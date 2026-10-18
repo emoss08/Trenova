@@ -25542,14 +25542,16 @@
     ]
   },
   "Analysis": {
-    "sites": 3,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "apps/web/config",
-      "routes/agent-control"
+      "apps/web/services",
+      "routes/agent-control",
+      "routes/desk"
     ]
   },
   "Analysis window": {
@@ -108855,7 +108857,7 @@
     ]
   },
   "From": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -114821,6 +114823,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Headline figures": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Headline is required": {
@@ -153226,7 +153237,7 @@
     ]
   },
   "No": {
-    "sites": 30,
+    "sites": 31,
     "scope": [
       "go",
       "ts"
@@ -200278,15 +200289,6 @@
       "template/notification.dash.review_submitted"
     ]
   },
-  "Read no datasets": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "Read on {0}.": {
     "sites": 1,
     "scope": [
@@ -237310,11 +237312,12 @@
     ]
   },
   "Showing {0} of {1, plural, one {# row} other {# rows}}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/fuel-purchase"
     ]
   },
@@ -247513,7 +247516,7 @@
     ]
   },
   "Table": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -250771,6 +250774,15 @@
       "go/other"
     ]
   },
+  "That analysis was not found": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "That approval is already delegated to this person for the same period": {
     "sites": 1,
     "scope": [
@@ -252675,7 +252687,7 @@
     ]
   },
   "The analysis id is not valid": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -302530,7 +302542,7 @@
     ]
   },
   "Yes": {
-    "sites": 31,
+    "sites": 32,
     "scope": [
       "go",
       "ts"

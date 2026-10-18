@@ -87,7 +87,9 @@ function AnalysisRunRow({ run, linked }: { run: AnalysisRun; linked: boolean }) 
         <Badge variant={phaseTone(status.phase)} title={status.description}>
           {status.text}
         </Badge>
-        <span className="min-w-0 flex-1 truncate text-sm">{run.purpose || t("Analysis")}</span>
+        <span className="min-w-0 flex-1 truncate text-sm">
+          {run.title || run.purpose || t("Analysis")}
+        </span>
         <span className="text-muted-foreground shrink-0 text-xs">
           {formatUnixTime(run.startedAt)}
         </span>

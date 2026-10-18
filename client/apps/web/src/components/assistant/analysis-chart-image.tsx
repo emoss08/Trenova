@@ -6,7 +6,8 @@ import { useT } from "@trenova/shared/i18n/use-t";
 /**
  * One chart an analysis drew, read from the run under the session's own
  * credentials. The server sends it only to the person the analysis ran for
- * and to those who oversee agents.
+ * and to those who oversee agents. The chart carries its own title and is
+ * drawn on a clear background in a neutral ink, so it reads in either theme.
  */
 export function AnalysisChartImage({
   runId,
@@ -35,22 +36,16 @@ export function AnalysisChartImage({
   }
 
   return (
-    <figure className="flex flex-col gap-1">
+    <figure className="rounded-md border p-2">
       {url ? (
-        <img
-          src={url}
-          alt={label}
-          className="bg-background w-full rounded-md border object-contain"
-          loading="lazy"
-        />
+        <img src={url} alt={label} className="w-full object-contain" loading="lazy" />
       ) : (
         <div
           aria-busy="true"
           aria-label={t("Loading {0}", label)}
-          className="ui-shimmer aspect-[4/3] w-full rounded-md"
+          className="ui-shimmer aspect-[16/9] w-full rounded-md"
         />
       )}
-      {title !== "" && <figcaption className="text-muted-foreground text-xs">{title}</figcaption>}
     </figure>
   );
 }

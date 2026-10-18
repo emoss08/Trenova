@@ -12,7 +12,12 @@ import {
 } from "@/components/assistant/readable-values";
 import type { AnalysisView } from "@/components/assistant/analysis-result";
 import { isRecordEntityType, recordPath, type RecordEntityType } from "@/config/record-links";
-import type { AnalysisRunStatus } from "@/types/agent-extension";
+import {
+  analysisFiguresSchema,
+  analysisLayoutSchema,
+  analysisTablesSchema,
+  type AnalysisRunStatus,
+} from "@/types/agent-extension";
 import { isAppPath } from "@/lib/app-path";
 import type { ReportPreviewColumn } from "@/lib/graphql/reports";
 import type { AssistantArtifact } from "@/types/assistant";
@@ -937,19 +942,24 @@ export function analysisFrom(artifact: AssistantArtifact): AnalysisView {
   return {
     runId: stringOf(payload.analysisRunId),
     status: ANALYSIS_STATUSES.includes(status) ? status : "Failed",
+    title: stringOf(payload.title) || artifact.title,
     code: stringOf(payload.code),
     datasets: listOf(payload.datasets)
       .filter(isRecord)
       .map((dataset) => ({
         name: stringOf(dataset.name),
         path: stringOf(dataset.path),
-        source:
-          dataset.source === "Attachment" ? ("Attachment" as const) : ("ReportRun" as const),
+        source: dataset.source === "Attachment" ? ("Attachment" as const) : ("ReportRun" as const),
         label: stringOf(dataset.label),
         rows: numberOf(dataset.rows),
       })),
     output: stringOf(payload.output),
-    results: listOf(payload.results).map(stringOf).filter((text) => text !== ""),
+    results: listOf(payload.results)
+      .map(stringOf)
+      .filter((text) => text !== ""),
+    tables: analysisTablesSchema.catch([]).parse(payload.tables),
+    figures: analysisFiguresSchema.catch([]).parse(payload.figures),
+    layout: analysisLayoutSchema.catch([]).parse(payload.layout),
     charts: listOf(payload.charts)
       .filter(isRecord)
       .map((chart) => ({ position: numberOf(chart.position), title: stringOf(chart.title) }))

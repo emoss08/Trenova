@@ -143,12 +143,16 @@ type fakeSandbox struct {
 	ran       []*agentextensionports.RunCodeRequest
 	stopped   []string
 	execution *agentextensionports.SandboxExecution
+	prelude   *agentextensionports.SandboxExecution
 	startErr  error
 	writeErr  error
 }
 
 func newFakeSandbox() *fakeSandbox {
-	return &fakeSandbox{execution: &agentextensionports.SandboxExecution{}}
+	return &fakeSandbox{
+		execution: &agentextensionports.SandboxExecution{},
+		prelude:   &agentextensionports.SandboxExecution{},
+	}
 }
 
 func (f *fakeSandbox) Type() agentextension.Type { return agentextension.TypeE2B }
@@ -206,6 +210,9 @@ func (f *fakeSandbox) RunCode(
 	defer f.mu.Unlock()
 
 	f.ran = append(f.ran, req)
+	if req.Code == analysisPrelude {
+		return f.prelude, nil
+	}
 
 	return f.execution, nil
 }
@@ -247,6 +254,7 @@ func lanesInput() agentextensionports.AnalysisInput {
 func (f *fixture) analysisRequest(inputs ...agentextensionports.AnalysisInput) *agentextensionports.AnalysisRequest {
 	return &agentextensionports.AnalysisRequest{
 		TenantInfo: f.tenant,
+		Title:      "Lane margin",
 		Purpose:    "Margin by lane for Q3",
 		Code:       "import pandas as pd\nprint(pd.read_csv('/home/user/data/lanes.csv'))",
 		Inputs:     inputs,
@@ -282,17 +290,24 @@ func TestAnalyzeRunsTheCodeOverTheDataAndStopsTheSandbox(t *testing.T) {
 	require.Len(t, f.sandbox.started, 1)
 	assert.Equal(t, testSandboxKey, f.sandbox.started[0].Settings[agentextension.ConfigKeyAPIKey])
 	assert.Equal(t, outcome.RunID.String(), f.sandbox.started[0].Metadata[analysisMetadataRun])
-	assert.Equal(t, []agentextensionports.SandboxFile{{
+	require.Len(t, f.sandbox.files, 2)
+	assert.Equal(t, agentextensionports.SandboxFile{
 		Path:    "/home/user/data/lanes.csv",
 		Content: []byte("lane,margin\nDAL-ATL,0.18\n"),
-	}}, f.sandbox.files)
-	require.Len(t, f.sandbox.ran, 1)
-	assert.Equal(t, 60*time.Second, f.sandbox.ran[0].Timeout)
+	}, f.sandbox.files[0])
+	assert.Equal(t, agentextension.AnalysisConfigPath, f.sandbox.files[1].Path)
+	assert.JSONEq(t, `{"timezone":"UTC","datasets":[{"name":"lanes",`+
+		`"path":"/home/user/data/lanes.csv","extension":"csv"}]}`,
+		string(f.sandbox.files[1].Content))
+	require.Len(t, f.sandbox.ran, 2)
+	assert.Equal(t, analysisPrelude, f.sandbox.ran[0].Code, "the data is prepared first")
+	assert.Equal(t, 60*time.Second, f.sandbox.ran[1].Timeout)
 	assert.Equal(t, []string{"sbx1"}, f.sandbox.stopped)
 
 	run := f.analyses.only(t)
 	assert.Equal(t, agentextension.AnalysisRunStatusSucceeded, run.Status)
 	assert.Equal(t, "Margin by lane for Q3", run.Purpose)
+	assert.Equal(t, "Lane margin", run.Title)
 	assert.Equal(t, "sbx1", run.VendorSandboxID)
 	assert.Equal(t, 1, run.ChartCount)
 	assert.True(t, decimal.RequireFromString("0.0003").Equal(run.CostUSD))
@@ -301,6 +316,120 @@ func TestAnalyzeRunsTheCodeOverTheDataAndStopsTheSandbox(t *testing.T) {
 	assert.Equal(t, testPNG, f.analyses.charts[0].Image)
 	assert.Equal(t, 1, f.usage.requests)
 	assert.Zero(t, f.usage.failures)
+}
+
+func TestAnalyzeKeepsTheTablesAndFiguresTheCodeShowedInOrder(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture(t)
+	f.enableAnalysis(t)
+	f.sandbox.prelude = &agentextensionports.SandboxExecution{
+		Results: []agentextensionports.SandboxResult{{JSON: map[string]any{
+			"trenova": "datasets",
+			"datasets": []any{map[string]any{
+				"name": "lanes",
+				"rows": float64(1),
+				"columns": []any{
+					map[string]any{"name": "Lane", "dtype": "string"},
+					map[string]any{"name": "Margin", "dtype": "float64"},
+				},
+			}},
+		}}},
+	}
+	f.sandbox.execution = &agentextensionports.SandboxExecution{
+		Results: []agentextensionports.SandboxResult{
+			{JSON: map[string]any{
+				"trenova": "figure", "label": "Average margin", "value": 0.18,
+				"kind": "percent",
+			}},
+			{JSON: map[string]any{
+				"trenova": "table",
+				"title":   "Margin by lane",
+				"columns": []any{
+					map[string]any{"name": "Lane", "kind": "text"},
+					map[string]any{"name": "Revenue", "kind": "money", "currency": "usd"},
+				},
+				"rows":      []any{[]any{"DAL-ATL", 1200.5}},
+				"totalRows": float64(1),
+			}},
+			{PNG: testPNG, Title: "Margin by lane"},
+			{JSON: map[string]any{"trenova": "something else"}},
+		},
+	}
+
+	outcome, err := f.svc.Analyze(t.Context(), f.analysisRequest(lanesInput()))
+	require.NoError(t, err)
+
+	assert.Equal(t, []agentextension.AnalysisFigure{{
+		Label: "Average margin", Value: 0.18, Kind: agentextension.AnalysisValuePercent,
+	}}, outcome.Figures)
+	require.Len(t, outcome.Tables, 1)
+	assert.Equal(t, []agentextension.AnalysisTableColumn{
+		{Name: "Lane", Kind: agentextension.AnalysisValueText},
+		{Name: "Revenue", Kind: agentextension.AnalysisValueMoney, Currency: "USD"},
+	}, outcome.Tables[0].Columns)
+	assert.Equal(t, [][]any{{"DAL-ATL", 1200.5}}, outcome.Tables[0].Rows)
+	assert.Equal(t, []agentextension.AnalysisBlock{
+		{Kind: agentextension.AnalysisBlockTable, Index: 0},
+		{Kind: agentextension.AnalysisBlockChart, Index: 1},
+	}, outcome.Layout, "the table came before the chart")
+	assert.Empty(t, outcome.Results, "values shown as JSON are not printed results")
+	assert.Equal(t, []agentextension.AnalysisDatasetLoad{{
+		Name: "lanes",
+		Rows: 1,
+		Columns: []agentextension.AnalysisDatasetColumn{
+			{Name: "Lane", DType: "string"},
+			{Name: "Margin", DType: "float64"},
+		},
+	}}, outcome.Loaded)
+
+	run := f.analyses.only(t)
+	assert.Len(t, run.Tables, 1)
+	assert.Len(t, run.Figures, 1)
+	assert.Len(t, run.Layout, 2)
+}
+
+func TestAnalyzeSendsTheReportColumnsAndTimezoneToThePrelude(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture(t)
+	f.enableAnalysis(t)
+	input := lanesInput()
+	input.Columns = []agentextension.AnalysisColumnSpec{{
+		ID: "margin", Label: "Margin", Type: "decimal", Kind: agentextension.AnalysisValuePercent,
+	}}
+	req := f.analysisRequest(input)
+	req.Timezone = "America/Chicago"
+
+	_, err := f.svc.Analyze(t.Context(), req)
+	require.NoError(t, err)
+
+	require.Len(t, f.sandbox.files, 2)
+	assert.JSONEq(t, `{"timezone":"America/Chicago","datasets":[{"name":"lanes",`+
+		`"path":"/home/user/data/lanes.csv","extension":"csv","columns":[{"id":"margin",`+
+		`"label":"Margin","type":"decimal","kind":"percent"}]}]}`,
+		string(f.sandbox.files[1].Content))
+}
+
+func TestAnalyzeFailsWithoutBlamingTheCodeWhenThePreludeCannotRun(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture(t)
+	f.enableAnalysis(t)
+	f.sandbox.prelude = &agentextensionports.SandboxExecution{
+		Error: &agentextension.AnalysisError{Name: "ImportError", Value: "no pandas"},
+	}
+
+	_, err := f.svc.Analyze(t.Context(), f.analysisRequest(lanesInput()))
+	require.True(t, IsToolError(err))
+	assert.Equal(t, analysisPrepFailure, err.Error())
+	require.Len(t, f.sandbox.ran, 1, "the agent's code never runs")
+	assert.Equal(t, []string{"sbx1"}, f.sandbox.stopped)
+
+	run := f.analyses.only(t)
+	assert.Equal(t, agentextension.AnalysisRunStatusFailed, run.Status)
+	assert.Equal(t, analysisPrepFailure, run.Failure)
+	assert.Equal(t, 1, f.usage.failures)
 }
 
 func TestAnalyzeReportsTheErrorTheCodeRaised(t *testing.T) {
@@ -458,4 +587,35 @@ func TestAnalysisChartsAreShownOnlyToWhoTheyWereRunFor(t *testing.T) {
 		Position:   2,
 	})
 	assert.True(t, errortypes.IsNotFoundError(err))
+}
+
+func TestAnAnalysisIsReadWholeOnlyByWhoItWasRunFor(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture(t)
+	f.enableAnalysis(t)
+	outcome, err := f.svc.Analyze(t.Context(), f.analysisRequest(lanesInput()))
+	require.NoError(t, err)
+
+	mine, err := f.svc.AnalysisRun(t.Context(), &agentextensionports.AnalysisRunRequest{
+		TenantInfo: f.tenant,
+		RunID:      outcome.RunID,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "Lane margin", mine.Title)
+
+	other := f.tenant
+	other.UserID = pulid.MustNew("usr_")
+	_, err = f.svc.AnalysisRun(t.Context(), &agentextensionports.AnalysisRunRequest{
+		TenantInfo: other,
+		RunID:      outcome.RunID,
+	})
+	assert.True(t, errortypes.IsNotFoundError(err))
+
+	_, err = f.svc.AnalysisRun(t.Context(), &agentextensionports.AnalysisRunRequest{
+		TenantInfo:  other,
+		RunID:       outcome.RunID,
+		Administers: true,
+	})
+	require.NoError(t, err)
 }

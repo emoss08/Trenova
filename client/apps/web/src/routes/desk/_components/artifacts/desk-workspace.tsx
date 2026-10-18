@@ -477,6 +477,8 @@ function shapeOf(artifact: AssistantArtifact): DeskArtifactShape {
     case "report":
     case "diff":
       return "table";
+    case "analysis":
+      return "lines";
     case "doc":
     case "email":
     case "plan":

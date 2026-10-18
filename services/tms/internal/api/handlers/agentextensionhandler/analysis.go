@@ -89,3 +89,36 @@ func (h *Handler) analysisChart(c *gin.Context) {
 	c.Header("Content-Disposition", `inline; filename="chart-`+strconv.Itoa(position)+`.png"`)
 	c.Data(http.StatusOK, "image/png", chart.Image)
 }
+
+// analysisRun is one analysis, whole, for the person it ran for or someone
+// who oversees agents.
+func (h *Handler) analysisRun(c *gin.Context) {
+	runID, err := pulid.MustParse(c.Param("runID"))
+	if err != nil {
+		h.eh.HandleError(c, errortypes.NewValidationError("runId", errortypes.ErrInvalid,
+			"The analysis id is not valid"))
+		return
+	}
+
+	administers, err := h.pm.Allowed(
+		c,
+		permission.ResourceAgentExtension.String(),
+		permission.OpRead,
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	run, err := h.service.AnalysisRun(c.Request.Context(), &agentextensionports.AnalysisRunRequest{
+		TenantInfo:  tenantOf(c),
+		RunID:       runID,
+		Administers: administers,
+	})
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, run)
+}

@@ -24,6 +24,7 @@ import (
 
 const (
 	paramAnalysisCode     = "code"
+	paramAnalysisTitle    = "title"
 	paramAnalysisPurpose  = "purpose"
 	paramAnalysisDatasets = "datasets"
 	paramDatasetName      = "name"
@@ -32,14 +33,18 @@ const (
 
 	maxAnalysisOutputRunes    = 6000
 	maxAnalysisTracebackRunes = 3000
+	maxAnswerTableRows        = 25
 
-	analysisChartNote = "The charts are shown to the person beside your reply; say what they " +
-		"show and what it means, without describing how they were drawn."
+	analysisShownNote = "The figures, tables and charts are shown to the person beside your " +
+		"reply under the analysis's title; say what they mean and what to do about them, " +
+		"without listing them again or describing how they were drawn."
 	analysisDoneNote = "Figures come from the datasets as they were when each report ran. " +
 		"Give the answer in plain words with the figures that matter; do not paste the code."
+	analysisPlainNote = "Nothing was shown with show_figure, show_table or plt.show(), so the " +
+		"person sees only what was printed. Next time show the results rather than print them."
 	analysisErrorNote = "The code raised an error. Fix it and run it again; do not run the " +
-		"same code unchanged. Open a dataset at its path, and check a column's id in the " +
-		"report's columns before using it."
+		"same code unchanged. Each dataset is loaded as the DataFrame named under datasets, " +
+		"with exactly the columns listed there."
 	analysisStoppedNote = "Tell the person if it cannot be done; otherwise narrow the data or " +
 		"simplify the code and run it again."
 )
@@ -77,22 +82,30 @@ func newAnalyzeDataTool(
 func (t *analyzeDataTool) Name() string { return agentextension.ToolAnalyzeData }
 
 func (t *analyzeDataTool) Description() string {
-	return "Run Python over report results and files the person attached, to work out what a " +
-		"report alone does not show, such as margin by lane over a quarter. It also finds which " +
-		"customers drift past terms or where detention clusters. pandas, numpy and matplotlib are " +
-		"available, and the " +
-		"code cannot reach the internet. Each dataset is written to /home/user/data/<name>.csv " +
-		"(or .xlsx, .json, .txt for a file) before the code runs; a report run's CSV has one " +
-		"column per report column, headed by its id, with raw values: decimals as exact text, " +
-		"times as unix seconds. Print what you need to read back, and show a chart with " +
-		"plt.show() to put it beside your reply. Run the report with run_report first and use " +
-		"its runId; each call starts afresh, so load what it needs every time."
+	return "Run Python over report results and files the person attached, to answer what a " +
+		"report alone does not show, such as who holds most of the open balance. Each dataset " +
+		"is already a pandas DataFrame named after it: a report run's columns are headed by " +
+		"their labels, as run_report showed them, with numbers as numbers and times as dates " +
+		"in the organization's timezone. pd, np and plt are imported, and the code cannot " +
+		"reach the internet. Show results instead of printing them: show_figure(label, value, " +
+		"kind) for a headline number, show_table(df, title) for a table and plt.show() for " +
+		"each chart, one point per chart with a title. Kinds are money, count, percent (a " +
+		"fraction) and number. Asked to explore, answer three or four questions the data " +
+		"supports. Run the report with run_report first and use its runId; each call starts " +
+		"afresh."
 }
 
 func (t *analyzeDataTool) ParamSchema() map[string]any {
 	return map[string]any{
 		toolschema.KeyType: toolschema.TypeObject,
 		toolschema.KeyProperties: map[string]any{
+			paramAnalysisTitle: map[string]any{
+				toolschema.KeyType: "string",
+				toolschema.KeyDescription: "A short name for what the analysis shows, three to " +
+					"eight words, such as \"Open AR by customer\". It names the result beside " +
+					"the reply; running again under the same title replaces it.",
+				toolschema.KeyMaxLength: agentextension.MaxAnalysisTitleRunes,
+			},
 			paramAnalysisPurpose: map[string]any{
 				toolschema.KeyType: "string",
 				toolschema.KeyDescription: "What the analysis answers, in one plain sentence the " +
@@ -101,8 +114,9 @@ func (t *analyzeDataTool) ParamSchema() map[string]any {
 			},
 			paramAnalysisCode: map[string]any{
 				toolschema.KeyType: "string",
-				toolschema.KeyDescription: "The Python to run, as one cell. Read each dataset " +
-					"from its path, print the figures, and plt.show() any chart.",
+				toolschema.KeyDescription: "The Python to run, as one cell. Use the loaded " +
+					"DataFrames, and show_figure, show_table or plt.show() what the person " +
+					"should see.",
 				toolschema.KeyMaxLength: agentextension.MaxAnalysisCodeRunes,
 			},
 			paramAnalysisDatasets: map[string]any{
@@ -135,7 +149,9 @@ func (t *analyzeDataTool) ParamSchema() map[string]any {
 				},
 			},
 		},
-		toolschema.KeyRequired:             []string{paramAnalysisPurpose, paramAnalysisCode},
+		toolschema.KeyRequired: []string{
+			paramAnalysisTitle, paramAnalysisPurpose, paramAnalysisCode,
+		},
 		toolschema.KeyAdditionalProperties: false,
 	}
 }
@@ -163,11 +179,20 @@ func (t *analyzeDataTool) SearchTerms() []string {
 }
 
 type analysisDatasetAnswer struct {
-	Name   string `json:"name"`
-	Path   string `json:"path"`
-	Source string `json:"source"`
-	Label  string `json:"label,omitempty"`
-	Rows   int    `json:"rows,omitempty"`
+	Name      string                                 `json:"name"`
+	Path      string                                 `json:"path"`
+	Source    string                                 `json:"source"`
+	Label     string                                 `json:"label,omitempty"`
+	Rows      int                                    `json:"rows,omitempty"`
+	Columns   []agentextension.AnalysisDatasetColumn `json:"columns,omitempty"`
+	LoadError string                                 `json:"loadError,omitempty"`
+}
+
+type analysisTableAnswer struct {
+	Title     string                               `json:"title,omitempty"`
+	Columns   []agentextension.AnalysisTableColumn `json:"columns"`
+	Rows      [][]any                              `json:"rows"`
+	TotalRows int                                  `json:"totalRows"`
 }
 
 type analysisErrorAnswer struct {
@@ -179,11 +204,15 @@ type analysisErrorAnswer struct {
 type analysisAnswer struct {
 	AnalysisRunID string                                     `json:"analysisRunId"`
 	Status        string                                     `json:"status"`
+	Title         string                                     `json:"title"`
 	Purpose       string                                     `json:"purpose"`
 	Datasets      []analysisDatasetAnswer                    `json:"datasets"`
+	Figures       []agentextension.AnalysisFigure            `json:"figures,omitempty"`
+	Tables        []analysisTableAnswer                      `json:"tables,omitempty"`
+	Charts        []agentextensionports.AnalysisChartSummary `json:"charts,omitempty"`
+	Layout        []agentextension.AnalysisBlock             `json:"layout,omitempty"`
 	Output        string                                     `json:"output,omitempty"`
 	Results       []string                                   `json:"results,omitempty"`
-	Charts        []agentextensionports.AnalysisChartSummary `json:"charts,omitempty"`
 	Error         *analysisErrorAnswer                       `json:"error,omitempty"`
 	Failure       string                                     `json:"failure,omitempty"`
 	Note          string                                     `json:"note"`
@@ -253,6 +282,9 @@ func (t *analyzeDataTool) Query(
 	if err != nil {
 		return nil, err
 	}
+	title := agentextension.NormalizeAnalysisTitle(
+		optionalString(params.Params, paramAnalysisTitle), purpose,
+	)
 	code, err := requireString(params.Params, paramAnalysisCode)
 	if err != nil {
 		return nil, err
@@ -272,9 +304,11 @@ func (t *analyzeDataTool) Query(
 
 	outcome, err := t.analyzer.Analyze(ctx, &agentextensionports.AnalysisRequest{
 		TenantInfo: tenantOf(params),
+		Title:      title,
 		Purpose:    purpose,
 		Code:       code,
 		Inputs:     inputs,
+		Timezone:   params.Timezone,
 		Owner: agentextensionports.AnalysisOwner{
 			Actor:        params.Actor,
 			DefinitionID: params.AgentDefinitionID,
@@ -401,6 +435,20 @@ func (t *analyzeDataTool) reportDataset(
 			request.reportRun, err)
 	}
 
+	columns := make([]agentextension.AnalysisColumnSpec, 0, len(envelope.Schema))
+	for idx := range envelope.Schema {
+		column := &envelope.Schema[idx]
+		columns = append(columns, agentextension.AnalysisColumnSpec{
+			ID:    column.ID,
+			Label: column.Label,
+			Type:  string(column.Type),
+			Kind: agentextension.AnalysisKindOf(
+				string(column.Type), string(column.Format), string(column.Display.DateStyle),
+			),
+			Currency: column.Display.Currency,
+		})
+	}
+
 	return &agentextensionports.AnalysisInput{
 		Name:      request.name,
 		Source:    agentextension.AnalysisDatasetReportRun,
@@ -409,6 +457,7 @@ func (t *analyzeDataTool) reportDataset(
 		Extension: "csv",
 		Content:   content.Bytes(),
 		Rows:      len(envelope.Rows),
+		Columns:   columns,
 	}, nil
 }
 
@@ -457,23 +506,36 @@ func answerOf(
 	answer := &analysisAnswer{
 		AnalysisRunID: outcome.RunID.String(),
 		Status:        outcome.Status.String(),
+		Title:         outcome.Title,
 		Purpose:       strings.TrimSpace(purpose),
 		Datasets:      make([]analysisDatasetAnswer, 0, len(outcome.Datasets)),
+		Figures:       outcome.Figures,
+		Tables:        answerTables(outcome.Tables),
+		Charts:        outcome.Charts,
+		Layout:        outcome.Layout,
 		Output:        analysisOutput(outcome.Stdout, outcome.Stderr),
 		Results:       outcome.Results,
-		Charts:        outcome.Charts,
 		Failure:       outcome.Failure,
 		attachments:   attachments,
 	}
+	loaded := make(map[string]*agentextension.AnalysisDatasetLoad, len(outcome.Loaded))
+	for idx := range outcome.Loaded {
+		loaded[outcome.Loaded[idx].Name] = &outcome.Loaded[idx]
+	}
 	for idx := range outcome.Datasets {
 		dataset := &outcome.Datasets[idx]
-		answer.Datasets = append(answer.Datasets, analysisDatasetAnswer{
+		entry := analysisDatasetAnswer{
 			Name:   dataset.Name,
 			Path:   dataset.Path,
 			Source: dataset.Source.String(),
 			Label:  dataset.Label,
 			Rows:   dataset.Rows,
-		})
+		}
+		if load, ok := loaded[dataset.Name]; ok {
+			entry.Columns = load.Columns
+			entry.LoadError = load.Error
+		}
+		answer.Datasets = append(answer.Datasets, entry)
 	}
 	if outcome.Error != nil {
 		answer.Error = &analysisErrorAnswer{
@@ -486,8 +548,10 @@ func answerOf(
 	switch outcome.Status {
 	case agentextension.AnalysisRunStatusSucceeded:
 		answer.Note = analysisDoneNote
-		if len(outcome.Charts) > 0 {
-			answer.Note += " " + analysisChartNote
+		if len(outcome.Charts)+len(outcome.Tables)+len(outcome.Figures) > 0 {
+			answer.Note += " " + analysisShownNote
+		} else {
+			answer.Note += " " + analysisPlainNote
 		}
 	case agentextension.AnalysisRunStatusErrored:
 		answer.Note = analysisErrorNote
@@ -498,6 +562,23 @@ func answerOf(
 	}
 
 	return answer
+}
+
+// answerTables are the tables as the agent reads them: each with its first
+// rows, and how many it has in all.
+func answerTables(tables []agentextension.AnalysisTable) []analysisTableAnswer {
+	answers := make([]analysisTableAnswer, 0, len(tables))
+	for idx := range tables {
+		table := &tables[idx]
+		answers = append(answers, analysisTableAnswer{
+			Title:     table.Title,
+			Columns:   table.Columns,
+			Rows:      table.Rows[:min(len(table.Rows), maxAnswerTableRows)],
+			TotalRows: table.TotalRows,
+		})
+	}
+
+	return answers
 }
 
 // analysisOutput is what the code printed, the end kept when it is long: a

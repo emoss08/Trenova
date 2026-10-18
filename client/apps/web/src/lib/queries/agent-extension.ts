@@ -34,6 +34,11 @@ export const agentExtension = createQueryKeys("agentExtension", {
     queryFn: ({ signal }: { signal?: AbortSignal }) =>
       apiService.agentExtensionService.listAnalysisRuns({ limit: ANALYSIS_RUNS_PAGE }, { signal }),
   }),
+  analysisRun: (runId: string) => ({
+    queryKey: ["analysis-run", runId],
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      apiService.agentExtensionService.analysisRun(runId, { signal }),
+  }),
   analysisChart: (runId: string, position: number) => ({
     queryKey: ["analysis-chart", runId, position],
     queryFn: ({ signal }: { signal?: AbortSignal }) =>

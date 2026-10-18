@@ -49,6 +49,7 @@ export function analysisViewOf(run: AnalysisRun): AnalysisView {
   return {
     runId: run.id,
     status: run.status,
+    title: run.title || run.purpose,
     code: run.code,
     datasets: run.datasets.map((dataset) => ({
       name: dataset.name,
@@ -59,6 +60,9 @@ export function analysisViewOf(run: AnalysisRun): AnalysisView {
     })),
     output,
     results: run.results,
+    tables: run.tables,
+    figures: run.figures,
+    layout: run.layout,
     charts: Array.from({ length: run.chartCount }, (_, index) => ({
       position: index + 1,
       title: "",

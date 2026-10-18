@@ -13,8 +13,9 @@ bundle). The history is managed under `agent_extension`, like the extension itse
 
 ## What the code reads
 
-The tool takes the code, a one-sentence purpose a person reads, and up to five datasets, each
-named for the file the code opens and given exactly one source:
+The tool takes a short title (three to eight words, which names the result on the Desk), a
+one-sentence purpose, the code, and up to five datasets, each named for the DataFrame and file
+the code reads and given exactly one source:
 
 - **A report run** (`reportRunId`, kind `report_run`). Only a run the same person ran
   (`RequestedByID`), and only while they may read reports (`report:read`, checked by the
@@ -26,10 +27,38 @@ named for the file the code opens and given exactly one source:
   (`Document.AttachedBy`), read through `ConversationFileReader`. CSV, XLSX, JSON and text
   files only: what pandas reads without fetching anything.
 
-Each dataset is written to `/home/user/data/<name>.<ext>` before the code runs. A name is
-lower-case letters, digits and underscores starting with a letter, so the code opens it
-without quoting. A dataset is at most 20 MB and an analysis at most 40 MB. A run with no
+Each dataset is written to `/home/user/data/<name>.<ext>` before the code runs, and loaded
+for it (see [Prepared before the code](#prepared-before-the-code)). A name is lower-case
+letters, digits and underscores starting with a letter, so it is a Python name and a file
+name without quoting. A dataset is at most 20 MB and an analysis at most 40 MB. A run with no
 person behind it (a background run) can analyze no datasets.
+
+## Prepared before the code
+
+Before the agent's code, Trenova runs its own cell in the same sandbox
+(`agentextensionservice/analysis_prelude.py`, embedded in the binary), reading
+`/home/user/.trenova/analysis.json`: the organization's timezone and, for each report run,
+its columns (`AnalysisColumnSpec`: id, label, type, and how its values read, from the
+report's format). It:
+
+- **Loads each dataset as a DataFrame named after it.** A report run's columns are headed by
+  their labels, as `run_report` showed them to the model (so `df["Open Balance"]`, not
+  `open_balance`), integers as nullable integers, decimals as floats, times as dates in the
+  organization's timezone and flags as booleans. A file is read with pandas' own reader. How
+  each loaded (rows, columns and dtypes, or the error) comes back as JSON and is handed to the
+  agent under `datasets[].columns`, so a retry names real columns.
+- **Styles charts for either theme**: a clear background, a neutral ink that reads on white
+  and on black, a fixed palette, no top or right spine, a light grid, and no scientific
+  notation; `plt.show()` and the inline backend's flush both turn a plain number axis into
+  compact figures (6M, 36.9K).
+- **Defines `show_figure(label, value, kind)` and `show_table(df, title, formats)`**, which
+  display JSON (`{"trenova": "figure" | "table", ...}`) rather than text. A kind is `text`,
+  `number`, `money`, `count`, `percent` (a fraction), `date`, `datetime` or `bool`; a
+  dataset column's kind comes from the report, so a money column reads as money unasked.
+
+Every step is guarded, so the preparation never fails an analysis; a preparation that cannot
+run at all (the cell raised or stopped) ends the run `Failed` with a message that does not
+blame the agent's code.
 
 ## What keeps it safe
 
@@ -37,8 +66,8 @@ person behind it (a background run) can analyze no datasets.
   `allow_internet_access: false` (all egress denied) and `allowPublicTraffic: false` (its own
   URLs need its traffic token). Whatever the data says and whatever the code tries, nothing
   it reads can be sent anywhere but back to Trenova. The sandbox is stopped when the analysis
-  ends, whatever happened, and its lifetime is the code's limit plus a minute, so one Trenova
-  failed to stop ends on its own.
+  ends, whatever happened, and its lifetime is the code's limit plus two minutes (the
+  preparation runs in that margin), so one Trenova failed to stop ends on its own.
 - **Starting a sandbox is never retried**: a create that failed after the vendor began it
   would leave a second sandbox running and billed. Code is never re-run either.
 - **Only the caller's own data.** Report runs another person ran and files from another
@@ -60,10 +89,14 @@ person behind it (a background run) can analyze no datasets.
    daily limit.
 2. Record the run in `agent_analysis_runs` (ids `aanr_`) before the vendor is called, so a
    sandbox Trenova started is never one it has no record of.
-3. Start the sandbox, write the datasets, run the code as one cell for at most
-   `runSeconds` (15 to 180, 90 by default), and stop the sandbox.
-4. Keep up to four PNG images the code displayed (`plt.show()`), each at most 2 MB, in
-   `agent_analysis_charts`, with the chart's title when the interpreter recognized one.
+3. Start the sandbox, write the datasets and the configuration, run the preparation (at most
+   a minute), run the code as one cell for at most `runSeconds` (15 to 180, 90 by default),
+   and stop the sandbox.
+4. Sort what the code displayed, in order: up to four PNG charts (each at most 2 MB, kept in
+   `agent_analysis_charts` with the chart's title when the interpreter recognized one), up to
+   six tables (20 columns, 200 rows, kept as values in `tables`), up to eight headline
+   figures (`figures`), and anything else as text. `layout` records the order the charts and
+   tables were shown in.
 5. Record how it ended and settle the cost: E2B's per-second price for the processors and
    memory the sandbox held, against the day the run started.
 
@@ -71,22 +104,32 @@ How it ends:
 
 | Status | Means | The agent is told |
 |---|---|---|
-| `Succeeded` | The code ran to the end. | The figures, the charts by position, and to say what they show. |
-| `Errored` | The code raised. | The exception and traceback, and to fix the code rather than run it unchanged. |
+| `Succeeded` | The code ran to the end. | The figures, tables (first 25 rows) and charts, and to say what they mean without listing them again; or, when nothing was shown, to show results rather than print them next time. |
+| `Errored` | The code raised. | The exception and traceback, the datasets' real columns, and to fix the code rather than run it unchanged. |
 | `TimedOut` | It ran past `runSeconds` and was stopped. | Why, and to narrow the data or simplify. |
 | `Failed` | The sandbox could not run it (start, load, or the cell stopped without finishing, usually out of memory). | Why. |
 
-The tool returns the output (the end kept past 6,000 characters, stderr after stdout), the
-text results, the charts by position and title, and the error.
+The tool returns the title, the datasets with their loaded columns, the figures, the tables,
+the charts by position and title, the order they were shown in, the output (the end kept past
+6,000 characters, stderr after stdout), the text results, and the error.
 
 ## On the Desk
 
-An analysis is the `analysis` artifact kind (family `report`): the purpose as its title, the
-charts, results, error, output and the code. It is made on purpose, not a view of a lookup,
-so it is kept whether or not the reply names it, and `ShownArtifact.MustBeLinked` holds the
-reply to naming it. The card reads each chart from
-`GET /agent-analysis/runs/:runID/charts/:position/`, which serves the person the analysis ran
-for and anyone who may read agent extensions; everyone else is told it does not exist.
+An analysis is the `analysis` artifact kind (family `report`; the Desk draws it as its own
+"Analysis" kind), titled by its short title. Only an analysis that ran to the end makes one:
+an attempt whose code raised is the agent's to fix, and the person sees the result it reaches,
+not each attempt. Its lineage is its title (case and spacing aside), so running it again under
+the same title, after a fix or over newer data, is the next version of one card rather than a
+second. It is made on purpose, not a view of a lookup, so it is kept whether or not the reply
+names it, and `ShownArtifact.MustBeLinked` holds the reply to naming it.
+
+The card shows the headline figures as a strip, then each chart and table in the order the
+code showed them (money, counts, percentages and dates formatted as their kinds, numbers
+aligned right), what it could not do, and where the data came from; what it printed and the
+code stay folded beneath. It reads each chart from
+`GET /agent-analysis/runs/:runID/charts/:position/`, and a table longer than the 25 rows the
+agent was shown from `GET /agent-analysis/runs/:runID/`. Both serve the person the analysis
+ran for and anyone who may read agent extensions; everyone else is told it does not exist.
 
 A run is the `analysis_run` record kind; its record link
 (`/admin/agent-control?tab=extensions&analysisRun=<id>`) opens the extension serving the
@@ -106,11 +149,13 @@ connection test lists the account's running sandboxes, starting none.
 |---|---|
 | Capability, settings, runs, charts | `internal/modules/agent/domain/agentextension/` (`capability.go`, `e2b.go`, `analysis.go`) |
 | Stored runs and charts | `agent_analysis_runs`, `agent_analysis_charts` |
-| Running an analysis, the history, chart access | `internal/modules/agent/app/agentextensionservice/analysis.go` |
+| Running an analysis, the history, chart and run access | `internal/modules/agent/app/agentextensionservice/analysis.go` |
+| The preparation the sandbox runs first | `internal/modules/agent/app/agentextensionservice/analysis_prelude.py` |
+| Tables, figures, layout and their bounds | `internal/modules/agent/domain/agentextension/analysisresult.go` |
 | The tool and dataset resolution | `internal/modules/agent/app/agentquerytoolservice/analysis_tool.go` |
 | Report rows as CSV | `pkg/reportrows/csv.go` |
 | Vendor connector | `internal/infrastructure/agentextension/e2bconnector/` over `shared/e2b` |
 | The Desk artifact | `assistantservice/analysis_artifact.go`; client `routes/desk/_components/artifacts/kinds/analysis/` |
 | The result view both surfaces draw | `client/apps/web/src/components/assistant/analysis-result.tsx` |
-| REST API | `/agent-analysis/runs/` (list), `/agent-analysis/runs/:runID/charts/:position/` |
+| REST API | `/agent-analysis/runs/` (list), `/agent-analysis/runs/:runID/`, `/agent-analysis/runs/:runID/charts/:position/` |
 | AI control | `client/apps/web/src/routes/agent-control/_components/extensions/analysis-runs.tsx` |

@@ -382,10 +382,12 @@ func (s *Session) WriteFile(ctx context.Context, path string, content []byte) er
 	return err
 }
 
-// Result is one value the code displayed.
+// Result is one value the code displayed. JSON is what it displayed as
+// application/json, such as a table handed back as values.
 type Result struct {
 	Text       string
 	PNG        []byte
+	JSON       map[string]any
 	ChartTitle string
 	IsMain     bool
 }
@@ -439,6 +441,7 @@ type outputLine struct {
 	Type         string         `json:"type"`
 	Text         *string        `json:"text"`
 	PNG          *string        `json:"png"`
+	JSON         map[string]any `json:"json"`
 	Chart        map[string]any `json:"chart"`
 	IsMainResult *bool          `json:"is_main_result"`
 	Name         *string        `json:"name"`
@@ -501,7 +504,11 @@ func ParseExecution(body []byte) (*Execution, error) {
 }
 
 func resultOf(out *outputLine) (Result, error) {
-	result := Result{Text: deref(out.Text), IsMain: out.IsMainResult != nil && *out.IsMainResult}
+	result := Result{
+		Text:   deref(out.Text),
+		JSON:   out.JSON,
+		IsMain: out.IsMainResult != nil && *out.IsMainResult,
+	}
 	if png := strings.TrimSpace(deref(out.PNG)); png != "" {
 		decoded, err := base64.StdEncoding.DecodeString(png)
 		if err != nil {

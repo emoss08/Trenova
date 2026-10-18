@@ -142,12 +142,16 @@ type AnalysisRun struct {
 	OrganizationID    pulid.ID          `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull"`
 	ExtensionType     Type              `json:"extensionType"     bun:"extension_type,type:VARCHAR(50),notnull"`
 	Status            AnalysisRunStatus `json:"status"            bun:"status,type:VARCHAR(20),notnull"`
+	Title             string            `json:"title"             bun:"title,type:VARCHAR(80),notnull,default:''"`
 	Purpose           string            `json:"purpose"           bun:"purpose,type:VARCHAR(500),notnull,default:''"`
 	Code              string            `json:"code"              bun:"code,type:TEXT,notnull"`
 	Datasets          []AnalysisDataset `json:"datasets"          bun:"datasets,type:JSONB,notnull,default:'[]'::jsonb"`
 	Stdout            string            `json:"stdout"            bun:"stdout,type:TEXT,notnull,default:''"`
 	Stderr            string            `json:"stderr"            bun:"stderr,type:TEXT,notnull,default:''"`
 	Results           []string          `json:"results"           bun:"results,type:JSONB,notnull,default:'[]'::jsonb"`
+	Tables            []AnalysisTable   `json:"tables"            bun:"tables,type:JSONB,notnull,default:'[]'::jsonb"`
+	Figures           []AnalysisFigure  `json:"figures"           bun:"figures,type:JSONB,notnull,default:'[]'::jsonb"`
+	Layout            []AnalysisBlock   `json:"layout"            bun:"layout,type:JSONB,notnull,default:'[]'::jsonb"`
 	ErrorName         string            `json:"errorName"         bun:"error_name,type:VARCHAR(200),notnull,default:''"`
 	ErrorValue        string            `json:"errorValue"        bun:"error_value,type:TEXT,notnull,default:''"`
 	Traceback         string            `json:"traceback"         bun:"traceback,type:TEXT,notnull,default:''"`
@@ -199,6 +203,9 @@ type AnalysisRunOutcome struct {
 	Stdout     string
 	Stderr     string
 	Results    []string
+	Tables     []AnalysisTable
+	Figures    []AnalysisFigure
+	Layout     []AnalysisBlock
 	Error      *AnalysisError
 	ChartCount int
 	Failure    string
@@ -218,6 +225,9 @@ func (r *AnalysisRun) Finish(outcome *AnalysisRunOutcome, at int64) {
 		r.Traceback = stringutils.TruncateRunes(outcome.Error.Traceback, MaxAnalysisTracebackRunes)
 	}
 	r.ChartCount = min(max(outcome.ChartCount, 0), MaxAnalysisCharts)
+	r.Tables = BoundedTables(outcome.Tables)
+	r.Figures = BoundedFigures(outcome.Figures)
+	r.Layout = BoundedLayout(outcome.Layout, r.ChartCount, len(r.Tables))
 	r.Failure = stringutils.TruncateRunes(outcome.Failure, MaxAnalysisFailureRunes)
 	r.DurationMs = max(outcome.DurationMs, 0)
 	r.CostUSD = outcome.CostUSD

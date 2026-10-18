@@ -19,9 +19,10 @@ import (
 const (
 	requestTimeout = 30 * time.Second
 	// sandboxLifeMargin keeps the sandbox alive past the code's own limit for
-	// the files written before it and the stop after it; a sandbox Trenova
-	// fails to stop ends on its own at this lifetime.
-	sandboxLifeMargin = 60 * time.Second
+	// the files written before it, the preparation that loads them and the
+	// stop after it; a sandbox Trenova fails to stop ends on its own at this
+	// lifetime.
+	sandboxLifeMargin = 120 * time.Second
 	defaultCPUCount   = 2
 	defaultMemoryMB   = 512
 )
@@ -223,6 +224,7 @@ func executionOf(execution *e2b.Execution) *agentextensionports.SandboxExecution
 		out.Results = append(out.Results, agentextensionports.SandboxResult{
 			Text:  result.Text,
 			PNG:   result.PNG,
+			JSON:  result.JSON,
 			Title: result.ChartTitle,
 		})
 	}

@@ -11,6 +11,8 @@ import (
 
 const (
 	analysisKeyRunID   = "analysisRunId"
+	analysisKeyStatus  = "status"
+	analysisKeyTitle   = "title"
 	analysisKeyPurpose = "purpose"
 	analysisKeyCode    = "code"
 	analysisKeyOutput  = "output"
@@ -19,14 +21,19 @@ const (
 )
 
 // analysisArtifact keeps what an analysis showed beside the conversation: the
-// figures, the charts by position (the images are read from the run when the
-// card is open) and the code that made them. The note is for the model.
+// headline figures, the tables and the charts by position (the images are
+// read from the run when the card is open), and the code that made them. The
+// note is for the model. Only an analysis that ran to the end is kept: one
+// whose code raised is the agent's to fix and run again, and the person sees
+// the result it reaches, not each attempt.
 func analysisArtifact(
 	callID string,
 	result map[string]any,
 	arguments map[string]any,
 ) *assistantartifact.Artifact {
-	if typeutils.StringOfTrimmed(result[analysisKeyRunID]) == "" {
+	if typeutils.StringOfTrimmed(result[analysisKeyRunID]) == "" ||
+		typeutils.StringOfTrimmed(result[analysisKeyStatus]) !=
+			agentextension.AnalysisRunStatusSucceeded.String() {
 		return nil
 	}
 
@@ -47,7 +54,10 @@ func analysisArtifact(
 		payload["truncated"] = true
 	}
 
-	title := typeutils.StringOfTrimmed(result[analysisKeyPurpose])
+	title := typeutils.StringOfTrimmed(result[analysisKeyTitle])
+	if title == "" {
+		title = typeutils.StringOfTrimmed(result[analysisKeyPurpose])
+	}
 	if title == "" {
 		title = analysisTitle
 	}

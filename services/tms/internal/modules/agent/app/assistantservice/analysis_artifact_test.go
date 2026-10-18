@@ -79,3 +79,30 @@ func TestAnAnalysisMustBeNamedInTheReply(t *testing.T) {
 	shown := agentports.ShownArtifact{Kind: string(assistantartifact.KindAnalysis)}
 	assert.True(t, shown.MustBeLinked())
 }
+
+func TestArtifactFromObservation_AnAnalysisIsNamedByItsShortTitle(t *testing.T) {
+	t.Parallel()
+
+	result := analysisResult()
+	result["title"] = "Lane margin"
+	result["figures"] = []any{map[string]any{"label": "Average margin", "value": 0.18}}
+
+	artifact := artifactFromObservation(analysisObservation(result, "print(1)"))
+	require.NotNil(t, artifact)
+	assert.Equal(t, "Lane margin", artifact.Title,
+		"the short title names the result, not the sentence of purpose")
+	assert.Contains(t, artifact.Payload, "figures")
+}
+
+func TestArtifactFromObservation_AnAnalysisThatDidNotRunToTheEndIsNotKept(t *testing.T) {
+	t.Parallel()
+
+	for _, status := range []string{"Errored", "Failed", "TimedOut"} {
+		result := analysisResult()
+		result["status"] = status
+		result["error"] = map[string]any{"name": "KeyError", "value": "'Open Balance'"}
+
+		assert.Nil(t, artifactFromObservation(analysisObservation(result, "print(1)")),
+			"%s: the agent fixes the code, and the person sees the result it reaches", status)
+	}
+}

@@ -59,6 +59,7 @@ type SandboxFile struct {
 type SandboxResult struct {
 	Text  string
 	PNG   []byte
+	JSON  map[string]any
 	Title string
 }
 
@@ -101,6 +102,10 @@ type AnalysisInput struct {
 	Extension string
 	Content   []byte
 	Rows      int
+
+	// Columns are a report run's columns, so the sandbox loads its CSV typed
+	// and headed by each column's label; a file has none.
+	Columns []agentextension.AnalysisColumnSpec
 }
 
 type AnalysisOwner struct {
@@ -112,10 +117,15 @@ type AnalysisOwner struct {
 
 type AnalysisRequest struct {
 	TenantInfo pagination.TenantInfo
+	Title      string
 	Purpose    string
 	Code       string
 	Inputs     []AnalysisInput
 	Owner      AnalysisOwner
+
+	// Timezone is the organization's, which times in the datasets are read
+	// in. Empty is UTC.
+	Timezone string
 }
 
 type AnalysisChartSummary struct {
@@ -126,11 +136,16 @@ type AnalysisChartSummary struct {
 type AnalysisOutcome struct {
 	RunID      pulid.ID
 	Status     agentextension.AnalysisRunStatus
+	Title      string
 	Datasets   []agentextension.AnalysisDataset
+	Loaded     []agentextension.AnalysisDatasetLoad
 	Stdout     string
 	Stderr     string
 	Results    []string
 	Charts     []AnalysisChartSummary
+	Tables     []agentextension.AnalysisTable
+	Figures    []agentextension.AnalysisFigure
+	Layout     []agentextension.AnalysisBlock
 	Error      *agentextension.AnalysisError
 	Failure    string
 	DurationMs int64
@@ -146,12 +161,16 @@ type AnalysisRunView struct {
 	ID            pulid.ID                         `json:"id"`
 	ExtensionType agentextension.Type              `json:"extensionType"`
 	Status        agentextension.AnalysisRunStatus `json:"status"`
+	Title         string                           `json:"title"`
 	Purpose       string                           `json:"purpose"`
 	Code          string                           `json:"code"`
 	Datasets      []agentextension.AnalysisDataset `json:"datasets"`
 	Stdout        string                           `json:"stdout"`
 	Stderr        string                           `json:"stderr"`
 	Results       []string                         `json:"results"`
+	Tables        []agentextension.AnalysisTable   `json:"tables"`
+	Figures       []agentextension.AnalysisFigure  `json:"figures"`
+	Layout        []agentextension.AnalysisBlock   `json:"layout"`
 	ErrorName     string                           `json:"errorName"`
 	ErrorValue    string                           `json:"errorValue"`
 	Traceback     string                           `json:"traceback"`
@@ -192,4 +211,14 @@ type AnalysisRuns interface {
 		ctx context.Context,
 		req *AnalysisChartRequest,
 	) (*agentextension.AnalysisChart, error)
+	AnalysisRun(ctx context.Context, req *AnalysisRunRequest) (*AnalysisRunView, error)
+}
+
+type AnalysisRunRequest struct {
+	TenantInfo pagination.TenantInfo
+	RunID      pulid.ID
+
+	// Administers lets someone who oversees agents read every run; anyone
+	// else reads only the analyses run for them.
+	Administers bool
 }

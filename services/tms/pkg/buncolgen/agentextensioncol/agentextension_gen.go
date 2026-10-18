@@ -200,12 +200,16 @@ var AnalysisRunColumns = struct {
 	OrganizationID    buncolgen.Column // "organization_id" → qualified: "aanr.organization_id"
 	ExtensionType     buncolgen.Column // "extension_type" → qualified: "aanr.extension_type"
 	Status            buncolgen.Column // "status" → qualified: "aanr.status"
+	Title             buncolgen.Column // "title" → qualified: "aanr.title"
 	Purpose           buncolgen.Column // "purpose" → qualified: "aanr.purpose"
 	Code              buncolgen.Column // "code" → qualified: "aanr.code"
 	Datasets          buncolgen.Column // "datasets" → qualified: "aanr.datasets"
 	Stdout            buncolgen.Column // "stdout" → qualified: "aanr.stdout"
 	Stderr            buncolgen.Column // "stderr" → qualified: "aanr.stderr"
 	Results           buncolgen.Column // "results" → qualified: "aanr.results"
+	Tables            buncolgen.Column // "tables" → qualified: "aanr.tables"
+	Figures           buncolgen.Column // "figures" → qualified: "aanr.figures"
+	Layout            buncolgen.Column // "layout" → qualified: "aanr.layout"
 	ErrorName         buncolgen.Column // "error_name" → qualified: "aanr.error_name"
 	ErrorValue        buncolgen.Column // "error_value" → qualified: "aanr.error_value"
 	Traceback         buncolgen.Column // "traceback" → qualified: "aanr.traceback"
@@ -229,12 +233,16 @@ var AnalysisRunColumns = struct {
 	OrganizationID:    buncolgen.NewColumn("organization_id", "aanr"),
 	ExtensionType:     buncolgen.NewColumn("extension_type", "aanr"),
 	Status:            buncolgen.NewColumn("status", "aanr"),
+	Title:             buncolgen.NewColumn("title", "aanr"),
 	Purpose:           buncolgen.NewColumn("purpose", "aanr"),
 	Code:              buncolgen.NewColumn("code", "aanr"),
 	Datasets:          buncolgen.NewColumn("datasets", "aanr"),
 	Stdout:            buncolgen.NewColumn("stdout", "aanr"),
 	Stderr:            buncolgen.NewColumn("stderr", "aanr"),
 	Results:           buncolgen.NewColumn("results", "aanr"),
+	Tables:            buncolgen.NewColumn("tables", "aanr"),
+	Figures:           buncolgen.NewColumn("figures", "aanr"),
+	Layout:            buncolgen.NewColumn("layout", "aanr"),
 	ErrorName:         buncolgen.NewColumn("error_name", "aanr"),
 	ErrorValue:        buncolgen.NewColumn("error_value", "aanr"),
 	Traceback:         buncolgen.NewColumn("traceback", "aanr"),
@@ -264,12 +272,16 @@ var AnalysisRunFieldMap = map[string]string{
 	"organizationId":    "organization_id",
 	"extensionType":     "extension_type",
 	"status":            "status",
+	"title":             "title",
 	"purpose":           "purpose",
 	"code":              "code",
 	"datasets":          "datasets",
 	"stdout":            "stdout",
 	"stderr":            "stderr",
 	"results":           "results",
+	"tables":            "tables",
+	"figures":           "figures",
+	"layout":            "layout",
 	"errorName":         "error_name",
 	"errorValue":        "error_value",
 	"traceback":         "traceback",
@@ -296,12 +308,16 @@ var AnalysisRunInsertableColumns = []string{
 	"organization_id",
 	"extension_type",
 	"status",
+	"title",
 	"purpose",
 	"code",
 	"datasets",
 	"stdout",
 	"stderr",
 	"results",
+	"tables",
+	"figures",
+	"layout",
 	"error_name",
 	"error_value",
 	"traceback",
@@ -376,12 +392,16 @@ var AnalysisRunFilter = struct {
 	OrganizationID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
 	ExtensionType     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "extensionType" → DB: "extension_type"
 	Status            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	Title             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "title" → DB: "title"
 	Purpose           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "purpose" → DB: "purpose"
 	Code              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "code" → DB: "code"
 	Datasets          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "datasets" → DB: "datasets"
 	Stdout            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "stdout" → DB: "stdout"
 	Stderr            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "stderr" → DB: "stderr"
 	Results           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "results" → DB: "results"
+	Tables            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tables" → DB: "tables"
+	Figures           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "figures" → DB: "figures"
+	Layout            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "layout" → DB: "layout"
 	ErrorName         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "errorName" → DB: "error_name"
 	ErrorValue        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "errorValue" → DB: "error_value"
 	Traceback         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "traceback" → DB: "traceback"
@@ -414,6 +434,9 @@ var AnalysisRunFilter = struct {
 	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("status", op, value)
 	},
+	Title: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("title", op, value)
+	},
 	Purpose: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("purpose", op, value)
 	},
@@ -431,6 +454,15 @@ var AnalysisRunFilter = struct {
 	},
 	Results: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("results", op, value)
+	},
+	Tables: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("tables", op, value)
+	},
+	Figures: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("figures", op, value)
+	},
+	Layout: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("layout", op, value)
 	},
 	ErrorName: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("errorName", op, value)

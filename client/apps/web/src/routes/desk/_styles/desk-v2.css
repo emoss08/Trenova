@@ -743,7 +743,8 @@
   z-index: 1;
 }
 .dk-ax-ki.dk-k-table,
-.dk-ax-ki.dk-k-report {
+.dk-ax-ki.dk-k-report,
+.dk-ax-ki.dk-k-analysis {
   color: oklch(0.6 0.16 255);
 }
 .dk-ax-ki.dk-k-record {

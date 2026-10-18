@@ -15,6 +15,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/reportcatalog"
+	"github.com/emoss08/trenova/pkg/reportfmt"
 	"github.com/emoss08/trenova/pkg/reportrows"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -50,6 +52,7 @@ func (s *stubAnalyzer) Analyze(
 	return &agentextensionports.AnalysisOutcome{
 		RunID:    pulid.MustNew(agentextension.AnalysisRunIDPrefix),
 		Status:   agentextension.AnalysisRunStatusSucceeded,
+		Title:    req.Title,
 		Datasets: datasets,
 		Stdout:   "margin 0.18\n",
 		Results:  []string{"0.18"},
@@ -99,9 +102,18 @@ func (h *analysisHarness) seedRun(requestedBy pulid.ID) pulid.ID {
 	run := &report.ReportRun{ID: pulid.MustNew("rrun_"), RequestedByID: requestedBy}
 	h.reports.runs = append(h.reports.runs, run)
 	h.reports.rows[run.ID] = &reportrows.Envelope{
-		Meta:   reportrows.Meta{Title: "Margin by lane"},
-		Schema: []reportrows.Column{{ID: "lane"}, {ID: "margin"}},
-		Rows:   [][]any{{"DAL-ATL", "0.180000"}, {"HOU-MEM", nil}},
+		Meta: reportrows.Meta{Title: "Margin by lane"},
+		Schema: []reportrows.Column{
+			{ID: "lane", Label: "Lane", Type: reportcatalog.FieldString},
+			{
+				ID:      "margin",
+				Label:   "Margin",
+				Type:    reportcatalog.FieldDecimal,
+				Format:  reportcatalog.FormatPercent,
+				Display: reportfmt.Resolved{Currency: "USD"},
+			},
+		},
+		Rows: [][]any{{"DAL-ATL", "0.180000"}, {"HOU-MEM", nil}},
 	}
 
 	return run.ID
@@ -128,6 +140,7 @@ func (h *analysisHarness) query(t *testing.T, datasets ...map[string]any) (*anal
 		items = append(items, dataset)
 	}
 	h.params.Params = map[string]any{
+		"title":    "Lane margin",
 		"purpose":  "Margin by lane for Q3",
 		"code":     "import pandas as pd\nprint(pd.read_csv('/home/user/data/lanes.csv'))",
 		"datasets": items,
@@ -159,16 +172,82 @@ func TestAnalyzeDataReadsTheRunsTheCallerRanAsRawCSV(t *testing.T) {
 	assert.Equal(t, "Margin by lane", input.Label)
 	assert.Equal(t, 2, input.Rows)
 	assert.Equal(t, "lane,margin\nDAL-ATL,0.180000\nHOU-MEM,\n", string(input.Content))
+	assert.Equal(t, []agentextension.AnalysisColumnSpec{
+		{ID: "lane", Label: "Lane", Type: "string", Kind: agentextension.AnalysisValueText},
+		{
+			ID:       "margin",
+			Label:    "Margin",
+			Type:     "decimal",
+			Kind:     agentextension.AnalysisValuePercent,
+			Currency: "USD",
+		},
+	}, input.Columns, "the sandbox loads each column typed and headed by its label")
 	assert.Equal(t, h.params.ThreadID, h.analyzer.asked.Owner.ThreadID)
+	assert.Equal(t, "Lane margin", h.analyzer.asked.Title)
 	assert.Equal(t, permission.ResourceReport.String(), h.perms.captured.Resource)
 	assert.Equal(t, permission.OpRead, h.perms.captured.Operation)
 
 	assert.Equal(t, "Succeeded", answer.Status)
+	assert.Equal(t, "Lane margin", answer.Title)
 	assert.Equal(t, "Margin by lane for Q3", answer.Purpose)
 	assert.Equal(t, "/home/user/data/lanes.csv", answer.Datasets[0].Path)
 	assert.Equal(t, "margin 0.18", answer.Output)
-	assert.Contains(t, answer.Note, "charts are shown to the person")
+	assert.Contains(t, answer.Note, analysisShownNote)
 	assert.Empty(t, answer.TaintedRecords(), "a report run is the organization's own data")
+}
+
+func TestAnalyzeDataTellsTheAgentTheColumnsAndAShortTable(t *testing.T) {
+	t.Parallel()
+
+	h := newAnalysisHarness()
+	h.params.Timezone = "America/Chicago"
+	rows := make([][]any, 0, agentextension.MaxAnalysisTableRows)
+	for idx := range agentextension.MaxAnalysisTableRows {
+		rows = append(rows, []any{float64(idx)})
+	}
+	h.analyzer.outcome = &agentextensionports.AnalysisOutcome{
+		RunID:    pulid.MustNew(agentextension.AnalysisRunIDPrefix),
+		Status:   agentextension.AnalysisRunStatusSucceeded,
+		Title:    "Lane margin",
+		Datasets: []agentextension.AnalysisDataset{{Name: "lanes", Path: "/home/user/data/lanes.csv"}},
+		Loaded: []agentextension.AnalysisDatasetLoad{{
+			Name:    "lanes",
+			Rows:    2,
+			Columns: []agentextension.AnalysisDatasetColumn{{Name: "Margin", DType: "float64"}},
+		}},
+		Tables: []agentextension.AnalysisTable{{
+			Columns:   []agentextension.AnalysisTableColumn{{Name: "n", Kind: "count"}},
+			Rows:      rows,
+			TotalRows: len(rows),
+		}},
+	}
+
+	answer, err := h.query(t)
+	require.NoError(t, err)
+
+	assert.Equal(t, "America/Chicago", h.analyzer.asked.Timezone)
+	require.Len(t, answer.Datasets, 1)
+	assert.Equal(t, []agentextension.AnalysisDatasetColumn{{Name: "Margin", DType: "float64"}},
+		answer.Datasets[0].Columns)
+	require.Len(t, answer.Tables, 1)
+	assert.Len(t, answer.Tables[0].Rows, maxAnswerTableRows, "the agent reads the first rows")
+	assert.Equal(t, agentextension.MaxAnalysisTableRows, answer.Tables[0].TotalRows)
+	assert.Contains(t, answer.Note, analysisShownNote)
+}
+
+func TestAnalyzeDataAsksToShowResultsWhenOnlyPrinted(t *testing.T) {
+	t.Parallel()
+
+	h := newAnalysisHarness()
+	h.analyzer.outcome = &agentextensionports.AnalysisOutcome{
+		RunID:  pulid.MustNew(agentextension.AnalysisRunIDPrefix),
+		Status: agentextension.AnalysisRunStatusSucceeded,
+		Stdout: "total 6045662.16\n",
+	}
+
+	answer, err := h.query(t)
+	require.NoError(t, err)
+	assert.Contains(t, answer.Note, analysisPlainNote)
 }
 
 func TestAnalyzeDataRefusesARunSomeoneElseRan(t *testing.T) {
