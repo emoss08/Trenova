@@ -1,13 +1,73 @@
 # Desk harness review
 
-Status: **Phase 1 (audit) complete. Phase 2 (research) in progress.** Phase 3 (analysis) has
-not started.
+Status: **Phases 1–3 complete (2026-10-18).** The deliverables are:
+
+- the audit summary (below, and §1);
+- research findings (§2);
+- analysis (§3);
+- the recommendation (§4);
+- a phased plan (§5);
+- an eval plan (§6);
+- references (§7).
+
+## Executive summary
+
+**Diagnosis.** Tool count and instruction load are real factors, but they are not the main cause.
+In order of evidence, the causes are:
+
+1. **The harness tells the model things that are wrong or incomplete.** The bench records more
+   findings about misleading descriptions and result shapes (33) than about tool selection itself
+   (16), and 58 more were product bugs.
+2. **The tool surface overlaps.** Shipments can be read five ways; 29 job agents hold overlapping
+   tool sets.
+3. **Retrieval runs on text that states no goal.** Preselection ranks the raw message, or for
+   unattended runs a boilerplate sentence. That is why LoadMonitor opens without the dispatch
+   board.
+4. **Model behaviour differs partly because of the harness's adapters.** Luna was not sent
+   `strict:false`, Ollama is never given a context size, and Haiku 5.5 may hit its
+   history-editing check.
+
+**What is right in the hypothesis:**
+
+- About 20 tool definitions per turn is past the measured comfort zone for Haiku-class models.
+- The prompt never states the goal of the request.
+- Prompt caching probably misses on most turns.
+
+**Recommendation.** Desk should become one agent runtime, built from these parts:
+
+- **Job profiles:** today's agents, kept as the unit of permissions, autonomy, budget and
+  schedule.
+- **A stable, cached prefix:** a platform core, a new domain primer, a namespace map and the job
+  profile.
+- **A deferred tool catalog:** found through a *written* need, with `defer_loading` and
+  `tool_reference` on Anthropic and `allowed_tools` / `tool_search` on OpenAI, so the cache and
+  thinking blocks stay valid.
+- **A per-request task frame:** the goal, the definition of done, what needs approval, and a
+  playbook. It is built deterministically for unattended runs, and from the per-turn classifier
+  in chat.
+- **A smaller, consolidated tool surface.**
+
+Code-as-action is added later as a second mode for read-heavy and batch work, gated by evals for
+each model. Delegation stays only for parallel, read-only fan-out. `dispatch`, approvals, the
+ledger and taint stay exactly as they are.
+
+**Order of work:**
+
+1. Measure, and fix correctness. Bench the unattended runs, which are not benched at all today.
+2. Make the prefix stable and loading deferred: the biggest gain for the least risk.
+3. Add the task frame and the domain primer.
+4. Consolidate the tools.
+5. Move to a single front door.
+6. Add code mode.
+
+Success is measured as pass^4, tool-selection accuracy, steps, tokens and cost per completed task,
+across Haiku 5.5, Sonnet 5.5, Opus 5.5, gpt-6-luna and gpt-6.1-sol.
 
 This is an architecture review of Desk, Trenova's agent harness. It is not a change
 proposal for any one file. Numbers come from the source at the commit this was
 written on; where a number is an estimate, the method is given.
 
-## Phase 1 summary
+## Audit summary
 
 This summary describes the harness and what the evidence in the repository says about it. It
 makes no recommendations yet; those wait for the research.
@@ -983,3 +1043,594 @@ Everything in this section is a finding from a source. Reasoning about Desk is k
 | Agent Skills disclose in three levels: about 100 tokens of name and description per skill always in context, a SKILL.md under about 5k tokens read when relevant, and bundled files read only when needed. No accuracy figures are published. | Anthropic, *Agent Skills* | [VB] |
 | A playbook updated by itemized deltas (ACE) raised AppWorld from 42.4 to 59.4. Rewriting the whole playbook "collapsed" it from 18,282 to 122 tokens and dropped accuracy below the no-playbook baseline. Workflow memory added 24.6% relative on Mind2Web and 51.1% on WebArena. | ACE, ICLR 2026; Agent Workflow Memory, arXiv 2409.07429 | [PR], [PP] |
 | Anthropic's context guidance favours a **hybrid**: some context retrieved up front, the rest found by the agent just in time. | *Effective context engineering* | [VB] |
+
+## 3. Analysis
+
+Sections 3 to 6 are my reasoning. Each claim points back to the audit (§1) or the research (§2).
+Where something is a hypothesis, it says so, and §6 says how to test it.
+
+### 3.0 Two more audit facts, found while analysing
+
+1. **No unattended run is benched.** The desk bench drives chat turns only, through `StartTurn`.
+   There are no event-driven or scheduled scenarios (`internal/deskbench/scenario.go`,
+   `deskbench/scenarios/*.yaml`), yet these are the owner's first-priority surface.
+2. **How unattended runs pick their first tools.** An unattended run's whole request is
+   boilerplate (`agentdefinition/runinput.go`): "An event started this run: `<kind>`. It concerns
+   `<label>`… Follow your instructions: look up what you need, act through your tools…". The
+   8 preselected tools are ranked against that text. I reproduced the keyword ranking for every
+   non-chat template, using a scratch overlay test with no change to the repo:
+   - **Event-driven runs** rank well enough: the event name (`billing_queue.item_exception`)
+     carries most of the signal.
+   - **EDIDesk**, given a quarantined file, loads `draft_edi_connection` and
+     `apply_edi_connection_draft`. These are the two largest tools in the catalog, about
+     6k tokens together.
+   - **LoadMonitor**, the one scheduled template, opens with `list_watchtower_items`,
+     `email_customer`, `notify_driver`, `list_service_failures`, `log_check_call`,
+     `record_stop_actual`, `add_shipment_comment` and `evaluate_service_failures`. That is four
+     writes. It does *not* open with `get_dispatch_board`, `get_shipment`,
+     `get_shipment_tracking` or `get_worker_hos`, although its instructions start with "work
+     through what the dispatch board shows". Its first step has to be `find_tools`, the skill
+     small models are weakest at (§2.1, BFCL Miss Func: Haiku 4.5 42.5%).
+   - With embeddings configured the order may differ. The point stands: the request carries no
+     goal, so the ranking has nothing to rank against.
+
+### 3.1 Is the diagnosis right?
+
+**Partly. Tool count and instruction load are real factors, but they are not the main cause.
+The evidence points at four causes, in this order.**
+
+1. **The harness misleads the model, and the evidence for this is strong.** The bench's own
+   history has more cases of a description or result shape misleading the model (33 findings)
+   than of discovery or selection (16), and 58 more were product bugs (§1.7).
+   - The biggest single win on record, DB-008, was making a tool do what its description said.
+     It cut 107 calls to 44.
+   - The literature agrees: description quality is worth 5–15 points, wording alone steers
+     selection by more than 10×, and longer descriptions can hurt (§2.1).
+   - So the cheapest reliability gain is still tools whose descriptions are true, whose names
+     are distinct and whose results are complete. That is the work the team already does through
+     the findings log; it needs to be systematic rather than found one finding at a time.
+
+2. **The tool surface overlaps.** The OpenAI guide says, and ToolScope and the skill-library
+   results measure, that overlap and confusability matter more than count (§2.1, §2.4). Desk has
+   heavy overlap:
+   - shipments can be read five ways;
+   - eleven single/batch pairs differ by a trailing "s";
+   - "find" means three different things;
+   - there are 29 job agents whose tool sets overlap heavily, for example Billing, Receivables and
+     Factoring (§1.2).
+
+   The router and the in-turn ranker are both choosing among confusable neighbours. That is where
+   the skill-library study saw 17–63 points lost.
+
+3. **Retrieval runs on text that carries no goal.** Preselection ranks the raw user message, or
+   for unattended runs a boilerplate sentence (§3.0).
+   - Raw messages share about 6% of their wording with the tools they need (§2.2, ToolRet).
+     Retrieving on a written need instead of the raw message was worth more than 20 points in
+     MCP-Zero.
+   - The CI floor for hybrid ranking already shows the effect: top-1 0.78 and recall@5 0.91 on
+     paraphrases, against 0.98 and 1.0 on non-paraphrases. The non-paraphrase cases reuse the
+     catalog's own words, so they flatter the ranker.
+   - When preselection misses, recovery depends on `find_tools`. Recognising that a needed tool
+     is missing is a skill small models do badly (Haiku 4.5 42.5%, GPT-5-mini 17%).
+
+4. **Behaviour differs by model, partly because of the harness's own adapters.**
+   - Luna over-searched partly because the Responses adapter did not send `strict:false`
+     (DB-080).
+   - Ollama is never given a context size.
+   - Sampling reaches only one protocol.
+   - Haiku 5.5's history-editing check may turn the harness's own tool-list edits into 400s
+     (§1.4 item 6).
+
+   Some of what reads as "model X is unreliable" is the harness treating model X differently.
+
+**Where the hypothesis is right:**
+
+- **Tool count.** About 20 definitions go out per turn, 10 of them generic core tools. For a
+  Haiku-class model that is past the measured 90% line (between 10 and 15 tools for Haiku 4.5;
+  OpenAI's soft ceiling is 20). Showing more tools lowers choice accuracy even when the right one
+  is in view (§2.1).
+- **Instruction load.** About 2.5k tokens of shared rules carry 16–24 "never" and 12–14
+  "do not" statements per agent, plus the template's own instructions. For a small model, IFScale
+  measures omissions rising quickly past a few dozen directives. AgentIF finds constraints about
+  tools the hardest to follow (§2.5).
+
+So the load does cost accuracy. But cutting the load without fixing causes 1–3 would move the
+failures elsewhere rather than remove them.
+
+**The prompt hypothesis is right.** Nothing tells the model what this request is for: no goal, no
+definition of done, no plan (§1.3). For unattended runs the goal is fully known before the run
+starts, from the trigger, the event and the template. Today it is spread through the job
+description, and the request itself is boilerplate. Restating the whole task in one place
+recovered 95% of the loss from multi-turn underspecification (§2.5). A task frame is the
+single-message version of that.
+
+**The efficiency hypothesis is right, with three specific causes:**
+
+- prompt caching probably misses on most turns (§1.5);
+- refused calls and guard re-asks spend the same budget as useful work (§1.6);
+- missed preselection forces extra `find_tools` steps (§3.0).
+
+At Haiku prices, latency and steps matter more than dollars (§3.4).
+
+### 3.2 Is a flat list of tool calls the right interface?
+
+**No. But the answer is not to replace discrete tools; it is to change what the model is shown
+and when.** I compared four patterns against the evidence and against Desk's constraints. Those
+constraints are:
+
+- every write goes through `dispatch`;
+- the default model is small;
+- the main workload is unattended and sequential, and ends in proposals.
+
+| Pattern | What the evidence says for Desk's workload | Verdict |
+|---|---|---|
+| **One flat list of everything** | Collapses at Desk's scale: MCPVerse lost 18 points at full scale, and the 600+ tools would be about 179k tokens. | Rejected |
+| **More multi-agent** (orchestrator plus specialists, deeper delegation) | −39% to −70% on sequential tasks, a penalty on tool-heavy tasks, 3–5× the tokens, and handoffs lose context. MAST, Kim et al. and Anthropic's own "poor fit" list all describe this workload (§2.4). | Rejected as the main pattern. Keep one-level delegation for **parallel, read-only fan-out** only. |
+| **Code over a typed SDK, replacing tools** | Helps fan-out, aggregation and filtering (−37% to −98% tokens). Neutral to negative on sequential, approval-gated transactional work: τ² unchanged at +8% cost; worse pass^4. **The nearest small Claude model regressed on dependent chains (Haiku 4.5: 88.5 → 73.1).** Writes need an outbox and re-checking at commit (§2.3). | Rejected as a replacement. **Adopted as a second mode** for read-heavy sweeps and batch writes, behind evals for each model. |
+| **One runtime with a stable, deferred catalog, a written search need, a per-request task frame, and fewer, consolidated tools** | Supported by tool search (+25 points on Opus 4 at −85% tokens; the cache is preserved), model-written queries (+20 points), a per-request focus (§2.5), and overlap reduction (+5–22 points). Keeps `dispatch` unchanged. | **Adopted as the core.** |
+
+MCP is not the question here. It is a transport, and nothing in the evidence favours moving
+Desk's in-process tools behind it.
+
+### 3.3 System prompt design
+
+What should be static, what should be injected per request, and how the model learns the domain:
+
+| Layer | Content | Where it goes | Changes |
+|---|---|---|---|
+| **Platform core** | Boundaries, how to treat records, output contract, approvals | `system`, first, cached | per release |
+| **Domain primer (new)** | A glossary and entity model (about 1–2k tokens): shipment → moves → stops; assignment; tender; billing queue → invoice → posting → adjustment; settlement; detention; EDI 204/210/214/990; the record id prefixes. | `system`, cached | per release |
+| **Tool map (new shape)** | The tool namespaces and what each covers, one line each, in a stable order: "`shipments_*`: find, read, create and change loads…". This replaces today's per-turn list of every unloaded tool. | `system`, cached | per release or per agent |
+| **Job profile** | Today's template instructions: persona, priorities, what stays a person's decision, organization guardrails | `system`, cached per agent | per agent version |
+| **Organization and person profiles** | As now, but the person profile moves out of the volatile part | `system`, cached per org / person | daily |
+| **Task frame (new)** | The goal of *this* request, the success criteria, the definition of done, what needs approval, the budget, the relevant playbook ids, and the subject records. **Unattended:** built deterministically from trigger, event kind and subject (an event → playbook table). **Chat:** built from the per-turn classifier, which today only refuses. | after the cache breakpoint, as a mid-conversation system message on models that take one, else a block in the user turn | per request |
+| **Playbooks (new, Skills pattern)** | Step-by-step procedures for recurring jobs: "bill a delivered load", "cover a move", "handle a quarantined 210". Each has a one-line index entry in `system` and is loaded on demand by a `read_playbook` tool or through the task frame. Learned `Procedure` memories feed them as itemized delta updates, as in ACE (§2.8). | loaded per request | as learned |
+| **Records in play, memories, page** | As today, but kept out of the `system` prefix | messages | per turn |
+
+What this changes:
+
+1. **The goal is stated, so the model need not infer it.** For unattended runs this is pure
+   gain. The information already exists in the trigger, the event kind and the template; it
+   only needs writing down in one place.
+2. **Rules the runtime already enforces leave the prompt** (about 300 tokens; §1.3). Tool rules
+   go into the tool's own description, not the shared rules, and only when a tool needs one. The
+   aim is a small number of rules that hold everywhere, with the critical ones first, since
+   models follow earlier instructions better (§2.5).
+3. **The domain is taught once, in a cached block**, instead of being implied by hundreds of
+   tool descriptions.
+4. **The per-turn classifier already runs on every turn** (`agentguard/classifier.go`), with a
+   3-second budget, and outputs only a category and an eight-word reason. Extending its schema to
+   also return the request's goal and a written search need costs no extra call. That one output
+   feeds both the task frame and preselection, which turns retrieval on the raw message into
+   retrieval on a written need (the MCP-Zero and Re-Invoke effect). It needs care: today the
+   classifier fails open, and it must stay advisory.
+
+### 3.4 Token and step efficiency
+
+Ranked by expected gain against risk. The cost figures use the Haiku 5.5 and Opus 5.5 list prices
+(§2.7).
+
+1. **Make the prompt cache hold.**
+   - Send a stable, name-sorted superset of each agent's held tools on every call.
+   - Mark everything except a small core `defer_loading`.
+   - Answer `find_tools` with `tool_reference` blocks, a documented custom-search path that
+     preserves the prefix and works on Haiku 5.5.
+   - Always declare `withdraw_proposal` (deferred), instead of adding it after the first proposal.
+   - Force the final answer with `tool_choice: none`, not `tools = nil`.
+   - **What it saves.** Take a turn of six model calls over a 20k-token prefix:
+     - Haiku 5.5: input cost falls from about $0.012 to about $0.0035, a 70% saving.
+     - Opus 5.5: about $0.48 to about $0.12.
+     - Time to first token falls on every call, which matters more at Haiku prices.
+   - **It also removes the Haiku 5.5 history-editing risk** (§1.4 item 6), because nothing edits
+     `tools` mid-turn any more. Of every item here, this has the best gain for its risk.
+2. **Cut the fixed overhead in every request.**
+   - Keep three or four tools always loaded (`find_tools`, `ask_user` where a person is present,
+     and the one or two most-used domain reads for the profile), and defer the rest of today's
+     10 core tools.
+   - Shrink `_why` from three 200-character properties to one optional short `why` string. It is
+     about 150 tokens per tool today (§1.5), and one string keeps its audit value at a fraction
+     of the cost.
+   - Never put the catalog in the volatile part (the palette's ~7k tokens).
+3. **Stop refusals and guard re-asks from sinking turns.**
+   - Count invalid-argument refusals against a separate small allowance (for example 3), not the
+     main budget, so a corrected call does not shorten the task. The repeat guard still stops
+     loops.
+   - Send grounding and placement re-asks as harness system messages.
+   - Measure each guard's fire rate and the extra calls it causes.
+4. **Write the goal down, so preselection lands and the first `find_tools` disappears** (§3.3).
+   On LoadMonitor alone, this probably removes one or two steps from every scheduled run.
+5. **Respect Haiku 5.5's 100k-token price cliff in long unattended runs.**
+   - Use context editing (`clear_tool_uses`, server-side, which keeps thinking valid) or tighter
+     caps on list results.
+   - Offer a `response_format: concise` option on large reads.
+   - Alarm on prompts over 90k tokens.
+6. **Tune effort per route.**
+   - Haiku 5.5 at `low` stops early in long prompts. Sweep `low` against `medium` on the bench
+     before choosing.
+   - On OpenAI models, reasoning effort was the largest single lever on pass^k (GPT-5.2 airline
+     pass^4: 22% at none, 72% at high).
+7. **Escalate instead of upgrading.** Use Anthropic's advisor tool (Haiku executor, Opus
+   advisor, `max_uses` capped) on the hard decisions, rather than running whole agents on Opus.
+   The evidence is a vendor post (BrowseComp roughly doubled at 85% less than Sonnet alone), so
+   test it on the bench.
+
+### 3.5 What else matters
+
+- **Multi-provider.**
+  - On OpenAI, the equivalents are `allowed_tools` (keeps the cached list and restricts what can
+    be called) and client-executed `tool_search` (gpt-5.4 and later) for `find_tools`.
+  - GPT-6 Astra and GPT-6.1 Sol need the Responses API for tool calling.
+  - The tool error flag should reach OpenAI and other protocols as structured output, not only
+    as text.
+  - **Ollama:** remove it, or mark it unsupported for agents. It has no users, at least two
+    defects, and no coverage on the bench. Keep the OpenAI-compatible protocol for gateways, and
+    label agent support as "unbenched".
+- **Evaluation.** The priority surface has no bench coverage (§3.0). Rubrics are not scored.
+  Two models were ever benched. Cache tokens are dropped. These must be fixed before any of
+  the above can be shown to work (§6).
+- **Observability.**
+  - Add cache-read ratio and prompt size per call.
+  - Add a `model` and a `provider` label to the tool-outcome counter.
+  - Add first-correct-tool position and the number of `find_tools` calls before it.
+  - Record refusals made before dispatch in the ledger.
+- **Latency.**
+  - Unattended runs already skip the scope classifier, which runs for up to 3 seconds before
+    each chat turn and is not on the run path.
+  - If the classifier's job widens to producing the task frame (§3.3), its 3-second budget
+    applies to it too. Caching cuts time to first token on every model call.
+- **Safety, for anything new.**
+  - Code mode must reach effects only through a broker that calls `dispatch`.
+  - Writes from code are outbox intents, folded into one batch proposal and re-previewed when
+    the person decides (§2.3). Desk's stale-version refusal at decision time already provides
+    this check for discrete writes.
+  - Taint labels are attached by the broker, not trusted to the model.
+  - Separately, decide on the two safety gaps already found: money tools can run automatically,
+    and an approval without a digest is accepted (§1.6).
+- **Cost is now a quality lever, not a constraint.** At $0.10 per million input tokens, a Haiku
+  turn costs fractions of a cent. Spend tokens where they buy reliability: the domain primer,
+  playbooks, effort, the advisor. Measure cost per *completed* task, not per call.
+
+## 4. Recommendation
+
+**Move to one agent runtime with job profiles, a stable cached prefix, a deferred catalog found
+through a written need, a per-request task frame, and a smaller, de-duplicated tool surface. Add
+a code mode for read-heavy and batch work later, gated by evals. Keep delegation only for
+parallel, read-only fan-out. Keep `dispatch` and the approval model exactly as they are.**
+
+How each part maps to today:
+
+1. **Job profiles replace "agents" as the unit the model sees, but not as the product unit.**
+   An agent definition keeps what makes it valuable as a product: its job description,
+   permissions, autonomy ceiling, budget, schedules, events and allowlist. What changes is the
+   context built from it:
+   - The job description becomes the profile's instructions.
+   - Its tools become the profile's non-deferred core plus its deferred namespaces.
+   - Its routine work becomes playbooks.
+   - A single front door for chat (§1.10 answer 2) is then a profile switch inside one runtime,
+     not a hand-off between agents:
+     - The router's confusion between neighbouring desks becomes a soft default, because any
+       profile can still find another namespace's tools through `find_tools`, subject to the
+       person's permissions and the profile's tier ceilings.
+     - Unattended runs pick their profile deterministically, from the event or the schedule.
+2. **A stable prefix.** Each call's prefix is built from the same parts in the same order:
+   - platform core, domain primer, tool map, job profile and organization profile in `system`;
+   - one sorted tool array, mostly deferred;
+   - a cache breakpoint;
+   - then the task frame, records in play and history in `messages`.
+
+   The tools change only through `tool_reference` (Anthropic) or `allowed_tools` / `tool_search`
+   (OpenAI).
+3. **Discovery through a written need.** Preselection ranks on the task frame's need, not the raw
+   message:
+   - unattended runs: the need comes from the playbook;
+   - chat: the need comes from the classifier.
+
+   `find_tools` stays as the agent's own search, answering with tool references. Its answers
+   carry namespaces. Its quality is measured as its own eval (§6).
+4. **A consolidated tool surface.** This reaches the same functionality with fewer, distinct
+   tools:
+   - Merge single/batch pairs into one tool that takes a list.
+   - Merge `list_*`/`search_*` overlaps into one read per entity, with typed filters.
+   - Namespace names by module (`shipments_`, `billing_`, …).
+   - Settle one convention per concept: pagination, ids, notes, date ranges.
+   - Replace the untyped list filter with per-tool typed filters, so the field documentation
+     leaves the prose.
+   - Rewrite descriptions by trace-driven iteration (DRAFT/Play2Prompt style), scored on a
+     held-out part of the bench.
+
+   Every existing capability survives. Write coverage (`writecoverage.yml`) and the contract
+   tests are the guard that nothing is lost.
+5. **Code mode, later and gated.**
+   - A read-only Trenova SDK runs in the existing E2B sandbox, with no egress except an RPC
+     binding to a Go broker that calls `dispatch`.
+   - It is offered for fan-out, reconciliation and report-style work.
+   - Write intents go to an outbox that becomes one batch proposal, re-previewed at commit.
+   - It is enabled per model only where the bench shows a gain, since Haiku 4.5 regressed on
+     chains (§2.3).
+   - A stronger model can write reusable scripts for recurring scheduled runs, which Haiku then
+     runs with parameters (the LATM idea).
+
+**Alternatives rejected, and why:**
+
+- **Keep the 29 agents and only tune descriptions.** It leaves the overlap, the uncached prefix,
+  the boilerplate inputs to unattended runs, and the cost of misrouting in place.
+- **A deeper orchestrator with specialist sub-agents.** The evidence is against it for
+  sequential, tool-heavy work, and it costs 3–5× the tokens (§2.4).
+- **Code-as-action everywhere.** The model-specific regressions and the null result on τ² rule it
+  out, and writes would become harder to govern (§2.3).
+- **The provider's own BM25 or regex tool search.** Desk's own hybrid ranker already handles
+  permissions, families and hand-offs. Use the custom `tool_reference` path instead, which keeps
+  that logic.
+- **Fine-tuning, or tools as tokens (ToolGen).** Not possible on hosted models, and it cannot
+  follow a catalog that changes.
+- **Logit masking (Manus).** Hosted APIs do not expose it. `allowed_tools` and `defer_loading`
+  are the hosted equivalents.
+
+**What to keep unchanged.** These are working, and the plan builds on them:
+
+- the `dispatch` chokepoint, policy-in-code tiers, preview-digest approvals and the step ledger;
+- taint;
+- argument repair that reports back to the model;
+- concurrent reads;
+- records in play and world-change notices;
+- the bench, the findings discipline, prompt snapshot tests, wire tests and the eval gate;
+- Temporal durability.
+
+## 5. Phased plan
+
+Each phase lists what it changes and how it is checked. The checks refer to the eval plan in §6.
+No phase removes a capability.
+
+**Phase 0: measure, and fix correctness (1–2 weeks).**
+
+- **Measurement.**
+  - Carry cache read and write tokens through `ChatCompletionResult`, the bench and
+    `ai_work_units`, and price the bench providers.
+  - Average the bench matrix rather than summing it, and add pass^k (k = 4).
+  - Add `model` and `provider` labels to the tool-outcome counter.
+  - Turn on `ai.cacheDiagnostics` for a day, as the owner offered, and count `tools_changed`.
+- **Correctness.**
+  - Test the Haiku 5.5 binding risk on an account created after 2026-08-31. If it reproduces,
+    set `bindsPrefix` for Haiku 5.5 as a stopgap.
+  - Use `tool_choice: none` for the final answer.
+  - Declare `withdraw_proposal` from the start of the turn.
+  - Give Ollama `num_ctx`, or remove Ollama.
+- **Coverage of the priority surface.** Add unattended-run scenarios to the bench: event and
+  scheduled, for at least LoadMonitor, Billing exception, Detention, Intake, EDI and Dispatch
+  assignment.
+- **Baseline.** Run the matrix on Haiku 5.5 (low and medium effort), Sonnet 5.5, gpt-6-luna and
+  gpt-6.1-sol, 4 trials each.
+
+**Phase 1: a stable prefix and deferred loading (2–3 weeks). Expected to be the biggest single
+gain.**
+
+- Send a sorted, stable tool array per agent, with a small non-deferred core and the rest
+  `defer_loading`.
+- `find_tools` answers with `tool_reference` blocks on Anthropic, and with `allowed_tools` or
+  client `tool_search` on OpenAI.
+- Move the catalog listing into a stable namespace map in `system`.
+- Move the person profile to the stable part.
+- Shrink `_why` to one optional string.
+- **Check:** cache-read ratio above 80% on the second and later calls of a turn; no loss in pass^k
+  or tool-selection accuracy; steps per task and time to first token fall.
+
+**Phase 2: the task frame and the domain primer (2–3 weeks).**
+
+- Build a task frame for unattended runs from an event → playbook table.
+- Extend the classifier's schema to emit the goal and a need for chat turns.
+- Rank preselection on the need.
+- Add the domain primer.
+- Move enforced rules out of the prompt, and move tool-specific rules into tool descriptions.
+- Deliver steering, world-change and guard notices as mid-conversation system messages where the
+  model supports them.
+- **Check:** recall@8 of preselection against the tools actually used; how many runs begin with
+  `find_tools`; pass^k on the new unattended scenarios.
+
+**Phase 3: consolidate the tool surface (4–6 weeks, rolling).**
+
+- Work module by module:
+  - merge the overlaps;
+  - namespace the names;
+  - make the conventions consistent;
+  - type the filters;
+  - rewrite descriptions against traces.
+- Keep a held-out split of the bench so description edits are not fitted to the scenarios they
+  are scored on.
+- **Check:** tool count down, write coverage unchanged, the contract tests passing; selection
+  accuracy and argument validity up on held-out cases.
+
+**Phase 4: a single front door and job profiles (3–4 weeks).**
+
+- One runtime: an agent definition supplies a profile.
+- Chat routing becomes a default profile with discovery across namespaces.
+- Delegation is restricted to read-only fan-out, and returns structured, verbatim results.
+- **Check:** the routing bench becomes a profile-selection bench, with its confusion matrix
+  reported; end-to-end pass^k on cross-desk requests ("bill it and email the customer").
+
+**Phase 5: code mode for reads, then batch writes (4–6 weeks, gated).**
+
+- A read-only SDK through a broker, in the existing E2B sandbox.
+- Next, write intents to an outbox that becomes a batch proposal, re-previewed at commit.
+- Enabled per model by eval.
+- **Check:** paired scenarios in discrete mode and code mode, mixing fan-out reads, batch writes
+  and τ-style sequential controls; adversarial cases (injection, sandbox escape, stale approval).
+  The bar is zero unauthorized commits.
+
+**Phase 6: tune the models (ongoing).**
+
+- Choose effort per route.
+- Try the advisor (Haiku with Opus) on hard steps.
+- Run the full matrix every quarter, and whenever a provider ships a model.
+
+## 6. Eval plan
+
+**The set.** Build "Desk tasks" from three sources:
+
+1. **The existing 134 bench scenarios (202 steps)**, kept, with their rubrics scored for the
+   first time.
+2. **New unattended-run scenarios.** Each is an event or schedule fired against seeded state, at
+   least 30 at first, covering every event-driven template and LoadMonitor. Grade the outcome:
+   database state, proposals filed with their arguments, records flagged. Do not grade the path.
+3. **Real failures.** Every finding in `findings.yaml` with a reproducible scenario, plus 20–50
+   requests from production threads with thumbs-down or rejected proposals, anonymized.
+
+Split the set three ways:
+
+- a **development** set, for iterating on descriptions and prompts;
+- a **held-out** set, for decisions;
+- an adversarial set: injection through emails or EDI, sandbox probes, stale approvals, money
+  writes.
+
+Label each task's expected tool set, the tools it must not call, and its success state.
+
+**Metrics, per task, and per provider × model × effort:**
+
+| Metric | Definition | Source |
+|---|---|---|
+| Task success, pass^1 and pass^4 | Outcome checks pass in all k trials | Bench checks (`db`, `proposals`, `executed`, `facts`) and the scored rubric |
+| Tool-selection accuracy | Precision and recall of tools called against the labelled expected set; position of the first correct tool; calls to forbidden tools | Bench trajectory |
+| Retrieval quality | Recall@8 of preselection, and recall of each `find_tools` answer, against the tools a passing trial used | Instrument `newToolSet` and `resolveFind` |
+| Steps | Model calls per task; tool calls; refused calls by verdict; guard re-asks by guard | `ai_work_units`, bench record |
+| Tokens | Uncached input, cache read, cache write and output, per task; peak prompt size | Fixed usage fields |
+| Cost per completed task | Total cost ÷ trials that passed | Priced bench providers |
+| Latency | Time to first token, and time per task | Existing metrics |
+| Safety | Unauthorized commits (must be 0), tainted writes held, refusals on in-scope tasks | Red team plus the adversarial set |
+
+**Comparisons to run, in the matrix:**
+
+- **Model.** Haiku 5.5 at `low` / `medium`, Sonnet 5.5, Opus 5.5 as the ceiling, gpt-6-luna,
+  gpt-6.1-sol.
+- **Interventions,** one at a time against the baseline:
+  - deferred and cached loading;
+  - the task frame;
+  - the written need;
+  - a slim core;
+  - `_why` as one string;
+  - consolidated tools;
+  - code mode.
+- **Tool-count sweep.** Held tools at 8, 12, 20 and 30, crossed with each model, to set
+  `disclosureThreshold` from data instead of the current 12.
+
+**Rules:**
+
+- Run 4 trials per cell.
+- Report means with confidence intervals.
+- Never ship a prompt or description change on the development set alone.
+- Read transcripts from every failing cell.
+- Keep LLM judges to rubric dimensions, one judge per dimension with an "Unknown" option,
+  calibrated on 50 human-labelled transcripts before their scores count.
+- Run the full matrix weekly while Phases 1–4 are under way, then monthly. Do not build on the
+  OpenAI Evals platform, which shuts down on 2026-11-30.
+
+**Cheap first steps:**
+
+1. The tool-count sweep and the cache metrics need no new code paths beyond measurement.
+2. The unattended scenarios reuse the bench's seeded database and agent sync.
+3. A cassette-backed version of each passing trial gives a fast regression test that needs no
+   model.
+
+## 7. References
+
+**Papers and benchmarks:**
+
+- Wang et al., *Executable Code Actions Elicit Better LLM Agents* (CodeAct), ICML 2024. https://arxiv.org/abs/2402.01030
+- Patel et al., *The Bitter Lesson of Tool Calling*, 2026. https://arxiv.org/abs/2608.06370
+- Fei et al., *CodeDelegator*, 2026. https://arxiv.org/abs/2601.14914
+- Debenedetti et al., *Defeating Prompt Injections by Design* (CaMeL), 2025. https://arxiv.org/abs/2503.18813
+- Costa et al., *Securing AI Agents with Information-Flow Control* (FIDES), 2025. https://arxiv.org/abs/2505.23643
+- Beurer-Kellner et al., *Design Patterns for Securing LLM Agents against Prompt Injections*, 2025. https://arxiv.org/abs/2506.08837
+- Chen et al., *Cordon: Semantic Transactions for Tool-Using LLM Agents*, 2026. https://arxiv.org/abs/2606.17573
+- Santos-Grueiro, *Commit-Time Authorization for LLM Agents*, 2026. https://arxiv.org/abs/2607.10487
+- Shi et al., *Progent*, 2025. https://arxiv.org/abs/2504.11703
+- Cai et al., *Large Language Models as Tool Makers*, ICLR 2024. https://arxiv.org/abs/2305.17126
+- Shi et al., *Retrieval Models Aren't Tool-Savvy* (ToolRet), ACL 2025. https://arxiv.org/abs/2503.01763
+- Gan & Sun, *RAG-MCP*, 2025. https://arxiv.org/abs/2505.03275
+- Fei, Zheng, Feng, *MCP-Zero*, 2025. https://arxiv.org/abs/2506.01056
+- Chen et al., *Re-Invoke*, EMNLP 2024 Findings. https://arxiv.org/abs/2408.01875
+- Lumer et al., *Toolshed*, 2024. https://arxiv.org/abs/2410.14594
+- Lumer et al., *ScaleMCP*, 2025. https://arxiv.org/abs/2505.06416
+- Laddha et al., *HumanMCP*, 2025. https://arxiv.org/abs/2602.23367
+- Sengupta et al., *ToolDreamer*, 2025. https://arxiv.org/abs/2510.19791
+- Mo et al., *LiveMCPBench*, 2025. https://arxiv.org/abs/2508.01780
+- Lei et al., *MCPVerse*, 2025. https://arxiv.org/abs/2508.16260
+- Kate et al., *LongFuncEval*, 2025. https://arxiv.org/abs/2505.10570
+- Rodrigues & Vas, *MCP Server Architecture Patterns for LLM-Integrated Applications*, 2026. https://arxiv.org/abs/2606.30317
+- Repantis et al., *How Many Tools Should an LLM Agent See?*, 2026. https://arxiv.org/abs/2605.24660
+- Paramanayakam et al., *Less is More*, DATE 2025. https://arxiv.org/abs/2411.15399
+- Wang et al., *MCP-Bench*, ICLR 2026. https://arxiv.org/abs/2508.20453
+- Luo et al., *MCP-Universe*, 2025. https://arxiv.org/abs/2508.14704
+- Fang et al., *Play2Prompt*, ACL Findings 2025. https://arxiv.org/abs/2503.14432
+- Qu et al., *From Exploration to Mastery* (DRAFT), ICLR 2025. https://arxiv.org/abs/2410.08197
+- Guo et al., *Learning to Rewrite Tool Descriptions* (Trace-Free+), 2026. https://arxiv.org/abs/2602.20426
+- Hasan et al., *MCP Tool Descriptions Are Smelly!*, 2026. https://arxiv.org/abs/2602.14878
+- Faghih et al., *Tool Preferences in Agentic LLMs are Unreliable*, EMNLP 2025. https://arxiv.org/abs/2505.18135
+- Lin et al., *Hammer*, ICLR 2025. https://arxiv.org/abs/2410.04587
+- Liu et al., *ToolScope*, 2025. https://arxiv.org/abs/2510.20036
+- Wang et al., *MCPTox*, AAAI 2026. https://arxiv.org/abs/2508.14925
+- Patil et al., *The Berkeley Function Calling Leaderboard*, ICML 2025. https://proceedings.mlr.press/v267/patil25a.html ; leaderboard https://gorilla.cs.berkeley.edu/leaderboard.html
+- Yao et al., *τ-bench*, 2024. https://arxiv.org/abs/2406.12045
+- Barres et al., *τ²-bench*, 2025. https://arxiv.org/abs/2506.07982 ; leaderboard https://taubench.com
+- Rabanser et al., *Towards a Science of AI Agent Reliability*, ICML 2026. https://arxiv.org/abs/2602.16666
+- Sinha et al., *The Illusion of Diminishing Returns*, ICLR 2026. https://arxiv.org/abs/2509.09677
+- Kwa et al. (METR), *Measuring AI Ability to Complete Long Tasks*, 2025. https://arxiv.org/abs/2503.14499
+- Cemri et al., *Why Do Multi-Agent LLM Systems Fail?*, 2025. https://arxiv.org/abs/2503.13657
+- Kim et al., *Towards a Science of Scaling Agent Systems*, 2025–26. https://arxiv.org/abs/2512.08296
+- Li, *When Single-Agent with Skills Replace Multi-Agent Systems and When They Fail*, 2026. https://arxiv.org/abs/2601.04748
+- Erdogan et al., *Plan-and-Act*, ICML 2025. https://arxiv.org/abs/2503.09572
+- Xu et al., *ReWOO*, 2023. https://arxiv.org/abs/2305.18323
+- Kim et al., *An LLM Compiler for Parallel Function Calling*, ICML 2024. https://arxiv.org/abs/2312.04511
+- Huang et al., *Large Language Models Cannot Self-Correct Reasoning Yet*, ICLR 2024. https://arxiv.org/abs/2310.01798
+- Kamoi et al., *When Can LLMs Actually Correct Their Own Mistakes?*, TACL 2024. https://arxiv.org/abs/2406.01297
+- Ong et al., *RouteLLM*, 2024. https://arxiv.org/abs/2406.18665
+- Hu et al., *RouterBench*, 2024. https://arxiv.org/abs/2403.12031
+- Jaroslawicz et al., *How Many Instructions Can LLMs Follow at Once?* (IFScale), NeurIPS 2025. https://arxiv.org/abs/2507.11538 ; data https://distylai.github.io/IFScale/results.csv
+- Qi et al., *AgentIF*, 2025. https://arxiv.org/abs/2505.16944
+- Du et al., *Context Length Alone Hurts LLM Performance Despite Perfect Retrieval*, 2025. https://arxiv.org/abs/2510.05381
+- Modarressi et al., *NoLiMa*, ICML 2025. https://arxiv.org/abs/2502.05167
+- Liu et al., *Lost in the Middle*, TACL 2024. https://arxiv.org/abs/2307.03172
+- Laban et al., *LLMs Get Lost in Multi-Turn Conversation*, 2025. https://arxiv.org/abs/2505.06120
+- Zhang et al., *Agentic Context Engineering* (ACE), ICLR 2026. https://arxiv.org/abs/2510.04618
+- Wang et al., *Agent Workflow Memory*, 2024. https://arxiv.org/abs/2409.07429
+- Barbaste et al., *Harness Engineering: a source-code study of eleven systems*, 2026. https://arxiv.org/abs/2609.00006
+
+**Vendor documentation and engineering posts:**
+
+- Anthropic, *Tool search tool*. https://platform.claude.com/docs/en/agents-and-tools/tool-use/tool-search-tool
+- Anthropic, *Programmatic tool calling*. https://platform.claude.com/docs/en/agents-and-tools/tool-use/programmatic-tool-calling
+- Anthropic, *Define tools*. https://platform.claude.com/docs/en/agents-and-tools/tool-use/define-tools
+- Anthropic, *Prompt caching*. https://platform.claude.com/docs/en/build-with-claude/prompt-caching
+- Anthropic, *Tool use with prompt caching*. https://platform.claude.com/docs/en/agents-and-tools/tool-use/tool-use-with-prompt-caching
+- Anthropic, *Preserved thinking*. https://platform.claude.com/docs/en/build-with-claude/preserved-thinking
+- Anthropic, *Context editing*. https://platform.claude.com/docs/en/build-with-claude/context-editing
+- Anthropic, *Pricing*. https://platform.claude.com/docs/en/about-claude/pricing
+- Anthropic, *Prompting best practices*. https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices
+- Anthropic, *Introducing advanced tool use*, 2025-11-24. https://www.anthropic.com/engineering/advanced-tool-use
+- Anthropic, *Code execution with MCP*, 2025-11-04. https://www.anthropic.com/engineering/code-execution-with-mcp
+- Anthropic, *Writing effective tools for agents*, 2025-09-11. https://www.anthropic.com/engineering/writing-tools-for-agents
+- Anthropic, *Effective context engineering for AI agents*, 2025-09-29. https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents
+- Anthropic, *Building effective agents*, 2024-12-19. https://www.anthropic.com/engineering/building-effective-agents
+- Anthropic, *How we built our multi-agent research system*, 2025-06-13. https://www.anthropic.com/engineering/multi-agent-research-system
+- Anthropic, *Equipping agents for the real world with Agent Skills*, 2025-10-16. https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills
+- Anthropic, *The "think" tool*, 2025 (updated 2025-12-15). https://www.anthropic.com/engineering/claude-think-tool
+- Anthropic, *Demystifying evals for AI agents*, 2026-01-09. https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents
+- Anthropic, *The advisor strategy*, 2026-04-09. https://claude.com/blog/the-advisor-strategy
+- Anthropic, *Claude Haiku 5.5*, 2026-10-07. https://www.anthropic.com/news/claude-haiku-5-5
+- OpenAI, *Function calling* (`allowed_tools`, strict mode). https://developers.openai.com/api/docs/guides/function-calling
+- OpenAI, *Tool search*. https://developers.openai.com/api/docs/guides/tools-tool-search
+- OpenAI, *Programmatic tool calling*. https://developers.openai.com/api/docs/guides/tools-programmatic-tool-calling
+- OpenAI, *Prompt caching*. https://developers.openai.com/api/docs/guides/prompt-caching
+- OpenAI, *Reasoning models*. https://developers.openai.com/api/docs/guides/reasoning
+- OpenAI, *GPT-5 prompting guide* (archived). https://developers.openai.com/cookbook/examples/gpt-5/gpt-5_prompting_guide
+- OpenAI, *A practical guide to building agents*. https://cdn.openai.com/business-guides-and-resources/a-practical-guide-to-building-agents.pdf
+- OpenAI, *Evaluation best practices*. https://developers.openai.com/api/docs/guides/evaluation-best-practices
+- Google, *Gemini function calling*. https://ai.google.dev/gemini-api/docs/function-calling
+- Cloudflare, *Code Mode: the better way to use MCP*, 2025-09-26. https://blog.cloudflare.com/code-mode/
+- Cloudflare, *Code Mode: give agents an entire API in 1,000 tokens*, 2026-02-20. https://blog.cloudflare.com/code-mode-mcp/
+
+**Practitioner posts:**
+
+- Manus, *Context Engineering for AI Agents: Lessons from Building Manus*, 2025-07-18. https://manus.im/blog/Context-Engineering-for-AI-Agents-Lessons-from-Building-Manus
+- Cognition, *Don't Build Multi-Agents*, 2025-06-12. https://cognition.com/blog/dont-build-multi-agents
+- LangChain, *Benchmarking Multi-Agent Architectures*, 2025-06-10. https://www.langchain.com/blog/benchmarking-multi-agent-architectures
+- Chroma, *Context Rot*, 2025. https://www.trychroma.com/research/context-rot
+- Archestra, *Progressive disclosure for MCP tools: modeled vs measured*, 2026. https://archestra.ai/blog/progressive-disclosure-for-mcp-tools
