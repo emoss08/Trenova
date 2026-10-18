@@ -5,6 +5,7 @@ import (
 	"errors"
 	"math"
 	"net/url"
+	"slices"
 	"sort"
 	"strings"
 
@@ -51,8 +52,10 @@ type Params struct {
 	Sites        agentextensionports.PortalSiteRepository
 	Runs         agentextensionports.PortalRunRepository
 	Analyses     agentextensionports.AnalysisRunRepository
-	Workflows    kernelports.WorkflowStarter `optional:"true"`
-	Config       *config.Config              `optional:"true"`
+	Watches      agentextensionports.WebWatchRepository
+	Findings     agentextensionports.WebWatchFindingRepository
+	Workflows    kernelports.WorkflowStarter `                                   optional:"true"`
+	Config       *config.Config              `                                   optional:"true"`
 }
 
 type Service struct {
@@ -65,12 +68,16 @@ type Service struct {
 	webSearch  map[agentextension.Type]agentextensionports.WebSearchProvider
 	browsers   map[agentextension.Type]agentextensionports.BrowserProvider
 	sandboxes  map[agentextension.Type]agentextensionports.SandboxProvider
+	watchers   map[agentextension.Type]agentextensionports.WebWatchProvider
 	plans      platformplanports.PlanService
 	sites      agentextensionports.PortalSiteRepository
 	runs       agentextensionports.PortalRunRepository
 	analyses   agentextensionports.AnalysisRunRepository
+	watches    agentextensionports.WebWatchRepository
+	findings   agentextensionports.WebWatchFindingRepository
 	workflows  kernelports.WorkflowStarter
 	appHost    string
+	webBase    string
 	now        func() int64
 }
 
@@ -91,6 +98,10 @@ func New(p Params) *Service {
 		map[agentextension.Type]agentextensionports.SandboxProvider,
 		len(p.Connectors),
 	)
+	watchers := make(
+		map[agentextension.Type]agentextensionports.WebWatchProvider,
+		len(p.Connectors),
+	)
 	for _, connector := range p.Connectors {
 		if connector == nil {
 			continue
@@ -106,6 +117,9 @@ func New(p Params) *Service {
 		if provider, ok := connector.(agentextensionports.SandboxProvider); ok {
 			sandboxes[typ] = provider
 		}
+		if provider, ok := connector.(agentextensionports.WebWatchProvider); ok {
+			watchers[typ] = provider
+		}
 	}
 
 	return &Service{
@@ -118,12 +132,16 @@ func New(p Params) *Service {
 		webSearch:  webSearch,
 		browsers:   browsers,
 		sandboxes:  sandboxes,
+		watchers:   watchers,
 		plans:      p.Plans,
 		sites:      p.Sites,
 		runs:       p.Runs,
 		analyses:   p.Analyses,
+		watches:    p.Watches,
+		findings:   p.Findings,
 		workflows:  p.Workflows,
 		appHost:    appHostOf(p.Config),
+		webBase:    webBaseOf(p.Config),
 		now:        timeutils.NowUnix,
 	}
 }
@@ -140,6 +158,16 @@ func appHostOf(cfg *config.Config) string {
 	}
 
 	return strings.ToLower(parsed.Hostname())
+}
+
+// webBaseOf is the public address Trenova is served from, where a vendor
+// reports back.
+func webBaseOf(cfg *config.Config) string {
+	if cfg == nil {
+		return ""
+	}
+
+	return cfg.App.GetWebBaseURL()
 }
 
 func secretScope(tenantInfo pagination.TenantInfo, typ agentextension.Type) secretconfig.Scope {
@@ -218,6 +246,20 @@ func (s *Service) ListCatalog(
 	}, nil
 }
 
+// servedTools are the capability's tools a vendor serves: the marketplace
+// lists, and an agent given the extension holds, only what that vendor can do.
+func servedTools(
+	tools []agentextensionports.AgentExtensionTool,
+	spec agentextension.Spec,
+) []agentextensionports.AgentExtensionTool {
+	return slices.DeleteFunc(
+		slices.Clone(tools),
+		func(tool agentextensionports.AgentExtensionTool) bool {
+			return spec.Omits(tool.Name)
+		},
+	)
+}
+
 func catalogItem(
 	def *definition,
 	spec agentextension.Spec,
@@ -240,7 +282,7 @@ func catalogItem(
 		WebsiteURL:          def.WebsiteURL,
 		PricingURL:          def.PricingURL,
 		Capabilities:        def.Capabilities,
-		Tools:               capability.Tools,
+		Tools:               servedTools(capability.Tools, spec),
 		DataNotice:          def.DataNotice,
 		Featured:            def.Featured,
 		SortOrder:           def.SortOrder,

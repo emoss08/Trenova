@@ -116,7 +116,7 @@ Keywords: at mention, @ mention, reference a load, tag a shipment, point the age
 4. The record shows in your message and goes with it, so the agent looks up that exact record. Delete the @name from the text to drop it.
 
 ### Use a slash command
-Keywords: slash command, shortcut, /status, /quote, /report, /explain, /browser, browser, portal, /search, web search, search the web, look it up online, quick question
+Keywords: slash command, shortcut, /status, /quote, /report, /explain, /browser, browser, portal, /search, web search, search the web, look it up online, /watch, watch the web, quick question
 1. In an empty message box, type /. The list shows **Commands** first, then the agent's starter questions.
 2. Use ↑ ↓ to pick one, then Enter or Tab. A starter question is sent as it is.
 3. For a command that needs details, such as /status (a PRO or shipment number), /quote (origin and destination city) or /report (a report name), type each one after the command. The grey hints show what is still missing, and **Desk will be asked** shows the full question.
@@ -124,6 +124,7 @@ Keywords: slash command, shortcut, /status, /quote, /report, /explain, /browser,
 5. /explain asks the agent to explain the page you came from.
 6. /browser, then what to do (such as "check whether the 9am slot at Acme DC is still open"), has the agent do it in a cloud browser on one of your organization's portal sites: it finds the site, looks the answer up there, and proposes any change to the portal for you to approve. If it answers without opening the portal, it is sent back to the browser once; when no site fits, it says so and names the sites there are. /browser is listed only when portal automation is turned on in [AI control](/admin/agent-control?tab=extensions), the agent you are talking to can use the portal tools, and you have permission to use them. Typed while the agent is still replying, it waits and goes as its own question once the reply ends.
 7. /search, then what to look up (such as "what changed in the FMCSA hours of service rules this year"), has the agent answer from the public web: it searches, reads the pages that matter and links to each one it uses. If it answers without searching, it is sent back to the web once; when the web has nothing on it, it says so. What you type after /search leaves Trenova as the search, so leave out record numbers and private details. /search is listed only when web research is turned on in [AI control](/admin/agent-control?tab=extensions), the agent you are talking to can search the web, and you have permission to use it. Like /browser, typed while the agent is still replying, it waits and goes as its own question once the reply ends.
+8. /watch, then what to keep an eye on (such as "FMCSA finalizing the broker transparency rule"), has the agent set a web watch: the web is searched on a schedule and the agent comes back to the conversation each time something new appears. If it answers without setting the watch, it is sent back once to set it. What you type after /watch leaves Trenova as the search, so leave out record numbers and private details. /watch is listed only when web search from Exa is turned on in [AI control](/admin/agent-control?tab=extensions), the agent you are talking to can set web watches, and you have permission to use web research.
 
 ### Attach files to a message
 Keywords: attach, upload, add a document, send a PDF, rate confirmation, BOL, spreadsheet, drag and drop
@@ -195,6 +196,13 @@ Keywords: waiting, wait until, parked, notify me when, truck arrives, reply from
 2. Above the message box, a list shows what the agent is waiting on: the kind of wait (an arrival, a departure, a reply, an appointment, free time, drive time or a time), the agent's description, and when it is due or gives up.
 3. Nothing runs while it waits. When the event happens, the agent comes back to the conversation on its own, and a note marks the place: **Picked up after a wait**, or **Picked up after the wait ran out** if it gave up first.
 4. Select **Cancel the wait** (×) to drop one you no longer need.
+
+### Have an agent keep watching the web for you
+Keywords: web watch, watch the web, tell me when, let me know when, alert me, keep an eye on, regulation, carrier news, stop watching
+1. Ask the agent to tell you when something happens, such as "let me know when FMCSA finalizes the broker transparency rule", or type /watch and what to keep an eye on. Watching needs web search from Exa, turned on in [AI control](/admin/agent-control).
+2. The agent sets a web watch that looks every six hours, daily or weekly for up to 90 days (30 unless you ask), and the wait above the message box shows **A web watch** with how often it looks, until when and what it has found so far.
+3. Each time it finds pages it has not found before, the agent comes back to the conversation with what they say and their sources. What the pages say is read from outside your organization, so any change the agent then wants to make waits for you.
+4. To end it, hover over the wait and select **Stop watching**, or ask the agent to stop it.
 
 ### Enter a sign-in code a portal sent you
 Keywords: sign-in code, verification code, two-factor, 2FA, MFA, one-time code, text message code, email code, portal login code, live browser, sign in myself, portal task

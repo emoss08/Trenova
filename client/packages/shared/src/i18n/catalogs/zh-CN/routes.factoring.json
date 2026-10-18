@@ -1,7 +1,6 @@
 {
   "A schedule carries at most {0} invoices. Select fewer and send the rest on another schedule.": "一份清单最多包含 {0} 张发票。请减少所选发票，其余的以另一份清单发送。",
   "Chargebacks due": "到期的退款追索",
-  "Checks": "检查项目",
   "Choose the factor that sent the report": "请选择发送此报告的保理公司",
   "Emailed to {0} at {1}, with each invoice's packet attached.": "通过电子邮件发送给 {0}（{1}），并附上每张发票的资料包。",
   "Emailed to {0} at {1}, without the invoice packets.": "通过电子邮件发送给 {0}（{1}），不附发票资料包。",

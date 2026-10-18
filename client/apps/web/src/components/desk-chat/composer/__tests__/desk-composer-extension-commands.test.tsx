@@ -102,6 +102,12 @@ const CASES = [
     ask: "/search FMCSA hours of service changes this year",
     description: "Search the web and answer from what it finds",
   },
+  {
+    name: "watch",
+    prefix: "/wat",
+    ask: "/watch FMCSA finalizing the broker transparency rule",
+    description: "Keep watching the web and come back when something new appears",
+  },
 ] as const;
 
 describe.each(CASES)("DeskComposer /$name", ({ name, prefix, ask, description }) => {
@@ -171,9 +177,21 @@ describe("DeskComposer extension commands", () => {
     await screen.findByRole("option", { name: /\/search/ });
     const labels = screen
       .getAllByRole("option")
-      .map((row) => /\/(browser|search)/.exec(row.textContent ?? "")?.[1])
+      .map((row) => /\/(browser|search|watch)/.exec(row.textContent ?? "")?.[1])
       .filter((label) => label !== undefined);
     expect(labels).toEqual(["browser", "search"]);
+  });
+
+  it("lists /watch after /search when the vendor can watch the web", async () => {
+    server.commands.set("agdef_exa", ["watch", "search"]);
+    renderComposer({ agentId: "agdef_exa", initial: "/", onSend: vi.fn() });
+
+    await screen.findByRole("option", { name: /\/watch/ });
+    const labels = screen
+      .getAllByRole("option")
+      .map((row) => /\/(browser|search|watch)/.exec(row.textContent ?? "")?.[1])
+      .filter((label) => label !== undefined);
+    expect(labels).toEqual(["search", "watch"]);
   });
 
   it("offers /search alone when web research is the only extension on", async () => {

@@ -40,15 +40,21 @@ line decides several of the obvious candidates:
   it ends; charts are kept with the run and drawn on the Desk. Chosen over Daytona because E2B
   closes egress at sandbox creation and runs a code interpreter that returns charts as images.
 
+- **Web watching** (`watch_web`, `list_web_watches`, `stop_web_watch`) on Exa Monitors; see
+  [agent-web-watching.md](../engineering/agent-web-watching.md). A scheduled search that hands
+  back only what earlier runs did not find, followed by a workflow that reads the runs from Exa
+  (the signed webhook only asks for a check now) and a wait that picks the work up with what was
+  found, quoted as outside text. Watches last at most 90 days, are capped per organization, and
+  are billed at Exa's published $0.015 a run. Parallel serves web research without watches.
+
 ## Next, in order
 
 1. **A second portal vendor** once one enforces where the browser may go, not only where a
    credential may be typed: Anchor or Kernel (signed-in sessions, zero data retention),
    Browserbase (largest ecosystem). `BrowserProvider` already takes the allow-list. TinyFish
    still needs SOC 2 and retention terms before it is considered.
-2. **Exa's newer endpoints on the web research capability:** Monitors (watch a regulation page or
-   a carrier's site) and Baselayer business verification through Exa Connect, which fits carrier
-   vetting conversations without becoming an integration.
+2. **Baselayer business verification through Exa Connect** on the web research capability, which
+   fits carrier vetting conversations without becoming an integration.
 3. **Voice calling (Retell, Vapi)** for check calls and appointment calls, the core of HappyRobot
    and FleetWorks. Every call is a write outside the organization and every transcript is outside
    content; it needs a consent ledger (TCPA treats AI voices as artificial, and some states

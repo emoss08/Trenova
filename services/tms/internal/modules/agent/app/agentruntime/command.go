@@ -55,6 +55,24 @@ var commandHolds = map[agentextension.Command]commandHold{
 		retryReason: "The reply did not search the web the person asked for, so it is being " +
 			"worked again with a web search.",
 	},
+	agentextension.CommandWatch: {
+		change: "agent-loop-watch-guard",
+		directive: "The person used /watch: they want to be told when something new about " +
+			"this appears on the web. Set a web watch with watch_web: the purpose in their " +
+			"words, and a search written as a description of the pages wanted. Set how often " +
+			"and for how long only when they said; otherwise leave the defaults. Use " +
+			"web_search first only when you need it to write a good search. To change or end " +
+			"a watch already running, find it with list_web_watches and stop it with " +
+			"stop_web_watch. Do not answer from memory in place of a watch. The search leaves " +
+			"Trenova, so keep record IDs and private details about a customer, carrier or " +
+			"driver out of it.\n\nWhat to keep watching the web for: ",
+		correction: "You answered without setting a web watch, but the person used /watch to " +
+			"be told when something new appears. Call watch_web with what they want to hear " +
+			"about and a search for it, or list_web_watches and stop_web_watch when they asked " +
+			"about a watch already running.",
+		retryReason: "The reply did not set the web watch the person asked for, so it is being " +
+			"worked again with one.",
+	},
 }
 
 // AvailableCommands are the extension commands the person can send this agent:
@@ -125,10 +143,10 @@ func commandInput(command agentextension.Command, input string) string {
 	return commandHolds[command].directive + task
 }
 
-func (t *Turn) usedCapability(capability agentextension.Capability) bool {
+func (t *Turn) honoured(spec agentextension.CommandSpec) bool {
 	for idx := range t.result.Messages {
 		for _, call := range t.result.Messages[idx].ToolCalls {
-			if used, ok := agentextension.CapabilityForTool(call.Name); ok && used == capability {
+			if spec.HonouredByCall(call.Name) {
 				return true
 			}
 		}
@@ -138,9 +156,9 @@ func (t *Turn) usedCapability(capability agentextension.Capability) bool {
 }
 
 // holdToCommand sends a reply that would end a command's turn without calling
-// any of its capability's tools back once, with the command's correction. A
-// second such reply stands, so a request the extension cannot serve still ends
-// in an answer.
+// any tool that honours it back once, with the command's correction. A second
+// such reply stands, so a request the extension cannot serve still ends in an
+// answer.
 func (s *Service) holdToCommand(
 	t *Turn,
 	fx TurnEffects,
@@ -152,7 +170,7 @@ func (s *Service) holdToCommand(
 	}
 	spec, specified := agentextension.CommandSpecFor(t.command)
 	hold, holds := commandHolds[t.command]
-	if !specified || !holds || t.usedCapability(spec.Capability) || !fx.Supports(hold.change) {
+	if !specified || !holds || t.honoured(spec) || !fx.Supports(hold.change) {
 		return false
 	}
 

@@ -7643,6 +7643,15 @@
       "routes/desk"
     ]
   },
+  "A person or an agent stopped the watch": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "A person rejected it": {
     "sites": 1,
     "scope": [
@@ -7845,15 +7854,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "A portal task is picked up by the work that asked for it, and this one names none": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "A position cannot report to itself": {
@@ -11470,6 +11470,24 @@
       "go/other"
     ]
   },
+  "A watch can name at most 20 sites": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A watch lasts from 1 to 90 days": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A waterfall runs out of carriers": {
     "sites": 1,
     "scope": [
@@ -11489,6 +11507,24 @@
     ]
   },
   "A web search is done by this conversation's agent; send it without naming another": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A web watch": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "A web watch is set by this conversation's agent; send it without naming another": {
     "sites": 1,
     "scope": [
       "go"
@@ -11713,6 +11749,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "A {0} is picked up by the work that asked for it, and this one names none": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "A {0} mailbox receives whole messages and needs no API key": {
@@ -49611,6 +49656,15 @@
       "routes/inbox"
     ]
   },
+  "Check the web watch for new findings and hand them on": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Check this customer's broker authority, surety bond and insurance with the connected carrier intelligence provider, and flag it when something lapses.": {
     "sites": 1,
     "scope": [
@@ -49932,11 +49986,12 @@
     ]
   },
   "Checks": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/factoring"
     ]
   },
@@ -62396,7 +62451,7 @@
     ]
   },
   "Cost": {
-    "sites": 22,
+    "sites": 23,
     "scope": [
       "go",
       "ts"
@@ -69276,7 +69331,7 @@
     ]
   },
   "Daily": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -90088,7 +90143,7 @@
     ]
   },
   "Ended": {
-    "sites": 5,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
@@ -90097,6 +90152,7 @@
       "apps/web/lib",
       "go/other",
       "packages/shared/lib",
+      "routes/agent-control",
       "routes/desk"
     ]
   },
@@ -90280,13 +90336,14 @@
     ]
   },
   "Ends": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "go/other",
+      "routes/agent-control",
       "routes/desk",
       "routes/factoring-company"
     ]
@@ -95416,6 +95473,15 @@
       "routes/admin"
     ]
   },
+  "Every six hours": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Every stop a driver is sitting on right now": {
     "sites": 1,
     "scope": [
@@ -100530,7 +100596,7 @@
     ]
   },
   "Failed": {
-    "sites": 71,
+    "sites": 72,
     "scope": [
       "go",
       "ts"
@@ -107034,6 +107100,15 @@
     ],
     "areas": [
       "routes/shipment-tracking-public"
+    ]
+  },
+  "Follow a web watch to its end and hand on what it finds": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Follow an approved portal task to its end and hand its answer back": {
@@ -117799,6 +117874,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "How often must be every six hours, daily or weekly": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "How often people took the agent Desk named for a question, by the agent named.": {
@@ -129516,6 +129600,15 @@
       "routes/admin"
     ]
   },
+  "Keep watching the web and come back when something new appears": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Keep what it is for to 500 characters": {
     "sites": 1,
     "scope": [
@@ -129640,6 +129733,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Keeps searching on a schedule and brings back only what is new, until the watch ends.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Keeps the ledger and closes periods.": {
@@ -131351,6 +131453,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Last looked": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Last message {0}": {
@@ -135818,6 +135929,15 @@
       "apps/web/components"
     ]
   },
+  "List web watches": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "List what to write profiles for": {
     "sites": 1,
     "scope": [
@@ -135855,6 +135975,15 @@
     ]
   },
   "Lists the portals set up for agents and what each is for.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Lists the watches set for the person and what each has found.": {
     "sites": 1,
     "scope": [
       "go"
@@ -138241,6 +138370,24 @@
       "apps/web/components"
     ]
   },
+  "Loading web watches": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Loading what it found": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Loading what was read off the document": {
     "sites": 1,
     "scope": [
@@ -139708,6 +139855,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Looks": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Looks after the drivers on their team.": {
@@ -161116,6 +161272,15 @@
       "routes/desk"
     ]
   },
+  "No web watches yet. When a person asks an agent to keep an eye on something, the watch is listed here with what it found.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "No widget matches “{0}”.": {
     "sites": 1,
     "scope": [
@@ -163791,6 +163956,15 @@
       "routes/desk"
     ]
   },
+  "Not yet passed on": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Not yet requested": {
     "sites": 2,
     "scope": [
@@ -165292,6 +165466,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Nothing new yet. Each check that finds something is kept here.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Nothing on a dock": {
@@ -172176,6 +172359,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Only on": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Only one EDI channel can be marked as default": {
@@ -222382,6 +222574,15 @@
       "routes/agent-control"
     ]
   },
+  "Say what the person wants to hear about": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Say what the view should show": {
     "sites": 1,
     "scope": [
@@ -222421,6 +222622,15 @@
       "go/other"
     ]
   },
+  "Say what to keep watching the web for after /watch": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Say what to narrow the table to.": {
     "sites": 1,
     "scope": [
@@ -222440,7 +222650,7 @@
     ]
   },
   "Say what to search for": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -225724,6 +225934,15 @@
     ],
     "areas": [
       "apps/web/components",
+      "routes/agent-control"
+    ]
+  },
+  "Searches for": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
       "routes/agent-control"
     ]
   },
@@ -232325,11 +232544,12 @@
     ]
   },
   "Set": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/edi"
     ]
   },
@@ -238748,6 +238968,15 @@
       "go/other"
     ]
   },
+  "Sites must be hostnames such as fmcsa.dot.gov; {0} is not": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Six rungs from coaching to termination. The next step is one rung above the highest action still active, and drops back as actions expire or are rescinded. It is a suggestion, not a rule: any rung can be issued, and a rung that ends employment is flagged before it is.": {
     "sites": 1,
     "scope": [
@@ -244441,6 +244670,15 @@
       "go/other"
     ]
   },
+  "Stop a web watch": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Stop above production's unusable answers by (pts)": {
     "sites": 1,
     "scope": [
@@ -244882,6 +245120,16 @@
       "routes/inbox"
     ]
   },
+  "Stop watching": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "routes/agent-control"
+    ]
+  },
   "Stop {0}": {
     "sites": 6,
     "scope": [
@@ -244908,7 +245156,7 @@
     ]
   },
   "Stopped": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -245017,6 +245265,15 @@
       "apps/web/components"
     ]
   },
+  "Stopping": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Stopping after this batch...": {
     "sites": 1,
     "scope": [
@@ -245061,6 +245318,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Stops a watch the person no longer needs, so it searches and bills no more.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Stops appear here the moment an arrival is recorded, with the free-time clock and the notice deadline already running.": {
@@ -255951,6 +256217,15 @@
       "routes/factoring-company"
     ]
   },
+  "The delivery's signature is not valid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The densest tier must be open ended": {
     "sites": 1,
     "scope": [
@@ -266433,6 +266708,15 @@
       "apps/web/components"
     ]
   },
+  "The vendor could no longer run the watch": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "The vendor has no live view of this browser": {
     "sites": 1,
     "scope": [
@@ -266449,6 +266733,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The vendor looks on schedule and brings back only what is new": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "The verification could not be started — try again shortly": {
@@ -266505,6 +266798,15 @@
       "apps/web/components"
     ]
   },
+  "The watch's time ran out": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "The waterfall skipped this carrier.": {
     "sites": 1,
     "scope": [
@@ -266512,6 +266814,51 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "The web watch could not be set": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The web watch could not be stopped": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "The web watch id is not valid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
+  "The web watch you opened is older than the ones listed here.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "The web watches could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "The webhook body could not be read": {
@@ -273346,6 +273693,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "This wait ends with its web watch. Stop the watch instead: stop_web_watch, or Stop watching on the wait.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "This wait has not ended, so there is nothing to pick up": {
@@ -292220,6 +292576,15 @@
       "apps/web/components"
     ]
   },
+  "Watch the web": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Watch your organization's USDOT and MC record for changes and expirations.": {
     "sites": 1,
     "scope": [
@@ -292239,11 +292604,12 @@
     ]
   },
   "Watching": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "routes/agent-control"
     ]
   },
@@ -292794,6 +293160,72 @@
       "go/other"
     ]
   },
+  "Web watch": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config",
+      "apps/web/services",
+      "routes/agent-control"
+    ]
+  },
+  "Web watch findings": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/services"
+    ]
+  },
+  "Web watch not found": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Web watches": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/services",
+      "routes/agent-control"
+    ]
+  },
+  "Web watches at once": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Web watches cannot be followed here": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Web watches cannot be waited on here": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Webhook Secret": {
     "sites": 2,
     "scope": [
@@ -292860,6 +293292,15 @@
     ]
   },
   "Webhook key": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Webhook secret": {
     "sites": 1,
     "scope": [
       "go"
@@ -293070,7 +293511,7 @@
     ]
   },
   "Weekly": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -294407,12 +294848,22 @@
     ]
   },
   "What it found": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "routes/agent-control"
+    ]
+  },
+  "What it found, written outside your organization": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/agent-control"
     ]
   },
   "What it handles": {
@@ -295274,6 +295725,15 @@
       "routes/worker"
     ]
   },
+  "What the watch found could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "What the worker is aiming at before the next review.": {
     "sites": 1,
     "scope": [
@@ -295560,6 +296020,24 @@
     ],
     "areas": [
       "routes/accounting-sync"
+    ]
+  },
+  "What to search for must be 400 characters or fewer": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "What to watch for must be 300 characters or fewer": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "What to write": {
@@ -306369,7 +306847,7 @@
     ]
   },
   "before must be a Unix time in seconds": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -310429,6 +310907,15 @@
       "routes/agent-control"
     ]
   },
+  "limit must be a whole number from 1 to 100": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
   "limit must be a whole number from 1 to 200": {
     "sites": 2,
     "scope": [
@@ -312534,6 +313021,15 @@
       "api/graphql"
     ]
   },
+  "status must be Active, Ended, Stopped or Failed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
   "status requests": {
     "sites": 1,
     "scope": [
@@ -313788,6 +314284,15 @@
     ]
   },
   "what to do on the portal": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "what to keep an eye on": {
     "sites": 1,
     "scope": [
       "ts"
@@ -315419,12 +315924,22 @@
       "routes/desk"
     ]
   },
-  "{0, plural, one {# finding} other {# findings}}": {
-    "sites": 2,
+  "{0, plural, one {# finding so far} other {# findings so far}}": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components"
+    ]
+  },
+  "{0, plural, one {# finding} other {# findings}}": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control",
       "routes/desk"
     ]
   },
@@ -319984,6 +320499,15 @@
       "routes/dispatch-console"
     ]
   },
+  "{0, select, SixHours {Looks every six hours until {1}} Weekly {Looks weekly until {1}} other {Looks daily until {1}}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "{0} (Day)": {
     "sites": 2,
     "scope": [
@@ -321591,6 +322115,15 @@
     ]
   },
   "{0} cannot view invoices, so the link would not open for them": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "{0} cannot watch the web. Web research from a vendor that watches the web has to be turned on, the agent has to hold its web watch tools, and you need permission to use them.": {
     "sites": 1,
     "scope": [
       "go"

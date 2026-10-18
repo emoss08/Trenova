@@ -148,6 +148,7 @@ export const RecordKindIDPrefix = {
   user: "usr_",
   wait: "awt_",
   watchtower_item: "wt_",
+  web_watch: "awwt_",
   worker: "wrk_",
   worker_checklist: "wcl_",
   worker_checklist_template: "wclt_",

@@ -2,6 +2,7 @@ package agentextension
 
 import (
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -30,6 +31,10 @@ type Spec struct {
 	SupportsTestConnect bool
 	Validate            SettingsValidator
 	DefaultDailyLimit   int
+
+	// Unsupported are tools of the capability this vendor cannot serve; they
+	// are never offered while it serves the capability.
+	Unsupported []string
 }
 
 func (s Spec) DailyLimit(values map[string]string, multiErr *errortypes.MultiError) int {
@@ -48,12 +53,29 @@ func (s Spec) Configured(configuration map[string]any) bool {
 	return configspec.HasRequired(configuration, s.Fields)
 }
 
+// Tools are the capability's tools this vendor serves.
 func (s Spec) Tools() []string {
-	return capabilities[s.Capability].Tools
+	all := capabilities[s.Capability].Tools
+	if len(s.Unsupported) == 0 {
+		return all
+	}
+
+	served := make([]string, 0, len(all))
+	for _, name := range all {
+		if !s.Omits(name) {
+			served = append(served, name)
+		}
+	}
+
+	return served
 }
 
 func (s Spec) HasTool(name string) bool {
-	return capabilities[s.Capability].HasTool(name)
+	return capabilities[s.Capability].HasTool(name) && !s.Omits(name)
+}
+
+func (s Spec) Omits(name string) bool {
+	return slices.Contains(s.Unsupported, name)
 }
 
 var specs = map[Type]Spec{

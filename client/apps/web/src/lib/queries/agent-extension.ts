@@ -7,6 +7,9 @@ export const PORTAL_RUNS_PAGE = 25;
 /** How many analyses the history shows at once. */
 export const ANALYSIS_RUNS_PAGE = 25;
 
+/** How many web watches the list shows at once. */
+export const WEB_WATCHES_PAGE = 50;
+
 export const agentExtension = createQueryKeys("agentExtension", {
   catalog: () => ({
     queryKey: ["catalog"],
@@ -43,6 +46,16 @@ export const agentExtension = createQueryKeys("agentExtension", {
     queryKey: ["analysis-run", runId],
     queryFn: ({ signal }: { signal?: AbortSignal }) =>
       apiService.agentExtensionService.analysisRun(runId, { signal }),
+  }),
+  webWatches: () => ({
+    queryKey: ["web-watches"],
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      apiService.agentExtensionService.listWebWatches({ limit: WEB_WATCHES_PAGE }, { signal }),
+  }),
+  webWatchFindings: (watchId: string) => ({
+    queryKey: ["web-watch-findings", watchId],
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      apiService.agentExtensionService.webWatchFindings(watchId, { signal }),
   }),
   analysisChart: (runId: string, position: number) => ({
     queryKey: ["analysis-chart", runId, position],

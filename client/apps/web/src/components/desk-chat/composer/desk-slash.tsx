@@ -20,6 +20,7 @@ const COMMAND_ICONS: Record<string, DeskIconName> = {
   explain: "info",
   browser: "globe",
   search: "search",
+  watch: "radar",
   compact: "compact",
 };
 

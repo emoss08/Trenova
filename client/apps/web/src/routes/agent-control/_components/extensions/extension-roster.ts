@@ -52,6 +52,28 @@ export function capabilityServer(
   );
 }
 
+/** The tool a vendor offers when it can keep watching the web on a schedule. */
+export const WATCH_WEB_TOOL = "watch_web";
+
+/** Whether an extension's vendor can keep watching the web for agents. */
+export function offersWebWatches(item: AgentExtensionCatalogItem): boolean {
+  return item.tools.some((tool) => tool.name === WATCH_WEB_TOOL);
+}
+
+/**
+ * The extension whose history holds web watches: the one turned on that offers them, else the
+ * first that does. A watch is kept with the vendor that runs it, whichever serves web research.
+ */
+export function webWatchServer(
+  items: readonly AgentExtensionCatalogItem[],
+): AgentExtensionCatalogItem | null {
+  return (
+    items.find((item) => offersWebWatches(item) && item.enabled) ??
+    items.find(offersWebWatches) ??
+    null
+  );
+}
+
 function matchesQuery(item: AgentExtensionCatalogItem, query: string): boolean {
   const needle = query.trim().toLowerCase();
   if (needle === "") {
@@ -140,5 +162,8 @@ export function withExtensionTools(
   if (!give) {
     return toolNames.filter((name) => !names.has(name));
   }
-  return [...toolNames, ...tools.map((tool) => tool.name).filter((name) => !toolNames.includes(name))];
+  return [
+    ...toolNames,
+    ...tools.map((tool) => tool.name).filter((name) => !toolNames.includes(name)),
+  ];
 }

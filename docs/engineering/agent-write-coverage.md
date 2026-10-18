@@ -88,7 +88,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 | `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 88 |
 | `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 270 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 40 |
-| `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 55 |
+| `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 56 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 107 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 35 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 56 |
@@ -97,25 +97,25 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-1168 writes: 643 GraphQL mutations and 525 REST writes, after merging 75 REST routes into the mutation they duplicate.
+1170 writes: 643 GraphQL mutations and 527 REST writes, after merging 75 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 458 |
-| Exempt | 710 |
+| Covered by a tool | 459 |
+| Exempt | 711 |
 | — Security | 88 |
 | — Configuration | 270 |
 | — User preference | 40 |
-| — Infrastructure | 55 |
+| — Infrastructure | 56 |
 | — Agent administration | 107 |
 | — Counterparty | 35 |
 | — Read-only | 56 |
 | — Attestation | 49 |
 | — Duplicate | 10 |
 | **Pending** | **0** |
-| Total | 1168 |
+| Total | 1170 |
 
-Of the 458 writes an agent should be able to make, 458 have a tool (100%).
+Of the 459 writes an agent should be able to make, 459 have a tool (100%).
 
 ## Pending
 
@@ -135,7 +135,7 @@ The writes no tool performs yet, and what the tool would do.
 | accounttype | 4 | 0 | 4 | 0 |
 | agent | 16 | 2 | 14 | 0 |
 | agentdefinition | 13 | 0 | 13 | 0 |
-| agentextension | 6 | 0 | 6 | 0 |
+| agentextension | 8 | 1 | 7 | 0 |
 | agentprofile | 8 | 2 | 6 | 0 |
 | agentquality | 6 | 0 | 6 | 0 |
 | agentrun | 1 | 0 | 1 | 0 |
@@ -319,6 +319,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `raise_exception` | agent_exception | create |
 | `request_credential_renewal` | worker_credential | update |
 | `request_missing_docs` | customer_communication | create |
+| `watch_web` | web_research | read |
 
 ## Every write
 
@@ -437,6 +438,8 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/agent-extensions/:type/test/`<br>agentextensionhandler.test | Exempt, read-only: Tests the vendor credentials and returns the result. |
 | `POST /api/v1/agent-portals/runs/:runID/sign-in-code/`<br>agentextensionhandler.provideSignInCode | Exempt, security: Relays a sign-in code a portal sent the person to the browser signing in for them; a second factor is given only by the person who received it, and never passes through an agent. |
 | `POST /api/v1/agent-portals/sites/`<br>agentextensionhandler.createSite | Exempt, agent-administration: Adds a portal agents may read and act on, with its sign-in; an agent that could add one could choose where its own browser goes. |
+| `POST /api/v1/agent-web-watches/:watchID/stop/`<br>agentextensionhandler.stopWebWatch | Tool: `stop_web_watch` |
+| `POST /api/v1/webhooks/agent-extensions/web-watches/:orgID/:buID/:watchID/`<br>agentextensionhandler.receiveWatchDelivery | Exempt, infrastructure: A research vendor reporting a web watch's run, signed with the watch's secret; it only asks the watch to be checked now, and is not a person's decision. |
 | `PUT /api/v1/agent-extensions/:type/config/`<br>agentextensionhandler.updateConfig | Exempt, agent-administration: Configures a vendor account an organization turns on for its agents; it holds the vendor credentials. |
 | `PUT /api/v1/agent-portals/sites/:siteID/`<br>agentextensionhandler.updateSite | Exempt, agent-administration: Changes a portal's addresses, sign-in or whether agents may act on it, which bound what agents can reach; an agent must not widen its own reach. |
 

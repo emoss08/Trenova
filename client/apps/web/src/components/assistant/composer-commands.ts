@@ -244,11 +244,22 @@ export const SEARCH_COMMAND = extensionCommand({
   slots: [{ name: "query", hint: "what to look up on the web" }],
 });
 
+/** /watch sets a web watch, so the agent comes back when something new appears on the web. */
+export const WATCH_COMMAND = extensionCommand({
+  name: "watch",
+  description: "Keep watching the web and come back when something new appears",
+  slots: [{ name: "topic", hint: "what to keep an eye on" }],
+});
+
 /**
  * Every extension command, in the order the composer lists them. A new one is
  * an entry here and its twin in agentextension.AllCommands on the server.
  */
-export const EXTENSION_COMMANDS: readonly SlashCommand[] = [BROWSER_COMMAND, SEARCH_COMMAND];
+export const EXTENSION_COMMANDS: readonly SlashCommand[] = [
+  BROWSER_COMMAND,
+  SEARCH_COMMAND,
+  WATCH_COMMAND,
+];
 
 /** The extension commands named in the server's answer, in the order listed here. */
 export function extensionCommandsNamed(names: readonly string[]): readonly SlashCommand[] {

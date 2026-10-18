@@ -241,6 +241,11 @@ export const RECORD_LINKS = {
     path: "/admin/agent-control",
     params: { tab: "extensions", analysisRun: "{id}" },
   },
+  web_watch: {
+    label: "Web watch",
+    path: "/admin/agent-control",
+    params: { tab: "extensions", webWatch: "{id}" },
+  },
   ai_audit_event: {
     label: "AI audit event",
     path: "/admin/agent-control",

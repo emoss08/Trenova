@@ -28,7 +28,9 @@ var _ agentextensionports.PortalRunWaits = (*Service)(nil)
 
 func NewPortalRunWaits(s *Service) agentextensionports.PortalRunWaits { return s }
 
-type portalWaitOwner struct {
+// waitOwner is whose work a system-set wait parks: a conversation, picked up
+// as a turn of it, or a background run's agent and record.
+type waitOwner struct {
 	actor        *permissionports.RequestActor
 	definitionID pulid.ID
 	threadID     pulid.ID
@@ -55,7 +57,7 @@ func (s *Service) RegisterPortalRunWait(
 		return nil
 	}
 
-	owner, err := s.portalWaitOwner(ctx, req)
+	owner, err := s.ownerOf(ctx, req.TenantInfo, req.Owner, "portal task")
 	if err != nil {
 		return err
 	}
@@ -75,32 +77,36 @@ func (s *Service) RegisterPortalRunWait(
 	return err
 }
 
-func (s *Service) portalWaitOwner(
+// ownerOf is the work a system-set wait belongs to: the conversation that
+// asked, or a background run's agent and record.
+func (s *Service) ownerOf(
 	ctx context.Context,
-	req *agentextensionports.RegisterPortalRunWaitRequest,
-) (*portalWaitOwner, error) {
-	tenant := pagination.TenantInfo{OrgID: req.TenantInfo.OrgID, BuID: req.TenantInfo.BuID}
-	if req.Owner.RunID.IsNil() {
-		if req.Owner.ThreadID.IsNotNil() {
-			return s.threadWaitOwner(ctx, tenant, req.Owner.ThreadID)
+	tenantInfo pagination.TenantInfo,
+	asked agentextensionports.PortalTaskOwner,
+	what string,
+) (*waitOwner, error) {
+	tenant := pagination.TenantInfo{OrgID: tenantInfo.OrgID, BuID: tenantInfo.BuID}
+	if asked.RunID.IsNil() {
+		if asked.ThreadID.IsNotNil() {
+			return s.threadWaitOwner(ctx, tenant, asked.ThreadID)
 		}
 		return nil, errortypes.NewBusinessError(
-			"A portal task is picked up by the work that asked for it, and this one names none",
+			"A {0} is picked up by the work that asked for it, and this one names none", what,
 		)
 	}
 	run, err := s.runs.GetByID(ctx, agentports.GetAgentRunByIDRequest{
-		ID:         req.Owner.RunID,
+		ID:         asked.RunID,
 		TenantInfo: &tenant,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("read the run that asked for the portal task: %w", err)
+		return nil, fmt.Errorf("read the run that asked for the %s: %w", what, err)
 	}
 
 	if run.SubjectType == agent.SubjectAssistantThread && run.SubjectID.IsNotNil() {
 		return s.threadWaitOwner(ctx, tenant, run.SubjectID)
 	}
 
-	actor := req.Owner.Actor
+	actor := asked.Actor
 	if actor == nil {
 		actor = &permissionports.RequestActor{
 			PrincipalType:  permissionports.PrincipalTypeAgent,
@@ -110,29 +116,29 @@ func (s *Service) portalWaitOwner(
 		}
 	}
 
-	return &portalWaitOwner{
+	return &waitOwner{
 		actor:        actor,
 		definitionID: run.AgentDefinitionID,
 		runID:        run.ID,
 	}, nil
 }
 
-// threadWaitOwner is the conversation a portal task was asked from, picked up
-// as a turn of it on its owner's behalf.
+// threadWaitOwner is the conversation the work was asked from, picked up as a
+// turn of it on its owner's behalf.
 func (s *Service) threadWaitOwner(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	threadID pulid.ID,
-) (*portalWaitOwner, error) {
+) (*waitOwner, error) {
 	thread, err := s.conversations.GetThreadOwned(ctx, agentports.GetThreadOwnedRequest{
 		ID:         threadID,
 		TenantInfo: tenant,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("read the conversation that asked for the portal task: %w", err)
+		return nil, fmt.Errorf("read the conversation that asked for the work: %w", err)
 	}
 
-	return &portalWaitOwner{
+	return &waitOwner{
 		actor: &permissionports.RequestActor{
 			PrincipalType:  permissionports.PrincipalTypeUser,
 			PrincipalID:    thread.UserID,

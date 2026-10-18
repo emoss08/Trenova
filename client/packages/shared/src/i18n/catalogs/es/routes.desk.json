@@ -1836,7 +1836,6 @@
   "{0, plural, one {# failed to send} other {# failed to send}}": "{0, plural, one {# no se pudo enviar} other {# no se pudieron enviar}}",
   "{0, plural, one {# failure reason} other {# failure reasons}}": "{0, plural, one {# motivo de falla} other {# motivos de falla}}",
   "{0, plural, one {# failure} other {# failures}}": "{0, plural, one {# falla} other {# fallas}}",
-  "{0, plural, one {# finding} other {# findings}}": "{0, plural, one {# hallazgo} other {# hallazgos}}",
   "{0, plural, one {# flag to review} other {# flags to review}}": "{0, plural, one {# alerta por revisar} other {# alertas por revisar}}",
   "{0, plural, one {# flag} other {# flags}}": "{0, plural, one {# alerta} other {# alertas}}",
   "{0, plural, one {# formula template} other {# formula templates}}": "{0, plural, one {# plantilla de fórmula} other {# plantillas de fórmula}}",

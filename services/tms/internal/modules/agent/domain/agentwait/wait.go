@@ -24,14 +24,19 @@ const (
 	IDPrefix            = "awt_"
 	MaxDescriptionRunes = 200
 	MaxThenRunes        = 1000
-	MaxOutcomeRunes     = 1000
+	MaxOutcomeRunes     = 4000
 	MaxMinutesBefore    = 24 * 60
 	MaxDriveMinutes     = 11 * 60
 	MinLifetimeSeconds  = 60
 	MaxLifetimeSeconds  = 7 * 24 * 60 * 60
-	DefaultLifetimeSecs = 24 * 60 * 60
-	MaxOpenPerOwner     = 10
-	tableName           = "agent_waits"
+
+	// MaxWebWatchLifetimeSeconds lets a wait on a web watch last as long as
+	// the watch can, which is up to ninety days; an hour more covers the
+	// watch's last check.
+	MaxWebWatchLifetimeSeconds = 90*24*60*60 + 60*60
+	DefaultLifetimeSecs        = 24 * 60 * 60
+	MaxOpenPerOwner            = 10
+	tableName                  = "agent_waits"
 )
 
 type Kind string
@@ -46,6 +51,7 @@ const (
 	KindHOSDriveBelow   = Kind("HOSDriveBelow")
 	KindPortalRun       = Kind("PortalRun")
 	KindDocumentRead    = Kind("DocumentRead")
+	KindWebWatch        = Kind("WebWatch")
 )
 
 func AllKinds() []Kind {
@@ -59,24 +65,35 @@ func AllKinds() []Kind {
 		KindHOSDriveBelow,
 		KindPortalRun,
 		KindDocumentRead,
+		KindWebWatch,
 	}
 }
 
 // AgentKinds are the kinds an agent asks for with wait_until. A portal run's
 // wait is set by the system when a person approves acting on a portal or a
-// portal read stops for a sign-in code, and a file's when the agent finds a
-// file the person attached still being read.
+// portal read stops for a sign-in code, a file's when the agent finds a file
+// the person attached still being read, and a web watch's when the agent sets
+// the watch.
 func AgentKinds() []Kind {
 	return slices.DeleteFunc(AllKinds(), func(kind Kind) bool {
-		return kind == KindPortalRun || kind == KindDocumentRead
+		return kind == KindPortalRun || kind == KindDocumentRead || kind == KindWebWatch
 	})
+}
+
+// MaxLifetime is the longest a wait of this kind may last.
+func (k Kind) MaxLifetime() int64 {
+	if k == KindWebWatch {
+		return MaxWebWatchLifetimeSeconds
+	}
+
+	return MaxLifetimeSeconds
 }
 
 func (k Kind) IsValid() bool {
 	switch k {
 	case KindTime, KindStopArrival, KindStopDeparture, KindReply,
 		KindAppointmentNear, KindFreeTimeEnding, KindHOSDriveBelow, KindPortalRun,
-		KindDocumentRead:
+		KindDocumentRead, KindWebWatch:
 		return true
 	default:
 		return false
@@ -129,6 +146,7 @@ type Condition struct {
 	DetentionOccurrenceID pulid.ID `json:"detentionOccurrenceId,omitempty"`
 	PortalRunID           pulid.ID `json:"portalRunId,omitempty"`
 	DocumentID            pulid.ID `json:"documentId,omitempty"`
+	WebWatchID            pulid.ID `json:"webWatchId,omitempty"`
 	MinutesBefore         int      `json:"minutesBefore,omitempty"`
 	DriveMinutesBelow     int      `json:"driveMinutesBelow,omitempty"`
 	// SeenInsideAt is when the truck was last seen inside the stop's geofence,
@@ -145,20 +163,20 @@ var (
 type Wait struct {
 	bun.BaseModel `bun:"table:agent_waits,alias:awt" json:"-"`
 
-	ID                pulid.ID          `json:"id"                    bun:"id,pk,type:VARCHAR(100)"`
-	OrganizationID    pulid.ID          `json:"organizationId"        bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID    pulid.ID          `json:"businessUnitId"        bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	Kind              Kind              `json:"kind"                  bun:"kind,type:VARCHAR(50),notnull"`
-	Condition         *Condition        `json:"condition"             bun:"condition,type:JSONB,notnull"`
-	WatchID           pulid.ID          `json:"watchId,omitempty"     bun:"watch_id,type:VARCHAR(100),nullzero"`
-	Description       string            `json:"description"           bun:"description,type:TEXT,notnull"`
-	Then              string            `json:"nextStep,omitempty"    bun:"then_note,type:TEXT,nullzero"`
-	AgentDefinitionID pulid.ID          `json:"agentDefinitionId"     bun:"agent_definition_id,type:VARCHAR(100),notnull"`
-	ThreadID          pulid.ID          `json:"threadId,omitempty"    bun:"thread_id,type:VARCHAR(100),nullzero"`
-	UserID            pulid.ID          `json:"userId,omitempty"      bun:"user_id,type:VARCHAR(100),nullzero"`
-	RunID             pulid.ID          `json:"runId,omitempty"       bun:"run_id,type:VARCHAR(100),nullzero"`
-	SubjectType       agent.SubjectType `json:"subjectType,omitempty" bun:"subject_type,type:VARCHAR(50),nullzero"`
-	SubjectID         pulid.ID          `json:"subjectId,omitempty"   bun:"subject_id,type:VARCHAR(100),nullzero"`
+	ID                pulid.ID          `json:"id"                      bun:"id,pk,type:VARCHAR(100)"`
+	OrganizationID    pulid.ID          `json:"organizationId"          bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	BusinessUnitID    pulid.ID          `json:"businessUnitId"          bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
+	Kind              Kind              `json:"kind"                    bun:"kind,type:VARCHAR(50),notnull"`
+	Condition         *Condition        `json:"condition"               bun:"condition,type:JSONB,notnull"`
+	WatchID           pulid.ID          `json:"watchId,omitempty"       bun:"watch_id,type:VARCHAR(100),nullzero"`
+	Description       string            `json:"description"             bun:"description,type:TEXT,notnull"`
+	Then              string            `json:"nextStep,omitempty"      bun:"then_note,type:TEXT,nullzero"`
+	AgentDefinitionID pulid.ID          `json:"agentDefinitionId"       bun:"agent_definition_id,type:VARCHAR(100),notnull"`
+	ThreadID          pulid.ID          `json:"threadId,omitempty"      bun:"thread_id,type:VARCHAR(100),nullzero"`
+	UserID            pulid.ID          `json:"userId,omitempty"        bun:"user_id,type:VARCHAR(100),nullzero"`
+	RunID             pulid.ID          `json:"runId,omitempty"         bun:"run_id,type:VARCHAR(100),nullzero"`
+	SubjectType       agent.SubjectType `json:"subjectType,omitempty"   bun:"subject_type,type:VARCHAR(50),nullzero"`
+	SubjectID         pulid.ID          `json:"subjectId,omitempty"     bun:"subject_id,type:VARCHAR(100),nullzero"`
 	// Taint is the outside content the work had read when it set the wait.
 	// The work picks up with it, so a wait never launders what was read.
 	Taint         *agent.RunTaint `json:"-"                       bun:"taint,type:JSONB,nullzero"`
@@ -180,6 +198,18 @@ type Wait struct {
 	// SignInCode is set on an open portal wait whose task is waiting on a
 	// sign-in code, when a conversation's waits are listed for its owner.
 	SignInCode *SignInCode `json:"signInCode,omitempty" bun:"-"`
+	// WebWatch is set on an open web watch wait, when a conversation's waits
+	// are listed for its owner.
+	WebWatch *WebWatchSummary `json:"webWatch,omitempty"   bun:"-"`
+}
+
+// WebWatchSummary is the watch a wait follows, as the conversation shows it:
+// read from the watch each time the waits are listed, never stored.
+type WebWatchSummary struct {
+	WatchID      pulid.ID `json:"watchId"`
+	Cadence      string   `json:"cadence"`
+	EndsAt       int64    `json:"endsAt"`
+	FindingCount int      `json:"findingCount"`
 }
 
 // SignInCode is what a person is asked for when the portal task a wait
@@ -230,6 +260,8 @@ func (c *Condition) watched(kind Kind) pulid.ID {
 		return c.PortalRunID
 	case KindDocumentRead:
 		return c.DocumentID
+	case KindWebWatch:
+		return c.WebWatchID
 	case KindTime:
 		return pulid.Nil
 	default:
@@ -309,6 +341,8 @@ func (c *Condition) validate(kind Kind, multiErr *errortypes.MultiError) {
 		require("portalRunId", c.PortalRunID)
 	case KindDocumentRead:
 		require("documentId", c.DocumentID)
+	case KindWebWatch:
+		require("webWatchId", c.WebWatchID)
 	case KindHOSDriveBelow:
 		require("workerId", c.WorkerID)
 		if c.DriveMinutesBelow < 1 || c.DriveMinutesBelow > MaxDriveMinutes {
@@ -322,9 +356,10 @@ func (c *Condition) validate(kind Kind, multiErr *errortypes.MultiError) {
 // waited for, what came of it, and what it said it would do then. It is the
 // system's account, not the person's words.
 // CarriesOutsideText reports whether what the wait picks up holds text written
-// outside the organization: a portal run's answer is the portal's words.
+// outside the organization: a portal run's answer is the portal's words, and
+// what a web watch found is the web's.
 func (w *Wait) CarriesOutsideText() bool {
-	return w.Kind == KindPortalRun && w.Outcome != ""
+	return (w.Kind == KindPortalRun || w.Kind == KindWebWatch) && w.Outcome != ""
 }
 
 func (w *Wait) ResumeNote() string {

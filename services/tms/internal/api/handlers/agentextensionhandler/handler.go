@@ -19,12 +19,14 @@ type Params struct {
 	fx.In
 
 	Service              *agentextensionservice.Service
+	Waits                agentextensionports.WebWatchWaits `optional:"true"`
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
 	service *agentextensionservice.Service
+	waits   agentextensionports.WebWatchWaits
 	eh      *helpers.ErrorHandler
 	pm      *middleware.PermissionMiddleware
 }
@@ -32,6 +34,7 @@ type Handler struct {
 func New(p Params) *Handler {
 	return &Handler{
 		service: p.Service,
+		waits:   p.Waits,
 		eh:      p.ErrorHandler,
 		pm:      p.PermissionMiddleware,
 	}
@@ -96,6 +99,25 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 			},
 		),
 		h.provideSignInCode,
+	)
+
+	watches := rg.Group("/agent-web-watches")
+	watches.GET("/", h.pm.RequirePermission(resource, permission.OpRead), h.listWebWatches)
+	watches.GET(
+		"/:watchID/findings/",
+		h.pm.RequirePermission(resource, permission.OpRead),
+		h.webWatchFindings,
+	)
+	watches.POST(
+		"/:watchID/stop/",
+		h.pm.RequireAnyPermission(
+			middleware.PermissionCheck{Resource: resource, Operation: permission.OpUpdate},
+			middleware.PermissionCheck{
+				Resource:  permission.ResourceWebResearch.String(),
+				Operation: permission.OpRead,
+			},
+		),
+		h.stopWebWatch,
 	)
 
 	analyses := rg.Group("/agent-analysis")

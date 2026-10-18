@@ -1,5 +1,5 @@
 {
-  "version": "sha256:a5f300b1c6b204ce8f8904370e39bd89ec1f85528aeac134ebbddc7b8dec0aba",
+  "version": "sha256:a8819044db2492d770fd5102918867fbc75c50885f7d4659d883f7c0cce8f2a9",
   "modules": [
     {
       "id": "home",
@@ -2481,6 +2481,10 @@
         "internet search",
         "Exa",
         "Parallel",
+        "web watch",
+        "watch the web",
+        "keep an eye on",
+        "monitors",
         "portal work",
         "browser automation",
         "Browser Use",
@@ -2665,6 +2669,28 @@
             "Under **Available to**, choose **Every agent** to give all agents, the assistant included, the web search tools, or **Agents you choose** and select the agents that get them.",
             "Optionally change **Search depth**, **Daily request limit**, the results per search and the sites agents never receive results from. Each change is saved as you make it.",
             "To move to the other vendor, open the one that is on and select **Turn off**, then turn on the other. Only one can be on at a time, and agents keep their web search tools, so no agent needs changing."
+          ]
+        },
+        {
+          "title": "Let agents watch the web",
+          "keywords": [
+            "web watch",
+            "watch the web",
+            "monitor",
+            "keep an eye on",
+            "tell me when",
+            "alert me",
+            "regulation change",
+            "carrier news",
+            "Exa monitors",
+            "stop watching"
+          ],
+          "steps": [
+            "Turn on **Web search** from Exa as in \"Let agents search the web\". Watching needs Exa; Parallel searches the web but cannot keep watching it.",
+            "Trenova must be reachable at a public https address, which an administrator sets as the web base URL, because Exa reports to it when a check finds something.",
+            "Optionally change how many web watches agents may keep running at once for the organization (10 by default). Each check Exa runs costs about $0.015.",
+            "When someone asks an agent to tell them when something happens, the agent sets a watch: what to search for, how often (every six hours, daily or weekly) and for how long (30 days unless asked, at most 90). It comes back to the conversation with each thing it finds.",
+            "**Web watches**, under the extension, lists every watch: open one to see what it searches for, how often it looks, until when, its checks and cost, and what each check found. Select **Stop watching** to end one."
           ]
         },
         {
@@ -9293,6 +9319,8 @@
             "web search",
             "search the web",
             "look it up online",
+            "/watch",
+            "watch the web",
             "quick question"
           ],
           "steps": [
@@ -9302,7 +9330,8 @@
             "Press Enter once every detail is filled in. Press Esc to send what you typed as plain text instead.",
             "/explain asks the agent to explain the page you came from.",
             "/browser, then what to do (such as \"check whether the 9am slot at Acme DC is still open\"), has the agent do it in a cloud browser on one of your organization's portal sites: it finds the site, looks the answer up there, and proposes any change to the portal for you to approve. If it answers without opening the portal, it is sent back to the browser once; when no site fits, it says so and names the sites there are. /browser is listed only when portal automation is turned on in [AI control](/admin/agent-control?tab=extensions), the agent you are talking to can use the portal tools, and you have permission to use them. Typed while the agent is still replying, it waits and goes as its own question once the reply ends.",
-            "/search, then what to look up (such as \"what changed in the FMCSA hours of service rules this year\"), has the agent answer from the public web: it searches, reads the pages that matter and links to each one it uses. If it answers without searching, it is sent back to the web once; when the web has nothing on it, it says so. What you type after /search leaves Trenova as the search, so leave out record numbers and private details. /search is listed only when web research is turned on in [AI control](/admin/agent-control?tab=extensions), the agent you are talking to can search the web, and you have permission to use it. Like /browser, typed while the agent is still replying, it waits and goes as its own question once the reply ends."
+            "/search, then what to look up (such as \"what changed in the FMCSA hours of service rules this year\"), has the agent answer from the public web: it searches, reads the pages that matter and links to each one it uses. If it answers without searching, it is sent back to the web once; when the web has nothing on it, it says so. What you type after /search leaves Trenova as the search, so leave out record numbers and private details. /search is listed only when web research is turned on in [AI control](/admin/agent-control?tab=extensions), the agent you are talking to can search the web, and you have permission to use it. Like /browser, typed while the agent is still replying, it waits and goes as its own question once the reply ends.",
+            "/watch, then what to keep an eye on (such as \"FMCSA finalizing the broker transparency rule\"), has the agent set a web watch: the web is searched on a schedule and the agent comes back to the conversation each time something new appears. If it answers without setting the watch, it is sent back once to set it. What you type after /watch leaves Trenova as the search, so leave out record numbers and private details. /watch is listed only when web search from Exa is turned on in [AI control](/admin/agent-control?tab=extensions), the agent you are talking to can set web watches, and you have permission to use web research."
           ]
         },
         {
@@ -9471,6 +9500,26 @@
             "Above the message box, a list shows what the agent is waiting on: the kind of wait (an arrival, a departure, a reply, an appointment, free time, drive time or a time), the agent's description, and when it is due or gives up.",
             "Nothing runs while it waits. When the event happens, the agent comes back to the conversation on its own, and a note marks the place: **Picked up after a wait**, or **Picked up after the wait ran out** if it gave up first.",
             "Select **Cancel the wait** (×) to drop one you no longer need."
+          ]
+        },
+        {
+          "title": "Have an agent keep watching the web for you",
+          "keywords": [
+            "web watch",
+            "watch the web",
+            "tell me when",
+            "let me know when",
+            "alert me",
+            "keep an eye on",
+            "regulation",
+            "carrier news",
+            "stop watching"
+          ],
+          "steps": [
+            "Ask the agent to tell you when something happens, such as \"let me know when FMCSA finalizes the broker transparency rule\", or type /watch and what to keep an eye on. Watching needs web search from Exa, turned on in [AI control](/admin/agent-control).",
+            "The agent sets a web watch that looks every six hours, daily or weekly for up to 90 days (30 unless you ask), and the wait above the message box shows **A web watch** with how often it looks, until when and what it has found so far.",
+            "Each time it finds pages it has not found before, the agent comes back to the conversation with what they say and their sources. What the pages say is read from outside your organization, so any change the agent then wants to make waits for you.",
+            "To end it, hover over the wait and select **Stop watching**, or ask the agent to stop it."
           ]
         },
         {
@@ -18738,6 +18787,15 @@
         "panelEntityId": "{id}"
       },
       "deskCard": true
+    },
+    {
+      "entity": "web_watch",
+      "label": "Web watch",
+      "path": "/admin/agent-control",
+      "params": {
+        "tab": "extensions",
+        "webWatch": "{id}"
+      }
     },
     {
       "entity": "worker",

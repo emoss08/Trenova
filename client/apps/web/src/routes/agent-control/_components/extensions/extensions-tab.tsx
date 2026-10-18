@@ -12,9 +12,11 @@ import {
   ANALYSIS_RUN_PARAM,
   EXTENSION_OPEN_PARAM,
   PORTAL_RUN_PARAM,
+  WEB_WATCH_PARAM,
   analysisRunParser,
   extensionOpenParser,
   portalRunParser,
+  webWatchParser,
 } from "../../ai-control-tabs";
 import { Search, useSlashFocus } from "../kit/controls";
 import { Ic } from "../kit/ic";
@@ -30,6 +32,7 @@ import {
   extensionState,
   filterExtensions,
   sortExtensions,
+  webWatchServer,
   type ExtensionSort,
 } from "./extension-roster";
 import { ExtensionMark, ExtensionStateTag, ExtensionTile } from "./extension-tile";
@@ -67,18 +70,21 @@ export default function ExtensionsTab() {
       [EXTENSION_OPEN_PARAM]: openType,
       [PORTAL_RUN_PARAM]: portalRun,
       [ANALYSIS_RUN_PARAM]: analysisRun,
+      [WEB_WATCH_PARAM]: webWatch,
     },
     setOpenState,
   ] = useQueryStates({
     [EXTENSION_OPEN_PARAM]: extensionOpenParser,
     [PORTAL_RUN_PARAM]: portalRunParser,
     [ANALYSIS_RUN_PARAM]: analysisRunParser,
+    [WEB_WATCH_PARAM]: webWatchParser,
   });
   const setOpenType = (type: string | null) =>
     setOpenState({
       [EXTENSION_OPEN_PARAM]: type,
       [PORTAL_RUN_PARAM]: null,
       [ANALYSIS_RUN_PARAM]: null,
+      [WEB_WATCH_PARAM]: null,
     });
   const [now] = useState(() => Math.floor(Date.now() / 1000));
 
@@ -118,7 +124,8 @@ export default function ExtensionsTab() {
       : null;
   const open =
     items.find((item) => item.type === openType) ??
-    (linkedCapability ? capabilityServer(items, linkedCapability) : null);
+    (linkedCapability ? capabilityServer(items, linkedCapability) : null) ??
+    (webWatch ? webWatchServer(items) : null);
   const control = useExtensionControl(open);
   const demoAgent =
     deskAgents.find((agent) => agent.enabled && agent.toolNames.length > 0)?.name ??

@@ -258,6 +258,8 @@ func SharedOptions() fx.Option {
 			agentextensionrepository.NewPortalSiteRepository,
 			agentextensionrepository.NewPortalRunRepository,
 			agentextensionrepository.NewAnalysisRunRepository,
+			agentextensionrepository.NewWebWatchRepository,
+			agentextensionrepository.NewWebWatchFindingRepository,
 			agentrunservice.NewValidator,
 			retrievalservice.New,
 			retrievalservice.AsIndexer,

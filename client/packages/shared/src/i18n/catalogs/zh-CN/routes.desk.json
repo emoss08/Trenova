@@ -1836,7 +1836,6 @@
   "{0, plural, one {# failed to send} other {# failed to send}}": "{0, plural, other {# 条发送失败}}",
   "{0, plural, one {# failure reason} other {# failure reasons}}": "{0, plural, other {# 个失败原因}}",
   "{0, plural, one {# failure} other {# failures}}": "{0, plural, one {# 项失误} other {# 项失误}}",
-  "{0, plural, one {# finding} other {# findings}}": "{0, plural, one {# 项发现} other {# 项发现}}",
   "{0, plural, one {# flag to review} other {# flags to review}}": "{0, plural, other {# 个待审核标记}}",
   "{0, plural, one {# flag} other {# flags}}": "{0, plural, other {# 个标记}}",
   "{0, plural, one {# formula template} other {# formula templates}}": "{0, plural, other {# 个公式模板}}",

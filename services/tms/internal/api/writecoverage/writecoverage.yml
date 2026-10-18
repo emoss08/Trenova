@@ -277,6 +277,11 @@ writes:
   "POST /api/v1/agent-portals/runs/:runID/sign-in-code/":
     exempt: security
     reason: "Relays a sign-in code a portal sent the person to the browser signing in for them; a second factor is given only by the person who received it, and never passes through an agent."
+  "POST /api/v1/agent-web-watches/:watchID/stop/":
+    tools: [stop_web_watch]
+  "POST /api/v1/webhooks/agent-extensions/web-watches/:orgID/:buID/:watchID/":
+    exempt: infrastructure
+    reason: "A research vendor reporting a web watch's run, signed with the watch's secret; it only asks the watch to be checked now, and is not a person's decision."
 
   # agentquality
   "mutation createAgentEvalCase":

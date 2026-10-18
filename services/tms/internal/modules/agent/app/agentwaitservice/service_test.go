@@ -216,9 +216,16 @@ type signal struct {
 type fakeWorkflows struct {
 	kernelports.WorkflowStarter
 
-	started  []string
-	signals  []signal
-	signalFn func(workflowID string) error
+	started   []string
+	signals   []signal
+	cancelled []string
+	signalFn  func(workflowID string) error
+}
+
+func (f *fakeWorkflows) CancelWorkflow(_ context.Context, workflowID, _ string) error {
+	f.cancelled = append(f.cancelled, workflowID)
+
+	return nil
 }
 
 func (f *fakeWorkflows) StartWorkflow(

@@ -6,7 +6,12 @@ contributes agent tools and nothing else. Each extension runs on the organizatio
 with its vendor, so its credentials, limits and cost belong to the organization.
 
 An extension provides a **capability**, and the capability owns the tools. Web research
-(`web_search`, `web_read`) is the first capability; Exa and Parallel each provide it. Portal
+(`web_search`, `web_read`, and the web watch tools `watch_web`, `list_web_watches` and
+`stop_web_watch`) is the first capability; Exa and Parallel each provide it, and
+[agent-web-watching.md](agent-web-watching.md) describes the watches. A vendor that cannot
+serve one of its capability's tools lists it in its spec's `Unsupported` (Parallel cannot
+watch), and that tool is neither offered nor granted while the vendor serves the capability.
+Portal
 automation (`list_portal_sites`, `read_portal`, `act_on_portal`) is the second; Browser Use
 provides it, and [agent-portal-automation.md](agent-portal-automation.md) describes it. Data
 analysis (`analyze_data`) is the third; E2B provides it, and
@@ -28,7 +33,7 @@ and every tool call agree on which vendor answers.
 | Marketplace, settings, test, metering, web research, portal sites and tasks, analyses | `internal/modules/agent/app/agentextensionservice/` |
 | REST API (`/agent-extensions/...`) | `internal/api/handlers/agentextensionhandler/` |
 | Vendor connectors | `internal/infrastructure/agentextension/<vendor>connector/` over `shared/<vendor>`, registered with `connectorkit.Provide` |
-| Tools | `internal/modules/agent/app/agentquerytoolservice/` (`web_tools.go`, `portal_tools.go`, `analysis_tool.go`) for reads, `internal/modules/agent/app/agenttools/portaltools/` for `act_on_portal` |
+| Tools | `internal/modules/agent/app/agentquerytoolservice/` (`web_tools.go`, `web_watch_tools.go`, `portal_tools.go`, `analysis_tool.go`) for reads, `internal/modules/agent/app/agenttools/portaltools/` for `act_on_portal`, `agenttools/webwatchtools/` for `watch_web` and `stop_web_watch` |
 | Runtime gating and the approval rule | `internal/modules/agent/app/agentruntime/extensions.go` |
 | Extension commands (`/browser`, `/search`) | `agentextension/command.go`, `agentruntime/command.go`, `assistantservice/commands.go`, `EXTENSION_COMMANDS` in the client's `composer-commands.ts` and `use-desk-extension-commands.ts` |
 | Marketplace UI | `client/apps/web/src/routes/agent-control/_components/extensions/` |
@@ -59,17 +64,20 @@ Tool use is authorized on the capability's own resource (`web_research` read; `p
 read to look and update to act; `data_analysis` read). Managing extensions, and the portal sites and task history,
 needs `agent_extension` read and update.
 
-## Extension commands: /browser and /search
+## Extension commands: /browser, /search and /watch
 
 A person can hold a Desk turn to one extension by starting the message with its slash
 command: `/browser` works the request on the organization's portal sites (portal automation),
-`/search` answers it from the public web (web research). Both are entries in one registry, and
-nothing on either side names a particular command outside it.
+`/search` answers it from the public web and `/watch` sets a web watch on it (both web
+research; see [agent-web-watching.md](agent-web-watching.md)). All three are entries in one
+registry, and nothing on either side names a particular command outside it.
 
 - **The registry.** `agentextension.AllCommands` lists the commands and `CommandSpecFor` gives
   each one's capability, the tools of which the turn needs at least one to honour it
-  (`Requires`: `read_portal` or `act_on_portal` for `/browser`, `web_search` for `/search`), and
-  the words a person is refused with (`MissingTaskReason`, `DirectedReason`,
+  (`Requires`: `read_portal` or `act_on_portal` for `/browser`, `web_search` for `/search`,
+  `watch_web` for `/watch`), the tools whose call honours it (`Honours`, left empty for any of
+  the capability's tools; `/watch` names the watch tools, since a search answers now and the
+  person asked to hear later), and the words a person is refused with (`MissingTaskReason`, `DirectedReason`,
   `UnavailableReason`, harvested for translation by `shared/cmd/i18n-extract`).
   `ParseCommand` reads a message the same way for every command: the command alone or
   followed by whitespace, in any case, at the start of the message.
@@ -82,7 +90,8 @@ nothing on either side names a particular command outside it.
   for all of them. The client keeps only the names it has a command for
   (`extensionCommandsNamed`), so a newer server never shows a command the client cannot fill.
   Turning an extension on or off invalidates the assistant queries, so a command appears or goes
-  at once; with no extension on, no command is listed.
+  at once; with no extension on, no command is listed. A tool its vendor cannot serve is never
+  offered (`Spec.Unsupported`), so `/watch` is not listed while Parallel serves web research.
 - **Checked again when sent.** `PrepareTurn` refuses a command whose agent cannot honour it, a
   command with nothing after it, and one handed to another agent (`directedAgentId`): a directed
   task runs the other agent without the conversation's own model, so nothing would hold it.
@@ -90,11 +99,12 @@ nothing on either side names a particular command outside it.
   so the workflow's turn sees it (a state from before carries `browser: true`, read as
   `/browser`). `OpenTurn` loads the command's tools the person may use even on a turn whose
   tools are narrowed, and sends the model the command's directive with the person's words in
-  place of the command. A reply that ends the turn without calling any of the capability's tools,
-  and without asking the person a question, is sent back once with the command's correction
-  (`holdToCommand`, behind the command's own change id: `agent-loop-browser-guard`,
-  `agent-loop-search-guard`); a second such reply stands, so a request the extension cannot
-  serve still ends in an answer. Another extension's tools do not count.
+  place of the command. A reply that ends the turn without calling a tool that honours the
+  command (`CommandSpec.HonouredByCall`), and without asking the person a question, is sent back
+  once with the command's correction (`holdToCommand`, behind the command's own change id:
+  `agent-loop-browser-guard`, `agent-loop-search-guard`, `agent-loop-watch-guard`); a second
+  such reply stands, so a request the extension cannot serve still ends in an answer. Another
+  extension's tools do not count, nor do its own capability's tools that do not honour it.
 - The words are sent as typed, command and all, so the conversation keeps them as written and a
   queued or retried message is still the same request. Typed while a reply is under way, a
   command is queued rather than steered (`isExtensionRequest`): a steer is more words for the
@@ -103,8 +113,9 @@ nothing on either side names a particular command outside it.
 ### Adding an extension command
 
 1. Add the command to `AllCommands` and its spec to `commands` in
-   `agentextension/command.go`. `TestEveryCommandIsServedByItsCapability` checks that its
-   required tools belong to its capability and that each refusal is written.
+   `agentextension/command.go`, naming `Honours` when only some of its capability's tools
+   carry it out. `TestEveryCommandIsServedByItsCapability` checks that its required and
+   honouring tools belong to its capability and that each refusal is written.
 2. Add its directive, correction, retry reason and a new change id to `commandHolds` in
    `agentruntime/command.go`, and list the change id under "Waiting on in-flight executions" in
    [agent-runtime.md](agent-runtime.md). `TestEveryCommandHasAHold` fails until it has one, and
@@ -241,7 +252,9 @@ connector cannot do what the capability needs.
    A vendor that does not report cost computes it from its published prices.
 4. Add its catalog `definition` in `agentextensionservice/catalog.go`.
 5. Bundle the vendor's mark in `client/packages/shared/src/components/ui/logos/` from Brandfetch
-   and register its domain, so the marketplace needs no network call to draw it.
+   and register its domain, so the marketplace needs no network call to draw it. Use the SVG
+   Brandfetch lists; a vendor it has only as an image (E2B's icon) is bundled as that image,
+   unmodified, and drawn with an `img`.
 6. Add its strings to the translation catalogs (`task i18n`) and describe it in the AI control
    product guide.
 

@@ -65,6 +65,21 @@ var capabilityDefinitions = map[agentextension.Capability]capabilityDefinition{
 				Label:       "Read a web page",
 				Description: "Reads the full text of a page a search returned.",
 			},
+			{
+				Name:        agentextension.ToolWatchWeb,
+				Label:       "Watch the web",
+				Description: "Keeps searching on a schedule and brings back only what is new, until the watch ends.",
+			},
+			{
+				Name:        agentextension.ToolListWebWatches,
+				Label:       "List web watches",
+				Description: "Lists the watches set for the person and what each has found.",
+			},
+			{
+				Name:        agentextension.ToolStopWebWatch,
+				Label:       "Stop a web watch",
+				Description: "Stops a watch the person no longer needs, so it searches and bills no more.",
+			},
 		},
 	},
 }
@@ -111,11 +126,14 @@ var definitions = []definition{
 			"Ranks government sites (.gov, .gc.ca, .gob.mx) first and marks them official",
 			"Reads a full page the search returned, in parts for long documents",
 			"Answers cite the page and its publication date",
+			"Keeps watching the web for what a person asked to hear about, and brings back only what is new",
 		},
 		DataNotice: "Search queries and the addresses of pages agents read are sent to Exa. " +
 			"Queries that contain Trenova record IDs, email addresses or phone numbers are " +
-			"refused before they leave Trenova. After an agent reads web content, any change " +
-			"it wants to make for the rest of that turn waits for a person's approval.",
+			"refused before they leave Trenova. A web watch sends its search and what it " +
+			"watches for to Exa, which runs it on a schedule until the watch ends. After an " +
+			"agent reads web content, any change it wants to make for the rest of that turn " +
+			"waits for a person's approval.",
 		Featured:   true,
 		SortOrder:  10,
 		ReleasedAt: 1_790_121_600,

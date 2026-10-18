@@ -666,6 +666,7 @@ func (r *Router) setupPublicRoutes(parent *gin.RouterGroup) {
 	r.emailHandler.RegisterPublicRoutes(rg)
 	r.telematicsHandler.RegisterPublicRoutes(rg)
 	r.accountingWebhookHandler.RegisterPublicRoutes(rg)
+	r.agentExtensionHandler.RegisterPublicRoutes(rg)
 	r.invoiceHandler.RegisterPublicRoutes(rg)
 	r.ediHandler.RegisterPublicRoutes(rg)
 	r.inboundHandler.RegisterPublicRoutes(rg)

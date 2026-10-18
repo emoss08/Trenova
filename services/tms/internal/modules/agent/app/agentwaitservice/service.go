@@ -82,6 +82,7 @@ type Params struct {
 	Workflows     kernelports.WorkflowStarter
 	Realtime      agentports.RealtimeService                     `optional:"true"`
 	PortalRuns    agentextensionports.PortalRunRepository        `optional:"true"`
+	WebWatches    agentextensionports.WebWatchRepository         `optional:"true"`
 	Documents     documentports.DocumentRepository               `optional:"true"`
 	Contents      documentcontentports.DocumentContentRepository `optional:"true"`
 }
@@ -139,6 +140,7 @@ func New(p Params) *Service { //nolint:gocritic // fx param structs are passed b
 			customers:   p.Customers,
 			subjects:    p.Subjects,
 			portalRuns:  p.PortalRuns,
+			webWatches:  p.WebWatches,
 			documents:   p.Documents,
 			contents:    p.Contents,
 		},
@@ -265,7 +267,7 @@ func expiry(wait *agentwait.Wait, now, lifetime int64) int64 {
 	if lifetime <= 0 {
 		lifetime = agentwait.DefaultLifetimeSecs
 	}
-	lifetime = min(max(lifetime, agentwait.MinLifetimeSeconds), agentwait.MaxLifetimeSeconds)
+	lifetime = min(max(lifetime, agentwait.MinLifetimeSeconds), wait.Kind.MaxLifetime())
 	expires := now + lifetime
 	if wait.DueAt != nil {
 		expires = max(expires, *wait.DueAt+expiryAfterTime)
@@ -324,11 +326,28 @@ func (s *Service) Cancel(
 	if !wait.Status.Open() {
 		return wait, nil
 	}
+	if wait.Kind == agentwait.KindWebWatch {
+		return nil, errortypes.NewBusinessError(
+			"This wait ends with its web watch. Stop the watch instead: stop_web_watch, or " +
+				"Stop watching on the wait.",
+		)
+	}
 
 	outcome := "Cancelled."
 	if req.By != "" {
 		outcome = "Cancelled by " + req.By + "."
 	}
+
+	return s.cancelWait(ctx, wait, outcome)
+}
+
+// cancelWait closes an open wait without picking the work up and stops its
+// workflow.
+func (s *Service) cancelWait(
+	ctx context.Context,
+	wait *agentwait.Wait,
+	outcome string,
+) (*agentwait.Wait, error) {
 	closed, changed, err := s.waits.Resolve(ctx, &agentwaitports.ResolveAgentWaitRequest{
 		ID:         wait.ID,
 		TenantInfo: tenantOf(wait),
@@ -371,6 +390,7 @@ func (s *Service) List(
 		return nil, err
 	}
 	s.facts.attachSignInCodes(ctx, req.TenantInfo, waits)
+	s.facts.attachWebWatches(ctx, req.TenantInfo, waits)
 
 	return waits, nil
 }

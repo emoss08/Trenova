@@ -11,10 +11,11 @@ type Command string
 const (
 	CommandBrowser = Command("browser")
 	CommandSearch  = Command("search")
+	CommandWatch   = Command("watch")
 )
 
 func AllCommands() []Command {
-	return []Command{CommandBrowser, CommandSearch}
+	return []Command{CommandBrowser, CommandSearch, CommandWatch}
 }
 
 func (c Command) String() string { return string(c) }
@@ -26,9 +27,17 @@ func (c Command) IsValid() bool {
 	return ok
 }
 
+// CommandSpec is one extension command: the capability it holds a turn to,
+// the tools of which the turn needs at least one to honour it (Requires),
+// and the words a person is refused with.
 type CommandSpec struct {
-	Capability        Capability
-	Requires          []string
+	Capability Capability
+	Requires   []string
+	// Honours are the tools whose call keeps a turn to the command. Left
+	// empty, any of the capability's tools does; a command that is one part
+	// of its capability, such as /watch of web research, names its own, so
+	// a search alone does not stand in for setting a watch.
+	Honours           []string
 	MissingTaskReason string
 	DirectedReason    string
 	UnavailableReason string
@@ -38,6 +47,16 @@ func (s CommandSpec) HonouredBy(tools []string) bool {
 	return slices.ContainsFunc(s.Requires, func(name string) bool {
 		return slices.Contains(tools, name)
 	})
+}
+
+// HonouredByCall says a call to the tool keeps the turn to the command.
+func (s CommandSpec) HonouredByCall(name string) bool {
+	if len(s.Honours) > 0 {
+		return slices.Contains(s.Honours, name)
+	}
+	used, ok := CapabilityForTool(name)
+
+	return ok && used == s.Capability
 }
 
 func (s CommandSpec) ToolsIn(names []string) []string {
@@ -70,6 +89,17 @@ var commands = map[Command]CommandSpec{
 			"send it without naming another",
 		UnavailableReason: "{0} cannot search the web. Web research has to be turned on, the " +
 			"agent has to hold its web tools, and you need permission to use them.",
+	},
+	CommandWatch: {
+		Capability:        CapabilityWebResearch,
+		Requires:          []string{ToolWatchWeb},
+		Honours:           WebWatchTools,
+		MissingTaskReason: "Say what to keep watching the web for after /watch",
+		DirectedReason: "A web watch is set by this conversation's agent; " +
+			"send it without naming another",
+		UnavailableReason: "{0} cannot watch the web. Web research from a vendor that watches " +
+			"the web has to be turned on, the agent has to hold its web watch tools, and you " +
+			"need permission to use them.",
 	},
 }
 

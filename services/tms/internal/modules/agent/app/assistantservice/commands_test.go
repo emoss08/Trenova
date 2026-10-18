@@ -72,6 +72,17 @@ func newCommandService(
 			ToolName: agentextension.ToolWebRead,
 			Resource: permission.ResourceWebResearch,
 		},
+		&agenttest.StubQueryTool{
+			ToolName: agentextension.ToolListWebWatches,
+			Resource: permission.ResourceWebResearch,
+		},
+	}}
+	action := &stubActionRegistry{Tools: []agentports.AgentTool{
+		&agenttest.StubActionTool{
+			ToolName:  agentextension.ToolWatchWeb,
+			Resource:  permission.ResourceWebResearch,
+			Operation: permission.OpRead,
+		},
 	}}
 	svc, conversations := newConversationService(completion, definition)
 	svc.guard = agentguard.New(agentguard.Params{Logger: zap.NewNop(), Completion: completion})
@@ -79,7 +90,7 @@ func newCommandService(
 		Logger:      zap.NewNop(),
 		Completion:  completion,
 		QueryTools:  query,
-		ActionTools: &stubActionRegistry{},
+		ActionTools: action,
 		Permissions: &agenttest.StubPermissions{},
 		Extensions:  gate,
 	})
@@ -106,6 +117,12 @@ var commandCases = []commandCase{
 		capability: agentextension.CapabilityWebResearch,
 		tools:      []string{agentextension.ToolWebSearch, agentextension.ToolWebRead},
 		ask:        "/search FMCSA hours of service changes this year",
+	},
+	{
+		command:    agentextension.CommandWatch,
+		capability: agentextension.CapabilityWebResearch,
+		tools:      []string{agentextension.ToolWatchWeb, agentextension.ToolListWebWatches},
+		ask:        "/watch FMCSA finalizing the broker transparency rule",
 	},
 }
 
@@ -271,19 +288,36 @@ func TestCommandAvailability_ListsTheCommandsTheAgentCanHonour(t *testing.T) {
 			name:       "the agent holds both extensions' tools",
 			gate:       extensionsOn(agentextension.AvailabilitySelectedAgents, both...),
 			definition: testDefinition(agentextension.ToolReadPortal, agentextension.ToolWebSearch),
-			want:       []agentextension.Command{agentextension.CommandBrowser, agentextension.CommandSearch},
+			want: []agentextension.Command{
+				agentextension.CommandBrowser,
+				agentextension.CommandSearch,
+			},
 		},
 		{
 			name:       "every agent is given them",
 			gate:       extensionsOn(agentextension.AvailabilityAllAgents, both...),
 			definition: testDefinition(),
-			want:       []agentextension.Command{agentextension.CommandBrowser, agentextension.CommandSearch},
+			want: []agentextension.Command{
+				agentextension.CommandBrowser, agentextension.CommandSearch,
+				agentextension.CommandWatch,
+			},
 		},
 		{
-			name:       "only web research is on",
-			gate:       extensionsOn(agentextension.AvailabilityAllAgents, agentextension.CapabilityWebResearch),
+			name:       "the agent holds the watch tool",
+			gate:       extensionsOn(agentextension.AvailabilitySelectedAgents, both...),
+			definition: testDefinition(agentextension.ToolWatchWeb),
+			want:       []agentextension.Command{agentextension.CommandWatch},
+		},
+		{
+			name: "only web research is on",
+			gate: extensionsOn(
+				agentextension.AvailabilityAllAgents,
+				agentextension.CapabilityWebResearch,
+			),
 			definition: testDefinition(agentextension.ToolReadPortal),
-			want:       []agentextension.Command{agentextension.CommandSearch},
+			want: []agentextension.Command{
+				agentextension.CommandSearch, agentextension.CommandWatch,
+			},
 		},
 		{
 			name:       "the agent holds only the page reader",

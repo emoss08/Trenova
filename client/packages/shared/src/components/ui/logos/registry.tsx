@@ -6,6 +6,7 @@ import { BedrockLogo } from "./bedrock";
 import { BrowserUseLogo } from "./browser-use";
 import { DeepInfraLogo } from "./deepinfra";
 import { DeepSeekLogo } from "./deepseek";
+import { E2BLogo } from "./e2b";
 import { ExaLogo } from "./exa";
 import { FireworksLogo } from "./fireworks";
 import { GeminiLogo } from "./gemini";
@@ -33,7 +34,9 @@ export type BrandMark = ComponentType<{ className?: string }>;
  * list of endpoints and nothing else. A vendor whose mark is black (Anthropic,
  * OpenAI, Ollama, Groq, LM Studio) draws it in the text colour, so it stays
  * legible in either theme. The coloured marks are taken from LobeHub's icon
- * set (@lobehub/icons-static-svg 1.95.1, MIT, Copyright (c) LobeHub).
+ * set (@lobehub/icons-static-svg 1.95.1, MIT, Copyright (c) LobeHub). The
+ * extension vendors' marks come from Brandfetch; E2B publishes only a raster
+ * icon there, so its mark is that image.
  */
 const MARKS_BY_PRESET: Record<string, BrandMark> = {
   anthropic: AnthropicLogo,
@@ -82,6 +85,7 @@ const MARKS_BY_DOMAIN: Record<string, BrandMark> = {
   "exa.ai": ExaLogo,
   "parallel.ai": ParallelLogo,
   "browser-use.com": BrowserUseLogo,
+  "e2b.dev": E2BLogo,
 };
 
 export type BrandMarkLookup = {

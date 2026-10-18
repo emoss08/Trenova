@@ -1,7 +1,6 @@
 {
   "A schedule carries at most {0} invoices. Select fewer and send the rest on another schedule.": "Una relación incluye {0} facturas como máximo. Seleccione menos y envíe el resto en otra relación.",
   "Chargebacks due": "Devoluciones próximas",
-  "Checks": "Verificaciones",
   "Choose the factor that sent the report": "Elija la empresa de factoraje que envió el informe",
   "Emailed to {0} at {1}, with each invoice's packet attached.": "Se envía por correo electrónico a {0} a {1}, con el paquete de cada factura adjunto.",
   "Emailed to {0} at {1}, without the invoice packets.": "Se envía por correo electrónico a {0} a {1}, sin los paquetes de facturas.",

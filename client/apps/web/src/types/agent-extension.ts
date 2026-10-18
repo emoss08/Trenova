@@ -180,6 +180,69 @@ export const portalRunsResponseSchema = z.object({
   nextBefore: z.number().int(),
 });
 
+export const webWatchStatusSchema = z.enum(["Active", "Ended", "Stopped", "Failed"]);
+export const webWatchCadenceSchema = z.enum(["SixHours", "Daily", "Weekly"]);
+
+export const webWatchSchema = z.object({
+  id: z.string(),
+  extensionType: z.string(),
+  query: z.string(),
+  purpose: z.string(),
+  sites: z
+    .array(z.string())
+    .nullish()
+    .transform((value) => value ?? []),
+  cadence: webWatchCadenceSchema,
+  status: webWatchStatusSchema,
+  endsAt: z.number().int(),
+  lastCheckedAt: z.number().int().nullish(),
+  lastRunAt: z.number().int().nullish(),
+  runCount: z.number().int(),
+  findingCount: z.number().int(),
+  costUsd: z.union([z.string(), z.number()]).transform((value) => Number(value) || 0),
+  failure: z.string(),
+  agentDefinitionId: optionalIdSchema,
+  agentRunId: optionalIdSchema,
+  threadId: optionalIdSchema,
+  requestedById: optionalIdSchema,
+  stoppedById: optionalIdSchema,
+  finishedAt: z.number().int().nullish(),
+  createdAt: z.number().int(),
+});
+
+export const webWatchesResponseSchema = z.object({
+  items: z
+    .array(webWatchSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+  nextBefore: z.number().int(),
+});
+
+export const webWatchResultSchema = z.object({
+  title: z.string(),
+  url: z.string(),
+  publishedDate: z.string().optional().default(""),
+  excerpt: z.string().optional().default(""),
+});
+
+export const webWatchFindingSchema = z.object({
+  id: z.string(),
+  summary: z.string(),
+  results: z
+    .array(webWatchResultSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+  foundAt: z.number().int(),
+  deliveredAt: z.number().int().nullish(),
+});
+
+export const webWatchFindingsResponseSchema = z.object({
+  items: z
+    .array(webWatchFindingSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+});
+
 export const analysisRunStatusSchema = z.enum([
   "Running",
   "Succeeded",
@@ -366,6 +429,12 @@ export type PortalLiveView = z.infer<typeof portalLiveViewSchema>;
 export type SavePortalSiteRequest = z.infer<typeof savePortalSiteRequestSchema>;
 export type PortalSiteFormValues = z.infer<typeof portalSiteFormSchema>;
 export type PortalSignInCodeFormValues = z.infer<typeof portalSignInCodeFormSchema>;
+export type WebWatch = z.infer<typeof webWatchSchema>;
+export type WebWatchStatus = z.infer<typeof webWatchStatusSchema>;
+export type WebWatchCadence = z.infer<typeof webWatchCadenceSchema>;
+export type WebWatchFinding = z.infer<typeof webWatchFindingSchema>;
+export type WebWatchesResponse = z.infer<typeof webWatchesResponseSchema>;
+export type WebWatchFindingsResponse = z.infer<typeof webWatchFindingsResponseSchema>;
 export type AnalysisRun = z.infer<typeof analysisRunSchema>;
 export type AnalysisValueKind = z.infer<typeof analysisValueKindSchema>;
 export type AnalysisTable = z.infer<typeof analysisTableSchema>;

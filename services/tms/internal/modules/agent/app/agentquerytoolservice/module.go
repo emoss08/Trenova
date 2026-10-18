@@ -167,6 +167,7 @@ func coreToolProviders() []any {
 		newWebReadTool,
 		newListPortalSitesTool,
 		newReadPortalTool,
+		newListWebWatchesTool,
 		provideAnalyzeDataTool,
 	}
 }

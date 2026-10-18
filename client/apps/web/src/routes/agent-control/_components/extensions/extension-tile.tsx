@@ -15,13 +15,7 @@ export function isNewExtension(item: AgentExtensionCatalogItem, now: number): bo
 }
 
 /** On, waiting for a key, or new; nothing for an extension that is simply off. */
-export function ExtensionStateTag({
-  item,
-  now,
-}: {
-  item: AgentExtensionCatalogItem;
-  now: number;
-}) {
+export function ExtensionStateTag({ item, now }: { item: AgentExtensionCatalogItem; now: number }) {
   const t = useT();
   const state = extensionState(item);
   if (state === "on") {

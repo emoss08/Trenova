@@ -398,7 +398,7 @@ func TestCatalogListsExaTurnedOffUntilSetUp(t *testing.T) {
 	assert.False(t, item.Configured)
 	assert.Equal(t, agentextension.AvailabilitySelectedAgents, item.Availability)
 	assert.Equal(t, agentextension.DefaultDailyRequestLimit, item.DailyRequestLimit)
-	assert.Len(t, item.Tools, 2)
+	assert.Len(t, item.Tools, 5, "Exa searches, reads and watches the web")
 	assert.Equal(t, agentextension.CapabilityWebResearch, item.Capability)
 	assert.Equal(t, "Web research", item.CapabilityLabel)
 	assert.Empty(t, item.CapabilityHeldBy)
@@ -412,6 +412,14 @@ func TestCatalogListsExaTurnedOffUntilSetUp(t *testing.T) {
 	for idx := range catalog.Items {
 		byType[catalog.Items[idx].Type] = catalog.Items[idx]
 	}
+	parallel := byType[agentextension.TypeParallel]
+	parallelTools := make([]string, 0, len(parallel.Tools))
+	for _, tool := range parallel.Tools {
+		parallelTools = append(parallelTools, tool.Name)
+	}
+	assert.Equal(t, []string{agentextension.ToolWebSearch, agentextension.ToolWebRead},
+		parallelTools, "a vendor that cannot watch lists no watch tools")
+
 	portal := byType[agentextension.TypeBrowserUse]
 	assert.Equal(t, agentextension.CapabilityPortalAutomation, portal.Capability)
 	assert.Equal(t, agentextension.DefaultPortalDailyTasks, portal.DailyRequestLimit)
