@@ -1412,6 +1412,7 @@ export const agentWaitKindSchema = z.enum([
   "HOSDriveBelow",
   "PortalRun",
   "DocumentRead",
+  "WebWatch",
 ]);
 
 export const agentWaitStatusSchema = z.enum(["Waiting", "Met", "TimedOut", "Cancelled", "Failed"]);
@@ -1431,6 +1432,14 @@ export const agentWaitSignInCodeSchema = z.object({
   attempts: z.number().int().default(0),
 });
 
+/** The web watch a wait follows, read from the watch with the waits. */
+export const agentWaitWebWatchSchema = z.object({
+  watchId: z.string(),
+  cadence: z.string().default("Daily"),
+  endsAt: z.number(),
+  findingCount: z.number().int().default(0),
+});
+
 export const agentWaitSchema = z.object({
   id: z.string(),
   kind: agentWaitKindSchema,
@@ -1446,6 +1455,7 @@ export const agentWaitSchema = z.object({
   resumedTurnId: z.string().optional().default(""),
   createdAt: z.number().optional().default(0),
   signInCode: agentWaitSignInCodeSchema.nullish(),
+  webWatch: agentWaitWebWatchSchema.nullish(),
 });
 
 export const agentWaitListSchema = z.object({
@@ -1457,6 +1467,7 @@ export const agentWaitListSchema = z.object({
 
 export type AgentWait = z.infer<typeof agentWaitSchema>;
 export type AgentWaitSignInCode = z.infer<typeof agentWaitSignInCodeSchema>;
+export type AgentWaitWebWatch = z.infer<typeof agentWaitWebWatchSchema>;
 export type AgentWaitKind = z.infer<typeof agentWaitKindSchema>;
 export type AgentWaitList = z.infer<typeof agentWaitListSchema>;
 

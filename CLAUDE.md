@@ -404,6 +404,12 @@ into the same browser, Trenova's own address refused as a site, actions run from
 [docs/engineering/agent-portal-automation.md](docs/engineering/agent-portal-automation.md).
 Read it before changing `portal_tasks.go`, `portal_sites.go`, `portaljobs`, `portaltools` or
 `browseruseconnector`.
+Web watching (`watch_web`, `list_web_watches`, `stop_web_watch` and the Desk's `/watch` on Exa Monitors: a scheduled
+search that hands back only what is new, followed by `WebWatchWorkflow`, delivered through a
+`WebWatch` wait and quoted as outside text, the signed webhook only asking for a check) is in
+[docs/engineering/agent-web-watching.md](docs/engineering/agent-web-watching.md). Read it before
+changing `web_watches.go`, `webwatchtools`, `webwatchjobs`, `agentwaitservice/webwatch.go` or
+`shared/exa/monitors.go`.
 Data analysis (`analyze_data`: Python over the caller's report runs and attached files in an E2B
 sandbox with all egress denied, charts kept with the run and drawn as the Desk's `analysis`
 artifact) is in [docs/engineering/agent-data-analysis.md](docs/engineering/agent-data-analysis.md).

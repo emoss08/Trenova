@@ -25854,6 +25854,49 @@
       }
     },
     {
+      "name": "list_web_watches",
+      "description": "List the web watches set for the person: what each watches for, how often and until when, how often it found something new, and whether it still runs. Call it before stop_web_watch to find a watch's id, or to answer what is being watched.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "includeEnded": {
+            "description": "Also list watches that ended, were stopped or failed. Off unless asked about past watches.",
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "searchTerms": [
+        "web watches",
+        "what am i watching",
+        "monitors",
+        "alerts",
+        "stop watching",
+        "watch list"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "web_research",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Lists the web watches set for the person; it changes nothing, reaches no one, and returns only what the agents wrote when they set them."
+      }
+    },
+    {
       "name": "list_worker_checklists",
       "description": "List one worker's onboarding, offboarding and other checklists with every item and where it stands, and the templates a person can start by hand. It yields the checklistId, checklistItemId and templateId the checklist tools take.",
       "parameters": {
@@ -27406,6 +27449,7 @@
               "shipment",
               "tractor",
               "trailer",
+              "web_watch",
               "worker"
             ],
             "type": "string",
@@ -38551,6 +38595,57 @@
       }
     },
     {
+      "name": "stop_web_watch",
+      "description": "Stop a web watch the person no longer needs, so the vendor stops searching and billing for it. Find its id with list_web_watches.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "watchId": {
+            "description": "The web watch to stop, from list_web_watches.",
+            "type": "string",
+            "x-recordKinds": [
+              "web_watch"
+            ]
+          }
+        },
+        "required": [
+          "watchId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "stop watching",
+        "stop monitoring",
+        "cancel watch",
+        "no longer need"
+      ],
+      "prerequisites": [
+        "list_web_watches"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "web_research",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "artifact": "web_watch",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": true,
+        "rationale": "Stops a scheduled search the person set; it changes no record and reaches nobody."
+      }
+    },
+    {
       "name": "submit_carrier_settlement",
       "description": "Submit a draft carrier settlement for approval once its lines are right. It moves to pending approval, where a person approves it or sends it back. Read it with get_carrier_settlement first; one with exceptions should be fixed or explained before it goes.",
       "parameters": {
@@ -45074,6 +45169,93 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Puts a parked message back in front of the people working Triage; nothing is sent."
+      }
+    },
+    {
+      "name": "watch_web",
+      "description": "Keep watching the web for something new for the person, such as a rule being finalized, a carrier or customer in the news, or a rate change announced. The organization's research vendor runs the search on a schedule and hands back only pages it has not found before, and this conversation picks the work up with them. Use it when the person asks to be told when something happens; for a question about now, use web_search. A watch lasts 30 days unless asked otherwise.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "cadence": {
+            "description": "How often to look. Daily unless the person needs to hear sooner or less often.",
+            "enum": [
+              "SixHours",
+              "Daily",
+              "Weekly"
+            ],
+            "type": "string",
+            "x-enumOf": "web_watch_cadences"
+          },
+          "days": {
+            "description": "How many days to keep watching, from 1 to 90. Defaults to 30.",
+            "maximum": 90,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "purpose": {
+            "description": "What the person wants to hear about, in their terms, such as \"FMCSA finalizing the broker transparency rule\".",
+            "maxLength": 300,
+            "type": "string"
+          },
+          "query": {
+            "description": "The search to run each time, written as a description of the pages wanted, such as \"FMCSA final rule broker transparency 49 CFR 371.3\". Never a Trenova record id.",
+            "maxLength": 400,
+            "type": "string"
+          },
+          "sites": {
+            "description": "Optional: search only these sites, such as [\"fmcsa.dot.gov\", \"federalregister.gov\"].",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "type": "array"
+          }
+        },
+        "required": [
+          "purpose",
+          "query"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "watch",
+        "monitor",
+        "keep an eye on",
+        "let me know when",
+        "tell me when",
+        "alert me",
+        "track",
+        "follow",
+        "news",
+        "regulation",
+        "rule change",
+        "announcement"
+      ],
+      "prerequisites": [
+        "web_search"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "web_research",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "artifact": "web_watch",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": true,
+        "rationale": "Sets a scheduled search on the organization's web research vendor for the person; it changes no record, reaches nobody, and ends on its own or when stopped."
       }
     },
     {

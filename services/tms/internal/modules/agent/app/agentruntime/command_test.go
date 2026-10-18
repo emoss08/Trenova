@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -41,6 +42,15 @@ var commandCases = []commandCase{
 		task:       "what changed in the FMCSA hours of service rules this year",
 		held:       []string{agentextension.ToolWebSearch, agentextension.ToolWebRead},
 		call:       agentextension.ToolWebSearch,
+		other:      agentextension.ToolReadPortal,
+	},
+	{
+		command:    agentextension.CommandWatch,
+		capability: agentextension.CapabilityWebResearch,
+		ask:        "/watch FMCSA finalizing the broker transparency rule",
+		task:       "FMCSA finalizing the broker transparency rule",
+		held:       []string{agentextension.ToolWatchWeb, agentextension.ToolListWebWatches},
+		call:       agentextension.ToolListWebWatches,
 		other:      agentextension.ToolReadPortal,
 	},
 }
@@ -100,7 +110,9 @@ func newCommandRuntime(
 		&agenttest.StubQueryTool{
 			ToolName: agentextension.ToolWebSearch,
 			Desc:     "Search the public web for current information that is not in Trenova.",
-			Result:   map[string]any{"results": []any{map[string]any{"url": "https://fmcsa.dot.gov"}}},
+			Result: map[string]any{
+				"results": []any{map[string]any{"url": "https://fmcsa.dot.gov"}},
+			},
 			Resource: permission.ResourceWebResearch,
 		},
 		&agenttest.StubQueryTool{
@@ -109,8 +121,27 @@ func newCommandRuntime(
 			Result:   map[string]any{"text": "The rule changed in March."},
 			Resource: permission.ResourceWebResearch,
 		},
+		&agenttest.StubQueryTool{
+			ToolName: agentextension.ToolListWebWatches,
+			Desc:     "List the web watches set for the person.",
+			Result:   map[string]any{"watches": []any{}},
+			Resource: permission.ResourceWebResearch,
+		},
 	)}
-	action := &stubActionRegistry{}
+	action := &stubActionRegistry{Tools: []agentports.AgentTool{
+		&agenttest.StubActionTool{
+			ToolName:  agentextension.ToolWatchWeb,
+			Tier:      agent.TierAutoExecute,
+			Resource:  permission.ResourceWebResearch,
+			Operation: permission.OpRead,
+		},
+		&agenttest.StubActionTool{
+			ToolName:  agentextension.ToolStopWebWatch,
+			Tier:      agent.TierAutoExecute,
+			Resource:  permission.ResourceWebResearch,
+			Operation: permission.OpRead,
+		},
+	}}
 	if permissions == nil {
 		permissions = &stubPermissions{}
 	}
@@ -193,7 +224,10 @@ func TestRun_ACommandTurnOffersItsToolsAndAsksForItsExtension(t *testing.T) {
 		t.Run(tc.command.String(), func(t *testing.T) {
 			t.Parallel()
 
-			rt := newCommandRuntime(t, everyCapabilityGate(agentextension.AvailabilityAllAgents), nil,
+			rt := newCommandRuntime(
+				t,
+				everyCapabilityGate(agentextension.AvailabilityAllAgents),
+				nil,
 				toolTurn(tc.call, map[string]any{"query": "the question"}),
 				textTurn("Here is the answer."),
 			)
@@ -206,7 +240,12 @@ func TestRun_ACommandTurnOffersItsToolsAndAsksForItsExtension(t *testing.T) {
 			require.Len(t, rt.completion.Requests, 2)
 			first := rt.completion.Requests[0]
 			offered := offeredTools(first)
-			assert.Contains(t, offered, findToolsName, "the agent holds enough tools to be narrowed")
+			assert.Contains(
+				t,
+				offered,
+				findToolsName,
+				"the agent holds enough tools to be narrowed",
+			)
 			for _, name := range tc.held {
 				assert.Contains(t, offered, name)
 			}
@@ -274,6 +313,28 @@ func TestRun_ACommandTurnIsNotSatisfiedByAnotherExtension(t *testing.T) {
 	}
 }
 
+func TestRun_AWatchTurnIsNotSatisfiedByASearchAlone(t *testing.T) {
+	t.Parallel()
+
+	rt := newCommandRuntime(t, everyCapabilityGate(agentextension.AvailabilityAllAgents), nil,
+		toolTurn(agentextension.ToolWebSearch, map[string]any{"query": "broker transparency"}),
+		textTurn("FMCSA has not finalized it yet."),
+		toolTurn(agentextension.ToolListWebWatches, map[string]any{}),
+		textTurn("I am watching for it."),
+	)
+	result := rt.run(t, &agentports.RunRequest{
+		Definition: testDefinition(),
+		Input:      "/watch FMCSA finalizing the broker transparency rule",
+		Command:    agentextension.CommandWatch,
+	})
+
+	require.Len(t, rt.completion.Requests, 4)
+	assert.Equal(t, commandHolds[agentextension.CommandWatch].correction,
+		lastUserMessage(rt.completion.Requests[2]),
+		"a search answers now; the person asked to hear when it changes")
+	assert.Equal(t, "I am watching for it.", result.Reply)
+}
+
 func TestRun_ACommandTurnIsSentBackOnlyOnce(t *testing.T) {
 	t.Parallel()
 
@@ -281,7 +342,10 @@ func TestRun_ACommandTurnIsSentBackOnlyOnce(t *testing.T) {
 		t.Run(tc.command.String(), func(t *testing.T) {
 			t.Parallel()
 
-			rt := newCommandRuntime(t, everyCapabilityGate(agentextension.AvailabilityAllAgents), nil,
+			rt := newCommandRuntime(
+				t,
+				everyCapabilityGate(agentextension.AvailabilityAllAgents),
+				nil,
 				textTurn("I cannot reach it for this."),
 				textTurn("There is nothing there for this."),
 			)
@@ -304,7 +368,10 @@ func TestRun_AnOrdinaryTurnIsNotHeldToAnExtension(t *testing.T) {
 		t.Run(tc.command.String(), func(t *testing.T) {
 			t.Parallel()
 
-			rt := newCommandRuntime(t, everyCapabilityGate(agentextension.AvailabilityAllAgents), nil,
+			rt := newCommandRuntime(
+				t,
+				everyCapabilityGate(agentextension.AvailabilityAllAgents),
+				nil,
 				textTurn("The answer is yes."),
 			)
 			rt.run(t, &agentports.RunRequest{
@@ -348,6 +415,15 @@ func TestAvailableCommands_AreTheOnesTheAgentAndThePersonCanUse(t *testing.T) {
 	webRead := permission.ResourceWebResearch.String() + ":" + string(permission.OpRead)
 	holding := []string{agentextension.ToolReadPortal, agentextension.ToolWebSearch}
 	both := []agentextension.Command{agentextension.CommandBrowser, agentextension.CommandSearch}
+	every := []agentextension.Command{
+		agentextension.CommandBrowser, agentextension.CommandSearch, agentextension.CommandWatch,
+	}
+	parallel := capabilityGate(agentextension.AvailabilityAllAgents,
+		agentextension.CapabilityPortalAutomation, agentextension.CapabilityWebResearch)
+	parallel.active[agentextension.CapabilityWebResearch] = agentextension.ActiveExtension{
+		Type:         agentextension.TypeParallel,
+		Availability: agentextension.AvailabilityAllAgents,
+	}
 	cases := []struct {
 		name        string
 		gate        *stubExtensionGate
@@ -397,6 +473,18 @@ func TestAvailableCommands_AreTheOnesTheAgentAndThePersonCanUse(t *testing.T) {
 			name:       "every agent is given the tools",
 			gate:       everyCapabilityGate(agentextension.AvailabilityAllAgents),
 			definition: []string{"list_workers"},
+			want:       every,
+		},
+		{
+			name:       "the agent holds the watch tool",
+			gate:       everyCapabilityGate(agentextension.AvailabilitySelectedAgents),
+			definition: []string{agentextension.ToolWatchWeb},
+			want:       []agentextension.Command{agentextension.CommandWatch},
+		},
+		{
+			name:       "the web research vendor cannot watch",
+			gate:       parallel,
+			definition: []string{agentextension.ToolWatchWeb, agentextension.ToolWebSearch},
 			want:       both,
 		},
 		{
@@ -404,7 +492,9 @@ func TestAvailableCommands_AreTheOnesTheAgentAndThePersonCanUse(t *testing.T) {
 			gate:        everyCapabilityGate(agentextension.AvailabilityAllAgents),
 			permissions: &stubPermissions{Denied: map[string]bool{portalRead: true}},
 			definition:  holding,
-			want:        []agentextension.Command{agentextension.CommandSearch},
+			want: []agentextension.Command{
+				agentextension.CommandSearch, agentextension.CommandWatch,
+			},
 		},
 		{
 			name:        "the person may not use web research",
@@ -433,7 +523,11 @@ func TestCommandTurn_KeepsBeingHeldAfterARestore(t *testing.T) {
 		t.Run(tc.command.String(), func(t *testing.T) {
 			t.Parallel()
 
-			rt := newCommandRuntime(t, everyCapabilityGate(agentextension.AvailabilityAllAgents), nil)
+			rt := newCommandRuntime(
+				t,
+				everyCapabilityGate(agentextension.AvailabilityAllAgents),
+				nil,
+			)
 			req := &agentports.RunRequest{
 				Definition: testDefinition(),
 				Actor:      testActor(),

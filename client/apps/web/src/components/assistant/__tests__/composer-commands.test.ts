@@ -53,6 +53,7 @@ import {
   SLASH_COMMANDS,
   slotHint,
   splitScheduleSlots,
+  WATCH_COMMAND,
 } from "../composer-commands";
 
 /**
@@ -297,7 +298,7 @@ describe("slash commands in another language", () => {
 });
 
 /*
-An extension command (/browser, /search) is offered only where the person can
+An extension command (/browser, /search, /watch) is offered only where the person can
 send the agent to that extension, so none is one of the shared commands. Where
 one is offered it is filled like any command, and what is sent is the command
 with the person's words, which the server reads.
@@ -313,11 +314,20 @@ const EXTENSION_CASES = [
     prefix: "sea",
     words: "FMCSA hours of service changes this year",
   },
+  {
+    command: WATCH_COMMAND,
+    prefix: "wat",
+    words: "FMCSA finalizing the broker transparency rule",
+  },
 ] as const;
 
 describe("extension commands", () => {
-  it("lists every extension command once, browser then search", () => {
-    expect(EXTENSION_COMMANDS.map((command) => command.name)).toEqual(["browser", "search"]);
+  it("lists every extension command once, browser, search, then watch", () => {
+    expect(EXTENSION_COMMANDS.map((command) => command.name)).toEqual([
+      "browser",
+      "search",
+      "watch",
+    ]);
   });
 
   describe.each(EXTENSION_CASES)("/$command.name", ({ command, prefix, words }) => {
@@ -352,6 +362,7 @@ describe("extensionCommandsNamed", () => {
       SEARCH_COMMAND,
     ]);
     expect(extensionCommandsNamed(["search"])).toEqual([SEARCH_COMMAND]);
+    expect(extensionCommandsNamed(["watch", "search"])).toEqual([SEARCH_COMMAND, WATCH_COMMAND]);
   });
 
   it("ignores a name this client has no command for", () => {
@@ -369,12 +380,15 @@ describe("isExtensionRequest", () => {
     expect(isExtensionRequest("/search diesel price outlook")).toBe(true);
     expect(isExtensionRequest(" /Search\tFMCSA rules")).toBe(true);
     expect(isExtensionRequest("/search")).toBe(true);
+    expect(isExtensionRequest("/watch the broker transparency rule")).toBe(true);
+    expect(isExtensionRequest("/WATCH")).toBe(true);
   });
 
   it("ignores another word that starts the same, another command, or one later in a sentence", () => {
     expect(isExtensionRequest("/browsers list them")).toBe(false);
     expect(isExtensionRequest("/browse the portal")).toBe(false);
     expect(isExtensionRequest("/searching for it")).toBe(false);
+    expect(isExtensionRequest("/watching the news")).toBe(false);
     expect(isExtensionRequest("use /browser to check")).toBe(false);
     expect(isExtensionRequest("/status S12345")).toBe(false);
     expect(isExtensionRequest("/")).toBe(false);

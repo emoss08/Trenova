@@ -39,6 +39,7 @@ The workflow costs nothing while it waits and survives every restart.
 | `HOSDriveBelow` | `workerId`, `driveHoursBelow` | the drive clock drops below it, timed to the second while the driver drives |
 | `PortalRun` | `portalRunId` | the portal task an approved `act_on_portal` started, or a `read_portal` that stopped for a sign-in code, ends (`NotifyPortalRun` from `PortalRunWorkflow`) |
 | `DocumentRead` | `documentId` | the file's extraction is saved (`document.extracted`), or a look every minute finds its reading over: text in, and no shipment draft still `Pending` |
+| `WebWatch` | `webWatchId` | the web watch finds something new (`NotifyWebWatch` from `WebWatchWorkflow`), or fails |
 
 `PortalRun` is not one an agent asks for: `wait_until` offers only `AgentKinds()`, and the
 `act_on_portal` tool registers it itself (`RegisterPortalRunWait`, idempotent per run) on the
@@ -61,6 +62,15 @@ wait saying why. A turn that reads the file in full cancels its open wait
 (`StopWaitingForDocumentRead`), and the turn that picks one up shows the file's
 extraction card first. A delegated task never sets one; it reports the file to the
 agent that handed it over.
+
+`WebWatch` is not one an agent asks for either: `watch_web` registers it
+(`RegisterWebWatchWait`, one open wait per watch) for the conversation or background run that
+set the watch, lasting as long as the watch plus an hour (`MaxWebWatchLifetimeSeconds`, the one
+kind allowed past 168 hours). Each delivery meets the waits set before its findings and sets
+the next one for the same work while the watch goes on. It cannot be cancelled on its own: it
+ends with its watch (`stop_web_watch`, or **Stop watching** on the Desk's row). Listing a
+conversation's waits attaches `webWatch` (the watch, its cadence, when it ends and its findings
+so far). See [agent-web-watching.md](agent-web-watching.md).
 
 Every wait also has an expiry (`giveUpAfterHours`, default 24, at most 168; a
 `Time` wait stays open at least five minutes past its time). A wait that runs
@@ -151,7 +161,7 @@ closed and picks up only what it has not) and then:
 `cancel_wait` (the agent; only a wait its own conversation or, for a background
 run, its own agent set) and `POST /assistant/threads/:threadID/waits/:waitID/cancel/`
 (the owner) close the wait as `Cancelled` and cancel its workflow. Nothing is
-picked up.
+picked up. A `WebWatch` wait is refused: stopping its watch closes it.
 
 ## Taint
 
@@ -159,9 +169,10 @@ A wait's `then` and description are the agent's own words, but a run that read
 outside content may have been steered into writing them. A conversation's turns
 inherit the conversation's taint already; a background run picking up a wait
 opens with the taint stored on the wait. The event detail that ends a wait never
-quotes outside content, with one exception: a `PortalRun` wait ends with what the portal
+quotes outside content, with two exceptions: a `PortalRun` wait ends with what the portal
 said, quoted and marked as written outside the organization (a task that strayed off its
-site has its answer withheld). `Wait.CarriesOutsideText` reports it, and the turn or run
+site has its answer withheld), and a `WebWatch` wait with what the watch found, quoted and
+marked the same way. `Wait.CarriesOutsideText` reports it, and the turn or run
 that picks the work up opens with outside content already read
 (`RunRequest.AfterExternalContent`), so every write it asks for is held for a person.
 

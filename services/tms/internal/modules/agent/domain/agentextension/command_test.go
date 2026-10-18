@@ -56,6 +56,14 @@ func TestParseCommandReadsTheCommandAndTheWordsAfterIt(t *testing.T) {
 			ok:      true,
 		},
 		{content: "/search", command: agentextension.CommandSearch, ok: true},
+		{
+			content: "/watch FMCSA finalizing the broker transparency rule",
+			command: agentextension.CommandWatch,
+			task:    "FMCSA finalizing the broker transparency rule",
+			ok:      true,
+		},
+		{content: "/WATCH", command: agentextension.CommandWatch, ok: true},
+		{content: "/watching the news"},
 		{content: "/browsers list them"},
 		{content: "/browse the portal"},
 		{content: "/searching for it"},
@@ -87,6 +95,9 @@ func TestEveryCommandIsServedByItsCapability(t *testing.T) {
 		require.NotEmpty(t, spec.Requires, command)
 		for _, name := range spec.Requires {
 			assert.True(t, capability.HasTool(name), "%s requires %s", command, name)
+		}
+		for _, name := range spec.Honours {
+			assert.True(t, capability.HasTool(name), "%s is honoured by %s", command, name)
 		}
 		assert.NotEmpty(t, spec.MissingTaskReason, command)
 		assert.NotEmpty(t, spec.DirectedReason, command)
@@ -124,4 +135,35 @@ func TestToolsInKeepsTheCapabilitysToolsInItsOwnOrder(t *testing.T) {
 		}),
 	)
 	assert.Empty(t, search.ToolsIn([]string{"list_workers"}))
+}
+
+func TestAWatchIsSetOnlyWithTheWatchTools(t *testing.T) {
+	t.Parallel()
+
+	watch, _ := agentextension.CommandSpecFor(agentextension.CommandWatch)
+	assert.Equal(t, agentextension.CapabilityWebResearch, watch.Capability)
+	assert.True(t, watch.HonouredBy([]string{agentextension.ToolWatchWeb}))
+	assert.False(t, watch.HonouredBy([]string{agentextension.ToolWebSearch}),
+		"a vendor that cannot watch leaves the command out")
+
+	for _, name := range agentextension.WebWatchTools {
+		assert.True(t, watch.HonouredByCall(name), name)
+	}
+	assert.False(t, watch.HonouredByCall(agentextension.ToolWebSearch),
+		"a search alone does not stand in for setting a watch")
+	assert.False(t, watch.HonouredByCall(agentextension.ToolReadPortal))
+}
+
+func TestACommandWithoutItsOwnToolsIsHonouredByAnyOfItsCapability(t *testing.T) {
+	t.Parallel()
+
+	search, _ := agentextension.CommandSpecFor(agentextension.CommandSearch)
+	assert.True(t, search.HonouredByCall(agentextension.ToolWebSearch))
+	assert.True(t, search.HonouredByCall(agentextension.ToolWebRead))
+	assert.False(t, search.HonouredByCall(agentextension.ToolReadPortal))
+	assert.False(t, search.HonouredByCall("list_workers"))
+
+	browser, _ := agentextension.CommandSpecFor(agentextension.CommandBrowser)
+	assert.True(t, browser.HonouredByCall(agentextension.ToolListPortalSites))
+	assert.False(t, browser.HonouredByCall(agentextension.ToolWebSearch))
 }

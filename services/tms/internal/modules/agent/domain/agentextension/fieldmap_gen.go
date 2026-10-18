@@ -45,3 +45,17 @@ func (e *PortalRun) GetStaticFieldMap() map[string]string {
 func (e *PortalSite) GetStaticFieldMap() map[string]string {
 	return agentextensioncol.PortalSiteFieldMap
 }
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [WebWatch].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [agentextensioncol.WebWatchFieldMap] instead of parsing struct tags via reflection.
+func (e *WebWatch) GetStaticFieldMap() map[string]string {
+	return agentextensioncol.WebWatchFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [WebWatchFinding].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [agentextensioncol.WebWatchFindingFieldMap] instead of parsing struct tags via reflection.
+func (e *WebWatchFinding) GetStaticFieldMap() map[string]string {
+	return agentextensioncol.WebWatchFindingFieldMap
+}

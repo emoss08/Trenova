@@ -32,6 +32,7 @@ func parallelSpec() Spec {
 		Validate: func(values map[string]string, multiErr *errortypes.MultiError) {
 			parseParallelSettings(values, multiErr)
 		},
+		Unsupported: WebWatchTools,
 	}
 }
 

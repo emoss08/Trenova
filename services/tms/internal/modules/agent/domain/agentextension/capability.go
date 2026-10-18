@@ -9,7 +9,14 @@ const (
 	ToolReadPortal      = "read_portal"
 	ToolActOnPortal     = "act_on_portal"
 	ToolAnalyzeData     = "analyze_data"
+	ToolWatchWeb        = "watch_web"
+	ToolListWebWatches  = "list_web_watches"
+	ToolStopWebWatch    = "stop_web_watch"
 )
+
+// WebWatchTools are the web research tools that watch the web over time,
+// which a vendor without scheduled searches leaves out.
+var WebWatchTools = []string{ToolWatchWeb, ToolListWebWatches, ToolStopWebWatch}
 
 type Capability string
 
@@ -47,7 +54,9 @@ func (s CapabilitySpec) ReturnsOutsideContent(name string) bool {
 
 var capabilities = map[Capability]CapabilitySpec{
 	CapabilityWebResearch: {
-		Tools:               []string{ToolWebSearch, ToolWebRead},
+		Tools: []string{
+			ToolWebSearch, ToolWebRead, ToolWatchWeb, ToolListWebWatches, ToolStopWebWatch,
+		},
 		OutsideContentTools: []string{ToolWebSearch, ToolWebRead},
 		Unchecked:           "the web could not be checked",
 		RequestNoun:         "web requests",
@@ -122,14 +131,22 @@ func ActiveFrom(records []*Extension) Active {
 	return active
 }
 
+// Serving is the extension that answers a tool, when one is on for its
+// capability and its vendor can serve that tool.
 func (a Active) Serving(name string) (ActiveExtension, bool) {
 	c, isExtension := CapabilityForTool(name)
 	if !isExtension {
 		return ActiveExtension{}, false
 	}
 	served, ok := a[c]
+	if !ok {
+		return ActiveExtension{}, false
+	}
+	if spec, known := SpecFor(served.Type); known && spec.Omits(name) {
+		return ActiveExtension{}, false
+	}
 
-	return served, ok
+	return served, true
 }
 
 func (a Active) Offers(name string) bool {
@@ -148,7 +165,8 @@ func (a Active) Grants() []string {
 		if !ok || served.Availability != AvailabilityAllAgents {
 			continue
 		}
-		granted = append(granted, capabilities[c].Tools...)
+		spec, _ := SpecFor(served.Type)
+		granted = append(granted, spec.Tools()...)
 	}
 
 	return granted

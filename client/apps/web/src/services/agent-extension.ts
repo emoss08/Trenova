@@ -11,6 +11,9 @@ import {
   portalRecordingSchema,
   portalRunSchema,
   portalRunsResponseSchema,
+  webWatchFindingsResponseSchema,
+  webWatchSchema,
+  webWatchesResponseSchema,
   portalSiteSchema,
   portalSitesResponseSchema,
   savePortalSiteRequestSchema,
@@ -162,6 +165,32 @@ export class AgentExtensionService {
   public async portalRunLive(runId: string) {
     const response = await api.get(`/agent-portals/runs/${encodeURIComponent(runId)}/live/`);
     return safeParse(portalLiveViewSchema, response, translate("Live browser"));
+  }
+
+  public async listWebWatches(
+    params: { status?: string; before?: number; limit?: number },
+    options?: { signal?: AbortSignal },
+  ) {
+    const query = new URLSearchParams();
+    if (params.status) query.set("status", params.status);
+    if (params.before) query.set("before", String(params.before));
+    if (params.limit) query.set("limit", String(params.limit));
+    const suffix = query.size > 0 ? `?${query.toString()}` : "";
+    const response = await api.get(`/agent-web-watches/${suffix}`, { signal: options?.signal });
+    return safeParse(webWatchesResponseSchema, response, translate("Web watches"));
+  }
+
+  public async webWatchFindings(id: string, options?: { signal?: AbortSignal }) {
+    const response = await api.get(`/agent-web-watches/${encodeURIComponent(id)}/findings/`, {
+      signal: options?.signal,
+    });
+    return safeParse(webWatchFindingsResponseSchema, response, translate("Web watch findings"));
+  }
+
+  /** Stops a web watch, so the vendor searches and bills for it no more. */
+  public async stopWebWatch(id: string) {
+    const response = await api.post(`/agent-web-watches/${encodeURIComponent(id)}/stop/`);
+    return safeParse(webWatchSchema, response, translate("Web watch"));
   }
 
   public async portalRunRecording(id: string) {

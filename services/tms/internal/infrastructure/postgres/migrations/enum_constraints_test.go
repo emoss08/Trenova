@@ -277,6 +277,14 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 			values: stringsOf(agentextension.AllPortalRunStatuses()),
 		},
 		{
+			name:   "ck_agent_web_watches_cadence",
+			values: stringsOf(agentextension.AllWebWatchCadences()),
+		},
+		{
+			name:   "ck_agent_web_watches_status",
+			values: stringsOf(agentextension.AllWebWatchStatuses()),
+		},
+		{
 			name:   "ck_agent_analysis_runs_status",
 			values: stringsOf(agentextension.AllAnalysisRunStatuses()),
 		},

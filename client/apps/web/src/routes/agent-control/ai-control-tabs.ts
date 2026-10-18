@@ -216,6 +216,10 @@ export const portalRunParser = parseAsString.withOptions(dialogOptions);
 export const ANALYSIS_RUN_PARAM = "analysisRun";
 export const analysisRunParser = parseAsString.withOptions(dialogOptions);
 
+/** The web watch open in the web research extension's watches, from a link to it. */
+export const WEB_WATCH_PARAM = "webWatch";
+export const webWatchParser = parseAsString.withOptions(dialogOptions);
+
 /** The agent open in Quality's sheet from the figures above the tables. */
 export const QUALITY_SHEET_PARAM = "qualitySheet";
 export const qualitySheetParser = parseAsString.withOptions(dialogOptions);
@@ -286,6 +290,7 @@ export const aiControlDialogParsers = {
   [EXTENSION_OPEN_PARAM]: extensionOpenParser,
   [PORTAL_RUN_PARAM]: portalRunParser,
   [ANALYSIS_RUN_PARAM]: analysisRunParser,
+  [WEB_WATCH_PARAM]: webWatchParser,
   [QUALITY_SHEET_PARAM]: qualitySheetParser,
   [SWEEP_SETTINGS_PARAM]: sweepSettingsParser,
   [AUDIT_EXPORT_PARAM]: auditExportParser,
@@ -309,6 +314,7 @@ export const CLEARED_DIALOG_STATE = {
   [EXTENSION_OPEN_PARAM]: null,
   [PORTAL_RUN_PARAM]: null,
   [ANALYSIS_RUN_PARAM]: null,
+  [WEB_WATCH_PARAM]: null,
   [QUALITY_SHEET_PARAM]: null,
   [SWEEP_SETTINGS_PARAM]: null,
   [AUDIT_EXPORT_PARAM]: null,

@@ -4,6 +4,8 @@ import {
   ALL_CATEGORIES,
   capabilityHolder,
   capabilityServer,
+  offersWebWatches,
+  webWatchServer,
   dailyUsageShare,
   extensionState,
   filterExtensions,
@@ -162,7 +164,10 @@ describe("dailyUsageShare", () => {
  * extension adds the tools it lacks, and taking it away removes only the extension's.
  */
 describe("holdsExtension and withExtensionTools", () => {
-  const tools = [{ name: "web_search", label: "", description: "" }, { name: "web_fetch", label: "", description: "" }];
+  const tools = [
+    { name: "web_search", label: "", description: "" },
+    { name: "web_fetch", label: "", description: "" },
+  ];
 
   it("holds only with every one of the extension's tools", () => {
     expect(holdsExtension(["web_search", "web_fetch", "list_loads"], tools)).toBe(true);
@@ -201,5 +206,34 @@ describe("capabilityServer", () => {
 
   it("is nothing when no extension provides it", () => {
     expect(capabilityServer([exa, parallel], "PortalAutomation")).toBeNull();
+  });
+});
+
+describe("webWatchServer", () => {
+  const watching = [
+    { name: "web_search", label: "Search the web", description: "" },
+    { name: "watch_web", label: "Watch the web", description: "" },
+  ];
+  const exa = extension({ type: "Exa", capability: "WebResearch", tools: watching });
+  const parallel = extension({ type: "Parallel", capability: "WebResearch", enabled: true });
+
+  it("is the vendor that can watch, even while another serves web research", () => {
+    expect(offersWebWatches(exa)).toBe(true);
+    expect(offersWebWatches(parallel)).toBe(false);
+    expect(webWatchServer([parallel, exa])).toBe(exa);
+  });
+
+  it("prefers the one turned on", () => {
+    const exaOn = extension({
+      type: "Exa",
+      capability: "WebResearch",
+      tools: watching,
+      enabled: true,
+    });
+    expect(webWatchServer([exa, exaOn])).toBe(exaOn);
+  });
+
+  it("is nothing when no vendor can watch", () => {
+    expect(webWatchServer([parallel])).toBeNull();
   });
 });

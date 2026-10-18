@@ -1,6 +1,8 @@
 package agentextension
 
 import (
+	"strconv"
+
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/configspec"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
@@ -26,7 +28,7 @@ func exaSpec() Spec {
 				"Your Exa API key",
 				"Create a key at dashboard.exa.ai. Trenova stores it encrypted and only sends it to api.exa.ai.",
 			),
-			vendor: []configspec.Field{exaSearchDepth.field()},
+			vendor: []configspec.Field{exaSearchDepth.field(), maxActiveWatchesField()},
 		}),
 		SupportsTestConnect: true,
 		Validate: func(values map[string]string, multiErr *errortypes.MultiError) {
@@ -37,7 +39,18 @@ func exaSpec() Spec {
 
 type ExaSettings struct {
 	WebResearchSettings
-	SearchType string
+	SearchType       string
+	MaxActiveWatches int
+}
+
+func maxActiveWatchesField() configspec.Field {
+	return configspec.Field{
+		Key:      ConfigKeyMaxActiveWatches,
+		Label:    "Web watches at once",
+		Type:     configspec.FieldTypeNumber,
+		Default:  strconv.Itoa(DefaultMaxActiveWebWatches),
+		HelpText: "The most searches agents may keep watching on a schedule at the same time, from 1 to 100. Each check Exa runs costs about $0.015.",
+	}
 }
 
 func ParseExaSettings(values map[string]string) (ExaSettings, error) {
@@ -54,5 +67,13 @@ func parseExaSettings(values map[string]string, multiErr *errortypes.MultiError)
 	return ExaSettings{
 		WebResearchSettings: parseWebResearchSettings(values, multiErr),
 		SearchType:          exaSearchDepth.parse(values, multiErr),
+		MaxActiveWatches: parseBoundedInt(boundedIntField{
+			values:   values,
+			key:      ConfigKeyMaxActiveWatches,
+			fallback: DefaultMaxActiveWebWatches,
+			min:      MinMaxActiveWebWatches,
+			max:      MaxMaxActiveWebWatches,
+			message:  "Web watches at once must be a whole number from 1 to 100",
+		}, multiErr),
 	}
 }

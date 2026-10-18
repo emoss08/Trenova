@@ -43,6 +43,7 @@ function waitsOf(open: AgentWait[]): ConversationWaits {
     open,
     byId: new Map(open.map((item) => [item.id, item])),
     cancel: vi.fn(async () => undefined),
+    stopWatch: vi.fn(async () => undefined),
   };
 }
 
@@ -126,6 +127,30 @@ describe("DeskWaits", () => {
         code: "123 456",
       }),
     );
+  });
+
+  it("follows a web watch until it ends, and stops the watch rather than the wait", () => {
+    const watching = wait({
+      kind: "WebWatch",
+      description: "the watch on Acme Freight carrier news to find something new",
+      expiresAt: 1_802_595_600,
+      webWatch: {
+        watchId: "awwt_1",
+        cadence: "Weekly",
+        endsAt: 1_802_592_000,
+        findingCount: 2,
+      },
+    });
+    const waits = waitsOf([watching]);
+    render(<DeskWaits waits={waits} timezone="UTC" />);
+
+    expect(screen.getByText("A web watch")).toBeInTheDocument();
+    expect(screen.getByText(/^Looks weekly until .+ · 2 findings so far$/u)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Cancel the wait" })).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Stop watching" }));
+    expect(waits.stopWatch).toHaveBeenCalledWith(watching);
+    expect(waits.cancel).not.toHaveBeenCalled();
   });
 
   it("shows a file being read as being read, not as due at its next look", () => {

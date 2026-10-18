@@ -17,6 +17,7 @@ import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { AnalysisRunsSkeleton } from "./analysis-runs-skeleton";
 import { PortalRunsSkeleton } from "./portal-runs-skeleton";
 import { PortalSitesSkeleton } from "./portal-sites-skeleton";
+import { WebWatchesSkeleton } from "./web-watches-skeleton";
 import type { ConfigFieldSpec } from "@/types/integration";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { defineLabels } from "@trenova/shared/i18n/labels";
@@ -34,6 +35,7 @@ import {
   capabilityHolder,
   extensionState,
   holdsExtension,
+  offersWebWatches,
   withExtensionTools,
 } from "./extension-roster";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -49,6 +51,10 @@ const portalRuns = lazyComponent(
 const analysisRuns = lazyComponent(
   () => import("./analysis-runs"),
   (module) => module.AnalysisRuns,
+);
+const webWatches = lazyComponent(
+  () => import("./web-watches"),
+  (module) => module.WebWatches,
 );
 
 /** What each choice a setting offers is called; one a vendor adds unnamed shows as sent. */
@@ -426,6 +432,13 @@ export function ExtensionDetail({
           </LazyComponent>
           <LazyComponent fallback={<PortalRunsSkeleton />}>
             <portalRuns.Component />
+          </LazyComponent>
+        </div>
+      )}
+      {offersWebWatches(item) && (
+        <div className="flex flex-col gap-6 px-5 pb-5">
+          <LazyComponent fallback={<WebWatchesSkeleton />}>
+            <webWatches.Component canUpdate={canUpdate} />
           </LazyComponent>
         </div>
       )}

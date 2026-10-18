@@ -216,6 +216,8 @@ type StubActionTool struct {
 	Calls      int
 	LastParams agentports.ToolExecuteParams
 	Resource   permission.Resource
+	// Operation is the permission the tool is gated on; update when unset.
+	Operation permission.Operation
 	// Schema stands in for the tool's declared parameters when set.
 	Schema map[string]any
 	// Egress is where the write reaches; internal when unset.
@@ -246,12 +248,16 @@ func (t *StubActionTool) Policy() agentports.ToolPolicy {
 	if egress == "" {
 		egress = agent.EgressInternal
 	}
+	operation := t.Operation
+	if operation == "" {
+		operation = permission.OpUpdate
+	}
 
 	return agentports.ToolPolicy{
 		Name:          t.ToolName,
 		Kind:          agent.ToolKindAction,
 		Resource:      resource,
-		Operation:     permission.OpUpdate,
+		Operation:     operation,
 		Scope:         agent.ToolScopeTenant,
 		DefaultTier:   tier,
 		MaxTier:       agent.TierAutoExecute,

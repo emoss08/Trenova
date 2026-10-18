@@ -427,6 +427,9 @@ var kindMinters = map[permission.RecordKind]minter{
 	permission.KindAnalysisRun: mint(
 		func(e *agentextension.AnalysisRun) pulid.ID { return e.ID },
 	),
+	permission.KindWebWatch: mint(
+		func(e *agentextension.WebWatch) pulid.ID { return e.ID },
+	),
 	permission.KindWatchtowerItem: mint(
 		func(e *watchtower.Item) pulid.ID { return e.ID },
 	),

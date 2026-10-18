@@ -1426,3 +1426,472 @@ var PortalSiteFilter = struct {
 		return buncolgen.NewFieldFilter("updatedAt", op, value)
 	},
 }
+
+// ---------------------------------------------------------------------------
+// WebWatch — table "agent_web_watches", alias "awwt"
+// ---------------------------------------------------------------------------
+
+// WebWatchTable holds the table name, alias, and primary key columns
+// for the "agent_web_watches" table. The alias "awwt" is used in all generated
+// SQL fragments (e.g. "awwt.id = ?").
+var WebWatchTable = buncolgen.TableInfo{
+	Name:       "agent_web_watches",
+	Alias:      "awwt",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// WebWatchColumns provides type-safe column references for the "agent_web_watches" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(WebWatchColumns.ID.String())
+//	// SELECT awwt.id FROM agent_web_watches AS awwt
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(WebWatchColumns.ID.Eq(), id)           // WHERE awwt.id = ?
+//	q.Order(WebWatchColumns.CreatedAt.OrderDesc())  // ORDER BY awwt.created_at DESC
+var WebWatchColumns = struct {
+	ID                buncolgen.Column // "id" → qualified: "awwt.id"
+	BusinessUnitID    buncolgen.Column // "business_unit_id" → qualified: "awwt.business_unit_id"
+	OrganizationID    buncolgen.Column // "organization_id" → qualified: "awwt.organization_id"
+	ExtensionType     buncolgen.Column // "extension_type" → qualified: "awwt.extension_type"
+	VendorMonitorID   buncolgen.Column // "vendor_monitor_id" → qualified: "awwt.vendor_monitor_id"
+	Query             buncolgen.Column // "query" → qualified: "awwt.query"
+	Purpose           buncolgen.Column // "purpose" → qualified: "awwt.purpose"
+	IncludeDomains    buncolgen.Column // "include_domains" → qualified: "awwt.include_domains"
+	Cadence           buncolgen.Column // "cadence" → qualified: "awwt.cadence"
+	Status            buncolgen.Column // "status" → qualified: "awwt.status"
+	Secrets           buncolgen.Column // "secrets" → qualified: "awwt.secrets"
+	EndsAt            buncolgen.Column // "ends_at" → qualified: "awwt.ends_at"
+	LastCheckedAt     buncolgen.Column // "last_checked_at" → qualified: "awwt.last_checked_at"
+	LastRunAt         buncolgen.Column // "last_run_at" → qualified: "awwt.last_run_at"
+	RunCount          buncolgen.Column // "run_count" → qualified: "awwt.run_count"
+	FindingCount      buncolgen.Column // "finding_count" → qualified: "awwt.finding_count"
+	CostUSD           buncolgen.Column // "cost_usd" → qualified: "awwt.cost_usd"
+	Failure           buncolgen.Column // "failure" → qualified: "awwt.failure"
+	AgentDefinitionID buncolgen.Column // "agent_definition_id" → qualified: "awwt.agent_definition_id"
+	AgentRunID        buncolgen.Column // "agent_run_id" → qualified: "awwt.agent_run_id"
+	ThreadID          buncolgen.Column // "thread_id" → qualified: "awwt.thread_id"
+	RequestedByID     buncolgen.Column // "requested_by_id" → qualified: "awwt.requested_by_id"
+	StoppedByID       buncolgen.Column // "stopped_by_id" → qualified: "awwt.stopped_by_id"
+	FinishedAt        buncolgen.Column // "finished_at" → qualified: "awwt.finished_at"
+	Version           buncolgen.Column // "version" → qualified: "awwt.version"
+	CreatedAt         buncolgen.Column // "created_at" → qualified: "awwt.created_at"
+	UpdatedAt         buncolgen.Column // "updated_at" → qualified: "awwt.updated_at"
+}{
+	ID:                buncolgen.NewColumn("id", "awwt"),
+	BusinessUnitID:    buncolgen.NewColumn("business_unit_id", "awwt"),
+	OrganizationID:    buncolgen.NewColumn("organization_id", "awwt"),
+	ExtensionType:     buncolgen.NewColumn("extension_type", "awwt"),
+	VendorMonitorID:   buncolgen.NewColumn("vendor_monitor_id", "awwt"),
+	Query:             buncolgen.NewColumn("query", "awwt"),
+	Purpose:           buncolgen.NewColumn("purpose", "awwt"),
+	IncludeDomains:    buncolgen.NewColumn("include_domains", "awwt"),
+	Cadence:           buncolgen.NewColumn("cadence", "awwt"),
+	Status:            buncolgen.NewColumn("status", "awwt"),
+	Secrets:           buncolgen.NewColumn("secrets", "awwt"),
+	EndsAt:            buncolgen.NewColumn("ends_at", "awwt"),
+	LastCheckedAt:     buncolgen.NewColumn("last_checked_at", "awwt"),
+	LastRunAt:         buncolgen.NewColumn("last_run_at", "awwt"),
+	RunCount:          buncolgen.NewColumn("run_count", "awwt"),
+	FindingCount:      buncolgen.NewColumn("finding_count", "awwt"),
+	CostUSD:           buncolgen.NewColumn("cost_usd", "awwt"),
+	Failure:           buncolgen.NewColumn("failure", "awwt"),
+	AgentDefinitionID: buncolgen.NewColumn("agent_definition_id", "awwt"),
+	AgentRunID:        buncolgen.NewColumn("agent_run_id", "awwt"),
+	ThreadID:          buncolgen.NewColumn("thread_id", "awwt"),
+	RequestedByID:     buncolgen.NewColumn("requested_by_id", "awwt"),
+	StoppedByID:       buncolgen.NewColumn("stopped_by_id", "awwt"),
+	FinishedAt:        buncolgen.NewColumn("finished_at", "awwt"),
+	Version:           buncolgen.NewColumn("version", "awwt"),
+	CreatedAt:         buncolgen.NewColumn("created_at", "awwt"),
+	UpdatedAt:         buncolgen.NewColumn("updated_at", "awwt"),
+}
+
+// WebWatchFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by WebWatch.GetStaticFieldMap().
+var WebWatchFieldMap = map[string]string{
+	"id":                "id",
+	"businessUnitId":    "business_unit_id",
+	"organizationId":    "organization_id",
+	"extensionType":     "extension_type",
+	"query":             "query",
+	"purpose":           "purpose",
+	"includeDomains":    "include_domains",
+	"cadence":           "cadence",
+	"status":            "status",
+	"endsAt":            "ends_at",
+	"lastCheckedAt":     "last_checked_at",
+	"lastRunAt":         "last_run_at",
+	"runCount":          "run_count",
+	"findingCount":      "finding_count",
+	"costUsd":           "cost_usd",
+	"failure":           "failure",
+	"agentDefinitionId": "agent_definition_id",
+	"agentRunId":        "agent_run_id",
+	"threadId":          "thread_id",
+	"requestedById":     "requested_by_id",
+	"stoppedById":       "stopped_by_id",
+	"finishedAt":        "finished_at",
+	"version":           "version",
+	"createdAt":         "created_at",
+	"updatedAt":         "updated_at",
+}
+
+// WebWatchInsertableColumns lists column names suitable for INSERT statements on the "agent_web_watches" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var WebWatchInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"extension_type",
+	"vendor_monitor_id",
+	"query",
+	"purpose",
+	"include_domains",
+	"cadence",
+	"status",
+	"secrets",
+	"ends_at",
+	"last_checked_at",
+	"last_run_at",
+	"run_count",
+	"finding_count",
+	"cost_usd",
+	"failure",
+	"agent_definition_id",
+	"agent_run_id",
+	"thread_id",
+	"requested_by_id",
+	"stopped_by_id",
+	"finished_at",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// WebWatchScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE awwt.organization_id = ? AND awwt.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	agentextensioncol.WebWatchScopeTenant(sq, ti).
+//		Where(agentextensioncol.WebWatchColumns.ID.Eq(), id)
+func WebWatchScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return buncolgen.ScopeTenant(q, WebWatchColumns.OrganizationID, WebWatchColumns.BusinessUnitID, ti)
+}
+
+// WebWatchScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return agentextensioncol.WebWatchScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(agentextensioncol.WebWatchColumns.ID.In(), bun.List(ids))
+//	})
+func WebWatchScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return buncolgen.ScopeTenantUpdate(q, WebWatchColumns.OrganizationID, WebWatchColumns.BusinessUnitID, ti)
+}
+
+// WebWatchScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return agentextensioncol.WebWatchScopeTenantDelete(dq, req.TenantInfo).
+//			Where(agentextensioncol.WebWatchColumns.ID.Eq(), id)
+//	})
+func WebWatchScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return buncolgen.ScopeTenantDelete(q, WebWatchColumns.OrganizationID, WebWatchColumns.BusinessUnitID, ti)
+}
+
+// WebWatchApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(agentextensioncol.WebWatchApplyTenant(tenantInfo))
+func WebWatchApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return buncolgen.ApplyTenant(WebWatchColumns.OrganizationID, WebWatchColumns.BusinessUnitID, ti)
+}
+
+// WebWatchFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "agent_web_watches" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	WebWatchFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var WebWatchFilter = struct {
+	ID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	ExtensionType     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "extensionType" → DB: "extension_type"
+	Query             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "query" → DB: "query"
+	Purpose           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "purpose" → DB: "purpose"
+	IncludeDomains    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "includeDomains" → DB: "include_domains"
+	Cadence           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cadence" → DB: "cadence"
+	Status            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	EndsAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "endsAt" → DB: "ends_at"
+	LastCheckedAt     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastCheckedAt" → DB: "last_checked_at"
+	LastRunAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastRunAt" → DB: "last_run_at"
+	RunCount          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "runCount" → DB: "run_count"
+	FindingCount      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "findingCount" → DB: "finding_count"
+	CostUSD           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "costUsd" → DB: "cost_usd"
+	Failure           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failure" → DB: "failure"
+	AgentDefinitionID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentDefinitionId" → DB: "agent_definition_id"
+	AgentRunID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentRunId" → DB: "agent_run_id"
+	ThreadID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "threadId" → DB: "thread_id"
+	RequestedByID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "requestedById" → DB: "requested_by_id"
+	StoppedByID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "stoppedById" → DB: "stopped_by_id"
+	FinishedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "finishedAt" → DB: "finished_at"
+	Version           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("organizationId", op, value)
+	},
+	ExtensionType: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("extensionType", op, value)
+	},
+	Query: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("query", op, value)
+	},
+	Purpose: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("purpose", op, value)
+	},
+	IncludeDomains: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("includeDomains", op, value)
+	},
+	Cadence: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("cadence", op, value)
+	},
+	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("status", op, value)
+	},
+	EndsAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("endsAt", op, value)
+	},
+	LastCheckedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("lastCheckedAt", op, value)
+	},
+	LastRunAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("lastRunAt", op, value)
+	},
+	RunCount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("runCount", op, value)
+	},
+	FindingCount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("findingCount", op, value)
+	},
+	CostUSD: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("costUsd", op, value)
+	},
+	Failure: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("failure", op, value)
+	},
+	AgentDefinitionID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("agentDefinitionId", op, value)
+	},
+	AgentRunID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("agentRunId", op, value)
+	},
+	ThreadID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("threadId", op, value)
+	},
+	RequestedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("requestedById", op, value)
+	},
+	StoppedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("stoppedById", op, value)
+	},
+	FinishedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("finishedAt", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// WebWatchFinding — table "agent_web_watch_findings", alias "awwf"
+// ---------------------------------------------------------------------------
+
+// WebWatchFindingTable holds the table name, alias, and primary key columns
+// for the "agent_web_watch_findings" table. The alias "awwf" is used in all generated
+// SQL fragments (e.g. "awwf.id = ?").
+var WebWatchFindingTable = buncolgen.TableInfo{
+	Name:       "agent_web_watch_findings",
+	Alias:      "awwf",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// WebWatchFindingColumns provides type-safe column references for the "agent_web_watch_findings" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(WebWatchFindingColumns.ID.String())
+//	// SELECT awwf.id FROM agent_web_watch_findings AS awwf
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(WebWatchFindingColumns.ID.Eq(), id)           // WHERE awwf.id = ?
+//	q.Order(WebWatchFindingColumns.CreatedAt.OrderDesc())  // ORDER BY awwf.created_at DESC
+var WebWatchFindingColumns = struct {
+	ID             buncolgen.Column // "id" → qualified: "awwf.id"
+	BusinessUnitID buncolgen.Column // "business_unit_id" → qualified: "awwf.business_unit_id"
+	OrganizationID buncolgen.Column // "organization_id" → qualified: "awwf.organization_id"
+	WatchID        buncolgen.Column // "watch_id" → qualified: "awwf.watch_id"
+	VendorRunID    buncolgen.Column // "vendor_run_id" → qualified: "awwf.vendor_run_id"
+	Summary        buncolgen.Column // "summary" → qualified: "awwf.summary"
+	Results        buncolgen.Column // "results" → qualified: "awwf.results"
+	FoundAt        buncolgen.Column // "found_at" → qualified: "awwf.found_at"
+	DeliveredAt    buncolgen.Column // "delivered_at" → qualified: "awwf.delivered_at"
+	CreatedAt      buncolgen.Column // "created_at" → qualified: "awwf.created_at"
+}{
+	ID:             buncolgen.NewColumn("id", "awwf"),
+	BusinessUnitID: buncolgen.NewColumn("business_unit_id", "awwf"),
+	OrganizationID: buncolgen.NewColumn("organization_id", "awwf"),
+	WatchID:        buncolgen.NewColumn("watch_id", "awwf"),
+	VendorRunID:    buncolgen.NewColumn("vendor_run_id", "awwf"),
+	Summary:        buncolgen.NewColumn("summary", "awwf"),
+	Results:        buncolgen.NewColumn("results", "awwf"),
+	FoundAt:        buncolgen.NewColumn("found_at", "awwf"),
+	DeliveredAt:    buncolgen.NewColumn("delivered_at", "awwf"),
+	CreatedAt:      buncolgen.NewColumn("created_at", "awwf"),
+}
+
+// WebWatchFindingFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by WebWatchFinding.GetStaticFieldMap().
+var WebWatchFindingFieldMap = map[string]string{
+	"id":             "id",
+	"businessUnitId": "business_unit_id",
+	"organizationId": "organization_id",
+	"watchId":        "watch_id",
+	"summary":        "summary",
+	"results":        "results",
+	"foundAt":        "found_at",
+	"deliveredAt":    "delivered_at",
+	"createdAt":      "created_at",
+}
+
+// WebWatchFindingInsertableColumns lists column names suitable for INSERT statements on the "agent_web_watch_findings" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var WebWatchFindingInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"watch_id",
+	"vendor_run_id",
+	"summary",
+	"results",
+	"found_at",
+	"delivered_at",
+	"created_at",
+}
+
+// WebWatchFindingScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE awwf.organization_id = ? AND awwf.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	agentextensioncol.WebWatchFindingScopeTenant(sq, ti).
+//		Where(agentextensioncol.WebWatchFindingColumns.ID.Eq(), id)
+func WebWatchFindingScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return buncolgen.ScopeTenant(q, WebWatchFindingColumns.OrganizationID, WebWatchFindingColumns.BusinessUnitID, ti)
+}
+
+// WebWatchFindingScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return agentextensioncol.WebWatchFindingScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(agentextensioncol.WebWatchFindingColumns.ID.In(), bun.List(ids))
+//	})
+func WebWatchFindingScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return buncolgen.ScopeTenantUpdate(q, WebWatchFindingColumns.OrganizationID, WebWatchFindingColumns.BusinessUnitID, ti)
+}
+
+// WebWatchFindingScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return agentextensioncol.WebWatchFindingScopeTenantDelete(dq, req.TenantInfo).
+//			Where(agentextensioncol.WebWatchFindingColumns.ID.Eq(), id)
+//	})
+func WebWatchFindingScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return buncolgen.ScopeTenantDelete(q, WebWatchFindingColumns.OrganizationID, WebWatchFindingColumns.BusinessUnitID, ti)
+}
+
+// WebWatchFindingApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(agentextensioncol.WebWatchFindingApplyTenant(tenantInfo))
+func WebWatchFindingApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return buncolgen.ApplyTenant(WebWatchFindingColumns.OrganizationID, WebWatchFindingColumns.BusinessUnitID, ti)
+}
+
+// WebWatchFindingFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "agent_web_watch_findings" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	WebWatchFindingFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var WebWatchFindingFilter = struct {
+	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	WatchID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "watchId" → DB: "watch_id"
+	Summary        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "summary" → DB: "summary"
+	Results        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "results" → DB: "results"
+	FoundAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "foundAt" → DB: "found_at"
+	DeliveredAt    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "deliveredAt" → DB: "delivered_at"
+	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("organizationId", op, value)
+	},
+	WatchID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("watchId", op, value)
+	},
+	Summary: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("summary", op, value)
+	},
+	Results: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("results", op, value)
+	},
+	FoundAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("foundAt", op, value)
+	},
+	DeliveredAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("deliveredAt", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("createdAt", op, value)
+	},
+}

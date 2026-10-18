@@ -1,6 +1,6 @@
 ---
 path: /admin/agent-control
-aliases: [AI settings, AI agents, agent setup, LLM providers, model providers, embedding providers, embeddings, semantic search, search by meaning, retrieval, re-index, indexing budget, pgvector, automation agents, agent proposals, agent memory, sub-agents, agent delegation, agent extensions, extension marketplace, web search, internet search, Exa, Parallel, portal work, browser automation, Browser Use, portal sites, dock appointment portal, shipper portal, data analysis, analyze data, E2B, python, charts, AI safety, tool rules, agent autonomy, AI analytics, model comparison, model leaderboard, compare models, compare providers, which model is best, cost per run, tool call failures, AI quality, agent evaluation, golden set, eval cases, agent regression, AI audit trail, AI audit log, agent audit, AI compliance, AI decisions log, hash chain, tamper evidence, AI export, traces, tracing, trace id]
+aliases: [AI settings, AI agents, agent setup, LLM providers, model providers, embedding providers, embeddings, semantic search, search by meaning, retrieval, re-index, indexing budget, pgvector, automation agents, agent proposals, agent memory, sub-agents, agent delegation, agent extensions, extension marketplace, web search, internet search, Exa, Parallel, web watch, watch the web, keep an eye on, monitors, portal work, browser automation, Browser Use, portal sites, dock appointment portal, shipper portal, data analysis, analyze data, E2B, python, charts, AI safety, tool rules, agent autonomy, AI analytics, model comparison, model leaderboard, compare models, compare providers, which model is best, cost per run, tool call failures, AI quality, agent evaluation, golden set, eval cases, agent regression, AI audit trail, AI audit log, agent audit, AI compliance, AI decisions log, hash chain, tamper evidence, AI export, traces, tracing, trace id]
 related:
   - /admin/document-intelligence
   - /admin/inbound-mailboxes
@@ -126,6 +126,21 @@ Keywords: web search, internet, Exa, Parallel, look up regulations, ELD rules, h
 7. To move to the other vendor, open the one that is on and select **Turn off**, then turn on the
    other. Only one can be on at a time, and agents keep their web search tools, so no agent needs
    changing.
+
+### Let agents watch the web
+Keywords: web watch, watch the web, monitor, keep an eye on, tell me when, alert me, regulation change, carrier news, Exa monitors, stop watching
+1. Turn on **Web search** from Exa as in "Let agents search the web". Watching needs Exa;
+   Parallel searches the web but cannot keep watching it.
+2. Trenova must be reachable at a public https address, which an administrator sets as the web
+   base URL, because Exa reports to it when a check finds something.
+3. Optionally change how many web watches agents may keep running at once for the organization
+   (10 by default). Each check Exa runs costs about $0.015.
+4. When someone asks an agent to tell them when something happens, the agent sets a watch: what
+   to search for, how often (every six hours, daily or weekly) and for how long (30 days unless
+   asked, at most 90). It comes back to the conversation with each thing it finds.
+5. **Web watches**, under the extension, lists every watch: open one to see what it searches
+   for, how often it looks, until when, its checks and cost, and what each check found. Select
+   **Stop watching** to end one.
 
 ### Let agents work on portal sites
 Keywords: portal, website, browser, Browser Use, dock appointment, appointment portal, shipper portal, carrier portal, book appointment, upload POD, portal sign-in, portal history, recording, two-factor, 2FA, MFA, authenticator, sign-in code, one-time code

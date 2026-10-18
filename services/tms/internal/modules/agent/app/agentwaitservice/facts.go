@@ -36,6 +36,7 @@ type facts struct {
 	customers   customerports.CustomerRepository
 	subjects    agentports.AgentSubjectRepository
 	portalRuns  agentextensionports.PortalRunRepository
+	webWatches  agentextensionports.WebWatchRepository
 	documents   documentports.DocumentRepository
 	contents    documentcontentports.DocumentContentRepository
 }
@@ -112,7 +113,18 @@ func (f *facts) assess(ctx context.Context, wait *agentwait.Wait, now int64) (*i
 		return &due, nil
 
 	case agentwait.KindPortalRun:
-		return nil, f.assessPortalRun(ctx, tenant, c) //nolint:nilnil // the task's end, not a time, ends it
+		return nil, f.assessPortalRun(
+			ctx,
+			tenant,
+			c,
+		) //nolint:nilnil // the task's end, not a time, ends it
+
+	case agentwait.KindWebWatch:
+		return nil, f.assessWebWatch(
+			ctx,
+			tenant,
+			c,
+		) //nolint:nilnil // a finding, not a time, ends it
 
 	case agentwait.KindDocumentRead:
 		return f.assessDocumentRead(ctx, tenant, c, now)
@@ -170,6 +182,25 @@ func (f *facts) assessStopVisit(
 	if wait.Kind == agentwait.KindStopDeparture && stop.ActualDeparture != nil {
 		return alreadyTrue("the truck left %s at %s.", stopName(stop),
 			stamp(*stop.ActualDeparture))
+	}
+
+	return nil
+}
+
+func (f *facts) assessWebWatch(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	c *agentwait.Condition,
+) error {
+	if f.webWatches == nil {
+		return errortypes.NewBusinessError("Web watches cannot be waited on here")
+	}
+	watch, err := f.webWatches.Get(ctx, tenant, c.WebWatchID)
+	if err != nil {
+		return missing(err, "web watch")
+	}
+	if !watch.Active() {
+		return alreadyTrue("the web watch has already ended (%s).", watch.Status)
 	}
 
 	return nil

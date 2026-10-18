@@ -109,8 +109,13 @@ func TestActiveOffersGrantsAndServes(t *testing.T) {
 		[]*agentextension.Extension{readyExa(agentextension.AvailabilityAllAgents)},
 	)
 	assert.Equal(t,
-		[]string{agentextension.ToolWebSearch, agentextension.ToolWebRead},
+		[]string{
+			agentextension.ToolWebSearch, agentextension.ToolWebRead,
+			agentextension.ToolWatchWeb, agentextension.ToolListWebWatches,
+			agentextension.ToolStopWebWatch,
+		},
 		everyone.Grants(),
+		"Exa can watch the web, so every agent is given the watch tools too",
 	)
 	assert.True(t, everyone.GrantsEveryAgent(agentextension.ToolWebRead))
 	served, ok := everyone.Serving(agentextension.ToolWebSearch)

@@ -37,6 +37,12 @@ describe("brandMarkFor", () => {
     expect(brandMarkFor({ domain: "api.fireworks.ai" })).not.toBeNull();
   });
 
+  it("ships the mark of every AI extension vendor in the marketplace", () => {
+    for (const domain of ["exa.ai", "parallel.ai", "browser-use.com", "e2b.dev"]) {
+      expect(brandMarkFor({ domain }), `${domain} has no bundled mark`).not.toBeNull();
+    }
+  });
+
   it("returns nothing for a vendor we do not ship", () => {
     // sglang, llamacpp and deepinfra have no mark we can draw from a published
     // source, so they fall to the monogram rather than to a guess at a logo.
