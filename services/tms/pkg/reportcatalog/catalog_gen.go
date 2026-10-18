@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen"
 )
 
-const Version = "sha256:8ffbce08996d3b86d9f5a16a9a102152c20696d12b4cdfac10fdf3ee30a6fcdf"
+const Version = "sha256:e71cb5f5e6756b3655c2a4406e18cd85cd2bddd33933f2660cb1e39684421bd7"
 
 var Default = indexed(defaultCatalog)
 
@@ -5254,6 +5254,15 @@ var defaultCatalog = Catalog{
 					Label:        "PRO Number",
 					Type:         FieldString,
 					Nullable:     true,
+					Aggregations: []Aggregation{AggCount, AggCountDistinct},
+					Filterable:   true,
+					Groupable:    true,
+				},
+				{
+					Key:          "addedByAgent",
+					Column:       buncolgen.NewColumn("added_by_agent", "dstll"),
+					Label:        "Added By Agent",
+					Type:         FieldBool,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
