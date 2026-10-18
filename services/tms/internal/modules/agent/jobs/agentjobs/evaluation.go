@@ -23,13 +23,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/temporal"
 )
 
@@ -509,50 +507,6 @@ func observeReplay(outcome *agentports.RunResult) observedReplay {
 	}
 
 	return observed
-}
-
-// ReplayRunActivity replays a run in one activity, as an evaluation did before
-// the loop moved into workflow code. Only evaluations that started on that
-// code call it.
-func (a *Activities) ReplayRunActivity(
-	ctx context.Context,
-	payload *agentcontract.AgentEvaluationPayload,
-) (*ReplayRunResult, error) {
-	opened, err := a.openReplay(ctx, payload)
-	if err != nil {
-		return nil, err
-	}
-	if opened == nil {
-		return a.finishedReplay(ctx, payload)
-	}
-
-	activity.RecordHeartbeat(ctx, "replaying")
-	opened.request.Emit = func(kernelports.StreamEvent) {
-		activity.RecordHeartbeat(ctx, "replaying")
-	}
-
-	outcome, err := a.runtime.Run(ctx, opened.request)
-	if err != nil {
-		return nil, err
-	}
-
-	return a.storeReplay(ctx, opened.evaluation, opened.originals, outcome)
-}
-
-// finishedReplay is what an evaluation that already finished came to.
-func (a *Activities) finishedReplay(
-	ctx context.Context,
-	payload *agentcontract.AgentEvaluationPayload,
-) (*ReplayRunResult, error) {
-	evaluation, err := a.evaluations.GetByID(ctx, agentports.GetAgentEvaluationByIDRequest{
-		ID:         payload.EvaluationID,
-		TenantInfo: payload.TenantInfo(),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return &ReplayRunResult{Model: evaluation.Model, ToolCallsUsed: evaluation.ToolCallsUsed}, nil
 }
 
 // OpenReplayActivity opens an evaluation's replay as a turn for workflow code

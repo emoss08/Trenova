@@ -80,7 +80,7 @@ func TestNewPersistedOperationManifest_IncludesShipmentOperations(t *testing.T) 
 		"UncancelShipment",
 		"DuplicateShipment",
 		"TransferShipmentOwnership",
-		"TransferShipmentToBilling",
+		"TransferShipmentToBillingItems",
 		"BulkTransferShipmentsToBilling",
 		"CalculateShipmentTotals",
 		"CalculateShipmentDistance",

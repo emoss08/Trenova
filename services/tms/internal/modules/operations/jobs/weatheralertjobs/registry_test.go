@@ -1,7 +1,6 @@
 package weatheralertjobs
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/registry"
@@ -54,19 +53,4 @@ func TestWorkflows_RegisterThePollWorkflow(t *testing.T) {
 	require.Len(t, Workflows, 1)
 	assert.Equal(t, PollNWSAlertsWorkflowName, Workflows[0].Name)
 	assert.NotNil(t, Workflows[0].Fn)
-}
-
-func TestActivities_KeepThePerTenantActivitiesUntilOldRunsDrain(t *testing.T) {
-	t.Parallel()
-
-	activities := reflect.TypeFor[*Activities]()
-	for _, name := range []string{
-		"PollNWSAlertsActivity",
-		"ExpireStaleWeatherAlertsActivity",
-		"ListWeatherAlertTenantsActivity",
-		"PollNWSAlertsForTenantActivity",
-	} {
-		_, ok := activities.MethodByName(name)
-		assert.True(t, ok, name)
-	}
 }

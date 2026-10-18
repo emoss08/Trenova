@@ -620,10 +620,6 @@ type ShipmentAdditionalCharge {
   fuelSurchargeProgramId: ID
   fuelSurchargeDetail: JSON
   isDetention: Boolean!
-  detentionOccurrenceId: ID
-    @deprecated(
-      reason: "A detention charge bills every detained stop on the shipment; read the occurrences' additionalChargeId instead."
-    )
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -1705,7 +1701,6 @@ input ShipmentAdditionalChargeInput {
   amount: Decimal = "0"
   unit: Int = 1
   fuelSurchargeProgramId: ID
-  detentionOccurrenceId: ID @deprecated(reason: "Ignored; the detention engine owns the link.")
   version: Int
   """
   How this charge is divided among payers. Omit to leave the split untouched;
@@ -1992,8 +1987,6 @@ extend type Mutation {
   uncancelShipment(id: ID!): Shipment!
   duplicateShipment(input: ShipmentDuplicateInput!): ShipmentDuplicateResponse!
   transferShipmentOwnership(id: ID!, input: ShipmentTransferOwnershipInput!): Shipment!
-  transferShipmentToBilling(input: ShipmentTransferToBillingInput!): BillingQueueItem!
-    @deprecated(reason: "Returns only the primary payer's item; use transferShipmentToBillingItems.")
   "Queues the shipment for billing, one item per payer."
   transferShipmentToBillingItems(input: ShipmentTransferToBillingInput!): ShipmentTransferToBillingResult!
   bulkTransferShipmentsToBilling(input: ShipmentBulkTransferToBillingInput!): ShipmentBulkTransferToBillingResponse!

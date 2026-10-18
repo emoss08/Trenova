@@ -3,8 +3,6 @@ package agentcontrolservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -26,8 +24,6 @@ import (
 	"go.uber.org/zap"
 )
 
-const SystemKeyBillingException = "billing_exception"
-
 type Params struct {
 	fx.In
 
@@ -35,7 +31,6 @@ type Params struct {
 	DB           kernelports.DBConnection
 	Repo         tenantports.AgentControlRepository
 	Versions     settingversionports.SettingVersionRepository
-	Definitions  agentdefinitionports.AgentDefinitionRepository
 	AuditService auditports.AuditService
 	// Trust promotes the tools that had already earned it when earned
 	// autonomy is turned on or its threshold lowered.
@@ -43,26 +38,24 @@ type Params struct {
 }
 
 type Service struct {
-	l           *zap.Logger
-	db          kernelports.DBConnection
-	repo        tenantports.AgentControlRepository
-	versions    settingversionports.SettingVersionRepository
-	definitions agentdefinitionports.AgentDefinitionRepository
-	audit       auditports.AuditService
-	trust       agentports.AgentTrustService
-	now         func() int64
+	l        *zap.Logger
+	db       kernelports.DBConnection
+	repo     tenantports.AgentControlRepository
+	versions settingversionports.SettingVersionRepository
+	audit    auditports.AuditService
+	trust    agentports.AgentTrustService
+	now      func() int64
 }
 
 func New(p Params) agentports.AgentControlService {
 	return &Service{
-		l:           p.Logger.Named("service.agentcontrol"),
-		db:          p.DB,
-		repo:        p.Repo,
-		versions:    p.Versions,
-		definitions: p.Definitions,
-		audit:       p.AuditService,
-		trust:       p.Trust,
-		now:         timeutils.NowUnix,
+		l:        p.Logger.Named("service.agentcontrol"),
+		db:       p.DB,
+		repo:     p.Repo,
+		versions: p.Versions,
+		audit:    p.AuditService,
+		trust:    p.Trust,
+		now:      timeutils.NowUnix,
 	}
 }
 
@@ -74,12 +67,6 @@ func (s *Service) Get(
 	if err != nil {
 		return nil, err
 	}
-
-	definition, err := s.billingDefinition(ctx, tenantInfo)
-	if err != nil {
-		return nil, err
-	}
-	applyLegacyFields(control, definition)
 
 	return control, nil
 }
@@ -125,12 +112,6 @@ func (s *Service) Update(
 	if err != nil {
 		return nil, s.explainConflict(ctx, req.TenantInfo, loaded, err)
 	}
-
-	definition, err := s.applyLegacyUpdate(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-	applyLegacyFields(updated, definition)
 
 	auditActor := actor.AuditActor()
 	if err = s.audit.LogAction(&auditports.LogActionParams{
@@ -282,65 +263,4 @@ func agentControlAuditComment(consentChanged bool, control *tenant.AgentControl)
 	default:
 		return "Agent control updated"
 	}
-}
-
-func (s *Service) billingDefinition(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-) (*agentdefinition.Definition, error) {
-	definition, err := s.definitions.GetBySystemKey(
-		ctx,
-		agentdefinitionports.GetAgentDefinitionBySystemKeyRequest{
-			SystemKey:  SystemKeyBillingException,
-			TenantInfo: tenantInfo,
-		},
-	)
-	if err != nil {
-		if errortypes.IsNotFoundError(err) {
-			return nil, nil
-		}
-
-		return nil, err
-	}
-
-	return definition, nil
-}
-
-func (s *Service) applyLegacyUpdate(
-	ctx context.Context,
-	req *agentports.UpdateAgentControlRequest,
-) (*agentdefinition.Definition, error) {
-	definition, err := s.billingDefinition(ctx, req.TenantInfo)
-	if err != nil || definition == nil {
-		return definition, err
-	}
-	if req.BillingAgentEnabled == nil && req.DecisionTimeoutSeconds == nil {
-		return definition, nil
-	}
-
-	if req.BillingAgentEnabled != nil {
-		definition.Enabled = *req.BillingAgentEnabled
-	}
-	if req.DecisionTimeoutSeconds != nil {
-		definition.DecisionTimeoutSeconds = *req.DecisionTimeoutSeconds
-	}
-
-	me := errortypes.NewMultiError()
-	definition.Validate(me)
-	if me.HasErrors() {
-		return nil, me
-	}
-
-	return s.definitions.Update(ctx, definition)
-}
-
-func applyLegacyFields(control *tenant.AgentControl, definition *agentdefinition.Definition) {
-	if definition == nil {
-		control.BillingAgentEnabled = false
-		control.DecisionTimeoutSeconds = agentdefinition.DefaultDecisionTimeoutSeconds
-		return
-	}
-
-	control.BillingAgentEnabled = definition.Enabled
-	control.DecisionTimeoutSeconds = definition.DecisionTimeoutSeconds
 }

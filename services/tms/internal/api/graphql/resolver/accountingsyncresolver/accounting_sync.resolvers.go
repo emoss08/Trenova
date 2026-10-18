@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/typeutils"
 )
 
 func (r *AccountingAppCredentialResolver) HasWebhookVerifier(ctx context.Context, obj *accountingsync.AccountingAppCredential) (bool, error) {
@@ -337,19 +338,23 @@ func (r *MutationResolver) StartAccountingAuthorization(ctx context.Context, int
 	})
 }
 
-func (r *MutationResolver) CompleteAccountingAuthorization(ctx context.Context, input gqlmodel.CompleteAccountingAuthorizationInput) (*accountingsync.AccountingConnection, error) {
-	completion, err := r.finishAccountingAuthorization(ctx, input)
+func (r *MutationResolver) FinishAccountingAuthorization(ctx context.Context, input gqlmodel.CompleteAccountingAuthorizationInput) (*accountingsyncports.AccountingAuthorizationCompletion, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingIntegration, permission.OpManage)
 	if err != nil {
 		return nil, err
 	}
-	if completion.Connection == nil {
-		return nil, errAccountingCompanyChoiceUnsupported()
+	if authCtx.UserID.IsNil() {
+		return nil, errAccountingNeedsAPerson()
 	}
-	return completion.Connection, nil
-}
 
-func (r *MutationResolver) FinishAccountingAuthorization(ctx context.Context, input gqlmodel.CompleteAccountingAuthorizationInput) (*accountingsyncports.AccountingAuthorizationCompletion, error) {
-	return r.finishAccountingAuthorization(ctx, input)
+	return r.AccountingConnections.CompleteAuthorization(ctx, &accountingsyncports.CompleteAccountingAuthorizationRequest{
+		TenantInfo:      base.TenantInfo(authCtx),
+		UserID:          authCtx.UserID,
+		IntegrationType: input.IntegrationType,
+		State:           input.State,
+		Code:            input.Code,
+		RealmID:         typeutils.ValueOrZero(input.RealmID),
+	})
 }
 
 func (r *MutationResolver) ChooseAccountingCompany(ctx context.Context, input gqlmodel.ChooseAccountingCompanyInput) (*accountingsync.AccountingConnection, error) {

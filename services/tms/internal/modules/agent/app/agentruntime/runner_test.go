@@ -1412,11 +1412,6 @@ func TestRestoreTurn_DecidesFromTheToolsHeldWhenTheTurnOpened(t *testing.T) {
 
 	assert.Equal(t, []string{"search_worker"}, drive(carried),
 		"the call is dispatched as it was when the turn opened")
-
-	before := carried
-	before.Held = nil
-	assert.Empty(t, drive(before),
-		"a state from before the set was kept is decided from the definition, as it was then")
 }
 
 // raise_exception needs a run, and a conversation's turn has none, so in the

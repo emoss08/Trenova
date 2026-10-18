@@ -101,8 +101,7 @@ registry, and nothing on either side names a particular command outside it.
   tools are narrowed, and sends the model the command's directive with the person's words in
   place of the command. A reply that ends the turn without calling a tool that honours the
   command (`CommandSpec.HonouredByCall`), and without asking the person a question, is sent back
-  once with the command's correction (`holdToCommand`, behind the command's own change id:
-  `agent-loop-browser-guard`, `agent-loop-search-guard`, `agent-loop-watch-guard`); a second
+  once with the command's correction (`holdToCommand`); a second
   such reply stands, so a request the extension cannot serve still ends in an answer. Another
   extension's tools do not count, nor do its own capability's tools that do not honour it.
 - The words are sent as typed, command and all, so the conversation keeps them as written and a
@@ -116,10 +115,8 @@ registry, and nothing on either side names a particular command outside it.
    `agentextension/command.go`, naming `Honours` when only some of its capability's tools
    carry it out. `TestEveryCommandIsServedByItsCapability` checks that its required and
    honouring tools belong to its capability and that each refusal is written.
-2. Add its directive, correction, retry reason and a new change id to `commandHolds` in
-   `agentruntime/command.go`, and list the change id under "Waiting on in-flight executions" in
-   [agent-runtime.md](agent-runtime.md). `TestEveryCommandHasAHold` fails until it has one, and
-   refuses a change id another command uses.
+2. Add its directive, correction and retry reason to `commandHolds` in
+   `agentruntime/command.go`. `TestEveryCommandHasAHold` fails until it has one.
 3. Add a case to `commandCases` in the runtime's and the assistant service's `command*_test.go`;
    `TestCommandCasesCoverEveryCommand` fails until both cover it.
 4. On the client, add it to `EXTENSION_COMMANDS` in `composer-commands.ts` with

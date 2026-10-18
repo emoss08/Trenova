@@ -34,21 +34,6 @@ type importAssistantStub struct {
 	completeHistoryFn func(context.Context, string, pagination.TenantInfo) error
 }
 
-func (s *importAssistantStub) Chat(
-	context.Context,
-	*shipmentports.ShipmentImportChatRequest,
-) (*shipmentports.ShipmentImportChatResponse, error) {
-	panic("unexpected Chat call")
-}
-
-func (s *importAssistantStub) ChatStream(
-	context.Context,
-	*shipmentports.ShipmentImportChatRequest,
-	func(kernelports.StreamEvent),
-) error {
-	panic("unexpected ChatStream call")
-}
-
 func (s *importAssistantStub) GetHistory(
 	context.Context,
 	string,

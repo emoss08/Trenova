@@ -140,10 +140,6 @@ func repeatRefusal(name, previous string) string {
 	)
 }
 
-// changeStopOnRepeats is the loop ending its tool use once a turn has sent
-// failed calls again unchanged maxRepeatedFailures times.
-const changeStopOnRepeats = "agent-loop-stop-on-repeats"
-
 // stoppedCallText answers a call in the same batch as the repeat that ended
 // the turn's tool use: every call a model makes needs a result, and this one
 // did not run.

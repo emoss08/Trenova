@@ -1008,32 +1008,6 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNAgentToolHolders2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋagentportsᚐAgentToolHoldersᚄ),
 			},
 			{
-				Name:       "agentToolPolicies",
-				NonNull:    true,
-				IsResolver: true,
-				Concurrent: true,
-				HasChild:   true,
-				ChildType:  "AgentToolPolicy",
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentToolPolicies(ctx)
-				},
-				Marshal: gqlexec.Marshal(marshalNAgentToolPolicy2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentToolPolicyᚄ),
-			},
-			{
-				Name:       "agentToolPolicyConnection",
-				NonNull:    true,
-				IsResolver: true,
-				Concurrent: true,
-				HasChild:   true,
-				ChildType:  "AgentToolPolicyConnection",
-				Args:       field_Query_agentToolPolicyConnection_args,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentToolPolicyConnection(ctx, fc.Args["input"].(gqlmodel.AgentToolPolicyConnectionInput))
-				},
-				Marshal: gqlexec.Marshal(marshalNAgentToolPolicyConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentToolPolicyConnection),
-			},
-			{
 				Name:       "agentToolRuleConnection",
 				NonNull:    true,
 				IsResolver: true,
@@ -1090,7 +1064,6 @@ var Shard = &gqlexec.Shard{
 		}},
 	},
 	Inputs: []gqlexec.Input{
-		{Name: "AgentToolPolicyConnectionInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputAgentToolPolicyConnectionInput)},
 		{Name: "AgentToolRuleInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputAgentToolRuleInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
@@ -1137,8 +1110,6 @@ type resolverMutation interface {
 type resolverQuery interface {
 	AgentToolRuleImpact(ctx context.Context, name string, input gqlmodel.AgentToolRuleInput) ([]*agentports.AgentToolRuleImpact, error)
 	AgentToolHolders(ctx context.Context) ([]*agentports.AgentToolHolders, error)
-	AgentToolPolicies(ctx context.Context) ([]*gqlmodel.AgentToolPolicy, error)
-	AgentToolPolicyConnection(ctx context.Context, input gqlmodel.AgentToolPolicyConnectionInput) (*gqlmodel.AgentToolPolicyConnection, error)
 	AgentToolRuleConnection(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentToolPolicyConnection, error)
 	AgentToolSafetyConnection(ctx context.Context, agentIds []string, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentToolSafetyConnection, error)
 	AgentSafetySummary(ctx context.Context) (*agentports.AgentSafetySummary, error)
@@ -1213,19 +1184,6 @@ func field_Query_agentToolRuleImpact_args(ctx context.Context, ec *gqlexec.Exec,
 	return args, nil
 }
 
-func field_Query_agentToolPolicyConnection_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
-	args := make(map[string]any, 1)
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
-		func(ctx context.Context, v any) (gqlmodel.AgentToolPolicyConnectionInput, error) {
-			return unmarshalNAgentToolPolicyConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentToolPolicyConnectionInput(ctx, ec, v)
-		})
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
 func field_Query_agentToolRuleConnection_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
@@ -1271,81 +1229,6 @@ func field_Query_agentSafety_args(ctx context.Context, ec *gqlexec.Exec, rawArgs
 	}
 	args["agentIds"] = arg0
 	return args, nil
-}
-
-func unmarshalInputAgentToolPolicyConnectionInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.AgentToolPolicyConnectionInput, error) {
-	var it gqlmodel.AgentToolPolicyConnectionInput
-	if obj == nil {
-		return it, nil
-	}
-
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-	if _, present := asMap["first"]; !present {
-		asMap["first"] = 25
-	}
-
-	fieldsInOrder := [...]string{"first", "after", "query", "egress", "resource", "kind", "runsWithoutPerson"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "first":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
-			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.First = data
-		case "after":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
-			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.After = data
-		case "query":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("query"))
-			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Query = data
-		case "egress":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("egress"))
-			data, err := unmarshalOAgentEgressClass2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐEgressClass(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Egress = data
-		case "resource":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resource"))
-			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Resource = data
-		case "kind":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
-			data, err := unmarshalOAgentToolKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐToolKind(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Kind = data
-		case "runsWithoutPerson":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("runsWithoutPerson"))
-			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.RunsWithoutPerson = data
-		}
-	}
-	return it, nil
 }
 
 func unmarshalInputAgentToolRuleInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.AgentToolRuleInput, error) {
@@ -1495,27 +1378,6 @@ var (
 )
 
 var (
-	enumUnmarshalOAgentEgressClass2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐEgressClass = map[string]agent.EgressClass{
-		"None":              agent.EgressNone,
-		"Personal":          agent.EgressPersonal,
-		"Internal":          agent.EgressInternal,
-		"CustomerVisible":   agent.EgressCustomerVisible,
-		"DriverVisible":     agent.EgressDriverVisible,
-		"ExternalRecipient": agent.EgressExternalRecipient,
-		"Money":             agent.EgressMoney,
-	}
-	enumMarshalOAgentEgressClass2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐEgressClass = map[agent.EgressClass]string{
-		agent.EgressNone:              "None",
-		agent.EgressPersonal:          "Personal",
-		agent.EgressInternal:          "Internal",
-		agent.EgressCustomerVisible:   "CustomerVisible",
-		agent.EgressDriverVisible:     "DriverVisible",
-		agent.EgressExternalRecipient: "ExternalRecipient",
-		agent.EgressMoney:             "Money",
-	}
-)
-
-var (
 	enumUnmarshalOAgentExternalRead2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐExternalRead = map[string]agent.ExternalRead{
 		"Never":  agent.ExternalReadNever,
 		"Always": agent.ExternalReadAlways,
@@ -1555,24 +1417,6 @@ var (
 	}
 )
 
-var (
-	enumUnmarshalOAgentToolKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐToolKind = map[string]agent.ToolKind{
-		"Query":   agent.ToolKindQuery,
-		"Action":  agent.ToolKindAction,
-		"Runtime": agent.ToolKindRuntime,
-	}
-	enumMarshalOAgentToolKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐToolKind = map[agent.ToolKind]string{
-		agent.ToolKindQuery:   "Query",
-		agent.ToolKindAction:  "Action",
-		agent.ToolKindRuntime: "Runtime",
-	}
-)
-
-func unmarshalNAgentToolPolicyConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentToolPolicyConnectionInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.AgentToolPolicyConnectionInput, error) {
-	res, err := unmarshalInputAgentToolPolicyConnectionInput(ctx, ec, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
 func unmarshalNAgentToolRuleInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentToolRuleInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.AgentToolRuleInput, error) {
 	res, err := unmarshalInputAgentToolRuleInput(ctx, ec, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -1611,15 +1455,6 @@ func unmarshalOAgentAutonomyTier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOAgentEgressClass2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐEgressClass(ctx context.Context, ec *gqlexec.Exec, v any) (*agent.EgressClass, error) {
-	if v == nil {
-		return nil, nil
-	}
-	tmp, err := graphql.UnmarshalString(v)
-	res := enumUnmarshalOAgentEgressClass2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐEgressClass[tmp]
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
 func unmarshalOAgentExternalRead2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐExternalRead(ctx context.Context, ec *gqlexec.Exec, v any) (*agent.ExternalRead, error) {
 	if v == nil {
 		return nil, nil
@@ -1629,36 +1464,11 @@ func unmarshalOAgentExternalRead2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOAgentToolKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐToolKind(ctx context.Context, ec *gqlexec.Exec, v any) (*agent.ToolKind, error) {
-	if v == nil {
-		return nil, nil
-	}
-	tmp, err := graphql.UnmarshalString(v)
-	res := enumUnmarshalOAgentToolKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐToolKind[tmp]
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func unmarshalOBoolean2ᚖbool(ctx context.Context, ec *gqlexec.Exec, v any) (*bool, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := graphql.UnmarshalBoolean(v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
 func unmarshalOID2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]string, error) {
 	if v == nil {
 		return nil, nil
 	}
 	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNID2string)
-}
-
-func unmarshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := graphql.UnmarshalInt(v)
-	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
@@ -1827,14 +1637,6 @@ func marshalNAgentToolKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodules
 		gqlexec.NullViolation(ctx)
 	}
 	return res
-}
-
-func marshalNAgentToolPolicy2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentToolPolicyᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.AgentToolPolicy) graphql.Marshaler {
-	return gqlexec.List[*gqlmodel.AgentToolPolicy]{
-		Elem:        marshalNAgentToolPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentToolPolicy,
-		NonNull:     true,
-		NonNullElem: true,
-	}.Marshal(ctx, ec, sel, v)
 }
 
 func marshalNAgentToolPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentToolPolicy(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.AgentToolPolicy) graphql.Marshaler {

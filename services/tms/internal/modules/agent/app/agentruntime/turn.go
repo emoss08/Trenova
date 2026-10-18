@@ -121,11 +121,6 @@ type TurnEffects interface {
 	// it worked and, when check is set, the changes made since the turn last
 	// looked to the records it watches.
 	Interject(t *Turn, check *WorldCheck) Interjections
-	// Supports reports whether a change to the loop's shape applies to this
-	// turn. In process every change does; in workflow code an execution
-	// started before the change keeps the shape it started with, so its
-	// history still replays.
-	Supports(change string) bool
 	Now() int64
 }
 
@@ -255,20 +250,15 @@ func (t *Turn) holds(name string) bool { return slices.Contains(t.held, name) }
 type TurnState struct {
 	Budget int    `json:"budget"`
 	System string `json:"system"`
-	// SystemStable is how much of System leads every turn unchanged. A state
-	// from before it was kept has none, and the whole prompt is cached as one.
+	// SystemStable is how much of System leads every turn unchanged.
 	SystemStable int                  `json:"systemStable,omitempty"`
 	Messages     []agentports.Message `json:"messages"`
-	// Evidence is the figures of the tool results the replay shortened. A
-	// state from before it was kept has none, and its replay shortened the
-	// same results without them.
+	// Evidence is the figures of the tool results the replay shortened.
 	Evidence []string     `json:"evidence,omitempty"`
 	Tools    ToolSetState `json:"tools"`
-	// Held is every tool the agent holds, as the turn opened. A state from
-	// before it was kept has none, and the turn works it out again.
+	// Held is every tool the agent holds, as the turn opened.
 	Held []string `json:"held,omitempty"`
-	// Reads are the held tools that only look something up. A state from
-	// before they were kept has none, and its calls run one at a time.
+	// Reads are the held tools that only look something up.
 	Reads     []string             `json:"reads,omitempty"`
 	Failures  map[string]string    `json:"failures,omitempty"`
 	Ordinals  map[string]int       `json:"ordinals,omitempty"`
@@ -279,25 +269,20 @@ type TurnState struct {
 	// how many it has handed out.
 	Delegates   []agentdefinition.RuntimeDelegate `json:"delegates,omitempty"`
 	Delegations int                               `json:"delegations,omitempty"`
-	// Directed is a task the person handed straight to another agent. A
-	// state from before it was kept has none.
+	// Directed is a task the person handed straight to another agent.
 	Directed *agentports.DirectedTask `json:"directed,omitempty"`
 	// Command is the extension command the turn is held to.
 	Command agentextension.Command `json:"command,omitempty"`
-	// Browser is how a state from before Command was kept said the turn was
-	// held to /browser. It is read, never written.
-	Browser bool `json:"browser,omitempty"`
 	// TaintOpened are the marks the turn's opening added, still to be
 	// announced. The turn's whole taint is Result.Taint.
 	TaintOpened []agent.TaintMark `json:"taintOpened,omitempty"`
 	// ExternalContent says the turn has read content from outside the
 	// organization.
 	ExternalContent bool `json:"externalContent,omitempty"`
-	// World is what the turn watches for changes made elsewhere. A state
-	// from before it was kept watches nothing.
+	// World is what the turn watches for changes made elsewhere.
 	World *WorldState `json:"world,omitempty"`
 	// ToolMemories are the carried memories about a tool the turn has not
-	// called yet. A state from before they were kept promotes none.
+	// called yet.
 	ToolMemories map[string][]pulid.ID `json:"toolMemories,omitempty"`
 }
 
@@ -381,13 +366,6 @@ func (s *Service) RestoreTurn(req *agentports.RunRequest, state TurnState) *Turn
 	if seen == nil {
 		seen = make(map[string]int, 4)
 	}
-	// Every agent holds the core tools, so an empty set is a state written
-	// before the set was kept, and the turn is decided the way it was then.
-	held := state.Held
-	if len(held) == 0 {
-		held = s.heldTools(req.Definition)
-	}
-
 	return &Turn{
 		s:            s,
 		req:          req,
@@ -397,7 +375,7 @@ func (s *Service) RestoreTurn(req *agentports.RunRequest, state TurnState) *Turn
 		messages:     state.Messages,
 		evidence:     state.Evidence,
 		tools:        restoreToolSet(state.Tools),
-		held:         held,
+		held:         state.Held,
 		reads:        restoreReads(state.Reads),
 		repeats:      &repeatGuard{failures: failures, reads: make(map[string]bool, 4)},
 		counts:       &ordinals{seen: seen},
@@ -408,20 +386,12 @@ func (s *Service) RestoreTurn(req *agentports.RunRequest, state TurnState) *Turn
 		delegates:    state.Delegates,
 		delegations:  state.Delegations,
 		directed:     state.Directed,
-		command:      state.heldCommand(),
+		command:      state.Command,
 		opened:       state.TaintOpened,
 		external:     state.ExternalContent,
 		world:        state.World.clone(),
 		toolMemories: cloneToolMemories(state.ToolMemories),
 	}
-}
-
-func (s TurnState) heldCommand() agentextension.Command {
-	if s.Command == "" && s.Browser {
-		return agentextension.CommandBrowser
-	}
-
-	return s.Command
 }
 
 func cloneToolMemories(byTool map[string][]pulid.ID) map[string][]pulid.ID {
@@ -714,8 +684,6 @@ type localEffects struct {
 	emit     kernelports.AssistantStreamEmitter
 	observer agentports.ToolObserver
 }
-
-func (fx *localEffects) Supports(string) bool { return true }
 
 func (*localEffects) Now() int64 { return timeutils.NowUnix() }
 

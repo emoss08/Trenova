@@ -301,57 +301,6 @@ func (a *Activities) runRequest(
 	}, nil
 }
 
-// RunAgentActivity is the whole loop in one activity, as a run was before the
-// loop moved into workflow code. Only runs that started on that code call it.
-func (a *Activities) RunAgentActivity(
-	ctx context.Context,
-	input *RunAgentInput,
-) (*RunAgentResult, error) {
-	payload := input.Payload
-	tenant := payload.TenantInfo()
-
-	req, err := a.runRequest(ctx, payload, input.Definition, input.Subject)
-	if err != nil {
-		return nil, err
-	}
-
-	activity.RecordHeartbeat(ctx, "running")
-
-	// The writer rides a context cancellation cannot reach: the events worth
-	// keeping are most often the ones emitted as something is going wrong.
-	keep := context.WithoutCancel(ctx)
-	trajectory := a.trajectoryFor(keep, tenant, payload.RunID)
-	req.Emit = func(event kernelports.StreamEvent) {
-		activity.RecordHeartbeat(ctx, "working")
-		agentports.RecordTrajectory(trajectory, keep, event)
-	}
-
-	outcome, err := a.runtime.Run(ctx, req)
-	agentports.FlushTrajectory(trajectory, keep)
-	if err != nil {
-		return nil, err
-	}
-
-	settled, _, err := a.settleRun(ctx, settleRunParams{
-		Payload:    payload,
-		Definition: input.Definition,
-		Subject:    input.Subject,
-		Outcome:    outcome,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return &RunAgentResult{
-		Reply:            outcome.Reply,
-		Model:            outcome.Model,
-		ToolCallsUsed:    outcome.ToolCallsUsed,
-		Exhausted:        outcome.Exhausted,
-		ProposalsRaised:  settled.ProposalsRaised,
-		PendingProposals: settled.PendingProposals,
-	}, nil
-}
-
 // OpenRunActivity builds the run's turn, which reads permissions, the agent's
 // memory and the ledger, so it happens here rather than in workflow code.
 //

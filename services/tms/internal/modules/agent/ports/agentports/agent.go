@@ -348,11 +348,9 @@ type UpdateAgentControlRequest struct {
 	ShadowMode bool
 	// EarnedAutonomy and PromotionThreshold are optional so a client that
 	// only knows the pause switch leaves them as they are.
-	EarnedAutonomy         *bool
-	PromotionThreshold     *int
-	BillingAgentEnabled    *bool
-	DecisionTimeoutSeconds *int
-	AITrainingConsent      *bool
+	EarnedAutonomy     *bool
+	PromotionThreshold *int
+	AITrainingConsent  *bool
 	// PersonMonthlyMessages is absent to leave the allowance as it is.
 	PersonMonthlyMessages *int
 	LearningOff           *bool

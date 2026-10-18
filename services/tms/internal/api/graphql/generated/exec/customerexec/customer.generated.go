@@ -354,32 +354,9 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
 			},
 			{
-				Name:       "billingCycleType",
-				NonNull:    true,
-				IsResolver: true,
-				Concurrent: true,
-				ChildErr:   errNoChild8,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*customer.CustomerBillingProfile)
-					return gqlexec.Resolver[resolverCustomerBillingProfile](ec, "CustomerBillingProfile").BillingCycleType(ctx, obj)
-				},
-				Marshal: gqlexec.Marshal(marshalNCustomerBillingCycleType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomerBillingCycleType),
-			},
-			{
-				Name:       "billingCycleDayOfWeek",
-				IsResolver: true,
-				Concurrent: true,
-				ChildErr:   errNoChild5,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*customer.CustomerBillingProfile)
-					return gqlexec.Resolver[resolverCustomerBillingProfile](ec, "CustomerBillingProfile").BillingCycleDayOfWeek(ctx, obj)
-				},
-				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
-			},
-			{
 				Name:     "invoiceDelivery",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customer.CustomerBillingProfile)
 					return obj.InvoiceDelivery, nil
@@ -389,7 +366,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "billingCycle",
 				NonNull:  true,
-				ChildErr: errNoChild10,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customer.CustomerBillingProfile)
 					return obj.BillingCycle, nil
@@ -428,7 +405,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "splitBy",
 				NonNull:  true,
-				ChildErr: errNoChild11,
+				ChildErr: errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customer.CustomerBillingProfile)
 					return obj.SplitBy, nil
@@ -438,7 +415,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "sectionBy",
 				NonNull:  true,
-				ChildErr: errNoChild12,
+				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customer.CustomerBillingProfile)
 					return obj.SectionBy, nil
@@ -448,7 +425,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "invoiceDetail",
 				NonNull:  true,
-				ChildErr: errNoChild13,
+				ChildErr: errNoChild12,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customer.CustomerBillingProfile)
 					return obj.InvoiceDetail, nil
@@ -456,22 +433,10 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNInvoiceDetail2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐInvoiceDetail),
 			},
 			{
-				Name:       "consolidationLookbackDays",
-				NonNull:    true,
-				IsResolver: true,
-				Concurrent: true,
-				ChildErr:   errNoChild5,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*customer.CustomerBillingProfile)
-					return gqlexec.Resolver[resolverCustomerBillingProfile](ec, "CustomerBillingProfile").ConsolidationLookbackDays(ctx, obj)
-				},
-				Marshal: gqlexec.Marshal(marshalNInt2int),
-			},
-			{
 				Name:       "minConsolidatedAmount",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild14,
+				ChildErr:   errNoChild13,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customer.CustomerBillingProfile)
 					return gqlexec.Resolver[resolverCustomerBillingProfile](ec, "CustomerBillingProfile").MinConsolidatedAmount(ctx, obj)
@@ -491,7 +456,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "paymentTerm",
 				NonNull:  true,
-				ChildErr: errNoChild15,
+				ChildErr: errNoChild14,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customer.CustomerBillingProfile)
 					return obj.PaymentTerm, nil
@@ -512,7 +477,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "creditLimit",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild14,
+				ChildErr:   errNoChild13,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customer.CustomerBillingProfile)
 					return gqlexec.Resolver[resolverCustomerBillingProfile](ec, "CustomerBillingProfile").CreditLimit(ctx, obj)
@@ -524,7 +489,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild14,
+				ChildErr:   errNoChild13,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customer.CustomerBillingProfile)
 					return gqlexec.Resolver[resolverCustomerBillingProfile](ec, "CustomerBillingProfile").CreditBalance(ctx, obj)
@@ -534,7 +499,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "creditStatus",
 				NonNull:  true,
-				ChildErr: errNoChild16,
+				ChildErr: errNoChild15,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customer.CustomerBillingProfile)
 					return obj.CreditStatus, nil
@@ -591,18 +556,6 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
 			},
 			{
-				Name:       "invoiceMethod",
-				NonNull:    true,
-				IsResolver: true,
-				Concurrent: true,
-				ChildErr:   errNoChild17,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*customer.CustomerBillingProfile)
-					return gqlexec.Resolver[resolverCustomerBillingProfile](ec, "CustomerBillingProfile").InvoiceMethod(ctx, obj)
-				},
-				Marshal: gqlexec.Marshal(marshalNCustomerInvoiceMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomerInvoiceMethod),
-			},
-			{
 				Name:     "autoSendInvoiceOnGeneration",
 				NonNull:  true,
 				ChildErr: errNoChild3,
@@ -653,45 +606,9 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
 			{
-				Name:       "allowInvoiceConsolidation",
-				NonNull:    true,
-				IsResolver: true,
-				Concurrent: true,
-				ChildErr:   errNoChild3,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*customer.CustomerBillingProfile)
-					return gqlexec.Resolver[resolverCustomerBillingProfile](ec, "CustomerBillingProfile").AllowInvoiceConsolidation(ctx, obj)
-				},
-				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
-			},
-			{
-				Name:       "consolidationPeriodDays",
-				NonNull:    true,
-				IsResolver: true,
-				Concurrent: true,
-				ChildErr:   errNoChild5,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*customer.CustomerBillingProfile)
-					return gqlexec.Resolver[resolverCustomerBillingProfile](ec, "CustomerBillingProfile").ConsolidationPeriodDays(ctx, obj)
-				},
-				Marshal: gqlexec.Marshal(marshalNInt2int),
-			},
-			{
-				Name:       "consolidationGroupBy",
-				NonNull:    true,
-				IsResolver: true,
-				Concurrent: true,
-				ChildErr:   errNoChild18,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*customer.CustomerBillingProfile)
-					return gqlexec.Resolver[resolverCustomerBillingProfile](ec, "CustomerBillingProfile").ConsolidationGroupBy(ctx, obj)
-				},
-				Marshal: gqlexec.Marshal(marshalNCustomerConsolidationGroupBy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomerConsolidationGroupBy),
-			},
-			{
 				Name:     "invoiceNumberFormat",
 				NonNull:  true,
-				ChildErr: errNoChild19,
+				ChildErr: errNoChild16,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customer.CustomerBillingProfile)
 					return obj.InvoiceNumberFormat, nil
@@ -752,7 +669,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "lateChargeRate",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild14,
+				ChildErr:   errNoChild13,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customer.CustomerBillingProfile)
 					return gqlexec.Resolver[resolverCustomerBillingProfile](ec, "CustomerBillingProfile").LateChargeRate(ctx, obj)
@@ -912,18 +829,6 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
 			{
-				Name:       "invoiceAdjustmentSupportingDocumentPolicy",
-				NonNull:    true,
-				IsResolver: true,
-				Concurrent: true,
-				ChildErr:   errNoChild20,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*customer.CustomerBillingProfile)
-					return gqlexec.Resolver[resolverCustomerBillingProfile](ec, "CustomerBillingProfile").InvoiceAdjustmentSupportingDocumentPolicy(ctx, obj)
-				},
-				Marshal: gqlexec.Marshal(marshalNCustomerInvoiceAdjustmentSupportingDocumentPolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomerInvoiceAdjustmentSupportingDocumentPolicy),
-			},
-			{
 				Name:     "defaultBillerId",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
@@ -945,7 +850,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "fuelSurchargeMode",
 				NonNull:  true,
-				ChildErr: errNoChild21,
+				ChildErr: errNoChild17,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customer.CustomerBillingProfile)
 					return obj.FuelSurchargeMode, nil
@@ -1129,18 +1034,6 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
-				Name:       "fromEmail",
-				NonNull:    true,
-				IsResolver: true,
-				Concurrent: true,
-				ChildErr:   errNoChild2,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*customer.CustomerEmailProfile)
-					return gqlexec.Resolver[resolverCustomerEmailProfile](ec, "CustomerEmailProfile").FromEmail(ctx, obj)
-				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
-			},
-			{
 				Name:     "toRecipients",
 				NonNull:  true,
 				ChildErr: errNoChild2,
@@ -1263,30 +1156,17 @@ var Shard = &gqlexec.Shard{
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
 		{Root: "CustomerBillingProfile", Check: func(r any) bool { _, ok := r.(resolverCustomerBillingProfile); return ok }},
-		{Root: "CustomerEmailProfile", Check: func(r any) bool { _, ok := r.(resolverCustomerEmailProfile); return ok }},
 		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
 	},
 }
 
 type resolverCustomerBillingProfile interface {
-	BillingCycleType(ctx context.Context, obj *customer.CustomerBillingProfile) (gqlmodel.CustomerBillingCycleType, error)
-	BillingCycleDayOfWeek(ctx context.Context, obj *customer.CustomerBillingProfile) (*int, error)
-	ConsolidationLookbackDays(ctx context.Context, obj *customer.CustomerBillingProfile) (int, error)
 	MinConsolidatedAmount(ctx context.Context, obj *customer.CustomerBillingProfile) (*string, error)
 	CreditLimit(ctx context.Context, obj *customer.CustomerBillingProfile) (*string, error)
 	CreditBalance(ctx context.Context, obj *customer.CustomerBillingProfile) (string, error)
-	InvoiceMethod(ctx context.Context, obj *customer.CustomerBillingProfile) (gqlmodel.CustomerInvoiceMethod, error)
-	AllowInvoiceConsolidation(ctx context.Context, obj *customer.CustomerBillingProfile) (bool, error)
-	ConsolidationPeriodDays(ctx context.Context, obj *customer.CustomerBillingProfile) (int, error)
-	ConsolidationGroupBy(ctx context.Context, obj *customer.CustomerBillingProfile) (gqlmodel.CustomerConsolidationGroupBy, error)
 	InvoiceCopies(ctx context.Context, obj *customer.CustomerBillingProfile) (int, error)
 	LateChargeRate(ctx context.Context, obj *customer.CustomerBillingProfile) (*string, error)
 	GracePeriodDays(ctx context.Context, obj *customer.CustomerBillingProfile) (int, error)
-	InvoiceAdjustmentSupportingDocumentPolicy(ctx context.Context, obj *customer.CustomerBillingProfile) (gqlmodel.CustomerInvoiceAdjustmentSupportingDocumentPolicy, error)
-}
-
-type resolverCustomerEmailProfile interface {
-	FromEmail(ctx context.Context, obj *customer.CustomerEmailProfile) (string, error)
 }
 
 type resolverQuery interface {
@@ -1303,20 +1183,16 @@ var (
 	errNoChild5  = errors.New("field of type Int does not have child fields")
 	errNoChild6  = errors.New("field of type CustomerStatusUpdatePreference does not have child fields")
 	errNoChild7  = errors.New("field of type Timestamp does not have child fields")
-	errNoChild8  = errors.New("field of type CustomerBillingCycleType does not have child fields")
-	errNoChild9  = errors.New("field of type CustomerInvoiceDelivery does not have child fields")
-	errNoChild10 = errors.New("field of type CustomerBillingCycle does not have child fields")
-	errNoChild11 = errors.New("field of type InvoiceSplitKey does not have child fields")
-	errNoChild12 = errors.New("field of type InvoiceSectionKey does not have child fields")
-	errNoChild13 = errors.New("field of type InvoiceDetail does not have child fields")
-	errNoChild14 = errors.New("field of type Decimal does not have child fields")
-	errNoChild15 = errors.New("field of type CustomerPaymentTerm does not have child fields")
-	errNoChild16 = errors.New("field of type CustomerCreditStatus does not have child fields")
-	errNoChild17 = errors.New("field of type CustomerInvoiceMethod does not have child fields")
-	errNoChild18 = errors.New("field of type CustomerConsolidationGroupBy does not have child fields")
-	errNoChild19 = errors.New("field of type CustomerInvoiceNumberFormat does not have child fields")
-	errNoChild20 = errors.New("field of type CustomerInvoiceAdjustmentSupportingDocumentPolicy does not have child fields")
-	errNoChild21 = errors.New("field of type CustomerFuelSurchargeMode does not have child fields")
+	errNoChild8  = errors.New("field of type CustomerInvoiceDelivery does not have child fields")
+	errNoChild9  = errors.New("field of type CustomerBillingCycle does not have child fields")
+	errNoChild10 = errors.New("field of type InvoiceSplitKey does not have child fields")
+	errNoChild11 = errors.New("field of type InvoiceSectionKey does not have child fields")
+	errNoChild12 = errors.New("field of type InvoiceDetail does not have child fields")
+	errNoChild13 = errors.New("field of type Decimal does not have child fields")
+	errNoChild14 = errors.New("field of type CustomerPaymentTerm does not have child fields")
+	errNoChild15 = errors.New("field of type CustomerCreditStatus does not have child fields")
+	errNoChild16 = errors.New("field of type CustomerInvoiceNumberFormat does not have child fields")
+	errNoChild17 = errors.New("field of type CustomerFuelSurchargeMode does not have child fields")
 )
 
 func field_Query_customers_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -1383,20 +1259,12 @@ func marshalNCustomerBillingCycle2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return res
 }
 
-func marshalNCustomerBillingCycleType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomerBillingCycleType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v gqlmodel.CustomerBillingCycleType) graphql.Marshaler {
-	return v
-}
-
 func marshalNCustomerConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomerConnection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.CustomerConnection) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "CustomerConnection", v)
-}
-
-func marshalNCustomerConsolidationGroupBy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomerConsolidationGroupBy(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v gqlmodel.CustomerConsolidationGroupBy) graphql.Marshaler {
-	return v
 }
 
 func marshalNCustomerCreditStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐCreditStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v customer.CreditStatus) graphql.Marshaler {
@@ -1431,20 +1299,12 @@ func marshalNCustomerFuelSurchargeMode2githubᚗcomᚋemoss08ᚋtrenovaᚋintern
 	return res
 }
 
-func marshalNCustomerInvoiceAdjustmentSupportingDocumentPolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomerInvoiceAdjustmentSupportingDocumentPolicy(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v gqlmodel.CustomerInvoiceAdjustmentSupportingDocumentPolicy) graphql.Marshaler {
-	return v
-}
-
 func marshalNCustomerInvoiceDelivery2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐInvoiceDelivery(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v customer.InvoiceDelivery) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}
 	return res
-}
-
-func marshalNCustomerInvoiceMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomerInvoiceMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v gqlmodel.CustomerInvoiceMethod) graphql.Marshaler {
-	return v
 }
 
 func marshalNCustomerInvoiceNumberFormat2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐInvoiceNumberFormat(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v customer.InvoiceNumberFormat) graphql.Marshaler {

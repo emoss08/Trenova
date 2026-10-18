@@ -11,10 +11,6 @@ import (
 	"go.temporal.io/sdk/workflow"
 )
 
-// perOrganizationChange marks where the sweep stopped walking every tenant
-// in one activity. A sweep started before it finishes on that activity.
-const perOrganizationChange = "insight-refresh-per-organization"
-
 // organizationConcurrency bounds how many organizations refresh at once. Each
 // runs month-wide aggregates, so the bound is what keeps a sweep from
 // saturating the database the product runs on.
@@ -25,15 +21,6 @@ var insightRetryPolicy = &temporal.RetryPolicy{
 	BackoffCoefficient: 2.0,
 	MaximumAttempts:    3,
 	MaximumInterval:    30 * time.Second,
-}
-
-// The timeout is generous because the sweep walks every organization and each
-// one runs several month-wide aggregates plus a model call. It serves only
-// sweeps started before the sweep fanned out.
-var insightActivityOptions = workflow.ActivityOptions{
-	StartToCloseTimeout: 30 * time.Minute,
-	HeartbeatTimeout:    2 * time.Minute,
-	RetryPolicy:         insightRetryPolicy,
 }
 
 var listOptions = workflow.ActivityOptions{
@@ -79,11 +66,6 @@ func InsightRefreshWorkflow(
 	ctx workflow.Context,
 	input *InsightRefreshInput,
 ) (*InsightRefreshResult, error) {
-	if workflow.GetVersion(ctx, perOrganizationChange, workflow.DefaultVersion, 1) ==
-		workflow.DefaultVersion {
-		return refreshInOneActivity(ctx)
-	}
-
 	if input == nil {
 		input = &InsightRefreshInput{}
 	}
@@ -165,21 +147,4 @@ func RefreshOrganizationInsightsWorkflow(
 	}
 
 	return &result, nil
-}
-
-// refreshInOneActivity is the sweep as it was before it fanned out. It runs
-// only sweeps that started on it, and must not change.
-func refreshInOneActivity(ctx workflow.Context) (*InsightRefreshResult, error) {
-	ctx = workflow.WithActivityOptions(ctx, insightActivityOptions)
-
-	var a *Activities
-	result := new(InsightRefreshResult)
-	if err := workflow.ExecuteActivity(ctx, a.RefreshInsightsActivity).
-		Get(ctx, result); err != nil {
-		workflow.GetLogger(ctx).Error("Insight refresh workflow failed", "error", err)
-
-		return nil, err
-	}
-
-	return result, nil
 }

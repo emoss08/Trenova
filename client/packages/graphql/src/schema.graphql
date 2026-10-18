@@ -3773,10 +3773,8 @@ type AgentControl {
   aiTrainingConsentChangedAt: Timestamp
   """Who last turned training consent on or off."""
   aiTrainingConsentChangedById: ID
-  billingAgentEnabled: Boolean! @deprecated(reason: "Enable or disable the billing exception agent definition instead")
   businessUnitId: ID!
   createdAt: Timestamp!
-  decisionTimeoutSeconds: Int! @deprecated(reason: "Set decisionTimeoutSeconds on the agent definition instead")
   """
   Whether a streak of clean approvals may move a tool up one tier on an agent.
   """
@@ -3805,8 +3803,6 @@ input AgentControlInput {
   Absent leaves training consent as it is. Only a signed-in person can change it.
   """
   aiTrainingConsent: Boolean
-  billingAgentEnabled: Boolean @deprecated(reason: "Enable or disable the billing exception agent definition instead")
-  decisionTimeoutSeconds: Int @deprecated(reason: "Set decisionTimeoutSeconds on the agent definition instead")
   """Absent leaves the organization's earned autonomy switch as it is."""
   earnedAutonomy: Boolean
   """Absent leaves whether agents learn from their work as it is."""
@@ -5393,13 +5389,6 @@ type AgentQualityAgentEdge {
   node: AgentQualityAgent!
 }
 
-input AgentQualityAgentsInput {
-  after: String
-  first: Int
-  """Days of ratings and scores to read, 30 by default, at most 365."""
-  window: Int
-}
-
 """When and how far the nightly agent quality sweep runs."""
 type AgentQualityControl {
   enabled: Boolean!
@@ -6135,12 +6124,6 @@ type AgentSuiteRunCaseEdge {
   node: AgentEvaluation!
 }
 
-input AgentSuiteRunCasesInput {
-  after: String
-  first: Int
-  suiteRunId: ID!
-}
-
 type AgentSuiteRunConnection {
   edges: [AgentSuiteRunEdge!]!
   pageInfo: PageInfo!
@@ -6167,13 +6150,6 @@ enum AgentSuiteRunStatus {
 enum AgentSuiteRunTrigger {
   Manual
   Scheduled
-}
-
-input AgentSuiteRunsInput {
-  after: String
-  agentDefinitionId: ID
-  first: Int
-  statuses: [AgentSuiteRunStatus!]
 }
 
 """
@@ -6384,29 +6360,6 @@ type AgentToolPolicyConnection {
   totalCount: Int
 }
 
-"""
-Narrows the tool rules. A filter left out matches every tool; the rules come
-back ordered by tool name.
-"""
-input AgentToolPolicyConnectionInput {
-  after: String
-  """Tools some of whose work reaches this class."""
-  egress: AgentEgressClass
-  first: Int = 25
-  kind: AgentToolKind
-  """Matched against the tool's name and title, ignoring case."""
-  query: String
-  """
-  The permission resource the tool needs; general for a tool that needs no grant.
-  """
-  resource: String
-  """
-  True keeps the tools that change something and, on at least one agent, can do
-  so without a person; false keeps every other tool.
-  """
-  runsWithoutPerson: Boolean
-}
-
 type AgentToolPolicyEdge {
   cursor: String!
   node: AgentToolPolicy!
@@ -6603,13 +6556,6 @@ type AgentWorstRatedAnswerConnection {
 type AgentWorstRatedAnswerEdge {
   cursor: String!
   node: AgentWorstRatedAnswer!
-}
-
-input AgentWorstRatedAnswersInput {
-  after: String
-  agentDefinitionId: ID
-  first: Int
-  window: Int
 }
 
 input AmendWorkerEmploymentEventInput {
@@ -10640,18 +10586,7 @@ enum CustomerBillingCycle {
   Weekly
 }
 
-enum CustomerBillingCycleType {
-  BiWeekly
-  Daily
-  Immediate
-  Monthly
-  PerShipment
-  Quarterly
-  Weekly
-}
-
 type CustomerBillingProfile {
-  allowInvoiceConsolidation: Boolean! @deprecated(reason: "Replaced by invoiceDelivery. Removed in a later release.")
   applyLateCharges: Boolean!
   arAccountId: ID
   autoApplyAccessorials: Boolean!
@@ -10673,15 +10608,10 @@ type CustomerBillingProfile {
   Weekday 0-6 for weekly cycles, day of month 1-28 for monthly and longer.
   """
   billingCycleAnchorDay: Int!
-  billingCycleDayOfWeek: Int @deprecated(reason: "Replaced by billingCycleAnchorDay, which also covers monthly and quarterly cycles. Removed in a later release.")
   """IANA zone the period boundaries are evaluated in."""
   billingCycleTimezone: String!
-  billingCycleType: CustomerBillingCycleType! @deprecated(reason: "Replaced by invoiceDelivery and billingCycle, which separate the delivery mode from the cadence. Removed in a later release.")
   billingNotes: String!
   businessUnitId: ID!
-  consolidationGroupBy: CustomerConsolidationGroupBy! @deprecated(reason: "Split into splitBy (how many invoices) and sectionBy (organisation within one). Removed in a later release.")
-  consolidationLookbackDays: Int! @deprecated(reason: "Statements no longer stop looking for owed freight after a window: every approved, unbilled shipment is included until it bills. Has no effect and is always 0. Removed in a later release.")
-  consolidationPeriodDays: Int! @deprecated(reason: "Replaced by billingCycle. Statements no longer use a sweep window, so this has no effect and is always 0. Removed in a later release.")
   countLateOnlyOnAppointmentStops: Boolean!
   createdAt: Timestamp!
   """
@@ -10717,11 +10647,9 @@ type CustomerBillingProfile {
   gracePeriodDays: Int!
   hasBillingControlOverrides: Boolean!
   id: ID!
-  invoiceAdjustmentSupportingDocumentPolicy: CustomerInvoiceAdjustmentSupportingDocumentPolicy! @deprecated(reason: "Supporting documents are no longer required for invoice adjustments or voids. Always Optional. Removed in a later release.")
   invoiceCopies: Int!
   invoiceDelivery: CustomerInvoiceDelivery!
   invoiceDetail: InvoiceDetail!
-  invoiceMethod: CustomerInvoiceMethod! @deprecated(reason: "Split into invoiceDelivery (how many invoices) and invoiceDetail (how verbose). Removed in a later release.")
   invoiceNumberFormat: CustomerInvoiceNumberFormat!
   """
   End of the last period billed, so a missed cycle catches up rather than skipping.
@@ -10761,14 +10689,6 @@ type CustomerConnection {
   totalCount: Int
 }
 
-enum CustomerConsolidationGroupBy {
-  BOL
-  Division
-  Location
-  None
-  PONumber
-}
-
 enum CustomerCreditStatus {
   Active
   Hold
@@ -10803,7 +10723,6 @@ type CustomerEmailProfile {
   comment: String!
   createdAt: Timestamp!
   customerId: ID!
-  fromEmail: String! @deprecated(reason: "Invoices are always sent from the organization's Billing email profile")
   id: ID!
   includeShipmentDetail: Boolean!
   organizationId: ID!
@@ -10820,12 +10739,6 @@ enum CustomerFuelSurchargeMode {
   Program
 }
 
-enum CustomerInvoiceAdjustmentSupportingDocumentPolicy {
-  Inherit
-  Optional
-  Required
-}
-
 """How many invoices a customer's freight turns into."""
 enum CustomerInvoiceDelivery {
   """
@@ -10836,12 +10749,6 @@ enum CustomerInvoiceDelivery {
   PerOrder
   """One invoice per shipment."""
   PerShipment
-}
-
-enum CustomerInvoiceMethod {
-  Individual
-  Summary
-  SummaryWithDetail
 }
 
 enum CustomerInvoiceNumberFormat {
@@ -20750,10 +20657,6 @@ type Mutation {
   """
   commitMyDecisionNow(planId: ID, proposalId: ID): Boolean!
   """
-  Finishes connecting with what the provider returned. Only the person who started it can finish it.
-  """
-  completeAccountingAuthorization(input: CompleteAccountingAuthorizationInput!): AccountingConnection! @deprecated(reason: "Use finishAccountingAuthorization, which can offer a choice of companies")
-  """
   Moves setup to the start date step once every required mapping is confirmed.
   """
   completeAccountingSetup(integrationType: AccountingSystem!): AccountingConnection!
@@ -20812,17 +20715,13 @@ type Mutation {
   createInboundLoad(fields: [TriageLoadFieldInput!]!, messageId: ID!): InboundMessage!
   """Creates a mailbox and returns its webhook token, once."""
   createInboundMailbox(apiKey: String, input: InboundMailboxInput!, signingSecret: String): InboundMailboxCredentials!
-  createInvoiceFromOrder(offCycleReason: String, orderId: ID!): Invoice! @deprecated(reason: "Returns only the primary payer's invoice; use createInvoicesFromOrder.")
-  """
-  Bills the given shipments. offCycleReason is required only when the customer
-  is on a periodic statement, where invoicing freight on its own takes it off
-  that statement; omitting it there fails with a validation error on
-  `offCycleReason` so the client can ask for one.
-  """
-  createInvoiceFromShipments(offCycleReason: String, shipmentIds: [ID!]!): Invoice! @deprecated(reason: "Returns only the primary payer's invoice; use createInvoicesFromShipments.")
   createInvoicesFromOrder(offCycleReason: String, orderId: ID!): CreateInvoicesResult!
   """
   Bills the shipments, producing one invoice per payer of a split shipment.
+  offCycleReason is required only when the customer is on a periodic statement,
+  where invoicing freight on its own takes it off that statement; omitting it
+  there fails with a validation error on `offCycleReason` so the client can ask
+  for one.
   """
   createInvoicesFromShipments(offCycleReason: String, shipmentIds: [ID!]!): CreateInvoicesResult!
   createJobPosition(input: JobPositionInput!): JobPosition!
@@ -21599,7 +21498,6 @@ type Mutation {
   """
   tightenAgentInstructions(instructions: String!): AgentInstructionsTightened!
   transferShipmentOwnership(id: ID!, input: ShipmentTransferOwnershipInput!): Shipment!
-  transferShipmentToBilling(input: ShipmentTransferToBillingInput!): BillingQueueItem! @deprecated(reason: "Returns only the primary payer's item; use transferShipmentToBillingItems.")
   """Queues the shipment for billing, one item per payer."""
   transferShipmentToBillingItems(input: ShipmentTransferToBillingInput!): ShipmentTransferToBillingResult!
   transitionShiftSwap(input: TransitionShiftSwapInput!): ShiftSwapRequest!
@@ -21857,31 +21755,6 @@ enum MyAgentOrigin {
   Custom
   """Made from one of the platform's templates."""
   Template
-}
-
-"""
-The agent a question is best put to, among the chat agents the caller may start
-a conversation with, judged by the tools it holds that the caller may use.
-"""
-type MyAgentRecommendation {
-  agent: MyAgent!
-  """
-  True when the agent the question would go to now is already the best fit.
-  """
-  current: Boolean!
-  """
-  The tools the agent holds that matched the question, best first. At most three.
-  """
-  tools: [String!]!
-}
-
-input MyAgentRecommendationInput {
-  """
-  The agent the question would go to now, kept when it fits as well as any.
-  """
-  currentAgentId: ID
-  """What the caller is about to ask. At most 4000 characters."""
-  text: String!
 }
 
 input MyAgentsInput {
@@ -23713,10 +23586,6 @@ type Query {
   ratings, qualityScore and lastRunAt.
   """
   agentQualityAgentConnection(input: DataTableConnectionInput!, window: Int = 30): AgentQualityAgentConnection!
-  """
-  Every agent with its satisfaction, quality line and last suite run, a page at a time.
-  """
-  agentQualityAgents(input: AgentQualityAgentsInput!): AgentQualityAgentConnection! @deprecated(reason: "Use agentQualityAgentConnection, which takes the data table's filters and sort.")
   agentQualityControl: AgentQualityControl!
   """The organization's AI quality over the last window days."""
   agentQualityOverview(window: Int = 30): AgentQualityOverview!
@@ -23743,21 +23612,14 @@ type Query {
   A suite run's cases a page at a time, in the order they were asked unless sorted.
   """
   agentSuiteRunCaseConnection(input: DataTableConnectionInput!, suiteRunId: ID!): AgentSuiteRunCaseConnection!
-  """A suite run's cases in the order they were asked."""
-  agentSuiteRunCases(input: AgentSuiteRunCasesInput!): AgentSuiteRunCaseConnection! @deprecated(reason: "Use agentSuiteRunCaseConnection, which takes the data table's filters and sort.")
   """
   Suite runs a page at a time, newest first unless sorted, for one agent or all of them.
   """
   agentSuiteRunConnection(agentDefinitionId: ID, input: DataTableConnectionInput!): AgentSuiteRunConnection!
-  agentSuiteRuns(input: AgentSuiteRunsInput!): AgentSuiteRunConnection! @deprecated(reason: "Use agentSuiteRunConnection, which takes the data table's filters and sort.")
   """The prompts kept with an agent, oldest first. At most 20."""
   agentTestPrompts(agentId: ID!): [AgentTestPrompt!]!
   """Every tool some agent holds, with the agents that hold it."""
   agentToolHolders: [AgentToolHolders!]!
-  """Every tool's safety policy, by name."""
-  agentToolPolicies: [AgentToolPolicy!]! @deprecated(reason: "Use agentToolRuleConnection, which pages, filters and sorts on the server.")
-  """The tool rules a page at a time, searched and filtered on the server."""
-  agentToolPolicyConnection(input: AgentToolPolicyConnectionInput!): AgentToolPolicyConnection! @deprecated(reason: "Use agentToolRuleConnection, which takes the data table's filters and sort.")
   """
   The tool rules a page at a time. Filters on title, name, egress, maxTier,
   resource, kind, readsExternal, leavesOrganization and runsWithoutPerson; sorts
@@ -23782,8 +23644,6 @@ type Query {
   lastRatedAt.
   """
   agentWorstRatedAnswerConnection(agentDefinitionId: ID, input: DataTableConnectionInput!, window: Int = 30): AgentWorstRatedAnswerConnection!
-  """The answers people liked least, a page at a time."""
-  agentWorstRatedAnswers(input: AgentWorstRatedAnswersInput!): AgentWorstRatedAnswerConnection! @deprecated(reason: "Use agentWorstRatedAnswerConnection, which takes the data table's filters and sort.")
   """
   Every agent that has run or proposed lately; an agent with neither is left out.
   """
@@ -24254,11 +24114,6 @@ type Query {
   myAgentMatch(input: MyAgentMatchInput!): MyAgentMatch!
   """What agents are told about the signed-in person's own work."""
   myAgentProfile: AgentProfile!
-  """
-  The chat agent the caller may use that holds the tools a question needs. Null
-  when no such agent holds a tool that matches it.
-  """
-  myAgentRecommendation(input: MyAgentRecommendationInput!): MyAgentRecommendation @deprecated(reason: "Use myAgentMatch, which also says when none of the caller's agents can help")
   """The chat agents the caller may use, enabled and by name."""
   myAgents(input: MyAgentsInput!): MyAgentConnection!
   """What the signed-in driver has said they would rather work."""
@@ -25769,7 +25624,6 @@ type ReportRunError {
 
 input ReportRunsFilterInput {
   definitionId: ID
-  mineOnly: Boolean @deprecated(reason: "Every run listed is one the caller ran; another person's runs are never listed.")
   statuses: [String!]
 }
 
@@ -27268,7 +27122,6 @@ type ShipmentAdditionalCharge {
   amount: Decimal!
   businessUnitId: ID!
   createdAt: Timestamp!
-  detentionOccurrenceId: ID @deprecated(reason: "A detention charge bills every detained stop on the shipment; read the occurrences' additionalChargeId instead.")
   fuelSurchargeDetail: JSON
   fuelSurchargeProgramId: ID
   id: ID
@@ -27290,7 +27143,6 @@ input ShipmentAdditionalChargeInput {
   """
   allocations: [ChargeAllocationInput!]
   amount: Decimal = "0"
-  detentionOccurrenceId: ID @deprecated(reason: "Ignored; the detention engine owns the link.")
   fuelSurchargeProgramId: ID
   id: ID
   isSystemGenerated: Boolean = false

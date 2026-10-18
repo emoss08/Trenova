@@ -15,8 +15,6 @@ import (
 	"go.uber.org/zap"
 )
 
-const ChangeInterjections = "agent-loop-interjections"
-
 const (
 	actionDeleted = "deleted"
 	actionCreated = "created"

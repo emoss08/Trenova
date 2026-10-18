@@ -15,8 +15,6 @@ import (
 )
 
 const (
-	pollPendingAIExtractionsDescription = "Poll pending OpenAI background extraction jobs"
-
 	defaultConversionTimeout   = 10 * time.Minute
 	conversionHeartbeatTimeout = time.Minute
 )
@@ -62,12 +60,6 @@ func RegisterExtractionWorkflows() []temporaltype.WorkflowDefinition {
 			Fn:          ProcessDocumentAIExtractionWorkflow,
 			TaskQueue:   temporaltype.DocumentExtractionTaskQueue,
 			Description: "Run asynchronous AI extraction for an indexed document",
-		},
-		{
-			Name:        "PollPendingDocumentAIExtractionsWorkflow",
-			Fn:          PollPendingDocumentAIExtractionsWorkflow,
-			TaskQueue:   temporaltype.DocumentExtractionTaskQueue,
-			Description: pollPendingAIExtractionsDescription,
 		},
 	}
 }

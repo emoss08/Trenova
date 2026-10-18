@@ -120,12 +120,10 @@ type RunContext struct {
 	// own agent handed it.
 	Delegation *agentports.Delegation `json:"delegation,omitempty"`
 	// Records are the records the turn is about, so an agent it hands a task
-	// to reads their memories too. A run recorded before they were kept has
-	// none, and its delegates read the memories of no record.
+	// to reads their memories too.
 	Records []agent.EntityRef `json:"records,omitempty"`
 	// Inline says the reply is read with nothing beside it, so no tool result
-	// is kept as an artifact. A run recorded before it existed reads false and
-	// keeps its artifacts as it always did.
+	// is kept as an artifact.
 	Inline bool `json:"inline,omitempty"`
 }
 

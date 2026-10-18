@@ -44,9 +44,6 @@ writes:
     reason: "Chooses what the organization's accounting connection sends during setup; an administrator owns the connection and it is fixed once sync is enabled."
   "mutation clearAccountingMapping":
     tools: [clear_accounting_mapping]
-  "mutation completeAccountingAuthorization":
-    exempt: security
-    reason: "Handles the OAuth app and its credentials that let Trenova act in the accounting system."
   "mutation completeAccountingSetup":
     exempt: configuration
     reason: "Connects the organization to an outside system; an administrator owns the connection and its credentials."
@@ -2136,9 +2133,9 @@ writes:
     reason: "Renders an invoice for review and saves nothing."
   "POST /api/v1/billing/invoices/:invoiceID/send/":
     tools: [send_invoice, send_invoices]
-  "mutation createInvoiceFromOrder":
+  "POST /api/v1/billing/invoices/from-order/":
     tools: [create_invoice]
-  "mutation createInvoiceFromShipments":
+  "POST /api/v1/billing/invoices/from-shipments/":
     tools: [create_invoice]
   "mutation createInvoicesFromOrder":
     tools: [create_invoice]
@@ -2774,6 +2771,8 @@ writes:
     tools: [place_shipment_hold]
   "POST /api/v1/shipments/:shipmentID/holds/:holdID/release/":
     tools: [release_shipment_hold]
+  "POST /api/v1/shipments/:shipmentID/transfer-to-billing/":
+    tools: [transfer_to_billing]
   "POST /api/v1/shipments/auto-cancel/":
     exempt: infrastructure
     reason: "The sweep the Temporal schedule runs over every organization to cancel shipments past the auto-cancel threshold; a person does not decide which shipments it takes, and cancel_shipment cancels one."
@@ -2834,8 +2833,6 @@ writes:
     tools: [resolve_shipment_comment]
   "mutation transferShipmentOwnership":
     tools: [transfer_shipment_ownership]
-  "mutation transferShipmentToBilling":
-    tools: [transfer_to_billing]
   "mutation transferShipmentToBillingItems":
     tools: [transfer_to_billing]
   "mutation uncancelShipment":

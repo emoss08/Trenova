@@ -158,15 +158,6 @@ func (s *Service) overridesFor(
 	return rules, nil
 }
 
-func (s *Service) ToolPolicies() []agentports.AgentToolPolicyView {
-	out := make([]agentports.AgentToolPolicyView, 0, len(s.entries))
-	for idx := range s.entries {
-		out = append(out, s.entries[idx].view)
-	}
-
-	return out
-}
-
 func (s *Service) ToolPolicy(name string) (agentports.AgentToolPolicyView, bool) {
 	idx, ok := s.byName[name]
 	if !ok {

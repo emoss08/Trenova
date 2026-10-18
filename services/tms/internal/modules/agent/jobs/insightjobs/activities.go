@@ -9,8 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"go.temporal.io/sdk/activity"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -35,53 +33,6 @@ func NewActivities(p ActivitiesParams) *Activities {
 		tenants:  p.Tenants,
 		l:        p.Logger.Named("job.insight-refresh"),
 	}
-}
-
-// RefreshInsightsActivity recomputes insights for every organization in one
-// activity. It serves only sweeps started before the sweep fanned out to a
-// child workflow per organization.
-//
-// One organization's failure is recorded and stepped over, and the run is
-// anchored to a single instant captured up front, so every tenant in one sweep
-// describes the same window.
-func (a *Activities) RefreshInsightsActivity(
-	ctx context.Context,
-) (*InsightRefreshResult, error) {
-	organizations, err := a.tenants.ListOrganizations(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("list organizations: %w", err)
-	}
-
-	now := timeutils.NowUnix()
-	result := newInsightRefreshResult()
-
-	for _, org := range organizations {
-		activity.RecordHeartbeat(ctx, org.ID.String())
-
-		refreshed, rErr := a.refresh(ctx, pagination.TenantInfo{
-			OrgID: org.ID,
-			BuID:  org.BusinessUnitID,
-		}, now)
-		if rErr != nil {
-			a.l.Error("insight refresh failed for organization",
-				zap.String("organization", org.ID.String()),
-				zap.Error(rErr),
-			)
-			result.FailedOrganizations = append(result.FailedOrganizations, org.ID.String())
-
-			continue
-		}
-		result.absorb(refreshed)
-	}
-
-	a.l.Info("insight refresh sweep complete",
-		zap.Int("organizations", result.OrganizationsProcessed),
-		zap.Int("created", result.InsightsCreated),
-		zap.Strings("failedOrganizations", result.FailedOrganizations),
-		zap.Strings("failedDetectors", result.FailedDetectors),
-	)
-
-	return result, nil
 }
 
 // ListOrganizationsActivity lists one page of organizations to refresh.

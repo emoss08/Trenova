@@ -423,10 +423,6 @@ type AgentControl {
   personMonthlyMessages: Int!
   "Agents no longer look back over their work to keep what they learned as memory."
   learningOff: Boolean!
-  billingAgentEnabled: Boolean!
-    @deprecated(reason: "Enable or disable the billing exception agent definition instead")
-  decisionTimeoutSeconds: Int!
-    @deprecated(reason: "Set decisionTimeoutSeconds on the agent definition instead")
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -867,10 +863,6 @@ input AgentControlInput {
   update to whatever is there.
   """
   version: Int
-  billingAgentEnabled: Boolean
-    @deprecated(reason: "Enable or disable the billing exception agent definition instead")
-  decisionTimeoutSeconds: Int
-    @deprecated(reason: "Set decisionTimeoutSeconds on the agent definition instead")
 }
 
 extend type Query {

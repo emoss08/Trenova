@@ -16,36 +16,11 @@ import (
 type groundingEffects struct {
 	*localEffects
 
-	supports bool
-	// joined is an execution started before the figures were read apart.
-	joined             bool
-	askedFiguresAsRead bool
-	// offersAreClaims is an execution started before an offer was read as
-	// no claim.
-	offersAreClaims bool
-	// unworked is an execution started before a reply's working counted.
-	unworked bool
-	events   []kernelports.StreamEvent
+	events []kernelports.StreamEvent
 }
 
 func (fx *groundingEffects) Emit(event kernelports.StreamEvent) {
 	fx.events = append(fx.events, event)
-}
-
-func (fx *groundingEffects) Supports(change string) bool {
-	switch change {
-	case changeGroundingGuard, changeGroundingReadAmounts:
-		return fx.supports
-	case changeGroundingFiguresAsRead:
-		fx.askedFiguresAsRead = true
-		return !fx.joined
-	case changeGroundingOffers:
-		return !fx.offersAreClaims
-	case changeGroundingWorkedFigures:
-		return !fx.unworked
-	}
-
-	return true
 }
 
 func (fx *groundingEffects) regrounded() []agentports.AssistantReplyRegroundedEvent {
@@ -95,13 +70,12 @@ type groundingRun struct {
 
 func runGrounded(
 	t *testing.T,
-	supports bool,
 	filed map[string]any,
 	replies ...string,
 ) groundingRun {
 	t.Helper()
 
-	return runGroundedWith(t, &groundingEffects{supports: supports}, filed, replies...)
+	return runGroundedWith(t, &groundingEffects{}, filed, replies...)
 }
 
 func runGroundedWith(
@@ -155,7 +129,7 @@ func lastUserMessage(req *agentports.ChatCompletionRequest) string {
 func TestGroundingGuard_RewritesAReplyThatClaimsWhatWasNotFiled(t *testing.T) {
 	t.Parallel()
 
-	run := runGrounded(t, true, map[string]any{"customerId": "cus_1"},
+	run := runGrounded(t, map[string]any{"customerId": "cus_1"},
 		"I proposed the copy of PRO-100 and copied its commodities across.",
 		"I proposed a copy of PRO-100 for cus_1. Check the card before you approve it.",
 	)
@@ -179,7 +153,7 @@ func TestGroundingGuard_RewritesAReplyThatClaimsWhatWasNotFiled(t *testing.T) {
 func TestGroundingGuard_NotesTheCardWhenTheRewriteStillDrifts(t *testing.T) {
 	t.Parallel()
 
-	run := runGrounded(t, true, map[string]any{"customerId": "cus_1"},
+	run := runGrounded(t, map[string]any{"customerId": "cus_1"},
 		"Proposed, with the commodities copied.",
 		"Proposed, and the commodities come along too.",
 	)
@@ -198,7 +172,7 @@ func TestGroundingGuard_NotesTheCardWhenTheRewriteStillDrifts(t *testing.T) {
 func TestGroundingGuard_CatchesAFigureNothingReturnedOrFiled(t *testing.T) {
 	t.Parallel()
 
-	run := runGrounded(t, true, map[string]any{"customerId": "cus_1", "baseRate": 1250},
+	run := runGrounded(t, map[string]any{"customerId": "cus_1", "baseRate": 1250},
 		"Proposed at a base rate of $4,800.",
 		"Proposed at a base rate of $1,250.",
 	)
@@ -214,7 +188,7 @@ func TestGroundingGuard_CatchesAFigureNothingReturnedOrFiled(t *testing.T) {
 func TestGroundingGuard_LetsAReplySayWhatWasLeftOut(t *testing.T) {
 	t.Parallel()
 
-	run := runGrounded(t, true, map[string]any{"customerId": "cus_1"},
+	run := runGrounded(t, map[string]any{"customerId": "cus_1"},
 		"I proposed the copy. I did not copy the commodities; add them on the card if needed.",
 	)
 
@@ -225,7 +199,7 @@ func TestGroundingGuard_LetsAReplySayWhatWasLeftOut(t *testing.T) {
 func TestGroundingGuard_AcceptsWhatWasFiled(t *testing.T) {
 	t.Parallel()
 
-	run := runGrounded(t, true, map[string]any{
+	run := runGrounded(t, map[string]any{
 		"customerId": "cus_1",
 		"commodities": []any{
 			map[string]any{"commodityId": "com_1", "pieces": 40},
@@ -238,18 +212,6 @@ func TestGroundingGuard_AcceptsWhatWasFiled(t *testing.T) {
 	assert.Empty(t, run.fx.regrounded())
 }
 
-func TestGroundingGuard_LeavesAnExecutionStartedBeforeItAlone(t *testing.T) {
-	t.Parallel()
-
-	run := runGrounded(t, false, map[string]any{"customerId": "cus_1"},
-		"Proposed, with the commodities copied.",
-	)
-
-	assert.Equal(t, 2, run.completion.CallCount)
-	assert.Empty(t, run.fx.regrounded())
-	assert.Equal(t, "Proposed, with the commodities copied.", run.result.Reply)
-}
-
 func TestGroundingGuard_AConversationThatReadNothingIsNotChecked(t *testing.T) {
 	t.Parallel()
 
@@ -257,7 +219,7 @@ func TestGroundingGuard_AConversationThatReadNothingIsNotChecked(t *testing.T) {
 		textTurn("Detention usually runs $50 to $75 an hour after two free hours."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
-	fx := &groundingEffects{supports: true}
+	fx := &groundingEffects{}
 	fx.localEffects = &localEffects{s: rt, ctx: t.Context(), emit: func(kernelports.StreamEvent) {}}
 
 	_, err := rt.Drive(rt.OpenTurn(t.Context(), &agentports.RunRequest{
@@ -275,13 +237,12 @@ func TestGroundingGuard_AConversationThatReadNothingIsNotChecked(t *testing.T) {
 // replies given, filing nothing.
 func readGrounded(
 	t *testing.T,
-	supports bool,
 	tools []string,
 	replies ...string,
 ) groundingRun {
 	t.Helper()
 
-	return readGroundedWith(t, &groundingEffects{supports: supports}, tools, replies...)
+	return readGroundedWith(t, &groundingEffects{}, tools, replies...)
 }
 
 func readGroundedWith(
@@ -326,7 +287,7 @@ func readGroundedWith(
 func TestGroundingGuard_RewritesAShareNothingRead(t *testing.T) {
 	t.Parallel()
 
-	run := readGrounded(t, true, []string{"get_report_run", "analyze_data"},
+	run := readGrounded(t, []string{"get_report_run", "analyze_data"},
 		"About 52.3% of the $87,310.40 billed is still open.",
 		"Of the $87,310.40 billed, $45,662.16 is still open.",
 	)
@@ -349,7 +310,7 @@ func TestGroundingGuard_RewritesAShareNothingRead(t *testing.T) {
 func TestGroundingGuard_WithoutAnalysisAShareIsLeftOut(t *testing.T) {
 	t.Parallel()
 
-	run := readGrounded(t, true, []string{"get_report_run"},
+	run := readGrounded(t, []string{"get_report_run"},
 		"About 52.3% is still open.",
 		"Of the $87,310.40 billed, $45,662.16 is still open.",
 	)
@@ -363,7 +324,7 @@ func TestGroundingGuard_WithoutAnalysisAShareIsLeftOut(t *testing.T) {
 func TestGroundingGuard_NamesTheFiguresWhenTheRewriteStillStatesThem(t *testing.T) {
 	t.Parallel()
 
-	run := readGrounded(t, true, []string{"get_report_run"},
+	run := readGrounded(t, []string{"get_report_run"},
 		"About 52.3% is still open.",
 		"Roughly 52.3% is still open.",
 	)
@@ -381,23 +342,13 @@ func TestGroundingGuard_NamesTheFiguresWhenTheRewriteStillStatesThem(t *testing.
 func TestGroundingGuard_AcceptsWhatTheConversationRead(t *testing.T) {
 	t.Parallel()
 
-	run := readGrounded(t, true, []string{"get_report_run"},
+	run := readGrounded(t, []string{"get_report_run"},
 		"Of about $87.3k billed, $45,662.16 is still open, and 91.4% delivered on time "+
 			"across 31 days.",
 	)
 
 	assert.Equal(t, 2, run.completion.CallCount)
 	assert.Empty(t, run.fx.regrounded())
-}
-
-func TestGroundingGuard_LeavesAReadAnswerStartedBeforeItAlone(t *testing.T) {
-	t.Parallel()
-
-	run := readGrounded(t, false, []string{"get_report_run"}, "About 52.3% is still open.")
-
-	assert.Equal(t, 2, run.completion.CallCount)
-	assert.Empty(t, run.fx.regrounded())
-	assert.Equal(t, "About 52.3% is still open.", run.result.Reply)
 }
 
 func TestFiledLabels_ComeFromTheToolsSchema(t *testing.T) {
@@ -488,7 +439,7 @@ func TestGroundingGuard_AFileOnlyTheModelReadsIsNotHeldAgainstIt(t *testing.T) {
 		&agenttest.StubQueryTool{ToolName: "get_report_run", Result: map[string]any{}},
 	}}
 	rt := newRuntime(completion, registry, &stubActionRegistry{}, nil)
-	fx := &groundingEffects{supports: true}
+	fx := &groundingEffects{}
 	fx.localEffects = &localEffects{s: rt, ctx: t.Context(), emit: func(kernelports.StreamEvent) {}}
 
 	turn := rt.OpenTurn(t.Context(), &agentports.RunRequest{
@@ -510,39 +461,24 @@ func TestGroundingGuard_AFileOnlyTheModelReadsIsNotHeldAgainstIt(t *testing.T) {
 func TestGroundingGuard_ReadsEachFigureOfAJSONRow(t *testing.T) {
 	t.Parallel()
 
-	run := runGroundedResult(t, &groundingEffects{supports: true},
+	run := runGroundedResult(t, &groundingEffects{},
 		[]any{[]any{"Riverside", 39, 12937.5, 0.708}},
 		"Proposed. Riverside cost $12,937.50, 70.8% of the total.",
 	)
 
 	assert.Equal(t, 2, run.completion.CallCount)
 	assert.Empty(t, run.fx.regrounded())
-	assert.True(t, run.fx.askedFiguresAsRead, "the two readings disagree, so the workflow is asked")
 }
 
-func TestGroundingGuard_AnExecutionThatReadFiguresJoinedKeepsDoingSo(t *testing.T) {
+func TestGroundingGuard_AcceptsAFigureTheResultCarries(t *testing.T) {
 	t.Parallel()
 
-	run := runGroundedResult(t, &groundingEffects{supports: true, joined: true},
-		[]any{[]any{"Riverside", 39, 12937.5, 0.708}},
-		"Proposed. Riverside cost $12,937.50.",
-		"Proposed.",
-	)
-
-	assert.Equal(t, 3, run.completion.CallCount)
-	require.Len(t, run.fx.regrounded(), 1)
-}
-
-func TestGroundingGuard_AgreeingReadingsDoNotAskTheWorkflow(t *testing.T) {
-	t.Parallel()
-
-	run := runGroundedResult(t, &groundingEffects{supports: true},
+	run := runGroundedResult(t, &groundingEffects{},
 		[]any{"12937.5"},
 		"Proposed. Riverside cost $12,937.50.",
 	)
 
 	assert.Empty(t, run.fx.regrounded())
-	assert.False(t, run.fx.askedFiguresAsRead)
 }
 
 // runGroundedResult files a create_shipment whose result carries rows, then
@@ -599,7 +535,7 @@ func TestGroundingGuard_ADifferenceOfThePersonsOwnFiguresIsStated(t *testing.T) 
 		&agenttest.StubQueryTool{ToolName: "get_invoices", Result: map[string]any{"total": "3700"}},
 	}}
 	rt := newRuntime(completion, registry, &stubActionRegistry{}, nil)
-	fx := &groundingEffects{supports: true}
+	fx := &groundingEffects{}
 	fx.localEffects = &localEffects{s: rt, ctx: t.Context(), emit: func(kernelports.StreamEvent) {}}
 
 	_, err := rt.Drive(rt.OpenTurn(t.Context(), &agentports.RunRequest{
@@ -619,7 +555,7 @@ func TestGroundingGuard_ADifferenceOfThePersonsOwnFiguresIsStated(t *testing.T) 
 func TestGroundingGuard_AnOfferToAddAFieldIsNoClaim(t *testing.T) {
 	t.Parallel()
 
-	run := runGroundedWith(t, &groundingEffects{supports: true},
+	run := runGroundedWith(t, &groundingEffects{},
 		map[string]any{"customerId": "cus_1"},
 		"I proposed the copy of PRO-100. If you have the packing list, I can add the "+
 			"commodities before you approve it.",
@@ -632,7 +568,7 @@ func TestGroundingGuard_AnOfferToAddAFieldIsNoClaim(t *testing.T) {
 func TestGroundingGuard_AnOfferBesideAClaimStillChecksTheClaim(t *testing.T) {
 	t.Parallel()
 
-	run := runGroundedWith(t, &groundingEffects{supports: true},
+	run := runGroundedWith(t, &groundingEffects{},
 		map[string]any{"customerId": "cus_1"},
 		"I proposed the copy with its commodities. I can add more commodities if you need them.",
 		"I proposed the copy of PRO-100.",
@@ -643,24 +579,12 @@ func TestGroundingGuard_AnOfferBesideAClaimStillChecksTheClaim(t *testing.T) {
 	assert.Equal(t, []string{"commodities"}, run.fx.regrounded()[0].Fields)
 }
 
-func TestGroundingGuard_AnExecutionThatReadOffersAsClaimsKeepsDoingSo(t *testing.T) {
-	t.Parallel()
-
-	run := runGroundedWith(t, &groundingEffects{supports: true, offersAreClaims: true},
-		map[string]any{"customerId": "cus_1"},
-		"I proposed the copy. I can add the commodities before you approve it.",
-		"I proposed the copy of PRO-100.",
-	)
-
-	assert.Equal(t, 3, run.completion.CallCount)
-}
-
 // A share whose two sides the reply gives is shown working: the guard checks
 // the division instead of sending the agent to analyze_data for it.
 func TestGroundingGuard_AcceptsArithmeticOnFiguresTheReplyGives(t *testing.T) {
 	t.Parallel()
 
-	run := readGrounded(t, true, []string{"get_report_run"},
+	run := readGrounded(t, []string{"get_report_run"},
 		"Of the $87,310.40 billed, $45,662.16 is still open: 52.3%, leaving $41,648.24 paid.",
 	)
 
@@ -671,25 +595,13 @@ func TestGroundingGuard_AcceptsArithmeticOnFiguresTheReplyGives(t *testing.T) {
 func TestGroundingGuard_WrongArithmeticOnGivenFiguresIsStillRewritten(t *testing.T) {
 	t.Parallel()
 
-	run := readGrounded(t, true, []string{"get_report_run"},
+	run := readGrounded(t, []string{"get_report_run"},
 		"Of the $87,310.40 billed, $45,662.16 is still open: 61.4%.",
 		"Of the $87,310.40 billed, $45,662.16 is still open.",
 	)
 
 	require.Len(t, run.fx.regrounded(), 1)
 	assert.Equal(t, []string{"61.4"}, run.fx.regrounded()[0].Figures)
-}
-
-func TestGroundingGuard_AnExecutionThatIgnoredWorkingKeepsDoingSo(t *testing.T) {
-	t.Parallel()
-
-	run := readGroundedWith(t, &groundingEffects{supports: true, unworked: true},
-		[]string{"get_report_run"},
-		"Of the $87,310.40 billed, $45,662.16 is still open: 52.3%.",
-		"Of the $87,310.40 billed, $45,662.16 is still open.",
-	)
-
-	assert.Equal(t, 3, run.completion.CallCount)
 }
 
 // Told 112 gallons at $3.89, "$435.68" is the person's own two figures
@@ -705,7 +617,7 @@ func TestGroundingGuard_AProductOfThePersonsFiguresIsStated(t *testing.T) {
 		&agenttest.StubQueryTool{ToolName: "find_in_trenova", Result: map[string]any{}},
 	}}
 	rt := newRuntime(completion, registry, &stubActionRegistry{}, nil)
-	fx := &groundingEffects{supports: true}
+	fx := &groundingEffects{}
 	fx.localEffects = &localEffects{s: rt, ctx: t.Context(), emit: func(kernelports.StreamEvent) {}}
 
 	_, err := rt.Drive(rt.OpenTurn(t.Context(), &agentports.RunRequest{
@@ -722,7 +634,7 @@ func TestGroundingGuard_AProductOfThePersonsFiguresIsStated(t *testing.T) {
 func TestGroundingGuard_AFiledReplysWorkingCounts(t *testing.T) {
 	t.Parallel()
 
-	run := runGroundedResult(t, &groundingEffects{supports: true},
+	run := runGroundedResult(t, &groundingEffects{},
 		[]any{"1121.36", "898.80"},
 		"Proposed at $1,121.36 in total: $898.80 linehaul and $222.56 in other charges.",
 	)

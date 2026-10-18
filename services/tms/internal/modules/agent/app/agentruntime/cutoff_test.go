@@ -15,22 +15,11 @@ import (
 type cutOffEffects struct {
 	*localEffects
 
-	supports bool
-	asked    []string
-	events   []kernelports.StreamEvent
+	events []kernelports.StreamEvent
 }
 
 func (fx *cutOffEffects) Emit(event kernelports.StreamEvent) {
 	fx.events = append(fx.events, event)
-}
-
-func (fx *cutOffEffects) Supports(change string) bool {
-	fx.asked = append(fx.asked, change)
-	if change == changeCutOffCallRetry {
-		return fx.supports
-	}
-
-	return true
 }
 
 func cutMidCall(limit int) *agentports.ChatCompletionResult {
@@ -62,7 +51,6 @@ type cutOffRun struct {
 
 func runCutOff(
 	t *testing.T,
-	supports bool,
 	turns ...*agentports.ChatCompletionResult,
 ) cutOffRun {
 	t.Helper()
@@ -75,7 +63,7 @@ func runCutOff(
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{
 		Tools: []agentports.AgentTool{tool},
 	}, nil)
-	fx := &cutOffEffects{supports: supports}
+	fx := &cutOffEffects{}
 	fx.localEffects = &localEffects{
 		s:    rt,
 		ctx:  t.Context(),
@@ -106,7 +94,7 @@ func retryingReasons(events []kernelports.StreamEvent) []string {
 func TestCutOffCall_IsAskedAgainWithTwiceTheRoom(t *testing.T) {
 	t.Parallel()
 
-	run := runCutOff(t, true,
+	run := runCutOff(t,
 		cutMidCall(1024),
 		toolTurn("transfer_to_billing", map[string]any{"shipmentIds": []any{"shp_1"}}),
 		textTurn("Proposed the transfer of shp_1."),
@@ -132,7 +120,7 @@ func TestCutOffCall_IsAskedAgainWithTwiceTheRoom(t *testing.T) {
 func TestCutOffCall_StillCutSaysItRanOutOfRoomAndNamesTheLimit(t *testing.T) {
 	t.Parallel()
 
-	run := runCutOff(t, true, cutMidCall(1024), cutMidCall(2048))
+	run := runCutOff(t, cutMidCall(1024), cutMidCall(2048))
 
 	require.Equal(t, 2, run.completion.CallCount, "asked again once, not again and again")
 	assert.Empty(t, run.result.Actions)
@@ -153,7 +141,7 @@ func TestCutOffCall_StillCutSaysItRanOutOfRoomAndNamesTheLimit(t *testing.T) {
 func TestCutOffCall_AReplyThatSpentItsBudgetThinkingIsAskedAgain(t *testing.T) {
 	t.Parallel()
 
-	run := runCutOff(t, true, cutBeforeAnswering(1024), textTurn("21 shipments can go."))
+	run := runCutOff(t, cutBeforeAnswering(1024), textTurn("21 shipments can go."))
 
 	require.Equal(t, 2, run.completion.CallCount)
 	assert.Equal(t, 2048, run.completion.Requests[1].MaxTokens)
@@ -173,7 +161,7 @@ func TestCutOffCall_ABrokenNativeCallIsAskedAgain(t *testing.T) {
 			ArgumentsError: "unexpected end of JSON input",
 		}},
 	}
-	run := runCutOff(t, true, broken, broken)
+	run := runCutOff(t, broken, broken)
 
 	require.Equal(t, 2, run.completion.CallCount)
 	assert.Equal(t, 8192, run.completion.Requests[1].MaxTokens)
@@ -185,12 +173,12 @@ func TestCutOffCall_ABrokenNativeCallIsAskedAgain(t *testing.T) {
 func TestCutOffCall_TheRetryIsCappedByTheRuntimeCeiling(t *testing.T) {
 	t.Parallel()
 
-	run := runCutOff(t, true, cutMidCall(cutOffRetryCeiling), textTurn("never asked"))
+	run := runCutOff(t, cutMidCall(cutOffRetryCeiling), textTurn("never asked"))
 
 	require.Equal(t, 1, run.completion.CallCount, "no more room to give, so it is not asked again")
 	assert.Contains(t, run.result.Reply, "ran out of room")
 
-	capped := runCutOff(t, true, cutMidCall(20000), textTurn("Done."))
+	capped := runCutOff(t, cutMidCall(20000), textTurn("Done."))
 	require.Equal(t, 2, capped.completion.CallCount)
 	assert.Equal(t, cutOffRetryCeiling, capped.completion.Requests[1].MaxTokens)
 }
@@ -203,21 +191,8 @@ func TestCutOffCall_ALongTextAnswerKeepsTheOldNotice(t *testing.T) {
 		Truncated:   true,
 		OutputLimit: 1024,
 	}
-	run := runCutOff(t, true, long)
+	run := runCutOff(t, long)
 
 	require.Equal(t, 1, run.completion.CallCount)
 	assert.True(t, strings.HasSuffix(run.result.Reply, truncationNotice))
-	assert.NotContains(t, run.fx.asked, changeCutOffCallRetry,
-		"a turn that never meets a cut call records no marker")
-}
-
-func TestCutOffCall_AnExecutionStartedBeforeTheChangeKeepsItsShape(t *testing.T) {
-	t.Parallel()
-
-	run := runCutOff(t, false, cutMidCall(1024), textTurn("never asked"))
-
-	require.Equal(t, 1, run.completion.CallCount)
-	assert.Equal(t, "I'll transfer all 21 now."+truncationNotice, run.result.Reply)
-	assert.Contains(t, run.fx.asked, changeCutOffCallRetry)
-	assert.Empty(t, retryingReasons(run.fx.events))
 }

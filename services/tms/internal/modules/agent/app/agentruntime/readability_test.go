@@ -162,10 +162,7 @@ func TestDistinctCallIDs_ReplacesAnIDTheConversationAlreadyUsed(t *testing.T) {
 		{ID: "toolu_unique", Name: "get_tractor"},
 	}}
 
-	distinctCallIDs(completion, used, callIDMinter{
-		mint:             NewCallID,
-		renewSynthesized: func() bool { return true },
-	})
+	distinctCallIDs(completion, used, NewCallID)
 
 	ids := make(map[string]struct{}, len(completion.ToolCalls))
 	for _, call := range completion.ToolCalls {
@@ -183,60 +180,34 @@ it.
 
 The conversation a turn replays is only its most recent messages, so a call_0
 from before them was not among the ids checked, and the next call_0 overwrote
-the artifact that older call had produced. An execution that started before
-the change keeps the ids it was given, so its history still replays.
+the artifact that older call had produced.
 */
 func TestDistinctCallIDs_AlwaysReplacesASynthesizedID(t *testing.T) {
 	t.Parallel()
 
-	completion := func() *agentports.ChatCompletionResult {
-		return &agentports.ChatCompletionResult{ToolCalls: []agentports.ToolCall{
-			{ID: "call_0", SynthesizedID: true, Name: "get_shipment"},
-			{ID: "call_1", SynthesizedID: true, Name: "get_customer"},
-			{ID: "toolu_unique", Name: "get_worker"},
-		}}
-	}
-
-	asked := 0
 	minted := 0
-	current := completion()
-	distinctCallIDs(current, map[string]struct{}{}, callIDMinter{
-		mint: func() string {
-			minted++
-			return NewCallID()
-		},
-		renewSynthesized: func() bool {
-			asked++
-			return true
-		},
+	current := &agentports.ChatCompletionResult{ToolCalls: []agentports.ToolCall{
+		{ID: "call_0", SynthesizedID: true, Name: "get_shipment"},
+		{ID: "call_1", SynthesizedID: true, Name: "get_customer"},
+		{ID: "toolu_unique", Name: "get_worker"},
+	}}
+	distinctCallIDs(current, map[string]struct{}{}, func() string {
+		minted++
+		return NewCallID()
 	})
 
-	assert.Equal(t, 1, asked, "the change is asked about once per completion")
 	assert.Equal(t, 2, minted)
 	assert.NotEqual(t, "call_0", current.ToolCalls[0].ID)
 	assert.NotEqual(t, "call_1", current.ToolCalls[1].ID)
 	assert.False(t, current.ToolCalls[0].SynthesizedID, "a minted id is the loop's own")
 	assert.Equal(t, "toolu_unique", current.ToolCalls[2].ID, "a provider's own id is kept")
 
-	before := completion()
-	distinctCallIDs(before, map[string]struct{}{}, callIDMinter{
-		mint: func() string {
-			t.Fatal("an execution from before the change mints nothing new here")
-			return ""
-		},
-		renewSynthesized: func() bool { return false },
-	})
-	assert.Equal(t, "call_0", before.ToolCalls[0].ID)
-
 	plain := &agentports.ChatCompletionResult{ToolCalls: []agentports.ToolCall{
 		{ID: "toolu_1", Name: "get_worker"},
 	}}
-	distinctCallIDs(plain, map[string]struct{}{}, callIDMinter{
-		mint: NewCallID,
-		renewSynthesized: func() bool {
-			t.Fatal("a completion with no synthesized id records no change marker")
-			return false
-		},
+	distinctCallIDs(plain, map[string]struct{}{}, func() string {
+		t.Fatal("a provider's own unique id is never replaced")
+		return ""
 	})
 	assert.Equal(t, "toolu_1", plain.ToolCalls[0].ID)
 }

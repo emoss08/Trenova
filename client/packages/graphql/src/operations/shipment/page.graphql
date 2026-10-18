@@ -1068,41 +1068,6 @@ mutation TransferShipmentToBillingItems($input: ShipmentTransferToBillingInput!)
   }
 }
 
-mutation TransferShipmentToBilling($input: ShipmentTransferToBillingInput!) {
-  transferShipmentToBilling(input: $input) {
-    id
-    organizationId
-    businessUnitId
-    shipmentId
-    billToCustomerId
-    allocatedTotalAmount
-    assignedBillerId
-    number
-    status
-    billType
-    exceptionReasonCode
-    reviewNotes
-    exceptionNotes
-    reviewStartedAt
-    reviewCompletedAt
-    canceledById
-    canceledAt
-    cancelReason
-    isAdjustmentOrigin
-    sourceInvoiceId
-    sourceInvoiceAdjustmentId
-    sourceCreditMemoInvoiceId
-    correctionGroupId
-    rebillStrategy
-    requiresReplacementReview
-    rerateVariancePercent
-    adjustmentContext
-    version
-    createdAt
-    updatedAt
-  }
-}
-
 mutation BulkTransferShipmentsToBilling($input: ShipmentBulkTransferToBillingInput!) {
   bulkTransferShipmentsToBilling(input: $input) {
     results {

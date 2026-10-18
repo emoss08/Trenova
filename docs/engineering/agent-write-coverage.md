@@ -85,7 +85,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 | Category | Means | Writes |
 | --- | --- | --- |
-| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 88 |
+| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 87 |
 | `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 270 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 40 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 56 |
@@ -97,13 +97,13 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-1170 writes: 643 GraphQL mutations and 527 REST writes, after merging 75 REST routes into the mutation they duplicate.
+1169 writes: 639 GraphQL mutations and 530 REST writes, after merging 71 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 459 |
-| Exempt | 711 |
-| — Security | 88 |
+| Exempt | 710 |
+| — Security | 87 |
 | — Configuration | 270 |
 | — User preference | 40 |
 | — Infrastructure | 56 |
@@ -113,7 +113,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 | — Attestation | 49 |
 | — Duplicate | 10 |
 | **Pending** | **0** |
-| Total | 1170 |
+| Total | 1169 |
 
 Of the 459 writes an agent should be able to make, 459 have a tool (100%).
 
@@ -130,7 +130,7 @@ The writes no tool performs yet, and what the tool would do.
 | --- | --- | --- | --- | --- |
 | accessorialcharge | 3 | 0 | 3 | 0 |
 | accountingcontrol | 1 | 0 | 1 | 0 |
-| accountingsync | 34 | 20 | 14 | 0 |
+| accountingsync | 33 | 20 | 13 | 0 |
 | accountingwebhook | 1 | 0 | 1 | 0 |
 | accounttype | 4 | 0 | 4 | 0 |
 | agent | 16 | 2 | 14 | 0 |
@@ -348,7 +348,6 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation chooseAccountingCompany` | Exempt, security: Finishes the OAuth sign-in by choosing the company the authorization is for; a person holds the grant, never an agent. |
 | `mutation chooseAccountingSyncMode` | Exempt, configuration: Chooses what the organization's accounting connection sends during setup; an administrator owns the connection and it is fixed once sync is enabled. |
 | `mutation clearAccountingMapping` | Tool: `clear_accounting_mapping` |
-| `mutation completeAccountingAuthorization` | Exempt, security: Handles the OAuth app and its credentials that let Trenova act in the accounting system. |
 | `mutation completeAccountingSetup` | Exempt, configuration: Connects the organization to an outside system; an administrator owns the connection and its credentials. |
 | `mutation confirmAccountingMappings` | Tool: `confirm_accounting_mapping_proposals` |
 | `mutation connectAccountingWithCertificate` | Exempt, security: Connects with a certificate an administrator uploaded in the accounting system's console; a person sets up the credential, never an agent. |
@@ -409,7 +408,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation reviewAgentMemory` | Exempt, agent-administration: A person vouching for what an agent wrote after reading outside content; an agent clearing the taint on what it will read would undo the hold. |
 | `mutation setAgentMemoryStatus` | Tool: `forget_memory` |
 | `mutation undoMyDecision` | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
-| `mutation updateAgentControl`<br>twin `PUT /api/v1/agent-controls/` | Exempt, agent-administration: The organization-wide switches and ceilings every agent runs under. |
+| `mutation updateAgentControl` | Exempt, agent-administration: The organization-wide switches and ceilings every agent runs under. |
 | `mutation updateAgentMemory` | Exempt, agent-administration: A person curating what agents remember; an agent writes memory through remember and forget_memory. |
 
 ### agentdefinition
@@ -1547,8 +1546,6 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation createInvoiceFromOrder`<br>twin `POST /api/v1/billing/invoices/from-order/` | Tool: `create_invoice` |
-| `mutation createInvoiceFromShipments`<br>twin `POST /api/v1/billing/invoices/from-shipments/` | Tool: `create_invoice` |
 | `mutation createInvoicesFromOrder` | Tool: `create_invoice` |
 | `mutation createInvoicesFromShipments` | Tool: `create_invoice` |
 | `mutation createMemo`<br>twin `POST /api/v1/billing/invoices/memos/` | Tool: `create_invoice_memo` |
@@ -1559,6 +1556,8 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/billing/invoices/:invoiceID/post/`<br>invoicehandler.post | Tool: `post_invoice`, `post_invoices` |
 | `POST /api/v1/billing/invoices/:invoiceID/preview/`<br>invoicehandler.preview | Exempt, read-only: Renders an invoice for review and saves nothing. |
 | `POST /api/v1/billing/invoices/:invoiceID/send/`<br>invoicehandler.send<br>also `POST /api/v1/billing/invoices/:invoiceID/resend/` | Tool: `send_invoice`, `send_invoices` |
+| `POST /api/v1/billing/invoices/from-order/`<br>invoicehandler.createFromOrder | Tool: `create_invoice` |
+| `POST /api/v1/billing/invoices/from-shipments/`<br>invoicehandler.createFromShipments | Tool: `create_invoice` |
 
 ### invoiceadjustment
 
@@ -2013,7 +2012,6 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation recalculateShipmentDistance`<br>twin `POST /api/v1/shipments/:shipmentID/recalculate-distance/` | Tool: `recalculate_shipment_distance` |
 | `mutation resolveShipmentComment` | Tool: `resolve_shipment_comment` |
 | `mutation transferShipmentOwnership`<br>twin `POST /api/v1/shipments/:shipmentID/transfer-ownership/` | Tool: `transfer_shipment_ownership` |
-| `mutation transferShipmentToBilling`<br>twin `POST /api/v1/shipments/:shipmentID/transfer-to-billing/` | Tool: `transfer_to_billing` |
 | `mutation transferShipmentToBillingItems` | Tool: `transfer_to_billing` |
 | `mutation uncancelShipment`<br>twin `POST /api/v1/shipments/:shipmentID/uncancel/` | Tool: `uncancel_shipment` |
 | `mutation unpinShipmentComment` | Tool: `unpin_shipment_comment` |
@@ -2022,6 +2020,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation updateShipmentComment`<br>twin `PUT /api/v1/shipments/:shipmentID/comments/:commentID/` | Tool: `edit_shipment_comment` |
 | `POST /api/v1/shipments/:shipmentID/holds/`<br>shipmenthandler.createHold | Tool: `place_shipment_hold` |
 | `POST /api/v1/shipments/:shipmentID/holds/:holdID/release/`<br>shipmenthandler.releaseHold | Tool: `release_shipment_hold` |
+| `POST /api/v1/shipments/:shipmentID/transfer-to-billing/`<br>shipmenthandler.transferToBilling | Tool: `transfer_to_billing` |
 | `POST /api/v1/shipments/auto-cancel/`<br>shipmenthandler.autoCancelShipments | Exempt, infrastructure: The sweep the Temporal schedule runs over every organization to cancel shipments past the auto-cancel threshold; a person does not decide which shipments it takes, and cancel_shipment cancels one. |
 | `POST /api/v1/shipments/check-for-duplicate-bols/`<br>shipmenthandler.checkForDuplicateBOLs | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
 | `POST /api/v1/shipments/check-hazmat-segregation/`<br>shipmenthandler.checkHazmatSegregation | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |

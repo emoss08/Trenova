@@ -54,8 +54,7 @@ func CheckNumbers(prose string, supported []decimal.Decimal) NumberCheck {
 	return CheckNumbersAs(ReadCodesApart, prose, supported)
 }
 
-// CheckNumbersAs is CheckNumbers in an earlier reading, for the agent loop's
-// executions that decided with it.
+// CheckNumbersAs is CheckNumbers in the given reading.
 func CheckNumbersAs(how Reading, prose string, supported []decimal.Decimal) NumberCheck {
 	cited := scan(prose, how)
 	if len(cited) == 0 {
@@ -64,12 +63,6 @@ func CheckNumbersAs(how Reading, prose string, supported []decimal.Decimal) Numb
 
 	unsupported := make([]string, 0, len(cited))
 	for _, citation := range cited {
-		if how == ReadJoined {
-			if !isSupported(citation.value, supported) {
-				unsupported = append(unsupported, citation.text)
-			}
-			continue
-		}
 		if !citation.supportedBy(supported) && !slices.Contains(unsupported, citation.text) {
 			unsupported = append(unsupported, citation.text)
 		}
@@ -87,8 +80,7 @@ func CheckAmounts(prose string, supported []decimal.Decimal) NumberCheck {
 	return CheckAmountsAs(ReadCodesApart, prose, supported)
 }
 
-// CheckAmountsAs is CheckAmounts in an earlier reading, for the agent loop's
-// executions that decided with it.
+// CheckAmountsAs is CheckAmounts in the given reading.
 func CheckAmountsAs(how Reading, prose string, supported []decimal.Decimal) NumberCheck {
 	unsupported := make([]string, 0, 2)
 	for _, cited := range scan(prose, how) {
@@ -252,8 +244,8 @@ func extractNumbers(prose string) []citation {
 }
 
 // Reading is how a scan tells one figure from the next. The agent loop's
-// grounding guard decides in workflow code, so an execution keeps the reading
-// it started with; everything else reads with ReadCodesApart.
+// grounding guard narrows a reply with ReadSeparated before it counts the
+// reply's working; everything else reads with ReadCodesApart.
 type Reading int
 
 const (
@@ -269,10 +261,6 @@ const (
 	// 214-555-0142, a 31-60 bucket) and one that is part of an identifier
 	// (INV2610000001, HL-30117) or an ordinal (31st) is not a figure.
 	ReadSeparated
-	// ReadJoined takes every comma and point between digits as part of one
-	// number, so a JSON array of numbers read as one unparseable run and its
-	// figures as nothing, and lists each repeat of an unsupported figure.
-	ReadJoined
 )
 
 var ordinalSuffixes = []string{"st", "nd", "rd", "th"}
@@ -280,7 +268,6 @@ var ordinalSuffixes = []string{"st", "nd", "rd", "th"}
 func scan(prose string, how Reading) []citation {
 	runes := []rune(prose)
 	citations := make([]citation, 0, 8)
-	separated := how != ReadJoined
 	codeEnd := -1
 
 	for index := 0; index < len(runes); index++ {
@@ -289,15 +276,15 @@ func scan(prose string, how Reading) []citation {
 		}
 
 		start := index
-		grouped := !separated || !jsonBefore(runes, start)
-		for index < len(runes) && continuesNumber(runes, index, how, grouped) {
+		grouped := !jsonBefore(runes, start)
+		for index < len(runes) && continuesNumber(runes, index, grouped) {
 			index++
 		}
 		// "[50,150,250]" is three numbers, not 150,250 with a stray 50.
-		if separated && grouped && jsonAfter(runes, index) &&
+		if grouped && jsonAfter(runes, index) &&
 			slices.Contains(runes[start:index], ',') {
 			index = start
-			for index < len(runes) && continuesNumber(runes, index, how, false) {
+			for index < len(runes) && continuesNumber(runes, index, false) {
 				index++
 			}
 		}
@@ -307,7 +294,7 @@ func scan(prose string, how Reading) []citation {
 		// at the end of a clause is the figure plus a comma.
 		raw = strings.TrimRight(raw, ".,")
 		end := start + len([]rune(raw))
-		if separated && notAFigure(runes, start, end) {
+		if notAFigure(runes, start, end) {
 			if inIdentifier(runes, start) {
 				codeEnd = end
 			}
@@ -330,9 +317,7 @@ func scan(prose string, how Reading) []citation {
 			codeEnd = end
 			continue
 		}
-		if separated {
-			cited.half = halfUnit(raw, value)
-		}
+		cited.half = halfUnit(raw, value)
 		citations = append(citations, cited)
 	}
 
@@ -410,14 +395,10 @@ func wordAfter(runes []rune, end int) string {
 	return string(runes[begin:stop])
 }
 
-func isNumericRune(r rune) bool {
-	return unicode.IsDigit(r) || r == ',' || r == '.'
-}
-
-func continuesNumber(runes []rune, index int, how Reading, grouped bool) bool {
+func continuesNumber(runes []rune, index int, grouped bool) bool {
 	r := runes[index]
-	if how == ReadJoined || unicode.IsDigit(r) {
-		return isNumericRune(r)
+	if unicode.IsDigit(r) {
+		return true
 	}
 
 	switch r {
@@ -648,8 +629,7 @@ func SupportedFromText(texts ...string) []decimal.Decimal {
 	return SupportedFromTextAs(ReadCodesApart, texts...)
 }
 
-// SupportedFromTextAs is SupportedFromText in an earlier reading, kept with
-// CheckNumbersAs.
+// SupportedFromTextAs is SupportedFromText in the given reading.
 func SupportedFromTextAs(how Reading, texts ...string) []decimal.Decimal {
 	supported := make([]decimal.Decimal, 0, len(texts)*4)
 	seen := make(map[string]struct{}, len(texts)*4)

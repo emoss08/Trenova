@@ -10,11 +10,6 @@ import (
 )
 
 const (
-	changeArtifactPlacement = "agent-loop-artifact-placement"
-	changeNameLeftOut       = "agent-loop-artifact-placement-name-left-out"
-)
-
-const (
 	placementCorrectionLead = "Your reply does not name its artifacts inside sentences."
 	placementRetryReason    = "The reply named an artifact outside a sentence, so it is " +
 		"being written again."
@@ -65,7 +60,7 @@ func (s *Service) placeArtifacts(
 	}
 
 	problems := t.placementProblems(completion.Text)
-	if problems.empty() || !fx.Supports(changeArtifactPlacement) {
+	if problems.empty() {
 		return false
 	}
 
@@ -73,7 +68,7 @@ func (s *Service) placeArtifacts(
 	// Time offs) was asked again in about one turn in ten, and the person
 	// watched a finished answer restart to add a link. The sentence the
 	// fallback writes names it without asking the model again.
-	if !state.retried && problems.onlyLeftOut() && fx.Supports(changeNameLeftOut) {
+	if !state.retried && problems.onlyLeftOut() {
 		state.retried = true
 		placed := t.placed(completion.Text, &problems)
 		fx.Emit(passEvent(agentports.RegroundPlaceArtifacts, placementNamedReason, nil))

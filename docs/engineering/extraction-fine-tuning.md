@@ -457,9 +457,8 @@ correction captured  ───────────────────�
   (`hashutils.InPercentSample`), so a retry makes the same choice and raising the share adds
   documents rather than swapping them.
 - **The trigger.** After `ApplyDocumentAIExtractionResultActivity`,
-  `ProcessDocumentAIExtractionWorkflow` runs `ConsiderDocumentAIExtractionShadowActivity`
-  behind `workflow.GetVersion("document-ai-extraction-shadow", …)`, so executions already in
-  flight replay unchanged. A failure there is logged and never fails the production extraction.
+  `ProcessDocumentAIExtractionWorkflow` runs `ConsiderDocumentAIExtractionShadowActivity`.
+  A failure there is logged and never fails the production extraction.
   The sampler creates the `extraction_shadow_results` row (one per document and extraction
   time) and starts `ExtractionShadowWorkflow` (`extraction-shadow:<result id>`) on the document
   intelligence queue at evaluation priority.

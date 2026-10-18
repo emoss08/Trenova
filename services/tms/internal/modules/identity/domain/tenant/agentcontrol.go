@@ -50,9 +50,6 @@ type AgentControl struct {
 
 	LearningOff bool `json:"learningOff" bun:"learning_off,type:BOOLEAN,notnull,default:false"`
 
-	BillingAgentEnabled    bool `json:"billingAgentEnabled"    bun:"-"`
-	DecisionTimeoutSeconds int  `json:"decisionTimeoutSeconds" bun:"-"`
-
 	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`

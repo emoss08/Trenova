@@ -6,24 +6,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
-type ShipmentImportChatRequest struct {
-	TenantInfo          pagination.TenantInfo `json:"-"`
-	UserMessage         string                `json:"message"`
-	ConversationID      string                `json:"conversationId,omitempty"`
-	DocumentID          string                `json:"documentId"`
-	ReconciliationState map[string]any        `json:"reconciliationState"`
-	RequiredFields      map[string]string     `json:"requiredFields"`
-	Stops               []map[string]any      `json:"stops"`
-	ShipmentData        map[string]any        `json:"shipmentData"`
-}
-
-type ShipmentImportAction struct {
-	Type     string         `json:"type"`
-	FieldKey string         `json:"fieldKey"`
-	Value    string         `json:"value"`
-	Metadata map[string]any `json:"metadata,omitempty"`
-}
-
 type ShipmentImportSuggestion struct {
 	Label       string `json:"label"`
 	Prompt      string `json:"prompt"`
@@ -48,14 +30,6 @@ type ShipmentImportChatMessage struct {
 	ToolCalls   []ShipmentImportToolCallRecord `json:"toolCalls,omitempty"`
 	Suggestions []ShipmentImportSuggestion     `json:"suggestions,omitempty"`
 	CreatedAt   int64                          `json:"createdAt"`
-}
-
-type ShipmentImportChatResponse struct {
-	Message        string                         `json:"message"`
-	ConversationID string                         `json:"conversationId"`
-	Actions        []ShipmentImportAction         `json:"actions"`
-	Suggestions    []ShipmentImportSuggestion     `json:"suggestions"`
-	ToolCalls      []ShipmentImportToolCallRecord `json:"toolCalls"`
 }
 
 type ShipmentImportChatHistoryResponse struct {

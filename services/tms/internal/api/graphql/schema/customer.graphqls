@@ -1,13 +1,3 @@
-enum CustomerBillingCycleType {
-  Immediate
-  Daily
-  Weekly
-  BiWeekly
-  Monthly
-  Quarterly
-  PerShipment
-}
-
 enum CustomerPaymentTerm {
   Net10
   Net15
@@ -24,20 +14,6 @@ enum CustomerCreditStatus {
   Hold
   Suspended
   Review
-}
-
-enum CustomerInvoiceMethod {
-  Individual
-  Summary
-  SummaryWithDetail
-}
-
-enum CustomerConsolidationGroupBy {
-  None
-  Location
-  PONumber
-  BOL
-  Division
 }
 
 """How many invoices a customer's freight turns into."""
@@ -95,12 +71,6 @@ enum CustomerInvoiceNumberFormat {
   POBased
 }
 
-enum CustomerInvoiceAdjustmentSupportingDocumentPolicy {
-  Inherit
-  Required
-  Optional
-}
-
 enum CustomerFuelSurchargeMode {
   None
   Program
@@ -112,10 +82,6 @@ type CustomerBillingProfile {
   businessUnitId: ID!
   organizationId: ID!
   customerId: ID!
-  billingCycleType: CustomerBillingCycleType!
-    @deprecated(reason: "Replaced by invoiceDelivery and billingCycle, which separate the delivery mode from the cadence. Removed in a later release.")
-  billingCycleDayOfWeek: Int
-    @deprecated(reason: "Replaced by billingCycleAnchorDay, which also covers monthly and quarterly cycles. Removed in a later release.")
   invoiceDelivery: CustomerInvoiceDelivery!
   billingCycle: CustomerBillingCycle!
   """Weekday 0-6 for weekly cycles, day of month 1-28 for monthly and longer."""
@@ -127,8 +93,6 @@ type CustomerBillingProfile {
   splitBy: InvoiceSplitKey!
   sectionBy: InvoiceSectionKey!
   invoiceDetail: InvoiceDetail!
-  consolidationLookbackDays: Int!
-    @deprecated(reason: "Statements no longer stop looking for owed freight after a window: every approved, unbilled shipment is included until it bills. Has no effect and is always 0. Removed in a later release.")
   """Below this, a group defers to the next period instead of billing."""
   minConsolidatedAmount: Decimal
   """Zero means unbounded."""
@@ -146,8 +110,6 @@ type CustomerBillingProfile {
   creditHoldAutomatic: Boolean!
   """When creditBalance was last recomputed from the receivables ledger."""
   creditReviewedAt: Timestamp
-  invoiceMethod: CustomerInvoiceMethod!
-    @deprecated(reason: "Split into invoiceDelivery (how many invoices) and invoiceDetail (how verbose). Removed in a later release.")
   autoSendInvoiceOnGeneration: Boolean!
   "Whether the organization's payment reminders may email this customer about overdue invoices."
   sendPaymentReminders: Boolean!
@@ -157,12 +119,6 @@ type CustomerBillingProfile {
   emailInvoiceEnabled: Boolean!
   "Whether invoices are sent to this customer's EDI partner as an 210."
   ediInvoiceEnabled: Boolean!
-  allowInvoiceConsolidation: Boolean!
-    @deprecated(reason: "Replaced by invoiceDelivery. Removed in a later release.")
-  consolidationPeriodDays: Int!
-    @deprecated(reason: "Replaced by billingCycle. Statements no longer use a sweep window, so this has no effect and is always 0. Removed in a later release.")
-  consolidationGroupBy: CustomerConsolidationGroupBy!
-    @deprecated(reason: "Split into splitBy (how many invoices) and sectionBy (organisation within one). Removed in a later release.")
   invoiceNumberFormat: CustomerInvoiceNumberFormat!
   customerInvoicePrefix: String!
   invoiceCopies: Int!
@@ -191,8 +147,6 @@ type CustomerBillingProfile {
   requirePONumber: Boolean!
   requireBOLNumber: Boolean!
   requireDeliveryNumber: Boolean!
-  invoiceAdjustmentSupportingDocumentPolicy: CustomerInvoiceAdjustmentSupportingDocumentPolicy!
-    @deprecated(reason: "Supporting documents are no longer required for invoice adjustments or voids. Always Optional. Removed in a later release.")
   defaultBillerId: ID
   billingNotes: String!
   fuelSurchargeMode: CustomerFuelSurchargeMode!
@@ -212,8 +166,6 @@ type CustomerEmailProfile {
   customerId: ID!
   subject: String!
   comment: String!
-  fromEmail: String!
-    @deprecated(reason: "Invoices are always sent from the organization's Billing email profile")
   toRecipients: String!
   ccRecipients: String!
   bccRecipients: String!

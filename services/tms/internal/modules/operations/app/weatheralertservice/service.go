@@ -142,34 +142,6 @@ func (s *Service) PollNWSAlerts(
 	return result, nil
 }
 
-func (s *Service) ListWeatherAlertTenants(
-	ctx context.Context,
-	limit int,
-) ([]pagination.TenantInfo, error) {
-	tenants, err := s.repo.ListTenants(ctx)
-	if err != nil {
-		return nil, errortypes.NewBusinessError("failed to list tenants for weather alerts").
-			WithInternal(err)
-	}
-	if limit > 0 && len(tenants) > limit {
-		tenants = tenants[:limit]
-	}
-
-	return tenants, nil
-}
-
-func (s *Service) PollNWSAlertsForTenant(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-) error {
-	feed, err := s.fetchActiveAlerts(ctx, nil)
-	if err != nil {
-		return err
-	}
-
-	return s.syncTenant(ctx, tenantInfo, feed, nil).Err
-}
-
 func (s *Service) syncTenant(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,

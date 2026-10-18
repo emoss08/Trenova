@@ -1455,32 +1455,6 @@ var Shard = &gqlexec.Shard{
 		}},
 		{Object: "Mutation", Fields: []*gqlexec.Field{
 			{
-				Name:       "createInvoiceFromShipments",
-				NonNull:    true,
-				IsResolver: true,
-				HasChild:   true,
-				ChildType:  "Invoice",
-				Args:       field_Mutation_createInvoiceFromShipments_args,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateInvoiceFromShipments(ctx, fc.Args["shipmentIds"].([]string), fc.Args["offCycleReason"].(*string))
-				},
-				Marshal: gqlexec.Marshal(marshalNInvoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐInvoice),
-			},
-			{
-				Name:       "createInvoiceFromOrder",
-				NonNull:    true,
-				IsResolver: true,
-				HasChild:   true,
-				ChildType:  "Invoice",
-				Args:       field_Mutation_createInvoiceFromOrder_args,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateInvoiceFromOrder(ctx, fc.Args["orderId"].(string), fc.Args["offCycleReason"].(*string))
-				},
-				Marshal: gqlexec.Marshal(marshalNInvoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐInvoice),
-			},
-			{
 				Name:       "createInvoicesFromShipments",
 				NonNull:    true,
 				IsResolver: true,
@@ -1675,8 +1649,6 @@ type resolverInvoiceLine interface {
 }
 
 type resolverMutation interface {
-	CreateInvoiceFromShipments(ctx context.Context, shipmentIds []string, offCycleReason *string) (*invoice.Invoice, error)
-	CreateInvoiceFromOrder(ctx context.Context, orderID string, offCycleReason *string) (*invoice.Invoice, error)
 	CreateInvoicesFromShipments(ctx context.Context, shipmentIds []string, offCycleReason *string) (*invoiceports.CreateInvoicesResult, error)
 	CreateInvoicesFromOrder(ctx context.Context, orderID string, offCycleReason *string) (*invoiceports.CreateInvoicesResult, error)
 	VoidInvoice(ctx context.Context, input gqlmodel.VoidInvoiceInput) (*invoiceports.VoidInvoiceResult, error)
@@ -1712,48 +1684,6 @@ var (
 	errNoChild19 = errors.New("field of type AccessorialMethod does not have child fields")
 	errNoChild20 = errors.New("field of type RateUnit does not have child fields")
 )
-
-func field_Mutation_createInvoiceFromShipments_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
-	args := make(map[string]any, 2)
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "shipmentIds",
-		func(ctx context.Context, v any) ([]string, error) {
-			return unmarshalNID2ᚕstringᚄ(ctx, ec, v)
-		})
-	if err != nil {
-		return nil, err
-	}
-	args["shipmentIds"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "offCycleReason",
-		func(ctx context.Context, v any) (*string, error) {
-			return unmarshalOString2ᚖstring(ctx, ec, v)
-		})
-	if err != nil {
-		return nil, err
-	}
-	args["offCycleReason"] = arg1
-	return args, nil
-}
-
-func field_Mutation_createInvoiceFromOrder_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
-	args := make(map[string]any, 2)
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "orderId",
-		func(ctx context.Context, v any) (string, error) {
-			return unmarshalNID2string(ctx, ec, v)
-		})
-	if err != nil {
-		return nil, err
-	}
-	args["orderId"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "offCycleReason",
-		func(ctx context.Context, v any) (*string, error) {
-			return unmarshalOString2ᚖstring(ctx, ec, v)
-		})
-	if err != nil {
-		return nil, err
-	}
-	args["offCycleReason"] = arg1
-	return args, nil
-}
 
 func field_Mutation_createInvoicesFromShipments_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 2)

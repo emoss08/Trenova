@@ -14,6 +14,4 @@ type Deps struct {
 
 type CustomerBillingProfileResolver struct{ *Deps }
 
-type CustomerEmailProfileResolver struct{ *Deps }
-
 type QueryResolver struct{ *Deps }
