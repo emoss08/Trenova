@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/shopspring/decimal"
 )
 
 const (
@@ -29,6 +30,8 @@ const (
 
 var reportJSON = sonic.Config{SortMapKeys: true, EscapeHTML: false}.Froze()
 
+const reportVersion = 2
+
 type ReportMeta struct {
 	StartedAt  time.Time `json:"startedAt"`
 	FinishedAt time.Time `json:"finishedAt"`
@@ -37,35 +40,76 @@ type ReportMeta struct {
 	Commit     string    `json:"commit,omitempty"`
 	Command    string    `json:"command,omitempty"`
 	WorkerLog  string    `json:"workerLog,omitempty"`
+	PassK      int       `json:"passK,omitempty"`
+	Label      string    `json:"label,omitempty"`
+	Threshold  *int      `json:"toolDisclosureThreshold,omitempty"`
 }
 
 type Report struct {
-	Meta       ReportMeta     `json:"meta"`
-	Summary    Summary        `json:"summary"`
-	ToolHealth []ToolHealth   `json:"toolHealth"`
-	ModelNotes []ModelNote    `json:"modelNotes,omitempty"`
-	Cases      []*CaseResult  `json:"cases"`
-	Comparison []CompareEntry `json:"comparison,omitempty"`
+	SchemaVersion int            `json:"schemaVersion,omitempty"`
+	Meta          ReportMeta     `json:"meta"`
+	Summary       Summary        `json:"summary"`
+	ToolHealth    []ToolHealth   `json:"toolHealth"`
+	ModelNotes    []ModelNote    `json:"modelNotes,omitempty"`
+	Cases         []*CaseResult  `json:"cases"`
+	Comparison    []CompareEntry `json:"comparison,omitempty"`
 }
 
 type Summary struct {
 	Cases   int         `json:"cases"`
 	Passed  int         `json:"passed"`
+	Skipped int         `json:"skipped,omitempty"`
+	PassK   int         `json:"passK,omitempty"`
 	Usage   Usage       `json:"usage"`
 	Matrix  []MatrixRow `json:"matrix"`
+	Cells   []CellRow   `json:"cells,omitempty"`
 	Failing []Failing   `json:"failing,omitempty"`
 }
 
+type Measures struct {
+	Seconds            Stat               `json:"seconds"`
+	FirstTokenMs       Stat               `json:"firstTokenMs"`
+	ModelCalls         Stat               `json:"modelCalls"`
+	ToolCalls          Stat               `json:"toolCalls"`
+	Refused            Stat               `json:"refused"`
+	RefusedByVerdict   map[string]float64 `json:"refusedByVerdict,omitempty"`
+	ReasksByGuard      map[string]float64 `json:"reasksByGuard,omitempty"`
+	UncachedInput      Stat               `json:"uncachedInput"`
+	CacheRead          Stat               `json:"cacheRead"`
+	CacheWrite         Stat               `json:"cacheWrite"`
+	Output             Stat               `json:"output"`
+	PeakPrompt         Stat               `json:"peakPrompt"`
+	CacheReadShare     *float64           `json:"cacheReadShare,omitempty"`
+	CostUSD            Stat               `json:"costUsd"`
+	CostEstimated      bool               `json:"costEstimated,omitempty"`
+	CostUnpriced       bool               `json:"costUnpriced,omitempty"`
+	CostPerPass        *float64           `json:"costPerCompletedTask,omitempty"`
+	Precision          Stat               `json:"precision"`
+	Recall             Stat               `json:"recall"`
+	FirstCorrect       Stat               `json:"firstCorrect"`
+	ForbiddenCalls     Stat               `json:"forbiddenCalls"`
+	PreselectionRecall Stat               `json:"preselectionRecall"`
+	FindRecall         Stat               `json:"findRecall"`
+	FindHitRate        *float64           `json:"findHitRate,omitempty"`
+}
+
 type MatrixRow struct {
-	Scenario     string  `json:"scenario"`
-	Provider     string  `json:"provider"`
-	Runs         int     `json:"runs"`
-	Passed       int     `json:"passed"`
-	AvgSeconds   float64 `json:"avgSeconds"`
-	AvgToolCalls float64 `json:"avgToolCalls"`
-	RefusedCalls int     `json:"refusedCalls"`
-	InputTokens  int     `json:"inputTokens"`
-	OutputTokens int     `json:"outputTokens"`
+	Scenario string   `json:"scenario"`
+	Provider string   `json:"provider"`
+	Split    Split    `json:"split,omitempty"`
+	Runs     int      `json:"runs"`
+	Passed   int      `json:"passed"`
+	Pass     Rate     `json:"pass"`
+	PassK    *float64 `json:"passK,omitempty"`
+	Measures Measures `json:"measures"`
+
+	AvgSeconds    float64 `json:"avgSeconds"`
+	AvgToolCalls  float64 `json:"avgToolCalls"`
+	RefusedTotal  int     `json:"refusedCalls,omitempty"`
+	InputTotal    int     `json:"inputTokens,omitempty"`
+	OutputTotal   int     `json:"outputTokens,omitempty"`
+	RefusedPerRun float64 `json:"refusedPerRun"`
+	TokensPerRun  float64 `json:"tokensPerRun"`
 }
 
 func (r *MatrixRow) Key() string {
@@ -78,6 +122,41 @@ func (r *MatrixRow) PassRate() float64 {
 	}
 
 	return float64(r.Passed) / float64(r.Runs)
+}
+
+func (r *MatrixRow) refusedPerRun(schema int) float64 {
+	if schema >= reportVersion || r.Runs == 0 {
+		return r.RefusedPerRun
+	}
+
+	return float64(r.RefusedTotal) / float64(r.Runs)
+}
+
+func (r *MatrixRow) tokensPerRun(schema int) float64 {
+	if schema >= reportVersion || r.Runs == 0 {
+		return r.TokensPerRun
+	}
+
+	return float64(r.InputTotal+r.OutputTotal) / float64(r.Runs)
+}
+
+type CellRow struct {
+	Provider  string   `json:"provider"`
+	Split     Split    `json:"split,omitempty"`
+	Scenarios int      `json:"scenarios"`
+	Trials    int      `json:"trials"`
+	Passed    int      `json:"passed"`
+	Pass      Rate     `json:"pass"`
+	PassK     Stat     `json:"passK"`
+	Measures  Measures `json:"measures"`
+}
+
+func (c *CellRow) Key() string {
+	if c.Split == "" {
+		return c.Provider
+	}
+
+	return c.Provider + " [" + string(c.Split) + "]"
 }
 
 type Failing struct {
@@ -105,12 +184,17 @@ type ModelNote struct {
 }
 
 func BuildReport(meta ReportMeta, cases []*CaseResult) *Report {
+	if meta.PassK <= 0 {
+		meta.PassK = DefaultPassK
+	}
+
 	return &Report{
-		Meta:       meta,
-		Summary:    summarize(cases),
-		ToolHealth: toolHealth(cases),
-		ModelNotes: modelNotes(cases),
-		Cases:      cases,
+		SchemaVersion: reportVersion,
+		Meta:          meta,
+		Summary:       summarize(cases, meta.PassK),
+		ToolHealth:    toolHealth(cases),
+		ModelNotes:    modelNotes(cases),
+		Cases:         cases,
 	}
 }
 
@@ -344,79 +428,301 @@ func allTurns(result *CaseResult) []*TurnRecord {
 	return append(turns, result.Cleanup...)
 }
 
-func summarize(cases []*CaseResult) Summary {
-	summary := Summary{Cases: len(cases)}
-	rows := make(map[string]*MatrixRow, len(cases))
+func summarize(cases []*CaseResult, k int) Summary {
+	summary := Summary{PassK: k}
+	groups := make(map[string][]*CaseResult, len(cases))
 	order := make([]string, 0, len(cases))
-	durations := make(map[string]float64, len(cases))
-	toolCalls := make(map[string]int, len(cases))
+	ran := make([]*CaseResult, 0, len(cases))
 
 	for _, result := range cases {
+		if result.Skipped != "" {
+			summary.Skipped++
+			continue
+		}
+		ran = append(ran, result)
+		summary.Cases++
 		if result.Passed {
 			summary.Passed++
 		}
 		summary.Usage.add(result.Usage)
 
 		key := result.Key()
-		row, ok := rows[key]
-		if !ok {
-			row = &MatrixRow{Scenario: result.Scenario.Name, Provider: result.Provider}
-			rows[key] = row
+		if _, ok := groups[key]; !ok {
 			order = append(order, key)
 		}
-		row.Runs++
-		if result.Passed {
-			row.Passed++
-		}
-		row.InputTokens += result.Usage.InputTokens
-		row.OutputTokens += result.Usage.OutputTokens
-		durations[key] += result.FinishedAt.Sub(result.StartedAt).Seconds()
-
-		for _, step := range result.Steps {
-			for _, turn := range step.Turns {
-				toolCalls[key] += len(turn.Tools)
-				row.RefusedCalls += len(refusedCalls(turn.Tools))
-			}
-			for _, check := range step.Checks {
-				if check.Passed {
-					continue
-				}
-				summary.Failing = append(summary.Failing, Failing{
-					Case:   result.Key() + " #" + strconv.Itoa(result.Repeat),
-					Step:   step.Index,
-					Label:  firstLine(step.Label),
-					Check:  check.Name,
-					Detail: firstLine(check.Detail),
-				})
-			}
-			if step.Error != "" {
-				summary.Failing = append(summary.Failing, Failing{
-					Case:   result.Key() + " #" + strconv.Itoa(result.Repeat),
-					Step:   step.Index,
-					Label:  firstLine(step.Label),
-					Check:  "step ran",
-					Detail: firstLine(step.Error),
-				})
-			}
-		}
-		if result.Error != "" {
-			summary.Failing = append(summary.Failing, Failing{
-				Case:   result.Key() + " #" + strconv.Itoa(result.Repeat),
-				Check:  "case ran",
-				Detail: firstLine(result.Error),
-			})
-		}
+		groups[key] = append(groups[key], result)
+		summary.Failing = append(summary.Failing, failingOf(result)...)
 	}
 
 	summary.Matrix = make([]MatrixRow, 0, len(order))
 	for _, key := range order {
-		row := rows[key]
-		row.AvgSeconds = durations[key] / float64(row.Runs)
-		row.AvgToolCalls = float64(toolCalls[key]) / float64(row.Runs)
-		summary.Matrix = append(summary.Matrix, *row)
+		summary.Matrix = append(summary.Matrix, matrixRow(groups[key], k))
 	}
+	summary.Cells = cellRows(ran, summary.Matrix)
 
 	return summary
+}
+
+func failingOf(result *CaseResult) []Failing {
+	label := result.Key() + " #" + strconv.Itoa(result.Repeat)
+	failing := make([]Failing, 0, 2)
+	for _, step := range result.Steps {
+		for _, check := range step.Checks {
+			if check.Passed {
+				continue
+			}
+			failing = append(failing, Failing{
+				Case:   label,
+				Step:   step.Index,
+				Label:  firstLine(step.Label),
+				Check:  check.Name,
+				Detail: firstLine(check.Detail),
+			})
+		}
+		if step.Error != "" {
+			failing = append(failing, Failing{
+				Case:   label,
+				Step:   step.Index,
+				Label:  firstLine(step.Label),
+				Check:  "step ran",
+				Detail: firstLine(step.Error),
+			})
+		}
+	}
+	if result.Error != "" {
+		failing = append(failing, Failing{
+			Case:   label,
+			Check:  "case ran",
+			Detail: firstLine(result.Error),
+		})
+	}
+
+	return failing
+}
+
+func matrixRow(results []*CaseResult, k int) MatrixRow {
+	first := results[0]
+	row := MatrixRow{
+		Scenario: first.Scenario.Name,
+		Provider: first.Provider,
+		Split:    first.Scenario.Split,
+		Runs:     len(results),
+	}
+	for _, result := range results {
+		if result.Passed {
+			row.Passed++
+		}
+	}
+	row.Pass = rateOf(row.Passed, row.Runs)
+	row.PassK = passHatK(row.Passed, row.Runs, k)
+	row.Measures = measuresOf(results)
+	row.AvgSeconds = row.Measures.Seconds.Mean
+	row.AvgToolCalls = row.Measures.ToolCalls.Mean
+	row.RefusedPerRun = row.Measures.Refused.Mean
+	row.TokensPerRun = row.Measures.UncachedInput.Mean + row.Measures.CacheRead.Mean +
+		row.Measures.CacheWrite.Mean + row.Measures.Output.Mean
+
+	return row
+}
+
+func cellRows(cases []*CaseResult, matrix []MatrixRow) []CellRow {
+	type cellKey struct {
+		provider string
+		split    Split
+	}
+	byCell := make(map[cellKey][]*CaseResult, 8)
+	rowsByCell := make(map[cellKey][]MatrixRow, 8)
+	order := make([]cellKey, 0, 8)
+	add := func(key cellKey, result *CaseResult) {
+		if _, ok := byCell[key]; !ok {
+			order = append(order, key)
+		}
+		byCell[key] = append(byCell[key], result)
+	}
+	for _, result := range cases {
+		add(cellKey{provider: result.Provider}, result)
+		if result.Scenario.Split != "" {
+			add(cellKey{provider: result.Provider, split: result.Scenario.Split}, result)
+		}
+	}
+	for idx := range matrix {
+		row := matrix[idx]
+		rowsByCell[cellKey{provider: row.Provider}] = append(
+			rowsByCell[cellKey{provider: row.Provider}], row)
+		if row.Split != "" {
+			key := cellKey{provider: row.Provider, split: row.Split}
+			rowsByCell[key] = append(rowsByCell[key], row)
+		}
+	}
+
+	cells := make([]CellRow, 0, len(order))
+	for _, key := range order {
+		results := byCell[key]
+		cell := CellRow{
+			Provider: key.provider,
+			Split:    key.split,
+			Trials:   len(results),
+			Measures: measuresOf(results),
+		}
+		passK := make([]float64, 0, len(rowsByCell[key]))
+		rows := rowsByCell[key]
+		for idx := range rows {
+			row := &rows[idx]
+			cell.Scenarios++
+			cell.Passed += row.Passed
+			if row.PassK != nil {
+				passK = append(passK, *row.PassK)
+			}
+		}
+		cell.Pass = rateOf(cell.Passed, cell.Trials)
+		cell.PassK = statOf(passK)
+		cells = append(cells, cell)
+	}
+	slices.SortStableFunc(cells, func(a, b CellRow) int {
+		return cmp.Or(cmp.Compare(a.Provider, b.Provider), cmp.Compare(a.Split, b.Split))
+	})
+
+	return cells
+}
+
+type measureSeries struct {
+	seconds, firstToken, modelCalls, toolCalls, refused []float64
+	uncached, read, write, output, peak, cost           []float64
+	precision, recall, firstCorrect, forbidden          []float64
+	preselection, find                                  []float64
+	findAnswers, findHits                               int
+	verdicts, guards                                    map[string]float64
+	estimated, unpriced                                 bool
+	passedCost                                          decimal.Decimal
+	passed                                              int
+}
+
+func measuresOf(results []*CaseResult) Measures {
+	series := measureSeries{
+		verdicts: map[string]float64{},
+		guards:   map[string]float64{},
+	}
+	for _, result := range results {
+		series.add(result)
+	}
+
+	return series.measures(len(results))
+}
+
+func (m *measureSeries) add(result *CaseResult) {
+	metrics := &result.Metrics
+	usage := &metrics.Usage
+	m.seconds = append(m.seconds, metrics.Seconds)
+	if metrics.FirstTokenMs != nil {
+		m.firstToken = append(m.firstToken, *metrics.FirstTokenMs)
+	}
+	m.modelCalls = append(m.modelCalls, float64(metrics.ModelCalls))
+	m.toolCalls = append(m.toolCalls, float64(metrics.ToolCalls))
+	m.refused = append(m.refused, float64(metrics.RefusedCalls))
+	m.uncached = append(m.uncached, float64(usage.InputTokens))
+	m.read = append(m.read, float64(usage.CacheReadTokens))
+	m.write = append(m.write, float64(usage.CacheWriteTokens))
+	m.output = append(m.output, float64(usage.OutputTokens))
+	m.peak = append(m.peak, float64(metrics.PeakPromptTokens))
+	switch {
+	case usage.UnpricedCalls > 0 || (usage.CostUSD == nil && usage.ModelCalls > 0):
+		m.unpriced = true
+	case usage.CostUSD != nil:
+		cost, _ := usage.CostUSD.Float64()
+		m.cost = append(m.cost, cost)
+		if result.Passed {
+			m.passedCost = m.passedCost.Add(*usage.CostUSD)
+		}
+	}
+	if usage.EstimatedCalls > 0 {
+		m.estimated = true
+	}
+	if result.Passed {
+		m.passed++
+	}
+	for verdict, count := range metrics.RefusedByVerdict {
+		m.verdicts[verdict] += float64(count)
+	}
+	for guard, count := range metrics.ReasksByGuard {
+		m.guards[guard] += float64(count)
+	}
+	if selection := metrics.Selection; selection != nil {
+		if selection.Precision != nil {
+			m.precision = append(m.precision, *selection.Precision)
+		}
+		m.recall = append(m.recall, selection.Recall)
+		if selection.FirstCorrect > 0 {
+			m.firstCorrect = append(m.firstCorrect, float64(selection.FirstCorrect))
+		}
+		m.forbidden = append(m.forbidden, float64(selection.ForbiddenCalls))
+	}
+	if retrieval := metrics.Retrieval; retrieval != nil {
+		if retrieval.PreselectionRecall != nil {
+			m.preselection = append(m.preselection, *retrieval.PreselectionRecall)
+		}
+		if retrieval.FindRecall != nil {
+			m.find = append(m.find, *retrieval.FindRecall)
+		}
+		m.findAnswers += retrieval.FindAnswers
+		m.findHits += retrieval.FindHits
+	}
+}
+
+func (m *measureSeries) measures(trials int) Measures {
+	measures := Measures{
+		Seconds:            statOf(m.seconds),
+		FirstTokenMs:       statOf(m.firstToken),
+		ModelCalls:         statOf(m.modelCalls),
+		ToolCalls:          statOf(m.toolCalls),
+		Refused:            statOf(m.refused),
+		UncachedInput:      statOf(m.uncached),
+		CacheRead:          statOf(m.read),
+		CacheWrite:         statOf(m.write),
+		Output:             statOf(m.output),
+		PeakPrompt:         statOf(m.peak),
+		CostUSD:            statOf(m.cost),
+		CostEstimated:      m.estimated,
+		CostUnpriced:       m.unpriced,
+		Precision:          statOf(m.precision),
+		Recall:             statOf(m.recall),
+		FirstCorrect:       statOf(m.firstCorrect),
+		ForbiddenCalls:     statOf(m.forbidden),
+		PreselectionRecall: statOf(m.preselection),
+		FindRecall:         statOf(m.find),
+		RefusedByVerdict:   perTrial(m.verdicts, trials),
+		ReasksByGuard:      perTrial(m.guards, trials),
+	}
+	prompt := measures.UncachedInput.Mean + measures.CacheRead.Mean + measures.CacheWrite.Mean
+	if prompt > 0 {
+		share := measures.CacheRead.Mean / prompt
+		measures.CacheReadShare = &share
+	}
+	if m.passed > 0 && !m.unpriced && len(m.cost) > 0 {
+		total := 0.0
+		for _, cost := range m.cost {
+			total += cost
+		}
+		perPass := total / float64(m.passed)
+		measures.CostPerPass = &perPass
+	}
+	if m.findAnswers > 0 {
+		rate := float64(m.findHits) / float64(m.findAnswers)
+		measures.FindHitRate = &rate
+	}
+
+	return measures
+}
+
+func perTrial(totals map[string]float64, trials int) map[string]float64 {
+	if len(totals) == 0 || trials == 0 {
+		return nil
+	}
+	out := make(map[string]float64, len(totals))
+	for key, total := range totals {
+		out[key] = total / float64(trials)
+	}
+
+	return out
 }
 
 func toolHealth(cases []*CaseResult) []ToolHealth {

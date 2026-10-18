@@ -123,6 +123,18 @@ tasks:
     cmds:
       - "{{.CLI_PATH}} desk run {{.CLI_ARGS}}"
 
+  desk-baseline:
+    desc: Run the Phase 0 baseline matrix in deskbench/baseline.yaml (4 trials per cell) and write baseline.md and baseline.json
+    deps: [build-cli]
+    cmds:
+      - "{{.CLI_PATH}} desk baseline {{.CLI_ARGS}}"
+
+  desk-sweep:
+    desc: Run the tool-count sweep (held 8, 12, 20, 30; all vs disclosed) to set ai.toolDisclosureThreshold
+    deps: [build-cli]
+    cmds:
+      - "{{.CLI_PATH}} desk sweep {{.CLI_ARGS}}"
+
   desk-route:
     desc: Score how well the questions under deskbench/routing are matched to their agent
     deps: [build-cli]

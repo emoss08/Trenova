@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -74,13 +75,41 @@ type TurnWatcher struct {
 
 	mu     sync.Mutex
 	queues map[pulid.ID]*turnQueue
+	runs   map[pulid.ID]client.WorkflowRun
 }
 
 func NewTurnWatcher(inner kernelports.WorkflowStarter) *TurnWatcher {
 	return &TurnWatcher{
 		WorkflowStarter: inner,
 		queues:          make(map[pulid.ID]*turnQueue),
+		runs:            make(map[pulid.ID]client.WorkflowRun),
 	}
+}
+
+func (w *TurnWatcher) run(runID pulid.ID) (client.WorkflowRun, bool) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	started, ok := w.runs[runID]
+	if ok {
+		delete(w.runs, runID)
+	}
+
+	return started, ok
+}
+
+func (w *TurnWatcher) noteRun(run client.WorkflowRun, args []any) {
+	if len(args) != 1 {
+		return
+	}
+	payload, ok := args[0].(*agentcontract.AgentRunPayload)
+	if !ok || payload == nil {
+		return
+	}
+
+	w.mu.Lock()
+	w.runs[payload.RunID] = run
+	w.mu.Unlock()
 }
 
 func (w *TurnWatcher) StartWorkflow(
@@ -95,7 +124,12 @@ func (w *TurnWatcher) StartWorkflow(
 		return run, err
 	}
 
-	if name, ok := workflow.(string); !ok || name != assistantcontract.AssistantTurnWorkflowName {
+	name, _ := workflow.(string)
+	if name == agentcontract.AgentRunWorkflowName {
+		w.noteRun(run, args)
+		return run, nil
+	}
+	if name != assistantcontract.AssistantTurnWorkflowName {
 		return run, nil
 	}
 	if len(args) != 1 {

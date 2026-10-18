@@ -250,10 +250,23 @@ func timeline(turn *TurnRecord) []timelineItem {
 }
 
 func renderCall(b *strings.Builder, call *CallSummary) {
-	fmt.Fprintf(b, "**Model call #%d** · %s · %s · %d in / %d out", call.Seq, call.Kind,
-		stringutils.WithDefault(call.Model, "?"), call.InputTokens, call.OutputTokens)
+	fmt.Fprintf(b, "**Model call #%d** · %s · %s · %d in", call.Seq, call.Kind,
+		stringutils.WithDefault(call.Model, "?"), call.InputTokens)
+	if call.CacheRead > 0 || call.CacheWrite > 0 {
+		fmt.Fprintf(b, " + %d cache read + %d cache write", call.CacheRead, call.CacheWrite)
+	}
+	fmt.Fprintf(b, " / %d out", call.OutputTokens)
 	if call.ReasoningTokens > 0 {
 		fmt.Fprintf(b, " (%d thinking)", call.ReasoningTokens)
+	}
+	if call.CostUSD != nil {
+		fmt.Fprintf(b, " · $%s%s", call.CostUSD.StringFixed(5), estimateMark(call.PriceSource))
+	}
+	if call.FirstTokenMs != nil {
+		fmt.Fprintf(b, " · first token %dms", *call.FirstTokenMs)
+	}
+	if call.Reask != "" {
+		fmt.Fprintf(b, " · re-asked by the %s guard", call.Reask)
 	}
 	fmt.Fprintf(
 		b,
@@ -368,16 +381,34 @@ func renderProposal(b *strings.Builder, proposal *ProposalRecord) {
 }
 
 func usageLine(usage Usage) string {
-	line := fmt.Sprintf("%d model calls, %d in / %d out tokens", usage.ModelCalls,
-		usage.InputTokens, usage.OutputTokens)
+	line := fmt.Sprintf("%d model calls, %d in", usage.ModelCalls, usage.InputTokens)
+	if usage.CacheReadTokens > 0 || usage.CacheWriteTokens > 0 {
+		line += fmt.Sprintf(" + %d cache read + %d cache write", usage.CacheReadTokens,
+			usage.CacheWriteTokens)
+	}
+	line += fmt.Sprintf(" / %d out tokens", usage.OutputTokens)
 	if usage.ReasoningTokens > 0 {
 		line += " (" + strconv.Itoa(usage.ReasoningTokens) + " thinking)"
 	}
 	if usage.CostUSD != nil {
 		line += ", $" + usage.CostUSD.StringFixed(4)
+		if usage.EstimatedCalls > 0 {
+			line += "~"
+		}
+	}
+	if usage.UnpricedCalls > 0 {
+		line += fmt.Sprintf(" (%d unpriced)", usage.UnpricedCalls)
 	}
 
 	return line
+}
+
+func estimateMark(source PriceSource) string {
+	if source == PriceSourceProvider || source == PriceSourceNone {
+		return ""
+	}
+
+	return "~"
 }
 
 func compactJSON(value any, limit int) string {

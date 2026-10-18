@@ -1,0 +1,24 @@
+# The Phase 0 baseline (docs/desk-harness-review.md §5, §6), run by `trenova desk baseline` and
+# `task desk-baseline`. Each cell is a chat provider the organization has, named by its name, model
+# id or id, optionally with @effort (off, none, minimal, low, medium, high) to override the
+# provider's own reasoning effort for that cell. A cell is pinned: it never fails over to
+# another provider mid-run, so every row measures one model. The rebuild of context assembly
+# compares against the report this writes (`trenova desk run --compare <baseline dir>`).
+repeat: 4
+passK: 4
+cells:
+  - claude-haiku-5-5@low
+  - claude-haiku-5-5@medium
+  - claude-sonnet-5-5
+  - claude-opus-5-5
+  - gpt-6-luna
+  - gpt-6.1-sol
+
+# `trenova desk sweep` (`task desk-sweep`): the agent is held to N tools (the scenario's own and
+# the agent's others up to N) and every scenario runs once with every held tool sent ("all") and
+# once disclosed (the 8 ranked for the request plus find_tools), to set
+# ai.toolDisclosureThreshold from data. Cells defaults to the baseline's cells.
+sweep:
+  held: [8, 12, 20, 30]
+  modes: [all, disclosed]
+  repeat: 4

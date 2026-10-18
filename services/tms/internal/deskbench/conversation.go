@@ -368,12 +368,7 @@ func (c *Conversation) capture(ctx context.Context, started StartedTurn) *TurnRe
 		}
 	}
 
-	from := record.StartedAt.Add(-windowLead)
-	record.ModelCalls = bench.recorder.For(record.ThreadID, record.TurnID, from, record.FinishedAt)
-	sortCalls(record.ModelCalls)
-	record.Calls = summarizeCalls(record.ModelCalls)
-	record.Usage, record.Models = usageOf(record.ModelCalls)
-	record.Unattributed = summarizeCalls(bench.recorder.Unattributed(from, record.FinishedAt))
+	bench.measure(ctx, c.session, record, record.StartedAt.Add(-windowLead))
 
 	announceTurnEnd(live, record)
 

@@ -58,19 +58,31 @@ const (
 )
 
 type Usage struct {
-	ModelCalls      int              `json:"modelCalls"`
-	InputTokens     int              `json:"inputTokens"`
-	OutputTokens    int              `json:"outputTokens"`
-	ReasoningTokens int              `json:"reasoningTokens"`
-	CostUSD         *decimal.Decimal `json:"costUsd,omitempty"`
-	ModelTime       time.Duration    `json:"modelTimeNs"`
+	ModelCalls       int              `json:"modelCalls"`
+	InputTokens      int              `json:"inputTokens"`
+	CacheReadTokens  int              `json:"cacheReadTokens"`
+	CacheWriteTokens int              `json:"cacheWriteTokens"`
+	OutputTokens     int              `json:"outputTokens"`
+	ReasoningTokens  int              `json:"reasoningTokens"`
+	CostUSD          *decimal.Decimal `json:"costUsd,omitempty"`
+	EstimatedCalls   int              `json:"estimatedCalls,omitempty"`
+	UnpricedCalls    int              `json:"unpricedCalls,omitempty"`
+	ModelTime        time.Duration    `json:"modelTimeNs"`
+}
+
+func (u *Usage) PromptTokens() int {
+	return u.InputTokens + u.CacheReadTokens + u.CacheWriteTokens
 }
 
 func (u *Usage) add(other Usage) {
 	u.ModelCalls += other.ModelCalls
 	u.InputTokens += other.InputTokens
+	u.CacheReadTokens += other.CacheReadTokens
+	u.CacheWriteTokens += other.CacheWriteTokens
 	u.OutputTokens += other.OutputTokens
 	u.ReasoningTokens += other.ReasoningTokens
+	u.EstimatedCalls += other.EstimatedCalls
+	u.UnpricedCalls += other.UnpricedCalls
 	u.ModelTime += other.ModelTime
 	if other.CostUSD != nil {
 		total := other.CostUSD.Copy()
@@ -99,6 +111,7 @@ type ProposalRecord struct {
 
 type TurnRecord struct {
 	TurnID       pulid.ID                         `json:"turnId"`
+	RunID        pulid.ID                         `json:"runId,omitzero"`
 	ThreadID     pulid.ID                         `json:"threadId"`
 	TraceID      string                           `json:"traceId,omitempty"`
 	Origin       conversation.AssistantTurnOrigin `json:"origin"`
@@ -118,6 +131,8 @@ type TurnRecord struct {
 	Proposals    []*ProposalRecord                `json:"proposals,omitempty"`
 	Artifacts    []agentports.AssistantArtifact   `json:"artifacts,omitempty"`
 	Usage        Usage                            `json:"usage"`
+	FirstTokenMs *int64                           `json:"firstTokenMs,omitempty"`
+	Disclosures  []Disclosure                     `json:"disclosures,omitempty"`
 	Models       []string                         `json:"models,omitempty"`
 	Unattributed []CallSummary                    `json:"unattributedModelCalls,omitempty"`
 	CaptureError string                           `json:"captureError,omitempty"`
@@ -139,8 +154,14 @@ type CallSummary struct {
 	SystemDigest    string                          `json:"systemDigest,omitempty"`
 	ToolsDigest     string                          `json:"toolsDigest,omitempty"`
 	InputTokens     int                             `json:"inputTokens"`
+	CacheRead       int                             `json:"cacheReadTokens,omitempty"`
+	CacheWrite      int                             `json:"cacheWriteTokens,omitempty"`
 	OutputTokens    int                             `json:"outputTokens"`
 	ReasoningTokens int                             `json:"reasoningTokens"`
+	CostUSD         *decimal.Decimal                `json:"costUsd,omitempty"`
+	PriceSource     PriceSource                     `json:"priceSource,omitempty"`
+	Reask           string                          `json:"reask,omitempty"`
+	FirstTokenMs    *int64                          `json:"firstTokenMs,omitempty"`
 	LatencyMs       int64                           `json:"latencyMs"`
 	Truncated       bool                            `json:"truncated,omitempty"`
 	CutOffCall      string                          `json:"cutOffCall,omitempty"`
