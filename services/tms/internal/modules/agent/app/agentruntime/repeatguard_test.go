@@ -83,7 +83,9 @@ func TestRun_StopsCallingToolsAfterRepeatedFailedCalls(t *testing.T) {
 	assert.Equal(t, "The report refused the status filter, so it did not run.", result.Reply)
 	require.Len(t, completion.Requests, 4)
 	final := completion.Requests[3]
-	assert.Empty(t, final.Tools, "the answer is asked for with no tools")
+	assert.True(t, final.ToolChoiceNone, "the answer is asked for with tool calls forbidden")
+	assert.Equal(t, specNames(completion.Requests[2].Tools), specNames(final.Tools),
+		"the tools stay declared so the cached prefix holds")
 	assert.Equal(t, stuckNote, final.Messages[len(final.Messages)-1].Content)
 }
 

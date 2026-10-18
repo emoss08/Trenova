@@ -216,6 +216,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentports.RunResult, error) 
 		result.Model = completion.ModelIdentifier
 		result.ProviderID = completion.ProviderID
 		result.ContextWindow = completion.ContextWindow
+		t.providerKind = completion.ProviderKind
 		tagReasoning(completion)
 		if stop {
 			return s.finishCutOff(t, fx, completion), nil
@@ -614,8 +615,10 @@ const budgetSpentNote = "You have used every tool call this turn allows. Answer 
 	"now from what the tools already returned. Say plainly what you could not finish or " +
 	"check, and do not ask for another tool."
 
-// finalAnswer asks the model once more with no tools, so a turn that spent its
-// budget answers from what it gathered. Ending on "I could not finish" threw
+// finalAnswer asks the model once more with tool calls forbidden, so a turn
+// that spent its budget answers from what it gathered. The tools stay declared:
+// the history holds tool calls a request without tools cannot carry, and
+// dropping them would throw away the cached prefix. Ending on "I could not finish" threw
 // away every lookup the turn had paid for. Nothing is returned when that ask
 // fails, loops, comes back empty or asks for a tool anyway: the canned line is
 // still better than any of those.
@@ -626,7 +629,7 @@ func (s *Service) finalAnswer(
 	note string,
 ) *agentports.ChatCompletionResult {
 	req := t.completionRequest()
-	req.Tools = nil
+	req.ToolChoiceNone = true
 	req.Messages = append(slices.Clone(req.Messages), agentports.Message{
 		Role:    agentports.RoleUser,
 		Content: note,
@@ -673,7 +676,7 @@ func (s *Service) recordToolResult(
 		t.offerWithdrawal(outcome.action)
 	}
 	outcome = fx.Observe(t, &call, outcome.exported()).internal()
-	s.countToolOutcome(fx, call.Name, &outcome)
+	s.countToolOutcome(t, fx, call.Name, &outcome)
 	t.keepShown(&outcome)
 	effect := s.ToolEffect(call.Name)
 	summary := summarizeOutcome(call, outcome)
@@ -869,6 +872,8 @@ func cannedCompletion(
 		canned.ProviderKind = attempt.ProviderKind
 		canned.InputTokens = attempt.InputTokens
 		canned.OutputTokens = attempt.OutputTokens
+		canned.CacheReadTokens = attempt.CacheReadTokens
+		canned.CacheWriteTokens = attempt.CacheWriteTokens
 		canned.LatencyMs = attempt.LatencyMs
 		canned.CostUSD = attempt.CostUSD
 		canned.ContextWindow = attempt.ContextWindow

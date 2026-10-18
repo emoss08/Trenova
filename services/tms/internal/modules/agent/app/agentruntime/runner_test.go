@@ -1278,7 +1278,7 @@ A turn that spends its tool budget answers from what it gathered.
 
 It used to end on "I gathered information but could not finish", which threw
 away every lookup the turn had paid for. It now asks the model once more with
-no tools, and keeps that answer.
+tool calls forbidden, and keeps that answer.
 */
 func TestRun_AnswersFromWhatItGatheredWhenTheBudgetRunsOut(t *testing.T) {
 	t.Parallel()
@@ -1305,7 +1305,8 @@ func TestRun_AnswersFromWhatItGatheredWhenTheBudgetRunsOut(t *testing.T) {
 	assert.False(t, result.Exhausted)
 	assert.Equal(t, "Shipment S-1 is in transit; I did not get to its stops.", result.Reply)
 	require.NotNil(t, completion.LastReq)
-	assert.Empty(t, completion.LastReq.Tools, "the last ask offers no tools")
+	assert.True(t, completion.LastReq.ToolChoiceNone, "the last ask forbids tool calls")
+	assert.NotEmpty(t, completion.LastReq.Tools, "the last ask keeps the tools declared")
 }
 
 // An answer that still asks for a tool is no answer; the plain line stands.
