@@ -437,7 +437,26 @@ result keeps its fields while its lists are cut (`RT/fence.go`).
    - **Unverified:** no wire fixture covers this request, and I have not seen it fail.
 4. **No provider-native tool search** (Anthropic's tool search tool with `defer_loading`,
    OpenAI's equivalents) is used. Discovery is entirely Trenova's own `find_tools`.
-5. **Habit fixes exist only for the two benched models.** Every one targets Haiku 5.5 or
+6. **Haiku 5.5's thinking-binding check may not be handled** (found while checking Anthropic's
+   current API reference in Phase 2). Haiku 5.5 is the default model.
+   - **What the API does.** Haiku 5.5 runs the same history-editing check as Opus 5.5 and Sonnet
+     5.5. A thinking block sent back after any change to `system`, `tools` or earlier messages is
+     a 400. This is enforced by default for accounts created on or after 2026-08-31, and on older
+     accounts only for requests that opt in.
+   - **What the adapter does.** It sets `bindsPrefix` (`drop_block` plus the beta header) only for
+     Opus ≥5.5, Sonnet ≥5.5 and Fable ≥5.1 (`modeladapter/anthropicmodels.go:64-80`).
+   - **How a turn hits it.** Desk changes `tools` within a turn in two places:
+     - `find_tools` loads tools;
+     - `offerWithdrawal` adds `withdraw_proposal` after the first proposal
+       (`withdrawproposal.go:71-80`). That happens even on small agents.
+
+     After either change, Desk replays the turn's thinking blocks.
+   - **Expected result.** A Haiku 5.5 turn on a new account would get a 400 at that point, and the
+     router does not retry a 400.
+   - **Status: unverified.** The bench account probably predates the cut-off, which would explain
+     why no finding records it. The test is one bench run on an account created after 2026-08-31
+     with a turn that files a proposal and then keeps working.
+7. **Habit fixes exist only for the two benched models.** Every one targets Haiku 5.5 or
    gpt-6-luna. Gemini, Llama, Qwen, DeepSeek and Ollama have code paths but no bench coverage.
 
 ### 1.5 Context spent before the person's message is read
