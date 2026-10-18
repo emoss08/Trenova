@@ -6,12 +6,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/memtable"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -20,8 +18,6 @@ const (
 	secondsPerDay         = int64(24 * 60 * 60)
 	agentsCursorScope     = "agent-quality-agents"
 	worstRatedCursorScope = "agent-worst-rated"
-	suiteRunsCursorScope  = "agent-suite-runs"
-	suiteCasesCursorScope = "agent-suite-run-cases"
 	detailWorstRatedLimit = 5
 )
 
@@ -39,27 +35,6 @@ func windowDays(requested int) (int, error) {
 	}
 
 	return requested, nil
-}
-
-func pageSize(requested int) int {
-	if requested <= 0 {
-		return agentqualityports.DefaultAgentQualityPageSize
-	}
-
-	return min(requested, agentqualityports.MaxAgentQualityPageSize)
-}
-
-func decodeOffset(scope, after string) (int, error) {
-	offset, err := pagination.DecodeOffsetCursor(scope, after)
-	if err != nil {
-		return 0, errortypes.NewValidationError(
-			"after",
-			errortypes.ErrInvalidFormat,
-			"Cursor is invalid",
-		)
-	}
-
-	return offset, nil
 }
 
 func satisfaction(positive, negative int) *float64 {
@@ -414,38 +389,6 @@ func (s *Service) agentNames(
 	return names, nil
 }
 
-func (s *Service) ListWorstRated(
-	ctx context.Context,
-	req *agentqualityports.ListAgentWorstRatedRequest,
-) (*agentqualityports.AgentWorstRatedPage, error) {
-	return s.ListWorstRatedTable(ctx, &agentqualityports.ListAgentWorstRatedTableRequest{
-		TenantInfo:        req.TenantInfo,
-		AgentDefinitionID: req.AgentDefinitionID,
-		WindowDays:        req.WindowDays,
-		ViewerID:          req.ViewerID,
-		Table: memtable.Request{
-			First: req.First,
-			After: req.After,
-		},
-	})
-}
-
-func (s *Service) ListAgents(
-	ctx context.Context,
-	req *agentqualityports.ListAgentQualityAgentsRequest,
-) (*agentqualityports.AgentQualityAgentPage, error) {
-	return s.ListAgentTable(ctx, &agentqualityports.ListAgentQualityAgentTableRequest{
-		TenantInfo:     req.TenantInfo,
-		WindowDays:     req.WindowDays,
-		IncludeRatings: req.IncludeRatings,
-		Table: memtable.Request{
-			First:             req.First,
-			After:             req.After,
-			IncludeTotalCount: req.IncludeTotalCount,
-		},
-	})
-}
-
 type agentPageRequest struct {
 	tenant         pagination.TenantInfo
 	ids            []pulid.ID
@@ -541,102 +484,6 @@ func (s *Service) fillTotals(
 	}
 
 	return nil
-}
-
-func (s *Service) ListSuiteRuns(
-	ctx context.Context,
-	req *agentqualityports.ListAgentSuiteRunsInput,
-) (*agentqualityports.AgentSuiteRunConnection, error) {
-	offset, err := decodeOffset(suiteRunsCursorScope, req.After)
-	if err != nil {
-		return nil, err
-	}
-	for _, status := range req.Statuses {
-		if !status.IsValid() {
-			return nil, errortypes.NewValidationError(
-				"statuses",
-				errortypes.ErrInvalid,
-				"Status is invalid",
-			)
-		}
-	}
-
-	page, err := s.suiteRuns.List(ctx, agentqualityports.ListAgentSuiteRunsRequest{
-		TenantInfo:        req.TenantInfo,
-		AgentDefinitionID: req.AgentDefinitionID,
-		Statuses:          req.Statuses,
-		Limit:             pageSize(req.First),
-		Offset:            offset,
-		IncludeTotalCount: req.IncludeTotalCount,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	connection := &agentqualityports.AgentSuiteRunConnection{
-		Edges:       make([]*agentqualityports.AgentSuiteRunEdge, 0, len(page.Items)),
-		HasNextPage: page.HasNextPage,
-		TotalCount:  page.TotalCount,
-	}
-	for idx, run := range page.Items {
-		connection.Edges = append(connection.Edges, &agentqualityports.AgentSuiteRunEdge{
-			Node:   run,
-			Cursor: pagination.EncodeOffsetCursor(suiteRunsCursorScope, offset+idx+1),
-		})
-	}
-
-	return connection, nil
-}
-
-func (s *Service) ListSuiteRunCases(
-	ctx context.Context,
-	req *agentqualityports.ListAgentSuiteRunCasesRequest,
-) (*agentqualityports.AgentSuiteRunCasePage, error) {
-	after, err := decodeOffset(suiteCasesCursorScope, req.After)
-	if err != nil {
-		return nil, err
-	}
-
-	run, err := s.suiteRuns.GetByID(ctx, agentqualityports.GetAgentSuiteRunRequest{
-		ID:         req.SuiteRunID,
-		TenantInfo: req.TenantInfo,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	limit := pageSize(req.First)
-	evaluations, err := s.evaluations.ListBySuiteRun(ctx, agentports.ListSuiteEvaluationsRequest{
-		TenantInfo:   req.TenantInfo,
-		SuiteRunID:   run.ID,
-		AfterOrdinal: after,
-		Limit:        limit + 1,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	page := &agentqualityports.AgentSuiteRunCasePage{HasNextPage: len(evaluations) > limit}
-	if page.HasNextPage {
-		evaluations = evaluations[:limit]
-	}
-	if req.IncludeTotalCount {
-		total := run.CasesTotal
-		page.TotalCount = &total
-	}
-	page.Edges = make([]*agentqualityports.AgentSuiteRunCaseEdge, 0, len(evaluations))
-	for _, evaluation := range evaluations {
-		ordinal := 0
-		if evaluation.SuiteOrdinal != nil {
-			ordinal = *evaluation.SuiteOrdinal
-		}
-		page.Edges = append(page.Edges, &agentqualityports.AgentSuiteRunCaseEdge{
-			Node:   evaluation,
-			Cursor: pagination.EncodeOffsetCursor(suiteCasesCursorScope, ordinal),
-		})
-	}
-
-	return page, nil
 }
 
 func (s *Service) GetSuiteRun(

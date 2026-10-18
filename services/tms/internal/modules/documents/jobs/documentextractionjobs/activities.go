@@ -71,7 +71,6 @@ type ActivitiesParams struct {
 	Storage             kernelports.Client
 	WorkflowStarter     kernelports.WorkflowStarter
 	ParsingRuleRuntime  documentparsingruleports.DocumentParsingRuleRuntime
-	TemporalClient      client.Client `optional:"true"`
 	Encryption          *encryptionservice.Service
 	AgentEvents         agentports.AgentEventPublisher                 `optional:"true"`
 	ShadowSampler       extractionshadowports.ExtractionShadowSampler  `optional:"true"`
@@ -98,7 +97,6 @@ type Activities struct {
 	storage             kernelports.Client
 	workflowStarter     kernelports.WorkflowStarter
 	parsingRuleRuntime  documentparsingruleports.DocumentParsingRuleRuntime
-	temporalClient      client.Client
 	encryption          *encryptionservice.Service
 	agentEvents         agentports.AgentEventPublisher
 	shadowSampler       extractionshadowports.ExtractionShadowSampler
@@ -148,7 +146,6 @@ func NewActivities(p ActivitiesParams) *Activities {
 		storage:             p.Storage,
 		workflowStarter:     workflowStarter,
 		parsingRuleRuntime:  parsingRuleRuntime,
-		temporalClient:      p.TemporalClient,
 		encryption:          p.Encryption,
 		agentEvents:         p.AgentEvents,
 		shadowSampler:       p.ShadowSampler,

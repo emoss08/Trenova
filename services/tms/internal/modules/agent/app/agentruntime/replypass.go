@@ -10,10 +10,6 @@ import (
 	"github.com/emoss08/trenova/shared/recordids"
 )
 
-// changeReplyPasses is the loop passing over a final reply before it is
-// recorded: internal ids taken out, a reprinted table pointed to.
-const changeReplyPasses = "agent-loop-reply-passes"
-
 const (
 	// minReprintRows is the fewest body rows a markdown table needs before
 	// it is taken for a reprint of a kept table. Below it the reply is
@@ -57,7 +53,7 @@ func (s *Service) passReply(
 
 	stripped := recordids.Strip(completion.Text)
 	pointed, table := pointToTables(stripped, t.keptTables())
-	if pointed == completion.Text || !fx.Supports(changeReplyPasses) {
+	if pointed == completion.Text {
 		return
 	}
 

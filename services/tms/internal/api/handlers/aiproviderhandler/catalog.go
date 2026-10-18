@@ -48,17 +48,6 @@ func kindDescriptors() []KindDescriptor {
 			SupportsStructuredEnforced: true,
 			SupportsEmbedding:          aiprovider.KindOpenAIChat.SupportsEmbedding(),
 		},
-		{
-			Kind:  aiprovider.KindOllama,
-			Label: "Ollama",
-			Description: "Ollama's native API. Used instead of its OpenAI-compatible " +
-				"endpoint, which ignores JSON schemas.",
-			DefaultBaseURL:             aiprovider.KindOllama.DefaultBaseURL(),
-			RequiresAPIKey:             false,
-			DefaultStructuredOutput:    aiprovider.KindOllama.DefaultStructuredOutputMode(),
-			SupportsStructuredEnforced: true,
-			SupportsEmbedding:          aiprovider.KindOllama.SupportsEmbedding(),
-		},
 	}
 }
 
@@ -366,34 +355,6 @@ func Presets() []Preset {
 			RequiresAPIKey:       true,
 			Notes: "Use the bedrock-mantle endpoint for your region and a Bedrock " +
 				"API key, for example https://bedrock-mantle.us-east-1.amazonaws.com/openai/v1.",
-		},
-		{
-			Key:                  "ollama",
-			Domain:               "ollama.com",
-			Label:                "Ollama (self-hosted)",
-			Kind:                 aiprovider.KindOllama,
-			BaseURL:              "http://localhost:11434",
-			StructuredOutputMode: aiprovider.StructuredOutputJSONSchema,
-			AllowPrivateNetwork:  true,
-			SelfHosted:           true,
-			ExampleModel:         "qwen3:8b",
-			Notes:                "Runs open-weight models on your own hardware; no data leaves your network.",
-		},
-		{
-			Key:                  "ollama-embeddings",
-			Domain:               "ollama.com",
-			Label:                "Ollama embeddings (self-hosted)",
-			Kind:                 aiprovider.KindOllama,
-			BaseURL:              "http://localhost:11434",
-			StructuredOutputMode: aiprovider.StructuredOutputJSONSchema,
-			AllowPrivateNetwork:  true,
-			SelfHosted:           true,
-			ExampleModel:         "nomic-embed-text",
-			Notes: "Semantic retrieval on your own hardware. nomic-embed-text returns 768 " +
-				"dimensions and expects search_document and search_query prefixes.",
-			Tasks:               []aiprovider.Task{aiprovider.TaskEmbedding},
-			EmbeddingDimensions: 768,
-			EmbeddingInputStyle: aiprovider.EmbeddingInputStyleNomicPrefix,
 		},
 		{
 			Key:                  "vllm",

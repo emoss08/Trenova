@@ -557,8 +557,6 @@ func (fx *effects) Delegate(
 	return run
 }
 
-func (*effects) Supports(string) bool { return true }
-
 func (*effects) Interject(*agentruntime.Turn, *agentruntime.WorldCheck) agentruntime.Interjections {
 	return agentruntime.Interjections{}
 }

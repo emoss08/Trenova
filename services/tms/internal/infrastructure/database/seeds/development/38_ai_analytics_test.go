@@ -24,7 +24,7 @@ func analyticsTestRefs() *analyticsSeedRefs {
 		admin: "usr_1",
 		now:   analyticsTestNow,
 		providers: map[string]*aiprovider.Provider{
-			SeedAIProviderLocalName: provider("aip_ollama", SeedAIProviderLocalName, "qwen2.5:14b"),
+			SeedAIProviderLocalName: provider("aip_local", SeedAIProviderLocalName, "qwen2.5-14b-instruct"),
 			SeedAIProviderServerName: provider(
 				"aip_vllm",
 				SeedAIProviderServerName,

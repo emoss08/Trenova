@@ -3,64 +3,9 @@ package agentsafetyresolver
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentsafetyservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/pkg/dbtype"
-	"github.com/emoss08/trenova/pkg/domaintypes"
-	"github.com/emoss08/trenova/pkg/memtable"
 	"github.com/emoss08/trenova/shared/pulid"
 )
-
-func toolPolicyViewsToModel(
-	views []agentports.AgentToolPolicyView,
-) []*gqlmodel.AgentToolPolicy {
-	out := make([]*gqlmodel.AgentToolPolicy, 0, len(views))
-	for idx := range views {
-		out = append(out, ToolPolicyViewToModel(&views[idx]))
-	}
-
-	return out
-}
-
-func toolPolicyConnectionRequest(
-	input *gqlmodel.AgentToolPolicyConnectionInput,
-) memtable.Request {
-	req := memtable.Request{
-		First: base.IntValue(input.First),
-		After: base.StringValue(input.After),
-		Query: base.StringValue(input.Query),
-	}
-	if input.Egress != nil {
-		req.FieldFilters = append(req.FieldFilters, domaintypes.FieldFilter{
-			Field:    "egress",
-			Operator: dbtype.OpEqual,
-			Value:    input.Egress.String(),
-		})
-	}
-	if input.Resource != nil {
-		req.FieldFilters = append(req.FieldFilters, domaintypes.FieldFilter{
-			Field:    "resource",
-			Operator: dbtype.OpEqual,
-			Value:    *input.Resource,
-		})
-	}
-	if input.Kind != nil {
-		req.FieldFilters = append(req.FieldFilters, domaintypes.FieldFilter{
-			Field:    "kind",
-			Operator: dbtype.OpEqual,
-			Value:    input.Kind.String(),
-		})
-	}
-	if input.RunsWithoutPerson != nil {
-		req.FieldFilters = append(req.FieldFilters, domaintypes.FieldFilter{
-			Field:    agentsafetyservice.FieldRunsWithoutPerson,
-			Operator: dbtype.OpEqual,
-			Value:    *input.RunsWithoutPerson,
-		})
-	}
-
-	return req
-}
 
 func agentToolSafetyPageToModel(
 	page *agentports.AgentToolSafetyPage,

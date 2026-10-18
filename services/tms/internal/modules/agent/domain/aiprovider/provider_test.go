@@ -127,8 +127,9 @@ func TestValidate_SelfHostedProviderDoesNotRequireAPIKey(t *testing.T) {
 
 	// A model server on a trusted network commonly has no auth at all.
 	p := validProvider()
-	p.Kind = aiprovider.KindOllama
-	p.Model = "qwen3:8b"
+	p.Kind = aiprovider.KindOpenAIChat
+	p.BaseURL = "http://10.0.0.4:8000/v1"
+	p.Model = "Qwen/Qwen3-32B"
 	p.APIKey = ""
 	p.AllowPrivateNetwork = true
 
@@ -240,11 +241,9 @@ func TestResolvedBaseURL(t *testing.T) {
 func TestKindDefaults(t *testing.T) {
 	t.Parallel()
 
-	// Ollama constrains decoding on its native endpoint, so it is not downgraded
-	// to prompted output the way a generic compatible endpoint is.
 	assert.Equal(t,
 		aiprovider.StructuredOutputJSONSchema,
-		aiprovider.KindOllama.DefaultStructuredOutputMode(),
+		aiprovider.KindAnthropicMessages.DefaultStructuredOutputMode(),
 	)
 	assert.Equal(t,
 		aiprovider.StructuredOutputPrompted,
@@ -253,7 +252,6 @@ func TestKindDefaults(t *testing.T) {
 
 	assert.True(t, aiprovider.KindAnthropicMessages.RequiresAPIKey())
 	assert.True(t, aiprovider.KindOpenAIResponses.RequiresAPIKey())
-	assert.False(t, aiprovider.KindOllama.RequiresAPIKey())
 	assert.False(t, aiprovider.KindOpenAIChat.RequiresAPIKey())
 }
 
@@ -376,7 +374,6 @@ func TestKindSupportsEmbedding(t *testing.T) {
 	assert.False(t, aiprovider.KindAnthropicMessages.SupportsEmbedding())
 	assert.True(t, aiprovider.KindOpenAIResponses.SupportsEmbedding())
 	assert.True(t, aiprovider.KindOpenAIChat.SupportsEmbedding())
-	assert.True(t, aiprovider.KindOllama.SupportsEmbedding())
 }
 
 func TestCanServeTask_Embedding(t *testing.T) {
@@ -412,10 +409,13 @@ func TestEmbeddingModelKey(t *testing.T) {
 	smaller := embeddingProviderFixture(768)
 	assert.NotEqual(t, voyage.EmbeddingModelKey(), smaller.EmbeddingModelKey())
 
-	defaultHost := &aiprovider.Provider{Kind: aiprovider.KindOllama, Model: "nomic-embed-text"}
+	defaultHost := &aiprovider.Provider{
+		Kind:  aiprovider.KindOpenAIResponses,
+		Model: "text-embedding-3-small",
+	}
 	dims := 768
 	defaultHost.EmbeddingDimensions = &dims
-	assert.Equal(t, "localhost:11434/nomic-embed-text@768", defaultHost.EmbeddingModelKey())
+	assert.Equal(t, "api.openai.com/text-embedding-3-small@768", defaultHost.EmbeddingModelKey())
 
 	assert.Empty(t, validProvider().EmbeddingModelKey(), "a text provider has no model key")
 }

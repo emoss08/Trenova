@@ -35,7 +35,7 @@ up providers and agents; reviewers use **Activity** to approve or reject what ag
 ## Tasks
 
 ### Connect an AI provider
-Keywords: add LLM, model endpoint, OpenAI, API key, gateway, self-hosted model, Ollama, vLLM
+Keywords: add LLM, model endpoint, OpenAI, API key, gateway, self-hosted model, vLLM
 1. Open [AI control](/admin/agent-control) and select **Providers**.
 2. Select **New provider** (or press N), then choose the vendor under **Provider**, from
    **Hosted** or **On your network**; it fills in that vendor's usual settings. With no provider
@@ -101,7 +101,7 @@ Keywords: rotate key, new API key, key rotation, expired key, leaked key
 Keywords: embeddings, embedding model, semantic search, search by meaning, vector search, Voyage, Gemini embeddings, OpenAI embeddings, nomic-embed-text, retrieval
 1. Open [AI control](/admin/agent-control) and select **Providers**.
 2. Select **New provider** and, under **Provider**, choose one of the embedding vendors: Voyage
-   AI, Gemini, OpenAI, or Ollama for a model on your own hardware. It fills in the endpoint, the
+   AI, Gemini or OpenAI. It fills in the endpoint, the
    model and the **Embedding** task.
 3. An embedding model serves nothing else, so leave the other tasks under **What it handles** for a
    separate provider. Anthropic has no embedding endpoint.

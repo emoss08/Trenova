@@ -520,17 +520,13 @@ type AIProviderModelOption struct {
 	ID          string `json:"id"`
 	DisplayName string `json:"displayName"`
 	// Tokens of context, when the endpoint or the model id says.
-	ContextWindow *int `json:"contextWindow,omitempty"`
-	// Bytes on disk, for a model a local server holds.
-	SizeBytes *float64 `json:"sizeBytes,omitempty"`
-	// A local server has it in memory now.
-	Loaded               bool    `json:"loaded"`
+	ContextWindow        *int    `json:"contextWindow,omitempty"`
 	Embedding            bool    `json:"embedding"`
 	InputCostPerMillion  *string `json:"inputCostPerMillion,omitempty"`
 	OutputCostPerMillion *string `json:"outputCostPerMillion,omitempty"`
 	// Where the prices came from; null when there are none.
 	PriceSource *AIModelPriceSource `json:"priceSource,omitempty"`
-	// When the provider released the model (for a local server, when it was pulled), when the endpoint says.
+	// When the provider released the model, when the endpoint says.
 	CreatedAt *int `json:"createdAt,omitempty"`
 }
 
@@ -912,9 +908,7 @@ type AgentControlInput struct {
 	// The version the person loaded. When someone saved since, the update is
 	// refused with who saved, when and what they changed. Absent applies the
 	// update to whatever is there.
-	Version                *int  `json:"version,omitempty"`
-	BillingAgentEnabled    *bool `json:"billingAgentEnabled,omitempty"`
-	DecisionTimeoutSeconds *int  `json:"decisionTimeoutSeconds,omitempty"`
+	Version *int `json:"version,omitempty"`
 }
 
 type AgentDefinitionConnection struct {
@@ -1142,13 +1136,6 @@ type AgentQualityAgentEdge struct {
 	Cursor string                               `json:"cursor"`
 }
 
-type AgentQualityAgentsInput struct {
-	// Days of ratings and scores to read, 30 by default, at most 365.
-	Window *int    `json:"window,omitempty"`
-	First  *int    `json:"first,omitempty"`
-	After  *string `json:"after,omitempty"`
-}
-
 // Who can reach an agent.
 type AgentReach struct {
 	AccessMode agentdefinition.AccessMode `json:"accessMode"`
@@ -1245,12 +1232,6 @@ type AgentSuiteRunCaseEdge struct {
 	Cursor string            `json:"cursor"`
 }
 
-type AgentSuiteRunCasesInput struct {
-	SuiteRunID string  `json:"suiteRunId"`
-	First      *int    `json:"first,omitempty"`
-	After      *string `json:"after,omitempty"`
-}
-
 type AgentSuiteRunConnection struct {
 	Edges      []*AgentSuiteRunEdge `json:"edges"`
 	PageInfo   *PageInfo            `json:"pageInfo"`
@@ -1260,13 +1241,6 @@ type AgentSuiteRunConnection struct {
 type AgentSuiteRunEdge struct {
 	Node   *agentquality.SuiteRun `json:"node"`
 	Cursor string                 `json:"cursor"`
-}
-
-type AgentSuiteRunsInput struct {
-	AgentDefinitionID *string                       `json:"agentDefinitionId,omitempty"`
-	Statuses          []agentquality.SuiteRunStatus `json:"statuses,omitempty"`
-	First             *int                          `json:"first,omitempty"`
-	After             *string                       `json:"after,omitempty"`
 }
 
 // One tool's safety policy, as declared in code.
@@ -1325,23 +1299,6 @@ type AgentToolPolicyConnection struct {
 	PageInfo *PageInfo              `json:"pageInfo"`
 	// Every tool matching the filters. Counted only when selected.
 	TotalCount *int `json:"totalCount,omitempty"`
-}
-
-// Narrows the tool rules. A filter left out matches every tool; the rules come
-// back ordered by tool name.
-type AgentToolPolicyConnectionInput struct {
-	First *int    `json:"first,omitempty"`
-	After *string `json:"after,omitempty"`
-	// Matched against the tool's name and title, ignoring case.
-	Query *string `json:"query,omitempty"`
-	// Tools some of whose work reaches this class.
-	Egress *agent.EgressClass `json:"egress,omitempty"`
-	// The permission resource the tool needs; general for a tool that needs no grant.
-	Resource *string         `json:"resource,omitempty"`
-	Kind     *agent.ToolKind `json:"kind,omitempty"`
-	// True keeps the tools that change something and, on at least one agent, can do
-	// so without a person; false keeps every other tool.
-	RunsWithoutPerson *bool `json:"runsWithoutPerson,omitempty"`
 }
 
 type AgentToolPolicyEdge struct {
@@ -1411,13 +1368,6 @@ type AgentWorstRatedAnswerConnection struct {
 type AgentWorstRatedAnswerEdge struct {
 	Node   *agentqualityports.AgentWorstRatedAnswer `json:"node"`
 	Cursor string                                   `json:"cursor"`
-}
-
-type AgentWorstRatedAnswersInput struct {
-	AgentDefinitionID *string `json:"agentDefinitionId,omitempty"`
-	Window            *int    `json:"window,omitempty"`
-	First             *int    `json:"first,omitempty"`
-	After             *string `json:"after,omitempty"`
 }
 
 type AmendWorkerEmploymentEventInput struct {
@@ -6092,23 +6042,6 @@ type MyAgentMatchInput struct {
 	ContextKinds []string `json:"contextKinds,omitempty"`
 }
 
-// The agent a question is best put to, among the chat agents the caller may start
-// a conversation with, judged by the tools it holds that the caller may use.
-type MyAgentRecommendation struct {
-	Agent *agentdefinition.Definition `json:"agent"`
-	// True when the agent the question would go to now is already the best fit.
-	Current bool `json:"current"`
-	// The tools the agent holds that matched the question, best first. At most three.
-	Tools []string `json:"tools"`
-}
-
-type MyAgentRecommendationInput struct {
-	// What the caller is about to ask. At most 4000 characters.
-	Text string `json:"text"`
-	// The agent the question would go to now, kept when it fits as well as any.
-	CurrentAgentID *string `json:"currentAgentId,omitempty"`
-}
-
 type MyAgentsInput struct {
 	First *int    `json:"first,omitempty"`
 	After *string `json:"after,omitempty"`
@@ -7403,7 +7336,6 @@ type ReportRunError struct {
 
 type ReportRunsFilterInput struct {
 	DefinitionID *string  `json:"definitionId,omitempty"`
-	MineOnly     *bool    `json:"mineOnly,omitempty"`
 	Statuses     []string `json:"statuses,omitempty"`
 }
 
@@ -8191,7 +8123,6 @@ type ShipmentAdditionalCharge struct {
 	FuelSurchargeProgramID *string                    `json:"fuelSurchargeProgramId,omitempty"`
 	FuelSurchargeDetail    map[string]any             `json:"fuelSurchargeDetail,omitempty"`
 	IsDetention            bool                       `json:"isDetention"`
-	DetentionOccurrenceID  *string                    `json:"detentionOccurrenceId,omitempty"`
 	Version                int                        `json:"version"`
 	CreatedAt              int                        `json:"createdAt"`
 	UpdatedAt              int                        `json:"updatedAt"`
@@ -8207,7 +8138,6 @@ type ShipmentAdditionalChargeInput struct {
 	Amount                 *string `json:"amount,omitempty"`
 	Unit                   *int    `json:"unit,omitempty"`
 	FuelSurchargeProgramID *string `json:"fuelSurchargeProgramId,omitempty"`
-	DetentionOccurrenceID  *string `json:"detentionOccurrenceId,omitempty"`
 	Version                *int    `json:"version,omitempty"`
 	// How this charge is divided among payers. Omit to leave the split untouched;
 	// send an empty list to bill the whole charge to the shipment's payer.
@@ -12152,246 +12082,6 @@ func (e *CostRateSource) UnmarshalJSON(b []byte) error {
 }
 
 func (e CostRateSource) MarshalJSON() ([]byte, error) {
-	var buf bytes.Buffer
-	e.MarshalGQL(&buf)
-	return buf.Bytes(), nil
-}
-
-type CustomerBillingCycleType string
-
-const (
-	CustomerBillingCycleTypeImmediate   CustomerBillingCycleType = "Immediate"
-	CustomerBillingCycleTypeDaily       CustomerBillingCycleType = "Daily"
-	CustomerBillingCycleTypeWeekly      CustomerBillingCycleType = "Weekly"
-	CustomerBillingCycleTypeBiWeekly    CustomerBillingCycleType = "BiWeekly"
-	CustomerBillingCycleTypeMonthly     CustomerBillingCycleType = "Monthly"
-	CustomerBillingCycleTypeQuarterly   CustomerBillingCycleType = "Quarterly"
-	CustomerBillingCycleTypePerShipment CustomerBillingCycleType = "PerShipment"
-)
-
-var AllCustomerBillingCycleType = []CustomerBillingCycleType{
-	CustomerBillingCycleTypeImmediate,
-	CustomerBillingCycleTypeDaily,
-	CustomerBillingCycleTypeWeekly,
-	CustomerBillingCycleTypeBiWeekly,
-	CustomerBillingCycleTypeMonthly,
-	CustomerBillingCycleTypeQuarterly,
-	CustomerBillingCycleTypePerShipment,
-}
-
-func (e CustomerBillingCycleType) IsValid() bool {
-	switch e {
-	case CustomerBillingCycleTypeImmediate, CustomerBillingCycleTypeDaily, CustomerBillingCycleTypeWeekly, CustomerBillingCycleTypeBiWeekly, CustomerBillingCycleTypeMonthly, CustomerBillingCycleTypeQuarterly, CustomerBillingCycleTypePerShipment:
-		return true
-	}
-	return false
-}
-
-func (e CustomerBillingCycleType) String() string {
-	return string(e)
-}
-
-func (e *CustomerBillingCycleType) UnmarshalGQL(v any) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = CustomerBillingCycleType(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid CustomerBillingCycleType", str)
-	}
-	return nil
-}
-
-func (e CustomerBillingCycleType) MarshalGQL(w io.Writer) {
-	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-func (e *CustomerBillingCycleType) UnmarshalJSON(b []byte) error {
-	s, err := strconv.Unquote(string(b))
-	if err != nil {
-		return err
-	}
-	return e.UnmarshalGQL(s)
-}
-
-func (e CustomerBillingCycleType) MarshalJSON() ([]byte, error) {
-	var buf bytes.Buffer
-	e.MarshalGQL(&buf)
-	return buf.Bytes(), nil
-}
-
-type CustomerConsolidationGroupBy string
-
-const (
-	CustomerConsolidationGroupByNone     CustomerConsolidationGroupBy = "None"
-	CustomerConsolidationGroupByLocation CustomerConsolidationGroupBy = "Location"
-	CustomerConsolidationGroupByPONumber CustomerConsolidationGroupBy = "PONumber"
-	CustomerConsolidationGroupByBOL      CustomerConsolidationGroupBy = "BOL"
-	CustomerConsolidationGroupByDivision CustomerConsolidationGroupBy = "Division"
-)
-
-var AllCustomerConsolidationGroupBy = []CustomerConsolidationGroupBy{
-	CustomerConsolidationGroupByNone,
-	CustomerConsolidationGroupByLocation,
-	CustomerConsolidationGroupByPONumber,
-	CustomerConsolidationGroupByBOL,
-	CustomerConsolidationGroupByDivision,
-}
-
-func (e CustomerConsolidationGroupBy) IsValid() bool {
-	switch e {
-	case CustomerConsolidationGroupByNone, CustomerConsolidationGroupByLocation, CustomerConsolidationGroupByPONumber, CustomerConsolidationGroupByBOL, CustomerConsolidationGroupByDivision:
-		return true
-	}
-	return false
-}
-
-func (e CustomerConsolidationGroupBy) String() string {
-	return string(e)
-}
-
-func (e *CustomerConsolidationGroupBy) UnmarshalGQL(v any) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = CustomerConsolidationGroupBy(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid CustomerConsolidationGroupBy", str)
-	}
-	return nil
-}
-
-func (e CustomerConsolidationGroupBy) MarshalGQL(w io.Writer) {
-	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-func (e *CustomerConsolidationGroupBy) UnmarshalJSON(b []byte) error {
-	s, err := strconv.Unquote(string(b))
-	if err != nil {
-		return err
-	}
-	return e.UnmarshalGQL(s)
-}
-
-func (e CustomerConsolidationGroupBy) MarshalJSON() ([]byte, error) {
-	var buf bytes.Buffer
-	e.MarshalGQL(&buf)
-	return buf.Bytes(), nil
-}
-
-type CustomerInvoiceAdjustmentSupportingDocumentPolicy string
-
-const (
-	CustomerInvoiceAdjustmentSupportingDocumentPolicyInherit  CustomerInvoiceAdjustmentSupportingDocumentPolicy = "Inherit"
-	CustomerInvoiceAdjustmentSupportingDocumentPolicyRequired CustomerInvoiceAdjustmentSupportingDocumentPolicy = "Required"
-	CustomerInvoiceAdjustmentSupportingDocumentPolicyOptional CustomerInvoiceAdjustmentSupportingDocumentPolicy = "Optional"
-)
-
-var AllCustomerInvoiceAdjustmentSupportingDocumentPolicy = []CustomerInvoiceAdjustmentSupportingDocumentPolicy{
-	CustomerInvoiceAdjustmentSupportingDocumentPolicyInherit,
-	CustomerInvoiceAdjustmentSupportingDocumentPolicyRequired,
-	CustomerInvoiceAdjustmentSupportingDocumentPolicyOptional,
-}
-
-func (e CustomerInvoiceAdjustmentSupportingDocumentPolicy) IsValid() bool {
-	switch e {
-	case CustomerInvoiceAdjustmentSupportingDocumentPolicyInherit, CustomerInvoiceAdjustmentSupportingDocumentPolicyRequired, CustomerInvoiceAdjustmentSupportingDocumentPolicyOptional:
-		return true
-	}
-	return false
-}
-
-func (e CustomerInvoiceAdjustmentSupportingDocumentPolicy) String() string {
-	return string(e)
-}
-
-func (e *CustomerInvoiceAdjustmentSupportingDocumentPolicy) UnmarshalGQL(v any) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = CustomerInvoiceAdjustmentSupportingDocumentPolicy(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid CustomerInvoiceAdjustmentSupportingDocumentPolicy", str)
-	}
-	return nil
-}
-
-func (e CustomerInvoiceAdjustmentSupportingDocumentPolicy) MarshalGQL(w io.Writer) {
-	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-func (e *CustomerInvoiceAdjustmentSupportingDocumentPolicy) UnmarshalJSON(b []byte) error {
-	s, err := strconv.Unquote(string(b))
-	if err != nil {
-		return err
-	}
-	return e.UnmarshalGQL(s)
-}
-
-func (e CustomerInvoiceAdjustmentSupportingDocumentPolicy) MarshalJSON() ([]byte, error) {
-	var buf bytes.Buffer
-	e.MarshalGQL(&buf)
-	return buf.Bytes(), nil
-}
-
-type CustomerInvoiceMethod string
-
-const (
-	CustomerInvoiceMethodIndividual        CustomerInvoiceMethod = "Individual"
-	CustomerInvoiceMethodSummary           CustomerInvoiceMethod = "Summary"
-	CustomerInvoiceMethodSummaryWithDetail CustomerInvoiceMethod = "SummaryWithDetail"
-)
-
-var AllCustomerInvoiceMethod = []CustomerInvoiceMethod{
-	CustomerInvoiceMethodIndividual,
-	CustomerInvoiceMethodSummary,
-	CustomerInvoiceMethodSummaryWithDetail,
-}
-
-func (e CustomerInvoiceMethod) IsValid() bool {
-	switch e {
-	case CustomerInvoiceMethodIndividual, CustomerInvoiceMethodSummary, CustomerInvoiceMethodSummaryWithDetail:
-		return true
-	}
-	return false
-}
-
-func (e CustomerInvoiceMethod) String() string {
-	return string(e)
-}
-
-func (e *CustomerInvoiceMethod) UnmarshalGQL(v any) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = CustomerInvoiceMethod(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid CustomerInvoiceMethod", str)
-	}
-	return nil
-}
-
-func (e CustomerInvoiceMethod) MarshalGQL(w io.Writer) {
-	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-func (e *CustomerInvoiceMethod) UnmarshalJSON(b []byte) error {
-	s, err := strconv.Unquote(string(b))
-	if err != nil {
-		return err
-	}
-	return e.UnmarshalGQL(s)
-}
-
-func (e CustomerInvoiceMethod) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

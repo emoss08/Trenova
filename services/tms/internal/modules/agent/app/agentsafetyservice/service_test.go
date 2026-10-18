@@ -163,13 +163,10 @@ func agentWith(name string, tools ...string) *agentdefinition.Definition {
 func TestPolicyViewsSayWhatEachToolNeeds(t *testing.T) {
 	t.Parallel()
 
-	views := testService(&fakeDefinitions{}, &tenant.AgentControl{}).ToolPolicies()
-	byName := make(map[string]agentports.AgentToolPolicyView, len(views))
-	for _, view := range views {
-		byName[view.Policy.Name] = view
-	}
+	svc := testService(&fakeDefinitions{}, &tenant.AgentControl{})
 
-	email := byName["email_customer"]
+	email, ok := svc.ToolPolicy("email_customer")
+	require.True(t, ok)
 	assert.Equal(t, "Email customer", email.Title)
 	assert.True(t, email.Leaves)
 	assert.Equal(t, agent.TierActWithApproval, email.Promotable)
@@ -177,7 +174,8 @@ func TestPolicyViewsSayWhatEachToolNeeds(t *testing.T) {
 	assert.Equal(t, permission.ResourceShipment, email.Needs.Resource)
 	assert.NotEmpty(t, email.Explanation)
 
-	widget := byName["add_home_widget"]
+	widget, ok := svc.ToolPolicy("add_home_widget")
+	require.True(t, ok)
 	assert.Nil(t, widget.Needs, "a tool on the caller's own records needs no grant")
 	assert.False(t, widget.Leaves)
 }

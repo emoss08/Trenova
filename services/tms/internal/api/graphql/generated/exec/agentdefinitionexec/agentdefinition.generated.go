@@ -47,7 +47,6 @@ var Shard = &gqlexec.Shard{
 		{Name: "MyAgentConnection", Implementors: []string{"MyAgentConnection"}},
 		{Name: "MyAgentEdge", Implementors: []string{"MyAgentEdge"}},
 		{Name: "MyAgentMatch", Implementors: []string{"MyAgentMatch"}},
-		{Name: "MyAgentRecommendation", Implementors: []string{"MyAgentRecommendation"}},
 	},
 	Fields: []gqlexec.Fields{
 		{Object: "AgentAccessPreview", Fields: []*gqlexec.Field{
@@ -2021,39 +2020,6 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNAgentMatchTool2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentMatchToolᚄ),
 			},
 		}},
-		{Object: "MyAgentRecommendation", Fields: []*gqlexec.Field{
-			{
-				Name:      "agent",
-				NonNull:   true,
-				HasChild:  true,
-				ChildType: "MyAgent",
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.MyAgentRecommendation)
-					return obj.Agent, nil
-				},
-				Marshal: gqlexec.Marshal(marshalNMyAgent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐDefinition),
-			},
-			{
-				Name:     "current",
-				NonNull:  true,
-				ChildErr: errNoChild3,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.MyAgentRecommendation)
-					return obj.Current, nil
-				},
-				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
-			},
-			{
-				Name:     "tools",
-				NonNull:  true,
-				ChildErr: errNoChild1,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.MyAgentRecommendation)
-					return obj.Tools, nil
-				},
-				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
-			},
-		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
 			{
 				Name:       "agentDefinitions",
@@ -2153,19 +2119,6 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNMyAgentConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐMyAgentConnection),
 			},
 			{
-				Name:       "myAgentRecommendation",
-				IsResolver: true,
-				Concurrent: true,
-				HasChild:   true,
-				ChildType:  "MyAgentRecommendation",
-				Args:       field_Query_myAgentRecommendation_args,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").MyAgentRecommendation(ctx, fc.Args["input"].(gqlmodel.MyAgentRecommendationInput))
-				},
-				Marshal: gqlexec.Marshal(marshalOMyAgentRecommendation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐMyAgentRecommendation),
-			},
-			{
 				Name:       "myAgentMatch",
 				NonNull:    true,
 				IsResolver: true,
@@ -2254,7 +2207,6 @@ var Shard = &gqlexec.Shard{
 		{Name: "AgentDelegateTopicInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputAgentDelegateTopicInput)},
 		{Name: "AgentInstructionLintInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputAgentInstructionLintInput)},
 		{Name: "MyAgentMatchInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputMyAgentMatchInput)},
-		{Name: "MyAgentRecommendationInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputMyAgentRecommendationInput)},
 		{Name: "MyAgentsInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputMyAgentsInput)},
 		{Name: "SetAgentAccessInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputSetAgentAccessInput)},
 		{Name: "UpdateAgentCapabilitiesInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputUpdateAgentCapabilitiesInput)},
@@ -2315,7 +2267,6 @@ type resolverQuery interface {
 	AgentDefinitionVersions(ctx context.Context, agentID string, limit *int) ([]*agentdefinition.DefinitionVersion, error)
 	AgentDefinitionVersionDraft(ctx context.Context, agentID string, version int) (*agentdefinition.Definition, error)
 	MyAgents(ctx context.Context, input gqlmodel.MyAgentsInput) (*gqlmodel.MyAgentConnection, error)
-	MyAgentRecommendation(ctx context.Context, input gqlmodel.MyAgentRecommendationInput) (*gqlmodel.MyAgentRecommendation, error)
 	MyAgentMatch(ctx context.Context, input gqlmodel.MyAgentMatchInput) (*gqlmodel.MyAgentMatch, error)
 	SuggestedAgentAudience(ctx context.Context, agentID string) (*gqlmodel.AgentAudienceSuggestion, error)
 	AgentAccessPreview(ctx context.Context, input gqlmodel.AgentAccessPreviewInput) (*gqlmodel.AgentAccessPreview, error)
@@ -2612,19 +2563,6 @@ func field_Query_myAgents_args(ctx context.Context, ec *gqlexec.Exec, rawArgs ma
 	return args, nil
 }
 
-func field_Query_myAgentRecommendation_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
-	args := make(map[string]any, 1)
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
-		func(ctx context.Context, v any) (gqlmodel.MyAgentRecommendationInput, error) {
-			return unmarshalNMyAgentRecommendationInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐMyAgentRecommendationInput(ctx, ec, v)
-		})
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
 func field_Query_myAgentMatch_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
@@ -2891,43 +2829,6 @@ func unmarshalInputMyAgentMatchInput(ctx context.Context, ec *gqlexec.Exec, obj 
 				return it, err
 			}
 			it.ContextKinds = data
-		}
-	}
-	return it, nil
-}
-
-func unmarshalInputMyAgentRecommendationInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.MyAgentRecommendationInput, error) {
-	var it gqlmodel.MyAgentRecommendationInput
-	if obj == nil {
-		return it, nil
-	}
-
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"text", "currentAgentId"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "text":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
-			data, err := unmarshalNString2string(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Text = data
-		case "currentAgentId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("currentAgentId"))
-			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.CurrentAgentID = data
 		}
 	}
 	return it, nil
@@ -3205,11 +3106,6 @@ func unmarshalNInt2int(ctx context.Context, ec *gqlexec.Exec, v any) (int, error
 
 func unmarshalNMyAgentMatchInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐMyAgentMatchInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.MyAgentMatchInput, error) {
 	res, err := unmarshalInputMyAgentMatchInput(ctx, ec, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func unmarshalNMyAgentRecommendationInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐMyAgentRecommendationInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.MyAgentRecommendationInput, error) {
-	res, err := unmarshalInputMyAgentRecommendationInput(ctx, ec, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -3837,13 +3733,6 @@ func marshalOMyAgent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋ
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "MyAgent", v)
-}
-
-func marshalOMyAgentRecommendation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐMyAgentRecommendation(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.MyAgentRecommendation) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec.MarshalType(ctx, sel, "MyAgentRecommendation", v)
 }
 
 func marshalOString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {

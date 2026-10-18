@@ -29,7 +29,7 @@ import {
   ShipmentProfitabilityDocument,
   ShipmentUiPolicyDocument,
   TransferShipmentOwnershipDocument,
-  TransferShipmentToBillingDocument,
+  TransferShipmentToBillingItemsDocument,
   UnassignedShipmentsDocument,
   UncancelShipmentDocument,
   UnpinShipmentCommentDocument,
@@ -379,8 +379,8 @@ export async function transferShipmentOwnershipGraphQL(
 
 export async function transferShipmentToBillingGraphQL(shipmentId: string, billType?: BillType) {
   const data = await requestShipmentGraphQL({
-    document: TransferShipmentToBillingDocument,
-    operationName: "TransferShipmentToBilling",
+    document: TransferShipmentToBillingItemsDocument,
+    operationName: "TransferShipmentToBillingItems",
     variables: {
       input: {
         shipmentId,
@@ -388,7 +388,7 @@ export async function transferShipmentToBillingGraphQL(shipmentId: string, billT
       },
     },
   });
-  return data.transferShipmentToBilling;
+  return data.transferShipmentToBillingItems;
 }
 
 export async function calculateShipmentTotalsGraphQL(payload: Shipment) {

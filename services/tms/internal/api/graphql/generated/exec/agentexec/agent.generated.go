@@ -345,26 +345,6 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
-				Name:     "billingAgentEnabled",
-				NonNull:  true,
-				ChildErr: errNoChild4,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.AgentControl)
-					return obj.BillingAgentEnabled, nil
-				},
-				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
-			},
-			{
-				Name:     "decisionTimeoutSeconds",
-				NonNull:  true,
-				ChildErr: errNoChild1,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.AgentControl)
-					return obj.DecisionTimeoutSeconds, nil
-				},
-				Marshal: gqlexec.Marshal(marshalNInt2int),
-			},
-			{
 				Name:     "version",
 				NonNull:  true,
 				ChildErr: errNoChild1,
@@ -4703,7 +4683,7 @@ func unmarshalInputAgentControlInput(ctx context.Context, ec *gqlexec.Exec, obj 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"shadowMode", "earnedAutonomy", "promotionThreshold", "aiTrainingConsent", "personMonthlyMessages", "learningOff", "agentMoneyCallCeiling", "agentMoneyRunCalls", "agentMoneyRunAmount", "agentMoneyDayCalls", "agentMoneyDayAmount", "version", "billingAgentEnabled", "decisionTimeoutSeconds"}
+	fieldsInOrder := [...]string{"shadowMode", "earnedAutonomy", "promotionThreshold", "aiTrainingConsent", "personMonthlyMessages", "learningOff", "agentMoneyCallCeiling", "agentMoneyRunCalls", "agentMoneyRunAmount", "agentMoneyDayCalls", "agentMoneyDayAmount", "version"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -4794,20 +4774,6 @@ func unmarshalInputAgentControlInput(ctx context.Context, ec *gqlexec.Exec, obj 
 				return it, err
 			}
 			it.Version = data
-		case "billingAgentEnabled":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("billingAgentEnabled"))
-			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.BillingAgentEnabled = data
-		case "decisionTimeoutSeconds":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("decisionTimeoutSeconds"))
-			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.DecisionTimeoutSeconds = data
 		}
 	}
 	return it, nil

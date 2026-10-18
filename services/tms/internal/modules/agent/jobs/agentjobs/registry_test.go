@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/registry"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func names(definitions []registry.WorkflowDefinition) map[string]struct{} {
@@ -45,21 +44,6 @@ func TestWorkflows_KeepTheWorkloadClassesApart(t *testing.T) {
 
 	assert.Equal(t, temporaltype.TaskQueueAgentHeavy.String(), HeavyDomainConfig.TaskQueue)
 	assert.Contains(t, names(workflows.heavy()), agentcontract.AgentEvaluationWorkflowName)
-}
-
-func TestWorkflows_DrainCoversEverythingOnTheOldQueue(t *testing.T) {
-	t.Parallel()
-
-	// A workflow's task queue is fixed when it starts, so runs already in
-	// flight when the split deployed still dispatch to agent-queue. Every
-	// workflow has to stay reachable there until they have drained, or they
-	// hang until their timeouts fire.
-	workflows := NewWorkflows(nil)
-	drain := names(workflows.drain())
-	require.Len(t, drain, len(workflows.background())+len(workflows.heavy()))
-	assert.Equal(t, temporaltype.TaskQueueAgent.String(), DrainDomainConfig.TaskQueue)
-	assert.Contains(t, drain, agentcontract.AgentRunWorkflowName)
-	assert.Contains(t, drain, agentcontract.AgentEvaluationWorkflowName)
 }
 
 // A workflow a schedule starts is started by its function, so the name it is

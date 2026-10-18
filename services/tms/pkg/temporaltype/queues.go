@@ -19,12 +19,8 @@ const (
 	TaskQueueFiscal               TaskQueue = "fiscal-queue"
 	TaskQueueEDI                  TaskQueue = "edi-queue"
 	TaskQueueReport               TaskQueue = "report-queue"
-	// TaskQueueAgent carries the cheap periodic work: the sweep that starts
-	// due agents, proposal expiry, ask-thread retention.
-	//
-	// It is also where every run started before the split still dispatches. A
-	// workflow's task queue is fixed when it starts, so retiring this queue
-	// while runs are in flight would strand them until their timeouts fire.
+	// TaskQueueAgent carries decision commits: the short wait after a person
+	// approves a proposal, during which the approval can still be undone.
 	TaskQueueAgent TaskQueue = "agent-queue"
 	// TaskQueueAgentChat carries interactive turns, where somebody is watching
 	// a reply arrive.

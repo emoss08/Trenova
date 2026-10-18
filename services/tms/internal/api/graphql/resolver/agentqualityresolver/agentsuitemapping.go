@@ -64,46 +64,6 @@ func agentWorstRatedToModel(
 	return out
 }
 
-func agentSuiteRunsToModel(
-	page *agentqualityports.AgentSuiteRunConnection,
-) *gqlmodel.AgentSuiteRunConnection {
-	out := &gqlmodel.AgentSuiteRunConnection{
-		Edges:      make([]*gqlmodel.AgentSuiteRunEdge, 0, len(page.Edges)),
-		TotalCount: page.TotalCount,
-	}
-	last := ""
-	for _, edge := range page.Edges {
-		out.Edges = append(out.Edges, &gqlmodel.AgentSuiteRunEdge{
-			Node:   edge.Node,
-			Cursor: edge.Cursor,
-		})
-		last = edge.Cursor
-	}
-	out.PageInfo = base.PageInfoFor(page.HasNextPage, last)
-
-	return out
-}
-
-func agentSuiteRunCasesToModel(
-	page *agentqualityports.AgentSuiteRunCasePage,
-) *gqlmodel.AgentSuiteRunCaseConnection {
-	out := &gqlmodel.AgentSuiteRunCaseConnection{
-		Edges:      make([]*gqlmodel.AgentSuiteRunCaseEdge, 0, len(page.Edges)),
-		TotalCount: page.TotalCount,
-	}
-	last := ""
-	for _, edge := range page.Edges {
-		out.Edges = append(out.Edges, &gqlmodel.AgentSuiteRunCaseEdge{
-			Node:   edge.Node,
-			Cursor: edge.Cursor,
-		})
-		last = edge.Cursor
-	}
-	out.PageInfo = base.PageInfoFor(page.HasNextPage, last)
-
-	return out
-}
-
 func agentSuiteRunConnectionToModel(
 	result *pagination.CursorListResult[*agentquality.SuiteRun],
 ) (*gqlmodel.AgentSuiteRunConnection, error) {

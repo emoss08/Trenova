@@ -1964,20 +1964,6 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNAgentQuality2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋagentqualityportsᚐAgentQualityDetail),
 			},
 			{
-				Name:       "agentQualityAgents",
-				NonNull:    true,
-				IsResolver: true,
-				Concurrent: true,
-				HasChild:   true,
-				ChildType:  "AgentQualityAgentConnection",
-				Args:       field_Query_agentQualityAgents_args,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentQualityAgents(ctx, fc.Args["input"].(gqlmodel.AgentQualityAgentsInput))
-				},
-				Marshal: gqlexec.Marshal(marshalNAgentQualityAgentConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentQualityAgentConnection),
-			},
-			{
 				Name:       "agentQualityAgentConnection",
 				NonNull:    true,
 				IsResolver: true,
@@ -1992,20 +1978,6 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNAgentQualityAgentConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentQualityAgentConnection),
 			},
 			{
-				Name:       "agentWorstRatedAnswers",
-				NonNull:    true,
-				IsResolver: true,
-				Concurrent: true,
-				HasChild:   true,
-				ChildType:  "AgentWorstRatedAnswerConnection",
-				Args:       field_Query_agentWorstRatedAnswers_args,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentWorstRatedAnswers(ctx, fc.Args["input"].(gqlmodel.AgentWorstRatedAnswersInput))
-				},
-				Marshal: gqlexec.Marshal(marshalNAgentWorstRatedAnswerConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentWorstRatedAnswerConnection),
-			},
-			{
 				Name:       "agentWorstRatedAnswerConnection",
 				NonNull:    true,
 				IsResolver: true,
@@ -2018,20 +1990,6 @@ var Shard = &gqlexec.Shard{
 					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentWorstRatedAnswerConnection(ctx, fc.Args["agentDefinitionId"].(*string), fc.Args["window"].(*int), fc.Args["input"].(gqlmodel.DataTableConnectionInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentWorstRatedAnswerConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentWorstRatedAnswerConnection),
-			},
-			{
-				Name:       "agentSuiteRuns",
-				NonNull:    true,
-				IsResolver: true,
-				Concurrent: true,
-				HasChild:   true,
-				ChildType:  "AgentSuiteRunConnection",
-				Args:       field_Query_agentSuiteRuns_args,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentSuiteRuns(ctx, fc.Args["input"].(gqlmodel.AgentSuiteRunsInput))
-				},
-				Marshal: gqlexec.Marshal(marshalNAgentSuiteRunConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentSuiteRunConnection),
 			},
 			{
 				Name:       "agentSuiteRunConnection",
@@ -2059,20 +2017,6 @@ var Shard = &gqlexec.Shard{
 					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentSuiteRun(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOAgentSuiteRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentqualityᚐSuiteRun),
-			},
-			{
-				Name:       "agentSuiteRunCases",
-				NonNull:    true,
-				IsResolver: true,
-				Concurrent: true,
-				HasChild:   true,
-				ChildType:  "AgentSuiteRunCaseConnection",
-				Args:       field_Query_agentSuiteRunCases_args,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentSuiteRunCases(ctx, fc.Args["input"].(gqlmodel.AgentSuiteRunCasesInput))
-				},
-				Marshal: gqlexec.Marshal(marshalNAgentSuiteRunCaseConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentSuiteRunCaseConnection),
 			},
 			{
 				Name:       "agentSuiteRunCaseConnection",
@@ -2107,10 +2051,6 @@ var Shard = &gqlexec.Shard{
 		{Name: "AgentEvalCaseFromFeedbackInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputAgentEvalCaseFromFeedbackInput)},
 		{Name: "AgentEvalCaseFromMessageInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputAgentEvalCaseFromMessageInput)},
 		{Name: "AgentEvalCaseFromProposalInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputAgentEvalCaseFromProposalInput)},
-		{Name: "AgentQualityAgentsInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputAgentQualityAgentsInput)},
-		{Name: "AgentSuiteRunCasesInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputAgentSuiteRunCasesInput)},
-		{Name: "AgentSuiteRunsInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputAgentSuiteRunsInput)},
-		{Name: "AgentWorstRatedAnswersInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputAgentWorstRatedAnswersInput)},
 		{Name: "CreateAgentEvalCaseInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputCreateAgentEvalCaseInput)},
 		{Name: "UpdateAgentEvalCaseInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputUpdateAgentEvalCaseInput)},
 		{Name: "UpdateAgentQualityControlInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputUpdateAgentQualityControlInput)},
@@ -2173,14 +2113,10 @@ type resolverQuery interface {
 	AgentEvalCase(ctx context.Context, id string) (*agentquality.EvalCase, error)
 	AgentQualityOverview(ctx context.Context, window *int) (*agentqualityports.AgentQualityOverview, error)
 	AgentQuality(ctx context.Context, agentDefinitionID string, window *int) (*agentqualityports.AgentQualityDetail, error)
-	AgentQualityAgents(ctx context.Context, input gqlmodel.AgentQualityAgentsInput) (*gqlmodel.AgentQualityAgentConnection, error)
 	AgentQualityAgentConnection(ctx context.Context, window *int, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentQualityAgentConnection, error)
-	AgentWorstRatedAnswers(ctx context.Context, input gqlmodel.AgentWorstRatedAnswersInput) (*gqlmodel.AgentWorstRatedAnswerConnection, error)
 	AgentWorstRatedAnswerConnection(ctx context.Context, agentDefinitionID *string, window *int, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentWorstRatedAnswerConnection, error)
-	AgentSuiteRuns(ctx context.Context, input gqlmodel.AgentSuiteRunsInput) (*gqlmodel.AgentSuiteRunConnection, error)
 	AgentSuiteRunConnection(ctx context.Context, agentDefinitionID *string, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentSuiteRunConnection, error)
 	AgentSuiteRun(ctx context.Context, id string) (*agentquality.SuiteRun, error)
-	AgentSuiteRunCases(ctx context.Context, input gqlmodel.AgentSuiteRunCasesInput) (*gqlmodel.AgentSuiteRunCaseConnection, error)
 	AgentSuiteRunCaseConnection(ctx context.Context, suiteRunID string, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentSuiteRunCaseConnection, error)
 	AgentQualityControl(ctx context.Context) (*agentquality.Control, error)
 }
@@ -2356,19 +2292,6 @@ func field_Query_agentQuality_args(ctx context.Context, ec *gqlexec.Exec, rawArg
 	return args, nil
 }
 
-func field_Query_agentQualityAgents_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
-	args := make(map[string]any, 1)
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
-		func(ctx context.Context, v any) (gqlmodel.AgentQualityAgentsInput, error) {
-			return unmarshalNAgentQualityAgentsInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentQualityAgentsInput(ctx, ec, v)
-		})
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
 func field_Query_agentQualityAgentConnection_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 2)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "window",
@@ -2387,19 +2310,6 @@ func field_Query_agentQualityAgentConnection_args(ctx context.Context, ec *gqlex
 		return nil, err
 	}
 	args["input"] = arg1
-	return args, nil
-}
-
-func field_Query_agentWorstRatedAnswers_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
-	args := make(map[string]any, 1)
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
-		func(ctx context.Context, v any) (gqlmodel.AgentWorstRatedAnswersInput, error) {
-			return unmarshalNAgentWorstRatedAnswersInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentWorstRatedAnswersInput(ctx, ec, v)
-		})
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
 	return args, nil
 }
 
@@ -2429,19 +2339,6 @@ func field_Query_agentWorstRatedAnswerConnection_args(ctx context.Context, ec *g
 		return nil, err
 	}
 	args["input"] = arg2
-	return args, nil
-}
-
-func field_Query_agentSuiteRuns_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
-	args := make(map[string]any, 1)
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
-		func(ctx context.Context, v any) (gqlmodel.AgentSuiteRunsInput, error) {
-			return unmarshalNAgentSuiteRunsInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentSuiteRunsInput(ctx, ec, v)
-		})
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
 	return args, nil
 }
 
@@ -2476,19 +2373,6 @@ func field_Query_agentSuiteRun_args(ctx context.Context, ec *gqlexec.Exec, rawAr
 		return nil, err
 	}
 	args["id"] = arg0
-	return args, nil
-}
-
-func field_Query_agentSuiteRunCases_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
-	args := make(map[string]any, 1)
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
-		func(ctx context.Context, v any) (gqlmodel.AgentSuiteRunCasesInput, error) {
-			return unmarshalNAgentSuiteRunCasesInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentSuiteRunCasesInput(ctx, ec, v)
-		})
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
 	return args, nil
 }
 
@@ -2738,196 +2622,6 @@ func unmarshalInputAgentEvalCaseFromProposalInput(ctx context.Context, ec *gqlex
 	return it, nil
 }
 
-func unmarshalInputAgentQualityAgentsInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.AgentQualityAgentsInput, error) {
-	var it gqlmodel.AgentQualityAgentsInput
-	if obj == nil {
-		return it, nil
-	}
-
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"window", "first", "after"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "window":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("window"))
-			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Window = data
-		case "first":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
-			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.First = data
-		case "after":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
-			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.After = data
-		}
-	}
-	return it, nil
-}
-
-func unmarshalInputAgentSuiteRunCasesInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.AgentSuiteRunCasesInput, error) {
-	var it gqlmodel.AgentSuiteRunCasesInput
-	if obj == nil {
-		return it, nil
-	}
-
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"suiteRunId", "first", "after"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "suiteRunId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("suiteRunId"))
-			data, err := unmarshalNID2string(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.SuiteRunID = data
-		case "first":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
-			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.First = data
-		case "after":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
-			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.After = data
-		}
-	}
-	return it, nil
-}
-
-func unmarshalInputAgentSuiteRunsInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.AgentSuiteRunsInput, error) {
-	var it gqlmodel.AgentSuiteRunsInput
-	if obj == nil {
-		return it, nil
-	}
-
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"agentDefinitionId", "statuses", "first", "after"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "agentDefinitionId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("agentDefinitionId"))
-			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.AgentDefinitionID = data
-		case "statuses":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("statuses"))
-			data, err := unmarshalOAgentSuiteRunStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentqualityᚐSuiteRunStatusᚄ(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Statuses = data
-		case "first":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
-			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.First = data
-		case "after":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
-			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.After = data
-		}
-	}
-	return it, nil
-}
-
-func unmarshalInputAgentWorstRatedAnswersInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.AgentWorstRatedAnswersInput, error) {
-	var it gqlmodel.AgentWorstRatedAnswersInput
-	if obj == nil {
-		return it, nil
-	}
-
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"agentDefinitionId", "window", "first", "after"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "agentDefinitionId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("agentDefinitionId"))
-			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.AgentDefinitionID = data
-		case "window":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("window"))
-			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Window = data
-		case "first":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
-			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.First = data
-		case "after":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
-			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.After = data
-		}
-	}
-	return it, nil
-}
-
 func unmarshalInputCreateAgentEvalCaseInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.CreateAgentEvalCaseInput, error) {
 	var it gqlmodel.CreateAgentEvalCaseInput
 	if obj == nil {
@@ -3168,32 +2862,6 @@ func unmarshalNAgentEvalCaseStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNAgentQualityAgentsInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentQualityAgentsInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.AgentQualityAgentsInput, error) {
-	res, err := unmarshalInputAgentQualityAgentsInput(ctx, ec, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func unmarshalNAgentSuiteRunCasesInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentSuiteRunCasesInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.AgentSuiteRunCasesInput, error) {
-	res, err := unmarshalInputAgentSuiteRunCasesInput(ctx, ec, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func unmarshalNAgentSuiteRunStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentqualityᚐSuiteRunStatus(ctx context.Context, ec *gqlexec.Exec, v any) (agentquality.SuiteRunStatus, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := agentquality.SuiteRunStatus(tmp)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func unmarshalNAgentSuiteRunsInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentSuiteRunsInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.AgentSuiteRunsInput, error) {
-	res, err := unmarshalInputAgentSuiteRunsInput(ctx, ec, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func unmarshalNAgentWorstRatedAnswersInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentWorstRatedAnswersInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.AgentWorstRatedAnswersInput, error) {
-	res, err := unmarshalInputAgentWorstRatedAnswersInput(ctx, ec, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
 func unmarshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, v any) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3288,13 +2956,6 @@ func unmarshalOAgentRunTrigger2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	tmp, err := graphql.UnmarshalString(v)
 	res := agent.RunTrigger(tmp)
 	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func unmarshalOAgentSuiteRunStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentqualityᚐSuiteRunStatusᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]agentquality.SuiteRunStatus, error) {
-	if v == nil {
-		return nil, nil
-	}
-	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNAgentSuiteRunStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentqualityᚐSuiteRunStatus)
 }
 
 func unmarshalOID2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {

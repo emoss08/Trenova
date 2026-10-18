@@ -19,7 +19,6 @@ func TestProviderVendor(t *testing.T) {
 		{"groq chat", Provider{Kind: KindOpenAIChat, BaseURL: "https://api.groq.com/openai/v1"}, "groq"},
 		{"gemini chat", Provider{Kind: KindOpenAIChat, BaseURL: "https://generativelanguage.googleapis.com/v1beta/openai"}, "gemini"},
 		{"mistral chat", Provider{Kind: KindOpenAIChat, BaseURL: "https://api.mistral.ai/v1"}, "mistral"},
-		{"ollama", Provider{Kind: KindOllama}, "ollama"},
 		{"self hosted", Provider{Kind: KindOpenAIChat, BaseURL: "http://10.0.0.4:8000/v1"}, ""},
 		{"lookalike host", Provider{Kind: KindOpenAIChat, BaseURL: "https://notgroq.com/v1"}, ""},
 	}

@@ -26231,15 +26231,6 @@
       "routes/agent-control"
     ]
   },
-  "Answer one message to the shipment import assistant, streaming the reply": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Answer one question in a conversation, publishing the reply as it is written": {
     "sites": 1,
     "scope": [
@@ -30806,7 +30797,7 @@
     ]
   },
   "Ask the model": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -67742,7 +67733,7 @@
     ]
   },
   "Cursor is invalid": {
-    "sites": 6,
+    "sites": 5,
     "scope": [
       "go"
     ],
@@ -123964,7 +123955,7 @@
     ]
   },
   "Invalid document ID": {
-    "sites": 6,
+    "sites": 5,
     "scope": [
       "go"
     ],
@@ -140077,6 +140068,24 @@
       "go/other"
     ]
   },
+  "Looks daily until {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Looks every six hours until {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Looks good, finish setup": {
     "sites": 1,
     "scope": [
@@ -140129,6 +140138,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Looks weekly until {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Lookup spend nears its cap": {
@@ -169405,42 +169423,6 @@
     ],
     "areas": [
       "routes/desk"
-    ]
-  },
-  "Ollama": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/handlers"
-    ]
-  },
-  "Ollama (self-hosted)": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/handlers"
-    ]
-  },
-  "Ollama embeddings (self-hosted)": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/handlers"
-    ]
-  },
-  "Ollama's native API. Used instead of its OpenAI-compatible endpoint, which ignores JSON schemas.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/handlers"
     ]
   },
   "On": {
@@ -244398,7 +244380,7 @@
     ]
   },
   "Status is invalid": {
-    "sites": 17,
+    "sites": 16,
     "scope": [
       "go"
     ],
@@ -265384,15 +265366,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "The sign-in authorized several companies. Reload the page and connect again to choose one.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/graphql"
     ]
   },
   "The sign-in is added by Trenova; do not send it as a detail": {
@@ -320972,15 +320945,6 @@
     ],
     "areas": [
       "routes/dispatch-console"
-    ]
-  },
-  "{0, select, SixHours {Looks every six hours until {1}} Weekly {Looks weekly until {1}} other {Looks daily until {1}}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "{0} (Day)": {

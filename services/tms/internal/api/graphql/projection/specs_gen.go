@@ -2893,14 +2893,6 @@ func init() {
 				Special: "agentMoneyCurrency",
 			},
 			{
-				Name:    "billingAgentEnabled",
-				Special: "billingAgentEnabled",
-			},
-			{
-				Name:    "decisionTimeoutSeconds",
-				Special: "decisionTimeoutSeconds",
-			},
-			{
 				Name:        "version",
 				FieldMapKey: "version",
 			},
@@ -9345,14 +9337,6 @@ func init() {
 				FieldMapKey: "customerId",
 			},
 			{
-				Name:    "billingCycleType",
-				Special: "billingCycleType",
-			},
-			{
-				Name:    "billingCycleDayOfWeek",
-				Special: "billingCycleDayOfWeek",
-			},
-			{
 				Name:        "invoiceDelivery",
 				FieldMapKey: "invoiceDelivery",
 			},
@@ -9383,10 +9367,6 @@ func init() {
 			{
 				Name:        "invoiceDetail",
 				FieldMapKey: "invoiceDetail",
-			},
-			{
-				Name:    "consolidationLookbackDays",
-				Special: "consolidationLookbackDays",
 			},
 			{
 				Name:        "minConsolidatedAmount",
@@ -9437,10 +9417,6 @@ func init() {
 				FieldMapKey: "creditReviewedAt",
 			},
 			{
-				Name:    "invoiceMethod",
-				Special: "invoiceMethod",
-			},
-			{
 				Name:        "autoSendInvoiceOnGeneration",
 				FieldMapKey: "autoSendInvoiceOnGeneration",
 			},
@@ -9459,18 +9435,6 @@ func init() {
 			{
 				Name:        "ediInvoiceEnabled",
 				FieldMapKey: "ediInvoiceEnabled",
-			},
-			{
-				Name:    "allowInvoiceConsolidation",
-				Special: "allowInvoiceConsolidation",
-			},
-			{
-				Name:    "consolidationPeriodDays",
-				Special: "consolidationPeriodDays",
-			},
-			{
-				Name:    "consolidationGroupBy",
-				Special: "consolidationGroupBy",
 			},
 			{
 				Name:        "invoiceNumberFormat",
@@ -9561,10 +9525,6 @@ func init() {
 				FieldMapKey: "requireDeliveryNumber",
 			},
 			{
-				Name:    "invoiceAdjustmentSupportingDocumentPolicy",
-				Special: "invoiceAdjustmentSupportingDocumentPolicy",
-			},
-			{
 				Name:        "defaultBillerId",
 				FieldMapKey: "defaultBillerId",
 			},
@@ -9641,10 +9601,6 @@ func init() {
 			{
 				Name:        "comment",
 				FieldMapKey: "comment",
-			},
-			{
-				Name:    "fromEmail",
-				Special: "fromEmail",
 			},
 			{
 				Name:        "toRecipients",
@@ -24361,10 +24317,6 @@ func init() {
 			{
 				Name:        "isDetention",
 				FieldMapKey: "isDetention",
-			},
-			{
-				Name:    "detentionOccurrenceId",
-				Special: "detentionOccurrenceId",
 			},
 			{
 				Name:        "version",

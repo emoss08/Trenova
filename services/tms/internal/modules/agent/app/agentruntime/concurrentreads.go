@@ -9,12 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 )
 
-// changeConcurrentReads is the loop running a completion's consecutive reads
-// at once instead of one after another. In workflow code that schedules every
-// read's activity before waiting on the first, which an execution started
-// before the change never did.
-const changeConcurrentReads = "agent-loop-concurrent-reads"
-
 // maxConcurrentReads bounds how many reads one batch runs at once, so a model
 // that asks for dozens of lookups in one reply does not open as many queries
 // against the database together.
@@ -90,7 +84,7 @@ type joinCheck struct {
 // the loop would have run one at a time. Anything else (a write, a refusal, a
 // repeat of a waiting read, a second fetch of a kind of card) settles the batch
 // first and then takes the loop's ordinary path.
-func (t *Turn) joins(fx TurnEffects, batch *readBatch, check *joinCheck) (string, bool) {
+func (t *Turn) joins(batch *readBatch, check *joinCheck) (string, bool) {
 	call := check.call
 	if t.reads == nil || call.ArgumentsError != "" || check.stuck {
 		return "", false
@@ -111,13 +105,6 @@ func (t *Turn) joins(fx TurnEffects, batch *readBatch, check *joinCheck) (string
 	if strings.HasPrefix(call.Name, getToolPrefix) && batch.holdsCallTo(call.Name) {
 		return "", false
 	}
-	// Asked only when a second read would join, so a turn whose execution
-	// predates the change settles its first read before the next call, as it
-	// always did.
-	if batch.size() > 0 && !fx.Supports(changeConcurrentReads) {
-		return "", false
-	}
-
 	return key, true
 }
 

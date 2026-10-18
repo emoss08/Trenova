@@ -14,12 +14,6 @@ type GetDocumentAIExtractionRequest struct {
 	TenantInfo  pagination.TenantInfo
 }
 
-type ListPollableDocumentAIExtractionRequest struct {
-	TenantInfo pagination.TenantInfo
-	OlderThan  int64
-	Limit      int
-}
-
 type DocumentAIExtractionRepository interface {
 	GetByDocumentExtractedAt(
 		ctx context.Context,
@@ -33,12 +27,4 @@ type DocumentAIExtractionRepository interface {
 		ctx context.Context,
 		entity *documentaiextraction.Extraction,
 	) (*documentaiextraction.Extraction, error)
-	ListPollable(
-		ctx context.Context,
-		req *ListPollableDocumentAIExtractionRequest,
-	) ([]*documentaiextraction.Extraction, error)
-	ListPollableTenants(
-		ctx context.Context,
-		req *ListPollableDocumentAIExtractionRequest,
-	) ([]pagination.TenantInfo, error)
 }

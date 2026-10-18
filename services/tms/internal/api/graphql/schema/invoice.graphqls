@@ -364,16 +364,12 @@ extend type Query {
 
 extend type Mutation {
   """
-  Bills the given shipments. offCycleReason is required only when the customer
-  is on a periodic statement, where invoicing freight on its own takes it off
-  that statement; omitting it there fails with a validation error on
-  `offCycleReason` so the client can ask for one.
+  Bills the shipments, producing one invoice per payer of a split shipment.
+  offCycleReason is required only when the customer is on a periodic statement,
+  where invoicing freight on its own takes it off that statement; omitting it
+  there fails with a validation error on `offCycleReason` so the client can ask
+  for one.
   """
-  createInvoiceFromShipments(shipmentIds: [ID!]!, offCycleReason: String): Invoice!
-    @deprecated(reason: "Returns only the primary payer's invoice; use createInvoicesFromShipments.")
-  createInvoiceFromOrder(orderId: ID!, offCycleReason: String): Invoice!
-    @deprecated(reason: "Returns only the primary payer's invoice; use createInvoicesFromOrder.")
-  "Bills the shipments, producing one invoice per payer of a split shipment."
   createInvoicesFromShipments(shipmentIds: [ID!]!, offCycleReason: String): CreateInvoicesResult!
   createInvoicesFromOrder(orderId: ID!, offCycleReason: String): CreateInvoicesResult!
   """

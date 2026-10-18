@@ -888,7 +888,6 @@ modules:
       - conversationschedulejobs
       - decisioncommitjobs
       - dispatchjobs
-      - importassistantjobs
       - insightjobs
       - modelcall
       - reflectionjobs

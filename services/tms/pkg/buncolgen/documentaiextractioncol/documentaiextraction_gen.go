@@ -60,7 +60,6 @@ var ExtractionColumns = struct {
 	WorkflowID     buncolgen.Column // "workflow_id" → qualified: "dae.workflow_id"
 	WorkflowRunID  buncolgen.Column // "workflow_run_id" → qualified: "dae.workflow_run_id"
 	ActivityID     buncolgen.Column // "activity_id" → qualified: "dae.activity_id"
-	TaskToken      buncolgen.Column // "task_token" → qualified: "dae.task_token"
 	ResponseID     buncolgen.Column // "response_id" → qualified: "dae.response_id"
 	ProviderID     buncolgen.Column // "provider_id" → qualified: "dae.provider_id"
 	Model          buncolgen.Column // "model" → qualified: "dae.model"
@@ -84,7 +83,6 @@ var ExtractionColumns = struct {
 	WorkflowID:     buncolgen.NewColumn("workflow_id", "dae"),
 	WorkflowRunID:  buncolgen.NewColumn("workflow_run_id", "dae"),
 	ActivityID:     buncolgen.NewColumn("activity_id", "dae"),
-	TaskToken:      buncolgen.NewColumn("task_token", "dae"),
 	ResponseID:     buncolgen.NewColumn("response_id", "dae"),
 	ProviderID:     buncolgen.NewColumn("provider_id", "dae"),
 	Model:          buncolgen.NewColumn("model", "dae"),
@@ -114,7 +112,6 @@ var ExtractionFieldMap = map[string]string{
 	"workflowId":     "workflow_id",
 	"workflowRunId":  "workflow_run_id",
 	"activityId":     "activity_id",
-	"taskToken":      "task_token",
 	"responseId":     "response_id",
 	"providerId":     "provider_id",
 	"model":          "model",
@@ -142,7 +139,6 @@ var ExtractionInsertableColumns = []string{
 	"workflow_id",
 	"workflow_run_id",
 	"activity_id",
-	"task_token",
 	"response_id",
 	"provider_id",
 	"model",
@@ -217,7 +213,6 @@ var ExtractionFilter = struct {
 	WorkflowID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "workflowId" → DB: "workflow_id"
 	WorkflowRunID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "workflowRunId" → DB: "workflow_run_id"
 	ActivityID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "activityId" → DB: "activity_id"
-	TaskToken      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "taskToken" → DB: "task_token"
 	ResponseID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "responseId" → DB: "response_id"
 	ProviderID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "providerId" → DB: "provider_id"
 	Model          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "model" → DB: "model"
@@ -260,9 +255,6 @@ var ExtractionFilter = struct {
 	},
 	ActivityID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("activityId", op, value)
-	},
-	TaskToken: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("taskToken", op, value)
 	},
 	ResponseID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("responseId", op, value)

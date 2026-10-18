@@ -383,7 +383,6 @@ type ResolverRoot interface {
 	Commodity() CommodityResolver
 	Customer() CustomerResolver
 	CustomerBillingProfile() CustomerBillingProfileResolver
-	CustomerEmailProfile() CustomerEmailProfileResolver
 	CustomerPayment() CustomerPaymentResolver
 	CustomerPaymentApplication() CustomerPaymentApplicationResolver
 	CustomerTrackingProfile() CustomerTrackingProfileResolver
@@ -1143,25 +1142,13 @@ type CustomerResolver interface {
 }
 
 type CustomerBillingProfileResolver interface {
-	BillingCycleType(ctx context.Context, obj *customer.CustomerBillingProfile) (gqlmodel.CustomerBillingCycleType, error)
-	BillingCycleDayOfWeek(ctx context.Context, obj *customer.CustomerBillingProfile) (*int, error)
-	ConsolidationLookbackDays(ctx context.Context, obj *customer.CustomerBillingProfile) (int, error)
 	MinConsolidatedAmount(ctx context.Context, obj *customer.CustomerBillingProfile) (*string, error)
 	CreditLimit(ctx context.Context, obj *customer.CustomerBillingProfile) (*string, error)
 	CreditBalance(ctx context.Context, obj *customer.CustomerBillingProfile) (string, error)
-	InvoiceMethod(ctx context.Context, obj *customer.CustomerBillingProfile) (gqlmodel.CustomerInvoiceMethod, error)
-	AllowInvoiceConsolidation(ctx context.Context, obj *customer.CustomerBillingProfile) (bool, error)
-	ConsolidationPeriodDays(ctx context.Context, obj *customer.CustomerBillingProfile) (int, error)
-	ConsolidationGroupBy(ctx context.Context, obj *customer.CustomerBillingProfile) (gqlmodel.CustomerConsolidationGroupBy, error)
 	InvoiceCopies(ctx context.Context, obj *customer.CustomerBillingProfile) (int, error)
 	LateChargeRate(ctx context.Context, obj *customer.CustomerBillingProfile) (*string, error)
 	GracePeriodDays(ctx context.Context, obj *customer.CustomerBillingProfile) (int, error)
-	InvoiceAdjustmentSupportingDocumentPolicy(ctx context.Context, obj *customer.CustomerBillingProfile) (gqlmodel.CustomerInvoiceAdjustmentSupportingDocumentPolicy, error)
 	FactoringCompany(ctx context.Context, obj *customer.CustomerBillingProfile) (*factoringcompany.FactoringCompany, error)
-}
-
-type CustomerEmailProfileResolver interface {
-	FromEmail(ctx context.Context, obj *customer.CustomerEmailProfile) (string, error)
 }
 
 type CustomerPaymentResolver interface {
@@ -1857,7 +1844,6 @@ type MutationResolver interface {
 	SaveAccountingApp(ctx context.Context, input gqlmodel.SaveAccountingAppInput) (*accountingsyncports.AccountingSyncStatus, error)
 	RemoveAccountingApp(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingSyncStatus, error)
 	StartAccountingAuthorization(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingAuthorizationStart, error)
-	CompleteAccountingAuthorization(ctx context.Context, input gqlmodel.CompleteAccountingAuthorizationInput) (*accountingsync.AccountingConnection, error)
 	FinishAccountingAuthorization(ctx context.Context, input gqlmodel.CompleteAccountingAuthorizationInput) (*accountingsyncports.AccountingAuthorizationCompletion, error)
 	ChooseAccountingCompany(ctx context.Context, input gqlmodel.ChooseAccountingCompanyInput) (*accountingsync.AccountingConnection, error)
 	PrepareAccountingCertificate(ctx context.Context, input gqlmodel.PrepareAccountingCertificateInput) (*accountingsyncports.AccountingPreparedCertificate, error)
@@ -2244,8 +2230,6 @@ type MutationResolver interface {
 	BlockInboundSender(ctx context.Context, messageID string) (*inboundmessage.InboundMessage, error)
 	UnblockInboundSender(ctx context.Context, mailboxID string, sender string) (*inboundmessage.Mailbox, error)
 	DecideInboundStops(ctx context.Context, messageID string, decision inboundmessage.StopsDecision) (*inboundmessage.InboundMessage, error)
-	CreateInvoiceFromShipments(ctx context.Context, shipmentIds []string, offCycleReason *string) (*invoice.Invoice, error)
-	CreateInvoiceFromOrder(ctx context.Context, orderID string, offCycleReason *string) (*invoice.Invoice, error)
 	CreateInvoicesFromShipments(ctx context.Context, shipmentIds []string, offCycleReason *string) (*invoiceports.CreateInvoicesResult, error)
 	CreateInvoicesFromOrder(ctx context.Context, orderID string, offCycleReason *string) (*invoiceports.CreateInvoicesResult, error)
 	VoidInvoice(ctx context.Context, input gqlmodel.VoidInvoiceInput) (*invoiceports.VoidInvoiceResult, error)
@@ -2336,7 +2320,6 @@ type MutationResolver interface {
 	UncancelShipment(ctx context.Context, id string) (*gqlmodel.Shipment, error)
 	DuplicateShipment(ctx context.Context, input gqlmodel.ShipmentDuplicateInput) (*gqlmodel.ShipmentDuplicateResponse, error)
 	TransferShipmentOwnership(ctx context.Context, id string, input gqlmodel.ShipmentTransferOwnershipInput) (*gqlmodel.Shipment, error)
-	TransferShipmentToBilling(ctx context.Context, input gqlmodel.ShipmentTransferToBillingInput) (*gqlmodel.BillingQueueItem, error)
 	TransferShipmentToBillingItems(ctx context.Context, input gqlmodel.ShipmentTransferToBillingInput) (*gqlmodel.ShipmentTransferToBillingResult, error)
 	BulkTransferShipmentsToBilling(ctx context.Context, input gqlmodel.ShipmentBulkTransferToBillingInput) (*gqlmodel.ShipmentBulkTransferToBillingResponse, error)
 	CalculateShipmentTotals(ctx context.Context, input gqlmodel.ShipmentInput) (*gqlmodel.ShipmentTotalsResponse, error)
@@ -2688,7 +2671,6 @@ type QueryResolver interface {
 	AgentDefinitionVersions(ctx context.Context, agentID string, limit *int) ([]*agentdefinition.DefinitionVersion, error)
 	AgentDefinitionVersionDraft(ctx context.Context, agentID string, version int) (*agentdefinition.Definition, error)
 	MyAgents(ctx context.Context, input gqlmodel.MyAgentsInput) (*gqlmodel.MyAgentConnection, error)
-	MyAgentRecommendation(ctx context.Context, input gqlmodel.MyAgentRecommendationInput) (*gqlmodel.MyAgentRecommendation, error)
 	MyAgentMatch(ctx context.Context, input gqlmodel.MyAgentMatchInput) (*gqlmodel.MyAgentMatch, error)
 	SuggestedAgentAudience(ctx context.Context, agentID string) (*gqlmodel.AgentAudienceSuggestion, error)
 	AgentAccessPreview(ctx context.Context, input gqlmodel.AgentAccessPreviewInput) (*gqlmodel.AgentAccessPreview, error)
@@ -2703,21 +2685,15 @@ type QueryResolver interface {
 	AgentEvalCase(ctx context.Context, id string) (*agentquality.EvalCase, error)
 	AgentQualityOverview(ctx context.Context, window *int) (*agentqualityports.AgentQualityOverview, error)
 	AgentQuality(ctx context.Context, agentDefinitionID string, window *int) (*agentqualityports.AgentQualityDetail, error)
-	AgentQualityAgents(ctx context.Context, input gqlmodel.AgentQualityAgentsInput) (*gqlmodel.AgentQualityAgentConnection, error)
 	AgentQualityAgentConnection(ctx context.Context, window *int, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentQualityAgentConnection, error)
-	AgentWorstRatedAnswers(ctx context.Context, input gqlmodel.AgentWorstRatedAnswersInput) (*gqlmodel.AgentWorstRatedAnswerConnection, error)
 	AgentWorstRatedAnswerConnection(ctx context.Context, agentDefinitionID *string, window *int, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentWorstRatedAnswerConnection, error)
-	AgentSuiteRuns(ctx context.Context, input gqlmodel.AgentSuiteRunsInput) (*gqlmodel.AgentSuiteRunConnection, error)
 	AgentSuiteRunConnection(ctx context.Context, agentDefinitionID *string, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentSuiteRunConnection, error)
 	AgentSuiteRun(ctx context.Context, id string) (*agentquality.SuiteRun, error)
-	AgentSuiteRunCases(ctx context.Context, input gqlmodel.AgentSuiteRunCasesInput) (*gqlmodel.AgentSuiteRunCaseConnection, error)
 	AgentSuiteRunCaseConnection(ctx context.Context, suiteRunID string, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentSuiteRunCaseConnection, error)
 	AgentQualityControl(ctx context.Context) (*agentquality.Control, error)
 	AgentRunEvents(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentRunEventConnection, error)
 	AgentToolRuleImpact(ctx context.Context, name string, input gqlmodel.AgentToolRuleInput) ([]*agentports.AgentToolRuleImpact, error)
 	AgentToolHolders(ctx context.Context) ([]*agentports.AgentToolHolders, error)
-	AgentToolPolicies(ctx context.Context) ([]*gqlmodel.AgentToolPolicy, error)
-	AgentToolPolicyConnection(ctx context.Context, input gqlmodel.AgentToolPolicyConnectionInput) (*gqlmodel.AgentToolPolicyConnection, error)
 	AgentToolRuleConnection(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentToolPolicyConnection, error)
 	AgentToolSafetyConnection(ctx context.Context, agentIds []string, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentToolSafetyConnection, error)
 	AgentSafetySummary(ctx context.Context) (*agentports.AgentSafetySummary, error)
@@ -4017,7 +3993,6 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"Commodity":                          func() any { return r.Commodity() },
 			"Customer":                           func() any { return r.Customer() },
 			"CustomerBillingProfile":             func() any { return r.CustomerBillingProfile() },
-			"CustomerEmailProfile":               func() any { return r.CustomerEmailProfile() },
 			"CustomerPayment":                    func() any { return r.CustomerPayment() },
 			"CustomerPaymentApplication":         func() any { return r.CustomerPaymentApplication() },
 			"CustomerTrackingProfile":            func() any { return r.CustomerTrackingProfile() },
@@ -5617,9 +5592,6 @@ extend type Mutation {
   removeAccountingApp(integrationType: AccountingSystem!): AccountingSyncStatus!
   "Starts connecting an accounting system. Returns the provider's page to send the person to."
   startAccountingAuthorization(integrationType: AccountingSystem!): AccountingAuthorizationStart!
-  "Finishes connecting with what the provider returned. Only the person who started it can finish it."
-  completeAccountingAuthorization(input: CompleteAccountingAuthorizationInput!): AccountingConnection!
-    @deprecated(reason: "Use finishAccountingAuthorization, which can offer a choice of companies")
   "Finishes connecting with what the provider returned, or offers the companies to choose between when the sign-in authorized several. Only the person who started it can finish it."
   finishAccountingAuthorization(input: CompleteAccountingAuthorizationInput!): CompleteAccountingAuthorizationPayload!
   "Connects the company the person chose after a sign-in that authorized several. The choice can be made once; the other companies are released."
@@ -6435,10 +6407,6 @@ type AgentControl {
   A money change in any other currency waits for a person.
   """
   agentMoneyCurrency: String!
-  billingAgentEnabled: Boolean!
-    @deprecated(reason: "Enable or disable the billing exception agent definition instead")
-  decisionTimeoutSeconds: Int!
-    @deprecated(reason: "Set decisionTimeoutSeconds on the agent definition instead")
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -6889,10 +6857,6 @@ input AgentControlInput {
   update to whatever is there.
   """
   version: Int
-  billingAgentEnabled: Boolean
-    @deprecated(reason: "Enable or disable the billing exception agent definition instead")
-  decisionTimeoutSeconds: Int
-    @deprecated(reason: "Set decisionTimeoutSeconds on the agent definition instead")
 }
 
 extend type Query {
@@ -7414,25 +7378,6 @@ input MyAgentsInput {
   ids: [ID!]
 }
 
-input MyAgentRecommendationInput {
-  "What the caller is about to ask. At most 4000 characters."
-  text: String!
-  "The agent the question would go to now, kept when it fits as well as any."
-  currentAgentId: ID
-}
-
-"""
-The agent a question is best put to, among the chat agents the caller may start
-a conversation with, judged by the tools it holds that the caller may use.
-"""
-type MyAgentRecommendation {
-  agent: MyAgent!
-  "True when the agent the question would go to now is already the best fit."
-  current: Boolean!
-  "The tools the agent holds that matched the question, best first. At most three."
-  tools: [String!]!
-}
-
 "How well the chat agents a person may use fit a question."
 enum AgentMatchOutcome {
   "Another of the person's agents holds the tools the question needs and the agent it would go to does not."
@@ -7614,12 +7559,6 @@ extend type Query {
   agentDefinitionVersionDraft(agentId: ID!, version: Int!): AgentDefinition!
   "The chat agents the caller may use, enabled and by name."
   myAgents(input: MyAgentsInput!): MyAgentConnection!
-  """
-  The chat agent the caller may use that holds the tools a question needs. Null
-  when no such agent holds a tool that matches it.
-  """
-  myAgentRecommendation(input: MyAgentRecommendationInput!): MyAgentRecommendation
-    @deprecated(reason: "Use myAgentMatch, which also says when none of the caller's agents can help")
   """
   How well the chat agents the caller may use fit a question: another agent
   that holds the tools it needs, the agent it would go to already, none of
@@ -8527,41 +8466,11 @@ type AgentQualityAgentConnection {
   totalCount: Int
 }
 
-input AgentQualityAgentsInput {
-  "Days of ratings and scores to read, 30 by default, at most 365."
-  window: Int
-  first: Int
-  after: String
-}
-
-input AgentWorstRatedAnswersInput {
-  agentDefinitionId: ID
-  window: Int
-  first: Int
-  after: String
-}
-
-input AgentSuiteRunsInput {
-  agentDefinitionId: ID
-  statuses: [AgentSuiteRunStatus!]
-  first: Int
-  after: String
-}
-
-input AgentSuiteRunCasesInput {
-  suiteRunId: ID!
-  first: Int
-  after: String
-}
-
 extend type Query {
   "The organization's AI quality over the last window days."
   agentQualityOverview(window: Int = 30): AgentQualityOverview!
   "One agent's quality over the last window days."
   agentQuality(agentDefinitionId: ID!, window: Int = 30): AgentQuality!
-  "Every agent with its satisfaction, quality line and last suite run, a page at a time."
-  agentQualityAgents(input: AgentQualityAgentsInput!): AgentQualityAgentConnection!
-    @deprecated(reason: "Use agentQualityAgentConnection, which takes the data table's filters and sort.")
   """
   Every agent with its satisfaction, quality line and last suite run over the
   last window days, a page at a time. Filters on name, enabled, openRegression
@@ -8572,9 +8481,6 @@ extend type Query {
     window: Int = 30
     input: DataTableConnectionInput!
   ): AgentQualityAgentConnection!
-  "The answers people liked least, a page at a time."
-  agentWorstRatedAnswers(input: AgentWorstRatedAnswersInput!): AgentWorstRatedAnswerConnection!
-    @deprecated(reason: "Use agentWorstRatedAnswerConnection, which takes the data table's filters and sort.")
   """
   The thousand answers people liked least over the last window days, most
   disliked first, a page at a time. Filters on question, agentName,
@@ -8586,17 +8492,12 @@ extend type Query {
     window: Int = 30
     input: DataTableConnectionInput!
   ): AgentWorstRatedAnswerConnection!
-  agentSuiteRuns(input: AgentSuiteRunsInput!): AgentSuiteRunConnection!
-    @deprecated(reason: "Use agentSuiteRunConnection, which takes the data table's filters and sort.")
   "Suite runs a page at a time, newest first unless sorted, for one agent or all of them."
   agentSuiteRunConnection(
     agentDefinitionId: ID
     input: DataTableConnectionInput!
   ): AgentSuiteRunConnection!
   agentSuiteRun(id: ID!): AgentSuiteRun
-  "A suite run's cases in the order they were asked."
-  agentSuiteRunCases(input: AgentSuiteRunCasesInput!): AgentSuiteRunCaseConnection!
-    @deprecated(reason: "Use agentSuiteRunCaseConnection, which takes the data table's filters and sort.")
   "A suite run's cases a page at a time, in the order they were asked unless sorted."
   agentSuiteRunCaseConnection(
     suiteRunId: ID!
@@ -8913,27 +8814,6 @@ type AgentSafety {
   reach: AgentReach!
 }
 
-"""
-Narrows the tool rules. A filter left out matches every tool; the rules come
-back ordered by tool name.
-"""
-input AgentToolPolicyConnectionInput {
-  first: Int = 25
-  after: String
-  "Matched against the tool's name and title, ignoring case."
-  query: String
-  "Tools some of whose work reaches this class."
-  egress: AgentEgressClass
-  "The permission resource the tool needs; general for a tool that needs no grant."
-  resource: String
-  kind: AgentToolKind
-  """
-  True keeps the tools that change something and, on at least one agent, can do
-  so without a person; false keeps every other tool.
-  """
-  runsWithoutPerson: Boolean
-}
-
 type AgentToolPolicyEdge {
   node: AgentToolPolicy!
   cursor: String!
@@ -8995,12 +8875,6 @@ extend type Query {
   agentToolRuleImpact(name: String!, input: AgentToolRuleInput!): [AgentToolRuleImpact!]!
   "Every tool some agent holds, with the agents that hold it."
   agentToolHolders: [AgentToolHolders!]!
-  "Every tool's safety policy, by name."
-  agentToolPolicies: [AgentToolPolicy!]!
-    @deprecated(reason: "Use agentToolRuleConnection, which pages, filters and sorts on the server.")
-  "The tool rules a page at a time, searched and filtered on the server."
-  agentToolPolicyConnection(input: AgentToolPolicyConnectionInput!): AgentToolPolicyConnection!
-    @deprecated(reason: "Use agentToolRuleConnection, which takes the data table's filters and sort.")
   """
   The tool rules a page at a time. Filters on title, name, egress, maxTier,
   resource, kind, readsExternal, leavesOrganization and runsWithoutPerson; sorts
@@ -10358,7 +10232,6 @@ extend type Mutation {
   AnthropicMessages
   OpenAIResponses
   OpenAIChat
-  Ollama
 }
 
 enum AIStructuredOutputMode {
@@ -10666,16 +10539,12 @@ type AIProviderModelOption {
   displayName: String!
   "Tokens of context, when the endpoint or the model id says."
   contextWindow: Int
-  "Bytes on disk, for a model a local server holds."
-  sizeBytes: Float
-  "A local server has it in memory now."
-  loaded: Boolean!
   embedding: Boolean!
   inputCostPerMillion: Decimal
   outputCostPerMillion: Decimal
   "Where the prices came from; null when there are none."
   priceSource: AIModelPriceSource
-  "When the provider released the model (for a local server, when it was pulled), when the endpoint says."
+  "When the provider released the model, when the endpoint says."
   createdAt: Timestamp
 }
 
@@ -14685,17 +14554,7 @@ extend type Query {
   customFieldDefinition(id: ID!): CustomFieldDefinition
 }
 `, BuiltIn: false},
-	{Name: "../schema/customer.graphqls", Input: `enum CustomerBillingCycleType {
-  Immediate
-  Daily
-  Weekly
-  BiWeekly
-  Monthly
-  Quarterly
-  PerShipment
-}
-
-enum CustomerPaymentTerm {
+	{Name: "../schema/customer.graphqls", Input: `enum CustomerPaymentTerm {
   Net10
   Net15
   Net30
@@ -14711,20 +14570,6 @@ enum CustomerCreditStatus {
   Hold
   Suspended
   Review
-}
-
-enum CustomerInvoiceMethod {
-  Individual
-  Summary
-  SummaryWithDetail
-}
-
-enum CustomerConsolidationGroupBy {
-  None
-  Location
-  PONumber
-  BOL
-  Division
 }
 
 """How many invoices a customer's freight turns into."""
@@ -14782,12 +14627,6 @@ enum CustomerInvoiceNumberFormat {
   POBased
 }
 
-enum CustomerInvoiceAdjustmentSupportingDocumentPolicy {
-  Inherit
-  Required
-  Optional
-}
-
 enum CustomerFuelSurchargeMode {
   None
   Program
@@ -14799,10 +14638,6 @@ type CustomerBillingProfile {
   businessUnitId: ID!
   organizationId: ID!
   customerId: ID!
-  billingCycleType: CustomerBillingCycleType!
-    @deprecated(reason: "Replaced by invoiceDelivery and billingCycle, which separate the delivery mode from the cadence. Removed in a later release.")
-  billingCycleDayOfWeek: Int
-    @deprecated(reason: "Replaced by billingCycleAnchorDay, which also covers monthly and quarterly cycles. Removed in a later release.")
   invoiceDelivery: CustomerInvoiceDelivery!
   billingCycle: CustomerBillingCycle!
   """Weekday 0-6 for weekly cycles, day of month 1-28 for monthly and longer."""
@@ -14814,8 +14649,6 @@ type CustomerBillingProfile {
   splitBy: InvoiceSplitKey!
   sectionBy: InvoiceSectionKey!
   invoiceDetail: InvoiceDetail!
-  consolidationLookbackDays: Int!
-    @deprecated(reason: "Statements no longer stop looking for owed freight after a window: every approved, unbilled shipment is included until it bills. Has no effect and is always 0. Removed in a later release.")
   """Below this, a group defers to the next period instead of billing."""
   minConsolidatedAmount: Decimal
   """Zero means unbounded."""
@@ -14833,8 +14666,6 @@ type CustomerBillingProfile {
   creditHoldAutomatic: Boolean!
   """When creditBalance was last recomputed from the receivables ledger."""
   creditReviewedAt: Timestamp
-  invoiceMethod: CustomerInvoiceMethod!
-    @deprecated(reason: "Split into invoiceDelivery (how many invoices) and invoiceDetail (how verbose). Removed in a later release.")
   autoSendInvoiceOnGeneration: Boolean!
   "Whether the organization's payment reminders may email this customer about overdue invoices."
   sendPaymentReminders: Boolean!
@@ -14844,12 +14675,6 @@ type CustomerBillingProfile {
   emailInvoiceEnabled: Boolean!
   "Whether invoices are sent to this customer's EDI partner as an 210."
   ediInvoiceEnabled: Boolean!
-  allowInvoiceConsolidation: Boolean!
-    @deprecated(reason: "Replaced by invoiceDelivery. Removed in a later release.")
-  consolidationPeriodDays: Int!
-    @deprecated(reason: "Replaced by billingCycle. Statements no longer use a sweep window, so this has no effect and is always 0. Removed in a later release.")
-  consolidationGroupBy: CustomerConsolidationGroupBy!
-    @deprecated(reason: "Split into splitBy (how many invoices) and sectionBy (organisation within one). Removed in a later release.")
   invoiceNumberFormat: CustomerInvoiceNumberFormat!
   customerInvoicePrefix: String!
   invoiceCopies: Int!
@@ -14878,8 +14703,6 @@ type CustomerBillingProfile {
   requirePONumber: Boolean!
   requireBOLNumber: Boolean!
   requireDeliveryNumber: Boolean!
-  invoiceAdjustmentSupportingDocumentPolicy: CustomerInvoiceAdjustmentSupportingDocumentPolicy!
-    @deprecated(reason: "Supporting documents are no longer required for invoice adjustments or voids. Always Optional. Removed in a later release.")
   defaultBillerId: ID
   billingNotes: String!
   fuelSurchargeMode: CustomerFuelSurchargeMode!
@@ -14899,8 +14722,6 @@ type CustomerEmailProfile {
   customerId: ID!
   subject: String!
   comment: String!
-  fromEmail: String!
-    @deprecated(reason: "Invoices are always sent from the organization's Billing email profile")
   toRecipients: String!
   ccRecipients: String!
   bccRecipients: String!
@@ -25831,16 +25652,12 @@ extend type Query {
 
 extend type Mutation {
   """
-  Bills the given shipments. offCycleReason is required only when the customer
-  is on a periodic statement, where invoicing freight on its own takes it off
-  that statement; omitting it there fails with a validation error on
-  ` + "`" + `offCycleReason` + "`" + ` so the client can ask for one.
+  Bills the shipments, producing one invoice per payer of a split shipment.
+  offCycleReason is required only when the customer is on a periodic statement,
+  where invoicing freight on its own takes it off that statement; omitting it
+  there fails with a validation error on ` + "`" + `offCycleReason` + "`" + ` so the client can ask
+  for one.
   """
-  createInvoiceFromShipments(shipmentIds: [ID!]!, offCycleReason: String): Invoice!
-    @deprecated(reason: "Returns only the primary payer's invoice; use createInvoicesFromShipments.")
-  createInvoiceFromOrder(orderId: ID!, offCycleReason: String): Invoice!
-    @deprecated(reason: "Returns only the primary payer's invoice; use createInvoicesFromOrder.")
-  "Bills the shipments, producing one invoice per payer of a split shipment."
   createInvoicesFromShipments(shipmentIds: [ID!]!, offCycleReason: String): CreateInvoicesResult!
   createInvoicesFromOrder(orderId: ID!, offCycleReason: String): CreateInvoicesResult!
   """
@@ -28585,8 +28402,6 @@ input ForkCannedReportInput {
 
 input ReportRunsFilterInput {
   definitionId: ID
-  mineOnly: Boolean
-    @deprecated(reason: "Every run listed is one the caller ran; another person's runs are never listed.")
   statuses: [String!]
 }
 
@@ -30500,10 +30315,6 @@ type ShipmentAdditionalCharge {
   fuelSurchargeProgramId: ID
   fuelSurchargeDetail: JSON
   isDetention: Boolean!
-  detentionOccurrenceId: ID
-    @deprecated(
-      reason: "A detention charge bills every detained stop on the shipment; read the occurrences' additionalChargeId instead."
-    )
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -31585,7 +31396,6 @@ input ShipmentAdditionalChargeInput {
   amount: Decimal = "0"
   unit: Int = 1
   fuelSurchargeProgramId: ID
-  detentionOccurrenceId: ID @deprecated(reason: "Ignored; the detention engine owns the link.")
   version: Int
   """
   How this charge is divided among payers. Omit to leave the split untouched;
@@ -31872,8 +31682,6 @@ extend type Mutation {
   uncancelShipment(id: ID!): Shipment!
   duplicateShipment(input: ShipmentDuplicateInput!): ShipmentDuplicateResponse!
   transferShipmentOwnership(id: ID!, input: ShipmentTransferOwnershipInput!): Shipment!
-  transferShipmentToBilling(input: ShipmentTransferToBillingInput!): BillingQueueItem!
-    @deprecated(reason: "Returns only the primary payer's item; use transferShipmentToBillingItems.")
   "Queues the shipment for billing, one item per payer."
   transferShipmentToBillingItems(input: ShipmentTransferToBillingInput!): ShipmentTransferToBillingResult!
   bulkTransferShipmentsToBilling(input: ShipmentBulkTransferToBillingInput!): ShipmentBulkTransferToBillingResponse!

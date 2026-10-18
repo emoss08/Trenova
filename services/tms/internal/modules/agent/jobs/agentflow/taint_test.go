@@ -97,9 +97,7 @@ func TestRun_ATurnOpenedBeforeTaintWasKeptCountsAsTainted(t *testing.T) {
 Taint is data. The same conversation driven once with a read that is outside
 content and once with one that is not schedules the same activities in the same
 order: whether the payment runs or waits is decided inside its activity, never
-by workflow code choosing a different command. That is what lets an execution
-started before the release replay on this code, and why taint took no
-GetVersion.
+by workflow code choosing a different command.
 */
 func TestRun_TaintChangesNoCommand(t *testing.T) {
 	t.Parallel()

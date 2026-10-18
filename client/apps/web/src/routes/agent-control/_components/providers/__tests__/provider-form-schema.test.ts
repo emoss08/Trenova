@@ -97,7 +97,11 @@ describe("embeddingIssues", () => {
 
   it("accepts a complete embedding provider", () => {
     expect(
-      embeddingIssues({ kind: "Ollama", tasks: ["Embedding"], embeddingDimensionsChoice: "768" }),
+      embeddingIssues({
+        kind: "OpenAIChat",
+        tasks: ["Embedding"],
+        embeddingDimensionsChoice: "768",
+      }),
     ).toEqual([]);
   });
 
@@ -135,7 +139,6 @@ describe("embeddingIssues", () => {
     expect(kindSupportsEmbedding("AnthropicMessages")).toBe(false);
     expect(kindSupportsEmbedding("OpenAIResponses")).toBe(true);
     expect(kindSupportsEmbedding("OpenAIChat")).toBe(true);
-    expect(kindSupportsEmbedding("Ollama")).toBe(true);
   });
 });
 

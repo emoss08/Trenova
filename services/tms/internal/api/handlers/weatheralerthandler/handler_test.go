@@ -29,20 +29,6 @@ func (s *weatherAlertServiceStub) PollNWSAlerts(
 	return &weatheralertports.PollNWSAlertsResult{}, nil
 }
 
-func (s *weatherAlertServiceStub) ListWeatherAlertTenants(
-	context.Context,
-	int,
-) ([]pagination.TenantInfo, error) {
-	return nil, nil
-}
-
-func (s *weatherAlertServiceStub) PollNWSAlertsForTenant(
-	context.Context,
-	pagination.TenantInfo,
-) error {
-	return nil
-}
-
 func (s *weatherAlertServiceStub) ExpireStaleWeatherAlerts(context.Context) error {
 	return nil
 }

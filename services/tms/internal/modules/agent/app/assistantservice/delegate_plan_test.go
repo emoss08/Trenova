@@ -110,8 +110,6 @@ func (fx *handOffEffects) Delegate(
 	return agentruntime.DelegateRun{Definition: opened.Request.Definition, Result: result}
 }
 
-func (*handOffEffects) Supports(string) bool { return true }
-
 func (*handOffEffects) Interject(*agentruntime.Turn, *agentruntime.WorldCheck) agentruntime.Interjections {
 	return agentruntime.Interjections{}
 }

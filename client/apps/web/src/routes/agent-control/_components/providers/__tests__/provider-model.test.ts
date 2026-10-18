@@ -26,7 +26,7 @@ const keyRequired = (kind: AIProviderKind) =>
 function provider(overrides: Partial<RoutingProvider> & { id: string }): RoutingProvider {
   return {
     name: overrides.id,
-    kind: "Ollama",
+    kind: "OpenAIChat",
     tasks: [],
     trusted: false,
     enabled: true,

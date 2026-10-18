@@ -35,14 +35,6 @@ var (
 		TaskQueue:    temporaltype.TaskQueueAgentHeavy.String(),
 		WorkerConfig: registry.DefaultWorkerConfig(),
 	}
-
-	// DrainDomainConfig polls the queue everything used before the split, so
-	// runs already in flight when it deployed still find a worker.
-	DrainDomainConfig = registry.DomainConfig{
-		Name:         "agent-drain-worker",
-		TaskQueue:    temporaltype.TaskQueueAgent.String(),
-		WorkerConfig: registry.DefaultWorkerConfig(),
-	}
 )
 
 type RegistryParams struct {
@@ -81,8 +73,4 @@ func NewBackgroundRegistry(p RegistryParams) registry.WorkerRegistry {
 
 func NewHeavyRegistry(p RegistryParams) registry.WorkerRegistry {
 	return newRegistry(p, &HeavyDomainConfig, p.Workflows.heavy())
-}
-
-func NewDrainRegistry(p RegistryParams) registry.WorkerRegistry {
-	return newRegistry(p, &DrainDomainConfig, p.Workflows.drain())
 }

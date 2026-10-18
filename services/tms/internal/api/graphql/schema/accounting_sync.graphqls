@@ -1302,9 +1302,6 @@ extend type Mutation {
   removeAccountingApp(integrationType: AccountingSystem!): AccountingSyncStatus!
   "Starts connecting an accounting system. Returns the provider's page to send the person to."
   startAccountingAuthorization(integrationType: AccountingSystem!): AccountingAuthorizationStart!
-  "Finishes connecting with what the provider returned. Only the person who started it can finish it."
-  completeAccountingAuthorization(input: CompleteAccountingAuthorizationInput!): AccountingConnection!
-    @deprecated(reason: "Use finishAccountingAuthorization, which can offer a choice of companies")
   "Finishes connecting with what the provider returned, or offers the companies to choose between when the sign-in authorized several. Only the person who started it can finish it."
   finishAccountingAuthorization(input: CompleteAccountingAuthorizationInput!): CompleteAccountingAuthorizationPayload!
   "Connects the company the person chose after a sign-in that authorized several. The choice can be made once; the other companies are released."

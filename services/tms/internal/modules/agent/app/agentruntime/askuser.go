@@ -42,16 +42,6 @@ const (
 	maxAskSuggestionRunes = 120
 )
 
-// changeUnshownAsk is the loop treating an ask_user call the runtime refused
-// as a refusal: it is marked failed, the turn has not asked anything, and the
-// question may be asked again properly. Before it such a call counted as
-// asked, so a turn could end in silence on a question nobody saw. It is asked
-// only of a call the runtime refused, so a turn whose questions are all shown
-// records no change marker.
-const changeUnshownAsk = "agent-loop-unshown-ask"
-
-const changeEndOnAsk = "agent-loop-end-on-ask"
-
 // The names of the properties an option, a typed value and a field carry, as
 // the schema declares them and the arguments are read back by.
 const (

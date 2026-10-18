@@ -21,9 +21,6 @@ type batchRecorder struct {
 	steps   []string
 	earlier map[string][]string
 	events  []string
-	// predates answers the concurrent-reads change as an execution started
-	// before it would.
-	predates bool
 }
 
 func newBatchRecorder(t *testing.T, rt *Service) *batchRecorder {
@@ -68,22 +65,13 @@ func (fx *batchRecorder) DispatchReads(_ *Turn, calls []DispatchCall) []ToolOutc
 	return outcomes
 }
 
-func (fx *batchRecorder) Supports(change string) bool {
-	if change == changeConcurrentReads {
-		return !fx.predates
-	}
-
-	return fx.localEffects.Supports(change)
-}
-
 func readCall(id, name string, args map[string]any) agentports.ToolCall {
 	return agentports.ToolCall{ID: id, Name: name, Arguments: args}
 }
 
 type readScenario struct {
-	calls    []agentports.ToolCall
-	budget   int
-	predates bool
+	calls  []agentports.ToolCall
+	budget int
 }
 
 // driveReads runs one reply's calls through the loop against a recorder, with
@@ -113,7 +101,6 @@ func driveReads(t *testing.T, scenario readScenario) (*batchRecorder, *agentport
 	}
 
 	fx := newBatchRecorder(t, rt)
-	fx.predates = scenario.predates
 	result, err := rt.Drive(rt.OpenTurn(t.Context(), &agentports.RunRequest{
 		Definition: definition,
 		Actor:      testActor(),
@@ -250,26 +237,8 @@ func TestDrive_RunsAtMostEightReadsAtOnce(t *testing.T) {
 	}, fx.steps)
 }
 
-/*
-An execution started before the change replays the commands it recorded: each
-read dispatched and settled before the next call started. It is asked about the
-change only when a second read would join, and then runs as it always did.
-*/
-func TestDrive_AnExecutionFromBeforeTheChangeRunsEachCallInTurn(t *testing.T) {
-	t.Parallel()
-
-	fx, result := driveReads(t, readScenario{predates: true, calls: []agentports.ToolCall{
-		readCall("c1", "list_workers", map[string]any{"status": "Active"}),
-		readCall("c2", "search_customer", map[string]any{"query": "Acme"}),
-	}})
-
-	assert.Equal(t, []string{"alone c1", "alone c2"}, fx.steps)
-	assert.Equal(t, []string{"started c1", "finished c1", "started c2", "finished c2"}, fx.events)
-	assert.Equal(t, []string{"c1", "c2"}, resultCallIDs(result))
-}
-
 // The reads are taken when the turn opens and cross the activity boundary
-// with it; a state from before they were kept runs every call on its own.
+// with it.
 func TestRestoreTurn_BatchesOnlyTheReadsTheTurnOpenedWith(t *testing.T) {
 	t.Parallel()
 
@@ -315,8 +284,4 @@ func TestRestoreTurn_BatchesOnlyTheReadsTheTurnOpenedWith(t *testing.T) {
 	}
 
 	assert.Equal(t, []string{"together c1 c2"}, drive(carried))
-
-	before := carried
-	before.Reads = nil
-	assert.Equal(t, []string{"alone c1", "alone c2"}, drive(before))
 }

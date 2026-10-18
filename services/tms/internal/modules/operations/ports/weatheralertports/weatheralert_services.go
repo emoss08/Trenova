@@ -79,8 +79,6 @@ type WeatherAlertService interface {
 		ctx context.Context,
 		heartbeat WeatherAlertPollHeartbeat,
 	) (*PollNWSAlertsResult, error)
-	ListWeatherAlertTenants(ctx context.Context, limit int) ([]pagination.TenantInfo, error)
-	PollNWSAlertsForTenant(ctx context.Context, tenantInfo pagination.TenantInfo) error
 	ExpireStaleWeatherAlerts(ctx context.Context) error
 	GetActiveAlerts(
 		ctx context.Context,

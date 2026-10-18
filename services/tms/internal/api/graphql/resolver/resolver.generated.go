@@ -234,7 +234,6 @@ type Resolver struct {
 	commodity                          *commodityresolver.CommodityResolver
 	customer                           *carrierintelligenceresolver.CustomerResolver
 	customerBillingProfile             *customerBillingProfileResolver
-	customerEmailProfile               *customerresolver.CustomerEmailProfileResolver
 	customerPayment                    *customerpaymentresolver.CustomerPaymentResolver
 	customerPaymentApplication         *customerpaymentresolver.CustomerPaymentApplicationResolver
 	customerTrackingProfile            *customertrackingresolver.CustomerTrackingProfileResolver
@@ -1242,7 +1241,6 @@ func FromServices(s *Services) *Resolver {
 			customerCustomerBillingProfile:  &customerCustomerBillingProfile{Deps: customerDeps},
 			factoringCustomerBillingProfile: &factoringCustomerBillingProfile{Deps: factoringDeps},
 		},
-		customerEmailProfile:         &customerresolver.CustomerEmailProfileResolver{Deps: customerDeps},
 		customerPayment:              &customerpaymentresolver.CustomerPaymentResolver{Deps: customerpaymentDeps},
 		customerPaymentApplication:   &customerpaymentresolver.CustomerPaymentApplicationResolver{Deps: customerpaymentDeps},
 		customerTrackingProfile:      &customertrackingresolver.CustomerTrackingProfileResolver{Deps: customertrackingDeps},
@@ -2056,10 +2054,6 @@ func (r *Resolver) CustomerBillingProfile() generated.CustomerBillingProfileReso
 type customerBillingProfileResolver struct {
 	*customerCustomerBillingProfile
 	*factoringCustomerBillingProfile
-}
-
-func (r *Resolver) CustomerEmailProfile() generated.CustomerEmailProfileResolver {
-	return r.customerEmailProfile
 }
 
 func (r *Resolver) CustomerPayment() generated.CustomerPaymentResolver {

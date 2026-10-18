@@ -141,7 +141,7 @@ func TestSelectOptions_AIProviderByIDsKeepsKnownProvidersInTheTenant(t *testing.
 	buID := pulid.MustNew("bu_")
 	kept := &aiprovider.Provider{
 		ID:      pulid.MustNew("aiprv_"),
-		Name:    "Local Ollama",
+		Name:    "Local vLLM",
 		Model:   "llama3.3",
 		Enabled: false,
 	}
@@ -163,7 +163,7 @@ func TestSelectOptions_AIProviderByIDsKeepsKnownProvidersInTheTenant(t *testing.
 
 	require.Len(t, result.Edges, 1)
 	assert.Equal(t, kept.ID.String(), result.Edges[0].Node.ID)
-	assert.Equal(t, "Local Ollama", result.Edges[0].Node.Label)
+	assert.Equal(t, "Local vLLM", result.Edges[0].Node.Label)
 	require.Len(t, svc.lookups, 2)
 	for _, lookup := range svc.lookups {
 		assert.Equal(t, orgID, lookup.TenantInfo.OrgID)

@@ -204,7 +204,6 @@ func TestProviderName_MapsProtocolsToGenAIProviders(t *testing.T) {
 	assert.Equal(t, "anthropic", ProviderName(aiprovider.KindAnthropicMessages))
 	assert.Equal(t, "openai", ProviderName(aiprovider.KindOpenAIResponses))
 	assert.Equal(t, "openai", ProviderName(aiprovider.KindOpenAIChat))
-	assert.Equal(t, "ollama", ProviderName(aiprovider.KindOllama))
 	assert.Equal(t, "someday", ProviderName(aiprovider.Kind("Someday")))
 }
 

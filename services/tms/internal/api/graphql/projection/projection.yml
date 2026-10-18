@@ -176,8 +176,6 @@ virtuals:
     - createdByName
   TenderOffer:
     - agreedRate
-  CustomerEmailProfile:
-    - fromEmail
   ShipmentEta:
     - stops
   LogCheckCallPayload:
@@ -207,8 +205,6 @@ virtuals:
     - usable
   AgentControl:
     - agentMoneyCurrency
-    - billingAgentEnabled
-    - decisionTimeoutSeconds
   AgentProposal:
     - run
     - reviewRequired
@@ -467,7 +463,6 @@ virtuals:
     - ediPartner
   ShipmentAdditionalCharge:
     - accessorialCharge
-    - detentionOccurrenceId
   ShipmentCommodity:
     - commodity
   ShipmentComment:
@@ -506,18 +501,6 @@ virtuals:
     - glAccounts
   CustomerBillingProfile:
     - documentTypes
-    # Statement billing replaced these, and each is now derived by a resolver
-    # from the fields that superseded it, so none projects a column of its own.
-    - billingCycleType
-    - billingCycleDayOfWeek
-    - invoiceMethod
-    - allowInvoiceConsolidation
-    - consolidationPeriodDays
-    - consolidationLookbackDays
-    - consolidationGroupBy
-    # Supporting documents are no longer required; the deprecated field is a
-    # constant with no column behind it.
-    - invoiceAdjustmentSupportingDocumentPolicy
   CustomerPayment:
     - customer
   CustomerPaymentApplication:

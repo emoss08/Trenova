@@ -16,10 +16,6 @@ import (
 // Workflow names. A workflow a schedule starts is started by its function, so
 // its name is the function's name: the SDK derives one from the other.
 const (
-	// agentflowChange marks where a run's loop moved into workflow code. A run
-	// that started before it replays on the code it started on.
-	agentflowChange = "agent-loop-in-workflow"
-
 	ReconcileSchedulesWorkflowName    = "ReconcileDefinitionSchedulesWorkflow"
 	ReconcileSchedulesScheduleID      = "agent-definition-schedules"
 	ExpireStaleProposalsWorkflowName  = "ExpireStaleProposalsWorkflow"
@@ -34,12 +30,6 @@ type PrepareRunResult struct {
 	ShadowMode             bool                            `json:"shadowMode"`
 	DecisionTimeoutSeconds int                             `json:"decisionTimeoutSeconds"`
 	RunTimeoutSeconds      int                             `json:"runTimeoutSeconds"`
-}
-
-type RunAgentInput struct {
-	Payload    *agentcontract.AgentRunPayload  `json:"payload"`
-	Definition *agentdefinition.Definition     `json:"definition"`
-	Subject    *agentdefinition.RuntimeSubject `json:"subject,omitempty"`
 }
 
 // OpenRunInput is a prepared run, to be opened as a turn.
@@ -75,15 +65,6 @@ type FinishRunResult struct {
 type PendingProposalsInput struct {
 	RunID      pulid.ID              `json:"runId"`
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
-}
-
-type RunAgentResult struct {
-	Reply            string `json:"reply"`
-	Model            string `json:"model"`
-	ToolCallsUsed    int    `json:"toolCallsUsed"`
-	Exhausted        bool   `json:"exhausted"`
-	ProposalsRaised  int    `json:"proposalsRaised"`
-	PendingProposals int    `json:"pendingProposals"`
 }
 
 type CompleteRunInput struct {

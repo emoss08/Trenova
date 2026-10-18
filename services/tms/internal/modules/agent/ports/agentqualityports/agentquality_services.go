@@ -3,7 +3,6 @@ package agentqualityports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
@@ -16,10 +15,6 @@ import (
 const DefaultAgentQualityWindowDays = 30
 
 const MaxAgentQualityWindowDays = 365
-
-const DefaultAgentQualityPageSize = 25
-
-const MaxAgentQualityPageSize = 100
 
 const AgentQualityHistoryPoints = 30
 
@@ -103,15 +98,6 @@ type AgentQualityDetail struct {
 	ActiveCases        int                                 `json:"activeCases"`
 }
 
-type ListAgentQualityAgentsRequest struct {
-	TenantInfo        pagination.TenantInfo
-	WindowDays        int
-	IncludeRatings    bool
-	First             int
-	After             string
-	IncludeTotalCount bool
-}
-
 type ListAgentQualityAgentTableRequest struct {
 	TenantInfo     pagination.TenantInfo
 	WindowDays     int
@@ -144,15 +130,6 @@ type AgentQualityAgentPage struct {
 	TotalCount  *int                     `json:"totalCount"`
 }
 
-type ListAgentWorstRatedRequest struct {
-	TenantInfo        pagination.TenantInfo
-	AgentDefinitionID pulid.ID
-	WindowDays        int
-	First             int
-	After             string
-	ViewerID          pulid.ID
-}
-
 type ListAgentWorstRatedTableRequest struct {
 	TenantInfo        pagination.TenantInfo
 	AgentDefinitionID pulid.ID
@@ -172,45 +149,6 @@ type AgentWorstRatedPage struct {
 	TotalCount  *int                   `json:"totalCount"`
 }
 
-type ListAgentSuiteRunsInput struct {
-	TenantInfo        pagination.TenantInfo
-	AgentDefinitionID pulid.ID
-	Statuses          []agentquality.SuiteRunStatus
-	First             int
-	After             string
-	IncludeTotalCount bool
-}
-
-type AgentSuiteRunEdge struct {
-	Node   *agentquality.SuiteRun `json:"node"`
-	Cursor string                 `json:"cursor"`
-}
-
-type AgentSuiteRunConnection struct {
-	Edges       []*AgentSuiteRunEdge `json:"edges"`
-	HasNextPage bool                 `json:"hasNextPage"`
-	TotalCount  *int                 `json:"totalCount"`
-}
-
-type ListAgentSuiteRunCasesRequest struct {
-	TenantInfo        pagination.TenantInfo
-	SuiteRunID        pulid.ID
-	First             int
-	After             string
-	IncludeTotalCount bool
-}
-
-type AgentSuiteRunCaseEdge struct {
-	Node   *agent.Evaluation `json:"node"`
-	Cursor string            `json:"cursor"`
-}
-
-type AgentSuiteRunCasePage struct {
-	Edges       []*AgentSuiteRunCaseEdge `json:"edges"`
-	HasNextPage bool                     `json:"hasNextPage"`
-	TotalCount  *int                     `json:"totalCount"`
-}
-
 type RunAgentSuiteRequest struct {
 	TenantInfo        pagination.TenantInfo
 	AgentDefinitionID pulid.ID
@@ -225,18 +163,10 @@ type AgentQualityService interface {
 	) (*agentquality.Control, error)
 	Overview(ctx context.Context, req *AgentQualityOverviewRequest) (*AgentQualityOverview, error)
 	AgentQuality(ctx context.Context, req *AgentQualityRequest) (*AgentQualityDetail, error)
-	ListAgents(
-		ctx context.Context,
-		req *ListAgentQualityAgentsRequest,
-	) (*AgentQualityAgentPage, error)
 	ListAgentTable(
 		ctx context.Context,
 		req *ListAgentQualityAgentTableRequest,
 	) (*AgentQualityAgentPage, error)
-	ListWorstRated(
-		ctx context.Context,
-		req *ListAgentWorstRatedRequest,
-	) (*AgentWorstRatedPage, error)
 	ListWorstRatedTable(
 		ctx context.Context,
 		req *ListAgentWorstRatedTableRequest,
@@ -245,19 +175,11 @@ type AgentQualityService interface {
 		ctx context.Context,
 		req *ListAgentSuiteRunConnectionRequest,
 	) (*pagination.CursorListResult[*agentquality.SuiteRun], error)
-	ListSuiteRuns(
-		ctx context.Context,
-		req *ListAgentSuiteRunsInput,
-	) (*AgentSuiteRunConnection, error)
 	GetSuiteRun(
 		ctx context.Context,
 		id pulid.ID,
 		tenant pagination.TenantInfo,
 	) (*agentquality.SuiteRun, error)
-	ListSuiteRunCases(
-		ctx context.Context,
-		req *ListAgentSuiteRunCasesRequest,
-	) (*AgentSuiteRunCasePage, error)
 	RunSuite(
 		ctx context.Context,
 		req *RunAgentSuiteRequest,

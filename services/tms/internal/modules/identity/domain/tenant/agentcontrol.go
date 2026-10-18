@@ -56,9 +56,6 @@ type AgentControl struct {
 	AgentMoneyDayCalls         int   `json:"agentMoneyDayCalls"         bun:"agent_money_day_calls,type:INTEGER,notnull,default:50"`
 	AgentMoneyDayAmountMinor   int64 `json:"agentMoneyDayAmountMinor"   bun:"agent_money_day_amount_minor,type:BIGINT,notnull,default:2500000"`
 
-	BillingAgentEnabled    bool `json:"billingAgentEnabled"    bun:"-"`
-	DecisionTimeoutSeconds int  `json:"decisionTimeoutSeconds" bun:"-"`
-
 	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`

@@ -17,8 +17,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
@@ -26,6 +26,9 @@ import (
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
+	enumspb "go.temporal.io/api/enums/v1"
+	historypb "go.temporal.io/api/history/v1"
+	"go.temporal.io/api/temporalproto"
 	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"
@@ -166,7 +169,7 @@ func registerLoopStandIns(
 
 	w.RegisterActivityWithOptions(
 		func(ctx context.Context, in *OpenRunInput) (*OpenRunResult, error) {
-			tenant := in.Payload.tenantInfo()
+			tenant := in.Payload.TenantInfo()
 			req := &agentports.RunRequest{
 				Definition: in.Definition,
 				Actor:      agentActor(tenant),
@@ -243,4 +246,42 @@ func registerLoopStandIns(
 	w.RegisterActivityWithOptions(func(context.Context, *PendingProposalsInput) (int, error) {
 		return rec.pending, nil
 	}, activity.RegisterOptions{Name: "PendingProposalsActivity"})
+}
+
+// waitForTimer returns once the workflow has started its decision timer, which
+// is the point at which it is parked waiting on a person.
+func waitForTimer(t *testing.T, c client.Client, run client.WorkflowRun) {
+	t.Helper()
+
+	require.Eventually(t, func() bool {
+		iter := c.GetWorkflowHistory(t.Context(), run.GetID(), run.GetRunID(), false,
+			enumspb.HISTORY_EVENT_FILTER_TYPE_ALL_EVENT)
+		for iter.HasNext() {
+			event, err := iter.Next()
+			if err != nil {
+				return false
+			}
+			if event.GetEventType() == enumspb.EVENT_TYPE_TIMER_STARTED {
+				return true
+			}
+		}
+		return false
+	}, 30*time.Second, 100*time.Millisecond)
+}
+
+func writeHistory(t *testing.T, c client.Client, run client.WorkflowRun, path string) {
+	t.Helper()
+
+	history := &historypb.History{}
+	iter := c.GetWorkflowHistory(t.Context(), run.GetID(), run.GetRunID(), false,
+		enumspb.HISTORY_EVENT_FILTER_TYPE_ALL_EVENT)
+	for iter.HasNext() {
+		event, err := iter.Next()
+		require.NoError(t, err)
+		history.Events = append(history.Events, event)
+	}
+
+	encoded, err := temporalproto.CustomJSONMarshalOptions{Indent: "  "}.Marshal(history)
+	require.NoError(t, err)
+	require.NoError(t, os.WriteFile(path, append(encoded, '\n'), 0o644))
 }

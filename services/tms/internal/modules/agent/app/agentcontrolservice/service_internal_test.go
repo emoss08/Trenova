@@ -4,12 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/settingversion"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/settingversion"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/settingversionports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -71,27 +69,15 @@ func (v *settingVersions) LatestAt(
 	return best, nil
 }
 
-type absentDefinitions struct {
-	agentdefinitionports.AgentDefinitionRepository
-}
-
-func (absentDefinitions) GetBySystemKey(
-	context.Context,
-	agentdefinitionports.GetAgentDefinitionBySystemKeyRequest,
-) (*agentdefinition.Definition, error) {
-	return nil, errortypes.NewNotFoundError("agent definition not found")
-}
-
 func newTestService(control *tenant.AgentControl) (*Service, *fakeControls) {
 	controls := &fakeControls{control: control}
 	return &Service{
-		l:           zap.NewNop(),
-		db:          dbtest.NopConnection{},
-		repo:        controls,
-		versions:    &settingVersions{},
-		definitions: absentDefinitions{},
-		audit:       &mocks.NoopAuditService{},
-		now:         func() int64 { return consentChangedAt },
+		l:        zap.NewNop(),
+		db:       dbtest.NopConnection{},
+		repo:     controls,
+		versions: &settingVersions{},
+		audit:    &mocks.NoopAuditService{},
+		now:      func() int64 { return consentChangedAt },
 	}, controls
 }
 

@@ -10,9 +10,8 @@ import (
 )
 
 const (
-	changeCutOffCallRetry = "agent-loop-cut-off-call-retry"
-	cutOffRetryCeiling    = 32768
-	cutOffRetryReason     = "The reply ran out of room partway through a tool call. " +
+	cutOffRetryCeiling = 32768
+	cutOffRetryReason  = "The reply ran out of room partway through a tool call. " +
 		"Asking again with more room."
 )
 
@@ -82,10 +81,6 @@ func (s *Service) handleCutOff(
 		t.cutOff.retrying = false
 		return false, false
 	}
-	if !fx.Supports(changeCutOffCallRetry) {
-		return false, false
-	}
-
 	fx.Emit(kernelports.StreamEvent{
 		Event: agentports.AssistantEventRetrying,
 		Data: agentports.AssistantRetryingEvent{

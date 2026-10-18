@@ -152,8 +152,7 @@ a portal that asks again stops the run at a code once more.
 No code within `PortalCodeWaitSeconds` (10 minutes) of the request ends the run:
 the poll closes the browser and records it `Failed` with what it did before the
 code. `PortalRunWorkflow` does not count time spent waiting on a code toward its
-20-minute deadline (`portal-run-code-wait-outside-deadline`), since the code wait
-bounds it.
+20-minute deadline, since the code wait bounds it.
 
 Sites belong to the organization, not to a vendor, so moving to another vendor
 keeps them. An agent finds them with `list_portal_sites` and names one by its id
@@ -257,7 +256,7 @@ checked and held the same way as `/search`; see "Extension commands" in
 `read_portal` or `act_on_portal`, and the directive tells the model to find the site
 with `list_portal_sites`, look it up with `read_portal` and change it with
 `act_on_portal`, which a person approves. A reply that never called a portal tool is
-sent back once (`agent-loop-browser-guard`); a second stands, so a request no site
+sent back once (`holdToCommand`); a second stands, so a request no site
 fits still ends in an answer that names the sites there are.
 
 ## Settings

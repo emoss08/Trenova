@@ -1,6 +1,5 @@
 import {
   ApplyCreditMemoDocument,
-  CreateInvoicesFromOrderDocument,
   CreateInvoicesFromShipmentsDocument,
   CreateMemoDocument,
   CreatedInvoiceFieldsFragmentDoc,
@@ -107,18 +106,6 @@ export async function createInvoicesFromShipments(
     variables: { shipmentIds, offCycleReason },
   });
   return unmaskCreatedInvoices(data.createInvoicesFromShipments);
-}
-
-export async function createInvoicesFromOrder(
-  orderId: string,
-  offCycleReason?: string,
-): Promise<CreateInvoicesResult> {
-  const data = await requestGraphQL({
-    document: CreateInvoicesFromOrderDocument,
-    operationName: "CreateInvoicesFromOrder",
-    variables: { orderId, offCycleReason },
-  });
-  return unmaskCreatedInvoices(data.createInvoicesFromOrder);
 }
 
 function unmaskArContext(invoice: ArContextBase): InvoiceArContext {

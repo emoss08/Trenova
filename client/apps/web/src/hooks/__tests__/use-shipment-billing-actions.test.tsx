@@ -43,6 +43,9 @@ const completedShipment = {
   proNumber: "PRO-1001",
 } as unknown as Shipment;
 
+const queuedItem = { id: "bqi_1", shipmentId: SHIPMENT_ID };
+const transferResult = { items: [queuedItem], primary: queuedItem };
+
 function setup() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
@@ -62,7 +65,7 @@ function shipmentWith(overrides: Partial<Shipment>): Shipment {
 beforeEach(() => {
   shipmentService.get.mockResolvedValue(completedShipment);
   shipmentService.update.mockImplementation(async (_id: string, payload: Shipment) => payload);
-  shipmentService.transferToBilling.mockResolvedValue({ id: "bqi_1" });
+  shipmentService.transferToBilling.mockResolvedValue(transferResult);
 });
 
 afterEach(() => {
@@ -99,7 +102,7 @@ describe("useShipmentBillingActions", () => {
     });
     shipmentService.transferToBilling.mockImplementation(async () => {
       calls.push("transfer");
-      return { id: "bqi_1" };
+      return transferResult;
     });
     const { result } = setup();
 

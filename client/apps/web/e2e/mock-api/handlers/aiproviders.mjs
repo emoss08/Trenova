@@ -12,23 +12,20 @@ const KEYED_KINDS = new Set(
 
 const MODELS = {
   AnthropicMessages: [
-    ["claude-sonnet-5", 200000, null, false, ["3", "15"]],
-    ["claude-haiku-5", 200000, null, false, ["0.8", "4"]],
-    ["claude-opus-5", 200000, null, false, ["15", "75"]],
+    ["claude-sonnet-5", 200000, false, ["3", "15"]],
+    ["claude-haiku-5", 200000, false, ["0.8", "4"]],
+    ["claude-opus-5", 200000, false, ["15", "75"]],
   ],
   OpenAIResponses: [
-    ["gpt-5.1", 400000, null, false, ["1.25", "10"]],
-    ["gpt-5.1-mini", 400000, null, false, ["0.25", "2"]],
-    ["text-embedding-3-large", null, null, true, ["0.13", null]],
-  ],
-  Ollama: [
-    ["qwen2.5:14b", 32768, 9.0e9, false, null, true],
-    ["llama3.3:70b", 131072, 43e9, false, null],
-    ["nomic-embed-text", null, 274e6, true, null],
+    ["gpt-5.1", 400000, false, ["1.25", "10"]],
+    ["gpt-5.1-mini", 400000, false, ["0.25", "2"]],
+    ["text-embedding-3-large", null, true, ["0.13", null]],
   ],
   OpenAIChat: [
-    ["meta-llama/Llama-3.3-70B-Instruct", 131072, null, false, null],
-    ["Qwen/Qwen2.5-32B-Instruct", 32768, null, false, null],
+    ["meta-llama/Llama-3.3-70B-Instruct", 131072, false, null],
+    ["Qwen/Qwen2.5-32B-Instruct", 32768, false, null],
+    ["qwen2.5-14b-instruct", 32768, false, null],
+    ["nomic-embed-text", null, true, null],
   ],
 };
 
@@ -119,7 +116,7 @@ function draftTest(state, input) {
   const stored = endpoint.providerId ? nodeOf(state, endpoint.providerId).node : null;
   // A platform provider signing in as the server stores no key.
   const local = !KEYED_KINDS.has(endpoint.kind) || endpoint.platformSettings?.auth === "Server";
-  const base = endpoint.baseUrl || (endpoint.kind === "Ollama" ? "http://localhost:11434" : "");
+  const base = endpoint.baseUrl || "";
   const fail = (message, detail, hint) => ({
     success: false,
     message,
@@ -215,12 +212,10 @@ export const PROVIDER_HANDLERS = {
   }),
   AIRoutePreview: (state, v) => ({ aiRoutePreview: routePreview(state, v.draft) }),
   AIProviderModels: (_state, v) => ({
-    aiProviderModels: (MODELS[v.input.kind] ?? []).map(([id, contextWindow, sizeBytes, embedding, price, loaded]) => ({
+    aiProviderModels: (MODELS[v.input.kind] ?? []).map(([id, contextWindow, embedding, price]) => ({
       id,
       displayName: id,
       contextWindow,
-      sizeBytes,
-      loaded: !!loaded,
       embedding,
       inputCostPerMillion: price?.[0] ?? null,
       outputCostPerMillion: price?.[1] ?? null,

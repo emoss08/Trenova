@@ -108,7 +108,7 @@ func TestTestDraft_RefusesADraftWithoutAModel(t *testing.T) {
 	timeout := 1
 
 	_, err := svc.TestDraft(t.Context(), &agentports.TestAIProviderDraftRequest{
-		Endpoint:       agentports.AIProviderEndpoint{Kind: aiprovider.KindOllama},
+		Endpoint:       agentports.AIProviderEndpoint{Kind: aiprovider.KindOpenAIChat},
 		Tasks:          []aiprovider.Task{aiprovider.TaskAssistantChat},
 		TimeoutSeconds: &timeout,
 	})

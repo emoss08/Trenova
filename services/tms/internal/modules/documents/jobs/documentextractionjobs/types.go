@@ -168,19 +168,6 @@ type ReconcileDocumentIntelligenceResult struct {
 	Queued int `json:"queued"`
 }
 
-type PollPendingDocumentAIExtractionsPayload struct {
-	temporaltype.BasePayload
-
-	Limit int `json:"limit"`
-}
-
-type PollPendingDocumentAIExtractionsResult struct {
-	temporaljobs.TenantRunResult
-	Completed int `json:"completed"`
-	Pending   int `json:"pending"`
-	Failed    int `json:"failed"`
-}
-
 type ListDocumentIntelligenceTenantsResult struct {
 	Tenants []temporaljobs.TenantWorkItem `json:"tenants"`
 }

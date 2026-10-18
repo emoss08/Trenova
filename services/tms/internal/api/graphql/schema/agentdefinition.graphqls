@@ -259,25 +259,6 @@ input MyAgentsInput {
   ids: [ID!]
 }
 
-input MyAgentRecommendationInput {
-  "What the caller is about to ask. At most 4000 characters."
-  text: String!
-  "The agent the question would go to now, kept when it fits as well as any."
-  currentAgentId: ID
-}
-
-"""
-The agent a question is best put to, among the chat agents the caller may start
-a conversation with, judged by the tools it holds that the caller may use.
-"""
-type MyAgentRecommendation {
-  agent: MyAgent!
-  "True when the agent the question would go to now is already the best fit."
-  current: Boolean!
-  "The tools the agent holds that matched the question, best first. At most three."
-  tools: [String!]!
-}
-
 "How well the chat agents a person may use fit a question."
 enum AgentMatchOutcome {
   "Another of the person's agents holds the tools the question needs and the agent it would go to does not."
@@ -459,12 +440,6 @@ extend type Query {
   agentDefinitionVersionDraft(agentId: ID!, version: Int!): AgentDefinition!
   "The chat agents the caller may use, enabled and by name."
   myAgents(input: MyAgentsInput!): MyAgentConnection!
-  """
-  The chat agent the caller may use that holds the tools a question needs. Null
-  when no such agent holds a tool that matches it.
-  """
-  myAgentRecommendation(input: MyAgentRecommendationInput!): MyAgentRecommendation
-    @deprecated(reason: "Use myAgentMatch, which also says when none of the caller's agents can help")
   """
   How well the chat agents the caller may use fit a question: another agent
   that holds the tools it needs, the agent it would go to already, none of

@@ -237,27 +237,6 @@ func (r *MutationResolver) TransferShipmentOwnership(ctx context.Context, id str
 	return base.ShipmentToModel(entity)
 }
 
-func (r *MutationResolver) TransferShipmentToBilling(ctx context.Context, input gqlmodel.ShipmentTransferToBillingInput) (*gqlmodel.BillingQueueItem, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceShipment, permission.OpUpdate)
-	if err != nil {
-		return nil, err
-	}
-
-	shipmentID, err := pulid.MustParse(input.ShipmentID)
-	if err != nil {
-		return nil, err
-	}
-	item, err := r.ShipmentService.TransferToBilling(ctx, &shipmentports.TransferShipmentToBillingRequest{
-		ShipmentID: shipmentID,
-		BillType:   parseBillType(input.BillType),
-	}, actorutil.FromAuthContext(authCtx))
-	if err != nil {
-		return nil, err
-	}
-
-	return base.RequiredBillingQueueItemToModel(item)
-}
-
 func (r *MutationResolver) TransferShipmentToBillingItems(ctx context.Context, input gqlmodel.ShipmentTransferToBillingInput) (*gqlmodel.ShipmentTransferToBillingResult, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceShipment, permission.OpUpdate)
 	if err != nil {

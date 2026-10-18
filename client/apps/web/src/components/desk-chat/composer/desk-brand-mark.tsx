@@ -30,17 +30,14 @@ export const VENDOR_NAMES: Record<string, string> = {
   deepseek: "DeepSeek",
   bedrock: "AWS Bedrock",
   huggingface: "Hugging Face",
-  ollama: "Ollama",
 };
 
 /** The shared logo set's marks for the vendors the Desk does not draw itself. */
 const SHARED_MARKS = new Map(
-  ["openrouter", "together", "fireworks", "bedrock", "ollama", "vllm", "lmstudio"].flatMap(
-    (key) => {
-      const Mark = brandMarkFor({ presetKey: key });
-      return Mark ? [[key, <Mark key={key} className="size-full" />] as const] : [];
-    },
-  ),
+  ["openrouter", "together", "fireworks", "bedrock", "vllm", "lmstudio"].flatMap((key) => {
+    const Mark = brandMarkFor({ presetKey: key });
+    return Mark ? [[key, <Mark key={key} className="size-full" />] as const] : [];
+  }),
 );
 
 /** The vendors the Auto reel and rain draw, in the order they turn up. */

@@ -440,10 +440,6 @@ type AgentControl {
   A money change in any other currency waits for a person.
   """
   agentMoneyCurrency: String!
-  billingAgentEnabled: Boolean!
-    @deprecated(reason: "Enable or disable the billing exception agent definition instead")
-  decisionTimeoutSeconds: Int!
-    @deprecated(reason: "Set decisionTimeoutSeconds on the agent definition instead")
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -894,10 +890,6 @@ input AgentControlInput {
   update to whatever is there.
   """
   version: Int
-  billingAgentEnabled: Boolean
-    @deprecated(reason: "Enable or disable the billing exception agent definition instead")
-  decisionTimeoutSeconds: Int
-    @deprecated(reason: "Set decisionTimeoutSeconds on the agent definition instead")
 }
 
 extend type Query {

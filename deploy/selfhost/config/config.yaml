@@ -118,7 +118,8 @@ ai:
   # under AI Control. Set enabled: false to turn every AI feature off.
   enabled: true
   # Organizations here belong to the operator, so a provider may point at a
-  # model served on your own network (Ollama, vLLM and the like).
+  # model served on your own network by an OpenAI-compatible server (vLLM,
+  # SGLang, LM Studio and the like).
   privateNetworkProviders: true
   # Turn on to let a Bedrock, Vertex AI or Claude Platform provider sign in
   # as this server (its IAM role or Google application default credentials)

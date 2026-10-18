@@ -18,21 +18,13 @@ var briefingRetryPolicy = &temporal.RetryPolicy{
 	MaximumInterval:    30 * time.Second,
 }
 
-// perOrganizationChange marks where the sweep stopped writing every due tenant
-// in one activity. A sweep started before it finishes on that activity.
-const perOrganizationChange = "daily-briefing-per-organization"
-
 // organizationConcurrency bounds how many organizations are written at once.
 // Each gathers a day of figures across eight repositories, so the bound is
 // what keeps the hour's sweep off the database the product runs on.
 const organizationConcurrency = 4
 
-const shipmentBriefChange = "daily-briefing-shipment-brief"
-
-const accountingBriefChange = "daily-briefing-accounting-brief"
-
-// briefingActivityOptions serve only sweeps started before the sweep fanned
-// out: one activity walking every tenant, generous and heartbeating.
+// briefingActivityOptions serve the retention sweep: one activity walking
+// every tenant, generous and heartbeating.
 var briefingActivityOptions = workflow.ActivityOptions{
 	StartToCloseTimeout: 45 * time.Minute,
 	HeartbeatTimeout:    3 * time.Minute,
@@ -88,11 +80,6 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 // table fails that tenant's child, retried and visible on its own, and costs
 // no other tenant its morning.
 func DailyBriefingWorkflow(ctx workflow.Context) (*DailyBriefingResult, error) {
-	if workflow.GetVersion(ctx, perOrganizationChange, workflow.DefaultVersion, 1) ==
-		workflow.DefaultVersion {
-		return writeInOneActivity(ctx)
-	}
-
 	now := workflow.Now(ctx).Unix()
 
 	var a *Activities
@@ -158,11 +145,6 @@ func WriteOrganizationBriefingWorkflow(
 		return nil, err
 	}
 
-	if workflow.GetVersion(ctx, shipmentBriefChange, workflow.DefaultVersion, 1) ==
-		workflow.DefaultVersion {
-		return &result, nil
-	}
-
 	var brief ShipmentBriefResult
 	if err := workflow.ExecuteActivity(ctx, a.WriteShipmentBriefActivity, input).
 		Get(ctx, &brief); err != nil {
@@ -170,11 +152,6 @@ func WriteOrganizationBriefingWorkflow(
 			"Shipment board brief failed; the board writes one when it is first opened",
 			"error", err,
 		)
-	}
-
-	if workflow.GetVersion(ctx, accountingBriefChange, workflow.DefaultVersion, 1) ==
-		workflow.DefaultVersion {
-		return &result, nil
 	}
 
 	var accounting AccountingBriefResult
@@ -187,23 +164,6 @@ func WriteOrganizationBriefingWorkflow(
 	}
 
 	return &result, nil
-}
-
-// writeInOneActivity is the sweep as it was before it fanned out. It runs only
-// sweeps that started on it, and must not change.
-func writeInOneActivity(ctx workflow.Context) (*DailyBriefingResult, error) {
-	ctx = workflow.WithActivityOptions(ctx, briefingActivityOptions)
-
-	var a *Activities
-	result := new(DailyBriefingResult)
-	if err := workflow.ExecuteActivity(ctx, a.WriteDueBriefingsActivity).
-		Get(ctx, result); err != nil {
-		workflow.GetLogger(ctx).Error("Daily briefing workflow failed", "error", err)
-
-		return nil, err
-	}
-
-	return result, nil
 }
 
 func BriefingRetentionWorkflow(ctx workflow.Context) (*BriefingRetentionResult, error) {

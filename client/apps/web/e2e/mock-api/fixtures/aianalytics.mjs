@@ -38,13 +38,13 @@ export const ANALYTICS_PROVIDERS = {
     firstToken: 420,
     timeout: 60,
   },
-  aip_ollama: {
-    id: "aip_ollama",
-    name: "Local Ollama",
-    kind: "Ollama",
-    baseUrl: "http://localhost:11434",
+  aip_lmstudio: {
+    id: "aip_lmstudio",
+    name: "Local LM Studio",
+    kind: "OpenAIChat",
+    baseUrl: "http://localhost:1234/v1",
     enabled: true,
-    model: "qwen2.5:14b",
+    model: "qwen2.5-14b-instruct",
     firstToken: 380,
     timeout: 60,
   },
@@ -82,7 +82,7 @@ export const ANALYTICS_PROVIDERS = {
 
 /** The order the router tries providers in; a task goes to the first that serves it. */
 export const ROUTING_ORDER = [
-  "aip_ollama",
+  "aip_lmstudio",
   "aip_openai",
   "aip_vllm",
   "aip_groq",
@@ -93,7 +93,7 @@ export const ROUTING_ORDER = [
 
 export const INITIAL_ROUTING = {
   aip_openai: ["DocumentClassification", "ScopeClassification", "QueryCompose"],
-  aip_ollama: [
+  aip_lmstudio: [
     "DocumentClassification",
     "ScopeClassification",
     "OperationalInsights",
@@ -232,7 +232,7 @@ const ROUTES = [
   {
     task: "DocumentClassification",
     model: "qwen-2.5-14b",
-    provider: "aip_ollama",
+    provider: "aip_lmstudio",
     runs: 600,
     rate: 0.89,
     agents: ["inbox"],
@@ -256,7 +256,7 @@ const ROUTES = [
   {
     task: "ScopeClassification",
     model: "qwen-2.5-14b",
-    provider: "aip_ollama",
+    provider: "aip_lmstudio",
     runs: 500,
     rate: 0.93,
     agents: ["dispatch", "help"],
@@ -272,7 +272,7 @@ const ROUTES = [
   {
     task: "OperationalInsights",
     model: "qwen-2.5-14b",
-    provider: "aip_ollama",
+    provider: "aip_lmstudio",
     runs: 300,
     rate: 0.74,
     agents: ["coverage"],
@@ -280,7 +280,7 @@ const ROUTES = [
   {
     task: "DailyBriefing",
     model: "qwen-2.5-14b",
-    provider: "aip_ollama",
+    provider: "aip_lmstudio",
     runs: 180,
     rate: 0.81,
     agents: ["digest"],
@@ -410,7 +410,7 @@ const PROVIDER_ERRORS = {
       ["ServerError", 0.06],
     ],
   },
-  aip_ollama: {
+  aip_lmstudio: {
     rate: 0.012,
     kinds: [
       ["CouldNotConnect", 0.4],

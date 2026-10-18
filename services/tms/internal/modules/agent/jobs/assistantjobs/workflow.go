@@ -92,39 +92,17 @@ var notifyOptions = workflow.ActivityOptions{
 	},
 }
 
-// changeCloseUnsavedTurn closes a turn's record when saving the turn failed on
-// every attempt. Executions that began before it replay without the step.
-const changeCloseUnsavedTurn = "assistant-turn-close-unsaved"
-
-// changePrepareLocally prepares a turn as a local activity. Executions that
-// began before it replay preparing as a regular activity.
-const changePrepareLocally = "assistant-turn-prepare-local"
-
-// changeAutoCompact compacts a conversation a turn left nearly full.
-// Executions that began before it replay without the step.
-const changeAutoCompact = "assistant-turn-auto-compact"
-
-// changeNotifyUnseenTurn tells the person who asked when their reply ended
-// with nobody reading it. Executions that began before it replay without the
-// step.
-const changeNotifyUnseenTurn = "assistant-turn-notify-unseen"
-
-// prepare reads the question and makes it ready to answer.
+// prepare reads the question and makes it ready to answer, as a local
+// activity.
 func prepare(
 	ctx workflow.Context,
 	payload *assistantcontract.AssistantTurnPayload,
 	plan *assistantservice.TurnPlan,
 ) error {
 	var a *Activities
-	if workflow.GetVersion(ctx, changePrepareLocally, workflow.DefaultVersion, 1) == 1 {
-		return workflow.ExecuteLocalActivity(
-			workflow.WithLocalActivityOptions(ctx, prepareLocalOptions),
-			a.PrepareTurnActivity, payload,
-		).Get(ctx, plan)
-	}
 
-	return workflow.ExecuteActivity(
-		workflow.WithActivityOptions(ctx, withPriority(prepareOptions, payload)),
+	return workflow.ExecuteLocalActivity(
+		workflow.WithLocalActivityOptions(ctx, prepareLocalOptions),
 		a.PrepareTurnActivity, payload,
 	).Get(ctx, plan)
 }
@@ -297,18 +275,6 @@ func rejectionDetails(err error) map[string]string {
 	return params
 }
 
-func withPriority(
-	options workflow.ActivityOptions,
-	payload *assistantcontract.AssistantTurnPayload,
-) workflow.ActivityOptions {
-	options.Priority = temporal.Priority{
-		PriorityKey: agentflowcontract.PriorityInteractive,
-		FairnessKey: payload.OrganizationID.String(),
-	}
-
-	return options
-}
-
 // notifyUnseen tells the person who asked that their reply ended, when nobody
 // was reading when it did: they closed the tab or signed in somewhere else. A
 // reply they stopped themselves is not news to them, a caller waiting on the
@@ -330,9 +296,6 @@ func (w *Workflows) notifyUnseen(
 
 	status := conversation.AssistantTurnStatus(ending.Result.Status)
 	if !notifiesUnseen(status) {
-		return
-	}
-	if workflow.GetVersion(ctx, changeNotifyUnseenTurn, workflow.DefaultVersion, 1) != 1 {
 		return
 	}
 
@@ -359,10 +322,6 @@ func (w *Workflows) closeRecord(
 	payload *assistantcontract.AssistantTurnPayload,
 	cause error,
 ) {
-	if workflow.GetVersion(ctx, changeCloseUnsavedTurn, workflow.DefaultVersion, 1) != 1 {
-		return
-	}
-
 	var a *Activities
 	err := workflow.ExecuteActivity(
 		workflow.WithActivityOptions(ctx, closeOptions),
@@ -391,9 +350,6 @@ func (w *Workflows) compactIfFull(
 	ending *TurnEnding,
 ) {
 	if ending.Compact == nil {
-		return
-	}
-	if workflow.GetVersion(ctx, changeAutoCompact, workflow.DefaultVersion, 1) != 1 {
 		return
 	}
 

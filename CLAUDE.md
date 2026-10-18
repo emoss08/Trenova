@@ -387,11 +387,11 @@ maintainer's: ask for them or read `BRANDFETCH_API_KEY`, and never commit them.
 How every AI feature executes on Temporal — the queues and why they are split,
 the agent loop in workflow code (one activity per model and tool call), the
 HTTP-derived retry mapping, the step ledger that makes a retried write safe, the
-turn stream, per-agent schedules, the one-shot and batch workflows, and the
-`GetVersion` branches waiting on in-flight executions to drain.
+turn stream, per-agent schedules, the one-shot and batch workflows, and why
+workflow code carries no version gates until launch.
 **Read [docs/engineering/agent-runtime.md](docs/engineering/agent-runtime.md)
 before changing anything under `internal/modules/agent/app/agentruntime/`,
-`assistantservice/`, or `internal/modules/agent/jobs/{agentflow,modelcall,agentjobs,assistantjobs,completionjobs,importassistantjobs}/`.**
+`assistantservice/`, or `internal/modules/agent/jobs/{agentflow,modelcall,agentjobs,assistantjobs,completionjobs}/`.**
 Extensions (web search and anything like it) add agent-only tools that an organization turns
 on with its own vendor account; how they are gated, metered, and why a turn that read outside
 content proposes every later write, is in
