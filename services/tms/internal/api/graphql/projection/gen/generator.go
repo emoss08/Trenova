@@ -31,6 +31,7 @@ const (
 )
 
 var nonProjectionObjects = map[string]string{
+	"AIProviderModelOption":              "GraphQL provider model listing DTO",
 	"BulkEditFailure":                    "GraphQL bulk edit progress DTO",
 	"BulkEditField":                      "GraphQL bulk edit catalog DTO",
 	"BulkEditJob":                        "GraphQL bulk edit progress DTO",
