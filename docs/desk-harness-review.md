@@ -1764,3 +1764,93 @@ changes the plan in four ways.
    surfaced (§8 item 3).
 4. **The step "why" toggle:** removed with `_why`, or fed from thinking summaries and progress
    notes where the model provides them (§8 item 4).
+
+### 8.2 Decided (2026-10-18): specifications to build from
+
+**1. Remove Ollama from the application, and keep it only for recording eval fixtures.**
+
+- **Application.** Remove:
+  - the `Ollama` provider kind and its adapters (`modeladapter/ollama.go`, `embed_ollama.go`);
+  - their registration in `modeladapter/adapter.go`;
+  - its branches in the completion router, the prober, the pricing reference, the vendor list
+    and tracing attributes;
+  - the `ForPortableModel` callers that existed for it;
+  - the provider editor's option and brand mark;
+  - the development seed;
+  - the self-hosting docs and the `config.yaml` comments.
+
+  `ai.privateNetworkProviders` stays for OpenAI-compatible servers on a private network.
+- **CI and evals.** CI reads recorded fixtures (`evals/embeddings/nomic-embed-text.json`) and
+  needs no Ollama. Only the two recorders call Ollama, and both go through the application's
+  adapter registry today:
+  - `agentevalgate/embeddings_record_test.go`;
+  - `retrievalservice/record_fixture_test.go` via `testutil/retrievaltest`.
+
+  Move a minimal Ollama embedding client into test-only code (for example
+  `internal/testutil/ollamaembed`), and point both recorders at it. Nothing in the fixtures or
+  floors changes.
+
+**2. Money tools run automatically only within bounds.**
+
+- **Change the default.** The Money class cap becomes Ask first. A money tool may run
+  automatically only when its per-call condition shows the call is within bounds. A new money
+  tool is therefore safe by default.
+- **Bounds that apply to every money tool:**
+  - never automatic in a tainted run, or after outside content (as today);
+  - a per-call amount ceiling;
+  - a per-run cap and a per-day cap, both counted in calls and in total amount;
+  - the existing per-tool daily execution budgets (`agentbudgetservice`) count the calls.
+- **Bounds for each tool:**
+
+  | Tool | Automatic only when |
+  |---|---|
+  | `post_customer_payment` | The remittance matches open invoices of the same customer exactly (amount and reference), the whole payment is applied, and it is within the ceiling |
+  | `match_bank_receipt` | The receipt matches one posted payment exactly, by amount and reference |
+  | `correct_charge_code` | The invoice is not yet posted and the corrected total is within the ceiling of the original |
+  | Add carrier or driver settlement adjustment | The settlement is not yet approved and the line is within the ceiling |
+  | Remove carrier or driver settlement adjustment | The line being removed was added by an agent and the settlement is not yet approved |
+
+- **Configuration.** The ceilings and caps are organization settings, editable in AI Control,
+  with conservative defaults.
+- **Explaining holds.** A call outside its bounds is filed as a proposal, with `HeldBy` naming the
+  bound it exceeded. That keeps the explanation the policy engine already gives.
+- **Tests.** Add the bounds to `agenttoolpolicy` validation, and regenerate the safety doc.
+
+**3. A preview digest is required by class.**
+
+- **When it is required.** Approving a proposal requires the digest of the preview the
+  approver was shown when either holds:
+  - the proposal's class is money, customer-visible, driver-visible or external recipient;
+  - the proposal is tainted.
+
+  Internal and personal writes may still be approved without one, and are recorded as
+  unreviewed, as today.
+- **Where it applies.** Enforce it in `agentdecisionservice` (`preview.go`), so every path
+  inherits it:
+  - single and batch GraphQL decisions;
+  - plans (`agentplanservice`);
+  - the REST handlers (`agentproposalhandler`, `agentplanhandler`);
+  - decisions in a conversation;
+  - decision follow-ups.
+- **Batch approval in the Desk.** The batch approval in the Desk must show the preview of every
+  gated item before it can approve them together. `batchPreviewDigests` then has a digest for
+  each of them.
+- **Integrations.** An integration calling the REST API fetches the preview first and echoes its
+  digest.
+- **Refusal.** Refuse with an error that says the change must be reviewed first.
+
+**4. Remove `_why`, and replace the "Why this step?" toggle with the model's own reasoning.**
+
+- **Server side.** Remove:
+  - `rationale.go` and `withRationale`;
+  - `liftRationales`;
+  - the stored rationale on steps;
+  - the `StepRationale` type in the client;
+  - the `StepWhyToggle` in `desk-citations.tsx`.
+- **The replacement.** Show the reasoning summary already saved on the assistant message that
+  made the call (`conversation.Message.Reasoning`, `ReasoningTrace`), using the existing
+  `reasoning-disclosure.tsx` component. Hide it when the model returned none.
+- **Cost.** Thinking is billed the same whatever is displayed. The Anthropic adapter already asks
+  for summarized thinking, and Responses returns reasoning summaries. The feature therefore costs
+  no prompt tokens, and drops about 150 tokens per tool on every call.
+- **Unattended runs.** Their reasoning stays in the trajectory for audit.
