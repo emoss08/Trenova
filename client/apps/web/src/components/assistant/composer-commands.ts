@@ -214,38 +214,59 @@ export const COMPACT_COMMAND: SlashCommand = {
   prompt: () => COMPACT_TEXT,
 };
 
-/** What the server reads as a request to work in the browser. */
-export const BROWSER_TEXT = "/browser";
-
 /**
- * /browser hands the request to the browser: the agent works it on the
- * organization's portal sites with the portal tools and is sent back to them
- * if it answers without. The words go to the server as typed, command and
- * all, because the server reads the command, checks the agent may use the
- * browser and holds the turn to it. It is offered only where the person can
- * send the agent to the browser.
+ * A command the server holds to one of the organization's extensions. The
+ * words go to the server as typed, command and all, because the server reads
+ * the command (agentextension.ParseCommand), checks the agent may use the
+ * extension and holds the turn to it; a queued or retried message is still
+ * the same request. The composer offers only the ones the server says the
+ * person can send to the agent (GET /assistant/agents/:agentID/commands/).
  */
-export const BROWSER_COMMAND: SlashCommand = {
+function extensionCommand(command: Omit<SlashCommand, "prompt">): SlashCommand {
+  return {
+    ...command,
+    // i18n-ignore: the command the server reads, followed by the person's own words
+    prompt: ([task = ""]) => `/${command.name} ${task}`,
+  };
+}
+
+/** /browser works the request on the organization's portal sites with the portal tools. */
+export const BROWSER_COMMAND = extensionCommand({
   name: "browser",
   description: "Do it in the browser, on one of your portal sites",
   slots: [{ name: "task", hint: "what to do on the portal" }],
-  // i18n-ignore: the command the server reads, followed by the person's own words
-  prompt: ([task = ""]) => `${BROWSER_TEXT} ${task}`,
-};
+});
+
+/** /search answers the request from the public web with the web research tools. */
+export const SEARCH_COMMAND = extensionCommand({
+  name: "search",
+  description: "Search the web and answer from what it finds",
+  slots: [{ name: "query", hint: "what to look up on the web" }],
+});
 
 /**
- * A message the server reads as /browser: the command alone or followed by a
- * space, in any case, as the server reads it (agentextension.BrowserTask).
+ * Every extension command, in the order the composer lists them. A new one is
+ * an entry here and its twin in agentextension.AllCommands on the server.
  */
-export function isBrowserRequest(text: string): boolean {
+export const EXTENSION_COMMANDS: readonly SlashCommand[] = [BROWSER_COMMAND, SEARCH_COMMAND];
+
+/** The extension commands named in the server's answer, in the order listed here. */
+export function extensionCommandsNamed(names: readonly string[]): readonly SlashCommand[] {
+  return EXTENSION_COMMANDS.filter((command) => names.includes(command.name));
+}
+
+/**
+ * A message the server reads as an extension command: one of the commands
+ * alone or followed by whitespace, in any case, as the server reads it.
+ */
+export function isExtensionRequest(text: string): boolean {
   const trimmed = text.trim();
-  const head = trimmed.slice(0, BROWSER_TEXT.length).toLowerCase();
-  if (head !== BROWSER_TEXT) {
+  if (!trimmed.startsWith("/")) {
     return false;
   }
-  const next = trimmed.charAt(BROWSER_TEXT.length);
+  const name = trimmed.slice(1).split(/\s/, 1)[0]?.toLowerCase() ?? "";
 
-  return next === "" || /\s/.test(next);
+  return EXTENSION_COMMANDS.some((command) => command.name === name);
 }
 
 /**

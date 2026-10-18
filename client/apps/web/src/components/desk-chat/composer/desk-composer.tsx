@@ -4,10 +4,9 @@ import {
   type ComposerPayload,
 } from "@/components/assistant/composer-types";
 import {
-  BROWSER_COMMAND,
   COMPACT_COMMAND,
   COMPACT_TEXT,
-  isBrowserRequest,
+  isExtensionRequest,
   type SlashCommand,
 } from "@/components/assistant/composer-commands";
 import type { Suggestion } from "@/components/assistant/suggestions";
@@ -35,26 +34,20 @@ import { DeskDictate } from "./desk-dictate";
 import { DeskMentionMirror, DeskMentionPicker, useDeskMentions } from "./desk-mentions";
 import { DeskSlashMenu, DeskSlashMirror, useDeskSlash } from "./desk-slash";
 import { DeskAttachMenu, DeskAttachRow, DeskDropGhosts, type DragState } from "./desk-uploads";
-import { useDeskBrowser } from "./use-desk-browser";
+import { useDeskExtensionCommands } from "./use-desk-extension-commands";
 import { useTypewriter } from "./use-typewriter";
 import { DeskCountdown } from "../desk-countdown";
 import { DeskContextDrain } from "./desk-context-meter";
 
 /**
- * The commands this composer adds to the shared ones: /browser where the
- * agent can work in the browser, /compact where the conversation can be
- * compacted.
+ * The commands this composer adds to the shared ones: the extension commands
+ * the agent can honour, then /compact where the conversation can be compacted.
  */
-const BROWSER_COMMANDS: readonly SlashCommand[] = [BROWSER_COMMAND];
-const COMPACT_COMMANDS: readonly SlashCommand[] = [COMPACT_COMMAND];
-const BROWSER_AND_COMPACT_COMMANDS: readonly SlashCommand[] = [BROWSER_COMMAND, COMPACT_COMMAND];
-
-function composerCommands(browser: boolean, compact: boolean): readonly SlashCommand[] | undefined {
-  if (browser) {
-    return compact ? BROWSER_AND_COMPACT_COMMANDS : BROWSER_COMMANDS;
-  }
-
-  return compact ? COMPACT_COMMANDS : undefined;
+function composerCommands(
+  extensions: readonly SlashCommand[],
+  compact: boolean,
+): readonly SlashCommand[] {
+  return compact ? [...extensions, COMPACT_COMMAND] : extensions;
 }
 
 /** How long a status line has to hold before a screen reader is told it. */
@@ -212,7 +205,7 @@ export function DeskComposer({
     (home || typewriter) && settings.presets === "on" && presets.length > 0 && empty && !disabled;
   const typed = useTypewriter(presets, typing);
   const dictation = useComposerDictation({ draft: value, onDraftChange: onChange });
-  const browser = useDeskBrowser(agent?.id);
+  const extensionCommands = useDeskExtensionCommands(agent?.id);
 
   const uploading = attachments?.uploading ?? false;
   const ready = attachments?.ready ?? [];
@@ -268,9 +261,9 @@ export function DeskComposer({
     };
     if (steering && onSteer) {
       // A reply under way reads a steer as more words for the work it is
-      // doing, so /browser waits to start a turn of its own, held to the
-      // browser.
-      onSteer(text, payload, filesOnly || isBrowserRequest(text) ? "queue" : mode);
+      // doing, so an extension command waits to start a turn of its own,
+      // held to its extension.
+      onSteer(text, payload, filesOnly || isExtensionRequest(text) ? "queue" : mode);
     } else {
       onSend(text, payload);
     }
@@ -285,7 +278,7 @@ export function DeskComposer({
     onSendText: send,
     suggestions,
     enabled: !typing && settings.slash === "on",
-    commands: composerCommands(browser, onCompact !== undefined),
+    commands: composerCommands(extensionCommands, onCompact !== undefined),
   });
   const mention = useDeskMentions({
     value,

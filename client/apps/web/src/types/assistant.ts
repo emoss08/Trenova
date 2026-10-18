@@ -649,15 +649,16 @@ export const threadBudgetSchema = z.object({
 export type ThreadBudget = z.infer<typeof threadBudgetSchema>;
 
 /**
- * Whether the person can ask an agent to work in the browser with /browser:
- * portal automation is on, the agent holds its tools or every agent is given
- * them, and the person may use it.
+ * The extension commands (/browser, /search) the person can send an agent:
+ * each one's extension is on, the agent holds a tool that honours it or every
+ * agent is given them, and the person may use it. Names this client has no
+ * command for are ignored.
  */
-export const browserAvailabilitySchema = z.object({
-  available: z.boolean(),
+export const commandAvailabilitySchema = z.object({
+  commands: z.array(z.string()),
 });
 
-export type BrowserAvailability = z.infer<typeof browserAvailabilitySchema>;
+export type CommandAvailability = z.infer<typeof commandAvailabilitySchema>;
 
 /** What the Desk's search palette looks through. */
 export const deskSearchKinds = ["all", "chat", "msg", "art", "dec"] as const;
