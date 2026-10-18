@@ -241,3 +241,112 @@ thumbs.
 4. 13 findings are marked fixed while their `fixedIn` still says "to verify in a run". Two
    scenarios had their call limits raised instead of the behaviour being fixed (DB-118: 8 → 10;
    DB-121: 8 → 11).
+
+### 1.4 Provider layer
+
+Paths in this section: MA = `services/tms/internal/infrastructure/agentcompletion/modeladapter/`,
+CR = `…/agentcompletion/completionrouter/`, RT = `services/tms/internal/modules/agent/app/agentruntime/`.
+
+**Protocols, not vendors.** There are four adapters (`MA/adapter.go:199-206`):
+
+| Protocol | Covers | Notes |
+|---|---|---|
+| `AnthropicMessages` | Claude direct, Bedrock, Vertex, Foundry, Claude Platform on AWS and on Google Cloud | Official Go SDK; requests are signed in-house; wire requests pinned in `testdata/anthropic_wire` |
+| `OpenAIResponses` | OpenAI `/v1/responses` | Encrypted reasoning is replayed; `strict:false` is always sent (DB-080) |
+| `OpenAIChat` | vLLM, SGLang, LM Studio, llama.cpp, OpenRouter, Groq, Together, Fireworks, NIM, DeepSeek, and **Gemini through its OpenAI-compatible endpoint** | There is no native Gemini adapter |
+| `Ollama` | Native `/api/chat` | Ollama has no tool call ids, so two calls to the same tool cannot be told apart |
+
+**How a provider is chosen.** Candidates are the organization's providers assigned to the
+`AssistantChat` task, ordered by priority. The thread's model picker, or else the agent's
+`PreferredProviderID`, moves one provider to the front, and an explicit pick pins it
+(`CR/chat.go:69-71`).
+
+Failure handling:
+
+- A provider is rested for 1 minute after 3 failures, and the rest is shared through Redis.
+- A reply that dies partway is restarted on the next provider, at most twice.
+- An empty reply counts as a failure.
+- A refusal never fails over.
+
+**The system prompt is the same for every provider and model.** Per model, only the following
+differ:
+
+- reasoning settings: Anthropic adaptive effort or a thinking budget; `reasoning_effort` on
+  Chat; reasoning effort plus summary on Responses; `think` on Ollama;
+- the max-token floors;
+- schema stripping: `toolschema.ForModel` strips `x-*` keys; `ForPortableModel` also strips
+  `examples` and custom formats, for Gemini;
+- a long tail of wire workarounds:
+  - Gemini thought signatures;
+  - inline `<think>` blocks from Qwen and R1 distills;
+  - `<tool_call>` text markup from servers that have no tool parser;
+  - streams that put every call at index 0;
+  - Haiku's empty-argument replay (DB-001).
+
+**Tool request settings.** `tool_choice` is never sent; it is a reserved key
+(`aiprovider/provider.go:804-818`). No parallel-tool-calls setting is sent, so every provider's
+default applies. Every tool gains an optional `_why` rationale parameter, stripped before
+dispatch (`RT/rationale.go`). The error flag on a tool result (`is_error`) reaches only
+Anthropic; the other protocols see a failure only in the result's text.
+
+**Argument repair.** Before validation, `RT/arguments.go:56-92` and `pkg/toolschema/coerce.go`
+quietly fix a long list of model mistakes, and tell the model what was fixed:
+
+- renamed keys (`shipment_id` → `shipmentId`, a bare `id`);
+- strings where numbers belong, and the reverse;
+- `"true"` for a boolean;
+- an enum value in the wrong case;
+- a single value where a list belongs;
+- JSON sent as a string;
+- empty optional values and placeholder ids (`"x"`, `"n/a"`, `"tbd"`), which are dropped;
+- relative dates, resolved in the organization's time zone;
+- an id of the wrong kind, refused by its prefix.
+
+The list shows which models made which mistakes, and in practice it is a catalog of
+gpt-6-luna's and Haiku's habits.
+
+**Prompt caching.**
+
+- **Anthropic** gets 3 cache breakpoints, all with the 5-minute TTL: after the last tool, after
+  the stable system part, and on the last message (`MA/anthropic.go:723-789`).
+- **Responses** gets a `prompt_cache_key`.
+- **Chat and Ollama** rely on byte-stable JSON.
+
+The cache is broken by:
+
+- `find_tools` adding tools mid-turn. Tools come first in Anthropic's prompt, so everything after
+  them is written again.
+- Per-message re-ranking of the 8 preselected tools, on agents that hold more than 12 tools.
+  The tool list, and so the whole prompt, can change on every turn.
+- `fitWindow` shortening this turn's older results once the request passes 85% of the window.
+- History replay: tool results stay whole only in the last 3 turns, and older ones shrink to
+  320 characters (`RT/messages.go:62-71`). This shrinking is stable from turn to turn.
+- Failover to another provider.
+- The final tool-free answer (below).
+
+**Context.** The window comes from the provider's own setting, or else from a table keyed by
+model id (`aiprovider/contextwindow.go`). Conversations compact at 85% of the window, and
+replay holds at most 120 messages. A tool result is capped at 12,000 characters, and a JSON
+result keeps its fields while its lists are cut (`RT/fence.go`).
+
+**Defects and risks found:**
+
+1. **Sampling reaches only OpenAIChat.** The temperature policy (chat 0.3, classifiers 0)
+   exists to keep small models from degenerating. Ollama, where those models usually run, never
+   receives it, and neither do Anthropic or Responses (`MA/sampling.go`, `MA/openaichat.go:58-68`).
+2. **Ollama never sends `num_ctx`.** The runtime assumes a 128k window, but Ollama serves its own
+   default and truncates silently. `ExtraBody`, where an operator could set the window, is
+   accepted on every provider but applied only on OpenAIChat. This is a likely cause of local
+   models being unreliable. (I verified the field is absent from the code; I have not run it.)
+3. **The tool-free final answer** (`RT/runner.go:633-660`, after the budget is spent or a turn is
+   stuck) sets `req.Tools = nil` while the history still holds tool calls and results.
+   - The Anthropic API has historically rejected such a request ("requests which include
+     tool_use or tool_result blocks must define tools"). `finalAnswer` swallows that error and
+     falls back to the canned line, so the failure would be silent.
+   - It also discards the tools cache prefix.
+   - `tool_choice: none` with the tools kept would avoid both problems.
+   - **Unverified:** no wire fixture covers this request, and I have not seen it fail.
+4. **No provider-native tool search** (Anthropic's tool search tool with `defer_loading`,
+   OpenAI's equivalents) is used. Discovery is entirely Trenova's own `find_tools`.
+5. **Habit fixes exist only for the two benched models.** Every one targets Haiku 5.5 or
+   gpt-6-luna. Gemini, Llama, Qwen, DeepSeek and Ollama have code paths but no bench coverage.
