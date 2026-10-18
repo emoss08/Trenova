@@ -163,6 +163,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentports.RunResult, error) 
 	asked := false
 	stuck := false
 	grounding := groundingState{}
+	browserHeld := false
 	placement := placementState{}
 	for result.ToolCallsUsed < budget && !stuck {
 		s.interject(t, fx)
@@ -238,6 +239,9 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentports.RunResult, error) 
 				}
 				fx.Emit(deltaEvent(emptyReply))
 				return s.finish(result, cannedCompletion(completion, emptyReply), fx), nil
+			}
+			if !asked && s.holdToBrowser(t, fx, completion, &browserHeld) {
+				continue
 			}
 			if s.reground(t, fx, completion, &grounding) {
 				continue

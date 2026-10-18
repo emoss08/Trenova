@@ -71,6 +71,7 @@ type Turn struct {
 	// directed is a task the person handed straight to another agent, which
 	// the turn runs instead of asking its own model.
 	directed *agentports.DirectedTask
+	browser  bool
 	// opened are the marks the turn's own subject, attachments and memories
 	// added when it opened, announced once the loop starts.
 	opened []agent.TaintMark
@@ -278,6 +279,7 @@ type TurnState struct {
 	// Directed is a task the person handed straight to another agent. A
 	// state from before it was kept has none.
 	Directed *agentports.DirectedTask `json:"directed,omitempty"`
+	Browser  bool                     `json:"browser,omitempty"`
 	// TaintOpened are the marks the turn's opening added, still to be
 	// announced. The turn's whole taint is Result.Taint.
 	TaintOpened []agent.TaintMark `json:"taintOpened,omitempty"`
@@ -330,6 +332,7 @@ func (t *Turn) State() TurnState {
 		Delegates:       slices.Clone(t.delegates),
 		Delegations:     t.delegations,
 		Directed:        t.directed,
+		Browser:         t.browser,
 		ExternalContent: t.external,
 		TaintOpened:     slices.Clone(t.opened),
 		World:           t.world.clone(),
@@ -398,6 +401,7 @@ func (s *Service) RestoreTurn(req *agentports.RunRequest, state TurnState) *Turn
 		delegates:    state.Delegates,
 		delegations:  state.Delegations,
 		directed:     state.Directed,
+		browser:      state.Browser,
 		opened:       state.TaintOpened,
 		external:     state.ExternalContent,
 		world:        state.World.clone(),
@@ -521,6 +525,7 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentports.RunRequest) *Tur
 		attachments: len(runtimeContext.Attachments) > 0 ||
 			conversation.CarriesAttachments(history),
 	})
+	browser := req.Browser && s.pinBrowser(tools)
 	runtimeContext.ToolsDisclosed = tools.disclosed
 	runtimeContext.Artifacts = tools.offers(publishArtifactName)
 	runtimeContext.Inline = req.Inline
@@ -554,6 +559,9 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentports.RunRequest) *Tur
 	messages, shortened := replayHistoryWithFiles(history, req.Proposals, req.FileTexts)
 	now := turnNow(&runtimeContext)
 	input := req.Input
+	if browser {
+		input = browserInput(input)
+	}
 	var attached agentdefinition.RenderedAttachments
 	if req.Delegation == nil {
 		attached = agentdefinition.RenderAttachments(
@@ -605,6 +613,7 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentports.RunRequest) *Tur
 		},
 		delegates:    delegates,
 		directed:     directedTask(req),
+		browser:      browser,
 		opened:       opened,
 		external:     req.AfterExternalContent,
 		world:        s.watchWorld(ctx, req, now),

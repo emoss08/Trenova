@@ -88,6 +88,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api.GET("/providers/", h.pm.RequirePermission(resource, permission.OpRead), h.listProviders)
 	api.GET("/mentions/", h.pm.RequirePermission(resource, permission.OpRead), h.searchMentions)
 	api.GET("/search/", h.pm.RequirePermission(resource, permission.OpRead), h.searchDesk)
+	api.GET(
+		"/agents/:agentID/browser/",
+		h.pm.RequirePermission(resource, permission.OpRead),
+		h.browserAvailability,
+	)
 	api.GET("/threads/", h.pm.RequirePermission(resource, permission.OpRead), h.listThreads)
 	api.GET(
 		"/threads/shelves/",
@@ -822,6 +827,32 @@ func (h *Handler) searchDesk(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"results": results})
+}
+
+func (h *Handler) browserAvailability(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	actor := requestActorFromAuthContext(authCtx)
+
+	agentID, err := pulid.Parse(c.Param("agentID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	availability, err := h.service.BrowserAvailability(
+		c.Request.Context(),
+		&agentports.BrowserAvailabilityRequest{
+			AgentID:    agentID,
+			TenantInfo: tenantFromAuthContext(authCtx),
+		},
+		&actor,
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, availability)
 }
 
 func (h *Handler) listProviders(c *gin.Context) {

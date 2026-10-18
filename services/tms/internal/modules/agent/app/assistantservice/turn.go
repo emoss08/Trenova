@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -139,6 +140,7 @@ func (s *Service) prepareTurn(
 	content := strings.TrimSpace(req.Content)
 	followUp := req.FollowUpProposalID.IsNotNil() || req.FollowUpPlanID.IsNotNil()
 	resumesWait := req.ResumeWaitID.IsNotNil()
+	browserTask, browser := agentextension.BrowserTask(content)
 	multiErr := errortypes.NewMultiError()
 	switch {
 	case content == "" && !followUp && !resumesWait:
@@ -160,6 +162,13 @@ func (s *Service) prepareTurn(
 		multiErr.Add("content", errortypes.ErrInvalid,
 			"A task for another agent can be at most {0} characters",
 			agentruntime.MaxDelegateTaskRunes)
+	case browser && req.DirectedAgentID.IsNotNil():
+		multiErr.Add("directedAgentId", errortypes.ErrInvalid,
+			"Work in the browser is done by this conversation's agent; "+
+				"send it without naming another")
+	case browser && browserTask == "":
+		multiErr.Add("content", errortypes.ErrRequired,
+			"Say what to do in the browser after /browser")
 	}
 	page := req.Page.Normalized()
 	if page != nil {
@@ -185,6 +194,11 @@ func (s *Service) prepareTurn(
 		return nil, nil, err
 	}
 	definition, history := checks.definition, checks.history
+	if browser {
+		if err = s.assertWorksInBrowser(ctx, actor, definition); err != nil {
+			return nil, nil, err
+		}
+	}
 	attachments, runtimeAttachments := checks.attachments, checks.runtimeAttachments
 	s.showAttachments(ctx, thread, actor, req.TenantInfo, runtimeAttachments)
 
@@ -261,6 +275,7 @@ func (s *Service) prepareTurn(
 		runReq.Publishes = s.artifacts != nil && !runReq.Inline
 		plan.Inline = runReq.Inline
 		runReq.Directed = checks.directed
+		runReq.Browser = browser
 		plan.Timezone = runReq.Context.Timezone
 		plan.Records = runReq.Records
 		plan.Turn = s.runtime.OpenTurn(ctx, runReq).State()

@@ -16,6 +16,7 @@ import {
   mentionPageSchema,
   deskSearchResultListSchema,
   threadBudgetSchema,
+  browserAvailabilitySchema,
   type DeskSearchKind,
   type MentionPageKind,
   type MentionSearchType,
@@ -602,6 +603,14 @@ export class AssistantService {
   public async threadBudget(id: AssistantThread["id"], { signal }: { signal?: AbortSignal } = {}) {
     const response = await api.get(`/assistant/threads/${id}/budget/`, { signal });
     return safeParse(threadBudgetSchema, response, "Assistant Thread Budget");
+  }
+
+  /** Whether the person can send this agent to the browser with /browser. */
+  public async browserAvailability(agentId: string, { signal }: { signal?: AbortSignal } = {}) {
+    const response = await api.get(`/assistant/agents/${encodeURIComponent(agentId)}/browser/`, {
+      signal,
+    });
+    return safeParse(browserAvailabilitySchema, response, "Browser Availability");
   }
 
   /** Asks the people who run AI Control for what the person ran out of. */

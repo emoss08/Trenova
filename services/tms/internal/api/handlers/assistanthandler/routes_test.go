@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
 
@@ -46,9 +47,11 @@ func (e *readOnlyEngine) Check(
 type reachedService struct {
 	agentports.AssistantService
 
-	reached bool
-	listed  *agentports.ListThreadsRequest
-	counted *agentports.CountThreadShelvesRequest
+	reached      bool
+	listed       *agentports.ListThreadsRequest
+	counted      *agentports.CountThreadShelvesRequest
+	browser      *agentports.BrowserAvailabilityRequest
+	browserActor *permissionports.RequestActor
 }
 
 func (s *reachedService) ListThreads(
@@ -107,6 +110,18 @@ func (s *reachedService) SaveProposalEdits(
 	s.reached = true
 
 	return &agentports.ProposalEdits{}, nil
+}
+
+func (s *reachedService) BrowserAvailability(
+	_ context.Context,
+	req *agentports.BrowserAvailabilityRequest,
+	actor *permissionports.RequestActor,
+) (*agentports.BrowserAvailability, error) {
+	s.reached = true
+	s.browser = req
+	s.browserActor = actor
+
+	return &agentports.BrowserAvailability{Available: true}, nil
 }
 
 func call(t *testing.T, method, path, body string) (*reachedService, int) {
@@ -204,5 +219,30 @@ func TestStartingAConversationStillNeedsMoreThanReading(t *testing.T) {
 	service, status := call(t, http.MethodPost, "/assistant/threads/", `{"agentDefinitionId":"x"}`)
 
 	assert.Equal(t, http.StatusForbidden, status)
+	assert.False(t, service.reached)
+}
+
+func TestBrowserAvailabilityNeedsOnlyTheAssistant(t *testing.T) {
+	t.Parallel()
+
+	agentID := pulid.MustNew("agdef_")
+	service, status := call(
+		t, http.MethodGet, "/assistant/agents/"+agentID.String()+"/browser/", "",
+	)
+
+	assert.Equal(t, http.StatusOK, status)
+	require.NotNil(t, service.browser)
+	assert.Equal(t, agentID, service.browser.AgentID)
+	require.NotNil(t, service.browserActor)
+	assert.Equal(t, service.browserActor.OrganizationID, service.browser.TenantInfo.OrgID)
+	assert.Equal(t, service.browserActor.UserID, service.browser.TenantInfo.UserID)
+}
+
+func TestBrowserAvailabilityRefusesAMalformedAgent(t *testing.T) {
+	t.Parallel()
+
+	service, status := call(t, http.MethodGet, "/assistant/agents/not-an-id/browser/", "")
+
+	assert.NotEqual(t, http.StatusOK, status)
 	assert.False(t, service.reached)
 }

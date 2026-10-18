@@ -18,6 +18,7 @@ const COMMAND_ICONS: Record<string, DeskIconName> = {
   quote: "route",
   report: "compass",
   explain: "search",
+  browser: "globe",
   compact: "compact",
 };
 

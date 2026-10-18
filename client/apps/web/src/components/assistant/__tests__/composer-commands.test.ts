@@ -40,9 +40,11 @@ describe("matchSuggestions", () => {
 });
 
 import {
+  BROWSER_COMMAND,
   commandEntries,
   COMPACT_COMMAND,
   fillCommand,
+  isBrowserRequest,
   isScheduleRequest,
   parseSlashCommand,
   SLASH_COMMANDS,
@@ -288,5 +290,53 @@ describe("slash commands in another language", () => {
 
   it("keeps /compact as the command it is", () => {
     expect(fillCommand(COMPACT_COMMAND, [])).toBe("/compact");
+  });
+});
+
+/*
+/browser is offered only where the person can send the agent to the browser,
+so it is never one of the shared commands. Where it is offered it is filled
+like any command, and what is sent is the command with the person's words,
+which the server reads.
+*/
+describe("/browser", () => {
+  it("is not offered unless the composer passes it in", () => {
+    expect(SLASH_COMMANDS.some((command) => command.name === "browser")).toBe(false);
+    expect(parseSlashCommand("/browser check the slot")).toBeNull();
+    expect(commandEntries("bro", []).map((entry) => entry.label)).toEqual([]);
+  });
+
+  it("is listed and filled where the composer passes it in", () => {
+    expect(commandEntries("bro", [], [BROWSER_COMMAND]).map((entry) => entry.label)).toEqual([
+      "/browser",
+    ]);
+
+    const parsed = parseSlashCommand("/browser check the 9am slot at Acme DC", [BROWSER_COMMAND]);
+    expect(parsed?.command).toBe(BROWSER_COMMAND);
+    expect(parsed?.args).toEqual(["check the 9am slot at Acme DC"]);
+    expect(parsed?.complete).toBe(true);
+    expect(parseSlashCommand("/browser ", [BROWSER_COMMAND])?.complete).toBe(false);
+  });
+
+  it("sends the command with the person's words for the server to read", () => {
+    expect(fillCommand(BROWSER_COMMAND, [" check the 9am slot at Acme DC "])).toBe(
+      "/browser check the 9am slot at Acme DC",
+    );
+  });
+});
+
+describe("isBrowserRequest", () => {
+  it("reads the command the way the server does", () => {
+    expect(isBrowserRequest("/browser check the 9am slot")).toBe(true);
+    expect(isBrowserRequest("  /BROWSER look up PO 4512 ")).toBe(true);
+    expect(isBrowserRequest("/browser\nbook the slot")).toBe(true);
+    expect(isBrowserRequest("/browser")).toBe(true);
+  });
+
+  it("ignores another word that starts the same, or the command later in a sentence", () => {
+    expect(isBrowserRequest("/browsers list them")).toBe(false);
+    expect(isBrowserRequest("/browse the portal")).toBe(false);
+    expect(isBrowserRequest("use /browser to check")).toBe(false);
+    expect(isBrowserRequest("")).toBe(false);
   });
 });
