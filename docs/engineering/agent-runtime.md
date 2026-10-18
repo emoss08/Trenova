@@ -81,8 +81,7 @@ over a `Turn`) from workflow code, through the `TurnEffects` seam:
   twice (`maxRepeatedFailures`), it stops calling tools, answers any other
   call in that batch as not run, and asks for an answer without tools under
   `stuckNote`, which says to tell the person what was refused and what they
-  can do instead (`agent-loop-stop-on-repeats`; `stuckReply` when that answer
-  cannot be had). Schemas are compiled once per tool (`toolschema.Validator`); every
+  can do instead (`stuckReply` when that answer cannot be had). Schemas are compiled once per tool (`toolschema.Validator`); every
   object in a tool's schema is closed and every enum names its source
   (`agenttoolschema.Enum`, `x-enumOf`, stripped by `toolschema.ForModel`),
   which `agenttoolpolicy/schema_contract_test.go` holds. A tool that
@@ -105,9 +104,7 @@ over a `Turn`) from workflow code, through the `TurnEffects` seam:
   outside-content flags the turn had when the batch started, which a query tool
   never reads; a write after it always waits for the batch. In process
   (`localEffects`, the red-team harness) the reads run one after another, since
-  a request's context may carry a transaction. Behind
-  `agent-loop-concurrent-reads`, asked only when a second read would join, and
-  a turn state without `Reads` runs every call on its own.
+  a request's context may carry a transaction.
 - `find_tools` and `publish_artifact` are activities of their own. Call ids
   are minted through `workflow.SideEffect`, so a replay reads back the same id.
   An id an adapter made up from the call's position (Ollama, and an
@@ -200,8 +197,8 @@ keep a small ceiling from ending every turn partway through a tool call:
   room, that the named tool was not filed, the limits it hit, and to raise **Max tokens**
   on the provider. A plain long answer cut by the limit keeps `truncationNotice`.
 
-The retry is one more model activity, so it is behind the `agent-loop-cut-off-call-retry`
-gate, asked only of a completion that meets the condition.
+The retry is one more model activity, scheduled only for a completion that meets the
+condition.
 
 ### Speaking to Claude
 
@@ -894,8 +891,8 @@ returns the turn to watch. `POST /threads/:id/messages/` starts the same
 workflow and waits for its result; `POST /ask/` opens the hidden thread and
 starts a turn on it.
 
-1. **Prepare** runs as a local activity on the worker running the workflow
-   (`assistant-turn-prepare-local`), so the turn's first workflow task prepares
+1. **Prepare** runs as a local activity on the worker running the workflow,
+   so the turn's first workflow task prepares
    it and schedules the model call without a task-queue dispatch or a second
    workflow task in between. It reads the thread, history, files and mentions,
    checks budget and room, and runs the scope guard. After the thread, every check and read runs
@@ -1214,8 +1211,8 @@ reply.
 - **Steer** (`steer: true`, the composer's send gesture while a reply runs) also
   signals the turn's workflow on `agentflow.SteerSignal` with the row's id and
   words. The loop reads the signal between steps, before its next model call
-  (`TurnEffects.Interject`); reading a signal records no command, so the change
-  is asked about (`agent-loop-interjections`) only when one is waiting. The words
+  (`TurnEffects.Interject`); reading a signal records no command, and the loop
+  reads one only when one is waiting. The words
   reach the model framed by `agentruntime.SteerPrompt` and are saved as a
   `Steer` message, which history replay frames the same way and which does not
   count as a turn of its own. The reader gets a `steered` event. A message with
@@ -1677,12 +1674,11 @@ multi-word field (derived with `toolschema.Walk`, ids left out) must carry a
 value in some filed call, or be named in its filing result, before the reply
 may say it is part of the change. A sentence that says the thing was left out
 is not a claim, and neither is one that offers to add it ("If you have the receipt, I can add the
-vendor and transaction reference": `offerPhrases`, behind `agent-loop-grounding-offers-not-claims`);
+vendor and transaction reference": `offerPhrases`);
 a field the reply also states in a sentence that is not an offer is still held to the filed call. A one-word name counts only at the top of a call: the `codes` of
 each requirement in `apply_edi_connection_draft` is a word an EDI reply spends
 on a guide's charge codes and status codes, and holding it to the filed
-requirements rewrote replies that never said the change carried any
-(`agent-loop-grounding-top-level-words`). A hit discards the reply once, the way a looping reply is (a
+requirements rewrote replies that never said the change carried any. A hit discards the reply once, the way a looping reply is (a
 `retrying` event, then the draft and a correction to the model); a reply that
 still drifts, or one written after the tool budget was spent, ends with a note
 to check the card. Each is a `reply_regrounded` event in the run's trajectory.
@@ -1690,7 +1686,7 @@ The LLM judge that scores the same thing stays in the evaluations.
 
 A reply that files nothing is held to less: only its money and percentages
 (`numberguard.CheckAmounts`), and only once the conversation has read a tool's result, in this
-turn or a replayed one (`agent-loop-grounding-read-amounts`). Those are the figures a model that
+turn or a replayed one. Those are the figures a model that
 totals, averages or divides in its head writes; asked what share of a month's billing was still
 open, an agent that had read both totals stated 52.3% without running anything (DB-186). A count,
 a year, a clock time or a limit the trade knows (the 70-hour rule) is left alone, because a reply
@@ -1699,7 +1695,7 @@ what the trade knows. The sum or difference of two figures in the person's own q
 stated: told a check was 3,200 against a 3,700 invoice, "$500 short" restates them (the first
 twelve figures of the question are paired). A figure that is one sum, difference, product or quotient of two figures the reply itself gives,
 each of them read, is shown working rather than worked in the agent's head (`numberguard.Worked`,
-behind `agent-loop-grounding-worked-figures`, for filed changes too): "$6,050,147.60 is open,
+for filed changes too): "$6,050,147.60 is open,
 $50,147.60 without the $6,000,000 invoice" and "112 gallons at $3.89 come to $435.68" were each
 rewritten after an analysis nobody needed, while a wrong result is still unsupported, and a share
 whose two sides the reply leaves out still goes to `analyze_data`. The person's own figures are
@@ -1710,8 +1706,9 @@ leave out what the tools do not give. A rewrite that still states one ends with 
 the figures to check. The bench fails a step whose reply either guard corrected ("reply grounded
 without a correction").
 
-Both checks read figures the same way (`numberguard.Reading`; a gated execution keeps the reading
-it decided with, `ReadJoined` or `ReadSeparated`, and new ones read with `ReadCodesApart`). A comma is a thousands
+Both checks read figures the same way (`numberguard.Reading`): a reply is first narrowed with
+`ReadSeparated`, and what it still cites is checked, with the reply's working counted, under
+`ReadCodesApart`. A comma is a thousands
 separator only before three digits and never inside JSON (after `[`, `:` or `,`, or before `]`,
 `}` or a comma with no space after it), so each number of a tool's JSON array
 (`[172.5,12937.5,0.708]`, `[50,150,250]`) counts as read; read as one run, it never parsed, and
@@ -1720,16 +1717,13 @@ slash or colon (a date, a clock time, a 31-60 bucket, a phone number), one glued
 (`INV2610000001`, `HL-30117`), an ordinal, and the day or year of a date written with its month
 ("September 29 and 30", "Dec 26–31, 2026") are not figures, and neither are a number written with
 a leading zero, one listed after an identifier as a shortened form of it ("INV2610000103, 104, 099")
-or a bare year ("Dates (2027)"), which ReadCodesApart adds behind
-`agent-loop-grounding-worked-figures`. A figure is the same as one it rounds to its last
+or a bare year ("Dates (2027)"), which `ReadCodesApart` adds. A figure is the same as one it rounds to its last
 written digit ("$57K" for 57,323.83, "43%" for 0.4343), as well as one within the proportional
 tolerance. A conversation holding a file the model reads itself (a PDF or an
 image no text was taken from, `Message.Files`) has no figure checked, since the guard cannot see
 what the model read on the page. A proposal's result replayed as what became of it, or cut short
 as an older result, counts whole as read (the replay's `shortened`, carried as `Turn.evidence`).
-A filed change's check decided the old way in executions started before
-`agent-loop-grounding-figures-as-read`; the workflow is asked only when the two readings disagree
-on whether the reply cites anything unsupported. Every correction ends by telling the model that
+Every correction ends by telling the model that
 the person sees neither it nor the reply it replaces: told only what was wrong, a rewrite opened
 "You're right, the 99% was my own arithmetic" to a person who never saw the 99%.
 
@@ -1753,7 +1747,7 @@ passes sit beneath the prompt's rules, not in place of them.
 
 Artifact links are then held to the contract in
 [desk-artifacts.md](desk-artifacts.md#naming-and-linking-artifacts) on every final reply the
-person reads (`placement.go`, behind `agent-loop-artifact-placement`; a delegate's reply is read
+person reads (`placement.go`; a delegate's reply is read
 by the agent that asked, which names what it needs in its own). The check is exact, not a
 judgement: a link stands outside a sentence when the sentence around it, split at `.`, `!` or `?`
 before a space, holds no word once the links are taken out, or when it sits in a table row, a
@@ -1764,7 +1758,7 @@ later version takes the earlier one's place in `Turn.keepShown`), or names an id
 conversation never held is discarded once, the way
 the grounding guard does it, unless leaving out an artifact it must name is its only fault: that
 reply is not asked again but ends with one sentence naming what it left out (`reply_regrounded`
-`place_artifacts`, then `reply_replaced`, behind `agent-loop-artifact-placement-name-left-out`).
+`place_artifacts`, then `reply_replaced`).
 Leaving out a table it searched (Shipments, Invoices, Time offs) was 14 of the 16 placement
 restarts in a run over every scenario, and each one showed the person a finished answer starting
 over to add a link. Otherwise the reply is discarded once: a `retrying` event, a `reply_regrounded` `relink_artifacts`, and a
@@ -2411,9 +2405,11 @@ Until launch, workflow code carries no `workflow.GetVersion` gates and keeps no
 branch, activity or registration for executions started on older code. Trenova has
 no production deployment, so a change that reorders, adds or removes a command
 changes the workflow in place: the development Temporal namespace is reset, and the
-recorded histories (`agentjobs/testdata/replay-loop`, `assistantjobs/testdata/replay`,
-`agentqualityjobs/testdata/replay`) are recorded again from the new code with each
-package's `replayrecord`-tagged recorder. The replay tests still catch a workflow
+recorded histories (`agentjobs/testdata/replay-loop`, `assistantjobs/testdata/replay`)
+are recorded again from the new code with each package's `replayrecord`-tagged
+recorder against `temporal server start-dev`. The histories there now were recorded
+that way and carry no version markers. `agentqualityjobs` has a recorder and a replay
+test but no histories yet, so its test skips. The replay tests still catch a workflow
 that no longer replays its own histories.
 
 **Version gates return as a launch requirement.** From the first production
