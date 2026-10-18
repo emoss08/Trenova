@@ -33,12 +33,6 @@ var asyncAIExtractionActivityOptions = workflow.ActivityOptions{
 	RetryPolicy:         defaultRetryPolicy,
 }
 
-// pollOnTimerChange marks where an extraction stopped waiting in an activity
-// the global poller completed. One started before it finishes that way.
-const pollOnTimerChange = "document-ai-extraction-timer-poll"
-
-const shadowExtractionChange = "document-ai-extraction-shadow"
-
 var considerShadowActivityOptions = workflow.ActivityOptions{
 	StartToCloseTimeout: time.Minute,
 	RetryPolicy: &temporal.RetryPolicy{
@@ -68,11 +62,6 @@ var pollAIExtractionActivityOptions = workflow.ActivityOptions{
 	RetryPolicy:         defaultRetryPolicy,
 }
 
-var pollPendingAIExtractionsActivityOptions = workflow.ActivityOptions{
-	StartToCloseTimeout: 2 * time.Minute,
-	RetryPolicy:         defaultRetryPolicy,
-}
-
 func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 	return []temporaltype.WorkflowDefinition{
 		{
@@ -92,12 +81,6 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 			Fn:          ProcessDocumentAIExtractionWorkflow,
 			TaskQueue:   temporaltype.DocumentIntelligenceTaskQueue,
 			Description: "Run asynchronous AI extraction for an indexed document",
-		},
-		{
-			Name:        "PollPendingDocumentAIExtractionsWorkflow",
-			Fn:          PollPendingDocumentAIExtractionsWorkflow,
-			TaskQueue:   temporaltype.DocumentIntelligenceTaskQueue,
-			Description: pollPendingAIExtractionsDescription,
 		},
 	}
 }
@@ -180,18 +163,12 @@ func ReconcileDocumentIntelligenceWorkflow(
 // submits the extraction, waits for the model on a durable timer, polling
 // until it answers or the longest wait passes, and applies what came back.
 //
-// Waiting here, rather than in an activity a global poller completes by task
-// token, puts the whole extraction in one execution's history: the submit,
-// every poll, and the apply, each visible in the Temporal UI.
+// Waiting here puts the whole extraction in one execution's history: the
+// submit, every poll, and the apply, each visible in the Temporal UI.
 func ProcessDocumentAIExtractionWorkflow(
 	ctx workflow.Context,
 	payload *ProcessDocumentAIExtractionPayload,
 ) (*ProcessDocumentAIExtractionResult, error) {
-	if workflow.GetVersion(ctx, pollOnTimerChange, workflow.DefaultVersion, 1) ==
-		workflow.DefaultVersion {
-		return extractWithTaskToken(ctx, payload)
-	}
-
 	var a *Activities
 	submitCtx := workflow.WithActivityOptions(ctx, submitAIExtractionActivityOptions)
 	var progress AIExtractionProgress
@@ -220,26 +197,6 @@ func ProcessDocumentAIExtractionWorkflow(
 	return applyAIExtraction(ctx, payload, progress.Completion)
 }
 
-// extractWithTaskToken is the extraction as it was before the workflow polled
-// on its own timer: one activity the global poller completes by task token.
-// It runs only executions that started on it, and must not change.
-func extractWithTaskToken(
-	ctx workflow.Context,
-	payload *ProcessDocumentAIExtractionPayload,
-) (*ProcessDocumentAIExtractionResult, error) {
-	ctx = workflow.WithActivityOptions(ctx, asyncAIExtractionActivityOptions)
-
-	var a *Activities
-	var completion *AsyncAIExtractionCompletion
-	if err := workflow.ExecuteActivity(
-		ctx, a.SubmitAndAwaitDocumentAIExtractionActivity, payload,
-	).Get(ctx, &completion); err != nil {
-		return nil, err
-	}
-
-	return applyAIExtraction(ctx, payload, completion)
-}
-
 func applyAIExtraction(
 	ctx workflow.Context,
 	payload *ProcessDocumentAIExtractionPayload,
@@ -266,9 +223,7 @@ func applyAIExtraction(
 		return nil, err
 	}
 
-	if workflow.GetVersion(ctx, shadowExtractionChange, workflow.DefaultVersion, 1) == 1 {
-		considerShadow(ctx, payload)
-	}
+	considerShadow(ctx, payload)
 
 	return result, nil
 }
@@ -295,60 +250,4 @@ func considerShadow(ctx workflow.Context, payload *ProcessDocumentAIExtractionPa
 			"error", err,
 		)
 	}
-}
-
-func PollPendingDocumentAIExtractionsWorkflow(
-	ctx workflow.Context,
-	payload *PollPendingDocumentAIExtractionsPayload,
-) (*PollPendingDocumentAIExtractionsResult, error) {
-	activityCtx := workflow.WithActivityOptions(ctx, pollPendingAIExtractionsActivityOptions)
-	logger := workflow.GetLogger(ctx)
-	if payload == nil {
-		payload = &PollPendingDocumentAIExtractionsPayload{}
-	}
-
-	var a *Activities
-	var tenantsResult *ListDocumentIntelligenceTenantsResult
-	if err := workflow.ExecuteActivity(
-		activityCtx,
-		a.ListPollableDocumentAIExtractionTenantsActivity,
-		payload,
-	).Get(ctx, &tenantsResult); err != nil {
-		return nil, err
-	}
-
-	result := &PollPendingDocumentAIExtractionsResult{}
-	result.TenantsScanned = len(tenantsResult.Tenants)
-	for _, tenant := range tenantsResult.Tenants {
-		tenantPayload := *payload
-		tenantPayload.OrganizationID = tenant.OrganizationID
-		tenantPayload.BusinessUnitID = tenant.BusinessUnitID
-		tenantPayload.Limit = temporaljobs.NormalizeLimit(
-			tenant.Limit,
-			temporaljobs.DefaultTenantRecordLimit,
-		)
-
-		var tenantResult *PollPendingDocumentAIExtractionsResult
-		if err := workflow.ExecuteActivity(
-			activityCtx,
-			a.PollPendingDocumentAIExtractionsActivity,
-			&tenantPayload,
-		).Get(ctx, &tenantResult); err != nil {
-			logger.Error("Document AI extraction polling tenant failed",
-				"orgId", tenant.OrganizationID.String(),
-				"buId", tenant.BusinessUnitID.String(),
-				"error", err,
-			)
-			result.AddFailure(tenant, err)
-			continue
-		}
-
-		processed := tenantResult.Completed + tenantResult.Pending + tenantResult.Failed
-		result.AddTenantResult(processed, 0)
-		result.Completed += tenantResult.Completed
-		result.Pending += tenantResult.Pending
-		result.Failed += tenantResult.Failed
-	}
-
-	return result, nil
 }

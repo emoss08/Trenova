@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -121,14 +120,9 @@ func (a *Activities) startAIExtractionWorkflow(
 // It returns the completion when there is nothing to wait for: the extraction
 // was superseded or already settled, or the router answered inline. A nil
 // completion means the model is still working on it.
-//
-// taskToken is kept on the record for an execution that waits on the old
-// poller to complete its activity. An execution that polls on its own timer
-// keeps none, which is also what keeps the old poller away from its record.
 func (a *Activities) submitAIExtraction( //nolint:funlen // async submission with idempotency checks
 	ctx context.Context,
 	payload *ProcessDocumentAIExtractionPayload,
-	taskToken []byte,
 ) (*AsyncAIExtractionCompletion, error) {
 	if a.aiExtractionRepo == nil {
 		return nil, temporal.NewNonRetryableApplicationError(
@@ -183,7 +177,6 @@ func (a *Activities) submitAIExtraction( //nolint:funlen // async submission wit
 		WorkflowID:     info.WorkflowExecution.ID,
 		WorkflowRunID:  info.WorkflowExecution.RunID,
 		ActivityID:     info.ActivityID,
-		TaskToken:      taskToken,
 		Status:         documentaiextraction.StatusPending,
 	}
 	row, err = a.aiExtractionRepo.SavePending(ctx, row)
@@ -299,26 +292,6 @@ func (a *Activities) submitAIExtraction( //nolint:funlen // async submission wit
 	return nil, nil
 }
 
-// SubmitAndAwaitDocumentAIExtractionActivity submits the extraction and leaves
-// the activity open for the poller to complete with its task token. It serves
-// only executions started before the workflow polled on its own timer.
-func (a *Activities) SubmitAndAwaitDocumentAIExtractionActivity(
-	ctx context.Context,
-	payload *ProcessDocumentAIExtractionPayload,
-) (*AsyncAIExtractionCompletion, error) {
-	completion, err := a.submitAIExtraction(
-		ctx, payload, append([]byte(nil), activity.GetInfo(ctx).TaskToken...),
-	)
-	if err != nil {
-		return nil, err
-	}
-	if completion == nil {
-		return nil, activity.ErrResultPending
-	}
-
-	return completion, nil
-}
-
 // SubmitDocumentAIExtractionActivity submits the extraction and returns at
 // once. The workflow waits on a durable timer and polls for the answer.
 func (a *Activities) SubmitDocumentAIExtractionActivity(
@@ -328,7 +301,7 @@ func (a *Activities) SubmitDocumentAIExtractionActivity(
 	stop := modelcall.Heartbeat(ctx)
 	defer stop()
 
-	completion, err := a.submitAIExtraction(ctx, payload, []byte{})
+	completion, err := a.submitAIExtraction(ctx, payload)
 	if err != nil {
 		return nil, err
 	}
@@ -375,59 +348,6 @@ func (a *Activities) PollDocumentAIExtractionActivity(
 	a.settleExtraction(ctx, row, completion, now.Unix())
 
 	return &AIExtractionProgress{Completion: completion}, nil
-}
-
-// PollPendingDocumentAIExtractionsActivity completes the activities of
-// executions that wait on a task token. It serves only executions started
-// before the workflow polled on its own timer, and records without a task
-// token are not listed for it.
-func (a *Activities) PollPendingDocumentAIExtractionsActivity(
-	ctx context.Context,
-	payload *PollPendingDocumentAIExtractionsPayload,
-) (*PollPendingDocumentAIExtractionsResult, error) {
-	result := &PollPendingDocumentAIExtractionsResult{}
-	if a.aiExtractionRepo == nil || a.temporalClient == nil {
-		return result, nil
-	}
-
-	now := time.Now()
-	rows, err := a.aiExtractionRepo.ListPollable(
-		ctx,
-		&documentaiextractionports.ListPollableDocumentAIExtractionRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: payload.OrganizationID,
-				BuID:  payload.BusinessUnitID,
-			},
-			OlderThan: now.Add(-documentAIExtractionPollInterval).Unix(),
-			Limit:     payload.Limit,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, row := range rows {
-		completion := a.pollExtraction(ctx, row, now)
-		if completion == nil {
-			a.touchExtraction(ctx, row)
-			result.Pending++
-
-			continue
-		}
-
-		if !a.completeAsyncAIActivity(ctx, row, completion) {
-			continue
-		}
-
-		a.settleExtraction(ctx, row, completion, now.Unix())
-		if completion.Status == documentaiextractionports.AIBackgroundExtractionStatusCompleted {
-			result.Completed++
-		} else {
-			result.Failed++
-		}
-	}
-
-	return result, nil
 }
 
 // pollExtraction asks the model whether a submitted extraction is done, and
@@ -510,8 +430,7 @@ func timedOutExtraction(row *documentaiextraction.Extraction) *AsyncAIExtraction
 	}
 }
 
-// touchExtraction records that a pending extraction was polled, so the next
-// poll of many goes to the one asked about longest ago.
+// touchExtraction records that a pending extraction was polled.
 func (a *Activities) touchExtraction(ctx context.Context, row *documentaiextraction.Extraction) {
 	if _, err := a.aiExtractionRepo.Update(ctx, row); err != nil {
 		a.logger.Warn(
@@ -547,31 +466,6 @@ func (a *Activities) settleExtraction(
 			zap.Error(err),
 		)
 	}
-}
-
-func (a *Activities) ListPollableDocumentAIExtractionTenantsActivity(
-	ctx context.Context,
-	payload *PollPendingDocumentAIExtractionsPayload,
-) (*ListDocumentIntelligenceTenantsResult, error) {
-	if a.aiExtractionRepo == nil {
-		return &ListDocumentIntelligenceTenantsResult{}, nil
-	}
-
-	tenants, err := a.aiExtractionRepo.ListPollableTenants(
-		ctx,
-		&documentaiextractionports.ListPollableDocumentAIExtractionRequest{
-			OlderThan: time.Now().Add(-documentAIExtractionPollInterval).Unix(),
-			Limit:     temporaljobs.DefaultTenantScanLimit,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	tenantLimit := temporaljobs.NormalizeLimit(payload.Limit, temporaljobs.DefaultTenantRecordLimit)
-	return &ListDocumentIntelligenceTenantsResult{
-		Tenants: temporaljobs.BuildTenantWorkItems(tenants, tenantLimit),
-	}, nil
 }
 
 func (a *Activities) ApplyDocumentAIExtractionResultActivity(
@@ -813,36 +707,6 @@ func aiAcceptanceStatusFromStructuredData(structured map[string]any) string {
 	}
 
 	return string(aiAcceptanceStatusNotAttempted)
-}
-
-func (a *Activities) completeAsyncAIActivity(
-	ctx context.Context,
-	row *documentaiextraction.Extraction,
-	completion *AsyncAIExtractionCompletion,
-) bool {
-	if row == nil || len(row.TaskToken) == 0 || completion == nil {
-		return false
-	}
-
-	if err := a.temporalClient.CompleteActivity(ctx, row.TaskToken, completion, nil); err != nil {
-		var notFound *serviceerror.NotFound
-		if errors.As(err, &notFound) {
-			a.logger.Warn(
-				"pending AI extraction activity no longer exists",
-				zap.String("documentId", row.DocumentID.String()),
-				zap.Error(err),
-			)
-			return true
-		}
-		a.logger.Warn(
-			"failed to complete pending AI extraction activity",
-			zap.String("documentId", row.DocumentID.String()),
-			zap.Error(err),
-		)
-		return false
-	}
-
-	return true
 }
 
 func hashAIExtractionRequest(fileName, text string, pages []*documentcontent.Page) string {
