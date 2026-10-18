@@ -8,7 +8,7 @@
     "X-Api-Key": "sk-test"
   },
   "body": {
-    "max_tokens": 512,
+    "max_tokens": 10240,
     "messages": [
       {
         "content": [
@@ -146,6 +146,10 @@
         "type": "text"
       }
     ],
+    "thinking": {
+      "display": "summarized",
+      "type": "adaptive"
+    },
     "tools": [
       {
         "description": "Look up a shipment by its number",

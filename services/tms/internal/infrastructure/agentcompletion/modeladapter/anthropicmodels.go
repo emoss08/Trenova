@@ -12,6 +12,9 @@ type anthropicModel struct {
 	adaptive bool
 	// thinksAlways models refuse thinking.type "disabled" at every effort.
 	thinksAlways bool
+	// thinksUnasked models think adaptively when a request says nothing
+	// about thinking, and leave the summary out unless it is asked for.
+	thinksUnasked bool
 	// disableRefused models refuse "disabled"; their own off switch takes no
 	// other field, so the least thinking is adaptive at low effort.
 	disableRefused bool
@@ -65,17 +68,22 @@ func anthropicTraits(model string) anthropicModel {
 	switch claude.Family {
 	case aiprovider.ClaudeFamilyOpus:
 		traits.thinksAlways = version >= 55
+		traits.thinksUnasked = version >= 50
 		traits.bindsPrefix = version >= 55
 		traits.disableNeedsLowEffort = version == 50
 	case aiprovider.ClaudeFamilySonnet:
 		traits.disableRefused = version >= 55
+		traits.thinksUnasked = version >= 50
 		traits.bindsPrefix = version >= 55
 	case aiprovider.ClaudeFamilyFable:
 		traits.thinksAlways = true
+		traits.thinksUnasked = true
 		traits.bindsPrefix = version >= 51
 	case aiprovider.ClaudeFamilyMythos:
 		traits.thinksAlways = true
+		traits.thinksUnasked = true
 	case aiprovider.ClaudeFamilyHaiku:
+		traits.thinksUnasked = version >= 55
 		traits.disableNeedsLowEffort = version >= 55
 	}
 
