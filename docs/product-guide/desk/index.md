@@ -116,19 +116,13 @@ Keywords: at mention, @ mention, reference a load, tag a shipment, point the age
 4. The record shows in your message and goes with it, so the agent looks up that exact record. Delete the @name from the text to drop it.
 
 ### Use a slash command
-Keywords: slash command, shortcut, /status, /quote, /report, /explain, quick question
+Keywords: slash command, shortcut, /status, /quote, /report, /explain, /browser, browser, portal, quick question
 1. In an empty message box, type /. The list shows **Commands** first, then the agent's starter questions.
 2. Use ↑ ↓ to pick one, then Enter or Tab. A starter question is sent as it is.
 3. For a command that needs details, such as /status (a PRO or shipment number), /quote (origin and destination city) or /report (a report name), type each one after the command. The grey hints show what is still missing, and **Desk will be asked** shows the full question.
 4. Press Enter once every detail is filled in. Press Esc to send what you typed as plain text instead.
 5. /explain asks the agent to explain the page you came from.
-
-### Have the agent do something in the browser
-Keywords: /browser, browser, portal, web portal, dock appointment portal, carrier portal, look it up on the portal, browser use
-1. In an empty message box, type /browser, then what to do, such as "check whether the 9am slot at Acme DC is still open".
-2. Press Enter. The agent works it on one of your organization's portal sites in a cloud browser: it finds the site, looks the answer up there, and proposes any change to the portal for you to approve.
-3. If it answers without opening the portal, it is sent back to the browser once. When no site fits, it says so and names the sites there are.
-4. /browser is listed only when portal automation is turned on in [AI control](/admin/agent-control?tab=extensions), the agent you are talking to can use the portal tools, and you have permission to use them. Typed while the agent is still replying, it waits and goes as its own question once the reply ends.
+6. /browser, then what to do (such as "check whether the 9am slot at Acme DC is still open"), has the agent do it in a cloud browser on one of your organization's portal sites: it finds the site, looks the answer up there, and proposes any change to the portal for you to approve. If it answers without opening the portal, it is sent back to the browser once; when no site fits, it says so and names the sites there are. /browser is listed only when portal automation is turned on in [AI control](/admin/agent-control?tab=extensions), the agent you are talking to can use the portal tools, and you have permission to use them. Typed while the agent is still replying, it waits and goes as its own question once the reply ends.
 
 ### Attach files to a message
 Keywords: attach, upload, add a document, send a PDF, rate confirmation, BOL, spreadsheet, drag and drop
