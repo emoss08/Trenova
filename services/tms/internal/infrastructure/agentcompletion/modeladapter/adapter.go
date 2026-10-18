@@ -38,10 +38,7 @@ type Request struct {
 	SchemaName string
 	// Tools the model may ask for. Offering tools and demanding a JSON schema at
 	// once confuses most endpoints, so callers set one or the other.
-	Tools []ToolSpec
-	// ToolChoiceNone keeps Tools declared but tells the model it may not call
-	// one, so a final answer forced mid-turn leaves the cached prefix alone and
-	// the history's tool calls still name tools the request defines.
+	Tools          []ToolSpec
 	ToolChoiceNone bool
 	MaxTokens      int
 	// Sampling is how adventurously the model may pick its next token. An

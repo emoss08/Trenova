@@ -200,12 +200,6 @@ func TestWithdrawProposal_IsNotDeclaredWhereNothingCanBeProposed(t *testing.T) {
 	assert.NotContains(t, offered(completion.Requests[0]), withdrawProposalName)
 }
 
-/*
-The tool list is the head of the cached prompt, and on Opus, Sonnet and Haiku
-5.5 every replayed thinking block is bound to it. A turn that proposes, then
-keeps working, then withdraws and proposes again sends the same tools on every
-model call.
-*/
 func TestTurn_SendsTheSameToolsOnEveryModelCall(t *testing.T) {
 	t.Parallel()
 

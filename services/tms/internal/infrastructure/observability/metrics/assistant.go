@@ -311,9 +311,6 @@ type GuardReaskLabels struct {
 	Provider string
 }
 
-// RecordGuardReask files one model call the runtime made again because a
-// guard (grounding, placement, a held command, an empty or looping reply, a
-// cut-off call, a spent budget) sent the answer back.
 func (m *Assistant) RecordGuardReask(labels GuardReaskLabels) {
 	if !m.enabled() {
 		return

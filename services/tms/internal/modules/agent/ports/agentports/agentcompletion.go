@@ -96,15 +96,12 @@ type ChatCompletionRequest struct {
 	// SystemStable is how many leading bytes of System are the same on every
 	// turn, which a provider that caches by explicit mark can cache apart from
 	// the turn's own part. Zero treats the whole prompt as one.
-	SystemStable int
-	Messages     []Message
-	Tools        []kernelports.ToolSpec
-	// ToolChoiceNone keeps Tools declared and forbids calling any of them.
-	ToolChoiceNone bool `json:"toolChoiceNone,omitempty"`
-	// Reask names the runtime guard that sent the previous answer back and
-	// asked again, empty on an ordinary step of the loop.
-	Reask     string `json:"reask,omitempty"`
-	MaxTokens int
+	SystemStable   int
+	Messages       []Message
+	Tools          []kernelports.ToolSpec
+	ToolChoiceNone bool   `json:"toolChoiceNone,omitempty"`
+	Reask          string `json:"reask,omitempty"`
+	MaxTokens      int
 	// PreferredProviderID asks for one configured provider first. It is honoured
 	// only when that provider is enabled and serves the task; otherwise the usual
 	// priority order applies, so a deleted preference never strands an agent.

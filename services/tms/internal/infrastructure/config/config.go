@@ -806,6 +806,9 @@ type AIConfig struct {
 	// about for a short while.
 	CacheDiagnostics bool `mapstructure:"cacheDiagnostics"`
 	MaxRetries       int  `mapstructure:"maxRetries"       validate:"omitempty,min=0,max=10"`
+
+	ToolDisclosureThreshold *int `mapstructure:"toolDisclosureThreshold" validate:"omitempty,min=0"`
+
 	// ModelPriceReference fills in a model's price, when the provider's own
 	// model list gives none, from OpenRouter's public catalog, marked as an
 	// estimate. It is a pointer so an absent key keeps it on; a deployment that
@@ -883,6 +886,16 @@ func (c *AIConfig) PrivateNetworkProvidersAllowed() bool {
 // the server's own cloud credentials.
 func (c *AIConfig) ServerCloudCredentialsAllowed() bool {
 	return c != nil && c.ServerCloudCredentials
+}
+
+const DefaultToolDisclosureThreshold = 12
+
+func (c *AIConfig) GetToolDisclosureThreshold() int {
+	if c == nil || c.ToolDisclosureThreshold == nil || *c.ToolDisclosureThreshold < 0 {
+		return DefaultToolDisclosureThreshold
+	}
+
+	return *c.ToolDisclosureThreshold
 }
 
 // CacheDiagnosticsEnabled reports whether model calls ask the Claude API why

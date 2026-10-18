@@ -91,13 +91,9 @@ type Turn struct {
 	toolMemories map[string][]pulid.ID
 	// artifacts are what the turn put beside the conversation, in the order
 	// it did.
-	artifacts []agentports.ShownArtifact
-	// providerKind is the protocol of the provider that answered the latest
-	// model call, which the tool outcome counter is labelled with.
+	artifacts    []agentports.ShownArtifact
 	providerKind aiprovider.Kind
-	// reask is the guard that sent the model's last answer back, carried on
-	// the next request so what each guard costs can be counted.
-	reask string
+	reask        string
 }
 
 // TurnEffects is everything a turn does outside itself.
@@ -519,6 +515,7 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentports.RunRequest) *Tur
 		attachments: len(runtimeContext.Attachments) > 0 ||
 			conversation.CarriesAttachments(history),
 	})
+	s.notePreselected(ctx, req, tools)
 	var command agentextension.Command
 	if req.Command != "" && s.pinCommand(tools, req.Command) {
 		command = req.Command
@@ -834,7 +831,10 @@ func (fx *localEffects) DispatchReads(t *Turn, calls []DispatchCall) []ToolOutco
 }
 
 func (fx *localEffects) Find(t *Turn, arguments map[string]any) FindAnswer {
-	return fx.s.resolveFind(fx.ctx, t.tools, t.req.Actor, arguments)
+	answer := fx.s.resolveFind(fx.ctx, t.tools, t.req.Actor, arguments)
+	fx.s.noteFound(fx.ctx, t.req, t.tools, arguments, &answer)
+
+	return answer
 }
 
 func (fx *localEffects) Emit(event kernelports.StreamEvent) { fx.emit(event) }
@@ -980,6 +980,7 @@ func (s *Service) FindFor(
 
 	before := len(set.specs)
 	answer := s.resolveFind(ctx, set, req.Actor, arguments)
+	s.noteFound(ctx, req, set, arguments, &answer)
 
 	loaded := make([]string, 0, len(set.specs)-before)
 	for _, spec := range set.specs[before:] {

@@ -231,29 +231,6 @@ func statusOf(err error) int {
 	return 0
 }
 
-/*
-Does Haiku 5.5 refuse the history edit Desk makes within a turn?
-
-Haiku 5.5 runs the same preserved-thinking check as Opus and Sonnet 5.5: a
-thinking block replayed after a change to system, tools or earlier messages is a
-400, enforced by default for accounts created on or after 2026-08-31 and, on an
-older account, for any request that sets prefix_mismatch_behavior. The adapter
-sets drop_block only for Opus >= 5.5, Sonnet >= 5.5 and Fable >= 5.1
-(anthropicTraits), and Desk still changes tools mid-turn when find_tools loads
-one. This replays a minted thinking block four ways and reports each:
-
-  honest      the same tools, as every call of a turn that loads nothing
-  as sent     a tool added, exactly as the adapter sends it for this model today
-  forced      the same edit with prefix_mismatch_behavior "error" (opts any account in)
-  drop_block  the same edit with prefix_mismatch_behavior "drop_block" (what bindsPrefix sends)
-
-It fails only when the honest replay or the request the adapter sends today is
-refused: that is the evidence for setting bindsPrefix on Haiku 5.5, and the
-guard once it is set. Opt in with TRENOVA_LIVE_ANTHROPIC_BINDING=1 and
-ANTHROPIC_API_KEY; TRENOVA_LIVE_ANTHROPIC_MODEL picks another model and
-TRENOVA_LIVE_ANTHROPIC_BASE_URL another endpoint (a gateway production uses). It sends
-five small requests at the model's normal rates.
-*/
 func TestLiveAnthropic_HaikuThinkingBindingOnAMidTurnToolChange(t *testing.T) {
 	if os.Getenv(liveBindingEnv) == "" || os.Getenv(liveBindingKeyEnv) == "" {
 		t.Skipf("live test: set %s=1 and %s to run it", liveBindingEnv, liveBindingKeyEnv)
@@ -283,7 +260,7 @@ func TestLiveAnthropic_HaikuThinkingBindingOnAMidTurnToolChange(t *testing.T) {
 	honest, asSent, forced := arms[0], arms[1], arms[2]
 	require.NoError(t, honest.err, "an unedited replay must be accepted")
 	if forced.err == nil && forced.dropped == 0 {
-		t.Logf("the forced arm was accepted with nothing dropped: the check does not " +
+		t.Logf("the forced arm was accepted with nothing dropped: the check does not "+
 			"see a tool added mid-turn as an edit on %s", model)
 	}
 	require.NoError(t, asSent.err,

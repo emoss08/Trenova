@@ -5,6 +5,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
@@ -69,6 +70,8 @@ type Params struct {
 	// hold names the person's other agents that hold it.
 	Definitions agentdefinitionports.AgentDefinitionRepository `optional:"true"`
 	RateLimits  kernelports.RateLimitStore                     `optional:"true"`
+	Config      *config.Config                                 `optional:"true"`
+	Disclosures agentports.ToolDisclosureObserver              `optional:"true"`
 }
 
 type Service struct {
@@ -90,6 +93,8 @@ type Service struct {
 	rules       agentports.ToolRuleOverrides
 	changes     agentports.RecordChangeFeed
 	metrics     *metrics.Assistant
+	disclosures agentports.ToolDisclosureObserver
+	threshold   *int
 	// arguments holds each tool's compiled schema, against which every
 	// call's arguments are checked before the tool sees them.
 	arguments  *toolschema.Validator
@@ -119,6 +124,8 @@ func New(p Params) *Service {
 		rules:       p.Rules,
 		changes:     p.Changes,
 		metrics:     metrics.AssistantFrom(p.Metrics),
+		disclosures: p.Disclosures,
+		threshold:   configuredThreshold(p.Config),
 		rateLimits:  p.RateLimits,
 		pools:       newMatchPools(),
 		matchable:   matchableTools(p.Catalog),

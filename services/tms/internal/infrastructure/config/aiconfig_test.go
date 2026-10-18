@@ -96,3 +96,17 @@ func TestAIConfig_CacheDiagnosticsAreOffUnlessTurnedOn(t *testing.T) {
 	assert.False(t, (&config.AIConfig{}).CacheDiagnosticsEnabled())
 	assert.True(t, (&config.AIConfig{CacheDiagnostics: true}).CacheDiagnosticsEnabled())
 }
+
+func TestAIConfig_ToolDisclosureThresholdDefaultsToTwelve(t *testing.T) {
+	t.Parallel()
+
+	var absent *config.AIConfig
+	assert.Equal(t, config.DefaultToolDisclosureThreshold, absent.GetToolDisclosureThreshold())
+	assert.Equal(t, 12, (&config.AIConfig{}).GetToolDisclosureThreshold())
+
+	zero, thirty, negative := 0, 30, -1
+	assert.Equal(t, 0, (&config.AIConfig{ToolDisclosureThreshold: &zero}).GetToolDisclosureThreshold())
+	assert.Equal(t, 30, (&config.AIConfig{ToolDisclosureThreshold: &thirty}).GetToolDisclosureThreshold())
+	assert.Equal(t, 12,
+		(&config.AIConfig{ToolDisclosureThreshold: &negative}).GetToolDisclosureThreshold())
+}
