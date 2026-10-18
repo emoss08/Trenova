@@ -172,6 +172,7 @@ func TestRunCodeSaysWhenTheCodeRanOutOfTime(t *testing.T) {
 	t.Parallel()
 
 	connector := serve(t, func(_ http.ResponseWriter, r *http.Request) {
+		_, _ = io.Copy(io.Discard, r.Body)
 		<-r.Context().Done()
 	})
 
