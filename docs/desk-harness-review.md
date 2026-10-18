@@ -36,7 +36,7 @@ again before the reply is accepted (`runner.go:240-262`):
 Every one of these costs a model call when it fires. That matters for Phase 3's
 efficiency question.
 
-(Sections 1.2 to 1.5 and 1.7 are being filled in from parallel audits.)
+(Sections 1.2 to 1.5 are being filled in from parallel audits.)
 
 ### 1.6 Safety of write actions
 
@@ -150,3 +150,94 @@ So every write meant for an agent has a tool. Taken together, Desk's write surfa
 - The guards that rewrite a reply (grounding, artifact placement, loop or empty retry, command
   hold) each cost a model call, and they can stack on one turn.
 - Closed schemas catch an invented field early, but each catch is a round trip.
+
+### 1.7 Evals, traces and recorded failures
+
+Desk has more eval machinery than most production harnesses. It does not yet measure the
+three things this review is about across providers: which tool a model chose, whether the task
+succeeded, and steps and tokens per task.
+
+**What exists**
+
+| Tool | What it measures | Size | Paths |
+|---|---|---|---|
+| Desk bench (`trenova desk run`) | Real turns on a seeded database through the production workflow. Deterministic checks: `calls`, `noCalls`, `maxCalls`, `maxFailedCalls`, `proposals`, `executed`, `replyIncludes/Excludes`, `facts`, `db`, `maxSeconds`. A provider matrix (`--provider A --provider B --repeat N`). | 134 scenarios, 202 steps, 20 files | `services/tms/deskbench/scenarios/`, `internal/deskbench/checks.go` |
+| Rubrics in the bench | 142 of the 202 steps carry a rubric. **None is scored**: each is printed beside the step. | – | `desk-bench.md:203` |
+| Routing bench (`trenova desk route`) | The pre-turn agent matcher. No model is called. | 33 labelled questions | `deskbench/routing/desk.yaml` |
+| Eval gate (CI) | `find_tools` / preselection **ranking**. It does not measure what a model chooses. | 557 keyword cases, 631 hybrid cases (557 plus 74 paraphrases) | `app/agentevalgate`, `evals/toolselection.floors.json` |
+| Quality suites (production) | Replays of captured cases against the live agent. The score is 0.7 deterministic (toolChoice 0.35, arguments 0.25, proposals 0.20, …) plus 0.3 from an LLM judge; a case passes at 0.8. Regression is measured against the median of recent runs. | Cases captured from decided proposals and replies given a thumbs-up | `agentscoring/scoring.go`, `agentqualityservice/judge.go` |
+| Red team | 15 injection cases against 14 invariants. The live baseline was **never measured** (`live-baseline.json`: `"cases":0`). | 15 cases | `app/agentredteam` |
+| Findings log | Every problem the bench has found. | 189 findings: 176 fixed, about 12 open, 1 won't fix | `deskbench/findings.yaml` |
+
+**Ranking floors in CI** (`evals/toolselection.floors.json`). This number matters most for
+the tool-count hypothesis:
+
+| Ranker | Cases | Top-1 | Recall@5 |
+|---|---|---|---|
+| keyword | 557 | 0.98 | 1.00 |
+| hybrid (keyword + embedding, includes paraphrases) | 631 | **0.78** | **0.91** |
+
+A disclosed turn opens with 8 preselected tools. So on paraphrased requests, roughly 1 in 10
+turns can start without the right tool in view: recall@5 is 0.91, and recall@8 is unmeasured
+but must be at least that. Those turns must recover through `find_tools`.
+
+**Which models were tested.** Only two models have ever been benched: `claude-haiku-5-5` (named
+in 119 findings) and `gpt-6-luna` (named in 83). From 2026-10-15 on, only Haiku was run. The
+latest full-bench pass rate on record is 83 of 107 (`603e746dd`). Up to DB-157, both models ran
+as a matrix, and the findings split evenly between them: 48 Haiku only, 43 Luna only, 40 both.
+
+**What the findings say, by cause.** These counts are the audit's own classification, one
+primary category per finding.
+
+| Primary cause | Findings | Haiku only | Luna only | Both |
+|---|---|---|---|---|
+| A product or backend bug, or a missing tool, that the bench exposed | 58 | 28 | 6 | 12 |
+| A description or result shape that misled the model | 33 | 14 | 7 | 11 |
+| Bench infrastructure, a scenario or seed data that went stale | 24 | 6 | 2 | 5 |
+| Tool discovery or selection | 16 | 6 | 8 | 2 |
+| Grounding, invented figures, reply form | 15 | 9 | 1 | 2 |
+| Argument or schema errors | 14 | 7 | 5 | 2 |
+| Loops, running out of budget | 13 | 1 | 10 | 2 |
+| Context or prompt | 9 | 5 | 2 | 2 |
+| Provider or adapter | 7 | 3 | 2 | 2 |
+
+**How failures differ by model.**
+
+- **gpt-6-luna** over-searches. It rewords `find_tools` until the budget is spent, fills every
+  optional parameter, and sends placeholders: `"x"`, `"n/a"`, zeros for pieces and
+  temperatures, and ids made up by swapping a prefix. Part of the cause was the Responses
+  adapter not sending `strict:false` (DB-014, DB-080).
+- **Haiku** states figures that no tool returned (DB-149, still open), files a corrected
+  proposal next to the original one (DB-056, critical), and under-uses a capability it holds
+  (DB-175: `analyze_data` was used in 2/4, 0/4 and 0/4 runs).
+- **Both models**: most failures were the harness telling the model something false. DB-008
+  is the canonical case. `search_shipments` said it matched customer and city, but only matched
+  PRO and BOL numbers. Both models searched "freshhaul", found nothing, and opened shipments one
+  by one until the budget ran out. After the fix, `search_shipments` calls fell from 107 to 44
+  and 5 Luna cases flipped to pass.
+
+**What production can measure today.**
+
+- Traces: an `invoke_agent` root per turn, `chat {model}` spans with cache-normalized tokens,
+  and `execute_tool` spans with their outcome.
+- The `ai_work_units` rollup, per turn, by model and provider: model calls, tool calls, tool
+  failures (split between model-caused and tool-caused), tokens and cost.
+- `assistant_tool_outcomes_total{tool,verdict}`. It has **no model or provider label**.
+
+So steps, tokens and cost per task can already be read by model. Tool-selection accuracy cannot,
+because there are no labels. Task success is only proxied by turn status, proposal decisions and
+thumbs.
+
+**Measurement defects that bias any comparison across providers:**
+
+1. Cache tokens are dropped. `ChatCompletionResult` has no cache fields
+   (`ports/agentports/agentcompletion.go:148-180`), and the Anthropic adapter reports only
+   uncached `input_tokens` (DB-002: a Haiku turn reads "4 in"). OpenAI's input count includes
+   its cached tokens. Both the bench matrix and `ai_work_units.input_tokens` therefore undercount
+   Claude's input heavily, relative to OpenAI. The trace spans normalize this; the rollups do not.
+2. The bench matrix sums tokens across repeats instead of averaging them, and has no cost column
+   (the local Anthropic provider has no prices set).
+3. `--provider default` can fail over mid-run, so one row may mix models.
+4. 13 findings are marked fixed while their `fixedIn` still says "to verify in a run". Two
+   scenarios had their call limits raised instead of the behaviour being fixed (DB-118: 8 → 10;
+   DB-121: 8 → 11).
