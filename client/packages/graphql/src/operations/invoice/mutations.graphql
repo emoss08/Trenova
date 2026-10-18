@@ -19,17 +19,6 @@ mutation CreateInvoicesFromShipments($shipmentIds: [ID!]!, $offCycleReason: Stri
   }
 }
 
-mutation CreateInvoicesFromOrder($orderId: ID!, $offCycleReason: String) {
-  createInvoicesFromOrder(orderId: $orderId, offCycleReason: $offCycleReason) {
-    invoices {
-      ...CreatedInvoiceFields
-    }
-    primary {
-      ...CreatedInvoiceFields
-    }
-  }
-}
-
 mutation VoidInvoice($input: VoidInvoiceInput!) {
   voidInvoice(input: $input) {
     invoice {

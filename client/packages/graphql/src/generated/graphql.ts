@@ -15448,14 +15448,6 @@ export type CreateInvoicesFromShipmentsMutationVariables = Exact<{
 
 export type CreateInvoicesFromShipmentsMutation = { createInvoicesFromShipments: { invoices: Array<{ ' $fragmentRefs'?: { 'CreatedInvoiceFieldsFragment': CreatedInvoiceFieldsFragment } }>, primary: { ' $fragmentRefs'?: { 'CreatedInvoiceFieldsFragment': CreatedInvoiceFieldsFragment } } } };
 
-export type CreateInvoicesFromOrderMutationVariables = Exact<{
-  orderId: string | number;
-  offCycleReason?: string | null | undefined;
-}>;
-
-
-export type CreateInvoicesFromOrderMutation = { createInvoicesFromOrder: { invoices: Array<{ ' $fragmentRefs'?: { 'CreatedInvoiceFieldsFragment': CreatedInvoiceFieldsFragment } }>, primary: { ' $fragmentRefs'?: { 'CreatedInvoiceFieldsFragment': CreatedInvoiceFieldsFragment } } } };
-
 export type VoidInvoiceMutationVariables = Exact<{
   input: VoidInvoiceInput;
 }>;
@@ -18962,7 +18954,7 @@ export { InboundSnoozeFieldsFragmentDoc, TriageActionFieldsFragmentDoc, InboundA
 export { InvoiceApprovalQueueItemFieldsFragmentDoc, InvoiceAdjustmentApprovalsDocument, InvoiceAdjustmentApprovalDetailDocument, InvoiceAdjustmentOperationsSummaryDocument, ApproveInvoiceAdjustmentDocument, RejectInvoiceAdjustmentDocument } from "./documents/invoice-adjustment/approvals";
 export { DeskInvoiceNeighborFragmentDoc, DeskInvoiceCardDocument } from "./documents/invoice/desk";
 export { InvoiceRelatedFieldsFragmentDoc, CreditMemoApplicationFieldsFragmentDoc, InvoiceDisputeFieldsFragmentDoc, InvoiceEdiSendPlanFieldsFragmentDoc, InvoiceArFieldsFragmentDoc, InvoiceArContextDocument, ShipmentInvoicesDocument } from "./documents/invoice/detail";
-export { CreatedInvoiceFieldsFragmentDoc, CreateInvoicesFromShipmentsDocument, CreateInvoicesFromOrderDocument, VoidInvoiceDocument, CreateMemoDocument, SendInvoiceEdiDocument, ApplyCreditMemoDocument, UnapplyCreditMemoApplicationDocument, OpenInvoiceDisputeDocument, ResolveInvoiceDisputeDocument, WithdrawInvoiceDisputeDocument } from "./documents/invoice/mutations";
+export { CreatedInvoiceFieldsFragmentDoc, CreateInvoicesFromShipmentsDocument, VoidInvoiceDocument, CreateMemoDocument, SendInvoiceEdiDocument, ApplyCreditMemoDocument, UnapplyCreditMemoApplicationDocument, OpenInvoiceDisputeDocument, ResolveInvoiceDisputeDocument, WithdrawInvoiceDisputeDocument } from "./documents/invoice/mutations";
 export { InvoiceRegisterRowFieldsFragmentDoc, InvoiceRegisterDocument } from "./documents/invoice/register";
 export { InvoiceTableRowFieldsFragmentDoc, InvoiceTableDocument } from "./documents/invoice/table";
 export { DeskJournalCardLineFieldsFragmentDoc, DeskJournalCardPeriodFieldsFragmentDoc, DeskJournalCardPostingFieldsFragmentDoc, DeskJournalCardPersonFieldsFragmentDoc, DeskJournalCardEntryFieldsFragmentDoc, DeskJournalEntryCardDocument } from "./documents/journal-entry/desk";
