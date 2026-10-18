@@ -1242,7 +1242,6 @@
   "Another record already uses these values. Refresh and try again.": "已有其他记录使用这些值。请刷新后重试。",
   "Another template is already the organization default for this kind. Clear that one first.": "此种类已有另一个模板被设为组织默认。请先取消该设置。",
   "Answer not found within your organization": "您的组织中找不到该回答",
-  "Answer one message to the shipment import assistant, streaming the reply": "回答发给运单导入助手的一条消息，并以流式方式返回回复",
   "Answer one question in a conversation, publishing the reply as it is written": "回答对话中的一个问题，边撰写边发布回复",
   "Answer questions and drive the tool loop in the assistant.": "在助手中回答问题并驱动工具调用循环。",
   "Answer to grade": "待评分的回答",

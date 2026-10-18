@@ -26137,15 +26137,6 @@
       "routes/agent-control"
     ]
   },
-  "Answer one message to the shipment import assistant, streaming the reply": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Answer one question in a conversation, publishing the reply as it is written": {
     "sites": 1,
     "scope": [
@@ -30712,7 +30703,7 @@
     ]
   },
   "Ask the model": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -123789,7 +123780,7 @@
     ]
   },
   "Invalid document ID": {
-    "sites": 6,
+    "sites": 5,
     "scope": [
       "go"
     ],
