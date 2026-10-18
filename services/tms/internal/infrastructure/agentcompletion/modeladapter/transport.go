@@ -180,8 +180,7 @@ func getJSON(
 
 // errorEnvelope covers the shapes providers actually return. OpenAI-compatible
 // servers nest under "error", some self-hosted servers return a bare "error"
-// string, and others
-// return neither, in which case the raw body is the message.
+// string, and others return neither, in which case the raw body is the message.
 type errorEnvelope struct {
 	Error struct {
 		Type    string `json:"type"`
