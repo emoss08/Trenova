@@ -122,7 +122,7 @@ func callAggregates() string {
 	return fmt.Sprintf(`COUNT(*) AS model_calls,
 			COUNT(*) FILTER (WHERE NOT u.succeeded) AS failed_calls,
 			COUNT(*) FILTER (WHERE u.failover) AS failovers,
-			COALESCE(SUM(CASE WHEN pk.kind = '%[2]s' THEN u.input_tokens
+			COALESCE(SUM(CASE WHEN u.provider_kind = '%[2]s' THEN u.input_tokens
 				ELSE GREATEST(u.input_tokens - u.cache_read_tokens - u.cache_write_tokens, 0)
 				END), 0) AS input_tokens,
 			COALESCE(SUM(u.output_tokens), 0) AS output_tokens,
@@ -141,11 +141,6 @@ func callAggregates() string {
 			BOOL_OR(u.succeeded) AS answered,
 			MAX(u.created_at) AS last_call_at`, callEndMs, aiprovider.KindAnthropicMessages)
 }
-
-const usageWithKindSQL = `ai_usage_records AS u
-		LEFT JOIN ai_providers AS pk ON pk.id = u.provider_id
-			AND pk.organization_id = u.organization_id
-			AND pk.business_unit_id = u.business_unit_id`
 
 const unitColumns = `id, business_unit_id, organization_id, source, agent_definition_id, provider_id,
 	model, model_key, task, outcome, decision_run_id, started_at_ms, finished_at, duration_ms,
@@ -206,7 +201,7 @@ func ownedUnitsSQL(src ownedSource) string {
 	),
 	calls AS (
 		SELECT u.owner_id, %[4]s
-		FROM `+usageWithKindSQL+`
+		FROM ai_usage_records AS u
 		WHERE u.organization_id = ?org AND u.business_unit_id = ?bu
 			AND u.owner_kind = '%[5]s' AND u.owner_id IN (SELECT id FROM owners)
 		GROUP BY u.owner_id
@@ -386,7 +381,7 @@ var (
 	),
 	calls AS (
 		SELECT %[1]s AS unit_id, %[3]s
-		FROM `+usageWithKindSQL+`
+		FROM ai_usage_records AS u
 		WHERE %[2]s
 			AND u.created_at >= ?from - %[4]d AND u.created_at < ?to
 			AND %[1]s IN (SELECT unit_id FROM touched)

@@ -289,3 +289,63 @@ func TestRefreshWorksOutUnitsToolsAndProviderHoursFromTheSourceRecords(t *testin
 	require.NoError(t, err)
 	assert.Empty(t, pruned)
 }
+
+func TestRefreshCountsUncachedInputByTheCallsOwnProtocolWhenTheProviderIsGone(t *testing.T) {
+	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	t.Cleanup(cleanup)
+
+	tenant := seededTenant(ctx, t, db)
+	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	now := timeutils.NowUnix()
+
+	insert(ctx, t, db,
+		&aiusage.AIUsageRecord{
+			OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID,
+			ProviderID: pulid.MustNew("aiprv_"), ProviderKind: aiprovider.KindAnthropicMessages,
+			Model: "claude-haiku-5-5", Task: aiprovider.TaskDocumentClassification,
+			Surface: aiusage.SurfaceStructured, Succeeded: true, LatencyMs: 300,
+			InputTokens: 120, CacheReadTokens: 900, CacheWriteTokens: 60, OutputTokens: 40,
+			CreatedAt: now - 5,
+		},
+		&aiusage.AIUsageRecord{
+			OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID,
+			ProviderID: pulid.MustNew("aiprv_"), ProviderKind: aiprovider.KindOpenAIResponses,
+			Model: "gpt-6-luna", Task: aiprovider.TaskDocumentClassification,
+			Surface: aiusage.SurfaceStructured, Succeeded: true, LatencyMs: 300,
+			InputTokens: 1000, CacheReadTokens: 800, OutputTokens: 40,
+			CreatedAt: now - 5,
+		},
+	)
+
+	_, err := repo.RefreshUnits(ctx, aianalyticsports.RefreshRequest{
+		TenantInfo: tenant,
+		From:       now - 3600,
+		To:         timeutils.NowUnix() + 1,
+		Stamp:      timeutils.NowUnixMilli(),
+	})
+	require.NoError(t, err)
+
+	var rows []struct {
+		Model      string `bun:"model"`
+		Input      int64  `bun:"input_tokens"`
+		CacheRead  int64  `bun:"cache_read_tokens"`
+		CacheWrite int64  `bun:"cache_write_tokens"`
+	}
+	require.NoError(t, db.NewSelect().
+		TableExpr("ai_work_units").
+		Column("model", "input_tokens", "cache_read_tokens", "cache_write_tokens").
+		Where("organization_id = ? AND business_unit_id = ?", tenant.OrgID, tenant.BuID).
+		Order("model").
+		Scan(ctx, &rows))
+	require.Len(t, rows, 2)
+
+	assert.Equal(t, "claude-haiku-5-5", rows[0].Model)
+	assert.Equal(t, int64(120), rows[0].Input,
+		"Anthropic reports input without the cache, whether or not its provider row still exists")
+	assert.Equal(t, int64(900), rows[0].CacheRead)
+	assert.Equal(t, int64(60), rows[0].CacheWrite)
+
+	assert.Equal(t, "gpt-6-luna", rows[1].Model)
+	assert.Equal(t, int64(200), rows[1].Input, "OpenAI's input includes the cache read")
+	assert.Equal(t, int64(800), rows[1].CacheRead)
+}

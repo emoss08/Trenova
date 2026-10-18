@@ -112,10 +112,14 @@ rebuilds the last 30 days from the sources.
 - **Tokens.** A unit's prompt is stored in three parts whatever the protocol reported:
   `input_tokens` is the input the provider's cache did not serve, beside `cache_read_tokens`
   and `cache_write_tokens`. Anthropic reports cache reads and writes beside `input_tokens`;
-  the OpenAI protocols count cached tokens inside it. The refresh joins each usage row to its
-  provider's `kind` and takes the cached part out of the OpenAI rows, so a Claude unit and an
-  OpenAI unit compare on the same terms (a Haiku turn used to read "4 in"). The usage rows
-  keep what the provider reported. `cost_usd` is priced per call by the provider's prices, with
+  the OpenAI protocols count cached tokens inside it. The refresh reads each usage row's own
+  `provider_kind` (kept on the row, so a deleted provider changes nothing) and takes the cached
+  part out of the OpenAI rows, so a Claude unit and an OpenAI unit compare on the same terms (a
+  Haiku turn used to read "4 in"). The usage rows keep what the provider reported. Units worked
+  out before this split counted OpenAI's cached input in `input_tokens`; migration
+  `20261231009950_ai_work_unit_cache_tokens` sets every organization's `refreshed_through` to
+  0, so the next refresh rebuilds the whole retention window (90 days, 14 days a cycle) from the
+  usage rows and no unit keeps the old meaning. `cost_usd` is priced per call by the provider's prices, with
   cache reads and writes at their own rates (the entered price, else the model's list rate from
   `aiprovider.ListPrice`, else the protocol's multiple) and Haiku 5.5's long-prompt rates above
   100,000 prompt tokens.
