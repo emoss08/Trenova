@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	"go.temporal.io/sdk/testsuite"
-	"go.temporal.io/sdk/workflow"
 )
 
 type AutoPostWorkflowTestSuite struct {
@@ -102,21 +101,6 @@ func (s *AutoPostWorkflowTestSuite) TestAnUndeliveredReportDoesNotChangeTheOutco
 
 	s.True(s.env.IsWorkflowCompleted())
 	s.ErrorContains(s.env.GetWorkflowError(), "Invoice not found")
-}
-
-func (s *AutoPostWorkflowTestSuite) TestAnExecutionFromBeforeTheChangeReportsNothing() {
-	s.env.OnGetVersion(changeReportAutoPostFailure, workflow.DefaultVersion, 1).
-		Return(workflow.DefaultVersion)
-
-	var a *Activities
-	s.env.OnActivity(a.AutoPostInvoiceActivity, mock.Anything, s.payload).
-		Return(nil, temporaltype.ToDomainRefusal(errortypes.NewBusinessError("closed"))).
-		Once()
-
-	s.env.ExecuteWorkflow(AutoPostInvoiceWorkflow, s.payload)
-
-	s.True(s.env.IsWorkflowCompleted())
-	s.Error(s.env.GetWorkflowError())
 }
 
 func TestAutoPostWorkflowTestSuite(t *testing.T) {

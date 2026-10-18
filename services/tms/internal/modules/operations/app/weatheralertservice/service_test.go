@@ -505,24 +505,6 @@ func TestPollNWSAlertsFailsOnAnUnexpectedStatus(t *testing.T) {
 	assert.Zero(t, feedState.saves)
 }
 
-func TestPollNWSAlertsForTenantSyncsOneTenant(t *testing.T) {
-	t.Parallel()
-
-	srv := newNWSServer(t, nwsFeedBody(
-		nwsFeature("urn:oid:1", "Winter Storm Warning", "2026-04-15T18:00:00Z"),
-	), `W/"feed-1"`)
-	tenants := newTenants(2)
-	repo := &repoStub{tenants: tenants}
-	service := newPollingService(repo, &feedStateStub{}, srv)
-
-	require.NoError(t, service.PollNWSAlertsForTenant(t.Context(), tenants[1]))
-	require.NoError(t, service.PollNWSAlertsForTenant(t.Context(), tenants[1]))
-
-	require.Len(t, srv.recorded(), 2)
-	require.Len(t, repo.upserted, 1, "the second pass finds the alert already stored")
-	assert.Equal(t, tenants[1].OrgID, repo.upserted[0].OrganizationID)
-}
-
 func TestGetActiveAlertsReturnsFeatureCollection(t *testing.T) {
 	t.Parallel()
 

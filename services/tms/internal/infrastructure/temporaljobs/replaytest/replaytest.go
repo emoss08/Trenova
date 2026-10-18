@@ -1,14 +1,14 @@
 // Package replaytest replays recorded workflow histories against the current
 // workflow code.
 //
-// A workflow change that reorders, adds or removes a command breaks every
-// execution already in flight, and nothing else catches it: the workflow test
-// suite runs new code from the start, so it cannot see what an execution
-// recorded yesterday expects. Replaying real histories is the test that can.
-// Record histories from the code that is about to change, commit them beside
-// the workflow, and keep them passing through every later change. A change
-// that has to diverge does so behind workflow.GetVersion, and the old histories
-// prove the old branch still replays.
+// A workflow that reorders, adds or removes a command between runs of the same
+// code is nondeterministic, and nothing else catches it: the workflow test
+// suite runs the code from the start, so it cannot see what a recorded
+// execution expects. Replaying real histories is the test that can. Record
+// histories from the current code and commit them beside the workflow. Until
+// launch, a change that reshapes a workflow re-records its histories and the
+// development namespace is reset; version gates return as a launch
+// requirement, and with them histories kept to prove old branches replay.
 package replaytest
 
 import (
@@ -43,8 +43,8 @@ func Dir(t *testing.T, dir string, register func(worker.WorkflowReplayer)) {
 
 			if err := replayer.ReplayWorkflowHistoryFromJSONFile(nil, file); err != nil {
 				t.Fatalf("recorded history %s no longer replays against the current code: %v\n"+
-					"An execution in this state is running somewhere right now. Put the change "+
-					"behind workflow.GetVersion so it keeps the path it was started on.",
+					"If the workflow was meant to change shape, record the history again from "+
+					"the new code; otherwise the change is nondeterministic.",
 					filepath.Base(file), err)
 			}
 		})

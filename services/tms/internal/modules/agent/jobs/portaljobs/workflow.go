@@ -53,9 +53,6 @@ func PortalRunWorkflow(ctx workflow.Context, payload *portalcontract.Payload) er
 	var a *Activities
 	pollCtx := workflow.WithActivityOptions(ctx, pollOptions)
 	notifyCtx := workflow.WithActivityOptions(ctx, notifyOptions)
-	waitsOutsideDeadline := workflow.GetVersion(
-		ctx, codeWaitChange, workflow.DefaultVersion, 1,
-	) == 1
 
 	deadline := workflow.Now(ctx).Add(actDeadline)
 	for {
@@ -73,7 +70,7 @@ func PortalRunWorkflow(ctx workflow.Context, payload *portalcontract.Payload) er
 			return workflow.ExecuteActivity(notifyCtx, a.NotifyPortalRunActivity, payload).
 				Get(ctx, nil)
 		}
-		if waitsOutsideDeadline && poll.AwaitingCode {
+		if poll.AwaitingCode {
 			deadline = deadline.Add(pollInterval)
 		}
 		if !workflow.Now(ctx).Before(deadline) {

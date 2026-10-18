@@ -303,9 +303,6 @@ func TestSupportedFromText_ReadsEachNumberOfAJSONArray(t *testing.T) {
 
 	check := numberguard.CheckNumbers("Riverside cost $12,937.50, 70.8% of the total.", supported)
 	assert.True(t, check.OK, check.Unsupported)
-	assert.False(t, numberguard.CheckNumbersAs(numberguard.ReadJoined, "Riverside cost $12,937.50.",
-		numberguard.SupportedFromTextAs(numberguard.ReadJoined, `[172.5,12937.5,0.708]`)).OK,
-		"the joined reading is the one that failed")
 }
 
 func TestCheckNumbers_DatesTimesRangesAndCodesAreNotFigures(t *testing.T) {

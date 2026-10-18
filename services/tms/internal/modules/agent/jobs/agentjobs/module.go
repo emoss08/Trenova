@@ -13,7 +13,7 @@ import (
 
 // asRegistry wires one of the agent's registries into the worker group. Which
 // of them a given process actually runs is decided by --queues at startup, not
-// here: every worker binary knows about all three and polls only the queues it
+// here: every worker binary knows about both and polls only the queues it
 // was told to.
 func asRegistry(constructor any) any {
 	return fx.Annotate(
@@ -29,7 +29,6 @@ var Module = fx.Module("agent-jobs",
 	fx.Provide(
 		asRegistry(NewBackgroundRegistry),
 		asRegistry(NewHeavyRegistry),
-		asRegistry(NewDrainRegistry),
 	),
 )
 

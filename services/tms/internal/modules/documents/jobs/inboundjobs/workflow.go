@@ -67,16 +67,6 @@ var fetchOptions = workflow.ActivityOptions{
 	},
 }
 
-// changeFetchContent reads a metadata-only provider's content before the
-// message is read. Executions that began before it replay without the step.
-const changeFetchContent = "inbound-message-fetch-content"
-
-const changeCheckConflicts = "inbound-message-check-conflicts"
-
-// changeFactorRemittance hands a factor's remittance mail to billing once it is
-// settled. Executions that began before it replay without the step.
-const changeFactorRemittance = "inbound-message-factor-remittance"
-
 // remittanceOptions allow for reading a PDF remittance with a model, which is
 // the slow case; a CSV or spreadsheet is read in moments.
 var remittanceOptions = workflow.ActivityOptions{
@@ -163,10 +153,8 @@ func ProcessInboundMessageWorkflow(
 
 	settleCtx := workflow.WithActivityOptions(ctx, settleOptions)
 
-	if workflow.GetVersion(ctx, changeFetchContent, workflow.DefaultVersion, 1) == 1 {
-		if result, done, err := fetchContent(ctx, payload); done {
-			return result, err
-		}
+	if result, done, err := fetchContent(ctx, payload); done {
+		return result, err
 	}
 
 	// Attachments first: what a message is about is often only legible once its
@@ -178,11 +166,8 @@ func ProcessInboundMessageWorkflow(
 	err := workflow.ExecuteActivity(settleCtx, a.SettleInboundMessageActivity, payload).
 		Get(settleCtx, result)
 	if err == nil {
-		if workflow.GetVersion(ctx, changeCheckConflicts, workflow.DefaultVersion, 1) == 1 {
-			checkConflicts(ctx, payload)
-		}
-		if workflow.GetVersion(ctx, changeFactorRemittance, workflow.DefaultVersion, 1) == 1 &&
-			result.Classification == inboundmessage.ClassificationFactorRemittance {
+		checkConflicts(ctx, payload)
+		if result.Classification == inboundmessage.ClassificationFactorRemittance {
 			ingestRemittances(ctx, payload)
 		}
 

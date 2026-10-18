@@ -176,47 +176,6 @@ func TestDrive_NamesATableTheReplyLeftOutWithoutAskingAgain(t *testing.T) {
 		regroundedActions(events))
 }
 
-type leftOutEffects struct {
-	*localEffects
-}
-
-func (fx *leftOutEffects) Supports(change string) bool {
-	return change != changeNameLeftOut
-}
-
-func TestDrive_AnExecutionThatAskedForALeftOutTableKeepsAsking(t *testing.T) {
-	t.Parallel()
-
-	table := keptShipments(15)
-	fixed := "Fifteen loads are late; " + ArtifactRef(&table) + " lists them."
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("get_formula_template", map[string]any{}),
-		textTurn("Fifteen loads are late."),
-		textTurn(fixed),
-	}}
-	rt := newRuntime(completion, &stubQueryRegistry{Tools: []agentports.AgentQueryTool{
-		queryTool("get_formula_template", map[string]any{"id": "ft_1"}, nil),
-	}}, &stubActionRegistry{}, nil)
-	req := &agentports.RunRequest{
-		Definition: testDefinition("get_formula_template"),
-		Actor:      testActor(),
-		Input:      "which loads are late?",
-		ToolObserver: func(agentports.ToolObservation) (*agentports.ShownArtifact, error) {
-			return &table, nil
-		},
-	}
-	events := recordEvents(req)
-	fx := &leftOutEffects{localEffects: &localEffects{
-		s: rt, ctx: t.Context(), emit: req.Emit, observer: req.ToolObserver,
-	}}
-
-	result, err := rt.Drive(rt.OpenTurn(t.Context(), req), fx)
-	require.NoError(t, err)
-
-	assert.Equal(t, fixed, result.Reply)
-	assert.True(t, retried(events))
-}
-
 // An id the conversation never held is not left as a link that opens nothing.
 func TestDrive_UnlinksAnArtifactTheConversationNeverHeld(t *testing.T) {
 	t.Parallel()

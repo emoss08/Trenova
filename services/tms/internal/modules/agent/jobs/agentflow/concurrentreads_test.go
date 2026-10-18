@@ -14,7 +14,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/converter"
-	"go.temporal.io/sdk/workflow"
 )
 
 // rendezvousWait is how long a read waits for the other to start. Run one
@@ -112,61 +111,4 @@ func TestRun_ReadsInOneReplyRunAtOnceAndSettleInOrder(t *testing.T) {
 	assert.Contains(t, tools[1].Content, "Acme")
 	assert.False(t, tools[0].ToolFailed)
 	assert.False(t, tools[1].ToolFailed)
-}
-
-/*
-An execution started before reads ran together answers the change with the
-default version, and its reads run as they did then: the second activity is
-scheduled only once the first has finished.
-*/
-func TestRun_AnExecutionFromBeforeTheChangeRunsItsReadsInTurn(t *testing.T) {
-	t.Parallel()
-
-	var (
-		mu    sync.Mutex
-		steps []string
-	)
-	note := func(step string) {
-		mu.Lock()
-		steps = append(steps, step)
-		mu.Unlock()
-	}
-
-	h := newHarness(t, harnessParams{
-		query: []agentports.AgentQueryTool{
-			&agenttest.StubQueryTool{ToolName: "list_workers", Result: map[string]any{}},
-			&agenttest.StubQueryTool{ToolName: "search_customer", Result: map[string]any{}},
-		},
-		wrapTool: func(
-			run func(context.Context, converter.EncodedValues) (*ToolResult, error),
-		) func(context.Context, converter.EncodedValues) (*ToolResult, error) {
-			return func(ctx context.Context, input converter.EncodedValues) (*ToolResult, error) {
-				name := activity.GetInfo(ctx).ActivityType.Name
-				note("start " + name)
-				result, err := run(ctx, input)
-				note("end " + name)
-
-				return result, err
-			}
-		},
-	})
-	h.env.OnGetVersion("agent-loop-concurrent-reads", workflow.DefaultVersion, 1).
-		Return(workflow.DefaultVersion)
-	h.replies(
-		&agentports.ChatCompletionResult{
-			ToolCalls: []agentports.ToolCall{
-				{ID: "call_1", Name: "list_workers", Arguments: map[string]any{"status": "Active"}},
-				{ID: "call_2", Name: "search_customer", Arguments: map[string]any{"query": "Acme"}},
-			},
-			ModelIdentifier: "test-model",
-		},
-		textReply("Done."),
-	)
-
-	result := h.run(t, runContext("list_workers", "search_customer"))
-
-	require.Empty(t, result.Err)
-	assert.Equal(t, []string{
-		"start list_workers", "end list_workers", "start search_customer", "end search_customer",
-	}, steps)
 }

@@ -221,12 +221,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentports.RunResult, error) 
 			return s.finishCutOff(t, fx, completion), nil
 		}
 		tagToolCalls(completion)
-		distinctCallIDs(completion, t.callIDs, callIDMinter{
-			mint: fx.NewCallID,
-			renewSynthesized: func() bool {
-				return fx.Supports(changeFreshSynthesizedCallIDs)
-			},
-		})
+		distinctCallIDs(completion, t.callIDs, fx.NewCallID)
 
 		if len(completion.ToolCalls) == 0 {
 			// A turn that ends in silence reads as a hung screen. One that
@@ -301,13 +296,13 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentports.RunResult, error) 
 				budget: budget,
 				stuck:  stuck,
 			}
-			key, joins := t.joins(fx, batch, check)
+			key, joins := t.joins(batch, check)
 			if !joins && batch.size() > 0 {
 				// The waiting reads settle first; with them settled the call
 				// may start a batch of its own.
 				s.settleReads(t, fx, batch)
 				check.used = result.ToolCallsUsed
-				key, joins = t.joins(fx, batch, check)
+				key, joins = t.joins(batch, check)
 			}
 			if joins {
 				s.emitToolStarted(fx, &call)
@@ -397,7 +392,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentports.RunResult, error) 
 				case question != "" && repeated:
 					outcome = refusedOutcome(aitrace.OutcomeDuplicate,
 						"the same question was already asked", "%s", repeatedAskRefusal)
-				case !shown && fx.Supports(changeUnshownAsk):
+				case !shown:
 					// Nothing reached the person, so the turn has not asked
 					// anything: it may not end in silence on it, and the
 					// question may be asked again as it should have been.
@@ -494,7 +489,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentports.RunResult, error) 
 				)
 				result.ToolCallsUsed++
 				s.recordToolResult(t, fx, call, outcome)
-				if t.repeats.refused() && fx.Supports(changeStopOnRepeats) {
+				if t.repeats.refused() {
 					stuck = true
 				}
 				continue
@@ -512,7 +507,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentports.RunResult, error) 
 			s.settleDispatched(t, fx, &dispatch, &outcome)
 		}
 		s.settleReads(t, fx, batch)
-		if shownNow && fx.Supports(changeEndOnAsk) {
+		if shownNow {
 			return s.finish(result, askedEnding(completion), fx), nil
 		}
 
@@ -527,16 +522,14 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentports.RunResult, error) 
 	if stuck {
 		note, ending = stuckNote, stuckReply
 	}
-	if fx.Supports(changeFinalAnswer) {
-		if final := s.finalAnswer(t, fx, result, note); final != nil {
-			grounding.rewritten = true
-			s.reground(t, fx, final, &grounding)
-			s.passReply(t, fx, final)
-			placement.retried = true
-			s.placeArtifacts(t, fx, final, &placement)
+	if final := s.finalAnswer(t, fx, result, note); final != nil {
+		grounding.rewritten = true
+		s.reground(t, fx, final, &grounding)
+		s.passReply(t, fx, final)
+		placement.retried = true
+		s.placeArtifacts(t, fx, final, &placement)
 
-			return s.finish(result, final, fx), nil
-		}
+		return s.finish(result, final, fx), nil
 	}
 
 	result.Exhausted = true
@@ -615,10 +608,6 @@ func (s *Service) settleDispatched(
 // maxLoopRefusalChars bounds what a loop refusal keeps of what the model
 // was told: the reason is the figure, the text only what explains it.
 const maxLoopRefusalChars = 1000
-
-// changeFinalAnswer is the loop asking for an answer once its tool budget is
-// spent, rather than ending on a canned line.
-const changeFinalAnswer = "agent-loop-final-answer"
 
 // budgetSpentNote is what the model is told when its tool budget is spent.
 const budgetSpentNote = "You have used every tool call this turn allows. Answer the person " +
@@ -1009,22 +998,6 @@ func usedCallIDs(history []conversation.Message) map[string]struct{} {
 	return used
 }
 
-// changeFreshSynthesizedCallIDs is the loop giving every call whose id the
-// adapter made up an id of its own, not only one the conversation already
-// holds.
-const changeFreshSynthesizedCallIDs = "agent-loop-fresh-synthesized-call-ids"
-
-// callIDMinter is how distinctCallIDs comes by a new id. mint makes one: the
-// turn's effects supply it, because a fresh id is random and workflow code may
-// not be. renewSynthesized reports whether an id the adapter made up is
-// replaced even when nothing else in the conversation holds it; it is asked
-// only when a completion carries one, so a turn that never meets one records
-// no change marker.
-type callIDMinter struct {
-	mint             func() string
-	renewSynthesized func() bool
-}
-
 // distinctCallIDs gives every call in a completion an id no other call in the
 // conversation has.
 //
@@ -1036,21 +1009,19 @@ type callIDMinter struct {
 // against the conversation is not enough: the conversation the turn replays
 // is only its most recent messages, and an artifact keyed on a call_0 from
 // before them was overwritten by the next call_0. So a synthesized id is
-// always replaced. A provider's own unique ids are kept as they are.
+// always replaced. A provider's own unique ids are kept as they are. mint
+// makes a new id: the turn's effects supply it, because a fresh id is random
+// and workflow code may not be.
 func distinctCallIDs(
 	completion *agentports.ChatCompletionResult,
 	used map[string]struct{},
-	minter callIDMinter,
+	mint func() string,
 ) {
-	decided, renew := false, false
 	for idx := range completion.ToolCalls {
 		call := &completion.ToolCalls[idx]
-		if call.SynthesizedID && !decided {
-			decided, renew = true, minter.renewSynthesized()
-		}
 		_, taken := used[call.ID]
-		if call.ID == "" || taken || (call.SynthesizedID && renew) {
-			call.ID = minter.mint()
+		if call.ID == "" || taken || call.SynthesizedID {
+			call.ID = mint()
 			call.SynthesizedID = false
 		}
 		used[call.ID] = struct{}{}

@@ -18,15 +18,6 @@ import (
 )
 
 const (
-	changeGroundingGuard         = "agent-loop-grounding-guard"
-	changeGroundingTopLevelWords = "agent-loop-grounding-top-level-words"
-	changeGroundingReadAmounts   = "agent-loop-grounding-read-amounts"
-	changeGroundingFiguresAsRead = "agent-loop-grounding-figures-as-read"
-	changeGroundingOffers        = "agent-loop-grounding-offers-not-claims"
-	changeGroundingWorkedFigures = "agent-loop-grounding-worked-figures"
-)
-
-const (
 	groundingCorrectionLead = "Your reply does not match what this turn filed."
 	groundingRetryReason    = "The reply named something the filed change does not hold, so it " +
 		"is being written again."
@@ -126,7 +117,7 @@ func (s *Service) reground(
 		return false
 	}
 
-	finding, found := s.drift(t, fx, completion.Text)
+	finding, found := s.drift(t, completion.Text)
 	if !found {
 		return false
 	}
@@ -167,38 +158,25 @@ func (s *Service) reground(
 // drift is what the reply says that the turn does not hold. A turn that filed
 // writes is held to them; one that filed nothing is held to the amounts the
 // conversation read, the totals and shares a model works out in its head
-// (DB-186). Each check is asked of the workflow only when it found something.
-func (s *Service) drift(t *Turn, fx TurnEffects, reply string) (groundingFinding, bool) {
+// (DB-186).
+func (s *Service) drift(t *Turn, reply string) (groundingFinding, bool) {
 	if len(t.result.Actions) == 0 {
-		finding := readFinding(t, fx, reply)
+		finding := readFinding(t, reply)
 
-		return finding, !finding.empty() && fx.Supports(changeGroundingReadAmounts)
-	}
-
-	finding := s.groundingFindings(t, fx, reply)
-	if finding.empty() || !fx.Supports(changeGroundingGuard) {
-		return finding, false
-	}
-	if len(finding.nested) > 0 && fx.Supports(changeGroundingTopLevelWords) {
-		finding.dropNestedWords()
-		if finding.empty() {
-			return finding, false
-		}
-	}
-	if len(finding.offered) > 0 && fx.Supports(changeGroundingOffers) {
-		finding.dropOffered()
-		if finding.empty() {
-			return finding, false
-		}
+		return finding, !finding.empty()
 	}
 
-	return finding, true
+	finding := s.groundingFindings(t, reply)
+	finding.dropNestedWords()
+	finding.dropOffered()
+
+	return finding, !finding.empty()
 }
 
 // readFinding is the money and shares a reply that filed nothing states and
 // nothing the conversation read gives. A conversation that has read no tool's
 // result is answering from what the trade knows, and is not checked.
-func readFinding(t *Turn, fx TurnEffects, reply string) groundingFinding {
+func readFinding(t *Turn, reply string) groundingFinding {
 	finding := groundingFinding{read: true, analyze: t.holds(agentextension.ToolAnalyzeData)}
 	if strings.TrimSpace(reply) == "" || !t.readAnything() || t.readUnseenFiles() {
 		return finding
@@ -208,8 +186,8 @@ func readFinding(t *Turn, fx TurnEffects, reply string) groundingFinding {
 	finding.figures = numberguard.CheckAmountsAs(numberguard.ReadSeparated, reply, supported).
 		Unsupported
 	if len(finding.figures) > 0 {
-		finding.figures = workedOut(fx, finding.figures, numberguard.CheckAmounts(reply,
-			t.withWorking(reply, t.groundingSupport())).Unsupported)
+		finding.figures = numberguard.CheckAmounts(reply,
+			t.withWorking(reply, t.groundingSupport())).Unsupported
 	}
 
 	return finding
@@ -224,19 +202,6 @@ func (t *Turn) withWorking(reply string, read []decimal.Decimal) []decimal.Decim
 		numberguard.Combinations(t.statedFigures(numberguard.ReadCodesApart))...)
 
 	return append(supported, numberguard.Worked(reply, read)...)
-}
-
-// workedOut is the figures still unsupported once the reply's working counts.
-// Before agent-loop-grounding-worked-figures a correct sum or product of two
-// figures the reply gave was rewritten as invented, and an execution that
-// decided that way keeps doing so where the two disagree on whether anything
-// is unsupported.
-func workedOut(fx TurnEffects, figures, worked []string) []string {
-	if len(worked) > 0 || fx.Supports(changeGroundingWorkedFigures) {
-		return worked
-	}
-
-	return figures
 }
 
 // maxStatedFigures bounds the figures of the person's question that are
@@ -295,28 +260,20 @@ func (t *Turn) readUnseenFiles() bool {
 }
 
 // filedFigures is the figures a reply on a filed change cites that nothing
-// read or filed gives. Before agent-loop-grounding-figures-as-read the guard
-// read a JSON array of numbers as one figure that never parsed, a date's day
-// and a code's digits as figures, and a figure from a file only the model can
-// read as invented; an execution that decided that way keeps deciding that
-// way where the two readings disagree on whether anything is wrong.
-func (t *Turn) filedFigures(fx TurnEffects, reply string) []string {
-	var figures []string
-	if !t.readUnseenFiles() {
-		figures = numberguard.CheckNumbersAs(numberguard.ReadSeparated, reply,
-			t.groundingSupportAs(numberguard.ReadSeparated)).Unsupported
+// read or filed gives. A figure from a file only the model can read is not
+// held against the reply.
+func (t *Turn) filedFigures(reply string) []string {
+	if t.readUnseenFiles() {
+		return nil
 	}
-	joined := numberguard.CheckNumbersAs(numberguard.ReadJoined, reply,
-		t.groundingSupportAs(numberguard.ReadJoined)).Unsupported
-	if (len(figures) == 0) != (len(joined) == 0) && !fx.Supports(changeGroundingFiguresAsRead) {
-		return joined
-	}
+	figures := numberguard.CheckNumbersAs(numberguard.ReadSeparated, reply,
+		t.groundingSupportAs(numberguard.ReadSeparated)).Unsupported
 	if len(figures) == 0 {
 		return figures
 	}
 
-	return workedOut(fx, figures, numberguard.CheckNumbers(reply,
-		t.withWorking(reply, t.groundingSupport())).Unsupported)
+	return numberguard.CheckNumbers(reply,
+		t.withWorking(reply, t.groundingSupport())).Unsupported
 }
 
 func isGroundingCorrection(content string) bool {
@@ -411,13 +368,13 @@ func (f groundingFinding) amountsCorrection() string {
 	return b.String()
 }
 
-func (s *Service) groundingFindings(t *Turn, fx TurnEffects, reply string) groundingFinding {
+func (s *Service) groundingFindings(t *Turn, reply string) groundingFinding {
 	finding := groundingFinding{tools: make(map[string][]string, 2)}
 	if strings.TrimSpace(reply) == "" {
 		return finding
 	}
 
-	finding.figures = t.filedFigures(fx, reply)
+	finding.figures = t.filedFigures(reply)
 
 	claims := claimedPhrases(reply)
 	stated := claims.withoutOffers()
@@ -464,9 +421,7 @@ func (t *Turn) groundingSupport() []decimal.Decimal {
 	return t.groundingSupportAs(numberguard.ReadCodesApart)
 }
 
-// groundingSupportAs is groundingSupport in the reading an execution decided
-// with: ReadJoined before agent-loop-grounding-figures-as-read, ReadSeparated
-// before agent-loop-grounding-worked-figures.
+// groundingSupportAs is groundingSupport in the given reading.
 func (t *Turn) groundingSupportAs(how numberguard.Reading) []decimal.Decimal {
 	return t.withEvidence(numberguard.SupportedFromTextAs(how, t.groundingTexts()...))
 }

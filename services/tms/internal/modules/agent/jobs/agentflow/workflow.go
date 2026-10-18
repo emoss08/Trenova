@@ -68,10 +68,6 @@ type workflowEffects struct {
 	outcome Outcome
 }
 
-func (fx *workflowEffects) Supports(change string) bool {
-	return workflow.GetVersion(fx.ctx, change, workflow.DefaultVersion, 1) == 1
-}
-
 func (fx *workflowEffects) Now() int64 { return workflow.Now(fx.ctx).Unix() }
 
 // Replaying reports the loop re-running over recorded history, during which
@@ -79,17 +75,13 @@ func (fx *workflowEffects) Now() int64 { return workflow.Now(fx.ctx).Unix() }
 func (fx *workflowEffects) Replaying() bool { return workflow.IsReplaying(fx.ctx) }
 
 // Interject reads, between steps, what the person said while the turn worked
-// and what changed under it. Reading a signal records nothing, so the change
-// is asked about only when there is something to read or to check.
+// and what changed under it.
 func (fx *workflowEffects) Interject(
 	_ *agentruntime.Turn,
 	check *agentruntime.WorldCheck,
 ) agentruntime.Interjections {
 	pending := fx.steers != nil && fx.steers.Len() > 0
 	if !pending && check == nil {
-		return agentruntime.Interjections{}
-	}
-	if !fx.Supports(agentruntime.ChangeInterjections) {
 		return agentruntime.Interjections{}
 	}
 

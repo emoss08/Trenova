@@ -199,19 +199,13 @@ func TestCommandCasesCoverEveryCommand(t *testing.T) {
 func TestEveryCommandHasAHold(t *testing.T) {
 	t.Parallel()
 
-	changes := make(map[string]agentextension.Command, len(commandHolds))
 	for _, command := range agentextension.AllCommands() {
 		hold, ok := commandHolds[command]
 		require.True(t, ok, "%s has no hold", command)
-		assert.NotEmpty(t, hold.change, command)
 		assert.NotEmpty(t, hold.directive, command)
 		assert.NotEmpty(t, hold.correction, command)
 		assert.NotEmpty(t, hold.retryReason, command)
 		assert.Contains(t, hold.directive, command.Text(), command)
-		if earlier, taken := changes[hold.change]; taken {
-			t.Errorf("%s and %s share the change id %q", earlier, command, hold.change)
-		}
-		changes[hold.change] = command
 	}
 	assert.Len(t, commandHolds, len(agentextension.AllCommands()),
 		"a hold for a command that does not exist")
@@ -536,26 +530,9 @@ func TestCommandTurn_KeepsBeingHeldAfterARestore(t *testing.T) {
 			}
 			state := rt.service.OpenTurn(t.Context(), req).State()
 			require.Equal(t, tc.command, state.Command)
-			assert.False(t, state.Browser, "the legacy flag is read, never written")
 
 			restored := rt.service.RestoreTurn(req, state)
 			assert.Equal(t, tc.command, restored.command)
 		})
 	}
-}
-
-func TestCommandTurn_AStateKeptBeforeCommandsIsStillHeldToTheBrowser(t *testing.T) {
-	t.Parallel()
-
-	rt := newCommandRuntime(t, everyCapabilityGate(agentextension.AvailabilityAllAgents), nil)
-	req := &agentports.RunRequest{
-		Definition: testDefinition(),
-		Actor:      testActor(),
-		Input:      commandCases[0].ask,
-	}
-	state := rt.service.OpenTurn(t.Context(), req).State()
-	state.Browser = true
-
-	restored := rt.service.RestoreTurn(req, state)
-	assert.Equal(t, agentextension.CommandBrowser, restored.command)
 }

@@ -28,14 +28,6 @@ const (
 	// reconcileTimeout bounds one reconcile of every agent's schedule, a
 	// read of every scheduled agent and a call per schedule.
 	reconcileTimeout = 10 * time.Minute
-	// runActivityRetries is how many times a run may be attempted.
-	//
-	// Two was the old ceiling, and it was low because a retry was dangerous:
-	// the second attempt re-ran every write the first had made. With the step
-	// ledger claiming each tool call before it runs, a retry redoes the
-	// reasoning and none of the writing, so a transient failure is worth
-	// another try rather than a failed run somebody has to notice.
-	runActivityRetries = 3
 	// evaluationTimeoutSeconds bounds a replay the way the longest run is
 	// bounded: an hour, the ceiling a definition may set.
 	evaluationTimeoutSeconds = 3600
@@ -143,16 +135,6 @@ func (w *Workflows) heavy() []registry.WorkflowDefinition {
 	}
 }
 
-// drain is the same set, on the queue everything used before the split.
-//
-// A workflow's task queue is fixed when it starts, so every run and evaluation
-// already in flight when the split deployed still dispatches to agent-queue.
-// Without a worker polling it they would hang until their timeouts fired. It
-// goes once Temporal shows no open executions there.
-func (w *Workflows) drain() []registry.WorkflowDefinition {
-	return append(w.background(), w.heavy()...)
-}
-
 // askThreadRetention is how long an unkept quick question stays. A person
 // who wants one keeps it, which lists it; the rest are noise the rail
 // already hides and the database need not carry.
@@ -231,22 +213,12 @@ func NewWorkflows(runtime *agentruntime.Service) *Workflows {
 }
 
 // AgentRunWorkflow runs one agent definition against its subject and waits for
-// decisions on what it proposed.
-//
-// A run started before the agent loop moved into workflow code runs to the end
-// on the code it started on: those are the executions the recorded histories
-// in testdata replay, most of them parked in a day-long wait for a decision.
-// Every run started since runs the loop here, one activity per model call and
-// per tool call.
+// decisions on what it proposed. The loop runs here, one activity per model
+// call and per tool call.
 func (w *Workflows) AgentRunWorkflow(
 	ctx workflow.Context,
 	payload *agentcontract.AgentRunPayload,
 ) error {
-	if workflow.GetVersion(ctx, agentflowChange, workflow.DefaultVersion, 1) ==
-		workflow.DefaultVersion {
-		return runInOneActivity(ctx, payload)
-	}
-
 	var a *Activities
 	tenant := payload.TenantInfo()
 
@@ -254,7 +226,7 @@ func (w *Workflows) AgentRunWorkflow(
 	var prepared PrepareRunResult
 	if err := workflow.ExecuteActivity(prepareCtx, a.PrepareRunActivity, payload).
 		Get(prepareCtx, &prepared); err != nil {
-		_ = failRun(ctx, a, payload.RunID, tenant, err)
+		_ = failRun(ctx, payload.RunID, tenant, err)
 		return err
 	}
 
@@ -278,7 +250,7 @@ func (w *Workflows) AgentRunWorkflow(
 		Subject:    prepared.Subject,
 		Shadow:     prepared.ShadowMode,
 	}).Get(openCtx, &opened); err != nil {
-		_ = failRun(ctx, a, payload.RunID, tenant, err)
+		_ = failRun(ctx, payload.RunID, tenant, err)
 		return err
 	}
 
@@ -300,7 +272,7 @@ func (w *Workflows) AgentRunWorkflow(
 		Failure:    modelcallcontract.FailureOf(runErr),
 		Events:     outcome.Events,
 	}).Get(finishCtx, &finished); err != nil {
-		_ = failRun(ctx, a, payload.RunID, tenant, err)
+		_ = failRun(ctx, payload.RunID, tenant, err)
 		return err
 	}
 
@@ -308,7 +280,7 @@ func (w *Workflows) AgentRunWorkflow(
 		// What ran is recorded; a proposal made before the failure is not left
 		// waiting on a run that will never hear its decision.
 		_ = expireProposals(ctx, a, payload.RunID, tenant)
-		_ = failRun(ctx, a, payload.RunID, tenant, runErr)
+		_ = failRun(ctx, payload.RunID, tenant, runErr)
 		return runErr
 	}
 
@@ -398,75 +370,13 @@ func expireProposals(
 	}).Get(expireCtx, nil)
 }
 
-// runInOneActivity is the run as it was before the loop moved into workflow
-// code: the whole loop inside one activity, and the first decision ending the
-// wait. It runs only executions that started on it, and must not change: a
-// change to what it schedules breaks every one of them mid-wait.
-func runInOneActivity(ctx workflow.Context, payload *agentcontract.AgentRunPayload) error {
-	var a *Activities
-	tenant := payload.TenantInfo()
-
-	prepareCtx := workflow.WithActivityOptions(ctx, prepareActivityOptions)
-	var prepared PrepareRunResult
-	if err := workflow.ExecuteActivity(prepareCtx, a.PrepareRunActivity, payload).
-		Get(prepareCtx, &prepared); err != nil {
-		_ = failRun(ctx, a, payload.RunID, tenant, err)
-		return err
-	}
-
-	runCtx := workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
-		StartToCloseTimeout: runTimeout(prepared.RunTimeoutSeconds),
-		HeartbeatTimeout:    prepareTimeout,
-		RetryPolicy: &temporal.RetryPolicy{
-			InitialInterval:    2 * time.Second,
-			BackoffCoefficient: 2.0,
-			MaximumInterval:    time.Minute,
-			MaximumAttempts:    runActivityRetries,
-		},
-	})
-	var outcome RunAgentResult
-	if err := workflow.ExecuteActivity(runCtx, a.RunAgentActivity, &RunAgentInput{
-		Payload:    payload,
-		Definition: prepared.Definition,
-		Subject:    prepared.Subject,
-	}).Get(runCtx, &outcome); err != nil {
-		_ = failRun(ctx, a, payload.RunID, tenant, err)
-		return err
-	}
-
-	if prepared.ShadowMode {
-		return completeRun(ctx, a, payload.RunID, agent.RunStatusShadowCompleted, tenant)
-	}
-
-	if outcome.PendingProposals == 0 {
-		return completeRun(ctx, a, payload.RunID, agent.RunStatusCompleted, tenant)
-	}
-
-	if _, timedOut := awaitDecision(ctx, prepared.DecisionTimeoutSeconds); timedOut {
-		expireCtx := workflow.WithActivityOptions(ctx, persistActivityOptions)
-		return workflow.ExecuteActivity(expireCtx, a.ExpireProposalsActivity, &ExpireProposalsInput{
-			RunID:      payload.RunID,
-			TenantInfo: tenant,
-		}).Get(expireCtx, nil)
-	}
-
-	return completeRun(ctx, a, payload.RunID, agent.RunStatusCompleted, tenant)
-}
-
 // AgentEvaluationWorkflow replays one run against its agent as it is now, with
-// every write simulated, and stores the comparison.
-//
-// An evaluation started before the loop moved into workflow code finishes on
-// the one activity it started on. Every one since drives the loop here.
+// every write simulated, and stores the comparison. The loop is driven here,
+// one activity per model call and per tool call.
 func (w *Workflows) AgentEvaluationWorkflow(
 	ctx workflow.Context,
 	payload *agentcontract.AgentEvaluationPayload,
 ) error {
-	if workflow.GetVersion(ctx, agentflowChange, workflow.DefaultVersion, 1) ==
-		workflow.DefaultVersion {
-		return replayInOneActivity(ctx, payload)
-	}
-
 	var a *Activities
 	options := prepareActivityOptions
 	options.Priority = temporal.Priority{
@@ -531,41 +441,6 @@ func failEvaluation(
 	}
 }
 
-// replayInOneActivity is the replay as it was before the loop moved into
-// workflow code. It runs only evaluations that started on it, and must not
-// change.
-func replayInOneActivity(
-	ctx workflow.Context,
-	payload *agentcontract.AgentEvaluationPayload,
-) error {
-	var a *Activities
-
-	replayCtx := workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
-		StartToCloseTimeout: runTimeout(evaluationTimeoutSeconds),
-		HeartbeatTimeout:    prepareTimeout,
-		RetryPolicy: &temporal.RetryPolicy{
-			InitialInterval:    2 * time.Second,
-			BackoffCoefficient: 2.0,
-			MaximumInterval:    time.Minute,
-			MaximumAttempts:    runActivityRetries,
-		},
-	})
-	var outcome ReplayRunResult
-	if err := workflow.ExecuteActivity(replayCtx, a.ReplayRunActivity, payload).
-		Get(replayCtx, &outcome); err != nil {
-		failCtx := workflow.WithActivityOptions(ctx, persistActivityOptions)
-		_ = workflow.ExecuteActivity(failCtx, a.FailEvaluationActivity, &FailEvaluationInput{
-			EvaluationID: payload.EvaluationID,
-			Error:        err.Error(),
-			TenantInfo:   payload.TenantInfo(),
-		}).Get(failCtx, nil)
-
-		return err
-	}
-
-	return nil
-}
-
 // AgentScheduledRunWorkflow is what a definition's schedule starts on each of
 // its slots: one activity that starts the run when the definition may run now.
 // The slot is the time the schedule fired for, so a slot starts at most one
@@ -628,29 +503,6 @@ func runTimeout(seconds int) time.Duration {
 	return timeout
 }
 
-func awaitDecision(ctx workflow.Context, timeoutSeconds int) (agentcontract.DecisionSignal, bool) {
-	if timeoutSeconds <= 0 {
-		timeoutSeconds = agentdefinition.DefaultDecisionTimeoutSeconds
-	}
-
-	ch := workflow.GetSignalChannel(ctx, agentcontract.AgentDecisionSignalName)
-	timer := workflow.NewTimer(ctx, time.Duration(timeoutSeconds)*time.Second)
-
-	var decision agentcontract.DecisionSignal
-	var timedOut bool
-
-	sel := workflow.NewSelector(ctx)
-	sel.AddReceive(ch, func(c workflow.ReceiveChannel, _ bool) {
-		c.Receive(ctx, &decision)
-	})
-	sel.AddFuture(timer, func(workflow.Future) {
-		timedOut = true
-	})
-	sel.Select(ctx)
-
-	return decision, timedOut
-}
-
 func completeRun(
 	ctx workflow.Context,
 	a *Activities,
@@ -668,11 +520,11 @@ func completeRun(
 
 func failRun(
 	ctx workflow.Context,
-	a *Activities,
 	runID pulid.ID,
 	tenant pagination.TenantInfo,
 	cause error,
 ) error {
+	var a *Activities
 	completeCtx := workflow.WithActivityOptions(ctx, persistActivityOptions)
 	return workflow.ExecuteActivity(completeCtx, a.CompleteRunActivity, &CompleteRunInput{
 		RunID:      runID,

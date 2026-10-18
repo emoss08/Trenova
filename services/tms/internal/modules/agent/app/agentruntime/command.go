@@ -12,12 +12,10 @@ import (
 )
 
 // commandHold is how a turn opened with an extension command is held to it:
-// the directive the model is sent in place of the command, the correction a
-// reply that ended without the extension is sent back with, and the change id
-// that gates sending it back in workflow code. Every command in
+// the directive the model is sent in place of the command and the correction a
+// reply that ended without the extension is sent back with. Every command in
 // agentextension.AllCommands has one.
 type commandHold struct {
-	change      string
 	directive   string
 	correction  string
 	retryReason string
@@ -25,7 +23,6 @@ type commandHold struct {
 
 var commandHolds = map[agentextension.Command]commandHold{
 	agentextension.CommandBrowser: {
-		change: "agent-loop-browser-guard",
 		directive: "The person used /browser: they want this done in the browser, on the " +
 			"organization's portal sites. Work it with the portal tools you have: " +
 			"list_portal_sites to find the site that fits, read_portal to look something up " +
@@ -41,7 +38,6 @@ var commandHolds = map[agentextension.Command]commandHold{
 			"worked again in the browser.",
 	},
 	agentextension.CommandSearch: {
-		change: "agent-loop-search-guard",
 		directive: "The person used /search: they want this answered from the public web. " +
 			"Search with web_search, read the pages that matter with web_read, and answer " +
 			"from what they say, linking to each page you use. Do not answer from Trenova's " +
@@ -56,7 +52,6 @@ var commandHolds = map[agentextension.Command]commandHold{
 			"worked again with a web search.",
 	},
 	agentextension.CommandWatch: {
-		change: "agent-loop-watch-guard",
 		directive: "The person used /watch: they want to be told when something new about " +
 			"this appears on the web. Set a web watch with watch_web: the purpose in their " +
 			"words, and a search written as a description of the pages wanted. Set how often " +
@@ -170,7 +165,7 @@ func (s *Service) holdToCommand(
 	}
 	spec, specified := agentextension.CommandSpecFor(t.command)
 	hold, holds := commandHolds[t.command]
-	if !specified || !holds || t.honoured(spec) || !fx.Supports(hold.change) {
+	if !specified || !holds || t.honoured(spec) {
 		return false
 	}
 

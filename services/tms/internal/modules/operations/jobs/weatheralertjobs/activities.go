@@ -10,18 +10,6 @@ import (
 	"go.uber.org/zap"
 )
 
-type ListWeatherAlertTenantsPayload struct {
-	Limit int `json:"limit"`
-}
-
-type ListWeatherAlertTenantsResult struct {
-	Tenants []temporaljobs.TenantWorkItem `json:"tenants"`
-}
-
-type PollNWSAlertsTenantPayload struct {
-	temporaljobs.TenantWorkItem
-}
-
 type PollNWSAlertsResult struct {
 	temporaljobs.TenantRunResult
 	FeedUnchanged bool `json:"feedUnchanged"`
@@ -84,38 +72,6 @@ func (a *Activities) PollNWSAlertsActivity(ctx context.Context) (*PollNWSAlertsR
 		zap.Int("failures", result.FailureCount))
 
 	return result, nil
-}
-
-func (a *Activities) ListWeatherAlertTenantsActivity(
-	ctx context.Context,
-	payload *ListWeatherAlertTenantsPayload,
-) (*ListWeatherAlertTenantsResult, error) {
-	limit := temporaljobs.NormalizeLimit(payload.Limit, temporaljobs.DefaultTenantScanLimit)
-	tenants, err := a.service.ListWeatherAlertTenants(ctx, limit)
-	if err != nil {
-		return nil, err
-	}
-
-	return &ListWeatherAlertTenantsResult{
-		Tenants: temporaljobs.BuildTenantWorkItems(tenants, 1),
-	}, nil
-}
-
-func (a *Activities) PollNWSAlertsForTenantActivity(
-	ctx context.Context,
-	payload *PollNWSAlertsTenantPayload,
-) error {
-	tenantInfo := payload.TenantInfo()
-	recordActivityHeartbeat(ctx, "polling-nws-alerts", tenantInfo.OrgID.String())
-	if err := a.service.PollNWSAlertsForTenant(ctx, tenantInfo); err != nil {
-		a.logger.Error("Weather alert tenant poll activity failed",
-			zap.String("orgID", tenantInfo.OrgID.String()),
-			zap.String("buID", tenantInfo.BuID.String()),
-			zap.Error(err))
-		return err
-	}
-
-	return nil
 }
 
 func (a *Activities) ExpireStaleWeatherAlertsActivity(ctx context.Context) error {

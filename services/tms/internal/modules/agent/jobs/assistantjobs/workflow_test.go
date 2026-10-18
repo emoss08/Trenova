@@ -451,17 +451,3 @@ func (s *AssistantTurnWorkflowTestSuite) TestAReplyNobodyCouldBeToldAboutStillCo
 	s.Equal("Completed", result.Status)
 	s.NotEmpty(s.notified)
 }
-
-// An execution that began before the step existed replays without it.
-func (s *AssistantTurnWorkflowTestSuite) TestAnExecutionFromBeforeTheChangeSaysNothing() {
-	s.env.OnGetVersion(changeNotifyUnseenTurn, workflow.DefaultVersion, 1).
-		Return(workflow.DefaultVersion)
-	s.prepares(s.plan(), nil)
-	s.answers("Done.")
-	s.finishes(answeredEnding("Done."), nil)
-
-	s.run()
-
-	s.NoError(s.env.GetWorkflowError())
-	s.Empty(s.notified)
-}

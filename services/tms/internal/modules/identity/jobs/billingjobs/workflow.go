@@ -16,10 +16,6 @@ import (
 
 const invoiceSendHeartbeatInterval = 10 * time.Second
 
-// changeReportAutoPostFailure tells the approver when an automatic post gives
-// up. Executions that began before it replay without the step.
-const changeReportAutoPostFailure = "invoice-auto-post-report-failure"
-
 // A post the domain refuses (a closed period, a missing GL account, an invoice
 // that is no longer a draft) refuses the same way every time, so only outages
 // and races are retried.
@@ -144,10 +140,6 @@ func reportAutoPostFailure(
 	payload *billingcontract.AutoPostInvoicePayload,
 	cause error,
 ) {
-	if workflow.GetVersion(ctx, changeReportAutoPostFailure, workflow.DefaultVersion, 1) != 1 {
-		return
-	}
-
 	var a *Activities
 	ctx = workflow.WithActivityOptions(ctx, reportAutoPostFailureActivityOptions)
 	if err := workflow.ExecuteActivity(

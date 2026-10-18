@@ -502,7 +502,7 @@ Tracing took no gate. The delegate's spans are opened in its activities and its
 root by the activity that files the turn; `DelegatedRun.Usage` is summed from
 model replies the workflow already holds, and the call id and definition version
 on the usage attribution come from the delegate's own request. None of it adds a
-command. See [agent-runtime.md](agent-runtime.md#waiting-on-in-flight-executions).
+command. See [agent-runtime.md](agent-runtime.md#workflow-versioning).
 
 Records and shared results took no gate. `DelegateCall.Context` is optional data on
 the activity input, built in workflow code only from the call's arguments and the
