@@ -179,8 +179,8 @@ func getJSON(
 }
 
 // errorEnvelope covers the shapes providers actually return. OpenAI-compatible
-// servers nest under "error", Ollama returns a bare "error" string, and some
-// self-hosted runtimes return neither, in which case the raw body is the message.
+// servers nest under "error", some self-hosted servers return a bare "error"
+// string, and others return neither, in which case the raw body is the message.
 type errorEnvelope struct {
 	Error struct {
 		Type    string `json:"type"`
@@ -250,8 +250,9 @@ func parseErrorMessage(payload []byte) string {
 		}
 	}
 
-	// Ollama reports {"error": "model 'x' not found"}, where error is a string
-	// rather than an object, so the struct decode above leaves it empty.
+	// Some self-hosted servers report {"error": "model 'x' not found"}, where
+	// error is a string rather than an object, so the struct decode above leaves
+	// it empty.
 	var bare struct {
 		Error string `json:"error"`
 	}

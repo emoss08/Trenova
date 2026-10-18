@@ -100,22 +100,22 @@ func TestReorderWhenTheFirstProviderFailsAndTheNextCatchesIt(t *testing.T) {
 	t.Parallel()
 
 	vllm := provider("aip_vllm", 10, aiprovider.TaskAssistantChat, aiprovider.TaskGeneral, aiprovider.TaskDailyBriefing)
-	ollama := provider("aip_ollama", 20, aiprovider.TaskAssistantChat, aiprovider.TaskGeneral, aiprovider.TaskDailyBriefing)
+	local := provider("aip_local", 20, aiprovider.TaskAssistantChat, aiprovider.TaskGeneral, aiprovider.TaskDailyBriefing)
 	usage := []aituneup.ProviderTaskUsage{
 		{ProviderID: vllm.ID, Task: aiprovider.TaskAssistantChat, Calls: 100, Failed: 24},
-		{ProviderID: ollama.ID, Task: aiprovider.TaskAssistantChat, Calls: 60, Failed: 0, Rescued: 24},
+		{ProviderID: local.ID, Task: aiprovider.TaskAssistantChat, Calls: 60, Failed: 0, Rescued: 24},
 		{ProviderID: vllm.ID, Task: aiprovider.TaskGeneral, Calls: 50, Failed: 10},
-		{ProviderID: ollama.ID, Task: aiprovider.TaskGeneral, Calls: 40, Failed: 1, Rescued: 10},
+		{ProviderID: local.ID, Task: aiprovider.TaskGeneral, Calls: 40, Failed: 1, Rescued: 10},
 		{ProviderID: vllm.ID, Task: aiprovider.TaskDailyBriefing, Calls: 100, Failed: 9},
-		{ProviderID: ollama.ID, Task: aiprovider.TaskDailyBriefing, Calls: 10, Rescued: 9},
+		{ProviderID: local.ID, Task: aiprovider.TaskDailyBriefing, Calls: 10, Rescued: 9},
 	}
 
 	got := ofKind(aituneup.Suggest(&aituneup.Inputs{
-		Now: now, Enabled: []*aiprovider.Provider{vllm, ollama}, Usage: usage,
+		Now: now, Enabled: []*aiprovider.Provider{vllm, local}, Usage: usage,
 	}), aituneup.KindReorderProviders)
 
 	require.Len(t, got, 1, "one suggestion per pair, however many tasks it covers")
-	assert.Equal(t, ollama.ID, got[0].ProviderID)
+	assert.Equal(t, local.ID, got[0].ProviderID)
 	assert.Equal(t, vllm.ID, got[0].OtherProviderID)
 	assert.Equal(t, []aiprovider.Task{aiprovider.TaskAssistantChat, aiprovider.TaskGeneral}, got[0].Evidence.Tasks,
 		"daily briefing failed 9 times, under the floor of 10")

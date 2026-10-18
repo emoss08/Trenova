@@ -17,13 +17,6 @@ const (
 	KindAnthropicMessages = Kind("AnthropicMessages")
 	KindOpenAIResponses   = Kind("OpenAIResponses")
 	KindOpenAIChat        = Kind("OpenAIChat")
-	// KindOllama exists despite Ollama exposing an OpenAI-compatible endpoint,
-	// because that endpoint drops response_format.json_schema on the floor
-	// (ollama/ollama#10001) — the request succeeds and returns unconstrained prose,
-	// which is the worst way for a schema to fail. Ollama's native /api/chat takes
-	// a `format` object and does real grammar-constrained decoding, so routing it
-	// here buys constrained output instead of a silent downgrade to prompting.
-	KindOllama = Kind("Ollama")
 )
 
 // CachesOutsideInput reports whether the protocol counts cached prompt tokens
@@ -61,7 +54,7 @@ var (
 
 func (k Kind) IsValid() bool {
 	switch k {
-	case KindAnthropicMessages, KindOpenAIResponses, KindOpenAIChat, KindOllama:
+	case KindAnthropicMessages, KindOpenAIResponses, KindOpenAIChat:
 		return true
 	default:
 		return false
@@ -77,8 +70,6 @@ func (k Kind) DefaultBaseURL() string {
 		return "https://api.anthropic.com"
 	case KindOpenAIResponses:
 		return "https://api.openai.com"
-	case KindOllama:
-		return "http://localhost:11434"
 	case KindOpenAIChat:
 		return ""
 	default:
@@ -95,7 +86,7 @@ func (k Kind) RequiresAPIKey() bool {
 
 func (k Kind) SupportsEmbedding() bool {
 	switch k {
-	case KindOpenAIResponses, KindOpenAIChat, KindOllama:
+	case KindOpenAIResponses, KindOpenAIChat:
 		return true
 	case KindAnthropicMessages:
 		return false
@@ -184,10 +175,6 @@ func (k Kind) DefaultStructuredOutputMode() StructuredOutputMode {
 	switch k {
 	case KindAnthropicMessages, KindOpenAIResponses:
 		return StructuredOutputJSONSchema
-	// Ollama constrains decoding to the schema on its native endpoint, so it is
-	// as strong as the hosted APIs here despite being self-hosted.
-	case KindOllama:
-		return StructuredOutputJSONSchema
 	case KindOpenAIChat:
 		return StructuredOutputPrompted
 	default:
@@ -240,9 +227,9 @@ const (
 	// What it reads is matched to schedule items and a person applies it, so
 	// it never books anything on its own.
 	TaskRemittanceExtraction = Task("RemittanceExtraction")
-	TaskEvaluationJudge       = Task("EvaluationJudge")
-	TaskEmbedding             = Task("Embedding")
-	TaskGeneral               = Task("General")
+	TaskEvaluationJudge      = Task("EvaluationJudge")
+	TaskEmbedding            = Task("Embedding")
+	TaskGeneral              = Task("General")
 )
 
 func (t Task) IsValid() bool {
@@ -310,8 +297,8 @@ func (t Task) Generates() bool {
 // unasked — DeepSeek-style reasoning_content — is still read and shown.
 //
 // Off is not "no thinking" on a model that reasons by default: the GPT-5
-// family and Ollama's thinking models reason at their own default effort when
-// nothing is sent, out of sight and before the first token. None tells such a
+// family and open-weight thinking models reason at their own default effort
+// when nothing is sent, out of sight and before the first token. None tells such a
 // model not to reason; Minimal asks for the least reasoning it allows.
 type ReasoningEffort string
 

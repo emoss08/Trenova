@@ -8825,6 +8825,15 @@
       "apps/web/components"
     ]
   },
+  "A report run is read by the person who ran it, and this request has no person": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A request with this Idempotency-Key is still being processed; retry once it finishes": {
     "sites": 1,
     "scope": [
@@ -139875,6 +139884,24 @@
       "go/other"
     ]
   },
+  "Looks daily until {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Looks every six hours until {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Looks good, finish setup": {
     "sites": 1,
     "scope": [
@@ -139927,6 +139954,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Looks weekly until {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Lookup spend nears its cap": {
@@ -169088,42 +169124,6 @@
       "routes/desk"
     ]
   },
-  "Ollama": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/handlers"
-    ]
-  },
-  "Ollama (self-hosted)": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/handlers"
-    ]
-  },
-  "Ollama embeddings (self-hosted)": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/handlers"
-    ]
-  },
-  "Ollama's native API. Used instead of its OpenAI-compatible endpoint, which ignores JSON schemas.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/handlers"
-    ]
-  },
   "On": {
     "sites": 22,
     "scope": [
@@ -173113,15 +173113,6 @@
     ]
   },
   "Only the target organization can reject this EDI connection": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Only the user who requested a report run can cancel it": {
     "sites": 1,
     "scope": [
       "go"
@@ -320497,15 +320488,6 @@
     ],
     "areas": [
       "routes/dispatch-console"
-    ]
-  },
-  "{0, select, SixHours {Looks every six hours until {1}} Weekly {Looks weekly until {1}} other {Looks daily until {1}}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "{0} (Day)": {

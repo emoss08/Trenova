@@ -10,7 +10,7 @@ policies, so this page cannot drift from what runs: CI regenerates it and fails
 when it differs. Each tool is listed once, under the furthest class its work
 can reach.
 
-Tools listed: 646.
+Tools listed: 649.
 
 ## The model
 
@@ -59,9 +59,9 @@ and Confidential fields never reach a model at all.
 
 | Class | Means | Runs at most | Held once tainted | Tools that reach it |
 | --- | --- | --- | --- | --- |
-| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 215 |
+| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 216 |
 | The caller's own records | Changes only the records of the person using the agent. | Automatic | No | 9 |
-| Inside the organization | Changes records only people inside the organization see. | Automatic | No | 267 |
+| Inside the organization | Changes records only people inside the organization see. | Automatic | No | 269 |
 | Seen by a customer | Changes something a customer can see. | Ask first | Yes | 5 |
 | Seen by a driver | Changes something a driver can see. | Ask first | Yes | 25 |
 | Sent outside the organization | Sends to someone outside the organization. | Ask first | Yes | 44 |
@@ -257,6 +257,7 @@ Looks something up. Nothing changes and nothing is sent.
 | List vehicle positions (`list_vehicle_positions`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List watchtower items (`list_watchtower_items`) | Reads only | Automatic | — | When the record is marked, from inbound message, EDI, weather or run record | Reads the watchtower feed, whose headlines can quote an inbound email, an EDI file, a weather alert or a run that read outside text; it changes nothing, not even what the person has seen. |
 | List weather alerts (`list_weather_alerts`) | Reads only | Automatic | — | Always, from weather | Reads National Weather Service alert text; nothing changes and nothing is sent. |
+| List web watches (`list_web_watches`) | Reads only | Automatic | — | — | Lists the web watches set for the person; it changes nothing, reaches no one, and returns only what the agents wrote when they set them. |
 | List worker checklists (`list_worker_checklists`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List worker credentials (`list_worker_credentials`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List worker injuries (`list_worker_injuries`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
@@ -516,6 +517,7 @@ Changes records only people inside the organization see.
 | Split move at relay (`split_move_at_relay`) | Inside the organization | Propose | — | — | Adds a move and turns a delivery into a relay inside Trenova; the two new windows are times only a person can vouch for, so a person always approves it. |
 | Start performance review (`start_performance_review`) | Inside the organization | Ask first | — | — | Opens a draft review inside Trenova; the worker sees nothing, and delete_performance_review removes the draft. |
 | Start worker checklist (`start_worker_checklist`) | Inside the organization | Ask first | — | — | Opens a checklist on the worker inside Trenova; nothing is sent, and cancel_worker_checklist cancels it. |
+| Stop web watch (`stop_web_watch`) | Inside the organization | Automatic | — | Carries outside text into later runs | Stops a scheduled search the person set; it changes no record and reaches nobody. |
 | Submit carrier settlement (`submit_carrier_settlement`) | Inside the organization | Automatic | — | — | Moves a draft into the approval queue inside Trenova; nothing is paid and a reviewer sends it back to draft. |
 | Submit driver settlement (`submit_driver_settlement`) | Inside the organization | Automatic | — | — | Moves a draft into the approval queue inside Trenova; nothing is paid and a reviewer sends it back to draft. |
 | Submit manual journal (`submit_manual_journal`) | Inside the organization | Ask first | — | — | Moves a draft journal into the approval queue inside Trenova; an approver decides and it books nothing until a person posts it. |
@@ -565,6 +567,7 @@ Changes records only people inside the organization see.
 | Wait until (`wait_until`) | Inside the organization | Automatic | — | Carries outside text into later runs | Parks the agent's own work until something happens and starts it again then; it changes no record and reaches nobody. |
 | Wake exception (`wake_exception`) | Inside the organization | Ask first | — | — | Puts a snoozed exception back in the open queue inside Trenova; nothing outside changes and it can be snoozed again. |
 | Wake inbound message (`wake_inbound_message`) | Inside the organization | Automatic | — | — | Puts a parked message back in front of the people working Triage; nothing is sent. |
+| Watch web (`watch_web`) | Inside the organization | Automatic | — | Carries outside text into later runs | Sets a scheduled search on the organization's web research vendor for the person; it changes no record, reaches nobody, and ends on its own or when stopped. |
 | Withdraw invoice dispute (`withdraw_invoice_dispute`) | Inside the organization | Ask first | A withdrawal read from what a customer wrote is proposed, since it sends the invoice back to collections. | — | Closes a dispute case inside Trenova with no outcome; it moves no money and a new case can be opened with open_invoice_dispute. |
 
 ## Seen by a customer

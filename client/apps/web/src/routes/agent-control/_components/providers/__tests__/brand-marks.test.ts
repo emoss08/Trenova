@@ -12,7 +12,6 @@ describe("brandMarkFor", () => {
     for (const key of [
       "openai",
       "anthropic",
-      "ollama",
       "openrouter",
       "bedrock",
       "vllm",
@@ -28,7 +27,7 @@ describe("brandMarkFor", () => {
   it("resolves a saved provider by its endpoint domain", () => {
     expect(brandMarkFor({ domain: "anthropic.com" })).not.toBeNull();
     expect(brandMarkFor({ domain: "api.openai.com" })).not.toBeNull();
-    expect(brandMarkFor({ domain: "www.ollama.com" })).not.toBeNull();
+    expect(brandMarkFor({ domain: "www.lmstudio.ai" })).not.toBeNull();
   });
 
   it("resolves the three vendors whose marks are not in simple-icons", () => {

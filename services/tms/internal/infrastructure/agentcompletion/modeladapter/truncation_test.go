@@ -1,7 +1,6 @@
 package modeladapter
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
@@ -173,20 +172,4 @@ func TestOpenAIResponsesAdapter_StreamReportsAnIncompleteResponseAsTruncated(t *
 
 	assert.True(t, resp.Truncated)
 	assert.Equal(t, "The drivers with", resp.Text)
-}
-
-func TestOllamaAdapter_StreamReportsALengthStopAsTruncated(t *testing.T) {
-	t.Parallel()
-
-	body := strings.Join([]string{
-		`{"model":"qwen","message":{"role":"assistant","content":"The drivers with"},"done":false}`,
-		`{"model":"qwen","message":{"role":"assistant","content":""},"done":true,"done_reason":"length","prompt_eval_count":11,"eval_count":6}`,
-	}, "\n") + "\n"
-	server, _ := streamServer(t, "application/x-ndjson", body)
-
-	resp, _ := streamWith(t, NewOllamaAdapter(), callFor(
-		aiprovider.KindOllama, server.URL, &Request{Messages: UserMessage("who?")},
-	))
-
-	assert.True(t, resp.Truncated)
 }

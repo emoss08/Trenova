@@ -520,17 +520,13 @@ type AIProviderModelOption struct {
 	ID          string `json:"id"`
 	DisplayName string `json:"displayName"`
 	// Tokens of context, when the endpoint or the model id says.
-	ContextWindow *int `json:"contextWindow,omitempty"`
-	// Bytes on disk, for a model a local server holds.
-	SizeBytes *float64 `json:"sizeBytes,omitempty"`
-	// A local server has it in memory now.
-	Loaded               bool    `json:"loaded"`
+	ContextWindow        *int    `json:"contextWindow,omitempty"`
 	Embedding            bool    `json:"embedding"`
 	InputCostPerMillion  *string `json:"inputCostPerMillion,omitempty"`
 	OutputCostPerMillion *string `json:"outputCostPerMillion,omitempty"`
 	// Where the prices came from; null when there are none.
 	PriceSource *AIModelPriceSource `json:"priceSource,omitempty"`
-	// When the provider released the model (for a local server, when it was pulled), when the endpoint says.
+	// When the provider released the model, when the endpoint says.
 	CreatedAt *int `json:"createdAt,omitempty"`
 }
 

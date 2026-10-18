@@ -145,7 +145,8 @@ go test -run TestToolCatalogSnapshot ./internal/modules/agent/app/agentevalgate/
 A tool description, a product guide page or an eval request is also embedded, by content
 hash, in `agentevalgate/evals/embeddings/nomic-embed-text.json`. Once that fixture is
 recorded, editing any of them makes it stale, and the hybrid ranking gate names the one-line
-command that re-records it from a local Ollama (see "Ranking" in
+command that re-records it from a local Ollama `nomic-embed-text`, through the test-only
+`internal/testutil/ollamaembed` client (see "Ranking" in
 [ai-retrieval.md](https://github.com/emoss08/trenova-documentation/blob/main/docs/engineering/ai-retrieval.md)).
 Re-record it, then run the floors command it names, whenever a description, guide page or
 eval request changes; the gates skip, rather than fail, without it.

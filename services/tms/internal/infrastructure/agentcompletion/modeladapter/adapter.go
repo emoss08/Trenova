@@ -202,7 +202,6 @@ func NewRegistry() *Registry {
 		NewAnthropicAdapter(),
 		NewOpenAIResponsesAdapter(),
 		NewOpenAIChatAdapter(),
-		NewOllamaAdapter(),
 	}
 
 	byKind := make(map[aiprovider.Kind]Adapter, len(adapters))

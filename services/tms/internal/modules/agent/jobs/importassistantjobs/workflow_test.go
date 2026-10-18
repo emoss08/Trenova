@@ -159,7 +159,7 @@ func TestImportAssistantTurnWorkflow_AttributesEveryModelCallAndTotalsItsUsage(t
 				Text:            "Found Acme Freight.",
 				ModelIdentifier: "second-model",
 				ProviderID:      providerID,
-				ProviderKind:    aiprovider.KindOllama,
+				ProviderKind:    aiprovider.KindOpenAIChat,
 				InputTokens:     500,
 				OutputTokens:    30,
 				ReasoningTokens: 7,
@@ -194,7 +194,7 @@ func TestImportAssistantTurnWorkflow_AttributesEveryModelCallAndTotalsItsUsage(t
 	require.NotNil(t, saved)
 	assert.Equal(t, "second-model", saved.Record.Model)
 	assert.Equal(t, providerID, saved.Record.ProviderID)
-	assert.Equal(t, aiprovider.KindOllama, saved.Record.ProviderKind)
+	assert.Equal(t, aiprovider.KindOpenAIChat, saved.Record.ProviderKind)
 	assert.Equal(t, 900, saved.Record.InputTokens)
 	assert.Equal(t, 50, saved.Record.OutputTokens)
 	assert.Equal(t, 12, saved.Record.ReasoningTokens)

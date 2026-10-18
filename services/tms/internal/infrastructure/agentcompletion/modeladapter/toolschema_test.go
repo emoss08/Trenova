@@ -68,13 +68,6 @@ func TestAdapters_SendNoExtensionKeywordsToAModel(t *testing.T) {
 				}},
 			},
 		},
-		{
-			"ollama", aiprovider.KindOllama, NewOllamaAdapter(),
-			map[string]any{
-				"model":   "m",
-				"message": map[string]any{"role": "assistant", "content": "hi"},
-			},
-		},
 	}
 
 	for _, tc := range cases {

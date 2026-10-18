@@ -285,7 +285,7 @@ func TestKeptKeyForNewEndpoint(t *testing.T) {
 		"the same server keeps its key")
 
 	rekinded := *existing
-	rekinded.Kind = aiprovider.KindOllama
+	rekinded.Kind = aiprovider.KindOpenAIResponses
 	assert.True(t, keptKeyForNewEndpoint(existing, &rekinded, saveRequest(existing, existing.BaseURL, nil)))
 
 	keyless := *existing

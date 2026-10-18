@@ -16,7 +16,7 @@ import (
 // Names the other AI seeds look providers up by, so an insight can attribute
 // its prose to the provider that would have written it.
 const (
-	SeedAIProviderLocalName  = "Local Ollama"
+	SeedAIProviderLocalName  = "Local LM Studio"
 	SeedAIProviderServerName = "Workstation vLLM"
 	SeedAIProviderHostedName = "Anthropic (add a key to enable)"
 )
@@ -93,8 +93,9 @@ func (s *AIProviderSeed) providers(orgID, buID pulid.ID) []*aiprovider.Provider 
 			Name:           SeedAIProviderLocalName,
 			Description: "A small model on the developer's own machine. Cheap enough to run " +
 				"on every chat turn and every insight refresh.",
-			Kind:                 aiprovider.KindOllama,
-			Model:                "qwen2.5:14b",
+			Kind:                 aiprovider.KindOpenAIChat,
+			BaseURL:              "http://localhost:1234/v1",
+			Model:                "qwen2.5-14b-instruct",
 			AllowPrivateNetwork:  true,
 			StructuredOutputMode: aiprovider.StructuredOutputJSONSchema,
 			ReasoningEffort:      aiprovider.ReasoningOff,

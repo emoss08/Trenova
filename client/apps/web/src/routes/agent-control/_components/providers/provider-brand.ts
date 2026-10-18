@@ -14,7 +14,6 @@ type BrandSource = {
 const KIND_VENDOR_DOMAIN: Partial<Record<AIProviderKind, string>> = {
   AnthropicMessages: "anthropic.com",
   OpenAIResponses: "openai.com",
-  Ollama: "ollama.com",
 };
 
 const PRIVATE_HOST =
@@ -60,9 +59,7 @@ export function providerBrandDomain(
     return null;
   }
   if (isPrivateHost(host)) {
-    // A private host could be any server, but Ollama's own protocol is spoken
-    // by Ollama alone, so that one still names its vendor.
-    return provider.kind === "Ollama" ? (KIND_VENDOR_DOMAIN.Ollama ?? null) : null;
+    return null;
   }
 
   const preset = presets.find(

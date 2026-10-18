@@ -232,7 +232,6 @@ export type AiProviderErrorKind =
 
 export type AiProviderKind =
   | 'AnthropicMessages'
-  | 'Ollama'
   | 'OpenAIChat'
   | 'OpenAIResponses';
 
@@ -11004,7 +11003,7 @@ export type AiProviderModelsQueryVariables = Exact<{
 }>;
 
 
-export type AiProviderModelsQuery = { aiProviderModels: Array<{ id: string, displayName: string, contextWindow: number | null, sizeBytes: number | null, loaded: boolean, embedding: boolean, inputCostPerMillion: string | null, outputCostPerMillion: string | null, priceSource: AiModelPriceSource | null, createdAt: number | null }> };
+export type AiProviderModelsQuery = { aiProviderModels: Array<{ id: string, displayName: string, contextWindow: number | null, embedding: boolean, inputCostPerMillion: string | null, outputCostPerMillion: string | null, priceSource: AiModelPriceSource | null, createdAt: number | null }> };
 
 export type AiProviderUsageDailyQueryVariables = Exact<{
   days?: number | null | undefined;

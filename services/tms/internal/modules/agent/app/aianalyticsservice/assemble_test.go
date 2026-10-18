@@ -18,7 +18,7 @@ const (
 	groqID    = pulid.ID("aiprv_groq")
 	vllmID    = pulid.ID("aiprv_vllm")
 	bedrockID = pulid.ID("aiprv_bedrock")
-	ollamaID  = pulid.ID("aiprv_ollama")
+	localID   = pulid.ID("aiprv_local")
 	llamaKey  = "llama-3.3-70b"
 	sonnetKey = "claude-sonnet-5"
 	qwenKey   = "qwen-2.5-14b"
@@ -42,8 +42,8 @@ func providers() []*aiprovider.Provider {
 			Tasks: []aiprovider.Task{aiprovider.TaskBillingDiagnosis},
 		},
 		{
-			ID: ollamaID, Name: "Local Ollama", Kind: aiprovider.KindOllama, Enabled: true,
-			Model: "qwen2.5:14b", Priority: 40,
+			ID: localID, Name: "Local LM Studio", Kind: aiprovider.KindOpenAIChat, Enabled: true,
+			Model: "Qwen/Qwen2.5-14B-Instruct", Priority: 40,
 			Tasks: []aiprovider.Task{aiprovider.TaskScopeClassification},
 		},
 	}
@@ -104,7 +104,7 @@ func fixture() *readings {
 			deployment(at(llamaKey, groqID), deploymentFigures{100, 86, 200, 8, 0}),
 			deployment(at(llamaKey, vllmID), deploymentFigures{100, 74, 200, 12, 0}),
 			sonnet,
-			deployment(at(qwenKey, ollamaID), deploymentFigures{40, 34, 400, 36, 0}),
+			deployment(at(qwenKey, localID), deploymentFigures{40, 34, 400, 36, 0}),
 		},
 		durations: []aianalyticsports.OutcomeDurationRow{
 			{
@@ -169,15 +169,15 @@ func fixture() *readings {
 				Cause:         aianalytics.CauseToolError,
 				Calls:         2,
 			},
-			{DeploymentKey: at(qwenKey, ollamaID), ToolName: "run_report", Calls: 364},
+			{DeploymentKey: at(qwenKey, localID), ToolName: "run_report", Calls: 364},
 			{
-				DeploymentKey: at(qwenKey, ollamaID),
+				DeploymentKey: at(qwenKey, localID),
 				ToolName:      "run_report",
 				Cause:         aianalytics.CauseWrongArguments,
 				Calls:         30,
 			},
 			{
-				DeploymentKey: at(qwenKey, ollamaID),
+				DeploymentKey: at(qwenKey, localID),
 				ToolName:      "run_report",
 				Cause:         aianalytics.CauseRepeatedCall,
 				Calls:         6,
@@ -402,9 +402,9 @@ func TestTaskFitRoutesToTheDeploymentThatFinishesTheTaskBest(t *testing.T) {
 	t.Parallel()
 
 	data := fixture()
-	ollama := data.providers[3]
-	ollama.Tasks = append(ollama.Tasks, aiprovider.TaskDailyBriefing)
-	data.providers = append([]*aiprovider.Provider{ollama}, data.providers[:3]...)
+	local := data.providers[3]
+	local.Tasks = append(local.Tasks, aiprovider.TaskDailyBriefing)
+	data.providers = append([]*aiprovider.Provider{local}, data.providers[:3]...)
 	data.taskCells = []aianalyticsports.TaskCellRow{
 		{
 			DeploymentKey: at(llamaKey, vllmID),
@@ -419,7 +419,7 @@ func TestTaskFitRoutesToTheDeploymentThatFinishesTheTaskBest(t *testing.T) {
 			Completed:     29,
 		},
 		{
-			DeploymentKey: at(qwenKey, ollamaID),
+			DeploymentKey: at(qwenKey, localID),
 			Task:          aiprovider.TaskDailyBriefing,
 			Runs:          40,
 			Completed:     28,
@@ -430,7 +430,7 @@ func TestTaskFitRoutesToTheDeploymentThatFinishesTheTaskBest(t *testing.T) {
 
 	require.Len(t, got.Tasks, 1)
 	briefing := got.Tasks[0]
-	assert.Equal(t, "Local Ollama", briefing.Current.Name)
+	assert.Equal(t, "Local LM Studio", briefing.Current.Name)
 	assert.Equal(t, qwenKey, briefing.CurrentSeriesKey)
 	assert.Equal(t, llamaKey, briefing.BestSeriesKey)
 	require.NotNil(t, briefing.Suggestion)
@@ -719,7 +719,7 @@ func TestSeriesKeepTheirColourWhenTheScopeNarrows(t *testing.T) {
 
 	data := fixture()
 	data.palette = []aianalyticsports.DeploymentKey{
-		at(llamaKey, groqID), at(llamaKey, vllmID), at(sonnetKey, bedrockID), at(qwenKey, ollamaID),
+		at(llamaKey, groqID), at(llamaKey, vllmID), at(sonnetKey, bedrockID), at(qwenKey, localID),
 		at("gpt-5.1", "aiprv_azure"), at("gemini-3-flash", "aiprv_gemini"),
 	}
 	whole := analyticsFor(data, aianalytics.CompareByModel)
@@ -739,7 +739,7 @@ func TestSeriesKeepTheirColourWhenTheScopeNarrows(t *testing.T) {
 	for _, deployment := range whole.Deployments {
 		if deployment.ProviderID == groqID {
 			assert.Equal(t, aianalytics.AssignPaletteSlots([]string{
-				groqID.String(), vllmID.String(), bedrockID.String(), ollamaID.String(), "aiprv_azure", "aiprv_gemini",
+				groqID.String(), vllmID.String(), bedrockID.String(), localID.String(), "aiprv_azure", "aiprv_gemini",
 			})[groqID.String()], deployment.ColorSlot, "a deployment takes its provider's hue")
 		}
 	}

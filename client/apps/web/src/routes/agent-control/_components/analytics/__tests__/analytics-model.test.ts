@@ -188,14 +188,14 @@ describe("board", () => {
   it("says a local provider's run costs nothing", () => {
     const entries = board(
       [
-        series({ key: "ollama", pricedRuns: 0, costPerCompletedRun: null }),
+        series({ key: "lmstudio", pricedRuns: 0, costPerCompletedRun: null }),
         series({ key: "azure", costPerCompletedRun: "0.041" }),
       ],
       METRICS.cost,
     );
 
     expect(boardSentence(t, rt, METRICS.cost, entries)).toBe(
-      "[ollama] runs on your own hardware, so a run costs nothing; [azure] costs $0.041.",
+      "[lmstudio] runs on your own hardware, so a run costs nothing; [azure] costs $0.041.",
     );
   });
 
@@ -457,8 +457,8 @@ describe("sameModelPair", () => {
 
 describe("moveAhead", () => {
   it("moves a provider to just ahead of another and leaves the rest in order", () => {
-    expect(moveAhead(["ollama", "vllm", "openai", "groq"], "groq", "vllm")).toEqual([
-      "ollama",
+    expect(moveAhead(["lmstudio", "vllm", "openai", "groq"], "groq", "vllm")).toEqual([
+      "lmstudio",
       "groq",
       "vllm",
       "openai",

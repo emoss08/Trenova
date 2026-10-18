@@ -105,7 +105,7 @@ func TestGenAI_IsSafeWhenMetricsAreOff(t *testing.T) {
 
 	genAI := registry.GenAI()
 	require.NotNil(t, genAI)
-	genAI.RecordCall(t.Context(), &metrics.GenAICall{Operation: "chat", Provider: "ollama"})
+	genAI.RecordCall(t.Context(), &metrics.GenAICall{Operation: "chat", Provider: "openai"})
 
 	var nilRegistry *metrics.Registry
 	assert.Nil(t, nilRegistry.GenAI())

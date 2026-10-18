@@ -130,7 +130,7 @@ func analyticsDeployments() []analyticsDeployment {
 	return []analyticsDeployment{
 		{
 			provider: SeedAIProviderLocalName,
-			model:    "qwen2.5:14b",
+			model:    "qwen2.5-14b-instruct",
 			routes: []analyticsRoute{
 				{aiprovider.TaskScopeClassification, 420, 0.93, ""},
 				{aiprovider.TaskDocumentClassification, 320, 0.89, ""},

@@ -27,7 +27,7 @@ function Harness() {
       placeholder="Choose a protocol"
       options={[
         { value: "anthropic", label: "Anthropic Messages", icon: <FullBleedMark /> },
-        { value: "plain", label: "Ollama" },
+        { value: "plain", label: "OpenAI-compatible" },
       ]}
     />
   );

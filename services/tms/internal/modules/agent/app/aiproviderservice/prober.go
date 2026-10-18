@@ -27,8 +27,8 @@ import (
 //
 // The check that earns its keep is not reachability but schema adherence.
 // Several OpenAI-compatible servers accept a json_schema request and quietly
-// ignore it — Ollama's compatibility endpoint is the best-known case — and the
-// only way to find out is to ask for a known shape and see what comes back.
+// ignore it, and the only way to find out is to ask for a known shape and see
+// what comes back.
 // Discovering that here, while an administrator is looking at the form, is far
 // better than discovering it from a malformed billing diagnosis weeks later.
 type Prober struct {
@@ -497,7 +497,6 @@ func modelOption(model *modeladapter.ModelInfo) agentports.AIProviderModelOption
 	option := agentports.AIProviderModelOption{
 		ID:                   model.ID,
 		DisplayName:          stringutils.FirstNonEmptyTrimmed(model.DisplayName, model.ID),
-		Loaded:               model.Loaded,
 		Embedding:            model.Embedding,
 		InputCostPerMillion:  model.InputCostPerMillion,
 		OutputCostPerMillion: model.OutputCostPerMillion,
@@ -508,10 +507,6 @@ func modelOption(model *modeladapter.ModelInfo) agentports.AIProviderModelOption
 	if model.ContextWindow > 0 {
 		window := model.ContextWindow
 		option.ContextWindow = &window
-	}
-	if model.SizeBytes > 0 {
-		size := model.SizeBytes
-		option.SizeBytes = &size
 	}
 	if model.CreatedAt > 0 {
 		created := model.CreatedAt

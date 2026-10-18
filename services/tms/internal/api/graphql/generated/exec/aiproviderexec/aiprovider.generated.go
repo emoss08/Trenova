@@ -631,25 +631,6 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
 			{
-				Name:     "sizeBytes",
-				ChildErr: errNoChild15,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.AIProviderModelOption)
-					return obj.SizeBytes, nil
-				},
-				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
-			},
-			{
-				Name:     "loaded",
-				NonNull:  true,
-				ChildErr: errNoChild3,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.AIProviderModelOption)
-					return obj.Loaded, nil
-				},
-				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
-			},
-			{
 				Name:     "embedding",
 				NonNull:  true,
 				ChildErr: errNoChild3,
@@ -679,7 +660,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "priceSource",
-				ChildErr: errNoChild16,
+				ChildErr: errNoChild15,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIProviderModelOption)
 					return obj.PriceSource, nil
@@ -700,7 +681,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "auth",
 				NonNull:  true,
-				ChildErr: errNoChild17,
+				ChildErr: errNoChild16,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aiprovider.PlatformSettings)
 					return obj.Auth, nil
@@ -1102,9 +1083,8 @@ var (
 	errNoChild12 = errors.New("field of type AIEmbeddingInputStyle does not have child fields")
 	errNoChild13 = errors.New("field of type AIProviderCapAction does not have child fields")
 	errNoChild14 = errors.New("field of type Timestamp does not have child fields")
-	errNoChild15 = errors.New("field of type Float does not have child fields")
-	errNoChild16 = errors.New("field of type AIModelPriceSource does not have child fields")
-	errNoChild17 = errors.New("field of type AIProviderPlatformAuth does not have child fields")
+	errNoChild15 = errors.New("field of type AIModelPriceSource does not have child fields")
+	errNoChild16 = errors.New("field of type AIProviderPlatformAuth does not have child fields")
 )
 
 func field_Mutation_testAIProviderDraft_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -2060,14 +2040,6 @@ func marshalODecimal2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.Se
 	}
 	res := graphql.MarshalString(*v)
 	return res
-}
-
-func marshalOFloat2ᚖfloat64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *float64) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	res := graphql.MarshalFloatContext(*v)
-	return graphql.WrapContextMarshaler(ctx, res)
 }
 
 func marshalOID2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *string) graphql.Marshaler {

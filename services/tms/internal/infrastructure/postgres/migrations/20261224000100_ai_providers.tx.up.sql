@@ -9,8 +9,7 @@ CREATE TABLE IF NOT EXISTS "ai_providers"(
     "description" text,
     -- Wire protocol, not vendor: one OpenAIChat row reaches vLLM, SGLang,
     -- OpenRouter, Groq, Together, Fireworks, Bedrock, or anything else speaking
-    -- that shape. Ollama is separate only because its compat endpoint ignores
-    -- json_schema while its native endpoint honours it.
+    -- that shape.
     "kind" varchar(50) NOT NULL,
     "base_url" text,
     -- Free text: self-hosted model names are arbitrary and cannot be enumerated.
@@ -29,7 +28,7 @@ CREATE TABLE IF NOT EXISTS "ai_providers"(
     CONSTRAINT "pk_ai_providers" PRIMARY KEY ("id", "business_unit_id", "organization_id"),
     CONSTRAINT "fk_ai_providers_org" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
     CONSTRAINT "fk_ai_providers_bu" FOREIGN KEY ("business_unit_id") REFERENCES "business_units"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
-    CONSTRAINT "ck_ai_providers_kind" CHECK ("kind" IN ('AnthropicMessages', 'OpenAIResponses', 'OpenAIChat', 'Ollama')),
+    CONSTRAINT "ck_ai_providers_kind" CHECK ("kind" IN ('AnthropicMessages', 'OpenAIResponses', 'OpenAIChat')),
     CONSTRAINT "ck_ai_providers_structured_output_mode" CHECK ("structured_output_mode" IN ('JSONSchema', 'JSONMode', 'Prompted')),
     CONSTRAINT "ck_ai_providers_max_tokens" CHECK ("max_tokens" BETWEEN 256 AND 200000),
     CONSTRAINT "ck_ai_providers_priority" CHECK ("priority" >= 0)

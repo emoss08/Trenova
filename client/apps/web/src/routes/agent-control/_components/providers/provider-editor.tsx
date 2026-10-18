@@ -62,7 +62,7 @@ import { formatRelativeTime } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateMedium, formatUnixDateTimeShort } from "@trenova/shared/lib/date";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
-import { cn, formatFileSize } from "@trenova/shared/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { useCallback, useMemo, useState, type ReactNode } from "react";
 import {
   useController,
@@ -1288,8 +1288,6 @@ function ModelPicker({ list, model, onPick, local }: ModelPickerProps) {
     if (option.contextWindow) {
       parts.push(t("{0} context", formatContext(option.contextWindow)));
     }
-    if (option.sizeBytes) parts.push(formatFileSize(option.sizeBytes));
-    if (option.loaded) parts.push(t("loaded"));
     if (option.createdAt) parts.push(formatUnixDateMedium(option.createdAt));
     return parts.join(" · ");
   };
