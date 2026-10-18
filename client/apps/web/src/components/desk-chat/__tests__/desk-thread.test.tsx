@@ -19,6 +19,10 @@ const conversation = vi.hoisted(() => ({
 vi.mock("@/lib/queries/assistant", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/queries/assistant")>()),
   assistant: {
+    browser: (agentId: string) => ({
+      queryKey: ["browser", agentId],
+      queryFn: () => ({ available: false }),
+    }),
     agentMatch: (text: string) => ({
       queryKey: ["agent-match", text],
       queryFn: () => ({ outcome: "NoMatch", agent: null, tools: [] }),
