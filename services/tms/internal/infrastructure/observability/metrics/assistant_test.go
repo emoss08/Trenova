@@ -92,6 +92,7 @@ func TestAssistant_IsSafeWhenThereIsNoCollector(t *testing.T) {
 		absent.RecordStepReplayed("AssistantTurn", "Completed")
 		absent.RecordStreamAttach("resumed")
 		absent.RecordToolOutcome(ToolOutcomeLabels{Tool: "list_shipments", Verdict: "ran"})
+		absent.RecordGuardReask(GuardReaskLabels{Guard: "grounding"})
 	})
 }
 
@@ -236,4 +237,23 @@ func TestAssistant_PhaseTimingsAreSafeWithoutMetrics(t *testing.T) {
 	off.RecordPrepare("allowed", 1)
 	off.RecordGuard("classifier", 1)
 	off.RecordModelCallWait(1)
+}
+
+func TestAssistant_CountsGuardReasksByGuardModelAndProvider(t *testing.T) {
+	t.Parallel()
+
+	assistant, registry := newAssistantForTest(t)
+
+	assistant.RecordGuardReask(GuardReaskLabels{
+		Guard: "grounding", Model: "claude-haiku-5.5", Provider: "AnthropicMessages",
+	})
+	assistant.RecordGuardReask(GuardReaskLabels{
+		Guard: "grounding", Model: "claude-haiku-5.5", Provider: "AnthropicMessages",
+	})
+	assistant.RecordGuardReask(GuardReaskLabels{Guard: "empty_reply"})
+
+	name := "trenova_assistant_guard_reasks_total"
+	assert.Equal(t, 2, countOf(t, registry, name,
+		"grounding", "claude-haiku-5.5", "AnthropicMessages"))
+	assert.Equal(t, 1, countOf(t, registry, name, "empty_reply", "unknown", "unknown"))
 }

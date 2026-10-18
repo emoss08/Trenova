@@ -187,6 +187,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentports.RunResult, error) 
 						Kind:    agentports.RetryKindRestart,
 					},
 				})
+				s.reask(t, fx, ReaskLoop, completion)
 				continue
 			}
 			fx.Emit(kernelports.StreamEvent{
@@ -210,6 +211,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentports.RunResult, error) 
 
 		retry, stop := s.handleCutOff(t, fx, completion)
 		if retry {
+			s.reask(t, fx, ReaskCutOff, completion)
 			continue
 		}
 
@@ -231,19 +233,23 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentports.RunResult, error) 
 			if strings.TrimSpace(completion.Text) == "" && !asked {
 				if retries < maxReplyRetries {
 					retries++
+					s.reask(t, fx, ReaskEmptyReply, completion)
 					continue
 				}
 				fx.Emit(deltaEvent(emptyReply))
 				return s.finish(result, cannedCompletion(completion, emptyReply), fx), nil
 			}
 			if !asked && s.holdToCommand(t, fx, completion, &commandHeld) {
+				s.reask(t, fx, ReaskCommand, completion)
 				continue
 			}
 			if s.reground(t, fx, completion, &grounding) {
+				s.reask(t, fx, ReaskGrounding, completion)
 				continue
 			}
 			s.passReply(t, fx, completion)
 			if s.placeArtifacts(t, fx, completion, &placement) {
+				s.reask(t, fx, ReaskPlacement, completion)
 				continue
 			}
 
@@ -519,11 +525,11 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentports.RunResult, error) 
 		)
 	}
 
-	note, ending := budgetSpentNote, exhaustedReply
+	note, ending, guard := budgetSpentNote, exhaustedReply, ReaskBudgetSpent
 	if stuck {
-		note, ending = stuckNote, stuckReply
+		note, ending, guard = stuckNote, stuckReply, ReaskStuck
 	}
-	if final := s.finalAnswer(t, fx, result, note); final != nil {
+	if final := s.finalAnswer(t, fx, result, note, guard); final != nil {
 		grounding.rewritten = true
 		s.reground(t, fx, final, &grounding)
 		s.passReply(t, fx, final)
@@ -626,8 +632,9 @@ func (s *Service) finalAnswer(
 	t *Turn,
 	fx TurnEffects,
 	result *agentports.RunResult,
-	note string,
+	note, guard string,
 ) *agentports.ChatCompletionResult {
+	s.reask(t, fx, guard, nil)
 	req := t.completionRequest()
 	req.ToolChoiceNone = true
 	req.Messages = append(slices.Clone(req.Messages), agentports.Message{

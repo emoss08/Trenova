@@ -1306,6 +1306,7 @@ func TestRun_AnswersFromWhatItGatheredWhenTheBudgetRunsOut(t *testing.T) {
 	assert.Equal(t, "Shipment S-1 is in transit; I did not get to its stops.", result.Reply)
 	require.NotNil(t, completion.LastReq)
 	assert.True(t, completion.LastReq.ToolChoiceNone, "the last ask forbids tool calls")
+	assert.Equal(t, ReaskBudgetSpent, completion.LastReq.Reask)
 	assert.NotEmpty(t, completion.LastReq.Tools, "the last ask keeps the tools declared")
 }
 

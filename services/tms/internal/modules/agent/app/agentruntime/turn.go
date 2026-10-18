@@ -95,6 +95,9 @@ type Turn struct {
 	// providerKind is the protocol of the provider that answered the latest
 	// model call, which the tool outcome counter is labelled with.
 	providerKind aiprovider.Kind
+	// reask is the guard that sent the model's last answer back, carried on
+	// the next request so what each guard costs can be counted.
+	reask string
 }
 
 // TurnEffects is everything a turn does outside itself.
@@ -653,6 +656,7 @@ func (t *Turn) completionRequest() *agentports.ChatCompletionRequest {
 		PinPreferred:        req.PinProvider && !req.PreferredProviderID.IsNil(),
 		Attribution:         turnAttribution(req),
 		MaxTokens:           t.cutOff.budget,
+		Reask:               t.takeReask(),
 	}
 	fitWindow(completion, t.window())
 

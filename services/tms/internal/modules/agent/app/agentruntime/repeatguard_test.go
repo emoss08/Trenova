@@ -84,6 +84,8 @@ func TestRun_StopsCallingToolsAfterRepeatedFailedCalls(t *testing.T) {
 	require.Len(t, completion.Requests, 4)
 	final := completion.Requests[3]
 	assert.True(t, final.ToolChoiceNone, "the answer is asked for with tool calls forbidden")
+	assert.Equal(t, ReaskStuck, final.Reask)
+	assert.Empty(t, completion.Requests[2].Reask)
 	assert.Equal(t, specNames(completion.Requests[2].Tools), specNames(final.Tools),
 		"the tools stay declared so the cached prefix holds")
 	assert.Equal(t, stuckNote, final.Messages[len(final.Messages)-1].Content)

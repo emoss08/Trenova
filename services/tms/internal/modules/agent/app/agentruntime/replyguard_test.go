@@ -97,6 +97,9 @@ func TestRun_AsksAgainForAnEmptyReply(t *testing.T) {
 
 	assert.Equal(t, "It was created.", result.Reply)
 	assert.Equal(t, 2, completion.CallCount)
+	assert.Empty(t, completion.Requests[0].Reask)
+	assert.Equal(t, ReaskEmptyReply, completion.Requests[1].Reask,
+		"the second call says which guard asked for it")
 }
 
 func TestRun_EndsOnAPlainLineWhenTheReplyIsEmptyAgain(t *testing.T) {

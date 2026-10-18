@@ -101,7 +101,10 @@ type ChatCompletionRequest struct {
 	Tools        []kernelports.ToolSpec
 	// ToolChoiceNone keeps Tools declared and forbids calling any of them.
 	ToolChoiceNone bool `json:"toolChoiceNone,omitempty"`
-	MaxTokens      int
+	// Reask names the runtime guard that sent the previous answer back and
+	// asked again, empty on an ordinary step of the loop.
+	Reask     string `json:"reask,omitempty"`
+	MaxTokens int
 	// PreferredProviderID asks for one configured provider first. It is honoured
 	// only when that provider is enabled and serves the task; otherwise the usual
 	// priority order applies, so a deleted preference never strands an agent.

@@ -38,6 +38,7 @@ type Assistant struct {
 	streamAttached   *prometheus.CounterVec
 	trajectoryEvents *prometheus.CounterVec
 	toolOutcomes     *prometheus.CounterVec
+	guardReasks      *prometheus.CounterVec
 }
 
 func NewAssistant(registry *prometheus.Registry, logger *zap.Logger, enabled bool) *Assistant {
@@ -131,6 +132,16 @@ func NewAssistant(registry *prometheus.Registry, logger *zap.Logger, enabled boo
 		[]string{"tool", "verdict", "model", "provider"},
 	)
 
+	m.guardReasks = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: Namespace,
+			Subsystem: "assistant",
+			Name:      "guard_reasks_total",
+			Help:      "Model calls the runtime made again because a guard sent the answer back",
+		},
+		[]string{"guard", "model", "provider"},
+	)
+
 	m.streamAttached = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: Namespace,
@@ -186,6 +197,7 @@ func NewAssistant(registry *prometheus.Registry, logger *zap.Logger, enabled boo
 		m.streamAttached,
 		m.trajectoryEvents,
 		m.toolOutcomes,
+		m.guardReasks,
 	)
 
 	return m
@@ -288,6 +300,27 @@ func (m *Assistant) RecordToolOutcome(labels ToolOutcomeLabels) {
 	m.toolOutcomes.WithLabelValues(
 		labels.Tool,
 		labels.Verdict,
+		labelOrUnknown(labels.Model),
+		labelOrUnknown(labels.Provider),
+	).Inc()
+}
+
+type GuardReaskLabels struct {
+	Guard    string
+	Model    string
+	Provider string
+}
+
+// RecordGuardReask files one model call the runtime made again because a
+// guard (grounding, placement, a held command, an empty or looping reply, a
+// cut-off call, a spent budget) sent the answer back.
+func (m *Assistant) RecordGuardReask(labels GuardReaskLabels) {
+	if !m.enabled() {
+		return
+	}
+
+	m.guardReasks.WithLabelValues(
+		labels.Guard,
 		labelOrUnknown(labels.Model),
 		labelOrUnknown(labels.Provider),
 	).Inc()

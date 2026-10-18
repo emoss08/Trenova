@@ -2369,6 +2369,15 @@ failed, unknown), by the canonical model that asked for it
 (`aianalytics.CanonicalModel`, so a dated snapshot and a Bedrock id count as one
 model) and by the protocol of the provider that answered (`AnthropicMessages`,
 `OpenAIResponses`, `OpenAIChat`; `unknown` before any model answered).
+
+`assistant_guard_reasks_total{guard,model,provider}` counts the model calls the loop makes
+again because a guard sent the answer back: `loop` (a reply that fell into a repetition),
+`cut_off` (a call cut off at the output limit, retried with a larger one), `empty_reply`,
+`command` (a turn held to the extension command it opened with), `grounding` (the grounding
+guard's correction), `placement` (artifact placement), and the two forced final answers,
+`budget_spent` and `stuck`. The same name rides on the re-asked request as
+`ChatCompletionRequest.Reask`, which is how the desk bench counts each guard's cost per
+task; like the tool counter it is not counted while workflow code replays.
 It is counted in one place, `recordToolResult`, and not while workflow code
 replays its history (`ReplayAware`); a name the model invented is counted as
 `unregistered`, so a confused model cannot mint a series per guess. The agent's

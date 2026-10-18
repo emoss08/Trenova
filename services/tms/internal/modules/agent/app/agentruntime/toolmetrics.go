@@ -1,8 +1,11 @@
 package agentruntime
 
 import (
+	"cmp"
+
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 )
 
 // unregisteredToolLabel is the tool a call is counted under when it names
@@ -50,4 +53,45 @@ func (s *Service) toolMetricLabel(name string) string {
 	}
 
 	return unregisteredToolLabel
+}
+
+const (
+	ReaskLoop        = "loop"
+	ReaskCutOff      = "cut_off"
+	ReaskEmptyReply  = "empty_reply"
+	ReaskCommand     = "command"
+	ReaskGrounding   = "grounding"
+	ReaskPlacement   = "placement"
+	ReaskBudgetSpent = "budget_spent"
+	ReaskStuck       = "stuck"
+)
+
+func (s *Service) reask(
+	t *Turn,
+	fx TurnEffects,
+	guard string,
+	completion *agentports.ChatCompletionResult,
+) {
+	t.reask = guard
+	if aware, ok := fx.(ReplayAware); ok && aware.Replaying() {
+		return
+	}
+
+	model, provider := t.result.Model, t.providerKind
+	if completion != nil {
+		model = cmp.Or(completion.ModelIdentifier, model)
+		provider = cmp.Or(completion.ProviderKind, provider)
+	}
+	s.metrics.RecordGuardReask(metrics.GuardReaskLabels{
+		Guard:    guard,
+		Model:    aianalytics.CanonicalModel(model),
+		Provider: string(provider),
+	})
+}
+
+func (t *Turn) takeReask() string {
+	guard := t.reask
+	t.reask = ""
+
+	return guard
 }
