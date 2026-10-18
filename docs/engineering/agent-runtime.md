@@ -1449,8 +1449,15 @@ Exactly one of the three parameters is given.
 A turn's proposals are filed when it ends, and two or more become one plan the person
 approves whole. An agent that proposes a change, notices a mistake and proposes it again
 corrected would otherwise leave both in that plan: one approval ran both, and a load was
-entered twice. Once a turn has filed a proposal a person will decide, the loop offers
-`withdraw_proposal {proposalId, reason?}` (`agentruntime/withdrawproposal.go`). Every
+entered twice. Every turn that holds a tool able to file a proposal (an action tool) is
+given `withdraw_proposal {proposalId, reason?}` (`agentruntime/withdrawproposal.go`) from
+its first model call (`declareWithdrawal`), and the loop refuses the call with
+`unofferedWithdrawal` until the turn has filed a proposal a person would decide
+(`hasFiledProposal`). It used to be added after the first filing, which changed `tools`
+mid-turn: the cached prefix was written again, and on the models that bind thinking to the
+conversation (Opus, Sonnet and Haiku 5.5) every replayed thinking block was bound to the old
+list. `TestTurn_SendsTheSameToolsOnEveryModelCall` holds the tool array identical across a
+turn that proposes, withdraws and proposes again. Every
 filing result names its proposal's id ("Recorded a proposal to run "create_shipment"
 (proposal ap_…)"), and the runtime answers the call itself, like `request_decision`: it
 marks that action `Withdrawn` on `PendingAction`, and the recorder records it
@@ -1462,9 +1469,7 @@ too. A withdrawn action is left out of `ProposedSoFar` (so the same change filed
 new proposal, not a duplicate), of the grounding guard's filed writes and of a delegate's
 report; a delegated turn is never offered the tool. The AI audit trail records the
 superseded proposal's `filed` event and the `withdraw_proposal` call like any runtime step,
-with no new event kind or canonical field. It took no gate: the tool is added to the turn's
-in-workflow tool set as data when a filing comes back, no command is added, and a history
-recorded before it never calls it.
+with no new event kind or canonical field.
 
 ### What a tool receives
 

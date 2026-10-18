@@ -6,6 +6,7 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -118,9 +119,9 @@ func TestWithdrawProposal_TakesBackTheProposalALaterOneReplaced(t *testing.T) {
 	assert.Contains(t, content, "Withdrew proposal "+result.Actions[0].ProposalID.String())
 	assert.Contains(t, content, "1 proposal is still waiting")
 
-	assert.NotContains(t, offered(completion.Requests[0]), withdrawProposalName,
-		"nothing is filed before the first proposal")
-	assert.Contains(t, offered(completion.Requests[1]), withdrawProposalName)
+	assert.Contains(t, offered(completion.Requests[0]), withdrawProposalName,
+		"declared before the first proposal, so the tool list never changes")
+	assertSameToolsEveryCall(t, completion.Requests)
 }
 
 func TestWithdrawProposal_RefusesWhatThisTurnDidNotFile(t *testing.T) {
@@ -163,7 +164,7 @@ func TestWithdrawProposal_RefusesWhatThisTurnDidNotFile(t *testing.T) {
 	}
 }
 
-func TestWithdrawProposal_IsOfferedOnlyOnceTheTurnHasFiledOne(t *testing.T) {
+func TestWithdrawProposal_IsRefusedUntilTheTurnHasFiledOne(t *testing.T) {
 	t.Parallel()
 
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
@@ -174,10 +175,67 @@ func TestWithdrawProposal_IsOfferedOnlyOnceTheTurnHasFiledOne(t *testing.T) {
 	result, err := proposingRuntime(completion).Run(t.Context(), proposingRequest())
 	require.NoError(t, err)
 
-	assert.NotContains(t, offered(completion.Requests[0]), withdrawProposalName)
+	assert.Contains(t, offered(completion.Requests[0]), withdrawProposalName)
 	content, failed := toolResult(result, withdrawProposalName)
 	assert.True(t, failed)
 	assert.Equal(t, unofferedWithdrawal, content)
+}
+
+func TestWithdrawProposal_IsNotDeclaredWhereNothingCanBeProposed(t *testing.T) {
+	t.Parallel()
+
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+		textTurn("Nothing to do."),
+	}}
+	rt := newRuntime(completion, &stubQueryRegistry{
+		Tools: []agentports.AgentQueryTool{queryTool("get_shipment", map[string]any{}, nil)},
+	}, &stubActionRegistry{}, nil)
+
+	_, err := rt.Run(t.Context(), &agentports.RunRequest{
+		Definition: testDefinition("get_shipment"),
+		Actor:      testActor(),
+		Input:      "where is S-1",
+	})
+	require.NoError(t, err)
+	assert.NotContains(t, offered(completion.Requests[0]), withdrawProposalName)
+}
+
+/*
+The tool list is the head of the cached prompt, and on Opus, Sonnet and Haiku
+5.5 every replayed thinking block is bound to it. A turn that proposes, then
+keeps working, then withdraws and proposes again sends the same tools on every
+model call.
+*/
+func TestTurn_SendsTheSameToolsOnEveryModelCall(t *testing.T) {
+	t.Parallel()
+
+	completion := &withdrawingCompletion{
+		scriptedCompletion: &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+			toolTurn("create_shipment", map[string]any{"customerId": "cus_1", "notes": "a"}),
+			toolTurn("create_shipment", map[string]any{"customerId": "cus_1"}),
+			nil,
+			textTurn("I proposed the shipment."),
+		}},
+		withdrawAt: 2,
+	}
+
+	_, err := withdrawingRuntime(completion).Run(t.Context(), proposingRequest())
+	require.NoError(t, err)
+	require.Len(t, completion.Requests, 4)
+	assertSameToolsEveryCall(t, completion.Requests)
+}
+
+func assertSameToolsEveryCall(t *testing.T, requests []*agentports.ChatCompletionRequest) {
+	t.Helper()
+
+	require.NotEmpty(t, requests)
+	first, err := sonic.ConfigStd.Marshal(requests[0].Tools)
+	require.NoError(t, err)
+	for idx, request := range requests[1:] {
+		next, marshalErr := sonic.ConfigStd.Marshal(request.Tools)
+		require.NoError(t, marshalErr)
+		assert.JSONEq(t, string(first), string(next), "model call %d changed the tools", idx+2)
+	}
 }
 
 func TestWithdrawProposal_IsNeverOfferedToADelegate(t *testing.T) {

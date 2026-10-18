@@ -429,7 +429,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentports.RunResult, error) 
 					outcome = refusedOutcome(aitrace.OutcomeDenied,
 						"a delegated task cannot withdraw a proposal", "%s", delegatedWithdrawal)
 				}
-				if tools.offers(withdrawProposalName) {
+				if tools.offers(withdrawProposalName) && t.hasFiledProposal() {
 					outcome = t.withdrawProposal(call.Arguments)
 				}
 				result.ToolCallsUsed++
@@ -673,7 +673,6 @@ func (s *Service) recordToolResult(
 	}
 	if outcome.action != nil {
 		result.Actions = append(result.Actions, *outcome.action)
-		t.offerWithdrawal(outcome.action)
 	}
 	outcome = fx.Observe(t, &call, outcome.exported()).internal()
 	s.countToolOutcome(t, fx, call.Name, &outcome)

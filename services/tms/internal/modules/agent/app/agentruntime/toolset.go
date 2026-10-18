@@ -191,6 +191,7 @@ func (s *Service) newToolSet(ctx context.Context, req toolSetRequest) *toolSet {
 			s.load(set, name)
 		}
 		set.addConversational(req)
+		s.declareWithdrawal(set, req.delegated)
 
 		return set
 	}
@@ -208,6 +209,7 @@ func (s *Service) newToolSet(ctx context.Context, req toolSetRequest) *toolSet {
 	s.carryOver(set, req.history)
 	set.add(findToolsSpec())
 	set.addConversational(req)
+	s.declareWithdrawal(set, req.delegated)
 
 	return set
 }
