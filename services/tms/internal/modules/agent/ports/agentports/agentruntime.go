@@ -161,6 +161,7 @@ type RunRequest struct {
 	// this conversation. The turn runs that agent on it instead of asking
 	// its own model.
 	Directed *DirectedTask
+	Browser  bool
 
 	UsagePurpose kernelports.AIUsagePurpose
 }

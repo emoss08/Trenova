@@ -248,6 +248,38 @@ it, and its record link (`/admin/agent-control?tab=extensions&portalRun=<id>`)
 opens the extension serving the capability with that task expanded. Sites are the
 `portal_site` kind, so a tool schema takes a site id by its prefix.
 
+## Asking for the browser: /browser
+
+A person sends an agent to the browser from the Desk by starting a message with
+`/browser` and saying what to do. The words are sent as typed, command and all,
+so the conversation keeps them as written and a queued or retried message is
+still a browser request; the server reads the command.
+
+- **Offered only where it can be honoured.** The composer lists `/browser` only
+  when `GET /assistant/agents/:agentID/browser/` (assistant read) answers
+  `available`: portal automation is active, the agent holds `read_portal` or
+  `act_on_portal` (or the extension gives them to every agent), and the person
+  may use one of them. `agentruntime.Service.BrowserTools` decides it, from the
+  same held tools, grants and permission checks a turn's tool set is built from,
+  and `agentextension.WorksInBrowser` reads the answer. Turning an extension on or
+  off invalidates the assistant queries, so the command appears or goes at once.
+- **Checked again when sent.** `PrepareTurn` reads the command with
+  `agentextension.BrowserTask` and refuses a message whose agent cannot work in
+  the browser, a command with nothing to do, and one handed to another agent
+  (`directedAgentId`): a directed task runs the other agent without the
+  conversation's own model, so nothing would hold it to the browser.
+- **Held to the browser.** The turn carries `RunRequest.Browser`, kept on
+  `TurnState.Browser` so the workflow's turn sees it. `OpenTurn` loads the
+  portal tools the person may use even on a turn whose tools are narrowed, and
+  sends the model a directive with the task in place of the command. A reply
+  that ends the turn without a call to any portal tool, and without asking the
+  person a question, is sent back once with a correction
+  (`holdToBrowser`, behind the `agent-loop-browser-guard` change); a second such
+  reply stands, so a request no site fits still ends in an answer.
+- Typed while a reply is under way, `/browser` is queued rather than steered: a
+  steer is more words for the turn already running, which is not held to the
+  browser.
+
 ## Settings
 
 Browser Use's settings are its API key, the browser agent's model
@@ -272,6 +304,7 @@ every extension does.
 | Site management, reads, starting and finishing actions | `internal/modules/agent/app/agentextensionservice/portal_sites.go`, `portal_tasks.go` |
 | The workflow that finishes an action | `internal/modules/agent/jobs/portaljobs/` |
 | The wait it sets | `agentwait.KindPortalRun`, `agentwaitservice/portal.go` |
+| `/browser` | `agentextension/browsercommand.go`, `agentruntime/browser.go`, `assistantservice/browser.go`, the composer's `use-desk-browser.ts` and `BROWSER_COMMAND` in `composer-commands.ts` |
 | Vendor connector | `internal/infrastructure/agentextension/browseruseconnector/` over `shared/browseruse` |
 | Tools | `agentquerytoolservice/portal_tools.go` (`list_portal_sites`, `read_portal`), `agenttools/portaltools/` (`act_on_portal`) |
 | REST API | `/agent-portals/sites/` (list, create, `/:siteID/` update and delete), `/agent-portals/runs/` (list, `/:runID/`, `/:runID/live/`, `/:runID/recording/`, `/:runID/sign-in-code/`) |

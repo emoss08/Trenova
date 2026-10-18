@@ -123,6 +123,13 @@ Keywords: slash command, shortcut, /status, /quote, /report, /explain, quick que
 4. Press Enter once every detail is filled in. Press Esc to send what you typed as plain text instead.
 5. /explain asks the agent to explain the page you came from.
 
+### Have the agent do something in the browser
+Keywords: /browser, browser, portal, web portal, dock appointment portal, carrier portal, look it up on the portal, browser use
+1. In an empty message box, type /browser, then what to do, such as "check whether the 9am slot at Acme DC is still open".
+2. Press Enter. The agent works it on one of your organization's portal sites in a cloud browser: it finds the site, looks the answer up there, and proposes any change to the portal for you to approve.
+3. If it answers without opening the portal, it is sent back to the browser once. When no site fits, it says so and names the sites there are.
+4. /browser is listed only when portal automation is turned on in [AI control](/admin/agent-control?tab=extensions), the agent you are talking to can use the portal tools, and you have permission to use them. Typed while the agent is still replying, it waits and goes as its own question once the reply ends.
+
 ### Attach files to a message
 Keywords: attach, upload, add a document, send a PDF, rate confirmation, BOL, spreadsheet, drag and drop
 1. Select **Attach files** (the plus at the bottom left of the box), then **Upload from computer**. You can also press ⌘U (Ctrl+U), or drag files anywhere onto the Desk and drop them on the box.

@@ -870,6 +870,11 @@ type AssistantService interface {
 		req DeskSearchRequest,
 	) ([]DeskSearchResult, error)
 	ThreadBudget(ctx context.Context, req GetThreadRequest) (*ThreadBudget, error)
+	BrowserAvailability(
+		ctx context.Context,
+		req *BrowserAvailabilityRequest,
+		actor *permissionports.RequestActor,
+	) (*BrowserAvailability, error)
 	RequestMore(ctx context.Context, req RequestMoreRequest) (*RequestMoreResult, error)
 	ListThreadProposals(
 		ctx context.Context,
@@ -1017,6 +1022,15 @@ type MentionPageRequest struct {
 type MentionPage struct {
 	Results []MentionCandidate `json:"results"`
 	HasMore bool               `json:"hasMore"`
+}
+
+type BrowserAvailabilityRequest struct {
+	AgentID    pulid.ID
+	TenantInfo pagination.TenantInfo
+}
+
+type BrowserAvailability struct {
+	Available bool `json:"available"`
 }
 
 // ThreadBudget is where a conversation's agent stands against its monthly

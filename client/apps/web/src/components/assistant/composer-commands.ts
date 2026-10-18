@@ -214,6 +214,40 @@ export const COMPACT_COMMAND: SlashCommand = {
   prompt: () => COMPACT_TEXT,
 };
 
+/** What the server reads as a request to work in the browser. */
+export const BROWSER_TEXT = "/browser";
+
+/**
+ * /browser hands the request to the browser: the agent works it on the
+ * organization's portal sites with the portal tools and is sent back to them
+ * if it answers without. The words go to the server as typed, command and
+ * all, because the server reads the command, checks the agent may use the
+ * browser and holds the turn to it. It is offered only where the person can
+ * send the agent to the browser.
+ */
+export const BROWSER_COMMAND: SlashCommand = {
+  name: "browser",
+  description: "Do it in the browser, on one of your portal sites",
+  slots: [{ name: "task", hint: "what to do on the portal" }],
+  // i18n-ignore: the command the server reads, followed by the person's own words
+  prompt: ([task = ""]) => `${BROWSER_TEXT} ${task}`,
+};
+
+/**
+ * A message the server reads as /browser: the command alone or followed by a
+ * space, in any case, as the server reads it (agentextension.BrowserTask).
+ */
+export function isBrowserRequest(text: string): boolean {
+  const trimmed = text.trim();
+  const head = trimmed.slice(0, BROWSER_TEXT.length).toLowerCase();
+  if (head !== BROWSER_TEXT) {
+    return false;
+  }
+  const next = trimmed.charAt(BROWSER_TEXT.length);
+
+  return next === "" || /\s/.test(next);
+}
+
 /**
  * A draft that opens with a slash is a request for the starter questions,
  * filtered by whatever follows. Null for any other draft, including a slash

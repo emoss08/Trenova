@@ -108,6 +108,13 @@ export const assistant = createQueryKeys("assistant", {
     queryFn: ({ signal }: { signal?: AbortSignal }) =>
       apiService.assistantService.searchDesk(query, kind, { signal }),
   }),
+  // Whether /browser is offered for an agent. The prefix with no agent is
+  // what turning an extension on or off invalidates.
+  browser: (agentId: string) => ({
+    queryKey: ["assistant-browser", agentId],
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      apiService.assistantService.browserAvailability(agentId, { signal }),
+  }),
   providers: () => ({
     queryKey: ["assistant-providers"],
     queryFn: () => apiService.assistantService.listProviders(),

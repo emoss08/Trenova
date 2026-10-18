@@ -1,5 +1,5 @@
 {
-  "version": "sha256:5d63976ce78b61aa59e4d73469636bfebdf8771d2f5053219a9447ded340fdbb",
+  "version": "sha256:ee33eff517cadc1d51813be5a2a145604d76d7047dd186769ed251a5213421ad",
   "modules": [
     {
       "id": "home",
@@ -9294,6 +9294,25 @@
             "For a command that needs details, such as /status (a PRO or shipment number), /quote (origin and destination city) or /report (a report name), type each one after the command. The grey hints show what is still missing, and **Desk will be asked** shows the full question.",
             "Press Enter once every detail is filled in. Press Esc to send what you typed as plain text instead.",
             "/explain asks the agent to explain the page you came from."
+          ]
+        },
+        {
+          "title": "Have the agent do something in the browser",
+          "keywords": [
+            "/browser",
+            "browser",
+            "portal",
+            "web portal",
+            "dock appointment portal",
+            "carrier portal",
+            "look it up on the portal",
+            "browser use"
+          ],
+          "steps": [
+            "In an empty message box, type /browser, then what to do, such as \"check whether the 9am slot at Acme DC is still open\".",
+            "Press Enter. The agent works it on one of your organization's portal sites in a cloud browser: it finds the site, looks the answer up there, and proposes any change to the portal for you to approve.",
+            "If it answers without opening the portal, it is sent back to the browser once. When no site fits, it says so and names the sites there are.",
+            "/browser is listed only when portal automation is turned on in [AI control](/admin/agent-control?tab=extensions), the agent you are talking to can use the portal tools, and you have permission to use them. Typed while the agent is still replying, it waits and goes as its own question once the reply ends."
           ]
         },
         {

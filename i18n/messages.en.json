@@ -79966,6 +79966,15 @@
       "routes/inbox"
     ]
   },
+  "Do it in the browser, on one of your portal sites": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Do it now": {
     "sites": 1,
     "scope": [
@@ -222394,6 +222403,15 @@
       "routes/desk"
     ]
   },
+  "Say what to do in the browser after /browser": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Say what to narrow the table to.": {
     "sites": 1,
     "scope": [
@@ -300471,6 +300489,15 @@
       "packages/shared/types"
     ]
   },
+  "Work in the browser is done by this conversation's agent; send it without naming another": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Work items": {
     "sites": 2,
     "scope": [
@@ -313733,6 +313760,15 @@
       "apps/web/components"
     ]
   },
+  "what to do on the portal": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "whoever the office finds": {
     "sites": 1,
     "scope": [
@@ -321510,6 +321546,15 @@
     ]
   },
   "{0} cannot view invoices, so the link would not open for them": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "{0} cannot work in the browser. Portal automation has to be turned on, the agent has to hold its portal tools, and you need permission to use them.": {
     "sites": 1,
     "scope": [
       "go"
