@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
@@ -31,7 +32,7 @@ const (
 	// attention than they buy: thirteen tools is already ~3,900 tokens, and a
 	// model picking from thirty overlapping descriptions reaches for the first
 	// plausible one rather than the right one.
-	disclosureThreshold = 12
+	disclosureThreshold = config.DefaultToolDisclosureThreshold
 
 	// preselectedTools is how many the turn opens with once disclosure is on.
 	preselectedTools = 8
@@ -146,7 +147,9 @@ type toolSet struct {
 	query     agentports.QueryVector
 	// self is the agent the turn runs as, left out when naming another of
 	// the person's agents that holds a tool.
-	self pulid.ID
+	self        pulid.ID
+	held        int
+	preselected []string
 }
 
 func (s *Service) newToolSet(ctx context.Context, req toolSetRequest) *toolSet {
@@ -186,16 +189,18 @@ func (s *Service) newToolSet(ctx context.Context, req toolSetRequest) *toolSet {
 		s.load(set, name)
 	}
 
-	if len(selected) <= disclosureThreshold || s.catalog == nil {
+	if len(selected) <= s.toolThreshold() || s.catalog == nil {
 		for _, name := range selected {
 			s.load(set, name)
 		}
 		set.addConversational(req)
+		s.declareWithdrawal(set, req.delegated)
 
 		return set
 	}
 
 	set.disclosed = true
+	set.held = len(selected)
 	set.query = s.vectorize(ctx, &req.query)
 	for _, descriptor := range s.catalog.RankHybrid(agenttoolcatalog.Query{
 		Allowed:  selected,
@@ -203,11 +208,13 @@ func (s *Service) newToolSet(ctx context.Context, req toolSetRequest) *toolSet {
 		Limit:    preselectedTools,
 		Semantic: s.toolSemantic(ctx, req.query.TenantInfo, set.query),
 	}) {
+		set.preselected = append(set.preselected, descriptor.Name)
 		s.load(set, descriptor.Name)
 	}
 	s.carryOver(set, req.history)
 	set.add(findToolsSpec())
 	set.addConversational(req)
+	s.declareWithdrawal(set, req.delegated)
 
 	return set
 }
@@ -919,4 +926,55 @@ func (s *Service) withoutSelfScoped(names []string) []string {
 	}
 
 	return kept
+}
+
+func configuredThreshold(cfg *config.Config) *int {
+	if cfg == nil {
+		return nil
+	}
+	threshold := cfg.GetAIConfig().GetToolDisclosureThreshold()
+
+	return &threshold
+}
+
+func (s *Service) toolThreshold() int {
+	if s.threshold == nil {
+		return disclosureThreshold
+	}
+
+	return *s.threshold
+}
+
+func (s *Service) notePreselected(ctx context.Context, req *agentports.RunRequest, set *toolSet) {
+	if s.disclosures == nil || !set.disclosed {
+		return
+	}
+
+	s.disclosures.Preselected(ctx, &agentports.ToolDisclosure{
+		Attribution: turnAttribution(req),
+		Disclosed:   true,
+		Held:        set.held,
+		Ranked:      slices.Clone(set.preselected),
+	})
+}
+
+func (s *Service) noteFound(
+	ctx context.Context,
+	req *agentports.RunRequest,
+	set *toolSet,
+	arguments map[string]any,
+	answer *FindAnswer,
+) {
+	if s.disclosures == nil {
+		return
+	}
+	need, _ := arguments["need"].(string)
+
+	s.disclosures.Found(ctx, &agentports.ToolDisclosure{
+		Attribution: turnAttribution(req),
+		Disclosed:   set.disclosed,
+		Held:        set.held,
+		Need:        need,
+		Ranked:      slices.Clone(answer.Found),
+	})
 }

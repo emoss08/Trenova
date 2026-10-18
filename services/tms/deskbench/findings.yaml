@@ -4404,3 +4404,192 @@ findings:
       over many customers worked out in the head, which still goes to analyze_data), against
       about one a turn in the Desk; analysis-billed-still-open and
       analysis-not-for-the-persons-own-arithmetic hold the two transcripts
+
+  - id: DB-191
+    title: LoadMonitor's scheduled run is preselected four writes and none of the board reads
+    status: open
+    severity: high
+    area: agent runtime / tool preselection for unattended runs
+    found: 2026-10-18, docs/desk-harness-review.md §3.0 (keyword ranking reproduced for every non-chat template)
+    scenarios: [unattended-monitor-late-delivery-reads-the-board-first]
+    problem: >
+      An unattended run's whole request is the boilerplate in agentdefinition/runinput.go, and the
+      8 preselected tools are ranked against it. LoadMonitor, the one scheduled template, opens
+      with list_watchtower_items, email_customer, notify_driver, list_service_failures,
+      log_check_call, record_stop_actual, add_shipment_comment and evaluate_service_failures:
+      four writes, and not get_dispatch_board, get_shipment, get_shipment_tracking or
+      get_worker_hos, although its instructions start with "work through what the dispatch board
+      shows". Its first step has to be find_tools, the skill small models are weakest at. EDIDesk,
+      given a quarantined file, is preselected draft_edi_connection and apply_edi_connection_draft,
+      the two largest tools in the catalog (about 6k tokens together).
+    cause: >
+      rankingText ranks against the request alone, and an unattended request carries no goal: the
+      definition's instructions, which name the first tools, are not part of the ranking text.
+    evidence: >
+      The fire scenario's expectedTools are get_dispatch_board and get_shipment_tracking or
+      get_shipment; the bench now records the preselected set per turn (Retrieval, preselection
+      recall@8) so the miss shows as a number in every baseline.
+    fix: Not fixed in Phase 0 by decision; the rebuild of context assembly owns it.
+    files:
+      - services/tms/internal/modules/agent/domain/agentdefinition/runinput.go
+      - services/tms/internal/modules/agent/app/agentruntime/toolset.go
+
+  - id: DB-192
+    title: CustomerUpdateDesk is handed an empty subject for every arrival and departure
+    status: fixed
+    severity: high
+    area: agent subjects / shipment move describer
+    found: 2026-10-18, writing unattended-customer-update-departure-on-a-covered-move
+    scenarios: [unattended-customer-update-departure-on-a-covered-move]
+    problem: >
+      Arrived and departed events are raised on a covered move (one with a driver or carrier), and
+      the run's subject reads only "Shipment move", with no PRO, stops or customer, so the agent
+      starts blind.
+    cause: >
+      agentsubjectservice shipmentMove calls ListBoardMoves with MoveIDs but without
+      IncludeCovered; the board query drops covered moves (dispatchconsolerepository/board.go) and
+      Completed ones (filters.go). The shipment describer passes IncludeCovered: true.
+    fix: >
+      Both describers ask the board for their moves through one filter (everyMove): the move ids,
+      every move status and IncludeCovered, so a covered, finished or cancelled move is described
+      with its PRO, stops, customer and coverage.
+    fixedIn: >
+      PR #814; agentsubjectservice tests pin the filter, and the board query run on the
+      development seed returned nothing for SEED-PAY-001's covered, Completed move before the
+      change and the move after it. The bench scenario still needs a run with model keys.
+    files:
+      - services/tms/internal/modules/agent/app/agentsubjectservice/service.go
+      - services/tms/internal/modules/operations/adapters/postgres/dispatchconsolerepository/board.go
+
+  - id: DB-193
+    title: An event's related record and detail never reach the run
+    status: open
+    severity: medium
+    area: agent events / run input
+    found: 2026-10-18, writing the CustomerUpdateDesk unattended scenarios
+    problem: >
+      agentevents publisher passes only the kind and subject to StartForDefinition; AgentEvent.Related
+      (the stop) and Detail are dropped, and runinput.go has neither. CustomerUpdateDesk is not told
+      which stop the truck arrived at or left.
+    files:
+      - services/tms/internal/modules/agent/app/agentevents/publisher.go
+      - services/tms/internal/modules/agent/ports/agentports/agentevents.go
+      - services/tms/internal/modules/agent/domain/agentdefinition/runinput.go
+
+  - id: DB-194
+    title: EDIDesk is told to read raw X12 it cannot read at its starter data access
+    status: open
+    severity: medium
+    area: agent definitions / EDIDesk
+    found: 2026-10-18, writing unattended-edi.yaml
+    scenarios: [unattended-edi-quarantine-missing-isa-header]
+    problem: >
+      The instructions say to read the raw X12 when parsed transactions do not explain a failure,
+      and a parse-level quarantine (no ISA, empty file) has no parsed transactions at all. The
+      starter data access is Internal, and get_edi_inbound_file withholds raw EDI below Restricted.
+      The chat EDI desk on the bench runs at Restricted, so fire runs and chat runs differ.
+    files:
+      - services/tms/internal/modules/agent/domain/agentdefinition/dataaccess.go
+      - services/tms/internal/modules/agent/domain/agentdefinition/instructions.go
+      - services/tms/internal/modules/agent/app/agentquerytoolservice/edi_tools.go
+
+  - id: DB-195
+    title: FactoringClerk is told to draft a renewal that the open-notice rule refuses
+    status: open
+    severity: medium
+    area: agent definitions / factoring tools
+    found: 2026-10-18, writing unattended-factoring-acme-notice-expiring
+    scenarios: [unattended-factoring-acme-notice-expiring]
+    problem: >
+      For an expiring notice of assignment the instructions say "draft the renewal", but only one
+      open notice per factor is allowed (uq_factoring_noas_open), NoaService.Draft has no
+      supersede path, and releasing the current notice is forbidden by the same instructions.
+    files:
+      - services/tms/internal/modules/agent/domain/agentdefinition/instructions.go
+      - services/tms/internal/modules/agent/app/agenttools/factoringtools/noa_tools.go
+      - services/tms/internal/modules/billing/app/factoringservice/noa.go
+
+  - id: DB-196
+    title: BillingException holds request_missing_docs but not the tool that fills its profileId
+    status: open
+    severity: medium
+    area: agent definitions / starter tools
+    found: 2026-10-18, writing unattended-billing-exception-missing-pod
+    scenarios: [unattended-billing-exception-missing-pod]
+    problem: >
+      request_missing_docs requires profileId and tells the model to call list_email_profiles
+      first, but declares no prerequisite, and BillingException's starter tools lack
+      list_email_profiles.
+    files:
+      - services/tms/internal/modules/agent/domain/agentdefinition/tools.go
+      - services/tms/internal/modules/agent/app/agenttools/workforcetools/request_missing_docs.go
+
+  - id: DB-197
+    title: LoadMonitor emails customers who asked for no status updates
+    status: open
+    severity: medium
+    area: agent definitions / LoadMonitor
+    found: 2026-10-18, writing unattended-monitor.yaml
+    problem: >
+      Its instructions say a delivery that will miss its window gets the customer told, but it
+      holds no get_customer_update_preferences, so a customer set to None is emailed.
+      CustomerUpdateDesk and ServiceFailureDesk are both told to respect None.
+    files:
+      - services/tms/internal/modules/agent/domain/agentdefinition/instructions.go
+      - services/tms/internal/modules/agent/domain/agentdefinition/tools.go
+
+  - id: DB-198
+    title: CarrierRiskDesk's instructions contradict themselves on closing a finding
+    status: open
+    severity: low
+    area: agent definitions / CarrierRiskDesk
+    found: 2026-10-18, writing unattended-carrier-risk-cedar-street-authority-revoked
+    scenarios: [unattended-carrier-risk-cedar-street-authority-revoked]
+    problem: >
+      "closed … CarrierBlocked when they are not to be used" sits beside "Never close a finding that
+      is still true"; a revoked authority is both.
+    files:
+      - services/tms/internal/modules/agent/domain/agentdefinition/instructions.go
+
+  - id: DB-199
+    title: Two agents run on every accounting.connection_degraded event
+    status: open
+    severity: low
+    area: agent definitions / triggers
+    found: 2026-10-18, writing unattended-billing-books-connection-revoked
+    problem: >
+      The event is in both BillingException's and BooksKeeper's starter events, so both investigate
+      one connection and may raise duplicate exceptions while BooksKeeper may pause syncing.
+    files:
+      - services/tms/internal/modules/agent/domain/agentdefinition/triggers.go
+
+  - id: DB-200
+    title: The development seed has no subject for most event templates
+    status: open
+    severity: low
+    area: seed data
+    found: 2026-10-18, writing the unattended scenarios
+    problem: >
+      Nothing is seeded for billing_queue.*, bank_receipt.exception, carrier_intel.event_opened,
+      edi.file_quarantined, edi.tender_received, accounting.*, factoring.* or
+      service_failure.detected; there are no edi_communication_profiles and no invoices; every
+      customer's status update preference is None; in-transit SEED-SHP-008 and SEED-SHP-010 have
+      no assignment. The unattended scenarios insert what they need in setup, with bench ids, and
+      those rows persist for later chat scenarios. A real edi.tender_received case (an inbound 204
+      and its tender transfer) is impractical in setup, so only the stale case is covered.
+    files:
+      - services/tms/internal/infrastructure/database/seeds
+
+  - id: DB-201
+    title: Bench copies of BooksKeeper and InsightAnalyst differ from their production starters
+    status: wontfix
+    severity: low
+    area: deskbench / unattended runs
+    found: 2026-10-18, building unattended agents
+    problem: >
+      BooksKeeper starts in shadow, so production runs end ShadowCompleted; the bench copy is not
+      shadow so its proposals can be graded. InsightAnalyst has a daily run limit that repeated
+      bench fires may reach.
+    fix: >
+      Deliberate: a fire run is graded on its proposals, which a shadow run does not file. A run the
+      daily limit refuses fails its case with the refusal, rather than passing silently.

@@ -38,6 +38,7 @@ type Assistant struct {
 	streamAttached   *prometheus.CounterVec
 	trajectoryEvents *prometheus.CounterVec
 	toolOutcomes     *prometheus.CounterVec
+	guardReasks      *prometheus.CounterVec
 }
 
 func NewAssistant(registry *prometheus.Registry, logger *zap.Logger, enabled bool) *Assistant {
@@ -128,7 +129,17 @@ func NewAssistant(registry *prometheus.Registry, logger *zap.Logger, enabled boo
 			Name:      "tool_outcomes_total",
 			Help:      "Agent tool calls by tool and by what became of the call",
 		},
-		[]string{"tool", "verdict"},
+		[]string{"tool", "verdict", "model", "provider"},
+	)
+
+	m.guardReasks = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: Namespace,
+			Subsystem: "assistant",
+			Name:      "guard_reasks_total",
+			Help:      "Model calls the runtime made again because a guard sent the answer back",
+		},
+		[]string{"guard", "model", "provider"},
 	)
 
 	m.streamAttached = prometheus.NewCounterVec(
@@ -186,6 +197,7 @@ func NewAssistant(registry *prometheus.Registry, logger *zap.Logger, enabled boo
 		m.streamAttached,
 		m.trajectoryEvents,
 		m.toolOutcomes,
+		m.guardReasks,
 	)
 
 	return m
@@ -270,14 +282,53 @@ func (m *Assistant) RecordTrajectoryDropped(ownerKind string, count int) {
 	m.trajectoryEvents.WithLabelValues(ownerKind, "dropped").Add(float64(count))
 }
 
+type ToolOutcomeLabels struct {
+	Tool     string
+	Verdict  string
+	Model    string
+	Provider string
+}
+
 // RecordToolOutcome files one tool call by what became of it: ran, proposed,
-// simulated, or the refusal that stopped it.
-func (m *Assistant) RecordToolOutcome(tool, verdict string) {
+// simulated, or the refusal that stopped it, and by the model and provider
+// protocol that asked for it.
+func (m *Assistant) RecordToolOutcome(labels ToolOutcomeLabels) {
 	if !m.enabled() {
 		return
 	}
 
-	m.toolOutcomes.WithLabelValues(tool, verdict).Inc()
+	m.toolOutcomes.WithLabelValues(
+		labels.Tool,
+		labels.Verdict,
+		labelOrUnknown(labels.Model),
+		labelOrUnknown(labels.Provider),
+	).Inc()
+}
+
+type GuardReaskLabels struct {
+	Guard    string
+	Model    string
+	Provider string
+}
+
+func (m *Assistant) RecordGuardReask(labels GuardReaskLabels) {
+	if !m.enabled() {
+		return
+	}
+
+	m.guardReasks.WithLabelValues(
+		labels.Guard,
+		labelOrUnknown(labels.Model),
+		labelOrUnknown(labels.Provider),
+	).Inc()
+}
+
+func labelOrUnknown(value string) string {
+	if value == "" {
+		return "unknown"
+	}
+
+	return value
 }
 
 // RecordStreamAttach files a reader arriving at a turn.

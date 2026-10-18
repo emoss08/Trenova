@@ -3,6 +3,7 @@ package deskbench
 import (
 	"cmp"
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"strconv"
@@ -10,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -31,18 +33,22 @@ type RunOptions struct {
 	Delete    bool
 	ThreadID  pulid.ID
 	Progress  func(*CaseResult)
+	Sweep     *Sweep
 }
 
 type CaseResult struct {
 	Scenario   *Scenario     `json:"scenario"`
 	Provider   string        `json:"provider"`
 	Model      string        `json:"model,omitempty"`
+	Effort     string        `json:"effort,omitempty"`
+	Metrics    CaseMetrics   `json:"metrics"`
 	Repeat     int           `json:"repeat"`
 	Agent      string        `json:"agent,omitempty"`
 	ThreadID   string        `json:"threadId,omitempty"`
 	Steps      []*StepResult `json:"steps"`
 	Cleanup    []*TurnRecord `json:"cleanup,omitempty"`
 	Passed     bool          `json:"passed"`
+	Skipped    string        `json:"skipped,omitempty"`
 	Error      string        `json:"error,omitempty"`
 	StartedAt  time.Time     `json:"startedAt"`
 	FinishedAt time.Time     `json:"finishedAt"`
@@ -198,6 +204,7 @@ func (b *Bench) runCase(ctx context.Context, opts *RunOptions, planned plannedCa
 		result.FinishedAt = time.Now()
 		result.Usage = caseUsage(result)
 		result.Passed = result.Error == "" && stepsPassed(result.Steps)
+		result.Metrics = measureCase(result)
 		b.liveVerdict(planned.label(), result)
 	}()
 
@@ -211,13 +218,15 @@ func (b *Bench) runCase(ctx context.Context, opts *RunOptions, planned plannedCa
 		return result
 	}
 
-	provider, err := session.Provider(ctx, planned.provider)
+	cell, err := session.Cell(ctx, planned.provider)
 	if err != nil {
 		result.Error = err.Error()
 		return result
 	}
-	result.Provider = ProviderLabel(provider)
+	provider := cell.Provider
+	result.Provider = cell.Label()
 	result.Model = providerModel(provider)
+	result.Effort = string(cell.Effort)
 
 	b.tidied.Do(func() {
 		if tidyErr := b.runStatements(ctx, session, benchLeftovers()); tidyErr != nil {
@@ -236,12 +245,39 @@ func (b *Bench) runCase(ctx context.Context, opts *RunOptions, planned plannedCa
 		)
 	}
 
-	conv, err := b.openCase(ctx, session, opts, planned, provider)
+	if scenario.Unattended() {
+		if opts.Sweep != nil {
+			result.Skipped = "the tool-count sweep runs chat scenarios"
+			return result
+		}
+		result.Steps = append(result.Steps, b.runFireStep(ctx, session, cell, &scenario.Steps[0],
+			planned.label()))
+		return result
+	}
+
+	swept, release, err := b.sweptAgent(ctx, session, opts, scenario)
+	if release != nil {
+		defer release()
+	}
+	if err != nil {
+		if errors.Is(err, ErrSweepSkipped) {
+			result.Skipped = err.Error()
+		} else {
+			result.Error = err.Error()
+		}
+		return result
+	}
+
+	conv, err := b.openCase(ctx, session, opts, planned, provider, swept)
 	if err != nil {
 		result.Error = err.Error()
 		return result
 	}
 	result.ThreadID = conv.Thread.ID.String()
+	if cell.Effort != "" {
+		unpin := b.recorder.Pin(conv.Thread.ID, ProviderPin{Effort: cell.Effort})
+		defer unpin()
+	}
 	if conv.Agent != nil {
 		result.Agent = conv.Agent.Name
 	}
@@ -276,6 +312,7 @@ func (b *Bench) openCase(
 	opts *RunOptions,
 	planned plannedCase,
 	provider *aiprovider.Provider,
+	swept *agentdefinition.Definition,
 ) (*Conversation, error) {
 	if planned.scenario.Formula != nil {
 		conv, err := session.OpenFormula(ctx, planned.label(), planned.scenario.Formula)
@@ -319,13 +356,17 @@ func (b *Bench) openCase(
 		return conv, nil
 	}
 
-	agentRef := planned.scenario.Agent
-	if agentRef == "" {
-		agentRef = opts.Agent
-	}
-	definition, err := session.Agent(ctx, agentRef)
-	if err != nil {
-		return nil, err
+	definition := swept
+	if definition == nil {
+		agentRef := planned.scenario.Agent
+		if agentRef == "" {
+			agentRef = opts.Agent
+		}
+		var err error
+		definition, err = session.Agent(ctx, agentRef)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return session.Open(ctx, OpenConversation{
@@ -391,6 +432,71 @@ func (b *Bench) runStep(
 	return result
 }
 
+func (b *Bench) runFireStep(
+	ctx context.Context,
+	session *Session,
+	cell Cell,
+	step *Step,
+	label string,
+) *StepResult {
+	result := &StepResult{
+		Index:  1,
+		Kind:   "fire",
+		Label:  step.Label(),
+		Rubric: step.Expect.Rubric,
+	}
+
+	record, outcome, err := b.runFire(ctx, session, cell, step, label)
+	if err != nil {
+		result.Error = err.Error()
+	}
+	evidence := &stepEvidence{run: outcome}
+	if record != nil {
+		result.Turns = []*TurnRecord{record}
+		evidence.turns = result.Turns
+	}
+	result.Checks = b.evaluate(ctx, session, &step.Expect, evidence)
+	result.Passed = result.Error == "" && checksPassed(result.Checks)
+
+	return result
+}
+
+func (b *Bench) sweptAgent(
+	ctx context.Context,
+	session *Session,
+	opts *RunOptions,
+	scenario *Scenario,
+) (*agentdefinition.Definition, func(), error) {
+	if opts.Sweep == nil {
+		return nil, nil, nil
+	}
+	if scenario.Palette || scenario.Formula != nil || opts.ThreadID.IsNotNil() {
+		return nil, nil, fmt.Errorf("%w: the palette, the formula studio and a continued "+
+			"conversation keep their own agent", ErrSweepSkipped)
+	}
+
+	agentRef := scenario.Agent
+	if agentRef == "" {
+		agentRef = opts.Agent
+	}
+	base, err := session.Agent(ctx, agentRef)
+	if err != nil {
+		return nil, nil, err
+	}
+	tools, err := sweepTools(base.ToolNames, scenario.ExpectedTools, opts.Sweep.Held)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	release := b.exclusive("sweep:" + base.ID.String())
+	swept, err := session.sweepAgent(ctx, base, tools)
+	if err != nil {
+		return nil, release, err
+	}
+
+	return swept, release, nil
+}
+
 func exclusiveKey(scenario *Scenario) string {
 	switch {
 	case scenario.Exclusive != "":
@@ -403,6 +509,10 @@ func exclusiveKey(scenario *Scenario) string {
 }
 
 func (b *Bench) liveVerdict(label string, result *CaseResult) {
+	if result.Skipped != "" {
+		b.live.Line(label, "<<< skipped: %s", result.Skipped)
+		return
+	}
 	mark := passMark
 	if !result.Passed {
 		mark = failMark

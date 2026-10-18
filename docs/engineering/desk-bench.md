@@ -88,10 +88,23 @@ trenova desk findings --status all --format csv                 # export what ru
 trenova desk route                                              # score where questions would go
 task desk-ask -- "how many loads did we deliver this week"
 task desk-bench -- --repeat 3
+trenova desk run --provider claude-haiku-5-5@low --provider claude-haiku-5-5@medium  # effort cells
+trenova desk run --split held-out --pass-k 4 --repeat 4         # one split, pass^4
+trenova desk run --tag unattended                               # fired event and schedule runs
+trenova desk run --tool-threshold 0                             # always disclose (8 + find_tools)
+trenova desk baseline                                           # the Phase 0 matrix, deskbench/baseline.yaml
+trenova desk sweep --held 8,12 --mode all,disclosed             # part of the tool-count sweep
+task desk-baseline
+task desk-sweep
 ```
 
 `--provider` takes a provider's name, model id or id; `default` is the organization's own
-order, which is what a person who never opens the model picker gets. `--agent` takes an
+order, which is what a person who never opens the model picker gets. A provider may end in
+`@effort` (`off`, `none`, `minimal`, `low`, `medium`, `high`) to override its reasoning effort for
+that cell. Each `--provider` is a cell, and a cell is pinned: its calls never fail over to another
+provider, so every row of the matrix measures one model at one effort. `--tool-threshold N`
+overrides `ai.toolDisclosureThreshold` for the run (`0` always discloses, a large number never
+does). `--agent` takes an
 agent's name, id or template and defaults to the general assistant, the agent Ask uses.
 Every case is a real Desk conversation of that person's, titled `[bench] <scenario> #<repeat>`,
 and it stays in the Desk once the case ends, to open and read like any other. Whatever the agent
@@ -140,6 +153,72 @@ Each run writes to `.deskbench/runs/<time>-<ask|run>/`:
 
 A call file names its system prompt and tool list by digest, so two calls with the same
 `systemDigest` saw the same prompt and a changed digest after an edit is the edit taking effect.
+
+## What a run measures
+
+Each case, and each cell (a provider at an effort, split by scenario split), reports:
+
+- **Tokens.** Uncached input, cache read, cache write and output, each apart. Anthropic reports
+  input without the cached tokens and OpenAI with them; the bench subtracts so `in` is always
+  input the cache did not serve.
+- **Cost.** Priced per call at the provider's own prices, with cache reads and writes at their
+  own rates and Haiku 5.5's long-prompt tier above 100K prompt tokens. A provider with no prices
+  is priced from the model's list price (`aiprovider.ListPrice`) or the price reference, and the
+  figure is marked `~`.
+- **Work.** Model calls, tool calls, refused calls by verdict, guard re-asks by guard (the
+  `reask` on each call), time to first token and time per task.
+- **Tool selection**, against the scenario's labels: precision, recall, the position of the
+  first expected call, and calls to forbidden tools. Core and runtime tools (`find_tools`,
+  `withdraw_proposal`, …) are left out unless a label names them.
+- **Retrieval**, on disclosed turns, against the tools the turn actually used. Preselection
+  recall is the share the turn's opening tool array held (the 8 ranked plus the companions,
+  followers, fed and carried-over tools loaded beside them). `find_tools` recall is scored
+  per answer, the share of the used tools the turn did not open with that one answer
+  loaded, averaged over answers; `findUnionRecall` is the same against every answer of the
+  turn together.
+
+`--repeat N` runs every scenario N times per cell. The matrix gives the mean per trial, never a
+sum, with a 95% Student-t interval. A scenario's pass rate takes a Wilson interval over its
+trials; a model's is the mean of its scenarios' pass rates with a t-interval over scenarios,
+because one scenario's trials pass and fail together and pooling them would draw the interval
+too narrow (`report.json` keeps the pooled Wilson rate as `pass`, beside `scenarioPass`); `pass^k` (`--pass-k`,
+default 4) is the chance all k trials of a scenario pass, estimated as C(c,k)/C(n,k) from c
+passes in n trials and averaged over scenarios, so it needs `--repeat` of at least k.
+`--compare` compares means per trial, so a run with a different `--repeat` still compares.
+
+### Counting cache misses
+
+Turn on `ai.cacheDiagnostics` (`cacheDiagnostics: true` under `ai:` in your config, or
+`TRENOVA_AI_CACHEDIAGNOSTICS=true`) and every Claude API call asks where its prompt stopped
+matching the call before it. A changed prompt is logged at info as "the prompt stopped matching
+the call before it", with `reason` (`tools_changed`, `system_changed`, `messages_changed`,
+`model_changed`) and `missedTokens`. Count them in a run's worker log:
+
+```bash
+grep -c '"reason":"tools_changed"' .deskbench/runs/<run>/worker.log
+grep -o '"reason":"[a-z_]*_changed"' .deskbench/runs/<run>/worker.log | sort | uniq -c
+```
+
+Within a turn the tool array is the same on every call (`withdraw_proposal` is declared from the
+start, and the final answer keeps the tools with `tool_choice: none`), so `tools_changed` inside
+a turn is a regression; across turns it is disclosure loading tools.
+
+## Baseline and sweep
+
+`trenova desk baseline` (`task desk-baseline`) runs every scenario in every cell of
+`services/tms/deskbench/baseline.yaml` (Haiku 5.5 at low and medium, Sonnet 5.5, Opus 5.5,
+gpt-6-luna and gpt-6.1-sol, 4 trials, pass^4) and writes `baseline.md` and `baseline.json` beside
+the usual run files in `.deskbench/baselines/<time>/`. Every cell must name a provider the
+organization has; `trenova desk providers` lists them. `--split`, `--tag` and `--parallel` narrow
+it as they do `run`. Later runs compare against it with `--compare .deskbench/baselines/<time>`.
+
+`trenova desk sweep` (`task desk-sweep`) sets `ai.toolDisclosureThreshold` from data. For each
+held count N (8, 12, 20, 30) the scenario's agent is copied as `Bench · Sweep · <name>` holding
+the tools the scenario's labels need plus the agent's others up to N, and every scenario runs
+once with every held tool sent (`all`) and once disclosed (the 8 ranked plus `find_tools`). A
+scenario needing more than N tools, or an agent holding fewer, is skipped at that point. Each
+point is a run under `.deskbench/sweeps/<time>/<mode>-<N>/`, and `sweep.md` / `sweep.json` at the
+top line them up by model. Set the threshold to the largest N at which `all` is at least as good.
 
 ## Agents
 
@@ -270,6 +349,48 @@ beside each other: for each provider and repeat in turn, each scenario of the gr
 A scenario may therefore build on the one before it (`edi-guide-revised` updates the partner
 `edi-guide-new-partner` saved), whatever `--provider`, `--repeat` or `--parallel` asked for.
 
+### Labels and splits
+
+Every scenario carries a `split`: `development` (tune against it), `held-out` (look at it only
+to confirm a change) or `adversarial` (outside text that tries to steer the agent). A file's
+`defaults` may set it, and a scenario without one is `development`. `expectedTools` names the tools a correct run calls (`a|b` for either one);
+`forbiddenTools` names ones it must not call. Left out, expected tools are taken from the
+scenario's `tools` and `proposals` checks and forbidden ones from `noTools` and `noProposals`,
+leaving out any tool expected elsewhere in the scenario. `--split` runs one split.
+
+### Unattended runs
+
+A `fire` step starts a run the way production does, through
+`AgentRunService.StartForDefinition`, instead of saying something:
+
+```yaml
+steps:
+  - fire:
+      agent: DetentionDesk            # the template
+      event: detention.notice_due     # or schedule: true
+      subject: >                      # one row: the subject's id
+        SELECT id FROM detention_occurrences WHERE ...
+    expect:
+      run: AwaitingDecision           # the run's final status
+      flagged: true                   # it raised an exception or flagged for review
+      proposals:
+        - tool: send_detention_notice
+      db:
+        - sql: SELECT count(*) FROM agent_exceptions WHERE run_id = '{{run}}'
+          equals: "1"
+```
+
+An event run has no actor and its subject type is taken from the event kind, as the publisher
+starts it. A scheduled run gets the definition's own trigger, a unique slot and the agent as its
+actor. Each template is run by `Bench · <Label> (unattended)`, created from the template's starter
+instructions, tools, events and data access, with learning off. It stays disabled except while
+its own case runs, so real development events never start it. The bench waits until the run is
+`AwaitingDecision`, `Completed`, `ShadowCompleted` or `Failed`, grades it, then rejects what it
+proposed, waits for the run to settle and cancels it if it has not. `{{run}}` and `{{subject}}`
+are replaced in checks with the run's and subject's ids. Unattended scenarios live in
+`scenarios/unattended-*.yaml`, are tagged `unattended`, and cover every event template and
+LoadMonitor.
+
 ### Writing them
 
 - **Write like the people who use it.** Lower case, abbreviations, half-sentences, two
@@ -374,7 +495,8 @@ trenova desk findings --area anthropic --format json
 
 ## Known limits
 
-- A turn the application starts long after the last one (a wait resolving, a scheduled
-  request) is not followed; the bench stops waiting a few seconds after the last turn ends.
+- A turn the application starts long after the last one (a wait resolving) is not followed; the
+  bench stops waiting a few seconds after the last turn ends. Scheduled and event runs are
+  followed only when a `fire` step starts them.
 - Approved writes are real. Run against a seeded development database, and `task db-reset`
   when a run has moved the data too far.

@@ -40,6 +40,7 @@ type stepEvidence struct {
 	turns     []*TurnRecord
 	decisions []*DecisionRecord
 	formula   string
+	run       *runOutcome
 }
 
 func (e *stepEvidence) calls() []*ToolCallRecord {
@@ -88,8 +89,11 @@ func (b *Bench) evaluate(
 ) []CheckResult {
 	checks := make([]CheckResult, 0, 8)
 	checks = append(checks, turnsCompleted(evidence))
-	checks = append(checks, artifactLinkChecks(evidence.turns)...)
-	checks = append(checks, groundingCheck(evidence.turns))
+	if evidence.run == nil {
+		checks = append(checks, artifactLinkChecks(evidence.turns)...)
+		checks = append(checks, groundingCheck(evidence.turns))
+	}
+	checks = append(checks, runChecks(expect, evidence.run)...)
 
 	calls := evidence.calls()
 	reply := evidence.reply()
@@ -154,10 +158,14 @@ func (b *Bench) evaluate(
 		checks = append(checks, executedCheck(*expect.Executed, evidence.decisions))
 	}
 	for idx := range expect.Facts {
-		checks = append(checks, b.factCheck(ctx, session, &expect.Facts[idx], reply))
+		fact := expect.Facts[idx]
+		fact.SQL = evidence.run.substitute(fact.SQL)
+		checks = append(checks, b.factCheck(ctx, session, &fact, reply))
 	}
 	for idx := range expect.DB {
-		checks = append(checks, b.dbCheck(ctx, session, &expect.DB[idx]))
+		check := expect.DB[idx]
+		check.SQL = evidence.run.substitute(check.SQL)
+		checks = append(checks, b.dbCheck(ctx, session, &check))
 	}
 	if expect.MaxSeconds != nil {
 		elapsed := evidence.duration().Seconds()

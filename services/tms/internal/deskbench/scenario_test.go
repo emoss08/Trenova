@@ -146,3 +146,17 @@ func TestLoadAgentSpecs_ReadsDataAccessAndRefusesAnUnknownOne(t *testing.T) {
 	_, err = deskbench.LoadAgentSpecs(bad)
 	require.ErrorIs(t, err, deskbench.ErrAgentSpecDataAccess)
 }
+
+func TestShippedScenarios_LoadWithLabelsAndASplit(t *testing.T) {
+	t.Parallel()
+
+	scenarios, err := deskbench.LoadScenarios([]string{"../../deskbench/scenarios"})
+	require.NoError(t, err)
+	require.NotEmpty(t, scenarios)
+
+	for _, scenario := range scenarios {
+		assert.True(t, scenario.Split.IsValid(), scenario.Name)
+		assert.NotNil(t, scenario.ExpectedTools, scenario.Name)
+		assert.NotNil(t, scenario.ForbiddenTools, scenario.Name)
+	}
+}

@@ -43,13 +43,15 @@ type ModelsCall struct {
 }
 
 type ModelInfo struct {
-	ID                   string
-	DisplayName          string
-	ContextWindow        int
-	Embedding            bool
-	InputCostPerMillion  *decimal.Decimal
-	OutputCostPerMillion *decimal.Decimal
-	CreatedAt            int64
+	ID                       string
+	DisplayName              string
+	ContextWindow            int
+	Embedding                bool
+	InputCostPerMillion      *decimal.Decimal
+	OutputCostPerMillion     *decimal.Decimal
+	CacheReadCostPerMillion  *decimal.Decimal
+	CacheWriteCostPerMillion *decimal.Decimal
+	CreatedAt                int64
 }
 
 func ListModels(ctx context.Context, call *ModelsCall) ([]ModelInfo, error) {
@@ -319,6 +321,7 @@ func decodeOpenAIModels(payload []byte) ([]ModelInfo, error) {
 			CreatedAt: unixFromAny(entry.Created),
 		}
 		info.InputCostPerMillion, info.OutputCostPerMillion = entry.prices()
+		info.CacheReadCostPerMillion, info.CacheWriteCostPerMillion = entry.cachePrices()
 		models = append(models, withKnownWindow(info))
 	}
 
@@ -367,6 +370,24 @@ func (e *openAIModelEntry) prices() (*decimal.Decimal, *decimal.Decimal) {
 	output, _ := priceOf(e.Pricing["completion"])
 
 	return scaled(input), scaled(output)
+}
+
+func (e *openAIModelEntry) cachePrices() (read, write *decimal.Decimal) {
+	if len(e.Pricing) == 0 {
+		return nil, nil
+	}
+	read, _ = priceOf(e.Pricing["input_cache_read"])
+	write, _ = priceOf(e.Pricing["input_cache_write"])
+
+	return positive(scaled(read)), positive(scaled(write))
+}
+
+func positive(value *decimal.Decimal) *decimal.Decimal {
+	if value == nil || !value.IsPositive() {
+		return nil
+	}
+
+	return value
 }
 
 func priceOf(value any) (*decimal.Decimal, bool) {

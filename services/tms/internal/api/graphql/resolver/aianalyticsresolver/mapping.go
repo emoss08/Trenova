@@ -1,6 +1,8 @@
 package aianalyticsresolver
 
 import (
+	"strconv"
+
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aianalyticsports"
@@ -129,7 +131,18 @@ func totalsModel(totals *aianalyticsports.Totals) *gqlmodel.AIAnalyticsTotals {
 		CostUsd:                  totals.CostUSD.String(),
 		PricedRuns:               totals.PricedRuns,
 		CostPerCompletedRun:      optionalDecimal(totals.CostPerCompletedRun),
+		Tokens:                   tokensModel(totals.Tokens),
 		ToolFailureAlarm:         totals.ToolFailureAlarm,
+	}
+}
+
+func tokensModel(tokens aianalyticsports.TokenTotals) *gqlmodel.AIAnalyticsTokens {
+	return &gqlmodel.AIAnalyticsTokens{
+		UncachedInput:  strconv.FormatInt(tokens.Input, 10),
+		CacheRead:      strconv.FormatInt(tokens.CacheRead, 10),
+		CacheWrite:     strconv.FormatInt(tokens.CacheWrite, 10),
+		Output:         strconv.FormatInt(tokens.Output, 10),
+		CacheReadShare: tokens.CacheReadShare(),
 	}
 }
 
@@ -179,6 +192,7 @@ func seriesModel(series *aianalyticsports.Series) *gqlmodel.AIAnalyticsSeries {
 		CostUsd:             series.CostUSD.String(),
 		PricedRuns:          series.PricedRuns,
 		CostPerCompletedRun: optionalDecimal(series.CostPerCompletedRun),
+		Tokens:              tokensModel(series.Tokens),
 		FirstTokenMedianMs:  optionalInt(series.FirstTokenMedianMs),
 		LastRanAt:           optionalInt(series.LastRanAt),
 		Quiet:               series.Quiet,

@@ -5,6 +5,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
@@ -69,6 +70,8 @@ type Params struct {
 	// hold names the person's other agents that hold it.
 	Definitions agentdefinitionports.AgentDefinitionRepository `optional:"true"`
 	RateLimits  kernelports.RateLimitStore                     `optional:"true"`
+	Config      *config.Config                                 `optional:"true"`
+	Disclosures agentports.ToolDisclosureObserver              `optional:"true"`
 }
 
 type Service struct {
@@ -90,6 +93,8 @@ type Service struct {
 	rules       agentports.ToolRuleOverrides
 	changes     agentports.RecordChangeFeed
 	metrics     *metrics.Assistant
+	disclosures agentports.ToolDisclosureObserver
+	threshold   *int
 	// arguments holds each tool's compiled schema, against which every
 	// call's arguments are checked before the tool sees them.
 	arguments  *toolschema.Validator
@@ -119,6 +124,8 @@ func New(p Params) *Service {
 		rules:       p.Rules,
 		changes:     p.Changes,
 		metrics:     metrics.AssistantFrom(p.Metrics),
+		disclosures: p.Disclosures,
+		threshold:   configuredThreshold(p.Config),
 		rateLimits:  p.RateLimits,
 		pools:       newMatchPools(),
 		matchable:   matchableTools(p.Catalog),
@@ -187,6 +194,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentports.RunResult, error) 
 						Kind:    agentports.RetryKindRestart,
 					},
 				})
+				s.reask(t, fx, ReaskLoop, completion)
 				continue
 			}
 			fx.Emit(kernelports.StreamEvent{
@@ -210,12 +218,14 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentports.RunResult, error) 
 
 		retry, stop := s.handleCutOff(t, fx, completion)
 		if retry {
+			s.reask(t, fx, ReaskCutOff, completion)
 			continue
 		}
 
 		result.Model = completion.ModelIdentifier
 		result.ProviderID = completion.ProviderID
 		result.ContextWindow = completion.ContextWindow
+		t.providerKind = completion.ProviderKind
 		tagReasoning(completion)
 		if stop {
 			return s.finishCutOff(t, fx, completion), nil
@@ -230,19 +240,23 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentports.RunResult, error) 
 			if strings.TrimSpace(completion.Text) == "" && !asked {
 				if retries < maxReplyRetries {
 					retries++
+					s.reask(t, fx, ReaskEmptyReply, completion)
 					continue
 				}
 				fx.Emit(deltaEvent(emptyReply))
 				return s.finish(result, cannedCompletion(completion, emptyReply), fx), nil
 			}
 			if !asked && s.holdToCommand(t, fx, completion, &commandHeld) {
+				s.reask(t, fx, ReaskCommand, completion)
 				continue
 			}
 			if s.reground(t, fx, completion, &grounding) {
+				s.reask(t, fx, ReaskGrounding, completion)
 				continue
 			}
 			s.passReply(t, fx, completion)
 			if s.placeArtifacts(t, fx, completion, &placement) {
+				s.reask(t, fx, ReaskPlacement, completion)
 				continue
 			}
 
@@ -427,7 +441,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentports.RunResult, error) 
 					outcome = refusedOutcome(aitrace.OutcomeDenied,
 						"a delegated task cannot withdraw a proposal", "%s", delegatedWithdrawal)
 				}
-				if tools.offers(withdrawProposalName) {
+				if tools.offers(withdrawProposalName) && t.hasFiledProposal() {
 					outcome = t.withdrawProposal(call.Arguments)
 				}
 				result.ToolCallsUsed++
@@ -517,11 +531,11 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentports.RunResult, error) 
 		)
 	}
 
-	note, ending := budgetSpentNote, exhaustedReply
+	note, ending, guard := budgetSpentNote, exhaustedReply, ReaskBudgetSpent
 	if stuck {
-		note, ending = stuckNote, stuckReply
+		note, ending, guard = stuckNote, stuckReply, ReaskStuck
 	}
-	if final := s.finalAnswer(t, fx, result, note); final != nil {
+	if final := s.finalAnswer(t, fx, result, note, guard); final != nil {
 		grounding.rewritten = true
 		s.reground(t, fx, final, &grounding)
 		s.passReply(t, fx, final)
@@ -613,8 +627,10 @@ const budgetSpentNote = "You have used every tool call this turn allows. Answer 
 	"now from what the tools already returned. Say plainly what you could not finish or " +
 	"check, and do not ask for another tool."
 
-// finalAnswer asks the model once more with no tools, so a turn that spent its
-// budget answers from what it gathered. Ending on "I could not finish" threw
+// finalAnswer asks the model once more with tool calls forbidden, so a turn
+// that spent its budget answers from what it gathered. The tools stay declared:
+// the history holds tool calls a request without tools cannot carry, and
+// dropping them would throw away the cached prefix. Ending on "I could not finish" threw
 // away every lookup the turn had paid for. Nothing is returned when that ask
 // fails, loops, comes back empty or asks for a tool anyway: the canned line is
 // still better than any of those.
@@ -622,10 +638,11 @@ func (s *Service) finalAnswer(
 	t *Turn,
 	fx TurnEffects,
 	result *agentports.RunResult,
-	note string,
+	note, guard string,
 ) *agentports.ChatCompletionResult {
+	s.reask(t, fx, guard, nil)
 	req := t.completionRequest()
-	req.Tools = nil
+	req.ToolChoiceNone = true
 	req.Messages = append(slices.Clone(req.Messages), agentports.Message{
 		Role:    agentports.RoleUser,
 		Content: note,
@@ -669,10 +686,9 @@ func (s *Service) recordToolResult(
 	}
 	if outcome.action != nil {
 		result.Actions = append(result.Actions, *outcome.action)
-		t.offerWithdrawal(outcome.action)
 	}
 	outcome = fx.Observe(t, &call, outcome.exported()).internal()
-	s.countToolOutcome(fx, call.Name, &outcome)
+	s.countToolOutcome(t, fx, call.Name, &outcome)
 	t.keepShown(&outcome)
 	effect := s.ToolEffect(call.Name)
 	summary := summarizeOutcome(call, outcome)
@@ -868,6 +884,8 @@ func cannedCompletion(
 		canned.ProviderKind = attempt.ProviderKind
 		canned.InputTokens = attempt.InputTokens
 		canned.OutputTokens = attempt.OutputTokens
+		canned.CacheReadTokens = attempt.CacheReadTokens
+		canned.CacheWriteTokens = attempt.CacheWriteTokens
 		canned.LatencyMs = attempt.LatencyMs
 		canned.CostUSD = attempt.CostUSD
 		canned.ContextWindow = attempt.ContextWindow

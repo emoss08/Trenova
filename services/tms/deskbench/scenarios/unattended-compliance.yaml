@@ -1,0 +1,157 @@
+defaults:
+  tags: [unattended, compliance]
+  split: development
+
+scenarios:
+  - name: unattended-credentials-robert-medical-card-lapsed
+    description: >
+      Robert Brown's DOT medical card and DOT physical both lapsed four days ago. A good run asks
+      him for the renewal once, covering both papers, and proposes a dispatch hold that names the
+      medical card and the date it lapsed.
+    tags: [unattended, credentials]
+    expectedTools: ["get_worker|get_worker_credential|list_expiring_credentials"]
+    exclusive: credential-seed
+    setup:
+      - >
+        UPDATE worker_credentials AS wc
+        SET expires_at = EXTRACT(EPOCH FROM now())::bigint - 345600
+        FROM workers AS w, worker_credential_types AS t
+        WHERE wc.worker_id = w.id AND t.id = wc.credential_type_id
+          AND w.first_name = 'Robert' AND w.last_name = 'Brown'
+          AND t.name IN ('DOT Medical Card', 'DOT Physical') AND wc.status <> 'Archived'
+    steps:
+      - fire:
+          agent: CredentialDesk
+          event: worker_credential.expiring
+          subject: select id from workers where first_name = 'Robert' and last_name = 'Brown'
+        expect:
+          run: AwaitingDecision
+          proposals:
+            - tool: place_worker_dispatch_hold
+            - tool: request_credential_renewal
+          db:
+            - sql: >
+                select count(*) from agent_proposals where run_id = {{run}}
+                and tool_name = 'request_credential_renewal'
+              equals: "1"
+              note: one renewal request covers both papers
+          rubric: >
+            The hold's reason names the DOT medical card and the day it lapsed and says it is
+            reversible. The renewal request covers the medical card and the physical together. The
+            report says Robert cannot be given freight until the card is renewed.
+
+  - name: unattended-credentials-carlos-mvr-review-due-in-a-month
+    description: >
+      Carlos Rivera's annual motor vehicle record review comes due in thirty days and everything
+      else he holds is current. A good run asks for the renewal and stops: nothing has lapsed, so
+      there is no hold.
+    tags: [unattended, credentials]
+    split: held-out
+    expectedTools: ["get_worker|get_worker_credential|list_expiring_credentials"]
+    forbiddenTools: [place_worker_dispatch_hold]
+    exclusive: credential-seed
+    setup:
+      - >
+        UPDATE worker_credentials AS wc
+        SET expires_at = EXTRACT(EPOCH FROM now())::bigint + 2592000
+        FROM workers AS w, worker_credential_types AS t
+        WHERE wc.worker_id = w.id AND t.id = wc.credential_type_id
+          AND w.first_name = 'Carlos' AND w.last_name = 'Rivera'
+          AND t.name = 'Motor Vehicle Record Review' AND wc.status <> 'Archived'
+    steps:
+      - fire:
+          agent: CredentialDesk
+          event: worker_credential.expiring
+          subject: select id from workers where first_name = 'Carlos' and last_name = 'Rivera'
+        expect:
+          run: AwaitingDecision
+          proposals:
+            - tool: request_credential_renewal
+          rubric: Asks for the MVR review once, says when it is due, and says Carlos can still roll.
+
+  - name: unattended-carrier-risk-cedar-street-authority-revoked
+    description: >
+      Monitoring found that FMCSA revoked Cedar Street Carriers' common authority yesterday, a
+      finding that bears on whether they can be tendered. A good run checks the carrier, finds the
+      authority still revoked, and proposes closing the finding as CarrierBlocked.
+    tags: [unattended, carriers]
+    expectedTools: [get_carrier_intel_event, "get_carrier|vet_carrier"]
+    exclusive: carrier-intel-seed
+    setup:
+      - >
+        INSERT INTO carrier_intel_events
+          (id, organization_id, business_unit_id, subject_type, subject_id, carrier_id, dot_number,
+           subject_name, provider, source, category, rule_code, severity, action, prior_value,
+           current_value, summary, detected_at, fingerprint, status)
+        SELECT 'cievt_01JBENCH00000000000000CR01', c.organization_id, c.business_unit_id,
+          'Carrier', c.id, c.id, c.dot_number, c.name, 'FMCSAQCMobile', 'RuleEvaluation',
+          'Authority', 'authority.revoked', 'Critical', 'Block',
+          '{"commonAuthority": "ACTIVE"}'::jsonb, '{"commonAuthority": "REVOKED"}'::jsonb,
+          'FMCSA shows common authority for MC 905117 revoked as of yesterday after the carrier''s liability insurance was cancelled.',
+          EXTRACT(EPOCH FROM now())::bigint - 1800, 'bench-csc-authority-revoked', 'Open'
+        FROM carriers AS c WHERE c.code = 'CSC'
+        ON CONFLICT DO NOTHING
+      - >
+        UPDATE carrier_intel_events SET status = 'Open', acknowledged_at = NULL,
+          acknowledged_by_id = NULL, resolved_at = NULL, resolved_by_id = NULL, resolution = NULL,
+          resolution_note = NULL, detected_at = EXTRACT(EPOCH FROM now())::bigint - 1800
+        WHERE fingerprint = 'bench-csc-authority-revoked'
+    steps:
+      - fire:
+          agent: CarrierRiskDesk
+          event: carrier_intel.event_opened
+          subject: select id from carrier_intel_events where fingerprint = 'bench-csc-authority-revoked'
+        expect:
+          proposals:
+            - tool: resolve_carrier_intel_event
+              args: { resolution: CarrierBlocked }
+          db:
+            - sql: >
+                select count(*) from agent_proposals where run_id = {{run}}
+                and tool_name = 'resolve_carrier_intel_event'
+                and (tool_params::text ilike '%FalsePositive%' or tool_params::text ilike '%CarrierUpdated%')
+              equals: "0"
+              note: the finding was not closed as fixed or false
+          rubric: >
+            Reports Cedar Street Carriers, the revoked authority and that they cannot be tendered
+            freight. Says the eligibility gate already refuses them, so closing the finding records
+            the outcome.
+
+  - name: unattended-carrier-risk-summit-peak-phone-changed
+    description: >
+      Monitoring noticed that Summit Peak Logistics' dispatch phone number changed on the FMCSA
+      census. It does not bear on eligibility. A good run acknowledges it and nothing more.
+    tags: [unattended, carriers]
+    split: held-out
+    expectedTools: [get_carrier_intel_event]
+    forbiddenTools: [resolve_carrier_intel_event, set_carrier_monitoring]
+    exclusive: carrier-intel-seed
+    setup:
+      - >
+        INSERT INTO carrier_intel_events
+          (id, organization_id, business_unit_id, subject_type, subject_id, carrier_id, dot_number,
+           subject_name, provider, source, category, field_path, severity, action, prior_value,
+           current_value, summary, detected_at, fingerprint, status)
+        SELECT 'cievt_01JBENCH00000000000000CR02', c.organization_id, c.business_unit_id,
+          'Carrier', c.id, c.id, c.dot_number, c.name, 'FMCSAQCMobile', 'SnapshotDiff',
+          'Contacts', 'contacts.dispatchPhone', 'Info', 'Notify',
+          '{"dispatchPhone": "(303) 555-0142"}'::jsonb, '{"dispatchPhone": "(303) 555-0187"}'::jsonb,
+          'Dispatch phone number changed from (303) 555-0142 to (303) 555-0187 on the FMCSA census.',
+          EXTRACT(EPOCH FROM now())::bigint - 3600, 'bench-spl-dispatch-phone', 'Open'
+        FROM carriers AS c WHERE c.code = 'SPL'
+        ON CONFLICT DO NOTHING
+      - >
+        UPDATE carrier_intel_events SET status = 'Open', acknowledged_at = NULL,
+          acknowledged_by_id = NULL, resolved_at = NULL, resolved_by_id = NULL, resolution = NULL,
+          resolution_note = NULL, detected_at = EXTRACT(EPOCH FROM now())::bigint - 3600
+        WHERE fingerprint = 'bench-spl-dispatch-phone'
+    steps:
+      - fire:
+          agent: CarrierRiskDesk
+          event: carrier_intel.event_opened
+          subject: select id from carrier_intel_events where fingerprint = 'bench-spl-dispatch-phone'
+        expect:
+          run: AwaitingDecision
+          proposals:
+            - tool: acknowledge_carrier_intel_event
+          rubric: Says the phone change does not affect whether Summit Peak can be tendered.

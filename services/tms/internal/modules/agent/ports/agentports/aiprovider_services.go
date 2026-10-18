@@ -153,8 +153,10 @@ const ModelPriceSourceOpenRouter ModelPriceSource = "OpenRouter"
 
 // ReferencePrice is a model's estimated price per million tokens.
 type ReferencePrice struct {
-	InputCostPerMillion  decimal.Decimal
-	OutputCostPerMillion *decimal.Decimal
+	InputCostPerMillion      decimal.Decimal
+	OutputCostPerMillion     *decimal.Decimal
+	CacheReadCostPerMillion  *decimal.Decimal
+	CacheWriteCostPerMillion *decimal.Decimal
 }
 
 // ModelPriceReference estimates a model's price where its provider lists none.

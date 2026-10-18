@@ -2,6 +2,7 @@ package agentruntime
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -68,15 +69,24 @@ func withdrawProposalSpec() kernelports.ToolSpec {
 	}
 }
 
-// offerWithdrawal adds withdraw_proposal to the turn once it has filed a
-// proposal a person will decide. A delegate's proposals are its own turn's
-// to answer for, so a delegated turn is never offered it.
-func (t *Turn) offerWithdrawal(action *agentports.PendingAction) {
-	if action == nil || !action.Waiting() || t.req.Delegation != nil || t.tools == nil {
+func (s *Service) declareWithdrawal(set *toolSet, delegated bool) {
+	if delegated || !slices.ContainsFunc(set.allowed, s.filesProposals) {
 		return
 	}
 
-	t.tools.add(withdrawProposalSpec())
+	set.add(withdrawProposalSpec())
+}
+
+func (s *Service) filesProposals(name string) bool {
+	_, ok := s.actionTools.Get(name)
+
+	return ok
+}
+
+func (t *Turn) hasFiledProposal() bool {
+	return slices.ContainsFunc(t.result.Actions, func(action agentports.PendingAction) bool {
+		return !action.Executed && !action.Simulated
+	})
 }
 
 func (t *Turn) withdrawProposal(arguments map[string]any) toolOutcome {

@@ -32,6 +32,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "AIAnalyticsSuggestions", Implementors: []string{"AIAnalyticsSuggestions"}},
 		{Name: "AIAnalyticsTask", Implementors: []string{"AIAnalyticsTask"}},
 		{Name: "AIAnalyticsTaskCell", Implementors: []string{"AIAnalyticsTaskCell"}},
+		{Name: "AIAnalyticsTokens", Implementors: []string{"AIAnalyticsTokens"}},
 		{Name: "AIAnalyticsTool", Implementors: []string{"AIAnalyticsTool"}},
 		{Name: "AIAnalyticsToolCell", Implementors: []string{"AIAnalyticsToolCell"}},
 		{Name: "AIAnalyticsTotals", Implementors: []string{"AIAnalyticsTotals"}},
@@ -960,6 +961,17 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
 			{
+				Name:      "tokens",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "AIAnalyticsTokens",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AIAnalyticsSeries)
+					return obj.Tokens, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAIAnalyticsTokens2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAIAnalyticsTokens),
+			},
+			{
 				Name:     "firstTokenMedianMs",
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
@@ -1271,6 +1283,57 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
 			},
 		}},
+		{Object: "AIAnalyticsTokens", Fields: []*gqlexec.Field{
+			{
+				Name:     "uncachedInput",
+				NonNull:  true,
+				ChildErr: errNoChild14,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AIAnalyticsTokens)
+					return obj.UncachedInput, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:     "cacheRead",
+				NonNull:  true,
+				ChildErr: errNoChild14,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AIAnalyticsTokens)
+					return obj.CacheRead, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:     "cacheWrite",
+				NonNull:  true,
+				ChildErr: errNoChild14,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AIAnalyticsTokens)
+					return obj.CacheWrite, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:     "output",
+				NonNull:  true,
+				ChildErr: errNoChild14,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AIAnalyticsTokens)
+					return obj.Output, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:     "cacheReadShare",
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AIAnalyticsTokens)
+					return obj.CacheReadShare, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
+			},
+		}},
 		{Object: "AIAnalyticsTool", Fields: []*gqlexec.Field{
 			{
 				Name:     "name",
@@ -1538,6 +1601,17 @@ var Shard = &gqlexec.Shard{
 					return obj.CostPerCompletedRun, nil
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
+			},
+			{
+				Name:      "tokens",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "AIAnalyticsTokens",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AIAnalyticsTotals)
+					return obj.Tokens, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAIAnalyticsTokens2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAIAnalyticsTokens),
 			},
 			{
 				Name:     "toolFailureAlarm",
@@ -2303,6 +2377,14 @@ func marshalNAIAnalyticsTaskCell2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "AIAnalyticsTaskCell", v)
+}
+
+func marshalNAIAnalyticsTokens2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAIAnalyticsTokens(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.AIAnalyticsTokens) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "AIAnalyticsTokens", v)
 }
 
 func marshalNAIAnalyticsTool2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAIAnalyticsToolᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.AIAnalyticsTool) graphql.Marshaler {

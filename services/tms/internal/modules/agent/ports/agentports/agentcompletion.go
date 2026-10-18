@@ -86,6 +86,9 @@ type StructuredCompletionResult struct {
 	ProviderKind aiprovider.Kind
 	LatencyMs    int64
 	CostUSD      *decimal.Decimal
+
+	CacheReadTokens  int
+	CacheWriteTokens int
 }
 
 // ChatCompletionRequest is one turn of a tool-using conversation. Unlike the
@@ -96,10 +99,13 @@ type ChatCompletionRequest struct {
 	// SystemStable is how many leading bytes of System are the same on every
 	// turn, which a provider that caches by explicit mark can cache apart from
 	// the turn's own part. Zero treats the whole prompt as one.
-	SystemStable int
-	Messages     []Message
-	Tools        []kernelports.ToolSpec
-	MaxTokens    int
+	SystemStable   int
+	Messages       []Message
+	Tools          []kernelports.ToolSpec
+	ToolChoiceNone bool                       `json:"toolChoiceNone,omitempty"`
+	Reask          string                     `json:"reask,omitempty"`
+	Reasoning      aiprovider.ReasoningEffort `json:"reasoning,omitempty"`
+	MaxTokens      int
 	// PreferredProviderID asks for one configured provider first. It is honoured
 	// only when that provider is enabled and serves the task; otherwise the usual
 	// priority order applies, so a deleted preference never strands an agent.
@@ -146,13 +152,15 @@ const RetryKindBusy kernelports.RetryKind = "busy"
 // ChatCompletionResult is a turn's reply, which may ask for tools, say
 // something, or both.
 type ChatCompletionResult struct {
-	Text            string
-	ToolCalls       []ToolCall
-	ModelIdentifier string
-	InputTokens     int
-	OutputTokens    int
-	ProviderID      pulid.ID
-	ProviderKind    aiprovider.Kind
+	Text             string
+	ToolCalls        []ToolCall
+	ModelIdentifier  string
+	InputTokens      int
+	OutputTokens     int
+	CacheReadTokens  int
+	CacheWriteTokens int
+	ProviderID       pulid.ID
+	ProviderKind     aiprovider.Kind
 	// ProviderMessageID is the provider's own id for the reply, kept so the
 	// next call can name it when the operator asks why a cache missed.
 	ProviderMessageID string

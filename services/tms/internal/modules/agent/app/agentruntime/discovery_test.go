@@ -1,6 +1,7 @@
 package agentruntime
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -339,4 +340,54 @@ func TestRun_RefusalLoadsTheNearestToolsTheAgentHolds(t *testing.T) {
 	assert.Contains(t, refusal, "There is no tool named")
 	assert.Contains(t, refusal, "list_trailers")
 	assert.Contains(t, requestTools(completion.Requests[1]), "list_trailers")
+}
+
+func TestRun_ADisclosedTurnOnlyAppendsToItsToolArray(t *testing.T) {
+	t.Parallel()
+
+	const input = "which drivers have a medical card expiring soon"
+	probe, names := wideRuntime(t)
+	definition := testDefinition(names...)
+	opening := specNames(probe.newToolSet(t.Context(), toolSetRequest{
+		definition: definition,
+		actor:      testActor(),
+		input:      input,
+	}).specs)
+	unsent := slices.DeleteFunc(slices.Clone(names), func(name string) bool {
+		return slices.Contains(opening, name)
+	})
+	require.GreaterOrEqual(t, len(unsent), 2, "the wide agent is disclosed")
+	found, called := unsent[0], unsent[1]
+
+	service, completion, _ := wideRun(t,
+		toolTurn(findToolsName, map[string]any{"need": found}),
+		toolTurn(called, map[string]any{}),
+		toolTurn("list_trailer_inspection_dates", map[string]any{}),
+		textTurn("Done."),
+	)
+	_, err := service.Run(t.Context(), &agentports.RunRequest{
+		Definition: definition,
+		Actor:      testActor(),
+		Input:      input,
+	})
+	require.NoError(t, err)
+	require.Len(t, completion.Requests, 4)
+
+	sent := make([][]string, 0, len(completion.Requests))
+	for _, req := range completion.Requests {
+		sent = append(sent, requestTools(req))
+	}
+	assert.Equal(t, opening, sent[0])
+	assert.NotContains(t, sent[0], found)
+	assert.Contains(t, sent[1], found, "resolveFind loads what find_tools answered")
+	assert.NotContains(t, sent[1], called)
+	assert.Contains(t, sent[2], called,
+		"the runner loads a held tool the model called without being sent it")
+	assert.GreaterOrEqual(t, len(sent[3]), len(sent[2]),
+		"unheldRefusal loads the nearest held tools for a name that does not exist")
+	for idx := 1; idx < len(sent); idx++ {
+		require.GreaterOrEqual(t, len(sent[idx]), len(sent[idx-1]))
+		assert.Equal(t, sent[idx-1], sent[idx][:len(sent[idx-1])],
+			"model call %d removed or reordered a tool; the array only grows at its end", idx+1)
+	}
 }

@@ -248,6 +248,10 @@ type AIAnalyticsSeries {
   runs: Int!
   shortLabel: String!
   stopped: Int!
+  """
+  Prompt and output tokens, with the prompt split by what the provider's cache served.
+  """
+  tokens: AIAnalyticsTokens!
   toolCalls: Int!
   toolCallsFailed: Int!
   toolFailureRate: Float
@@ -306,6 +310,20 @@ type AIAnalyticsTaskCell {
 }
 
 """
+Tokens over a set of runs. The prompt is split three ways whatever the protocol
+reports: input the cache did not serve, input read from the cache, and input
+written to it. Counts are Decimal because a window's sum can pass 32 bits.
+"""
+type AIAnalyticsTokens {
+  cacheRead: Decimal!
+  """Cache reads over every prompt token; absent when nothing was sent."""
+  cacheReadShare: Float
+  cacheWrite: Decimal!
+  output: Decimal!
+  uncachedInput: Decimal!
+}
+
+"""
 One tool's calls by series; the tools that fail most often, at most twelve.
 """
 type AIAnalyticsTool {
@@ -339,6 +357,7 @@ type AIAnalyticsTotals {
   pricedRuns: Int!
   runs: Int!
   stopped: Int!
+  tokens: AIAnalyticsTokens!
   toolCalls: Int!
   toolCallsFailed: Int!
   """Tool calls fail often enough to call out."""

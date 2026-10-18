@@ -141,6 +141,9 @@ func (s *Service) CompleteStructured(
 		CostUSD:         outcome.CostUSD,
 		ProviderID:      outcome.ProviderID,
 		ProviderKind:    outcome.ProviderKind,
+
+		CacheReadTokens:  outcome.CacheReadTokens,
+		CacheWriteTokens: outcome.CacheWriteTokens,
 	}, nil
 }
 

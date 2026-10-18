@@ -116,3 +116,84 @@ func TestProvider_CachePrices(t *testing.T) {
 	assert.False(t, KindOpenAIResponses.CachesOutsideInput())
 	assert.False(t, KindOpenAIChat.CachesOutsideInput())
 }
+
+func TestListPrice(t *testing.T) {
+	t.Parallel()
+
+	_, ok := ListPrice(KindOpenAIResponses, "claude-haiku-5-5")
+	assert.False(t, ok)
+	_, ok = ListPrice(KindAnthropicMessages, "claude-unknown-9")
+	assert.False(t, ok)
+
+	opus, ok := ListPrice(KindAnthropicMessages, "anthropic.claude-opus-5-5")
+	require.True(t, ok)
+	assert.True(t, opus.CacheReadCostPerMillion().Equal(decimal.RequireFromString("0.2")))
+	assert.True(t, opus.CacheWriteCostPerMillion().Equal(decimal.RequireFromString("5")))
+
+	fable, ok := ListPrice(KindAnthropicMessages, "claude-fable-5-1")
+	require.True(t, ok)
+	assert.True(t, fable.CacheReadCostPerMillion().Equal(decimal.RequireFromString("0.25")))
+
+	haiku, ok := ListPrice(KindAnthropicMessages, "claude-haiku-5-5")
+	require.True(t, ok)
+	assert.True(t, haiku.InputCostPerMillion.Equal(decimal.RequireFromString("0.1")))
+	assert.True(t, haiku.CacheReadCostPerMillion().Equal(decimal.RequireFromString("0.01")))
+	require.NotNil(t, haiku.LongPrompt)
+	assert.Equal(t, 100_000, haiku.LongPrompt.AbovePromptTokens)
+}
+
+func TestProvider_CostFor_HaikuLongPromptTier(t *testing.T) {
+	t.Parallel()
+
+	haiku := &Provider{
+		Kind:                 KindAnthropicMessages,
+		Model:                "claude-haiku-5-5",
+		InputCostPerMillion:  money("0.10"),
+		OutputCostPerMillion: money("0.50"),
+	}
+
+	short := haiku.CostFor(TokenUsage{Input: 10_000, CacheRead: 90_000, Output: 1_000_000})
+	require.NotNil(t, short)
+	want := decimal.RequireFromString("0.001").
+		Add(decimal.RequireFromString("0.0009")).
+		Add(decimal.RequireFromString("0.5"))
+	assert.True(t, short.Equal(want), short.String())
+
+	long := haiku.CostFor(TokenUsage{Input: 10_000, CacheRead: 90_001, Output: 1_000_000})
+	require.NotNil(t, long)
+	want = decimal.RequireFromString("0.005").
+		Add(decimal.RequireFromString("0.00450005")).
+		Add(decimal.RequireFromString("2.5"))
+	assert.True(t, long.Equal(want), long.String())
+
+	write := haiku.CostFor(TokenUsage{CacheWrite: 1_000_000})
+	require.NotNil(t, write)
+	assert.True(t, write.Equal(decimal.RequireFromString("0.625")), write.String())
+}
+
+func TestProvider_CostFor_OpusCacheReadAtItsOwnRate(t *testing.T) {
+	t.Parallel()
+
+	opus := &Provider{
+		Kind:                 KindAnthropicMessages,
+		Model:                "claude-opus-5-5",
+		InputCostPerMillion:  money("4"),
+		OutputCostPerMillion: money("20"),
+	}
+	cost := opus.CostFor(TokenUsage{CacheRead: 1_000_000})
+	require.NotNil(t, cost)
+	assert.True(t, cost.Equal(decimal.RequireFromString("0.2")), cost.String())
+
+	opus.CacheReadCostPerMillion = money("0.3")
+	cost = opus.CostFor(TokenUsage{CacheRead: 1_000_000})
+	require.NotNil(t, cost)
+	assert.True(t, cost.Equal(decimal.RequireFromString("0.3")), cost.String())
+}
+
+func TestTokenUsage_PromptTokens(t *testing.T) {
+	t.Parallel()
+
+	usage := TokenUsage{Input: 100, CacheRead: 50, CacheWrite: 25}
+	assert.Equal(t, 175, usage.PromptTokens(KindAnthropicMessages))
+	assert.Equal(t, 100, usage.PromptTokens(KindOpenAIResponses))
+}

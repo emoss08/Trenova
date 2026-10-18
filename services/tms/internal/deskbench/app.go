@@ -33,11 +33,12 @@ const (
 )
 
 type OpenOptions struct {
-	Namespace          string
-	OutDir             string
-	LivePaths          []string
-	LockDir            string
-	WithoutBenchAgents bool
+	Namespace               string
+	OutDir                  string
+	LivePaths               []string
+	LockDir                 string
+	WithoutBenchAgents      bool
+	ToolDisclosureThreshold *int
 }
 
 type deps struct {
@@ -61,19 +62,24 @@ type deps struct {
 	Documents        *documentservice.Service
 	Contents         documentports.DocumentContentService
 	Recommender      agentports.AgentRecommender
+	Runs             agentports.AgentRunService
+	RunRecords       agentports.AgentRunRepository
+	PriceReference   agentports.ModelPriceReference `optional:"true"`
 }
 
 type Bench struct {
 	deps
-	recorder *Recorder
-	watcher  *TurnWatcher
-	app      *fx.App
-	logPath  string
-	sdkLog   *os.File
-	live     *LiveFeed
-	locks    sync.Map
-	held     *namespaceLock
-	tidied   sync.Once
+	recorder    *Recorder
+	disclosures *DisclosureLog
+	pricer      *pricer
+	watcher     *TurnWatcher
+	app         *fx.App
+	logPath     string
+	sdkLog      *os.File
+	live        *LiveFeed
+	locks       sync.Map
+	held        *namespaceLock
+	tidied      sync.Once
 }
 
 func (b *Bench) exclusive(key string) func() {
@@ -99,7 +105,10 @@ func Open(ctx context.Context, opts OpenOptions) (*Bench, error) {
 }
 
 func open(ctx context.Context, opts OpenOptions) (*Bench, error) {
-	bench := &Bench{logPath: filepath.Join(opts.OutDir, logFileName)}
+	bench := &Bench{
+		logPath:     filepath.Join(opts.OutDir, logFileName),
+		disclosures: NewDisclosureLog(),
+	}
 
 	sdkLog, err := os.OpenFile(
 		filepath.Join(opts.OutDir, sdkLogName),
@@ -124,7 +133,13 @@ func open(ctx context.Context, opts OpenOptions) (*Bench, error) {
 		bootstrap.Options(),
 		bootstrap.UnscheduledWorkerOptions(),
 		fx.Decorate(func(cfg *config.Config) *config.Config {
-			return isolate(cfg, opts.Namespace, bench.logPath)
+			isolated := isolate(cfg, opts.Namespace, bench.logPath)
+			if opts.ToolDisclosureThreshold != nil {
+				threshold := *opts.ToolDisclosureThreshold
+				isolated.AI.ToolDisclosureThreshold = &threshold
+			}
+
+			return isolated
 		}),
 		fx.Decorate(func(inner agentports.CompletionService) agentports.CompletionService {
 			bench.recorder = NewRecorder(inner)
@@ -143,8 +158,12 @@ func open(ctx context.Context, opts OpenOptions) (*Bench, error) {
 			bench.watcher = NewTurnWatcher(inner)
 			return bench.watcher
 		}),
+		fx.Provide(func() agentports.ToolDisclosureObserver { return bench.disclosures }),
 		benchAgentScope(opts.WithoutBenchAgents),
-		fx.Invoke(func(d deps) { bench.deps = d }),
+		fx.Invoke(func(d deps) {
+			bench.deps = d
+			bench.pricer = newPricer(d.Providers, d.PriceReference)
+		}),
 		fx.WithLogger(func(logger *zap.Logger) fxevent.Logger {
 			return &fxevent.ZapLogger{Logger: logger.Named("fx")}
 		}),

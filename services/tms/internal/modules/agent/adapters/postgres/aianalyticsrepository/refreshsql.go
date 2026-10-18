@@ -122,8 +122,12 @@ func callAggregates() string {
 	return fmt.Sprintf(`COUNT(*) AS model_calls,
 			COUNT(*) FILTER (WHERE NOT u.succeeded) AS failed_calls,
 			COUNT(*) FILTER (WHERE u.failover) AS failovers,
-			COALESCE(SUM(u.input_tokens), 0) AS input_tokens,
+			COALESCE(SUM(CASE WHEN u.provider_kind = '%[2]s' THEN u.input_tokens
+				ELSE GREATEST(u.input_tokens - u.cache_read_tokens - u.cache_write_tokens, 0)
+				END), 0) AS input_tokens,
 			COALESCE(SUM(u.output_tokens), 0) AS output_tokens,
+			COALESCE(SUM(u.cache_read_tokens), 0) AS cache_read_tokens,
+			COALESCE(SUM(u.cache_write_tokens), 0) AS cache_write_tokens,
 			SUM(u.cost_usd) AS cost_usd,
 			MIN(%[1]s - u.latency_ms) AS first_start_ms,
 			MAX(%[1]s) AS last_end_ms,
@@ -135,13 +139,13 @@ func callAggregates() string {
 			(ARRAY_AGG(u.agent_definition_id ORDER BY %[1]s)
 				FILTER (WHERE u.agent_definition_id IS NOT NULL))[1] AS agent_definition_id,
 			BOOL_OR(u.succeeded) AS answered,
-			MAX(u.created_at) AS last_call_at`, callEndMs)
+			MAX(u.created_at) AS last_call_at`, callEndMs, aiprovider.KindAnthropicMessages)
 }
 
 const unitColumns = `id, business_unit_id, organization_id, source, agent_definition_id, provider_id,
 	model, model_key, task, outcome, decision_run_id, started_at_ms, finished_at, duration_ms,
-	first_token_ms, model_calls, failed_calls, failovers, input_tokens, output_tokens, cost_usd,
-	tool_calls, tool_failures_model, tool_failures_tool, refresh_stamp`
+	first_token_ms, model_calls, failed_calls, failovers, input_tokens, output_tokens,
+	cache_read_tokens, cache_write_tokens, cost_usd, tool_calls, tool_failures_model, tool_failures_tool, refresh_stamp`
 
 const unitConflict = `ON CONFLICT (id, business_unit_id, organization_id) DO UPDATE SET
 	source = EXCLUDED.source,
@@ -161,6 +165,8 @@ const unitConflict = `ON CONFLICT (id, business_unit_id, organization_id) DO UPD
 	failovers = EXCLUDED.failovers,
 	input_tokens = EXCLUDED.input_tokens,
 	output_tokens = EXCLUDED.output_tokens,
+	cache_read_tokens = EXCLUDED.cache_read_tokens,
+	cache_write_tokens = EXCLUDED.cache_write_tokens,
 	cost_usd = EXCLUDED.cost_usd,
 	tool_calls = EXCLUDED.tool_calls,
 	tool_failures_model = EXCLUDED.tool_failures_model,
@@ -172,14 +178,16 @@ const unitConflict = `ON CONFLICT (id, business_unit_id, organization_id) DO UPD
 		ai_work_units.decision_run_id, ai_work_units.started_at_ms, ai_work_units.finished_at,
 		ai_work_units.duration_ms, ai_work_units.first_token_ms, ai_work_units.model_calls,
 		ai_work_units.failed_calls, ai_work_units.failovers, ai_work_units.input_tokens,
-		ai_work_units.output_tokens, ai_work_units.cost_usd, ai_work_units.tool_calls,
+		ai_work_units.output_tokens, ai_work_units.cache_read_tokens,
+		ai_work_units.cache_write_tokens, ai_work_units.cost_usd, ai_work_units.tool_calls,
 		ai_work_units.tool_failures_model, ai_work_units.tool_failures_tool
 	) IS DISTINCT FROM (
 		EXCLUDED.source, EXCLUDED.agent_definition_id, EXCLUDED.provider_id, EXCLUDED.model,
 		EXCLUDED.task, EXCLUDED.outcome, EXCLUDED.decision_run_id, EXCLUDED.started_at_ms,
 		EXCLUDED.finished_at, EXCLUDED.duration_ms, EXCLUDED.first_token_ms,
 		EXCLUDED.model_calls, EXCLUDED.failed_calls, EXCLUDED.failovers, EXCLUDED.input_tokens,
-		EXCLUDED.output_tokens, EXCLUDED.cost_usd, EXCLUDED.tool_calls,
+		EXCLUDED.output_tokens, EXCLUDED.cache_read_tokens, EXCLUDED.cache_write_tokens,
+		EXCLUDED.cost_usd, EXCLUDED.tool_calls,
 		EXCLUDED.tool_failures_model, EXCLUDED.tool_failures_tool
 	)`
 
@@ -235,6 +243,8 @@ func ownedUnitsSQL(src ownedSource) string {
 			COALESCE(c.failovers, 0) AS failovers,
 			COALESCE(c.input_tokens, 0) AS input_tokens,
 			COALESCE(c.output_tokens, 0) AS output_tokens,
+			COALESCE(c.cache_read_tokens, 0) AS cache_read_tokens,
+			COALESCE(c.cache_write_tokens, 0) AS cache_write_tokens,
 			c.cost_usd,
 			COALESCE(st.tool_calls, 0) AS tool_calls,
 			COALESCE(st.tool_failures_model, 0) AS tool_failures_model,
@@ -255,7 +265,8 @@ func ownedUnitsSQL(src ownedSource) string {
 				THEN units.finished_at * 1000 ELSE 0 END
 		) - units.started_at_ms),
 		units.first_token_ms, units.model_calls, units.failed_calls, units.failovers,
-		units.input_tokens, units.output_tokens, units.cost_usd, units.tool_calls,
+		units.input_tokens, units.output_tokens, units.cache_read_tokens,
+		units.cache_write_tokens, units.cost_usd, units.tool_calls,
 		units.tool_failures_model, units.tool_failures_tool, ?stamp
 	FROM units
 	WHERE units.model IS NOT NULL
@@ -385,7 +396,7 @@ var (
 		c.last_call_at,
 		GREATEST(0, c.last_end_ms - c.first_start_ms),
 		c.first_token_ms, c.model_calls, c.failed_calls, c.failovers, c.input_tokens,
-		c.output_tokens, c.cost_usd, 0, 0, 0, ?stamp
+		c.output_tokens, c.cache_read_tokens, c.cache_write_tokens, c.cost_usd, 0, 0, 0, ?stamp
 	FROM calls AS c
 	WHERE c.model IS NOT NULL
 	%[9]s`,

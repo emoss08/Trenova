@@ -37,13 +37,16 @@ func (f *fakeShipments) Get(
 type fakeConsole struct {
 	shipmentports.DispatchConsoleRepository
 
-	moves []*shipmentports.BoardMove
+	moves   []*shipmentports.BoardMove
+	filters []*shipmentports.DispatchBoardFilter
 }
 
 func (f *fakeConsole) ListBoardMoves(
 	_ context.Context,
-	_ *shipmentports.DispatchBoardFilter,
+	filter *shipmentports.DispatchBoardFilter,
 ) ([]*shipmentports.BoardMove, error) {
+	f.filters = append(f.filters, filter)
+
 	return f.moves, nil
 }
 
@@ -168,4 +171,52 @@ func TestService_AMoveWithoutDispatchControlsStillDescribesTheMove(t *testing.T)
 	assert.Equal(t, "Shipment move for PRO S-2003", subject.Label)
 	assert.Contains(t, subject.Notes, moveID.String())
 	assert.NotContains(t, subject.Notes, `"coverage":`)
+}
+
+func TestService_ReadsACoveredOrFinishedMoveOffTheBoard(t *testing.T) {
+	t.Parallel()
+
+	moveID := pulid.MustNew("smv_")
+	console := &fakeConsole{moves: []*shipmentports.BoardMove{{
+		MoveID:     moveID,
+		ProNumber:  "S-2004",
+		MoveStatus: shipment.MoveStatusCompleted,
+	}}}
+	svc := &Service{console: console, logger: zap.NewNop()}
+
+	subject, err := svc.Describe(t.Context(), testTenant(), agent.SubjectShipmentMove, moveID)
+	require.NoError(t, err)
+	assert.Equal(t, "Shipment move for PRO S-2004", subject.Label)
+
+	require.Len(t, console.filters, 1)
+	filter := console.filters[0]
+	assert.Equal(t, []pulid.ID{moveID}, filter.MoveIDs)
+	assert.True(t, filter.IncludeCovered, "an arrival or departure is on a move with a driver")
+	assert.ElementsMatch(t, shipment.MoveStatuses(), filter.MoveStatuses,
+		"a delivered move is Completed, which the board leaves out by default")
+}
+
+func TestService_ShipmentSubjectReadsEveryOneOfItsMoves(t *testing.T) {
+	t.Parallel()
+
+	first, last := pulid.MustNew("smv_"), pulid.MustNew("smv_")
+	console := &fakeConsole{}
+	svc := &Service{
+		shipments: &fakeShipments{entity: &shipment.Shipment{
+			ProNumber: "S-2005",
+			Moves:     []*shipment.ShipmentMove{{ID: first}, {ID: last}},
+		}},
+		console: console,
+		logger:  zap.NewNop(),
+	}
+
+	_, err := svc.Describe(t.Context(), testTenant(), agent.SubjectShipment, pulid.MustNew("shp_"))
+	require.NoError(t, err)
+
+	require.Len(t, console.filters, 1)
+	filter := console.filters[0]
+	assert.Equal(t, []pulid.ID{first, last}, filter.MoveIDs)
+	assert.Equal(t, 2, filter.Limit)
+	assert.True(t, filter.IncludeCovered)
+	assert.ElementsMatch(t, shipment.MoveStatuses(), filter.MoveStatuses)
 }

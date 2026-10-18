@@ -327,8 +327,10 @@ type AIAnalyticsSeries struct {
 	PricedRuns int    `json:"pricedRuns"`
 	// Cost over completed runs; absent when nothing was priced or completed.
 	CostPerCompletedRun *string `json:"costPerCompletedRun,omitempty"`
-	FirstTokenMedianMs  *int    `json:"firstTokenMedianMs,omitempty"`
-	LastRanAt           *int    `json:"lastRanAt,omitempty"`
+	// Prompt and output tokens, with the prompt split by what the provider's cache served.
+	Tokens             *AIAnalyticsTokens `json:"tokens"`
+	FirstTokenMedianMs *int               `json:"firstTokenMedianMs,omitempty"`
+	LastRanAt          *int               `json:"lastRanAt,omitempty"`
 	// Nothing ran for longer than a day before the end of the window.
 	Quiet    bool                  `json:"quiet"`
 	RunTimes []*AIAnalyticsRunTime `json:"runTimes"`
@@ -380,6 +382,18 @@ type AIAnalyticsTaskCell struct {
 	CompletedRate *float64 `json:"completedRate,omitempty"`
 }
 
+// Tokens over a set of runs. The prompt is split three ways whatever the protocol
+// reports: input the cache did not serve, input read from the cache, and input
+// written to it. Counts are Decimal because a window's sum can pass 32 bits.
+type AIAnalyticsTokens struct {
+	UncachedInput string `json:"uncachedInput"`
+	CacheRead     string `json:"cacheRead"`
+	CacheWrite    string `json:"cacheWrite"`
+	Output        string `json:"output"`
+	// Cache reads over every prompt token; absent when nothing was sent.
+	CacheReadShare *float64 `json:"cacheReadShare,omitempty"`
+}
+
 // One tool's calls by series; the tools that fail most often, at most twelve.
 type AIAnalyticsTool struct {
 	Name        string                 `json:"name"`
@@ -399,23 +413,24 @@ type AIAnalyticsToolCell struct {
 }
 
 type AIAnalyticsTotals struct {
-	Runs                     int      `json:"runs"`
-	ModelCalls               int      `json:"modelCalls"`
-	Completed                int      `json:"completed"`
-	HandedOff                int      `json:"handedOff"`
-	Stopped                  int      `json:"stopped"`
-	Failed                   int      `json:"failed"`
-	CompletedRate            *float64 `json:"completedRate,omitempty"`
-	MedianRunMs              *int     `json:"medianRunMs,omitempty"`
-	P95RunMs                 *int     `json:"p95RunMs,omitempty"`
-	ToolCalls                int      `json:"toolCalls"`
-	ToolCallsFailed          int      `json:"toolCallsFailed"`
-	ToolFailuresModel        int      `json:"toolFailuresModel"`
-	ToolFailureRate          *float64 `json:"toolFailureRate,omitempty"`
-	ModelShareOfToolFailures *float64 `json:"modelShareOfToolFailures,omitempty"`
-	CostUsd                  string   `json:"costUsd"`
-	PricedRuns               int      `json:"pricedRuns"`
-	CostPerCompletedRun      *string  `json:"costPerCompletedRun,omitempty"`
+	Runs                     int                `json:"runs"`
+	ModelCalls               int                `json:"modelCalls"`
+	Completed                int                `json:"completed"`
+	HandedOff                int                `json:"handedOff"`
+	Stopped                  int                `json:"stopped"`
+	Failed                   int                `json:"failed"`
+	CompletedRate            *float64           `json:"completedRate,omitempty"`
+	MedianRunMs              *int               `json:"medianRunMs,omitempty"`
+	P95RunMs                 *int               `json:"p95RunMs,omitempty"`
+	ToolCalls                int                `json:"toolCalls"`
+	ToolCallsFailed          int                `json:"toolCallsFailed"`
+	ToolFailuresModel        int                `json:"toolFailuresModel"`
+	ToolFailureRate          *float64           `json:"toolFailureRate,omitempty"`
+	ModelShareOfToolFailures *float64           `json:"modelShareOfToolFailures,omitempty"`
+	CostUsd                  string             `json:"costUsd"`
+	PricedRuns               int                `json:"pricedRuns"`
+	CostPerCompletedRun      *string            `json:"costPerCompletedRun,omitempty"`
+	Tokens                   *AIAnalyticsTokens `json:"tokens"`
 	// Tool calls fail often enough to call out.
 	ToolFailureAlarm bool `json:"toolFailureAlarm"`
 }

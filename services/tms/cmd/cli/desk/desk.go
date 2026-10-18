@@ -72,6 +72,12 @@ var flags struct {
 	area      string
 	format    string
 	findings  string
+	passK     int
+	splits    []string
+	threshold int
+	spec      string
+	held      []int
+	modes     []string
 }
 
 var DeskCmd = &cobra.Command{
@@ -203,6 +209,12 @@ func init() {
 		StringSliceVar(&flags.names, "name", nil, "only scenarios whose name contains one of these")
 	runCmd.Flags().StringVar(&flags.compare, "compare", comparePrevious,
 		"report to compare with: 'previous', a run directory, a report.json, or '' for none")
+	runCmd.Flags().IntVar(&flags.passK, "pass-k", deskbench.DefaultPassK,
+		"k for pass^k, the chance every one of k trials of a scenario passes")
+	runCmd.Flags().StringSliceVar(&flags.splits, "split", nil,
+		"only scenarios of these splits: development, held-out, adversarial")
+	runCmd.Flags().IntVar(&flags.threshold, "tool-threshold", -1,
+		"override ai.toolDisclosureThreshold for this run (tools held before a turn is disclosed)")
 
 	findingsCmd.Flags().StringVar(&flags.findings, "file", defaultFindings, "findings file")
 	findingsCmd.Flags().
@@ -213,7 +225,9 @@ func init() {
 	findingsCmd.Flags().StringVar(&flags.area, "area", "", "only findings whose area contains this")
 	findingsCmd.Flags().StringVar(&flags.format, "format", formatMarkdown, "md, csv or json")
 
-	DeskCmd.AddCommand(askCmd, runCmd, routeCmd, findingsCmd, cleanCmd, agentsCmd, providersCmd)
+	initBaseline()
+	DeskCmd.AddCommand(askCmd, runCmd, routeCmd, findingsCmd, cleanCmd, agentsCmd, providersCmd,
+		baselineCmd, sweepCmd)
 }
 
 func runAsk(cmd *cobra.Command, args []string) error {
@@ -236,7 +250,7 @@ func runAsk(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	report, outDir, err := execute(cmd.Context(), "ask", deskbench.RunOptions{
+	report, outDir, err := execute(cmd.Context(), executeOptions{kind: "ask"}, deskbench.RunOptions{
 		Scenarios: []*deskbench.Scenario{scenario},
 		User:      flags.user,
 		Agent:     flags.agent,
@@ -244,7 +258,7 @@ func runAsk(cmd *cobra.Command, args []string) error {
 		Keep:      flags.keep,
 		Delete:    flags.delete,
 		ThreadID:  threadID,
-	}, "")
+	})
 	if err != nil {
 		return err
 	}
@@ -339,7 +353,12 @@ func runScenarios(cmd *cobra.Command, args []string) error {
 		return errors.New("no scenario matches the filters")
 	}
 
-	report, outDir, err := execute(cmd.Context(), "run", deskbench.RunOptions{
+	report, outDir, err := execute(cmd.Context(), executeOptions{
+		kind:      "run",
+		compare:   flags.compare,
+		passK:     flags.passK,
+		threshold: thresholdFlag(),
+	}, deskbench.RunOptions{
 		Scenarios: scenarios,
 		User:      flags.user,
 		Agent:     flags.agent,
@@ -349,7 +368,7 @@ func runScenarios(cmd *cobra.Command, args []string) error {
 		Keep:      flags.keep,
 		Delete:    flags.delete,
 		Progress:  printProgress,
-	}, flags.compare)
+	})
 	if err != nil {
 		return err
 	}
@@ -369,6 +388,9 @@ func filterScenarios(scenarios []*deskbench.Scenario) []*deskbench.Scenario {
 	kept := make([]*deskbench.Scenario, 0, len(scenarios))
 	for _, scenario := range scenarios {
 		if !scenario.HasTag(flags.tags) {
+			continue
+		}
+		if len(flags.splits) > 0 && !slices.Contains(flags.splits, string(scenario.Split)) {
 			continue
 		}
 		if len(flags.names) > 0 && !nameMatches(scenario.Name, flags.names) {
@@ -391,30 +413,55 @@ func nameMatches(name string, wanted []string) bool {
 	return false
 }
 
+type executeOptions struct {
+	kind      string
+	compare   string
+	passK     int
+	threshold *int
+	label     string
+	outDir    string
+}
+
+func thresholdFlag() *int {
+	if flags.threshold < 0 {
+		return nil
+	}
+	threshold := flags.threshold
+
+	return &threshold
+}
+
 func execute(
 	parent context.Context,
-	kind string,
+	run executeOptions,
 	opts deskbench.RunOptions,
-	compare string,
 ) (*deskbench.Report, string, error) {
 	ctx, stop := signal.NotifyContext(parent, os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	outDir, err := runDirectory(kind)
-	if err != nil {
-		return nil, "", err
+	outDir := run.outDir
+	var err error
+	if outDir == "" {
+		outDir, err = runDirectory(run.kind)
+		if err != nil {
+			return nil, "", err
+		}
 	}
 
 	var baseline *deskbench.Report
-	if compare != "" {
-		baseline, err = loadBaseline(compare)
+	if run.compare != "" {
+		baseline, err = loadBaseline(run.compare)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "not comparing: %v\n", err)
 		}
 	}
 
 	livePath := filepath.Join(benchRoot, liveFile)
-	bench, err := openBench(ctx, outDir, filepath.Join(outDir, liveFile), livePath)
+	bench, err := openBenchWith(ctx, deskbench.OpenOptions{
+		OutDir:                  outDir,
+		LivePaths:               []string{filepath.Join(outDir, liveFile), livePath},
+		ToolDisclosureThreshold: run.threshold,
+	})
 	if err != nil {
 		return nil, "", err
 	}
@@ -431,6 +478,9 @@ func execute(
 		Commit:    commit(),
 		Command:   strings.Join(os.Args[1:], " "),
 		WorkerLog: bench.LogPath(),
+		PassK:     run.passK,
+		Label:     run.label,
+		Threshold: run.threshold,
 	}
 	fmt.Fprintf(
 		os.Stderr,
@@ -453,7 +503,7 @@ func execute(
 	if err = report.Write(outDir); err != nil {
 		return nil, outDir, err
 	}
-	if kind == "run" {
+	if run.kind == "run" {
 		if err = markLatest(outDir); err != nil {
 			fmt.Fprintf(os.Stderr, "could not record the latest run: %v\n", err)
 		}
@@ -467,7 +517,7 @@ func execute(
 
 func syncBenchAgents(ctx context.Context, bench *deskbench.Bench) error {
 	specs, err := deskbench.LoadAgentSpecs(defaultAgents)
-	if err != nil || len(specs) == 0 {
+	if err != nil {
 		return err
 	}
 
@@ -476,18 +526,30 @@ func syncBenchAgents(ctx context.Context, bench *deskbench.Bench) error {
 		return err
 	}
 
-	synced, err := session.SyncAgents(ctx, specs)
-	if err != nil {
-		return fmt.Errorf("sync the bench agents in %s: %w", defaultAgents, err)
+	if len(specs) > 0 {
+		synced, syncErr := session.SyncAgents(ctx, specs)
+		if syncErr != nil {
+			return fmt.Errorf("sync the bench agents in %s: %w", defaultAgents, syncErr)
+		}
+		reportSync(synced)
 	}
+
+	synced, err := session.SyncUnattendedAgents(ctx)
+	if err != nil {
+		return fmt.Errorf("sync the bench's unattended agents: %w", err)
+	}
+	reportSync(synced)
+
+	return nil
+}
+
+func reportSync(synced *deskbench.AgentSync) {
 	for _, name := range synced.Created {
 		fmt.Fprintf(os.Stderr, "created agent %s\n", name)
 	}
 	for _, name := range synced.Updated {
 		fmt.Fprintf(os.Stderr, "updated agent %s\n", name)
 	}
-
-	return nil
 }
 
 func openBench(ctx context.Context, outDir string, livePaths ...string) (*deskbench.Bench, error) {

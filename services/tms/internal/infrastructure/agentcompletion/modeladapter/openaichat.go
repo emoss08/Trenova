@@ -40,6 +40,7 @@ type chatRequest struct {
 	MaxTokens      int                 `json:"max_tokens,omitempty"`
 	ResponseFormat *chatResponseFormat `json:"response_format,omitempty"`
 	Tools          []chatTool          `json:"tools,omitempty"`
+	ToolChoice     string              `json:"tool_choice,omitempty"`
 	Stream         bool                `json:"stream"`
 	StreamOptions  *chatStreamOptions  `json:"stream_options,omitempty"`
 	// ReasoningEffort is sent only when the provider is configured to reason,
@@ -151,8 +152,9 @@ func (a openAIChatAdapter) Complete(ctx context.Context, call *Call) (*Response,
 		Messages: toChatMessages(
 			call.Request.System, call.Request.Messages, call.Provider.ID, call.Provider.Model,
 		),
-		Tools:  toChatTools(call.Request.Tools),
-		Stream: false,
+		Tools:      toChatTools(call.Request.Tools),
+		ToolChoice: toolChoiceWire(call.Request),
+		Stream:     false,
 	}
 	body.ResponseFormat = chatResponseFormatFor(call)
 	body.ReasoningEffort = call.reasoning().Wire()
@@ -251,6 +253,7 @@ func (a openAIChatAdapter) Stream(
 			call.Request.System, call.Request.Messages, call.Provider.ID, call.Provider.Model,
 		),
 		Tools:         toChatTools(call.Request.Tools),
+		ToolChoice:    toolChoiceWire(call.Request),
 		Stream:        true,
 		StreamOptions: &chatStreamOptions{IncludeUsage: true},
 	}

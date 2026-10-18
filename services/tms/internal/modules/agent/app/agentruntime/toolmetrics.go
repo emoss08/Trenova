@@ -1,5 +1,13 @@
 package agentruntime
 
+import (
+	"cmp"
+
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+)
+
 // unregisteredToolLabel is the tool a call is counted under when it names
 // nothing the runtime knows. The name comes from the model, and a label taken
 // from it as sent would let one confused model mint a series per invented tool.
@@ -18,12 +26,22 @@ type ReplayAware interface {
 // is the one place a call is counted. A call with no verdict of its own, a
 // find_tools answer or a repeated read, is counted as the verdict its result
 // implies.
-func (s *Service) countToolOutcome(fx TurnEffects, name string, outcome *toolOutcome) {
+func (s *Service) countToolOutcome(
+	t *Turn,
+	fx TurnEffects,
+	name string,
+	outcome *toolOutcome,
+) {
 	if aware, ok := fx.(ReplayAware); ok && aware.Replaying() {
 		return
 	}
 
-	s.metrics.RecordToolOutcome(s.toolMetricLabel(name), outcome.verdictOrDerived())
+	s.metrics.RecordToolOutcome(metrics.ToolOutcomeLabels{
+		Tool:     s.toolMetricLabel(name),
+		Verdict:  outcome.verdictOrDerived(),
+		Model:    aianalytics.CanonicalModel(t.result.Model),
+		Provider: string(t.providerKind),
+	})
 }
 
 func (s *Service) toolMetricLabel(name string) string {
@@ -35,4 +53,45 @@ func (s *Service) toolMetricLabel(name string) string {
 	}
 
 	return unregisteredToolLabel
+}
+
+const (
+	ReaskLoop        = "loop"
+	ReaskCutOff      = "cut_off"
+	ReaskEmptyReply  = "empty_reply"
+	ReaskCommand     = "command"
+	ReaskGrounding   = "grounding"
+	ReaskPlacement   = "placement"
+	ReaskBudgetSpent = "budget_spent"
+	ReaskStuck       = "stuck"
+)
+
+func (s *Service) reask(
+	t *Turn,
+	fx TurnEffects,
+	guard string,
+	completion *agentports.ChatCompletionResult,
+) {
+	t.reask = guard
+	if aware, ok := fx.(ReplayAware); ok && aware.Replaying() {
+		return
+	}
+
+	model, provider := t.result.Model, t.providerKind
+	if completion != nil {
+		model = cmp.Or(completion.ModelIdentifier, model)
+		provider = cmp.Or(completion.ProviderKind, provider)
+	}
+	s.metrics.RecordGuardReask(metrics.GuardReaskLabels{
+		Guard:    guard,
+		Model:    aianalytics.CanonicalModel(model),
+		Provider: string(provider),
+	})
+}
+
+func (t *Turn) takeReask() string {
+	guard := t.reask
+	t.reask = ""
+
+	return guard
 }

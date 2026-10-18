@@ -79,8 +79,13 @@ over a `Turn`) from workflow code, through the `TurnEffects` seam:
   guard. The guard answers an identical failed call with the first failure
   instead of running it; once a turn has sent failed calls again unchanged
   twice (`maxRepeatedFailures`), it stops calling tools, answers any other
-  call in that batch as not run, and asks for an answer without tools under
-  `stuckNote`, which says to tell the person what was refused and what they
+  call in that batch as not run, and asks for an answer with tool calls
+  forbidden under `stuckNote` (`finalAnswer` keeps the turn's tools declared
+  and sends `ToolChoiceNone`: Anthropic's `tool_choice: {"type":"none"}`, the
+  OpenAI protocols' `"none"`, so the history's tool calls still name declared
+  tools and the cached prefix holds; an OpenAI-compatible endpoint that refuses it with a 400
+  or 422 naming `tool_choice` is asked once more with the tools and no `tool_choice`, logged
+  as a warning, by `refusedToolChoice` in `completionrouter`), which says to tell the person what was refused and what they
   can do instead (`stuckReply` when that answer cannot be had). Schemas are compiled once per tool (`toolschema.Validator`); every
   object in a tool's schema is closed and every enum names its source
   (`agenttoolschema.Enum`, `x-enumOf`, stripped by `toolschema.ForModel`),
@@ -370,6 +375,15 @@ than any it names takes the newest known constraints.
   `anthropic-beta: thinking-binding-controls-2026-08-01` header. The header goes only to
   those models, since a gateway in front of an older one may refuse an unknown beta, and
   Off on those models already sends an adaptive thinking object for the binding to ride on.
+  Haiku 5.5 runs the same check but is not sent the binding until there is evidence it
+  refuses the edit. `TestLiveAnthropic_HaikuThinkingBindingOnAMidTurnToolChange`
+  (`modeladapter/anthropiclive_binding_test.go`) is the evidence and then the guard: with
+  `TRENOVA_LIVE_ANTHROPIC_BINDING=1` and `ANTHROPIC_API_KEY` set it mints a thinking block
+  with a tool call, then replays it honestly, with a tool added exactly as the adapter sends
+  it today, and with the same edit under `prefix_mismatch_behavior` `"error"` (which opts any
+  account into the check) and `"drop_block"`, logs each result, and fails when the request
+  the adapter sends today is refused. `TRENOVA_LIVE_ANTHROPIC_MODEL` and
+  `TRENOVA_LIVE_ANTHROPIC_BASE_URL` point it at another model or a gateway.
 - **Drops are counted.** The API lists each dropped block in `input_transformations`
   (`message_start` when streaming). The adapter counts the `thinking_dropped` entries into
   `Response.ThinkingDropped`, and the attempt span carries it as
@@ -1456,8 +1470,20 @@ Exactly one of the three parameters is given.
 A turn's proposals are filed when it ends, and two or more become one plan the person
 approves whole. An agent that proposes a change, notices a mistake and proposes it again
 corrected would otherwise leave both in that plan: one approval ran both, and a load was
-entered twice. Once a turn has filed a proposal a person will decide, the loop offers
-`withdraw_proposal {proposalId, reason?}` (`agentruntime/withdrawproposal.go`). Every
+entered twice. Every turn that holds a tool able to file a proposal (an action tool) is
+given `withdraw_proposal {proposalId, reason?}` (`agentruntime/withdrawproposal.go`) from
+its first model call (`declareWithdrawal`), and the loop refuses the call with
+`unofferedWithdrawal` until the turn has filed a proposal a person would decide
+(`hasFiledProposal`). It used to be added after the first filing, which changed `tools`
+mid-turn: the cached prefix was written again, and on the models that bind thinking to the
+conversation (Opus, Sonnet and Haiku 5.5) every replayed thinking block was bound to the old
+list. `TestTurn_SendsTheSameToolsOnEveryModelCall` holds the tool array identical across a
+turn that proposes, withdraws and proposes again. A disclosed turn's array still grows
+mid-turn, at its end only: `resolveFind` loads what `find_tools` answered, the runner loads a
+held tool the model called without being sent it, `unheldRefusal` loads the nearest held
+tools for a name that does not exist, and `Turn.LoadTools` loads what a `find_tools`
+answered elsewhere found. `TestRun_ADisclosedTurnOnlyAppendsToItsToolArray` pins that as the
+baseline for the rebuild of context assembly. Every
 filing result names its proposal's id ("Recorded a proposal to run "create_shipment"
 (proposal ap_…)"), and the runtime answers the call itself, like `request_decision`: it
 marks that action `Withdrawn` on `PendingAction`, and the recorder records it
@@ -1469,9 +1495,7 @@ too. A withdrawn action is left out of `ProposedSoFar` (so the same change filed
 new proposal, not a duplicate), of the grounding guard's filed writes and of a delegate's
 report; a delegated turn is never offered the tool. The AI audit trail records the
 superseded proposal's `filed` event and the `withdraw_proposal` call like any runtime step,
-with no new event kind or canonical field. It took no gate: the tool is added to the turn's
-in-workflow tool set as data when a filing comes back, no command is added, and a history
-recorded before it never calls it.
+with no new event kind or canonical field.
 
 ### What a tool receives
 
@@ -2402,9 +2426,22 @@ The whole table of link columns, and who writes each, is in
 duration says how long the answer took, first-event says how long a reader who
 attached as the turn began stared at nothing.
 
-`assistant_tool_outcomes_total{tool,verdict}` counts every tool call the loop
-answers, refusals included, by what became of it (the `aitrace` verdicts: ran,
-proposed, simulated, denied, invalid, duplicate, over_budget, failed, unknown).
+`assistant_tool_outcomes_total{tool,verdict,model,provider}` counts every tool
+call the loop answers, refusals included, by what became of it (the `aitrace`
+verdicts: ran, proposed, simulated, denied, invalid, duplicate, over_budget,
+failed, unknown), by the canonical model that asked for it
+(`aianalytics.CanonicalModel`, so a dated snapshot and a Bedrock id count as one
+model) and by the protocol of the provider that answered (`AnthropicMessages`,
+`OpenAIResponses`, `OpenAIChat`; `unknown` before any model answered).
+
+`assistant_guard_reasks_total{guard,model,provider}` counts the model calls the loop makes
+again because a guard sent the answer back: `loop` (a reply that fell into a repetition),
+`cut_off` (a call cut off at the output limit, retried with a larger one), `empty_reply`,
+`command` (a turn held to the extension command it opened with), `grounding` (the grounding
+guard's correction), `placement` (artifact placement), and the two forced final answers,
+`budget_spent` and `stuck`. The same name rides on the re-asked request as
+`ChatCompletionRequest.Reask`, which is how the desk bench counts each guard's cost per
+task; like the tool counter it is not counted while workflow code replays.
 It is counted in one place, `recordToolResult`, and not while workflow code
 replays its history (`ReplayAware`); a name the model invented is counted as
 `unregistered`, so a confused model cannot mint a series per guess. The agent's

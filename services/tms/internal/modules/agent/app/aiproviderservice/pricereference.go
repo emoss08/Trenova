@@ -134,6 +134,12 @@ func (r *openRouterPrices) load(ctx context.Context) *priceIndex {
 		if model.OutputCostPerMillion != nil {
 			price.Output = model.OutputCostPerMillion.String()
 		}
+		if model.CacheReadCostPerMillion != nil {
+			price.CacheRead = model.CacheReadCostPerMillion.String()
+		}
+		if model.CacheWriteCostPerMillion != nil {
+			price.CacheWrite = model.CacheWriteCostPerMillion.String()
+		}
 		prices[model.ID] = price
 	}
 
@@ -190,10 +196,11 @@ func newPriceIndex(prices map[string]agentports.CachedModelPrice) *priceIndex {
 		if err != nil || !input.IsPositive() {
 			continue
 		}
-		price := agentports.ReferencePrice{InputCostPerMillion: input}
-		if output, outputErr := decimal.NewFromString(cached.Output); outputErr == nil &&
-			output.IsPositive() {
-			price.OutputCostPerMillion = &output
+		price := agentports.ReferencePrice{
+			InputCostPerMillion:      input,
+			OutputCostPerMillion:     positivePrice(cached.Output),
+			CacheReadCostPerMillion:  positivePrice(cached.CacheRead),
+			CacheWriteCostPerMillion: positivePrice(cached.CacheWrite),
 		}
 
 		key := normalizeModelID(id)
@@ -203,6 +210,15 @@ func newPriceIndex(prices map[string]agentports.CachedModelPrice) *priceIndex {
 	}
 
 	return index
+}
+
+func positivePrice(value string) *decimal.Decimal {
+	price, err := decimal.NewFromString(value)
+	if err != nil || !price.IsPositive() {
+		return nil
+	}
+
+	return &price
 }
 
 func (x *priceIndex) lookup(

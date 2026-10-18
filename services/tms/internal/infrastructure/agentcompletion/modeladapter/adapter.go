@@ -38,8 +38,9 @@ type Request struct {
 	SchemaName string
 	// Tools the model may ask for. Offering tools and demanding a JSON schema at
 	// once confuses most endpoints, so callers set one or the other.
-	Tools     []ToolSpec
-	MaxTokens int
+	Tools          []ToolSpec
+	ToolChoiceNone bool
+	MaxTokens      int
 	// Sampling is how adventurously the model may pick its next token. An
 	// empty value leaves the endpoint's own defaults alone, which is what
 	// every call used to do.
@@ -263,4 +264,14 @@ type BackgroundOutcome struct {
 type BackgroundRunner interface {
 	Submit(ctx context.Context, call *Call) (*BackgroundHandle, error)
 	Poll(ctx context.Context, call *Call, id string) (*BackgroundOutcome, error)
+}
+
+const toolChoiceNone = "none"
+
+func toolChoiceWire(req *Request) string {
+	if req.ToolChoiceNone && len(req.Tools) > 0 {
+		return toolChoiceNone
+	}
+
+	return ""
 }

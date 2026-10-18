@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -90,7 +91,9 @@ type Turn struct {
 	toolMemories map[string][]pulid.ID
 	// artifacts are what the turn put beside the conversation, in the order
 	// it did.
-	artifacts []agentports.ShownArtifact
+	artifacts    []agentports.ShownArtifact
+	providerKind aiprovider.Kind
+	reask        string
 }
 
 // TurnEffects is everything a turn does outside itself.
@@ -143,10 +146,12 @@ func (r ModelReply) usage() *agentports.RunUsage {
 	}
 
 	return &agentports.RunUsage{
-		ModelCalls:   1,
-		InputTokens:  int64(r.Completion.InputTokens),
-		OutputTokens: int64(r.Completion.OutputTokens),
-		CostUSD:      r.Completion.CostUSD,
+		ModelCalls:       1,
+		InputTokens:      int64(r.Completion.InputTokens),
+		OutputTokens:     int64(r.Completion.OutputTokens),
+		CacheReadTokens:  int64(r.Completion.CacheReadTokens),
+		CacheWriteTokens: int64(r.Completion.CacheWriteTokens),
+		CostUSD:          r.Completion.CostUSD,
 	}
 }
 
@@ -287,6 +292,8 @@ type TurnState struct {
 	// ToolMemories are the carried memories about a tool the turn has not
 	// called yet.
 	ToolMemories map[string][]pulid.ID `json:"toolMemories,omitempty"`
+
+	ProviderKind aiprovider.Kind `json:"providerKind,omitempty"`
 }
 
 // ToolSetState is a turn's tool set as data. Which tools are loaded follows
@@ -332,6 +339,7 @@ func (t *Turn) State() TurnState {
 		TaintOpened:     slices.Clone(t.opened),
 		World:           t.world.clone(),
 		ToolMemories:    cloneToolMemories(t.toolMemories),
+		ProviderKind:    t.providerKind,
 	}
 }
 
@@ -394,6 +402,7 @@ func (s *Service) RestoreTurn(req *agentports.RunRequest, state TurnState) *Turn
 		external:     state.ExternalContent,
 		world:        state.World.clone(),
 		toolMemories: cloneToolMemories(state.ToolMemories),
+		providerKind: state.ProviderKind,
 	}
 }
 
@@ -513,6 +522,7 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentports.RunRequest) *Tur
 		attachments: len(runtimeContext.Attachments) > 0 ||
 			conversation.CarriesAttachments(history),
 	})
+	s.notePreselected(ctx, req, tools)
 	var command agentextension.Command
 	if req.Command != "" && s.pinCommand(tools, req.Command) {
 		command = req.Command
@@ -650,6 +660,7 @@ func (t *Turn) completionRequest() *agentports.ChatCompletionRequest {
 		PinPreferred:        req.PinProvider && !req.PreferredProviderID.IsNil(),
 		Attribution:         turnAttribution(req),
 		MaxTokens:           t.cutOff.budget,
+		Reask:               t.takeReask(),
 	}
 	fitWindow(completion, t.window())
 
@@ -827,7 +838,10 @@ func (fx *localEffects) DispatchReads(t *Turn, calls []DispatchCall) []ToolOutco
 }
 
 func (fx *localEffects) Find(t *Turn, arguments map[string]any) FindAnswer {
-	return fx.s.resolveFind(fx.ctx, t.tools, t.req.Actor, arguments)
+	answer := fx.s.resolveFind(fx.ctx, t.tools, t.req.Actor, arguments)
+	fx.s.noteFound(fx.ctx, t.req, t.tools, arguments, &answer)
+
+	return answer
 }
 
 func (fx *localEffects) Emit(event kernelports.StreamEvent) { fx.emit(event) }
@@ -974,6 +988,7 @@ func (s *Service) FindFor(
 
 	before := len(set.specs)
 	answer := s.resolveFind(ctx, set, req.Actor, arguments)
+	s.noteFound(ctx, req, set, arguments, &answer)
 
 	loaded := make([]string, 0, len(set.specs)-before)
 	for _, spec := range set.specs[before:] {

@@ -136,6 +136,7 @@ func TestGroundingGuard_RewritesAReplyThatClaimsWhatWasNotFiled(t *testing.T) {
 
 	require.Equal(t, 3, run.completion.CallCount, "the reply is asked for once more")
 	correction := lastUserMessage(run.completion.Requests[2])
+	assert.Equal(t, ReaskGrounding, run.completion.Requests[2].Reask)
 	assert.Contains(t, correction, "commodities")
 	assert.Contains(t, correction, "create_shipment")
 	assert.Equal(t,

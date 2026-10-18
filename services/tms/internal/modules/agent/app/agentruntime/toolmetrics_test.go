@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/prometheus/client_golang/prometheus"
@@ -127,4 +128,20 @@ func TestDrive_DoesNotCountCallsWhileReplaying(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Empty(t, toolOutcomeCounts(t, registry))
+}
+
+func TestRestoreTurn_KeepsTheProviderKindItsOutcomesAreLabelledWith(t *testing.T) {
+	t.Parallel()
+
+	rt, _ := countedRuntime(&scriptedCompletion{}, &stubQueryRegistry{})
+	req := &agentports.RunRequest{
+		Definition: testDefinition("get_shipment"),
+		Actor:      testActor(),
+		Input:      "Look it up.",
+	}
+	turn := rt.OpenTurn(t.Context(), req)
+	turn.providerKind = aiprovider.KindAnthropicMessages
+
+	restored := rt.RestoreTurn(req, turn.State())
+	assert.Equal(t, aiprovider.KindAnthropicMessages, restored.providerKind)
 }

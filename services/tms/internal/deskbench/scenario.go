@@ -29,6 +29,72 @@ type Scenario struct {
 	Setup       []string     `yaml:"setup"       json:"setup,omitempty"`
 	Steps       []Step       `yaml:"steps"       json:"steps"`
 	Source      string       `yaml:"-"           json:"source,omitempty"`
+
+	Split          Split    `yaml:"split"          json:"split,omitempty"`
+	ExpectedTools  []string `yaml:"expectedTools"  json:"expectedTools,omitempty"`
+	ForbiddenTools []string `yaml:"forbiddenTools" json:"forbiddenTools,omitempty"`
+	LabelsDerived  bool     `yaml:"-"              json:"labelsDerived,omitempty"`
+}
+
+type Split string
+
+const (
+	SplitDevelopment = Split("development")
+	SplitHeldOut     = Split("held-out")
+	SplitAdversarial = Split("adversarial")
+)
+
+func (s Split) IsValid() bool {
+	switch s {
+	case SplitDevelopment, SplitHeldOut, SplitAdversarial:
+		return true
+	default:
+		return false
+	}
+}
+
+func (s *Scenario) deriveLabels() {
+	if s.Split == "" {
+		s.Split = SplitDevelopment
+	}
+	if s.ExpectedTools != nil && s.ForbiddenTools != nil {
+		return
+	}
+
+	expected := make([]string, 0, 4)
+	forbidden := make([]string, 0, 2)
+	for idx := range s.Steps {
+		want := &s.Steps[idx].Expect
+		for _, spec := range want.Calls {
+			if !slices.Contains(expected, spec) {
+				expected = append(expected, spec)
+			}
+		}
+		for _, proposal := range want.Proposals {
+			if !slices.Contains(expected, proposal.Tool) {
+				expected = append(expected, proposal.Tool)
+			}
+		}
+		for _, spec := range want.NoCalls {
+			for _, name := range alternatives(spec) {
+				if !slices.Contains(forbidden, name) {
+					forbidden = append(forbidden, name)
+				}
+			}
+		}
+	}
+	if s.ExpectedTools == nil {
+		s.ExpectedTools = expected
+		s.LabelsDerived = true
+	}
+	if s.ForbiddenTools == nil {
+		s.ForbiddenTools = slices.DeleteFunc(forbidden, func(name string) bool {
+			return slices.ContainsFunc(s.ExpectedTools, func(spec string) bool {
+				return slices.Contains(alternatives(spec), name)
+			})
+		})
+		s.LabelsDerived = true
+	}
 }
 
 type Step struct {
@@ -42,6 +108,7 @@ type Step struct {
 	Tool          string           `yaml:"tool"          json:"tool,omitempty"`
 	Modifications map[string]any   `yaml:"modifications" json:"modifications,omitempty"`
 	Attach        []string         `yaml:"attach"        json:"attach,omitempty"`
+	Fire          *Fire            `yaml:"fire"          json:"fire,omitempty"`
 	Expect        Expect           `yaml:"expect"        json:"expect"`
 }
 
@@ -105,6 +172,9 @@ func (s *Step) validateAttach(where string, decides bool) error {
 }
 
 func (s *Step) Label() string {
+	if s.Fire != nil {
+		return s.Fire.Label()
+	}
 	if s.Decide != "" {
 		label := string(s.Decide)
 		if s.Tool != "" {
@@ -136,6 +206,8 @@ type Expect struct {
 	Facts          []Fact          `yaml:"facts"          json:"facts,omitempty"`
 	DB             []DBCheck       `yaml:"db"             json:"db,omitempty"`
 	MaxSeconds     *float64        `yaml:"maxSeconds"     json:"maxSeconds,omitempty"`
+	Run            string          `yaml:"run"            json:"run,omitempty"`
+	Flagged        *bool           `yaml:"flagged"        json:"flagged,omitempty"`
 	Rubric         string          `yaml:"rubric"         json:"rubric,omitempty"`
 }
 
@@ -251,6 +323,7 @@ func loadScenarioFile(file string) ([]*Scenario, error) {
 		scenario.Source = file
 		scenario.applyDefaults(&doc.Defaults)
 		scenario.resolveAttachments(filepath.Dir(file))
+		scenario.deriveLabels()
 		if err = scenario.Validate(); err != nil {
 			return nil, fmt.Errorf("%s: %w", file, err)
 		}
@@ -280,6 +353,9 @@ func (s *Scenario) applyDefaults(defaults *Scenario) {
 	if s.Provider == "" {
 		s.Provider = defaults.Provider
 	}
+	if s.Split == "" {
+		s.Split = defaults.Split
+	}
 	for _, tag := range defaults.Tags {
 		if !slices.Contains(s.Tags, tag) {
 			s.Tags = append(s.Tags, tag)
@@ -302,10 +378,38 @@ func (s *Scenario) Validate() error {
 	if err := s.validatePalette(); err != nil {
 		return err
 	}
+	if err := s.validateFire(); err != nil {
+		return err
+	}
+	if s.Split != "" && !s.Split.IsValid() {
+		return fmt.Errorf("%s: split must be development, held-out or adversarial, not %q",
+			s.Name, s.Split)
+	}
+	for _, spec := range s.ForbiddenTools {
+		for _, name := range alternatives(spec) {
+			if slices.ContainsFunc(s.ExpectedTools, func(expected string) bool {
+				return slices.Contains(alternatives(expected), name)
+			}) {
+				return fmt.Errorf("%s: %s is both expected and forbidden", s.Name, name)
+			}
+		}
+	}
 
 	for idx := range s.Steps {
 		step := &s.Steps[idx]
 		where := fmt.Sprintf("%s step %d", s.Name, idx+1)
+		if step.Fire != nil {
+			if err := validateChecks(where, &step.Expect); err != nil {
+				return err
+			}
+			continue
+		}
+		if step.Expect.Run != "" || step.Expect.Flagged != nil {
+			return fmt.Errorf(
+				"%s: run and flagged grade an unattended run; they belong on a fire step",
+				where,
+			)
+		}
 		hasSay := strings.TrimSpace(step.Say) != ""
 		hasDecide := step.Decide != ""
 		switch {
@@ -337,20 +441,57 @@ func (s *Scenario) Validate() error {
 				return err
 			}
 		}
-		for _, check := range step.Expect.DB {
-			fact := Fact{SQL: check.SQL}
-			if err := fact.validate(); err != nil {
-				return fmt.Errorf("%s: %w", where, err)
-			}
-		}
-		for _, fact := range step.Expect.Facts {
-			if err := fact.validate(); err != nil {
-				return fmt.Errorf("%s: %w", where, err)
-			}
+		if err := validateChecks(where, &step.Expect); err != nil {
+			return err
 		}
 	}
 
 	return nil
+}
+
+func validateChecks(where string, expect *Expect) error {
+	for _, check := range expect.DB {
+		fact := Fact{SQL: check.SQL}
+		if err := fact.validate(); err != nil {
+			return fmt.Errorf("%s: %w", where, err)
+		}
+	}
+	for _, fact := range expect.Facts {
+		if err := fact.validate(); err != nil {
+			return fmt.Errorf("%s: %w", where, err)
+		}
+	}
+	if expect.NoProposals && len(expect.Proposals) > 0 {
+		return fmt.Errorf("%s: noProposals and proposals cannot both be expected", where)
+	}
+
+	return nil
+}
+
+func (s *Scenario) Unattended() bool {
+	return len(s.Steps) > 0 && s.Steps[0].Fire != nil
+}
+
+func (s *Scenario) validateFire() error {
+	fired := slices.ContainsFunc(s.Steps, func(step Step) bool { return step.Fire != nil })
+	if !fired {
+		return nil
+	}
+	switch {
+	case len(s.Steps) != 1:
+		return fmt.Errorf("%s: an unattended scenario is one fire step; the run is graded on "+
+			"what it left behind", s.Name)
+	case s.Palette || s.Formula != nil || s.Agent != "":
+		return fmt.Errorf("%s: a fire step names its agent's template on the step itself", s.Name)
+	}
+	step := &s.Steps[0]
+	where := s.Name + " step 1"
+	if step.Say != "" || step.Decide != "" || len(step.Attach) > 0 || len(step.Mentions) > 0 ||
+		len(step.Page) > 0 {
+		return fmt.Errorf("%s: a fire step says nothing and decides nothing", where)
+	}
+
+	return step.Fire.validate(where)
 }
 
 func (s *Scenario) validatePalette() error {
