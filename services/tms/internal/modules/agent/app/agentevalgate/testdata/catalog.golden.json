@@ -396,6 +396,7 @@
           "money"
         ],
         "classifiesEachCall": false,
+        "condition": "Runs on its own only while the settlement is not yet approved and the line is within the organization's money limits for agents; any other call waits for a person.",
         "personalRunsUnasked": false,
         "heldWhenTainted": true,
         "taintHold": "Its text is what payroll or the payee reads next, so a run that has read outside text proposes it rather than writing it.",
@@ -574,6 +575,7 @@
           "money"
         ],
         "classifiesEachCall": false,
+        "condition": "Runs on its own only while the settlement is not yet approved and the line is within the organization's money limits for agents; any other call waits for a person.",
         "personalRunsUnasked": false,
         "heldWhenTainted": true,
         "taintHold": "Its text is what payroll or the payee reads next, so a run that has read outside text proposes it rather than writing it.",
@@ -1412,12 +1414,12 @@
     },
     {
       "name": "analyze_data",
-      "description": "Run Python over report results and files the person attached, to answer what a report alone does not show, such as who holds most of the open balance. Each dataset is already a pandas DataFrame named after it: a report run's columns are headed by their labels, as run_report showed them, with numbers as numbers and times as dates in the organization's timezone. pd, np and plt are imported, and the code cannot reach the internet. Show results instead of printing them: show_figure(label, value, kind) for a headline number, show_table(df, title) for a table and plt.show() for each chart, one point per chart with a title. Kinds are money, count, percent (a fraction) and number. Asked to explore, answer three or four questions the data supports. Run the report with run_report first and use its runId; each call starts afresh.",
+      "description": "Run Python over every row of report results and attached files, to calculate what the rows do not state and to analyze, explore or chart data. Each dataset is a pandas DataFrame named after it: a report run's columns are headed by their labels, as run_report showed them, with numbers as numbers and times as dates in the organization's timezone. pd, np and plt are imported, and the code cannot reach the internet. Show results instead of printing them: show_figure(label, value, kind) for a headline number, show_table(df, title) for a table and plt.show() for each chart, one point per chart with a title. Kinds are money, count, percent (a fraction) and number. Asked to explore, answer three or four questions the data supports. Run the report with run_report first and use its runId; each call starts afresh.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "code": {
-            "description": "The Python to run, as one cell. Use the loaded DataFrames, and show_figure, show_table or plt.show() what the person should see.",
+            "description": "The Python to run, as one cell. Use the loaded DataFrames; every call returns each dataset's columns and types, so the first call can do the work rather than look first. print() is for you; show_figure, show_table or plt.show() only what the person should see.",
             "maxLength": 20000,
             "type": "string"
           },
@@ -1427,7 +1429,7 @@
               "additionalProperties": false,
               "properties": {
                 "documentId": {
-                  "description": "A CSV, XLSX, JSON or text file the person attached to this conversation, from read_attachment.",
+                  "description": "A CSV, XLSX or text file the person attached to this conversation, from read_attachment.",
                   "type": "string",
                   "x-recordOf": "document"
                 },
@@ -6252,6 +6254,7 @@
           "money"
         ],
         "classifiesEachCall": false,
+        "condition": "Runs on its own only while nothing has been invoiced from the billing queue item and the change to its total is within the organization's money limits for agents; any other call waits for a person.",
         "personalRunsUnasked": false,
         "heldWhenTainted": true,
         "effect": "change",
@@ -24298,22 +24301,18 @@
     },
     {
       "name": "list_report_runs",
-      "description": "List recent runs of a saved report, newest first, so you can name the two worth comparing. Use this before compare_report_runs, which needs run ids and has no other way to learn them. Each row says whether the run finished and whether its rows were stored — a run whose rows were not stored cannot be compared, and there is no way to recover them short of running the report again.",
+      "description": "List recent runs the person you are acting for made of a report, newest first, so you can name the two worth comparing; another person's runs are never listed. Use this before compare_report_runs, which needs run ids and has no other way to learn them. Each row says whether the run finished and whether its rows were stored — a run whose rows were not stored cannot be compared, and there is no way to recover them short of running the report again.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "definitionId": {
-            "description": "The saved report to list runs of, from list_reports. Omit to list this organization's recent runs across every report.",
+            "description": "The saved report to list runs of, from list_reports. Omit to list the person's recent runs across every report.",
             "type": "string",
             "x-recordOf": "report"
           },
           "limit": {
             "description": "How many runs to return, up to 25.",
             "type": "integer"
-          },
-          "mineOnly": {
-            "description": "Only runs the person you are acting for started. Defaults to false.",
-            "type": "boolean"
           }
         },
         "type": "object"
@@ -26963,6 +26962,7 @@
           "money"
         ],
         "classifiesEachCall": false,
+        "condition": "Runs on its own only when the payment is the one posted payment with the receipt's exact amount and reference, and the amount is within the organization's money limits for agents; any other call waits for a person.",
         "personalRunsUnasked": false,
         "heldWhenTainted": true,
         "effect": "change",
@@ -28161,6 +28161,7 @@
           "money"
         ],
         "classifiesEachCall": false,
+        "condition": "Runs on its own only when it records an unmatched bank receipt whose reference or memo names every invoice it pays, each an open invoice of the same customer paid to its exact balance, the whole payment is applied with nothing short-paid or left unapplied, and the amount is within the organization's money limits for agents; any other call waits for a person.",
         "personalRunsUnasked": false,
         "heldWhenTainted": true,
         "effect": "change",
@@ -32573,6 +32574,7 @@
           "money"
         ],
         "classifiesEachCall": false,
+        "condition": "Runs on its own only when an agent added the line, the settlement is not yet approved and the line is within the organization's money limits for agents; any other call waits for a person.",
         "personalRunsUnasked": false,
         "heldWhenTainted": true,
         "effect": "change",
@@ -32624,6 +32626,7 @@
           "money"
         ],
         "classifiesEachCall": false,
+        "condition": "Runs on its own only when an agent added the line, the settlement is not yet approved and the line is within the organization's money limits for agents; any other call waits for a person.",
         "personalRunsUnasked": false,
         "heldWhenTainted": true,
         "effect": "change",
