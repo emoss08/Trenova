@@ -383,7 +383,7 @@ Keywords: billing item, invoice check, proof of delivery, rate con mismatch, hol
 ### Check where a fact in a reply came from
 Keywords: citation, citations, source, step number, how did the agent know, reasoning, why did it do that, web sources
 1. A reply carries small numbers after the facts the agent looked up. Point at a number to see the step behind it: what the agent did, what it found and how long it took.
-2. Select **Why this step?** to read the agent's own reasoning (**Saw**, **Because**, **Instead of**). Select **Hide reasoning** to close it. If the step produced a table or record, select its name, or the number itself, to open it in the workspace.
+2. Select **Thought it through** under the step to read what the model thought when it decided to take it. A step whose model shared no reasoning shows nothing to open. If the step produced a table or record, select its name, or the number itself, to open it in the workspace.
 3. When the agent searched the web, the reply names the site it cites. Point at it to list every page it cites, and select one to open it in a new tab. Under the finished reply, select the sources count to see the search and every page it found.
 4. To hide the numbers, turn off **Source numbers** in Desk settings.
 

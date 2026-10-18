@@ -150,6 +150,7 @@
       }
     ],
     "thinking": {
+      "display": "summarized",
       "type": "adaptive"
     },
     "tools": [

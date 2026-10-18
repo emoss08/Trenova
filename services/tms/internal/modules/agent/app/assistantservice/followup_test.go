@@ -301,7 +301,6 @@ func TestRanWith_NamesTheApprovedValuesOfAWriteWithNoResult(t *testing.T) {
 			"shipmentId": "shp_1",
 			"weight":     float64(38500),
 			"pieces":     float64(10),
-			"_why":       map[string]any{"because": "the person said so"},
 		},
 	}
 	changed := []*agent.AgentDecision{{

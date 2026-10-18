@@ -648,7 +648,7 @@ func (t *Turn) completionRequest() *agentports.ChatCompletionRequest {
 		System:              t.system,
 		SystemStable:        t.systemStable,
 		Messages:            t.messages,
-		Tools:               withRationale(t.tools.specs),
+		Tools:               t.tools.specs,
 		PreferredProviderID: preferredProvider(req, definition),
 		PinPreferred:        req.PinProvider && !req.PreferredProviderID.IsNil(),
 		Attribution:         turnAttribution(req),

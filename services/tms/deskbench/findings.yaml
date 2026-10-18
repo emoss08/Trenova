@@ -2001,7 +2001,7 @@ findings:
       execution result, so gpt-6-luna reported the change without the weight.
     fix: >
       A write with no result adds "It ran with ..." to the note: the approved values, the approver's
-      changes winning, leaving out ids and _why.
+      changes winning, leaving out ids.
     fixedIn: uncommitted; TestRanWith_NamesTheApprovedValuesOfAWriteWithNoResult
     files:
       - services/tms/internal/modules/agent/app/assistantservice/followup.go

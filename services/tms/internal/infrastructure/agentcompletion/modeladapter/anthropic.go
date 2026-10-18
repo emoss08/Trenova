@@ -80,13 +80,17 @@ func applyThinking(params *anthropic.BetaMessageNewParams, call *Call) {
 		// "disabled" is told so; the rest do not think unless asked.
 		switch {
 		case model.thinksAlways || model.disableRefused || model.declared:
-			params.Thinking = adaptiveThinking("")
+			params.Thinking = adaptiveThinking(
+				anthropic.BetaThinkingConfigAdaptiveDisplaySummarized,
+			)
 			params.OutputConfig.Effort = anthropic.BetaOutputConfigEffortLow
 		case model.disableNeedsLowEffort:
 			params.Thinking = anthropic.BetaThinkingConfigParamUnion{
 				OfDisabled: &anthropic.BetaThinkingConfigDisabledParam{},
 			}
 		}
+	case model.thinksUnasked:
+		params.Thinking = adaptiveThinking(anthropic.BetaThinkingConfigAdaptiveDisplaySummarized)
 	}
 	if model.bindsPrefix {
 		bindThinking(params)

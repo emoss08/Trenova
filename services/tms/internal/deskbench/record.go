@@ -17,21 +17,20 @@ type Event struct {
 }
 
 type ToolCallRecord struct {
-	CallID         string                      `json:"callId"`
-	Name           string                      `json:"name"`
-	Arguments      map[string]any              `json:"arguments,omitempty"`
-	Why            *conversation.StepRationale `json:"why,omitempty"`
-	Effect         string                      `json:"effect,omitempty"`
-	Verdict        string                      `json:"verdict,omitempty"`
-	Failed         bool                        `json:"failed"`
-	Proposed       bool                        `json:"proposed"`
-	Summary        string                      `json:"summary,omitempty"`
-	Result         string                      `json:"result,omitempty"`
-	AgentID        pulid.ID                    `json:"agentId,omitempty"`
-	DelegateCallID string                      `json:"delegateCallId,omitempty"`
-	StartedAt      time.Time                   `json:"startedAt"`
-	FinishedAt     time.Time                   `json:"finishedAt"`
-	Finished       bool                        `json:"finished"`
+	CallID         string         `json:"callId"`
+	Name           string         `json:"name"`
+	Arguments      map[string]any `json:"arguments,omitempty"`
+	Effect         string         `json:"effect,omitempty"`
+	Verdict        string         `json:"verdict,omitempty"`
+	Failed         bool           `json:"failed"`
+	Proposed       bool           `json:"proposed"`
+	Summary        string         `json:"summary,omitempty"`
+	Result         string         `json:"result,omitempty"`
+	AgentID        pulid.ID       `json:"agentId,omitempty"`
+	DelegateCallID string         `json:"delegateCallId,omitempty"`
+	StartedAt      time.Time      `json:"startedAt"`
+	FinishedAt     time.Time      `json:"finishedAt"`
+	Finished       bool           `json:"finished"`
 }
 
 func (c *ToolCallRecord) Refused() bool {

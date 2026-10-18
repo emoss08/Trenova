@@ -1,5 +1,5 @@
 {
-  "version": "sha256:f42546f5fca8bb4475b58456aeae8a877538c863b41ec23367ff45e0359b0418",
+  "version": "sha256:7efac97cdef62e3a906c3f3a142b3572c936905df638d7beb10d093d8b5737b9",
   "modules": [
     {
       "id": "home",
@@ -9971,7 +9971,7 @@
           ],
           "steps": [
             "A reply carries small numbers after the facts the agent looked up. Point at a number to see the step behind it: what the agent did, what it found and how long it took.",
-            "Select **Why this step?** to read the agent's own reasoning (**Saw**, **Because**, **Instead of**). Select **Hide reasoning** to close it. If the step produced a table or record, select its name, or the number itself, to open it in the workspace.",
+            "Select **Thought it through** under the step to read what the model thought when it decided to take it. A step whose model shared no reasoning shows nothing to open. If the step produced a table or record, select its name, or the number itself, to open it in the workspace.",
             "When the agent searched the web, the reply names the site it cites. Point at it to list every page it cites, and select one to open it in a new tab. Under the finished reply, select the sources count to see the search and every page it found.",
             "To hide the numbers, turn off **Source numbers** in Desk settings."
           ]

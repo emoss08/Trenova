@@ -146,6 +146,7 @@
       "block_binding": {
         "prefix_mismatch_behavior": "drop_block"
       },
+      "display": "summarized",
       "type": "adaptive"
     },
     "tool_choice": {

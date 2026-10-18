@@ -142,7 +142,7 @@ Each run writes to `.deskbench/runs/<time>-<ask|run>/`:
 | File | What it holds |
 |---|---|
 | `summary.md` | pass matrix by scenario and model, the comparison, tools that were refused or failed with sample reasons, model calls worth a look (cut off, retried, fell back, unparsed arguments), every failing check |
-| `transcript.md` | each case's steps and checks, then each turn as a timeline: model calls (thinking, text, the calls asked for with their rationale), tool calls (verdict, timing, arguments, the result the model read), notable stream events (`retrying`, `reply_regrounded`, `run_tainted`, `refused`, `world_changed`, delegation, memory), proposals with their preview, and the reply |
+| `transcript.md` | each case's steps and checks, then each turn as a timeline: model calls (thinking, text, the calls asked for), tool calls (verdict, timing, arguments, the result the model read), notable stream events (`retrying`, `reply_regrounded`, `run_tainted`, `refused`, `world_changed`, delegation, memory), proposals with their preview, and the reply |
 | `report.json` | all of it, machine-readable |
 | `calls/<case>/turnNN-callNNN.json` | one model call exactly as sent and received: messages, the tool names offered, the result |
 | `prompts/<digest>.md` | each distinct system prompt, once |
