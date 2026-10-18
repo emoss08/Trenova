@@ -171,9 +171,9 @@ func TestRunCodeReportsOutputChartsAndTheException(t *testing.T) {
 func TestRunCodeSaysWhenTheCodeRanOutOfTime(t *testing.T) {
 	t.Parallel()
 
-	release := make(chan struct{})
-	t.Cleanup(func() { close(release) })
-	connector := serve(t, func(http.ResponseWriter, *http.Request) { <-release })
+	connector := serve(t, func(_ http.ResponseWriter, r *http.Request) {
+		<-r.Context().Done()
+	})
 
 	execution, err := connector.RunCode(t.Context(), &agentextensionports.RunCodeRequest{
 		Sandbox: started(),

@@ -310,9 +310,9 @@ func TestParseExecutionSaysWhenTheCellNeverFinished(t *testing.T) {
 func TestRunCodeStopsAtItsTimeout(t *testing.T) {
 	t.Parallel()
 
-	release := make(chan struct{})
-	t.Cleanup(func() { close(release) })
-	client := newClient(t, func(http.ResponseWriter, *http.Request) { <-release })
+	client := newClient(t, func(_ http.ResponseWriter, r *http.Request) {
+		<-r.Context().Done()
+	})
 
 	session, err := client.Session(sandbox(), 50*time.Millisecond)
 	require.NoError(t, err)
