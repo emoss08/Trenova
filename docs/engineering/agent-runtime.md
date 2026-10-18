@@ -364,6 +364,15 @@ than any it names takes the newest known constraints.
   `anthropic-beta: thinking-binding-controls-2026-08-01` header. The header goes only to
   those models, since a gateway in front of an older one may refuse an unknown beta, and
   Off sends `{type: "adaptive"}` there so the binding has a thinking object to ride on.
+  Haiku 5.5 runs the same check but is not sent the binding until there is evidence it
+  refuses the edit. `TestLiveAnthropic_HaikuThinkingBindingOnAMidTurnToolChange`
+  (`modeladapter/anthropiclive_binding_test.go`) is the evidence and then the guard: with
+  `TRENOVA_LIVE_ANTHROPIC_BINDING=1` and `ANTHROPIC_API_KEY` set it mints a thinking block
+  with a tool call, then replays it honestly, with a tool added exactly as the adapter sends
+  it today, and with the same edit under `prefix_mismatch_behavior` `"error"` (which opts any
+  account into the check) and `"drop_block"`, logs each result, and fails when the request
+  the adapter sends today is refused. `TRENOVA_LIVE_ANTHROPIC_MODEL` and
+  `TRENOVA_LIVE_ANTHROPIC_BASE_URL` point it at another model or a gateway.
 - **Drops are counted.** The API lists each dropped block in `input_transformations`
   (`message_start` when streaming). The adapter counts the `thinking_dropped` entries into
   `Response.ThinkingDropped`, and the attempt span carries it as
