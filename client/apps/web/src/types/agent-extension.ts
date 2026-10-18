@@ -292,6 +292,11 @@ export const portalRecordingSchema = z.object({
   shareUrl: z.string(),
 });
 
+/** The open browser a portal task runs in, where a person watches it or signs in themselves. */
+export const portalLiveViewSchema = z.object({
+  liveUrl: z.string(),
+});
+
 export const savePortalSiteRequestSchema = z.object({
   name: z.string(),
   purpose: z.string(),
@@ -356,6 +361,7 @@ export type PortalRun = z.infer<typeof portalRunSchema>;
 export type PortalRunStatus = z.infer<typeof portalRunStatusSchema>;
 export type PortalRunsResponse = z.infer<typeof portalRunsResponseSchema>;
 export type PortalRecording = z.infer<typeof portalRecordingSchema>;
+export type PortalLiveView = z.infer<typeof portalLiveViewSchema>;
 export type SavePortalSiteRequest = z.infer<typeof savePortalSiteRequestSchema>;
 export type PortalSiteFormValues = z.infer<typeof portalSiteFormSchema>;
 export type PortalSignInCodeFormValues = z.infer<typeof portalSignInCodeFormSchema>;

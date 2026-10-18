@@ -128,12 +128,12 @@ func (p *PortalTaskText) Task() string {
 			" and the password " + PortalSecretPassword + ".\n")
 	}
 	if p.UsesSignIn && p.UsesAuthenticator {
-		b.WriteString("If it asks for a code from an authenticator app, enter " +
-			PortalSecretAuthenticator + ".\n")
+		b.WriteString(authenticatorLine)
 	}
 	b.WriteString("If the portal asks for a sign-in code you were not given (one sent by text " +
 		"message or email, or a prompt to approve on a phone), stop there and begin your answer " +
 		"with " + PortalSignInCodeMarker + ", then say how it asked for the code.\n")
+	b.WriteString(staySignedInLine)
 
 	if p.Mode == PortalRunModeAct {
 		b.WriteString("Do exactly this and nothing more. If the portal asks for something this " +

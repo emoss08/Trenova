@@ -1,15 +1,12 @@
-import { PortalCodeForm } from "@/components/assistant/portal-code-form";
-import { ExternalLink } from "@/components/link";
+import { PortalRunResult } from "@/components/assistant/portal-run-result";
 import { usePermission } from "@/hooks/use-permission";
-import { portalRunStatusAttrs, portalRunTitle } from "@/lib/portal-run";
+import { portalRunResultView, portalRunStatusAttrs, portalRunTitle } from "@/lib/portal-run";
 import { agentExtension } from "@/lib/queries/agent-extension";
-import { apiService } from "@/services/api";
-import type { PortalRecording, PortalRun } from "@/types/agent-extension";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { ChevronDownIcon, PlayCircleIcon } from "@trenova/shared/components/icons";
+import type { PortalRun } from "@/types/agent-extension";
+import { useQuery } from "@tanstack/react-query";
+import { ChevronDownIcon } from "@trenova/shared/components/icons";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
-import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixTime } from "@trenova/shared/lib/date";
 import { phaseTone } from "@trenova/shared/lib/status-phase";
@@ -107,12 +104,6 @@ function PortalRunRow({ run, linked }: { run: PortalRun; linked: boolean }) {
 function PortalRunDetail({ run }: { run: PortalRun }) {
   const t = useT();
   const { allowed: canEnterCode } = usePermission(Resource.AgentExtension, Operation.Update);
-  const [recording, setRecording] = useState<PortalRecording | null>(null);
-  const fetchRecording = useMutation({
-    mutationFn: () => apiService.agentExtensionService.portalRunRecording(run.id),
-    onSuccess: setRecording,
-  });
-  const recordingLink = recording?.shareUrl || recording?.recordingUrl || "";
 
   return (
     <div className="bg-muted/30 flex flex-col gap-3 px-3 pt-1 pb-3 text-sm">
@@ -136,72 +127,7 @@ function PortalRunDetail({ run }: { run: PortalRun }) {
           {run.instruction}
         </p>
       </div>
-      {run.status === "AwaitingCode" && run.codeExpiresAt && canEnterCode && (
-        <PortalCodeForm
-          className="bg-background rounded-md border p-2"
-          runId={run.id}
-          prompt={run.codePrompt}
-          deadline={formatUnixTime(run.codeExpiresAt)}
-          attempts={run.codeAttempts}
-        />
-      )}
-      {run.answer && run.status !== "Strayed" && (
-        <div className="flex flex-col gap-1">
-          <span className="text-muted-foreground text-xs">{t("What the portal said")}</span>
-          <p className="text-xs whitespace-pre-wrap">{run.answer}</p>
-        </div>
-      )}
-      {run.failure && (
-        <Alert size="sm" variant={run.status === "Strayed" ? "warning" : "destructive"}>
-          <AlertDescription>{run.failure}</AlertDescription>
-        </Alert>
-      )}
-      {run.visitedUrls.length > 0 && (
-        <div className="flex flex-col gap-1">
-          <span className="text-muted-foreground text-xs">
-            {t("{0, plural, one {# page visited} other {# pages visited}}", run.visitedUrls.length)}
-          </span>
-          <ul className="flex flex-col gap-0.5 font-mono text-xs">
-            {run.visitedUrls.map((url, index) => (
-              <li
-                key={`${index}-${url}`}
-                className={cn("truncate", run.offSiteUrls.includes(url) && "text-danger")}
-                title={run.offSiteUrls.includes(url) ? t("Outside the site's addresses") : url}
-              >
-                {url}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-      {run.hasRecording && (
-        <div className="flex flex-wrap items-center gap-2">
-          {recordingLink ? (
-            <ExternalLink href={recordingLink}>{t("Open the recording")}</ExternalLink>
-          ) : (
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              isLoading={fetchRecording.isPending}
-              loadingText={t("Recording")}
-              onClick={() => fetchRecording.mutate()}
-            >
-              <PlayCircleIcon className="size-3.5" />
-              {t("Recording")}
-            </Button>
-          )}
-          {fetchRecording.isError && (
-            <Alert size="sm" variant="destructive">
-              <AlertDescription>
-                {fetchRecording.error instanceof Error
-                  ? fetchRecording.error.message
-                  : t("The recording could not be found.")}
-              </AlertDescription>
-            </Alert>
-          )}
-        </div>
-      )}
+      <PortalRunResult run={portalRunResultView(run)} canEnterCode={canEnterCode} />
     </div>
   );
 }

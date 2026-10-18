@@ -46395,6 +46395,15 @@
       "routes/agent-control"
     ]
   },
+  "Carrying on": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Carrying over": {
     "sites": 2,
     "scope": [
@@ -91441,6 +91450,15 @@
       "apps/web/types"
     ]
   },
+  "Enter the code, or say you signed in yourself, not both": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Enter the date the customer promised to pay by": {
     "sites": 2,
     "scope": [
@@ -118509,6 +118527,15 @@
       "apps/dash/_components"
     ]
   },
+  "I've signed in": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "IAM access key": {
     "sites": 1,
     "scope": [
@@ -135878,6 +135905,16 @@
       "routes/detention-policy"
     ]
   },
+  "Live browser": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "apps/web/services"
+    ]
+  },
   "Live dwell clocks, detention billing, and contract terms": {
     "sites": 1,
     "scope": [
@@ -137959,6 +137996,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Loading the portal task": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Loading the rate agreement…": {
@@ -150567,6 +150613,15 @@
       "routes/desk",
       "routes/formula-template",
       "routes/scheduling"
+    ]
+  },
+  "Needs a sign-in code": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Needs a signature": {
@@ -174717,6 +174772,15 @@
       "template/carriertracking.link.email"
     ]
   },
+  "Open the live browser": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Open the message": {
     "sites": 1,
     "scope": [
@@ -174822,7 +174886,7 @@
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
+      "apps/web/components"
     ]
   },
   "Open the run": {
@@ -176530,6 +176594,15 @@
       "template/driverportal.invitation.email",
       "template/invoice.share.email",
       "template/rateconfirmation.email"
+    ]
+  },
+  "Or sign in yourself in the live browser, then tell the task to carry on.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Or tender to a carrier": {
@@ -178470,7 +178543,7 @@
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
+      "apps/web/components"
     ]
   },
   "Outstanding": {
@@ -189515,7 +189588,7 @@
     ]
   },
   "Portal run not found": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -189553,13 +189626,15 @@
     ]
   },
   "Portal task": {
-    "sites": 2,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/config",
-      "apps/web/services"
+      "apps/web/services",
+      "routes/desk"
     ]
   },
   "Portal task recording": {
@@ -200244,6 +200319,15 @@
       "routes/agent-control"
     ]
   },
+  "Read from the portal, outside your organization. Check anything you act on.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Read from the provider's API.": {
     "sites": 1,
     "scope": [
@@ -204718,7 +204802,7 @@
       "ts"
     ],
     "areas": [
-      "routes/agent-control",
+      "apps/web/components",
       "routes/detention-desk"
     ]
   },
@@ -253462,6 +253546,15 @@
       "apps/web/lib"
     ]
   },
+  "The browser is working on it. You can watch it as it goes.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "The browser reached pages outside the site's addresses, so what it found was withheld": {
     "sites": 1,
     "scope": [
@@ -259388,6 +259481,15 @@
       "routes/worker"
     ]
   },
+  "The live browser could not be opened.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "The live feed of what needs attention across the operation": {
     "sites": 1,
     "scope": [
@@ -261705,7 +261807,7 @@
     ]
   },
   "The portal run id is not valid": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -262727,7 +262829,7 @@
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
+      "apps/web/components"
     ]
   },
   "The records behind this": {
@@ -266284,6 +266386,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "The vendor has no live view of this browser": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The vendor has no recording of this task. Recording may have been off, or the video is still being prepared.": {
@@ -271576,6 +271687,15 @@
       "go/other"
     ]
   },
+  "This portal task's browser is closed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This profile already has 50 lines of guidance, kept or offered. Retire or dismiss one that no longer holds first.": {
     "sites": 1,
     "scope": [
@@ -272788,6 +272908,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "This task could not be read as it stands now. What the agent was told is shown.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "This template does not render yet, so there is nothing to send. {0}": {
@@ -292037,6 +292166,15 @@
       "routes/carrier-sourcing"
     ]
   },
+  "Watch the browser": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Watch your organization's USDOT and MC record for changes and expirations.": {
     "sites": 1,
     "scope": [
@@ -294946,12 +295084,12 @@
     ]
   },
   "What the portal said": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
+      "apps/web/components"
     ]
   },
   "What the provider charged, divided by runs that finished": {
@@ -316334,7 +316472,7 @@
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
+      "apps/web/components"
     ]
   },
   "{0, plural, one {# page} other {# pages}}": {

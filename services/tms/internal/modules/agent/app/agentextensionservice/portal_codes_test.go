@@ -317,3 +317,97 @@ func TestACodeTheVendorWouldNotTakeEndsTheRun(t *testing.T) {
 	assert.Equal(t, 2, run.Steps)
 	assert.Equal(t, []string{"session-1"}, f.browser.closed)
 }
+
+func TestAPersonWhoSignedInThemselvesLetsTheTaskCarryOnWithoutACode(t *testing.T) {
+	t.Parallel()
+
+	f := newCodeFixture(t)
+	outcome := f.readAwaitingCode(t)
+	waiting := f.runs.only(t)
+
+	view, err := f.svc.ProvidePortalCode(t.Context(), &agentextensionports.ProvidePortalCodeRequest{
+		TenantInfo: f.tenant,
+		RunID:      outcome.RunID,
+		SignedIn:   true,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, agentextension.PortalRunStatusRunning, view.Status)
+
+	require.Len(t, f.browser.started, 2)
+	followUp := f.browser.started[1]
+	assert.Equal(t, "session-1", followUp.SessionID)
+	assert.Equal(t, agentextension.ContinueAfterSignIn(waiting.Instruction), followUp.Instruction)
+	assert.NotContains(t, followUp.Secrets, agentextension.PortalSecretSignInCode)
+}
+
+func TestACodeAndASignInOfTheirOwnTogetherAreRefused(t *testing.T) {
+	t.Parallel()
+
+	f := newCodeFixture(t)
+	outcome := f.readAwaitingCode(t)
+
+	_, err := f.svc.ProvidePortalCode(t.Context(), &agentextensionports.ProvidePortalCodeRequest{
+		TenantInfo: f.tenant,
+		RunID:      outcome.RunID,
+		Code:       "123456",
+		SignedIn:   true,
+	})
+	var fieldErr *errortypes.Error
+	require.ErrorAs(t, err, &fieldErr)
+	assert.Equal(t, "code", fieldErr.Field)
+	assert.Len(t, f.browser.started, 1)
+}
+
+func TestTheLiveBrowserIsOpenedOnlyForWhoTheTaskWasFor(t *testing.T) {
+	t.Parallel()
+
+	f := newCodeFixture(t)
+	outcome := f.readAwaitingCode(t)
+
+	live, err := f.svc.PortalRunLive(t.Context(), &agentextensionports.PortalRunAccessRequest{
+		TenantInfo: f.tenant,
+		RunID:      outcome.RunID,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, testLiveURL, live.LiveURL)
+
+	someoneElse := f.tenant
+	someoneElse.UserID = pulid.MustNew("usr_")
+	_, err = f.svc.PortalRunLive(t.Context(), &agentextensionports.PortalRunAccessRequest{
+		TenantInfo: someoneElse,
+		RunID:      outcome.RunID,
+	})
+	require.True(t, errortypes.IsNotFoundError(err))
+
+	_, err = f.svc.PortalRunFor(t.Context(), &agentextensionports.PortalRunAccessRequest{
+		TenantInfo: someoneElse,
+		RunID:      outcome.RunID,
+	})
+	require.True(t, errortypes.IsNotFoundError(err))
+
+	view, err := f.svc.PortalRunFor(t.Context(), &agentextensionports.PortalRunAccessRequest{
+		TenantInfo:  someoneElse,
+		RunID:       outcome.RunID,
+		Administers: true,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, agentextension.PortalRunStatusAwaitingCode, view.Status)
+}
+
+func TestAFinishedTaskHasNoLiveBrowser(t *testing.T) {
+	t.Parallel()
+
+	f := newCodeFixture(t)
+	outcome := f.readAwaitingCode(t)
+	_, err := f.enterCode(t, outcome.RunID, "123456")
+	require.NoError(t, err)
+	f.browser.finishWith(finished("Open slots: 8:00 AM.", "https://portal.acme.com/appointments"))
+	_, err = f.svc.PollPortalRun(t.Context(), f.tenant, outcome.RunID)
+	require.NoError(t, err)
+
+	_, err = f.svc.PortalRunLive(t.Context(), &agentextensionports.PortalRunAccessRequest{
+		TenantInfo: f.tenant,
+		RunID:      outcome.RunID,
+	})
+	require.True(t, errortypes.IsBusinessError(err))
+}

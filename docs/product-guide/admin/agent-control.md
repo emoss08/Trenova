@@ -144,16 +144,20 @@ Keywords: portal, website, browser, Browser Use, dock appointment, appointment p
    **Authenticator key**: the setup key the portal showed when the app was added, often under
    "Can't scan the code", not a six-digit code. The browser then makes a fresh code each time.
    For a portal that sends its codes by text message or email, the agent asks the person it is
-   working for to enter the code in the Desk; giving the site a **Browser profile** that is
-   already signed in saves asking. A task waiting on a code shows **Needs a code** under
-   **Recent portal tasks**, where you can enter the code for it too.
+   working for to enter the code in the Desk, on the portal task beside the conversation or in
+   the box above the message box; giving the site a **Browser profile** that is already signed
+   in saves asking. When the code is slow to arrive, or the portal asks for more than a code,
+   select **Live browser**, sign in there yourself, then select **I've signed in** and the task
+   carries on from that page. A task waiting on a code shows **Needs a code** under **Recent
+   portal tasks**, where you can enter the code or sign in for it too.
 7. Turn on **Let agents act on this portal** only for a site where agents may book, upload or
    submit. A site left read-only can only be looked up. Select **Add site**.
 8. Optionally change the browser model, the country it browses from, the steps per task, the
    daily limit, whether every task is recorded and whether the browser may see screenshots. Each
    change is saved as you make it.
 9. **Recent portal tasks** lists every task agents ran: open one to see what the browser was
-   told, every page it visited, how it ended and its recording.
+   told, every page it visited, how it ended and its recording. While one runs, **Watch the
+   browser** opens it live.
 10. To stop agents using a site without losing its history, edit it and turn off **Available to
     agents**. A site with tasks recorded against it cannot be removed, only turned off. Trenova's
     own address cannot be a portal site: agents work in Trenova with their own tools.

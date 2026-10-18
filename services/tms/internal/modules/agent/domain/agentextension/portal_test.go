@@ -192,6 +192,9 @@ func TestPortalTaskTextSaysWhatTheBrowserMayDo(t *testing.T) {
 			"If the portal asks for a sign-in code you were not given (one sent by text message "+
 			"or email, or a prompt to approve on a phone), stop there and begin your answer with "+
 			"SIGN-IN CODE NEEDED, then say how it asked for the code.\n"+
+			"Once you are signed in, stay signed in: check your work on the page you are on or "+
+			"through the portal's own links, and never sign out, open the sign-in page again or "+
+			"open the portal in a new tab, which can ask for the sign-in and its code again.\n"+
 			"Only look things up. Do not submit, book, upload, accept, cancel, change or delete "+
 			"anything. When you have the answer, finish with it in plain words, with reference "+
 			"numbers, dates and times exactly as the portal shows them. If the portal does not "+
@@ -214,7 +217,10 @@ func TestPortalTaskTextSaysWhatTheBrowserMayDo(t *testing.T) {
 
 	act.UsesAuthenticator = true
 	assert.Contains(t, act.Task(),
-		"If it asks for a code from an authenticator app, enter portal_bu_2fa_code.")
+		"If it asks for a code from an authenticator app, type portal_bu_2fa_code into the "+
+			"code box and submit it in the same step, before anything else: each code lasts only "+
+			"about thirty seconds. If the portal says the code is wrong or has expired, type "+
+			"portal_bu_2fa_code again, which makes a new code, at most twice more.\n")
 }
 
 func TestParseBrowserUseSettingsDefaultsAndRefusals(t *testing.T) {
@@ -376,10 +382,24 @@ func TestContinueWithCodeEntersThePlaceholderAndCarriesOnWithTheTask(t *testing.
 
 	task := "On Acme DC, find out: Which slots are open?"
 	assert.Equal(t, "The portal is showing where to enter the sign-in code it sent. Enter "+
-		"portal_sign_in_code there and submit it. Then carry on with the task below from "+
-		"where you stopped, without repeating anything already done. If the portal says the "+
-		"code is wrong or has expired, stop there and begin your answer with SIGN-IN CODE "+
-		"NEEDED, then say what it said.\n\n"+task, agentextension.ContinueWithCode(task))
+		"portal_sign_in_code there and submit it straight away, in the same step. Then carry "+
+		"on with the task below from where you stopped, without repeating anything already "+
+		"done. Stay signed in: do not reload the sign-in page, sign out or open the portal in "+
+		"a new tab. If the portal says the code is wrong or has expired, stop there and begin "+
+		"your answer with SIGN-IN CODE NEEDED, then say what it said.\n\n"+task,
+		agentextension.ContinueWithCode(task))
+}
+
+func TestContinueAfterSignInCarriesOnWithoutSigningInAgain(t *testing.T) {
+	t.Parallel()
+
+	task := "On Acme DC, find out: Which slots are open?"
+	assert.Equal(t, "A person has signed in to the portal in this browser themselves. Carry "+
+		"on with the task below from the page the browser is on, without repeating anything "+
+		"already done. Stay signed in: do not reload the sign-in page, sign out or open the "+
+		"portal in a new tab. If the portal asks for a sign-in code again, stop there and "+
+		"begin your answer with SIGN-IN CODE NEEDED, then say how it asked for the code.\n\n"+
+		task, agentextension.ContinueAfterSignIn(task))
 }
 
 func TestAPortalRunWaitingOnACodeKeepsItsProgressUntilACodeContinuesIt(t *testing.T) {

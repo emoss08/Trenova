@@ -993,6 +993,8 @@ func artifactFromObservation(observation agentports.ToolObservation) *assistanta
 		return connectionDraftArtifact(observation.Call.ID, result)
 	case name == agentextension.ToolAnalyzeData:
 		return analysisArtifact(observation.Call.ID, result, observation.Call.Arguments)
+	case name == agentextension.ToolReadPortal:
+		return portalTaskArtifact(observation.Call.ID, result)
 	case strings.HasPrefix(name, listToolPrefix), strings.HasPrefix(name, searchToolPrefix):
 		if card := soleRecordCard(observation.Call.ID, name, result); card != nil {
 			return card

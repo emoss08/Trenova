@@ -250,3 +250,26 @@ func (c *Connector) Recording(
 
 	return recording, nil
 }
+
+// LiveView is the address of the open browser, where a person watches the
+// task or takes over to sign in.
+func (c *Connector) LiveView(
+	ctx context.Context,
+	settings map[string]string,
+	sessionID string,
+) (string, error) {
+	client, _, err := c.client(settings, true)
+	if err != nil {
+		return "", err
+	}
+
+	session, err := client.GetSession(ctx, sessionID)
+	if err != nil {
+		return "", err
+	}
+	if session.LiveURL == nil {
+		return "", nil
+	}
+
+	return strings.TrimSpace(*session.LiveURL), nil
+}

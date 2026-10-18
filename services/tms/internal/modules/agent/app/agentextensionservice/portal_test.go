@@ -19,7 +19,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const testBrowserKey = "bu-live-key"
+const (
+	testBrowserKey = "bu-live-key"
+	testLiveURL    = "https://live.browser-use.com/s/abc"
+)
 
 type memorySites struct {
 	mu    sync.Mutex
@@ -297,6 +300,10 @@ func (f *fakeBrowser) Recording(
 	string,
 ) (*agentextensionports.PortalRecording, error) {
 	return &agentextensionports.PortalRecording{ShareURL: "https://cloud.browser-use.com/share/x"}, nil
+}
+
+func (f *fakeBrowser) LiveView(context.Context, map[string]string, string) (string, error) {
+	return testLiveURL, nil
 }
 
 func (f *fakeBrowser) finishWith(state *agentextensionports.PortalTaskState) {

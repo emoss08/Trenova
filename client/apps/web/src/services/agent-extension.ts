@@ -7,6 +7,7 @@ import {
   agentExtensionTestResponseSchema,
   analysisRunSchema,
   analysisRunsResponseSchema,
+  portalLiveViewSchema,
   portalRecordingSchema,
   portalRunSchema,
   portalRunsResponseSchema,
@@ -132,6 +133,35 @@ export class AgentExtensionService {
       { code },
     );
     return safeParse(portalRunSchema, response, translate("Portal task"));
+  }
+
+  /**
+   * Carries on a portal task waiting on a sign-in code after the person signed in themselves in
+   * the live browser, so there is no code to send.
+   */
+  public async confirmPortalSignIn(runId: string) {
+    const response = await api.post(
+      `/agent-portals/runs/${encodeURIComponent(runId)}/sign-in-code/`,
+      { signedIn: true },
+    );
+    return safeParse(portalRunSchema, response, translate("Portal task"));
+  }
+
+  /** One portal task, for the person it was asked for: the Desk's card follows it as it runs. */
+  public async portalRun(runId: string, options?: { signal?: AbortSignal }) {
+    const response = await api.get(`/agent-portals/runs/${encodeURIComponent(runId)}/`, {
+      signal: options?.signal,
+    });
+    return safeParse(portalRunSchema, response, translate("Portal task"));
+  }
+
+  /**
+   * The address of the open browser a portal task runs in. It is signed in to the portal, so it
+   * is read when the person asks to open it and never kept.
+   */
+  public async portalRunLive(runId: string) {
+    const response = await api.get(`/agent-portals/runs/${encodeURIComponent(runId)}/live/`);
+    return safeParse(portalLiveViewSchema, response, translate("Live browser"));
   }
 
   public async portalRunRecording(id: string) {

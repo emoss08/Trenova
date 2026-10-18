@@ -64,3 +64,37 @@ const CODE_MARKER = /^\s*SIGN-IN CODE NEEDED[\s:.,-]*/iu;
 export function portalCodePrompt(prompt: string): string {
   return prompt.replace(CODE_MARKER, "").trim();
 }
+
+/** A task whose browser is still open: running, or waiting on a sign-in code. */
+export function isLivePortalRun(status: PortalRunStatus | null): boolean {
+  return status === "Running" || status === "AwaitingCode";
+}
+
+/** What a person reads of a portal task's outcome, from the run or from what the agent was told. */
+export type PortalRunResultView = {
+  runId: string;
+  status: PortalRunStatus | null;
+  answer: string;
+  failure: string;
+  visitedUrls: string[];
+  offSiteUrls: string[];
+  hasRecording: boolean;
+  codePrompt: string;
+  codeExpiresAt: number | null;
+  codeAttempts: number;
+};
+
+export function portalRunResultView(run: PortalRun): PortalRunResultView {
+  return {
+    runId: run.id,
+    status: run.status,
+    answer: run.answer,
+    failure: run.failure,
+    visitedUrls: run.visitedUrls,
+    offSiteUrls: run.offSiteUrls,
+    hasRecording: run.hasRecording,
+    codePrompt: run.codePrompt,
+    codeExpiresAt: run.codeExpiresAt ?? null,
+    codeAttempts: run.codeAttempts,
+  };
+}

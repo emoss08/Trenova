@@ -137,8 +137,68 @@ func (h *Handler) runRecording(c *gin.Context) {
 	c.JSON(http.StatusOK, recording)
 }
 
+// portalRun is one run, for the person it was asked for or someone who
+// administers agents: the Desk's card follows it while it runs.
+func (h *Handler) portalRun(c *gin.Context) {
+	req, ok := h.runAccess(c, permission.OpRead)
+	if !ok {
+		return
+	}
+
+	run, err := h.service.PortalRunFor(c.Request.Context(), req)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, run)
+}
+
+// portalRunLive is the address of the open browser a run is in, where the
+// person watches it or signs in themselves. Taking over another person's
+// browser needs the right to change agent extensions.
+func (h *Handler) portalRunLive(c *gin.Context) {
+	req, ok := h.runAccess(c, permission.OpUpdate)
+	if !ok {
+		return
+	}
+
+	live, err := h.service.PortalRunLive(c.Request.Context(), req)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.Header("Cache-Control", "no-store")
+	c.JSON(http.StatusOK, live)
+}
+
+func (h *Handler) runAccess(
+	c *gin.Context,
+	administer permission.Operation,
+) (*agentextensionports.PortalRunAccessRequest, bool) {
+	id, err := pulid.MustParse(c.Param("runID"))
+	if err != nil {
+		h.eh.HandleError(c, errortypes.NewValidationError("runId", errortypes.ErrInvalid,
+			"The portal run id is not valid"))
+		return nil, false
+	}
+	administers, err := h.pm.Allowed(c, permission.ResourceAgentExtension.String(), administer)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return nil, false
+	}
+
+	return &agentextensionports.PortalRunAccessRequest{
+		TenantInfo:  tenantOf(c),
+		RunID:       id,
+		Administers: administers,
+	}, true
+}
+
 type signInCodeRequest struct {
-	Code string `json:"code"`
+	Code     string `json:"code"`
+	SignedIn bool   `json:"signedIn"`
 }
 
 // provideSignInCode continues a portal task waiting on a sign-in code with the
@@ -173,6 +233,7 @@ func (h *Handler) provideSignInCode(c *gin.Context) {
 			TenantInfo:  tenantOf(c),
 			RunID:       id,
 			Code:        body.Code,
+			SignedIn:    body.SignedIn,
 			Administers: administers,
 		},
 	)

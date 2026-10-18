@@ -34,6 +34,8 @@ import { recordCardFor } from "./cards/registry";
 import { DeskArtifactBrowser } from "./desk-artifact-browser";
 import { DeskArtifactsEmpty } from "./desk-artifacts-empty";
 import { DeskAnalysisBody } from "./kinds/analysis/desk-analysis-body";
+import { DeskPortalBody } from "./kinds/portal/desk-portal-body";
+import { PortalTaskSkeleton } from "./kinds/portal/portal-task-skeleton";
 import { DeskDecisionBody } from "./kinds/decision/desk-decision-body";
 import { DeskDiffBody } from "./kinds/diff/desk-diff-body";
 import { DeskEmailBody } from "./kinds/email/desk-email-body";
@@ -393,6 +395,8 @@ export function ArtifactBody({
       return <DeskConnectionDraftBody artifact={artifact} />;
     case "analysis":
       return <DeskAnalysisBody artifact={artifact} />;
+    case "portal_task":
+      return <DeskPortalBody artifact={artifact} />;
     case "navigation":
     case "dashboard_ref":
       return <DeskViewBody artifact={artifact} />;
@@ -463,6 +467,9 @@ function ArtifactBodySkeleton({ artifact }: { artifact: AssistantArtifact }) {
   }
   if (artifact.kind === "extraction") {
     return <ExtractionSkeleton />;
+  }
+  if (artifact.kind === "portal_task") {
+    return <PortalTaskSkeleton />;
   }
   const resource =
     artifact.kind === "entity_card" && typeof artifact.payload.entity === "string"

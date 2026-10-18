@@ -49,8 +49,8 @@ artifacts/
     artifact-body-parts.tsx  what several kinds' bodies share
     <kind>/               one kind's body and everything only it uses: table,
                           report, document, extraction, edi-connection-draft,
-                          analysis, record, rate, diff, plan, email, view,
-                          decision, each with its __tests__/
+                          analysis, portal, record, rate, diff, plan, email,
+                          view, decision, each with its __tests__/
   record-card/            the parts every card is built from: head, stepper, status,
                           sections, checks, timeline, a list's next page, the
                           "could not be read" head, bottom bar (record-card.tsx),
@@ -101,6 +101,25 @@ what it printed and the code, folded. `kinds/analysis/` only reads the payload
 control's analysis history draws too, and each chart is read from the run by
 `AnalysisChartImage` under the session's credentials. An analysis is made on purpose, so it
 is not a lookup: it is kept whether or not the reply names it, and the reply must name it.
+
+## The portal task
+
+`portal_task` is a portal task an agent ran in a cloud browser (see
+[agent-portal-automation.md](agent-portal-automation.md)): a `read_portal` call,
+titled by its question, or an approved `act_on_portal`, titled "Portal action on"
+its site (`assistantservice/portal_task_artifact.go`). The payload is only what the
+agent was told; `kinds/portal/` reads the run itself (`agentExtension.portalRun`)
+and reads it again every few seconds while its browser is open, so the card is
+the task as it stands: running, with a way to watch the live browser; waiting on
+a sign-in code, with the code box and the way to sign in by hand; or ended, with
+what the portal said marked as read from outside the organization, why it did not
+finish, the pages it reached and its recording. The drawing is `PortalRunResult`
+in `components/assistant/`, which AI control's portal history draws too. A run
+the viewer cannot read (another person's, in a shared thread) shows the payload's
+answer and pages with nothing to act on. Each run is its own artifact, with no
+versions: two reads of one site are two tasks. It is made on purpose, so it is
+not a lookup, and the reply must name it, which is how the person waiting on a
+code finds where to enter it.
 
 ## The EDI connection draft
 
