@@ -241,7 +241,7 @@ retitled `[bench] …` like any other, so `desk clean` finds it. The palette sen
 its search found that the question names as `mentions`; give them on the step to test that
 path, or leave them out to test Nova finding the record itself.
 
-Every step also checks that each of its turns finished, and that the grounding guard did not
+Every step also checks that each of its turns finished, that no artifact link restarted its reply (a left-out artifact the runtime names at the end without asking again is not counted), and that the grounding guard did not
 have to rewrite or annotate its reply ("reply grounded without a correction": a reply that named
 what a filed change does not hold, or stated money or a percentage nothing the conversation read;
 the detail lists the figures and fields). A decide step takes `decide: approve`

@@ -219,7 +219,18 @@ func artifactLinkChecks(turns []*TurnRecord) []CheckResult {
 	}
 }
 
+// artifactCorrections is the link corrections that cost the person a restart:
+// a reply asked again, and a reply placed after that. A left-out artifact
+// named by a closing sentence, with nothing asked again, is not one.
 func artifactCorrections(events []Event) []string {
+	if !slices.ContainsFunc(events, func(event Event) bool {
+		data, ok := event.Data.(map[string]any)
+		return ok && event.Name == agentports.AssistantEventReplyRegrounded &&
+			data["action"] == string(agentports.RegroundRelinkArtifacts)
+	}) {
+		return nil
+	}
+
 	var actions []string
 	for _, event := range events {
 		if event.Name != agentports.AssistantEventReplyRegrounded {

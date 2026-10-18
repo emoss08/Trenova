@@ -9,7 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
 
-const changeArtifactPlacement = "agent-loop-artifact-placement"
+const (
+	changeArtifactPlacement = "agent-loop-artifact-placement"
+	changeNameLeftOut       = "agent-loop-artifact-placement-name-left-out"
+)
 
 const (
 	placementCorrectionLead = "Your reply does not name its artifacts inside sentences."
@@ -17,6 +20,8 @@ const (
 		"being written again."
 	placementPlacedReason = "The rewritten reply still named an artifact outside a sentence, " +
 		"so it was moved into one."
+	placementNamedReason = "The reply left out an artifact the person needs, so a sentence " +
+		"naming it was added."
 	detailsPointerLead = "The details are in "
 	cutMarkup          = "*_"
 	cutTrailers        = ".,;:!?"
@@ -43,6 +48,12 @@ func (p *placementProblems) empty() bool {
 	return len(p.stray) == 0 && len(p.missing) == 0 && len(p.invented) == 0
 }
 
+// onlyLeftOut reports whether the reply's one fault is an artifact it never
+// named, which a closing sentence repairs as well as a rewrite does.
+func (p *placementProblems) onlyLeftOut() bool {
+	return len(p.missing) > 0 && len(p.stray) == 0 && len(p.invented) == 0
+}
+
 func (s *Service) placeArtifacts(
 	t *Turn,
 	fx TurnEffects,
@@ -55,6 +66,20 @@ func (s *Service) placeArtifacts(
 
 	problems := t.placementProblems(completion.Text)
 	if problems.empty() || !fx.Supports(changeArtifactPlacement) {
+		return false
+	}
+
+	// A reply that only left out a table it searched (Shipments, Invoices,
+	// Time offs) was asked again in about one turn in ten, and the person
+	// watched a finished answer restart to add a link. The sentence the
+	// fallback writes names it without asking the model again.
+	if !state.retried && problems.onlyLeftOut() && fx.Supports(changeNameLeftOut) {
+		state.retried = true
+		placed := t.placed(completion.Text, &problems)
+		fx.Emit(passEvent(agentports.RegroundPlaceArtifacts, placementNamedReason, nil))
+		fx.Emit(replyReplacedEvent(placed, placementNamedReason))
+		completion.Text = placed
+
 		return false
 	}
 

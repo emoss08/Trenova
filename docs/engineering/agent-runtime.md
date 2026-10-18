@@ -1699,21 +1699,31 @@ a year, a clock time or a limit the trade knows (the 70-hour rule) is left alone
 may state one that nothing it read printed, and a conversation that read nothing is answering from
 what the trade knows. The sum or difference of two figures in the person's own question counts as
 stated: told a check was 3,200 against a 3,700 invoice, "$500 short" restates them (the first
-twelve figures of the question are paired). A percentage is supported by the fraction it renders (52.3% by 0.523), and
+twelve figures of the question are paired). A figure that is one sum, difference, product or quotient of two figures the reply itself gives,
+each of them read, is shown working rather than worked in the agent's head (`numberguard.Worked`,
+behind `agent-loop-grounding-worked-figures`, for filed changes too): "$6,050,147.60 is open,
+$50,147.60 without the $6,000,000 invoice" and "112 gallons at $3.89 come to $435.68" were each
+rewritten after an analysis nobody needed, while a wrong result is still unsupported, and a share
+whose two sides the reply leaves out still goes to `analyze_data`. The person's own figures are
+paired the same way. A percentage is supported by the fraction it renders (52.3% by 0.523), and
 rounding and thousands are read as for a filed change. A hit is discarded once with a correction
 naming the figures: an agent holding `analyze_data` is told to work them out there, any other to
 leave out what the tools do not give. A rewrite that still states one ends with a sentence naming
 the figures to check. The bench fails a step whose reply either guard corrected ("reply grounded
 without a correction").
 
-Both checks read figures the same way (`numberguard`'s separated reading). A comma is a thousands
+Both checks read figures the same way (`numberguard.Reading`; a gated execution keeps the reading
+it decided with, `ReadJoined` or `ReadSeparated`, and new ones read with `ReadCodesApart`). A comma is a thousands
 separator only before three digits and never inside JSON (after `[`, `:` or `,`, or before `]`,
 `}` or a comma with no space after it), so each number of a tool's JSON array
 (`[172.5,12937.5,0.708]`, `[50,150,250]`) counts as read; read as one run, it never parsed, and
 replies quoting an analysis table were rewritten. A number joined to another by a hyphen, dash,
 slash or colon (a date, a clock time, a 31-60 bucket, a phone number), one glued to a letter
 (`INV2610000001`, `HL-30117`), an ordinal, and the day or year of a date written with its month
-("September 29 and 30", "Dec 26–31, 2026") are not figures. A figure is the same as one it rounds to its last
+("September 29 and 30", "Dec 26–31, 2026") are not figures, and neither are a number written with
+a leading zero, one listed after an identifier as a shortened form of it ("INV2610000103, 104, 099")
+or a bare year ("Dates (2027)"), which ReadCodesApart adds behind
+`agent-loop-grounding-worked-figures`. A figure is the same as one it rounds to its last
 written digit ("$57K" for 57,323.83, "43%" for 0.4343), as well as one within the proportional
 tolerance. A conversation holding a file the model reads itself (a PDF or an
 image no text was taken from, `Message.Files`) has no figure checked, since the guard cannot see
@@ -1754,7 +1764,12 @@ or document it must name (`ShownArtifact.MustBeLinked`, the same rule that keeps
 when the reply forgets it; only the newest version of each lineage the turn showed, since a
 later version takes the earlier one's place in `Turn.keepShown`), or names an id the
 conversation never held is discarded once, the way
-the grounding guard does it: a `retrying` event, a `reply_regrounded` `relink_artifacts`, and a
+the grounding guard does it, unless leaving out an artifact it must name is its only fault: that
+reply is not asked again but ends with one sentence naming what it left out (`reply_regrounded`
+`place_artifacts`, then `reply_replaced`, behind `agent-loop-artifact-placement-name-left-out`).
+Leaving out a table it searched (Shipments, Invoices, Time offs) was 14 of the 16 placement
+restarts in a run over every scenario, and each one showed the person a finished answer starting
+over to add a link. Otherwise the reply is discarded once: a `retrying` event, a `reply_regrounded` `relink_artifacts`, and a
 correction naming each link as it should be written. A rewrite that still breaks the contract, or
 a reply written after the tool budget was spent, is not asked again: each stray link is cut from
 where it stood, an id nobody holds is left as its words, and one sentence at the end of the reply
@@ -2418,8 +2433,10 @@ before the change:
 | `assistant-turn-notify-unseen` | a turn that ends with nobody reading its stream ends without telling the person who asked | nothing; the check itself is the only cost, and it is asked only of a turn nobody drained |
 | `assistant-turn-prepare-local` | a turn prepares as a regular activity: a task-queue dispatch and a second workflow task before the model call is scheduled | nothing; `PrepareTurnActivity` stays registered, and the old branch keeps its priority and fairness keys |
 | `agent-loop-grounding-top-level-words` | a one-word collection nested in a filed call's items (`requirements[].codes`) is held to the filed call like a top-level one, and a reply naming a guide's codes is rewritten | nothing; the check itself is the only cost, and it is asked only of a reply the guard found naming such a word |
+| `agent-loop-artifact-placement-name-left-out` | a reply whose only fault is leaving out an artifact it must name is discarded and asked again before the closing sentence names it | nothing; the check itself is the only cost, and it is asked only of such a reply |
+| `agent-loop-grounding-worked-figures` | a correct sum, difference, product or quotient of two figures the reply gives, or of two the person gave, is rewritten as a figure nothing read, and codes and bare years are read as figures (`numberguard.ReadSeparated`) | nothing; the check itself is the only cost, and it is asked only when counting the working clears every figure the guard found |
 | `agent-loop-grounding-offers-not-claims` | a field named only in an offer to add it ("I can add the transaction reference") is held to the filed call, and the reply is rewritten | nothing; the check itself is the only cost, and it is asked only of a reply the guard found naming a field only in an offer |
-| `agent-loop-grounding-figures-as-read` | a filed change's reply is read with every comma and point between digits joining one number, a date's day and a code's digits as figures, and a figure from a file only the model reads as invented (`numberguard.CheckNumbersJoined`, `SupportedFromTextJoined`, `Turn.groundingSupportJoined`) | the joined reading in `numberguard`; asked only when the two readings disagree on whether anything is unsupported |
+| `agent-loop-grounding-figures-as-read` | a filed change's reply is read with every comma and point between digits joining one number, a date's day and a code's digits as figures, and a figure from a file only the model reads as invented (`numberguard.ReadJoined`, `Turn.groundingSupportAs`) | `numberguard.ReadJoined`; asked only when the two readings disagree on whether anything is unsupported |
 | `agent-loop-grounding-read-amounts` | a reply that files nothing is kept as written, whatever money or percentage it states | nothing; the check itself is the only cost, and it is asked only of a reply the guard found stating an amount nothing read |
 | `agent-loop-grounding-guard` | a reply that names what the filed writes do not hold is kept as written | nothing; the check itself is the only cost, and it is asked only of a reply the guard found wanting |
 | `agent-loop-browser-guard` | a `/browser` turn whose reply never called a portal tool is kept as written | nothing; the check itself is the only cost, and it is asked only of a `/browser` turn about to end without the browser |

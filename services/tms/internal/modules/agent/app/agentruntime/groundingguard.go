@@ -23,6 +23,7 @@ const (
 	changeGroundingReadAmounts   = "agent-loop-grounding-read-amounts"
 	changeGroundingFiguresAsRead = "agent-loop-grounding-figures-as-read"
 	changeGroundingOffers        = "agent-loop-grounding-offers-not-claims"
+	changeGroundingWorkedFigures = "agent-loop-grounding-worked-figures"
 )
 
 const (
@@ -169,7 +170,7 @@ func (s *Service) reground(
 // (DB-186). Each check is asked of the workflow only when it found something.
 func (s *Service) drift(t *Turn, fx TurnEffects, reply string) (groundingFinding, bool) {
 	if len(t.result.Actions) == 0 {
-		finding := readFinding(t, reply)
+		finding := readFinding(t, fx, reply)
 
 		return finding, !finding.empty() && fx.Supports(changeGroundingReadAmounts)
 	}
@@ -197,16 +198,45 @@ func (s *Service) drift(t *Turn, fx TurnEffects, reply string) (groundingFinding
 // readFinding is the money and shares a reply that filed nothing states and
 // nothing the conversation read gives. A conversation that has read no tool's
 // result is answering from what the trade knows, and is not checked.
-func readFinding(t *Turn, reply string) groundingFinding {
+func readFinding(t *Turn, fx TurnEffects, reply string) groundingFinding {
 	finding := groundingFinding{read: true, analyze: t.holds(agentextension.ToolAnalyzeData)}
 	if strings.TrimSpace(reply) == "" || !t.readAnything() || t.readUnseenFiles() {
 		return finding
 	}
-	supported := t.groundingSupport()
+	supported := t.groundingSupportAs(numberguard.ReadSeparated)
 	supported = append(supported, t.statedArithmetic()...)
-	finding.figures = numberguard.CheckAmounts(reply, supported).Unsupported
+	finding.figures = numberguard.CheckAmountsAs(numberguard.ReadSeparated, reply, supported).
+		Unsupported
+	if len(finding.figures) > 0 {
+		finding.figures = workedOut(fx, finding.figures, numberguard.CheckAmounts(reply,
+			t.withWorking(reply, t.groundingSupport())).Unsupported)
+	}
 
 	return finding
+}
+
+// withWorking is what the turn read, and what the reply's own figures and the
+// person's work out to in one step (numberguard.Worked): "112 gallons at $3.89
+// come to $435.68" shows its working, and the guard checks the result.
+func (t *Turn) withWorking(reply string, read []decimal.Decimal) []decimal.Decimal {
+	supported := slices.Clone(read)
+	supported = append(supported,
+		numberguard.Combinations(t.statedFigures(numberguard.ReadCodesApart))...)
+
+	return append(supported, numberguard.Worked(reply, read)...)
+}
+
+// workedOut is the figures still unsupported once the reply's working counts.
+// Before agent-loop-grounding-worked-figures a correct sum or product of two
+// figures the reply gave was rewritten as invented, and an execution that
+// decided that way keeps doing so where the two disagree on whether anything
+// is unsupported.
+func workedOut(fx TurnEffects, figures, worked []string) []string {
+	if len(worked) > 0 || fx.Supports(changeGroundingWorkedFigures) {
+		return worked
+	}
+
+	return figures
 }
 
 // maxStatedFigures bounds the figures of the person's question that are
@@ -217,13 +247,7 @@ const maxStatedFigures = 12
 // own question. Told a check was 3,200 against a 3,700 invoice, "$500 short"
 // restates what they said; it is not a figure the agent needs analyze_data for.
 func (t *Turn) statedArithmetic() []decimal.Decimal {
-	if t.req == nil {
-		return nil
-	}
-	stated := numberguard.SupportedFromText(t.req.Input)
-	if len(stated) > maxStatedFigures {
-		stated = stated[:maxStatedFigures]
-	}
+	stated := t.statedFigures(numberguard.ReadSeparated)
 	pairs := make([]decimal.Decimal, 0, len(stated)*(len(stated)-1))
 	for i := range stated {
 		for j := i + 1; j < len(stated); j++ {
@@ -232,6 +256,20 @@ func (t *Turn) statedArithmetic() []decimal.Decimal {
 	}
 
 	return pairs
+}
+
+// statedFigures is the figures of the person's question, the first
+// maxStatedFigures of them.
+func (t *Turn) statedFigures(how numberguard.Reading) []decimal.Decimal {
+	if t.req == nil {
+		return nil
+	}
+	stated := numberguard.SupportedFromTextAs(how, t.req.Input)
+	if len(stated) > maxStatedFigures {
+		stated = stated[:maxStatedFigures]
+	}
+
+	return stated
 }
 
 // readAnything reports whether the conversation has read a tool's result, in
@@ -265,14 +303,20 @@ func (t *Turn) readUnseenFiles() bool {
 func (t *Turn) filedFigures(fx TurnEffects, reply string) []string {
 	var figures []string
 	if !t.readUnseenFiles() {
-		figures = numberguard.CheckNumbers(reply, t.groundingSupport()).Unsupported
+		figures = numberguard.CheckNumbersAs(numberguard.ReadSeparated, reply,
+			t.groundingSupportAs(numberguard.ReadSeparated)).Unsupported
 	}
-	joined := numberguard.CheckNumbersJoined(reply, t.groundingSupportJoined()).Unsupported
-	if (len(figures) == 0) == (len(joined) == 0) || fx.Supports(changeGroundingFiguresAsRead) {
+	joined := numberguard.CheckNumbersAs(numberguard.ReadJoined, reply,
+		t.groundingSupportAs(numberguard.ReadJoined)).Unsupported
+	if (len(figures) == 0) != (len(joined) == 0) && !fx.Supports(changeGroundingFiguresAsRead) {
+		return joined
+	}
+	if len(figures) == 0 {
 		return figures
 	}
 
-	return joined
+	return workedOut(fx, figures, numberguard.CheckNumbers(reply,
+		t.withWorking(reply, t.groundingSupport())).Unsupported)
 }
 
 func isGroundingCorrection(content string) bool {
@@ -417,13 +461,14 @@ func (s *Service) groundingFindings(t *Turn, fx TurnEffects, reply string) groun
 // groundingSupport is every figure the turn has read: what it was sent, and
 // the figures of older results the replay shortened.
 func (t *Turn) groundingSupport() []decimal.Decimal {
-	return t.withEvidence(numberguard.SupportedFromText(t.groundingTexts()...))
+	return t.groundingSupportAs(numberguard.ReadCodesApart)
 }
 
-// groundingSupportJoined is groundingSupport as the guard read it before
-// agent-loop-grounding-figures-as-read.
-func (t *Turn) groundingSupportJoined() []decimal.Decimal {
-	return t.withEvidence(numberguard.SupportedFromTextJoined(t.groundingTexts()...))
+// groundingSupportAs is groundingSupport in the reading an execution decided
+// with: ReadJoined before agent-loop-grounding-figures-as-read, ReadSeparated
+// before agent-loop-grounding-worked-figures.
+func (t *Turn) groundingSupportAs(how numberguard.Reading) []decimal.Decimal {
+	return t.withEvidence(numberguard.SupportedFromTextAs(how, t.groundingTexts()...))
 }
 
 func (t *Turn) withEvidence(supported []decimal.Decimal) []decimal.Decimal {

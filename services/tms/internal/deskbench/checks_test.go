@@ -84,3 +84,21 @@ func TestGroundingCheck_FailsAReplyTheGuardCorrected(t *testing.T) {
 	assert.False(t, corrected.Passed)
 	assert.Equal(t, "rewrite: 52.3", corrected.Detail)
 }
+
+func TestArtifactCorrections_CountOnlyWhatRestartedTheReply(t *testing.T) {
+	t.Parallel()
+
+	placed := Event{
+		Name: agentports.AssistantEventReplyRegrounded,
+		Data: map[string]any{"action": string(agentports.RegroundPlaceArtifacts)},
+	}
+	relinked := Event{
+		Name: agentports.AssistantEventReplyRegrounded,
+		Data: map[string]any{"action": string(agentports.RegroundRelinkArtifacts)},
+	}
+
+	assert.Empty(t, artifactCorrections([]Event{placed}),
+		"a left-out table named at the end restarted nothing")
+	assert.Equal(t, []string{"relink_artifacts", "place_artifacts"},
+		artifactCorrections([]Event{relinked, placed}))
+}

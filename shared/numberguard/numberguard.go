@@ -51,34 +51,26 @@ type NumberCheck struct {
 // Supported values are the metric values, their baselines, and any extra
 // figures the caller states are legitimate, such as the window length.
 func CheckNumbers(prose string, supported []decimal.Decimal) NumberCheck {
-	cited := extractNumbers(prose)
-	if len(cited) == 0 {
-		return NumberCheck{OK: true}
-	}
-
-	unsupported := make([]string, 0, len(cited))
-	for _, citation := range cited {
-		if !citation.supportedBy(supported) && !slices.Contains(unsupported, citation.text) {
-			unsupported = append(unsupported, citation.text)
-		}
-	}
-
-	return NumberCheck{OK: len(unsupported) == 0, Unsupported: unsupported}
+	return CheckNumbersAs(ReadCodesApart, prose, supported)
 }
 
-// CheckNumbersJoined is CheckNumbers as it read prose before readSeparated:
-// every comma and point between digits joined one number, and each repeat of
-// an unsupported figure was listed. The agent loop's grounding guard keeps it
-// for executions that decided with it; nothing else should call it.
-func CheckNumbersJoined(prose string, supported []decimal.Decimal) NumberCheck {
-	cited := scan(prose, readJoined)
+// CheckNumbersAs is CheckNumbers in an earlier reading, for the agent loop's
+// executions that decided with it.
+func CheckNumbersAs(how Reading, prose string, supported []decimal.Decimal) NumberCheck {
+	cited := scan(prose, how)
 	if len(cited) == 0 {
 		return NumberCheck{OK: true}
 	}
 
 	unsupported := make([]string, 0, len(cited))
 	for _, citation := range cited {
-		if !isSupported(citation.value, supported) {
+		if how == ReadJoined {
+			if !isSupported(citation.value, supported) {
+				unsupported = append(unsupported, citation.text)
+			}
+			continue
+		}
+		if !citation.supportedBy(supported) && !slices.Contains(unsupported, citation.text) {
 			unsupported = append(unsupported, citation.text)
 		}
 	}
@@ -92,8 +84,14 @@ func CheckNumbersJoined(prose string, supported []decimal.Decimal) NumberCheck {
 // or a limit it knows from the trade is left alone, because a reply may state
 // one that nothing it read printed.
 func CheckAmounts(prose string, supported []decimal.Decimal) NumberCheck {
+	return CheckAmountsAs(ReadCodesApart, prose, supported)
+}
+
+// CheckAmountsAs is CheckAmounts in an earlier reading, for the agent loop's
+// executions that decided with it.
+func CheckAmountsAs(how Reading, prose string, supported []decimal.Decimal) NumberCheck {
 	unsupported := make([]string, 0, 2)
-	for _, cited := range extractNumbers(prose) {
+	for _, cited := range scan(prose, how) {
 		if !cited.money && !cited.percent {
 			continue
 		}
@@ -113,11 +111,17 @@ func CheckAmounts(prose string, supported []decimal.Decimal) NumberCheck {
 // "$57K" is of 57,323.83. A percentage is also the fraction it renders: 52.3%
 // is a computed 0.523.
 func (c citation) supportedBy(supported []decimal.Decimal) bool {
-	if isSupported(c.value, supported) {
-		return true
-	}
+	return isSupported(c.value, supported) || c.readIn(supported)
+}
+
+// readIn reports whether a figure in supported is the one cited, leaving out
+// the small numbers supportedBy lets pass as sentence furniture.
+func (c citation) readIn(supported []decimal.Decimal) bool {
+	thousand := decimal.NewFromInt(1000)
 	for _, candidate := range supported {
-		if c.value.Sub(candidate).Abs().LessThanOrEqual(c.half) {
+		if withinTolerance(c.value, candidate) ||
+			withinTolerance(c.value.Mul(thousand), candidate) ||
+			c.value.Sub(candidate).Abs().LessThanOrEqual(c.half) {
 			return true
 		}
 		if c.percent && (withinTolerance(c.value.Shift(-2), candidate) ||
@@ -127,6 +131,53 @@ func (c citation) supportedBy(supported []decimal.Decimal) bool {
 	}
 
 	return false
+}
+
+// maxWorkingOperands bounds the figures of a reply that are paired up.
+const maxWorkingOperands = 16
+
+// Worked is what the figures prose states work out to in one step: the sum,
+// difference, product and each quotient of every pair of them that supported
+// holds. A reply that gives both sides of "$6,050,147.60 open, $50,147.60
+// without the $6,000,000 invoice" or "112 gallons at $3.89 come to $435.68"
+// shows its working; the person can follow it and the guard checks the
+// result, so a result that is wrong is still unsupported.
+func Worked(prose string, supported []decimal.Decimal) []decimal.Decimal {
+	operands := make([]decimal.Decimal, 0, maxWorkingOperands)
+	for _, cited := range extractNumbers(prose) {
+		if len(operands) == maxWorkingOperands {
+			break
+		}
+		if cited.readIn(supported) && !slices.ContainsFunc(operands, cited.value.Equal) {
+			operands = append(operands, cited.value)
+		}
+	}
+
+	return Combinations(operands)
+}
+
+// Combinations is the sum, difference, product and each quotient of every
+// pair of values.
+func Combinations(values []decimal.Decimal) []decimal.Decimal {
+	if len(values) < 2 {
+		return nil
+	}
+
+	combined := make([]decimal.Decimal, 0, len(values)*(len(values)-1)*5/2)
+	for i := range values {
+		for j := i + 1; j < len(values); j++ {
+			a, b := values[i], values[j]
+			combined = append(combined, a.Add(b), a.Sub(b).Abs(), a.Mul(b))
+			if !b.IsZero() {
+				combined = append(combined, a.Div(b))
+			}
+			if !a.IsZero() {
+				combined = append(combined, b.Div(a))
+			}
+		}
+	}
+
+	return combined
 }
 
 func matchesAny(value decimal.Decimal, supported []decimal.Decimal) bool {
@@ -197,32 +248,40 @@ func withinTolerance(value, candidate decimal.Decimal) bool {
 // pattern covering those without also matching the "30" inside an identifier
 // ends up longer and harder to reason about than the scan.
 func extractNumbers(prose string) []citation {
-	return scan(prose, readSeparated)
+	return scan(prose, ReadCodesApart)
 }
 
-// reading is how a scan tells one figure from the next.
-type reading int
+// Reading is how a scan tells one figure from the next. The agent loop's
+// grounding guard decides in workflow code, so an execution keeps the reading
+// it started with; everything else reads with ReadCodesApart.
+type Reading int
 
 const (
-	// readSeparated takes a comma as a thousands separator only before a group
+	// ReadCodesApart is ReadSeparated that also leaves out what is a code or a
+	// year rather than a quantity: a number written with a leading zero
+	// ("083"), one listed after an identifier as a shortened form of it
+	// ("INV2610000103, 104, 099"), and a bare year ("Dates (2027)").
+	ReadCodesApart Reading = iota
+	// ReadSeparated takes a comma as a thousands separator only before a group
 	// of three digits, and a point as a decimal point only before a digit, so
 	// "[172.5,12937.5,0.708]" in a tool's JSON is three figures. A number joined
 	// to another by a hyphen, slash or colon (2026-10-25, 10/26, 14:30,
 	// 214-555-0142, a 31-60 bucket) and one that is part of an identifier
 	// (INV2610000001, HL-30117) or an ordinal (31st) is not a figure.
-	readSeparated reading = iota
-	// readJoined takes every comma and point between digits as part of one
+	ReadSeparated
+	// ReadJoined takes every comma and point between digits as part of one
 	// number, so a JSON array of numbers read as one unparseable run and its
-	// figures as nothing. Kept only for the agent loop's executions that
-	// decided with it.
-	readJoined
+	// figures as nothing, and lists each repeat of an unsupported figure.
+	ReadJoined
 )
 
 var ordinalSuffixes = []string{"st", "nd", "rd", "th"}
 
-func scan(prose string, how reading) []citation {
+func scan(prose string, how Reading) []citation {
 	runes := []rune(prose)
 	citations := make([]citation, 0, 8)
+	separated := how != ReadJoined
+	codeEnd := -1
 
 	for index := 0; index < len(runes); index++ {
 		if !unicode.IsDigit(runes[index]) {
@@ -230,12 +289,12 @@ func scan(prose string, how reading) []citation {
 		}
 
 		start := index
-		grouped := how == readJoined || !jsonBefore(runes, start)
+		grouped := !separated || !jsonBefore(runes, start)
 		for index < len(runes) && continuesNumber(runes, index, how, grouped) {
 			index++
 		}
 		// "[50,150,250]" is three numbers, not 150,250 with a stray 50.
-		if how == readSeparated && grouped && jsonAfter(runes, index) &&
+		if separated && grouped && jsonAfter(runes, index) &&
 			slices.Contains(runes[start:index], ',') {
 			index = start
 			for index < len(runes) && continuesNumber(runes, index, how, false) {
@@ -248,7 +307,10 @@ func scan(prose string, how reading) []citation {
 		// at the end of a clause is the figure plus a comma.
 		raw = strings.TrimRight(raw, ".,")
 		end := start + len([]rune(raw))
-		if how == readSeparated && notAFigure(runes, start, end) {
+		if separated && notAFigure(runes, start, end) {
+			if inIdentifier(runes, start) {
+				codeEnd = end
+			}
 			continue
 		}
 
@@ -263,7 +325,12 @@ func scan(prose string, how reading) []citation {
 			money:   isMoney(runes, start, end),
 			percent: isPercent(runes, end),
 		}
-		if how == readSeparated {
+		if how == ReadCodesApart && !cited.money && !cited.percent &&
+			(leadingZero(raw) || listedAfter(runes, codeEnd, start) || isYear(raw)) {
+			codeEnd = end
+			continue
+		}
+		if separated {
 			cited.half = halfUnit(raw, value)
 		}
 		citations = append(citations, cited)
@@ -347,9 +414,9 @@ func isNumericRune(r rune) bool {
 	return unicode.IsDigit(r) || r == ',' || r == '.'
 }
 
-func continuesNumber(runes []rune, index int, how reading, grouped bool) bool {
+func continuesNumber(runes []rune, index int, how Reading, grouped bool) bool {
 	r := runes[index]
-	if how == readJoined || unicode.IsDigit(r) {
+	if how == ReadJoined || unicode.IsDigit(r) {
 		return isNumericRune(r)
 	}
 
@@ -362,6 +429,46 @@ func continuesNumber(runes []rune, index int, how reading, grouped bool) bool {
 	default:
 		return false
 	}
+}
+
+// inIdentifier reports whether the number starting at start is the tail of an
+// identifier: glued to a letter, or joined to one ("HL-30117").
+func inIdentifier(runes []rune, start int) bool {
+	if start == 0 {
+		return false
+	}
+	before := runes[start-1]
+
+	return unicode.IsLetter(before) ||
+		(strings.ContainsRune(joiners+"_", before) && start > 1 && unicode.IsLetter(runes[start-2]))
+}
+
+// leadingZero reports whether raw is a whole number written with a leading
+// zero, as a code is ("083") and a quantity never is.
+func leadingZero(raw string) bool {
+	return len(raw) > 1 && raw[0] == '0' && raw[1] != '.'
+}
+
+// listedAfter reports whether the number starting at start follows the code
+// ending at codeEnd in one list: "INV2610000103, 104 and 099".
+func listedAfter(runes []rune, codeEnd, start int) bool {
+	if codeEnd < 0 || codeEnd > start {
+		return false
+	}
+	between := strings.TrimSpace(strings.Trim(string(runes[codeEnd:start]), " ,"))
+
+	return between == "" || between == "and" || between == "or"
+}
+
+// isYear reports whether raw is a year written alone: four digits from 1900
+// to 2199 with no thousands separator, as a count of that size never is.
+func isYear(raw string) bool {
+	if len(raw) != 4 {
+		return false
+	}
+	year, err := strconv.Atoi(raw)
+
+	return err == nil && year >= 1900 && year < 2200
 }
 
 // jsonBefore reports whether the number starting at start opens a JSON
@@ -538,16 +645,12 @@ func SupportedValues(
 }
 
 func SupportedFromText(texts ...string) []decimal.Decimal {
-	return supportedFrom(readSeparated, texts)
+	return SupportedFromTextAs(ReadCodesApart, texts...)
 }
 
-// SupportedFromTextJoined is SupportedFromText as it read text before
-// readSeparated, kept with CheckNumbersJoined.
-func SupportedFromTextJoined(texts ...string) []decimal.Decimal {
-	return supportedFrom(readJoined, texts)
-}
-
-func supportedFrom(how reading, texts []string) []decimal.Decimal {
+// SupportedFromTextAs is SupportedFromText in an earlier reading, kept with
+// CheckNumbersAs.
+func SupportedFromTextAs(how Reading, texts ...string) []decimal.Decimal {
 	supported := make([]decimal.Decimal, 0, len(texts)*4)
 	seen := make(map[string]struct{}, len(texts)*4)
 	for _, text := range texts {

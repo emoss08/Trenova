@@ -303,8 +303,8 @@ func TestSupportedFromText_ReadsEachNumberOfAJSONArray(t *testing.T) {
 
 	check := numberguard.CheckNumbers("Riverside cost $12,937.50, 70.8% of the total.", supported)
 	assert.True(t, check.OK, check.Unsupported)
-	assert.False(t, numberguard.CheckNumbersJoined("Riverside cost $12,937.50.",
-		numberguard.SupportedFromTextJoined(`[172.5,12937.5,0.708]`)).OK,
+	assert.False(t, numberguard.CheckNumbersAs(numberguard.ReadJoined, "Riverside cost $12,937.50.",
+		numberguard.SupportedFromTextAs(numberguard.ReadJoined, `[172.5,12937.5,0.708]`)).OK,
 		"the joined reading is the one that failed")
 }
 
@@ -366,4 +366,60 @@ func TestCheckNumbers_AFigureRoundedToItsLastDigitIsTheSameFigure(t *testing.T) 
 
 	check = numberguard.CheckNumbers("FreshHaul's other loads add up to roughly $62K.", supported)
 	assert.Equal(t, []string{"62"}, check.Unsupported, "a different figure is still different")
+}
+
+func TestWorked_ChecksArithmeticOnFiguresTheProseStates(t *testing.T) {
+	t.Parallel()
+
+	read := values(6050147.60, 6000000, 112, 3.89)
+
+	for _, prose := range []string{
+		"$6,050,147.60 is open; without the $6,000,000 invoice, $50,147.60 is.",
+		"112 gallons at $3.89 come to about $435.68.",
+		"FreshHaul's $6,000,000 is 99.2% of the $6,050,147.60 open.",
+	} {
+		check := numberguard.CheckAmounts(prose, append(read, numberguard.Worked(prose, read)...))
+		assert.True(t, check.OK, "%s: %v", prose, check.Unsupported)
+	}
+
+	wrong := "$6,050,147.60 is open; without the $6,000,000 invoice, $52,147.60 is."
+	check := numberguard.CheckAmounts(wrong, append(read, numberguard.Worked(wrong, read)...))
+	assert.Equal(t, []string{"52,147.60"}, check.Unsupported, "a wrong result is still caught")
+
+	alone := "About 99.2% is FreshHaul's."
+	check = numberguard.CheckAmounts(alone, append(read, numberguard.Worked(alone, read)...))
+	assert.False(t, check.OK, "a share whose sides the reply does not give is not worked")
+}
+
+func TestWorked_PairsOnlyFiguresThatWereRead(t *testing.T) {
+	t.Parallel()
+
+	prose := "A $40,000 fee on the $6,000,000 invoice leaves $6,040,000."
+	read := values(6000000)
+
+	check := numberguard.CheckAmounts(prose, append(read, numberguard.Worked(prose, read)...))
+	assert.Equal(t, []string{"40,000", "6,040,000"}, check.Unsupported,
+		"an invented side makes an invented result")
+}
+
+func TestCheckNumbers_CodesAndYearsAreNotFigures(t *testing.T) {
+	t.Parallel()
+
+	prose := "Acme has four other $1,121.36 invoices (INV2610000103, 104, 099 and an " +
+		"earlier one, 083), dated in 2027, out of 1,940 loads."
+
+	check := numberguard.CheckNumbers(prose, values(1121.36))
+	assert.Equal(t, []string{"1,940"}, check.Unsupported)
+
+	separated := numberguard.CheckNumbersAs(numberguard.ReadSeparated, prose, values(1121.36))
+	assert.Equal(t, []string{"104", "099", "083", "2027", "1,940"}, separated.Unsupported,
+		"the reading executions decided with is unchanged")
+}
+
+func TestCheckNumbers_AListAfterACodeEndsAtMoney(t *testing.T) {
+	t.Parallel()
+
+	check := numberguard.CheckNumbers("INV2610000103, $104 and 099 are open.", nil)
+
+	assert.Equal(t, []string{"104"}, check.Unsupported)
 }

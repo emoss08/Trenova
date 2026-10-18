@@ -158,29 +158,63 @@ func TestDrive_PlacesALinkTheRewriteStillLeftOutsideASentence(t *testing.T) {
 }
 
 // A table the reply was told to point to, and did not, is asked for.
-func TestDrive_AsksForATableTheReplyMustName(t *testing.T) {
+// A table the reply must name and left out is named at its end, without
+// asking the model again: a finished answer restarting only to add a link was
+// the restart people saw most.
+func TestDrive_NamesATableTheReplyLeftOutWithoutAskingAgain(t *testing.T) {
+	t.Parallel()
+
+	table := keptShipments(15)
+
+	result, events, completion := placementRun(t, &table, nil, "Fifteen loads are late.")
+
+	assert.Equal(t, "Fifteen loads are late.\n\n"+tablePointerLead+ArtifactRef(&table)+".",
+		result.Reply)
+	assert.False(t, retried(events))
+	assert.Len(t, completion.Requests, 2)
+	assert.Equal(t, []agentports.RegroundAction{agentports.RegroundPlaceArtifacts},
+		regroundedActions(events))
+}
+
+type leftOutEffects struct {
+	*localEffects
+}
+
+func (fx *leftOutEffects) Supports(change string) bool {
+	return change != changeNameLeftOut
+}
+
+func TestDrive_AnExecutionThatAskedForALeftOutTableKeepsAsking(t *testing.T) {
 	t.Parallel()
 
 	table := keptShipments(15)
 	fixed := "Fifteen loads are late; " + ArtifactRef(&table) + " lists them."
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+		toolTurn("get_formula_template", map[string]any{}),
+		textTurn("Fifteen loads are late."),
+		textTurn(fixed),
+	}}
+	rt := newRuntime(completion, &stubQueryRegistry{Tools: []agentports.AgentQueryTool{
+		queryTool("get_formula_template", map[string]any{"id": "ft_1"}, nil),
+	}}, &stubActionRegistry{}, nil)
+	req := &agentports.RunRequest{
+		Definition: testDefinition("get_formula_template"),
+		Actor:      testActor(),
+		Input:      "which loads are late?",
+		ToolObserver: func(agentports.ToolObservation) (*agentports.ShownArtifact, error) {
+			return &table, nil
+		},
+	}
+	events := recordEvents(req)
+	fx := &leftOutEffects{localEffects: &localEffects{
+		s: rt, ctx: t.Context(), emit: req.Emit, observer: req.ToolObserver,
+	}}
 
-	result, events, _ := placementRun(t, &table, nil, "Fifteen loads are late.", fixed)
+	result, err := rt.Drive(rt.OpenTurn(t.Context(), req), fx)
+	require.NoError(t, err)
 
 	assert.Equal(t, fixed, result.Reply)
 	assert.True(t, retried(events))
-}
-
-// A table the reply never names after being asked is named at its end.
-func TestDrive_NamesATableTheReplyLeftOutAtItsEnd(t *testing.T) {
-	t.Parallel()
-
-	table := keptShipments(15)
-
-	result, _, _ := placementRun(t, &table, nil, "Fifteen loads are late.",
-		"Fifteen loads are late, mostly in Texas.")
-
-	assert.Equal(t, "Fifteen loads are late, mostly in Texas.\n\n"+tablePointerLead+
-		ArtifactRef(&table)+".", result.Reply)
 }
 
 // An id the conversation never held is not left as a link that opens nothing.
@@ -337,10 +371,10 @@ func TestDrive_AsksForEachArtifactOutsideALineage(t *testing.T) {
 
 	first, second := draftVersions(false)
 	reply := "The connection is drafted in " + ArtifactRef(&second) + ", waiting for approval."
-	fixed := reply + " The first attempt is in " + ArtifactRef(&first) + "."
 
-	result, events := redraftRun(t, &first, &second, reply, fixed)
+	result, events := redraftRun(t, &first, &second, reply)
 
-	assert.Equal(t, fixed, result.Reply)
-	assert.True(t, retried(events))
+	assert.Equal(t, reply+"\n\n"+detailsPointerLead+ArtifactRef(&first)+".", result.Reply,
+		"a draft of another partner is not replaced by this one, so it is named too")
+	assert.False(t, retried(events))
 }

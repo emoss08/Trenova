@@ -23,7 +23,9 @@ type groundingEffects struct {
 	// offersAreClaims is an execution started before an offer was read as
 	// no claim.
 	offersAreClaims bool
-	events          []kernelports.StreamEvent
+	// unworked is an execution started before a reply's working counted.
+	unworked bool
+	events   []kernelports.StreamEvent
 }
 
 func (fx *groundingEffects) Emit(event kernelports.StreamEvent) {
@@ -39,6 +41,8 @@ func (fx *groundingEffects) Supports(change string) bool {
 		return !fx.joined
 	case changeGroundingOffers:
 		return !fx.offersAreClaims
+	case changeGroundingWorkedFigures:
+		return !fx.unworked
 	}
 
 	return true
@@ -277,6 +281,17 @@ func readGrounded(
 ) groundingRun {
 	t.Helper()
 
+	return readGroundedWith(t, &groundingEffects{supports: supports}, tools, replies...)
+}
+
+func readGroundedWith(
+	t *testing.T,
+	fx *groundingEffects,
+	tools []string,
+	replies ...string,
+) groundingRun {
+	t.Helper()
+
 	turns := []*agentports.ChatCompletionResult{toolTurn("get_report_run", map[string]any{})}
 	for _, reply := range replies {
 		turns = append(turns, textTurn(reply))
@@ -294,7 +309,6 @@ func readGrounded(
 		})
 	}
 	rt := newRuntime(completion, registry, &stubActionRegistry{}, nil)
-	fx := &groundingEffects{supports: supports}
 	fx.localEffects = &localEffects{s: rt, ctx: t.Context(), emit: func(kernelports.StreamEvent) {}}
 
 	result, err := rt.Drive(rt.OpenTurn(t.Context(), &agentports.RunRequest{
@@ -639,4 +653,80 @@ func TestGroundingGuard_AnExecutionThatReadOffersAsClaimsKeepsDoingSo(t *testing
 	)
 
 	assert.Equal(t, 3, run.completion.CallCount)
+}
+
+// A share whose two sides the reply gives is shown working: the guard checks
+// the division instead of sending the agent to analyze_data for it.
+func TestGroundingGuard_AcceptsArithmeticOnFiguresTheReplyGives(t *testing.T) {
+	t.Parallel()
+
+	run := readGrounded(t, true, []string{"get_report_run"},
+		"Of the $87,310.40 billed, $45,662.16 is still open: 52.3%, leaving $41,648.24 paid.",
+	)
+
+	assert.Equal(t, 2, run.completion.CallCount)
+	assert.Empty(t, run.fx.regrounded())
+}
+
+func TestGroundingGuard_WrongArithmeticOnGivenFiguresIsStillRewritten(t *testing.T) {
+	t.Parallel()
+
+	run := readGrounded(t, true, []string{"get_report_run"},
+		"Of the $87,310.40 billed, $45,662.16 is still open: 61.4%.",
+		"Of the $87,310.40 billed, $45,662.16 is still open.",
+	)
+
+	require.Len(t, run.fx.regrounded(), 1)
+	assert.Equal(t, []string{"61.4"}, run.fx.regrounded()[0].Figures)
+}
+
+func TestGroundingGuard_AnExecutionThatIgnoredWorkingKeepsDoingSo(t *testing.T) {
+	t.Parallel()
+
+	run := readGroundedWith(t, &groundingEffects{supports: true, unworked: true},
+		[]string{"get_report_run"},
+		"Of the $87,310.40 billed, $45,662.16 is still open: 52.3%.",
+		"Of the $87,310.40 billed, $45,662.16 is still open.",
+	)
+
+	assert.Equal(t, 3, run.completion.CallCount)
+}
+
+// Told 112 gallons at $3.89, "$435.68" is the person's own two figures
+// multiplied, whether or not the reply repeats them.
+func TestGroundingGuard_AProductOfThePersonsFiguresIsStated(t *testing.T) {
+	t.Parallel()
+
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+		toolTurn("find_in_trenova", map[string]any{}),
+		textTurn("Key it in at Fuel purchases; the total paid should be about $435.68."),
+	}}
+	registry := &stubQueryRegistry{Tools: []agentports.AgentQueryTool{
+		&agenttest.StubQueryTool{ToolName: "find_in_trenova", Result: map[string]any{}},
+	}}
+	rt := newRuntime(completion, registry, &stubActionRegistry{}, nil)
+	fx := &groundingEffects{supports: true}
+	fx.localEffects = &localEffects{s: rt, ctx: t.Context(), emit: func(kernelports.StreamEvent) {}}
+
+	_, err := rt.Drive(rt.OpenTurn(t.Context(), &agentports.RunRequest{
+		Definition: testDefinition("find_in_trenova"),
+		Actor:      testActor(),
+		Input:      "log 112 gallons of diesel for TRC-001 bought in Texas yesterday at $3.89",
+	}), fx)
+	require.NoError(t, err)
+
+	assert.Equal(t, 2, completion.CallCount)
+	assert.Empty(t, fx.regrounded())
+}
+
+func TestGroundingGuard_AFiledReplysWorkingCounts(t *testing.T) {
+	t.Parallel()
+
+	run := runGroundedResult(t, &groundingEffects{supports: true},
+		[]any{"1121.36", "898.80"},
+		"Proposed at $1,121.36 in total: $898.80 linehaul and $222.56 in other charges.",
+	)
+
+	assert.Equal(t, 2, run.completion.CallCount)
+	assert.Empty(t, run.fx.regrounded())
 }

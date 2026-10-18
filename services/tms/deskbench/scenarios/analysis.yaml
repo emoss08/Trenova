@@ -339,6 +339,38 @@ scenarios:
             a share of what it was billed. Says plainly that open invoices may predate the window
             and that a customer in one report but not the other has no share.
 
+  - name: analysis-billed-still-open
+    description: >
+      Asked from the Desk on 2026-10-18. The answer subtracts the
+      FreshHaul invoice from totals it states, which the grounding guard used to rewrite as
+      figures nothing read; the turn restarted twice before answering. Every step's grounding and
+      placement checks fail on a restart.
+    agent: Report analyst
+    steps:
+      - say: "how much of what we billed in the last 30 days is still open?"
+        expect:
+          calls: ["analyze_data|preview_report|run_report"]
+          maxFailedCalls: 2
+          rubric: >
+            Gives what was billed in the last 30 days and how much of it is open, from an analysis
+            over every row or a report's own totals, and flags the one $6,000,000 FreshHaul
+            invoice as a likely keying error.
+
+  - name: analysis-not-for-the-persons-own-arithmetic
+    description: >
+      Asked from the Desk on 2026-10-18. The person gives the gallons and
+      the price; their product is their own figures multiplied, not a figure to start a sandbox
+      for. The guard rewrote "$435.68" and the agent ran analyze_data to multiply two numbers.
+    agent: Report analyst
+    steps:
+      - say: "log 112 gallons of diesel for TRC-001 bought in Texas yesterday at $3.89"
+        expect:
+          noCalls: [analyze_data]
+          noProposals: true
+          rubric: >
+            Says it cannot record fuel purchases itself and points to Fuel purchases with the
+            values to enter. If it gives the total, it is $435.68.
+
   - name: analysis-trend-chart
     description: >
       A trend asked for over too short a history. The seeded loads span about two weeks, so the

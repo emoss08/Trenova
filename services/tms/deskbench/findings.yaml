@@ -4312,7 +4312,7 @@ findings:
       outcome lost the rate its preview priced. The rewrites then told the person to disregard the
       rate confirmation's own figures.
     fix: >
-      numberguard reads figures apart (readSeparated): a comma groups digits only before three
+      numberguard reads figures apart (ReadSeparated): a comma groups digits only before three
       digits and never inside JSON; a number joined by a hyphen, dash, slash or colon, glued to a
       letter, an ordinal, or the day or year of a written date is not a figure; a figure rounded
       to its last written digit ("$57K" for 57,323.83, "43%" for 0.4343) is the same figure; an
@@ -4370,3 +4370,37 @@ findings:
     files:
       - services/tms/internal/modules/agent/app/agentruntime/groundingguard.go
     fixedIn: uncommitted; verified by .deskbench/runs/20261018-091506-run (log-a-fuel-purchase 3/3, no correction)
+
+  - id: DB-190
+    title: Replies restart to redo arithmetic they showed, or to link a table they searched
+    status: fixed
+    severity: high
+    area: agent runtime / grounding and artifact placement
+    found: 2026-10-18, two Desk conversations (threads athr_01M57KSGYSC462CMFB0WKJA62K, athr_01M57MECHP0SF25SB5SANS4148)
+    models: [claude-haiku-5-5]
+    scenarios: [analysis-two-reports-together, customer-short-paid, credit-memo-for-damage, approve-pending-time-off, in-transit-count, find-a-carrier-for-it]
+    problem: >
+      Trying the scenarios in the Desk, most turns restarted at least once. "112 gallons at $3.89
+      come to about $435.68" and "$50,147.60 without the $6,000,000 invoice" were rewritten as
+      figures nothing read, and the agent ran a sandbox to multiply or subtract two numbers it had
+      just stated. Shortened invoice numbers ("INV2610000103, 104, 099") and a year in a table
+      header were read as figures. And 14 of the 16 artifact placement restarts in a run over every
+      scenario were a table the agent searched (Shipments, Invoices, Time offs) left unnamed: the
+      person watched a finished answer start over to add a link.
+    fix: >
+      A figure that is one sum, difference, product or quotient of two read figures the reply
+      gives, or of two the person gave, counts as shown working (numberguard.Worked), and codes and
+      bare years are not figures (numberguard.ReadCodesApart); both behind
+      agent-loop-grounding-worked-figures. A wrong result is still unsupported, and a share whose
+      sides the reply leaves out still goes to analyze_data. A reply whose only placement fault is
+      a left-out artifact ends with a sentence naming it instead of being asked again, behind
+      agent-loop-artifact-placement-name-left-out.
+    files:
+      - shared/numberguard/numberguard.go
+      - services/tms/internal/modules/agent/app/agentruntime/groundingguard.go
+      - services/tms/internal/modules/agent/app/agentruntime/placement.go
+    fixedIn: >
+      uncommitted; verified by .deskbench/runs/20261018-100738-run: 1 restart in 18 turns (a total
+      over many customers worked out in the head, which still goes to analyze_data), against
+      about one a turn in the Desk; analysis-billed-still-open and
+      analysis-not-for-the-persons-own-arithmetic hold the two transcripts
