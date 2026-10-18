@@ -80,7 +80,6 @@ func (e *eventCollector) start(at time.Time, started *agentports.AssistantToolSt
 		CallID:         started.CallID,
 		Name:           started.Name,
 		Arguments:      started.Arguments,
-		Why:            started.Why,
 		Effect:         string(started.Effect),
 		AgentID:        started.AgentID,
 		DelegateCallID: started.DelegateCallID,

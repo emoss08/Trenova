@@ -28,7 +28,6 @@ func toToolCallRecords(calls []agentports.ToolCall) []conversation.ToolCallRecor
 			Arguments:    call.Arguments,
 			ProviderData: call.ProviderData,
 			ProviderID:   call.ProviderID,
-			Why:          call.Why,
 		})
 	}
 
@@ -48,7 +47,6 @@ func fromToolCallRecords(records []conversation.ToolCallRecord) []agentports.Too
 			Arguments:    record.Arguments,
 			ProviderData: record.ProviderData,
 			ProviderID:   record.ProviderID,
-			Why:          record.Why,
 		})
 	}
 

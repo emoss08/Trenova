@@ -343,9 +343,18 @@ than any it names takes the newest known constraints.
   validation refuses it, and so does `ck_ai_providers_thinking_style_kind`.
 - **None and Off.** None is the least thinking the model allows. Opus 5.5, Fable and Mythos
   cannot stop thinking and Sonnet 5.5 refuses `disabled`, so they get adaptive at low
-  effort; Opus 5 gets `disabled`; Opus and Sonnet 4.6 to 4.8 get nothing, which is no
-  thinking there. Off sends nothing and the model's own default applies, so a model that
-  always thinks still does.
+  effort, with the summary shown; Opus 5 gets `disabled`; Opus and Sonnet 4.6 to 4.8 get
+  nothing, which is no thinking there. Off leaves the effort to the model. A model that
+  thinks when a request says nothing about thinking (Opus 5 and later, Sonnet 5 and later,
+  Haiku 5.5, Fable, Mythos: `thinksUnasked`) is sent `{type: "adaptive", display:
+  "summarized"}` and no effort, which is the thinking it would do anyway, made readable;
+  every other model is sent nothing.
+- **Why the summary is always asked for.** Each step on the Desk shows the reasoning of the
+  reply that asked for it (`Message.Reasoning`, drawn with `ReasoningDisclosure`), and
+  unattended runs keep it in their trajectory. Display changes only what comes back:
+  thinking is billed the same whether it is shown, summarized or omitted, so asking for it
+  costs nothing. There is no tool argument for a step's reason; the model's own reasoning
+  is the account of why it took the step.
 - **Only this turn's thinking goes back.** A thinking block is bound to the conversation
   before it, and that changes every turn: the system prompt carries the turn's page,
   memories and date, and older tool results are shortened in replay. So
@@ -360,7 +369,7 @@ than any it names takes the newest known constraints.
   `thinking.block_binding.prefix_mismatch_behavior: "drop_block"` with the
   `anthropic-beta: thinking-binding-controls-2026-08-01` header. The header goes only to
   those models, since a gateway in front of an older one may refuse an unknown beta, and
-  Off sends `{type: "adaptive"}` there so the binding has a thinking object to ride on.
+  Off on those models already sends an adaptive thinking object for the binding to ride on.
 - **Drops are counted.** The API lists each dropped block in `input_transformations`
   (`message_start` when streaming). The adapter counts the `thinking_dropped` entries into
   `Response.ThinkingDropped`, and the attempt span carries it as
