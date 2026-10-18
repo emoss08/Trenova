@@ -28,6 +28,7 @@ type responsesRequest struct {
 	Input           []responsesItem      `json:"input"`
 	Text            *responsesTextConfig `json:"text,omitempty"`
 	Tools           []responsesTool      `json:"tools,omitempty"`
+	ToolChoice      string               `json:"tool_choice,omitempty"`
 	MaxOutputTokens int                  `json:"max_output_tokens,omitempty"`
 	Stream          bool                 `json:"stream,omitempty"`
 	// Reasoning is sent only when the provider is configured to reason. The
@@ -158,6 +159,7 @@ func (a openAIResponsesAdapter) baseRequest(call *Call) responsesRequest {
 		MaxOutputTokens: call.Request.MaxTokens,
 		Input:           toResponsesInput(call.Request.System, call.Request.Messages),
 		Tools:           toResponsesTools(call.Request.Tools),
+		ToolChoice:      toolChoiceWire(call.Request),
 	}
 	body.applyReasoning(call)
 	body.MaxOutputTokens = answerRoom(call, body.MaxOutputTokens)

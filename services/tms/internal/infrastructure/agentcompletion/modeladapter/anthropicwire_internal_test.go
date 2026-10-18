@@ -181,6 +181,12 @@ func wireCases() []wireCase {
 	structuredWithTools := structured
 	structuredWithTools.Tools = wireTools()[:1]
 	bare := Request{Messages: UserMessage("hi")}
+	finalAnswer := agent
+	finalAnswer.Messages = append(
+		append([]Message(nil), agent.Messages...),
+		Message{Role: RoleUser, Content: "Answer now from what you have; do not call a tool."},
+	)
+	finalAnswer.ToolChoiceNone = true
 
 	return []wireCase{
 		{name: "agent_opus_5_5_off_stream", model: "claude-opus-5-5", effort: aiprovider.ReasoningOff, stream: true, request: agent},
@@ -198,6 +204,8 @@ func wireCases() []wireCase {
 		{name: "structured_opus_4_8_off_blocking", model: "claude-opus-4-8", effort: aiprovider.ReasoningOff, request: structured},
 		{name: "structured_with_tools_blocking", model: "claude-opus-4-8", effort: aiprovider.ReasoningOff, request: structuredWithTools},
 		{name: "structured_opus_5_5_none_blocking", model: "claude-opus-5-5", effort: aiprovider.ReasoningNone, request: structured},
+		{name: "final_answer_haiku_5_5_medium_stream", model: "claude-haiku-5-5", effort: aiprovider.ReasoningMedium, stream: true, request: finalAnswer},
+		{name: "final_answer_opus_5_5_off_stream", model: "claude-opus-5-5", effort: aiprovider.ReasoningOff, stream: true, request: finalAnswer},
 		{name: "bare_unknown_model_blocking", model: "test-model", effort: aiprovider.ReasoningOff, request: bare},
 	}
 }
@@ -268,4 +276,25 @@ func TestAnthropicAdapter_WireMatchesGolden(t *testing.T) {
 			require.JSONEq(t, string(want), string(got))
 		})
 	}
+}
+
+func TestAnthropicAdapter_FinalAnswerKeepsToolsAndForbidsCalls(t *testing.T) {
+	t.Parallel()
+
+	var final, turn wireCase
+	for _, tc := range wireCases() {
+		switch tc.name {
+		case "final_answer_opus_5_5_off_stream":
+			final = tc
+		case "agent_opus_5_5_off_stream":
+			turn = tc
+		}
+	}
+
+	finalBody := runWireCase(t, final).Body
+	turnBody := runWireCase(t, turn).Body
+	require.Equal(t, map[string]any{"type": "none"}, finalBody["tool_choice"])
+	require.NotContains(t, turnBody, "tool_choice")
+	require.Equal(t, turnBody["tools"], finalBody["tools"])
+	require.Equal(t, turnBody["system"], finalBody["system"])
 }

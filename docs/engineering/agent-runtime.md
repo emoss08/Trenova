@@ -79,8 +79,11 @@ over a `Turn`) from workflow code, through the `TurnEffects` seam:
   guard. The guard answers an identical failed call with the first failure
   instead of running it; once a turn has sent failed calls again unchanged
   twice (`maxRepeatedFailures`), it stops calling tools, answers any other
-  call in that batch as not run, and asks for an answer without tools under
-  `stuckNote`, which says to tell the person what was refused and what they
+  call in that batch as not run, and asks for an answer with tool calls
+  forbidden under `stuckNote` (`finalAnswer` keeps the turn's tools declared
+  and sends `ToolChoiceNone`: Anthropic's `tool_choice: {"type":"none"}`, the
+  OpenAI protocols' `"none"`, so the history's tool calls still name declared
+  tools and the cached prefix holds), which says to tell the person what was refused and what they
   can do instead (`stuckReply` when that answer cannot be had). Schemas are compiled once per tool (`toolschema.Validator`); every
   object in a tool's schema is closed and every enum names its source
   (`agenttoolschema.Enum`, `x-enumOf`, stripped by `toolschema.ForModel`),
@@ -2345,9 +2348,13 @@ The whole table of link columns, and who writes each, is in
 duration says how long the answer took, first-event says how long a reader who
 attached as the turn began stared at nothing.
 
-`assistant_tool_outcomes_total{tool,verdict}` counts every tool call the loop
-answers, refusals included, by what became of it (the `aitrace` verdicts: ran,
-proposed, simulated, denied, invalid, duplicate, over_budget, failed, unknown).
+`assistant_tool_outcomes_total{tool,verdict,model,provider}` counts every tool
+call the loop answers, refusals included, by what became of it (the `aitrace`
+verdicts: ran, proposed, simulated, denied, invalid, duplicate, over_budget,
+failed, unknown), by the canonical model that asked for it
+(`aianalytics.CanonicalModel`, so a dated snapshot and a Bedrock id count as one
+model) and by the protocol of the provider that answered (`AnthropicMessages`,
+`OpenAIResponses`, `OpenAIChat`; `unknown` before any model answered).
 It is counted in one place, `recordToolResult`, and not while workflow code
 replays its history (`ReplayAware`); a name the model invented is counted as
 `unregistered`, so a confused model cannot mint a series per guess. The agent's

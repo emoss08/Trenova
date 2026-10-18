@@ -48,7 +48,11 @@ func anthropicParams(call *Call, attached *anthropicFiles) anthropic.BetaMessage
 		Messages: cachedConversation(
 			anthropicConversation(attached.messages, attached.blocks),
 		),
-		Tools:     cachedTools(toAnthropicTools(call.Request.Tools)),
+		Tools: cachedTools(toAnthropicTools(call.Request.Tools)),
+	}
+	if call.Request.ToolChoiceNone && len(params.Tools) > 0 {
+		none := anthropic.NewBetaToolChoiceNoneParam()
+		params.ToolChoice = anthropic.BetaToolChoiceUnionParam{OfNone: &none}
 	}
 	applyThinking(&params, call)
 	applyDiagnostics(&params, call)
