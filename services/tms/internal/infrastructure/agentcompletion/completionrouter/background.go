@@ -105,6 +105,9 @@ func (s *Service) SubmitBackground(
 			OutputTokens:    outcome.OutputTokens,
 			ProviderID:      outcome.ProviderID,
 			ProviderKind:    outcome.ProviderKind,
+
+			CacheReadTokens:  outcome.CacheReadTokens,
+			CacheWriteTokens: outcome.CacheWriteTokens,
 		},
 	}, nil
 }
@@ -187,6 +190,9 @@ func (s *Service) PollBackground(
 			OutputTokens:    result.Response.OutputTokens,
 			ProviderID:      provider.ID,
 			ProviderKind:    provider.Kind,
+
+			CacheReadTokens:  result.Response.CacheReadTokens,
+			CacheWriteTokens: result.Response.CacheWriteTokens,
 		}
 		s.recordBackground(ctx, provider, req, result)
 	}

@@ -141,8 +141,10 @@ func (b *Baseline) Render() string {
 	fmt.Fprintf(&out, " · %s · commit %s · %s\n\n",
 		b.Meta.FinishedAt.Sub(b.Meta.StartedAt).Round(time.Second),
 		stringOr(b.Meta.Commit, "unknown"), usageLine(b.Usage))
-	out.WriteString("Every figure is a mean per trial with a 95% interval in brackets. Pass is a " +
-		"Wilson interval; pass^" + strconv.Itoa(b.PassK) + " is the chance all " +
+	out.WriteString("Every figure is a mean per trial with a 95% interval in brackets. A model's " +
+		"pass is the mean of its scenarios' pass rates with a t-interval over scenarios (a " +
+		"scenario's trials are not independent); a scenario's is a Wilson interval over its " +
+		"trials. pass^" + strconv.Itoa(b.PassK) + " is the chance all " +
 		strconv.Itoa(b.PassK) + " trials of a scenario pass, averaged over scenarios. A cost " +
 		"marked ~ was priced from the model's list price or the price reference because the " +
 		"provider carries none. In is input the cache did not serve.\n\n")
@@ -224,9 +226,10 @@ func (r *SweepReport) Render() string {
 		"REFUSED\tRECALL\tPRESELECTION R@8\tIN+CACHE\t$/TASK\n", r.PassK)
 	for _, row := range rows {
 		m := &row.cell.Measures
+		pass := percentStatCell(row.cell.ScenarioPass)
 		fmt.Fprintf(table, "%s\t%d\t%s\t%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%.0f\t%s\n",
 			row.cell.Provider, row.point.Held, row.point.Mode, row.cell.Trials,
-			rateCell(row.cell.Pass), statCell(row.cell.PassK, 2), statCell(m.ModelCalls, 1),
+			pass, statCell(row.cell.PassK, 2), statCell(m.ModelCalls, 1),
 			statCell(m.ToolCalls, 1), statCell(m.Refused, 2), statCell(m.Recall, 2),
 			statCell(m.PreselectionRecall, 2),
 			m.UncachedInput.Mean+m.CacheRead.Mean+m.CacheWrite.Mean, costCell(m))

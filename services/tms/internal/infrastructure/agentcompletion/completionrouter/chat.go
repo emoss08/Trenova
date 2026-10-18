@@ -540,37 +540,52 @@ func (s *Service) attemptChat(
 		})
 	}
 
-	if streamer, ok := adapter.(modeladapter.Streamer); ok && sink != nil {
-		first := func(delta string) {
-			limited.disarm()
-			streamed.markFirst()
-			sink(delta)
-		}
-		err = s.withKeyFallback(provider, func(apiKey string) error {
-			call.APIKey = apiKey
-			var streamErr error
-			resp, streamed.text, streamErr = s.executeStreamWithRetry(
-				ctx,
-				streamer,
-				call,
-				first,
-				busy,
-			)
+	execute := func() error {
+		if streamer, ok := adapter.(modeladapter.Streamer); ok && sink != nil {
+			first := func(delta string) {
+				limited.disarm()
+				streamed.markFirst()
+				sink(delta)
+			}
+			err = s.withKeyFallback(provider, func(apiKey string) error {
+				call.APIKey = apiKey
+				var streamErr error
+				resp, streamed.text, streamErr = s.executeStreamWithRetry(
+					ctx,
+					streamer,
+					call,
+					first,
+					busy,
+				)
 
-			return streamErr
-		})
-	} else {
-		err = s.withKeyFallback(provider, func(apiKey string) error {
-			call.APIKey = apiKey
-			var callErr error
-			resp, callErr = s.executeWithRetryNoticed(ctx, adapter, call, busy)
+				return streamErr
+			})
+		} else {
+			err = s.withKeyFallback(provider, func(apiKey string) error {
+				call.APIKey = apiKey
+				var callErr error
+				resp, callErr = s.executeWithRetryNoticed(ctx, adapter, call, busy)
 
-			return callErr
-		})
-		if err == nil && sink != nil && resp.Text != "" {
-			sink(resp.Text)
-			streamed.text = resp.Text
+				return callErr
+			})
+			if err == nil && sink != nil && resp.Text != "" {
+				sink(resp.Text)
+				streamed.text = resp.Text
+			}
 		}
+
+		return err
+	}
+	err = execute()
+	if refusedToolChoice(provider, call.Request, err) {
+		s.logger.Warn("the provider refused tool_choice none; asking once more with the tools "+
+			"and no tool_choice",
+			zap.String("provider", provider.ID.String()),
+			zap.String("model", provider.Model),
+			zap.Error(err),
+		)
+		call.Request.ToolChoiceNone = false
+		err = execute()
 	}
 	err = limited.finish(err)
 	if err != nil {

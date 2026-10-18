@@ -61,6 +61,14 @@ func tCritical(df int) float64 {
 	return wilsonZ
 }
 
+func unitStatOf(values []float64) Stat {
+	stat := statOf(values)
+	stat.Low = max(stat.Low, 0)
+	stat.High = min(stat.High, 1)
+
+	return stat
+}
+
 type Rate struct {
 	Successes int     `json:"successes"`
 	Trials    int     `json:"trials"`

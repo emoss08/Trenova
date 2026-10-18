@@ -170,12 +170,18 @@ Each case, and each cell (a provider at an effort, split by scenario split), rep
 - **Tool selection**, against the scenario's labels: precision, recall, the position of the
   first expected call, and calls to forbidden tools. Core and runtime tools (`find_tools`,
   `withdraw_proposal`, …) are left out unless a label names them.
-- **Retrieval.** Preselection recall@8 (how many expected tools the turn opened with) and
-  `find_tools` recall (how many the model found when it asked), read from the disclosure
-  observer on the runtime.
+- **Retrieval**, on disclosed turns, against the tools the turn actually used. Preselection
+  recall is the share the turn's opening tool array held (the 8 ranked plus the companions,
+  followers, fed and carried-over tools loaded beside them). `find_tools` recall is scored
+  per answer, the share of the used tools the turn did not open with that one answer
+  loaded, averaged over answers; `findUnionRecall` is the same against every answer of the
+  turn together.
 
 `--repeat N` runs every scenario N times per cell. The matrix gives the mean per trial, never a
-sum, with a 95% Student-t interval; the pass rate takes a Wilson interval; `pass^k` (`--pass-k`,
+sum, with a 95% Student-t interval. A scenario's pass rate takes a Wilson interval over its
+trials; a model's is the mean of its scenarios' pass rates with a t-interval over scenarios,
+because one scenario's trials pass and fail together and pooling them would draw the interval
+too narrow (`report.json` keeps the pooled Wilson rate as `pass`, beside `scenarioPass`); `pass^k` (`--pass-k`,
 default 4) is the chance all k trials of a scenario pass, estimated as C(c,k)/C(n,k) from c
 passes in n trials and averaged over scenarios, so it needs `--repeat` of at least k.
 `--compare` compares means per trial, so a run with a different `--repeat` still compares.

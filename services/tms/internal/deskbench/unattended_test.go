@@ -203,3 +203,21 @@ func TestPricer_PricesAnUnpricedProviderFromTheListThenTheReference(t *testing.T
 		&charged)
 	assert.Equal(t, PriceSourceProvider, price.source)
 }
+
+func TestPricer_PricesEachModelAProviderServedOnItsOwn(t *testing.T) {
+	t.Parallel()
+
+	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
+	gateway := &aiprovider.Provider{
+		ID: pulid.MustNew("aiprv_"), Kind: aiprovider.KindAnthropicMessages, Model: "claude-haiku-5-5",
+	}
+	pricer := newPricer(&fakeProviders{provider: gateway}, fakeReference{})
+	usage := aiprovider.TokenUsage{Input: 1_000, Output: 1_000}
+
+	haiku := pricer.price(t.Context(), tenant, gateway.ID, "claude-haiku-5-5", usage, nil)
+	opus := pricer.price(t.Context(), tenant, gateway.ID, "claude-opus-5-5", usage, nil)
+	require.NotNil(t, haiku.cost)
+	require.NotNil(t, opus.cost)
+	assert.True(t, opus.cost.GreaterThan(*haiku.cost),
+		"a failover to another model on the same provider is priced at that model's rate")
+}

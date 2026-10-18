@@ -125,8 +125,11 @@ func RenderSummary(r *Report) string {
 	if r.Meta.Threshold != nil {
 		fmt.Fprintf(&b, "Tool disclosure threshold %d\n", *r.Meta.Threshold)
 	}
-	b.WriteString("\nMeans per trial with 95% intervals; pass is a Wilson interval; pass^" +
-		strconv.Itoa(summary.PassK) + " is the chance every one of " + strconv.Itoa(summary.PassK) +
+	b.WriteString("\nMeans per trial with 95% intervals. By model, pass is the mean of each " +
+		"scenario's pass rate with a t-interval over scenarios, since a scenario's trials rise " +
+		"and fall together (report.json keeps the pooled Wilson rate as pass); by scenario it is " +
+		"a Wilson interval over that scenario's trials. pass^" + strconv.Itoa(summary.PassK) +
+		" is the chance every one of " + strconv.Itoa(summary.PassK) +
 		" trials passes. Tokens: in is input the cache did not serve.\n")
 
 	renderCells(&b, summary.Cells, summary.PassK)
@@ -150,7 +153,8 @@ func renderCells(b *strings.Builder, cells []CellRow, k int) {
 		cell := &cells[idx]
 		m := &cell.Measures
 		fmt.Fprintf(table, strings.Repeat("%s\t", 2)+"%d\t%d\t"+strings.Repeat("%s\t", 13)+"%s\n",
-			cell.Provider, splitLabel(cell.Split), cell.Scenarios, cell.Trials, rateCell(cell.Pass),
+			cell.Provider, splitLabel(cell.Split), cell.Scenarios, cell.Trials,
+			percentStatCell(cell.ScenarioPass),
 			statCell(cell.PassK, 2), statCell(m.Seconds, 1), statCell(m.FirstTokenMs, 0),
 			statCell(m.ModelCalls, 1), statCell(m.ToolCalls, 1), statCell(m.Refused, 2),
 			statCell(m.UncachedInput, 0), statCell(m.CacheRead, 0), statCell(m.CacheWrite, 0),
@@ -298,12 +302,15 @@ func meanCell(stat Stat, places int) string {
 	return strconv.FormatFloat(stat.Mean, 'f', places, 64)
 }
 
-func rateCell(rate Rate) string {
-	if rate.Trials == 0 {
+func percentStatCell(stat Stat) string {
+	if stat.N == 0 {
 		return "–"
 	}
+	if stat.N == 1 || stat.Low == stat.High {
+		return fmt.Sprintf("%.0f%%", stat.Mean*100)
+	}
 
-	return fmt.Sprintf("%.0f%% [%.0f, %.0f]", rate.Value*100, rate.Low*100, rate.High*100)
+	return fmt.Sprintf("%.0f%% [%.0f, %.0f]", stat.Mean*100, stat.Low*100, stat.High*100)
 }
 
 func percentCell(value *float64) string {

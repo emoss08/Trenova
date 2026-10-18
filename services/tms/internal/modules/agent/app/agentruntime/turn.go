@@ -289,6 +289,8 @@ type TurnState struct {
 	// ToolMemories are the carried memories about a tool the turn has not
 	// called yet.
 	ToolMemories map[string][]pulid.ID `json:"toolMemories,omitempty"`
+
+	ProviderKind aiprovider.Kind `json:"providerKind,omitempty"`
 }
 
 // ToolSetState is a turn's tool set as data. Which tools are loaded follows
@@ -334,6 +336,7 @@ func (t *Turn) State() TurnState {
 		TaintOpened:     slices.Clone(t.opened),
 		World:           t.world.clone(),
 		ToolMemories:    cloneToolMemories(t.toolMemories),
+		ProviderKind:    t.providerKind,
 	}
 }
 
@@ -396,6 +399,7 @@ func (s *Service) RestoreTurn(req *agentports.RunRequest, state TurnState) *Turn
 		external:     state.ExternalContent,
 		world:        state.World.clone(),
 		toolMemories: cloneToolMemories(state.ToolMemories),
+		providerKind: state.ProviderKind,
 	}
 }
 

@@ -37,6 +37,7 @@ type Retrieval struct {
 	FindAnswers        int      `json:"findAnswers"`
 	FindHits           int      `json:"findHits"`
 	FindRecall         *float64 `json:"findRecall,omitempty"`
+	FindUnionRecall    *float64 `json:"findUnionRecall,omitempty"`
 }
 
 var runtimeToolNames = sync.OnceValue(func() []string {
@@ -186,14 +187,18 @@ func (t *selectionTally) score() *Selection {
 func scoreRetrieval(turns []*TurnRecord) *Retrieval {
 	retrieval := &Retrieval{}
 	preselection := make([]float64, 0, len(turns))
-	finds := make([]float64, 0, len(turns))
+	answers := make([]float64, 0, len(turns))
+	unions := make([]float64, 0, len(turns))
 	for _, turn := range turns {
 		used := usedDomainTools(turn)
 		if len(used) == 0 {
 			continue
 		}
 		opening := openingTools(turn)
-		var ranked []string
+		missing := slices.DeleteFunc(slices.Clone(used), func(name string) bool {
+			return slices.Contains(opening, name)
+		})
+		disclosed := false
 		found := make([]string, 0, 8)
 		for idx := range turn.Disclosures {
 			disclosure := &turn.Disclosures[idx]
@@ -202,35 +207,39 @@ func scoreRetrieval(turns []*TurnRecord) *Retrieval {
 			}
 			switch disclosure.Kind {
 			case DisclosurePreselected:
-				ranked = disclosure.Ranked
+				disclosed = true
 			case DisclosureFound:
 				retrieval.FindAnswers++
 				if slices.ContainsFunc(disclosure.Ranked, func(name string) bool {
-					return slices.Contains(used, name) && !slices.Contains(opening, name)
+					return slices.Contains(missing, name)
 				}) {
 					retrieval.FindHits++
+				}
+				if len(missing) > 0 {
+					answers = append(answers, coverage(missing, disclosure.Ranked))
 				}
 				found = append(found, disclosure.Ranked...)
 			}
 		}
-		if ranked != nil {
+		if disclosed {
 			retrieval.PreselectionTurns++
-			preselection = append(preselection, coverage(used, ranked))
+			preselection = append(preselection, coverage(used, opening))
 		}
-		missing := slices.DeleteFunc(slices.Clone(used), func(name string) bool {
-			return slices.Contains(opening, name)
-		})
 		if len(missing) > 0 && len(found) > 0 {
-			finds = append(finds, coverage(missing, found))
+			unions = append(unions, coverage(missing, found))
 		}
 	}
 	if len(preselection) > 0 {
 		value := meanOf(preselection)
 		retrieval.PreselectionRecall = &value
 	}
-	if len(finds) > 0 {
-		value := meanOf(finds)
+	if len(answers) > 0 {
+		value := meanOf(answers)
 		retrieval.FindRecall = &value
+	}
+	if len(unions) > 0 {
+		value := meanOf(unions)
+		retrieval.FindUnionRecall = &value
 	}
 	if retrieval.PreselectionTurns == 0 && retrieval.FindAnswers == 0 {
 		return nil

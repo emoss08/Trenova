@@ -77,6 +77,29 @@ func TestSummarize_AveragesTrialsInsteadOfSummingThem(t *testing.T) {
 	assert.Equal(t, 1, summary.Cells[0].Scenarios)
 }
 
+func TestSummarize_IntervalsAModelsPassRateOverItsScenarios(t *testing.T) {
+	t.Parallel()
+
+	steady := &Scenario{Name: "steady", Split: SplitDevelopment}
+	broken := &Scenario{Name: "broken", Split: SplitDevelopment}
+	cases := make([]*CaseResult, 0, 8)
+	for range 4 {
+		cases = append(cases,
+			benchCase(steady, "Haiku", true, 1, 100, 0, "0.01"),
+			benchCase(broken, "Haiku", false, 1, 100, 0, "0.01"))
+	}
+
+	summary := summarize(cases, 4)
+	cell := summary.Cells[0]
+	assert.Equal(t, 0.5, cell.Pass.Value)
+	assert.InDelta(t, 0.5, cell.ScenarioPass.Mean, 1e-9)
+	assert.Equal(t, 2, cell.ScenarioPass.N, "two scenarios, not eight trials")
+	assert.Less(t, cell.ScenarioPass.Low, cell.Pass.Low,
+		"trials of one scenario move together, so the pooled interval is too narrow")
+	assert.GreaterOrEqual(t, cell.ScenarioPass.Low, 0.0)
+	assert.LessOrEqual(t, cell.ScenarioPass.High, 1.0)
+}
+
 func TestCompare_ReadsAnOlderReportsTotalsPerRun(t *testing.T) {
 	t.Parallel()
 
@@ -133,9 +156,12 @@ func TestScoreSelection(t *testing.T) {
 func TestScoreRetrieval_AgainstTheToolsThePassingTrialUsed(t *testing.T) {
 	t.Parallel()
 
-	turn := toolTurnRecord("find_tools", "get_shipment", "list_trailers", "add_shipment_comment")
+	turn := toolTurnRecord(
+		"find_tools", "get_shipment", "list_trailers", "add_shipment_comment", "get_customer",
+	)
 	turn.ModelCalls = []*ModelCall{{Chat: &agentports.ChatCompletionRequest{Tools: []kernelports.ToolSpec{
-		{Name: "get_shipment"}, {Name: "add_shipment_comment"}, {Name: "find_tools"},
+		{Name: "get_shipment"}, {Name: "add_shipment_comment"}, {Name: "get_customer"},
+		{Name: "find_tools"},
 	}}}}
 	turn.Disclosures = []Disclosure{
 		{Kind: DisclosurePreselected, Ranked: []string{"get_shipment", "add_shipment_comment"}},
@@ -146,9 +172,12 @@ func TestScoreRetrieval_AgainstTheToolsThePassingTrialUsed(t *testing.T) {
 	retrieval := scoreRetrieval([]*TurnRecord{turn})
 	require.NotNil(t, retrieval)
 	require.NotNil(t, retrieval.PreselectionRecall)
-	assert.InDelta(t, 2.0/3, *retrieval.PreselectionRecall, 1e-9)
+	assert.InDelta(t, 3.0/4, *retrieval.PreselectionRecall, 1e-9,
+		"a tool carried over or loaded beside the ranked ones was in the opening set")
 	require.NotNil(t, retrieval.FindRecall)
-	assert.InDelta(t, 1.0, *retrieval.FindRecall, 1e-9)
+	assert.InDelta(t, 0.5, *retrieval.FindRecall, 1e-9, "each answer is scored on its own")
+	require.NotNil(t, retrieval.FindUnionRecall)
+	assert.InDelta(t, 1.0, *retrieval.FindUnionRecall, 1e-9)
 	assert.Equal(t, 2, retrieval.FindAnswers)
 	assert.Equal(t, 1, retrieval.FindHits)
 }

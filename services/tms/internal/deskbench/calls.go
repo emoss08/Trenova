@@ -131,7 +131,12 @@ func callTokens(call *ModelCall) tokenCount {
 		count.charged = result.CostUSD
 	case call.StructuredResult != nil:
 		result := call.StructuredResult
-		count.raw = aiprovider.TokenUsage{Input: result.InputTokens, Output: result.OutputTokens}
+		count.raw = aiprovider.TokenUsage{
+			Input:      result.InputTokens,
+			Output:     result.OutputTokens,
+			CacheRead:  result.CacheReadTokens,
+			CacheWrite: result.CacheWriteTokens,
+		}
 		count.kind = result.ProviderKind
 		count.model = result.ModelIdentifier
 		count.provider = result.ProviderID

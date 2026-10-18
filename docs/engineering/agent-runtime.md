@@ -83,7 +83,9 @@ over a `Turn`) from workflow code, through the `TurnEffects` seam:
   forbidden under `stuckNote` (`finalAnswer` keeps the turn's tools declared
   and sends `ToolChoiceNone`: Anthropic's `tool_choice: {"type":"none"}`, the
   OpenAI protocols' `"none"`, so the history's tool calls still name declared
-  tools and the cached prefix holds), which says to tell the person what was refused and what they
+  tools and the cached prefix holds; an OpenAI-compatible endpoint that refuses it with a 400
+  or 422 naming `tool_choice` is asked once more with the tools and no `tool_choice`, logged
+  as a warning, by `refusedToolChoice` in `completionrouter`), which says to tell the person what was refused and what they
   can do instead (`stuckReply` when that answer cannot be had). Schemas are compiled once per tool (`toolschema.Validator`); every
   object in a tool's schema is closed and every enum names its source
   (`agenttoolschema.Enum`, `x-enumOf`, stripped by `toolschema.ForModel`),
@@ -1475,7 +1477,12 @@ its first model call (`declareWithdrawal`), and the loop refuses the call with
 mid-turn: the cached prefix was written again, and on the models that bind thinking to the
 conversation (Opus, Sonnet and Haiku 5.5) every replayed thinking block was bound to the old
 list. `TestTurn_SendsTheSameToolsOnEveryModelCall` holds the tool array identical across a
-turn that proposes, withdraws and proposes again. Every
+turn that proposes, withdraws and proposes again. A disclosed turn's array still grows
+mid-turn, at its end only: `resolveFind` loads what `find_tools` answered, the runner loads a
+held tool the model called without being sent it, `unheldRefusal` loads the nearest held
+tools for a name that does not exist, and `Turn.LoadTools` loads what a `find_tools`
+answered elsewhere found. `TestRun_ADisclosedTurnOnlyAppendsToItsToolArray` pins that as the
+baseline for the rebuild of context assembly. Every
 filing result names its proposal's id ("Recorded a proposal to run "create_shipment"
 (proposal ap_…)"), and the runtime answers the call itself, like `request_decision`: it
 marks that action `Withdrawn` on `PendingAction`, and the recorder records it

@@ -13,7 +13,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/shopspring/decimal"
 )
 
 const (
@@ -149,6 +148,8 @@ type CellRow struct {
 	Pass      Rate     `json:"pass"`
 	PassK     Stat     `json:"passK"`
 	Measures  Measures `json:"measures"`
+
+	ScenarioPass Stat `json:"scenarioPass"`
 }
 
 func (c *CellRow) Key() string {
@@ -564,18 +565,23 @@ func cellRows(cases []*CaseResult, matrix []MatrixRow) []CellRow {
 			Trials:   len(results),
 			Measures: measuresOf(results),
 		}
-		passK := make([]float64, 0, len(rowsByCell[key]))
 		rows := rowsByCell[key]
+		passK := make([]float64, 0, len(rows))
+		scenarioPass := make([]float64, 0, len(rows))
 		for idx := range rows {
 			row := &rows[idx]
 			cell.Scenarios++
 			cell.Passed += row.Passed
+			if row.Runs > 0 {
+				scenarioPass = append(scenarioPass, float64(row.Passed)/float64(row.Runs))
+			}
 			if row.PassK != nil {
 				passK = append(passK, *row.PassK)
 			}
 		}
 		cell.Pass = rateOf(cell.Passed, cell.Trials)
-		cell.PassK = statOf(passK)
+		cell.ScenarioPass = unitStatOf(scenarioPass)
+		cell.PassK = unitStatOf(passK)
 		cells = append(cells, cell)
 	}
 	slices.SortStableFunc(cells, func(a, b CellRow) int {
@@ -593,7 +599,6 @@ type measureSeries struct {
 	findAnswers, findHits                               int
 	verdicts, guards                                    map[string]float64
 	estimated, unpriced                                 bool
-	passedCost                                          decimal.Decimal
 	passed                                              int
 }
 
@@ -630,9 +635,6 @@ func (m *measureSeries) add(result *CaseResult) {
 	case usage.CostUSD != nil:
 		cost, _ := usage.CostUSD.Float64()
 		m.cost = append(m.cost, cost)
-		if result.Passed {
-			m.passedCost = m.passedCost.Add(*usage.CostUSD)
-		}
 	}
 	if usage.EstimatedCalls > 0 {
 		m.estimated = true

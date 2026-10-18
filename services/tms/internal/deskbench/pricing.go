@@ -31,7 +31,12 @@ type pricer struct {
 	reference agentports.ModelPriceReference
 
 	mu    sync.Mutex
-	known map[pulid.ID]pricedProvider
+	known map[priceKey]pricedProvider
+}
+
+type priceKey struct {
+	provider pulid.ID
+	model    string
 }
 
 func newPricer(
@@ -41,7 +46,7 @@ func newPricer(
 	return &pricer{
 		providers: providers,
 		reference: reference,
-		known:     make(map[pulid.ID]pricedProvider, 8),
+		known:     make(map[priceKey]pricedProvider, 8),
 	}
 }
 
@@ -79,8 +84,9 @@ func (p *pricer) lookup(
 	providerID pulid.ID,
 	model string,
 ) pricedProvider {
+	key := priceKey{provider: providerID, model: model}
 	p.mu.Lock()
-	known, ok := p.known[providerID]
+	known, ok := p.known[key]
 	p.mu.Unlock()
 	if ok {
 		return known
@@ -88,7 +94,7 @@ func (p *pricer) lookup(
 
 	resolved := p.resolve(ctx, tenant, providerID, model)
 	p.mu.Lock()
-	p.known[providerID] = resolved
+	p.known[key] = resolved
 	p.mu.Unlock()
 
 	return resolved

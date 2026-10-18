@@ -86,6 +86,9 @@ type StructuredCompletionResult struct {
 	ProviderKind aiprovider.Kind
 	LatencyMs    int64
 	CostUSD      *decimal.Decimal
+
+	CacheReadTokens  int
+	CacheWriteTokens int
 }
 
 // ChatCompletionRequest is one turn of a tool-using conversation. Unlike the
