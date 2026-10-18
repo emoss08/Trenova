@@ -39,7 +39,7 @@ func TestSumAutomaticMoney_CountsOnlyWritesThatRanInTheFunctionalCurrency(t *tes
 		`AND (ap.executed_at >= 100))`)).
 		WillReturnRows(sqlmock.NewRows([]string{"calls", "amount_minor"}).AddRow(3, 45_000))
 
-	used, err := repo.SumAutomaticMoney(t.Context(), agentports.SumAutomaticMoneyRequest{
+	used, err := repo.SumAutomaticMoney(t.Context(), &agentports.SumAutomaticMoneyRequest{
 		TenantInfo: tenant,
 		Currency:   " usd ",
 		Since:      100,
@@ -63,7 +63,7 @@ func TestSumAutomaticMoney_ASimulatedRunCountsItsSimulatedWrites(t *testing.T) {
 		`AND (ap.run_id = '`+runID.String()+`'))`)).
 		WillReturnRows(sqlmock.NewRows([]string{"calls", "amount_minor"}).AddRow(1, 2_000))
 
-	used, err := repo.SumAutomaticMoney(t.Context(), agentports.SumAutomaticMoneyRequest{
+	used, err := repo.SumAutomaticMoney(t.Context(), &agentports.SumAutomaticMoneyRequest{
 		TenantInfo: tenant,
 		Currency:   "CAD",
 		RunID:      runID,
@@ -80,7 +80,7 @@ func TestSumAutomaticMoney_RefusesToCountWithoutACurrency(t *testing.T) {
 	conn, sqlMock := dbtest.NewSQLMock(t)
 	repo := &repository{db: conn, l: zap.NewNop()}
 
-	_, err := repo.SumAutomaticMoney(t.Context(), agentports.SumAutomaticMoneyRequest{
+	_, err := repo.SumAutomaticMoney(t.Context(), &agentports.SumAutomaticMoneyRequest{
 		TenantInfo: moneyTenant(),
 		Currency:   " ",
 	})

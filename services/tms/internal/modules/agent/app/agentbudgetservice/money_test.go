@@ -17,13 +17,13 @@ import (
 
 type fakeMoney struct {
 	day, run agent.MoneyUse
-	asked    []agentports.SumAutomaticMoneyRequest
+	asked    []*agentports.SumAutomaticMoneyRequest
 	err      error
 }
 
 func (f *fakeMoney) SumAutomaticMoney(
 	_ context.Context,
-	req agentports.SumAutomaticMoneyRequest,
+	req *agentports.SumAutomaticMoneyRequest,
 ) (agent.MoneyUse, error) {
 	f.asked = append(f.asked, req)
 	if f.err != nil {

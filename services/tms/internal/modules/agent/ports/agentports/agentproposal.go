@@ -219,5 +219,5 @@ type AgentProposalRepository interface {
 		req SetPendingModificationsRequest,
 	) (*agent.AgentProposal, error)
 	CountExecutedTool(ctx context.Context, req CountExecutedToolRequest) (int, error)
-	SumAutomaticMoney(ctx context.Context, req SumAutomaticMoneyRequest) (agent.MoneyUse, error)
+	SumAutomaticMoney(ctx context.Context, req *SumAutomaticMoneyRequest) (agent.MoneyUse, error)
 }

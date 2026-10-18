@@ -211,7 +211,7 @@ var errMoneyCurrencyRequired = errors.New("sum automatic money writes: a currenc
 
 func (r *repository) SumAutomaticMoney(
 	ctx context.Context,
-	req agentports.SumAutomaticMoneyRequest,
+	req *agentports.SumAutomaticMoneyRequest,
 ) (agent.MoneyUse, error) {
 	currency := strings.ToUpper(strings.TrimSpace(req.Currency))
 	if currency == "" {

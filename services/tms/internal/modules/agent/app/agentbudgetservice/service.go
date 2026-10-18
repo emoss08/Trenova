@@ -61,7 +61,7 @@ type booksReader interface {
 type moneyCounter interface {
 	SumAutomaticMoney(
 		ctx context.Context,
-		req agentports.SumAutomaticMoneyRequest,
+		req *agentports.SumAutomaticMoneyRequest,
 	) (agent.MoneyUse, error)
 }
 
@@ -215,7 +215,7 @@ func (s *Service) MoneyAllowance(
 		return agent.MoneyAllowance{}, err
 	}
 
-	day, err := s.money.SumAutomaticMoney(ctx, agentports.SumAutomaticMoneyRequest{
+	day, err := s.money.SumAutomaticMoney(ctx, &agentports.SumAutomaticMoneyRequest{
 		TenantInfo: tenantInfo,
 		Currency:   currency,
 		Since:      dayStart,
@@ -227,7 +227,7 @@ func (s *Service) MoneyAllowance(
 	simulated := req.Definition.SimulationMode
 	run := agent.MoneyUse{}
 	if req.RunID.IsNotNil() {
-		if run, err = s.money.SumAutomaticMoney(ctx, agentports.SumAutomaticMoneyRequest{
+		if run, err = s.money.SumAutomaticMoney(ctx, &agentports.SumAutomaticMoneyRequest{
 			TenantInfo: tenantInfo,
 			Currency:   currency,
 			RunID:      req.RunID,

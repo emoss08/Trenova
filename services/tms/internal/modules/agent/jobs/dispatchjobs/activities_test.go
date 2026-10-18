@@ -436,7 +436,7 @@ func (m *stubProposalRepo) ExpirePendingByThread(
 
 func (s *stubProposalRepo) SumAutomaticMoney(
 	context.Context,
-	agentports.SumAutomaticMoneyRequest,
+	*agentports.SumAutomaticMoneyRequest,
 ) (agent.MoneyUse, error) {
 	return agent.MoneyUse{}, nil
 }

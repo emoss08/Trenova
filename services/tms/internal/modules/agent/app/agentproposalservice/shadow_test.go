@@ -340,7 +340,7 @@ func (f *fakeProposalRepo) ExpirePendingByThread(
 
 func (r *fakeProposalRepo) SumAutomaticMoney(
 	context.Context,
-	agentports.SumAutomaticMoneyRequest,
+	*agentports.SumAutomaticMoneyRequest,
 ) (agent.MoneyUse, error) {
 	return agent.MoneyUse{}, nil
 }

@@ -304,7 +304,7 @@ func TestDecide_RefusesAPlanWithAStepFromAnAgentInShadowMode(t *testing.T) {
 
 func (f *fakeSteps) SumAutomaticMoney(
 	context.Context,
-	agentports.SumAutomaticMoneyRequest,
+	*agentports.SumAutomaticMoneyRequest,
 ) (agent.MoneyUse, error) {
 	return agent.MoneyUse{}, nil
 }
