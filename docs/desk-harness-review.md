@@ -350,3 +350,157 @@ result keeps its fields while its lists are cut (`RT/fence.go`).
    OpenAI's equivalents) is used. Discovery is entirely Trenova's own `find_tools`.
 5. **Habit fixes exist only for the two benched models.** Every one targets Haiku 5.5 or
    gpt-6-luna. Gemini, Llama, Qwen, DeepSeek and Ollama have code paths but no bench coverage.
+
+### 1.3 System prompt and instructions
+
+These figures come from the 90 committed prompt snapshots
+(`domain/agentdefinition/testdata/prompts/*.golden`) and from five prompts rendered through the
+real `OpenTurn` with the real tool registry. Token counts are characters ÷ 4. That is a floor:
+JSON schemas tokenize denser than prose, so treat the tool figures as low by perhaps 10–30%.
+
+**Assembly.** `BuildSystemPromptParts` (`domain/agentdefinition/prompt.go:334`) builds the prompt
+in two parts, and the prompt version is `agent-definition/v9`. The stable part is meant to be
+cacheable. The volatile part changes from turn to turn. A few more blocks ride on the user
+message (`agentruntime/turn.go:579-602`).
+
+The stable part, in order:
+
+| Section | Scope | ~Tokens |
+|---|---|---|
+| Identity and the administrator's description | per agent | 85–155 |
+| **Boundaries**: tenant, act only through tools, proposals, no code, the list of untrusted tags | static | 416 |
+| **Working with records**: lookup not recall; never invent ids; send only the parameters you know; do not calculate; overdue first; propose as the person said it | static (a variant is used when the agent holds `analyze_data`) | 741 (≈1,000 with the variant) |
+| **Tools**, grouped by what a call does, with recipes | per agent, only when the agent holds ≤12 tools | 110–300 |
+| **Agents you can ask** and the `<delegate_agents>` roster | per agent and person | ~200 + 35 per delegate |
+| **Artifacts** | static | 305 |
+| **Trenova itself**: product blurb, `find_in_trenova` and `open_page` rules | static | 489 |
+| **Output**: conversational, inline (palette), report, or delegated | per surface | 63–360 |
+| **Remembering** | static | 248 |
+| **Organization instructions**: the template's text, with `{{organization}}`, `{{user.name}}` and similar filled in | per agent | 58 (General) to 934 |
+| **Never**: up to 20 guardrails set by an administrator | per agent | 0 on the starter templates |
+| **About this organization**: the nightly organization profile | per organization | 150–540 |
+
+The volatile part:
+
+- runtime context: the organization, the date, how the run started, the surface, the person and
+  their profile, `<subject_context>`, `<page_context>` with the product guide's summary of the
+  page, `<page_view>`, `<page_draft>`, pinned facts and mentions (81–280 tokens, and hundreds
+  more with a page view or draft);
+- memories chosen for this message (0–6,000 tokens by default; 16,000 at most);
+- the **disclosed-tool catalog**, on agents that hold more than 12 tools. It names the loaded
+  tools and then lists *every other held tool* with its first sentence: about 1,750 tokens on
+  Dispatch, 2,550 on Billing, and **about 7,000 on a palette question** (195 tools);
+- proposals awaiting a decision (about 245 tokens).
+
+On the user message: the `Now:` line, `<records_in_play>` (100–600 tokens), decisions made out
+of view, attachment text (up to 24,000 characters), and slash-command directives.
+
+The shared rules that every agent carries, before any agent-specific text, come to about 2,540
+tokens: Boundaries, Working with records, Artifacts, Trenova itself, Output and Remembering.
+
+**What the prompt does well.**
+
+- Every rule says why it exists, and the comments in `prompt.go` record the incident behind each
+  one.
+- There is no shouting in capitals.
+- The stable and volatile split is deliberate. For example, the date is day-only so that the
+  prefix stays cacheable.
+- Records in play are kept off the saved history, so a stale status or ETA is never replayed.
+
+Representative lines:
+
+> Anything about this organization's records is a lookup, not a recall. Look it up, every
+> time, even when you are confident. You do not know this organization's data.
+
+> When the person names exactly what to change — this driver on that tractor, this amount,
+> that time — propose it as they said it… The approval is where they weigh it, so do not ask
+> them to confirm first.
+
+**What it does not do.**
+
+1. **Nothing states the goal of this request.** No intent, no task frame, no plan, no success
+   criteria. The scope classifier's category is used only to refuse, and is never passed to the
+   prompt. The agent matcher adds nothing to the prompt either.
+2. **No domain model.** Nothing defines a move, a stop, a billing queue item, an EDI 210 or a
+   settlement. The domain reaches the model through:
+   - a one-paragraph product blurb;
+   - the organization profile;
+   - the business rules inside each template's instructions;
+   - the tool descriptions.
+
+   The product guide (`docs/product-guide/`) is reachable only through `find_in_trenova`.
+3. **Per-request injection exists, but only for tools and memories.** The tools are ranked
+   (hybrid lexical plus semantic) and the memories are chosen for the message. Learned
+   `Procedure` memories are the nearest thing to playbooks. Nothing retrieves domain or workflow
+   guidance for the request in hand.
+4. **Generic text goes to agents it does not apply to.** "Working with records" (741 tokens) goes
+   to the Desk's General assistant, which holds no record tools.
+5. **The same text is said twice.**
+   - `publish_artifact`'s description repeats the Artifacts section almost word for word.
+   - `remember` repeats Remembering.
+   - `find_in_trenova` and `open_page` repeat Trenova itself.
+   - `find_tools` repeats the catalog preamble.
+   - About 300 tokens of prose restate rules the runtime already enforces: stripping ids, code
+     and tables; grounding; the `find_tools` cap.
+6. **Tensions.**
+   - The General assistant is told to "change nothing", yet it holds `remember`, `guide_profile`,
+     `wait_until` and `flag_for_manual_review`.
+   - On the palette, the surface line says "keep it short" while Output says "write every row up
+     to about 30".
+   - Boundaries tells every agent to use `withdraw_proposal`, a tool that does not exist until a
+     proposal is filed.
+7. **The list of untrusted tags in Boundaries is incomplete.** It leaves out
+   `<records_in_play>`, `<pinned_facts>`, `<delegate_agents>`, `<file_text>` and both memory tags.
+
+### 1.5 Context spent before the person's message is read
+
+First model call, measured on prompts rendered through the real runtime, with short profiles,
+no memories and no delegates:
+
+| Case | Tools sent | System prompt | Tool schemas | `_why` on every tool | **Total** |
+|---|---|---|---|---|---|
+| Desk, General assistant (core tools only) | 10 | ≈3,280 | ≈5,440 | ≈1,500 | **≈10,250** |
+| Desk, Dispatch assistant (holds 50, disclosed) | 22 | ≈5,750 | ≈10,620 | ≈3,300 | **≈19,700** |
+| Desk, Billing assistant (disclosed) | 19 | ≈6,435 | ≈8,140 | ≈2,850 | **≈17,450** |
+| Billing as a delegate of Dispatch | 20 | ≈5,260 | ≈8,480 | ≈3,000 | **≈16,780** |
+| Palette quick question (General assistant holding all 206 reads) | 18 | ≈10,450 (≈6,825 of it the catalog) | ≈7,790 | ≈2,700 | **≈20,950** |
+
+In production, add full profiles (about 750), memories (0–6,000), delegates and records in play.
+That gives roughly **12–17k tokens for a General-assistant turn and 21–27k for a specialist**,
+before the question.
+
+Where it goes:
+
+1. **Tool schemas outweigh the prompt by 1.5 to 2 times.** The 10 core tools that every chat turn
+   carries cost about 5,400 tokens:
+   - `ask_user` 1,218;
+   - `wait_until` 851;
+   - `remember` 631;
+   - `publish_artifact` 600;
+   - `flag_for_manual_review` 566;
+   - `recall_memory`, `guide_profile`, `find_in_trenova`, `open_page` and `cancel_wait` for the
+     rest.
+2. **Core tools are about half of every disclosed turn's tool list.** On Dispatch, 22 tools are
+   sent: the 10 core tools, the 8 preselected for the question, `find_tools`, and tools carried
+   over. Every specialist turn opens with only 8 domain tools in view, and with 10 conversation
+   and memory tools beside them. Not one of the 10 core tools is a domain tool.
+3. **`_why` costs about 150 tokens per tool**, on every tool and every call: 1,500 to 3,300 tokens
+   per request. It is valuable for the person reading the transcript, but it is the most
+   compressible block of all (see Phase 3).
+4. **The palette, the "quick" surface, sends the largest prompt in the system.** Most of it is the
+   195-line catalog, and it sits in the volatile, uncached part.
+
+**Prompt caching probably misses for most agents.** This is an inference from code, not a
+measurement. Anthropic matches its prefix in the order tools, then system, then messages. So any
+change to the tool list discards the cached system prompt too. The tool list changes in three
+places:
+
+- **Between turns**, on any agent holding more than 12 tools: the 8 preselected tools are
+  re-ranked from each question.
+- **Within a turn**, when `find_tools` loads tools.
+- **Within a turn**, when the first proposal adds `withdraw_proposal`
+  (`withdrawproposal.go:74-80`).
+
+The cache-mark comment at `modeladapter/anthropic.go:726-746` holds only for agents with 12 or
+fewer tools. `ai.cacheDiagnostics` already exists and would confirm or refute this in one day of
+traffic: look for `tools_changed`.
