@@ -666,8 +666,13 @@ So every write meant for an agent has a tool. Taken together, Desk's write surfa
 
 **Gaps worth a decision** (they are not the subject of this review, but they are recorded here):
 
-1. Money's class cap is Automatic, so 7 money tools (for example `vet_carrier` and settlement
-   adjustments) can run unattended in an untainted run.
+1. Money's class cap is Automatic, so 7 money tools can run unattended in an untainted run:
+   - `post_customer_payment`;
+   - `match_bank_receipt`;
+   - `correct_charge_code`;
+   - adding and removing carrier and driver settlement adjustments.
+
+   (`vet_carrier` is Ask first; an earlier draft wrongly listed it here.)
 2. The preview digest is optional. A decision without one goes through and is recorded as
    unreviewed (`agentdecisionservice/preview.go:97-109`). Rows of a batch past the first 5 are
    approved unreviewed.
@@ -1634,3 +1639,60 @@ Label each task's expected tool set, the tools it must not call, and its success
 - LangChain, *Benchmarking Multi-Agent Architectures*, 2025-06-10. https://www.langchain.com/blog/benchmarking-multi-agent-architectures
 - Chroma, *Context Rot*, 2025. https://www.trychroma.com/research/context-rot
 - Archestra, *Progressive disclosure for MCP tools: modeled vs measured*, 2026. https://archestra.ai/blog/progressive-disclosure-for-mcp-tools
+
+## 8. Decisions and open questions (2026-10-18, after the review)
+
+**Decisions made by the product owner:**
+
+1. **Remove Ollama.**
+2. **Close the write-safety gaps** in §1.6:
+   - money tools that run automatically;
+   - approvals accepted without a preview digest.
+3. **Remove `_why`** from every tool schema.
+
+**What a code scan found each decision touches.** These need settling before implementation.
+
+1. **Ollama is used for more than chat.**
+   - The adapter has an embeddings path (`modeladapter/embed_ollama.go`).
+   - **The CI eval gate records its embedding baselines with Ollama**
+     (`agentevalgate/embeddings.go`: `ollama pull nomic-embed-text`, `TRENOVA_EVAL_OLLAMA_URL`).
+     The hybrid floors in `toolselection.floors.json` (top-1 0.78, recall@5 0.91) were measured
+     against those vectors.
+   - Removing Ollama means choosing another embedding model for the gate and re-recording the
+     floors, or keeping a test-only embedder.
+   - Ollama is also referenced in the seed providers, the provider catalog and prober, the
+     pricing reference, the `ForPortableModel` schema path, tracing attributes, the web
+     provider editor and its brand marks, the self-hosting docs and the self-host `config.yaml`
+     (`ai.privateNetworkProviders`).
+   - Rows already saved with kind `Ollama` need a migration path: refuse them, or disable them
+     with a notice.
+2. **The money gap is a trade-off against unattended automation.**
+   - Capping the Money class at Ask first would make every customer-payment post and bank
+     match wait for a person. That is the core of what the Cash application desk runs
+     unattended, and unattended runs are the owner's first priority.
+   - The alternative keeps those tools automatic, but only inside per-call conditions:
+     - an exact match only;
+     - an amount ceiling;
+     - a per-run and per-day cap;
+     - never after outside content.
+   - That needs a decision on which bounds apply to which of the 7 tools.
+3. **Unreviewed approval is deliberate today, so closing it is a design change, not a bug fix.**
+   The client says so itself (`preview-gate.ts`): a batch "proposal they never opened goes
+   without [a digest] and is recorded as approved unreviewed, which is the truth".
+   - Approvals without a digest also arrive through the REST handlers (`agentproposalhandler`,
+     `agentplanhandler`), which API keys and integrations use, and through plans.
+   - Choices:
+     - (a) require a digest everywhere, so bulk approval must show each preview;
+     - (b) require a digest by class (money, customer, driver, external, tainted) and allow
+       unreviewed approval only for internal writes;
+     - (c) keep it and only surface it.
+
+     I recommend (b).
+4. **`_why` is a product feature, not only a token cost.**
+   - The Desk renders it as the "why" toggle on each step (`desk-citations.tsx`, `StepWhyToggle`;
+     `activity.ts`), and it is saved with the steps.
+   - Removing it removes that UI, or needs a replacement. Anthropic's thinking display
+     `"updates"` returns short progress notes between tool calls at no extra prompt cost, but
+     only on Fable 5.1, Opus 5.5 and Sonnet 5.5, not Haiku 5.5. Haiku 5.5 can return summarized
+     thinking. The model's own text before a call is another source.
+   - The quality judge's "rationale" is its own field and is unaffected.
