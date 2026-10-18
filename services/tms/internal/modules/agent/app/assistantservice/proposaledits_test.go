@@ -189,3 +189,26 @@ func TestToAssistantProposal_CarriesPendingModificationsOnlyWhilePending(t *test
 	}, nil)
 	assert.Nil(t, decided.PendingModifications)
 }
+
+func TestToAssistantProposal_SaysWhenApprovingNeedsThePreviewShown(t *testing.T) {
+	t.Parallel()
+
+	for class, want := range map[agent.EgressClass]bool{
+		agent.EgressInternal:          false,
+		agent.EgressPersonal:          false,
+		agent.EgressMoney:             true,
+		agent.EgressCustomerVisible:   true,
+		agent.EgressDriverVisible:     true,
+		agent.EgressExternalRecipient: true,
+		"":                            true,
+	} {
+		got := toAssistantProposal(&agent.AgentProposal{EgressClass: class}, nil)
+		assert.Equal(t, want, got.ReviewRequired, class)
+	}
+
+	tainted := toAssistantProposal(&agent.AgentProposal{
+		EgressClass: agent.EgressInternal,
+		Tainted:     true,
+	}, nil)
+	assert.True(t, tainted.ReviewRequired, "a tainted run's write is reviewed whatever it reaches")
+}

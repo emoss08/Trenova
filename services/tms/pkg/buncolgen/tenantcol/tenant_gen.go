@@ -522,6 +522,11 @@ var AgentControlColumns = struct {
 	AITrainingConsentChangedByID buncolgen.Column // "ai_training_consent_changed_by_id" → qualified: "agc.ai_training_consent_changed_by_id"
 	PersonMonthlyMessages        buncolgen.Column // "person_monthly_messages" → qualified: "agc.person_monthly_messages"
 	LearningOff                  buncolgen.Column // "learning_off" → qualified: "agc.learning_off"
+	AgentMoneyCallCeilingMinor   buncolgen.Column // "agent_money_call_ceiling_minor" → qualified: "agc.agent_money_call_ceiling_minor"
+	AgentMoneyRunCalls           buncolgen.Column // "agent_money_run_calls" → qualified: "agc.agent_money_run_calls"
+	AgentMoneyRunAmountMinor     buncolgen.Column // "agent_money_run_amount_minor" → qualified: "agc.agent_money_run_amount_minor"
+	AgentMoneyDayCalls           buncolgen.Column // "agent_money_day_calls" → qualified: "agc.agent_money_day_calls"
+	AgentMoneyDayAmountMinor     buncolgen.Column // "agent_money_day_amount_minor" → qualified: "agc.agent_money_day_amount_minor"
 	Version                      buncolgen.Column // "version" → qualified: "agc.version"
 	CreatedAt                    buncolgen.Column // "created_at" → qualified: "agc.created_at"
 	UpdatedAt                    buncolgen.Column // "updated_at" → qualified: "agc.updated_at"
@@ -539,6 +544,11 @@ var AgentControlColumns = struct {
 	AITrainingConsentChangedByID: buncolgen.NewColumn("ai_training_consent_changed_by_id", "agc"),
 	PersonMonthlyMessages:        buncolgen.NewColumn("person_monthly_messages", "agc"),
 	LearningOff:                  buncolgen.NewColumn("learning_off", "agc"),
+	AgentMoneyCallCeilingMinor:   buncolgen.NewColumn("agent_money_call_ceiling_minor", "agc"),
+	AgentMoneyRunCalls:           buncolgen.NewColumn("agent_money_run_calls", "agc"),
+	AgentMoneyRunAmountMinor:     buncolgen.NewColumn("agent_money_run_amount_minor", "agc"),
+	AgentMoneyDayCalls:           buncolgen.NewColumn("agent_money_day_calls", "agc"),
+	AgentMoneyDayAmountMinor:     buncolgen.NewColumn("agent_money_day_amount_minor", "agc"),
 	Version:                      buncolgen.NewColumn("version", "agc"),
 	CreatedAt:                    buncolgen.NewColumn("created_at", "agc"),
 	UpdatedAt:                    buncolgen.NewColumn("updated_at", "agc"),
@@ -562,6 +572,11 @@ var AgentControlFieldMap = map[string]string{
 	"aiTrainingConsentChangedById": "ai_training_consent_changed_by_id",
 	"personMonthlyMessages":        "person_monthly_messages",
 	"learningOff":                  "learning_off",
+	"agentMoneyCallCeilingMinor":   "agent_money_call_ceiling_minor",
+	"agentMoneyRunCalls":           "agent_money_run_calls",
+	"agentMoneyRunAmountMinor":     "agent_money_run_amount_minor",
+	"agentMoneyDayCalls":           "agent_money_day_calls",
+	"agentMoneyDayAmountMinor":     "agent_money_day_amount_minor",
 	"version":                      "version",
 	"createdAt":                    "created_at",
 	"updatedAt":                    "updated_at",
@@ -583,6 +598,11 @@ var AgentControlInsertableColumns = []string{
 	"ai_training_consent_changed_by_id",
 	"person_monthly_messages",
 	"learning_off",
+	"agent_money_call_ceiling_minor",
+	"agent_money_run_calls",
+	"agent_money_run_amount_minor",
+	"agent_money_day_calls",
+	"agent_money_day_amount_minor",
 	"version",
 	"created_at",
 	"updated_at",
@@ -664,6 +684,11 @@ var AgentControlFilter = struct {
 	AITrainingConsentChangedByID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "aiTrainingConsentChangedById" → DB: "ai_training_consent_changed_by_id"
 	PersonMonthlyMessages        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "personMonthlyMessages" → DB: "person_monthly_messages"
 	LearningOff                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "learningOff" → DB: "learning_off"
+	AgentMoneyCallCeilingMinor   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentMoneyCallCeilingMinor" → DB: "agent_money_call_ceiling_minor"
+	AgentMoneyRunCalls           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentMoneyRunCalls" → DB: "agent_money_run_calls"
+	AgentMoneyRunAmountMinor     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentMoneyRunAmountMinor" → DB: "agent_money_run_amount_minor"
+	AgentMoneyDayCalls           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentMoneyDayCalls" → DB: "agent_money_day_calls"
+	AgentMoneyDayAmountMinor     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentMoneyDayAmountMinor" → DB: "agent_money_day_amount_minor"
 	Version                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -706,6 +731,21 @@ var AgentControlFilter = struct {
 	},
 	LearningOff: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("learningOff", op, value)
+	},
+	AgentMoneyCallCeilingMinor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("agentMoneyCallCeilingMinor", op, value)
+	},
+	AgentMoneyRunCalls: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("agentMoneyRunCalls", op, value)
+	},
+	AgentMoneyRunAmountMinor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("agentMoneyRunAmountMinor", op, value)
+	},
+	AgentMoneyDayCalls: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("agentMoneyDayCalls", op, value)
+	},
+	AgentMoneyDayAmountMinor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("agentMoneyDayAmountMinor", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("version", op, value)

@@ -47,8 +47,11 @@ func TestDelegate_HandsTheTurnsTaintDown(t *testing.T) {
 
 	require.Len(t, fx.calls, 1)
 	require.NotNil(t, fx.calls[0].Taint)
-	assert.Equal(t, []agent.TaintMark{email}, fx.calls[0].Taint.Marks,
-		"the delegate opens with what the turn that asked had read")
+	handed := email
+	handed.Delegated = true
+	assert.Equal(t, []agent.TaintMark{handed}, fx.calls[0].Taint.Marks,
+		"the delegate opens with what the turn that asked had read, marked as handed on")
+	assert.False(t, req.Taint.Marks[0].Delegated, "the turn's own mark is left as it was")
 }
 
 func TestDelegate_FoldsTheDelegatesTaintBackUp(t *testing.T) {
@@ -70,7 +73,10 @@ func TestDelegate_FoldsTheDelegatesTaintBackUp(t *testing.T) {
 	result := driveWith(t, rt, delegatingRequest(delegate), fx)
 
 	require.True(t, result.Taint.Tainted(), "the delegate's reply entered this turn")
-	assert.Equal(t, []agent.TaintMark{document}, result.Taint.Marks)
+	inherited := document
+	inherited.Delegated = true
+	assert.Equal(t, []agent.TaintMark{inherited}, result.Taint.Marks,
+		"what the delegate read is marked as read across the delegation")
 	require.Len(t, result.Delegations, 1)
 	require.NotNil(t, result.Delegations[0].Taint)
 	assert.Equal(t, []agent.TaintMark{document}, result.Delegations[0].Taint.Marks,
@@ -83,7 +89,22 @@ func TestDelegate_FoldsTheDelegatesTaintBackUp(t *testing.T) {
 		}
 	}
 	require.Len(t, announced, 1)
-	assert.Equal(t, document, announced[0].Mark)
+	assert.Equal(t, inherited, announced[0].Mark)
+}
+
+func TestDelegate_AnOverflowedDelegateTaintOverflowsTheTurn(t *testing.T) {
+	t.Parallel()
+
+	delegate := reportBuilder()
+	run := scriptedDelegateRun(delegate)
+	run.Result.Taint = &agent.RunTaint{Seen: []agent.TaintSource{agent.TaintSourceWeb}, Overflowed: true}
+	rt := newRuntime(delegatingTurnScript(delegate.ID.String()),
+		&stubQueryRegistry{}, &stubActionRegistry{}, nil)
+
+	result := driveWith(t, rt, delegatingRequest(delegate), &delegateRecorder{run: run})
+
+	assert.True(t, result.Taint.Overflowed)
+	assert.True(t, result.Taint.Has(agent.TaintSourceWeb), "a source past the delegate's marks is kept")
 }
 
 func TestDelegate_AMarkTheTurnAlreadyHadIsNotAnnouncedAgain(t *testing.T) {

@@ -452,6 +452,7 @@ type AdjustmentLineInput struct {
 	Quantity    decimal.Decimal
 	Rate        decimal.Decimal
 	PayCodeID   *pulid.ID
+	ByAgent     bool
 }
 
 func (s *Service) AddAdjustmentLine(

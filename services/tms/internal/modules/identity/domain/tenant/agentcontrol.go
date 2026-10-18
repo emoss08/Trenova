@@ -50,6 +50,12 @@ type AgentControl struct {
 
 	LearningOff bool `json:"learningOff" bun:"learning_off,type:BOOLEAN,notnull,default:false"`
 
+	AgentMoneyCallCeilingMinor int64 `json:"agentMoneyCallCeilingMinor" bun:"agent_money_call_ceiling_minor,type:BIGINT,notnull,default:100000"`
+	AgentMoneyRunCalls         int   `json:"agentMoneyRunCalls"         bun:"agent_money_run_calls,type:INTEGER,notnull,default:10"`
+	AgentMoneyRunAmountMinor   int64 `json:"agentMoneyRunAmountMinor"   bun:"agent_money_run_amount_minor,type:BIGINT,notnull,default:500000"`
+	AgentMoneyDayCalls         int   `json:"agentMoneyDayCalls"         bun:"agent_money_day_calls,type:INTEGER,notnull,default:50"`
+	AgentMoneyDayAmountMinor   int64 `json:"agentMoneyDayAmountMinor"   bun:"agent_money_day_amount_minor,type:BIGINT,notnull,default:2500000"`
+
 	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -68,7 +74,23 @@ const (
 	DefaultBriefingHourLocal = 6
 	maxBriefingHour          = 23
 	maxPersonMonthlyMessages = 1_000_000
+
+	DefaultAgentMoneyCallCeilingMinor = 100_000
+	DefaultAgentMoneyRunCalls         = 10
+	DefaultAgentMoneyRunAmountMinor   = 500_000
+	DefaultAgentMoneyDayCalls         = 50
+	DefaultAgentMoneyDayAmountMinor   = 2_500_000
+	maxAgentMoneyAmountMinor          = 100_000_000_000
+	maxAgentMoneyCalls                = 10_000
 )
+
+func (ac *AgentControl) ApplyAgentMoneyDefaults() {
+	ac.AgentMoneyCallCeilingMinor = DefaultAgentMoneyCallCeilingMinor
+	ac.AgentMoneyRunCalls = DefaultAgentMoneyRunCalls
+	ac.AgentMoneyRunAmountMinor = DefaultAgentMoneyRunAmountMinor
+	ac.AgentMoneyDayCalls = DefaultAgentMoneyDayCalls
+	ac.AgentMoneyDayAmountMinor = DefaultAgentMoneyDayAmountMinor
+}
 
 func (ac *AgentControl) Validate(multiErr *errortypes.MultiError) {
 	if ac.PromotionThreshold < minPromotionThreshold ||
@@ -91,6 +113,64 @@ func (ac *AgentControl) Validate(multiErr *errortypes.MultiError) {
 			"personMonthlyMessages",
 			errortypes.ErrInvalid,
 			"The monthly allowance must be between 0 (unlimited) and 1,000,000 questions",
+		)
+	}
+	ac.validateAgentMoney(multiErr)
+}
+
+func (ac *AgentControl) validateAgentMoney(multiErr *errortypes.MultiError) {
+	amounts := []struct {
+		field string
+		value int64
+	}{
+		{"agentMoneyCallCeiling", ac.AgentMoneyCallCeilingMinor},
+		{"agentMoneyRunAmount", ac.AgentMoneyRunAmountMinor},
+		{"agentMoneyDayAmount", ac.AgentMoneyDayAmountMinor},
+	}
+	for _, amount := range amounts {
+		if amount.value < 0 || amount.value > maxAgentMoneyAmountMinor {
+			multiErr.Add(
+				amount.field,
+				errortypes.ErrInvalid,
+				"The amount must be between 0 and 1,000,000,000.00",
+			)
+		}
+	}
+	calls := []struct {
+		field string
+		value int
+	}{
+		{"agentMoneyRunCalls", ac.AgentMoneyRunCalls},
+		{"agentMoneyDayCalls", ac.AgentMoneyDayCalls},
+	}
+	for _, count := range calls {
+		if count.value < 0 || count.value > maxAgentMoneyCalls {
+			multiErr.Add(
+				count.field,
+				errortypes.ErrInvalid,
+				"The number of changes must be between 0 and 10,000",
+			)
+		}
+	}
+	if ac.AgentMoneyRunAmountMinor > ac.AgentMoneyDayAmountMinor {
+		multiErr.Add(
+			"agentMoneyRunAmount",
+			errortypes.ErrInvalid,
+			"A run's total cannot be more than the day's",
+		)
+	}
+	if ac.AgentMoneyRunCalls > ac.AgentMoneyDayCalls {
+		multiErr.Add(
+			"agentMoneyRunCalls",
+			errortypes.ErrInvalid,
+			"A run's number of changes cannot be more than the day's",
+		)
+	}
+	if ac.AgentMoneyCallCeilingMinor > ac.AgentMoneyRunAmountMinor {
+		multiErr.Add(
+			"agentMoneyCallCeiling",
+			errortypes.ErrInvalid,
+			"One change cannot be more than a run's total",
 		)
 	}
 }
@@ -161,6 +241,16 @@ var AgentControlChangeRules = []editchange.Rule[AgentControl]{
 		Field: "personMonthlyMessages", Label: "Monthly allowance",
 		Same: func(a, b *AgentControl) bool {
 			return a.PersonMonthlyMessages == b.PersonMonthlyMessages
+		},
+	},
+	{
+		Field: "agentMoneyLimits", Label: "Money limits for agents",
+		Same: func(a, b *AgentControl) bool {
+			return a.AgentMoneyCallCeilingMinor == b.AgentMoneyCallCeilingMinor &&
+				a.AgentMoneyRunCalls == b.AgentMoneyRunCalls &&
+				a.AgentMoneyRunAmountMinor == b.AgentMoneyRunAmountMinor &&
+				a.AgentMoneyDayCalls == b.AgentMoneyDayCalls &&
+				a.AgentMoneyDayAmountMinor == b.AgentMoneyDayAmountMinor
 		},
 	},
 	{

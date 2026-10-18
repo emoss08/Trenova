@@ -1,5 +1,9 @@
 import { PlanPreview } from "@/components/assistant/proposal-preview/plan-preview";
-import { canApprove, gateDigest } from "@/components/assistant/proposal-preview/preview-gate";
+import {
+  canApprove,
+  gateDigest,
+  reviewRequiredFor,
+} from "@/components/assistant/proposal-preview/preview-gate";
 import {
   PreviewLoadState,
   ProposalPreview,
@@ -42,6 +46,11 @@ export type ReasonDialogPreview = {
   scope: PreviewScope;
   id: string;
   approving: boolean;
+  /**
+   * The server's word on whether an approval needs the preview's digest, as
+   * the row knows it. Unknown counts as needed until the preview says.
+   */
+  reviewRequired?: boolean;
   /** Compact where the surface behind the dialog already shows the preview in full. */
   density?: PreviewDensity;
   /** The sentence a plan step is known by, in place of "Step 2". */
@@ -137,7 +146,12 @@ function ReasonForm({ request, onClose }: { request: ReasonDialogRequest; onClos
   const approval = useApprovalGate(preview?.kind === "plan" ? planQuery : proposalQuery);
 
   const trimmed = reason.trim();
-  const previewAllows = preview?.approving !== true || canApprove(approval.gate);
+  const reviewRequired = reviewRequiredFor(
+    preview?.kind === "plan" ? planQuery.data : proposalQuery.data,
+    preview?.reviewRequired ?? true,
+    false,
+  );
+  const previewAllows = preview?.approving !== true || canApprove(approval.gate, reviewRequired);
 
   // A write that would be refused is turned down with its reasons, so the
   // agent learns what to fix. Nothing here can change a value: that is the
@@ -196,6 +210,7 @@ function ReasonForm({ request, onClose }: { request: ReasonDialogRequest; onClos
               query={planQuery}
               changed={approval.changed}
               density={preview.density}
+              reviewRequired={preview.approving && reviewRequired}
             >
               {(plan) => (
                 <PlanPreview
@@ -211,6 +226,7 @@ function ReasonForm({ request, onClose }: { request: ReasonDialogRequest; onClos
               query={proposalQuery}
               changed={approval.changed}
               density={preview.density}
+              reviewRequired={preview.approving && reviewRequired}
             >
               {(data) => (
                 <ProposalPreview preview={data} density={preview.density} wouldFail={wouldFail} />

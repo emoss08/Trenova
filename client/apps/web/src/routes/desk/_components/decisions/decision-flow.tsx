@@ -3,7 +3,10 @@ import {
   type EditorFocus,
   type ProposalEditorRequest,
 } from "@/components/assistant/proposal-editor";
-import { batchPreviewDigests } from "@/components/assistant/proposal-preview/preview-gate";
+import {
+  batchPreviewDigests,
+  unreviewedRequired,
+} from "@/components/assistant/proposal-preview/preview-gate";
 import { presentProposal } from "@/components/assistant/proposal-presenters";
 import { usePermission } from "@/hooks/use-permission";
 import { decideAgentPlan, decideAgentProposal } from "@/lib/graphql/agent-decisions";
@@ -172,10 +175,30 @@ export function DecisionFlow() {
   }
 
   const [gate, setGate] = useState<CardGate | null>(null);
-  const shownDigests = useRef(new Map<string, string>());
+  const [shownDigests, setShownDigests] = useState<ReadonlyMap<string, string>>(new Map());
   const onPreviewShown = useCallback((id: string, digest: string) => {
-    shownDigests.current.set(id, digest);
+    setShownDigests((previous) =>
+      previous.get(id) === digest ? previous : new Map(previous).set(id, digest),
+    );
   }, []);
+  // A batch approves every change in it together; one the server takes only
+  // with the digest of a preview the person was shown must have been opened
+  // first, and these are the ones still to read.
+  const batchUnreviewed = useMemo(
+    () =>
+      batch
+        ? unreviewedRequired(
+            items
+              .filter((item) => batch.includes(item.id))
+              .map((item) => ({
+                id: item.id,
+                reviewRequired: isPendingProposal(item.node) ? item.node.reviewRequired : true,
+              })),
+            shownDigests,
+          )
+        : [],
+    [batch, items, shownDigests],
+  );
 
   const { leaving, leave } = useQueueLeave();
   const [busy, setBusy] = useState(false);
@@ -222,13 +245,14 @@ export function DecisionFlow() {
     if (!current || busy || !canDecide) return;
     const ids = batch ?? [current.id];
     if (ids.length === 1 && !gate?.approvable) return;
+    if (ids.length > 1 && batchUnreviewed.length > 0) return;
     setBusy(true);
     try {
       if (ids.length > 1) {
         const results = await decideAgentProposals(ids, {
           decision: "Accepted",
           reasonCode: "approved_from_desk_batch",
-          previewDigests: batchPreviewDigests(ids, shownDigests.current),
+          previewDigests: batchPreviewDigests(ids, shownDigests),
         });
         const failed = results.filter((result) => result.error);
         if (failed.length > 0) {
@@ -265,7 +289,7 @@ export function DecisionFlow() {
     } finally {
       setBusy(false);
     }
-  }, [batch, busy, canDecide, current, finish, gate, t]);
+  }, [batch, batchUnreviewed.length, busy, canDecide, current, finish, gate, shownDigests, t]);
 
   const decline = useCallback(
     (initialReason?: string) => {
@@ -494,7 +518,12 @@ export function DecisionFlow() {
                       <b>{t("Deciding {0} together", batch.length)}</b>
                       <span>
                         {t("All {0}", current.tool)}
-                        {unopened > 0 && ` · ${t("{0} not opened yet", unopened)}`}
+                        {batchUnreviewed.length > 0
+                          ? ` · ${t(
+                              "{0, plural, one {# change must be opened before these can be approved} other {# changes must be opened before these can be approved}}",
+                              batchUnreviewed.length,
+                            )}`
+                          : unopened > 0 && ` · ${t("{0} not opened yet", unopened)}`}
                       </span>
                       <Button
                         variant="bare"
@@ -562,7 +591,9 @@ export function DecisionFlow() {
                 <QueueButton
                   ink
                   shortcut="A"
-                  disabled={busy || (batch === null && !gate?.approvable)}
+                  disabled={
+                    busy || (batch === null ? !gate?.approvable : batchUnreviewed.length > 0)
+                  }
                   onClick={() => void approve()}
                 >
                   {approveLabel}

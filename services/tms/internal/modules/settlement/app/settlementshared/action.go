@@ -45,6 +45,7 @@ type AdjustmentInput struct {
 	Rate        decimal.Decimal
 	PayCodeID   *pulid.ID
 	GLAccountID *pulid.ID
+	ByAgent     bool
 }
 
 type ActionRequest struct {

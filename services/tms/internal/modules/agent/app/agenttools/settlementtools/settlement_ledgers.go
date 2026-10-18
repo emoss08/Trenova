@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
+	"github.com/emoss08/trenova/shared/pulid"
 )
 
 const nounCarrierSettlement = "carrier settlement"
@@ -28,8 +29,27 @@ func carrierSettlementLedger() common.SettlementLedger[carriersettlement.Carrier
 		Sources:   carrierSettlementRead,
 		Sensitive: []string{"grossCostMinor", "adjustmentsMinor", "netPayableMinor"},
 		Facts:     carrierSettlementFacts,
+		Editable:  (*carriersettlement.CarrierSettlement).IsEditable,
+		Line:      carrierSettlementLine,
 		Effects:   carrierSettlementEffects,
 	}
+}
+
+func carrierSettlementLine(
+	entity *carriersettlement.CarrierSettlement,
+	lineID pulid.ID,
+) (common.SettlementLineFacts, bool) {
+	for _, line := range entity.Lines {
+		if line != nil && line.ID == lineID {
+			return common.SettlementLineFacts{
+				AmountMinor:  line.AmountMinor,
+				Manual:       line.IsManualAdjustment(),
+				AddedByAgent: line.AddedByAgent,
+			}, true
+		}
+	}
+
+	return common.SettlementLineFacts{}, false
 }
 
 func carrierSettlementFacts(entity *carriersettlement.CarrierSettlement) *common.SettlementFacts {

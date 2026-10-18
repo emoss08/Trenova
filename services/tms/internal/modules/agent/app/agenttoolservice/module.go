@@ -110,7 +110,7 @@ func ToolProviders() []any {
 		provideCreateInvoiceMemoTool,
 		provideVoidInvoiceTool,
 		provideSendInvoiceEDITool,
-		invoicetools.NewCorrectChargeCodeTool,
+		provideCorrectChargeCodeTool,
 		masterdatatools.NewSaveTableViewTool,
 		masterdatatools.NewCreateDashboardTool,
 		masterdatatools.NewAddDashboardTileTool,

@@ -3766,6 +3766,27 @@ enum AgentContextProvider {
 
 type AgentControl {
   """
+  The most one money change an agent makes on its own may move. 0 holds every money change for a person.
+  """
+  agentMoneyCallCeiling: Decimal!
+  """
+  The organization's functional currency, which the money limits are set in.
+  A money change in any other currency waits for a person.
+  """
+  agentMoneyCurrency: String!
+  """
+  The most money the organization's agents may move on their own in a day, in its timezone.
+  """
+  agentMoneyDayAmount: Decimal!
+  """
+  The most money changes the organization's agents may make on their own in a day, in its timezone.
+  """
+  agentMoneyDayCalls: Int!
+  """The most money one agent run or turn may move on its own."""
+  agentMoneyRunAmount: Decimal!
+  """The most money changes one agent run or turn may make on its own."""
+  agentMoneyRunCalls: Int!
+  """
   Whether the organization's AI corrections may be anonymized and used to train models outside it. Off until a person turns it on.
   """
   aiTrainingConsent: Boolean!
@@ -3799,6 +3820,22 @@ type AgentControl {
 }
 
 input AgentControlInput {
+  """Absent leaves the most one automatic money change may move as it is."""
+  agentMoneyCallCeiling: Decimal
+  """
+  Absent leaves the money the agents may move on their own in a day as it is.
+  """
+  agentMoneyDayAmount: Decimal
+  """
+  Absent leaves the number of automatic money changes a day may hold as it is.
+  """
+  agentMoneyDayCalls: Int
+  """Absent leaves the money a run may move on its own as it is."""
+  agentMoneyRunAmount: Decimal
+  """
+  Absent leaves the number of automatic money changes a run may make as it is.
+  """
+  agentMoneyRunCalls: Int
   """
   Absent leaves training consent as it is. Only a signed-in person can change it.
   """
@@ -4776,6 +4813,10 @@ type AgentPlanPreview {
   digest: String!
   planId: ID!
   """
+  An approval is refused without the digest: a step waiting on it must be reviewed.
+  """
+  reviewRequired: Boolean!
+  """
   A step's record has changed since the plan was proposed; it can only be rejected.
   """
   stale: Boolean!
@@ -5130,7 +5171,7 @@ type AgentProposal {
   """
   executionError: String!
   """
-  What held the write below running on its own: agent_ceiling, tool_max, egress_class, condition, tainted, tool_tier or personal_exemption.
+  What held the write below running on its own: agent_ceiling, tool_max, egress_class, condition, tainted, tool_tier, personal_exemption, business_hours or one of the money_ bounds.
   """
   heldBy: [String!]!
   id: ID!
@@ -5150,6 +5191,10 @@ type AgentProposal {
   """Position in the plan, from one; zero outside a plan."""
   planStep: Int!
   rationale: String!
+  """
+  Approving it needs the digest of the preview the approver was shown: it moves money, reaches a customer, a driver or someone outside, or was proposed after the run read outside text.
+  """
+  reviewRequired: Boolean!
   """The run that raised this proposal, for the agent behind it."""
   run: AgentRun
   runId: ID!
@@ -5296,6 +5341,13 @@ type AgentProposalPreview {
   This is the preview recorded when the proposal was decided, not one computed now.
   """
   recorded: Boolean!
+  """
+  An approval of this change, with the modifications this preview was asked
+  for, is refused without the digest: the change moves money, reaches a
+  customer, a driver or someone outside the organization, or was proposed
+  after the run read outside content.
+  """
+  reviewRequired: Boolean!
   """
   The record the proposal was made against has changed or is gone; it can only be rejected.
   """

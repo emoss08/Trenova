@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
@@ -286,12 +287,18 @@ func (r *repository) UpdateStatus(
 		if req.CommitsAt != 0 {
 			query = query.
 				Set(cols.CommitsAt.Set(), req.CommitsAt).
+				Set(cols.ApprovalReasonCode.Set(), stringutils.Ptr(req.Approval.ReasonCode)).
+				Set(cols.ApprovalNote.Set(), stringutils.Ptr(req.Approval.Note)).
+				Set(cols.ApprovalPreviewDigest.Set(), stringutils.Ptr(req.Approval.PreviewDigest)).
 				Set(cols.UndoneAt.SetNull()).
 				Set(cols.UndoneByUserID.SetNull())
 		}
 		if req.Reopen {
 			query = query.
 				Set(cols.CommitsAt.SetNull()).
+				Set(cols.ApprovalReasonCode.SetNull()).
+				Set(cols.ApprovalNote.SetNull()).
+				Set(cols.ApprovalPreviewDigest.SetNull()).
 				Set(cols.DecidedByUserID.SetNull()).
 				Set(cols.DecidedAt.SetNull())
 		}

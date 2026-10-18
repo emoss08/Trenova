@@ -167,6 +167,9 @@ type DelegateCall struct {
 	// a task written under that content cannot make a write on its own.
 	AfterExternalContent bool             `json:"afterExternalContent,omitempty"`
 	Context              *DelegateContext `json:"context,omitempty"`
+	// MoneySpent is what the delegating turn's automatic money writes have
+	// moved and not yet recorded, which the delegate's own caps count.
+	MoneySpent agent.MoneyUse `json:"moneySpent,omitzero"`
 	// Directed says the person chose the agent from the conversation rather
 	// than its agent asking for it, so the agent need not be on the
 	// conversation's agent's list. Only the runtime sets it, from a task the
@@ -331,9 +334,10 @@ func (s *Service) handTask(
 		// a different order every time.
 		CallIDs:              slices.Sorted(maps.Keys(t.callIDs)),
 		AfterExternalContent: t.external,
-		Taint:                t.result.Taint.Clone(),
+		Taint:                t.result.Taint.HandedOn(),
 		Context:              h.handed,
 		Directed:             h.directed,
+		MoneySpent:           t.moneySpent(),
 	})
 	report = delegateReport(delegate, call.ID, run)
 	if run.ExternalContent {

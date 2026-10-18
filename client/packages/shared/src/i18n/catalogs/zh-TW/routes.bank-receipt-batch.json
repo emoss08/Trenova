@@ -7,7 +7,6 @@
   "Check #, txn ID...": "支票號碼、交易 ID...",
   "Could not load this import batch. It may have been deleted or you may not have permission.": "無法載入此匯入批次。它可能已被刪除，或您沒有存取權限。",
   "Create a batch of bank receipts to import for reconciliation.": "建立一批銀行入帳資料以匯入核對。",
-  "Enter an amount with at most two decimal places": "請輸入最多兩位小數的金額",
   "Failed to load batch details.": "無法載入批次明細。",
   "Failed to load import batches. Try refreshing the page.": "無法載入匯入批次。請嘗試重新整理頁面。",
   "Identify the source bank and a reference for this import": "指明此匯入的來源銀行與參考編號",

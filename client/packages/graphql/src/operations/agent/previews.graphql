@@ -100,6 +100,7 @@ fragment AgentProposalPreviewFields on AgentProposalPreview {
   recorded
   computedAt
   digest
+  reviewRequired
 }
 
 fragment AgentPlanPreviewFields on AgentPlanPreview {
@@ -115,6 +116,7 @@ fragment AgentPlanPreviewFields on AgentPlanPreview {
   stale
   withheldCount
   computedAt
+  reviewRequired
 }
 
 query AgentProposalPreview($id: ID!, $modifications: JSON) {

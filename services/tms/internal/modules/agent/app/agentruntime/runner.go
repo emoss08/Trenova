@@ -566,6 +566,7 @@ func (t *Turn) dispatchCall(call *agentports.ToolCall, completionText string) Di
 		AfterExternalContent: t.external,
 		Taint:                t.result.Taint,
 		Earlier:              t.earlier(call.Name),
+		MoneySpent:           t.moneySpent(),
 	}
 }
 

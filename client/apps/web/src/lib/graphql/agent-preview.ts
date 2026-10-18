@@ -111,6 +111,7 @@ export async function fetchPlanPreview(
     stale: plan.stale,
     withheldCount: plan.withheldCount,
     computedAt: plan.computedAt,
+    reviewRequired: plan.reviewRequired,
     steps: plan.steps.map((step) => ({
       proposalId: step.proposalId,
       step: step.step,

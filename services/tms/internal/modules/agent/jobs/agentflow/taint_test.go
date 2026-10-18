@@ -17,10 +17,13 @@ import (
 )
 
 func paymentTool() *agenttest.StubActionTool {
+	amount := int64(12_500)
+
 	return &agenttest.StubActionTool{
-		ToolName: "post_customer_payment",
-		Tier:     agent.TierAutoExecute,
-		Egress:   agent.EgressMoney,
+		ToolName:   "post_customer_payment",
+		Tier:       agent.TierAutoExecute,
+		Egress:     agent.EgressMoney,
+		MoneyMinor: &amount,
 	}
 }
 
@@ -104,8 +107,9 @@ func TestRun_TaintChangesNoCommand(t *testing.T) {
 	) ([]string, *turnResult, *agenttest.StubActionTool) {
 		pay := paymentTool()
 		h := newHarness(t, harnessParams{
-			query:  []agentports.AgentQueryTool{receiptTool(reads)},
-			action: []agentports.AgentTool{pay},
+			query:   []agentports.AgentQueryTool{receiptTool(reads)},
+			action:  []agentports.AgentTool{pay},
+			budgets: &agenttest.StubMoneyBudgets{Limits: agenttest.RoomyMoneyLimits()},
 		})
 		h.replies(
 			toolReply("get_bank_receipt", map[string]any{"receiptId": "brc_1"}),

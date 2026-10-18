@@ -118,6 +118,7 @@ type SettlementLine struct {
 	AdvanceID            *pulid.ID               `json:"advanceId"            bun:"advance_id,type:VARCHAR(100),nullzero"`
 	EscrowAccountID      *pulid.ID               `json:"escrowAccountId"      bun:"escrow_account_id,type:VARCHAR(100),nullzero"`
 	ProNumber            string                  `json:"proNumber"            bun:"pro_number,type:VARCHAR(100),nullzero"`
+	AddedByAgent         bool                    `json:"addedByAgent"         bun:"added_by_agent,type:BOOLEAN,notnull,default:false"`
 	CreatedAt            int64                   `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt            int64                   `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 

@@ -1,5 +1,9 @@
 import { PlanPreview } from "@/components/assistant/proposal-preview/plan-preview";
-import { canApprove, gateDigest } from "@/components/assistant/proposal-preview/preview-gate";
+import {
+  canApprove,
+  gateDigest,
+  reviewRequiredFor,
+} from "@/components/assistant/proposal-preview/preview-gate";
 import type { EditorFocus } from "@/components/assistant/proposal-editor";
 import {
   askAgentMessage,
@@ -239,7 +243,8 @@ function ProposalCard({
   const facts = useMemo(() => approvalFacts(preview, t), [preview, t]);
   const rows = useMemo(() => (preview ? diffRows(preview, t) : null), [preview, t]);
 
-  const approvable = canApprove(approval.gate);
+  const reviewRequired = reviewRequiredFor(preview, node.reviewRequired, false);
+  const approvable = canApprove(approval.gate, reviewRequired);
   const digest = gateDigest(approval.gate);
   const { handleDecisionError } = approval;
   useEffect(() => {
@@ -251,11 +256,14 @@ function ProposalCard({
       handleError: handleDecisionError,
     });
   }, [approvable, digest, facts.count, facts.refused.length, handleDecisionError, onGate]);
+  // A preview of a record that moved since is shown but never counts as
+  // reviewed: the server refuses an approval of it, so it is recorded as unseen.
+  const shownDigest = preview === undefined ? undefined : preview.stale ? "" : preview.digest;
   useEffect(() => {
-    if (preview?.digest !== undefined) {
-      onPreviewShown(node.id, preview.digest);
+    if (shownDigest !== undefined) {
+      onPreviewShown(node.id, shownDigest);
     }
-  }, [node.id, onPreviewShown, preview?.digest]);
+  }, [node.id, onPreviewShown, shownDigest]);
 
   // A write that would be refused: change the value a reason names, or turn
   // it down with the reasons so the agent learns what to fix.
@@ -283,6 +291,7 @@ function ProposalCard({
         query={previewQuery}
         changed={approval.changed}
         fallback={<Highlights rows={view.highlights} />}
+        reviewRequired={reviewRequired}
       >
         {(data) =>
           rows && rows.length > 0 ? (
@@ -375,7 +384,12 @@ function PlanCard({
     [stepsQuery.data],
   );
 
-  const approvable = canApprove(approval.gate);
+  const reviewRequired = reviewRequiredFor(
+    previewQuery.data,
+    stepsQuery.data?.some((step) => step.reviewRequired) ?? true,
+    false,
+  );
+  const approvable = canApprove(approval.gate, reviewRequired);
   const digest = gateDigest(approval.gate);
   const { handleDecisionError } = approval;
   useEffect(() => {
@@ -401,7 +415,11 @@ function PlanCard({
       </h1>
       {node.summary !== "" && <p className="dk-dc2-why">{node.summary}</p>}
       <div className="dk-dc2-full">
-        <PreviewLoadState query={previewQuery} changed={approval.changed}>
+        <PreviewLoadState
+          query={previewQuery}
+          changed={approval.changed}
+          reviewRequired={reviewRequired}
+        >
           {(plan) => (
             <PlanPreview
               plan={plan}

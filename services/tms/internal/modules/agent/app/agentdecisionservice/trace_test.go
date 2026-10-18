@@ -148,6 +148,7 @@ func newDecideHarness(t *testing.T) *decideHarness {
 		ToolName:       "place_shipment_hold",
 		ToolParams:     map[string]any{},
 		AutonomyTier:   agent.TierPropose,
+		EgressClass:    agent.EgressInternal,
 		Status:         agent.ProposalStatusPending,
 		ExpiresAt:      timeutils.NowUnix() + 3600,
 		TraceID:        proposing.SpanContext().TraceID().String(),

@@ -354,6 +354,7 @@ type UpdateAgentControlRequest struct {
 	// PersonMonthlyMessages is absent to leave the allowance as it is.
 	PersonMonthlyMessages *int
 	LearningOff           *bool
+	AgentMoney            AgentMoneyLimitsUpdate
 	// Version is the version the person loaded. When it is given and someone
 	// saved since, the update is refused with what they changed; absent, the
 	// update applies to whatever is there.
@@ -442,12 +443,27 @@ type CheckToolBudgetRequest struct {
 	Unrecorded int
 }
 
+type AgentMoneyLimitsUpdate struct {
+	CallCeilingMinor *int64
+	RunCalls         *int
+	RunAmountMinor   *int64
+	DayCalls         *int
+	DayAmountMinor   *int64
+}
+
+type MoneyAllowanceRequest struct {
+	Definition *agentdefinition.Definition
+	RunID      pulid.ID
+	Unrecorded agent.MoneyUse
+}
+
 // AgentBudgetService enforces an agent's caps and reports where it stands.
 type AgentBudgetService interface {
 	// CheckRun says whether the agent may start another run or turn now.
 	CheckRun(ctx context.Context, definition *agentdefinition.Definition) (BudgetRefusal, error)
 	// CheckTool says whether the agent may execute the tool once more today.
 	CheckTool(ctx context.Context, req CheckToolBudgetRequest) (BudgetRefusal, error)
+	MoneyAllowance(ctx context.Context, req MoneyAllowanceRequest) (agent.MoneyAllowance, error)
 	Status(ctx context.Context, definition *agentdefinition.Definition) (*AgentBudgetStatus, error)
 	// WithinBusinessHours says whether the agent may make a change on its
 	// own now, reading its business-hours window in its own zone or the
@@ -491,14 +507,17 @@ const ActivityCreated = "created"
 
 const ActivityUpdated = "updated"
 
-// ActivityApproving, ActivityCommitted and ActivityUndone follow an
-// approval through its undo window: approved and waiting, gone through,
-// or taken back and waiting on its decider again.
+// ActivityApproving, ActivityCommitted, ActivityUndone and ActivityReopened
+// follow an approval through its undo window: approved and waiting, gone
+// through, taken back by its decider, or sent back to its decider because it
+// could no longer go through as approved.
 const ActivityApproving = "approving"
 
 const ActivityCommitted = "committed"
 
 const ActivityUndone = "undone"
+
+const ActivityReopened = "reopened"
 
 // PendingDecision is one thing waiting on a person: a proposal that stands
 // on its own, or a plan decided as a whole. Exactly one of the two is set.

@@ -128,6 +128,16 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
 			},
+			{
+				Name:     "reviewRequired",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agent.PlanPreview)
+					return obj.ReviewRequired, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
 		}},
 		{Object: "AgentPlanStepPreview", Fields: []*gqlexec.Field{
 			{
@@ -987,6 +997,16 @@ var Shard = &gqlexec.Shard{
 					return obj.Digest, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "reviewRequired",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agent.ProposalPreview)
+					return obj.ReviewRequired, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{

@@ -404,6 +404,7 @@ type AdjustmentLineInput struct {
 	Description string
 	AmountMinor int64
 	GLAccountID *pulid.ID
+	ByAgent     bool
 }
 
 func (s *Service) AddAdjustmentLine(

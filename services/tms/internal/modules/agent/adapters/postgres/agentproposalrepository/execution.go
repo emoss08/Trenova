@@ -2,14 +2,17 @@ package agentproposalrepository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
@@ -196,5 +199,61 @@ func (r *repository) CountExecutedTool(
 		}
 
 		return int(count), nil
+	})
+}
+
+type automaticMoneyRow struct {
+	Calls       int   `bun:"calls"`
+	AmountMinor int64 `bun:"amount_minor"`
+}
+
+var errMoneyCurrencyRequired = errors.New("sum automatic money writes: a currency is required")
+
+func (r *repository) SumAutomaticMoney(
+	ctx context.Context,
+	req *agentports.SumAutomaticMoneyRequest,
+) (agent.MoneyUse, error) {
+	currency := money.ISOCode(req.Currency)
+	if currency == "" {
+		return agent.MoneyUse{}, errMoneyCurrencyRequired
+	}
+
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (agent.MoneyUse, error) {
+		cols := agentcol.AgentProposalColumns
+		status, at := agent.ProposalStatusExecuted, cols.ExecutedAt
+		if req.Simulated {
+			status, at = agent.ProposalStatusSimulated, cols.SimulatedAt
+		}
+
+		row := new(automaticMoneyRow)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*agent.AgentProposal)(nil)).
+			ColumnExpr(buncolgen.Count("calls")).
+			ColumnExpr(cols.MoneyMinor.Expr("COALESCE(SUM(ABS({})), 0) AS amount_minor")).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				sq = agentcol.AgentProposalScopeTenant(sq, req.TenantInfo).
+					Where(cols.AutonomyTier.Eq(), agent.TierAutoExecute).
+					Where(cols.Status.Eq(), status).
+					Where(cols.MoneyMinor.IsNotNull()).
+					Where(cols.MoneyCurrency.Eq(), currency).
+					Where(at.IsNotNull())
+				if req.Since > 0 {
+					sq = sq.Where(at.Gte(), req.Since)
+				}
+				if req.RunID.IsNotNil() {
+					sq = sq.Where(cols.RunID.Eq(), req.RunID)
+				}
+
+				return sq
+			}).
+			Scan(ctx, row)
+		if err != nil {
+			r.l.Error("failed to sum automatic money writes", zap.Error(err))
+
+			return agent.MoneyUse{}, fmt.Errorf("sum automatic money writes: %w", err)
+		}
+
+		return agent.MoneyUse{Calls: row.Calls, AmountMinor: row.AmountMinor}, nil
 	})
 }

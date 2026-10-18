@@ -308,6 +308,7 @@ type ProposalPreview struct {
 	Recorded       bool              `json:"recorded,omitempty"`
 	ComputedAt     int64             `json:"computedAt"`
 	Digest         string            `json:"digest,omitempty"`
+	ReviewRequired bool              `json:"reviewRequired"`
 }
 
 func (p *ProposalPreview) IsStale() bool {
@@ -764,12 +765,13 @@ type PlanStepPreview struct {
 // Digest covers every step's digest in order, and the plan is stale when any
 // step is.
 type PlanPreview struct {
-	PlanID        pulid.ID          `json:"planId"`
-	Steps         []PlanStepPreview `json:"steps"`
-	Digest        string            `json:"digest"`
-	Stale         bool              `json:"stale"`
-	WithheldCount int               `json:"withheldCount"`
-	ComputedAt    int64             `json:"computedAt"`
+	PlanID         pulid.ID          `json:"planId"`
+	Steps          []PlanStepPreview `json:"steps"`
+	Digest         string            `json:"digest"`
+	Stale          bool              `json:"stale"`
+	WithheldCount  int               `json:"withheldCount"`
+	ComputedAt     int64             `json:"computedAt"`
+	ReviewRequired bool              `json:"reviewRequired"`
 }
 
 // StepDigests are the steps' digests in plan order.

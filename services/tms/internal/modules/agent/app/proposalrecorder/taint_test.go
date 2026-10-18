@@ -131,3 +131,58 @@ func TestRecord_ACleanRunIsNotMarked(t *testing.T) {
 	assert.Nil(t, runs.opened[0].Taint)
 	assert.Nil(t, runs.opened[0].TaintedAt)
 }
+
+func TestRecord_KeepsWhatAnAutomaticMoneyWriteMovedWithItsCurrency(t *testing.T) {
+	t.Parallel()
+
+	store := &capturingStore{}
+	moved, unpriced := int64(12_500), int64(900)
+	_, err := NewWithStores(nil, &openedRuns{}, store).Record(t.Context(), &RecordRequest{
+		Evidence: messageEvidence,
+		Actor: &permissionports.RequestActor{
+			PrincipalType:  permissionports.PrincipalTypeUser,
+			PrincipalID:    pulid.MustNew("usr_"),
+			UserID:         pulid.MustNew("usr_"),
+			OrganizationID: pulid.MustNew("org_"),
+			BusinessUnitID: pulid.MustNew("bu_"),
+		},
+		Open: &OpenRunRequest{
+			AgentType:        agent.TypeAssistantChat,
+			SubjectType:      agent.SubjectAssistantThread,
+			SubjectID:        pulid.MustNew("athr_"),
+			Trigger:          agent.RunTriggerChat,
+			PromptVersion:    "test",
+			InputContextHash: "hash",
+		},
+		Taint: &agent.RunTaint{},
+		Actions: []agentports.PendingAction{
+			{
+				ToolName:      "post_customer_payment",
+				Arguments:     map[string]any{},
+				Rationale:     "within its bounds",
+				Tier:          agent.TierAutoExecute,
+				Executed:      true,
+				Egress:        agent.EgressMoney,
+				MoneyMinor:    &moved,
+				MoneyCurrency: "USD",
+			},
+			{
+				ToolName:   "post_customer_payment",
+				Arguments:  map[string]any{},
+				Rationale:  "an amount with no currency counts against nothing",
+				Tier:       agent.TierAutoExecute,
+				Executed:   true,
+				Egress:     agent.EgressMoney,
+				MoneyMinor: &unpriced,
+			},
+		},
+	})
+	require.NoError(t, err)
+
+	require.Len(t, store.created, 2)
+	require.NotNil(t, store.created[0].MoneyMinor)
+	assert.Equal(t, int64(12_500), *store.created[0].MoneyMinor)
+	assert.Equal(t, "USD", store.created[0].MoneyCurrency)
+	assert.Nil(t, store.created[1].MoneyMinor, "the amount and its currency are kept together")
+	assert.Empty(t, store.created[1].MoneyCurrency)
+}

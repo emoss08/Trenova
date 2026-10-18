@@ -236,6 +236,7 @@ func addAdjustmentDecision(text *lifecycleText) *settlementDecision {
 		maxTier:          agent.TierAutoExecute,
 		reversible:       true,
 		holdsWhenTainted: true,
+		bound:            addedLineBound,
 		rationale: "Changes what the " + text.payee + " will be paid on a settlement a " +
 			"person still approves, so it moves money; the line is removed the same way.",
 		properties:    properties,
@@ -258,6 +259,7 @@ func removeAdjustmentDecision(text *lifecycleText) *settlementDecision {
 		defaultTo:  agent.TierPropose,
 		maxTier:    agent.TierAutoExecute,
 		reversible: true,
+		bound:      removedLineBound,
 		rationale: "Changes what the " + text.payee + " will be paid on a settlement a " +
 			"person still approves, so it moves money; the line is added back the same way.",
 		properties: map[string]any{
@@ -316,6 +318,7 @@ func fillAdjustmentBase(
 	req.Adjustment = &settlementshared.AdjustmentInput{
 		Description: description,
 		AmountMinor: amount,
+		ByAgent:     true,
 	}
 
 	return req.Adjustment, nil

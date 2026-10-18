@@ -5,17 +5,30 @@ package agentbudgetservice
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/money"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
+)
+
+var (
+	errNoDefinition = errors.New("money limits are read for an agent, and none was given")
+	errNoCurrency   = errors.New("the organization's functional currency is not set")
+	errNoTimezone   = errors.New("the organization's timezone could not be read")
 )
 
 type Params struct {
@@ -26,6 +39,8 @@ type Params struct {
 	Runs          agentports.AgentRunRepository
 	Proposals     agentports.AgentProposalRepository
 	Organizations tenantports.OrganizationRepository
+	Controls      tenantports.AgentControlRepository
+	Books         tenantports.AccountingControlRepository
 }
 
 type Service struct {
@@ -33,8 +48,26 @@ type Service struct {
 	usage     costReader
 	runs      runCounter
 	proposals toolCounter
+	money     moneyCounter
+	controls  controlReader
+	books     booksReader
 	zones     timezoneReader
 	now       func() int64
+}
+
+type booksReader interface {
+	GetByOrgID(ctx context.Context, orgID pulid.ID) (*tenant.AccountingControl, error)
+}
+
+type moneyCounter interface {
+	SumAutomaticMoney(
+		ctx context.Context,
+		req *agentports.SumAutomaticMoneyRequest,
+	) (agent.MoneyUse, error)
+}
+
+type controlReader interface {
+	GetOrCreate(ctx context.Context, tenantInfo pagination.TenantInfo) (*tenant.AgentControl, error)
 }
 
 type costReader interface {
@@ -55,7 +88,7 @@ type toolCounter interface {
 // timezoneReader names the organization's zone, which is what "this month"
 // and "today" mean for a cap.
 type timezoneReader interface {
-	Timezone(ctx context.Context, tenant pagination.TenantInfo) string
+	Timezone(ctx context.Context, tenant pagination.TenantInfo) (string, error)
 }
 
 func New(p Params) agentports.AgentBudgetService {
@@ -64,6 +97,9 @@ func New(p Params) agentports.AgentBudgetService {
 		usage:     p.Usage,
 		runs:      p.Runs,
 		proposals: p.Proposals,
+		money:     p.Proposals,
+		controls:  p.Controls,
+		books:     p.Books,
 		zones:     organizationZones{organizations: p.Organizations, logger: p.Logger},
 		now:       timeutils.NowUnix,
 	}
@@ -158,6 +194,109 @@ func (s *Service) CheckTool(
 	return agentports.BudgetRefusal{}, nil
 }
 
+func (s *Service) MoneyAllowance(
+	ctx context.Context,
+	req agentports.MoneyAllowanceRequest,
+) (agent.MoneyAllowance, error) {
+	if req.Definition == nil {
+		return agent.MoneyAllowance{}, errNoDefinition
+	}
+
+	tenantInfo := tenantOf(req.Definition)
+	control, err := s.controls.GetOrCreate(ctx, tenantInfo)
+	if err != nil {
+		return agent.MoneyAllowance{}, fmt.Errorf("read agent money limits: %w", err)
+	}
+	currency, err := s.functionalCurrency(ctx, tenantInfo)
+	if err != nil {
+		return agent.MoneyAllowance{}, err
+	}
+	dayStart, err := s.moneyDayStart(ctx, tenantInfo)
+	if err != nil {
+		return agent.MoneyAllowance{}, err
+	}
+
+	day, err := s.money.SumAutomaticMoney(ctx, &agentports.SumAutomaticMoneyRequest{
+		TenantInfo: tenantInfo,
+		Currency:   currency,
+		Since:      dayStart,
+	})
+	if err != nil {
+		return agent.MoneyAllowance{}, err
+	}
+
+	simulated := req.Definition.SimulationMode
+	run := agent.MoneyUse{}
+	if req.RunID.IsNotNil() {
+		if run, err = s.money.SumAutomaticMoney(ctx, &agentports.SumAutomaticMoneyRequest{
+			TenantInfo: tenantInfo,
+			Currency:   currency,
+			RunID:      req.RunID,
+			Simulated:  simulated,
+		}); err != nil {
+			return agent.MoneyAllowance{}, err
+		}
+	}
+	if simulated {
+		day = day.Plus(run)
+	}
+
+	return agent.MoneyAllowance{
+		Limits: agent.MoneyLimits{
+			CallCeilingMinor: control.AgentMoneyCallCeilingMinor,
+			RunCalls:         control.AgentMoneyRunCalls,
+			RunAmountMinor:   control.AgentMoneyRunAmountMinor,
+			DayCalls:         control.AgentMoneyDayCalls,
+			DayAmountMinor:   control.AgentMoneyDayAmountMinor,
+		},
+		Currency: currency,
+		Run:      run.Plus(req.Unrecorded),
+		Day:      day.Plus(req.Unrecorded),
+	}, nil
+}
+
+func (s *Service) functionalCurrency(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (string, error) {
+	if s.books == nil {
+		return "", errNoCurrency
+	}
+	books, err := s.books.GetByOrgID(ctx, tenantInfo.OrgID)
+	if err != nil {
+		return "", fmt.Errorf("read the organization's functional currency: %w", err)
+	}
+	if books == nil {
+		return "", errNoCurrency
+	}
+	currency := money.ISOCode(books.FunctionalCurrencyCode)
+	if currency == "" {
+		return "", errNoCurrency
+	}
+
+	return currency, nil
+}
+
+func (s *Service) moneyDayStart(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (int64, error) {
+	zone, err := s.zones.Timezone(ctx, tenantInfo)
+	if err != nil {
+		return 0, fmt.Errorf("%w: %w", errNoTimezone, err)
+	}
+	if strings.TrimSpace(zone) == "" {
+		return 0, errNoTimezone
+	}
+	loc, err := time.LoadLocation(zone)
+	if err != nil {
+		return 0, fmt.Errorf("%w: %w", errNoTimezone, err)
+	}
+	now := time.Unix(s.now(), 0).In(loc)
+
+	return time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc).Unix(), nil
+}
+
 func (s *Service) Status(
 	ctx context.Context,
 	definition *agentdefinition.Definition,
@@ -233,7 +372,9 @@ func (s *Service) WithinBusinessHours(
 }
 
 func (s *Service) Timezone(ctx context.Context, definition *agentdefinition.Definition) string {
-	return s.zones.Timezone(ctx, tenantOf(definition))
+	zone, _ := s.zones.Timezone(ctx, tenantOf(definition))
+
+	return zone
 }
 
 type budgetWindows struct {
@@ -247,7 +388,8 @@ type budgetWindows struct {
 // that rolled over at UTC midnight would reset in the middle of a Pacific
 // afternoon.
 func (s *Service) windows(ctx context.Context, tenant pagination.TenantInfo) budgetWindows {
-	loc := timeutils.LoadLocation(s.zones.Timezone(ctx, tenant))
+	zone, _ := s.zones.Timezone(ctx, tenant)
+	loc := timeutils.LoadLocation(zone)
 	now := time.Unix(s.now(), 0).In(loc)
 
 	monthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, loc)
@@ -265,24 +407,29 @@ func tenantOf(definition *agentdefinition.Definition) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: definition.OrganizationID, BuID: definition.BusinessUnitID}
 }
 
-// organizationZones reads the zone from the organization, falling back to
-// UTC when it cannot be read: a cap checked in the wrong zone is still a
-// cap, and a run refused because the organization could not be read is not.
+// organizationZones reads the zone from the organization. The run, cost and
+// tool caps fall back to UTC when it cannot be read: a cap checked in the
+// wrong zone is still a cap, and a run refused because the organization could
+// not be read is not. The money caps do not: a write whose day cannot be
+// placed waits for a person.
 type organizationZones struct {
 	organizations tenantports.OrganizationRepository
 	logger        *zap.Logger
 }
 
-func (z organizationZones) Timezone(ctx context.Context, tenant pagination.TenantInfo) string {
+func (z organizationZones) Timezone(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (string, error) {
 	org, err := z.organizations.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
-		TenantInfo: tenant,
+		TenantInfo: tenantInfo,
 	})
 	if err != nil {
 		z.logger.Warn("agent budget: organization lookup failed",
-			zap.String("organization", tenant.OrgID.String()), zap.Error(err))
+			zap.String("organization", tenantInfo.OrgID.String()), zap.Error(err))
 
-		return ""
+		return "", err
 	}
 
-	return org.Timezone
+	return org.Timezone, nil
 }

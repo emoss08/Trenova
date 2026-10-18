@@ -56,9 +56,20 @@ func (c EgressClass) Leaves() bool {
 	}
 }
 
+func (c EgressClass) ApprovalNeedsReview() bool {
+	switch c {
+	case EgressNone, EgressPersonal, EgressInternal:
+		return false
+	case EgressCustomerVisible, EgressDriverVisible, EgressExternalRecipient, EgressMoney:
+		return true
+	default:
+		return true
+	}
+}
+
 func (c EgressClass) Ceiling() AutonomyTier {
 	switch c {
-	case EgressCustomerVisible, EgressDriverVisible, EgressExternalRecipient:
+	case EgressCustomerVisible, EgressDriverVisible, EgressExternalRecipient, EgressMoney:
 		return TierActWithApproval
 	default:
 		return TierAutoExecute
@@ -157,6 +168,10 @@ func (s TaintSource) IsValid() bool {
 
 func (s TaintSource) String() string { return string(s) }
 
+func (s TaintSource) Rereadable() bool {
+	return s == TaintSourceBankReceipt
+}
+
 const (
 	MaxTaintMarks  = 16
 	HeldByTaintKey = "tainted"
@@ -168,6 +183,9 @@ type TaintMark struct {
 	CallID   string      `json:"callId"`
 	Ref      *RecordRef  `json:"ref,omitempty"`
 	At       int64       `json:"at"`
+	// Delegated says the mark crossed a delegation: a delegate read it, or the
+	// turn that handed the delegate its task did.
+	Delegated bool `json:"delegated,omitempty"`
 }
 
 func (m TaintMark) sameOrigin(other TaintMark) bool {
@@ -182,18 +200,28 @@ func (m TaintMark) sameOrigin(other TaintMark) bool {
 	return m.CallID == other.CallID
 }
 
+// RunTaint is the outside content a run has read. Marks are bounded; the
+// sources are not, so a source read after the marks are full is still known,
+// and Overflowed says some reads were not kept as marks.
 type RunTaint struct {
-	Marks []TaintMark `json:"marks"`
+	Marks      []TaintMark   `json:"marks"`
+	Seen       []TaintSource `json:"seen,omitempty"`
+	Overflowed bool          `json:"overflowed,omitempty"`
 }
 
 func (t *RunTaint) Add(mark TaintMark) bool {
 	if t == nil || !mark.Source.IsValid() {
 		return false
 	}
+	if !slices.Contains(t.Seen, mark.Source) {
+		t.Seen = append(t.Seen, mark.Source)
+	}
 	if slices.ContainsFunc(t.Marks, mark.sameOrigin) {
 		return false
 	}
 	if len(t.Marks) >= MaxTaintMarks {
+		t.Overflowed = true
+
 		return false
 	}
 	t.Marks = append(t.Marks, mark)
@@ -202,16 +230,26 @@ func (t *RunTaint) Add(mark TaintMark) bool {
 }
 
 func (t *RunTaint) Tainted() bool {
-	return t != nil && len(t.Marks) > 0
+	return t != nil && (len(t.Marks) > 0 || len(t.Seen) > 0 || t.Overflowed)
 }
 
 func (t *RunTaint) Merge(other *RunTaint) {
 	if t == nil || other == nil {
 		return
 	}
+	t.carry(other)
 	for _, mark := range other.Marks {
 		t.Add(mark)
 	}
+}
+
+func (t *RunTaint) carry(other *RunTaint) {
+	for _, source := range other.Seen {
+		if !slices.Contains(t.Seen, source) {
+			t.Seen = append(t.Seen, source)
+		}
+	}
+	t.Overflowed = t.Overflowed || other.Overflowed
 }
 
 func (t *RunTaint) Clone() *RunTaint {
@@ -219,7 +257,36 @@ func (t *RunTaint) Clone() *RunTaint {
 		return nil
 	}
 
-	return &RunTaint{Marks: slices.Clone(t.Marks)}
+	return &RunTaint{
+		Marks:      slices.Clone(t.Marks),
+		Seen:       slices.Clone(t.Seen),
+		Overflowed: t.Overflowed,
+	}
+}
+
+// HandedOn is the taint as it crosses a delegation, every mark flagged as
+// delegated.
+func (t *RunTaint) HandedOn() *RunTaint {
+	handed := t.Clone()
+	if handed == nil {
+		return nil
+	}
+	for idx := range handed.Marks {
+		handed.Marks[idx].Delegated = true
+	}
+
+	return handed
+}
+
+// Inherit takes on a delegate's taint: its marks, flagged as delegated, its
+// sources and whether it overflowed. It returns the marks it added.
+func (t *RunTaint) Inherit(other *RunTaint) []TaintMark {
+	if t == nil || other == nil {
+		return nil
+	}
+	t.carry(other)
+
+	return t.Absorb(other.HandedOn().Marks)
 }
 
 func (t *RunTaint) Absorb(marks []TaintMark) []TaintMark {
@@ -242,11 +309,7 @@ func (t *RunTaint) Unknown() bool {
 }
 
 func (t *RunTaint) Has(source TaintSource) bool {
-	if t == nil {
-		return false
-	}
-
-	return slices.ContainsFunc(t.Marks, func(mark TaintMark) bool { return mark.Source == source })
+	return slices.Contains(t.Sources(), source)
 }
 
 func (t *RunTaint) Sources() []TaintSource {
@@ -254,7 +317,7 @@ func (t *RunTaint) Sources() []TaintSource {
 		return nil
 	}
 
-	sources := make([]TaintSource, 0, len(t.Marks))
+	sources := slices.Clone(t.Seen)
 	for _, mark := range t.Marks {
 		if !slices.Contains(sources, mark.Source) {
 			sources = append(sources, mark.Source)

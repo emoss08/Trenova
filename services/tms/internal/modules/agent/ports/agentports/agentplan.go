@@ -40,12 +40,21 @@ type UpdateAgentPlanStatusRequest struct {
 	// CommitsAt, when set, is when an approval in its undo window goes
 	// through; it clears any earlier undo.
 	CommitsAt int64
+	// Approval is what the person approved with, kept with a window that
+	// opens so a commit made without its workflow carries the same approval.
+	Approval PlanApproval
 	// Reopen clears the decision an approval in its undo window recorded, for
 	// a plan going back to waiting on its decider. UndoneByUserID, when set,
 	// says it was the decider who took it back, and when.
 	Reopen         bool
 	UndoneByUserID pulid.ID
 	UndoneAt       int64
+}
+
+type PlanApproval struct {
+	ReasonCode    string
+	Note          string
+	PreviewDigest string
 }
 
 // RecordAgentPlanProgressRequest writes how far execution got: the count of

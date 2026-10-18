@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
+	"github.com/emoss08/trenova/shared/pulid"
 )
 
 const NounDriverSettlement = "driver settlement"
@@ -37,9 +38,28 @@ func DriverSettlementLedger() SettlementLedger[driversettlement.Settlement] {
 			"deductionsMinor",
 			"netPayMinor",
 		},
-		Facts:   DriverSettlementFacts,
-		Effects: driverSettlementEffects,
+		Facts:    DriverSettlementFacts,
+		Editable: (*driversettlement.Settlement).IsEditable,
+		Line:     driverSettlementLine,
+		Effects:  driverSettlementEffects,
 	}
+}
+
+func driverSettlementLine(
+	entity *driversettlement.Settlement,
+	lineID pulid.ID,
+) (SettlementLineFacts, bool) {
+	for _, line := range entity.Lines {
+		if line != nil && line.ID == lineID {
+			return SettlementLineFacts{
+				AmountMinor:  line.AmountMinor,
+				Manual:       line.Category == driversettlement.LineCategoryAdjustment,
+				AddedByAgent: line.AddedByAgent,
+			}, true
+		}
+	}
+
+	return SettlementLineFacts{}, false
 }
 
 func DriverSettlementFacts(entity *driversettlement.Settlement) *SettlementFacts {

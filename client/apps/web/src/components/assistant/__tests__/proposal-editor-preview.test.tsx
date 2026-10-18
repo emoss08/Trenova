@@ -219,6 +219,28 @@ describe("ProposalEditor preview", () => {
     );
   });
 
+  it("will not approve changed values unreviewed when their preview cannot be read", async () => {
+    const user = userEvent.setup();
+    fetchProposalPreview.mockImplementation(async (request) => {
+      if (request.modifications) {
+        throw new Error("preview unavailable");
+      }
+      return previewFor(request);
+    });
+    const { onConfirm } = renderEditor();
+
+    await user.clear(statusInput());
+    await user.type(statusInput(), "Late");
+
+    expect(
+      await screen.findByText(
+        "What this would change could not be loaded. It has to be reviewed before it can be approved, so try again.",
+      ),
+    ).toBeInTheDocument();
+    expect(confirmButton()).toBeDisabled();
+    expect(onConfirm).not.toHaveBeenCalled();
+  });
+
   it("reads the preview again and says so when the approval's digest no longer matches", async () => {
     const user = userEvent.setup();
     fetchProposalPreview.mockImplementation(async (request) => previewFor(request));

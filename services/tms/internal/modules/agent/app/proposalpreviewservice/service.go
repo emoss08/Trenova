@@ -50,6 +50,7 @@ type modificationChecker interface {
 		modifications map[string]any,
 		actor *permissionports.RequestActor,
 	) (map[string]any, error)
+	ReviewRequired(proposal *agent.AgentProposal, modifications map[string]any) bool
 }
 
 type decisionReader interface {
@@ -180,10 +181,19 @@ func (s *Service) ForProposal(
 
 		return nil, err
 	}
+	preview.ReviewRequired = s.reviewRequired(proposal, req.Modifications)
 
 	s.observe(span, proposal.ToolName, preview, started)
 
 	return preview, nil
+}
+
+func (s *Service) reviewRequired(proposal *agent.AgentProposal, modifications map[string]any) bool {
+	if s.checker == nil {
+		return proposal.ApprovalNeedsReview() || len(modifications) > 0
+	}
+
+	return s.checker.ReviewRequired(proposal, modifications)
 }
 
 func (s *Service) forProposal(
@@ -233,9 +243,10 @@ func (s *Service) ForPlan(
 
 	reader := s.accessFor(req.Viewer)
 	preview := &agent.PlanPreview{
-		PlanID:     plan.ID,
-		Steps:      make([]agent.PlanStepPreview, 0, len(steps)),
-		ComputedAt: s.now(),
+		PlanID:         plan.ID,
+		Steps:          make([]agent.PlanStepPreview, 0, len(steps)),
+		ComputedAt:     s.now(),
+		ReviewRequired: agent.PlanNeedsReview(steps),
 	}
 
 	pending := make([]*draft, 0, len(steps))
@@ -272,6 +283,8 @@ func (s *Service) ForPlan(
 				return nil, err
 			}
 		}
+		stepPreview.ReviewRequired = step.Status == agent.ProposalStatusPending &&
+			s.reviewRequired(step, nil)
 		preview.WithheldCount += stepPreview.WithheldCount
 		preview.Steps = append(preview.Steps, agent.PlanStepPreview{
 			ProposalID: step.ID,

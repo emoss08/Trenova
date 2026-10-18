@@ -2869,6 +2869,30 @@ func init() {
 				FieldMapKey: "learningOff",
 			},
 			{
+				Name:        "agentMoneyCallCeiling",
+				FieldMapKey: "agentMoneyCallCeilingMinor",
+			},
+			{
+				Name:        "agentMoneyRunCalls",
+				FieldMapKey: "agentMoneyRunCalls",
+			},
+			{
+				Name:        "agentMoneyRunAmount",
+				FieldMapKey: "agentMoneyRunAmountMinor",
+			},
+			{
+				Name:        "agentMoneyDayCalls",
+				FieldMapKey: "agentMoneyDayCalls",
+			},
+			{
+				Name:        "agentMoneyDayAmount",
+				FieldMapKey: "agentMoneyDayAmountMinor",
+			},
+			{
+				Name:    "agentMoneyCurrency",
+				Special: "agentMoneyCurrency",
+			},
+			{
 				Name:        "version",
 				FieldMapKey: "version",
 			},
@@ -3963,6 +3987,8 @@ func init() {
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
+			"tainted",
+			"egress_class",
 		},
 		Fields: []FieldSpec{
 			{
@@ -4052,6 +4078,10 @@ func init() {
 			{
 				Name:        "heldBy",
 				FieldMapKey: "heldBy",
+			},
+			{
+				Name:    "reviewRequired",
+				Special: "reviewRequired",
 			},
 			{
 				Name:        "traceId",

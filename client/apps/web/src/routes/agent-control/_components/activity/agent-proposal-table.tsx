@@ -64,7 +64,13 @@ export default function AgentProposalTable() {
       reasonLabel: t("Reason"),
       requireReason: !accepting,
       destructive: !accepting,
-      preview: { kind: "proposal", scope: "approver", id: proposal.id, approving: accepting },
+      preview: {
+        kind: "proposal",
+        scope: "approver",
+        id: proposal.id,
+        approving: accepting,
+        reviewRequired: proposal.reviewRequired,
+      },
       onConfirm: async (reason, previewDigest) => {
         await decideAgentProposal(proposal.id, {
           decision,

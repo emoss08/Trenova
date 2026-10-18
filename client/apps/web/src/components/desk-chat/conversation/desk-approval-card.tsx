@@ -1,6 +1,17 @@
 import { decideBatch } from "@/components/assistant/approval-actions";
-import type { ApprovalEntry } from "@/components/assistant/approval-queue";
-import { canApprove, gateDigest } from "@/components/assistant/proposal-preview/preview-gate";
+import { pendingEdits, type ApprovalEntry } from "@/components/assistant/approval-queue";
+import {
+  canApprove,
+  gateDigest,
+  reviewRequiredFor,
+  unreviewedRequired,
+} from "@/components/assistant/proposal-preview/preview-gate";
+import {
+  ReviewBlocker,
+  ReviewedChange,
+  reviewTally,
+  useReviewReports,
+} from "@/components/assistant/proposal-preview/reviewed-change";
 import {
   useApprovalGate,
   usePlanPreview,
@@ -20,7 +31,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { useEffect, type MutableRefObject } from "react";
+import { useEffect, useState, type MutableRefObject } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { DeskIcon } from "../desk-icons";
 import {
@@ -100,24 +111,32 @@ function ProposalCard({
   const queryClient = useQueryClient();
   const { proposal } = entry;
   const view = presentProposal(proposal);
-  const previewQuery = useProposalPreview({ scope: "mine", id: proposal.id });
-  const approval = useApprovalGate(previewQuery);
-  const facts = approvalFacts(previewQuery.data, t);
-
   // Wording the person changed on the draft and sent for approval is kept on
   // the proposal, and goes with the approval as a modification of what the
-  // agent proposed. Deciding clears it on the server.
-  const edits =
-    proposal.pendingModifications && Object.keys(proposal.pendingModifications).length > 0
-      ? proposal.pendingModifications
-      : null;
+  // agent proposed. Deciding clears it on the server. The preview is of the
+  // change with those edits, so its digest is what the approval carries.
+  const edits = pendingEdits(proposal);
+  const previewQuery = useProposalPreview({
+    scope: "mine",
+    id: proposal.id,
+    modifications: edits,
+  });
+  const approval = useApprovalGate(previewQuery);
+  const facts = approvalFacts(previewQuery.data, t);
+  const previewDigest = gateDigest(approval.gate);
+
   const mutation = useMutation({
     mutationFn: () =>
       decideMyProposal(
         proposal.id,
         edits
-          ? { decision: "Modified", reasonCode: "modified_from_desk", modifications: edits }
-          : { decision: "Accepted", reasonCode: "", previewDigest: gateDigest(approval.gate) },
+          ? {
+              decision: "Modified",
+              reasonCode: "modified_from_desk",
+              modifications: edits,
+              previewDigest,
+            }
+          : { decision: "Accepted", reasonCode: "", previewDigest },
       ),
     onMutate: () =>
       hold(undo, {
@@ -146,7 +165,12 @@ function ProposalCard({
       void invalidateProposalViews(queryClient, threadId);
     },
   });
-  const approvable = canApprove(approval.gate) && !mutation.isPending;
+  const reviewRequired = reviewRequiredFor(
+    previewQuery.data,
+    proposal.reviewRequired,
+    edits !== null,
+  );
+  const approvable = canApprove(approval.gate, reviewRequired) && !mutation.isPending;
   const approve = () => {
     approval.acknowledge();
     mutation.mutate();
@@ -157,6 +181,7 @@ function ProposalCard({
     <CardRow
       title={view.title}
       facts={facts}
+      unreviewable={approval.gate.state === "unavailable" && reviewRequired}
       reversible={view.reversible}
       changed={approval.changed}
       stale={approval.gate.state === "stale"}
@@ -233,7 +258,14 @@ function PlanCard({
       void invalidateProposalViews(queryClient, threadId);
     },
   });
-  const approvable = canApprove(approval.gate) && !mutation.isPending;
+  // Steps not listed yet say nothing about the plan, so it is held as one that
+  // must be reviewed until its preview says otherwise.
+  const reviewRequired = reviewRequiredFor(
+    previewQuery.data,
+    steps.length === 0 || steps.some((step) => step.reviewRequired),
+    false,
+  );
+  const approvable = canApprove(approval.gate, reviewRequired) && !mutation.isPending;
   const approve = () => {
     approval.acknowledge();
     mutation.mutate();
@@ -244,6 +276,7 @@ function PlanCard({
     <CardRow
       title={title}
       facts={facts}
+      unreviewable={approval.gate.state === "unavailable" && reviewRequired}
       countLabel={t("{0, plural, one {# step} other {# steps}}", plan.stepCount)}
       reversible={reversible}
       changed={approval.changed}
@@ -271,19 +304,35 @@ function BatchCard({
   const view = presentProposal(first);
   const previewQuery = useProposalPreview({ scope: "mine", id: first.id });
   const sample = approvalFacts(previewQuery.data, t);
-  const facts: ApprovalFacts = { ...sample, count: proposals.length };
-  const reversible = proposals.every((proposal) => presentProposal(proposal).reversible);
+  // Only the first change's preview is on this row. A change the server takes
+  // only once its preview has been shown is read here first: Review opens
+  // each of their previews under the row, and the batch carries their digests.
+  // The rest may be approved from here, unreviewed. A change whose record moved
+  // since it was drafted can no longer be approved, so it is left out of the
+  // approval and stays waiting for the person to set aside or redraft.
+  const [reviewing, setReviewing] = useState(false);
+  const { reports, shown, onReport } = useReviewReports();
+  const gated = proposals.filter((proposal) => proposal.reviewRequired);
+  const approving = proposals.filter((proposal) => reports.get(proposal.id)?.state !== "stale");
+  const leftOut = proposals.length - approving.length;
+  const unreviewed = unreviewedRequired(approving, shown);
+  const needsReview = unreviewed.length;
+  const tally = reviewTally(
+    unreviewedRequired(proposals, shown).map((proposal) => proposal.id),
+    reports,
+  );
+  const facts: ApprovalFacts = { ...sample, count: approving.length };
+  const reversible = approving.every((proposal) => presentProposal(proposal).reversible);
 
   const mutation = useMutation({
-    mutationFn: () =>
-      decideBatch(queryClient, proposals, { approving: true, shownDigests: new Map() }),
+    mutationFn: () => decideBatch(queryClient, approving, { approving: true, shownDigests: shown }),
     onMutate: () =>
       hold(undo, {
         key: entry.key,
         title: view.title,
         what: approvedWhat(view.title, facts, t),
         target: { proposalId: first.id },
-        proposalIds: proposals.map((proposal) => proposal.id),
+        proposalIds: approving.map((proposal) => proposal.id),
         planId: null,
       }),
     onSuccess: (outcome) => {
@@ -306,21 +355,38 @@ function BatchCard({
       void invalidateProposalViews(queryClient, threadId);
     },
   });
-  const approvable = !mutation.isPending;
+  const approvable = needsReview === 0 && approving.length > 0 && !mutation.isPending;
   const approve = () => mutation.mutate();
   useApproveShortcut(approveRef, approve, approvable);
 
   return (
-    <CardRow
-      title={view.title}
-      facts={facts}
-      reversible={reversible}
-      changed={false}
-      approvable={approvable}
-      onApprove={approve}
-      onReview={() => onReview(entry)}
-      onDefer={onDefer}
-    />
+    <>
+      <CardRow
+        title={view.title}
+        facts={facts}
+        reviewFirst={needsReview}
+        reviewOpen={reviewing}
+        leftOut={leftOut}
+        reversible={reversible}
+        changed={false}
+        approvable={approvable}
+        onApprove={approve}
+        onReview={needsReview > 0 && !reviewing ? () => setReviewing(true) : () => onReview(entry)}
+        onDefer={onDefer}
+      />
+      {reviewing && gated.length > 0 && (
+        <div
+          className="flex min-w-0 flex-col gap-3 px-3 pt-1 pb-2"
+          role="group"
+          aria-label={t("Changes to review before approving")}
+        >
+          {gated.map((proposal) => (
+            <ReviewedChange key={proposal.id} proposal={proposal} onReport={onReport} />
+          ))}
+          <ReviewBlocker tally={tally} />
+        </div>
+      )}
+    </>
   );
 }
 
@@ -348,6 +414,10 @@ function CardRow({
   countLabel,
   reversible,
   changed,
+  unreviewable = false,
+  reviewFirst = 0,
+  reviewOpen = false,
+  leftOut = 0,
   stale = false,
   approvable,
   onApprove,
@@ -363,6 +433,14 @@ function CardRow({
   changed: boolean;
   /** Records changed since the agent drafted it; the server will not take an approval. */
   stale?: boolean;
+  /** Its preview could not be read, and the server approves it only once one is shown. */
+  unreviewable?: boolean;
+  /** How many changes of a batch must have their preview read in Review before approving. */
+  reviewFirst?: number;
+  /** Their previews are open under the row; Review opens the decision instead. */
+  reviewOpen?: boolean;
+  /** How many changes of a batch moved since they were drafted and are left out of it. */
+  leftOut?: number;
   approvable: boolean;
   onApprove: () => void;
   onReview: () => void;
@@ -468,6 +546,15 @@ function CardRow({
         <span className="dk-dcx-d">
           {changed ? (
             t("This changed since it was drafted. Read it again before approving.")
+          ) : unreviewable ? (
+            t(
+              "Its preview could not be read, and this change is approved only once you've seen it.",
+            )
+          ) : reviewFirst > 0 ? (
+            t(
+              "{0, plural, one {Review # change before approving: it is approved only once you've seen its preview} other {Review # changes before approving: each is approved only once you've seen its preview}}",
+              reviewFirst,
+            )
           ) : facts.field ? (
             <>
               {facts.field.label} <span className="sr-only">{t("from")}</span>
@@ -476,26 +563,58 @@ function CardRow({
             </>
           ) : null}
           <span className="dk-dcx-m">· {reversible ? t("reversible") : t("can't be undone")}</span>
+          {leftOut > 0 && (
+            <span className="dk-dcx-m">
+              ·{" "}
+              {t(
+                "{0, plural, one {# left out: it changed since it was drafted} other {# left out: they changed since they were drafted}}",
+                leftOut,
+              )}
+            </span>
+          )}
         </span>
       </span>
-      <Button variant="quiet" size="sm" className={cn(warnButton, leadButton)} onClick={onReview}>
-        {t("Review")}
-      </Button>
-      <Button variant="quiet" size="sm" className={warnButton} onClick={onDefer}>
-        {t("Not now")}
-      </Button>
-      <Button
-        size="sm"
-        className={cn("dk-apv-b", approveButton)}
-        disabled={!approvable}
-        aria-keyshortcuts="Meta+Enter"
-        onClick={onApprove}
-      >
-        {t("Approve")}
-        <span className="dk-kbd" aria-hidden>
-          ⌘↵
-        </span>
-      </Button>
+      {reviewFirst > 0 ? (
+        <>
+          <Button
+            variant="quiet"
+            size="sm"
+            className={cn(warnButton, leadButton)}
+            onClick={onDefer}
+          >
+            {t("Not now")}
+          </Button>
+          <Button size="sm" className={approveButton} onClick={onReview} aria-expanded={reviewOpen}>
+            {reviewOpen ? t("Open the decision") : t("Review {0}", reviewFirst)}
+          </Button>
+        </>
+      ) : (
+        <>
+          <Button
+            variant="quiet"
+            size="sm"
+            className={cn(warnButton, leadButton)}
+            onClick={onReview}
+          >
+            {t("Review")}
+          </Button>
+          <Button variant="quiet" size="sm" className={warnButton} onClick={onDefer}>
+            {t("Not now")}
+          </Button>
+          <Button
+            size="sm"
+            className={cn("dk-apv-b", approveButton)}
+            disabled={!approvable}
+            aria-keyshortcuts="Meta+Enter"
+            onClick={onApprove}
+          >
+            {t("Approve")}
+            <span className="dk-kbd" aria-hidden>
+              ⌘↵
+            </span>
+          </Button>
+        </>
+      )}
     </div>
   );
 }

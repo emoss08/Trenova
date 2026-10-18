@@ -47,6 +47,12 @@ type GetBankReceiptRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 }
 
+type ReceiptAmountPaymentsRequest struct {
+	ReceiptID  pulid.ID              `json:"receiptId"`
+	Limit      int                   `json:"limit"`
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+}
+
 type BankReceiptService interface {
 	Get(ctx context.Context, req *GetBankReceiptRequest) (*bankreceipt.BankReceipt, error)
 	Import(

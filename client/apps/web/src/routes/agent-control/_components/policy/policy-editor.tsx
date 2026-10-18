@@ -18,7 +18,11 @@ import { toast } from "@trenova/shared/components/ui/toast";
 import { personAllowanceOptions, promotionThresholdOptions } from "../agent-control-options";
 import type { EditFields } from "../edit/change-review";
 import { EditSheet, type EditSection } from "../edit/edit-sheet";
+import { MoneyField } from "@/components/fields/money-field";
+import { NumberField } from "@/components/fields/number-field";
 import { SegmentedField } from "@/components/fields/segmented-field";
+import { formatNumber } from "@trenova/shared/i18n/format";
+import { formatCurrency } from "@trenova/shared/lib/utils";
 import { Callout } from "../edit/callout";
 import { useEditFlow } from "../edit/use-edit-flow";
 import { Ic } from "../kit/ic";
@@ -101,6 +105,23 @@ export function PolicyEditor({ open, control, onClose }: PolicyEditorProps) {
       format: (value) =>
         typeof value === "number" && value > 0 ? value.toLocaleString() : t("Unlimited"),
     },
+    agentMoney: {
+      label: t("Money limits"),
+      format: (value) => {
+        const money = value as PolicyFormValues["agentMoney"] | undefined;
+        if (!money) {
+          return "";
+        }
+        return t(
+          "{0} a change · {1} changes or {2} a run · {3} changes or {4} a day",
+          formatCurrency(money.callCeilingCents / 100, control.agentMoneyCurrency),
+          formatNumber(money.runCalls),
+          formatCurrency(money.runAmountCents / 100, control.agentMoneyCurrency),
+          formatNumber(money.dayCalls),
+          formatCurrency(money.dayAmountCents / 100, control.agentMoneyCurrency),
+        );
+      },
+    },
     aiTrainingConsent: { label: t("Share corrections") },
   };
 
@@ -178,6 +199,53 @@ export function PolicyEditor({ open, control, onClose }: PolicyEditorProps) {
               value,
               label: value === 0 ? t("Unlimited") : value.toLocaleString(),
             }))}
+          />
+        </>
+      ),
+    },
+    {
+      id: "money",
+      label: t("Money agents move on their own"),
+      keys: ["agentMoney"],
+      content: (
+        <>
+          <p className="es-note">
+            {t(
+              "A payment, a receipt match, a charge correction or a settlement adjustment runs without a person only when its record matches exactly and it fits every limit here. Anything past a limit waits for a person, who sees which limit it reached. A run that read outside text never moves money on its own, except that a payment or a receipt match may after reading only bank receipts, which it reads again from your records. Set the most one change may move, or the changes in one run, to 0 to have a person approve every money change.",
+            )}
+          </p>
+          <p className="es-note">
+            {t(
+              "Amounts are in {0}, your organization's functional currency. A change in any other currency always waits for a person.",
+              control.agentMoneyCurrency,
+            )}
+          </p>
+          <MoneyField<PolicyFormValues>
+            control={form.control}
+            name="agentMoney.callCeilingCents"
+            label={t("Most one change may move")}
+          />
+          <NumberField<PolicyFormValues>
+            control={form.control}
+            name="agentMoney.runCalls"
+            label={t("Changes in one run")}
+            placeholder="0"
+          />
+          <MoneyField<PolicyFormValues>
+            control={form.control}
+            name="agentMoney.runAmountCents"
+            label={t("Most one run may move")}
+          />
+          <NumberField<PolicyFormValues>
+            control={form.control}
+            name="agentMoney.dayCalls"
+            label={t("Changes in a day, across every agent")}
+            placeholder="0"
+          />
+          <MoneyField<PolicyFormValues>
+            control={form.control}
+            name="agentMoney.dayAmountCents"
+            label={t("Most every agent may move in a day")}
           />
         </>
       ),

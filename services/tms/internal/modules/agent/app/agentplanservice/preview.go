@@ -41,8 +41,15 @@ func (s *Service) settlePreview(
 	steps []*agent.AgentProposal,
 	actor *permissionports.RequestActor,
 ) (*shownPlan, error) {
-	if req.Decision != agent.DecisionAccepted || s.previews == nil {
+	if req.Decision != agent.DecisionAccepted {
 		return nil, nil //nolint:nilnil // no preview settles a rejection
+	}
+	gated := agent.PlanNeedsReview(steps)
+	if gated && (s.previews == nil || req.PreviewDigest == "") {
+		return nil, agent.ReviewRequiredError()
+	}
+	if s.previews == nil {
+		return nil, nil //nolint:nilnil // an ungated plan with nothing to preview it is decided unseen
 	}
 
 	preview, err := s.previews.ForPlan(ctx, &agentports.PlanPreviewRequest{

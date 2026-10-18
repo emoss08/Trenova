@@ -64,6 +64,18 @@ describe("labels", () => {
       "personal_exemption",
       "shadow_mode",
       "simulation_mode",
+      "money_unbounded",
+      "money_unproven",
+      "money_exact_match",
+      "money_record_state",
+      "money_agent_line",
+      "money_limits_unread",
+      "money_currency",
+      "money_call_ceiling",
+      "money_run_calls",
+      "money_run_amount",
+      "money_day_calls",
+      "money_day_amount",
     ]) {
       expect(heldByLabel(t, key)).not.toBe(key);
     }

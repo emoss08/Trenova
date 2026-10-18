@@ -4,11 +4,11 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -64,7 +64,31 @@ func assessBoth(
 A payment an agent may post on its own still waits for a person once the run
 has read an email: money is not held by its class, only by what the run read.
 */
-func TestAssess_MoneyRunsOnItsOwnUntilTheRunIsTainted(t *testing.T) {
+func TestAssess_BoundedMoneyRunsOnItsOwnWithinBoundsUntilTheRunIsTainted(t *testing.T) {
+	t.Parallel()
+
+	policy := actionPolicy("post_customer_payment", agent.EgressMoney)
+	policy.Condition = &agentports.TierCondition{
+		Description: "Runs on its own only within bounds.",
+		Bounds: func(context.Context, agentports.ToolExecuteParams) agentports.MoneyBound {
+			return agentports.WithinMoneyBound(1, "USD")
+		},
+	}
+	clean, tainted := assessBoth(t, agenttoolpolicy.AssessInput{
+		Policy:     policy,
+		Definition: chatAgent(agent.TierAutoExecute, nil),
+	})
+
+	assert.Equal(t, agent.AutonomyConditional, clean.Answer)
+	assert.Equal(t, agent.TierAutoExecute, clean.Tier)
+	assert.Equal(t, []string{agent.HeldByMoneyUnproven}, clean.HeldBy)
+
+	assert.Equal(t, agent.AutonomyNeedsApproval, tainted.Answer)
+	assert.Equal(t, agent.TierActWithApproval, tainted.Tier)
+	assert.Equal(t, []string{agenttoolpolicy.HeldByTainted}, tainted.HeldBy)
+}
+
+func TestAssess_UnboundedMoneyAsksFirst(t *testing.T) {
 	t.Parallel()
 
 	clean, tainted := assessBoth(t, agenttoolpolicy.AssessInput{
@@ -72,13 +96,12 @@ func TestAssess_MoneyRunsOnItsOwnUntilTheRunIsTainted(t *testing.T) {
 		Definition: chatAgent(agent.TierAutoExecute, nil),
 	})
 
-	assert.Equal(t, agent.AutonomyRunsOnItsOwn, clean.Answer)
-	assert.Equal(t, agent.TierAutoExecute, clean.Tier)
-	assert.Empty(t, clean.HeldBy)
-
-	assert.Equal(t, agent.AutonomyNeedsApproval, tainted.Answer)
-	assert.Equal(t, agent.TierActWithApproval, tainted.Tier)
-	assert.Equal(t, []string{agenttoolpolicy.HeldByTainted}, tainted.HeldBy)
+	for _, autonomy := range []agentports.ToolAutonomy{clean, tainted} {
+		assert.Equal(t, agent.AutonomyNeedsApproval, autonomy.Answer)
+		assert.Equal(t, agent.TierActWithApproval, autonomy.Tier)
+		assert.Contains(t, autonomy.HeldBy, agent.HeldByMoneyUnbounded)
+	}
+	assert.Contains(t, tainted.HeldBy, agenttoolpolicy.HeldByTainted)
 }
 
 func TestAssess_WorkThatLeavesNeverRunsPastApproval(t *testing.T) {

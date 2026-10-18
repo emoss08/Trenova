@@ -76,7 +76,7 @@ func TestCorrectChargeCodePreview_ShowsEachChargeAndTheTotal(t *testing.T) {
 		}).
 		Once()
 
-	tool := NewCorrectChargeCodeTool(billing)
+	tool := NewCorrectChargeCodeTool(billing, &payerBooks{currency: "USD"})
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		"billingQueueItemId": pulid.MustNew("bqi_").String(),
 		"additionalCharges": []any{map[string]any{

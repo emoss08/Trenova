@@ -269,6 +269,7 @@ func resolvePayDisputeRequest(
 		Description: description,
 		AmountMinor: amount,
 		PayCodeID:   payCodeID,
+		ByAgent:     true,
 	}
 	return req, nil
 }

@@ -10,16 +10,29 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
 )
 
 type CorrectChargeCodeTool struct {
-	billing billingqueueports.BillingQueueService
+	billing  billingqueueports.BillingQueueService
+	profiles billingProfileReader
 }
 
-func NewCorrectChargeCodeTool(billing billingqueueports.BillingQueueService) agentports.AgentTool {
-	return &CorrectChargeCodeTool{billing: billing}
+type billingProfileReader interface {
+	GetBillingProfile(
+		ctx context.Context,
+		req customerports.GetCustomerBillingProfileRequest,
+	) (*customer.CustomerBillingProfile, error)
+}
+
+func NewCorrectChargeCodeTool(
+	billing billingqueueports.BillingQueueService,
+	profiles billingProfileReader,
+) agentports.AgentTool {
+	return &CorrectChargeCodeTool{billing: billing, profiles: profiles}
 }
 
 func (t *CorrectChargeCodeTool) Name() string { return "correct_charge_code" }
@@ -100,14 +113,18 @@ func chargeLineSchema() map[string]any {
 
 func (t *CorrectChargeCodeTool) Policy() agentports.ToolPolicy {
 	return agentports.ToolPolicy{
-		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
-		Resource:      permission.ResourceBillingQueue,
-		Operation:     permission.OpUpdate,
-		Scope:         agent.ToolScopeTenant,
-		DefaultTier:   agent.TierPropose,
-		MaxTier:       agent.TierAutoExecute,
-		Egress:        []agent.EgressClass{agent.EgressMoney},
+		Name:        t.Name(),
+		Kind:        agent.ToolKindAction,
+		Resource:    permission.ResourceBillingQueue,
+		Operation:   permission.OpUpdate,
+		Scope:       agent.ToolScopeTenant,
+		DefaultTier: agent.TierPropose,
+		MaxTier:     agent.TierAutoExecute,
+		Egress:      []agent.EgressClass{agent.EgressMoney},
+		Condition: &agentports.TierCondition{
+			Description: correctChargeBoundText,
+			Bounds:      t.withinBounds,
+		},
 		Effect:        agent.ToolEffectChange,
 		Reversible:    true,
 		ReadsExternal: agent.ExternalReadNever,

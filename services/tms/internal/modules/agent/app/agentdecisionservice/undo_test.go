@@ -323,6 +323,7 @@ func newWindowHarness(t *testing.T, count int) *windowHarness {
 			ToolName:       "place_shipment_hold",
 			ToolParams:     map[string]any{},
 			AutonomyTier:   agent.TierPropose,
+			EgressClass:    agent.EgressInternal,
 			Status:         agent.ProposalStatusPending,
 			ExpiresAt:      timeutils.NowUnix() + 3600,
 			TargetResource: string(permission.ResourceShipmentMove),

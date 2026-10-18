@@ -160,5 +160,8 @@ func (t *Turn) inheritDelegateTaint(fx TurnEffects, result *agentports.RunResult
 
 		return
 	}
-	t.absorbTaint(fx, result.Taint.Marks)
+	taint := t.result.Taint
+	for _, mark := range taint.Inherit(result.Taint) {
+		fx.Emit(taintedEvent(mark, len(taint.Marks)))
+	}
 }
