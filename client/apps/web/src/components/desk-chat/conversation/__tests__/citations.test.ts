@@ -12,6 +12,7 @@ function step(name: string, value: unknown, summary = ""): ToolStep {
     effect: "lookup",
     summary,
     durationSeconds: 1.2,
+    reasoning: "",
   };
 }
 

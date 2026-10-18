@@ -24,6 +24,7 @@ function step(overrides: Partial<ToolStep> & { name: string }): ToolStep {
     effect: toolEffect(overrides.name),
     summary: "",
     durationSeconds: null,
+    reasoning: "",
     ...overrides,
   };
 }

@@ -1,12 +1,6 @@
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { formatWorkDuration } from "@/lib/ai-usage-format";
-import type {
-  AssistantMessage,
-  DelegateReport,
-  StepRationale,
-  ToolEffect,
-  ToolVerdict,
-} from "@/types/assistant";
+import type { AssistantMessage, DelegateReport, ToolEffect, ToolVerdict } from "@/types/assistant";
 import type { ToolExchange } from "./thread-view";
 import { describeToolCall, isWebTool, parseToolResult, WEB_READ_TOOL } from "./tool-presentation";
 import { REQUEST_DECISION_TOOL, WITHDRAW_PROPOSAL_TOOL } from "./decision-requests";
@@ -33,8 +27,11 @@ export type ToolStep = {
   summary: string;
   /** How long the call took, in seconds, when that is known. */
   durationSeconds: number | null;
-  /** Why the agent took the step, in its own words, when it said. */
-  why?: StepRationale | null;
+  /**
+   * What the model thought in the reply that asked for this call; empty when
+   * it returned no readable thinking. Calls asked for together share it.
+   */
+  reasoning: string;
   /** How the runtime judged the call; absent from an older server or a result saved before it was kept. */
   verdict?: ToolVerdict;
   /**
@@ -146,7 +143,7 @@ function savedStatus(result: AssistantMessage | null): ToolActivityStatus {
  * result whose call is not in view has nothing to measure from.
  */
 export function stepsFromExchanges(tools: readonly ToolExchange[], askedAt: number): ToolStep[] {
-  return tools.map(({ call, result, orphan, delegated }) => {
+  return tools.map(({ call, result, orphan, delegated, reasoning }) => {
     const name = call.name !== "" ? call.name : (result?.toolName ?? "");
     const timed = !orphan && result !== null && result.createdAt > 0 && askedAt > 0;
     return {
@@ -159,7 +156,7 @@ export function stepsFromExchanges(tools: readonly ToolExchange[], askedAt: numb
       summary: result?.summary ?? "",
       durationSeconds: timed ? Math.max(0, result.createdAt - askedAt) : null,
       verdict: result?.toolVerdict,
-      why: call.why,
+      reasoning: reasoning ?? "",
       ...(name === DELEGATE_TOOL
         ? {
             delegate: {
@@ -175,10 +172,32 @@ export function stepsFromExchanges(tools: readonly ToolExchange[], askedAt: numb
 
 /** The calls of a turn still streaming, timed by the reader's own clock. */
 export function stepsFromSegments(segments: readonly TurnSegment[]): ToolStep[] {
-  return segments.flatMap((segment) => (segment.kind === "tool" ? [segmentStep(segment)] : []));
+  const reasoning = reasoningByCall(segments);
+  return segments.flatMap((segment) =>
+    segment.kind === "tool" ? [segmentStep(segment, reasoning.get(segment.callId) ?? "")] : [],
+  );
 }
 
-export function segmentStep(segment: Extract<TurnSegment, { kind: "tool" }>): ToolStep {
+/**
+ * Each call's reasoning in a streaming turn: the thought of the reply that
+ * asked for it, once that reply has finished and named its calls.
+ */
+function reasoningByCall(segments: readonly TurnSegment[]): Map<string, string> {
+  const byCall = new Map<string, string>();
+  for (const segment of segments) {
+    if (segment.kind !== "reasoning" || segment.text.trim() === "") continue;
+    for (const callId of segment.callIds ?? []) {
+      const earlier = byCall.get(callId);
+      byCall.set(callId, earlier ? `${earlier}\n\n${segment.text}` : segment.text);
+    }
+  }
+  return byCall;
+}
+
+export function segmentStep(
+  segment: Extract<TurnSegment, { kind: "tool" }>,
+  reasoning: string = "",
+): ToolStep {
   const timed = segment.startedAt !== undefined && segment.finishedAt !== undefined;
   return {
     id: segment.callId,
@@ -190,7 +209,7 @@ export function segmentStep(segment: Extract<TurnSegment, { kind: "tool" }>): To
     summary: segment.summary ?? "",
     durationSeconds: timed ? (segment.finishedAt! - segment.startedAt!) / 1000 : null,
     verdict: segment.verdict,
-    why: segment.why,
+    reasoning,
     ...(segment.delegate || segment.name === DELEGATE_TOOL
       ? {
           delegate: {

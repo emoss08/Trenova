@@ -17,6 +17,7 @@ describe("decisionRequestsFromSteps", () => {
       effect: "ask",
       summary: "",
       durationSeconds: null,
+      reasoning: "",
     });
 
     expect(

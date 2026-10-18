@@ -1,7 +1,8 @@
 import { describeActivity, groupActivity, type ToolStep } from "@/components/assistant/activity";
+import { ReasoningDisclosure } from "@/components/assistant/reasoning-disclosure";
 import { ArtifactKindIcon } from "@/components/assistant/voice/artifact-chrome";
 import { MarkdownLink } from "@/components/elements/ai-markdown";
-import type { AssistantArtifact, StepRationale } from "@/types/assistant";
+import type { AssistantArtifact } from "@/types/assistant";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
@@ -190,58 +191,12 @@ function StepSummary({
           {artifact.title}
         </Button>
       )}
-      {citation.step.why && <StepWhyToggle why={citation.step.why} />}
+      {citation.step.reasoning !== "" && (
+        <span className="mt-1 block" onClick={(event) => event.stopPropagation()}>
+          <ReasoningDisclosure text={citation.step.reasoning} />
+        </span>
+      )}
     </>
-  );
-}
-
-/**
- * "Why this step?": the agent's own account of the step, as it gave it with
- * the call. A step it gave none for offers nothing rather than a made-up
- * reason.
- */
-function StepWhyToggle({ why }: { why: StepRationale }) {
-  const t = useT();
-  const [open, setOpen] = useState(false);
-  const rows: [string, string][] = [
-    [t("Saw"), why.saw],
-    [t("Because"), why.because],
-    [t("Instead of"), why.insteadOf],
-  ];
-  if (rows.every(([, text]) => text === "")) return null;
-
-  return (
-    <>
-      <Button
-        variant="bare"
-        size="bare"
-        className="mt-1.5 gap-1 text-xs font-medium text-dsk-subtle hover:text-dsk-fg aria-expanded:text-dsk-fg"
-        aria-expanded={open}
-        onClick={(event) => {
-          event.stopPropagation();
-          setOpen((value) => !value);
-        }}
-      >
-        <DeskIcon name="why" size={12} />
-        {open ? t("Hide reasoning") : t("Why this step?")}
-      </Button>
-      {open && <StepWhy rows={rows} />}
-    </>
-  );
-}
-
-export function StepWhy({ rows }: { rows: [string, string][] }) {
-  return (
-    <span className="dk-why">
-      {rows
-        .filter(([, text]) => text !== "")
-        .map(([label, text]) => (
-          <span key={label}>
-            <em>{label}</em>
-            {text}
-          </span>
-        ))}
-    </span>
   );
 }
 
