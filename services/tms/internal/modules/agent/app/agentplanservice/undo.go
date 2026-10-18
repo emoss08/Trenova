@@ -308,8 +308,11 @@ func (s *Service) reopenPlan(
 
 	if undo {
 		s.logUndo(reopened, actor)
+		s.announce(ctx, reopened, actor, agentports.ActivityUndone)
+
+		return true
 	}
-	s.announce(ctx, reopened, actor, agentports.ActivityUndone)
+	s.announce(ctx, reopened, actor, agentports.ActivityReopened)
 
 	return true
 }

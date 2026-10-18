@@ -112,6 +112,35 @@ describe("DecisionFlow approving changes together", () => {
     );
   });
 
+  it("never counts an opened change whose record moved since as reviewed", async () => {
+    nodes = [
+      proposalNode({ id: "aprop_1", reviewRequired: true }),
+      proposalNode({ id: "aprop_2", reviewRequired: true, createdAt: 1_790_000_100 }),
+    ];
+    fetchProposalPreview.mockImplementation(async (request) =>
+      preview({
+        proposalId: request.id,
+        tool: "post_customer_payment",
+        digest: `sha256:${request.id}`,
+        stale: request.id === "aprop_2",
+      }),
+    );
+    renderFlow();
+
+    await waitFor(() => expect(approveButton()).toBeEnabled());
+    press("x");
+    press("j");
+
+    await waitFor(() =>
+      expect(
+        screen.getByText(/1 change must be opened before these can be approved/),
+      ).toBeInTheDocument(),
+    );
+    expect(screen.getByRole("button", { name: /^Approve 2/ })).toBeDisabled();
+    press("a");
+    expect(decideAgentProposals).not.toHaveBeenCalled();
+  });
+
   it("approves a batch of internal changes without opening each one", async () => {
     nodes = [
       proposalNode({ id: "aprop_1", reviewRequired: false }),

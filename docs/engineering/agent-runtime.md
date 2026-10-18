@@ -1588,11 +1588,20 @@ takes the amount, the customer and the references from it rather than from the c
 vouch for having read that record (`TierCondition.Vouches`, `MoneyBound.Reread`). Only a bank
 receipt can be vouched for (`TaintSource.Rereadable`); `post_customer_payment` and
 `match_bank_receipt` vouch for it, so a run that read only bank receipts may post or match
-within the limits. The hold lifts only when the turn's taint is known, every source it holds
-is one the tool declares, and the bound actually re-read it; any other outside content (web,
-email, a document, a portal, a delegate's), and a bound that did not re-read the receipt,
-hold the write as before, and the bounds are not read at all for a source the tool cannot
-vouch for. Two turns running at once each see what the other has recorded, not what it has
+within the limits. The hold lifts only when the turn's taint is known and complete, every
+source it holds is one the tool declares, every mark names its record (the receipt read tools
+name each receipt they return) and was read by this turn, and each record the bound re-read
+(`MoneyBound.Rereading(source, ref)`) is one the turn read. `RunTaint` keeps every source it
+has seen in `Seen` even once its 16 marks are full, and sets `Overflowed`, so a source read
+past the cap is never lost and an overflowed taint is never vouched for. A mark that crosses a
+delegation, handed down (`HandedOn`) or folded back up (`Inherit`), is `Delegated` and is never
+vouched for. Any other outside content (web, email, a document, a portal), and a bound that did
+not re-read the receipt, hold the write as before, and the bounds are not read at all for a
+taint the tool cannot vouch for (`TierCondition.MayVouch`). A vouched payment is pinned to its
+receipt: its day, reference, memo and method must be the receipt's, or it is held as
+`money_exact_match`. A payment whose receipt will not match once it has posted is reported as
+posted with the failed match, never failed, so it counts against the caps and a retry does not
+post it twice. Two turns running at once each see what the other has recorded, not what it has
 run and not yet recorded, so the day's caps can be passed by at most one turn's unrecorded
 writes per concurrent turn.
 

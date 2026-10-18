@@ -349,8 +349,77 @@ describe("DeskApprovalCard and changes that must be reviewed", () => {
         "1 change has changed since it was drafted and can only be set aside · 1 preview could not be loaded; try it again above",
       ),
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Review 2" })).toBeDisabled();
     expect(screen.queryByRole("button", { name: /^Approve/ })).toBeNull();
+    expect(decideMyProposals).not.toHaveBeenCalled();
+  });
+
+  it("leaves a change that moved out of the batch and approves the rest", async () => {
+    fetchProposalPreview.mockImplementation(async (request) =>
+      preview({
+        proposalId: request.id,
+        digest: `sha256:${request.id}`,
+        stale: request.id === "aprop_2",
+      }),
+    );
+    decideMyProposals.mockResolvedValue([
+      { proposalId: "aprop_1", decision: { commitsAt: null }, error: null },
+    ]);
+    renderCard([
+      proposal({ id: "aprop_1", reviewRequired: true }),
+      proposal({ id: "aprop_2", reviewRequired: true, arguments: { shipmentId: "shp_2" } }),
+    ]);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Review 2" }));
+
+    expect(
+      await screen.findByText(/1 left out: it changed since it was drafted/),
+    ).toBeInTheDocument();
+    await waitFor(() => expect(approve()).toBeEnabled());
+    fireEvent.click(approve());
+    await waitFor(() => expect(decideMyProposals).toHaveBeenCalledTimes(1));
+    expect(decideMyProposals).toHaveBeenCalledWith(
+      ["aprop_1"],
+      expect.objectContaining({
+        previewDigests: [{ proposalId: "aprop_1", digest: "sha256:aprop_1" }],
+      }),
+    );
+  });
+
+  it("opens the decision from a batch whose review is already open", async () => {
+    fetchProposalPreview.mockImplementation(async (request) => {
+      if (request.id === "aprop_2") {
+        throw new Error("preview unavailable");
+      }
+      return preview({ proposalId: request.id, digest: `sha256:${request.id}` });
+    });
+    const { onReview } = renderCard([
+      proposal({ id: "aprop_1", reviewRequired: true }),
+      proposal({ id: "aprop_2", reviewRequired: true, arguments: { shipmentId: "shp_2" } }),
+    ]);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Review 2" }));
+    expect(onReview).not.toHaveBeenCalled();
+    const open = await screen.findByRole("button", { name: "Open the decision" });
+    expect(open).toBeEnabled();
+    fireEvent.click(open);
+    expect(onReview).toHaveBeenCalledTimes(1);
+  });
+
+  it("never batches a change the person edited with others", async () => {
+    fetchProposalPreview.mockResolvedValue(preview({ digest: "sha256:edited" }));
+    renderCard([
+      proposal({ id: "aprop_1", reviewRequired: false, pendingModifications: { status: "Late" } }),
+      proposal({ id: "aprop_2", reviewRequired: false, arguments: { shipmentId: "shp_2" } }),
+    ]);
+
+    await waitFor(() => expect(approve()).toBeEnabled());
+    expect(screen.queryByRole("button", { name: /^Review \d/ })).toBeNull();
+    fireEvent.click(approve());
+    await waitFor(() => expect(decideMyProposal).toHaveBeenCalledTimes(1));
+    expect(decideMyProposal).toHaveBeenCalledWith(
+      "aprop_1",
+      expect.objectContaining({ decision: "Modified", modifications: { status: "Late" } }),
+    );
     expect(decideMyProposals).not.toHaveBeenCalled();
   });
 
@@ -413,6 +482,15 @@ describe("DeskApprovalCard and changes that must be reviewed", () => {
       "apl_1",
       expect.objectContaining({ previewDigest: "sha256:plan" }),
     );
+  });
+
+  it("holds a plan whose steps are not listed yet when its preview cannot be read", async () => {
+    fetchPlanPreview.mockRejectedValue(new Error("preview unavailable"));
+    renderCard([], [plan()]);
+
+    await waitFor(() => expect(fetchPlanPreview).toHaveBeenCalled());
+    await act(async () => {});
+    expect(approve()).toBeDisabled();
   });
 
   it("keeps a plan with a step that must be reviewed off when its preview cannot be read", async () => {

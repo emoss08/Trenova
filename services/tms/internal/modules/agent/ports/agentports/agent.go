@@ -507,14 +507,17 @@ const ActivityCreated = "created"
 
 const ActivityUpdated = "updated"
 
-// ActivityApproving, ActivityCommitted and ActivityUndone follow an
-// approval through its undo window: approved and waiting, gone through,
-// or taken back and waiting on its decider again.
+// ActivityApproving, ActivityCommitted, ActivityUndone and ActivityReopened
+// follow an approval through its undo window: approved and waiting, gone
+// through, taken back by its decider, or sent back to its decider because it
+// could no longer go through as approved.
 const ActivityApproving = "approving"
 
 const ActivityCommitted = "committed"
 
 const ActivityUndone = "undone"
+
+const ActivityReopened = "reopened"
 
 // PendingDecision is one thing waiting on a person: a proposal that stands
 // on its own, or a plan decided as a whole. Exactly one of the two is set.

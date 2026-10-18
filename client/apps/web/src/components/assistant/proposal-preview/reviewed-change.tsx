@@ -123,9 +123,29 @@ export function reviewTally(
   return tally;
 }
 
-/** What stops a reviewed approval from going through, or nothing when nothing does. */
-export function ReviewBlocker({ tally }: { tally: ReviewTally }) {
+/**
+ * What stops a reviewed approval from going through, or nothing when nothing
+ * does. A plan is one preview, and is spoken of as the plan.
+ */
+export function ReviewBlocker({ tally, plan = false }: { tally: ReviewTally; plan?: boolean }) {
   const t = useT();
+  if (plan) {
+    const message =
+      tally.stale > 0
+        ? t("The plan's records changed since it was drafted, so it can only be set aside")
+        : tally.failed > 0
+          ? t("The plan's preview could not be loaded; try it again above")
+          : tally.loading > 0
+            ? t("Waiting for the plan's preview to load")
+            : null;
+
+    return message === null ? null : (
+      <span className="text-muted-foreground text-sm" role="status">
+        {message}
+      </span>
+    );
+  }
+
   const messages: string[] = [];
   if (tally.stale > 0) {
     messages.push(

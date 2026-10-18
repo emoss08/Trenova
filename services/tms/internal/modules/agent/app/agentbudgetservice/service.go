@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
@@ -268,7 +269,7 @@ func (s *Service) functionalCurrency(
 	if books == nil {
 		return "", errNoCurrency
 	}
-	currency := strings.ToUpper(strings.TrimSpace(books.FunctionalCurrencyCode))
+	currency := money.ISOCode(books.FunctionalCurrencyCode)
 	if currency == "" {
 		return "", errNoCurrency
 	}

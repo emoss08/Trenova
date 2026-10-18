@@ -54,8 +54,14 @@ func FormatDecimalString(currencyCode, amount string) string {
 	return normalizeCurrencyCode(currencyCode) + " " + amount
 }
 
+// ISOCode is a currency code as it is stored and compared: trimmed and upper
+// case. An absent code stays absent rather than taking the default.
+func ISOCode(currencyCode string) string {
+	return strings.ToUpper(strings.TrimSpace(currencyCode))
+}
+
 func normalizeCurrencyCode(currencyCode string) string {
-	code := strings.ToUpper(strings.TrimSpace(currencyCode))
+	code := ISOCode(currencyCode)
 	if code == "" {
 		return DefaultCurrencyCode
 	}

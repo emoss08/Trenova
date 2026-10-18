@@ -294,11 +294,15 @@ func (f *fakeSteps) ListByPlan(
 type fakeChecker struct {
 	err      error
 	review   bool
+	byClass  bool
 	reviewed map[string]any
 }
 
-func (f *fakeChecker) ReviewRequired(_ *agent.AgentProposal, modifications map[string]any) bool {
+func (f *fakeChecker) ReviewRequired(proposal *agent.AgentProposal, modifications map[string]any) bool {
 	f.reviewed = modifications
+	if f.byClass {
+		return proposal.ApprovalNeedsReview()
+	}
 
 	return f.review
 }

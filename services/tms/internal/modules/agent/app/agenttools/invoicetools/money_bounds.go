@@ -2,6 +2,8 @@ package invoicetools
 
 import (
 	"context"
+	"strings"
+	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -11,6 +13,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/referenceutils"
@@ -20,17 +25,18 @@ import (
 const matchCandidateLimit = 10
 
 const postPaymentBoundText = "Runs on its own only when it records an unmatched bank receipt " +
-	"whose reference or memo names every invoice it pays, each an open invoice of the same " +
-	"customer paid to its exact balance, the whole payment is applied with nothing short-paid " +
-	"or left unapplied, and the amount is within the organization's money limits for agents; " +
-	"any other call waits for a person. Bank receipts the run read do not hold it, because " +
-	"the receipt is read again from the organization's records; any other outside content does."
+	"as the receipt has it (its day, reference and memo, by ACH), whose reference or memo names " +
+	"every invoice it pays, each an open invoice of the same customer paid to its exact " +
+	"balance, the whole payment is applied with nothing short-paid or left unapplied, and the " +
+	"amount is within the organization's money limits for agents; any other call waits for a " +
+	"person. The receipt it records, if the run read it, does not hold it, because the receipt " +
+	"is read again from the organization's records; any other outside content does."
 
 const matchReceiptBoundText = "Runs on its own only when the payment is the one posted payment " +
 	"with the receipt's exact amount and reference, and the amount is within the organization's " +
-	"money limits for agents; any other call waits for a person. Bank receipts the run read do " +
-	"not hold it, because the receipt is read again from the organization's records; any other " +
-	"outside content does."
+	"money limits for agents; any other call waits for a person. The receipt it matches, if the " +
+	"run read it, does not hold it, because the receipt is read again from the organization's " +
+	"records; any other outside content does."
 
 const correctChargeBoundText = "Runs on its own only while nothing has been invoiced from the " +
 	"billing queue item and every charge it adds, removes or changes, counted in full, is " +
@@ -52,12 +58,39 @@ func (t *PostCustomerPaymentTool) withinBounds(
 		return agentports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
 	}
 
-	if args.receipt == nil || !remittanceMatches(args.receipt, posted) {
+	if args.receipt == nil || !recordsTheReceipt(args.request, args.receipt) ||
+		!remittanceMatches(args.receipt, posted) {
 		return agentports.OutsideMoneyBound(agent.HeldByMoneyExactMatch)
 	}
 
 	return agentports.WithinMoneyBound(args.request.AmountMinor, posted.Payment.CurrencyCode).
-		Rereading(agent.TaintSourceBankReceipt)
+		Rereading(agent.TaintSourceBankReceipt, receiptRef(args.receipt.ID))
+}
+
+// recordsTheReceipt says the payment is recorded as the receipt has it: on the
+// day it was received, under its reference, with its memo or none, by the
+// method a bank receipt arrives by. What the call says otherwise is not taken
+// on its own.
+func recordsTheReceipt(
+	request *customerpaymentports.PostCustomerPaymentRequest,
+	receipt *bankreceipt.BankReceipt,
+) bool {
+	memo := strings.TrimSpace(request.Memo)
+
+	return sameDay(request.PaymentDate, receipt.ReceiptDate) &&
+		sameDay(request.AccountingDate, receipt.ReceiptDate) &&
+		referenceutils.Same(request.ReferenceNumber, receipt.ReferenceNumber) &&
+		(memo == "" || memo == strings.TrimSpace(receipt.Memo)) &&
+		request.PaymentMethod == defaultPaymentMethod
+}
+
+func sameDay(a, b int64) bool {
+	return time.Unix(a, 0).UTC().Format(time.DateOnly) ==
+		time.Unix(b, 0).UTC().Format(time.DateOnly)
+}
+
+func receiptRef(id pulid.ID) agent.RecordRef {
+	return agent.RecordRef{EntityType: agent.TaintEntityBankReceipt, ID: id.String()}
 }
 
 func remittanceMatches(
@@ -126,7 +159,7 @@ func (t *MatchBankReceiptTool) withinBounds(
 	}
 
 	return agentports.WithinMoneyBound(receipt.AmountMinor, payment.CurrencyCode).
-		Rereading(agent.TaintSourceBankReceipt)
+		Rereading(agent.TaintSourceBankReceipt, receiptRef(receipt.ID))
 }
 
 func exactReceiptMatch(receipt *bankreceipt.BankReceipt, payment *customerpayment.Payment) bool {
@@ -159,7 +192,7 @@ func (t *CorrectChargeCodeTool) withinBounds(
 	ctx context.Context,
 	params agentports.ToolExecuteParams, //nolint:gocritic // the TierCondition bounds pass params by value
 ) agentports.MoneyBound {
-	if t.billing == nil {
+	if t.billing == nil || t.profiles == nil {
 		return agentports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
 	}
 	request, err := t.request(&params)
@@ -173,13 +206,27 @@ func (t *CorrectChargeCodeTool) withinBounds(
 	if !uninvoiced(plan.Item) {
 		return agentports.OutsideMoneyBound(agent.HeldByMoneyRecordState)
 	}
-	if plan.Item.BillToCustomer == nil {
+	if plan.Item.BillToCustomerID.IsNil() {
 		return agentports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
 	}
+	profile, err := t.profiles.GetBillingProfile(
+		ctx,
+		customerports.GetCustomerBillingProfileRequest{
+			CustomerID: plan.Item.BillToCustomerID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: params.OrganizationID,
+				BuID:  params.BusinessUnitID,
+			},
+		},
+	)
+	if err != nil || profile == nil {
+		return agentports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+	}
+	payer := customer.Customer{BillingProfile: profile}
 
 	return agentports.WithinMoneyBound(
 		money.MinorUnits(grossChargeChange(plan.Before, plan.After)),
-		plan.Item.BillToCustomer.BillingCurrencyCode(),
+		payer.BillingCurrencyCode(),
 	)
 }
 

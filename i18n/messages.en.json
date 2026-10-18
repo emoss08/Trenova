@@ -91301,11 +91301,12 @@
     ]
   },
   "Enter an amount with at most two decimal places": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/bank-receipt-batch"
     ]
   },
@@ -175148,6 +175149,15 @@
     ],
     "areas": [
       "routes/accounting-dashboard"
+    ]
+  },
+  "Open the decision": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Open the detention desk": {
@@ -262376,6 +262386,24 @@
       "routes/worker"
     ]
   },
+  "The plan's preview could not be loaded; try it again above": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "The plan's records changed since it was drafted, so it can only be set aside": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "The plan's steps cannot be read": {
     "sites": 1,
     "scope": [
@@ -291746,6 +291774,15 @@
       "apps/web/components"
     ]
   },
+  "Waiting for the plan's preview to load": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Waiting for the result…": {
     "sites": 1,
     "scope": [
@@ -307213,6 +307250,15 @@
       "apps/web/components"
     ]
   },
+  "bank receipt": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "bank receipt work item not found": {
     "sites": 1,
     "scope": [
@@ -316816,6 +316862,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "{0, plural, one {# left out: it changed since it was drafted} other {# left out: they changed since they were drafted}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0, plural, one {# legacy exact match} other {# legacy exact matches}}": {

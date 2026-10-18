@@ -13,6 +13,21 @@ import (
 	"go.temporal.io/sdk/client"
 )
 
+type announcedPlans struct {
+	agentports.AgentActivityPublisher
+
+	actions []string
+}
+
+func (a *announcedPlans) PlanChanged(
+	_ context.Context,
+	_ *agent.AgentPlan,
+	_ kernelports.AuditActor,
+	action string,
+) {
+	a.actions = append(a.actions, action)
+}
+
 type unreachableWindow struct {
 	kernelports.WorkflowStarter
 
@@ -97,6 +112,8 @@ func TestCommitApproval_AGatedPlanWithoutItsPreviewIsNotReportedAsCommitted(t *t
 	t.Parallel()
 
 	f, _ := gatedOwnFixture(t)
+	announced := &announcedPlans{}
+	f.svc.activity = announced
 	f.req.PreviewDigest = ""
 	commitsAt := int64(1_800_000_000)
 	f.plans.plan.Status = agent.PlanStatusApproving
@@ -111,4 +128,6 @@ func TestCommitApproval_AGatedPlanWithoutItsPreviewIsNotReportedAsCommitted(t *t
 
 	assert.Equal(t, agent.PlanStatusPending, f.plans.plan.Status, "the plan waits on the person again")
 	assert.Empty(t, f.decider.decided, "no step ran")
+	assert.Equal(t, []string{agentports.ActivityReopened}, announced.actions,
+		"nobody undid it, so it is not announced as undone")
 }

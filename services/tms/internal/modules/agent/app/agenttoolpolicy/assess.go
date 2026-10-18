@@ -81,7 +81,7 @@ func bestCase(
 	if in.Policy.Bounded() {
 		policy.Condition = &agentports.TierCondition{
 			Description: in.Policy.Condition.Description,
-			Bounds:      withinBounds(in.Policy.Condition.Vouches),
+			Bounds:      withinBounds,
 			Vouches:     in.Policy.Condition.Vouches,
 		}
 	}
@@ -182,12 +182,8 @@ func heldToProposal(context.Context, agentports.ToolExecuteParams) agent.Autonom
 
 const representativeCurrency = "USD"
 
-func withinBounds(
-	vouches []agent.TaintSource,
-) func(context.Context, agentports.ToolExecuteParams) agentports.MoneyBound {
-	return func(context.Context, agentports.ToolExecuteParams) agentports.MoneyBound {
-		return agentports.WithinMoneyBound(0, representativeCurrency).Rereading(vouches...)
-	}
+func withinBounds(context.Context, agentports.ToolExecuteParams) agentports.MoneyBound {
+	return agentports.WithinMoneyBound(0, representativeCurrency)
 }
 
 func outsideBounds(context.Context, agentports.ToolExecuteParams) agentports.MoneyBound {

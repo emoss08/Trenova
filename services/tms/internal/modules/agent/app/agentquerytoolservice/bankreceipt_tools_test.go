@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
@@ -122,8 +123,11 @@ func TestListBankReceiptExceptions_JoinsTheQueueEntryAndFiltersByText(t *testing
 	result, err := tool.Query(t.Context(), testParams(map[string]any{"query": "4471"}))
 	require.NoError(t, err)
 
-	outcome, ok := result.(searchOutcome)
+	search, ok := result.(*bankReceiptSearch)
 	require.True(t, ok)
+	outcome := search.searchOutcome
+	assert.Equal(t, []agent.RecordRef{{EntityType: agent.TaintEntityBankReceipt, ID: first.ID.String()}},
+		search.TaintedRecords(), "the run's taint names each receipt it was shown")
 	assert.Equal(t, 1, outcome.Count)
 	rows, ok := outcome.Items.([]bankReceiptRow)
 	require.True(t, ok)
@@ -143,7 +147,7 @@ func TestListBankReceiptExceptions_SaysNothingMatchedRatherThanNothingExists(t *
 	result, err := tool.Query(t.Context(), testParams(map[string]any{}))
 	require.NoError(t, err)
 
-	outcome := result.(searchOutcome)
+	outcome := result.(*bankReceiptSearch).searchOutcome
 	assert.Equal(t, 0, outcome.Count)
 	assert.Contains(t, outcome.Note, "No unmatched bank receipts")
 }
@@ -178,8 +182,10 @@ func TestGetBankReceipt_ReturnsTheScoredCandidatesAndTheQueueEntry(t *testing.T)
 	)
 	require.NoError(t, err)
 
-	row, ok := result.(bankReceiptDetailRow)
+	row, ok := result.(*bankReceiptDetailRow)
 	require.True(t, ok)
+	assert.Equal(t, []agent.RecordRef{{EntityType: agent.TaintEntityBankReceipt, ID: receipt.ID.String()}},
+		row.TaintedRecords())
 	assert.Equal(t, "Exception", row.Status)
 	require.Len(t, row.Suggestions, 1)
 	assert.Equal(t, paymentID.String(), row.Suggestions[0].CustomerPaymentID)
@@ -204,7 +210,7 @@ func TestGetBankReceipt_SkipsCandidatesForAMatchedReceiptAndGuidesWhenThereAreNo
 	result, err := newGetBankReceiptTool(receipts, &fakeWorkItems{}).
 		Query(t.Context(), testParams(map[string]any{"bankReceiptId": matched.ID.String()}))
 	require.NoError(t, err)
-	row := result.(bankReceiptDetailRow)
+	row := result.(*bankReceiptDetailRow)
 	assert.False(t, receipts.suggested)
 	assert.Contains(t, row.Note, "already matched")
 	assert.Equal(t, matched.MatchedCustomerPaymentID.String(), row.MatchedCustomerPaymentID)
@@ -214,7 +220,7 @@ func TestGetBankReceipt_SkipsCandidatesForAMatchedReceiptAndGuidesWhenThereAreNo
 	result, err = newGetBankReceiptTool(&fakeReceipts{receipt: bare}, &fakeWorkItems{}).
 		Query(t.Context(), testParams(map[string]any{"bankReceiptId": bare.ID.String()}))
 	require.NoError(t, err)
-	assert.Contains(t, result.(bankReceiptDetailRow).Note, "list_customer_payments")
+	assert.Contains(t, result.(*bankReceiptDetailRow).Note, "list_customer_payments")
 }
 
 func TestListCustomerPayments_DefaultsToPostedAndPassesTheFiltersThrough(t *testing.T) {
@@ -251,7 +257,7 @@ func TestListCustomerPayments_DefaultsToPostedAndPassesTheFiltersThrough(t *test
 	assert.Equal(t, "4471", payments.captured.Filter.Query)
 	assert.Equal(t, 10, payments.captured.Filter.Pagination.Limit)
 
-	outcome := result.(searchOutcome)
+	outcome := result.(*bankReceiptSearch).searchOutcome
 	assert.Contains(t, outcome.SearchedFor, "status Posted")
 	rows := outcome.Items.([]customerPaymentRow)
 	require.Len(t, rows, 1)

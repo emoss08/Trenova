@@ -149,6 +149,9 @@ describe("money limits", () => {
     expect(messages({ runCalls: 2.5 })).toEqual({
       "agentMoney.runCalls": "Enter a whole number of changes",
     });
+    expect(messages({ dayAmountCents: 100.5 })).toEqual({
+      "agentMoney.dayAmountCents": "Enter an amount with at most two decimal places",
+    });
     expect(messages({ runAmountCents: -1 })["agentMoney.runAmountCents"]).toBe(
       "An amount cannot be below 0",
     );

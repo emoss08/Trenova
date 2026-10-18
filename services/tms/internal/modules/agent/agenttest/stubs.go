@@ -229,6 +229,8 @@ type StubActionTool struct {
 	MoneyMinor    *int64
 	MoneyCurrency string
 	MoneyVouches  []agent.TaintSource
+	// MoneyRereads are the records the stub's bound says it read again.
+	MoneyRereads []agent.SourcedRef
 }
 
 func (t *StubActionTool) Name() string        { return t.ToolName }
@@ -280,11 +282,16 @@ func (t *StubActionTool) Policy() agentports.ToolPolicy {
 		if currency == "" {
 			currency = StubFunctionalCurrency
 		}
-		vouches := t.MoneyVouches
+		vouches, rereads := t.MoneyVouches, t.MoneyRereads
 		policy.Condition = &agentports.TierCondition{
 			Description: "A stub money write within its bounds.",
 			Bounds: func(context.Context, agentports.ToolExecuteParams) agentports.MoneyBound {
-				return agentports.WithinMoneyBound(amount, currency).Rereading(vouches...)
+				bound := agentports.WithinMoneyBound(amount, currency)
+				for _, reread := range rereads {
+					bound = bound.Rereading(reread.Source, reread.Ref)
+				}
+
+				return bound
 			},
 			Vouches: vouches,
 		}

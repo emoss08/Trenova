@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/intutils"
+	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -603,7 +604,7 @@ func applyTaint(
 	proposal.EgressClass = action.Egress
 	if action.MoneyMinor != nil && action.MoneyCurrency != "" {
 		proposal.MoneyMinor = action.MoneyMinor
-		proposal.MoneyCurrency = action.MoneyCurrency
+		proposal.MoneyCurrency = money.ISOCode(action.MoneyCurrency)
 	}
 	proposal.HeldBy = slices.Clone(action.HeldBy)
 	if proposal.HeldBy == nil {

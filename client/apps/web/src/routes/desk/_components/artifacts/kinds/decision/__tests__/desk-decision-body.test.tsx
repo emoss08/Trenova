@@ -266,7 +266,9 @@ describe("DeskDecisionBody approving a plan", () => {
     fetchPlanPreview.mockResolvedValue(planPreview({ stale: true, reviewRequired: true }));
     renderBody([], "apl_1");
 
-    await screen.findByText("1 change has changed since it was drafted and can only be set aside");
+    await screen.findByText(
+      "The plan's records changed since it was drafted, so it can only be set aside",
+    );
     expect(approve()).toBeDisabled();
     expect(decideMyPlan).not.toHaveBeenCalled();
   });

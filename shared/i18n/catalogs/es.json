@@ -11383,6 +11383,7 @@
   "amount must be greater than zero": "el importe debe ser mayor que cero",
   "archive status must not be Active": "el estado de archivo no puede ser Activo",
   "auto": "Automático",
+  "bank receipt": "recibo bancario",
   "bank receipt work item not found": "no se encontró el elemento de trabajo del recibo bancario",
   "before must be a Unix time in seconds": "before debe ser una hora Unix en segundos",
   "billerId is not a user in this organization. Leave it out to assign the person who asked, or use an id a tool returned; never make one up": "billerId no es un usuario de esta organización. Omítalo para asignar a la persona que lo pidió, o use un id que haya devuelto una herramienta; nunca invente uno",

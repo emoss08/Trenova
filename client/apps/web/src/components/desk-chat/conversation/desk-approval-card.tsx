@@ -1,5 +1,5 @@
 import { decideBatch } from "@/components/assistant/approval-actions";
-import type { ApprovalEntry } from "@/components/assistant/approval-queue";
+import { pendingEdits, type ApprovalEntry } from "@/components/assistant/approval-queue";
 import {
   canApprove,
   gateDigest,
@@ -115,10 +115,7 @@ function ProposalCard({
   // the proposal, and goes with the approval as a modification of what the
   // agent proposed. Deciding clears it on the server. The preview is of the
   // change with those edits, so its digest is what the approval carries.
-  const edits =
-    proposal.pendingModifications && Object.keys(proposal.pendingModifications).length > 0
-      ? proposal.pendingModifications
-      : null;
+  const edits = pendingEdits(proposal);
   const previewQuery = useProposalPreview({
     scope: "mine",
     id: proposal.id,
@@ -261,9 +258,11 @@ function PlanCard({
       void invalidateProposalViews(queryClient, threadId);
     },
   });
+  // Steps not listed yet say nothing about the plan, so it is held as one that
+  // must be reviewed until its preview says otherwise.
   const reviewRequired = reviewRequiredFor(
     previewQuery.data,
-    steps.some((step) => step.reviewRequired),
+    steps.length === 0 || steps.some((step) => step.reviewRequired),
     false,
   );
   const approvable = canApprove(approval.gate, reviewRequired) && !mutation.isPending;
@@ -305,31 +304,35 @@ function BatchCard({
   const view = presentProposal(first);
   const previewQuery = useProposalPreview({ scope: "mine", id: first.id });
   const sample = approvalFacts(previewQuery.data, t);
-  const facts: ApprovalFacts = { ...sample, count: proposals.length };
-  const reversible = proposals.every((proposal) => presentProposal(proposal).reversible);
   // Only the first change's preview is on this row. A change the server takes
   // only once its preview has been shown is read here first: Review opens
   // each of their previews under the row, and the batch carries their digests.
-  // The rest may be approved from here, unreviewed.
+  // The rest may be approved from here, unreviewed. A change whose record moved
+  // since it was drafted can no longer be approved, so it is left out of the
+  // approval and stays waiting for the person to set aside or redraft.
   const [reviewing, setReviewing] = useState(false);
   const { reports, shown, onReport } = useReviewReports();
   const gated = proposals.filter((proposal) => proposal.reviewRequired);
-  const unreviewed = unreviewedRequired(proposals, shown);
+  const approving = proposals.filter((proposal) => reports.get(proposal.id)?.state !== "stale");
+  const leftOut = proposals.length - approving.length;
+  const unreviewed = unreviewedRequired(approving, shown);
   const needsReview = unreviewed.length;
   const tally = reviewTally(
-    unreviewed.map((proposal) => proposal.id),
+    unreviewedRequired(proposals, shown).map((proposal) => proposal.id),
     reports,
   );
+  const facts: ApprovalFacts = { ...sample, count: approving.length };
+  const reversible = approving.every((proposal) => presentProposal(proposal).reversible);
 
   const mutation = useMutation({
-    mutationFn: () => decideBatch(queryClient, proposals, { approving: true, shownDigests: shown }),
+    mutationFn: () => decideBatch(queryClient, approving, { approving: true, shownDigests: shown }),
     onMutate: () =>
       hold(undo, {
         key: entry.key,
         title: view.title,
         what: approvedWhat(view.title, facts, t),
         target: { proposalId: first.id },
-        proposalIds: proposals.map((proposal) => proposal.id),
+        proposalIds: approving.map((proposal) => proposal.id),
         planId: null,
       }),
     onSuccess: (outcome) => {
@@ -352,7 +355,7 @@ function BatchCard({
       void invalidateProposalViews(queryClient, threadId);
     },
   });
-  const approvable = needsReview === 0 && !mutation.isPending;
+  const approvable = needsReview === 0 && approving.length > 0 && !mutation.isPending;
   const approve = () => mutation.mutate();
   useApproveShortcut(approveRef, approve, approvable);
 
@@ -363,11 +366,12 @@ function BatchCard({
         facts={facts}
         reviewFirst={needsReview}
         reviewOpen={reviewing}
+        leftOut={leftOut}
         reversible={reversible}
         changed={false}
         approvable={approvable}
         onApprove={approve}
-        onReview={needsReview > 0 ? () => setReviewing(true) : () => onReview(entry)}
+        onReview={needsReview > 0 && !reviewing ? () => setReviewing(true) : () => onReview(entry)}
         onDefer={onDefer}
       />
       {reviewing && gated.length > 0 && (
@@ -413,6 +417,7 @@ function CardRow({
   unreviewable = false,
   reviewFirst = 0,
   reviewOpen = false,
+  leftOut = 0,
   stale = false,
   approvable,
   onApprove,
@@ -432,8 +437,10 @@ function CardRow({
   unreviewable?: boolean;
   /** How many changes of a batch must have their preview read in Review before approving. */
   reviewFirst?: number;
-  /** Their previews are open under the row; Review has nothing more to open. */
+  /** Their previews are open under the row; Review opens the decision instead. */
   reviewOpen?: boolean;
+  /** How many changes of a batch moved since they were drafted and are left out of it. */
+  leftOut?: number;
   approvable: boolean;
   onApprove: () => void;
   onReview: () => void;
@@ -556,6 +563,15 @@ function CardRow({
             </>
           ) : null}
           <span className="dk-dcx-m">· {reversible ? t("reversible") : t("can't be undone")}</span>
+          {leftOut > 0 && (
+            <span className="dk-dcx-m">
+              ·{" "}
+              {t(
+                "{0, plural, one {# left out: it changed since it was drafted} other {# left out: they changed since they were drafted}}",
+                leftOut,
+              )}
+            </span>
+          )}
         </span>
       </span>
       {reviewFirst > 0 ? (
@@ -568,14 +584,8 @@ function CardRow({
           >
             {t("Not now")}
           </Button>
-          <Button
-            size="sm"
-            className={approveButton}
-            onClick={onReview}
-            disabled={reviewOpen}
-            aria-expanded={reviewOpen}
-          >
-            {t("Review {0}", reviewFirst)}
+          <Button size="sm" className={approveButton} onClick={onReview} aria-expanded={reviewOpen}>
+            {reviewOpen ? t("Open the decision") : t("Review {0}", reviewFirst)}
           </Button>
         </>
       ) : (

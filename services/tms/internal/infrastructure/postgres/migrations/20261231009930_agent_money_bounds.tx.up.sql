@@ -45,6 +45,7 @@ ALTER TABLE "agent_proposals"
 ALTER TABLE "agent_proposals"
     ADD CONSTRAINT "ck_agent_proposals_money_currency" CHECK (
         ("money_minor" IS NULL) = ("money_currency" IS NULL)
+        AND ("money_currency" IS NULL OR "money_currency" = upper("money_currency"))
     );
 
 --bun:split

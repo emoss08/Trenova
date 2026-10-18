@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
@@ -13,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
@@ -213,7 +213,7 @@ func (r *repository) SumAutomaticMoney(
 	ctx context.Context,
 	req *agentports.SumAutomaticMoneyRequest,
 ) (agent.MoneyUse, error) {
-	currency := strings.ToUpper(strings.TrimSpace(req.Currency))
+	currency := money.ISOCode(req.Currency)
 	if currency == "" {
 		return agent.MoneyUse{}, errMoneyCurrencyRequired
 	}

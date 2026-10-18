@@ -3,6 +3,7 @@ package agenttoolpolicy_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
@@ -46,10 +47,15 @@ func boundAt(amountMinor int64) func(context.Context, agentports.ToolExecutePara
 func boundIn(
 	amountMinor int64,
 	currency string,
-	reread ...agent.TaintSource,
+	reread ...agent.RecordRef,
 ) func(context.Context, agentports.ToolExecuteParams) agentports.MoneyBound {
 	return func(context.Context, agentports.ToolExecuteParams) agentports.MoneyBound {
-		return agentports.WithinMoneyBound(amountMinor, currency).Rereading(reread...)
+		bound := agentports.WithinMoneyBound(amountMinor, currency)
+		for _, ref := range reread {
+			bound = bound.Rereading(agent.TaintSourceBankReceipt, ref)
+		}
+
+		return bound
 	}
 }
 
@@ -310,13 +316,24 @@ func TestPromotable_ABoundedMoneyToolMayEarnAutomatic(t *testing.T) {
 	assert.Equal(t, agent.TierActWithApproval, agenttoolpolicy.Promotable(moneyPolicy(nil)))
 }
 
-func receiptRead() *agent.RunTaint {
-	taint := &agent.RunTaint{}
-	taint.Add(agent.TaintMark{
+func receipt(id string) agent.RecordRef {
+	return agent.RecordRef{EntityType: agent.TaintEntityBankReceipt, ID: id}
+}
+
+func receiptMark(id string) agent.TaintMark {
+	ref := receipt(id)
+
+	return agent.TaintMark{
 		Source:   agent.TaintSourceBankReceipt,
 		ToolName: "get_bank_receipt",
-		CallID:   "call_receipt",
-	})
+		CallID:   "call_" + id,
+		Ref:      &ref,
+	}
+}
+
+func receiptRead() *agent.RunTaint {
+	taint := &agent.RunTaint{}
+	taint.Add(receiptMark("brcpt_a"))
 
 	return taint
 }
@@ -341,7 +358,7 @@ func TestDecide_ABoundThatRereadsTheReceiptVouchesForHavingReadIt(t *testing.T) 
 	t.Parallel()
 
 	none := agent.MoneyUse{}
-	rereads := boundIn(40_000, functional, agent.TaintSourceBankReceipt)
+	rereads := boundIn(40_000, functional, receipt("brcpt_a"))
 	cases := []struct {
 		name   string
 		policy agentports.ToolPolicy
@@ -381,6 +398,40 @@ func TestDecide_ABoundThatRereadsTheReceiptVouchesForHavingReadIt(t *testing.T) 
 			name:   "a run whose taint is unknown is never vouched for",
 			policy: vouchingPolicy(rereads),
 			taint:  nil,
+			tier:   agent.TierActWithApproval,
+			heldBy: []string{agenttoolpolicy.HeldByTainted},
+		},
+		{
+			name:   "a receipt the run never read is not vouched for by reading another",
+			policy: vouchingPolicy(boundIn(40_000, functional, receipt("brcpt_b"))),
+			taint:  receiptRead(),
+			tier:   agent.TierActWithApproval,
+			heldBy: []string{agenttoolpolicy.HeldByTainted},
+		},
+		{
+			name:   "the receipt it posts among several the run read runs",
+			policy: vouchingPolicy(rereads),
+			taint:  receiptsRead("brcpt_a", "brcpt_b", "brcpt_c"),
+			tier:   agent.TierAutoExecute,
+		},
+		{
+			name:   "a receipt read without naming its record cannot be vouched for",
+			policy: vouchingPolicy(rereads),
+			taint:  unnamedReceiptRead(),
+			tier:   agent.TierActWithApproval,
+			heldBy: []string{agenttoolpolicy.HeldByTainted},
+		},
+		{
+			name:   "a receipt read across a delegation cannot be vouched for",
+			policy: vouchingPolicy(rereads),
+			taint:  receiptRead().HandedOn(),
+			tier:   agent.TierActWithApproval,
+			heldBy: []string{agenttoolpolicy.HeldByTainted},
+		},
+		{
+			name:   "outside content read once the marks were full still holds the post",
+			policy: vouchingPolicy(rereads),
+			taint:  overflowedThenEmailed(),
 			tier:   agent.TierActWithApproval,
 			heldBy: []string{agenttoolpolicy.HeldByTainted},
 		},
@@ -428,4 +479,56 @@ func TestDecide_ABoundIsNotReadWhenTheRunHoldsContentItCannotVouchFor(t *testing
 	decision := agenttoolpolicy.Decide(t.Context(), in)
 	assert.Equal(t, agent.TierActWithApproval, decision.Tier)
 	assert.Equal(t, []string{agenttoolpolicy.HeldByTainted}, decision.HeldBy)
+}
+
+func receiptsRead(ids ...string) *agent.RunTaint {
+	taint := &agent.RunTaint{}
+	for _, id := range ids {
+		taint.Add(receiptMark(id))
+	}
+
+	return taint
+}
+
+func unnamedReceiptRead() *agent.RunTaint {
+	taint := &agent.RunTaint{}
+	taint.Add(agent.TaintMark{
+		Source:   agent.TaintSourceBankReceipt,
+		ToolName: "list_bank_receipt_exceptions",
+		CallID:   "call_list",
+	})
+
+	return taint
+}
+
+func overflowedThenEmailed() *agent.RunTaint {
+	taint := &agent.RunTaint{}
+	taint.Add(receiptMark("brcpt_a"))
+	for idx := 1; idx < agent.MaxTaintMarks; idx++ {
+		taint.Add(receiptMark(fmt.Sprintf("brcpt_%02d", idx)))
+	}
+	taint.Add(agent.TaintMark{
+		Source:   agent.TaintSourceInboundMessage,
+		ToolName: "get_inbound_message",
+		CallID:   "call_email",
+	})
+
+	return taint
+}
+
+func TestDecide_SixteenReceiptsThenAnEmailHoldsThePost(t *testing.T) {
+	t.Parallel()
+
+	taint := overflowedThenEmailed()
+	require.Len(t, taint.Marks, agent.MaxTaintMarks, "the email found the marks full")
+	require.True(t, taint.Overflowed)
+	require.True(t, taint.Has(agent.TaintSourceInboundMessage), "the source is still known")
+
+	in := moneyInput(vouchingPolicy(boundIn(40_000, functional, receipt("brcpt_a"))),
+		allowance(agent.MoneyUse{}, agent.MoneyUse{}))
+	in.Taint = taint
+	decision := agenttoolpolicy.Decide(t.Context(), in)
+	assert.Equal(t, agent.TierActWithApproval, decision.Tier)
+	assert.Contains(t, decision.HeldBy, agenttoolpolicy.HeldByTainted)
+	assert.Nil(t, decision.MoneyMinor)
 }

@@ -13,7 +13,7 @@ const MAX_CHANGE_LIMIT = 10_000;
 function moneyLimit() {
   return z
     .number({ error: () => translate("Enter an amount") })
-    .int()
+    .int({ error: () => translate("Enter an amount with at most two decimal places") })
     .min(0, { error: () => translate("An amount cannot be below 0") })
     .max(MAX_MONEY_LIMIT * 100, {
       error: () => translate("An amount can be at most {0}", formatNumber(MAX_MONEY_LIMIT)),

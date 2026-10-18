@@ -182,7 +182,7 @@ func (d *Decision) boundMoney(ctx context.Context, in *DecideInput, taintHolds b
 		d.lower(agent.TierActWithApproval, agent.HeldByMoneyUnbounded)
 		return false
 	}
-	if taintHolds && !vouchable(in.Policy.Condition, in.Taint) {
+	if taintHolds && !in.Policy.Condition.MayVouch(in.Taint) {
 		return false
 	}
 
@@ -199,16 +199,6 @@ func (d *Decision) boundMoney(ctx context.Context, in *DecideInput, taintHolds b
 	d.MoneyCurrency = check.Currency
 
 	return taintHolds
-}
-
-func vouchable(condition *agentports.TierCondition, taint *agent.RunTaint) bool {
-	if condition == nil || len(condition.Vouches) == 0 || !taint.Tainted() {
-		return false
-	}
-
-	return !slices.ContainsFunc(taint.Sources(), func(source agent.TaintSource) bool {
-		return !slices.Contains(condition.Vouches, source)
-	})
 }
 
 func moneyHeld(ctx context.Context, in *DecideInput) (string, agentports.MoneyBound) {

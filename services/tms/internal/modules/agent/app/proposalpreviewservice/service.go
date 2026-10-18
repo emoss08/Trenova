@@ -283,6 +283,8 @@ func (s *Service) ForPlan(
 				return nil, err
 			}
 		}
+		stepPreview.ReviewRequired = step.Status == agent.ProposalStatusPending &&
+			s.reviewRequired(step, nil)
 		preview.WithheldCount += stepPreview.WithheldCount
 		preview.Steps = append(preview.Steps, agent.PlanStepPreview{
 			ProposalID: step.ID,

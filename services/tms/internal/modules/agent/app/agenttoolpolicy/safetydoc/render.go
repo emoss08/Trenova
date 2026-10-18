@@ -124,7 +124,10 @@ exception a tool declares: a bound that reads a record again from the
 organization's own records, and takes the amount, the customer and the
 references from it rather than from the call, may vouch for having read that
 record. Only a bank receipt can be vouched for this way, by the tools that say
-so below; any other outside text the run read still holds the change.
+so below, and only for a receipt the run itself read and named: a receipt
+handed across a delegation, one read without naming which, or reads past what
+the run can keep track of hold the change, as does any other outside text the
+run read.
 
 **Taint.** Some tools return text written outside the organization: an inbound
 message, a document, an EDI transaction, a bank receipt, a weather alert, a

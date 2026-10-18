@@ -7,7 +7,6 @@
   "Check #, txn ID...": "N.º de cheque, ID de transacción...",
   "Could not load this import batch. It may have been deleted or you may not have permission.": "No se pudo cargar este lote de importación. Puede que se haya eliminado o que no tenga permiso.",
   "Create a batch of bank receipts to import for reconciliation.": "Cree un lote de recibos bancarios para importar y conciliar.",
-  "Enter an amount with at most two decimal places": "Ingrese un importe con dos decimales como máximo",
   "Failed to load batch details.": "No se pudieron cargar los detalles del lote.",
   "Failed to load import batches. Try refreshing the page.": "No se pudieron cargar los lotes de importación. Intente actualizar la página.",
   "Identify the source bank and a reference for this import": "Identifique el banco de origen y una referencia para esta importación",

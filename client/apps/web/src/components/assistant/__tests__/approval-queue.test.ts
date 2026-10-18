@@ -323,3 +323,40 @@ describe("decisionArtifactFor", () => {
     expect(decisionArtifactFor(single!, [])).toBeNull();
   });
 });
+
+describe("approvalQueue and edited proposals", () => {
+  it("keeps a proposal the person edited out of its turn's batch", () => {
+    const queue = approvalQueue(
+      [
+        proposal({ id: "aprop_1", pendingModifications: { invoiceId: "inv_9" } }),
+        proposal({ id: "aprop_2", arguments: { invoiceId: "inv_2" } }),
+        proposal({ id: "aprop_3", arguments: { invoiceId: "inv_3" } }),
+      ],
+      [],
+      null,
+      1_000,
+    );
+
+    expect(queue.map((entry) => [entry.kind, entry.members])).toEqual(
+      expect.arrayContaining([
+        ["proposal", [proposalKey("aprop_1")]],
+        ["batch", [proposalKey("aprop_2"), proposalKey("aprop_3")]],
+      ]),
+    );
+    expect(queue).toHaveLength(2);
+  });
+
+  it("does not decide an edited proposal together with others even when asked to", () => {
+    const queue = approvalQueue(
+      [
+        proposal({ id: "aprop_1", pendingModifications: { invoiceId: "inv_9" } }),
+        proposal({ id: "aprop_2", arguments: { invoiceId: "inv_2" } }),
+      ],
+      [],
+      { proposalIds: ["aprop_1", "aprop_2"], planId: "" },
+      1_000,
+    );
+
+    expect(queue.every((entry) => entry.kind === "proposal")).toBe(true);
+  });
+});

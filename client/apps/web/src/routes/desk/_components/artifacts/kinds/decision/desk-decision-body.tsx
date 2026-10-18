@@ -182,7 +182,7 @@ export function DeskDecisionBody({ artifact }: { artifact: AssistantArtifact }) 
             {t("Not now")}
           </Button>
           <span className="flex-1" />
-          <ReviewBlocker tally={tally} />
+          <ReviewBlocker tally={tally} plan={plan !== null} />
           <Button
             disabled={decide.isPending || unseen > 0}
             onClick={() => decide.mutate("Accepted")}

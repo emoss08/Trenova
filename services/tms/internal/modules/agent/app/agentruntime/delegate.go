@@ -334,7 +334,7 @@ func (s *Service) handTask(
 		// a different order every time.
 		CallIDs:              slices.Sorted(maps.Keys(t.callIDs)),
 		AfterExternalContent: t.external,
-		Taint:                t.result.Taint.Clone(),
+		Taint:                t.result.Taint.HandedOn(),
 		Context:              h.handed,
 		Directed:             h.directed,
 		MoneySpent:           t.moneySpent(),

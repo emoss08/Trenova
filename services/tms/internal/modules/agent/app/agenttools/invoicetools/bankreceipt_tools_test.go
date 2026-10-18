@@ -39,6 +39,7 @@ type fakeReceiptMatcher struct {
 	candidates    []*customerpayment.Payment
 	candidatesErr error
 	askedLimit    int
+	matchErr      error
 }
 
 func (f *fakeReceiptMatcher) PaymentsOfReceiptAmount(
@@ -125,6 +126,9 @@ func (f *fakeReceiptMatcher) Match(
 ) (*bankreceipt.BankReceipt, error) {
 	f.matched = req
 	f.actor = actor
+	if f.matchErr != nil {
+		return nil, f.matchErr
+	}
 
 	return &bankreceipt.BankReceipt{ID: req.ReceiptID, Status: bankreceipt.StatusMatched}, nil
 }
@@ -445,6 +449,36 @@ func TestPostCustomerPayment_MatchesTheReceiptItRecords(t *testing.T) {
 	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
 	assert.Equal(t, receipt.ID, target.ID)
+}
+
+func TestPostCustomerPayment_APostedPaymentIsNotFailedByAReceiptThatWillNotMatch(t *testing.T) {
+	t.Parallel()
+
+	receipt := unmatchedReceipt(125_000)
+	receipts := &fakeReceiptMatcher{receipt: receipt, matchErr: errors.New("the receipt was matched meanwhile")}
+	poster := &fakePaymentPoster{}
+	tool := NewPostCustomerPaymentTool(poster, receipts, &allowingPermissions{allowed: true})
+	params := agenttoolstest.MemoryParams(map[string]any{
+		"customerId":    pulid.MustNew("cus_").String(),
+		"amount":        "1250.00",
+		"paymentDate":   "2026-09-18",
+		"bankReceiptId": receipt.ID.String(),
+	})
+
+	reporter, ok := tool.(agentports.ToolResultReporter)
+	require.True(t, ok)
+	result, err := reporter.ExecuteWithResult(t.Context(), params)
+
+	require.NoError(t, err, "the money moved, so the write went through")
+	require.NotNil(t, poster.posted)
+	require.NotNil(t, result)
+	assert.Equal(t, poster.id.String(), result.IDs["customerPaymentId"])
+	assert.Contains(t, result.State, "the bank receipt was not matched")
+	require.Len(t, result.Failed, 1)
+	assert.Equal(t, receipt.ID.String(), result.Failed[0].ID)
+	assert.Contains(t, result.Failed[0].Reason, "matched meanwhile")
+
+	require.NoError(t, tool.Execute(t.Context(), params), "Execute reports the same outcome")
 }
 
 func TestPostCustomerPayment_RefusesAReceiptOfADifferentAmountOrWithoutTheRight(t *testing.T) {

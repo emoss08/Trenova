@@ -53,3 +53,10 @@ func TestFormatMinor(t *testing.T) {
 	assert.Equal(t, "1000.00 USD", FormatMinor(100000, ""))
 	assert.Equal(t, "-3.50 EUR", FormatMinor(-350, "EUR"))
 }
+
+func TestISOCodeKeepsAnAbsentCodeAbsent(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, "CAD", ISOCode(" cad "))
+	assert.Empty(t, ISOCode("  "))
+}

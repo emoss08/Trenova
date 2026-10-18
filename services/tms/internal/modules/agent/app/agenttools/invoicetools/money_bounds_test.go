@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -17,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -105,6 +107,7 @@ func TestPostCustomerPaymentBounds(t *testing.T) {
 		amount   string
 		shortPay bool
 		receipt  bool
+		override map[string]any
 		within   bool
 		held     string
 	}{
@@ -163,6 +166,56 @@ func TestPostCustomerPaymentBounds(t *testing.T) {
 			held:     agent.HeldByMoneyExactMatch,
 		},
 		{
+			name:     "a payment dated otherwise than its receipt is not the receipt",
+			memo:     "Remit INV-1001",
+			invoices: []*invoice.Invoice{openInvoice(customerID, "INV-1001", 100_000)},
+			applied:  []string{"1000.00"},
+			amount:   "1000.00",
+			receipt:  true,
+			override: map[string]any{"paymentDate": "2026-09-30"},
+			held:     agent.HeldByMoneyExactMatch,
+		},
+		{
+			name:     "a reference other than the receipt's is not the receipt",
+			memo:     "Remit INV-1001",
+			invoices: []*invoice.Invoice{openInvoice(customerID, "INV-1001", 100_000)},
+			applied:  []string{"1000.00"},
+			amount:   "1000.00",
+			receipt:  true,
+			override: map[string]any{"referenceNumber": "INV-1001"},
+			held:     agent.HeldByMoneyExactMatch,
+		},
+		{
+			name:     "a memo other than the receipt's is not the receipt",
+			memo:     "Remit INV-1001",
+			invoices: []*invoice.Invoice{openInvoice(customerID, "INV-1001", 100_000)},
+			applied:  []string{"1000.00"},
+			amount:   "1000.00",
+			receipt:  true,
+			override: map[string]any{"memo": "Paid in full, thanks"},
+			held:     agent.HeldByMoneyExactMatch,
+		},
+		{
+			name:     "a method a bank receipt does not arrive by is not the receipt",
+			memo:     "Remit INV-1001",
+			invoices: []*invoice.Invoice{openInvoice(customerID, "INV-1001", 100_000)},
+			applied:  []string{"1000.00"},
+			amount:   "1000.00",
+			receipt:  true,
+			override: map[string]any{"paymentMethod": "Check"},
+			held:     agent.HeldByMoneyExactMatch,
+		},
+		{
+			name:     "the receipt's own reference and memo, written out, are the receipt",
+			memo:     "Remit INV-1001",
+			invoices: []*invoice.Invoice{openInvoice(customerID, "INV-1001", 100_000)},
+			applied:  []string{"1000.00"},
+			amount:   "1000.00",
+			receipt:  true,
+			override: map[string]any{"referenceNumber": "ach-88213", "memo": "Remit INV-1001"},
+			within:   true,
+		},
+		{
 			name:     "another customer's invoice is not an exact match",
 			memo:     "Remit INV-1001",
 			invoices: []*invoice.Invoice{openInvoice(other, "INV-1001", 100_000)},
@@ -183,6 +236,7 @@ func TestPostCustomerPaymentBounds(t *testing.T) {
 				AmountMinor:     amountMinor,
 				ReferenceNumber: "ACH-88213",
 				Memo:            tc.memo,
+				ReceiptDate:     time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC).Unix(),
 				Status:          bankreceipt.StatusException,
 			}
 			tool := NewPostCustomerPaymentTool(
@@ -198,15 +252,16 @@ func TestPostCustomerPaymentBounds(t *testing.T) {
 				})
 			}
 			args := map[string]any{
-				"customerId":      customerID.String(),
-				"amount":          tc.amount,
-				"paymentDate":     "2026-10-01",
-				"referenceNumber": "INV-1001 INV-1002",
-				"memo":            "INV-1001 INV-1002",
-				"applications":    applications,
+				"customerId":   customerID.String(),
+				"amount":       tc.amount,
+				"paymentDate":  "2026-10-01",
+				"applications": applications,
 			}
 			if tc.receipt {
 				args["bankReceiptId"] = receipt.ID.String()
+			}
+			for key, value := range tc.override {
+				args[key] = value
 			}
 
 			bound := boundsOf(t, tool)(t.Context(), agenttoolstest.MemoryParams(args))
@@ -214,8 +269,10 @@ func TestPostCustomerPaymentBounds(t *testing.T) {
 			if tc.within {
 				assert.Equal(t, amountMinor, bound.AmountMinor)
 				assert.Equal(t, "USD", bound.Currency)
-				assert.Equal(t, []agent.TaintSource{agent.TaintSourceBankReceipt}, bound.Reread,
-					"the receipt was read again from the organization's records")
+				assert.Equal(t, []agent.SourcedRef{{
+					Source: agent.TaintSourceBankReceipt,
+					Ref:    agent.RecordRef{EntityType: agent.TaintEntityBankReceipt, ID: receipt.ID.String()},
+				}}, bound.Reread, "the receipt it records was read again from the organization's records")
 				return
 			}
 			assert.Equal(t, tc.held, bound.Held)
@@ -325,7 +382,10 @@ func TestMatchBankReceiptBounds(t *testing.T) {
 			if tc.within {
 				assert.Equal(t, int64(120_000), bound.AmountMinor)
 				assert.Equal(t, "USD", bound.Currency)
-				assert.Equal(t, []agent.TaintSource{agent.TaintSourceBankReceipt}, bound.Reread)
+				assert.Equal(t, []agent.SourcedRef{{
+					Source: agent.TaintSourceBankReceipt,
+					Ref:    agent.RecordRef{EntityType: agent.TaintEntityBankReceipt, ID: receipt.ID.String()},
+				}}, bound.Reread)
 				return
 			}
 			assert.Equal(t, tc.held, bound.Held)
@@ -370,7 +430,7 @@ func TestBankReceiptTools_VouchOnlyForTheReceiptsTheyReread(t *testing.T) {
 			policy.Name)
 	}
 
-	policy, ok := agentports.PolicyOf(NewCorrectChargeCodeTool(nil))
+	policy, ok := agentports.PolicyOf(NewCorrectChargeCodeTool(nil, nil))
 	require.True(t, ok)
 	assert.Empty(t, policy.Condition.Vouches, "a charge correction re-reads no outside record")
 }
@@ -384,11 +444,25 @@ func candidatesOf(exact *customerpayment.Payment, count int) []*customerpayment.
 	return out
 }
 
-func billedTo(currency string) *customer.Customer {
-	return &customer.Customer{
-		ID:             pulid.MustNew("cus_"),
-		BillingProfile: &customer.CustomerBillingProfile{BillingCurrency: currency},
+type payerBooks struct {
+	currency string
+	err      error
+	asked    pulid.ID
+}
+
+func (b *payerBooks) GetBillingProfile(
+	_ context.Context,
+	req customerports.GetCustomerBillingProfileRequest,
+) (*customer.CustomerBillingProfile, error) {
+	b.asked = req.CustomerID
+	if b.err != nil {
+		return nil, b.err
 	}
+
+	return &customer.CustomerBillingProfile{
+		CustomerID:      req.CustomerID,
+		BillingCurrency: b.currency,
+	}, nil
 }
 
 func charge(id pulid.ID, amount string) *shipment.AdditionalCharge {
@@ -403,6 +477,7 @@ func charge(id pulid.ID, amount string) *shipment.AdditionalCharge {
 func chargeBound(
 	t *testing.T,
 	item *billingqueue.BillingQueueItem,
+	books *payerBooks,
 	before, after []*shipment.AdditionalCharge,
 ) agentports.MoneyBound {
 	t.Helper()
@@ -418,7 +493,7 @@ func chargeBound(
 		}, nil).
 		Once()
 
-	return boundsOf(t, NewCorrectChargeCodeTool(billing))(
+	return boundsOf(t, NewCorrectChargeCodeTool(billing, books))(
 		t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
 			"billingQueueItemId": pulid.MustNew("bqi_").String(),
@@ -432,40 +507,48 @@ func TestCorrectChargeCodeBounds(t *testing.T) {
 
 	invoiceID := pulid.MustNew("inv_")
 	lumper := pulid.MustNew("ac_")
+	payer := pulid.MustNew("cus_")
 	cases := []struct {
 		name   string
 		item   *billingqueue.BillingQueueItem
+		books  *payerBooks
 		within bool
 		held   string
 	}{
 		{
 			name:   "an item in review with nothing invoiced is within bounds",
-			item:   &billingqueue.BillingQueueItem{Status: billingqueue.StatusInReview, BillToCustomer: billedTo("USD")},
+			item:   &billingqueue.BillingQueueItem{Status: billingqueue.StatusInReview, BillToCustomerID: payer},
 			within: true,
 		},
 		{
 			name: "an item already invoiced is not",
 			item: &billingqueue.BillingQueueItem{
-				Status: billingqueue.StatusInReview, InvoiceID: invoiceID, BillToCustomer: billedTo("USD"),
+				Status: billingqueue.StatusInReview, InvoiceID: invoiceID, BillToCustomerID: payer,
 			},
 			held: agent.HeldByMoneyRecordState,
 		},
 		{
 			name: "a correction of a posted invoice is not",
 			item: &billingqueue.BillingQueueItem{
-				Status: billingqueue.StatusInReview, SourceInvoiceID: &invoiceID, BillToCustomer: billedTo("USD"),
+				Status: billingqueue.StatusInReview, SourceInvoiceID: &invoiceID, BillToCustomerID: payer,
 			},
 			held: agent.HeldByMoneyRecordState,
 		},
 		{
 			name: "a posted item is not",
-			item: &billingqueue.BillingQueueItem{Status: billingqueue.StatusPosted, BillToCustomer: billedTo("USD")},
+			item: &billingqueue.BillingQueueItem{Status: billingqueue.StatusPosted, BillToCustomerID: payer},
 			held: agent.HeldByMoneyRecordState,
 		},
 		{
-			name: "an item whose payer was not read proves nothing",
+			name: "an item with no payer proves nothing",
 			item: &billingqueue.BillingQueueItem{Status: billingqueue.StatusInReview},
 			held: agent.HeldByMoneyUnproven,
+		},
+		{
+			name:  "a payer whose billing profile cannot be read proves nothing",
+			item:  &billingqueue.BillingQueueItem{Status: billingqueue.StatusInReview, BillToCustomerID: payer},
+			books: &payerBooks{err: errors.New("database down")},
+			held:  agent.HeldByMoneyUnproven,
 		},
 	}
 
@@ -473,7 +556,11 @@ func TestCorrectChargeCodeBounds(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			bound := chargeBound(t, tc.item,
+			books := tc.books
+			if books == nil {
+				books = &payerBooks{currency: "USD"}
+			}
+			bound := chargeBound(t, tc.item, books,
 				[]*shipment.AdditionalCharge{charge(lumper, "150")},
 				[]*shipment.AdditionalCharge{charge(lumper, "100.50")},
 			)
@@ -481,6 +568,7 @@ func TestCorrectChargeCodeBounds(t *testing.T) {
 			if tc.within {
 				assert.Equal(t, int64(4_950), bound.AmountMinor)
 				assert.Equal(t, "USD", bound.Currency)
+				assert.Equal(t, payer, books.asked, "the payer's own billing profile is read")
 				assert.Empty(t, bound.Reread)
 				return
 			}
@@ -495,7 +583,7 @@ func TestCorrectChargeCodeBounds_CountEveryChargeItChangesInFull(t *testing.T) {
 	lumper, detention := pulid.MustNew("ac_"), pulid.MustNew("ac_")
 	inReview := &billingqueue.BillingQueueItem{
 		Status:         billingqueue.StatusInReview,
-		BillToCustomer: billedTo("CAD"),
+		BillToCustomerID: pulid.MustNew("cus_"),
 	}
 	cases := []struct {
 		name          string
@@ -538,7 +626,7 @@ func TestCorrectChargeCodeBounds_CountEveryChargeItChangesInFull(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			bound := chargeBound(t, inReview, tc.before, tc.after)
+			bound := chargeBound(t, inReview, &payerBooks{currency: "cad"}, tc.before, tc.after)
 			require.True(t, bound.Within)
 			assert.Equal(t, tc.gross, bound.AmountMinor)
 			assert.Equal(t, "CAD", bound.Currency, "the payer's billing currency is what moves")

@@ -256,11 +256,14 @@ function ProposalCard({
       handleError: handleDecisionError,
     });
   }, [approvable, digest, facts.count, facts.refused.length, handleDecisionError, onGate]);
+  // A preview of a record that moved since is shown but never counts as
+  // reviewed: the server refuses an approval of it, so it is recorded as unseen.
+  const shownDigest = preview === undefined ? undefined : preview.stale ? "" : preview.digest;
   useEffect(() => {
-    if (preview?.digest !== undefined) {
-      onPreviewShown(node.id, preview.digest);
+    if (shownDigest !== undefined) {
+      onPreviewShown(node.id, shownDigest);
     }
-  }, [node.id, onPreviewShown, preview?.digest]);
+  }, [node.id, onPreviewShown, shownDigest]);
 
   // A write that would be refused: change the value a reason names, or turn
   // it down with the reasons so the agent learns what to fix.

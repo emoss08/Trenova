@@ -11383,6 +11383,7 @@
   "amount must be greater than zero": "金額必須大於零",
   "archive status must not be Active": "封存狀態不得為「有效」",
   "auto": "自動",
+  "bank receipt": "銀行入帳",
   "bank receipt work item not found": "找不到銀行入帳工作項目",
   "before must be a Unix time in seconds": "before 必須是以秒為單位的 Unix 時間",
   "billerId is not a user in this organization. Leave it out to assign the person who asked, or use an id a tool returned; never make one up": "billerId 不是此組織中的使用者。省略它即可指派提出要求的人，或使用工具傳回的 id；切勿自行編造",
