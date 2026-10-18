@@ -80,7 +80,7 @@ export function PortalLiveBrowser({
 export function PortalSignInYourself({ runId }: { runId: string }) {
   const t = useT();
   const invalidate = useInvalidatePortalRun();
-  const { mutate, isPending } = useApiMutation<PortalRun, void>({
+  const { mutate, isPending } = useApiMutation<PortalRun, undefined>({
     resourceName: t("Portal task"),
     mutationFn: () => apiService.agentExtensionService.confirmPortalSignIn(runId),
     onSuccess: invalidate,
@@ -99,7 +99,7 @@ export function PortalSignInYourself({ runId }: { runId: string }) {
           variant="outline"
           isLoading={isPending}
           loadingText={t("Carrying on")}
-          onClick={() => mutate()}
+          onClick={() => mutate(undefined)}
         >
           {t("I've signed in")}
         </Button>
