@@ -4436,7 +4436,7 @@ findings:
 
   - id: DB-192
     title: CustomerUpdateDesk is handed an empty subject for every arrival and departure
-    status: open
+    status: fixed
     severity: high
     area: agent subjects / shipment move describer
     found: 2026-10-18, writing unattended-customer-update-departure-on-a-covered-move
@@ -4449,6 +4449,14 @@ findings:
       agentsubjectservice shipmentMove calls ListBoardMoves with MoveIDs but without
       IncludeCovered; the board query drops covered moves (dispatchconsolerepository/board.go) and
       Completed ones (filters.go). The shipment describer passes IncludeCovered: true.
+    fix: >
+      Both describers ask the board for their moves through one filter (everyMove): the move ids,
+      every move status and IncludeCovered, so a covered, finished or cancelled move is described
+      with its PRO, stops, customer and coverage.
+    fixedIn: >
+      PR #814; agentsubjectservice tests pin the filter, and the board query run on the
+      development seed returned nothing for SEED-PAY-001's covered, Completed move before the
+      change and the move after it. The bench scenario still needs a run with model keys.
     files:
       - services/tms/internal/modules/agent/app/agentsubjectservice/service.go
       - services/tms/internal/modules/operations/adapters/postgres/dispatchconsolerepository/board.go

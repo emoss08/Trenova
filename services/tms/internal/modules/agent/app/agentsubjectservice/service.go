@@ -278,11 +278,7 @@ func (s *Service) shipmentMove(
 		}, nil
 	}
 
-	moves, err := s.console.ListBoardMoves(ctx, &shipmentports.DispatchBoardFilter{
-		TenantInfo: tenant,
-		MoveIDs:    []pulid.ID{moveID},
-		Limit:      1,
-	})
+	moves, err := s.console.ListBoardMoves(ctx, everyMove(tenant, []pulid.ID{moveID}))
 	if err != nil {
 		return nil, fmt.Errorf("load shipment move: %w", err)
 	}
@@ -301,6 +297,19 @@ func (s *Service) shipmentMove(
 	}
 
 	return subject, nil
+}
+
+func everyMove(
+	tenant pagination.TenantInfo,
+	moveIDs []pulid.ID,
+) *shipmentports.DispatchBoardFilter {
+	return &shipmentports.DispatchBoardFilter{
+		TenantInfo:     tenant,
+		MoveIDs:        moveIDs,
+		MoveStatuses:   shipment.MoveStatuses(),
+		IncludeCovered: true,
+		Limit:          len(moveIDs),
+	}
 }
 
 type moveNotes struct {
@@ -394,12 +403,7 @@ func (s *Service) shipment(
 				moveIDs = append(moveIDs, move.ID)
 			}
 		}
-		moves, listErr := s.console.ListBoardMoves(ctx, &shipmentports.DispatchBoardFilter{
-			TenantInfo:     tenant,
-			MoveIDs:        moveIDs,
-			IncludeCovered: true,
-			Limit:          len(moveIDs),
-		})
+		moves, listErr := s.console.ListBoardMoves(ctx, everyMove(tenant, moveIDs))
 		if listErr != nil {
 			s.logger.Warn("shipment subject: assignments unavailable", zap.Error(listErr))
 		}
