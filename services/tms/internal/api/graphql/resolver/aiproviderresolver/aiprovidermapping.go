@@ -193,16 +193,11 @@ func modelOptionsToModel(
 			ID:                   model.ID,
 			DisplayName:          model.DisplayName,
 			ContextWindow:        model.ContextWindow,
-			Loaded:               model.Loaded,
 			Embedding:            model.Embedding,
 			InputCostPerMillion:  base.DecimalPtrToStringPtr(model.InputCostPerMillion),
 			OutputCostPerMillion: base.DecimalPtrToStringPtr(model.OutputCostPerMillion),
 			PriceSource:          priceSourceToModel(model.PriceSource),
 			CreatedAt:            base.Int64PtrToIntPtr(model.CreatedAt),
-		}
-		if model.SizeBytes != nil {
-			size := float64(*model.SizeBytes)
-			option.SizeBytes = &size
 		}
 		out = append(out, option)
 	}

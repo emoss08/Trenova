@@ -41,13 +41,11 @@ describe("providerBrandDomain", () => {
     ).toBeNull();
   });
 
-  it("names Ollama on a private endpoint, since only Ollama speaks its protocol", () => {
-    expect(
-      providerBrandDomain({ kind: "Ollama", baseUrl: "http://localhost:11434" }, presets),
-    ).toBe("ollama.com");
-    expect(
-      providerBrandDomain({ kind: "Ollama", baseUrl: "http://10.0.0.5:11434" }, presets),
-    ).toBe("ollama.com");
+  it("names no vendor on a private endpoint, whatever the protocol", () => {
+    for (const kind of ["AnthropicMessages", "OpenAIResponses", "OpenAIChat"] as const) {
+      expect(providerBrandDomain({ kind, baseUrl: "http://localhost:11434" }, presets)).toBeNull();
+      expect(providerBrandDomain({ kind, baseUrl: "http://10.0.0.5:8080/v1" }, presets)).toBeNull();
+    }
   });
 
   it("falls back to the protocol's vendor when no endpoint is set", () => {
@@ -57,7 +55,6 @@ describe("providerBrandDomain", () => {
     expect(providerBrandDomain({ kind: "OpenAIResponses", baseUrl: "" }, presets)).toBe(
       "openai.com",
     );
-    expect(providerBrandDomain({ kind: "Ollama", baseUrl: "" }, presets)).toBe("ollama.com");
     expect(providerBrandDomain({ kind: "OpenAIChat", baseUrl: "" }, presets)).toBeNull();
   });
 

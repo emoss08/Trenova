@@ -133,8 +133,6 @@ type AIProviderModelOption struct {
 	ID                   string           `json:"id"`
 	DisplayName          string           `json:"displayName"`
 	ContextWindow        *int             `json:"contextWindow,omitempty"`
-	SizeBytes            *int64           `json:"sizeBytes,omitempty"`
-	Loaded               bool             `json:"loaded"`
 	Embedding            bool             `json:"embedding"`
 	InputCostPerMillion  *decimal.Decimal `json:"inputCostPerMillion,omitempty"`
 	OutputCostPerMillion *decimal.Decimal `json:"outputCostPerMillion,omitempty"`

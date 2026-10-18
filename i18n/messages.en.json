@@ -8825,6 +8825,15 @@
       "apps/web/components"
     ]
   },
+  "A report run is read by the person who ran it, and this request has no person": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A request with this Idempotency-Key is still being processed; retry once it finishes": {
     "sites": 1,
     "scope": [
@@ -169088,42 +169097,6 @@
       "routes/desk"
     ]
   },
-  "Ollama": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/handlers"
-    ]
-  },
-  "Ollama (self-hosted)": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/handlers"
-    ]
-  },
-  "Ollama embeddings (self-hosted)": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/handlers"
-    ]
-  },
-  "Ollama's native API. Used instead of its OpenAI-compatible endpoint, which ignores JSON schemas.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/handlers"
-    ]
-  },
   "On": {
     "sites": 22,
     "scope": [
@@ -173113,15 +173086,6 @@
     ]
   },
   "Only the target organization can reject this EDI connection": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Only the user who requested a report run can cancel it": {
     "sites": 1,
     "scope": [
       "go"

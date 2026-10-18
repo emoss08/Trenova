@@ -110,9 +110,9 @@ over a `Turn`) from workflow code, through the `TurnEffects` seam:
   a turn state without `Reads` runs every call on its own.
 - `find_tools` and `publish_artifact` are activities of their own. Call ids
   are minted through `workflow.SideEffect`, so a replay reads back the same id.
-  An id an adapter made up from the call's position (Ollama, and an
-  OpenAI-compatible stream that sends none) is marked `SynthesizedID` and
-  always replaced: `call_0` of one completion would otherwise name the same
+  An id an adapter made up from the call's position (an OpenAI-compatible
+  stream that sends none, or a call lifted from the reply's text) is marked
+  `SynthesizedID` and always replaced: `call_0` of one completion would otherwise name the same
   artifact as `call_0` of an earlier one that has left the replayed history.
 - Anything that reads a clock or the database happens in an activity. The
   workflow holds only the turn and what its activities returned. That includes
@@ -403,7 +403,7 @@ one), or a file that could not be read. A request the provider refuses with a 40
 413 while carrying files is sent once more without them, before anything has
 streamed. The reader keeps up to eight files of 8 MB or less for ten minutes, keyed
 by tenant and document, since every model call of a turn sends the same files.
-OpenAI and Ollama providers read the text as before.
+OpenAI and OpenAI-compatible providers read the text as before.
 
 ### How big a model's context is
 
@@ -1531,9 +1531,8 @@ with a space or with seconds becomes its minute; a number is never read as a
 date, and is refused as the Unix time it is. The shape is also said in the
 description. Anthropic and OpenAI's own endpoints are sent the full schema
 (`toolschema.ForModel` strips only the `x-` keywords); the OpenAI-compatible
-adapter, which reaches Gemini, vLLM and the rest, and Ollama are sent
-`ForPortableModel`, which also leaves out `examples` (Gemini's schema has only
-a root `example`) and the `local-date-time` format, which is Trenova's own. The call
+adapter, which reaches Gemini, vLLM and the rest, is sent `ForPortableModel`,
+which also leaves out `examples` (Gemini's schema has only a root `example`) and the `local-date-time` format, which is Trenova's own. The call
 then has to fit the schema, and its record ids have to be ids of the right
 kind. An id parameter built with `agenttoolschema.RecordID` (or `RecordIDs` for
 a list) carries the resource it takes as `x-recordOf`, at any depth, and its
@@ -1955,7 +1954,7 @@ request is laid out stable first:
   call of a tool loop read the exchange before it back from the cache.
 - **OpenAI** gets `prompt_cache_key`, a hash of organization, agent and version,
   only when the provider is reached at `api.openai.com`; a server speaking the
-  same protocol elsewhere may refuse the field. Everything else (vLLM, Ollama,
+  same protocol elsewhere may refuse the field. Everything else (vLLM, SGLang,
   Gemini, DeepSeek and the rest) caches prefixes on its own and needs only the
   layout.
 

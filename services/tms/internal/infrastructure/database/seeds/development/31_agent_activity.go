@@ -29,7 +29,7 @@ const (
 	activitySeedDay  = 24 * activitySeedHour
 	// seedActivityModel matches the local provider the AI provider seed writes,
 	// so a run opened in AI Control names a model the organization actually has.
-	seedActivityModel = "qwen2.5:14b"
+	seedActivityModel = "qwen2.5-14b-instruct"
 )
 
 type AgentActivitySeed struct {

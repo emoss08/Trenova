@@ -110,12 +110,6 @@ func TestRequests_AreTheSameBytesEveryTime(t *testing.T) {
 				[2]string{"response.completed", `{"type":"response.completed","response":{"model":"m","status":"completed","output":[]}}`},
 			),
 		},
-		{
-			kind:        aiprovider.KindOllama,
-			adapter:     NewOllamaAdapter(),
-			contentType: "application/x-ndjson",
-			reply:       `{"model":"m","message":{"role":"assistant","content":"ok"},"done":true,"done_reason":"stop"}` + "\n",
-		},
 	}
 
 	for _, tc := range cases {

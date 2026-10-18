@@ -241,8 +241,8 @@ configured provider can defer it.
 
 A full rate confirmation can take minutes, which is longer than an activity
 should hold a heartbeat open, so the work is deferred where the protocol allows
-it. Where no configured provider can defer — an install running only Ollama, for
-instance — the router runs the call inline and returns the answer on the
+it. Where no configured provider can defer — an install running only a
+self-hosted OpenAI-compatible server, for instance — the router runs the call inline and returns the answer on the
 submission. That is why ExtractResult exists on the submission: the alternative
 was for those installs to lose document extraction entirely over a protocol
 feature they do not have.

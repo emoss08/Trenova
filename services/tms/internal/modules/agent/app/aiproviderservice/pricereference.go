@@ -74,7 +74,7 @@ func (r *openRouterPrices) Prices(
 	kind aiprovider.Kind,
 	modelIDs []string,
 ) map[string]agentports.ReferencePrice {
-	if !r.cfg.ModelPriceReferenceEnabled() || kind == aiprovider.KindOllama || len(modelIDs) == 0 {
+	if !r.cfg.ModelPriceReferenceEnabled() || len(modelIDs) == 0 {
 		return nil
 	}
 

@@ -31,17 +31,17 @@ const ANTHROPIC: AIProviderPreset = {
 
 const NO_PLATFORMS: PlatformCatalog = { platforms: [], serverCloudCredentials: false };
 
-const OLLAMA: AIProviderPreset = {
+const VLLM: AIProviderPreset = {
   ...ANTHROPIC,
-  key: "ollama",
-  label: "Ollama (self-hosted)",
-  kind: "Ollama",
-  baseUrl: "http://localhost:11434",
+  key: "vllm",
+  label: "vLLM (self-hosted)",
+  kind: "OpenAIChat",
+  baseUrl: "http://localhost:8000/v1",
   allowPrivateNetwork: true,
   requiresApiKey: false,
   selfHosted: true,
-  exampleModel: "qwen2.5:14b",
-  domain: "ollama.com",
+  exampleModel: "Qwen/Qwen3-32B",
+  domain: "vllm.ai",
 };
 
 function values(overrides: Partial<ProviderEditorValues> = {}): ProviderEditorValues {
@@ -61,10 +61,10 @@ describe("editorValuesFromPreset", () => {
   });
 
   it("names a self-hosted preset as local and lets it reach the private network", () => {
-    const local = editorValuesFromPreset(OLLAMA, []);
-    expect(local.name).toBe("Local Ollama");
+    const local = editorValuesFromPreset(VLLM, []);
+    expect(local.name).toBe("Local vLLM");
     expect(local.allowPrivateNetwork).toBe(true);
-    expect(local.baseUrl).toBe("http://localhost:11434");
+    expect(local.baseUrl).toBe("http://localhost:8000/v1");
   });
 });
 
@@ -226,6 +226,6 @@ describe("cachePriceDefault", () => {
   it("knows only the Anthropic protocol reports cache writes", () => {
     expect(reportsCacheWrites("AnthropicMessages")).toBe(true);
     expect(reportsCacheWrites("OpenAIResponses")).toBe(false);
-    expect(reportsCacheWrites("Ollama")).toBe(false);
+    expect(reportsCacheWrites("OpenAIChat")).toBe(false);
   });
 });

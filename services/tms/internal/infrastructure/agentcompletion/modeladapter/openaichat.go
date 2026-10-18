@@ -105,7 +105,7 @@ type chatToolCall struct {
 }
 
 // chatToolCallFunc carries arguments as a JSON-encoded string rather than an
-// object, which is the one place this protocol differs from Ollama's.
+// object.
 type chatToolCallFunc struct {
 	Name      string `json:"name"`
 	Arguments string `json:"arguments"`

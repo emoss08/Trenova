@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Mark } from "../kit/marks";
 
 /** The presets the first step offers, in order; the editor offers every one. */
-const SETUP_PRESETS = ["anthropic", "openai", "groq", "openrouter", "ollama", "vllm"];
+const SETUP_PRESETS = ["anthropic", "openai", "groq", "openrouter", "vllm"];
 
 type SetupStepsProps = {
   agentCount: number;

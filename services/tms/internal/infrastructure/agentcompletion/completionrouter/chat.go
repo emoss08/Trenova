@@ -308,7 +308,6 @@ var vendorNames = map[string]string{
 	"deepseek":    "DeepSeek",
 	"bedrock":     "AWS Bedrock",
 	"huggingface": "Hugging Face",
-	"ollama":      "Ollama",
 }
 
 func vendorName(provider *aiprovider.Provider) string {

@@ -26,7 +26,7 @@ func TestFileInput_OnlyAClaudeModelReadsFilesItself(t *testing.T) {
 		{kind: KindAnthropicMessages, model: "kimi-k2"},
 		{kind: KindAnthropicMessages, model: "claude-latest"},
 		{kind: KindOpenAIResponses, model: "claude-opus-5-5"},
-		{kind: KindOllama, model: "qwen2.5vl:7b"},
+		{kind: KindOpenAIChat, model: "Qwen/Qwen2.5-VL-7B-Instruct"},
 	} {
 		provider := &Provider{Kind: tc.kind, Model: tc.model}
 		input, reads := provider.FileInput()

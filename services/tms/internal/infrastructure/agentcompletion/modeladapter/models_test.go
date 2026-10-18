@@ -90,28 +90,6 @@ func TestListModels_ReadsABareArrayWithPricesAlreadyPerMillion(t *testing.T) {
 	assert.True(t, models[1].Embedding)
 }
 
-func TestListModels_MarksOllamaModelsInMemory(t *testing.T) {
-	t.Parallel()
-
-	server := serveModels(t, map[string]string{
-		"/api/tags": `{"models":[
-			{"name":"qwen3:32b","model":"qwen3:32b","size":20000000000,"details":{"family":"qwen3"}},
-			{"name":"nomic-embed-text:latest","model":"nomic-embed-text:latest","size":274000000,
-			 "details":{"family":"nomic-bert"}}
-		]}`,
-		"/api/ps": `{"models":[{"name":"qwen3:32b","model":"qwen3:32b","context_length":40960}]}`,
-	})
-
-	models, err := listFrom(t, server, aiprovider.KindOllama, "")
-	require.NoError(t, err)
-	require.Len(t, models, 2)
-	assert.True(t, models[0].Loaded)
-	assert.Equal(t, 40960, models[0].ContextWindow)
-	assert.Equal(t, int64(20000000000), models[0].SizeBytes)
-	assert.False(t, models[1].Loaded)
-	assert.True(t, models[1].Embedding)
-}
-
 func TestListModels_FollowsAnthropicPages(t *testing.T) {
 	t.Parallel()
 
@@ -192,19 +170,6 @@ func TestListModels_ReadsWhenEachModelWasCreated(t *testing.T) {
 				"gpt-5": 1754352000, "gpt-float": 1754352000, "gpt-text": 1754352000,
 				"gpt-none": 0, "gpt-neg": 0, "gpt-junk": 0, "gpt-obj": 0,
 			},
-		},
-		{
-			name: "ollama modified_at",
-			kind: aiprovider.KindOllama,
-			routes: map[string]string{
-				"/api/tags": `{"models":[
-					{"name":"qwen3:32b","model":"qwen3:32b","modified_at":"2025-08-05T02:30:00.123456789+02:30"},
-					{"name":"llama3:8b","model":"llama3:8b"},
-					{"name":"bad:1b","model":"bad:1b","modified_at":"not a time"}
-				]}`,
-				"/api/ps": `{"models":[]}`,
-			},
-			want: map[string]int64{"qwen3:32b": 1754352000, "llama3:8b": 0, "bad:1b": 0},
 		},
 	}
 

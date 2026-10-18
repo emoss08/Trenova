@@ -131,7 +131,7 @@ func TestPlanRouteToRefusesWhatWouldBreakOrChangeNothing(t *testing.T) {
 		Tasks: []Task{TaskAssistantChat},
 	}
 	untrusted := &Provider{
-		ID: pulid.MustNew("aiprv_"), Name: "Ollama", Enabled: true, Priority: 20,
+		ID: pulid.MustNew("aiprv_"), Name: "vLLM", Enabled: true, Priority: 20,
 		Tasks: []Task{TaskAssistantChat, TaskDailyBriefing},
 	}
 	disabled := &Provider{

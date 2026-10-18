@@ -196,7 +196,7 @@ describe("buildSavePayload thinking style", () => {
     expect(payload.thinkingStyle).toBe("Effort");
   });
 
-  it.each(["OpenAIChat", "OpenAIResponses", "Ollama"] as const)(
+  it.each(["OpenAIChat", "OpenAIResponses"] as const)(
     "sends Auto for a %s provider whatever the field holds",
     (kind) => {
       const payload = buildSavePayload(formValues({ kind, thinkingStyle: "Budget" }), false);

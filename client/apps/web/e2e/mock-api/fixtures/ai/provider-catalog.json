@@ -154,17 +154,6 @@
             "defaultStructuredOutputMode": "Prompted",
             "supportsStructuredEnforced": true,
             "supportsEmbedding": true
-        },
-        {
-            "kind": "Ollama",
-            "label": "Ollama",
-            "description": "Ollama's native API. Used instead of its OpenAI-compatible endpoint, which ignores JSON schemas.",
-            "defaultBaseUrl": "http://localhost:11434",
-            "requiresApiKey": false,
-            "requiresBaseUrl": false,
-            "defaultStructuredOutputMode": "JSONSchema",
-            "supportsStructuredEnforced": true,
-            "supportsEmbedding": true
         }
     ],
     "presets": [
@@ -386,37 +375,6 @@
             "exampleModel": "",
             "notes": "Use the bedrock-mantle endpoint for your region and a Bedrock API key, for example https://bedrock-mantle.us-east-1.amazonaws.com/openai/v1.",
             "domain": "aws.amazon.com"
-        },
-        {
-            "key": "ollama",
-            "label": "Ollama (self-hosted)",
-            "kind": "Ollama",
-            "baseUrl": "http://localhost:11434",
-            "structuredOutputMode": "JSONSchema",
-            "allowPrivateNetwork": true,
-            "requiresApiKey": false,
-            "selfHosted": true,
-            "exampleModel": "qwen3:8b",
-            "notes": "Runs open-weight models on your own hardware; no data leaves your network.",
-            "domain": "ollama.com"
-        },
-        {
-            "key": "ollama-embeddings",
-            "label": "Ollama embeddings (self-hosted)",
-            "kind": "Ollama",
-            "baseUrl": "http://localhost:11434",
-            "structuredOutputMode": "JSONSchema",
-            "allowPrivateNetwork": true,
-            "requiresApiKey": false,
-            "selfHosted": true,
-            "exampleModel": "nomic-embed-text",
-            "notes": "Semantic retrieval on your own hardware. nomic-embed-text returns 768 dimensions and expects search_document and search_query prefixes.",
-            "domain": "ollama.com",
-            "tasks": [
-                "Embedding"
-            ],
-            "embeddingDimensions": 768,
-            "embeddingInputStyle": "NomicPrefix"
         },
         {
             "key": "vllm",

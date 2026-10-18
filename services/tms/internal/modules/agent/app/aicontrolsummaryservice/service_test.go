@@ -312,7 +312,7 @@ func TestFactsCountEveryProviderTheWeekAndAKeyStillMissing(t *testing.T) {
 	t.Parallel()
 
 	on := &aiprovider.Provider{
-		ID: pulid.MustNew("aiprv_"), Name: "Local", Kind: aiprovider.KindOllama, Enabled: true,
+		ID: pulid.MustNew("aiprv_"), Name: "Local", Kind: aiprovider.KindOpenAIChat, Enabled: true,
 		Tasks: []aiprovider.Task{aiprovider.TaskGeneral},
 	}
 	keyed := &aiprovider.Provider{

@@ -243,7 +243,7 @@ Settings you are likely to change:
 | Setting | Where |
 |---|---|
 | Turn every AI feature off | `ai.enabled: false` in `config/config.yaml`. With it on, nothing reaches a model vendor until an administrator adds a provider under **AI control** (`/admin/agent-control`). |
-| Models served on your own network (Ollama, vLLM) | `ai.privateNetworkProviders` (on by default here) |
+| Models served on your own network (vLLM, SGLang, LM Studio and other OpenAI-compatible servers) | `ai.privateNetworkProviders` (on by default here) |
 | Driver portal web push | `TRENOVA_PUSH_VAPIDPUBLICKEY`, `TRENOVA_PUSH_VAPIDPRIVATEKEY`, `TRENOVA_PUSH_SUBJECT` in `.env` |
 | One-click QuickBooks or Xero for every organization | `TRENOVA_QUICKBOOKS_*`, `TRENOVA_XERO_*` in `.env`; register the redirect URI `https://DOMAIN/admin/integrations/quickbooks/callback` (or `/xero/callback`) |
 | Rate limits | `security.rateLimit` |

@@ -115,5 +115,4 @@ func TestProvider_CachePrices(t *testing.T) {
 	assert.True(t, KindAnthropicMessages.CachesOutsideInput())
 	assert.False(t, KindOpenAIResponses.CachesOutsideInput())
 	assert.False(t, KindOpenAIChat.CachesOutsideInput())
-	assert.False(t, KindOllama.CachesOutsideInput())
 }

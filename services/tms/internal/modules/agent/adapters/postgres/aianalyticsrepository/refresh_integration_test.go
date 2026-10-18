@@ -123,7 +123,7 @@ func TestRefreshWorksOutUnitsToolsAndProviderHoursFromTheSourceRecords(t *testin
 		},
 		&aiusage.AIUsageRecord{
 			OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID, ProviderID: groq,
-			ProviderKind: aiprovider.KindOllama, Model: "nomic-embed-text",
+			ProviderKind: aiprovider.KindOpenAIChat, Model: "nomic-embed-text",
 			Task: aiprovider.TaskEmbedding, Surface: aiusage.SurfaceIndexing,
 			Succeeded: true, LatencyMs: 40, CreatedAt: now - 5,
 		},

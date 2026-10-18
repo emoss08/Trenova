@@ -2149,7 +2149,7 @@ func (b *triageSeed) extracted(staged *seededDocument, at int64) {
 		WorkflowRunID:  "seed",
 		ActivityID:     "seed",
 		TaskToken:      []byte{},
-		Model:          "qwen2.5:14b",
+		Model:          "qwen2.5-14b-instruct",
 		Status:         documentaiextraction.StatusCompleted,
 		SubmittedAt:    &at,
 		CompletedAt:    &at,

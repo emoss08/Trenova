@@ -21,7 +21,7 @@ import (
 // it, and runs it inline when none does.
 //
 // The inline path is not a fallback bolted on for completeness: a self-hosted
-// runtime has no background mode at all, and an install that runs only Ollama
+// runtime has no background mode at all, and an install that runs only one
 // would otherwise lose document extraction entirely. Callers get an answer
 // either way and branch on whether Handle came back empty.
 func (s *Service) SubmitBackground(

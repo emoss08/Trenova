@@ -380,14 +380,14 @@ const PROVIDER_SPECS = {
       cap: 200,
     },
     {
-      key: "ollama",
-      name: "Local Ollama",
-      kind: "Ollama",
-      model: "qwen2.5:14b",
+      key: "lmstudio",
+      name: "Local LM Studio",
+      kind: "OpenAIChat",
+      model: "qwen2.5-14b-instruct",
       on: true,
       trusted: false,
       priv: true,
-      base: "http://localhost:11434",
+      base: "http://localhost:1234/v1",
       tasks: [
         "ScopeClassification",
         "DocumentClassification",
@@ -800,11 +800,11 @@ function buildTuneUps(anchor, agents, providers) {
       },
     );
   }
-  if (provider("ollama") && provider("vllm")) {
+  if (provider("lmstudio") && provider("vllm")) {
     add(
       "order",
       "ReorderProviders",
-      { providerKey: "ollama", otherProviderKey: "vllm" },
+      { providerKey: "lmstudio", otherProviderKey: "vllm" },
       {
         calls: 672,
         failed: 24,
@@ -819,11 +819,11 @@ function buildTuneUps(anchor, agents, providers) {
     { agentKey: "coverage" },
     { recorded: 31, matchRate: 0.87, wouldFail: 0 },
   );
-  if (provider("ollama")) {
+  if (provider("lmstudio")) {
     add(
       "embed",
       "AssignTask",
-      { providerKey: "ollama", task: "Embedding" },
+      { providerKey: "lmstudio", task: "Embedding" },
       { model: "nomic-embed-text" },
     );
   }

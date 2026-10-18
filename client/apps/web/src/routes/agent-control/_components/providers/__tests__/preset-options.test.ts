@@ -33,15 +33,15 @@ function preset(overrides: Partial<AIProviderPreset>): AIProviderPreset {
 
 const hosted = preset({});
 const local = preset({
-  key: "ollama",
-  label: "Ollama (self-hosted)",
-  kind: "Ollama",
-  baseUrl: "http://localhost:11434",
+  key: "vllm",
+  label: "vLLM (self-hosted)",
+  kind: "OpenAIChat",
+  baseUrl: "http://localhost:8000/v1",
   requiresApiKey: false,
   selfHosted: true,
   allowPrivateNetwork: true,
-  exampleModel: "qwen3:8b",
-  domain: "ollama.com",
+  exampleModel: "Qwen/Qwen3-32B",
+  domain: "vllm.ai",
 });
 const bedrock = preset({
   key: "bedrock",
@@ -59,7 +59,7 @@ describe("preset options", () => {
 
     expect(groups.map((group) => group.key)).toEqual(["hosted", "selfHosted"]);
     expect(groups[0].presets.map((entry) => entry.key)).toEqual(["openai", "bedrock"]);
-    expect(groups[1].presets.map((entry) => entry.key)).toEqual(["ollama"]);
+    expect(groups[1].presets.map((entry) => entry.key)).toEqual(["vllm"]);
   });
 
   it("omits a group nothing belongs to", () => {
@@ -74,7 +74,7 @@ describe("preset options", () => {
   });
 
   it("drops the self-hosted suffix from the display name", () => {
-    expect(presetDisplayName(local)).toBe("Ollama");
+    expect(presetDisplayName(local)).toBe("vLLM");
     expect(presetDisplayName(hosted)).toBe("OpenAI");
   });
 
@@ -82,26 +82,26 @@ describe("preset options", () => {
     const all = [hosted, local];
 
     expect(findPreset(all, CUSTOM_PRESET_VALUE)).toBeNull();
-    expect(findPreset(all, "ollama")).toBe(local);
+    expect(findPreset(all, "vllm")).toBe(local);
     expect(findPreset(all, "nothing-like-this")).toBeNull();
   });
 });
 
 describe("startingPreset", () => {
   const openai = preset({ key: "openai" });
-  const ollama = preset({ key: "ollama", label: "Ollama", selfHosted: true, requiresApiKey: false });
+  const vllm = preset({ key: "vllm", label: "vLLM", selfHosted: true, requiresApiKey: false });
 
   it("opens on the preset a link names", () => {
-    expect(startingPreset([openai, ollama], "ollama")).toBe(ollama);
+    expect(startingPreset([openai, vllm], "vllm")).toBe(vllm);
   });
 
   it("opens on the first preset when the link names none, so New provider opens the panel", () => {
-    expect(startingPreset([openai, ollama], null)).toBe(openai);
-    expect(startingPreset([openai, ollama], "")).toBe(openai);
+    expect(startingPreset([openai, vllm], null)).toBe(openai);
+    expect(startingPreset([openai, vllm], "")).toBe(openai);
   });
 
   it("opens on the first preset when the link names one the catalog no longer offers", () => {
-    expect(startingPreset([openai, ollama], "retired")).toBe(openai);
+    expect(startingPreset([openai, vllm], "retired")).toBe(openai);
   });
 
   it("has nothing to open on while the catalog is empty", () => {

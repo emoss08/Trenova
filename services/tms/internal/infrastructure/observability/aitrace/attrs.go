@@ -146,7 +146,6 @@ const (
 const (
 	providerAnthropic = "anthropic"
 	providerOpenAI    = "openai"
-	providerOllama    = "ollama"
 )
 
 func ProviderName(kind aiprovider.Kind) string {
@@ -155,8 +154,6 @@ func ProviderName(kind aiprovider.Kind) string {
 		return providerAnthropic
 	case aiprovider.KindOpenAIResponses, aiprovider.KindOpenAIChat:
 		return providerOpenAI
-	case aiprovider.KindOllama:
-		return providerOllama
 	}
 
 	return strings.ToLower(string(kind))
