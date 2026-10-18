@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/pkg/buncolgen/billingqueuecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
 	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -134,6 +135,7 @@ func (r *repository) GetByID(
 			Relation(buncolgen.Rel(billingqueuecol.BillingQueueItemRelations.Shipment, shipmentcol.ShipmentRelations.AdditionalCharges)).
 			Relation(buncolgen.Rel(billingqueuecol.BillingQueueItemRelations.Shipment, shipmentcol.ShipmentRelations.ChargeAllocations)).
 			Relation(billingqueuecol.BillingQueueItemRelations.BillToCustomer).
+			Relation(buncolgen.Rel(billingqueuecol.BillingQueueItemRelations.BillToCustomer, customercol.CustomerRelations.BillingProfile)).
 			Relation(billingqueuecol.BillingQueueItemRelations.AssignedBiller).
 			Relation(billingqueuecol.BillingQueueItemRelations.CanceledBy).
 			Scan(ctx); err != nil {

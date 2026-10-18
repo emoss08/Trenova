@@ -192,7 +192,7 @@ func TestRun_AFeedRowFromAnInboundEmailTaintsTheRunAndHoldsMoney(t *testing.T) {
 	rt := newRuntime(completion,
 		&stubQueryRegistry{Tools: []agentports.AgentQueryTool{feed}},
 		&stubActionRegistry{Tools: []agentports.AgentTool{pay}}, nil)
-	rt.budgets = &moneyBudgets{limits: roomyMoneyLimits()}
+	rt.budgets = &moneyBudgets{Limits: roomyMoneyLimits()}
 
 	run := runTainted(t, rt, &agentports.RunRequest{
 		Definition: autoDefinition("list_watchtower_items", "apply_payment"),
@@ -232,7 +232,7 @@ func TestRun_AFeedWithNoOutsideRowLeavesTheRunClean(t *testing.T) {
 	rt := newRuntime(completion,
 		&stubQueryRegistry{Tools: []agentports.AgentQueryTool{feed}},
 		&stubActionRegistry{Tools: []agentports.AgentTool{pay}}, nil)
-	rt.budgets = &moneyBudgets{limits: roomyMoneyLimits()}
+	rt.budgets = &moneyBudgets{Limits: roomyMoneyLimits()}
 
 	run := runTainted(t, rt, &agentports.RunRequest{
 		Definition: autoDefinition("list_watchtower_items", "apply_payment"),

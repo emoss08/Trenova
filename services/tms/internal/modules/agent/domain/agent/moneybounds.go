@@ -2,6 +2,7 @@ package agent
 
 import (
 	"slices"
+	"strings"
 
 	"github.com/emoss08/trenova/shared/intutils"
 )
@@ -13,6 +14,7 @@ const (
 	HeldByMoneyRecordState  = "money_record_state"
 	HeldByMoneyAgentLine    = "money_agent_line"
 	HeldByMoneyLimitsUnread = "money_limits_unread"
+	HeldByMoneyCurrency     = "money_currency"
 	HeldByMoneyCallCeiling  = "money_call_ceiling"
 	HeldByMoneyRunCalls     = "money_run_calls"
 	HeldByMoneyRunAmount    = "money_run_amount"
@@ -28,6 +30,7 @@ func MoneyHeldByKeys() []string {
 		HeldByMoneyRecordState,
 		HeldByMoneyAgentLine,
 		HeldByMoneyLimitsUnread,
+		HeldByMoneyCurrency,
 		HeldByMoneyCallCeiling,
 		HeldByMoneyRunCalls,
 		HeldByMoneyRunAmount,
@@ -67,15 +70,18 @@ func (u MoneyUse) Plus(other MoneyUse) MoneyUse {
 }
 
 type MoneyAllowance struct {
-	Limits MoneyLimits
-	Run    MoneyUse
-	Day    MoneyUse
+	Limits   MoneyLimits
+	Currency string
+	Run      MoneyUse
+	Day      MoneyUse
 }
 
-func (a *MoneyAllowance) Exceeded(amountMinor int64) string {
+func (a *MoneyAllowance) Exceeded(amountMinor int64, currency string) string {
 	amount := intutils.Abs(amountMinor)
 	switch {
-	case amount < 0 || amount > a.Limits.CallCeilingMinor:
+	case !a.Counts(currency):
+		return HeldByMoneyCurrency
+	case amount < 0 || a.Limits.CallCeilingMinor <= 0 || amount > a.Limits.CallCeilingMinor:
 		return HeldByMoneyCallCeiling
 	case a.Run.Calls >= a.Limits.RunCalls:
 		return HeldByMoneyRunCalls
@@ -92,4 +98,10 @@ func (a *MoneyAllowance) Exceeded(amountMinor int64) string {
 
 func exceeds(used, amount, limit int64) bool {
 	return used < 0 || used > limit || amount > limit-used
+}
+
+func (a *MoneyAllowance) Counts(currency string) bool {
+	functional := strings.TrimSpace(a.Currency)
+
+	return functional != "" && strings.EqualFold(strings.TrimSpace(currency), functional)
 }

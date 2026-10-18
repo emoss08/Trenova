@@ -553,6 +553,26 @@ func (s *Service) CallEgress(
 	}).Egress, true
 }
 
+// ReviewRequired is the rule an approval is decided by: a proposal whose
+// class, or whose class once the approver's changes are applied, must be
+// reviewed is approved only with its preview's digest. A tool that is no
+// longer registered cannot be classified, so its proposal is reviewed.
+func (s *Service) ReviewRequired(
+	proposal *agent.AgentProposal,
+	modifications map[string]any,
+) bool {
+	if proposal == nil || proposal.ApprovalNeedsReview() {
+		return true
+	}
+	if len(modifications) == 0 {
+		return false
+	}
+
+	egress, known := s.CallEgress(proposal, modifications)
+
+	return !known || egress.ApprovalNeedsReview()
+}
+
 // CheckModifications validates what an approver changed before the decision
 // that carries it is recorded: the merged parameters must fit the tool's
 // schema, and a tool that checks its own arguments gets to check them. It

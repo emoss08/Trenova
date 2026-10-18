@@ -46,9 +46,10 @@ type PendingAction struct {
 	Target *ProposalTarget `json:"target,omitempty"`
 	// Egress is where the call's effect reaches, as the policy classified
 	// it, and HeldBy what kept it below AutoExecute.
-	Egress     agent.EgressClass `json:"egress,omitempty"`
-	HeldBy     []string          `json:"heldBy,omitempty"`
-	MoneyMinor *int64            `json:"moneyMinor,omitempty"`
+	Egress        agent.EgressClass `json:"egress,omitempty"`
+	HeldBy        []string          `json:"heldBy,omitempty"`
+	MoneyMinor    *int64            `json:"moneyMinor,omitempty"`
+	MoneyCurrency string            `json:"moneyCurrency,omitempty"`
 	// Tainted says the turn had read outside content when the call was
 	// decided.
 	Tainted bool `json:"tainted,omitempty"`
@@ -221,6 +222,9 @@ type Delegation struct {
 	// delegated, in the ledger both share. It is derived from what the
 	// delegating model asked for, never from a provider's call id.
 	StepScope string `json:"stepScope"`
+	// MoneySpent is what the delegating turn had moved in automatic money
+	// writes not yet recorded, so the run and day caps hold across both.
+	MoneySpent agent.MoneyUse `json:"moneySpent,omitzero"`
 }
 
 // Scope is how the turn's events and saved steps are tagged.

@@ -181,6 +181,18 @@ func trustPolicy(
 	}
 }
 
+func boundedMoneyPolicy() agentports.ToolPolicy {
+	policy := trustPolicy(agent.TierActWithApproval, agent.TierAutoExecute, agent.EgressMoney)
+	policy.Condition = &agentports.TierCondition{
+		Description: "Runs on its own only within bounds.",
+		Bounds: func(context.Context, agentports.ToolExecuteParams) agentports.MoneyBound {
+			return agentports.WithinMoneyBound(1, "USD")
+		},
+	}
+
+	return policy
+}
+
 type fakeRegistry struct {
 	agentports.AgentToolRegistry
 	tools map[string]agent.AutonomyTier
@@ -616,10 +628,14 @@ func TestRecordDecision_PromotesNoFurtherThanThePolicyAllows(t *testing.T) {
 			),
 		},
 		{
-			name: "money is promoted like internal work",
+			name: "money that proves no bounds stays at approval",
 			policy: trustPolicy(
 				agent.TierActWithApproval, agent.TierAutoExecute, agent.EgressMoney,
 			),
+		},
+		{
+			name:     "money that proves its bounds is promoted like internal work",
+			policy:   boundedMoneyPolicy(),
 			promoted: true,
 		},
 	}

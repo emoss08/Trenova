@@ -112,11 +112,19 @@ person by default. It runs on its own only on a tool whose condition proves the
 call is within bounds: the records it touches are in the state the tool
 requires, and the amount it moves is within the organization's money limits for
 agents in AI Control, which are a ceiling on one change and a cap on each run
-and on each day in both the number of changes and the total moved. The day is
-the organization's own and counts every agent. A call outside any bound, or
-whose bounds or limits cannot be read, is filed as a proposal that names the
-bound it exceeded, and a run that has read outside text never moves money on
-its own at all.
+and on each day in both the number of changes and the total moved. The limits
+are amounts in the organization's functional currency, so a change in any other
+currency waits for a person, and the caps count only changes in it. The day is
+the organization's own and counts every agent, a delegate's changes count
+against the run that handed it the task, and a change that failed moved nothing
+and counts against nothing. A call outside any bound, or whose bounds, limits or
+day cannot be read, is filed as a proposal that names the bound it exceeded. A
+run that has read outside text never moves money on its own, with one
+exception a tool declares: a bound that reads a record again from the
+organization's own records, and takes the amount, the customer and the
+references from it rather than from the call, may vouch for having read that
+record. Only a bank receipt can be vouched for this way, by the tools that say
+so below; any other outside text the run read still holds the change.
 
 **Taint.** Some tools return text written outside the organization: an inbound
 message, a document, an EDI transaction, a bank receipt, a weather alert, a

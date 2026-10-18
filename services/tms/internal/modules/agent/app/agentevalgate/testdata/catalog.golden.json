@@ -6254,7 +6254,7 @@
           "money"
         ],
         "classifiesEachCall": false,
-        "condition": "Runs on its own only while nothing has been invoiced from the billing queue item and the change to its total is within the organization's money limits for agents; any other call waits for a person.",
+        "condition": "Runs on its own only while nothing has been invoiced from the billing queue item and every charge it adds, removes or changes, counted in full, is within the organization's money limits for agents; any other call waits for a person.",
         "personalRunsUnasked": false,
         "heldWhenTainted": true,
         "effect": "change",
@@ -26962,7 +26962,7 @@
           "money"
         ],
         "classifiesEachCall": false,
-        "condition": "Runs on its own only when the payment is the one posted payment with the receipt's exact amount and reference, and the amount is within the organization's money limits for agents; any other call waits for a person.",
+        "condition": "Runs on its own only when the payment is the one posted payment with the receipt's exact amount and reference, and the amount is within the organization's money limits for agents; any other call waits for a person. Bank receipts the run read do not hold it, because the receipt is read again from the organization's records; any other outside content does.",
         "personalRunsUnasked": false,
         "heldWhenTainted": true,
         "effect": "change",
@@ -28161,7 +28161,7 @@
           "money"
         ],
         "classifiesEachCall": false,
-        "condition": "Runs on its own only when it records an unmatched bank receipt whose reference or memo names every invoice it pays, each an open invoice of the same customer paid to its exact balance, the whole payment is applied with nothing short-paid or left unapplied, and the amount is within the organization's money limits for agents; any other call waits for a person.",
+        "condition": "Runs on its own only when it records an unmatched bank receipt whose reference or memo names every invoice it pays, each an open invoice of the same customer paid to its exact balance, the whole payment is applied with nothing short-paid or left unapplied, and the amount is within the organization's money limits for agents; any other call waits for a person. Bank receipts the run read do not hold it, because the receipt is read again from the organization's records; any other outside content does.",
         "personalRunsUnasked": false,
         "heldWhenTainted": true,
         "effect": "change",

@@ -2,6 +2,7 @@ package agentbudgetservice
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -57,7 +58,15 @@ func (f *fakeTools) CountExecutedTool(
 
 type fixedZone string
 
-func (z fixedZone) Timezone(context.Context, pagination.TenantInfo) string { return string(z) }
+func (z fixedZone) Timezone(context.Context, pagination.TenantInfo) (string, error) {
+	return string(z), nil
+}
+
+type unreadableZone struct{}
+
+func (unreadableZone) Timezone(context.Context, pagination.TenantInfo) (string, error) {
+	return "", errors.New("organization unavailable")
+}
 
 func money(value string) *decimal.Decimal {
 	d := decimal.RequireFromString(value)
@@ -86,6 +95,7 @@ func newService(cost *fakeCost, runs *fakeRuns, tools *fakeTools) *Service {
 		usage:     cost,
 		runs:      runs,
 		proposals: tools,
+		books:     fixedBooks("USD"),
 		zones:     fixedZone("America/Los_Angeles"),
 		now:       func() int64 { return laEvening },
 	}

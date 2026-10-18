@@ -391,7 +391,7 @@ func (s *Service) recordPlan(
 			return nil, paramsErr
 		}
 
-		proposal, createErr := s.proposalRepo.Create(ctx, &agent.AgentProposal{
+		proposal := &agent.AgentProposal{
 			OrganizationID: req.TenantInfo.OrgID,
 			BusinessUnitID: req.TenantInfo.BuID,
 			RunID:          run.ID,
@@ -402,7 +402,9 @@ func (s *Service) recordPlan(
 			Evidence:       evidenceFor(planned.Score, moveStubFor(planned)),
 			AutonomyTier:   policy.Tier,
 			Status:         agent.ProposalStatusPending,
-		})
+		}
+		proposal.EgressClass = s.egressOf(proposal)
+		proposal, createErr := s.proposalRepo.Create(ctx, proposal)
 		if createErr != nil {
 			return nil, createErr
 		}
@@ -411,6 +413,21 @@ func (s *Service) recordPlan(
 	}
 
 	return proposals, nil
+}
+
+func (s *Service) egressOf(proposal *agent.AgentProposal) agent.EgressClass {
+	if s.executor == nil {
+		return ""
+	}
+	egress, ok := s.executor.CallEgress(proposal, nil)
+	if !ok {
+		s.l.Warn("the auto-assign tool is not registered; its proposal is held for review",
+			zap.String("tool", proposal.ToolName))
+
+		return ""
+	}
+
+	return egress
 }
 
 func (s *Service) applyAutoExecutable(

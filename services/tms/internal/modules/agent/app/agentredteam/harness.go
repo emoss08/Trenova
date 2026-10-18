@@ -530,6 +530,7 @@ func (fx *effects) Delegate(
 			ParentAgentName: parent.Name,
 			CallID:          call.Call.ID,
 			StepScope:       call.StepScope,
+			MoneySpent:      call.MoneySpent,
 		},
 		Taint: call.Taint.Clone(),
 	}

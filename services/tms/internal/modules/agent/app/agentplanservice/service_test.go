@@ -37,6 +37,17 @@ func (f *fakePlans) UpdateStatus(
 ) (*agent.AgentPlan, error) {
 	f.statuses = append(f.statuses, req)
 	f.plan.Status = req.Status
+	if req.CommitsAt != 0 {
+		commitsAt := req.CommitsAt
+		f.plan.CommitsAt = &commitsAt
+		f.plan.ApprovalReasonCode = req.Approval.ReasonCode
+		f.plan.ApprovalNote = req.Approval.Note
+		f.plan.ApprovalPreviewDigest = req.Approval.PreviewDigest
+	}
+	if req.Reopen {
+		f.plan.CommitsAt = nil
+		f.plan.ApprovalReasonCode, f.plan.ApprovalNote, f.plan.ApprovalPreviewDigest = "", "", ""
+	}
 
 	return f.plan, nil
 }

@@ -36,15 +36,24 @@ type fakeReceiptMatcher struct {
 	previewed     *bankreceiptports.MatchBankReceiptRequest
 	actor         *permissionports.RequestActor
 	payment       *customerpayment.Payment
-	suggestions   []*bankreceiptports.BankReceiptMatchSuggestion
-	suggestErr    error
+	candidates    []*customerpayment.Payment
+	candidatesErr error
+	askedLimit    int
 }
 
-func (f *fakeReceiptMatcher) SuggestMatches(
+func (f *fakeReceiptMatcher) PaymentsOfReceiptAmount(
 	_ context.Context,
-	_ *bankreceiptports.GetBankReceiptRequest,
-) ([]*bankreceiptports.BankReceiptMatchSuggestion, error) {
-	return f.suggestions, f.suggestErr
+	req *bankreceiptports.ReceiptAmountPaymentsRequest,
+) ([]*customerpayment.Payment, error) {
+	f.askedLimit = req.Limit
+	if f.candidatesErr != nil {
+		return nil, f.candidatesErr
+	}
+	if req.Limit > 0 && len(f.candidates) > req.Limit {
+		return f.candidates[:req.Limit], nil
+	}
+
+	return f.candidates, nil
 }
 
 func (f *fakeReceiptMatcher) Get(

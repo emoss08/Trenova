@@ -53,7 +53,7 @@ func boundedAt(
 	amountMinor int64,
 ) func(context.Context, agentports.ToolExecuteParams) agentports.MoneyBound {
 	return func(context.Context, agentports.ToolExecuteParams) agentports.MoneyBound {
-		return agentports.WithinMoneyBound(amountMinor)
+		return agentports.WithinMoneyBound(amountMinor, "USD")
 	}
 }
 
@@ -420,6 +420,33 @@ func TestValidate_RefusesEachBrokenRule(t *testing.T) {
 				return []Spec{spec}
 			},
 			reason: "it moves no money",
+		},
+		{
+			name: "only bounds may vouch for outside content",
+			specs: func() []Spec {
+				spec := validAction()
+				spec.Policy.Condition = &agentports.TierCondition{
+					Description: "Holds a call.",
+					Limit:       holdToPropose,
+					Vouches:     []agent.TaintSource{agent.TaintSourceBankReceipt},
+				}
+				return []Spec{spec}
+			},
+			reason: "only bounds that re-read a record may vouch",
+		},
+		{
+			name: "bounds vouch only for content they can re-read",
+			specs: func() []Spec {
+				spec := validAction()
+				spec.Policy.Egress = []agent.EgressClass{agent.EgressMoney}
+				spec.Policy.Condition = &agentports.TierCondition{
+					Description: "Within bounds.",
+					Bounds:      boundedAt(100),
+					Vouches:     []agent.TaintSource{agent.TaintSourceWeb},
+				}
+				return []Spec{spec}
+			},
+			reason: `vouches for "web", which is not a record the bounds can re-read`,
 		},
 		{
 			name: "a runtime tool never leaves",

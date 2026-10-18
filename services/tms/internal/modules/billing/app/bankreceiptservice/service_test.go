@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -366,4 +367,46 @@ func TestListExceptionsAndSuggestMatches(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, suggestions, 1)
 	assert.Equal(t, 95, suggestions[0].Score)
+}
+
+func TestPaymentsOfReceiptAmount_AsksForPaymentsOfTheReceiptsAmountUpToTheLimit(t *testing.T) {
+	t.Parallel()
+
+	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
+	receipt := &bankreceipt.BankReceipt{
+		ID:              pulid.MustNew("brcpt_"),
+		Status:          bankreceipt.StatusException,
+		ReferenceNumber: "ACH-88213",
+		AmountMinor:     120_000,
+	}
+	payment := &customerpayment.Payment{
+		ID:          pulid.MustNew("cpay_"),
+		AmountMinor: 120_000,
+		Status:      customerpayment.StatusPosted,
+	}
+	repo := bankreceiptportsmock.NewMockBankReceiptRepository(t)
+	payments := customerpaymentportsmock.NewMockCustomerPaymentRepository(t)
+	svc := &Service{db: passthroughDB{}, repo: repo, paymentRepo: payments}
+
+	repo.EXPECT().
+		GetByID(mock.Anything, bankreceiptports.GetBankReceiptByIDRequest{ID: receipt.ID, TenantInfo: tenant}).
+		Return(receipt, nil).
+		Once()
+	payments.EXPECT().
+		FindSuggestedMatchCandidates(mock.Anything, customerpaymentports.FindCustomerPaymentMatchCandidatesRequest{
+			TenantInfo:  tenant,
+			AmountMinor: 120_000,
+			Limit:       11,
+		}).
+		Return([]*customerpayment.Payment{payment}, nil).
+		Once()
+
+	found, err := svc.PaymentsOfReceiptAmount(t.Context(), &bankreceiptports.ReceiptAmountPaymentsRequest{
+		ReceiptID:  receipt.ID,
+		Limit:      11,
+		TenantInfo: tenant,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, []*customerpayment.Payment{payment}, found,
+		"every payment of the amount, whatever its reference, so the caller judges the references")
 }

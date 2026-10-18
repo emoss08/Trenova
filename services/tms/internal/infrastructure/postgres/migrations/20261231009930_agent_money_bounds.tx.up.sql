@@ -34,10 +34,18 @@ COMMENT ON COLUMN "agent_controls"."agent_money_day_calls" IS 'Most automatic mo
 COMMENT ON COLUMN "agent_controls"."agent_money_day_amount_minor" IS 'Most the organization''s agents may move in automatic money writes in a day, in minor units';
 
 --bun:split
--- What an automatic money write moved, counted against those caps. Set only
--- on a write that ran on its own inside its bounds.
+-- What an automatic money write moved, and in which currency, counted against
+-- those caps. Set only on a write that ran on its own inside its bounds; the
+-- caps count only writes in the organization's functional currency.
 ALTER TABLE "agent_proposals"
-    ADD COLUMN IF NOT EXISTS "money_minor" BIGINT;
+    ADD COLUMN IF NOT EXISTS "money_minor" BIGINT,
+    ADD COLUMN IF NOT EXISTS "money_currency" VARCHAR(3);
+
+--bun:split
+ALTER TABLE "agent_proposals"
+    ADD CONSTRAINT "ck_agent_proposals_money_currency" CHECK (
+        ("money_minor" IS NULL) = ("money_currency" IS NULL)
+    );
 
 --bun:split
 CREATE INDEX IF NOT EXISTS "idx_agent_proposals_automatic_money"

@@ -168,6 +168,10 @@ func (s TaintSource) IsValid() bool {
 
 func (s TaintSource) String() string { return string(s) }
 
+func (s TaintSource) Rereadable() bool {
+	return s == TaintSourceBankReceipt
+}
+
 const (
 	MaxTaintMarks  = 16
 	HeldByTaintKey = "tainted"

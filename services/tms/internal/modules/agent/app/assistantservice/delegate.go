@@ -139,6 +139,7 @@ func (s *Service) OpenDelegate(
 			ParentAgentName: parent.Name,
 			CallID:          req.Call.Call.ID,
 			StepScope:       req.Call.StepScope,
+			MoneySpent:      req.Call.MoneySpent,
 		},
 		// The delegate reads what the task says, and the task was written
 		// by a turn that may have read outside content.

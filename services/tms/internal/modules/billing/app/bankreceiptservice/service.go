@@ -135,6 +135,28 @@ func (s *Service) SuggestMatches(
 	return buildMatchSuggestions(receipt, candidates), nil
 }
 
+func (s *Service) PaymentsOfReceiptAmount(
+	ctx context.Context,
+	req *bankreceiptports.ReceiptAmountPaymentsRequest,
+) ([]*customerpayment.Payment, error) {
+	receipt, err := s.repo.GetByID(
+		ctx,
+		bankreceiptports.GetBankReceiptByIDRequest{ID: req.ReceiptID, TenantInfo: req.TenantInfo},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.paymentRepo.FindSuggestedMatchCandidates(
+		ctx,
+		customerpaymentports.FindCustomerPaymentMatchCandidatesRequest{
+			TenantInfo:  req.TenantInfo,
+			AmountMinor: receipt.AmountMinor,
+			Limit:       req.Limit,
+		},
+	)
+}
+
 func (s *Service) Import(
 	ctx context.Context,
 	req *bankreceiptports.ImportBankReceiptRequest,

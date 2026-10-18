@@ -49,10 +49,10 @@ type bankReceiptMatcher interface {
 		req *bankreceiptservice.PreviewMatchPaymentRequest,
 		actor *permissionports.RequestActor,
 	) (*bankreceiptservice.MatchPreview, error)
-	SuggestMatches(
+	PaymentsOfReceiptAmount(
 		ctx context.Context,
-		req *bankreceiptports.GetBankReceiptRequest,
-	) ([]*bankreceiptports.BankReceiptMatchSuggestion, error)
+		req *bankreceiptports.ReceiptAmountPaymentsRequest,
+	) ([]*customerpayment.Payment, error)
 }
 
 type customerPaymentPoster interface {
@@ -143,6 +143,7 @@ func (t *MatchBankReceiptTool) Policy() agentports.ToolPolicy {
 		Condition: &agentports.TierCondition{
 			Description: matchReceiptBoundText,
 			Bounds:      t.withinBounds,
+			Vouches:     []agent.TaintSource{agent.TaintSourceBankReceipt},
 		},
 		Effect:        agent.ToolEffectChange,
 		ReadsExternal: agent.ExternalReadNever,
@@ -333,6 +334,7 @@ func (t *PostCustomerPaymentTool) Policy() agentports.ToolPolicy {
 		Condition: &agentports.TierCondition{
 			Description: postPaymentBoundText,
 			Bounds:      t.withinBounds,
+			Vouches:     []agent.TaintSource{agent.TaintSourceBankReceipt},
 		},
 		Effect:        agent.ToolEffectChange,
 		Reversible:    true,

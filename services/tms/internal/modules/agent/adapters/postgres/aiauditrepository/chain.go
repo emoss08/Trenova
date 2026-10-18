@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
@@ -82,7 +83,7 @@ func (r *repository) RecordVerification(
 			Model(head).
 			Set(cols.LastVerificationStatus.Set(), req.Status).
 			Set(cols.LastVerifiedAt.Set(), req.At).
-			Set(cols.LastVerificationDetail.Set(), nullableText(req.Detail)).
+			Set(cols.LastVerificationDetail.Set(), stringutils.Ptr(req.Detail)).
 			Set(cols.UpdatedAt.Set(), req.At).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
 				return aiauditcol.AIAuditChainHeadScopeTenantUpdate(uq, req.TenantInfo)
@@ -104,14 +105,6 @@ func (r *repository) RecordVerification(
 
 		return head, nil
 	})
-}
-
-func nullableText(value string) any {
-	if value == "" {
-		return nil
-	}
-
-	return value
 }
 
 func (r *repository) GetSealEndingAt(

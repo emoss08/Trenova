@@ -86,8 +86,10 @@ type CountExecutedToolRequest struct {
 
 type SumAutomaticMoneyRequest struct {
 	TenantInfo pagination.TenantInfo
+	Currency   string
 	Since      int64
 	RunID      pulid.ID
+	Simulated  bool
 }
 
 // ListAgentProposalsByThreadRequest fetches every proposal raised during one

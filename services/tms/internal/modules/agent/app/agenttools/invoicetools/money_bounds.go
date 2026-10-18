@@ -10,8 +10,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/shared/money"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/referenceutils"
+	"github.com/shopspring/decimal"
 )
 
 const matchCandidateLimit = 10
@@ -20,15 +23,18 @@ const postPaymentBoundText = "Runs on its own only when it records an unmatched 
 	"whose reference or memo names every invoice it pays, each an open invoice of the same " +
 	"customer paid to its exact balance, the whole payment is applied with nothing short-paid " +
 	"or left unapplied, and the amount is within the organization's money limits for agents; " +
-	"any other call waits for a person."
+	"any other call waits for a person. Bank receipts the run read do not hold it, because " +
+	"the receipt is read again from the organization's records; any other outside content does."
 
 const matchReceiptBoundText = "Runs on its own only when the payment is the one posted payment " +
 	"with the receipt's exact amount and reference, and the amount is within the organization's " +
-	"money limits for agents; any other call waits for a person."
+	"money limits for agents; any other call waits for a person. Bank receipts the run read do " +
+	"not hold it, because the receipt is read again from the organization's records; any other " +
+	"outside content does."
 
 const correctChargeBoundText = "Runs on its own only while nothing has been invoiced from the " +
-	"billing queue item and the change to its total is within the organization's money limits " +
-	"for agents; any other call waits for a person."
+	"billing queue item and every charge it adds, removes or changes, counted in full, is " +
+	"within the organization's money limits for agents; any other call waits for a person."
 
 func (t *PostCustomerPaymentTool) withinBounds(
 	ctx context.Context,
@@ -50,7 +56,8 @@ func (t *PostCustomerPaymentTool) withinBounds(
 		return agentports.OutsideMoneyBound(agent.HeldByMoneyExactMatch)
 	}
 
-	return agentports.WithinMoneyBound(args.request.AmountMinor)
+	return agentports.WithinMoneyBound(args.request.AmountMinor, posted.Payment.CurrencyCode).
+		Rereading(agent.TaintSourceBankReceipt)
 }
 
 func remittanceMatches(
@@ -103,18 +110,23 @@ func (t *MatchBankReceiptTool) withinBounds(
 		return agentports.OutsideMoneyBound(agent.HeldByMoneyExactMatch)
 	}
 
-	candidates, err := t.receipts.SuggestMatches(ctx, &bankreceiptports.GetBankReceiptRequest{
-		ReceiptID:  request.ReceiptID,
-		TenantInfo: request.TenantInfo,
-	})
-	if err != nil || len(candidates) >= matchCandidateLimit {
+	candidates, err := t.receipts.PaymentsOfReceiptAmount(
+		ctx,
+		&bankreceiptports.ReceiptAmountPaymentsRequest{
+			ReceiptID:  request.ReceiptID,
+			Limit:      matchCandidateLimit + 1,
+			TenantInfo: request.TenantInfo,
+		},
+	)
+	if err != nil || len(candidates) > matchCandidateLimit {
 		return agentports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
 	}
 	if !onlyExactCandidate(receipt, payment, candidates) {
 		return agentports.OutsideMoneyBound(agent.HeldByMoneyExactMatch)
 	}
 
-	return agentports.WithinMoneyBound(receipt.AmountMinor)
+	return agentports.WithinMoneyBound(receipt.AmountMinor, payment.CurrencyCode).
+		Rereading(agent.TaintSourceBankReceipt)
 }
 
 func exactReceiptMatch(receipt *bankreceipt.BankReceipt, payment *customerpayment.Payment) bool {
@@ -126,7 +138,7 @@ func exactReceiptMatch(receipt *bankreceipt.BankReceipt, payment *customerpaymen
 func onlyExactCandidate(
 	receipt *bankreceipt.BankReceipt,
 	payment *customerpayment.Payment,
-	candidates []*bankreceiptports.BankReceiptMatchSuggestion,
+	candidates []*customerpayment.Payment,
 ) bool {
 	exact := 0
 	for _, candidate := range candidates {
@@ -134,7 +146,7 @@ func onlyExactCandidate(
 			!referenceutils.Same(candidate.ReferenceNumber, receipt.ReferenceNumber) {
 			continue
 		}
-		if candidate.CustomerPaymentID != payment.ID {
+		if candidate.ID != payment.ID {
 			return false
 		}
 		exact++
@@ -161,11 +173,50 @@ func (t *CorrectChargeCodeTool) withinBounds(
 	if !uninvoiced(plan.Item) {
 		return agentports.OutsideMoneyBound(agent.HeldByMoneyRecordState)
 	}
+	if plan.Item.BillToCustomer == nil {
+		return agentports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+	}
 
-	before := money.MinorUnits(plan.Before.TotalChargeAmount.Decimal)
-	after := money.MinorUnits(plan.After.TotalChargeAmount.Decimal)
+	return agentports.WithinMoneyBound(
+		money.MinorUnits(grossChargeChange(plan.Before, plan.After)),
+		plan.Item.BillToCustomer.BillingCurrencyCode(),
+	)
+}
 
-	return agentports.WithinMoneyBound(after - before)
+func grossChargeChange(before, after *shipment.Shipment) decimal.Decimal {
+	beforeFreight := before.FreightChargeAmount.Decimal
+	afterFreight := after.FreightChargeAmount.Decimal
+	gross := afterFreight.Sub(beforeFreight).Abs()
+
+	kept := make(map[pulid.ID]*shipment.AdditionalCharge, len(before.AdditionalCharges))
+	for _, charge := range before.AdditionalCharges {
+		if charge != nil && charge.ID.IsNotNil() {
+			kept[charge.ID] = charge
+		}
+	}
+	for _, charge := range after.AdditionalCharges {
+		if charge == nil {
+			continue
+		}
+		total := charge.Total(afterFreight)
+		previous, found := kept[charge.ID]
+		if !found || charge.ID.IsNil() {
+			gross = gross.Add(total.Abs())
+			continue
+		}
+		delete(kept, charge.ID)
+		gross = gross.Add(total.Sub(previous.Total(beforeFreight)).Abs())
+	}
+	for _, charge := range before.AdditionalCharges {
+		if charge == nil {
+			continue
+		}
+		if _, removed := kept[charge.ID]; removed || charge.ID.IsNil() {
+			gross = gross.Add(charge.Total(beforeFreight).Abs())
+		}
+	}
+
+	return gross
 }
 
 func uninvoiced(item *billingqueue.BillingQueueItem) bool {

@@ -25,6 +25,7 @@ type FindCustomerPaymentMatchCandidatesRequest struct {
 	ReferenceNumber string                `json:"referenceNumber"`
 	AmountMinor     int64                 `json:"amountMinor"`
 	ReceiptDate     int64                 `json:"receiptDate"`
+	Limit           int                   `json:"limit"`
 }
 
 type ListCustomerPaymentConnectionRequest struct {

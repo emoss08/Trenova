@@ -292,7 +292,15 @@ func (f *fakeSteps) ListByPlan(
 }
 
 type fakeChecker struct {
-	err error
+	err      error
+	review   bool
+	reviewed map[string]any
+}
+
+func (f *fakeChecker) ReviewRequired(_ *agent.AgentProposal, modifications map[string]any) bool {
+	f.reviewed = modifications
+
+	return f.review
 }
 
 func (f *fakeChecker) CheckModifications(

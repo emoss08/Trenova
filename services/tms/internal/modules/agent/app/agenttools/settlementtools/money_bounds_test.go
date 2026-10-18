@@ -44,7 +44,9 @@ func TestAddDriverSettlementAdjustmentBounds(t *testing.T) {
 		t.Run(string(tc.status), func(t *testing.T) {
 			t.Parallel()
 
-			entity := &driversettlement.Settlement{ID: pulid.MustNew("dstl_"), Status: tc.status}
+			entity := &driversettlement.Settlement{
+				ID: pulid.MustNew("dstl_"), Status: tc.status, CurrencyCode: "USD",
+			}
 			book := &fakeSettlementBook[driversettlement.Settlement]{
 				plan: driverPlanner(entity, nil),
 			}
@@ -58,6 +60,7 @@ func TestAddDriverSettlementAdjustmentBounds(t *testing.T) {
 			assert.Equal(t, tc.within, bound.Within)
 			if tc.within {
 				assert.Equal(t, int64(-7_525), bound.AmountMinor)
+				assert.Equal(t, "USD", bound.Currency, "the settlement's currency is what moves")
 				return
 			}
 			assert.Equal(t, agent.HeldByMoneyRecordState, bound.Held)
@@ -72,8 +75,9 @@ func TestRemoveSettlementAdjustmentBounds(t *testing.T) {
 	earning := pulid.MustNew("dstll_")
 	settlement := func(status driversettlement.Status) *driversettlement.Settlement {
 		return &driversettlement.Settlement{
-			ID:     pulid.MustNew("dstl_"),
-			Status: status,
+			ID:           pulid.MustNew("dstl_"),
+			Status:       status,
+			CurrencyCode: "CAD",
 			Lines: []*driversettlement.SettlementLine{
 				{
 					ID:           agentLine,
@@ -118,6 +122,7 @@ func TestRemoveSettlementAdjustmentBounds(t *testing.T) {
 			assert.Equal(t, tc.within, bound.Within)
 			if tc.within {
 				assert.Equal(t, int64(12_500), bound.AmountMinor)
+				assert.Equal(t, "CAD", bound.Currency)
 				return
 			}
 			assert.Equal(t, tc.held, bound.Held)
@@ -130,8 +135,9 @@ func TestRemoveCarrierSettlementAdjustmentBounds(t *testing.T) {
 
 	agentLine := pulid.MustNew("carstll_")
 	entity := &carriersettlement.CarrierSettlement{
-		ID:     pulid.MustNew("carstl_"),
-		Status: carriersettlement.StatusPendingApproval,
+		ID:           pulid.MustNew("carstl_"),
+		Status:       carriersettlement.StatusPendingApproval,
+		CurrencyCode: "USD",
 		Lines: []*carriersettlement.CarrierSettlementLine{{
 			ID:           agentLine,
 			EventType:    carriersettlement.CostEventTypeAdjustment,
@@ -155,6 +161,7 @@ func TestRemoveCarrierSettlementAdjustmentBounds(t *testing.T) {
 	})
 	require.True(t, bound.Within)
 	assert.Equal(t, int64(-3_000), bound.AmountMinor)
+	assert.Equal(t, "USD", bound.Currency)
 }
 
 func TestSettlementAdjustmentRefusedByItsPlanIsUnproven(t *testing.T) {

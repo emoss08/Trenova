@@ -765,3 +765,24 @@ func TestSettleParams_ReadsValuesAsTheExecutorWill(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "Hold", typed["status"])
 }
+
+func TestForProposal_SaysWhetherAnApprovalOfWhatItShowsNeedsItsDigest(t *testing.T) {
+	t.Parallel()
+
+	for _, review := range []bool{true, false} {
+		f := newFixture()
+		f.checker.review = review
+		modifications := map[string]any{"reason": "Customer asked"}
+
+		preview, err := f.svc.ForProposal(t.Context(), &agentports.ProposalPreviewRequest{
+			Proposal:      f.proposal(f.cancelParams()),
+			Modifications: modifications,
+			Viewer:        f.viewer(),
+		})
+		require.NoError(t, err)
+
+		assert.Equal(t, review, preview.ReviewRequired)
+		assert.Equal(t, modifications, f.checker.reviewed,
+			"the rule is the server's own, applied to the approver's changes")
+	}
+}

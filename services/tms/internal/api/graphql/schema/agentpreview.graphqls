@@ -198,6 +198,13 @@ type AgentProposalPreview {
   computedAt: Timestamp!
   "SHA-256 of what this reader was shown; send it back with an approval."
   digest: String!
+  """
+  An approval of this change, with the modifications this preview was asked
+  for, is refused without the digest: the change moves money, reaches a
+  customer, a driver or someone outside the organization, or was proposed
+  after the run read outside content.
+  """
+  reviewRequired: Boolean!
 }
 
 "One pending step of a plan and what it would do."

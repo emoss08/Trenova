@@ -61,6 +61,10 @@ type AgentPlan struct {
 	CommitsAt      *int64    `json:"commitsAt"      bun:"commits_at,type:BIGINT,nullzero"`
 	UndoneAt       *int64    `json:"undoneAt"       bun:"undone_at,type:BIGINT,nullzero"`
 	UndoneByUserID *pulid.ID `json:"undoneByUserId" bun:"undone_by_user_id,type:VARCHAR(100),nullzero"`
+	// The approval the window carries until it commits.
+	ApprovalReasonCode    string `json:"-" bun:"approval_reason_code,type:VARCHAR(100),nullzero"`
+	ApprovalNote          string `json:"-" bun:"approval_note,type:TEXT,nullzero"`
+	ApprovalPreviewDigest string `json:"-" bun:"approval_preview_digest,type:VARCHAR(64),nullzero"`
 
 	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`

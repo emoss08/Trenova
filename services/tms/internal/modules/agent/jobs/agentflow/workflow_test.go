@@ -49,6 +49,8 @@ type harnessParams struct {
 	query  []agentports.AgentQueryTool
 	action []agentports.AgentTool
 	ledger agentports.RunStepLedger
+	// budgets reads the organization's money limits for a money write.
+	budgets agentports.AgentBudgetService
 	// delegates opens another agent's turn when the run's agent hands it a
 	// task.
 	delegates DelegateOpener
@@ -71,6 +73,7 @@ func newHarness(t *testing.T, p harnessParams) *harness {
 		QueryTools:  &agenttest.StubQueryRegistry{Tools: p.query},
 		ActionTools: &agenttest.StubActionRegistry{Tools: p.action},
 		Permissions: &agenttest.StubPermissions{},
+		Budgets:     p.budgets,
 	})
 	acts := NewActivities(ActivitiesParams{
 		Logger:    zap.NewNop(),

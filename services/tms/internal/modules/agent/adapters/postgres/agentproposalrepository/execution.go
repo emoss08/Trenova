@@ -2,7 +2,9 @@ package agentproposalrepository
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
@@ -205,12 +207,23 @@ type automaticMoneyRow struct {
 	AmountMinor int64 `bun:"amount_minor"`
 }
 
+var errMoneyCurrencyRequired = errors.New("sum automatic money writes: a currency is required")
+
 func (r *repository) SumAutomaticMoney(
 	ctx context.Context,
 	req agentports.SumAutomaticMoneyRequest,
 ) (agent.MoneyUse, error) {
+	currency := strings.ToUpper(strings.TrimSpace(req.Currency))
+	if currency == "" {
+		return agent.MoneyUse{}, errMoneyCurrencyRequired
+	}
+
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (agent.MoneyUse, error) {
 		cols := agentcol.AgentProposalColumns
+		status, at := agent.ProposalStatusExecuted, cols.ExecutedAt
+		if req.Simulated {
+			status, at = agent.ProposalStatusSimulated, cols.SimulatedAt
+		}
 
 		row := new(automaticMoneyRow)
 		err := r.db.DBForContext(ctx).
@@ -221,11 +234,12 @@ func (r *repository) SumAutomaticMoney(
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 				sq = agentcol.AgentProposalScopeTenant(sq, req.TenantInfo).
 					Where(cols.AutonomyTier.Eq(), agent.TierAutoExecute).
+					Where(cols.Status.Eq(), status).
 					Where(cols.MoneyMinor.IsNotNull()).
-					Where(cols.ExecutedAt.IsNotNull()).
-					Where(cols.SimulatedAt.IsNull())
+					Where(cols.MoneyCurrency.Eq(), currency).
+					Where(at.IsNotNull())
 				if req.Since > 0 {
-					sq = sq.Where(cols.ExecutedAt.Gte(), req.Since)
+					sq = sq.Where(at.Gte(), req.Since)
 				}
 				if req.RunID.IsNotNil() {
 					sq = sq.Where(cols.RunID.Eq(), req.RunID)

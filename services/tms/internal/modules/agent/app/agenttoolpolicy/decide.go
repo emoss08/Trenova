@@ -38,11 +38,12 @@ type DecideInput struct {
 }
 
 type Decision struct {
-	Tier       agent.AutonomyTier
-	Egress     agent.EgressClass
-	HeldBy     []string
-	Source     agent.TierSource
-	MoneyMinor *int64
+	Tier          agent.AutonomyTier
+	Egress        agent.EgressClass
+	HeldBy        []string
+	Source        agent.TierSource
+	MoneyMinor    *int64
+	MoneyCurrency string
 }
 
 func HeldWhenTainted(class agent.EgressClass) bool {
@@ -68,7 +69,9 @@ func Decide(ctx context.Context, in DecideInput) Decision {
 	}
 	taintHolds := policy.TaintHolds(in.Params, call) && (in.Taint == nil || in.Taint.Tainted())
 	if call.Egress == agent.EgressMoney {
-		decision.boundMoney(ctx, &in, taintHolds)
+		if decision.boundMoney(ctx, &in, taintHolds) {
+			taintHolds = false
+		}
 	} else {
 		decision.lower(call.Egress.Ceiling(), HeldByEgressClass)
 	}
@@ -90,6 +93,7 @@ func Decide(ctx context.Context, in DecideInput) Decision {
 	}
 	if decision.Tier != agent.TierAutoExecute {
 		decision.MoneyMinor = nil
+		decision.MoneyCurrency = ""
 	}
 
 	return decision
@@ -170,45 +174,64 @@ func TierSetByPerson(
 	return trust == nil || !trust.HoldsEarnedTier(definition.ToolTiers[toolName])
 }
 
-func (d *Decision) boundMoney(ctx context.Context, in *DecideInput, taintHolds bool) {
+func (d *Decision) boundMoney(ctx context.Context, in *DecideInput, taintHolds bool) bool {
 	if d.Tier != agent.TierAutoExecute {
-		return
+		return false
 	}
 	if !in.Policy.Bounded() {
 		d.lower(agent.TierActWithApproval, agent.HeldByMoneyUnbounded)
-		return
+		return false
 	}
-	if taintHolds {
-		return
+	if taintHolds && !vouchable(in.Policy.Condition, in.Taint) {
+		return false
 	}
-	if held, amount := moneyHeld(ctx, in); held != "" {
+
+	held, check := moneyHeld(ctx, in)
+	if held != "" {
 		d.lower(agent.TierActWithApproval, held)
-	} else {
-		d.MoneyMinor = &amount
+		return false
 	}
+	if taintHolds && !in.Policy.Condition.Vouched(in.Taint, &check) {
+		return false
+	}
+	amount := check.AmountMinor
+	d.MoneyMinor = &amount
+	d.MoneyCurrency = check.Currency
+
+	return taintHolds
 }
 
-func moneyHeld(ctx context.Context, in *DecideInput) (held string, amountMinor int64) {
+func vouchable(condition *agentports.TierCondition, taint *agent.RunTaint) bool {
+	if condition == nil || len(condition.Vouches) == 0 || !taint.Tainted() {
+		return false
+	}
+
+	return !slices.ContainsFunc(taint.Sources(), func(source agent.TaintSource) bool {
+		return !slices.Contains(condition.Vouches, source)
+	})
+}
+
+func moneyHeld(ctx context.Context, in *DecideInput) (string, agentports.MoneyBound) {
 	check, proven := provenBound(ctx, in)
 	if !proven {
-		return agent.HeldByMoneyUnproven, 0
+		return agent.HeldByMoneyUnproven, check
 	}
 	if !check.Within {
 		if slices.Contains(agent.MoneyConditionHeldByKeys(), check.Held) {
-			return check.Held, 0
+			return check.Held, check
 		}
-		return agent.HeldByMoneyUnproven, 0
+		return agent.HeldByMoneyUnproven, check
 	}
 	if in.MoneyAllowance == nil {
-		return agent.HeldByMoneyLimitsUnread, 0
+		return agent.HeldByMoneyLimitsUnread, check
 	}
 
 	allowance, err := in.MoneyAllowance(ctx)
 	if err != nil {
-		return agent.HeldByMoneyLimitsUnread, 0
+		return agent.HeldByMoneyLimitsUnread, check
 	}
 
-	return allowance.Exceeded(check.AmountMinor), check.AmountMinor
+	return allowance.Exceeded(check.AmountMinor, check.Currency), check
 }
 
 func provenBound(ctx context.Context, in *DecideInput) (bound agentports.MoneyBound, proven bool) {

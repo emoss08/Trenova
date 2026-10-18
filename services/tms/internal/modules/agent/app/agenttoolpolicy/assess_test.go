@@ -71,7 +71,7 @@ func TestAssess_BoundedMoneyRunsOnItsOwnWithinBoundsUntilTheRunIsTainted(t *test
 	policy.Condition = &agentports.TierCondition{
 		Description: "Runs on its own only within bounds.",
 		Bounds: func(context.Context, agentports.ToolExecuteParams) agentports.MoneyBound {
-			return agentports.WithinMoneyBound(1)
+			return agentports.WithinMoneyBound(1, "USD")
 		},
 	}
 	clean, tainted := assessBoth(t, agenttoolpolicy.AssessInput{

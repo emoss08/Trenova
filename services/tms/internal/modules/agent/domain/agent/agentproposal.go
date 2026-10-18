@@ -81,11 +81,12 @@ type AgentProposal struct {
 	TargetID       pulid.ID `json:"targetId"       bun:"target_id,type:VARCHAR(100),nullzero"`
 	TargetVersion  int64    `json:"targetVersion"  bun:"target_version,type:BIGINT,nullzero"`
 
-	Tainted     bool        `json:"tainted"     bun:"tainted,type:BOOLEAN,notnull,default:false"`
-	Taint       *RunTaint   `json:"taint"       bun:"taint,type:JSONB,nullzero"`
-	EgressClass EgressClass `json:"egressClass" bun:"egress_class,type:VARCHAR(30),nullzero"`
-	HeldBy      []string    `json:"heldBy"      bun:"held_by,type:TEXT[],array,notnull"`
-	MoneyMinor  *int64      `json:"moneyMinor"  bun:"money_minor,type:BIGINT,nullzero"`
+	Tainted       bool        `json:"tainted"       bun:"tainted,type:BOOLEAN,notnull,default:false"`
+	Taint         *RunTaint   `json:"taint"         bun:"taint,type:JSONB,nullzero"`
+	EgressClass   EgressClass `json:"egressClass"   bun:"egress_class,type:VARCHAR(30),nullzero"`
+	HeldBy        []string    `json:"heldBy"        bun:"held_by,type:TEXT[],array,notnull"`
+	MoneyMinor    *int64      `json:"moneyMinor"    bun:"money_minor,type:BIGINT,nullzero"`
+	MoneyCurrency string      `json:"moneyCurrency" bun:"money_currency,type:VARCHAR(3),nullzero"`
 
 	// TraceID and SpanID are the tool span the write was decided in, so a
 	// decision made later links back to it; StepKey is the ledger step that

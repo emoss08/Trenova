@@ -131,19 +131,11 @@ func (s *Service) settlePreview(
 }
 
 func (s *Service) needsReview(proposal *agent.AgentProposal, modifications map[string]any) bool {
-	if proposal.ApprovalNeedsReview() {
-		return true
-	}
-	if len(modifications) == 0 {
-		return false
-	}
 	if s.executor == nil {
-		return true
+		return proposal.ApprovalNeedsReview() || len(modifications) > 0
 	}
 
-	egress, known := s.executor.CallEgress(proposal, modifications)
-
-	return !known || egress.ApprovalNeedsReview()
+	return s.executor.ReviewRequired(proposal, modifications)
 }
 
 func previewRefusal(err error) string {

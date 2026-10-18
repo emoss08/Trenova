@@ -1,62 +1,19 @@
 package agentruntime
 
 import (
-	"context"
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-type moneyBudgets struct {
-	agentports.AgentBudgetService
+type moneyBudgets = agenttest.StubMoneyBudgets
 
-	limits agent.MoneyLimits
-	used   agent.MoneyUse
-	err    error
-	asked  []agentports.MoneyAllowanceRequest
-}
-
-func (b *moneyBudgets) MoneyAllowance(
-	_ context.Context,
-	req agentports.MoneyAllowanceRequest,
-) (agent.MoneyAllowance, error) {
-	b.asked = append(b.asked, req)
-	if b.err != nil {
-		return agent.MoneyAllowance{}, b.err
-	}
-
-	return agent.MoneyAllowance{
-		Limits: b.limits,
-		Run:    req.Unrecorded,
-		Day:    b.used.Plus(req.Unrecorded),
-	}, nil
-}
-
-func (b *moneyBudgets) CheckTool(
-	context.Context,
-	agentports.CheckToolBudgetRequest,
-) (agentports.BudgetRefusal, error) {
-	return agentports.BudgetRefusal{}, nil
-}
-
-func (b *moneyBudgets) WithinBusinessHours(context.Context, *agentdefinition.Definition) bool {
-	return true
-}
-
-func roomyMoneyLimits() agent.MoneyLimits {
-	return agent.MoneyLimits{
-		CallCeilingMinor: 100_000,
-		RunCalls:         10,
-		RunAmountMinor:   1_000_000,
-		DayCalls:         100,
-		DayAmountMinor:   10_000_000,
-	}
-}
+func roomyMoneyLimits() agent.MoneyLimits { return agenttest.RoomyMoneyLimits() }
 
 func TestRun_AMoneyWritePastTheCeilingIsFiledNamingTheBound(t *testing.T) {
 	t.Parallel()
@@ -70,7 +27,7 @@ func TestRun_AMoneyWritePastTheCeilingIsFiledNamingTheBound(t *testing.T) {
 		&stubActionRegistry{Tools: []agentports.AgentTool{pay}}, nil)
 	limits := roomyMoneyLimits()
 	limits.CallCeilingMinor = 9_999
-	rt.budgets = &moneyBudgets{limits: limits}
+	rt.budgets = &moneyBudgets{Limits: limits}
 
 	run := runTainted(t, rt, &agentports.RunRequest{
 		Definition: autoDefinition("apply_payment"),
@@ -100,7 +57,7 @@ func TestRun_WritesEarlierInTheTurnCountAgainstTheRunCap(t *testing.T) {
 		&stubActionRegistry{Tools: []agentports.AgentTool{pay}}, nil)
 	limits := roomyMoneyLimits()
 	limits.RunCalls = 1
-	budgets := &moneyBudgets{limits: limits}
+	budgets := &moneyBudgets{Limits: limits}
 	rt.budgets = budgets
 
 	run := runTainted(t, rt, &agentports.RunRequest{
@@ -114,15 +71,15 @@ func TestRun_WritesEarlierInTheTurnCountAgainstTheRunCap(t *testing.T) {
 	assert.True(t, run.result.Actions[0].Executed)
 	assert.False(t, run.result.Actions[1].Executed)
 	assert.Equal(t, []string{agent.HeldByMoneyRunCalls}, run.result.Actions[1].HeldBy)
-	require.Len(t, budgets.asked, 2)
-	assert.Equal(t, agent.MoneyUse{Calls: 1, AmountMinor: 10_000}, budgets.asked[1].Unrecorded)
+	require.Len(t, budgets.Asked(), 2)
+	assert.Equal(t, agent.MoneyUse{Calls: 1, AmountMinor: 10_000}, budgets.Asked()[1].Unrecorded)
 }
 
 func TestRun_MoneyLimitsThatCannotBeReadHoldTheWrite(t *testing.T) {
 	t.Parallel()
 
 	for name, budgets := range map[string]agentports.AgentBudgetService{
-		"unreadable": &moneyBudgets{err: errors.New("database down")},
+		"unreadable": &moneyBudgets{Err: errors.New("database down")},
 		"absent":     nil,
 	} {
 		t.Run(name, func(t *testing.T) {
@@ -161,7 +118,7 @@ func TestRun_AMoneyToolThatProvesNothingAsksFirst(t *testing.T) {
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
 		&stubActionRegistry{Tools: []agentports.AgentTool{pay}}, nil)
-	rt.budgets = &moneyBudgets{limits: roomyMoneyLimits()}
+	rt.budgets = &moneyBudgets{Limits: roomyMoneyLimits()}
 
 	run := runTainted(t, rt, &agentports.RunRequest{
 		Definition: autoDefinition("apply_payment"),

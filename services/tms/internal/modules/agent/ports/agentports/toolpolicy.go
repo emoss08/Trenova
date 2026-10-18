@@ -133,16 +133,39 @@ type TierCondition struct {
 	Description string
 	Limit       func(context.Context, ToolExecuteParams) agent.AutonomyTier
 	Bounds      func(context.Context, ToolExecuteParams) MoneyBound
+	Vouches     []agent.TaintSource
+}
+
+func (c *TierCondition) Vouched(taint *agent.RunTaint, bound *MoneyBound) bool {
+	if c == nil || taint == nil || !taint.Tainted() || bound == nil || !bound.Within {
+		return false
+	}
+	for _, source := range taint.Sources() {
+		if !source.Rereadable() || !slices.Contains(c.Vouches, source) ||
+			!slices.Contains(bound.Reread, source) {
+			return false
+		}
+	}
+
+	return true
 }
 
 type MoneyBound struct {
 	Within      bool
 	Held        string
 	AmountMinor int64
+	Currency    string
+	Reread      []agent.TaintSource
 }
 
-func WithinMoneyBound(amountMinor int64) MoneyBound {
-	return MoneyBound{Within: true, AmountMinor: amountMinor}
+func WithinMoneyBound(amountMinor int64, currency string) MoneyBound {
+	return MoneyBound{Within: true, AmountMinor: amountMinor, Currency: currency}
+}
+
+func (b MoneyBound) Rereading(sources ...agent.TaintSource) MoneyBound {
+	b.Reread = append(slices.Clip(b.Reread), sources...)
+
+	return b
 }
 
 func OutsideMoneyBound(held string) MoneyBound {

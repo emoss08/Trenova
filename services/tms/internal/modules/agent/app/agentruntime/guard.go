@@ -41,6 +41,7 @@ type guardedDispatchParams struct {
 	call           agentports.ToolCall
 	completionText string
 	proposedSoFar  []agentports.PendingAction
+	moneySpent     agent.MoneyUse
 	// ordinal numbers this exact call within the run; the loop assigns it.
 	ordinal int
 	taint   *agent.RunTaint
@@ -86,6 +87,7 @@ func (s *Service) guardedDispatch(
 			call:           p.call,
 			completionText: p.completionText,
 			proposedSoFar:  p.proposedSoFar,
+			moneySpent:     p.moneySpent,
 			idempotencyKey: p.call.ID,
 			taint:          p.taint,
 			afterExternal:  p.afterExternal,
@@ -164,6 +166,7 @@ func (s *Service) claimAndDispatch(
 		call:           p.call,
 		completionText: p.completionText,
 		proposedSoFar:  p.proposedSoFar,
+		moneySpent:     p.moneySpent,
 		idempotencyKey: key,
 		taint:          p.taint,
 		afterExternal:  p.afterExternal,

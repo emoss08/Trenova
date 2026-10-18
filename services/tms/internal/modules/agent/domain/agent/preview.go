@@ -308,6 +308,7 @@ type ProposalPreview struct {
 	Recorded       bool              `json:"recorded,omitempty"`
 	ComputedAt     int64             `json:"computedAt"`
 	Digest         string            `json:"digest,omitempty"`
+	ReviewRequired bool              `json:"reviewRequired"`
 }
 
 func (p *ProposalPreview) IsStale() bool {

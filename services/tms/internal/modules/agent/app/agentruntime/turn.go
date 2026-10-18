@@ -170,6 +170,9 @@ type DispatchCall struct {
 	// organization, so a write is proposed rather than run.
 	AfterExternalContent bool     `json:"afterExternalContent,omitempty"`
 	Earlier              []string `json:"earlier,omitempty"`
+	// MoneySpent is what the turn's automatic money writes, its delegates'
+	// and the delegating turn's, have moved and not yet recorded.
+	MoneySpent agent.MoneyUse `json:"moneySpent,omitzero"`
 }
 
 // ToolOutcome is what one tool call came to.
@@ -975,6 +978,7 @@ func (s *Service) DispatchStep(
 		call:           call.Call,
 		completionText: call.CompletionText,
 		proposedSoFar:  call.ProposedSoFar,
+		moneySpent:     call.MoneySpent,
 		ordinal:        call.Ordinal,
 		taint:          call.Taint,
 		afterExternal:  call.AfterExternalContent,

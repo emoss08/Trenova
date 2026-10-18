@@ -33,11 +33,19 @@ person by default. It runs on its own only on a tool whose condition proves the
 call is within bounds: the records it touches are in the state the tool
 requires, and the amount it moves is within the organization's money limits for
 agents in AI Control, which are a ceiling on one change and a cap on each run
-and on each day in both the number of changes and the total moved. The day is
-the organization's own and counts every agent. A call outside any bound, or
-whose bounds or limits cannot be read, is filed as a proposal that names the
-bound it exceeded, and a run that has read outside text never moves money on
-its own at all.
+and on each day in both the number of changes and the total moved. The limits
+are amounts in the organization's functional currency, so a change in any other
+currency waits for a person, and the caps count only changes in it. The day is
+the organization's own and counts every agent, a delegate's changes count
+against the run that handed it the task, and a change that failed moved nothing
+and counts against nothing. A call outside any bound, or whose bounds, limits or
+day cannot be read, is filed as a proposal that names the bound it exceeded. A
+run that has read outside text never moves money on its own, with one
+exception a tool declares: a bound that reads a record again from the
+organization's own records, and takes the amount, the customer and the
+references from it rather than from the call, may vouch for having read that
+record. Only a bank receipt can be vouched for this way, by the tools that say
+so below; any other outside text the run read still holds the change.
 
 **Taint.** Some tools return text written outside the organization: an inbound
 message, a document, an EDI transaction, a bank receipt, a weather alert, a
@@ -703,7 +711,7 @@ Moves or commits money. A call runs on its own only when its tool proves it is w
 | Close fiscal period (`close_fiscal_period`) | Money | Propose | — | — | Ends posting to a period of the books a person signs off; only a person closes one. |
 | Commit invoice run (`commit_invoice_run`) | Money | Propose | — | — | Issues the invoices a run proposes and advances the customers' billing period; only a person commits a run. |
 | Commit rate import (`commit_rate_import`) | Money | Propose | — | — | Changes the rates an agreement prices shipments at; only a person applies a rate sheet. |
-| Correct charge code (`correct_charge_code`) | Money | Automatic | Runs on its own only while nothing has been invoiced from the billing queue item and the change to its total is within the organization's money limits for agents; any other call waits for a person. | — | Rewrites the accessorial charges a customer will be invoiced, so it moves money. |
+| Correct charge code (`correct_charge_code`) | Money | Automatic | Runs on its own only while nothing has been invoiced from the billing queue item and every charge it adds, removes or changes, counted in full, is within the organization's money limits for agents; any other call waits for a person. | — | Rewrites the accessorial charges a customer will be invoiced, so it moves money. |
 | Correct fuel index price (`correct_fuel_index_price`) | Money | Propose | — | — | Moves the price every fuel surcharge on this index is computed from, which changes what customers are charged; only a person sets it. |
 | Create carrier (`create_carrier`) | Inside the organization, money | Ask first | Each call is classified by what it reaches. A record read from a document or message someone outside sent is proposed, since colleagues book and pay against it. | — | Adds a carrier inside Trenova that colleagues can then book; nothing is sent. Payment and remit-to details decide where money goes, so a call that sets them is money and runs only on a person's approval. |
 | Create invoice (`create_invoice`) | Money | Propose | — | — | Turns freight into receivables and takes it off the billing queue and any statement; only a person decides what is billed and when. |
@@ -716,13 +724,13 @@ Moves or commits money. A call runs on its own only when its tool proves it is w
 | Issue pay advance (`issue_pay_advance`) | Money | Propose | — | — | Records money handed to a driver that their pay then repays; only a person records it. |
 | Locate trailer (`locate_trailer`) | Money | Propose | — | — | Adds an empty move to the trailer's last shipment and re-rates it, which can change what that customer is charged, so it runs only on a person's approval. |
 | Lock fiscal period (`lock_fiscal_period`) | Money | Propose | — | — | Changes which dates the ledger takes postings for; only a person locks a period. |
-| Match bank receipt (`match_bank_receipt`) | Money | Automatic | Runs on its own only when the payment is the one posted payment with the receipt's exact amount and reference, and the amount is within the organization's money limits for agents; any other call waits for a person. | — | Matches a bank receipt to a posted payment, closing its reconciliation. |
+| Match bank receipt (`match_bank_receipt`) | Money | Automatic | Runs on its own only when the payment is the one posted payment with the receipt's exact amount and reference, and the amount is within the organization's money limits for agents; any other call waits for a person. Bank receipts the run read do not hold it, because the receipt is read again from the organization's records; any other outside content does. | — | Matches a bank receipt to a posted payment, closing its reconciliation. |
 | Open escrow account (`open_escrow_account`) | Money | Propose | — | — | Sets escrow terms under an owner-operator's lease that their pay is then withheld against; only a person agrees them. |
 | Open fiscal period (`open_fiscal_period`) | Money | Propose | — | — | Changes which dates the ledger takes postings for; only a person opens a period. |
 | Pay driver now (`pay_driver_now`) | Seen by a driver, money | Propose | Each call is classified by what it reaches. | — | Approves, posts and records a payment to a driver in one step; only a person pays someone. |
 | Post carrier settlement (`post_carrier_settlement`) | Money | Propose | — | — | Books the settlement's payable to the ledger and queues it for the accounting system; only a person posts. |
 | Post carrier settlements (`post_carrier_settlements`) | Money | Propose | — | — | Books several settlements' payables to the ledger at once and queues each for the accounting system; only a person posts, settlement by settlement exactly as post_carrier_settlement, and may untick any of them. |
-| Post customer payment (`post_customer_payment`) | Money | Automatic | Runs on its own only when it records an unmatched bank receipt whose reference or memo names every invoice it pays, each an open invoice of the same customer paid to its exact balance, the whole payment is applied with nothing short-paid or left unapplied, and the amount is within the organization's money limits for agents; any other call waits for a person. | — | Records a customer payment and applies it to invoices. |
+| Post customer payment (`post_customer_payment`) | Money | Automatic | Runs on its own only when it records an unmatched bank receipt whose reference or memo names every invoice it pays, each an open invoice of the same customer paid to its exact balance, the whole payment is applied with nothing short-paid or left unapplied, and the amount is within the organization's money limits for agents; any other call waits for a person. Bank receipts the run read do not hold it, because the receipt is read again from the organization's records; any other outside content does. | — | Records a customer payment and applies it to invoices. |
 | Post driver settlement (`post_driver_settlement`) | Seen by a driver, money | Propose | Each call is classified by what it reaches. | — | Books the settlement's payable to the ledger and queues it for the accounting system; only a person posts. |
 | Post driver settlements (`post_driver_settlements`) | Seen by a driver, money | Propose | Each call is classified by what it reaches. | — | Books several settlements' payables to the ledger at once and queues each for the accounting system; only a person posts, settlement by settlement exactly as post_driver_settlement, and may untick any of them. |
 | Post invoice (`post_invoice`) | Money | Propose | — | — | Books a receivable to the ledger and queues it for the accounting system and the customer's EDI; only a person posts, and hands-off posting is the billing-control auto-post setting. |

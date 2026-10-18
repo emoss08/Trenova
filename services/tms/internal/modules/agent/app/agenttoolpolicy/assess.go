@@ -81,7 +81,8 @@ func bestCase(
 	if in.Policy.Bounded() {
 		policy.Condition = &agentports.TierCondition{
 			Description: in.Policy.Condition.Description,
-			Bounds:      withinBounds,
+			Bounds:      withinBounds(in.Policy.Condition.Vouches),
+			Vouches:     in.Policy.Condition.Vouches,
 		}
 	}
 	policy.TaintHold = nil
@@ -179,8 +180,14 @@ func heldToProposal(context.Context, agentports.ToolExecuteParams) agent.Autonom
 	return agent.TierPropose
 }
 
-func withinBounds(context.Context, agentports.ToolExecuteParams) agentports.MoneyBound {
-	return agentports.WithinMoneyBound(0)
+const representativeCurrency = "USD"
+
+func withinBounds(
+	vouches []agent.TaintSource,
+) func(context.Context, agentports.ToolExecuteParams) agentports.MoneyBound {
+	return func(context.Context, agentports.ToolExecuteParams) agentports.MoneyBound {
+		return agentports.WithinMoneyBound(0, representativeCurrency).Rereading(vouches...)
+	}
 }
 
 func outsideBounds(context.Context, agentports.ToolExecuteParams) agentports.MoneyBound {
@@ -188,13 +195,16 @@ func outsideBounds(context.Context, agentports.ToolExecuteParams) agentports.Mon
 }
 
 func unspentAllowance(context.Context) (agent.MoneyAllowance, error) {
-	return agent.MoneyAllowance{Limits: agent.MoneyLimits{
-		CallCeilingMinor: math.MaxInt64,
-		RunCalls:         math.MaxInt,
-		RunAmountMinor:   math.MaxInt64,
-		DayCalls:         math.MaxInt,
-		DayAmountMinor:   math.MaxInt64,
-	}}, nil
+	return agent.MoneyAllowance{
+		Currency: representativeCurrency,
+		Limits: agent.MoneyLimits{
+			CallCeilingMinor: math.MaxInt64,
+			RunCalls:         math.MaxInt,
+			RunAmountMinor:   math.MaxInt64,
+			DayCalls:         math.MaxInt,
+			DayAmountMinor:   math.MaxInt64,
+		},
+	}, nil
 }
 
 func alwaysHeld(agentports.ToolExecuteParams) bool {

@@ -208,13 +208,20 @@ func (t *SettlementDecisionTool[E]) withinBounds(
 	if plan.Refused() {
 		return agentports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
 	}
+	if t.ledger.Facts == nil {
+		return agentports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+	}
+	facts := t.ledger.Facts(plan.Before)
+	if facts == nil {
+		return agentports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+	}
 
 	switch t.decision.bound {
 	case addedLineBound:
 		if req.Adjustment == nil {
 			return agentports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
 		}
-		return agentports.WithinMoneyBound(req.Adjustment.AmountMinor)
+		return agentports.WithinMoneyBound(req.Adjustment.AmountMinor, facts.Currency)
 	case removedLineBound:
 		if t.ledger.Line == nil {
 			return agentports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
@@ -226,7 +233,7 @@ func (t *SettlementDecisionTool[E]) withinBounds(
 		if !line.AddedByAgent {
 			return agentports.OutsideMoneyBound(agent.HeldByMoneyAgentLine)
 		}
-		return agentports.WithinMoneyBound(line.AmountMinor)
+		return agentports.WithinMoneyBound(line.AmountMinor, facts.Currency)
 	case unbounded:
 	}
 

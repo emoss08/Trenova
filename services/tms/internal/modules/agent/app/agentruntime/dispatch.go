@@ -80,6 +80,7 @@ type dispatchParams struct {
 	// before the tool read them, told back to the model with the result.
 	argumentNote  string
 	proposedSoFar []agentports.PendingAction
+	moneySpent    agent.MoneyUse
 	// idempotencyKey names this operation to the tool. It is the run's step
 	// key where there is a ledger, and the provider's call id otherwise.
 	idempotencyKey string
@@ -205,7 +206,7 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		Definition:     req.Definition,
 		Unattended:     req.Unattended,
 		Taint:          decisionTaint(p.taint, p.afterExternal),
-		MoneyAllowance: s.moneyAllowance(req, proposedSoFar),
+		MoneyAllowance: s.moneyAllowance(req, p.moneySpent),
 	})
 	tier, heldForExternal := afterExternalContent(decision.Tier, p.afterExternal)
 	tier, heldForHours := s.heldForBusinessHours(ctx, req, tier)
@@ -230,12 +231,13 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 			Arguments: call.Arguments,
 			Input:     req.Input,
 		}),
-		Tier:       tier,
-		ToolCallID: call.ID,
-		Egress:     decision.Egress,
-		HeldBy:     decision.HeldBy,
-		MoneyMinor: decision.MoneyMinor,
-		Tainted:    p.taint.Tainted() || p.afterExternal,
+		Tier:          tier,
+		ToolCallID:    call.ID,
+		Egress:        decision.Egress,
+		HeldBy:        decision.HeldBy,
+		MoneyMinor:    decision.MoneyMinor,
+		MoneyCurrency: decision.MoneyCurrency,
+		Tainted:       p.taint.Tainted() || p.afterExternal,
 	}
 	if heldForExternal && !slices.Contains(action.HeldBy, agenttoolpolicy.HeldByTainted) {
 		action.HeldBy = append(slices.Clone(action.HeldBy), agenttoolpolicy.HeldByTainted)
@@ -245,6 +247,7 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 	}
 	if tier != agent.TierAutoExecute {
 		action.MoneyMinor = nil
+		action.MoneyCurrency = ""
 	}
 	source := decision.Source
 	if heldForExternal || heldForHours {
@@ -424,7 +427,7 @@ func (s *Service) withinBudget(
 
 func (s *Service) moneyAllowance(
 	req *agentports.RunRequest,
-	soFar []agentports.PendingAction,
+	spent agent.MoneyUse,
 ) agenttoolpolicy.MoneyAllowanceReader {
 	if s.budgets == nil {
 		return nil
@@ -434,7 +437,7 @@ func (s *Service) moneyAllowance(
 		allowance, err := s.budgets.MoneyAllowance(ctx, agentports.MoneyAllowanceRequest{
 			Definition: req.Definition,
 			RunID:      req.RunID,
-			Unrecorded: unrecordedMoney(soFar),
+			Unrecorded: spent,
 		})
 		if err != nil {
 			s.logger.Warn("agent money limits could not be read; the write waits for a person",
@@ -445,17 +448,34 @@ func (s *Service) moneyAllowance(
 	}
 }
 
+func (t *Turn) moneySpent() agent.MoneyUse {
+	spent := unrecordedMoney(t.result.Actions)
+	for idx := range t.result.Delegations {
+		spent = spent.Plus(unrecordedMoney(t.result.Delegations[idx].Actions))
+	}
+	if t.req.Delegation != nil {
+		spent = spent.Plus(t.req.Delegation.MoneySpent)
+	}
+
+	return spent
+}
+
 func unrecordedMoney(actions []agentports.PendingAction) agent.MoneyUse {
 	use := agent.MoneyUse{}
 	for i := range actions {
 		action := &actions[i]
-		if action.Executed && !action.Simulated && action.MoneyMinor != nil {
+		if movedMoney(action) {
 			use.Calls++
 			use.AmountMinor += intutils.Abs(*action.MoneyMinor)
 		}
 	}
 
 	return use
+}
+
+func movedMoney(action *agentports.PendingAction) bool {
+	return action.MoneyMinor != nil && !action.Withdrawn && action.ExecutionError == "" &&
+		(action.Executed || action.Simulated)
 }
 
 // executedCount is how many times this turn already ran a tool for real. Those
@@ -816,6 +836,8 @@ var moneyHeldReasons = map[string]string{
 		"change its money on its own",
 	agent.HeldByMoneyAgentLine:    "a person added that line, so a person removes it",
 	agent.HeldByMoneyLimitsUnread: "the organization's money limits for agents could not be read",
+	agent.HeldByMoneyCurrency: "the amount is not in the organization's functional currency, " +
+		"which its money limits for agents are set in",
 	agent.HeldByMoneyCallCeiling: "the amount is more than one automatic change may " +
 		"move",
 	agent.HeldByMoneyRunCalls: "this run has already made as many automatic money " +

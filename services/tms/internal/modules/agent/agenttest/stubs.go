@@ -209,6 +209,8 @@ func (r *StubQueryRegistry) Descriptors() []agentports.AgentToolDescriptor {
 	return out
 }
 
+const StubFunctionalCurrency = "USD"
+
 type StubActionTool struct {
 	ToolName   string
 	Tier       agent.AutonomyTier
@@ -223,8 +225,10 @@ type StubActionTool struct {
 	// Egress is where the write reaches; internal when unset.
 	Egress agent.EgressClass
 	// CarriesTaint hands the tool the run's taint, as remember is.
-	CarriesTaint bool
-	MoneyMinor   *int64
+	CarriesTaint  bool
+	MoneyMinor    *int64
+	MoneyCurrency string
+	MoneyVouches  []agent.TaintSource
 }
 
 func (t *StubActionTool) Name() string        { return t.ToolName }
@@ -272,11 +276,17 @@ func (t *StubActionTool) Policy() agentports.ToolPolicy {
 	}
 	if egress == agent.EgressMoney && t.MoneyMinor != nil {
 		amount := *t.MoneyMinor
+		currency := t.MoneyCurrency
+		if currency == "" {
+			currency = StubFunctionalCurrency
+		}
+		vouches := t.MoneyVouches
 		policy.Condition = &agentports.TierCondition{
 			Description: "A stub money write within its bounds.",
 			Bounds: func(context.Context, agentports.ToolExecuteParams) agentports.MoneyBound {
-				return agentports.WithinMoneyBound(amount)
+				return agentports.WithinMoneyBound(amount, currency).Rereading(vouches...)
 			},
+			Vouches: vouches,
 		}
 	}
 

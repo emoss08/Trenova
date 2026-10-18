@@ -7,7 +7,12 @@ ALTER TABLE "driver_settlement_lines" DROP COLUMN IF EXISTS "added_by_agent";
 DROP INDEX IF EXISTS "idx_agent_proposals_automatic_money";
 
 --bun:split
-ALTER TABLE "agent_proposals" DROP COLUMN IF EXISTS "money_minor";
+ALTER TABLE "agent_proposals" DROP CONSTRAINT IF EXISTS "ck_agent_proposals_money_currency";
+
+--bun:split
+ALTER TABLE "agent_proposals"
+    DROP COLUMN IF EXISTS "money_currency",
+    DROP COLUMN IF EXISTS "money_minor";
 
 --bun:split
 ALTER TABLE "agent_controls" DROP CONSTRAINT IF EXISTS "ck_agent_controls_agent_money_bounds";
