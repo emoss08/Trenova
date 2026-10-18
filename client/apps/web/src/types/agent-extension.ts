@@ -1,4 +1,5 @@
 import { translate } from "@trenova/shared/i18n/runtime";
+import { optionalIdSchema } from "@trenova/shared/types/helpers";
 import { z } from "zod";
 import { configFieldSpecSchema, configFieldValueSchema } from "@/types/integration";
 
@@ -156,10 +157,10 @@ export const portalRunSchema = z.object({
   steps: z.number().int(),
   costUsd: z.union([z.string(), z.number()]).transform((value) => Number(value) || 0),
   failure: z.string(),
-  agentRunId: z.string().default(""),
-  threadId: z.string().default(""),
-  proposalId: z.string().default(""),
-  requestedById: z.string().default(""),
+  agentRunId: optionalIdSchema,
+  threadId: optionalIdSchema,
+  proposalId: optionalIdSchema,
+  requestedById: optionalIdSchema,
   hasRecording: z.boolean(),
   /** How the portal asked for the sign-in code it sent, while the run waits on one. */
   codePrompt: z.string().default(""),
@@ -272,9 +273,9 @@ export const analysisRunSchema = z.object({
   failure: z.string(),
   durationMs: z.number().int(),
   costUsd: z.union([z.string(), z.number()]).transform((value) => Number(value) || 0),
-  agentRunId: z.string().default(""),
-  threadId: z.string().default(""),
-  requestedById: z.string().default(""),
+  agentRunId: optionalIdSchema,
+  threadId: optionalIdSchema,
+  requestedById: optionalIdSchema,
   startedAt: z.number().int(),
   finishedAt: z.number().int().nullish(),
 });
