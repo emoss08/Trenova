@@ -3,6 +3,7 @@ import type { AssistantArtifact } from "@/types/assistant";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import {
   analysisFrom,
+  portalTaskFrom,
   emailDraftFrom,
   entityCardFrom,
   planFrom,
@@ -90,6 +91,11 @@ export function artifactPreview(artifact: AssistantArtifact, t: TranslateFn): st
       return analysis.charts.length > 0
         ? t("{0, plural, one {# chart} other {# charts}}", analysis.charts.length)
         : "";
+    }
+    case "portal_task": {
+      const task = portalTaskFrom(artifact);
+      if (task.awaitingSignInCode) return t("Needs a sign-in code");
+      return task.site;
     }
     default:
       return "";

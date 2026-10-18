@@ -305,3 +305,30 @@ func TestClassifyTellsABusyAccountFromABadKey(t *testing.T) {
 	refused := connector.Classify(&restx.APIError{StatusCode: http.StatusUnauthorized})
 	assert.NotEqual(t, agentextensionports.ProviderFailureRateLimited, refused.Kind)
 }
+
+func TestLiveViewIsTheOpenBrowsersAddress(t *testing.T) {
+	t.Parallel()
+
+	connector := serve(t, func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "/sessions/session-1", r.URL.Path)
+		_, _ = w.Write([]byte(`{"id": "session-1", "liveUrl": " https://live.browser-use.com/s/1 "}`))
+	})
+
+	live, err := connector.LiveView(t.Context(),
+		map[string]string{agentextension.ConfigKeyAPIKey: "bu-key"}, "session-1")
+	require.NoError(t, err)
+	assert.Equal(t, "https://live.browser-use.com/s/1", live)
+}
+
+func TestLiveViewOfAClosedBrowserIsEmpty(t *testing.T) {
+	t.Parallel()
+
+	connector := serve(t, func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte(`{"id": "session-1", "liveUrl": null}`))
+	})
+
+	live, err := connector.LiveView(t.Context(),
+		map[string]string{agentextension.ConfigKeyAPIKey: "bu-key"}, "session-1")
+	require.NoError(t, err)
+	assert.Empty(t, live)
+}

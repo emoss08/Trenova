@@ -192,6 +192,14 @@ const ICONS = {
       <path d="M18.7 15.7l2.3 2.3" />
     </>
   ),
+  portal: (
+    <>
+      <rect x="3.5" y="4.5" width="17" height="15" rx="2" />
+      <path d="M3.5 8.5h17" />
+      <circle cx="6.2" cy="6.5" r="0.6" />
+      <path d="M11 11.5l5.5 2.2-2.4 0.9-0.9 2.4z" />
+    </>
+  ),
   diff: (
     <>
       <path d="M7 4v10M3.5 9.5L7 14l3.5-4.5" />
@@ -305,6 +313,7 @@ export type DeskArtKind =
   | "plan"
   | "report"
   | "analysis"
+  | "portal"
   | "diff"
   | "doc"
   | "view"
@@ -341,6 +350,7 @@ const KIND_LABELS: Record<DeskArtKind, string> = defineLabels({
   plan: "Plan",
   report: "Report",
   analysis: "Analysis",
+  portal: "Portal task",
   diff: "Run diff",
   doc: "Document",
   view: "View",
@@ -428,6 +438,8 @@ export function deskArtKind(artifact: Pick<AssistantArtifact, "kind" | "payload"
       return "report";
     case "analysis":
       return "analysis";
+    case "portal_task":
+      return "portal";
     case "entity_card": {
       const entity = artifact.payload.entity;
       return typeof entity === "string" && Object.hasOwn(CARD_KINDS, entity)
@@ -481,6 +493,8 @@ export function deskArtKindName(kind: DeskArtKind, t: TranslateFn): string {
       return t("Report");
     case "analysis":
       return t("Analysis");
+    case "portal":
+      return t("Portal task");
     case "diff":
       return t("Run diff");
     case "doc":

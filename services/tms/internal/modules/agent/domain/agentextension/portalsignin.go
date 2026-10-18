@@ -159,16 +159,49 @@ func NormalizeSignInCode(raw string) (string, error) {
 	return code, nil
 }
 
+// authenticatorLine tells the browser to submit an authenticator code the
+// moment it types one: a code lasts about thirty seconds, and a browser that
+// looks around between typing and submitting hands the portal a stale one.
+// Typing the placeholder again makes a fresh code.
+const authenticatorLine = "If it asks for a code from an authenticator app, type " +
+	PortalSecretAuthenticator + " into the code box and submit it in the same step, before " +
+	"anything else: each code lasts only about thirty seconds. If the portal says the code is " +
+	"wrong or has expired, type " + PortalSecretAuthenticator + " again, which makes a new " +
+	"code, at most twice more.\n"
+
+// staySignedInLine keeps the browser from signing in again to check its own
+// work: a reload of the sign-in page or the portal opened in a new tab asks
+// for the sign-in, and its code, a second time.
+const staySignedInLine = "Once you are signed in, stay signed in: check your work on the " +
+	"page you are on or through the portal's own links, and never sign out, open the sign-in " +
+	"page again or open the portal in a new tab, which can ask for the sign-in and its code " +
+	"again.\n"
+
 // ContinueWithCode is the follow-up task that carries on in the same browser
-// once a person relayed the code: enter it where the portal asked, then do
-// what the first task was given, without repeating what it already did.
+// once a person relayed the code: enter it where the portal asked and submit
+// it at once, then do what the first task was given, without repeating what
+// it already did or signing in again.
 func ContinueWithCode(task string) string {
 	return "The portal is showing where to enter the sign-in code it sent. Enter " +
-		PortalSecretSignInCode + " there and submit it. Then carry on with the task below from " +
-		"where you stopped, without repeating anything already done. If the portal says the " +
-		"code is wrong or has expired, stop there and begin your answer with " +
-		PortalSignInCodeMarker + ", then say what it said.\n\n" + task
+		PortalSecretSignInCode + " there and submit it straight away, in the same step. Then " +
+		"carry on with the task below from where you stopped, without repeating anything " +
+		"already done. " + staySignedIn + " If the portal says the code is wrong or has " +
+		"expired, stop there and begin your answer with " + PortalSignInCodeMarker + ", then " +
+		"say what it said.\n\n" + task
 }
+
+// ContinueAfterSignIn is the follow-up task once a person signed in to the
+// portal themselves, in the live browser the run was waiting in.
+func ContinueAfterSignIn(task string) string {
+	return "A person has signed in to the portal in this browser themselves. Carry on with " +
+		"the task below from the page the browser is on, without repeating anything already " +
+		"done. " + staySignedIn + " If the portal asks for a sign-in code again, stop there and " +
+		"begin your answer with " + PortalSignInCodeMarker + ", then say how it asked for the " +
+		"code.\n\n" + task
+}
+
+const staySignedIn = "Stay signed in: do not reload the sign-in page, sign out or open the " +
+	"portal in a new tab."
 
 // CodeExpiresAt is when a run waiting on a sign-in code stops waiting.
 func (r *PortalRun) CodeExpiresAt() *int64 {

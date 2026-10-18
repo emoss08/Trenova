@@ -1,5 +1,5 @@
 {
-  "version": "sha256:a34482a3fa7c26ff6b48c3e2d9bc8066ded05ee5a95a57798b0cc99d316282c4",
+  "version": "sha256:5d63976ce78b61aa59e4d73469636bfebdf8771d2f5053219a9447ded340fdbb",
   "modules": [
     {
       "id": "home",
@@ -2696,10 +2696,10 @@
             "Under **Available to**, choose **Every agent** or **Agents you choose**.",
             "Under **Portal sites**, select **New portal site**. Give it a **Name**, say **What it is for**, list its **Addresses** (the hostnames it lives on, such as `portal.acme.com`) and the **Start page** the browser opens, which must be an https address on one of them.",
             "If the portal needs a sign-in, enter its **Username** and **Password**. They are stored encrypted, never shown again and never seen by an agent; leave them blank later to keep them, or select **Remove the stored sign-in**.",
-            "If the portal asks for a code from an authenticator app at sign-in, enter its **Authenticator key**: the setup key the portal showed when the app was added, often under \"Can't scan the code\", not a six-digit code. The browser then makes a fresh code each time. For a portal that sends its codes by text message or email, the agent asks the person it is working for to enter the code in the Desk; giving the site a **Browser profile** that is already signed in saves asking. A task waiting on a code shows **Needs a code** under **Recent portal tasks**, where you can enter the code for it too.",
+            "If the portal asks for a code from an authenticator app at sign-in, enter its **Authenticator key**: the setup key the portal showed when the app was added, often under \"Can't scan the code\", not a six-digit code. The browser then makes a fresh code each time. For a portal that sends its codes by text message or email, the agent asks the person it is working for to enter the code in the Desk, on the portal task beside the conversation or in the box above the message box; giving the site a **Browser profile** that is already signed in saves asking. When the code is slow to arrive, or the portal asks for more than a code, select **Live browser**, sign in there yourself, then select **I've signed in** and the task carries on from that page. A task waiting on a code shows **Needs a code** under **Recent portal tasks**, where you can enter the code or sign in for it too.",
             "Turn on **Let agents act on this portal** only for a site where agents may book, upload or submit. A site left read-only can only be looked up. Select **Add site**.",
             "Optionally change the browser model, the country it browses from, the steps per task, the daily limit, whether every task is recorded and whether the browser may see screenshots. Each change is saved as you make it.",
-            "**Recent portal tasks** lists every task agents ran: open one to see what the browser was told, every page it visited, how it ended and its recording.",
+            "**Recent portal tasks** lists every task agents ran: open one to see what the browser was told, every page it visited, how it ended and its recording. While one runs, **Watch the browser** opens it live.",
             "To stop agents using a site without losing its history, edit it and turn off **Available to agents**. A site with tasks recorded against it cannot be removed, only turned off. Trenova's own address cannot be a portal site: agents work in Trenova with their own tools."
           ]
         },
@@ -9475,13 +9475,34 @@
             "one-time code",
             "text message code",
             "email code",
-            "portal login code"
+            "portal login code",
+            "live browser",
+            "sign in myself",
+            "portal task"
           ],
           "steps": [
-            "When an agent reading or acting on a portal reaches a sign-in that sends a code to your phone or email, it says so, and the wait above the message box shows **Waiting for your sign-in code** with how the portal asked.",
-            "Type the code into **Sign-in code** and select **Send code** before the time shown. The code goes only to the portal's browser, never into the conversation, so don't paste it as a message.",
-            "If the portal asks again, for example because the code was mistyped or expired, enter the new one. After three codes, or ten minutes without one, the task stops.",
-            "The agent comes back to the conversation on its own with what the portal said."
+            "When an agent reading or acting on a portal reaches a sign-in that sends a code to your phone or email, it says so. The portal task beside the conversation shows **Needs a code**, and the wait above the message box shows **Waiting for your sign-in code**, each with how the portal asked.",
+            "Type the code into **Sign-in code** in either place and select **Send code** before the time shown. The code goes only to the portal's browser, never into the conversation, so don't paste it as a message.",
+            "If the code is slow to arrive or the portal asks for something else, select **Live browser**, then **Open the live browser**, and sign in there yourself. Then select **I've signed in**, and the task carries on from that page.",
+            "If the portal asks again, for example because the code was mistyped or expired, enter the new one. After three tries, or ten minutes without one, the task stops.",
+            "The agent comes back to the conversation on its own with what the portal said, and the portal task shows the answer, the pages it read and its recording."
+          ]
+        },
+        {
+          "title": "Follow a portal task",
+          "keywords": [
+            "portal task",
+            "portal answer",
+            "watch the browser",
+            "live browser",
+            "portal recording",
+            "dock appointment portal",
+            "shipper portal"
+          ],
+          "steps": [
+            "Each time an agent looks something up or acts on a portal, the task opens beside the conversation as a **Portal task**, titled by what it was asked.",
+            "While it runs, select **Watch the browser**, then **Open the live browser**, to see it work.",
+            "When it ends, it shows what the portal said, marked as read from outside your organization, every page it visited and **Recording**. A task that could not finish says why."
           ]
         },
         {

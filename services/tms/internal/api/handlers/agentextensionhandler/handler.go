@@ -60,6 +60,28 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	)
 	portals.GET("/runs/", h.pm.RequirePermission(resource, permission.OpRead), h.listRuns)
 	portals.GET(
+		"/runs/:runID/",
+		h.pm.RequireAnyPermission(
+			middleware.PermissionCheck{Resource: resource, Operation: permission.OpRead},
+			middleware.PermissionCheck{
+				Resource:  permission.ResourcePortalAutomation.String(),
+				Operation: permission.OpRead,
+			},
+		),
+		h.portalRun,
+	)
+	portals.GET(
+		"/runs/:runID/live/",
+		h.pm.RequireAnyPermission(
+			middleware.PermissionCheck{Resource: resource, Operation: permission.OpUpdate},
+			middleware.PermissionCheck{
+				Resource:  permission.ResourcePortalAutomation.String(),
+				Operation: permission.OpRead,
+			},
+		),
+		h.portalRunLive,
+	)
+	portals.GET(
 		"/runs/:runID/recording/",
 		h.pm.RequirePermission(resource, permission.OpRead),
 		h.runRecording,

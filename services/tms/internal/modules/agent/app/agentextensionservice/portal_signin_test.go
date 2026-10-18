@@ -77,7 +77,7 @@ func TestAnAuthenticatorKeyIsStoredEncryptedAndSentAsTheCodePlaceholder(t *testi
 	sent := f.browser.started[0]
 	assert.Equal(t, testAuthenticatorKey, sent.Secrets[agentextension.PortalSecretAuthenticator],
 		"the key, normalized, is what Browser Use turns into a fresh code")
-	assert.Contains(t, sent.Instruction, "enter portal_bu_2fa_code")
+	assert.Contains(t, sent.Instruction, "type portal_bu_2fa_code into the code box and submit it")
 	assert.NotContains(t, sent.Instruction, testAuthenticatorKey)
 }
 

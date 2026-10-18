@@ -139,6 +139,7 @@ type Session struct {
 	Status         string  `json:"status"`
 	RecordingURL   *string `json:"recordingUrl"`
 	PublicShareURL *string `json:"publicShareUrl"`
+	LiveURL        *string `json:"liveUrl"`
 	ProxyCost      string  `json:"proxyCost"`
 }
 

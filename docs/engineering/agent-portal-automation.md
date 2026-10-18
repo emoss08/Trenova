@@ -55,7 +55,14 @@ A portal that asks for a second factor at sign-in is handled one of three ways:
   with the `bu_2fa_code` suffix whenever the browser types it, so no code is
   stored or shown, and no model sees the key. A key needs a sign-in beside it;
   clearing the sign-in clears it, and `clearAuthenticator` removes the key alone.
-  The approver's preview says the task answers the authenticator code.
+  The approver's preview says the task answers the authenticator code. A code
+  lasts about thirty seconds and the browser agent can take longer than that
+  between steps, so the task tells it to type the placeholder and submit it in
+  the same step, before anything else, and to type it again (which makes a new
+  code) at most twice more when the portal says the code is wrong or expired
+  (`authenticatorLine` in `portalsignin.go`). A portal that still refuses stops
+  with `SIGN-IN CODE NEEDED`, and the person can sign in themselves (see
+  [Signing in by hand](#signing-in-by-hand)).
 - **A code sent by text message or email.** The browser cannot read one, so the
   person relays it. Every task tells the browser to stop at a code it was not
   given and begin its answer with `SIGN-IN CODE NEEDED`
@@ -68,6 +75,13 @@ A portal that asks for a second factor at sign-in is handled one of three ways:
 - **A browser profile already signed in.** A profile in the vendor's account
   keeps a signed-in session; a site that names one (`browserProfileId`) starts
   each task already past the sign-in until the portal ends that session.
+
+Once signed in, the browser is told to stay signed in (`staySignedInLine`): to
+check its work on the page it is on or through the portal's own links, and never
+to sign out, open the sign-in page again or open the portal in a new tab. A
+browser agent that went back to the sign-in page to confirm what it did was asked
+for the second factor again, which with a relayed code meant a second code for
+one task. Both continuations repeat it.
 
 ### Relayed codes
 
@@ -87,8 +101,9 @@ run, and `code_prompt` keeps how the portal asked, in the browser's words.
 - A read waiting on a code returns with `Status: AwaitingCode` inside its tool
   call: the service starts `PortalRunWorkflow` for it, and `read_portal`
   registers a `PortalRun` wait on the conversation and tells the agent to have
-  the person enter the code in the box above their message box, never in the
-  conversation, and to end its turn. The answer comes back as a new turn when the
+  the person enter the code on the portal task beside the conversation or in the
+  box above their message box, or sign in themselves in the live browser, never
+  in the conversation, and to end its turn. The answer comes back as a new turn when the
   wait is met.
 - An action is already followed by `PortalRunWorkflow`; the poll that finds the
   code request moves the run and returns `CodeRequested`, and the activity calls
@@ -111,6 +126,28 @@ the run, never reaches a model, and a detail named like it is refused. The run i
 `Running` again with the follow-up's task id, and what the follow-up does adds to
 what the run already held (`progressOf`). A portal that refuses the code asks
 again (up to three codes in all); after the third, the run fails and says so.
+
+### Signing in by hand
+
+A code can arrive too late for the portal, or the portal can ask for more than a
+code (a captcha, a security question, a push to a phone). While a run is open
+(`Running` or `AwaitingCode` with its browser open), the person it was asked for,
+or someone who can update agent extensions, can open the browser itself:
+`GET /agent-portals/runs/:runID/live/` returns the vendor's live view of the
+session (`BrowserProvider.LiveView`, Browser Use's `liveUrl`), where they can
+watch the task or take over and sign in. The address opens a browser signed in to
+the portal, so it is read only when someone asks for it, sent `no-store`, and
+never written to the run; the client asks for it on a click and opens it from a
+link the person follows. A finished run's browser is closed and has no live view.
+
+Having signed in, the person posts `{ "signedIn": true }` to the sign-in code
+route instead of a code. `ProvidePortalCode` then starts the follow-up with
+`agentextension.ContinueAfterSignIn` over the original task, which carries on
+from the page the browser is on, and sends no code secret; a request with both a
+code and `signedIn` is refused. It counts as one of the run's three attempts, and
+a portal that asks again stops the run at a code once more.
+
+### When a code never comes
 
 No code within `PortalCodeWaitSeconds` (10 minutes) of the request ends the run:
 the poll closes the browser and records it `Failed` with what it did before the
@@ -200,7 +237,11 @@ Every task is a row in `agent_portal_runs` (ids `aprn_`): the site, read or act,
 the instruction as sent, the details, whether it signed in, the vendor's task
 and session, every page visited and those off the site, the outcome and the
 answer, the steps and cost, who asked and from which agent run, conversation and
-proposal. AI control lists the history under the extension; a run's recording is
+proposal. The Desk shows each task as a `portal_task` artifact (see
+[desk-artifacts.md](desk-artifacts.md#the-portal-task)) that follows the run while
+its browser is open, read through `GET /agent-portals/runs/:runID/` by the person
+it was asked for or someone who can read agent extensions. AI control lists the
+history under the extension; a run's recording is
 fetched from the vendor when someone opens it, because its address is signed and
 short-lived. A run is the `portal_run` record kind: `act_on_portal`'s result names
 it, and its record link (`/admin/agent-control?tab=extensions&portalRun=<id>`)
@@ -233,6 +274,7 @@ every extension does.
 | The wait it sets | `agentwait.KindPortalRun`, `agentwaitservice/portal.go` |
 | Vendor connector | `internal/infrastructure/agentextension/browseruseconnector/` over `shared/browseruse` |
 | Tools | `agentquerytoolservice/portal_tools.go` (`list_portal_sites`, `read_portal`), `agenttools/portaltools/` (`act_on_portal`) |
-| REST API | `/agent-portals/sites/` (list, create, `/:siteID/` update and delete), `/agent-portals/runs/` (list, `/:runID/recording/`, `/:runID/sign-in-code/`) |
-| Relayed codes | `agentextension/portalsignin.go`, `agentextensionservice/portal_codes.go`, the code box in `client/apps/web/src/components/assistant/portal-code-form.tsx` |
+| REST API | `/agent-portals/sites/` (list, create, `/:siteID/` update and delete), `/agent-portals/runs/` (list, `/:runID/`, `/:runID/live/`, `/:runID/recording/`, `/:runID/sign-in-code/`) |
+| Relayed codes and signing in by hand | `agentextension/portalsignin.go`, `agentextensionservice/portal_codes.go`, the code box in `client/apps/web/src/components/assistant/portal-code-form.tsx`, the live browser and "I've signed in" in `portal-sign-in.tsx` |
+| What a person reads of a run | `client/apps/web/src/components/assistant/portal-run-result.tsx`, drawn by AI control and by the Desk's `portal_task` artifact (`routes/desk/_components/artifacts/kinds/portal/`, recorded by `assistantservice/portal_task_artifact.go`) |
 | AI control | `client/apps/web/src/routes/agent-control/_components/extensions/portal-*.tsx` |

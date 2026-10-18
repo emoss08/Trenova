@@ -975,3 +975,39 @@ export function analysisFrom(artifact: AssistantArtifact): AnalysisView {
     truncated: payload.truncated === true,
   };
 }
+
+/** A portal task as the agent was told of it: the card reads the run itself for how it stands. */
+export type PortalTaskPayload = {
+  runId: string;
+  mode: "Read" | "Act";
+  site: string;
+  question: string;
+  answer: string;
+  pagesRead: string[];
+  awaitingSignInCode: boolean;
+  portalSaid: string;
+  retrievedOn: string;
+};
+
+/**
+ * What a portal task carried when the agent saw it: a read's question and the portal's answer,
+ * or that it stopped on a sign-in code; an approved action only its site. Anything else reads
+ * as absent.
+ */
+export function portalTaskFrom(artifact: AssistantArtifact): PortalTaskPayload {
+  const payload = artifact.payload;
+
+  return {
+    runId: stringOf(payload.portalRunId),
+    mode: payload.mode === "Act" ? "Act" : "Read",
+    site: stringOf(payload.site),
+    question: stringOf(payload.question),
+    answer: stringOf(payload.answer),
+    pagesRead: listOf(payload.pagesRead)
+      .map(stringOf)
+      .filter((url) => url !== ""),
+    awaitingSignInCode: payload.awaitingSignInCode === true,
+    portalSaid: stringOf(payload.portalSaid),
+    retrievedOn: stringOf(payload.retrievedOn),
+  };
+}

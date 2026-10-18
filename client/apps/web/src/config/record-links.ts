@@ -331,8 +331,10 @@ type Locator = (typeof LOCATORS)[number];
  * The record a location shows, when it is one of the pages records open on:
  * the reverse of `recordPath`. Several kinds of record can open on one page
  * (AI Control holds agent runs and the audit trail's events and exports);
- * the one whose fixed parameters the address carries is the one it shows,
- * and an address naming none of them reads as the first.
+ * the one whose fixed parameters the address carries, and whose id parameter
+ * it carries when the id is in the query, is the one it shows: a portal task
+ * and an analysis open on the same tab, told apart only by their id's name.
+ * An address naming none of them reads as the first.
  */
 export function recordAtLocation(pathname: string, search: string): RecordAtLocation | null {
   const params = new URLSearchParams(search);
@@ -342,7 +344,9 @@ export function recordAtLocation(pathname: string, search: string): RecordAtLoca
     if (!match) {
       continue;
     }
-    if (locator.fixedParams.every(([key, value]) => params.get(key) === value)) {
+    const carriesId =
+      locator.idParams.length === 0 || locator.idParams.some((idParam) => params.has(idParam.key));
+    if (carriesId && locator.fixedParams.every(([key, value]) => params.get(key) === value)) {
       chosen = { locator, match };
       break;
     }

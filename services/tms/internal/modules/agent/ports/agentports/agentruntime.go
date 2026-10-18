@@ -335,6 +335,7 @@ func (a *ShownArtifact) MustBeLinked() bool {
 	case a.Kind == string(assistantartifact.KindDocument),
 		a.Kind == string(assistantartifact.KindEDIConnectionDraft),
 		a.Kind == string(assistantartifact.KindAnalysis),
+		a.Kind == string(assistantartifact.KindPortalTask),
 		a.Written != "":
 		return true
 	case a.Tabular():

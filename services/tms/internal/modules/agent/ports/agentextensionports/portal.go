@@ -101,6 +101,9 @@ type BrowserProvider interface {
 	) (*PortalTaskState, error)
 	StopTask(ctx context.Context, settings map[string]string, taskID string) error
 	StopSession(ctx context.Context, settings map[string]string, sessionID string) error
+	// LiveView is the address of the open browser, where a person can watch
+	// the task or sign in themselves.
+	LiveView(ctx context.Context, settings map[string]string, sessionID string) (string, error)
 	Recording(
 		ctx context.Context,
 		settings map[string]string,
@@ -319,9 +322,25 @@ type ProvidePortalCodeRequest struct {
 	RunID      pulid.ID
 	Code       string
 
+	// SignedIn says the person signed in themselves in the live browser, so
+	// the task carries on with no code to type.
+	SignedIn bool
+
 	// Administers lets someone who oversees agents enter a code for any run;
 	// anyone else only for a run that was asked for them.
 	Administers bool
+}
+
+// PortalRunAccessRequest names a run for the person it was asked for, or for
+// someone who administers agents; anyone else is told it does not exist.
+type PortalRunAccessRequest struct {
+	TenantInfo  pagination.TenantInfo
+	RunID       pulid.ID
+	Administers bool
+}
+
+type PortalLiveView struct {
+	LiveURL string `json:"liveUrl"`
 }
 
 // PortalSignInCodes takes a sign-in code a person relays from their phone or

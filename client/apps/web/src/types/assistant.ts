@@ -170,6 +170,7 @@ export const artifactKindSchema = z.enum([
   "extraction",
   "edi_connection_draft",
   "analysis",
+  "portal_task",
 ]);
 
 /**

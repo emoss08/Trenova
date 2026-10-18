@@ -8,6 +8,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import { useNowSeconds } from "@/hooks/use-now-seconds";
 import type { ArtifactKind, ArtifactStatus } from "@/types/assistant";
 import {
+  BrowserIcon,
   Compass03Icon,
   Dataflow03Icon,
   File06Icon,
@@ -60,6 +61,7 @@ export const ARTIFACT_KINDS: Record<
   extraction: { label: "Extraction", icon: ScanTextIcon },
   edi_connection_draft: { label: "EDI draft", icon: Dataflow03Icon },
   analysis: { label: "Analysis", icon: LineChartUp01Icon },
+  portal_task: { label: "Portal task", icon: BrowserIcon },
 };
 
 /** Where an artifact is, as a tone: severity, not category. */

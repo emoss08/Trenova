@@ -47,6 +47,10 @@ const (
 	// KindAnalysis is code an agent ran over report results and attached
 	// files: what it answers, the figures, the charts it drew and the code.
 	KindAnalysis Kind = "analysis"
+	// KindPortalTask is a portal task an agent ran in a cloud browser: the
+	// site, what it was asked, and the run as it goes, with the way to enter
+	// a sign-in code or sign in in the live browser while it waits.
+	KindPortalTask Kind = "portal_task"
 )
 
 // AllKinds is the whole set, in the order they were added.
@@ -74,6 +78,7 @@ func AllKinds() []Kind {
 		KindExtraction,
 		KindEDIConnectionDraft,
 		KindAnalysis,
+		KindPortalTask,
 	}
 }
 

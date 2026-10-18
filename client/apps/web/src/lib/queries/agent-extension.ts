@@ -29,6 +29,11 @@ export const agentExtension = createQueryKeys("agentExtension", {
         { signal },
       ),
   }),
+  portalRun: (runId: string) => ({
+    queryKey: ["portal-run", runId],
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      apiService.agentExtensionService.portalRun(runId, { signal }),
+  }),
   analysisRuns: () => ({
     queryKey: ["analysis-runs"],
     queryFn: ({ signal }: { signal?: AbortSignal }) =>

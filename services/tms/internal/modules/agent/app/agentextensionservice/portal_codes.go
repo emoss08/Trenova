@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
 )
 
@@ -76,17 +77,15 @@ func (s *Service) release(ctx context.Context, call *portalCall, run *agentexten
 	}
 }
 
-// mayEnterCode is the person the run was asked for, or someone who
-// administers agents; anyone else is told there is no such run.
-func mayEnterCode(
-	req *agentextensionports.ProvidePortalCodeRequest,
-	run *agentextension.PortalRun,
-) bool {
-	if req.Administers {
+// mayReach says a person may enter a run's code, open its browser or follow it: the
+// person it was asked for, or someone who administers agents. Anyone else is told
+// there is no such run.
+func mayReach(administers bool, run *agentextension.PortalRun, userID pulid.ID) bool {
+	if administers {
 		return true
 	}
 
-	return run.RequestedByID.IsNotNil() && run.RequestedByID == req.TenantInfo.UserID
+	return run.RequestedByID.IsNotNil() && run.RequestedByID == userID
 }
 
 type awaitingRead struct {
@@ -144,7 +143,7 @@ func (s *Service) ProvidePortalCode(
 	if err != nil {
 		return nil, err
 	}
-	if !mayEnterCode(req, run) {
+	if !mayReach(req.Administers, run, req.TenantInfo.UserID) {
 		return nil, errortypes.NewNotFoundError("Portal run not found")
 	}
 	if run.Status != agentextension.PortalRunStatusAwaitingCode {
@@ -158,10 +157,19 @@ func (s *Service) ProvidePortalCode(
 		)
 	}
 
-	code, err := agentextension.NormalizeSignInCode(req.Code)
-	if err != nil {
+	instruction := agentextension.ContinueAfterSignIn(run.Instruction)
+	code := ""
+	switch {
+	case req.SignedIn && strings.TrimSpace(req.Code) != "":
 		return nil, errortypes.NewValidationError("code", errortypes.ErrInvalid,
-			"A sign-in code is 4 to 12 letters or digits, as the portal sent it")
+			"Enter the code, or say you signed in yourself, not both")
+	case !req.SignedIn:
+		code, err = agentextension.NormalizeSignInCode(req.Code)
+		if err != nil {
+			return nil, errortypes.NewValidationError("code", errortypes.ErrInvalid,
+				"A sign-in code is 4 to 12 letters or digits, as the portal sent it")
+		}
+		instruction = agentextension.ContinueWithCode(run.Instruction)
 	}
 
 	call, err := s.portalCallOf(ctx, req.TenantInfo, run.ExtensionType)
@@ -179,12 +187,14 @@ func (s *Service) ProvidePortalCode(
 	if secrets == nil {
 		secrets = make(map[string]string, 1)
 	}
-	secrets[agentextension.PortalSecretSignInCode] = code
+	if code != "" {
+		secrets[agentextension.PortalSecretSignInCode] = code
+	}
 
 	text := taskText(site, run.Mode, "", run.Details)
 	started, err := call.provider.StartTask(ctx, &agentextensionports.PortalTaskRequest{
 		Settings:       call.values,
-		Instruction:    agentextension.ContinueWithCode(run.Instruction),
+		Instruction:    instruction,
 		Guidance:       text.Guidance(),
 		AllowedDomains: site.Domains,
 		Secrets:        secrets,
@@ -195,7 +205,7 @@ func (s *Service) ProvidePortalCode(
 		},
 	})
 	if err != nil {
-		failure := s.providerError(call.failing(err, "continue the portal task with the code"))
+		failure := s.providerError(call.failing(err, "continue the portal task"))
 		finished := s.finish(ctx, req.TenantInfo, run, heldProgress(run,
 			agentextension.PortalRunStatusFailed, failure.Error()))
 		s.release(ctx, call, finished)
@@ -214,4 +224,74 @@ func (s *Service) ProvidePortalCode(
 	view := portalRunView(updated, site.Name)
 
 	return &view, nil
+}
+
+// PortalRunFor is one run, for the person it was asked for or someone who
+// administers agents: the Desk's card follows it while it runs.
+func (s *Service) PortalRunFor(
+	ctx context.Context,
+	req *agentextensionports.PortalRunAccessRequest,
+) (*agentextensionports.PortalRunView, error) {
+	run, err := s.accessibleRun(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	name := ""
+	if site, siteErr := s.sites.Get(ctx, req.TenantInfo, run.SiteID); siteErr == nil {
+		name = site.Name
+	}
+	view := portalRunView(run, name)
+
+	return &view, nil
+}
+
+// PortalRunLive is the address of the browser a run is in, while it is open:
+// a person watches the task there, or signs in themselves when the portal
+// asked for a code. It is read when asked for, never stored: it opens a
+// browser signed in to the portal.
+func (s *Service) PortalRunLive(
+	ctx context.Context,
+	req *agentextensionports.PortalRunAccessRequest,
+) (*agentextensionports.PortalLiveView, error) {
+	run, err := s.accessibleRun(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if run.Status.Finished() || run.VendorSessionID == "" {
+		return nil, errortypes.NewBusinessError("This portal task's browser is closed")
+	}
+
+	call, err := s.portalCallOf(ctx, req.TenantInfo, run.ExtensionType)
+	if err != nil {
+		return nil, asBusinessError(err)
+	}
+	live, err := call.provider.LiveView(ctx, call.values, run.VendorSessionID)
+	if err != nil {
+		return nil, asBusinessError(s.providerError(call.failing(err, "open the live browser")))
+	}
+	if live == "" {
+		return nil, errortypes.NewBusinessError("The vendor has no live view of this browser")
+	}
+
+	return &agentextensionports.PortalLiveView{LiveURL: live}, nil
+}
+
+func (s *Service) accessibleRun(
+	ctx context.Context,
+	req *agentextensionports.PortalRunAccessRequest,
+) (*agentextension.PortalRun, error) {
+	ctx = dbscope.WithValidTenant(ctx, req.TenantInfo.DBTenant())
+	run, err := s.runs.Get(ctx, req.TenantInfo, req.RunID)
+	if errortypes.IsNotFoundError(err) {
+		return nil, errortypes.NewNotFoundError("Portal run not found")
+	}
+	if err != nil {
+		return nil, err
+	}
+	if !mayReach(req.Administers, run, req.TenantInfo.UserID) {
+		return nil, errortypes.NewNotFoundError("Portal run not found")
+	}
+
+	return run, nil
 }

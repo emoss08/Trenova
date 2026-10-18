@@ -46,6 +46,9 @@ func (r *artifactRecorder) writtenCard(
 	callID, writeTool string,
 	executed *agent.ToolExecutionResult,
 ) *assistantartifact.Artifact {
+	if card := portalActionArtifact(callID, executed); card != nil {
+		return card
+	}
 	if card := r.readCard(callID, executed.Record); card != nil {
 		card.Payload[payloadWritten] = executed.Action
 
