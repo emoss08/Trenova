@@ -9210,6 +9210,8 @@ type AIAnalyticsSeries {
   pricedRuns: Int!
   "Cost over completed runs; absent when nothing was priced or completed."
   costPerCompletedRun: Decimal
+  "Prompt and output tokens, with the prompt split by what the provider's cache served."
+  tokens: AIAnalyticsTokens!
   firstTokenMedianMs: Int
   lastRanAt: Timestamp
   "Nothing ran for longer than a day before the end of the window."
@@ -9245,8 +9247,23 @@ type AIAnalyticsTotals {
   costUsd: Decimal!
   pricedRuns: Int!
   costPerCompletedRun: Decimal
+  tokens: AIAnalyticsTokens!
   "Tool calls fail often enough to call out."
   toolFailureAlarm: Boolean!
+}
+
+"""
+Tokens over a set of runs. The prompt is split three ways whatever the protocol
+reports: input the cache did not serve, input read from the cache, and input
+written to it. Counts are Decimal because a window's sum can pass 32 bits.
+"""
+type AIAnalyticsTokens {
+  uncachedInput: Decimal!
+  cacheRead: Decimal!
+  cacheWrite: Decimal!
+  output: Decimal!
+  "Cache reads over every prompt token; absent when nothing was sent."
+  cacheReadShare: Float
 }
 
 "One series in one hour or day."

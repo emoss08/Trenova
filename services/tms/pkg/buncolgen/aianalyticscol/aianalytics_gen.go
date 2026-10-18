@@ -569,6 +569,8 @@ var WorkUnitColumns = struct {
 	InputTokens       buncolgen.Column // "input_tokens" → qualified: "aiwu.input_tokens"
 	OutputTokens      buncolgen.Column // "output_tokens" → qualified: "aiwu.output_tokens"
 	CostUSD           buncolgen.Column // "cost_usd" → qualified: "aiwu.cost_usd"
+	CacheReadTokens   buncolgen.Column // "cache_read_tokens" → qualified: "aiwu.cache_read_tokens"
+	CacheWriteTokens  buncolgen.Column // "cache_write_tokens" → qualified: "aiwu.cache_write_tokens"
 	ToolCalls         buncolgen.Column // "tool_calls" → qualified: "aiwu.tool_calls"
 	ToolFailuresModel buncolgen.Column // "tool_failures_model" → qualified: "aiwu.tool_failures_model"
 	ToolFailuresTool  buncolgen.Column // "tool_failures_tool" → qualified: "aiwu.tool_failures_tool"
@@ -595,6 +597,8 @@ var WorkUnitColumns = struct {
 	InputTokens:       buncolgen.NewColumn("input_tokens", "aiwu"),
 	OutputTokens:      buncolgen.NewColumn("output_tokens", "aiwu"),
 	CostUSD:           buncolgen.NewColumn("cost_usd", "aiwu"),
+	CacheReadTokens:   buncolgen.NewColumn("cache_read_tokens", "aiwu"),
+	CacheWriteTokens:  buncolgen.NewColumn("cache_write_tokens", "aiwu"),
 	ToolCalls:         buncolgen.NewColumn("tool_calls", "aiwu"),
 	ToolFailuresModel: buncolgen.NewColumn("tool_failures_model", "aiwu"),
 	ToolFailuresTool:  buncolgen.NewColumn("tool_failures_tool", "aiwu"),
@@ -627,6 +631,8 @@ var WorkUnitFieldMap = map[string]string{
 	"inputTokens":       "input_tokens",
 	"outputTokens":      "output_tokens",
 	"costUsd":           "cost_usd",
+	"cacheReadTokens":   "cache_read_tokens",
+	"cacheWriteTokens":  "cache_write_tokens",
 	"toolCalls":         "tool_calls",
 	"toolFailuresModel": "tool_failures_model",
 	"toolFailuresTool":  "tool_failures_tool",
@@ -657,6 +663,8 @@ var WorkUnitInsertableColumns = []string{
 	"input_tokens",
 	"output_tokens",
 	"cost_usd",
+	"cache_read_tokens",
+	"cache_write_tokens",
 	"tool_calls",
 	"tool_failures_model",
 	"tool_failures_tool",
@@ -734,6 +742,8 @@ var WorkUnitFilter = struct {
 	InputTokens       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "inputTokens" → DB: "input_tokens"
 	OutputTokens      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "outputTokens" → DB: "output_tokens"
 	CostUSD           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "costUsd" → DB: "cost_usd"
+	CacheReadTokens   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cacheReadTokens" → DB: "cache_read_tokens"
+	CacheWriteTokens  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cacheWriteTokens" → DB: "cache_write_tokens"
 	ToolCalls         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolCalls" → DB: "tool_calls"
 	ToolFailuresModel func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolFailuresModel" → DB: "tool_failures_model"
 	ToolFailuresTool  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolFailuresTool" → DB: "tool_failures_tool"
@@ -801,6 +811,12 @@ var WorkUnitFilter = struct {
 	},
 	CostUSD: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("costUsd", op, value)
+	},
+	CacheReadTokens: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("cacheReadTokens", op, value)
+	},
+	CacheWriteTokens: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("cacheWriteTokens", op, value)
 	},
 	ToolCalls: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("toolCalls", op, value)

@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -91,6 +92,9 @@ type Turn struct {
 	// artifacts are what the turn put beside the conversation, in the order
 	// it did.
 	artifacts []agentports.ShownArtifact
+	// providerKind is the protocol of the provider that answered the latest
+	// model call, which the tool outcome counter is labelled with.
+	providerKind aiprovider.Kind
 }
 
 // TurnEffects is everything a turn does outside itself.
@@ -143,10 +147,12 @@ func (r ModelReply) usage() *agentports.RunUsage {
 	}
 
 	return &agentports.RunUsage{
-		ModelCalls:   1,
-		InputTokens:  int64(r.Completion.InputTokens),
-		OutputTokens: int64(r.Completion.OutputTokens),
-		CostUSD:      r.Completion.CostUSD,
+		ModelCalls:       1,
+		InputTokens:      int64(r.Completion.InputTokens),
+		OutputTokens:     int64(r.Completion.OutputTokens),
+		CacheReadTokens:  int64(r.Completion.CacheReadTokens),
+		CacheWriteTokens: int64(r.Completion.CacheWriteTokens),
+		CostUSD:          r.Completion.CostUSD,
 	}
 }
 

@@ -22,7 +22,8 @@ agent runtime    ─▶ agent_runs / assistant_turns (status, fingerprint.stoppe
                                      │
             ai-analytics-refresh (every 5 min, per tenant, Temporal)
                                      ▼
- ai_work_units ── one row per run, assistant turn or standalone call: outcome, duration, calls, cost, tools
+ ai_work_units ── one row per run, assistant turn or standalone call: outcome, duration, calls,
+                  tokens (uncached input, cache read, cache write, output), cost, tools
  ai_work_unit_tools ── a unit's tool calls by tool and cause, with the unit's model, provider, agent, task
  ai_provider_hourly_stats ── calls per hour × provider × model × task × agent × provider error,
                              fell-to-next, 64-bucket first-token histogram
@@ -44,7 +45,7 @@ agent runtime    ─▶ agent_runs / assistant_turns (status, fingerprint.stoppe
 | Routing change | `aiprovider.PlanRouteTo`, `AIProviderService.RouteTask`, mutation `routeAITask` |
 | GraphQL | `schema/aianalytics.graphqls`, `resolver/aianalyticsresolver` (permission `AgentRun` Read) |
 | Web | `routes/agent-control/_components/analytics/`, query keys `queries.aiAnalytics` |
-| Migrations | `20261231009250_ai_analytics.tx`, `20261231009260_ai_analytics_indexes`, `20261231009290_ai_analytics_refresh_indexes` |
+| Migrations | `20261231009250_ai_analytics.tx`, `20261231009260_ai_analytics_indexes`, `20261231009290_ai_analytics_refresh_indexes`, `20261231009950_ai_work_unit_cache_tokens.tx` |
 | Development seed | `seeds/development/38_ai_analytics.go` |
 
 ## What is recorded
@@ -108,9 +109,24 @@ Every table is a tenant table under FORCE row-level security, and the migration 
 `trenova_rls.reconcile()`. The rollup is derived data: deleting it is safe, and the next refresh
 rebuilds the last 30 days from the sources.
 
+- **Tokens.** A unit's prompt is stored in three parts whatever the protocol reported:
+  `input_tokens` is the input the provider's cache did not serve, beside `cache_read_tokens`
+  and `cache_write_tokens`. Anthropic reports cache reads and writes beside `input_tokens`;
+  the OpenAI protocols count cached tokens inside it. The refresh joins each usage row to its
+  provider's `kind` and takes the cached part out of the OpenAI rows, so a Claude unit and an
+  OpenAI unit compare on the same terms (a Haiku turn used to read "4 in"). The usage rows
+  keep what the provider reported. `cost_usd` is priced per call by the provider's prices, with
+  cache reads and writes at their own rates (the entered price, else the model's list rate from
+  `aiprovider.ListPrice`, else the protocol's multiple) and Haiku 5.5's long-prompt rates above
+  100,000 prompt tokens.
+
 ## The query
 
 `agentAnalytics(input: {window, compareBy, agentDefinitionId, task, timezone})`.
+
+**Tokens.** Every series and the totals carry `tokens` (`uncachedInput`, `cacheRead`,
+`cacheWrite`, `output`, as `Decimal` because a window's sum can pass 32 bits) and
+`cacheReadShare`, cache reads over every prompt token.
 
 **Grouping.** Everything is read per **deployment** (canonical model × provider) and folded into
 **groups** (models or providers) in Go. Counts, costs, decisions, ratings and first-token

@@ -72,6 +72,7 @@ type Series struct {
 	CostUSD             decimal.Decimal
 	PricedRuns          int
 	CostPerCompletedRun *decimal.Decimal
+	Tokens              TokenTotals
 	FirstTokenMedianMs  *int64
 	LastRanAt           *int64
 	Quiet               bool
@@ -104,6 +105,7 @@ type Totals struct {
 	CostUSD                  decimal.Decimal
 	PricedRuns               int
 	CostPerCompletedRun      *decimal.Decimal
+	Tokens                   TokenTotals
 	ToolFailureAlarm         bool
 }
 

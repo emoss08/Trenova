@@ -35,6 +35,9 @@ type WorkUnit struct {
 	OutputTokens int64            `json:"outputTokens" bun:"output_tokens,type:BIGINT,notnull,default:0"`
 	CostUSD      *decimal.Decimal `json:"costUsd"      bun:"cost_usd,type:NUMERIC(14,6),nullzero"`
 
+	CacheReadTokens  int64 `json:"cacheReadTokens"  bun:"cache_read_tokens,type:BIGINT,notnull,default:0"`
+	CacheWriteTokens int64 `json:"cacheWriteTokens" bun:"cache_write_tokens,type:BIGINT,notnull,default:0"`
+
 	ToolCalls         int `json:"toolCalls"         bun:"tool_calls,type:INTEGER,notnull,default:0"`
 	ToolFailuresModel int `json:"toolFailuresModel" bun:"tool_failures_model,type:INTEGER,notnull,default:0"`
 	ToolFailuresTool  int `json:"toolFailuresTool"  bun:"tool_failures_tool,type:INTEGER,notnull,default:0"`

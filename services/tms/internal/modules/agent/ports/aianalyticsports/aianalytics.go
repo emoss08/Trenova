@@ -74,6 +74,37 @@ type Counts struct {
 	CostUSD           decimal.Decimal
 	PricedRuns        int
 	LastRanAt         int64
+	Tokens            TokenTotals
+}
+
+type TokenTotals struct {
+	Input      int64
+	Output     int64
+	CacheRead  int64
+	CacheWrite int64
+}
+
+func (t TokenTotals) Add(other TokenTotals) TokenTotals {
+	return TokenTotals{
+		Input:      t.Input + other.Input,
+		Output:     t.Output + other.Output,
+		CacheRead:  t.CacheRead + other.CacheRead,
+		CacheWrite: t.CacheWrite + other.CacheWrite,
+	}
+}
+
+func (t TokenTotals) Prompt() int64 {
+	return t.Input + t.CacheRead + t.CacheWrite
+}
+
+func (t TokenTotals) CacheReadShare() *float64 {
+	prompt := t.Prompt()
+	if prompt <= 0 {
+		return nil
+	}
+	share := float64(t.CacheRead) / float64(prompt)
+
+	return &share
 }
 
 type DeploymentRow struct {

@@ -99,7 +99,9 @@ type ChatCompletionRequest struct {
 	SystemStable int
 	Messages     []Message
 	Tools        []kernelports.ToolSpec
-	MaxTokens    int
+	// ToolChoiceNone keeps Tools declared and forbids calling any of them.
+	ToolChoiceNone bool `json:"toolChoiceNone,omitempty"`
+	MaxTokens      int
 	// PreferredProviderID asks for one configured provider first. It is honoured
 	// only when that provider is enabled and serves the task; otherwise the usual
 	// priority order applies, so a deleted preference never strands an agent.
@@ -146,13 +148,15 @@ const RetryKindBusy kernelports.RetryKind = "busy"
 // ChatCompletionResult is a turn's reply, which may ask for tools, say
 // something, or both.
 type ChatCompletionResult struct {
-	Text            string
-	ToolCalls       []ToolCall
-	ModelIdentifier string
-	InputTokens     int
-	OutputTokens    int
-	ProviderID      pulid.ID
-	ProviderKind    aiprovider.Kind
+	Text             string
+	ToolCalls        []ToolCall
+	ModelIdentifier  string
+	InputTokens      int
+	OutputTokens     int
+	CacheReadTokens  int
+	CacheWriteTokens int
+	ProviderID       pulid.ID
+	ProviderKind     aiprovider.Kind
 	// ProviderMessageID is the provider's own id for the reply, kept so the
 	// next call can name it when the operator asks why a cache missed.
 	ProviderMessageID string

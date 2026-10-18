@@ -407,6 +407,10 @@ type countsScan struct {
 	CostUSD           string `bun:"cost_usd"`
 	PricedRuns        int    `bun:"priced_runs"`
 	LastRanAt         int64  `bun:"last_ran_at"`
+	InputTokens       int64  `bun:"input_tokens"`
+	OutputTokens      int64  `bun:"output_tokens"`
+	CacheReadTokens   int64  `bun:"cache_read_tokens"`
+	CacheWriteTokens  int64  `bun:"cache_write_tokens"`
 }
 
 func (s *countsScan) counts() aianalyticsports.Counts {
@@ -429,6 +433,12 @@ func (s *countsScan) counts() aianalyticsports.Counts {
 		CostUSD:           cost,
 		PricedRuns:        s.PricedRuns,
 		LastRanAt:         s.LastRanAt,
+		Tokens: aianalyticsports.TokenTotals{
+			Input:      s.InputTokens,
+			Output:     s.OutputTokens,
+			CacheRead:  s.CacheReadTokens,
+			CacheWrite: s.CacheWriteTokens,
+		},
 	}
 }
 

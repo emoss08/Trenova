@@ -495,12 +495,13 @@ func (s *Service) attemptChat(
 		Files:                    s.fileSource(req.TenantInfo),
 		CacheDiagnostics:         s.ai.CacheDiagnosticsEnabled(),
 		Request: &modeladapter.Request{
-			System:       req.System,
-			SystemStable: req.SystemStable,
-			CacheKey:     promptCacheKey(req),
-			Messages:     req.Messages,
-			Tools:        req.Tools,
-			MaxTokens:    maxTokens,
+			System:         req.System,
+			SystemStable:   req.SystemStable,
+			CacheKey:       promptCacheKey(req),
+			Messages:       req.Messages,
+			Tools:          req.Tools,
+			ToolChoiceNone: req.ToolChoiceNone,
+			MaxTokens:      maxTokens,
 			// A chat turn drives tools, so it is sampled for exactness: the
 			// model has to name a tool that exists and fill its arguments
 			// with JSON that parses, and invention there is only ever a bug.
@@ -599,6 +600,8 @@ func (s *Service) attemptChat(
 		ModelIdentifier:   resp.ModelIdentifier,
 		InputTokens:       resp.InputTokens,
 		OutputTokens:      resp.OutputTokens,
+		CacheReadTokens:   resp.CacheReadTokens,
+		CacheWriteTokens:  resp.CacheWriteTokens,
 		ProviderID:        provider.ID,
 		ProviderKind:      provider.Kind,
 		ProviderMessageID: resp.MessageID,
