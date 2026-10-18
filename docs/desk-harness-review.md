@@ -788,3 +788,198 @@ What this changes for the rest of the review:
 - **The target model is a small, fast one.** Every recommendation has to work on Haiku 5.5
   and a comparable OpenAI model, not only on frontier models.
 - **The provider work narrows** to Anthropic Messages (with its platforms) and the OpenAI APIs.
+
+## 2. Research findings
+
+**Method.**
+
+- Five parallel research tracks read primary sources: arXiv HTML and PDFs, benchmark data files, and vendor documentation and engineering posts.
+- I re-checked the numbers this review relies on against the primary source myself:
+  - Anthropic's tool search and programmatic tool calling docs;
+  - IFScale's published results CSV;
+  - the Haiku 4.5 rows of "The Bitter Lesson of Tool Calling";
+  - the Haiku 4.5 tool-count result in the MCP architecture-patterns paper;
+  - the Claude Haiku 5.5 launch page;
+  - the advisor post.
+- Anthropic API facts also come from the Claude API reference bundled with Claude Code (cached 2026-10-06), and only where it agrees with the live docs.
+
+**Evidence labels** used below:
+
+- **[PR]** peer-reviewed;
+- **[PP]** preprint;
+- **[BM]** benchmark or leaderboard data;
+- **[VD]** vendor documentation;
+- **[VB]** vendor blog, often reporting internal evals that are not public;
+- **[AN]** practitioner anecdote.
+
+Everything in this section is a finding from a source. Reasoning about Desk is kept to Section 3.
+
+### 2.1 Tool count, overlap and description quality
+
+| Finding | Evidence | Strength |
+|---|---|---|
+| Accuracy falls as the catalog grows, mildly for frontier models and steeply for small ones. Claude-4-Sonnet: 62.3% with only the tools needed, 62.4% with 218 tools, 44.2% with all 552. GPT-4o fell from 0.94 to 0.76 and Llama-3.1-8B from 0.86 to 0.09 as the catalog went from 49 to 741 tools. | MCPVerse, arXiv 2508.16260; LongFuncEval, arXiv 2505.10570 | [PP] |
+| The only small-Claude data: **Claude Haiku 4.5's tool-selection accuracy falls below 90% between 10 and 15 tools in context** (91% at 10, 87% at 15). Sonnet 4 stays at 90% or above up to 20 tools. | Rodrigues & Vas, arXiv 2606.30317. The abstract confirms the threshold; the per-count figures are from the body. | [PP], production telemetry from one organization |
+| Sensitivity to tool count depends on the model and must be measured per model. Moving from a domain's own tools to the full pool cost Claude-3.5-Sonnet 28 points (97.6% → 69.2%) and GPT-4.1 3 points (98.1% → 94.7%). | MCP-Zero, arXiv 2506.01056 | [PP] |
+| Showing more tools hurts the *choice* even when the right tool is in view: Sonnet 4.6 chose correctly 100% of the time with 1 tool shown and 87.1% with 5. But fixed top-k sets miss hard queries: on ToolBench, top-5 covered 64.7% of queries and top-20 covered 77.3%. | Repantis et al. (Meta), arXiv 2605.24660 | [PP] |
+| **Overlap matters more than count.** "Some implementations successfully manage more than 15 well-defined, distinct tools while others struggle with fewer than 10 overlapping tools." Merging semantically redundant tools raised GPT-4o's correct-selection rate by 5–22%. | OpenAI, *A practical guide to building agents*; ToolScope, arXiv 2510.20036 | [VB], [PP] |
+| Vendors put their soft limits in the same place: | | |
+| • OpenAI: "aim for fewer than 20 functions available at the start of a turn". | OpenAI function-calling guide | [VD] |
+| • Google: an active set of 10–20 tools. | Gemini function-calling guide | [VD] |
+| • Anthropic: Claude's choice of tool "degrades once you exceed 30–50 available tools". Use tool search from 10 tools or 10k tokens of definitions, and keep 3–5 tools always loaded. | Anthropic tool search docs | [VD] |
+| Description quality is worth 5–15 points. | | |
+| • Removing parameter descriptions cost GPT-4o 14.5 points on BFCL-executable. | Play2Prompt, ACL Findings 2025 | [PR] |
+| • Self-refined documentation took GPT-4o-mini from 35 to 47 correct paths, past GPT-4o with raw documentation at 37. | DRAFT, ICLR 2025 | [PR] |
+| • Tool-use examples raised accuracy on complex parameters from 72% to 90%. | Anthropic, *Advanced tool use* | [VB] |
+| **Longer is not better.** Adding to MCP descriptions gained a median 5.85 points but added 67% more execution steps and made results worse in 16.7% of cases. Short, targeted additions did as well. | Hasan et al., arXiv 2602.14878 | [PP] |
+| Wording alone steers selection between near-equivalent tools by more than 10×. | Faghih et al., EMNLP 2025 | [PR] |
+| **Models are bad at noticing that the tool they need is missing** (BFCL "Miss Func", 2026-04-12 snapshot): Sonnet 4.5 65%, Opus 4.5 64%, **Haiku 4.5 42.5%**, GPT-4.1 32.5%, GPT-5.2 18%, GPT-5-mini 17%. This is the skill `find_tools` depends on. | BFCL v4 leaderboard data; Patil et al., ICML 2025 | [BM], [PR] |
+| Native function calling beats tools described in the prompt by a wide margin for small models: Haiku 4.5 scores 68.7% native against 25.3% prompted. | BFCL v4 | [BM] |
+| Schema validity has converged across models (≥97.5% for gpt-4o-mini and up). What separates them is choosing the right tool, the right parameters and the right dependencies. | MCP-Bench, ICLR 2026 | [PR] |
+| About a third of gpt-4o's τ-bench failures are wrong arguments. Weaker models invent ids about 4× as often. | τ-bench, arXiv 2406.12045 | [PP/BM] |
+
+### 2.2 Tool retrieval and dynamic loading
+
+| Finding | Evidence | Strength |
+|---|---|---|
+| Tool retrieval is harder than ordinary retrieval. A query and the tool it needs share almost no words (ROUGE-L 0.06, against 0.31–0.34 for NQ and MS-MARCO). The best embedding model reaches nDCG@10 of about 47, BM25 about 22, and rerankers help little. Using retrieved tools instead of the right ones cost 11.4 points of pass rate. | ToolRet, ACL 2025 | [PR] |
+| Benchmarks built from synthetic queries flatter retrievers. With queries written in user personas, BM25 retrieval scored *below* putting all 2,000 tools in context (59% against 65%). | HumanMCP, arXiv 2602.23367 | [PP] |
+| **A search query the model writes beats retrieval on the raw user message.** | | |
+| • A model-written capability request reached about 95%, against 71.6% (single turn) and 65.1% (multi-turn) when retrieving on the raw query. | MCP-Zero | [PP], one model, 48 tools |
+| • Extracting the intents from a message before retrieving raised nDCG@5 from 0.65 to 0.78 for single-tool queries and from 0.53 to 0.72 for multi-tool ones. | Re-Invoke, EMNLP 2024 Findings | [PR] |
+| • Breaking a query down and rewriting it raised Recall@5 by 46–56%. | Toolshed, arXiv 2410.14594 | [PP] |
+| When the agent finds its own tools, **retrieval errors are about half of Claude's failures**. Cutting k from 5 to 1 lost 14.7 points; raising k to 10 added nothing. | LiveMCPBench, arXiv 2508.01780 | [BM/PP] |
+| **Anthropic tool search keeps the prompt cache.** "The API excludes deferred tools from the system-prompt prefix … appends a `tool_reference` block inline … The prefix is untouched, so prompt caching is preserved." | Anthropic tool search docs | [VD], verified |
+| • A custom search (embedding or hybrid) can return `tool_reference` blocks from an ordinary `tool_result`. | same | |
+| • It supports up to 10,000 deferred tools and **Claude Haiku 5.5**. | same | |
+| • It is not billed separately. | same | |
+| On Anthropic's internal MCP evals, tool search raised Opus 4 from 49% to 74% and Opus 4.5 from 79.5% to 88.1%, and cut tool tokens by about 85%. | Anthropic, *Advanced tool use* | [VB] |
+| OpenAI has two equivalents: | OpenAI function-calling and tool-search guides | [VD] |
+| • `allowed_tools` limits which tools can be called "but not modify the list … to maximize savings from prompt caching". | | |
+| • Client-executed `tool_search` (gpt-5.4 and later) injects loaded tools at the end of the context. | | |
+| Practitioners report the same thing. | | |
+| • Manus: the KV-cache hit rate is "the single most important metric". "Avoid dynamically adding or removing tools mid-iteration": it breaks the cache, and calls to tools no longer defined confuse the model. | Manus engineering post | [AN] |
+| • Archestra modelled 77% savings from progressive disclosure and measured 13% on real transcripts. Conversation tokens dominate after a few turns. | Archestra | [AN] |
+| • A source-code study of 11 coding agents found deferred tool loading is the dominant pattern. | arXiv 2609.00006 | [PP] |
+
+### 2.3 Code as the action
+
+| Finding | Evidence | Strength |
+|---|---|---|
+| CodeAct (Python as the action) reached 74.4% against 52.4% for JSON on M3ToolEval (gpt-4-1106), with about 30% fewer turns. It won on 12 of 17 models. It **lost** for claude-instant-1 (20.7 against 31.7) and scored about zero for small open models. On single atomic calls (API-Bank) it won on only 8 of 17. | Wang et al., ICML 2024 | [PR], 82 tasks, no writes |
+| The newest head-to-head is a wash on average: 77.0 for programmatic calling against 78.6 for JSON over 14 models. | "The Bitter Lesson of Tool Calling", arXiv 2608.06370 (verified from the HTML) | [PP], small ablations (n = 31–52) |
+| • **Claude Haiku 4.5 gained overall (81.9 → 85.8) but lost on dependent chains (88.5 → 73.1, n = 52) and under a flood of schemas (87.1 → 77.4).** | same | |
+| • GPT-4o fell from 81.9 to 55.0 and GPT-4.1 to 62.1, mostly from syntax errors. | same | |
+| Anthropic's own measurement: | Anthropic programmatic tool calling docs | [VD], verified |
+| • **"On τ²-bench … where each turn makes one or two sequential tool calls, programmatic tool calling left scores unchanged and cost roughly 8% more. Sequential single-call workflows do not benefit."** | | |
+| • On a 75-tool project-management benchmark it cut billed input tokens by about 38% with no change in accuracy. | | |
+| Code-as-action degrades faster over repeated trials on transactional work. On τ²-bench retail (DeepSeek-V3.2), pass^4 was 47.0 for CodeAct against 58.8 for ReAct. On a PostgreSQL write domain it scored 36.2 against 52.4. | CodeDelegator, arXiv 2601.14914 (abstract verified; numbers from the body) | [PP], one lab |
+| Every vendor uses the same security model, and none of them provides approval. | Anthropic PTC docs; Cloudflare Code Mode (Sep 2025, Feb 2026); OpenAI programmatic tool calling docs | [VD], [VB] |
+| • The sandbox has no network and no credentials. | | |
+| • Every effect returns through a dispatcher on the host. | | |
+| • Calls are tagged as coming from code. | | |
+| • Anthropic: "Do not rely on `allowed_callers` as a security boundary." | Anthropic PTC docs | |
+| • OpenAI recommends direct calls for "writes or approval-sensitive actions". | OpenAI docs | |
+| • Anthropic programmatic calling is not eligible for zero data retention. A pending call times out after about 4 minutes, so a person's approval cannot block inside the script. | Anthropic PTC docs | |
+| **Staging effects and checking authority at commit time is what keeps approval sound.** | | |
+| • CaMeL plans in code with capability tracking. It solved 77% of tasks securely (84% undefended) at about 2.8× the tokens. | arXiv 2503.18813 | [PP] |
+| • Cordon's effect outbox cut risky commits from 45 of 45 to 0 of 45. | arXiv 2606.17573 | [PP] |
+| • Agents commit on authority that has gone stale (207 of 216 invalidated runs committed anyway) unless a fail-closed check runs at commit. | arXiv 2607.10487 | [PP] |
+
+### 2.4 Routing, multiple agents and planning
+
+| Finding | Evidence | Strength |
+|---|---|---|
+| Whether multiple agents help depends on the task's structure. Against a single agent, results range from +80.8% on decomposable financial reasoning to **−70% on sequential planning**, and tool-heavy tasks pay a coordination cost. A single agent did 67.7 successes per 1k tokens; centralized multi-agent did 21.5. | Kim et al. (Google), arXiv 2512.08296 v3 (abstract verified) | [PP] |
+| Across 1,642 traces from 7 multi-agent frameworks, 41–86.7% of tasks failed. System design accounted for about 44% of failures, misalignment between agents about 32%, and verification about 24%. Repeating steps (15.7%) and not knowing when to stop (12.4%) were the largest single causes. | MAST, arXiv 2503.13657 | [PP] |
+| Multi-agent research used about 15× the tokens of chat. Anthropic lists "domains that require all agents to share the same context" as a poor fit. | Anthropic, *Multi-agent research system* | [VB] |
+| A multi-agent system "compiled" into one agent with a skill library scored −2 to +4 points at about 54% fewer tokens. Choosing a skill stays above 95% up to 20 skills, falls to about 20% at 200, and **confusable neighbours cost 17–63 points**. Hierarchical selection recovers most of it: 72–85% against 45–63%. | Li, arXiv 2601.04748 | [PP], synthetic |
+| A supervisor that paraphrases what its sub-agents said loses information (a "telephone" effect). Forwarding their answers verbatim improved results by about 50%. | LangChain, *Benchmarking multi-agent architectures* | [VB] |
+| Re-planning after each observation was the largest single gain (29.6% → 44.2% on WebArena-Lite). A plan fixed before any observation is cheap but cannot react to what it finds. | Plan-and-Act, ICML 2025; ReWOO | [PR] |
+| A model asked to correct itself without an outside signal does not reliably improve. Correction works with reliable external feedback. | Huang et al., ICLR 2024; Kamoi et al., TACL 2024 | [PR] |
+| Cascades between a small and a large model. | | |
+| • Router papers (FrugalGPT, RouteLLM, Hybrid LLM) are single-turn only. A cascade degrades quickly once its judge's error passes 0.2. | RouterBench | [BM] |
+| • The advisor tool lets Haiku consult Opus mid-task: BrowseComp rose from 19.7% to 41.2%, at 85% less per task than Sonnet alone (verified). | Anthropic, *The advisor strategy* | [VB] |
+
+### 2.5 Long context and instruction load
+
+| Finding | Evidence | Strength |
+|---|---|---|
+| **Instruction density hurts small models exponentially.** Accuracy at 10 / 50 / 100 / 250 instructions (verified against the results CSV): | IFScale, NeurIPS 2025 | [PR], synthetic task, no Haiku 4.5 or 5.5 |
+| • claude-3.5-haiku: 98.0 / **78.0** / **43.4** / 16.6 | | |
+| • claude-sonnet-4: 100 / 98.0 / 94.4 / 77.2 | | |
+| • gpt-4.1: 98.0 / 98.8 / 95.4 / 74.0 | | |
+| • Small models fail mostly by leaving instructions out. Earlier instructions are followed better. | | |
+| Real agent system prompts average 1,723 words and 11.9 constraints, and fewer than 30% of instructions are followed perfectly. **Constraints about tools and conditional constraints are the hardest.** | AgentIF, arXiv 2505.16944 | [PP] |
+| Length alone costs accuracy, even with perfect retrieval and even with blank padding: drops of 13.9–85% at 30k tokens. Having the model recite the relevant facts before solving mitigates it. | Du et al., arXiv 2510.05381 | [PP] |
+| On needles that share no words with the question, effective length is 8k for GPT-4o and 4k for Claude 3.5 Sonnet. | NoLiMa, ICML 2025 | [PR] |
+| Every model family did better on a focused prompt of about 300 tokens than on the full 113k-token history. | Chroma, *Context rot* | [VB] |
+| When a request's details are spread over several turns, models score 39% worse on average and their unreliability rises 112%. Restating the whole task in one message recovers 95% of single-turn performance. | Laban et al., arXiv 2505.06120 | [PP] |
+
+### 2.6 Reliability across repeated runs, and how models differ
+
+| Finding | Evidence | Strength |
+|---|---|---|
+| pass^k is the probability that *all* k trials succeed, and it sits far below pass^1. | | |
+| • gpt-4o on τ-bench retail: pass^1 61%, pass^8 below 25%. | τ-bench | [BM] |
+| • On τ² (pass^1 → pass^4): Opus 4.5 retail 79.6 → 51.8; Sonnet 4.5 retail 72.4 → 39.5. | τ² leaderboard v1.0.1 | [BM] |
+| • **GPT-5.2 airline: 83 → 72 at high reasoning, 52.5 → 22 with reasoning off.** Reasoning effort is the largest single lever on OpenAI models. | τ² leaderboard v1.0.1 | [BM] |
+| Capability gains bring only small gains in reliability. Smaller models often match larger ones on consistency. Sensitivity to paraphrase is the main difference in robustness. Incorrect charges and refunds are the most common safety violation. | Rabanser et al., ICML 2026 | [PR] |
+| A per-step success rate of 0.95 halves end-to-end success by about 13 steps; 0.99 lasts about 69 steps. Models condition on their own earlier mistakes; thinking models avoid this, and a sliding context window helps. | Sinha et al., ICLR 2026 | [PR] |
+| Claude Haiku 5.5 (released 2026-10-07) reports Terminal-Bench 4.0 39.2% (Haiku 4.5 0%, GPT-6 Luna 16.4%) and OSWorld 2.1 offline 72.4%. **It publishes no τ², BFCL or MCP tool-use scores, and no independent tool-calling evaluation exists yet.** | Anthropic launch page (verified) | [VB] |
+
+### 2.7 What the providers recommend
+
+**Anthropic** ([VD], [VB]):
+
+- **Tools.**
+  - Prefer fewer, task-shaped, namespaced tools (`search_contacts`, not `list_contacts`).
+  - Return readable names rather than ids.
+  - Offer a `response_format` of concise or detailed; in one example this took a result from 206 to 72 tokens.
+  - Return actionable errors.
+  - "Provide extremely detailed descriptions. This is by far the most important factor."
+  - "Ask for an explanation, not reasoning": a tool parameter that asks for reasoning can trigger a billed `reasoning_extraction` refusal on Opus and Sonnet 5.5. (Desk's `_why` already asks for an explanation.)
+- **Prompts.**
+  - Write at the "right altitude".
+  - Use the "smallest set of high-signal tokens".
+  - Dial back "CRITICAL/MUST" language.
+  - Keep history append-only.
+  - Deliver harness notices as mid-conversation system messages, never inside a `tool_result`.
+- **Haiku 5.5 specifics.**
+  - At `low` effort in long agent prompts it is "more likely to skip a search, stop early, or skip a check". Moving from `low` to `medium` roughly halved early stopping and more than doubled output tokens.
+  - Pricing is $0.10/$0.50 per million tokens when the prompt is ≤100k tokens, and **$0.50/$2.50 above**. The tier is set by the whole prompt, cache reads included.
+  - Its tokenizer counts about 30% more tokens than Haiku 4.5's for the same text.
+  - Its thinking blocks run the history-editing check: a block sent back after a change to `system`, `tools` or earlier messages is a 400 for accounts created on or after 2026-08-31.
+- **Caching.**
+  - The order is tools → system → messages, and any change to the tool definitions invalidates everything.
+  - Changing `tool_choice` keeps the tools and system caches and invalidates only the messages cache.
+  - `tool_choice: none` is the documented way to get a text-only answer.
+  - Reads cost 0.1× the input price (0.05× on Opus and Sonnet 5.5); 5-minute writes cost 1.25×.
+  - The minimum cacheable prefix is 512 tokens.
+- **Evals** (*Demystifying evals for AI agents*, 2026-01-09).
+  - Grade the outcome, not the path.
+  - Report pass^k.
+  - Start from 20–50 tasks drawn from real failures.
+  - Isolate trials.
+  - Give the judge an "Unknown" option, with one judge per dimension.
+  - Read the transcripts.
+
+**OpenAI** ([VD]):
+
+- Fewer than 20 functions at the start of a turn.
+- Use `allowed_tools` rather than changing the list, so the cache survives.
+- Strict mode on the Responses API.
+- On GPT-6 Astra and GPT-6.1 Sol, tool calling requires the Responses API.
+- Pass reasoning items back unchanged; reusing reasoning raised τ-bench retail from 73.9% to 78.2%.
+- "Combine functions that are always called in sequence."
+- The OpenAI Evals platform becomes read-only on 2026-10-31 and shuts down on 2026-11-30.
+
+**Google** ([VD]): an active set of 10–20 tools.
+
+### 2.8 Progressive disclosure and per-request context
+
+| Finding | Evidence | Strength |
+|---|---|---|
+| Agent Skills disclose in three levels: about 100 tokens of name and description per skill always in context, a SKILL.md under about 5k tokens read when relevant, and bundled files read only when needed. No accuracy figures are published. | Anthropic, *Agent Skills* | [VB] |
+| A playbook updated by itemized deltas (ACE) raised AppWorld from 42.4 to 59.4. Rewriting the whole playbook "collapsed" it from 18,282 to 122 tokens and dropped accuracy below the no-playbook baseline. Workflow memory added 24.6% relative on Mind2Web and 51.1% on WebArena. | ACE, ICLR 2026; Agent Workflow Memory, arXiv 2409.07429 | [PR], [PP] |
+| Anthropic's context guidance favours a **hybrid**: some context retrieved up front, the rest found by the agent just in time. | *Effective context engineering* | [VB] |
