@@ -257,7 +257,7 @@ func TestListCustomerPayments_DefaultsToPostedAndPassesTheFiltersThrough(t *test
 	assert.Equal(t, "4471", payments.captured.Filter.Query)
 	assert.Equal(t, 10, payments.captured.Filter.Pagination.Limit)
 
-	outcome := result.(*bankReceiptSearch).searchOutcome
+	outcome := result.(searchOutcome)
 	assert.Contains(t, outcome.SearchedFor, "status Posted")
 	rows := outcome.Items.([]customerPaymentRow)
 	require.Len(t, rows, 1)
