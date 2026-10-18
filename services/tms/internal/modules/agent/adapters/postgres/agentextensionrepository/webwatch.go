@@ -173,7 +173,7 @@ func (r *webWatchRepository) CountActive(
 			return 0, fmt.Errorf("count active web watches: %w", err)
 		}
 
-		return count, nil
+		return int(count), nil
 	})
 }
 

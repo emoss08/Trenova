@@ -560,9 +560,6 @@ func (r *QueryResolver) ReportRuns(ctx context.Context, input gqlmodel.DataTable
 			}
 			req.DefinitionID = definitionID
 		}
-		if filter.MineOnly != nil && *filter.MineOnly {
-			req.RequestedBy = base.TenantInfo(authCtx).UserID
-		}
 		for _, status := range filter.Statuses {
 			req.Statuses = append(req.Statuses, report.RunStatus(status))
 		}

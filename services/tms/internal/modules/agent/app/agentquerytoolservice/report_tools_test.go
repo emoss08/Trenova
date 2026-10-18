@@ -9,12 +9,12 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/canned"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/emoss08/trenova/pkg/reportrows"
@@ -820,7 +820,7 @@ func TestRunReport_HandsBackASampleOfAFinishedRunsRows(t *testing.T) {
 		"dates read the way preview_report writes them")
 	assert.Contains(t, status.Note, "finished with 25 rows")
 	assert.Contains(t, status.Note, "already shown in this conversation")
-	assert.Contains(t, status.Note, "first 20 of its 25 rows as a sample")
+	assert.Contains(t, status.Note, "first 20 of its 25 rows, keyed by column label: a sample")
 
 	encoded, err := sonic.Marshal(status)
 	require.NoError(t, err)
@@ -880,7 +880,7 @@ func TestGetReportRun_HandsBackASampleOfAFinishedRunsRows(t *testing.T) {
 
 	status := result.(reportRunStatus)
 	assert.Len(t, status.Rows, 3)
-	assert.Contains(t, status.Note, "first 3 of its 3 rows")
+	assert.Contains(t, status.Note, "all 3 of its rows")
 }
 
 // gpt-6-luna searched four wordings for an on-time report that did not exist

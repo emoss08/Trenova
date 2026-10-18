@@ -16,7 +16,7 @@ func TestBoundedTablesKeepWhatATableCanShow(t *testing.T) {
 		{
 			Title: "  Open balance  ",
 			Columns: []agentextension.AnalysisTableColumn{
-				{Name: "Customer", Kind: "text"},
+				{Name: "Customer", Kind: "text", Currency: "USD"},
 				{Name: "Open Balance", Kind: "money", Currency: "usd"},
 				{Name: "Share", Kind: "share"},
 			},
@@ -37,7 +37,8 @@ func TestBoundedTablesKeepWhatATableCanShow(t *testing.T) {
 		{Name: "Customer", Kind: agentextension.AnalysisValueText},
 		{Name: "Open Balance", Kind: agentextension.AnalysisValueMoney, Currency: "USD"},
 		{Name: "Share", Kind: agentextension.AnalysisValueText},
-	}, table.Columns, "an unknown kind reads as text and a currency is its code")
+	}, table.Columns, "an unknown kind reads as text, a currency is its code, and only "+
+		"money keeps one")
 	assert.Equal(t, []any{"Acme", 36912.16, 0.006}, table.Rows[0])
 	assert.Len(t, []rune(table.Rows[1][0].(string)), agentextension.MaxAnalysisCellRunes)
 	assert.Nil(t, table.Rows[1][2], "a short row is padded to the table's width")
@@ -100,6 +101,46 @@ func TestBoundedLayoutPointsOnlyAtWhatWasKept(t *testing.T) {
 		{Kind: agentextension.AnalysisBlockTable, Index: 0},
 		{Kind: agentextension.AnalysisBlockChart, Index: 1},
 	}, layout)
+}
+
+// A report's display carries the organization's currency on every column; a
+// run of AR aging handed it on and tagged customer names and invoice counts USD.
+func TestAnalysisCurrencyIsOnlyMoneys(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(
+		t,
+		"USD",
+		agentextension.AnalysisCurrency(agentextension.AnalysisValueMoney, " usd "),
+	)
+	assert.Empty(t, agentextension.AnalysisCurrency(agentextension.AnalysisValueMoney, "dollars"))
+	for _, kind := range []agentextension.AnalysisValueKind{
+		agentextension.AnalysisValueText,
+		agentextension.AnalysisValueCount,
+		agentextension.AnalysisValuePercent,
+		agentextension.AnalysisValueNumber,
+		agentextension.AnalysisValueDateTime,
+	} {
+		assert.Empty(t, agentextension.AnalysisCurrency(kind, "USD"), string(kind))
+	}
+
+	figures := agentextension.BoundedFigures([]agentextension.AnalysisFigure{
+		{
+			Label:    "Open invoices",
+			Value:    36,
+			Kind:     agentextension.AnalysisValueCount,
+			Currency: "USD",
+		},
+		{
+			Label:    "Open balance",
+			Value:    45662.16,
+			Kind:     agentextension.AnalysisValueMoney,
+			Currency: "usd",
+		},
+	})
+	require.Len(t, figures, 2)
+	assert.Empty(t, figures[0].Currency)
+	assert.Equal(t, "USD", figures[1].Currency)
 }
 
 func TestAnalysisKindOfReadsTheReportsFormatFirst(t *testing.T) {

@@ -11,6 +11,36 @@ It has one tool, `analyze_data`, a read. The capability is the plan capability
 `agent.data_analysis` and the permission resource `data_analysis` (`read`, in the Desk
 bundle). The history is managed under `agent_extension`, like the extension itself.
 
+## When an agent analyzes
+
+An agent that holds `analyze_data` is told, in Trenova's own rules
+(`agentdefinition.trenovaRules`), that a figure no tool stated (a total, a share, a ranking, an
+age bucket, a trend, anything across more rows than a result showed it) is worked out with
+`analyze_data`, and that a request to analyze, explore, dig into, compare or chart data is a call
+to it in that turn. An agent without it keeps the plain rule: do not calculate, say what you would
+need. The rule depends only on whether the tool is held, so the cached part of the prompt does not
+change from turn to turn, and it holds over instructions an organization saved before the
+extension existed ("never calculate what the report did not"). `run_report` and `get_report_run`
+say plainly when their rows are a sample, "not the data to total, count, rank or compare", and
+`analyze_data` loads whenever either of them or `read_attachment` loads (see "follows" in
+[agent-runtime.md](agent-runtime.md)). Before these, the Report analyst asked to "run AR aging by
+customer and do analysis on it" read the sample, wrote its own commentary and offered the
+analysis as a next step; `deskbench/scenarios/analysis.yaml` holds that case and the rest.
+
+The rule also holds when every row is in front of the agent: a share of two columns or a total of
+one is still worked out by `analyze_data`, and `run_report` says of a complete result that a
+figure its rows do not state is not read off them. An attached CSV, XLSX or text file is read by
+`analyze_data` as it is, so an agent never tells the person such a file cannot be read because
+`read_attachment` found no text in it. The scope classifier (`agentguard`) treats a request to
+analyze, chart, total or compare the organization's own data as operations work even when it names
+Python, pandas or a package, and keeps a computation unrelated to the organization's data (a
+prime, a benchmark) and a request for the sandbox's environment or keys out of scope.
+
+The prompt is not the only control. A reply that files nothing is held to the money and
+percentages the conversation read (see "What the reply may claim" in
+[agent-runtime.md](agent-runtime.md)): a share worked out in the agent's head is sent back once
+with a correction telling an agent that holds `analyze_data` to work it out there.
+
 ## What the code reads
 
 The tool takes a short title (three to eight words, which names the result on the Desk), a
@@ -24,7 +54,7 @@ the code reads and given exactly one source:
   and values stay raw (decimals as exact text, times as unix seconds), so a program reads
   them without parsing a person's formatting. Totals are left out.
 - **An attached file** (`documentId`). Only one the person attached to this conversation
-  (`Document.AttachedBy`), read through `ConversationFileReader`. CSV, XLSX, JSON and text
+  (`Document.AttachedBy`), read through `ConversationFileReader`. CSV, XLSX and text
   files only: what pandas reads without fetching anything.
 
 Each dataset is written to `/home/user/data/<name>.<ext>` before the code runs, and loaded
@@ -55,6 +85,10 @@ report's format). It:
   display JSON (`{"trenova": "figure" | "table", ...}`) rather than text. A kind is `text`,
   `number`, `money`, `count`, `percent` (a fraction), `date`, `datetime` or `bool`; a
   dataset column's kind comes from the report, so a money column reads as money unasked.
+  Only money carries a currency (`agentextension.AnalysisCurrency`), though a report's
+  display gives every column the organization's. `show_table` shows a frame's index as a
+  column only when it holds values (a name, several levels, or labels that are not whole
+  numbers); the unnamed row positions a sort or filter leaves behind are dropped.
 
 Every step is guarded, so the preparation never fails an analysis; a preparation that cannot
 run at all (the cell raised or stopped) ends the run `Failed` with a message that does not
@@ -71,7 +105,10 @@ blame the agent's code.
 - **Starting a sandbox is never retried**: a create that failed after the vendor began it
   would leave a second sandbox running and billed. Code is never re-run either.
 - **Only the caller's own data.** Report runs another person ran and files from another
-  conversation are refused as though they did not exist.
+  conversation are refused as though they did not exist. A report run is read only by the
+  person who ran it, on every surface (`reporting.Service.GetRun`, `ListRuns`,
+  `ListRunsConnection`): it holds what the report returned under that person's data scope, and
+  may be a run of their private report.
 - **Taint follows the data.** The tool declares `ReadsExternal: marked` with the
   `attachment` source: a result that read an attached file names it
   (`analysisAnswer.TaintedRecords`), and the run is tainted as if the file had been read
@@ -116,9 +153,10 @@ the charts by position and title, the order they were shown in, the output (the 
 ## On the Desk
 
 An analysis is the `analysis` artifact kind (family `report`; the Desk draws it as its own
-"Analysis" kind), titled by its short title. Only an analysis that ran to the end makes one:
-an attempt whose code raised is the agent's to fix, and the person sees the result it reaches,
-not each attempt. Its lineage is its title (case and spacing aside), so running it again under
+"Analysis" kind), titled by its short title. Only an analysis that ran to the end and showed
+something (a figure, a table or a chart) makes one: an attempt whose code raised is the agent's
+to fix, and the person sees the result it reaches, not each attempt; a run that only printed is
+the agent looking at the data, and a card for it was one more the reply had to name. Its lineage is its title (case and spacing aside), so running it again under
 the same title, after a fix or over newer data, is the next version of one card rather than a
 second. It is made on purpose, not a view of a lookup, so it is kept whether or not the reply
 names it, and `ShownArtifact.MustBeLinked` holds the reply to naming it.

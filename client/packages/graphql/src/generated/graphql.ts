@@ -6608,6 +6608,7 @@ export type ReportPivotInput = {
 
 export type ReportRunsFilterInput = {
   definitionId?: string | number | null | undefined;
+  /** @deprecated Every run listed is one the caller ran; another person's runs are never listed. */
   mineOnly?: boolean | null | undefined;
   statuses?: Array<string> | null | undefined;
 };

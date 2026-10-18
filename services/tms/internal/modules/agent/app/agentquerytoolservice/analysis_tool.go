@@ -10,6 +10,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -40,8 +41,9 @@ const (
 		"without listing them again or describing how they were drawn."
 	analysisDoneNote = "Figures come from the datasets as they were when each report ran. " +
 		"Give the answer in plain words with the figures that matter; do not paste the code."
-	analysisPlainNote = "Nothing was shown with show_figure, show_table or plt.show(), so the " +
-		"person sees only what was printed. Next time show the results rather than print them."
+	analysisPlainNote = "Nothing was shown with show_figure, show_table or plt.show(), so " +
+		"this run was yours alone: the person sees nothing of it and there is nothing beside " +
+		"your reply to point to. Show what the person should see."
 	analysisErrorNote = "The code raised an error. Fix it and run it again; do not run the " +
 		"same code unchanged. Each dataset is loaded as the DataFrame named under datasets, " +
 		"with exactly the columns listed there."
@@ -82,17 +84,16 @@ func newAnalyzeDataTool(
 func (t *analyzeDataTool) Name() string { return agentextension.ToolAnalyzeData }
 
 func (t *analyzeDataTool) Description() string {
-	return "Run Python over report results and files the person attached, to answer what a " +
-		"report alone does not show, such as who holds most of the open balance. Each dataset " +
-		"is already a pandas DataFrame named after it: a report run's columns are headed by " +
-		"their labels, as run_report showed them, with numbers as numbers and times as dates " +
-		"in the organization's timezone. pd, np and plt are imported, and the code cannot " +
-		"reach the internet. Show results instead of printing them: show_figure(label, value, " +
-		"kind) for a headline number, show_table(df, title) for a table and plt.show() for " +
-		"each chart, one point per chart with a title. Kinds are money, count, percent (a " +
-		"fraction) and number. Asked to explore, answer three or four questions the data " +
-		"supports. Run the report with run_report first and use its runId; each call starts " +
-		"afresh."
+	return "Run Python over every row of report results and attached files, to calculate " +
+		"what the rows do not state and to analyze, explore or chart data. Each dataset is " +
+		"a pandas DataFrame named after it: a report run's columns are headed by their " +
+		"labels, as run_report showed them, with numbers as numbers and times as dates in the " +
+		"organization's timezone. pd, np and plt are imported, and the code cannot reach the " +
+		"internet. Show results instead of printing them: show_figure(label, value, kind) for " +
+		"a headline number, show_table(df, title) for a table and plt.show() for each chart, " +
+		"one point per chart with a title. Kinds are money, count, percent (a fraction) and " +
+		"number. Asked to explore, answer three or four questions the data supports. Run the " +
+		"report with run_report first and use its runId; each call starts afresh."
 }
 
 func (t *analyzeDataTool) ParamSchema() map[string]any {
@@ -115,8 +116,9 @@ func (t *analyzeDataTool) ParamSchema() map[string]any {
 			paramAnalysisCode: map[string]any{
 				toolschema.KeyType: "string",
 				toolschema.KeyDescription: "The Python to run, as one cell. Use the loaded " +
-					"DataFrames, and show_figure, show_table or plt.show() what the person " +
-					"should see.",
+					"DataFrames; every call returns each dataset's columns and types, so the " +
+					"first call can do the work rather than look first. print() is for you; " +
+					"show_figure, show_table or plt.show() only what the person should see.",
 				toolschema.KeyMaxLength: agentextension.MaxAnalysisCodeRunes,
 			},
 			paramAnalysisDatasets: map[string]any{
@@ -140,7 +142,7 @@ func (t *analyzeDataTool) ParamSchema() map[string]any {
 						}, permission.KindReportRun),
 						paramDatasetDocument: agenttoolschema.RecordIDText(
 							permission.ResourceDocument,
-							"A CSV, XLSX, JSON or text file the person attached to this "+
+							"A CSV, XLSX or text file the person attached to this "+
 								"conversation, from read_attachment.",
 						),
 					},
@@ -168,7 +170,11 @@ func (t *analyzeDataTool) Policy() agentports.ToolPolicy {
 }
 
 func (t *analyzeDataTool) Prerequisites() []string {
-	return []string{"run_report"}
+	return []string{toolRunReport}
+}
+
+func (t *analyzeDataTool) Follows() []string {
+	return []string{toolRunReport, toolGetReportRun, agentdefinition.CoreToolReadAttachment}
 }
 
 func (t *analyzeDataTool) SearchTerms() []string {
@@ -438,14 +444,15 @@ func (t *analyzeDataTool) reportDataset(
 	columns := make([]agentextension.AnalysisColumnSpec, 0, len(envelope.Schema))
 	for idx := range envelope.Schema {
 		column := &envelope.Schema[idx]
+		kind := agentextension.AnalysisKindOf(
+			string(column.Type), string(column.Format), string(column.Display.DateStyle),
+		)
 		columns = append(columns, agentextension.AnalysisColumnSpec{
-			ID:    column.ID,
-			Label: column.Label,
-			Type:  string(column.Type),
-			Kind: agentextension.AnalysisKindOf(
-				string(column.Type), string(column.Format), string(column.Display.DateStyle),
-			),
-			Currency: column.Display.Currency,
+			ID:       column.ID,
+			Label:    column.Label,
+			Type:     string(column.Type),
+			Kind:     kind,
+			Currency: agentextension.AnalysisCurrency(kind, column.Display.Currency),
 		})
 	}
 

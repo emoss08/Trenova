@@ -373,10 +373,3 @@ func (s *Service) ListDefinitionsConnection(
 ) (*pagination.CursorListResult[*report.ReportDefinition], error) {
 	return s.defRepo.ListConnection(ctx, req)
 }
-
-func (s *Service) ListRunsConnection(
-	ctx context.Context,
-	req *reportports.ListReportRunConnectionRequest,
-) (*pagination.CursorListResult[*report.ReportRun], error) {
-	return s.runRepo.ListConnection(ctx, req)
-}

@@ -161,11 +161,12 @@ func boundedTable(raw *AnalysisTable) AnalysisTable {
 	width := min(len(raw.Columns), MaxAnalysisTableColumns)
 	columns := make([]AnalysisTableColumn, 0, width)
 	for _, column := range raw.Columns[:width] {
+		kind := column.Kind.Or(AnalysisValueText)
 		columns = append(columns, AnalysisTableColumn{
 			Name: stringutils.TruncateRunes(strings.TrimSpace(column.Name),
 				MaxAnalysisColumnNameRunes),
-			Kind:     column.Kind.Or(AnalysisValueText),
-			Currency: boundedCurrency(column.Currency),
+			Kind:     kind,
+			Currency: AnalysisCurrency(kind, column.Currency),
 		})
 	}
 
@@ -200,6 +201,17 @@ func boundedCell(value any) any {
 	}
 }
 
+// AnalysisCurrency is the currency a value is shown in: only money has one. A
+// report's display carries the organization's currency on every column, and
+// handed on as it was it tagged customer names and invoice counts as USD.
+func AnalysisCurrency(kind AnalysisValueKind, raw string) string {
+	if kind != AnalysisValueMoney {
+		return ""
+	}
+
+	return boundedCurrency(raw)
+}
+
 func boundedCurrency(raw string) string {
 	code := strings.ToUpper(strings.TrimSpace(raw))
 	if len(code) != 3 {
@@ -226,11 +238,12 @@ func BoundedFigures(raw []AnalysisFigure) []AnalysisFigure {
 		if label == "" {
 			continue
 		}
+		kind := raw[idx].Kind.Or(AnalysisValueNumber)
 		figures = append(figures, AnalysisFigure{
 			Label:    label,
 			Value:    boundedCell(raw[idx].Value),
-			Kind:     raw[idx].Kind.Or(AnalysisValueNumber),
-			Currency: boundedCurrency(raw[idx].Currency),
+			Kind:     kind,
+			Currency: AnalysisCurrency(kind, raw[idx].Currency),
 			Note: stringutils.TruncateRunes(strings.TrimSpace(raw[idx].Note),
 				MaxAnalysisFigureNoteRunes),
 		})

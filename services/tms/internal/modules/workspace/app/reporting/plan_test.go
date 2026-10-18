@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/canned"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -70,9 +70,12 @@ type planRuns struct {
 }
 
 func (r *planRuns) GetByID(
-	context.Context,
-	*reportports.GetReportRunRequest,
+	_ context.Context,
+	req *reportports.GetReportRunRequest,
 ) (*report.ReportRun, error) {
+	if !req.RequestedBy.IsNil() && req.RequestedBy != r.run.RequestedByID {
+		return nil, errortypes.NewNotFoundError("ReportRun not found")
+	}
 	copied := *r.run
 
 	return &copied, nil
@@ -204,8 +207,8 @@ func TestPlanCancelRun_OnlyAnUnfinishedRunOfTheRequester(t *testing.T) {
 	_, err = svc.PlanCancelRun(t.Context(), &GetRunRequest{
 		Request: planRequest(pulid.MustNew("usr_")), RunID: run.ID,
 	})
-	var denied *errortypes.AuthorizationError
-	require.ErrorAs(t, err, &denied)
+	var missing *errortypes.NotFoundError
+	require.ErrorAs(t, err, &missing)
 
 	run.Status = report.RunStatusSucceeded
 	_, err = svc.PlanCancelRun(t.Context(), &GetRunRequest{

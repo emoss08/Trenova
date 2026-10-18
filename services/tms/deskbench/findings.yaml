@@ -3920,3 +3920,453 @@ findings:
       get_edi_ack_health. The harness refused each and the agent called again correctly, a model
       call each time.
     fix: Open.
+
+  - id: DB-174
+    title: Any report reader can read a colleague's report run, including a private report's
+    status: fixed
+    severity: high
+    area: reporting / permissions
+    found: 2026-10-17, .deskbench/runs/20261017-223651-run and 20261017-225422-run
+    models: [claude-haiku-5-5]
+    scenarios: [analysis-colleague-report-run]
+    problem: >
+      Asked to analyze a run another user made of their own private report ("Journal entries, last
+      30 days"), the Report analyst read 20 of its rows with get_report_run in 4 of 4 cases and
+      answered from them, while describe_report on the same definition was refused ("no saved
+      report ... that you can see") and analyze_data refused the run ("not one you ran for this
+      person"). The agent tool only exposed it: the same run is served to anyone with report:read
+      by the GraphQL reportRun query and the REST download.
+    evidence: >
+      transcript.md of both runs, get_report_run on rrun_01M52GQQW1STSZA14VFYTBPEK4 (requested by
+      eric@trenova.app, definition rd_01M52E7JSQQ3M02TXYKTB5BS37, private) returned rows to
+      admin@trenova.app.
+    cause: >
+      reportrepository.runRepository.GetByID filters by tenant only, and reporting.Service.GetRun,
+      ReadRunRows and DownloadRun call it with no check on who ran the run or whether the caller
+      may see its definition. A run is computed under its requester's data scope, so it can also
+      carry rows the reader's own read scope would withhold.
+    fix: >
+      A run is read only by the person who ran it (a schedule's runs are its run-as person's):
+      it holds what the report returned under that person's data scope and may be a run of their
+      private report. reporting.Service.GetRun narrows runRepository.GetByID by RequestedBy, so
+      another person's run reads as not found through GetRun, ReadRunRows, DownloadRun, CancelRun,
+      the reportRun query, get_report_run, compare_report_runs and analyze_data alike; ListRuns
+      and ListRunsConnection always list the caller's own, and a request with no person is
+      refused. ReportRunsFilterInput.mineOnly is deprecated (every list is the caller's), and
+      list_report_runs lost its mineOnly argument. Jobs keep reading runs through the repository.
+    files:
+      - services/tms/internal/modules/workspace/app/reporting/runs.go
+      - services/tms/internal/modules/workspace/app/reporting/rows.go
+      - services/tms/internal/modules/workspace/app/reporting/download.go
+      - services/tms/internal/modules/workspace/adapters/postgres/reportrepository/run.go
+      - services/tms/internal/modules/workspace/ports/reportports/report.go
+      - services/tms/internal/modules/workspace/app/reporting/plan.go
+      - services/tms/internal/api/graphql/schema/report.graphqls
+      - services/tms/internal/api/graphql/resolver/reportresolver/report.resolvers.go
+      - services/tms/internal/modules/agent/app/agentquerytoolservice/reportdiff_tools.go
+      - docs/product-guide/reports/runs.md
+    fixedIn: >
+      uncommitted; verified by .deskbench/runs/20261017-231325-run and 20261017-231936-run
+      (get_report_run on the colleague's run refused 6 of 6, no JE number in any reply)
+
+  - id: DB-175
+    title: Asked to analyze a report, agents describe run_report's sample instead of calling analyze_data
+    status: fixed
+    severity: high
+    area: agent prompt / data analysis
+    found: 2026-10-17, .deskbench/runs/20261017-223651-run and 20261017-225422-run
+    models: [claude-haiku-5-5]
+    scenarios:
+      - analysis-ar-aging-asked-outright
+      - analysis-explore-a-report
+      - analysis-follow-up-revises-the-analysis
+      - analysis-asked-from-ask
+    problem: >
+      "Run AR aging by customer and do analysis on it" reached analyze_data in 2 of 4 cases,
+      "dig into it, anything interesting" in 0 of 4 (one reply said "I read the 20-row sample" of
+      63 rows and drew conclusions from it), and "analyze who owes us the most" in 0 of 4. A
+      person's own conversation needed "there is analysis that you can run" before the agent
+      used it. Asked for a chart, it used analyze_data 4 of 4 times: only a chart reads as
+      something no other tool does. From Ask (.deskbench/runs/20261017-230021-run), told "last
+      90 days" after asking for the window, it ran the revenue report and then paged
+      list_shipments to compare periods by hand in 3 of 3 cases; there analyze_data is only
+      callable after find_tools, and it never loaded it.
+    cause: >
+      Every agent's base rules (agentdefinition/prompt.go) say "Do not calculate ... If answering
+      would need arithmetic the tools did not do for you, say what you would need instead of
+      estimating it", the Report analyst's instructions add "never calculate what the report did
+      not", and run_report's note calls the sample rows "for answering questions about it; the
+      rest are in the download". None says that analyze_data is the tool that does the
+      arithmetic and reads every row, so an agent holding it treats the sample as the answer.
+    fix: >
+      trenovaRules(tools) gives an agent that holds analyze_data a calculation rule that sends
+      every figure no tool stated, and every request to analyze, explore, compare or chart, to
+      analyze_data in that turn, and says it holds over saved instructions about calculating; an
+      agent without it keeps the old rule, so its prompt is unchanged. The rule depends only on
+      the held tools, so the cached prompt stays stable. run_report and get_report_run call a
+      partial sample "not the data to total, count, rank or compare". A new relation, Follows
+      (agentports.FollowerTool, Catalog.Followers), loads analyze_data whenever run_report,
+      get_report_run or read_attachment loads, for an agent that already holds it, granting
+      nothing. analyze_data's description says it is how the agent calculates. The Report
+      analyst template no longer says "never calculate what the report did not".
+    files:
+      - services/tms/internal/modules/agent/domain/agentdefinition/prompt.go
+      - services/tms/internal/modules/agent/domain/agentdefinition/focused_templates.go
+      - services/tms/internal/modules/agent/app/agentquerytoolservice/report_tools.go
+      - services/tms/internal/modules/agent/app/agentquerytoolservice/analysis_tool.go
+      - services/tms/internal/modules/agent/ports/agentports/agenttool.go
+      - services/tms/internal/modules/agent/app/agenttoolcatalog/catalog.go
+      - services/tms/internal/modules/agent/app/agentruntime/toolset.go
+    fixedIn: >
+      uncommitted; verified by .deskbench/runs/20261017-231325-run and 20261017-231936-run:
+      asked-outright, explore-a-report and chart 3/3 each, asked-from-ask 3/3,
+      follow-up-revises-the-analysis 3/3, and not-needed-for-a-lookup 3/3 (no analysis for a
+      figure a row states). The local Report analyst still carries the old saved instruction,
+      so the rule held over it.
+
+  - id: DB-176
+    title: A CSV attachment sent with a charset parameter is refused as a file type
+    status: fixed
+    severity: medium
+    area: documents / upload
+    found: 2026-10-17, .deskbench/runs/20261017-223651-run
+    models: [claude-haiku-5-5]
+    scenarios: [analysis-attached-spreadsheet, analysis-file-from-another-conversation]
+    problem: >
+      Attaching fuel-purchases-q3.csv failed with "File type is not allowed", so analyze_data
+      could not be given a file at all. text/csv is on the allow list; the upload's Content-Type
+      was text/csv; charset=utf-8.
+    cause: >
+      documentservice.Validator compared the whole Content-Type header with the allow list, so
+      any media type parameter refused an allowed type, and the upload stored that raw header as
+      the document's FileType, where isActiveContentType, previews and the docling extension
+      switch compare it exactly.
+    fix: >
+      fileutils.MediaType reads the media type alone (lower-cased, no parameters); the validator
+      checks that against the allow list and the upload stores it as FileType.
+    files:
+      - shared/fileutils/mediatype.go
+      - services/tms/internal/modules/documents/app/documentservice/validator.go
+      - services/tms/internal/modules/documents/app/documentservice/service.go
+    fixedIn: uncommitted; verified by .deskbench/runs/20261017-225422-run (both attachment scenarios 3/3)
+
+  - id: DB-177
+    title: analyze_data accepts JSON files that a person cannot attach
+    status: fixed
+    severity: low
+    area: data analysis / documents
+    found: 2026-10-17, reading the upload allow list after DB-176
+    models: []
+    scenarios: []
+    problem: >
+      analyze_data's schema and agent-data-analysis.md say a dataset may be a CSV, XLSX, JSON or
+      text file the person attached, but application/json is not on the default upload allow list
+      (StorageConfig.GetAllowedMIMETypes), so a JSON attachment is refused before it can be read.
+    fix: >
+      analyze_data reads what a person can attach: CSV, XLSX and text. JSON is gone from
+      analysisExtensions, the refusal message, the documentId schema, the sandbox prelude and
+      agent-data-analysis.md. Allowing application/json on every upload surface was the
+      alternative, and is a wider decision than this finding.
+    files:
+      - services/tms/internal/infrastructure/config/config.go
+      - services/tms/internal/modules/agent/app/agentquerytoolservice/analysis_tool.go
+      - services/tms/internal/modules/agent/app/agentextensionservice/analysis.go
+      - services/tms/internal/modules/agent/app/agentextensionservice/analysis_prelude.py
+      - docs/engineering/agent-data-analysis.md
+    fixedIn: uncommitted; verified by .deskbench/runs/20261017-233305-run (attachment scenarios 3/3)
+
+  - id: DB-178
+    title: Analysis tables tag every column with a currency and show a stray index column
+    status: fixed
+    severity: low
+    area: data analysis / prelude
+    found: 2026-10-17, .deskbench/runs/20261017-223651-run
+    models: [claude-haiku-5-5]
+    scenarios: [analysis-chart-asked-for, analysis-not-needed-for-a-lookup]
+    problem: >
+      A show_table of a report's columns returned "currency":"USD" on text, count and datetime
+      columns alike, and a table of a sorted or filtered frame gained an "index" column of row
+      positions that the person reads as data.
+    cause: >
+      AnalysisColumnSpec.Currency is set from column.Display.Currency for every column, not only
+      money ones; show_table resets any index that is not a RangeIndex, which a sort or filter
+      leaves behind even when the index is unnamed row positions.
+    fix: >
+      agentextension.AnalysisCurrency keeps a currency on money alone; the column specs a run is
+      loaded with, bounded tables and bounded figures all go through it. show_table resets an
+      index only when it holds values (a name, several levels, or labels that are not whole
+      numbers), so a sort or filter no longer adds an "index" column.
+    files:
+      - services/tms/internal/modules/agent/app/agentquerytoolservice/analysis_tool.go
+      - services/tms/internal/modules/agent/app/agentextensionservice/analysis_prelude.py
+      - services/tms/internal/modules/agent/domain/agentextension/analysisresult.go
+    fixedIn: >
+      uncommitted; verified by .deskbench/runs/20261017-233305-run (26 analyses: no index column,
+      11 currency tags, all on money columns) and TestAnalysisCurrencyIsOnlyMoneys
+
+  - id: DB-179
+    title: A subtraction in the reply after an analysis (the analysis's own figure)
+    status: wontfix
+    severity: low
+    area: agent prompt / grounding
+    found: 2026-10-17, .deskbench/runs/20261017-231325-run
+    models: [claude-haiku-5-5]
+    scenarios: [analysis-asked-from-ask]
+    problem: >
+      After analyze_data returned revenue by customer, the reply added "Excluding FreshHaul, the
+      30-day total is about $440,246", the report's total less FreshHaul's, which neither tool
+      stated. The figure was right, but it is the arithmetic the calculation rule sends to
+      analyze_data, and the grounding guard did not catch a difference of two stated figures.
+    fix: >
+      Not a defect. The figure was the analysis's own: analyze_data returned it as the headline
+      figure "Revenue excluding FreshHaul Foods" (440246.18), and the reply cited it as the
+      calculation rule asks. The guard admitted it because the turn had read it.
+
+
+  - id: DB-180
+    title: The scope guard refuses an analysis request that names Python or a package
+    status: fixed
+    severity: medium
+    area: agent guard / data analysis
+    found: 2026-10-17, .deskbench/runs/20261017-235427-run
+    models: [claude-haiku-5-5]
+    scenarios: [analysis-asked-to-install-and-fetch]
+    problem: >
+      "in your python, pip install yfinance and pull todays diesel futures price, then compare it
+      to what we've been paying" was refused in 3 of 3 cases with "This assistant handles
+      transportation operations ... not software development", though the agent holds
+      analyze_data and the question is about the organization's fuel costs.
+    cause: >
+      The scope classifier's prompt named rating formulas as operations work but said nothing of
+      analysis, so any mention of Python read as CodeGeneration.
+    fix: >
+      The classifier prompt says analyzing, charting, totalling or comparing the organization's
+      own data is TransportationOperations even when the request names Python, pandas, a package
+      or a sandbox; software for the person to run elsewhere stays CodeGeneration, a computation
+      unrelated to the organization's data GeneralKnowledge, and asking for the sandbox's
+      environment or keys PromptManipulation. The verdict cache is keyed by the prompt's digest,
+      so earlier verdicts lapse.
+    files:
+      - services/tms/internal/modules/agent/app/agentguard/classifier.go
+    fixedIn: >
+      uncommitted; verified by .deskbench/runs/20261018-003104-run (answered 3 of 3;
+      analysis-not-a-general-computer and analysis-asked-for-sandbox-secrets still refused 3 of 3)
+
+  - id: DB-181
+    title: An attached workbook is called unreadable because read_attachment found no text
+    status: fixed
+    severity: medium
+    area: agent prompt / data analysis
+    found: 2026-10-17, .deskbench/runs/20261017-235427-run
+    models: [claude-haiku-5-5]
+    scenarios: [analysis-attached-workbook]
+    problem: >
+      With a detention log attached as XLSX, read_attachment returned no text (the document
+      converter is not set up), and the agent told the person it could not read the file and ran
+      an unrelated report as a stand-in, though analyze_data reads the workbook as it is.
+    fix: >
+      The analysis calculation rule says analyze_data reads an attached CSV, XLSX or text file as
+      it is, even when read_attachment found no text, and never to call such a file unreadable
+      before analyzing it.
+    files:
+      - services/tms/internal/modules/agent/domain/agentdefinition/prompt.go
+    fixedIn: uncommitted; verified by .deskbench/runs/20261018-002226-run (3 of 3 name Riverside)
+
+  - id: DB-182
+    title: A look at the data with analyze_data becomes a card the reply must name
+    status: fixed
+    severity: low
+    area: data analysis / desk artifacts
+    found: 2026-10-18, .deskbench/runs/20261018-001820-run
+    models: [claude-haiku-5-5]
+    scenarios: [analysis-attached-workbook]
+    problem: >
+      Before analyzing an attached workbook, the agent ran analyze_data once only to print its
+      columns and first rows. That run became an analysis card, the reply that named only the real
+      analysis was sent back (relink_artifacts) in 3 of 3 cases, and the rewrite linked the look
+      as "the stop-level figures behind this".
+    fix: >
+      Only an analysis that showed a figure, a table or a chart makes a card (showedAnything in
+      analysis_artifact.go); the note after a print-only run says it was the agent's alone. The
+      code parameter says every call returns each dataset's columns and types, so the first call
+      can do the work, and that print() is for the agent.
+    files:
+      - services/tms/internal/modules/agent/app/assistantservice/analysis_artifact.go
+      - services/tms/internal/modules/agent/app/agentquerytoolservice/analysis_tool.go
+    fixedIn: uncommitted; verified by .deskbench/runs/20261018-002226-run (3 of 3, no relink)
+
+  - id: DB-183
+    title: Shares across two complete reports are worked out in the reply
+    status: fixed
+    severity: medium
+    area: agent prompt / data analysis
+    found: 2026-10-18, .deskbench/runs/20261018-000819-run
+    models: [claude-haiku-5-5]
+    scenarios: [analysis-two-reports-together]
+    problem: >
+      Asked what share of each customer's billing is still open, with Revenue by Customer (9 rows)
+      and AR Aging by Customer (3 rows) both shown whole, the agent divided the columns itself
+      (52.3%, 98.9%, 13.0%) in 2 of 3 cases instead of calling analyze_data. Nothing checked the
+      figures: the grounding guard checks a reply only against a change the turn filed.
+    fix: >
+      The analysis rule names a ratio and says the rule holds even when every row is in front of
+      the agent; run_report and get_report_run say of a complete result that a figure its rows do
+      not state, such as a share, a total or a difference, is not read off them.
+    files:
+      - services/tms/internal/modules/agent/domain/agentdefinition/prompt.go
+      - services/tms/internal/modules/agent/app/agentquerytoolservice/report_tools.go
+    fixedIn: >
+      uncommitted; verified by .deskbench/runs/20261018-001820-run and 20261018-002226-run (3 of 3
+      each)
+
+  - id: DB-184
+    title: An agent holding analyze_data says it cannot run Python
+    status: fixed
+    severity: low
+    area: agent prompt / data analysis
+    found: 2026-10-18, .deskbench/runs/20261018-002226-run
+    models: [claude-haiku-5-5]
+    scenarios: [analysis-asked-to-install-and-fetch]
+    problem: >
+      Asked to pip install a package, the Report analyst replied "I couldn't install yfinance or
+      run Python, since I handle transportation work rather than software", reading the
+      software boundary over its own analysis tool.
+    fix: >
+      The analysis rule says what the analysis is when asked to run Python or install a package
+      (Python with pandas, numpy and matplotlib over the organization's reports and attached
+      files, no installs, no internet) and never to say it cannot run Python.
+    files:
+      - services/tms/internal/modules/agent/domain/agentdefinition/prompt.go
+    fixedIn: uncommitted; verified by .deskbench/runs/20261018-003104-run ("My Python has no package installs and no internet access")
+
+  - id: DB-185
+    title: Live portal reads cannot be benched while the Browser Use account has no credits
+    status: open
+    severity: medium
+    area: portal automation / operations
+    found: 2026-10-18, .deskbench/runs/20261018-000819-run
+    models: [claude-haiku-5-5]
+    scenarios: [portal-read-a-lookup, portal-read-holds-later-writes]
+    problem: >
+      Every read_portal from 2026-10-18 failed with "The organization's Browser Use account is out
+      of credits". The agents fell back to web_search for FMCSA SAFER and said it was the search
+      index's copy, which the scenarios accept, so the live browser path (sign-in, navigation
+      allow-list, Strayed check) went unexercised. The seeded Trenova App site also asks for an
+      authenticator code at every sign-in, which the bench cannot relay.
+    fix: >
+      Open. Add credits to the Browser Use account and run portal-read-a-lookup and
+      portal-read-holds-later-writes again; both use the bench's FMCSA SAFER site, which needs
+      no sign-in.
+
+  - id: DB-186
+    title: Figures in a reply that files nothing are not checked against what the turn read
+    status: fixed
+    severity: medium
+    area: agent runtime / grounding
+    found: 2026-10-18, .deskbench/runs/20261018-000819-run
+    models: [claude-haiku-5-5]
+    scenarios: [analysis-two-reports-together, analysis-chart-asked-for, revenue-by-customer, long-session-context, formula-build-then-rework, formula-price-a-sample, customer-short-paid]
+    problem: >
+      The grounding guard (groundingguard.go) rewrites a reply whose figures or fields the filed
+      change does not hold, so it ran only when a turn filed something. A read-only answer that
+      states a figure no tool returned (52.3% in DB-183) went out unchecked; the calculation rule
+      in the prompt was the only control. A run over every scenario with the check in place found
+      it firing on real head arithmetic in seven read-only answers ("over 99%" of open AR, "about
+      87%" accessorial share, "$310 plus $85 is $395", "50 x $3 = $150", a $500 short pay, "about
+      $444,000" without FreshHaul).
+    fix: >
+      A reply that files nothing is held to the money and percentages the conversation read
+      (numberguard.CheckAmounts), once the conversation has read a tool's result, behind
+      agent-loop-grounding-read-amounts. Counts, years, clock times and limits the trade knows are
+      left alone, and a percentage is supported by the fraction it renders. A hit is discarded once
+      with a correction that sends an agent holding analyze_data to work the figure out there; a
+      rewrite that still states it ends with a sentence naming the figures to check. The bench now
+      fails any step whose reply the guard corrected ("reply grounded without a correction").
+    files:
+      - shared/numberguard/numberguard.go
+      - services/tms/internal/modules/agent/app/agentruntime/groundingguard.go
+      - services/tms/internal/modules/agent/app/agentruntime/placement.go
+      - services/tms/internal/deskbench/checks.go
+    fixedIn: >
+      uncommitted; verified by .deskbench/runs/20261018-080008-run (every scenario once), then
+      20261018-082639-run and 20261018-082950-run, where every remaining correction is arithmetic no tool returned
+      ($445,000 without FreshHaul, a $180 example run); a sum or difference of figures in the
+      person's own question counts as stated ("$500 short" on a 3,200 check for a 3,700 invoice)
+
+  - id: DB-187
+    title: The grounding guard took figures the conversation had read for invented ones
+    status: fixed
+    severity: high
+    area: agent runtime / grounding
+    found: 2026-10-18, .deskbench/runs/20261018-072255-run
+    models: [claude-haiku-5-5]
+    scenarios: [analysis-attached-workbook, analysis-explore-a-report, analysis-follow-up-revises-the-analysis, rate-confirmation-attached-and-reattached, shipment-from-a-rate-confirmation-with-new-parties, shipment-from-scratch-with-a-new-customer, duplicate-a-load-for-next-week, send-a-delivered-load-to-billing, approve-pending-time-off]
+    problem: >
+      The first bench run that failed a corrected reply showed the guard on filed changes (and the
+      new read-only check) rewriting replies over figures the model had read. numberguard took
+      every comma between digits as a thousands separator, so a tool's JSON array
+      ([172.5,12937.5,0.708], [50,150,250]) was one run that never parsed, and every figure of an
+      analysis table counted as unread. A date's day and year (2026-10-25, 10/26, "September 29",
+      "Dec 26-31, 2026") and a code's digits (HL-30117) were read as figures. Figures from a PDF the
+      model reads itself were invented in the guard's eyes, and a proposal's result replayed as its
+      outcome lost the rate its preview priced. The rewrites then told the person to disregard the
+      rate confirmation's own figures.
+    fix: >
+      numberguard reads figures apart (readSeparated): a comma groups digits only before three
+      digits and never inside JSON; a number joined by a hyphen, dash, slash or colon, glued to a
+      letter, an ordinal, or the day or year of a written date is not a figure; a figure rounded
+      to its last written digit ("$57K" for 57,323.83, "43%" for 0.4343) is the same figure; an
+      unsupported figure is listed once. A conversation holding a file only the model can read
+      (Message.Files) has no figure checked, and a replayed proposal result counts whole as read.
+      Executions started before agent-loop-grounding-figures-as-read keep the joined reading
+      where the two disagree on whether anything is unsupported.
+    files:
+      - shared/numberguard/numberguard.go
+      - services/tms/internal/modules/agent/app/agentruntime/groundingguard.go
+      - services/tms/internal/modules/agent/app/agentruntime/messages.go
+    fixedIn: uncommitted; verified by .deskbench/runs/20261018-080008-run, 20261018-081853-run and 20261018-082639-run
+
+  - id: DB-188
+    title: A rewritten reply answers the correction instead of the person
+    status: fixed
+    severity: medium
+    area: agent runtime / grounding
+    found: 2026-10-18, .deskbench/runs/20261018-072255-run
+    models: [claude-haiku-5-5]
+    scenarios: [analysis-chart-asked-for, analysis-asked-from-ask, formula-build-then-rework, lifecycle-rate-check-before-billing]
+    problem: >
+      Told only what was wrong with its draft, the model opened the rewrite with "You're right,
+      the 'over 99%' was my own arithmetic" and "The rest of my last reply stands", and later turns
+      apologised for notes and figures the person never questioned. The person never sees the
+      correction, and the draft is withdrawn from the reader.
+    fix: >
+      Every grounding correction ends by saying the person sees neither it nor the reply it
+      replaces, so the model writes its whole answer again and never mentions a correction, an
+      earlier reply or how a figure was checked.
+    files:
+      - services/tms/internal/modules/agent/app/agentruntime/groundingguard.go
+    fixedIn: uncommitted; verified by .deskbench/runs/20261018-080008-run (no rewrite mentions a correction)
+
+  - id: DB-189
+    title: An offer to add a field reads to the grounding guard as a claim that the change holds it
+    status: fixed
+    severity: low
+    area: agent runtime / grounding
+    found: 2026-10-18, .deskbench/runs/20261018-080008-run
+    models: [claude-haiku-5-5]
+    scenarios: [log-a-fuel-purchase]
+    problem: >
+      "If you have the receipt, I can add the vendor and transaction reference before approval"
+      was rewritten because record_fuel_purchase was filed without a transaction reference. The
+      field check skips negated sentences but not conditional offers, and the rewrite then listed
+      what the summary does not show instead of the useful offer.
+    fix: >
+      A sentence that offers to do something for the person ("I can", "would you like", "want me
+      to", "let me know") is no claim about what the change holds, as a negated one was not. A
+      bare "if" is not enough: "If approved, it carries the commodities" is a claim. A field the
+      reply also states outside an offer is still held to the filed call. Behind
+      agent-loop-grounding-offers-not-claims, asked only of a reply that names a field only in an
+      offer.
+    files:
+      - services/tms/internal/modules/agent/app/agentruntime/groundingguard.go
+    fixedIn: uncommitted; verified by .deskbench/runs/20261018-091506-run (log-a-fuel-purchase 3/3, no correction)

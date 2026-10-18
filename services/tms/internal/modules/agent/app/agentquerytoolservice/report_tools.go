@@ -402,14 +402,14 @@ func newRunReportTool(
 	}
 }
 
-func (t *runReportTool) Name() string { return "run_report" }
+func (t *runReportTool) Name() string { return toolRunReport }
 
 func (t *runReportTool) Prerequisites() []string {
 	return []string{"list_reports", "describe_report"}
 }
 
 func (t *runReportTool) Recipe() []string {
-	return []string{"list_reports", "describe_report", "run_report"}
+	return []string{"list_reports", "describe_report", toolRunReport}
 }
 
 func (t *runReportTool) Description() string {
@@ -668,6 +668,11 @@ func describeMissingParameter(parameter report.ParameterDef) string {
 	)
 }
 
+const (
+	toolRunReport    = "run_report"
+	toolGetReportRun = "get_report_run"
+)
+
 type getReportRunTool struct {
 	reports reportRunner
 }
@@ -676,7 +681,7 @@ func newGetReportRunTool(reports reportRunner) agentports.AgentQueryTool {
 	return &getReportRunTool{reports: reports}
 }
 
-func (t *getReportRunTool) Name() string { return "get_report_run" }
+func (t *getReportRunTool) Name() string { return toolGetReportRun }
 
 func (t *getReportRunTool) Description() string {
 	return "Check on a report started by run_report, when the person asks a question " +
@@ -777,14 +782,32 @@ func attachRunSample(
 	}
 	status.Rows = sampleRows(shape, envelope.Rows, maxRunSampleRows)
 
-	status.Note += fmt.Sprintf(
-		" rows holds the first %d of its %d rows as a sample, keyed by column label, "+
-			"for answering questions about it; the rest are in the download.",
-		len(status.Rows), run.RowCount,
-	)
+	status.Note += sampleNote(len(status.Rows), run.RowCount)
 	if hasDated(shape.dated) {
 		status.Note += " Date columns are written as dates in the organization's timezone."
 	}
+}
+
+// sampleNote says how much of a run rows holds. A sample described as being
+// "for answering questions about it" was read as the answer: asked to analyze
+// a 63-row report, an agent said "I read the 20-row sample" and drew its
+// conclusions from it.
+func sampleNote(shown int, total int64) string {
+	if int64(shown) >= total {
+		return fmt.Sprintf(
+			" rows holds all %d of its rows, keyed by column label, to read from; a figure "+
+				"they do not state, such as a share, a total or a difference, is not read "+
+				"off them.",
+			shown,
+		)
+	}
+
+	return fmt.Sprintf(
+		" rows holds the first %d of its %d rows, keyed by column label: a sample of what "+
+			"the report holds, not the data to total, count, rank or compare, which "+
+			"covers every row. The rest are in the download.",
+		shown, total,
+	)
 }
 
 func describeRun(run *report.ReportRun) reportRunStatus {

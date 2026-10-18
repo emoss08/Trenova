@@ -3,8 +3,8 @@ package agentquerytoolservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/emoss08/trenova/pkg/reportrows"
@@ -123,14 +123,12 @@ func TestListReportRuns_CapsTheListAndPassesTheFilters(t *testing.T) {
 
 	_, err := fixture.tools["list_report_runs"].Query(t.Context(), testParams(map[string]any{
 		"definitionId": definitionID.String(),
-		"mineOnly":     true,
 		"limit":        500,
 	}))
 	require.NoError(t, err)
 
 	require.NotNil(t, fixture.service.listedRuns)
 	assert.Equal(t, definitionID, fixture.service.listedRuns.DefinitionID)
-	assert.True(t, fixture.service.listedRuns.MineOnly)
 	assert.Equal(t, maxListedRuns, fixture.service.listedRuns.Limit)
 }
 

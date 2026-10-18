@@ -106,3 +106,19 @@ func TestArtifactFromObservation_AnAnalysisThatDidNotRunToTheEndIsNotKept(t *tes
 			"%s: the agent fixes the code, and the person sees the result it reaches", status)
 	}
 }
+
+// An agent that loaded a workbook to read its columns before analyzing it
+// printed what it saw; that look is its own, so it makes no card the reply has
+// to name.
+func TestArtifactFromObservation_AnAnalysisThatOnlyPrintedIsNotKept(t *testing.T) {
+	t.Parallel()
+
+	result := analysisResult()
+	delete(result, "charts")
+
+	assert.Nil(t, artifactFromObservation(analysisObservation(result, "print(df.columns)")))
+
+	result["tables"] = []any{map[string]any{"title": "Margin by lane"}}
+	assert.NotNil(t, artifactFromObservation(analysisObservation(result, "show_table(df)")),
+		"a table the person was shown is kept")
+}

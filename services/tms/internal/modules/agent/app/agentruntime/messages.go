@@ -248,10 +248,13 @@ func replayToolResult(
 ) (replayed agentports.Message, original string) {
 	content, current := ledger.currentContent(*msg)
 	if !current && !keep {
-		if compacted := compactToolResult(content); compacted != content {
-			original = content
-			content = compacted
-		}
+		content = compactToolResult(content)
+	}
+	// A proposal's result is replayed as what became of it, and an older one
+	// is cut short; either way the model read the whole of it when it ran, so
+	// the figures in it (the rate a preview priced) still count as read.
+	if content != msg.Content {
+		original = msg.Content
 	}
 
 	return agentports.Message{

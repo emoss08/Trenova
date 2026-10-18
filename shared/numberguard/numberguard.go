@@ -1,6 +1,7 @@
 package numberguard
 
 import (
+	"slices"
 	"strconv"
 	"strings"
 	"unicode"
@@ -57,6 +58,26 @@ func CheckNumbers(prose string, supported []decimal.Decimal) NumberCheck {
 
 	unsupported := make([]string, 0, len(cited))
 	for _, citation := range cited {
+		if !citation.supportedBy(supported) && !slices.Contains(unsupported, citation.text) {
+			unsupported = append(unsupported, citation.text)
+		}
+	}
+
+	return NumberCheck{OK: len(unsupported) == 0, Unsupported: unsupported}
+}
+
+// CheckNumbersJoined is CheckNumbers as it read prose before readSeparated:
+// every comma and point between digits joined one number, and each repeat of
+// an unsupported figure was listed. The agent loop's grounding guard keeps it
+// for executions that decided with it; nothing else should call it.
+func CheckNumbersJoined(prose string, supported []decimal.Decimal) NumberCheck {
+	cited := scan(prose, readJoined)
+	if len(cited) == 0 {
+		return NumberCheck{OK: true}
+	}
+
+	unsupported := make([]string, 0, len(cited))
+	for _, citation := range cited {
 		if !isSupported(citation.value, supported) {
 			unsupported = append(unsupported, citation.text)
 		}
@@ -65,9 +86,68 @@ func CheckNumbers(prose string, supported []decimal.Decimal) NumberCheck {
 	return NumberCheck{OK: len(unsupported) == 0, Unsupported: unsupported}
 }
 
+// CheckAmounts is CheckNumbers held to the amounts in prose: money and
+// percentages. Those are the figures a person acts on, and the ones a model
+// that totals, averages or divides in its head writes; a count, a year, a time
+// or a limit it knows from the trade is left alone, because a reply may state
+// one that nothing it read printed.
+func CheckAmounts(prose string, supported []decimal.Decimal) NumberCheck {
+	unsupported := make([]string, 0, 2)
+	for _, cited := range extractNumbers(prose) {
+		if !cited.money && !cited.percent {
+			continue
+		}
+		if cited.supportedBy(supported) {
+			continue
+		}
+		if !slices.Contains(unsupported, cited.text) {
+			unsupported = append(unsupported, cited.text)
+		}
+	}
+
+	return NumberCheck{OK: len(unsupported) == 0, Unsupported: unsupported}
+}
+
+// supportedBy reports whether a computed figure supports the citation: one
+// within rounding of it, or within half a unit of its last written digit, as
+// "$57K" is of 57,323.83. A percentage is also the fraction it renders: 52.3%
+// is a computed 0.523.
+func (c citation) supportedBy(supported []decimal.Decimal) bool {
+	if isSupported(c.value, supported) {
+		return true
+	}
+	for _, candidate := range supported {
+		if c.value.Sub(candidate).Abs().LessThanOrEqual(c.half) {
+			return true
+		}
+		if c.percent && (withinTolerance(c.value.Shift(-2), candidate) ||
+			c.value.Shift(-2).Sub(candidate).Abs().LessThanOrEqual(c.half.Shift(-2))) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func matchesAny(value decimal.Decimal, supported []decimal.Decimal) bool {
+	for _, candidate := range supported {
+		if withinTolerance(value, candidate) {
+			return true
+		}
+	}
+
+	return false
+}
+
 type citation struct {
-	text  string
-	value decimal.Decimal
+	text    string
+	value   decimal.Decimal
+	money   bool
+	percent bool
+	// half is half a unit of the last digit written, in the figure's own
+	// units: "$57K" is 57,000 to the nearest thousand, so 500 either way,
+	// and "43%" is 43 to the nearest point. Zero in the joined reading.
+	half decimal.Decimal
 }
 
 func isSupported(value decimal.Decimal, supported []decimal.Decimal) bool {
@@ -117,6 +197,30 @@ func withinTolerance(value, candidate decimal.Decimal) bool {
 // pattern covering those without also matching the "30" inside an identifier
 // ends up longer and harder to reason about than the scan.
 func extractNumbers(prose string) []citation {
+	return scan(prose, readSeparated)
+}
+
+// reading is how a scan tells one figure from the next.
+type reading int
+
+const (
+	// readSeparated takes a comma as a thousands separator only before a group
+	// of three digits, and a point as a decimal point only before a digit, so
+	// "[172.5,12937.5,0.708]" in a tool's JSON is three figures. A number joined
+	// to another by a hyphen, slash or colon (2026-10-25, 10/26, 14:30,
+	// 214-555-0142, a 31-60 bucket) and one that is part of an identifier
+	// (INV2610000001, HL-30117) or an ordinal (31st) is not a figure.
+	readSeparated reading = iota
+	// readJoined takes every comma and point between digits as part of one
+	// number, so a JSON array of numbers read as one unparseable run and its
+	// figures as nothing. Kept only for the agent loop's executions that
+	// decided with it.
+	readJoined
+)
+
+var ordinalSuffixes = []string{"st", "nd", "rd", "th"}
+
+func scan(prose string, how reading) []citation {
 	runes := []rune(prose)
 	citations := make([]citation, 0, 8)
 
@@ -126,28 +230,261 @@ func extractNumbers(prose string) []citation {
 		}
 
 		start := index
-		for index < len(runes) && isNumericRune(runes[index]) {
+		grouped := how == readJoined || !jsonBefore(runes, start)
+		for index < len(runes) && continuesNumber(runes, index, how, grouped) {
 			index++
+		}
+		// "[50,150,250]" is three numbers, not 150,250 with a stray 50.
+		if how == readSeparated && grouped && jsonAfter(runes, index) &&
+			slices.Contains(runes[start:index], ',') {
+			index = start
+			for index < len(runes) && continuesNumber(runes, index, how, false) {
+				index++
+			}
 		}
 
 		raw := string(runes[start:index])
 		// A trailing separator belongs to the sentence, not the number: "12,400,"
 		// at the end of a clause is the figure plus a comma.
 		raw = strings.TrimRight(raw, ".,")
+		end := start + len([]rune(raw))
+		if how == readSeparated && notAFigure(runes, start, end) {
+			continue
+		}
 
 		value, err := parseNumber(raw, runes, index)
 		if err != nil {
 			continue
 		}
 
-		citations = append(citations, citation{text: raw, value: value})
+		cited := citation{
+			text:    raw,
+			value:   value,
+			money:   isMoney(runes, start, end),
+			percent: isPercent(runes, end),
+		}
+		if how == readSeparated {
+			cited.half = halfUnit(raw, value)
+		}
+		citations = append(citations, cited)
 	}
 
 	return citations
 }
 
+var (
+	currencySymbols = []rune{'$', '€', '£', '¥'}
+	currencyCodes   = []string{"USD", "CAD", "MXN", "EUR", "GBP"}
+	percentWords    = []string{"percent", "pct"}
+)
+
+// isMoney reports whether the figure at runes[start:end] is written as money:
+// a currency symbol before it ("$12,400", "-$80", "($80)", "US$ 80") or a
+// currency code on either side ("USD 12,400", "12,400 CAD").
+func isMoney(runes []rune, start, end int) bool {
+	before := start - 1
+	for before >= 0 && (runes[before] == ' ' || runes[before] == '-' || runes[before] == '(') &&
+		start-before <= 2 {
+		before--
+	}
+	if before >= 0 && slices.Contains(currencySymbols, runes[before]) {
+		return true
+	}
+	if word := wordBefore(runes, start); slices.Contains(currencyCodes, word) {
+		return true
+	}
+
+	after := end
+	if after < len(runes) && strings.ContainsRune("kKmM", runes[after]) {
+		after++
+	}
+
+	return slices.Contains(currencyCodes, wordAfter(runes, after))
+}
+
+// isPercent reports whether the figure ending at end is written as a share:
+// "52.3%", "52.3 %", "52.3 percent".
+func isPercent(runes []rune, end int) bool {
+	if end < len(runes) && runes[end] == '%' {
+		return true
+	}
+	if end+1 < len(runes) && runes[end] == ' ' && runes[end+1] == '%' {
+		return true
+	}
+
+	return slices.Contains(percentWords, strings.ToLower(wordAfter(runes, end)))
+}
+
+// wordBefore is the word that ends one space before start, or "".
+func wordBefore(runes []rune, start int) string {
+	end := start
+	if end > 0 && runes[end-1] == ' ' {
+		end--
+	}
+	begin := end
+	for begin > 0 && unicode.IsLetter(runes[begin-1]) {
+		begin--
+	}
+
+	return string(runes[begin:end])
+}
+
+// wordAfter is the word that starts one space after end, or "".
+func wordAfter(runes []rune, end int) string {
+	begin := end
+	if begin < len(runes) && runes[begin] == ' ' {
+		begin++
+	}
+	stop := begin
+	for stop < len(runes) && unicode.IsLetter(runes[stop]) {
+		stop++
+	}
+
+	return string(runes[begin:stop])
+}
+
 func isNumericRune(r rune) bool {
 	return unicode.IsDigit(r) || r == ',' || r == '.'
+}
+
+func continuesNumber(runes []rune, index int, how reading, grouped bool) bool {
+	r := runes[index]
+	if how == readJoined || unicode.IsDigit(r) {
+		return isNumericRune(r)
+	}
+
+	switch r {
+	case '.':
+		return isDigitAt(runes, index+1)
+	case ',':
+		return grouped && isDigitAt(runes, index+1) && isDigitAt(runes, index+2) &&
+			isDigitAt(runes, index+3) && !isDigitAt(runes, index+4)
+	default:
+		return false
+	}
+}
+
+// jsonBefore reports whether the number starting at start opens a JSON
+// value, where a comma never groups digits.
+func jsonBefore(runes []rune, start int) bool {
+	return start > 0 && strings.ContainsRune("[:,", runes[start-1])
+}
+
+// jsonAfter reports whether the run ending at end closes a JSON value or is
+// followed by the next one with no space between.
+func jsonAfter(runes []rune, end int) bool {
+	if end >= len(runes) {
+		return false
+	}
+	switch runes[end] {
+	case ']', '}':
+		return true
+	case ',':
+		return end+1 < len(runes) && !unicode.IsSpace(runes[end+1])
+	default:
+		return false
+	}
+}
+
+// joiners join two numbers into a date, a time, a range or a code.
+const joiners = "-–—/:"
+
+var months = []string{
+	"jan", "january", "feb", "february", "mar", "march", "apr", "april", "may", "jun", "june",
+	"jul", "july", "aug", "august", "sep", "sept", "september", "oct", "october", "nov",
+	"november", "dec", "december",
+}
+
+// dateConnectors join the days of one written date: "September 29 and 30".
+var dateConnectors = []string{"and", "or", "to", "through", "thru"}
+
+// notAFigure reports whether the digits at runes[start:end] are a date, a
+// time, a range, a code or an ordinal rather than a quantity.
+func notAFigure(runes []rune, start, end int) bool {
+	if start > 0 {
+		before := runes[start-1]
+		if unicode.IsLetter(before) {
+			return true
+		}
+		if strings.ContainsRune(joiners+"_", before) && start > 1 &&
+			(unicode.IsLetter(runes[start-2]) || unicode.IsDigit(runes[start-2])) {
+			return true
+		}
+	}
+	if end < len(runes) && strings.ContainsRune(joiners, runes[end]) && isDigitAt(runes, end+1) {
+		return true
+	}
+	if slices.Contains(ordinalSuffixes, strings.ToLower(wordAfterNoSpace(runes, end))) {
+		return true
+	}
+
+	return inCalendarDate(runes, start, end)
+}
+
+// inCalendarDate reports whether the number is the day or year of a date
+// written with its month: "September 29", "Dec 26–31, 2026", "29 Sep".
+func inCalendarDate(runes []rune, start, end int) bool {
+	value, err := strconv.Atoi(string(runes[start:end]))
+	if err != nil {
+		return false
+	}
+	day := end-start <= 2 && value >= 1 && value <= 31
+	year := end-start == 4 && value >= 1900 && value < 2200
+	if !day && !year {
+		return false
+	}
+
+	begin := start
+	for begin > 0 && start-begin < 24 {
+		r := runes[begin-1]
+		if unicode.IsLetter(r) {
+			word := wordBefore(runes, begin)
+			if !slices.Contains(dateConnectors, strings.ToLower(word)) {
+				break
+			}
+			begin -= len([]rune(word))
+			continue
+		}
+		if r != ' ' && r != ',' && r != '.' && !unicode.IsDigit(r) &&
+			!strings.ContainsRune(joiners, r) {
+			break
+		}
+		begin--
+	}
+	if slices.Contains(months, strings.ToLower(wordBefore(runes, begin))) {
+		return true
+	}
+
+	return day && slices.Contains(months, strings.ToLower(wordAfter(runes, end)))
+}
+
+func isDigitAt(runes []rune, index int) bool {
+	return index < len(runes) && unicode.IsDigit(runes[index])
+}
+
+// wordAfterNoSpace is the word that starts right at end, or "".
+func wordAfterNoSpace(runes []rune, end int) string {
+	stop := end
+	for stop < len(runes) && unicode.IsLetter(runes[stop]) {
+		stop++
+	}
+
+	return string(runes[end:stop])
+}
+
+// halfUnit is half a unit of the last digit of raw, scaled as value is: "57"
+// written as 57,000 is half of a thousand.
+func halfUnit(raw string, value decimal.Decimal) decimal.Decimal {
+	written, err := decimal.NewFromString(strings.ReplaceAll(raw, ",", ""))
+	if err != nil || written.IsZero() {
+		return decimal.Zero
+	}
+	places := int32(0)
+	if dot := strings.IndexByte(raw, '.'); dot >= 0 {
+		places = int32(len(raw) - dot - 1)
+	}
+
+	return decimal.New(5, -places-1).Mul(value.Div(written).Abs())
 }
 
 func parseNumber(raw string, runes []rune, after int) (decimal.Decimal, error) {
@@ -201,13 +538,23 @@ func SupportedValues(
 }
 
 func SupportedFromText(texts ...string) []decimal.Decimal {
+	return supportedFrom(readSeparated, texts)
+}
+
+// SupportedFromTextJoined is SupportedFromText as it read text before
+// readSeparated, kept with CheckNumbersJoined.
+func SupportedFromTextJoined(texts ...string) []decimal.Decimal {
+	return supportedFrom(readJoined, texts)
+}
+
+func supportedFrom(how reading, texts []string) []decimal.Decimal {
 	supported := make([]decimal.Decimal, 0, len(texts)*4)
 	seen := make(map[string]struct{}, len(texts)*4)
 	for _, text := range texts {
 		if text == "" {
 			continue
 		}
-		for _, cited := range extractNumbers(text) {
+		for _, cited := range scan(text, how) {
 			key := cited.value.String()
 			if _, dup := seen[key]; dup {
 				continue

@@ -7,7 +7,7 @@ related:
 ---
 
 ## What it's for
-Run history lists every report run in your organization: which report, its **Status**, **Format**, **Trigger** (for example run by hand or by a schedule), how many **Rows** it returned, its **Size** and **Duration**, when it was requested (**Requested At**) and when its file **Expires**. Anyone who runs or schedules reports uses it to download finished files and to cancel runs that are still in progress.
+Run history lists the report runs you made, by hand or through your schedules: which report, its **Status**, **Format**, **Trigger** (for example run by hand or by a schedule), how many **Rows** it returned, its **Size** and **Duration**, when it was requested (**Requested At**) and when its file **Expires**. Anyone who runs or schedules reports uses it to download finished files and to cancel runs that are still in progress. A run holds what the report returned for the person who ran it, so nobody else's runs are listed or can be downloaded; to see a colleague's results, run the report yourself.
 
 ## Tasks
 

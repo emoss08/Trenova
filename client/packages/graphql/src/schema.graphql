@@ -25776,7 +25776,7 @@ type ReportRunError {
 
 input ReportRunsFilterInput {
   definitionId: ID
-  mineOnly: Boolean
+  mineOnly: Boolean @deprecated(reason: "Every run listed is one the caller ran; another person's runs are never listed.")
   statuses: [String!]
 }
 

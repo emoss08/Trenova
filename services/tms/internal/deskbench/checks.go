@@ -89,6 +89,7 @@ func (b *Bench) evaluate(
 	checks := make([]CheckResult, 0, 8)
 	checks = append(checks, turnsCompleted(evidence))
 	checks = append(checks, artifactLinkChecks(evidence.turns)...)
+	checks = append(checks, groundingCheck(evidence.turns))
 
 	calls := evidence.calls()
 	reply := evidence.reply()
@@ -238,6 +239,50 @@ func artifactCorrections(events []Event) []string {
 	}
 
 	return actions
+}
+
+// groundingCheck fails a step whose reply the grounding guard had to rewrite or
+// annotate: one that named what a filed change does not hold, or stated an
+// amount nothing the conversation read. Either is the model drifting, and a
+// guard that fires where it should not shows here too.
+func groundingCheck(turns []*TurnRecord) CheckResult {
+	var corrected []string
+	for _, turn := range turns {
+		for _, event := range turn.Events {
+			if event.Name != agentports.AssistantEventReplyRegrounded {
+				continue
+			}
+			data, ok := event.Data.(map[string]any)
+			if !ok {
+				continue
+			}
+			action, _ := data["action"].(string)
+			reground := agentports.RegroundAction(action)
+			if reground != agentports.RegroundRewrite && reground != agentports.RegroundNote {
+				continue
+			}
+			corrected = append(corrected, action+": "+strings.Join(
+				append(eventStrings(data["figures"]), eventStrings(data["fields"])...), ", "))
+		}
+	}
+
+	return CheckResult{
+		Name:   "reply grounded without a correction",
+		Passed: len(corrected) == 0,
+		Detail: strings.Join(corrected, " | "),
+	}
+}
+
+func eventStrings(value any) []string {
+	items, _ := value.([]any)
+	out := make([]string, 0, len(items))
+	for _, item := range items {
+		if text, ok := item.(string); ok {
+			out = append(out, text)
+		}
+	}
+
+	return out
 }
 
 func formulaCheck(spec, formula string) CheckResult {

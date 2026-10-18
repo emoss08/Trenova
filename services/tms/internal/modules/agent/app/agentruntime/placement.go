@@ -145,7 +145,7 @@ func (t *Turn) discardedDraft(idx int) bool {
 func isCorrection(message *agentports.Message) bool {
 	return message.Role == agentports.RoleUser &&
 		(strings.HasPrefix(message.Content, placementCorrectionLead) ||
-			strings.HasPrefix(message.Content, groundingCorrectionLead))
+			isGroundingCorrection(message.Content))
 }
 
 func (t *Turn) shownArtifact(id string) (*agentports.ShownArtifact, bool) {

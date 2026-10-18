@@ -183,6 +183,18 @@ def _kind_of(series, name, given):
     return "text", ""
 
 
+def _index_is_data(index):
+    """An index is shown as a column when it holds values: a name, several
+    levels, or labels that are not whole numbers. Unnamed whole numbers are
+    row positions a sort or a filter left behind, not data."""
+    try:
+        if isinstance(index, pd.MultiIndex) or index.name is not None:
+            return True
+        return not pd.api.types.is_integer_dtype(index.dtype)
+    except Exception:
+        return True
+
+
 def show_table(data, title=None, formats=None, max_rows=200):
     """Show a DataFrame or Series as a table beside the reply.
 
@@ -191,7 +203,7 @@ def show_table(data, title=None, formats=None, max_rows=200):
     count, percent (a fraction: 0.25 is 25%), date, datetime and bool.
     """
     frame = data.to_frame() if isinstance(data, pd.Series) else pd.DataFrame(data)
-    if not isinstance(frame.index, pd.RangeIndex) or frame.index.name is not None:
+    if _index_is_data(frame.index):
         frame = frame.reset_index()
     formats = formats or {}
     columns = []
@@ -290,8 +302,6 @@ def _load(spec):
             frame = pd.read_csv(spec["path"])
         elif extension == "xlsx":
             frame = pd.read_excel(spec["path"])
-        elif extension == "json":
-            frame = pd.read_json(spec["path"])
         else:
             frame = None
         if frame is not None:

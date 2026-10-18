@@ -226,3 +226,144 @@ func TestOnlyCountsHoldsEveryNumberToTheCounts(t *testing.T) {
 		t.Fatal("prose with no numbers was refused")
 	}
 }
+
+// DB-186: a model that read two reports and divided one total by the other in
+// its head wrote a share nothing it read held. Money and shares are held to what
+// was read; a count, a year, a clock time or a limit the trade knows are not.
+func TestCheckAmounts_HoldsMoneyAndSharesOnly(t *testing.T) {
+	t.Parallel()
+
+	check := numberguard.CheckAmounts(
+		"Of the $87,310.40 billed in 31 days, 52.3% is still open. The 70-hour rule "+
+			"applies from 2026 on, and the dock opens at 14:45.",
+		values(87310.40),
+	)
+
+	require.False(t, check.OK)
+	assert.Equal(t, []string{"52.3"}, check.Unsupported)
+}
+
+func TestCheckAmounts_ReadsEveryWayMoneyIsWritten(t *testing.T) {
+	t.Parallel()
+
+	for _, prose := range []string{
+		"It came to $4,800.",
+		"It came to -$4,800.",
+		"It came to ($4,800).",
+		"It came to US$ 4,800.",
+		"It came to USD 4,800.",
+		"It came to 4,800 CAD.",
+		"It came to $4.8k.",
+		"It came to €4,800.",
+	} {
+		check := numberguard.CheckAmounts(prose, values(1250))
+		assert.False(t, check.OK, prose)
+	}
+}
+
+func TestCheckAmounts_ReadsEveryWayAShareIsWritten(t *testing.T) {
+	t.Parallel()
+
+	for _, prose := range []string{
+		"About 52.3% is open.",
+		"About 52.3 % is open.",
+		"About 52.3 percent is open.",
+	} {
+		assert.False(t, numberguard.CheckAmounts(prose, values(41)).OK, prose)
+		assert.True(t, numberguard.CheckAmounts(prose, values(52.3)).OK, prose)
+	}
+}
+
+func TestCheckAmounts_AShareIsTheFractionItRenders(t *testing.T) {
+	t.Parallel()
+
+	assert.True(t, numberguard.CheckAmounts("52.3% is still open.", values(0.5231)).OK)
+	assert.False(t, numberguard.CheckAmounts("52.3% is still open.", values(0.61)).OK)
+}
+
+func TestCheckAmounts_LeavesSmallAmountsAndRoundingAlone(t *testing.T) {
+	t.Parallel()
+
+	check := numberguard.CheckAmounts(
+		"A $20 fee on 5% of loads; open balances average about $168K.",
+		values(167935.06),
+	)
+
+	assert.True(t, check.OK, check.Unsupported)
+}
+
+// A tool's JSON lists numbers with nothing but a comma between them. Read as
+// thousands separators, "[172.5,12937.5,0.708]" was one unparseable run, and
+// every figure an analysis table returned counted as never read.
+func TestSupportedFromText_ReadsEachNumberOfAJSONArray(t *testing.T) {
+	t.Parallel()
+
+	supported := numberguard.SupportedFromText(
+		`{"rows":[["Riverside Cold Storage",39,39,172.5,12937.5,0.708]]}`)
+
+	check := numberguard.CheckNumbers("Riverside cost $12,937.50, 70.8% of the total.", supported)
+	assert.True(t, check.OK, check.Unsupported)
+	assert.False(t, numberguard.CheckNumbersJoined("Riverside cost $12,937.50.",
+		numberguard.SupportedFromTextJoined(`[172.5,12937.5,0.708]`)).OK,
+		"the joined reading is the one that failed")
+}
+
+func TestCheckNumbers_DatesTimesRangesAndCodesAreNotFigures(t *testing.T) {
+	t.Parallel()
+
+	check := numberguard.CheckNumbers(
+		"Delivery moves to 2026-10-25 11:00–13:30, or 10/26 if you meant next week. "+
+			"Pickup # HL-30117 on INV2610000001, call 214-555-0142, in the 31-60 bucket, "+
+			"by the 31st.",
+		nil,
+	)
+
+	assert.True(t, check.OK, check.Unsupported)
+}
+
+func TestCheckNumbers_ListsEachUnsupportedFigureOnce(t *testing.T) {
+	t.Parallel()
+
+	check := numberguard.CheckNumbers("Short by $500. Write off the $500 or dispute $500.", nil)
+
+	assert.Equal(t, []string{"500"}, check.Unsupported)
+}
+
+func TestCheckNumbers_ReadsAJSONRowApart(t *testing.T) {
+	t.Parallel()
+
+	supported := numberguard.SupportedFromText(`{"rows":[[90,270,270],[50,150,250]]}`)
+
+	assert.True(t, numberguard.CheckNumbers("50 miles prices at $150 before the minimum.",
+		supported).OK)
+	assert.True(t, numberguard.CheckNumbers("It came to $150,250.",
+		numberguard.SupportedFromText("Total: 150,250 USD")).OK,
+		"prose keeps its thousands separators")
+}
+
+func TestCheckNumbers_DaysAndYearsOfAWrittenDateAreNotFigures(t *testing.T) {
+	t.Parallel()
+
+	check := numberguard.CheckNumbers(
+		"Deliveries on September 29 and 30; time off Dec 26–31, 2026 and Jan 27–31, 2027; "+
+			"due 29 Sep. The $3,200 Oct invoice is open.",
+		nil,
+	)
+
+	assert.Equal(t, []string{"3,200"}, check.Unsupported)
+}
+
+func TestCheckNumbers_AFigureRoundedToItsLastDigitIsTheSameFigure(t *testing.T) {
+	t.Parallel()
+
+	supported := values(57323.83, 65438.46, 0.4343)
+
+	check := numberguard.CheckNumbers(
+		"One TEAM load is $57K; without it the total is about $65k, 43% accessorial.",
+		supported,
+	)
+	assert.True(t, check.OK, check.Unsupported)
+
+	check = numberguard.CheckNumbers("FreshHaul's other loads add up to roughly $62K.", supported)
+	assert.Equal(t, []string{"62"}, check.Unsupported, "a different figure is still different")
+}

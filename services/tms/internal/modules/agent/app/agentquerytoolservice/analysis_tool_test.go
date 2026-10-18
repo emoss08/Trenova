@@ -175,13 +175,13 @@ func TestAnalyzeDataReadsTheRunsTheCallerRanAsRawCSV(t *testing.T) {
 	assert.Equal(t, []agentextension.AnalysisColumnSpec{
 		{ID: "lane", Label: "Lane", Type: "string", Kind: agentextension.AnalysisValueText},
 		{
-			ID:       "margin",
-			Label:    "Margin",
-			Type:     "decimal",
-			Kind:     agentextension.AnalysisValuePercent,
-			Currency: "USD",
+			ID:    "margin",
+			Label: "Margin",
+			Type:  "decimal",
+			Kind:  agentextension.AnalysisValuePercent,
 		},
-	}, input.Columns, "the sandbox loads each column typed and headed by its label")
+	}, input.Columns, "the sandbox loads each column typed and headed by its label, "+
+		"and only money carries the report's currency")
 	assert.Equal(t, h.params.ThreadID, h.analyzer.asked.Owner.ThreadID)
 	assert.Equal(t, "Lane margin", h.analyzer.asked.Title)
 	assert.Equal(t, permission.ResourceReport.String(), h.perms.captured.Resource)

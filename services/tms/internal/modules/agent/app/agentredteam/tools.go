@@ -180,6 +180,8 @@ func (q *recordingQuery) Prerequisites() []string { return prerequisitesOf(q.inn
 
 func (q *recordingQuery) Companions() []string { return companionsOf(q.inner) }
 
+func (q *recordingQuery) Follows() []string { return followsOf(q.inner) }
+
 func (q *recordingQuery) Query(
 	ctx context.Context,
 	params *agentports.QueryToolParams,
@@ -214,6 +216,8 @@ func (a *recordingAction) SearchTerms() []string { return searchTermsOf(a.inner)
 func (a *recordingAction) Prerequisites() []string { return prerequisitesOf(a.inner) }
 
 func (a *recordingAction) Companions() []string { return companionsOf(a.inner) }
+
+func (a *recordingAction) Follows() []string { return followsOf(a.inner) }
 
 func (a *recordingAction) Execute(
 	ctx context.Context,
@@ -251,6 +255,14 @@ func prerequisitesOf(tool any) []string {
 func companionsOf(tool any) []string {
 	if companion, ok := tool.(agentports.CompanionTool); ok {
 		return companion.Companions()
+	}
+
+	return nil
+}
+
+func followsOf(tool any) []string {
+	if follower, ok := tool.(agentports.FollowerTool); ok {
+		return follower.Follows()
 	}
 
 	return nil

@@ -3,6 +3,7 @@ package deskbench
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -65,4 +66,21 @@ func TestRunUnits_RunsAnExclusiveGroupInOrderForEachProviderAndRepeat(t *testing
 	for _, unit := range units[1:] {
 		assert.Len(t, unit, 1)
 	}
+}
+
+func TestGroundingCheck_FailsAReplyTheGuardCorrected(t *testing.T) {
+	t.Parallel()
+
+	clean := groundingCheck([]*TurnRecord{{Events: []Event{{
+		Name: agentports.AssistantEventReplyRegrounded,
+		Data: map[string]any{"action": "relink_artifacts"},
+	}}}})
+	assert.True(t, clean.Passed, "an artifact link correction has a check of its own")
+
+	corrected := groundingCheck([]*TurnRecord{{Events: []Event{{
+		Name: agentports.AssistantEventReplyRegrounded,
+		Data: map[string]any{"action": "rewrite", "figures": []any{"52.3"}},
+	}}}})
+	assert.False(t, corrected.Passed)
+	assert.Equal(t, "rewrite: 52.3", corrected.Detail)
 }

@@ -19,6 +19,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// heldRequestLimit is the longest a handler holds a request its client should
+// abandon.
+const heldRequestLimit = 5 * time.Second
+
 var settings = map[string]string{agentextension.ConfigKeyAPIKey: "e2b-key"}
 
 func serve(t *testing.T, handler http.HandlerFunc) *Connector {
@@ -173,7 +177,13 @@ func TestRunCodeSaysWhenTheCodeRanOutOfTime(t *testing.T) {
 
 	connector := serve(t, func(_ http.ResponseWriter, r *http.Request) {
 		_, _ = io.Copy(io.Discard, r.Body)
-		<-r.Context().Done()
+		// The client gives up long before this; a client that never does
+		// fails the test here instead of holding the server's Close, and the
+		// package, until the test binary times out.
+		select {
+		case <-r.Context().Done():
+		case <-time.After(heldRequestLimit):
+		}
 	})
 
 	execution, err := connector.RunCode(t.Context(), &agentextensionports.RunCodeRequest{

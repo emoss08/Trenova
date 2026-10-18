@@ -49,8 +49,10 @@ var (
 	pngSignature = []byte("\x89PNG\r\n\x1a\n")
 
 	// analysisExtensions are the formats a dataset may be written as: what
-	// pandas reads without anything the sandbox would have to fetch.
-	analysisExtensions = []string{"csv", "xlsx", "json", "txt"}
+	// pandas reads without anything the sandbox would have to fetch, among
+	// what a person can attach to a conversation. JSON was listed once, but no
+	// upload accepts it, so a dataset could never be one.
+	analysisExtensions = []string{"csv", "xlsx", "txt"}
 )
 
 type analysisCall struct {
@@ -109,7 +111,7 @@ func checkInputs(inputs []agentextensionports.AnalysisInput) error {
 		seen[input.Name] = struct{}{}
 		if !slices.Contains(analysisExtensions, input.Extension) {
 			return &ToolError{Message: "Dataset " + input.Name + " is a ." + input.Extension +
-				" file, which an analysis cannot read. Use a CSV, XLSX, JSON or text file."}
+				" file, which an analysis cannot read. Use a CSV, XLSX or text file."}
 		}
 		if len(input.Content) > agentextension.MaxAnalysisDatasetBytes {
 			return &ToolError{Message: "Dataset " + input.Name + " is larger than 20 MB. " +

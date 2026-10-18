@@ -1589,6 +1589,14 @@ Its answer said to call `create_shipment` next, and the model went looking for i
 with `find_tools` first. A lookup many held recipes start from (`search_shipments`,
 `get_shipment`) brings none of them.
 
+A tool that works on what other tools return names them as the tools it follows
+(`agentports.FollowerTool`, `Catalog.Followers`), and loads whenever one of them loads, but only
+for an agent that already holds it and a person who may use it: following grants nothing, so an
+administrator who gave an extension's tool to chosen agents keeps that choice. `analyze_data`
+follows `run_report`, `get_report_run` and `read_attachment`. Before it did, a turn from Ask
+loaded `run_report` without it, read the report's twenty sample rows and compared periods by
+paging `list_shipments`, and never asked `find_tools` for the tool that reads every row.
+
 A prerequisite only ever grants a read. A write a tool cannot finish its job without is
 declared instead as a companion (`agentports.CompanionTool`): `create_shipment` names
 `create_customer`, `create_location` and `create_commodity`, because a load from a broker
@@ -1670,7 +1678,9 @@ against the filed tools' own schemas: each collection property and each
 multi-word field (derived with `toolschema.Walk`, ids left out) must carry a
 value in some filed call, or be named in its filing result, before the reply
 may say it is part of the change. A sentence that says the thing was left out
-is not a claim. A one-word name counts only at the top of a call: the `codes` of
+is not a claim, and neither is one that offers to add it ("If you have the receipt, I can add the
+vendor and transaction reference": `offerPhrases`, behind `agent-loop-grounding-offers-not-claims`);
+a field the reply also states in a sentence that is not an offer is still held to the filed call. A one-word name counts only at the top of a call: the `codes` of
 each requirement in `apply_edi_connection_draft` is a word an EDI reply spends
 on a guide's charge codes and status codes, and holding it to the filed
 requirements rewrote replies that never said the change carried any
@@ -1679,6 +1689,41 @@ requirements rewrote replies that never said the change carried any
 still drifts, or one written after the tool budget was spent, ends with a note
 to check the card. Each is a `reply_regrounded` event in the run's trajectory.
 The LLM judge that scores the same thing stays in the evaluations.
+
+A reply that files nothing is held to less: only its money and percentages
+(`numberguard.CheckAmounts`), and only once the conversation has read a tool's result, in this
+turn or a replayed one (`agent-loop-grounding-read-amounts`). Those are the figures a model that
+totals, averages or divides in its head writes; asked what share of a month's billing was still
+open, an agent that had read both totals stated 52.3% without running anything (DB-186). A count,
+a year, a clock time or a limit the trade knows (the 70-hour rule) is left alone, because a reply
+may state one that nothing it read printed, and a conversation that read nothing is answering from
+what the trade knows. The sum or difference of two figures in the person's own question counts as
+stated: told a check was 3,200 against a 3,700 invoice, "$500 short" restates them (the first
+twelve figures of the question are paired). A percentage is supported by the fraction it renders (52.3% by 0.523), and
+rounding and thousands are read as for a filed change. A hit is discarded once with a correction
+naming the figures: an agent holding `analyze_data` is told to work them out there, any other to
+leave out what the tools do not give. A rewrite that still states one ends with a sentence naming
+the figures to check. The bench fails a step whose reply either guard corrected ("reply grounded
+without a correction").
+
+Both checks read figures the same way (`numberguard`'s separated reading). A comma is a thousands
+separator only before three digits and never inside JSON (after `[`, `:` or `,`, or before `]`,
+`}` or a comma with no space after it), so each number of a tool's JSON array
+(`[172.5,12937.5,0.708]`, `[50,150,250]`) counts as read; read as one run, it never parsed, and
+replies quoting an analysis table were rewritten. A number joined to another by a hyphen, dash,
+slash or colon (a date, a clock time, a 31-60 bucket, a phone number), one glued to a letter
+(`INV2610000001`, `HL-30117`), an ordinal, and the day or year of a date written with its month
+("September 29 and 30", "Dec 26–31, 2026") are not figures. A figure is the same as one it rounds to its last
+written digit ("$57K" for 57,323.83, "43%" for 0.4343), as well as one within the proportional
+tolerance. A conversation holding a file the model reads itself (a PDF or an
+image no text was taken from, `Message.Files`) has no figure checked, since the guard cannot see
+what the model read on the page. A proposal's result replayed as what became of it, or cut short
+as an older result, counts whole as read (the replay's `shortened`, carried as `Turn.evidence`).
+A filed change's check decided the old way in executions started before
+`agent-loop-grounding-figures-as-read`; the workflow is asked only when the two readings disagree
+on whether the reply cites anything unsupported. Every correction ends by telling the model that
+the person sees neither it nor the reply it replaces: told only what was wrong, a rewrite opened
+"You're right, the 99% was my own arithmetic" to a person who never saw the 99%.
 
 Two rules the prompt gives are then enforced on every final reply, a
 delegate's included, before it is recorded (`replypass.go`): internal record
@@ -2373,6 +2418,9 @@ before the change:
 | `assistant-turn-notify-unseen` | a turn that ends with nobody reading its stream ends without telling the person who asked | nothing; the check itself is the only cost, and it is asked only of a turn nobody drained |
 | `assistant-turn-prepare-local` | a turn prepares as a regular activity: a task-queue dispatch and a second workflow task before the model call is scheduled | nothing; `PrepareTurnActivity` stays registered, and the old branch keeps its priority and fairness keys |
 | `agent-loop-grounding-top-level-words` | a one-word collection nested in a filed call's items (`requirements[].codes`) is held to the filed call like a top-level one, and a reply naming a guide's codes is rewritten | nothing; the check itself is the only cost, and it is asked only of a reply the guard found naming such a word |
+| `agent-loop-grounding-offers-not-claims` | a field named only in an offer to add it ("I can add the transaction reference") is held to the filed call, and the reply is rewritten | nothing; the check itself is the only cost, and it is asked only of a reply the guard found naming a field only in an offer |
+| `agent-loop-grounding-figures-as-read` | a filed change's reply is read with every comma and point between digits joining one number, a date's day and a code's digits as figures, and a figure from a file only the model reads as invented (`numberguard.CheckNumbersJoined`, `SupportedFromTextJoined`, `Turn.groundingSupportJoined`) | the joined reading in `numberguard`; asked only when the two readings disagree on whether anything is unsupported |
+| `agent-loop-grounding-read-amounts` | a reply that files nothing is kept as written, whatever money or percentage it states | nothing; the check itself is the only cost, and it is asked only of a reply the guard found stating an amount nothing read |
 | `agent-loop-grounding-guard` | a reply that names what the filed writes do not hold is kept as written | nothing; the check itself is the only cost, and it is asked only of a reply the guard found wanting |
 | `agent-loop-browser-guard` | a `/browser` turn whose reply never called a portal tool is kept as written | nothing; the check itself is the only cost, and it is asked only of a `/browser` turn about to end without the browser |
 | `agent-loop-search-guard` | none: no `/search` turn existed before it, so no execution takes the old branch | nothing; the check itself is the only cost, and it is asked only of a `/search` turn about to end without searching the web. Each extension command has its own change id (`commandHolds` in `agentruntime/command.go`) |

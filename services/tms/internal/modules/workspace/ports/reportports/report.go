@@ -122,8 +122,9 @@ type ReportDashboardRepository interface {
 }
 
 type GetReportRunRequest struct {
-	TenantInfo pagination.TenantInfo
-	RunID      pulid.ID
+	TenantInfo  pagination.TenantInfo
+	RunID       pulid.ID
+	RequestedBy pulid.ID
 }
 
 type ListReportRunsRequest struct {

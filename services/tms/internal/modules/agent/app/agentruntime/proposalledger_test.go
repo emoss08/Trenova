@@ -360,3 +360,33 @@ func TestProposalOutcomeText_SaysWhatTheApproverChanged(t *testing.T) {
 	)
 	assert.NotContains(t, plain, "after changing")
 }
+
+// A proposal's result is replayed as what became of it. The rate its preview
+// priced is still something the model read, and a reply quoting it a turn
+// later was rewritten as if it had made the figure up.
+func TestReplayHistory_KeepsTheFiguresOfAProposalsResultAsRead(t *testing.T) {
+	t.Parallel()
+
+	sourceID := pulid.MustNew("amsg_")
+	filed := "Summary: The rate agreement would charge 5959.35 USD for the linehaul."
+	history := []conversation.Message{
+		{Role: conversation.RoleUser, Content: "Book it"},
+		{
+			ID:        sourceID,
+			Role:      conversation.RoleAssistant,
+			ToolCalls: []conversation.ToolCallRecord{{ID: "c1", Name: "create_shipment"}},
+		},
+		{Role: conversation.RoleTool, ToolCallID: "c1", ToolName: "create_shipment", Content: filed},
+	}
+	outcomes := []agentports.ProposalOutcome{{
+		SourceMessageID: sourceID,
+		ToolName:        "create_shipment",
+		Status:          agent.ProposalStatusPending,
+	}}
+
+	messages, shortened := replayHistory(history, outcomes)
+
+	require.Len(t, messages, 3)
+	assert.NotContains(t, messages[2].Content, "5959.35")
+	assert.Equal(t, []string{filed}, shortened)
+}

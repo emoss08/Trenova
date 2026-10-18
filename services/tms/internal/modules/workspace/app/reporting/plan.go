@@ -88,11 +88,6 @@ func (s *Service) PlanCancelRun(ctx context.Context, req *GetRunRequest) (*RunCh
 		return nil, err
 	}
 
-	if run.RequestedByID != req.TenantInfo.UserID {
-		return nil, errortypes.NewAuthorizationError(
-			"Only the user who requested a report run can cancel it",
-		)
-	}
 	if run.Status.IsTerminal() {
 		return nil, errortypes.NewBusinessError("This report run has already finished")
 	}

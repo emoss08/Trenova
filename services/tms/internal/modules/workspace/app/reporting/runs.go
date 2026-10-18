@@ -7,12 +7,17 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/jobs/reportjobs/reportcontract"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/zap"
+)
+
+var errRunsNeedAPerson = errortypes.NewAuthorizationError(
+	"A report run is read by the person who ran it, and this request has no person",
 )
 
 type RunReportRequest struct {
@@ -200,9 +205,14 @@ type GetRunRequest struct {
 }
 
 func (s *Service) GetRun(ctx context.Context, req *GetRunRequest) (*report.ReportRun, error) {
+	if req.TenantInfo.UserID.IsNil() {
+		return nil, errRunsNeedAPerson
+	}
+
 	return s.runRepo.GetByID(ctx, &reportports.GetReportRunRequest{
-		TenantInfo: req.TenantInfo,
-		RunID:      req.RunID,
+		TenantInfo:  req.TenantInfo,
+		RunID:       req.RunID,
+		RequestedBy: req.TenantInfo.UserID,
 	})
 }
 
@@ -210,7 +220,6 @@ type ListRunsRequest struct {
 	Request
 
 	DefinitionID pulid.ID
-	MineOnly     bool
 	Statuses     []report.RunStatus
 	Limit        int
 	Offset       int
@@ -220,18 +229,32 @@ func (s *Service) ListRuns(
 	ctx context.Context,
 	req *ListRunsRequest,
 ) ([]*report.ReportRun, error) {
-	listReq := &reportports.ListReportRunsRequest{
+	if req.TenantInfo.UserID.IsNil() {
+		return nil, errRunsNeedAPerson
+	}
+
+	return s.runRepo.List(ctx, &reportports.ListReportRunsRequest{
 		TenantInfo:   req.TenantInfo,
 		DefinitionID: req.DefinitionID,
+		RequestedBy:  req.TenantInfo.UserID,
 		Statuses:     req.Statuses,
 		Limit:        req.Limit,
 		Offset:       req.Offset,
-	}
-	if req.MineOnly {
-		listReq.RequestedBy = req.TenantInfo.UserID
+	})
+}
+
+func (s *Service) ListRunsConnection(
+	ctx context.Context,
+	req *reportports.ListReportRunConnectionRequest,
+) (*pagination.CursorListResult[*report.ReportRun], error) {
+	if req.Filter == nil || req.Filter.TenantInfo.UserID.IsNil() {
+		return nil, errRunsNeedAPerson
 	}
 
-	return s.runRepo.List(ctx, listReq)
+	scoped := *req
+	scoped.RequestedBy = req.Filter.TenantInfo.UserID
+
+	return s.runRepo.ListConnection(ctx, &scoped)
 }
 
 func (s *Service) CancelRun(ctx context.Context, req *GetRunRequest) (*report.ReportRun, error) {

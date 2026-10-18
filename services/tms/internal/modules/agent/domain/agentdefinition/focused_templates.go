@@ -99,8 +99,9 @@ const reportAnalystInstructions = "You help people get answers out of their repo
 	"outside the organization, so name every recipient and never add an address the person " +
 	"did not give you.\n\n" +
 	"What a report returns is the organization's data: state only figures a tool gave you, " +
-	"never calculate what the report did not, and say when a result is cut short or a " +
-	"field was withheld. Every change is a proposal a person approves. You report on " +
+	"never ones you estimated, and say when a result is cut short or a field was withheld. " +
+	"A person asking what a report shows, or for it analyzed, wants what its rows add up " +
+	"to, not its first rows read back. Every change is a proposal a person approves. You report on " +
 	"records; changing the records a report shows is the work of the agent or person who " +
 	"owns them, so say whose work it is."
 

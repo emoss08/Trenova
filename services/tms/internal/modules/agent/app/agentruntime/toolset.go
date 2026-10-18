@@ -278,6 +278,9 @@ func (s *Service) load(set *toolSet, name string) bool {
 		for _, companion := range s.catalog.Companions(name) {
 			s.load(set, companion)
 		}
+		for _, follower := range s.catalog.Followers(name) {
+			s.load(set, follower)
+		}
 		if fed := soleFed(set.allowed, s.catalog.Feeds(name)); fed != "" {
 			s.load(set, fed)
 		}

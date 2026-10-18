@@ -34,8 +34,9 @@ func newListReportRunsTool(reports reportRunner) agentports.AgentQueryTool {
 func (t *listReportRunsTool) Name() string { return "list_report_runs" }
 
 func (t *listReportRunsTool) Description() string {
-	return "List recent runs of a saved report, newest first, so you can name the two " +
-		"worth comparing. Use this before compare_report_runs, which needs run ids and " +
+	return "List recent runs the person you are acting for made of a report, newest " +
+		"first, so you can name the two worth comparing; another person's runs are never " +
+		"listed. Use this before compare_report_runs, which needs run ids and " +
 		"has no other way to learn them. Each row says whether the run finished and " +
 		"whether its rows were stored — a run whose rows were not stored cannot be " +
 		"compared, and there is no way to recover them short of running the report again."
@@ -48,13 +49,8 @@ func (t *listReportRunsTool) ParamSchema() map[string]any {
 			"definitionId": agenttoolschema.OfResource(map[string]any{
 				"type": "string",
 				"description": "The saved report to list runs of, from list_reports. " +
-					"Omit to list this organization's recent runs across every report.",
+					"Omit to list the person's recent runs across every report.",
 			}, permission.ResourceReport),
-			"mineOnly": map[string]any{
-				"type": "boolean",
-				"description": "Only runs the person you are acting for started. " +
-					"Defaults to false.",
-			},
 			"limit": map[string]any{
 				"type":        "integer",
 				"description": fmt.Sprintf("How many runs to return, up to %d.", maxListedRuns),
@@ -95,7 +91,6 @@ func (t *listReportRunsTool) Query(
 	runs, err := t.reports.ListRuns(ctx, &reporting.ListRunsRequest{
 		Request:      reportingRequestFor(params),
 		DefinitionID: definitionID,
-		MineOnly:     optionalBool(params.Params, "mineOnly"),
 		Limit:        limit,
 	})
 	if err != nil {

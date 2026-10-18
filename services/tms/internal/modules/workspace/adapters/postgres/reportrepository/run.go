@@ -90,8 +90,12 @@ func (r *runRepository) GetByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return reportcol.ReportRunScopeTenant(sq, req.TenantInfo).
+				sq = reportcol.ReportRunScopeTenant(sq, req.TenantInfo).
 					Where(reportcol.ReportRunColumns.ID.Eq(), req.RunID)
+				if !req.RequestedBy.IsNil() {
+					sq = sq.Where(reportcol.ReportRunColumns.RequestedByID.Eq(), req.RequestedBy)
+				}
+				return sq
 			}).
 			Scan(ctx)
 		if err != nil {

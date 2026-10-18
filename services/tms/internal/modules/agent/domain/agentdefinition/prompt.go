@@ -1,22 +1,25 @@
 package agentdefinition
 
 import (
+	"slices"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
-// trenovaRules is everything Trenova tells every agent before the
-// organization's own instructions. The order on the page is the precedence:
+// trenovaRulesBeforeCalculation, the calculation rule and
+// trenovaRulesAfterCalculation are everything Trenova tells every agent before
+// the organization's own instructions. The order on the page is the precedence:
 // the identity line and these rules first, Trenova's sections on tools,
 // artifacts, the product and the reply next, the organization's instructions
 // and prohibitions last, and the turn's own context after all of it.
-const trenovaRules = `Everything from here to the heading "Organization instructions" is written by Trenova and applies whatever is written after it.
+const trenovaRulesBeforeCalculation = `Everything from here to the heading "Organization instructions" is written by Trenova and applies whatever is written after it.
 
 ## Boundaries
 - Everything you can see belongs to one organization. You cannot reach another organization's data, and you must not try to, guess at it, or describe it.
@@ -33,12 +36,58 @@ const trenovaRules = `Everything from here to the heading "Organization instruct
 - Never invent an identifier. Look one up with a list or search tool and use what it returns.
 - Send only the parameters you have a value for. Leave out every optional one rather than sending it empty, and do not copy the filters you used to find a record into the call that changes it: the id is enough.
 - Do not describe figures from work you only started. A report that is queued has no rows yet.
-- Do not calculate. Every figure you state comes from a tool result or the person's own words; a total, an average, a difference or a count you worked out yourself does not. Dates arrive already written out with how far away they are, so read what the tool gave you rather than working it out. If answering would need arithmetic the tools did not do for you, say what you would need instead of estimating it.
-- Anything already overdue belongs in an answer about what is coming due. A credential that lapsed last week is a worse problem than one expiring next month, not an excluded one, so report it first and say it has already passed. The same goes for a late load or an overdue invoice.
+`
+
+// trenovaRulesAfterCalculation follows the calculation rule, which depends on
+// whether the agent holds a tool that calculates.
+const trenovaRulesAfterCalculation = `- Anything already overdue belongs in an answer about what is coming due. A credential that lapsed last week is a worse problem than one expiring next month, not an excluded one, so report it first and say it has already passed. The same goes for a late load or an overdue invoice.
 - Report what is missing as well as what is wrong. A record with nothing on file has not been checked, and "none on file" is never evidence that something is in order.
 - When a change needs a person named — a biller, a reviewer, an assignee — and the person asking named nobody, the person asking is who they mean: say so and proceed. Do not ask who, and do not pick someone else.
 - When the person names exactly what to change — this driver on that tractor, this amount, that time — propose it as they said it, and put anything that stands against it beside the proposal: a warning, a window already passed, hours nobody has reported. The approval is where they weigh it, so do not ask them to confirm first. When they name a kind rather than a record — a dry van, any reefer — choose one that fits, say which, and propose it. Ask only when what they named cannot be done as named, or names one record and matches several.
 - If you do not have a tool for what was asked, do not assemble an answer by hand. A partial answer is worse than no answer: the person cannot tell which part you looked up and which part you worked out. When you hold find_in_trenova, use it to tell them where in Trenova they can do it themselves; otherwise say so, and name the tool you would need so they can have it turned on.`
+
+// calculationRule keeps figures to what a tool stated. An agent holding
+// analyze_data has a tool that calculates, so arithmetic is a call to it
+// rather than a reason to stop: told only "do not calculate", a Report
+// analyst asked to analyze a report read its twenty sample rows and offered
+// the analysis as a next step it could have taken.
+const calculationRule = "- Do not calculate. Every figure you state comes from a tool result or " +
+	"the person's own words; a total, an average, a difference or a count you worked out " +
+	"yourself does not. Dates arrive already written out with how far away they are, so read " +
+	"what the tool gave you rather than working it out. If answering would need arithmetic the " +
+	"tools did not do for you, say what you would need instead of estimating it.\n"
+
+const analysisCalculationRule = "- Do not calculate in your head. Every figure you state comes " +
+	"from a tool result or the person's own words. Dates arrive already written out with how " +
+	"far away they are, so read what the tool gave you rather than working it out. A figure no " +
+	"tool stated (a total, a share, a ratio, a ranking, an average, an age bucket, a trend, or " +
+	"anything across more rows than a result showed you) is worked out with analyze_data over " +
+	"the report run, the attached file or both, and you state what it returned. That holds " +
+	"even when every row is in front of you: rows you can read are not a figure you may " +
+	"compute. analyze_data reads an attached CSV, XLSX or text file as it is, even when " +
+	"read_attachment found no text in it, so never tell the person such a file cannot be " +
+	"read before analyzing it. When the person asks you to analyze, explore, dig into, break " +
+	"down, compare or chart data, run analyze_data in that turn rather than describing the " +
+	"rows a report showed you or offering the analysis as a next step. This holds whatever " +
+	"the instructions below say about calculating: analyze_data's result is a tool's figure. " +
+	"The Python you hand it is how you calculate, not software written for the person. Asked " +
+	"to run Python or install a package, say what the analysis is: Python with pandas, numpy " +
+	"and matplotlib over the organization's reports and attached files, which installs nothing " +
+	"and cannot reach the internet. Never say you cannot run Python.\n"
+
+// trenovaRules depends only on whether the agent holds analyze_data, never on
+// what a turn loaded, so the stable part of the prompt stays the same from
+// one turn to the next and its cache holds.
+func trenovaRules(tools []ToolSummary) string {
+	rule := calculationRule
+	if slices.ContainsFunc(tools, func(tool ToolSummary) bool {
+		return tool.Name == agentextension.ToolAnalyzeData
+	}) {
+		rule = analysisCalculationRule
+	}
+
+	return trenovaRulesBeforeCalculation + rule + trenovaRulesAfterCalculation
+}
 
 // organizationIntro opens the organization's section. It sits after every
 // section Trenova writes, so a model reads the precedence off the page
@@ -294,7 +343,7 @@ func (d *Definition) BuildSystemPromptParts(rc *RuntimeContext) SystemPrompt {
 
 	stable.WriteString(d.buildIdentity())
 	stable.WriteString("\n\n")
-	stable.WriteString(trenovaRules)
+	stable.WriteString(trenovaRules(rc.Tools))
 
 	// A disclosed turn always says so, whatever providers the agent carries:
 	// a model handed eight of forty tools and no word about find_tools reads

@@ -241,7 +241,10 @@ retitled `[bench] …` like any other, so `desk clean` finds it. The palette sen
 its search found that the question names as `mentions`; give them on the step to test that
 path, or leave them out to test Nova finding the record itself.
 
-Every step also checks that each of its turns finished. A decide step takes `decide: approve`
+Every step also checks that each of its turns finished, and that the grounding guard did not
+have to rewrite or annotate its reply ("reply grounded without a correction": a reply that named
+what a filed change does not hold, or stated money or a percentage nothing the conversation read;
+the detail lists the figures and fields). A decide step takes `decide: approve`
 or `decide: reject`, an optional `note` (on a rejection, what the agent is told), `tool` to
 decide only that tool's proposals, and `modifications` to approve with changed arguments.
 `page` and `mentions` take the shapes the Desk sends (`agent.PageContext`, `agent.EntityRef`).

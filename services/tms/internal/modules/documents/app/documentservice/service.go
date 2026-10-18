@@ -316,7 +316,7 @@ func (s *Service) storeUpload(
 ) (*UploadResult, error) {
 	req := in.req
 	processingProfile := in.processingProfile
-	contentType := in.contentType
+	contentType := fileutils.MediaType(in.contentType)
 	storagePath := fileutils.GenerateStoragePath(
 		req.TenantInfo.OrgID.String(),
 		req.ResourceType,

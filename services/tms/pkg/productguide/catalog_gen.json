@@ -1,5 +1,5 @@
 {
-  "version": "sha256:a8819044db2492d770fd5102918867fbc75c50885f7d4659d883f7c0cce8f2a9",
+  "version": "sha256:4f966cc73f2b0badca1e7e803c2171cff79407b665c6651de91486cbedba4631",
   "modules": [
     {
       "id": "home",
@@ -17124,7 +17124,7 @@
         "Run history"
       ],
       "description": "Track report generation, download artifacts, and cancel active runs",
-      "summary": "Run history lists every report run in your organization: which report, its **Status**, **Format**, **Trigger** (for example run by hand or by a schedule), how many **Rows** it returned, its **Size** and **Duration**, when it was requested (**Requested At**) and when its file **Expires**. Anyone who runs or schedules reports uses it to download finished files and to cancel runs that are still in progress.",
+      "summary": "Run history lists the report runs you made, by hand or through your schedules: which report, its **Status**, **Format**, **Trigger** (for example run by hand or by a schedule), how many **Rows** it returned, its **Size** and **Duration**, when it was requested (**Requested At**) and when its file **Expires**. Anyone who runs or schedules reports uses it to download finished files and to cancel runs that are still in progress. A run holds what the report returned for the person who ran it, so nobody else's runs are listed or can be downloaded; to see a colleague's results, run the report yourself.",
       "requires": [
         {
           "resource": "report",

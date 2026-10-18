@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/fileutils"
 	"go.uber.org/fx"
 )
 
@@ -81,7 +82,7 @@ func (v *Validator) validateFileMetadata(
 		)
 	}
 
-	if contentType != "" && !slices.Contains(v.allowedMIMETypes, contentType) {
+	if contentType != "" && !v.allowsContentType(contentType) {
 		multiErr.Add(
 			"file",
 			errortypes.ErrInvalidFormat,
@@ -94,6 +95,12 @@ func (v *Validator) validateFileMetadata(
 	}
 
 	return nil
+}
+
+func (v *Validator) allowsContentType(contentType string) bool {
+	mediaType := fileutils.MediaType(contentType)
+
+	return mediaType != "" && slices.Contains(v.allowedMIMETypes, mediaType)
 }
 
 func (v *Validator) ValidateFiles(files []*multipart.FileHeader) *errortypes.MultiError {

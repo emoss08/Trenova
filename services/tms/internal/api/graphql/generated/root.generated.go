@@ -28540,6 +28540,7 @@ input ForkCannedReportInput {
 input ReportRunsFilterInput {
   definitionId: ID
   mineOnly: Boolean
+    @deprecated(reason: "Every run listed is one the caller ran; another person's runs are never listed.")
   statuses: [String!]
 }
 
