@@ -1,7 +1,7 @@
 # Desk harness review
 
-Status: **Phase 1 (audit) complete; waiting on answers to the questions in §1.9.** Phases 2
-(research) and 3 (analysis) have not started.
+Status: **Phase 1 (audit) complete. Phase 2 (research) in progress.** Phase 3 (analysis) has
+not started.
 
 This is an architecture review of Desk, Trenova's agent harness. It is not a change
 proposal for any one file. Numbers come from the source at the commit this was
@@ -743,3 +743,29 @@ The research focus and the eval matrix depend on these answers:
    it is off the table for product or security reasons, I will not spend research time on it.
 6. **What are the targets for latency and cost?** For example, a p50 time to first token, or a
    cost ceiling per turn. These decide how far to push routing and caching against accuracy.
+
+### 1.10 Answers from the product owner (2026-10-18)
+
+1. **Models.** Claude and OpenAI matter most. Self-hosted small models (Ollama, vLLM) have no
+   real users. They exist because Trenova can be self-hosted, and they may be removed.
+2. **Specialist desks are not a product commitment.** They exist so that work driven by a job
+   description is relatable: an agent is given a job description and does the work a person in
+   that job would. A single front door that routes internally is open for consideration.
+3. **Priority of surfaces:**
+   1. unattended event and scheduled runs;
+   2. Desk conversations;
+   3. palette questions.
+4. **Evidence.** There is none beyond `findings.yaml`. `ai.cacheDiagnostics` can be turned on,
+   and heavier desk bench runs can be done on the owner's machine.
+5. **Code-as-action is on the table.**
+6. **Latency and cost: the lower the better.** Haiku 5.5 is the default because it is fast and
+   cheap. Opus and Fable are options, at a higher cost.
+
+What this changes for the rest of the review:
+
+- **Unattended runs come first.** Nobody is there to rephrase, approve straight away or notice a
+  wrong turn, so reliability measured over repeated runs (pass^k) matters more than a single
+  pass.
+- **The target model is a small, fast one.** Every recommendation has to work on Haiku 5.5
+  and a comparable OpenAI model, not only on frontier models.
+- **The provider work narrows** to Anthropic Messages (with its platforms) and the OpenAI APIs.
