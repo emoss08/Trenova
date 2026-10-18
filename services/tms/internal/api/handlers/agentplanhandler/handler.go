@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/authctx"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
@@ -21,21 +22,24 @@ type Params struct {
 	fx.In
 
 	PlanService          agentports.AgentPlanService
+	PreviewService       agentports.ProposalPreviewService `optional:"true"`
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
-	plans agentports.AgentPlanService
-	eh    *helpers.ErrorHandler
-	pm    *middleware.PermissionMiddleware
+	plans    agentports.AgentPlanService
+	previews agentports.ProposalPreviewService
+	eh       *helpers.ErrorHandler
+	pm       *middleware.PermissionMiddleware
 }
 
 func New(p Params) *Handler {
 	return &Handler{
-		plans: p.PlanService,
-		eh:    p.ErrorHandler,
-		pm:    p.PermissionMiddleware,
+		plans:    p.PlanService,
+		previews: p.PreviewService,
+		eh:       p.ErrorHandler,
+		pm:       p.PermissionMiddleware,
 	}
 }
 
@@ -47,6 +51,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		"/:planID/",
 		h.pm.RequirePermission(permission.ResourceAgentProposal.String(), permission.OpRead),
 		h.get,
+	)
+	api.GET(
+		"/:planID/preview/",
+		h.pm.RequirePermission(permission.ResourceAgentProposal.String(), permission.OpRead),
+		h.preview,
 	)
 	api.POST(
 		"/:planID/resolve/",
@@ -85,8 +94,58 @@ func (h *Handler) get(c *gin.Context) {
 }
 
 type resolvePlanRequest struct {
-	Decision   agent.DecisionType `json:"decision"`
-	ReasonCode string             `json:"reasonCode"`
+	Decision      agent.DecisionType `json:"decision"`
+	ReasonCode    string             `json:"reasonCode"`
+	Note          string             `json:"note"`
+	PreviewDigest string             `json:"previewDigest"`
+}
+
+func actorFromAuthContext(authCtx *authctx.AuthContext) permissionports.RequestActor {
+	return permissionports.RequestActor{
+		PrincipalType:  kernelports.PrincipalType(authCtx.PrincipalType),
+		PrincipalID:    authCtx.PrincipalID,
+		UserID:         authCtx.UserID,
+		APIKeyID:       authCtx.APIKeyID,
+		BusinessUnitID: authCtx.BusinessUnitID,
+		OrganizationID: authCtx.OrganizationID,
+	}
+}
+
+func (h *Handler) preview(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	planID, err := pulid.Parse(c.Param("planID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	if h.previews == nil {
+		h.eh.HandleError(c, errortypes.NewBusinessError(
+			"Previews of proposed changes are not available",
+		))
+		return
+	}
+
+	plan, err := h.plans.GetByID(c.Request.Context(), agentports.GetAgentPlanByIDRequest{
+		ID:         planID,
+		TenantInfo: tenantFromAuthContext(authCtx),
+	})
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	actor := actorFromAuthContext(authCtx)
+	preview, err := h.previews.ForPlan(c.Request.Context(), &agentports.PlanPreviewRequest{
+		Plan:   plan,
+		Viewer: &agentports.PreviewViewer{Actor: &actor},
+	})
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, preview)
 }
 
 func (h *Handler) resolve(c *gin.Context) {
@@ -104,19 +163,14 @@ func (h *Handler) resolve(c *gin.Context) {
 		return
 	}
 
-	actor := permissionports.RequestActor{
-		PrincipalType:  kernelports.PrincipalType(authCtx.PrincipalType),
-		PrincipalID:    authCtx.PrincipalID,
-		UserID:         authCtx.UserID,
-		APIKeyID:       authCtx.APIKeyID,
-		BusinessUnitID: authCtx.BusinessUnitID,
-		OrganizationID: authCtx.OrganizationID,
-	}
+	actor := actorFromAuthContext(authCtx)
 	plan, err := h.plans.Decide(c.Request.Context(), &agentports.DecideAgentPlanRequest{
-		PlanID:     planID,
-		Decision:   body.Decision,
-		ReasonCode: body.ReasonCode,
-		TenantInfo: tenantFromAuthContext(authCtx),
+		PlanID:        planID,
+		Decision:      body.Decision,
+		ReasonCode:    body.ReasonCode,
+		Note:          body.Note,
+		PreviewDigest: body.PreviewDigest,
+		TenantInfo:    tenantFromAuthContext(authCtx),
 	}, &actor)
 	if err != nil {
 		h.eh.HandleError(c, err)

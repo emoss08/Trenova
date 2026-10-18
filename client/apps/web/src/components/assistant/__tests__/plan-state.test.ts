@@ -42,6 +42,7 @@ function proposal(overrides: Partial<AssistantProposal> = {}): AssistantProposal
     decidedAt: null,
     decidedByUserId: "",
     decisionNote: "",
+    reviewRequired: true,
     ...overrides,
   };
 }

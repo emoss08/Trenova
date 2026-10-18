@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/shared/money"
 )
 
 type ToolPolicy struct {
@@ -94,12 +95,26 @@ func (p ToolPolicy) EgressCeiling() agent.AutonomyTier {
 
 	ceiling := agent.TierPropose
 	for _, class := range p.Egress {
-		if class.Ceiling().Above(ceiling) {
-			ceiling = class.Ceiling()
+		if limit := p.ClassCeiling(class); limit.Above(ceiling) {
+			ceiling = limit
 		}
 	}
 
 	return ceiling
+}
+
+//nolint:gocritic // ToolPolicy is held and passed by value, as its other methods take it
+func (p ToolPolicy) ClassCeiling(class agent.EgressClass) agent.AutonomyTier {
+	if class == agent.EgressMoney && p.Bounded() {
+		return agent.TierAutoExecute
+	}
+
+	return class.Ceiling()
+}
+
+//nolint:gocritic // ToolPolicy is held and passed by value, as its other methods take it
+func (p ToolPolicy) Bounded() bool {
+	return p.Condition != nil && p.Condition.Bounds != nil
 }
 
 func (p ToolPolicy) TaintHolds(params ToolExecuteParams, call CallPolicy) bool {
@@ -118,6 +133,71 @@ type CallPolicy struct {
 type TierCondition struct {
 	Description string
 	Limit       func(context.Context, ToolExecuteParams) agent.AutonomyTier
+	Bounds      func(context.Context, ToolExecuteParams) MoneyBound
+	Vouches     []agent.TaintSource
+}
+
+// MayVouch says whether the condition could vouch for the run's taint at all,
+// before its bounds are read: the taint is known and complete, every source in
+// it is one the condition vouches for, and every mark names its own record and
+// was read by this run rather than across a delegation.
+func (c *TierCondition) MayVouch(taint *agent.RunTaint) bool {
+	if c == nil || len(c.Vouches) == 0 || taint == nil || !taint.Tainted() || taint.Overflowed {
+		return false
+	}
+	for _, source := range taint.Sources() {
+		if !source.Rereadable() || !slices.Contains(c.Vouches, source) {
+			return false
+		}
+	}
+
+	return !slices.ContainsFunc(taint.Marks, func(mark agent.TaintMark) bool {
+		return mark.Delegated || mark.Ref == nil
+	})
+}
+
+// Vouched says the bound re-read, from the organization's own records, each
+// record it counts from, and that each is one the run itself read: what the
+// call does is taken from those records, never from the text around them.
+func (c *TierCondition) Vouched(taint *agent.RunTaint, bound *MoneyBound) bool {
+	if !c.MayVouch(taint) || bound == nil || !bound.Within || len(bound.Reread) == 0 {
+		return false
+	}
+
+	for _, reread := range bound.Reread {
+		if !slices.ContainsFunc(taint.Marks, func(mark agent.TaintMark) bool {
+			return reread.Source == mark.Source && reread.Ref.EntityType == mark.Ref.EntityType &&
+				reread.Ref.ID == mark.Ref.ID
+		}) {
+			return false
+		}
+	}
+
+	return true
+}
+
+type MoneyBound struct {
+	Within      bool
+	Held        string
+	AmountMinor int64
+	Currency    string
+	Reread      []agent.SourcedRef
+}
+
+func WithinMoneyBound(amountMinor int64, currency string) MoneyBound {
+	return MoneyBound{Within: true, AmountMinor: amountMinor, Currency: money.ISOCode(currency)}
+}
+
+// Rereading says the bound read this record again from the organization's own
+// records and took what it counts from it rather than from the call.
+func (b MoneyBound) Rereading(source agent.TaintSource, ref agent.RecordRef) MoneyBound {
+	b.Reread = append(slices.Clip(b.Reread), agent.SourcedRef{Source: source, Ref: ref})
+
+	return b
+}
+
+func OutsideMoneyBound(held string) MoneyBound {
+	return MoneyBound{Held: held}
 }
 
 type TaintHold struct {

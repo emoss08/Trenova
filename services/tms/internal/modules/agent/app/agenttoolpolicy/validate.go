@@ -99,9 +99,38 @@ func specProblems(spec *Spec) []string {
 	if !spec.Reports && policy.Artifact != "" && !artifactResolves(policy.Artifact) {
 		add("artifact %q is not a record-link key", policy.Artifact)
 	}
-	if policy.Condition != nil &&
-		(policy.Condition.Limit == nil || strings.TrimSpace(policy.Condition.Description) == "") {
-		add("condition needs both a description and a limit")
+	problems = append(problems, conditionProblems(&policy)...)
+
+	return problems
+}
+
+func conditionProblems(policy *agentports.ToolPolicy) []string {
+	condition := policy.Condition
+	if condition == nil {
+		return nil
+	}
+
+	problems := make([]string, 0)
+	if strings.TrimSpace(condition.Description) == "" ||
+		(condition.Limit == nil && condition.Bounds == nil) {
+		problems = append(problems, "condition needs a description and a limit or bounds")
+	}
+	if condition.Bounds != nil && !policy.HasEgress(agent.EgressMoney) {
+		problems = append(problems,
+			"bounds prove a money write is within the organization's limits, but it moves no money")
+	}
+	if condition.Bounds != nil && policy.Kind != agent.ToolKindAction {
+		problems = append(problems, "only a write can be bounded")
+	}
+	if len(condition.Vouches) > 0 && condition.Bounds == nil {
+		problems = append(problems,
+			"only bounds that re-read a record may vouch for the outside content it holds")
+	}
+	for _, source := range condition.Vouches {
+		if !source.Rereadable() {
+			problems = append(problems, fmt.Sprintf(
+				"vouches for %q, which is not a record the bounds can re-read", source))
+		}
 	}
 
 	return problems

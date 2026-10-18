@@ -20,6 +20,15 @@ const (
 // simply not a match, which costs one indexed lookup and nothing else.
 var token = regexp.MustCompile(`\b[A-Za-z0-9]+(?:[-_/][A-Za-z0-9]+)*\b`)
 
+// mention is a reference as a payer writes it in a memo: segments joined by a
+// hyphen, an underscore or a dot. A slash, a comma or a space separates one
+// reference from the next, so "INV-1001/INV-1002" names two invoices.
+var mention = regexp.MustCompile(`[A-Za-z0-9]+(?:[-_.][A-Za-z0-9]+)*`)
+
+// separators are the joiners a payer swaps freely; "INV.1001" and "INV_1001"
+// are the reference "INV-1001" written another way.
+var separators = strings.NewReplacer(".", "-", "_", "-")
+
 // hasDigit is what separates a reference from a word. "Thursday" and "confirm"
 // are not reference numbers; "88213" and "SEED-SHP-001" are.
 var hasDigit = regexp.MustCompile(`[0-9]`)
@@ -64,4 +73,31 @@ func Plausible(candidate string) bool {
 	}
 
 	return hasDigit.MatchString(candidate)
+}
+
+func Same(a, b string) bool {
+	left := canonical(a)
+
+	return left != "" && left == canonical(b)
+}
+
+func Mentions(reference string, sources ...string) bool {
+	want := canonical(reference)
+	if want == "" {
+		return false
+	}
+
+	for _, source := range sources {
+		for _, match := range mention.FindAllString(source, -1) {
+			if canonical(match) == want {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func canonical(reference string) string {
+	return strings.ToUpper(separators.Replace(strings.TrimSpace(reference)))
 }

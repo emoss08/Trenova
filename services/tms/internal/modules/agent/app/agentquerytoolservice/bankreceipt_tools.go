@@ -233,6 +233,7 @@ func (t *listBankReceiptExceptionsTool) Query(
 	}
 
 	rows := make([]bankReceiptRow, 0, len(receipts))
+	shown := make([]agent.RecordRef, 0, limit)
 	matched := 0
 	for _, receipt := range receipts {
 		if receipt == nil || !receiptMatchesQuery(receipt, query) {
@@ -241,10 +242,28 @@ func (t *listBankReceiptExceptionsTool) Query(
 		matched++
 		if len(rows) < limit {
 			rows = append(rows, bankReceiptRowFrom(receipt, itemsByReceipt[receipt.ID]))
+			shown = append(shown, bankReceiptRef(receipt.ID))
 		}
 	}
 
-	return searchResult(criteria, rows, matched), nil
+	return &bankReceiptSearch{
+		searchOutcome: searchResult(criteria, rows, matched),
+		outside:       shown,
+	}, nil
+}
+
+// bankReceiptSearch names each receipt it shows, so the run's taint says which
+// receipts' payer-written memos it read.
+type bankReceiptSearch struct {
+	searchOutcome
+
+	outside []agent.RecordRef
+}
+
+func (s *bankReceiptSearch) TaintedRecords() []agent.RecordRef { return s.outside }
+
+func bankReceiptRef(id pulid.ID) agent.RecordRef {
+	return agent.RecordRef{EntityType: agent.TaintEntityBankReceipt, ID: id.String()}
 }
 
 func receiptMatchesQuery(receipt *bankreceipt.BankReceipt, query string) bool {
@@ -267,7 +286,11 @@ type bankReceiptDetailRow struct {
 
 	Suggestions []matchSuggestionRow `json:"suggestions"`
 	Note        string               `json:"note,omitempty"`
+
+	outside []agent.RecordRef
 }
+
+func (r *bankReceiptDetailRow) TaintedRecords() []agent.RecordRef { return r.outside }
 
 type matchSuggestionRow struct {
 	CustomerPaymentID string `json:"customerPaymentId"`
@@ -348,9 +371,10 @@ func (t *getBankReceiptTool) Query(
 		return nil, err
 	}
 
-	row := bankReceiptDetailRow{
+	row := &bankReceiptDetailRow{
 		bankReceiptRow: bankReceiptRowFrom(receipt, item),
 		Suggestions:    []matchSuggestionRow{},
+		outside:        []agent.RecordRef{bankReceiptRef(receipt.ID)},
 	}
 	if receipt.Status == bankreceipt.StatusMatched {
 		row.Note = "This receipt is already matched; nothing further is needed."

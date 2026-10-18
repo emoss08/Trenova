@@ -1,5 +1,6 @@
 fragment PendingProposalFields on AgentProposal {
   id
+  reviewRequired
   organizationId
   businessUnitId
   runId

@@ -1709,6 +1709,16 @@ export const assistantProposalSchema = z.object({
     .string()
     .nullish()
     .transform((value) => value ?? ""),
+  /**
+   * Whether the server approves it only with the digest of a preview the
+   * person was shown: money, what a customer or a driver sees, what is sent
+   * outside, or anything a tainted run proposed. Taken as true when the
+   * server does not say.
+   */
+  reviewRequired: z
+    .boolean()
+    .nullish()
+    .transform((value) => value ?? true),
 });
 
 export const assistantProposalListSchema = z.object({

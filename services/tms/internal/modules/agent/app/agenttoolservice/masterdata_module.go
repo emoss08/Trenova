@@ -3,12 +3,14 @@ package agenttoolservice
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/alerttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/insighttools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatatools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/receivabletools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowerservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/tractorservice"
@@ -114,6 +116,13 @@ func provideUpdateCarrierStatusTool(
 	states usstateports.UsStateRepository,
 ) agentports.AgentTool {
 	return masterdatatools.NewUpdateCarrierStatusTool(carriers, states)
+}
+
+func provideCorrectChargeCodeTool(
+	billing billingqueueports.BillingQueueService,
+	customers *customerservice.Service,
+) agentports.AgentTool {
+	return invoicetools.NewCorrectChargeCodeTool(billing, customers)
 }
 
 func provideCreateCustomerTool(

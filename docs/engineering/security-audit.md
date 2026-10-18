@@ -33,6 +33,7 @@ separate system: see [ai-audit-trail.md](ai-audit-trail.md).
 | Request refused inside a Trenova support session (Cloud edition) | `audit_entries` | `internal/cloud/supportaccess/supportaccessservice` | yes |
 | Platform staff member added or removed (`trenova cloud staff`, Cloud edition) | `audit_entries` | `internal/cloud/supportaccess/supportaccessservice.StaffManager` | yes |
 | Agent tool rule held lower or returned to its declared rule, with the reason and the agents whose answer moved | `audit_entries` | `agenttoolruleservice` | yes |
+| Money limits for agents changed in AI Control (one change's ceiling, a run's and a day's count and total) | `audit_entries` | `agentcontrolservice` | yes |
 | Agent memory written after outside content reviewed (directly, or by approving it as a suggestion), so it no longer holds the writes of the turns that read it | `audit_entries` | `agentmemoryservice` | yes |
 | Document downloaded or viewed (content, presigned URL or page image) | `audit_entries` | `documentservice` | — |
 | Document attached to an outbound email | `audit_entries` | `documentmailservice` | — |

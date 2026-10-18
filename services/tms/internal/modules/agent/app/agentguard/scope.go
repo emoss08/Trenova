@@ -42,8 +42,10 @@ const (
 	ReasonPromptManipulation = Reason("PromptManipulation")
 	// ReasonOversized covers input too large to classify safely.
 	ReasonOversized = Reason("Oversized")
-	// ReasonClassifierUnavailable covers a configured classifier that could not be
-	// reached, which fails closed.
+	// ReasonClassifierUnavailable covers a configured classifier that failed or
+	// ran past its budget while RefuseWhenUnavailable is set. By default the
+	// classifier fails open: the request goes ahead on the deterministic rules,
+	// recorded as StageUnavailable.
 	ReasonClassifierUnavailable = Reason("ClassifierUnavailable")
 )
 

@@ -15,7 +15,9 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/emoss08/trenova/shared/typeutils"
 	"go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/zap"
@@ -51,6 +53,11 @@ func (s *Service) approveDeferred(
 		DecidedByUserID: actor.UserID,
 		DecidedAt:       now.Unix(),
 		CommitsAt:       commitsAt,
+		Approval: agentports.PlanApproval{
+			ReasonCode:    req.ReasonCode,
+			Note:          req.Note,
+			PreviewDigest: req.PreviewDigest,
+		},
 	})
 	if err != nil {
 		return nil, err
@@ -113,13 +120,20 @@ func (s *Service) CommitApproval(ctx context.Context, req *agentports.CommitAppr
 	decideReq := &agentports.DecideAgentPlanRequest{
 		PlanID:        plan.ID,
 		Decision:      agent.DecisionAccepted,
-		ReasonCode:    req.ReasonCode,
-		Note:          req.Note,
+		ReasonCode:    stringutils.FirstNonEmpty(req.ReasonCode, plan.ApprovalReasonCode),
+		Note:          stringutils.FirstNonEmpty(req.Note, plan.ApprovalNote),
 		TenantInfo:    tenant,
-		PreviewDigest: req.PreviewDigest,
+		PreviewDigest: stringutils.FirstNonEmpty(req.PreviewDigest, plan.ApprovalPreviewDigest),
 	}
 	prepared, err := s.prepare(ctx, decideReq, actor, agent.PlanStatusApproving)
 	if err != nil {
+		if agent.IsReviewRequired(err) {
+			s.l.Warn("a plan approved in its undo window came to commit without its preview",
+				zap.String("plan", plan.ID.String()), zap.Error(err))
+			s.reopenPlan(ctx, plan, actor, false)
+
+			return err
+		}
 		if errortypes.IsBusinessError(err) || errortypes.IsConflictError(err) ||
 			errortypes.IsMultiError(err) || errortypes.IsAuthorizationError(err) {
 			s.l.Warn("a plan approved in its undo window can no longer go through",
@@ -210,6 +224,7 @@ func (s *Service) CommitOwnApprovalNow(
 	); err == nil {
 		return nil
 	}
+	commitsAt, _ := typeutils.Deref(plan.CommitsAt)
 
 	s.l.Warn("commit-now could not reach its plan's workflow; committing here",
 		zap.String("plan", plan.ID.String()), zap.Error(err))
@@ -220,6 +235,10 @@ func (s *Service) CommitOwnApprovalNow(
 		DecidedByUserID: actor.UserID,
 		WorkflowID:      workflowID,
 		PlanID:          plan.ID,
+		ReasonCode:      plan.ApprovalReasonCode,
+		Note:            plan.ApprovalNote,
+		PreviewDigest:   plan.ApprovalPreviewDigest,
+		CommitsAt:       commitsAt,
 	})
 }
 
@@ -289,8 +308,11 @@ func (s *Service) reopenPlan(
 
 	if undo {
 		s.logUndo(reopened, actor)
+		s.announce(ctx, reopened, actor, agentports.ActivityUndone)
+
+		return true
 	}
-	s.announce(ctx, reopened, actor, agentports.ActivityUndone)
+	s.announce(ctx, reopened, actor, agentports.ActivityReopened)
 
 	return true
 }

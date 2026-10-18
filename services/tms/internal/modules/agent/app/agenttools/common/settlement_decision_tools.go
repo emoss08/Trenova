@@ -44,6 +44,12 @@ type SettlementFacts struct {
 	Totals   []SettlementTotal `json:"-"`
 }
 
+type SettlementLineFacts struct {
+	AmountMinor  int64 `json:"-"`
+	Manual       bool  `json:"-"`
+	AddedByAgent bool  `json:"-"`
+}
+
 type SettlementLedger[E any] struct {
 	Resource  permission.Resource                                                                  `json:"-"`
 	Kind      permission.RecordKind                                                                `json:"-"`
@@ -53,6 +59,8 @@ type SettlementLedger[E any] struct {
 	ByName    string                                                                               `json:"-"`
 	Sensitive []string                                                                             `json:"-"`
 	Facts     func(*E) *SettlementFacts                                                            `json:"-"`
+	Editable  func(*E) bool                                                                        `json:"-"`
+	Line      func(*E, pulid.ID) (SettlementLineFacts, bool)                                       `json:"-"`
 	Effects   func(action settlementshared.Action, plan *settlementshared.ActionPlan[*E]) []string `json:"-"`
 }
 

@@ -7,6 +7,12 @@ fragment AgentControlFields on AgentControl {
   promotionThreshold
   personMonthlyMessages
   learningOff
+  agentMoneyCallCeiling
+  agentMoneyRunCalls
+  agentMoneyRunAmount
+  agentMoneyDayCalls
+  agentMoneyDayAmount
+  agentMoneyCurrency
   aiTrainingConsent
   aiTrainingConsentChangedAt
   version

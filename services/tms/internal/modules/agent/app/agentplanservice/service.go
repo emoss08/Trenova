@@ -932,7 +932,7 @@ func (s *Service) logDecision(
 	if err := s.audit.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceAgentProposal,
 		ResourceID:     plan.ID.String(),
-		Operation:      permission.OpApprove,
+		Operation:      permission.OpUpdate,
 		UserID:         auditActor.UserID,
 		PrincipalType:  auditActor.PrincipalType,
 		PrincipalID:    auditActor.PrincipalID,

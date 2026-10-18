@@ -580,47 +580,53 @@ var AgentPlanTable = buncolgen.TableInfo{
 //	q.Where(AgentPlanColumns.ID.Eq(), id)           // WHERE apl.id = ?
 //	q.Order(AgentPlanColumns.CreatedAt.OrderDesc())  // ORDER BY apl.created_at DESC
 var AgentPlanColumns = struct {
-	ID              buncolgen.Column // "id" → qualified: "apl.id"
-	BusinessUnitID  buncolgen.Column // "business_unit_id" → qualified: "apl.business_unit_id"
-	OrganizationID  buncolgen.Column // "organization_id" → qualified: "apl.organization_id"
-	RunID           buncolgen.Column // "run_id" → qualified: "apl.run_id"
-	Title           buncolgen.Column // "title" → qualified: "apl.title"
-	Summary         buncolgen.Column // "summary" → qualified: "apl.summary"
-	Status          buncolgen.Column // "status" → qualified: "apl.status"
-	StepCount       buncolgen.Column // "step_count" → qualified: "apl.step_count"
-	CompletedSteps  buncolgen.Column // "completed_steps" → qualified: "apl.completed_steps"
-	FailedStep      buncolgen.Column // "failed_step" → qualified: "apl.failed_step"
-	FailureError    buncolgen.Column // "failure_error" → qualified: "apl.failure_error"
-	DecidedByUserID buncolgen.Column // "decided_by_user_id" → qualified: "apl.decided_by_user_id"
-	DecidedAt       buncolgen.Column // "decided_at" → qualified: "apl.decided_at"
-	ExpiresAt       buncolgen.Column // "expires_at" → qualified: "apl.expires_at"
-	CommitsAt       buncolgen.Column // "commits_at" → qualified: "apl.commits_at"
-	UndoneAt        buncolgen.Column // "undone_at" → qualified: "apl.undone_at"
-	UndoneByUserID  buncolgen.Column // "undone_by_user_id" → qualified: "apl.undone_by_user_id"
-	Version         buncolgen.Column // "version" → qualified: "apl.version"
-	CreatedAt       buncolgen.Column // "created_at" → qualified: "apl.created_at"
-	UpdatedAt       buncolgen.Column // "updated_at" → qualified: "apl.updated_at"
+	ID                    buncolgen.Column // "id" → qualified: "apl.id"
+	BusinessUnitID        buncolgen.Column // "business_unit_id" → qualified: "apl.business_unit_id"
+	OrganizationID        buncolgen.Column // "organization_id" → qualified: "apl.organization_id"
+	RunID                 buncolgen.Column // "run_id" → qualified: "apl.run_id"
+	Title                 buncolgen.Column // "title" → qualified: "apl.title"
+	Summary               buncolgen.Column // "summary" → qualified: "apl.summary"
+	Status                buncolgen.Column // "status" → qualified: "apl.status"
+	StepCount             buncolgen.Column // "step_count" → qualified: "apl.step_count"
+	CompletedSteps        buncolgen.Column // "completed_steps" → qualified: "apl.completed_steps"
+	FailedStep            buncolgen.Column // "failed_step" → qualified: "apl.failed_step"
+	FailureError          buncolgen.Column // "failure_error" → qualified: "apl.failure_error"
+	DecidedByUserID       buncolgen.Column // "decided_by_user_id" → qualified: "apl.decided_by_user_id"
+	DecidedAt             buncolgen.Column // "decided_at" → qualified: "apl.decided_at"
+	ExpiresAt             buncolgen.Column // "expires_at" → qualified: "apl.expires_at"
+	CommitsAt             buncolgen.Column // "commits_at" → qualified: "apl.commits_at"
+	UndoneAt              buncolgen.Column // "undone_at" → qualified: "apl.undone_at"
+	UndoneByUserID        buncolgen.Column // "undone_by_user_id" → qualified: "apl.undone_by_user_id"
+	ApprovalReasonCode    buncolgen.Column // "approval_reason_code" → qualified: "apl.approval_reason_code"
+	ApprovalNote          buncolgen.Column // "approval_note" → qualified: "apl.approval_note"
+	ApprovalPreviewDigest buncolgen.Column // "approval_preview_digest" → qualified: "apl.approval_preview_digest"
+	Version               buncolgen.Column // "version" → qualified: "apl.version"
+	CreatedAt             buncolgen.Column // "created_at" → qualified: "apl.created_at"
+	UpdatedAt             buncolgen.Column // "updated_at" → qualified: "apl.updated_at"
 }{
-	ID:              buncolgen.NewColumn("id", "apl"),
-	BusinessUnitID:  buncolgen.NewColumn("business_unit_id", "apl"),
-	OrganizationID:  buncolgen.NewColumn("organization_id", "apl"),
-	RunID:           buncolgen.NewColumn("run_id", "apl"),
-	Title:           buncolgen.NewColumn("title", "apl"),
-	Summary:         buncolgen.NewColumn("summary", "apl"),
-	Status:          buncolgen.NewColumn("status", "apl"),
-	StepCount:       buncolgen.NewColumn("step_count", "apl"),
-	CompletedSteps:  buncolgen.NewColumn("completed_steps", "apl"),
-	FailedStep:      buncolgen.NewColumn("failed_step", "apl"),
-	FailureError:    buncolgen.NewColumn("failure_error", "apl"),
-	DecidedByUserID: buncolgen.NewColumn("decided_by_user_id", "apl"),
-	DecidedAt:       buncolgen.NewColumn("decided_at", "apl"),
-	ExpiresAt:       buncolgen.NewColumn("expires_at", "apl"),
-	CommitsAt:       buncolgen.NewColumn("commits_at", "apl"),
-	UndoneAt:        buncolgen.NewColumn("undone_at", "apl"),
-	UndoneByUserID:  buncolgen.NewColumn("undone_by_user_id", "apl"),
-	Version:         buncolgen.NewColumn("version", "apl"),
-	CreatedAt:       buncolgen.NewColumn("created_at", "apl"),
-	UpdatedAt:       buncolgen.NewColumn("updated_at", "apl"),
+	ID:                    buncolgen.NewColumn("id", "apl"),
+	BusinessUnitID:        buncolgen.NewColumn("business_unit_id", "apl"),
+	OrganizationID:        buncolgen.NewColumn("organization_id", "apl"),
+	RunID:                 buncolgen.NewColumn("run_id", "apl"),
+	Title:                 buncolgen.NewColumn("title", "apl"),
+	Summary:               buncolgen.NewColumn("summary", "apl"),
+	Status:                buncolgen.NewColumn("status", "apl"),
+	StepCount:             buncolgen.NewColumn("step_count", "apl"),
+	CompletedSteps:        buncolgen.NewColumn("completed_steps", "apl"),
+	FailedStep:            buncolgen.NewColumn("failed_step", "apl"),
+	FailureError:          buncolgen.NewColumn("failure_error", "apl"),
+	DecidedByUserID:       buncolgen.NewColumn("decided_by_user_id", "apl"),
+	DecidedAt:             buncolgen.NewColumn("decided_at", "apl"),
+	ExpiresAt:             buncolgen.NewColumn("expires_at", "apl"),
+	CommitsAt:             buncolgen.NewColumn("commits_at", "apl"),
+	UndoneAt:              buncolgen.NewColumn("undone_at", "apl"),
+	UndoneByUserID:        buncolgen.NewColumn("undone_by_user_id", "apl"),
+	ApprovalReasonCode:    buncolgen.NewColumn("approval_reason_code", "apl"),
+	ApprovalNote:          buncolgen.NewColumn("approval_note", "apl"),
+	ApprovalPreviewDigest: buncolgen.NewColumn("approval_preview_digest", "apl"),
+	Version:               buncolgen.NewColumn("version", "apl"),
+	CreatedAt:             buncolgen.NewColumn("created_at", "apl"),
+	UpdatedAt:             buncolgen.NewColumn("updated_at", "apl"),
 }
 
 // AgentPlanFieldMap maps JSON API field names to database column names.
@@ -670,6 +676,9 @@ var AgentPlanInsertableColumns = []string{
 	"commits_at",
 	"undone_at",
 	"undone_by_user_id",
+	"approval_reason_code",
+	"approval_note",
+	"approval_preview_digest",
 	"version",
 	"created_at",
 	"updated_at",
@@ -877,6 +886,8 @@ var AgentProposalColumns = struct {
 	Taint                 buncolgen.Column // "taint" → qualified: "ap.taint"
 	EgressClass           buncolgen.Column // "egress_class" → qualified: "ap.egress_class"
 	HeldBy                buncolgen.Column // "held_by" → qualified: "ap.held_by"
+	MoneyMinor            buncolgen.Column // "money_minor" → qualified: "ap.money_minor"
+	MoneyCurrency         buncolgen.Column // "money_currency" → qualified: "ap.money_currency"
 	TraceID               buncolgen.Column // "trace_id" → qualified: "ap.trace_id"
 	SpanID                buncolgen.Column // "span_id" → qualified: "ap.span_id"
 	StepKey               buncolgen.Column // "step_key" → qualified: "ap.step_key"
@@ -915,6 +926,8 @@ var AgentProposalColumns = struct {
 	Taint:                 buncolgen.NewColumn("taint", "ap"),
 	EgressClass:           buncolgen.NewColumn("egress_class", "ap"),
 	HeldBy:                buncolgen.NewColumn("held_by", "ap"),
+	MoneyMinor:            buncolgen.NewColumn("money_minor", "ap"),
+	MoneyCurrency:         buncolgen.NewColumn("money_currency", "ap"),
 	TraceID:               buncolgen.NewColumn("trace_id", "ap"),
 	SpanID:                buncolgen.NewColumn("span_id", "ap"),
 	StepKey:               buncolgen.NewColumn("step_key", "ap"),
@@ -959,6 +972,8 @@ var AgentProposalFieldMap = map[string]string{
 	"taint":                 "taint",
 	"egressClass":           "egress_class",
 	"heldBy":                "held_by",
+	"moneyMinor":            "money_minor",
+	"moneyCurrency":         "money_currency",
 	"traceId":               "trace_id",
 	"spanId":                "span_id",
 	"stepKey":               "step_key",
@@ -1001,6 +1016,8 @@ var AgentProposalInsertableColumns = []string{
 	"taint",
 	"egress_class",
 	"held_by",
+	"money_minor",
+	"money_currency",
 	"trace_id",
 	"span_id",
 	"step_key",
@@ -1105,6 +1122,8 @@ var AgentProposalFilter = struct {
 	Taint                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "taint" → DB: "taint"
 	EgressClass           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "egressClass" → DB: "egress_class"
 	HeldBy                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "heldBy" → DB: "held_by"
+	MoneyMinor            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "moneyMinor" → DB: "money_minor"
+	MoneyCurrency         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "moneyCurrency" → DB: "money_currency"
 	TraceID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "traceId" → DB: "trace_id"
 	SpanID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "spanId" → DB: "span_id"
 	StepKey               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "stepKey" → DB: "step_key"
@@ -1198,6 +1217,12 @@ var AgentProposalFilter = struct {
 	},
 	HeldBy: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("heldBy", op, value)
+	},
+	MoneyMinor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("moneyMinor", op, value)
+	},
+	MoneyCurrency: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("moneyCurrency", op, value)
 	},
 	TraceID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("traceId", op, value)

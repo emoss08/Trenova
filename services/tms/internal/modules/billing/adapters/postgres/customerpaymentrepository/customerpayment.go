@@ -218,6 +218,8 @@ func (r *repository) FindMatchCandidates(
 	})
 }
 
+const defaultMatchCandidateLimit = 10
+
 func (r *repository) FindSuggestedMatchCandidates(
 	ctx context.Context,
 	req customerpaymentports.FindCustomerPaymentMatchCandidatesRequest,
@@ -247,7 +249,11 @@ func (r *repository) FindSuggestedMatchCandidates(
 		if req.ReceiptDate > 0 {
 			query = query.Where("ABS(cp.payment_date - ?) <= 604800", req.ReceiptDate)
 		}
-		err := query.Order("cp.created_at DESC").Limit(10).Scan(ctx)
+		limit := req.Limit
+		if limit <= 0 {
+			limit = defaultMatchCandidateLimit
+		}
+		err := query.Order("cp.created_at DESC").Limit(int64(limit)).Scan(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("find suggested customer payment matches: %w", err)
 		}

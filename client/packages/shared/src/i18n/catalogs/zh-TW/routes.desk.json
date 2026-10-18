@@ -1815,6 +1815,7 @@
   "{0, plural, one {# agreement rule} other {# agreement rules}}": "{0, plural, one {# 條協議規則} other {# 條協議規則}}",
   "{0, plural, one {# artifact} other {# artifacts}}": "{0, plural, other {# 個產出物}}",
   "{0, plural, one {# attempt failed} other {# attempts failed}}": "{0, plural, other {# 次嘗試失敗}}",
+  "{0, plural, one {# change must be opened before these can be approved} other {# changes must be opened before these can be approved}}": "{0, plural, other {必須先開啟 # 項變更，才能核准這些變更}}",
   "{0, plural, one {# charge waits on approval} other {# charges wait on approval}}": "{0, plural, other {# 項費用等待核准}}",
   "{0, plural, one {# chart} other {# charts}}": "{0, plural, one {# 張圖表} other {# 張圖表}}",
   "{0, plural, one {# code has no mapping} other {# codes have no mapping}}": "{0, plural, other {# 個代碼沒有對應}}",

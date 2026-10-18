@@ -1,4 +1,6 @@
+import { decimalToCents } from "@/lib/decimal-cents";
 import type { AgentControl } from "@/lib/graphql/agent-control";
+import { formatCurrency } from "@trenova/shared/lib/utils";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Ic, type IcName } from "../kit/ic";
 import { SecH } from "../kit/layout";
@@ -22,6 +24,8 @@ export function OrganizationWide({
   onOpenRouting,
 }: OrganizationWideProps) {
   const t = useT();
+  const callCeilingCents = decimalToCents(control.agentMoneyCallCeiling);
+  const moneyRunsOnItsOwn = callCeilingCents > 0 && control.agentMoneyRunCalls > 0;
 
   const rows: { icon: IcName; label: string; value: string; on: boolean }[] = [
     {
@@ -46,6 +50,17 @@ export function OrganizationWide({
           ? t("{0} per person", control.personMonthlyMessages.toLocaleString())
           : t("Unlimited"),
       on: control.personMonthlyMessages > 0,
+    },
+    {
+      icon: "dollar",
+      label: t("Money on their own"),
+      value: moneyRunsOnItsOwn
+        ? t(
+            "Up to {0} a change",
+            formatCurrency(callCeilingCents / 100, control.agentMoneyCurrency),
+          )
+        : t("A person approves every change"),
+      on: moneyRunsOnItsOwn,
     },
     {
       icon: "database",

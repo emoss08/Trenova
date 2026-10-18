@@ -534,8 +534,13 @@ func (c *Conversation) decideProposal(
 		Note:          d.Note,
 		TenantInfo:    c.session.Tenant,
 	}
-	if decision != agent.DecisionRejected && proposal.Preview != nil {
-		req.PreviewDigest = proposal.Preview.Digest
+	if decision != agent.DecisionRejected {
+		digest, err := c.proposalDigest(ctx, proposal, d.Modifications)
+		if err != nil {
+			record.Error = "preview: " + err.Error()
+			return record
+		}
+		req.PreviewDigest = digest
 	}
 
 	if _, err := bench.Decisions.DecideOwn(ctx, req, &c.session.Actor); err != nil {
@@ -573,12 +578,21 @@ func (c *Conversation) decidePlan(
 		Note:     d.Note,
 	}
 
-	if _, err := bench.Plans.DecideOwn(ctx, &agentports.DecideAgentPlanRequest{
+	planReq := &agentports.DecideAgentPlanRequest{
 		PlanID:     proposal.PlanID,
 		Decision:   decision,
 		Note:       d.Note,
 		TenantInfo: c.session.Tenant,
-	}, &c.session.Actor); err != nil {
+	}
+	if decision != agent.DecisionRejected {
+		digest, err := c.planDigest(ctx, proposal.PlanID)
+		if err != nil {
+			record.Error = "preview: " + err.Error()
+			return record
+		}
+		planReq.PreviewDigest = digest
+	}
+	if _, err := bench.Plans.DecideOwn(ctx, planReq, &c.session.Actor); err != nil {
 		record.Error = err.Error()
 		return record
 	}
@@ -594,6 +608,49 @@ func (c *Conversation) decidePlan(
 	}
 
 	return record
+}
+
+func (c *Conversation) proposalDigest(
+	ctx context.Context,
+	proposal *ProposalRecord,
+	modifications map[string]any,
+) (string, error) {
+	if len(modifications) == 0 && proposal.Preview != nil {
+		return proposal.Preview.Digest, nil
+	}
+	current, err := c.loadProposal(ctx, proposal.ID)
+	if err != nil {
+		return "", err
+	}
+	preview, err := c.session.bench.Previews.ForProposal(ctx, &agentports.ProposalPreviewRequest{
+		Proposal:      current,
+		Modifications: modifications,
+		Viewer:        &agentports.PreviewViewer{Actor: &c.session.Actor},
+	})
+	if err != nil {
+		return "", err
+	}
+
+	return preview.Digest, nil
+}
+
+func (c *Conversation) planDigest(ctx context.Context, planID pulid.ID) (string, error) {
+	plan, err := c.session.bench.Plans.GetByID(ctx, agentports.GetAgentPlanByIDRequest{
+		ID:         planID,
+		TenantInfo: c.session.Tenant,
+	})
+	if err != nil {
+		return "", err
+	}
+	preview, err := c.session.bench.Previews.ForPlan(ctx, &agentports.PlanPreviewRequest{
+		Plan:   plan,
+		Viewer: &agentports.PreviewViewer{Actor: &c.session.Actor},
+	})
+	if err != nil {
+		return "", err
+	}
+
+	return preview.Digest, nil
 }
 
 func (c *Conversation) settleDecisions(ctx context.Context, decisions []*DecisionRecord) {

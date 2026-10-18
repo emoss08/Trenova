@@ -4,12 +4,12 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 )
@@ -472,14 +472,27 @@ func TestDecide_TaintHoldsWhatLeaves(t *testing.T) {
 
 	runDecideCases(t, []decideCase{
 		{
-			name: "a clean run posts a payment it earned",
+			name: "a clean run posts a payment it earned when the payment is within bounds",
 			in: agenttoolpolicy.DecideInput{
-				Policy:     money,
-				Params:     call(agentPrincipal(), nil),
-				Definition: actsAlone("post_customer_payment"),
-				Taint:      clean(),
+				Policy:         provenWithin(money),
+				Params:         call(agentPrincipal(), nil),
+				Definition:     actsAlone("post_customer_payment"),
+				Taint:          clean(),
+				MoneyAllowance: allowance(agent.MoneyUse{}, agent.MoneyUse{}),
 			},
 			tier: agent.TierAutoExecute,
+		},
+		{
+			name: "a clean run asks first for a payment it cannot prove within bounds",
+			in: agenttoolpolicy.DecideInput{
+				Policy:         money,
+				Params:         call(agentPrincipal(), nil),
+				Definition:     actsAlone("post_customer_payment"),
+				Taint:          clean(),
+				MoneyAllowance: allowance(agent.MoneyUse{}, agent.MoneyUse{}),
+			},
+			tier:   agent.TierActWithApproval,
+			heldBy: []string{agent.HeldByMoneyUnproven},
 		},
 		{
 			name: "a tainted run waits",

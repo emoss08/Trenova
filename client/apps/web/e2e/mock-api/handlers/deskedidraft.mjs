@@ -431,6 +431,7 @@ function preview(state) {
     recorded: false,
     computedAt: state.anchor - 60,
     digest: "sha256:4e1b7c90d2a6f3e8",
+    reviewRequired: false,
   };
 }
 

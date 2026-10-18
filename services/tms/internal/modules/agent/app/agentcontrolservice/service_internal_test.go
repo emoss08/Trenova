@@ -209,11 +209,68 @@ func TestAgentControlAuditComment(t *testing.T) {
 	t.Parallel()
 
 	assert.Equal(t, "AI training consent granted",
-		agentControlAuditComment(true, &tenant.AgentControl{AITrainingConsent: true}))
+		agentControlAuditComment(true, false, &tenant.AgentControl{AITrainingConsent: true}))
 	assert.Equal(t, "AI training consent withdrawn",
-		agentControlAuditComment(true, &tenant.AgentControl{}))
+		agentControlAuditComment(true, false, &tenant.AgentControl{}))
+	assert.Equal(t, "Agent money limits changed",
+		agentControlAuditComment(false, true, &tenant.AgentControl{}))
 	assert.Equal(t, "Agent control updated",
-		agentControlAuditComment(false, &tenant.AgentControl{AITrainingConsent: true}))
+		agentControlAuditComment(false, false, &tenant.AgentControl{AITrainingConsent: true}))
+}
+
+func TestUpdate_SetsOnlyTheMoneyLimitsSent(t *testing.T) {
+	t.Parallel()
+
+	control := defaultControl()
+	control.ApplyAgentMoneyDefaults()
+	svc, controls := newTestService(control)
+	ceiling := int64(25_000)
+	dayCalls := 20
+
+	updated, err := svc.Update(t.Context(), &agentports.UpdateAgentControlRequest{
+		AgentMoney: agentports.AgentMoneyLimitsUpdate{
+			CallCeilingMinor: &ceiling,
+			DayCalls:         &dayCalls,
+		},
+	}, userActor(pulid.ID("usr_admin")))
+
+	require.NoError(t, err)
+	require.Same(t, updated, controls.updated)
+	assert.Equal(t, ceiling, updated.AgentMoneyCallCeilingMinor)
+	assert.Equal(t, dayCalls, updated.AgentMoneyDayCalls)
+	assert.Equal(t, int64(tenant.DefaultAgentMoneyRunAmountMinor), updated.AgentMoneyRunAmountMinor)
+	assert.Equal(t, tenant.DefaultAgentMoneyRunCalls, updated.AgentMoneyRunCalls)
+}
+
+func TestUpdate_RefusesMoneyLimitsThatDoNotNest(t *testing.T) {
+	t.Parallel()
+
+	control := defaultControl()
+	control.ApplyAgentMoneyDefaults()
+	svc, controls := newTestService(control)
+	ceiling := int64(tenant.DefaultAgentMoneyRunAmountMinor + 1)
+
+	_, err := svc.Update(t.Context(), &agentports.UpdateAgentControlRequest{
+		AgentMoney: agentports.AgentMoneyLimitsUpdate{CallCeilingMinor: &ceiling},
+	}, userActor(pulid.ID("usr_admin")))
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "agentMoneyCallCeiling")
+	assert.Nil(t, controls.updated)
+}
+
+func TestAgentControlAuditOptions_MoneyLimitChangesAreCritical(t *testing.T) {
+	t.Parallel()
+
+	before := defaultControl()
+	before.ApplyAgentMoneyDefaults()
+	after := *before
+	after.AgentMoneyDayAmountMinor++
+
+	assert.True(t, agentMoneyChanged(before, &after))
+	assert.False(t, agentMoneyChanged(before, before))
+	assert.Len(t, agentControlAuditOptions(t.Context(), false, before, &after), 3)
+	assert.Len(t, agentControlAuditOptions(t.Context(), false, before, before), 2)
 }
 
 func TestUpdateRecordsTheVersionTheControlsBecome(t *testing.T) {

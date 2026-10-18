@@ -201,12 +201,13 @@ func PlanAddAdjustment(entity *driversettlement.Settlement, input *AdjustmentLin
 		payCodeID = input.PayCodeID
 	}
 	entity.Lines = append(entity.Lines, &driversettlement.SettlementLine{
-		Category:    driversettlement.LineCategoryAdjustment,
-		Description: input.Description,
-		AmountMinor: input.AmountMinor,
-		Quantity:    input.Quantity,
-		Rate:        input.Rate,
-		PayCodeID:   payCodeID,
+		Category:     driversettlement.LineCategoryAdjustment,
+		Description:  input.Description,
+		AmountMinor:  input.AmountMinor,
+		Quantity:     input.Quantity,
+		Rate:         input.Rate,
+		PayCodeID:    payCodeID,
+		AddedByAgent: input.ByAgent,
 	})
 	entity.AddException(
 		driversettlement.ExceptionCodeManualAdjustment,
@@ -314,6 +315,7 @@ func adjustmentLineInput(input *settlementshared.AdjustmentInput) *AdjustmentLin
 		Quantity:    input.Quantity,
 		Rate:        input.Rate,
 		PayCodeID:   input.PayCodeID,
+		ByAgent:     input.ByAgent,
 	}
 }
 

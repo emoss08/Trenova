@@ -198,6 +198,13 @@ type AgentProposalPreview {
   computedAt: Timestamp!
   "SHA-256 of what this reader was shown; send it back with an approval."
   digest: String!
+  """
+  An approval of this change, with the modifications this preview was asked
+  for, is refused without the digest: the change moves money, reaches a
+  customer, a driver or someone outside the organization, or was proposed
+  after the run read outside content.
+  """
+  reviewRequired: Boolean!
 }
 
 "One pending step of a plan and what it would do."
@@ -220,6 +227,8 @@ type AgentPlanPreview {
   stale: Boolean!
   withheldCount: Int!
   computedAt: Timestamp!
+  "An approval is refused without the digest: a step waiting on it must be reviewed."
+  reviewRequired: Boolean!
 }
 
 "The digest of the preview a person was shown for one proposal of a batch."

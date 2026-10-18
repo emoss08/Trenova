@@ -208,10 +208,11 @@ func PlanAddAdjustment(
 		glAccountID = input.GLAccountID
 	}
 	entity.Lines = append(entity.Lines, &carriersettlement.CarrierSettlementLine{
-		EventType:   carriersettlement.CostEventTypeAdjustment,
-		Description: input.Description,
-		AmountMinor: input.AmountMinor,
-		GLAccountID: glAccountID,
+		EventType:    carriersettlement.CostEventTypeAdjustment,
+		Description:  input.Description,
+		AmountMinor:  input.AmountMinor,
+		GLAccountID:  glAccountID,
+		AddedByAgent: input.ByAgent,
 	})
 	entity.SyncTotals()
 	return nil
@@ -282,6 +283,7 @@ func adjustmentLineInput(input *settlementshared.AdjustmentInput) *AdjustmentLin
 		Description: input.Description,
 		AmountMinor: input.AmountMinor,
 		GLAccountID: input.GLAccountID,
+		ByAgent:     input.ByAgent,
 	}
 }
 

@@ -1,5 +1,5 @@
 import type { DecisionFocus } from "@/stores/assistant-store";
-import type { AssistantPlan, AssistantProposal } from "@/types/assistant";
+import type { AssistantArtifact, AssistantPlan, AssistantProposal } from "@/types/assistant";
 import { classifyPlan } from "./plan-state";
 import { classifyProposal } from "./proposal-state";
 
@@ -47,6 +47,25 @@ export function proposalKey(id: string): string {
   return `proposal:${id}`;
 }
 
+/**
+ * The decision request the agent raised for an entry: the one naming any of
+ * its proposals, or its plan. Members are keyed, so a proposal is looked up by
+ * its key, not its bare id.
+ */
+export function decisionArtifactFor(
+  entry: ApprovalEntry,
+  artifacts: readonly Pick<AssistantArtifact, "id" | "kind" | "proposalId" | "planId">[],
+): string | null {
+  const artifact = artifacts.find(
+    (candidate) =>
+      candidate.kind === "decision_request" &&
+      ((candidate.proposalId !== "" && entry.members.includes(proposalKey(candidate.proposalId))) ||
+        (entry.kind === "plan" && candidate.planId !== "" && candidate.planId === entry.plan.id)),
+  );
+
+  return artifact?.id ?? null;
+}
+
 export function planKey(id: string): string {
   return `plan:${id}`;
 }
@@ -85,6 +104,16 @@ function chunk<T>(items: readonly T[], size: number): T[][] {
 }
 
 /**
+ * The wording the person changed on a draft and sent for approval, which goes
+ * with the approval as its modifications; null when they changed nothing.
+ */
+export function pendingEdits(proposal: AssistantProposal): Record<string, unknown> | null {
+  const edits = proposal.pendingModifications;
+
+  return edits && Object.keys(edits).length > 0 ? edits : null;
+}
+
+/**
  * Proposals of one tool from one run, as entries: alone when there is one,
  * otherwise as batches the server takes in one call.
  */
@@ -110,7 +139,11 @@ function requestedTogether(
     return [];
   }
 
-  const byId = new Map(standalone.map((proposal) => [proposal.id, proposal]));
+  const byId = new Map(
+    standalone
+      .filter((proposal) => pendingEdits(proposal) === null)
+      .map((proposal) => [proposal.id, proposal]),
+  );
   const requested = focus.proposalIds
     .map((id) => byId.get(id))
     .filter((proposal) => proposal !== undefined);
@@ -176,6 +209,12 @@ export function approvalQueue(
   const byRunAndTool = new Map<string, AssistantProposal[]>();
   for (const proposal of standalone) {
     if (taken.has(proposal.id)) {
+      continue;
+    }
+    // A change the person edited is approved as edited, against the preview
+    // of those edits, so it is never folded into a batch of others.
+    if (pendingEdits(proposal) !== null) {
+      entries.push(proposalEntry(proposal));
       continue;
     }
     const group = `${proposal.runId}\u0000${proposal.toolName}`;

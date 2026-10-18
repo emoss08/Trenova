@@ -49,6 +49,10 @@ type bankReceiptMatcher interface {
 		req *bankreceiptservice.PreviewMatchPaymentRequest,
 		actor *permissionports.RequestActor,
 	) (*bankreceiptservice.MatchPreview, error)
+	PaymentsOfReceiptAmount(
+		ctx context.Context,
+		req *bankreceiptports.ReceiptAmountPaymentsRequest,
+	) ([]*customerpayment.Payment, error)
 }
 
 type customerPaymentPoster interface {
@@ -128,14 +132,19 @@ func (t *MatchBankReceiptTool) ParamSchema() map[string]any {
 
 func (t *MatchBankReceiptTool) Policy() agentports.ToolPolicy {
 	return agentports.ToolPolicy{
-		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
-		Resource:      permission.ResourceBankReceipt,
-		Operation:     permission.OpUpdate,
-		Scope:         agent.ToolScopeTenant,
-		DefaultTier:   agent.TierActWithApproval,
-		MaxTier:       agent.TierAutoExecute,
-		Egress:        []agent.EgressClass{agent.EgressMoney},
+		Name:        t.Name(),
+		Kind:        agent.ToolKindAction,
+		Resource:    permission.ResourceBankReceipt,
+		Operation:   permission.OpUpdate,
+		Scope:       agent.ToolScopeTenant,
+		DefaultTier: agent.TierActWithApproval,
+		MaxTier:     agent.TierAutoExecute,
+		Egress:      []agent.EgressClass{agent.EgressMoney},
+		Condition: &agentports.TierCondition{
+			Description: matchReceiptBoundText,
+			Bounds:      t.withinBounds,
+			Vouches:     []agent.TaintSource{agent.TaintSourceBankReceipt},
+		},
 		Effect:        agent.ToolEffectChange,
 		ReadsExternal: agent.ExternalReadNever,
 		Rationale:     "Matches a bank receipt to a posted payment, closing its reconciliation.",
@@ -314,18 +323,24 @@ func (t *PostCustomerPaymentTool) ParamSchema() map[string]any {
 
 func (t *PostCustomerPaymentTool) Policy() agentports.ToolPolicy {
 	return agentports.ToolPolicy{
-		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
-		Resource:      permission.ResourceCustomerPayment,
-		Operation:     permission.OpCreate,
-		Scope:         agent.ToolScopeTenant,
-		DefaultTier:   agent.TierActWithApproval,
-		MaxTier:       agent.TierAutoExecute,
-		Egress:        []agent.EgressClass{agent.EgressMoney},
+		Name:        t.Name(),
+		Kind:        agent.ToolKindAction,
+		Resource:    permission.ResourceCustomerPayment,
+		Operation:   permission.OpCreate,
+		Scope:       agent.ToolScopeTenant,
+		DefaultTier: agent.TierActWithApproval,
+		MaxTier:     agent.TierAutoExecute,
+		Egress:      []agent.EgressClass{agent.EgressMoney},
+		Condition: &agentports.TierCondition{
+			Description: postPaymentBoundText,
+			Bounds:      t.withinBounds,
+			Vouches:     []agent.TaintSource{agent.TaintSourceBankReceipt},
+		},
 		Effect:        agent.ToolEffectChange,
 		Reversible:    true,
 		ReadsExternal: agent.ExternalReadNever,
 		Rationale:     "Records a customer payment and applies it to invoices.",
+		Artifact:      common.CustomerRecordEntity,
 	}
 }
 
@@ -341,23 +356,55 @@ func (t *PostCustomerPaymentTool) Target(params map[string]any) (agentports.Tool
 type postPaymentArgs struct {
 	request   *customerpaymentports.PostCustomerPaymentRequest
 	receiptID pulid.ID
+	receipt   *bankreceipt.BankReceipt
 }
 
 func (t *PostCustomerPaymentTool) Execute(
 	ctx context.Context,
 	params agentports.ToolExecuteParams,
 ) error {
+	_, err := t.ExecuteWithResult(ctx, params)
+
+	return err
+}
+
+// ExecuteWithResult posts the payment and matches the receipt. Once the post
+// has gone through the write has moved money, so a receipt that will not match
+// is reported in the result rather than failing the write: a failure would
+// say nothing moved, and a retry would post the payment again.
+func (t *PostCustomerPaymentTool) ExecuteWithResult(
+	ctx context.Context,
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+) (*agent.ToolExecutionResult, error) {
 	args, err := t.arguments(ctx, params)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	payment, err := t.payments.PostAndApply(ctx, args.request, params.Actor)
 	if err != nil {
-		return err
+		return nil, err
+	}
+	result := &agent.ToolExecutionResult{
+		Action: "posted",
+		Kind:   "customer payment",
+		Name:   payment.ReferenceNumber,
+		IDs: map[string]string{
+			"customerPaymentId": payment.ID.String(),
+			"customerId":        payment.CustomerID.String(),
+		},
+		Record: &agent.RecordRef{
+			EntityType: common.CustomerRecordEntity,
+			ID:         payment.CustomerID.String(),
+		},
+		State: fmt.Sprintf(
+			"Posted, %s %s",
+			money.DecimalFromMinor(payment.AmountMinor).StringFixed(2),
+			payment.CurrencyCode,
+		),
 	}
 	if args.receiptID.IsNil() {
-		return nil
+		return result, nil
 	}
 
 	_, err = t.receipts.Match(ctx, &bankreceiptports.MatchBankReceiptRequest{
@@ -366,13 +413,19 @@ func (t *PostCustomerPaymentTool) Execute(
 		TenantInfo: args.request.TenantInfo,
 	}, params.Actor)
 	if err != nil {
-		return fmt.Errorf(
-			"the payment %s was posted, but the bank receipt could not be matched to it: %w",
-			payment.ID, err,
-		)
-	}
+		result.State += "; the bank receipt was not matched to it"
+		result.Total = 1
+		result.Failed = []agent.ExecutionItemFail{{
+			ID:     args.receiptID.String(),
+			Label:  "bank receipt",
+			Reason: fmt.Sprintf("could not be matched to payment %s: %s", payment.ID, err),
+		}}
 
-	return nil
+		return result, nil
+	}
+	result.State += ", matched to its bank receipt"
+
+	return result, nil
 }
 
 func (t *PostCustomerPaymentTool) arguments(
@@ -460,6 +513,7 @@ func (t *PostCustomerPaymentTool) arguments(
 		args.request.ReferenceNumber = receipt.ReferenceNumber
 	}
 	args.receiptID = receiptID
+	args.receipt = receipt
 
 	return args, nil
 }

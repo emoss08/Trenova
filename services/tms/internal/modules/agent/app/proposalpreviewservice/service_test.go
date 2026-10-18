@@ -765,3 +765,45 @@ func TestSettleParams_ReadsValuesAsTheExecutorWill(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "Hold", typed["status"])
 }
+
+func TestForProposal_SaysWhetherAnApprovalOfWhatItShowsNeedsItsDigest(t *testing.T) {
+	t.Parallel()
+
+	for _, review := range []bool{true, false} {
+		f := newFixture()
+		f.checker.review = review
+		modifications := map[string]any{"reason": "Customer asked"}
+
+		preview, err := f.svc.ForProposal(t.Context(), &agentports.ProposalPreviewRequest{
+			Proposal:      f.proposal(f.cancelParams()),
+			Modifications: modifications,
+			Viewer:        f.viewer(),
+		})
+		require.NoError(t, err)
+
+		assert.Equal(t, review, preview.ReviewRequired)
+		assert.Equal(t, modifications, f.checker.reviewed,
+			"the rule is the server's own, applied to the approver's changes")
+	}
+}
+
+func TestForPlan_EachStepSaysWhetherItMustBeReviewed(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture()
+	f.checker.byClass = true
+	plan := &agent.AgentPlan{ID: pulid.MustNew("apl_"), OrganizationID: f.org, BusinessUnitID: f.bu}
+	internal := f.proposal(map[string]any{"shipmentId": f.tool.state.ID.String(), "status": "Hold"})
+	internal.PlanID, internal.PlanStep, internal.EgressClass = &plan.ID, 1, agent.EgressInternal
+	money := f.proposal(f.cancelParams())
+	money.PlanID, money.PlanStep, money.EgressClass = &plan.ID, 2, agent.EgressMoney
+	f.steps.steps = []*agent.AgentProposal{internal, money}
+
+	preview, err := f.svc.ForPlan(t.Context(), &agentports.PlanPreviewRequest{Plan: plan, Viewer: f.viewer()})
+	require.NoError(t, err)
+
+	require.Len(t, preview.Steps, 2)
+	assert.False(t, preview.Steps[0].Preview.ReviewRequired)
+	assert.True(t, preview.Steps[1].Preview.ReviewRequired)
+	assert.True(t, preview.ReviewRequired, "the plan needs its digest when a waiting step does")
+}

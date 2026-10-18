@@ -394,7 +394,7 @@ func (s *Service) carryOut(
 	if err := s.audit.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceAgentProposal,
 		ResourceID:     proposal.GetID().String(),
-		Operation:      permission.OpApprove,
+		Operation:      permission.OpUpdate,
 		UserID:         auditActor.UserID,
 		PrincipalType:  auditActor.PrincipalType,
 		PrincipalID:    auditActor.PrincipalID,

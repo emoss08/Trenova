@@ -923,7 +923,8 @@ starts a turn on it.
    told about the first in the old order (files, agent, page, budget, room,
    history), never about a cancellation. The guard's classifier runs beside the
    context build (memories, retrieval embedding), which writes nothing, so a
-   refusal discards it; the classifier fails open after 3s. A refusal the
+   refusal discards it; the classifier fails open after 3s, and on any other failure, unless
+   `RefuseWhenUnavailable` is set, when either refuses the turn. A refusal the
    person can act on is non-retryable and its message reaches the reader as
    written.
 2. **The loop** runs in workflow code, as above.
@@ -1590,9 +1591,56 @@ allowed values, the parameter's first sentence), and a key the tool does not
 take is answered with the parameters it does. The model's own call is never
 changed; the thread records what it sent.
 
+**Money runs on its own only within bounds.** The money class runs at most Ask first. A
+money tool may run a call automatically only when its `TierCondition.Bounds` proves the call
+within bounds (`agenttoolpolicy.Decide`): its own record checks (an exact remittance or
+receipt match, an uninvoiced billing item, a settlement not yet approved, a line an agent
+added) and the amount it moves, which `agentbudgetservice.MoneyAllowance` holds against the
+organization's money limits for agents in `agent_controls` (one change's ceiling, where 0
+holds every call; a run's and a day's count and total, the day in the organization's zone
+and across every agent). The limits are amounts in the organization's functional currency
+(`accounting_controls.functional_currency_code`): every bound returns the currency of the
+amount it counts, a write in any other currency is held as `money_currency`, and the totals
+count only functional-currency writes (`agent_proposals.money_currency`, beside
+`money_minor`). The allowance counts automatic money writes already recorded and executed
+(`money_minor` is written only for a write that ran on its own; a write that failed moved
+nothing and counts against nothing) plus the turn's own unrecorded ones, its delegates', and
+the delegating turn's: `DispatchCall.MoneySpent` and `DelegateCall.MoneySpent` carry them in
+workflow code, so a delegate's turn starts from what the turn that handed it the task moved,
+and the turn after a delegation counts what the delegate moved. A simulated run counts its
+simulated writes against its own run and against the day, so it is held where the real run
+would be. A gross change is counted, never a net one: `correct_charge_code` counts every
+charge it adds, removes or changes in full. A call outside a bound, or whose bounds, limits,
+currency or day cannot be read (a timezone that cannot be read holds the write rather than
+drawing the day in UTC), is filed as a proposal whose `HeldBy` names the bound
+(`money_call_ceiling`, `money_run_calls`, `money_exact_match`, …).
+
+A tainted turn never moves money on its own, with one exception a tool declares and the
+validator checks: a bound that reads a record again from the organization's own records, and
+takes the amount, the customer and the references from it rather than from the call, may
+vouch for having read that record (`TierCondition.Vouches`, `MoneyBound.Reread`). Only a bank
+receipt can be vouched for (`TaintSource.Rereadable`); `post_customer_payment` and
+`match_bank_receipt` vouch for it, so a run that read only bank receipts may post or match
+within the limits. The hold lifts only when the turn's taint is known and complete, every
+source it holds is one the tool declares, every mark names its record (the receipt read tools
+name each receipt they return) and was read by this turn, and each record the bound re-read
+(`MoneyBound.Rereading(source, ref)`) is one the turn read. `RunTaint` keeps every source it
+has seen in `Seen` even once its 16 marks are full, and sets `Overflowed`, so a source read
+past the cap is never lost and an overflowed taint is never vouched for. A mark that crosses a
+delegation, handed down (`HandedOn`) or folded back up (`Inherit`), is `Delegated` and is never
+vouched for. Any other outside content (web, email, a document, a portal), and a bound that did
+not re-read the receipt, hold the write as before, and the bounds are not read at all for a
+taint the tool cannot vouch for (`TierCondition.MayVouch`). A vouched payment is pinned to its
+receipt: its day, reference, memo and method must be the receipt's, or it is held as
+`money_exact_match`. A payment whose receipt will not match once it has posted is reported as
+posted with the failed match, never failed, so it counts against the caps and a retry does not
+post it twice. Two turns running at once each see what the other has recorded, not what it has
+run and not yet recorded, so the day's caps can be passed by at most one turn's unrecorded
+writes per concurrent turn.
+
 A proposal's result says why it waits (`heldReason`: the tool's tier, the
 agent's ceiling, a change that is always a person's, what it would reach, a
-condition, outside content, business hours), a permission denial says what to
+condition, outside content, business hours, or the money bound it exceeded), a permission denial says what to
 tell the person and not to try another way (`deniedAdvice`), and `remember`
 says whether the memory is kept or only offered on a card
 (`savedMemoryContent`). A tool done as a sequence declares it

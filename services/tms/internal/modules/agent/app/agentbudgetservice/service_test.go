@@ -2,6 +2,7 @@ package agentbudgetservice
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -57,9 +58,17 @@ func (f *fakeTools) CountExecutedTool(
 
 type fixedZone string
 
-func (z fixedZone) Timezone(context.Context, pagination.TenantInfo) string { return string(z) }
+func (z fixedZone) Timezone(context.Context, pagination.TenantInfo) (string, error) {
+	return string(z), nil
+}
 
-func money(value string) *decimal.Decimal {
+type unreadableZone struct{}
+
+func (unreadableZone) Timezone(context.Context, pagination.TenantInfo) (string, error) {
+	return "", errors.New("organization unavailable")
+}
+
+func decimalOf(value string) *decimal.Decimal {
 	d := decimal.RequireFromString(value)
 
 	return &d
@@ -86,6 +95,7 @@ func newService(cost *fakeCost, runs *fakeRuns, tools *fakeTools) *Service {
 		usage:     cost,
 		runs:      runs,
 		proposals: tools,
+		books:     fixedBooks("USD"),
 		zones:     fixedZone("America/Los_Angeles"),
 		now:       func() int64 { return laEvening },
 	}
@@ -112,7 +122,7 @@ func TestCheckRun_RefusesWhenTheMonthlyBudgetIsSpent(t *testing.T) {
 	}
 	svc := newService(cost, &fakeRuns{}, &fakeTools{})
 	d := definition()
-	d.MonthlyBudgetUSD = money("25")
+	d.MonthlyBudgetUSD = decimalOf("25")
 
 	refusal, err := svc.CheckRun(t.Context(), d)
 	require.NoError(t, err)
@@ -134,7 +144,7 @@ func TestCheckRun_AllowsUnderBudgetAndWithoutOne(t *testing.T) {
 	cost := &fakeCost{cost: &aiusageports.AIUsageCost{CostUSD: decimal.RequireFromString("3")}}
 	svc := newService(cost, &fakeRuns{started: 2}, &fakeTools{})
 	d := definition()
-	d.MonthlyBudgetUSD = money("25")
+	d.MonthlyBudgetUSD = decimalOf("25")
 	d.DailyRunLimit = 3
 
 	refusal, err := svc.CheckRun(t.Context(), d)
@@ -212,7 +222,7 @@ func TestStatus_ReportsEveryCapAndTheUnpricedCalls(t *testing.T) {
 		&fakeTools{used: map[string]int{"assign_move": 2}},
 	)
 	d := definition()
-	d.MonthlyBudgetUSD = money("50")
+	d.MonthlyBudgetUSD = decimalOf("50")
 	d.DailyRunLimit = 10
 	d.ToolDailyLimits = map[string]int{"assign_move": 8}
 	d.SimulationMode = true

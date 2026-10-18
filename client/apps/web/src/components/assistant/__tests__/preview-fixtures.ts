@@ -121,6 +121,7 @@ export function preview(overrides: Partial<ProposalPreview> = {}): ProposalPrevi
     recorded: false,
     computedAt: 1_790_000_000,
     digest: "sha256:aaaa",
+    reviewRequired: false,
     ...overrides,
   };
 }
@@ -132,6 +133,7 @@ export function planPreview(overrides: Partial<PlanPreview> = {}): PlanPreview {
     stale: false,
     withheldCount: 0,
     computedAt: 1_790_000_000,
+    reviewRequired: false,
     steps: [
       { proposalId: "aprop_1", step: 1, preview: preview({ proposalId: "aprop_1" }) },
       {

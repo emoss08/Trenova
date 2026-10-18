@@ -165,6 +165,7 @@ type Resolver struct {
 	accountingSyncAttempt              *accountingsyncresolver.AccountingSyncAttemptResolver
 	accountingSyncAttentionGroup       *accountingsyncresolver.AccountingSyncAttentionGroupResolver
 	accountingSyncRecord               *accountingsyncresolver.AccountingSyncRecordResolver
+	agentControl                       *agentresolver.AgentControlResolver
 	agentDecision                      *agentDecisionResolver
 	agentDefinition                    *agentdefinitionresolver.AgentDefinitionResolver
 	agentDraft                         *agentdefinitionresolver.AgentDraftResolver
@@ -470,6 +471,7 @@ func FromServices(s *Services) *Resolver {
 		ApprovalCommitter:         s.ApprovalCommitter,
 		AgentTools:                s.AgentTools,
 		AgentControlService:       s.AgentControlService,
+		AccountingControlRepo:     s.AccountingControlRepo,
 	}
 	agentdefinitionDeps := &agentdefinitionresolver.Deps{
 		Core:                   s.Core,
@@ -1158,6 +1160,7 @@ func FromServices(s *Services) *Resolver {
 		accountingSyncAttempt:        &accountingsyncresolver.AccountingSyncAttemptResolver{Deps: accountingsyncDeps},
 		accountingSyncAttentionGroup: &accountingsyncresolver.AccountingSyncAttentionGroupResolver{Deps: accountingsyncDeps},
 		accountingSyncRecord:         &accountingsyncresolver.AccountingSyncRecordResolver{Deps: accountingsyncDeps},
+		agentControl:                 &agentresolver.AgentControlResolver{Deps: agentDeps},
 		agentDecision: &agentDecisionResolver{
 			agentAgentDecision:        &agentAgentDecision{Deps: agentDeps},
 			agentpreviewAgentDecision: &agentpreviewAgentDecision{Deps: agentpreviewDeps},
@@ -1755,6 +1758,10 @@ func (r *Resolver) AccountingSyncAttentionGroup() generated.AccountingSyncAttent
 
 func (r *Resolver) AccountingSyncRecord() generated.AccountingSyncRecordResolver {
 	return r.accountingSyncRecord
+}
+
+func (r *Resolver) AgentControl() generated.AgentControlResolver {
+	return r.agentControl
 }
 
 func (r *Resolver) AgentDecision() generated.AgentDecisionResolver {

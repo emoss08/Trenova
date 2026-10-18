@@ -20,7 +20,7 @@ func TestEgressClass_LeavesAndCeiling(t *testing.T) {
 		EgressCustomerVisible:   {leaves: true, ceiling: TierActWithApproval},
 		EgressDriverVisible:     {leaves: true, ceiling: TierActWithApproval},
 		EgressExternalRecipient: {leaves: true, ceiling: TierActWithApproval},
-		EgressMoney:             {leaves: true, ceiling: TierAutoExecute},
+		EgressMoney:             {leaves: true, ceiling: TierActWithApproval},
 	}
 
 	assert.Len(t, EgressClasses(), len(cases))
@@ -30,6 +30,17 @@ func TestEgressClass_LeavesAndCeiling(t *testing.T) {
 		assert.Equal(t, want.ceiling, class.Ceiling(), class)
 	}
 	assert.False(t, EgressClass("broadcast").IsValid())
+}
+
+func TestEgressClass_ApprovalNeedsReview(t *testing.T) {
+	t.Parallel()
+
+	for _, class := range EgressClasses() {
+		want := class.Leaves()
+		assert.Equal(t, want, class.ApprovalNeedsReview(), class)
+	}
+	assert.True(t, EgressClass("").ApprovalNeedsReview(), "an unknown reach is reviewed")
+	assert.True(t, EgressClass("broadcast").ApprovalNeedsReview())
 }
 
 func TestRunTaint_NilIsUnknownAndEmptyIsClean(t *testing.T) {

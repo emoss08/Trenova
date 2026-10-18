@@ -381,6 +381,7 @@ type Params struct {
 	DriverSettlementService      *driversettlementservice.Service
 	DriverPortalService          *driverportalservice.Service
 	SettlementControlService     *settlementcontrolservice.Service
+	AccountingControlRepo        tenantports.AccountingControlRepository
 	DashControlService           *dashcontrolservice.Service
 	PayProfileRepo               driverpayports.PayProfileRepository
 	RecurringDeductionRepo       driverpayports.RecurringDeductionRepository
@@ -608,6 +609,7 @@ type Services struct {
 	DriverSettlementService      *driversettlementservice.Service
 	DriverPortalService          *driverportalservice.Service
 	SettlementControlService     *settlementcontrolservice.Service
+	AccountingControlRepo        tenantports.AccountingControlRepository
 	DashControlService           *dashcontrolservice.Service
 	PayProfileRepo               driverpayports.PayProfileRepository
 	RecurringDeductionRepo       driverpayports.RecurringDeductionRepository
@@ -846,6 +848,7 @@ func newServices(p *Params) *Services {
 		DriverSettlementService:      p.DriverSettlementService,
 		DriverPortalService:          p.DriverPortalService,
 		SettlementControlService:     p.SettlementControlService,
+		AccountingControlRepo:        p.AccountingControlRepo,
 		DashControlService:           p.DashControlService,
 		PayProfileRepo:               p.PayProfileRepo,
 		RecurringDeductionRepo:       p.RecurringDeductionRepo,

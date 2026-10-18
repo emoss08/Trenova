@@ -250,4 +250,53 @@ describe("ReasonDialog for a write that would be refused", () => {
 
     expect(screen.getByRole("textbox", { name: /^Reason/ })).toHaveValue(ASKED);
   });
+
+  it("holds an approval that must be reviewed when the preview cannot be read", async () => {
+    fetchProposalPreview.mockRejectedValue(new Error("preview unavailable"));
+    const { onConfirm } = openDialog({
+      preview: {
+        kind: "proposal",
+        scope: "approver",
+        id: "aprop_1",
+        approving: true,
+        reviewRequired: true,
+      },
+    });
+
+    await screen.findByText(
+      "What this would change could not be loaded. It has to be reviewed before it can be approved, so try again.",
+    );
+    expect(confirm()).toBeDisabled();
+    expect(onConfirm).not.toHaveBeenCalled();
+  });
+
+  it("approves an internal change unreviewed when the preview cannot be read", async () => {
+    const user = userEvent.setup();
+    fetchProposalPreview.mockRejectedValue(new Error("preview unavailable"));
+    const { onConfirm } = openDialog({
+      preview: {
+        kind: "proposal",
+        scope: "approver",
+        id: "aprop_1",
+        approving: true,
+        reviewRequired: false,
+      },
+    });
+
+    await screen.findByText(
+      "What this would change could not be loaded. Approving now is recorded as approved without a preview.",
+    );
+    await user.click(confirm());
+    await waitFor(() => expect(onConfirm).toHaveBeenCalledWith("", undefined));
+  });
+
+  it("holds an approval whose class it was not told until the preview says", async () => {
+    fetchPlanPreview.mockRejectedValue(new Error("preview unavailable"));
+    openDialog({ preview: { kind: "plan", scope: "approver", id: "apl_1", approving: true } });
+
+    await screen.findByText(
+      "What this would change could not be loaded. It has to be reviewed before it can be approved, so try again.",
+    );
+    expect(confirm()).toBeDisabled();
+  });
 });
