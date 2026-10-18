@@ -1664,8 +1664,6 @@ Label each task's expected tool set, the tools it must not call, and its success
      pricing reference, the `ForPortableModel` schema path, tracing attributes, the web
      provider editor and its brand marks, the self-hosting docs and the self-host `config.yaml`
      (`ai.privateNetworkProviders`).
-   - Rows already saved with kind `Ollama` need a migration path: refuse them, or disable them
-     with a notice.
 2. **The money gap is a trade-off against unattended automation.**
    - Capping the Money class at Ask first would make every customer-payment post and bank
      match wait for a person. That is the core of what the Cash application desk runs
@@ -1696,3 +1694,73 @@ Label each task's expected tool set, the tools it must not call, and its success
      only on Fable 5.1, Opus 5.5 and Sonnet 5.5, not Haiku 5.5. Haiku 5.5 can return summarized
      thinking. The model's own text before a call is another source.
    - The quality judge's "rationale" is its own field and is unaffected.
+
+### 8.1 Constraint update: Trenova is not in production
+
+The owner confirmed that Trenova has no production deployments. Migrations, saved data and
+backward compatibility are therefore not constraints. What is built now sets the design. This
+changes the plan in four ways.
+
+1. **Delete the compatibility layer instead of building around it.** The agent module carries:
+   - about 28 `workflow.GetVersion` or `fx.Supports` gates, over at least 19 change ids;
+   - their old branches;
+   - activities kept registered only for those branches (agent-runtime.md, "Waiting on in-flight
+     executions");
+   - 27 `@deprecated` GraphQL fields;
+   - deprecated queries kept so "a tab still on the previous release" works
+     (`myAgentRecommendation`).
+
+   Every change to the loop today pays for a new gate and a new old branch. Before launch:
+   - remove the gates and their old branches;
+   - reset the development Temporal namespace when workflow code changes shape;
+   - drop the deprecated fields and queries.
+
+   Put versioning back as a launch requirement. This makes the restructuring in §5 much
+   cheaper, because most of it is loop and context-assembly code.
+2. **Rename and merge tools freely.** Tool names, parameter names and schemas can change without
+   aliases:
+   - namespaced names;
+   - merged single/batch pairs;
+   - one convention for ids, pagination, notes and dates;
+   - typed filters.
+
+   Agent definitions, seeds and bench fixtures are regenerated. No saved data has to survive.
+   Write coverage and the contract tests remain the check that no capability is lost.
+3. **Merge the phases.** §5 phased the work partly to protect running executions and stored
+   conversations, and that reason is gone. The revised order:
+   1. **Baseline first** (Phase 0). It is still needed: without it, nobody can tell whether the
+      restructure helped. That includes the measurement fixes, unattended-run scenarios on the
+      bench, and the 4-trial matrix.
+   2. **One rebuild of context assembly** (Phases 1, 2 and 4 together):
+      - job profiles in one runtime;
+      - the stable cached prefix with the domain primer and namespace map;
+      - the deferred catalog through `tool_reference` and `allowed_tools`;
+      - the task frame;
+      - no `_why`;
+      - `tool_choice: none` for the final answer;
+      - no mid-turn changes to `tools`.
+
+      Behind it, the bench is compared against the baseline.
+   3. **Tool surface consolidation** (Phase 3), module by module, with no aliases.
+   4. **Code mode** (Phase 5), gated by eval for each model.
+   5. **Model tuning** (Phase 6).
+4. **Evals cannot draw on production traffic.** No production threads, thumbs or decided
+   proposals exist to mine. The eval set (§6) is built from:
+   - the bench's 134 scenarios;
+   - the findings log;
+   - new unattended-run scenarios;
+   - the owner's own use of a seeded environment.
+
+   The held-out split matters more for that reason: without real traffic, the risk of fitting
+   descriptions to the bench is higher.
+
+**Decisions still open:**
+
+1. **Ollama embeddings.** Removing Ollama includes its embeddings. The CI eval gate then needs
+   another embedding model to record its floors, for example the embedding model the
+   organization's retrieval settings use. The floors are re-recorded once.
+2. **The money tools:** a person on every call, or automatic inside per-call bounds (§8 item 2).
+3. **The preview-digest rule:** required everywhere, required by class (recommended), or only
+   surfaced (§8 item 3).
+4. **The step "why" toggle:** removed with `_why`, or fed from thinking summaries and progress
+   notes where the model provides them (§8 item 4).
