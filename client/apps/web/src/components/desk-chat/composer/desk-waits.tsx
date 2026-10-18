@@ -143,14 +143,21 @@ function whenText(wait: AgentWait, timezone: string, t: TranslateFn): string {
   return t("Gives up {0}", turnTime(wait.expiresAt, timezone, t));
 }
 
+/** How often a web watch looks, until when. */
+function webWatchSchedule(cadence: string, until: string, t: TranslateFn): string {
+  switch (cadence) {
+    case "SixHours":
+      return t("Looks every six hours until {0}", until);
+    case "Weekly":
+      return t("Looks weekly until {0}", until);
+    default:
+      return t("Looks daily until {0}", until);
+  }
+}
+
 /** How often a web watch looks and until when, with what it has found so far. */
 function webWatchWhen(watch: AgentWaitWebWatch, timezone: string, t: TranslateFn): string {
-  const until = turnTime(watch.endsAt, timezone, t);
-  const schedule = t(
-    "{0, select, SixHours {Looks every six hours until {1}} Weekly {Looks weekly until {1}} other {Looks daily until {1}}}",
-    watch.cadence,
-    until,
-  );
+  const schedule = webWatchSchedule(watch.cadence, turnTime(watch.endsAt, timezone, t), t);
   if (watch.findingCount === 0) {
     return schedule;
   }

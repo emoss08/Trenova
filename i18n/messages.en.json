@@ -139884,6 +139884,24 @@
       "go/other"
     ]
   },
+  "Looks daily until {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Looks every six hours until {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Looks good, finish setup": {
     "sites": 1,
     "scope": [
@@ -139936,6 +139954,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Looks weekly until {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Lookup spend nears its cap": {
@@ -320461,15 +320488,6 @@
     ],
     "areas": [
       "routes/dispatch-console"
-    ]
-  },
-  "{0, select, SixHours {Looks every six hours until {1}} Weekly {Looks weekly until {1}} other {Looks daily until {1}}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "{0} (Day)": {
