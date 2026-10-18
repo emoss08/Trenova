@@ -99,8 +99,9 @@ type ChatCompletionRequest struct {
 	SystemStable   int
 	Messages       []Message
 	Tools          []kernelports.ToolSpec
-	ToolChoiceNone bool   `json:"toolChoiceNone,omitempty"`
-	Reask          string `json:"reask,omitempty"`
+	ToolChoiceNone bool                       `json:"toolChoiceNone,omitempty"`
+	Reask          string                     `json:"reask,omitempty"`
+	Reasoning      aiprovider.ReasoningEffort `json:"reasoning,omitempty"`
 	MaxTokens      int
 	// PreferredProviderID asks for one configured provider first. It is honoured
 	// only when that provider is enabled and serves the task; otherwise the usual
