@@ -270,7 +270,7 @@ describe("DeskJournalEntry", () => {
       }),
     );
     await vi.waitFor(() => expect(fetchers.entry).toHaveBeenCalledTimes(2));
-    expect(screen.queryByRole("dialog")).toBeNull();
+    await vi.waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   });
 
   it("shows a reversal that waits on approval in place of the button to ask for one", async () => {
