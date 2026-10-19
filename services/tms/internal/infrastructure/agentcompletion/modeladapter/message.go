@@ -29,6 +29,7 @@ const (
 	RoleUser      = agentports.RoleUser
 	RoleAssistant = agentports.RoleAssistant
 	RoleTool      = agentports.RoleTool
+	RoleSystem    = agentports.RoleSystem
 )
 
 // UserMessage is the common single-turn case.

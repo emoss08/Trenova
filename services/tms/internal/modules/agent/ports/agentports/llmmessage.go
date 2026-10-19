@@ -17,6 +17,12 @@ const RoleAssistant = Role("assistant")
 // than the caller's.
 const RoleTool = Role("tool")
 
+const RoleSystem = Role("system")
+
+func NoticeMessage(content string) Message {
+	return Message{Role: RoleSystem, Content: content}
+}
+
 // Message is one turn. A single assistant turn can both say something and ask
 // for tools, so Content and ToolCalls are not mutually exclusive.
 type Message struct {

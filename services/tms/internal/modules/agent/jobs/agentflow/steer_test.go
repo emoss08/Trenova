@@ -60,11 +60,14 @@ func TestRunReadsASteerAtItsNextStep(t *testing.T) {
 
 	require.Empty(t, result.Err)
 	require.Len(t, asked, 2)
-	last := asked[1].Messages[len(asked[1].Messages)-1]
-	assert.Equal(t, agentports.RoleUser, last.Role,
+	messages := asked[1].Messages
+	words, notice := messages[len(messages)-2], messages[len(messages)-1]
+	assert.Equal(t, agentports.RoleUser, words.Role,
 		"the steer is read after the step's results and before the next model call")
-	assert.Contains(t, last.Content, "Actually the carrier is Werner, not JB Hunt.")
-	assert.Contains(t, last.Content, "car_01J9WERNERWERNERWERNER000")
+	assert.Contains(t, words.Content, "Actually the carrier is Werner, not JB Hunt.")
+	assert.Contains(t, words.Content, "car_01J9WERNERWERNERWERNER000")
+	assert.Equal(t, agentports.RoleSystem, notice.Role,
+		"what to make of the person's words comes from the system, not from them")
 
 	assert.Equal(t, []pulid.ID{"aqm_01J9STEERSTEERSTEERSTEER00"}, result.Outcome.Steered,
 		"the queued message the turn read is handed back, so the save clears it")

@@ -28,6 +28,7 @@ type anthropicModel struct {
 	// an id this cannot read. Which effort model it is is unknown, so None
 	// asks for the least every one of them accepts.
 	declared bool
+	notices  bool
 }
 
 // providerTraits is what the configured provider's model takes: read from its
@@ -71,20 +72,25 @@ func anthropicTraits(model string) anthropicModel {
 		traits.thinksUnasked = version >= 50
 		traits.bindsPrefix = version >= 55
 		traits.disableNeedsLowEffort = version == 50
+		traits.notices = version >= 48
 	case aiprovider.ClaudeFamilySonnet:
 		traits.disableRefused = version >= 55
 		traits.thinksUnasked = version >= 50
 		traits.bindsPrefix = version >= 55
+		traits.notices = version >= 55
 	case aiprovider.ClaudeFamilyFable:
 		traits.thinksAlways = true
 		traits.thinksUnasked = true
 		traits.bindsPrefix = version >= 51
+		traits.notices = true
 	case aiprovider.ClaudeFamilyMythos:
 		traits.thinksAlways = true
 		traits.thinksUnasked = true
+		traits.notices = true
 	case aiprovider.ClaudeFamilyHaiku:
 		traits.thinksUnasked = version >= 55
 		traits.disableNeedsLowEffort = version >= 55
+		traits.notices = version >= 55
 	}
 
 	return traits

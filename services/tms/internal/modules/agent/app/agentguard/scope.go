@@ -91,7 +91,9 @@ type Decision struct {
 	MatchedRule string `json:"matchedRule,omitempty"`
 	// Altered says the output guard let the reply through with something taken
 	// out of it, which Reason and MatchedRule name.
-	Altered bool `json:"altered,omitempty"`
+	Altered bool   `json:"altered,omitempty"`
+	Goal    string `json:"goal,omitempty"`
+	Need    string `json:"need,omitempty"`
 }
 
 func allowed(stage Stage, category Category) Decision {

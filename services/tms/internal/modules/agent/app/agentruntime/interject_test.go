@@ -266,9 +266,12 @@ func TestReplayHistory_FramesASteerAndKeepsItInsideItsTurn(t *testing.T) {
 	}
 
 	messages, _ := replayHistory(history, nil)
-	require.Len(t, messages, 5)
+	require.Len(t, messages, 6)
 	assert.Equal(t, SteerPrompt("Only Werner.", history[2].Mentions), messages[2].Content)
-	assert.Equal(t, "notice", messages[3].Content)
+	assert.Equal(t, agentports.RoleUser, messages[2].Role, "the person's words stay theirs")
+	assert.Equal(t, agentports.NoticeMessage(steerNotice), messages[3],
+		"what to make of them is the system's")
+	assert.Equal(t, agentports.NoticeMessage("notice"), messages[4])
 	assert.Equal(t, 0, recentTurnStart(history, 1),
 		"a steer and a notice arrive inside a turn and open none of their own")
 }

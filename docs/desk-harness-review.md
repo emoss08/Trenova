@@ -1419,6 +1419,7 @@ gain.**
 - Shrink `_why` to one optional string.
 - **Check:** cache-read ratio above 80% on the second and later calls of a turn; no loss in pass^k
   or tool-selection accuracy; steps per task and time to first token fall.
+- **Built (2026-10-19, PR #822; `_why` already gone in #815).** See §8.3.
 
 **Phase 2: the task frame and the domain primer (2–3 weeks).**
 
@@ -1431,6 +1432,7 @@ gain.**
   model supports them.
 - **Check:** recall@8 of preselection against the tools actually used; how many runs begin with
   `find_tools`; pass^k on the new unattended scenarios.
+- **Built (2026-10-19, the task-frame PR stacked on #822).** See §8.3.
 
 **Phase 3: consolidate the tool surface (4–6 weeks, rolling).**
 
@@ -1452,6 +1454,7 @@ gain.**
 - Delegation is restricted to read-only fan-out, and returns structured, verbatim results.
 - **Check:** the routing bench becomes a profile-selection bench, with its confusion matrix
   reported; end-to-end pass^k on cross-desk requests ("bill it and email the customer").
+- **Built (2026-10-19, PR #821).** See §8.3.
 
 **Phase 5: code mode for reads, then batch writes (4–6 weeks, gated).**
 
@@ -1855,3 +1858,110 @@ changes the plan in four ways.
   for summarized thinking, and Responses returns reasoning summaries. The feature therefore costs
   no prompt tokens, and drops about 150 tokens per tool on every call.
 - **Unattended runs.** Their reasoning stays in the trajectory for audit.
+
+### 8.3 Built (2026-10-19): the context-assembly rebuild
+
+Phases 1, 2 and 4 were built together, as §8.1 item 3 set out, in three stacked PRs: job profiles
+(#821), the stable prefix (#822), then the task frame. `docs/engineering/agent-runtime.md`
+describes the design as built ("Job profiles in one runtime", "What a provider can cache",
+"Notices are system messages", "The task frame and the domain primer").
+
+**Job profiles (Phase 4).**
+
+- One runtime: `agentruntime.profileFor` gives every turn a profile, in one of four modes:
+  conversation, unattended, delegated, or read-only fan-out. The agent definition supplies what
+  the profile holds.
+- A conversation turn can reach the tools other agents in the organization hold for the person.
+  They are found through `find_tools` when the turn's own tools match weakly, and each one runs
+  under the tier its holder would give it (`DecideInput.HolderCeiling`).
+- `delegate_task` is read-only fan-out:
+  - several calls in one step run in parallel (`workflow.Go`);
+  - a delegate's writes are refused;
+  - the delegate hands back its tool results verbatim, as structured findings
+    (`DelegateReport.Findings`).
+- The routing bench reports profile selection as a confusion matrix, with recall and precision
+  for each profile (`deskbench.ProfileConfusion`).
+
+**Stable prefix and deferred loading (Phase 1).**
+
+- Each turn declares one name-sorted tool array and never changes it.
+  - The core and the preselected tools are sent in full.
+  - Every other tool the turn holds or reaches is declared deferred.
+  - Deferred schemas travel by name through Temporal.
+- `find_tools` loads tools by reference: `tool_reference` blocks on Anthropic, and a client
+  `tool_search` on OpenAI Responses (gpt-5.4 and later, on OpenAI's platform). Other providers
+  are sent the tools loaded so far.
+  - `allowed_tools` was rejected because it keeps every schema in context.
+- The per-turn catalog listing is replaced by a namespace map built from the permission
+  registry's categories.
+- The person profile is in the stable part.
+- `tool_choice: none` for the final answer was confirmed from Phase 0.
+
+**Task frame and primer (Phase 2).**
+
+- **Unattended runs** are framed from an event → playbook table.
+  - Every one of the 31 event kinds has a playbook, and so does the load monitor's schedule.
+  - Other scheduled or continuous runs, and runs that pick up a wait, get a generic playbook.
+  - Playbooks are written in words, never tool names.
+- **Chat turns** are framed by the scope classifier, which now also returns a `goal` and a
+  written `need`.
+  - It stays advisory, and still fails open.
+  - The shared verdict store keeps only the category.
+- **Preselection** ranks on the need, followed by the message.
+- **The domain primer** (about 560 tokens) sits in the cached shared part.
+- **Notices.** Steering, world-change and guard notices, and the final-answer note, travel as
+  `RoleSystem`.
+  - On Anthropic models that accept them, they are sent as mid-conversation `system` messages.
+  - Elsewhere they are developer messages (Responses) or user text.
+  - The person's words are never sent inside a system message.
+- **Rules removed from the shared prompt** are the ones the runtime enforces or a tool's
+  description already states:
+  - the `withdraw_proposal` explanation;
+  - the code-block and internal-id mechanics;
+  - the duplicated search warning.
+- The fenced-tag list now names every tag in use.
+- `PromptVersion` is v11.
+
+**Measured here, offline.**
+
+- **Prompt size.** Across the 90 prompt snapshots, the mean system prompt went from about 3,770
+  tokens on master to about 3,480 (characters ÷ 4). That is after adding the primer and the task
+  frame.
+  - Delegated prompts fell most: 3,490 to 2,790.
+  - Chat prompts went from 4,190 to 4,080.
+  - Unattended prompts went from 3,380 to 3,430, because they now carry a playbook.
+- **The shared part is now the same bytes on every turn of an agent for a person.** It used to
+  name the tools each turn loaded. Two tests check this:
+  `TestRun_APromptsToolSectionIsTheSameForEveryQuestion` and
+  `TestRun_ADisclosedTurnNeverChangesItsToolArray`.
+- The Anthropic wire golden for a deferred turn shows `defer_loading` on every unloaded tool,
+  the cache mark on the last tool sent in full, and `tool_reference` blocks in the result that
+  loaded tools.
+- **Suites.** The unit suites pass: agentruntime, modeladapter, agentdefinition, agentguard,
+  assistantservice, agentflow, agentredteam, agentevalgate, agenttoolcatalog contract tests,
+  and the bench's own tests.
+  - Red-team case 08 now expects a delegate's writes to be refused.
+
+**Not measured yet.** These need the live bench, which needs a seeded database and provider keys,
+neither available where this was built:
+
+- the cache-read share on a turn's second and later calls (target above 80%);
+- pass^k;
+- tool-selection accuracy;
+- steps per task;
+- time to first token;
+- preselection recall@8;
+- the share of turns that open with `find_tools`.
+
+The bench reports each of them: "CACHED 2+", "OPENS WITH FIND" and recall in `summary.md`, and
+`--compare` gives the per-cell changes. To measure them against the Phase 0 baseline, run on a
+seeded development database:
+
+```
+cd services/tms
+task db-reset
+trenova desk baseline          # once on master, if no Phase 0 baseline is kept
+trenova desk run --provider claude-haiku-5-5@low,claude-haiku-5-5@medium --repeat 4 \
+  --compare .deskbench/baselines/<phase-0 time>
+trenova desk route --compare <phase-0 routing run>
+```

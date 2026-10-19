@@ -18,6 +18,8 @@ import (
 
 type stubCompletion struct {
 	category string
+	goal     string
+	need     string
 	err      error
 	calls    int
 	lastReq  *agentports.StructuredCompletionRequest
@@ -36,6 +38,8 @@ func (s *stubCompletion) CompleteStructured(
 	text, _ := sonic.Marshal(agentguard.ClassifierResult{
 		Category:  s.category,
 		Reasoning: "stub",
+		Goal:      s.goal,
+		Need:      s.need,
 	})
 
 	return &agentports.StructuredCompletionResult{Text: string(text)}, nil

@@ -103,6 +103,7 @@ func (s *Service) admit(
 		}
 	}
 
+	runtimeContext.Frame = agentdefinition.ChatFrame(decision.Goal, decision.Need)
 	runtimeContext.PendingProposals = pendingProposals(req.Proposals)
 	runtimeContext.Anchors = req.Anchors
 

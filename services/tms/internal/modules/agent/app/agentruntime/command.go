@@ -185,7 +185,7 @@ func (s *Service) holdToCommand(
 			ReplyID:       completion.ProviderMessageID,
 			ReplyProvider: completion.ProviderID,
 		},
-		agentports.Message{Role: agentports.RoleUser, Content: hold.correction},
+		agentports.NoticeMessage(hold.correction),
 	)
 
 	return true

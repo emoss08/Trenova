@@ -980,6 +980,61 @@ and because the chosen profile reaches the others' tools a near miss costs a
 search, not a hand-off. The routing bench reports the match as a profile
 selection with a confusion matrix ([desk-bench.md](desk-bench.md#routing)).
 
+## The task frame and the domain primer
+
+Every turn knows what it is for before it starts (`agentdefinition.TaskFrame`,
+`RuntimeContext.Frame`), and every agent knows how Trenova's records fit
+together.
+
+- **Unattended runs** are framed from what started them, with no model call:
+  `BackgroundFrame(trigger, eventKind, template)` reads the event → playbook
+  table in `domain/agentdefinition/taskframe.go`. Every `agent.EventKind` has a
+  playbook (`TestEventPlaybook_EveryEventAnAgentCanStartOnHasOne`), a scheduled
+  starter has its own (the load monitor's `watch-the-board`), any other
+  schedule or continuous pass gets `scheduled-pass`, and a run a wait started
+  gets `wait-ended`. A playbook is a goal, a few steps, a definition of done
+  and a written need. It is written in words, never tool names, so renaming a
+  tool cannot strand it (the test refuses anything shaped like one). The
+  frame is set in `agentjobs.runRequest`, after the context is built.
+- **Chat turns** are framed by the scope classifier, which already runs on
+  every turn person-written input reaches (`agentguard/classifier.go`). Its
+  schema also asks for a `goal` (one sentence) and a `need` (what the work must
+  read and change, as plain phrases); both are empty for a refused request,
+  and a request the classifier timed out on, failed on or found only in the
+  shared verdict store has neither. The shared store keeps the category alone,
+  so nothing derived from the person's words leaves the replica that asked
+  (`TestEvaluate_TheSharedStoreKeepsNoParaphraseOfTheRequest`).
+  `assistantservice.admit` turns the decision into `ChatFrame(goal, need)`; a
+  note Trenova wrote is not classified and has no frame. The frame stays
+  advisory: the prompt calls it how the request read before the turn started
+  and says the message wins.
+- **Preselection ranks on the need.** With a need, both the lexical and the
+  semantic ranking read the need followed by the message (`frameNeed`,
+  `turnQuery`), in place of the message and the person's previous one: the
+  classifier already resolved what a follow-up refers to, and a written need
+  shares its words with the tool descriptions where "yes, those ones" shares
+  none. The bench reports preselection recall@8 against the tools the turn used.
+- **In the prompt**, the frame opens the turn's own part as `## This task`: a
+  playbook's goal, steps, done-when and that proposals wait on a person, or a
+  chat turn's goal with its caveat. The need is not shown; it ranks tools. The
+  turn's own part is after the cache breakpoint, so the frame costs no cached
+  prefix.
+- **The domain primer** (`agentdefinition.domainPrimer`, about 600 tokens) sits
+  in the shared part right after Trenova's rules: shipments, moves and stops;
+  assignment and tenders; detention and service failures; charges and
+  documents; billing queue to invoice to posting; workers, credentials and
+  settlements; customers, locations and carriers; the EDI transaction sets;
+  and the record id prefixes. It is the same for every agent, so it is cached
+  once per release.
+- **Rules the code holds, or a tool's own description says, left the shared
+  rules.** Boundaries no longer explains `withdraw_proposal` (its description
+  does, and it is offered only once a proposal is filed); Output no longer
+  explains that a code block is removed or spells out what an internal id looks
+  like (the output guard and `passReply` enforce both, and the primer names the
+  prefixes); the disclosed tool section says once, not twice, to search before
+  saying something cannot be done. The list of fenced tags in Boundaries now
+  names every tag the prompt and messages use.
+
 ## Chat turns
 
 Every assistant question is answered by `AssistantTurnWorkflow`, ID
@@ -1313,9 +1368,11 @@ reply.
   words. The loop reads the signal between steps, before its next model call
   (`TurnEffects.Interject`); reading a signal records no command, and the loop
   reads one only when one is waiting. The words
-  reach the model framed by `agentruntime.SteerPrompt` and are saved as a
-  `Steer` message, which history replay frames the same way and which does not
-  count as a turn of its own. The reader gets a `steered` event. A message with
+  reach the model as the person's own message (`agentruntime.SteerPrompt`, the
+  words and the records they named), followed by a system notice saying they
+  arrived mid-reply and how to take them (`steerNotice`; see "Notices are system
+  messages"). They are saved as a `Steer` message, which history replay frames
+  the same way and which does not count as a turn of its own. The reader gets a `steered` event. A message with
   files never steers: a reply under way reads words, not documents.
 - **Queue** (Option+Enter, or anything with files) waits for the reply to end.
 - **When a turn's record closes**, `FinishTurnActivity` (and a compaction's
@@ -1353,6 +1410,38 @@ of the write, are its own and dropped. What is left reaches the model as a
 guard's memory of reads, is saved with the structured changes
 (`assistant_messages.world_changes`) and reaches the reader as `world_changed`.
 Delegated turns neither watch nor steer.
+
+### Notices are system messages
+
+What the runtime tells the model mid-turn is not something the person said, so
+it travels as `agentports.RoleSystem` (`agentports.NoticeMessage`): the steer
+notice, a world-change notice, the grounding, placement and command corrections
+(`groundingguard.go`, `placement.go`, `command.go`) and the final-answer note
+sent with `tool_choice: none`. History replays a saved `WorldChange` message as a
+notice and a `Steer` as the person's words followed by the steer notice, so the
+same bytes go out on every turn. Each adapter places a notice where its API
+takes one:
+
+- **Anthropic** sends it as a mid-conversation `role: "system"` message on the
+  models that take one (Opus 4.8 and later, Sonnet 5.5, Haiku 5.5, every Fable
+  and Mythos; `anthropicModel.notices`) on the platforms that do (not Bedrock,
+  whose ARN-versioned models refuse it, nor Foundry). The API takes one only
+  after a user message and before an assistant one or the end, so a notice
+  that follows the model's own draft, or that the person's next message
+  follows, is sent as text in the user turn instead (`noticeFits`), and
+  notices in a row are one system message (`appendNotice`). The cache mark
+  stays on the last message that is not a notice. A notice no longer counts as
+  a person's message, so a world change no longer drops the turn's earlier
+  thinking from the replay. The person's words never ride in a system message:
+  Sonnet 5.5 and Haiku 5.5 read one right after a tool result as possible
+  injection, so a steer is the person's text after the tool results and its
+  notice a separate system message after it.
+- **OpenAI Responses** sends it as a `developer` message.
+- **OpenAI-compatible chat** sends it as user text: a compatible host may refuse
+  a system message mid-conversation.
+
+Every notice's text opens by saying it comes from the system, so it reads the
+same where it has to travel as text.
 
 ### Records in play
 
@@ -2105,7 +2194,7 @@ conversation is the same from the first call of the turn to the last.
   product guide stay loaded, because the prompt tells the model when to use them.
 - **System prompt.** `BuildSystemPromptParts` writes what every turn of an agent
   for a person shares first and the turn's own part after it. The shared part
-  is, in order: the identity line, Trenova's rules, the tool section, the agents
+  is, in order: the identity line, Trenova's rules, the domain primer, the tool section, the agents
   it may ask, artifacts, the product guide, how to answer, the organization's
   instructions and its Never list, the organization's profile and the person's.
   The tool section never names which tools a turn opened with: a disclosed one
@@ -2114,10 +2203,10 @@ conversation is the same from the first call of the turn to the last.
   tool's permission resource: the resource's category in the permission
   registry is the area, its display name what the area covers, so a renamed or
   moved tool lands in its area with no list to edit), then what a change does
-  and the recipes, over every tool held. The turn's own part is the runtime
+  and the recipes, over every tool held. The turn's own part is the task frame, the runtime
   context, memories and proposals waiting on a decision. The turn carries the
   shared part's length (`TurnState.SystemStable`) to the adapter.
-  `agentdefinition.PromptVersion` names this shape (v10) on runs, evaluation
+  `agentdefinition.PromptVersion` names this shape (v11) on runs, evaluation
   cases and fingerprints; the snapshots under
   `domain/agentdefinition/testdata/prompts` are regenerated with
   `go test -run TestPromptSnapshots ./internal/modules/agent/domain/agentdefinition/ -update`.
