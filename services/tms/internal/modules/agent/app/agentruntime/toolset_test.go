@@ -208,7 +208,7 @@ func TestResolveFind_MakesTheMissingToolCallable(t *testing.T) {
 		"need": "trailer inspection date",
 	})
 
-	assert.Contains(t, specNames(set.specs), "list_trailers")
+	assert.True(t, set.offers("list_trailers"))
 	assert.Contains(t, answer, "list_trailers")
 }
 
@@ -236,7 +236,7 @@ func TestResolveFind_CannotReachPastTheAgentsConfiguration(t *testing.T) {
 
 	findContent(t, service, set, map[string]any{"need": "driver medical card expiry"})
 
-	assert.NotContains(t, specNames(set.specs), "list_expiring_credentials")
+	assert.False(t, set.offers("list_expiring_credentials"))
 	for _, name := range specNames(set.specs) {
 		// The two the agent holds, plus the two the runtime answers itself.
 		// Neither built-in reads anything, so neither widens the agent.
@@ -311,11 +311,7 @@ func TestSystemPrompt_SaysTheToolListIsPartialWhenDisclosed(t *testing.T) {
 	assert.Contains(t, whole, "are the only ones you have")
 }
 
-// A tool not loaded on a disclosed turn is named with the first sentence of
-// its description, enough to know to ask find_tools for it. The rest stays
-// with its schema: repeating whole descriptions would spend the context the
-// narrowing just saved.
-func TestSystemPrompt_DisclosedListingGivesOneSentencePerUnloadedTool(t *testing.T) {
+func TestSystemPrompt_DisclosedSectionNamesAreasNotTools(t *testing.T) {
 	t.Parallel()
 
 	definition := testDefinition("list_reports", "get_shipment")
@@ -332,13 +328,19 @@ func TestSystemPrompt_DisclosedListingGivesOneSentencePerUnloadedTool(t *testing
 			Loaded:      true,
 		},
 	}
+	rc := runtimeContextWith(summaries, true)
+	rc.ToolMap = []agentdefinition.ToolNamespace{
+		{Name: "Reports", Covers: []string{"report"}, Tools: 1},
+		{Name: "Shipments", Covers: []string{"shipment"}, Tools: 1},
+	}
 
-	disclosed := definition.BuildSystemPrompt(runtimeContextWith(summaries, true))
+	parts := definition.BuildSystemPromptParts(&rc)
 
-	assert.Contains(t, disclosed, "- list_reports — List saved reports by name.")
-	assert.NotContains(t, disclosed, "Filter by owner, schedule or last run.")
-	assert.Contains(t, disclosed, "Loaded now:\n- get_shipment")
-	assert.NotContains(t, disclosed, "Retrieve one shipment by id.")
+	assert.Contains(t, parts.Stable, "What find_tools can load, by area of Trenova:")
+	assert.Contains(t, parts.Stable, "- Reports (1 tool): report")
+	assert.NotContains(t, parts.Stable, "list_reports — List saved reports by name.")
+	assert.NotContains(t, parts.Stable+parts.Volatile, "Loaded now:")
+	assert.NotContains(t, parts.Volatile, "find_tools")
 }
 
 func runtimeContextWith(
@@ -577,52 +579,33 @@ func TestNewToolSet_WithholdsAskUserFromAnUnattendedRun(t *testing.T) {
 	assert.Contains(t, specNames(large.specs), findToolsName, "finding tools needs no person")
 }
 
-// The prompt's account of what is loaded has to match the request: a tool
-// the ranking chose is named as loaded, one it left out as callable after
-// find_tools, so the model asks for exactly what it lacks.
-func TestRun_TellsThePromptWhichToolsAreLoaded(t *testing.T) {
+func TestRun_APromptsToolSectionIsTheSameForEveryQuestion(t *testing.T) {
 	t.Parallel()
 
 	service, names := wideRuntime(t)
 	definition := testDefinition(names...)
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{textTurn("ok")}}
-	service.completion = completion
-
-	_, err := service.Run(t.Context(), &agentports.RunRequest{
-		Definition: definition,
-		Actor:      testActor(),
-		Input:      "which drivers have a medical card expiring soon",
-	})
-	require.NoError(t, err)
-
-	loaded := make(map[string]struct{}, len(completion.LastReq.Tools))
-	for _, spec := range completion.LastReq.Tools {
-		loaded[spec.Name] = struct{}{}
+	stable := make([]string, 0, 2)
+	for _, input := range []string{
+		"which drivers have a medical card expiring soon",
+		"which trailers are due inspection",
+	} {
+		completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{textTurn("ok")}}
+		service.completion = completion
+		_, err := service.Run(t.Context(), &agentports.RunRequest{
+			Definition: definition,
+			Actor:      testActor(),
+			Input:      input,
+		})
+		require.NoError(t, err)
+		req := completion.LastReq
+		stable = append(stable, req.System[:req.SystemStable])
+		assert.Contains(t, req.System[:req.SystemStable], "What find_tools can load")
+		assert.NotContains(t, req.System, "Callable after find_tools")
 	}
-	require.Less(t, len(loaded), len(names), "the wide agent is disclosed")
 
-	system := completion.LastReq.System
-	after := strings.SplitN(system, "Callable after find_tools:", 2)
-	require.Len(t, after, 2)
-	for _, name := range names {
-		if _, isLoaded := loaded[name]; isLoaded {
-			assert.NotContains(
-				t,
-				after[1],
-				"- "+name+"\n",
-				"%s is loaded, not offered through find_tools",
-				name,
-			)
-		} else {
-			assert.Contains(t, after[1], "- "+name, "%s is not loaded and must be findable", name)
-		}
-	}
+	assert.Equal(t, stable[0], stable[1])
 }
 
-// The set a turn may call is narrowed to what the person may use. A tool
-// they lacked the right for was shown, ranked and offered, then refused when
-// called, and the refusal named the resource they lacked; now it is not
-// offered, not ranked, not found, and not named among what exists.
 func TestNewToolSet_OffersOnlyWhatThePersonMayUse(t *testing.T) {
 	t.Parallel()
 
@@ -793,7 +776,7 @@ func TestResolveFind_ListsTheCallableMatchesFirst(t *testing.T) {
 	assert.Less(t, callable, loaded, "what the model can already call is named first")
 	assert.Contains(t, answer, "already loaded")
 	assert.Contains(t, answer, "now callable")
-	assert.Contains(t, specNames(set.specs), "list_expiring_credentials")
+	assert.True(t, set.offers("list_expiring_credentials"))
 }
 
 func weakMatchRuntime(t *testing.T) *Service {
@@ -860,7 +843,7 @@ func TestResolveFind_ReachesTheToolsOfThePersonsOtherAgentsWhenItsOwnMatchWeakly
 	assert.Contains(t, answer, "list_shipments", "the weak match still loads")
 	assert.Contains(t, answer, beyondLead)
 	assert.Contains(t, answer, "search_commodities")
-	assert.Contains(t, specNames(set.specs), "search_commodities")
+	assert.True(t, set.offers("search_commodities"))
 }
 
 func TestResolveFind_ReachesBeyondOnATurnThatHoldsFewTools(t *testing.T) {
@@ -882,7 +865,7 @@ func TestResolveFind_ReachesBeyondOnATurnThatHoldsFewTools(t *testing.T) {
 	answer := findContent(t, service, set, map[string]any{"need": "commodity"})
 
 	assert.Contains(t, answer, "search_commodities")
-	assert.Contains(t, specNames(set.specs), "search_commodities")
+	assert.True(t, set.offers("search_commodities"))
 }
 
 func TestResolveFind_NeverReachesWhatAStrongOwnMatchCovers(t *testing.T) {
@@ -907,7 +890,7 @@ func TestResolveFind_NeverReachesWhatAStrongOwnMatchCovers(t *testing.T) {
 
 	assert.Contains(t, answer, "search_commodities")
 	assert.NotContains(t, answer, beyondLead)
-	assert.NotContains(t, specNames(set.specs), "list_shipments")
+	assert.False(t, set.offers("list_shipments"))
 }
 
 func TestResolveFind_AStrongNewMatchNeedsNoDelegate(t *testing.T) {
@@ -994,6 +977,6 @@ func TestResolveFind_LoadsTheToolsANeedNamesOutright(t *testing.T) {
 		"need": "Use list_trailers (and list_nothing) to see invoices by due date",
 	})
 
-	assert.Contains(t, specNames(set.specs), "list_trailers")
+	assert.True(t, set.offers("list_trailers"))
 	assert.Contains(t, answer, "- list_trailers:")
 }

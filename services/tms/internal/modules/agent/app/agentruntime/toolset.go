@@ -65,6 +65,7 @@ func findToolsSpec() kernelports.ToolSpec {
 	return kernelports.ToolSpec{
 		Name:        findToolsName,
 		Description: findToolsDescription,
+		Searches:    true,
 		Parameters: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
@@ -129,12 +130,20 @@ type toolSetRequest struct {
 	// extensions; nil reads them again.
 	extensions  *agentextension.Active
 	attachments bool
+	command     agentextension.Command
 }
 
-// toolSet is the live set of tools a turn may call. It starts from the agent's
-// configuration and grows when the model asks for more.
+// toolSet is the set of tools a turn may call. It is declared once, when the
+// turn opens: the tools it opens with, sent in full, and every other tool it
+// may load, declared as deferred. Loading one later never changes what is
+// declared; it marks the tool loaded and names it on the next tool result, so
+// the request's tools and everything cached after them stay the same bytes
+// from the first call of the turn to the last.
 type toolSet struct {
 	specs      []kernelports.ToolSpec
+	deferred   []string
+	frozen     bool
+	pending    []string
 	loaded     map[string]struct{}
 	allowed    []string
 	beyond     []string
@@ -150,9 +159,20 @@ type toolSet struct {
 	self        pulid.ID
 	held        int
 	preselected []string
+	pinned      bool
 }
 
 func (s *Service) newToolSet(ctx context.Context, req toolSetRequest) *toolSet {
+	set := s.openToolSet(ctx, req)
+	if req.command != "" {
+		set.pinned = s.pinCommand(set, req.command)
+	}
+	s.freeze(set)
+
+	return set
+}
+
+func (s *Service) openToolSet(ctx context.Context, req toolSetRequest) *toolSet {
 	// The set a turn may call is the agent's configuration narrowed to what
 	// the person driving it may do. A tool they cannot use was still shown,
 	// ranked and offered, and denied only when called, which taught the
@@ -179,21 +199,42 @@ func (s *Service) newToolSet(ctx context.Context, req toolSetRequest) *toolSet {
 		self: req.definition.ID,
 	}
 
+	disclosed := len(selected) > s.toolThreshold() && s.catalog != nil
+	searchable := disclosed || (len(set.beyond) > 0 && s.catalog != nil)
+	text := rankingText(req.input, req.history)
+
 	// The core tools ride on every turn and do not count toward narrowing: a
 	// turn that opened with eight slots would otherwise spend half of them on
-	// memory and escalation before reaching the work it was asked to do.
+	// memory and escalation before reaching the work it was asked to do. On a
+	// turn that can search, the ones few turns call wait, deferred, unless the
+	// request names what they do.
+	waiting := make([]string, 0, len(deferredCoreTools))
 	for _, name := range coreOf(allowed) {
 		if name == agentdefinition.CoreToolReadAttachment && !req.attachments {
 			continue
 		}
+		if searchable && slices.Contains(deferredCoreTools, name) {
+			waiting = append(waiting, name)
+			continue
+		}
 		s.load(set, name)
 	}
+	if len(waiting) > 0 {
+		for _, descriptor := range s.catalog.FindHybrid(agenttoolcatalog.Query{
+			Allowed:    waiting,
+			Text:       text,
+			Limit:      len(waiting),
+			StrongOnly: true,
+		}) {
+			s.load(set, descriptor.Name)
+		}
+	}
 
-	if len(selected) <= s.toolThreshold() || s.catalog == nil {
+	if !disclosed {
 		for _, name := range selected {
 			s.load(set, name)
 		}
-		if len(set.beyond) > 0 && s.catalog != nil {
+		if searchable {
 			s.carryOver(set, req.history)
 			set.add(findToolsSpec())
 		}
@@ -208,7 +249,7 @@ func (s *Service) newToolSet(ctx context.Context, req toolSetRequest) *toolSet {
 	set.query = s.vectorize(ctx, &req.query)
 	for _, descriptor := range s.catalog.RankHybrid(agenttoolcatalog.Query{
 		Allowed:  selected,
-		Text:     rankingText(req.input, req.history),
+		Text:     text,
 		Limit:    preselectedTools,
 		Semantic: s.toolSemantic(ctx, req.query.TenantInfo, set.query),
 	}) {
@@ -221,6 +262,14 @@ func (s *Service) newToolSet(ctx context.Context, req toolSetRequest) *toolSet {
 	s.declareWithdrawal(set, req.delegated)
 
 	return set
+}
+
+var deferredCoreTools = []string{
+	agentdefinition.CoreToolCancelWait,
+	agentdefinition.CoreToolFlagForReview,
+	agentdefinition.CoreToolGuideProfile,
+	agentdefinition.CoreToolRaiseException,
+	agentdefinition.CoreToolWaitUntil,
 }
 
 // addConversational adds the tools that only mean something with a person
@@ -246,7 +295,7 @@ func (t *toolSet) addConversational(req toolSetRequest) {
 }
 
 func (t *toolSet) add(spec kernelports.ToolSpec) bool {
-	if _, ok := t.loaded[spec.Name]; ok {
+	if _, ok := t.loaded[spec.Name]; ok || t.frozen {
 		return false
 	}
 
@@ -277,21 +326,14 @@ func (t *toolSet) offers(name string) bool {
 // Prerequisites travel with the tool because a model handed create_dashboard
 // without list_reports does not go looking for a report id; it writes one.
 func (s *Service) load(set *toolSet, name string) bool {
-	if !set.reaches(name) {
-		return false
-	}
-	spec, ok := s.specFor(name)
-	if !ok || !set.add(spec) {
+	if !s.loadOne(set, name) {
 		return false
 	}
 
 	if s.catalog != nil {
 		for _, prerequisite := range s.catalog.Prerequisites(name) {
-			if !slices.Contains(set.allowed, prerequisite) {
-				continue
-			}
-			if dependency, found := s.specFor(prerequisite); found {
-				set.add(dependency)
+			if slices.Contains(set.allowed, prerequisite) {
+				s.loadOne(set, prerequisite)
 			}
 		}
 		for _, companion := range s.catalog.Companions(name) {
@@ -306,6 +348,55 @@ func (s *Service) load(set *toolSet, name string) bool {
 	}
 
 	return true
+}
+
+func (s *Service) loadOne(set *toolSet, name string) bool {
+	if !set.reaches(name) || set.offers(name) {
+		return false
+	}
+	if set.frozen {
+		if !slices.Contains(set.deferred, name) {
+			return false
+		}
+		set.loaded[name] = struct{}{}
+		set.pending = append(set.pending, name)
+
+		return true
+	}
+	spec, ok := s.specFor(name)
+
+	return ok && set.add(spec)
+}
+
+func (s *Service) freeze(set *toolSet) {
+	if set.frozen {
+		return
+	}
+	slices.SortFunc(set.specs, func(a, b kernelports.ToolSpec) int {
+		return strings.Compare(a.Name, b.Name)
+	})
+	if set.offers(findToolsName) {
+		reachable := slices.Concat(set.allowed, set.beyond)
+		deferred := make([]string, 0, len(reachable))
+		for _, name := range reachable {
+			if set.offers(name) || slices.Contains(deferred, name) {
+				continue
+			}
+			if _, ok := s.specFor(name); ok {
+				deferred = append(deferred, name)
+			}
+		}
+		slices.Sort(deferred)
+		set.deferred = deferred
+	}
+	set.frozen = true
+}
+
+func (t *toolSet) takeLoaded() []string {
+	loaded := t.pending
+	t.pending = nil
+
+	return loaded
 }
 
 // soleFed is the one held tool a lookup is a step of the recipe of, when it
@@ -418,12 +509,12 @@ func (s *Service) resolveFind(
 			callable = append(callable, descriptor)
 			continue
 		}
-		before := len(set.specs)
+		before := len(set.pending)
 		if s.load(set, descriptor.Name) {
 			added = append(added, descriptor)
-			for _, spec := range set.specs[before:] {
-				if spec.Name != descriptor.Name {
-					alongside = append(alongside, spec.Name)
+			for _, name := range set.pending[before:] {
+				if name != descriptor.Name {
+					alongside = append(alongside, name)
 				}
 			}
 		}

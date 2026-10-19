@@ -102,6 +102,7 @@ type ChatCompletionRequest struct {
 	SystemStable   int
 	Messages       []Message
 	Tools          []kernelports.ToolSpec
+	DeferredTools  []string                   `json:"deferredTools,omitempty"`
 	ToolChoiceNone bool                       `json:"toolChoiceNone,omitempty"`
 	Reask          string                     `json:"reask,omitempty"`
 	Reasoning      aiprovider.ReasoningEffort `json:"reasoning,omitempty"`

@@ -31,7 +31,7 @@ func TestSplitResponsesOutput_DoesNotMistakeReasoningForTheAnswer(t *testing.T) 
 		},
 	}}
 
-	text, toolCalls, refused := splitResponsesOutput(envelope)
+	text, toolCalls, refused := splitResponsesOutput(envelope, "")
 
 	assert.Equal(t, "Six shipments are still in transit.", text)
 	assert.Nil(t, toolCalls)
@@ -51,7 +51,7 @@ func TestSplitResponsesOutput_ReadsOnlyOutputTextParts(t *testing.T) {
 		},
 	}}}
 
-	text, _, _ := splitResponsesOutput(envelope)
+	text, _, _ := splitResponsesOutput(envelope, "")
 
 	assert.Equal(t, "the answer", text)
 }
@@ -66,7 +66,7 @@ func TestSplitResponsesOutput_StillHonoursARefusal(t *testing.T) {
 		Content: []responsesMessagePart{{Type: "refusal", Refusal: "I cannot help with that."}},
 	}}}
 
-	text, toolCalls, refused := splitResponsesOutput(envelope)
+	text, toolCalls, refused := splitResponsesOutput(envelope, "")
 
 	require.True(t, refused)
 	assert.Empty(t, text)
@@ -82,7 +82,7 @@ func TestSplitResponsesOutput_ReadsAnUntypedItem(t *testing.T) {
 		Content: []responsesMessagePart{{Text: "the answer"}},
 	}}}
 
-	text, _, _ := splitResponsesOutput(envelope)
+	text, _, _ := splitResponsesOutput(envelope, "")
 
 	assert.Equal(t, "the answer", text)
 }

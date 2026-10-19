@@ -2,7 +2,6 @@ package agentruntime
 
 import (
 	"context"
-	"slices"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
@@ -176,7 +175,7 @@ func TestCarryOver_NeverWidensPastWhatTheAgentHolds(t *testing.T) {
 	})
 
 	require.True(t, set.disclosed)
-	assert.NotContains(t, specNames(set.specs), "list_workers")
+	assert.False(t, set.offers("list_workers"))
 }
 
 func TestRun_RecordsWhatFindToolsFoundOnItsResult(t *testing.T) {
@@ -251,16 +250,10 @@ func TestNewToolSet_PreselectsByMeaningWhenAVectorIsAvailable(t *testing.T) {
 	require.Len(t, vectorizer.calls, 1, "one query vector per turn")
 	require.Len(t, similarities.requests, 1)
 	assert.Equal(t, airetrieval.CatalogCorpusTools, similarities.requests[0].Corpus)
-	first := ""
-	for _, name := range specNames(set.specs) {
-		if slices.Contains(names, name) {
-			first = name
-			break
-		}
-	}
-	assert.Equal(t, "list_expiring_credentials", first,
+	require.NotEmpty(t, set.preselected)
+	assert.Equal(t, "list_expiring_credentials", set.preselected[0],
 		"the closest tool by meaning leads when no word matches")
-	assert.NotContains(t, specNames(set.specs)[:3], "list_carriers",
+	assert.NotContains(t, set.preselected[:3], "list_carriers",
 		"a tool below the similarity floor gains nothing from the vector")
 
 	state := set.state()

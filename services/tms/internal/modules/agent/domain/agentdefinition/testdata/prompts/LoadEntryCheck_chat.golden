@@ -55,6 +55,12 @@ Worked out each night from this organization's records and from what its people 
 Acme Freight runs its own fleet of sleeper tractors and dry vans and brokers overflow to outside carriers. Most of its freight is retail replenishment out of Dallas, with Texas to California its busiest lane.
 </organization_profile>
 
+## About the person you are talking to
+What they work on, worked out from their own records and what they told you. Use it to read their requests; look up anything you state.
+<person_profile>
+This person dispatches the Dallas terminal's regional loads and works mostly with Northwind Foods and Contoso Retail.
+</person_profile>
+
 ## Runtime context
 - Organization: Acme Freight
 - Business unit: West Coast
@@ -62,10 +68,6 @@ Acme Freight runs its own fleet of sleeper tractors and dry vans and brokers ove
 - How this run started: a person is talking to you in a conversation
 - You are talking to: Maria Ortiz (maria@acme.example)
 - Their roles: Dispatcher
-- What they work on, worked out from their own records and what they told you. Use it to read their requests; look up anything you state:
-<person_profile>
-This person dispatches the Dallas terminal's regional loads and works mostly with Northwind Foods and Contoso Retail.
-</person_profile>
 - What the person is looking at right now:
 <page_context>
 path: /shipments

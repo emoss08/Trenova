@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -101,6 +102,7 @@ type Service struct {
 	rateLimits kernelports.RateLimitStore
 	pools      matchPools
 	matchable  func() []string
+	registry   *permission.Registry
 }
 
 func New(p Params) *Service {
@@ -129,6 +131,7 @@ func New(p Params) *Service {
 		rateLimits:  p.RateLimits,
 		pools:       newMatchPools(),
 		matchable:   matchableTools(p.Catalog),
+		registry:    permission.NewRegistry(),
 	}
 }
 
@@ -735,11 +738,12 @@ func (s *Service) recordToolResult(
 		CreatedAt:      fx.Now(),
 	})
 	t.messages = append(t.messages, agentports.Message{
-		Role:       agentports.RoleTool,
-		Content:    outcome.content,
-		ToolCallID: call.ID,
-		ToolName:   call.Name,
-		IsError:    outcome.failed,
+		Role:           agentports.RoleTool,
+		Content:        outcome.content,
+		ToolCallID:     call.ID,
+		ToolName:       call.Name,
+		IsError:        outcome.failed,
+		ToolReferences: t.tools.takeLoaded(),
 	})
 }
 

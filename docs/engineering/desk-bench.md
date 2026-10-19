@@ -167,12 +167,18 @@ Each case, and each cell (a provider at an effort, split by scenario split), rep
   figure is marked `~`.
 - **Work.** Model calls, tool calls, refused calls by verdict, guard re-asks by guard (the
   `reask` on each call), time to first token and time per task.
+- **Cache on later calls** (`CACHED 2+`, `laterCacheReadShare`): the cache-read share of every
+  model call of a turn but its first, which writes the cache. A stable prefix shows here first:
+  the rebuild of context assembly is held to above 80%.
+- **Opens with find** (`findFirstShare`): the share of turns that called a tool whose first call
+  was `find_tools`, the step a missed preselection costs.
 - **Tool selection**, against the scenario's labels: precision, recall, the position of the
   first expected call, and calls to forbidden tools. Core and runtime tools (`find_tools`,
   `withdraw_proposal`, …) are left out unless a label names them.
 - **Retrieval**, on disclosed turns, against the tools the turn actually used. Preselection
-  recall is the share the turn's opening tool array held (the 8 ranked plus the companions,
-  followers, fed and carried-over tools loaded beside them). `find_tools` recall is scored
+  recall is the share the turn opened with loaded (the 8 ranked plus the companions,
+  followers, fed and carried-over tools loaded beside them; a tool declared deferred is not
+  one the turn opened with). `find_tools` recall is scored
   per answer, the share of the used tools the turn did not open with that one answer
   loaded, averaged over answers; `findUnionRecall` is the same against every answer of the
   turn together.
@@ -184,7 +190,10 @@ because one scenario's trials pass and fail together and pooling them would draw
 too narrow (`report.json` keeps the pooled Wilson rate as `pass`, beside `scenarioPass`); `pass^k` (`--pass-k`,
 default 4) is the chance all k trials of a scenario pass, estimated as C(c,k)/C(n,k) from c
 passes in n trials and averaged over scenarios, so it needs `--repeat` of at least k.
-`--compare` compares means per trial, so a run with a different `--repeat` still compares.
+`--compare` compares means per trial, so a run with a different `--repeat` still compares. Each
+model's cell is also set beside its cell in the earlier run, before → after, on pass^k, recall,
+preselection recall, model and tool calls, time to first token, the cache share of later calls,
+the share that opens with `find_tools` and cost per task (`CompareCells`).
 
 ### Counting cache misses
 

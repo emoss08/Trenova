@@ -18,6 +18,10 @@ type CaseMetrics struct {
 	FirstTokenMs     *float64       `json:"firstTokenMs,omitempty"`
 	Seconds          float64        `json:"seconds"`
 	PeakPromptTokens int            `json:"peakPromptTokens"`
+	LaterPrompt      int            `json:"laterPromptTokens,omitempty"`
+	LaterCacheRead   int            `json:"laterCacheReadTokens,omitempty"`
+	ToolTurns        int            `json:"toolTurns,omitempty"`
+	FindFirstTurns   int            `json:"findFirstTurns,omitempty"`
 	Selection        *Selection     `json:"selection,omitempty"`
 	Retrieval        *Retrieval     `json:"retrieval,omitempty"`
 }
@@ -81,13 +85,28 @@ func measureCase(result *CaseResult) CaseMetrics {
 				metrics.RefusedByVerdict[verdictLabel(call)]++
 			}
 		}
+		own := 0
 		for idx := range turn.Calls {
 			call := &turn.Calls[idx]
 			if call.Reask != "" {
 				metrics.ReasksByGuard[call.Reask]++
 			}
-			metrics.PeakPromptTokens = max(metrics.PeakPromptTokens,
-				call.InputTokens+call.CacheRead+call.CacheWrite)
+			prompt := call.InputTokens + call.CacheRead + call.CacheWrite
+			metrics.PeakPromptTokens = max(metrics.PeakPromptTokens, prompt)
+			if call.Delegate != "" || call.Kind != ModelCallChat {
+				continue
+			}
+			if own > 0 {
+				metrics.LaterPrompt += prompt
+				metrics.LaterCacheRead += call.CacheRead
+			}
+			own++
+		}
+		if first := firstOwnTool(turn); first != "" {
+			metrics.ToolTurns++
+			if first == findToolsName {
+				metrics.FindFirstTurns++
+			}
 		}
 		if turn.FirstTokenMs != nil {
 			firstTokens = append(firstTokens, float64(*turn.FirstTokenMs))
@@ -262,11 +281,31 @@ func usedDomainTools(turn *TurnRecord) []string {
 	return used
 }
 
+const findToolsName = "find_tools"
+
+func firstOwnTool(turn *TurnRecord) string {
+	for _, call := range turn.Tools {
+		if call.DelegateCallID == "" {
+			return call.Name
+		}
+	}
+
+	return ""
+}
+
 func openingTools(turn *TurnRecord) []string {
 	for _, call := range turn.ModelCalls {
-		if call.Chat != nil && call.Attribution.DelegateCallID == "" {
-			return toolNames(call.Chat.Tools)
+		if call.Chat == nil || call.Attribution.DelegateCallID != "" {
+			continue
 		}
+		names := make([]string, 0, len(call.Chat.Tools))
+		for idx := range call.Chat.Tools {
+			if !call.Chat.Tools[idx].Deferred {
+				names = append(names, call.Chat.Tools[idx].Name)
+			}
+		}
+
+		return names
 	}
 
 	return nil

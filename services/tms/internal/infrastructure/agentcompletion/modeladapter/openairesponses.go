@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/bytedance/sonic"
@@ -86,13 +87,17 @@ type responsesItem struct {
 	Summary          *[]responsesSummaryPart `json:"summary,omitempty"`
 	EncryptedContent string                  `json:"encrypted_content,omitempty"`
 
-	// function_call
+	// function_call, and a client tool search's call, whose arguments are an
+	// object rather than encoded text.
 	CallID    string `json:"call_id,omitempty"`
 	Name      string `json:"name,omitempty"`
-	Arguments string `json:"arguments,omitempty"`
+	Arguments any    `json:"arguments,omitempty"`
+	Execution string `json:"execution,omitempty"`
+	Status    string `json:"status,omitempty"`
 
-	// function_call_output
-	Output string `json:"output,omitempty"`
+	// function_call_output, and the tools a client tool search loaded.
+	Output string          `json:"output,omitempty"`
+	Tools  []responsesTool `json:"tools,omitempty"`
 }
 
 type responsesMessagePart struct {
@@ -107,11 +112,13 @@ type responsesMessagePart struct {
 // type Vacation), narrowing lists to nothing. The runtime checks every call
 // against the tool's schema itself.
 type responsesTool struct {
-	Type        string         `json:"type"`
-	Name        string         `json:"name"`
-	Description string         `json:"description"`
-	Parameters  map[string]any `json:"parameters"`
-	Strict      bool           `json:"strict"`
+	Type         string         `json:"type"`
+	Name         string         `json:"name,omitempty"`
+	Description  string         `json:"description"`
+	Parameters   map[string]any `json:"parameters"`
+	Strict       *bool          `json:"strict,omitempty"`
+	Execution    string         `json:"execution,omitempty"`
+	DeferLoading bool           `json:"defer_loading,omitempty"`
 }
 
 type responsesTextConfig struct {
@@ -157,9 +164,15 @@ func (a openAIResponsesAdapter) baseRequest(call *Call) responsesRequest {
 	body := responsesRequest{
 		Model:           call.Provider.Model,
 		MaxOutputTokens: call.Request.MaxTokens,
-		Input:           toResponsesInput(call.Request.System, call.Request.Messages),
-		Tools:           toResponsesTools(call.Request.Tools),
 		ToolChoice:      toolChoiceWire(call.Request),
+	}
+	if search := responsesSearch(call); search != "" {
+		body.Input = toResponsesInput(call.Request.System, call.Request.Messages,
+			&responsesSearchTool{name: search, tools: call.Request.Tools})
+		body.Tools = toResponsesSearchTools(call.Request.Tools)
+	} else {
+		body.Input = toResponsesInput(call.Request.System, call.Request.Messages, nil)
+		body.Tools = toResponsesTools(loadedTools(call.Request.Tools, call.Request.Messages))
 	}
 	body.applyReasoning(call)
 	body.MaxOutputTokens = answerRoom(call, body.MaxOutputTokens)
@@ -215,7 +228,7 @@ func (a openAIResponsesAdapter) Complete(ctx context.Context, call *Call) (*Resp
 }
 
 func (a openAIResponsesAdapter) responseFrom(call *Call, envelope *responsesEnvelope) *Response {
-	text, toolCalls, refused := splitResponsesOutput(envelope)
+	text, toolCalls, refused := splitResponsesOutput(envelope, responsesSearch(call))
 
 	return &Response{
 		Text:            text,
@@ -445,7 +458,7 @@ func (a openAIResponsesAdapter) Stream(
 		}, nil
 	}
 
-	finalText, toolCalls, finalRefused := splitResponsesOutput(completed)
+	finalText, toolCalls, finalRefused := splitResponsesOutput(completed, responsesSearch(call))
 	reasoning := responsesReasoningOf(completed)
 	if reasoning == nil {
 		reasoning = textReasoning(thinking.String())
@@ -537,7 +550,119 @@ func responsesTruncated(envelope *responsesEnvelope) bool {
 	return envelope.Status == "incomplete"
 }
 
-func toResponsesInput(system string, messages []Message) []responsesItem {
+type responsesSearchTool struct {
+	name  string
+	tools []ToolSpec
+}
+
+func responsesSearch(call *Call) string {
+	if !call.Provider.OnOpenAIPlatform() || !toolSearchModel(call.Provider.Model) {
+		return ""
+	}
+	search := ""
+	deferred := false
+	for _, tool := range call.Request.Tools {
+		switch {
+		case tool.Searches && !tool.Deferred:
+			search = tool.Name
+		case tool.Deferred:
+			deferred = true
+		}
+	}
+	if !deferred {
+		return ""
+	}
+
+	return search
+}
+
+func toolSearchModel(model string) bool {
+	version, ok := strings.CutPrefix(strings.ToLower(strings.TrimSpace(model)), "gpt-")
+	if !ok {
+		return false
+	}
+	version, _, _ = strings.Cut(version, "-")
+	majorText, minorText, _ := strings.Cut(version, ".")
+	major, err := strconv.Atoi(majorText)
+	if err != nil {
+		return false
+	}
+	minor := 0
+	if minorText != "" {
+		if minor, err = strconv.Atoi(minorText); err != nil {
+			return false
+		}
+	}
+
+	return major > 5 || (major == 5 && minor >= 4)
+}
+
+func toResponsesSearchTools(tools []ToolSpec) []responsesTool {
+	out := make([]responsesTool, 0, len(tools))
+	for _, tool := range tools {
+		switch {
+		case tool.Deferred:
+		case tool.Searches:
+			out = append(out, responsesTool{
+				Type:        "tool_search",
+				Execution:   "client",
+				Description: tool.Description,
+				Parameters:  toolschema.ForModel(tool.Parameters),
+			})
+		default:
+			out = append(out, responsesFunction(tool))
+		}
+	}
+
+	return out
+}
+
+func responsesFunction(tool ToolSpec) responsesTool {
+	strict := false
+
+	return responsesTool{
+		Type:        "function",
+		Name:        tool.Name,
+		Description: tool.Description,
+		Parameters:  toolschema.ForModel(tool.Parameters),
+		Strict:      &strict,
+	}
+}
+
+func (search *responsesSearchTool) searchOutput(msg *Message) []responsesItem {
+	loaded := make([]responsesTool, 0, len(msg.ToolReferences))
+	for _, name := range msg.ToolReferences {
+		for _, tool := range search.tools {
+			if tool.Name == name && tool.Deferred {
+				declared := responsesFunction(tool)
+				declared.DeferLoading = true
+				loaded = append(loaded, declared)
+				break
+			}
+		}
+	}
+	items := []responsesItem{{
+		Type:      "tool_search_output",
+		Execution: "client",
+		CallID:    msg.ToolCallID,
+		Status:    "completed",
+		Tools:     loaded,
+	}}
+	if strings.TrimSpace(msg.Content) != "" {
+		items = append(items, responsesItem{
+			Role:    "developer",
+			Content: []responsesMessagePart{{Type: "input_text", Text: msg.Content}},
+		})
+	}
+
+	return items
+}
+
+func toResponsesInput(
+	system string,
+	messages []Message,
+	search *responsesSearchTool,
+) []responsesItem {
 	items := make([]responsesItem, 0, len(messages)+1)
 	if strings.TrimSpace(system) != "" {
 		items = append(items, responsesItem{
@@ -549,6 +674,10 @@ func toResponsesInput(system string, messages []Message) []responsesItem {
 	for _, msg := range messages {
 		switch msg.Role {
 		case RoleTool:
+			if search != nil && msg.ToolName == search.name {
+				items = append(items, search.searchOutput(&msg)...)
+				continue
+			}
 			items = append(items, responsesItem{
 				Type:   "function_call_output",
 				CallID: msg.ToolCallID,
@@ -563,6 +692,16 @@ func toResponsesInput(system string, messages []Message) []responsesItem {
 				})
 			}
 			for _, tc := range msg.ToolCalls {
+				if search != nil && tc.Name == search.name {
+					items = append(items, responsesItem{
+						Type:      "tool_search_call",
+						Execution: "client",
+						CallID:    tc.ID,
+						Status:    "completed",
+						Arguments: toolUseInput(tc.Arguments),
+					})
+					continue
+				}
 				encoded, err := requestJSON.Marshal(tc.Arguments)
 				if err != nil {
 					encoded = []byte("{}")
@@ -592,26 +731,35 @@ func toResponsesTools(tools []ToolSpec) []responsesTool {
 
 	out := make([]responsesTool, 0, len(tools))
 	for _, tool := range tools {
-		out = append(out, responsesTool{
-			Type:        "function",
-			Name:        tool.Name,
-			Description: tool.Description,
-			Parameters:  toolschema.ForModel(tool.Parameters),
-		})
+		out = append(out, responsesFunction(tool))
 	}
 
 	return out
 }
 
-func splitResponsesOutput(resp *responsesEnvelope) (string, []ToolCall, bool) {
+func splitResponsesOutput(
+	resp *responsesEnvelope,
+	search string,
+) (string, []ToolCall, bool) {
 	var text string
 	toolCalls := make([]ToolCall, 0, len(resp.Output))
 
 	for idx := range resp.Output {
 		item := &resp.Output[idx]
 
+		if item.Type == "tool_search_call" && search != "" {
+			args, argsErr := responsesArgumentsOf(item.Arguments)
+			toolCalls = append(toolCalls, ToolCall{
+				ID:             item.CallID,
+				Name:           search,
+				Arguments:      args,
+				ArgumentsError: argsErr,
+			})
+			continue
+		}
+
 		if item.Type == "function_call" {
-			args, argsErr := decodeArguments(item.Arguments)
+			args, argsErr := responsesArgumentsOf(item.Arguments)
 			toolCalls = append(toolCalls, ToolCall{
 				ID:             item.CallID,
 				Name:           item.Name,
@@ -652,4 +800,22 @@ func splitResponsesOutput(resp *responsesEnvelope) (string, []ToolCall, bool) {
 	}
 
 	return text, toolCalls, false
+}
+
+func responsesArgumentsOf(raw any) (map[string]any, string) {
+	switch value := raw.(type) {
+	case map[string]any:
+		return value, ""
+	case string:
+		return decodeArguments(value)
+	case nil:
+		return map[string]any{}, ""
+	default:
+		encoded, err := requestJSON.Marshal(value)
+		if err != nil {
+			return map[string]any{}, err.Error()
+		}
+
+		return decodeArguments(string(encoded))
+	}
 }

@@ -87,7 +87,9 @@ func delegateTurn(agentID pulid.ID, task string) *agentports.ChatCompletionResul
 func offered(req *agentports.ChatCompletionRequest) []string {
 	names := make([]string, 0, len(req.Tools))
 	for _, spec := range req.Tools {
-		names = append(names, spec.Name)
+		if !spec.Deferred {
+			names = append(names, spec.Name)
+		}
 	}
 
 	return names

@@ -499,6 +499,7 @@ func execute(
 	report := deskbench.BuildReport(meta, cases)
 	if baseline != nil {
 		report.Comparison = deskbench.Compare(baseline, report)
+		report.CellChanges = deskbench.CompareCells(baseline, report)
 	}
 	if err = report.Write(outDir); err != nil {
 		return nil, outDir, err

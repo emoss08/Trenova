@@ -52,6 +52,7 @@ type Report struct {
 	ModelNotes    []ModelNote    `json:"modelNotes,omitempty"`
 	Cases         []*CaseResult  `json:"cases"`
 	Comparison    []CompareEntry `json:"comparison,omitempty"`
+	CellChanges   []CellChange   `json:"cellChanges,omitempty"`
 }
 
 type Summary struct {
@@ -79,6 +80,8 @@ type Measures struct {
 	Output             Stat               `json:"output"`
 	PeakPrompt         Stat               `json:"peakPrompt"`
 	CacheReadShare     *float64           `json:"cacheReadShare,omitempty"`
+	LaterCacheShare    *float64           `json:"laterCacheReadShare,omitempty"`
+	FindFirstShare     *float64           `json:"findFirstShare,omitempty"`
 	CostUSD            Stat               `json:"costUsd"`
 	CostEstimated      bool               `json:"costEstimated,omitempty"`
 	CostUnpriced       bool               `json:"costUnpriced,omitempty"`
@@ -597,6 +600,7 @@ type measureSeries struct {
 	precision, recall, firstCorrect, forbidden          []float64
 	preselection, find                                  []float64
 	findAnswers, findHits                               int
+	laterPrompt, laterRead, toolTurns, findFirst        int
 	verdicts, guards                                    map[string]float64
 	estimated, unpriced                                 bool
 	passed                                              int
@@ -629,6 +633,10 @@ func (m *measureSeries) add(result *CaseResult) {
 	m.write = append(m.write, float64(usage.CacheWriteTokens))
 	m.output = append(m.output, float64(usage.OutputTokens))
 	m.peak = append(m.peak, float64(metrics.PeakPromptTokens))
+	m.laterPrompt += metrics.LaterPrompt
+	m.laterRead += metrics.LaterCacheRead
+	m.toolTurns += metrics.ToolTurns
+	m.findFirst += metrics.FindFirstTurns
 	switch {
 	case usage.UnpricedCalls > 0 || (usage.CostUSD == nil && usage.ModelCalls > 0):
 		m.unpriced = true
@@ -710,6 +718,14 @@ func (m *measureSeries) measures(trials int) Measures {
 	if m.findAnswers > 0 {
 		rate := float64(m.findHits) / float64(m.findAnswers)
 		measures.FindHitRate = &rate
+	}
+	if m.laterPrompt > 0 {
+		share := float64(m.laterRead) / float64(m.laterPrompt)
+		measures.LaterCacheShare = &share
+	}
+	if m.toolTurns > 0 {
+		share := float64(m.findFirst) / float64(m.toolTurns)
+		measures.FindFirstShare = &share
 	}
 
 	return measures

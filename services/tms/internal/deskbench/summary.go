@@ -134,6 +134,7 @@ func RenderSummary(r *Report) string {
 
 	renderCells(&b, summary.Cells, summary.PassK)
 	renderMatrix(&b, summary.Matrix, summary.PassK)
+	renderCellChanges(&b, r.CellChanges)
 	renderComparison(&b, r.Comparison)
 	renderTroubles(&b, r)
 
@@ -148,32 +149,36 @@ func renderCells(b *strings.Builder, cells []CellRow, k int) {
 	b.WriteString("\nBy model:\n")
 	table := tabwriter.NewWriter(b, 0, 2, 2, ' ', 0)
 	fmt.Fprintf(table, "MODEL\tSPLIT\tSCEN\tTRIALS\tPASS\tPASS^%d\tS/TASK\tTTFT MS\t"+
-		"MODEL CALLS\tTOOL CALLS\tREFUSED\tIN\tCACHE R\tCACHE W\tOUT\tCACHED\t$/TASK\t$/PASS\n", k)
+		"MODEL CALLS\tTOOL CALLS\tREFUSED\tIN\tCACHE R\tCACHE W\tOUT\tCACHED\tCACHED 2+\t"+
+		"$/TASK\t$/PASS\n", k)
 	for idx := range cells {
 		cell := &cells[idx]
 		m := &cell.Measures
-		fmt.Fprintf(table, strings.Repeat("%s\t", 2)+"%d\t%d\t"+strings.Repeat("%s\t", 13)+"%s\n",
+		fmt.Fprintf(table, strings.Repeat("%s\t", 2)+"%d\t%d\t"+strings.Repeat("%s\t", 14)+"%s\n",
 			cell.Provider, splitLabel(cell.Split), cell.Scenarios, cell.Trials,
 			percentStatCell(cell.ScenarioPass),
 			statCell(cell.PassK, 2), statCell(m.Seconds, 1), statCell(m.FirstTokenMs, 0),
 			statCell(m.ModelCalls, 1), statCell(m.ToolCalls, 1), statCell(m.Refused, 2),
 			statCell(m.UncachedInput, 0), statCell(m.CacheRead, 0), statCell(m.CacheWrite, 0),
-			statCell(m.Output, 0), percentCell(m.CacheReadShare), costCell(m), costPassCell(m))
+			statCell(m.Output, 0), percentCell(m.CacheReadShare), percentCell(m.LaterCacheShare),
+			costCell(m), costPassCell(m))
 	}
 	_ = table.Flush()
 
 	b.WriteString("\nTool selection and retrieval by model:\n")
 	table = tabwriter.NewWriter(b, 0, 2, 2, ' ', 0)
 	fmt.Fprintln(table, "MODEL\tSPLIT\tPRECISION\tRECALL\tFIRST RIGHT\tFORBIDDEN\t"+
-		"PRESELECTION R@8\tFIND RECALL\tFIND HITS\tREFUSED BY VERDICT\tRE-ASKS BY GUARD")
+		"PRESELECTION R@8\tFIND RECALL\tFIND HITS\tOPENS WITH FIND\tREFUSED BY VERDICT\t"+
+		"RE-ASKS BY GUARD")
 	for idx := range cells {
 		cell := &cells[idx]
 		m := &cell.Measures
-		fmt.Fprintf(table, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+		fmt.Fprintf(table, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
 			cell.Provider, splitLabel(cell.Split), statCell(m.Precision, 2),
 			statCell(m.Recall, 2), statCell(m.FirstCorrect, 1), statCell(m.ForbiddenCalls, 2),
 			statCell(m.PreselectionRecall, 2), statCell(m.FindRecall, 2),
-			percentCell(m.FindHitRate), perTrialCounts(m.RefusedByVerdict),
+			percentCell(m.FindHitRate), percentCell(m.FindFirstShare),
+			perTrialCounts(m.RefusedByVerdict),
 			perTrialCounts(m.ReasksByGuard))
 	}
 	_ = table.Flush()
@@ -384,4 +389,69 @@ func verdictCounts(verdicts map[string]int) string {
 	}
 
 	return strings.Join(parts, ", ")
+}
+
+type CellChange struct {
+	Key         string   `json:"key"`
+	Before      Measures `json:"before"`
+	After       Measures `json:"after"`
+	BeforePassK Stat     `json:"beforePassK"`
+	AfterPassK  Stat     `json:"afterPassK"`
+}
+
+func CompareCells(before, after *Report) []CellChange {
+	previous := make(map[string]*CellRow, len(before.Summary.Cells))
+	for idx := range before.Summary.Cells {
+		previous[before.Summary.Cells[idx].Key()] = &before.Summary.Cells[idx]
+	}
+
+	changes := make([]CellChange, 0, len(after.Summary.Cells))
+	for idx := range after.Summary.Cells {
+		cell := &after.Summary.Cells[idx]
+		old, ok := previous[cell.Key()]
+		if !ok {
+			continue
+		}
+		changes = append(changes, CellChange{
+			Key:         cell.Key(),
+			Before:      old.Measures,
+			After:       cell.Measures,
+			BeforePassK: old.PassK,
+			AfterPassK:  cell.PassK,
+		})
+	}
+
+	return changes
+}
+
+func renderCellChanges(b *strings.Builder, changes []CellChange) {
+	if len(changes) == 0 {
+		return
+	}
+
+	b.WriteString("\nBy model, against the earlier run (before → after):\n")
+	table := tabwriter.NewWriter(b, 0, 2, 2, ' ', 0)
+	fmt.Fprintln(table, "MODEL\tPASS^k\tRECALL\tPRESELECTION R@8\tMODEL CALLS\tTOOL CALLS\t"+
+		"TTFT MS\tCACHED, CALLS 2+\tOPENS WITH FIND\t$/TASK")
+	for idx := range changes {
+		change := &changes[idx]
+		before, after := &change.Before, &change.After
+		fmt.Fprintf(table, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+			change.Key,
+			arrow(statCell(change.BeforePassK, 2), statCell(change.AfterPassK, 2)),
+			arrow(statCell(before.Recall, 2), statCell(after.Recall, 2)),
+			arrow(statCell(before.PreselectionRecall, 2), statCell(after.PreselectionRecall, 2)),
+			arrow(statCell(before.ModelCalls, 1), statCell(after.ModelCalls, 1)),
+			arrow(statCell(before.ToolCalls, 1), statCell(after.ToolCalls, 1)),
+			arrow(statCell(before.FirstTokenMs, 0), statCell(after.FirstTokenMs, 0)),
+			arrow(percentCell(before.LaterCacheShare), percentCell(after.LaterCacheShare)),
+			arrow(percentCell(before.FindFirstShare), percentCell(after.FindFirstShare)),
+			arrow(costCell(before), costCell(after)),
+		)
+	}
+	_ = table.Flush()
+}
+
+func arrow(before, after string) string {
+	return before + " → " + after
 }
