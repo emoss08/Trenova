@@ -70,6 +70,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # A change to a package most of the service imports recompiles hundreds of
+      # packages on top of the restored build cache, and the runner's disk ran out
+      # while linking the last test binaries. The SDKs preinstalled on the image,
+      # none of which this job uses, are most of that disk.
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+            /opt/hostedtoolcache/CodeQL /usr/local/share/boost
+          df -h /
+
       - name: Checkout code
         uses: actions/checkout@v5
 
