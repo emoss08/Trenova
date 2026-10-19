@@ -29,6 +29,11 @@ scenarios:
           AND b.number IS DISTINCT FROM 'BQ-BENCH-0001'
           AND NOT EXISTS (SELECT 1 FROM invoices AS i WHERE i.billing_queue_item_id = b.id)
       - >
+        UPDATE billing_queue_items AS b SET status = 'Canceled'
+        FROM shipments AS s
+        WHERE b.shipment_id = s.id AND s.pro_number = 'SEED-SHP-009'
+          AND b.number IS DISTINCT FROM 'BQ-BENCH-0001' AND b.status NOT IN ('Posted', 'Canceled')
+      - >
         INSERT INTO billing_queue_items
           (id, organization_id, business_unit_id, shipment_id, bill_to_customer_id, number,
            status, bill_type, exception_reason_code, exception_notes)
@@ -79,6 +84,11 @@ scenarios:
         WHERE b.shipment_id = s.id AND s.pro_number = 'SEED-DET-004'
           AND b.number IS DISTINCT FROM 'BQ-BENCH-0002'
           AND NOT EXISTS (SELECT 1 FROM invoices AS i WHERE i.billing_queue_item_id = b.id)
+      - >
+        UPDATE billing_queue_items AS b SET status = 'Canceled'
+        FROM shipments AS s
+        WHERE b.shipment_id = s.id AND s.pro_number = 'SEED-DET-004'
+          AND b.number IS DISTINCT FROM 'BQ-BENCH-0002' AND b.status NOT IN ('Posted', 'Canceled')
       - >
         INSERT INTO billing_queue_items
           (id, organization_id, business_unit_id, shipment_id, bill_to_customer_id, number,
@@ -179,6 +189,11 @@ scenarios:
         WHERE b.shipment_id = s.id AND s.pro_number = 'SEED-DET-006'
           AND b.number IS DISTINCT FROM 'BQ-BENCH-0003'
           AND NOT EXISTS (SELECT 1 FROM invoices AS i WHERE i.billing_queue_item_id = b.id)
+      - >
+        UPDATE billing_queue_items AS b SET status = 'Canceled'
+        FROM shipments AS s
+        WHERE b.shipment_id = s.id AND s.pro_number = 'SEED-DET-006'
+          AND b.number IS DISTINCT FROM 'BQ-BENCH-0003' AND b.status NOT IN ('Posted', 'Canceled')
       - >
         INSERT INTO billing_queue_items
           (id, organization_id, business_unit_id, shipment_id, bill_to_customer_id, number,
