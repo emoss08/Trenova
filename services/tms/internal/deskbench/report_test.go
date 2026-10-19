@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/evalsplit"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/shopspring/decimal"
@@ -46,7 +47,7 @@ func benchCase(
 func TestSummarize_AveragesTrialsInsteadOfSummingThem(t *testing.T) {
 	t.Parallel()
 
-	scenario := &Scenario{Name: "late-loads", Split: SplitDevelopment}
+	scenario := &Scenario{Name: "late-loads", Split: evalsplit.Development}
 	cases := []*CaseResult{
 		benchCase(scenario, "Haiku", true, 2, 1000, 9000, "0.010"),
 		benchCase(scenario, "Haiku", true, 4, 3000, 7000, "0.030"),
@@ -80,8 +81,8 @@ func TestSummarize_AveragesTrialsInsteadOfSummingThem(t *testing.T) {
 func TestSummarize_IntervalsAModelsPassRateOverItsScenarios(t *testing.T) {
 	t.Parallel()
 
-	steady := &Scenario{Name: "steady", Split: SplitDevelopment}
-	broken := &Scenario{Name: "broken", Split: SplitDevelopment}
+	steady := &Scenario{Name: "steady", Split: evalsplit.Development}
+	broken := &Scenario{Name: "broken", Split: evalsplit.Development}
 	cases := make([]*CaseResult, 0, 8)
 	for range 4 {
 		cases = append(cases,
@@ -195,7 +196,6 @@ func TestScenario_DerivesLabelsFromItsChecks(t *testing.T) {
 	}}}
 	scenario.deriveLabels()
 
-	assert.Equal(t, SplitDevelopment, scenario.Split)
 	assert.Equal(t, []string{"get_shipment|search_shipments", "add_shipment_comment"},
 		scenario.ExpectedTools)
 	assert.Equal(t, []string{"cancel_shipment", "delete_shipment"}, scenario.ForbiddenTools)
@@ -220,4 +220,27 @@ func TestScenario_RefusesAToolBothExpectedAndForbidden(t *testing.T) {
 	scenario.ForbiddenTools = []string{"cancel_shipment"}
 	scenario.Split = "training"
 	require.Error(t, scenario.Validate())
+}
+
+func TestSummarize_ReportsTheShareOfCallsWhoseArgumentsWereAccepted(t *testing.T) {
+	t.Parallel()
+
+	scenario := &Scenario{Name: "invoice-it", Split: evalsplit.HeldOut}
+	refused := benchCase(scenario, "Haiku", false, 4, 1000, 0, "0.010")
+	refused.Metrics.RefusedCalls = 2
+	refused.Metrics.RefusedByVerdict = map[string]int{verdictInvalid: 1, verdictDenied: 1}
+	cases := []*CaseResult{
+		refused,
+		benchCase(scenario, "Haiku", true, 2, 1000, 0, "0.010"),
+		benchCase(scenario, "Haiku", true, 0, 1000, 0, "0.010"),
+	}
+
+	summary := summarize(cases, 4)
+	validity := summary.Matrix[0].Measures.ArgumentValidity
+	assert.Equal(t, 2, validity.N, "a trial that called nothing has no arguments to judge")
+	assert.InDelta(t, 0.875, validity.Mean, 1e-9, "a denial is not an argument error")
+
+	heldOut := summary.Cells[len(summary.Cells)-1]
+	assert.Equal(t, evalsplit.HeldOut, heldOut.Split)
+	assert.InDelta(t, 0.875, heldOut.Measures.ArgumentValidity.Mean, 1e-9)
 }

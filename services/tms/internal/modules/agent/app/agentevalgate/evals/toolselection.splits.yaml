@@ -1,0 +1,280 @@
+# The held-out find_tools cases, by desk and by chat or unattended. Generated from
+# the rule in docs/engineering/desk-bench.md (Labels and splits) by running, in
+# services/tms:
+#   go test -count=1 -run 'AgainstFloors|Splits' ./internal/modules/agent/app/agentevalgate/ -update
+# Do not edit by hand, and never edit a description, search term or prompt against
+# a case listed here: the gate prints only the development cases' misses for that.
+strata:
+  - stratum:
+      desk: Billing assistant
+      mode: chat
+    heldOut:
+      - bill the statement customer's open period now instead of waiting for month end
+      - check these billing queue items before we post them
+      - credit and rebill posted invoice 3302 for the corrected weight
+      - drop shipment 4412 from the proposed invoice run, it is not ready to bill
+      - issue a $100 goodwill credit to Acme with no shipment behind it
+      - post draft invoice 1042
+      - re-render the PDF on invoice 7781 so it shows the corrected address
+      - reassign the fuel charge on this billing item to the other customer
+  - stratum:
+      desk: Billing exception agent
+      mode: unattended
+    heldOut:
+      - is quickbooks connected
+      - park the billing item until the lumper receipt shows up
+      - why is the accounting sync not working
+  - stratum:
+      desk: Books keeper
+      mode: unattended
+    heldOut:
+      - can we close the books for March
+      - confirm the proposed quickbooks mappings
+      - dismiss that small rounding difference with quickbooks
+      - lock the fiscal period while we review the books
+      - when does the current fiscal period end
+      - which invoices failed to sync to quickbooks
+      - which invoices were changed in quickbooks after we sent them
+      - which payments recorded in quickbooks are waiting to be applied in trenova
+  - stratum:
+      desk: Carrier risk desk
+      mode: unattended
+    heldOut:
+      - close the carrier finding about the insurance lapse, they sent a new certificate
+      - what's happening with safety scores on haulers we use
+      - which haulers lost their cover or operating permission lately
+  - stratum:
+      desk: Cash application agent
+      mode: unattended
+    heldOut:
+      - assign the bank receipt work item to Maria
+      - match this bank receipt to the posted payment
+  - stratum:
+      desk: Compliance assistant
+      mode: chat
+    heldOut:
+      - add the roadside violation from the inspection report
+      - assign the hazmat training course to these drivers
+      - close the safety event now that the brakes are fixed
+      - deny the shift swap between Carla and Ben, we need coverage that day
+      - import the carrier we found in sourcing by its DOT number
+      - what shift schedule is the driver on
+  - stratum:
+      desk: Credential desk
+      mode: unattended
+    heldOut:
+      - ping the trucker that pickup slipped to three
+      - which driver licenses and medical cards expire this month
+  - stratum:
+      desk: Customer assistant
+      mode: chat
+    heldOut:
+      - add a consolidation fee to the order
+      - drop the detention charge from order 6612 before we invoice
+      - fix the typo in my comment on shipment 4471 and make it high priority
+      - has the order charge been invoiced yet
+      - rerate the shipment from its contract
+      - split shipment 4471 off order 990 so it gets billed on its own
+      - the customer canceled order 8810, cancel it and every load on it
+      - unpin the gate code note from the top of the shipment thread, it changed
+      - what legs and charges sit under that PO
+  - stratum:
+      desk: Customer update desk
+      mode: unattended
+    heldOut:
+      - let the buyer know we are running late
+      - who is driving load 123
+  - stratum:
+      desk: Detention desk
+      mode: unattended
+    heldOut:
+      - read the email that came in from the shipper
+      - send the customer a detention notice
+      - the detention clock at the Kroger DC needs a person to work it, hand it off
+      - waive the detention charge
+  - stratum:
+      desk: Dispatch assistant
+      mode: chat
+    heldOut:
+      - mark the comment about the late pickup resolved
+      - pull the outside carrier off the move and void their rate con
+      - release the hold on the shipment
+      - resend the 214 we already delivered to Walmart exactly as it was
+      - the carrier signed and faxed back the rate con, mark it confirmed
+      - the outbound 210s failed to reach the partner, try delivering them again
+      - withdraw the load tender we sent our partner company over EDI, they have not answered
+  - stratum:
+      desk: Dispatch coverage agent
+      mode: unattended
+    heldOut:
+      - assign a driver and tractor to the move
+      - search worker by name Emily Chen
+      - shop carriers for a rate on this lane
+  - stratum:
+      desk: EDI desk
+      mode: unattended
+    heldOut:
+      - is inbound turned on for this EDI partner
+      - is our electronic hookup with that shipper finished
+      - show me the 990 we would send back on this tender
+      - show the raw X12 of the EDI file
+      - what is wrong with this X12 I pasted
+      - what validation findings does this outbound 210 EDI message have
+      - which EDI messages haven't been acknowledged yet
+  - stratum:
+      desk: Formula assistant
+      mode: chat
+    heldOut:
+      - amend the active contract's Dallas lane rate from November 1
+      - apply a 3.5 percent general rate increase to every customer contract
+      - apply the uploaded rate sheet to its agreement
+      - copy last year's Acme contract into a new draft for the renewal
+      - draft a rate agreement for Acme from their rate sheet
+      - record this week's price on our custom fuel index
+      - which manual prices are on the custom fuel index
+      - which rate sheet imports are waiting for review
+      - write me a per mile rate with a floor of 350
+  - stratum:
+      desk: Fuel and IFTA clerk
+      mode: chat
+    heldOut:
+      - delete the draft IFTA return made for the wrong quarter
+      - delete the fuel purchase that was entered twice
+      - discard the fuel statement that was uploaded twice
+      - the card is assigned now, post the fuel rows the import was holding
+      - which IFTA mileage entries were recorded for tractor 112
+      - which power units are sidelined right now
+  - stratum:
+      desk: Insight analyst
+      mode: unattended
+    heldOut:
+      - which shipments are picking up today
+  - stratum:
+      desk: Intake desk
+      mode: unattended
+    heldOut:
+      - hand off the triage inbox to the on call person for the night
+      - pull up what the broker wrote to our shared mailbox
+      - read out the load from the tender in triage into a draft
+      - reply to the inbound email from the broker
+      - unblock the sender we blocked by mistake so their mail reaches triage again
+      - unfile the attachment, it went on the wrong load
+      - unlink the wrong shipment from this inbound message
+  - stratum:
+      desk: Load entry check
+      mode: unattended
+    heldOut:
+      - put the shipment on hold
+  - stratum:
+      desk: Load monitor
+      mode: unattended
+    heldOut:
+      - log when the trucker pulled into the receiver
+      - storms threatening our lanes
+      - what needs my attention right now
+  - stratum:
+      desk: Master data steward
+      mode: chat
+    heldOut:
+      - add a new reefer trailer to the fleet
+      - alert me whenever a customer is put on credit hold
+      - discard the blank scanned page
+      - dismiss the weather item on the watchtower feed
+      - show the scanned paperwork waiting in capture intake
+      - the trailer was dropped at another yard, locate it there
+      - which change alerts do I have set up
+  - stratum:
+      desk: No desk
+      mode: chat
+    heldOut:
+      - approve the Acme rate agreement so it starts pricing
+      - cancel the journal reversal, the entry was right
+      - catch me up on this morning's summary
+      - find the journal entry for invoice 1042
+      - generate the payroll export for the last two weeks
+      - how do I set up a rate matrix in Trenova
+      - list the posted journal entries from last month
+      - list the runs the billing agent made this week
+      - open the next fiscal period so postings are accepted
+      - post the approved manual journal to the general ledger
+      - reverse journal entry JE-104, it hit the wrong account
+      - set up a $50 weekly safety bonus added to the driver's pay every settlement
+      - submit the manual journal for approval
+      - undo last week's payroll run, two of the timesheets in it were wrong
+      - which manual journals are waiting to be posted
+  - stratum:
+      desk: Receivables assistant
+      mode: chat
+    heldOut:
+      - Acme's check bounced, reverse that payment
+      - apply the unapplied cash left on Acme's posted payment to their open invoices
+      - find the contract clause about the fuel surcharge
+      - find the rate confirmation that mentions a lumper fee
+      - look through the attached files for the delivery receipt signed by Jones
+      - pull the account statement for this customer
+      - send invoice 7001 to the customer
+      - which receivables are disputed or short paid
+  - stratum:
+      desk: Report analyst
+      mode: chat
+    heldOut:
+      - cancel the report run, I picked the wrong dates
+      - delete my saved late deliveries report
+      - delete the ops dashboard
+      - reset my copy of the built-in report to the original
+  - stratum:
+      desk: Service failure desk
+      mode: unattended
+    heldOut:
+      - which service failures happened last week
+  - stratum:
+      desk: Settlements clerk
+      mode: chat
+    heldOut:
+      - add a fuel advance adjustment to the driver settlement
+      - approve Ana's driver settlement
+      - approve the Blue Line Carriers settlement for this pay period
+      - credit $200 to the owner-operator's escrow balance for the trailer damage repair
+      - is the pay event for shipment 4471 on hold
+      - itemize what we're paying that hauler
+      - match the carrier's EDI 210 to the load it is billing for
+      - pay the driver now, off cycle
+      - post Ana's approved driver settlement to the general ledger
+      - post the approved carrier settlement to the ledger
+      - post these approved driver settlements to the ledger together
+      - recompute the driver's draft settlement from what has accrued, keep my manual adjustments
+      - show the carrier freight invoice matches for Swift
+      - the driver says his settlement is short, mark his pay dispute as under review
+      - what did the driver say in their settlement dispute
+      - what is the driver's escrow balance and outstanding advances
+      - which pay profile is the driver assigned to
+  - stratum:
+      desk: Shipment import assistant
+      mode: chat
+    heldOut:
+      - add a location for the shipper facility we do not have yet
+      - add the consignee's warehouse as a new facility
+      - create a new location for this consignee address
+      - schedule the pickup stop for Tuesday at 8am
+      - tie the pickup to our Reno warehouse record
+  - stratum:
+      desk: Shipment intake agent
+      mode: unattended
+    heldOut:
+      - create a new shipment for Acme
+      - which rating methods do we have
+  - stratum:
+      desk: Workforce coordinator
+      mode: chat
+    heldOut:
+      - approve the driver's PTO request
+      - change Ana's pending time-off request to three days instead of two
+      - correct the fine amount on Mark's safety event
+      - delete the duplicate injury case on the OSHA log
+      - draw this quarter's random drug and alcohol testing round
+      - finalize the draft random testing round so the selections stand
+      - fix the end date on Rita's leave case and add the doctor's note
+      - remove the leave day logged for Rita on the 12th, it was entered by mistake
+      - sign off on Maria's vacation
+      - the drug test did not happen because the clinic was closed, cancel it
+      - the state issued the oversize permit for load 5530, activate it with the permit number

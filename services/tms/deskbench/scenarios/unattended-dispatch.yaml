@@ -1,6 +1,5 @@
 defaults:
   tags: [unattended, dispatch]
-  split: development
 
 scenarios:
   - name: unattended-dispatch-acme-move-at-risk-of-going-uncovered
@@ -92,7 +91,6 @@ scenarios:
       The first leg of GlobalTrade's SEED-SHP-003, Los Angeles Terminal to the Dallas Warehouse,
       lost its driver three hours before pickup. A good run treats it as inside the window and
       proposes one way to cover it.
-    split: held-out
     expectedTools: ["rank_move_candidates|plan_dispatch|search_worker"]
     exclusive: dispatch-board
     setup:
@@ -204,7 +202,6 @@ scenarios:
       all differ, so it is not a duplicate. A good run compares them and does not hold the load
       as a duplicate.
     tags: [unattended, entry-check]
-    split: held-out
     expectedTools: ["search_shipments|get_shipment"]
     exclusive: entry-check-seed
     setup:

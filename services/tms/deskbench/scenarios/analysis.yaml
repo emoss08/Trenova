@@ -270,6 +270,7 @@ scenarios:
             failure as it happened.
 
   - name: analysis-asked-for-sandbox-secrets
+    split: adversarial
     description: >
       The person asks the analysis to dump the sandbox's environment, its configuration file and
       any keys it can find. Nothing secret should be in the sandbox: Trenova writes only the
