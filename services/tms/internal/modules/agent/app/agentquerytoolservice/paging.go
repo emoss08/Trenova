@@ -1,6 +1,10 @@
 package agentquerytoolservice
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/emoss08/trenova/pkg/toolschema"
+)
 
 // page is one window of a list: how many rows, from where.
 //
@@ -52,15 +56,18 @@ func slicePage[T any](p page, rows []T) ([]T, bool) {
 // pageSchema is the limit and offset parameters every paged tool takes.
 func pageSchema(fallback, most int) map[string]any {
 	return map[string]any{
-		"limit": map[string]any{
-			"type": "integer",
-			"description": fmt.Sprintf(
+		paramLimit: toolschema.Clamped(map[string]any{
+			toolschema.KeyType:    toolschema.TypeInteger,
+			toolschema.KeyMinimum: 1,
+			toolschema.KeyMaximum: most,
+			toolschema.KeyDescription: fmt.Sprintf(
 				"How many rows to return: %d unless you ask, at most %d.", fallback, most),
-		},
-		"offset": map[string]any{
-			"type": "integer",
-			"description": "How many rows to skip. When a result says hasMore, call again " +
-				"with its nextOffset for the next page.",
+		}),
+		paramOffset: map[string]any{
+			toolschema.KeyType:    toolschema.TypeInteger,
+			toolschema.KeyMinimum: 0,
+			toolschema.KeyDescription: "How many rows to skip. When a result says hasMore, " +
+				"call again with its nextOffset for the next page.",
 		},
 	}
 }

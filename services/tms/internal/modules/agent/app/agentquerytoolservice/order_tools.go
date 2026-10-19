@@ -103,12 +103,12 @@ func newListOrdersTool(
 	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
 	return newListTool(listSpec{
-		name:         "list_orders",
+		name:         "order_list",
 		entityPlural: "orders",
 		searchTerms:  []string{"po number", "order number"},
 		summary: "List customer orders, the commercial record that groups one or more " +
 			"shipments and their charges under a customer's order number, PO or BOL. " +
-			"get_order opens one with its shipments and charges.",
+			"order_get opens one with its shipments and charges.",
 		resource: permission.ResourceOrder,
 		config:   querybuilder.GetFieldConfiguration((*order.Order)(nil)),
 		fields: []listField{
@@ -154,7 +154,7 @@ func newGetOrderTool(
 	return &getOrderTool{orders: orders, access: newFieldAccess(permissions)}
 }
 
-func (t *getOrderTool) Name() string { return "get_order" }
+func (t *getOrderTool) Name() string { return "order_get" }
 
 func (t *getOrderTool) SearchTerms() []string {
 	return []string{"charges", "invoiced", "legs"}
@@ -163,7 +163,7 @@ func (t *getOrderTool) SearchTerms() []string {
 func (t *getOrderTool) Description() string {
 	return "Retrieve one customer order by id with the shipments it groups and its " +
 		"order-level charges, including which charges are already invoiced. Use " +
-		"list_orders first when you have an order number, PO or BOL rather than an id."
+		"order_list first when you have an order number, PO or BOL rather than an id."
 }
 
 func (t *getOrderTool) ParamSchema() map[string]any {
@@ -171,8 +171,8 @@ func (t *getOrderTool) ParamSchema() map[string]any {
 		"orderId",
 		agenttoolschema.RecordIDText(
 			permission.ResourceOrder,
-			"The order's id, from list_orders, the orderId on "+
-				"get_shipment or get_invoice, or the page you are on.",
+			"The order's id, from order_list, the orderId on "+
+				"shipment_get or get_invoice, or the page you are on.",
 		),
 	)
 }

@@ -526,7 +526,7 @@ const PRESENTERS: Record<string, Presenter> = {
     };
   },
 
-  request_missing_docs: (args) => {
+  shipment_request_documents: (args) => {
     const to = list(args.to);
     const documents = list(args.requestedDocuments);
     const who = text(args.customerName) || to.join(", ");
@@ -598,7 +598,7 @@ const PRESENTERS: Record<string, Presenter> = {
     };
   },
 
-  create_shipment: (args) => {
+  shipment_create: (args) => {
     const draft = (args.shipment ?? {}) as Args;
     const moves = Array.isArray(draft.moves) ? (draft.moves as Args[]) : [];
     const stops = moves.reduce(
@@ -623,7 +623,7 @@ const PRESENTERS: Record<string, Presenter> = {
     };
   },
 
-  update_shipment: (args) => {
+  shipment_update: (args) => {
     const changed = Object.keys(args).filter((key) => key !== "shipmentId");
 
     return {

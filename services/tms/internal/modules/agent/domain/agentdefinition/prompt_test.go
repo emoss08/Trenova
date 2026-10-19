@@ -43,7 +43,7 @@ func fullContext() agentdefinition.RuntimeContext {
 			Title:      "Shipment S-1001",
 		},
 		Tools: []agentdefinition.ToolSummary{
-			{Name: "get_shipment", Description: "Looks up a shipment", Query: true},
+			{Name: "shipment_get", Description: "Looks up a shipment", Query: true},
 			{
 				Name:        "assign_move",
 				Description: "Assigns a driver",
@@ -152,7 +152,7 @@ func TestBuildSystemPrompt_ListsToolsByWhatACallDoesWithoutRepeatingDescriptions
 
 	prompt := definitionWithInstructions("Help.").BuildSystemPrompt(rc)
 
-	assert.Contains(t, prompt, "- Reads, which run as soon as you call them: get_shipment")
+	assert.Contains(t, prompt, "- Reads, which run as soon as you call them: shipment_get")
 	assert.Contains(t, prompt,
 		"- Changes that always record a proposal for a person to decide: post_invoices")
 	assert.Contains(t, prompt,
@@ -214,16 +214,16 @@ func TestBuildSystemPrompt_NamesTheOrderAToolIsUsedIn(t *testing.T) {
 
 	rc := fullContext()
 	rc.Tools = append(rc.Tools, agentdefinition.ToolSummary{
-		Name:   "create_shipment",
+		Name:   "shipment_create",
 		Tier:   agent.TierPropose,
-		Recipe: []string{"list_customers", "list_locations", "quote_shipment", "create_shipment"},
+		Recipe: []string{"list_customers", "list_locations", "quote_shipment", "shipment_create"},
 	})
 
 	prompt := definitionWithInstructions("Help.").BuildSystemPrompt(rc)
 
 	assert.Contains(t, prompt, "How a task is done with these, in order")
 	assert.Contains(t, prompt,
-		"- create_shipment: list_customers → list_locations → quote_shipment → create_shipment")
+		"- shipment_create: list_customers → list_locations → quote_shipment → shipment_create")
 }
 
 // "Dashboard" is ambiguous only for an agent that can touch one.
@@ -289,7 +289,7 @@ func TestBuildSystemPrompt_RendersRuntimeContext(t *testing.T) {
 	assert.Contains(t, prompt, "<page_context>")
 	assert.Contains(t, prompt, "Shipment S-1001")
 	assert.Contains(t, prompt, "## Tools")
-	assert.Contains(t, prompt, "get_shipment")
+	assert.Contains(t, prompt, "shipment_get")
 	assert.Contains(t, prompt, "assign_move")
 	assert.Contains(t, prompt, "needs a person's approval")
 }
@@ -636,14 +636,14 @@ func TestBuildSystemPrompt_ListsTheWaitingProposalIdsForRequestDecision(t *testi
 	prompt := d.BuildSystemPrompt(agentdefinition.RuntimeContext{
 		PendingProposals: []agentdefinition.PendingProposal{{
 			ProposalID: id,
-			ToolName:   "create_shipment",
+			ToolName:   "shipment_create",
 			Rationale:  "Copy PRO-100 for Tuesday.",
 		}},
 		DecisionRequests: true,
 	})
 
 	assert.Contains(t, prompt,
-		"- create_shipment (proposalId aprop_01JWAITING0000000000000000) — Copy PRO-100")
+		"- shipment_create (proposalId aprop_01JWAITING0000000000000000) — Copy PRO-100")
 	assert.Contains(t, prompt, "call request_decision with its proposalId")
 	assert.Contains(t, prompt, "not by typing")
 	assert.NotContains(t, prompt, "tell them the proposal is waiting for their approval")
@@ -689,7 +689,7 @@ func TestBuildSystemPrompt_DisclosedSectionNamesWhatFindToolsCanLoad(t *testing.
 		ToolsDisclosed: true,
 		Tools: []agentdefinition.ToolSummary{
 			{
-				Name:        "get_shipment",
+				Name:        "shipment_get",
 				Description: "Look up one shipment by PRO. Returns stops and charges.",
 				Query:       true,
 				Loaded:      true,
@@ -702,7 +702,7 @@ func TestBuildSystemPrompt_DisclosedSectionNamesWhatFindToolsCanLoad(t *testing.
 		},
 	})
 
-	assert.Contains(t, prompt, "Loaded now:\n- get_shipment")
+	assert.Contains(t, prompt, "Loaded now:\n- shipment_get")
 	assert.Contains(
 		t,
 		prompt,

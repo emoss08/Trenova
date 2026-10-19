@@ -296,7 +296,7 @@ describe("Desk home suggesting the agent with the tools for a question", () => {
           ? ({
               outcome: "BetterAgent",
               agent: customerService,
-              tools: [{ name: "list_shipments", summary: "" }],
+              tools: [{ name: "shipment_list", summary: "" }],
             } as AgentMatch)
           : currentAgentId === billing.id
             ? { ...billingFits(), outcome: "CurrentAgent" }
@@ -327,7 +327,7 @@ describe("Desk home suggesting the agent with the tools for a question", () => {
           ? ({
               outcome: "BetterAgent",
               agent: customerService,
-              tools: [{ name: "list_shipments", summary: "" }],
+              tools: [{ name: "shipment_list", summary: "" }],
             } as AgentMatch)
           : billingFits(),
       );

@@ -147,7 +147,7 @@ function handlers(): ImportDraftHandlers {
 function importEdit(overrides: Partial<PageDraftEdit>): PageDraftEdit {
   return {
     surface: "shipment_import",
-    action: "accept_field",
+    action: "intake_accept_field",
     fieldKey: "",
     value: "",
     label: "",
@@ -164,33 +164,12 @@ describe("applyImportDraftEdit", () => {
     const page = handlers();
 
     expect(applyImportDraftEdit(importEdit({ fieldKey: "loadNumber" }), page, 2)).toBe(true);
-    expect(applyImportDraftEdit(importEdit({ action: "accept_all_confident" }), page, 2)).toBe(
+    expect(applyImportDraftEdit(importEdit({ action: "intake_accept_confident" }), page, 2)).toBe(
       true,
     );
     expect(
       applyImportDraftEdit(
-        importEdit({ action: "set_field_value", fieldKey: "weight", value: "42000" }),
-        page,
-        2,
-      ),
-    ).toBe(true);
-    expect(
-      applyImportDraftEdit(
-        importEdit({ action: "set_required_field", fieldKey: "serviceTypeId", value: "st_1" }),
-        page,
-        2,
-      ),
-    ).toBe(true);
-    expect(
-      applyImportDraftEdit(
-        importEdit({ action: "set_stop_location", stopIndex: 0, value: "loc_1" }),
-        page,
-        2,
-      ),
-    ).toBe(true);
-    expect(
-      applyImportDraftEdit(
-        importEdit({ action: "set_stop_schedule", stopIndex: 1, windowStart: 1767225600 }),
+        importEdit({ action: "intake_set_field", fieldKey: "weight", value: "42000" }),
         page,
         2,
       ),
@@ -198,7 +177,32 @@ describe("applyImportDraftEdit", () => {
     expect(
       applyImportDraftEdit(
         importEdit({
-          action: "set_stop_schedule",
+          action: "intake_set_required_field",
+          fieldKey: "serviceTypeId",
+          value: "st_1",
+        }),
+        page,
+        2,
+      ),
+    ).toBe(true);
+    expect(
+      applyImportDraftEdit(
+        importEdit({ action: "intake_set_stop_location", stopIndex: 0, value: "loc_1" }),
+        page,
+        2,
+      ),
+    ).toBe(true);
+    expect(
+      applyImportDraftEdit(
+        importEdit({ action: "intake_set_stop_schedule", stopIndex: 1, windowStart: 1767225600 }),
+        page,
+        2,
+      ),
+    ).toBe(true);
+    expect(
+      applyImportDraftEdit(
+        importEdit({
+          action: "intake_set_stop_schedule",
           stopIndex: 1,
           windowStart: 1767225600,
           windowEnd: 1767232800,
@@ -223,24 +227,32 @@ describe("applyImportDraftEdit", () => {
     expect(applyImportDraftEdit(importEdit({ fieldKey: "" }), page, 1)).toBe(false);
     expect(
       applyImportDraftEdit(
-        importEdit({ action: "set_required_field", fieldKey: "tractorTypeId", value: "tt_1" }),
+        importEdit({
+          action: "intake_set_required_field",
+          fieldKey: "tractorTypeId",
+          value: "tt_1",
+        }),
         page,
         1,
       ),
     ).toBe(false);
     expect(
       applyImportDraftEdit(
-        importEdit({ action: "set_stop_location", stopIndex: 3, value: "loc_1" }),
+        importEdit({ action: "intake_set_stop_location", stopIndex: 3, value: "loc_1" }),
         page,
         1,
       ),
     ).toBe(false);
     expect(
-      applyImportDraftEdit(importEdit({ action: "set_stop_location", value: "loc_1" }), page, 1),
+      applyImportDraftEdit(
+        importEdit({ action: "intake_set_stop_location", value: "loc_1" }),
+        page,
+        1,
+      ),
     ).toBe(false);
     expect(
       applyImportDraftEdit(
-        importEdit({ action: "set_stop_schedule", stopIndex: 0, windowStart: 0 }),
+        importEdit({ action: "intake_set_stop_schedule", stopIndex: 0, windowStart: 0 }),
         page,
         1,
       ),

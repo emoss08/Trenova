@@ -39,7 +39,7 @@ func (t *listEmailProfilesTool) Name() string { return "list_email_profiles" }
 
 func (t *listEmailProfilesTool) Description() string {
 	return "The sending profiles email can go out from: each has a name, a sender " +
-		"address and a reply-to. email_customer and request_missing_docs take one " +
+		"address and a reply-to. email_customer and shipment_request_documents take one " +
 		"as profileId. Pick the profile whose name or sender fits the message, such " +
 		"as operations for a status update and billing for a document request; with " +
 		"one profile there is nothing to choose."

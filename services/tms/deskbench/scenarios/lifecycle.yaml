@@ -39,7 +39,7 @@ scenarios:
           morning, delivered to phoenix cold storage yesterday afternoon, 41,500 lbs dry van,
           price it off their contract
         expect:
-          proposals: [{ tool: create_shipment }]
+          proposals: [{ tool: shipment_create }]
           maxFailedCalls: 2
           noRecordIds: true
       - decide: approve
@@ -162,7 +162,7 @@ scenarios:
           new load for peak distributing, dallas warehouse to the denver drop point, pick up
           tomorrow 7am, deliver the day after by 3pm, 28k lbs dry van, $2,450 flat
         expect:
-          proposals: [{ tool: create_shipment }]
+          proposals: [{ tool: shipment_create }]
           maxFailedCalls: 2
           rubric: >
             Peak Distributing has no rate agreement, so the load is entered at the flat price the
@@ -304,14 +304,14 @@ scenarios:
     steps:
       - say: "before we bill SEED-SHP-001, is it priced right per the acme contract?"
         expect:
-          calls: ["explain_rate|get_rate_agreement|get_shipment"]
+          calls: ["explain_rate|get_rate_agreement|shipment_get"]
           noProposals: true
           rubric: >
             Explains how SEED-SHP-001 was priced (its rating method and charges) against the Acme
             Truckload Agreement, and says plainly whether they agree.
       - say: "rerate it off the contract then"
         expect:
-          proposals: [{ tool: rerate_shipment }]
+          proposals: [{ tool: shipment_rerate }]
       - decide: approve
         expect:
           executed: true

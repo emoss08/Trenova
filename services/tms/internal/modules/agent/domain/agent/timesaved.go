@@ -35,12 +35,12 @@ var toolMinutesSaved = map[string]int{
 	"assign_move":           12,
 	"plan_dispatch":         20,
 	"rank_move_candidates":  8,
-	"place_shipment_hold":   4,
-	"release_shipment_hold": 4,
+	"shipment_place_hold":   4,
+	"shipment_release_hold": 4,
 	"record_stop_actual":    2,
 	"log_check_call":        3,
-	"cancel_shipment":       6,
-	"create_shipment":       15,
+	"shipment_cancel":       6,
+	"shipment_create":       15,
 	"quote_shipment":        8,
 
 	// Billing. A charge correction is a hunt through the rate and the
@@ -49,13 +49,13 @@ var toolMinutesSaved = map[string]int{
 	"post_customer_payment":          6,
 	"match_bank_receipt":             8,
 	"resolve_bank_receipt_work_item": 6,
-	"attach_document_to_shipment":    3,
-	"request_missing_docs":           5,
+	"shipment_attach_document":       3,
+	"shipment_request_documents":     5,
 
 	// Communication. Writing the message is most of the cost.
 	"email_customer":       8,
 	"notify_driver":        4,
-	"add_shipment_comment": 2,
+	"shipment_add_comment": 2,
 
 	// Compliance and safety.
 	"approve_worker_pto":        3,

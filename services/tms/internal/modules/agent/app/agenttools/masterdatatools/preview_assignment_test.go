@@ -208,7 +208,7 @@ func TestAssignMove_PreviewWarnsForAMoveAlreadyCovered(t *testing.T) {
 
 /*
 "put david park on it with trc-001 and a dry van" loaded assign_move with only
-get_shipment and rank_move_candidates. gpt-6-luna spent its four tool searches
+shipment_get and rank_move_candidates. gpt-6-luna spent its four tool searches
 finding the driver and the tractor, was refused a fifth for the trailer list,
 and asked which dry van instead of choosing one. The lookups its ids name load
 with it.

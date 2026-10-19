@@ -22,7 +22,7 @@ scenarios:
             JOIN agent_runs r ON r.id = p.run_id
             JOIN assistant_threads t ON t.id = r.subject_id
             WHERE t.title LIKE '[bench]%' AND p.status = 'Executed'
-              AND p.tool_name IN ('create_shipment', 'duplicate_shipment'))
+              AND p.tool_name IN ('shipment_create', 'shipment_duplicate'))
       - >
         UPDATE shipments AS sp SET status = 'Canceled'
         WHERE sp.status = 'New'
@@ -34,7 +34,7 @@ scenarios:
             JOIN agent_runs r ON r.id = p.run_id
             JOIN assistant_threads t ON t.id = r.subject_id
             WHERE t.title LIKE '[bench]%' AND p.status = 'Executed'
-              AND p.tool_name IN ('create_shipment', 'duplicate_shipment'))
+              AND p.tool_name IN ('shipment_create', 'shipment_duplicate'))
       - >
         UPDATE shipments SET status = 'New', canceled_at = NULL, canceled_by_id = NULL,
           cancel_reason = NULL
@@ -67,7 +67,7 @@ scenarios:
       - say: "cancel the freshhaul load to LA"
         expect:
           noProposals: true
-          calls: ["search_shipments|list_shipments"]
+          calls: ["shipment_list"]
           rubric: >
             Says several FreshHaul loads to Los Angeles match and asks which one (by pro number,
             pickup date or status) instead of cancelling any of them.
@@ -125,7 +125,7 @@ scenarios:
     steps:
       - say: "whats on SEED-SHP-004 for weight, and is trc-002 free tomorrow"
         expect:
-          calls: ["get_shipment|search_shipments", "list_tractors|get_dispatch_board|list_shipments"]
+          calls: ["shipment_get|shipment_list", "list_tractors|get_dispatch_board|shipment_list"]
           noProposals: true
           rubric: Answers both, each from a lookup, in two short parts.
 
@@ -166,10 +166,10 @@ scenarios:
     steps:
       - say: "what's the weight on SEED-SHP-004"
         expect:
-          calls: ["get_shipment|search_shipments"]
+          calls: ["shipment_get|shipment_list"]
       - say: "make it 39,250"
         expect:
-          proposals: [{ tool: update_shipment }]
+          proposals: [{ tool: shipment_update }]
           maxFailedCalls: 1
       - decide: approve
         expect:

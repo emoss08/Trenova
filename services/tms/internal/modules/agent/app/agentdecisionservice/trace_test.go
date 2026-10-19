@@ -4,15 +4,15 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace/aitracetest"
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
 	"github.com/emoss08/trenova/internal/modules/agent/app/proposalexecutor"
-	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
-	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace/aitracetest"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -137,7 +137,7 @@ func newDecideHarness(t *testing.T) *decideHarness {
 	}
 	run := aitrace.AnchorFor(aitrace.AnchorAgentRun, pulid.MustNew("ar_").String())
 	_, proposing := otel.Tracer("agentdecisionservice-test").
-		Start(aitrace.ContextWithAnchor(t.Context(), run), "execute_tool place_shipment_hold")
+		Start(aitrace.ContextWithAnchor(t.Context(), run), "execute_tool shipment_place_hold")
 	proposing.End()
 
 	proposals := &traceProposals{proposal: &agent.AgentProposal{
@@ -145,7 +145,7 @@ func newDecideHarness(t *testing.T) *decideHarness {
 		OrganizationID: actor.OrganizationID,
 		BusinessUnitID: actor.BusinessUnitID,
 		RunID:          pulid.MustNew("ar_"),
-		ToolName:       "place_shipment_hold",
+		ToolName:       "shipment_place_hold",
 		ToolParams:     map[string]any{},
 		AutonomyTier:   agent.TierPropose,
 		EgressClass:    agent.EgressInternal,
@@ -163,7 +163,7 @@ func newDecideHarness(t *testing.T) *decideHarness {
 	executor := proposalexecutor.New(proposalexecutor.Params{
 		Logger: zap.NewNop(),
 		Tools: &agenttest.StubActionRegistry{Tools: []agentports.AgentTool{
-			&agenttest.StubActionTool{ToolName: "place_shipment_hold"},
+			&agenttest.StubActionTool{ToolName: "shipment_place_hold"},
 		}},
 		ProposalRepo: proposals,
 		Permissions:  &agenttest.StubPermissions{},
@@ -228,7 +228,7 @@ func TestDecide_LinksBackToTheSpanThatProposedIt(t *testing.T) {
 		aitrace.AIProposalID.String(h.proposals.proposal.ID.String()),
 		aitrace.AIDecision.String(string(agent.DecisionRejected)),
 		aitrace.UserID.String(h.actor.UserID.String()),
-		aitrace.GenAIToolName.String("place_shipment_hold"),
+		aitrace.GenAIToolName.String("shipment_place_hold"),
 	} {
 		assert.Contains(t, decide.Attributes, want)
 	}
@@ -252,7 +252,7 @@ func TestDecide_AnApprovalRunsTheWriteInsideItsExecuteSpan(t *testing.T) {
 	requestTrace := request.SpanContext().TraceID()
 	decide := aitracetest.One(t, requestTrace, "trenova.ai.proposal.decide")
 	execute := aitracetest.One(t, requestTrace, "trenova.ai.proposal.execute")
-	tool := aitracetest.One(t, requestTrace, "execute_tool place_shipment_hold")
+	tool := aitracetest.One(t, requestTrace, "execute_tool shipment_place_hold")
 	write := aitracetest.One(t, requestTrace, "trenova.ai.write shipment_move")
 
 	assert.Equal(t, decide.SpanContext.SpanID(), execute.Parent.SpanID())

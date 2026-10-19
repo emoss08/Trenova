@@ -155,3 +155,26 @@ func TestCoerce_ReadsJSONTextAsTheListOrObjectItHolds(t *testing.T) {
 	assert.Equal(t, []any{"[not json"}, left["filters"])
 	assert.Len(t, none, 1)
 }
+
+func TestCoerce_ReadsAClampedNumberPastItsBoundsAsTheBound(t *testing.T) {
+	t.Parallel()
+
+	schema := map[string]any{
+		KeyType: TypeObject,
+		KeyProperties: map[string]any{
+			"limit": Clamped(map[string]any{KeyType: TypeInteger, KeyMinimum: 1, KeyMaximum: 50}),
+			"days":  map[string]any{KeyType: TypeInteger, KeyMaximum: 30},
+		},
+	}
+
+	got, coercions := Coerce(schema, map[string]any{"limit": float64(500), "days": float64(90)})
+	assert.Equal(t, map[string]any{"limit": float64(50), "days": float64(90)}, got,
+		"only a clamped number is read as its bound; any other is left for the schema")
+	require.Len(t, coercions, 1)
+	assert.Contains(t, coercions[0].Note, "read as 50")
+
+	got, _ = Coerce(schema, map[string]any{"limit": "0"})
+	assert.Equal(t, float64(1), got["limit"])
+	require.NoError(t, Validate(schema, map[string]any{"limit": got["limit"]}))
+	assert.NotContains(t, ForModel(schema[KeyProperties].(map[string]any)["limit"].(map[string]any)), KeyClamp)
+}

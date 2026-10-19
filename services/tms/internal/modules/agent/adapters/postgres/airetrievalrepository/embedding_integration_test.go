@@ -257,7 +257,7 @@ func TestCatalogEmbeddings_AreKeyedByModelCorpusItemAndHash(t *testing.T) {
 		Dimensions: 768,
 		Items: []agentports.CatalogEmbeddingInput{
 			{
-				ItemKey:     "list_shipments",
+				ItemKey:     "shipment_list",
 				ContentHash: "v1",
 				Vector:      axisVector(768, map[int]float32{0: 1}),
 			},
@@ -277,12 +277,12 @@ func TestCatalogEmbeddings_AreKeyedByModelCorpusItemAndHash(t *testing.T) {
 		Dimensions: 768,
 		Items: []agentports.CatalogEmbeddingInput{
 			{
-				ItemKey:     "list_shipments",
+				ItemKey:     "shipment_list",
 				ContentHash: "v1",
 				Vector:      axisVector(768, map[int]float32{0: 1}),
 			},
 			{
-				ItemKey:     "list_shipments",
+				ItemKey:     "shipment_list",
 				ContentHash: "v2",
 				Vector:      axisVector(768, map[int]float32{2: 1}),
 			},
@@ -295,7 +295,7 @@ func TestCatalogEmbeddings_AreKeyedByModelCorpusItemAndHash(t *testing.T) {
 		ModelKey: modelA,
 		Corpus:   airetrieval.CatalogCorpusTools,
 		Items: []airetrieval.CatalogItemRef{
-			{ItemKey: "list_shipments", ContentHash: "v2"},
+			{ItemKey: "shipment_list", ContentHash: "v2"},
 			{ItemKey: "get_customer", ContentHash: "v1"},
 			{ItemKey: "get_customer", ContentHash: "v9"},
 		},
@@ -303,7 +303,7 @@ func TestCatalogEmbeddings_AreKeyedByModelCorpusItemAndHash(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, found, 2)
 	assert.Equal(t, "get_customer", found[0].ItemKey)
-	assert.Equal(t, "list_shipments", found[1].ItemKey)
+	assert.Equal(t, "shipment_list", found[1].ItemKey)
 	assert.Equal(t, "v2", found[1].ContentHash)
 	assert.InDelta(t, 1.0, found[1].Vector()[2], 0.001)
 
@@ -311,7 +311,7 @@ func TestCatalogEmbeddings_AreKeyedByModelCorpusItemAndHash(t *testing.T) {
 		ModelKey: modelA,
 		Corpus:   airetrieval.CatalogCorpusTools,
 		Keep: []airetrieval.CatalogItemRef{
-			{ItemKey: "list_shipments", ContentHash: "v2"},
+			{ItemKey: "shipment_list", ContentHash: "v2"},
 			{ItemKey: "get_customer", ContentHash: "v1"},
 		},
 	})

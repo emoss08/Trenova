@@ -3,10 +3,10 @@ package assistantjobs
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdryrun"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdryrun"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -33,10 +33,10 @@ func TestDryRunStepsSetEachCallBesideTheWriteItBecame(t *testing.T) {
 				CallID: "2", Name: "update_invoice", Verdict: "proposed", Proposed: true,
 			}},
 			{Event: agentports.AssistantEventToolFinished, Data: map[string]any{
-				"callId": "3", "name": "cancel_shipment", "verdict": "denied", "failed": true,
+				"callId": "3", "name": "shipment_cancel", "verdict": "denied", "failed": true,
 			}},
 			{Event: agentports.AssistantEventToolFinished, Data: agentports.AssistantToolFinishedEvent{
-				CallID: "4", Name: "get_shipment", Verdict: "ran", AgentID: pulid.MustNew("agdef_"),
+				CallID: "4", Name: "shipment_get", Verdict: "ran", AgentID: pulid.MustNew("agdef_"),
 			}},
 		},
 	}
@@ -46,7 +46,7 @@ func TestDryRunStepsSetEachCallBesideTheWriteItBecame(t *testing.T) {
 	assert.Equal(t, []agentdryrun.Step{
 		{CallID: "1", Tool: "get_invoice", Outcome: agentdryrun.OutcomeRuns},
 		{CallID: "2", Tool: "update_invoice", Outcome: agentdryrun.OutcomeAskFirst},
-		{CallID: "3", Tool: "cancel_shipment", Outcome: agentdryrun.OutcomeNotHeld},
+		{CallID: "3", Tool: "shipment_cancel", Outcome: agentdryrun.OutcomeNotHeld},
 	}, steps, "a delegate's own calls are its agent's, not the draft's")
 }
 

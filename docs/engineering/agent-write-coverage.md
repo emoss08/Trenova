@@ -19,7 +19,7 @@ Each write is one entry under `writes:`, keyed as it appears below
 (`mutation createShipment`, `POST /api/v1/shipments/:shipmentID/cancel/`),
 and takes exactly one of:
 
-- `tools: [cancel_shipment]`: the agent tools that perform it. A tool
+- `tools: [shipment_cancel]`: the agent tools that perform it. A tool
   named here must be registered.
 - `exempt: <category>` with `reason: <why no agent should>`: one of
   the categories below. The reason is required.
@@ -318,7 +318,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `place_worker_dispatch_hold` | worker_dispatch_hold | create |
 | `raise_exception` | agent_exception | create |
 | `request_credential_renewal` | worker_credential | update |
-| `request_missing_docs` | customer_communication | create |
+| `shipment_request_documents` | customer_communication | create |
 | `watch_web` | web_research | read |
 
 ## Every write
@@ -837,8 +837,8 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation issueCustomerTrackingLink` | Tool: `share_customer_tracking_link` |
-| `mutation revokeCustomerTrackingLink` | Tool: `revoke_customer_tracking_link` |
+| `mutation issueCustomerTrackingLink` | Tool: `shipment_share_tracking_link` |
+| `mutation revokeCustomerTrackingLink` | Tool: `shipment_revoke_tracking_link` |
 | `mutation updateCustomerTrackingProfile` | Exempt, configuration: What a customer's tracking page shows and which status emails it gets is a commercial agreement with the customer, set by a person on the customer record. |
 
 ### customfield
@@ -946,20 +946,20 @@ Tools that change something no person-facing write does, such as sending a messa
 | --- | --- |
 | `DELETE /api/v1/documents/:documentID/`<br>documenthandler.delete | Tool: `delete_documents` |
 | `POST /api/v1/documents/:documentID/approve/`<br>documenthandler.approve | Exempt, attestation: Accepting a document as proof, such as a proof of delivery that lets a shipment bill, is the reviewer's sign-off on the evidence; agents may never approve. |
-| `POST /api/v1/documents/:documentID/attach-to-shipment/`<br>documenthandler.attachToShipment | Tool: `attach_document_to_shipment` |
+| `POST /api/v1/documents/:documentID/attach-to-shipment/`<br>documenthandler.attachToShipment | Tool: `shipment_attach_document` |
 | `POST /api/v1/documents/:documentID/import-assistant/thread/`<br>documenthandler.openImportAssistantThread | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
 | `POST /api/v1/documents/:documentID/reject/`<br>documenthandler.reject | Exempt, attestation: Refusing a document as proof takes it out of the shipment's billing requirements and is the reviewer's judgement of the evidence, recorded with their reason; an agent can point out a doubtful document but does not decide it. |
 | `POST /api/v1/documents/:documentID/restore/`<br>documenthandler.restoreVersion | Tool: `restore_document_version` |
 | `POST /api/v1/documents/:documentID/shipment-draft/reextract/`<br>documenthandler.reextractDocumentContent | Exempt, infrastructure: A repair a person asks for when the page's machine reading of a document went wrong: it runs extraction again, replaces the draft they are reviewing and archives their import assistant conversation. The extraction pipeline, not a decision, produces what replaces it. |
 | `POST /api/v1/documents/:documentID/signature/`<br>documenthandler.setSignature | Exempt, attestation: Saying a proof of delivery is signed or unsigned is the reviewer's reading of the evidence that lets a shipment bill, and it overrides what extraction read; an agent can point out a doubtful signature but does not attest to one. |
 | `POST /api/v1/documents/bulk-delete/`<br>documenthandler.bulkDelete | Tool: `delete_documents` |
-| `POST /api/v1/documents/upload-bulk/`<br>documenthandler.uploadBulk | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment). |
-| `POST /api/v1/documents/upload/`<br>documenthandler.upload | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment). |
-| `POST /api/v1/documents/uploads/`<br>documenthandler.createUploadSession | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment). |
-| `POST /api/v1/documents/uploads/:uploadSessionID/cancel/`<br>documenthandler.cancelUploadSession | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment). |
-| `POST /api/v1/documents/uploads/:uploadSessionID/complete/`<br>documenthandler.completeUploadSession | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment). |
-| `POST /api/v1/documents/uploads/:uploadSessionID/parts/`<br>documenthandler.getUploadPartURLs | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment). |
-| `PUT /api/v1/documents/uploads/:uploadSessionID/parts/:partNumber/`<br>documenthandler.uploadSessionPart | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment). |
+| `POST /api/v1/documents/upload-bulk/`<br>documenthandler.uploadBulk | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document). |
+| `POST /api/v1/documents/upload/`<br>documenthandler.upload | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document). |
+| `POST /api/v1/documents/uploads/`<br>documenthandler.createUploadSession | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document). |
+| `POST /api/v1/documents/uploads/:uploadSessionID/cancel/`<br>documenthandler.cancelUploadSession | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document). |
+| `POST /api/v1/documents/uploads/:uploadSessionID/complete/`<br>documenthandler.completeUploadSession | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document). |
+| `POST /api/v1/documents/uploads/:uploadSessionID/parts/`<br>documenthandler.getUploadPartURLs | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document). |
+| `PUT /api/v1/documents/uploads/:uploadSessionID/parts/:partNumber/`<br>documenthandler.uploadSessionPart | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document). |
 
 ### documentcontrol
 
@@ -1693,23 +1693,23 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation addOrderCharge` | Tool: `add_order_charge` |
-| `mutation attachOrderShipments` | Tool: `attach_order_shipments` |
-| `mutation cancelOrder` | Tool: `cancel_order` |
-| `mutation closeOrder` | Tool: `close_order` |
-| `mutation createOrder`<br>twin `POST /api/v1/orders/` | Tool: `create_order` |
-| `mutation detachOrderShipment` | Tool: `detach_order_shipment` |
-| `mutation removeOrderCharge` | Tool: `remove_order_charge` |
-| `mutation setOrderChargeAllocations` | Tool: `set_order_charge_allocations` |
-| `mutation updateOrder`<br>twin `PATCH /api/v1/orders/:orderID/`<br>twin `PUT /api/v1/orders/:orderID/` | Tool: `update_order` |
-| `mutation updateOrderCharge` | Tool: `update_order_charge` |
+| `mutation addOrderCharge` | Tool: `order_add_charge` |
+| `mutation attachOrderShipments` | Tool: `order_attach_shipments` |
+| `mutation cancelOrder` | Tool: `order_cancel` |
+| `mutation closeOrder` | Tool: `order_close` |
+| `mutation createOrder`<br>twin `POST /api/v1/orders/` | Tool: `order_create` |
+| `mutation detachOrderShipment` | Tool: `order_detach_shipment` |
+| `mutation removeOrderCharge` | Tool: `order_remove_charge` |
+| `mutation setOrderChargeAllocations` | Tool: `order_set_charge_allocations` |
+| `mutation updateOrder`<br>twin `PATCH /api/v1/orders/:orderID/`<br>twin `PUT /api/v1/orders/:orderID/` | Tool: `order_update` |
+| `mutation updateOrderCharge` | Tool: `order_update_charge` |
 
 ### organization
 
 | Write | Decision |
 | --- | --- |
 | `DELETE /api/v1/organizations/:id/logo`<br>organizationhandler.deleteLogo | Exempt, configuration: The organization's logo on every document it sends. |
-| `POST /api/v1/organizations/:id/logo`<br>organizationhandler.uploadLogo | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment). |
+| `POST /api/v1/organizations/:id/logo`<br>organizationhandler.uploadLogo | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document). |
 | `PUT /api/v1/organizations/:id/microsoft-sso`<br>organizationhandler.upsertMicrosoftSSOConfig | Exempt, security: Single sign-on decides who can sign in to the organization. |
 | `PUT /api/v1/organizations/:id/okta-sso`<br>organizationhandler.upsertOktaSSOConfig | Exempt, security: Single sign-on decides who can sign in to the organization. |
 
@@ -1765,8 +1765,8 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `POST /api/v1/shipments/:shipmentID/permit-requirements/:requirementID/waive/`<br>permithandler.waiveRequirement | Exempt, attestation: Waiving a permit requirement is a named person accepting the compliance risk of moving the load without that state's permit. |
-| `POST /api/v1/shipments/:shipmentID/permits/`<br>permithandler.createPermit | Tool: `record_shipment_permit` |
-| `PUT /api/v1/shipments/:shipmentID/permits/:permitID/`<br>permithandler.updatePermit | Tool: `update_shipment_permit` |
+| `POST /api/v1/shipments/:shipmentID/permits/`<br>permithandler.createPermit | Tool: `shipment_record_permit` |
+| `PUT /api/v1/shipments/:shipmentID/permits/:permitID/`<br>permithandler.updatePermit | Tool: `shipment_update_permit` |
 
 ### ptopolicy
 
@@ -1824,7 +1824,7 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/rate-imports/`<br>rateimporthandler.upload | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment). |
+| `POST /api/v1/rate-imports/`<br>rateimporthandler.upload | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document). |
 | `POST /api/v1/rate-imports/:rateImportID/commit/`<br>rateimporthandler.commit | Tool: `commit_rate_import` |
 | `POST /api/v1/rate-imports/:rateImportID/discard/`<br>rateimporthandler.discard | Tool: `discard_rate_import` |
 
@@ -1875,11 +1875,11 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/recurring-shipments/`<br>recurringshipmenthandler.create | Tool: `create_recurring_shipment` |
-| `POST /api/v1/recurring-shipments/:recurringShipmentID/generate/`<br>recurringshipmenthandler.generate | Tool: `generate_recurring_shipment` |
+| `POST /api/v1/recurring-shipments/`<br>recurringshipmenthandler.create | Tool: `shipment_create_recurring` |
+| `POST /api/v1/recurring-shipments/:recurringShipmentID/generate/`<br>recurringshipmenthandler.generate | Tool: `shipment_generate_recurring` |
 | `POST /api/v1/recurring-shipments/match/`<br>recurringshipmenthandler.match | Exempt, read-only: Finds the recurring shipment a new shipment matches and saves nothing. |
-| `PUT /api/v1/recurring-shipments/:recurringShipmentID/`<br>recurringshipmenthandler.update | Tool: `update_recurring_shipment` |
-| `PUT /api/v1/recurring-shipments/:recurringShipmentID/status/`<br>recurringshipmenthandler.updateStatus | Tool: `set_recurring_shipment_status` |
+| `PUT /api/v1/recurring-shipments/:recurringShipmentID/`<br>recurringshipmenthandler.update | Tool: `shipment_update_recurring` |
+| `PUT /api/v1/recurring-shipments/:recurringShipmentID/status/`<br>recurringshipmenthandler.updateStatus | Tool: `shipment_set_recurring_status` |
 
 ### report
 
@@ -1995,38 +1995,38 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `mutation acknowledgeShipmentComment` | Exempt, attestation: Acknowledging a comment says that the person it was addressed to has read it; only that person can say so. |
-| `mutation autoRateShipment`<br>twin `POST /api/v1/shipments/:shipmentID/auto-rate/` | Tool: `rerate_shipment` |
+| `mutation autoRateShipment`<br>twin `POST /api/v1/shipments/:shipmentID/auto-rate/` | Tool: `shipment_rerate` |
 | `mutation bulkTransferShipmentsToBilling`<br>twin `POST /api/v1/shipments/bulk-transfer-to-billing/` | Tool: `transfer_to_billing` |
 | `mutation calculateShipmentDistance`<br>twin `POST /api/v1/shipments/calculate-distance/` | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
 | `mutation calculateShipmentLoadingOptimization`<br>twin `POST /api/v1/shipments/loading-optimization/` | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
 | `mutation calculateShipmentTotals`<br>twin `POST /api/v1/shipments/calculate-totals/` | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
-| `mutation cancelShipment`<br>twin `POST /api/v1/shipments/:shipmentID/cancel/` | Tool: `cancel_shipment` |
+| `mutation cancelShipment`<br>twin `POST /api/v1/shipments/:shipmentID/cancel/` | Tool: `shipment_cancel` |
 | `mutation checkShipmentDuplicateBol` | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
 | `mutation checkShipmentHazmatSegregation` | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
-| `mutation createShipment`<br>twin `POST /api/v1/shipments/` | Tool: `create_shipment` |
-| `mutation createShipmentComment`<br>twin `POST /api/v1/shipments/:shipmentID/comments/` | Tool: `add_shipment_comment` |
-| `mutation deleteShipmentComment`<br>twin `DELETE /api/v1/shipments/:shipmentID/comments/:commentID/` | Tool: `delete_shipment_comment` |
-| `mutation duplicateShipment`<br>twin `POST /api/v1/shipments/duplicate/` | Tool: `duplicate_shipment` |
-| `mutation pinShipmentComment` | Tool: `pin_shipment_comment` |
+| `mutation createShipment`<br>twin `POST /api/v1/shipments/` | Tool: `shipment_create` |
+| `mutation createShipmentComment`<br>twin `POST /api/v1/shipments/:shipmentID/comments/` | Tool: `shipment_add_comment` |
+| `mutation deleteShipmentComment`<br>twin `DELETE /api/v1/shipments/:shipmentID/comments/:commentID/` | Tool: `shipment_delete_comment` |
+| `mutation duplicateShipment`<br>twin `POST /api/v1/shipments/duplicate/` | Tool: `shipment_duplicate` |
+| `mutation pinShipmentComment` | Tool: `shipment_pin_comment` |
 | `mutation previewShipmentContractRate` | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
-| `mutation recalculateShipmentDistance`<br>twin `POST /api/v1/shipments/:shipmentID/recalculate-distance/` | Tool: `recalculate_shipment_distance` |
-| `mutation resolveShipmentComment` | Tool: `resolve_shipment_comment` |
-| `mutation transferShipmentOwnership`<br>twin `POST /api/v1/shipments/:shipmentID/transfer-ownership/` | Tool: `transfer_shipment_ownership` |
+| `mutation recalculateShipmentDistance`<br>twin `POST /api/v1/shipments/:shipmentID/recalculate-distance/` | Tool: `shipment_recalculate_distance` |
+| `mutation resolveShipmentComment` | Tool: `shipment_resolve_comment` |
+| `mutation transferShipmentOwnership`<br>twin `POST /api/v1/shipments/:shipmentID/transfer-ownership/` | Tool: `shipment_transfer_ownership` |
 | `mutation transferShipmentToBillingItems` | Tool: `transfer_to_billing` |
-| `mutation uncancelShipment`<br>twin `POST /api/v1/shipments/:shipmentID/uncancel/` | Tool: `uncancel_shipment` |
-| `mutation unpinShipmentComment` | Tool: `unpin_shipment_comment` |
-| `mutation unresolveShipmentComment` | Tool: `resolve_shipment_comment` |
-| `mutation updateShipment`<br>twin `PUT /api/v1/shipments/:shipmentID/` | Tool: `update_shipment`, `reschedule_stop`, `add_shipment_charge` |
-| `mutation updateShipmentComment`<br>twin `PUT /api/v1/shipments/:shipmentID/comments/:commentID/` | Tool: `edit_shipment_comment` |
-| `POST /api/v1/shipments/:shipmentID/holds/`<br>shipmenthandler.createHold | Tool: `place_shipment_hold` |
-| `POST /api/v1/shipments/:shipmentID/holds/:holdID/release/`<br>shipmenthandler.releaseHold | Tool: `release_shipment_hold` |
+| `mutation uncancelShipment`<br>twin `POST /api/v1/shipments/:shipmentID/uncancel/` | Tool: `shipment_uncancel` |
+| `mutation unpinShipmentComment` | Tool: `shipment_unpin_comment` |
+| `mutation unresolveShipmentComment` | Tool: `shipment_resolve_comment` |
+| `mutation updateShipment`<br>twin `PUT /api/v1/shipments/:shipmentID/` | Tool: `shipment_update`, `shipment_reschedule_stop`, `shipment_add_charge` |
+| `mutation updateShipmentComment`<br>twin `PUT /api/v1/shipments/:shipmentID/comments/:commentID/` | Tool: `shipment_update_comment` |
+| `POST /api/v1/shipments/:shipmentID/holds/`<br>shipmenthandler.createHold | Tool: `shipment_place_hold` |
+| `POST /api/v1/shipments/:shipmentID/holds/:holdID/release/`<br>shipmenthandler.releaseHold | Tool: `shipment_release_hold` |
 | `POST /api/v1/shipments/:shipmentID/transfer-to-billing/`<br>shipmenthandler.transferToBilling | Tool: `transfer_to_billing` |
-| `POST /api/v1/shipments/auto-cancel/`<br>shipmenthandler.autoCancelShipments | Exempt, infrastructure: The sweep the Temporal schedule runs over every organization to cancel shipments past the auto-cancel threshold; a person does not decide which shipments it takes, and cancel_shipment cancels one. |
+| `POST /api/v1/shipments/auto-cancel/`<br>shipmenthandler.autoCancelShipments | Exempt, infrastructure: The sweep the Temporal schedule runs over every organization to cancel shipments past the auto-cancel threshold; a person does not decide which shipments it takes, and shipment_cancel cancels one. |
 | `POST /api/v1/shipments/check-for-duplicate-bols/`<br>shipmenthandler.checkForDuplicateBOLs | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
 | `POST /api/v1/shipments/check-hazmat-segregation/`<br>shipmenthandler.checkHazmatSegregation | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
 | `POST /api/v1/shipments/delay/`<br>shipmenthandler.delayShipments | Exempt, infrastructure: The sweep the Temporal schedule runs to mark late shipments delayed from their stop windows; evaluate_service_failures records a late stop for one shipment. |
 | `POST /api/v1/shipments/previous-rates/`<br>shipmenthandler.getPreviousRates | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
-| `PUT /api/v1/shipments/:shipmentID/holds/:holdID/`<br>shipmenthandler.updateHold | Tool: `update_shipment_hold` |
+| `PUT /api/v1/shipments/:shipmentID/holds/:holdID/`<br>shipmenthandler.updateHold | Tool: `shipment_update_hold` |
 
 ### shipmentboard
 

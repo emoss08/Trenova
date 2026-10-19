@@ -6,10 +6,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -571,7 +571,7 @@ func TestOpenDelegate_PutsWhatWasHandedOverAfterTheTask(t *testing.T) {
 		Records: []agent.RecordRef{{EntityType: "shipment", ID: "shp_1"}},
 		Results: []agentruntime.SharedResult{{
 			CallID:   "call_read",
-			ToolName: "get_shipment",
+			ToolName: "shipment_get",
 			Content:  `{"proNumber":"PRO-1001"}`,
 		}},
 	}

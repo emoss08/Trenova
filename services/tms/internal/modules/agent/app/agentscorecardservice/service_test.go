@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -211,7 +211,7 @@ func TestGet_CarriesHowEachToolsCallsEnded(t *testing.T) {
 	t.Parallel()
 
 	verdicts := []agent.ToolVerdictCount{{
-		ToolName: "list_shipments",
+		ToolName: "shipment_list",
 		Verdict:  "invalid",
 		Calls:    4,
 		TopReasons: []agent.ToolVerdictReason{

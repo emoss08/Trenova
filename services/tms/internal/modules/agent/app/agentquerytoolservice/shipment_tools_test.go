@@ -2,32 +2,33 @@ package agentquerytoolservice
 
 import (
 	"context"
+	"fmt"
 	"slices"
 	"strings"
 	"testing"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
-	"github.com/emoss08/trenova/internal/modules/places/domain/location"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/commodityports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/shipmenttypeports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -54,7 +55,7 @@ func (f *fakeShipmentRepo) List(
 	return &pagination.CursorListResult[*shipment.Shipment]{Items: f.items}, nil
 }
 
-// search_shipments carried the same required-query defect as search_worker, so
+// shipment_list carried the same required-query defect as search_worker, so
 // "show me everything delivered yesterday" would have failed the same way. It
 // already took an optional status, which is the shape the query should have had
 // from the start.
@@ -62,7 +63,7 @@ func TestSearchShipments_ListsWithoutAQuery(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeShipmentRepo{items: []*shipment.Shipment{{ID: pulid.MustNew("shp_")}}}
-	tool := newSearchShipmentsTool(repo, shipmentPartySources{})
+	tool := newShipmentListTool(repo, shipmentPartySources{})
 
 	_, err := tool.Query(t.Context(), testParams(map[string]any{}))
 	require.NoError(t, err)
@@ -75,7 +76,7 @@ func TestSearchShipments_KeepsTheStatusFilter(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeShipmentRepo{}
-	tool := newSearchShipmentsTool(repo, shipmentPartySources{})
+	tool := newShipmentListTool(repo, shipmentPartySources{})
 
 	// Completed, not "Delivered". These fixtures used to say Delivered, copied
 	// from the tool's own description, which named a status the system does not
@@ -83,14 +84,44 @@ func TestSearchShipments_KeepsTheStatusFilter(t *testing.T) {
 	_, err := tool.Query(t.Context(), testParams(map[string]any{"status": "Completed"}))
 	require.NoError(t, err)
 
-	assert.Equal(t, []shipment.Status{shipment.StatusCompleted}, repo.captured.ShipmentOptions.Statuses)
+	assert.Equal(t, []string{"Completed"}, statusFilterOf(t, repo.captured))
+}
+
+func statusFilterOf(t *testing.T, req *shipmentports.ListShipmentsRequest) []string {
+	t.Helper()
+
+	require.NotNil(t, req)
+	for _, filter := range req.Filter.FieldFilters {
+		if filter.Field != "status" {
+			continue
+		}
+		values, ok := filter.Value.([]string)
+		if !ok {
+			raw, isAny := filter.Value.([]any)
+			require.True(t, isAny, "the status filter holds a list, not %T", filter.Value)
+			for _, value := range raw {
+				values = append(values, fmt.Sprint(value))
+			}
+		}
+		assert.Equal(t, "in", string(filter.Operator))
+		return values
+	}
+	if len(req.ShipmentOptions.Statuses) > 0 {
+		values := make([]string, 0, len(req.ShipmentOptions.Statuses))
+		for _, status := range req.ShipmentOptions.Statuses {
+			values = append(values, string(status))
+		}
+		return values
+	}
+
+	return nil
 }
 
 func TestSearchShipments_EmptyResultNamesEveryFilterItApplied(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeShipmentRepo{items: nil}
-	tool := newSearchShipmentsTool(repo, shipmentPartySources{})
+	tool := newShipmentListTool(repo, shipmentPartySources{})
 
 	result, err := tool.Query(
 		t.Context(),
@@ -112,7 +143,7 @@ func TestSearchShipments_UnfilteredEmptyResultSaysSo(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeShipmentRepo{items: nil}
-	tool := newSearchShipmentsTool(repo, shipmentPartySources{})
+	tool := newShipmentListTool(repo, shipmentPartySources{})
 
 	result, err := tool.Query(t.Context(), testParams(map[string]any{}))
 	require.NoError(t, err)
@@ -122,7 +153,7 @@ func TestSearchShipments_UnfilteredEmptyResultSaysSo(t *testing.T) {
 	assert.Contains(t, outcome.Note, "whole set")
 }
 
-// search_shipments returned the stored entity for the same reason
+// shipment_list returned the stored entity for the same reason
 // search_worker did, and pays the same cost: a shipment carries its moves,
 // stops, commodities and charges, none of which a list of matches needs.
 func TestSearchShipments_ReturnsTheCuratedRowNotTheStoredEntity(t *testing.T) {
@@ -134,16 +165,18 @@ func TestSearchShipments_ReturnsTheCuratedRowNotTheStoredEntity(t *testing.T) {
 		Status:    shipment.StatusNew,
 	}}}
 
-	result, err := newSearchShipmentsTool(repo, shipmentPartySources{}).Query(t.Context(), testParams(map[string]any{}))
+	result, err := newShipmentListTool(repo, shipmentPartySources{}).Query(t.Context(), testParams(map[string]any{}))
 	require.NoError(t, err)
 
 	outcome, ok := result.(searchOutcome)
 	require.True(t, ok)
-	rows, ok := outcome.Items.([]shipmentRow)
-	require.True(t, ok, "search must return the curated row, not the entity")
+	rows, ok := outcome.Items.([]any)
+	require.True(t, ok)
 	require.Len(t, rows, 1)
+	row, ok := rows[0].(shipmentRow)
+	require.True(t, ok, "the list must return the curated row, not the entity")
 
-	assert.Equal(t, "S-1001", rows[0].ProNumber)
+	assert.Equal(t, "S-1001", row.ProNumber)
 }
 
 // A shipment that has not arrived is in transit, not missing paperwork. The
@@ -155,7 +188,7 @@ func TestSearchShipments_DistinguishesInTransitFromUnrecorded(t *testing.T) {
 		ID: pulid.MustNew("shp_"), ProNumber: "S-1001", Status: shipment.StatusNew,
 	}}}
 
-	result, err := newSearchShipmentsTool(repo, shipmentPartySources{}).Query(t.Context(), testParams(map[string]any{}))
+	result, err := newShipmentListTool(repo, shipmentPartySources{}).Query(t.Context(), testParams(map[string]any{}))
 	require.NoError(t, err)
 
 	outcome, _ := result.(searchOutcome)
@@ -181,7 +214,7 @@ func TestSearchShipments_RefusesAStatusThatDoesNotExist(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeShipmentRepo{}
-	_, err := newSearchShipmentsTool(repo, shipmentPartySources{}).Query(t.Context(), testParams(map[string]any{
+	_, err := newShipmentListTool(repo, shipmentPartySources{}).Query(t.Context(), testParams(map[string]any{
 		"status": "Delivered",
 	}))
 
@@ -194,12 +227,12 @@ func TestSearchShipments_AcceptsAStatusThatExists(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeShipmentRepo{}
-	_, err := newSearchShipmentsTool(repo, shipmentPartySources{}).Query(t.Context(), testParams(map[string]any{
+	_, err := newShipmentListTool(repo, shipmentPartySources{}).Query(t.Context(), testParams(map[string]any{
 		"status": "InTransit",
 	}))
 
 	require.NoError(t, err)
-	assert.Equal(t, []shipment.Status{shipment.StatusInTransit}, repo.captured.ShipmentOptions.Statuses)
+	assert.Equal(t, []string{"InTransit"}, statusFilterOf(t, repo.captured))
 }
 
 /*
@@ -211,14 +244,22 @@ func TestSearchShipments_TakesSeveralStatusesInOneCall(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeShipmentRepo{}
-	_, err := newSearchShipmentsTool(repo, shipmentPartySources{}).Query(t.Context(), testParams(map[string]any{
+	_, err := newShipmentListTool(repo, shipmentPartySources{}).Query(t.Context(), testParams(map[string]any{
 		"status": []any{"New", "PartiallyAssigned", "Assigned", "New"},
 	}))
 
 	require.NoError(t, err)
-	assert.Equal(t, []shipment.Status{
-		shipment.StatusNew, shipment.StatusPartiallyAssigned, shipment.StatusAssigned,
-	}, repo.captured.ShipmentOptions.Statuses)
+	assert.Equal(t, []string{"New", "PartiallyAssigned", "Assigned"},
+		statusFilterOf(t, repo.captured))
+
+	repo = &fakeShipmentRepo{}
+	_, err = newShipmentListTool(repo, shipmentPartySources{}).Query(t.Context(), testParams(map[string]any{
+		"query":  "chicago",
+		"status": []any{"New", "Assigned"},
+	}))
+	require.NoError(t, err)
+	assert.Equal(t, []shipment.Status{shipment.StatusNew, shipment.StatusAssigned},
+		repo.captured.ShipmentOptions.Statuses, "a search by words narrows by status itself")
 }
 
 // Every status the schema offers has to be one the tool accepts, or the model
@@ -226,7 +267,7 @@ func TestSearchShipments_TakesSeveralStatusesInOneCall(t *testing.T) {
 func TestSearchShipmentsSchema_OffersOnlyStatusesTheToolAccepts(t *testing.T) {
 	t.Parallel()
 
-	properties, ok := newSearchShipmentsTool(&fakeShipmentRepo{}, shipmentPartySources{}).
+	properties, ok := newShipmentListTool(&fakeShipmentRepo{}, shipmentPartySources{}).
 		ParamSchema()["properties"].(map[string]any)
 	require.True(t, ok)
 	items, ok := properties["status"].(map[string]any)["items"].(map[string]any)
@@ -248,9 +289,11 @@ func TestListShipments_FindsShipmentsNeverTransferredToBilling(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeShipmentRepo{}
-	tool := newListShipmentsTool(repo)
+	tool := newShipmentListTool(repo, shipmentPartySources{})
 
-	assert.Contains(t, tool.Description(), "isnull means never transferred")
+	filters, ok := tool.ParamSchema()["properties"].(map[string]any)["filters"].(map[string]any)
+	require.True(t, ok)
+	assert.Contains(t, filters["description"], "isnull means never transferred")
 
 	_, err := tool.Query(t.Context(), testParams(map[string]any{
 		"filters": []any{map[string]any{
@@ -867,7 +910,7 @@ func (f *namedCommodities) List(
 }
 
 /*
-"did the acme steel load deliver yet?" found nothing: search_shipments matched
+"did the acme steel load deliver yet?" found nothing: shipment_list matched
 customers, places and drivers but not what a load carries. SEED-SHP-005 is
 Acme's load of steel coils.
 */
@@ -876,7 +919,7 @@ func TestSearchShipments_MatchesWhatALoadCarries(t *testing.T) {
 
 	steel := &commodity.Commodity{ID: pulid.MustNew("com_"), Name: "Steel Coils"}
 	repo := &recordingShipmentRepo{}
-	tool := newSearchShipmentsTool(repo, shipmentPartySources{
+	tool := newShipmentListTool(repo, shipmentPartySources{
 		commodities: &namedCommodities{items: []*commodity.Commodity{steel}},
 	})
 
@@ -920,7 +963,7 @@ func TestSearchShipments_MatchesTheShipmentType(t *testing.T) {
 
 	ltl := &shipmenttype.ShipmentType{ID: pulid.MustNew("sht_"), Code: "LTL"}
 	repo := &recordingShipmentRepo{}
-	tool := newSearchShipmentsTool(repo, shipmentPartySources{
+	tool := newShipmentListTool(repo, shipmentPartySources{
 		types: &namedShipmentTypes{items: []*shipmenttype.ShipmentType{ltl}},
 	})
 
@@ -971,7 +1014,7 @@ func TestSearchShipments_RequiresAStopAtEachPlaceNamed(t *testing.T) {
 		ID: pulid.MustNew("loc_"), Name: "Phoenix Cold Storage", City: "Phoenix",
 	}
 	repo := &recordingShipmentRepo{}
-	tool := newSearchShipmentsTool(repo, shipmentPartySources{
+	tool := newShipmentListTool(repo, shipmentPartySources{
 		locations: &namedLocations{items: []*location.Location{denver, phoenix}},
 	})
 
@@ -1036,7 +1079,7 @@ func TestSearchShipments_AFullPageStillShowsEachStatusAskedFor(t *testing.T) {
 	}
 	items = append(items, delayed)
 
-	result, err := newSearchShipmentsTool(&statusShipmentRepo{items: items}, shipmentPartySources{}).
+	result, err := newShipmentListTool(&statusShipmentRepo{items: items}, shipmentPartySources{}).
 		Query(t.Context(), testParams(map[string]any{
 			"query":  "freshhaul los angeles",
 			"status": []any{"New", "InTransit", "Delayed"},
@@ -1074,4 +1117,77 @@ func TestMoveSummary_SaysAnUncoveredMoveNeedsADriver(t *testing.T) {
 		Assignment: &shipment.Assignment{ID: pulid.MustNew("a_")},
 	}, input)
 	assert.Empty(t, covered.Coverage)
+}
+
+type proShipmentRepo struct {
+	shipmentports.ShipmentRepository
+
+	items []*shipment.Shipment
+}
+
+func (f *proShipmentRepo) List(
+	_ context.Context,
+	_ *shipmentports.ListShipmentsRequest,
+) (*pagination.CursorListResult[*shipment.Shipment], error) {
+	return &pagination.CursorListResult[*shipment.Shipment]{Items: f.items}, nil
+}
+
+func TestGetShipment_ReadsTheShipmentAPersonNamedByItsProNumber(t *testing.T) {
+	t.Parallel()
+
+	fixture := realisticShipment()
+	other := &shipment.Shipment{ID: pulid.MustNew("shp_"), ProNumber: fixture.entity.ProNumber + "1"}
+	repo := &proShipmentRepo{items: []*shipment.Shipment{other, fixture.entity}}
+	tool := newGetShipmentTool(repo, nil, nil, &fakePermissions{allowed: true})
+
+	require.NoError(t, toolschema.Validate(tool.ParamSchema(),
+		map[string]any{"proNumber": fixture.entity.ProNumber}))
+	result, err := tool.Query(t.Context(), testParams(map[string]any{
+		"proNumber": strings.ToLower(fixture.entity.ProNumber),
+	}))
+	require.NoError(t, err)
+	encoded, err := sonic.Marshal(result)
+	require.NoError(t, err)
+	assert.Contains(t, string(encoded), fixture.entity.ID.String())
+
+	_, err = tool.Query(t.Context(), testParams(map[string]any{}))
+	require.ErrorContains(t, err, "shipmentId or proNumber")
+}
+
+func TestShipmentList_NarrowsASearchByWordsWithTheFiltersAndPagesIt(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeShipmentRepo{}
+	_, err := newShipmentListTool(repo, shipmentPartySources{}).Query(t.Context(),
+		testParams(map[string]any{
+			"query": "acme",
+			"filters": []any{map[string]any{
+				"field": "billingTransferStatus", "operator": "isnull",
+			}},
+			"sortBy": "createdAt",
+			"offset": float64(10),
+			"limit":  float64(5),
+		}))
+	require.NoError(t, err)
+	require.NotNil(t, repo.captured)
+	assert.Equal(t, "acme", repo.captured.Filter.Query)
+	require.Len(t, repo.captured.Filter.FieldFilters, 1)
+	assert.Equal(t, "billingTransferStatus", repo.captured.Filter.FieldFilters[0].Field)
+	assert.Equal(t, 10, repo.captured.Filter.Pagination.Offset)
+	assert.Equal(t, 5, repo.captured.Filter.Pagination.Limit)
+	assert.NotEmpty(t, repo.captured.Filter.Sort)
+}
+
+func TestShipmentListSchema_OffersStatusOnceAndNotAgainAsAFilter(t *testing.T) {
+	t.Parallel()
+
+	properties, ok := newShipmentListTool(&fakeShipmentRepo{}, shipmentPartySources{}).
+		ParamSchema()["properties"].(map[string]any)
+	require.True(t, ok)
+	filters, ok := properties["filters"].(map[string]any)
+	require.True(t, ok)
+	fields := toolschema.EnumValues(
+		filters["items"].(map[string]any)["properties"].(map[string]any)["field"].(map[string]any))
+	assert.NotContains(t, fields, "status")
+	assert.Contains(t, fields, "billingTransferStatus")
 }

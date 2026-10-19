@@ -251,7 +251,7 @@ func (t *openPageTool) ParamSchema() map[string]any {
 			),
 			"recordId": map[string]any{
 				"type": "string",
-				"description": "The record's id, from the tool that found it (get_shipment, " +
+				"description": "The record's id, from the tool that found it (shipment_get, " +
 					"list_invoices and the like) or the record on screen.",
 			},
 			"action": agenttoolschema.Enum(

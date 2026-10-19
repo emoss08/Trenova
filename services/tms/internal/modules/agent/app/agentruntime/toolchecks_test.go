@@ -5,10 +5,10 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -85,8 +85,8 @@ func TestPermittedTools_ChecksDistinctPermissionsTogetherAndAnswersTheSame(t *te
 	rt := newRuntime(
 		&scriptedCompletion{},
 		&stubQueryRegistry{Tools: []agentports.AgentQueryTool{
-			queryTool("get_shipment", map[string]any{}, nil),
-			queryTool("list_shipments", map[string]any{}, nil),
+			queryTool("shipment_get", map[string]any{}, nil),
+			queryTool("shipment_list", map[string]any{}, nil),
 			&agenttest.StubQueryTool{
 				ToolName: "get_customer",
 				Result:   map[string]any{},
@@ -99,10 +99,10 @@ func TestPermittedTools_ChecksDistinctPermissionsTogetherAndAnswersTheSame(t *te
 	rt.permissions = permissions
 
 	permitted := rt.permittedTools(t.Context(), testActor(), []string{
-		"get_shipment", "get_customer", "list_shipments",
+		"shipment_get", "get_customer", "shipment_list",
 	})
 
-	assert.Equal(t, []string{"get_shipment", "list_shipments"}, permitted)
+	assert.Equal(t, []string{"shipment_get", "shipment_list"}, permitted)
 	assert.EqualValues(t, 2, permissions.met.Load(), "the checks ran one after the other")
 	assert.Len(t, permissions.Requests, 2, "one check per resource and operation")
 }

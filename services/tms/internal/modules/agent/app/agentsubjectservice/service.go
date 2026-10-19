@@ -435,7 +435,7 @@ func (s *Service) shipment(
 // document describes an uploaded document by what intelligence read from
 // it: the draft's status and confidence, every field with its confidence,
 // the stops and what is missing. A run woken by document.extracted starts
-// with the whole draft in front of it, and get_shipment_draft is there for
+// with the whole draft in front of it, and intake_get_draft is there for
 // a second look after a tool call has moved the conversation on.
 func (s *Service) document(
 	ctx context.Context,

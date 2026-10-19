@@ -160,7 +160,7 @@ func TestBuildSystemPrompt_NamesTheAgentsItCanAskFenced(t *testing.T) {
 	assert.Contains(t, prompt, "Its tools include: create_report, run_report")
 	assert.Contains(t, prompt, "records", "the parent hands over ids, not a retyped copy")
 	assert.Contains(t, prompt, "shareResults")
-	assert.Contains(t, prompt, "duplicate_shipment",
+	assert.Contains(t, prompt, "shipment_duplicate",
 		"a copy of a record is made by the tool that copies it, never retyped")
 	assert.Contains(t, prompt, "proposalId")
 }

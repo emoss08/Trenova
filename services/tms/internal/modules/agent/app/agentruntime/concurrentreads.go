@@ -3,7 +3,6 @@ package agentruntime
 import (
 	"maps"
 	"slices"
-	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -102,7 +101,7 @@ func (t *Turn) joins(batch *readBatch, check *joinCheck) (string, bool) {
 	if _, failed := t.repeats.seen(call); failed || t.repeats.readBefore(call) {
 		return "", false
 	}
-	if strings.HasPrefix(call.Name, getToolPrefix) && batch.holdsCallTo(call.Name) {
+	if isFetch(call.Name) && batch.holdsCallTo(call.Name) {
 		return "", false
 	}
 	return key, true

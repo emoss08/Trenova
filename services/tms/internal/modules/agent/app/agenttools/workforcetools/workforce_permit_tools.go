@@ -55,7 +55,7 @@ func permitOptions() []toolpreview.Option {
 func permitFactProperties() map[string]any {
 	return map[string]any{
 		paramStateID: agenttoolschema.KindID("The state that issued it, as the stateId of the "+
-			"requirement it satisfies in list_shipment_permits. Never guess one.",
+			"requirement it satisfies in shipment_list_permits. Never guess one.",
 			permission.KindUSState),
 		paramPermitNumber: common.StringProperty(
 			"The permit number exactly as the state printed it.",
@@ -67,7 +67,7 @@ func permitFactProperties() map[string]any {
 		paramPermitExpiry: agenttoolschema.DateTime("When the permit stops covering the move."),
 		paramPermitCost: common.AmountProperty("What the state charged, as a decimal string such " +
 			"as 85.00."),
-		common.FieldNotes: wfNoteProperty("Route conditions, escort or travel-time restrictions " +
+		common.ParamNote: wfNoteProperty("Route conditions, escort or travel-time restrictions " +
 			"the permit carries."),
 	}
 }
@@ -114,7 +114,7 @@ func applyPermitFacts(entity *permit.Permit, params map[string]any) error {
 	}
 	if notes, notesErr := common.OptionalBoundedText(
 		params,
-		common.FieldNotes,
+		common.ParamNote,
 		wfNoteChars,
 	); notesErr != nil {
 		return notesErr
@@ -151,17 +151,17 @@ func newRecordShipmentPermitTool(permits permitports.PermitService) agentports.A
 	properties := permitFactProperties()
 	properties[common.ParamShipmentID] = common.ShipmentIDProperty("The shipment the permit covers")
 	spec := targeting(withSchema(permitSpec(
-		"record_shipment_permit",
+		"shipment_record_permit",
 		"Record an oversize or overweight permit a state issued for a shipment, from the "+
 			"permit in hand: the state, its number, status, dates, cost and conditions. The "+
 			"shipment's permit requirements are worked out again, so an active permit that "+
 			"covers the trip satisfies its state and can lift the permit hold on dispatch.",
 		"Records a permit on the shipment inside Trenova, which can release a dispatch "+
-			"hold; nothing is sent to the state, and update_shipment_permit voids it.",
+			"hold; nothing is sent to the state, and shipment_update_permit voids it.",
 		permission.OpCreate,
 	), properties, common.ParamShipmentID, paramStateID, paramPermitNumber), common.ParamShipmentID,
 		permission.ResourceShipment)
-	spec.Recipe = []string{"list_shipment_permits", "record_shipment_permit"}
+	spec.Recipe = []string{"shipment_list_permits", "shipment_record_permit"}
 
 	return common.NewReportingReceivableTool(
 		spec,
@@ -244,9 +244,9 @@ func newUpdateShipmentPermitTool(permits permitports.PermitService) agentports.A
 	properties := permitFactProperties()
 	properties[common.ParamShipmentID] = common.ShipmentIDProperty("The shipment the permit covers")
 	properties[paramPermitID] = agenttoolschema.RecordIDText(permission.ResourcePermit,
-		"The permit, from list_shipment_permits. Never guess one.")
+		"The permit, from shipment_list_permits. Never guess one.")
 	spec := targeting(withSchema(permitSpec(
-		"update_shipment_permit",
+		"shipment_update_permit",
 		"Correct or move on a permit recorded on a shipment: activate it when the state "+
 			"issues it, fix its number or dates, or void it. Give only what changes. The "+
 			"shipment's permit requirements are worked out again.",

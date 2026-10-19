@@ -152,7 +152,7 @@ asking agent wrote it (the call's `task` argument).
 
 Both prompts say how to use it. "Agents you can ask" tells the parent to hand
 over records and results rather than retype them, to ask for a record to be
-made with a tool rather than described (a copy with `duplicate_shipment` or the
+made with a tool rather than described (a copy with `shipment_duplicate` or the
 tool that copies it, naming the record), and to name each waiting proposal by
 its `proposalId`. A delegated turn's output section tells the delegate to work
 from what it was handed, open each record by its id, and copy a record with

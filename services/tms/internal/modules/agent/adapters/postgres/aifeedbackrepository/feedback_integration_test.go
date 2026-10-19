@@ -5,8 +5,8 @@ package aifeedbackrepository
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -45,7 +45,7 @@ func feedbackFor(
 			Question: "Where is load 12?",
 			Answer:   "In Dallas.",
 		}),
-		PatternKey: aifeedback.PatternKey([]string{"get_shipment"}, reasons[0], "Shipment"),
+		PatternKey: aifeedback.PatternKey([]string{"shipment_get"}, reasons[0], "Shipment"),
 	}
 }
 

@@ -13,7 +13,7 @@ const DOCUMENT = "doc_1";
 function proposal(overrides: Partial<AssistantProposal> = {}): AssistantProposal {
   return {
     id: "aprop_1",
-    toolName: "create_shipment",
+    toolName: "shipment_create",
     arguments: { sourceDocumentId: DOCUMENT },
     status: "Pending",
     createdAt: 1_000,
@@ -119,11 +119,11 @@ describe("shipmentStage", () => {
 });
 
 describe("shipmentProposal", () => {
-  it("takes the newest create_shipment proposal for this file only", () => {
+  it("takes the newest shipment_create proposal for this file only", () => {
     const proposals = [
       proposal({ id: "old", createdAt: 1 }),
       proposal({ id: "other_file", createdAt: 9, arguments: { sourceDocumentId: "doc_2" } }),
-      proposal({ id: "other_tool", createdAt: 9, toolName: "update_shipment" }),
+      proposal({ id: "other_tool", createdAt: 9, toolName: "shipment_update" }),
       proposal({ id: "new", createdAt: 5 }),
     ];
 

@@ -1,4 +1,5 @@
 import type { AssistantMessage, AssistantPlan, AssistantProposal } from "@/types/assistant";
+import { toolNameInReadingOrder } from "@/lib/tool-names";
 
 /**
  * What a proposal card should show.
@@ -209,7 +210,9 @@ export function groupProposalsByMessage(
  * to a dispatcher deciding whether to allow it is needlessly unfriendly.
  */
 export function humanizeToolName(toolName: string): string {
-  const words = toolName.split(/[_\-.]+/u).filter((word) => word !== "");
+  const words = toolNameInReadingOrder(toolName)
+    .split(/[_\-.]+/u)
+    .filter((word) => word !== "");
   if (words.length === 0) {
     return toolName;
   }

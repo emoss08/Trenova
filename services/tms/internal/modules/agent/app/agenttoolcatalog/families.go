@@ -87,9 +87,9 @@ var families = [...][]string{
 	{"draft_edi_connection", "apply_edi_connection_draft"},
 	{"list_rate_agreements", "get_rate_agreement", "explain_rate"},
 	{"describe_formula_schema", "test_formula_expression", "propose_formula"},
-	{"accept_field", "accept_all_confident", "set_field_value"},
-	{"list_locations", "set_stop_location", "set_stop_schedule", "create_location"},
-	{"list_formula_templates", "get_formula_template", "set_required_field"},
+	{"intake_accept_field", "intake_accept_confident", "intake_set_field"},
+	{"list_locations", "intake_set_stop_location", "intake_set_stop_schedule", "create_location"},
+	{"list_formula_templates", "get_formula_template", "intake_set_required_field"},
 	{
 		"list_billing_queue_items",
 		"get_billing_queue_items",
@@ -97,7 +97,7 @@ var families = [...][]string{
 		"transition_items_to_in_review",
 	},
 	{"approve_billing_queue_items", "post_invoices", "send_invoices", "get_invoices"},
-	{"quote_shipment", "create_shipment", "duplicate_shipment"},
+	{"quote_shipment", "shipment_create", "shipment_duplicate"},
 	{"get_dispatch_board", "rank_move_candidates", "assign_move", "assign_move_to_carrier"},
 	{"list_invoice_runs", "get_invoice_run", "commit_invoice_run", "cancel_invoice_run"},
 	{

@@ -534,7 +534,7 @@ taint, so both record it.
 During the turn, a tool whose policy reads outside content always
 (`ReadsExternal: always`) adds a mark when it succeeds; a `marked` tool
 (`recall_memory`, `get_agent_run`, `list_agent_runs`, `list_watchtower_items`,
-`get_shipment`) adds one only for a returned record that carries taint
+`shipment_get`) adds one only for a returned record that carries taint
 (`agent.TaintCarrier`). A result whose rows come from different places names
 each row's source itself (`agent.SourcedTaintCarrier`, preferred when both are
 present), and its policy lists every further source it may name
@@ -542,7 +542,7 @@ present), and its policy lists every further source it may name
 that names a source the policy does not declare is still marked, under the
 policy's own source, so a mark is never dropped and the table never lies.
 
-`get_shipment` returns the shipment's twenty newest top-level comments (when the
+`shipment_get` returns the shipment's twenty newest top-level comments (when the
 caller may read shipment comments) and marks each one written outside the
 organization as a `record_note` (`shipment_comment` record). Comment origin is
 not a column of its own, so `ShipmentComment.WrittenOutside` reads it from what
@@ -551,7 +551,7 @@ is recorded:
 | Comment | Outside? |
 |---|---|
 | `source` `Integration` | yes: another system wrote it |
-| `source` `AI` | only when `metadata.tainted` is set: `add_shipment_comment` (`CarriesTaint`) stamps it on a note a tainted or nil-taint run wrote on its own; a note a person approved is not stamped |
+| `source` `AI` | only when `metadata.tainted` is set: `shipment_add_comment` (`CarriesTaint`) stamps it on a note a tainted or nil-taint run wrote on its own; a note a person approved is not stamped |
 | `type` `DriverUpdate` | yes: what Dash writes for a driver, including rows written before Dash stamped its origin, and a note an employee filed under that type |
 | `metadata.source` `dash` or `edi` | yes: Dash now stamps `dash`; EDI 214 status and 210 invoice comments carry `edi` |
 | anything else (`User`, `System` from inside Trenova) | no |
@@ -568,7 +568,7 @@ which reaches the stream and the trajectory. A delegate's taint is folded back
 into the turn that asked when it ends, because its reply enters that turn's
 context.
 
-`get_shipment` returns a summary unless the call passes `detail: full`: the
+`shipment_get` returns a summary unless the call passes `detail: full`: the
 ids a follow-up write takes (moves, stops, assignment, holds, comments), the
 customer, the rating, the commodities and charges, and each stop's window and
 actuals as a local date and time in the stop location's zone (the
@@ -627,7 +627,7 @@ What is kept:
 | `assistant_threads` | `taint`, `tainted_at` |
 | `agent_memories` | `tainted`, `taint_run_id`, for a memory `remember` wrote from a tainted or nil-taint run (`CarriesTaint`); `source_proposal_id` and `created_by_user_id` when a person approved the `remember` that wrote it; `reviewed_by_user_id` and `reviewed_at` when a person reviewed it, after which it taints no turn while `tainted` still records where it came from |
 | `agent_reflections` | `tainted`, for a look back over a window that read outside content (or whose taint is unknown); every lesson it keeps is a suggestion and carries the window's taint |
-| `shipment_comments` | `metadata.tainted`, for a note `add_shipment_comment` wrote on its own after outside content |
+| `shipment_comments` | `metadata.tainted`, for a note `shipment_add_comment` wrote on its own after outside content |
 
 The proposal executor refuses a tainted proposal whose class leaves the
 organization, or that names `tainted` in `held_by`, unless a person decides it
@@ -1375,7 +1375,7 @@ instead of asking whether to (`continueTheWork`).
 
 A write that names the one record it made or changed (`ToolExecutionResult.Record`) shows that
 record beside the conversation, read again just then, without the person asking for it. Before,
-an approved `create_shipment` named its pro number and the person had to ask to see the
+an approved `shipment_create` named its pro number and the person had to ask to see the
 shipment. The record is read as the person through the tool that reads its kind (`get_` and the
 record-link entity, by its one required parameter, `agentruntime.ReadRecord`) and drawn as that
 kind's card; a kind with no reader (a location, a commodity) is drawn from what the write
@@ -1484,7 +1484,7 @@ held tool the model called without being sent it, `unheldRefusal` loads the near
 tools for a name that does not exist, and `Turn.LoadTools` loads what a `find_tools`
 answered elsewhere found. `TestRun_ADisclosedTurnOnlyAppendsToItsToolArray` pins that as the
 baseline for the rebuild of context assembly. Every
-filing result names its proposal's id ("Recorded a proposal to run "create_shipment"
+filing result names its proposal's id ("Recorded a proposal to run "shipment_create"
 (proposal ap_…)"), and the runtime answers the call itself, like `request_decision`: it
 marks that action `Withdrawn` on `PendingAction`, and the recorder records it
 `Superseded` (never pending, never a plan step, never on the watchtower, no draft
@@ -1659,10 +1659,10 @@ Every recipe and prerequisite names a registered tool, and a recipe names its
 own tool (`TestEveryRecipeNamesRegisteredTools`).
 
 A lookup that is a step of exactly one held tool's recipe brings that tool when it
-loads (`Catalog.Feeds`, `soleFed`): `find_shipment_records` brings `create_shipment`.
-Its answer said to call `create_shipment` next, and the model went looking for it
-with `find_tools` first. A lookup many held recipes start from (`search_shipments`,
-`get_shipment`) brings none of them.
+loads (`Catalog.Feeds`, `soleFed`): `shipment_match_records` brings `shipment_create`.
+Its answer said to call `shipment_create` next, and the model went looking for it
+with `find_tools` first. A lookup many held recipes start from (`shipment_list`,
+`shipment_get`) brings none of them.
 
 A tool that works on what other tools return names them as the tools it follows
 (`agentports.FollowerTool`, `Catalog.Followers`), and loads whenever one of them loads, but only
@@ -1670,23 +1670,23 @@ for an agent that already holds it and a person who may use it: following grants
 administrator who gave an extension's tool to chosen agents keeps that choice. `analyze_data`
 follows `run_report`, `get_report_run` and `read_attachment`. Before it did, a turn from Ask
 loaded `run_report` without it, read the report's twenty sample rows and compared periods by
-paging `list_shipments`, and never asked `find_tools` for the tool that reads every row.
+paging `shipment_list`, and never asked `find_tools` for the tool that reads every row.
 
 A prerequisite only ever grants a read. A write a tool cannot finish its job without is
-declared instead as a companion (`agentports.CompanionTool`): `create_shipment` names
+declared instead as a companion (`agentports.CompanionTool`): `shipment_create` names
 `create_customer`, `create_location` and `create_commodity`, because a load from a broker
 Trenova has never seen names a customer, facilities and freight that do not exist yet, and an
 agent made in AI Control that held only shipment tools ended with "no match was found; no
 shipment was created". An agent holding the tool holds its companions (`heldTools`), they load
 with it, and each answers to its own policy, so it is proposed and approved like any write; one
 an administrator switched off for the agent stays off, and AI Control lists them under the
-agent's capabilities. What the companions are for is found in one call: `find_shipment_records`
+agent's capabilities. What the companions are for is found in one call: `shipment_match_records`
 matches the customer, each stop's location (by name, then street) and each commodity, says
 which are missing, and lists the service types, shipment types, equipment types, location
 categories and rating methods to choose from. Before it, a load with two new stops spent the
 turn's twelve calls on one list call per record and ended without proposing anything. The turn
 proposes what is missing; once those are approved, the decision follow-up proposes the shipment
-with their new ids, and a later load for the same customer goes straight to `create_shipment`
+with their new ids, and a later load for the same customer goes straight to `shipment_create`
 (`deskbench/scenarios/shipment-creation.yaml`).
 
 `create_location` places the address on the map through the organization's address lookup
@@ -1714,16 +1714,16 @@ dropping the text, or any one of the first four filters, find something. The not
 which: "there are no hold reasons at all, so no other wording will find one", "dropping just
 one of these finds some: status equals Approved", or "together they rule everything out". A
 bare "nothing matched" sent models round a loop of near-identical calls, a status at a time,
-until the tool budget ran out. `search_shipments` does the same for its status: a search that
+until the tool budget ran out. `shipment_list` does the same for its status: a search that
 finds nothing in the status asked for returns the rows its words match in any status, with a
 note saying none was in that status.
 
-Shipment rows from `list_shipments` and `search_shipments` carry the first pickup and the last
+Shipment rows from `shipment_list` carry the first pickup and the last
 delivery (place, window in the stop's zone) and who drives each move, or that it needs a
 driver (`ShipmentOptions.IncludeRoute`, loaded with the page as batched relations), and the
 search matches customers by name or code and stops by location name or city
 (`shipment_search_parties.go`) besides pro number and BOL. Without them, "which one picks up
-first" and "the sunbelt load to chicago" cost one `get_shipment` per row.
+first" and "the sunbelt load to chicago" cost one `shipment_get` per row.
 
 ### Reads bunch into one table
 
@@ -1929,8 +1929,8 @@ its later writes. `get_document_summary` stays for documents a record names.
 
 What document intelligence read off an attached rate confirmation is shown as its
 extraction card without anyone asking (`attachment_cards.go`). The card is read as
-the person through `get_shipment_draft` (`agentruntime.ReadRecord`), kept under the
-call id `attachment:<documentId>` and in the lineage `get_shipment_draft` uses for
+the person through `intake_get_draft` (`agentruntime.ReadRecord`), kept under the
+call id `attachment:<documentId>` and in the lineage `intake_get_draft` uses for
 that document (`extractionLineageKey`), so the card the attachment opened and the
 one the agent opens by reading the draft are versions of one artifact, and reading
 an unchanged draft points the reply at the card already there. It is recorded at
@@ -2237,14 +2237,14 @@ the formula's expression and variables. The prompt renders it in a
 is not a live page thread of the matching surface, and re-checks that the
 subject is still readable.
 
-**Draft tools present; they do not save.** `accept_field`,
-`accept_all_confident`, `set_field_value`, `set_required_field`,
-`set_stop_location`, `set_stop_schedule` and `propose_formula` are query tools
+**Draft tools present; they do not save.** `intake_accept_field`,
+`intake_accept_confident`, `intake_set_field`, `intake_set_required_field`,
+`intake_set_stop_location`, `intake_set_stop_schedule` and `propose_formula` are query tools
 with self scope and effect `present`. Each returns a `pagedraft.Edit`; the
 turn saves it as a `draft_edit` artifact and the artifact event carries it, and
 the page applies it once, the way a navigation artifact is followed. Nothing
 reaches the database until the person creates the shipment or saves the
-formula. `set_required_field` and `set_stop_location` read the record they name
+formula. `intake_set_required_field` and `intake_set_stop_location` read the record they name
 under the person's own permission and hand the page its label.
 `create_location` is an internal-egress action at `ActWithApproval`, requiring
 location create. The formula tools price with the formula engine:
@@ -2609,7 +2609,7 @@ expenses in [agent-workforce-tools.md](agent-workforce-tools.md#who-holds-them).
 
 | Tool | Why no template holds it |
 | --- | --- |
-| `cancel_shipment` | Canceling a shipment is a person's call, by owner decision: it withdraws live tenders from carriers and can tell a partner over EDI. `uncancel_shipment`, which puts a canceled shipment back to New and sends nothing, stays with the dispatch assistant. |
+| `shipment_cancel` | Canceling a shipment is a person's call, by owner decision: it withdraws live tenders from carriers and can tell a partner over EDI. `shipment_uncancel`, which puts a canceled shipment back to New and sends nothing, stays with the dispatch assistant. |
 | `forget_memory` | A person retires a memory in AI Control; see [Forgetting](#memory-in-the-prompt). |
 | `save_table_view`, `add_home_widget`, `remove_home_widget`, `arrange_home_layout` | Each changes only the caller's own screen, a person's interface state that is no desk's job; the report analyst, the one desk near dashboards, builds report dashboards and never the person's home page. |
 

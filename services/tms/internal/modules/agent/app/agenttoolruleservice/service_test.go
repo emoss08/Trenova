@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const shipmentTool = "update_shipment"
+const shipmentTool = "shipment_update"
 
 type fakeRepo struct {
 	mu    sync.Mutex

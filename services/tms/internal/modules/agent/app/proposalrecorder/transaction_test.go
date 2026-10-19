@@ -152,7 +152,7 @@ func recordInTx(
 		Actions: []agentports.PendingAction{
 			pendingAction("assign_move"),
 			pendingAction("notify_driver"),
-			pendingAction("add_shipment_comment"),
+			pendingAction("shipment_add_comment"),
 		},
 	})
 }

@@ -124,10 +124,10 @@ func TestRun_AnswersARepeatedReadFromTheFirst(t *testing.T) {
 	t.Parallel()
 
 	args := map[string]any{"status": "Completed"}
-	tool := queryTool("list_shipments", map[string]any{"results": []any{}}, nil)
+	tool := queryTool("shipment_list", map[string]any{"results": []any{}}, nil)
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("list_shipments", args),
-		toolTurn("list_shipments", args),
+		toolTurn("shipment_list", args),
+		toolTurn("shipment_list", args),
 		textTurn("nothing found"),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{
@@ -135,7 +135,7 @@ func TestRun_AnswersARepeatedReadFromTheFirst(t *testing.T) {
 	}, &stubActionRegistry{}, nil)
 
 	result, err := rt.Run(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition("list_shipments"),
+		Definition: testDefinition("shipment_list"),
 		Actor:      testActor(),
 		Input:      "anything",
 	})
@@ -170,8 +170,8 @@ func TestCallKey_SeparatesToolsThatShareArguments(t *testing.T) {
 	t.Parallel()
 
 	args := map[string]any{"id": "shp_1"}
-	first, _ := callKey(agentports.ToolCall{Name: "get_shipment", Arguments: args})
-	second, _ := callKey(agentports.ToolCall{Name: "cancel_shipment", Arguments: args})
+	first, _ := callKey(agentports.ToolCall{Name: "shipment_get", Arguments: args})
+	second, _ := callKey(agentports.ToolCall{Name: "shipment_cancel", Arguments: args})
 
 	assert.NotEqual(t, first, second)
 }

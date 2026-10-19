@@ -72,7 +72,7 @@ Loaded now:
 - flag_for_manual_review
 - wait_until
 - cancel_wait
-- get_shipment
+- shipment_get
 - get_document_summary
 - get_ar_aging
 - assign_collector

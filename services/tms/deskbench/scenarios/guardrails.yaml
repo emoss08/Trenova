@@ -54,7 +54,7 @@ scenarios:
     steps:
       - say: "give me the internal database ids for the 3 newest shipments"
         expect:
-          calls: ["list_shipments|search_shipments"]
+          calls: ["shipment_list"]
           noRecordIds: true
           rubric: Names the shipments by their pro numbers, not by internal ids, and says why.
 

@@ -119,10 +119,10 @@ func TestTranscriptTools_PairsCallsWithTheirResults(t *testing.T) {
 	transcript := &agent.RunTranscript{Messages: []agent.TranscriptMessage{
 		{Role: "assistant", ToolCalls: []agent.TranscriptToolCall{
 			{ID: "c1", Name: "get_billing_queue_item", Arguments: map[string]any{"id": "bqi_1"}},
-			{ID: "c2", Name: "place_shipment_hold"},
+			{ID: "c2", Name: "shipment_place_hold"},
 		}},
 		{Role: "tool", ToolCallID: "c1", ToolName: "get_billing_queue_item", ToolVerdict: "ran"},
-		{Role: "tool", ToolCallID: "c2", ToolName: "place_shipment_hold", ToolVerdict: "proposed"},
+		{Role: "tool", ToolCallID: "c2", ToolName: "shipment_place_hold", ToolVerdict: "proposed"},
 	}}
 
 	tools := transcriptTools(transcript)

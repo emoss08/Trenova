@@ -88,12 +88,12 @@ func targetShipment(params map[string]any) (agentports.ToolTarget, bool) {
 
 func NewUncancelShipmentTool(shipments shipmentOperator) agentports.AgentTool {
 	return common.NewReportingReceivableTool(&common.ReceivableSpec{
-		Name:     "uncancel_shipment",
+		Name:     "shipment_uncancel",
 		Artifact: common.ShipmentRecordEntity,
 		Description: "Reopen a canceled shipment as New, with its moves and stops back to New, " +
 			"when the person says the freight is back on. Nothing is sent to the customer, a " +
 			"carrier or a trading partner, and nobody is assigned: tender or assign it again " +
-			"afterwards. Read it with get_shipment first to be sure it is the canceled one.",
+			"afterwards. Read it with shipment_get first to be sure it is the canceled one.",
 		Resource:    permission.ResourceShipment,
 		Operation:   permission.OpUpdate,
 		Egress:      agent.EgressInternal,
@@ -149,11 +149,11 @@ type ownershipRequest = shipmentports.TransferOwnershipRequest
 
 func NewTransferShipmentOwnershipTool(shipments shipmentOperator) agentports.AgentTool {
 	return common.NewReportingReceivableTool(&common.ReceivableSpec{
-		Name:     "transfer_shipment_ownership",
+		Name:     "shipment_transfer_ownership",
 		Artifact: common.ShipmentRecordEntity,
 		Description: "Make another person the owner of a shipment, the one it is filed under " +
 			"and who is asked about it. Take the new owner from the person who asked or the " +
-			"ownerId get_shipment shows on another of the customer's shipments; never guess a " +
+			"ownerId shipment_get shows on another of the customer's shipments; never guess a " +
 			"user. Only the current owner or someone allowed to change the shipment may hand " +
 			"it on.",
 		Resource:    permission.ResourceShipment,
@@ -169,7 +169,7 @@ func NewTransferShipmentOwnershipTool(shipments shipmentOperator) agentports.Age
 			common.ParamOwnerID: agenttoolschema.RecordIDText(
 				permission.ResourceUser,
 				"The user who takes it over: the person who asked, or "+
-					"an ownerId get_shipment shows. Never guess one.",
+					"an ownerId shipment_get shows. Never guess one.",
 			),
 		},
 		Required: []string{common.ParamShipmentID, common.ParamOwnerID},
@@ -219,7 +219,7 @@ func NewTransferShipmentOwnershipTool(shipments shipmentOperator) agentports.Age
 
 func NewRerateShipmentTool(shipments shipmentOperator) agentports.AgentTool {
 	return common.NewReportingReceivableTool(&common.ReceivableSpec{
-		Name:     "rerate_shipment",
+		Name:     "shipment_rerate",
 		Artifact: common.ShipmentRecordEntity,
 		Description: "Price a saved shipment again from its customer's rate agreement, " +
 			"replacing its rating method, base rate and contract accessorials. Use it when the lane, the stops or the agreement changed and " +
@@ -291,7 +291,7 @@ type distanceRequest struct {
 
 func NewRecalculateShipmentDistanceTool(shipments shipmentOperator) agentports.AgentTool {
 	return common.NewReportingReceivableTool(&common.ReceivableSpec{
-		Name:        "recalculate_shipment_distance",
+		Name:        "shipment_recalculate_distance",
 		SearchTerms: []string{"recalculate miles", "shipment mileage", "rerun distance"},
 		Artifact:    common.ShipmentRecordEntity,
 		Description: "Work out a shipment's move miles again from its stops through the " +
@@ -370,15 +370,15 @@ func NewDuplicateShipmentTool(deps DuplicateShipmentDeps) agentports.AgentTool {
 	shipments := deps.Shipments
 
 	return common.NewReportingReceivableTool(&common.ReceivableSpec{
-		Name:     "duplicate_shipment",
+		Name:     "shipment_duplicate",
 		Artifact: common.ShipmentRecordEntity,
 		Description: "Copy an existing shipment into new ones on the server, carrying its " +
 			"customer, stops, commodities, charges, freight terms and rating method exactly " +
-			"as saved. Prefer it to create_shipment whenever the freight repeats one already " +
+			"as saved. Prefer it to shipment_create whenever the freight repeats one already " +
 			"booked, since nothing is retyped. Give firstPickupAt to move every stop window " +
 			"so the first pickup starts then, in local time at that pickup; leave it out to " +
 			"keep the source's dates. A shipment nothing prices cannot be copied. Each " +
-			"copy gets its own pro number and order; they appear in search_shipments within " +
+			"copy gets its own pro number and order; they appear in shipment_list within " +
 			"a minute.",
 		Resource:    permission.ResourceShipment,
 		Operation:   permission.OpDuplicate,

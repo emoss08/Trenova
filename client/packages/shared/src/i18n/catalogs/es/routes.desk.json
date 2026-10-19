@@ -1555,7 +1555,7 @@
   "Trenova wrote this entry from its source when the source posted.": "Trenova generó este asiento a partir de su origen cuando este se contabilizó.",
   "Trenova's default": "Predeterminada de Trenova",
   "Try a load number, customer or invoice ID.": "Prueba con un número de carga, un cliente o un ID de factura.",
-  "Try a tool name like list_shipments or a load ID.": "Pruebe un nombre de herramienta como list_shipments o un ID de carga.",
+  "Try a tool name like shipment_list or a load ID.": "Pruebe un nombre de herramienta como shipment_list o un ID de carga.",
   "Turned into layover": "Convertido en escala",
   "Turned off": "Desactivado",
   "Turned off both ways": "Desactivado en ambos sentidos",

@@ -1555,7 +1555,7 @@
   "Trenova wrote this entry from its source when the source posted.": "Trenova 在來源過帳時依其內容產生了此分錄。",
   "Trenova's default": "Trenova 預設",
   "Try a load number, customer or invoice ID.": "試試貨物編號、客戶或發票 ID。",
-  "Try a tool name like list_shipments or a load ID.": "試試工具名稱（例如 list_shipments）或貨載 ID。",
+  "Try a tool name like shipment_list or a load ID.": "試試工具名稱（例如 shipment_list）或貨載 ID。",
   "Turned into layover": "已轉為過夜停留",
   "Turned off": "已停用",
   "Turned off both ways": "雙向皆已停用",

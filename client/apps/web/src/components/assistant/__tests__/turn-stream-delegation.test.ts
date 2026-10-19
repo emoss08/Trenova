@@ -398,7 +398,7 @@ describe("parseAssistantStreamEvent hand-off events", () => {
     expect(
       wire("tool_finished", {
         callId: "c1",
-        name: "get_shipment",
+        name: "shipment_get",
         content: "{}",
         agentId: AGENT,
         delegateCallId: CALL,

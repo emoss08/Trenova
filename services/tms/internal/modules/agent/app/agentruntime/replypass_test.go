@@ -99,14 +99,14 @@ func passRun(t *testing.T, reply string, shown *agentports.ShownArtifact) (
 	t.Helper()
 
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("list_shipments", map[string]any{}),
+		toolTurn("shipment_list", map[string]any{}),
 		textTurn(reply),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{Tools: []agentports.AgentQueryTool{
-		queryTool("list_shipments", map[string]any{"items": []any{}}, nil),
+		queryTool("shipment_list", map[string]any{"items": []any{}}, nil),
 	}}, &stubActionRegistry{}, nil)
 	req := &agentports.RunRequest{
-		Definition: testDefinition("list_shipments"),
+		Definition: testDefinition("shipment_list"),
 		Actor:      testActor(),
 		Input:      "Which loads are late?",
 		ToolObserver: func(agentports.ToolObservation) (*agentports.ShownArtifact, error) {

@@ -96,7 +96,7 @@ Loaded now:
 - wait_until
 - cancel_wait
 - list_carriers
-- search_shipments
+- shipment_list
 - generate_driver_settlement
 - accept_carrier_invoice_match
 - issue_pay_advance
@@ -107,7 +107,7 @@ Loaded now:
 Callable after find_tools:
 - read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
 - search_worker — Find a driver or other worker by name or code, or list the roster.
-- get_shipment — Retrieve one shipment (load) by its id, with its stops, the driver and equipment assigned to each move, the holds on it now and its newest comments.
+- shipment_get — Read one shipment (load) by its id or PRO number.
 - list_driver_settlements — List driver pay settlements, the drivers' pay statements, newest period first.
 - get_driver_settlement — Retrieve one driver settlement, a driver's pay statement, by id with its earnings, deduction and adjustment lines.
 - list_driver_pay_events — List driver pay events, the pay a driver earned per load, newest first.

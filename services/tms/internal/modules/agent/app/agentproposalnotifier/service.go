@@ -591,7 +591,7 @@ func reminderLines(proposals []*agent.AgentProposal) []documenttemplate.Proposal
 	lines := make([]documenttemplate.ProposalReminderLine, 0, len(proposals))
 	for _, proposal := range proposals {
 		lines = append(lines, documenttemplate.ProposalReminderLine{
-			Tool:      stringutils.HumanizeSnakeCase(proposal.ToolName),
+			Tool:      stringutils.HumanizeSnakeCase(agentports.ReadingOrder(proposal.ToolName)),
 			Rationale: proposal.Rationale,
 		})
 	}
@@ -610,7 +610,10 @@ func describeTools(proposals []*agent.AgentProposal) string {
 		}
 		seen[proposal.ToolName] = struct{}{}
 		if len(names) < maxListedTools {
-			names = append(names, stringutils.HumanizeSnakeCase(proposal.ToolName))
+			names = append(
+				names,
+				stringutils.HumanizeSnakeCase(agentports.ReadingOrder(proposal.ToolName)),
+			)
 		}
 	}
 

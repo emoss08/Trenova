@@ -15,7 +15,7 @@ const KindShipment = "shipment"
 
 func ShipmentIDProperty(what string) map[string]any {
 	return agenttoolschema.RecordID(permission.ResourceShipment, what,
-		"get_shipment, search_shipments or the page you are on")
+		"shipment_get, shipment_list or the page you are on")
 }
 
 func ShipmentResult(action string, entity *shipment.Shipment) *agent.ToolExecutionResult {

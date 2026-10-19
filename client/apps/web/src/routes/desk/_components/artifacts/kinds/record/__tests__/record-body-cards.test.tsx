@@ -162,7 +162,7 @@ describe("a looked-up record with a card of its own", () => {
   });
 
   it("draws a shipment the agent looked up as the shipment card, with its own mark", async () => {
-    const artifact = card("shipment", { recordId: "shp_1", tool: "get_shipment" });
+    const artifact = card("shipment", { recordId: "shp_1", tool: "shipment_get" });
 
     draw(artifact);
 
@@ -275,7 +275,7 @@ describe("a looked-up record with a card of its own", () => {
   });
 
   it("draws an order the agent looked up as the order card, with its own mark", async () => {
-    const artifact = card("order", { recordId: "ord_1", tool: "get_order" });
+    const artifact = card("order", { recordId: "ord_1", tool: "order_get" });
 
     draw(artifact);
 

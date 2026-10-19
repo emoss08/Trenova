@@ -26,13 +26,11 @@ const (
 	// It is one card per file and thread, so reading the file again after
 	// its extraction changed revises the card rather than adding another.
 	attachmentCallID = "attachment:"
-	// shipmentDraftEntity is the record get_shipment_draft reads.
-	shipmentDraftEntity = "shipment_draft"
 )
 
 // attachedExtraction keeps what document intelligence read off a file the
 // person attached as its extraction card beside the conversation. It reads
-// the draft through get_shipment_draft as the person, so the card shows only
+// the draft through intake_get_draft as the person, so the card shows only
 // what they may read, in the same shape as the card the agent opens. It is
 // nil while nothing has been read off the file, and for a file that does not
 // give a shipment draft.
@@ -41,10 +39,12 @@ func (r *artifactRecorder) attachedExtraction(documentID pulid.ID) *assistantart
 		return nil
 	}
 
-	read, ok := r.svc.runtime.ReadRecord(r.ctx, r.reader, &agent.RecordRef{
-		EntityType: shipmentDraftEntity,
-		ID:         documentID.String(),
-	})
+	read, ok := r.svc.runtime.ReadRecordWith(
+		r.ctx,
+		r.reader,
+		toolGetShipmentDraft,
+		documentID.String(),
+	)
 	if !ok {
 		return nil
 	}

@@ -114,7 +114,7 @@ Each write is one entry under `+"`writes:`"+`, keyed as it appears below
 (`+"`mutation createShipment`"+`, `+"`POST /api/v1/shipments/:shipmentID/cancel/`"+`),
 and takes exactly one of:
 
-- `+"`tools: [cancel_shipment]`"+`: the agent tools that perform it. A tool
+- `+"`tools: [shipment_cancel]`"+`: the agent tools that perform it. A tool
   named here must be registered.
 - `+"`exempt: <category>`"+` with `+"`reason: <why no agent should>`"+`: one of
   the categories below. The reason is required.

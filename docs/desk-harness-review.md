@@ -1455,6 +1455,13 @@ held-out`) when one is made for a PR.
 | PR | Modules | Tools before → after | Write coverage (tools / exempt / pending) | Held-out recall@5 | Held-out top-1 |
 |---|---|---|---|---|---|
 | Held-out split | none (measurement only) | 649 → 649 | 459 / 710 / 0, unchanged | 0.92 (161 cases) | 0.81 |
+| Shipments, orders, import page | `shipment`, `order`, `intake` (55 tools namespaced) | 649 → 648 | 459 / 710 / 0, unchanged | 0.9193 → 0.9193 | 0.8137 → 0.8137 |
+
+The shipment row is measured on the held-out set the split PR recorded (161 cases), so both
+figures read the same cases; the module's merges moved three cases between splits, which the
+ledger now records. On the development cases the same PR moved hybrid top-1 from 0.7702 to
+0.7745 and recall@5 from 0.9149 to 0.9128 (one case, an accounting request whose ranking moved
+with the renamed tools' embeddings), and keyword recall@5 over every case from 0.9287 to 0.9319.
 
 **Phase 4: a single front door and job profiles (3–4 weeks).**
 

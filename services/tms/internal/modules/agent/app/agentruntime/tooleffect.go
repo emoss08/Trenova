@@ -117,7 +117,7 @@ func countSummary(toolName string, items []any, count int, more bool) string {
 }
 
 func collectionNoun(toolName string) string {
-	subject := toolName
+	subject := agentports.ReadingOrder(toolName)
 	for _, prefix := range collectionPrefixes {
 		if trimmed, found := strings.CutPrefix(subject, prefix); found {
 			subject = trimmed

@@ -40,7 +40,7 @@ simulation reads it, capped at 8 KiB.
 Message, Param}`: `toolpreview.WouldFail(err)` splits a validation `MultiError` into one reason
 a field (a refusal of the whole write is a reason with no field), and
 `toolpreview.LocateReasons` walks the tool's parameter schema to name the parameter each field
-rides in (`bol` is `shipment.bol` for `create_shipment`). The preview service locates reasons
+rides in (`bol` is `shipment.bol` for `shipment_create`). The preview service locates reasons
 for every tool, including a failing `ToolValidator`. GraphQL serves them as
 `AgentPreviewWarning.reasons`. The client lists each reason ("BOL: already in use by shipment
 SEED-DET-009"), falling back to `Message` without its leading sentence, never the bare "would
@@ -350,8 +350,8 @@ array-of-ids parameter as a subset of one permission resource's records with
   filed before pinning) is refused and asked to be proposed again. An automatic retry has no
   approval to keep faith with, so it still reads its categories when it runs, with no cap.
 
-  The other record-subset tools keep ids only: `attach_order_shipments` (its records come
-  from `search_shipments`, a general search, and the order's own rules decide membership),
+  The other record-subset tools keep ids only: `order_attach_shipments` (its records come
+  from `shipment_list`, a general search, and the order's own rules decide membership),
   `release_accounting_sync` (a person-only send to the books from a general list; releasing
   "everything awaiting approval" unseen is what the tool exists to prevent),
   `set_carrier_monitoring` (billed per carrier from `list_carriers`, a general list), and

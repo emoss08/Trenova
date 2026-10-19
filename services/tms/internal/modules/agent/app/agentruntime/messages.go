@@ -452,7 +452,7 @@ func proposalRationale(in rationaleInput) string {
 	if trimmed := strings.TrimSpace(in.Input); trimmed != "" {
 		prefix := fmt.Sprintf(
 			"Asked to %s in reply to: \u201c",
-			stringutils.HumanizeSnakeCase(in.ToolName),
+			stringutils.HumanizeSnakeCase(agentports.ReadingOrder(in.ToolName)),
 		)
 		room := maxRationaleChars - len([]rune(prefix)) - 1
 

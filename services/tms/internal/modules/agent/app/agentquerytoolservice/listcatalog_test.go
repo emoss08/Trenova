@@ -81,7 +81,7 @@ func TestListCatalog_NamesAreUniqueAndPrefixed(t *testing.T) {
 		assert.False(t, seen[spec.name], "%s is registered twice", spec.name)
 		seen[spec.name] = true
 
-		assert.Regexp(t, `^list_[a-z_]+$`, spec.name)
+		assert.Regexp(t, `^([a-z]+_list(_[a-z]+)*|list_[a-z_]+)$`, spec.name)
 		assert.NotEmpty(t, spec.resource, "%s must authorize against a resource", spec.name)
 		assert.NotEmpty(t, spec.fields, "%s must offer something to filter on", spec.name)
 	}

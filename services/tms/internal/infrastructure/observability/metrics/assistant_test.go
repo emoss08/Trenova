@@ -91,7 +91,7 @@ func TestAssistant_IsSafeWhenThereIsNoCollector(t *testing.T) {
 		absent.RecordTurnStopped("cancelled")
 		absent.RecordStepReplayed("AssistantTurn", "Completed")
 		absent.RecordStreamAttach("resumed")
-		absent.RecordToolOutcome(ToolOutcomeLabels{Tool: "list_shipments", Verdict: "ran"})
+		absent.RecordToolOutcome(ToolOutcomeLabels{Tool: "shipment_list", Verdict: "ran"})
 		absent.RecordGuardReask(GuardReaskLabels{Guard: "grounding"})
 	})
 }
@@ -111,26 +111,26 @@ func TestAssistant_CountsToolOutcomesByToolVerdictModelAndProvider(t *testing.T)
 			Provider: "AnthropicMessages",
 		}
 	}
-	assistant.RecordToolOutcome(haiku("list_shipments", "ran"))
-	assistant.RecordToolOutcome(haiku("list_shipments", "invalid"))
-	assistant.RecordToolOutcome(haiku("list_shipments", "invalid"))
+	assistant.RecordToolOutcome(haiku("shipment_list", "ran"))
+	assistant.RecordToolOutcome(haiku("shipment_list", "invalid"))
+	assistant.RecordToolOutcome(haiku("shipment_list", "invalid"))
 	assistant.RecordToolOutcome(haiku("assign_move", "proposed"))
 	assistant.RecordToolOutcome(ToolOutcomeLabels{
-		Tool:     "list_shipments",
+		Tool:     "shipment_list",
 		Verdict:  "invalid",
 		Model:    "gpt-6-luna",
 		Provider: "OpenAIResponses",
 	})
-	assistant.RecordToolOutcome(ToolOutcomeLabels{Tool: "list_shipments", Verdict: "ran"})
+	assistant.RecordToolOutcome(ToolOutcomeLabels{Tool: "shipment_list", Verdict: "ran"})
 
 	name := "trenova_assistant_tool_outcomes_total"
 	claude := []string{"claude-haiku-5.5", "AnthropicMessages"}
-	assert.Equal(t, 1, countOf(t, registry, name, append([]string{"list_shipments", "ran"}, claude...)...))
-	assert.Equal(t, 2, countOf(t, registry, name, append([]string{"list_shipments", "invalid"}, claude...)...))
+	assert.Equal(t, 1, countOf(t, registry, name, append([]string{"shipment_list", "ran"}, claude...)...))
+	assert.Equal(t, 2, countOf(t, registry, name, append([]string{"shipment_list", "invalid"}, claude...)...))
 	assert.Equal(t, 1, countOf(t, registry, name, append([]string{"assign_move", "proposed"}, claude...)...))
 	assert.Equal(t, 1, countOf(t, registry, name,
-		"list_shipments", "invalid", "gpt-6-luna", "OpenAIResponses"))
-	assert.Equal(t, 1, countOf(t, registry, name, "list_shipments", "ran", "unknown", "unknown"))
+		"shipment_list", "invalid", "gpt-6-luna", "OpenAIResponses"))
+	assert.Equal(t, 1, countOf(t, registry, name, "shipment_list", "ran", "unknown", "unknown"))
 }
 
 // countOf reads one counter by the label values it carries, in any order:

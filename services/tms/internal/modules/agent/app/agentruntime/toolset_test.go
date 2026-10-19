@@ -5,11 +5,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -28,7 +28,7 @@ func wideRuntime(t *testing.T) (*Service, []string) {
 
 	tools := []*agenttest.StubQueryTool{
 		describedTool("list_workers", "List workers (drivers) by status or employment type."),
-		describedTool("list_shipments", "List shipments by status, billing state or dates."),
+		describedTool("shipment_list", "List shipments by status, billing state or dates."),
 		describedTool("list_tractors", "List tractors (power units) by status."),
 		describedTool("list_trailers", "List trailers by status or inspection date."),
 		describedTool("list_customers", "List customers by status, code or city."),
@@ -39,10 +39,10 @@ func wideRuntime(t *testing.T) (*Service, []string) {
 			"list_expiring_credentials",
 			"Worker credentials falling due: medical cards, licences, hazmat.",
 		),
-		describedTool("get_shipment", "Retrieve one shipment by id."),
+		describedTool("shipment_get", "Retrieve one shipment by id."),
 		describedTool("get_worker", "Retrieve one worker by id."),
 		describedTool("search_worker", "Search workers by name."),
-		describedTool("search_shipments", "Search shipments by pro number."),
+		describedTool("shipment_get_tracking", "Track a shipment by pro number."),
 		describedTool("list_reports", "List the reports this organization can run."),
 		describedTool("run_report", "Start a report run."),
 	}
@@ -317,7 +317,7 @@ func TestSystemPrompt_SaysTheToolListIsPartialWhenDisclosed(t *testing.T) {
 func TestSystemPrompt_DisclosedListingGivesOneSentencePerUnloadedTool(t *testing.T) {
 	t.Parallel()
 
-	definition := testDefinition("list_reports", "get_shipment")
+	definition := testDefinition("list_reports", "shipment_get")
 	summaries := []agentdefinition.ToolSummary{
 		{
 			Name:        "list_reports",
@@ -325,7 +325,7 @@ func TestSystemPrompt_DisclosedListingGivesOneSentencePerUnloadedTool(t *testing
 			Query:       true,
 		},
 		{
-			Name:        "get_shipment",
+			Name:        "shipment_get",
 			Description: "Retrieve one shipment by id. Includes stops and moves.",
 			Query:       true,
 			Loaded:      true,
@@ -336,7 +336,7 @@ func TestSystemPrompt_DisclosedListingGivesOneSentencePerUnloadedTool(t *testing
 
 	assert.Contains(t, disclosed, "- list_reports — List saved reports by name.")
 	assert.NotContains(t, disclosed, "Filter by owner, schedule or last run.")
-	assert.Contains(t, disclosed, "Loaded now:\n- get_shipment")
+	assert.Contains(t, disclosed, "Loaded now:\n- shipment_get")
 	assert.NotContains(t, disclosed, "Retrieve one shipment by id.")
 }
 
@@ -650,16 +650,16 @@ func TestNewToolSet_OffersOnlyWhatThePersonMayUse(t *testing.T) {
 	)
 
 	offered := specNames(set.specs)
-	assert.NotContains(t, offered, "list_shipments")
-	assert.NotContains(t, offered, "get_shipment")
-	assert.NotContains(t, set.allowed, "search_shipments")
+	assert.NotContains(t, offered, "shipment_list")
+	assert.NotContains(t, offered, "shipment_get")
+	assert.NotContains(t, set.allowed, "shipment_list")
 	assert.Contains(t, set.allowed, "list_workers")
 
 	answer := findContent(t, service, set, map[string]any{"need": "search shipments by pro number"})
 	assert.NotContains(
 		t,
 		answer,
-		"search_shipments",
+		"shipment_list",
 		"find_tools cannot reach a tool the person may not use",
 	)
 }
@@ -800,7 +800,7 @@ func weakMatchRuntime(t *testing.T) *Service {
 
 	tools := []agentports.AgentQueryTool{
 		&agenttest.StubQueryTool{
-			ToolName: "list_shipments",
+			ToolName: "shipment_list",
 			Desc:     "List shipments by status or dates.",
 			Schema: map[string]any{
 				"type": "object",
@@ -838,7 +838,7 @@ func TestResolveFind_PointsAtADelegateWhenTheBestNewMatchIsWeak(t *testing.T) {
 	t.Parallel()
 
 	service := weakMatchRuntime(t)
-	held := []string{"list_shipments"}
+	held := []string{"shipment_list"}
 	for idx := range disclosureThreshold + 1 {
 		held = append(held, fmt.Sprintf("list_filler_%02d", idx))
 	}
@@ -857,12 +857,12 @@ func TestResolveFind_PointsAtADelegateWhenTheBestNewMatchIsWeak(t *testing.T) {
 		},
 	)
 	require.True(t, set.disclosed)
-	require.NotContains(t, specNames(set.specs), "list_shipments",
+	require.NotContains(t, specNames(set.specs), "shipment_list",
 		"the fixture depends on the shipments list not being preselected")
 
 	answer := findContent(t, service, set, map[string]any{"need": "commodity"})
 
-	assert.Contains(t, answer, "list_shipments", "the weak match still loads")
+	assert.Contains(t, answer, "shipment_list", "the weak match still loads")
 	assert.Contains(t, answer, "Master Data (agentId "+delegate.ID.String()+"): search_commodities")
 	assert.Contains(t, answer, delegateTaskName)
 }
@@ -884,7 +884,7 @@ func TestResolveFind_AStrongNewMatchNeedsNoDelegate(t *testing.T) {
 			delegates: []agentdefinition.RuntimeDelegate{{
 				ID:    pulid.MustNew("agdef_"),
 				Name:  "Operations",
-				Tools: []string{"list_shipments"},
+				Tools: []string{"shipment_list"},
 			}},
 		},
 	)
@@ -912,7 +912,7 @@ func TestResolveFind_NamesOnlyStrongMatchesBeyondTheAgent(t *testing.T) {
 	answer := findContent(t, service, set, map[string]any{"need": "commodity"})
 
 	assert.Contains(t, answer, "search_commodities")
-	assert.NotContains(t, answer, "list_shipments",
+	assert.NotContains(t, answer, "shipment_list",
 		"a tool that only takes the word as a parameter is not what was asked for")
 }
 

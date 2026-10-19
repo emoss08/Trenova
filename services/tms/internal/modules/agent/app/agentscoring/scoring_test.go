@@ -17,25 +17,25 @@ func holdCase() *agentquality.EvalCase {
 		Status:    agentquality.CaseStatusActive,
 		Trigger:   agent.RunTriggerChat,
 		Input:     "Put S-100 on hold until the customer pays the 4,210 balance",
-		HeldTools: []string{"get_shipment", "place_shipment_hold", "cancel_shipment"},
+		HeldTools: []string{"shipment_get", "shipment_place_hold", "shipment_cancel"},
 		ToolFixtures: []agentquality.ToolFixture{{
-			Tool:   "get_shipment",
+			Tool:   "shipment_get",
 			Args:   map[string]any{"proNumber": "S-100"},
 			Result: map[string]any{"id": "shp_1", "totalCharge": 12400.5},
 		}},
 		Expected: agentquality.Expected{
 			ToolMode: agentquality.ToolMatchAnyOrder,
 			Tools: []agentquality.ExpectedTool{
-				{Name: "get_shipment"},
+				{Name: "shipment_get"},
 				{
-					Name: "place_shipment_hold",
+					Name: "shipment_place_hold",
 					Args: map[string]any{"shipmentId": "shp_1"},
 					Rules: map[string]agentquality.Tolerance{
 						"reason": {Kind: agentquality.TolerancePresent},
 					},
 				},
 			},
-			ForbiddenTools: []string{"cancel_shipment"},
+			ForbiddenTools: []string{"shipment_cancel"},
 			MustMention:    []string{"hold"},
 			MustNotMention: []string{"cancelled"},
 		},
@@ -48,9 +48,9 @@ func goodInput() *Input {
 		Reply: "S-100 is on hold until the $12,400.50 invoice is paid.",
 		Calls: []agent.ObservedCall{
 			{ToolName: "find_tools"},
-			{ToolName: "get_shipment", Arguments: map[string]any{"proNumber": "S-100"}},
+			{ToolName: "shipment_get", Arguments: map[string]any{"proNumber": "S-100"}},
 			{
-				ToolName:  "place_shipment_hold",
+				ToolName:  "shipment_place_hold",
 				Arguments: map[string]any{"shipmentId": "shp_1", "reason": "Unpaid balance"},
 			},
 		},
@@ -101,7 +101,7 @@ func TestScore_HardChecksScoreTheCaseZero(t *testing.T) {
 		{
 			name: "forbidden tool",
 			mutate: func(in *Input) {
-				in.Calls = append(in.Calls, agent.ObservedCall{ToolName: "cancel_shipment"})
+				in.Calls = append(in.Calls, agent.ObservedCall{ToolName: "shipment_cancel"})
 			},
 			failed: CheckForbiddenTools,
 		},
@@ -189,7 +189,7 @@ func TestScore_JudgeBlendsButNeverOverridesAHardFailure(t *testing.T) {
 
 	failing := goodInput()
 	failing.Judge = &agent.JudgeVerdict{Score: 1}
-	failing.Calls = append(failing.Calls, agent.ObservedCall{ToolName: "cancel_shipment"})
+	failing.Calls = append(failing.Calls, agent.ObservedCall{ToolName: "shipment_cancel"})
 	hard := New().Score(failing)
 	assert.Zero(t, hard.Final)
 	assert.False(t, hard.Passed)
@@ -238,10 +238,10 @@ func TestScore_ToolChoiceModes(t *testing.T) {
 	t.Parallel()
 
 	calls := []agent.ObservedCall{
-		{ToolName: "place_shipment_hold"},
-		{ToolName: "get_shipment"},
+		{ToolName: "shipment_place_hold"},
+		{ToolName: "shipment_get"},
 	}
-	tools := []agentquality.ExpectedTool{{Name: "get_shipment"}, {Name: "place_shipment_hold"}}
+	tools := []agentquality.ExpectedTool{{Name: "shipment_get"}, {Name: "shipment_place_hold"}}
 	score := func(mode agentquality.ToolMatchMode, called []agent.ObservedCall) float64 {
 		in := &Input{
 			Case: &agentquality.EvalCase{
@@ -275,7 +275,7 @@ func TestScore_ArgumentsFollowTheirRules(t *testing.T) {
 	assert.True(t, arguments.Applies)
 	assert.InDelta(t, 0.0, arguments.Score, 1e-9)
 	assert.ElementsMatch(t,
-		[]string{"place_shipment_hold.reason", "place_shipment_hold.shipmentId"},
+		[]string{"shipment_place_hold.reason", "shipment_place_hold.shipmentId"},
 		arguments.Findings,
 	)
 
@@ -283,7 +283,7 @@ func TestScore_ArgumentsFollowTheirRules(t *testing.T) {
 	missing.Calls = missing.Calls[:2]
 	assert.Contains(t,
 		check(t, New().Score(missing), CheckArguments).Findings,
-		"place_shipment_hold: not called",
+		"shipment_place_hold: not called",
 	)
 }
 

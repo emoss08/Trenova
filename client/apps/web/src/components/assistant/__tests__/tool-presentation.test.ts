@@ -14,7 +14,7 @@ import {
  */
 describe("describeToolCall", () => {
   it("names the action and the record it was about", () => {
-    expect(describeToolCall("get_shipment", { proNumber: "S12345" })).toEqual({
+    expect(describeToolCall("shipment_get", { proNumber: "S12345" })).toEqual({
       title: "Look up shipment",
       subject: "S12345",
     });
@@ -98,12 +98,12 @@ describe("describeToolCall", () => {
    */
   it("summarizes the filters a list call applied", () => {
     expect(
-      describeToolCall("list_shipments", {
+      describeToolCall("shipment_list", {
         filters: [{ field: "status", operator: "eq", value: "Delivered" }],
         limit: 25,
       }),
     ).toEqual({
-      title: "List shipments",
+      title: "Find shipments",
       subject: "status Delivered",
     });
   });
@@ -162,7 +162,7 @@ describe("describeToolCall", () => {
    * the subject rather than nothing.
    */
   it("names a tracked shipment, a failure and a detention occurrence", () => {
-    expect(describeToolCall("get_shipment_tracking", { proNumber: "S12345" })).toEqual({
+    expect(describeToolCall("shipment_get_tracking", { proNumber: "S12345" })).toEqual({
       title: "Track shipment",
       subject: "S12345",
     });
@@ -207,7 +207,7 @@ describe("describeToolCall", () => {
 describe("parseToolResult", () => {
   it("unwraps the fence and parses the JSON inside", () => {
     const content =
-      'Result from get_shipment:\n<untrusted_data>\n{"proNumber":"S1","status":"InTransit"}\n</untrusted_data>';
+      'Result from shipment_get:\n<untrusted_data>\n{"proNumber":"S1","status":"InTransit"}\n</untrusted_data>';
 
     expect(parseToolResult(content)).toEqual({
       kind: "json",
@@ -222,7 +222,7 @@ describe("parseToolResult", () => {
   // as ordinary text with nothing saying it was short.
   it("reports truncation and returns the text when the JSON was cut short", () => {
     const content =
-      'Result from search_shipments:\n<untrusted_data>\n[{"proNumber":"S1"},{"pro\n\n' +
+      'Result from shipment_list:\n<untrusted_data>\n[{"proNumber":"S1"},{"pro\n\n' +
       "[This result was cut off here: it was too long to return in full, so the text " +
       "above ends mid-record and the records after it are missing entirely. Do not " +
       "infer, complete, or count anything from the cut-off portion. Narrow your " +
@@ -239,7 +239,7 @@ describe("parseToolResult", () => {
   // Threads saved before the notice was reworded still have to read correctly.
   it("still recognises the marker the server used to write", () => {
     const content =
-      'Result from search_shipments:\n<untrusted_data>\n[{"proNumber":"S1"},{"pro\n…(truncated)\n</untrusted_data>';
+      'Result from shipment_list:\n<untrusted_data>\n[{"proNumber":"S1"},{"pro\n…(truncated)\n</untrusted_data>';
 
     expect(parseToolResult(content)).toEqual({
       kind: "text",
@@ -249,7 +249,7 @@ describe("parseToolResult", () => {
   });
 
   it("extracts the reason from a failed call", () => {
-    expect(parseToolResult('Tool "get_shipment" failed: shipment not found')).toEqual({
+    expect(parseToolResult('Tool "shipment_get" failed: shipment not found')).toEqual({
       kind: "error",
       message: "shipment not found",
     });
@@ -260,7 +260,7 @@ describe("parseToolResult", () => {
   // the record.
   it("reads the record and leaves out the note the model was given after it", () => {
     const content =
-      'Result from search_shipments:\n<untrusted_data>\n{"count":1}\n</untrusted_data>\n\n' +
+      'Result from shipment_list:\n<untrusted_data>\n{"count":1}\n</untrusted_data>\n\n' +
       '[Shown to the person as a table titled "Shipments", which they can open beside the ' +
       "conversation.]";
 

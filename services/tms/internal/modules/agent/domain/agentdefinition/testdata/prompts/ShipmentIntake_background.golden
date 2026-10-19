@@ -60,7 +60,7 @@ Loaded now:
 - flag_for_manual_review
 - wait_until
 - cancel_wait
-- get_shipment_draft
+- intake_get_draft
 - list_customers
 - list_locations
 - list_service_types
@@ -70,21 +70,21 @@ Loaded now:
 - get_formula_template
 - list_commodities
 - list_accessorial_charges
-- create_shipment
+- shipment_create
 - create_customer
 - create_location
 - create_commodity
-- find_shipment_records
+- shipment_match_records
 - list_location_categories
 
 Callable after find_tools:
-- search_shipments — Find shipments by the words people use for them: a pro number or BOL, a customer's name or code, a stop's place or city, the driver, or what it carries.
+- shipment_list — Find shipments (loads) by the words people use for them, by status, or by filters on dates, charges and transfer status.
 - quote_shipment — Price a shipment that has not been saved, from the customer's rate agreements and the organization's rating rules.
 
 What a change you call does:
-- Changes that always record a proposal for a person to decide: raise_exception, flag_for_manual_review, wait_until, cancel_wait, create_shipment, create_customer, create_location, create_commodity
+- Changes that always record a proposal for a person to decide: raise_exception, flag_for_manual_review, wait_until, cancel_wait, shipment_create, create_customer, create_location, create_commodity
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: remember
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
 - quote_shipment: list_customers → list_service_types → list_locations → quote_shipment
-- create_shipment: find_shipment_records → create_shipment
+- shipment_create: shipment_match_records → shipment_create

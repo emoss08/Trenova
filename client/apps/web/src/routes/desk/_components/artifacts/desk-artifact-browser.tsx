@@ -368,7 +368,7 @@ export function DeskArtifactBrowser({
             </b>
             <span>
               {needle || kind !== "all"
-                ? t("Try a tool name like list_shipments or a load ID.")
+                ? t("Try a tool name like shipment_list or a load ID.")
                 : t("Pin an artifact to keep it at the top of this conversation.")}
             </span>
           </div>

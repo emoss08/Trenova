@@ -108,7 +108,7 @@ export function record(overrides: Partial<PreviewRecordChange> = {}): PreviewRec
 export function preview(overrides: Partial<ProposalPreview> = {}): ProposalPreview {
   return {
     proposalId: "aprop_1",
-    tool: "update_shipment",
+    tool: "shipment_update",
     summary: "Would change S-1001.",
     coverage: "Full",
     changes: [record()],

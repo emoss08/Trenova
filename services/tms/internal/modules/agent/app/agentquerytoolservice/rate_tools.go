@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetypes"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
@@ -82,8 +83,8 @@ func (t *explainRateTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"shipmentId": agenttoolschema.OfResource(map[string]any{
 				"type": "string",
-				"description": "The shipment whose rate to explain, from search_shipments " +
-					"or list_shipments, or the page you are on.",
+				toolschema.KeyDescription: "The shipment whose rate to explain, from " +
+					"shipment_list or the page you are on.",
 			}, permission.ResourceShipment),
 			"side": agenttoolschema.Enum(
 				"Which side of the shipment to price: what the customer is "+

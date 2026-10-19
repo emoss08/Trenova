@@ -4,10 +4,10 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -260,9 +260,9 @@ func (t *companionTool) Companions() []string { return t.brings }
 /*
 A write brings the writes its job cannot be finished without.
 
-The Shipment Assistant held create_shipment and nothing that adds a customer,
+The Shipment Assistant held shipment_create and nothing that adds a customer,
 so a rate confirmation from a broker Trenova did not know ended with "no match
-was found; no shipment was created". create_shipment names create_customer,
+was found; no shipment was created". shipment_create names create_customer,
 create_location and create_commodity as its companions: an agent holding it
 holds them, each still proposed, and one switched off for the agent stays off.
 */
@@ -273,7 +273,7 @@ func TestRun_HoldsTheWritesAHeldToolNamesAsCompanions(t *testing.T) {
 	query := &stubQueryRegistry{Tools: []agentports.AgentQueryTool{categories}}
 	action := &stubActionRegistry{Tools: []agentports.AgentTool{
 		&companionTool{
-			StubActionTool: actionTool("create_shipment", agent.TierPropose, nil),
+			StubActionTool: actionTool("shipment_create", agent.TierPropose, nil),
 			brings:         []string{"create_customer", "create_location"},
 		},
 		actionTool("create_customer", agent.TierPropose, nil),
@@ -289,23 +289,23 @@ func TestRun_HoldsTheWritesAHeldToolNamesAsCompanions(t *testing.T) {
 		ActionTools: action,
 	})
 
-	held := service.heldTools(testDefinition("create_shipment"))
+	held := service.heldTools(testDefinition("shipment_create"))
 	assert.Contains(t, held, "create_customer")
 	assert.Contains(t, held, "create_location")
 	assert.Contains(t, held, "list_location_categories",
 		"a companion's own reads come with it")
 	assert.NotContains(t, held, "delete_customer")
 
-	definition := testDefinition("create_shipment")
+	definition := testDefinition("shipment_create")
 	definition.DisabledToolNames = []string{"create_customer"}
 	held = service.heldTools(definition)
 	assert.NotContains(t, held, "create_customer", "a companion switched off stays off")
 	assert.Contains(t, held, "create_location")
 
 	set := &toolSet{loaded: map[string]struct{}{}, allowed: service.heldTools(testDefinition(
-		"create_shipment",
+		"shipment_create",
 	))}
-	require.True(t, service.load(set, "create_shipment"))
+	require.True(t, service.load(set, "shipment_create"))
 	assert.True(t, set.offers("create_customer"), "a companion is loaded with its tool")
 	assert.True(t, set.offers("create_location"))
 	assert.True(t, set.offers("list_location_categories"))

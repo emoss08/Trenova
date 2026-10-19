@@ -28,7 +28,7 @@ describe("assistantMessageSchema", () => {
   it("keeps the arguments of a call that has some", () => {
     const parsed = assistantMessageSchema.parse({
       ...assistantTurn,
-      toolCalls: [{ id: "call_1", name: "get_shipment", arguments: { proNumber: "S1" } }],
+      toolCalls: [{ id: "call_1", name: "shipment_get", arguments: { proNumber: "S1" } }],
     });
 
     expect(parsed.toolCalls?.[0].arguments).toEqual({ proNumber: "S1" });

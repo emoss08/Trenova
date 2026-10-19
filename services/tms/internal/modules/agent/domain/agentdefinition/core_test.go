@@ -102,22 +102,22 @@ func TestHoldingReads_AddsEveryReadButOnesTheAgentSwitchedOff(t *testing.T) {
 	t.Parallel()
 
 	definition := &agentdefinition.Definition{
-		ToolNames:         []string{"get_shipment", "assign_move"},
+		ToolNames:         []string{"shipment_get", "assign_move"},
 		DisabledToolNames: []string{"list_settlements"},
 	}
 
 	reading := definition.HoldingReads([]string{
-		"get_shipment",
+		"shipment_get",
 		"get_customer",
 		"list_settlements",
 		agentdefinition.CoreToolFindInTrenova,
 		"get_customer",
 	})
 
-	assert.Equal(t, []string{"get_shipment", "assign_move", "get_customer"}, reading.ToolNames)
+	assert.Equal(t, []string{"shipment_get", "assign_move", "get_customer"}, reading.ToolNames)
 	assert.Equal(
 		t,
-		[]string{"get_shipment", "assign_move"},
+		[]string{"shipment_get", "assign_move"},
 		definition.ToolNames,
 		"the stored agent keeps the tools it was configured with",
 	)

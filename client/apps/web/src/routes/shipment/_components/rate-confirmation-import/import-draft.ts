@@ -139,22 +139,22 @@ export function applyImportDraftEdit(
   const fieldKey = edit.fieldKey.trim();
 
   switch (edit.action) {
-    case "accept_field":
+    case "intake_accept_field":
       if (fieldKey === "") {
         return false;
       }
       handlers.acceptField(fieldKey);
       return true;
-    case "accept_all_confident":
+    case "intake_accept_confident":
       handlers.acceptAllConfident();
       return true;
-    case "set_field_value":
+    case "intake_set_field":
       if (fieldKey === "") {
         return false;
       }
       handlers.editField(fieldKey, edit.value);
       return true;
-    case "set_required_field": {
+    case "intake_set_required_field": {
       const key = importRequiredFieldKeySchema.safeParse(fieldKey);
       if (!key.success) {
         return false;
@@ -162,7 +162,7 @@ export function applyImportDraftEdit(
       handlers.setRequiredField(key.data, edit.value);
       return true;
     }
-    case "set_stop_location": {
+    case "intake_set_stop_location": {
       const index = stopIndexOf(edit, stopCount);
       if (index === null || edit.value.trim() === "") {
         return false;
@@ -170,7 +170,7 @@ export function applyImportDraftEdit(
       handlers.setStopLocation(index, edit.value.trim());
       return true;
     }
-    case "set_stop_schedule": {
+    case "intake_set_stop_schedule": {
       const index = stopIndexOf(edit, stopCount);
       if (index === null || edit.windowStart <= 0) {
         return false;

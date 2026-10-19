@@ -109,7 +109,7 @@ func newListServiceFailuresTool(failures serviceFailureLister) agentports.AgentQ
 			{
 				Name: "shipmentId",
 				Kind: filterText,
-				Note: "an exact shipment id, from search_shipments",
+				Note: "an exact shipment id, from shipment_list",
 			},
 		},
 	}
@@ -315,8 +315,8 @@ func (t *listDetentionDeskTool) ParamSchema() map[string]any {
 				"Optional: only occurrences at this urgency.", detentionUrgencies,
 			),
 			"shipmentId": agenttoolschema.RecordIDText(permission.ResourceShipment,
-				"Optional: only this shipment's occurrences, from search_shipments or "+
-					"get_shipment."),
+				"Optional: only this shipment's occurrences, from shipment_list or "+
+					"shipment_get."),
 			"proNumber": map[string]any{
 				"type":        "string",
 				"description": "Optional: only the shipment with this pro number, such as SEED-DET-001.",

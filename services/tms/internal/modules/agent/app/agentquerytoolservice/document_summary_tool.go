@@ -62,7 +62,7 @@ func (t *getDocumentSummaryTool) Description() string {
 		"found. Use it for a document a record names, or for a page search_documents " +
 		"pointed at; a file the person attached to this conversation is read with " +
 		"read_attachment. For a rate confirmation or tender, follow with " +
-		"get_shipment_draft for the shipment it describes. A document whose reading " +
+		"intake_get_draft for the shipment it describes. A document whose reading " +
 		"is still pending has no text yet; say so and ask again shortly."
 }
 

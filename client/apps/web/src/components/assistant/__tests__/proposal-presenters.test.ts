@@ -8,7 +8,7 @@ function proposal(overrides: Partial<AssistantProposal>): AssistantProposal {
     runId: "arun_1",
     threadId: "athr_1",
     sourceMessageId: "amsg_1",
-    toolName: "request_missing_docs",
+    toolName: "shipment_request_documents",
     arguments: {},
     rationale: "",
     confidence: 0.8,
@@ -60,7 +60,7 @@ describe("presentProposal", () => {
   it("explains a document request by recipient and documents", () => {
     const view = presentProposal(
       proposal({
-        toolName: "request_missing_docs",
+        toolName: "shipment_request_documents",
         arguments: {
           to: ["ap@acme.example", "ops@acme.example"],
           subject: "Missing POD for S12345",
@@ -85,7 +85,7 @@ describe("presentProposal", () => {
   it("does not repeat an argument the presenter already spoke for", () => {
     const view = presentProposal(
       proposal({
-        toolName: "request_missing_docs",
+        toolName: "shipment_request_documents",
         arguments: {
           to: ["ap@acme.example"],
           body: "Hello, please send the documents.",
@@ -598,7 +598,7 @@ describe("presentProposal — intake and tendering", () => {
   it("describes a new shipment by its BOL, stops and source document", () => {
     const view = presentProposal(
       proposal({
-        toolName: "create_shipment",
+        toolName: "shipment_create",
         arguments: {
           sourceDocumentId: "doc_0123456789ABCDEFGHJKMNPQRS",
           shipment: {
@@ -625,7 +625,7 @@ describe("presentProposal — intake and tendering", () => {
   it("names the fields a shipment change touches and nothing else", () => {
     const view = presentProposal(
       proposal({
-        toolName: "update_shipment",
+        toolName: "shipment_update",
         arguments: { shipmentId: "shp_0123456789ABCDEFGHJKMNPQRC", weight: 22000, bol: "NEW-1" },
       }),
     );

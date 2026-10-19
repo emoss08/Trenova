@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -68,7 +68,7 @@ func (s *stubPermissions) Check(
 
 func shipmentCatalog() *filtercatalog.Catalog {
 	return filtercatalog.New(filtercatalog.Resource{
-		Tool:     "list_shipments",
+		Tool:     "shipment_list",
 		Resource: permission.ResourceShipment,
 		Entity:   "shipments",
 		Summary:  "Shipments and their status.",

@@ -25,13 +25,13 @@ const t: TranslateFn = (message) => message ?? "";
 describe("toolCallRecords", () => {
   it("gathers each tool's verdicts and counts the calls that did not go through", () => {
     const [record] = toolCallRecords([
-      row("update_shipment", "ran", 6),
-      row("update_shipment", "invalid", 3, [{ reason: "stop 2 has no location", calls: 3 }]),
-      row("update_shipment", "proposed", 2),
-      row("update_shipment", "failed", 1, [{ reason: "version conflict", calls: 1 }]),
+      row("shipment_update", "ran", 6),
+      row("shipment_update", "invalid", 3, [{ reason: "stop 2 has no location", calls: 3 }]),
+      row("shipment_update", "proposed", 2),
+      row("shipment_update", "failed", 1, [{ reason: "version conflict", calls: 1 }]),
     ]);
 
-    expect(record.toolName).toBe("update_shipment");
+    expect(record.toolName).toBe("shipment_update");
     expect(record.calls).toBe(12);
     expect(record.failing).toBe(4);
     expect(record.failingShare).toBeCloseTo(4 / 12);
@@ -58,16 +58,16 @@ describe("toolCallRecords", () => {
 
   it("puts the tool with the most calls that did not go through first, whatever its volume", () => {
     const records = toolCallRecords([
-      row("list_shipments", "ran", 400),
-      row("list_shipments", "invalid", 2),
-      row("update_shipment", "ran", 3),
-      row("update_shipment", "invalid", 5),
+      row("shipment_list", "ran", 400),
+      row("shipment_list", "invalid", 2),
+      row("shipment_update", "ran", 3),
+      row("shipment_update", "invalid", 5),
       row("get_customer", "ran", 50),
     ]);
 
     expect(records.map((record) => record.toolName)).toEqual([
-      "update_shipment",
-      "list_shipments",
+      "shipment_update",
+      "shipment_list",
       "get_customer",
     ]);
   });
@@ -93,13 +93,11 @@ describe("toolCallRecords", () => {
 
   it("folds two rows for the same verdict into one, adding up a reason given in both", () => {
     const [record] = toolCallRecords([
-      row("update_shipment", "invalid", 3, [
+      row("shipment_update", "invalid", 3, [
         { reason: "missing stop", calls: 2 },
         { reason: "bad date", calls: 1 },
       ]),
-      row("update_shipment", "invalid", 2, [
-        { reason: "bad date", calls: 2 },
-      ]),
+      row("shipment_update", "invalid", 2, [{ reason: "bad date", calls: 2 }]),
     ]);
 
     expect(record.verdicts).toEqual([
@@ -116,7 +114,7 @@ describe("toolCallRecords", () => {
 
   it("orders a verdict's reasons most frequent first", () => {
     const [record] = toolCallRecords([
-      row("update_shipment", "denied", 4, [
+      row("shipment_update", "denied", 4, [
         { reason: "no permission to update shipments", calls: 1 },
         { reason: "outside the agent's data access", calls: 3 },
       ]),

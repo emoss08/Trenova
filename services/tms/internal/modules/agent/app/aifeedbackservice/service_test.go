@@ -10,9 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -51,7 +51,7 @@ func newConversation(owner pulid.ID) conversationFixture {
 			ThreadID:    thread.ID,
 			Role:        conversation.RoleTool,
 			Kind:        conversation.MessageKindMessage,
-			ToolName:    "get_shipment",
+			ToolName:    "shipment_get",
 			ToolSummary: "Load 12",
 			Content:     `{"proNumber":"12","status":"InTransit"}`,
 		},
@@ -143,7 +143,7 @@ func TestSetMine_CreditsTheAnswerAndKeepsWhatThePersonSaw(t *testing.T) {
 	assert.Empty(t, saved.PromptHash, "turn-time fingerprints are recorded elsewhere")
 	assert.Equal(t, "It is in Houston.", saved.Comment)
 	assert.Equal(t,
-		aifeedback.PatternKey([]string{"get_shipment"}, aifeedback.ReasonInaccurate, "Shipment"),
+		aifeedback.PatternKey([]string{"shipment_get"}, aifeedback.ReasonInaccurate, "Shipment"),
 		saved.PatternKey,
 	)
 
@@ -151,7 +151,7 @@ func TestSetMine_CreditsTheAnswerAndKeepsWhatThePersonSaw(t *testing.T) {
 	assert.Equal(t, "Where is load 12?", saved.TurnSnapshot.Question)
 	assert.Equal(t, "Load 12 is in Dallas.", saved.TurnSnapshot.Answer)
 	require.Len(t, saved.TurnSnapshot.Tools, 1)
-	assert.Equal(t, "get_shipment", saved.TurnSnapshot.Tools[0].Name)
+	assert.Equal(t, "shipment_get", saved.TurnSnapshot.Tools[0].Name)
 }
 
 func TestSetMine_ReasonsMustMatchTheRating(t *testing.T) {

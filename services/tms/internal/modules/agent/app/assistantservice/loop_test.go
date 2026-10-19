@@ -4,12 +4,12 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
-	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -138,18 +138,18 @@ func TestRun_RunsAnEnabledQueryToolAndAnswersFromIt(t *testing.T) {
 	t.Parallel()
 
 	tool := &agenttest.StubQueryTool{
-		ToolName: "get_shipment",
+		ToolName: "shipment_get",
 		Result:   map[string]any{"proNumber": "S12345", "status": "InTransit"},
 	}
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("get_shipment", map[string]any{"shipmentId": "shp_1"}),
+		toolTurn("shipment_get", map[string]any{"shipmentId": "shp_1"}),
 		textTurn("S12345 is in transit."),
 	}}
 	svc := newService(completion, &stubQueryRegistry{Tools: []agentports.AgentQueryTool{tool}},
 		&stubActionRegistry{})
 
 	result, err := svc.run(t.Context(), &TurnRequest{
-		Definition: testDefinition("get_shipment"),
+		Definition: testDefinition("shipment_get"),
 		Actor:      testActor(),
 		Input:      "Where is S12345?",
 	})
@@ -190,18 +190,18 @@ func TestRun_ReportsToolFailureToTheModel(t *testing.T) {
 	t.Parallel()
 
 	tool := &agenttest.StubQueryTool{
-		ToolName: "get_shipment",
+		ToolName: "shipment_get",
 		Err:      errors.New("shipment not found"),
 	}
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("get_shipment", map[string]any{"shipmentId": "bogus"}),
+		toolTurn("shipment_get", map[string]any{"shipmentId": "bogus"}),
 		textTurn("I could not find that shipment."),
 	}}
 	svc := newService(completion, &stubQueryRegistry{Tools: []agentports.AgentQueryTool{tool}},
 		&stubActionRegistry{})
 
 	result, err := svc.run(t.Context(), &TurnRequest{
-		Definition: testDefinition("get_shipment"),
+		Definition: testDefinition("shipment_get"),
 		Actor:      testActor(),
 		Input:      "Where is bogus?",
 	})
@@ -249,13 +249,13 @@ func TestRunObserved_ReportsTheTurnInOrder(t *testing.T) {
 	t.Parallel()
 
 	tool := &agenttest.StubQueryTool{
-		ToolName: "get_shipment",
+		ToolName: "shipment_get",
 		Result:   map[string]any{"proNumber": "S12345"},
 	}
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		{
 			Text:            "Let me check.",
-			ToolCalls:       []agentports.ToolCall{{ID: "call_1", Name: "get_shipment"}},
+			ToolCalls:       []agentports.ToolCall{{ID: "call_1", Name: "shipment_get"}},
 			ModelIdentifier: "test-model",
 		},
 		textTurn("S12345 is in transit."),
@@ -265,7 +265,7 @@ func TestRunObserved_ReportsTheTurnInOrder(t *testing.T) {
 
 	var names []string
 	result, err := svc.runObserved(t.Context(), &TurnRequest{
-		Definition: testDefinition("get_shipment"),
+		Definition: testDefinition("shipment_get"),
 		Actor:      testActor(),
 		Input:      "Where is S12345?",
 	}, func(event kernelports.StreamEvent) {

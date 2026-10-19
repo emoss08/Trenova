@@ -11,7 +11,7 @@ scenarios:
       late stop's failures evaluated.
     expectedTools:
       - get_dispatch_board
-      - "get_shipment_tracking|get_shipment"
+      - "shipment_get_tracking|shipment_get"
       - list_service_failures
     exclusive: dispatch-board
     setup:
@@ -254,7 +254,7 @@ scenarios:
       does. A good run tells Sunbelt's traffic desk the stop, the time it left and the next stop
       with its window, and nothing internal.
     tags: [unattended, customer-updates]
-    expectedTools: [get_customer_update_preferences, "get_shipment|get_shipment_tracking"]
+    expectedTools: [get_customer_update_preferences, "shipment_get|shipment_get_tracking"]
     exclusive: dispatch-board
     setup:
       - *shp008-no-forwarded-note
@@ -424,7 +424,7 @@ scenarios:
       email. A good run leaves the failure open with what a person has to find out, and emails no
       one.
     tags: [unattended, service-failures]
-    expectedTools: ["get_service_failure|list_service_failures", "get_shipment_tracking|get_shipment"]
+    expectedTools: ["get_service_failure|list_service_failures", "shipment_get_tracking|shipment_get"]
     forbiddenTools: [resolve_service_failure, void_service_failure, email_customer]
     exclusive: service-failure-seed
     setup:

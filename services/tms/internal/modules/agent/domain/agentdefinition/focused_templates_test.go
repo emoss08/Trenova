@@ -21,7 +21,7 @@ const (
 		"template is at the tool cap"
 	withheldPersonalInterface = "it changes only the caller's own screen, a person's " +
 		"interface state that is no desk's job"
-	withheldCancelShipment = "canceling a shipment is a person's call; uncancel_shipment " +
+	withheldCancelShipment = "canceling a shipment is a person's call; shipment_uncancel " +
 		"stays with the dispatch assistant"
 )
 
@@ -60,7 +60,7 @@ var withheldFromEveryTemplate = map[string]string{
 	"add_home_widget":             withheldPersonalInterface,
 	"remove_home_widget":          withheldPersonalInterface,
 	"arrange_home_layout":         withheldPersonalInterface,
-	"cancel_shipment":             withheldCancelShipment,
+	"shipment_cancel":             withheldCancelShipment,
 }
 
 func TestTemplates_TheFocusedClerksTalkToAPersonAndOnlyPropose(t *testing.T) {
@@ -163,7 +163,7 @@ func TestTemplates_TheWorkforceCoordinatorKeepsWorkerRecordsAndNeverPay(t *testi
 		"cancel_dot_test",
 		"start_worker_checklist", "cancel_worker_checklist",
 		"close_worker_training", "archive_worker_credential",
-		"record_shipment_permit", "update_shipment_permit",
+		"shipment_record_permit", "shipment_update_permit",
 	} {
 		require.Containsf(t, tools, tool, "the workforce coordinator needs %s", tool)
 	}
@@ -237,15 +237,15 @@ func TestTemplates_TheExistingDesksPickUpTheWritesTheirWorkNeeds(t *testing.T) {
 	t.Parallel()
 
 	require.Contains(t,
-		agentdefinition.TemplateDispatchAssistant.StarterTools(), "update_shipment",
+		agentdefinition.TemplateDispatchAssistant.StarterTools(), "shipment_update",
 	)
 	require.Contains(t,
-		agentdefinition.TemplateDispatchAssistant.StarterTools(), "uncancel_shipment",
+		agentdefinition.TemplateDispatchAssistant.StarterTools(), "shipment_uncancel",
 	)
 	require.Contains(t,
 		agentdefinition.TemplateLoadMonitor.StarterTools(), "record_stop_actual",
 	)
 	require.NotContains(t,
-		agentdefinition.TemplateShipmentIntake.StarterTools(), "cancel_shipment",
+		agentdefinition.TemplateShipmentIntake.StarterTools(), "shipment_cancel",
 	)
 }

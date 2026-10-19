@@ -4,13 +4,13 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
+	"github.com/emoss08/trenova/internal/modules/agent/app/proposalrecorder"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
-	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
-	"github.com/emoss08/trenova/internal/modules/agent/app/proposalrecorder"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -145,7 +145,7 @@ func callNamed(t *testing.T, saved []conversation.Message, tool string) string {
 The owner's transcript: "void and recreate" became two unordered proposals
 with separate approvals. The Dispatch desk proposes voiding the old shipment
 and hands the Shipment Desk the copy, naming the shipment rather than
-retyping it. The Shipment Desk proposes duplicate_shipment from the id it was
+retyping it. The Shipment Desk proposes shipment_duplicate from the id it was
 handed, and the turn files both as one plan, voided first, under one
 approval, each write still the proposal of the agent that filed it.
 */
@@ -154,10 +154,10 @@ func TestHandOff_VoidAndRecreateIsOneTwoStepPlanInTheOrderAsked(t *testing.T) {
 
 	f := newDelegateFixture()
 	f.parent.ToolNames = []string{"void_shipment"}
-	f.delegate.ToolNames = []string{"duplicate_shipment"}
+	f.delegate.ToolNames = []string{"shipment_duplicate"}
 	void := &agenttest.StubActionTool{ToolName: "void_shipment", Tier: agent.TierPropose}
 	duplicate := &agenttest.StubActionTool{
-		ToolName: "duplicate_shipment",
+		ToolName: "shipment_duplicate",
 		Tier:     agent.TierPropose,
 	}
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
@@ -174,7 +174,7 @@ func TestHandOff_VoidAndRecreateIsOneTwoStepPlanInTheOrderAsked(t *testing.T) {
 			},
 		}}},
 		{ToolCalls: []agentports.ToolCall{{
-			ID: "call_copy", Name: "duplicate_shipment",
+			ID: "call_copy", Name: "shipment_duplicate",
 			Arguments: map[string]any{"shipmentId": "shp_old"},
 		}}},
 		{Text: "I proposed the copy of shp_old."},
@@ -265,15 +265,15 @@ func TestHandOff_VoidAndRecreateIsOneTwoStepPlanInTheOrderAsked(t *testing.T) {
 	}
 	assert.Equal(t, 1, steps["void_shipment"].PlanStep, "the void runs first, as asked")
 	assert.Equal(t, parentRun.ID, steps["void_shipment"].RunID)
-	assert.Equal(t, 2, steps["duplicate_shipment"].PlanStep)
-	assert.Equal(t, delegateRun.ID, steps["duplicate_shipment"].RunID)
+	assert.Equal(t, 2, steps["shipment_duplicate"].PlanStep)
+	assert.Equal(t, delegateRun.ID, steps["shipment_duplicate"].RunID)
 
 	byTool := map[string]agentports.AssistantProposal{}
 	for _, proposal := range persisted {
 		byTool[proposal.ToolName] = proposal
 	}
 	assert.Equal(t, f.parent.Name, byTool["void_shipment"].AgentName)
-	assert.Equal(t, f.delegate.Name, byTool["duplicate_shipment"].AgentName,
+	assert.Equal(t, f.delegate.Name, byTool["shipment_duplicate"].AgentName,
 		"the card still says which agent proposed it")
 }
 

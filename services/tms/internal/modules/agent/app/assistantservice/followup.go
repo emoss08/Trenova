@@ -192,7 +192,7 @@ func noteFrom(decisions []*agent.AgentDecision, proposalIDs []pulid.ID) string {
 // ranWith names the values a write that reports no result of its own ran with,
 // as the person approved them (their changes on the card over what was
 // proposed), leaving out ids and the agent's own rationale. "Approved
-// update_shipment, and it ran" left the agent nothing to tell the person, and
+// shipment_update, and it ran" left the agent nothing to tell the person, and
 // it wrote that the weight change had run without saying the weight.
 func ranWith(proposal *agent.AgentProposal, decisions []*agent.AgentDecision) string {
 	if proposal.Status != agent.ProposalStatusExecuted ||

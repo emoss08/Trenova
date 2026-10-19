@@ -40,7 +40,7 @@ func (o *decisionObserver) observe(
 func waitingOutcome(status agent.ProposalStatus) agentports.ProposalOutcome {
 	return agentports.ProposalOutcome{
 		ProposalID: pulid.MustNew("aprop_"),
-		ToolName:   "create_shipment",
+		ToolName:   "shipment_create",
 		Rationale:  "Copy PRO-100 for Tuesday.",
 		Status:     status,
 	}
@@ -149,7 +149,7 @@ func TestRequestDecision_ShowsTheCardAgainAndSaysTypingDecidesNothing(t *testing
 	require.Len(t, observer.seen, 1)
 	assert.Equal(t, agentports.DecisionRequest{
 		ProposalID: waiting.ProposalID,
-		ToolName:   "create_shipment",
+		ToolName:   "shipment_create",
 	}, observer.seen[0].Data)
 
 	content, failed := toolResult(run.result, requestDecisionName)
@@ -330,7 +330,7 @@ func TestRequestDecision_ShowsSeveralProposalsOfOneToolAsOneCard(t *testing.T) {
 	assert.Equal(t, agentports.DecisionRequest{
 		ProposalID:  first.ProposalID,
 		ProposalIDs: []pulid.ID{first.ProposalID, second.ProposalID},
-		ToolName:    "create_shipment",
+		ToolName:    "shipment_create",
 	}, observer.seen[0].Data)
 	_, failed := toolResult(run.result, requestDecisionName)
 	assert.False(t, failed)

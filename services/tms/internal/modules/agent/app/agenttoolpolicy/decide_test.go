@@ -294,7 +294,7 @@ func TestDecide_MailboxGate(t *testing.T) {
 func TestDecide_CommentVisibility(t *testing.T) {
 	t.Parallel()
 
-	policy := registeredPolicy(t, "add_shipment_comment")
+	policy := registeredPolicy(t, "shipment_add_comment")
 	actsAlone := definition(agent.TierAutoExecute, nil)
 	comment := func(visibility string) map[string]any {
 		return map[string]any{"shipmentId": "shp_1", "visibility": visibility}
@@ -347,12 +347,12 @@ func TestDecide_OutboundApprovalCap(t *testing.T) {
 		"email_customer",
 		"send_detention_notice",
 		"notify_driver",
-		"request_missing_docs",
+		"shipment_request_documents",
 		"request_credential_renewal",
 		"tender_move_to_routing_guide",
 		"tender_move_to_carriers",
 		"schedule_report",
-		"create_shipment",
+		"shipment_create",
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
@@ -570,13 +570,13 @@ func TestPromotable(t *testing.T) {
 	cases := map[string]agent.AutonomyTier{
 		"assign_move":              agent.TierAutoExecute,
 		"create_report":            agent.TierAutoExecute,
-		"add_shipment_comment":     agent.TierAutoExecute,
+		"shipment_add_comment":     agent.TierAutoExecute,
 		"post_customer_payment":    agent.TierAutoExecute,
 		"email_customer":           agent.TierActWithApproval,
 		"reply_to_inbound_message": agent.TierActWithApproval,
-		"create_shipment":          agent.TierActWithApproval,
+		"shipment_create":          agent.TierActWithApproval,
 		"schedule_report":          agent.TierActWithApproval,
-		"cancel_shipment":          agent.TierActWithApproval,
+		"shipment_cancel":          agent.TierActWithApproval,
 	}
 	for name, want := range cases {
 		assert.Equal(t, want, agenttoolpolicy.Promotable(registeredPolicy(t, name)), name)
@@ -594,12 +594,12 @@ func TestStaticTierAndExplainTier(t *testing.T) {
 	t.Parallel()
 
 	actsAlone := definition(agent.TierAutoExecute, map[string]agent.AutonomyTier{
-		"create_shipment": agent.TierAutoExecute,
+		"shipment_create": agent.TierAutoExecute,
 	})
 	assert.Equal(t, agent.TierActWithApproval,
-		agenttoolpolicy.StaticTier(actsAlone, registeredPolicy(t, "create_shipment")))
+		agenttoolpolicy.StaticTier(actsAlone, registeredPolicy(t, "shipment_create")))
 
-	explained := agenttoolpolicy.ExplainTier(registeredPolicy(t, "add_shipment_comment"))
+	explained := agenttoolpolicy.ExplainTier(registeredPolicy(t, "shipment_add_comment"))
 	assert.Contains(t, explained, "customer visible")
 	assert.Contains(t, explained, "waits for approval")
 }

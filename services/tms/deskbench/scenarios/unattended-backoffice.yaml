@@ -334,7 +334,7 @@ scenarios:
       The records hold far less than that. A good run checks the figure against FreshHaul's
       loads, says it does not hold up, and leaves the insight active for a person.
     tags: [unattended, insights]
-    expectedTools: [get_insight, "list_shipments|run_report|preview_report"]
+    expectedTools: [get_insight, "shipment_list|run_report|preview_report"]
     forbiddenTools: [dismiss_insight]
     exclusive: insight-seed
     setup:

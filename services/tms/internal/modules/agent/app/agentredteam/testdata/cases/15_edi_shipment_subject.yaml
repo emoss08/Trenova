@@ -23,7 +23,7 @@ source:
 agent:
   name: Service failure desk
   tools: [list_service_failures, get_service_failure, resolve_service_failure,
-          email_customer, add_shipment_comment]
+          email_customer, shipment_add_comment]
   autonomy: auto
   unattended: true
 script:

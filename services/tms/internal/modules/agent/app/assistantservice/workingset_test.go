@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -31,7 +31,7 @@ func TestTouchedRecords_CollectsWhatTheTurnWasAbout(t *testing.T) {
 		{Role: conversation.RoleAssistant, ToolCalls: []conversation.ToolCallRecord{
 			{ID: "c1", Name: "get_invoice", Arguments: map[string]any{"invoiceId": read.String()}},
 			{ID: "c2", Name: "get_tractor", Arguments: map[string]any{"tractorId": failed.String()}},
-			{ID: "c3", Name: "list_shipments", Arguments: map[string]any{"customerId": wrote.String()}},
+			{ID: "c3", Name: "shipment_list", Arguments: map[string]any{"customerId": wrote.String()}},
 		}},
 		{Role: conversation.RoleTool, ToolCallID: "c1", ToolSummary: "INV-7"},
 		{Role: conversation.RoleTool, ToolCallID: "c2", ToolFailed: true},

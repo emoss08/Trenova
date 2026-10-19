@@ -70,7 +70,7 @@ type orderChargeKeeper interface {
 
 func chargeIDProperty() map[string]any {
 	return agenttoolschema.KindID(
-		agenttoolschema.IDDescription("The order charge", "the charges get_order lists"),
+		agenttoolschema.IDDescription("The order charge", "the charges order_get lists"),
 		permission.KindOrderCharge,
 	)
 }
@@ -189,12 +189,12 @@ func chargeSpec(name, description, rationale string, properties map[string]any,
 
 func NewAddOrderChargeTool(charges orderChargeKeeper) agentports.AgentTool {
 	return common.NewReportingReceivableTool(chargeSpec(
-		"add_order_charge",
+		"order_add_charge",
 		"Add an order-level charge, one billed once for the whole order rather than on a "+
 			"shipment: a consolidation fee, a quoted flat rate. Give allocations only to "+
 			"split it among several payers; left out, the order's customer pays it all.",
 		"Adds to what the customer is billed; nothing is invoiced or sent, and "+
-			"remove_order_charge takes it off until it is invoiced.",
+			"order_remove_charge takes it off until it is invoiced.",
 		map[string]any{
 			common.ParamOrderID: orderIDProperty("The order"),
 			common.FieldDescription: common.StringProperty(
@@ -384,7 +384,7 @@ func (r *chargeRef) allocationRequest(
 
 func NewUpdateOrderChargeTool(charges orderChargeKeeper) agentports.AgentTool {
 	spec := chargeSpec(
-		"update_order_charge",
+		"order_update_charge",
 		"Change an order charge's description, amount or payer split. Send only what "+
 			"changes. An invoiced charge cannot be changed; adjust its invoice instead.",
 		"Changes what the customer is billed; nothing is invoiced or sent, and the old "+
@@ -463,7 +463,7 @@ func NewUpdateOrderChargeTool(charges orderChargeKeeper) agentports.AgentTool {
 
 func NewSetOrderChargeAllocationsTool(charges orderChargeKeeper) agentports.AgentTool {
 	spec := chargeSpec(
-		"set_order_charge_allocations",
+		"order_set_charge_allocations",
 		"Replace how one order charge is split among payers without touching the charge "+
 			"itself. Percents must add up to 100 and amounts to the charge; an empty list "+
 			"bills it all to the order's customer.",
@@ -534,11 +534,11 @@ func NewSetOrderChargeAllocationsTool(charges orderChargeKeeper) agentports.Agen
 
 func NewRemoveOrderChargeTool(charges orderChargeKeeper) agentports.AgentTool {
 	spec := chargeSpec(
-		"remove_order_charge",
+		"order_remove_charge",
 		"Take a charge off an order before it is invoiced. An invoiced charge stays; "+
 			"credit its invoice instead.",
 		"Lowers what the customer is billed; nothing is invoiced or sent, and "+
-			"add_order_charge puts it back.",
+			"order_add_charge puts it back.",
 		map[string]any{
 			common.ParamOrderID: orderIDProperty("The order"),
 			paramChargeID:       chargeIDProperty(),

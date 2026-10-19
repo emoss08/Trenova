@@ -347,7 +347,7 @@ func newGetCustomerUpdatePreferencesTool(
 			"recipient list is empty the notice profile's own recipients are the fallback. " +
 			"Call this before writing any status update.",
 		paramName: "customerId",
-		idSource:  "from list_customers or the customerId on get_shipment",
+		idSource:  "from list_customers or the customerId on shipment_get",
 		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
 			entity, err := repo.GetByID(ctx, customerports.GetCustomerByIDRequest{
 				ID:         id,

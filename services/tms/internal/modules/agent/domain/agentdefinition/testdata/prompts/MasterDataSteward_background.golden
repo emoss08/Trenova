@@ -114,7 +114,7 @@ Callable after find_tools:
 - list_equipment_types — List equipment types — the trailer and tractor classes this organization books against, such as dry van, reefer or flatbed.
 - list_equipment_manufacturers — List equipment manufacturers — who built the tractors and trailers in the fleet, such as Freightliner or Utility.
 - list_fleet_codes — List fleet codes — the groupings drivers and equipment are assigned to, each with its own manager and revenue goal.
-- search_shipments — Find shipments by the words people use for them: a pro number or BOL, a customer's name or code, a stop's place or city, the driver, or what it carries.
+- shipment_list — Find shipments (loads) by the words people use for them, by status, or by filters on dates, charges and transfer status.
 - search_documents — Search the text of documents: rate confirmations, bills of lading, proofs of delivery, invoices, contracts, permits and other files attached to records.
 - list_document_types — List the document types this organization files — rate confirmations, bills of lading, proofs of delivery and the rest.
 - delete_documents — Delete documents that should not be on file, such as a duplicate upload or a scan of the wrong paperwork.

@@ -27,7 +27,7 @@ function tableArtifact(payload: Record<string, unknown>): AssistantArtifact {
 describe("a table copied as CSV", () => {
   const artifact = tableArtifact({
     display: 1,
-    tool: "list_shipments",
+    tool: "shipment_list",
     entity: "shipments",
     recordEntity: "shipment",
     columns: [

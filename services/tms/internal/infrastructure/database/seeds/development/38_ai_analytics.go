@@ -92,7 +92,7 @@ type analyticsDeployment struct {
 
 var analyticsSeedTools = map[aiprovider.Task][]string{
 	aiprovider.TaskAssistantChat: {
-		"get_shipment", "search_drivers", "assign_driver", "get_hos_status", "update_load_status", "lookup_rate",
+		"shipment_get", "search_drivers", "assign_driver", "get_hos_status", "update_load_status", "lookup_rate",
 	},
 	aiprovider.TaskBillingDiagnosis: {
 		"release_billing_hold",
@@ -752,7 +752,7 @@ func (s *AIAnalyticsSeed) write(
 			OrganizationID: refs.org,
 			BusinessUnitID: refs.bu,
 			RunID:          pulid.ID(unit.ID),
-			ToolName:       "add_shipment_comment",
+			ToolName:       "shipment_add_comment",
 			ToolParams:     map[string]any{"comment": "Seeded proposal"},
 			Confidence:     decimal.NewFromFloat(0.8),
 			Rationale:      "Seeded so analytics has decisions to read.",

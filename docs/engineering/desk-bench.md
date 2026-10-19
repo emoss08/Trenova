@@ -258,7 +258,7 @@ scenarios:
       - say: "anything running late rn? need to know before my 9am"
         page: { path: /shipments, title: Shipments }
         expect:
-          calls: ["list_shipments|search_shipments|get_dispatch_board"]
+          calls: ["shipment_list|get_dispatch_board"]
           noCalls: [build_invoice_run]
           maxCalls: 6
           maxFailedCalls: 0
@@ -270,7 +270,7 @@ scenarios:
           rubric: Names each late load with its customer and how late it is.
       - say: "put a note on the first one that the receiver moved us to tomorrow 2pm"
         expect:
-          proposals: [{ tool: add_shipment_comment }]
+          proposals: [{ tool: shipment_add_comment }]
       - decide: approve
         expect:
           executed: true

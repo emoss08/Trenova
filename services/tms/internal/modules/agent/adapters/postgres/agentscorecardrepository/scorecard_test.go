@@ -22,16 +22,16 @@ func TestFoldVerdicts_OneCountPerToolAndVerdict(t *testing.T) {
 
 	got := foldVerdicts([]verdictRow{
 		{ToolName: "get_invoice", Verdict: "ran", Calls: 40, Total: 40},
-		{ToolName: "list_shipments", Verdict: "invalid", Reason: limitReason, Calls: 5, Total: 8},
-		{ToolName: "list_shipments", Verdict: "invalid", Reason: statusReason, Calls: 2, Total: 8},
-		{ToolName: "list_shipments", Verdict: "invalid", Calls: 1, Total: 8},
-		{ToolName: "list_shipments", Verdict: "ran", Calls: 12, Total: 12},
+		{ToolName: "shipment_list", Verdict: "invalid", Reason: limitReason, Calls: 5, Total: 8},
+		{ToolName: "shipment_list", Verdict: "invalid", Reason: statusReason, Calls: 2, Total: 8},
+		{ToolName: "shipment_list", Verdict: "invalid", Calls: 1, Total: 8},
+		{ToolName: "shipment_list", Verdict: "ran", Calls: 12, Total: 12},
 	})
 
 	assert.Equal(t, []agent.ToolVerdictCount{
 		{ToolName: "get_invoice", Verdict: "ran", Calls: 40, TopReasons: none},
 		{
-			ToolName: "list_shipments",
+			ToolName: "shipment_list",
 			Verdict:  "invalid",
 			Calls:    8,
 			TopReasons: []agent.ToolVerdictReason{
@@ -39,7 +39,7 @@ func TestFoldVerdicts_OneCountPerToolAndVerdict(t *testing.T) {
 				{Reason: statusReason, Calls: 2},
 			},
 		},
-		{ToolName: "list_shipments", Verdict: "ran", Calls: 12, TopReasons: none},
+		{ToolName: "shipment_list", Verdict: "ran", Calls: 12, TopReasons: none},
 	}, got)
 }
 

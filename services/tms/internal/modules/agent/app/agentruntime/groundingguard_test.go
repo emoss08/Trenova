@@ -86,13 +86,13 @@ func runGroundedWith(
 ) groundingRun {
 	t.Helper()
 
-	turns := []*agentports.ChatCompletionResult{toolTurn("create_shipment", filed)}
+	turns := []*agentports.ChatCompletionResult{toolTurn("shipment_create", filed)}
 	for _, reply := range replies {
 		turns = append(turns, textTurn(reply))
 	}
 	completion := &scriptedCompletion{Turns: turns}
 	tool := &agenttest.StubActionTool{
-		ToolName: "create_shipment",
+		ToolName: "shipment_create",
 		Tier:     agent.TierPropose,
 		Schema:   groundedShipmentSchema(),
 	}
@@ -100,7 +100,7 @@ func runGroundedWith(
 		Tools: []agentports.AgentTool{tool},
 	}, nil)
 	req := &agentports.RunRequest{
-		Definition: testDefinition("create_shipment"),
+		Definition: testDefinition("shipment_create"),
 		Actor:      testActor(),
 		Input:      "Copy shipment PRO-100 for customer cus_1, same lane, for Tuesday.",
 	}
@@ -138,7 +138,7 @@ func TestGroundingGuard_RewritesAReplyThatClaimsWhatWasNotFiled(t *testing.T) {
 	correction := lastUserMessage(run.completion.Requests[2])
 	assert.Equal(t, ReaskGrounding, run.completion.Requests[2].Reask)
 	assert.Contains(t, correction, "commodities")
-	assert.Contains(t, correction, "create_shipment")
+	assert.Contains(t, correction, "shipment_create")
 	assert.Equal(t,
 		"I proposed a copy of PRO-100 for cus_1. Check the card before you approve it.",
 		run.result.Reply)
@@ -406,7 +406,7 @@ func TestGroundingFinding_DropsOnlyWordsNoTopLevelLabelClaims(t *testing.T) {
 		fields: []string{"codes", "commodities"},
 		tools: map[string][]string{
 			"codes":       {"apply_edi_connection_draft"},
-			"commodities": {"create_shipment"},
+			"commodities": {"shipment_create"},
 		},
 		nested: []string{"codes"},
 	}
@@ -482,7 +482,7 @@ func TestGroundingGuard_AcceptsAFigureTheResultCarries(t *testing.T) {
 	assert.Empty(t, run.fx.regrounded())
 }
 
-// runGroundedResult files a create_shipment whose result carries rows, then
+// runGroundedResult files a shipment_create whose result carries rows, then
 // answers with the replies given.
 func runGroundedResult(
 	t *testing.T,
@@ -493,14 +493,14 @@ func runGroundedResult(
 	t.Helper()
 
 	turns := []*agentports.ChatCompletionResult{
-		toolTurn("create_shipment", map[string]any{"customerId": "cus_1"}),
+		toolTurn("shipment_create", map[string]any{"customerId": "cus_1"}),
 	}
 	for _, reply := range replies {
 		turns = append(turns, textTurn(reply))
 	}
 	completion := &scriptedCompletion{Turns: turns}
 	tool := &agenttest.StubActionTool{
-		ToolName: "create_shipment",
+		ToolName: "shipment_create",
 		Tier:     agent.TierPropose,
 		Schema:   groundedShipmentSchema(),
 	}
@@ -510,7 +510,7 @@ func runGroundedResult(
 	fx.localEffects = &localEffects{s: rt, ctx: t.Context(), emit: func(kernelports.StreamEvent) {}}
 
 	turn := rt.OpenTurn(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition("create_shipment"),
+		Definition: testDefinition("shipment_create"),
 		Actor:      testActor(),
 		Input:      "Copy shipment PRO-100 for customer cus_1.",
 	})

@@ -28,7 +28,7 @@ const stored = {
       },
     },
   ],
-  forbiddenTools: ["cancel_shipment"],
+  forbiddenTools: ["shipment_cancel"],
   proposals: [
     {
       toolName: "update_rate",
@@ -37,7 +37,7 @@ const stored = {
       rules: { rate: { kind: "numeric", abs: 5 } },
       sourceProposalId: "aprop_1",
     },
-    { toolName: "cancel_shipment", params: { shipmentId: "shp_1" }, rejected: true },
+    { toolName: "shipment_cancel", params: { shipmentId: "shp_1" }, rejected: true },
   ],
   expectRefusal: false,
   mustMention: ["hold"],
@@ -101,7 +101,7 @@ describe("readExpected", () => {
   it("drops what it does not recognise instead of failing", () => {
     const expected = readExpected({
       toolMode: "Sometimes",
-      tools: [{ name: 3 }, { name: "get_shipment", rules: { id: { kind: "fuzzy" } } }],
+      tools: [{ name: 3 }, { name: "shipment_get", rules: { id: { kind: "fuzzy" } } }],
       mustMention: ["hold", 4],
     });
 
@@ -181,13 +181,13 @@ describe("evalCaseFormSchema", () => {
     expect(
       issuePaths(
         valid({
-          tools: [{ name: "cancel_shipment", args: [] }],
-          forbiddenTools: ["cancel_shipment"],
+          tools: [{ name: "shipment_cancel", args: [] }],
+          forbiddenTools: ["shipment_cancel"],
         }),
       ),
     ).toContain("tools.0.name");
     expect(
-      issuePaths(valid({ expectRefusal: true, tools: [{ name: "get_shipment", args: [] }] })),
+      issuePaths(valid({ expectRefusal: true, tools: [{ name: "shipment_get", args: [] }] })),
     ).toContain("expectRefusal");
     expect(issuePaths(valid({ mustMention: ["Hold"], mustNotMention: ["hold"] }))).toContain(
       "mustNotMention",

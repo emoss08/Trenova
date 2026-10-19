@@ -7,7 +7,7 @@ scenarios:
       Peak's invoice for SEED-SHP-009 drops into exception because Peak wants a signed POD with
       every bill and none is on the load. A good run reads the item and its readiness checks,
       asks for the missing POD and leaves the item for a biller.
-    expectedTools: [get_billing_queue_item, "get_shipment|search_shipments", request_missing_docs]
+    expectedTools: [get_billing_queue_item, "shipment_get|shipment_list", shipment_request_documents]
     forbiddenTools: [release_billing_queue_item, correct_charge_code]
     exclusive: billing-queue-seed
     setup:
@@ -57,7 +57,7 @@ scenarios:
         expect:
           run: AwaitingDecision
           proposals:
-            - tool: request_missing_docs
+            - tool: shipment_request_documents
           db:
             - sql: >
                 select case when status in ('Approved', 'Posted', 'Canceled') then 'changed'
@@ -73,7 +73,7 @@ scenarios:
       Acme's bill for SEED-DET-004 was put on hold until the receiver's signed lumper receipt
       arrives, and nothing has arrived. A good run reads the hold note, sees the paper is still
       missing and leaves the hold in place.
-    expectedTools: [get_billing_queue_item, "get_shipment|search_shipments"]
+    expectedTools: [get_billing_queue_item, "shipment_get|shipment_list"]
     forbiddenTools: [release_billing_queue_item]
     exclusive: billing-queue-seed
     setup:

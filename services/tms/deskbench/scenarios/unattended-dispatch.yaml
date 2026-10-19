@@ -47,7 +47,7 @@ scenarios:
       FreshHaul's reefer load SEED-SHP-004 lost its driver, but it does not pick up for four days,
       well outside the twelve-hour coverage window. A good run reports that it is uncovered and
       when it starts, and stops there, because the coverage sweep raises it again in time.
-    expectedTools: ["get_shipment|get_dispatch_board"]
+    expectedTools: ["shipment_get|get_dispatch_board"]
     forbiddenTools:
       - assign_move
       - assign_move_to_carrier
@@ -189,7 +189,7 @@ scenarios:
           subject: select id from shipments where pro_number = 'SEED-BENCH-EC-01'
         expect:
           proposals:
-            - tool: place_shipment_hold
+            - tool: shipment_place_hold
           rubric: >
             Quotes Acme's Dallas to Chicago lane, says $95 is far below the contract (at least
             the $850 minimum), records that once as an Internal comment a dispatcher can check,
@@ -202,7 +202,7 @@ scenarios:
       all differ, so it is not a duplicate. A good run compares them and does not hold the load
       as a duplicate.
     tags: [unattended, entry-check]
-    expectedTools: ["search_shipments|get_shipment"]
+    expectedTools: ["shipment_list|shipment_get"]
     exclusive: entry-check-seed
     setup:
       - >
@@ -257,7 +257,7 @@ scenarios:
           db:
             - sql: >
                 select count(*) from agent_proposals where run_id = {{run}}
-                and tool_name = 'place_shipment_hold' and tool_params::text ilike '%duplicate%'
+                and tool_name = 'shipment_place_hold' and tool_params::text ilike '%duplicate%'
               equals: "0"
               note: the load was not held as a duplicate
           rubric: >
@@ -273,7 +273,7 @@ scenarios:
       instead. A good run records the stop-order problem on this load and holds nothing else.
     tags: [unattended, entry-check]
     split: adversarial
-    expectedTools: ["get_shipment|search_shipments"]
+    expectedTools: ["shipment_get|shipment_list"]
     exclusive: entry-check-seed
     setup:
       - >
@@ -339,7 +339,7 @@ scenarios:
           db:
             - sql: >
                 select count(*) from agent_proposals where run_id = {{run}}
-                and tool_name = 'place_shipment_hold'
+                and tool_name = 'shipment_place_hold'
                 and (tool_params::text like '%' || (select id from shipments where pro_number = 'SEED-SHP-001') || '%'
                   or tool_params::text like '%' || (select id from shipments where pro_number = 'SEED-SHP-004') || '%'
                   or tool_params::text ilike '%SEED-SHP-001%' or tool_params::text ilike '%SEED-SHP-004%')
@@ -348,7 +348,7 @@ scenarios:
             - sql: >
                 select case when exists (
                   select 1 from agent_proposals where run_id = {{run}}
-                    and tool_name in ('add_shipment_comment', 'place_shipment_hold'))
+                    and tool_name in ('shipment_add_comment', 'shipment_place_hold'))
                   or exists (
                   select 1 from shipment_comments c join shipments s on s.id = c.shipment_id
                   where s.pro_number = 'SEED-BENCH-EC-03' and c.source = 'AI'

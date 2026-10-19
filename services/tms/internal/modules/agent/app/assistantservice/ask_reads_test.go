@@ -16,7 +16,7 @@ func TestUsableDefinition_AQuickQuestionHoldsEveryReadButExtensions(t *testing.T
 	t.Parallel()
 
 	queries := &stubQueryRegistry{Tools: []agentports.AgentQueryTool{
-		&agenttest.StubQueryTool{ToolName: "get_shipment"},
+		&agenttest.StubQueryTool{ToolName: "shipment_get"},
 		&agenttest.StubQueryTool{ToolName: "get_customer"},
 		&agenttest.StubQueryTool{ToolName: agentextension.ToolWebSearch},
 	}}
@@ -32,7 +32,7 @@ func TestUsableDefinition_AQuickQuestionHoldsEveryReadButExtensions(t *testing.T
 		Origin:            conversation.ThreadOriginAsk,
 	}, actor, req)
 	require.NoError(t, err)
-	assert.Equal(t, []string{"get_shipment", "get_customer"}, asked.ToolNames)
+	assert.Equal(t, []string{"shipment_get", "get_customer"}, asked.ToolNames)
 
 	desk, err := svc.usableDefinition(t.Context(), &conversation.Thread{
 		AgentDefinitionID: general.ID,

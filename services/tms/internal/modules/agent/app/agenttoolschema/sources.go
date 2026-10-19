@@ -37,11 +37,11 @@ var (
 		"shipment.commentVisibility",
 		shipment.CommentVisibilityValues(),
 	)
-	CommentPriorities  = Source("shipment.commentPriority", shipment.CommentPriorityValues())
-	CarrierRateMethods = Source("shipment.carrierRateMethod", shipment.CarrierRateMethodValues())
-	AccessorialMethods = Source("accessorialCharge.method", accessorialcharge.MethodValues())
-	TenderChannels     = Source("tender.channel", tender.ChannelValues())
-	SpotTenderModes    = Source("tender.spotMode", tender.SpotModeValues())
+	CommentPriorities   = Source("shipment.commentPriority", shipment.CommentPriorityValues())
+	CarrierRateMethods  = Source("shipment.carrierRateMethod", shipment.CarrierRateMethodValues())
+	AccessorialMethods  = Source("accessorialCharge.method", accessorialcharge.MethodValues())
+	TenderChannels      = Source("tender.channel", tender.ChannelValues())
+	SpotTenderModes     = Source("tender.spotMode", tender.SpotModeValues())
 	ExceptionCategories = Source(
 		"agent.exceptionCategory",
 		agent.AllExceptionCategories(),

@@ -100,9 +100,9 @@ describe("shareItemsByKey", () => {
       message({
         role: "Assistant",
         content: "Checking both.",
-        toolCalls: [{ id: "c1", name: "get_shipment", arguments: { proNumber: "S1" } }],
+        toolCalls: [{ id: "c1", name: "shipment_get", arguments: { proNumber: "S1" } }],
       }),
-      message({ role: "Tool", toolCallId: "c1", toolName: "get_shipment", content: "one" }),
+      message({ role: "Tool", toolCallId: "c1", toolName: "shipment_get", content: "one" }),
       message({ role: "Assistant", content: "S1 is in transit." }),
     ];
     const entryKey = (entry: ThreadEntry) => entry.message.id;

@@ -431,7 +431,7 @@ func buildDelegateSection(delegates []RuntimeDelegate) string {
 			"the task is about in records by their kind and id and the results of your own " +
 			"calls it should work from in shareResults, and say what to hand back. Ask for a " +
 			"record to be made with a tool, never described in words: to copy one, ask for it " +
-			"to be copied with duplicate_shipment or the tool that copies it. One task per " +
+			"to be copied with shipment_duplicate or the tool that copies it. One task per " +
 			"call, and only when your own tools cannot do the job. Then tell the person " +
 			"plainly what the other agent did and what still waits on them on its card; a " +
 			"waiting proposal's proposalId is for request_decision, not for the person.\n",
@@ -479,7 +479,7 @@ func buildDelegatedOutputSection(delegator string) string {
 		"you cannot ask the person anything, so do the task with what you have. Work from " +
 		"the records and results handed over with the task: open each record by its id with " +
 		"your own tools, and copy a record with the tool that copies it, such as " +
-		"duplicate_shipment, rather than retyping it into a new one. Finish with a short " +
+		"shipment_duplicate, rather than retyping it into a new one. Finish with a short " +
 		"plain answer: what you did, every record you created or changed by its number or " +
 		"name, what is waiting on the person's approval, and what you could not do and why. " +
 		"Never write a record's internal id (shp_01…, inv_01…) or a proposal's in it, even " +
@@ -1205,7 +1205,7 @@ func changeGroups(tools []ToolSummary) string {
 }
 
 // buildRecipeLines says, for each tool that is done as a sequence, which
-// tools come before and after it. A model handed create_shipment with
+// tools come before and after it. A model handed shipment_create with
 // eight id parameters and no order looked them up one at a time or guessed
 // one; a line that names the order is followed.
 func buildRecipeLines(tools []ToolSummary) string {

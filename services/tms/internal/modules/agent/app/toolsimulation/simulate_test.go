@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -77,7 +77,7 @@ func TestSimulate_DescribesAToolWithoutAPreview(t *testing.T) {
 
 	preview := Simulate(
 		t.Context(),
-		plainTool{name: "cancel_shipment"},
+		plainTool{name: "shipment_cancel"},
 		&agentports.ToolExecuteParams{
 			Params: map[string]any{
 				"shipmentId":   "shp_1",
@@ -88,7 +88,7 @@ func TestSimulate_DescribesAToolWithoutAPreview(t *testing.T) {
 	)
 
 	assert.False(t, preview.Previewed)
-	assert.Contains(t, preview.Summary, "Would run cancel_shipment")
+	assert.Contains(t, preview.Summary, "Would run shipment_cancel")
 	assert.Contains(t, preview.Summary, "no preview of its own")
 	require.Len(t, preview.Changes, 3)
 	assert.Equal(
@@ -102,7 +102,7 @@ func TestSimulate_DescribesAToolWithoutAPreview(t *testing.T) {
 func TestSimulate_ReadsTheRecordPreview(t *testing.T) {
 	t.Parallel()
 
-	tool := previewingTool{plainTool: plainTool{name: "cancel_shipment"}, record: cancelPreview()}
+	tool := previewingTool{plainTool: plainTool{name: "shipment_cancel"}, record: cancelPreview()}
 
 	preview := Simulate(t.Context(), tool, &agentports.ToolExecuteParams{})
 
@@ -128,7 +128,7 @@ func TestSimulate_PreviewsInAReadOnlyContext(t *testing.T) {
 
 	readOnly := false
 	tool := previewingTool{
-		plainTool: plainTool{name: "cancel_shipment"},
+		plainTool: plainTool{name: "shipment_cancel"},
 		record:    cancelPreview(),
 		readOnly:  &readOnly,
 	}
@@ -141,7 +141,7 @@ func TestSimulate_PreviewsInAReadOnlyContext(t *testing.T) {
 func TestFromBaseline_ReadsTheSnapshotsPreview(t *testing.T) {
 	t.Parallel()
 
-	simulation := FromBaseline("cancel_shipment", nil, &agentports.ProposalBaselineResult{
+	simulation := FromBaseline("shipment_cancel", nil, &agentports.ProposalBaselineResult{
 		Preview: cancelPreview(),
 	})
 
@@ -155,7 +155,7 @@ func TestFromBaseline_ReportsAFailedPreviewWithoutRunningItAgain(t *testing.T) {
 	t.Parallel()
 
 	simulation := FromBaseline(
-		"cancel_shipment",
+		"shipment_cancel",
 		map[string]any{"shipmentId": "shp_1"},
 		&agentports.ProposalBaselineResult{
 			PreviewErr: errors.New("cannot execute UPDATE in a read-only transaction"),
@@ -172,9 +172,9 @@ func TestFromBaseline_DescribesWhenNothingWasPreviewed(t *testing.T) {
 	t.Parallel()
 
 	for _, baseline := range []*agentports.ProposalBaselineResult{nil, {}} {
-		simulation := FromBaseline("cancel_shipment", map[string]any{"shipmentId": "shp_1"}, baseline)
+		simulation := FromBaseline("shipment_cancel", map[string]any{"shipmentId": "shp_1"}, baseline)
 
 		assert.False(t, simulation.Previewed)
-		assert.Contains(t, simulation.Summary, "Would run cancel_shipment")
+		assert.Contains(t, simulation.Summary, "Would run shipment_cancel")
 	}
 }

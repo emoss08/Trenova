@@ -144,10 +144,10 @@ func TestRunDrivesADelegatesTurnInTheSameWorkflow(t *testing.T) {
 	t.Parallel()
 
 	lookup := &agenttest.StubQueryTool{
-		ToolName: "get_shipment",
+		ToolName: "shipment_get",
 		Result:   map[string]any{"city": "Memphis"},
 	}
-	delegate := delegateDefinition("get_shipment")
+	delegate := delegateDefinition("shipment_get")
 	opener := &scriptedOpener{definition: delegate}
 	h := newHarness(t, harnessParams{
 		query:     []agentports.AgentQueryTool{lookup},
@@ -168,7 +168,7 @@ func TestRunDrivesADelegatesTurnInTheSameWorkflow(t *testing.T) {
 		textReply("The Shipment Desk found it in Memphis."),
 	)
 	h.scopedReplies(delegateScope,
-		toolReply("get_shipment", map[string]any{"proNumber": "12345"}),
+		toolReply("shipment_get", map[string]any{"proNumber": "12345"}),
 		textReply("Load 12345 is in Memphis."),
 	)
 

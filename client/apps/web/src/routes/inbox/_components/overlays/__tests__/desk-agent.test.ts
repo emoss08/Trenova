@@ -6,7 +6,7 @@ const DISPATCH: AgentLike = {
   name: "Dispatch",
   description: "Loads, tenders, carriers",
   template: "DispatchAssistant",
-  toolNames: ["create_shipment", "tender_shipment"],
+  toolNames: ["shipment_create", "tender_shipment"],
 };
 const BILLING: AgentLike = {
   id: "a_billing",

@@ -8,7 +8,7 @@ scenarios:
     steps:
       - say: "whats ready to bill"
         expect:
-          calls: ["list_shipments|search_shipments|list_billing_queue_items|list_billing_transfer_candidates"]
+          calls: ["shipment_list|list_billing_queue_items|list_billing_transfer_candidates"]
           maxFailedCalls: 0
           noProposals: true
           facts:
@@ -28,7 +28,7 @@ scenarios:
     steps:
       - say: "peak is asking why the denver to phoenix load is 3700. whats in that"
         expect:
-          calls: ["search_shipments|list_shipments|get_shipment|explain_rate"]
+          calls: ["shipment_list|shipment_get|explain_rate"]
           maxFailedCalls: 1
           noProposals: true
           replyIncludes: ["SEED-SHP-009"]
@@ -61,7 +61,7 @@ scenarios:
     steps:
       - say: "any loads that delivered but never got sent over to billing?"
         expect:
-          calls: ["list_shipments|search_shipments|list_billing_transfer_candidates"]
+          calls: ["shipment_list|list_billing_transfer_candidates"]
           maxFailedCalls: 0
           noProposals: true
           rubric: >
@@ -71,7 +71,7 @@ scenarios:
   - name: lumper-charge-on-a-load
     description: >
       An accessorial added to a saved load, at an amount the person names rather than the charge's
-      configured $150. Exercises add_shipment_charge, which Billing exceptions holds since DB-019 and
+      configured $150. Exercises shipment_add_charge, which Billing exceptions holds since DB-019 and
       no other case reached. Lumper charges earlier runs added are removed first, so the load starts
       without one.
     tags: [billing, write]
@@ -85,7 +85,7 @@ scenarios:
     steps:
       - say: "add a 175 lumper to SEED-SHP-008, the receiver charged our driver at the dock"
         expect:
-          proposals: [{ tool: add_shipment_charge }]
+          proposals: [{ tool: shipment_add_charge }]
           maxFailedCalls: 1
           rubric: >
             Proposes one lumper charge of $175 on SEED-SHP-008, not the charge's configured $150,

@@ -167,7 +167,36 @@ func partyTerms(query string) []string {
 	return terms
 }
 
-func (t *searchShipmentsTool) resolveParties(
+type partySource struct {
+	into   *[]partyMatch
+	lookup func(context.Context, *pagination.QueryOptions, string) ([]partyMatch, error)
+}
+
+func (t *shipmentListTool) partySources(parties *shipmentParties) []partySource {
+	sources := make([]partySource, 0, 5)
+	if t.parties.customers != nil {
+		sources = append(sources, partySource{into: &parties.customers, lookup: t.customerParties})
+	}
+	if t.parties.locations != nil {
+		sources = append(sources, partySource{into: &parties.locations, lookup: t.locationParties})
+	}
+	if t.parties.workers != nil {
+		sources = append(sources, partySource{into: &parties.workers, lookup: t.workerParties})
+	}
+	if t.parties.commodities != nil {
+		sources = append(sources, partySource{
+			into:   &parties.commodities,
+			lookup: t.commodityParties,
+		})
+	}
+	if t.parties.types != nil {
+		sources = append(sources, partySource{into: &parties.types, lookup: t.typeParties})
+	}
+
+	return sources
+}
+
+func (t *shipmentListTool) resolveParties(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	query string,
@@ -177,92 +206,122 @@ func (t *searchShipmentsTool) resolveParties(
 		return parties, nil
 	}
 
+	sources := t.partySources(parties)
 	for _, term := range partyTerms(query) {
 		filter := &pagination.QueryOptions{
 			TenantInfo: tenant,
 			Pagination: pagination.Info{Limit: partyMatchLimit},
 			Query:      term,
 		}
-
-		if t.parties.customers != nil {
-			found, err := t.parties.customers.List(
-				ctx,
-				&customerports.ListCustomerRequest{Filter: filter},
-			)
+		for _, source := range sources {
+			found, err := source.lookup(ctx, filter, term)
 			if err != nil {
 				return nil, err
 			}
-			for _, item := range found.Items {
-				parties.customers = append(parties.customers, partyMatch{
-					term: term, id: item.ID, name: item.Name,
-				})
-			}
+			*source.into = append(*source.into, found...)
 		}
-
-		if t.parties.locations != nil {
-			found, err := t.parties.locations.List(
-				ctx,
-				&locationports.ListLocationRequest{Filter: filter},
-			)
-			if err != nil {
-				return nil, err
-			}
-			for _, item := range found.Items {
-				parties.locations = append(parties.locations, partyMatch{
-					term: term, id: item.ID, name: item.Name + " (" + item.City + ")",
-				})
-			}
-		}
-
-		if t.parties.workers != nil {
-			found, err := t.parties.workers.List(
-				ctx,
-				&workerports.ListWorkersRequest{Filter: filter},
-			)
-			if err != nil {
-				return nil, err
-			}
-			for _, item := range found.Items {
-				parties.workers = append(parties.workers, partyMatch{
-					term: term, id: item.ID, name: workerName(item),
-				})
-			}
-		}
-
-		if t.parties.commodities != nil {
-			found, err := t.parties.commodities.List(
-				ctx,
-				&commodityports.ListCommodityRequest{Filter: filter},
-			)
-			if err != nil {
-				return nil, err
-			}
-			for _, item := range found.Items {
-				parties.commodities = append(parties.commodities, partyMatch{
-					term: term, id: item.ID, name: item.Name,
-				})
-			}
-		}
-
-		if t.parties.types != nil {
-			found, err := t.parties.types.List(
-				ctx,
-				&shipmenttypeports.ListShipmentTypesRequest{Filter: filter},
-			)
-			if err != nil {
-				return nil, err
-			}
-			for _, item := range found.Items {
-				parties.types = append(parties.types, partyMatch{
-					term: term, id: item.ID, name: item.Code,
-				})
-			}
-		}
-
 		if term == query && !parties.empty() {
 			break
 		}
 	}
 
 	return parties, nil
+}
+
+func (t *shipmentListTool) customerParties(
+	ctx context.Context,
+	filter *pagination.QueryOptions,
+	term string,
+) ([]partyMatch, error) {
+	found, err := t.parties.customers.List(ctx, &customerports.ListCustomerRequest{Filter: filter})
+	if err != nil {
+		return nil, err
+	}
+
+	matches := make([]partyMatch, 0, len(found.Items))
+	for _, item := range found.Items {
+		matches = append(matches, partyMatch{term: term, id: item.ID, name: item.Name})
+	}
+
+	return matches, nil
+}
+
+func (t *shipmentListTool) locationParties(
+	ctx context.Context,
+	filter *pagination.QueryOptions,
+	term string,
+) ([]partyMatch, error) {
+	found, err := t.parties.locations.List(ctx, &locationports.ListLocationRequest{Filter: filter})
+	if err != nil {
+		return nil, err
+	}
+
+	matches := make([]partyMatch, 0, len(found.Items))
+	for _, item := range found.Items {
+		matches = append(matches, partyMatch{
+			term: term, id: item.ID, name: item.Name + " (" + item.City + ")",
+		})
+	}
+
+	return matches, nil
+}
+
+func (t *shipmentListTool) workerParties(
+	ctx context.Context,
+	filter *pagination.QueryOptions,
+	term string,
+) ([]partyMatch, error) {
+	found, err := t.parties.workers.List(ctx, &workerports.ListWorkersRequest{Filter: filter})
+	if err != nil {
+		return nil, err
+	}
+
+	matches := make([]partyMatch, 0, len(found.Items))
+	for _, item := range found.Items {
+		matches = append(matches, partyMatch{term: term, id: item.ID, name: workerName(item)})
+	}
+
+	return matches, nil
+}
+
+func (t *shipmentListTool) commodityParties(
+	ctx context.Context,
+	filter *pagination.QueryOptions,
+	term string,
+) ([]partyMatch, error) {
+	found, err := t.parties.commodities.List(
+		ctx,
+		&commodityports.ListCommodityRequest{Filter: filter},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	matches := make([]partyMatch, 0, len(found.Items))
+	for _, item := range found.Items {
+		matches = append(matches, partyMatch{term: term, id: item.ID, name: item.Name})
+	}
+
+	return matches, nil
+}
+
+func (t *shipmentListTool) typeParties(
+	ctx context.Context,
+	filter *pagination.QueryOptions,
+	term string,
+) ([]partyMatch, error) {
+	found, err := t.parties.types.List(
+		ctx,
+		&shipmenttypeports.ListShipmentTypesRequest{Filter: filter},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	matches := make([]partyMatch, 0, len(found.Items))
+	for _, item := range found.Items {
+		matches = append(matches, partyMatch{term: term, id: item.ID, name: item.Code})
+	}
+
+	return matches, nil
 }

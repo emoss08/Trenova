@@ -120,6 +120,7 @@ type AgentTool interface {
 
 type AgentToolDescriptor struct {
 	Name         string             `json:"name"`
+	Namespace    string             `json:"namespace,omitempty"`
 	Description  string             `json:"description"`
 	Parameters   map[string]any     `json:"parameters"`
 	AutonomyTier agent.AutonomyTier `json:"autonomyTier"`
@@ -180,7 +181,7 @@ type BatchTool interface {
 
 // RecipeTool is a tool whose use is a sequence: the lookups that hand out
 // its arguments in the order the work is done, the tool itself, and what
-// follows it. A model handed create_shipment with eight id parameters and
+// follows it. A model handed shipment_create with eight id parameters and
 // no order went looking for them one at a time, or guessed; the recipe is
 // told with the tool wherever it is named, in the prompt and in a find_tools
 // answer, so one call does what three round trips used to.
@@ -208,6 +209,7 @@ func DescribeTool(
 ) AgentToolDescriptor {
 	descriptor := AgentToolDescriptor{
 		Name:         tool.Name(),
+		Namespace:    NamespaceOf(tool.Name()),
 		Description:  tool.Description(),
 		Parameters:   tool.ParamSchema(),
 		AutonomyTier: tier,

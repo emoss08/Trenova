@@ -187,7 +187,7 @@ func (s *AssistantConversationSeed) seedDispatchThread(
 			Role:     conversation.RoleAssistant,
 			ToolCalls: []conversation.ToolCallRecord{{
 				ID:        callID,
-				Name:      "get_shipment",
+				Name:      "shipment_get",
 				Arguments: map[string]any{"proNumber": refs.shipment.ProNumber},
 			}},
 			Model:        seedConversationModel,
@@ -200,7 +200,7 @@ func (s *AssistantConversationSeed) seedDispatchThread(
 			Sequence:   2,
 			Role:       conversation.RoleTool,
 			ToolCallID: callID,
-			ToolName:   "get_shipment",
+			ToolName:   "shipment_get",
 			Content: fmt.Sprintf(
 				`{"proNumber":%q,"status":%q,"id":%q}`,
 				refs.shipment.ProNumber,

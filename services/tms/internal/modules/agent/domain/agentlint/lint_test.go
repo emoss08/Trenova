@@ -12,8 +12,8 @@ func registry(held ...string) []Tool {
 	tools := []Tool{
 		{Name: "get_invoice", Resource: permission.ResourceInvoice, ResourceLabel: "Invoice", Operation: permission.OpRead},
 		{Name: "update_invoice", Resource: permission.ResourceInvoice, ResourceLabel: "Invoice", Operation: permission.OpUpdate},
-		{Name: "get_shipment", Resource: permission.ResourceShipment, ResourceLabel: "Shipment", Operation: permission.OpRead},
-		{Name: "cancel_shipment", Resource: permission.ResourceShipment, ResourceLabel: "Shipment", Operation: permission.OpCancel},
+		{Name: "shipment_get", Resource: permission.ResourceShipment, ResourceLabel: "Shipment", Operation: permission.OpRead},
+		{Name: "shipment_cancel", Resource: permission.ResourceShipment, ResourceLabel: "Shipment", Operation: permission.OpCancel},
 	}
 	for idx := range tools {
 		for _, name := range held {

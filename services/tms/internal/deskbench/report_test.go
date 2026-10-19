@@ -135,11 +135,11 @@ func TestScoreSelection(t *testing.T) {
 	t.Parallel()
 
 	scenario := &Scenario{
-		ExpectedTools:  []string{"get_shipment|search_shipments", "add_shipment_comment"},
-		ForbiddenTools: []string{"cancel_shipment"},
+		ExpectedTools:  []string{"shipment_get|shipment_list", "shipment_add_comment"},
+		ForbiddenTools: []string{"shipment_cancel"},
 	}
 	turns := []*TurnRecord{toolTurnRecord(
-		"find_tools", "list_customers", "search_shipments", "cancel_shipment", "recall_memory",
+		"find_tools", "list_customers", "shipment_list", "shipment_cancel", "recall_memory",
 	)}
 
 	selection := scoreSelection(scenario, turns)
@@ -158,14 +158,14 @@ func TestScoreRetrieval_AgainstTheToolsThePassingTrialUsed(t *testing.T) {
 	t.Parallel()
 
 	turn := toolTurnRecord(
-		"find_tools", "get_shipment", "list_trailers", "add_shipment_comment", "get_customer",
+		"find_tools", "shipment_get", "list_trailers", "shipment_add_comment", "get_customer",
 	)
 	turn.ModelCalls = []*ModelCall{{Chat: &agentports.ChatCompletionRequest{Tools: []kernelports.ToolSpec{
-		{Name: "get_shipment"}, {Name: "add_shipment_comment"}, {Name: "get_customer"},
+		{Name: "shipment_get"}, {Name: "shipment_add_comment"}, {Name: "get_customer"},
 		{Name: "find_tools"},
 	}}}}
 	turn.Disclosures = []Disclosure{
-		{Kind: DisclosurePreselected, Ranked: []string{"get_shipment", "add_shipment_comment"}},
+		{Kind: DisclosurePreselected, Ranked: []string{"shipment_get", "shipment_add_comment"}},
 		{Kind: DisclosureFound, Need: "trailers", Ranked: []string{"list_trailers"}},
 		{Kind: DisclosureFound, Need: "drivers", Ranked: []string{"list_workers"}},
 	}
@@ -189,16 +189,16 @@ func TestScenario_DerivesLabelsFromItsChecks(t *testing.T) {
 	scenario := &Scenario{Name: "s", Steps: []Step{{
 		Say: "hi",
 		Expect: Expect{
-			Calls:     []string{"get_shipment|search_shipments"},
-			NoCalls:   []string{"cancel_shipment|delete_shipment"},
-			Proposals: []ExpectedWrite{{Tool: "add_shipment_comment"}},
+			Calls:     []string{"shipment_get|shipment_list"},
+			NoCalls:   []string{"shipment_cancel|delete_shipment"},
+			Proposals: []ExpectedWrite{{Tool: "shipment_add_comment"}},
 		},
 	}}}
 	scenario.deriveLabels()
 
-	assert.Equal(t, []string{"get_shipment|search_shipments", "add_shipment_comment"},
+	assert.Equal(t, []string{"shipment_get|shipment_list", "shipment_add_comment"},
 		scenario.ExpectedTools)
-	assert.Equal(t, []string{"cancel_shipment", "delete_shipment"}, scenario.ForbiddenTools)
+	assert.Equal(t, []string{"shipment_cancel", "delete_shipment"}, scenario.ForbiddenTools)
 	assert.True(t, scenario.LabelsDerived)
 
 	labelled := &Scenario{Name: "t", ExpectedTools: []string{}, ForbiddenTools: []string{}}
@@ -212,12 +212,12 @@ func TestScenario_RefusesAToolBothExpectedAndForbidden(t *testing.T) {
 	scenario := &Scenario{
 		Name:           "s",
 		Steps:          []Step{{Say: "hi"}},
-		ExpectedTools:  []string{"get_shipment"},
-		ForbiddenTools: []string{"get_shipment|cancel_shipment"},
+		ExpectedTools:  []string{"shipment_get"},
+		ForbiddenTools: []string{"shipment_get|shipment_cancel"},
 	}
 	require.Error(t, scenario.Validate())
 
-	scenario.ForbiddenTools = []string{"cancel_shipment"}
+	scenario.ForbiddenTools = []string{"shipment_cancel"}
 	scenario.Split = "training"
 	require.Error(t, scenario.Validate())
 }
