@@ -14,6 +14,12 @@ import (
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
+const (
+	responsesClientExecution = "client"
+	responsesFunctionType    = "function"
+	responsesInputText       = "input_text"
+)
+
 type openAIResponsesAdapter struct{}
 
 var _ BackgroundRunner = openAIResponsesAdapter{}
@@ -605,7 +611,7 @@ func toResponsesSearchTools(tools []ToolSpec) []responsesTool {
 		case tool.Searches:
 			out = append(out, responsesTool{
 				Type:        "tool_search",
-				Execution:   "client",
+				Execution:   responsesClientExecution,
 				Description: tool.Description,
 				Parameters:  toolschema.ForModel(tool.Parameters),
 			})
@@ -621,7 +627,7 @@ func responsesFunction(tool ToolSpec) responsesTool {
 	strict := false
 
 	return responsesTool{
-		Type:        "function",
+		Type:        responsesFunctionType,
 		Name:        tool.Name,
 		Description: tool.Description,
 		Parameters:  toolschema.ForModel(tool.Parameters),
@@ -643,7 +649,7 @@ func (search *responsesSearchTool) searchOutput(msg *Message) []responsesItem {
 	}
 	items := []responsesItem{{
 		Type:      "tool_search_output",
-		Execution: "client",
+		Execution: responsesClientExecution,
 		CallID:    msg.ToolCallID,
 		Status:    "completed",
 		Tools:     loaded,
@@ -651,7 +657,7 @@ func (search *responsesSearchTool) searchOutput(msg *Message) []responsesItem {
 	if strings.TrimSpace(msg.Content) != "" {
 		items = append(items, responsesItem{
 			Role:    "developer",
-			Content: []responsesMessagePart{{Type: "input_text", Text: msg.Content}},
+			Content: []responsesMessagePart{{Type: responsesInputText, Text: msg.Content}},
 		})
 	}
 
@@ -667,7 +673,7 @@ func toResponsesInput(
 	if strings.TrimSpace(system) != "" {
 		items = append(items, responsesItem{
 			Role:    "system",
-			Content: []responsesMessagePart{{Type: "input_text", Text: system}},
+			Content: []responsesMessagePart{{Type: responsesInputText, Text: system}},
 		})
 	}
 
@@ -695,7 +701,7 @@ func toResponsesInput(
 				if search != nil && tc.Name == search.name {
 					items = append(items, responsesItem{
 						Type:      "tool_search_call",
-						Execution: "client",
+						Execution: responsesClientExecution,
 						CallID:    tc.ID,
 						Status:    "completed",
 						Arguments: toolUseInput(tc.Arguments),
@@ -716,7 +722,7 @@ func toResponsesInput(
 		default:
 			items = append(items, responsesItem{
 				Role:    "user",
-				Content: []responsesMessagePart{{Type: "input_text", Text: msg.Content}},
+				Content: []responsesMessagePart{{Type: responsesInputText, Text: msg.Content}},
 			})
 		}
 	}
@@ -740,9 +746,8 @@ func toResponsesTools(tools []ToolSpec) []responsesTool {
 func splitResponsesOutput(
 	resp *responsesEnvelope,
 	search string,
-) (string, []ToolCall, bool) {
-	var text string
-	toolCalls := make([]ToolCall, 0, len(resp.Output))
+) (text string, toolCalls []ToolCall, refused bool) {
+	toolCalls = make([]ToolCall, 0, len(resp.Output))
 
 	for idx := range resp.Output {
 		item := &resp.Output[idx]
@@ -802,7 +807,7 @@ func splitResponsesOutput(
 	return text, toolCalls, false
 }
 
-func responsesArgumentsOf(raw any) (map[string]any, string) {
+func responsesArgumentsOf(raw any) (args map[string]any, problem string) {
 	switch value := raw.(type) {
 	case map[string]any:
 		return value, ""

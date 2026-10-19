@@ -163,7 +163,7 @@ type toolSet struct {
 }
 
 func (s *Service) newToolSet(ctx context.Context, req toolSetRequest) *toolSet {
-	set := s.openToolSet(ctx, req)
+	set := s.openToolSet(ctx, &req)
 	if req.command != "" {
 		set.pinned = s.pinCommand(set, req.command)
 	}
@@ -172,7 +172,7 @@ func (s *Service) newToolSet(ctx context.Context, req toolSetRequest) *toolSet {
 	return set
 }
 
-func (s *Service) openToolSet(ctx context.Context, req toolSetRequest) *toolSet {
+func (s *Service) openToolSet(ctx context.Context, req *toolSetRequest) *toolSet {
 	// The set a turn may call is the agent's configuration narrowed to what
 	// the person driving it may do. A tool they cannot use was still shown,
 	// ranked and offered, and denied only when called, which taught the
@@ -220,13 +220,14 @@ func (s *Service) openToolSet(ctx context.Context, req toolSetRequest) *toolSet 
 		s.load(set, name)
 	}
 	if len(waiting) > 0 {
-		for _, descriptor := range s.catalog.FindHybrid(agenttoolcatalog.Query{
+		found := s.catalog.FindHybrid(agenttoolcatalog.Query{
 			Allowed:    waiting,
 			Text:       text,
 			Limit:      len(waiting),
 			StrongOnly: true,
-		}) {
-			s.load(set, descriptor.Name)
+		})
+		for idx := range found {
+			s.load(set, found[idx].Name)
 		}
 	}
 
@@ -238,7 +239,7 @@ func (s *Service) openToolSet(ctx context.Context, req toolSetRequest) *toolSet 
 			s.carryOver(set, req.history)
 			set.add(findToolsSpec())
 		}
-		set.addConversational(req)
+		set.addConversational(*req)
 		s.declareWithdrawal(set, req.delegated)
 
 		return set
@@ -258,7 +259,7 @@ func (s *Service) openToolSet(ctx context.Context, req toolSetRequest) *toolSet 
 	}
 	s.carryOver(set, req.history)
 	set.add(findToolsSpec())
-	set.addConversational(req)
+	set.addConversational(*req)
 	s.declareWithdrawal(set, req.delegated)
 
 	return set
