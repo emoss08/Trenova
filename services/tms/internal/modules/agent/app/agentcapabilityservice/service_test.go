@@ -339,6 +339,8 @@ func TestUpdate_RefusesAModeTheRowDoesNotOffer(t *testing.T) {
 func TestLabel(t *testing.T) {
 	t.Parallel()
 
+	assert.Equal(t, "List shipments", Label("shipment_list"))
+	assert.Equal(t, "Place shipment hold", Label("shipment_place_hold"))
 	assert.Equal(t, "Post invoices", Label("post_invoices"))
 	assert.Equal(t, "Billing queue list", Label("billing.queue.list"))
 	assert.Equal(t, "Ab", Label("AB"))
