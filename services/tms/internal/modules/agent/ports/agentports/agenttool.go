@@ -134,9 +134,6 @@ type AgentToolDescriptor struct {
 	// loads one of them loads this tool too when the agent holds it, and
 	// grants it to nobody.
 	Follows []string `json:"follows,omitempty"`
-	// BatchOf names the tool this one does to several records at once, for
-	// a tool that is the plural twin of another.
-	BatchOf string `json:"batchOf,omitempty"`
 	// Recipe is the tools a task with this one is done with, in order, the
 	// tool itself among them.
 	Recipe []string `json:"recipe,omitempty"`
@@ -168,15 +165,6 @@ type CompanionTool interface {
 // is loaded puts the tool that reads every row beside the one that samples.
 type FollowerTool interface {
 	Follows() []string
-}
-
-// BatchTool is a tool that does to a list of records what another tool does
-// to one, in one call and, for a change, on one card. The prompt names each
-// pair an agent holds, so a model asked for one change across several records
-// reaches for the twin rather than calling the single tool once per record;
-// the examples it used to be given named billing tools to every agent.
-type BatchTool interface {
-	BatchOf() string
 }
 
 // RecipeTool is a tool whose use is a sequence: the lookups that hand out
@@ -226,9 +214,6 @@ func DescribeTool(
 	}
 	if follower, ok := tool.(FollowerTool); ok {
 		descriptor.Follows = follower.Follows()
-	}
-	if batch, ok := tool.(BatchTool); ok {
-		descriptor.BatchOf = batch.BatchOf()
 	}
 	if recipe, ok := tool.(RecipeTool); ok {
 		descriptor.Recipe = recipe.Recipe()

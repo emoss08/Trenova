@@ -2010,8 +2010,8 @@ request is laid out stable first:
   shares first and the turn's own part after it. The shared part is, in order:
   the identity line (the agent's name and description), Trenova's rules
   (Boundaries, Working with records), the tools when all are offered (grouped
-  by what a call does, with the plural twins and the dashboard note only for an
-  agent that holds those tools; the request's schemas carry the descriptions),
+  by what a call does, with the dashboard note only for an agent that holds
+  those tools; the request's schemas carry the descriptions),
   the agents it may ask, artifacts, the product guide, how to answer, then the
   organization's instructions and its Never list. The turn's own part is the
   runtime context, memories, a disclosed tool list and proposals waiting on a

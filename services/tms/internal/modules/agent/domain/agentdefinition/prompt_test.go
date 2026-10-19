@@ -166,38 +166,6 @@ func TestBuildSystemPrompt_ListsToolsByWhatACallDoesWithoutRepeatingDescriptions
 	assert.NotContains(t, prompt, "\"Dashboard\" means two things")
 }
 
-// The rule about plural twins named billing's tools to every agent. It now
-// names the twins the agent holds, and only when it holds one.
-func TestBuildSystemPrompt_NamesThePluralTwinsTheAgentHolds(t *testing.T) {
-	t.Parallel()
-
-	rc := fullContext()
-	rc.Tools = append(rc.Tools,
-		agentdefinition.ToolSummary{Name: "settlement_post_driver", Tier: agent.TierPropose},
-		agentdefinition.ToolSummary{
-			Name:    "settlement_post_driver",
-			Tier:    agent.TierPropose,
-			BatchOf: "settlement_post_driver",
-		},
-		agentdefinition.ToolSummary{
-			Name:    "settlement_approve_carrier",
-			Tier:    agent.TierPropose,
-			BatchOf: "settlement_approve_carrier",
-		},
-	)
-
-	prompt := definitionWithInstructions("Help.").BuildSystemPrompt(rc)
-
-	assert.Contains(t, prompt,
-		"Several records in one call: settlement_post_driver does settlement_post_driver "+
-			"for a list, settlement_approve_carrier does settlement_approve_carrier for a list.")
-	assert.Contains(t, prompt, "never call the single tool once per record.")
-
-	rc.ToolsDisclosed = true
-	disclosed := definitionWithInstructions("Help.").BuildSystemPrompt(rc)
-	assert.Contains(t, disclosed, "load the list tool with find_tools when it is not loaded")
-}
-
 // remember saves a memory kept for the person alone at once, and the static
 // tier used to list it among the tools that record a proposal.
 func TestBuildSystemPrompt_ListsPersonalToolsAsRunningAtOnceForThePerson(t *testing.T) {
