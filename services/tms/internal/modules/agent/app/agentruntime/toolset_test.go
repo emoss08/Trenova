@@ -926,8 +926,8 @@ func TestSearchesLeft_SpeaksUpOnlyNearTheCap(t *testing.T) {
 }
 
 /*
-gpt-6-luna asked find_tools for "search_worker, list_driver_settlements and
-list_pay_advances" by name, was handed six other tools ranked above
+gpt-6-luna asked find_tools for "search_worker, settlement_list_driver and
+settlement_list_advances" by name, was handed six other tools ranked above
 search_worker, and searched a fourth time for it. A tool the need names
 outright, and the agent holds, comes first.
 */

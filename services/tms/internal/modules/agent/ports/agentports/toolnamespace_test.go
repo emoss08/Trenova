@@ -28,7 +28,35 @@ func TestReadingOrder_PutsTheVerbFirst(t *testing.T) {
 		"shipment_list_permits": "list_shipment_permits",
 		"list_workers":          "list_workers",
 		"remember":              "remember",
+
+		"settlement_get_driver":             "get_driver_settlement",
+		"settlement_list_carrier":           "list_carrier_settlements",
+		"settlement_add_driver_adjustment":  "add_driver_settlement_adjustment",
+		"settlement_list_pay_events":        "list_settlement_pay_events",
+		"settlement_generate_carrier_batch": "generate_carrier_settlement_batch",
 	} {
 		assert.Equalf(t, want, agentports.ReadingOrder(name), "%s", name)
 	}
+}
+
+func TestToolNameFor_UndoesReadingOrder(t *testing.T) {
+	t.Parallel()
+
+	for _, name := range []string{
+		"shipment_get",
+		"shipment_list",
+		"shipment_place_hold",
+		"invoice_list",
+		"invoice_get_run",
+		"billing_get_queue_item",
+		"billing_list_queue_items",
+		"settlement_get_driver",
+		"settlement_list_carrier",
+		"settlement_add_driver_adjustment",
+		"settlement_list_pay_events",
+	} {
+		assert.Equalf(t, name, agentports.ToolNameFor(agentports.ReadingOrder(name)), "%s", name)
+	}
+	assert.Equal(t, "find_tools", agentports.ToolNameFor("find_tools"),
+		"a name no namespace reads is its own")
 }

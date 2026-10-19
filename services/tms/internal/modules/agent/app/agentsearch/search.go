@@ -213,29 +213,12 @@ func TokenSet(text string) map[string]struct{} {
 	return set
 }
 
-const listVerb = "list"
-
-func NameTokenSet(name, terms string) map[string]struct{} {
-	set := TokenSet(name + " " + terms)
-	if noun, verb, found := strings.Cut(name, "_"); found && verb == listVerb {
-		set[Pluralize(noun)] = struct{}{}
-	}
-
-	return set
-}
-
-func Pluralize(token string) string {
-	switch {
-	case len(token) > 2 && strings.HasSuffix(token, "y") && !strings.ContainsRune("aeiou", rune(token[len(token)-2])):
-		return strings.TrimSuffix(token, "y") + "ies"
-	case strings.HasSuffix(token, "s"),
-		strings.HasSuffix(token, "x"),
-		strings.HasSuffix(token, "ch"),
-		strings.HasSuffix(token, "sh"):
-		return token + "es"
-	default:
-		return token + "s"
-	}
+// NameTokenSet is the words a tool is named by: its name, the same name in
+// reading order and its search terms. Reading order is how a request says it,
+// so settlement_list_driver is also found as "list driver settlements" and a
+// bare shipment_list as "list shipments".
+func NameTokenSet(name, reading, terms string) map[string]struct{} {
+	return TokenSet(name + " " + reading + " " + terms)
 }
 
 // Singularize trims a trailing plural so "drivers" and "driver" are one term.

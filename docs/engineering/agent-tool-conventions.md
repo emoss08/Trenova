@@ -33,6 +33,13 @@ A tool is `<namespace>_<verb>[_<object>]`, all lower case: `shipment_get`, `ship
   several records (`invoice_post` takes `invoiceIds`, `billing_approve_queue_item` takes
   `billingQueueItemIds`): a `get` tool's name in reading order, less its verb, is the kind of
   record its card draws (`get_billing_queue_item` draws a `billing_queue_item`).
+- **Qualifiers.** A namespace whose records come in kinds names the words that tell them apart
+  (`settlement`: `driver`, `carrier`). A qualifier opening the object reads before the
+  namespace, so `settlement_get_driver` reads `get_driver_settlement`, the kind of record it
+  reads, `settlement_list_carrier` reads `list_carrier_settlements` and
+  `settlement_add_driver_adjustment` reads `add_driver_settlement_adjustment`.
+  `agentports.ToolNameFor` reads a name in reading order back to its tool, which is how a
+  record link finds the tool that reads it (`ReadRecord`).
 - **No other area's noun.** A name weighs four times its description in keyword ranking, so a
   noun in a name pulls the tool into every question that says it. `billing_transfer` moves
   shipments into the billing queue; named `billing_transfer_shipments`, it came first for
@@ -75,8 +82,11 @@ a parameter the input names differently says why in the binding.
   that a model would otherwise go and look for.
 - Do not restate policy the runtime enforces (who approves, what is held after outside text);
   say what the tool changes and who sees it.
-- Keyword ties break on the name in reading order (`agenttoolcatalog`), so a namespace, which
-  every tool in it shares, never decides which of two equally good answers comes first.
+- The keyword ranker indexes a name as written and in reading order, with its search terms
+  (`agentsearch.NameTokenSet`), so a request reads "list driver settlements" for
+  `settlement_list_driver`. Ties break on the name in reading order (`agenttoolcatalog`), so a
+  namespace, which every tool in it shares, never decides which of two equally good answers
+  comes first.
 - Search terms are the words people use for the tool that its name and description lack. They
   weigh as much as the name, so a term that names another area's records ("customer", "rate")
   pulls the tool into unrelated questions; a page-bound tool's terms name its page.

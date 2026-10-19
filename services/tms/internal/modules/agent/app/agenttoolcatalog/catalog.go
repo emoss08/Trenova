@@ -73,6 +73,7 @@ func New(descriptors []agentports.AgentToolDescriptor) *Catalog {
 			descriptor: descriptor,
 			nameTokens: agentsearch.NameTokenSet(
 				descriptor.Name,
+				agentports.ReadingOrder(descriptor.Name),
 				strings.Join(descriptor.SearchTerms, " "),
 			),
 			bodyTokens:  agentsearch.TokenSet(descriptor.Description),

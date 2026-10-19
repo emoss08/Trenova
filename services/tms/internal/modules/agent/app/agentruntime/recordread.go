@@ -12,7 +12,6 @@ import (
 
 const (
 	recordReadPrefix = "get_"
-	recordReadSuffix = "_get"
 )
 
 type RecordRead struct {
@@ -30,7 +29,7 @@ func (s *Service) ReadRecord(
 		return nil, false
 	}
 
-	name := ref.EntityType + recordReadSuffix
+	name := agentports.ToolNameFor(recordReadPrefix + ref.EntityType)
 	if _, ok := s.queryTools.Get(name); !ok {
 		name = recordReadPrefix + ref.EntityType
 	}

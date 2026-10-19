@@ -40,3 +40,13 @@ export const TOOL_NAMESPACES = [
 ] as const;
 
 export type ToolNamespace = (typeof TOOL_NAMESPACES)[number];
+
+/**
+ * The words that read before a namespace when they open a name's object:
+ * settlement_get_driver reads as get_driver_settlement.
+ */
+export const TOOL_NAMESPACE_QUALIFIERS: Readonly<
+  Partial<Record<ToolNamespace, readonly string[]>>
+> = {
+  settlement: ["driver", "carrier"],
+};

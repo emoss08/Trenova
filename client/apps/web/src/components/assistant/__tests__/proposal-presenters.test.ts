@@ -559,7 +559,7 @@ describe("presentProposal for settlement bulk tools", () => {
   it("counts the settlements an approval or posting covers and keeps the ids off the card", () => {
     const approve = presentProposal(
       proposal({
-        toolName: "approve_driver_settlements",
+        toolName: "settlement_approve_driver",
         arguments: {
           settlementIds: ["dstl_01M3034Q2N7JD99RA1D8DGH1ZF", "dstl_01M3034Q2N7JD99RA1D8DGH1ZG"],
         },
@@ -574,11 +574,11 @@ describe("presentProposal for settlement bulk tools", () => {
 
     const post = presentProposal(
       proposal({
-        toolName: "post_carrier_settlements",
+        toolName: "settlement_post_carrier",
         arguments: { settlementIds: ["carstl_01M3034Q2N7JD99RA1D8DGH1ZF"] },
       }),
     );
-    expect(post.title).toBe("Post carrier settlements");
+    expect(post.title).toBe("Post carrier settlement");
     expect(post.summary).toBe(
       "Post 1 approved carrier settlement to the ledger and queue it for the accounting system.",
     );
@@ -709,5 +709,20 @@ describe("presentProposal — intake and tendering", () => {
     );
     expect(two.summary).toBe("Move 2 billing items into review so a biller picks them up.");
     expect(two.reversible).toBe(true);
+  });
+
+  it("names one driver settlement to approve as one, and a set by its count", () => {
+    const one = presentProposal(
+      proposal({ toolName: "settlement_approve_driver", arguments: { settlementIds: ["dstl_1"] } }),
+    );
+    expect(one.title).toBe("Approve driver settlement");
+
+    const two = presentProposal(
+      proposal({
+        toolName: "settlement_approve_driver",
+        arguments: { settlementIds: ["dstl_1", "dstl_2"] },
+      }),
+    );
+    expect(two.title).toBe("Approve driver settlements");
   });
 });

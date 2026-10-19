@@ -33,7 +33,7 @@ const (
 	absentNotScheduled = "not scheduled"
 
 	syncDocumentIDSources = "invoice_list, invoice_get, list_customer_payments, " +
-		"list_carrier_settlements or list_driver_settlements"
+		"settlement_list_carrier or settlement_list_driver"
 )
 
 // syncDocumentKinds are the records a sync record can stand for: the invoices,

@@ -39,7 +39,7 @@ func ProvidePayWorkerNowTool(s *driversettlementservice.Service) agentports.Agen
 	return &PayWorkerNowTool{Settlements: s}
 }
 
-func (t *PayWorkerNowTool) Name() string { return "pay_driver_now" }
+func (t *PayWorkerNowTool) Name() string { return "settlement_pay_now" }
 
 func (t *PayWorkerNowTool) Description() string {
 	return "Propose paying a driver now, off cycle, for pay they have accrued. It builds a " +
@@ -51,7 +51,7 @@ func (t *PayWorkerNowTool) Description() string {
 func (t *PayWorkerNowTool) ParamSchema() map[string]any {
 	properties := common.SettlementPaymentProperties(common.DriverPaymentMethods)
 	properties[common.ParamWorkerID] = agenttoolschema.RecordIDText(permission.ResourceWorker,
-		"The driver, from search_worker or list_driver_pay_events.")
+		"The driver, from search_worker or settlement_list_pay_events.")
 	properties[ParamPayEventIDs] = toolschema.KeepEmpty(agenttoolschema.OfKinds(map[string]any{
 		toolschema.KeyType:     toolschema.TypeArray,
 		toolschema.KeyMaxItems: maxPayEventsPerAttach,

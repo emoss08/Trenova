@@ -358,7 +358,7 @@ array-of-ids parameter as a subset of one permission resource's records with
   `retry_edi_message_delivery` and `reprocess_edi_inbound_files` (general lists of messages
   and files, capped at `ediservice.MaxBulkEDIActionItems`), and `invoice_post`,
   `invoice_send`, `billing_approve_queue_item` and the four settlement approve and post
-  twins (up to 50, each record previewed and run through its single-record tool; see
+  tools (up to 50, each record previewed and run through its single-record tool; see
   [Tools that take one record or many](#tools-that-take-one-record-or-many)).
   None of them has a candidates read that decides each record the way the write would.
 
@@ -381,16 +381,15 @@ approves exactly the set that remains:
 | `billing_start_review` | `billingQueueItemIds` (billing queue), `billerId` (optional: the person asking) | `TransitionToInReviewTool` |
 | `invoice_post` | `invoiceIds` (invoice) | `PostInvoiceTool` |
 | `invoice_send` | `invoiceIds` (invoice) | `SendInvoiceTool` |
-| `approve_driver_settlements` | `settlementIds` (driver settlement) | `approve_driver_settlement` |
-| `post_driver_settlements` | `settlementIds` (driver settlement) | `post_driver_settlement` |
-| `approve_carrier_settlements` | `settlementIds` (carrier settlement) | `approve_carrier_settlement` |
-| `post_carrier_settlements` | `settlementIds` (carrier settlement) | `post_carrier_settlement` |
+| `settlement_approve_driver` | `settlementIds` (driver settlement) | the driver settlement's approve decision |
+| `settlement_post_driver` | `settlementIds` (driver settlement) | the driver settlement's post decision |
+| `settlement_approve_carrier` | `settlementIds` (carrier settlement) | the carrier settlement's approve decision |
+| `settlement_post_carrier` | `settlementIds` (carrier settlement) | the carrier settlement's post decision |
 
 Each such tool wraps a single-record tool (`agenttools/common/bulk_records.go`) and copies its
-policy: the same class, permission and floor. The billing and invoice tools were merged with
-their single-record tools in Phase 3, so the single-record tool is an implementation the
-registered tool runs, not a tool of its own; the settlement tools still have registered
-singles until their module is merged. A call naming one record is the single tool's call: its
+policy: the same class, permission and floor. Phase 3 merged each of them with its
+single-record tool, so the single-record tool is an implementation the registered tool runs,
+not a tool of its own. A call naming one record is the single tool's call: its
 preview, its validation, its target (so the proposal is pinned to that record's version) and
 its result, unchanged. A tool over a person-only step runs only from a person's approval; one
 over a step that may run on its own (`billing_assign_biller`, `billing_start_review`) runs
@@ -406,14 +405,12 @@ person's approval, as the approver, record by record through the single tool (so
 single-record guard, including `ApprovedFromProposal`, still applies), on the approved ids
 only, and reports "N of M posted; refused: …". A run in which every record was refused fails.
 
-The settlement twins (`agenttools/settlementtools/settlement_bulk_tools.go`) build their single tool
-from the same lifecycle text and ledger, so each settlement is planned and performed by
-`PlanAction` and `Perform` exactly as the single approve or post would, including the
-journal entry a posting books and, for a driver, the driver-visible egress that classifies
-each call as money. The record-subset choices and a refused settlement in the outcome are
-named by settlement number. The settlements clerk holds the four twins in place of the four
-singles (still 56 tools): a twin takes one settlement as well as fifty, so the clerk loses
-nothing, and the singles stay registered for agents an organization builds.
+The settlement tools (`agenttools/settlementtools/settlement_bulk_tools.go`) build their
+single-settlement decision from the same lifecycle text and ledger, so each settlement is
+planned and performed by `PlanAction` and `Perform` exactly as one settlement's approval or
+posting is, including the journal entry a posting books and, for a driver, the
+driver-visible egress that classifies each call as money. The record-subset choices and a
+refused settlement in the outcome are named by settlement number.
 
 `invoice_get` reads one invoice in full, or up to 50 by id in one call as a table
 (`InvoiceRepository.GetByIDs`, tenant-scoped, amounts gated as for one invoice), and names ids
@@ -421,7 +418,7 @@ that are not an invoice of the organization; `billing_get_queue_item` does the s
 items. `invoice_list` and `billing_list_queue_items` also filter on
 `id` with `in`.
 
-Two billing-queue steps that are not money also have twins, because eleven items waiting on a
+Two billing-queue steps that are not money also take a set, because eleven items waiting on a
 biller were eleven proposals: `billing_assign_biller` and `billing_start_review`.
 Both take `billerId` as optional and, when it is absent, assign **the person asking**: "assign
 me", "start reviewing these" and "get these ready to post" name nobody else, and an item in
@@ -434,9 +431,8 @@ reads up to 50 items in one call with what blocks each (approvable, missing docu
 validation failures, detention holds), as `invoice_get` does for drafts, so checking a queue
 is one read and one table rather than a card per item.
 
-The billing assistant template holds the twins in place of `billing_assign_biller` and
-`billing_start_review` (a twin takes one item as well as fifty), plus `billing_get_queue_item`,
-and gave up `preview_report` (the report analyst's) to stay under the 64-tool cap with room for
+The billing assistant template holds `billing_assign_biller`, `billing_start_review` and
+`billing_get_queue_item`, and gave up `preview_report` (the report analyst's) to stay under the 64-tool cap with room for
 an organization's own. To make room it gave up `list_insights`,
 `get_insight` (the insight analyst's) and `get_report_run` (a run's progress is already on
 screen). A template is copied when an agent is made, so an existing billing agent gains the

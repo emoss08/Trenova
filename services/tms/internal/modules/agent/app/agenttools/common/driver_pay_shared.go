@@ -17,7 +17,6 @@ import (
 
 const ParamDriverPayAmount = "amount"
 
-const ParamDriverPayNotes = "notes"
 
 const MaxDriverPayNotes = 1000
 

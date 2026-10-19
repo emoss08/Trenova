@@ -797,11 +797,14 @@ const PRESENTERS: Record<string, Presenter> = {
     };
   },
 
-  approve_driver_settlements: (args) => {
+  settlement_approve_driver: (args) => {
     const count = list(args.settlementIds).length;
 
     return {
-      title: "Approve driver settlements",
+      title: translate(
+        "{0, plural, one {Approve driver settlement} other {Approve driver settlements}}",
+        count,
+      ),
       summary: translate(
         "Approve {0, plural, one {# driver settlement} other {# driver settlements}}, committing to pay each driver what it comes to.",
         count,
@@ -811,11 +814,14 @@ const PRESENTERS: Record<string, Presenter> = {
     };
   },
 
-  post_driver_settlements: (args) => {
+  settlement_post_driver: (args) => {
     const count = list(args.settlementIds).length;
 
     return {
-      title: "Post driver settlements",
+      title: translate(
+        "{0, plural, one {Post driver settlement} other {Post driver settlements}}",
+        count,
+      ),
       summary: translate(
         "{0, plural, one {Post # approved driver settlement to the ledger, queue it for the accounting system and tell the driver.} other {Post # approved driver settlements to the ledger, queue each for the accounting system and tell each driver.}}",
         count,
@@ -825,11 +831,14 @@ const PRESENTERS: Record<string, Presenter> = {
     };
   },
 
-  approve_carrier_settlements: (args) => {
+  settlement_approve_carrier: (args) => {
     const count = list(args.settlementIds).length;
 
     return {
-      title: "Approve carrier settlements",
+      title: translate(
+        "{0, plural, one {Approve carrier settlement} other {Approve carrier settlements}}",
+        count,
+      ),
       summary: translate(
         "Approve {0, plural, one {# carrier settlement} other {# carrier settlements}}, committing to pay each carrier what it comes to.",
         count,
@@ -839,11 +848,14 @@ const PRESENTERS: Record<string, Presenter> = {
     };
   },
 
-  post_carrier_settlements: (args) => {
+  settlement_post_carrier: (args) => {
     const count = list(args.settlementIds).length;
 
     return {
-      title: "Post carrier settlements",
+      title: translate(
+        "{0, plural, one {Post carrier settlement} other {Post carrier settlements}}",
+        count,
+      ),
       summary: translate(
         "{0, plural, one {Post # approved carrier settlement to the ledger and queue it for the accounting system.} other {Post # approved carrier settlements to the ledger and queue each for the accounting system.}}",
         count,

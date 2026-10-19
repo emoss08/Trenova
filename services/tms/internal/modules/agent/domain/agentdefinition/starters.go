@@ -484,7 +484,7 @@ var templateStarters = map[Template][]starterQuestion{
 			"Which settlements need attention?",
 			"Which driver settlements have exceptions or open disputes, and what has to be "+
 				"settled before they can be paid?",
-			"list_driver_settlements",
+			"settlement_list_driver",
 		),
 		ask(
 			"What has a driver earned?",
@@ -495,7 +495,7 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Why is a load missing from pay?",
 			"Why is this load missing from the driver's settlement?",
-			"list_driver_pay_events",
+			"settlement_list_pay_events",
 		),
 		ask(
 			"Which carrier invoices do not match?",
@@ -819,7 +819,7 @@ var toolFamilies = [][]starterQuestion{
 			"Which settlements need attention?",
 			"Which driver settlements have exceptions or open disputes, and what has to be "+
 				"settled before they can be paid?",
-			"list_driver_settlements",
+			"settlement_list_driver",
 		),
 		ask(
 			"Which carrier invoices do not match?",

@@ -2,6 +2,7 @@ package settlementtools
 
 import (
 	"context"
+	"slices"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
@@ -123,30 +124,30 @@ func TestSettlementDecisions_MoneyAndFinalOnesAreAPersonsDecision(t *testing.T) 
 	t.Parallel()
 
 	personOnly := map[string]permission.Operation{
-		"approve_driver_settlement":         permission.OpApprove,
-		"post_driver_settlement":            permission.OpApprove,
-		"record_driver_settlement_payment":  permission.OpUpdate,
-		"void_driver_settlement":            permission.OpCancel,
-		"approve_carrier_settlement":        permission.OpApprove,
-		"post_carrier_settlement":           permission.OpApprove,
-		"record_carrier_settlement_payment": permission.OpUpdate,
-		"void_carrier_settlement":           permission.OpCancel,
+		"settlement_approve_driver":         permission.OpApprove,
+		"settlement_post_driver":            permission.OpApprove,
+		"settlement_record_driver_payment":  permission.OpUpdate,
+		"settlement_void_driver":            permission.OpCancel,
+		"settlement_approve_carrier":        permission.OpApprove,
+		"settlement_post_carrier":           permission.OpApprove,
+		"settlement_record_carrier_payment": permission.OpUpdate,
+		"settlement_void_carrier":           permission.OpCancel,
 	}
 	inside := map[string]permission.Operation{
-		"submit_driver_settlement":             permission.OpSubmit,
-		"reject_driver_settlement":             permission.OpReject,
-		"recalculate_driver_settlement":        permission.OpUpdate,
-		"add_driver_settlement_adjustment":     permission.OpUpdate,
-		"remove_driver_settlement_adjustment":  permission.OpUpdate,
-		"submit_carrier_settlement":            permission.OpSubmit,
-		"reject_carrier_settlement":            permission.OpReject,
-		"recalculate_carrier_settlement":       permission.OpUpdate,
-		"add_carrier_settlement_adjustment":    permission.OpUpdate,
-		"remove_carrier_settlement_adjustment": permission.OpUpdate,
+		"settlement_submit_driver":             permission.OpSubmit,
+		"settlement_reject_driver":             permission.OpReject,
+		"settlement_recalculate_driver":        permission.OpUpdate,
+		"settlement_add_driver_adjustment":     permission.OpUpdate,
+		"settlement_remove_driver_adjustment":  permission.OpUpdate,
+		"settlement_submit_carrier":            permission.OpSubmit,
+		"settlement_reject_carrier":            permission.OpReject,
+		"settlement_recalculate_carrier":       permission.OpUpdate,
+		"settlement_add_carrier_adjustment":    permission.OpUpdate,
+		"settlement_remove_carrier_adjustment": permission.OpUpdate,
 	}
 
 	seen := map[string]bool{}
-	for _, provider := range SettlementDecisionProviders() {
+	for _, provider := range slices.Concat(SettlementDecisionProviders(), SettlementBulkProviders()) {
 		tool := agenttoolstest.BuildTool(t, provider)
 		policy := tool.Policy()
 		seen[tool.Name()] = true
@@ -165,7 +166,7 @@ func TestSettlementDecisions_MoneyAndFinalOnesAreAPersonsDecision(t *testing.T) 
 	}
 	assert.Len(t, seen, len(personOnly)+len(inside))
 
-	driverPost := agenttoolstest.BuildTool(t, providePostDriverSettlementTool).Policy()
+	driverPost := agenttoolstest.BuildTool(t, postDriverSingle).Policy()
 	assert.True(t, driverPost.HasEgress(agent.EgressDriverVisible))
 	require.NotNil(t, driverPost.Classify)
 	assert.Equal(t, agent.EgressMoney, driverPost.Classify(agentports.ToolExecuteParams{}).Egress)
@@ -180,7 +181,7 @@ func TestApproveDriverSettlement_RunsOnlyFromAPersonsApproval(t *testing.T) {
 	entity := agenttoolstest.PendingDriverSettlement()
 	entity.Status = driversettlement.StatusPendingApproval
 	book := &fakeSettlementBook[driversettlement.Settlement]{plan: driverPlanner(entity, nil)}
-	tool := settlementTool(t, provideApproveDriverSettlementTool, book)
+	tool := settlementTool(t, approveDriverSingle, book)
 	params := agenttoolstest.ExecuteParams(map[string]any{common.ParamSettlementID: entity.ID.String()})
 
 	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrSettlementNeedsAPerson)
@@ -240,7 +241,7 @@ func TestPostDriverSettlement_PreviewShowsTheStatusMoneyAndJournal(t *testing.T)
 		plan:   driverPlanner(entity, journal),
 		locked: true,
 	}
-	tool := settlementTool(t, providePostDriverSettlementTool, book)
+	tool := settlementTool(t, postDriverSingle, book)
 	params := agenttoolstest.ExecuteParams(map[string]any{common.ParamSettlementID: entity.ID.String()})
 
 	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
@@ -275,7 +276,7 @@ func TestSettlementDecision_ARefusalIsAWouldFail(t *testing.T) {
 		plan:   driverPlanner(entity, nil),
 		locked: true,
 	}
-	tool := settlementTool(t, provideApproveDriverSettlementTool, book)
+	tool := settlementTool(t, approveDriverSingle, book)
 	params := agenttoolstest.ExecuteParams(map[string]any{common.ParamSettlementID: entity.ID.String()})
 
 	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
@@ -424,4 +425,23 @@ func TestRemoveSettlementAdjustment_TakesTheLineFromTheSettlement(t *testing.T) 
 	})))
 	assert.Equal(t, lineID, book.performed.LineID)
 	assert.Equal(t, settlementshared.ActionRemoveAdjustment, book.performed.Action)
+}
+
+// The single approve and post tools are no longer registered: the merged
+// tools run them for each settlement. These build them for the tests that
+// exercise one settlement directly.
+func approveDriverSingle(s *driversettlementservice.Service) agentports.AgentTool {
+	return driverDecisionTool(approveDecision, s)
+}
+
+func postDriverSingle(s *driversettlementservice.Service) agentports.AgentTool {
+	return driverDecisionTool(postDecision, s)
+}
+
+func approveCarrierSingle(s *carriersettlementservice.Service) agentports.AgentTool {
+	return carrierDecisionTool(approveDecision, s)
+}
+
+func postCarrierSingle(s *carriersettlementservice.Service) agentports.AgentTool {
+	return carrierDecisionTool(postDecision, s)
 }

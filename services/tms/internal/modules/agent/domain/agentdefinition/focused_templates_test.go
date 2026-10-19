@@ -28,15 +28,15 @@ const (
 var withheldFromEveryTemplate = map[string]string{
 	"approve_rate_agreement":      withheldRateReview,
 	"reject_rate_agreement":       withheldRateReview,
-	"assign_pay_profile":          withheldPaySetup,
-	"end_pay_assignment":          withheldPaySetup,
-	"create_recurring_deduction":  withheldPaySetup,
-	"update_recurring_deduction":  withheldPaySetup,
-	"create_recurring_earning":    withheldPaySetup,
-	"update_recurring_earning":    withheldPaySetup,
-	"open_escrow_account":         withheldPaySetup,
-	"update_escrow_account":       withheldPaySetup,
-	"close_escrow_account":        withheldPaySetup,
+	"settlement_assign_pay_profile":          withheldPaySetup,
+	"settlement_end_pay_assignment":          withheldPaySetup,
+	"settlement_create_recurring_deduction":  withheldPaySetup,
+	"settlement_update_recurring_deduction":  withheldPaySetup,
+	"settlement_create_recurring_earning":    withheldPaySetup,
+	"settlement_update_recurring_earning":    withheldPaySetup,
+	"settlement_open_escrow_account":         withheldPaySetup,
+	"settlement_update_escrow_account":       withheldPaySetup,
+	"settlement_close_escrow_account":        withheldPaySetup,
 	"draft_manual_journal":        withheldPrivilegedAccounting,
 	"revise_manual_journal_draft": withheldPrivilegedAccounting,
 	"submit_manual_journal":       withheldPrivilegedAccounting,
@@ -53,8 +53,8 @@ var withheldFromEveryTemplate = map[string]string{
 	"clear_accounting_mapping":    withheldPrivilegedAccounting,
 	"redate_accounting_sync":      withheldPrivilegedAccounting,
 	"forget_memory":               withheldMemory,
-	"generate_payroll_export":     withheldPayMovement,
-	"void_payroll_export":         withheldPayMovement,
+	"settlement_generate_payroll_export":     withheldPayMovement,
+	"settlement_void_payroll_export":         withheldPayMovement,
 	"review_driver_expense":       withheldPayMovement,
 	"save_table_view":             withheldPersonalInterface,
 	"add_home_widget":             withheldPersonalInterface,
@@ -169,9 +169,9 @@ func TestTemplates_TheWorkforceCoordinatorKeepsWorkerRecordsAndNeverPay(t *testi
 	}
 
 	for _, tool := range []string{
-		"list_driver_settlements",
-		"resolve_settlement_dispute",
-		"list_payroll_exports",
+		"settlement_list_driver",
+		"settlement_resolve_dispute",
+		"settlement_list_payroll_exports",
 		"list_driver_expenses",
 	} {
 		require.NotContainsf(t, tools, tool, "the workforce coordinator must not hold %s", tool)

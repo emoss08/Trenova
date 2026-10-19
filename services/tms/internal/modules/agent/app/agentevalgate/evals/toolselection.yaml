@@ -255,77 +255,77 @@ cases:
   - request: can we close the books for March
     expect: [get_fiscal_close_blockers, list_fiscal_periods]
   - request: list the driver settlements waiting for approval
-    expect: [list_driver_settlements]
+    expect: [settlement_list_driver]
   - request: which driver pay settlements have exceptions
-    expect: [list_driver_settlements]
+    expect: [settlement_list_driver]
   - request: open this driver settlement and show its deduction lines
-    expect: [get_driver_settlement]
+    expect: [settlement_get_driver]
   - request: why is the net pay on Maria's settlement negative
-    expect: [get_driver_settlement, list_driver_settlements]
+    expect: [settlement_get_driver, settlement_list_driver]
   - request: which loads has the driver been paid for
-    expect: [list_driver_pay_events]
+    expect: [settlement_list_pay_events]
   - request: is the pay event for shipment 4471 on hold
-    expect: [list_driver_pay_events]
+    expect: [settlement_list_pay_events]
   - request: how much has the driver earned that is not settled yet
     expect: [get_worker_earnings_summary]
   - request: what is the driver's escrow balance and outstanding advances
     expect: [get_worker_earnings_summary]
   - request: read the pay dispute the driver submitted
-    expect: [get_settlement_dispute]
+    expect: [settlement_get_dispute]
   - request: what did the driver say in their settlement dispute
-    expect: [get_settlement_dispute]
+    expect: [settlement_get_dispute]
   - request: list the carrier settlements paid this month
-    expect: [list_carrier_settlements]
+    expect: [settlement_list_carrier]
   - request: which carrier settlements are pending approval
-    expect: [list_carrier_settlements]
+    expect: [settlement_list_carrier]
   - request: open the carrier settlement and show its cost lines
-    expect: [get_carrier_settlement]
+    expect: [settlement_get_carrier]
   - request: when was this carrier settlement paid
-    expect: [get_carrier_settlement, list_carrier_settlements]
+    expect: [settlement_get_carrier, settlement_list_carrier]
   - request: approve Ana's driver settlement
-    expect: [approve_driver_settlement, approve_driver_settlements]
+    expect: [settlement_approve_driver]
   - request: post the approved carrier settlement to the ledger
-    expect: [post_carrier_settlement, post_carrier_settlements]
+    expect: [settlement_post_carrier]
   - request: approve all of this week's pending driver settlements
-    expect: [approve_driver_settlements]
+    expect: [settlement_approve_driver]
   - request: post these approved driver settlements to the ledger together
-    expect: [post_driver_settlements]
+    expect: [settlement_post_driver]
   - request: approve the pending carrier settlements in one go
-    expect: [approve_carrier_settlements]
+    expect: [settlement_approve_carrier]
   - request: post every approved carrier settlement for the period at once
-    expect: [post_carrier_settlements]
+    expect: [settlement_post_carrier]
   - request: record that the driver settlement was paid by check
-    expect: [record_driver_settlement_payment]
+    expect: [settlement_record_driver_payment]
   - request: void the carrier settlement
-    expect: [void_carrier_settlement]
+    expect: [settlement_void_carrier]
   - request: add a fuel advance adjustment to the driver settlement
-    expect: [add_driver_settlement_adjustment]
+    expect: [settlement_add_driver_adjustment]
   - request: generate this week's driver settlement batch
-    expect: [generate_driver_settlement_batch]
+    expect: [settlement_generate_driver_batch]
   - request: hold the driver's pay for load 4471 until the paperwork arrives
-    expect: [hold_driver_pay_event]
+    expect: [settlement_hold_pay_event]
   - request: release the held pay event
-    expect: [release_driver_pay_event]
+    expect: [settlement_release_pay_event]
   - request: pay the driver now, off cycle
-    expect: [pay_driver_now]
+    expect: [settlement_pay_now]
   - request: issue a pay advance to the driver
-    expect: [issue_pay_advance]
+    expect: [settlement_issue_advance]
   - request: write off the advance the driver still owes
-    expect: [write_off_pay_advance]
+    expect: [settlement_forgive_advance]
   - request: open an escrow account for the owner operator
-    expect: [open_escrow_account]
+    expect: [settlement_open_escrow_account]
   - request: close the escrow account and refund the balance
-    expect: [close_escrow_account]
+    expect: [settlement_close_escrow_account]
   - request: set up a recurring insurance deduction
-    expect: [create_recurring_deduction]
+    expect: [settlement_create_recurring_deduction]
   - request: accept the carrier invoice with its variance
     expect: [accept_carrier_invoice_match_with_variance]
   - request: which EDI carrier invoices have no carrier
     expect: [list_edi_carrier_invoices]
   - request: list the deduction pay codes
-    expect: [list_pay_codes]
+    expect: [settlement_list_pay_codes]
   - request: which pay profile is the driver assigned to
-    expect: [list_pay_assignments]
+    expect: [settlement_list_pay_assignments]
   - request: which carrier invoices have a variance against the expected cost
     expect: [list_carrier_invoice_matches]
   - request: show the carrier freight invoice matches for Swift
@@ -685,11 +685,11 @@ cases:
   - request: record the oversize permit Indiana issued for this shipment
     expect: [shipment_record_permit]
   - request: resolve the driver's pay dispute and pay back the detention
-    expect: [resolve_settlement_dispute]
+    expect: [settlement_resolve_dispute]
   - request: approve the lumper expense the driver submitted for reimbursement
     expect: [review_driver_expense]
   - request: generate the payroll export for the last two weeks
-    expect: [generate_payroll_export]
+    expect: [settlement_generate_payroll_export]
   - request: draft the performance review scores for the driver
     expect: [draft_performance_review]
   - request: onboard a new carrier with their USDOT and MC numbers
@@ -767,57 +767,57 @@ cases:
   - request: the inbound carrier invoice came in with an unknown SCAC, tie it to the right carrier in our system
     expect: [link_edi_carrier_invoice_to_carrier]
   - request: add a $150 lumper reimbursement line to the carrier's draft settlement
-    expect: [add_carrier_settlement_adjustment]
+    expect: [settlement_add_carrier_adjustment]
   - request: delete the manual deduction line on ABC Trucking's pending carrier settlement
-    expect: [remove_carrier_settlement_adjustment]
+    expect: [settlement_remove_carrier_adjustment]
   - request: remove the manual adjustment I put on Mike's driver settlement by mistake
-    expect: [remove_driver_settlement_adjustment]
+    expect: [settlement_remove_driver_adjustment]
   - request: approve the Blue Line Carriers settlement for this pay period
-    expect: [approve_carrier_settlement, approve_carrier_settlements]
+    expect: [settlement_approve_carrier]
   - request: send the carrier settlement for Rapid Freight back to draft, the fuel advance is wrong
-    expect: [reject_carrier_settlement]
+    expect: [settlement_reject_carrier]
   - request: send Jose's driver settlement back to draft, his detention pay is missing
-    expect: [reject_driver_settlement]
+    expect: [settlement_reject_driver]
   - request: the carrier's draft settlement lines look right now, send it up for approval
-    expect: [submit_carrier_settlement]
+    expect: [settlement_submit_carrier]
   - request: Maria's draft driver settlement is ready, send it up for approval
-    expect: [submit_driver_settlement]
+    expect: [settlement_submit_driver]
   - request: rerun the totals on the carrier's draft settlement, two more loads accrued since
-    expect: [recalculate_carrier_settlement]
+    expect: [settlement_recalculate_carrier]
   - request: recompute the driver's draft settlement from what has accrued, keep my manual adjustments
-    expect: [recalculate_driver_settlement]
+    expect: [settlement_recalculate_driver]
   - request: generate this pay period's draft settlements for all of our carriers
-    expect: [generate_carrier_settlement_batch]
+    expect: [settlement_generate_carrier_batch]
   - request: generate a draft settlement for driver Tom Reyes for last week's pay period
-    expect: [generate_driver_settlement]
+    expect: [settlement_generate_driver]
   - request: post Ana's approved driver settlement to the general ledger
-    expect: [post_driver_settlement, post_driver_settlements]
+    expect: [settlement_post_driver]
   - request: we paid the carrier settlement by ACH yesterday, reference 88213, mark it paid
-    expect: [record_carrier_settlement_payment]
+    expect: [settlement_record_carrier_payment]
   - request: void Derek's driver settlement, it was generated for the wrong period and has not been paid
-    expect: [void_driver_settlement]
+    expect: [settlement_void_driver]
   - request: add the late load pay that missed generation onto the driver's draft settlement
-    expect: [attach_pay_events_to_settlement]
+    expect: [settlement_attach_pay_events]
   - request: pull load 7731's pay off this driver settlement, it belongs in next week's period
-    expect: [detach_pay_event_from_settlement]
+    expect: [settlement_detach_pay_event]
   - request: the driver says his settlement is short, mark his pay dispute as under review
-    expect: [start_settlement_dispute_review]
+    expect: [settlement_start_dispute_review]
   - request: credit $200 to the owner-operator's escrow balance for the trailer damage repair
-    expect: [adjust_escrow_account]
+    expect: [settlement_adjust_escrow_account]
   - request: the amended lease raises the owner operator's escrow target balance to $2,500 with 2% interest
-    expect: [update_escrow_account]
+    expect: [settlement_update_escrow_account]
   - request: put driver Chen on the per-mile team pay profile starting Monday
-    expect: [assign_pay_profile]
+    expect: [settlement_assign_pay_profile]
   - request: Larry is leaving Friday, end his pay profile as of that date
-    expect: [end_pay_assignment]
+    expect: [settlement_end_pay_assignment]
   - request: set up a $50 weekly safety bonus added to the driver's pay every settlement
-    expect: [create_recurring_earning]
+    expect: [settlement_create_recurring_earning]
   - request: pause the weekly safety bonus on Kim's pay
-    expect: [update_recurring_earning]
+    expect: [settlement_update_recurring_earning]
   - request: raise Kim's weekly truck lease deduction to $400
-    expect: [update_recurring_deduction]
+    expect: [settlement_update_recurring_deduction]
   - request: undo last week's payroll run, two of the timesheets in it were wrong
-    expect: [void_payroll_export]
+    expect: [settlement_void_payroll_export]
   - request: drop shipment 4412 from the proposed invoice run, it is not ready to bill
     expect: [invoice_adjust_run]
   - request: use Acme's posted credit memo to settle their open invoices

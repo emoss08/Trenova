@@ -27,8 +27,6 @@ const paramPayDate = "payDate"
 
 const paramBatchName = "name"
 
-const paramBatchNotes = "notes"
-
 const maxBatchNameChars = 100
 
 const maxBatchNotesChars = 1000
@@ -115,13 +113,13 @@ func ProvideGenerateDriverSettlementTool(
 	return &GenerateDriverSettlementTool{settlements: s}
 }
 
-func (t *GenerateDriverSettlementTool) Name() string { return "generate_driver_settlement" }
+func (t *GenerateDriverSettlementTool) Name() string { return "settlement_generate_driver" }
 
 func (t *GenerateDriverSettlementTool) Description() string {
 	return "Generate one driver's draft settlement for a pay period from the pay they have " +
 		"accrued, with their recurring earnings, deductions, escrow and advance recovery. " +
 		"Use it for a driver the batch missed or an off-cycle statement; " +
-		"generate_driver_settlement_batch settles everyone. A period already settled for " +
+		"settlement_generate_driver_batch settles everyone. A period already settled for " +
 		"the driver is refused. The draft is shown to the person before anything is kept, " +
 		"so when they name a period (\"last week\", \"the first half of the month\") work " +
 		"out its days from today's date and propose it rather than asking which dates."
@@ -130,12 +128,9 @@ func (t *GenerateDriverSettlementTool) Description() string {
 func (t *GenerateDriverSettlementTool) ParamSchema() map[string]any {
 	properties := periodProperties("the settlement")
 	properties[common.ParamWorkerID] = agenttoolschema.RecordIDText(permission.ResourceWorker,
-		"The driver, from search_worker, list_workers or list_driver_pay_events.")
-	properties[paramPayDate] = map[string]any{
-		toolschema.KeyType: toolschema.TypeString,
-		toolschema.KeyDescription: "The day it is paid, YYYY-MM-DD. Leave it out for the " +
-			"pay period's own pay date.",
-	}
+		"The driver, from search_worker, list_workers or settlement_list_pay_events.")
+	properties[paramPayDate] = agenttoolschema.Date("The day it is paid. Leave it out for " +
+		"the pay period's own pay date.")
 
 	return map[string]any{
 		toolschema.KeyType:                 toolschema.TypeObject,
@@ -332,7 +327,7 @@ func batchSchema() map[string]any {
 	properties := periodProperties("the batch")
 	properties[paramBatchName] = common.StringProperty("A name for the batch; leave it out for "+
 		"\"Pay period ending\" and the period's last day.", maxBatchNameChars)
-	properties[paramBatchNotes] = common.StringProperty("Notes kept on the batch for payroll.",
+	properties[common.ParamNote] = common.StringProperty("Notes kept on the batch for payroll.",
 		maxBatchNotesChars)
 
 	return map[string]any{
@@ -373,7 +368,7 @@ func readBatchInput(params map[string]any) (batchInput, error) {
 	if err != nil {
 		return batchInput{}, err
 	}
-	notes, err := common.BoundedString(params, paramBatchNotes, maxBatchNotesChars, false)
+	notes, err := common.BoundedString(params, common.ParamNote, maxBatchNotesChars, false)
 	if err != nil {
 		return batchInput{}, err
 	}
@@ -405,11 +400,11 @@ func ProvideGenerateDriverSettlementBatchTool(
 
 func driverBatchText() batchText {
 	return batchText{
-		name: "generate_driver_settlement_batch",
+		name: "settlement_generate_driver_batch",
 		recipe: []string{
-			"list_driver_pay_events",
-			"generate_driver_settlement_batch",
-			"list_driver_settlements",
+			"settlement_list_pay_events",
+			"settlement_generate_driver_batch",
+			toolListDriverSettlements,
 		},
 		resource: permission.ResourceDriverSettlement,
 		rationale: "Drafts the period's settlements from pay already accrued inside Trenova; " +
@@ -426,7 +421,7 @@ func (t *GenerateDriverBatchTool) Description() string {
 	return "Generate the pay period's driver settlement batch: a draft settlement for every " +
 		"driver with accrued, unheld pay who has none for the period yet. An open batch for " +
 		"the period is added to; a completed one is refused. Review the drafts with " +
-		"list_driver_settlements afterwards."
+		"settlement_list_driver afterwards."
 }
 
 func (t *GenerateDriverBatchTool) ParamSchema() map[string]any {
@@ -614,7 +609,7 @@ func ProvideGenerateCarrierSettlementBatchTool(
 
 func carrierBatchText() batchText {
 	return batchText{
-		name:     "generate_carrier_settlement_batch",
+		name:     "settlement_generate_carrier_batch",
 		resource: permission.ResourceCarrierSettlement,
 		rationale: "Drafts the period's carrier settlements from cost already accrued inside " +
 			"Trenova; nothing is paid until a person approves and posts them.",
@@ -626,7 +621,7 @@ func (t *GenerateCarrierBatchTool) Name() string { return carrierBatchText().nam
 func (t *GenerateCarrierBatchTool) Description() string {
 	return "Generate the pay period's carrier settlement batch, a draft settlement for each " +
 		"carrier with pending cost. A carrier that already has one for the period is skipped. " +
-		"Review the drafts with list_carrier_settlements afterwards."
+		"Review the drafts with settlement_list_carrier afterwards."
 }
 
 func (t *GenerateCarrierBatchTool) ParamSchema() map[string]any {

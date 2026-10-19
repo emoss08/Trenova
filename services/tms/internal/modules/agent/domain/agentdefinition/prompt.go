@@ -145,9 +145,6 @@ type ToolSummary struct {
 	// Loaded says the tool's schema is on this turn's request. Meaningful
 	// only when the turn disclosed a subset; the rest load through find_tools.
 	Loaded bool
-	// BatchOf names the tool this one does to several records at once, for
-	// a plural twin such as invoice_post.
-	BatchOf string
 	// PersonalRunsUnasked says a call that touches only the person's own
 	// records runs at once while they are in the conversation, whatever
 	// the static tier says: remember for a memory kept for them alone.
@@ -1147,7 +1144,7 @@ func buildToolSection(tools []ToolSummary, disclosed bool) string {
 			builder.WriteString("\n\nWhat a change you call does:")
 			builder.WriteString(changes)
 		}
-		builder.WriteString(buildToolNotes(tools, disclosed))
+		builder.WriteString(buildToolNotes(tools))
 
 		return builder.String()
 	}
@@ -1166,7 +1163,7 @@ func buildToolSection(tools []ToolSummary, disclosed bool) string {
 	}
 	writeToolGroup(&builder, "Reads, which run as soon as you call them", reads)
 	builder.WriteString(changeGroups(tools))
-	builder.WriteString(buildToolNotes(tools, disclosed))
+	builder.WriteString(buildToolNotes(tools))
 
 	return builder.String()
 }
@@ -1238,42 +1235,17 @@ func writeToolGroup(builder *strings.Builder, label string, names []string) {
 }
 
 // buildToolNotes says what the tool list cannot say for itself about the
-// tools this agent holds: which of them are a plural twin of another, and
-// that "dashboard" names two different things when it holds the tools for
-// either. Both used to be told to every agent with billing's examples.
-func buildToolNotes(tools []ToolSummary, disclosed bool) string {
+// tools this agent holds: that "dashboard" names two different things when it
+// holds the tools for either. It used to be told to every agent.
+func buildToolNotes(tools []ToolSummary) string {
 	var builder strings.Builder
 
-	twins := make([]ToolSummary, 0, 4)
 	dashboards := false
 	for _, tool := range tools {
-		if strings.TrimSpace(tool.BatchOf) != "" {
-			twins = append(twins, tool)
-		}
 		if strings.Contains(tool.Name, "dashboard") || strings.Contains(tool.Name, "home_layout") ||
 			tool.Name == "list_home_widgets" {
 			dashboards = true
 		}
-	}
-
-	if len(twins) > 0 {
-		builder.WriteString("\n\nSeveral records in one call: ")
-		for idx, tool := range twins {
-			if idx > 0 {
-				builder.WriteString(", ")
-			}
-			builder.WriteString(tool.Name)
-			builder.WriteString(" does ")
-			builder.WriteString(tool.BatchOf)
-			builder.WriteString(" for a list")
-		}
-		builder.WriteString(". When the person asks about several records, or for one change " +
-			"across several, call the list tool once with all of them, so a change is " +
-			"decided once on one card; never call the single tool once per record")
-		if disclosed {
-			builder.WriteString(", and load the list tool with find_tools when it is not loaded")
-		}
-		builder.WriteString(".")
 	}
 
 	if dashboards {
