@@ -51,10 +51,7 @@ func (t *listReportRunsTool) ParamSchema() map[string]any {
 				"description": "The saved report to list runs of, from report_list. " +
 					"Omit to list the person's recent runs across every report.",
 			}, permission.ResourceReport),
-			"limit": map[string]any{
-				"type":        "integer",
-				"description": fmt.Sprintf("How many runs to return, up to %d.", maxListedRuns),
-			},
+			paramLimit: limitSchema(maxListedRuns, maxListedRuns),
 		},
 		"additionalProperties": false,
 	}

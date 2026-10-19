@@ -399,7 +399,7 @@ func TestIFTAMileageTools_RecordCorrectAndProposeDeletingMiles(t *testing.T) {
 		paramJurisdictionID:   texasID.String(),
 		paramTraveledAt:       "2026-08-03T10:00:00Z",
 		paramMiles:            "212.5",
-		paramNotes:            "Trip sheet 4411",
+		common.ParamNote:      "Trip sheet 4411",
 	})
 	preview := agenttoolstest.PreviewWithoutWrites(t, entries.guard, func() (*agent.ToolPreview, error) {
 		return record.(agentports.ToolPreviewer).Preview(t.Context(), params)

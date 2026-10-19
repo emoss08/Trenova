@@ -369,12 +369,12 @@ func (t *ResolveServiceFailureTool) ParamSchema() map[string]any {
 				"The reason code, from exception_list_service_failure_reason_codes. "+
 					"Required when the failure has none; otherwise replaces it.",
 			),
-			"notes": map[string]any{
+			common.ParamNote: map[string]any{
 				"type":        "string",
 				"description": "What was found and done. Required.",
 			},
 		},
-		"required":             []string{"serviceFailureId", "notes"},
+		"required":             []string{"serviceFailureId", common.ParamNote},
 		"additionalProperties": false,
 	}
 }
@@ -429,7 +429,7 @@ func (t *ResolveServiceFailureTool) request(
 	if err != nil {
 		return nil, nil, err
 	}
-	notes, err := common.RequireString(params.Params, "notes")
+	notes, err := common.RequireString(params.Params, common.ParamNote)
 	if err != nil {
 		return nil, nil, err
 	}

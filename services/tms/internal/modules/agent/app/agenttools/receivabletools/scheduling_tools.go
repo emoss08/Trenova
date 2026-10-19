@@ -241,7 +241,7 @@ func NewAssignWorkerShiftTool(schedules scheduleKeeper, scope teamScope) agentpo
 			common.FieldEffectiveFrom: agenttoolschema.Date("The first day the worker works it."),
 			paramCycleOffsetWeeks: common.IntegerProperty("Which week of a rotating pattern the "+
 				"worker starts on, 0 for the first.", 0, maxCycleOffsetWeeks),
-			common.FieldNotes: common.StringProperty("Anything the planner should know.",
+			common.ParamNote: common.StringProperty("Anything the planner should know.",
 				common.MaxOperationNoteChars),
 		},
 		[]string{common.ParamWorkerID, paramShiftTemplateID, common.FieldEffectiveFrom},
@@ -913,7 +913,7 @@ func assignShiftRequest(
 			return nil, err
 		}
 	}
-	notes, err := common.BoundedText(params.Params, common.FieldNotes, common.MaxOperationNoteChars)
+	notes, err := common.BoundedText(params.Params, common.ParamNote, common.MaxOperationNoteChars)
 	if err != nil {
 		return nil, err
 	}

@@ -166,7 +166,7 @@ func trainingAssignmentFrom(params *agentports.ToolExecuteParams) (*trainingAssi
 	if err != nil {
 		return nil, err
 	}
-	notes, err := common.BoundedText(params.Params, common.FieldNotes, wfNoteChars)
+	notes, err := common.BoundedText(params.Params, common.ParamNote, wfNoteChars)
 	if err != nil {
 		return nil, err
 	}
@@ -247,7 +247,7 @@ func newAssignWorkerTrainingTool(training TrainingKeeper) agentports.AgentTool {
 		wfParamDueDate: agenttoolschema.Date(
 			"When it is due, when not the course's own schedule.",
 		),
-		common.FieldNotes: wfNoteProperty("Anything the assignment should say."),
+		common.ParamNote: wfNoteProperty("Anything the assignment should say."),
 	}, paramTrainingWorkers, paramCourseIDs)
 	spec.Egress = agent.EgressDriverVisible
 	spec.Artifact = ""
@@ -412,7 +412,7 @@ func completionFrom(
 	}
 	if req.Notes, err = common.BoundedText(
 		params.Params,
-		common.FieldNotes,
+		common.ParamNote,
 		wfNoteChars,
 	); err != nil {
 		return nil, err
@@ -475,9 +475,9 @@ func newRecordTrainingCompletionTool(training TrainingKeeper) agentports.AgentTo
 			"The day it was finished. Defaults to today; never a " +
 				"day to come.",
 		),
-		paramScore:        common.AmountProperty("The score, such as 92, for a scored course."),
-		wfParamDocument:   wfDocumentProperty(),
-		common.FieldNotes: wfNoteProperty("Anything the record should say."),
+		paramScore:       common.AmountProperty("The score, such as 92, for a scored course."),
+		wfParamDocument:  wfDocumentProperty(),
+		common.ParamNote: wfNoteProperty("Anything the record should say."),
 	})
 	spec.Target = func(params map[string]any) (agentports.ToolTarget, bool) {
 		return common.TargetOf(params, paramTrainingID, permission.ResourceWorkerTraining)

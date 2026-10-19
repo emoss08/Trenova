@@ -93,10 +93,10 @@ func (t *RememberTool) ParamSchema() map[string]any {
 				permission.RecordKind(permission.ResourceWorker),
 				permission.RecordKind(permission.ResourceCarrier),
 			),
-			"expiresOn": map[string]any{
-				toolschema.KeyType:        toolschema.TypeString,
-				toolschema.KeyDescription: "Optional YYYY-MM-DD after which the memory no longer applies, such as a temporary arrangement.",
-			},
+			"expiresOn": agenttoolschema.Date(
+				"The last day the memory applies, such as for a temporary arrangement. Omit " +
+					"when it does not expire.",
+			),
 			fieldReplacesMemoryID: agenttoolschema.RecordIDText(
 				permission.ResourceAgentMemory,
 				"The id of a kept memory this one changes, from "+

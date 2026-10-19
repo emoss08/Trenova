@@ -449,9 +449,9 @@ const PRESENTERS: Record<string, Presenter> = {
     summary: "Close this service failure with the reason and note below.",
     highlights: facts(
       fact("Reason code", shortRef(text(args.reasonCodeId))),
-      fact("Note", text(args.notes)),
+      fact("Note", text(args.note)),
     ),
-    covered: ["serviceFailureId", "reasonCodeId", "notes"],
+    covered: ["serviceFailureId", "reasonCodeId", "note"],
     reversible: false,
   }),
 

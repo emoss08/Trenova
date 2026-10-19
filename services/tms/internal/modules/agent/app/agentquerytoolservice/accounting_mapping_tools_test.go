@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -150,7 +150,7 @@ func TestGetAccountingMapping_SearchesTheRightKindOfRecord(t *testing.T) {
 	params := accountingQueryParams("QuickBooksOnline")
 	params.Params["targetType"] = "AccountRole"
 	params.Params["key"] = "RevenueAccount"
-	params.Params["search"] = "freight"
+	params.Params["query"] = "freight"
 
 	out, err := newGetAccountingMappingTool(reader).Query(t.Context(), params)
 	require.NoError(t, err)

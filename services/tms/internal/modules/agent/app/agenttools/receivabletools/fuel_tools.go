@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
@@ -16,9 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/app/fuelpurchaseservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
-	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -33,8 +32,6 @@ const paramFuelImportID = "fuelPurchaseImportId"
 const paramJurisdictionID = "jurisdictionId"
 
 const paramPurchasedAt = "purchasedAt"
-
-const noonOffsetSeconds = 12 * 3600
 
 const paramVendor = "vendor"
 
@@ -55,8 +52,6 @@ const paramCardLastFour = "cardLastFour"
 const paramTransactionReference = "transactionReference"
 
 const paramTaxPaid = "taxPaid"
-
-const paramNotes = "notes"
 
 const paramAssignedTractorID = "assignedTractorId"
 
@@ -200,13 +195,9 @@ func fuelPurchaseProperties(forCorrection bool) map[string]any {
 		paramJurisdictionID: agenttoolschema.KindID("The state or province the fuel was "+
 			"bought in, from fuel_list_ifta_jurisdictions; it decides which line of the return the "+
 			"tax-paid gallons credit."+keep, permission.KindIFTAJurisdiction),
-		paramPurchasedAt: map[string]any{
-			toolschema.KeyType: toolschema.TypeString,
-			toolschema.KeyDescription: "When it was bought: the receipt's date and time with its " +
-				"offset, such as 2026-10-08T14:30:00-05:00, or the day alone (2026-10-08, " +
-				"yesterday) when nobody gave a time; a day is recorded at noon in the " +
-				"organization's time zone, which is what the IFTA quarter needs." + keep,
-		},
+		paramPurchasedAt: agenttoolschema.LocalDateTime("When it was bought, in the " +
+			"organization's time zone: the receipt's date and time, or noon that day when " +
+			"nobody gave a time, which is what the IFTA quarter needs." + keep),
 		paramVendor:     common.StringProperty("The truck stop or vendor."+keep, maxFuelVendorText),
 		paramVendorCity: common.StringProperty("The vendor's city."+keep, maxFuelVendorText),
 		common.ParamFuelType: agenttoolschema.Enum("The fuel as IFTA classifies it; DEF, Reefer "+
@@ -233,7 +224,7 @@ func fuelPurchaseProperties(forCorrection bool) map[string]any {
 			maxFuelReferenceText),
 		paramTaxPaid: common.BooleanProperty("Whether fuel tax was paid at the pump. Defaults to " +
 			"true; bulk or untaxed fuel earns no tax-paid credit." + keep),
-		paramNotes: common.StringProperty("Anything the person reconciling it should know."+keep,
+		common.ParamNote: common.StringProperty("Anything the person reconciling it should know."+keep,
 			maxFuelNotes),
 	}
 	if forCorrection {
@@ -285,7 +276,7 @@ func (in fuelPurchaseInput) applyTexts(purchase *fuelpurchase.FuelPurchase) erro
 		paramVendorCity:           {&purchase.VendorCity, maxFuelVendorText},
 		paramCardLastFour:         {&purchase.CardLastFour, fuelCardLastFourDigits},
 		paramTransactionReference: {&purchase.TransactionReference, maxFuelReferenceText},
-		paramNotes:                {&purchase.Notes, maxFuelNotes},
+		common.ParamNote:          {&purchase.Notes, maxFuelNotes},
 	} {
 		text, err := common.OptionalBoundedText(in.values, key, field.limit)
 		if err != nil {
@@ -340,24 +331,7 @@ func (in fuelPurchaseInput) applyAmounts(purchase *fuelpurchase.FuelPurchase) er
 }
 
 func (in fuelPurchaseInput) purchasedAt() (int64, error) {
-	raw, err := common.RequireString(in.values, paramPurchasedAt)
-	if err != nil {
-		return 0, err
-	}
-	if instant, parseErr := common.ParseDateTime(paramPurchasedAt, raw); parseErr == nil {
-		return instant, nil
-	}
-
-	if strings.Contains(raw, ":") {
-		return 0, common.DateRefusal(paramPurchasedAt, raw, toolschema.FormatDateTime)
-	}
-	clk := filtercatalog.NewClock(in.timezone)
-	day, err := filtercatalog.CoerceDate(paramPurchasedAt, raw, clk)
-	if err != nil {
-		return 0, common.DateRefusal(paramPurchasedAt, raw, toolschema.FormatDateTime)
-	}
-
-	return clk.DayStart(day) + noonOffsetSeconds, nil
+	return common.RequireLocalTime(in.values, paramPurchasedAt, timeutils.LoadLocation(in.timezone))
 }
 
 func (in fuelPurchaseInput) applyChoices(purchase *fuelpurchase.FuelPurchase) error {

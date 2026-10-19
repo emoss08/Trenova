@@ -69,7 +69,7 @@ func TestListAccountingInboundChanges_FiltersAndSaysWhatEachPays(t *testing.T) {
 	params.Params["status"] = []any{"Proposed"}
 	params.Params["kind"] = []any{"CustomerPayment"}
 	params.Params["reason"] = []any{"Overpayment", "PeriodNotOpen"}
-	params.Params["search"] = " Acme "
+	params.Params["query"] = " Acme "
 	params.Params["limit"] = 500.0
 
 	out, err := newListAccountingInboundChangesTool(reader).Query(t.Context(), params)

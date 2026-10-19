@@ -180,8 +180,8 @@ func injuryDetailProperties() map[string]any {
 		paramSafetyEventID: agenttoolschema.RecordIDText(permission.ResourceWorkerSafetyEvent,
 			"The accident it came from, from worker_list_safety_events.",
 		),
-		wfParamDocument:   wfDocumentProperty(),
-		common.FieldNotes: wfNoteProperty("Anything the case should say."),
+		wfParamDocument:  wfDocumentProperty(),
+		common.ParamNote: wfNoteProperty("Anything the case should say."),
 	}
 }
 
@@ -255,7 +255,7 @@ func injuryTextFrom(params map[string]any, req *workerinjuryservice.UpdateInjury
 		{paramHarmfulAgent, &req.HarmfulAgent, wfShortChars},
 		{paramClaimNumber, &req.ClaimNumber, maxCredentialField},
 		{paramClaimCarrier, &req.ClaimCarrier, maxClaimField},
-		{common.FieldNotes, &req.Notes, wfNoteChars},
+		{common.ParamNote, &req.Notes, wfNoteChars},
 	} {
 		text, err := common.OptionalBoundedText(params, field.key, field.limit)
 		if err != nil {

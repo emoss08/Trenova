@@ -230,10 +230,7 @@ func (t *searchWorkerTool) ParamSchema() map[string]any {
 				"type":        "string",
 				"description": "Optional name or code to match. Omit to list workers unfiltered.",
 			},
-			"limit": map[string]any{
-				"type":        "integer",
-				"description": "How many results to return, at most 25",
-			},
+			paramLimit: limitSchema(defaultSearchLimit, maxSearchLimit),
 		},
 		"additionalProperties": false,
 	}
@@ -259,10 +256,7 @@ func (t *searchWorkerTool) Query(
 	// the tool reject a call the layer beneath it would have served.
 	query := optionalString(params.Params, "query")
 
-	limit := optionalInt(params.Params, "limit", defaultSearchLimit)
-	if limit <= 0 || limit > maxSearchLimit {
-		limit = defaultSearchLimit
-	}
+	limit := readLimit(params.Params, defaultSearchLimit, maxSearchLimit)
 
 	criteria := filtercatalog.NewCriteria("workers").At(clockFor(params))
 	criteria.Text(query)

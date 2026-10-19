@@ -253,7 +253,7 @@ func TestDescriptorText_NamesTheToolAndWhatPeopleCallIt(t *testing.T) {
 	})
 
 	assert.Equal(t,
-		"get my home layout: Read the person's home page.\nAlso asked for as: my dashboard, home",
+		"get home layout: Read the person's home page.\nAlso asked for as: my dashboard, home",
 		text,
 	)
 }

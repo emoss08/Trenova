@@ -18,7 +18,6 @@ const (
 	paramInboundStatus = "status"
 	paramInboundKind   = "kind"
 	paramInboundReason = "reason"
-	paramInboundSearch = "search"
 
 	inboundDefaultLimit = 25
 	inboundMaxLimit     = 50
@@ -157,13 +156,10 @@ func (t *listAccountingInboundChangesTool) ParamSchema() map[string]any {
 			agenttoolschema.Enum("A reason.", agenttoolschema.InboundChangeReasons),
 			len(accountingsync.AllInboundChangeReasons()),
 		),
-		paramInboundSearch: jsonschemautils.Text(
+		paramQuery: jsonschemautils.Text(
 			"Words to find in the payment's number or the customer or vendor name.",
 		),
-		paramLimit: jsonschemautils.Integer(fmt.Sprintf(
-			"How many payments to return, at most %d. Defaults to %d.",
-			inboundMaxLimit, inboundDefaultLimit,
-		)),
+		paramLimit: limitSchema(inboundDefaultLimit, inboundMaxLimit),
 		paramAfter: jsonschemautils.Text(
 			"The nextCursor from a previous call of this tool, for the next page.",
 		),
@@ -225,7 +221,7 @@ func (t *listAccountingInboundChangesTool) request(
 		Statuses:        statuses,
 		Kinds:           kinds,
 		Reasons:         reasons,
-		Search:          optionalString(params.Params, paramInboundSearch),
+		Search:          optionalString(params.Params, paramQuery),
 		Cursor:          cursor,
 	}, nil
 }

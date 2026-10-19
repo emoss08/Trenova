@@ -207,7 +207,7 @@ func capacityFields() []masterField[carriercapacity.Posting] {
 			func(p *carriercapacity.Posting) *decimal.NullDecimal { return &p.Rate }),
 		masterEnum("source", "How the offer reached you.", capacitySources,
 			func(p *carriercapacity.Posting) *carriercapacity.Source { return &p.Source }),
-		masterText("notes", "Anything else the carrier said.", carriercapacity.MaxNotesLength,
+		masterText(mdNote, "Anything else the carrier said.", carriercapacity.MaxNotesLength,
 			false, func(p *carriercapacity.Posting) *string { return &p.Notes }),
 	}
 }

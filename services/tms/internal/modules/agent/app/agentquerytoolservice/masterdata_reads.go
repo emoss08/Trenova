@@ -267,11 +267,7 @@ func (t *listCaptureBatchesTool) ParamSchema() map[string]any {
 				toolschema.KeyDescription: "One stack to read, by an id a listing without it returned or " +
 					"the stack on the page. Leave it out to list open stacks.",
 			}, permission.ResourceCaptureBatch),
-			paramLimit: map[string]any{
-				toolschema.KeyType: toolschema.TypeInteger,
-				toolschema.KeyDescription: fmt.Sprintf("How many stacks to return, at most %d.",
-					maxCaptureBatches),
-			},
+			paramLimit: limitSchema(defaultCaptureBatches, maxCaptureBatches),
 		},
 		toolschema.KeyAdditionalProperties: false,
 	}

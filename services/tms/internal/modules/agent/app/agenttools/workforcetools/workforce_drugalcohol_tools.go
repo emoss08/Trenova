@@ -195,7 +195,7 @@ func scheduledTestFrom(params *agentports.ToolExecuteParams) (*worker.WorkerDOTT
 	if err != nil {
 		return nil, err
 	}
-	notes, err := common.BoundedText(params.Params, common.FieldNotes, wfNoteChars)
+	notes, err := common.BoundedText(params.Params, common.ParamNote, wfNoteChars)
 	if err != nil {
 		return nil, err
 	}
@@ -260,7 +260,7 @@ func newScheduleDOTTestTool(tests DrugAlcoholKeeper) agentports.AgentTool {
 			"Whether it is a DOT-regulated test. Defaults to true; " +
 				"a company-policy test is false.",
 		),
-		common.FieldNotes: wfNoteProperty("Anything the collector should know."),
+		common.ParamNote: wfNoteProperty("Anything the collector should know."),
 	}, common.ParamWorkerID, paramDOTTestType, paramSubstance)
 	spec.SearchTerms = []string{"drug test", "alcohol test", "random test", "collection"}
 
@@ -402,7 +402,7 @@ func drawRequestFrom(
 	if err != nil {
 		return nil, err
 	}
-	notes, err := common.BoundedText(params.Params, common.FieldNotes, wfNoteChars)
+	notes, err := common.BoundedText(params.Params, common.ParamNote, wfNoteChars)
 	if err != nil {
 		return nil, err
 	}
@@ -440,7 +440,7 @@ func newRunDOTRandomDrawTool(draws DrugAlcoholKeeper) agentports.AgentTool {
 			"A day inside the period to draw for, for a period that was " +
 				"missed. Defaults to today.",
 		),
-		common.FieldNotes: wfNoteProperty("Anything the round's record should say."),
+		common.ParamNote: wfNoteProperty("Anything the round's record should say."),
 	})
 	spec.Artifact = ""
 	spec.SearchTerms = []string{"random drug test", "random selection", "testing pool"}

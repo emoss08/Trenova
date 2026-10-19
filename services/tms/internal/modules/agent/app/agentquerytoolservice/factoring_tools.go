@@ -220,10 +220,7 @@ func (t *listFactoringReadyInvoicesTool) ParamSchema() map[string]any {
 			permission.ResourceCustomer,
 			"Only this customer's invoices, from customer_list or invoice_get.",
 		),
-		paramLimit: jsonschemautils.Integer(fmt.Sprintf(
-			"How many invoices to return, at most %d. Defaults to %d.",
-			factoringStatesMaxLimit, factoringStatesDefaultLimit,
-		)),
+		paramLimit: limitSchema(factoringStatesDefaultLimit, factoringStatesMaxLimit),
 		paramAfter: jsonschemautils.Text(
 			"The nextCursor from a previous call of this tool, for the next page.",
 		),
@@ -503,10 +500,7 @@ func (t *listFactoringNoasTool) ParamSchema() map[string]any {
 			agenttoolschema.Enum("A notice status.", agenttoolschema.FactoringNoaStatuses),
 			len(factoring.AllNoaStatuses()),
 		),
-		paramLimit: jsonschemautils.Integer(fmt.Sprintf(
-			"How many notices to return, at most %d. Defaults to %d.",
-			factoringNoasMaxLimit, factoringNoasDefaultLimit,
-		)),
+		paramLimit: limitSchema(factoringNoasDefaultLimit, factoringNoasMaxLimit),
 		paramAfter: jsonschemautils.Text(
 			"The nextCursor from a previous call of this tool, for the next page.",
 		),

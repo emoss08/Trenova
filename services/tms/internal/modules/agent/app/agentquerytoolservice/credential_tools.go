@@ -93,10 +93,7 @@ func (t *listExpiringCredentialsTool) ParamSchema() map[string]any {
 				"type":        "boolean",
 				"description": "Only credential types the organization marks required.",
 			},
-			"limit": map[string]any{
-				"type":        "integer",
-				"description": fmt.Sprintf("How many to return, at most %d.", maxExpiringRows),
-			},
+			paramLimit: limitSchema(defaultSearchLimit, maxExpiringRows),
 		},
 		"additionalProperties": false,
 	}

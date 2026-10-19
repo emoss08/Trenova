@@ -105,8 +105,8 @@ func newListWorkersTool(
 		name:         "worker_list",
 		entityPlural: "workers",
 		summary: "List workers (drivers) by employment or qualification. worker_search " +
-			"finds a name; worker_list_expiring_credentials, credentials. \"none on file\" was " +
-			"never recorded: report it as worse than expiring soon.",
+			"finds a name; worker_list_expiring_credentials, credentials. \"none on file\" " +
+			"was never recorded: worse than expiring soon.",
 		resource: permission.ResourceWorker,
 		config:   querybuilder.GetFieldConfiguration((*worker.Worker)(nil)),
 		fields: []listField{

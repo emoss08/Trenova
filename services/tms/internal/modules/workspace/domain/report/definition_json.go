@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/pkg/toolschema"
 )
 
 // DecodeDefinition reads a definition out of a decoded JSON value, such as a
@@ -375,7 +376,13 @@ func DefinitionJSONSchema() map[string]any {
 					"additionalProperties": false,
 				},
 			},
-			"limit": map[string]any{"type": "integer"},
+			"limit": toolschema.Clamped(map[string]any{
+				"type":    "integer",
+				"minimum": 0,
+				"maximum": MaxDefinitionLimit,
+				"description": "The most rows a run returns; 0 or left out returns as many " +
+					"as a report may.",
+			}),
 			"parameters": map[string]any{
 				"type":        "array",
 				"description": "Values asked for at run time and bound to filters by param.",

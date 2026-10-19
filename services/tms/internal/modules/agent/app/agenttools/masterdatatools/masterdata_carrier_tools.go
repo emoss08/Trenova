@@ -215,7 +215,7 @@ func carrierFields() []masterField[carrier.Carrier] {
 			func(c *carrier.Carrier) *string { return &c.Phone }),
 		masterText(mdEmail, "The dispatch email address.", mdMaxName, false,
 			func(c *carrier.Carrier) *string { return &c.Email }),
-		masterText(mdNotes, "Anything colleagues booking this carrier should know.",
+		masterText(mdNote, "Anything colleagues booking this carrier should know.",
 			mdMaxNotes, false, func(c *carrier.Carrier) *string { return &c.Notes }),
 		masterEnum(carrierPaymentMethod, "How the carrier is paid. Defaults to Check. "+
 			"Payment details are only ever proposed and change on a person's approval.",

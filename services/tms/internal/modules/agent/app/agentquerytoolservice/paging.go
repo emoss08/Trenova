@@ -18,15 +18,19 @@ type page struct {
 }
 
 func readPage(params map[string]any, fallback, most int) page {
-	limit := optionalInt(params, "limit", fallback)
-	if limit <= 0 {
-		limit = fallback
+	return page{
+		limit:  readLimit(params, fallback, most),
+		offset: max(optionalInt(params, paramOffset, 0), 0),
 	}
-	if limit > most {
-		limit = most
+}
+
+func readLimit(params map[string]any, fallback, most int) int {
+	limit := optionalInt(params, paramLimit, fallback)
+	if limit <= 0 {
+		return fallback
 	}
 
-	return page{limit: limit, offset: max(optionalInt(params, "offset", 0), 0)}
+	return min(limit, most)
 }
 
 // fetch is how many rows to ask for: one more than the page, so the answer

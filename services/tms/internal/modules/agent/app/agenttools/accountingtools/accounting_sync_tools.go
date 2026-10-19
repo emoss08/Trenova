@@ -958,11 +958,11 @@ func (t *RequestAccountingBackfillTool) Prerequisites() []string {
 func (t *RequestAccountingBackfillTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		ParamAccountingSystem: accountingSystemSchema(),
-		paramBackfillFrom: jsonschemautils.Text(
-			"The first document date to send, as YYYY-MM-DD. Defaults to the start date.",
+		paramBackfillFrom: agenttoolschema.Date(
+			"The first document date to send. Defaults to the start date.",
 		),
-		paramBackfillTo: jsonschemautils.Text(
-			"The last document date to send, as YYYY-MM-DD. Defaults to the day sending began.",
+		paramBackfillTo: agenttoolschema.Date(
+			"The last document date to send. Defaults to the day sending began.",
 		),
 		paramBackfillTypes: jsonschemautils.DescribedArray(
 			"Only these kinds of document. Defaults to all of them.",

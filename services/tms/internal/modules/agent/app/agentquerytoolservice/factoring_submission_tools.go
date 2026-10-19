@@ -186,10 +186,7 @@ func (t *listFactoringSubmissionsTool) ParamSchema() map[string]any {
 			),
 			len(factoring.AllSubmissionStatuses()),
 		),
-		paramLimit: jsonschemautils.Integer(fmt.Sprintf(
-			"How many schedules to return, at most %d. Defaults to %d.",
-			factoringSubmissionsMaxLimit, factoringSubmissionsDefaultLimit,
-		)),
+		paramLimit: limitSchema(factoringSubmissionsDefaultLimit, factoringSubmissionsMaxLimit),
 		paramAfter: jsonschemautils.Text(
 			"The nextCursor from a previous call of this tool, for the next page.",
 		),

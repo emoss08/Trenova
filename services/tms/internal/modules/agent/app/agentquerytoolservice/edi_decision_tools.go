@@ -173,13 +173,8 @@ func provideListEDIPartnersTool(ediSvc *ediservice.Service) agentports.AgentQuer
 }
 
 func cursorPage(params *agentports.QueryToolParams) (pagination.CursorInfo, error) {
-	limit := optionalInt(params.Params, paramLimit, defaultListLimit)
-	if limit <= 0 {
-		limit = defaultListLimit
-	}
-
 	cursor, err := pagination.NewCursorInfo(
-		min(limit, maxListLimit),
+		readLimit(params.Params, defaultListLimit, maxListLimit),
 		optionalString(params.Params, paramAfter),
 	)
 	if err != nil {
@@ -191,10 +186,7 @@ func cursorPage(params *agentports.QueryToolParams) (pagination.CursorInfo, erro
 }
 
 func cursorSchema(properties map[string]any) map[string]any {
-	properties[paramLimit] = intParam(fmt.Sprintf(
-		"How many rows to return: %d unless you ask, at most %d.",
-		defaultListLimit, maxListLimit,
-	))
+	properties[paramLimit] = limitSchema(defaultListLimit, maxListLimit)
 	properties[paramAfter] = stringParam("The nextCursor from a previous call, for the next page.")
 
 	return properties

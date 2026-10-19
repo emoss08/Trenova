@@ -110,10 +110,7 @@ func (t *listTimeOffTool) ParamSchema() map[string]any {
 				"type":        "integer",
 				"description": "Only leave starting on or before this Unix second.",
 			},
-			"limit": map[string]any{
-				"type":        "integer",
-				"description": fmt.Sprintf("How many to return, at most %d.", maxTimeOffLimit),
-			},
+			paramLimit: limitSchema(defaultTimeOffLimit, maxTimeOffLimit),
 		},
 		"additionalProperties": false,
 	}
@@ -133,10 +130,7 @@ func (t *listTimeOffTool) Query(
 		return nil, err
 	}
 
-	limit := optionalInt(params.Params, "limit", defaultTimeOffLimit)
-	if limit <= 0 || limit > maxTimeOffLimit {
-		limit = defaultTimeOffLimit
-	}
+	limit := readLimit(params.Params, defaultTimeOffLimit, maxTimeOffLimit)
 
 	request := &workerports.ListPTORequest{
 		Filter: &pagination.QueryOptions{

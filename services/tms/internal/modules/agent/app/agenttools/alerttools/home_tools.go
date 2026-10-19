@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -295,10 +296,12 @@ func (t *AddHomeWidgetTool) ParamSchema() map[string]any {
 						"type":        "string",
 						"description": "What an announcement widget says.",
 					},
-					"limit": map[string]any{
+					"limit": toolschema.Clamped(map[string]any{
 						"type":        "integer",
+						"minimum":     1,
+						"maximum":     homelayout.MaxWidgetLimit,
 						"description": "How many rows a queue widget shows.",
-					},
+					}),
 					"windowDays": map[string]any{
 						"type":        "integer",
 						"description": "How many days a trend widget covers.",

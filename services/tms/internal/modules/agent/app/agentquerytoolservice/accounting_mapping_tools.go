@@ -218,9 +218,7 @@ func (t *listAccountingMappingGapsTool) ParamSchema() map[string]any {
 			agenttoolschema.MappingTargetTypes,
 		),
 		"requiredOnly": jsonschemautils.Boolean("Only the mappings setup cannot finish without."),
-		paramLimit: jsonschemautils.Integer(
-			"How many gaps to return, at most 50. Defaults to 25.",
-		),
+		paramLimit:     limitSchema(mappingGapsDefaultLimit, mappingGapsMaxLimit),
 	}, paramAccountingSystem)
 }
 
@@ -322,7 +320,7 @@ func (t *getAccountingMappingTool) Description() string {
 	return "Get which accounting system record one Trenova record or setting is sent as. " +
 		"Name it by mappingId, or by targetType with recordId for a customer, carrier or " +
 		"accessorial charge, or with key for an account role, line type, term or payment " +
-		"method. With search, it also returns up to ten usable accounting records of the " +
+		"method. With query, it also returns up to ten usable accounting records of the " +
 		"right kind whose names match, so you can choose one for accounting_set_mapping."
 }
 
@@ -351,7 +349,7 @@ func (t *getAccountingMappingTool) ParamSchema() map[string]any {
 				"other target types. Examples: " +
 				"\"ARAccount\", \"RevenueAccount\", \"Freight\", \"Net30\", \"ACH\".",
 		),
-		"search": jsonschemautils.Text("Words to find in the accounting system's record names."),
+		paramQuery: jsonschemautils.Text("Words to find in the accounting system's record names."),
 	}, paramAccountingSystem)
 }
 
@@ -381,7 +379,7 @@ func (t *getAccountingMappingTool) Query(
 	}
 	detail := &accountingMappingDetail{Mapping: accountingMappingRowFrom(row)}
 
-	search := optionalString(params.Params, "search")
+	search := optionalString(params.Params, paramQuery)
 	if search == "" {
 		return detail, nil
 	}

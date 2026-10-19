@@ -226,7 +226,7 @@ func (t *SetAccountingMappingTool) Recipe() []string {
 func (t *SetAccountingMappingTool) Description() string {
 	return "Choose which accounting system record a Trenova record or setting is sent as, " +
 		"and confirm it. Use an externalId from the mapping's candidates or from " +
-		"accounting_get_mapping's search options; never guess one. To accept Trenova's " +
+		"the options accounting_get_mapping finds with a query; never guess one. To accept Trenova's " +
 		"proposal, send the proposed record's externalId. Give a short reason a bookkeeper " +
 		"would accept. Only confirmed mappings are used when syncing."
 }
@@ -428,7 +428,7 @@ func (t *CreateAccountingReferenceRecordTool) Recipe() []string {
 func (t *CreateAccountingReferenceRecordTool) Description() string {
 	return "Create an item, customer or vendor in the accounting system and map a Trenova " +
 		"record to it. Use it for an accessorial charge, line type, customer or carrier " +
-		"with no match there, and only when accounting_get_mapping's search finds no " +
+		"with no match there, and only when accounting_get_mapping finds no " +
 		"existing record; a duplicate is refused and names the existing one. Accounts, " +
 		"terms and payment methods are the bookkeeper's and are never created."
 }

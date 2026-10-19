@@ -71,7 +71,7 @@ func TestResolveServiceFailure_CarriesTheVersionAndTheReason(t *testing.T) {
 		map[string]any{
 			"serviceFailureId": existing.ID.String(),
 			"reasonCodeId":     reasonID.String(),
-			"notes":            "  Shipper closed early; driver waited until opening. ",
+			"note":             "  Shipper closed early; driver waited until opening. ",
 		},
 	)))
 
@@ -94,7 +94,7 @@ func TestResolveServiceFailure_InsistsOnAReasonWhenNoneIsOnFile(t *testing.T) {
 
 	err := operationstools.NewResolveServiceFailureTool(failures).Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 		"serviceFailureId": existing.ID.String(),
-		"notes":            "Done.",
+		"note":             "Done.",
 	}))
 
 	require.Error(t, err)
@@ -103,7 +103,7 @@ func TestResolveServiceFailure_InsistsOnAReasonWhenNoneIsOnFile(t *testing.T) {
 
 	existing.ReasonCodeID = pulid.PtrOrNil(pulid.MustNew("sfrc_"))
 	require.NoError(t, operationstools.NewResolveServiceFailureTool(failures).Execute(t.Context(), agenttoolstest.ExecuteParams(
-		map[string]any{"serviceFailureId": existing.ID.String(), "notes": "Done."},
+		map[string]any{"serviceFailureId": existing.ID.String(), "note": "Done."},
 	)), "a failure that already carries a reason keeps it")
 	assert.True(t, failures.Resolved.ReasonCodeID.IsNil())
 }
@@ -117,7 +117,7 @@ func TestResolveServiceFailure_RefusesATerminalOne(t *testing.T) {
 
 	err := operationstools.NewResolveServiceFailureTool(failures).Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 		"serviceFailureId": existing.ID.String(),
-		"notes":            "Again.",
+		"note":             "Again.",
 	}))
 
 	require.Error(t, err)

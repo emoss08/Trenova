@@ -169,7 +169,7 @@ describe("describeToolCall", () => {
     expect(
       describeToolCall("exception_resolve_service_failure", {
         serviceFailureId: "sf_1",
-        notes: "Shipper closed early.",
+        note: "Shipper closed early.",
       }),
     ).toEqual({ title: "Resolve service failure", subject: "sf_1" });
     expect(describeToolCall("detention_send_notice", { occurrenceId: "dto_1" })).toEqual({

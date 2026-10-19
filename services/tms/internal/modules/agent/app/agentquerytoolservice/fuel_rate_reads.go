@@ -367,11 +367,9 @@ func (t *listFuelIndexPricesTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
 		paramFuelIndexID: agenttoolschema.KindID("The fuel index, from "+
 			"rate_list_fuel_surcharge_programs. Never guess one.", permission.KindFuelIndex),
-		"from": stringParam("The earliest price day to include, YYYY-MM-DD."),
-		"to":   stringParam("The latest price day to include, YYYY-MM-DD."),
-		paramLimit: intParam(
-			fmt.Sprintf("How many prices to return, at most %d.", maxFuelIndexPrices),
-		),
+		"from":     agenttoolschema.Date("The earliest price day to include."),
+		"to":       agenttoolschema.Date("The latest price day to include."),
+		paramLimit: limitSchema(defaultFuelIndexPrices, maxFuelIndexPrices),
 	}, paramFuelIndexID)
 }
 
@@ -703,7 +701,7 @@ func (t *listRateImportsTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
 		"rateAgreementId": agenttoolschema.RecordIDText(permission.ResourceRateAgreement,
 			"Only the imports against this agreement, from rate_list_agreements."),
-		paramLimit: intParam(fmt.Sprintf("How many imports to return, at most %d.", maxListLimit)),
+		paramLimit: limitSchema(defaultListLimit, maxListLimit),
 	})
 }
 
@@ -813,8 +811,7 @@ func (t *listReportSchedulesTool) ParamSchema() map[string]any {
 		paramReportScheduleDef: agenttoolschema.RecordIDText(permission.ResourceReport,
 			"Only the schedules of this saved report, from report_list."),
 		"enabledOnly": boolParam("Only schedules that are switched on."),
-		paramLimit: intParam(fmt.Sprintf("How many schedules to return, at most %d.",
-			maxReportSchedules)),
+		paramLimit:    limitSchema(maxReportSchedules, maxReportSchedules),
 	})
 }
 

@@ -130,10 +130,7 @@ func (t *listCarrierIntelEventsTool) ParamSchema() map[string]any {
 		),
 		paramFromDate: agenttoolschema.Date("Only events detected on or after this day."),
 		paramToDate:   agenttoolschema.Date("Only events detected on or before this day."),
-		paramLimit: jsonschemautils.Integer(fmt.Sprintf(
-			"How many events to return, at most %d. Defaults to %d.",
-			carrierIntelEventMaxLimit, carrierIntelEventDefaultLimit,
-		)),
+		paramLimit:    limitSchema(carrierIntelEventDefaultLimit, carrierIntelEventMaxLimit),
 		paramAfter: jsonschemautils.Text(
 			"The nextCursor from a previous call of this tool, for the next page.",
 		),

@@ -188,8 +188,8 @@ func leaveCaseProperties() map[string]any {
 		paramEndsAt: agenttoolschema.Date("The last day of leave, when it is known."),
 		paramEligibilityHours: common.IntegerProperty("Hours worked in the twelve months before, "+
 			"for eligibility.", 0, maxEligibilityHours),
-		wfParamDocument:   wfDocumentProperty(),
-		common.FieldNotes: wfNoteProperty("Anything the case should say."),
+		wfParamDocument:  wfDocumentProperty(),
+		common.ParamNote: wfNoteProperty("Anything the case should say."),
 	}
 }
 
@@ -224,7 +224,7 @@ func applyLeaveCaseOpen(entity *worker.WorkerLeaveCase, params map[string]any) e
 	if entity.DocumentID, err = common.OptionalID(params, wfParamDocument); err != nil {
 		return err
 	}
-	if entity.Notes, err = common.BoundedText(params, common.FieldNotes, wfNoteChars); err != nil {
+	if entity.Notes, err = common.BoundedText(params, common.ParamNote, wfNoteChars); err != nil {
 		return err
 	}
 	hours, err := common.OptionalIntInRange(params, paramEligibilityHours, 0, maxEligibilityHours)
@@ -354,7 +354,7 @@ func leaveCaseUpdateFrom(
 	}
 	if req.Notes, err = common.OptionalBoundedText(
 		params.Params,
-		common.FieldNotes,
+		common.ParamNote,
 		wfNoteChars,
 	); err != nil {
 		return nil, err
@@ -611,7 +611,7 @@ func newRecordLeaveDayTool(cases LeaveKeeper) agentports.AgentTool {
 		paramPTOLink: agenttoolschema.RecordIDText(permission.ResourceWorkerPTO,
 			"Paid time off booked for the same day, from worker_list_time_off, when the leave "+
 				"runs concurrently."),
-		common.FieldNotes: wfNoteProperty("Anything the day should say."),
+		common.ParamNote: wfNoteProperty("Anything the day should say."),
 	}, paramLeaveCaseID, paramUsedOn, paramLeaveHours)
 
 	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[
@@ -636,7 +636,7 @@ func newRecordLeaveDayTool(cases LeaveKeeper) agentports.AgentTool {
 			if err != nil {
 				return nil, err
 			}
-			notes, err := common.BoundedText(params.Params, common.FieldNotes, wfNoteChars)
+			notes, err := common.BoundedText(params.Params, common.ParamNote, wfNoteChars)
 			if err != nil {
 				return nil, err
 			}
@@ -712,7 +712,7 @@ func newUpdateLeaveDayTool(cases LeaveKeeper) agentports.AgentTool {
 			permission.ResourceWorkerPTO,
 			"Paid time off booked for the same day, from worker_list_time_off.",
 		),
-		common.FieldNotes: wfNoteProperty("The day's note."),
+		common.ParamNote: wfNoteProperty("The day's note."),
 	}, paramLeaveEntryID), paramLeaveEntryID, permission.ResourceWorkerLeave)
 
 	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[
@@ -746,7 +746,7 @@ func newUpdateLeaveDayTool(cases LeaveKeeper) agentports.AgentTool {
 			if req.PTOID, err = common.OptionalID(params.Params, paramPTOLink); err != nil {
 				return nil, err
 			}
-			if req.Notes, err = common.OptionalBoundedText(params.Params, common.FieldNotes,
+			if req.Notes, err = common.OptionalBoundedText(params.Params, common.ParamNote,
 				wfNoteChars); err != nil {
 				return nil, err
 			}

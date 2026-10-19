@@ -537,7 +537,7 @@ func iftaMileageProperties(forCorrection bool) map[string]any {
 		common.ParamShipmentMoveID: agenttoolschema.RecordIDText(permission.ResourceShipmentMove,
 			"The move these miles correct, from shipment_get; the entry then replaces the "+
 				"move's routed miles on the return."+keep),
-		paramNotes: common.StringProperty("Where the miles came from, such as a trip sheet."+keep,
+		common.ParamNote: common.StringProperty("Where the miles came from, such as a trip sheet."+keep,
 			maxMileageNotes),
 	}
 	if forCorrection {
@@ -588,7 +588,7 @@ func applyMileageParams(entry *ifta.JurisdictionMileageEntry, values map[string]
 	if loaded != nil {
 		entry.Loaded = *loaded
 	}
-	notes, err := common.OptionalBoundedText(values, paramNotes, maxMileageNotes)
+	notes, err := common.OptionalBoundedText(values, common.ParamNote, maxMileageNotes)
 	if err != nil {
 		return err
 	}

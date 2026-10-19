@@ -112,10 +112,10 @@ func credentialFactProperties() map[string]any {
 			"exactly as printed.", maxCredentialField),
 		paramIssuingAuthority: common.StringProperty("Who issued it, such as the state.",
 			maxCredentialField),
-		paramIssuedAt:     agenttoolschema.Date("When it was issued."),
-		paramExpiresAt:    agenttoolschema.Date("When it expires."),
-		wfParamDocument:   wfDocumentProperty(),
-		common.FieldNotes: wfNoteProperty("Anything the credential should say."),
+		paramIssuedAt:    agenttoolschema.Date("When it was issued."),
+		paramExpiresAt:   agenttoolschema.Date("When it expires."),
+		wfParamDocument:  wfDocumentProperty(),
+		common.ParamNote: wfNoteProperty("Anything the credential should say."),
 	}
 }
 
@@ -135,7 +135,7 @@ func applyCredentialFacts(entity *worker.WorkerCredential, params map[string]any
 	}
 	if notes, notesErr := common.OptionalBoundedText(
 		params,
-		common.FieldNotes,
+		common.ParamNote,
 		wfNoteChars,
 	); notesErr != nil {
 		return notesErr

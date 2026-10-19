@@ -23,7 +23,6 @@ const (
 	paramDocumentID        = "documentId"
 	paramDocumentIDs       = "documentIds"
 	paramSyncRecordID      = "syncRecordId"
-	paramSyncSearch        = "search"
 
 	syncRecordsDefaultLimit = 25
 	syncRecordsMaxLimit     = 50
@@ -249,13 +248,10 @@ func (t *listAccountingSyncRecordsTool) ParamSchema() map[string]any {
 			"Only the records of one Trenova document, by its id from "+
 				syncDocumentIDSources+".",
 		), syncDocumentKinds...),
-		paramSyncSearch: jsonschemautils.Text(
+		paramQuery: jsonschemautils.Text(
 			"Words to find in Trenova or accounting system document numbers.",
 		),
-		paramLimit: jsonschemautils.Integer(fmt.Sprintf(
-			"How many records to return, at most %d. Defaults to %d.",
-			syncRecordsMaxLimit, syncRecordsDefaultLimit,
-		)),
+		paramLimit: limitSchema(syncRecordsDefaultLimit, syncRecordsMaxLimit),
 		paramAfter: jsonschemautils.Text(
 			"The nextCursor from a previous call of this tool, for the next page.",
 		),
@@ -322,7 +318,7 @@ func (t *listAccountingSyncRecordsTool) request(
 		ObjectTypes:     types,
 		ErrorCategories: categories,
 		ObjectID:        documentID,
-		Search:          optionalString(params.Params, paramSyncSearch),
+		Search:          optionalString(params.Params, paramQuery),
 		Cursor:          cursor,
 	}, nil
 }

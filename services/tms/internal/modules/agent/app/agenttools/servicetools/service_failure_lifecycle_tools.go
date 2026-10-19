@@ -165,7 +165,7 @@ func readServiceFailureEdit(params *agentports.ToolExecuteParams) (*serviceFailu
 	}
 	if edit.notes, err = common.OptionalBoundedText(
 		params.Params,
-		common.FieldNotes,
+		common.ParamNote,
 		common.MaxOperationNoteChars,
 	); err != nil {
 		return nil, err
@@ -262,7 +262,7 @@ func NewUpdateServiceFailureTool(failures serviceFailureLifecycle) agentports.Ag
 			),
 			paramClearReasonCode: common.BooleanProperty("True to remove the reason code. A " +
 				"reviewed failure keeps its reason."),
-			common.FieldNotes: toolschema.KeepEmpty(
+			common.ParamNote: toolschema.KeepEmpty(
 				common.StringProperty("What the customer may read "+
 					"about the failure.", common.MaxOperationNoteChars),
 			),
@@ -361,13 +361,13 @@ func readServiceFailureTransition(
 	if notesRequired {
 		transition.notes, err = common.RequireBoundedText(
 			params.Params,
-			common.FieldNotes,
+			common.ParamNote,
 			common.MaxOperationNoteChars,
 		)
 	} else {
 		transition.notes, err = common.BoundedText(
 			params.Params,
-			common.FieldNotes,
+			common.ParamNote,
 			common.MaxOperationNoteChars,
 		)
 	}
@@ -422,7 +422,7 @@ func newServiceFailureTransitionTool(
 ) agentports.AgentTool {
 	properties := map[string]any{
 		editools.ParamServiceFailureID: serviceFailureIDProperty(),
-		common.FieldNotes: common.StringProperty(
+		common.ParamNote: common.StringProperty(
 			"What was found, in a sentence a person reads on the "+
 				"failure later.",
 			common.MaxOperationNoteChars,
@@ -430,7 +430,7 @@ func newServiceFailureTransitionTool(
 	}
 	required := []string{editools.ParamServiceFailureID}
 	if spec.notesRequired {
-		required = append(required, common.FieldNotes)
+		required = append(required, common.ParamNote)
 	} else {
 		properties[common.FieldReasonCodeID] = agenttoolschema.RecordIDText(
 			permission.ResourceServiceFailureReasonCode,

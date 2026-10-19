@@ -45,12 +45,14 @@ type documentSummary struct {
 type textWindow struct {
 	page   int
 	offset int
+	limit  int
 }
 
 func textWindowOf(params map[string]any) (textWindow, error) {
 	window := textWindow{
 		page:   optionalInt(params, paramPage, 0),
 		offset: max(optionalInt(params, paramOffset, 0), 0),
+		limit:  readLimit(params, maxDocumentSummaryRunes, maxDocumentSummaryRunes),
 	}
 	if window.page < 0 {
 		return textWindow{}, fmt.Errorf(
@@ -62,7 +64,7 @@ func textWindowOf(params map[string]any) (textWindow, error) {
 }
 
 func withTextWindow(properties map[string]any) map[string]any {
-	merged := make(map[string]any, len(properties)+2)
+	merged := make(map[string]any, len(properties)+3)
 	maps.Copy(merged, properties)
 	merged[paramPage] = map[string]any{
 		toolschema.KeyType: toolschema.TypeInteger,
@@ -76,6 +78,14 @@ func withTextWindow(properties map[string]any) map[string]any {
 			"long document read in pieces. Defaults to the beginning.",
 		toolschema.KeyMinimum: 0,
 	}
+	merged[paramLimit] = toolschema.Clamped(map[string]any{
+		toolschema.KeyType:    toolschema.TypeInteger,
+		toolschema.KeyMinimum: 1,
+		toolschema.KeyMaximum: maxDocumentSummaryRunes,
+		toolschema.KeyDescription: fmt.Sprintf(
+			"How many characters of text to return from the offset: %d unless you ask, "+
+				"at most %d.", maxDocumentSummaryRunes, maxDocumentSummaryRunes),
+	})
 
 	return merged
 }
@@ -126,11 +136,11 @@ func summarizeDocument(
 	offset := min(window.offset, len(runes))
 	summary.TextOffset = offset
 	rest := string(runes[offset:])
-	summary.Text = stringutils.TruncateRunes(rest, maxDocumentSummaryRunes)
-	summary.TextTruncated = len(runes)-offset > maxDocumentSummaryRunes
+	summary.Text = stringutils.TruncateRunes(rest, window.limit)
+	summary.TextTruncated = len(runes)-offset > window.limit
 	if summary.TextTruncated {
 		summary.Note = "The text continues; call again with offset " +
-			strconv.Itoa(offset+maxDocumentSummaryRunes) + " for the next part."
+			strconv.Itoa(offset+window.limit) + " for the next part."
 	}
 
 	switch content.Status {

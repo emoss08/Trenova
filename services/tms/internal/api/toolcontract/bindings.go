@@ -53,8 +53,17 @@ func namedID(param string) string {
 		"tools hand it out under and the tool takes"
 }
 
+func keptNoteOf(field string) string {
+	return "one text under two names: the input's " + field + ", and note, the name every " +
+		"tool gives text kept on the record"
+}
+
 var Bindings = []Binding{
-	{Tool: "factoring_create_noa", Input: "DraftFactoringNoaInput"},
+	{
+		Tool:  "factoring_create_noa",
+		Input: "DraftFactoringNoaInput",
+		Extra: map[string]string{"note": keptNoteOf("notes")},
+	},
 	{
 		Tool:      "factoring_send_noa",
 		Input:     "SendFactoringNoaInput",
@@ -263,6 +272,7 @@ var Bindings = []Binding{
 	{
 		Tool:  "worker_open_leave_case",
 		Input: "OpenLeaveCaseInput",
+		Extra: map[string]string{"note": keptNoteOf("notes")},
 	},
 	{
 		Tool:  "worker_open_safety_event",
@@ -271,12 +281,16 @@ var Bindings = []Binding{
 	{
 		Tool:  "worker_record_employment_verification",
 		Input: "RecordEmploymentVerificationInput",
+		Extra: map[string]string{"note": keptNoteOf("notes")},
 	},
 	{
 		Tool:      "worker_record_leave_day",
 		Input:     "RecordLeaveDayInput",
 		Defaulted: map[string]string{"caseId": namedID("leaveCaseId")},
-		Extra:     map[string]string{"leaveCaseId": namedID("leaveCaseId")},
+		Extra: map[string]string{
+			"leaveCaseId": namedID("leaveCaseId"),
+			"note":        keptNoteOf("notes"),
+		},
 	},
 	{
 		Tool:  "worker_record_safety_violation",
@@ -285,15 +299,20 @@ var Bindings = []Binding{
 	{
 		Tool:  "worker_record_training_completion",
 		Input: "CompleteWorkerTrainingInput",
-		Extra: map[string]string{"trainingRecordId": namedID("trainingRecordId")},
+		Extra: map[string]string{
+			"note":             keptNoteOf("notes"),
+			"trainingRecordId": namedID("trainingRecordId"),
+		},
 	},
 	{
 		Tool:  "worker_record_credential",
 		Input: "WorkerCredentialInput",
+		Extra: map[string]string{"note": keptNoteOf("notes")},
 	},
 	{
 		Tool:  "worker_record_injury",
 		Input: "RecordWorkerInjuryInput",
+		Extra: map[string]string{"note": keptNoteOf("notes")},
 	},
 	{
 		Tool:  "worker_request_pto",
@@ -306,6 +325,7 @@ var Bindings = []Binding{
 	{
 		Tool:  "worker_schedule_dot_test",
 		Input: "RecordDOTTestInput",
+		Extra: map[string]string{"note": keptNoteOf("notes")},
 	},
 	{
 		Tool:  "worker_start_performance_review",
@@ -318,18 +338,25 @@ var Bindings = []Binding{
 	{
 		Tool:  "worker_update_employment_verification",
 		Input: "UpdateEmploymentVerificationInput",
+		Extra: map[string]string{"note": keptNoteOf("notes")},
 	},
 	{
 		Tool:      "worker_update_leave_case",
 		Input:     "UpdateLeaveCaseInput",
 		Defaulted: map[string]string{"caseId": namedID("leaveCaseId")},
-		Extra:     map[string]string{"leaveCaseId": namedID("leaveCaseId")},
+		Extra: map[string]string{
+			"leaveCaseId": namedID("leaveCaseId"),
+			"note":        keptNoteOf("notes"),
+		},
 	},
 	{
 		Tool:      "worker_update_leave_day",
 		Input:     "UpdateLeaveDayInput",
 		Defaulted: map[string]string{"entryId": namedID("leaveDayId")},
-		Extra:     map[string]string{"leaveDayId": namedID("leaveDayId")},
+		Extra: map[string]string{
+			"leaveDayId": namedID("leaveDayId"),
+			"note":       keptNoteOf("notes"),
+		},
 	},
 	{
 		Tool:  "worker_update_safety_violation",
@@ -357,11 +384,15 @@ var Bindings = []Binding{
 			"id":         namedID("credentialId"),
 			versionField: readVersion,
 		},
-		Extra: map[string]string{"credentialId": namedID("credentialId")},
+		Extra: map[string]string{
+			"credentialId": namedID("credentialId"),
+			"note":         keptNoteOf("notes"),
+		},
 	},
 	{
 		Tool:  "worker_update_injury",
 		Input: "UpdateWorkerInjuryInput",
+		Extra: map[string]string{"note": keptNoteOf("notes")},
 	},
 	{
 		Tool:  "worker_update_pto",
@@ -390,10 +421,15 @@ var Bindings = []Binding{
 		},
 		Extra: map[string]string{"safetyEventId": namedID("safetyEventId")},
 	},
-	{Tool: "fuel_record_purchase", Input: "FuelPurchaseInput", Defaulted: map[string]string{
-		"totalAmount": "the tool works the total out from quantity and unitPrice when a receipt " +
-			"is read out as gallons and a price, and refuses when it has neither",
-	}},
+	{
+		Tool:  "fuel_record_purchase",
+		Input: "FuelPurchaseInput",
+		Defaulted: map[string]string{
+			"totalAmount": "the tool works the total out from quantity and unitPrice when a " +
+				"receipt is read out as gallons and a price, and refuses when it has neither",
+		},
+		Extra: map[string]string{"note": keptNoteOf("notes")},
+	},
 	{
 		Tool:  "fuel_correct_purchase",
 		Input: "FuelPurchaseInput",
@@ -405,7 +441,10 @@ var Bindings = []Binding{
 			"quantity":       patchLeavesIt,
 			"totalAmount":    patchLeavesIt,
 		},
-		Extra: map[string]string{"fuelPurchaseId": namedID("fuelPurchaseId")},
+		Extra: map[string]string{
+			"fuelPurchaseId": namedID("fuelPurchaseId"),
+			"note":           keptNoteOf("notes"),
+		},
 	},
 	{
 		Tool:  "fuel_assign_card",
@@ -423,7 +462,11 @@ var Bindings = []Binding{
 		Defaulted: map[string]string{"id": namedID("fuelIndexPriceId")},
 		Extra:     map[string]string{"fuelIndexPriceId": namedID("fuelIndexPriceId")},
 	},
-	{Tool: "fuel_record_ifta_mileage_entry", Input: "IFTAMileageEntryInput"},
+	{
+		Tool:  "fuel_record_ifta_mileage_entry",
+		Input: "IFTAMileageEntryInput",
+		Extra: map[string]string{"note": keptNoteOf("notes")},
+	},
 	{
 		Tool:  "fuel_correct_ifta_mileage_entry",
 		Input: "IFTAMileageEntryInput",
@@ -433,13 +476,17 @@ var Bindings = []Binding{
 			"traveledAt":     patchLeavesIt,
 			"miles":          patchLeavesIt,
 		},
-		Extra: map[string]string{"iftaMileageEntryId": namedID("iftaMileageEntryId")},
+		Extra: map[string]string{
+			"iftaMileageEntryId": namedID("iftaMileageEntryId"),
+			"note":               keptNoteOf("notes"),
+		},
 	},
 	{Tool: "fuel_generate_ifta_return", Input: "IFTAPeriodInput"},
 	{
 		Tool:  "carrier_create_capacity_posting",
 		Input: "CarrierCapacityPostingInput",
 		Extra: map[string]string{
+			"note":             keptNoteOf("notes"),
 			"originState":      stateCode("originStateId"),
 			"destinationState": stateCode("destinationStateId"),
 		},
@@ -455,6 +502,7 @@ var Bindings = []Binding{
 		Extra: map[string]string{
 			"carrierCapacityPostingId": "the mutation takes the posting as its id argument, " +
 				"beside the input",
+			"note":             keptNoteOf("notes"),
 			"originState":      stateCode("originStateId"),
 			"destinationState": stateCode("destinationStateId"),
 		},

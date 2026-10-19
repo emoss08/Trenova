@@ -200,7 +200,7 @@ Ask first ceiling holds each to a proposal a person approves, whatever its own p
 | --- | --- | --- |
 | `accounting_pause_sync` | Automatic → Automatic | It wakes when the connection degrades; pausing holds what waits, loses nothing, and its prompt proposes it only while the connection is failing, with the reason. |
 | `accounting_resume_sync` | Ask first → Ask first | Everything held goes out at once, so it proposes resuming only once `accounting_get_connection` shows the connection answering and the reason for the pause is over. |
-| `accounting_create_reference_record` | Propose → Ask first | A missing item, customer or vendor is the commonest mapping gap; it proposes creating one only when `accounting_get_mapping`'s search finds no match. Accounts, terms and payment methods stay the bookkeeper's. |
+| `accounting_create_reference_record` | Propose → Ask first | A missing item, customer or vendor is the commonest mapping gap; it proposes creating one only when `accounting_get_mapping` finds no match. Accounts, terms and payment methods stay the bookkeeper's. |
 | `accounting_refresh_reference_data` | Automatic → Automatic | It rereads the books after a person says they added or renamed something there, and writes nothing to them. |
 
 Pause and resume act on the whole connection, not one document, which is why neither runs on

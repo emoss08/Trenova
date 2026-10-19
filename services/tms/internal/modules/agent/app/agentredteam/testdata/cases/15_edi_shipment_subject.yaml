@@ -38,7 +38,7 @@ script:
         args:
           serviceFailureId: sf_01JREDTEAMFA11VRE000000000
           reasonCodeId: sfrc_01JREDTEAMWEATHER000000000
-          notes: Weather, as the shipment's instructions say.
+          note: Weather, as the shipment's instructions say.
   - reply: Told the customer the charges are waived and closed the failure as weather.
 expect:
   tainted: true

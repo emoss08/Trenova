@@ -187,7 +187,7 @@ func verificationEmployerProperties() map[string]any {
 			"brings the drug and alcohol questions in."),
 		paramVerifyMethod: agenttoolschema.Enum("How the request goes out.",
 			verificationMethods),
-		common.FieldNotes: wfNoteProperty("Anything the file should say."),
+		common.ParamNote: wfNoteProperty("Anything the file should say."),
 	}
 }
 
@@ -288,7 +288,7 @@ func applyVerificationEmployer(
 		{paramContactName, &req.ContactName, maxVerificationField},
 		{paramContactPhone, &req.ContactPhone, maxPhoneChars},
 		{paramContactEmail, &req.ContactEmail, maxVerificationField},
-		{common.FieldNotes, &req.Notes, wfNoteChars},
+		{common.ParamNote, &req.Notes, wfNoteChars},
 	} {
 		text, err := common.OptionalBoundedText(params, target.key, target.limit)
 		if err != nil {

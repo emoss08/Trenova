@@ -220,10 +220,7 @@ func (t *listFactoringRemittancesTool) ParamSchema() map[string]any {
 			),
 			len(factoring.AllRemittanceStatuses()),
 		),
-		paramLimit: jsonschemautils.Integer(fmt.Sprintf(
-			"How many remittances to return, at most %d. Defaults to %d.",
-			factoringRemittancesMaxLimit, factoringRemittancesDefaultLimit,
-		)),
+		paramLimit: limitSchema(factoringRemittancesDefaultLimit, factoringRemittancesMaxLimit),
 		paramAfter: jsonschemautils.Text(
 			"The nextCursor from a previous call of this tool, for the next page.",
 		),

@@ -160,7 +160,7 @@ func TestUpdateServiceFailure_ChangesOnlyWhatIsSent(t *testing.T) {
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		editools.ParamServiceFailureID: failures.current.ID.String(),
 		paramX12Status:                 "ax",
-		common.FieldNotes:              "Consignee closed early",
+		common.ParamNote:               "Consignee closed early",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(t, failures.guard, func() (*agent.ToolPreview, error) {
@@ -239,7 +239,7 @@ func TestVoidServiceFailure_NeedsAReasonAndShowsThe214(t *testing.T) {
 	tool := NewVoidServiceFailureTool(failures)
 	params := agenttoolstest.ApprovedParams(map[string]any{
 		editools.ParamServiceFailureID: failures.current.ID.String(),
-		common.FieldNotes:              "The appointment window was keyed wrong",
+		common.ParamNote:               "The appointment window was keyed wrong",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(t, failures.guard, func() (*agent.ToolPreview, error) {

@@ -139,10 +139,7 @@ func (t *listInsightsTool) ParamSchema() map[string]any {
 			paramStatus: agenttoolschema.Enum(
 				"Which findings to list. Defaults to Active.", insightStatuses,
 			),
-			"limit": map[string]any{
-				"type":        "integer",
-				"description": fmt.Sprintf("How many to return, at most %d.", maxInsightRows),
-			},
+			paramLimit: limitSchema(defaultInsightRows, maxInsightRows),
 		},
 		"additionalProperties": false,
 	}

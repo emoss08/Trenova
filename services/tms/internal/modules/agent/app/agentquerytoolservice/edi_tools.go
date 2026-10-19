@@ -739,8 +739,7 @@ func (t *listEDITransfersTool) ParamSchema() map[string]any {
 		paramInboundFileID: agenttoolschema.KindID("Only the tenders one inbound file "+
 			"carried, by id from edi_list_inbound_files or this run's subject.",
 			permission.KindEDIInboundFile),
-		paramLimit: intParam(fmt.Sprintf("How many rows to return: %d unless you ask, at most %d.",
-			defaultListLimit, maxListLimit)),
+		paramLimit: limitSchema(defaultListLimit, maxListLimit),
 		paramAfter: stringParam("The nextCursor from a previous call, for the next page."),
 	})
 }

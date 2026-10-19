@@ -73,7 +73,7 @@ func TestListAccountingDriftFindings_FiltersAndShowsBothSidesAndTheTolerance(t *
 	params.Params["status"] = []any{"Open"}
 	params.Params["kind"] = []any{"AmountMismatch"}
 	params.Params["objectType"] = []any{"Invoice", "Customer"}
-	params.Params["search"] = " Acme "
+	params.Params["query"] = " Acme "
 	params.Params["limit"] = 500.0
 
 	out, err := newListAccountingDriftFindingsTool(reader).Query(t.Context(), params)

@@ -22,7 +22,7 @@ const (
 	paramVersion        = "version"
 	paramCustomerID     = "customerId"
 	paramFactorID       = "factoringCompanyId"
-	paramNotes          = "notes"
+	paramNote           = "note"
 	paramRecipient      = "recipient"
 	paramAcknowledgedAt = "acknowledgedAt"
 	paramSignedDocument = "signedDocumentId"
@@ -174,7 +174,7 @@ func (t *DraftFactoringNoaTool) ParamSchema() map[string]any {
 			permission.ResourceFactoringCompany,
 			"The factor the customer's invoices are assigned to, from invoice_get or factoring_list_readiness.",
 		),
-		paramNotes: jsonschemautils.Text("A note printed on the letter, when there is one."),
+		paramNote: jsonschemautils.Text("A note printed on the letter, when there is one."),
 	}, paramCustomerID, paramFactorID)
 }
 
@@ -207,7 +207,7 @@ func (t *DraftFactoringNoaTool) request(
 		TenantInfo:         common.TenantFrom(*params),
 		CustomerID:         customerID,
 		FactoringCompanyID: factorID,
-		Notes:              common.OptionalString(params.Params, paramNotes),
+		Notes:              common.OptionalString(params.Params, paramNote),
 	}, nil
 }
 

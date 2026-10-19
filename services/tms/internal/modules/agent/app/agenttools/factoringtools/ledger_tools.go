@@ -60,10 +60,6 @@ func itemIDParam(description string) map[string]any {
 	return agenttoolschema.RecordIDText(permission.ResourceFactoringSubmission, description)
 }
 
-func dayParam(description string) map[string]any {
-	return common.StringProperty(description+" As YYYY-MM-DD.", 0)
-}
-
 func amountParam(description string) map[string]any {
 	return common.StringProperty(description+" A decimal such as 1250.00.", 0)
 }
@@ -215,7 +211,7 @@ func (t *RecordFactoringFundingTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramSubmissionID: submissionIDParam("The sent schedule, from factoring_list_submissions."),
 		paramVersion:      submissionVersionParam(),
-		paramFundedOn:     dayParam("The day the factor funded."),
+		paramFundedOn:     agenttoolschema.Date("The day the factor funded."),
 		paramItems: map[string]any{
 			toolschema.KeyType: toolschema.TypeArray,
 			toolschema.KeyDescription: "What the factor did with each invoice it decided; " +
@@ -470,7 +466,7 @@ func (t *ReserveMovementTool) ParamSchema() map[string]any {
 			"The invoice's line on the schedule (its item id) from factoring_get_submission.",
 		),
 		paramVersion:  submissionVersionParam(),
-		paramOccurred: dayParam(t.spec.dateHelp),
+		paramOccurred: agenttoolschema.Date(t.spec.dateHelp),
 		paramReason:   common.StringProperty(t.spec.reasonHelp, maxReasonText),
 	}
 	required := []string{paramSubmissionID, paramItemID, paramVersion, paramOccurred}

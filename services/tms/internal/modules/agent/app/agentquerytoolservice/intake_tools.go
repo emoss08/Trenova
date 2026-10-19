@@ -662,10 +662,7 @@ func (t *shopCarriersTool) ParamSchema() map[string]any {
 				"description": "An explicit shortlist of carrier ids from carrier_list. " +
 					"Empty means the routing guide's candidates.",
 			}, permission.ResourceCarrier),
-			"limit": map[string]any{
-				"type":        "integer",
-				"description": "How many options to return; defaults to 5, at most 20.",
-			},
+			paramLimit: limitSchema(defaultShopMax, maxShopOptions),
 		},
 		"required":             []string{"shipmentId"},
 		"additionalProperties": false,
@@ -718,10 +715,7 @@ func (t *shopCarriersTool) Query(
 		return nil, err
 	}
 
-	limit := optionalInt(params.Params, "limit", defaultShopMax)
-	if limit <= 0 || limit > maxShopOptions {
-		limit = defaultShopMax
-	}
+	limit := readLimit(params.Params, defaultShopMax, maxShopOptions)
 
 	req := &ratequoteservice.ShopRequest{
 		TenantInfo: tenantOf(params),

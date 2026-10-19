@@ -532,7 +532,7 @@ describe("presentProposal for monitoring tools", () => {
         arguments: {
           serviceFailureId: "sf_01M3034Q2N7JD99RA1D8DGH1ZF",
           reasonCodeId: "sfrc_01M3034Q2N7JD99RA1D8DGH1ZF",
-          notes: "Shipper closed early; driver waited until opening.",
+          note: "Shipper closed early; driver waited until opening.",
         },
       }),
     );

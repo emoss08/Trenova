@@ -7,13 +7,13 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -133,9 +133,9 @@ func TestGetCatalog_EveryToolSaysWhereItsIDComesFrom(t *testing.T) {
 		assert.False(t, seen[spec.name], "%s is registered twice", spec.name)
 		seen[spec.name] = true
 
-		assert.Regexp(t, `^get_[a-z_]+$`, spec.name)
+		assert.Regexp(t, `^[a-z]+_get(_[a-z_]+)?$`, spec.name)
 		assert.NotEmpty(t, spec.resource)
-		assert.Contains(t, spec.summary, "list_",
+		assert.Contains(t, spec.summary, "_list",
 			"%s must name the tool that yields its id", spec.name)
 	}
 }

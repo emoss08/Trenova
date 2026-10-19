@@ -1032,6 +1032,7 @@ func (t *previewReportTool) source(
 		if err != nil {
 			return reportSource{}, err
 		}
+		definition.Limit = min(definition.Limit, report.MaxDefinitionLimit)
 
 		return reportSource{Name: "the definition", Definition: definition}, nil
 	}

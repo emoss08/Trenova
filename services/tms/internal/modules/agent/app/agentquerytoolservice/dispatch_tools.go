@@ -62,10 +62,7 @@ func (t *rankMoveCandidatesTool) ParamSchema() map[string]any {
 					"summary carries one), a moveId from dispatch_get_board, a move's id "+
 					"from shipment_get_tracking, or this run's subject. Look it up first; "+
 					"never send a placeholder."),
-			"limit": map[string]any{
-				"type":        "integer",
-				"description": "How many candidates to return; defaults to 5, at most 20.",
-			},
+			paramLimit: limitSchema(defaultCandidateLimit, maxCandidateLimit),
 			"includeBlocked": map[string]any{
 				"type":        "boolean",
 				"description": "Include drivers a blocking finding rules out, with the finding. Off by default.",
@@ -137,10 +134,7 @@ func (t *rankMoveCandidatesTool) Query(
 	if err != nil {
 		return nil, err
 	}
-	limit := optionalInt(params.Params, "limit", defaultCandidateLimit)
-	if limit <= 0 || limit > maxCandidateLimit {
-		limit = defaultCandidateLimit
-	}
+	limit := readLimit(params.Params, defaultCandidateLimit, maxCandidateLimit)
 	fleetCodeIDs, err := optionalPulidSlice(params.Params, "fleetCodeIds", maxCandidateLimit)
 	if err != nil {
 		return nil, err
