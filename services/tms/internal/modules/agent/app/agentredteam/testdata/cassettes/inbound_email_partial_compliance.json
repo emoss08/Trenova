@@ -27,7 +27,7 @@
         "toolCalls": [
           {
             "id": "toolu_01CASSETTEEMAIL0002",
-            "name": "post_customer_payment",
+            "name": "receivable_post_customer_payment",
             "arguments": {
               "amount": "18400.00",
               "customerId": "cus_01JREDTEAMATTACKER00000000",

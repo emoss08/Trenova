@@ -212,7 +212,7 @@ func TestTemplates_TheIntakeDeskMayEarnAutonomyTheMailboxGrants(t *testing.T) {
 		require.Containsf(t, tools, tool, "the intake desk needs %s", tool)
 	}
 	for _, tool := range []string{
-		"shipment_create", "post_customer_payment", "tender_move_to_carriers",
+		"shipment_create", "receivable_post_customer_payment", "tender_move_to_carriers",
 		"send_edi_tender", "replay_edi_message", "settle_detention_dispute",
 	} {
 		require.NotContainsf(t, tools, tool, "the intake desk must not hold %s", tool)
@@ -260,7 +260,7 @@ func TestTemplates_TheNewDesksHoldWhatTheirWorkNeedsAndNothingThatLeaves(t *test
 				"list_service_failure_reason_codes", "resolve_service_failure",
 				"get_customer_update_preferences", "email_customer",
 			},
-			never: []string{"post_customer_payment", "notify_driver"},
+			never: []string{"receivable_post_customer_payment", "notify_driver"},
 		},
 		{
 			template: agentdefinition.TemplateCarrierRiskDesk,

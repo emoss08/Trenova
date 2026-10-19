@@ -46,18 +46,18 @@ What find_tools can load, by area of Trenova:
 - Shipments (1 tool): shipment
 
 What a change you call does:
-- Changes that always record a proposal for a person to decide: wait_until, cancel_wait, log_collection_activity, assign_collector, schedule_collection_follow_up, send_payment_reminder, send_customer_statement, apply_customer_payment, reverse_customer_payment, apply_credit_memo, unapply_credit_memo, invoice_open_dispute, invoice_resolve_dispute, invoice_withdraw_dispute, assess_late_charges, invoice_send, invoice_share
+- Changes that always record a proposal for a person to decide: wait_until, cancel_wait, receivable_record_collection_activity, receivable_assign_collector, receivable_schedule_follow_up, receivable_send_payment_reminder, receivable_send_statement, receivable_apply_customer_payment, receivable_reverse_customer_payment, receivable_apply_credit_memo, receivable_unapply_credit_memo, invoice_open_dispute, invoice_resolve_dispute, invoice_withdraw_dispute, receivable_assess_late_charges, invoice_send, invoice_share
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: remember
 - Changes that run at once whatever else waits, because they hand the run to a person in the organization: raise_exception, flag_for_manual_review
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
-- log_collection_activity: list_collections_worklist → get_customer_statement → log_collection_activity
-- assign_collector: list_collections_worklist → assign_collector
-- schedule_collection_follow_up: list_collections_worklist → schedule_collection_follow_up
-- send_payment_reminder: list_collections_worklist → get_customer_statement → send_payment_reminder
-- send_customer_statement: get_customer_statement → send_customer_statement
-- apply_customer_payment: list_customer_payments → list_ar_open_items → apply_customer_payment
-- apply_credit_memo: list_ar_open_items → apply_credit_memo
+- receivable_record_collection_activity: receivable_list_collection_worklist → receivable_get_statement → receivable_record_collection_activity
+- receivable_assign_collector: receivable_list_collection_worklist → receivable_assign_collector
+- receivable_schedule_follow_up: receivable_list_collection_worklist → receivable_schedule_follow_up
+- receivable_send_payment_reminder: receivable_list_collection_worklist → receivable_get_statement → receivable_send_payment_reminder
+- receivable_send_statement: receivable_get_statement → receivable_send_statement
+- receivable_apply_customer_payment: receivable_list_customer_payments → receivable_list_open_items → receivable_apply_customer_payment
+- receivable_apply_credit_memo: receivable_list_open_items → receivable_apply_credit_memo
 - invoice_open_dispute: invoice_get → invoice_open_dispute
 - invoice_resolve_dispute: invoice_list_disputes → invoice_list_adjustments → invoice_resolve_dispute
 - invoice_share: invoice_list_share_candidates → invoice_share

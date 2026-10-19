@@ -220,7 +220,7 @@ func TestGetBankReceipt_SkipsCandidatesForAMatchedReceiptAndGuidesWhenThereAreNo
 	result, err = newGetBankReceiptTool(&fakeReceipts{receipt: bare}, &fakeWorkItems{}).
 		Query(t.Context(), testParams(map[string]any{"bankReceiptId": bare.ID.String()}))
 	require.NoError(t, err)
-	assert.Contains(t, result.(*bankReceiptDetailRow).Note, "list_customer_payments")
+	assert.Contains(t, result.(*bankReceiptDetailRow).Note, "receivable_list_customer_payments")
 }
 
 func TestListCustomerPayments_DefaultsToPostedAndPassesTheFiltersThrough(t *testing.T) {

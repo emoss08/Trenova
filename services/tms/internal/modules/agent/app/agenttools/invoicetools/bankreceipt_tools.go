@@ -96,19 +96,19 @@ func NewMatchBankReceiptTool(receipts bankReceiptMatcher) agentports.AgentTool {
 	return &MatchBankReceiptTool{receipts: receipts}
 }
 
-func (t *MatchBankReceiptTool) Name() string { return "match_bank_receipt" }
+func (t *MatchBankReceiptTool) Name() string { return "receivable_match_bank_receipt" }
 
 func (t *MatchBankReceiptTool) Recipe() []string {
-	return []string{"get_bank_receipt", "list_customer_payments", "match_bank_receipt"}
+	return []string{"receivable_get_bank_receipt", "receivable_list_customer_payments", "receivable_match_bank_receipt"}
 }
 
 func (t *MatchBankReceiptTool) Description() string {
 	return "Match a bank receipt to the posted customer payment it represents. The " +
 		"payment's amount must equal the receipt's exactly; the reference and date " +
 		"should agree too. Matching closes the receipt's reconciliation work item. " +
-		"Use the candidate from get_bank_receipt, or a payment found with " +
-		"list_customer_payments. When no payment has been recorded yet, use " +
-		"post_customer_payment with bankReceiptId instead."
+		"Use the candidate from receivable_get_bank_receipt, or a payment found with " +
+		"receivable_list_customer_payments. When no payment has been recorded yet, use " +
+		"receivable_post_customer_payment with bankReceiptId instead."
 }
 
 func (t *MatchBankReceiptTool) ParamSchema() map[string]any {
@@ -117,12 +117,12 @@ func (t *MatchBankReceiptTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"bankReceiptId": agenttoolschema.RecordIDText(
 				permission.ResourceBankReceipt,
-				"The bank receipt, from list_bank_receipt_exceptions or the page.",
+				"The bank receipt, from receivable_list_bank_receipt_exceptions or the page.",
 			),
 			"customerPaymentId": agenttoolschema.RecordIDText(
 				permission.ResourceCustomerPayment,
-				"The posted payment, from get_bank_receipt's suggestions or "+
-					"list_customer_payments.",
+				"The posted payment, from receivable_get_bank_receipt's suggestions or "+
+					"receivable_list_customer_payments.",
 			),
 		},
 		"required":             []string{"bankReceiptId", "customerPaymentId"},
@@ -231,14 +231,14 @@ func NewPostCustomerPaymentTool(
 	}
 }
 
-func (t *PostCustomerPaymentTool) Name() string { return "post_customer_payment" }
+func (t *PostCustomerPaymentTool) Name() string { return "receivable_post_customer_payment" }
 
 func (t *PostCustomerPaymentTool) Recipe() []string {
 	return []string{
-		"get_bank_receipt",
-		"list_customer_payments",
+		"receivable_get_bank_receipt",
+		"receivable_list_customer_payments",
 		"invoice_list",
-		"post_customer_payment",
+		"receivable_post_customer_payment",
 	}
 }
 
@@ -263,17 +263,16 @@ func (t *PostCustomerPaymentTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"customerId": agenttoolschema.RecordIDText(
 				permission.ResourceCustomer,
-				"The paying customer, from list_customers or get_bank_receipt's "+
+				"The paying customer, from list_customers or receivable_get_bank_receipt's "+
 					"suggestions.",
 			),
 			common.ParamAmount: map[string]any{
 				"type":        "string",
 				"description": "The payment amount as a decimal string, such as 1250.00.",
 			},
-			"paymentDate": map[string]any{
-				"type":        "string",
-				"description": "The day the money arrived, YYYY-MM-DD; the receipt date for a bank receipt.",
-			},
+			"paymentDate": agenttoolschema.Date(
+				"The day the money arrived; the receipt date for a bank receipt.",
+			),
 			"paymentMethod": agenttoolschema.Enum(
 				"How it was paid. Defaults to ACH.", customerPaymentMethods,
 			),
@@ -312,7 +311,7 @@ func (t *PostCustomerPaymentTool) ParamSchema() map[string]any {
 			"bankReceiptId": agenttoolschema.RecordIDText(
 				permission.ResourceBankReceipt,
 				"The unmatched bank receipt this payment records, from "+
-					"list_bank_receipt_exceptions or get_bank_receipt, to match it in the same "+
+					"receivable_list_bank_receipt_exceptions or receivable_get_bank_receipt, to match it in the same "+
 					"step.",
 			),
 		},
@@ -524,7 +523,7 @@ func (t *PostCustomerPaymentTool) authorizeMatch(
 ) error {
 	if t.permissions == nil {
 		return fmt.Errorf(
-			"matching the bank receipt could not be authorized; post the payment without bankReceiptId and match it with match_bank_receipt",
+			"matching the bank receipt could not be authorized; post the payment without bankReceiptId and match it with receivable_match_bank_receipt",
 		)
 	}
 
@@ -601,7 +600,9 @@ func NewResolveBankReceiptWorkItemTool(items workItemResolver) agentports.AgentT
 	return &ResolveBankReceiptWorkItemTool{items: items}
 }
 
-func (t *ResolveBankReceiptWorkItemTool) Name() string { return "resolve_bank_receipt_work_item" }
+func (t *ResolveBankReceiptWorkItemTool) Name() string {
+	return "receivable_resolve_bank_receipt_work_item"
+}
 
 func (t *ResolveBankReceiptWorkItemTool) Description() string {
 	return "Close a bank receipt's reconciliation work item without matching it. Use " +
@@ -609,7 +610,7 @@ func (t *ResolveBankReceiptWorkItemTool) Description() string {
 		"a transfer, a refund or interest, and RequiresExternalFollowUp when it is a " +
 		"payment but the customer or the invoices cannot be identified from the records " +
 		"and a person must ask the payer. The note is what that person reads. To match " +
-		"the receipt instead, use match_bank_receipt or post_customer_payment."
+		"the receipt instead, use receivable_match_bank_receipt or receivable_post_customer_payment."
 }
 
 func (t *ResolveBankReceiptWorkItemTool) ParamSchema() map[string]any {
@@ -618,7 +619,7 @@ func (t *ResolveBankReceiptWorkItemTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"workItemId": agenttoolschema.RecordIDText(
 				permission.ResourceBankReceiptWorkItem,
-				"The work item's id, from get_bank_receipt.",
+				"The work item's id, from receivable_get_bank_receipt.",
 			),
 			common.FieldResolution: agenttoolschema.Enum(
 				"MarkedFalsePositive when the receipt is not a customer payment; "+
@@ -738,7 +739,7 @@ func (t *ResolveBankReceiptWorkItemTool) arguments(
 		bankreceiptworkitem.ResolutionMarkedFalsePositive:
 	default:
 		return resolveWorkItemArgs{}, fmt.Errorf(
-			"resolution must be %s or %s; to match the receipt use match_bank_receipt",
+			"resolution must be %s or %s; to match the receipt use receivable_match_bank_receipt",
 			bankreceiptworkitem.ResolutionRequiresExternalFollowUp,
 			bankreceiptworkitem.ResolutionMarkedFalsePositive,
 		)

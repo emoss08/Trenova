@@ -935,7 +935,7 @@ func TestResolveFind_ReachesPastAnOwnToolThatSharesOneWordWithTheNeed(t *testing
 			"Change an active hold on a shipment and whether the customer sees it.",
 		),
 		describedTool(
-			"get_ar_aging",
+			"receivable_get_aging",
 			"Summarize accounts receivable aging: which customers owe money and how overdue it is.",
 		),
 	)
@@ -949,7 +949,7 @@ func TestResolveFind_ReachesPastAnOwnToolThatSharesOneWordWithTheNeed(t *testing
 			definition: testDefinition(held...),
 			actor:      testActor(),
 			input:      "hello",
-			beyond:     map[string]agent.AutonomyTier{"get_ar_aging": agent.TierAutoExecute},
+			beyond:     map[string]agent.AutonomyTier{"receivable_get_aging": agent.TierAutoExecute},
 		},
 	)
 
@@ -961,8 +961,8 @@ func TestResolveFind_ReachesPastAnOwnToolThatSharesOneWordWithTheNeed(t *testing
 	)
 
 	assert.Contains(t, answer, beyondLead)
-	assert.Contains(t, answer, "get_ar_aging")
-	assert.True(t, set.offers("get_ar_aging"))
+	assert.Contains(t, answer, "receivable_get_aging")
+	assert.True(t, set.offers("receivable_get_aging"))
 }
 
 func TestResolveFind_AStrongNewMatchNeedsNoDelegate(t *testing.T) {

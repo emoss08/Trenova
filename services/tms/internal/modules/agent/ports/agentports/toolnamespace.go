@@ -15,6 +15,10 @@ type ToolNamespace struct {
 	// a name's object: settlement_get_driver reads get_driver_settlement, the
 	// kind of record it reads.
 	Qualifiers []string `json:"qualifiers,omitempty"`
+	// Records are the kinds of record in the namespace that keep their own
+	// name: an object that opens with one reads without the namespace, so
+	// receivable_get_bank_receipt reads get_bank_receipt, the record it reads.
+	Records []string `json:"records,omitempty"`
 }
 
 const (
@@ -147,6 +151,7 @@ var toolNamespaces = []ToolNamespace{
 		Name:    "receivable",
 		Title:   "Receivables",
 		Summary: "What customers owe: payments, bank receipts, credit memos, statements and collections.",
+		Records: []string{"bank_receipt", "customer_payment"},
 	},
 	{
 		Name:    "report",
@@ -214,6 +219,9 @@ func ReadingOrder(toolName string) string {
 	}
 	rest := strings.TrimPrefix(toolName, namespace.Name+toolNamespaceSeparator)
 	verb, object, found := strings.Cut(rest, toolNamespaceSeparator)
+	if found && namespace.opensWithRecord(object) {
+		return verb + toolNamespaceSeparator + object
+	}
 	noun := namespace.Name
 	if found {
 		qualifier, after, _ := strings.Cut(object, toolNamespaceSeparator)
@@ -243,6 +251,11 @@ func ToolNameFor(readingOrder string) string {
 	verb, rest, found := strings.Cut(readingOrder, toolNamespaceSeparator)
 	if !found {
 		return readingOrder
+	}
+	for idx := range toolNamespaces {
+		if toolNamespaces[idx].opensWithRecord(rest) {
+			return toolNamespaces[idx].Name + toolNamespaceSeparator + readingOrder
+		}
 	}
 	for idx := range toolNamespaces {
 		for _, qualifier := range toolNamespaces[idx].Qualifiers {
@@ -277,4 +290,16 @@ func namespacedName(namespace, verb, rest, qualifier string) (string, bool) {
 	}
 
 	return strings.Join(parts, toolNamespaceSeparator), true
+}
+
+func (n *ToolNamespace) opensWithRecord(object string) bool {
+	for _, record := range n.Records {
+		for _, form := range [...]string{record, stringutils.PluralNoun(record)} {
+			if object == form || strings.HasPrefix(object, form+toolNamespaceSeparator) {
+				return true
+			}
+		}
+	}
+
+	return false
 }

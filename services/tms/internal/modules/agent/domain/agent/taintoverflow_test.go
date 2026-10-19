@@ -15,7 +15,7 @@ func TestRunTaint_KeepsEverySourcePastTheMarkCap(t *testing.T) {
 	for idx := range MaxTaintMarks {
 		require.True(t, taint.Add(TaintMark{
 			Source:   TaintSourceBankReceipt,
-			ToolName: "get_bank_receipt",
+			ToolName: "receivable_get_bank_receipt",
 			CallID:   fmt.Sprintf("call_%d", idx),
 		}))
 	}
@@ -49,7 +49,7 @@ func TestRunTaint_ARepeatedReadIsNotAnOverflow(t *testing.T) {
 func TestRunTaint_MarksCrossingADelegationAreFlagged(t *testing.T) {
 	t.Parallel()
 
-	own := TaintMark{Source: TaintSourceBankReceipt, ToolName: "get_bank_receipt", CallID: "call_own"}
+	own := TaintMark{Source: TaintSourceBankReceipt, ToolName: "receivable_get_bank_receipt", CallID: "call_own"}
 	parent := &RunTaint{}
 	parent.Add(own)
 

@@ -41,7 +41,7 @@ var families = [...][]string{
 	},
 	{"list_watchtower_items", "get_daily_briefing", "list_agent_runs", "get_agent_run"},
 	{"settlement_list_driver", "settlement_get_driver", "settlement_list_pay_events"},
-	{"get_ar_aging", "list_ar_open_items", "get_customer_statement"},
+	{"receivable_get_aging", "receivable_list_open_items", "receivable_get_statement"},
 	{
 		"list_factoring_ready_invoices",
 		"get_factoring_readiness",

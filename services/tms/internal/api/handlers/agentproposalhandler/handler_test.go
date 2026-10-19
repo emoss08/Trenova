@@ -145,7 +145,7 @@ func TestPreview_ReturnsTheDigestToEcho(t *testing.T) {
 
 	proposal := &agent.AgentProposal{
 		ID:          pulid.MustNew("ap_"),
-		ToolName:    "post_customer_payment",
+		ToolName:    "receivable_post_customer_payment",
 		EgressClass: agent.EgressMoney,
 	}
 	previews := &digestPreviews{}

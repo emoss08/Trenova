@@ -100,9 +100,9 @@ configuration or security as they were.
 
 ## Bank receipts
 
-`triage_bank_receipt_work_item` assigns a reconciliation work item to a person or marks it
+`receivable_triage_bank_receipt_work_item` assigns a reconciliation work item to a person or marks it
 under review (inside, Ask first → Automatic). It matches and closes nothing;
-`match_bank_receipt` and `resolve_bank_receipt_work_item` do that. Importing a bank receipt
+`receivable_match_bank_receipt` and `receivable_resolve_bank_receipt_work_item` do that. Importing a bank receipt
 or a batch records what the bank reported and is infrastructure: an agent matches receipts,
 it never writes one.
 
@@ -166,11 +166,11 @@ transaction.
 
 | Tool | Resource / operation | Class | Default → most | Taint |
 | --- | --- | --- | --- | --- |
-| `log_collection_activity` | accounts receivable / update | inside | Propose → Automatic | held: proposed once the run read outside text |
-| `assign_collector` | accounts receivable / update | inside | Propose → Ask first | — |
-| `schedule_collection_follow_up` | accounts receivable / update | inside | Propose → Automatic | held |
-| `send_payment_reminder` | accounts receivable / update | outside | Propose → Ask first | held (outside) |
-| `send_customer_statement` | accounts receivable / update | outside | Propose → Ask first | held (outside) |
+| `receivable_record_collection_activity` | accounts receivable / update | inside | Propose → Automatic | held: proposed once the run read outside text |
+| `receivable_assign_collector` | accounts receivable / update | inside | Propose → Ask first | — |
+| `receivable_schedule_follow_up` | accounts receivable / update | inside | Propose → Automatic | held |
+| `receivable_send_payment_reminder` | accounts receivable / update | outside | Propose → Ask first | held (outside) |
+| `receivable_send_statement` | accounts receivable / update | outside | Propose → Ask first | held (outside) |
 
 A logged promise to pay becomes the account's standing promise: the scheduled reminder sweep
 skips the customer until it falls due, and the follow-up moves to the day after unless one is
@@ -185,8 +185,8 @@ outrun the preview's time budget, and a statement dated today is digested by day
 | Template | Runs | Holds |
 | --- | --- | --- |
 | Books keeper | unattended, on accounting sync events and the weekly reconciliation, starting in shadow | `confirm_accounting_mapping_proposals`, `reject_accounting_mapping_proposal`, `release_accounting_sync`, `pause_accounting_sync`, `resume_accounting_sync`, `create_accounting_reference_record`, `refresh_accounting_reference_data`, and for period end `list_fiscal_periods`, `get_fiscal_close_blockers`, `lock_fiscal_period`, `close_fiscal_period` |
-| Cash application agent | unattended, on bank receipt exceptions | `triage_bank_receipt_work_item`, to put an item it leaves for a person under review |
-| Receivables assistant | in chat, for the person working receivables | `log_collection_activity`, `assign_collector`, `schedule_collection_follow_up`, `send_payment_reminder`, `send_customer_statement`, beside the worklist and statement reads |
+| Cash application agent | unattended, on bank receipt exceptions | `receivable_triage_bank_receipt_work_item`, to put an item it leaves for a person under review |
+| Receivables assistant | in chat, for the person working receivables | `receivable_record_collection_activity`, `receivable_assign_collector`, `receivable_schedule_follow_up`, `receivable_send_payment_reminder`, `receivable_send_statement`, beside the worklist and statement reads |
 | Factoring clerk | unattended, on factoring readiness, schedule, remittance and chargeback-window events | `get_factoring_reserve_balance`, `record_factoring_funding`, `release_factoring_reserve`, `list_factoring_remittances`, `get_factoring_remittance`, `resolve_factoring_remittance_line`, `rematch_factoring_remittance`, `apply_factoring_remittance` |
 
 The agent permission ceiling (`permission/agent.go`) gains lock and close on fiscal periods

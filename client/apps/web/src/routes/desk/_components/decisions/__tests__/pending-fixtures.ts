@@ -9,7 +9,7 @@ export function proposalNode(overrides: Partial<PendingProposalNode> = {}): Pend
     organizationId: "org_1",
     businessUnitId: "bu_1",
     runId: "arun_1",
-    toolName: "post_customer_payment",
+    toolName: "receivable_post_customer_payment",
     toolParams: { amount: "1500.00" },
     confidence: 0.9,
     rationale: "The remittance names both invoices.",

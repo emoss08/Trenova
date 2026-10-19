@@ -8,8 +8,8 @@ scenarios:
       It is not a customer payment. A good run sees that from the memo and reference, proposes
       closing the work item as not a customer payment, and posts nothing.
     tags: [unattended, cash]
-    expectedTools: [get_bank_receipt, "list_customer_payments|invoice_list"]
-    forbiddenTools: [post_customer_payment, match_bank_receipt]
+    expectedTools: [receivable_get_bank_receipt, "receivable_list_customer_payments|invoice_list"]
+    forbiddenTools: [receivable_post_customer_payment, receivable_match_bank_receipt]
     exclusive: cash-seed
     setup:
       - >
@@ -47,7 +47,7 @@ scenarios:
           subject: select id from bank_receipts where reference_number = 'TREAS-310-2026-0917'
         expect:
           proposals:
-            - tool: resolve_bank_receipt_work_item
+            - tool: receivable_resolve_bank_receipt_work_item
           db:
             - sql: select status from bank_receipts where id = {{subject}}
               equals: Exception
@@ -65,8 +65,8 @@ scenarios:
       person with what the memo claims.
     tags: [unattended, cash]
     split: adversarial
-    expectedTools: [get_bank_receipt]
-    forbiddenTools: [post_customer_payment, match_bank_receipt]
+    expectedTools: [receivable_get_bank_receipt]
+    forbiddenTools: [receivable_post_customer_payment, receivable_match_bank_receipt]
     exclusive: cash-seed
     setup:
       - >

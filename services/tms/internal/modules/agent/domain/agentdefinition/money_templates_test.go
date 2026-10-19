@@ -131,7 +131,7 @@ func TestTemplates_TheSettlementsClerkRunsThePayPeriod(t *testing.T) {
 		"settlement_open_escrow_account",
 		"settlement_update_escrow_account",
 		"settlement_close_escrow_account",
-		"post_customer_payment",
+		"receivable_post_customer_payment",
 		"invoice_post",
 	} {
 		require.NotContainsf(t, tools, tool, "the settlements clerk must not hold %s", tool)
@@ -163,27 +163,27 @@ func TestTemplates_ReceivablesWorksWhatCustomersOwe(t *testing.T) {
 		"get_customer",
 		"invoice_list",
 		"invoice_get",
-		"get_ar_aging",
-		"list_ar_open_items",
-		"list_collections_worklist",
-		"get_customer_statement",
-		"log_collection_activity",
-		"assign_collector",
-		"schedule_collection_follow_up",
-		"send_payment_reminder",
-		"send_customer_statement",
-		"list_customer_payments",
-		"apply_customer_payment",
-		"reverse_customer_payment",
-		"list_credit_memo_applications",
-		"apply_credit_memo",
-		"unapply_credit_memo",
+		"receivable_get_aging",
+		"receivable_list_open_items",
+		"receivable_list_collection_worklist",
+		"receivable_get_statement",
+		"receivable_record_collection_activity",
+		"receivable_assign_collector",
+		"receivable_schedule_follow_up",
+		"receivable_send_payment_reminder",
+		"receivable_send_statement",
+		"receivable_list_customer_payments",
+		"receivable_apply_customer_payment",
+		"receivable_reverse_customer_payment",
+		"receivable_list_credit_memo_applications",
+		"receivable_apply_credit_memo",
+		"receivable_unapply_credit_memo",
 		"invoice_list_disputes",
 		"invoice_open_dispute",
 		"invoice_resolve_dispute",
 		"invoice_withdraw_dispute",
 		"invoice_list_adjustments",
-		"assess_late_charges",
+		"receivable_assess_late_charges",
 		"invoice_send",
 		"invoice_list_share_candidates",
 		"invoice_share",
@@ -192,9 +192,9 @@ func TestTemplates_ReceivablesWorksWhatCustomersOwe(t *testing.T) {
 	}
 
 	for _, tool := range []string{
-		"post_customer_payment",
-		"match_bank_receipt",
-		"resolve_bank_receipt_work_item",
+		"receivable_post_customer_payment",
+		"receivable_match_bank_receipt",
+		"receivable_resolve_bank_receipt_work_item",
 		"invoice_create",
 		"invoice_void",
 		"invoice_submit_adjustment",
@@ -204,7 +204,7 @@ func TestTemplates_ReceivablesWorksWhatCustomersOwe(t *testing.T) {
 	}
 
 	cash := agentdefinition.TemplateCashApplication.StarterTools()
-	for _, tool := range []string{"match_bank_receipt", "post_customer_payment"} {
+	for _, tool := range []string{"receivable_match_bank_receipt", "receivable_post_customer_payment"} {
 		require.Containsf(t, cash, tool, "the cash application agent still matches receipts with %s", tool)
 	}
 }
@@ -234,14 +234,14 @@ func TestTemplates_TheBillingAssistantHandsCollectionsToReceivables(t *testing.T
 	}
 
 	for _, tool := range []string{
-		"list_ar_open_items",
-		"list_customer_payments",
-		"apply_customer_payment",
-		"reverse_customer_payment",
-		"list_credit_memo_applications",
-		"apply_credit_memo",
-		"unapply_credit_memo",
-		"assess_late_charges",
+		"receivable_list_open_items",
+		"receivable_list_customer_payments",
+		"receivable_apply_customer_payment",
+		"receivable_reverse_customer_payment",
+		"receivable_list_credit_memo_applications",
+		"receivable_apply_credit_memo",
+		"receivable_unapply_credit_memo",
+		"receivable_assess_late_charges",
 		"invoice_list_disputes",
 		"invoice_open_dispute",
 		"invoice_resolve_dispute",
@@ -317,6 +317,6 @@ func TestTemplates_TheBooksKeeperKeepsTheBooksInStepAndReadyToClose(t *testing.T
 	}
 
 	cash := agentdefinition.TemplateCashApplication.StarterTools()
-	require.Contains(t, cash, "triage_bank_receipt_work_item",
+	require.Contains(t, cash, "receivable_triage_bank_receipt_work_item",
 		"the cash application agent hands a receipt it cannot place to a person")
 }

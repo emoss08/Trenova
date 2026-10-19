@@ -77,7 +77,7 @@ describe("DecisionCard and changes that must be reviewed", () => {
 
   it("approves a change that must be reviewed once its preview is in, with its digest", async () => {
     fetchProposalPreview.mockResolvedValue(
-      preview({ tool: "post_customer_payment", digest: "sha256:paid", reviewRequired: true }),
+      preview({ tool: "receivable_post_customer_payment", digest: "sha256:paid", reviewRequired: true }),
     );
     const { lastGate } = renderCard(proposalNode({ reviewRequired: true }));
 

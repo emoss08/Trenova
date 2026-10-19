@@ -6,9 +6,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -147,7 +147,7 @@ func TestDecideNamesTaintForEveryWriteThatLeaves(t *testing.T) {
 func TestDefinitionForHoldsEveryToolAutomatically(t *testing.T) {
 	t.Parallel()
 
-	definition := definitionFor(&AgentSpec{Tools: []string{"post_customer_payment"}},
+	definition := definitionFor(&AgentSpec{Tools: []string{"receivable_post_customer_payment"}},
 		MainAgentID, Tenant{OrganizationID: OrganizationID, BusinessUnitID: BusinessUnitID})
 
 	assert.Equal(t, agent.TierAutoExecute, definition.AutonomyCeiling)

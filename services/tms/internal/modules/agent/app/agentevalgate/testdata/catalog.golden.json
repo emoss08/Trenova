@@ -1024,7 +1024,7 @@
       }
     },
     {
-      "name": "apply_credit_memo",
+      "name": "receivable_apply_credit_memo",
       "description": "Propose settling a customer's open invoices with a posted credit memo of theirs. Name each invoice and the amount of credit it takes; together they cannot exceed what is left of the memo, nor any invoice its open balance. A person always decides. Find the memo with invoice_list (billType CreditMemo).",
       "parameters": {
         "additionalProperties": false,
@@ -1047,7 +1047,7 @@
                   "type": "string"
                 },
                 "invoiceId": {
-                  "description": "An open posted invoice or debit memo of the same customer, from invoice_list or list_ar_open_items.",
+                  "description": "An open posted invoice or debit memo of the same customer, from invoice_list or receivable_list_open_items.",
                   "type": "string",
                   "x-recordOf": "invoice"
                 }
@@ -1098,8 +1098,8 @@
       }
     },
     {
-      "name": "apply_customer_payment",
-      "description": "Propose applying a posted payment's unapplied cash to that customer's open invoices. Name each invoice and the amount it takes, and any short pay to write off; together they cannot exceed what is unapplied. It books a ledger entry, so a person always decides. Find the payment with list_customer_payments and the invoices with list_ar_open_items.",
+      "name": "receivable_apply_customer_payment",
+      "description": "Propose applying a posted payment's unapplied cash to that customer's open invoices. Name each invoice and the amount it takes, and any short pay to write off; together they cannot exceed what is unapplied. It books a ledger entry, so a person always decides. Find the payment with receivable_list_customer_payments and the invoices with receivable_list_open_items.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -1121,7 +1121,7 @@
                   "type": "string"
                 },
                 "invoiceId": {
-                  "description": "An open posted invoice or debit memo of the same customer, from invoice_list or list_ar_open_items.",
+                  "description": "An open posted invoice or debit memo of the same customer, from invoice_list or receivable_list_open_items.",
                   "type": "string",
                   "x-recordOf": "invoice"
                 },
@@ -1141,7 +1141,7 @@
             "type": "array"
           },
           "customerPaymentId": {
-            "description": "The posted payment, from list_customer_payments. Never guess one.",
+            "description": "The posted payment, from receivable_list_customer_payments. Never guess one.",
             "type": "string",
             "x-recordOf": "customer_payment"
           }
@@ -2246,7 +2246,7 @@
       }
     },
     {
-      "name": "assess_late_charges",
+      "name": "receivable_assess_late_charges",
       "description": "Propose assessing late charges on overdue invoices as of a date, as one debit memo per customer. Each has a line per invoice and overdue period at the customer's rate, and no period is charged twice. Leave out customerIds to assess every customer. A person always decides.",
       "parameters": {
         "additionalProperties": false,
@@ -2260,7 +2260,7 @@
             "type": "string"
           },
           "customerIds": {
-            "description": "Only these customers, from list_customers or list_ar_open_items.",
+            "description": "Only these customers, from list_customers or receivable_list_open_items.",
             "items": {
               "type": "string",
               "x-recordOf": "customer"
@@ -2303,18 +2303,18 @@
       }
     },
     {
-      "name": "assign_collector",
-      "description": "Give a customer's overdue receivables to a collector, or take them off whoever has them. The collector must be a member of the organization and is told the account is theirs. Use a collectorId list_collections_worklist shows or the person who asked; leave it out only to leave the account with nobody.",
+      "name": "receivable_assign_collector",
+      "description": "Give a customer's overdue receivables to a collector, or take them off whoever has them. The collector must be a member of the organization and is told the account is theirs. Use a collectorId receivable_list_collection_worklist shows or the person who asked; leave it out only to leave the account with nobody.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "collectorId": {
-            "description": "The collector's user id: a collectorId list_collections_worklist shows, or the person who asked. Leave it out to take the account off whoever has it. Never guess one.",
+            "description": "The collector's user id: a collectorId receivable_list_collection_worklist shows, or the person who asked. Leave it out to take the account off whoever has it. Never guess one.",
             "type": "string",
             "x-recordOf": "user"
           },
           "customerId": {
-            "description": "The customer whose receivables these are, from list_collections_worklist, get_ar_aging or list_customers. Never guess one.",
+            "description": "The customer whose receivables these are, from receivable_list_collection_worklist, receivable_get_aging or list_customers. Never guess one.",
             "type": "string",
             "x-recordOf": "customer"
           }
@@ -11680,8 +11680,8 @@
       }
     },
     {
-      "name": "get_ar_aging",
-      "description": "Summarize accounts receivable aging: which customers owe money and how overdue it is, in current, 1-30, 31-60, 61-90 and over-90-day buckets. Each row names the oldest bucket holding a balance. Use list_ar_open_items for the invoices behind a customer's balance and get_customer_statement for their history. Amounts are named in withheldByAccess when your data access does not reach them.",
+      "name": "receivable_get_aging",
+      "description": "Summarize accounts receivable aging: which customers owe money and how overdue it is, in current, 1-30, 31-60, 61-90 and over-90-day buckets. Each row names the oldest bucket holding a balance. Use receivable_list_open_items for the invoices behind a customer's balance and receivable_get_statement for their history. Amounts are named in withheldByAccess when your data access does not reach them.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -11740,13 +11740,13 @@
       }
     },
     {
-      "name": "get_bank_receipt",
-      "description": "Read one bank receipt with the customer payments that might be it, each scored out of 100, and its reconciliation queue entry. The score says how well a payment's reference, amount and date agree with the receipt. A receipt in Exception has no match yet; a score of 90 or more with a clear lead is what the system would have matched on its own. Use the id from list_bank_receipt_exceptions or the run's subject.",
+      "name": "receivable_get_bank_receipt",
+      "description": "Read one bank receipt with the customer payments that might be it, each scored out of 100, and its reconciliation queue entry. The score says how well a payment's reference, amount and date agree with the receipt. A receipt in Exception has no match yet; a score of 90 or more with a clear lead is what the system would have matched on its own. Use the id from receivable_list_bank_receipt_exceptions or the run's subject.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "bankReceiptId": {
-            "description": "The bank receipt's id, from list_bank_receipt_exceptions or this run's subject.",
+            "description": "The bank receipt's id, from receivable_list_bank_receipt_exceptions or this run's subject.",
             "type": "string",
             "x-recordOf": "bank_receipt"
           }
@@ -11909,8 +11909,8 @@
       }
     },
     {
-      "name": "get_customer_statement",
-      "description": "Build one customer's account statement: invoices, payments and credits over a period with the running balance, what is still open, and their aging. It answers what a customer was billed and paid and what they owe now. Take the customer's id from list_customers or get_ar_aging.",
+      "name": "receivable_get_statement",
+      "description": "Build one customer's account statement: invoices, payments and credits over a period with the running balance, what is still open, and their aging. It answers what a customer was billed and paid and what they owe now. Take the customer's id from list_customers or receivable_get_aging.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -11923,7 +11923,7 @@
             "type": "string"
           },
           "customerId": {
-            "description": "The customer's id, from list_customers, get_ar_aging or the page you are on.",
+            "description": "The customer's id, from list_customers, receivable_get_aging or the page you are on.",
             "type": "string",
             "x-recordOf": "customer"
           },
@@ -13218,7 +13218,7 @@
         "additionalProperties": false,
         "properties": {
           "documentIds": {
-            "description": "Up to 50 Trenova document ids, from invoice_list, invoice_get, list_customer_payments, settlement_list_carrier or settlement_list_driver, or the record on screen.",
+            "description": "Up to 50 Trenova document ids, from invoice_list, invoice_get, receivable_list_customer_payments, settlement_list_carrier or settlement_list_driver, or the record on screen.",
             "items": {
               "type": "string",
               "x-recordKinds": [
@@ -14749,7 +14749,7 @@
     },
     {
       "name": "invoice_create_memo",
-      "description": "Propose a draft credit or debit memo to a customer with no shipment behind it, such as a goodwill credit or a returned-check fee. It stays a draft until invoice_post posts it; apply a posted credit with apply_credit_memo. A person always decides.",
+      "description": "Propose a draft credit or debit memo to a customer with no shipment behind it, such as a goodwill credit or a returned-check fee. It stays a draft until invoice_post posts it; apply a posted credit with receivable_apply_credit_memo. A person always decides.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -14902,7 +14902,7 @@
         "additionalProperties": false,
         "properties": {
           "invoiceIds": {
-            "description": "The invoices' ids, from invoice_list, list_ar_open_items or the page you are on.",
+            "description": "The invoices' ids, from invoice_list, receivable_list_open_items or the page you are on.",
             "items": {
               "type": "string",
               "x-recordOf": "invoice"
@@ -15024,7 +15024,7 @@
     },
     {
       "name": "invoice_list",
-      "description": "List invoices narrowed by customer, status, whether they are paid or disputed, the amount, or the invoice and due dates. It answers what is unpaid, overdue or in dispute. Filters: status (Draft|Posted|Voided): where the invoice is in its own lifecycle, not whether it is paid; settlementStatus (Unpaid|PartiallyPaid|Paid): this is the one to use for \"unpaid\" or \"outstanding\"; disputeStatus (None|Disputed); billType (Invoice|CreditMemo|DebitMemo): CreditMemo and DebitMemo are memos; apply a posted CreditMemo with apply_credit_memo; id (text): in with several ids reads them together; billToName (text): who the invoice is billed to; dueDate (date): overdue is a due date before today with settlementStatus not Paid; text: number, shipmentProNumber; date: invoiceDate, createdAt; number: totalAmount. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "description": "List invoices narrowed by customer, status, whether they are paid or disputed, the amount, or the invoice and due dates. It answers what is unpaid, overdue or in dispute. Filters: status (Draft|Posted|Voided): where the invoice is in its own lifecycle, not whether it is paid; settlementStatus (Unpaid|PartiallyPaid|Paid): this is the one to use for \"unpaid\" or \"outstanding\"; disputeStatus (None|Disputed); billType (Invoice|CreditMemo|DebitMemo): CreditMemo and DebitMemo are memos; apply a posted CreditMemo with receivable_apply_credit_memo; id (text): in with several ids reads them together; billToName (text): who the invoice is billed to; dueDate (date): overdue is a due date before today with settlementStatus not Paid; text: number, shipmentProNumber; date: invoiceDate, createdAt; number: totalAmount. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -16952,7 +16952,7 @@
             "type": "string"
           },
           "documentId": {
-            "description": "Only the records of one Trenova document, by its id from invoice_list, invoice_get, list_customer_payments, settlement_list_carrier or settlement_list_driver.",
+            "description": "Only the records of one Trenova document, by its id from invoice_list, invoice_get, receivable_list_customer_payments, settlement_list_carrier or settlement_list_driver.",
             "type": "string",
             "x-recordKinds": [
               "invoice",
@@ -17224,7 +17224,7 @@
       }
     },
     {
-      "name": "list_ar_open_items",
+      "name": "receivable_list_open_items",
       "description": "List the open receivables, the unpaid or partly paid invoices customers still owe, most overdue first. Each row has the due date, days past due, dispute and short-pay state, and the open balance. Narrow to one customer, a minimum number of days past due, or disputed invoices. invoice_get expands one.",
       "parameters": {
         "additionalProperties": false,
@@ -17238,7 +17238,7 @@
             "type": "string"
           },
           "customerId": {
-            "description": "Only this customer's invoices, by id from list_customers or get_ar_aging.",
+            "description": "Only this customer's invoices, by id from list_customers or receivable_get_aging.",
             "type": "string",
             "x-recordOf": "customer"
           },
@@ -17288,8 +17288,8 @@
       }
     },
     {
-      "name": "list_bank_receipt_exceptions",
-      "description": "List the bank receipts that could not be matched to a customer payment on their own and are waiting in the reconciliation queue. Each has its amount, the bank's reference and memo, why it was not matched, and the queue entry with who it is assigned to. Narrow with query to match the reference, memo or reason. Use get_bank_receipt for one receipt's candidate payments.",
+      "name": "receivable_list_bank_receipt_exceptions",
+      "description": "List the bank receipts that could not be matched to a customer payment on their own and are waiting in the reconciliation queue. Each has its amount, the bank's reference and memo, why it was not matched, and the queue entry with who it is assigned to. Narrow with query to match the reference, memo or reason. Use receivable_get_bank_receipt for one receipt's candidate payments.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -17841,8 +17841,8 @@
       }
     },
     {
-      "name": "list_collections_worklist",
-      "description": "List the collections worklist: overdue and disputed invoices ranked for a collector to chase, each marked Critical, Warning or Watch. Rows carry the customer, days past due, the open dispute's reason and the open amount. Use get_customer_statement before calling a customer about their balance.",
+      "name": "receivable_list_collection_worklist",
+      "description": "List the collections worklist: overdue and disputed invoices ranked for a collector to chase, each marked Critical, Warning or Watch. Rows carry the customer, days past due, the open dispute's reason and the open amount. Use receivable_get_statement before calling a customer about their balance.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -18026,8 +18026,8 @@
       }
     },
     {
-      "name": "list_credit_memo_applications",
-      "description": "List where credit memos were applied to the invoices or credit memos you name. Each application shows the amount and whether it still stands or was taken back; unapply_credit_memo takes one back.",
+      "name": "receivable_list_credit_memo_applications",
+      "description": "List where credit memos were applied to the invoices or credit memos you name. Each application shows the amount and whether it still stands or was taken back; receivable_unapply_credit_memo takes one back.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -18070,13 +18070,13 @@
       }
     },
     {
-      "name": "list_customer_payments",
-      "description": "List recorded customer payments, newest first, with the amount, how much of it is applied to invoices, the method, the reference and the memo. Search by reference or memo text, narrow to one customer, or include reversed payments. Use it to find the payment a bank receipt represents when get_bank_receipt suggested nothing, and to see whether a customer's payment is already recorded before posting another.",
+      "name": "receivable_list_customer_payments",
+      "description": "List recorded customer payments, newest first, with the amount, how much of it is applied to invoices, the method, the reference and the memo. Search by reference or memo text, narrow to one customer, or include reversed payments. Use it to find the payment a bank receipt represents when receivable_get_bank_receipt suggested nothing, and to see whether a customer's payment is already recorded before posting another.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "customerId": {
-            "description": "Optional: only this customer's payments, by id from list_customers or a candidate's customerId in get_bank_receipt.",
+            "description": "Optional: only this customer's payments, by id from list_customers or a candidate's customerId in receivable_get_bank_receipt.",
             "type": "string",
             "x-recordOf": "customer"
           },
@@ -24514,7 +24514,7 @@
       }
     },
     {
-      "name": "log_collection_activity",
+      "name": "receivable_record_collection_activity",
       "description": "Log a call, email, note or promise to pay against a customer's overdue receivables, so the next person chasing them knows what was said. Record what the customer said in their words; a promise to pay takes the amount and the date they gave, holds back payment reminders until then, and moves the follow-up to the day after unless you give one. Never infer a promise from a payment that has not arrived.",
       "parameters": {
         "additionalProperties": false,
@@ -24525,7 +24525,7 @@
             "type": "string"
           },
           "customerId": {
-            "description": "The customer whose receivables these are, from list_collections_worklist, get_ar_aging or list_customers. Never guess one.",
+            "description": "The customer whose receivables these are, from receivable_list_collection_worklist, receivable_get_aging or list_customers. Never guess one.",
             "type": "string",
             "x-recordOf": "customer"
           },
@@ -24538,7 +24538,7 @@
             "type": "string"
           },
           "invoiceId": {
-            "description": "The invoice it is about, when it is about one, from list_ar_open_items or get_customer_statement.",
+            "description": "The invoice it is about, when it is about one, from receivable_list_open_items or receivable_get_statement.",
             "type": "string",
             "x-recordOf": "invoice"
           },
@@ -24849,18 +24849,18 @@
       }
     },
     {
-      "name": "match_bank_receipt",
-      "description": "Match a bank receipt to the posted customer payment it represents. The payment's amount must equal the receipt's exactly; the reference and date should agree too. Matching closes the receipt's reconciliation work item. Use the candidate from get_bank_receipt, or a payment found with list_customer_payments. When no payment has been recorded yet, use post_customer_payment with bankReceiptId instead.",
+      "name": "receivable_match_bank_receipt",
+      "description": "Match a bank receipt to the posted customer payment it represents. The payment's amount must equal the receipt's exactly; the reference and date should agree too. Matching closes the receipt's reconciliation work item. Use the candidate from receivable_get_bank_receipt, or a payment found with receivable_list_customer_payments. When no payment has been recorded yet, use receivable_post_customer_payment with bankReceiptId instead.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "bankReceiptId": {
-            "description": "The bank receipt, from list_bank_receipt_exceptions or the page.",
+            "description": "The bank receipt, from receivable_list_bank_receipt_exceptions or the page.",
             "type": "string",
             "x-recordOf": "bank_receipt"
           },
           "customerPaymentId": {
-            "description": "The posted payment, from get_bank_receipt's suggestions or list_customer_payments.",
+            "description": "The posted payment, from receivable_get_bank_receipt's suggestions or receivable_list_customer_payments.",
             "type": "string",
             "x-recordOf": "customer_payment"
           }
@@ -26386,7 +26386,7 @@
       }
     },
     {
-      "name": "post_customer_payment",
+      "name": "receivable_post_customer_payment",
       "description": "Record a customer payment and apply it to that customer's invoices. Give the customer, the amount, the date and the method, and the invoices it pays with the amount applied to each; anything not applied stays on the customer's account as unapplied cash, which is right when you cannot tell which invoice a remainder pays. Give bankReceiptId when the money is an unmatched bank receipt: the amount must equal the receipt's, and the receipt is matched to the new payment. Only post against a customer you identified from the reference, the memo or the invoices, never from the amount alone.",
       "parameters": {
         "additionalProperties": false,
@@ -26423,12 +26423,12 @@
             "type": "array"
           },
           "bankReceiptId": {
-            "description": "The unmatched bank receipt this payment records, from list_bank_receipt_exceptions or get_bank_receipt, to match it in the same step.",
+            "description": "The unmatched bank receipt this payment records, from receivable_list_bank_receipt_exceptions or receivable_get_bank_receipt, to match it in the same step.",
             "type": "string",
             "x-recordOf": "bank_receipt"
           },
           "customerId": {
-            "description": "The paying customer, from list_customers or get_bank_receipt's suggestions.",
+            "description": "The paying customer, from list_customers or receivable_get_bank_receipt's suggestions.",
             "type": "string",
             "x-recordOf": "customer"
           },
@@ -30870,8 +30870,8 @@
       }
     },
     {
-      "name": "resolve_bank_receipt_work_item",
-      "description": "Close a bank receipt's reconciliation work item without matching it. Use MarkedFalsePositive when the receipt is not a customer payment at all, such as a transfer, a refund or interest, and RequiresExternalFollowUp when it is a payment but the customer or the invoices cannot be identified from the records and a person must ask the payer. The note is what that person reads. To match the receipt instead, use match_bank_receipt or post_customer_payment.",
+      "name": "receivable_resolve_bank_receipt_work_item",
+      "description": "Close a bank receipt's reconciliation work item without matching it. Use MarkedFalsePositive when the receipt is not a customer payment at all, such as a transfer, a refund or interest, and RequiresExternalFollowUp when it is a payment but the customer or the invoices cannot be identified from the records and a person must ask the payer. The note is what that person reads. To match the receipt instead, use receivable_match_bank_receipt or receivable_post_customer_payment.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -30889,7 +30889,7 @@
             "x-enumOf": "bankReceiptWorkItem.resolution"
           },
           "workItemId": {
-            "description": "The work item's id, from get_bank_receipt.",
+            "description": "The work item's id, from receivable_get_bank_receipt.",
             "type": "string",
             "x-recordOf": "bank_receipt_work_item"
           }
@@ -31689,7 +31689,7 @@
       }
     },
     {
-      "name": "reverse_customer_payment",
+      "name": "receivable_reverse_customer_payment",
       "description": "Propose reversing a posted customer payment that bounced, was charged back or was recorded in error. Every invoice it paid is reopened by what it applied and a reversing ledger entry takes the cash back out. It cannot be undone, so a person always decides; say why.",
       "parameters": {
         "additionalProperties": false,
@@ -31703,7 +31703,7 @@
             "type": "string"
           },
           "customerPaymentId": {
-            "description": "The posted payment, from list_customer_payments. Never guess one.",
+            "description": "The posted payment, from receivable_list_customer_payments. Never guess one.",
             "type": "string",
             "x-recordOf": "customer_payment"
           },
@@ -32733,13 +32733,13 @@
       }
     },
     {
-      "name": "schedule_collection_follow_up",
+      "name": "receivable_schedule_follow_up",
       "description": "Set the day a customer's overdue receivables are next chased, or clear the follow-up, with a note saying why. The account comes back up the worklist on that day. Leave followUpOn out only to clear it.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "customerId": {
-            "description": "The customer whose receivables these are, from list_collections_worklist, get_ar_aging or list_customers. Never guess one.",
+            "description": "The customer whose receivables these are, from receivable_list_collection_worklist, receivable_get_aging or list_customers. Never guess one.",
             "type": "string",
             "x-recordOf": "customer"
           },
@@ -33159,8 +33159,8 @@
       }
     },
     {
-      "name": "send_customer_statement",
-      "description": "Email a customer its statement of account as a PDF, to the invoice recipients on its email profile, with an optional note. The statement runs from startDate (or the account's first transaction) to asOfDate (or today). Read it with get_customer_statement first so you know what it says. The email is entered in the customer's collections history.",
+      "name": "receivable_send_statement",
+      "description": "Email a customer its statement of account as a PDF, to the invoice recipients on its email profile, with an optional note. The statement runs from startDate (or the account's first transaction) to asOfDate (or today). Read it with receivable_get_statement first so you know what it says. The email is entered in the customer's collections history.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -33173,7 +33173,7 @@
             "type": "string"
           },
           "customerId": {
-            "description": "The customer whose receivables these are, from list_collections_worklist, get_ar_aging or list_customers. Never guess one.",
+            "description": "The customer whose receivables these are, from receivable_list_collection_worklist, receivable_get_aging or list_customers. Never guess one.",
             "type": "string",
             "x-recordOf": "customer"
           },
@@ -33427,13 +33427,13 @@
       }
     },
     {
-      "name": "send_payment_reminder",
+      "name": "receivable_send_payment_reminder",
       "description": "Email a customer a reminder of every overdue invoice it has that is not in dispute, with an optional note. It is one email per currency, to the invoice recipients on its email profile, and it goes whatever the reminder schedule says, so use it when a collector asks or a promise to pay was broken, never for a customer waiting on a promise that has not yet fallen due. The email is entered in the customer's collections history.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "customerId": {
-            "description": "The customer whose receivables these are, from list_collections_worklist, get_ar_aging or list_customers. Never guess one.",
+            "description": "The customer whose receivables these are, from receivable_list_collection_worklist, receivable_get_aging or list_customers. Never guess one.",
             "type": "string",
             "x-recordOf": "customer"
           },
@@ -40762,8 +40762,8 @@
       }
     },
     {
-      "name": "triage_bank_receipt_work_item",
-      "description": "Assign a bank receipt's reconciliation work item to a person who will work it, or mark it under review while it is being looked into. Nothing is matched or closed; match_bank_receipt and resolve_bank_receipt_work_item do that.",
+      "name": "receivable_triage_bank_receipt_work_item",
+      "description": "Assign a bank receipt's reconciliation work item to a person who will work it, or mark it under review while it is being looked into. Nothing is matched or closed; receivable_match_bank_receipt and receivable_resolve_bank_receipt_work_item do that.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -40777,12 +40777,12 @@
             "x-enumOf": "bankReceiptWorkItem.agentMove"
           },
           "assigneeUserId": {
-            "description": "For Assign: the person's user id, the assignedToUserId get_bank_receipt shows on a work item, or the person who asked. Never guess one.",
+            "description": "For Assign: the person's user id, the assignedToUserId receivable_get_bank_receipt shows on a work item, or the person who asked. Never guess one.",
             "type": "string",
             "x-recordOf": "user"
           },
           "workItemId": {
-            "description": "The work item's id, from get_bank_receipt or this run's subject. Never guess one.",
+            "description": "The work item's id, from receivable_get_bank_receipt or this run's subject. Never guess one.",
             "type": "string",
             "x-recordOf": "bank_receipt_work_item"
           }
@@ -40816,13 +40816,13 @@
       }
     },
     {
-      "name": "unapply_credit_memo",
+      "name": "receivable_unapply_credit_memo",
       "description": "Propose taking back one credit memo application: the invoice it settled is reopened by that amount and the credit is available again. Use it when credit went to the wrong invoice. A person always decides; say why.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "creditMemoApplicationId": {
-            "description": "The application, from list_credit_memo_applications. Never guess one.",
+            "description": "The application, from receivable_list_credit_memo_applications. Never guess one.",
             "type": "string",
             "x-recordKinds": [
               "credit_memo_application"

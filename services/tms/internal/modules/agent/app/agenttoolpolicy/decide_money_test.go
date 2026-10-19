@@ -16,7 +16,7 @@ import (
 
 func moneyPolicy(bounds func(context.Context, agentports.ToolExecuteParams) agentports.MoneyBound) agentports.ToolPolicy {
 	policy := agentports.ToolPolicy{
-		Name:          "post_customer_payment",
+		Name:          "receivable_post_customer_payment",
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceCustomerPayment,
 		Operation:     permission.OpCreate,
@@ -288,7 +288,7 @@ func TestDecide_MoneyBoundsAreNotReadForACallAlreadyHeld(t *testing.T) {
 
 	proposing := moneyInput(moneyPolicy(unread), noAllowance)
 	proposing.Definition = definition(agent.TierAutoExecute, map[string]agent.AutonomyTier{
-		"post_customer_payment": agent.TierPropose,
+		"receivable_post_customer_payment": agent.TierPropose,
 	})
 	decision = agenttoolpolicy.Decide(t.Context(), proposing)
 	assert.Equal(t, agent.TierPropose, decision.Tier)
@@ -325,7 +325,7 @@ func receiptMark(id string) agent.TaintMark {
 
 	return agent.TaintMark{
 		Source:   agent.TaintSourceBankReceipt,
-		ToolName: "get_bank_receipt",
+		ToolName: "receivable_get_bank_receipt",
 		CallID:   "call_" + id,
 		Ref:      &ref,
 	}
@@ -494,7 +494,7 @@ func unnamedReceiptRead() *agent.RunTaint {
 	taint := &agent.RunTaint{}
 	taint.Add(agent.TaintMark{
 		Source:   agent.TaintSourceBankReceipt,
-		ToolName: "list_bank_receipt_exceptions",
+		ToolName: "receivable_list_bank_receipt_exceptions",
 		CallID:   "call_list",
 	})
 

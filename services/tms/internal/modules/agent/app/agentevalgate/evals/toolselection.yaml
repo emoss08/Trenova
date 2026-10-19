@@ -17,13 +17,13 @@ cases:
   - request: message the driver about the new delivery window
     expect: [notify_driver]
   - request: record a customer payment against their open invoices
-    expect: [post_customer_payment]
+    expect: [receivable_post_customer_payment]
   - request: apply the ACH payment we received to invoice 889
-    expect: [post_customer_payment, match_bank_receipt]
+    expect: [receivable_post_customer_payment, receivable_match_bank_receipt]
   - request: match this bank receipt to the posted payment
-    expect: [match_bank_receipt]
+    expect: [receivable_match_bank_receipt]
   - request: show the bank receipts that did not reconcile
-    expect: [list_bank_receipt_exceptions]
+    expect: [receivable_list_bank_receipt_exceptions]
   - request: read the email that came in from the shipper
     expect: [get_inbound_message, list_inbound_messages]
   - request: reply to the inbound email from the broker
@@ -219,21 +219,21 @@ cases:
   - request: backfill last year's invoices into quickbooks
     expect: [request_accounting_backfill]
   - request: show the accounts receivable aging by customer
-    expect: [get_ar_aging]
+    expect: [receivable_get_aging]
   - request: which customers owe us money over 90 days
-    expect: [get_ar_aging, list_ar_open_items]
+    expect: [receivable_get_aging, receivable_list_open_items]
   - request: list the open unpaid invoices for Acme with days past due
-    expect: [list_ar_open_items, invoice_list]
+    expect: [receivable_list_open_items, invoice_list]
   - request: which receivables are disputed or short paid
-    expect: [list_ar_open_items, list_collections_worklist]
+    expect: [receivable_list_open_items, receivable_list_collection_worklist]
   - request: pull the account statement for this customer
-    expect: [get_customer_statement]
+    expect: [receivable_get_statement]
   - request: what was Acme billed and paid this quarter, and what is the running balance
-    expect: [get_customer_statement]
+    expect: [receivable_get_statement]
   - request: who should collections call first today
-    expect: [list_collections_worklist]
+    expect: [receivable_list_collection_worklist]
   - request: show the critical collections worklist
-    expect: [list_collections_worklist]
+    expect: [receivable_list_collection_worklist]
   - request: list the posted journal entries from last month
     expect: [list_journal_entries]
   - request: find the journal entry for invoice 1042
@@ -545,7 +545,7 @@ cases:
   - request: pause the accounting backfill
     expect: [change_accounting_backfill]
   - request: assign the bank receipt work item to Maria
-    expect: [triage_bank_receipt_work_item]
+    expect: [receivable_triage_bank_receipt_work_item]
   - request: record the diesel receipt from the Love's in Amarillo for tractor 112
     expect: [record_fuel_purchase]
   - request: enter this fuel receipt so it counts on the IFTA return
@@ -821,9 +821,9 @@ cases:
   - request: drop shipment 4412 from the proposed invoice run, it is not ready to bill
     expect: [invoice_adjust_run]
   - request: use Acme's posted credit memo to settle their open invoices
-    expect: [apply_credit_memo]
+    expect: [receivable_apply_credit_memo]
   - request: apply the unapplied cash left on Acme's posted payment to their open invoices
-    expect: [apply_customer_payment]
+    expect: [receivable_apply_customer_payment]
   - request: approve the pending adjustment on invoice 2210 so the credit memo gets posted
     expect: [invoice_approve_adjustment]
   - request: deny the pending write-off adjustment on invoice 3120, the customer still owes it
@@ -833,7 +833,7 @@ cases:
   - request: credit and rebill posted invoice 3302 for the corrected weight
     expect: [invoice_submit_adjustment]
   - request: charge late fees on everything past due as of the end of the month
-    expect: [assess_late_charges]
+    expect: [receivable_assess_late_charges]
   - request: assign Sarah as the biller on the queue item for load 9921
     expect: [billing_assign_biller]
   - request: assign me as the biller on all of these billing queue items
@@ -875,19 +875,19 @@ cases:
   - request: the customer dropped their complaint about invoice 4410, withdraw the dispute
     expect: [invoice_withdraw_dispute]
   - request: Acme's check bounced, reverse that payment
-    expect: [reverse_customer_payment]
+    expect: [receivable_reverse_customer_payment]
   - request: send posted invoice 6620 to the customer's EDI partner as a 210
     expect: [invoice_send_edi]
   - request: loop my teammate Dana in on invoice 3390 with a note
     expect: [invoice_share]
   - request: undo the credit memo application on invoice 2004, it went to the wrong invoice
-    expect: [unapply_credit_memo]
+    expect: [receivable_unapply_credit_memo]
   - request: change the memo and email recipients on the draft invoice before it goes out
     expect: [invoice_update_draft]
   - request: invoice 5523 went to the wrong customer, void it
     expect: [invoice_void]
   - request: close the reconciliation work item for that deposit without matching it, it was a transfer between our own accounts
-    expect: [resolve_bank_receipt_work_item]
+    expect: [receivable_resolve_bank_receipt_work_item]
   - request: unlock September in the books so a few late postings can still land
     expect: [unlock_fiscal_period]
   - request: QuickBooks refused the invoice because that month is closed, send it dated on the first open day

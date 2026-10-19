@@ -20,8 +20,8 @@ import (
 )
 
 const (
-	toolSendPaymentReminder   = "send_payment_reminder"
-	toolSendCustomerStatement = "send_customer_statement"
+	toolSendPaymentReminder   = "receivable_send_payment_reminder"
+	toolSendCustomerStatement = "receivable_send_statement"
 	paramStatementStart       = "startDate"
 	paramStatementAsOf        = "asOfDate"
 	maxCustomerEmailNoteChars = 2000
@@ -203,7 +203,7 @@ func NewSendCustomerStatementTool(statements customerstatementports.Service) age
 			Description: "Email a customer its statement of account as a PDF, to the invoice " +
 				"recipients on its email profile, with an optional note. The statement runs from " +
 				"startDate (or the account's first transaction) to asOfDate (or today). Read " +
-				"it with get_customer_statement first so you know what it says. The email is " +
+				"it with receivable_get_statement first so you know what it says. The email is " +
 				"entered in the customer's collections history.",
 			Resource:    permission.ResourceAccountsReceivable,
 			Operation:   permission.OpUpdate,

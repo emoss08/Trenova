@@ -82,14 +82,14 @@ func accountingDateProperty() map[string]any {
 
 func customerPaymentIDProperty() map[string]any {
 	return agenttoolschema.RecordID(permission.ResourceCustomerPayment, "The posted payment",
-		"list_customer_payments")
+		"receivable_list_customer_payments")
 }
 
 func applicationsProperty(description string, withShortPay bool) map[string]any {
 	properties := map[string]any{
 		common.ParamInvoiceID: agenttoolschema.RecordIDText(permission.ResourceInvoice,
 			"An open posted invoice or debit memo of the same customer, from invoice_list "+
-				"or list_ar_open_items."),
+				"or receivable_list_open_items."),
 		common.ParamAmount: common.StringProperty(
 			"Applied to this invoice, as a decimal such as 250.00.",
 			0,
@@ -125,18 +125,18 @@ func receivableMoneySpec(spec *common.ReceivableSpec) *common.ReceivableSpec {
 
 func NewApplyCustomerPaymentTool(payments receivablesKeeper) agentports.AgentTool {
 	return common.NewReceivableTool(receivableMoneySpec(&common.ReceivableSpec{
-		Name: "apply_customer_payment",
+		Name: "receivable_apply_customer_payment",
 		Recipe: []string{
-			"list_customer_payments",
-			"list_ar_open_items",
-			"apply_customer_payment",
+			"receivable_list_customer_payments",
+			"receivable_list_open_items",
+			"receivable_apply_customer_payment",
 		},
 		SearchTerms: []string{"unapplied cash", "unapplied payment"},
 		Description: "Propose applying a posted payment's unapplied cash to that customer's open " +
 			"invoices. Name each invoice and the amount it takes, and any short pay to write off; " +
 			"together they cannot exceed what is unapplied. It books a ledger entry, so a person " +
-			"always decides. Find the payment with list_customer_payments and the invoices with " +
-			"list_ar_open_items.",
+			"always decides. Find the payment with receivable_list_customer_payments and the invoices with " +
+			"receivable_list_open_items.",
 		Resource:  permission.ResourceCustomerPayment,
 		Operation: permission.OpUpdate,
 		Rationale: "Moves a customer's cash onto their invoices and books the entry that says " +
@@ -207,7 +207,7 @@ func applyPaymentRequest(
 
 func NewReverseCustomerPaymentTool(payments receivablesKeeper) agentports.AgentTool {
 	return common.NewReceivableTool(receivableMoneySpec(&common.ReceivableSpec{
-		Name: "reverse_customer_payment",
+		Name: "receivable_reverse_customer_payment",
 		Description: "Propose reversing a posted customer payment that bounced, was charged back " +
 			"or was recorded in error. Every invoice it paid is reopened by what it applied and a " +
 			"reversing ledger entry takes the cash back out. It cannot be undone, so a person " +
@@ -278,8 +278,8 @@ func reversePaymentRequest(
 
 func NewApplyCreditMemoTool(payments receivablesKeeper) agentports.AgentTool {
 	return common.NewReceivableTool(receivableMoneySpec(&common.ReceivableSpec{
-		Name:   "apply_credit_memo",
-		Recipe: []string{"list_ar_open_items", "apply_credit_memo"},
+		Name:   "receivable_apply_credit_memo",
+		Recipe: []string{"receivable_list_open_items", "receivable_apply_credit_memo"},
 		Description: "Propose settling a customer's open invoices with a posted credit memo of " +
 			"theirs. Name each invoice and the amount of credit it takes; together they cannot " +
 			"exceed what is left of the memo, nor any invoice its open balance. A person always " +
@@ -364,7 +364,7 @@ func applyCreditRequest(
 
 func NewUnapplyCreditMemoTool(payments receivablesKeeper) agentports.AgentTool {
 	return common.NewReceivableTool(receivableMoneySpec(&common.ReceivableSpec{
-		Name: "unapply_credit_memo",
+		Name: "receivable_unapply_credit_memo",
 		Description: "Propose taking back one credit memo application: the invoice it settled " +
 			"is reopened by that amount and the credit is available again. Use it when credit " +
 			"went to the wrong invoice. A person always decides; say why.",
@@ -374,7 +374,7 @@ func NewUnapplyCreditMemoTool(payments receivablesKeeper) agentports.AgentTool {
 			"person moves credit.",
 		Properties: map[string]any{
 			ParamCreditMemoApplicationID: agenttoolschema.KindID(
-				"The application, from list_credit_memo_applications. Never guess one.",
+				"The application, from receivable_list_credit_memo_applications. Never guess one.",
 				permission.KindCreditMemoApplication),
 			common.ParamReason: common.StringProperty(
 				"Why it is taken back.",

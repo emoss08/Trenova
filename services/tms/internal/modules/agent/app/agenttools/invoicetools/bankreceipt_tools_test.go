@@ -609,7 +609,7 @@ func TestResolveBankReceiptWorkItem_RefusesAMatchResolutionAndAnOverlongNote(t *
 		"note":       "x",
 	}))
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "match_bank_receipt")
+	assert.Contains(t, err.Error(), "receivable_match_bank_receipt")
 
 	err = tool.Execute(t.Context(), agenttoolstest.MemoryParams(map[string]any{
 		"workItemId": id.String(),

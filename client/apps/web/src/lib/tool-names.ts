@@ -1,5 +1,6 @@
 import {
   TOOL_NAMESPACE_QUALIFIERS,
+  TOOL_NAMESPACE_RECORDS,
   TOOL_NAMESPACES,
   type ToolNamespace,
 } from "@trenova/shared/types/generated/tool-namespaces";
@@ -11,12 +12,17 @@ const NAMESPACES: ReadonlySet<string> = new Set(TOOL_NAMESPACES);
  * `<namespace>_<verb>[_<object>]`, so `shipment_place_hold` reads as `place_shipment_hold`,
  * a bare `<namespace>_list` lists that record (`shipment_list` reads as `list_shipments`), and a
  * namespace's qualifier reads before it (`settlement_get_driver` reads as
- * `get_driver_settlement`). A name outside a namespace is returned as it is.
+ * `get_driver_settlement`), and a record the namespace names on its own reads without it
+ * (`receivable_get_bank_receipt` reads as `get_bank_receipt`). A name outside a namespace is
+ * returned as it is.
  */
 export function toolNameInReadingOrder(name: string): string {
   const [namespace, verb, ...object] = name.split("_");
   if (verb === undefined || !NAMESPACES.has(namespace)) {
     return name;
+  }
+  if (opensWithRecord(namespace as ToolNamespace, object)) {
+    return [verb, ...object].join("_");
   }
   const qualifiers = TOOL_NAMESPACE_QUALIFIERS[namespace as ToolNamespace] ?? [];
   const qualified = object.length > 0 && qualifiers.includes(object[0]);
@@ -27,6 +33,13 @@ export function toolNameInReadingOrder(name: string): string {
   }
 
   return [verb, noun, ...rest].join("_");
+}
+
+function opensWithRecord(namespace: ToolNamespace, object: readonly string[]): boolean {
+  const joined = object.join("_");
+  return (TOOL_NAMESPACE_RECORDS[namespace] ?? []).some((record) =>
+    [record, plural(record)].some((form) => joined === form || joined.startsWith(`${form}_`)),
+  );
 }
 
 function plural(noun: string): string {

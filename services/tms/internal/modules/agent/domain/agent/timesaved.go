@@ -45,12 +45,12 @@ var toolMinutesSaved = map[string]int{
 
 	// Billing. A charge correction is a hunt through the rate and the
 	// invoice before anything is typed.
-	"billing_correct_charge_codes":   10,
-	"post_customer_payment":          6,
-	"match_bank_receipt":             8,
-	"resolve_bank_receipt_work_item": 6,
-	"shipment_attach_document":       3,
-	"shipment_request_documents":     5,
+	"billing_correct_charge_codes":              10,
+	"receivable_post_customer_payment":          6,
+	"receivable_match_bank_receipt":             8,
+	"receivable_resolve_bank_receipt_work_item": 6,
+	"shipment_attach_document":                  3,
+	"shipment_request_documents":                5,
 
 	// Communication. Writing the message is most of the cost.
 	"email_customer":       8,

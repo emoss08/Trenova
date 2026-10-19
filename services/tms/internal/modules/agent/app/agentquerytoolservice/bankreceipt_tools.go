@@ -159,14 +159,16 @@ func newListBankReceiptExceptionsTool(
 	return &listBankReceiptExceptionsTool{receipts: receipts, items: items}
 }
 
-func (t *listBankReceiptExceptionsTool) Name() string { return "list_bank_receipt_exceptions" }
+func (t *listBankReceiptExceptionsTool) Name() string {
+	return "receivable_list_bank_receipt_exceptions"
+}
 
 func (t *listBankReceiptExceptionsTool) Description() string {
 	return "List the bank receipts that could not be matched to a customer payment on " +
 		"their own and are waiting in the reconciliation queue. Each has its amount, the " +
 		"bank's reference and memo, why it was not matched, and the queue entry with who " +
 		"it is assigned to. Narrow with query to match the reference, memo or reason. " +
-		"Use get_bank_receipt for one receipt's candidate payments."
+		"Use receivable_get_bank_receipt for one receipt's candidate payments."
 }
 
 func (t *listBankReceiptExceptionsTool) ParamSchema() map[string]any {
@@ -177,10 +179,7 @@ func (t *listBankReceiptExceptionsTool) ParamSchema() map[string]any {
 				"type":        "string",
 				"description": "Words to look for in the reference, the memo or the exception reason.",
 			},
-			"limit": map[string]any{
-				"type":        "integer",
-				"description": fmt.Sprintf("How many to return, at most %d.", maxBankReceiptRows),
-			},
+			paramLimit: limitSchema(defaultBankReceiptRows, maxBankReceiptRows),
 		},
 		"additionalProperties": false,
 	}
@@ -204,7 +203,7 @@ func (t *listBankReceiptExceptionsTool) Query(
 		return nil, err
 	}
 
-	limit := optionalInt(params.Params, "limit", defaultBankReceiptRows)
+	limit := optionalInt(params.Params, paramLimit, defaultBankReceiptRows)
 	if limit <= 0 || limit > maxBankReceiptRows {
 		limit = maxBankReceiptRows
 	}
@@ -313,14 +312,14 @@ func newGetBankReceiptTool(
 	return &getBankReceiptTool{receipts: receipts, items: items}
 }
 
-func (t *getBankReceiptTool) Name() string { return "get_bank_receipt" }
+func (t *getBankReceiptTool) Name() string { return "receivable_get_bank_receipt" }
 
 func (t *getBankReceiptTool) Description() string {
 	return "Read one bank receipt with the customer payments that might be it, each scored " +
 		"out of 100, and its reconciliation queue entry. The score says how well a " +
 		"payment's reference, amount and date agree with the receipt. A receipt in Exception has no match " +
 		"yet; a score of 90 or more with a clear lead is what the system would have " +
-		"matched on its own. Use the id from list_bank_receipt_exceptions or the run's subject."
+		"matched on its own. Use the id from receivable_list_bank_receipt_exceptions or the run's subject."
 }
 
 func (t *getBankReceiptTool) ParamSchema() map[string]any {
@@ -328,7 +327,7 @@ func (t *getBankReceiptTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"bankReceiptId": agenttoolschema.RecordIDText(permission.ResourceBankReceipt,
-				"The bank receipt's id, from list_bank_receipt_exceptions or "+
+				"The bank receipt's id, from receivable_list_bank_receipt_exceptions or "+
 					"this run's subject."),
 		},
 		"required":             []string{"bankReceiptId"},
@@ -400,7 +399,7 @@ func (t *getBankReceiptTool) Query(
 		})
 	}
 	if len(row.Suggestions) == 0 {
-		row.Note = "No posted customer payment resembles this receipt. Search list_customer_payments " +
+		row.Note = "No posted customer payment resembles this receipt. Search receivable_list_customer_payments " +
 			"by the reference or memo, or identify the customer and the invoices it pays."
 	}
 
@@ -484,13 +483,13 @@ func newListCustomerPaymentsTool(payments customerPaymentLister) agentports.Agen
 	return &listCustomerPaymentsTool{payments: payments}
 }
 
-func (t *listCustomerPaymentsTool) Name() string { return "list_customer_payments" }
+func (t *listCustomerPaymentsTool) Name() string { return "receivable_list_customer_payments" }
 
 func (t *listCustomerPaymentsTool) Description() string {
 	return "List recorded customer payments, newest first, with the amount, how much of " +
 		"it is applied to invoices, the method, the reference and the memo. Search by " +
 		"reference or memo text, narrow to one customer, or include reversed payments. " +
-		"Use it to find the payment a bank receipt represents when get_bank_receipt " +
+		"Use it to find the payment a bank receipt represents when receivable_get_bank_receipt " +
 		"suggested nothing, and to see whether a customer's payment is already recorded " +
 		"before posting another."
 }
@@ -505,14 +504,11 @@ func (t *listCustomerPaymentsTool) ParamSchema() map[string]any {
 			},
 			"customerId": agenttoolschema.RecordIDText(permission.ResourceCustomer,
 				"Optional: only this customer's payments, by id from "+
-					"list_customers or a candidate's customerId in get_bank_receipt."),
+					"list_customers or a candidate's customerId in receivable_get_bank_receipt."),
 			paramStatus: agenttoolschema.Enum(
 				"Which payments to list. Defaults to Posted.", customerPaymentListStatuses,
 			),
-			"limit": map[string]any{
-				"type":        "integer",
-				"description": fmt.Sprintf("How many to return, at most %d.", maxBankReceiptRows),
-			},
+			paramLimit: limitSchema(defaultBankReceiptRows, maxBankReceiptRows),
 		},
 		"additionalProperties": false,
 	}
@@ -532,7 +528,7 @@ func (t *listCustomerPaymentsTool) Query(
 		return nil, err
 	}
 
-	limit := optionalInt(params.Params, "limit", defaultBankReceiptRows)
+	limit := optionalInt(params.Params, paramLimit, defaultBankReceiptRows)
 	if limit <= 0 || limit > maxBankReceiptRows {
 		limit = maxBankReceiptRows
 	}

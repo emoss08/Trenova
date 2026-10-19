@@ -72,7 +72,7 @@ func TestRecord_KeepsTheRunsTaintAndEachProposalsEgress(t *testing.T) {
 				Egress:    agent.EgressInternal,
 			},
 			{
-				ToolName:  "post_customer_payment",
+				ToolName:  "receivable_post_customer_payment",
 				Arguments: map[string]any{},
 				Rationale: "decided after the run read the file",
 				Tier:      agent.TierActWithApproval,
@@ -157,7 +157,7 @@ func TestRecord_KeepsWhatAnAutomaticMoneyWriteMovedWithItsCurrency(t *testing.T)
 		Taint: &agent.RunTaint{},
 		Actions: []agentports.PendingAction{
 			{
-				ToolName:      "post_customer_payment",
+				ToolName:      "receivable_post_customer_payment",
 				Arguments:     map[string]any{},
 				Rationale:     "within its bounds",
 				Tier:          agent.TierAutoExecute,
@@ -167,7 +167,7 @@ func TestRecord_KeepsWhatAnAutomaticMoneyWriteMovedWithItsCurrency(t *testing.T)
 				MoneyCurrency: "USD",
 			},
 			{
-				ToolName:   "post_customer_payment",
+				ToolName:   "receivable_post_customer_payment",
 				Arguments:  map[string]any{},
 				Rationale:  "an amount with no currency counts against nothing",
 				Tier:       agent.TierAutoExecute,
