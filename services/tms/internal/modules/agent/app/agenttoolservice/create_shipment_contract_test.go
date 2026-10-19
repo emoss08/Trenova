@@ -59,7 +59,7 @@ func TestCreateShipment_TheSchemaAsksForWhatTheDomainNeeds(t *testing.T) {
 		assert.Contains(t, errorFields(t, err), "shipment."+required)
 	}
 
-	assert.Contains(t, tool.Description(), "duplicate_shipment")
+	assert.Contains(t, tool.Description(), "shipment_duplicate")
 	assert.Contains(t, tool.Description(), "Price it the way the person did")
 
 	withoutRating := maps.Clone(payload)
@@ -85,7 +85,7 @@ func (f *fakeContractRates) PreviewContractRate(
 }
 
 /*
-An agent that held create_shipment but not quote_shipment asked the person for
+An agent that held shipment_create but not quote_shipment asked the person for
 a rating method and base rate for Peak Distributing, whose agreement already
 prices the lane. Saving the shipment consults the contract either way; leaving
 the rating out now seats the contract's.

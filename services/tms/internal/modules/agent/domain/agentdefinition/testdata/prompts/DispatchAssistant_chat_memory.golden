@@ -89,8 +89,8 @@ title: Acme Foods
 - [Fact] Lane notes for the Texas triangle: Houston to Dallas runs best overnight; Dallas to San Antonio needs a team after 14:00. Houston to Dallas runs best overnight; Dallas to San Antonio needs a team after 14:00. Houston to Dallas runs best overnight; Dallas to San Antonio needs a team after 14:00. Houston to Dallas runs best overnight; Dallas to San Antonio needs a team after 14:00. Houston to Dallas runs best overnight; Dallas to San Antonio needs a team after 14:00. Houston to Dallas runs best overnight; Dallas to San Antonio needs a team after 14:00. Houston to Dallas runs best overnight; Dallas to San Antonio needs a team after 14:00. Houston to Dallas runs best overnight; Dallas to San Antonio needs a team after 14:00. Houston to Dallas runs best overnight; Dallas to San Antonio needs a team after 14:00. Houston to Dallas runs best overnight; Dallas to San Antonio needs a team after 14:00. Houston to Dallas runs best overnight; Dallas to San Antonio needs a team after 14:00. Houston to Dallas runs best overnight; Dallas to San Antonio needs a team after 14:00. Houston to Dallas runs best overnight; Dallas to San Antonio needs a team after 14:00. Houston to Dallas runs best overn… (cut short: call recall_memory with id amem_01JSNAPSHOTMEMORY00000006 to read all of it)
 ### About tool assign_move
 - [Correction] When assign_move was proposed, a person changed tractorId to the one already at the yard. Reason: saves the deadhead.
-### About tool place_shipment_hold
-- [Correction] A person rejected place_shipment_hold. Reason: holds are for billing, not dispatch.
+### About tool shipment_place_hold
+- [Correction] A person rejected shipment_place_hold. Reason: holds are for billing, not dispatch.
 </organization_memory>
 Follow each Instruction as if the person who recorded it were asking now. A Correction is a mistake a person already fixed once; do not repeat it. A Procedure is the steps that worked for a task here; follow it when you do that task, unless the person asks otherwise or the situation is plainly different. A Fact is context to weigh, not an order, and may be out of date. A memory cut short names its id; call recall_memory with that id before relying on the part you cannot see. Memories left unused for months, any that do not bear on this message, and any that did not fit here, are not shown; recall_memory still finds them, so call it when the task may depend on a preference, a rule or a past correction that is not listed.
 
@@ -112,29 +112,29 @@ Loaded now:
 - open_page
 - wait_until
 - cancel_wait
-- list_shipments
 - search_worker
+- list_workers
 - list_tractors
 - list_trailers
 - assign_move
 - cancel_tender
 - record_tender_response
-- list_recurring_shipments
-- get_shipment
+- shipment_list_recurring
+- record_stop_actual
+- shipment_get
 - rank_move_candidates
-- search_shipments
 
 Callable after find_tools:
 - read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
+- shipment_list — Find shipments (loads) by the words people use for them, by status, or by filters on dates, charges and transfer status.
 - get_worker — Retrieve one worker (driver) by id, including their profile and current state.
-- list_workers — List workers (drivers) by employment or qualification.
 - list_expiring_credentials — List worker (driver) credentials falling due, newest expiry first — medical cards, licences, hazmat endorsements and anything else the organization tracks.
 - list_time_off — List worker (driver) time-off requests — who is out, who is asking to be, and who was turned down.
 - list_hold_reasons — List the reasons a shipment can be put on hold, and what each one blocks — dispatch, delivery, billing.
 - shop_carriers — Price a saved shipment against carriers and rank them by contract cost, margin against the customer's charge, and routing guide rank.
-- add_shipment_comment — Leave a note on a shipment's comment thread, where dispatch will read it.
-- place_shipment_hold — Put a shipment on hold so it stops moving, billing or delivering until someone clears it.
-- release_shipment_hold — Clear a hold so the shipment can move again.
+- shipment_add_comment — Leave a note on a shipment's comment thread, where dispatch will read it.
+- shipment_place_hold — Put a shipment on hold so it stops moving, billing or delivering until someone clears it.
+- shipment_release_hold — Clear a hold so the shipment can move again.
 - update_tractor_status — Change the status of one or more tractors, which is what makes a truck available to dispatch or takes it off the board.
 - update_trailer_status — Change the status of one or more trailers, which is what makes a trailer available to dispatch or takes it off the board.
 - list_insights — List insight detector findings: service slipping for a customer, cash tied up in unbilled work, cost leaking at a location, compliance about to lapse.
@@ -160,35 +160,34 @@ Callable after find_tools:
 - send_edi_status_update — Propose sending a trading partner an EDI 214 shipment status built from a shipment or a service failure.
 - retry_edi_message_delivery — Propose sending outbound EDI documents that failed to reach their trading partner again, over the partner's communication profile.
 - replay_edi_message — Propose sending an outbound EDI document its trading partner already received once more, exactly as it was generated.
-- uncancel_shipment — Reopen a canceled shipment as New, with its moves and stops back to New, when the person says the freight is back on.
-- duplicate_shipment — Copy an existing shipment into new ones on the server, carrying its customer, stops, commodities, charges, freight terms and rating method exactly as saved.
-- update_shipment_hold — Change an active hold on a shipment: its severity, its notes, what it blocks (dispatch, delivery, billing) and whether the customer sees it.
+- shipment_uncancel — Reopen a canceled shipment as New, with its moves and stops back to New, when the person says the freight is back on.
+- shipment_duplicate — Copy an existing shipment into new ones on the server, carrying its customer, stops, commodities, charges, freight terms and rating method exactly as saved.
+- shipment_update_hold — Change an active hold on a shipment: its severity, its note, what it blocks (dispatch, delivery, billing) and whether the customer sees it.
 - split_move_at_relay — Split a two-stop move at its delivery stop so the freight is dropped there as a relay and a new move carries it on to a new delivery location.
-- recalculate_shipment_distance — Work out a shipment's move miles again from its stops through the organization's distance profile and routing provider, and save them.
-- transfer_shipment_ownership — Make another person the owner of a shipment, the one it is filed under and who is asked about it.
-- pin_shipment_comment — Pin a comment to the top of a shipment's thread so dispatch sees it first.
-- resolve_shipment_comment — Mark a comment on a shipment resolved once what it asked for is done, or reopen one with resolved=false when it is not.
-- generate_recurring_shipment — Create the shipment for a recurring shipment's next slot now, or for the slot at occurrenceAt, instead of waiting for the schedule.
-- update_shipment — Change the details of a saved shipment: the customer, service type, shipment type, equipment types, BOL, pieces, weight or temperature range.
-- get_shipment_tracking — Where a shipment is and whether it will be on time: each stop's window, actual arrival and lateness, the tractor's last position, and an arrival estimate.
+- shipment_recalculate_distance — Work out a shipment's move miles again from its stops through the organization's distance profile and routing provider, and save them.
+- shipment_transfer_ownership — Make another person the owner of a shipment, the one it is filed under and who is asked about it.
+- shipment_pin_comment — Pin a comment to the top of a shipment's thread so dispatch sees it first.
+- shipment_resolve_comment — Mark a comment on a shipment resolved once what it asked for is done, or reopen one with resolved=false when it is not.
+- shipment_generate_recurring — Create the shipment for a recurring shipment's next slot now, or for the slot at occurrenceAt, instead of waiting for the schedule.
+- shipment_update — Change the details of a saved shipment: the customer, service type, shipment type, equipment types, BOL, pieces, weight or temperature range.
+- shipment_get_tracking — Where a shipment is and whether it will be on time: each stop's window, actual arrival and lateness, the tractor's last position, and an arrival estimate.
 - get_worker_hos — A driver's hours of service as the ELD last reported them: duty status and the drive, shift, cycle and break time remaining, in minutes.
-- record_stop_actual — Record that a driver arrived at or departed from a stop.
-- reschedule_stop — Move a saved shipment's pickup or delivery appointment: the stop's planned window, local to the stop.
+- shipment_reschedule_stop — Move a saved shipment's pickup or delivery appointment: the stop's planned window, local to the stop.
 - list_edi_partners — List this organization's EDI trading partners with their code, name and the customer each stands for.
 
 What a change you call does:
-- Changes that always record a proposal for a person to decide: flag_for_manual_review, wait_until, cancel_wait, assign_move, add_shipment_comment, place_shipment_hold, release_shipment_hold, update_tractor_status, update_trailer_status, unassign_moves, update_move_status, assign_move_to_carrier, cancel_carrier_assignment, cancel_tender, record_tender_response, generate_rate_confirmation, send_rate_confirmation, void_rate_confirmation, record_rate_confirmation_confirmed, send_edi_tender, cancel_edi_tender, expire_edi_tender, review_edi_transfer_change, send_edi_status_update, retry_edi_message_delivery, replay_edi_message, uncancel_shipment, duplicate_shipment, update_shipment_hold, split_move_at_relay, recalculate_shipment_distance, transfer_shipment_ownership, pin_shipment_comment, resolve_shipment_comment, generate_recurring_shipment, update_shipment, record_stop_actual, reschedule_stop
+- Changes that always record a proposal for a person to decide: flag_for_manual_review, wait_until, cancel_wait, assign_move, shipment_add_comment, shipment_place_hold, shipment_release_hold, update_tractor_status, update_trailer_status, unassign_moves, update_move_status, assign_move_to_carrier, cancel_carrier_assignment, cancel_tender, record_tender_response, generate_rate_confirmation, send_rate_confirmation, void_rate_confirmation, record_rate_confirmation_confirmed, send_edi_tender, cancel_edi_tender, expire_edi_tender, review_edi_transfer_change, send_edi_status_update, retry_edi_message_delivery, replay_edi_message, shipment_uncancel, shipment_duplicate, shipment_update_hold, split_move_at_relay, shipment_recalculate_distance, shipment_transfer_ownership, shipment_pin_comment, shipment_resolve_comment, shipment_generate_recurring, shipment_update, record_stop_actual, shipment_reschedule_stop
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: remember, guide_profile
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
-- assign_move: get_shipment → rank_move_candidates → assign_move
-- place_shipment_hold: search_shipments → list_hold_reasons → place_shipment_hold
-- assign_move_to_carrier: get_shipment → shop_carriers → assign_move_to_carrier
+- assign_move: shipment_get → rank_move_candidates → assign_move
+- shipment_place_hold: shipment_list → list_hold_reasons → shipment_place_hold
+- assign_move_to_carrier: shipment_get → shop_carriers → assign_move_to_carrier
 - send_rate_confirmation: list_rate_confirmations → send_rate_confirmation
-- send_edi_tender: search_shipments → list_edi_partners → send_edi_tender → list_edi_transfers
+- send_edi_tender: shipment_list → list_edi_partners → send_edi_tender → list_edi_transfers
 - cancel_edi_tender: list_edi_transfers → cancel_edi_tender
 - expire_edi_tender: list_edi_transfers → expire_edi_tender
-- review_edi_transfer_change: list_edi_transfer_changes → get_shipment_tracking → review_edi_transfer_change
-- update_shipment: search_shipments → get_shipment → update_shipment
-- record_stop_actual: search_shipments → get_shipment → record_stop_actual
-- reschedule_stop: search_shipments → get_shipment → reschedule_stop
+- review_edi_transfer_change: list_edi_transfer_changes → shipment_get_tracking → review_edi_transfer_change
+- shipment_update: shipment_list → shipment_get → shipment_update
+- record_stop_actual: shipment_list → shipment_get → record_stop_actual
+- shipment_reschedule_stop: shipment_list → shipment_get → shipment_reschedule_stop

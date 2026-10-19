@@ -5,13 +5,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -112,7 +112,7 @@ func newScenario() *scenario {
 				Kind: string(
 					agentports.RunStepTool,
 				), Status: string(agentports.RunStepCompleted),
-				StepKey: "k-read", ToolName: "get_shipment", CallID: "c1",
+				StepKey: "k-read", ToolName: "shipment_get", CallID: "c1",
 				Arguments: map[string]any{"shipmentId": shipment.String()},
 				Outcome:   map[string]any{"content": "found", "failed": false},
 				CreatedAt: testNow - 960, UpdatedAt: testNow - 959,
@@ -166,7 +166,7 @@ func newScenario() *scenario {
 				ID: pulid.MustNew("are_"), OrganizationID: org, BusinessUnitID: bu,
 				OwnerKind: string(agent.RunOwnerAssistantTurn), OwnerID: s.turn, Sequence: 2,
 				Kind: agentports.AssistantEventToolFinished, CallID: "c1",
-				Payload:    map[string]any{"callId": "c1", "name": "get_shipment", "failed": true},
+				Payload:    map[string]any{"callId": "c1", "name": "shipment_get", "failed": true},
 				OccurredAt: testNow - 930, CreatedAt: testNow - 900,
 			},
 			{

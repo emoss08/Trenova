@@ -45,9 +45,9 @@ is a fence of its own, closed, with the note outside it.
 func TestReplayHistory_ShortensAnOldResultInsideAClosedFence(t *testing.T) {
 	t.Parallel()
 
-	stored := FenceToolResult("list_shipments", strings.Repeat(`{"pro":"S1"},`, 400)) +
+	stored := FenceToolResult("shipment_list", strings.Repeat(`{"pro":"S1"},`, 400)) +
 		"\n\nShown to the person as a table."
-	history := append(readTurn("c1", "list_shipments", stored), quietTurns(recentToolTurns)...)
+	history := append(readTurn("c1", "shipment_list", stored), quietTurns(recentToolTurns)...)
 
 	messages, _ := replayHistory(history, nil)
 
@@ -55,11 +55,11 @@ func TestReplayHistory_ShortensAnOldResultInsideAClosedFence(t *testing.T) {
 	require.Less(t, len(shortened), len(stored)/4)
 	tool, payload, fenced := UnfenceToolResult(shortened)
 	require.True(t, fenced, "the shortened result is still a closed fence")
-	assert.Equal(t, "list_shipments", tool)
+	assert.Equal(t, "shipment_list", tool)
 	assert.True(t, strings.HasPrefix(payload, `{"pro":"S1"}`), "its opening is kept")
 	closeAt := strings.Index(shortened, untrustedCloseTag)
 	note := shortened[closeAt:]
-	assert.Contains(t, note, "list_shipments again", "the note, outside the fence, names the tool")
+	assert.Contains(t, note, "shipment_list again", "the note, outside the fence, names the tool")
 	assert.Contains(t, note, "Shown to the person as a table.", "a note that followed the result is kept")
 	assert.NotContains(t, shortened[:closeAt], "again")
 }
@@ -78,12 +78,12 @@ func TestReplayHistory_KeepsRecentResultsWholeOnlyUpToABudget(t *testing.T) {
 	results := make([]conversation.Message, 0, 6)
 	for i := range 6 {
 		id := fmt.Sprintf("c%d", i)
-		calls = append(calls, conversation.ToolCallRecord{ID: id, Name: "list_shipments"})
+		calls = append(calls, conversation.ToolCallRecord{ID: id, Name: "shipment_list"})
 		results = append(results, conversation.Message{
 			Role:       conversation.RoleTool,
 			ToolCallID: id,
-			ToolName:   "list_shipments",
-			Content:    FenceToolResult("list_shipments", strings.Repeat("x", 11000)),
+			ToolName:   "shipment_list",
+			Content:    FenceToolResult("shipment_list", strings.Repeat("x", 11000)),
 		})
 	}
 	history = append(history, conversation.Message{Role: conversation.RoleAssistant, ToolCalls: calls})
@@ -107,8 +107,8 @@ func TestReplayHistory_KeepsRecentResultsWholeOnlyUpToABudget(t *testing.T) {
 func TestReplayHistory_DoesNotCountDecisionNotesAsTurns(t *testing.T) {
 	t.Parallel()
 
-	stored := FenceToolResult("list_shipments", strings.Repeat("row,", 2000))
-	history := readTurn("c1", "list_shipments", stored)
+	stored := FenceToolResult("shipment_list", strings.Repeat("row,", 2000))
+	history := readTurn("c1", "shipment_list", stored)
 	for range recentToolTurns + 1 {
 		history = append(history, conversation.Message{
 			Role:    conversation.RoleUser,
@@ -132,7 +132,7 @@ func TestOpenTurn_KeepsTheFiguresOfShortenedResultsAsEvidence(t *testing.T) {
 
 	payload := strings.Repeat(`{"pro":"S1"},`, 100) + `{"pro":"S9","rate":"4817.25"}`
 	history := append(
-		readTurn("c1", "list_shipments", FenceToolResult("list_shipments", payload)),
+		readTurn("c1", "shipment_list", FenceToolResult("shipment_list", payload)),
 		quietTurns(recentToolTurns)...,
 	)
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{}, nil)

@@ -72,7 +72,7 @@ Loaded now:
 - flag_for_manual_review
 - wait_until
 - cancel_wait
-- get_shipment
+- shipment_get
 - get_document_summary
 - get_ar_aging
 - assign_collector
@@ -84,8 +84,8 @@ Loaded now:
 Callable after find_tools:
 - list_customers — List customers narrowed by status, code, name or city, with their ids.
 - get_customer — Retrieve one customer by id, with their billing and email profiles.
-- list_invoices — List invoices narrowed by customer, status, whether they are paid or disputed, the amount, or the invoice and due dates.
-- get_invoice — Retrieve one invoice by id, with its line items, totals, payment and dispute state.
+- invoice_list — List invoices narrowed by customer, status, whether they are paid or disputed, the amount, or the invoice and due dates.
+- invoice_get — Retrieve invoices by id: one in full, or up to 50 in one call as a table, for example to check a batch of drafts before posting them.
 - search_documents — Search the text of documents: rate confirmations, bills of lading, proofs of delivery, invoices, contracts, permits and other files attached to records.
 - list_ar_open_items — List the open receivables, the unpaid or partly paid invoices customers still owe, most overdue first.
 - list_collections_worklist — List the collections worklist: overdue and disputed invoices ranked for a collector to chase, each marked Critical, Warning or Watch.
@@ -97,18 +97,18 @@ Callable after find_tools:
 - reverse_customer_payment — Propose reversing a posted customer payment that bounced, was charged back or was recorded in error.
 - list_credit_memo_applications — List where credit memos were applied to the invoices or credit memos you name.
 - unapply_credit_memo — Propose taking back one credit memo application: the invoice it settled is reopened by that amount and the credit is available again.
-- list_invoice_disputes — List the dispute cases on invoices, open and closed, newest first: the reason, the amount in dispute, the notes and how each was resolved.
-- open_invoice_dispute — Open a dispute on a posted invoice the customer is withholding payment on.
-- resolve_invoice_dispute — Propose closing an open invoice dispute with its outcome.
-- withdraw_invoice_dispute — Withdraw an open invoice dispute the customer no longer pursues, without recording an outcome.
-- list_invoice_adjustments — List the invoice adjustments on one invoice, drafts included, or those waiting for an approver.
-- get_invoice_adjustment — Retrieve one invoice adjustment by id: its kind, status, approval, reason, the invoices it made and each line it credits or rebills against the invoice's lines.
-- send_invoice — Propose emailing an invoice to the customer.
-- list_invoice_share_candidates — List the teammates an invoice can be shared with: only people whose role lets them read invoices.
-- share_invoice — Propose sharing an invoice with teammates, who get a notification and an email with your note and a link to it.
+- invoice_list_disputes — List the dispute cases on invoices, open and closed, newest first: the reason, the amount in dispute, the notes and how each was resolved.
+- invoice_open_dispute — Open a dispute on a posted invoice the customer is withholding payment on.
+- invoice_resolve_dispute — Propose closing an open invoice dispute with its outcome.
+- invoice_withdraw_dispute — Withdraw an open invoice dispute the customer no longer pursues, without recording an outcome.
+- invoice_list_adjustments — List the invoice adjustments on one invoice, drafts included, or those waiting for an approver.
+- invoice_get_adjustment — Retrieve one invoice adjustment by id: its kind, status, approval, reason, the invoices it made and each line it credits or rebills against the invoice's lines.
+- invoice_send — Propose emailing invoices to their customers, one or up to 50 in one proposal the person decides together.
+- invoice_list_share_candidates — List the teammates an invoice can be shared with: only people whose role lets them read invoices.
+- invoice_share — Propose sharing an invoice with teammates, who get a notification and an email with your note and a link to it.
 
 What a change you call does:
-- Changes that always record a proposal for a person to decide: raise_exception, flag_for_manual_review, wait_until, cancel_wait, log_collection_activity, assign_collector, schedule_collection_follow_up, send_payment_reminder, send_customer_statement, apply_customer_payment, reverse_customer_payment, apply_credit_memo, unapply_credit_memo, open_invoice_dispute, resolve_invoice_dispute, withdraw_invoice_dispute, assess_late_charges, send_invoice, share_invoice
+- Changes that always record a proposal for a person to decide: raise_exception, flag_for_manual_review, wait_until, cancel_wait, log_collection_activity, assign_collector, schedule_collection_follow_up, send_payment_reminder, send_customer_statement, apply_customer_payment, reverse_customer_payment, apply_credit_memo, unapply_credit_memo, invoice_open_dispute, invoice_resolve_dispute, invoice_withdraw_dispute, assess_late_charges, invoice_send, invoice_share
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: remember
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
@@ -119,6 +119,6 @@ How a task is done with these, in order, each step's result feeding the next; sk
 - send_customer_statement: get_customer_statement → send_customer_statement
 - apply_customer_payment: list_customer_payments → list_ar_open_items → apply_customer_payment
 - apply_credit_memo: list_ar_open_items → apply_credit_memo
-- open_invoice_dispute: get_invoice → open_invoice_dispute
-- resolve_invoice_dispute: list_invoice_disputes → list_invoice_adjustments → resolve_invoice_dispute
-- share_invoice: list_invoice_share_candidates → share_invoice
+- invoice_open_dispute: invoice_get → invoice_open_dispute
+- invoice_resolve_dispute: invoice_list_disputes → invoice_list_adjustments → invoice_resolve_dispute
+- invoice_share: invoice_list_share_candidates → invoice_share

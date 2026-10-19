@@ -17,8 +17,8 @@ scenarios:
     steps:
       - say: "put a note on the late freshhaul reefer to LA that the receiver pushed us to tomorrow am"
         expect:
-          calls: ["search_shipments|list_shipments|get_shipment"]
-          proposals: [{ tool: add_shipment_comment }]
+          calls: ["shipment_list|shipment_get"]
+          proposals: [{ tool: shipment_add_comment }]
           maxFailedCalls: 1
           rubric: >
             Proposes one comment on SEED-SHP-010 whose text carries the receiver's change, and
@@ -36,14 +36,14 @@ scenarios:
     steps:
       - say: "hold SEED-SHP-007, the hazmat paperwork isnt in yet"
         expect:
-          calls: ["search_shipments|get_shipment|list_hold_reasons"]
-          proposals: [{ tool: place_shipment_hold }]
+          calls: ["shipment_list|shipment_get|list_hold_reasons"]
+          proposals: [{ tool: shipment_place_hold }]
           maxFailedCalls: 1
       - decide: reject
         note: "dont hold it, just leave a note for whoever dispatches it"
         expect:
-          noCalls: [place_shipment_hold]
-          proposals: [{ tool: add_shipment_comment }]
+          noCalls: [shipment_place_hold]
+          proposals: [{ tool: shipment_add_comment }]
           rubric: >
             Accepts the rejection without pushing back, and proposes a comment on SEED-SHP-007
             about the missing hazmat paperwork instead.
@@ -53,7 +53,7 @@ scenarios:
       A schedule change on a stop, named by its place in the trip rather than by id, which the
       agent has to resolve to the right stop before proposing anything. The windows are rolled
       forward first, so the load is always one that has not picked up yet. It runs on the bench's
-      Operations agent: no agent in the seeded organization holds reschedule_stop (DB-019).
+      Operations agent: no agent in the seeded organization holds shipment_reschedule_stop (DB-019).
       Acme loads other scenarios booked or copied in the same run are canceled first, so
       SEED-SHP-001 is the one Acme load to Chicago not yet picked up.
     agent: Bench · Operations
@@ -72,7 +72,7 @@ scenarios:
             JOIN agent_runs r ON r.id = p.run_id
             JOIN assistant_threads t ON t.id = r.subject_id
             WHERE t.title LIKE '[bench]%' AND p.status = 'Executed'
-              AND p.tool_name IN ('create_shipment', 'duplicate_shipment'))
+              AND p.tool_name IN ('shipment_create', 'shipment_duplicate'))
       - >
         UPDATE shipments AS sp SET status = 'Canceled'
         WHERE sp.status = 'New'
@@ -84,7 +84,7 @@ scenarios:
             JOIN agent_runs r ON r.id = p.run_id
             JOIN assistant_threads t ON t.id = r.subject_id
             WHERE t.title LIKE '[bench]%' AND p.status = 'Executed'
-              AND p.tool_name IN ('create_shipment', 'duplicate_shipment'))
+              AND p.tool_name IN ('shipment_create', 'shipment_duplicate'))
       - >
         UPDATE assignments AS a SET status = 'Canceled'
         FROM shipment_moves AS sm JOIN shipments AS sp ON sp.id = sm.shipment_id
@@ -119,9 +119,9 @@ scenarios:
     steps:
       - say: "acme's chicago load that hasn't picked up yet, push the delivery appt back a day"
         expect:
-          calls: ["search_shipments|list_shipments|get_shipment"]
-          proposals: [{ tool: "reschedule_stop|update_stop_schedule|update_shipment" }]
-          noCalls: [set_stop_schedule, split_move_at_relay]
+          calls: ["shipment_list|shipment_get"]
+          proposals: [{ tool: "shipment_reschedule_stop|update_stop_schedule|shipment_update" }]
+          noCalls: [intake_set_stop_schedule, split_move_at_relay]
           maxFailedCalls: 1
           rubric: >
             Finds SEED-SHP-001 (Acme, LA to Chicago, New), moves only the delivery stop's window
@@ -185,7 +185,7 @@ scenarios:
     steps:
       - say: "put david on the peak ltl load to chicago, trc-002 and a dry van"
         expect:
-          calls: ["search_shipments|list_shipments|get_shipment|search_worker|list_workers"]
+          calls: ["shipment_list|shipment_get|search_worker|list_workers"]
           proposals: [{ tool: assign_move }]
           maxFailedCalls: 1
           rubric: >

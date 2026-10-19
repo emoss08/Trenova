@@ -9,7 +9,7 @@ describe("readComparison", () => {
     const comparison = readComparison({
       matches: [
         { toolName: "assign_move", verdict: "Agreed", originalOutcome: "accepted" },
-        { toolName: "cancel_shipment", verdict: "Made up" },
+        { toolName: "shipment_cancel", verdict: "Made up" },
         "nonsense",
         {
           toolName: "assign_move",

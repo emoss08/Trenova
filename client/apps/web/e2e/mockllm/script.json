@@ -14,7 +14,7 @@
           "delay": 0.4
         },
         {
-          "name": "get_shipment",
+          "name": "shipment_get",
           "arguments": { "shipmentId": "shp_01M3Z03ZKBGEXN64ZVQ4QMARG1" },
           "delay": 0.8
         },
@@ -47,7 +47,9 @@
       "tools": [
         {
           "name": "find_tools",
-          "arguments": { "need": "email a customer asking for missing paperwork, and the email profiles to send from" },
+          "arguments": {
+            "need": "email a customer asking for missing paperwork, and the email profiles to send from"
+          },
           "delay": 0.4
         },
         {
@@ -56,7 +58,7 @@
           "delay": 0.6
         },
         {
-          "name": "request_missing_docs",
+          "name": "shipment_request_documents",
           "arguments": {
             "profileId": "{{id:emlprof_}}",
             "to": ["ap@acme.example"],

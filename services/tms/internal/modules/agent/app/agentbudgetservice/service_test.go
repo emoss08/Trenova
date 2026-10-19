@@ -80,7 +80,7 @@ func definition() *agentdefinition.Definition {
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
 		Name:           "Night desk",
-		ToolNames:      []string{"assign_move", "cancel_shipment"},
+		ToolNames:      []string{"assign_move", "shipment_cancel"},
 	}
 }
 
@@ -182,7 +182,7 @@ func TestCheckTool_CountsOnlyToolsWithACap(t *testing.T) {
 	assert.Equal(t, agentports.BudgetCapTool, refusal.Cap)
 	assert.Equal(t, "assign_move", refusal.Tool)
 
-	refusal, err = svc.CheckTool(t.Context(), agentports.CheckToolBudgetRequest{Definition: d, ToolName: "cancel_shipment"})
+	refusal, err = svc.CheckTool(t.Context(), agentports.CheckToolBudgetRequest{Definition: d, ToolName: "shipment_cancel"})
 	require.NoError(t, err)
 	assert.False(t, refusal.Refused())
 }

@@ -10,6 +10,7 @@ import {
   type DelegateProgress,
   type TurnSegment,
 } from "./turn-stream";
+import { toolNameInReadingOrder } from "@/lib/tool-names";
 
 export type ToolActivityStatus = "running" | "done" | "failed" | "proposed";
 
@@ -82,7 +83,9 @@ export function toolEffect(name: string, effect?: ToolEffect | null): ToolEffect
     return named;
   }
 
-  return LOOKUP_PREFIXES.some((prefix) => name.startsWith(prefix)) ? "lookup" : "change";
+  const reading = toolNameInReadingOrder(name);
+
+  return LOOKUP_PREFIXES.some((prefix) => reading.startsWith(prefix)) ? "lookup" : "change";
 }
 
 /**
@@ -356,7 +359,9 @@ function readsMany(step: ToolStep): boolean {
     return false;
   }
 
-  return step.name.startsWith("list_") || step.name.startsWith("search_");
+  const reading = toolNameInReadingOrder(step.name);
+
+  return reading.startsWith("list_") || reading.startsWith("search_");
 }
 
 /** The failure message a call returned, for the line's detail. */

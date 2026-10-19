@@ -59,7 +59,7 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Which moves are unassigned today?",
 			"Which moves are still unassigned for today, and what is each one waiting on?",
-			"list_shipments", "search_shipments",
+			"shipment_list",
 		),
 		ask(
 			"Who should take the next uncovered move?",
@@ -69,7 +69,7 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"What is picking up today?",
 			"Which shipments are scheduled to pick up today?",
-			"list_shipments",
+			"shipment_list",
 		),
 		ask(
 			"Who is off this week?",
@@ -81,17 +81,19 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"What is ready to transfer to billing?",
 			"Which delivered shipments are ready to transfer to billing, and which cannot go yet?",
-			"list_billing_transfer_candidates",
+			"billing_list_transfer_candidates",
 		),
 		ask(
 			"Which billing items are stuck the longest?",
 			"Which billing queue items have been blocked the longest, and why?",
-			"list_billing_queue_items", "transition_item_to_in_review", "request_missing_docs",
+			"billing_list_queue_items",
+			"billing_start_review",
+			"shipment_request_documents",
 		),
 		ask(
 			"Which deliveries are missing paperwork?",
 			"Which delivered shipments are still missing the documents billing needs?",
-			"request_missing_docs",
+			"shipment_request_documents",
 		),
 		ask(
 			"Which billing reports can I run?",
@@ -125,17 +127,17 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"What delivers today?",
 			"Which shipments are scheduled to deliver today?",
-			"list_shipments",
+			"shipment_list",
 		),
 		ask(
 			"Which shipments are running late?",
 			"Which shipments are running late right now, and for which customers?",
-			"list_shipments", "search_shipments",
+			"shipment_list",
 		),
 		ask(
 			"Which invoices are still open?",
 			"Which invoices are still open, oldest first?",
-			"list_invoices",
+			"invoice_list",
 		),
 		ask(
 			"Look up a customer",
@@ -148,17 +150,17 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Which billing items are blocked, and why?",
 			"Which billing items are blocked right now, and what is blocking each one?",
-			"list_billing_queue_items", "transition_item_to_in_review", "search_shipments",
+			"billing_list_queue_items", "billing_start_review", "shipment_list",
 		),
 		ask(
 			"Which shipments are missing documents?",
 			"Which shipments are held from billing for missing documents?",
-			"request_missing_docs",
+			"shipment_request_documents",
 		),
 		ask(
 			"Which charge codes need correcting?",
 			"Which shipments have a charge code that looks wrong, and what should it be?",
-			"correct_charge_code",
+			"billing_correct_charge_codes",
 		),
 	},
 	TemplateDispatchAssignment: {
@@ -182,12 +184,12 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Finish this shipment",
 			"Help me finish this shipment from the document: what is still missing?",
-			"set_required_field", "set_stop_location",
+			"intake_set_required_field", "intake_set_stop_location",
 		),
 		ask(
 			"Match the stops to locations",
 			"Match each stop on the document to one of our locations.",
-			"list_locations", "set_stop_location",
+			"list_locations", "intake_set_stop_location",
 		),
 		ask(
 			"Which rating method should I use?",
@@ -199,7 +201,7 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Which loads are running late?",
 			"Which loads on the board are running late right now?",
-			"get_dispatch_board", "get_shipment_tracking",
+			"get_dispatch_board", "shipment_get_tracking",
 		),
 		ask(
 			"Who is low on hours?",
@@ -221,7 +223,7 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Help me enter a shipment",
 			"Help me enter a new shipment from a customer's document.",
-			"create_shipment",
+			"shipment_create",
 		),
 		ask(
 			"Quote a shipment",
@@ -243,7 +245,7 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Which invoices are past due?",
 			"Which invoices are past due, and for which customers?",
-			"list_invoices",
+			"invoice_list",
 		),
 		ask(
 			"Which payments came in this week?",
@@ -299,7 +301,7 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Look up a shipment's progress",
 			"Find a shipment and tell me where it is and when it should arrive.",
-			"get_shipment_tracking", "get_shipment",
+			"shipment_get_tracking", "shipment_get",
 		),
 		ask(
 			"How do customers choose their updates?",
@@ -336,7 +338,7 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Find a shipment",
 			"Find a shipment by its reference and tell me where it stands.",
-			"search_shipments",
+			"shipment_list",
 		),
 	},
 	TemplateLoadEntryCheck: {
@@ -344,7 +346,7 @@ var templateStarters = map[Template][]starterQuestion{
 			"Is this shipment a duplicate?",
 			"Look for another shipment with the same BOL or PRO as this one, and tell me "+
 				"whether it is the same load.",
-			"search_shipments",
+			"shipment_list",
 		),
 		ask(
 			"Does the rate fit the lane?",
@@ -366,7 +368,7 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Why was this stop late?",
 			"Look into this shipment's late stop and tell me what caused it.",
-			"get_service_failure", "get_shipment_tracking",
+			"get_service_failure", "shipment_get_tracking",
 		),
 		ask(
 			"Which reason codes can I use?",
@@ -482,7 +484,7 @@ var templateStarters = map[Template][]starterQuestion{
 			"Which settlements need attention?",
 			"Which driver settlements have exceptions or open disputes, and what has to be "+
 				"settled before they can be paid?",
-			"list_driver_settlements",
+			"settlement_list_driver",
 		),
 		ask(
 			"What has a driver earned?",
@@ -493,7 +495,7 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Why is a load missing from pay?",
 			"Why is this load missing from the driver's settlement?",
-			"list_driver_pay_events",
+			"settlement_list_pay_events",
 		),
 		ask(
 			"Which carrier invoices do not match?",
@@ -516,7 +518,7 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Which invoices are disputed?",
 			"Which invoices are in dispute, and what is each customer's reason?",
-			"list_invoice_disputes",
+			"invoice_list_disputes",
 		),
 		ask(
 			"Which payments are unapplied?",
@@ -567,7 +569,7 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Which permits are missing?",
 			"Which permit requirements on this shipment are not covered by an active permit?",
-			"list_shipment_permits",
+			"shipment_list_permits",
 		),
 	},
 	TemplateFuelTaxClerk: {
@@ -712,7 +714,7 @@ var toolFamilies = [][]starterQuestion{
 		ask(
 			"Which loads are running late?",
 			"Which loads are running late right now, based on tracking?",
-			"get_shipment_tracking", "list_vehicle_positions",
+			"shipment_get_tracking", "list_vehicle_positions",
 		),
 		ask(
 			"Is weather affecting any loads?",
@@ -724,12 +726,12 @@ var toolFamilies = [][]starterQuestion{
 		ask(
 			"What is picking up today?",
 			"Which shipments are scheduled to pick up today?",
-			"list_shipments",
+			"shipment_list",
 		),
 		ask(
 			"Find a shipment",
 			"Find a shipment by its reference and tell me where it stands.",
-			"search_shipments", "get_shipment",
+			"shipment_list", "shipment_get",
 		),
 	},
 	{
@@ -782,19 +784,19 @@ var toolFamilies = [][]starterQuestion{
 		ask(
 			"Which billing items are stuck the longest?",
 			"Which billing queue items have been blocked the longest, and why?",
-			"transition_item_to_in_review", "correct_charge_code",
+			"billing_start_review", "billing_correct_charge_codes",
 		),
 		ask(
 			"Which deliveries are missing paperwork?",
 			"Which delivered shipments are still missing the documents billing needs?",
-			"request_missing_docs",
+			"shipment_request_documents",
 		),
 	},
 	{
 		ask(
 			"Which invoices are past due?",
 			"Which invoices are past due, and for which customers?",
-			"list_invoices", "get_invoice",
+			"invoice_list", toolInvoiceGet,
 		),
 		ask(
 			"Which receipts still need matching?",
@@ -817,7 +819,7 @@ var toolFamilies = [][]starterQuestion{
 			"Which settlements need attention?",
 			"Which driver settlements have exceptions or open disputes, and what has to be "+
 				"settled before they can be paid?",
-			"list_driver_settlements",
+			"settlement_list_driver",
 		),
 		ask(
 			"Which carrier invoices do not match?",
@@ -849,7 +851,7 @@ var toolFamilies = [][]starterQuestion{
 		ask(
 			"Help me enter a shipment",
 			"Help me enter a new shipment from a customer's document.",
-			"create_shipment",
+			"shipment_create",
 		),
 		ask(
 			"Quote a shipment",

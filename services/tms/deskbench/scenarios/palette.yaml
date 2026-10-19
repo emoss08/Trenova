@@ -17,7 +17,7 @@ scenarios:
             label: SEED-PAY-002
             find: select id from shipments where pro_number = 'SEED-PAY-002'
         expect:
-          calls: ["get_shipment|search_shipments|list_shipments|get_shipment_tracking"]
+          calls: ["shipment_get|shipment_list|shipment_get_tracking"]
           noCalls: [list_agent_runs, get_agent_run]
           noProposals: true
           noRecordIds: true

@@ -20,11 +20,11 @@ func validCase() *EvalCase {
 		Status:            CaseStatusActive,
 		Trigger:           agent.RunTriggerChat,
 		Input:             "Put shipment S-100 on hold until the customer pays",
-		HeldTools:         []string{"get_shipment", "place_shipment_hold"},
+		HeldTools:         []string{"shipment_get", "shipment_place_hold"},
 		Expected: Expected{
 			ToolMode: ToolMatchAnyOrder,
 			Tools: []ExpectedTool{{
-				Name:  "place_shipment_hold",
+				Name:  "shipment_place_hold",
 				Args:  map[string]any{"shipmentId": "shp_1"},
 				Rules: map[string]Tolerance{"reason": {Kind: TolerancePresent}},
 			}},
@@ -90,7 +90,7 @@ func TestEvalCaseValidate_Refusals(t *testing.T) {
 		},
 		{
 			name:   "duplicate held tool",
-			mutate: func(c *EvalCase) { c.HeldTools = []string{"get_shipment", "get_shipment"} },
+			mutate: func(c *EvalCase) { c.HeldTools = []string{"shipment_get", "shipment_get"} },
 			field:  "heldTools[1].name",
 		},
 		{
@@ -155,7 +155,7 @@ func TestEvalCaseValidate_Refusals(t *testing.T) {
 		{
 			name: "expected and forbidden",
 			mutate: func(c *EvalCase) {
-				c.Expected.ForbiddenTools = []string{"place_shipment_hold"}
+				c.Expected.ForbiddenTools = []string{"shipment_place_hold"}
 			},
 			field: "expected.tools[0].name",
 		},
@@ -213,16 +213,16 @@ func TestExpectedNormalize_TrimsAndDedupes(t *testing.T) {
 	t.Parallel()
 
 	expected := Expected{
-		ForbiddenTools: []string{" cancel_shipment ", "cancel_shipment", ""},
+		ForbiddenTools: []string{" shipment_cancel ", "shipment_cancel", ""},
 		MustMention:    []string{"hold", " hold", ""},
-		Tools:          []ExpectedTool{{Name: " get_shipment "}},
+		Tools:          []ExpectedTool{{Name: " shipment_get "}},
 	}
 	expected.Normalize()
 
 	assert.Equal(t, ToolMatchAnyOrder, expected.ToolMode)
-	assert.Equal(t, []string{"cancel_shipment"}, expected.ForbiddenTools)
+	assert.Equal(t, []string{"shipment_cancel"}, expected.ForbiddenTools)
 	assert.Equal(t, []string{"hold"}, expected.MustMention)
-	assert.Equal(t, "get_shipment", expected.Tools[0].Name)
+	assert.Equal(t, "shipment_get", expected.Tools[0].Name)
 	assert.NotNil(t, expected.Proposals)
 }
 
@@ -298,7 +298,7 @@ func TestHistoryFromMessages_DropsProviderData(t *testing.T) {
 		Role: conversation.RoleAssistant,
 		ToolCalls: []conversation.ToolCallRecord{{
 			ID:           "call_1",
-			Name:         "get_shipment",
+			Name:         "shipment_get",
 			Arguments:    map[string]any{"id": "shp_1"},
 			ProviderData: map[string]any{"signature": "opaque"},
 		}},

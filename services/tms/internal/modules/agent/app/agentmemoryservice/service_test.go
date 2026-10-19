@@ -466,7 +466,7 @@ func TestRecordCorrection_KeepsARejectionOnlyWithAReason(t *testing.T) {
 
 	repo := &fakeMemoryRepo{}
 	svc := newService(repo, &fakeRuns{}, &fakeLabeler{})
-	p := proposal("cancel_shipment", map[string]any{"shipmentId": "shp_1"})
+	p := proposal("shipment_cancel", map[string]any{"shipmentId": "shp_1"})
 
 	none, err := svc.RecordCorrection(t.Context(), p, &agent.AgentDecision{
 		Decision:   agent.DecisionRejected,
@@ -482,7 +482,7 @@ func TestRecordCorrection_KeepsARejectionOnlyWithAReason(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, memory)
 	assert.Equal(t,
-		"A person rejected cancel_shipment. Reason: Never cancel a load that has already picked up",
+		"A person rejected shipment_cancel. Reason: Never cancel a load that has already picked up",
 		memory.Content)
 }
 

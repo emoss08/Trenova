@@ -524,8 +524,8 @@ func TestCancelOrder_NamesEveryLiveShipmentAndNeedsAReason(t *testing.T) {
 	}
 	tool := NewCancelOrderTool(orders)
 	params := agenttoolstest.ApprovedParams(map[string]any{
-		common.ParamOrderID:      orders.current.ID.String(),
-		common.ParamCancelReason: "Customer canceled the PO",
+		common.ParamOrderID: orders.current.ID.String(),
+		common.ParamReason:  "Customer canceled the PO",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(t, orders.guard, func() (*agent.ToolPreview, error) {

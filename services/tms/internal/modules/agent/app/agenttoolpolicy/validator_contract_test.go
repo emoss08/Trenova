@@ -12,7 +12,7 @@ import (
 // preview function to run, so there is nothing to ask short of the write.
 // A tool whose service gains one comes off this list.
 var validateExempt = map[string]string{
-	"update_shipment": "shipmentservice has no update plan; the tool patches the loaded " +
+	"shipment_update": "shipmentservice has no update plan; the tool patches the loaded " +
 		"record itself, and the service's validation runs only in Update",
 	"dismiss_insight": "insightservice dismisses in the repository; the preview applies the " +
 		"domain transition, which is not the code the write runs",
@@ -22,7 +22,7 @@ var validateExempt = map[string]string{
 		"through the repository",
 	"email_customer": "the send has no plan function; what refuses it is the mail provider " +
 		"at send time",
-	"request_missing_docs": "the send has no plan function; what refuses it is the mail " +
+	"shipment_request_documents": "the send has no plan function; what refuses it is the mail " +
 		"provider at send time",
 	"fork_report": "reporting has no fork plan that can refuse; NewCannedFork always builds " +
 		"a copy and the tool refuses an unknown report key while reading its arguments",

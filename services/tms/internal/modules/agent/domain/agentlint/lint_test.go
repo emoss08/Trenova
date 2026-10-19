@@ -10,10 +10,10 @@ import (
 
 func registry(held ...string) []Tool {
 	tools := []Tool{
-		{Name: "get_invoice", Resource: permission.ResourceInvoice, ResourceLabel: "Invoice", Operation: permission.OpRead},
+		{Name: "invoice_get", Resource: permission.ResourceInvoice, ResourceLabel: "Invoice", Operation: permission.OpRead},
 		{Name: "update_invoice", Resource: permission.ResourceInvoice, ResourceLabel: "Invoice", Operation: permission.OpUpdate},
-		{Name: "get_shipment", Resource: permission.ResourceShipment, ResourceLabel: "Shipment", Operation: permission.OpRead},
-		{Name: "cancel_shipment", Resource: permission.ResourceShipment, ResourceLabel: "Shipment", Operation: permission.OpCancel},
+		{Name: "shipment_get", Resource: permission.ResourceShipment, ResourceLabel: "Shipment", Operation: permission.OpRead},
+		{Name: "shipment_cancel", Resource: permission.ResourceShipment, ResourceLabel: "Shipment", Operation: permission.OpCancel},
 	}
 	for idx := range tools {
 		for _, name := range held {
@@ -30,7 +30,7 @@ func TestLintNamesWhatNoHeldToolDoes(t *testing.T) {
 
 	instructions := "Check each invoice first.\nUpdate the invoice when the amount is wrong. Cancel shipments that sat a week."
 
-	findings := Lint(instructions, registry("get_invoice"))
+	findings := Lint(instructions, registry("invoice_get"))
 
 	require.Len(t, findings, 2)
 	assert.Equal(t, permission.ResourceInvoice, findings[0].Resource)
@@ -71,8 +71,8 @@ func TestLintPrefersTheLongerRecordName(t *testing.T) {
 	t.Parallel()
 
 	tools := []Tool{
-		{Name: "get_invoice", Resource: permission.ResourceInvoice, ResourceLabel: "Invoice", Operation: permission.OpRead, Held: true},
-		{Name: "commit_invoice_run", Resource: permission.ResourceInvoiceRun, ResourceLabel: "Invoice Run", Operation: permission.OpApprove},
+		{Name: "invoice_get", Resource: permission.ResourceInvoice, ResourceLabel: "Invoice", Operation: permission.OpRead, Held: true},
+		{Name: "invoice_commit_run", Resource: permission.ResourceInvoiceRun, ResourceLabel: "Invoice Run", Operation: permission.OpApprove},
 	}
 
 	findings := Lint("Commit the invoice run each Friday.", tools)

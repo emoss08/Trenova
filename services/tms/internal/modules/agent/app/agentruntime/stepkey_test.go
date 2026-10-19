@@ -36,7 +36,7 @@ func TestStepKey_IgnoresTheProvidersCallID(t *testing.T) {
 	owner := pulid.MustNew("ar_")
 	params := StepKeyParams{
 		OwnerID:  owner,
-		ToolName: "create_shipment",
+		ToolName: "shipment_create",
 		Args:     map[string]any{"customerId": "cus_1"},
 	}
 

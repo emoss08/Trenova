@@ -83,28 +83,28 @@ Loaded now:
 - list_locations
 - list_service_types
 - list_shipment_types
+- list_equipment_types
 - list_formula_templates
 - list_commodities
 - list_accessorial_charges
-- search_shipments
 - quote_shipment
 - create_customer
 
 Callable after find_tools:
 - read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
-- get_shipment_draft — Read the shipment draft extracted from an uploaded document: the fields and stops it found, each with a confidence, and what it could not read.
-- list_equipment_types — List equipment types — the trailer and tractor classes this organization books against, such as dry van, reefer or flatbed.
+- intake_get_draft — Read the shipment draft extracted from an uploaded document: the fields and stops it found, each with a confidence, and what it could not read.
 - get_formula_template — Retrieve one formula template by id, whole: its formula, variables and their defaults, breakdown lines, minimum, maximum, rounding, status and version.
-- create_shipment — Enter a new shipment, priced by the customer's rate agreement when no price is given; to copy one, use duplicate_shipment.
+- shipment_list — Find shipments (loads) by the words people use for them, by status, or by filters on dates, charges and transfer status.
+- shipment_create — Enter a new shipment, priced by the customer's rate agreement when no price is given; to copy one, use shipment_duplicate.
 - create_location — Create a location record for a pickup or delivery address that has none, such as a facility read from a document.
 - create_commodity — Add a commodity shipments can carry, with its freight class, temperature range, dimensions and handling.
-- find_shipment_records — Match the customer, stop locations and commodities a new shipment names, in one call, and say which are missing.
+- shipment_match_records — Match the customer, stop locations and commodities a new shipment names, in one call, and say which are missing.
 - list_location_categories — List location categories — how facilities are grouped, and what each offers: secure parking, overnight, a restroom, whether an appointment is required.
 
 What a change you call does:
-- Changes that always record a proposal for a person to decide: flag_for_manual_review, wait_until, cancel_wait, create_shipment, create_customer, create_location, create_commodity
+- Changes that always record a proposal for a person to decide: flag_for_manual_review, wait_until, cancel_wait, shipment_create, create_customer, create_location, create_commodity
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: remember, guide_profile
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
 - quote_shipment: list_customers → list_service_types → list_locations → quote_shipment
-- create_shipment: find_shipment_records → create_shipment
+- shipment_create: shipment_match_records → shipment_create

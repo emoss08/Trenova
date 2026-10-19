@@ -58,25 +58,25 @@ Loaded now:
 - recall_memory
 - search_worker
 - list_carriers
-- search_shipments
-- get_shipment
-- list_driver_pay_events
-- get_carrier_settlement
+- shipment_list
+- shipment_get
+- settlement_list_pay_events
+- settlement_get_carrier
 - list_carrier_invoice_matches
 - list_edi_carrier_invoices
 
 Callable after find_tools:
 - read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
-- list_driver_settlements — List driver pay settlements, the drivers' pay statements, newest period first.
-- get_driver_settlement — Retrieve one driver settlement, a driver's pay statement, by id with its earnings, deduction and adjustment lines.
+- settlement_list_driver — List driver pay settlements, the drivers' pay statements, newest period first.
+- settlement_get_driver — Retrieve one driver settlement, a driver's pay statement, by id with its earnings, deduction and adjustment lines.
 - get_worker_earnings_summary — Summarize what a worker has earned but not yet been paid on a settlement.
-- get_settlement_dispute — Retrieve one pay dispute a driver raised on a settlement: its category, status, the driver's own description, the line it is about, and how it was resolved.
-- list_carrier_settlements — List carrier settlements, the statements paying outside carriers for the loads they hauled.
-- list_pay_advances — List driver pay advances, the cash and money codes given against future pay, newest first.
-- list_escrow_accounts — List owner-operator escrow accounts with the driver, status and when each opened or closed.
-- list_pay_codes — List the organization's active earning and deduction pay codes, each with the GL account it maps to.
-- list_pay_profiles — List the organization's driver pay profiles, the packages that say how a driver is paid per mile, per load or by percentage.
-- list_pay_assignments — List a driver's pay profile assignments, newest first: which profile paid them from when to when, their share of each load, and which one is in force today.
-- list_recurring_deductions — List drivers' recurring deductions, such as insurance, equipment lease or escrow contributions.
-- list_recurring_earnings — List drivers' recurring earnings, such as per diem, a guaranteed stipend or a bonus paid over time.
+- settlement_get_dispute — Retrieve one pay dispute a driver raised on a settlement: its category, status, the driver's own description, the line it is about, and how it was resolved.
+- settlement_list_carrier — List carrier settlements, the statements paying outside carriers for the loads they hauled.
+- settlement_list_advances — List driver pay advances, the cash and money codes given against future pay, newest first.
+- settlement_list_escrow_accounts — List owner-operator escrow accounts with the driver, status and when each opened or closed.
+- settlement_list_pay_codes — List the organization's active earning and deduction pay codes, each with the GL account it maps to.
+- settlement_list_pay_profiles — List the organization's driver pay profiles, the packages that say how a driver is paid per mile, per load or by percentage.
+- settlement_list_pay_assignments — List a driver's pay profile assignments, newest first: which profile paid them from when to when, their share of each load, and which one is in force today.
+- settlement_list_recurring_deductions — List drivers' recurring deductions, such as insurance, equipment lease or escrow contributions.
+- settlement_list_recurring_earnings — List drivers' recurring earnings, such as per diem, a guaranteed stipend or a bonus paid over time.
 - list_gl_accounts — List the chart of accounts: each general ledger account's code, name, type and status, with its balances when your data access reaches them.

@@ -23,14 +23,14 @@ func TestLineageKeyFor(t *testing.T) {
 		LineageKeyFor(KindTableView, "compose_table_view", map[string]any{"entity": "shipment", "description": "in Iowa"}),
 	)
 	assert.NotEqual(t,
-		LineageKeyFor(KindEntityCard, "get_shipment", map[string]any{"shipmentId": "shp_a", "detail": "full"}),
-		LineageKeyFor(KindEntityCard, "get_shipment", map[string]any{"shipmentId": "shp_b"}),
+		LineageKeyFor(KindEntityCard, "shipment_get", map[string]any{"shipmentId": "shp_a", "detail": "full"}),
+		LineageKeyFor(KindEntityCard, "shipment_get", map[string]any{"shipmentId": "shp_b"}),
 	)
 	assert.Equal(t,
-		LineageKeyFor(KindEntityCard, "get_shipment", map[string]any{"shipmentId": "shp_a", "detail": "full"}),
-		LineageKeyFor(KindEntityCard, "get_shipment", map[string]any{"shipmentId": "shp_a"}),
+		LineageKeyFor(KindEntityCard, "shipment_get", map[string]any{"shipmentId": "shp_a", "detail": "full"}),
+		LineageKeyFor(KindEntityCard, "shipment_get", map[string]any{"shipmentId": "shp_a"}),
 	)
-	assert.NotEqual(t, first, LineageKeyFor(KindTableView, "list_shipments", map[string]any{"status": "Ready", "limit": 50}))
+	assert.NotEqual(t, first, LineageKeyFor(KindTableView, "shipment_list", map[string]any{"status": "Ready", "limit": 50}))
 	assert.Equal(t,
 		LineageKeyFor(KindEDIConnectionDraft, "draft_edi_connection",
 			map[string]any{"documentId": "doc_v4"}),

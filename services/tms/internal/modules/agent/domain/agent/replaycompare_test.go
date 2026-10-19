@@ -37,19 +37,19 @@ func TestCompareReplay_JudgesByHowAPersonDecided(t *testing.T) {
 			DecisionAccepted,
 		),
 		original(
-			"cancel_shipment",
+			"shipment_cancel",
 			map[string]any{"shipmentId": "shp_1"},
 			ProposalStatusRejected,
 			DecisionRejected,
 		),
 		original(
-			"place_shipment_hold",
+			"shipment_place_hold",
 			map[string]any{"shipmentId": "shp_2"},
 			ProposalStatusExecuted,
 			DecisionAccepted,
 		),
 		original(
-			"add_shipment_comment",
+			"shipment_add_comment",
 			map[string]any{"shipmentId": "shp_3"},
 			ProposalStatusExpired,
 			"",
@@ -70,9 +70,9 @@ func TestCompareReplay_JudgesByHowAPersonDecided(t *testing.T) {
 		verdicts[match.ToolName] = match.Verdict
 	}
 	assert.Equal(t, VerdictAgreed, verdicts["assign_move"])
-	assert.Equal(t, VerdictImproved, verdicts["cancel_shipment"])
-	assert.Equal(t, VerdictRegressed, verdicts["place_shipment_hold"])
-	assert.Equal(t, VerdictUndecided, verdicts["add_shipment_comment"])
+	assert.Equal(t, VerdictImproved, verdicts["shipment_cancel"])
+	assert.Equal(t, VerdictRegressed, verdicts["shipment_place_hold"])
+	assert.Equal(t, VerdictUndecided, verdicts["shipment_add_comment"])
 	assert.Equal(t, VerdictAdded, verdicts["notify_driver"])
 
 	assert.Equal(t, 1, comparison.Agreed)
@@ -139,14 +139,14 @@ func TestCompareReplay_ReadsNumbersAndOrderAsTheSame(t *testing.T) {
 			DecisionAccepted,
 		),
 		original(
-			"request_missing_docs",
+			"shipment_request_documents",
 			map[string]any{"count": float64(2)},
 			ProposalStatusRejected,
 			DecisionRejected,
 		),
 	}
 	replay := []ReplayAction{
-		{ToolName: "request_missing_docs", Arguments: map[string]any{"count": 2}},
+		{ToolName: "shipment_request_documents", Arguments: map[string]any{"count": 2}},
 		{
 			ToolName:  "update_tractor_status",
 			Arguments: map[string]any{"status": "Available", "tractorIds": []string{"trc_1"}},

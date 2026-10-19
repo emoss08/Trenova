@@ -30,7 +30,7 @@ func (f *fakeToolRules) For(
 
 func ruledPolicy() agentports.ToolPolicy {
 	return agentports.ToolPolicy{
-		Name:          "update_shipment",
+		Name:          "shipment_update",
 		Kind:          agent.ToolKindAction,
 		DefaultTier:   agent.TierAutoExecute,
 		MaxTier:       agent.TierAutoExecute,
@@ -48,7 +48,7 @@ func TestRuled_AppliesTheOrganizationsRule(t *testing.T) {
 	t.Parallel()
 
 	rules := &fakeToolRules{rules: map[string]*agent.ToolRuleOverride{
-		"update_shipment": {MaxTier: agent.TierActWithApproval, ReadsExternal: agent.ExternalReadAlways},
+		"shipment_update": {MaxTier: agent.TierActWithApproval, ReadsExternal: agent.ExternalReadAlways},
 	}}
 	s := &Service{rules: rules, logger: zap.NewNop()}
 

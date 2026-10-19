@@ -61,8 +61,9 @@ func newRepeatGuard() *repeatGuard {
 
 // isRead is a tool that only looks something up, by the names read tools take.
 func isRead(name string) bool {
+	reading := agentports.ReadingOrder(name)
 	for _, prefix := range []string{"get_", "list_", "search_"} {
-		if strings.HasPrefix(name, prefix) {
+		if strings.HasPrefix(reading, prefix) {
 			return true
 		}
 	}
@@ -193,7 +194,7 @@ const fanOutAfter = 3
 // each of its nine items to read one field spent nine steps, and the person
 // read nine citations, on what the list either had or could not show.
 func fanOutNote(name string, count int) string {
-	if count < fanOutAfter || !strings.HasPrefix(name, "get_") {
+	if count < fanOutAfter || !isFetch(name) {
 		return ""
 	}
 

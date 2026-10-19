@@ -1,6 +1,5 @@
 defaults:
   tags: [unattended, detention]
-  split: development
 
 scenarios:
   - name: unattended-detention-clock-opens-notice-already-sent
@@ -118,7 +117,6 @@ scenarios:
       The notice-due event for SEED-DET-002 arrives after the notice deadline has already passed,
       and a gate on the policy is holding the notice back. A good run escalates the clock with
       what is blocking it instead of sending a notice FreshHaul can reject on timing.
-    split: held-out
     expectedTools: ["get_detention_occurrence|list_detention_desk"]
     forbiddenTools: [send_detention_notice, approve_detention]
     exclusive: detention-seed

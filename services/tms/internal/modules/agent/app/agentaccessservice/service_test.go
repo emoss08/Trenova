@@ -539,10 +539,10 @@ func TestHeldTools_ReadsEachToolsPolicy(t *testing.T) {
 
 	f := newFixture(t)
 	f.service.runtime = summarizingRuntime{
-		names: []string{"get_shipment", "email_customer", "remember", "get_shipment", "gone"},
+		names: []string{"shipment_get", "email_customer", "remember", "shipment_get", "gone"},
 	}
 	f.service.policies = policyTable{
-		"get_shipment": {Name: "get_shipment", Resource: "shipment"},
+		"shipment_get": {Name: "shipment_get", Resource: "shipment"},
 		"email_customer": {
 			Name:      "email_customer",
 			Resource:  "shipment",
@@ -560,7 +560,7 @@ func TestHeldTools_ReadsEachToolsPolicy(t *testing.T) {
 	held := f.service.HeldTools(f.agent)
 
 	assert.Equal(t, []HeldTool{
-		{Name: "get_shipment", Resource: "shipment", Operation: permission.OpRead},
+		{Name: "shipment_get", Resource: "shipment", Operation: permission.OpRead},
 		{
 			Name:      "email_customer",
 			Resource:  "shipment",
@@ -570,7 +570,7 @@ func TestHeldTools_ReadsEachToolsPolicy(t *testing.T) {
 		{Name: "remember", Egress: []agent.EgressClass{agent.EgressPersonal}},
 	}, held)
 	assert.Equal(t, []permissionports.RequiredGrant{
-		{Tool: "get_shipment", Resource: "shipment", Operation: permission.OpRead},
+		{Tool: "shipment_get", Resource: "shipment", Operation: permission.OpRead},
 		{Tool: "email_customer", Resource: "shipment", Operation: permission.OpUpdate},
 	}, requiredGrants(held))
 	assert.Equal(t, []string{"email_customer"}, SensitiveTools(held, f.service.sensitive))

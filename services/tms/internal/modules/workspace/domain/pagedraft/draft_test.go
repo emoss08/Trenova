@@ -283,7 +283,7 @@ func TestEditTitles(t *testing.T) {
 		assert.Equal(t, want, edit.Title())
 	}
 
-	require.True(t, pagedraft.IsEditTool("set_stop_location"))
+	require.True(t, pagedraft.IsEditTool("intake_set_stop_location"))
 	require.False(t, pagedraft.IsEditTool("create_location"))
 	assert.Equal(t, pagedraft.SurfaceFormula, pagedraft.ActionProposeFormula.Surface())
 	assert.Equal(t, pagedraft.SurfaceShipmentImport, pagedraft.ActionAcceptField.Surface())

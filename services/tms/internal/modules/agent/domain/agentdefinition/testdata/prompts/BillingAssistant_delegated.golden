@@ -48,33 +48,28 @@ You hold more tools than are loaded on this turn. The loaded ones are callable n
 
 Loaded now:
 - recall_memory
-- get_shipment
-- search_shipments
-- list_shipments
-- list_billing_transfer_candidates
-- list_billing_queue_items
-- get_billing_queue_item
-- list_open_statements
+- shipment_get
+- shipment_list
+- billing_list_transfer_candidates
+- billing_list_queue_items
+- billing_get_queue_item
+- explain_rate
+- invoice_list_open_statements
 - list_customers
 
 Callable after find_tools:
 - read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
-- get_billing_queue_items — Open several billing queue items by id in one call, each with what blocks its approval and what its shipment still lacks for billing.
-- list_invoices — List invoices narrowed by customer, status, whether they are paid or disputed, the amount, or the invoice and due dates.
-- get_invoice — Retrieve one invoice by id, with its line items, totals, payment and dispute state.
-- get_invoices — Retrieve several invoices by id in one call, each with its status, totals, payment state and line items.
+- invoice_list — List invoices narrowed by customer, status, whether they are paid or disputed, the amount, or the invoice and due dates.
+- invoice_get — Retrieve invoices by id: one in full, or up to 50 in one call as a table, for example to check a batch of drafts before posting them.
 - list_email_profiles — The sending profiles email can go out from: each has a name, a sender address and a reply-to.
 - list_accessorial_charges — List the accessorial charges this organization bills — detention, layover, lumper and the rest — with how each is calculated and at what rate.
 - search_documents — Search the text of documents: rate confirmations, bills of lading, proofs of delivery, invoices, contracts, permits and other files attached to records.
-- list_invoice_adjustments — List the invoice adjustments on one invoice, drafts included, or those waiting for an approver.
-- get_invoice_adjustment — Retrieve one invoice adjustment by id: its kind, status, approval, reason, the invoices it made and each line it credits or rebills against the invoice's lines.
-- list_invoice_runs — List invoice runs, the reviewable batches of consolidated invoices for a billing period, by status, number or period.
-- get_invoice_run — Retrieve one invoice run by id with each group, the invoice it would make or made, and the items in it: the ids adjust_invoice_run_membership moves or excludes.
-- list_invoice_share_candidates — List the teammates an invoice can be shared with: only people whose role lets them read invoices.
-- explain_rate — Explain how a saved shipment's rate was arrived at: the agreement and rule that priced it and every charge with its arithmetic.
+- invoice_list_adjustments — List the invoice adjustments on one invoice, drafts included, or those waiting for an approver.
+- invoice_get_adjustment — Retrieve one invoice adjustment by id: its kind, status, approval, reason, the invoices it made and each line it credits or rebills against the invoice's lines.
+- invoice_list_runs — List invoice runs, the reviewable batches of consolidated invoices for a billing period, by status, number or period.
+- invoice_get_run — Retrieve one invoice run by id with each group, the invoice it would make or made, and the items in it: the ids invoice_adjust_run moves or excludes.
+- invoice_list_share_candidates — List the teammates an invoice can be shared with: only people whose role lets them read invoices.
 - list_reports — List the reports this organization can run and what each takes: built-in ones with a reportKey, and ones saved in the report builder with a definitionId.
 - describe_report — Show what a report contains: its dataset, columns, filters, sort, parameters and the full definition as the report builder saves it.
 - list_detention_desk — List every open detention occurrence: a truck at a stop past its free time, with minutes until free time ends, notice status and the amount at risk.
 - get_detention_occurrence — Retrieve one detention occurrence by id: the stop, the clock, free time, billable minutes, amounts, notice status, and the evidence and notices on file.
-
-Several records in one call: get_billing_queue_items does get_billing_queue_item for a list, get_invoices does get_invoice for a list. When the person asks about several records, or for one change across several, call the list tool once with all of them, so a change is decided once on one card; never call the single tool once per record, and load the list tool with find_tools when it is not loaded.

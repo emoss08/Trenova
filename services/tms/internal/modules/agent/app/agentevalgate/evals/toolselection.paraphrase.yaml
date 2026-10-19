@@ -5,7 +5,7 @@
 # answers: find_tools must return nothing for them, by keyword and by meaning.
 cases:
   - request: chase the shipper for paperwork
-    expect: [request_missing_docs]
+    expect: [shipment_request_documents]
   - request: who's out on leave this week
     expect: [list_time_off]
   - request: is anyone's medical certificate about to lapse
@@ -15,9 +15,9 @@ cases:
   - request: let the buyer know we are running late
     expect: [email_customer]
   - request: freeze that load until we sort things out
-    expect: [place_shipment_hold]
+    expect: [shipment_place_hold]
   - request: unfreeze that load, we are good to go
-    expect: [release_shipment_hold]
+    expect: [shipment_release_hold]
   - request: how long can this operator legally keep rolling today
     expect: [get_worker_hos]
   - request: which power units are sidelined right now
@@ -29,7 +29,7 @@ cases:
   - request: what is the going price to haul freight from Denver to Phoenix
     expect: [quote_shipment, shop_carriers]
   - request: who still owes us money past thirty days
-    expect: [list_invoices]
+    expect: [invoice_list]
   - request: the client wired us funds, apply them to their bills
     expect: [post_customer_payment]
   - request: pull up what the broker wrote to our shared mailbox
@@ -37,9 +37,9 @@ cases:
   - request: write back to that broker's note
     expect: [reply_to_inbound_message]
   - request: where are our rigs at the moment
-    expect: [list_vehicle_positions, get_shipment_tracking]
+    expect: [list_vehicle_positions, shipment_get_tracking]
   - request: which loads are rolling out of the dock today
-    expect: [list_shipments, search_shipments]
+    expect: [shipment_list]
   - request: note down that Acme's dock shuts at four on Fridays
     expect: [remember]
   - request: what have we jotted down about Acme before
@@ -67,13 +67,13 @@ cases:
   - request: late deliveries last week and why
     expect: [list_service_failures, evaluate_service_failures]
   - request: book a new load for Acme out of Dallas
-    expect: [create_shipment]
+    expect: [shipment_create]
   - request: put Juan on the Houston leg with truck 42
     expect: [assign_move]
   - request: who is dragging their feet paying us
     expect: [get_ar_aging, list_collections_worklist, list_ar_open_items]
   - request: which bills is this client still sitting on
-    expect: [list_ar_open_items, list_invoices]
+    expect: [list_ar_open_items, invoice_list]
   - request: send me everything this client was charged and what they paid back
     expect: [get_customer_statement]
   - request: who do I phone about late money first
@@ -89,19 +89,19 @@ cases:
   - request: what is stopping us from finishing month end
     expect: [get_fiscal_close_blockers]
   - request: whose paychecks are ready to go out
-    expect: [list_driver_settlements]
+    expect: [settlement_list_driver]
   - request: walk me through Juan's pay stub
-    expect: [get_driver_settlement]
+    expect: [settlement_get_driver]
   - request: which trips has she been credited for
-    expect: [list_driver_pay_events]
+    expect: [settlement_list_pay_events]
   - request: what does he have coming that hasn't been paid out
     expect: [get_worker_earnings_summary]
   - request: what's the trucker complaining about on his check
-    expect: [get_settlement_dispute]
+    expect: [settlement_get_dispute]
   - request: what do we owe the outside haulers this week
-    expect: [list_carrier_settlements]
+    expect: [settlement_list_carrier]
   - request: itemize what we're paying that hauler
-    expect: [get_carrier_settlement]
+    expect: [settlement_get_carrier]
   - request: which hauler bills don't agree with what we expected
     expect: [list_carrier_invoice_matches]
   - request: what pricing deals do we have with Acme
@@ -113,9 +113,9 @@ cases:
   - request: what are we adding for diesel right now
     expect: [get_fuel_surcharge_rates]
   - request: which customer POs are still in progress
-    expect: [list_orders]
+    expect: [order_list]
   - request: what legs and charges sit under that PO
-    expect: [get_order]
+    expect: [order_get]
   - request: which partner transmissions got stuck
     expect: [list_edi_inbound_files]
   - request: show me exactly what the partner transmitted
@@ -131,17 +131,17 @@ cases:
   - request: what have the automations been doing lately
     expect: [list_agent_runs, get_agent_run]
   - request: the rate the paperwork shows is right, keep it
-    expect: [accept_field]
+    expect: [intake_accept_field]
   - request: take every reading the scan is sure about
-    expect: [accept_all_confident]
+    expect: [intake_accept_confident]
   - request: change the weight on this import to 42000 pounds
-    expect: [set_field_value]
+    expect: [intake_set_field]
   - request: make Acme the customer on this import
-    expect: [set_required_field]
+    expect: [intake_set_required_field]
   - request: tie the pickup to our Reno warehouse record
-    expect: [set_stop_location]
+    expect: [intake_set_stop_location]
   - request: the delivery happens Tuesday at eight in the morning
-    expect: [set_stop_schedule]
+    expect: [intake_set_stop_schedule]
   - request: add the consignee's warehouse as a new facility
     expect: [create_location]
   - request: which rating methods do we have

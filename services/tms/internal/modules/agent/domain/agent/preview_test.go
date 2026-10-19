@@ -18,7 +18,7 @@ func samplePreview() *ProposalPreview {
 	return &ProposalPreview{
 		Schema:        PreviewSchemaVersion,
 		ProposalID:    pulid.MustNew("ap_"),
-		Tool:          "cancel_shipment",
+		Tool:          "shipment_cancel",
 		Summary:       "Would cancel PRO-100.",
 		Coverage:      PreviewCoverageFull,
 		TargetVersion: &version,

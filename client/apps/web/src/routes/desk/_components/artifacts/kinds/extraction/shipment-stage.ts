@@ -29,7 +29,7 @@ export type ShipmentStageInput = {
   askWaiting: boolean;
 };
 
-const CREATE_SHIPMENT = "create_shipment";
+const CREATE_SHIPMENT = "shipment_create";
 
 /** The newest proposal to create a shipment from this file. */
 export function shipmentProposal(

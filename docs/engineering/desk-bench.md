@@ -52,7 +52,7 @@ Four things make that observable and repeatable:
   itself is covered by its own tests, not by the bench. For the same reason
   `agentports.AgentTrustService` is wrapped so the bench's approvals, its end-of-case
   rejections and its failed executions are not outcomes for earned autonomy: its streaks
-  promoted `transfer_to_billing` to AutoExecute on Billing exceptions, and the case that
+  promoted `billing_transfer` to AutoExecute on Billing exceptions, and the case that
   approves that proposal found it had already run.
 
 The worker's own log goes to `worker.log` in the run directory, so a tool's error that never
@@ -170,6 +170,9 @@ Each case, and each cell (a provider at an effort, split by scenario split), rep
 - **Tool selection**, against the scenario's labels: precision, recall, the position of the
   first expected call, and calls to forbidden tools. Core and runtime tools (`find_tools`,
   `withdraw_proposal`, …) are left out unless a label names them.
+- **Argument validity**: the share of a trial's tool calls whose arguments the tool's schema
+  accepted, that is every call but those refused as `invalid` (`ARGS VALID`). A denied,
+  duplicate or over-budget call is not an argument error.
 - **Retrieval**, on disclosed turns, against the tools the turn actually used. Preselection
   recall is the share the turn's opening tool array held (the 8 ranked plus the companions,
   followers, fed and carried-over tools loaded beside them). `find_tools` recall is scored
@@ -255,8 +258,8 @@ scenarios:
       - say: "anything running late rn? need to know before my 9am"
         page: { path: /shipments, title: Shipments }
         expect:
-          calls: ["list_shipments|search_shipments|get_dispatch_board"]
-          noCalls: [build_invoice_run]
+          calls: ["shipment_list|get_dispatch_board"]
+          noCalls: [invoice_build_run]
           maxCalls: 6
           maxFailedCalls: 0
           replyIncludes: ["late|behind|delayed"]
@@ -267,7 +270,7 @@ scenarios:
           rubric: Names each late load with its customer and how late it is.
       - say: "put a note on the first one that the receiver moved us to tomorrow 2pm"
         expect:
-          proposals: [{ tool: add_shipment_comment }]
+          proposals: [{ tool: shipment_add_comment }]
       - decide: approve
         expect:
           executed: true
@@ -360,12 +363,54 @@ A scenario may therefore build on the one before it (`edi-guide-revised` updates
 
 ### Labels and splits
 
-Every scenario carries a `split`: `development` (tune against it), `held-out` (look at it only
-to confirm a change) or `adversarial` (outside text that tries to steer the agent). A file's
-`defaults` may set it, and a scenario without one is `development`. `expectedTools` names the tools a correct run calls (`a|b` for either one);
-`forbiddenTools` names ones it must not call. Left out, expected tools are taken from the
-scenario's `tools` and `proposals` checks and forbidden ones from `noTools` and `noProposals`,
-leaving out any tool expected elsewhere in the scenario. `--split` runs one split.
+Every scenario is in one of three splits: `development` (tune against it), `held-out` (look at it
+only to confirm a change, and decide on it) or `adversarial` (text that tries to steer the agent:
+an injected instruction in a message, an email or an EDI file, a probe of the analysis sandbox).
+Only `adversarial` is written by hand, as `split: adversarial` on the scenario or in a file's
+`defaults`; the loader refuses any other `split` written in a file, because the other two are
+assigned by a fixed rule (`internal/modules/agent/domain/evalsplit`):
+
+1. **Strata.** A scenario's stratum is its desk and whether it is chat or unattended. An
+   unattended scenario's desk is the template its `fire` step names; a chat scenario's is its
+   `agent` without the `Bench · ` prefix (or the first step's agent), `Palette` for a palette
+   scenario, `Formula studio` for a formula one, and `General assistant` when none is named.
+2. **Quota.** Of a stratum's non-adversarial scenarios, a quarter rounded to the nearest whole
+   one is held out, and at least one when the stratum has two or more: 2–5 scenarios hold out
+   one, 6–9 two, 10–13 three. A stratum of one is development only.
+3. **Order.** Within a stratum the scenarios are ranked by the 64-bit FNV-1a hash of their name,
+   and the first ones by that rank are held out. The rule reads nothing else, so it gives the same
+   answer for the same names whatever order the files are read in, and loading one file assigns
+   what loading them all would (the loader ranks every scenario in the file's directory).
+
+The `find_tools` cases of the eval gate (`agentevalgate/evals/toolselection*.yaml`) are split by
+the same rule over the two suites together, keyed by the request. A case's desk is the template
+that lists its first expected tool among its starter tools, the one with the fewest starter tools
+when several do, and its mode is that template's trigger (chat, or event and schedule for
+unattended); a case whose tools no template starts with is in `No desk`.
+
+What each rule assigns is recorded: `deskbench/splits.yaml` for scenarios and
+`agentevalgate/evals/toolselection.splits.yaml` for selection cases, each listing the held-out
+keys by stratum. `TestScenarioSplits_MatchTheLedger` and `TestToolSelectionSplits_MatchTheLedger`
+fail when the assignment moves, naming what joined and what left the held-out set. Adding a
+scenario or a case moves its stratum's quota, and renaming or merging tools can move a case to
+another desk, so a move is expected; review it before rewriting the ledger (`go test -count=1 -run
+TestScenarioSplits ./internal/deskbench/ -update`, and `-run 'AgainstFloors|Splits'` with
+`-update` in `agentevalgate`). A scenario that joins the held-out set after living in development
+may have been tuned against: write a new scenario for that desk instead of keeping it held out.
+
+**Using the split.** Edit descriptions, search terms, schemas and prompts against development
+cases, traces and `findings.yaml`, never against a held-out case. `trenova desk run` reports every
+cell by split (`--split held-out` runs only that split), so pass rate, pass^k, tool-selection
+precision and recall, and argument validity are given for held-out scenarios apart from the
+rest. The eval gate logs `find_tools` recall@5 and top-1 on held-out cases apart, and gates them
+on their own floors (`heldOut` in `toolselection.floors.json`) beside the floors over every case.
+It prints the misses of development cases only; a held-out miss is printed only when the held-out
+floor fails. The Agent Evals workflow writes both to the run's summary.
+
+`expectedTools` names the tools a correct run calls (`a|b` for either one); `forbiddenTools`
+names ones it must not call. Left out, expected tools are taken from the scenario's `tools` and
+`proposals` checks and forbidden ones from `noTools` and `noProposals`, leaving out any tool
+expected elsewhere in the scenario.
 
 ### Unattended runs
 

@@ -60,11 +60,11 @@ Loaded now:
 - flag_for_manual_review
 - wait_until
 - cancel_wait
-- get_shipment_tracking
-- get_shipment
+- shipment_get_tracking
+- shipment_get
 - list_detention_desk
 - evaluate_service_failures
-- add_shipment_comment
+- shipment_add_comment
 - email_customer
 - send_detention_notice
 - list_watchtower_items
@@ -93,18 +93,18 @@ Callable after find_tools:
 - resolve_exception — Close an exception with the reason it is closed.
 
 What a change you call does:
-- Changes that always record a proposal for a person to decide: raise_exception, flag_for_manual_review, wait_until, cancel_wait, evaluate_service_failures, resolve_service_failure, add_shipment_comment, notify_driver, email_customer, send_detention_notice, record_stop_actual, log_check_call, issue_carrier_tracking_link, revoke_carrier_tracking_link, comment_on_exception, snooze_exception, wake_exception, assign_exception, set_exception_due, resolve_exception
+- Changes that always record a proposal for a person to decide: raise_exception, flag_for_manual_review, wait_until, cancel_wait, evaluate_service_failures, resolve_service_failure, shipment_add_comment, notify_driver, email_customer, send_detention_notice, record_stop_actual, log_check_call, issue_carrier_tracking_link, revoke_carrier_tracking_link, comment_on_exception, snooze_exception, wake_exception, assign_exception, set_exception_due, resolve_exception
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: remember
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
-- evaluate_service_failures: get_shipment_tracking → list_service_failures → evaluate_service_failures
-- resolve_service_failure: list_service_failures → get_service_failure → get_shipment_tracking → list_service_failure_reason_codes → resolve_service_failure
-- email_customer: get_shipment_tracking → get_customer_update_preferences → email_customer
+- evaluate_service_failures: shipment_get_tracking → list_service_failures → evaluate_service_failures
+- resolve_service_failure: list_service_failures → get_service_failure → shipment_get_tracking → list_service_failure_reason_codes → resolve_service_failure
+- email_customer: shipment_get_tracking → get_customer_update_preferences → email_customer
 - send_detention_notice: get_detention_occurrence → send_detention_notice
-- record_stop_actual: search_shipments → get_shipment → record_stop_actual
-- log_check_call: search_shipments → get_shipment → log_check_call
-- issue_carrier_tracking_link: search_shipments → get_shipment → get_carrier → issue_carrier_tracking_link
-- revoke_carrier_tracking_link: search_shipments → get_shipment → revoke_carrier_tracking_link
+- record_stop_actual: shipment_list → shipment_get → record_stop_actual
+- log_check_call: shipment_list → shipment_get → log_check_call
+- issue_carrier_tracking_link: shipment_list → shipment_get → get_carrier → issue_carrier_tracking_link
+- revoke_carrier_tracking_link: shipment_list → shipment_get → revoke_carrier_tracking_link
 - comment_on_exception: list_watchtower_items → comment_on_exception
 - snooze_exception: list_watchtower_items → snooze_exception
 - wake_exception: list_watchtower_items → wake_exception

@@ -124,8 +124,8 @@ describe("scopeWord", () => {
 describe("splitSteps", () => {
   it("splits numbered steps written on one line", () => {
     expect(
-      splitSteps("1. If `search_shipments` finds nothing, keep looking. 2. Call `list_shipments`."),
-    ).toEqual(["If `search_shipments` finds nothing, keep looking.", "Call `list_shipments`."]);
+      splitSteps("1. If `shipment_list` finds nothing, keep looking. 2. Call `shipment_get`."),
+    ).toEqual(["If `shipment_list` finds nothing, keep looking.", "Call `shipment_get`."]);
   });
 
   it("splits on lines when the memory is written on lines, dropping their numbers", () => {

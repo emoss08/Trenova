@@ -176,7 +176,7 @@ func (t *listFactoringSubmissionsTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramFactoringFactor: agenttoolschema.RecordIDText(
 			permission.ResourceFactoringCompany,
-			"Only schedules sent to this factor, from list_factoring_ready_invoices or get_invoice.",
+			"Only schedules sent to this factor, from list_factoring_ready_invoices or invoice_get.",
 		),
 		paramFactoringStatus: jsonschemautils.DescribedArray(
 			"Only schedules in these statuses.",

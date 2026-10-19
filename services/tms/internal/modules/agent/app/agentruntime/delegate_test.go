@@ -576,9 +576,9 @@ func TestDelegateReport_HandsBackWhatTheLookupsReadWordForWord(t *testing.T) {
 		Result: &agentports.RunResult{
 			Reply: "One invoice is overdue.",
 			Messages: []conversation.Message{
-				{Role: conversation.RoleTool, ToolCallID: "call_d1", ToolName: "list_invoices",
-					Content: FenceToolResult("list_invoices", read)},
-				{Role: conversation.RoleTool, ToolCallID: "call_d2", ToolName: "list_invoices",
+				{Role: conversation.RoleTool, ToolCallID: "call_d1", ToolName: "invoice_list",
+					Content: FenceToolResult("invoice_list", read)},
+				{Role: conversation.RoleTool, ToolCallID: "call_d2", ToolName: "invoice_list",
 					Content: "Tool failed.", ToolFailed: true},
 				{Role: conversation.RoleTool, ToolCallID: "call_d3", ToolName: findToolsName,
 					Content: FenceToolResult(findToolsName, "These tools are now callable")},
@@ -589,7 +589,7 @@ func TestDelegateReport_HandsBackWhatTheLookupsReadWordForWord(t *testing.T) {
 	report := delegateReport(delegate, "call_1", run)
 
 	require.Len(t, report.Findings, 1)
-	assert.Equal(t, "list_invoices", report.Findings[0].ToolName)
+	assert.Equal(t, "invoice_list", report.Findings[0].ToolName)
 	assert.Equal(t, "call_d1", report.Findings[0].CallID)
 	assert.Equal(t, read, report.Findings[0].Content)
 	assert.Equal(t, "One invoice is overdue.", report.Reply)
@@ -609,7 +609,7 @@ func TestDelegateOutcome_KeepsTheReportWholeWithinOneToolResult(t *testing.T) {
 	}
 	for idx := range 6 {
 		report.Findings = append(report.Findings, conversation.DelegateFinding{
-			ToolName: "list_invoices",
+			ToolName: "invoice_list",
 			CallID:   fmt.Sprintf("call_%d", idx),
 			Content:  `{"rows":["` + strings.Repeat("\"", 900) + `"]}`,
 		})
@@ -636,8 +636,8 @@ func TestDelegateReport_CountsFindingsPastWhatOneAnswerCarries(t *testing.T) {
 		messages = append(messages, conversation.Message{
 			Role:       conversation.RoleTool,
 			ToolCallID: fmt.Sprintf("call_%d", idx),
-			ToolName:   "list_invoices",
-			Content:    FenceToolResult("list_invoices", strings.Repeat("x", 3<<10)),
+			ToolName:   "invoice_list",
+			Content:    FenceToolResult("invoice_list", strings.Repeat("x", 3<<10)),
 		})
 	}
 	run := DelegateRun{Result: &agentports.RunResult{Messages: messages}}

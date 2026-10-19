@@ -78,7 +78,7 @@ func NewAssignMoveToCarrierTool(carriers carrierCoverage) agentports.AgentTool {
 func (t *AssignMoveToCarrierTool) Name() string { return "assign_move_to_carrier" }
 
 func (t *AssignMoveToCarrierTool) Recipe() []string {
-	return []string{"get_shipment", "shop_carriers", "assign_move_to_carrier"}
+	return []string{"shipment_get", "shop_carriers", "assign_move_to_carrier"}
 }
 
 func (t *AssignMoveToCarrierTool) Description() string {
@@ -96,7 +96,7 @@ func (t *AssignMoveToCarrierTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		common.PreviewFieldShipmentMoveID: agenttoolschema.RecordIDText(
 			permission.ResourceShipmentMove,
-			"The move to cover, from get_dispatch_board (moveId) or get_shipment (its moves).",
+			"The move to cover, from get_dispatch_board (moveId) or shipment_get (its moves).",
 		),
 		common.FieldCarrierID: agenttoolschema.RecordIDText(
 			permission.ResourceCarrier,
@@ -330,7 +330,7 @@ func (t *CancelCarrierAssignmentTool) ParamSchema() map[string]any {
 		common.PreviewFieldShipmentMoveID: agenttoolschema.RecordIDText(
 			permission.ResourceShipmentMove,
 			"The move whose carrier comes off, from get_dispatch_board (moveId) or "+
-				"get_shipment (its moves).",
+				"shipment_get (its moves).",
 		),
 		common.FieldReason: jsonschemautils.Text(
 			"Why the carrier is coming off, in a sentence a person can check.",

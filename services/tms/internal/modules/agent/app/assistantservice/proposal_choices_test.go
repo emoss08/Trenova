@@ -18,7 +18,7 @@ import (
 
 type subsetTool struct{}
 
-func (subsetTool) Name() string        { return "transfer_to_billing" }
+func (subsetTool) Name() string        { return "billing_transfer" }
 func (subsetTool) Description() string { return "Transfer shipments." }
 func (subsetTool) ParamSchema() map[string]any {
 	return map[string]any{
@@ -95,7 +95,7 @@ func newChoicesFixture(t *testing.T, mayReadShipments bool) *choicesFixture {
 		{
 			ID:       pulid.MustNew("ap_"),
 			RunID:    run.ID,
-			ToolName: "transfer_to_billing",
+			ToolName: "billing_transfer",
 			Status:   agent.ProposalStatusPending,
 			ToolParams: map[string]any{
 				"shipmentIds": []any{f.first.String(), f.gone.String(), f.notAnID, f.second.String()},
@@ -104,13 +104,13 @@ func newChoicesFixture(t *testing.T, mayReadShipments bool) *choicesFixture {
 		{
 			ID:         pulid.MustNew("ap_"),
 			RunID:      run.ID,
-			ToolName:   "transfer_to_billing",
+			ToolName:   "billing_transfer",
 			Status:     agent.ProposalStatusPending,
 			ToolParams: map[string]any{"shipmentIds": []any{f.other.String()}},
 		},
 		{
 			ID:         pulid.MustNew("ap_"),
-			ToolName:   "transfer_to_billing",
+			ToolName:   "billing_transfer",
 			Status:     agent.ProposalStatusExecuted,
 			ToolParams: map[string]any{"shipmentIds": []any{f.other.String()}},
 		},

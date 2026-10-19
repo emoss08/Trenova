@@ -19,7 +19,7 @@
 const HOLD = { __hold: true };
 
 const TOOLS = {
-  create_shipment: "Create a shipment load order from a tender or email booking",
+  shipment_create: "Create a shipment load order from a tender or email booking",
   tender_shipment: "Tender a shipment load to a carrier for coverage",
   search_carriers: "Search carriers by lane equipment authority to cover a load",
   file_document: "File a document such as a POD bill of lading or lumper receipt on a shipment",
@@ -32,9 +32,9 @@ const TOOLS = {
   get_worker: "Retrieve one worker driver",
   get_location: "Retrieve one location facility",
   get_carrier: "Retrieve one carrier",
-  get_order: "Retrieve one order",
+  order_get: "Retrieve one order",
   list_tractors: "List tractors trucks by status",
-  get_shipment: "Retrieve one shipment load",
+  shipment_get: "Retrieve one shipment load",
 };
 
 const STOP_WORDS = new Set([
@@ -115,13 +115,15 @@ function rankTools(text, names) {
 const SUMMARIES = {
   shipment_eta: "Projected arrival for each open stop.",
   draft_reply: "Writes the email for you to review and send.",
-  get_shipment: "Stops, status, equipment and references.",
+  shipment_get: "Stops, status, equipment and references.",
   file_document: "PODs, bills of lading and lumper receipts.",
   waive_detention: "Approve or waive detention on an invoice.",
 };
 
 function matchTools(names) {
-  return names.slice(0, 3).map((name) => ({ name, summary: SUMMARIES[name] ?? `${TOOLS[name] ?? ""}.` }));
+  return names
+    .slice(0, 3)
+    .map((name) => ({ name, summary: SUMMARIES[name] ?? `${TOOLS[name] ?? ""}.` }));
 }
 
 function outcome(kind, agent, tools) {
@@ -137,7 +139,11 @@ export function matchAgent(state, variables, agents) {
   if (wide.length === 0) return outcome("NoMatch", null, []);
   const held = new Set(agents.flatMap((agent) => agent.toolNames ?? []));
   if (state.scenario.agentMatch === "nobody" || !wide.some((name) => held.has(name))) {
-    return outcome("NoAgent", null, wide.filter((name, index) => index === 0 || name === wide[0]));
+    return outcome(
+      "NoAgent",
+      null,
+      wide.filter((name, index) => index === 0 || name === wide[0]),
+    );
   }
 
   const currentId = variables.input?.currentAgentId ?? "";

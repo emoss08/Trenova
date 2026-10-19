@@ -6,9 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -91,14 +91,14 @@ func newPreviewFixture(t *testing.T) *previewFixture {
 	f.service.grants = grants
 	f.service.runtime = heldRuntime{}
 	f.service.policies = policyTable{
-		"get_shipment": {Name: "get_shipment", Resource: "shipment"},
+		"shipment_get": {Name: "shipment_get", Resource: "shipment"},
 		"email_customer": {
 			Name:     "email_customer",
 			Resource: "shipment",
 			Egress:   []agent.EgressClass{agent.EgressExternalRecipient},
 		},
 	}
-	f.agent.ToolNames = []string{"get_shipment"}
+	f.agent.ToolNames = []string{"shipment_get"}
 	f.agent.AccessMode = agentdefinition.AccessRoles
 
 	return &previewFixture{fixture: f, coverage: coverage, grants: grants}
@@ -119,7 +119,7 @@ func TestPreviewAudience_ReadsTheFormNotTheSavedAgent(t *testing.T) {
 	open, err := f.service.PreviewAudience(t.Context(), &agentdefinitionports.PreviewAgentAudienceRequest{
 		TenantInfo: f.tenant,
 		AgentID:    f.agent.ID,
-		ToolNames:  []string{"get_shipment", "email_customer"},
+		ToolNames:  []string{"shipment_get", "email_customer"},
 		Mode:       agentdefinition.AccessEveryone,
 	})
 	require.NoError(t, err)
@@ -135,13 +135,13 @@ func TestPreviewAudience_ReadsTheFormNotTheSavedAgent(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Equal(t, agentdefinition.AccessRoles, stored.AccessMode, "a preview changes nothing")
-	assert.Equal(t, []string{"get_shipment"}, stored.ToolNames)
+	assert.Equal(t, []string{"shipment_get"}, stored.ToolNames)
 	assert.Empty(t, f.definitions.modeSets)
 
 	restricted, err := f.service.PreviewAudience(t.Context(), &agentdefinitionports.PreviewAgentAudienceRequest{
 		TenantInfo: f.tenant,
 		AgentID:    f.agent.ID,
-		ToolNames:  []string{"get_shipment", "email_customer"},
+		ToolNames:  []string{"shipment_get", "email_customer"},
 		Mode:       agentdefinition.AccessRoles,
 	})
 	require.NoError(t, err)
@@ -205,7 +205,7 @@ func TestPreviewAudience_RefusesABadRequest(t *testing.T) {
 
 	tooMany := make([]string, maxPreviewTools+1)
 	for i := range tooMany {
-		tooMany[i] = "get_shipment"
+		tooMany[i] = "shipment_get"
 	}
 	_, err = f.service.PreviewAudience(t.Context(), &agentdefinitionports.PreviewAgentAudienceRequest{
 		TenantInfo: f.tenant,

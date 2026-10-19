@@ -130,7 +130,7 @@ func TestSendMessageStream_NamesWhatEachStepOfAPlanMade(t *testing.T) {
 	}
 	copied := &agent.AgentProposal{
 		ID:       pulid.MustNew("ap_"),
-		ToolName: "duplicate_shipment",
+		ToolName: "shipment_duplicate",
 		Status:   agent.ProposalStatusExecuted,
 		PlanID:   &planID,
 		PlanStep: 2,
@@ -162,8 +162,8 @@ func TestSendMessageStream_NamesWhatEachStepOfAPlanMade(t *testing.T) {
 	)
 	assert.NotContains(t, first, "shp_new")
 	assert.Contains(t, rest, "Decision on plan "+plan.ID.String()+" (2 steps).")
-	assert.Contains(t, rest, "Step 2 (duplicate_shipment): It produced shipmentId shp_new;")
+	assert.Contains(t, rest, "Step 2 (shipment_duplicate): It produced shipmentId shp_new;")
 	assert.Less(t, strings.Index(rest, "Step 1 (void_shipment)"),
-		strings.Index(rest, "Step 2 (duplicate_shipment)"), "steps are told in order")
+		strings.Index(rest, "Step 2 (shipment_duplicate)"), "steps are told in order")
 	assert.Contains(t, rest, followUpInstruction)
 }

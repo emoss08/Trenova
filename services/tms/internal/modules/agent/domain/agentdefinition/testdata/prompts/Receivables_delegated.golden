@@ -57,22 +57,22 @@ You hold more tools than are loaded on this turn. The loaded ones are callable n
 Loaded now:
 - recall_memory
 - list_customers
-- get_customer
-- list_invoices
-- get_shipment
+- invoice_list
+- invoice_get
+- shipment_get
 - get_document_summary
 - get_ar_aging
 - list_credit_memo_applications
-- list_invoice_disputes
+- invoice_list_disputes
 
 Callable after find_tools:
 - read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
-- get_invoice — Retrieve one invoice by id, with its line items, totals, payment and dispute state.
+- get_customer — Retrieve one customer by id, with their billing and email profiles.
 - search_documents — Search the text of documents: rate confirmations, bills of lading, proofs of delivery, invoices, contracts, permits and other files attached to records.
 - list_ar_open_items — List the open receivables, the unpaid or partly paid invoices customers still owe, most overdue first.
 - list_collections_worklist — List the collections worklist: overdue and disputed invoices ranked for a collector to chase, each marked Critical, Warning or Watch.
 - get_customer_statement — Build one customer's account statement: invoices, payments and credits over a period with the running balance, what is still open, and their aging.
 - list_customer_payments — List recorded customer payments, newest first, with the amount, how much of it is applied to invoices, the method, the reference and the memo.
-- list_invoice_adjustments — List the invoice adjustments on one invoice, drafts included, or those waiting for an approver.
-- get_invoice_adjustment — Retrieve one invoice adjustment by id: its kind, status, approval, reason, the invoices it made and each line it credits or rebills against the invoice's lines.
-- list_invoice_share_candidates — List the teammates an invoice can be shared with: only people whose role lets them read invoices.
+- invoice_list_adjustments — List the invoice adjustments on one invoice, drafts included, or those waiting for an approver.
+- invoice_get_adjustment — Retrieve one invoice adjustment by id: its kind, status, approval, reason, the invoices it made and each line it credits or rebills against the invoice's lines.
+- invoice_list_share_candidates — List the teammates an invoice can be shared with: only people whose role lets them read invoices.

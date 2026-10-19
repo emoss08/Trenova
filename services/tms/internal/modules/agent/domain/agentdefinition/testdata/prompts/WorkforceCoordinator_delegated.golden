@@ -57,13 +57,13 @@ You hold more tools than are loaded on this turn. The loaded ones are callable n
 Loaded now:
 - recall_memory
 - search_worker
-- search_shipments
+- shipment_list
 - list_time_off
 - list_dot_random_draws
 - get_dot_random_draw
 - list_worker_checklists
 - list_employment_verifications
-- list_shipment_permits
+- shipment_list_permits
 
 Callable after find_tools:
 - read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.

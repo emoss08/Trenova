@@ -21,7 +21,7 @@ func validFeedback() *Feedback {
 		Rating:            RatingNegative,
 		Reasons:           []Reason{ReasonInaccurate, ReasonIncomplete},
 		Comment:           "The ETA was a day off",
-		PatternKey:        PatternKey([]string{"get_shipment"}, ReasonInaccurate, "Shipment"),
+		PatternKey:        PatternKey([]string{"shipment_get"}, ReasonInaccurate, "Shipment"),
 	}
 }
 
@@ -165,19 +165,19 @@ func TestPatternKey(t *testing.T) {
 	t.Parallel()
 
 	key := PatternKey(
-		[]string{"get_shipment", "get_shipment", "list_moves"},
+		[]string{"shipment_get", "shipment_get", "list_moves"},
 		ReasonInaccurate,
 		"Shipment",
 	)
 	assert.Len(t, key, PatternKeyLength)
 	assert.Equal(t, key,
-		PatternKey([]string{"get_shipment", "list_moves"}, ReasonInaccurate, "Shipment"),
+		PatternKey([]string{"shipment_get", "list_moves"}, ReasonInaccurate, "Shipment"),
 		"a tool called twice in a row is one step of the pattern")
 	assert.NotEqual(t, key,
-		PatternKey([]string{"list_moves", "get_shipment"}, ReasonInaccurate, "Shipment"),
+		PatternKey([]string{"list_moves", "shipment_get"}, ReasonInaccurate, "Shipment"),
 		"the order of the tools matters")
 	assert.NotEqual(t, key,
-		PatternKey([]string{"get_shipment", "list_moves"}, ReasonIncomplete, "Shipment"))
+		PatternKey([]string{"shipment_get", "list_moves"}, ReasonIncomplete, "Shipment"))
 	assert.NotEqual(t, key,
-		PatternKey([]string{"get_shipment", "list_moves"}, ReasonInaccurate, "Customer"))
+		PatternKey([]string{"shipment_get", "list_moves"}, ReasonInaccurate, "Customer"))
 }

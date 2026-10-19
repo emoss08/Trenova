@@ -177,6 +177,28 @@ func TestListBillingQueueItems_FiltersByIDs(t *testing.T) {
 	assert.Equal(t, []any{ids[0], ids[1]}, queue.captured.Filter.FieldFilters[0].Value)
 }
 
+func TestGetBillingQueueItem_ReadsOneItemInFull(t *testing.T) {
+	t.Parallel()
+
+	item := queueItem(billingqueue.StatusInReview)
+	tool := &getBillingQueueItemTool{
+		items:     &fakeBillingQueue{items: []*billingqueue.BillingQueueItem{item, item}},
+		readiness: &fakeReadiness{},
+		invoices:  &fakeQueueInvoices{},
+		access:    newFieldAccess(&fakePermissions{}),
+	}
+
+	result, err := tool.Query(t.Context(), agentParams(map[string]any{
+		paramBillingQueueItemIDs: []any{item.ID.String(), item.ID.String()},
+	}, permission.SensitivityRestricted))
+	require.NoError(t, err)
+
+	detail, ok := result.(billingQueueDetail)
+	require.True(t, ok, "the same id twice is one item, read in full")
+	assert.Equal(t, item.ID.String(), detail.ID)
+	require.Len(t, detail.Charges, 1)
+}
+
 func TestGetBillingQueueItem_SaysWhatBlocksApprovalAndWhatTheShipmentLacks(t *testing.T) {
 	t.Parallel()
 
@@ -199,7 +221,7 @@ func TestGetBillingQueueItem_SaysWhatBlocksApprovalAndWhatTheShipmentLacks(t *te
 	}
 
 	result, err := tool.Query(t.Context(), agentParams(
-		map[string]any{paramBillingQueueItemID: item.ID.String()},
+		map[string]any{paramBillingQueueItemIDs: []any{item.ID.String()}},
 		permission.SensitivityRestricted,
 	))
 	require.NoError(t, err)
@@ -218,7 +240,7 @@ func TestGetBillingQueueItem_SaysWhatBlocksApprovalAndWhatTheShipmentLacks(t *te
 }
 
 // An approved item has made its invoice; the detail names it, so the next
-// step (post_invoice) has the id it takes.
+// step (invoice_post) has the id it takes.
 func TestGetBillingQueueItem_NamesTheInvoiceApprovalMade(t *testing.T) {
 	t.Parallel()
 
@@ -232,7 +254,7 @@ func TestGetBillingQueueItem_NamesTheInvoiceApprovalMade(t *testing.T) {
 	}
 
 	result, err := tool.Query(t.Context(), agentParams(
-		map[string]any{paramBillingQueueItemID: item.ID.String()},
+		map[string]any{paramBillingQueueItemIDs: []any{item.ID.String()}},
 		"",
 	))
 	require.NoError(t, err)
@@ -416,7 +438,7 @@ func TestListBillingTransferCandidates_SaysTheTotalsCoverOnlyThisPage(t *testing
 	assert.Empty(t, totals.Refused)
 }
 
-// Posting a queue used to mean one get_billing_queue_item per item, which
+// Posting a queue used to mean one billing_get_queue_item per item, which
 // spent the turn's tool budget on eleven reads and left eleven cards. One
 // call reads the set, says what blocks each item, and lands as one table.
 func TestGetBillingQueueItems_ReadsASetAndSaysWhatBlocksEach(t *testing.T) {
@@ -436,7 +458,7 @@ func TestGetBillingQueueItems_ReadsASetAndSaysWhatBlocksEach(t *testing.T) {
 		BillableAmount: decimal.RequireFromString("150.00"),
 	}}
 	queue := &fakeBillingQueue{items: []*billingqueue.BillingQueueItem{waiting, ready, held}}
-	tool := &getBillingQueueItemsTool{
+	tool := &getBillingQueueItemTool{
 		items: queue,
 		readiness: &fakeReadiness{readiness: &shipmentports.ShipmentBillingReadiness{
 			MissingRequirements: []shipmentports.ShipmentBillingRequirement{
@@ -484,22 +506,22 @@ func TestGetBillingQueueItems_ReadsASetAndSaysWhatBlocksEach(t *testing.T) {
 func TestGetBillingQueueItems_WithholdsAmountsAtInternal(t *testing.T) {
 	t.Parallel()
 
-	item := queueItem(billingqueue.StatusInReview)
-	tool := &getBillingQueueItemsTool{
-		items:     &fakeBillingQueue{items: []*billingqueue.BillingQueueItem{item}},
+	first, second := queueItem(billingqueue.StatusInReview), queueItem(billingqueue.StatusInReview)
+	tool := &getBillingQueueItemTool{
+		items:     &fakeBillingQueue{items: []*billingqueue.BillingQueueItem{first, second}},
 		readiness: &fakeReadiness{},
 		invoices:  &fakeQueueInvoices{},
 		access:    newFieldAccess(&fakePermissions{}),
 	}
 
 	result, err := tool.Query(t.Context(), agentParams(map[string]any{
-		paramBillingQueueItemIDs: []any{item.ID.String()},
+		paramBillingQueueItemIDs: []any{first.ID.String(), second.ID.String()},
 	}, ""))
 	require.NoError(t, err)
 
 	outcome := result.(*gatedOutcome)
 	rows := outcome.Items.([]billingQueueBatchRow)
-	require.Len(t, rows, 1)
+	require.Len(t, rows, 2)
 	assert.Empty(t, rows[0].Amount)
 	assert.Contains(t, outcome.Withheld, "amounts")
 	assert.NotContains(t, outcome.Columns, "amount", "a withheld column is not promised")

@@ -50,12 +50,12 @@ describe("a saved step's reasoning", () => {
         role: "Assistant",
         reasoning: { text: "Both are on the Dallas lane; look them up together." },
         toolCalls: [
-          { id: "c1", name: "get_shipment", arguments: { proNumber: "S1" } },
-          { id: "c2", name: "get_shipment", arguments: { proNumber: "S2" } },
+          { id: "c1", name: "shipment_get", arguments: { proNumber: "S1" } },
+          { id: "c2", name: "shipment_get", arguments: { proNumber: "S2" } },
         ],
       }),
-      message({ role: "Tool", toolCallId: "c1", toolName: "get_shipment", content: "one" }),
-      message({ role: "Tool", toolCallId: "c2", toolName: "get_shipment", content: "two" }),
+      message({ role: "Tool", toolCallId: "c1", toolName: "shipment_get", content: "one" }),
+      message({ role: "Tool", toolCallId: "c2", toolName: "shipment_get", content: "two" }),
       message({
         role: "Assistant",
         reasoning: null,
@@ -79,7 +79,7 @@ describe("a saved step's reasoning", () => {
 
   it("is empty on a result whose call is out of view", () => {
     const steps = savedSteps([
-      message({ role: "Tool", toolCallId: "c9", toolName: "get_shipment", content: "one" }),
+      message({ role: "Tool", toolCallId: "c9", toolName: "shipment_get", content: "one" }),
       message({ role: "Assistant", reasoning: { text: "Answer from what came back." } }),
     ]);
 
@@ -108,13 +108,13 @@ describe("a streaming step's reasoning", () => {
           content: "",
           model: "m",
           toolCalls: [
-            { id: "c1", name: "get_shipment" },
+            { id: "c1", name: "shipment_get" },
             { id: "c2", name: "get_stops" },
           ],
         },
       },
-      { event: "tool_started", data: { callId: "c1", name: "get_shipment" } },
-      { event: "tool_finished", data: { callId: "c1", name: "get_shipment", content: "{}" } },
+      { event: "tool_started", data: { callId: "c1", name: "shipment_get" } },
+      { event: "tool_finished", data: { callId: "c1", name: "shipment_get", content: "{}" } },
       { event: "tool_started", data: { callId: "c2", name: "get_stops" } },
       { event: "tool_finished", data: { callId: "c2", name: "get_stops", content: "{}" } },
       {
@@ -135,10 +135,10 @@ describe("a streaming step's reasoning", () => {
     const steps = streamed([
       {
         event: "message",
-        data: { content: "", model: "m", toolCalls: [{ id: "c1", name: "get_shipment" }] },
+        data: { content: "", model: "m", toolCalls: [{ id: "c1", name: "shipment_get" }] },
       },
-      { event: "tool_started", data: { callId: "c1", name: "get_shipment" } },
-      { event: "tool_finished", data: { callId: "c1", name: "get_shipment", content: "{}" } },
+      { event: "tool_started", data: { callId: "c1", name: "shipment_get" } },
+      { event: "tool_finished", data: { callId: "c1", name: "shipment_get", content: "{}" } },
       { event: "reasoning", data: { text: "Now the driver." } },
     ] as AssistantStreamEvent[]);
 

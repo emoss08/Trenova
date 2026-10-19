@@ -12,15 +12,15 @@ function fold(events: [string, unknown][]): DryRunState {
 describe("reduceDryRun", () => {
   it("shows each call while it runs, then what it came to", () => {
     const state = fold([
-      ["tool_started", { callId: "c1", name: "search_shipments" }],
+      ["tool_started", { callId: "c1", name: "shipment_list" }],
       ["tool_started", { callId: "c2", name: "assign_driver" }],
-      ["tool_finished", { callId: "c1", name: "search_shipments" }],
+      ["tool_finished", { callId: "c1", name: "shipment_list" }],
       ["delta", { text: "Marcus Reed " }],
       ["delta", { text: "is closest." }],
     ]);
     expect(state.status).toBe("running");
     expect(state.steps).toEqual([
-      { callId: "c1", tool: "search_shipments", outcome: "Runs", summary: "" },
+      { callId: "c1", tool: "shipment_list", outcome: "Runs", summary: "" },
       { callId: "c2", tool: "assign_driver", outcome: null, summary: "" },
     ]);
     expect(state.reply).toBe("Marcus Reed is closest.");
@@ -28,14 +28,14 @@ describe("reduceDryRun", () => {
 
   it("lets the closing account replace the outcomes, keeping the streamed reply when it has none", () => {
     const state = fold([
-      ["tool_started", { callId: "c1", name: "search_shipments" }],
+      ["tool_started", { callId: "c1", name: "shipment_list" }],
       ["tool_started", { callId: "c2", name: "assign_driver" }],
       ["delta", { text: "Streamed." }],
       [
         "dry_run_steps",
         {
           steps: [
-            { callId: "c1", tool: "search_shipments", outcome: "Runs" },
+            { callId: "c1", tool: "shipment_list", outcome: "Runs" },
             { callId: "c2", tool: "assign_driver", outcome: "AskFirst", summary: "Assign Marcus" },
             { callId: "c3", tool: "tender", outcome: "SomethingNew" },
           ],
@@ -62,9 +62,9 @@ describe("reduceDryRun", () => {
 
   it("leaves out what a delegate did, and a call it already has", () => {
     const state = fold([
-      ["tool_started", { callId: "c1", name: "search_shipments" }],
-      ["tool_started", { callId: "c1", name: "search_shipments" }],
-      ["tool_started", { callId: "d1", name: "get_invoice", agentId: "agdef_other" }],
+      ["tool_started", { callId: "c1", name: "shipment_list" }],
+      ["tool_started", { callId: "c1", name: "shipment_list" }],
+      ["tool_started", { callId: "d1", name: "invoice_get", agentId: "agdef_other" }],
       ["delta", { text: "their words", agentId: "agdef_other" }],
     ]);
     expect(state.steps).toHaveLength(1);

@@ -94,7 +94,6 @@ Loaded now:
 - wait_until
 - cancel_wait
 - list_tractors
-- search_shipments
 - list_fuel_purchases
 - record_fuel_purchase
 - correct_fuel_purchase
@@ -109,7 +108,8 @@ Callable after find_tools:
 - read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
 - get_tractor — Retrieve one tractor by id, with its equipment details, fleet and assigned workers.
 - search_worker — Find a driver or other worker by name or code, or list the roster.
-- get_shipment — Retrieve one shipment (load) by its id, with its stops, the driver and equipment assigned to each move, the holds on it now and its newest comments.
+- shipment_list — Find shipments (loads) by the words people use for them, by status, or by filters on dates, charges and transfer status.
+- shipment_get — Read one shipment (load) by its id or PRO number.
 - search_documents — Search the text of documents: rate confirmations, bills of lading, proofs of delivery, invoices, contracts, permits and other files attached to records.
 - get_document_summary — Read a document by id: what kind of document it looks like, how many pages, the text extracted from it, and the structured fields document intelligence found.
 - list_ifta_jurisdictions — List the active states and provinces fuel tax is reported by, with each one's two-letter code and whether it is an IFTA member.

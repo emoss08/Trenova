@@ -10,7 +10,7 @@ import (
 
 /*
 A template that fills the tool cap leaves an organization nothing to add. The
-billing assistant sat at 63 of 64, so share_invoice and its candidate read were
+billing assistant sat at 63 of 64, so invoice_share and its candidate read were
 registered and on no template: the only way to use them was to build an agent by
 hand. Every starter keeps room for a handful of tools of the organization's own.
 */
@@ -66,40 +66,40 @@ func TestTemplates_TheSettlementsClerkRunsThePayPeriod(t *testing.T) {
 	for _, tool := range []string{
 		"search_worker",
 		"list_carriers",
-		"search_shipments",
-		"list_driver_settlements",
-		"get_driver_settlement",
-		"list_driver_pay_events",
+		"shipment_list",
+		"settlement_list_driver",
+		"settlement_get_driver",
+		"settlement_list_pay_events",
 		"get_worker_earnings_summary",
-		"get_settlement_dispute",
-		"generate_driver_settlement",
-		"generate_driver_settlement_batch",
-		"attach_pay_events_to_settlement",
-		"detach_pay_event_from_settlement",
-		"hold_driver_pay_event",
-		"release_driver_pay_event",
-		"add_driver_settlement_adjustment",
-		"remove_driver_settlement_adjustment",
-		"recalculate_driver_settlement",
-		"submit_driver_settlement",
-		"approve_driver_settlements",
-		"reject_driver_settlement",
-		"post_driver_settlements",
-		"record_driver_settlement_payment",
-		"void_driver_settlement",
-		"pay_driver_now",
-		"list_carrier_settlements",
-		"get_carrier_settlement",
-		"generate_carrier_settlement_batch",
-		"add_carrier_settlement_adjustment",
-		"remove_carrier_settlement_adjustment",
-		"recalculate_carrier_settlement",
-		"submit_carrier_settlement",
-		"approve_carrier_settlements",
-		"reject_carrier_settlement",
-		"post_carrier_settlements",
-		"record_carrier_settlement_payment",
-		"void_carrier_settlement",
+		"settlement_get_dispute",
+		"settlement_generate_driver",
+		"settlement_generate_driver_batch",
+		"settlement_attach_pay_events",
+		"settlement_detach_pay_event",
+		"settlement_hold_pay_event",
+		"settlement_release_pay_event",
+		"settlement_add_driver_adjustment",
+		"settlement_remove_driver_adjustment",
+		"settlement_recalculate_driver",
+		"settlement_submit_driver",
+		"settlement_approve_driver",
+		"settlement_reject_driver",
+		"settlement_post_driver",
+		"settlement_record_driver_payment",
+		"settlement_void_driver",
+		"settlement_pay_now",
+		"settlement_list_carrier",
+		"settlement_get_carrier",
+		"settlement_generate_carrier_batch",
+		"settlement_add_carrier_adjustment",
+		"settlement_remove_carrier_adjustment",
+		"settlement_recalculate_carrier",
+		"settlement_submit_carrier",
+		"settlement_approve_carrier",
+		"settlement_reject_carrier",
+		"settlement_post_carrier",
+		"settlement_record_carrier_payment",
+		"settlement_void_carrier",
 		"list_carrier_invoice_matches",
 		"list_edi_carrier_invoices",
 		"create_carrier_invoice_match",
@@ -107,46 +107,44 @@ func TestTemplates_TheSettlementsClerkRunsThePayPeriod(t *testing.T) {
 		"accept_carrier_invoice_match_with_variance",
 		"reject_carrier_invoice_match",
 		"link_edi_carrier_invoice_to_carrier",
-		"list_pay_advances",
-		"issue_pay_advance",
-		"write_off_pay_advance",
-		"list_escrow_accounts",
-		"adjust_escrow_account",
-		"list_pay_codes",
-		"list_pay_profiles",
-		"list_pay_assignments",
-		"list_recurring_deductions",
-		"list_recurring_earnings",
+		"settlement_list_advances",
+		"settlement_issue_advance",
+		"settlement_forgive_advance",
+		"settlement_list_escrow_accounts",
+		"settlement_adjust_escrow_account",
+		"settlement_list_pay_codes",
+		"settlement_list_pay_profiles",
+		"settlement_list_pay_assignments",
+		"settlement_list_recurring_deductions",
+		"settlement_list_recurring_earnings",
 	} {
 		require.Containsf(t, tools, tool, "the settlements clerk needs %s", tool)
 	}
 
 	for _, tool := range []string{
-		"assign_pay_profile",
-		"end_pay_assignment",
-		"create_recurring_deduction",
-		"update_recurring_deduction",
-		"create_recurring_earning",
-		"update_recurring_earning",
-		"open_escrow_account",
-		"update_escrow_account",
-		"close_escrow_account",
+		"settlement_assign_pay_profile",
+		"settlement_end_pay_assignment",
+		"settlement_create_recurring_deduction",
+		"settlement_update_recurring_deduction",
+		"settlement_create_recurring_earning",
+		"settlement_update_recurring_earning",
+		"settlement_open_escrow_account",
+		"settlement_update_escrow_account",
+		"settlement_close_escrow_account",
 		"post_customer_payment",
-		"post_invoice",
+		"invoice_post",
 	} {
 		require.NotContainsf(t, tools, tool, "the settlements clerk must not hold %s", tool)
 	}
 
-	for _, single := range []string{
-		"approve_driver_settlement",
-		"post_driver_settlement",
-		"approve_carrier_settlement",
-		"post_carrier_settlement",
+	for _, tool := range []string{
+		"settlement_approve_driver",
+		"settlement_post_driver",
+		"settlement_approve_carrier",
+		"settlement_post_carrier",
 	} {
-		require.NotContainsf(t, tools, single,
-			"the settlements clerk approves and posts through %ss, which takes one or many",
-			single)
-		require.Containsf(t, tools, single+"s", "the settlements clerk needs %ss", single)
+		require.Containsf(t, tools, tool,
+			"the settlements clerk approves and posts through %s, which takes one or many", tool)
 	}
 }
 
@@ -163,8 +161,8 @@ func TestTemplates_ReceivablesWorksWhatCustomersOwe(t *testing.T) {
 	for _, tool := range []string{
 		"list_customers",
 		"get_customer",
-		"list_invoices",
-		"get_invoice",
+		"invoice_list",
+		"invoice_get",
 		"get_ar_aging",
 		"list_ar_open_items",
 		"list_collections_worklist",
@@ -180,15 +178,15 @@ func TestTemplates_ReceivablesWorksWhatCustomersOwe(t *testing.T) {
 		"list_credit_memo_applications",
 		"apply_credit_memo",
 		"unapply_credit_memo",
-		"list_invoice_disputes",
-		"open_invoice_dispute",
-		"resolve_invoice_dispute",
-		"withdraw_invoice_dispute",
-		"list_invoice_adjustments",
+		"invoice_list_disputes",
+		"invoice_open_dispute",
+		"invoice_resolve_dispute",
+		"invoice_withdraw_dispute",
+		"invoice_list_adjustments",
 		"assess_late_charges",
-		"send_invoice",
-		"list_invoice_share_candidates",
-		"share_invoice",
+		"invoice_send",
+		"invoice_list_share_candidates",
+		"invoice_share",
 	} {
 		require.Containsf(t, tools, tool, "receivables needs %s", tool)
 	}
@@ -197,10 +195,10 @@ func TestTemplates_ReceivablesWorksWhatCustomersOwe(t *testing.T) {
 		"post_customer_payment",
 		"match_bank_receipt",
 		"resolve_bank_receipt_work_item",
-		"create_invoice",
-		"void_invoice",
-		"submit_invoice_adjustment",
-		"approve_billing_queue_item",
+		"invoice_create",
+		"invoice_void",
+		"invoice_submit_adjustment",
+		"billing_approve_queue_item",
 	} {
 		require.NotContainsf(t, tools, tool, "receivables must not hold %s", tool)
 	}
@@ -218,19 +216,19 @@ func TestTemplates_TheBillingAssistantHandsCollectionsToReceivables(t *testing.T
 
 	billing := agentdefinition.TemplateBillingAssistant.StarterTools()
 	for _, tool := range []string{
-		"transfer_to_billing",
-		"approve_billing_queue_item",
-		"post_invoice",
-		"send_invoice",
-		"create_invoice",
-		"void_invoice",
-		"create_invoice_memo",
-		"submit_invoice_adjustment",
-		"build_invoice_run",
-		"commit_invoice_run",
-		"bill_statement_now",
-		"share_invoice",
-		"list_invoice_share_candidates",
+		"billing_transfer",
+		"billing_approve_queue_item",
+		"invoice_post",
+		"invoice_send",
+		"invoice_create",
+		"invoice_void",
+		"invoice_create_memo",
+		"invoice_submit_adjustment",
+		"invoice_build_run",
+		"invoice_commit_run",
+		"invoice_bill_statement",
+		"invoice_share",
+		"invoice_list_share_candidates",
 	} {
 		require.Containsf(t, billing, tool, "the billing assistant keeps %s", tool)
 	}
@@ -244,10 +242,10 @@ func TestTemplates_TheBillingAssistantHandsCollectionsToReceivables(t *testing.T
 		"apply_credit_memo",
 		"unapply_credit_memo",
 		"assess_late_charges",
-		"list_invoice_disputes",
-		"open_invoice_dispute",
-		"resolve_invoice_dispute",
-		"withdraw_invoice_dispute",
+		"invoice_list_disputes",
+		"invoice_open_dispute",
+		"invoice_resolve_dispute",
+		"invoice_withdraw_dispute",
 	} {
 		require.NotContainsf(t, billing, tool, "%s is receivables work now", tool)
 	}

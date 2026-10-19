@@ -85,21 +85,21 @@ Loaded now:
 - send_detention_notice
 - escalate_detention
 - approve_detention
-- add_shipment_comment
+- shipment_add_comment
 - dispute_detention
 - get_inbound_message
 - settle_detention_dispute
 
 Callable after find_tools:
 - read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
-- get_shipment — Retrieve one shipment (load) by its id, with its stops, the driver and equipment assigned to each move, the holds on it now and its newest comments.
-- get_shipment_tracking — Where a shipment is and whether it will be on time: each stop's window, actual arrival and lateness, the tractor's last position, and an arrival estimate.
+- shipment_get — Read one shipment (load) by its id or PRO number.
+- shipment_get_tracking — Where a shipment is and whether it will be on time: each stop's window, actual arrival and lateness, the tractor's last position, and an arrival estimate.
 - list_email_profiles — The sending profiles email can go out from: each has a name, a sender address and a reply-to.
 - waive_detention — Waive a detention charge, with a coded reason and a note.
 - search_inbound_messages — Search the inbox by what the mail says, best match first: the subject, the sender and the sender's own words, without the quoted thread.
 
 What a change you call does:
-- Changes that always record a proposal for a person to decide: flag_for_manual_review, wait_until, cancel_wait, send_detention_notice, escalate_detention, approve_detention, waive_detention, add_shipment_comment, dispute_detention, settle_detention_dispute
+- Changes that always record a proposal for a person to decide: flag_for_manual_review, wait_until, cancel_wait, send_detention_notice, escalate_detention, approve_detention, waive_detention, shipment_add_comment, dispute_detention, settle_detention_dispute
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: remember, guide_profile
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:

@@ -332,14 +332,14 @@ func TestBuild_BoundsWhatItKeeps(t *testing.T) {
 func TestDescribe_IsTheParametersAndNothingMore(t *testing.T) {
 	t.Parallel()
 
-	preview := Describe("cancel_shipment", map[string]any{
+	preview := Describe("shipment_cancel", map[string]any{
 		"shipmentId":   "shp_1",
 		"cancelReason": "Customer pulled the load",
 		"_owner":       "usr_1",
 	})
 
 	assert.True(t, preview.Partial)
-	assert.Contains(t, preview.Summary, "Would run cancel_shipment")
+	assert.Contains(t, preview.Summary, "Would run shipment_cancel")
 	require.Len(t, preview.Changes, 1)
 	assert.Equal(t, agent.PreviewOperationRun, preview.Changes[0].Operation)
 	assert.Equal(t, []string{"cancelReason", "shipmentId"}, paths(&preview.Changes[0]),

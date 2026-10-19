@@ -35,7 +35,7 @@ function tool(name: string, kind: "query" | "action", core = false): ToolCatalog
 
 const catalog = [
   tool("recall_memory", "query", true),
-  tool("search_shipments", "query"),
+  tool("shipment_list", "query"),
   tool("schedule_report_email", "action"),
   tool("send_customer_reply", "action"),
   tool("assign_driver", "action"),
@@ -153,7 +153,7 @@ describe("changeTiers", () => {
     expect(
       changeTiers(
         values({
-          toolNames: ["recall_memory", "search_shipments", "assign_driver", "send_customer_reply"],
+          toolNames: ["recall_memory", "shipment_list", "assign_driver", "send_customer_reply"],
           toolTiers: { assign_driver: "AutoExecute", send_customer_reply: "Propose" },
           autonomyCeiling: "ActWithApproval",
         }),

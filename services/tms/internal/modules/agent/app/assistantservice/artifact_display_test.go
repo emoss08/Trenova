@@ -150,7 +150,7 @@ func TestTableArtifact_KeepsARecordIDOnlyToOpenIt(t *testing.T) {
 	t.Parallel()
 
 	// Two rows: a list that found one shipment is that shipment's card, not a table.
-	artifact := artifactFromObservation(observation("list_shipments", map[string]any{
+	artifact := artifactFromObservation(observation("shipment_list", map[string]any{
 		"count":   float64(2),
 		"columns": []any{"id", "proNumber", "customerId", "status", "totalCharge", "actualShipDate", "assignedTo"},
 		"items": []any{
@@ -291,7 +291,7 @@ type cardRecord struct {
 func TestEntityCardArtifact_KeepsTheRecordsReadableFields(t *testing.T) {
 	t.Parallel()
 
-	artifact := artifactFromObservation(observation("get_shipment", cardRecord{
+	artifact := artifactFromObservation(observation("shipment_get", cardRecord{
 		ID:             shipmentPulid,
 		OrganizationID: organizationID,
 		Version:        4,

@@ -5,12 +5,12 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace/aitracetest"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -55,13 +55,13 @@ func newTracedDispatch(t *testing.T, tier, ceiling agent.AutonomyTier) *tracedDi
 	t.Helper()
 	aitracetest.Install()
 
-	tool := &targetedStubTool{actionTool("place_shipment_hold", tier, nil)}
+	tool := &targetedStubTool{actionTool("shipment_place_hold", tier, nil)}
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{
 		Tools: []agentports.AgentTool{tool},
 	}, nil)
 	rt.versions = &versionSequence{versions: []int64{7, 8}}
 
-	definition := testDefinition("place_shipment_hold")
+	definition := testDefinition("shipment_place_hold")
 	definition.ID = pulid.MustNew("agdef_")
 	definition.Version = 3
 	definition.AutonomyCeiling = ceiling
@@ -86,7 +86,7 @@ func newTracedDispatch(t *testing.T, tier, ceiling agent.AutonomyTier) *tracedDi
 		call: DispatchCall{
 			Call: agentports.ToolCall{
 				ID:        "call_hold",
-				Name:      "place_shipment_hold",
+				Name:      "shipment_place_hold",
 				Arguments: map[string]any{"shipmentId": shipmentID.String()},
 			},
 		},
@@ -125,7 +125,7 @@ func TestDispatchStep_TracesAProposalAndStampsItWithTheSpan(t *testing.T) {
 
 	require.NotNil(t, outcome.Action)
 	action := outcome.Action
-	span := aitracetest.One(t, d.anchor().TraceID, "execute_tool place_shipment_hold")
+	span := aitracetest.One(t, d.anchor().TraceID, "execute_tool shipment_place_hold")
 	assert.Equal(t, d.anchor().RootSpanID, span.Parent.SpanID())
 
 	step := d.settled(t)
@@ -177,7 +177,7 @@ func TestDispatchStep_AReplayedCallKeepsItsProposalAndSaysSo(t *testing.T) {
 	assert.Equal(t, first.Action.ProposalID, second.Action.ProposalID,
 		"a retry hands back the proposal the first attempt minted, not a new one")
 
-	spans := aitracetest.Named(d.anchor().TraceID, "execute_tool place_shipment_hold")
+	spans := aitracetest.Named(d.anchor().TraceID, "execute_tool shipment_place_hold")
 	require.Len(t, spans, 2)
 	assert.Equal(t, aitrace.StepStateFresh, stringAttr(t, spans[0], aitrace.AIStepState))
 	assert.Equal(t, aitrace.StepStateReplayed, stringAttr(t, spans[1], aitrace.AIStepState))
@@ -201,7 +201,7 @@ func TestDispatchStep_RecordsWhyACallWasRefused(t *testing.T) {
 	assert.Equal(t, aitrace.OutcomeDenied, step.Outcome.Verdict)
 	assert.Equal(t, "lacks update access to shipment_move", step.Outcome.Reason)
 
-	span := aitracetest.One(t, d.anchor().TraceID, "execute_tool place_shipment_hold")
+	span := aitracetest.One(t, d.anchor().TraceID, "execute_tool shipment_place_hold")
 	assert.Equal(t, codes.Error, span.Status.Code)
 	assert.Equal(t, aitrace.OutcomeDenied, stringAttr(t, span, aitrace.ErrorType))
 	assert.Equal(t, aitrace.OutcomeDenied, stringAttr(t, span, aitrace.AIOutcome))
@@ -222,7 +222,7 @@ func TestDispatchStep_WrapsAnAutomaticWriteAndItsVersions(t *testing.T) {
 	assert.Equal(t, int64(8), *action.ExecutedVersion, "the version the write left")
 	assert.NotZero(t, action.ExecutedAt, "when the write ran, not when it was filed")
 
-	tool := aitracetest.One(t, d.anchor().TraceID, "execute_tool place_shipment_hold")
+	tool := aitracetest.One(t, d.anchor().TraceID, "execute_tool shipment_place_hold")
 	assert.Equal(t, aitrace.OutcomeRan, stringAttr(t, tool, aitrace.AIOutcome))
 	write := aitracetest.One(t, d.anchor().TraceID, "trenova.ai.write shipment")
 	assert.Equal(t, tool.SpanContext.SpanID(), write.Parent.SpanID())
@@ -246,14 +246,14 @@ func TestDispatchStep_ADelegatesCallIsTracedUnderItsTaskAndLinked(t *testing.T) 
 	d.req.Delegation = &agentports.Delegation{CallID: "call_task_1", StepScope: "scope-1"}
 	turn := aitrace.ForRun(d.req.StepOwner, nil)
 	ctx, activity := otel.Tracer("agentruntime-test").
-		Start(aitrace.ContextWithAnchor(t.Context(), turn), "RunActivity:place_shipment_hold")
+		Start(aitrace.ContextWithAnchor(t.Context(), turn), "RunActivity:shipment_place_hold")
 
 	outcome := d.rt.DispatchStep(ctx, d.req, d.call)
 	activity.End()
 
 	require.NotNil(t, outcome.Action)
 	delegate := aitrace.ForDelegate(d.req.StepOwner.ID, "call_task_1")
-	span := aitracetest.One(t, delegate.TraceID, "execute_tool place_shipment_hold")
+	span := aitracetest.One(t, delegate.TraceID, "execute_tool shipment_place_hold")
 	assert.Equal(t, delegate.RootSpanID, span.Parent.SpanID())
 	require.Len(t, span.Links, 1)
 	assert.Equal(t, activity.SpanContext().SpanID(), span.Links[0].SpanContext.SpanID(),
@@ -324,18 +324,18 @@ func TestRun_TotalsWhatEveryModelCallUsed(t *testing.T) {
 
 	first := decimal.RequireFromString("0.010")
 	second := decimal.RequireFromString("0.025")
-	read := toolTurn("get_shipment", map[string]any{"proNumber": "12345"})
+	read := toolTurn("shipment_get", map[string]any{"proNumber": "12345"})
 	read.InputTokens, read.OutputTokens, read.CostUSD = 1000, 40, &first
 	answer := textTurn("It is in Memphis.")
 	answer.InputTokens, answer.OutputTokens, answer.CostUSD = 1200, 12, &second
 
 	rt := newRuntime(&scriptedCompletion{Turns: []*agentports.ChatCompletionResult{read, answer}},
 		&stubQueryRegistry{Tools: []agentports.AgentQueryTool{
-			queryTool("get_shipment", map[string]any{"city": "Memphis"}, nil),
+			queryTool("shipment_get", map[string]any{"city": "Memphis"}, nil),
 		}}, &stubActionRegistry{}, nil)
 
 	result, err := rt.Run(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition("get_shipment"),
+		Definition: testDefinition("shipment_get"),
 		Actor:      testActor(),
 		Input:      "Where is 12345?",
 	})

@@ -40,14 +40,14 @@ func runSelection(
 	t.Helper()
 
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("transfer_to_billing", map[string]any{"allTransferable": true}),
+		toolTurn("billing_transfer", map[string]any{"allTransferable": true}),
 		textTurn("Done."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
 		&stubActionRegistry{Tools: []agentports.AgentTool{tool}}, nil)
-	definition := testDefinition("transfer_to_billing")
+	definition := testDefinition("billing_transfer")
 	if auto {
-		definition = autoDefinition("transfer_to_billing")
+		definition = autoDefinition("billing_transfer")
 	}
 
 	result, err := rt.Run(t.Context(), &agentports.RunRequest{
@@ -65,7 +65,7 @@ func TestDispatch_ProposesTheRecordsASelectionResolvesTo(t *testing.T) {
 
 	tool := &resolvingTool{
 		StubActionTool: &agenttest.StubActionTool{
-			ToolName: "transfer_to_billing",
+			ToolName: "billing_transfer",
 			Tier:     agent.TierPropose,
 		},
 		resolved: map[string]any{"shipmentIds": []any{"shp_1", "shp_2"}},
@@ -96,7 +96,7 @@ func TestDispatch_RunsAnAutomaticWriteOnTheResolvedRecords(t *testing.T) {
 
 	tool := &resolvingTool{
 		StubActionTool: &agenttest.StubActionTool{
-			ToolName: "transfer_to_billing",
+			ToolName: "billing_transfer",
 			Tier:     agent.TierAutoExecute,
 		},
 		resolved: map[string]any{"shipmentIds": []any{"shp_1"}},
@@ -113,7 +113,7 @@ func TestDispatch_RefusesASelectionThatCannotBeResolved(t *testing.T) {
 
 	tool := &resolvingTool{
 		StubActionTool: &agenttest.StubActionTool{
-			ToolName: "transfer_to_billing",
+			ToolName: "billing_transfer",
 			Tier:     agent.TierPropose,
 		},
 		err: errors.New("none of the 4 shipments these filters select would transfer"),

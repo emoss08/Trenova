@@ -137,7 +137,7 @@ func (t *getFactoringReadinessTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramFactoringInvoice: agenttoolschema.RecordIDText(
 			permission.ResourceInvoice,
-			"The invoice, from list_invoices, get_invoice or list_factoring_ready_invoices.",
+			"The invoice, from invoice_list, invoice_get or list_factoring_ready_invoices.",
 		),
 	}, paramFactoringInvoice)
 }
@@ -214,11 +214,11 @@ func (t *listFactoringReadyInvoicesTool) ParamSchema() map[string]any {
 		),
 		paramFactoringFactor: agenttoolschema.RecordIDText(
 			permission.ResourceFactoringCompany,
-			"Only invoices assigned to this factor, from get_invoice or list_factoring_noas.",
+			"Only invoices assigned to this factor, from invoice_get or list_factoring_noas.",
 		),
 		paramCustomerID: agenttoolschema.RecordIDText(
 			permission.ResourceCustomer,
-			"Only this customer's invoices, from list_customers or get_invoice.",
+			"Only this customer's invoices, from list_customers or invoice_get.",
 		),
 		paramLimit: jsonschemautils.Integer(fmt.Sprintf(
 			"How many invoices to return, at most %d. Defaults to %d.",
@@ -374,7 +374,7 @@ func (t *getFactoringAgreementTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramFactoringFactor: agenttoolschema.RecordIDText(
 			permission.ResourceFactoringCompany,
-			"The factor, from get_invoice, list_factoring_noas or list_factoring_ready_invoices.",
+			"The factor, from invoice_get, list_factoring_noas or list_factoring_ready_invoices.",
 		),
 	}, paramFactoringFactor)
 }
@@ -492,11 +492,11 @@ func (t *listFactoringNoasTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramCustomerID: agenttoolschema.RecordIDText(
 			permission.ResourceCustomer,
-			"Only this customer's notices, from list_customers or get_invoice.",
+			"Only this customer's notices, from list_customers or invoice_get.",
 		),
 		paramFactoringFactor: agenttoolschema.RecordIDText(
 			permission.ResourceFactoringCompany,
-			"Only notices for this factor, from get_invoice or list_factoring_ready_invoices.",
+			"Only notices for this factor, from invoice_get or list_factoring_ready_invoices.",
 		),
 		paramFactoringStatus: jsonschemautils.DescribedArray(
 			"Only notices in these statuses.",

@@ -134,7 +134,7 @@ func TestToAdapterMessages_StartsAtAUserTurn(t *testing.T) {
 		{
 			Role:       conversation.RoleTool,
 			ToolCallID: "call_0",
-			ToolName:   "get_shipment",
+			ToolName:   "shipment_get",
 			Content:    "{}",
 		},
 		{Role: conversation.RoleAssistant, Content: "It is in Dallas."},
@@ -156,9 +156,9 @@ func TestToAdapterMessages_KeepsAWholeHistoryThatAlreadyStartsRight(t *testing.T
 		{Role: conversation.RoleUser, Content: "Where is S1?"},
 		{
 			Role:      conversation.RoleAssistant,
-			ToolCalls: []conversation.ToolCallRecord{{ID: "c1", Name: "get_shipment"}},
+			ToolCalls: []conversation.ToolCallRecord{{ID: "c1", Name: "shipment_get"}},
 		},
-		{Role: conversation.RoleTool, ToolCallID: "c1", ToolName: "get_shipment", Content: "{}"},
+		{Role: conversation.RoleTool, ToolCallID: "c1", ToolName: "shipment_get", Content: "{}"},
 		{Role: conversation.RoleAssistant, Content: "Dallas."},
 	}
 
@@ -216,12 +216,12 @@ func TestToAdapterMessages_DropsTheResultsOfARefusedTurnsCalls(t *testing.T) {
 		{
 			Role:      conversation.RoleAssistant,
 			Refused:   true,
-			ToolCalls: []conversation.ToolCallRecord{{ID: "c1", Name: "search_shipments"}},
+			ToolCalls: []conversation.ToolCallRecord{{ID: "c1", Name: "shipment_list"}},
 		},
 		{
 			Role:       conversation.RoleTool,
 			ToolCallID: "c1",
-			ToolName:   "search_shipments",
+			ToolName:   "shipment_list",
 			Content:    "{}",
 		},
 		{Role: conversation.RoleUser, Content: "Fine, where is S1?"},
@@ -249,9 +249,9 @@ func TestToAdapterMessages_CompactsToolResultsFromOlderTurns(t *testing.T) {
 		{Role: conversation.RoleUser, Content: "List shipments."},
 		{
 			Role:      conversation.RoleAssistant,
-			ToolCalls: []conversation.ToolCallRecord{{ID: "c1", Name: "list_shipments"}},
+			ToolCalls: []conversation.ToolCallRecord{{ID: "c1", Name: "shipment_list"}},
 		},
-		{Role: conversation.RoleTool, ToolCallID: "c1", ToolName: "list_shipments", Content: big},
+		{Role: conversation.RoleTool, ToolCallID: "c1", ToolName: "shipment_list", Content: big},
 		{Role: conversation.RoleAssistant, Content: "Here they are."},
 	}
 	for turn := range recentToolTurns {
@@ -261,12 +261,12 @@ func TestToAdapterMessages_CompactsToolResultsFromOlderTurns(t *testing.T) {
 			conversation.Message{Role: conversation.RoleUser, Content: "And again."},
 			conversation.Message{
 				Role:      conversation.RoleAssistant,
-				ToolCalls: []conversation.ToolCallRecord{{ID: id, Name: "list_shipments"}},
+				ToolCalls: []conversation.ToolCallRecord{{ID: id, Name: "shipment_list"}},
 			},
 			conversation.Message{
 				Role:       conversation.RoleTool,
 				ToolCallID: id,
-				ToolName:   "list_shipments",
+				ToolName:   "shipment_list",
 				Content:    big,
 			},
 			conversation.Message{Role: conversation.RoleAssistant, Content: "Here they are."},
@@ -297,12 +297,12 @@ func TestToAdapterMessages_LeavesShortOldResultsAlone(t *testing.T) {
 		{Role: conversation.RoleUser, Content: "Where is S1?"},
 		{
 			Role:      conversation.RoleAssistant,
-			ToolCalls: []conversation.ToolCallRecord{{ID: "c1", Name: "get_shipment"}},
+			ToolCalls: []conversation.ToolCallRecord{{ID: "c1", Name: "shipment_get"}},
 		},
 		{
 			Role:       conversation.RoleTool,
 			ToolCallID: "c1",
-			ToolName:   "get_shipment",
+			ToolName:   "shipment_get",
 			Content:    `{"status":"InTransit"}`,
 		},
 		{Role: conversation.RoleAssistant, Content: "In transit."},
@@ -335,16 +335,16 @@ func TestToAdapterMessages_DropsCallsNothingAnswered(t *testing.T) {
 			Role:    conversation.RoleAssistant,
 			Content: "Looking.",
 			ToolCalls: []conversation.ToolCallRecord{
-				{ID: "c1", Name: "get_shipment"},
+				{ID: "c1", Name: "shipment_get"},
 				{ID: "c2", Name: "get_worker"},
 			},
 		},
-		{Role: conversation.RoleTool, ToolCallID: "c1", ToolName: "get_shipment", Content: "{}"},
+		{Role: conversation.RoleTool, ToolCallID: "c1", ToolName: "shipment_get", Content: "{}"},
 		{Role: conversation.RoleAssistant, Content: "The run stopped before it finished."},
 		{Role: conversation.RoleUser, Content: "Try again."},
 		{
 			Role:      conversation.RoleAssistant,
-			ToolCalls: []conversation.ToolCallRecord{{ID: "c3", Name: "get_shipment"}},
+			ToolCalls: []conversation.ToolCallRecord{{ID: "c3", Name: "shipment_get"}},
 		},
 	}
 
@@ -373,7 +373,7 @@ func TestToolCallRecords_KeepTheProvidersOwnData(t *testing.T) {
 	providerID := pulid.MustNew("aip_")
 	calls := []agentports.ToolCall{{
 		ID:           "c1",
-		Name:         "get_shipment",
+		Name:         "shipment_get",
 		Arguments:    map[string]any{"id": "S1"},
 		ProviderData: map[string]any{"google": map[string]any{"thought_signature": "sig"}},
 		ProviderID:   providerID,

@@ -144,7 +144,7 @@ func runPlan() *agentports.ReflectionPlan {
 func procedure(audience string) *lesson {
 	return &lesson{
 		Kind:     string(agent.MemoryKindProcedure),
-		Content:  "1. Read the move with get_shipment. 2. Pass its move id to assign_move.",
+		Content:  "1. Read the move with shipment_get. 2. Pass its move id to assign_move.",
 		Audience: audience,
 		ToolName: "assign_move",
 		Evidence: "assign_move failed with a shipment id",
@@ -201,9 +201,9 @@ func TestLessonRequest_RefusesWhatTheWorkCannotVouchFor(t *testing.T) {
 			plan: threadPlan(),
 			lesson: &lesson{
 				Kind:     "Procedure",
-				Content:  "Use send_invoice",
+				Content:  "Use invoice_send",
 				Audience: audienceMe,
-				ToolName: "send_invoice",
+				ToolName: "invoice_send",
 			},
 			reason: "did not use",
 		},

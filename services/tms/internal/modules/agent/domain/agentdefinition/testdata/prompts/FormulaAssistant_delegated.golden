@@ -51,20 +51,20 @@ You hold more tools than are loaded on this turn. The loaded ones are callable n
 Loaded now:
 - recall_memory
 - describe_formula_schema
-- test_formula_expression
 - list_formula_templates
 - get_rate_agreement
 - get_rate_matrix
 - get_fuel_surcharge_rates
 - explain_rate
 - list_customers
+- list_carriers
 
 Callable after find_tools:
 - read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
+- test_formula_expression — Price a formula expression with Trenova's formula engine, for sample loads or against a saved shipment.
 - get_formula_template — Retrieve one formula template by id, whole: its formula, variables and their defaults, breakdown lines, minimum, maximum, rounding, status and version.
 - list_rate_agreements — List rate agreements, the contracts and tariffs that price freight for a customer or pay a carrier.
 - list_accessorial_charges — List the accessorial charges this organization bills — detention, layover, lumper and the rest — with how each is calculated and at what rate.
-- list_carriers — List the carriers this organization tenders freight to, narrowed by status, compliance, safety rating or authority number.
 - list_locations — List locations (facilities, terminals, yards) narrowed by status, code, name or city.
 - list_rate_imports — List rate sheets uploaded against rate agreements, newest first, with the agreement and the day the new rates take effect.
 - list_fuel_index_prices — List the prices on file for one fuel index, newest first, with the day each applies to and whether a person entered it or it was fetched.

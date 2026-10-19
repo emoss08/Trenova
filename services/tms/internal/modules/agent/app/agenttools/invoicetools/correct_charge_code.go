@@ -35,14 +35,14 @@ func NewCorrectChargeCodeTool(
 	return &CorrectChargeCodeTool{billing: billing, profiles: profiles}
 }
 
-func (t *CorrectChargeCodeTool) Name() string { return "correct_charge_code" }
+func (t *CorrectChargeCodeTool) Name() string { return "billing_correct_charge_codes" }
 
 func (t *CorrectChargeCodeTool) Description() string {
 	return "Correct or normalize the accessorial charge codes on a billing queue item's charges. " +
 		"Use it when a charge carries the wrong accessorial; the set you send replaces the " +
 		"item's additional charges, so include every charge that should remain, each with " +
 		"an accessorialChargeId from list_accessorial_charges. The item must be InReview " +
-		"first (transition_item_to_in_review)."
+		"first (billing_start_review)."
 }
 
 func (t *CorrectChargeCodeTool) ParamSchema() map[string]any {
@@ -51,7 +51,7 @@ func (t *CorrectChargeCodeTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"billingQueueItemId": agenttoolschema.KindID(
 				"The billing queue item whose charges are corrected, from "+
-					"list_billing_queue_items, get_billing_queue_item, this run's subject or "+
+					"billing_list_queue_items, billing_get_queue_item, this run's subject or "+
 					"the record on the page. Never guess one.",
 				permission.KindBillingQueueItem,
 			),

@@ -56,8 +56,8 @@ Loaded now:
 - recall_memory
 - get_tractor
 - search_worker
-- search_shipments
-- get_shipment
+- shipment_list
+- shipment_get
 - get_document_summary
 - list_fuel_cards
 - list_ifta_mileage_entries

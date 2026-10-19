@@ -128,7 +128,7 @@ func renderCreateInvoices(
 		payers = append(payers, payer)
 	}
 
-	summary := fmt.Sprintf("Would create %s: %s. They stay drafts until post_invoice posts "+
+	summary := fmt.Sprintf("Would create %s: %s. They stay drafts until invoice_post posts "+
 		"them.", common.CountOf(len(plan.Drafts), "draft invoice"), strings.Join(payers, "; "))
 	preview := toolpreview.Build(summary, changes...)
 	preview.Partial = true
@@ -154,7 +154,7 @@ func renderMemo(
 		summary += ", against " + common.InvoiceLabel(memo.ReferenceInvoice)
 	}
 
-	return toolpreview.Build(summary+"; it stays a draft until post_invoice posts it.", change), nil
+	return toolpreview.Build(summary+"; it stays a draft until invoice_post posts it.", change), nil
 }
 
 func dispositionSentence(disposition invoice.VoidDisposition) string {

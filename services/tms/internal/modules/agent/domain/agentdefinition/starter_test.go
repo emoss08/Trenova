@@ -172,7 +172,7 @@ template only makes room.
 
 It holds nothing that creates a load or money on its own. A tender's attachment
 already wakes shipment intake through the document it became; a second desk
-holding create_shipment would put two proposals for the same load in front of a
+holding shipment_create would put two proposals for the same load in front of a
 person. A tender written only in an email's body reaches no other agent, so the
 desk drafts it and proposes create_inbound_load, which never runs unattended. A
 tender that arrives over EDI never becomes a document, so the desk answers it,
@@ -192,7 +192,7 @@ func TestTemplates_TheIntakeDeskMayEarnAutonomyTheMailboxGrants(t *testing.T) {
 		"link_inbound_message",
 		"mark_inbound_message",
 		"reply_to_inbound_message",
-		"attach_document_to_shipment",
+		"shipment_attach_document",
 		"get_edi_transfer",
 		"accept_edi_tender",
 		"decline_edi_tender",
@@ -212,7 +212,7 @@ func TestTemplates_TheIntakeDeskMayEarnAutonomyTheMailboxGrants(t *testing.T) {
 		require.Containsf(t, tools, tool, "the intake desk needs %s", tool)
 	}
 	for _, tool := range []string{
-		"create_shipment", "post_customer_payment", "tender_move_to_carriers",
+		"shipment_create", "post_customer_payment", "tender_move_to_carriers",
 		"send_edi_tender", "replay_edi_message", "settle_detention_dispute",
 	} {
 		require.NotContainsf(t, tools, tool, "the intake desk must not hold %s", tool)
@@ -248,10 +248,10 @@ func TestTemplates_TheNewDesksHoldWhatTheirWorkNeedsAndNothingThatLeaves(t *test
 		{
 			template: agentdefinition.TemplateLoadEntryCheck,
 			needs: []string{
-				"get_shipment", "search_shipments", "explain_rate", "quote_shipment",
-				"list_hold_reasons", "add_shipment_comment", "place_shipment_hold",
+				"shipment_get", "shipment_list", "explain_rate", "quote_shipment",
+				"list_hold_reasons", "shipment_add_comment", "shipment_place_hold",
 			},
-			never: []string{"email_customer", "update_shipment", "cancel_shipment"},
+			never: []string{"email_customer", "shipment_update", "shipment_cancel"},
 		},
 		{
 			template: agentdefinition.TemplateServiceFailureDesk,
@@ -300,7 +300,7 @@ func TestTemplates_TheNewDesksHoldWhatTheirWorkNeedsAndNothingThatLeaves(t *test
 				"get_edi_ack_health", "inspect_x12", "preview_edi_document",
 			},
 			never: []string{
-				"create_shipment", "email_customer", "reply_to_inbound_message",
+				"shipment_create", "email_customer", "reply_to_inbound_message",
 				"accept_edi_tender", "retry_edi_message_delivery", "replay_edi_message",
 			},
 		},

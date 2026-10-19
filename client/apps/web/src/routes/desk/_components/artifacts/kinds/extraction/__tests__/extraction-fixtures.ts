@@ -153,7 +153,7 @@ export function currentPayload(overrides: Record<string, unknown> = {}): Record<
       { key: "pieceCount", label: "Piece Count" },
       { key: "temperature", label: "Temperature" },
     ],
-    tool: "get_shipment_draft",
+    tool: "intake_get_draft",
     ...overrides,
   };
 }

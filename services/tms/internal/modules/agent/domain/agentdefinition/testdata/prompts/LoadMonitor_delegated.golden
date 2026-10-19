@@ -49,18 +49,18 @@ You hold more tools than are loaded on this turn. The loaded ones are callable n
 Loaded now:
 - recall_memory
 - get_dispatch_board
-- get_shipment_tracking
-- get_shipment
-- list_vehicle_positions
+- shipment_get_tracking
+- shipment_get
 - list_service_failures
 - list_detention_desk
 - list_weather_alerts
+- list_email_profiles
 - get_edi_ack_health
 
 Callable after find_tools:
 - read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
+- list_vehicle_positions — Where every tractor is right now, from the telematics feed: its last known position, the nearest place name, speed, engine state and how old the reading is.
 - get_worker_hos — A driver's hours of service as the ELD last reported them: duty status and the drive, shift, cycle and break time remaining, in minutes.
 - list_service_failure_reason_codes — The reason codes a service failure can carry, such as Weather, Shipper delay or Equipment.
-- list_email_profiles — The sending profiles email can go out from: each has a name, a sender address and a reply-to.
 - list_watchtower_items — List the watchtower feed of open items that need attention now, newest first: failed agent runs, proposals awaiting a decision, exceptions and service failures.
 - get_detention_occurrence — Retrieve one detention occurrence by id: the stop, the clock, free time, billable minutes, amounts, notice status, and the evidence and notices on file.

@@ -23,7 +23,7 @@ func NewAddShipmentCommentTool(
 	return &AddShipmentCommentTool{comments: comments}
 }
 
-func (t *AddShipmentCommentTool) Name() string { return "add_shipment_comment" }
+func (t *AddShipmentCommentTool) Name() string { return "shipment_add_comment" }
 
 func (t *AddShipmentCommentTool) Description() string {
 	return "Leave a note on a shipment's comment thread, where dispatch will read it. " +
@@ -37,8 +37,8 @@ func (t *AddShipmentCommentTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			common.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
-				"The shipment to comment on, from the page, list_shipments or "+
-					"search_shipments."),
+				"The shipment to comment on, from the page, shipment_list or "+
+					"shipment_list."),
 			"comment": map[string]any{
 				"type":        "string",
 				"description": "What to say, in the words a dispatcher would use.",
@@ -201,10 +201,10 @@ func NewPlaceShipmentHoldTool(holds shipmentports.ShipmentHoldService) agentport
 	return &PlaceShipmentHoldTool{holds: holds}
 }
 
-func (t *PlaceShipmentHoldTool) Name() string { return "place_shipment_hold" }
+func (t *PlaceShipmentHoldTool) Name() string { return "shipment_place_hold" }
 
 func (t *PlaceShipmentHoldTool) Recipe() []string {
-	return []string{"search_shipments", "list_hold_reasons", "place_shipment_hold"}
+	return []string{toolShipmentList, "list_hold_reasons", "shipment_place_hold"}
 }
 
 func (t *PlaceShipmentHoldTool) Description() string {
@@ -218,10 +218,10 @@ func (t *PlaceShipmentHoldTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			common.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
-				"The shipment to hold, from the page, list_shipments or search_shipments."),
+				"The shipment to hold, from the page, shipment_list."),
 			"holdReasonId": agenttoolschema.RecordIDText(permission.ResourceHoldReason,
 				"A hold reason id from list_hold_reasons."),
-			"notes": map[string]any{
+			common.ParamNote: map[string]any{
 				"type": "string",
 				"description": "What prompted the hold, for whoever releases it. " +
 					"Say what would have to be true to clear it.",
@@ -288,7 +288,7 @@ func (t *PlaceShipmentHoldTool) request(
 		TenantInfo:   common.TenantFrom(*params),
 		ShipmentID:   shipmentID,
 		HoldReasonID: reasonID,
-		Notes:        common.OptionalString(params.Params, "notes"),
+		Notes:        common.OptionalString(params.Params, common.ParamNote),
 	}, nil
 }
 
@@ -300,7 +300,7 @@ func NewReleaseShipmentHoldTool(holds shipmentports.ShipmentHoldService) agentpo
 	return &ReleaseShipmentHoldTool{holds: holds}
 }
 
-func (t *ReleaseShipmentHoldTool) Name() string { return "release_shipment_hold" }
+func (t *ReleaseShipmentHoldTool) Name() string { return "shipment_release_hold" }
 
 func (t *ReleaseShipmentHoldTool) Description() string {
 	return "Clear a hold so the shipment can move again. Only release a hold whose " +
@@ -313,10 +313,10 @@ func (t *ReleaseShipmentHoldTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			common.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
-				"The shipment the hold is on, from the page, list_shipments or "+
-					"search_shipments."),
+				"The shipment the hold is on, from the page, shipment_list or "+
+					"shipment_list."),
 			"holdId": agenttoolschema.RecordIDText(permission.ResourceShipmentHold,
-				"The hold to release, from the holds get_shipment lists, the page or the "+
+				"The hold to release, from the holds shipment_get lists, the page or the "+
 					"event that started this run. Never guess one."),
 		},
 		"required":             []string{common.ParamShipmentID, "holdId"},
@@ -393,13 +393,13 @@ func NewCancelShipmentTool(
 	return &CancelShipmentTool{shipments: shipments, partners: partners, tenders: tenders}
 }
 
-func (t *CancelShipmentTool) Name() string { return "cancel_shipment" }
+func (t *CancelShipmentTool) Name() string { return "shipment_cancel" }
 
 func (t *CancelShipmentTool) Description() string {
-	return "Cancel a shipment. This releases its assignments and stops it being billed, " +
-		"and it is not an undo — a cancelled shipment is not re-opened, it is rebooked. " +
-		"Only propose this when the person has said the load is dead, never to tidy up " +
-		"a record that merely looks wrong."
+	return "Cancel a shipment the person says is off. It releases its assignments, withdraws " +
+		"live tenders, sends the reason to a linked trading partner over EDI and stops it " +
+		"being billed. shipment_uncancel reopens it if the freight comes back. Never cancel " +
+		"a record that merely looks wrong; correct it."
 }
 
 func (t *CancelShipmentTool) ParamSchema() map[string]any {
@@ -407,14 +407,14 @@ func (t *CancelShipmentTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			common.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
-				"The shipment to cancel, from the page, list_shipments or search_shipments."),
-			"cancelReason": map[string]any{
+				"The shipment to cancel, from the page, shipment_list."),
+			common.ParamReason: map[string]any{
 				"type": "string",
 				"description": "Why it is being cancelled, in the customer's or " +
 					"dispatcher's own terms. This is kept on the record.",
 			},
 		},
-		"required":             []string{common.ParamShipmentID, "cancelReason"},
+		"required":             []string{common.ParamShipmentID, common.ParamReason},
 		"additionalProperties": false,
 	}
 }
@@ -462,7 +462,7 @@ func (t *CancelShipmentTool) request(
 		return nil, err
 	}
 
-	reason, err := common.RequireString(params.Params, "cancelReason")
+	reason, err := common.RequireString(params.Params, common.ParamReason)
 	if err != nil {
 		return nil, err
 	}

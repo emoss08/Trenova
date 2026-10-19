@@ -9,24 +9,24 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 )
 
-const bulkAssignBillersDescription = "Assign one biller to several billing queue items in one call, " +
-	"so the person decides it once. Use it instead of assign_billing_queue_biller whenever " +
-	"more than one item is waiting, never one call per item. Each item is assigned exactly " +
-	"as assign_billing_queue_biller would: an item waiting for review moves into review " +
-	"with the biller. Leave billerId out to assign the person who asked, which is what " +
-	"\"assign me\", \"start reviewing these\" or \"get these ready to post\" means. An item " +
-	"the queue would refuse (posted, canceled) is reported and the rest still go. Up to " +
-	"50 items."
+const bulkAssignBillersDescription = "Assign the biller who reviews billing queue items, one " +
+	"or up to 50 in one call the person decides once. An item waiting for review moves " +
+	"into review with the biller. Leave billerId out to assign the person who asked, which " +
+	"is what \"assign me\", \"start reviewing these\" or \"get these ready to post\" means. " +
+	"Name every item in one call; one the queue would refuse (posted, canceled) is " +
+	"reported and the rest still go."
 
-const bulkInReviewDescription = "Move several billing queue items into review in one call, so the " +
-	"person decides it once. Use it instead of transition_item_to_in_review whenever more " +
-	"than one item needs a biller's attention, never one call per item. Each item moves " +
-	"exactly as transition_item_to_in_review would: one with no biller is assigned the " +
-	"person who asked, or the billerId you name. An item the queue would refuse is " +
-	"reported and the rest still go. Up to 50 items."
+const bulkInReviewDescription = "Move billing queue items into review, one or up to 50 in one " +
+	"call the person decides once. An item with no biller is assigned the person who " +
+	"asked, or the billerId you name. Name every item that needs a biller's attention in " +
+	"one call; one the queue would refuse is reported and the rest still go."
 
-const bulkQueueItemIDsDescription = "The billing queue items, by id from list_billing_queue_items, " +
-	"get_billing_queue_items or get_billing_queue_item. Never guess one."
+const bulkQueueItemIDsDescription = "The billing queue items, by id from billing_list_queue_items " +
+	"or billing_get_queue_item. Never guess one."
+
+const toolAssignBiller = "billing_assign_biller"
+
+const toolStartReview = "billing_start_review"
 
 const verbAssignBiller = "assign a biller to"
 
@@ -41,8 +41,8 @@ const unchangedAlreadyThere = "is already where the call would leave it"
 // artifactBillingQueueItem is the record-link key of what the twins report.
 const artifactBillingQueueItem = "billing_queue_item"
 
-// assignBillersTool is assign_billing_queue_biller over a set of items: one
-// proposal, one card, one decision, each item assigned as the single would.
+// AssignBillersTool assigns a biller to a set of items: one proposal, one
+// card, one decision, each item assigned as AssignBillerTool would.
 type AssignBillersTool struct {
 	single *AssignBillerTool
 	batch  *common.RecordBatch
@@ -70,17 +70,19 @@ func NewAssignBillersTool(billing common.BillingQueueDecider) agentports.AgentTo
 	}
 }
 
-func (t *AssignBillersTool) Name() string { return "assign_billing_queue_billers" }
+func (t *AssignBillersTool) Name() string { return toolAssignBiller }
 
 func (t *AssignBillersTool) Recipe() []string {
 	return []string{
-		"list_billing_queue_items",
-		"get_billing_queue_items",
-		"assign_billing_queue_billers",
+		"billing_list_queue_items",
+		toolGetBillingQueueItem,
+		toolAssignBiller,
 	}
 }
 
-func (t *AssignBillersTool) BatchOf() string { return t.single.Name() }
+func (t *AssignBillersTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+	return t.batch.Target(params)
+}
 
 func (t *AssignBillersTool) SearchTerms() []string {
 	return []string{"biller", "reviewer", "assign me", "start review", common.SearchTermBulk}
@@ -98,9 +100,8 @@ func (t *AssignBillersTool) Policy() agentports.ToolPolicy {
 	policy := t.single.Policy()
 	policy.Name = t.Name()
 	policy.Artifact = artifactBillingQueueItem
-	policy.Rationale = "Names who reviews several items inside Trenova, each exactly as " +
-		"assign_billing_queue_biller would; it creates no money and is changed by " +
-		"assigning someone else."
+	policy.Rationale = "Names who reviews billing queue items inside Trenova; it creates no " +
+		"money and is changed by assigning someone else."
 
 	return policy
 }
@@ -132,10 +133,11 @@ func (t *AssignBillersTool) ExecuteWithResult(
 	ctx context.Context,
 	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
-	return t.batch.Execute(ctx, t, &params, t.single.Execute)
+	return t.batch.Execute(ctx, t, &params)
 }
 
-// transitionItemsToInReviewTool is transition_item_to_in_review over a set.
+// TransitionItemsToInReviewTool moves a set of items into review, each as
+// TransitionToInReviewTool would.
 type TransitionItemsToInReviewTool struct {
 	single *TransitionToInReviewTool
 	batch  *common.RecordBatch
@@ -163,9 +165,13 @@ func NewTransitionItemsToInReviewTool(billing common.BillingQueueDecider) agentp
 	}
 }
 
-func (t *TransitionItemsToInReviewTool) Name() string { return "transition_items_to_in_review" }
+func (t *TransitionItemsToInReviewTool) Name() string { return toolStartReview }
 
-func (t *TransitionItemsToInReviewTool) BatchOf() string { return t.single.Name() }
+func (t *TransitionItemsToInReviewTool) Target(
+	params map[string]any,
+) (agentports.ToolTarget, bool) {
+	return t.batch.Target(params)
+}
 
 func (t *TransitionItemsToInReviewTool) SearchTerms() []string {
 	return []string{"review", "unblock", common.SearchTermBulk}
@@ -188,8 +194,8 @@ func (t *TransitionItemsToInReviewTool) Policy() agentports.ToolPolicy {
 			"guarded item allows.",
 		Limit: t.tierLimit,
 	}
-	policy.Rationale = "Moves several billing queue items into review inside Trenova, each " +
-		"exactly as transition_item_to_in_review would; nothing is sent anywhere."
+	policy.Rationale = "Moves billing queue items into review inside Trenova; nothing is " +
+		"sent anywhere."
 
 	return policy
 }
@@ -248,5 +254,5 @@ func (t *TransitionItemsToInReviewTool) ExecuteWithResult(
 	ctx context.Context,
 	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
-	return t.batch.Execute(ctx, t, &params, t.single.Execute)
+	return t.batch.Execute(ctx, t, &params)
 }

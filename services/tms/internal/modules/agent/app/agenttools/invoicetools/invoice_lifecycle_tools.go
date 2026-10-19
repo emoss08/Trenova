@@ -72,7 +72,7 @@ var ErrNothingToUpdate = errors.New(
 
 var ErrPDFWouldSend = errortypes.NewBusinessError(
 	"rendering this invoice's PDF would email it to the customer at once, as their " +
-		"billing profile sends invoices when the PDF is made; use send_invoice, which a " +
+		"billing profile sends invoices when the PDF is made; use invoice_send, which a " +
 		"person approves, instead",
 )
 
@@ -175,7 +175,7 @@ type invoiceEDISender interface {
 
 func invoiceIDProperty() map[string]any {
 	return agenttoolschema.RecordID(permission.ResourceInvoice, "The invoice",
-		"list_invoices or get_invoice")
+		"invoice_list or invoice_get")
 }
 
 func recipientsProperty(description string) map[string]any {
@@ -189,7 +189,7 @@ func recipientsProperty(description string) map[string]any {
 
 func NewUpdateInvoiceDraftTool(invoices invoiceDraftEditor) agentports.AgentTool {
 	return common.NewReceivableTool(&common.ReceivableSpec{
-		Name: "update_invoice_draft",
+		Name: "invoice_update_draft",
 		Description: "Change what a draft invoice says and where it goes: its memo, remittance " +
 			"instructions, email subject and body, recipients and attached documents. Only " +
 			"the fields you pass change; an empty string or list clears one. A posted " +
@@ -440,10 +440,10 @@ func NewGenerateInvoicePDFTool(invoices invoicePDFGenerator) agentports.AgentToo
 	}
 
 	return common.NewReceivableTool(&common.ReceivableSpec{
-		Name: "generate_invoice_pdf",
+		Name: "invoice_generate_pdf",
 		Description: "Render an invoice's PDF from what it says now and file it on the " +
 			"invoice, replacing the one there. Refused when the customer's billing profile " +
-			"would email the invoice the moment its PDF is made; send it with send_invoice.",
+			"would email the invoice the moment its PDF is made; send it with invoice_send.",
 		Resource:    permission.ResourceInvoice,
 		Operation:   permission.OpUpdate,
 		Egress:      agent.EgressInternal,
@@ -490,11 +490,11 @@ type createInvoicesRequest struct {
 
 func NewCreateInvoiceTool(invoices invoiceCreator) agentports.AgentTool {
 	return common.NewReportingReceivableTool(&common.ReceivableSpec{
-		Name:        "create_invoice",
+		Name:        "invoice_create",
 		SearchTerms: []string{"invoice delivered", "bill completed"},
 		Description: "Propose drafting invoices for completed freight: an order's billable " +
 			"shipments as one grouped invoice, or shipments on their own. A split-billed " +
-			"shipment makes one draft per payer. Drafts are posted with post_invoice. A " +
+			"shipment makes one draft per payer. Drafts are posted with invoice_post. A " +
 			"person always decides.",
 		Resource:    permission.ResourceInvoice,
 		Operation:   permission.OpCreate,
@@ -507,11 +507,11 @@ func NewCreateInvoiceTool(invoices invoiceCreator) agentports.AgentTool {
 			"statement; only a person decides what is billed and when.",
 		Properties: map[string]any{
 			common.ParamOrderID: agenttoolschema.RecordIDText(permission.ResourceOrder,
-				"The order to bill as one grouped invoice, from get_order or get_shipment."),
+				"The order to bill as one grouped invoice, from order_get or shipment_get."),
 			common.ParamShipmentIDs: agenttoolschema.RecordIDs(
 				permission.ResourceShipment,
-				"The shipments to bill, from search_shipments or "+
-					"get_shipment. With orderId, only these of the order's shipments.",
+				"The shipments to bill, from shipment_list or "+
+					"shipment_get. With orderId, only these of the order's shipments.",
 				maxInvoiceShipments,
 			),
 			ParamOffCycleNote: common.StringProperty("Why this customer's freight is billed now "+
@@ -618,10 +618,10 @@ func invoiceResult(action string, entity *invoice.Invoice) *agent.ToolExecutionR
 
 func NewCreateInvoiceMemoTool(invoices invoiceMemoRaiser) agentports.AgentTool {
 	return common.NewReportingReceivableTool(&common.ReceivableSpec{
-		Name: "create_invoice_memo",
+		Name: "invoice_create_memo",
 		Description: "Propose a draft credit or debit memo to a customer with no shipment " +
 			"behind it, such as a goodwill credit or a returned-check fee. It stays a draft " +
-			"until post_invoice posts it; apply a posted credit with apply_credit_memo. A " +
+			"until invoice_post posts it; apply a posted credit with apply_credit_memo. A " +
 			"person always decides.",
 		Resource:    permission.ResourceInvoice,
 		Operation:   permission.OpCreate,
@@ -634,7 +634,7 @@ func NewCreateInvoiceMemoTool(invoices invoiceMemoRaiser) agentports.AgentTool {
 			"person decides it, and it is never posted as it is made.",
 		Properties: map[string]any{
 			common.ParamCustomerID: agenttoolschema.RecordIDText(permission.ResourceCustomer,
-				"The customer, from list_customers or get_invoice."),
+				"The customer, from list_customers or invoice_get."),
 			common.ParamBillType: agenttoolschema.Enum("CreditMemo lowers what the customer owes; "+
 				"DebitMemo raises it.", memoBillTypes),
 			common.ParamReason: common.StringProperty(
@@ -659,7 +659,7 @@ func NewCreateInvoiceMemoTool(invoices invoiceMemoRaiser) agentports.AgentTool {
 						paramMemoQuantity: common.StringProperty("How many; defaults to 1.", 0),
 						paramAccessorialChargeID: agenttoolschema.RecordIDText(
 							permission.ResourceAccessorialCharge,
-							"The accessorial the line corrects, from get_invoice's lines.",
+							"The accessorial the line corrects, from invoice_get's lines.",
 						),
 					},
 					toolschema.KeyRequired: []string{
@@ -670,7 +670,7 @@ func NewCreateInvoiceMemoTool(invoices invoiceMemoRaiser) agentports.AgentTool {
 				},
 			},
 			paramReferenceInvoiceID: agenttoolschema.RecordIDText(permission.ResourceInvoice,
-				"The posted invoice this memo relates to, from list_invoices or get_invoice."),
+				"The posted invoice this memo relates to, from invoice_list or invoice_get."),
 			common.ParamInvoiceDate: agenttoolschema.Date("The memo's date; defaults to today."),
 			paramInvoiceMemo: common.StringProperty(
 				"A note printed on the memo.",
@@ -815,7 +815,7 @@ func memoLine(fields map[string]any) (*invoiceports.CreateMemoLineInput, error) 
 
 func NewVoidInvoiceTool(invoices invoiceVoider) agentports.AgentTool {
 	return common.NewReportingReceivableTool(&common.ReceivableSpec{
-		Name:        "void_invoice",
+		Name:        "invoice_void",
 		SearchTerms: []string{"kill invoice", "cancel invoice"},
 		Description: "Propose voiding an invoice. A draft is voided in place; a posted one " +
 			"through a full-reversal adjustment that credits it, which may wait for an " +
@@ -902,7 +902,7 @@ func voidRequest(params *agentports.ToolExecuteParams) (*invoiceports.VoidInvoic
 
 func NewSendInvoiceEDITool(invoices invoiceEDISender) agentports.AgentTool {
 	return common.NewReceivableTool(&common.ReceivableSpec{
-		Name: "send_invoice_edi",
+		Name: "invoice_send_edi",
 		Description: "Propose sending a posted invoice to the customer's EDI partner as a 210. " +
 			"Set force only to resend one that already went, when the partner asks for it " +
 			"again. A person always decides.",

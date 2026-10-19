@@ -33,11 +33,11 @@ const (
 	paramCustomer      = "customer"
 	paramLocations     = "locations"
 	paramCommodities   = "commodities"
-	recordsAllFound    = "Every record is in Trenova: call create_shipment with these ids."
+	recordsAllFound    = "Every record is in Trenova: call shipment_create with these ids."
 	recordsSomeMissing = "Propose what is missing now, in this turn, with create_customer, " +
 		"create_location (category from locationCategories) and create_commodity; do not " +
 		"ask first. Then say the shipment follows once they are approved, and call " +
-		"create_shipment with their new ids then."
+		"shipment_create with their new ids then."
 	recordsUnreadable = "you may not read these records"
 	recordFieldCity   = "city"
 	recordFieldHazmat = "hazardous"
@@ -107,7 +107,7 @@ func (t *findShipmentRecordsTool) Description() string {
 	return "Match the customer, stop locations and commodities a new shipment names, in " +
 		"one call, and say which are missing. Each comes with its closest matches, and the " +
 		"answer lists the service types, shipment types, equipment types, location " +
-		"categories and rating methods to choose from. Use it before create_shipment " +
+		"categories and rating methods to choose from. Use it before shipment_create " +
 		"instead of one list call per record."
 }
 

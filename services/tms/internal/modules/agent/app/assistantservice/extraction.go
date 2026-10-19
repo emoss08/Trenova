@@ -23,7 +23,7 @@ import (
 // document intelligence uses to mark a field for review.
 const lowConfidence = 0.8
 
-// draftDocumentIDParam names the document in get_shipment_draft's arguments
+// draftDocumentIDParam names the document in intake_get_draft's arguments
 // and in the draft it returns.
 const draftDocumentIDParam = "documentId"
 

@@ -11,7 +11,7 @@ vi.mock("@trenova/shared/components/ui/toast", () => ({
 
 type Values = { name: string; tools: string[]; version: number };
 
-const loaded: Values = { name: "Billing desk", tools: ["get_invoice"], version: 3 };
+const loaded: Values = { name: "Billing desk", tools: ["invoice_get"], version: 3 };
 
 function setup(
   onSave: (values: Values) => Promise<Values>,
@@ -126,7 +126,7 @@ describe("useEditFlow", () => {
 
     act(() => {
       result.current.form.setValue("name", "Payroll desk", { shouldDirty: true });
-      result.current.form.setValue("tools", ["get_invoice", "hold_invoice"], { shouldDirty: true });
+      result.current.form.setValue("tools", ["invoice_get", "hold_invoice"], { shouldDirty: true });
     });
     await waitFor(() => expect(result.current.flow.changed).toHaveLength(2));
     act(() => result.current.flow.undo("name"));

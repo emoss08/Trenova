@@ -20,7 +20,8 @@ import (
 const (
 	toolIssueCarrierTrackingLink  = "issue_carrier_tracking_link"
 	toolRevokeCarrierTrackingLink = "revoke_carrier_tracking_link"
-	toolGetShipment               = "get_shipment"
+	toolShipmentGet               = "shipment_get"
+	toolShipmentList              = "shipment_list"
 	toolGetCarrier                = "get_carrier"
 	paramRecipientEmail           = "recipientEmail"
 	fieldExpiresAt                = "expiresAt"
@@ -85,7 +86,7 @@ func moveTarget(params map[string]any) (agentports.ToolTarget, bool) {
 
 func moveProperty(what string) map[string]any {
 	return agenttoolschema.RecordIDText(permission.ResourceShipmentMove,
-		what+", from get_shipment (its moves). Only a move covered by an outside carrier "+
+		what+", from shipment_get (its moves). Only a move covered by an outside carrier "+
 			"has a carrier tracking link.")
 }
 
@@ -120,12 +121,12 @@ func newIssueCarrierTrackingLinkTool(links carrierTrackingLinker) agentports.Age
 		&common.ReceivableSpec{
 			Name: toolIssueCarrierTrackingLink,
 			Recipe: []string{
-				"search_shipments",
-				toolGetShipment,
+				toolShipmentList,
+				toolShipmentGet,
 				toolGetCarrier,
 				toolIssueCarrierTrackingLink,
 			},
-			Prerequisites: []string{toolGetShipment},
+			Prerequisites: []string{toolShipmentGet},
 			Description: "Email the carrier covering a brokered move a tracking link, so their " +
 				"dispatcher or driver can post check calls, arrivals and departures without " +
 				"signing in. Issuing replaces any live link on the move, which stops working. " +
@@ -303,11 +304,11 @@ func newRevokeCarrierTrackingLinkTool(links carrierTrackingLinker) agentports.Ag
 		&common.ReceivableSpec{
 			Name: toolRevokeCarrierTrackingLink,
 			Recipe: []string{
-				"search_shipments",
-				toolGetShipment,
+				toolShipmentList,
+				toolShipmentGet,
 				toolRevokeCarrierTrackingLink,
 			},
-			Prerequisites: []string{toolGetShipment},
+			Prerequisites: []string{toolShipmentGet},
 			Description: "Stop the live carrier tracking link on a move from working, so nobody " +
 				"can post check calls through it. Use it when the link reached the wrong person, " +
 				"the carrier changed, or the person asks for it to end; issue a new one with " +

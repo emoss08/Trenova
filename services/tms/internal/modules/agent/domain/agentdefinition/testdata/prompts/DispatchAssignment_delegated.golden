@@ -48,8 +48,8 @@ You hold more tools than are loaded on this turn. The loaded ones are callable n
 
 Loaded now:
 - recall_memory
-- get_shipment
-- search_shipments
+- shipment_get
+- shipment_list
 - search_worker
 - get_dispatch_board
 - rank_move_candidates

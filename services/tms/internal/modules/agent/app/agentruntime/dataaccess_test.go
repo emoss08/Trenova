@@ -20,16 +20,16 @@ func TestRun_HandsQueryToolsTheAgentsDataAccess(t *testing.T) {
 		agentdefinition.DataAccessRestricted: permission.SensitivityRestricted,
 	}
 	for setting, want := range cases {
-		tool := &agenttest.StubQueryTool{ToolName: "get_invoice", Result: map[string]any{}}
+		tool := &agenttest.StubQueryTool{ToolName: "invoice_get", Result: map[string]any{}}
 		completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-			toolTurn("get_invoice", map[string]any{"invoiceId": "inv_1"}),
+			toolTurn("invoice_get", map[string]any{"invoiceId": "inv_1"}),
 			textTurn("done"),
 		}}
 		rt := newRuntime(completion, &stubQueryRegistry{
 			Tools: []agentports.AgentQueryTool{tool},
 		}, &stubActionRegistry{}, nil)
 
-		definition := testDefinition("get_invoice")
+		definition := testDefinition("invoice_get")
 		definition.DataAccessCeiling = setting
 		_, err := rt.Run(t.Context(), &agentports.RunRequest{
 			Definition: definition,

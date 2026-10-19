@@ -9,12 +9,12 @@ import (
 type Action string
 
 const (
-	ActionAcceptField        = Action("accept_field")
-	ActionAcceptAllConfident = Action("accept_all_confident")
-	ActionSetFieldValue      = Action("set_field_value")
-	ActionSetRequiredField   = Action("set_required_field")
-	ActionSetStopLocation    = Action("set_stop_location")
-	ActionSetStopSchedule    = Action("set_stop_schedule")
+	ActionAcceptField        = Action("intake_accept_field")
+	ActionAcceptAllConfident = Action("intake_accept_confident")
+	ActionSetFieldValue      = Action("intake_set_field")
+	ActionSetRequiredField   = Action("intake_set_required_field")
+	ActionSetStopLocation    = Action("intake_set_stop_location")
+	ActionSetStopSchedule    = Action("intake_set_stop_schedule")
 	ActionProposeFormula     = Action("propose_formula")
 )
 

@@ -12,7 +12,7 @@ import (
 
 func targetEach(h *harness, resource permission.Resource) {
 	for _, step := range h.steps.steps {
-		step.ToolName = "post_invoice"
+		step.ToolName = "invoice_post"
 		step.TargetResource = string(resource)
 		step.TargetID = pulid.MustNew("inv_")
 	}

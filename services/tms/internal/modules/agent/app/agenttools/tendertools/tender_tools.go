@@ -70,7 +70,7 @@ func (t *TenderToRoutingGuideTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"shipmentMoveId": agenttoolschema.RecordIDText(permission.ResourceShipmentMove,
 				"The move to tender, from get_dispatch_board (moveId) or "+
-					"get_shipment (its moves)."),
+					"shipment_get (its moves)."),
 			"routingGuideId": agenttoolschema.RecordIDText(permission.ResourceRoutingGuide,
 				"A specific routing guide to use instead of the one matched from "+
 					"the lane: the routingGuideId shop_carriers returns. Omit to match from the "+
@@ -170,7 +170,7 @@ func (t *TenderToCarriersTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"shipmentMoveId": agenttoolschema.RecordIDText(permission.ResourceShipmentMove,
 				"The move to tender, from get_dispatch_board (moveId) or "+
-					"get_shipment (its moves)."),
+					"shipment_get (its moves)."),
 			"mode": agenttoolschema.Enum(
 				"Broadcast asks every carrier at once; Sequential asks them in order.",
 				agenttoolschema.SpotTenderModes,

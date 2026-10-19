@@ -60,7 +60,7 @@ Loaded now:
 - get_customer
 - list_commodities
 - get_location
-- search_shipments
+- shipment_list
 - get_document_summary
 
 Callable after find_tools:

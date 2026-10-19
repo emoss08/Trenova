@@ -51,7 +51,7 @@ func waitingProposal(status agent.ProposalStatus) *agent.AgentProposal {
 	return &agent.AgentProposal{
 		ID:        pulid.MustNew("aprop_"),
 		RunID:     pulid.MustNew("arun_"),
-		ToolName:  "create_shipment",
+		ToolName:  "shipment_create",
 		Rationale: "Copy PRO-100 for Tuesday.",
 		Status:    status,
 	}
@@ -200,7 +200,7 @@ func TestRequestDecision_RefusesABunchThatCannotShareACard(t *testing.T) {
 
 	first, other := waitingProposal(agent.ProposalStatusPending),
 		waitingProposal(agent.ProposalStatusPending)
-	other.ToolName = "post_invoice"
+	other.ToolName = "invoice_post"
 	decided := waitingProposal(agent.ProposalStatusExecuted)
 	fixture := newDecisionFixture(t, first, other, decided)
 

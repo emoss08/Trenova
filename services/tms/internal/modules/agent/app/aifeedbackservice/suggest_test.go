@@ -16,7 +16,7 @@ import (
 )
 
 var shipmentPattern = aifeedback.PatternKey(
-	[]string{"get_shipment"},
+	[]string{"shipment_get"},
 	aifeedback.ReasonMadeUpNumbers,
 	"Shipment",
 )

@@ -94,7 +94,7 @@ function pendingNode(
     organizationId: "org_1",
     businessUnitId: "bu_1",
     runId: "arun_1",
-    toolName: "transfer_to_billing",
+    toolName: "billing_transfer",
     toolParams,
     confidence: 0.9,
     rationale: "Delivered and paperwork in.",
@@ -119,7 +119,7 @@ function transferPreview({ modifications }: ProposalPreviewRequest): ProposalPre
   const kept = (modifications?.shipmentIds as string[] | undefined) ?? [SHP_1, SHP_2, SHP_3];
 
   return preview({
-    tool: "transfer_to_billing",
+    tool: "billing_transfer",
     digest: `sha256:${kept.join("+")}`,
     changes: kept.includes(SHP_2)
       ? [
@@ -331,7 +331,7 @@ describe("assistant proposal fields", () => {
   it("keeps a subset field's choices from the thread's proposals", () => {
     const parsed = assistantProposalSchema.parse({
       id: "aprop_1",
-      toolName: "transfer_to_billing",
+      toolName: "billing_transfer",
       arguments: { shipmentIds: [SHP_1, SHP_2] },
       rationale: "",
       autonomyTier: "Propose",

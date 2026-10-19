@@ -19,7 +19,7 @@ Each write is one entry under `writes:`, keyed as it appears below
 (`mutation createShipment`, `POST /api/v1/shipments/:shipmentID/cancel/`),
 and takes exactly one of:
 
-- `tools: [cancel_shipment]`: the agent tools that perform it. A tool
+- `tools: [shipment_cancel]`: the agent tools that perform it. A tool
   named here must be registered.
 - `exempt: <category>` with `reason: <why no agent should>`: one of
   the categories below. The reason is required.
@@ -318,7 +318,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `place_worker_dispatch_hold` | worker_dispatch_hold | create |
 | `raise_exception` | agent_exception | create |
 | `request_credential_renewal` | worker_credential | update |
-| `request_missing_docs` | customer_communication | create |
+| `shipment_request_documents` | customer_communication | create |
 | `watch_web` | web_research | read |
 
 ## Every write
@@ -636,29 +636,29 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation assignBillingQueueBiller`<br>twin `PUT /api/v1/billing-queue/:itemID/assign/` | Tool: `assign_billing_queue_biller`, `assign_billing_queue_billers` |
-| `mutation postBillingQueueItem`<br>twin `POST /api/v1/billing-queue/:itemID/post/` | Tool: `post_invoice`, `send_invoice` |
-| `mutation releaseBillingQueueItem`<br>twin `POST /api/v1/billing-queue/:itemID/release/` | Tool: `release_billing_queue_item` |
-| `mutation resolveBillingQueueIssue`<br>twin `POST /api/v1/billing-queue/:itemID/issues/:issueID/resolve/` | Tool: `resolve_billing_queue_issue` |
-| `mutation undoBillingQueueIssue`<br>twin `POST /api/v1/billing-queue/:itemID/issues/:issueID/undo/` | Tool: `undo_billing_queue_issue` |
-| `mutation updateBillingQueueStatus`<br>twin `PUT /api/v1/billing-queue/:itemID/status/` | Tool: `approve_billing_queue_item`, `approve_billing_queue_items`, `cancel_billing_queue_item`, `hold_billing_queue_item`, `move_billing_item_to_exception`, `send_billing_item_back_to_ops`, `transition_item_to_in_review`, `transition_items_to_in_review` |
+| `mutation assignBillingQueueBiller`<br>twin `PUT /api/v1/billing-queue/:itemID/assign/` | Tool: `billing_assign_biller` |
+| `mutation postBillingQueueItem`<br>twin `POST /api/v1/billing-queue/:itemID/post/` | Tool: `invoice_post`, `invoice_send` |
+| `mutation releaseBillingQueueItem`<br>twin `POST /api/v1/billing-queue/:itemID/release/` | Tool: `billing_release_queue_item` |
+| `mutation resolveBillingQueueIssue`<br>twin `POST /api/v1/billing-queue/:itemID/issues/:issueID/resolve/` | Tool: `billing_resolve_issue` |
+| `mutation undoBillingQueueIssue`<br>twin `POST /api/v1/billing-queue/:itemID/issues/:issueID/undo/` | Tool: `billing_undo_issue` |
+| `mutation updateBillingQueueStatus`<br>twin `PUT /api/v1/billing-queue/:itemID/status/` | Tool: `billing_approve_queue_item`, `billing_cancel_queue_item`, `billing_hold_queue_item`, `billing_raise_exception`, `billing_return_to_operations`, `billing_start_review` |
 | `DELETE /api/v1/billing-queue/filter-presets/:presetId/`<br>billingqueuehandler.deleteFilterPreset | Exempt, user-preference: A saved filter on the billing queue screen. |
-| `POST /api/v1/billing-queue/:itemID/reassign-charge/`<br>billingqueuehandler.reassignCharge | Tool: `reassign_billing_charge` |
-| `POST /api/v1/billing-queue/bulk-approve/`<br>billingqueuehandler.startBulkApprove | Tool: `approve_billing_queue_items` |
-| `POST /api/v1/billing-queue/bulk-approve/:runID/cancel/`<br>billingqueuehandler.cancelBulkApprove | Exempt, infrastructure: Stops a bulk approval run the queue screen started in the background; approve_billing_queue_items approves its items within the one proposal a person decides, so an agent has no run to stop. |
+| `POST /api/v1/billing-queue/:itemID/reassign-charge/`<br>billingqueuehandler.reassignCharge | Tool: `billing_reassign_charge` |
+| `POST /api/v1/billing-queue/bulk-approve/`<br>billingqueuehandler.startBulkApprove | Tool: `billing_approve_queue_item` |
+| `POST /api/v1/billing-queue/bulk-approve/:runID/cancel/`<br>billingqueuehandler.cancelBulkApprove | Exempt, infrastructure: Stops a bulk approval run the queue screen started in the background; billing_approve_queue_item approves its items within the one proposal a person decides, so an agent has no run to stop. |
 | `POST /api/v1/billing-queue/filter-presets/`<br>billingqueuehandler.createFilterPreset | Exempt, user-preference: A saved filter on the billing queue screen. |
 | `POST /api/v1/billing-queue/pod-signatures/redetect/`<br>billingqueuehandler.redetectPODSignatures | Exempt, infrastructure: A repair a person asks for after signature detection arrived: it runs document intelligence again on the queued PODs nobody has read, and the extraction pipeline, not a decision, says whether each is signed. |
-| `POST /api/v1/billing-queue/transfer/`<br>billingqueuehandler.transfer | Tool: `transfer_to_billing` |
-| `PUT /api/v1/billing-queue/:itemID/charges/`<br>billingqueuehandler.updateCharges | Tool: `correct_charge_code` |
+| `POST /api/v1/billing-queue/transfer/`<br>billingqueuehandler.transfer | Tool: `billing_transfer` |
+| `PUT /api/v1/billing-queue/:itemID/charges/`<br>billingqueuehandler.updateCharges | Tool: `billing_correct_charge_codes` |
 | `PUT /api/v1/billing-queue/filter-presets/:presetId/`<br>billingqueuehandler.updateFilterPreset | Exempt, user-preference: A saved filter on the billing queue screen. |
 
 ### billingtransfer
 
 | Write | Decision |
 | --- | --- |
-| `mutation cancelBillingTransferRun` | Tool: `manage_billing_transfer_run` |
-| `mutation retryBillingTransferRun` | Tool: `manage_billing_transfer_run` |
-| `mutation startBillingTransferRun` | Tool: `transfer_to_billing` |
+| `mutation cancelBillingTransferRun` | Tool: `billing_manage_transfer_run` |
+| `mutation retryBillingTransferRun` | Tool: `billing_manage_transfer_run` |
+| `mutation startBillingTransferRun` | Tool: `billing_transfer` |
 
 ### briefing
 
@@ -747,20 +747,20 @@ Tools that change something no person-facing write does, such as sending a messa
 | --- | --- |
 | `mutation acceptCarrierInvoiceMatch` | Tool: `accept_carrier_invoice_match` |
 | `mutation acceptCarrierInvoiceMatchWithVariance` | Tool: `accept_carrier_invoice_match_with_variance` |
-| `mutation addCarrierSettlementAdjustment` | Tool: `add_carrier_settlement_adjustment` |
-| `mutation approveCarrierSettlement` | Tool: `approve_carrier_settlement`, `approve_carrier_settlements` |
+| `mutation addCarrierSettlementAdjustment` | Tool: `settlement_add_carrier_adjustment` |
+| `mutation approveCarrierSettlement` | Tool: `settlement_approve_carrier` |
 | `mutation createCarrierInvoiceMatch` | Tool: `create_carrier_invoice_match` |
-| `mutation generateCarrierSettlementBatch` | Tool: `generate_carrier_settlement_batch` |
+| `mutation generateCarrierSettlementBatch` | Tool: `settlement_generate_carrier_batch` |
 | `mutation linkEdiCarrierInvoiceToCarrier` | Tool: `link_edi_carrier_invoice_to_carrier` |
-| `mutation markCarrierSettlementPaid` | Tool: `record_carrier_settlement_payment` |
-| `mutation postCarrierSettlement` | Tool: `post_carrier_settlement`, `post_carrier_settlements` |
-| `mutation recalculateCarrierSettlement` | Tool: `recalculate_carrier_settlement` |
+| `mutation markCarrierSettlementPaid` | Tool: `settlement_record_carrier_payment` |
+| `mutation postCarrierSettlement` | Tool: `settlement_post_carrier` |
+| `mutation recalculateCarrierSettlement` | Tool: `settlement_recalculate_carrier` |
 | `mutation rejectCarrierInvoiceMatch` | Tool: `reject_carrier_invoice_match` |
-| `mutation rejectCarrierSettlement` | Tool: `reject_carrier_settlement` |
-| `mutation removeCarrierSettlementAdjustment` | Tool: `remove_carrier_settlement_adjustment` |
-| `mutation submitCarrierSettlement` | Tool: `submit_carrier_settlement` |
+| `mutation rejectCarrierSettlement` | Tool: `settlement_reject_carrier` |
+| `mutation removeCarrierSettlementAdjustment` | Tool: `settlement_remove_carrier_adjustment` |
+| `mutation submitCarrierSettlement` | Tool: `settlement_submit_carrier` |
 | `mutation updateCarrierSettlementControl` | Exempt, configuration: An organization-wide control an administrator sets once; every later write depends on it. |
-| `mutation voidCarrierSettlement` | Tool: `void_carrier_settlement` |
+| `mutation voidCarrierSettlement` | Tool: `settlement_void_carrier` |
 
 ### carriertrackingpublic
 
@@ -837,8 +837,8 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation issueCustomerTrackingLink` | Tool: `share_customer_tracking_link` |
-| `mutation revokeCustomerTrackingLink` | Tool: `revoke_customer_tracking_link` |
+| `mutation issueCustomerTrackingLink` | Tool: `shipment_share_tracking_link` |
+| `mutation revokeCustomerTrackingLink` | Tool: `shipment_revoke_tracking_link` |
 | `mutation updateCustomerTrackingProfile` | Exempt, configuration: What a customer's tracking page shows and which status emails it gets is a commercial agreement with the customer, set by a person on the customer record. |
 
 ### customfield
@@ -946,20 +946,20 @@ Tools that change something no person-facing write does, such as sending a messa
 | --- | --- |
 | `DELETE /api/v1/documents/:documentID/`<br>documenthandler.delete | Tool: `delete_documents` |
 | `POST /api/v1/documents/:documentID/approve/`<br>documenthandler.approve | Exempt, attestation: Accepting a document as proof, such as a proof of delivery that lets a shipment bill, is the reviewer's sign-off on the evidence; agents may never approve. |
-| `POST /api/v1/documents/:documentID/attach-to-shipment/`<br>documenthandler.attachToShipment | Tool: `attach_document_to_shipment` |
+| `POST /api/v1/documents/:documentID/attach-to-shipment/`<br>documenthandler.attachToShipment | Tool: `shipment_attach_document` |
 | `POST /api/v1/documents/:documentID/import-assistant/thread/`<br>documenthandler.openImportAssistantThread | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
 | `POST /api/v1/documents/:documentID/reject/`<br>documenthandler.reject | Exempt, attestation: Refusing a document as proof takes it out of the shipment's billing requirements and is the reviewer's judgement of the evidence, recorded with their reason; an agent can point out a doubtful document but does not decide it. |
 | `POST /api/v1/documents/:documentID/restore/`<br>documenthandler.restoreVersion | Tool: `restore_document_version` |
 | `POST /api/v1/documents/:documentID/shipment-draft/reextract/`<br>documenthandler.reextractDocumentContent | Exempt, infrastructure: A repair a person asks for when the page's machine reading of a document went wrong: it runs extraction again, replaces the draft they are reviewing and archives their import assistant conversation. The extraction pipeline, not a decision, produces what replaces it. |
 | `POST /api/v1/documents/:documentID/signature/`<br>documenthandler.setSignature | Exempt, attestation: Saying a proof of delivery is signed or unsigned is the reviewer's reading of the evidence that lets a shipment bill, and it overrides what extraction read; an agent can point out a doubtful signature but does not attest to one. |
 | `POST /api/v1/documents/bulk-delete/`<br>documenthandler.bulkDelete | Tool: `delete_documents` |
-| `POST /api/v1/documents/upload-bulk/`<br>documenthandler.uploadBulk | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment). |
-| `POST /api/v1/documents/upload/`<br>documenthandler.upload | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment). |
-| `POST /api/v1/documents/uploads/`<br>documenthandler.createUploadSession | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment). |
-| `POST /api/v1/documents/uploads/:uploadSessionID/cancel/`<br>documenthandler.cancelUploadSession | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment). |
-| `POST /api/v1/documents/uploads/:uploadSessionID/complete/`<br>documenthandler.completeUploadSession | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment). |
-| `POST /api/v1/documents/uploads/:uploadSessionID/parts/`<br>documenthandler.getUploadPartURLs | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment). |
-| `PUT /api/v1/documents/uploads/:uploadSessionID/parts/:partNumber/`<br>documenthandler.uploadSessionPart | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment). |
+| `POST /api/v1/documents/upload-bulk/`<br>documenthandler.uploadBulk | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document). |
+| `POST /api/v1/documents/upload/`<br>documenthandler.upload | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document). |
+| `POST /api/v1/documents/uploads/`<br>documenthandler.createUploadSession | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document). |
+| `POST /api/v1/documents/uploads/:uploadSessionID/cancel/`<br>documenthandler.cancelUploadSession | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document). |
+| `POST /api/v1/documents/uploads/:uploadSessionID/complete/`<br>documenthandler.completeUploadSession | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document). |
+| `POST /api/v1/documents/uploads/:uploadSessionID/parts/`<br>documenthandler.getUploadPartURLs | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document). |
+| `PUT /api/v1/documents/uploads/:uploadSessionID/parts/:partNumber/`<br>documenthandler.uploadSessionPart | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document). |
 
 ### documentcontrol
 
@@ -1039,14 +1039,14 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation proposeMyShiftSwap` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
 | `mutation recordMyStopAction` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
 | `mutation requestMyPto` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
-| `mutation resolveSettlementDispute` | Tool: `resolve_settlement_dispute` |
+| `mutation resolveSettlementDispute` | Tool: `settlement_resolve_dispute` |
 | `mutation respondToMyAssignment` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
 | `mutation respondToMyShiftSwap` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
 | `mutation restoreMyNotifications` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
 | `mutation reviewDriverExpense` | Tool: `review_driver_expense` |
 | `mutation revokeWorkerPortalAccess` | Exempt, security: Removes a driver's sign-in to the driver portal. |
 | `mutation setMyAvailability` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
-| `mutation startSettlementDisputeReview` | Tool: `start_settlement_dispute_review` |
+| `mutation startSettlementDisputeReview` | Tool: `settlement_start_dispute_review` |
 | `mutation submitMyExpense` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
 | `mutation updateDashControl` | Exempt, configuration: An organization-wide control an administrator sets once; every later write depends on it. |
 | `mutation updateMyContactInfo` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
@@ -1062,40 +1062,40 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation addDriverSettlementAdjustment` | Tool: `add_driver_settlement_adjustment` |
-| `mutation adjustEscrowAccount` | Tool: `adjust_escrow_account` |
-| `mutation approveDriverSettlement` | Tool: `approve_driver_settlement` |
-| `mutation assignPayProfileToWorker` | Tool: `assign_pay_profile` |
-| `mutation attachPayEventsToSettlement` | Tool: `attach_pay_events_to_settlement` |
-| `mutation bulkDriverSettlementAction` | Tool: `approve_driver_settlements`, `post_driver_settlements`, `record_driver_settlement_payment`, `submit_driver_settlement` |
-| `mutation closeEscrowAccount` | Tool: `close_escrow_account` |
+| `mutation addDriverSettlementAdjustment` | Tool: `settlement_add_driver_adjustment` |
+| `mutation adjustEscrowAccount` | Tool: `settlement_adjust_escrow_account` |
+| `mutation approveDriverSettlement` | Tool: `settlement_approve_driver` |
+| `mutation assignPayProfileToWorker` | Tool: `settlement_assign_pay_profile` |
+| `mutation attachPayEventsToSettlement` | Tool: `settlement_attach_pay_events` |
+| `mutation bulkDriverSettlementAction` | Tool: `settlement_approve_driver`, `settlement_post_driver`, `settlement_record_driver_payment`, `settlement_submit_driver` |
+| `mutation closeEscrowAccount` | Tool: `settlement_close_escrow_account` |
 | `mutation createPayCode` | Exempt, configuration: Pay codes and pay profiles are the pay rules an administrator authors once; every settlement is computed from them, and assigning one to a driver is its own tool. |
 | `mutation createPayProfile` | Exempt, configuration: Pay codes and pay profiles are the pay rules an administrator authors once; every settlement is computed from them, and assigning one to a driver is its own tool. |
-| `mutation createRecurringDeduction` | Tool: `create_recurring_deduction` |
-| `mutation createRecurringEarning` | Tool: `create_recurring_earning` |
-| `mutation detachPayEventFromSettlement` | Tool: `detach_pay_event_from_settlement` |
-| `mutation endWorkerPayAssignment` | Tool: `end_pay_assignment` |
-| `mutation generateDriverSettlement` | Tool: `generate_driver_settlement` |
-| `mutation generateSettlementBatch` | Tool: `generate_driver_settlement_batch` |
-| `mutation holdDriverPayEvent` | Tool: `hold_driver_pay_event` |
-| `mutation issuePayAdvance` | Tool: `issue_pay_advance` |
-| `mutation markDriverSettlementPaid` | Tool: `record_driver_settlement_payment` |
-| `mutation openEscrowAccount` | Tool: `open_escrow_account` |
-| `mutation payWorkerNow` | Tool: `pay_driver_now` |
-| `mutation postDriverSettlement` | Tool: `post_driver_settlement` |
-| `mutation recalculateDriverSettlement` | Tool: `recalculate_driver_settlement` |
-| `mutation rejectDriverSettlement` | Tool: `reject_driver_settlement` |
-| `mutation releaseDriverPayEvent` | Tool: `release_driver_pay_event` |
-| `mutation removeDriverSettlementAdjustment` | Tool: `remove_driver_settlement_adjustment` |
-| `mutation submitDriverSettlement` | Tool: `submit_driver_settlement` |
-| `mutation updateEscrowAccount` | Tool: `update_escrow_account` |
+| `mutation createRecurringDeduction` | Tool: `settlement_create_recurring_deduction` |
+| `mutation createRecurringEarning` | Tool: `settlement_create_recurring_earning` |
+| `mutation detachPayEventFromSettlement` | Tool: `settlement_detach_pay_event` |
+| `mutation endWorkerPayAssignment` | Tool: `settlement_end_pay_assignment` |
+| `mutation generateDriverSettlement` | Tool: `settlement_generate_driver` |
+| `mutation generateSettlementBatch` | Tool: `settlement_generate_driver_batch` |
+| `mutation holdDriverPayEvent` | Tool: `settlement_hold_pay_event` |
+| `mutation issuePayAdvance` | Tool: `settlement_issue_advance` |
+| `mutation markDriverSettlementPaid` | Tool: `settlement_record_driver_payment` |
+| `mutation openEscrowAccount` | Tool: `settlement_open_escrow_account` |
+| `mutation payWorkerNow` | Tool: `settlement_pay_now` |
+| `mutation postDriverSettlement` | Tool: `settlement_post_driver` |
+| `mutation recalculateDriverSettlement` | Tool: `settlement_recalculate_driver` |
+| `mutation rejectDriverSettlement` | Tool: `settlement_reject_driver` |
+| `mutation releaseDriverPayEvent` | Tool: `settlement_release_pay_event` |
+| `mutation removeDriverSettlementAdjustment` | Tool: `settlement_remove_driver_adjustment` |
+| `mutation submitDriverSettlement` | Tool: `settlement_submit_driver` |
+| `mutation updateEscrowAccount` | Tool: `settlement_update_escrow_account` |
 | `mutation updatePayCode` | Exempt, configuration: Pay codes and pay profiles are the pay rules an administrator authors once; every settlement is computed from them, and assigning one to a driver is its own tool. |
 | `mutation updatePayProfile` | Exempt, configuration: Pay codes and pay profiles are the pay rules an administrator authors once; every settlement is computed from them, and assigning one to a driver is its own tool. |
-| `mutation updateRecurringDeduction` | Tool: `update_recurring_deduction` |
-| `mutation updateRecurringEarning` | Tool: `update_recurring_earning` |
+| `mutation updateRecurringDeduction` | Tool: `settlement_update_recurring_deduction` |
+| `mutation updateRecurringEarning` | Tool: `settlement_update_recurring_earning` |
 | `mutation updateSettlementControl` | Exempt, configuration: An organization-wide control an administrator sets once; every later write depends on it. |
-| `mutation voidDriverSettlement` | Tool: `void_driver_settlement` |
-| `mutation writeOffPayAdvance` | Tool: `write_off_pay_advance` |
+| `mutation voidDriverSettlement` | Tool: `settlement_void_driver` |
+| `mutation writeOffPayAdvance` | Tool: `settlement_forgive_advance` |
 
 ### edi
 
@@ -1546,33 +1546,33 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation createInvoicesFromOrder` | Tool: `create_invoice` |
-| `mutation createInvoicesFromShipments` | Tool: `create_invoice` |
-| `mutation createMemo`<br>twin `POST /api/v1/billing/invoices/memos/` | Tool: `create_invoice_memo` |
-| `mutation sendInvoiceEdi` | Tool: `send_invoice_edi` |
-| `mutation voidInvoice`<br>twin `POST /api/v1/billing/invoices/:invoiceID/void/` | Tool: `void_invoice` |
-| `PATCH /api/v1/billing/invoices/:invoiceID/`<br>invoicehandler.updateDraft | Tool: `update_invoice_draft` |
-| `POST /api/v1/billing/invoices/:invoiceID/generate-pdf/`<br>invoicehandler.generatePDF | Tool: `generate_invoice_pdf` |
-| `POST /api/v1/billing/invoices/:invoiceID/post/`<br>invoicehandler.post | Tool: `post_invoice`, `post_invoices` |
+| `mutation createInvoicesFromOrder` | Tool: `invoice_create` |
+| `mutation createInvoicesFromShipments` | Tool: `invoice_create` |
+| `mutation createMemo`<br>twin `POST /api/v1/billing/invoices/memos/` | Tool: `invoice_create_memo` |
+| `mutation sendInvoiceEdi` | Tool: `invoice_send_edi` |
+| `mutation voidInvoice`<br>twin `POST /api/v1/billing/invoices/:invoiceID/void/` | Tool: `invoice_void` |
+| `PATCH /api/v1/billing/invoices/:invoiceID/`<br>invoicehandler.updateDraft | Tool: `invoice_update_draft` |
+| `POST /api/v1/billing/invoices/:invoiceID/generate-pdf/`<br>invoicehandler.generatePDF | Tool: `invoice_generate_pdf` |
+| `POST /api/v1/billing/invoices/:invoiceID/post/`<br>invoicehandler.post | Tool: `invoice_post` |
 | `POST /api/v1/billing/invoices/:invoiceID/preview/`<br>invoicehandler.preview | Exempt, read-only: Renders an invoice for review and saves nothing. |
-| `POST /api/v1/billing/invoices/:invoiceID/send/`<br>invoicehandler.send<br>also `POST /api/v1/billing/invoices/:invoiceID/resend/` | Tool: `send_invoice`, `send_invoices` |
-| `POST /api/v1/billing/invoices/from-order/`<br>invoicehandler.createFromOrder | Tool: `create_invoice` |
-| `POST /api/v1/billing/invoices/from-shipments/`<br>invoicehandler.createFromShipments | Tool: `create_invoice` |
+| `POST /api/v1/billing/invoices/:invoiceID/send/`<br>invoicehandler.send<br>also `POST /api/v1/billing/invoices/:invoiceID/resend/` | Tool: `invoice_send` |
+| `POST /api/v1/billing/invoices/from-order/`<br>invoicehandler.createFromOrder | Tool: `invoice_create` |
+| `POST /api/v1/billing/invoices/from-shipments/`<br>invoicehandler.createFromShipments | Tool: `invoice_create` |
 
 ### invoiceadjustment
 
 | Write | Decision |
 | --- | --- |
-| `mutation approveInvoiceAdjustment`<br>twin `POST /api/v1/billing/invoice-adjustments/:adjustmentID/approve/` | Tool: `approve_invoice_adjustment` |
-| `mutation rejectInvoiceAdjustment`<br>twin `POST /api/v1/billing/invoice-adjustments/:adjustmentID/reject/` | Tool: `reject_invoice_adjustment` |
-| `PATCH /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/`<br>invoiceadjustmenthandler.updateDraft | Tool: `save_invoice_adjustment_draft` |
+| `mutation approveInvoiceAdjustment`<br>twin `POST /api/v1/billing/invoice-adjustments/:adjustmentID/approve/` | Tool: `invoice_approve_adjustment` |
+| `mutation rejectInvoiceAdjustment`<br>twin `POST /api/v1/billing/invoice-adjustments/:adjustmentID/reject/` | Tool: `invoice_reject_adjustment` |
+| `PATCH /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/`<br>invoiceadjustmenthandler.updateDraft | Tool: `invoice_save_adjustment_draft` |
 | `POST /api/v1/billing/invoice-adjustments/bulk-preview/`<br>invoiceadjustmenthandler.bulkPreview | Exempt, read-only: Previews an invoice adjustment and saves nothing. |
-| `POST /api/v1/billing/invoice-adjustments/bulk-submit/`<br>invoiceadjustmenthandler.bulkSubmit | Tool: `submit_invoice_adjustment` |
-| `POST /api/v1/billing/invoice-adjustments/drafts/`<br>invoiceadjustmenthandler.createDraft | Tool: `save_invoice_adjustment_draft` |
+| `POST /api/v1/billing/invoice-adjustments/bulk-submit/`<br>invoiceadjustmenthandler.bulkSubmit | Tool: `invoice_submit_adjustment` |
+| `POST /api/v1/billing/invoice-adjustments/drafts/`<br>invoiceadjustmenthandler.createDraft | Tool: `invoice_save_adjustment_draft` |
 | `POST /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/preview/`<br>invoiceadjustmenthandler.previewDraft | Exempt, read-only: Previews an invoice adjustment and saves nothing. |
-| `POST /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/submit/`<br>invoiceadjustmenthandler.submitDraft | Tool: `submit_invoice_adjustment` |
+| `POST /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/submit/`<br>invoiceadjustmenthandler.submitDraft | Tool: `invoice_submit_adjustment` |
 | `POST /api/v1/billing/invoice-adjustments/preview/`<br>invoiceadjustmenthandler.preview | Exempt, read-only: Previews an invoice adjustment and saves nothing. |
-| `POST /api/v1/billing/invoice-adjustments/submit/`<br>invoiceadjustmenthandler.submit | Tool: `submit_invoice_adjustment` |
+| `POST /api/v1/billing/invoice-adjustments/submit/`<br>invoiceadjustmenthandler.submit | Tool: `invoice_submit_adjustment` |
 
 ### invoiceadjustmentcontrol
 
@@ -1584,25 +1584,25 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation openInvoiceDispute` | Tool: `open_invoice_dispute` |
-| `mutation resolveInvoiceDispute` | Tool: `resolve_invoice_dispute` |
-| `mutation withdrawInvoiceDispute` | Tool: `withdraw_invoice_dispute` |
+| `mutation openInvoiceDispute` | Tool: `invoice_open_dispute` |
+| `mutation resolveInvoiceDispute` | Tool: `invoice_resolve_dispute` |
+| `mutation withdrawInvoiceDispute` | Tool: `invoice_withdraw_dispute` |
 
 ### invoicerun
 
 | Write | Decision |
 | --- | --- |
-| `PATCH /api/v1/billing/invoice-runs/:runID/membership/`<br>invoicerunhandler.adjustMembership | Tool: `adjust_invoice_run_membership` |
-| `POST /api/v1/billing/invoice-runs/:runID/cancel/`<br>invoicerunhandler.cancel | Tool: `cancel_invoice_run` |
-| `POST /api/v1/billing/invoice-runs/:runID/commit/`<br>invoicerunhandler.commit | Tool: `commit_invoice_run` |
-| `POST /api/v1/billing/invoice-runs/preview/`<br>invoicerunhandler.preview | Tool: `build_invoice_run` |
-| `POST /api/v1/billing/statements/:customerID/bill/`<br>invoicerunhandler.billStatement | Tool: `bill_statement_now` |
+| `PATCH /api/v1/billing/invoice-runs/:runID/membership/`<br>invoicerunhandler.adjustMembership | Tool: `invoice_adjust_run` |
+| `POST /api/v1/billing/invoice-runs/:runID/cancel/`<br>invoicerunhandler.cancel | Tool: `invoice_cancel_run` |
+| `POST /api/v1/billing/invoice-runs/:runID/commit/`<br>invoicerunhandler.commit | Tool: `invoice_commit_run` |
+| `POST /api/v1/billing/invoice-runs/preview/`<br>invoicerunhandler.preview | Tool: `invoice_build_run` |
+| `POST /api/v1/billing/statements/:customerID/bill/`<br>invoicerunhandler.billStatement | Tool: `invoice_bill_statement` |
 
 ### invoiceshare
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/billing/invoices/:invoiceID/shares/`<br>invoicesharehandler.share | Tool: `share_invoice` |
+| `POST /api/v1/billing/invoices/:invoiceID/shares/`<br>invoicesharehandler.share | Tool: `invoice_share` |
 
 ### journalentry
 
@@ -1693,23 +1693,23 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation addOrderCharge` | Tool: `add_order_charge` |
-| `mutation attachOrderShipments` | Tool: `attach_order_shipments` |
-| `mutation cancelOrder` | Tool: `cancel_order` |
-| `mutation closeOrder` | Tool: `close_order` |
-| `mutation createOrder`<br>twin `POST /api/v1/orders/` | Tool: `create_order` |
-| `mutation detachOrderShipment` | Tool: `detach_order_shipment` |
-| `mutation removeOrderCharge` | Tool: `remove_order_charge` |
-| `mutation setOrderChargeAllocations` | Tool: `set_order_charge_allocations` |
-| `mutation updateOrder`<br>twin `PATCH /api/v1/orders/:orderID/`<br>twin `PUT /api/v1/orders/:orderID/` | Tool: `update_order` |
-| `mutation updateOrderCharge` | Tool: `update_order_charge` |
+| `mutation addOrderCharge` | Tool: `order_add_charge` |
+| `mutation attachOrderShipments` | Tool: `order_attach_shipments` |
+| `mutation cancelOrder` | Tool: `order_cancel` |
+| `mutation closeOrder` | Tool: `order_close` |
+| `mutation createOrder`<br>twin `POST /api/v1/orders/` | Tool: `order_create` |
+| `mutation detachOrderShipment` | Tool: `order_detach_shipment` |
+| `mutation removeOrderCharge` | Tool: `order_remove_charge` |
+| `mutation setOrderChargeAllocations` | Tool: `order_set_charge_allocations` |
+| `mutation updateOrder`<br>twin `PATCH /api/v1/orders/:orderID/`<br>twin `PUT /api/v1/orders/:orderID/` | Tool: `order_update` |
+| `mutation updateOrderCharge` | Tool: `order_update_charge` |
 
 ### organization
 
 | Write | Decision |
 | --- | --- |
 | `DELETE /api/v1/organizations/:id/logo`<br>organizationhandler.deleteLogo | Exempt, configuration: The organization's logo on every document it sends. |
-| `POST /api/v1/organizations/:id/logo`<br>organizationhandler.uploadLogo | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment). |
+| `POST /api/v1/organizations/:id/logo`<br>organizationhandler.uploadLogo | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document). |
 | `PUT /api/v1/organizations/:id/microsoft-sso`<br>organizationhandler.upsertMicrosoftSSOConfig | Exempt, security: Single sign-on decides who can sign in to the organization. |
 | `PUT /api/v1/organizations/:id/okta-sso`<br>organizationhandler.upsertOktaSSOConfig | Exempt, security: Single sign-on decides who can sign in to the organization. |
 
@@ -1765,8 +1765,8 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `POST /api/v1/shipments/:shipmentID/permit-requirements/:requirementID/waive/`<br>permithandler.waiveRequirement | Exempt, attestation: Waiving a permit requirement is a named person accepting the compliance risk of moving the load without that state's permit. |
-| `POST /api/v1/shipments/:shipmentID/permits/`<br>permithandler.createPermit | Tool: `record_shipment_permit` |
-| `PUT /api/v1/shipments/:shipmentID/permits/:permitID/`<br>permithandler.updatePermit | Tool: `update_shipment_permit` |
+| `POST /api/v1/shipments/:shipmentID/permits/`<br>permithandler.createPermit | Tool: `shipment_record_permit` |
+| `PUT /api/v1/shipments/:shipmentID/permits/:permitID/`<br>permithandler.updatePermit | Tool: `shipment_update_permit` |
 
 ### ptopolicy
 
@@ -1824,7 +1824,7 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/rate-imports/`<br>rateimporthandler.upload | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment). |
+| `POST /api/v1/rate-imports/`<br>rateimporthandler.upload | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document). |
 | `POST /api/v1/rate-imports/:rateImportID/commit/`<br>rateimporthandler.commit | Tool: `commit_rate_import` |
 | `POST /api/v1/rate-imports/:rateImportID/discard/`<br>rateimporthandler.discard | Tool: `discard_rate_import` |
 
@@ -1875,11 +1875,11 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/recurring-shipments/`<br>recurringshipmenthandler.create | Tool: `create_recurring_shipment` |
-| `POST /api/v1/recurring-shipments/:recurringShipmentID/generate/`<br>recurringshipmenthandler.generate | Tool: `generate_recurring_shipment` |
+| `POST /api/v1/recurring-shipments/`<br>recurringshipmenthandler.create | Tool: `shipment_create_recurring` |
+| `POST /api/v1/recurring-shipments/:recurringShipmentID/generate/`<br>recurringshipmenthandler.generate | Tool: `shipment_generate_recurring` |
 | `POST /api/v1/recurring-shipments/match/`<br>recurringshipmenthandler.match | Exempt, read-only: Finds the recurring shipment a new shipment matches and saves nothing. |
-| `PUT /api/v1/recurring-shipments/:recurringShipmentID/`<br>recurringshipmenthandler.update | Tool: `update_recurring_shipment` |
-| `PUT /api/v1/recurring-shipments/:recurringShipmentID/status/`<br>recurringshipmenthandler.updateStatus | Tool: `set_recurring_shipment_status` |
+| `PUT /api/v1/recurring-shipments/:recurringShipmentID/`<br>recurringshipmenthandler.update | Tool: `shipment_update_recurring` |
+| `PUT /api/v1/recurring-shipments/:recurringShipmentID/status/`<br>recurringshipmenthandler.updateStatus | Tool: `shipment_set_recurring_status` |
 
 ### report
 
@@ -1995,38 +1995,38 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `mutation acknowledgeShipmentComment` | Exempt, attestation: Acknowledging a comment says that the person it was addressed to has read it; only that person can say so. |
-| `mutation autoRateShipment`<br>twin `POST /api/v1/shipments/:shipmentID/auto-rate/` | Tool: `rerate_shipment` |
-| `mutation bulkTransferShipmentsToBilling`<br>twin `POST /api/v1/shipments/bulk-transfer-to-billing/` | Tool: `transfer_to_billing` |
+| `mutation autoRateShipment`<br>twin `POST /api/v1/shipments/:shipmentID/auto-rate/` | Tool: `shipment_rerate` |
+| `mutation bulkTransferShipmentsToBilling`<br>twin `POST /api/v1/shipments/bulk-transfer-to-billing/` | Tool: `billing_transfer` |
 | `mutation calculateShipmentDistance`<br>twin `POST /api/v1/shipments/calculate-distance/` | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
 | `mutation calculateShipmentLoadingOptimization`<br>twin `POST /api/v1/shipments/loading-optimization/` | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
 | `mutation calculateShipmentTotals`<br>twin `POST /api/v1/shipments/calculate-totals/` | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
-| `mutation cancelShipment`<br>twin `POST /api/v1/shipments/:shipmentID/cancel/` | Tool: `cancel_shipment` |
+| `mutation cancelShipment`<br>twin `POST /api/v1/shipments/:shipmentID/cancel/` | Tool: `shipment_cancel` |
 | `mutation checkShipmentDuplicateBol` | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
 | `mutation checkShipmentHazmatSegregation` | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
-| `mutation createShipment`<br>twin `POST /api/v1/shipments/` | Tool: `create_shipment` |
-| `mutation createShipmentComment`<br>twin `POST /api/v1/shipments/:shipmentID/comments/` | Tool: `add_shipment_comment` |
-| `mutation deleteShipmentComment`<br>twin `DELETE /api/v1/shipments/:shipmentID/comments/:commentID/` | Tool: `delete_shipment_comment` |
-| `mutation duplicateShipment`<br>twin `POST /api/v1/shipments/duplicate/` | Tool: `duplicate_shipment` |
-| `mutation pinShipmentComment` | Tool: `pin_shipment_comment` |
+| `mutation createShipment`<br>twin `POST /api/v1/shipments/` | Tool: `shipment_create` |
+| `mutation createShipmentComment`<br>twin `POST /api/v1/shipments/:shipmentID/comments/` | Tool: `shipment_add_comment` |
+| `mutation deleteShipmentComment`<br>twin `DELETE /api/v1/shipments/:shipmentID/comments/:commentID/` | Tool: `shipment_delete_comment` |
+| `mutation duplicateShipment`<br>twin `POST /api/v1/shipments/duplicate/` | Tool: `shipment_duplicate` |
+| `mutation pinShipmentComment` | Tool: `shipment_pin_comment` |
 | `mutation previewShipmentContractRate` | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
-| `mutation recalculateShipmentDistance`<br>twin `POST /api/v1/shipments/:shipmentID/recalculate-distance/` | Tool: `recalculate_shipment_distance` |
-| `mutation resolveShipmentComment` | Tool: `resolve_shipment_comment` |
-| `mutation transferShipmentOwnership`<br>twin `POST /api/v1/shipments/:shipmentID/transfer-ownership/` | Tool: `transfer_shipment_ownership` |
-| `mutation transferShipmentToBillingItems` | Tool: `transfer_to_billing` |
-| `mutation uncancelShipment`<br>twin `POST /api/v1/shipments/:shipmentID/uncancel/` | Tool: `uncancel_shipment` |
-| `mutation unpinShipmentComment` | Tool: `unpin_shipment_comment` |
-| `mutation unresolveShipmentComment` | Tool: `resolve_shipment_comment` |
-| `mutation updateShipment`<br>twin `PUT /api/v1/shipments/:shipmentID/` | Tool: `update_shipment`, `reschedule_stop`, `add_shipment_charge` |
-| `mutation updateShipmentComment`<br>twin `PUT /api/v1/shipments/:shipmentID/comments/:commentID/` | Tool: `edit_shipment_comment` |
-| `POST /api/v1/shipments/:shipmentID/holds/`<br>shipmenthandler.createHold | Tool: `place_shipment_hold` |
-| `POST /api/v1/shipments/:shipmentID/holds/:holdID/release/`<br>shipmenthandler.releaseHold | Tool: `release_shipment_hold` |
-| `POST /api/v1/shipments/:shipmentID/transfer-to-billing/`<br>shipmenthandler.transferToBilling | Tool: `transfer_to_billing` |
-| `POST /api/v1/shipments/auto-cancel/`<br>shipmenthandler.autoCancelShipments | Exempt, infrastructure: The sweep the Temporal schedule runs over every organization to cancel shipments past the auto-cancel threshold; a person does not decide which shipments it takes, and cancel_shipment cancels one. |
+| `mutation recalculateShipmentDistance`<br>twin `POST /api/v1/shipments/:shipmentID/recalculate-distance/` | Tool: `shipment_recalculate_distance` |
+| `mutation resolveShipmentComment` | Tool: `shipment_resolve_comment` |
+| `mutation transferShipmentOwnership`<br>twin `POST /api/v1/shipments/:shipmentID/transfer-ownership/` | Tool: `shipment_transfer_ownership` |
+| `mutation transferShipmentToBillingItems` | Tool: `billing_transfer` |
+| `mutation uncancelShipment`<br>twin `POST /api/v1/shipments/:shipmentID/uncancel/` | Tool: `shipment_uncancel` |
+| `mutation unpinShipmentComment` | Tool: `shipment_unpin_comment` |
+| `mutation unresolveShipmentComment` | Tool: `shipment_resolve_comment` |
+| `mutation updateShipment`<br>twin `PUT /api/v1/shipments/:shipmentID/` | Tool: `shipment_update`, `shipment_reschedule_stop`, `shipment_add_charge` |
+| `mutation updateShipmentComment`<br>twin `PUT /api/v1/shipments/:shipmentID/comments/:commentID/` | Tool: `shipment_update_comment` |
+| `POST /api/v1/shipments/:shipmentID/holds/`<br>shipmenthandler.createHold | Tool: `shipment_place_hold` |
+| `POST /api/v1/shipments/:shipmentID/holds/:holdID/release/`<br>shipmenthandler.releaseHold | Tool: `shipment_release_hold` |
+| `POST /api/v1/shipments/:shipmentID/transfer-to-billing/`<br>shipmenthandler.transferToBilling | Tool: `billing_transfer` |
+| `POST /api/v1/shipments/auto-cancel/`<br>shipmenthandler.autoCancelShipments | Exempt, infrastructure: The sweep the Temporal schedule runs over every organization to cancel shipments past the auto-cancel threshold; a person does not decide which shipments it takes, and shipment_cancel cancels one. |
 | `POST /api/v1/shipments/check-for-duplicate-bols/`<br>shipmenthandler.checkForDuplicateBOLs | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
 | `POST /api/v1/shipments/check-hazmat-segregation/`<br>shipmenthandler.checkHazmatSegregation | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
 | `POST /api/v1/shipments/delay/`<br>shipmenthandler.delayShipments | Exempt, infrastructure: The sweep the Temporal schedule runs to mark late shipments delayed from their stop windows; evaluate_service_failures records a late stop for one shipment. |
 | `POST /api/v1/shipments/previous-rates/`<br>shipmenthandler.getPreviousRates | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
-| `PUT /api/v1/shipments/:shipmentID/holds/:holdID/`<br>shipmenthandler.updateHold | Tool: `update_shipment_hold` |
+| `PUT /api/v1/shipments/:shipmentID/holds/:holdID/`<br>shipmenthandler.updateHold | Tool: `shipment_update_hold` |
 
 ### shipmentboard
 
@@ -2147,10 +2147,10 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation clockIn` | Exempt, counterparty: A worker clocking their own time; an agent must not record hours worked for a person. |
 | `mutation clockOut` | Exempt, counterparty: A worker clocking their own time; an agent must not record hours worked for a person. |
 | `mutation deleteTimeEntry` | Exempt, attestation: Time clock entries are the wage record a worker's pay is computed from; only the worker or a supervisor who saw the time may change them. |
-| `mutation generatePayrollExport` | Tool: `generate_payroll_export` |
+| `mutation generatePayrollExport` | Tool: `settlement_generate_payroll_export` |
 | `mutation recordTimeEntry` | Exempt, attestation: Time clock entries are the wage record a worker's pay is computed from; only the worker or a supervisor who saw the time may enter them. |
 | `mutation transitionTimesheet` | Exempt, attestation: Submitting and approving hours for payroll is a sign-off by the worker and their manager. |
-| `mutation voidPayrollExport` | Tool: `void_payroll_export` |
+| `mutation voidPayrollExport` | Tool: `settlement_void_payroll_export` |
 
 ### tractor
 

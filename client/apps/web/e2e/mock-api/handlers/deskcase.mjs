@@ -371,12 +371,12 @@ function followLive(state) {
   return {
     __sse: [
       { event: "accepted", data: { content: LIVE_QUESTION }, delay: 200 },
-      start("call_desk_1", "list_shipments", { status: "Completed", deliveredFrom: "last week" }),
-      finish("call_desk_1", "list_shipments", "42 delivered loads"),
+      start("call_desk_1", "shipment_list", { status: "Completed", deliveredFrom: "last week" }),
+      finish("call_desk_1", "shipment_list", "42 delivered loads"),
       start("call_desk_2", "get_billing_readiness", { shipments: 42 }),
       finish("call_desk_2", "get_billing_readiness", "9 not ready to bill"),
       ...d.steers.map((steer) => ({ event: "steered", data: steer, delay: 300 })),
-      start("call_desk_3", "list_shipments", { customer: "Acme Foods", status: "Completed" }),
+      start("call_desk_3", "shipment_list", { customer: "Acme Foods", status: "Completed" }),
     ],
     __sseHold: (write) => {
       d.streams.add(write);

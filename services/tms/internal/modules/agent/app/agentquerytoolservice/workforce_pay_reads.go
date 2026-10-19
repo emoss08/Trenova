@@ -112,7 +112,7 @@ func newListShipmentPermitsTool(
 	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
 	return &workforceRead{
-		name: "list_shipment_permits",
+		name: "shipment_list_permits",
 		description: "List an oversize or overweight shipment's state permit requirements " +
 			"and the permits recorded against it. Each requirement has its state, status " +
 			"and lead time; each permit its number, dates and cost. It " +
@@ -121,7 +121,7 @@ func newListShipmentPermitsTool(
 		properties: map[string]any{
 			paramShipmentID: agenttoolschema.OfResource(map[string]any{
 				toolschema.KeyType: toolschema.TypeString,
-				toolschema.KeyDescription: "The shipment, from get_shipment, search_shipments or the " +
+				toolschema.KeyDescription: "The shipment, from shipment_get, shipment_list or the " +
 					"page you are on. Never guess one.",
 			}, permission.ResourceShipment),
 		},
@@ -315,11 +315,11 @@ func newListPayrollExportsTool(
 	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
 	return &workforceRead{
-		name: "list_payroll_exports",
+		name: "settlement_list_payroll_exports",
 		description: "List payroll runs, newest first. Each shows the pay period it " +
 			"covers, how many approved timesheet weeks it locked, the regular, overtime and " +
 			"paid leave minutes, and whether it was voided. It yields the payrollExportId " +
-			"void_payroll_export takes.",
+			"settlement_void_payroll_export takes.",
 		resource:   permission.ResourceTimesheet,
 		properties: map[string]any{},
 		access:     newFieldAccess(permissions),

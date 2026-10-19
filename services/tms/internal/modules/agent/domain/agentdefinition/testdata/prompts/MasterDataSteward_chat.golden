@@ -98,7 +98,7 @@ Loaded now:
 - create_customer
 - list_commodities
 - list_equipment_types
-- search_shipments
+- list_fleet_codes
 - list_document_types
 - file_capture_items
 - list_watchtower_items
@@ -139,7 +139,7 @@ Callable after find_tools:
 - update_trailer_status — Change the status of one or more trailers, which is what makes a trailer available to dispatch or takes it off the board.
 - locate_trailer — Record where a trailer actually is when it was moved outside a shipment.
 - list_equipment_manufacturers — List equipment manufacturers — who built the tractors and trailers in the fleet, such as Freightliner or Utility.
-- list_fleet_codes — List fleet codes — the groupings drivers and equipment are assigned to, each with its own manager and revenue goal.
+- shipment_list — Find shipments (loads) by the words people use for them, by status, or by filters on dates, charges and transfer status.
 - search_documents — Search the text of documents: rate confirmations, bills of lading, proofs of delivery, invoices, contracts, permits and other files attached to records.
 - get_document_summary — Read a document by id: what kind of document it looks like, how many pages, the text extracted from it, and the structured fields document intelligence found.
 - delete_documents — Delete documents that should not be on file, such as a duplicate upload or a scan of the wrong paperwork.

@@ -86,10 +86,10 @@ func NewCreateShipmentTool(deps CreateShipmentDeps) agentports.AgentTool {
 	}
 }
 
-func (t *CreateShipmentTool) Name() string { return "create_shipment" }
+func (t *CreateShipmentTool) Name() string { return "shipment_create" }
 
 func (t *CreateShipmentTool) SearchTerms() []string {
-	return []string{"new shipment", "enter shipment"}
+	return []string{"new shipment", "enter shipment", "book a load", "new load"}
 }
 
 func (t *CreateShipmentTool) Prerequisites() []string {
@@ -115,12 +115,12 @@ func (t *CreateShipmentTool) Companions() []string {
 }
 
 func (t *CreateShipmentTool) Recipe() []string {
-	return []string{agentdefinition.ToolFindShipmentRecords, "create_shipment"}
+	return []string{agentdefinition.ToolFindShipmentRecords, "shipment_create"}
 }
 
 func (t *CreateShipmentTool) Description() string {
-	return "Enter a new shipment, priced by the customer's rate agreement when no price is given; to copy one, use duplicate_shipment. " +
-		"Match its customer, stops and commodities first with one find_shipment_records call, and propose what it says is missing instead of stopping. " +
+	return "Enter a new shipment, priced by the customer's rate agreement when no price is given; to copy one, use shipment_duplicate. " +
+		"Match its customer, stops and commodities first with one shipment_match_records call, and propose what it says is missing instead of stopping. " +
 		"Do not interview the person first: fill what the conversation, page and lookups give and call it; ask_user only for what it refuses as missing. " +
 		"Price it the way the person did: \"$2,450 flat\" is the Flat Rate template, \"$2.10 a mile\" Per Mile, and charges they name are accessorial charges. " +
 		"Given no price, leave the rating out: it finds the agreement itself; ask for one only when none covers the lane. " +
@@ -136,7 +136,7 @@ func (t *CreateShipmentTool) ParamSchema() map[string]any {
 			"sourceDocumentId": agenttoolschema.RecordIDText(
 				permission.ResourceDocument,
 				"The uploaded document this shipment was read from, "+
-					"when there is one: the documentId you read with get_shipment_draft or "+
+					"when there is one: the documentId you read with intake_get_draft or "+
 					"read_attachment, usually a file on the message, this run's subject or "+
 					"the page.",
 			),
@@ -547,25 +547,25 @@ func NewUpdateShipmentTool(
 	return &UpdateShipmentTool{shipments: shipments, partners: partners}
 }
 
-func (t *UpdateShipmentTool) Name() string { return "update_shipment" }
+func (t *UpdateShipmentTool) Name() string { return "shipment_update" }
 
 func (t *UpdateShipmentTool) SearchTerms() []string {
 	return []string{"edit shipment", "pieces", "correct weight"}
 }
 
 func (t *UpdateShipmentTool) Prerequisites() []string {
-	return []string{"search_shipments", "get_shipment"}
+	return []string{"shipment_list", "shipment_get"}
 }
 
 func (t *UpdateShipmentTool) Recipe() []string {
-	return []string{"search_shipments", "get_shipment", "update_shipment"}
+	return []string{"shipment_list", "shipment_get", "shipment_update"}
 }
 
 func (t *UpdateShipmentTool) Description() string {
 	return "Change the details of a saved shipment: the customer, service type, shipment " +
 		"type, equipment types, BOL, pieces, weight or temperature range. Send only " +
 		"the fields to change. Stops, moves, rates and status are not changed here: " +
-		"reschedule_stop moves an appointment, add_shipment_charge adds an accessorial, " +
+		"shipment_reschedule_stop moves an appointment, shipment_add_charge adds an accessorial, " +
 		"and the move, hold and cancel tools do the rest."
 }
 
@@ -574,7 +574,7 @@ func (t *UpdateShipmentTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			common.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
-				"The shipment to change, from the page, list_shipments or search_shipments."),
+				"The shipment to change, from the page, shipment_list."),
 			"customerId": agenttoolschema.RecordIDText(permission.ResourceCustomer,
 				"The new customer, from list_customers."),
 			"serviceTypeId": agenttoolschema.RecordIDText(permission.ResourceServiceType,
@@ -632,7 +632,7 @@ func (t *UpdateShipmentTool) Policy() agentports.ToolPolicy {
 	}
 }
 
-// shipmentPatch is what update_shipment may change. Pointers say "absent
+// shipmentPatch is what shipment_update may change. Pointers say "absent
 // leaves it alone"; the allowlist is the struct itself.
 type shipmentPatch struct {
 	CustomerID     *string `json:"customerId"`
@@ -684,7 +684,7 @@ func (t *UpdateShipmentTool) plan(
 
 	var patch shipmentPatch
 	if err = jsonutils.Convert(params.Params, &patch); err != nil {
-		return nil, nil, fmt.Errorf("update_shipment parameters: %w", err)
+		return nil, nil, fmt.Errorf("shipment_update parameters: %w", err)
 	}
 	if patch.empty() {
 		return nil, nil, errortypes.NewValidationError(

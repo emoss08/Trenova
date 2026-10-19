@@ -12,6 +12,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/evalsplit"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"gopkg.in/yaml.v3"
 )
@@ -30,33 +31,42 @@ type Scenario struct {
 	Steps       []Step       `yaml:"steps"       json:"steps"`
 	Source      string       `yaml:"-"           json:"source,omitempty"`
 
-	Split          Split    `yaml:"split"          json:"split,omitempty"`
-	ExpectedTools  []string `yaml:"expectedTools"  json:"expectedTools,omitempty"`
-	ForbiddenTools []string `yaml:"forbiddenTools" json:"forbiddenTools,omitempty"`
-	LabelsDerived  bool     `yaml:"-"              json:"labelsDerived,omitempty"`
+	Split          evalsplit.Split `yaml:"split"          json:"split,omitempty"`
+	ExpectedTools  []string        `yaml:"expectedTools"  json:"expectedTools,omitempty"`
+	ForbiddenTools []string        `yaml:"forbiddenTools" json:"forbiddenTools,omitempty"`
+	LabelsDerived  bool            `yaml:"-"              json:"labelsDerived,omitempty"`
 }
 
-type Split string
+const generalAssistantDesk = "General assistant"
 
-const (
-	SplitDevelopment = Split("development")
-	SplitHeldOut     = Split("held-out")
-	SplitAdversarial = Split("adversarial")
-)
-
-func (s Split) IsValid() bool {
-	switch s {
-	case SplitDevelopment, SplitHeldOut, SplitAdversarial:
-		return true
-	default:
-		return false
+func (s *Scenario) Stratum() evalsplit.Stratum {
+	if s.Unattended() {
+		return evalsplit.Stratum{Desk: s.Steps[0].Fire.Label(), Mode: evalsplit.Unattended}
 	}
+
+	desk := s.Agent
+	switch {
+	case s.Palette:
+		desk = "Palette"
+	case s.Formula != nil:
+		desk = "Formula studio"
+	case desk == "":
+		for idx := range s.Steps {
+			if s.Steps[idx].Agent != "" {
+				desk = s.Steps[idx].Agent
+				break
+			}
+		}
+	}
+	desk = strings.TrimSpace(strings.TrimPrefix(desk, BenchAgentPrefix))
+	if desk == "" {
+		desk = generalAssistantDesk
+	}
+
+	return evalsplit.Stratum{Desk: desk, Mode: evalsplit.Chat}
 }
 
 func (s *Scenario) deriveLabels() {
-	if s.Split == "" {
-		s.Split = SplitDevelopment
-	}
 	if s.ExpectedTools != nil && s.ForbiddenTools != nil {
 		return
 	}
@@ -266,7 +276,93 @@ func LoadScenarios(paths []string) ([]*Scenario, error) {
 		}
 	}
 
+	if err := assignSplits(scenarios); err != nil {
+		return nil, err
+	}
+
 	return scenarios, nil
+}
+
+func assignSplits(scenarios []*Scenario) error {
+	population, err := splitPopulation(scenarios)
+	if err != nil {
+		return err
+	}
+
+	items := make([]evalsplit.Item, 0, len(population))
+	for _, scenario := range population {
+		items = append(items, scenario.splitItem())
+	}
+	splits := evalsplit.Assign(items)
+	assigned := make(map[string]evalsplit.Split, len(population))
+	for idx := range items {
+		assigned[items[idx].Key] = splits[idx]
+	}
+	for _, scenario := range scenarios {
+		scenario.Split = assigned[scenario.Name]
+	}
+
+	return nil
+}
+
+func (s *Scenario) splitItem() evalsplit.Item {
+	return evalsplit.Item{
+		Key:         s.Name,
+		Stratum:     s.Stratum(),
+		Adversarial: s.Split == evalsplit.Adversarial,
+	}
+}
+
+func splitPopulation(scenarios []*Scenario) ([]*Scenario, error) {
+	loaded := make(map[string]struct{}, len(scenarios))
+	dirs := make([]string, 0, 2)
+	for _, scenario := range scenarios {
+		loaded[filepath.Clean(scenario.Source)] = struct{}{}
+		if dir := filepath.Dir(scenario.Source); !slices.Contains(dirs, dir) {
+			dirs = append(dirs, dir)
+		}
+	}
+
+	population := slices.Clone(scenarios)
+	seen := make(map[string]struct{}, len(scenarios))
+	for _, scenario := range scenarios {
+		seen[scenario.Name] = struct{}{}
+	}
+	for _, dir := range dirs {
+		files, err := scenarioFiles(dir)
+		if err != nil {
+			return nil, err
+		}
+		for _, file := range files {
+			if _, ok := loaded[filepath.Clean(file)]; ok {
+				continue
+			}
+			siblings, loadErr := loadScenarioFile(file)
+			if loadErr != nil {
+				return nil, loadErr
+			}
+			for _, sibling := range siblings {
+				if _, ok := seen[sibling.Name]; ok {
+					continue
+				}
+				seen[sibling.Name] = struct{}{}
+				population = append(population, sibling)
+			}
+		}
+	}
+
+	return population, nil
+}
+
+func SplitLedger(scenarios []*Scenario) evalsplit.Ledger {
+	items := make([]evalsplit.Item, 0, len(scenarios))
+	splits := make([]evalsplit.Split, 0, len(scenarios))
+	for _, scenario := range scenarios {
+		items = append(items, scenario.splitItem())
+		splits = append(splits, scenario.Split)
+	}
+
+	return evalsplit.LedgerOf(items, splits)
 }
 
 func scenarioFiles(path string) ([]string, error) {
@@ -322,6 +418,11 @@ func loadScenarioFile(file string) ([]*Scenario, error) {
 		}
 		scenario.Source = file
 		scenario.applyDefaults(&doc.Defaults)
+		if scenario.Split != "" && scenario.Split != evalsplit.Adversarial {
+			return nil, fmt.Errorf("%s: %s: split %q is assigned by rule; only adversarial is "+
+				"written by hand (docs/engineering/desk-bench.md, Labels and splits)",
+				file, scenario.Name, scenario.Split)
+		}
 		scenario.resolveAttachments(filepath.Dir(file))
 		scenario.deriveLabels()
 		if err = scenario.Validate(); err != nil {

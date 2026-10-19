@@ -75,8 +75,8 @@ describe("rosterCounts and filterRoster", () => {
 
 describe("tierSplit", () => {
   const catalog = [
-    tool("search_shipments", "query"),
-    tool("get_shipment", "query"),
+    tool("shipment_list", "query"),
+    tool("shipment_get", "query"),
     tool("recall_memory", "query", true),
     tool("assign_driver", "action"),
     tool("tender_to_carrier", "action"),
@@ -87,8 +87,8 @@ describe("tierSplit", () => {
     const split = tierSplit(
       agent({
         toolNames: [
-          "search_shipments",
-          "get_shipment",
+          "shipment_list",
+          "shipment_get",
           "recall_memory",
           "assign_driver",
           "tender_to_carrier",
@@ -138,7 +138,10 @@ describe("rowFact", () => {
 
   it("names the first event and how many more wake it", () => {
     expect(
-      rowFact(agent({ triggerMode: "Event", eventKinds: ["BillingHoldPlaced", "RateMismatch", "X"] }), label),
+      rowFact(
+        agent({ triggerMode: "Event", eventKinds: ["BillingHoldPlaced", "RateMismatch", "X"] }),
+        label,
+      ),
     ).toEqual({ kind: "event", label: "label:BillingHoldPlaced", more: 2 });
     expect(rowFact(agent({ triggerMode: "Event", eventKinds: [] }), label)).toBeNull();
   });

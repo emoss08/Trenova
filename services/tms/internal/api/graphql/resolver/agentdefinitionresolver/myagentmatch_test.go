@@ -124,7 +124,7 @@ func TestMyAgentMatch_SaysWhenNoAgentCanHelp(t *testing.T) {
 
 	recommender := &recordingRecommender{answer: &agentports.AgentMatch{
 		Outcome: agentsuggestion.MatchNoAgent,
-		Tools:   []agentports.AgentMatchTool{{Name: "list_invoices", Summary: "List invoices."}},
+		Tools:   []agentports.AgentMatchTool{{Name: "invoice_list", Summary: "List invoices."}},
 	}}
 	resolver, ctx, _ := recommendationResolver(t, recommender, &assistantPermissions{allowed: true})
 
@@ -133,7 +133,7 @@ func TestMyAgentMatch_SaysWhenNoAgentCanHelp(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, &gqlmodel.MyAgentMatch{
 		Outcome: agentsuggestion.MatchNoAgent,
-		Tools:   []*gqlmodel.AgentMatchTool{{Name: "list_invoices", Summary: "List invoices."}},
+		Tools:   []*gqlmodel.AgentMatchTool{{Name: "invoice_list", Summary: "List invoices."}},
 	}, result)
 	assert.True(t, recommender.asked[0].CurrentAgentID.IsNil())
 }

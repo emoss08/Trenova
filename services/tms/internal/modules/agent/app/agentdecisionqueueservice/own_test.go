@@ -40,7 +40,7 @@ func (d *owningDecider) AssertOwnProposal(
 func TestDecideManyOwn_DecidesTheCallersOwnProposalsOfOneTool(t *testing.T) {
 	t.Parallel()
 
-	first, second := proposal("post_invoice"), proposal("post_invoice")
+	first, second := proposal("invoice_post"), proposal("invoice_post")
 	proposals := &stubProposals{byID: map[pulid.ID]*agent.AgentProposal{
 		first.ID: first, second.ID: second,
 	}}
@@ -70,7 +70,7 @@ func TestDecideManyOwn_DecidesTheCallersOwnProposalsOfOneTool(t *testing.T) {
 func TestDecideManyOwn_RefusesTheWholeBatchWhenOneIsNotTheCallers(t *testing.T) {
 	t.Parallel()
 
-	mine, theirs := proposal("post_invoice"), proposal("post_invoice")
+	mine, theirs := proposal("invoice_post"), proposal("invoice_post")
 	proposals := &stubProposals{byID: map[pulid.ID]*agent.AgentProposal{
 		mine.ID: mine, theirs.ID: theirs,
 	}}
@@ -91,7 +91,7 @@ func TestDecideManyOwn_RefusesTheWholeBatchWhenOneIsNotTheCallers(t *testing.T) 
 func TestDecideManyOwn_KeepsTheBatchRules(t *testing.T) {
 	t.Parallel()
 
-	first, other := proposal("post_invoice"), proposal("send_invoice")
+	first, other := proposal("invoice_post"), proposal("invoice_send")
 	proposals := &stubProposals{byID: map[pulid.ID]*agent.AgentProposal{
 		first.ID: first, other.ID: other,
 	}}

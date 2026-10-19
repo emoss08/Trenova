@@ -26,6 +26,10 @@ const paramAdjustmentRate = "rate"
 
 const paramLineID = "lineId"
 
+const settlementNamespace = "settlement"
+
+const toolListDriverSettlements = "settlement_list_driver"
+
 const fieldSubmittedAt = "submittedAt"
 
 const fieldApprovedAt = "approvedAt"
@@ -36,6 +40,7 @@ const fieldPaidAt = "paidAt"
 
 type lifecycleText struct {
 	noun        string
+	qualifier   string
 	payee       string
 	listTool    string
 	getTool     string
@@ -50,8 +55,8 @@ type lifecycleText struct {
 	fillAdjust  func(map[string]any, *settlementshared.ActionRequest) error
 }
 
-func (l *lifecycleText) name(verb string) string {
-	return verb + "_" + strings.ReplaceAll(l.noun, " ", "_")
+func (l *lifecycleText) name(verb string, object ...string) string {
+	return strings.Join(append([]string{settlementNamespace, verb, l.qualifier}, object...), "_")
 }
 
 func submitDecision(text *lifecycleText) *settlementDecision {
@@ -81,8 +86,7 @@ func approveDecision(text *lifecycleText) *settlementDecision {
 		description: "Propose approving a " + text.noun + " that is pending approval, " +
 			"which commits the organization to paying the " + text.payee + " what it comes to. " +
 			"A person always decides. Propose it only when " + text.getTool + " shows no " +
-			"open exception or dispute you cannot explain. For more than one, propose " +
-			bulkName(text.name(common.VerbApprove)) + " once with all of them instead.",
+			"open exception or dispute you cannot explain.",
 		action:     settlementshared.ActionApprove,
 		operation:  permission.OpApprove,
 		personOnly: true,
@@ -128,8 +132,7 @@ func postDecision(text *lifecycleText) *settlementDecision {
 		name: text.name("post"),
 		description: "Propose posting an approved " + text.noun + " to the general " +
 			"ledger. " + text.postMeaning + " It cannot be undone except by voiding, so a " +
-			"person always decides. For more than one, propose " +
-			bulkName(text.name("post")) + " once with all of them instead.",
+			"person always decides.",
 		action:     settlementshared.ActionPost,
 		operation:  permission.OpApprove,
 		personOnly: true,
@@ -147,7 +150,7 @@ func markPaidDecision(text *lifecycleText) *settlementDecision {
 	properties := common.SettlementPaymentProperties(text.methods)
 
 	return &settlementDecision{
-		name: text.name("record") + "_payment",
+		name: text.name("record", "payment"),
 		description: "Propose recording that a posted " + text.noun + " was paid, with how " +
 			"and the reference. " + text.paidMeaning + " A person always decides, and only " +
 			"once the money has actually gone out.",
@@ -221,7 +224,7 @@ func addAdjustmentDecision(text *lifecycleText) *settlementDecision {
 	properties, required := text.adjustment()
 
 	return &settlementDecision{
-		name: text.name("add") + "_adjustment",
+		name: text.name("add", "adjustment"),
 		description: "Add a manual adjustment line to a draft or pending " + text.noun +
 			": a positive amount pays the " + text.payee + " more, one below zero takes " +
 			"money back. The settlement is flagged as manually adjusted for whoever " +
@@ -249,7 +252,7 @@ func addAdjustmentDecision(text *lifecycleText) *settlementDecision {
 
 func removeAdjustmentDecision(text *lifecycleText) *settlementDecision {
 	return &settlementDecision{
-		name: text.name("remove") + "_adjustment",
+		name: text.name("remove", "adjustment"),
 		description: "Remove a manual adjustment line from a draft or pending " + text.noun +
 			". Only a line someone added by hand can be removed; earnings and deductions " +
 			"computed from pay records are corrected at their source and recalculated.",
@@ -336,7 +339,7 @@ func driverAdjustmentSchema() (properties map[string]any, required []string) {
 		toolschema.KeyDescription: "The rate per unit, when it is a rate times a quantity.",
 	}
 	properties[common.ParamPayCodeID] = agenttoolschema.RecordIDText(permission.ResourcePayCode,
-		"The pay code it posts under, from list_pay_codes, so it reaches that code's GL "+
+		"The pay code it posts under, from settlement_list_pay_codes, so it reaches that code's GL "+
 			"account. Leave it out for the default account.")
 
 	return properties, []string{paramAdjustmentDescription, paramAdjustmentAmount}
@@ -393,10 +396,11 @@ func fillCarrierAdjustment(params map[string]any, req *settlementshared.ActionRe
 func driverLifecycle() *lifecycleText {
 	return &lifecycleText{
 		noun:       common.NounDriverSettlement,
+		qualifier:  "driver",
 		payee:      "driver",
-		listTool:   "list_driver_settlements",
-		getTool:    "get_driver_settlement",
-		adjustFrom: "list_pay_codes",
+		listTool:   toolListDriverSettlements,
+		getTool:    "settlement_get_driver",
+		adjustFrom: "settlement_list_pay_codes",
 		methods:    common.DriverPaymentMethods,
 		postEgress: []agent.EgressClass{
 			agent.EgressDriverVisible,
@@ -419,9 +423,10 @@ func driverLifecycle() *lifecycleText {
 func carrierLifecycle() *lifecycleText {
 	return &lifecycleText{
 		noun:       nounCarrierSettlement,
+		qualifier:  "carrier",
 		payee:      "carrier",
-		listTool:   "list_carrier_settlements",
-		getTool:    "get_carrier_settlement",
+		listTool:   "settlement_list_carrier",
+		getTool:    "settlement_get_carrier",
 		adjustFrom: "list_gl_accounts",
 		methods:    carrierPaymentMethods,
 		postEgress: []agent.EgressClass{agent.EgressMoney},
@@ -470,16 +475,8 @@ func provideSubmitDriverSettlementTool(s *driversettlementservice.Service) agent
 	return driverDecisionTool(submitDecision, s)
 }
 
-func provideApproveDriverSettlementTool(s *driversettlementservice.Service) agentports.AgentTool {
-	return driverDecisionTool(approveDecision, s)
-}
-
 func provideRejectDriverSettlementTool(s *driversettlementservice.Service) agentports.AgentTool {
 	return driverDecisionTool(rejectDecision, s)
-}
-
-func providePostDriverSettlementTool(s *driversettlementservice.Service) agentports.AgentTool {
-	return driverDecisionTool(postDecision, s)
 }
 
 func provideMarkDriverSettlementPaidTool(
@@ -516,20 +513,10 @@ func provideSubmitCarrierSettlementTool(
 	return carrierDecisionTool(submitDecision, s)
 }
 
-func provideApproveCarrierSettlementTool(
-	s *carriersettlementservice.Service,
-) agentports.AgentTool {
-	return carrierDecisionTool(approveDecision, s)
-}
-
 func provideRejectCarrierSettlementTool(
 	s *carriersettlementservice.Service,
 ) agentports.AgentTool {
 	return carrierDecisionTool(rejectDecision, s)
-}
-
-func providePostCarrierSettlementTool(s *carriersettlementservice.Service) agentports.AgentTool {
-	return carrierDecisionTool(postDecision, s)
 }
 
 func provideMarkCarrierSettlementPaidTool(
@@ -563,18 +550,14 @@ func provideRemoveCarrierSettlementAdjustmentTool(
 func SettlementDecisionProviders() []any {
 	return []any{
 		provideSubmitDriverSettlementTool,
-		provideApproveDriverSettlementTool,
 		provideRejectDriverSettlementTool,
-		providePostDriverSettlementTool,
 		provideMarkDriverSettlementPaidTool,
 		provideVoidDriverSettlementTool,
 		provideRecalculateDriverSettlementTool,
 		provideAddDriverSettlementAdjustmentTool,
 		provideRemoveDriverSettlementAdjustmentTool,
 		provideSubmitCarrierSettlementTool,
-		provideApproveCarrierSettlementTool,
 		provideRejectCarrierSettlementTool,
-		providePostCarrierSettlementTool,
 		provideMarkCarrierSettlementPaidTool,
 		provideVoidCarrierSettlementTool,
 		provideRecalculateCarrierSettlementTool,

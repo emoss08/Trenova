@@ -535,7 +535,7 @@ func iftaMileageProperties(forCorrection bool) map[string]any {
 		paramLoaded: common.BooleanProperty("Whether the tractor was loaded. Defaults to true." +
 			keep),
 		common.ParamShipmentMoveID: agenttoolschema.RecordIDText(permission.ResourceShipmentMove,
-			"The move these miles correct, from get_shipment; the entry then replaces the "+
+			"The move these miles correct, from shipment_get; the entry then replaces the "+
 				"move's routed miles on the return."+keep),
 		paramNotes: common.StringProperty("Where the miles came from, such as a trip sheet."+keep,
 			maxMileageNotes),
@@ -995,7 +995,7 @@ func NewRecalculateMoveJurisdictionMilesTool(router JurisdictionMileRouter) agen
 		Properties: map[string]any{
 			common.ParamShipmentMoveID: agenttoolschema.RecordIDText(
 				permission.ResourceShipmentMove,
-				"The move, from get_shipment. Never guess one.",
+				"The move, from shipment_get. Never guess one.",
 			),
 		},
 		Required: []string{common.ParamShipmentMoveID},

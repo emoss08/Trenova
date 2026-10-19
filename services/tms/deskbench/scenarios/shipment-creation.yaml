@@ -5,7 +5,7 @@ defaults:
 scenarios:
   - name: shipment-desk-creates-a-customer
     description: >
-      create_customer reached from the Shipment Assistant, which holds it because create_shipment
+      create_customer reached from the Shipment Assistant, which holds it because shipment_create
       names it as a companion. Approved, so the customer is really written.
     exclusive: pinecrest-customer
     tags: [masterdata]
@@ -101,9 +101,9 @@ scenarios:
           8am-noon, deliver to Summit Sports Boise, 1700 W Main St, Boise ID 83702 next tuesday 9am.
           18 pallets of camping gear, 22,000 lbs, dry van, $1,850 flat. set up whatever we don't have
         expect:
-          calls: [find_shipment_records]
+          calls: [shipment_match_records]
           proposals: [{ tool: create_customer, args: { code: SLVR } }, { tool: create_location }]
-          noCalls: [create_shipment]
+          noCalls: [shipment_create]
           maxFailedCalls: 2
           replyExcludes: ["no shipment was created|couldn.t create|could not create"]
           rubric: >
@@ -114,7 +114,7 @@ scenarios:
       - decide: approve
         expect:
           executed: true
-          proposals: [{ tool: create_shipment }]
+          proposals: [{ tool: shipment_create }]
           rubric: >
             The follow-up proposes the shipment with the new customer's and locations' ids: next
             Monday 08:00-12:00 Spokane to next Tuesday 09:00 Boise, 18 pallets, 22,000 lb, dry van,
@@ -131,7 +131,7 @@ scenarios:
               note: the shipment was created for the new customer
       - say: "another one for silverline, same pickup and delivery a week later, same freight and rate"
         expect:
-          proposals: [{ tool: create_shipment }]
+          proposals: [{ tool: shipment_create }]
           noCalls: [create_customer, create_location]
           maxFailedCalls: 1
       - decide: approve
@@ -171,9 +171,9 @@ scenarios:
         page: { path: /shipments, title: Shipments }
         attach: [../fixtures/attachments/rate-confirmation-np-88410.pdf]
         expect:
-          calls: [find_shipment_records]
+          calls: [shipment_match_records]
           proposals: [{ tool: create_customer }, { tool: create_location }]
-          noCalls: [create_shipment]
+          noCalls: [shipment_create]
           maxFailedCalls: 2
           replyExcludes:
             - "don't see|do not see|can't see|no file|not attached|re-upload|no shipment was created"
@@ -184,7 +184,7 @@ scenarios:
       - decide: approve
         expect:
           executed: true
-          proposals: [{ tool: create_shipment }]
+          proposals: [{ tool: shipment_create }]
           rubric: >
             The follow-up proposes NP-88410: pickup 2027-04-06 06:00-10:00 Seattle, delivery
             2027-04-07 07:00 Clackamas, 24 pallets, 41,500 lb, reefer at -10 F, $2,410.00 ($2,150
@@ -202,7 +202,7 @@ scenarios:
       - say: Here is their next one, same lane. Book it.
         attach: [../fixtures/attachments/rate-confirmation-np-88415.pdf]
         expect:
-          proposals: [{ tool: create_shipment }]
+          proposals: [{ tool: shipment_create }]
           noCalls: [create_customer, create_location]
           maxFailedCalls: 1
       - decide: approve

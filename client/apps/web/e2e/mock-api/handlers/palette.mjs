@@ -269,7 +269,7 @@ function answerFor(state, content, mentions) {
     return {
       tools: [
         {
-          name: "get_shipment",
+          name: "shipment_get",
           summary: s.proNumber,
           records: [shipmentRecord(s), record("customer", customer.id, customer.name)],
         },
@@ -314,7 +314,7 @@ function answerFor(state, content, mentions) {
     return {
       tools: [
         {
-          name: "list_shipments",
+          name: "shipment_list",
           summary: "42 shipments",
           records: [shipmentRecord(late), shipmentRecord(risk)],
         },

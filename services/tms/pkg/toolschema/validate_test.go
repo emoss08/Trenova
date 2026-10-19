@@ -143,7 +143,7 @@ func TestValidator_FilesNestedProblemsUnderTheirPaths(t *testing.T) {
 		"additionalProperties": false,
 	}
 
-	errs := fieldErrors(t, NewValidator().ValidateFor("create_shipment", schema, map[string]any{
+	errs := fieldErrors(t, NewValidator().ValidateFor("shipment_create", schema, map[string]any{
 		"shipment": map[string]any{
 			"moves": []any{map[string]any{
 				"type": "Linehaul",

@@ -61,12 +61,12 @@ describe("toolEffect", () => {
     ["request_decision", "ask"],
     ["withdraw_proposal", "ask"],
     ["list_customers", "lookup"],
-    ["get_shipment", "lookup"],
+    ["shipment_get", "lookup"],
     ["search_worker", "lookup"],
     ["describe_report_dataset", "lookup"],
     ["preview_report", "lookup"],
     ["create_report", "change"],
-    ["cancel_shipment", "change"],
+    ["shipment_cancel", "change"],
     ["something_new", "change"],
   ])("derives %s as %s when the effect is missing", (name, effect) => {
     expect(toolEffect(name)).toBe(effect);
@@ -112,7 +112,7 @@ describe("groupActivity", () => {
       step({ name: "find_in_trenova" }),
       step({ name: "open_page" }),
       step({ name: "get_customer" }),
-      step({ name: "list_shipments" }),
+      step({ name: "shipment_list" }),
       step({ name: "create_report" }),
       step({ name: "run_report" }),
     ]);
@@ -143,7 +143,7 @@ describe("describeActivity", () => {
   it("counts several single-record lookups as records and names the first", () => {
     const result = line([
       step({ name: "get_customer", summary: "Peak Distributing" }),
-      step({ name: "get_shipment", summary: "PRO-1042" }),
+      step({ name: "shipment_get", summary: "PRO-1042" }),
       step({ name: "get_worker", summary: "Maria Ortiz" }),
     ]);
 
@@ -155,7 +155,7 @@ describe("describeActivity", () => {
     expect(line([step({ name: "list_customers", summary: "3 customers" })]).phrase).toBe(
       "Found 3 records",
     );
-    expect(line([step({ name: "list_shipments", summary: "25+ shipments" })]).phrase).toBe(
+    expect(line([step({ name: "shipment_list", summary: "25+ shipments" })]).phrase).toBe(
       "Found 25+ records",
     );
     expect(line([step({ name: "list_customers", summary: "No customers" })]).phrase).toBe(
@@ -173,7 +173,7 @@ describe("describeActivity", () => {
   });
 
   it("falls back to the argument it was asked about for a saved lookup with no summary", () => {
-    expect(line([step({ name: "get_shipment", arguments: { proNumber: "S1" } })]).phrase).toBe(
+    expect(line([step({ name: "shipment_get", arguments: { proNumber: "S1" } })]).phrase).toBe(
       "Looked up S1",
     );
   });
@@ -217,7 +217,7 @@ describe("describeActivity", () => {
 
   it("reads a write waiting on approval as proposed, never as done", () => {
     const result = line([
-      step({ name: "cancel_shipment", status: "proposed", summary: "PRO-1042" }),
+      step({ name: "shipment_cancel", status: "proposed", summary: "PRO-1042" }),
     ]);
 
     expect(result.phrase).toBe("Proposed a change");
@@ -282,7 +282,7 @@ describe("workSummary", () => {
       workSummary(
         [
           step({ name: "get_customer", durationSeconds: 4 }),
-          step({ name: "update_shipment", durationSeconds: 8 }),
+          step({ name: "shipment_update", durationSeconds: 8 }),
         ],
         t,
       ),
@@ -296,7 +296,7 @@ describe("workSummary", () => {
   it("adds up only the steps that were timed", () => {
     expect(
       workSummary(
-        [step({ name: "get_customer" }), step({ name: "get_shipment", durationSeconds: 3 })],
+        [step({ name: "get_customer" }), step({ name: "shipment_get", durationSeconds: 3 })],
         t,
       ),
     ).toBe("Worked through 2 steps · 3s");
@@ -307,7 +307,7 @@ describe("workSummary", () => {
       workSummary(
         [
           step({ name: "get_customer", durationSeconds: 1 }),
-          step({ name: "update_shipment", status: "failed", durationSeconds: 2 }),
+          step({ name: "shipment_update", status: "failed", durationSeconds: 2 }),
           step({ name: "update_worker", status: "failed", verdict: "denied", durationSeconds: 2 }),
         ],
         t,
@@ -413,14 +413,14 @@ describe("stepsFromExchanges", () => {
     const steps = stepsFromExchanges(
       [
         {
-          call: { id: "c1", name: "cancel_shipment", arguments: {} },
+          call: { id: "c1", name: "shipment_cancel", arguments: {} },
           result: saved({
             toolCallId: "c1",
-            content: 'Recorded a proposal to run "cancel_shipment".',
+            content: 'Recorded a proposal to run "shipment_cancel".',
           }),
         },
         {
-          call: { id: "c2", name: "get_shipment", arguments: {} },
+          call: { id: "c2", name: "shipment_get", arguments: {} },
           result: saved({ toolCallId: "c2", toolFailed: true }),
         },
       ],
@@ -436,8 +436,8 @@ describe("stepsFromExchanges", () => {
     const [only] = stepsFromExchanges(
       [
         {
-          call: { id: "c9", name: "get_shipment", arguments: {} },
-          result: saved({ toolCallId: "c9", toolName: "get_shipment", createdAt: 1_700_000_009 }),
+          call: { id: "c9", name: "shipment_get", arguments: {} },
+          result: saved({ toolCallId: "c9", toolName: "shipment_get", createdAt: 1_700_000_009 }),
           orphan: true,
         },
       ],
@@ -561,13 +561,13 @@ describe("refusals", () => {
   it("names a folded group by its refusal only when every call shares it", () => {
     const alike = [
       step({ name: "get_worker", status: "failed", verdict: "denied" }),
-      step({ name: "get_shipment", status: "failed", verdict: "denied" }),
+      step({ name: "shipment_get", status: "failed", verdict: "denied" }),
     ];
     expect(line(alike)).toMatchObject({ phrase: "Not permitted", refusal: "denied" });
 
     const mixed = [
       step({ name: "get_worker", status: "failed", verdict: "denied" }),
-      step({ name: "get_shipment", status: "done", summary: "S-1001" }),
+      step({ name: "shipment_get", status: "done", summary: "S-1001" }),
     ];
     expect(line(mixed).refusal).toBeUndefined();
   });

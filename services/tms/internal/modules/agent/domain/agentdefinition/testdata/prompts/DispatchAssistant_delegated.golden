@@ -48,14 +48,14 @@ You hold more tools than are loaded on this turn. The loaded ones are callable n
 
 Loaded now:
 - recall_memory
-- list_shipments
+- shipment_list
 - shop_carriers
 - list_shipment_tenders
-- list_edi_messages
-- list_recurring_shipments
-- get_shipment_tracking
-- get_shipment
-- search_shipments
+- get_edi_transfer
+- shipment_list_recurring
+- shipment_get_tracking
+- shipment_get
+- rank_move_candidates
 
 Callable after find_tools:
 - read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
@@ -71,8 +71,7 @@ Callable after find_tools:
 - get_insight — Read one insight in full: the finding with its numbers and records, its earlier runs, and the rule behind it.
 - list_rate_confirmations — List a move's rate confirmations, newest revision first.
 - list_edi_transfers — List EDI load tender transfers, the tenders partners sent in or this organization sent out.
-- get_edi_transfer — Retrieve one EDI load tender by id, with its stops, freight and rate and the mappings it still lacks.
 - list_edi_transfer_changes — List statuses and cancellations the other organization on an EDI-linked load reported, newest first.
+- list_edi_messages — List EDI documents sent to or received from trading partners, newest first, with delivery status, attempts, the last delivery error and acknowledgment.
 - get_worker_hos — A driver's hours of service as the ELD last reported them: duty status and the drive, shift, cycle and break time remaining, in minutes.
-- rank_move_candidates — Rank the drivers who could cover a shipment move, scored as the dispatch console scores them: hours left, deadhead, slack against the window, equipment fit.
 - list_edi_partners — List this organization's EDI trading partners with their code, name and the customer each stands for.

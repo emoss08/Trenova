@@ -133,7 +133,7 @@ func TestGetInvoice_WithholdsAmountsAndTheMemoBelowRestricted(t *testing.T) {
 		&fakePermissions{})
 
 	result, err := tool.Query(t.Context(),
-		agentParams(map[string]any{"invoiceId": entity.ID.String()}, ""))
+		agentParams(map[string]any{"invoiceIds": []any{entity.ID.String()}}, ""))
 	require.NoError(t, err)
 
 	detail, ok := result.(invoiceDetail)
@@ -157,7 +157,7 @@ func TestGetInvoice_ShowsEverythingAtRestricted(t *testing.T) {
 		&fakePermissions{})
 
 	result, err := tool.Query(t.Context(), chatParams(
-		map[string]any{"invoiceId": entity.ID.String()},
+		map[string]any{"invoiceIds": []any{entity.ID.String()}},
 		permission.SensitivityRestricted,
 	))
 	require.NoError(t, err)
@@ -175,9 +175,12 @@ func TestGetInvoice_RefusesSomethingThatIsNotAnID(t *testing.T) {
 
 	tool := newGetInvoiceTool(&fakeInvoiceRepo{}, &fakePermissions{})
 
-	_, err := tool.Query(t.Context(), agentParams(map[string]any{"invoiceId": "INV-1042"}, ""))
+	_, err := tool.Query(
+		t.Context(),
+		agentParams(map[string]any{"invoiceIds": []any{"INV-1042"}}, ""),
+	)
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "invoiceId")
+	assert.Contains(t, err.Error(), "invoiceIds")
 }
 
 func (f *fakeInvoiceRepo) GetByIDs(
@@ -203,7 +206,7 @@ func TestGetInvoices_ReadsEveryInvoiceInOneCallInTheOrderAsked(t *testing.T) {
 	first, second := sensitiveInvoice(), sensitiveInvoice()
 	second.Number = "INV-1043"
 	repo := &fakeInvoiceRepo{items: []*invoice.Invoice{first, second}}
-	tool := newGetInvoicesTool(repo, &fakePermissions{})
+	tool := newGetInvoiceTool(repo, &fakePermissions{})
 	stranger := pulid.MustNew("inv_")
 
 	params := agentParams(map[string]any{
@@ -228,12 +231,12 @@ func TestGetInvoices_ReadsEveryInvoiceInOneCallInTheOrderAsked(t *testing.T) {
 func TestGetInvoices_WithholdsTheTotalBelowRestrictedAndRefusesTooMany(t *testing.T) {
 	t.Parallel()
 
-	entity := sensitiveInvoice()
-	repo := &fakeInvoiceRepo{items: []*invoice.Invoice{entity}}
-	tool := newGetInvoicesTool(repo, &fakePermissions{})
+	entity, other := sensitiveInvoice(), sensitiveInvoice()
+	repo := &fakeInvoiceRepo{items: []*invoice.Invoice{entity, other}}
+	tool := newGetInvoiceTool(repo, &fakePermissions{})
 
 	result, err := tool.Query(t.Context(), agentParams(map[string]any{
-		"invoiceIds": []any{entity.ID.String()},
+		"invoiceIds": []any{entity.ID.String(), other.ID.String()},
 	}, ""))
 	require.NoError(t, err)
 	outcome := result.(*gatedOutcome)

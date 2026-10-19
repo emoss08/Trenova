@@ -6,12 +6,12 @@ import (
 
 	"github.com/bytedance/sonic"
 
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -28,7 +28,7 @@ func testRegistries() (*agenttest.StubActionRegistry, *agenttest.StubQueryRegist
 			Tier:     agent.TierPropose,
 		},
 		&agenttest.StubActionTool{
-			ToolName: "correct_charge_code",
+			ToolName: "billing_correct_charge_codes",
 			Resource: permission.ResourceBillingQueue,
 			Tier:     agent.TierPropose,
 		},
@@ -40,7 +40,7 @@ func testRegistries() (*agenttest.StubActionRegistry, *agenttest.StubQueryRegist
 	}}
 	queries := &agenttest.StubQueryRegistry{Tools: []agentports.AgentQueryTool{
 		&agenttest.StubQueryTool{
-			ToolName: "get_shipment",
+			ToolName: "shipment_get",
 			Resource: permission.ResourceShipment,
 		},
 	}}
@@ -82,13 +82,13 @@ func TestValidateToolSelection_AcceptsAnyRegisteredToolOnAnyTemplate(t *testing.
 
 	assert.Empty(
 		t,
-		validate(t, definition(agentdefinition.TemplateCustomerAssistant, "correct_charge_code")),
+		validate(t, definition(agentdefinition.TemplateCustomerAssistant, "billing_correct_charge_codes")),
 	)
 	assert.Empty(
 		t,
 		validate(
 			t,
-			definition(agentdefinition.TemplateGeneralAssistant, "reassign_move", "get_shipment"),
+			definition(agentdefinition.TemplateGeneralAssistant, "reassign_move", "shipment_get"),
 		),
 	)
 	assert.Empty(t, validate(t, definition("", "update_customer")))
@@ -107,7 +107,7 @@ func TestValidateToolSelection_ReportsEachOffendingToolByIndex(t *testing.T) {
 	errs := validate(t, definition(
 		agentdefinition.TemplateDispatchAssistant,
 		"reassign_move",
-		"get_shipment",
+		"shipment_get",
 		"exec_shell",
 		"run_sql",
 	))
@@ -130,8 +130,8 @@ func TestBuildToolCatalog_ListsEveryRegisteredToolWithItsKind(t *testing.T) {
 		byName[entry.Name] = entry
 	}
 
-	assert.Equal(t, agentdefinitionports.ToolCatalogKindQuery, byName["get_shipment"].Kind)
-	assert.Equal(t, permission.OpRead, byName["get_shipment"].Operation)
+	assert.Equal(t, agentdefinitionports.ToolCatalogKindQuery, byName["shipment_get"].Kind)
+	assert.Equal(t, permission.OpRead, byName["shipment_get"].Operation)
 	assert.Equal(t, agentdefinitionports.ToolCatalogKindAction, byName["update_customer"].Kind)
 	assert.Equal(t, agent.TierActWithApproval, byName["update_customer"].DefaultAutonomyTier)
 	assert.Equal(t, permission.ResourceCustomer, byName["update_customer"].Resource)
@@ -148,7 +148,7 @@ func TestBuildToolCatalog_SaysWhatEachToolDoes(t *testing.T) {
 		byName[entry.Name] = entry
 	}
 
-	assert.Equal(t, agent.ToolEffectLookup, byName["get_shipment"].Effect)
+	assert.Equal(t, agent.ToolEffectLookup, byName["shipment_get"].Effect)
 	assert.Equal(t, agent.ToolEffectChange, byName["update_customer"].Effect)
 	assert.Equal(t, agent.ToolEffectChange, byName["reassign_move"].Effect)
 }
@@ -159,7 +159,7 @@ func TestRegisteredStarterTools_DropsToolsNotYetRegistered(t *testing.T) {
 	actions, queries := testRegistries()
 	tools := registeredStarterTools(agentdefinition.TemplateBillingException, actions, queries)
 
-	assert.Equal(t, []string{"get_shipment", "correct_charge_code"}, tools,
+	assert.Equal(t, []string{"shipment_get", "billing_correct_charge_codes"}, tools,
 		"starter tools that no registry provides are not offered")
 }
 
@@ -225,15 +225,15 @@ func TestApply_ClearsTriggerFieldsThatDoNotBelongToTheMode(t *testing.T) {
 		CronExpression:  "* * * * *",
 		IntervalSeconds: 300,
 		EventKinds:      []agent.EventKind{agent.EventShipmentCreated},
-		ToolNames:       []string{" get_shipment "},
-		ToolTiers:       map[string]agent.AutonomyTier{"get_shipment": agent.TierAutoExecute},
+		ToolNames:       []string{" shipment_get "},
+		ToolTiers:       map[string]agent.AutonomyTier{"shipment_get": agent.TierAutoExecute},
 	})
 
 	assert.Equal(t, "Night desk", d.Name)
 	assert.Empty(t, d.CronExpression)
 	assert.Zero(t, d.IntervalSeconds)
 	assert.Equal(t, []agent.EventKind{agent.EventShipmentCreated}, d.EventKinds)
-	assert.Equal(t, []string{"get_shipment"}, d.ToolNames)
+	assert.Equal(t, []string{"shipment_get"}, d.ToolNames)
 	assert.Equal(t, agentdefinition.DefaultMaxToolCalls, d.MaxToolCalls)
 	assert.Equal(t, agentdefinition.OutputConversational, d.OutputMode)
 }
@@ -271,7 +271,7 @@ func TestBuildToolCatalog_MarksTheCoreTools(t *testing.T) {
 	}
 
 	assert.True(t, byName["recall_memory"].Core)
-	assert.False(t, byName["get_shipment"].Core)
+	assert.False(t, byName["shipment_get"].Core)
 }
 
 type cappedStubTool struct {
@@ -354,14 +354,14 @@ func tierMessages(
 /*
 The refusal says why the tool stops where it does, in the tool's own words. It
 used to say every capped tool "sends work outside the organization", which was
-false for create_shipment, held to approval because a new load commits a
+false for shipment_create, held to approval because a new load commits a
 customer's freight.
 */
 func TestValidateToolSelection_ExplainsTheCapWithTheToolsRationale(t *testing.T) {
 	t.Parallel()
 
 	booking := policyStubTool{StubActionTool: &agenttest.StubActionTool{
-		ToolName: "create_shipment",
+		ToolName: "shipment_create",
 	}}
 	booking.policy = booking.StubActionTool.Policy()
 	booking.policy.MaxTier = agent.TierActWithApproval
@@ -374,7 +374,7 @@ func TestValidateToolSelection_ExplainsTheCapWithTheToolsRationale(t *testing.T)
 	mail.policy.Egress = []agent.EgressClass{agent.EgressExternalRecipient}
 	mail.policy.Rationale = "Emails the customer's contacts a message the model wrote."
 
-	booked := tierMessages(t, booking, agent.TierAutoExecute)["toolTiers.create_shipment"]
+	booked := tierMessages(t, booking, agent.TierAutoExecute)["toolTiers.shipment_create"]
 	assert.Contains(t, booked, "A new load commits a customer's freight.")
 	assert.Contains(t, booked, string(agent.TierActWithApproval))
 	assert.NotContains(t, booked, "outside the organization")
@@ -409,7 +409,7 @@ func TestBuildToolCatalog_NamesTheMostEachChangeMayBeGiven(t *testing.T) {
 		&agenttest.StubActionTool{ToolName: "pay_carrier", Egress: agent.EgressMoney},
 	}}
 	queries := &agenttest.StubQueryRegistry{Tools: []agentports.AgentQueryTool{
-		&agenttest.StubQueryTool{ToolName: "get_shipment"},
+		&agenttest.StubQueryTool{ToolName: "shipment_get"},
 	}}
 
 	byName := make(map[string]agentdefinitionports.ToolCatalogEntry)
@@ -419,7 +419,7 @@ func TestBuildToolCatalog_NamesTheMostEachChangeMayBeGiven(t *testing.T) {
 
 	assert.Equal(t, agent.TierAutoExecute, byName["update_customer"].MaxAutonomyTier)
 	assert.Equal(t, agent.EgressMoney.Ceiling(), byName["pay_carrier"].MaxAutonomyTier)
-	assert.Empty(t, byName["get_shipment"].MaxAutonomyTier)
+	assert.Empty(t, byName["shipment_get"].MaxAutonomyTier)
 }
 
 // noPrerequisites is a tool that can name the tools it takes its arguments
@@ -438,7 +438,7 @@ func TestCatalogEntry_SendsNoPrerequisitesAsAnEmptyList(t *testing.T) {
 
 	for _, tool := range []catalogTool{
 		noPrerequisites{&agenttest.StubQueryTool{ToolName: "list_open_invoices"}},
-		&agenttest.StubQueryTool{ToolName: "get_shipment"},
+		&agenttest.StubQueryTool{ToolName: "shipment_get"},
 	} {
 		encoded, err := sonic.Marshal(catalogEntry(tool, agentdefinitionports.ToolCatalogKindQuery))
 		require.NoError(t, err)

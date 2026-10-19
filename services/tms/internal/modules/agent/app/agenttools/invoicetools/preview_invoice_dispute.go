@@ -18,7 +18,7 @@ var disputeFields = []string{
 	common.FieldStatus,
 	paramDisputeReasonCode,
 	paramDisputedAmount,
-	paramDisputeNotes,
+	fieldDisputeNotes,
 	paramDisputeResolution,
 	paramResolutionNotes,
 	common.FieldResolvedByID,

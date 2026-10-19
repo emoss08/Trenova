@@ -275,7 +275,7 @@ function audienceOf(card: Pick<MemoryCard, "scope" | "roleId">): DeskMemoryAudie
   return { scope: card.scope === "Organization" ? "Organization" : "User", roleId: null };
 }
 
-/** Inline code in a memory, as the reply's prose shows it: `list_shipments`. */
+/** Inline code in a memory, as the reply's prose shows it: `shipment_list`. */
 function InlineCode({ text }: { text: string }) {
   const parts = text.split(/`([^`]+)`/);
   if (parts.length === 1) {

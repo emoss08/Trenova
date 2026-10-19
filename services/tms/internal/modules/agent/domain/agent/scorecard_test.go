@@ -124,7 +124,7 @@ func TestNewScorecard_CarriesToolVerdicts(t *testing.T) {
 	t.Parallel()
 
 	verdicts := []agent.ToolVerdictCount{{
-		ToolName: "list_shipments",
+		ToolName: "shipment_list",
 		Verdict:  "invalid",
 		Calls:    7,
 		TopReasons: []agent.ToolVerdictReason{

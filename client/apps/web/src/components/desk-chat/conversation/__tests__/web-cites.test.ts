@@ -58,7 +58,7 @@ describe("deskWebSources", () => {
     expect(
       deskWebSources(
         [
-          { name: "get_shipment", status: "done", content: "{}" },
+          { name: "shipment_get", status: "done", content: "{}" },
           { ...search("x", [result("https://eia.gov/", "EIA")]), status: "running", content: "" },
         ],
         today,
@@ -174,7 +174,7 @@ describe("webQueryOf", () => {
   it("is the first search's query", () => {
     expect(
       webQueryOf([
-        { name: "get_shipment", arguments: { query: "no" } },
+        { name: "shipment_get", arguments: { query: "no" } },
         { name: "web_search", arguments: { query: " DOE diesel average " } },
       ]),
     ).toBe("DOE diesel average");

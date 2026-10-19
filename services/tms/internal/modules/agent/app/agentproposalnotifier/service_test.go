@@ -8,13 +8,13 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -210,7 +210,7 @@ func TestNotifyPending_TellsEveryDeciderOnce(t *testing.T) {
 		Run:        h.run,
 		Proposals: []*agent.AgentProposal{
 			h.proposal("assign_move", agent.ProposalStatusPending, 1),
-			h.proposal("add_shipment_comment", agent.ProposalStatusPending, 2),
+			h.proposal("shipment_add_comment", agent.ProposalStatusPending, 2),
 			h.proposal("notify_driver", agent.ProposalStatusExecuted, 3),
 		},
 	}))

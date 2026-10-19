@@ -21,7 +21,7 @@ var decisionFields = map[billingqueue.Status][]string{
 	billingqueue.StatusSentBackToOps: {common.FieldStatus, "exceptionReasonCode", "exceptionNotes"},
 	billingqueue.StatusApproved:      {common.FieldStatus, "reviewNotes", fieldReviewCompletedAt},
 	billingqueue.StatusCanceled: {
-		common.FieldStatus, common.ParamCancelReason, common.FieldCanceledByID, "canceledAt",
+		common.FieldStatus, common.FieldCancelReason, common.FieldCanceledByID, "canceledAt",
 	},
 }
 
@@ -91,7 +91,7 @@ func (t *BillingQueueDecisionTool) Preview(
 
 	after := *item
 	after.ExceptionReasonCode = t.reasonOf(&params)
-	after.ExceptionNotes = common.OptionalString(params.Params, paramDecisionNotes)
+	after.ExceptionNotes = common.OptionalString(params.Params, common.ParamNote)
 	comment := billingqueueservice.SendBackComment(&after, params.Actor.UserIDOrNil())
 	note := toolpreview.Send(toolpreview.Record{
 		Resource: permission.ResourceShipment,

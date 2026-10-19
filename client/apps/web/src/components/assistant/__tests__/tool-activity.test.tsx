@@ -37,10 +37,10 @@ describe("ToolActivity refusals", () => {
           }),
           step({
             id: "c2",
-            name: "create_shipment",
+            name: "shipment_create",
             status: "failed",
             verdict: "failed",
-            content: 'Tool "create_shipment" failed: connection reset.',
+            content: 'Tool "shipment_create" failed: connection reset.',
           }),
         ]}
       />,
@@ -80,7 +80,7 @@ describe("ToolActivity refusals", () => {
             verdict: "denied",
             content: "no",
           }),
-          step({ id: "c2", name: "get_shipment", status: "done", summary: "S-1001" }),
+          step({ id: "c2", name: "shipment_get", status: "done", summary: "S-1001" }),
         ]}
       />,
     );

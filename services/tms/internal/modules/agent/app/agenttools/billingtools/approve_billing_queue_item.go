@@ -32,7 +32,7 @@ func NewApproveBillingQueueItemTool(
 		BillingQueueDecisionTool: &BillingQueueDecisionTool{
 			billing: billing,
 			decision: queueDecision{
-				name: "approve_billing_queue_item",
+				name: "billing_approve_queue_item",
 				description: "Propose approving a billing queue item. On your own, propose it only " +
 					"for an item you reviewed and found clean: charges that match the agreement, the " +
 					"documents the customer requires, and no detention charge waiting on approval. When " +
@@ -40,8 +40,8 @@ func NewApproveBillingQueueItemTool(
 					"what you could not confirm; they decide with that in front of them. An item still " +
 					"waiting for review is taken into review by the approval itself. Approval creates the " +
 					"item's draft invoice, or puts it on a statement customer's statement, and the " +
-					"organization's auto-post setting may post it. Once approved, propose post_invoice " +
-					"for the draft. For more than one item, propose approve_billing_queue_items once " +
+					"organization's auto-post setting may post it. Once approved, propose invoice_post " +
+					"for the draft. For more than one item, propose billing_approve_queue_item once " +
 					"with all of them instead.",
 				status:     billingqueue.StatusApproved,
 				personOnly: true,
@@ -141,7 +141,7 @@ func (t *ApproveBillingQueueItemTool) Preview(
 }
 
 // ExecuteWithResult approves the item as the person who approved the proposal
-// and names the invoice approval made, which post_invoice takes next.
+// and names the invoice approval made, which invoice_post takes next.
 func (t *ApproveBillingQueueItemTool) ExecuteWithResult(
 	ctx context.Context,
 	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value

@@ -37,12 +37,12 @@ func TestMergeToolNames_NeverRemoves(t *testing.T) {
 	t.Parallel()
 
 	merged, changed := mergeToolNames(
-		[]string{"cancel_shipment", "get_worker"},
+		[]string{"shipment_cancel", "get_worker"},
 		[]string{"get_worker", "list_time_off"},
 	)
 
 	assert.True(t, changed)
-	assert.Contains(t, merged, "cancel_shipment", "a hand-picked tool is not the seeder's to drop")
+	assert.Contains(t, merged, "shipment_cancel", "a hand-picked tool is not the seeder's to drop")
 	assert.Contains(t, merged, "list_time_off")
 }
 
@@ -101,14 +101,14 @@ func TestMergeToolNames_StopsAtTheToolCap(t *testing.T) {
 
 	merged, changed := mergeToolNames(
 		current,
-		[]string{"share_invoice", "list_invoice_share_candidates"},
+		[]string{"invoice_share", "invoice_list_share_candidates"},
 	)
 
 	assert.True(t, changed)
 	assert.Len(t, merged, agentdefinition.MaxTools)
-	assert.Equal(t, "share_invoice", merged[len(merged)-1])
+	assert.Equal(t, "invoice_share", merged[len(merged)-1])
 
-	full, changed := mergeToolNames(merged, []string{"list_invoice_share_candidates"})
+	full, changed := mergeToolNames(merged, []string{"invoice_list_share_candidates"})
 
 	assert.False(t, changed, "a full list gains nothing")
 	assert.Len(t, full, agentdefinition.MaxTools)

@@ -85,7 +85,7 @@ func TestCompactToolResult_KeepsTheRecordIDsItLeavesOut(t *testing.T) {
 		`"note":"` + strings.Repeat("x", compactedToolResultChars) + `",` +
 		`"locations":[{"id":"loc_01M4SAMFDCV8AGW5XZ28YHJYC6"},{"id":"loc_01M4SAMFS0M58Y5T8XVG9X7Q9P"}]}`
 
-	compacted := compactToolResult(FenceToolResult("find_shipment_records", payload))
+	compacted := compactToolResult(FenceToolResult("shipment_match_records", payload))
 
 	assert.Contains(t, compacted, "was shortened")
 	assert.Contains(

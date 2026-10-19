@@ -28,7 +28,7 @@ func requiredSchema(required []string, fields ...string) map[string]any {
 /*
 A record asked for by "id" reaches the tool under the name it takes.
 
-The Dispatch desk called get_shipment with {"id": "shp_..."} and was told the
+The Dispatch desk called shipment_get with {"id": "shp_..."} and was told the
 shipmentId it had in fact supplied was missing.
 */
 func TestAliasedArguments_ReadsABareIDAsTheOneMissingID(t *testing.T) {
@@ -78,7 +78,7 @@ func TestAliasedArguments_LeavesACompleteCallAlone(t *testing.T) {
 /*
 A record reaches the model without what it carries for the database.
 
-The get_shipment the Dispatch desk read repeated the tenant, a version and two
+The shipment_get the Dispatch desk read repeated the tenant, a version and two
 audit stamps on every commodity, stop, location and charge. The record's own
 version stays, because a write that checks it reads it from there.
 */
@@ -153,10 +153,10 @@ func TestDistinctCallIDs_ReplacesAnIDTheConversationAlreadyUsed(t *testing.T) {
 
 	used := usedCallIDs([]conversation.Message{{
 		Role:      conversation.RoleAssistant,
-		ToolCalls: []conversation.ToolCallRecord{{ID: "call_0", Name: "search_shipments"}},
+		ToolCalls: []conversation.ToolCallRecord{{ID: "call_0", Name: "shipment_list"}},
 	}})
 	completion := &agentports.ChatCompletionResult{ToolCalls: []agentports.ToolCall{
-		{ID: "call_0", Name: "get_shipment"},
+		{ID: "call_0", Name: "shipment_get"},
 		{ID: "", Name: "get_customer"},
 		{ID: "toolu_unique", Name: "get_worker"},
 		{ID: "toolu_unique", Name: "get_tractor"},
@@ -187,7 +187,7 @@ func TestDistinctCallIDs_AlwaysReplacesASynthesizedID(t *testing.T) {
 
 	minted := 0
 	current := &agentports.ChatCompletionResult{ToolCalls: []agentports.ToolCall{
-		{ID: "call_0", SynthesizedID: true, Name: "get_shipment"},
+		{ID: "call_0", SynthesizedID: true, Name: "shipment_get"},
 		{ID: "call_1", SynthesizedID: true, Name: "get_customer"},
 		{ID: "toolu_unique", Name: "get_worker"},
 	}}
