@@ -159,9 +159,9 @@ func (l Ledger) Diff(recorded Ledger) Diff {
 
 func (l Ledger) keys() map[string]struct{} {
 	keys := make(map[string]struct{}, 64)
-	for _, members := range l {
+	for stratum, members := range l {
 		for _, key := range members {
-			keys[key] = struct{}{}
+			keys[key+" ["+stratum.String()+"]"] = struct{}{}
 		}
 	}
 
