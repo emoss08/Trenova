@@ -653,10 +653,7 @@ func (s *Service) finalAnswer(
 	s.reask(t, fx, guard, nil)
 	req := t.completionRequest()
 	req.ToolChoiceNone = true
-	req.Messages = append(slices.Clone(req.Messages), agentports.Message{
-		Role:    agentports.RoleUser,
-		Content: note,
-	})
+	req.Messages = append(slices.Clone(req.Messages), agentports.NoticeMessage(note))
 
 	reply, err := fx.Complete(t, req)
 	result.Usage = result.Usage.Add(reply.usage())

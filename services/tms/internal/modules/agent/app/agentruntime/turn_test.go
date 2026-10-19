@@ -103,7 +103,7 @@ func TestOpenTurn_OpensTheQuestionWithTheRecordsInPlayAndNeverKeepsThem(t *testi
 	assert.Less(t, strings.Index(asked, "<records_in_play>"), strings.Index(asked, "is it still on time?"))
 	assert.Equal(t, "is it still on time?", turn.result.Messages[0].Content,
 		"what was read this turn is never replayed as if it were current later")
-	assert.NotContains(t, turn.system, "records_in_play",
+	assert.NotContains(t, turn.system, "status: Delayed",
 		"the system prompt stays the same bytes from turn to turn")
 }
 

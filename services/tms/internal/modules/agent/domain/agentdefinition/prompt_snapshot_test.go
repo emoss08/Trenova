@@ -110,6 +110,10 @@ func promptContexts() []promptContext {
 				rc.Facts = []string{"Invoice date is Oct 3", "Acme pays net 45"}
 				rc.UserProfile = "This person dispatches the Dallas terminal's regional loads " +
 					"and works mostly with Northwind Foods and Contoso Retail."
+				rc.Frame = agentdefinition.ChatFrame(
+					"See which of today's loads and moves need the dispatcher's attention.",
+					"list late and at-risk loads; list moves with no driver",
+				)
 
 				return &agentports.RunRequest{
 					Definition: definition,
@@ -127,10 +131,15 @@ func promptContexts() []promptContext {
 				rc := canonicalContext(agent.RunTriggerEvent)
 				rc.Subject = &agentdefinition.RuntimeSubject{
 					Type:  agent.SubjectShipmentMove,
-					ID:    "smv_01JSNAPSHOT000000000000000",
+					ID:    "sm_01JSNAPSHOT0000000000000000",
 					Label: "Move 1 of shipment S-1001 for Acme Freight",
 					Notes: "Picks up in Dallas tomorrow at 08:00; no driver assigned.",
 				}
+				rc.Frame = agentdefinition.BackgroundFrame(
+					agent.RunTriggerEvent,
+					agent.EventShipmentMoveUnassigned,
+					definition.Template,
+				)
 				actor := snapshotUser()
 				actor.PrincipalType = permissionports.PrincipalTypeAgent
 				actor.PrincipalID = snapshotAgentID

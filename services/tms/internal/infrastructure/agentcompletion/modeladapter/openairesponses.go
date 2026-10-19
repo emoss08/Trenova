@@ -18,6 +18,7 @@ const (
 	responsesClientExecution = "client"
 	responsesFunctionType    = "function"
 	responsesInputText       = "input_text"
+	responsesDeveloperRole   = "developer"
 )
 
 type openAIResponsesAdapter struct{}
@@ -656,7 +657,7 @@ func (search *responsesSearchTool) searchOutput(msg *Message) []responsesItem {
 	}}
 	if strings.TrimSpace(msg.Content) != "" {
 		items = append(items, responsesItem{
-			Role:    "developer",
+			Role:    responsesDeveloperRole,
 			Content: []responsesMessagePart{{Type: responsesInputText, Text: msg.Content}},
 		})
 	}
@@ -719,6 +720,11 @@ func toResponsesInput(
 					Arguments: string(encoded),
 				})
 			}
+		case RoleSystem:
+			items = append(items, responsesItem{
+				Role:    responsesDeveloperRole,
+				Content: []responsesMessagePart{{Type: responsesInputText, Text: msg.Content}},
+			})
 		default:
 			items = append(items, responsesItem{
 				Role:    "user",

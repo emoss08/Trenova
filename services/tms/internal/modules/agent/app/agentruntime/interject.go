@@ -308,10 +308,10 @@ func (t *Turn) steer(fx TurnEffects, steer Steer) {
 		t.world.watch(mention)
 	}
 
-	t.messages = append(t.messages, agentports.Message{
-		Role:    agentports.RoleUser,
-		Content: SteerPrompt(content, mentions),
-	})
+	t.messages = append(t.messages,
+		agentports.Message{Role: agentports.RoleUser, Content: SteerPrompt(content, mentions)},
+		agentports.NoticeMessage(steerNotice),
+	)
 	t.result.Messages = append(t.result.Messages, conversation.Message{
 		Role:      conversation.RoleUser,
 		Kind:      conversation.MessageKindSteer,
@@ -333,10 +333,7 @@ func (t *Turn) worldChanged(fx TurnEffects, changes []agentports.WatchedRecordCh
 	notice := WorldChangeNotice(changes, t.req.Actor)
 	clear(t.repeats.reads)
 
-	t.messages = append(t.messages, agentports.Message{
-		Role:    agentports.RoleUser,
-		Content: notice,
-	})
+	t.messages = append(t.messages, agentports.NoticeMessage(notice))
 	t.result.Messages = append(t.result.Messages, conversation.Message{
 		Role:         conversation.RoleUser,
 		Kind:         conversation.MessageKindWorldChange,
@@ -350,14 +347,13 @@ func (t *Turn) worldChanged(fx TurnEffects, changes []agentports.WatchedRecordCh
 	})
 }
 
-const steerPreamble = "[The person added this while you were still working. Take it into " +
-	"account from here: change course if it calls for that, keep what still stands, and do " +
-	"not start over.]\n\n"
+const steerNotice = "[Notice from the system, not from the person: the person added the " +
+	"message above while you were still working. Take it into account from here: change " +
+	"course if it calls for that, keep what still stands, and do not start over.]"
 
 func SteerPrompt(content string, mentions []agent.EntityRef) string {
 	var b strings.Builder
-	b.Grow(len(steerPreamble) + len(content) + len(mentions)*48)
-	b.WriteString(steerPreamble)
+	b.Grow(len(content) + len(mentions)*48)
 	b.WriteString(content)
 	if len(mentions) > 0 {
 		b.WriteString("\n\nRecords they named:")

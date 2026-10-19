@@ -54,7 +54,7 @@ func anthropicParams(call *Call, attached *anthropicFiles) anthropic.BetaMessage
 		MaxTokens: int64(call.Request.MaxTokens),
 		System:    cachedSystem(call.Request.System, call.Request.SystemStable),
 		Messages: cachedConversation(
-			anthropicConversation(messages, attached.blocks),
+			anthropicConversation(messages, attached.blocks, anthropicNotices(call)),
 		),
 		Tools: cachedTools(toAnthropicTools(tools)),
 	}
@@ -66,6 +66,15 @@ func anthropicParams(call *Call, attached *anthropicFiles) anthropic.BetaMessage
 	applyDiagnostics(&params, call)
 
 	return params
+}
+
+func anthropicNotices(call *Call) bool {
+	platform := call.Provider.ResolvedPlatform()
+	if platform == aiprovider.PlatformFoundry || platform == aiprovider.PlatformBedrock {
+		return false
+	}
+
+	return providerTraits(call.Provider).notices
 }
 
 func anthropicDefers(call *Call) bool {
@@ -565,7 +574,7 @@ func replayThinking(trace *ReasoningTrace) []anthropic.BetaContentBlockParamUnio
 // is an edit every model accepts, and most ignore earlier turns' thinking
 // anyway. A tool result needs its own turn's thinking before it, which stays.
 func toAnthropicMessages(messages []Message) []anthropic.BetaMessageParam {
-	return anthropicConversation(messages, nil)
+	return anthropicConversation(messages, nil, false)
 }
 
 // anthropicConversation is the conversation as the API takes it, with the
@@ -573,6 +582,7 @@ func toAnthropicMessages(messages []Message) []anthropic.BetaMessageParam {
 func anthropicConversation(
 	messages []Message,
 	files map[int][]anthropic.BetaContentBlockParamUnion,
+	notices bool,
 ) []anthropic.BetaMessageParam {
 	out := make([]anthropic.BetaMessageParam, 0, len(messages))
 	currentTurn := 0
@@ -585,7 +595,15 @@ func anthropicConversation(
 
 	for i := range messages {
 		msg := &messages[i]
-		switch msg.Role {
+		role := msg.Role
+		if role == RoleSystem {
+			if notices && noticeFits(out, messages, i) {
+				out = appendNotice(out, msg.Content)
+				continue
+			}
+			role = RoleUser
+		}
+		switch role {
 		case RoleTool:
 			// A tool result is a tool_result block in a user-role message, not
 			// a role of its own. The results of one turn's calls share a
@@ -626,7 +644,7 @@ func anthropicConversation(
 				Role:    anthropic.BetaMessageParamRoleAssistant,
 				Content: blocks,
 			})
-		default:
+		case RoleUser, RoleSystem:
 			blocks := append(slices.Clone(files[i]), anthropic.BetaContentBlockParamUnion{
 				OfText: &anthropic.BetaTextBlockParam{Text: msg.Content},
 			})
@@ -644,6 +662,34 @@ func anthropicConversation(
 	}
 
 	return out
+}
+
+func noticeFits(out []anthropic.BetaMessageParam, messages []Message, at int) bool {
+	if len(out) == 0 || out[len(out)-1].Role == anthropic.BetaMessageParamRoleAssistant {
+		return false
+	}
+	for idx := at + 1; idx < len(messages); idx++ {
+		if messages[idx].Role != RoleSystem {
+			return messages[idx].Role == RoleAssistant
+		}
+	}
+
+	return true
+}
+
+func appendNotice(out []anthropic.BetaMessageParam, content string) []anthropic.BetaMessageParam {
+	block := anthropic.BetaContentBlockParamUnion{
+		OfText: &anthropic.BetaTextBlockParam{Text: content},
+	}
+	if last := &out[len(out)-1]; last.Role == anthropic.BetaMessageParamRoleSystem {
+		last.Content = append(last.Content, block)
+		return out
+	}
+
+	return append(out, anthropic.BetaMessageParam{
+		Role:    anthropic.BetaMessageParamRoleSystem,
+		Content: []anthropic.BetaContentBlockParamUnion{block},
+	})
 }
 
 // lastToolResults is the final message when it is a user message that opens
@@ -809,8 +855,12 @@ func cachedConversation(messages []anthropic.BetaMessageParam) []anthropic.BetaM
 	if len(messages) == 0 {
 		return messages
 	}
-	last := &messages[len(messages)-1]
-	if len(last.Content) == 0 {
+	at := len(messages) - 1
+	for at > 0 && messages[at].Role == anthropic.BetaMessageParamRoleSystem {
+		at--
+	}
+	last := &messages[at]
+	if len(last.Content) == 0 || last.Role == anthropic.BetaMessageParamRoleSystem {
 		return messages
 	}
 	if mark := last.Content[len(last.Content)-1].GetCacheControl(); mark != nil {

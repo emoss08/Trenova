@@ -130,7 +130,7 @@ func TestDrive_AsksAgainForAnArtifactNamedOutsideASentence(t *testing.T) {
 
 	last := completion.Requests[len(completion.Requests)-1].Messages
 	correction := last[len(last)-1]
-	assert.Equal(t, agentports.RoleUser, correction.Role)
+	assert.Equal(t, agentports.RoleSystem, correction.Role)
 	assert.Contains(t, correction.Content, placementCorrectionLead)
 	assert.Contains(t, correction.Content, ArtifactRef(&card)+" stands outside a sentence.")
 }

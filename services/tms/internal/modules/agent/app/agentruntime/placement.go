@@ -97,10 +97,7 @@ func (s *Service) placeArtifacts(
 				ReplyID:       completion.ProviderMessageID,
 				ReplyProvider: completion.ProviderID,
 			},
-			agentports.Message{
-				Role:    agentports.RoleUser,
-				Content: t.placementCorrection(&problems),
-			},
+			agentports.NoticeMessage(t.placementCorrection(&problems)),
 		)
 
 		return true
@@ -163,7 +160,7 @@ func (t *Turn) discardedDraft(idx int) bool {
 }
 
 func isCorrection(message *agentports.Message) bool {
-	return message.Role == agentports.RoleUser &&
+	return message.Role == agentports.RoleSystem &&
 		(strings.HasPrefix(message.Content, placementCorrectionLead) ||
 			isGroundingCorrection(message.Content))
 }

@@ -118,7 +118,8 @@ func runGroundedWith(
 
 func lastUserMessage(req *agentports.ChatCompletionRequest) string {
 	for idx := len(req.Messages) - 1; idx >= 0; idx-- {
-		if req.Messages[idx].Role == agentports.RoleUser {
+		if role := req.Messages[idx].Role; role == agentports.RoleUser ||
+			role == agentports.RoleSystem {
 			return req.Messages[idx].Content
 		}
 	}

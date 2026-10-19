@@ -111,6 +111,7 @@ type toolSetRequest struct {
 	beyond map[string]agent.AutonomyTier
 	actor  *permissionports.RequestActor
 	input  string
+	need   string
 	query  agentports.QueryVectorRequest
 	// history is the replayed conversation. The tools the model used or
 	// loaded in its recent turns are loaded again, so a follow-up like "yes,
@@ -202,6 +203,9 @@ func (s *Service) openToolSet(ctx context.Context, req *toolSetRequest) *toolSet
 	disclosed := len(selected) > s.toolThreshold() && s.catalog != nil
 	searchable := disclosed || (len(set.beyond) > 0 && s.catalog != nil)
 	text := rankingText(req.input, req.history)
+	if req.need != "" {
+		text = req.need + "\n" + req.input
+	}
 
 	// The core tools ride on every turn and do not count toward narrowing: a
 	// turn that opened with eight slots would otherwise spend half of them on
@@ -457,6 +461,23 @@ func (s *Service) carryOver(set *toolSet, history []conversation.Message) {
 			}
 		}
 	}
+}
+
+func frameNeed(req *agentports.RunRequest) string {
+	if req.Context.Frame == nil {
+		return ""
+	}
+
+	return strings.TrimSpace(req.Context.Frame.Need)
+}
+
+func turnQuery(req *agentports.RunRequest) agentports.QueryVectorRequest {
+	query := agentports.TurnQueryRequest(req)
+	if need := frameNeed(req); need != "" && req.Actor != nil {
+		query.Text = need + "\n" + req.Input
+	}
+
+	return query
 }
 
 // rankingText is what preselection ranks against: the request, and the one

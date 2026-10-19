@@ -141,7 +141,7 @@ func (s *Service) reground(
 				ReplyID:       completion.ProviderMessageID,
 				ReplyProvider: completion.ProviderID,
 			},
-			agentports.Message{Role: agentports.RoleUser, Content: finding.correction()},
+			agentports.NoticeMessage(finding.correction()),
 		)
 
 		return true

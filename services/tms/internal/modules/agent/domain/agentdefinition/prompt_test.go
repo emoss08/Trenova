@@ -574,14 +574,14 @@ func TestBuildSystemPrompt_LeavesMemoryOutWhenNotAskedForOrEmpty(t *testing.T) {
 	assert.NotContains(
 		t,
 		d.BuildSystemPrompt(agentdefinition.RuntimeContext{}),
-		"organization_memory",
+		"<organization_memory>\n",
 	)
 
 	d.ContextProviders = []agentdefinition.ContextProvider{agentdefinition.ContextClock}
 	prompt := d.BuildSystemPrompt(agentdefinition.RuntimeContext{
 		Memories: []*agent.Memory{{Kind: agent.MemoryKindFact, Content: "x"}},
 	})
-	assert.NotContains(t, prompt, "organization_memory")
+	assert.NotContains(t, prompt, "<organization_memory>\n")
 }
 
 // The person typed "yes" at a card they had not clicked and the model raised
@@ -706,8 +706,7 @@ func TestBuildSystemPrompt_DisclosedSectionNamesWhatFindToolsCanLoad(t *testing.
 		"- Shipments (9 tools): shipment, shipment move, stop and 2 more")
 	assert.NotContains(t, prompt, "Loaded now:")
 	assert.NotContains(t, prompt, "Callable after find_tools")
-	assert.Contains(t, prompt, "call find_tools first")
-	assert.Contains(t, prompt, "never tell")
+	assert.Contains(t, prompt, "call find_tools before you tell the person")
 	assert.False(
 		t,
 		d.HasContextProvider(agentdefinition.ContextTools),
@@ -723,7 +722,7 @@ func TestBuildSystemPrompt_TellsAConversationAgentToSaveStatedPreferences(t *tes
 	prompt := validDefinition().BuildSystemPrompt(agentdefinition.RuntimeContext{})
 	assert.Contains(t, prompt, "## Remembering")
 	assert.Contains(t, prompt, "save it with remember in the same turn")
-	assert.Contains(t, prompt, "Never show the person a record's internal id")
+	assert.Contains(t, prompt, "never by an internal id")
 
 	delegated := validDefinition().BuildSystemPrompt(agentdefinition.RuntimeContext{DelegatedBy: "Dispatch desk"})
 	assert.NotContains(

@@ -274,6 +274,11 @@ func (a *Activities) runRequest(
 	if err != nil {
 		return nil, fmt.Errorf("build runtime context: %w", err)
 	}
+	runtimeContext.Frame = agentdefinition.BackgroundFrame(
+		payload.Trigger,
+		payload.EventKind,
+		definition.Template,
+	)
 
 	return &agentports.RunRequest{
 		Definition: definition,

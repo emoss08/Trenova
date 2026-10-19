@@ -304,7 +304,7 @@ func TestSystemPrompt_SaysTheToolListIsPartialWhenDisclosed(t *testing.T) {
 
 	disclosed := definition.BuildSystemPrompt(runtimeContextWith(summaries, true))
 	assert.Contains(t, disclosed, findToolsName)
-	assert.Contains(t, disclosed, "never tell")
+	assert.Contains(t, disclosed, "call find_tools before you tell")
 
 	whole := definition.BuildSystemPrompt(runtimeContextWith(summaries, false))
 	assert.NotContains(t, whole, findToolsName)
