@@ -175,7 +175,7 @@ func TestRoutingReport_SaysHowManyWentWhereTheyShouldAndWhatChanged(t *testing.T
 			Expect:  "BillingAssistant",
 			Outcome: "BetterAgent",
 			Agent:   "Billing",
-			Tools:   []string{"list_invoices"},
+			Tools:   []string{"invoice_list"},
 			Passed:  true,
 		},
 		{Case: "aging", From: "Billing", Expect: "current", Outcome: "NoMatch"},
@@ -188,7 +188,7 @@ func TestRoutingReport_SaysHowManyWentWhereTheyShouldAndWhatChanged(t *testing.T
 	assert.Contains(t, summary, "The run compared with: 1 of 2 (50%), +0 points.")
 	assert.Contains(t, summary, "- `aging` now fails")
 	assert.Contains(t, summary, "- `past-due` now passes")
-	assert.Contains(t, summary, "| ✓ past-due | Dispatch | BillingAssistant | Billing | list_invoices |")
+	assert.Contains(t, summary, "| ✓ past-due | Dispatch | BillingAssistant | Billing | invoice_list |")
 	assert.Contains(t, summary, "| ✗ aging | Billing | current | nothing |  |")
 
 	dir := t.TempDir()

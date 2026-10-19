@@ -145,7 +145,7 @@ describe("DecisionCard", () => {
         ],
       }),
     );
-    renderCard(node({ toolName: "post_invoices" }));
+    renderCard(node({ toolName: "invoice_post" }));
 
     expect(await screen.findByText("Refused")).toBeInTheDocument();
     expect(

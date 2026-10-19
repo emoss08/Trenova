@@ -29,7 +29,7 @@ cases:
   - request: what is the going price to haul freight from Denver to Phoenix
     expect: [quote_shipment, shop_carriers]
   - request: who still owes us money past thirty days
-    expect: [list_invoices]
+    expect: [invoice_list]
   - request: the client wired us funds, apply them to their bills
     expect: [post_customer_payment]
   - request: pull up what the broker wrote to our shared mailbox
@@ -73,7 +73,7 @@ cases:
   - request: who is dragging their feet paying us
     expect: [get_ar_aging, list_collections_worklist, list_ar_open_items]
   - request: which bills is this client still sitting on
-    expect: [list_ar_open_items, list_invoices]
+    expect: [list_ar_open_items, invoice_list]
   - request: send me everything this client was charged and what they paid back
     expect: [get_customer_statement]
   - request: who do I phone about late money first

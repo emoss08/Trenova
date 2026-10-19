@@ -49,11 +49,11 @@ agents:
       - explain_rate
       - rank_move_candidates
       - get_dispatch_board
-      - list_billing_transfer_candidates
-      - list_billing_queue_items
-      - get_billing_queue_item
-      - list_invoices
-      - get_invoice
+      - billing_list_transfer_candidates
+      - billing_list_queue_items
+      - billing_get_queue_item
+      - invoice_list
+      - invoice_get
       - list_service_failures
       - list_detention_desk
       - shipment_create
@@ -71,10 +71,10 @@ agents:
       - shipment_place_hold
       - shipment_release_hold
       - shipment_add_comment
-      - transfer_to_billing
-      - approve_billing_queue_item
-      - post_invoice
-      - send_invoice
+      - billing_transfer
+      - billing_approve_queue_item
+      - invoice_post
+      - invoice_send
       - shop_carriers
       - assign_move_to_carrier
       - generate_rate_confirmation

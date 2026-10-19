@@ -677,7 +677,7 @@ func (s *Service) limits(
 }
 
 // Label is a tool's name as a person reads it, in reading order:
-// shipment_list is "List shipments".
+// invoice_post is "Post invoice".
 func Label(name string) string {
 	words := strings.FieldsFunc(agentports.ReadingOrder(name), func(r rune) bool {
 		return r == '_' || r == '-' || r == '.'

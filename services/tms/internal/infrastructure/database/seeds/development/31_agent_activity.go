@@ -556,7 +556,7 @@ func (s *AgentActivitySeed) insertPlan(
 
 	steps := []*agent.AgentProposal{
 		proposal(
-			"correct_charge_code",
+			"billing_correct_charge_codes",
 			agent.TierActWithApproval,
 			agent.ProposalStatusPending,
 			0.9,
@@ -782,7 +782,7 @@ func trustRows(refs *activitySeedRefs) []*agent.ToolTrust {
 			OrganizationID:    refs.org.ID,
 			BusinessUnitID:    refs.org.BusinessUnitID,
 			AgentDefinitionID: refs.billing.ID,
-			ToolName:          "correct_charge_code",
+			ToolName:          "billing_correct_charge_codes",
 			Streak:            5,
 			Approvals:         6,
 			Modifications:     1,

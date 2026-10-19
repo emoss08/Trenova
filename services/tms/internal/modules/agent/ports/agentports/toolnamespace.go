@@ -30,6 +30,11 @@ var toolNamespaces = []ToolNamespace{
 		Summary: "The agent's own work: memories, waits, runs, profiles and finding things in Trenova.",
 	},
 	{
+		Name:    "billing",
+		Title:   "Billing queue",
+		Summary: "The billing queue: transferring shipments into it and reviewing, assigning, holding and approving its items.",
+	},
+	{
 		Name:    "carrier",
 		Title:   "Carriers",
 		Summary: "Outside carriers: their records, vetting, monitoring, capacity and intelligence events.",
@@ -106,8 +111,8 @@ var toolNamespaces = []ToolNamespace{
 	},
 	{
 		Name:    "invoice",
-		Title:   "Billing and invoices",
-		Summary: "The billing queue, invoices, invoice runs, adjustments, disputes and sending invoices.",
+		Title:   "Invoices",
+		Summary: "Invoices: drafting, posting and sending them, invoice runs, statement billing, adjustments and disputes.",
 	},
 	{
 		Name:    "ledger",

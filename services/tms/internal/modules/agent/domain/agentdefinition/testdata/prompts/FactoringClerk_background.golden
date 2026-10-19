@@ -93,8 +93,8 @@ Callable after find_tools:
 - list_factoring_remittances — List factor remittances, newest first, with how far each has been read and booked.
 - resolve_factoring_remittance_line — Resolve one line of a factor remittance so it can be applied, or set it aside.
 - rematch_factoring_remittance — Match a remittance's open lines again against the factor's schedules as they are now, after a schedule was sent or funded since the remittance was read.
-- list_invoices — List invoices narrowed by customer, status, whether they are paid or disputed, the amount, or the invoice and due dates.
-- get_invoice — Retrieve one invoice by id, with its line items, totals, payment and dispute state.
+- invoice_list — List invoices narrowed by customer, status, whether they are paid or disputed, the amount, or the invoice and due dates.
+- invoice_get — Retrieve invoices by id: one in full, or up to 50 in one call as a table, for example to check a batch of drafts before posting them.
 
 What a change you call does:
 - Changes that always record a proposal for a person to decide: raise_exception, flag_for_manual_review, wait_until, cancel_wait, draft_factoring_noa, send_factoring_noa, record_factoring_noa_acknowledgement, request_missing_factoring_document, submit_invoices_to_factor, retry_factoring_submission, cancel_factoring_submission, record_factoring_funding, release_factoring_reserve, resolve_factoring_remittance_line, rematch_factoring_remittance, apply_factoring_remittance

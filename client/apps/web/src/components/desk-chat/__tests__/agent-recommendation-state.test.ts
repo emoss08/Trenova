@@ -33,14 +33,14 @@ function recommending(agent: AgentChoice, current = false): AgentMatch {
   return {
     outcome: current ? "CurrentAgent" : "BetterAgent",
     agent,
-    tools: [{ name: "list_invoices", summary: "List invoices by status." }],
+    tools: [{ name: "invoice_list", summary: "List invoices by status." }],
   };
 }
 
 const nobody: AgentMatch = {
   outcome: "NoAgent",
   agent: null,
-  tools: [{ name: "list_invoices", summary: "List invoices by status." }],
+  tools: [{ name: "invoice_list", summary: "List invoices by status." }],
 };
 
 describe("recommendationQueryText", () => {

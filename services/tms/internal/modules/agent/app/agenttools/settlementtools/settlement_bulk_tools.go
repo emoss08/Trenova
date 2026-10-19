@@ -224,7 +224,7 @@ func (t *SettlementBulkTool[E]) ExecuteWithResult(
 	ctx context.Context,
 	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
-	return t.batch.Execute(ctx, t, &params, t.single.Execute)
+	return t.batch.Execute(ctx, t, &params)
 }
 
 func driverBulkSpec(

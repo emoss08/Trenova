@@ -63,20 +63,19 @@ Loaded now:
 - wait_until
 - cancel_wait
 - get_inbound_message
+- shipment_get
+- shipment_get_tracking
 - get_document_summary
 - intake_get_draft
-- link_inbound_message
+- reply_to_inbound_message
 - get_edi_inbound_file
-- list_edi_transfers
 - get_edi_transfer
 - decline_edi_tender
 
 Callable after find_tools:
 - list_inbound_messages — List the inbox, newest first: mail that arrived on a monitored address, with sender, subject, what it was read as and whether it waits on a person.
 - search_inbound_messages — Search the inbox by what the mail says, best match first: the subject, the sender and the sender's own words, without the quoted thread.
-- shipment_get — Read one shipment (load) by its id or PRO number.
 - shipment_list — Find shipments (loads) by the words people use for them, by status, or by filters on dates, charges and transfer status.
-- shipment_get_tracking — Where a shipment is and whether it will be on time: each stop's window, actual arrival and lateness, the tractor's last position, and an arrival estimate.
 - get_customer — Retrieve one customer by id, with their billing and email profiles.
 - get_carrier — Retrieve one carrier by id, including its authority, insurance and compliance state.
 - search_documents — Search the text of documents: rate confirmations, bills of lading, proofs of delivery, invoices, contracts, permits and other files attached to records.
@@ -85,9 +84,9 @@ Callable after find_tools:
 - list_email_profiles — The sending profiles email can go out from: each has a name, a sender address and a reply-to.
 - list_triage_assignees — List the people who can take messages in the Triage queue, with how many waiting messages each already holds, and the on-call person.
 - list_document_types — List the document types this organization files — rate confirmations, bills of lading, proofs of delivery and the rest.
+- link_inbound_message — Say which shipment, customer or carrier a message that arrived on a monitored address is about, when the automatic match missed it or got it wrong.
 - unlink_inbound_message — Remove the shipment, customer or carrier a message is linked to, when the link is wrong and the right record is not known.
 - mark_inbound_message — Settle a message that arrived on a monitored address as Actioned or Ignored.
-- reply_to_inbound_message — Answer a message that arrived on a monitored address, in the same thread: a status question, a request for a missing detail.
 - draft_inbound_reply — Save a reply to a message as its draft in Triage, for a person to review and send; nothing is sent.
 - discard_inbound_reply_draft — Throw away the reply draft waiting on a message in Triage, when it should not be sent at all.
 - wait_for_inbound_reply — Park a message in Triage until its sender answers on the same thread, or until a time if nobody does, at most 30 days out; it returns to the queue either way.
@@ -108,6 +107,7 @@ Callable after find_tools:
 - create_inbound_load — Create the shipment a tender in Triage describes, from the fields you checked.
 - shipment_attach_document — Attach a document that already exists to a shipment, so it rides with the load and its billing.
 - shipment_add_comment — Leave a note on a shipment's comment thread, where dispatch will read it.
+- list_edi_transfers — List EDI load tender transfers, the tenders partners sent in or this organization sent out.
 - quote_shipment — Price a shipment that has not been saved, from the customer's rate agreements and the organization's rating rules.
 - accept_edi_tender — Propose accepting a load tender a trading partner sent over EDI, which creates the shipment from it and tells the partner.
 - list_service_types — List service types — the levels of service a shipment can be booked at.

@@ -62,12 +62,12 @@ Loaded now:
 - list_tractors
 - list_trailers
 - assign_move
-- list_shipment_tenders
+- shipment_add_comment
 - shipment_uncancel
 - shipment_duplicate
 - shipment_transfer_ownership
 - shipment_list_recurring
-- record_stop_actual
+- shipment_generate_recurring
 - shipment_get
 - rank_move_candidates
 
@@ -79,7 +79,6 @@ Callable after find_tools:
 - list_time_off — List worker (driver) time-off requests — who is out, who is asking to be, and who was turned down.
 - list_hold_reasons — List the reasons a shipment can be put on hold, and what each one blocks — dispatch, delivery, billing.
 - shop_carriers — Price a saved shipment against carriers and rank them by contract cost, margin against the customer's charge, and routing guide rank.
-- shipment_add_comment — Leave a note on a shipment's comment thread, where dispatch will read it.
 - shipment_place_hold — Put a shipment on hold so it stops moving, billing or delivering until someone clears it.
 - shipment_release_hold — Clear a hold so the shipment can move again.
 - update_tractor_status — Change the status of one or more tractors, which is what makes a truck available to dispatch or takes it off the board.
@@ -90,6 +89,7 @@ Callable after find_tools:
 - update_move_status — Set the status of one or more moves directly: InTransit when a load is rolling, Completed when it has been delivered, Canceled when the move will not run.
 - assign_move_to_carrier — Cover a move with an outside carrier at a rate the carrier already agreed to.
 - cancel_carrier_assignment — Take the outside carrier off a move that has not started, leaving it uncovered, and void the carrier's rate confirmation.
+- list_shipment_tenders — List a shipment's tenders, newest first, with every offer in rank order.
 - cancel_tender — Withdraw a live tender: every offer a carrier still holds is withdrawn and its answer link stops working, and the carriers not yet asked are skipped.
 - record_tender_response — Record a carrier's answer to an offer that reached you by phone or email outside the offer's link.
 - list_rate_confirmations — List a move's rate confirmations, newest revision first.
@@ -113,10 +113,10 @@ Callable after find_tools:
 - shipment_recalculate_distance — Work out a shipment's move miles again from its stops through the organization's distance profile and routing provider, and save them.
 - shipment_pin_comment — Pin a comment to the top of a shipment's thread so dispatch sees it first.
 - shipment_resolve_comment — Mark a comment on a shipment resolved once what it asked for is done, or reopen one with resolved=false when it is not.
-- shipment_generate_recurring — Create the shipment for a recurring shipment's next slot now, or for the slot at occurrenceAt, instead of waiting for the schedule.
 - shipment_update — Change the details of a saved shipment: the customer, service type, shipment type, equipment types, BOL, pieces, weight or temperature range.
 - shipment_get_tracking — Where a shipment is and whether it will be on time: each stop's window, actual arrival and lateness, the tractor's last position, and an arrival estimate.
 - get_worker_hos — A driver's hours of service as the ELD last reported them: duty status and the drive, shift, cycle and break time remaining, in minutes.
+- record_stop_actual — Record that a driver arrived at or departed from a stop.
 - shipment_reschedule_stop — Move a saved shipment's pickup or delivery appointment: the stop's planned window, local to the stop.
 - list_edi_partners — List this organization's EDI trading partners with their code, name and the customer each stands for.
 

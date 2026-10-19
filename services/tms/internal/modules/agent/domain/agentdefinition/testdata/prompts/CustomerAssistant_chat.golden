@@ -87,7 +87,7 @@ Loaded now:
 - open_page
 - wait_until
 - cancel_wait
-- list_invoices
+- invoice_list
 - accept_edi_tender
 - list_service_failures
 - create_customer

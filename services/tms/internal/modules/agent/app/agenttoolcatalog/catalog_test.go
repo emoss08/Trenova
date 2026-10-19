@@ -474,7 +474,7 @@ func TestMatch_KeepsATieWhenEmbeddingsJoinTheRanking(t *testing.T) {
 	catalog := New([]agentports.AgentToolDescriptor{
 		{Name: "shipment_create", Description: "Create a shipment."},
 		{Name: "shipment_get", Description: "Retrieve one shipment."},
-		{Name: "list_invoices", Description: "List invoices."},
+		{Name: "invoice_list", Description: "List invoices."},
 	})
 
 	matches := catalog.Match(Query{
@@ -483,7 +483,7 @@ func TestMatch_KeepsATieWhenEmbeddingsJoinTheRanking(t *testing.T) {
 		Semantic: NewSemantic(map[string]float64{
 			"shipment_create": 0.62,
 			"shipment_get":    0.62,
-			"list_invoices":   0.11,
+			"invoice_list":   0.11,
 		}),
 	})
 
@@ -500,7 +500,7 @@ func TestMentionsAny_FindsAQuestionThatNamesSomethingAToolDoes(t *testing.T) {
 	t.Parallel()
 
 	catalog := New([]agentports.AgentToolDescriptor{
-		{Name: "list_invoices", Description: "List invoices by status."},
+		{Name: "invoice_list", Description: "List invoices by status."},
 	})
 
 	assert.True(t, catalog.MentionsAny(nil, "which invoices are past due"))
@@ -512,11 +512,11 @@ func TestMentionsAny_LooksOnlyAtTheToolsAllowed(t *testing.T) {
 	t.Parallel()
 
 	catalog := New([]agentports.AgentToolDescriptor{
-		{Name: "list_invoices", Description: "List invoices by status."},
+		{Name: "invoice_list", Description: "List invoices by status."},
 		{Name: "shipment_get", Description: "Get a shipment by its number."},
 	})
 
-	assert.True(t, catalog.MentionsAny([]string{"list_invoices"}, "which invoices are past due"))
+	assert.True(t, catalog.MentionsAny([]string{"invoice_list"}, "which invoices are past due"))
 	assert.False(t, catalog.MentionsAny([]string{"shipment_get"}, "which invoices are past due"))
 	assert.False(t, catalog.MentionsAny([]string{}, "which invoices are past due"))
 	assert.False(t, catalog.MentionsAny([]string{"unknown_tool"}, "which invoices are past due"))

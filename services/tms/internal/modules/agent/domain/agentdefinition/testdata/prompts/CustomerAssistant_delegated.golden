@@ -61,15 +61,15 @@ Loaded now:
 - order_attach_shipments
 - shipment_list_recurring
 - shipment_create_recurring
-- shipment_update_recurring
 - shipment_set_recurring_status
 - shipment_rerate
+- update_customer_status
 - create_commodity
 
 Callable after find_tools:
 - read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
 - shipment_get — Read one shipment (load) by its id or PRO number.
-- list_invoices — List invoices narrowed by customer, status, whether they are paid or disputed, the amount, or the invoice and due dates.
+- invoice_list — List invoices narrowed by customer, status, whether they are paid or disputed, the amount, or the invoice and due dates.
 - shipment_add_comment — Leave a note on a shipment's comment thread, where dispatch will read it.
 - list_insights — List insight detector findings: service slipping for a customer, cash tied up in unbilled work, cost leaking at a location, compliance about to lapse.
 - get_insight — Read one insight in full: the finding with its numbers and records, its earlier runs, and the rule behind it.
@@ -92,6 +92,7 @@ Callable after find_tools:
 - order_remove_charge — Take a charge off an order before it is invoiced.
 - order_close — Close a Billed order once nothing more will be billed on it.
 - order_cancel — Cancel an order and every shipment on it that is not already canceled, with the reason the customer gave.
+- shipment_update_recurring — Change a recurring shipment's name, schedule, timezone, dates, limits, blackout days or whether it generates on its own.
 - shipment_generate_recurring — Create the shipment for a recurring shipment's next slot now, or for the slot at occurrenceAt, instead of waiting for the schedule.
 - shipment_update_comment — Change the text, visibility, priority or acknowledgment request of a comment on a shipment.
 - shipment_unpin_comment — Take a pinned comment off the top of a shipment's thread once what it said no longer applies.
@@ -105,7 +106,6 @@ Callable after find_tools:
 - vet_customer_broker — Check a customer that is a freight broker against the public FMCSA record by its DOT number: broker authority and bond.
 - create_customer — Add a customer the organization ships for: its code, name, billing address and DOT and MC numbers.
 - update_customer — Change a customer's details: name, billing address, DOT and MC numbers, who is emailed status updates, and consolidation.
-- update_customer_status — Set one or more customers Active or Inactive, which decides whether shipments can be booked for them.
 - update_location — Change a location's name, description, address or category.
 - update_location_status — Set one or more locations Active or Inactive, which decides whether stops can be booked at them.
 - list_commodities — List commodities — what this organization hauls, with freight class, handling flags and whether the commodity is hazardous.

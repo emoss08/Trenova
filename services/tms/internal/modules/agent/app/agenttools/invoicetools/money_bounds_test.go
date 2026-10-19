@@ -582,7 +582,7 @@ func TestCorrectChargeCodeBounds_CountEveryChargeItChangesInFull(t *testing.T) {
 
 	lumper, detention := pulid.MustNew("ac_"), pulid.MustNew("ac_")
 	inReview := &billingqueue.BillingQueueItem{
-		Status:         billingqueue.StatusInReview,
+		Status:           billingqueue.StatusInReview,
 		BillToCustomerID: pulid.MustNew("cus_"),
 	}
 	cases := []struct {

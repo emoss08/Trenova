@@ -1304,7 +1304,7 @@ batch reader:
   the next stop (arrived and not departed, or overdue and by how long), who covers
   it, the last position, the driver's hours and the estimated arrival.
 - **Invoice**: status, settlement and dispute, bill-to, shipment and due date.
-  Amounts are left to `get_invoice`, which gates them by the reader's data access.
+  Amounts are left to `invoice_get`, which gates them by the reader's data access.
 - **Detention occurrence**: status and notice, the clock, and the charge priced as
   of now for a running clock (`detentionservice.PriceOpenClock`).
 - **Tractor**: status and last position. **Trailer**: status. **Worker**: hours of
@@ -1515,7 +1515,7 @@ empty customer and search beside it, which the tool read as filters given. A
 parameter whose empty value means something other than leaving it out is
 marked `toolschema.KeepEmpty` and keeps it: an update's field that an empty
 value clears (the master data kit's `clearable`, order amounts,
-`update_invoice_draft`, `update_service_failure`, a recurring series'
+`invoice_update_draft`, `update_service_failure`, a recurring series'
 blackout days), and a write's list whose absence means every record, where
 an empty list read as not sent would widen the call (the pay events
 `pay_worker_now` pays, the customers `assess_late_charges` charges, the sync
@@ -1609,7 +1609,7 @@ the delegating turn's: `DispatchCall.MoneySpent` and `DelegateCall.MoneySpent` c
 workflow code, so a delegate's turn starts from what the turn that handed it the task moved,
 and the turn after a delegation counts what the delegate moved. A simulated run counts its
 simulated writes against its own run and against the day, so it is held where the real run
-would be. A gross change is counted, never a net one: `correct_charge_code` counts every
+would be. A gross change is counted, never a net one: `billing_correct_charge_codes` counts every
 charge it adds, removes or changes in full. A call outside a bound, or whose bounds, limits,
 currency or day cannot be read (a timezone that cannot be read holds the write rather than
 drawing the day in UTC), is filed as a proposal whose `HeldBy` names the bound
@@ -1739,7 +1739,7 @@ table replaced are deleted and withdrawn from the reader with `artifact_removed`
 client's reducer drops from the live turn, so eleven reads leave one table beside the
 conversation and not eleven cards next to it. When the turn
 is saved, a card a table covers is not tied back to its message. A `get_*`
-result that is already rows and columns (`get_invoices`) is a table from the
+result that is already rows and columns (`invoice_get`) is a table from the
 start. `Earlier` is activity input, not a workflow decision, so the recorded
 histories replay unchanged.
 
@@ -2557,7 +2557,7 @@ commands changed. An evaluation keeps no baseline, a retried activity's orphan i
 by the expiry sweep inside its activity, and a settled step replayed from the ledger
 never previews again. See [proposal-previews.md](proposal-previews.md).
 
-Resolving a criteria selection to records (`ToolSelectionResolver`, `transfer_to_billing`'s
+Resolving a criteria selection to records (`ToolSelectionResolver`, `billing_transfer`'s
 `allTransferable`; `ToolProposalSelectionResolver`, `retry_accounting_sync`'s
 `errorCategories` when proposed) took no gate: it happens inside the dispatch activity, the
 ledger key is still derived from the model's own arguments, and only the activity's result
@@ -2584,10 +2584,10 @@ decisions, posting and sending), their tiers, and why approving, canceling, post
 sending always stop at a proposal a person approves, are described in
 [agent-billing-tools.md](https://github.com/emoss08/trenova-documentation/blob/main/docs/engineering/agent-billing-tools.md). An agent principal may move a billing
 queue item into review, onto hold, into exception or back to operations; the queue refuses
-it every other status. The steps over a set of items (`assign_billing_queue_billers`,
-`transition_items_to_in_review`, `approve_billing_queue_items`, `post_invoices`,
-`send_invoices`) are one call and one card each, and a biller nobody named is the person
-asking; see [proposal-previews.md](proposal-previews.md#bulk-twins-of-single-record-tools).
+it every other status. The steps over a set of items (`billing_assign_biller`,
+`billing_start_review`, `billing_approve_queue_item`, `invoice_post`,
+`invoice_send`) are one call and one card each, and a biller nobody named is the person
+asking; see [proposal-previews.md](proposal-previews.md#tools-that-take-one-record-or-many).
 
 Three chat templates that act as the person hold the money tools: the billing assistant (up
 to an invoice in the customer's hands, and its corrections), the receivables assistant (what

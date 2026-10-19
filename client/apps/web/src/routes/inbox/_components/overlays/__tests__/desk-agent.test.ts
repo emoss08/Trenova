@@ -48,7 +48,7 @@ describe("which agent a message is handed to", () => {
       name: "Carrier desk",
       description: "Books carriers on open loads",
       template: null,
-      toolNames: ["send_invoice"],
+      toolNames: ["invoice_send"],
     };
     expect(pickAgentFor([BILLING, carrierDesk], "Tender")?.id).toBe("a_carrier_desk");
   });

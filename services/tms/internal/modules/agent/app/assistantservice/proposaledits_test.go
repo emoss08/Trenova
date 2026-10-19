@@ -151,7 +151,7 @@ func TestSaveProposalEdits_RefusesAParameterThatIsNotEditable(t *testing.T) {
 	t.Parallel()
 
 	f := newEditsFixture(agent.ProposalStatusPending)
-	f.proposal.ToolName = "transfer_to_billing"
+	f.proposal.ToolName = "billing_transfer"
 	f.proposal.ToolParams = map[string]any{"billType": "Invoice"}
 	f.svc.tools = subsetTools{}
 

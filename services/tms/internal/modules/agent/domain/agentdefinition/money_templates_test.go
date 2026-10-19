@@ -10,7 +10,7 @@ import (
 
 /*
 A template that fills the tool cap leaves an organization nothing to add. The
-billing assistant sat at 63 of 64, so share_invoice and its candidate read were
+billing assistant sat at 63 of 64, so invoice_share and its candidate read were
 registered and on no template: the only way to use them was to build an agent by
 hand. Every starter keeps room for a handful of tools of the organization's own.
 */
@@ -132,7 +132,7 @@ func TestTemplates_TheSettlementsClerkRunsThePayPeriod(t *testing.T) {
 		"update_escrow_account",
 		"close_escrow_account",
 		"post_customer_payment",
-		"post_invoice",
+		"invoice_post",
 	} {
 		require.NotContainsf(t, tools, tool, "the settlements clerk must not hold %s", tool)
 	}
@@ -163,8 +163,8 @@ func TestTemplates_ReceivablesWorksWhatCustomersOwe(t *testing.T) {
 	for _, tool := range []string{
 		"list_customers",
 		"get_customer",
-		"list_invoices",
-		"get_invoice",
+		"invoice_list",
+		"invoice_get",
 		"get_ar_aging",
 		"list_ar_open_items",
 		"list_collections_worklist",
@@ -180,15 +180,15 @@ func TestTemplates_ReceivablesWorksWhatCustomersOwe(t *testing.T) {
 		"list_credit_memo_applications",
 		"apply_credit_memo",
 		"unapply_credit_memo",
-		"list_invoice_disputes",
-		"open_invoice_dispute",
-		"resolve_invoice_dispute",
-		"withdraw_invoice_dispute",
-		"list_invoice_adjustments",
+		"invoice_list_disputes",
+		"invoice_open_dispute",
+		"invoice_resolve_dispute",
+		"invoice_withdraw_dispute",
+		"invoice_list_adjustments",
 		"assess_late_charges",
-		"send_invoice",
-		"list_invoice_share_candidates",
-		"share_invoice",
+		"invoice_send",
+		"invoice_list_share_candidates",
+		"invoice_share",
 	} {
 		require.Containsf(t, tools, tool, "receivables needs %s", tool)
 	}
@@ -197,10 +197,10 @@ func TestTemplates_ReceivablesWorksWhatCustomersOwe(t *testing.T) {
 		"post_customer_payment",
 		"match_bank_receipt",
 		"resolve_bank_receipt_work_item",
-		"create_invoice",
-		"void_invoice",
-		"submit_invoice_adjustment",
-		"approve_billing_queue_item",
+		"invoice_create",
+		"invoice_void",
+		"invoice_submit_adjustment",
+		"billing_approve_queue_item",
 	} {
 		require.NotContainsf(t, tools, tool, "receivables must not hold %s", tool)
 	}
@@ -218,19 +218,19 @@ func TestTemplates_TheBillingAssistantHandsCollectionsToReceivables(t *testing.T
 
 	billing := agentdefinition.TemplateBillingAssistant.StarterTools()
 	for _, tool := range []string{
-		"transfer_to_billing",
-		"approve_billing_queue_item",
-		"post_invoice",
-		"send_invoice",
-		"create_invoice",
-		"void_invoice",
-		"create_invoice_memo",
-		"submit_invoice_adjustment",
-		"build_invoice_run",
-		"commit_invoice_run",
-		"bill_statement_now",
-		"share_invoice",
-		"list_invoice_share_candidates",
+		"billing_transfer",
+		"billing_approve_queue_item",
+		"invoice_post",
+		"invoice_send",
+		"invoice_create",
+		"invoice_void",
+		"invoice_create_memo",
+		"invoice_submit_adjustment",
+		"invoice_build_run",
+		"invoice_commit_run",
+		"invoice_bill_statement",
+		"invoice_share",
+		"invoice_list_share_candidates",
 	} {
 		require.Containsf(t, billing, tool, "the billing assistant keeps %s", tool)
 	}
@@ -244,10 +244,10 @@ func TestTemplates_TheBillingAssistantHandsCollectionsToReceivables(t *testing.T
 		"apply_credit_memo",
 		"unapply_credit_memo",
 		"assess_late_charges",
-		"list_invoice_disputes",
-		"open_invoice_dispute",
-		"resolve_invoice_dispute",
-		"withdraw_invoice_dispute",
+		"invoice_list_disputes",
+		"invoice_open_dispute",
+		"invoice_resolve_dispute",
+		"invoice_withdraw_dispute",
 	} {
 		require.NotContainsf(t, billing, tool, "%s is receivables work now", tool)
 	}

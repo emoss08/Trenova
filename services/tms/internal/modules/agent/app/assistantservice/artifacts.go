@@ -1073,14 +1073,15 @@ func tableArtifact(callID, toolName string, result map[string]any) *assistantart
 }
 
 // listedEntity is what a list, search or get tool names its records by:
-// "formula_templates" for list_formula_templates.
+// "formula_templates" for list_formula_templates, and "invoices" for
+// invoice_get, whose name is singular because it reads one invoice or many.
 func listedEntity(toolName string) string {
 	reading := agentports.ReadingOrder(toolName)
+	if entity, read := strings.CutPrefix(reading, getToolPrefix); read {
+		return stringutils.PluralNoun(stringutils.SingularNoun(entity))
+	}
 
-	return strings.TrimPrefix(
-		strings.TrimPrefix(strings.TrimPrefix(reading, listToolPrefix), searchToolPrefix),
-		getToolPrefix,
-	)
+	return strings.TrimPrefix(strings.TrimPrefix(reading, listToolPrefix), searchToolPrefix)
 }
 
 // soleRecordCard is a list or search that found exactly one record of a kind

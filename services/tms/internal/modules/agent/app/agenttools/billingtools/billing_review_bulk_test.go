@@ -160,8 +160,8 @@ func TestAssignBillingQueueBillers_AssignsOnePersonToEveryItemInOneCall(t *testi
 	posted.Number = "INV-7004"
 	queue := newFakeQueueSet(first, second, third, posted)
 	tool := NewAssignBillersTool(queue)
-	assert.Equal(t, "assign_billing_queue_billers", tool.Name())
-	assert.Contains(t, tool.Description(), "assign_billing_queue_biller")
+	assert.Equal(t, "billing_assign_biller", tool.Name())
+	assert.Contains(t, tool.Description(), "one or up to 50")
 
 	policy := tool.Policy()
 	assert.Equal(t, agent.TierPropose, policy.DefaultTier)
@@ -285,7 +285,7 @@ func TestTransitionItemsToInReview_MovesEveryItemInOneCall(t *testing.T) {
 	first, second := waitingItem("INV-9001"), waitingItem("INV-9002")
 	queue := newFakeQueueSet(first, second)
 	tool := NewTransitionItemsToInReviewTool(queue)
-	assert.Equal(t, "transition_items_to_in_review", tool.Name())
+	assert.Equal(t, "billing_start_review", tool.Name())
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		common.ParamBillingQueueItemIDs: []any{first.ID.String(), second.ID.String()},
 	})

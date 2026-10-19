@@ -23,7 +23,7 @@ function proposal(overrides: Partial<AssistantProposal> = {}): AssistantProposal
   return {
     id: "aprop_1",
     runId: "arun_1",
-    toolName: "post_invoice",
+    toolName: "invoice_post",
     arguments: { invoiceId: "inv_1" },
     rationale: "",
     autonomyTier: "Propose",
@@ -71,7 +71,7 @@ describe("approvalQueue", () => {
     const queue = approvalQueue(
       [
         proposal({ id: "late", runId: "arun_3", createdAt: 300 }),
-        proposal({ id: "early", runId: "arun_1", createdAt: 100, toolName: "send_invoice" }),
+        proposal({ id: "early", runId: "arun_1", createdAt: 100, toolName: "invoice_send" }),
         proposal({ id: "step_1", runId: "arun_2", planId: "apl_1", planStep: 1, createdAt: 200 }),
       ],
       [plan({ id: "apl_1", runId: "arun_2", createdAt: 200 })],
@@ -106,7 +106,7 @@ describe("approvalQueue", () => {
       [
         proposal({ id: "a", createdAt: 110 }),
         proposal({ id: "b", createdAt: 105 }),
-        proposal({ id: "c", toolName: "send_invoice", createdAt: 120 }),
+        proposal({ id: "c", toolName: "invoice_send", createdAt: 120 }),
       ],
       [],
       null,
@@ -116,7 +116,7 @@ describe("approvalQueue", () => {
     expect(queue).toHaveLength(2);
     expect(queue[0]).toMatchObject({
       kind: "batch",
-      toolName: "post_invoice",
+      toolName: "invoice_post",
       createdAt: 105,
       members: [proposalKey("a"), proposalKey("b")],
     });
@@ -144,7 +144,7 @@ describe("approvalQueue", () => {
       [
         proposal({ id: "first", runId: "arun_1", createdAt: 100 }),
         proposal({ id: "second", runId: "arun_2", createdAt: 200 }),
-        proposal({ id: "other", runId: "arun_2", toolName: "send_invoice", createdAt: 300 }),
+        proposal({ id: "other", runId: "arun_2", toolName: "invoice_send", createdAt: 300 }),
       ],
       [],
       { proposalIds: ["first", "second", "other", "gone"], planId: "" },

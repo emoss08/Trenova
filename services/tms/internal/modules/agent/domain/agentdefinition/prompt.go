@@ -146,7 +146,7 @@ type ToolSummary struct {
 	// only when the turn disclosed a subset; the rest load through find_tools.
 	Loaded bool
 	// BatchOf names the tool this one does to several records at once, for
-	// a plural twin such as post_invoices.
+	// a plural twin such as invoice_post.
 	BatchOf string
 	// PersonalRunsUnasked says a call that touches only the person's own
 	// records runs at once while they are in the conversation, whatever

@@ -5,17 +5,10 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/toolschema"
-	"github.com/emoss08/trenova/shared/sliceutils"
+	"github.com/emoss08/trenova/shared/pulid"
 )
 
 const (
@@ -26,65 +19,6 @@ const (
 	readinessSeparator        = "; "
 	columnAmount              = "amount"
 )
-
-// getBillingQueueItemsTool reads a set of queue items in one call, each with
-// what get_billing_queue_item would say blocks it, so a biller working a
-// queue reads it once and lands one table rather than a card per item.
-type getBillingQueueItemsTool struct {
-	items     billingQueueReader
-	readiness billingReadinessReader
-	invoices  queueInvoiceReader
-	access    fieldAccess
-}
-
-func newGetBillingQueueItemsTool(
-	items billingqueueports.BillingQueueService,
-	shipments shipmentports.ShipmentService,
-	invoices invoiceports.InvoiceRepository,
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return &getBillingQueueItemsTool{
-		items:     items,
-		readiness: shipments,
-		invoices:  invoices,
-		access:    newFieldAccess(permissions),
-	}
-}
-
-func (t *getBillingQueueItemsTool) Name() string { return "get_billing_queue_items" }
-
-func (t *getBillingQueueItemsTool) BatchOf() string { return "get_billing_queue_item" }
-
-func (t *getBillingQueueItemsTool) SearchTerms() []string {
-	return []string{"billing queue", "review", "approve", "post", "batch", "readiness"}
-}
-
-func (t *getBillingQueueItemsTool) Description() string {
-	return "Open several billing queue items by id in one call, each with what blocks its " +
-		"approval and what its shipment still lacks for billing. Each row also carries the " +
-		"payer, shipment, charges, biller and the invoice it made once approved. Use it " +
-		"instead of calling get_billing_queue_item once per item: to check a queue before " +
-		"assigning, moving into review, approving or posting it. Up to 50; an id that is not " +
-		"a queue item of this organization is named in the note. Amounts are left out, and " +
-		"named in withheldByAccess, when your data access does not reach them."
-}
-
-func (t *getBillingQueueItemsTool) ParamSchema() map[string]any {
-	return map[string]any{
-		toolschema.KeyType: toolschema.TypeObject,
-		toolschema.KeyProperties: map[string]any{
-			paramBillingQueueItemIDs: agenttoolschema.KindIDs("The items' ids, from "+
-				"list_billing_queue_items, the page you are on or the proposals that named "+
-				"them.", maxBatchBillingQueueItems, permission.KindBillingQueueItem),
-		},
-		toolschema.KeyRequired:             []string{paramBillingQueueItemIDs},
-		toolschema.KeyAdditionalProperties: false,
-	}
-}
-
-func (t *getBillingQueueItemsTool) Policy() agentports.ToolPolicy {
-	return readPolicy(t.Name(), readSpec{resource: permission.ResourceBillingQueue})
-}
 
 // billingQueueBatchRow is one item as a row of the table the batch read
 // lands: the queue row, then what decides its next step.
@@ -112,23 +46,17 @@ type billingQueueBatchRow struct {
 	ShipmentID         string       `json:"shipmentId,omitempty"`
 }
 
-func (t *getBillingQueueItemsTool) Query(
+// several reads a set of items as rows of one table, each with what decides
+// its next step, so a biller working a queue reads it once rather than an
+// item at a time.
+func (t *getBillingQueueItemTool) several(
 	ctx context.Context,
 	params *agentports.QueryToolParams,
+	ids []pulid.ID,
+	gate *fieldGate,
 ) (any, error) {
-	if err := guardQuery(params); err != nil {
-		return nil, err
-	}
-
-	ids, err := requireIDList(params.Params, paramBillingQueueItemIDs, maxBatchBillingQueueItems)
-	if err != nil {
-		return nil, err
-	}
-	ids = sliceutils.Dedupe(ids)
-
 	tenant := tenantOf(params)
-	gate := t.access.gate(ctx, params, permission.ResourceBillingQueue)
-	reader := queueDetailReader{items: t.items, readiness: t.readiness, invoices: t.invoices}
+	reader := t.reader()
 	rows := make([]billingQueueBatchRow, 0, len(ids))
 	missing := make([]string, 0, len(ids))
 	for _, id := range ids {

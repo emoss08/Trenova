@@ -26,16 +26,31 @@ A tool is `<namespace>_<verb>[_<object>]`, all lower case: `shipment_get`, `ship
   `assign`, `send`, `share` and `revoke`, `set` (one value), `match`, `rerate`, and so on. A
   tool that files a proposal is named for what it does once approved, not "propose".
 - **Object.** What the verb acts on when it is not the namespace's own record:
-  `shipment_add_comment`, `shipment_list_permits`. A read of the namespace's own records has
-  no object: `shipment_list`, not `shipment_list_shipments`. The keyword ranker reads a bare
-  `<namespace>_list` as a list of that record and indexes the plural too
-  (`agentsearch.NameTokenSet`).
+  `shipment_add_comment`, `shipment_list_permits`, `billing_get_queue_item`. A read of the
+  namespace's own records has no object: `shipment_list`, not `shipment_list_shipments`. The
+  keyword ranker reads a bare `<namespace>_list` as a list of that record and indexes the
+  plural too (`agentsearch.NameTokenSet`). The object is singular even when the tool takes
+  several records (`invoice_post` takes `invoiceIds`, `billing_approve_queue_item` takes
+  `billingQueueItemIds`): a `get` tool's name in reading order, less its verb, is the kind of
+  record its card draws (`get_billing_queue_item` draws a `billing_queue_item`).
+- **No other area's noun.** A name weighs four times its description in keyword ranking, so a
+  noun in a name pulls the tool into every question that says it. `billing_transfer` moves
+  shipments into the billing queue; named `billing_transfer_shipments`, it came first for
+  "which shipments are picking up today". Say the object's area in the description instead.
 
 One tool does one thing to one kind of record. Two tools that differ only by a trailing "s"
 (one record and several) become one tool taking a list. Two reads of the same records become
 one read with the union of their parameters (`shipment_list` was `list_shipments` and
 `search_shipments`). Tools are not merged across permission operations: a tool's policy names
 one resource and one operation, so pin and unpin stay two tools.
+
+A write over one record or many is a `common.RecordBatch` around the single-record tool, which
+is no longer registered. A call naming one record is the single tool's call, with its preview,
+its validation, its target (so the proposal is pinned to that record's version) and its
+result; a call naming several previews each through the single tool and runs each through it
+on the ids the person kept ("Tools that take one record or many" in
+[proposal-previews.md](proposal-previews.md)). A read over one record or many returns the
+record in full for one id and a table for several (`invoice_get`, `billing_get_queue_item`).
 
 ## Parameters
 
@@ -60,6 +75,8 @@ a parameter the input names differently says why in the binding.
   that a model would otherwise go and look for.
 - Do not restate policy the runtime enforces (who approves, what is held after outside text);
   say what the tool changes and who sees it.
+- Keyword ties break on the name in reading order (`agenttoolcatalog`), so a namespace, which
+  every tool in it shares, never decides which of two equally good answers comes first.
 - Search terms are the words people use for the tool that its name and description lack. They
   weigh as much as the name, so a term that names another area's records ("customer", "rate")
   pulls the tool into unrelated questions; a page-bound tool's terms name its page.

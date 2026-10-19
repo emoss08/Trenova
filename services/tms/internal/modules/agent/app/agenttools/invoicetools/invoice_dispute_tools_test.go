@@ -134,7 +134,7 @@ func openDisputeParams(invoiceID pulid.ID) agentports.ToolExecuteParams {
 		common.ParamInvoiceID:  invoiceID.String(),
 		paramDisputeReasonCode: string(invoice.DisputeReasonAccessorialDisputed),
 		paramDisputedAmount:    "150.00",
-		paramDisputeNotes:      " Customer disputes the detention line ",
+		common.ParamNote:       " Customer disputes the detention line ",
 	})
 }
 
@@ -310,7 +310,7 @@ func TestWithdrawInvoiceDispute_WithdrawsWithItsNotes(t *testing.T) {
 	tool := NewWithdrawInvoiceDisputeTool(disputer)
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		common.ParamDisputeID: plan.Before.ID.String(),
-		paramDisputeNotes:     "Paid in full on the 12th",
+		common.ParamNote:      "Paid in full on the 12th",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(t, disputer.guard, func() (*agent.ToolPreview, error) {

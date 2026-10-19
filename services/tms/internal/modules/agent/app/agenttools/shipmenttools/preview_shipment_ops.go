@@ -18,7 +18,7 @@ var uncancelFields = []string{
 	common.FieldStatus,
 	common.FieldCanceledAt,
 	common.FieldCanceledByID,
-	common.ParamCancelReason,
+	common.FieldCancelReason,
 }
 
 var rerateFields = []string{

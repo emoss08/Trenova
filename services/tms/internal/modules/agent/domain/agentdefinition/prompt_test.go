@@ -144,7 +144,7 @@ func TestBuildSystemPrompt_ListsToolsByWhatACallDoesWithoutRepeatingDescriptions
 			Tier:        agent.TierAutoExecute,
 		},
 		agentdefinition.ToolSummary{
-			Name:           "post_invoices",
+			Name:           "invoice_post",
 			Tier:           agent.TierPropose,
 			AlwaysProposes: true,
 		},
@@ -154,7 +154,7 @@ func TestBuildSystemPrompt_ListsToolsByWhatACallDoesWithoutRepeatingDescriptions
 
 	assert.Contains(t, prompt, "- Reads, which run as soon as you call them: shipment_get")
 	assert.Contains(t, prompt,
-		"- Changes that always record a proposal for a person to decide: post_invoices")
+		"- Changes that always record a proposal for a person to decide: invoice_post")
 	assert.Contains(t, prompt,
 		"- Changes that run at once or are recorded as a proposal depending on what the "+
 			"call would reach; the result says which and why: assign_move, update_tractor_status")
@@ -173,16 +173,24 @@ func TestBuildSystemPrompt_NamesThePluralTwinsTheAgentHolds(t *testing.T) {
 
 	rc := fullContext()
 	rc.Tools = append(rc.Tools,
-		agentdefinition.ToolSummary{Name: "post_invoice", Tier: agent.TierPropose},
-		agentdefinition.ToolSummary{Name: "post_invoices", Tier: agent.TierPropose, BatchOf: "post_invoice"},
-		agentdefinition.ToolSummary{Name: "get_invoices", Query: true, BatchOf: "get_invoice"},
+		agentdefinition.ToolSummary{Name: "post_driver_settlement", Tier: agent.TierPropose},
+		agentdefinition.ToolSummary{
+			Name:    "post_driver_settlements",
+			Tier:    agent.TierPropose,
+			BatchOf: "post_driver_settlement",
+		},
+		agentdefinition.ToolSummary{
+			Name:    "approve_carrier_settlements",
+			Tier:    agent.TierPropose,
+			BatchOf: "approve_carrier_settlement",
+		},
 	)
 
 	prompt := definitionWithInstructions("Help.").BuildSystemPrompt(rc)
 
 	assert.Contains(t, prompt,
-		"Several records in one call: post_invoices does post_invoice for a list, "+
-			"get_invoices does get_invoice for a list.")
+		"Several records in one call: post_driver_settlements does post_driver_settlement "+
+			"for a list, approve_carrier_settlements does approve_carrier_settlement for a list.")
 	assert.Contains(t, prompt, "never call the single tool once per record.")
 
 	rc.ToolsDisclosed = true
@@ -659,12 +667,12 @@ func TestBuildSystemPrompt_NamesThePlanAWaitingStepBelongsTo(t *testing.T) {
 		PendingProposals: []agentdefinition.PendingProposal{{
 			ProposalID: pulid.ID("aprop_01JSTEP000000000000000000"),
 			PlanID:     pulid.ID("apl_01JPLAN0000000000000000000"),
-			ToolName:   "post_invoice",
+			ToolName:   "invoice_post",
 		}},
 		DecisionRequests: true,
 	})
 
-	assert.Contains(t, prompt, "- post_invoice (proposalId aprop_01JSTEP000000000000000000, "+
+	assert.Contains(t, prompt, "- invoice_post (proposalId aprop_01JSTEP000000000000000000, "+
 		"a step of planId apl_01JPLAN0000000000000000000)")
 	assert.Contains(t, prompt, "pass their ids together in proposalIds")
 	assert.Contains(t, prompt, "a plan's steps are decided together: pass its planId")

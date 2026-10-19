@@ -457,7 +457,7 @@ func newListInvoicesTool(
 	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
 	return newListTool(listSpec{
-		name:         "list_invoices",
+		name:         "invoice_list",
 		entityPlural: "invoices",
 		summary: "List invoices narrowed by customer, status, whether they are paid or " +
 			"disputed, the amount, or the invoice and due dates. It answers what is unpaid, " +

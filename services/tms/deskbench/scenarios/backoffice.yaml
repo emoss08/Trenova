@@ -54,7 +54,7 @@ scenarios:
     steps:
       - say: "peak sent a check for 3,200 but their invoice was 3,700. what do we do with it"
         expect:
-          calls: ["list_ar_open_items|list_invoices|list_customer_payments"]
+          calls: ["list_ar_open_items|invoice_list|list_customer_payments"]
           rubric: >
             Looks for Peak's open invoice and a recorded payment, explains the choices (apply the
             3,200 and leave 500 open, or open a dispute for the 500), and says what it found,
@@ -141,7 +141,7 @@ scenarios:
     steps:
       - say: "acme says 2 pallets came in damaged on their last invoice, credit them 480"
         expect:
-          calls: ["list_invoices|get_invoice"]
+          calls: ["invoice_list|invoice_get"]
           rubric: >
             Finds Acme's most recent invoice and proposes a $480 credit memo against it for the
             damaged pallets, or says there is no posted Acme invoice to credit.

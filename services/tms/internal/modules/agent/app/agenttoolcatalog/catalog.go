@@ -34,6 +34,9 @@ type indexed struct {
 	nameTokens  map[string]struct{}
 	bodyTokens  map[string]struct{}
 	paramTokens map[string]struct{}
+	// catalogRank breaks ties between equal scores. It orders tools by their
+	// names in reading order, so a tool's namespace, which every tool in it
+	// shares, does not decide which of two equally good answers comes first.
 	catalogRank int
 }
 
@@ -63,6 +66,7 @@ func New(descriptors []agentports.AgentToolDescriptor) *Catalog {
 		followers: make(map[string][]string),
 	}
 
+	tieRanks := readingOrderRanks(sorted)
 	for i, descriptor := range sorted {
 		catalog.byName[descriptor.Name] = i
 		catalog.entries = append(catalog.entries, indexed{
@@ -73,7 +77,7 @@ func New(descriptors []agentports.AgentToolDescriptor) *Catalog {
 			),
 			bodyTokens:  agentsearch.TokenSet(descriptor.Description),
 			paramTokens: agentsearch.TokenSet(parameterText(descriptor.Parameters)),
-			catalogRank: i,
+			catalogRank: tieRanks[i],
 		})
 		catalog.items = append(
 			catalog.items,
@@ -95,6 +99,27 @@ func New(descriptors []agentports.AgentToolDescriptor) *Catalog {
 	}
 
 	return catalog
+}
+
+// readingOrderRanks is each tool's position, by index into sorted, when the
+// tools are ordered by their names in reading order and then by name.
+func readingOrderRanks(sorted []agentports.AgentToolDescriptor) []int {
+	order := make([]int, len(sorted))
+	reading := make([]string, len(sorted))
+	for i := range sorted {
+		order[i] = i
+		reading[i] = agentports.ReadingOrder(sorted[i].Name)
+	}
+	sort.SliceStable(order, func(a, b int) bool {
+		return reading[order[a]] < reading[order[b]]
+	})
+
+	ranks := make([]int, len(sorted))
+	for rank, index := range order {
+		ranks[index] = rank
+	}
+
+	return ranks
 }
 
 // Feeds names the tools whose recipe has the tool as a step before them:

@@ -9,6 +9,7 @@
 export const TOOL_NAMESPACES = [
   "accounting",
   "agent",
+  "billing",
   "carrier",
   "customer",
   "detention",

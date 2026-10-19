@@ -71,18 +71,13 @@ var Module = fx.Module("agent-tool-service", fx.Provide(append(grouped(), NewReg
 // builds each one to read what a model is shown.
 func ToolProviders() []any {
 	providers := []any{
-		provideTransitionToInReviewTool,
 		provideTransitionItemsToInReviewTool,
 		provideAssignBillersTool,
 		provideTransferToBillingTool,
-		provideApproveBillingQueueItemTool,
 		provideSendBackToOpsTool,
 		provideMoveToExceptionTool,
 		provideHoldBillingQueueItemTool,
 		provideCancelBillingQueueItemTool,
-		provideAssignBillerTool,
-		providePostInvoiceTool,
-		provideSendInvoiceTool,
 		providePostInvoicesTool,
 		provideSendInvoicesTool,
 		provideApproveBillingQueueItemsTool,
@@ -408,13 +403,6 @@ func provideTransferToBillingTool(
 	return billingtools.NewTransferToBillingTool(shipments, runs)
 }
 
-func provideApproveBillingQueueItemTool(
-	billing billingqueueports.BillingQueueService,
-	invoices *invoiceservice.Service,
-) agentports.AgentTool {
-	return billingtools.NewApproveBillingQueueItemTool(billing, invoices)
-}
-
 func provideSendBackToOpsTool(billing billingqueueports.BillingQueueService) agentports.AgentTool {
 	return billingtools.NewSendBackToOpsTool(billing)
 }
@@ -437,32 +425,14 @@ func provideCancelBillingQueueItemTool(
 	return billingtools.NewCancelBillingQueueItemTool(billing)
 }
 
-func provideAssignBillerTool(billing billingqueueports.BillingQueueService) agentports.AgentTool {
-	return billingtools.NewAssignBillerTool(billing)
-}
-
 func provideAssignBillersTool(billing billingqueueports.BillingQueueService) agentports.AgentTool {
 	return billingtools.NewAssignBillersTool(billing)
-}
-
-func provideTransitionToInReviewTool(
-	billing billingqueueports.BillingQueueService,
-) agentports.AgentTool {
-	return billingtools.NewTransitionToInReviewTool(billing)
 }
 
 func provideTransitionItemsToInReviewTool(
 	billing billingqueueports.BillingQueueService,
 ) agentports.AgentTool {
 	return billingtools.NewTransitionItemsToInReviewTool(billing)
-}
-
-func providePostInvoiceTool(invoices *invoiceservice.Service) agentports.AgentTool {
-	return invoicetools.NewPostInvoiceTool(invoices)
-}
-
-func provideSendInvoiceTool(invoices *invoiceservice.Service) agentports.AgentTool {
-	return invoicetools.NewSendInvoiceTool(invoices)
 }
 
 func providePostInvoicesTool(

@@ -52,12 +52,13 @@ func (s *Service) ReadRecordWith(
 	if !ok || len(s.permittedTools(ctx, actor, []string{name})) != 1 {
 		return nil, false
 	}
-	param, ok := recordIDParam(tool.ParamSchema())
+	schema := tool.ParamSchema()
+	param, ok := recordIDParam(schema)
 	if !ok {
 		return nil, false
 	}
 
-	params := map[string]any{param: id}
+	params := map[string]any{param: recordIDArgument(schema, param, id)}
 	data, err := tool.Query(ctx, &agentports.QueryToolParams{
 		OrganizationID: actor.OrganizationID,
 		BusinessUnitID: actor.BusinessUnitID,
@@ -69,6 +70,16 @@ func (s *Service) ReadRecordWith(
 	}
 
 	return &RecordRead{Tool: name, Params: params, Data: data}, true
+}
+
+func recordIDArgument(schema map[string]any, param, id string) any {
+	properties, _ := schema[toolschema.KeyProperties].(map[string]any)
+	property, _ := properties[param].(map[string]any)
+	if kind, _ := property[toolschema.KeyType].(string); kind == toolschema.TypeArray {
+		return []any{id}
+	}
+
+	return id
 }
 
 func recordIDParam(schema map[string]any) (string, bool) {

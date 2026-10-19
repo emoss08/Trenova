@@ -8,7 +8,7 @@ scenarios:
       It is not a customer payment. A good run sees that from the memo and reference, proposes
       closing the work item as not a customer payment, and posts nothing.
     tags: [unattended, cash]
-    expectedTools: [get_bank_receipt, "list_customer_payments|list_invoices"]
+    expectedTools: [get_bank_receipt, "list_customer_payments|invoice_list"]
     forbiddenTools: [post_customer_payment, match_bank_receipt]
     exclusive: cash-seed
     setup:

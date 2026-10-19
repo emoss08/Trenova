@@ -30,13 +30,13 @@ func NewTransitionToInReviewTool(billing common.BillingQueueDecider) agentports.
 	return &TransitionToInReviewTool{billing: billing}
 }
 
-func (t *TransitionToInReviewTool) Name() string { return "transition_item_to_in_review" }
+func (t *TransitionToInReviewTool) Name() string { return toolStartReview }
 
 func (t *TransitionToInReviewTool) Description() string {
 	return "Move a billing queue item into review so a biller can work it: one waiting for " +
 		"review, on hold, in exception or sent back to operations. Review needs a biller " +
 		"on the item, so one with nobody is assigned the person who asked, or the billerId " +
-		"you name. For more than one item, call transition_items_to_in_review once with " +
+		"you name. For more than one item, call billing_start_review once with " +
 		"all of them instead."
 }
 
@@ -46,7 +46,7 @@ func (t *TransitionToInReviewTool) ParamSchema() map[string]any {
 		toolschema.KeyProperties: map[string]any{
 			common.ParamBillingQueueItemID: agenttoolschema.KindID(
 				"The billing queue item to move into review: this "+
-					"run's subject, the record on the page, or one list_billing_queue_items "+
+					"run's subject, the record on the page, or one billing_list_queue_items "+
 					"found. Never guess one.",
 				permission.KindBillingQueueItem,
 			),

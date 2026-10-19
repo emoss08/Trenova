@@ -262,7 +262,7 @@ func namesAnotherTool(text, self string, registered map[string]struct{}) bool {
 // stagingSteps are writes that only stage work for a person to review before
 // a later tool commits it, so a recipe may run one ahead of that tool.
 var stagingSteps = map[string]struct{}{
-	"build_invoice_run": {},
+	"invoice_build_run": {},
 }
 
 // A recipe and a prerequisite list name tools that exist. The order of a
@@ -271,8 +271,8 @@ var stagingSteps = map[string]struct{}{
 // nothing.
 //
 // A recipe is followed as literally as it is written, so everything before
-// the tool must only read: approve_billing_queue_items once listed
-// assign_billing_queue_billers ahead of itself and post_invoices after, which
+// the tool must only read: billing_approve_queue_item once listed
+// billing_assign_biller ahead of itself and invoice_post after, which
 // told a model asked only to approve to reassign billers and post as well. A
 // prerequisite is granted to every agent holding the tool, which is only safe
 // for a read.

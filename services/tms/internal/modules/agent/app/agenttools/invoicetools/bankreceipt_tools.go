@@ -237,7 +237,7 @@ func (t *PostCustomerPaymentTool) Recipe() []string {
 	return []string{
 		"get_bank_receipt",
 		"list_customer_payments",
-		"list_invoices",
+		"invoice_list",
 		"post_customer_payment",
 	}
 }
@@ -294,7 +294,7 @@ func (t *PostCustomerPaymentTool) ParamSchema() map[string]any {
 					"properties": map[string]any{
 						"invoiceId": agenttoolschema.RecordIDText(
 							permission.ResourceInvoice,
-							"An open invoice of this customer, from list_invoices.",
+							"An open invoice of this customer, from invoice_list.",
 						),
 						common.ParamAmount: map[string]any{
 							"type":        "string",

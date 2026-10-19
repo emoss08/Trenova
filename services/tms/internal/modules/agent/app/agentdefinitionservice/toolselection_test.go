@@ -28,7 +28,7 @@ func testRegistries() (*agenttest.StubActionRegistry, *agenttest.StubQueryRegist
 			Tier:     agent.TierPropose,
 		},
 		&agenttest.StubActionTool{
-			ToolName: "correct_charge_code",
+			ToolName: "billing_correct_charge_codes",
 			Resource: permission.ResourceBillingQueue,
 			Tier:     agent.TierPropose,
 		},
@@ -82,7 +82,7 @@ func TestValidateToolSelection_AcceptsAnyRegisteredToolOnAnyTemplate(t *testing.
 
 	assert.Empty(
 		t,
-		validate(t, definition(agentdefinition.TemplateCustomerAssistant, "correct_charge_code")),
+		validate(t, definition(agentdefinition.TemplateCustomerAssistant, "billing_correct_charge_codes")),
 	)
 	assert.Empty(
 		t,
@@ -159,7 +159,7 @@ func TestRegisteredStarterTools_DropsToolsNotYetRegistered(t *testing.T) {
 	actions, queries := testRegistries()
 	tools := registeredStarterTools(agentdefinition.TemplateBillingException, actions, queries)
 
-	assert.Equal(t, []string{"shipment_get", "correct_charge_code"}, tools,
+	assert.Equal(t, []string{"shipment_get", "billing_correct_charge_codes"}, tools,
 		"starter tools that no registry provides are not offered")
 }
 

@@ -405,7 +405,7 @@
     },
     {
       "name": "list_ar_open_items",
-      "description": "List the open receivables, the unpaid or partly paid invoices customers still owe, most overdue first. Each row has the due date, days past due, dispute and short-pay state, and the open balance. Narrow to one customer, a minimum number of days past due, or disputed invoices. get_invoice expands one.",
+      "description": "List the open receivables, the unpaid or partly paid invoices customers still owe, most overdue first. Each row has the due date, days past due, dispute and short-pay state, and the open balance. Narrow to one customer, a minimum number of days past due, or disputed invoices. invoice_get expands one.",
       "kind": "query",
       "resource": "accounts_receivable",
       "operation": "read",
@@ -612,8 +612,8 @@
       "grantedToEveryAgent": false
     },
     {
-      "name": "approve_billing_queue_item",
-      "description": "Propose approving a billing queue item you have reviewed and found clean. Clean means charges that match the agreement, the documents the customer requires, and no detention charge waiting on approval. Approval creates the item's draft invoice, or puts it on a statement customer's statement, and the organization's auto-post setting may post it; a person always decides. Say in reviewNotes what you checked. Once approved, propose post_invoice for the draft. For more than one item, propose approve_billing_queue_items once with all of them instead.",
+      "name": "billing_approve_queue_item",
+      "description": "Propose approving billing queue items, one or up to 50 in one proposal the person decides together. On your own, propose only items you reviewed and found clean: charges that match the agreement, the documents the customer requires and no detention charge waiting on approval. When the person asks for items, propose those and say in reviewNotes what you could not confirm. Approval creates each item's draft invoice, or puts it on a statement customer's statement, and the auto-post setting may post it; the person may untick items. Name every ready item in one call; an item the queue would refuse is reported, not approved, and the rest still go.",
       "kind": "action",
       "resource": "billing_queue",
       "operation": "update",
@@ -625,21 +625,8 @@
       "grantedToEveryAgent": false
     },
     {
-      "name": "approve_billing_queue_items",
-      "description": "Propose approving several billing queue items you have reviewed and found clean, in one proposal the person approves together. Use it instead of approve_billing_queue_item whenever more than one item is ready. Each item is approved exactly as approve_billing_queue_item would: charges that match the agreement, the documents the customer requires and no detention charge waiting on approval. Approval creates each item's draft invoice, or puts it on a statement customer's statement, and the auto-post setting may post it; a person always decides and may untick items. An item the queue would refuse is reported, not approved, and the rest still go. Say in reviewNotes what you checked. Up to 50 items.",
-      "kind": "action",
-      "resource": "billing_queue",
-      "operation": "update",
-      "defaultAutonomyTier": "Propose",
-      "reversible": false,
-      "core": false,
-      "effect": "change",
-      "prerequisites": [],
-      "grantedToEveryAgent": false
-    },
-    {
-      "name": "assign_billing_queue_biller",
-      "description": "Assign the biller who reviews a billing queue item. An item still waiting for review moves into review with them. Leave billerId out to assign the person who asked, which is what \"assign me\", \"start reviewing\" or \"get these ready to post\" means; name a biller only when they named one or the customer's default biller is on another of its items. Never guess a user id. For more than one item, call assign_billing_queue_billers once with all of them instead.",
+      "name": "billing_assign_biller",
+      "description": "Assign the biller who reviews billing queue items, one or up to 50 in one call the person decides once. An item waiting for review moves into review with the biller. Leave billerId out to assign the person who asked, which is what \"assign me\", \"start reviewing these\" or \"get these ready to post\" means. Name every item in one call; one the queue would refuse (posted, canceled) is reported and the rest still go.",
       "kind": "action",
       "resource": "billing_queue",
       "operation": "assign",
@@ -651,20 +638,7 @@
       "grantedToEveryAgent": false
     },
     {
-      "name": "assign_billing_queue_billers",
-      "description": "Assign one biller to several billing queue items in one call, so the person decides it once. Use it instead of assign_billing_queue_biller whenever more than one item is waiting, never one call per item. Each item is assigned exactly as assign_billing_queue_biller would: an item waiting for review moves into review with the biller. Leave billerId out to assign the person who asked, which is what \"assign me\", \"start reviewing these\" or \"get these ready to post\" means. An item the queue would refuse (posted, canceled) is reported and the rest still go. Up to 50 items.",
-      "kind": "action",
-      "resource": "billing_queue",
-      "operation": "assign",
-      "defaultAutonomyTier": "Propose",
-      "reversible": true,
-      "core": false,
-      "effect": "change",
-      "prerequisites": [],
-      "grantedToEveryAgent": false
-    },
-    {
-      "name": "cancel_billing_queue_item",
+      "name": "billing_cancel_queue_item",
       "description": "Propose canceling a billing queue item that should never be billed, such as a duplicate of another item. Canceling drops the charge from billing for good, so a person always decides; say which item it duplicates or why it must not bill.",
       "kind": "action",
       "resource": "billing_queue",
@@ -677,8 +651,8 @@
       "grantedToEveryAgent": false
     },
     {
-      "name": "correct_charge_code",
-      "description": "Correct or normalize the accessorial charge codes on a billing queue item's charges. Use it when a charge carries the wrong accessorial; the set you send replaces the item's additional charges, so include every charge that should remain, each with an accessorialChargeId from list_accessorial_charges. The item must be InReview first (transition_item_to_in_review).",
+      "name": "billing_correct_charge_codes",
+      "description": "Correct or normalize the accessorial charge codes on a billing queue item's charges. Use it when a charge carries the wrong accessorial; the set you send replaces the item's additional charges, so include every charge that should remain, each with an accessorialChargeId from list_accessorial_charges. The item must be InReview first (billing_start_review).",
       "kind": "action",
       "resource": "billing_queue",
       "operation": "update",
@@ -690,8 +664,8 @@
       "grantedToEveryAgent": false
     },
     {
-      "name": "get_billing_queue_item",
-      "description": "Open one billing queue item with its payer, shipment and the charges this payer is billed. It also shows the detention charges holding it, its exception and review notes, what its shipment still lacks for billing, and the invoice it made once approved. Read it before proposing approve_billing_queue_item, hold_billing_queue_item, move_billing_item_to_exception, send_billing_item_back_to_ops or cancel_billing_queue_item. Amounts are left out, and named in withheldByAccess, when your data access does not reach them.",
+      "name": "billing_get_queue_item",
+      "description": "Open billing queue items by id: one in full, or up to 50 as a table of what blocks each item's approval and what its shipment still lacks for billing. One item comes with its payer, shipment and the charges this payer is billed, the detention charges holding it, its exception and review notes, and the invoice it made once approved. Its issues are the flagged checks, each with the issueId, whether it is Open or Settled, the options a biller settles it with by optionKey, and whether its settlement can be undone. Read an item before approving, holding, releasing, canceling or sending it back, or settling one of its issues; read the set before assigning, moving into review, approving or posting several. An id that is not a queue item of this organization is named in the note. Amounts are left out, and named in withheldByAccess, when your data access does not reach them.",
       "kind": "query",
       "resource": "billing_queue",
       "operation": "read",
@@ -703,20 +677,7 @@
       "grantedToEveryAgent": false
     },
     {
-      "name": "get_billing_queue_items",
-      "description": "Open several billing queue items by id in one call, each with what blocks its approval and what its shipment still lacks for billing. Each row also carries the payer, shipment, charges, biller and the invoice it made once approved. Use it instead of calling get_billing_queue_item once per item: to check a queue before assigning, moving into review, approving or posting it. Up to 50; an id that is not a queue item of this organization is named in the note. Amounts are left out, and named in withheldByAccess, when your data access does not reach them.",
-      "kind": "query",
-      "resource": "billing_queue",
-      "operation": "read",
-      "defaultAutonomyTier": "",
-      "reversible": true,
-      "core": false,
-      "effect": "lookup",
-      "prerequisites": [],
-      "grantedToEveryAgent": false
-    },
-    {
-      "name": "hold_billing_queue_item",
+      "name": "billing_hold_queue_item",
       "description": "Put a billing queue item on hold, with a note saying what it waits on. Use it when an item waiting for or in review cannot be billed yet but nothing is wrong with it: a document on its way, a customer's confirmation. A held item is taken off hold only when the note's condition is met.",
       "kind": "action",
       "resource": "billing_queue",
@@ -729,8 +690,8 @@
       "grantedToEveryAgent": false
     },
     {
-      "name": "list_billing_queue_items",
-      "description": "List billing queue items, the shipments waiting on a biller. Open one with get_billing_queue_item before deciding it; Posted items need status Posted. Filters: status (ReadyForReview|InReview|OnHold|Exception|SentBackToOps|Approved|Posted|Canceled): ReadyForReview and InReview await a biller; billType (Invoice|CreditMemo|DebitMemo); exceptionReasonCode (MissingDocumentation|IncorrectRates|WeightDiscrepancy|AccessorialDispute|DuplicateCharge|MissingReferenceNumber|CustomerInformationError|ServiceFailure|RateNotOnFile|Other); assignedBillerId (text): a user id; isnull for unassigned; billToCustomerId (text): the payer, from list_customers; id (text): in with several ids reads them together; createdAt (date): when it was queued; text: number, shipment.proNumber; date: reviewStartedAt; number: allocatedTotalAmount. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "name": "billing_list_queue_items",
+      "description": "List billing queue items, the shipments waiting on a biller. Open one with billing_get_queue_item before deciding it; Posted items need status Posted. Filters: status (ReadyForReview|InReview|OnHold|Exception|SentBackToOps|Approved|Posted|Canceled): ReadyForReview and InReview await a biller; billType (Invoice|CreditMemo|DebitMemo); exceptionReasonCode (MissingDocumentation|IncorrectRates|WeightDiscrepancy|AccessorialDispute|DuplicateCharge|MissingReferenceNumber|CustomerInformationError|ServiceFailure|RateNotOnFile|Other); assignedBillerId (text): a user id; isnull for unassigned; billToCustomerId (text): the payer, from list_customers; id (text): in with several ids reads them together; createdAt (date): when it was queued; text: number, shipment.proNumber; date: reviewStartedAt; number: allocatedTotalAmount. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
       "kind": "query",
       "resource": "billing_queue",
       "operation": "read",
@@ -742,7 +703,7 @@
       "grantedToEveryAgent": false
     },
     {
-      "name": "move_billing_item_to_exception",
+      "name": "billing_raise_exception",
       "description": "Move a billing queue item in review into exception for a biller to resolve. Use it when the bill itself is wrong: a rate that disagrees with the agreement, a disputed accessorial, a duplicate charge. Give the reason and notes that say what is wrong and what would clear it.",
       "kind": "action",
       "resource": "billing_queue",
@@ -755,7 +716,7 @@
       "grantedToEveryAgent": false
     },
     {
-      "name": "reassign_billing_charge",
+      "name": "billing_reassign_charge",
       "description": "Move who pays one charge on a shipment in billing review: its freight or one accessorial, whole to another payer or split among several. A payer who gains a share gets a queue item and one left with nothing has theirs canceled. An empty allocations list gives the charge back to the shipment's own payer. Only while every queue item for the shipment is in review or on hold.",
       "kind": "action",
       "resource": "billing_queue",
@@ -768,8 +729,8 @@
       "grantedToEveryAgent": false
     },
     {
-      "name": "send_billing_item_back_to_ops",
-      "description": "Send a billing queue item in review back to operations to fix, with a reason. Use it when the fix belongs to the shipment rather than the bill: a missing document operations must collect, a wrong weight, a missing reference number. Operations sees a high-priority note on the shipment saying why. Read the item with get_billing_queue_item first. Notes are required when the reason is Other.",
+      "name": "billing_return_to_operations",
+      "description": "Send a billing queue item in review back to operations to fix, with a reason. Use it when the fix belongs to the shipment rather than the bill: a missing document operations must collect, a wrong weight, a missing reference number. Operations sees a high-priority note on the shipment saying why. Read the item with billing_get_queue_item first. Notes are required when the reason is Other.",
       "kind": "action",
       "resource": "billing_queue",
       "operation": "update",
@@ -781,21 +742,8 @@
       "grantedToEveryAgent": false
     },
     {
-      "name": "transition_item_to_in_review",
-      "description": "Move a billing queue item into review so a biller can work it: one waiting for review, on hold, in exception or sent back to operations. Review needs a biller on the item, so one with nobody is assigned the person who asked, or the billerId you name. For more than one item, call transition_items_to_in_review once with all of them instead.",
-      "kind": "action",
-      "resource": "billing_queue",
-      "operation": "update",
-      "defaultAutonomyTier": "Propose",
-      "reversible": true,
-      "core": false,
-      "effect": "change",
-      "prerequisites": [],
-      "grantedToEveryAgent": false
-    },
-    {
-      "name": "transition_items_to_in_review",
-      "description": "Move several billing queue items into review in one call, so the person decides it once. Use it instead of transition_item_to_in_review whenever more than one item needs a biller's attention, never one call per item. Each item moves exactly as transition_item_to_in_review would: one with no biller is assigned the person who asked, or the billerId you name. An item the queue would refuse is reported and the rest still go. Up to 50 items.",
+      "name": "billing_start_review",
+      "description": "Move billing queue items into review, one or up to 50 in one call the person decides once. An item with no biller is assigned the person who asked, or the billerId you name. Name every item that needs a biller's attention in one call; one the queue would refuse is reported and the rest still go.",
       "kind": "action",
       "resource": "billing_queue",
       "operation": "update",
@@ -1562,7 +1510,7 @@
     },
     {
       "name": "apply_credit_memo",
-      "description": "Propose settling a customer's open invoices with a posted credit memo of theirs. Name each invoice and the amount of credit it takes; together they cannot exceed what is left of the memo, nor any invoice its open balance. A person always decides. Find the memo with list_invoices (billType CreditMemo).",
+      "description": "Propose settling a customer's open invoices with a posted credit memo of theirs. Name each invoice and the amount of credit it takes; together they cannot exceed what is left of the memo, nor any invoice its open balance. A person always decides. Find the memo with invoice_list (billType CreditMemo).",
       "kind": "action",
       "resource": "customer_payment",
       "operation": "create",
@@ -3516,7 +3464,7 @@
       "grantedToEveryAgent": false
     },
     {
-      "name": "approve_invoice_adjustment",
+      "name": "invoice_approve_adjustment",
       "description": "Propose approving an invoice adjustment that waits for approval, which executes it: the credit memo and any replacement invoice are made and posted. It is checked again against the invoice as it stands, as execution does. A person always decides.",
       "kind": "action",
       "resource": "invoice",
@@ -3542,8 +3490,8 @@
       "grantedToEveryAgent": false
     },
     {
-      "name": "create_invoice",
-      "description": "Propose drafting invoices for completed freight: an order's billable shipments as one grouped invoice, or shipments on their own. A split-billed shipment makes one draft per payer. Drafts are posted with post_invoice. A person always decides.",
+      "name": "invoice_create",
+      "description": "Propose drafting invoices for completed freight: an order's billable shipments as one grouped invoice, or shipments on their own. A split-billed shipment makes one draft per payer. Drafts are posted with invoice_post. A person always decides.",
       "kind": "action",
       "resource": "invoice",
       "operation": "create",
@@ -3555,8 +3503,8 @@
       "grantedToEveryAgent": false
     },
     {
-      "name": "create_invoice_memo",
-      "description": "Propose a draft credit or debit memo to a customer with no shipment behind it, such as a goodwill credit or a returned-check fee. It stays a draft until post_invoice posts it; apply a posted credit with apply_credit_memo. A person always decides.",
+      "name": "invoice_create_memo",
+      "description": "Propose a draft credit or debit memo to a customer with no shipment behind it, such as a goodwill credit or a returned-check fee. It stays a draft until invoice_post posts it; apply a posted credit with apply_credit_memo. A person always decides.",
       "kind": "action",
       "resource": "invoice",
       "operation": "create",
@@ -3568,8 +3516,8 @@
       "grantedToEveryAgent": false
     },
     {
-      "name": "generate_invoice_pdf",
-      "description": "Render an invoice's PDF from what it says now and file it on the invoice, replacing the one there. Refused when the customer's billing profile would email the invoice the moment its PDF is made; send it with send_invoice.",
+      "name": "invoice_generate_pdf",
+      "description": "Render an invoice's PDF from what it says now and file it on the invoice, replacing the one there. Refused when the customer's billing profile would email the invoice the moment its PDF is made; send it with invoice_send.",
       "kind": "action",
       "resource": "invoice",
       "operation": "update",
@@ -3581,8 +3529,8 @@
       "grantedToEveryAgent": false
     },
     {
-      "name": "get_invoice",
-      "description": "Retrieve one invoice by id, with its line items, totals, payment and dispute state. Each line's id is what an invoice adjustment names. Use list_invoices first when you have a number or are looking for what is unpaid, and get_invoices to check several at once. Amounts and the memo are left out, and named in withheldByAccess, when your data access does not reach them.",
+      "name": "invoice_get",
+      "description": "Retrieve invoices by id: one in full, or up to 50 in one call as a table, for example to check a batch of drafts before posting them. One invoice comes with its line items, totals, payment and dispute state; a table row carries the status, totals, payment state and lines. Each line's id is what an invoice adjustment names. Use invoice_list first when you have a number or are looking for what is unpaid. An id that is not an invoice of this organization is named in the note. Amounts and the memo are left out, and named in withheldByAccess, when your data access does not reach them.",
       "kind": "query",
       "resource": "invoice",
       "operation": "read",
@@ -3594,21 +3542,8 @@
       "grantedToEveryAgent": false
     },
     {
-      "name": "get_invoice_adjustment",
+      "name": "invoice_get_adjustment",
       "description": "Retrieve one invoice adjustment by id: its kind, status, approval, reason, the invoices it made and each line it credits or rebills against the invoice's lines.",
-      "kind": "query",
-      "resource": "invoice",
-      "operation": "read",
-      "defaultAutonomyTier": "",
-      "reversible": true,
-      "core": false,
-      "effect": "lookup",
-      "prerequisites": [],
-      "grantedToEveryAgent": false
-    },
-    {
-      "name": "get_invoices",
-      "description": "Retrieve several invoices by id in one call, each with its status, totals, payment state and line items. Use it instead of calling get_invoice once per invoice, for example to check a batch of drafts before posting them. Up to 50; an id that is not an invoice of this organization is named in the note. Amounts are left out, and named in withheldByAccess, when your data access does not reach them.",
       "kind": "query",
       "resource": "invoice",
       "operation": "read",
@@ -3633,8 +3568,8 @@
       "grantedToEveryAgent": false
     },
     {
-      "name": "list_invoice_adjustments",
-      "description": "List the invoice adjustments on one invoice, drafts included, or those waiting for an approver. With invoiceId it lists every credit, rebill and reversal made or drafted against the invoice and its replacements; without it, the approval queue. Open one with get_invoice_adjustment.",
+      "name": "invoice_list_adjustments",
+      "description": "List the invoice adjustments on one invoice, drafts included, or those waiting for an approver. With invoiceId it lists every credit, rebill and reversal made or drafted against the invoice and its replacements; without it, the approval queue. Open one with invoice_get_adjustment.",
       "kind": "query",
       "resource": "invoice",
       "operation": "read",
@@ -3646,7 +3581,7 @@
       "grantedToEveryAgent": false
     },
     {
-      "name": "list_invoice_share_candidates",
+      "name": "invoice_list_share_candidates",
       "description": "List the teammates an invoice can be shared with: only people whose role lets them read invoices. Search by name or username.",
       "kind": "query",
       "resource": "invoice",
@@ -3659,7 +3594,7 @@
       "grantedToEveryAgent": false
     },
     {
-      "name": "list_invoices",
+      "name": "invoice_list",
       "description": "List invoices narrowed by status, whether they are paid, whether they are disputed, the amount, or the invoice and due dates. It answers what is unpaid, overdue or in dispute. Filters: status (Draft|Posted|Voided): where the invoice is in its own lifecycle, not whether it is paid; settlementStatus (Unpaid|PartiallyPaid|Paid): this is the one to use for \"unpaid\" or \"outstanding\"; disputeStatus (None|Disputed); billType (Invoice|CreditMemo|DebitMemo): CreditMemo and DebitMemo are memos; apply a posted CreditMemo with apply_credit_memo; id (text): in with several ids reads them together; billToName (text): who the invoice is billed to; dueDate (date): overdue is a due date before today with settlementStatus not Paid; text: number, shipmentProNumber; date: invoiceDate, createdAt; number: totalAmount. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
       "kind": "query",
       "resource": "invoice",
@@ -3672,8 +3607,8 @@
       "grantedToEveryAgent": false
     },
     {
-      "name": "post_invoice",
-      "description": "Propose posting a draft invoice, usually the one approve_billing_queue_item just made. Posting books it to the ledger, marks its shipments invoiced, settles its billing queue item and queues it for the accounting system and, where the customer takes it, an EDI 210. It cannot be undone except by voiding, so a person always decides; propose it once the draft's lines and totals are right. For more than one invoice, propose post_invoices once with all of them instead.",
+      "name": "invoice_post",
+      "description": "Propose posting draft invoices, one or up to 50 in one proposal the person decides together, usually the drafts approving billing queue items just made. Posting books each to the ledger, marks its shipments invoiced, settles its billing queue item and queues it for the accounting system and, where the customer takes it, an EDI 210. It cannot be undone except by voiding, so propose it once you have checked the drafts; the person may untick invoices. Name every ready invoice in one call; one posting would refuse is reported, not posted, and the rest still go.",
       "kind": "action",
       "resource": "invoice",
       "operation": "update",
@@ -3685,20 +3620,7 @@
       "grantedToEveryAgent": false
     },
     {
-      "name": "post_invoices",
-      "description": "Propose posting several draft invoices in one proposal the person approves together. Use it instead of post_invoice whenever more than one invoice is ready, rather than one proposal per invoice. Each invoice is posted exactly as post_invoice would: booked to the ledger, its shipments marked invoiced, its billing queue item settled and queued for the accounting system and, where the customer takes it, an EDI 210. It cannot be undone except by voiding, so a person always decides and may untick invoices. An invoice posting would refuse is reported, not posted, and the rest still go. Up to 50 invoices.",
-      "kind": "action",
-      "resource": "invoice",
-      "operation": "update",
-      "defaultAutonomyTier": "Propose",
-      "reversible": false,
-      "core": false,
-      "effect": "change",
-      "prerequisites": [],
-      "grantedToEveryAgent": false
-    },
-    {
-      "name": "reject_invoice_adjustment",
+      "name": "invoice_reject_adjustment",
       "description": "Propose rejecting an invoice adjustment that waits for approval, with the reason the submitter will read. Nothing is credited and the invoice is left as it is. A person always decides.",
       "kind": "action",
       "resource": "invoice",
@@ -3711,8 +3633,8 @@
       "grantedToEveryAgent": false
     },
     {
-      "name": "save_invoice_adjustment_draft",
-      "description": "Save a draft credit, rebill, reversal or write-off on a posted invoice for a biller to review and submit; nothing is credited until it is submitted. Give invoiceId for a new draft, or adjustmentId to rewrite a draft already saved. The result names the draft, which submit_invoice_adjustment takes as draftAdjustmentId.",
+      "name": "invoice_save_adjustment_draft",
+      "description": "Save a draft credit, rebill, reversal or write-off on a posted invoice for a biller to review and submit; nothing is credited until it is submitted. Give invoiceId for a new draft, or adjustmentId to rewrite a draft already saved. The result names the draft, which invoice_submit_adjustment takes as draftAdjustmentId.",
       "kind": "action",
       "resource": "invoice",
       "operation": "update",
@@ -3724,8 +3646,8 @@
       "grantedToEveryAgent": false
     },
     {
-      "name": "send_invoice",
-      "description": "Propose emailing an invoice to the customer. The recipients, subject, wording and attachments come from the organization and the customer's billing profile; nothing is chosen by you. A person always decides. Propose it after post_invoice when the customer is not sent invoices automatically. For more than one invoice, propose send_invoices once with all of them instead.",
+      "name": "invoice_send",
+      "description": "Propose emailing invoices to their customers, one or up to 50 in one proposal the person decides together. The recipients, subject, wording and attachments come from the organization and each customer's billing profile; nothing is chosen by you. Propose it after posting when the customer is not sent invoices automatically. The person approving sees every email, may untick invoices, and is who sends them. Name every invoice going out in one call; one that cannot go is reported, not sent, and the rest still go.",
       "kind": "action",
       "resource": "invoice",
       "operation": "submit",
@@ -3737,7 +3659,7 @@
       "grantedToEveryAgent": false
     },
     {
-      "name": "send_invoice_edi",
+      "name": "invoice_send_edi",
       "description": "Propose sending a posted invoice to the customer's EDI partner as a 210. Set force only to resend one that already went, when the partner asks for it again. A person always decides.",
       "kind": "action",
       "resource": "invoice",
@@ -3750,21 +3672,8 @@
       "grantedToEveryAgent": false
     },
     {
-      "name": "send_invoices",
-      "description": "Propose emailing several invoices to their customers in one proposal the person approves together. Use it instead of send_invoice whenever more than one invoice goes out. Each invoice goes exactly as send_invoice would send it: the recipients, subject, wording and attachments come from the organization and each customer's billing profile, and nothing is chosen by you. The person approving sees every email, may untick invoices, and is who sends them. An invoice that cannot go is reported, not sent, and the rest still go. Up to 50 invoices.",
-      "kind": "action",
-      "resource": "invoice",
-      "operation": "submit",
-      "defaultAutonomyTier": "Propose",
-      "reversible": false,
-      "core": false,
-      "effect": "change",
-      "prerequisites": [],
-      "grantedToEveryAgent": false
-    },
-    {
-      "name": "share_invoice",
-      "description": "Propose sharing an invoice with teammates, who get a notification and an email with your note and a link to it. Pick them with list_invoice_share_candidates, which lists only people who may read invoices. It is sent in the name of the person who approves it, so a person always decides.",
+      "name": "invoice_share",
+      "description": "Propose sharing an invoice with teammates, who get a notification and an email with your note and a link to it. Pick them with invoice_list_share_candidates, which lists only people who may read invoices. It is sent in the name of the person who approves it, so a person always decides.",
       "kind": "action",
       "resource": "invoice",
       "operation": "read",
@@ -3776,7 +3685,7 @@
       "grantedToEveryAgent": false
     },
     {
-      "name": "submit_invoice_adjustment",
+      "name": "invoice_submit_adjustment",
       "description": "Propose crediting, rebilling, reversing or writing off posted invoices. Give adjustments, one per invoice and up to 25 at once, or draftAdjustmentId to submit a saved draft as it stands. Each executes at once or waits for approval as the organization's adjustment policy says. It creates credit memos and replacement invoices, so a person always decides.",
       "kind": "action",
       "resource": "invoice",
@@ -3789,7 +3698,7 @@
       "grantedToEveryAgent": false
     },
     {
-      "name": "update_invoice_draft",
+      "name": "invoice_update_draft",
       "description": "Change what a draft invoice says and where it goes: its memo, remittance instructions, email subject and body, recipients and attached documents. Only the fields you pass change; an empty string or list clears one. A posted invoice is changed with an invoice adjustment instead.",
       "kind": "action",
       "resource": "invoice",
@@ -3802,7 +3711,7 @@
       "grantedToEveryAgent": false
     },
     {
-      "name": "void_invoice",
+      "name": "invoice_void",
       "description": "Propose voiding an invoice. A draft is voided in place; a posted one through a full-reversal adjustment that credits it, which may wait for an approver. Its freight is rebilled or canceled as you say. Unapply payments and credits first. A person always decides.",
       "kind": "action",
       "resource": "invoice",
@@ -3815,8 +3724,8 @@
       "grantedToEveryAgent": false
     },
     {
-      "name": "list_invoice_disputes",
-      "description": "List the dispute cases on invoices, open and closed, newest first: the reason, the amount in dispute, the notes and how each was resolved. Find disputed invoices with list_invoices filtered to disputeStatus Disputed.",
+      "name": "invoice_list_disputes",
+      "description": "List the dispute cases on invoices, open and closed, newest first: the reason, the amount in dispute, the notes and how each was resolved. Find disputed invoices with invoice_list filtered to disputeStatus Disputed.",
       "kind": "query",
       "resource": "invoice_dispute",
       "operation": "read",
@@ -3828,8 +3737,8 @@
       "grantedToEveryAgent": false
     },
     {
-      "name": "open_invoice_dispute",
-      "description": "Open a dispute on a posted invoice the customer is withholding payment on. The invoice is marked Disputed until the case is resolved or withdrawn. The disputed amount cannot exceed the open balance, and an invoice holds one open case at a time. Record the customer's reason as they gave it; read get_invoice first.",
+      "name": "invoice_open_dispute",
+      "description": "Open a dispute on a posted invoice the customer is withholding payment on. The invoice is marked Disputed until the case is resolved or withdrawn. The disputed amount cannot exceed the open balance, and an invoice holds one open case at a time. Record the customer's reason as they gave it; read invoice_get first.",
       "kind": "action",
       "resource": "invoice_dispute",
       "operation": "create",
@@ -3841,8 +3750,8 @@
       "grantedToEveryAgent": false
     },
     {
-      "name": "resolve_invoice_dispute",
-      "description": "Propose closing an open invoice dispute with its outcome. A credit or a write-off must name the executed adjustment that settled it, from list_invoice_adjustments; an upheld invoice, a rebill or a customer who dropped it need none. Resolving clears the invoice's Disputed flag. A person always decides.",
+      "name": "invoice_resolve_dispute",
+      "description": "Propose closing an open invoice dispute with its outcome. A credit or a write-off must name the executed adjustment that settled it, from invoice_list_adjustments; an upheld invoice, a rebill or a customer who dropped it need none. Resolving clears the invoice's Disputed flag. A person always decides.",
       "kind": "action",
       "resource": "invoice_dispute",
       "operation": "approve",
@@ -3854,8 +3763,8 @@
       "grantedToEveryAgent": false
     },
     {
-      "name": "withdraw_invoice_dispute",
-      "description": "Withdraw an open invoice dispute the customer no longer pursues, without recording an outcome. The invoice's Disputed flag clears and it goes back to collections as it was. Use resolve_invoice_dispute instead when there is an outcome to record.",
+      "name": "invoice_withdraw_dispute",
+      "description": "Withdraw an open invoice dispute the customer no longer pursues, without recording an outcome. The invoice's Disputed flag clears and it goes back to collections as it was. Use invoice_resolve_dispute instead when there is an outcome to record.",
       "kind": "action",
       "resource": "invoice_dispute",
       "operation": "cancel",
@@ -3867,7 +3776,7 @@
       "grantedToEveryAgent": false
     },
     {
-      "name": "adjust_invoice_run_membership",
+      "name": "invoice_adjust_run",
       "description": "Take shipments off an invoice run that is still a proposal, put them back, or move them to another of the same customer's invoices on it. An excluded shipment stays approved and rolls into the next period. Every exclusion needs a reason the next biller can read.",
       "kind": "action",
       "resource": "invoice_run",
@@ -3880,8 +3789,8 @@
       "grantedToEveryAgent": false
     },
     {
-      "name": "bill_statement_now",
-      "description": "Propose billing a statement customer's open period now, before its cycle closes, with the reason recorded on the run. Shipments you name in exclude stay on the statement for the period's end. The customer's next boundary does not move. A person always decides; read list_open_statements first.",
+      "name": "invoice_bill_statement",
+      "description": "Propose billing a statement customer's open period now, before its cycle closes, with the reason recorded on the run. Shipments you name in exclude stay on the statement for the period's end. The customer's next boundary does not move. A person always decides; read invoice_list_open_statements first.",
       "kind": "action",
       "resource": "invoice_run",
       "operation": "approve",
@@ -3893,8 +3802,8 @@
       "grantedToEveryAgent": false
     },
     {
-      "name": "build_invoice_run",
-      "description": "Build an invoice run: a reviewable proposal of the consolidated invoices for customers' approved, uninvoiced freight over a period. Nothing is invoiced until the run is committed with commit_invoice_run. Find the run afterwards with list_invoice_runs, newest first.",
+      "name": "invoice_build_run",
+      "description": "Build an invoice run: a reviewable proposal of the consolidated invoices for customers' approved, uninvoiced freight over a period. Nothing is invoiced until the run is committed with invoice_commit_run. Find the run afterwards with invoice_list_runs, newest first.",
       "kind": "action",
       "resource": "invoice_run",
       "operation": "create",
@@ -3906,7 +3815,7 @@
       "grantedToEveryAgent": false
     },
     {
-      "name": "cancel_invoice_run",
+      "name": "invoice_cancel_run",
       "description": "Cancel an invoice run that will never be committed, such as one built for the wrong period or customers. Its shipments stay approved for the next run. Say why; the reason is kept on the run.",
       "kind": "action",
       "resource": "invoice_run",
@@ -3919,7 +3828,7 @@
       "grantedToEveryAgent": false
     },
     {
-      "name": "commit_invoice_run",
+      "name": "invoice_commit_run",
       "description": "Propose committing an invoice run, which turns each of its proposed invoices into a draft invoice for the customer. A group below the customer's minimum, or whose shipments were invoiced or re-approved elsewhere since it was built, is skipped with a reason. A person always decides.",
       "kind": "action",
       "resource": "invoice_run",
@@ -3932,8 +3841,8 @@
       "grantedToEveryAgent": false
     },
     {
-      "name": "get_invoice_run",
-      "description": "Retrieve one invoice run by id with each group, the invoice it would make or made, and the items in it: the ids adjust_invoice_run_membership moves or excludes.",
+      "name": "invoice_get_run",
+      "description": "Retrieve one invoice run by id with each group, the invoice it would make or made, and the items in it: the ids invoice_adjust_run moves or excludes.",
       "kind": "query",
       "resource": "invoice_run",
       "operation": "read",
@@ -3945,8 +3854,8 @@
       "grantedToEveryAgent": false
     },
     {
-      "name": "list_invoice_runs",
-      "description": "List invoice runs, the reviewable batches of consolidated invoices for a billing period, by status, number or period. Open one with get_invoice_run to see its groups and items. Filters: status (Building|Ready|Committing|Committed|Failed|Canceled): Ready runs are waiting to be committed or canceled; text: number; date: periodEnd, createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "name": "invoice_list_runs",
+      "description": "List invoice runs, the reviewable batches of consolidated invoices for a billing period, by status, number or period. Open one with invoice_get_run to see its groups and items. Filters: status (Building|Ready|Committing|Committed|Failed|Canceled): Ready runs are waiting to be committed or canceled; text: number; date: periodEnd, createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
       "kind": "query",
       "resource": "invoice_run",
       "operation": "read",
@@ -3958,8 +3867,8 @@
       "grantedToEveryAgent": false
     },
     {
-      "name": "list_open_statements",
-      "description": "List the open billing periods of customers billed on statements, as they stand now. Each shows the period, the freight on it, the invoices it would make and what is held back. Name a customerId to see the shipments on theirs, which bill_statement_now can exclude.",
+      "name": "invoice_list_open_statements",
+      "description": "List the open billing periods of customers billed on statements, as they stand now. Each shows the period, the freight on it, the invoices it would make and what is held back. Name a customerId to see the shipments on theirs, which invoice_bill_statement can exclude.",
       "kind": "query",
       "resource": "invoice_run",
       "operation": "read",
@@ -5614,8 +5523,8 @@
       "grantedToEveryAgent": false
     },
     {
-      "name": "list_billing_transfer_candidates",
-      "description": "List the delivered shipments not yet in the billing queue, oldest first: the same list the transfer-to-billing dialog offers. Each row says what a transfer would do with it (Transfer, MarkReadyAndTransfer, Refused with a failure code, or ReturnToOperations), the documents it still lacks and its rate or validation issues, decided by the checks the transfer itself makes. totals counts and sums the charges of each outcome per currency, so quote them rather than adding rows yourself. To transfer, propose one transfer_to_billing: allTransferable with these same filters when every row that can go should go, or shipmentIds for a hand-picked set, rather than one call per shipment.",
+      "name": "billing_list_transfer_candidates",
+      "description": "List the delivered shipments not yet in the billing queue, oldest first: the same list the transfer-to-billing dialog offers. Each row says what a transfer would do with it (Transfer, MarkReadyAndTransfer, Refused with a failure code, or ReturnToOperations), the documents it still lacks and its rate or validation issues, decided by the checks the transfer itself makes. totals counts and sums the charges of each outcome per currency, so quote them rather than adding rows yourself. To transfer, propose one billing_transfer: allTransferable with these same filters when every row that can go should go, or shipmentIds for a hand-picked set, rather than one call per shipment.",
       "kind": "query",
       "resource": "shipment",
       "operation": "read",
@@ -5653,8 +5562,8 @@
       "grantedToEveryAgent": false
     },
     {
-      "name": "manage_billing_transfer_run",
-      "description": "Stop a background transfer to billing that is still running, or Retry the shipments a finished one could not transfer. Take the run id from transfer_to_billing's result. Only the person who started a transfer can stop it; shipments already transferred stay in the queue.",
+      "name": "billing_manage_transfer_run",
+      "description": "Stop a background transfer to billing that is still running, or Retry the shipments a finished one could not transfer. Take the run id from billing_transfer's result. Only the person who started a transfer can stop it; shipments already transferred stay in the queue.",
       "kind": "action",
       "resource": "shipment",
       "operation": "update",
@@ -5705,8 +5614,8 @@
       "grantedToEveryAgent": false
     },
     {
-      "name": "transfer_to_billing",
-      "description": "Transfer delivered shipments to the billing queue, as the transfer-to-billing dialog does: each becomes a queue item a biller reviews. When the person means every shipment that can go (all of them, everything ready), set allTransferable to true, with the same filters list_billing_transfer_candidates takes, instead of copying ids: the proposal lists each shipment it resolves to. For a hand-picked set, give shipmentIds from list_billing_transfer_candidates. Cover every shipment in one call rather than one call per shipment; a shipment the checks refuse is reported, not transferred, and the rest still go. The person approving may untick shipments. Up to 100 transfer at once; more run as a background transfer.",
+      "name": "billing_transfer",
+      "description": "Transfer delivered shipments to the billing queue, as the transfer-to-billing dialog does: each becomes a queue item a biller reviews. When the person means every shipment that can go (all of them, everything ready), set allTransferable to true, with the same filters billing_list_transfer_candidates takes, instead of copying ids: the proposal lists each shipment it resolves to. For a hand-picked set, give shipmentIds from billing_list_transfer_candidates. Cover every shipment in one call rather than one call per shipment; a shipment the checks refuse is reported, not transferred, and the rest still go. The person approving may untick shipments. Up to 100 transfer at once; more run as a background transfer.",
       "kind": "action",
       "resource": "shipment",
       "operation": "update",

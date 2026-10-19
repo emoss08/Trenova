@@ -1456,12 +1456,23 @@ held-out`) when one is made for a PR.
 |---|---|---|---|---|---|
 | Held-out split | none (measurement only) | 649 → 649 | 459 / 710 / 0, unchanged | 0.92 (161 cases) | 0.81 |
 | Shipments, orders, import page | `shipment`, `order`, `intake` (55 tools namespaced) | 649 → 648 | 459 / 710 / 0, unchanged | 0.9193 → 0.9193 | 0.8137 → 0.8137 |
+| Billing queue and invoices | `billing`, `invoice` (47 tools namespaced; 7 single/batch pairs merged) | 648 → 641 | 459 / 710 / 0, unchanged | 0.9193 → 0.9193 | 0.8137 → 0.8137 |
 
 The shipment row is measured on the held-out set the split PR recorded (161 cases), so both
 figures read the same cases; the module's merges moved three cases between splits, which the
 ledger now records. On the development cases the same PR moved hybrid top-1 from 0.7702 to
 0.7745 and recall@5 from 0.9149 to 0.9128 (one case, an accounting request whose ranking moved
 with the renamed tools' embeddings), and keyword recall@5 over every case from 0.9287 to 0.9319.
+
+The billing row reads the same 161 cases. On the development cases it moved hybrid top-1 from
+0.7745 to 0.7766 and recall@5 from 0.9128 to 0.9149, and keyword top-1 from 0.8830 to 0.8872 with
+recall@5 from 0.9255 to 0.9213 (two cases). Two causes found on the way are fixed for every
+later module: keyword ties broke on the alphabetical name, so a namespace prefix (`billing_`)
+decided which of two equal answers came first, and they now break on the name in reading order;
+and a name that carries another area's noun (`billing_transfer_shipments`) name-matched every
+question about that noun. The merges moved two cases between strata; one, a miss in both, joined
+the held-out set, so the gate's own held-out hybrid top-1 reads 132 of 163 (0.8098) where it read
+132 of 162, and its floor is written as 0.80.
 
 **Phase 4: a single front door and job profiles (3–4 weeks).**
 

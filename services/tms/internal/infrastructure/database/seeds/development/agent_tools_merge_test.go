@@ -101,14 +101,14 @@ func TestMergeToolNames_StopsAtTheToolCap(t *testing.T) {
 
 	merged, changed := mergeToolNames(
 		current,
-		[]string{"share_invoice", "list_invoice_share_candidates"},
+		[]string{"invoice_share", "invoice_list_share_candidates"},
 	)
 
 	assert.True(t, changed)
 	assert.Len(t, merged, agentdefinition.MaxTools)
-	assert.Equal(t, "share_invoice", merged[len(merged)-1])
+	assert.Equal(t, "invoice_share", merged[len(merged)-1])
 
-	full, changed := mergeToolNames(merged, []string{"list_invoice_share_candidates"})
+	full, changed := mergeToolNames(merged, []string{"invoice_list_share_candidates"})
 
 	assert.False(t, changed, "a full list gains nothing")
 	assert.Len(t, full, agentdefinition.MaxTools)

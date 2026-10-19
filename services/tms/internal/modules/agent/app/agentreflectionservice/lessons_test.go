@@ -201,9 +201,9 @@ func TestLessonRequest_RefusesWhatTheWorkCannotVouchFor(t *testing.T) {
 			plan: threadPlan(),
 			lesson: &lesson{
 				Kind:     "Procedure",
-				Content:  "Use send_invoice",
+				Content:  "Use invoice_send",
 				Audience: audienceMe,
-				ToolName: "send_invoice",
+				ToolName: "invoice_send",
 			},
 			reason: "did not use",
 		},

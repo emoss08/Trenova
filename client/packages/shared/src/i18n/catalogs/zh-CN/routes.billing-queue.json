@@ -11,7 +11,6 @@
   "Approving them makes you their biller. You can approve only the items that already have a biller instead.": "批准后，您将成为其开票人。您也可以只批准已有开票人的项目。",
   "Assign a biller to review this billing queue item.": "分配计费人员审查此计费队列项目。",
   "Assign a biller to review {0, plural, one {# billing queue item} other {# billing queue items}}.": "指派开票人以审核 {0, plural, other {# 个账单队列项目}}。",
-  "Assign biller": "分配计费人员",
   "Assigned biller": "分配的计费人员",
   "Assigned billers": "分配的计费人员",
   "Auto-bills": "自动计费",

@@ -1203,7 +1203,7 @@ func TestArtifactRecorder_ReadingTheSameSourceAgainMakesANewVersion(t *testing.T
 		return agentports.ToolObservation{
 			Call: agentports.ToolCall{
 				ID:        callID,
-				Name:      "list_billing_queue_items",
+				Name:      "billing_list_queue_items",
 				Arguments: map[string]any{"status": status},
 			},
 			Data: data,

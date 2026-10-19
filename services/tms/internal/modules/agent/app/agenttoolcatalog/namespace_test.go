@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const maxToolsOutsideANamespace = 586
+const maxToolsOutsideANamespace = 532
 
 var (
 	namespaceName  = regexp.MustCompile(`^[a-z]+$`)

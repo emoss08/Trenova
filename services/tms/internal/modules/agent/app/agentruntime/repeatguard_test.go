@@ -179,19 +179,19 @@ func TestCallKey_SeparatesToolsThatShareArguments(t *testing.T) {
 func TestFanOutNote_RemindsOnlyFromTheThirdSingleFetch(t *testing.T) {
 	t.Parallel()
 
-	assert.Empty(t, fanOutNote("get_billing_queue_item", 2))
-	assert.Empty(t, fanOutNote("list_billing_queue_items", 5))
-	assert.Contains(t, fanOutNote("get_billing_queue_item", 3), "3rd get_billing_queue_item call")
-	assert.Contains(t, fanOutNote("get_billing_queue_item", 12), "12th")
+	assert.Empty(t, fanOutNote("billing_get_queue_item", 2))
+	assert.Empty(t, fanOutNote("billing_list_queue_items", 5))
+	assert.Contains(t, fanOutNote("billing_get_queue_item", 3), "3rd billing_get_queue_item call")
+	assert.Contains(t, fanOutNote("billing_get_queue_item", 12), "12th")
 }
 
 func TestRepeatGuard_AnswersARepeatedReadUntilSomethingWrites(t *testing.T) {
 	t.Parallel()
 
 	guard := newRepeatGuard()
-	read := agentports.ToolCall{Name: "get_billing_queue_item", Arguments: map[string]any{"billingQueueItemId": "bqi_1"}}
-	other := agentports.ToolCall{Name: "get_billing_queue_item", Arguments: map[string]any{"billingQueueItemId": "bqi_2"}}
-	write := agentports.ToolCall{Name: "approve_billing_queue_item", Arguments: map[string]any{"billingQueueItemId": "bqi_1"}}
+	read := agentports.ToolCall{Name: "billing_get_queue_item", Arguments: map[string]any{"billingQueueItemId": "bqi_1"}}
+	other := agentports.ToolCall{Name: "billing_get_queue_item", Arguments: map[string]any{"billingQueueItemId": "bqi_2"}}
+	write := agentports.ToolCall{Name: "billing_approve_queue_item", Arguments: map[string]any{"billingQueueItemId": "bqi_1"}}
 
 	assert.False(t, guard.readBefore(read), "a first read runs")
 	guard.ran(read)

@@ -57,7 +57,7 @@ function billingFits(): AgentMatch {
   return {
     outcome: "BetterAgent",
     agent: billing,
-    tools: [{ name: "list_invoices", summary: "List invoices by status." }],
+    tools: [{ name: "invoice_list", summary: "List invoices by status." }],
   };
 }
 

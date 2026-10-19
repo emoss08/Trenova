@@ -359,7 +359,7 @@ func (t *listAROpenItemsTool) Description() string {
 	return "List the open receivables, the unpaid or partly paid invoices customers still " +
 		"owe, most overdue first. Each row has the due date, days past due, dispute and " +
 		"short-pay state, and the open balance. Narrow to one customer, a minimum number " +
-		"of days past due, or disputed invoices. get_invoice expands one."
+		"of days past due, or disputed invoices. invoice_get expands one."
 }
 
 func (t *listAROpenItemsTool) ParamSchema() map[string]any {

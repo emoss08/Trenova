@@ -486,11 +486,11 @@ func TestDelegatedSearchNote_NamesTheAgentThatHoldsIt(t *testing.T) {
 	delegate := reportBuilder()
 	note := delegatedSearchNote(
 		[]agentdefinition.RuntimeDelegate{delegate},
-		[]string{"create_report", "list_invoices"},
+		[]string{"create_report", "invoice_list"},
 	)
 
 	assert.Contains(t, note, "Report Builder (agentId "+delegate.ID.String()+"): create_report")
-	assert.NotContains(t, note, "list_invoices")
+	assert.NotContains(t, note, "invoice_list")
 	assert.Contains(t, note, delegateTaskName)
 	assert.Empty(t, delegatedSearchNote(nil, []string{"create_report"}))
 }

@@ -81,13 +81,13 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"What is ready to transfer to billing?",
 			"Which delivered shipments are ready to transfer to billing, and which cannot go yet?",
-			"list_billing_transfer_candidates",
+			"billing_list_transfer_candidates",
 		),
 		ask(
 			"Which billing items are stuck the longest?",
 			"Which billing queue items have been blocked the longest, and why?",
-			"list_billing_queue_items",
-			"transition_item_to_in_review",
+			"billing_list_queue_items",
+			"billing_start_review",
 			"shipment_request_documents",
 		),
 		ask(
@@ -137,7 +137,7 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Which invoices are still open?",
 			"Which invoices are still open, oldest first?",
-			"list_invoices",
+			"invoice_list",
 		),
 		ask(
 			"Look up a customer",
@@ -150,7 +150,7 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Which billing items are blocked, and why?",
 			"Which billing items are blocked right now, and what is blocking each one?",
-			"list_billing_queue_items", "transition_item_to_in_review", "shipment_list",
+			"billing_list_queue_items", "billing_start_review", "shipment_list",
 		),
 		ask(
 			"Which shipments are missing documents?",
@@ -160,7 +160,7 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Which charge codes need correcting?",
 			"Which shipments have a charge code that looks wrong, and what should it be?",
-			"correct_charge_code",
+			"billing_correct_charge_codes",
 		),
 	},
 	TemplateDispatchAssignment: {
@@ -245,7 +245,7 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Which invoices are past due?",
 			"Which invoices are past due, and for which customers?",
-			"list_invoices",
+			"invoice_list",
 		),
 		ask(
 			"Which payments came in this week?",
@@ -518,7 +518,7 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Which invoices are disputed?",
 			"Which invoices are in dispute, and what is each customer's reason?",
-			"list_invoice_disputes",
+			"invoice_list_disputes",
 		),
 		ask(
 			"Which payments are unapplied?",
@@ -784,7 +784,7 @@ var toolFamilies = [][]starterQuestion{
 		ask(
 			"Which billing items are stuck the longest?",
 			"Which billing queue items have been blocked the longest, and why?",
-			"transition_item_to_in_review", "correct_charge_code",
+			"billing_start_review", "billing_correct_charge_codes",
 		),
 		ask(
 			"Which deliveries are missing paperwork?",
@@ -796,7 +796,7 @@ var toolFamilies = [][]starterQuestion{
 		ask(
 			"Which invoices are past due?",
 			"Which invoices are past due, and for which customers?",
-			"list_invoices", "get_invoice",
+			"invoice_list", toolInvoiceGet,
 		),
 		ask(
 			"Which receipts still need matching?",
