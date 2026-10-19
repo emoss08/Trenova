@@ -63,4 +63,6 @@ func Register(r *seeder.Registry) {
 	r.MustRegister(development.NewCarrierRateAgreementSeed())
 	r.MustRegister(development.NewAIAnalyticsSeed())
 	r.MustRegister(development.NewEDITradingPartnerSeed())
+	r.MustRegister(development.NewReceivablesSeed())
+	r.MustRegister(development.NewOutboundChannelsSeed())
 }

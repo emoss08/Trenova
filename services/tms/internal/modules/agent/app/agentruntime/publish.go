@@ -318,6 +318,13 @@ func shownNote(shown *agentports.ShownArtifact) string {
 		artifactNoun(shown.Kind), shown.Title, artifactRefNote(shown))
 }
 
+func foldedNote(table *agentports.ShownArtifact) string {
+	return fmt.Sprintf("\n\n[This record is now one row of %s titled %q beside the "+
+		"conversation, with the others of its kind read in this step; there is no record card "+
+		"of its own. Point to that table once, where you say what it holds.]",
+		artifactNoun(table.Kind), table.Title)
+}
+
 // InlineRows is the most rows a reply repeats as a markdown table. A table
 // that short is answered in the reply and not kept, unless the reply ranks or
 // compares its rows; a longer one is kept and pointed to, and its rows are

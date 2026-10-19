@@ -4889,7 +4889,7 @@ findings:
 
   - id: DB-213
     title: The development seed has no email profile, so a run cannot ask for a document
-    status: open
+    status: fixed
     severity: medium
     area: development seed / email profiles
     found: 2026-10-19, .deskbench/runs/20261019-131140-run
@@ -4906,12 +4906,13 @@ findings:
       No seed creates an email profile (13_detention.go creates customer email profiles only);
       older development databases had one made by hand.
     fix: >
-      Not fixed in code. An email profile was created by hand for this run. A development seed
-      for one, or setup in the scenarios that need it, would make a fresh database enough.
+      The OutboundChannels development seed adds the email profile "Trenova Local" (Resend, no key, so a request can be proposed and nothing is delivered); it skips one that exists.
+    fixedIn: >
+      .deskbench/runs/20261019-154944-run: unattended-billing-exception-missing-pod 3/3, unattended-billing-stopped-while-waiting-closes-the-run 3/3.
 
   - id: DB-214
     title: Two parallel get calls of one kind merge into one table and drop the first card
-    status: open
+    status: fixed
     severity: medium
     area: agent runtime / result artifacts
     found: 2026-10-19, .deskbench/runs/20261019-125417-run
@@ -4926,14 +4927,17 @@ findings:
       transcript of approve-two-settlements-in-one-go #2, model call #8 to the reply; event
       artifact_removed art_01M5AHE0XPY8E7ZMT3DZXACHMS.
     cause: >
-      By design (assistantservice/artifact_bunch.go) a second get of one tool in a turn folds the
-      earlier card into a table and retires the card. When the two calls run in parallel, the
-      first call's result has already offered the model the card's link, so the reply links an
-      artifact that is gone and the reply pass drops the link.
+      A second get of one tool in a turn folds the earlier card into a table and retires the card (assistantservice/artifact_bunch.go). When the two calls run in parallel, the first call's result has already told the model to link the card, so the reply linked an artifact that was gone and the reply pass dropped the link.
     fix: >
-      Not fixed; no case failed on it. The result of a call whose card a later call in the same
-      batch retired needs to name the table instead, which changes how a batch's results are
-      put together.
+      A bunched table names the cards it replaced (ShownArtifact.Replaces). When a replaced card's result is still in the batch the model has not read, the runtime rewrites that result's note to point to the table instead (Turn.foldReplaced, foldedNote) and drops the card from what the turn keeps; a result the model has already read is never rewritten, so the cached prefix and replayed thinking stay intact.
+    files:
+      - services/tms/internal/modules/agent/ports/agentports/agentruntime.go
+      - services/tms/internal/modules/agent/app/assistantservice/artifact_bunch.go
+      - services/tms/internal/modules/agent/app/agentruntime/replypass.go
+      - services/tms/internal/modules/agent/app/agentruntime/publish.go
+      - services/tms/internal/modules/agent/app/agentruntime/runner.go
+    fixedIn: >
+      .deskbench/runs/20261019-165003-run: approve-two-settlements-in-one-go #2 read both settlements in parallel; Jane Doe's result reads "This record is now one row of a table titled \"Driver settlements (2)\"" and the reply links no retired card. 3/3.
 
   - id: DB-215
     title: A run the bench stopped on purpose failed the case's "every turn finished" check
@@ -4963,7 +4967,7 @@ findings:
 
   - id: DB-216
     title: Seven scenarios named agents that only existed on an older database
-    status: open
+    status: fixed
     severity: high
     area: deskbench / scenarios and bench agents
     found: 2026-10-19, .deskbench/runs/20261019-133049-run (Pass 2)
@@ -4995,10 +4999,12 @@ findings:
       - services/tms/deskbench/scenarios/conversation.yaml
       - services/tms/deskbench/scenarios/lifecycle.yaml
       - services/tms/deskbench/scenarios/formulas.yaml
+    fixedIn: >
+      .deskbench/runs/20261019-154944-run: all seven cases run; ambiguous-load-asks, create-shipment-from-a-sentence, correct-a-weight, cancel-then-think-better, where-is-it-will-it-make-it, formula-asked-for-in-the-desk and lifecycle-handed-between-agents are graded on their own merits (their remaining failures are DB-227 to DB-230).
 
   - id: DB-217
     title: Every seeded driver is non-compliant, so no load can be assigned
-    status: open
+    status: fixed
     severity: high
     area: development seed / worker credentials
     found: 2026-10-19, .deskbench/runs/20261019-133049-run (Pass 2)
@@ -5022,10 +5028,12 @@ findings:
       medical card stays.
     files:
       - services/tms/internal/infrastructure/database/seeds/development/18_worker_credential.go
+    fixedIn: >
+      .deskbench/runs/20261019-154944-run: assign-a-driver 0/1 → 3/3; db seed --target WorkerCredential left six of eight drivers compliant.
 
   - id: DB-218
     title: The SEED-SHP-008 in-transit setup leaves the moving leg without a driver
-    status: open
+    status: fixed
     severity: medium
     area: deskbench / scenarios
     found: 2026-10-19, .deskbench/runs/20261019-133049-run (Pass 2)
@@ -5042,10 +5050,12 @@ findings:
       put back in progress when a run completed it).
     files:
       - services/tms/deskbench/scenarios/shipments.yaml
+    fixedIn: >
+      .deskbench/runs/20261019-154944-run: where-is-it-will-it-make-it 3/3, mark-a-move-delivered 2/3 (the miss restated a lateness figure nothing read, DB-230).
 
   - id: DB-219
     title: Writes that name their id source only in prose are preselected without it
-    status: open
+    status: fixed
     severity: medium
     area: agent tools / prerequisites
     found: 2026-10-19, .deskbench/runs/20261019-133049-run (Pass 2)
@@ -5068,10 +5078,12 @@ findings:
       - services/tms/internal/modules/agent/app/agenttools/masterdatatools/masterdata_kit.go
       - services/tms/internal/modules/agent/app/agenttools/masterdatatools/fleet_tools.go
       - services/tms/internal/modules/agent/app/agentevalgate/testdata/catalog.golden.json
+    fixedIn: >
+      .deskbench/runs/20261019-154944-run: tractor-in-the-shop 0/1 → 3/3; list_tractors loads with update_tractor_status.
 
   - id: DB-220
     title: A fact whose truth is zero failed a reply that said "no" or "none"
-    status: open
+    status: fixed
     severity: low
     area: deskbench / checks
     found: 2026-10-19, .deskbench/runs/20261019-133049-run (Pass 2)
@@ -5081,14 +5093,17 @@ findings:
       "No delivered shipments are waiting to be transferred to billing" failed "truth 0; missing
       from reply: 0", though the scenario's note says an empty group need not be named as zero.
     cause: statesInWords read 0 only as "zero".
-    fix: A zero is stated by zero, none, nothing or no.
     files:
       - services/tms/internal/deskbench/checks.go
       - services/tms/internal/deskbench/checks_test.go
+    fix: >
+      A zero is stated by zero, none or nothing, or by "no" directly before a noun ("no loads", "no delivered shipments"); "no problem", "no worries", "no longer" and a bare "no" are not counted (notCounted), so "no problem, there are 3" does not pass a fact of zero.
+    fixedIn: >
+      .deskbench/runs/20261019-154944-run: ready-to-invoice 0/1 → 3/3 with the tightened matcher; TestReplyStates_ReadsASmallCountInWords holds both directions.
 
   - id: DB-221
     title: The proposals checks counted tools that ran at once
-    status: open
+    status: fixed
     severity: medium
     area: deskbench / checks
     found: 2026-10-19, .deskbench/runs/20261019-133049-run (Pass 2)
@@ -5108,10 +5123,12 @@ findings:
     files:
       - services/tms/internal/deskbench/checks.go
       - services/tms/internal/deskbench/checks_test.go
+    fixedIn: >
+      .deskbench/runs/20261019-154944-run: unattended-insight-acme-on-time-decline 3/3, unattended-insight-unbilled-aging-not-borne-out (held-out) 3/3.
 
   - id: DB-222
     title: An unattended run's escalation was deferred and lost to wait_until in find_tools
-    status: open
+    status: fixed
     severity: high
     area: agent runtime / deferred core tools
     found: 2026-10-19, .deskbench/runs/20261019-133049-run (Pass 2)
@@ -5135,10 +5152,12 @@ findings:
       - services/tms/internal/modules/agent/app/agentruntime/toolset.go
       - services/tms/internal/modules/agent/app/agentruntime/toolset_test.go
       - docs/engineering/agent-runtime.md
+    fixedIn: >
+      .deskbench/runs/20261019-154944-run: raise_exception is in the LoadMonitor run's tool list loaded, not deferred, and two of its calls ran; the case still failed on the tool budget, which is DB-226.
 
   - id: DB-223
     title: Two scenario expectations predate a conversation reaching other desks' tools
-    status: open
+    status: fixed
     severity: low
     area: deskbench / scenarios
     found: 2026-10-19, .deskbench/runs/20261019-133049-run (Pass 2)
@@ -5159,10 +5178,12 @@ findings:
     files:
       - services/tms/deskbench/scenarios/analysis.yaml
       - services/tms/deskbench/scenarios/palette.yaml
+    fixedIn: >
+      .deskbench/runs/20261019-154944-run: analysis-not-for-the-persons-own-arithmetic 3/3, palette-customer-by-name 3/3.
 
   - id: DB-224
     title: The development seed posts no invoices, so receivables scenarios read an empty ledger
-    status: open
+    status: fixed
     severity: medium
     area: development seed / invoices
     found: 2026-10-19, .deskbench/runs/20261019-133049-run (Pass 2)
@@ -5181,11 +5202,14 @@ findings:
       lifecycle-one-agent-book-to-posted-invoice in the same run.
     cause: >
       The seed creates draft invoices only; older databases had posted invoices from earlier runs.
-    fix: Not fixed. A development seed of posted, partly paid and overdue invoices is needed.
+    fix: >
+      The Receivables development seed posts ten invoices on delivered, invoiced loads across ACME, PEAK and FRSH (current, 1-30, 31-60, 61-90 and over 90 days past due), two customer payments (one in full and in part, one leaving $500 unapplied) and a credit memo applied to the oldest PEAK invoice. Each posts its journal (AR against linehaul revenue; cash against AR and an Unapplied Customer Cash account it adds) and its customer ledger entries as the application does; the AR account, the customer subledger and the open invoice balances tie at $21,637.50. It is keyed by document number, so it runs once on an existing database and skips what is there.
+    fixedIn: >
+      .deskbench/runs/20261019-154944-run: analysis-ar-aging-asked-outright 0/1 → 3/3, analysis-chart-asked-for 0/1 → 3/3, analysis-figure-checked-against-the-database (held-out) 0/1 → 3/3; analysis-two-reports-together 2/3 and analysis-follow-up-revises-the-analysis 1/3 now fail on model choices (DB-230).
 
   - id: DB-225
     title: No portal site is set up on a fresh database
-    status: open
+    status: fixed
     severity: low
     area: environment / portal automation
     found: 2026-10-19, .deskbench/runs/20261019-133049-run (Pass 2)
@@ -5195,4 +5219,154 @@ findings:
     cause: >
       Portal sites are set by an administrator with the cloud browser vendor's account; the older
       database had one.
-    fix: Not fixed; it needs a site configured with the vendor account.
+    fix: >
+      The OutboundChannels seed adds "Trenova App" (cloud.trenova.app, actions allowed, no saved sign-in); portal.yaml says so instead of describing the hand-made site.
+    fixedIn: >
+      .deskbench/runs/20261019-154944-run: portal-what-can-you-reach 0/1 → 3/3, portal-detail-without-record-ids 0/1 → 3/3.
+
+  - id: DB-226
+    title: An unattended run that spent its tool budget could not hand the case to a person
+    status: open
+    severity: high
+    area: agent runtime / tool budget
+    found: 2026-10-19, .deskbench/runs/20261019-154944-run
+    models: [claude-haiku-5-5]
+    scenarios: [unattended-monitor-pickup-window-open-nobody-on-it]
+    problem: >
+      With raise_exception loaded from the start (DB-222), every trial still flagged nothing for
+      SEED-SHP-001's missed pickup: 7 of 9 raise_exception calls were refused "this turn's tool
+      budget of 12 is spent. Answer with what you have."
+    cause: >
+      The load monitor spends its twelve calls reading the board, and the budget check refused
+      every call past it, the escalation included. For a run, ending "with what you have" means
+      ending with nobody told.
+    fix: >
+      An escalation (agenttoolpolicy.Escalates: the tool's policy sets Escalates and no person set
+      its tier) is let past a spent budget up to escalationReserve (2) calls
+      (Service.escalatesPastBudget); every other call is refused as before, and so is an
+      escalation past the reserve. agent-runtime.md says so.
+    files:
+      - services/tms/internal/modules/agent/app/agentruntime/runner.go
+      - services/tms/internal/modules/agent/app/agentruntime/toolset.go
+      - services/tms/internal/modules/agent/app/agentruntime/runner_test.go
+      - docs/engineering/agent-runtime.md
+
+  - id: DB-227
+    title: The grounding guard's second reading re-flagged a figure the first found read
+    status: fixed
+    severity: medium
+    area: agent runtime / grounding guard
+    found: 2026-10-19, .deskbench/runs/20261019-154944-run
+    models: [claude-haiku-5-5]
+    scenarios: [correct-a-weight]
+    problem: >
+      A reply that said the commodity's unit weight is 2,000 lb, so 20 pieces come to 40,000 lb,
+      was rewritten as naming "2,000" and "40,000" that the filed change does not hold, though
+      shipment_get had returned "weightPerUnit":2000.
+    evidence: >
+      numberguard.SupportedFromTextAs on that JSON gives [20 2000 38000] read separated and
+      [20 38000] read with codes apart: the stricter reading leaves out a bare year, and 2000
+      looks like one.
+    cause: >
+      filedFigures and readFinding narrow the reply with ReadSeparated, then check the whole reply
+      again with ReadCodesApart and return that second result, so a figure the first reading
+      found read came back unread, and the working built on it (20 × 2,000) could not count.
+    fix: >
+      The second check only narrows the first (narrowed): it keeps a figure only if the first
+      also found it unread, and the working's operands are the figures either reading found
+      read. A figure nothing read is still caught (TestGroundingGuard_AFigureNoReadingSupportsIsStillCaught).
+    files:
+      - services/tms/internal/modules/agent/app/agentruntime/groundingguard.go
+      - services/tms/internal/modules/agent/app/agentruntime/groundingguard_test.go
+      - docs/engineering/agent-runtime.md
+    fixedIn: >
+      .deskbench/runs/20261019-165003-run: correct-a-weight 2/3 → 3/3; TestGroundingGuard_AReadQuantityThatLooksLikeAYearStaysRead pins it.
+
+  - id: DB-228
+    title: lifecycle-handed-between-agents says a load delivered before its pickup day
+    status: open
+    severity: low
+    area: deskbench / scenarios
+    found: 2026-10-19, .deskbench/runs/20261019-154944-run
+    models: [claude-haiku-5-5]
+    scenarios: [lifecycle-handed-between-agents]
+    problem: >
+      Two trials stopped at "it delivered, mark it done": the load booked minutes earlier picks up
+      tomorrow, and the agent rightly asked rather than record a delivery the record contradicts.
+    cause: >
+      The scenario books "pick up tomorrow 7am, deliver the day after". Its one-agent sibling was
+      already changed to a load that ran yesterday on a lane a truck drives in a day for this
+      reason.
+    fix: >
+      The load ran yesterday, LA terminal to Phoenix Cold Storage, as in the one-agent case, and
+      the person gives the pickup and delivery times when they say it delivered (the agent then
+      asked for them, rightly, as the record had none).
+    files:
+      - services/tms/deskbench/scenarios/lifecycle.yaml
+
+  - id: DB-229
+    title: ambiguous-load-asks assumes eleven FreshHaul loads to LA that the seed does not have
+    status: open
+    severity: medium
+    area: deskbench / scenarios (held-out)
+    found: 2026-10-19, .deskbench/runs/20261019-154944-run
+    models: [claude-haiku-5-5]
+    scenarios: [ambiguous-load-asks]
+    problem: >
+      Every trial proposed cancelling SEED-SHP-010, the one open FreshHaul load to LA on a seeded
+      database; the case expects the agent to ask which of several.
+    cause: >
+      Its description says "Eleven FreshHaul reefers to LA exist locally", true of an older
+      database. The premise is not in its setup, so the case is not ambiguous on the seed.
+    fix: >
+      Not changed: the case is held-out, and editing it after reading its failures would tune
+      against it. It needs setup that creates several open FreshHaul loads to LA (or a new
+      development scenario for the same behaviour) by someone's decision.
+
+  - id: DB-230
+    title: Model-level misses on Haiku 5.5 after the harness fixes
+    status: open
+    severity: low
+    area: model / claude-haiku-5-5
+    found: 2026-10-19, .deskbench/runs/20261019-154944-run
+    models: [claude-haiku-5-5]
+    scenarios:
+      - analysis-follow-up-revises-the-analysis
+      - analysis-two-reports-together
+      - formula-asked-for-in-the-desk
+      - lifecycle-one-agent-book-to-posted-invoice
+      - mark-a-move-delivered
+    problem: >
+      analysis-follow-up-revises-the-analysis (1/3) asked the person a question instead of running
+      the AR aging; analysis-two-reports-together (2/3) answered from two report runs without
+      analyze_data; formula-asked-for-in-the-desk (2/3) priced a made-up 500-mile example in two
+      steps (1,700) and the guard rewrote it; lifecycle-one-agent-book-to-posted-invoice (1/3)
+      filed request_decision instead of reading the billing queue item, and once proposed
+      nothing at "post the invoice"; mark-a-move-delivered (2/3) stated a lateness figure (40)
+      nothing read.
+    cause: >
+      Each tool was offered, loaded and described; the trials that passed used the same harness.
+      No harness change is indicated.
+    fix: Not fixed; model choices, tracked so a later model or effort can be compared.
+
+  - id: DB-231
+    title: Tool descriptions and filters outside a namespace that the runs tripped on
+    status: open
+    severity: low
+    area: agent tools (parked for namespace PRs)
+    found: 2026-10-19, .deskbench/runs/20261019-133049-run and 20261019-154944-run
+    models: [claude-haiku-5-5]
+    scenarios:
+      - tractor-in-the-shop
+      - assign-a-driver
+      - analysis-follow-up-revises-the-analysis
+      - analysis-two-reports-together
+    problem: >
+      list_tractors and list_trailers tie on "in the shop" and nothing ties "trc" to tractors, so
+      "trc-004" was read as a trailer (fixed for preselection by DB-219, not for the ranking);
+      list_trailers refused "contains" on code without a value; preview_report was refused five
+      times on a computed column's ref ("Computed columns cannot reference a field directly");
+      run_report was refused with agent_denied in one trial.
+    fix: >
+      Not changed in this pass: list_tractors and list_trailers are handled by the equipment
+      namespace PR; preview_report and run_report by the reports namespace PR.

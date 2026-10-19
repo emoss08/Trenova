@@ -74,7 +74,12 @@ func (r *artifactRecorder) bunch(
 
 	r.retire(parts.cards)
 
-	return shownArtifact(saved), nil
+	shown := shownArtifact(saved)
+	for _, card := range parts.cards {
+		shown.Replaces = append(shown.Replaces, card.ID)
+	}
+
+	return shown, nil
 }
 
 func (r *artifactRecorder) keep(

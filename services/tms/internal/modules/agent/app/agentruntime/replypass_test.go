@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -233,4 +234,43 @@ func TestPointToTables_PointsEveryReprintToItsOwnTable(t *testing.T) {
 	assert.NotContains(t, got, "| Acme |")
 	assert.Contains(t, got, "Call the carriers first.")
 	assert.Contains(t, got, "That is all.")
+}
+
+func TestFoldReplaced_PointsAnUnreadResultAtTheTableItsCardWentInto(t *testing.T) {
+	t.Parallel()
+
+	read := &agentports.ShownArtifact{ID: pulid.MustNew("art_"), Kind: "entity_card", Title: "Driver settlement"}
+	unread := &agentports.ShownArtifact{ID: pulid.MustNew("art_"), Kind: "entity_card", Title: "Driver settlement"}
+	table := &agentports.ShownArtifact{
+		ID:       pulid.MustNew("art_"),
+		Kind:     "table_view",
+		Title:    "Driver settlements (3)",
+		Rows:     3,
+		Replaces: []pulid.ID{read.ID, unread.ID},
+	}
+	readContent := "Jane Doe's settlement" + shownNote(read)
+	unreadContent := "Sarah Williams's settlement" + shownNote(unread)
+
+	turn := &Turn{
+		messages: []agentports.Message{
+			{Role: agentports.RoleTool, ToolCallID: "call_read", Content: readContent},
+			{Role: agentports.RoleAssistant},
+			{Role: agentports.RoleTool, ToolCallID: "call_unread", Content: unreadContent},
+		},
+		artifacts: []agentports.ShownArtifact{*read, *unread, *table},
+		result: &agentports.RunResult{Messages: []conversation.Message{
+			{Role: conversation.RoleTool, ToolCallID: "call_unread", Content: unreadContent},
+		}},
+	}
+
+	turn.foldReplaced(table)
+
+	assert.Equal(t, readContent, turn.messages[0].Content,
+		"a result the model has read is never rewritten")
+	folded := "Sarah Williams's settlement" + foldedNote(table)
+	assert.Equal(t, folded, turn.messages[2].Content)
+	assert.Equal(t, folded, turn.result.Messages[0].Content)
+	assert.NotContains(t, turn.messages[2].Content, unread.ID.String())
+	require.Len(t, turn.artifacts, 1)
+	assert.Equal(t, table.ID, turn.artifacts[0].ID)
 }

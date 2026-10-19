@@ -46,8 +46,10 @@ const (
 	SeedOrgHoliday                      SeedID = "OrgHoliday"                      // from 21_org_holiday.go
 	SeedOrganizationRolePermissionsSync SeedID = "OrganizationRolePermissionsSync" // from 08_organization_role_permissions_sync.go
 	SeedOrganizationRoles               SeedID = "OrganizationRoles"               // from 02_organization_roles.go
+	SeedOutboundChannels                SeedID = "OutboundChannels"                // from 41_outbound_channels.go
 	SeedPTOPolicy                       SeedID = "PTOPolicy"                       // from 17_pto_policy.go
 	SeedRateAgreement                   SeedID = "RateAgreement"                   // from 16_rate_agreement.go
+	SeedReceivables                     SeedID = "Receivables"                     // from 40_receivables.go
 	SeedRoutingGuide                    SeedID = "RoutingGuide"                    // from 15_routing_guide.go
 	SeedServiceFailureReasonCode        SeedID = "ServiceFailureReasonCode"        // from 09_service_failure_reason_code.go
 	SeedShipment                        SeedID = "Shipment"                        // from 07_shipment.go
@@ -102,8 +104,10 @@ var AllSeedIDs = []SeedID{
 	SeedOrgHoliday,
 	SeedOrganizationRolePermissionsSync,
 	SeedOrganizationRoles,
+	SeedOutboundChannels,
 	SeedPTOPolicy,
 	SeedRateAgreement,
+	SeedReceivables,
 	SeedRoutingGuide,
 	SeedServiceFailureReasonCode,
 	SeedShipment,
@@ -166,8 +170,10 @@ var DevelopmentSeedIDs = []SeedID{
 	SeedLocationCategory,
 	SeedLookupMatrix,
 	SeedOrgHoliday,
+	SeedOutboundChannels,
 	SeedPTOPolicy,
 	SeedRateAgreement,
+	SeedReceivables,
 	SeedRoutingGuide,
 	SeedShipment,
 	SeedTestData,

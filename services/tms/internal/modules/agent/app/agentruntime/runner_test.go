@@ -1458,3 +1458,26 @@ func TestRun_OffersRaiseExceptionOnlyWithARun(t *testing.T) {
 		})
 	}
 }
+
+func TestEscalatesPastBudget_KeepsARunsHandOffWhenItsBudgetIsSpent(t *testing.T) {
+	t.Parallel()
+
+	rt := newRuntime(nil, nil, &stubActionRegistry{Tools: []agentports.AgentTool{
+		&agenttest.StubActionTool{ToolName: "raise_exception", Tier: agent.TierAutoExecute, Escalates: true},
+		actionTool("record_case", agent.TierAutoExecute, nil),
+	}}, nil)
+	turn := &Turn{req: &agentports.RunRequest{Definition: testDefinition("record_case")}}
+
+	assert.True(t, rt.escalatesPastBudget(turn, "raise_exception", 0))
+	assert.True(t, rt.escalatesPastBudget(turn, "raise_exception", escalationReserve-1))
+	assert.False(t, rt.escalatesPastBudget(turn, "raise_exception", escalationReserve),
+		"the reserve is spent too, so a run that only escalates still stops")
+	assert.False(t, rt.escalatesPastBudget(turn, "record_case", 0))
+	assert.False(t, rt.escalatesPastBudget(turn, "list_workers", 0))
+
+	tiered := testDefinition("record_case")
+	tiered.ToolTiers = map[string]agent.AutonomyTier{"raise_exception": agent.TierPropose}
+	assert.False(t, rt.escalatesPastBudget(
+		&Turn{req: &agentports.RunRequest{Definition: tiered}}, "raise_exception", 0),
+		"a tier a person set makes it an ordinary write")
+}

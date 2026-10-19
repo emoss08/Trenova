@@ -644,3 +644,29 @@ func TestGroundingGuard_AFiledReplysWorkingCounts(t *testing.T) {
 	assert.Equal(t, 2, run.completion.CallCount)
 	assert.Empty(t, run.fx.regrounded())
 }
+
+func TestGroundingGuard_AReadQuantityThatLooksLikeAYearStaysRead(t *testing.T) {
+	t.Parallel()
+
+	run := runGroundedResult(t, &groundingEffects{},
+		[]any{map[string]any{"pieces": 20, "weightPerUnit": 2000}},
+		"Proposed. Each unit weighs 2,000 lb, so 20 of them come to 40,000 lb.",
+		"Proposed.",
+	)
+
+	assert.Empty(t, run.fx.regrounded(),
+		"2,000 was read, and 40,000 is 20 of it, worked in the reply")
+}
+
+func TestGroundingGuard_AFigureNoReadingSupportsIsStillCaught(t *testing.T) {
+	t.Parallel()
+
+	run := runGroundedResult(t, &groundingEffects{},
+		[]any{map[string]any{"pieces": 20, "weightPerUnit": 2000}},
+		"Proposed. The load weighs 41,500 lb.",
+		"Proposed.",
+	)
+
+	require.Len(t, run.fx.regrounded(), 1)
+	assert.Equal(t, []string{"41,500"}, run.fx.regrounded()[0].Figures)
+}

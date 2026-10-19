@@ -768,7 +768,29 @@ func replyStates(reply, value string) bool {
 	return folded != "" && strings.Contains(stringutils.NormalizeIdentifier(reply), folded)
 }
 
-var zeroInWords = regexp.MustCompile(`(?i)\b(zero|none|nothing|no)\b`)
+var (
+	zeroInWords = regexp.MustCompile(`(?i)\b(zero|none|nothing)\b`)
+	noBefore    = regexp.MustCompile(`(?i)\bno\s+([a-z][a-z-]*)`)
+	notCounted  = map[string]struct{}{
+		"big": {}, "doubt": {}, "idea": {}, "later": {}, "less": {}, "longer": {},
+		"matter": {}, "more": {}, "need": {}, "one": {}, "problem": {}, "problems": {},
+		"rush": {}, "sooner": {}, "surprise": {}, "thanks": {}, "way": {}, "wonder": {},
+		"worries": {}, "worry": {},
+	}
+)
+
+func statesZero(reply string) bool {
+	if zeroInWords.MatchString(reply) {
+		return true
+	}
+	for _, match := range noBefore.FindAllStringSubmatch(reply, -1) {
+		if _, idiom := notCounted[strings.ToLower(match[1])]; !idiom {
+			return true
+		}
+	}
+
+	return false
+}
 
 func statesInWords(reply string, number decimal.Decimal) bool {
 	if !number.IsInteger() || number.IsNegative() {
@@ -776,7 +798,7 @@ func statesInWords(reply string, number decimal.Decimal) bool {
 	}
 	count := int(number.IntPart())
 	if count == 0 {
-		return zeroInWords.MatchString(reply)
+		return statesZero(reply)
 	}
 	word := intutils.SmallNumberWord(count)
 	if word == strconv.Itoa(count) {

@@ -28,6 +28,16 @@ func TestReplyStates_ReadsASmallCountInWords(t *testing.T) {
 		{reply: "0 shipments are waiting", value: "0", want: true},
 		{reply: "nineteen shipments are waiting", value: "0", want: false},
 		{reply: "know of three loads", value: "0", want: false},
+		{reply: "there are no invoices past due", value: "0", want: true},
+		{reply: "No loads are ready", value: "0", want: true},
+		{reply: "nothing is ready to bill", value: "0", want: true},
+		{reply: "zero loads are late", value: "0", want: true},
+		{reply: "no problem, there are 3", value: "0", want: false},
+		{reply: "No worries: three loads are late", value: "0", want: false},
+		{reply: "no, three are late", value: "0", want: false},
+		{reply: "the answer is no.", value: "0", want: false},
+		{reply: "they are no longer late, three loads moved", value: "0", want: false},
+		{reply: "know of 3 loads", value: "0", want: false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.reply, func(t *testing.T) {

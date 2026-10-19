@@ -181,13 +181,13 @@ func readFinding(t *Turn, reply string) groundingFinding {
 	if strings.TrimSpace(reply) == "" || !t.readAnything() || t.readUnseenFiles() {
 		return finding
 	}
-	supported := t.groundingSupportAs(numberguard.ReadSeparated)
-	supported = append(supported, t.statedArithmetic()...)
-	finding.figures = numberguard.CheckAmountsAs(numberguard.ReadSeparated, reply, supported).
+	separated := t.groundingSupportAs(numberguard.ReadSeparated)
+	supported := append(slices.Clone(separated), t.statedArithmetic()...)
+	candidates := numberguard.CheckAmountsAs(numberguard.ReadSeparated, reply, supported).
 		Unsupported
-	if len(finding.figures) > 0 {
-		finding.figures = numberguard.CheckAmounts(reply,
-			t.withWorking(reply, t.groundingSupport())).Unsupported
+	if len(candidates) > 0 {
+		finding.figures = narrowed(candidates, numberguard.CheckAmounts(reply,
+			t.withWorking(reply, slices.Concat(t.groundingSupport(), separated))).Unsupported)
 	}
 
 	return finding
@@ -266,14 +266,20 @@ func (t *Turn) filedFigures(reply string) []string {
 	if t.readUnseenFiles() {
 		return nil
 	}
-	figures := numberguard.CheckNumbersAs(numberguard.ReadSeparated, reply,
-		t.groundingSupportAs(numberguard.ReadSeparated)).Unsupported
+	separated := t.groundingSupportAs(numberguard.ReadSeparated)
+	figures := numberguard.CheckNumbersAs(numberguard.ReadSeparated, reply, separated).Unsupported
 	if len(figures) == 0 {
 		return figures
 	}
 
-	return numberguard.CheckNumbers(reply,
-		t.withWorking(reply, t.groundingSupport())).Unsupported
+	return narrowed(figures, numberguard.CheckNumbers(reply,
+		t.withWorking(reply, slices.Concat(t.groundingSupport(), separated))).Unsupported)
+}
+
+func narrowed(candidates, unsupported []string) []string {
+	return slices.DeleteFunc(slices.Clone(unsupported), func(figure string) bool {
+		return !slices.Contains(candidates, figure)
+	})
 }
 
 func isGroundingCorrection(content string) bool {

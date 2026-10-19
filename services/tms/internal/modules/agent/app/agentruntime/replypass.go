@@ -1,6 +1,7 @@
 package agentruntime
 
 import (
+	"slices"
 	"strings"
 	"unicode"
 
@@ -103,6 +104,50 @@ func (t *Turn) keepShown(outcome *toolOutcome) {
 		}
 	}
 	t.artifacts = append(t.artifacts, *outcome.shown)
+}
+
+func (t *Turn) foldReplaced(table *agentports.ShownArtifact) {
+	if table == nil || len(table.Replaces) == 0 {
+		return
+	}
+	unread := 0
+	for idx := len(t.messages) - 1; idx >= 0; idx-- {
+		if t.messages[idx].Role == agentports.RoleAssistant {
+			unread = idx + 1
+			break
+		}
+	}
+	folded := foldedNote(table)
+	for _, cardID := range table.Replaces {
+		idx := slices.IndexFunc(t.artifacts, func(shown agentports.ShownArtifact) bool {
+			return shown.ID == cardID
+		})
+		if idx < 0 {
+			continue
+		}
+		stale := shownNote(&t.artifacts[idx])
+		t.artifacts = slices.Delete(t.artifacts, idx, idx+1)
+		for msgIdx := unread; msgIdx < len(t.messages); msgIdx++ {
+			msg := &t.messages[msgIdx]
+			if msg.Role != agentports.RoleTool || !strings.HasSuffix(msg.Content, stale) {
+				continue
+			}
+			msg.Content = strings.TrimSuffix(msg.Content, stale) + folded
+			t.refold(msg.ToolCallID, stale, folded)
+		}
+	}
+}
+
+func (t *Turn) refold(callID, stale, folded string) {
+	if t.result == nil {
+		return
+	}
+	for idx := range t.result.Messages {
+		kept := &t.result.Messages[idx]
+		if kept.ToolCallID == callID && strings.HasSuffix(kept.Content, stale) {
+			kept.Content = strings.TrimSuffix(kept.Content, stale) + folded
+		}
+	}
 }
 
 func (t *Turn) keptTables() []agentports.ShownArtifact {
