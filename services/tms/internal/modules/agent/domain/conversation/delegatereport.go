@@ -176,9 +176,12 @@ func boundedDocuments(documents []DelegateDocument, more int) ([]DelegateDocumen
 	return out, max(more, 0) + len(documents) - kept
 }
 
-func boundedFindings(findings []DelegateFinding, more int) ([]DelegateFinding, int) {
+func boundedFindings(
+	findings []DelegateFinding,
+	more int,
+) (out []DelegateFinding, left int) {
 	kept := min(len(findings), maxReportFindings)
-	out := make([]DelegateFinding, 0, kept)
+	out = make([]DelegateFinding, 0, kept)
 	for idx := range kept {
 		finding := &findings[idx]
 		out = append(out, DelegateFinding{

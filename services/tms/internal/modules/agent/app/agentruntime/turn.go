@@ -519,8 +519,8 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentports.RunRequest) *Tur
 	// thread's reader leaves them out already; this holds for any caller.
 	history := modelHistory(req.History)
 
-	profile := s.profileFor(ctx, req, granted)
-	held := profile.held
+	job := s.profileFor(ctx, req, granted)
+	held := job.held
 	var delegates []agentdefinition.RuntimeDelegate
 	if req.MayDelegate() {
 		delegates = slices.Clone(runtimeContext.Delegates)
@@ -530,7 +530,7 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentports.RunRequest) *Tur
 	tools := s.newToolSet(ctx, toolSetRequest{
 		definition: definition,
 		held:       held,
-		beyond:     profile.beyond,
+		beyond:     job.beyond,
 		actor:      req.Actor,
 		input:      req.Input,
 		query:      agentports.TurnQueryRequest(req),
@@ -557,7 +557,7 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentports.RunRequest) *Tur
 	}
 	runtimeContext.Artifacts = tools.offers(publishArtifactName)
 	runtimeContext.Inline = req.Inline
-	runtimeContext.LooksUpOnly = profile.mode == ProfileFanOut
+	runtimeContext.LooksUpOnly = job.mode == ProfileFanOut
 	runtimeContext.DecisionRequests = tools.offers(requestDecisionName)
 	// The prompt describes the set the person may use, not the agent's whole
 	// configuration: a tool named there and refused when called reads as
@@ -624,9 +624,9 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentports.RunRequest) *Tur
 		evidence:     figuresOf(append(shortened, maputils.SortedValues(req.FileTexts)...)),
 		tools:        tools,
 		held:         held,
-		beyond:       profile.beyond,
-		mode:         profile.mode,
-		reads:        s.concurrentReads(append(slices.Clone(held), beyondNames(profile.beyond)...)),
+		beyond:       job.beyond,
+		mode:         job.mode,
+		reads:        s.concurrentReads(append(slices.Clone(held), beyondNames(job.beyond)...)),
 		repeats:      repeats,
 		counts:       counts,
 		questions:    askedQuestions(history),
