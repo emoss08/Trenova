@@ -85,6 +85,8 @@ func findToolsSpec() kernelports.ToolSpec {
 // that searches in a loop has to be stopped by something else.
 const maxFindCalls = 4
 
+const escalationReserve = 2
+
 // searchesLeft is said once a turn has searched for tools more than twice:
 // gpt-6-luna re-worded the same need five times rather than call the tools
 // its first search had loaded, and ran out of searches before it answered.

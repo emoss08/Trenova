@@ -1944,7 +1944,10 @@ for filed changes too): "$6,050,147.60 is open,
 $50,147.60 without the $6,000,000 invoice" and "112 gallons at $3.89 come to $435.68" were each
 rewritten after an analysis nobody needed, while a wrong result is still unsupported, and a share
 whose two sides the reply leaves out still goes to `analyze_data`. The person's own figures are
-paired the same way. A percentage is supported by the fraction it renders (52.3% by 0.523), and
+paired the same way. The reply is read twice, and the second reading only narrows the first: a
+figure the separated reading (`ReadSeparated`) found read stays read and is an operand of the
+working (`narrowed`). The stricter reading leaves out a bare year, and a 2,000 lb unit weight in a
+tool's JSON looked like one, so "2,000 lb, so 20 of them come to 40,000 lb" was rewritten. A percentage is supported by the fraction it renders (52.3% by 0.523), and
 rounding and thousands are read as for a filed change. A hit is discarded once with a correction
 naming the figures: an agent holding `analyze_data` is told to work them out there, any other to
 leave out what the tools do not give. A rewrite that still states one ends with a sentence naming
@@ -2198,7 +2201,11 @@ conversation is the same from the first call of the turn to the last.
   An unattended run also loads `raise_exception` (`defersCoreTool`): handing the
   case to a person is how a run that cannot resolve it ends, and left to a
   search it lost a tie for the last slot to `wait_until` and the run ended with
-  nobody told.
+  nobody told. An escalation (a tool whose policy sets `Escalates`, unless a
+  person set its tier) is also let past a spent tool budget, up to
+  `escalationReserve` calls (`escalatesPastBudget`): a load monitor that spent
+  its twelve calls reading the board was told "answer with what you have" when
+  it tried to hand the missed pickup to a person.
 - **System prompt.** `BuildSystemPromptParts` writes what every turn of an agent
   for a person shares first and the turn's own part after it. The shared part
   is, in order: the identity line, Trenova's rules, the domain primer, the tool section, the agents

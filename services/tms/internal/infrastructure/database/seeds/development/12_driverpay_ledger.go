@@ -8,15 +8,12 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/pkg/dbhelper"
-	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -124,84 +121,27 @@ func (s *DriverPayLedgerSeed) ensureLedgerAccounts(
 	sc *seedhelpers.SeedContext,
 	orgID, buID pulid.ID,
 ) (map[string]pulid.ID, error) {
-	var existing []glaccount.GLAccount
-	if err := tx.NewSelect().Model(&existing).Column("id", "account_code").
-		Where("organization_id = ?", orgID).
-		Where("business_unit_id = ?", buID).
-		Scan(ctx); err != nil {
-		return nil, fmt.Errorf("get gl accounts: %w", err)
-	}
-
-	accounts := make(map[string]pulid.ID, len(existing))
-	for i := range existing {
-		accounts[existing[i].AccountCode] = existing[i].ID
-	}
-
-	var accountTypes []struct {
-		ID       pulid.ID `bun:"id"`
-		Category string   `bun:"category"`
-	}
-	if err := tx.NewSelect().Table("account_types").Column("id", "category").
-		Where("organization_id = ?", orgID).
-		Where("business_unit_id = ?", buID).
-		Scan(ctx, &accountTypes); err != nil {
-		return nil, fmt.Errorf("get account types: %w", err)
-	}
-	typeByCategory := make(map[string]pulid.ID, len(accountTypes))
-	for _, at := range accountTypes {
-		typeByCategory[at.Category] = at.ID
-	}
-
-	defs := []struct {
-		code        string
-		name        string
-		description string
-		category    string
-	}{
-		{
-			ledgerAccountDriverAdvances,
-			"Driver Advances Receivable",
-			"Outstanding cash and money-code advances owed back by drivers, recovered through settlements",
-			"Asset",
+	accounts, created, err := ensureGLAccounts(ctx, tx, sc, &seedGLAccountsRequest{
+		seedName: s.Name(),
+		orgID:    orgID,
+		buID:     buID,
+		accounts: []seedGLAccount{
+			{
+				code:        ledgerAccountDriverAdvances,
+				name:        "Driver Advances Receivable",
+				description: "Outstanding cash and money-code advances owed back by drivers, recovered through settlements",
+				category:    "Asset",
+			},
+			{
+				code:        ledgerAccountEscrowLiability,
+				name:        "Driver Escrow Liability",
+				description: "Driver maintenance escrow balances held on behalf of owner-operators per 49 CFR 376.12(k)",
+				category:    "Liability",
+			},
 		},
-		{
-			ledgerAccountEscrowLiability,
-			"Driver Escrow Liability",
-			"Driver maintenance escrow balances held on behalf of owner-operators per 49 CFR 376.12(k)",
-			"Liability",
-		},
-	}
-
-	created := 0
-	for _, def := range defs {
-		if _, ok := accounts[def.code]; ok {
-			continue
-		}
-		typeID, ok := typeByCategory[def.category]
-		if !ok {
-			return nil, fmt.Errorf("account type %s not found", def.category)
-		}
-
-		account := &glaccount.GLAccount{
-			ID:             pulid.MustNew("gla_"),
-			BusinessUnitID: buID,
-			OrganizationID: orgID,
-			Status:         domaintypes.StatusActive,
-			AccountTypeID:  typeID,
-			AllowManualJE:  true,
-			AccountCode:    def.code,
-			Name:           def.name,
-			Description:    def.description,
-			IsSystem:       true,
-		}
-		if _, err := tx.NewInsert().Model(account).Exec(ctx); err != nil {
-			return nil, fmt.Errorf("insert gl account %s: %w", def.code, err)
-		}
-		if err := sc.TrackCreated(ctx, "gl_accounts", account.ID, s.Name()); err != nil {
-			return nil, fmt.Errorf("track gl account: %w", err)
-		}
-		accounts[def.code] = account.ID
-		created++
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	required := []string{
@@ -480,101 +420,6 @@ func (s *DriverPayLedgerSeed) ensureRecurringEarnings(
 
 // -- Settlement journals --
 
-type seedJournalBatch struct {
-	bun.BaseModel `bun:"table:journal_batches"`
-
-	ID             pulid.ID `bun:"id,pk"`
-	OrganizationID pulid.ID `bun:"organization_id,pk"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id,pk"`
-	BatchNumber    string   `bun:"batch_number"`
-	BatchType      string   `bun:"batch_type"`
-	Status         string   `bun:"status"`
-	Description    string   `bun:"description"`
-	AccountingDate int64    `bun:"accounting_date"`
-	FiscalYearID   pulid.ID `bun:"fiscal_year_id"`
-	FiscalPeriodID pulid.ID `bun:"fiscal_period_id"`
-	EntryCount     int      `bun:"entry_count"`
-	PostedAt       *int64   `bun:"posted_at,nullzero"`
-	PostedByID     pulid.ID `bun:"posted_by_id,nullzero"`
-	CreatedByID    pulid.ID `bun:"created_by_id"`
-	UpdatedByID    pulid.ID `bun:"updated_by_id"`
-}
-
-type seedJournalEntry struct {
-	bun.BaseModel `bun:"table:journal_entries"`
-
-	ID              pulid.ID `bun:"id,pk"`
-	BusinessUnitID  pulid.ID `bun:"business_unit_id,pk"`
-	OrganizationID  pulid.ID `bun:"organization_id,pk"`
-	BatchID         pulid.ID `bun:"batch_id"`
-	FiscalYearID    pulid.ID `bun:"fiscal_year_id"`
-	FiscalPeriodID  pulid.ID `bun:"fiscal_period_id"`
-	EntryNumber     string   `bun:"entry_number"`
-	EntryDate       int64    `bun:"entry_date"`
-	EntryType       string   `bun:"entry_type"`
-	AccountingDate  int64    `bun:"accounting_date"`
-	Status          string   `bun:"status"`
-	ReferenceNumber string   `bun:"reference_number"`
-	ReferenceType   string   `bun:"reference_type"`
-	ReferenceID     string   `bun:"reference_id"`
-	Description     string   `bun:"description"`
-	TotalDebit      int64    `bun:"total_debit"`
-	TotalCredit     int64    `bun:"total_credit"`
-	IsPosted        bool     `bun:"is_posted"`
-	PostedAt        *int64   `bun:"posted_at,nullzero"`
-	PostedByID      pulid.ID `bun:"posted_by_id,nullzero"`
-	IsAutoGenerated bool     `bun:"is_auto_generated"`
-	IsApproved      bool     `bun:"is_approved"`
-	ApprovedAt      *int64   `bun:"approved_at,nullzero"`
-	ApprovedByID    pulid.ID `bun:"approved_by_id,nullzero"`
-	CreatedByID     pulid.ID `bun:"created_by_id"`
-	UpdatedByID     pulid.ID `bun:"updated_by_id"`
-}
-
-type seedJournalEntryLine struct {
-	bun.BaseModel `bun:"table:journal_entry_lines"`
-
-	ID             pulid.ID `bun:"id,pk"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id,pk"`
-	OrganizationID pulid.ID `bun:"organization_id,pk"`
-	JournalEntryID pulid.ID `bun:"journal_entry_id"`
-	GLAccountID    pulid.ID `bun:"gl_account_id"`
-	LineNumber     int16    `bun:"line_number"`
-	Description    string   `bun:"description"`
-	DebitAmount    int64    `bun:"debit_amount"`
-	CreditAmount   int64    `bun:"credit_amount"`
-	NetAmount      int64    `bun:"net_amount"`
-}
-
-type seedJournalSource struct {
-	bun.BaseModel `bun:"table:journal_sources"`
-
-	ID                   pulid.ID `bun:"id,pk"`
-	BusinessUnitID       pulid.ID `bun:"business_unit_id,pk"`
-	OrganizationID       pulid.ID `bun:"organization_id,pk"`
-	SourceObjectType     string   `bun:"source_object_type"`
-	SourceObjectID       string   `bun:"source_object_id"`
-	SourceEventType      string   `bun:"source_event_type"`
-	SourceDocumentNumber string   `bun:"source_document_number"`
-	Status               string   `bun:"status"`
-	IdempotencyKey       string   `bun:"idempotency_key"`
-	JournalBatchID       pulid.ID `bun:"journal_batch_id"`
-	JournalEntryID       pulid.ID `bun:"journal_entry_id"`
-}
-
-type seedSourceJournalLink struct {
-	bun.BaseModel `bun:"table:source_journal_links"`
-
-	ID              pulid.ID `bun:"id,pk"`
-	BusinessUnitID  pulid.ID `bun:"business_unit_id,pk"`
-	OrganizationID  pulid.ID `bun:"organization_id,pk"`
-	JournalSourceID pulid.ID `bun:"journal_source_id"`
-	JournalBatchID  pulid.ID `bun:"journal_batch_id"`
-	JournalEntryID  pulid.ID `bun:"journal_entry_id"`
-	LinkRole        string   `bun:"link_role"`
-}
-
-//nolint:funlen,gocognit // sequential journal fixture assembly reads clearest as one workflow
 func (s *DriverPayLedgerSeed) postSeededSettlementJournals(
 	ctx context.Context,
 	tx bun.Tx,
@@ -597,9 +442,6 @@ func (s *DriverPayLedgerSeed) postSeededSettlementJournals(
 		Scan(ctx); err != nil {
 		return fmt.Errorf("get unposted settlements: %w", err)
 	}
-	if len(settlements) == 0 {
-		return nil
-	}
 
 	posted := 0
 	for idx, settlement := range settlements {
@@ -608,29 +450,10 @@ func (s *DriverPayLedgerSeed) postSeededSettlementJournals(
 			accountingDate = *settlement.PostedAt
 		}
 
-		var period struct {
-			ID           pulid.ID `bun:"id"`
-			FiscalYearID pulid.ID `bun:"fiscal_year_id"`
-		}
-		err := tx.NewSelect().Table("fiscal_periods").Column("id", "fiscal_year_id").
-			Where("organization_id = ?", orgID).
-			Where("business_unit_id = ?", buID).
-			Where("start_date <= ?", accountingDate).
-			Where("end_date >= ?", accountingDate).
-			Limit(1).
-			Scan(ctx, &period)
-		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				continue
-			}
-			return fmt.Errorf("get fiscal period: %w", err)
-		}
-
 		expenseAccountID := accounts[ledgerAccountDriverPayExpense]
 		if settlement.Classification == driverpay.PayeeClassificationOwnerOperator {
 			expenseAccountID = accounts[ledgerAccountPurchasedTrans]
 		}
-		codeAccounts := make(map[pulid.ID]pulid.ID)
 		legs := driversettlementservice.BuildSettlementPostingLegs(
 			settlement,
 			&driversettlementservice.PostingAccounts{
@@ -640,150 +463,46 @@ func (s *DriverPayLedgerSeed) postSeededSettlementJournals(
 				Advance:       accounts[ledgerAccountDriverAdvances],
 				Escrow:        accounts[ledgerAccountEscrowLiability],
 			},
-			codeAccounts,
+			make(map[pulid.ID]pulid.ID),
 		)
 		if len(legs) == 0 {
 			continue
 		}
 
-		description := "Driver settlement " + settlement.SettlementNumber
-		batchID := pulid.MustNew("jb_")
-		entryID := pulid.MustNew("je_")
-		sourceID := pulid.MustNew("jsrc_")
-		suffix := fmt.Sprintf("%04d", idx+1)
-
-		var totalDebit, totalCredit int64
-		lines := make([]*seedJournalEntryLine, 0, len(legs))
-		for lineIdx, leg := range legs {
-			totalDebit += leg.Debit
-			totalCredit += leg.Credit
-			lines = append(lines, &seedJournalEntryLine{
-				ID:             pulid.MustNew("jel_"),
-				BusinessUnitID: buID,
-				OrganizationID: orgID,
-				JournalEntryID: entryID,
-				GLAccountID:    leg.AccountID,
-				LineNumber:     int16(lineIdx + 1), //nolint:gosec // bounded by leg count
-				Description:    description,
-				DebitAmount:    leg.Debit,
-				CreditAmount:   leg.Credit,
-				NetAmount:      leg.Debit - leg.Credit,
+		journalLegs := make([]seedJournalLeg, 0, len(legs))
+		for _, leg := range legs {
+			journalLegs = append(journalLegs, seedJournalLeg{
+				AccountID: leg.AccountID,
+				Debit:     leg.Debit,
+				Credit:    leg.Credit,
 			})
 		}
-
-		batch := &seedJournalBatch{
-			ID:             batchID,
-			OrganizationID: orgID,
-			BusinessUnitID: buID,
-			BatchNumber:    "SEED-JB-" + suffix,
-			BatchType:      "System",
-			Status:         "Posted",
-			Description:    description,
-			AccountingDate: accountingDate,
-			FiscalYearID:   period.FiscalYearID,
-			FiscalPeriodID: period.ID,
-			EntryCount:     1,
-			PostedAt:       &accountingDate,
-			PostedByID:     adminID,
-			CreatedByID:    adminID,
-			UpdatedByID:    adminID,
+		suffix := fmt.Sprintf("%04d", idx+1)
+		journal, err := postSeedJournal(ctx, tx, sc, &seedJournalRequest{
+			seedName:       s.Name(),
+			orgID:          orgID,
+			buID:           buID,
+			actorID:        adminID,
+			accountingDate: accountingDate,
+			batchNumber:    "SEED-JB-" + suffix,
+			entryNumber:    "SEED-JE-" + suffix,
+			description:    "Driver settlement " + settlement.SettlementNumber,
+			sourceType:     "DriverSettlement",
+			sourceID:       settlement.ID.String(),
+			documentNumber: settlement.SettlementNumber,
+			event:          tenant.JournalSourceEventDriverSettlementPosted.String(),
+			idempotencyKey: "driver-settlement-posted:" + settlement.ID.String(),
+			legs:           journalLegs,
+		})
+		if errors.Is(err, errSeedNoFiscalPeriod) {
+			continue
 		}
-		if _, err = tx.NewInsert().Model(batch).Exec(ctx); err != nil {
-			return fmt.Errorf("insert journal batch: %w", err)
-		}
-		if err = sc.TrackCreated(ctx, "journal_batches", batchID, s.Name()); err != nil {
-			return fmt.Errorf("track journal batch: %w", err)
-		}
-
-		sourceEvent := tenant.JournalSourceEventDriverSettlementPosted.String()
-		entry := &seedJournalEntry{
-			ID:              entryID,
-			BusinessUnitID:  buID,
-			OrganizationID:  orgID,
-			BatchID:         batchID,
-			FiscalYearID:    period.FiscalYearID,
-			FiscalPeriodID:  period.ID,
-			EntryNumber:     "SEED-JE-" + suffix,
-			EntryDate:       accountingDate,
-			EntryType:       "Standard",
-			AccountingDate:  accountingDate,
-			Status:          "Posted",
-			ReferenceNumber: settlement.SettlementNumber,
-			ReferenceType:   sourceEvent,
-			ReferenceID:     settlement.ID.String(),
-			Description:     description,
-			TotalDebit:      totalDebit,
-			TotalCredit:     totalCredit,
-			IsPosted:        true,
-			PostedAt:        &accountingDate,
-			PostedByID:      adminID,
-			IsApproved:      true,
-			ApprovedAt:      &accountingDate,
-			ApprovedByID:    adminID,
-			CreatedByID:     adminID,
-			UpdatedByID:     adminID,
-		}
-		if _, err = tx.NewInsert().Model(entry).Exec(ctx); err != nil {
-			return fmt.Errorf("insert journal entry: %w", err)
-		}
-		if err = sc.TrackCreated(ctx, "journal_entries", entryID, s.Name()); err != nil {
-			return fmt.Errorf("track journal entry: %w", err)
-		}
-
-		if _, err = tx.NewInsert().Model(&lines).Exec(ctx); err != nil {
-			return fmt.Errorf("insert journal entry lines: %w", err)
-		}
-		for _, line := range lines {
-			if err = sc.TrackCreated(ctx, "journal_entry_lines", line.ID, s.Name()); err != nil {
-				return fmt.Errorf("track journal entry line: %w", err)
-			}
-		}
-
-		source := &seedJournalSource{
-			ID:                   sourceID,
-			BusinessUnitID:       buID,
-			OrganizationID:       orgID,
-			SourceObjectType:     "DriverSettlement",
-			SourceObjectID:       settlement.ID.String(),
-			SourceEventType:      sourceEvent,
-			SourceDocumentNumber: settlement.SettlementNumber,
-			Status:               "Posted",
-			IdempotencyKey:       "driver-settlement-posted:" + settlement.ID.String(),
-			JournalBatchID:       batchID,
-			JournalEntryID:       entryID,
-		}
-		if _, err = tx.NewInsert().Model(source).Exec(ctx); err != nil {
-			return fmt.Errorf("insert journal source: %w", err)
-		}
-		if err = sc.TrackCreated(ctx, "journal_sources", sourceID, s.Name()); err != nil {
-			return fmt.Errorf("track journal source: %w", err)
-		}
-
-		link := &seedSourceJournalLink{
-			ID:              sourceID,
-			BusinessUnitID:  buID,
-			OrganizationID:  orgID,
-			JournalSourceID: sourceID,
-			JournalBatchID:  batchID,
-			JournalEntryID:  entryID,
-			LinkRole:        "Primary",
-		}
-		if _, err = tx.NewInsert().Model(link).Exec(ctx); err != nil {
-			return fmt.Errorf("insert source journal link: %w", err)
-		}
-		if err = sc.TrackCreated(ctx, "source_journal_links", link.ID, s.Name()); err != nil {
-			return fmt.Errorf("track source journal link: %w", err)
-		}
-
-		for _, line := range lines {
-			if err = s.applyBalances(ctx, tx, orgID, buID, period.FiscalYearID, period.ID,
-				entryID, line); err != nil {
-				return err
-			}
+		if err != nil {
+			return err
 		}
 
 		if _, err = tx.NewUpdate().Model((*driversettlement.Settlement)(nil)).
-			Set("posted_journal_batch_id = ?", batchID).
+			Set("posted_journal_batch_id = ?", journal.batchID).
 			Where("id = ?", settlement.ID).
 			Where("organization_id = ?", orgID).
 			Where("business_unit_id = ?", buID).
@@ -802,53 +521,6 @@ func (s *DriverPayLedgerSeed) postSeededSettlementJournals(
 			),
 		)
 	}
-	return nil
-}
-
-func (s *DriverPayLedgerSeed) applyBalances(
-	ctx context.Context,
-	tx bun.Tx,
-	orgID, buID, fiscalYearID, fiscalPeriodID, entryID pulid.ID,
-	line *seedJournalEntryLine,
-) error {
-	if _, err := tx.NewRaw(`
-		INSERT INTO gl_account_balances_by_period AS gb (
-			organization_id,
-			business_unit_id,
-			gl_account_id,
-			fiscal_year_id,
-			fiscal_period_id,
-			period_debit_minor,
-			period_credit_minor,
-			net_change_minor,
-			last_journal_entry_id
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-		ON CONFLICT (organization_id, business_unit_id, gl_account_id, fiscal_year_id, fiscal_period_id)
-		DO UPDATE SET
-			period_debit_minor = gb.period_debit_minor + EXCLUDED.period_debit_minor,
-			period_credit_minor = gb.period_credit_minor + EXCLUDED.period_credit_minor,
-			net_change_minor = gb.net_change_minor + EXCLUDED.net_change_minor,
-			last_journal_entry_id = EXCLUDED.last_journal_entry_id,
-			updated_at = `+dbhelper.NowEpoch+`
-	`,
-		orgID, buID, line.GLAccountID, fiscalYearID, fiscalPeriodID,
-		line.DebitAmount, line.CreditAmount, line.NetAmount, entryID,
-	).Exec(ctx); err != nil {
-		return fmt.Errorf("upsert gl balance by period: %w", err)
-	}
-
-	if _, err := tx.NewUpdate().Table("gl_accounts").
-		Set("current_balance = current_balance + ?", line.NetAmount).
-		Set("debit_balance = debit_balance + ?", line.DebitAmount).
-		Set("credit_balance = credit_balance + ?", line.CreditAmount).
-		Set("updated_at = "+dbhelper.NowEpoch).
-		Where("id = ?", line.GLAccountID).
-		Where("organization_id = ?", orgID).
-		Where("business_unit_id = ?", buID).
-		Exec(ctx); err != nil {
-		return fmt.Errorf("update gl account running balance: %w", err)
-	}
-
 	return nil
 }
 

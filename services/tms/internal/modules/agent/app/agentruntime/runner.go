@@ -358,7 +358,8 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentports.RunResult, error) 
 			// tools in one completion does not get ten when it was allowed one;
 			// the calls past the line are answered, so the model knows, but not
 			// run.
-			if result.ToolCallsUsed >= budget {
+			if result.ToolCallsUsed >= budget &&
+				!s.escalatesPastBudget(t, call.Name, result.ToolCallsUsed-budget) {
 				outcome := refusedOutcome(
 					aitrace.OutcomeOverBudget,
 					"the turn's tool budget is spent",
@@ -697,6 +698,7 @@ func (s *Service) recordToolResult(
 	outcome = fx.Observe(t, &call, outcome.exported()).internal()
 	s.countToolOutcome(t, fx, call.Name, &outcome)
 	t.keepShown(&outcome)
+	t.foldReplaced(outcome.shown)
 	effect := s.ToolEffect(call.Name)
 	summary := summarizeOutcome(call, outcome)
 	var records []agent.EntityRef
@@ -954,6 +956,19 @@ func (s *Service) summarize(
 	}
 
 	return summaries
+}
+
+func (s *Service) escalatesPastBudget(t *Turn, name string, over int) bool {
+	if over >= escalationReserve {
+		return false
+	}
+	tool, ok := s.actionTools.Get(name)
+	if !ok {
+		return false
+	}
+	policy := tool.Policy()
+
+	return agenttoolpolicy.Escalates(t.req.Definition, &policy)
 }
 
 // tierSetFor reports a tool whose tier a person set on the agent, which

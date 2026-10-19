@@ -2,10 +2,10 @@ defaults:
   tags: [portal, extensions]
 
 # Portal automation runs a real cloud browser on the organization's Browser Use account against
-# the sites set up in AI Control. The seeded organization has one, "Trenova App"
-# (cloud.trenova.app, signed in, actions allowed), which asks for an authenticator code at every
-# sign-in, so a bench read of it stops for a code nobody relays. The scenarios add three sites
-# of their own with setup:
+# the sites set up in AI Control. The development seed (OutboundChannels) gives the organization
+# one, "Trenova App" (cloud.trenova.app, actions allowed, no saved sign-in), so no scenario reads
+# it: a read would stop at its sign-in page. The scenarios add three sites of their own with
+# setup:
 #
 # - Dallas DC dock appointments: read only, on dock.example.com, which does not exist.
 # - Mesa Grocery DC appointments: actions allowed, on appointments.example.net, which does not

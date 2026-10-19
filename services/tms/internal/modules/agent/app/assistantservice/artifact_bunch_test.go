@@ -116,6 +116,7 @@ func TestBunch_SeveralGetsOfOneToolInATurnBecomeOneTable(t *testing.T) {
 	require.NotNil(t, shown)
 	assert.Equal(t, string(assistantartifact.KindTableView), shown.Kind)
 	assert.Equal(t, []pulid.ID{card.ID}, repo.deleted, "the first card is folded into the table")
+	assert.Equal(t, []pulid.ID{card.ID}, shown.Replaces, "the model is told which card is gone")
 	require.Len(t, repo.listedBy, 1)
 	assert.Equal(t, tenant, repo.listedBy[0].TenantInfo)
 	assert.Equal(t, []string{"call_1"}, repo.listedBy[0].CallIDs)

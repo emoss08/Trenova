@@ -117,7 +117,8 @@ scenarios:
     description: >
       The same life of a load the way a team works it: the shipment desk books it, dispatch covers
       and runs it, billing invoices it. Each step is handed to the agent that owns it from one
-      conversation, as a person does with the agent picker.
+      conversation, as a person does with the agent picker. The load ran yesterday on a lane a
+      truck drives in a day, as in the one-agent case, so "it delivered" agrees with the record.
     agent: Bench · Shipment Assistant
     exclusive: peak-shipments
     setup:
@@ -159,8 +160,9 @@ scenarios:
                       WHERE sm.shipment_id = sp.id AND sm.status = 'InTransit')
     steps:
       - say: >
-          new load for peak distributing, dallas warehouse to the denver drop point, pick up
-          tomorrow 7am, deliver the day after by 3pm, 28k lbs dry van, $2,450 flat
+          new load for peak distributing that ran yesterday: picked up at the LA terminal
+          yesterday 7am, delivered to phoenix cold storage yesterday by 3pm, 28k lbs dry van,
+          $2,450 flat
         expect:
           proposals: [{ tool: shipment_create }]
           maxFailedCalls: 2
@@ -181,7 +183,9 @@ scenarios:
       - decide: approve
         expect:
           executed: true
-      - say: "it delivered, mark it done"
+      - say: >
+          it picked up at the LA terminal at 7:05 yesterday morning and got to phoenix cold
+          storage at 2:40 yesterday afternoon, empty by 3:30. mark it done
         agent: Dispatch desk
         expect:
           proposals: [{ tool: "update_move_status|record_stop_actual" }]

@@ -325,9 +325,10 @@ type ShownArtifact struct {
 	// Ranked is a table whose order is the answer, such as drivers ranked
 	// for a move: the person picks from it, so it is pointed to however
 	// short it is.
-	Ranked  bool     `json:"ranked,omitempty"`
-	Written string   `json:"written,omitempty"`
-	Lineage pulid.ID `json:"lineage,omitempty"`
+	Ranked   bool       `json:"ranked,omitempty"`
+	Written  string     `json:"written,omitempty"`
+	Lineage  pulid.ID   `json:"lineage,omitempty"`
+	Replaces []pulid.ID `json:"replaces,omitempty"`
 }
 
 const InlineTableRows = 12
