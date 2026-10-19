@@ -341,6 +341,7 @@ func TestLabel(t *testing.T) {
 
 	assert.Equal(t, "Post invoice", Label("invoice_post"))
 	assert.Equal(t, "List shipments", Label("shipment_list"))
+	assert.Equal(t, "Place shipment hold", Label("shipment_place_hold"))
 	assert.Equal(t, "Get billing queue item", Label("billing_get_queue_item"))
 	assert.Equal(t, "Billing queue list", Label("billing.queue.list"))
 	assert.Equal(t, "Ab", Label("AB"))
