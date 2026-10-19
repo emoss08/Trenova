@@ -741,34 +741,34 @@ writes:
   "mutation acceptCarrierInvoiceMatchWithVariance":
     tools: [accept_carrier_invoice_match_with_variance]
   "mutation addCarrierSettlementAdjustment":
-    tools: [add_carrier_settlement_adjustment]
+    tools: [settlement_add_carrier_adjustment]
   "mutation approveCarrierSettlement":
-    tools: [approve_carrier_settlement, approve_carrier_settlements]
+    tools: [settlement_approve_carrier]
   "mutation createCarrierInvoiceMatch":
     tools: [create_carrier_invoice_match]
   "mutation generateCarrierSettlementBatch":
-    tools: [generate_carrier_settlement_batch]
+    tools: [settlement_generate_carrier_batch]
   "mutation linkEdiCarrierInvoiceToCarrier":
     tools: [link_edi_carrier_invoice_to_carrier]
   "mutation markCarrierSettlementPaid":
-    tools: [record_carrier_settlement_payment]
+    tools: [settlement_record_carrier_payment]
   "mutation postCarrierSettlement":
-    tools: [post_carrier_settlement, post_carrier_settlements]
+    tools: [settlement_post_carrier]
   "mutation recalculateCarrierSettlement":
-    tools: [recalculate_carrier_settlement]
+    tools: [settlement_recalculate_carrier]
   "mutation rejectCarrierInvoiceMatch":
     tools: [reject_carrier_invoice_match]
   "mutation rejectCarrierSettlement":
-    tools: [reject_carrier_settlement]
+    tools: [settlement_reject_carrier]
   "mutation removeCarrierSettlementAdjustment":
-    tools: [remove_carrier_settlement_adjustment]
+    tools: [settlement_remove_carrier_adjustment]
   "mutation submitCarrierSettlement":
-    tools: [submit_carrier_settlement]
+    tools: [settlement_submit_carrier]
   "mutation updateCarrierSettlementControl":
     exempt: configuration
     reason: "An organization-wide control an administrator sets once; every later write depends on it."
   "mutation voidCarrierSettlement":
-    tools: [void_carrier_settlement]
+    tools: [settlement_void_carrier]
 
   # carriertrackingpublic
   "POST /api/v1/carrier-tracking-links/:token/check-calls/":
@@ -1190,7 +1190,7 @@ writes:
     exempt: counterparty
     reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
   "mutation resolveSettlementDispute":
-    tools: [resolve_settlement_dispute]
+    tools: [settlement_resolve_dispute]
   "mutation respondToMyAssignment":
     exempt: counterparty
     reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
@@ -1209,7 +1209,7 @@ writes:
     exempt: counterparty
     reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
   "mutation startSettlementDisputeReview":
-    tools: [start_settlement_dispute_review]
+    tools: [settlement_start_dispute_review]
   "mutation submitMyExpense":
     exempt: counterparty
     reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
@@ -1228,19 +1228,19 @@ writes:
 
   # driversettlement
   "mutation addDriverSettlementAdjustment":
-    tools: [add_driver_settlement_adjustment]
+    tools: [settlement_add_driver_adjustment]
   "mutation adjustEscrowAccount":
-    tools: [adjust_escrow_account]
+    tools: [settlement_adjust_escrow_account]
   "mutation approveDriverSettlement":
-    tools: [approve_driver_settlement]
+    tools: [settlement_approve_driver]
   "mutation assignPayProfileToWorker":
-    tools: [assign_pay_profile]
+    tools: [settlement_assign_pay_profile]
   "mutation attachPayEventsToSettlement":
-    tools: [attach_pay_events_to_settlement]
+    tools: [settlement_attach_pay_events]
   "mutation bulkDriverSettlementAction":
-    tools: [approve_driver_settlements, post_driver_settlements, record_driver_settlement_payment, submit_driver_settlement]
+    tools: [settlement_approve_driver, settlement_post_driver, settlement_record_driver_payment, settlement_submit_driver]
   "mutation closeEscrowAccount":
-    tools: [close_escrow_account]
+    tools: [settlement_close_escrow_account]
   "mutation createPayCode":
     exempt: configuration
     reason: "Pay codes and pay profiles are the pay rules an administrator authors once; every settlement is computed from them, and assigning one to a driver is its own tool."
@@ -1248,41 +1248,41 @@ writes:
     exempt: configuration
     reason: "Pay codes and pay profiles are the pay rules an administrator authors once; every settlement is computed from them, and assigning one to a driver is its own tool."
   "mutation createRecurringDeduction":
-    tools: [create_recurring_deduction]
+    tools: [settlement_create_recurring_deduction]
   "mutation createRecurringEarning":
-    tools: [create_recurring_earning]
+    tools: [settlement_create_recurring_earning]
   "mutation detachPayEventFromSettlement":
-    tools: [detach_pay_event_from_settlement]
+    tools: [settlement_detach_pay_event]
   "mutation endWorkerPayAssignment":
-    tools: [end_pay_assignment]
+    tools: [settlement_end_pay_assignment]
   "mutation generateDriverSettlement":
-    tools: [generate_driver_settlement]
+    tools: [settlement_generate_driver]
   "mutation generateSettlementBatch":
-    tools: [generate_driver_settlement_batch]
+    tools: [settlement_generate_driver_batch]
   "mutation holdDriverPayEvent":
-    tools: [hold_driver_pay_event]
+    tools: [settlement_hold_pay_event]
   "mutation issuePayAdvance":
-    tools: [issue_pay_advance]
+    tools: [settlement_issue_advance]
   "mutation markDriverSettlementPaid":
-    tools: [record_driver_settlement_payment]
+    tools: [settlement_record_driver_payment]
   "mutation openEscrowAccount":
-    tools: [open_escrow_account]
+    tools: [settlement_open_escrow_account]
   "mutation payWorkerNow":
-    tools: [pay_driver_now]
+    tools: [settlement_pay_now]
   "mutation postDriverSettlement":
-    tools: [post_driver_settlement]
+    tools: [settlement_post_driver]
   "mutation recalculateDriverSettlement":
-    tools: [recalculate_driver_settlement]
+    tools: [settlement_recalculate_driver]
   "mutation rejectDriverSettlement":
-    tools: [reject_driver_settlement]
+    tools: [settlement_reject_driver]
   "mutation releaseDriverPayEvent":
-    tools: [release_driver_pay_event]
+    tools: [settlement_release_pay_event]
   "mutation removeDriverSettlementAdjustment":
-    tools: [remove_driver_settlement_adjustment]
+    tools: [settlement_remove_driver_adjustment]
   "mutation submitDriverSettlement":
-    tools: [submit_driver_settlement]
+    tools: [settlement_submit_driver]
   "mutation updateEscrowAccount":
-    tools: [update_escrow_account]
+    tools: [settlement_update_escrow_account]
   "mutation updatePayCode":
     exempt: configuration
     reason: "Pay codes and pay profiles are the pay rules an administrator authors once; every settlement is computed from them, and assigning one to a driver is its own tool."
@@ -1290,16 +1290,16 @@ writes:
     exempt: configuration
     reason: "Pay codes and pay profiles are the pay rules an administrator authors once; every settlement is computed from them, and assigning one to a driver is its own tool."
   "mutation updateRecurringDeduction":
-    tools: [update_recurring_deduction]
+    tools: [settlement_update_recurring_deduction]
   "mutation updateRecurringEarning":
-    tools: [update_recurring_earning]
+    tools: [settlement_update_recurring_earning]
   "mutation updateSettlementControl":
     exempt: configuration
     reason: "An organization-wide control an administrator sets once; every later write depends on it."
   "mutation voidDriverSettlement":
-    tools: [void_driver_settlement]
+    tools: [settlement_void_driver]
   "mutation writeOffPayAdvance":
-    tools: [write_off_pay_advance]
+    tools: [settlement_forgive_advance]
 
   # edi
   "DELETE /api/v1/edi/mapping-profiles/:profileID/items/:mappingItemID/":
@@ -3009,7 +3009,7 @@ writes:
     exempt: attestation
     reason: "Time clock entries are the wage record a worker's pay is computed from; only the worker or a supervisor who saw the time may change them."
   "mutation generatePayrollExport":
-    tools: [generate_payroll_export]
+    tools: [settlement_generate_payroll_export]
   "mutation recordTimeEntry":
     exempt: attestation
     reason: "Time clock entries are the wage record a worker's pay is computed from; only the worker or a supervisor who saw the time may enter them."
@@ -3017,7 +3017,7 @@ writes:
     exempt: attestation
     reason: "Submitting and approving hours for payroll is a sign-off by the worker and their manager."
   "mutation voidPayrollExport":
-    tools: [void_payroll_export]
+    tools: [settlement_void_payroll_export]
 
   # tractor
   "mutation bulkUpdateTractorStatus":

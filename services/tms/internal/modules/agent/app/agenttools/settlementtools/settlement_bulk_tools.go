@@ -35,28 +35,26 @@ type settlementBulk struct {
 	decision    func(*lifecycleText) *settlementDecision
 	verb        string
 	past        string
-	description func(text *lifecycleText, single string) string
-	rationale   func(text *lifecycleText, single string) string
+	description func(text *lifecycleText) string
+	rationale   func(text *lifecycleText) string
 }
 
 var approveSettlements = settlementBulk{
 	decision: approveDecision,
 	verb:     common.VerbApprove,
 	past:     common.PastApproved,
-	description: func(text *lifecycleText, single string) string {
-		return "Propose approving several pending " + text.noun + "s in one proposal the " +
-			"person approves together. Use it instead of " + single + " whenever more " +
-			"than one is ready. Each is approved exactly as " + single +
-			" would, committing the organization to paying the " + text.payee + " what it " +
-			"comes to; a person always decides and may untick settlements. Propose only " +
-			"those " + text.getTool + " shows with no open exception or dispute you cannot " +
-			"explain. A settlement approving would refuse is reported, not approved, and the " +
-			"rest still go. Takes 1 to 50 settlements."
+	description: func(text *lifecycleText) string {
+		return "Propose approving pending " + text.noun + "s, one or up to 50 in one " +
+			"proposal the person decides together. Approving commits the organization to " +
+			"paying each " + text.payee + " what it comes to. Propose only those " +
+			text.getTool + " shows with no open exception or dispute you cannot explain; " +
+			"the person may untick settlements. Name every settlement that is ready in one " +
+			"call; one approving would refuse is reported, not approved, and the rest still go."
 	},
-	rationale: func(text *lifecycleText, single string) string {
-		return "Commits the organization to what several " + text.payee + "s are paid at " +
-			"once; only a person approves, settlement by settlement exactly as " + single +
-			", and may untick any of them."
+	rationale: func(text *lifecycleText) string {
+		return "Commits the organization to what " + text.payee + "s are paid; only a " +
+			"person approves, and may untick any of them, and hands-off approval is the " +
+			"settlement control's rule."
 	},
 }
 
@@ -64,40 +62,37 @@ var postSettlements = settlementBulk{
 	decision: postDecision,
 	verb:     "post",
 	past:     common.PastPosted,
-	description: func(text *lifecycleText, single string) string {
-		return "Propose posting several approved " + text.noun + "s to the general ledger " +
-			"in one proposal the person approves together. Use it instead of " + single +
-			" whenever more than one is ready. Each is posted exactly as " + single +
-			" would: " + text.postEach + ". It cannot be undone except by voiding, so a " +
-			"person always decides and may untick settlements. A settlement posting would " +
-			"refuse is reported, not posted, and the rest still go. Takes 1 to 50 settlements."
+	description: func(text *lifecycleText) string {
+		return "Propose posting approved " + text.noun + "s to the general ledger, one or " +
+			"up to 50 in one proposal the person decides together. Each is " + text.postEach +
+			". It cannot be undone except by voiding; the person may untick settlements. " +
+			"Name every approved settlement in one call; one posting would refuse is " +
+			"reported, not posted, and the rest still go."
 	},
-	rationale: func(text *lifecycleText, single string) string {
-		return "Books several settlements' payables to the ledger at once and queues each " +
-			"for the accounting system; only a person posts, settlement by settlement " +
-			"exactly as " + single + ", and may untick any of them."
+	rationale: func(*lifecycleText) string {
+		return "Books settlements' payables to the ledger and queues each for the accounting " +
+			"system; only a person posts, and may untick any of them."
 	},
 }
 
-// settlementBulkRecipes are the reads that hand each bulk tool its
-// settlements, ending at the tool. They once ran on through the period's other
-// writes, which told a model asked only to approve to submit, post and record
-// payments as well. The bulk tools are named from their single twins, so the
-// recipes are kept by name here rather than on each spec.
+// settlementBulkRecipes are the reads that hand each tool its settlements,
+// ending at the tool. They once ran on through the period's other writes,
+// which told a model asked only to approve to submit, post and record
+// payments as well.
 var settlementBulkRecipes = map[string][]string{
-	"approve_driver_settlements": {
-		"list_driver_settlements",
-		"get_driver_settlement",
-		"approve_driver_settlements",
+	"settlement_approve_driver": {
+		toolListDriverSettlements,
+		"settlement_get_driver",
+		"settlement_approve_driver",
 	},
-	"post_driver_settlements": {
-		"list_driver_settlements",
-		"post_driver_settlements",
+	"settlement_post_driver": {
+		toolListDriverSettlements,
+		"settlement_post_driver",
 	},
-	"approve_carrier_settlements": {
-		"list_carrier_settlements",
-		"get_carrier_settlement",
-		"approve_carrier_settlements",
+	"settlement_approve_carrier": {
+		"settlement_list_carrier",
+		"settlement_get_carrier",
+		"settlement_approve_carrier",
 	},
 }
 
@@ -109,10 +104,6 @@ type SettlementBulkTool[E any] struct {
 	batch       *common.RecordBatch
 }
 
-func bulkName(single string) string {
-	return single + "s"
-}
-
 func newSettlementBulkTool[E any](
 	spec settlementBulkSpec[E],
 	bulk *settlementBulk,
@@ -122,12 +113,10 @@ func newSettlementBulkTool[E any](
 		ledger:   spec.ledger,
 		book:     spec.book,
 	}
-	name := bulkName(single.Name())
-
 	return &SettlementBulkTool[E]{
-		name:        name,
-		description: bulk.description(spec.text, single.Name()),
-		rationale:   bulk.rationale(spec.text, single.Name()),
+		name:        single.Name(),
+		description: bulk.description(spec.text),
+		rationale:   bulk.rationale(spec.text),
 		single:      single,
 		batch: &common.RecordBatch{
 			Param:       paramSettlementIDs,
@@ -173,13 +162,13 @@ func (t *SettlementBulkTool[E]) Name() string { return t.name }
 
 func (t *SettlementBulkTool[E]) Recipe() []string { return settlementBulkRecipes[t.name] }
 
-func (t *SettlementBulkTool[E]) BatchOf() string { return t.single.Name() }
+func (t *SettlementBulkTool[E]) Target(params map[string]any) (agentports.ToolTarget, bool) {
+	return t.batch.Target(params)
+}
 
 func (t *SettlementBulkTool[E]) Description() string { return t.description }
 
-func (t *SettlementBulkTool[E]) SearchTerms() []string {
-	return []string{"every", "several", "many", "together", common.SearchTermBulk, "once"}
-}
+func (t *SettlementBulkTool[E]) SearchTerms() []string { return t.single.SearchTerms() }
 
 func (t *SettlementBulkTool[E]) ParamSchema() map[string]any {
 	return common.BulkIDsSchema(t.batch,

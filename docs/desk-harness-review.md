@@ -1457,6 +1457,7 @@ held-out`) when one is made for a PR.
 | Held-out split | none (measurement only) | 649 → 649 | 459 / 710 / 0, unchanged | 0.92 (161 cases) | 0.81 |
 | Shipments, orders, import page | `shipment`, `order`, `intake` (55 tools namespaced) | 649 → 648 | 459 / 710 / 0, unchanged | 0.9193 → 0.9193 | 0.8137 → 0.8137 |
 | Billing queue and invoices | `billing`, `invoice` (47 tools namespaced; 7 single/batch pairs merged) | 648 → 641 | 459 / 710 / 0, unchanged | 0.9193 → 0.9193 | 0.8137 → 0.8137 |
+| Settlements and pay | `settlement` (56 tools namespaced; 4 single/batch pairs merged) | 641 → 637 | 459 / 710 / 0, unchanged | 0.9193 → 0.9193 | 0.8137 → 0.8137 |
 
 The shipment row is measured on the held-out set the split PR recorded (161 cases), so both
 figures read the same cases; the module's merges moved three cases between splits, which the
@@ -1473,6 +1474,15 @@ and a name that carries another area's noun (`billing_transfer_shipments`) name-
 question about that noun. The merges moved two cases between strata; one, a miss in both, joined
 the held-out set, so the gate's own held-out hybrid top-1 reads 132 of 163 (0.8098) where it read
 132 of 162, and its floor is written as 0.80.
+
+The settlement row reads the same 161 cases. Held-out keyword ranking is unchanged as well
+(recall@5 0.9503, top-1 0.9130). On the development cases hybrid top-1 moved from 0.7766 to
+0.7787 and keyword recall@5 from 0.9213 to 0.9234, while keyword top-1 fell from 0.8872 to
+0.8809: three requests ("hold the driver's pay", "post every approved carrier settlement",
+"generate this pay period's settlements for our carriers") had matched words the old names or
+the batch tools' generic search terms ("every", "once") carried. Settlement records come in two
+kinds, so the namespace declares the qualifiers `driver` and `carrier`, and a name is indexed in
+reading order too, which gave the list tools back their plural.
 
 **Phase 4: a single front door and job profiles (3–4 weeks).**
 

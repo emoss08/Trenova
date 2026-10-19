@@ -173,24 +173,24 @@ func TestBuildSystemPrompt_NamesThePluralTwinsTheAgentHolds(t *testing.T) {
 
 	rc := fullContext()
 	rc.Tools = append(rc.Tools,
-		agentdefinition.ToolSummary{Name: "post_driver_settlement", Tier: agent.TierPropose},
+		agentdefinition.ToolSummary{Name: "settlement_post_driver", Tier: agent.TierPropose},
 		agentdefinition.ToolSummary{
-			Name:    "post_driver_settlements",
+			Name:    "settlement_post_driver",
 			Tier:    agent.TierPropose,
-			BatchOf: "post_driver_settlement",
+			BatchOf: "settlement_post_driver",
 		},
 		agentdefinition.ToolSummary{
-			Name:    "approve_carrier_settlements",
+			Name:    "settlement_approve_carrier",
 			Tier:    agent.TierPropose,
-			BatchOf: "approve_carrier_settlement",
+			BatchOf: "settlement_approve_carrier",
 		},
 	)
 
 	prompt := definitionWithInstructions("Help.").BuildSystemPrompt(rc)
 
 	assert.Contains(t, prompt,
-		"Several records in one call: post_driver_settlements does post_driver_settlement "+
-			"for a list, approve_carrier_settlements does approve_carrier_settlement for a list.")
+		"Several records in one call: settlement_post_driver does settlement_post_driver "+
+			"for a list, settlement_approve_carrier does settlement_approve_carrier for a list.")
 	assert.Contains(t, prompt, "never call the single tool once per record.")
 
 	rc.ToolsDisclosed = true

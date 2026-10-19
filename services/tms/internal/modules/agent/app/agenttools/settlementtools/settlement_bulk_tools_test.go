@@ -119,16 +119,16 @@ func TestSettlementBulkTools_CopyTheirSingleToolsPolicy(t *testing.T) {
 	t.Parallel()
 
 	twins := map[string]any{
-		"approve_driver_settlement":  provideApproveDriverSettlementTool,
-		"post_driver_settlement":     providePostDriverSettlementTool,
-		"approve_carrier_settlement": provideApproveCarrierSettlementTool,
-		"post_carrier_settlement":    providePostCarrierSettlementTool,
+		"settlement_approve_driver":  approveDriverSingle,
+		"settlement_post_driver":     postDriverSingle,
+		"settlement_approve_carrier": approveCarrierSingle,
+		"settlement_post_carrier":    postCarrierSingle,
 	}
 	resources := map[string]permission.Resource{
-		"approve_driver_settlements":  permission.ResourceDriverSettlement,
-		"post_driver_settlements":     permission.ResourceDriverSettlement,
-		"approve_carrier_settlements": permission.ResourceCarrierSettlement,
-		"post_carrier_settlements":    permission.ResourceCarrierSettlement,
+		"settlement_approve_driver":  permission.ResourceDriverSettlement,
+		"settlement_post_driver":     permission.ResourceDriverSettlement,
+		"settlement_approve_carrier": permission.ResourceCarrierSettlement,
+		"settlement_post_carrier":    permission.ResourceCarrierSettlement,
 	}
 
 	seen := map[string]bool{}
@@ -136,9 +136,8 @@ func TestSettlementBulkTools_CopyTheirSingleToolsPolicy(t *testing.T) {
 		tool := agenttoolstest.BuildTool(t, provider)
 		name := tool.Name()
 		seen[name] = true
-		singleName := name[:len(name)-1]
-		singleProvider, ok := twins[singleName]
-		require.Truef(t, ok, "%s has no single twin", name)
+		singleProvider, ok := twins[name]
+		require.Truef(t, ok, "%s runs no single-settlement tool", name)
 		single := agenttoolstest.BuildTool(t, singleProvider)
 
 		policy := tool.Policy()
@@ -167,10 +166,15 @@ func TestSettlementBulkTools_CopyTheirSingleToolsPolicy(t *testing.T) {
 		assert.Equal(t, []string{paramSettlementIDs},
 			tool.ParamSchema()[toolschema.KeyRequired], name)
 
-		_, targeted := tool.(agentports.TargetedTool)
-		assert.False(t, targeted, "%s acts on a set, not one record", name)
-		assert.Contains(t, single.Description(), name,
-			"%s points to its bulk twin", singleName)
+		targeted, ok := tool.(agentports.TargetedTool)
+		require.Truef(t, ok, "%s pins a call naming one settlement", name)
+		id := pulid.MustNew("dstl_").String()
+		_, one := targeted.Target(map[string]any{paramSettlementIDs: []any{id}})
+		assert.True(t, one, "%s pins one settlement", name)
+		_, several := targeted.Target(map[string]any{
+			paramSettlementIDs: []any{id, pulid.MustNew("dstl_").String()},
+		})
+		assert.False(t, several, "%s pins nothing for a set", name)
 	}
 	assert.Len(t, seen, len(twins))
 
@@ -430,7 +434,7 @@ func TestPostCarrierSettlements_PostsEachAsPostCarrierSettlementWould(t *testing
 		},
 	}, &postSettlements).(*SettlementBulkTool[carriersettlement.CarrierSettlement])
 	require.True(t, ok)
-	assert.Equal(t, "post_carrier_settlements", tool.Name())
+	assert.Equal(t, "settlement_post_carrier", tool.Name())
 
 	params := agenttoolstest.ExecuteParams(map[string]any{paramSettlementIDs: agenttoolstest.IdList(ids)})
 	preview, err := tool.Preview(t.Context(), params)

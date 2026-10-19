@@ -28423,15 +28423,6 @@
       "go/other"
     ]
   },
-  "Approve carrier settlements": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "Approve charge": {
     "sites": 1,
     "scope": [
@@ -28469,15 +28460,6 @@
     ]
   },
   "Approve document": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
-  "Approve driver settlements": {
     "sites": 1,
     "scope": [
       "ts"
@@ -190592,15 +190574,6 @@
       "routes/worker"
     ]
   },
-  "Post carrier settlements": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "Post customer payments and apply credit memos": {
     "sites": 1,
     "scope": [
@@ -190608,15 +190581,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Post driver settlements": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Post fuel purchases and IFTA gallons automatically from Comdata fleet card transactions.": {
@@ -319540,6 +319504,24 @@
       "apps/web/components"
     ]
   },
+  "{0, plural, one {Approve carrier settlement} other {Approve carrier settlements}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "{0, plural, one {Approve driver settlement} other {Approve driver settlements}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "{0, plural, one {Approved # invoice} other {Approved # invoices}}": {
     "sites": 1,
     "scope": [
@@ -320323,6 +320305,24 @@
     ],
     "areas": [
       "routes/invoice"
+    ]
+  },
+  "{0, plural, one {Post carrier settlement} other {Post carrier settlements}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "{0, plural, one {Post driver settlement} other {Post driver settlements}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0, plural, one {Post invoice} other {Post invoices}}": {

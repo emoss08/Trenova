@@ -12,7 +12,7 @@ import (
 
 const NounDriverSettlement = "driver settlement"
 
-const DriverSettlementReads = "list_driver_settlements or get_driver_settlement"
+const DriverSettlementReads = "settlement_list_driver or settlement_get_driver"
 
 const PaymentMethodCheck = "Check"
 
@@ -30,7 +30,7 @@ func DriverSettlementLedger() SettlementLedger[driversettlement.Settlement] {
 		Artifact: DriverSettlementEntity,
 		Noun:     NounDriverSettlement,
 		Sources:  DriverSettlementReads,
-		ByName: " list_driver_settlements finds it by the driver's name as query, with no " +
+		ByName: " settlement_list_driver finds it by the driver's name as query, with no " +
 			"lookup before it.",
 		Sensitive: []string{
 			"grossEarningsMinor",

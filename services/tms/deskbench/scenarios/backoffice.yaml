@@ -9,8 +9,8 @@ scenarios:
     steps:
       - say: "run carlos rivera's settlement for last week"
         expect:
-          calls: ["search_worker|list_driver_pay_events"]
-          proposals: [{ tool: "generate_driver_settlement|generate_driver_settlement_batch" }]
+          calls: ["search_worker|settlement_list_pay_events"]
+          proposals: [{ tool: "settlement_generate_driver|settlement_generate_driver_batch" }]
           maxFailedCalls: 2
           rubric: >
             Resolves Carlos Rivera, last week's dates, and the pay events it would include, and
@@ -23,8 +23,8 @@ scenarios:
     steps:
       - say: "take 150 out of david park's settlement for the fuel advance he got"
         expect:
-          calls: ["list_driver_settlements"]
-          proposals: [{ tool: add_driver_settlement_adjustment }]
+          calls: ["settlement_list_driver"]
+          proposals: [{ tool: settlement_add_driver_adjustment }]
           maxFailedCalls: 1
           maxCalls: 10
           rubric: >
@@ -40,7 +40,7 @@ scenarios:
     steps:
       - say: "take 150 out of emily chen's open settlement for the fuel advance she got"
         expect:
-          calls: ["list_driver_settlements"]
+          calls: ["settlement_list_driver"]
           noProposals: true
           maxCalls: 6
           rubric: >

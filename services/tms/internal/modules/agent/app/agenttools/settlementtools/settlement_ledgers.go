@@ -11,7 +11,7 @@ import (
 
 const nounCarrierSettlement = "carrier settlement"
 
-const carrierSettlementRead = "list_carrier_settlements or get_carrier_settlement"
+const carrierSettlementRead = "settlement_list_carrier or settlement_get_carrier"
 
 const carrierSettlementEntity = "carrier_settlement"
 

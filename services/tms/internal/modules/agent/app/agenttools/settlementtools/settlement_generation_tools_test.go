@@ -182,7 +182,7 @@ func TestGenerateDriverSettlementBatch_PreviewsEachDriverStillToSettle(t *testin
 		},
 	}}
 	tool := &GenerateDriverBatchTool{settlements: batch}
-	params := agenttoolstest.ExecuteParams(map[string]any{paramBatchNotes: "  Labor Day week  "})
+	params := agenttoolstest.ExecuteParams(map[string]any{common.ParamNote: "  Labor Day week  "})
 
 	preview, err := tool.Preview(t.Context(), params)
 	require.NoError(t, err)

@@ -136,7 +136,7 @@ func (t *RecurringPayTool[E]) ParamSchema() map[string]any {
 	properties := map[string]any{
 		common.ParamPayCodeID: agenttoolschema.RecordIDText(
 			permission.ResourcePayCode,
-			"The "+t.kind.payee+" pay code it posts under, from list_pay_codes.",
+			"The "+t.kind.payee+" pay code it posts under, from settlement_list_pay_codes.",
 		),
 		paramRecurringDescription: common.StringProperty("What it is for, as it will read on the "+
 			"driver's statement.", maxRecurringDescription),
@@ -165,7 +165,7 @@ func (t *RecurringPayTool[E]) ParamSchema() map[string]any {
 		properties[paramEscrowContribution] = map[string]any{
 			toolschema.KeyType: toolschema.TypeBoolean,
 			toolschema.KeyDescription: "true to pay it into the driver's active escrow " +
-				"account, from open_escrow_account.",
+				"account, from settlement_open_escrow_account.",
 		}
 	}
 
@@ -472,10 +472,10 @@ func recurringMoney(before, after *recurringFacts) *agent.MoneyPreview {
 func deductionKind() recurringKind[driverpay.RecurringDeduction] {
 	return recurringKind[driverpay.RecurringDeduction]{
 		noun:        "recurring deduction",
-		createName:  "create_recurring_deduction",
-		updateName:  "update_recurring_deduction",
+		createName:  "settlement_create_recurring_deduction",
+		updateName:  "settlement_update_recurring_deduction",
 		resource:    permission.ResourceRecurringDeduction,
-		listTool:    "list_recurring_deductions",
+		listTool:    "settlement_list_recurring_deductions",
 		idParam:     "deductionId",
 		payee:       "deduction",
 		direction:   "taken from the driver's pay",
@@ -547,10 +547,10 @@ func deductionKind() recurringKind[driverpay.RecurringDeduction] {
 func earningKind() recurringKind[driverpay.RecurringEarning] {
 	return recurringKind[driverpay.RecurringEarning]{
 		noun:        "recurring earning",
-		createName:  "create_recurring_earning",
-		updateName:  "update_recurring_earning",
+		createName:  "settlement_create_recurring_earning",
+		updateName:  "settlement_update_recurring_earning",
 		resource:    permission.ResourceRecurringEarning,
-		listTool:    "list_recurring_earnings",
+		listTool:    "settlement_list_recurring_earnings",
 		idParam:     "earningId",
 		payee:       "earning",
 		direction:   "added to the driver's pay",

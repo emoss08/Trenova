@@ -305,7 +305,7 @@ func (t *driverPayTool) driverNamed(
 
 type listPayCodesTool struct{ driverPayTool }
 
-func (t *listPayCodesTool) Name() string { return "list_pay_codes" }
+func (t *listPayCodesTool) Name() string { return "settlement_list_pay_codes" }
 
 func (t *listPayCodesTool) Description() string {
 	return "List the organization's active earning and deduction pay codes, each with the " +
@@ -379,7 +379,7 @@ func (t *listPayCodesTool) Query(
 
 type listPayProfilesTool struct{ driverPayTool }
 
-func (t *listPayProfilesTool) Name() string { return "list_pay_profiles" }
+func (t *listPayProfilesTool) Name() string { return "settlement_list_pay_profiles" }
 
 func (t *listPayProfilesTool) Description() string {
 	return "List the organization's driver pay profiles, the packages that say how a driver " +
@@ -461,7 +461,7 @@ func (t *listPayProfilesTool) Query(
 
 type listWorkerPayAssignmentsTool struct{ driverPayTool }
 
-func (t *listWorkerPayAssignmentsTool) Name() string { return "list_pay_assignments" }
+func (t *listWorkerPayAssignmentsTool) Name() string { return "settlement_list_pay_assignments" }
 
 func (t *listWorkerPayAssignmentsTool) SearchTerms() []string {
 	return []string{"driver pay profile", "assigned pay profile", "pay plan"}
@@ -564,7 +564,7 @@ func (t *listWorkerPayAssignmentsTool) Query(
 
 type listEscrowAccountsTool struct{ driverPayTool }
 
-func (t *listEscrowAccountsTool) Name() string { return "list_escrow_accounts" }
+func (t *listEscrowAccountsTool) Name() string { return "settlement_list_escrow_accounts" }
 
 func (t *listEscrowAccountsTool) Description() string {
 	return "List owner-operator escrow accounts with the driver, status and when each " +
@@ -652,7 +652,7 @@ func (t *listEscrowAccountsTool) Query(
 
 type listPayAdvancesTool struct{ driverPayTool }
 
-func (t *listPayAdvancesTool) Name() string { return "list_pay_advances" }
+func (t *listPayAdvancesTool) Name() string { return "settlement_list_advances" }
 
 func (t *listPayAdvancesTool) Description() string {
 	return "List driver pay advances, the cash and money codes given against future pay, " +
@@ -800,7 +800,7 @@ type recurringRow struct {
 
 type listRecurringDeductionsTool struct{ driverPayTool }
 
-func (t *listRecurringDeductionsTool) Name() string { return "list_recurring_deductions" }
+func (t *listRecurringDeductionsTool) Name() string { return "settlement_list_recurring_deductions" }
 
 func (t *listRecurringDeductionsTool) Description() string {
 	return "List drivers' recurring deductions, such as insurance, equipment lease or escrow " +
@@ -878,7 +878,7 @@ func (t *listRecurringDeductionsTool) Query(
 
 type listRecurringEarningsTool struct{ driverPayTool }
 
-func (t *listRecurringEarningsTool) Name() string { return "list_recurring_earnings" }
+func (t *listRecurringEarningsTool) Name() string { return "settlement_list_recurring_earnings" }
 
 func (t *listRecurringEarningsTool) Description() string {
 	return "List drivers' recurring earnings, such as per diem, a guaranteed stipend or a " +

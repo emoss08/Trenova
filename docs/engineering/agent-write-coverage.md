@@ -747,20 +747,20 @@ Tools that change something no person-facing write does, such as sending a messa
 | --- | --- |
 | `mutation acceptCarrierInvoiceMatch` | Tool: `accept_carrier_invoice_match` |
 | `mutation acceptCarrierInvoiceMatchWithVariance` | Tool: `accept_carrier_invoice_match_with_variance` |
-| `mutation addCarrierSettlementAdjustment` | Tool: `add_carrier_settlement_adjustment` |
-| `mutation approveCarrierSettlement` | Tool: `approve_carrier_settlement`, `approve_carrier_settlements` |
+| `mutation addCarrierSettlementAdjustment` | Tool: `settlement_add_carrier_adjustment` |
+| `mutation approveCarrierSettlement` | Tool: `settlement_approve_carrier` |
 | `mutation createCarrierInvoiceMatch` | Tool: `create_carrier_invoice_match` |
-| `mutation generateCarrierSettlementBatch` | Tool: `generate_carrier_settlement_batch` |
+| `mutation generateCarrierSettlementBatch` | Tool: `settlement_generate_carrier_batch` |
 | `mutation linkEdiCarrierInvoiceToCarrier` | Tool: `link_edi_carrier_invoice_to_carrier` |
-| `mutation markCarrierSettlementPaid` | Tool: `record_carrier_settlement_payment` |
-| `mutation postCarrierSettlement` | Tool: `post_carrier_settlement`, `post_carrier_settlements` |
-| `mutation recalculateCarrierSettlement` | Tool: `recalculate_carrier_settlement` |
+| `mutation markCarrierSettlementPaid` | Tool: `settlement_record_carrier_payment` |
+| `mutation postCarrierSettlement` | Tool: `settlement_post_carrier` |
+| `mutation recalculateCarrierSettlement` | Tool: `settlement_recalculate_carrier` |
 | `mutation rejectCarrierInvoiceMatch` | Tool: `reject_carrier_invoice_match` |
-| `mutation rejectCarrierSettlement` | Tool: `reject_carrier_settlement` |
-| `mutation removeCarrierSettlementAdjustment` | Tool: `remove_carrier_settlement_adjustment` |
-| `mutation submitCarrierSettlement` | Tool: `submit_carrier_settlement` |
+| `mutation rejectCarrierSettlement` | Tool: `settlement_reject_carrier` |
+| `mutation removeCarrierSettlementAdjustment` | Tool: `settlement_remove_carrier_adjustment` |
+| `mutation submitCarrierSettlement` | Tool: `settlement_submit_carrier` |
 | `mutation updateCarrierSettlementControl` | Exempt, configuration: An organization-wide control an administrator sets once; every later write depends on it. |
-| `mutation voidCarrierSettlement` | Tool: `void_carrier_settlement` |
+| `mutation voidCarrierSettlement` | Tool: `settlement_void_carrier` |
 
 ### carriertrackingpublic
 
@@ -1039,14 +1039,14 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation proposeMyShiftSwap` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
 | `mutation recordMyStopAction` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
 | `mutation requestMyPto` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
-| `mutation resolveSettlementDispute` | Tool: `resolve_settlement_dispute` |
+| `mutation resolveSettlementDispute` | Tool: `settlement_resolve_dispute` |
 | `mutation respondToMyAssignment` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
 | `mutation respondToMyShiftSwap` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
 | `mutation restoreMyNotifications` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
 | `mutation reviewDriverExpense` | Tool: `review_driver_expense` |
 | `mutation revokeWorkerPortalAccess` | Exempt, security: Removes a driver's sign-in to the driver portal. |
 | `mutation setMyAvailability` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
-| `mutation startSettlementDisputeReview` | Tool: `start_settlement_dispute_review` |
+| `mutation startSettlementDisputeReview` | Tool: `settlement_start_dispute_review` |
 | `mutation submitMyExpense` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
 | `mutation updateDashControl` | Exempt, configuration: An organization-wide control an administrator sets once; every later write depends on it. |
 | `mutation updateMyContactInfo` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
@@ -1062,40 +1062,40 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation addDriverSettlementAdjustment` | Tool: `add_driver_settlement_adjustment` |
-| `mutation adjustEscrowAccount` | Tool: `adjust_escrow_account` |
-| `mutation approveDriverSettlement` | Tool: `approve_driver_settlement` |
-| `mutation assignPayProfileToWorker` | Tool: `assign_pay_profile` |
-| `mutation attachPayEventsToSettlement` | Tool: `attach_pay_events_to_settlement` |
-| `mutation bulkDriverSettlementAction` | Tool: `approve_driver_settlements`, `post_driver_settlements`, `record_driver_settlement_payment`, `submit_driver_settlement` |
-| `mutation closeEscrowAccount` | Tool: `close_escrow_account` |
+| `mutation addDriverSettlementAdjustment` | Tool: `settlement_add_driver_adjustment` |
+| `mutation adjustEscrowAccount` | Tool: `settlement_adjust_escrow_account` |
+| `mutation approveDriverSettlement` | Tool: `settlement_approve_driver` |
+| `mutation assignPayProfileToWorker` | Tool: `settlement_assign_pay_profile` |
+| `mutation attachPayEventsToSettlement` | Tool: `settlement_attach_pay_events` |
+| `mutation bulkDriverSettlementAction` | Tool: `settlement_approve_driver`, `settlement_post_driver`, `settlement_record_driver_payment`, `settlement_submit_driver` |
+| `mutation closeEscrowAccount` | Tool: `settlement_close_escrow_account` |
 | `mutation createPayCode` | Exempt, configuration: Pay codes and pay profiles are the pay rules an administrator authors once; every settlement is computed from them, and assigning one to a driver is its own tool. |
 | `mutation createPayProfile` | Exempt, configuration: Pay codes and pay profiles are the pay rules an administrator authors once; every settlement is computed from them, and assigning one to a driver is its own tool. |
-| `mutation createRecurringDeduction` | Tool: `create_recurring_deduction` |
-| `mutation createRecurringEarning` | Tool: `create_recurring_earning` |
-| `mutation detachPayEventFromSettlement` | Tool: `detach_pay_event_from_settlement` |
-| `mutation endWorkerPayAssignment` | Tool: `end_pay_assignment` |
-| `mutation generateDriverSettlement` | Tool: `generate_driver_settlement` |
-| `mutation generateSettlementBatch` | Tool: `generate_driver_settlement_batch` |
-| `mutation holdDriverPayEvent` | Tool: `hold_driver_pay_event` |
-| `mutation issuePayAdvance` | Tool: `issue_pay_advance` |
-| `mutation markDriverSettlementPaid` | Tool: `record_driver_settlement_payment` |
-| `mutation openEscrowAccount` | Tool: `open_escrow_account` |
-| `mutation payWorkerNow` | Tool: `pay_driver_now` |
-| `mutation postDriverSettlement` | Tool: `post_driver_settlement` |
-| `mutation recalculateDriverSettlement` | Tool: `recalculate_driver_settlement` |
-| `mutation rejectDriverSettlement` | Tool: `reject_driver_settlement` |
-| `mutation releaseDriverPayEvent` | Tool: `release_driver_pay_event` |
-| `mutation removeDriverSettlementAdjustment` | Tool: `remove_driver_settlement_adjustment` |
-| `mutation submitDriverSettlement` | Tool: `submit_driver_settlement` |
-| `mutation updateEscrowAccount` | Tool: `update_escrow_account` |
+| `mutation createRecurringDeduction` | Tool: `settlement_create_recurring_deduction` |
+| `mutation createRecurringEarning` | Tool: `settlement_create_recurring_earning` |
+| `mutation detachPayEventFromSettlement` | Tool: `settlement_detach_pay_event` |
+| `mutation endWorkerPayAssignment` | Tool: `settlement_end_pay_assignment` |
+| `mutation generateDriverSettlement` | Tool: `settlement_generate_driver` |
+| `mutation generateSettlementBatch` | Tool: `settlement_generate_driver_batch` |
+| `mutation holdDriverPayEvent` | Tool: `settlement_hold_pay_event` |
+| `mutation issuePayAdvance` | Tool: `settlement_issue_advance` |
+| `mutation markDriverSettlementPaid` | Tool: `settlement_record_driver_payment` |
+| `mutation openEscrowAccount` | Tool: `settlement_open_escrow_account` |
+| `mutation payWorkerNow` | Tool: `settlement_pay_now` |
+| `mutation postDriverSettlement` | Tool: `settlement_post_driver` |
+| `mutation recalculateDriverSettlement` | Tool: `settlement_recalculate_driver` |
+| `mutation rejectDriverSettlement` | Tool: `settlement_reject_driver` |
+| `mutation releaseDriverPayEvent` | Tool: `settlement_release_pay_event` |
+| `mutation removeDriverSettlementAdjustment` | Tool: `settlement_remove_driver_adjustment` |
+| `mutation submitDriverSettlement` | Tool: `settlement_submit_driver` |
+| `mutation updateEscrowAccount` | Tool: `settlement_update_escrow_account` |
 | `mutation updatePayCode` | Exempt, configuration: Pay codes and pay profiles are the pay rules an administrator authors once; every settlement is computed from them, and assigning one to a driver is its own tool. |
 | `mutation updatePayProfile` | Exempt, configuration: Pay codes and pay profiles are the pay rules an administrator authors once; every settlement is computed from them, and assigning one to a driver is its own tool. |
-| `mutation updateRecurringDeduction` | Tool: `update_recurring_deduction` |
-| `mutation updateRecurringEarning` | Tool: `update_recurring_earning` |
+| `mutation updateRecurringDeduction` | Tool: `settlement_update_recurring_deduction` |
+| `mutation updateRecurringEarning` | Tool: `settlement_update_recurring_earning` |
 | `mutation updateSettlementControl` | Exempt, configuration: An organization-wide control an administrator sets once; every later write depends on it. |
-| `mutation voidDriverSettlement` | Tool: `void_driver_settlement` |
-| `mutation writeOffPayAdvance` | Tool: `write_off_pay_advance` |
+| `mutation voidDriverSettlement` | Tool: `settlement_void_driver` |
+| `mutation writeOffPayAdvance` | Tool: `settlement_forgive_advance` |
 
 ### edi
 
@@ -2147,10 +2147,10 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation clockIn` | Exempt, counterparty: A worker clocking their own time; an agent must not record hours worked for a person. |
 | `mutation clockOut` | Exempt, counterparty: A worker clocking their own time; an agent must not record hours worked for a person. |
 | `mutation deleteTimeEntry` | Exempt, attestation: Time clock entries are the wage record a worker's pay is computed from; only the worker or a supervisor who saw the time may change them. |
-| `mutation generatePayrollExport` | Tool: `generate_payroll_export` |
+| `mutation generatePayrollExport` | Tool: `settlement_generate_payroll_export` |
 | `mutation recordTimeEntry` | Exempt, attestation: Time clock entries are the wage record a worker's pay is computed from; only the worker or a supervisor who saw the time may enter them. |
 | `mutation transitionTimesheet` | Exempt, attestation: Submitting and approving hours for payroll is a sign-off by the worker and their manager. |
-| `mutation voidPayrollExport` | Tool: `void_payroll_export` |
+| `mutation voidPayrollExport` | Tool: `settlement_void_payroll_export` |
 
 ### tractor
 

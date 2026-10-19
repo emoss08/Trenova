@@ -89,19 +89,19 @@ cases:
   - request: what is stopping us from finishing month end
     expect: [get_fiscal_close_blockers]
   - request: whose paychecks are ready to go out
-    expect: [list_driver_settlements]
+    expect: [settlement_list_driver]
   - request: walk me through Juan's pay stub
-    expect: [get_driver_settlement]
+    expect: [settlement_get_driver]
   - request: which trips has she been credited for
-    expect: [list_driver_pay_events]
+    expect: [settlement_list_pay_events]
   - request: what does he have coming that hasn't been paid out
     expect: [get_worker_earnings_summary]
   - request: what's the trucker complaining about on his check
-    expect: [get_settlement_dispute]
+    expect: [settlement_get_dispute]
   - request: what do we owe the outside haulers this week
-    expect: [list_carrier_settlements]
+    expect: [settlement_list_carrier]
   - request: itemize what we're paying that hauler
-    expect: [get_carrier_settlement]
+    expect: [settlement_get_carrier]
   - request: which hauler bills don't agree with what we expected
     expect: [list_carrier_invoice_matches]
   - request: what pricing deals do we have with Acme

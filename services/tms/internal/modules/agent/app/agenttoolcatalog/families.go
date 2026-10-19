@@ -40,7 +40,7 @@ var families = [...][]string{
 		"create_accounting_reference_record",
 	},
 	{"list_watchtower_items", "get_daily_briefing", "list_agent_runs", "get_agent_run"},
-	{"list_driver_settlements", "get_driver_settlement", "list_driver_pay_events"},
+	{"settlement_list_driver", "settlement_get_driver", "settlement_list_pay_events"},
 	{"get_ar_aging", "list_ar_open_items", "get_customer_statement"},
 	{
 		"list_factoring_ready_invoices",
