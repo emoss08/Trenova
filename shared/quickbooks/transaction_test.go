@@ -65,7 +65,7 @@ func TestCreateInvoiceSendsRequestIDAndPricedLines(t *testing.T) {
 		assert.Equal(t, testRequestID, r.URL.Query().Get("requestid"))
 		assert.Equal(t, "75", r.URL.Query().Get("minorversion"))
 		body = readJSON(t, r)
-		_, _ = w.Write(fixture(t, "invoice_create.json"))
+		_, _ = w.Write(fixture(t, "create_invoice.json"))
 	})
 
 	result, err := client.CreateInvoice(t.Context(), testRequestID, freightInvoice())
@@ -783,7 +783,7 @@ func TestExchangeRateIsSentOnlyWithACurrency(t *testing.T) {
 	var bodies []map[string]any
 	client := newAPIClient(t, func(w http.ResponseWriter, r *http.Request) {
 		bodies = append(bodies, readJSON(t, r))
-		_, _ = w.Write(fixture(t, "invoice_create.json"))
+		_, _ = w.Write(fixture(t, "create_invoice.json"))
 	})
 
 	priced := freightInvoice()

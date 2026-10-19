@@ -19,16 +19,16 @@ inputs:
 runs:
   using: composite
   steps:
-    # A change to a package most of the service imports recompiles hundreds of
-    # packages on top of the restored build cache, and the runner's disk ran
-    # out linking the last binaries. The SDKs preinstalled on the image, none
-    # of which a Go job uses, are most of that disk.
-    - name: Free disk space
+    # The ubuntu-26.04 image mounts /tmp as a size-capped tmpfs, and go build
+    # and go test link every binary under GOTMPDIR, which defaults to /tmp. A
+    # change to a package most of the service imports relinks hundreds of test
+    # binaries at once and filled it ("disk quota exceeded"), so the work
+    # directory goes on the runner's disk instead.
+    - name: Keep Go's work directory on disk
       shell: bash
       run: |
-        sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
-          /opt/hostedtoolcache/CodeQL /usr/local/share/boost
-        df -h /
+        mkdir -p "$RUNNER_TEMP/gotmp"
+        echo "GOTMPDIR=$RUNNER_TEMP/gotmp" >> "$GITHUB_ENV"
 
     - name: Set up Go
       uses: actions/setup-go@v6
