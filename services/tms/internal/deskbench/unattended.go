@@ -475,8 +475,15 @@ func (b *Bench) captureRun(
 		record.Failure = run.ErrorMessage
 		record.Status = turnStatusOf(run.Status)
 		record.Input = string(run.Trigger)
-		if run.Transcript != nil {
-			record.Tools = transcriptTools(run.Transcript)
+		transcript, transcriptErr := b.loadTranscript(ctx, session, fired.run.ID)
+		if transcriptErr != nil {
+			record.CaptureError = joinErrors(
+				record.CaptureError,
+				"transcript: "+transcriptErr.Error(),
+			)
+		}
+		if transcript != nil {
+			record.Tools = transcriptTools(transcript)
 		}
 	}
 
@@ -544,6 +551,17 @@ func (b *Bench) loadRun(
 	session *Session,
 	runID pulid.ID,
 ) (*agent.AgentRun, error) {
+	return b.RunRecords.GetByID(session.Context(ctx), agentports.GetAgentRunByIDRequest{
+		ID:         runID,
+		TenantInfo: &session.Tenant,
+	})
+}
+
+func (b *Bench) loadTranscript(
+	ctx context.Context,
+	session *Session,
+	runID pulid.ID,
+) (*agent.RunTranscript, error) {
 	runs, err := b.RunRecords.ListTranscriptsByIDs(
 		session.Context(ctx),
 		agentports.ListAgentRunsByIDsRequest{
@@ -558,7 +576,7 @@ func (b *Bench) loadRun(
 		return nil, errors.New("the run is not recorded yet")
 	}
 
-	return runs[0], nil
+	return runs[0].Transcript, nil
 }
 
 func transcriptTools(transcript *agent.RunTranscript) []*ToolCallRecord {
