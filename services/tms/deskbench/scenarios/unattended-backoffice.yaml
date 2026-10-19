@@ -1,6 +1,5 @@
 defaults:
   tags: [unattended, backoffice]
-  split: development
 
 scenarios:
   - name: unattended-cash-receipt-is-a-tax-refund
@@ -375,7 +374,6 @@ scenarios:
       Acme's recent deliveries against that, gives the likely cause from what it read, and does
       not dismiss a finding it cannot explain away.
     tags: [unattended, insights]
-    split: held-out
     expectedTools: [get_insight]
     forbiddenTools: [dismiss_insight]
     exclusive: insight-seed

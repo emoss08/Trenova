@@ -1445,6 +1445,17 @@ gain.**
 - **Check:** tool count down, write coverage unchanged, the contract tests passing; selection
   accuracy and argument validity up on held-out cases.
 
+**Phase 3 progress.** The held-out split is in place before any tool changes: scenarios and
+`find_tools` cases are held out by a fixed rule, a quarter of each desk, chat and unattended apart
+(`desk-bench.md`, "Labels and splits"). The held-out figures below are the eval gate's `find_tools`
+ranking by keyword and meaning over the held-out cases, read from the gate's log after each PR.
+Argument validity on held-out scenarios is read from a bench run (`trenova desk run --split
+held-out`) when one is made for a PR.
+
+| PR | Modules | Tools before → after | Write coverage (tools / exempt / pending) | Held-out recall@5 | Held-out top-1 |
+|---|---|---|---|---|---|
+| Held-out split | none (measurement only) | 649 → 649 | 459 / 710 / 0, unchanged | 0.92 (161 cases) | 0.81 |
+
 **Phase 4: a single front door and job profiles (3–4 weeks).**
 
 - One runtime: an agent definition supplies a profile.

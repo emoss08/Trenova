@@ -1,6 +1,5 @@
 defaults:
   tags: [unattended, billing]
-  split: development
 
 scenarios:
   - name: unattended-billing-exception-missing-pod
@@ -74,7 +73,6 @@ scenarios:
       Acme's bill for SEED-DET-004 was put on hold until the receiver's signed lumper receipt
       arrives, and nothing has arrived. A good run reads the hold note, sees the paper is still
       missing and leaves the hold in place.
-    split: held-out
     expectedTools: [get_billing_queue_item, "get_shipment|search_shipments"]
     forbiddenTools: [release_billing_queue_item]
     exclusive: billing-queue-seed
