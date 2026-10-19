@@ -18,11 +18,9 @@ func TestShippedBaselineSpec_NamesTheReviewsCells(t *testing.T) {
 
 	assert.Equal(t, 4, spec.Repeat)
 	assert.Equal(t, 4, spec.PassK)
-	assert.Equal(t, []string{
-		"claude-haiku-5-5@low", "claude-haiku-5-5@medium", "claude-sonnet-5-5",
-		"claude-opus-5-5", "gpt-6-luna", "gpt-6.1-sol",
-	}, spec.Cells)
+	assert.Equal(t, []string{"claude-haiku-5-5@low", "claude-haiku-5-5@medium"}, spec.Cells)
 	assert.Equal(t, []int{8, 12, 20, 30}, spec.Sweep.Held)
+	assert.Equal(t, 2, spec.Sweep.Repeat)
 	assert.Equal(t, spec.Cells, spec.Sweep.Cells, "the sweep crosses every model by default")
 }
 

@@ -9,10 +9,6 @@ passK: 4
 cells:
   - claude-haiku-5-5@low
   - claude-haiku-5-5@medium
-  - claude-sonnet-5-5
-  - claude-opus-5-5
-  - gpt-6-luna
-  - gpt-6.1-sol
 
 # `trenova desk sweep` (`task desk-sweep`): the agent is held to N tools (the scenario's own and
 # the agent's others up to N) and every scenario runs once with every held tool sent ("all") and
@@ -21,4 +17,4 @@ cells:
 sweep:
   held: [8, 12, 20, 30]
   modes: [all, disclosed]
-  repeat: 4
+  repeat: 2
