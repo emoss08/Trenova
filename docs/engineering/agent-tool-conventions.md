@@ -40,6 +40,14 @@ A tool is `<namespace>_<verb>[_<object>]`, all lower case: `shipment_get`, `ship
   `settlement_add_driver_adjustment` reads `add_driver_settlement_adjustment`.
   `agentports.ToolNameFor` reads a name in reading order back to its tool, which is how a
   record link finds the tool that reads it (`ReadRecord`).
+- **Records.** A kind of record that keeps its own name in the registry (`bank_receipt`,
+  `customer_payment`) is listed in its namespace's `Records`. An object that opens with one
+  reads without the namespace: `receivable_get_bank_receipt` reads `get_bank_receipt`,
+  `receivable_list_customer_payments` reads `list_customer_payments`, and
+  `agentports.ToolNameFor("get_bank_receipt")` finds the tool. Without it a record link, a
+  run's subject read (`ReadRecord`) and a card's kind would all name a `receivable_bank_receipt`
+  that does not exist. List a record only when the registry names it so; anything else reads
+  with the namespace (`receivable_apply_credit_memo` reads `apply_receivable_credit_memo`).
 - **No other area's noun.** A name weighs four times its description in keyword ranking, so a
   noun in a name pulls the tool into every question that says it. `billing_transfer` moves
   shipments into the billing queue; named `billing_transfer_shipments`, it came first for
