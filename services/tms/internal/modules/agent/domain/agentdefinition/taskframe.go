@@ -60,7 +60,7 @@ func BackgroundFrame(
 			return playbook.frame()
 		}
 	case agent.RunTriggerScheduled, agent.RunTriggerContinuous:
-		if playbook, ok := scheduledPlaybooks[template]; ok {
+		if playbook, ok := ScheduledPlaybook(template); ok {
 			return playbook.frame()
 		}
 		return scheduledPlaybook.frame()
@@ -79,9 +79,11 @@ func EventPlaybook(kind agent.EventKind) (Playbook, bool) {
 }
 
 func ScheduledPlaybook(template Template) (Playbook, bool) {
-	playbook, ok := scheduledPlaybooks[template]
+	if template == TemplateLoadMonitor {
+		return loadMonitorPlaybook, true
+	}
 
-	return playbook, ok
+	return Playbook{}, false
 }
 
 func boundedLine(text string, limit int) string {
@@ -165,24 +167,22 @@ var waitPlaybook = Playbook{
 	Need: "read the records the wait concerns and finish the work it was waiting on",
 }
 
-var scheduledPlaybooks = map[Template]Playbook{
-	TemplateLoadMonitor: {
-		ID:   "watch-the-board",
-		Goal: "Find the loads on the board that are late or about to be, and act on each.",
-		Steps: []string{
-			"List the loads the dispatch board shows as late or due now.",
-			"For each, read its stops, the truck's position, the driver's hours and the " +
-				"projected arrival, and decide whether the next stop will be made.",
-			"Act on what you find: record a stop the tracking shows was reached, warn the " +
-				"customer and the driver of a missed window, send a detention notice that is due.",
-			"Flag what you cannot resolve for a person, with the evidence.",
-		},
-		Done: "every late or at-risk load has an action, a proposal or a flag, and the report " +
-			"lists what is at risk, what you did and what needs a person.",
-		Need: "list late and at-risk loads on the dispatch board; read stops, truck positions, " +
-			"driver hours and projected arrivals; record stop arrivals; notify customers and " +
-			"drivers of delays; send detention notices; flag a load for review",
+var loadMonitorPlaybook = Playbook{
+	ID:   "watch-the-board",
+	Goal: "Find the loads on the board that are late or about to be, and act on each.",
+	Steps: []string{
+		"List the loads the dispatch board shows as late or due now.",
+		"For each, read its stops, the truck's position, the driver's hours and the " +
+			"projected arrival, and decide whether the next stop will be made.",
+		"Act on what you find: record a stop the tracking shows was reached, warn the " +
+			"customer and the driver of a missed window, send a detention notice that is due.",
+		"Flag what you cannot resolve for a person, with the evidence.",
 	},
+	Done: "every late or at-risk load has an action, a proposal or a flag, and the report " +
+		"lists what is at risk, what you did and what needs a person.",
+	Need: "list late and at-risk loads on the dispatch board; read stops, truck positions, " +
+		"driver hours and projected arrivals; record stop arrivals; notify customers and " +
+		"drivers of delays; send detention notices; flag a load for review",
 }
 
 var eventPlaybooks = map[agent.EventKind]Playbook{

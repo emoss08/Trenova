@@ -69,12 +69,12 @@ func anthropicParams(call *Call, attached *anthropicFiles) anthropic.BetaMessage
 }
 
 func anthropicNotices(call *Call) bool {
-	switch call.Provider.ResolvedPlatform() {
-	case aiprovider.PlatformFoundry, aiprovider.PlatformBedrock:
+	platform := call.Provider.ResolvedPlatform()
+	if platform == aiprovider.PlatformFoundry || platform == aiprovider.PlatformBedrock {
 		return false
-	default:
-		return providerTraits(call.Provider).notices
 	}
+
+	return providerTraits(call.Provider).notices
 }
 
 func anthropicDefers(call *Call) bool {
@@ -644,7 +644,7 @@ func anthropicConversation(
 				Role:    anthropic.BetaMessageParamRoleAssistant,
 				Content: blocks,
 			})
-		default:
+		case RoleUser, RoleSystem:
 			blocks := append(slices.Clone(files[i]), anthropic.BetaContentBlockParamUnion{
 				OfText: &anthropic.BetaTextBlockParam{Text: msg.Content},
 			})

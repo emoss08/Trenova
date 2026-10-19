@@ -163,16 +163,13 @@ func replayHistoryWithFiles(
 			if msg.Refused {
 				continue
 			}
-			switch msg.Kind {
-			case conversation.MessageKindWorldChange:
+			if msg.Kind == conversation.MessageKindWorldChange {
 				messages = append(messages, agentports.NoticeMessage(msg.Content))
-			case conversation.MessageKindSteer:
-				messages = append(messages,
-					replayUserMessage(&history[idx], files, idx >= recent),
-					agentports.NoticeMessage(steerNotice),
-				)
-			default:
-				messages = append(messages, replayUserMessage(&history[idx], files, idx >= recent))
+				continue
+			}
+			messages = append(messages, replayUserMessage(&history[idx], files, idx >= recent))
+			if msg.Kind == conversation.MessageKindSteer {
+				messages = append(messages, agentports.NoticeMessage(steerNotice))
 			}
 		}
 	}
