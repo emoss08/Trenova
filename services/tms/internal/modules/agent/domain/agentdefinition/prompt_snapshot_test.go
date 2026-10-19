@@ -156,7 +156,6 @@ func promptContexts() []promptContext {
 					Actor:      snapshotUser(),
 					Context:    rc,
 					ThreadID:   snapshotThreadID,
-					Publishes:  true,
 					Input: "Find the shipments for Acme Freight that picked up this week " +
 						"and hand back their ids.",
 					Delegation: &agentports.Delegation{
@@ -164,6 +163,7 @@ func promptContexts() []promptContext {
 						ParentAgentName: parentAgentName,
 						CallID:          "call_delegate_snapshot",
 						StepScope:       "snapshot",
+						ReadOnly:        true,
 					},
 				}
 			},

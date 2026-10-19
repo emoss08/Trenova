@@ -225,6 +225,7 @@ type Delegation struct {
 	// MoneySpent is what the delegating turn had moved in automatic money
 	// writes not yet recorded, so the run and day caps hold across both.
 	MoneySpent agent.MoneyUse `json:"moneySpent,omitzero"`
+	ReadOnly   bool           `json:"readOnly,omitempty"`
 }
 
 // Scope is how the turn's events and saved steps are tagged.

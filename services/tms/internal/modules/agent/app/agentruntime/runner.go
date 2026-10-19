@@ -302,6 +302,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentports.RunResult, error) 
 
 		batch := &readBatch{}
 		shownNow := false
+		fannedOut := s.fanOut(t, fx, completion.ToolCalls, result.ToolCallsUsed, budget)
 		for _, call := range completion.ToolCalls {
 			check := &joinCheck{
 				call:   call,
@@ -325,7 +326,9 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentports.RunResult, error) 
 				continue
 			}
 
-			s.emitToolStarted(fx, &call)
+			if _, ran := fannedOut[call.ID]; !ran {
+				s.emitToolStarted(fx, &call)
+			}
 
 			// Arguments that did not parse are not arguments. The tool used to
 			// run on the empty map that stood in for them, and a list tool given
@@ -466,7 +469,10 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentports.RunResult, error) 
 			// it was before the tool existed.
 			if call.Name == delegateTaskName &&
 				(t.holds(delegateTaskName) || t.req.Delegation != nil) {
-				outcome := s.delegate(t, fx, call)
+				outcome, ran := fannedOut[call.ID]
+				if !ran {
+					outcome = s.delegate(t, fx, call)
+				}
 				result.ToolCallsUsed++
 				s.recordToolResult(t, fx, call, outcome)
 				continue
@@ -581,6 +587,7 @@ func (t *Turn) dispatchCall(call *agentports.ToolCall, completionText string) Di
 		Taint:                t.result.Taint,
 		Earlier:              t.earlier(call.Name),
 		MoneySpent:           t.moneySpent(),
+		Beyond:               t.beyondTier(call.Name),
 	}
 }
 
@@ -922,6 +929,7 @@ func (s *Service) summarize(
 				Name:        tool.Name(),
 				Description: tool.Description(),
 				Query:       true,
+				Lookup:      agentports.EffectOf(tool) == agent.ToolEffectLookup,
 				BatchOf:     batchOf(tool),
 				Recipe:      recipeOf(tool),
 			})

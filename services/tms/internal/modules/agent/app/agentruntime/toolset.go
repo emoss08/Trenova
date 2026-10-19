@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
@@ -105,10 +106,11 @@ type toolSetRequest struct {
 	definition *agentdefinition.Definition
 	// held is every tool the agent holds, when the caller has already worked
 	// it out; otherwise it is worked out from the definition.
-	held  []string
-	actor *permissionports.RequestActor
-	input string
-	query agentports.QueryVectorRequest
+	held   []string
+	beyond map[string]agent.AutonomyTier
+	actor  *permissionports.RequestActor
+	input  string
+	query  agentports.QueryVectorRequest
 	// history is the replayed conversation. The tools the model used or
 	// loaded in its recent turns are loaded again, so a follow-up like "yes,
 	// do it" does not reopen with a toolbox that has forgotten the work.
@@ -135,16 +137,14 @@ type toolSet struct {
 	specs      []kernelports.ToolSpec
 	loaded     map[string]struct{}
 	allowed    []string
+	beyond     []string
 	disclosed  bool
 	unattended bool
 	findCalls  int
 	// usable answers whether the person may use a tool at all, for naming
 	// what exists beyond the agent's configuration.
 	usable func(name string) bool
-	// delegates are the agents the turn may ask, for naming one that holds
-	// what a search could not load.
-	delegates []agentdefinition.RuntimeDelegate
-	query     agentports.QueryVector
+	query  agentports.QueryVector
 	// self is the agent the turn runs as, left out when naming another of
 	// the person's agents that holds a tool.
 	self        pulid.ID
@@ -171,12 +171,12 @@ func (s *Service) newToolSet(ctx context.Context, req toolSetRequest) *toolSet {
 	set := &toolSet{
 		loaded:     make(map[string]struct{}, len(allowed)),
 		allowed:    allowed,
+		beyond:     s.permittedWith(ctx, req.actor, beyondNames(req.beyond), req.extensions),
 		unattended: req.unattended,
 		usable: func(name string) bool {
 			return len(s.permittedTools(ctx, req.actor, []string{name})) == 1
 		},
-		delegates: req.delegates,
-		self:      req.definition.ID,
+		self: req.definition.ID,
 	}
 
 	// The core tools ride on every turn and do not count toward narrowing: a
@@ -192,6 +192,10 @@ func (s *Service) newToolSet(ctx context.Context, req toolSetRequest) *toolSet {
 	if len(selected) <= s.toolThreshold() || s.catalog == nil {
 		for _, name := range selected {
 			s.load(set, name)
+		}
+		if len(set.beyond) > 0 && s.catalog != nil {
+			s.carryOver(set, req.history)
+			set.add(findToolsSpec())
 		}
 		set.addConversational(req)
 		s.declareWithdrawal(set, req.delegated)
@@ -252,6 +256,14 @@ func (t *toolSet) add(spec kernelports.ToolSpec) bool {
 	return true
 }
 
+func (t *toolSet) reaches(name string) bool {
+	return slices.Contains(t.allowed, name) || slices.Contains(t.beyond, name)
+}
+
+func (t *toolSet) searchable() bool {
+	return t.disclosed || len(t.beyond) > 0
+}
+
 // offers reports whether the turn's request carries a tool.
 func (t *toolSet) offers(name string) bool {
 	_, ok := t.loaded[name]
@@ -265,7 +277,7 @@ func (t *toolSet) offers(name string) bool {
 // Prerequisites travel with the tool because a model handed create_dashboard
 // without list_reports does not go looking for a report id; it writes one.
 func (s *Service) load(set *toolSet, name string) bool {
-	if !slices.Contains(set.allowed, name) {
+	if !set.reaches(name) {
 		return false
 	}
 	spec, ok := s.specFor(name)
@@ -383,7 +395,7 @@ func (s *Service) resolveFind(
 	}
 	// A turn that was sent everything has nothing left to load; the answer
 	// can still say what exists beyond the agent.
-	if !set.disclosed {
+	if !set.searchable() {
 		content, handOff := s.nothingLoaded(ctx, set, actor, need)
 
 		return FindAnswer{Content: content, HandOff: handOff}
@@ -417,7 +429,15 @@ func (s *Service) resolveFind(
 		}
 	}
 
-	if len(added) == 0 && len(callable) == 0 {
+	var reached []agentports.AgentToolDescriptor
+	if !s.catalog.MatchesStrongly(bestMatch(callable, added), need) {
+		reached = s.reachBeyond(ctx, set, actor, need)
+		for _, descriptor := range reached {
+			names = append(names, descriptor.Name)
+		}
+	}
+
+	if len(added) == 0 && len(callable) == 0 && len(reached) == 0 {
 		content, handOff := s.nothingLoaded(ctx, set, actor, need)
 
 		return FindAnswer{Content: content, Found: names, HandOff: handOff}
@@ -439,17 +459,48 @@ func (s *Service) resolveFind(
 			fmt.Fprintf(&b, "Loaded with them, because their ids come from these: %s.\n",
 				strings.Join(alongside, ", "))
 		}
-	} else {
-		fmt.Fprintf(&b, "\nNothing new matched %q beyond those.", need)
 	}
-	if !s.catalog.MatchesStrongly(bestMatch(callable, added), need) {
-		if note := s.delegatedStrongMatches(set, need); note != "" {
+	if len(reached) > 0 {
+		if b.Len() > 0 {
 			b.WriteByte('\n')
-			b.WriteString(note)
 		}
+		b.WriteString(beyondLead)
+		writeToolLines(&b, reached)
+	}
+	if len(added) == 0 && len(reached) == 0 {
+		fmt.Fprintf(&b, "\nNothing new matched %q beyond those.", need)
 	}
 
 	return FindAnswer{Content: strings.TrimRight(b.String(), "\n"), Found: names}
+}
+
+const beyondLead = "These come from the desks of the person's other agents and are now " +
+	"callable here, under the same approvals as on those desks:\n"
+
+func (s *Service) reachBeyond(
+	ctx context.Context,
+	set *toolSet,
+	actor *permissionports.RequestActor,
+	need string,
+) []agentports.AgentToolDescriptor {
+	if len(set.beyond) == 0 {
+		return nil
+	}
+	found := s.withNamedTools(set.beyond, need, s.catalog.FindHybrid(agenttoolcatalog.Query{
+		Allowed:    set.beyond,
+		Text:       need,
+		Limit:      foundToolsLimit,
+		Semantic:   s.toolSemantic(ctx, actorTenant(actor), set.query),
+		StrongOnly: true,
+	}))
+	reached := make([]agentports.AgentToolDescriptor, 0, len(found))
+	for _, descriptor := range found {
+		if set.offers(descriptor.Name) || s.load(set, descriptor.Name) {
+			reached = append(reached, descriptor)
+		}
+	}
+
+	return reached
 }
 
 // withNamedTools puts first the tools a need names outright. The prompt lists
@@ -521,14 +572,6 @@ func writeToolLines(b *strings.Builder, descriptors []agentports.AgentToolDescri
 			fmt.Fprintf(b, "  In order: %s\n", strings.Join(descriptor.Recipe, " → "))
 		}
 	}
-}
-
-func (s *Service) delegatedStrongMatches(set *toolSet, need string) string {
-	if len(set.delegates) == 0 {
-		return ""
-	}
-
-	return weakMatchDelegateNote(set.delegates, s.unheldStrongMatches(set, need))
 }
 
 func (s *Service) unheldStrongMatches(set *toolSet, need string) []string {
@@ -674,10 +717,6 @@ func (s *Service) nothingLoaded(
 		if descriptor, ok := s.catalog.Descriptor(name); ok {
 			elsewhere = append(elsewhere, descriptor)
 		}
-	}
-
-	if note := delegatedSearchNote(set.delegates, unheld); note != "" {
-		return note, nil
 	}
 
 	if len(elsewhere) == 0 {

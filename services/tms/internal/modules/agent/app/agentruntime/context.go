@@ -353,8 +353,9 @@ func (b *ContextBuilder) delegates(
 	return delegates
 }
 
-// delegateTools names the tools a delegate holds beyond the core ones every
-// agent has, narrowed to those the person may use.
+// delegateTools names the lookups a delegate holds beyond the core ones every
+// agent has, narrowed to those the person may use: a task handed to it only
+// reads.
 func (b *ContextBuilder) delegateTools(
 	ctx context.Context,
 	actor *permissionports.RequestActor,
@@ -363,7 +364,7 @@ func (b *ContextBuilder) delegateTools(
 	summaries := b.runtime.ToolSummaries(delegate)
 	names := make([]string, 0, len(summaries))
 	for _, summary := range summaries {
-		if !agentdefinition.IsCoreTool(summary.Name) {
+		if !agentdefinition.IsCoreTool(summary.Name) && summary.Lookup {
 			names = append(names, summary.Name)
 		}
 	}

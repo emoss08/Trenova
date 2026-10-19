@@ -494,6 +494,18 @@ func (fx *effects) NewCallID() string {
 
 func (fx *effects) Delegate(
 	t *agentruntime.Turn,
+	calls []agentruntime.DelegateCall,
+) []agentruntime.DelegateRun {
+	runs := make([]agentruntime.DelegateRun, 0, len(calls))
+	for idx := range calls {
+		runs = append(runs, fx.delegate(t, calls[idx]))
+	}
+
+	return runs
+}
+
+func (fx *effects) delegate(
+	t *agentruntime.Turn,
 	call agentruntime.DelegateCall,
 ) agentruntime.DelegateRun {
 	parent := t.Definition()
@@ -531,6 +543,7 @@ func (fx *effects) Delegate(
 			CallID:          call.Call.ID,
 			StepScope:       call.StepScope,
 			MoneySpent:      call.MoneySpent,
+			ReadOnly:        !call.Directed,
 		},
 		Taint: call.Taint.Clone(),
 	}

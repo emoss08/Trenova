@@ -6,10 +6,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -218,7 +218,15 @@ func TestOpenDelegate_OpensTheDelegatesOwnTurnForTheSamePerson(t *testing.T) {
 	assert.Equal(t, "scope-1", req.Delegation.StepScope)
 	assert.Equal(t, f.parent.ID, req.Delegation.ParentAgentID)
 	assert.NotContains(t, opened.Turn.Held, "delegate_task")
-	assert.Contains(t, opened.Turn.System, "The agent Homepage Widget Builder handed you this task")
+	assert.True(t, req.Delegation.ReadOnly, "a task the agent hands out only looks things up")
+	assert.False(t, req.Publishes)
+	assert.Empty(t, req.Proposals)
+	assert.Contains(
+		t,
+		opened.Turn.System,
+		"The agent Homepage Widget Builder handed you this lookup",
+	)
+	assert.Contains(t, opened.Turn.System, "you change nothing")
 	asked := opened.Turn.Messages[len(opened.Turn.Messages)-1].Content
 	assert.Regexp(t, clockLinePrefix, asked, "the delegate reads the time like any turn")
 	assert.Equal(t, f.request.Call.Task, clockLinePrefix.ReplaceAllString(asked, ""))

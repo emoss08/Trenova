@@ -111,6 +111,7 @@ func (s *Service) MatchAgent(
 	if current, delegate, matched := pool.delegateHolding(
 		req.CurrentAgentID,
 		ranked,
+		s.looksUp,
 	); current != nil {
 		found := s.matchFor(agentsuggestion.MatchCurrentAgent, current, matched)
 		found.Delegate = delegate

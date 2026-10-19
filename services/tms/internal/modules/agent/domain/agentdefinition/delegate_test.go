@@ -160,9 +160,22 @@ func TestBuildSystemPrompt_NamesTheAgentsItCanAskFenced(t *testing.T) {
 	assert.Contains(t, prompt, "Its tools include: create_report, run_report")
 	assert.Contains(t, prompt, "records", "the parent hands over ids, not a retyped copy")
 	assert.Contains(t, prompt, "shareResults")
-	assert.Contains(t, prompt, "duplicate_shipment",
-		"a copy of a record is made by the tool that copies it, never retyped")
-	assert.Contains(t, prompt, "proposalId")
+	assert.Contains(t, prompt, "only reads, changes nothing")
+	assert.Contains(t, prompt, "several calls in one reply run at the same time")
+}
+
+func TestBuildSystemPrompt_ALookupHandedOutSaysItChangesNothing(t *testing.T) {
+	t.Parallel()
+
+	d := validDefinition()
+	prompt := d.BuildSystemPrompt(agentdefinition.RuntimeContext{
+		DelegatedBy: "Dispatch helper",
+		LooksUpOnly: true,
+	})
+
+	assert.Contains(t, prompt, "The agent Dispatch helper handed you this lookup")
+	assert.Contains(t, prompt, "you change nothing")
+	assert.NotContains(t, prompt, "duplicate_shipment")
 }
 
 // A turn working for another agent answers that agent, not the person, so
@@ -182,4 +195,28 @@ func TestBuildSystemPrompt_ADelegatedTurnReportsToTheAgentThatAsked(t *testing.T
 		"the delegate works from the records it was handed rather than retyping them")
 	assert.NotContains(t, prompt, "Dispatchers are busy")
 	assert.NotContains(t, prompt, "## Agents you can ask")
+}
+
+func TestBuildSystemPrompt_SaysFindToolsReachesThePersonsOtherAgents(t *testing.T) {
+	t.Parallel()
+
+	d := validDefinition()
+	tools := []agentdefinition.ToolSummary{{Name: "list_shipments", Query: true, Loaded: true}}
+
+	reaching := d.BuildSystemPrompt(agentdefinition.RuntimeContext{
+		Tools:         tools,
+		ReachesBeyond: true,
+	})
+	alone := d.BuildSystemPrompt(agentdefinition.RuntimeContext{Tools: tools})
+	disclosed := d.BuildSystemPrompt(agentdefinition.RuntimeContext{
+		Tools:          tools,
+		ToolsDisclosed: true,
+		ReachesBeyond:  true,
+	})
+
+	assert.Contains(t, reaching, "find_tools also reaches the tools of the person's other agents")
+	assert.NotContains(t, reaching, "are the only ones you have")
+	assert.Contains(t, alone, "are the only ones you have")
+	assert.NotContains(t, alone, "other agents")
+	assert.Contains(t, disclosed, "find_tools also reaches the tools of the person's other agents")
 }

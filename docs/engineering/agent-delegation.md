@@ -7,10 +7,21 @@ workflow.
 
 ## What it is for
 
-The Homepage Widget Builder holds dashboard tools and no report tools. Asked
-"build a dashboard of this month's on-time delivery", it hands the Report
-Builder the task "create a report of this month's on-time deliveries and return
-its id", reads back the new report's id, and adds the tile itself.
+Delegation is **parallel, read-only fan-out**. An agent asked "which of Acme's
+loads are late, and are any of their invoices overdue?" hands the late loads to
+one agent and the overdue invoices to another in the same reply; both look
+things up at the same time, change nothing, and hand back their answers and
+every result they read, word for word. The agent that asked answers from those
+results and makes any change itself.
+
+A change another desk's agent would make is not delegated: the agent the person
+is talking to reaches that agent's tools itself, through `find_tools`, under the
+approvals that agent would have run them with ("Discovery across desks" in
+[agent-runtime.md](agent-runtime.md#job-profiles-in-one-runtime)). That keeps a
+write in the conversation that proposes it, where the person decides it, rather
+than in a sub-turn that reports it back second hand. A task the **person**
+directs to another agent from the conversation is not fan-out: it runs as that
+agent with its writes ("Person-directed tasks" below).
 
 ## The decisions
 
@@ -19,7 +30,7 @@ These were made by the product owner and the code enforces each one.
 | Decision | Where it is enforced |
 |---|---|
 | Who an agent may ask is a **per-agent allowlist** on its definition, set in AI Control. | `agentdefinition.Definition.DelegateIDs`, validated on save by the domain and by `agentdefinitionservice.validateDelegates` |
-| A delegate keeps **its own autonomy**: its tools, tier settings, autonomy ceiling and budget. A private write it may make alone (a personal call of a tool whose policy sets `PersonalRunsUnasked`) runs, unless a person set that tool's tier on the delegate; a tier the trust ledger earned (`agent_tool_trust.earned_tier`) does not count as one (`agentruntime/tierprovenance.go`). A shared or outbound write still waits for approval. | The delegate's turn is opened from its own definition (`assistantservice.OpenDelegate`), not unattended, so `dispatch` decides every call exactly as it would for a conversation with the delegate |
+| A task the agent hands out **only reads.** The delegate's turn holds the tools it holds whose effect is `lookup`, and no write, no `publish_artifact` and no proposal history. A task the person directed keeps the delegate's own autonomy: its tools, tier settings, ceiling and budget. | `assistantservice.OpenDelegate` sets `Delegation.ReadOnly` unless the call is `Directed`; `agentruntime.profileFor` opens a `ReadOnly` delegation as the `fan_out` profile, which keeps only lookups (`Service.looksUp`) |
 | **One level only.** Only the agent the person is talking to delegates. A delegate never holds `delegate_task`, and a call to it from a delegate is refused. | `RunRequest.MayDelegate`, `OpenTurn` (the tool is held only when it is true), `Service.delegate` (refuses when `RunRequest.Delegation` is set) |
 | **Taint crosses both ways.** A delegate opens with the taint of the turn that asked, and its own taint is folded back into that turn when it ends, because its reply enters that turn's context. Its proposals carry its turn's taint. | `DelegateCall.Taint` → `RunRequest.Taint` (`assistantservice.OpenDelegate`), `Turn.inheritDelegateTaint`, `DelegatedRun.Taint` → `persistDelegatedProposals` |
 | **Everything runs as the same person.** Every tool call of the delegate is permission-checked against the person, so a delegate can never do more than they could. The person must also be allowed to use the delegate. | The delegate's turn carries the turn's `RequestActor`; its tool set is narrowed by `permittedTools`; `OpenDelegate` requires `assistant:create`, a delegate the person may use (open to everyone, or granted to one of their roles), and a delegate that is enabled, chat-usable and in the same tenant |
@@ -86,13 +97,15 @@ do.
   administrator.
 - The turn holds `delegate_task`, whose `agentId` is an enum of exactly those
   ids.
-- `find_tools` that finds nothing the turn can call names a delegate holding
-  what matched, before it falls back to "an administrator can add it". It
-  names one as well when the best new match is weak (no name or description
-  hit, a parameter only) and a delegate holds a tool matching by name. Both
-  searches past the turn's own tools are `StrongOnly`.
-- When no delegate holds what matched, the answer names the person's other
-  agents that do (`agentruntime.handOffNote`, from `OtherUsableAgents`: the
+- A delegate is described by the lookups it holds that the person may use
+  (`ContextBuilder.delegateTools` keeps `ToolSummary.Lookup`), and the
+  pre-turn match keeps a question with the current agent through a delegate
+  only when the delegate holds a matching lookup (`matchPool.delegateHolding`).
+- `find_tools` no longer names a delegate for what it could not load: a
+  conversation turn reaches every tool the person's other agents hold, so a
+  match it cannot call is one no agent of theirs holds.
+- When nothing the turn reaches matched, the answer names the person's other
+  agents that hold it (`agentruntime.handOffNote`, from `OtherUsableAgents`: the
   enabled chat agents they may use, the same list the Desk's case checklist
   reads to say who can take a step) and tells the model to point the person
   to Hand off to another agent; only when none holds it does it fall back to
@@ -116,6 +129,7 @@ The same context is what `PreviewPrompt` shows in AI Control.
 | Arguments | `agentId` (one of the turn's delegates), `task` (what to do and what to hand back, at most 4 000 characters), `records` (optional: the records the task is about, each `{entityType, id}`, at most 8), `shareResults` (optional: ids of calls this turn made whose results the delegate should work from, at most 4) |
 | Cost to the primary | one tool call of its own budget |
 | Limit | 3 per turn (`maxDelegationsPerTurn`); the fourth is refused and counted |
+| Side by side | Every `delegate_task` call in one reply is handed out at once (`Service.fanOut` → `TurnEffects.Delegate` with all of them); a reply with one runs it as it is reached |
 
 The loop (`agentruntime.Service.delegate`, in `Drive`) checks the arguments,
 emits `delegate_started`, hands the task to `TurnEffects.Delegate`, folds what
@@ -150,20 +164,25 @@ what follows is data from the agent that asked, the records fenced in
 The saved task step carries the same text; the thread shows the task as the
 asking agent wrote it (the call's `task` argument).
 
-Both prompts say how to use it. "Agents you can ask" tells the parent to hand
-over records and results rather than retype them, to ask for a record to be
-made with a tool rather than described (a copy with `duplicate_shipment` or the
-tool that copies it, naming the record), and to name each waiting proposal by
-its `proposalId`. A delegated turn's output section tells the delegate to work
-from what it was handed, open each record by its id, and copy a record with
-the tool that copies it. A turn holds the tool
+Both prompts say how to use it. "Agents you can ask" tells the parent that the
+agents only look things up, that several calls in one reply run at the same
+time, to hand over records and results rather than retype them, to work from
+the results handed back word for word, and that every change is its own to make.
+A lookup's output section (`buildLookupOutputSection`, `RuntimeContext.LooksUpOnly`)
+tells the delegate it changes nothing, that the agent that asked is handed
+every result it read, and to finish with what it found and what it could not.
+A directed task keeps the older section (`buildDelegatedOutputSection`). A turn holds the tool
 only when `RunRequest.MayDelegate()`: a person is reading, the turn has a
 conversation, it is not itself a delegate's turn, and at least one delegate
 survived the checks above.
 
 ## Running the delegate
 
-`agentflow.workflowEffects.Delegate`:
+`agentflow.workflowEffects.Delegate` takes every task of the reply. One runs on
+the workflow's own coroutine; several run each on its own (`workflow.Go`, joined
+by a `WaitGroup`), and the artifacts and events they kept are folded into the
+turn's in the order the calls were made, so a replay reads the same account.
+Each task:
 
 1. `OpenDelegateActivity` asks the `DelegateOpener` (the assistant, through
    `assistantjobs.delegateOpener`) to open the delegate's turn. Every check is
@@ -173,12 +192,14 @@ survived the checks above.
    delegate's own budget
    (`AgentBudgetService.CheckRun`) is not spent. A refusal is
    `DelegateDeclined`, non-retryable, and its reason is what the primary reads.
-2. The turn is opened **as the delegate** (`runtime.OpenTurn`): its tools
-   narrowed to the person, its tiers, its ceiling, its model, its prompt — with
-   `RuntimeContext.DelegatedBy` set, so its output section says it answers the
-   agent that asked, and with `RunRequest.Delegation` set, so it holds neither
-   `delegate_task` nor `ask_user` (it has nobody to ask). It is **not**
-   unattended: a write that is the person's own still runs as theirs.
+2. The turn is opened **as the delegate** (`runtime.OpenTurn`): its lookups
+   narrowed to the person, its model, its prompt — with
+   `RuntimeContext.DelegatedBy` and `LooksUpOnly` set, so its output section
+   says it answers the agent that asked and changes nothing, and with
+   `RunRequest.Delegation` set, so it holds neither `delegate_task` nor
+   `ask_user` (it has nobody to ask). A directed task opens with the
+   delegate's writes and tiers too, not unattended, so a write that is the
+   person's own still runs as theirs.
 3. The delegate's loop is the same `Drive` with the same effects: each model
    call and each tool call is an activity of **this** workflow execution. Its
    model calls are attributed to the delegate's definition, so its spend counts
@@ -204,7 +225,7 @@ as a child workflow:
   things back through its result, for no gain.
 - **Bounded history.** At most three delegations per turn, each bounded by the
   delegate's own tool budget (at most 64), keeps the execution well inside
-  Temporal's history limits.
+  Temporal's history limits, run side by side or not.
 
 ### The step ledger
 
@@ -251,9 +272,21 @@ note on how to read it. It is the same object the reader receives as
   "awaiting": [{"toolName": "share_report", "callId": "call_…", "tier": "Propose",
                 "summary": "On-time this month", "proposalId": "ap_…"}],
   "published": [{"id": "aart_…", "kind": "document", "title": "Report notes"}],
+  "findings": [{"toolName": "list_invoices", "callId": "call_…",
+                "content": "{\"invoices\":[{\"number\":\"INV-104\",\"daysOverdue\":12}]}"}],
   "toolCallsUsed": 2
 }
 ```
+
+`made`, `awaiting` and `published` are filled only for a task the person
+directed; a lookup the agent handed out has none. `findings` are the results the
+delegate's lookups returned, unfenced, in the order it read them, every
+successful call but the runtime's own (`find_tools` and the like): the agent that
+asked works from them rather than from a retelling, which is what the
+"telephone" effect of a supervisor paraphrasing its sub-agents costs. They are
+bounded at 12 KiB each and 32 KiB together (`delegateFindings`); what is left out
+is counted in `moreFindings`, and the note says to look it up again. The saved
+account keeps the first ten, each cut to 400 characters.
 
 | `status` | Meaning | The call |
 |---|---|---|
@@ -295,7 +328,11 @@ Each write carries `proposalId`, the proposal it was filed as (`PendingAction.Pr
 and the note after the account tells the parent to name each waiting proposal by it, so
 the person can find its card and the parent never searches for what was made.
 
-A delegate that failed or was stopped is a failed call whose writes are still
+After a lookup the note says the delegate changed nothing, that the findings
+are what it read word for word, and that a finding beats the reply where they
+disagree (`lookupNote`).
+
+A directed task that failed or was stopped is a failed call whose writes are still
 named under `made`: they happened. Anything else it may have begun is
 **unconfirmed** — the same rule as `unsettledToolOutcome` — and the note says
 so; nothing ever claims a write did not happen.

@@ -52,7 +52,9 @@ type Turn struct {
 	// workflow code that decision has to replay the same way: working it out
 	// again from the catalog would give a different answer to a replay run
 	// by a release whose catalog or core tools changed.
-	held []string
+	held   []string
+	beyond map[string]agent.AutonomyTier
+	mode   ProfileMode
 	// reads are the held tools that only look something up, taken with
 	// held, which the loop may run beside each other. Nil for a turn opened
 	// before they were kept, which runs every call on its own.
@@ -117,9 +119,10 @@ type TurnEffects interface {
 	// NewCallID mints a tool call id, for a provider that gave none or reused
 	// one. Minting is random, so workflow code has it recorded.
 	NewCallID() string
-	// Delegate hands a task to another agent and runs that agent's turn to
-	// its end, reporting what it did. The loop has already checked the call.
-	Delegate(t *Turn, call DelegateCall) DelegateRun
+	// Delegate hands tasks to other agents and runs each agent's turn to its
+	// end, side by side where it can, reporting what each did in the order
+	// given. The loop has already checked the calls.
+	Delegate(t *Turn, calls []DelegateCall) []DelegateRun
 	// Interject hands the loop, between steps, what the person said while
 	// it worked and, when check is set, the changes made since the turn last
 	// looked to the records it watches.
@@ -172,7 +175,8 @@ type DispatchCall struct {
 	Earlier              []string `json:"earlier,omitempty"`
 	// MoneySpent is what the turn's automatic money writes, its delegates'
 	// and the delegating turn's, have moved and not yet recorded.
-	MoneySpent agent.MoneyUse `json:"moneySpent,omitzero"`
+	MoneySpent agent.MoneyUse     `json:"moneySpent,omitzero"`
+	Beyond     agent.AutonomyTier `json:"beyond,omitempty"`
 }
 
 // ToolOutcome is what one tool call came to.
@@ -250,7 +254,24 @@ func (t *Turn) Request() *agentports.RunRequest { return t.req }
 func (t *Turn) Definition() *agentdefinition.Definition { return t.req.Definition }
 
 // holds reports whether the agent held a tool when the turn opened.
-func (t *Turn) holds(name string) bool { return slices.Contains(t.held, name) }
+func (t *Turn) holds(name string) bool {
+	if slices.Contains(t.held, name) {
+		return true
+	}
+	_, reached := t.beyond[name]
+
+	return reached
+}
+
+func (t *Turn) beyondTier(name string) agent.AutonomyTier {
+	if slices.Contains(t.held, name) {
+		return ""
+	}
+
+	return t.beyond[name]
+}
+
+func (t *Turn) Mode() ProfileMode { return t.mode }
 
 // TurnState is a Turn as data, for handing a turn built in one place to a loop
 // running in another: built by an activity, which may read permissions and
@@ -265,7 +286,9 @@ type TurnState struct {
 	Evidence []string     `json:"evidence,omitempty"`
 	Tools    ToolSetState `json:"tools"`
 	// Held is every tool the agent holds, as the turn opened.
-	Held []string `json:"held,omitempty"`
+	Held   []string                      `json:"held,omitempty"`
+	Beyond map[string]agent.AutonomyTier `json:"beyond,omitempty"`
+	Mode   ProfileMode                   `json:"mode,omitempty"`
 	// Reads are the held tools that only look something up.
 	Reads     []string             `json:"reads,omitempty"`
 	Failures  map[string]string    `json:"failures,omitempty"`
@@ -304,10 +327,8 @@ type ToolSetState struct {
 	Disclosed  bool                   `json:"disclosed"`
 	Unattended bool                   `json:"unattended"`
 	FindCalls  int                    `json:"findCalls"`
-	// Delegates are the agents the turn may ask, so a search that finds
-	// nothing the turn can call can name one that holds it.
-	Delegates []agentdefinition.RuntimeDelegate `json:"delegates,omitempty"`
-	Query     *QueryVectorState                 `json:"query,omitempty"`
+	Beyond     []string               `json:"beyond,omitempty"`
+	Query      *QueryVectorState      `json:"query,omitempty"`
 }
 
 // State captures the turn as data.
@@ -325,6 +346,8 @@ func (t *Turn) State() TurnState {
 		Evidence:        slices.Clone(t.evidence),
 		Tools:           t.tools.state(),
 		Held:            slices.Clone(t.held),
+		Beyond:          maps.Clone(t.beyond),
+		Mode:            t.mode,
 		Reads:           readsState(t.reads),
 		Failures:        maps.Clone(t.repeats.failures),
 		Ordinals:        maps.Clone(t.counts.seen),
@@ -387,6 +410,8 @@ func (s *Service) RestoreTurn(req *agentports.RunRequest, state TurnState) *Turn
 		evidence:     state.Evidence,
 		tools:        restoreToolSet(state.Tools),
 		held:         state.Held,
+		beyond:       state.Beyond,
+		mode:         state.Mode,
 		reads:        restoreReads(state.Reads),
 		repeats:      &repeatGuard{failures: failures, reads: make(map[string]bool, 4)},
 		counts:       &ordinals{seen: seen},
@@ -426,7 +451,7 @@ func (t *toolSet) state() ToolSetState {
 		Disclosed:  t.disclosed,
 		Unattended: t.unattended,
 		FindCalls:  t.findCalls,
-		Delegates:  slices.Clone(t.delegates),
+		Beyond:     slices.Clone(t.beyond),
 		Query:      packQueryVector(t.query),
 	}
 }
@@ -438,7 +463,7 @@ func restoreToolSet(state ToolSetState) *toolSet {
 		disclosed:  state.Disclosed,
 		unattended: state.Unattended,
 		findCalls:  state.FindCalls,
-		delegates:  state.Delegates,
+		beyond:     state.Beyond,
 		query:      state.Query.unpack(),
 	}
 	for _, spec := range state.Specs {
@@ -471,44 +496,18 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentports.RunRequest) *Tur
 	// thread's reader leaves them out already; this holds for any caller.
 	history := modelHistory(req.History)
 
-	held := withGrants(s.heldTools(definition), granted)
-	// Moving the person around the app is for the agent they are talking
-	// to. A delegate that navigated would pull them away mid-answer to a
-	// page they never asked for.
-	if req.Delegation != nil {
-		held = slices.DeleteFunc(
-			held,
-			func(name string) bool { return name == agentdefinition.CoreToolOpenPage },
-		)
-	}
-	if req.RunID.IsNil() {
-		held = slices.DeleteFunc(
-			held,
-			func(name string) bool { return name == agentdefinition.CoreToolRaiseException },
-		)
-	}
-	// Guidance on a profile is a person's words, written down by the agent
-	// they are talking to: a run nobody is in, or a delegate working on a
-	// handed-over task, has nobody's words to write down.
-	if req.Unattended || req.Delegation != nil || req.Actor.PersonUserID().IsNil() {
-		held = slices.DeleteFunc(
-			held,
-			func(name string) bool { return name == agentdefinition.CoreToolGuideProfile },
-		)
-	}
-	// Only the agent a person is talking to delegates, and only to agents
-	// they may use; the tool is held on that turn and on no other, so a
-	// turn working for another agent cannot hand its task on.
+	profile := s.profileFor(ctx, req, granted)
+	held := profile.held
 	var delegates []agentdefinition.RuntimeDelegate
 	if req.MayDelegate() {
 		delegates = slices.Clone(runtimeContext.Delegates)
-		held = append(held, delegateTaskName)
 	} else {
 		runtimeContext.Delegates = nil
 	}
 	tools := s.newToolSet(ctx, toolSetRequest{
 		definition: definition,
 		held:       held,
+		beyond:     profile.beyond,
 		actor:      req.Actor,
 		input:      req.Input,
 		query:      agentports.TurnQueryRequest(req),
@@ -528,8 +527,10 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentports.RunRequest) *Tur
 		command = req.Command
 	}
 	runtimeContext.ToolsDisclosed = tools.disclosed
+	runtimeContext.ReachesBeyond = len(tools.beyond) > 0
 	runtimeContext.Artifacts = tools.offers(publishArtifactName)
 	runtimeContext.Inline = req.Inline
+	runtimeContext.LooksUpOnly = profile.mode == ProfileFanOut
 	runtimeContext.DecisionRequests = tools.offers(requestDecisionName)
 	// The prompt describes the set the person may use, not the agent's whole
 	// configuration: a tool named there and refused when called reads as
@@ -596,7 +597,9 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentports.RunRequest) *Tur
 		evidence:     figuresOf(append(shortened, maputils.SortedValues(req.FileTexts)...)),
 		tools:        tools,
 		held:         held,
-		reads:        s.concurrentReads(held),
+		beyond:       profile.beyond,
+		mode:         profile.mode,
+		reads:        s.concurrentReads(append(slices.Clone(held), beyondNames(profile.beyond)...)),
 		repeats:      repeats,
 		counts:       counts,
 		questions:    askedQuestions(history),
@@ -877,11 +880,16 @@ func (fx *localEffects) Interject(t *Turn, check *WorldCheck) Interjections {
 // Delegate declines in process. A turn is offered delegate_task only when it
 // is driven as a workflow, where the delegate's turn runs as activities of its
 // own; this answers a model that names the tool anyway.
-func (*localEffects) Delegate(_ *Turn, call DelegateCall) DelegateRun {
-	return DelegateRun{
-		Declined: "handing a task to " + call.Delegate.Name + " is not available here. " +
-			"Do what you can with your own tools.",
+func (*localEffects) Delegate(_ *Turn, calls []DelegateCall) []DelegateRun {
+	runs := make([]DelegateRun, 0, len(calls))
+	for idx := range calls {
+		runs = append(runs, DelegateRun{
+			Declined: "handing a task to " + calls[idx].Delegate.Name + " is not available " +
+				"here. Do what you can with your own tools.",
+		})
 	}
+
+	return runs
 }
 
 // ObserveCall hands a finished call to observe and folds what it showed the
@@ -961,6 +969,7 @@ func (s *Service) DispatchStep(
 		completionText: call.CompletionText,
 		proposedSoFar:  call.ProposedSoFar,
 		moneySpent:     call.MoneySpent,
+		beyond:         call.Beyond,
 		ordinal:        call.Ordinal,
 		taint:          call.Taint,
 		afterExternal:  call.AfterExternalContent,

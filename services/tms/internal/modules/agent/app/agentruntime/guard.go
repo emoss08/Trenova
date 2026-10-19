@@ -48,6 +48,7 @@ type guardedDispatchParams struct {
 	// afterExternal says the turn has read content from outside the
 	// organization, so no write may run without a person.
 	afterExternal bool
+	beyond        agent.AutonomyTier
 }
 
 // guardedDispatch runs one tool call at most once across every attempt of a
@@ -91,6 +92,7 @@ func (s *Service) guardedDispatch(
 			idempotencyKey: p.call.ID,
 			taint:          p.taint,
 			afterExternal:  p.afterExternal,
+			beyond:         p.beyond,
 		})
 		finishToolSpan(span, &outcome, p.afterExternal)
 
@@ -170,6 +172,7 @@ func (s *Service) claimAndDispatch(
 		idempotencyKey: key,
 		taint:          p.taint,
 		afterExternal:  p.afterExternal,
+		beyond:         p.beyond,
 		stepKey:        key,
 	})
 

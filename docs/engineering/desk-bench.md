@@ -471,8 +471,18 @@ is started by inbound messages and never by the Desk. The seeded Customer servic
 off until someone reviews it, so the cases that need it accept `none` too: with it off, no
 agent the person may use holds the best tool for them.
 
-Each run writes `routing.md` (the score, the cases that changed since the previous routing
-run, and every case's expected and actual answer with the tools that matched) and
+It is a profile-selection bench: every case records the job profile it expected
+(`expectedProfile`, by template; `current` is the agent asked from) and the one the match
+left it with (`selectedProfile`), and `routing.md` opens with their confusion matrix, rows
+expected and columns selected, with each profile's recall and precision. A case whose
+expectation allows several profiles counts on the diagonal when it passes. Since a
+conversation reaches the tools of the person's other agents, an off-diagonal cell is a
+question that starts on a near neighbour and finds the tools with `find_tools`, not one that
+cannot be done; the matrix shows which neighbours the match confuses.
+
+Each run writes `routing.md` (the score, the confusion matrix, the cases that changed since
+the previous routing run, and every case's expected and actual answer with the tools that
+matched) and
 `routing.json` to `.deskbench/runs/<time>-route/`, and exits non-zero when a question goes
 the wrong way. `--compare` takes a run directory or a `routing.json`, `''` for none. The bench
 lifts the per-person limit on matching embeddings for its own matches only, so a long run is

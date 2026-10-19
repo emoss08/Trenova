@@ -31,6 +31,7 @@ type DecideInput struct {
 	Policy          agentports.ToolPolicy
 	Params          agentports.ToolExecuteParams
 	Definition      *agentdefinition.Definition
+	HolderCeiling   agent.AutonomyTier
 	Unattended      bool
 	TierSetByPerson bool
 	Taint           *agent.RunTaint
@@ -60,6 +61,9 @@ func Decide(ctx context.Context, in DecideInput) Decision {
 		decision.hold(HeldByToolTier)
 	}
 	decision.lower(effectiveTier(in.Definition, policy), HeldByAgentCeiling)
+	if in.HolderCeiling.IsValid() {
+		decision.lower(in.HolderCeiling, HeldByAgentCeiling)
+	}
 	decision.lower(maxTier(policy), HeldByToolMax)
 
 	call := policy.Classified(in.Params)

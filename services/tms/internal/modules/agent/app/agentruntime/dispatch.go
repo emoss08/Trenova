@@ -91,6 +91,7 @@ type dispatchParams struct {
 	// content from outside the organization, which may have been written to
 	// steer it.
 	afterExternal bool
+	beyond        agent.AutonomyTier
 	stepKey       string
 }
 
@@ -107,7 +108,7 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 
 		return refusal
 	}
-	if !s.holdsFor(ctx, req, call.Name) {
+	if !s.holdsFor(ctx, req, call.Name) && !s.reachable(req, p.beyond) {
 		return refusedOutcome(aitrace.OutcomeDenied, aianalytics.ReasonNotHeld,
 			"Tool %q is not available to this agent.", call.Name)
 	}
@@ -204,6 +205,7 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		Policy:         policy,
 		Params:         tierParams,
 		Definition:     req.Definition,
+		HolderCeiling:  p.beyond,
 		Unattended:     req.Unattended,
 		Taint:          decisionTaint(p.taint, p.afterExternal),
 		MoneyAllowance: s.moneyAllowance(req, p.moneySpent),

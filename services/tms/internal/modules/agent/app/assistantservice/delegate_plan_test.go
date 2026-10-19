@@ -4,20 +4,16 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
-	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
-	"github.com/emoss08/trenova/internal/modules/agent/app/proposalrecorder"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 )
 
 type capturingPlanStore struct {
@@ -90,6 +86,18 @@ func (*handOffEffects) NewCallID() string { return agentruntime.NewCallID() }
 
 func (fx *handOffEffects) Delegate(
 	t *agentruntime.Turn,
+	calls []agentruntime.DelegateCall,
+) []agentruntime.DelegateRun {
+	runs := make([]agentruntime.DelegateRun, 0, len(calls))
+	for _, call := range calls {
+		runs = append(runs, fx.delegate(t, call))
+	}
+
+	return runs
+}
+
+func (fx *handOffEffects) delegate(
+	t *agentruntime.Turn,
 	call agentruntime.DelegateCall,
 ) agentruntime.DelegateRun {
 	opened, err := fx.svc.OpenDelegate(fx.ctx, &OpenDelegateRequest{
@@ -110,7 +118,10 @@ func (fx *handOffEffects) Delegate(
 	return agentruntime.DelegateRun{Definition: opened.Request.Definition, Result: result}
 }
 
-func (*handOffEffects) Interject(*agentruntime.Turn, *agentruntime.WorldCheck) agentruntime.Interjections {
+func (*handOffEffects) Interject(
+	*agentruntime.Turn,
+	*agentruntime.WorldCheck,
+) agentruntime.Interjections {
 	return agentruntime.Interjections{}
 }
 
@@ -141,144 +152,6 @@ func callNamed(t *testing.T, saved []conversation.Message, tool string) string {
 	return ""
 }
 
-/*
-The owner's transcript: "void and recreate" became two unordered proposals
-with separate approvals. The Dispatch desk proposes voiding the old shipment
-and hands the Shipment Desk the copy, naming the shipment rather than
-retyping it. The Shipment Desk proposes duplicate_shipment from the id it was
-handed, and the turn files both as one plan, voided first, under one
-approval, each write still the proposal of the agent that filed it.
-*/
-func TestHandOff_VoidAndRecreateIsOneTwoStepPlanInTheOrderAsked(t *testing.T) {
-	t.Parallel()
-
-	f := newDelegateFixture()
-	f.parent.ToolNames = []string{"void_shipment"}
-	f.delegate.ToolNames = []string{"duplicate_shipment"}
-	void := &agenttest.StubActionTool{ToolName: "void_shipment", Tier: agent.TierPropose}
-	duplicate := &agenttest.StubActionTool{
-		ToolName: "duplicate_shipment",
-		Tier:     agent.TierPropose,
-	}
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		{ToolCalls: []agentports.ToolCall{{
-			ID: "call_void", Name: "void_shipment",
-			Arguments: map[string]any{"shipmentId": "shp_old", "reason": "Wrong dates"},
-		}}},
-		{ToolCalls: []agentports.ToolCall{{
-			ID: "call_hand", Name: "delegate_task",
-			Arguments: map[string]any{
-				"agentId": f.delegate.ID.String(),
-				"task":    "Copy this shipment with pickup moved to next Monday; return its pro.",
-				"records": []any{map[string]any{"entityType": "shipment", "id": "shp_old"}},
-			},
-		}}},
-		{ToolCalls: []agentports.ToolCall{{
-			ID: "call_copy", Name: "duplicate_shipment",
-			Arguments: map[string]any{"shipmentId": "shp_old"},
-		}}},
-		{Text: "I proposed the copy of shp_old."},
-		{Text: "The void and the copy wait on your approval as one plan."},
-	}}
-	f.svc.runtime = agentruntime.New(agentruntime.Params{
-		Logger:     zap.NewNop(),
-		Completion: completion,
-		QueryTools: &stubQueryRegistry{},
-		ActionTools: &stubActionRegistry{
-			Tools: []agentports.AgentTool{void, duplicate},
-		},
-		Permissions: &agenttest.StubPermissions{},
-	})
-	runs, proposals, plans := &stubRunRepo{}, &stubProposalRepo{}, &capturingPlanStore{}
-	f.svc.recorder = proposalrecorder.NewWithStores(zap.NewNop(), runs, proposals).
-		WithPlans(plans)
-	f.svc.shadow = agentshadow.New(agentshadow.Params{
-		Control:     stubControlRepo{},
-		Runs:        runs,
-		Definitions: stubDefinitionRepo{},
-	})
-
-	threadID := pulid.MustNew("athr_")
-	req := &agentports.RunRequest{
-		Definition: f.parent,
-		Actor:      f.request.Actor,
-		Context: agentdefinition.RuntimeContext{
-			Trigger: agent.RunTriggerChat,
-			Delegates: []agentdefinition.RuntimeDelegate{{
-				ID:    f.delegate.ID,
-				Name:  f.delegate.Name,
-				Tools: f.delegate.ToolNames,
-			}},
-		},
-		Input:    "Void SEED-DET-009 and recreate it for next Monday.",
-		ThreadID: threadID,
-		StepOwner: agentports.RunStepOwner{
-			Kind: agentports.RunStepOwnerAssistantTurn,
-			ID:   pulid.MustNew("atrn_"),
-		},
-	}
-	fx := &handOffEffects{
-		ctx: t.Context(), t: t, svc: f.svc, parent: f.parent, threadID: threadID,
-	}
-
-	result, err := f.svc.runtime.Drive(f.svc.runtime.OpenTurn(t.Context(), req), fx)
-	require.NoError(t, err)
-
-	require.Len(t, fx.opened, 1)
-	assert.Contains(t, fx.opened[0].Input, "shipment shp_old",
-		"the Shipment Desk was handed the record, not a retyped copy")
-	require.Len(t, result.Actions, 1)
-	require.Len(t, result.Delegations, 1)
-	require.Len(t, result.Delegations[0].Actions, 1)
-	assert.Zero(t, void.Calls+duplicate.Calls, "nothing ran before the person approved")
-
-	saved := savedWithIDs(result.Messages)
-	persisted, err := f.svc.persistProposals(t.Context(), persistProposalsParams{
-		TurnID:      req.StepOwner.ID,
-		Definition:  f.parent,
-		Thread:      &conversation.Thread{ID: threadID},
-		Actor:       req.Actor,
-		Saved:       saved,
-		Actions:     result.Actions,
-		Model:       result.Model,
-		Input:       req.Input,
-		Taint:       result.Taint,
-		Delegations: result.Delegations,
-	})
-	require.NoError(t, err)
-
-	require.Len(t, plans.created, 1, "one decision for the whole request")
-	plan := plans.created[0]
-	assert.Equal(t, 2, plan.StepCount)
-	require.Len(t, runs.created, 2)
-	parentRun, delegateRun := runs.created[0], runs.created[1]
-	assert.Equal(t, plan.RunID, parentRun.ID)
-	assert.Equal(t, f.delegate.ID, delegateRun.AgentDefinitionID)
-	assert.Equal(t, callNamed(t, saved, "delegate_task"), delegateRun.DelegateCallID)
-
-	require.Len(t, proposals.created, 2)
-	steps := map[string]*agent.AgentProposal{}
-	for _, proposal := range proposals.created {
-		steps[proposal.ToolName] = proposal
-		require.NotNil(t, proposal.PlanID)
-		assert.Equal(t, plan.ID, *proposal.PlanID)
-	}
-	assert.Equal(t, 1, steps["void_shipment"].PlanStep, "the void runs first, as asked")
-	assert.Equal(t, parentRun.ID, steps["void_shipment"].RunID)
-	assert.Equal(t, 2, steps["duplicate_shipment"].PlanStep)
-	assert.Equal(t, delegateRun.ID, steps["duplicate_shipment"].RunID)
-
-	byTool := map[string]agentports.AssistantProposal{}
-	for _, proposal := range persisted {
-		byTool[proposal.ToolName] = proposal
-	}
-	assert.Equal(t, f.parent.Name, byTool["void_shipment"].AgentName)
-	assert.Equal(t, f.delegate.Name, byTool["duplicate_shipment"].AgentName,
-		"the card still says which agent proposed it")
-}
-
-// #628: a hand-off that only read leaves the delegate's run, so the work it
-// did is in AI Control after a reload.
 func TestPersistProposals_AReadOnlyHandOffLeavesItsRun(t *testing.T) {
 	t.Parallel()
 
