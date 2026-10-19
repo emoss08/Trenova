@@ -104,6 +104,14 @@ func (b *Bench) evaluate(
 	for _, unwanted := range expect.NoCalls {
 		checks = append(checks, notCalledCheck(unwanted, calls))
 	}
+	if len(expect.NoDelegateCalls) > 0 {
+		delegated := delegateCalls(calls)
+		for _, unwanted := range expect.NoDelegateCalls {
+			check := notCalledCheck(unwanted, delegated)
+			check.Name = "no delegate called " + strings.Join(alternatives(unwanted), " or ")
+			checks = append(checks, check)
+		}
+	}
 	if expect.MaxCalls != nil {
 		checks = append(checks, CheckResult{
 			Name:   "at most " + strconv.Itoa(*expect.MaxCalls) + " tool calls",
@@ -410,6 +418,17 @@ func notCalledCheck(spec string, calls []*ToolCallRecord) CheckResult {
 	}
 
 	return check
+}
+
+func delegateCalls(calls []*ToolCallRecord) []*ToolCallRecord {
+	delegated := make([]*ToolCallRecord, 0, len(calls))
+	for _, call := range calls {
+		if call.DelegateCallID != "" {
+			delegated = append(delegated, call)
+		}
+	}
+
+	return delegated
 }
 
 func verdictLabel(call *ToolCallRecord) string {

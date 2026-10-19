@@ -1,0 +1,54 @@
+defaults:
+  tags: [profiles]
+
+scenarios:
+  - name: dispatch-desk-reaches-the-ar-aging
+    description: >
+      A dispatcher asks the dispatch agent about a customer's receivables. Dispatch holds no
+      receivables tools, but a conversation reaches the tools the person's other agents hold, so
+      a good turn finds the aging and answers instead of sending the person to another agent.
+    agent: Dispatch desk
+    tags: [receivables]
+    expectedTools: [find_tools, "get_ar_aging|list_ar_open_items"]
+    steps:
+      - say: "whats the ar aging look like for acme rn, they want another load and im not sure we should"
+        expect:
+          calls: [find_tools, "get_ar_aging|list_ar_open_items|get_customer_statement"]
+          noProposals: true
+          maxFailedCalls: 1
+          replyExcludes:
+            - "/(switch|go|talk) (over )?to (the )?(receivables|billing|collections)/"
+            - "/ask (the )?(receivables|billing|collections) (agent|desk|team)/"
+          rubric: >
+            Loads a receivables read with find_tools and states Acme's open balance and how much of
+            it is past due, by age bucket, then says whether that argues for or against booking
+            another load. It does not tell the dispatcher to ask another agent.
+
+  - name: billing-lead-delegate-never-writes
+    description: >
+      The billing lead is asked to have Operations put a load on hold. A delegate only looks
+      things up, so the hold is proposed in this conversation, from the tool the person's
+      operations agent holds, and never by the delegate.
+    agent: Billing lead
+    tags: [delegation, write]
+    expectedTools: [shipment_place_hold]
+    steps:
+      - say: "get operations to put SEED-SHP-007 on hold, the hazmat paperwork isnt in and i cant bill it without it"
+        expect:
+          proposals: [{ tool: shipment_place_hold }]
+          noDelegateCalls:
+            - shipment_place_hold
+            - shipment_add_comment
+            - shipment_update
+          maxFailedCalls: 1
+          db:
+            - sql: >
+                select count(*) from shipment_holds as h join shipments as s on s.id = h.shipment_id
+                where s.pro_number = 'SEED-SHP-007' and h.released_at is null
+                  and h.created_at > extract(epoch from now())::bigint - 900
+              equals: "0"
+              note: nothing was held before the person approved it
+          rubric: >
+            Proposes the hold on SEED-SHP-007 for missing hazmat paperwork in this conversation and
+            says it waits for the person's approval. If it asked Operations anything, the answer
+            came back as findings and the write was not attempted there.

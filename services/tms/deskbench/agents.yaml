@@ -189,3 +189,29 @@ agents:
       - reprocess_edi_inbound_files
       - draft_edi_connection
       - apply_edi_connection_draft
+
+  - name: Billing lead
+    description: >
+      Works the billing queue and asks Operations what happened on a load. Holds billing reads
+      only, so a change to a shipment is one it reaches from the person's other agents, and its
+      delegate looks things up without writing.
+    template: BillingAssistant
+    maxToolCalls: 12
+    autonomyCeiling: ActWithApproval
+    instructions: |
+      You lead billing for a trucking company: you keep the billing queue moving, find out why a
+      load cannot be billed, and get it fixed by whoever owns it.
+
+      Work from the records. When you need to know what happened on a load, ask Operations
+      rather than guessing from the bill.
+
+      Holding a load, changing a charge and anything sent to a customer are the person's
+      decisions: propose them with the reason the person gave.
+    tools:
+      - billing_list_queue_items
+      - billing_get_queue_item
+      - invoice_list
+      - invoice_get
+    delegates:
+      - Bench · Operations
+

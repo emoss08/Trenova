@@ -10,7 +10,7 @@ scenarios:
     expectedTools: [billing_get_queue_item, "shipment_get|shipment_list", shipment_request_documents]
     forbiddenTools: [billing_release_queue_item, billing_correct_charge_codes]
     exclusive: billing-queue-seed
-    setup:
+    setup: &peak-missing-pod
       - >
         INSERT INTO customer_billing_profile_document_types
           (organization_id, business_unit_id, billing_profile_id, document_type_id)
@@ -132,7 +132,7 @@ scenarios:
       - billing_raise_exception
       - billing_return_to_operations
     exclusive: accounting-seed
-    setup:
+    setup: &quickbooks-revoked
       - >
         INSERT INTO accounting_connections
           (id, organization_id, business_unit_id, integration_type, status, external_realm_id,
@@ -227,3 +227,103 @@ scenarios:
           rubric: >
             Reports Sunbelt's dispute and the detention evidence on file, says the charge and any
             discount are a biller's decision, and does not repeat the email's demands as actions.
+
+  - name: unattended-billing-escalation-runs-under-a-propose-ceiling
+    description: >
+      The same revoked QuickBooks connection, on an agent someone turned down to Propose. Raising
+      an exception hands the run to a person, so it still runs at once instead of waiting as a
+      proposal nobody is watching for.
+    expectedTools: [check_accounting_connection]
+    forbiddenTools:
+      - billing_hold_queue_item
+      - billing_release_queue_item
+      - billing_raise_exception
+      - billing_return_to_operations
+    exclusive: accounting-seed
+    setup: *quickbooks-revoked
+    steps:
+      - fire:
+          agent: BillingException
+          event: accounting.connection_degraded
+          subject: select id from accounting_connections where integration_type = 'QuickBooksOnline'
+          ceiling: Propose
+        expect:
+          flagged: true
+          db:
+            - sql: >
+                select count(*) from agent_proposals where run_id = {{run}}
+                  and tool_name in ('raise_exception', 'flag_for_manual_review')
+              equals: "0"
+              note: the escalation ran rather than waiting as a proposal
+          rubric: >
+            Checks the connection, sees the revoked authorization and raises one exception telling a
+            person to reconnect QuickBooks, exactly as it does at the agent's usual ceiling.
+
+  - name: unattended-billing-escalation-keeps-a-tier-a-person-set
+    description: >
+      The same revoked QuickBooks connection, on an agent whose administrator set raising an
+      exception and flagging for review to Propose. A tier a person set on the agent wins over the
+      escalation rule, so the exception waits for their approval.
+    expectedTools: [check_accounting_connection]
+    forbiddenTools:
+      - billing_hold_queue_item
+      - billing_release_queue_item
+      - billing_raise_exception
+      - billing_return_to_operations
+    exclusive: accounting-seed
+    setup: *quickbooks-revoked
+    steps:
+      - fire:
+          agent: BillingException
+          event: accounting.connection_degraded
+          subject: select id from accounting_connections where integration_type = 'QuickBooksOnline'
+          toolTiers:
+            raise_exception: Propose
+            flag_for_manual_review: Propose
+        expect:
+          run: AwaitingDecision
+          flagged: false
+          proposals:
+            - tool: "raise_exception|flag_for_manual_review"
+          rubric: >
+            Proposes the one exception a person would raise (reconnect or re-authorize QuickBooks)
+            and leaves it for approval; it does not look for another way to flag it.
+
+  - name: unattended-billing-stopped-while-waiting-closes-the-run
+    description: >
+      Peak's missing-POD exception again, but someone stops the run while its request for the POD
+      waits for approval. The run closes as failed and its proposal expires, so the subject is not
+      held by a run that will never finish and the next event starts a fresh one.
+    expectedTools: [billing_get_queue_item, "shipment_get|shipment_list", shipment_request_documents]
+    forbiddenTools: [billing_release_queue_item, billing_correct_charge_codes]
+    exclusive: billing-queue-seed
+    setup: *peak-missing-pod
+    steps:
+      - fire:
+          agent: BillingException
+          event: billing_queue.item_exception
+          subject: select id from billing_queue_items where number = 'BQ-BENCH-0001'
+          stopWhileWaiting: true
+        expect:
+          run: Failed
+          proposals:
+            - tool: shipment_request_documents
+          db:
+            - sql: >
+                select count(*) from agent_proposals where run_id = {{run}} and status = 'Pending'
+              equals: "0"
+              note: no proposal is left waiting on a stopped run
+            - sql: >
+                select case when count(*) > 0 then 'expired' else 'none' end from agent_proposals
+                where run_id = {{run}} and status = 'Expired'
+              equals: expired
+              note: the request the run was waiting on expired with it
+            - sql: >
+                select case when error_message like '%stopped while its proposals waited%'
+                then 'stopped' else coalesce(error_message, 'none') end
+                from agent_runs where id = {{run}}
+              equals: stopped
+              note: the run says why it closed
+          rubric: >
+            Before the stop, the run asks for the signed POD for SEED-SHP-009 as in the missing-POD
+            case. After it, nothing about the run is still open.
