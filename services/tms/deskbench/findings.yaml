@@ -4642,3 +4642,26 @@ findings:
       After the delete, the setup cancels any other item on the shipment that is not Posted or
       Canceled, so the bench item always has the slot. The CLI's progress line now prints step
       errors as well as case errors, so a failure like this names its cause on the console.
+
+  - id: DB-204
+    title: The bench waits out every unattended run to its 17-minute deadline
+    status: fixed
+    severity: critical
+    area: deskbench / unattended runs
+    found: 2026-10-19, .deskbench/baselines/20261018-213512 (trenova desk baseline --split held-out)
+    models: [claude-haiku-5-5]
+    scenarios:
+      - unattended-insight-acme-on-time-decline
+      - unattended-credentials-carlos-mvr-review-due-in-a-month
+    problem: >
+      All 11 model calls of the Acme run finished within 28 seconds and the agent filed its
+      proposal, yet the case sat in Running for 13 minutes until it was interrupted. Its check
+      read "the run ended Completed — ended", with no status at all.
+    cause: >
+      The fire step polled the run through ListTranscriptsByIDs, which selects only the run's id,
+      tenant and transcript. The status it read was always empty, so the loop never saw the run
+      finish and only the deadline (turnTimeout plus runStartWithin) ended the wait.
+    fix: >
+      The poll reads the run with GetByID, which carries its status but not its transcript, and
+      the transcript is read once when the loop ends. TestAwaitLoop_EndsOnTheStatusTheRunRecords
+      fails on the old poll.
