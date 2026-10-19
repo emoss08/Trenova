@@ -457,8 +457,7 @@ func (r *RoutingReport) Confusion() ProfileConfusion {
 	return confusion
 }
 
-func (c ProfileConfusion) Recall(profile string) (float64, int) {
-	total := 0
+func (c ProfileConfusion) Recall(profile string) (share float64, total int) {
 	for _, count := range c.Counts[profile] {
 		total += count
 	}
@@ -469,8 +468,7 @@ func (c ProfileConfusion) Recall(profile string) (float64, int) {
 	return float64(c.Counts[profile][profile]) / float64(total), total
 }
 
-func (c ProfileConfusion) Precision(profile string) (float64, int) {
-	total := 0
+func (c ProfileConfusion) Precision(profile string) (share float64, total int) {
 	for _, row := range c.Counts {
 		total += row[profile]
 	}
