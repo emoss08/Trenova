@@ -461,6 +461,11 @@ now, and the approval carries its digest; tools implement `ToolPreviewer` with
 [docs/engineering/proposal-previews.md](docs/engineering/proposal-previews.md) before
 changing `toolpreview`, `proposalpreviewservice`, a tool's `Preview`, or how a proposal is
 decided.**
+Every agent tool is named `<namespace>_<verb>[_<object>]` from the namespaces in
+`agentports.ToolNamespaces()`, with one convention for ids, paging, free text and dates, and a
+rename carries no alias; **read
+[docs/engineering/agent-tool-conventions.md](docs/engineering/agent-tool-conventions.md) before
+adding, renaming or merging a tool or rewriting its description.**
 Every write a person can make has an agent tool, a reasoned exemption or a `pending` entry in
 `services/tms/internal/api/writecoverage/writecoverage.yml`, and a new mutation or write route
 fails CI until it has one; see

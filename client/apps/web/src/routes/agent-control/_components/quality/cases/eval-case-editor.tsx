@@ -173,7 +173,7 @@ function ToolsSection() {
                   name={`tools.${index}.name`}
                   rules={{ required: true }}
                   label={t("Tool")}
-                  placeholder={t("place_shipment_hold")}
+                  placeholder={t("shipment_place_hold")}
                 />
               </div>
               <Button
@@ -196,7 +196,7 @@ function ToolsSection() {
               control={control}
               name="forbiddenTools"
               label={t("Forbidden tools")}
-              placeholder={t("cancel_shipment")}
+              placeholder={t("shipment_cancel")}
               description={t("Calling any of these fails the case.")}
             />
           </FormControl>
@@ -205,7 +205,7 @@ function ToolsSection() {
               control={control}
               name="heldTools"
               label={t("Held tools")}
-              placeholder={t("get_shipment")}
+              placeholder={t("shipment_get")}
               description={t("What the agent held when the case was captured.")}
             />
           </FormControl>

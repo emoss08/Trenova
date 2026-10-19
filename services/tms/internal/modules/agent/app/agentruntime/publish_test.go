@@ -202,9 +202,9 @@ func TestRun_TellsTheModelWhatThePersonAlreadySees(t *testing.T) {
 	observer := &recordingObserver{shown: &agentports.ShownArtifact{
 		ID: pulid.MustNew("art_"), Kind: "table_view", Title: "Shipments", Rows: 25,
 	}}
-	tool := queryTool("search_shipments", map[string]any{"items": []any{}}, nil)
+	tool := queryTool("shipment_list", map[string]any{"items": []any{}}, nil)
 	result, _ := runWithObserver(t, observer.observe, []agentports.AgentQueryTool{tool},
-		toolTurn("search_shipments", map[string]any{"query": ""}),
+		toolTurn("shipment_list", map[string]any{"query": ""}),
 		textTurn("Twenty-five shipments; two are delayed."),
 	)
 

@@ -23,7 +23,7 @@ type shipmentReader struct {
 	asked map[string]any
 }
 
-func (r *shipmentReader) Name() string        { return "get_shipment" }
+func (r *shipmentReader) Name() string        { return "shipment_get" }
 func (r *shipmentReader) Description() string { return "Retrieve one shipment." }
 func (r *shipmentReader) ParamSchema() map[string]any {
 	return map[string]any{
@@ -34,7 +34,7 @@ func (r *shipmentReader) ParamSchema() map[string]any {
 
 func (r *shipmentReader) Policy() agentports.ToolPolicy {
 	return agentports.ToolPolicy{
-		Name: "get_shipment", Kind: agent.ToolKindQuery,
+		Name: "shipment_get", Kind: agent.ToolKindQuery,
 		Resource: permission.ResourceShipment, Operation: permission.OpRead,
 	}
 }
@@ -80,7 +80,7 @@ func executedWrite(tool string, result *agent.ToolExecutionResult) agentports.To
 /*
 A record a change writes is shown as it now stands, without being asked for.
 
-An approved create_shipment named its pro number and the person had to ask to
+An approved shipment_create named its pro number and the person had to ask to
 see the shipment. Any write that names the record it made or changed now
 shows that record's card, read again through the tool that reads it, and the
 model is told to point to it.
@@ -92,7 +92,7 @@ func TestObserve_ShowsTheRecordAWriteMade(t *testing.T) {
 	recorder, repo := writtenRecorder(t, reader)
 	shipmentID := pulid.MustNew("shp_").String()
 
-	shown, err := recorder.observe(executedWrite("create_shipment", &agent.ToolExecutionResult{
+	shown, err := recorder.observe(executedWrite("shipment_create", &agent.ToolExecutionResult{
 		Action: "created", Kind: "shipment", Name: "S26100125117880",
 		Record: &agent.RecordRef{EntityType: "shipment", ID: shipmentID},
 	}))
@@ -132,7 +132,7 @@ func TestObserve_AProposedWriteShowsNoRecord(t *testing.T) {
 	t.Parallel()
 
 	recorder, repo := writtenRecorder(t, &shipmentReader{})
-	observation := executedWrite("create_shipment", nil)
+	observation := executedWrite("shipment_create", nil)
 	observation.Action.Executed = false
 
 	shown, err := recorder.observe(observation)
@@ -158,7 +158,7 @@ func TestShowWritten_PointsTheFollowUpAtWhatTheApprovalMade(t *testing.T) {
 	thread := &conversation.Thread{ID: pulid.MustNew("athr_")}
 	shipmentID := pulid.MustNew("shp_").String()
 	executed := &agent.AgentProposal{
-		ID: pulid.MustNew("ap_"), ToolName: "create_shipment", Status: agent.ProposalStatusExecuted,
+		ID: pulid.MustNew("ap_"), ToolName: "shipment_create", Status: agent.ProposalStatusExecuted,
 		ExecutionResult: &agent.ToolExecutionResult{
 			Action: "created", Record: &agent.RecordRef{EntityType: "shipment", ID: shipmentID},
 		},

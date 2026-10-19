@@ -114,7 +114,7 @@ func PolicyViews(policies []agentports.ToolPolicy) []agentports.AgentToolPolicyV
 func PolicyView(policy agentports.ToolPolicy) agentports.AgentToolPolicyView {
 	view := agentports.AgentToolPolicyView{
 		Policy:      policy,
-		Title:       stringutils.HumanizeCamelCaseSentence(policy.Name),
+		Title:       stringutils.HumanizeCamelCaseSentence(agentports.ReadingOrder(policy.Name)),
 		Promotable:  agenttoolpolicy.Promotable(policy),
 		Leaves:      slices.ContainsFunc(policy.Egress, agent.EgressClass.Leaves),
 		Explanation: agenttoolpolicy.ExplainTier(policy),

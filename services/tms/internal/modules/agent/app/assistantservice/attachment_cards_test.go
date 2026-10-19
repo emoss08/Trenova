@@ -91,7 +91,7 @@ func deskThread() *conversation.Thread {
 /*
 A rate confirmation dropped into the Desk shows what was read off it without
 anyone asking: the card is kept beside the conversation as the turn begins, one
-per file, read as the person through get_shipment_draft, and the agent is told
+per file, read as the person through intake_get_draft, and the agent is told
 where it is so the reply points to it instead of publishing the reading as a
 document of its own.
 */

@@ -3,8 +3,8 @@ package agentruntime
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/stretchr/testify/assert"
@@ -218,8 +218,8 @@ func TestIDSource_ReadsWhereTheIDComesFrom(t *testing.T) {
 	t.Parallel()
 
 	assert.Equal(t, "list_customers", idSource("The customer, from list_customers. Never guess one."))
-	assert.Equal(t, "get_shipment, search_shipments or the page you are on",
-		idSource("The shipment, from get_shipment, search_shipments or the page you are on. "+
+	assert.Equal(t, "shipment_get, shipment_list or the page you are on",
+		idSource("The shipment, from shipment_get, shipment_list or the page you are on. "+
 			"Never guess one."))
 	assert.Empty(t, idSource("A note."))
 }

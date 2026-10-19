@@ -64,7 +64,7 @@ func TestRecord_KeepsTheRunsTaintAndEachProposalsEgress(t *testing.T) {
 		Taint: taint,
 		Actions: []agentports.PendingAction{
 			{
-				ToolName:  "add_shipment_comment",
+				ToolName:  "shipment_add_comment",
 				Arguments: map[string]any{},
 				Rationale: "decided before the run read anything",
 				Tier:      agent.TierAutoExecute,

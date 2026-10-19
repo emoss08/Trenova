@@ -188,8 +188,13 @@ func writeGroup(buf *bytes.Buffer, class agent.EgressClass, policies []agentport
 	for idx := range policies {
 		policy := &policies[idx]
 		fmt.Fprintf(buf, "| %s | %s | %s | %s | %s | %s |\n",
-			stringutils.MarkdownTableCell(fmt.Sprintf("%s (`%s`)",
-				stringutils.HumanizeCamelCaseSentence(policy.Name), policy.Name)),
+			stringutils.MarkdownTableCell(fmt.Sprintf(
+				"%s (`%s`)",
+				stringutils.HumanizeCamelCaseSentence(
+					agentports.ReadingOrder(policy.Name),
+				),
+				policy.Name,
+			)),
 			stringutils.MarkdownTableCell(classList(policy.Egress)),
 			agenttoolpolicy.Promotable(*policy).Label(),
 			stringutils.MarkdownTableCell(condition(policy)),

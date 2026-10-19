@@ -67,8 +67,9 @@ func New(descriptors []agentports.AgentToolDescriptor) *Catalog {
 		catalog.byName[descriptor.Name] = i
 		catalog.entries = append(catalog.entries, indexed{
 			descriptor: descriptor,
-			nameTokens: agentsearch.TokenSet(
-				descriptor.Name + " " + strings.Join(descriptor.SearchTerms, " "),
+			nameTokens: agentsearch.NameTokenSet(
+				descriptor.Name,
+				strings.Join(descriptor.SearchTerms, " "),
 			),
 			bodyTokens:  agentsearch.TokenSet(descriptor.Description),
 			paramTokens: agentsearch.TokenSet(parameterText(descriptor.Parameters)),
@@ -97,7 +98,7 @@ func New(descriptors []agentports.AgentToolDescriptor) *Catalog {
 }
 
 // Feeds names the tools whose recipe has the tool as a step before them:
-// find_shipment_records feeds create_shipment.
+// shipment_match_records feeds shipment_create.
 func (c *Catalog) Feeds(name string) []string {
 	return c.feeds[name]
 }
@@ -373,7 +374,7 @@ func score(entry *indexed, terms map[string]struct{}, strong bool) int {
 
 // parameterText is the searchable text of a tool's parameters: their names
 // and descriptions, one level of properties deep. A tool whose purpose is
-// only in what it takes — a customerId filter on list_shipments — is found
+// only in what it takes — a customerId filter on shipment_list — is found
 // by it, below anything that names the thing outright.
 func parameterText(schema map[string]any) string {
 	properties, _ := schema["properties"].(map[string]any)

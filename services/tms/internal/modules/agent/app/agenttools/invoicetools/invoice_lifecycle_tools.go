@@ -507,11 +507,11 @@ func NewCreateInvoiceTool(invoices invoiceCreator) agentports.AgentTool {
 			"statement; only a person decides what is billed and when.",
 		Properties: map[string]any{
 			common.ParamOrderID: agenttoolschema.RecordIDText(permission.ResourceOrder,
-				"The order to bill as one grouped invoice, from get_order or get_shipment."),
+				"The order to bill as one grouped invoice, from order_get or shipment_get."),
 			common.ParamShipmentIDs: agenttoolschema.RecordIDs(
 				permission.ResourceShipment,
-				"The shipments to bill, from search_shipments or "+
-					"get_shipment. With orderId, only these of the order's shipments.",
+				"The shipments to bill, from shipment_list or "+
+					"shipment_get. With orderId, only these of the order's shipments.",
 				maxInvoiceShipments,
 			),
 			ParamOffCycleNote: common.StringProperty("Why this customer's freight is billed now "+

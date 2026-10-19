@@ -137,7 +137,7 @@ Everything reads the stored rows; nothing estimates on read.
 - `ShipmentEtaReader.EtasByShipmentIDs` (GraphQL `Shipment.eta`, the REST route, Desk cases)
   summarises a shipment by its governing stop and adds an open service failure's reason when the
   load needs attention. A shipment with no rows has no ETA (REST answers `Unknown`).
-- `ShipmentTrackingReader.TrackingSnapshots`, the agent tool `get_shipment_tracking` and the
+- `ShipmentTrackingReader.TrackingSnapshots`, the agent tool `shipment_get_tracking` and the
   shipment subject build the tracking snapshot with `Input.StopETAs`, so the agent quotes the same
   arrival as the board.
 - `etaSlip` on the shipments analytics counts active shipments with an unarrived `AtRisk` or

@@ -99,24 +99,24 @@ Loaded now:
 - list_formula_templates
 - list_locations
 - list_location_categories
-- search_shipments
-- accept_all_confident
-- set_stop_location
+- shipment_list
+- intake_set_stop_location
+- create_location
 
 Callable after find_tools:
 - read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
-- get_shipment_draft — Read the shipment draft extracted from an uploaded document: the fields and stops it found, each with a confidence, and what it could not read.
+- intake_get_draft — Read the shipment draft extracted from an uploaded document: the fields and stops it found, each with a confidence, and what it could not read.
 - get_customer — Retrieve one customer by id, with their billing and email profiles.
 - get_formula_template — Retrieve one formula template by id, whole: its formula, variables and their defaults, breakdown lines, minimum, maximum, rounding, status and version.
-- accept_field — Accept one field read from the document as correct on the import page.
-- set_field_value — Set or correct the value of a field on the import page, such as the BOL, the weight, the pieces or the freight rate.
-- set_required_field — Set the customer, service type, shipment type or rating method on the import page, by record id.
-- set_stop_schedule — Set when a stop on the import page is scheduled: the start of its window and, optionally, the end.
-- create_location — Create a location record for a pickup or delivery address that has none, such as a facility read from a document.
+- intake_accept_field — Accept one field read from the document as correct on the import page.
+- intake_accept_confident — Accept every field the page read from the document with high confidence, at once.
+- intake_set_field — Set or correct the value of a field on the import page, such as the BOL, the weight, the pieces or the freight rate.
+- intake_set_required_field — Set the customer, service type, shipment type or rating method on the import page, by record id.
+- intake_set_stop_schedule — Set when a stop on the import page is scheduled: the start of its window and, optionally, the end.
 
 What a change you call does:
 - Changes that always record a proposal for a person to decide: flag_for_manual_review, wait_until, cancel_wait, create_location
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: remember, guide_profile
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
-- set_stop_location: list_locations → set_stop_location
+- intake_set_stop_location: list_locations → intake_set_stop_location

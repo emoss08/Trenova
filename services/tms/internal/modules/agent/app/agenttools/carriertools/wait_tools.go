@@ -102,14 +102,14 @@ func (t *waitUntilTool) ParamSchema() map[string]any {
 			common.ParamShipmentMoveID: agenttoolschema.RecordIDText(
 				permission.ResourceShipmentMove,
 				"For StopArrival, StopDeparture and AppointmentNear: the move the stop is on, from "+
-					"get_shipment.",
+					"shipment_get.",
 			),
 			common.ParamStopID: agenttoolschema.RecordIDText(permission.ResourceShipmentStop,
-				"The stop, from get_shipment: required for AppointmentNear; for StopArrival "+
+				"The stop, from shipment_get: required for AppointmentNear; for StopArrival "+
 					"and StopDeparture, leave it out to wait for the move's next one."),
 			common.FieldShipmentID: agenttoolschema.RecordIDText(
 				permission.ResourceShipment,
-				"For Reply: a reply about this shipment, from search_shipments or the run subject.",
+				"For Reply: a reply about this shipment, from shipment_list or the run subject.",
 			),
 			common.ParamCarrierID: agenttoolschema.RecordIDText(permission.ResourceCarrier,
 				"For Reply: a reply from this carrier, from list_carriers."),

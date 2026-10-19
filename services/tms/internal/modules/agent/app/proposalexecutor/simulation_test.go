@@ -88,7 +88,7 @@ func TestExecute_SimulatesInsteadOfRunningForAnAgentInSimulation(t *testing.T) {
 	t.Parallel()
 
 	tool := &recordingTool{
-		name:      "cancel_shipment",
+		name:      "shipment_cancel",
 		resource:  permission.ResourceShipment,
 		operation: permission.OpCancel,
 	}
@@ -99,7 +99,7 @@ func TestExecute_SimulatesInsteadOfRunningForAnAgentInSimulation(t *testing.T) {
 	}
 
 	proposal := testProposal(
-		"cancel_shipment",
+		"shipment_cancel",
 		map[string]any{"shipmentId": "shp_1", "cancelReason": "Dead load"},
 	)
 	require.NoError(t, svc.Execute(t.Context(), proposal, nil, approver(proposal)))
@@ -109,7 +109,7 @@ func TestExecute_SimulatesInsteadOfRunningForAnAgentInSimulation(t *testing.T) {
 	require.Len(t, repo.simulated, 1)
 	assert.Equal(t, proposal.ID, repo.simulated[0].ID)
 	assert.Positive(t, repo.simulated[0].SimulatedAt)
-	assert.Contains(t, repo.simulated[0].Simulation.Summary, "Would run cancel_shipment")
+	assert.Contains(t, repo.simulated[0].Simulation.Summary, "Would run shipment_cancel")
 }
 
 func TestExecute_RefusesAWritePastTheToolsDailyCap(t *testing.T) {
@@ -195,7 +195,7 @@ func TestExecute_SimulatesInsideAReadOnlySnapshot(t *testing.T) {
 	t.Parallel()
 
 	tool := &snapshotPreviewTool{recordingTool: &recordingTool{
-		name:      "cancel_shipment",
+		name:      "shipment_cancel",
 		resource:  permission.ResourceShipment,
 		operation: permission.OpCancel,
 	}}
@@ -207,7 +207,7 @@ func TestExecute_SimulatesInsideAReadOnlySnapshot(t *testing.T) {
 	conn := &recordingTxConnection{}
 	svc.db = conn
 
-	proposal := testProposal("cancel_shipment", map[string]any{"shipmentId": "shp_1"})
+	proposal := testProposal("shipment_cancel", map[string]any{"shipmentId": "shp_1"})
 	require.NoError(t, svc.Execute(t.Context(), proposal, nil, approver(proposal)))
 
 	require.Len(t, conn.opts, 1)

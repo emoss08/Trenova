@@ -10,7 +10,7 @@ afterEach(cleanup);
 function step(reasoning: string): ToolStep {
   return {
     id: "call_1",
-    name: "get_shipment",
+    name: "shipment_get",
     arguments: {},
     status: "done",
     content: "",

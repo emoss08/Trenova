@@ -7,14 +7,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
 	"github.com/emoss08/trenova/internal/modules/agent/app/proposalexecutor"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/decisioncommitjobs/decisioncommitcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -320,7 +320,7 @@ func newWindowHarness(t *testing.T, count int) *windowHarness {
 			OrganizationID: actor.OrganizationID,
 			BusinessUnitID: actor.BusinessUnitID,
 			RunID:          pulid.MustNew("ar_"),
-			ToolName:       "place_shipment_hold",
+			ToolName:       "shipment_place_hold",
 			ToolParams:     map[string]any{},
 			AutonomyTier:   agent.TierPropose,
 			EgressClass:    agent.EgressInternal,
@@ -340,7 +340,7 @@ func newWindowHarness(t *testing.T, count int) *windowHarness {
 	executor := proposalexecutor.New(proposalexecutor.Params{
 		Logger: zap.NewNop(),
 		Tools: &agenttest.StubActionRegistry{Tools: []agentports.AgentTool{
-			&agenttest.StubActionTool{ToolName: "place_shipment_hold"},
+			&agenttest.StubActionTool{ToolName: "shipment_place_hold"},
 		}},
 		ProposalRepo: proposals,
 		Permissions:  &agenttest.StubPermissions{},

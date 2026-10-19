@@ -631,7 +631,7 @@ func newListHoldReasonsTool(
 		name:         "list_hold_reasons",
 		entityPlural: "hold reasons",
 		summary: "List the reasons a shipment can be put on hold, and what each one " +
-			"blocks — dispatch, delivery, billing. Call this before place_shipment_hold: " +
+			"blocks — dispatch, delivery, billing. Call this before shipment_place_hold: " +
 			"the reason decides the hold's behaviour, so it has to be one this " +
 			"organization actually configured rather than one you describe.",
 		resource: permission.ResourceHoldReason,

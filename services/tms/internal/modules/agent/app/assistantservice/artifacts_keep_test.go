@@ -80,7 +80,7 @@ func TestArtifactRecorder_ADelegatesCitationsDoNotKeepItsLookups(t *testing.T) {
 
 	repo := &deletingArtifactRepo{stubArtifactRepo: &stubArtifactRepo{}}
 	recorder := keepRecorder(t, repo)
-	cited, _ := recorder.observe(observation("get_shipment", map[string]any{"id": "shp_1", "proNumber": "P-1"}))
+	cited, _ := recorder.observe(observation("shipment_get", map[string]any{"id": "shp_1", "proNumber": "P-1"}))
 	both, _ := recorder.observe(observation("get_customer", map[string]any{"id": "cus_1", "name": "Acme"}))
 	require.NotNil(t, cited)
 	require.NotNil(t, both)

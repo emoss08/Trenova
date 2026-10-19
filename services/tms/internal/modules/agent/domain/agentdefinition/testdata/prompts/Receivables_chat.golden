@@ -108,7 +108,7 @@ Callable after find_tools:
 - read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
 - get_customer — Retrieve one customer by id, with their billing and email profiles.
 - get_invoice — Retrieve one invoice by id, with its line items, totals, payment and dispute state.
-- get_shipment — Retrieve one shipment (load) by its id, with its stops, the driver and equipment assigned to each move, the holds on it now and its newest comments.
+- shipment_get — Read one shipment (load) by its id or PRO number.
 - search_documents — Search the text of documents: rate confirmations, bills of lading, proofs of delivery, invoices, contracts, permits and other files attached to records.
 - get_document_summary — Read a document by id: what kind of document it looks like, how many pages, the text extracted from it, and the structured fields document intelligence found.
 - list_ar_open_items — List the open receivables, the unpaid or partly paid invoices customers still owe, most overdue first.

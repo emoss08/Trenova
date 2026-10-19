@@ -46,7 +46,7 @@ const (
 	toolExplainRate      = "explain_rate"
 	toolCompareRuns      = "compare_report_runs"
 	toolOpenPage         = "open_page"
-	toolGetShipmentDraft = "get_shipment_draft"
+	toolGetShipmentDraft = "intake_get_draft"
 	toolRankCandidates   = "rank_move_candidates"
 
 	minPreviewRows = 1
@@ -83,7 +83,7 @@ var draftSpecs = map[string]draftSpec{
 	// The reply's subject and recipient come from the message it answers,
 	// not from the proposal, so the draft carries the body alone.
 	"reply_to_inbound_message": {title: "Inbox reply", bodyKey: "body"},
-	"request_missing_docs": {
+	"shipment_request_documents": {
 		title:      "Document request",
 		subjectKey: "subject",
 		bodyKey:    "body",
@@ -837,8 +837,13 @@ func bunchDecisionArtifact(
 	}
 
 	artifact := decisionRequestArtifact(callID, proposals[0])
-	artifact.Title = assistantartifact.NormalizeTitle(fmt.Sprintf("%s (%d)",
-		assistantartifact.PhraseTitle(proposals[0].ToolName), len(proposals)))
+	artifact.Title = assistantartifact.NormalizeTitle(fmt.Sprintf(
+		"%s (%d)",
+		assistantartifact.PhraseTitle(
+			agentports.ReadingOrder(proposals[0].ToolName),
+		),
+		len(proposals),
+	))
 	artifact.Payload[payloadProposalIDs] = proposalIDStrings(proposals)
 
 	return artifact, nil
@@ -868,7 +873,7 @@ func decisionRequestArtifact(
 	artifact := &assistantartifact.Artifact{
 		Kind:   assistantartifact.KindDecisionRequest,
 		Status: decisionStatus(proposal.Status),
-		Title:  assistantartifact.PhraseTitle(proposal.ToolName),
+		Title:  assistantartifact.PhraseTitle(agentports.ReadingOrder(proposal.ToolName)),
 		Payload: map[string]any{
 			payloadProposalID: proposal.ID.String(),
 			payloadToolName:   proposal.ToolName,
@@ -975,9 +980,9 @@ func artifactFromObservation(observation agentports.ToolObservation) *assistanta
 		return candidateRankingArtifact(observation.Call.ID, result)
 	case name == toolRunReport || name == toolGetReportRun:
 		return runArtifact(observation.Call.ID, result)
-	case strings.HasPrefix(name, getToolPrefix) && isRowSet(result):
+	case strings.HasPrefix(agentports.ReadingOrder(name), getToolPrefix) && isRowSet(result):
 		return tableArtifact(observation.Call.ID, name, result)
-	case strings.HasPrefix(name, getToolPrefix):
+	case strings.HasPrefix(agentports.ReadingOrder(name), getToolPrefix):
 		return entityCardArtifact(observation.Call.ID, name, document)
 	case name == toolExplainRate:
 		return rateArtifact(observation.Call.ID, result)
@@ -995,7 +1000,8 @@ func artifactFromObservation(observation agentports.ToolObservation) *assistanta
 		return analysisArtifact(observation.Call.ID, result, observation.Call.Arguments)
 	case name == agentextension.ToolReadPortal:
 		return portalTaskArtifact(observation.Call.ID, result)
-	case strings.HasPrefix(name, listToolPrefix), strings.HasPrefix(name, searchToolPrefix):
+	case strings.HasPrefix(agentports.ReadingOrder(name), listToolPrefix),
+		strings.HasPrefix(agentports.ReadingOrder(name), searchToolPrefix):
 		if card := soleRecordCard(observation.Call.ID, name, result); card != nil {
 			return card
 		}
@@ -1069,8 +1075,10 @@ func tableArtifact(callID, toolName string, result map[string]any) *assistantart
 // listedEntity is what a list, search or get tool names its records by:
 // "formula_templates" for list_formula_templates.
 func listedEntity(toolName string) string {
+	reading := agentports.ReadingOrder(toolName)
+
 	return strings.TrimPrefix(
-		strings.TrimPrefix(strings.TrimPrefix(toolName, listToolPrefix), searchToolPrefix),
+		strings.TrimPrefix(strings.TrimPrefix(reading, listToolPrefix), searchToolPrefix),
 		getToolPrefix,
 	)
 }
@@ -1584,7 +1592,7 @@ func entityCardArtifact(
 	return recordCardArtifact(&recordCard{
 		callID:   callID,
 		toolName: toolName,
-		entity:   strings.TrimPrefix(toolName, getToolPrefix),
+		entity:   strings.TrimPrefix(agentports.ReadingOrder(toolName), getToolPrefix),
 		record:   document.fields,
 		order:    document.keyOrder(),
 	})

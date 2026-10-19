@@ -45,7 +45,7 @@ func TestReadSignals_AQuietSuccessfulTurnHasNothingToLearn(t *testing.T) {
 	signals := ReadSignals(&Window{
 		Messages: []conversation.Message{
 			person("How many loads are late today?"),
-			toolResult("list_shipments", false, aitrace.OutcomeRan),
+			toolResult("shipment_list", false, aitrace.OutcomeRan),
 			reply("Three are late."),
 		},
 		HasPerson: true,
@@ -147,7 +147,7 @@ func TestReadSignals_DecisionsFeedbackAndLongTasks(t *testing.T) {
 
 	messages := make([]conversation.Message, 0, LongTaskToolCalls)
 	for range LongTaskToolCalls {
-		messages = append(messages, toolResult("get_shipment", false, aitrace.OutcomeRan))
+		messages = append(messages, toolResult("shipment_get", false, aitrace.OutcomeRan))
 	}
 
 	signals := ReadSignals(&Window{
@@ -182,7 +182,7 @@ func TestReadSignals_ALongRunWithNobodyInItIsNoSignal(t *testing.T) {
 
 	messages := make([]conversation.Message, 0, LongTaskToolCalls)
 	for range LongTaskToolCalls {
-		messages = append(messages, toolResult("get_shipment", false, aitrace.OutcomeRan))
+		messages = append(messages, toolResult("shipment_get", false, aitrace.OutcomeRan))
 	}
 
 	assert.Empty(t, ReadSignals(&Window{Messages: messages}),

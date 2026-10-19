@@ -96,7 +96,7 @@ Loaded now:
 - wait_until
 - cancel_wait
 - list_workers
-- search_shipments
+- shipment_list
 - list_time_off
 - request_worker_pto
 - approve_worker_pto
@@ -150,12 +150,12 @@ Callable after find_tools:
 - archive_worker_credential — Archive a credential that no longer applies, such as an endorsement the driver surrendered, with the reason.
 - list_employment_verifications — List the previous employers on drivers' qualification files.
 - delete_employment_verification — Remove a previous employer filed on the qualification file in error, such as a duplicate.
-- list_shipment_permits — List an oversize or overweight shipment's state permit requirements and the permits recorded against it.
-- record_shipment_permit — Record an oversize or overweight permit a state issued for a shipment, from the permit in hand: the state, its number, status, dates, cost and conditions.
-- update_shipment_permit — Correct or move on a permit recorded on a shipment: activate it when the state issues it, fix its number or dates, or void it.
+- shipment_list_permits — List an oversize or overweight shipment's state permit requirements and the permits recorded against it.
+- shipment_record_permit — Record an oversize or overweight permit a state issued for a shipment, from the permit in hand: the state, its number, status, dates, cost and conditions.
+- shipment_update_permit — Correct or move on a permit recorded on a shipment: activate it when the state issues it, fix its number or dates, or void it.
 
 What a change you call does:
-- Changes that always record a proposal for a person to decide: flag_for_manual_review, wait_until, cancel_wait, request_worker_pto, update_worker_pto, approve_worker_pto, reject_worker_pto, cancel_worker_pto, adjust_worker_pto_balance, open_leave_case, update_leave_case, request_leave_certification, record_leave_day, update_leave_day, delete_leave_day, close_leave_case, record_worker_injury, update_worker_injury, delete_worker_injury, start_performance_review, draft_performance_review, delete_performance_review, give_worker_recognition, delete_worker_recognition, update_worker_safety_event, delete_worker_safety_event, update_safety_violation, delete_safety_violation, cancel_dot_test, run_dot_random_draw, finalize_dot_random_draw, cancel_dot_random_draw, start_worker_checklist, update_worker_checklist_item, cancel_worker_checklist, attach_worker_training_document, close_worker_training, archive_worker_credential, delete_employment_verification, record_shipment_permit, update_shipment_permit
+- Changes that always record a proposal for a person to decide: flag_for_manual_review, wait_until, cancel_wait, request_worker_pto, update_worker_pto, approve_worker_pto, reject_worker_pto, cancel_worker_pto, adjust_worker_pto_balance, open_leave_case, update_leave_case, request_leave_certification, record_leave_day, update_leave_day, delete_leave_day, close_leave_case, record_worker_injury, update_worker_injury, delete_worker_injury, start_performance_review, draft_performance_review, delete_performance_review, give_worker_recognition, delete_worker_recognition, update_worker_safety_event, delete_worker_safety_event, update_safety_violation, delete_safety_violation, cancel_dot_test, run_dot_random_draw, finalize_dot_random_draw, cancel_dot_random_draw, start_worker_checklist, update_worker_checklist_item, cancel_worker_checklist, attach_worker_training_document, close_worker_training, archive_worker_credential, delete_employment_verification, shipment_record_permit, shipment_update_permit
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: remember, guide_profile
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
@@ -163,4 +163,4 @@ How a task is done with these, in order, each step's result feeding the next; sk
 - close_leave_case: list_worker_leave_cases → close_leave_case
 - draft_performance_review: list_performance_reviews → draft_performance_review
 - finalize_dot_random_draw: list_dot_random_draws → get_dot_random_draw → finalize_dot_random_draw
-- record_shipment_permit: list_shipment_permits → record_shipment_permit
+- shipment_record_permit: shipment_list_permits → shipment_record_permit

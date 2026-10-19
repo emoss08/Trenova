@@ -10,7 +10,7 @@ import {
 
 function tool(overrides: Partial<ToolCatalogEntry>): ToolCatalogEntry {
   return {
-    name: "get_shipment",
+    name: "shipment_get",
     description: "Reads one shipment",
     parameters: null,
     kind: "query",
@@ -27,9 +27,9 @@ function tool(overrides: Partial<ToolCatalogEntry>): ToolCatalogEntry {
 }
 
 const catalog = [
-  tool({ name: "get_shipment" }),
-  tool({ name: "list_shipments" }),
-  tool({ name: "cancel_shipment", kind: "action", description: "Cancels a shipment" }),
+  tool({ name: "shipment_get" }),
+  tool({ name: "shipment_list" }),
+  tool({ name: "shipment_cancel", kind: "action", description: "Cancels a shipment" }),
   tool({ name: "list_workers", resource: "worker", description: "Lists drivers" }),
   tool({ name: "update_worker", kind: "action", resource: "worker" }),
   tool({ name: "approve_worker_pto", kind: "action", resource: "worker_pto" }),
@@ -50,27 +50,27 @@ describe("pickerGroups", () => {
     const reads = pickerGroups(catalog, [], { ...ALL, kind: "read" });
     expect(reads.map((group) => group.resource)).toEqual(["shipment", "worker"]);
     expect(reads.flatMap((group) => names(group.tools))).toEqual([
-      "get_shipment",
-      "list_shipments",
+      "shipment_get",
+      "shipment_list",
       "list_workers",
     ]);
 
     const changes = pickerGroups(catalog, [], { ...ALL, kind: "act" });
     expect(changes.flatMap((group) => names(group.tools))).toEqual([
-      "cancel_shipment",
+      "shipment_cancel",
       "update_worker",
       "approve_worker_pto",
     ]);
   });
 
   it("shows only chosen tools when asked, across groups", () => {
-    const groups = pickerGroups(catalog, ["list_workers", "cancel_shipment"], {
+    const groups = pickerGroups(catalog, ["list_workers", "shipment_cancel"], {
       ...ALL,
       chosenOnly: true,
     });
     expect(groups.map((group) => group.resource)).toEqual(["shipment", "worker"]);
     expect(groups.flatMap((group) => names(group.tools))).toEqual([
-      "cancel_shipment",
+      "shipment_cancel",
       "list_workers",
     ]);
   });
@@ -82,7 +82,7 @@ describe("pickerGroups", () => {
   });
 
   it("keeps the rail's chosen count over the whole group however it is narrowed", () => {
-    const groups = pickerGroups(catalog, ["get_shipment", "cancel_shipment"], {
+    const groups = pickerGroups(catalog, ["shipment_get", "shipment_cancel"], {
       ...ALL,
       kind: "read",
     });
@@ -106,9 +106,9 @@ describe("pickerRows", () => {
     const rows = pickerRows(groups, new Set(["list_workers"]));
     expect(rows.map((row) => (row.kind === "group" ? `#${row.resource}` : row.tool.name))).toEqual([
       "#shipment",
-      "get_shipment",
-      "list_shipments",
-      "cancel_shipment",
+      "shipment_get",
+      "shipment_list",
+      "shipment_cancel",
       "#worker",
       "list_workers",
       "update_worker",
@@ -132,44 +132,44 @@ describe("pickerRows", () => {
 
 describe("setTools", () => {
   const tierFor = (entry: ToolCatalogEntry): AutonomyTier =>
-    entry.name === "cancel_shipment" ? "Propose" : "ActWithApproval";
+    entry.name === "shipment_cancel" ? "Propose" : "ActWithApproval";
 
   it("adds the missing tools in order and gives only the new changes a tier", () => {
     const next = setTools(
       ["update_worker"],
       { update_worker: "AutoExecute" },
-      [byName("get_shipment"), byName("cancel_shipment"), byName("update_worker")],
+      [byName("shipment_get"), byName("shipment_cancel"), byName("update_worker")],
       true,
       tierFor,
     );
-    expect(next.selected).toEqual(["update_worker", "get_shipment", "cancel_shipment"]);
-    expect(next.tiers).toEqual({ update_worker: "AutoExecute", cancel_shipment: "Propose" });
+    expect(next.selected).toEqual(["update_worker", "shipment_get", "shipment_cancel"]);
+    expect(next.tiers).toEqual({ update_worker: "AutoExecute", shipment_cancel: "Propose" });
   });
 
   it("removes the given tools and their tiers, leaving every other choice alone", () => {
     const next = setTools(
-      ["get_shipment", "cancel_shipment", "update_worker", "approve_worker_pto"],
-      { cancel_shipment: "Propose", update_worker: "AutoExecute", approve_worker_pto: "Propose" },
-      [byName("cancel_shipment"), byName("update_worker"), byName("list_workers")],
+      ["shipment_get", "shipment_cancel", "update_worker", "approve_worker_pto"],
+      { shipment_cancel: "Propose", update_worker: "AutoExecute", approve_worker_pto: "Propose" },
+      [byName("shipment_cancel"), byName("update_worker"), byName("list_workers")],
       false,
       tierFor,
     );
-    expect(next.selected).toEqual(["get_shipment", "approve_worker_pto"]);
+    expect(next.selected).toEqual(["shipment_get", "approve_worker_pto"]);
     expect(next.tiers).toEqual({ approve_worker_pto: "Propose" });
   });
 
   it("clearing what a filter shows leaves the hidden chosen tools untouched", () => {
-    const selected = ["get_shipment", "cancel_shipment", "list_workers"];
+    const selected = ["shipment_get", "shipment_cancel", "list_workers"];
     const shown = pickerGroups(catalog, selected, { ...ALL, kind: "read" }).flatMap(
       (group) => group.tools,
     );
-    const next = setTools(selected, { cancel_shipment: "Propose" }, shown, false, tierFor);
-    expect(next.selected).toEqual(["cancel_shipment"]);
-    expect(next.tiers).toEqual({ cancel_shipment: "Propose" });
+    const next = setTools(selected, { shipment_cancel: "Propose" }, shown, false, tierFor);
+    expect(next.selected).toEqual(["shipment_cancel"]);
+    expect(next.tiers).toEqual({ shipment_cancel: "Propose" });
   });
 
   it("does not repeat a tool named twice", () => {
-    const next = setTools([], {}, [byName("get_shipment"), byName("get_shipment")], true, tierFor);
-    expect(next.selected).toEqual(["get_shipment"]);
+    const next = setTools([], {}, [byName("shipment_get"), byName("shipment_get")], true, tierFor);
+    expect(next.selected).toEqual(["shipment_get"]);
   });
 });

@@ -138,7 +138,7 @@ var Bindings = []Binding{
 		Extra: map[string]string{watchtowerItemID: exceptionItemArg},
 	},
 	{
-		Tool:  "create_shipment",
+		Tool:  "shipment_create",
 		Input: "ShipmentInput",
 		Param: "shipment",
 		Nested: map[string]string{
@@ -153,7 +153,7 @@ var Bindings = []Binding{
 		},
 	},
 	{
-		Tool:  "update_shipment",
+		Tool:  "shipment_update",
 		Input: "ShipmentInput",
 		Defaulted: map[string]string{
 			"serviceTypeId":     patchLeavesIt,
@@ -166,7 +166,7 @@ var Bindings = []Binding{
 		},
 	},
 	{
-		Tool:  "duplicate_shipment",
+		Tool:  "shipment_duplicate",
 		Input: "ShipmentDuplicateInput",
 		Extra: map[string]string{
 			"firstPickupAt": "the service and the REST duplicate route take a new first " +
@@ -213,7 +213,7 @@ var Bindings = []Binding{
 		Extra: map[string]string{watchtowerItemIDParam: exceptionIDArg},
 	},
 	{
-		Tool:  "share_customer_tracking_link",
+		Tool:  "shipment_share_tracking_link",
 		Input: "IssueCustomerTrackingLinkInput",
 	},
 	{
@@ -223,7 +223,7 @@ var Bindings = []Binding{
 		Extra:     map[string]string{"moveId": namedID("moveId")},
 	},
 	{
-		Tool:  "add_shipment_comment",
+		Tool:  "shipment_add_comment",
 		Input: "ShipmentCommentInput",
 		Extra: map[string]string{"shipmentId": shipmentIDArg},
 	},
@@ -556,9 +556,9 @@ var Unbound = map[string]string{
 	"add_dashboard_tile":                layoutPart,
 	"add_driver_settlement_adjustment":  pendingBinding,
 	"add_home_widget":                   layoutPart,
-	"add_order_charge": "addOrderCharge takes the charge as scalar arguments; only its payer sp" +
+	"order_add_charge": "addOrderCharge takes the charge as scalar arguments; only its payer sp" +
 		"lit is an input object, which the tool does not take",
-	"add_shipment_charge": "adds one accessorial to a saved shipment through the shipment " +
+	"shipment_add_charge": "adds one accessorial to a saved shipment through the shipment " +
 		"service's update; it takes the charge and its units, never the whole ShipmentInput",
 	"adjust_escrow_account":           pendingBinding,
 	"apply_carrier_intel_suggestions": pendingBinding,
@@ -577,14 +577,14 @@ var Unbound = map[string]string{
 	"create_accounting_reference_record":   pendingBinding,
 	"create_carrier_invoice_match":         pendingBinding,
 	"create_dashboard":                     pendingBinding,
-	"create_order":                         pendingBinding,
+	"order_create":                         pendingBinding,
 	"create_recurring_deduction":           pendingBinding,
 	"create_recurring_earning":             pendingBinding,
 	"create_report":                        pendingBinding,
 	"detach_pay_event_from_settlement":     pendingBinding,
 	"dismiss_accounting_drift":             pendingBinding,
 	"dispute_detention":                    pendingBinding,
-	"edit_shipment_comment":                pendingBinding,
+	"shipment_update_comment":              pendingBinding,
 	"email_customer": "composes any customer email; notifyShipmentDelay's input is one fixed " +
 		"kind of it, so the tool keeps its own parameters",
 	"fork_report":                       pendingBinding,
@@ -615,11 +615,11 @@ var Unbound = map[string]string{
 	"remove_carrier_settlement_adjustment": pendingBinding,
 	"remove_driver_settlement_adjustment":  pendingBinding,
 	"remove_home_widget":                   layoutPart,
-	"remove_order_charge":                  pendingBinding,
+	"order_remove_charge":                  pendingBinding,
 	"reply_to_inbound_message": "answers the sender under the original subject in the " +
 		"organization's letterhead and settles the message; it takes the body and an email " +
 		"profile, never the subject, address or template sendInboundReply's input lets a person set",
-	"reschedule_stop": "moves one stop's window through the shipment service's update; it " +
+	"shipment_reschedule_stop": "moves one stop's window through the shipment service's update; it " +
 		"takes the stop and its new window, never the whole ShipmentInput",
 	"resolve_accounting_drift":           pendingBinding,
 	"resolve_carrier_intel_event":        pendingBinding,
@@ -629,12 +629,12 @@ var Unbound = map[string]string{
 	"schedule_report":                    pendingBinding,
 	"send_billing_item_back_to_ops":      statusDecision,
 	"set_accounting_mapping":             pendingBinding,
-	"set_order_charge_allocations":       pendingBinding,
+	"order_set_charge_allocations":       pendingBinding,
 	"set_worker_availability_preference": pendingBinding,
 	"skip_accounting_sync":               pendingBinding,
 	"tender_move_to_carriers":            oneMoveTender,
 	"tender_move_to_routing_guide":       oneMoveTender,
-	"transfer_shipment_ownership":        pendingBinding,
+	"shipment_transfer_ownership":        pendingBinding,
 	"transfer_to_billing": "one tool for four mutations (one shipment, its items, a bulk transfer " +
 		"and a transfer run), so no single input is its shape",
 	"transition_item_to_in_review": statusDecision,
@@ -642,8 +642,8 @@ var Unbound = map[string]string{
 		"each; the mutation's input decides one item, so the tool takes their ids instead",
 	"unapply_credit_memo":        pendingBinding,
 	"update_escrow_account":      pendingBinding,
-	"update_order":               pendingBinding,
-	"update_order_charge":        pendingBinding,
+	"order_update":               pendingBinding,
+	"order_update_charge":        pendingBinding,
 	"update_recurring_deduction": pendingBinding,
 	"update_recurring_earning":   pendingBinding,
 	"update_report":              pendingBinding,

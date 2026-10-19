@@ -37,12 +37,12 @@ func TestMergeToolNames_NeverRemoves(t *testing.T) {
 	t.Parallel()
 
 	merged, changed := mergeToolNames(
-		[]string{"cancel_shipment", "get_worker"},
+		[]string{"shipment_cancel", "get_worker"},
 		[]string{"get_worker", "list_time_off"},
 	)
 
 	assert.True(t, changed)
-	assert.Contains(t, merged, "cancel_shipment", "a hand-picked tool is not the seeder's to drop")
+	assert.Contains(t, merged, "shipment_cancel", "a hand-picked tool is not the seeder's to drop")
 	assert.Contains(t, merged, "list_time_off")
 }
 

@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	getShipmentTool    = "get_shipment"
+	getShipmentTool    = "shipment_get"
 	listWatchtowerTool = "list_watchtower_items"
 )
 

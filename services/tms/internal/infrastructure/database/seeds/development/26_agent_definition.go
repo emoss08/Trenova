@@ -409,8 +409,7 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			// whenever the catalog grows, which is exactly the maintenance the
 			// templated definitions above no longer need.
 			ToolNames: []string{
-				"list_shipments",
-				"search_shipments",
+				"shipment_list",
 				"list_workers",
 				"list_time_off",
 				"list_expiring_credentials",

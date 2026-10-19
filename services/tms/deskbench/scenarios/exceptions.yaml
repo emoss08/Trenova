@@ -26,7 +26,7 @@ scenarios:
     steps:
       - say: "driver on SEED-DET-001 has been sitting at the receiver forever. what do we bill them"
         expect:
-          calls: ["list_detention_desk|get_detention_occurrence|get_shipment_tracking"]
+          calls: ["list_detention_desk|get_detention_occurrence|shipment_get_tracking"]
           maxFailedCalls: 1
           rubric: >
             Reads the detention clock for the stop (arrival, free time, minutes over) and the
@@ -116,7 +116,7 @@ scenarios:
     steps:
       - say: "email freshhaul that the reefer to LA is running behind, new eta is tomorrow at 10am"
         expect:
-          calls: ["get_shipment_tracking|get_shipment|search_shipments"]
+          calls: ["shipment_get_tracking|shipment_get|shipment_list"]
           proposals: [{ tool: email_customer }]
           maxFailedCalls: 1
           rubric: >
@@ -145,7 +145,7 @@ scenarios:
     steps:
       - say: "tell sarah the receiver in phoenix moved her appointment to 2pm tomorrow"
         expect:
-          calls: ["search_worker|search_shipments|get_worker"]
+          calls: ["search_worker|shipment_list|get_worker"]
           proposals: [{ tool: notify_driver }]
           maxFailedCalls: 1
           rubric: >

@@ -5,9 +5,9 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -374,13 +374,13 @@ func TestReplayHistory_KeepsTheFiguresOfAProposalsResultAsRead(t *testing.T) {
 		{
 			ID:        sourceID,
 			Role:      conversation.RoleAssistant,
-			ToolCalls: []conversation.ToolCallRecord{{ID: "c1", Name: "create_shipment"}},
+			ToolCalls: []conversation.ToolCallRecord{{ID: "c1", Name: "shipment_create"}},
 		},
-		{Role: conversation.RoleTool, ToolCallID: "c1", ToolName: "create_shipment", Content: filed},
+		{Role: conversation.RoleTool, ToolCallID: "c1", ToolName: "shipment_create", Content: filed},
 	}
 	outcomes := []agentports.ProposalOutcome{{
 		SourceMessageID: sourceID,
-		ToolName:        "create_shipment",
+		ToolName:        "shipment_create",
 		Status:          agent.ProposalStatusPending,
 	}}
 

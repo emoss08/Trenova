@@ -9,9 +9,9 @@ cases:
   - request: send the customer a delay notice by email
     expect: [email_customer]
   - request: who is driving load 123
-    expect: [get_shipment, search_shipments, get_dispatch_board]
+    expect: [shipment_get, shipment_list, get_dispatch_board]
   - request: which driver is assigned to shipment 4471
-    expect: [get_shipment, search_shipments, get_dispatch_board]
+    expect: [shipment_get, shipment_list, get_dispatch_board]
   - request: text the driver that the pickup moved to 3pm
     expect: [notify_driver]
   - request: message the driver about the new delivery window
@@ -29,13 +29,13 @@ cases:
   - request: reply to the inbound email from the broker
     expect: [reply_to_inbound_message]
   - request: which shipments are picking up today
-    expect: [list_shipments, search_shipments]
+    expect: [shipment_list]
   - request: find shipment by pro number
-    expect: [search_shipments]
+    expect: [shipment_list]
   - request: where is my truck right now
-    expect: [list_vehicle_positions, get_shipment_tracking]
+    expect: [list_vehicle_positions, shipment_get_tracking]
   - request: track the shipment location
-    expect: [get_shipment_tracking]
+    expect: [shipment_get_tracking]
   - request: which driver licenses and medical cards expire this month
     expect: [list_expiring_credentials]
   - request: ask the driver to renew their medical card
@@ -51,17 +51,17 @@ cases:
   - request: shop carriers for a rate on this lane
     expect: [shop_carriers]
   - request: put the shipment on hold
-    expect: [place_shipment_hold]
+    expect: [shipment_place_hold]
   - request: release the hold on the shipment
-    expect: [release_shipment_hold]
+    expect: [shipment_release_hold]
   - request: cancel the shipment
-    expect: [cancel_shipment]
+    expect: [shipment_cancel]
   - request: create a new shipment for Acme
-    expect: [create_shipment]
+    expect: [shipment_create]
   - request: quote a rate for a load from Dallas to Chicago
     expect: [quote_shipment]
   - request: add a comment to the shipment
-    expect: [add_shipment_comment]
+    expect: [shipment_add_comment]
   - request: who has time off booked this week
     expect: [list_time_off]
   - request: approve the driver's PTO request
@@ -101,9 +101,9 @@ cases:
   - request: fix the wrong accessorial charge code
     expect: [correct_charge_code]
   - request: ask the shipper for the missing proof of delivery
-    expect: [request_missing_docs]
+    expect: [shipment_request_documents]
   - request: attach the BOL document to the shipment
-    expect: [attach_document_to_shipment]
+    expect: [shipment_attach_document]
   - request: what does the rate confirmation document say
     expect: [get_document_summary]
   - request: record the arrival time at the stop
@@ -347,13 +347,13 @@ cases:
   - request: which diesel index price is the fuel program using
     expect: [get_fuel_surcharge_rates]
   - request: list the customer orders that are in progress
-    expect: [list_orders]
+    expect: [order_list]
   - request: find the order with PO number 88213
-    expect: [list_orders]
+    expect: [order_list]
   - request: which shipments and charges belong to this order
-    expect: [get_order]
+    expect: [order_get]
   - request: has the order charge been invoiced yet
-    expect: [get_order]
+    expect: [order_get]
   - request: which inbound EDI files were quarantined today
     expect: [list_edi_inbound_files]
   - request: show the EDI files the trading partner sent this week
@@ -409,29 +409,29 @@ cases:
   - request: list the runs the billing agent made this week
     expect: [list_agent_runs, get_agent_run]
   - request: accept the extracted rate on the import
-    expect: [accept_field]
+    expect: [intake_accept_field]
   - request: accept the BOL field the document read
-    expect: [accept_field]
+    expect: [intake_accept_field]
   - request: accept all the high confidence fields on the import
-    expect: [accept_all_confident]
+    expect: [intake_accept_confident]
   - request: accept every confident value from the rate confirmation
-    expect: [accept_all_confident]
+    expect: [intake_accept_confident]
   - request: set the weight field on the import to 42000
-    expect: [set_field_value]
+    expect: [intake_set_field]
   - request: correct the BOL value on the imported shipment
-    expect: [set_field_value]
+    expect: [intake_set_field]
   - request: set the customer on the import to Acme Foods
-    expect: [set_required_field]
+    expect: [intake_set_required_field]
   - request: set the rating method required for the imported shipment
-    expect: [set_required_field]
+    expect: [intake_set_required_field]
   - request: match the pickup stop to one of our locations
-    expect: [set_stop_location]
+    expect: [intake_set_stop_location]
   - request: set the delivery stop location on the import
-    expect: [set_stop_location]
+    expect: [intake_set_stop_location]
   - request: schedule the pickup stop for Tuesday at 8am
-    expect: [set_stop_schedule]
+    expect: [intake_set_stop_schedule]
   - request: set the delivery window on the import stop
-    expect: [set_stop_schedule]
+    expect: [intake_set_stop_schedule]
   - request: create a new location for this consignee address
     expect: [create_location]
   - request: add a location for the shipper facility we do not have yet
@@ -455,43 +455,43 @@ cases:
   - request: propose a rating formula with a hazmat surcharge
     expect: [propose_formula]
   - request: reopen the canceled shipment, the load is back on
-    expect: [uncancel_shipment]
+    expect: [shipment_uncancel]
   - request: make Maria the owner of shipment 4471
-    expect: [transfer_shipment_ownership]
+    expect: [shipment_transfer_ownership]
   - request: rerate the shipment from its contract
-    expect: [rerate_shipment]
+    expect: [shipment_rerate]
   - request: recalculate the miles on shipment 4471
-    expect: [recalculate_shipment_distance]
+    expect: [shipment_recalculate_distance]
   - request: duplicate shipment 4471 three times for next week
-    expect: [duplicate_shipment]
+    expect: [shipment_duplicate]
   - request: change the hold so it also blocks billing
-    expect: [update_shipment_hold]
+    expect: [shipment_update_hold]
   - request: split the move at the Memphis yard as a relay
     expect: [split_move_at_relay]
   - request: pin that comment to the top of the thread
-    expect: [pin_shipment_comment]
+    expect: [shipment_pin_comment]
   - request: mark the comment about the late pickup resolved
-    expect: [resolve_shipment_comment]
+    expect: [shipment_resolve_comment]
   - request: delete my comment on the shipment
-    expect: [delete_shipment_comment]
+    expect: [shipment_delete_comment]
   - request: void the service failure that was opened by mistake
     expect: [void_service_failure]
   - request: the customer disputes the detention charge
     expect: [dispute_detention]
   - request: create an order for Acme with PO 5512
-    expect: [create_order]
+    expect: [order_create]
   - request: add a consolidation fee to the order
-    expect: [add_order_charge]
+    expect: [order_add_charge]
   - request: attach these shipments to the order
-    expect: [attach_order_shipments]
+    expect: [order_attach_shipments]
   - request: close the billed order
-    expect: [close_order]
+    expect: [order_close]
   - request: set up a recurring shipment every weekday for Acme
-    expect: [create_recurring_shipment]
+    expect: [shipment_create_recurring]
   - request: pause the recurring shipment
-    expect: [set_recurring_shipment_status]
+    expect: [shipment_set_recurring_status]
   - request: which recurring shipments generate tomorrow
-    expect: [list_recurring_shipments]
+    expect: [shipment_list_recurring]
   - request: put Maria on the early shift pattern from Monday
     expect: [assign_worker_shift]
   - request: what shift schedule is the driver on
@@ -683,7 +683,7 @@ cases:
   - request: file a vacation time off request for the driver
     expect: [request_worker_pto]
   - request: record the oversize permit Indiana issued for this shipment
-    expect: [record_shipment_permit]
+    expect: [shipment_record_permit]
   - request: resolve the driver's pay dispute and pay back the detention
     expect: [resolve_settlement_dispute]
   - request: approve the lumper expense the driver submitted for reimbursement
@@ -893,29 +893,29 @@ cases:
   - request: QuickBooks refused the invoice because that month is closed, send it dated on the first open day
     expect: [redate_accounting_sync]
   - request: the customer canceled order 8810, cancel it and every load on it
-    expect: [cancel_order]
+    expect: [order_cancel]
   - request: split shipment 4471 off order 990 so it gets billed on its own
-    expect: [detach_order_shipment]
+    expect: [order_detach_shipment]
   - request: drop the detention charge from order 6612 before we invoice
-    expect: [remove_order_charge]
+    expect: [order_remove_charge]
   - request: split the fuel surcharge on order 6612 60/40 between the shipper and the consignee
-    expect: [set_order_charge_allocations, update_order_charge]
+    expect: [order_set_charge_allocations, order_update_charge]
   - request: change the PO number and BOL on order 6612
-    expect: [update_order]
+    expect: [order_update]
   - request: change the lumper charge amount on order 6612 to $185
-    expect: [update_order_charge]
+    expect: [order_update_charge]
   - request: fix the typo in my comment on shipment 4471 and make it high priority
-    expect: [edit_shipment_comment]
+    expect: [shipment_update_comment]
   - request: unpin the gate code note from the top of the shipment thread, it changed
-    expect: [unpin_shipment_comment]
+    expect: [shipment_unpin_comment]
   - request: change the weight to 42,000 lbs and the pieces to 22 on shipment 4471
-    expect: [update_shipment]
+    expect: [shipment_update]
   - request: the state issued the oversize permit for load 5530, activate it with the permit number
-    expect: [update_shipment_permit]
+    expect: [shipment_update_permit]
   - request: spin up next Tuesday's load from the weekly Walmart recurring schedule now instead of waiting
-    expect: [generate_recurring_shipment]
+    expect: [shipment_generate_recurring]
   - request: change the weekly Kroger recurring shipment to run Mondays and Thursdays
-    expect: [update_recurring_shipment]
+    expect: [shipment_update_recurring]
   - request: mark the move in transit, the driver just left the shipper
     expect: [update_move_status]
   - request: take the driver and truck off these two moves, they have not started yet

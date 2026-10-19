@@ -286,8 +286,8 @@ func safetyEventProperties() map[string]any {
 			wfShortChars),
 		common.FieldShipmentID: agenttoolschema.RecordIDText(
 			permission.ResourceShipment,
-			"The load it happened on, from search_shipments or "+
-				"get_shipment. Never guess one.",
+			"The load it happened on, from shipment_list or "+
+				"shipment_get. Never guess one.",
 		),
 		paramInspectionLevel: common.IntegerProperty("For an inspection: its CVSA level.", 1,
 			maxInspectionLevel),

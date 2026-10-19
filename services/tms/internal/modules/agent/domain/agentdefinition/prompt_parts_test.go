@@ -56,12 +56,12 @@ func TestBuildSystemPromptParts_PutsADisclosedToolListWithTheTurn(t *testing.T) 
 	rc := fullContext()
 	rc.ToolsDisclosed = true
 	rc.Tools = []agentdefinition.ToolSummary{
-		{Name: "get_shipment", Description: "Look up a shipment", Loaded: true},
+		{Name: "shipment_get", Description: "Look up a shipment", Loaded: true},
 		{Name: "list_workers", Description: "List workers"},
 	}
 
 	parts := d.BuildSystemPromptParts(&rc)
 
-	assert.NotContains(t, parts.Stable, "get_shipment")
-	assert.Contains(t, parts.Volatile, "get_shipment")
+	assert.NotContains(t, parts.Stable, "shipment_get")
+	assert.Contains(t, parts.Volatile, "shipment_get")
 }

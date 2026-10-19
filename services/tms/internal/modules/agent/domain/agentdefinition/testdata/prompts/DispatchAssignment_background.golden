@@ -60,7 +60,7 @@ Loaded now:
 - flag_for_manual_review
 - wait_until
 - cancel_wait
-- get_shipment
+- shipment_get
 - get_worker
 - search_worker
 - rank_move_candidates
@@ -73,7 +73,7 @@ Loaded now:
 - list_trailers
 
 Callable after find_tools:
-- search_shipments — Find shipments by the words people use for them: a pro number or BOL, a customer's name or code, a stop's place or city, the driver, or what it carries.
+- shipment_list — Find shipments (loads) by the words people use for them, by status, or by filters on dates, charges and transfer status.
 - get_dispatch_board — The dispatch board: every move in the window with its urgency and coverage, and every driver with availability, hours remaining and last position.
 - list_carriers — List the carriers this organization tenders freight to, narrowed by status, compliance, safety rating or authority number.
 - shop_carriers — Price a saved shipment against carriers and rank them by contract cost, margin against the customer's charge, and routing guide rank.
@@ -90,6 +90,6 @@ What a change you call does:
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: remember
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
-- assign_move: get_shipment → rank_move_candidates → assign_move
-- assign_move_to_carrier: get_shipment → shop_carriers → assign_move_to_carrier
+- assign_move: shipment_get → rank_move_candidates → assign_move
+- assign_move_to_carrier: shipment_get → shop_carriers → assign_move_to_carrier
 - send_rate_confirmation: list_rate_confirmations → send_rate_confirmation

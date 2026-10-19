@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/samber/lo"
@@ -91,7 +92,7 @@ func newGetShipmentTrackingTool(
 	}
 }
 
-func (t *getShipmentTrackingTool) Name() string { return "get_shipment_tracking" }
+func (t *getShipmentTrackingTool) Name() string { return "shipment_get_tracking" }
 
 func (t *getShipmentTrackingTool) Description() string {
 	return "Where a shipment is and whether it will be on time: each stop's window, actual " +
@@ -102,7 +103,7 @@ func (t *getShipmentTrackingTool) Description() string {
 		"routed drive time, dwell and the driver's hours; estimate.basis says what it rests " +
 		"on and estimate.inputStale says when that is old. Call it an estimate and never a " +
 		"promise. Start here for any \"where is\", \"is it " +
-		"late\" or \"when will it arrive\" question; get_shipment has the commercial " +
+		"late\" or \"when will it arrive\" question; shipment_get has the commercial " +
 		"detail instead."
 }
 
@@ -110,17 +111,29 @@ func (t *getShipmentTrackingTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"shipmentId": agenttoolschema.OfResource(map[string]any{
-				"type": "string",
-				"description": "The shipment's id, from search_shipments or list_shipments, " +
-					"the page you are on, or this run's subject. Give this or proNumber.",
-			}, permission.ResourceShipment),
-			"proNumber": map[string]any{
-				"type":        "string",
-				"description": "The PRO number, when that is what the person gave you.",
-			},
+			paramShipmentID: shipmentRefProperty(),
+			paramProNumber:  proNumberProperty(),
 		},
 		"additionalProperties": false,
+	}
+}
+
+func (t *getShipmentTrackingTool) SearchTerms() []string {
+	return []string{"track", "where is", "eta", "on time", "running late"}
+}
+
+func shipmentRefProperty() map[string]any {
+	return agenttoolschema.OfResource(map[string]any{
+		toolschema.KeyType: toolschema.TypeString,
+		toolschema.KeyDescription: "The shipment's id, from shipment_list, the page you are " +
+			"on, or this run's subject. Give this or proNumber.",
+	}, permission.ResourceShipment)
+}
+
+func proNumberProperty() map[string]any {
+	return map[string]any{
+		toolschema.KeyType:        toolschema.TypeString,
+		toolschema.KeyDescription: "The PRO number, when that is what the person gave you.",
 	}
 }
 
@@ -139,7 +152,7 @@ func (t *getShipmentTrackingTool) Query(
 	}
 
 	tenant := tenantOf(params)
-	sp, err := t.load(ctx, tenant, params.Params)
+	sp, err := loadShipment(ctx, t.shipments, tenant, params.Params)
 	if err != nil {
 		return nil, err
 	}
@@ -192,12 +205,13 @@ func (t *getShipmentTrackingTool) Query(
 	}), nil
 }
 
-// load reads the shipment by id, or by PRO number when that is what was
+// loadShipment reads the shipment by id, or by PRO number when that is what was
 // given; a PRO that matches more than one record is refused with the
 // candidates, because guessing between two loads is how the wrong customer
 // gets a call.
-func (t *getShipmentTrackingTool) load(
+func loadShipment(
 	ctx context.Context,
+	shipments shipmentports.ShipmentRepository,
 	tenant pagination.TenantInfo,
 	params map[string]any,
 ) (*shipment.Shipment, error) {
@@ -212,7 +226,7 @@ func (t *getShipmentTrackingTool) load(
 			return nil, fmt.Errorf("parameter \"shipmentId\" is not a valid id: %w", err)
 		}
 
-		return t.shipments.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
+		return shipments.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 			ID:              id,
 			TenantInfo:      tenant,
 			ShipmentOptions: options,
@@ -224,7 +238,7 @@ func (t *getShipmentTrackingTool) load(
 		return nil, fmt.Errorf("give shipmentId or proNumber")
 	}
 
-	result, err := t.shipments.List(ctx, &shipmentports.ListShipmentsRequest{
+	result, err := shipments.List(ctx, &shipmentports.ListShipmentsRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenant,
 			Pagination: pagination.Info{Limit: 10},

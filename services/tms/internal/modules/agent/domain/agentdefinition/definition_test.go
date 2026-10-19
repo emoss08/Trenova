@@ -21,7 +21,7 @@ func validDefinition() *agentdefinition.Definition {
 		Name:            "Night dispatch helper",
 		Instructions:    "You help the night dispatch desk. Check hours of service first.",
 		AutonomyCeiling: agent.TierPropose,
-		ToolNames:       []string{"get_shipment", "flag_for_manual_review"},
+		ToolNames:       []string{"shipment_get", "flag_for_manual_review"},
 		TriggerMode:     agentdefinition.TriggerChat,
 		Enabled:         true,
 	}
@@ -132,7 +132,7 @@ func TestValidate_RejectsToolTiersForToolsNotEnabled(t *testing.T) {
 
 	d := validDefinition()
 	d.ToolTiers = map[string]agent.AutonomyTier{
-		"get_shipment": agent.TierAutoExecute,
+		"shipment_get": agent.TierAutoExecute,
 		"assign_move":  agent.TierPropose,
 	}
 
@@ -142,11 +142,11 @@ func TestValidate_RejectsToolTiersForToolsNotEnabled(t *testing.T) {
 		errs["toolTiers.assign_move"],
 		"a tier for a tool the agent cannot use is a mistake",
 	)
-	assert.False(t, errs["toolTiers.get_shipment"])
+	assert.False(t, errs["toolTiers.shipment_get"])
 
 	d = validDefinition()
-	d.ToolTiers = map[string]agent.AutonomyTier{"get_shipment": agent.AutonomyTier("Whenever")}
-	assert.True(t, fieldErrors(t, d)["toolTiers.get_shipment"])
+	d.ToolTiers = map[string]agent.AutonomyTier{"shipment_get": agent.AutonomyTier("Whenever")}
+	assert.True(t, fieldErrors(t, d)["toolTiers.shipment_get"])
 }
 
 func TestValidate_ScheduledNeedsAValidCronAndTimezone(t *testing.T) {
@@ -325,7 +325,7 @@ func TestAllowsTool(t *testing.T) {
 	assert.True(t, d.AllowsTool("flag_for_manual_review"))
 	assert.True(
 		t,
-		d.AllowsTool("get_shipment"),
+		d.AllowsTool("shipment_get"),
 		"read tools are enabled the same way write tools are",
 	)
 	assert.False(t, d.AllowsTool("correct_charge_code"))
@@ -453,7 +453,7 @@ func TestTemplates_CarryTheToolsTheirPurposeRequires(t *testing.T) {
 		"dispatch decides who is available")
 
 	assert.Contains(t, agentdefinition.TemplateBillingAssistant.StarterTools(),
-		"list_shipments")
+		"shipment_list")
 }
 
 // The billing assistant works the whole lifecycle with the person it is

@@ -110,7 +110,9 @@ func (c *Connector) Test(
 	if running == 1 {
 		note = "The key works. 1 sandbox is running on this account now."
 	} else if running > 1 {
-		note = "The key works. " + strconv.Itoa(running) + " sandboxes are running on this account now."
+		note = "The key works. " + strconv.Itoa(
+			running,
+		) + " sandboxes are running on this account now."
 	}
 
 	return &agentextensionports.ConnectorTestResult{Note: note}, nil

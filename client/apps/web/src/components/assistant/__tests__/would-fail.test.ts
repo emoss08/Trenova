@@ -107,7 +107,7 @@ describe("editableParam", () => {
 describe("askAgentMessage", () => {
   it("names each reason and asks for a corrected proposal", () => {
     const text = askAgentMessage(
-      "create_shipment",
+      "shipment_create",
       [reason(), { field: "", label: "", message: "The customer is on credit hold", param: "" }],
       t,
     );

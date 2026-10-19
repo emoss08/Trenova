@@ -87,13 +87,15 @@ Loaded now:
 - open_page
 - wait_until
 - cancel_wait
-- search_shipments
+- shipment_list
 - list_billing_queue_items
 - transition_items_to_in_review
-- request_missing_docs
+- list_email_profiles
+- shipment_request_documents
 - list_accessorial_charges
+- list_invoice_runs
 - adjust_invoice_run_membership
-- add_shipment_charge
+- shipment_add_charge
 - send_detention_notice
 - list_customers
 - list_detention_desk
@@ -101,8 +103,7 @@ Loaded now:
 
 Callable after find_tools:
 - read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
-- get_shipment — Retrieve one shipment (load) by its id, with its stops, the driver and equipment assigned to each move, the holds on it now and its newest comments.
-- list_shipments — List shipments by status, billing state, dates or charges, such as picking up today.
+- shipment_get — Read one shipment (load) by its id or PRO number.
 - list_billing_transfer_candidates — List the delivered shipments not yet in the billing queue, oldest first: the same list the transfer-to-billing dialog offers.
 - transfer_to_billing — Transfer delivered shipments to the billing queue, as the transfer-to-billing dialog does: each becomes a queue item a biller reviews.
 - get_billing_queue_item — Open one billing queue item with its payer, shipment and the charges this payer is billed.
@@ -122,8 +123,7 @@ Callable after find_tools:
 - post_invoices — Propose posting several draft invoices in one proposal the person approves together.
 - send_invoices — Propose emailing several invoices to their customers in one proposal the person approves together.
 - run_report — Start one of the reports from list_reports: a built-in one by reportKey or a saved one by definitionId, whichever dataset it reads.
-- list_email_profiles — The sending profiles email can go out from: each has a name, a sender address and a reply-to.
-- add_shipment_comment — Leave a note on a shipment's comment thread, where dispatch will read it.
+- shipment_add_comment — Leave a note on a shipment's comment thread, where dispatch will read it.
 - create_invoice — Propose drafting invoices for completed freight: an order's billable shipments as one grouped invoice, or shipments on their own.
 - update_invoice_draft — Change what a draft invoice says and where it goes: its memo, remittance instructions, email subject and body, recipients and attached documents.
 - generate_invoice_pdf — Render an invoice's PDF from what it says now and file it on the invoice, replacing the one there.
@@ -137,7 +137,6 @@ Callable after find_tools:
 - submit_invoice_adjustment — Propose crediting, rebilling, reversing or writing off posted invoices.
 - approve_invoice_adjustment — Propose approving an invoice adjustment that waits for approval, which executes it: the credit memo and any replacement invoice are made and posted.
 - reject_invoice_adjustment — Propose rejecting an invoice adjustment that waits for approval, with the reason the submitter will read.
-- list_invoice_runs — List invoice runs, the reviewable batches of consolidated invoices for a billing period, by status, number or period.
 - get_invoice_run — Retrieve one invoice run by id with each group, the invoice it would make or made, and the items in it: the ids adjust_invoice_run_membership moves or excludes.
 - build_invoice_run — Build an invoice run: a reviewable proposal of the consolidated invoices for customers' approved, uninvoiced freight over a period.
 - commit_invoice_run — Propose committing an invoice run, which turns each of its proposed invoices into a draft invoice for the customer.
@@ -154,7 +153,7 @@ Callable after find_tools:
 - list_open_statements — List the open billing periods of customers billed on statements, as they stand now.
 
 What a change you call does:
-- Changes that always record a proposal for a person to decide: flag_for_manual_review, wait_until, cancel_wait, transfer_to_billing, assign_billing_queue_billers, transition_items_to_in_review, hold_billing_queue_item, move_billing_item_to_exception, send_billing_item_back_to_ops, approve_billing_queue_item, approve_billing_queue_items, cancel_billing_queue_item, post_invoice, send_invoice, post_invoices, send_invoices, request_missing_docs, add_shipment_comment, create_invoice, update_invoice_draft, generate_invoice_pdf, void_invoice, create_invoice_memo, send_invoice_edi, save_invoice_adjustment_draft, submit_invoice_adjustment, approve_invoice_adjustment, reject_invoice_adjustment, build_invoice_run, adjust_invoice_run_membership, commit_invoice_run, cancel_invoice_run, bill_statement_now, share_invoice, reassign_billing_charge, manage_billing_transfer_run, add_shipment_charge, approve_detention, send_detention_notice
+- Changes that always record a proposal for a person to decide: flag_for_manual_review, wait_until, cancel_wait, transfer_to_billing, assign_billing_queue_billers, transition_items_to_in_review, hold_billing_queue_item, move_billing_item_to_exception, send_billing_item_back_to_ops, approve_billing_queue_item, approve_billing_queue_items, cancel_billing_queue_item, post_invoice, send_invoice, post_invoices, send_invoices, shipment_request_documents, shipment_add_comment, create_invoice, update_invoice_draft, generate_invoice_pdf, void_invoice, create_invoice_memo, send_invoice_edi, save_invoice_adjustment_draft, submit_invoice_adjustment, approve_invoice_adjustment, reject_invoice_adjustment, build_invoice_run, adjust_invoice_run_membership, commit_invoice_run, cancel_invoice_run, bill_statement_now, share_invoice, reassign_billing_charge, manage_billing_transfer_run, shipment_add_charge, approve_detention, send_detention_notice
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: remember, guide_profile
 
 Several records in one call: get_billing_queue_items does get_billing_queue_item for a list, assign_billing_queue_billers does assign_billing_queue_biller for a list, transition_items_to_in_review does transition_item_to_in_review for a list, approve_billing_queue_items does approve_billing_queue_item for a list, get_invoices does get_invoice for a list, post_invoices does post_invoice for a list, send_invoices does send_invoice for a list. When the person asks about several records, or for one change across several, call the list tool once with all of them, so a change is decided once on one card; never call the single tool once per record, and load the list tool with find_tools when it is not loaded.
@@ -168,6 +167,6 @@ How a task is done with these, in order, each step's result feeding the next; sk
 - submit_invoice_adjustment: get_invoice → submit_invoice_adjustment
 - build_invoice_run: list_open_statements → build_invoice_run → get_invoice_run → commit_invoice_run
 - share_invoice: list_invoice_share_candidates → share_invoice
-- add_shipment_charge: search_shipments → list_accessorial_charges → add_shipment_charge
+- shipment_add_charge: shipment_list → list_accessorial_charges → shipment_add_charge
 - approve_detention: list_detention_desk → get_detention_occurrence → approve_detention
 - send_detention_notice: get_detention_occurrence → send_detention_notice

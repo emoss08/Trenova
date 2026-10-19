@@ -4,12 +4,12 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -355,12 +355,12 @@ func TestGet_ListsTheWritesAHeldToolBrings(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture()
-	f.agent.ToolNames = []string{"create_shipment"}
+	f.agent.ToolNames = []string{"shipment_create"}
 	f.agent.DisabledToolNames = []string{"create_commodity"}
 	f.svc.tools = &agenttest.StubActionRegistry{Tools: []agentports.AgentTool{
 		bringingTool{
 			StubActionTool: &agenttest.StubActionTool{
-				ToolName: "create_shipment", Tier: agent.TierPropose,
+				ToolName: "shipment_create", Tier: agent.TierPropose,
 			},
 			brings: []string{"create_customer", "create_commodity"},
 		},

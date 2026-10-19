@@ -54,10 +54,10 @@ func TestEveryToolBelongsToOneCapability(t *testing.T) {
 func TestCapabilityForToolIgnoresOtherTools(t *testing.T) {
 	t.Parallel()
 
-	_, found := agentextension.CapabilityForTool("get_shipment")
+	_, found := agentextension.CapabilityForTool("shipment_get")
 	assert.False(t, found)
-	assert.False(t, agentextension.IsExtensionTool("get_shipment"))
-	assert.False(t, agentextension.ReturnsExternalContent("get_shipment"))
+	assert.False(t, agentextension.IsExtensionTool("shipment_get"))
+	assert.False(t, agentextension.ReturnsExternalContent("shipment_get"))
 	assert.True(t, agentextension.ReturnsExternalContent(agentextension.ToolWebSearch))
 }
 
@@ -94,7 +94,7 @@ func TestActiveOffersGrantsAndServes(t *testing.T) {
 	t.Parallel()
 
 	none := agentextension.Active{}
-	assert.True(t, none.Offers("get_shipment"))
+	assert.True(t, none.Offers("shipment_get"))
 	assert.False(t, none.Offers(agentextension.ToolWebSearch))
 	assert.Empty(t, none.Grants())
 

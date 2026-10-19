@@ -92,12 +92,12 @@ func newListRecurringShipmentsTool(
 	repo recurringshipmentports.RecurringShipmentRepository,
 ) agentports.AgentQueryTool {
 	return newListTool(listSpec{
-		name:         "list_recurring_shipments",
+		name:         "shipment_list_recurring",
 		entityPlural: "recurring shipments",
 		summary: "List recurring shipments: the series that copy one saved shipment on a " +
 			"schedule for a customer's standing lane, with when each next generates. Use " +
-			"the id with update_recurring_shipment, set_recurring_shipment_status or " +
-			"generate_recurring_shipment.",
+			"the id with shipment_update_recurring, shipment_set_recurring_status or " +
+			"shipment_generate_recurring.",
 		resource: permission.ResourceRecurringShipment,
 		config:   querybuilder.GetFieldConfiguration((*recurringshipment.RecurringShipment)(nil)),
 		fields: []listField{

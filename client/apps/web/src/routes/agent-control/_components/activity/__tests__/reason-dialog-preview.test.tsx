@@ -34,7 +34,7 @@ function openDialog(overrides: Partial<ReasonDialogRequest> = {}) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const request: ReasonDialogRequest = {
     title: "Approve this change?",
-    description: "update_shipment will run.",
+    description: "shipment_update will run.",
     confirmLabel: "Approve and run",
     reasonLabel: "Reason",
     requireReason: false,
@@ -135,7 +135,7 @@ describe("ReasonDialog with a preview", () => {
 });
 
 function refusedOverBOL(): ProposalPreview {
-  return preview({ tool: "create_shipment", warnings: [warning({ reasons: [reason()] })] });
+  return preview({ tool: "shipment_create", warnings: [warning({ reasons: [reason()] })] });
 }
 
 const ASKED =
@@ -191,7 +191,7 @@ describe("ReasonDialog for a write that would be refused", () => {
     const onReject = vi.fn<ReasonDialogRequest["onConfirm"]>(async () => {});
     const base: ReasonDialogRequest = {
       title: "Approve this change?",
-      description: "create_shipment will run.",
+      description: "shipment_create will run.",
       confirmLabel: "Approve and run",
       reasonLabel: "Reason",
       requireReason: false,

@@ -100,7 +100,7 @@ func (t *GenerateRateConfirmationTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		common.PreviewFieldShipmentMoveID: agenttoolschema.RecordIDText(
 			permission.ResourceShipmentMove,
-			"The carrier-covered move, from get_dispatch_board (moveId) or get_shipment "+
+			"The carrier-covered move, from get_dispatch_board (moveId) or shipment_get "+
 				"(its moves).",
 		),
 	}, common.PreviewFieldShipmentMoveID)

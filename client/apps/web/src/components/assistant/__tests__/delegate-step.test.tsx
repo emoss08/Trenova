@@ -51,12 +51,12 @@ function handOff(): ToolStep {
         saved({ role: "User", content: "Find where PRO-1001 is." }),
         saved({
           role: "Assistant",
-          toolCalls: [{ id: "call_look", name: "get_shipment", arguments: {} }],
+          toolCalls: [{ id: "call_look", name: "shipment_get", arguments: {} }],
         }),
         saved({
           role: "Tool",
           toolCallId: "call_look",
-          toolName: "get_shipment",
+          toolName: "shipment_get",
           content: "{}",
           summary: "PRO-1001",
         }),

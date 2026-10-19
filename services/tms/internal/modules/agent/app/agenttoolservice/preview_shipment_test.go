@@ -152,8 +152,8 @@ func TestCancelShipmentPreview_ShowsWhoIsToldAndWhatIsWithdrawn(t *testing.T) {
 	shipments := &fakeShipmentService{}
 	tool := shipmenttools.NewCancelShipmentTool(shipments, &fakePartnerNotices{}, fakeLiveTenders{})
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		"shipmentId":   pulid.MustNew("shp_").String(),
-		"cancelReason": "Customer pulled the load",
+		"shipmentId": pulid.MustNew("shp_").String(),
+		"reason":     "Customer pulled the load",
 	})
 
 	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)

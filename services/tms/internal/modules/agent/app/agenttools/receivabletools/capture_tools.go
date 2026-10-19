@@ -302,7 +302,7 @@ func captureFilingProperties() map[string]any {
 					paramCaptureTarget: agenttoolschema.Enum("The kind of record it "+
 						"goes on.", captureTargetTypes),
 					paramCaptureTargetID: agenttoolschema.KindID("The record it goes on, by id "+
-						"from search_shipments, search_worker, list_tractors, list_trailers, "+
+						"from shipment_list, search_worker, list_tractors, list_trailers, "+
 						"list_customers or list_carriers.",
 						permission.RecordKind(permission.ResourceShipment),
 						permission.RecordKind(permission.ResourceWorker),

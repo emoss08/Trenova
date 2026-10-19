@@ -4,7 +4,7 @@
 // and the PDF are drawn from the same lines, so a box built from a line sits
 // on that line's text. The payload is built the way
 // `assistantservice/extraction.go` builds it from the draft
-// `get_shipment_draft` returns.
+// `intake_get_draft` returns.
 
 export const EXTRACTION_THREAD_ID = "athr_desk_extract";
 export const EXTRACTION_AGENT_ID = "agd_dispatch";
@@ -109,7 +109,7 @@ const field = (label, value, confidence, pageNumber, extra = {}) => ({
   ...extra,
 });
 
-/** The draft `get_shipment_draft` returns for the rate confirmation. */
+/** The draft `intake_get_draft` returns for the rate confirmation. */
 function rateconDraft(documentId, attachedShipmentId) {
   return {
     documentId,
@@ -474,7 +474,7 @@ function payloadOf(draft, document, pages) {
       key: MISSING_KEYS[label] ?? label,
       label,
     })),
-    tool: "get_shipment_draft",
+    tool: "intake_get_draft",
   };
   if (draft.attachedShipmentId) payload.attachedShipmentId = draft.attachedShipmentId;
   return payload;
@@ -520,7 +520,7 @@ function legacyPayload(draft, document) {
     fields,
     needsLook: fields.filter((entry) => entry.needsLook).length,
     missing: draft.missingFields,
-    tool: "get_shipment_draft",
+    tool: "intake_get_draft",
   };
 }
 

@@ -77,7 +77,7 @@ describe("emailDraftFrom", () => {
   it("reads the subject, body and recipients", () => {
     const draft = emailDraftFrom(
       artifact("email_draft", {
-        tool: "request_missing_docs",
+        tool: "shipment_request_documents",
         subject: "Missing POD",
         body: "Please send it.",
         to: ["ops@acme.test"],
@@ -85,7 +85,7 @@ describe("emailDraftFrom", () => {
       }),
     );
     expect(draft).toEqual({
-      tool: "request_missing_docs",
+      tool: "shipment_request_documents",
       subject: "Missing POD",
       body: "Please send it.",
       to: ["ops@acme.test"],

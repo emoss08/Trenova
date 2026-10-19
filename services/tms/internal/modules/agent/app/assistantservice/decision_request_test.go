@@ -51,7 +51,7 @@ func waitingProposal(status agent.ProposalStatus) *agent.AgentProposal {
 	return &agent.AgentProposal{
 		ID:        pulid.MustNew("aprop_"),
 		RunID:     pulid.MustNew("arun_"),
-		ToolName:  "create_shipment",
+		ToolName:  "shipment_create",
 		Rationale: "Copy PRO-100 for Tuesday.",
 		Status:    status,
 	}

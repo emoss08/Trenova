@@ -17,7 +17,7 @@ scenarios:
         page: { path: /billing/queue, title: Billing queue }
         attach: [../fixtures/attachments/rate-confirmation-np-77120.pdf]
         expect:
-          proposals: [{ tool: create_shipment }]
+          proposals: [{ tool: shipment_create }]
           maxFailedCalls: 2
           replyExcludes:
             - "don't see|do not see|can't see|cannot see|no file|not attached|re-upload|reupload"

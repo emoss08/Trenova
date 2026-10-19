@@ -387,7 +387,7 @@ func (t *CreateCarrierInvoiceMatchTool) ParamSchema() map[string]any {
 			ediInvoiceSourcesTool+". Never guess one.", permission.KindEDICarrierInvoice),
 		common.FieldShipmentID: agenttoolschema.RecordIDText(
 			permission.ResourceShipment,
-			"The shipment it bills, from search_shipments, when the "+
+			"The shipment it bills, from shipment_list, when the "+
 				"invoice's own references do not find it.",
 		),
 		paramMatchProNumber: common.StringProperty("The pro number it bills, when the invoice "+

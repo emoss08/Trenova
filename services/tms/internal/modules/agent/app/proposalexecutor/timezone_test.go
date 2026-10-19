@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -40,7 +40,7 @@ func TestExecute_HandsTheToolTheTenantsTimezone(t *testing.T) {
 	t.Parallel()
 
 	tool := &zoneTool{recordingTool: recordingTool{
-		name:      "create_shipment",
+		name:      "shipment_create",
 		resource:  permission.ResourceShipment,
 		operation: permission.OpCreate,
 	}}
@@ -66,7 +66,7 @@ func TestExecute_RefusesWhenTheTimezoneCannotBeRead(t *testing.T) {
 	t.Parallel()
 
 	tool := &zoneTool{recordingTool: recordingTool{
-		name:      "create_shipment",
+		name:      "shipment_create",
 		resource:  permission.ResourceShipment,
 		operation: permission.OpCreate,
 	}}

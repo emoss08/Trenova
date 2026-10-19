@@ -4520,6 +4520,13 @@ findings:
       request_missing_docs requires profileId and tells the model to call list_email_profiles
       first, but declares no prerequisite, and BillingException's starter tools lack
       list_email_profiles.
+    cause: >
+      The tool names its id source in prose only; a prerequisite is what grants the read to
+      every agent holding the tool.
+    fix: >
+      The tool, now shipment_request_documents, declares list_email_profiles as a prerequisite,
+      so every agent that holds it holds the read. Open until a bench run of the scenario shows
+      it.
     files:
       - services/tms/internal/modules/agent/domain/agentdefinition/tools.go
       - services/tms/internal/modules/agent/app/agenttools/workforcetools/request_missing_docs.go

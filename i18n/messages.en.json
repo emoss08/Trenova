@@ -14496,7 +14496,7 @@
     ]
   },
   "Accounting sync": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -20121,12 +20121,14 @@
     ]
   },
   "Agent": {
-    "sites": 31,
+    "sites": 32,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/hooks",
+      "go/other",
       "routes/agent-control",
       "routes/desk"
     ]
@@ -39005,6 +39007,15 @@
       "go/other"
     ]
   },
+  "Billing and invoices": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Billing assistant": {
     "sites": 1,
     "scope": [
@@ -43183,7 +43194,7 @@
       "go/other"
     ]
   },
-  "Cancel an order and every shipment on it that is not already canceled, with the reason the customer gave. An order with an invoiced shipment cannot be canceled; credit the invoice first. Canceling a shipment tells its carrier and trading partner as cancel_shipment would.": {
+  "Cancel an order and every shipment on it that is not already canceled, with the reason the customer gave. An order with an invoiced shipment cannot be canceled; credit the invoice first. Canceling a shipment tells its carrier and trading partner as shipment_cancel would.": {
     "sites": 1,
     "scope": [
       "go"
@@ -46355,7 +46366,7 @@
     ]
   },
   "Carriers": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
@@ -47551,7 +47562,7 @@
       "go/other"
     ]
   },
-  "Change a recurring shipment's name, schedule, timezone, dates, limits, blackout days or whether it generates on its own. Send only what changes; an empty endDate removes the end. Pause or resume it with set_recurring_shipment_status.": {
+  "Change a recurring shipment's name, schedule, timezone, dates, limits, blackout days or whether it generates on its own. Send only what changes; an empty endDate removes the end. Pause or resume it with shipment_set_recurring_status.": {
     "sites": 1,
     "scope": [
       "go"
@@ -47596,7 +47607,7 @@
       "go/other"
     ]
   },
-  "Change an active hold on a shipment: its severity, its notes, what it blocks (dispatch, delivery, billing) and whether the customer sees it. Send only what changes; everything else stays as it is. Use release_shipment_hold to clear a hold rather than unblocking everything. Making a hold visible to the customer is shown to them, so only do it when the person asked.": {
+  "Change an active hold on a shipment: its severity, its note, what it blocks (dispatch, delivery, billing) and whether the customer sees it. Send only what changes; everything else stays as it is. Use shipment_release_hold to clear a hold rather than unblocking everything. Making a hold visible to the customer is shown to them, so only do it when the person asked.": {
     "sites": 1,
     "scope": [
       "go"
@@ -56324,6 +56335,15 @@
       "routes/shipment"
     ]
   },
+  "Commodities, hazardous materials, hold reasons and the other lookup lists.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Commodity": {
     "sites": 19,
     "scope": [
@@ -61700,7 +61720,7 @@
       "routes/inbox"
     ]
   },
-  "Copy an existing shipment into new ones on the server, carrying its customer, stops, commodities, charges, freight terms and rating method exactly as saved. Prefer it to create_shipment whenever the freight repeats one already booked, since nothing is retyped. Give firstPickupAt to move every stop window so the first pickup starts then, in local time at that pickup; leave it out to keep the source's dates. A shipment nothing prices cannot be copied. Each copy gets its own pro number and order; they appear in search_shipments within a minute.": {
+  "Copy an existing shipment into new ones on the server, carrying its customer, stops, commodities, charges, freight terms and rating method exactly as saved. Prefer it to shipment_create whenever the freight repeats one already booked, since nothing is retyped. Give firstPickupAt to move every stop window so the first pickup starts then, in local time at that pickup; leave it out to keep the source's dates. A shipment nothing prices cannot be copied. Each copy gets its own pro number and order; they appear in shipment_list within a minute.": {
     "sites": 1,
     "scope": [
       "go"
@@ -64787,6 +64807,15 @@
     "areas": [
       "apps/web/lib",
       "routes/org-structure"
+    ]
+  },
+  "Covering moves: the board, assignments, tenders, check calls and stop actuals.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Covers brokered loads with carriers.": {
@@ -68314,6 +68343,15 @@
       "go/other"
     ]
   },
+  "Customer and facility locations and their categories.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Customer assistant": {
     "sites": 1,
     "scope": [
@@ -68555,6 +68593,15 @@
       "routes/accounting-inbound"
     ]
   },
+  "Customer orders, the shipments under them and their charges.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Customer payment": {
     "sites": 4,
     "scope": [
@@ -68676,6 +68723,15 @@
     ]
   },
   "Customer purchase order number.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Customer records, their status, preferences and the updates sent to them.": {
     "sites": 1,
     "scope": [
       "go"
@@ -68877,7 +68933,7 @@
     ]
   },
   "Customers": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "go",
       "ts"
@@ -73838,7 +73894,7 @@
       "go/other"
     ]
   },
-  "Delete a comment from a shipment's thread: your own, or another person's when the person you act for may moderate comments. One with replies is left as a placeholder so the replies keep their place. Prefer resolve_shipment_comment for a note that was right at the time.": {
+  "Delete a comment from a shipment's thread: your own, or another person's when the person you act for may moderate comments. One with replies is left as a placeholder so the replies keep their place. Prefer shipment_resolve_comment for a note that was right at the time.": {
     "sites": 1,
     "scope": [
       "go"
@@ -76696,7 +76752,7 @@
     ]
   },
   "Detention": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
@@ -76837,6 +76893,15 @@
   },
   "Detention analytics are not available": {
     "sites": 3,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Detention at a stop: occurrences, notices, approvals, waivers and disputes.": {
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -78743,7 +78808,7 @@
     ]
   },
   "Dispatch": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "go",
       "ts"
@@ -81218,7 +81283,7 @@
     ]
   },
   "Documents": {
-    "sites": 21,
+    "sites": 22,
     "scope": [
       "go",
       "ts"
@@ -82905,6 +82970,15 @@
       "routes/accounting-control"
     ]
   },
+  "Driver and carrier settlements, pay events, advances, escrow, deductions and payroll.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Driver and owner-operator pay": {
     "sites": 1,
     "scope": [
@@ -83672,6 +83746,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Drivers and staff: records, hours, credentials, time off, training, safety and reviews.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Drivers available": {
@@ -85025,7 +85108,7 @@
     ]
   },
   "EDI": {
-    "sites": 19,
+    "sites": 20,
     "scope": [
       "go",
       "ts"
@@ -92526,7 +92609,7 @@
     ]
   },
   "Equipment": {
-    "sites": 19,
+    "sites": 20,
     "scope": [
       "go",
       "ts"
@@ -96702,7 +96785,7 @@
     ]
   },
   "Exceptions": {
-    "sites": 14,
+    "sites": 15,
     "scope": [
       "go",
       "ts"
@@ -100275,7 +100358,7 @@
     ]
   },
   "Factoring": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
@@ -105542,6 +105625,15 @@
       "go/other"
     ]
   },
+  "Find shipments": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Find someone": {
     "sites": 1,
     "scope": [
@@ -108418,6 +108510,15 @@
       "apps/web/lib"
     ]
   },
+  "Formulas": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Formulas are written by hand": {
     "sites": 1,
     "scope": [
@@ -109701,7 +109802,7 @@
     ]
   },
   "Fuel and IFTA": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -109997,6 +110098,15 @@
     "areas": [
       "apps/web/config",
       "routes/fuel-purchase"
+    ]
+  },
+  "Fuel purchases, fuel cards, IFTA mileage and returns.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Fuel spend, surcharge pricing, and IFTA": {
@@ -111412,7 +111522,7 @@
     ]
   },
   "General ledger": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -116670,12 +116780,14 @@
     ]
   },
   "Home page": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "apps/web/lib",
+      "go/other"
     ]
   },
   "Home screen": {
@@ -121147,6 +121259,15 @@
       "go/other"
     ]
   },
+  "Inbound messages and captures: triage, replies, filing, senders and drafted loads.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Inbound only": {
     "sites": 1,
     "scope": [
@@ -121211,12 +121332,14 @@
     ]
   },
   "Inbox": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "go/other",
       "routes/carrier-monitoring"
     ]
   },
@@ -122405,13 +122528,15 @@
     ]
   },
   "Insights": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "apps/web/config",
+      "go/other",
       "routes/insights"
     ]
   },
@@ -122431,6 +122556,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Insights, the daily briefing and weather alerts.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Inspect": {
@@ -128340,6 +128474,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Journal entries, manual journals, reversals, GL accounts and fiscal periods.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Journal entries, summed by day": {
@@ -136042,15 +136185,6 @@
       "apps/web/components"
     ]
   },
-  "List shipments": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "List time off": {
     "sites": 1,
     "scope": [
@@ -138746,6 +138880,15 @@
       "routes/desk"
     ]
   },
+  "Loads: finding, reading, tracking, creating and changing them, with their holds, comments and charges.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Loan interest": {
     "sites": 1,
     "scope": [
@@ -139114,7 +139257,7 @@
     ]
   },
   "Locations": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -140977,7 +141120,7 @@
       "go/other"
     ]
   },
-  "Make another person the owner of a shipment, the one it is filed under and who is asked about it. Take the new owner from the person who asked or the ownerId get_shipment shows on another of the customer's shipments; never guess a user. Only the current owner or someone allowed to change the shipment may hand it on.": {
+  "Make another person the owner of a shipment, the one it is filed under and who is asked about it. Take the new owner from the person who asked or the ownerId shipment_get shows on another of the customer's shipments; never guess a user. Only the current owner or someone allowed to change the shipment may hand it on.": {
     "sites": 1,
     "scope": [
       "go"
@@ -173858,7 +174001,7 @@
       "apps/dash/_components"
     ]
   },
-  "Open a customer order: the commercial record that groups a customer's shipments and order-level charges under their PO or BOL. It starts as a Draft with its own number; attach shipments with attach_order_shipments and add charges with add_order_charge. Only from what the person or the customer asked for.": {
+  "Open a customer order: the commercial record that groups a customer's shipments and order-level charges under their PO or BOL. It starts as a Draft with its own number; attach shipments with order_attach_shipments and add charges with order_add_charge. Only from what the person or the customer asked for.": {
     "sites": 1,
     "scope": [
       "go"
@@ -177405,7 +177548,7 @@
     ]
   },
   "Orders": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -178971,6 +179114,15 @@
     ]
   },
   "Output tokens cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Outside carriers: their records, vetting, monitoring, capacity and intelligence events.": {
     "sites": 1,
     "scope": [
       "go"
@@ -198733,6 +198885,15 @@
       "routes/rate-agreement"
     ]
   },
+  "Rate agreements, quotes, rating, rate imports and fuel index prices.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Rate applied": {
     "sites": 1,
     "scope": [
@@ -199744,11 +199905,13 @@
     ]
   },
   "Rates": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "routes/rate-matrix",
       "routes/review-template"
     ]
@@ -199880,6 +200043,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Rating formulas: templates, their schema and testing an expression.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Rating items": {
@@ -202928,7 +203100,7 @@
     ]
   },
   "Receivables": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -206206,6 +206378,15 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "Reference data": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Reference data refresh is not available on this server": {
@@ -209632,7 +209813,7 @@
       "go/other"
     ]
   },
-  "Reopen a canceled shipment as New, with its moves and stops back to New, when the person says the freight is back on. Nothing is sent to the customer, a carrier or a trading partner, and nobody is assigned: tender or assign it again afterwards. Read it with get_shipment first to be sure it is the canceled one.": {
+  "Reopen a canceled shipment as New, with its moves and stops back to New, when the person says the freight is back on. Nothing is sent to the customer, a carrier or a trading partner, and nobody is assigned: tender or assign it again afterwards. Read it with shipment_get first to be sure it is the canceled one.": {
     "sites": 1,
     "scope": [
       "go"
@@ -211076,7 +211257,7 @@
     ]
   },
   "Reports": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
@@ -211131,6 +211312,15 @@
     ],
     "areas": [
       "routes/org-structure"
+    ]
+  },
+  "Reports, their runs and schedules, dashboards, table views and change alerts.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Representative sample — actual values increment sequentially.": {
@@ -225968,15 +226158,6 @@
       "routes/invoice"
     ]
   },
-  "Search shipments": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "Search states": {
     "sites": 2,
     "scope": [
@@ -229691,6 +229872,15 @@
     ],
     "areas": [
       "template/factoring.schedule.pdf"
+    ]
+  },
+  "Selling invoices to a factor: agreements, notices, submissions, remittances and reserves.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Semi-monthly": {
@@ -234046,6 +234236,15 @@
       "routes/settlement-batch"
     ]
   },
+  "Settlements and pay": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Settlements can auto-post on approval based on your carrier settlement control policy.": {
     "sites": 1,
     "scope": [
@@ -236044,6 +236243,15 @@
       "go/other"
     ]
   },
+  "Shipment intake": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Shipment intake agent": {
     "sites": 1,
     "scope": [
@@ -236701,7 +236909,7 @@
     ]
   },
   "Shipments": {
-    "sites": 24,
+    "sites": 25,
     "scope": [
       "go",
       "ts"
@@ -245841,6 +246049,15 @@
       "go/other"
     ]
   },
+  "Stored documents: search, summaries, attachments, versions and document types.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Stored encrypted and never shown again.": {
     "sites": 2,
     "scope": [
@@ -252153,7 +252370,7 @@
       "go/other"
     ]
   },
-  "That stop is not on this shipment; take the stop id from get_shipment's moves": {
+  "That stop is not on this shipment; take the stop id from shipment_get's moves": {
     "sites": 1,
     "scope": [
       "go"
@@ -253134,6 +253351,15 @@
       "apps/web/components"
     ]
   },
+  "The agent's own work: memories, waits, runs, profiles and finding things in Trenova.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The agent's reason.": {
     "sites": 1,
     "scope": [
@@ -254062,6 +254288,15 @@
     ]
   },
   "The billing queue's order is unavailable": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The billing queue, invoices, invoice runs, adjustments, disputes and sending invoices.": {
     "sites": 1,
     "scope": [
       "go"
@@ -255520,6 +255755,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "The connection to the accounting system: sync records, mappings, drift and backfills.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The connection to the assistant was lost.": {
@@ -257733,6 +257977,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "The exception queue: watchtower items, service failures and their owners and status.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The executive's job title, as it appears on the 300A.": {
@@ -262242,6 +262495,15 @@
       "go/other"
     ]
   },
+  "The person's own home page: its widgets and their layout.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The person's setting": {
     "sites": 1,
     "scope": [
@@ -262924,6 +263186,15 @@
     ],
     "areas": [
       "routes/fuel-purchase"
+    ]
+  },
+  "The public web and the carrier and customer portals an organization set up.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The qualifier code that identifies the type of our ISA sender ID (e.g. 01, ZZ).": {
@@ -265160,6 +265431,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "The shipment draft open on the page: accepting, correcting and placing its fields and stops.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The shipment has no ETA yet; snooze to a time instead": {
@@ -278599,6 +278879,15 @@
       "apps/web/config"
     ]
   },
+  "Tractors, trailers, equipment types and where each truck is.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Trade name the carrier operates under when it differs from the legal name.": {
     "sites": 1,
     "scope": [
@@ -278651,6 +278940,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Trading partners and their EDI: tenders, transfers, messages, files and connections.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Trading partners, connection requests, and partner defaults": {
@@ -280991,7 +281289,7 @@
       "routes/desk"
     ]
   },
-  "Try a tool name like list_shipments or a load ID.": {
+  "Try a tool name like shipment_list or a load ID.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -292344,7 +292642,7 @@
       "go/other"
     ]
   },
-  "Waive or stand by a detention charge a customer disputes by email, once the stop times are checked, and have Triage draft the answer for a person to send. Waive when the times do not support the charge; stand by it when arrival, departure and free time hold up. Check them first with get_detention_occurrence or get_shipment_tracking. A waived charge already invoiced is credited.": {
+  "Waive or stand by a detention charge a customer disputes by email, once the stop times are checked, and have Triage draft the answer for a person to send. Waive when the times do not support the charge; stand by it when arrival, departure and free time hold up. Check them first with get_detention_occurrence or shipment_get_tracking. A waived charge already invoiced is credited.": {
     "sites": 1,
     "scope": [
       "go"
@@ -293518,6 +293816,15 @@
       "go/other"
     ]
   },
+  "Web and portals": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Web portal": {
     "sites": 1,
     "scope": [
@@ -294682,6 +294989,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "What customers owe: payments, bank receipts, credit memos, statements and collections.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "What did Nova pull from this?": {
@@ -301957,7 +302273,7 @@
     ]
   },
   "Workers": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "go",
       "ts"

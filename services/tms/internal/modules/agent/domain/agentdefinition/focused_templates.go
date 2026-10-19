@@ -113,7 +113,7 @@ const (
 	toolRunReport          = "run_report"
 	toolGetCustomer        = "get_customer"
 	toolGetDocumentSummary = "get_document_summary"
-	toolGetShipment        = "get_shipment"
+	toolShipmentGet        = "shipment_get"
 	toolGetWorker          = "get_worker"
 	toolListCommodities    = "list_commodities"
 	toolListCustomers      = "list_customers"
@@ -121,8 +121,12 @@ const (
 	toolListTractors       = "list_tractors"
 	toolListTrailers       = "list_trailers"
 	toolListWorkers        = "list_workers"
-	toolSearchShipments    = "search_shipments"
+	toolShipmentList       = "shipment_list"
 	toolSearchWorker       = "search_worker"
+
+	toolShipmentAddComment  = "shipment_add_comment"
+	toolShipmentGetTracking = "shipment_get_tracking"
+	toolIntakeGetDraft      = "intake_get_draft"
 )
 
 func masterDataStewardTools() []string {
@@ -166,7 +170,7 @@ func masterDataStewardTools() []string {
 		"list_equipment_types",
 		"list_equipment_manufacturers",
 		"list_fleet_codes",
-		toolSearchShipments,
+		toolShipmentList,
 		toolSearchDocuments,
 		toolGetDocumentSummary,
 		"list_document_types",
@@ -191,7 +195,7 @@ func workforceCoordinatorTools() []string {
 		toolSearchWorker,
 		toolListWorkers,
 		toolGetWorker,
-		toolSearchShipments,
+		toolShipmentList,
 		toolListTimeOff,
 		"request_worker_pto",
 		"update_worker_pto",
@@ -240,9 +244,9 @@ func workforceCoordinatorTools() []string {
 		"archive_worker_credential",
 		"list_employment_verifications",
 		"delete_employment_verification",
-		"list_shipment_permits",
-		"record_shipment_permit",
-		"update_shipment_permit",
+		"shipment_list_permits",
+		"shipment_record_permit",
+		"shipment_update_permit",
 	}
 }
 
@@ -251,8 +255,8 @@ func fuelTaxClerkTools() []string {
 		toolListTractors,
 		"get_tractor",
 		toolSearchWorker,
-		toolSearchShipments,
-		toolGetShipment,
+		toolShipmentList,
+		toolShipmentGet,
 		toolSearchDocuments,
 		toolGetDocumentSummary,
 		"list_ifta_jurisdictions",

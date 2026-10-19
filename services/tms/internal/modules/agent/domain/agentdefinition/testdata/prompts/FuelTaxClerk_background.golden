@@ -70,7 +70,7 @@ Loaded now:
 - flag_for_manual_review
 - wait_until
 - cancel_wait
-- get_shipment
+- shipment_get
 - get_document_summary
 - assign_fuel_card
 - list_fuel_purchase_imports
@@ -84,7 +84,7 @@ Callable after find_tools:
 - list_tractors — List tractors (power units) narrowed by status, ownership, or a registration or lease date.
 - get_tractor — Retrieve one tractor by id, with its equipment details, fleet and assigned workers.
 - search_worker — Find a driver or other worker by name or code, or list the roster.
-- search_shipments — Find shipments by the words people use for them: a pro number or BOL, a customer's name or code, a stop's place or city, the driver, or what it carries.
+- shipment_list — Find shipments (loads) by the words people use for them, by status, or by filters on dates, charges and transfer status.
 - search_documents — Search the text of documents: rate confirmations, bills of lading, proofs of delivery, invoices, contracts, permits and other files attached to records.
 - list_ifta_jurisdictions — List the active states and provinces fuel tax is reported by, with each one's two-letter code and whether it is an IFTA member.
 - list_fuel_purchases — List fuel bought for tractors, newest first, with where it was bought for IFTA, the fuel type, the gallons and the amount.

@@ -24,6 +24,7 @@ const config: CodegenConfig = {
       "node scripts/generate-error-enums.mjs",
       "node scripts/generate-permission-resources.mjs",
       "node scripts/generate-record-kinds.mjs",
+      "node scripts/generate-tool-namespaces.mjs",
     ],
   },
   generates: {

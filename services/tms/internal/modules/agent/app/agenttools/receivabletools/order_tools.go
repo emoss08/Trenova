@@ -117,7 +117,7 @@ type orderKeeper interface {
 
 func orderIDProperty(what string) map[string]any {
 	return agenttoolschema.RecordID(permission.ResourceOrder, what,
-		"list_orders, get_order or the orderId get_shipment shows")
+		"order_list, order_get or the orderId shipment_get shows")
 }
 
 func targetOrder(params map[string]any) (agentports.ToolTarget, bool) {
@@ -168,7 +168,7 @@ func orderProperties(customerRequired bool) map[string]any {
 		),
 		common.ParamOwnerID: agenttoolschema.RecordIDText(permission.ResourceUser,
 			"The user who owns the order: the person who asked, "+
-				"or an ownerId get_order shows. Never guess one."),
+				"or an ownerId order_get shows. Never guess one."),
 		paramPONumber: common.StringProperty("The customer's purchase order number.",
 			maxOrderReference),
 		common.FieldBol: common.StringProperty("The bill of lading number.", maxOrderReference),
@@ -293,12 +293,12 @@ func renderOrderChange(verb string) func(
 
 func NewCreateOrderTool(orders orderKeeper) agentports.AgentTool {
 	return common.NewReportingReceivableTool(&common.ReceivableSpec{
-		Name:     "create_order",
+		Name:     "order_create",
 		Artifact: common.OrderRecordEntity,
 		Description: "Open a customer order: the commercial record that groups a " +
 			"customer's shipments and order-level charges under their PO or BOL. It starts " +
-			"as a Draft with its own number; attach shipments with attach_order_shipments " +
-			"and add charges with add_order_charge. Only from what the person or the " +
+			"as a Draft with its own number; attach shipments with order_attach_shipments " +
+			"and add charges with order_add_charge. Only from what the person or the " +
 			"customer asked for.",
 		SearchTerms: []string{
 			"order for several loads",
@@ -378,7 +378,7 @@ func (e *orderEdit) entity(ctx context.Context, orders orderKeeper) (*order.Orde
 
 func NewUpdateOrderTool(orders orderKeeper) agentports.AgentTool {
 	base := common.NewReportingReceivableTool(&common.ReceivableSpec{
-		Name:        "update_order",
+		Name:        "order_update",
 		SearchTerms: []string{"purchase order", "po", "fix bol", "edit order"},
 		Artifact:    common.OrderRecordEntity,
 		Description: "Change an order's customer, owner, PO number, BOL, currency, quoted " +
@@ -482,7 +482,7 @@ type orderMembership struct {
 
 func NewAttachOrderShipmentsTool(orders orderKeeper) agentports.AgentTool {
 	return common.NewReportingReceivableTool(&common.ReceivableSpec{
-		Name:     "attach_order_shipments",
+		Name:     "order_attach_shipments",
 		Artifact: common.OrderRecordEntity,
 		Description: "Put shipments on an order so they are billed and tracked together. " +
 			"Each must be the order's customer's and neither canceled nor invoiced; a " +
@@ -495,14 +495,14 @@ func NewAttachOrderShipmentsTool(orders orderKeeper) agentports.AgentTool {
 		MaxTier:     agent.TierActWithApproval,
 		Reversible:  true,
 		Rationale: "Regroups shipments under an order inside Trenova; nothing is sent, and " +
-			"detach_order_shipment moves one back out.",
+			"order_detach_shipment moves one back out.",
 		Properties: map[string]any{
 			common.ParamOrderID: orderIDProperty("The order to add them to"),
 			common.ParamShipmentIDs: toolschema.RecordSubset(permission.ResourceShipment.String(),
 				agenttoolschema.RecordIDs(
 					permission.ResourceShipment,
-					"The shipments to attach, from search_shipments or "+
-						"get_shipment.",
+					"The shipments to attach, from shipment_list or "+
+						"shipment_get.",
 					maxOrderAttachments,
 				)),
 		},
@@ -605,7 +605,7 @@ type orderLeg struct {
 
 func NewDetachOrderShipmentTool(orders orderKeeper) agentports.AgentTool {
 	return common.NewReportingReceivableTool(&common.ReceivableSpec{
-		Name:     "detach_order_shipment",
+		Name:     "order_detach_shipment",
 		Artifact: common.OrderRecordEntity,
 		Description: "Take one shipment off an order onto an order of its own, so it is " +
 			"billed on its own. The order's only shipment and an invoiced one stay where " +
@@ -617,7 +617,7 @@ func NewDetachOrderShipmentTool(orders orderKeeper) agentports.AgentTool {
 		MaxTier:     agent.TierActWithApproval,
 		Reversible:  true,
 		Rationale: "Moves a shipment onto a new order inside Trenova; nothing is sent, and " +
-			"attach_order_shipments puts it back.",
+			"order_attach_shipments puts it back.",
 		Properties: map[string]any{
 			common.ParamOrderID:    orderIDProperty("The order the shipment is on"),
 			common.ParamShipmentID: common.ShipmentIDProperty("The shipment to take off it"),
@@ -699,7 +699,7 @@ func readOrderOnly(
 	}
 	req := &orderOnly{tenant: common.TenantFrom(*params), orderID: orderID}
 	if reasonRequired {
-		if req.reason, err = common.RequireBoundedText(params.Params, common.ParamCancelReason,
+		if req.reason, err = common.RequireBoundedText(params.Params, common.ParamReason,
 			common.MaxOperationNoteChars); err != nil {
 			return nil, err
 		}
@@ -710,7 +710,7 @@ func readOrderOnly(
 
 func NewCloseOrderTool(orders orderKeeper) agentports.AgentTool {
 	return common.NewReportingReceivableTool(&common.ReceivableSpec{
-		Name:     "close_order",
+		Name:     "order_close",
 		Artifact: common.OrderRecordEntity,
 		Description: "Close a Billed order once nothing more will be billed on it. Closing " +
 			"is final: a Closed order takes no more shipments or charges.",
@@ -757,12 +757,12 @@ func NewCloseOrderTool(orders orderKeeper) agentports.AgentTool {
 
 func NewCancelOrderTool(orders orderKeeper) agentports.AgentTool {
 	return common.NewReportingReceivableTool(&common.ReceivableSpec{
-		Name:     "cancel_order",
+		Name:     "order_cancel",
 		Artifact: common.OrderRecordEntity,
 		Description: "Cancel an order and every shipment on it that is not already " +
 			"canceled, with the reason the customer gave. An order with an invoiced " +
 			"shipment cannot be canceled; credit the invoice first. Canceling a shipment " +
-			"tells its carrier and trading partner as cancel_shipment would.",
+			"tells its carrier and trading partner as shipment_cancel would.",
 		Resource:    permission.ResourceOrder,
 		Operation:   permission.OpUpdate,
 		Egress:      agent.EgressExternalRecipient,
@@ -773,10 +773,10 @@ func NewCancelOrderTool(orders orderKeeper) agentports.AgentTool {
 			"trading partners; only a person cancels an order.",
 		Properties: map[string]any{
 			common.ParamOrderID: orderIDProperty("The order to cancel"),
-			common.ParamCancelReason: common.StringProperty("Why, as the customer said it.",
+			common.ParamReason: common.StringProperty("Why, as the customer said it.",
 				common.MaxOperationNoteChars),
 		},
-		Required: []string{common.ParamOrderID, common.ParamCancelReason},
+		Required: []string{common.ParamOrderID, common.ParamReason},
 		Target:   targetOrder,
 	}, common.ReceivablePlan[*orderOnly, *orderservice.CancelPlan]{
 		Request: func(params *agentports.ToolExecuteParams) (*orderOnly, error) {

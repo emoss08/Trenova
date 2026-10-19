@@ -87,13 +87,13 @@ func TestToolsThatReadOutsideTextSayWhere(t *testing.T) {
 		"search_inbound_messages":      agent.ExternalReadAlways,
 		"search_documents":             agent.ExternalReadAlways,
 		"get_document_summary":         agent.ExternalReadAlways,
-		"get_shipment_draft":           agent.ExternalReadAlways,
+		"intake_get_draft":             agent.ExternalReadAlways,
 		"get_bank_receipt":             agent.ExternalReadAlways,
 		"list_bank_receipt_exceptions": agent.ExternalReadAlways,
 		"list_weather_alerts":          agent.ExternalReadAlways,
 		"recall_memory":                agent.ExternalReadMarked,
 		"get_agent_run":                agent.ExternalReadMarked,
-		"get_shipment":                 agent.ExternalReadMarked,
+		"shipment_get":                 agent.ExternalReadMarked,
 		"list_watchtower_items":        agent.ExternalReadMarked,
 		"list_agent_runs":              agent.ExternalReadMarked,
 		"get_daily_briefing":           agent.ExternalReadNever,
@@ -109,7 +109,7 @@ func TestToolsThatReadOutsideTextSayWhere(t *testing.T) {
 		"get_ar_aging":                 agent.ExternalReadNever,
 		"get_driver_settlement":        agent.ExternalReadNever,
 		"get_rate_agreement":           agent.ExternalReadNever,
-		"get_order":                    agent.ExternalReadNever,
+		"order_get":                    agent.ExternalReadNever,
 	}
 	for name, want := range cases {
 		policy := registeredPolicy(t, name)
@@ -118,7 +118,7 @@ func TestToolsThatReadOutsideTextSayWhere(t *testing.T) {
 			assert.True(t, policy.Source.IsValid(), name)
 		}
 	}
-	assert.Equal(t, agent.TaintSourceRecordNote, registeredPolicy(t, "get_shipment").Source)
+	assert.Equal(t, agent.TaintSourceRecordNote, registeredPolicy(t, "shipment_get").Source)
 	assert.Equal(t, agent.TaintSourceRecordNote,
 		registeredPolicy(t, "get_settlement_dispute").Source)
 	for _, name := range []string{
@@ -142,7 +142,7 @@ func TestToolsThatReadOutsideTextSayWhere(t *testing.T) {
 	assert.NotNil(t, registeredPolicy(t, "remember").TaintHold)
 	assert.True(t, registeredPolicy(t, "guide_profile").CarriesTaint)
 	assert.NotNil(t, registeredPolicy(t, "guide_profile").TaintHold)
-	assert.True(t, registeredPolicy(t, "add_shipment_comment").CarriesTaint)
+	assert.True(t, registeredPolicy(t, "shipment_add_comment").CarriesTaint)
 }
 
 func TestEveryRegisteredToolIsInTheClassItWasGiven(t *testing.T) {
@@ -210,15 +210,15 @@ func TestEveryRegisteredToolIsInTheClassItWasGiven(t *testing.T) {
 		"log_check_call":                 {agent.EgressInternal},
 		"issue_carrier_tracking_link":    {agent.EgressExternalRecipient},
 		"revoke_carrier_tracking_link":   {agent.EgressExternalRecipient},
-		"attach_document_to_shipment":    {agent.EgressInternal},
-		"place_shipment_hold":            {agent.EgressInternal},
-		"release_shipment_hold":          {agent.EgressInternal},
-		"share_customer_tracking_link": {
+		"shipment_attach_document":       {agent.EgressInternal},
+		"shipment_place_hold":            {agent.EgressInternal},
+		"shipment_release_hold":          {agent.EgressInternal},
+		"shipment_share_tracking_link": {
 			agent.EgressCustomerVisible,
 			agent.EgressExternalRecipient,
 		},
-		"revoke_customer_tracking_link": {agent.EgressCustomerVisible},
-		"create_shipment":               {agent.EgressInternal},
+		"shipment_revoke_tracking_link": {agent.EgressCustomerVisible},
+		"shipment_create":               {agent.EgressInternal},
 		"create_location":               {agent.EgressInternal},
 		"escalate_detention":            {agent.EgressInternal},
 		"place_worker_dispatch_hold":    {agent.EgressInternal},
@@ -273,7 +273,7 @@ func TestEveryRegisteredToolIsInTheClassItWasGiven(t *testing.T) {
 		"pause_accounting_sync":             {agent.EgressInternal},
 		"resume_accounting_sync":            {agent.EgressInternal},
 		"request_accounting_backfill":       {agent.EgressInternal},
-		"add_shipment_comment": {
+		"shipment_add_comment": {
 			agent.EgressInternal,
 			agent.EgressCustomerVisible,
 			agent.EgressDriverVisible,
@@ -285,12 +285,12 @@ func TestEveryRegisteredToolIsInTheClassItWasGiven(t *testing.T) {
 		"email_customer":                  {agent.EgressExternalRecipient},
 		"send_detention_notice":           {agent.EgressExternalRecipient},
 		"reply_to_inbound_message":        {agent.EgressExternalRecipient},
-		"request_missing_docs":            {agent.EgressExternalRecipient},
+		"shipment_request_documents":      {agent.EgressExternalRecipient},
 		"tender_move_to_routing_guide":    {agent.EgressExternalRecipient},
 		"tender_move_to_carriers":         {agent.EgressExternalRecipient},
 		"schedule_report":                 {agent.EgressExternalRecipient},
-		"cancel_shipment":                 {agent.EgressExternalRecipient},
-		"update_shipment":                 {agent.EgressExternalRecipient},
+		"shipment_cancel":                 {agent.EgressExternalRecipient},
+		"shipment_update":                 {agent.EgressExternalRecipient},
 		"resolve_service_failure":         {agent.EgressExternalRecipient},
 		"post_customer_payment":           {agent.EgressMoney},
 		"apply_accounting_inbound_change": {agent.EgressMoney},
@@ -393,49 +393,49 @@ func TestEveryRegisteredToolIsInTheClassItWasGiven(t *testing.T) {
 		"update_recurring_deduction":    {agent.EgressMoney},
 		"create_recurring_earning":      {agent.EgressMoney},
 		"update_recurring_earning":      {agent.EgressMoney},
-		"uncancel_shipment":             {agent.EgressInternal},
-		"transfer_shipment_ownership":   {agent.EgressInternal},
-		"rerate_shipment":               {agent.EgressMoney},
-		"recalculate_shipment_distance": {agent.EgressInternal},
-		"duplicate_shipment":            {agent.EgressInternal},
-		"update_shipment_hold": {
+		"shipment_uncancel":             {agent.EgressInternal},
+		"shipment_transfer_ownership":   {agent.EgressInternal},
+		"shipment_rerate":               {agent.EgressMoney},
+		"shipment_recalculate_distance": {agent.EgressInternal},
+		"shipment_duplicate":            {agent.EgressInternal},
+		"shipment_update_hold": {
 			agent.EgressInternal,
 			agent.EgressCustomerVisible,
 		},
 		"split_move_at_relay":    {agent.EgressInternal},
-		"pin_shipment_comment":   {agent.EgressInternal},
-		"unpin_shipment_comment": {agent.EgressInternal},
-		"resolve_shipment_comment": {
+		"shipment_pin_comment":   {agent.EgressInternal},
+		"shipment_unpin_comment": {agent.EgressInternal},
+		"shipment_resolve_comment": {
 			agent.EgressInternal,
 		},
-		"edit_shipment_comment": {
+		"shipment_update_comment": {
 			agent.EgressInternal,
 			agent.EgressCustomerVisible,
 			agent.EgressDriverVisible,
 		},
-		"delete_shipment_comment": {agent.EgressInternal},
+		"shipment_delete_comment": {agent.EgressInternal},
 		"update_service_failure":  {agent.EgressInternal},
 		"review_service_failure":  {agent.EgressExternalRecipient},
 		"void_service_failure":    {agent.EgressExternalRecipient},
 		"dispute_detention":       {agent.EgressMoney},
-		"create_order":            {agent.EgressInternal},
-		"update_order":            {agent.EgressInternal, agent.EgressMoney},
-		"attach_order_shipments":  {agent.EgressInternal},
-		"detach_order_shipment":   {agent.EgressInternal},
-		"close_order":             {agent.EgressInternal},
-		"cancel_order":            {agent.EgressExternalRecipient},
-		"add_order_charge":        {agent.EgressMoney},
-		"update_order_charge":     {agent.EgressMoney},
-		"set_order_charge_allocations": {
+		"order_create":            {agent.EgressInternal},
+		"order_update":            {agent.EgressInternal, agent.EgressMoney},
+		"order_attach_shipments":  {agent.EgressInternal},
+		"order_detach_shipment":   {agent.EgressInternal},
+		"order_close":             {agent.EgressInternal},
+		"order_cancel":            {agent.EgressExternalRecipient},
+		"order_add_charge":        {agent.EgressMoney},
+		"order_update_charge":     {agent.EgressMoney},
+		"order_set_charge_allocations": {
 			agent.EgressMoney,
 		},
-		"remove_order_charge":       {agent.EgressMoney},
-		"create_recurring_shipment": {agent.EgressInternal},
-		"update_recurring_shipment": {agent.EgressInternal},
-		"set_recurring_shipment_status": {
+		"order_remove_charge":       {agent.EgressMoney},
+		"shipment_create_recurring": {agent.EgressInternal},
+		"shipment_update_recurring": {agent.EgressInternal},
+		"shipment_set_recurring_status": {
 			agent.EgressInternal,
 		},
-		"generate_recurring_shipment": {agent.EgressInternal},
+		"shipment_generate_recurring": {agent.EgressInternal},
 		"assign_worker_shift":         {agent.EgressInternal},
 		"end_worker_shift_assignment": {agent.EgressInternal},
 		"set_worker_availability_preference": {
@@ -561,8 +561,8 @@ func TestEveryRegisteredToolIsInTheClassItWasGiven(t *testing.T) {
 		"request_worker_pto":                  {agent.EgressDriverVisible},
 		"update_worker_pto":                   {agent.EgressDriverVisible},
 		"adjust_worker_pto_balance":           {agent.EgressMoney},
-		"record_shipment_permit":              {agent.EgressInternal},
-		"update_shipment_permit":              {agent.EgressInternal},
+		"shipment_record_permit":              {agent.EgressInternal},
+		"shipment_update_permit":              {agent.EgressInternal},
 		"start_settlement_dispute_review":     {agent.EgressDriverVisible},
 		"resolve_settlement_dispute":          {agent.EgressDriverVisible, agent.EgressMoney},
 		"review_driver_expense":               {agent.EgressDriverVisible, agent.EgressMoney},
@@ -614,8 +614,8 @@ func TestEveryRegisteredToolIsInTheClassItWasGiven(t *testing.T) {
 		"file_capture_items":                   {agent.EgressInternal},
 		"discard_capture_item":                 {agent.EgressInternal},
 		"discard_capture_batch":                {agent.EgressInternal},
-		"reschedule_stop":                      {agent.EgressExternalRecipient},
-		"add_shipment_charge":                  {agent.EgressMoney},
+		"shipment_reschedule_stop":             {agent.EgressExternalRecipient},
+		"shipment_add_charge":                  {agent.EgressMoney},
 		"draft_factoring_noa":                  {agent.EgressInternal},
 		"send_factoring_noa":                   {agent.EgressExternalRecipient},
 		"submit_invoices_to_factor":            {agent.EgressExternalRecipient},

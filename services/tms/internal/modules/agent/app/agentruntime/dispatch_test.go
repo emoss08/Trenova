@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -34,12 +34,12 @@ func filedContent(
 	t.Helper()
 
 	tool := &agenttest.StubActionTool{
-		ToolName: "create_shipment",
+		ToolName: "shipment_create",
 		Tier:     agent.TierPropose,
 		Schema:   schema,
 	}
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("create_shipment", args),
+		toolTurn("shipment_create", args),
 		textTurn("I have proposed the shipment."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{
@@ -50,7 +50,7 @@ func filedContent(
 	}
 
 	result, err := rt.Run(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition("create_shipment"),
+		Definition: testDefinition("shipment_create"),
 		Actor:      testActor(),
 		Input:      "copy PRO-100 for Tuesday",
 	})
@@ -58,7 +58,7 @@ func filedContent(
 	require.Len(t, result.Actions, 1)
 
 	for _, message := range result.Messages {
-		if message.ToolName == "create_shipment" {
+		if message.ToolName == "shipment_create" {
 			return message.Content
 		}
 	}
@@ -93,7 +93,7 @@ func TestDispatch_FilingEchoesThePreviewTheCardShows(t *testing.T) {
 		}},
 	}}, shipmentSchema(), map[string]any{"customerId": "cus_1"})
 
-	assert.Contains(t, content, "Recorded a proposal to run \"create_shipment\"")
+	assert.Contains(t, content, "Recorded a proposal to run \"shipment_create\"")
 	assert.Contains(t, content,
 		"Creates a shipment for Acme from Dallas to Tulsa, rated at $1,250.00.")
 	assert.Contains(t, content,

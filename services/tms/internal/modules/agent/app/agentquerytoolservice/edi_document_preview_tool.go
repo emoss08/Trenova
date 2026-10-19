@@ -99,7 +99,7 @@ func (t *previewEDIDocumentTool) ParamSchema() map[string]any {
 		paramPartnerID: agenttoolschema.KindID("The trading partner it would go to, by id from "+
 			"list_edi_partners or get_edi_partner.", permission.KindEDIPartner),
 		paramShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
-			"For a 204 or 214: the shipment, from search_shipments or get_shipment."),
+			"For a 204 or 214: the shipment, from shipment_list or shipment_get."),
 		paramEDITransferID: agenttoolschema.KindID("For a 990: the tender it answers, from "+
 			"list_edi_transfers.", permission.KindEDITransfer),
 		paramTenderResponse: enumParam("For a 990 on a tender not yet answered: preview "+

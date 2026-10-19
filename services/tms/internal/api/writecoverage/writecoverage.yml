@@ -793,9 +793,9 @@ writes:
 
   # customertracking
   "mutation issueCustomerTrackingLink":
-    tools: [share_customer_tracking_link]
+    tools: [shipment_share_tracking_link]
   "mutation revokeCustomerTrackingLink":
-    tools: [revoke_customer_tracking_link]
+    tools: [shipment_revoke_tracking_link]
   "mutation updateCustomerTrackingProfile":
     exempt: configuration
     reason: "What a customer's tracking page shows and which status emails it gets is a commercial agreement with the customer, set by a person on the customer record."
@@ -990,7 +990,7 @@ writes:
     exempt: attestation
     reason: "Accepting a document as proof, such as a proof of delivery that lets a shipment bill, is the reviewer's sign-off on the evidence; agents may never approve."
   "POST /api/v1/documents/:documentID/attach-to-shipment/":
-    tools: [attach_document_to_shipment]
+    tools: [shipment_attach_document]
   "POST /api/v1/documents/:documentID/import-assistant/thread/":
     exempt: agent-administration
     reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
@@ -1009,25 +1009,25 @@ writes:
     tools: [delete_documents]
   "POST /api/v1/documents/upload-bulk/":
     exempt: infrastructure
-    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment)."
+    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document)."
   "POST /api/v1/documents/upload/":
     exempt: infrastructure
-    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment)."
+    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document)."
   "POST /api/v1/documents/uploads/":
     exempt: infrastructure
-    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment)."
+    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document)."
   "POST /api/v1/documents/uploads/:uploadSessionID/cancel/":
     exempt: infrastructure
-    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment)."
+    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document)."
   "POST /api/v1/documents/uploads/:uploadSessionID/complete/":
     exempt: infrastructure
-    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment)."
+    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document)."
   "POST /api/v1/documents/uploads/:uploadSessionID/parts/":
     exempt: infrastructure
-    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment)."
+    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document)."
   "PUT /api/v1/documents/uploads/:uploadSessionID/parts/:partNumber/":
     exempt: infrastructure
-    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment)."
+    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document)."
 
   # documentcontrol
   "PUT /api/v1/document-controls/":
@@ -2311,25 +2311,25 @@ writes:
 
   # order
   "mutation addOrderCharge":
-    tools: [add_order_charge]
+    tools: [order_add_charge]
   "mutation attachOrderShipments":
-    tools: [attach_order_shipments]
+    tools: [order_attach_shipments]
   "mutation cancelOrder":
-    tools: [cancel_order]
+    tools: [order_cancel]
   "mutation closeOrder":
-    tools: [close_order]
+    tools: [order_close]
   "mutation createOrder":
-    tools: [create_order]
+    tools: [order_create]
   "mutation detachOrderShipment":
-    tools: [detach_order_shipment]
+    tools: [order_detach_shipment]
   "mutation removeOrderCharge":
-    tools: [remove_order_charge]
+    tools: [order_remove_charge]
   "mutation setOrderChargeAllocations":
-    tools: [set_order_charge_allocations]
+    tools: [order_set_charge_allocations]
   "mutation updateOrder":
-    tools: [update_order]
+    tools: [order_update]
   "mutation updateOrderCharge":
-    tools: [update_order_charge]
+    tools: [order_update_charge]
 
   # organization
   "DELETE /api/v1/organizations/:id/logo":
@@ -2337,7 +2337,7 @@ writes:
     reason: "The organization's logo on every document it sends."
   "POST /api/v1/organizations/:id/logo":
     exempt: infrastructure
-    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment)."
+    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document)."
   "PUT /api/v1/organizations/:id/microsoft-sso":
     exempt: security
     reason: "Single sign-on decides who can sign in to the organization."
@@ -2423,9 +2423,9 @@ writes:
     exempt: attestation
     reason: "Waiving a permit requirement is a named person accepting the compliance risk of moving the load without that state's permit."
   "POST /api/v1/shipments/:shipmentID/permits/":
-    tools: [record_shipment_permit]
+    tools: [shipment_record_permit]
   "PUT /api/v1/shipments/:shipmentID/permits/:permitID/":
-    tools: [update_shipment_permit]
+    tools: [shipment_update_permit]
 
   # ptopolicy
   "mutation adjustWorkerPtoBalance":
@@ -2505,7 +2505,7 @@ writes:
   # rateimport
   "POST /api/v1/rate-imports/":
     exempt: infrastructure
-    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment)."
+    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document)."
   "POST /api/v1/rate-imports/:rateImportID/commit/":
     tools: [commit_rate_import]
   "POST /api/v1/rate-imports/:rateImportID/discard/":
@@ -2576,16 +2576,16 @@ writes:
 
   # recurringshipment
   "POST /api/v1/recurring-shipments/":
-    tools: [create_recurring_shipment]
+    tools: [shipment_create_recurring]
   "POST /api/v1/recurring-shipments/:recurringShipmentID/generate/":
-    tools: [generate_recurring_shipment]
+    tools: [shipment_generate_recurring]
   "POST /api/v1/recurring-shipments/match/":
     exempt: read-only
     reason: "Finds the recurring shipment a new shipment matches and saves nothing."
   "PUT /api/v1/recurring-shipments/:recurringShipmentID/":
-    tools: [update_recurring_shipment]
+    tools: [shipment_update_recurring]
   "PUT /api/v1/recurring-shipments/:recurringShipmentID/status/":
-    tools: [set_recurring_shipment_status]
+    tools: [shipment_set_recurring_status]
 
   # report
   "POST /api/v1/reports/dashboards/:dashboardID/export/":
@@ -2768,14 +2768,14 @@ writes:
 
   # shipment
   "POST /api/v1/shipments/:shipmentID/holds/":
-    tools: [place_shipment_hold]
+    tools: [shipment_place_hold]
   "POST /api/v1/shipments/:shipmentID/holds/:holdID/release/":
-    tools: [release_shipment_hold]
+    tools: [shipment_release_hold]
   "POST /api/v1/shipments/:shipmentID/transfer-to-billing/":
     tools: [transfer_to_billing]
   "POST /api/v1/shipments/auto-cancel/":
     exempt: infrastructure
-    reason: "The sweep the Temporal schedule runs over every organization to cancel shipments past the auto-cancel threshold; a person does not decide which shipments it takes, and cancel_shipment cancels one."
+    reason: "The sweep the Temporal schedule runs over every organization to cancel shipments past the auto-cancel threshold; a person does not decide which shipments it takes, and shipment_cancel cancels one."
   "POST /api/v1/shipments/check-for-duplicate-bols/":
     exempt: read-only
     reason: "Computes a figure or a check for the shipment form and saves nothing."
@@ -2789,12 +2789,12 @@ writes:
     exempt: read-only
     reason: "Computes a figure or a check for the shipment form and saves nothing."
   "PUT /api/v1/shipments/:shipmentID/holds/:holdID/":
-    tools: [update_shipment_hold]
+    tools: [shipment_update_hold]
   "mutation acknowledgeShipmentComment":
     exempt: attestation
     reason: "Acknowledging a comment says that the person it was addressed to has read it; only that person can say so."
   "mutation autoRateShipment":
-    tools: [rerate_shipment]
+    tools: [shipment_rerate]
   "mutation bulkTransferShipmentsToBilling":
     tools: [transfer_to_billing]
   "mutation calculateShipmentDistance":
@@ -2807,7 +2807,7 @@ writes:
     exempt: read-only
     reason: "Computes a figure or a check for the shipment form and saves nothing."
   "mutation cancelShipment":
-    tools: [cancel_shipment]
+    tools: [shipment_cancel]
   "mutation checkShipmentDuplicateBol":
     exempt: read-only
     reason: "Computes a figure or a check for the shipment form and saves nothing."
@@ -2815,36 +2815,36 @@ writes:
     exempt: read-only
     reason: "Computes a figure or a check for the shipment form and saves nothing."
   "mutation createShipment":
-    tools: [create_shipment]
+    tools: [shipment_create]
   "mutation createShipmentComment":
-    tools: [add_shipment_comment]
+    tools: [shipment_add_comment]
   "mutation deleteShipmentComment":
-    tools: [delete_shipment_comment]
+    tools: [shipment_delete_comment]
   "mutation duplicateShipment":
-    tools: [duplicate_shipment]
+    tools: [shipment_duplicate]
   "mutation pinShipmentComment":
-    tools: [pin_shipment_comment]
+    tools: [shipment_pin_comment]
   "mutation previewShipmentContractRate":
     exempt: read-only
     reason: "Computes a figure or a check for the shipment form and saves nothing."
   "mutation recalculateShipmentDistance":
-    tools: [recalculate_shipment_distance]
+    tools: [shipment_recalculate_distance]
   "mutation resolveShipmentComment":
-    tools: [resolve_shipment_comment]
+    tools: [shipment_resolve_comment]
   "mutation transferShipmentOwnership":
-    tools: [transfer_shipment_ownership]
+    tools: [shipment_transfer_ownership]
   "mutation transferShipmentToBillingItems":
     tools: [transfer_to_billing]
   "mutation uncancelShipment":
-    tools: [uncancel_shipment]
+    tools: [shipment_uncancel]
   "mutation unpinShipmentComment":
-    tools: [unpin_shipment_comment]
+    tools: [shipment_unpin_comment]
   "mutation unresolveShipmentComment":
-    tools: [resolve_shipment_comment]
+    tools: [shipment_resolve_comment]
   "mutation updateShipment":
-    tools: [update_shipment, reschedule_stop, add_shipment_charge]
+    tools: [shipment_update, shipment_reschedule_stop, shipment_add_charge]
   "mutation updateShipmentComment":
-    tools: [edit_shipment_comment]
+    tools: [shipment_update_comment]
 
   # shipmentboard
   "mutation decideShipmentSuggestion":

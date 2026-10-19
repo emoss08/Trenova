@@ -107,7 +107,7 @@ func TestSummarizeResult(t *testing.T) {
 		},
 		{
 			name: "a full page says there are more",
-			tool: "search_shipments",
+			tool: "shipment_list",
 			document: map[string]any{
 				"count":   float64(25),
 				"items":   []any{map[string]any{}},
@@ -135,7 +135,7 @@ func TestSummarizeResult(t *testing.T) {
 		},
 		{
 			name:     "a shipment is named by its number",
-			tool:     "get_shipment",
+			tool:     "shipment_get",
 			document: map[string]any{"proNumber": "PRO-1042", "status": "New"},
 			want:     "PRO-1042",
 		},

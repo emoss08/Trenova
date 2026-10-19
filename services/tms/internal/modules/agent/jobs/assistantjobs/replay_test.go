@@ -21,7 +21,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const replayToolName = "get_shipment"
+const replayToolName = "shipment_get"
 
 func replayRuntime() *agentruntime.Service {
 	return agentruntime.New(agentruntime.Params{

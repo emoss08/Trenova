@@ -20,6 +20,6 @@ describe("composer status while the agent works", () => {
   });
 
   it("is ordinary work for any other step", () => {
-    expect(composerStatus(working("get_shipment"), t)?.pose).toBe("work");
+    expect(composerStatus(working("shipment_get"), t)?.pose).toBe("work");
   });
 });

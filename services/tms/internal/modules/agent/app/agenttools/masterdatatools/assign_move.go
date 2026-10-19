@@ -27,12 +27,12 @@ func (t *AssignMoveTool) Name() string { return "assign_move" }
 
 func (t *AssignMoveTool) Prerequisites() []string {
 	return []string{
-		"get_shipment", "rank_move_candidates", "search_worker", "list_tractors", "list_trailers",
+		"shipment_get", "rank_move_candidates", "search_worker", "list_tractors", "list_trailers",
 	}
 }
 
 func (t *AssignMoveTool) Recipe() []string {
-	return []string{"get_shipment", "rank_move_candidates", "assign_move"}
+	return []string{"shipment_get", "rank_move_candidates", "assign_move"}
 }
 
 func (t *AssignMoveTool) Description() string {
@@ -49,7 +49,7 @@ func (t *AssignMoveTool) ParamSchema() map[string]any {
 			"shipmentMoveId": agenttoolschema.RecordIDText(
 				permission.ResourceShipmentMove,
 				"The move to cover, from get_dispatch_board (moveId), "+
-					"get_shipment (its moves) or plan_dispatch.",
+					"shipment_get (its moves) or plan_dispatch.",
 			),
 			"primaryWorkerId": agenttoolschema.RecordIDText(
 				permission.ResourceWorker,

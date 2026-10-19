@@ -50,7 +50,7 @@ func TestArtifactRecorder_NamesEveryLinkByItsArtifactsTitle(t *testing.T) {
 		titles:           map[pulid.ID]string{earlier: "Shipments"},
 	}
 	recorder := keepRecorder(t, repo)
-	card, _ := recorder.observe(observation("get_shipment", map[string]any{
+	card, _ := recorder.observe(observation("shipment_get", map[string]any{
 		"id": "shp_1", "proNumber": "S26100090038417",
 	}))
 	require.NotNil(t, card)

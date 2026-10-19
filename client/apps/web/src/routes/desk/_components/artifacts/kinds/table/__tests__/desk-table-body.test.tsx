@@ -232,7 +232,7 @@ describe("DeskTableBody with shipments", () => {
     renderTable(
       artifact({
         display: 1,
-        tool: "list_shipments",
+        tool: "shipment_list",
         entity: "shipments",
         recordEntity: "shipment",
         columns: [{ key: "proNumber", label: "Pro number", type: "text" }],

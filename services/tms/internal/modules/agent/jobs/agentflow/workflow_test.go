@@ -6,11 +6,11 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
-	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -198,12 +198,12 @@ func TestRunCallsAToolAsItsOwnActivity(t *testing.T) {
 	t.Parallel()
 
 	lookup := &agenttest.StubQueryTool{
-		ToolName: "get_shipment",
+		ToolName: "shipment_get",
 		Result:   map[string]any{"status": "InTransit", "city": "Memphis"},
 	}
 	h := newHarness(t, harnessParams{query: []agentports.AgentQueryTool{lookup}})
 	h.replies(
-		toolReply("get_shipment", map[string]any{"proNumber": "12345"}),
+		toolReply("shipment_get", map[string]any{"proNumber": "12345"}),
 		textReply("It is in transit near Memphis."),
 	)
 
@@ -214,12 +214,12 @@ func TestRunCallsAToolAsItsOwnActivity(t *testing.T) {
 		},
 	)
 
-	result := h.run(t, runContext("get_shipment"))
+	result := h.run(t, runContext("shipment_get"))
 
 	require.Empty(t, result.Err)
 	assert.Equal(t, 1, lookup.Calls)
 	assert.Equal(t, "12345", lookup.LastParams.Params["proNumber"])
-	assert.Contains(t, started, "get_shipment",
+	assert.Contains(t, started, "shipment_get",
 		"the tool is scheduled under its own name, so it reads as itself in the UI")
 	assert.Equal(t, "It is in transit near Memphis.", result.Outcome.Result.Reply)
 	assert.Equal(t, 1, result.Outcome.Result.ToolCallsUsed)
@@ -242,16 +242,16 @@ func TestRunToolBindsTheRunsTenantForTheDatabase(t *testing.T) {
 	t.Parallel()
 
 	lookup := &agenttest.StubQueryTool{
-		ToolName: "get_shipment",
+		ToolName: "shipment_get",
 		Result:   map[string]any{"status": "InTransit"},
 	}
 	h := newHarness(t, harnessParams{query: []agentports.AgentQueryTool{lookup}})
 	h.replies(
-		toolReply("get_shipment", map[string]any{"proNumber": "12345"}),
+		toolReply("shipment_get", map[string]any{"proNumber": "12345"}),
 		textReply("It is in transit."),
 	)
 
-	rc := runContext("get_shipment")
+	rc := runContext("shipment_get")
 	result := h.run(t, rc)
 
 	require.Empty(t, result.Err)
@@ -264,14 +264,14 @@ func TestRunToolBindsTheRunsTenantForTheDatabase(t *testing.T) {
 func TestRunToolRefusesACallWithNoTenant(t *testing.T) {
 	t.Parallel()
 
-	lookup := &agenttest.StubQueryTool{ToolName: "get_shipment"}
+	lookup := &agenttest.StubQueryTool{ToolName: "shipment_get"}
 	h := newHarness(t, harnessParams{query: []agentports.AgentQueryTool{lookup}})
 	h.replies(
-		toolReply("get_shipment", map[string]any{"proNumber": "12345"}),
+		toolReply("shipment_get", map[string]any{"proNumber": "12345"}),
 		textReply("I could not look that up."),
 	)
 
-	rc := runContext("get_shipment")
+	rc := runContext("shipment_get")
 	rc.Actor.OrganizationID = pulid.Nil
 	result := h.run(t, rc)
 
@@ -285,7 +285,7 @@ func TestRunToolRefusesACallWithNoTenant(t *testing.T) {
 func TestRunTellsTheModelWhenAToolCouldNotBeRun(t *testing.T) {
 	t.Parallel()
 
-	lookup := &agenttest.StubQueryTool{ToolName: "get_shipment"}
+	lookup := &agenttest.StubQueryTool{ToolName: "shipment_get"}
 	attempts := 0
 	h := newHarness(t, harnessParams{
 		query: []agentports.AgentQueryTool{lookup},
@@ -299,11 +299,11 @@ func TestRunTellsTheModelWhenAToolCouldNotBeRun(t *testing.T) {
 		},
 	})
 	h.replies(
-		toolReply("get_shipment", map[string]any{"proNumber": "12345"}),
+		toolReply("shipment_get", map[string]any{"proNumber": "12345"}),
 		textReply("I could not look that up just now."),
 	)
 
-	result := h.run(t, runContext("get_shipment"))
+	result := h.run(t, runContext("shipment_get"))
 
 	require.Empty(t, result.Err)
 	assert.Equal(t, 3, attempts, "the tool is retried before it is given up on")
@@ -336,14 +336,14 @@ func TestUnsettledToolOutcome_NeverSaysAStoppedWriteDidNotHappen(t *testing.T) {
 func TestRunReturnsWhatTheTurnDidWhenTheModelFails(t *testing.T) {
 	t.Parallel()
 
-	lookup := &agenttest.StubQueryTool{ToolName: "get_shipment", Result: "found"}
+	lookup := &agenttest.StubQueryTool{ToolName: "shipment_get", Result: "found"}
 	h := newHarness(t, harnessParams{query: []agentports.AgentQueryTool{lookup}})
-	h.replies(toolReply("get_shipment", map[string]any{"proNumber": "12345"}))
+	h.replies(toolReply("shipment_get", map[string]any{"proNumber": "12345"}))
 	h.env.OnActivity(h.activities.ModelCallActivity, mock.Anything, mock.Anything).
 		Return(nil, temporal.NewNonRetryableApplicationError("bad request", modelcall.ErrTypeModelRejected, nil)).
 		Once()
 
-	result := h.run(t, runContext("get_shipment"))
+	result := h.run(t, runContext("shipment_get"))
 
 	assert.Contains(t, result.Err, "bad request")
 	require.NotNil(t, result.Outcome.Result)
@@ -475,7 +475,7 @@ func TestToolActivityRefusesWhatIsNotATool(t *testing.T) {
 			call:     "SomeMisspelledActivity",
 			errType:  ErrTypeUnknownTool,
 		},
-		{name: "a call to a different tool", activity: "assign_move", call: "get_shipment",
+		{name: "a call to a different tool", activity: "assign_move", call: "shipment_get",
 			errType: ErrTypeBadToolInput},
 	}
 

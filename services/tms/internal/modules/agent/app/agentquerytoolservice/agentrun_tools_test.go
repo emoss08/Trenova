@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbtype"
@@ -457,14 +457,14 @@ func TestGetAgentRun_AddsBoundedProposalsAndTheLastFiftySteps(t *testing.T) {
 			Sequence: 71,
 			Kind:     agentports.AssistantEventToolStarted,
 			CallID:   "call_1",
-			Payload:  map[string]any{"name": "get_shipment", "arguments": map[string]any{"x": 1}},
+			Payload:  map[string]any{"name": "shipment_get", "arguments": map[string]any{"x": 1}},
 		},
 		{
 			Sequence: 72,
 			Kind:     agentports.AssistantEventToolFinished,
 			CallID:   "call_1",
 			Payload: map[string]any{
-				"name":    "get_shipment",
+				"name":    "shipment_get",
 				"content": "<tool_result>the whole shipment</tool_result>",
 				"summary": "Read shipment S-1001",
 			},
@@ -497,7 +497,7 @@ func TestGetAgentRun_AddsBoundedProposalsAndTheLastFiftySteps(t *testing.T) {
 	assert.Equal(t, run.ID, request.OwnerID)
 
 	require.Len(t, detail.Events, 3)
-	assert.Equal(t, "get_shipment", detail.Events[0].Tool)
+	assert.Equal(t, "shipment_get", detail.Events[0].Tool)
 	assert.Empty(t, detail.Events[0].Text, "arguments stay out of the account")
 	assert.Equal(t, "Read shipment S-1001", detail.Events[1].Text,
 		"a tool's summary, never its whole result")
@@ -569,7 +569,7 @@ func TestAgentRunEventView_CarriesTheVerdictOfAToolThatDidNotRun(t *testing.T) {
 
 	ran := agentRunEventViewFrom(&agent.AgentRunEvent{
 		Kind:    agentports.AssistantEventToolStarted,
-		Payload: map[string]any{"name": "get_shipment"},
+		Payload: map[string]any{"name": "shipment_get"},
 	})
 	assert.Empty(t, ran.Verdict, "a started call has no verdict yet")
 }

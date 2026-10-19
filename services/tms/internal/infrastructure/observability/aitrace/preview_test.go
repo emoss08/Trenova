@@ -13,7 +13,7 @@ func TestStartPreview_RecordsWhatWasFoundAndNoValue(t *testing.T) {
 
 	ctx, request := tracer().Start(t.Context(), "POST /graphql")
 	_, span := StartPreview(ctx, &PreviewSpec{
-		ToolName:       "cancel_shipment",
+		ToolName:       "shipment_cancel",
 		ProposalID:     pulid.ID("ap_preview"),
 		OrganizationID: pulid.ID("org_1"),
 		BusinessUnitID: pulid.ID("bu_1"),
@@ -29,10 +29,10 @@ func TestStartPreview_RecordsWhatWasFoundAndNoValue(t *testing.T) {
 	span.End()
 	request.End()
 
-	preview := spanNamed(t, request.SpanContext().TraceID(), "trenova.ai.preview cancel_shipment")
+	preview := spanNamed(t, request.SpanContext().TraceID(), "trenova.ai.preview shipment_cancel")
 	assert.Equal(t, request.SpanContext().SpanID(), preview.Parent.SpanID())
 	for _, want := range []attribute.KeyValue{
-		GenAIToolName.String("cancel_shipment"),
+		GenAIToolName.String("shipment_cancel"),
 		AIProposalID.String("ap_preview"),
 		TenantOrganizationID.String("org_1"),
 		AIPreviewPurpose.String(PreviewPurposeDecide),

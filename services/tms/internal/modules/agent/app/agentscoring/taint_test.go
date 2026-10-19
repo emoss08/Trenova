@@ -11,7 +11,7 @@ import (
 
 func testPolicies() PolicyLookup {
 	policies := map[string]agentports.ToolPolicy{
-		"get_shipment": {
+		"shipment_get": {
 			Kind:          agent.ToolKindQuery,
 			ReadsExternal: agent.ExternalReadNever,
 		},

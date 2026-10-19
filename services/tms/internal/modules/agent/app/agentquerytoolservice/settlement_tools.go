@@ -719,8 +719,8 @@ func (t *listDriverPayEventsTool) ParamSchema() map[string]any {
 			"Only this driver's pay, by id from list_workers or "+
 				"search_worker."),
 		"shipmentId": agenttoolschema.RecordIDText(permission.ResourceShipment,
-			"Only pay for this shipment, by id from search_shipments "+
-				"or get_shipment."),
+			"Only pay for this shipment, by id from shipment_list "+
+				"or shipment_get."),
 		paramStatus: enumParam("Only pay events in this status.", payEventStatuses),
 	}, defaultListLimit, maxListLimit))
 }

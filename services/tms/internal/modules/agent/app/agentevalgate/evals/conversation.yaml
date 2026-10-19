@@ -7,18 +7,18 @@ cases:
   - name: a reprinted list points to its table
     input: Which loads are running late today?
     tools:
-      - name: list_shipments
+      - name: shipment_list
         table:
           title: Late shipments
           rows: 25
     script:
       - calls:
-          - name: list_shipments
+          - name: shipment_list
             args: {}
       - reply: "Twenty-five loads are late; the oldest is PRO-1001."
         reprintRows: 25
     expect:
-      pointsToTable: list_shipments
+      pointsToTable: shipment_list
       noMarkdownTable: true
 
   - name: internal record ids never reach the person
@@ -33,7 +33,7 @@ cases:
   - name: a number sent as text and a lone id are read as the tool declares them
     input: Check the last thirty loads, starting with that one.
     tools:
-      - name: list_shipments
+      - name: shipment_list
         schema:
           type: object
           properties:
@@ -42,14 +42,14 @@ cases:
               description: How many to return.
             shipmentIds:
               type: array
-              description: The shipments to read, from search_shipments.
+              description: The shipments to read, from shipment_list.
               items:
                 type: string
         result:
           items: []
     script:
       - calls:
-          - name: list_shipments
+          - name: shipment_list
             args:
               limit: "30"
               shipmentIds: shp_01M3Q2Y4SRFE0YW60JY6F5NRW7
@@ -57,7 +57,7 @@ cases:
     expect:
       noRefusals: true
       received:
-        - tool: list_shipments
+        - tool: shipment_list
           call: 1
           calls: 1
           args:
@@ -67,7 +67,7 @@ cases:
   - name: a value outside an enum is refused with the allowed values, then corrected
     input: Show me the delayed loads.
     tools:
-      - name: list_shipments
+      - name: shipment_list
         schema:
           type: object
           properties:
@@ -80,20 +80,20 @@ cases:
           items: []
     script:
       - calls:
-          - name: list_shipments
+          - name: shipment_list
             args:
               status: Delayed
       - calls:
-          - name: list_shipments
+          - name: shipment_list
             args:
               status: Late
       - reply: No loads are late.
     expect:
       refusal:
-        tool: list_shipments
+        tool: shipment_list
         mentions: ["'Late', 'OnTime'"]
       received:
-        - tool: list_shipments
+        - tool: shipment_list
           call: 1
           calls: 1
           args:

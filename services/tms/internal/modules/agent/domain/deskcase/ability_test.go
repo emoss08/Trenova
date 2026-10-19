@@ -37,7 +37,7 @@ does it.
 func TestAbilities(t *testing.T) {
 	t.Parallel()
 
-	shipments := holder("Shipment Assistant", "get_shipment_tracking")
+	shipments := holder("Shipment Assistant", "shipment_get_tracking")
 	billing := holder("Billing Assistant", "transfer_to_billing", "email_customer")
 	steps := []deskcase.StepKey{
 		deskcase.StepTrackDelivery,
@@ -50,7 +50,7 @@ func TestAbilities(t *testing.T) {
 		Steps:     steps,
 		Own:       shipments,
 		Others:    []*deskcase.Holder{billing},
-		Permitted: permitted("get_shipment_tracking", "transfer_to_billing", "send_invoice"),
+		Permitted: permitted("shipment_get_tracking", "transfer_to_billing", "send_invoice"),
 	})
 
 	assert.Equal(t, deskcase.ViaAgent, got[deskcase.StepTrackDelivery].Via)

@@ -66,7 +66,7 @@ func TestTemplates_TheSettlementsClerkRunsThePayPeriod(t *testing.T) {
 	for _, tool := range []string{
 		"search_worker",
 		"list_carriers",
-		"search_shipments",
+		"shipment_list",
 		"list_driver_settlements",
 		"get_driver_settlement",
 		"list_driver_pay_events",

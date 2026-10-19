@@ -3,8 +3,8 @@ package agenttoolschema_test
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/stretchr/testify/assert"
 )
@@ -91,10 +91,10 @@ func TestOfResource_MarksAPropertyBuiltElsewhereWithoutChangingIt(t *testing.T) 
 
 	single := agenttoolschema.OfResource(map[string]any{
 		toolschema.KeyType:        toolschema.TypeString,
-		toolschema.KeyDescription: "The hold, from get_shipment.",
+		toolschema.KeyDescription: "The hold, from shipment_get.",
 	}, permission.ResourceShipmentHold)
 	assert.Equal(t, "shipment_hold", toolschema.RecordOf(single))
-	assert.Equal(t, "The hold, from get_shipment.", single[toolschema.KeyDescription])
+	assert.Equal(t, "The hold, from shipment_get.", single[toolschema.KeyDescription])
 
 	list := agenttoolschema.OfKinds(map[string]any{
 		toolschema.KeyType:        toolschema.TypeArray,

@@ -25,7 +25,7 @@ func TestSensitiveTools_NamesToolsOnRestrictedResources(t *testing.T) {
 	}
 
 	held := []HeldTool{
-		{Name: "get_shipment", Resource: "shipment", Operation: permission.OpRead},
+		{Name: "shipment_get", Resource: "shipment", Operation: permission.OpRead},
 		{Name: "get_worker_pay", Resource: "worker_pay", Operation: permission.OpRead},
 		{Name: "rotate_api_key", Resource: "api_key", Operation: permission.OpUpdate},
 		{Name: "unknown", Resource: "nothing", Operation: permission.OpRead},
@@ -72,13 +72,13 @@ func TestDefaultSensitiveRule_NamesToolsWhoseWorkLeavesTheOrganization(t *testin
 			Egress:    []agent.EgressClass{agent.EgressInternal, agent.EgressExternalRecipient},
 		},
 		{
-			Name:      "add_shipment_comment",
+			Name:      "shipment_add_comment",
 			Resource:  "shipment",
 			Operation: permission.OpUpdate,
 			Egress:    []agent.EgressClass{agent.EgressInternal},
 		},
 		{Name: "remember", Egress: []agent.EgressClass{agent.EgressPersonal}},
-		{Name: "get_shipment", Resource: "shipment", Operation: permission.OpRead},
+		{Name: "shipment_get", Resource: "shipment", Operation: permission.OpRead},
 	}
 
 	assert.Equal(t,

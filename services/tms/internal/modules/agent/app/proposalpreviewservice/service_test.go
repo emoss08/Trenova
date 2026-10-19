@@ -6,10 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -334,7 +334,7 @@ func TestForProposal_AFailingValidationIsAWarning(t *testing.T) {
 	t.Parallel()
 
 	failing := &validatingTool{
-		baseTool: baseTool{name: "release_shipment_hold", resource: permission.ResourceShipment},
+		baseTool: baseTool{name: "shipment_release_hold", resource: permission.ResourceShipment},
 		err:      errors.New("the shipment has no hold"),
 	}
 	f := newFixture(failing)
@@ -666,7 +666,7 @@ func TestForProposal_AFailingValidationNamesItsReasons(t *testing.T) {
 	t.Parallel()
 
 	failing := &validatingTool{
-		baseTool: baseTool{name: "release_shipment_hold", resource: permission.ResourceShipment},
+		baseTool: baseTool{name: "shipment_release_hold", resource: permission.ResourceShipment},
 		err:      statusRefusal(),
 	}
 	f := newFixture(failing)

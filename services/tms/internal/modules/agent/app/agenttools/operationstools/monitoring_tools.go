@@ -101,6 +101,8 @@ type EvaluateServiceFailuresTool struct {
 	failures ServiceFailureDecider
 }
 
+const toolShipmentGetTracking = "shipment_get_tracking"
+
 func NewEvaluateServiceFailuresTool(failures ServiceFailureDecider) agentports.AgentTool {
 	return &EvaluateServiceFailuresTool{failures: failures}
 }
@@ -108,14 +110,14 @@ func NewEvaluateServiceFailuresTool(failures ServiceFailureDecider) agentports.A
 func (t *EvaluateServiceFailuresTool) Name() string { return "evaluate_service_failures" }
 
 func (t *EvaluateServiceFailuresTool) Recipe() []string {
-	return []string{"get_shipment_tracking", "list_service_failures", "evaluate_service_failures"}
+	return []string{toolShipmentGetTracking, "list_service_failures", "evaluate_service_failures"}
 }
 
 func (t *EvaluateServiceFailuresTool) Description() string {
 	return "Run the service failure check on a shipment now, opening a failure for a " +
 		"late or missed stop that has none. Every stop is compared against its window " +
 		"and the grace period; send stopId to check one stop, or shipmentIds to check " +
-		"several shipments in one pass. Use it when get_shipment_tracking shows a stop " +
+		"several shipments in one pass. Use it when shipment_get_tracking shows a stop " +
 		"late or overdue and list_service_failures shows nothing for it, so the " +
 		"failure is on record before anyone is told. It records what the stop " +
 		"actuals prove and nothing else; it cannot create a failure from a guess."
@@ -127,19 +129,19 @@ func (t *EvaluateServiceFailuresTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			common.ParamShipmentID: agenttoolschema.RecordIDText(
 				permission.ResourceShipment,
-				"The shipment to check, from get_shipment_tracking, "+
-					"list_shipments or this run's subject. For several shipments send "+
+				"The shipment to check, from shipment_get_tracking, "+
+					"shipment_list or this run's subject. For several shipments send "+
 					"shipmentIds instead.",
 			),
 			common.ParamStopID: agenttoolschema.RecordIDText(
 				permission.ResourceShipmentStop,
 				"One stop of that shipment to check on its own, from "+
-					"get_shipment_tracking or get_shipment. Needs shipmentId.",
+					"shipment_get_tracking or shipment_get. Needs shipmentId.",
 			),
 			"shipmentIds": agenttoolschema.RecordIDs(
 				permission.ResourceShipment,
 				"Several shipments to check in one pass, from "+
-					"list_shipments or search_shipments. Leave it out when checking one "+
+					"shipment_list. Leave it out when checking one "+
 					"shipment by shipmentId.",
 				MaxBulkEvaluationShipments,
 			),
@@ -336,7 +338,7 @@ func (t *ResolveServiceFailureTool) Recipe() []string {
 	return []string{
 		"list_service_failures",
 		"get_service_failure",
-		"get_shipment_tracking",
+		toolShipmentGetTracking,
 		"list_service_failure_reason_codes",
 		"resolve_service_failure",
 	}
@@ -509,7 +511,7 @@ func (t *NotifyDriverTool) Description() string {
 		"to what the driver needs to do; it goes to their phone. A driver without " +
 		"portal access cannot be reached this way, and the message is not " +
 		"delivered; say so if a reply matters. It is a message, not a record: put " +
-		"anything the office needs later on the shipment with add_shipment_comment."
+		"anything the office needs later on the shipment with shipment_add_comment."
 }
 
 func (t *NotifyDriverTool) ParamSchema() map[string]any {
@@ -537,7 +539,7 @@ func (t *NotifyDriverTool) ParamSchema() map[string]any {
 			common.ParamShipmentID: agenttoolschema.RecordIDText(
 				permission.ResourceShipment,
 				"Optional: the shipment the message is about, so Dash can open "+
-					"it; from get_dispatch_board, get_shipment_tracking or search_shipments.",
+					"it; from get_dispatch_board, shipment_get_tracking or shipment_list.",
 			),
 		},
 		"required":             []string{"workerId", "title", "message"},
@@ -685,7 +687,7 @@ func (t *EmailCustomerTool) Name() string { return emailCustomerToolName }
 
 func (t *EmailCustomerTool) Recipe() []string {
 	return []string{
-		"get_shipment_tracking",
+		toolShipmentGetTracking,
 		"get_customer_update_preferences",
 		emailCustomerToolName,
 	}
@@ -707,8 +709,8 @@ func (t *EmailCustomerTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			common.ParamShipmentID: agenttoolschema.RecordIDText(
 				permission.ResourceShipment,
-				"The shipment the update is about, from search_shipments, "+
-					"list_shipments or this run's subject. Its customer is who receives it.",
+				"The shipment the update is about, from shipment_list, "+
+					"shipment_list or this run's subject. Its customer is who receives it.",
 			),
 			"profileId": agenttoolschema.RecordIDText(
 				permission.ResourceEmailProfile,

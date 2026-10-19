@@ -12,6 +12,18 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/toolschema"
+)
+
+const (
+	paramFilters       = "filters"
+	paramOperator      = "operator"
+	paramValue         = "value"
+	paramValues        = "values"
+	paramDays          = "days"
+	paramSortBy        = "sortBy"
+	paramSortDirection = "sortDirection"
+	paramProNumber     = "proNumber"
 )
 
 const (
@@ -207,47 +219,64 @@ func (t *listTool) Policy() agentports.ToolPolicy {
 
 func (t *listTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
-			"query": map[string]any{
-				"type": "string",
-				"description": "Optional free text matched across the searchable columns. " +
-					"Omit it when you are filtering on a field.",
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
+			paramQuery: map[string]any{
+				toolschema.KeyType: toolschema.TypeString,
+				toolschema.KeyDescription: "Optional free text matched across the searchable " +
+					"columns. Omit it when you are filtering on a field.",
 			},
-			"filters": map[string]any{
-				"type":     "array",
-				"maxItems": maxListFilters,
-				"description": "Conditions, combined with AND. Give value for a single " +
-					"comparison, values for in and notin, days for nextndays and lastndays, " +
-					"and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
-				"items": map[string]any{
-					"type": "object",
-					"properties": map[string]any{
-						paramField: agenttoolschema.Enum("", t.fields),
-						"operator": agenttoolschema.Enum("", t.operators),
-						"value":    map[string]any{"type": "string"},
-						"values": map[string]any{
-							"type":  "array",
-							"items": map[string]any{"type": "string"},
-						},
-						"days": map[string]any{"type": "integer"},
-					},
-					"required":             []string{"field", "operator"},
-					"additionalProperties": false,
+			paramFilters:       filtersSchema(t.fields, t.operators),
+			paramSortBy:        t.sortSchema(),
+			paramSortDirection: sortDirectionSchema(),
+			paramLimit:         pageSchema(defaultListLimit, maxListLimit)[paramLimit],
+			paramOffset:        pageSchema(defaultListLimit, maxListLimit)[paramOffset],
+		},
+		toolschema.KeyAdditionalProperties: false,
+	}
+}
+
+func filtersSchema(
+	fields agenttoolschema.EnumSource[string],
+	operators agenttoolschema.EnumSource[string],
+) map[string]any {
+	return map[string]any{
+		toolschema.KeyType:     toolschema.TypeArray,
+		toolschema.KeyMaxItems: maxListFilters,
+		toolschema.KeyDescription: "Conditions, combined with AND. Give value for a single " +
+			"comparison, values for in and notin, days for nextndays and lastndays, " +
+			"and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
+		toolschema.KeyItems: map[string]any{
+			toolschema.KeyType: toolschema.TypeObject,
+			toolschema.KeyProperties: map[string]any{
+				paramField:    agenttoolschema.Enum("", fields),
+				paramOperator: agenttoolschema.Enum("", operators),
+				paramValue:    map[string]any{toolschema.KeyType: toolschema.TypeString},
+				paramValues: map[string]any{
+					toolschema.KeyType:  toolschema.TypeArray,
+					toolschema.KeyItems: map[string]any{toolschema.KeyType: toolschema.TypeString},
+				},
+				paramDays: map[string]any{
+					toolschema.KeyType:    toolschema.TypeInteger,
+					toolschema.KeyMinimum: 1,
+					toolschema.KeyMaximum: maxRelativeDays,
 				},
 			},
-			"sortBy": agenttoolschema.Enum(
-				"Field to order by. Defaults to most recently created.", t.sortable,
-			),
-			"sortDirection": agenttoolschema.Enum(
-				"asc for oldest or smallest first, desc for newest or largest.",
-				listSortDirections,
-			),
-			"limit":  pageSchema(defaultListLimit, maxListLimit)["limit"],
-			"offset": pageSchema(defaultListLimit, maxListLimit)["offset"],
+			toolschema.KeyRequired:             []string{paramField, paramOperator},
+			toolschema.KeyAdditionalProperties: false,
 		},
-		"additionalProperties": false,
 	}
+}
+
+func (t *listTool) sortSchema() map[string]any {
+	return agenttoolschema.Enum("Field to order by. Defaults to most recently created.", t.sortable)
+}
+
+func sortDirectionSchema() map[string]any {
+	return agenttoolschema.Enum(
+		"asc for oldest or smallest first, desc for newest or largest.",
+		listSortDirections,
+	)
 }
 
 func (t *listTool) Query(

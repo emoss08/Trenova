@@ -27,10 +27,10 @@ agents:
       will do in a sentence. Approving, rejecting and anything that sends something to a
       customer or a carrier are the person's decisions.
     tools:
-      - search_shipments
-      - list_shipments
-      - get_shipment
-      - get_shipment_tracking
+      - shipment_list
+      - shipment_list
+      - shipment_get
+      - shipment_get_tracking
       - list_customers
       - get_customer
       - list_locations
@@ -57,21 +57,21 @@ agents:
       - get_invoice
       - list_service_failures
       - list_detention_desk
-      - create_shipment
-      - update_shipment
-      - reschedule_stop
-      - add_shipment_charge
-      - duplicate_shipment
-      - cancel_shipment
-      - rerate_shipment
+      - shipment_create
+      - shipment_update
+      - shipment_reschedule_stop
+      - shipment_add_charge
+      - shipment_duplicate
+      - shipment_cancel
+      - shipment_rerate
       - assign_move
       - unassign_moves
       - update_move_status
       - record_stop_actual
       - log_check_call
-      - place_shipment_hold
-      - release_shipment_hold
-      - add_shipment_comment
+      - shipment_place_hold
+      - shipment_release_hold
+      - shipment_add_comment
       - transfer_to_billing
       - approve_billing_queue_item
       - post_invoice
@@ -102,10 +102,10 @@ agents:
       a driver are the person's decisions: propose them with the figures that justify them.
       When a message to a customer or a driver is right, write it plainly and briefly.
     tools:
-      - get_shipment
-      - search_shipments
-      - list_shipments
-      - get_shipment_tracking
+      - shipment_get
+      - shipment_list
+      - shipment_list
+      - shipment_get_tracking
       - search_worker
       - get_worker
       - get_worker_hos
@@ -130,9 +130,9 @@ agents:
       - notify_driver
       - place_worker_dispatch_hold
       - request_credential_renewal
-      - add_shipment_comment
-      - place_shipment_hold
-      - release_shipment_hold
+      - shipment_add_comment
+      - shipment_place_hold
+      - shipment_release_hold
       - list_hold_reasons
       - list_tractors
       - update_tractor_status
@@ -151,13 +151,13 @@ agents:
 
       Every shipment, customer, location and commodity you enter waits for a person's approval.
     tools:
-      - search_shipments
-      - list_shipments
-      - get_shipment
-      - get_shipment_tracking
-      - create_shipment
-      - update_shipment
-      - cancel_shipment
+      - shipment_list
+      - shipment_list
+      - shipment_get
+      - shipment_get_tracking
+      - shipment_create
+      - shipment_update
+      - shipment_cancel
 
 
   - name: EDI desk
