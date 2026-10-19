@@ -102,3 +102,33 @@ func TestArtifactCorrections_CountOnlyWhatRestartedTheReply(t *testing.T) {
 	assert.Equal(t, []string{"relink_artifacts", "place_artifacts"},
 		artifactCorrections([]Event{relinked, placed}))
 }
+
+func TestNoDelegateCalls_GradesOnlyWhatADelegateCalled(t *testing.T) {
+	t.Parallel()
+
+	expect := &Expect{NoDelegateCalls: []string{"shipment_place_hold"}}
+	byName := func(tools ...*ToolCallRecord) CheckResult {
+		evidence := &stepEvidence{turns: []*TurnRecord{{Tools: tools}}}
+		for _, check := range (&Bench{}).evaluate(t.Context(), &Session{}, expect, evidence) {
+			if check.Name == "no delegate called shipment_place_hold" {
+				return check
+			}
+		}
+		t.Fatal("the check was not run")
+
+		return CheckResult{}
+	}
+
+	asked := byName(
+		&ToolCallRecord{Name: "shipment_place_hold", Verdict: verdictProposed, Finished: true},
+		&ToolCallRecord{Name: "shipment_get", DelegateCallID: "call_1", Finished: true},
+	)
+	assert.True(t, asked.Passed, "the conversation's own proposal is not the delegate's")
+
+	delegated := byName(&ToolCallRecord{
+		Name: "shipment_place_hold", DelegateCallID: "call_1", Verdict: "unregistered",
+		Finished: true,
+	})
+	assert.False(t, delegated.Passed)
+	assert.Equal(t, "shipment_place_hold (unregistered)", delegated.Detail)
+}

@@ -14,6 +14,7 @@ strata:
       desk: BillingException
       mode: unattended
     heldOut:
+      - unattended-billing-books-connection-revoked
       - unattended-billing-on-hold-paperwork-not-in
   - stratum:
       desk: CarrierRiskDesk

@@ -52,10 +52,37 @@ func TestFire_Validation(t *testing.T) {
 			Agent: string(agentdefinition.TemplateBillingException),
 			Event: agent.EventBillingQueueItemException, Subject: "delete from shipments",
 		},
+		"a ceiling that is no tier": {
+			Agent: string(agentdefinition.TemplateLoadMonitor), Schedule: true, Ceiling: "Sometimes",
+		},
+		"a tier that is no tier": {
+			Agent: string(agentdefinition.TemplateLoadMonitor), Schedule: true,
+			ToolTiers: map[string]agent.AutonomyTier{agentdefinition.CoreToolRaiseException: "Loud"},
+		},
+		"a tier on a tool the agent does not hold": {
+			Agent: string(agentdefinition.TemplateLoadMonitor), Schedule: true,
+			ToolTiers: map[string]agent.AutonomyTier{"invoice_post": agent.TierPropose},
+		},
 	}
 	for name, fire := range cases {
 		assert.Error(t, fireScenario(fire).Validate(), name)
 	}
+
+	shaped := &Fire{
+		Agent:   string(agentdefinition.TemplateBillingException),
+		Event:   agent.EventBillingQueueItemException,
+		Subject: "select id from billing_queue_items limit 1",
+		Ceiling: agent.TierPropose,
+		ToolTiers: map[string]agent.AutonomyTier{
+			agentdefinition.CoreToolRaiseException: agent.TierPropose,
+			agentdefinition.CoreToolFlagForReview:  agent.TierPropose,
+		},
+		StopWhileWaiting: true,
+	}
+	require.NoError(t, fireScenario(shaped).Validate(), "a core tool's tier may be set")
+	assert.Equal(t, agent.TierPropose, shaped.ceiling(agentdefinition.TemplateBillingException))
+	assert.Equal(t, agentdefinition.TemplateBillingException.StarterCeiling(),
+		event.ceiling(agentdefinition.TemplateBillingException))
 
 	twoSteps := fireScenario(schedule)
 	twoSteps.Steps = append(twoSteps.Steps, Step{Say: "and then?"})
@@ -85,6 +112,20 @@ func TestUnattendedTemplates_CoverEveryEventAndScheduledTemplate(t *testing.T) {
 			assert.Equal(t, unattendedCron, shape.CronExpression)
 		}
 	}
+}
+
+func TestUnattendedMatches_ResetsToolTiersALeftRunSet(t *testing.T) {
+	t.Parallel()
+
+	template := agentdefinition.TemplateBillingException
+	existing := unattendedShape(template)
+	assert.True(t, unattendedMatches(existing, unattendedShape(template)))
+
+	existing.ToolTiers = map[string]agent.AutonomyTier{
+		agentdefinition.CoreToolRaiseException: agent.TierPropose,
+	}
+	assert.False(t, unattendedMatches(existing, unattendedShape(template)),
+		"tiers a crashed case left on the agent are cleared by the next sync")
 }
 
 func TestRecorderPin_HoldsARunToItsCell(t *testing.T) {

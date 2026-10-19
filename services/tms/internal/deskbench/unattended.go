@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"slices"
 	"strings"
 	"time"
@@ -38,10 +39,13 @@ var unattendedContext = []agentdefinition.ContextProvider{
 }
 
 type Fire struct {
-	Agent    string          `yaml:"agent"    json:"agent"`
-	Event    agent.EventKind `yaml:"event"    json:"event,omitempty"`
-	Subject  string          `yaml:"subject"  json:"subject,omitempty"`
-	Schedule bool            `yaml:"schedule" json:"schedule,omitempty"`
+	Agent            string                        `yaml:"agent"            json:"agent"`
+	Event            agent.EventKind               `yaml:"event"            json:"event,omitempty"`
+	Subject          string                        `yaml:"subject"          json:"subject,omitempty"`
+	Schedule         bool                          `yaml:"schedule"         json:"schedule,omitempty"`
+	Ceiling          agent.AutonomyTier            `yaml:"ceiling"          json:"ceiling,omitempty"`
+	ToolTiers        map[string]agent.AutonomyTier `yaml:"toolTiers"        json:"toolTiers,omitempty"`
+	StopWhileWaiting bool                          `yaml:"stopWhileWaiting" json:"stopWhileWaiting,omitempty"`
 }
 
 func (f *Fire) Template() agentdefinition.Template {
@@ -89,7 +93,33 @@ func (f *Fire) validate(where string) error {
 		return fmt.Errorf("%s: %s has no trigger the bench can fire", where, template)
 	}
 
+	return f.validateShape(where, template)
+}
+
+func (f *Fire) validateShape(where string, template agentdefinition.Template) error {
+	if f.Ceiling != "" && !f.Ceiling.IsValid() {
+		return fmt.Errorf("%s: fire.ceiling %q is not an autonomy tier", where, f.Ceiling)
+	}
+	held := template.StarterTools()
+	for tool, tier := range f.ToolTiers {
+		if !tier.IsValid() {
+			return fmt.Errorf("%s: fire.toolTiers.%s %q is not an autonomy tier", where, tool, tier)
+		}
+		if !agentdefinition.IsCoreTool(tool) && !slices.Contains(held, tool) {
+			return fmt.Errorf("%s: fire.toolTiers names %s, which %s does not hold", where, tool,
+				template)
+		}
+	}
+
 	return nil
+}
+
+func (f *Fire) ceiling(template agentdefinition.Template) agent.AutonomyTier {
+	if f.Ceiling != "" {
+		return f.Ceiling
+	}
+
+	return template.StarterCeiling()
 }
 
 func UnattendedTemplates() []agentdefinition.Template {
@@ -163,6 +193,7 @@ func unattendedMatches(existing, want *agentdefinition.Definition) bool {
 		existing.CronExpression == want.CronExpression &&
 		slices.Equal(existing.EventKinds, want.EventKinds) &&
 		existing.OutputMode == want.OutputMode &&
+		len(existing.ToolTiers) == 0 &&
 		slices.Equal(held, wanted)
 }
 
@@ -278,6 +309,7 @@ func (s *Session) reshapeUnattended(
 			definition.EventKinds = want.EventKinds
 			definition.OutputMode = want.OutputMode
 			definition.ContextProviders = want.ContextProviders
+			definition.ToolTiers = nil
 			definition.LearningOff = true
 			definition.ShadowMode = false
 			definition.Enabled = false
@@ -289,15 +321,29 @@ func (s *Session) reshapeUnattended(
 	return err
 }
 
-func (s *Session) setEnabled(ctx context.Context, definitionID pulid.ID, enabled bool) error {
+func (s *Session) shapeForRun(
+	ctx context.Context,
+	definition *agentdefinition.Definition,
+	fire *Fire,
+	enabled bool,
+) error {
+	ceiling := definition.Template.StarterCeiling()
+	var tiers map[string]agent.AutonomyTier
+	if enabled {
+		ceiling = fire.ceiling(definition.Template)
+		tiers = maps.Clone(fire.ToolTiers)
+	}
+
 	_, err := s.bench.AgentDefinitions.Patch(
 		s.Context(ctx),
 		&agentdefinitionports.PatchAgentDefinitionRequest{
-			ID:         definitionID,
+			ID:         definition.ID,
 			TenantInfo: s.Tenant,
 			Comment:    agentSyncComment,
-			Edit: func(definition *agentdefinition.Definition) error {
-				definition.Enabled = enabled
+			Edit: func(edited *agentdefinition.Definition) error {
+				edited.Enabled = enabled
+				edited.AutonomyCeiling = ceiling
+				edited.ToolTiers = tiers
 				return nil
 			},
 		},
@@ -316,10 +362,12 @@ type firedRun struct {
 }
 
 type runOutcome struct {
-	ID      pulid.ID
-	Subject pulid.ID
-	Status  agent.RunStatus
-	Flagged int
+	ID       pulid.ID
+	Subject  pulid.ID
+	Status   agent.RunStatus
+	Flagged  int
+	Stopping bool
+	Stopped  bool
 }
 
 func (b *Bench) runFire(
@@ -346,13 +394,13 @@ func (b *Bench) runFire(
 	unpin := b.recorder.Pin(definition.ID, cell.pin())
 	defer unpin()
 
-	if err = session.setEnabled(ctx, definition.ID, true); err != nil {
+	if err = session.shapeForRun(ctx, definition, fire, true); err != nil {
 		return nil, nil, fmt.Errorf("turn %s on for the run: %w", definition.Name, err)
 	}
 	defer func() {
 		offCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), cleanupWithin)
 		defer cancel()
-		if offErr := session.setEnabled(offCtx, definition.ID, false); offErr != nil {
+		if offErr := session.shapeForRun(offCtx, definition, fire, false); offErr != nil {
 			b.live.Line(label, "could not turn %s off again: %v", definition.Name, offErr)
 		}
 	}()
@@ -364,6 +412,9 @@ func (b *Bench) runFire(
 	b.live.Line(label, "== run %s (%s) ==", fired.run.ID, fire.Label())
 
 	record, outcome := b.captureRun(ctx, session, fired, label)
+	if fire.StopWhileWaiting {
+		b.stopWaitingRun(ctx, session, fired, record, outcome, label)
+	}
 	b.settleRun(ctx, session, fired, record, label)
 
 	return record, outcome, nil
@@ -780,6 +831,48 @@ func (b *Bench) runFlags(ctx context.Context, session *Session, runID pulid.ID) 
 	return count, nil
 }
 
+func (b *Bench) stopWaitingRun(
+	ctx context.Context,
+	session *Session,
+	fired *firedRun,
+	record *TurnRecord,
+	outcome *runOutcome,
+	label string,
+) {
+	outcome.Stopping = true
+	if outcome.Status != agent.RunStatusAwaitingDecision {
+		return
+	}
+
+	b.live.Line(label, "stopping run %s while it waits for a decision", fired.run.ID)
+	if err := b.watcher.CancelWorkflow(ctx, fired.run.WorkflowID, ""); err != nil {
+		record.CaptureError = joinErrors(record.CaptureError, "stop: "+err.Error())
+		return
+	}
+	outcome.Stopped = true
+
+	waitCtx, cancel := context.WithTimeout(ctx, runSettleWithin)
+	defer cancel()
+	if err := fired.workflow.Get(waitCtx, nil); err != nil && waitCtx.Err() != nil {
+		record.CaptureError = joinErrors(record.CaptureError,
+			fmt.Sprintf("the stopped run did not close within %s", runSettleWithin))
+	}
+
+	run, err := b.loadRun(ctx, session, fired.run.ID)
+	if err != nil {
+		record.CaptureError = joinErrors(record.CaptureError, "stopped run: "+err.Error())
+		return
+	}
+	outcome.Status = run.Status
+	record.Status = turnStatusOf(run.Status)
+	record.Failure = run.ErrorMessage
+
+	record.Proposals, err = b.runProposals(ctx, session, fired.run.ID)
+	if err != nil {
+		record.CaptureError = joinErrors(record.CaptureError, "proposals: "+err.Error())
+	}
+}
+
 func (b *Bench) settleRun(
 	ctx context.Context,
 	session *Session,
@@ -829,9 +922,20 @@ func (o *runOutcome) substitute(statement string) string {
 }
 
 func runChecks(expect *Expect, outcome *runOutcome) []CheckResult {
-	checks := make([]CheckResult, 0, 2)
+	checks := make([]CheckResult, 0, 3)
 	if outcome == nil {
 		return checks
+	}
+	if outcome.Stopping {
+		detail := "stopped while " + string(agent.RunStatusAwaitingDecision)
+		if !outcome.Stopped {
+			detail = "it was " + string(outcome.Status) + ", not waiting for a decision"
+		}
+		checks = append(checks, CheckResult{
+			Name:   "the run was stopped while it waited for a decision",
+			Passed: outcome.Stopped,
+			Detail: detail,
+		})
 	}
 	if expect.Run != "" {
 		checks = append(checks, CheckResult{

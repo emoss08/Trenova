@@ -47,6 +47,41 @@ scenarios:
             Says Emily Chen has no open settlement (SEED-STL-1005 is already posted) and offers
             what can be done instead, such as taking it from her next settlement.
 
+  - name: approve-two-settlements-in-one-go
+    description: >
+      Jane Doe's and Sarah Williams's settlements both wait for approval. The approve tool takes
+      one settlement or many, so a good turn puts both in one approval the person decides
+      together, not a proposal each.
+    agent: Settlements clerk
+    tags: [settlements, write]
+    exclusive: seed-settlements
+    setup:
+      - >
+        UPDATE driver_settlements SET status = 'PendingApproval'
+        WHERE settlement_number IN ('SEED-STL-1001', 'SEED-STL-1002')
+    steps:
+      - say: "approve jane doe and sarah williams settlements, ive checked both"
+        expect:
+          calls: ["settlement_list_driver"]
+          proposals: [{ tool: settlement_approve_driver }]
+          maxFailedCalls: 1
+          maxCalls: 8
+          db:
+            - sql: >
+                select count(*) from agent_proposals
+                where tool_name = 'settlement_approve_driver' and status = 'Pending'
+                  and created_at > extract(epoch from now())::bigint - 900
+                  and jsonb_array_length(tool_params->'settlementIds') = 2
+                  and tool_params->'settlementIds' @> (
+                    select jsonb_agg(id) from driver_settlements
+                    where settlement_number in ('SEED-STL-1001', 'SEED-STL-1002'))
+              equals: "1"
+              note: one proposal names both settlements
+          rubric: >
+            Finds SEED-STL-1001 (Jane Doe) and SEED-STL-1002 (Sarah Williams), both pending
+            approval, and proposes approving them together in one call, naming each settlement's
+            net pay. It does not submit, post or pay either.
+
   - name: customer-short-paid
     description: A payment that does not cover the invoice.
     agent: Receivables

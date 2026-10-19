@@ -290,6 +290,7 @@ scenarios:
 |---|---|
 | `calls` | each entry was called and not refused; `a\|b` accepts either |
 | `noCalls` | none of these was called, refused or not |
+| `noDelegateCalls` | no delegate called any of these, refused or not; the conversation's own calls are not counted, so a write it proposes itself still passes |
 | `maxCalls`, `maxFailedCalls` | tool calls in the step, and those refused (`denied`, `invalid`, `duplicate`, `over_budget`, `failed`, `unregistered`) |
 | `replyIncludes`, `replyExcludes` | case-insensitive text; `a\|b` alternatives; `/pattern/` is a regular expression |
 | `noRecordIds` | the reply shows no internal record id, by the same detector the reply pass uses (`shared/recordids`), so an `artifact:` link is not counted |
@@ -441,6 +442,28 @@ steps:
       db:
         - sql: SELECT count(*) FROM agent_exceptions WHERE run_id = '{{run}}'
           equals: "1"
+```
+
+A fire step may also shape the agent for that one run, the way a person would in AI Control:
+`ceiling` sets its autonomy ceiling (`Propose`, `ActWithApproval`, `AutoExecute`) and
+`toolTiers` sets a tier on named tools as a person's setting (`raise_exception: Propose`), on
+tools the template holds or the core tools. Both apply while the case holds the agent and are
+put back to the template's own ceiling and no tool tiers when it ends; the next sync clears any
+a crashed case left. `stopWhileWaiting: true` cancels the run's workflow once it is
+`AwaitingDecision`, before the bench decides anything, waits for the run to close and grades
+what it left: the run's status, its proposals read again, and a check that it was waiting when
+it was stopped.
+
+```yaml
+      - fire:
+          agent: BillingException
+          event: billing_queue.item_exception
+          subject: select id from billing_queue_items where number = 'BQ-BENCH-0001'
+          ceiling: Propose
+          toolTiers: { flag_for_manual_review: Propose }
+          stopWhileWaiting: true
+        expect:
+          run: Failed
 ```
 
 An event run has no actor and its subject type is taken from the event kind, as the publisher

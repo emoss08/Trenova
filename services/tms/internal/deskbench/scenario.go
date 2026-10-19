@@ -204,24 +204,25 @@ func (s *Step) Label() string {
 }
 
 type Expect struct {
-	Calls          []string        `yaml:"calls"          json:"calls,omitempty"`
-	NoCalls        []string        `yaml:"noCalls"        json:"noCalls,omitempty"`
-	MaxCalls       *int            `yaml:"maxCalls"       json:"maxCalls,omitempty"`
-	MaxFailedCalls *int            `yaml:"maxFailedCalls" json:"maxFailedCalls,omitempty"`
-	ReplyIncludes  []string        `yaml:"replyIncludes"  json:"replyIncludes,omitempty"`
-	ReplyExcludes  []string        `yaml:"replyExcludes"  json:"replyExcludes,omitempty"`
-	NoRecordIDs    bool            `yaml:"noRecordIds"    json:"noRecordIds,omitempty"`
-	Formula        []string        `yaml:"formula"        json:"formula,omitempty"`
-	Refused        *bool           `yaml:"refused"        json:"refused,omitempty"`
-	Proposals      []ExpectedWrite `yaml:"proposals"      json:"proposals,omitempty"`
-	NoProposals    bool            `yaml:"noProposals"    json:"noProposals,omitempty"`
-	Executed       *bool           `yaml:"executed"       json:"executed,omitempty"`
-	Facts          []Fact          `yaml:"facts"          json:"facts,omitempty"`
-	DB             []DBCheck       `yaml:"db"             json:"db,omitempty"`
-	MaxSeconds     *float64        `yaml:"maxSeconds"     json:"maxSeconds,omitempty"`
-	Run            string          `yaml:"run"            json:"run,omitempty"`
-	Flagged        *bool           `yaml:"flagged"        json:"flagged,omitempty"`
-	Rubric         string          `yaml:"rubric"         json:"rubric,omitempty"`
+	Calls           []string        `yaml:"calls"           json:"calls,omitempty"`
+	NoCalls         []string        `yaml:"noCalls"         json:"noCalls,omitempty"`
+	NoDelegateCalls []string        `yaml:"noDelegateCalls" json:"noDelegateCalls,omitempty"`
+	MaxCalls        *int            `yaml:"maxCalls"        json:"maxCalls,omitempty"`
+	MaxFailedCalls  *int            `yaml:"maxFailedCalls"  json:"maxFailedCalls,omitempty"`
+	ReplyIncludes   []string        `yaml:"replyIncludes"   json:"replyIncludes,omitempty"`
+	ReplyExcludes   []string        `yaml:"replyExcludes"   json:"replyExcludes,omitempty"`
+	NoRecordIDs     bool            `yaml:"noRecordIds"     json:"noRecordIds,omitempty"`
+	Formula         []string        `yaml:"formula"         json:"formula,omitempty"`
+	Refused         *bool           `yaml:"refused"         json:"refused,omitempty"`
+	Proposals       []ExpectedWrite `yaml:"proposals"       json:"proposals,omitempty"`
+	NoProposals     bool            `yaml:"noProposals"     json:"noProposals,omitempty"`
+	Executed        *bool           `yaml:"executed"        json:"executed,omitempty"`
+	Facts           []Fact          `yaml:"facts"           json:"facts,omitempty"`
+	DB              []DBCheck       `yaml:"db"              json:"db,omitempty"`
+	MaxSeconds      *float64        `yaml:"maxSeconds"      json:"maxSeconds,omitempty"`
+	Run             string          `yaml:"run"             json:"run,omitempty"`
+	Flagged         *bool           `yaml:"flagged"         json:"flagged,omitempty"`
+	Rubric          string          `yaml:"rubric"          json:"rubric,omitempty"`
 }
 
 type ExpectedWrite struct {
