@@ -1,15 +1,66 @@
 -- Shipment, order and import-page tools now carry their namespace (shipment_, order_, intake_), and search_shipments and list_shipments are one tool, shipment_list.
 -- Renames an agent tool everywhere a tenant's saved agent configuration names it: the
--- definitions' tool lists, disabled lists and tiers, earned trust, tool rule overrides
--- and memories about one tool. Two tools merged into one keep a single entry; where both
--- names already have a row keyed by tool, the old one is dropped. A captured eval case
--- replays the tools it held when it was captured, so one that held the old name is
--- quarantined rather than rewritten.
+-- definitions' tool lists, disabled lists, tiers and daily caps, earned trust, tool rule
+-- overrides and memories about one tool. A captured eval case replays the tools it held
+-- when it was captured, so one that held the old name is quarantined rather than
+-- rewritten.
+--
+-- Two tools merged into one keep a single entry, and the merged entry is never looser
+-- than either name was:
+--   * tier: the lower of the two (Propose < ActWithApproval < AutoExecute). A name the
+--     agent holds with no tier of its own runs at its declared default, which is not
+--     known here, so a merge with such a name is held at Propose;
+--   * daily cap: the smaller cap, where a cap of 0 or none is no cap;
+--   * rule override: the lower max_tier and the stricter reads_external
+--     (never < marked < always), where null leaves the declared rule in place;
+--   * earned trust: the row with the lower earned tier (none below Propose), then the
+--     shorter streak, so a merge never carries the looser name's earned autonomy.
 CREATE OR REPLACE FUNCTION "agent_rename_tool"("old_name" text, "new_name" text)
 RETURNS void
 LANGUAGE plpgsql
 AS $fn$
+DECLARE
+    "tiers" CONSTANT text[] := ARRAY['Propose', 'ActWithApproval', 'AutoExecute'];
+    "reads" CONSTANT text[] := ARRAY['never', 'marked', 'always'];
 BEGIN
+    UPDATE "agent_definitions"
+    SET "tool_tiers" = ("tool_tiers" - "old_name") || jsonb_build_object(
+        "new_name",
+        CASE
+            WHEN "tool_tiers" ? "old_name" AND "tool_tiers" ? "new_name" THEN
+                CASE
+                    WHEN coalesce(array_position("tiers", "tool_tiers" ->> "old_name"), 99)
+                        < coalesce(array_position("tiers", "tool_tiers" ->> "new_name"), 99)
+                    THEN "tool_tiers" -> "old_name"
+                    ELSE "tool_tiers" -> "new_name"
+                END
+            WHEN "tool_tiers" ? "old_name"
+                AND "new_name" = ANY(coalesce("tool_names", '{}'::text[]))
+            THEN to_jsonb('Propose'::text)
+            WHEN "tool_tiers" ? "old_name" THEN "tool_tiers" -> "old_name"
+            ELSE to_jsonb('Propose'::text)
+        END
+    )
+    WHERE "tool_tiers" ? "old_name"
+       OR ("tool_tiers" ? "new_name" AND "old_name" = ANY(coalesce("tool_names", '{}'::text[])));
+
+    UPDATE "agent_definitions"
+    SET "tool_daily_limits" = ("tool_daily_limits" - "old_name") || jsonb_build_object(
+        "new_name",
+        CASE
+            WHEN NOT ("tool_daily_limits" ? "new_name")
+                OR coalesce(("tool_daily_limits" ->> "new_name")::numeric, 0) <= 0
+            THEN "tool_daily_limits" -> "old_name"
+            WHEN coalesce(("tool_daily_limits" ->> "old_name")::numeric, 0) <= 0
+            THEN "tool_daily_limits" -> "new_name"
+            ELSE to_jsonb(least(
+                ("tool_daily_limits" ->> "old_name")::numeric,
+                ("tool_daily_limits" ->> "new_name")::numeric
+            ))
+        END
+    )
+    WHERE "tool_daily_limits" ? "old_name";
+
     UPDATE "agent_definitions"
     SET "tool_names" = ARRAY(
         SELECT "name"
@@ -30,27 +81,52 @@ BEGIN
     )
     WHERE "old_name" = ANY("disabled_tool_names");
 
-    UPDATE "agent_definitions"
-    SET "tool_tiers" = ("tool_tiers" - "old_name")
-        || jsonb_build_object("new_name", "tool_tiers" -> "old_name")
-    WHERE "tool_tiers" ? "old_name"
-      AND NOT ("tool_tiers" ? "new_name");
-
-    UPDATE "agent_definitions"
-    SET "tool_tiers" = "tool_tiers" - "old_name"
-    WHERE "tool_tiers" ? "old_name";
-
-    DELETE FROM "agent_tool_trust" AS "stale"
-    WHERE "stale"."tool_name" = "old_name"
-      AND EXISTS (
-          SELECT 1 FROM "agent_tool_trust" AS "kept"
-          WHERE "kept"."organization_id" = "stale"."organization_id"
-            AND "kept"."business_unit_id" = "stale"."business_unit_id"
-            AND "kept"."agent_definition_id" = "stale"."agent_definition_id"
-            AND "kept"."tool_name" = "new_name"
+    DELETE FROM "agent_tool_trust" AS "looser"
+    USING "agent_tool_trust" AS "twin"
+    WHERE "twin"."organization_id" = "looser"."organization_id"
+      AND "twin"."business_unit_id" = "looser"."business_unit_id"
+      AND "twin"."agent_definition_id" = "looser"."agent_definition_id"
+      AND (
+          ("looser"."tool_name" = "old_name" AND "twin"."tool_name" = "new_name")
+          OR ("looser"."tool_name" = "new_name" AND "twin"."tool_name" = "old_name")
+      )
+      AND (
+          coalesce(array_position("tiers", "looser"."earned_tier"::text), 0),
+          "looser"."streak",
+          ("looser"."tool_name" = "old_name")::int
+      ) > (
+          coalesce(array_position("tiers", "twin"."earned_tier"::text), 0),
+          "twin"."streak",
+          ("twin"."tool_name" = "old_name")::int
       );
 
     UPDATE "agent_tool_trust" SET "tool_name" = "new_name" WHERE "tool_name" = "old_name";
+
+    UPDATE "agent_tool_rule_overrides" AS "kept"
+    SET "max_tier" = CASE
+            WHEN "stale"."max_tier" IS NULL THEN "kept"."max_tier"
+            WHEN "kept"."max_tier" IS NULL THEN "stale"."max_tier"
+            WHEN coalesce(array_position("tiers", "stale"."max_tier"::text), 99)
+                < coalesce(array_position("tiers", "kept"."max_tier"::text), 99)
+            THEN "stale"."max_tier"
+            ELSE "kept"."max_tier"
+        END,
+        "reads_external" = CASE
+            WHEN "stale"."reads_external" IS NULL THEN "kept"."reads_external"
+            WHEN "kept"."reads_external" IS NULL THEN "stale"."reads_external"
+            WHEN coalesce(array_position("reads", "stale"."reads_external"::text), 0)
+                > coalesce(array_position("reads", "kept"."reads_external"::text), 0)
+            THEN "stale"."reads_external"
+            ELSE "kept"."reads_external"
+        END,
+        "reason" = CASE WHEN "kept"."reason" = '' THEN "stale"."reason" ELSE "kept"."reason" END,
+        "version" = "kept"."version" + 1,
+        "updated_at" = extract(epoch FROM current_timestamp)::bigint
+    FROM "agent_tool_rule_overrides" AS "stale"
+    WHERE "kept"."tool_name" = "new_name"
+      AND "stale"."tool_name" = "old_name"
+      AND "stale"."organization_id" = "kept"."organization_id"
+      AND "stale"."business_unit_id" = "kept"."business_unit_id";
 
     DELETE FROM "agent_tool_rule_overrides" AS "stale"
     WHERE "stale"."tool_name" = "old_name"
