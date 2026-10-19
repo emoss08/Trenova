@@ -68,7 +68,7 @@ func NewGuideProfileTool(profiles agentprofileports.Service) agentports.AgentToo
 	return &GuideProfileTool{profiles: profiles}
 }
 
-func (t *GuideProfileTool) Name() string { return "guide_profile" }
+func (t *GuideProfileTool) Name() string { return "agent_guide_profile" }
 
 func (t *GuideProfileTool) SearchTerms() []string {
 	return []string{"profile", "about our business", "about my work", "what we do", "my role"}

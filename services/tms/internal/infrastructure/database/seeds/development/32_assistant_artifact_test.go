@@ -42,7 +42,7 @@ func artifactRefs(t *testing.T) *artifactSeedRefs {
 		},
 		steps: []*agent.AgentProposal{
 			{ID: pulid.MustNew("aprp_"), PlanStep: 1, ToolName: "billing_correct_charge_codes"},
-			{ID: pulid.MustNew("aprp_"), PlanStep: 2, ToolName: "email_customer"},
+			{ID: pulid.MustNew("aprp_"), PlanStep: 2, ToolName: "customer_send_email"},
 		},
 		draft: &agent.AgentProposal{
 			ID:    pulid.MustNew("aprp_"),

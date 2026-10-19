@@ -354,7 +354,7 @@ function reportMetadataValue(key: (typeof REPORT_METADATA_KEYS)[number], value: 
 }
 
 const PRESENTERS: Record<string, Presenter> = {
-  create_report: (args) => {
+  report_create: (args) => {
     const name = text(args.name);
     const dataset = text((args.definition as { entity?: unknown } | undefined)?.entity);
     const visibility = text(args.visibility).toLowerCase();
@@ -374,7 +374,7 @@ const PRESENTERS: Record<string, Presenter> = {
     };
   },
 
-  update_report: (args) => {
+  report_update: (args) => {
     const changed = REPORT_METADATA_KEYS.filter((key) => args[key] !== undefined).map(
       reportMetadataNoun,
     );
@@ -401,7 +401,7 @@ const PRESENTERS: Record<string, Presenter> = {
     };
   },
 
-  create_location: (args) => {
+  location_create: (args) => {
     const name = text(args.name);
     const street = [text(args.addressLine1), text(args.addressLine2)]
       .filter((part) => part !== "")
@@ -431,7 +431,7 @@ const PRESENTERS: Record<string, Presenter> = {
     };
   },
 
-  evaluate_service_failures: (args) => ({
+  exception_evaluate_service_failures: (args) => ({
     title: "Check for service failures",
     summary:
       args.force === true
@@ -444,7 +444,7 @@ const PRESENTERS: Record<string, Presenter> = {
     reversible: true,
   }),
 
-  resolve_service_failure: (args) => ({
+  exception_resolve_service_failure: (args) => ({
     title: "Resolve a service failure",
     summary: "Close this service failure with the reason and note below.",
     highlights: facts(
@@ -455,7 +455,7 @@ const PRESENTERS: Record<string, Presenter> = {
     reversible: false,
   }),
 
-  notify_driver: (args) => {
+  worker_send_message: (args) => {
     const priority = text(args.priority);
 
     return {
@@ -475,7 +475,7 @@ const PRESENTERS: Record<string, Presenter> = {
     };
   },
 
-  email_customer: (args) => ({
+  customer_send_email: (args) => ({
     title: "Email the customer",
     summary: translate(
       "Send this shipment's customer “{0}” from the organization's letterhead.",
@@ -486,7 +486,7 @@ const PRESENTERS: Record<string, Presenter> = {
     reversible: false,
   }),
 
-  send_detention_notice: () => ({
+  detention_send_notice: () => ({
     title: "Send a detention notice",
     summary: "Send the customer the detention notice for this occurrence.",
     highlights: [],
@@ -494,7 +494,7 @@ const PRESENTERS: Record<string, Presenter> = {
     reversible: false,
   }),
 
-  approve_detention: (args) => ({
+  detention_approve: (args) => ({
     title: "Approve detention charge",
     summary: "Approve this detention charge as calculated, so its shipment can be invoiced.",
     highlights: facts(fact("Evidence", text(args.evidence))),
@@ -502,7 +502,7 @@ const PRESENTERS: Record<string, Presenter> = {
     reversible: false,
   }),
 
-  waive_detention: (args) => ({
+  detention_waive: (args) => ({
     title: "Waive detention",
     summary: translate(
       "Waive this detention charge as {0}.",
@@ -513,7 +513,7 @@ const PRESENTERS: Record<string, Presenter> = {
     reversible: false,
   }),
 
-  fork_report: (args) => {
+  report_fork: (args) => {
     const key = text(args.reportKey);
     const name = text(args.name);
 
@@ -577,7 +577,7 @@ const PRESENTERS: Record<string, Presenter> = {
     };
   },
 
-  assign_move: (args) => {
+  dispatch_assign_move: (args) => {
     const driver = shortRef(text(args.primaryWorkerId));
     const tractor = shortRef(text(args.tractorId));
     const trailer = shortRef(text(args.trailerId));
@@ -664,7 +664,7 @@ const PRESENTERS: Record<string, Presenter> = {
     };
   },
 
-  tender_move_to_routing_guide: (args) => ({
+  dispatch_create_tender_from_routing_guide: (args) => ({
     title: "Tender down the routing guide",
     summary: args.routingGuideId
       ? translate(
@@ -679,7 +679,7 @@ const PRESENTERS: Record<string, Presenter> = {
     reversible: true,
   }),
 
-  tender_move_to_carriers: (args) => {
+  dispatch_create_tender: (args) => {
     const lines = Array.isArray(args.lines) ? (args.lines as Args[]) : [];
     const sequential = text(args.mode) === "SpotSequential";
 
@@ -715,7 +715,7 @@ const PRESENTERS: Record<string, Presenter> = {
     };
   },
 
-  apply_edi_connection_draft: (args) => {
+  edi_apply_connection_draft: (args) => {
     const counted = (label: string, value: unknown) =>
       fact(label, Array.isArray(value) && value.length > 0 ? String(value.length) : "");
 
@@ -879,7 +879,7 @@ const PRESENTERS: Record<string, Presenter> = {
     };
   },
 
-  flag_for_manual_review: (args) => {
+  agent_request_review: (args) => {
     const category = humanizeEnum(text(args.category));
     const affected = Number(args.blastRadius ?? 0);
 

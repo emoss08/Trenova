@@ -6,10 +6,10 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/llmtokens"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -210,14 +210,14 @@ func TestChunkMemoryIsOneLine(t *testing.T) {
 
 	correction := &agent.Memory{
 		Kind:     agent.MemoryKindCorrection,
-		ToolName: "assign_move",
+		ToolName: "dispatch_assign_move",
 		Content:  " Loads over 900 miles need a team. ",
 	}
 	chunks := ChunkMemory(correction)
 	require.Len(t, chunks, 1)
 	assert.Equal(
 		t,
-		"[Correction] tool assign_move: Loads over 900 miles need a team.",
+		"[Correction] tool dispatch_assign_move: Loads over 900 miles need a team.",
 		chunks[0].Text,
 	)
 	assert.Equal(t, ChunkHash(MemoryChunkerVersion, chunks[0].Text), chunks[0].Hash)

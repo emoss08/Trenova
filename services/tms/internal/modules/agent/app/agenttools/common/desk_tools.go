@@ -4,7 +4,7 @@ import (
 	"errors"
 )
 
-// ErrApprovalNeedsAPerson is an approve_detention or waive_detention call that
+// ErrApprovalNeedsAPerson is an detention_approve or detention_waive call that
 // did not come from a proposal a person approved. The tool's tier ceiling already keeps the
 // runtime from running it on its own; this is the same rule where the money
 // moves.

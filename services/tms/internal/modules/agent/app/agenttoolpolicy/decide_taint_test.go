@@ -4,10 +4,10 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -39,7 +39,7 @@ func TestDecide_TaintAgainstEveryEgressClass(t *testing.T) {
 	marked := &agent.RunTaint{}
 	marked.Add(agent.TaintMark{
 		Source:   agent.TaintSourceDocument,
-		ToolName: "get_document_summary",
+		ToolName: "document_get_summary",
 		CallID:   "call_1",
 		Ref:      &agent.RecordRef{EntityType: agent.TaintEntityDocument, ID: "doc_1"},
 	})
@@ -109,7 +109,7 @@ func TestDecide_ADifferentMarkOrderIsTheSameDecision(t *testing.T) {
 func TestDecide_RememberHoldsAnInstructionFromATaintedRun(t *testing.T) {
 	t.Parallel()
 
-	policy := registeredPolicy(t, "remember")
+	policy := registeredPolicy(t, "agent_create_memory")
 	acting := definition(agent.TierAutoExecute, map[string]agent.AutonomyTier{
 		policy.Name: agent.TierAutoExecute,
 	})

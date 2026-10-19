@@ -174,7 +174,7 @@ func TestGetDocumentSummary_IsGatedOnDocumentsAndRefusesANonID(t *testing.T) {
 		nil,
 	)
 	assert.Equal(t, permission.ResourceDocument, tool.Policy().Resource)
-	assert.Equal(t, "get_document_summary", tool.Name())
+	assert.Equal(t, "document_get_summary", tool.Name())
 
 	_, err := tool.Query(t.Context(), testParams(map[string]any{"documentId": "tender.pdf"}))
 	require.Error(t, err)

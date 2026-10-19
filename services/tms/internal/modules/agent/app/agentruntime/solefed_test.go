@@ -16,10 +16,10 @@ func TestSoleFed(t *testing.T) {
 	t.Parallel()
 
 	allowed := []string{"shipment_match_records", "shipment_create", "shipment_get",
-		"shipment_reschedule_stop", "record_stop_actual"}
+		"shipment_reschedule_stop", "dispatch_record_stop_actual"}
 
 	assert.Equal(t, "shipment_create", soleFed(allowed, []string{"shipment_create"}))
-	assert.Empty(t, soleFed(allowed, []string{"shipment_reschedule_stop", "record_stop_actual"}))
+	assert.Empty(t, soleFed(allowed, []string{"shipment_reschedule_stop", "dispatch_record_stop_actual"}))
 	assert.Equal(
 		t,
 		"shipment_reschedule_stop",

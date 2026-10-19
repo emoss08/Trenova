@@ -75,7 +75,7 @@ type readScenario struct {
 }
 
 // driveReads runs one reply's calls through the loop against a recorder, with
-// list_workers, search_customer and shipment_get held as reads and
+// worker_list, search_customer and shipment_get held as reads and
 // record_case held as a write.
 func driveReads(t *testing.T, scenario readScenario) (*batchRecorder, *agentports.RunResult) {
 	t.Helper()
@@ -86,7 +86,7 @@ func driveReads(t *testing.T, scenario readScenario) (*batchRecorder, *agentport
 			textTurn("Done."),
 		}},
 		&stubQueryRegistry{Tools: []agentports.AgentQueryTool{
-			queryTool("list_workers", map[string]any{"results": []any{}}, nil),
+			queryTool("worker_list", map[string]any{"results": []any{}}, nil),
 			queryTool("search_customer", map[string]any{"results": []any{}}, nil),
 			queryTool("shipment_get", map[string]any{"id": "shp_1"}, nil),
 		}},
@@ -95,7 +95,7 @@ func driveReads(t *testing.T, scenario readScenario) (*batchRecorder, *agentport
 		}},
 		nil,
 	)
-	definition := testDefinition("list_workers", "search_customer", "shipment_get", "record_case")
+	definition := testDefinition("worker_list", "search_customer", "shipment_get", "record_case")
 	if scenario.budget > 0 {
 		definition.MaxToolCalls = scenario.budget
 	}
@@ -141,7 +141,7 @@ func TestDrive_RunsAReplysReadsTogether(t *testing.T) {
 	t.Parallel()
 
 	fx, result := driveReads(t, readScenario{calls: []agentports.ToolCall{
-		readCall("c1", "list_workers", map[string]any{"status": "Active"}),
+		readCall("c1", "worker_list", map[string]any{"status": "Active"}),
 		readCall("c2", "search_customer", map[string]any{"query": "Acme"}),
 		readCall("c3", "shipment_get", map[string]any{"id": "shp_1"}),
 	}})
@@ -161,10 +161,10 @@ func TestDrive_AWriteRunsBetweenTheReadsAroundIt(t *testing.T) {
 	t.Parallel()
 
 	fx, result := driveReads(t, readScenario{calls: []agentports.ToolCall{
-		readCall("c1", "list_workers", map[string]any{"status": "Active"}),
+		readCall("c1", "worker_list", map[string]any{"status": "Active"}),
 		readCall("c2", "search_customer", map[string]any{"query": "Acme"}),
 		readCall("c3", "record_case", map[string]any{"subject": "late"}),
-		readCall("c4", "list_workers", map[string]any{"status": "Inactive"}),
+		readCall("c4", "worker_list", map[string]any{"status": "Inactive"}),
 		readCall("c5", "search_customer", map[string]any{"query": "Globex"}),
 	}})
 
@@ -183,7 +183,7 @@ func TestDrive_FetchesOfOneKindRunApartAndStillBunch(t *testing.T) {
 	fx, _ := driveReads(t, readScenario{calls: []agentports.ToolCall{
 		readCall("c1", "shipment_get", map[string]any{"id": "shp_1"}),
 		readCall("c2", "shipment_get", map[string]any{"id": "shp_2"}),
-		readCall("c3", "list_workers", map[string]any{"status": "Active"}),
+		readCall("c3", "worker_list", map[string]any{"status": "Active"}),
 	}})
 
 	assert.Equal(t, []string{"alone c1", "together c2 c3"}, fx.steps)
@@ -195,20 +195,20 @@ func TestDrive_AnswersARepeatedReadInOneReplyFromTheFirst(t *testing.T) {
 
 	args := map[string]any{"status": "Active"}
 	fx, result := driveReads(t, readScenario{calls: []agentports.ToolCall{
-		readCall("c1", "list_workers", args),
-		readCall("c2", "list_workers", args),
+		readCall("c1", "worker_list", args),
+		readCall("c2", "worker_list", args),
 	}})
 
 	assert.Equal(t, []string{"alone c1"}, fx.steps)
 	require.Equal(t, []string{"c1", "c2"}, resultCallIDs(result))
-	assert.Equal(t, repeatedRead("list_workers"), resultContent(result, "c2"))
+	assert.Equal(t, repeatedRead("worker_list"), resultContent(result, "c2"))
 }
 
 func TestDrive_HoldsAReadBatchToTheToolBudget(t *testing.T) {
 	t.Parallel()
 
 	fx, result := driveReads(t, readScenario{budget: 2, calls: []agentports.ToolCall{
-		readCall("c1", "list_workers", map[string]any{"status": "Active"}),
+		readCall("c1", "worker_list", map[string]any{"status": "Active"}),
 		readCall("c2", "search_customer", map[string]any{"query": "Acme"}),
 		readCall("c3", "shipment_get", map[string]any{"id": "shp_1"}),
 	}})
@@ -226,7 +226,7 @@ func TestDrive_RunsAtMostEightReadsAtOnce(t *testing.T) {
 	for idx := range 10 {
 		id := "c" + string(rune('a'+idx))
 		ids = append(ids, id)
-		calls = append(calls, readCall(id, "list_workers", map[string]any{"page": idx}))
+		calls = append(calls, readCall(id, "worker_list", map[string]any{"page": idx}))
 	}
 
 	fx, _ := driveReads(t, readScenario{budget: 20, calls: calls})
@@ -245,7 +245,7 @@ func TestRestoreTurn_BatchesOnlyTheReadsTheTurnOpenedWith(t *testing.T) {
 	rt := newRuntime(
 		nil,
 		&stubQueryRegistry{Tools: []agentports.AgentQueryTool{
-			queryTool("list_workers", map[string]any{"results": []any{}}, nil),
+			queryTool("worker_list", map[string]any{"results": []any{}}, nil),
 			queryTool("search_customer", map[string]any{"results": []any{}}, nil),
 		}},
 		&stubActionRegistry{Tools: []agentports.AgentTool{
@@ -254,12 +254,12 @@ func TestRestoreTurn_BatchesOnlyTheReadsTheTurnOpenedWith(t *testing.T) {
 		nil,
 	)
 	request := &agentports.RunRequest{
-		Definition: testDefinition("list_workers", "search_customer", "record_case"),
+		Definition: testDefinition("worker_list", "search_customer", "record_case"),
 		Actor:      testActor(),
 		Input:      "Who is free?",
 	}
 	state := rt.OpenTurn(t.Context(), request).State()
-	assert.Equal(t, []string{"list_workers", "search_customer"}, state.Reads,
+	assert.Equal(t, []string{"worker_list", "search_customer"}, state.Reads,
 		"a write is never a read, whatever it is held with")
 
 	encoded, err := sonic.Marshal(state)
@@ -271,7 +271,7 @@ func TestRestoreTurn_BatchesOnlyTheReadsTheTurnOpenedWith(t *testing.T) {
 	drive := func(state TurnState) []string {
 		rt.completion = &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 			callsTurn(
-				readCall("c1", "list_workers", map[string]any{"status": "Active"}),
+				readCall("c1", "worker_list", map[string]any{"status": "Active"}),
 				readCall("c2", "search_customer", map[string]any{"query": "Acme"}),
 			),
 			textTurn("Done."),

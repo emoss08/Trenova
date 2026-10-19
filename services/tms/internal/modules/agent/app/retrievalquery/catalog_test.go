@@ -23,8 +23,8 @@ var catalogAxes = map[string]int{
 
 func catalogItems() []agentports.EmbeddingCatalogItem {
 	return []agentports.EmbeddingCatalogItem{
-		agentports.NewEmbeddingCatalogItem("list_workers", "list workers"),
-		agentports.NewEmbeddingCatalogItem("list_time_off", "list time off"),
+		agentports.NewEmbeddingCatalogItem("worker_list", "list workers"),
+		agentports.NewEmbeddingCatalogItem("worker_list_time_off", "list time off"),
 		agentports.NewEmbeddingCatalogItem("send_reminder", "send reminder"),
 	}
 }
@@ -76,8 +76,8 @@ func TestSimilarities_EmbedsWhatIsMissingOnceAndKeepsIt(t *testing.T) {
 	result, err := index.Similarities(t.Context(), similarityRequest(catalogItems()))
 	require.NoError(t, err)
 	require.True(t, result.Available)
-	assert.InDelta(t, 0.8, result.ByKey["list_time_off"], 1e-6)
-	assert.InDelta(t, 0.6, result.ByKey["list_workers"], 1e-6)
+	assert.InDelta(t, 0.8, result.ByKey["worker_list_time_off"], 1e-6)
+	assert.InDelta(t, 0.6, result.ByKey["worker_list"], 1e-6)
 	assert.InDelta(t, 0, result.ByKey["send_reminder"], 1e-6)
 	assert.InDelta(t, airetrieval.SimilarityFloor(testModelKey), result.Floor, 1e-9,
 		"the floor is the embedding model's, not one height for every model")
@@ -120,7 +120,7 @@ func TestSimilarities_ReadsWhatAnotherProcessStored(t *testing.T) {
 	require.NoError(t, err)
 
 	require.True(t, result.Available)
-	assert.InDelta(t, 0.8, result.ByKey["list_time_off"], 1e-3)
+	assert.InDelta(t, 0.8, result.ByKey["worker_list_time_off"], 1e-3)
 	assert.Empty(t, embeddings.calls(), "stored vectors are not embedded again")
 }
 

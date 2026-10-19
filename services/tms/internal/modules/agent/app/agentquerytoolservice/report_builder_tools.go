@@ -22,9 +22,9 @@ import (
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
-// maxPreviewRows bounds what preview_report hands the model. A preview exists
+// maxPreviewRows bounds what report_preview hands the model. A preview exists
 // to check the shape of a report — the columns, a few rows, whether the filter
-// bites — and twenty rows show that. The whole result is what run_report is for.
+// bites — and twenty rows show that. The whole result is what report_run is for.
 const maxPreviewRows = 20
 
 // reportSource is a report the tools can act on, whichever way it was named:
@@ -52,7 +52,7 @@ func (s reportSource) Editable(actor pulid.ID) bool {
 
 var errNoReportNamed = errors.New(
 	"name the report: reportKey for a built-in report or definitionId for a saved one, " +
-		"both from list_reports",
+		"both from report_list",
 )
 
 // resolveReportSource reads the report a call names. A definitionId wins
@@ -80,7 +80,7 @@ func resolveReportSource(
 			if errortypes.IsNotFoundError(err) {
 				return reportSource{}, fmt.Errorf(
 					"there is no saved report with the id %q that you can see; call "+
-						"list_reports for the ones that exist",
+						"report_list for the ones that exist",
 					raw,
 				)
 			}
@@ -99,7 +99,7 @@ func resolveReportSource(
 	entry, err := reports.GetCanned(key)
 	if err != nil {
 		return reportSource{}, fmt.Errorf(
-			"there is no report with the key %q; call list_reports for the keys that exist",
+			"there is no report with the key %q; call report_list for the keys that exist",
 			key,
 		)
 	}
@@ -205,14 +205,14 @@ type datasetEdgeRow struct {
 	// nothing said the id had a field of its own here.
 	Key string `json:"key,omitempty"`
 	// TargetFields are the keys on the dataset the edge leads to, given by
-	// describe_report_dataset so a report can reach one edge out without a
+	// report_get_dataset so a report can reach one edge out without a
 	// second call. A model that had only the edge's name guessed the field
 	// on the far side, and guessed wrong.
 	TargetFields []string `json:"targetFields,omitempty"`
 }
 
 // datasetRow is one dataset in the list. Edges are left to
-// describe_report_dataset: with them, the list of seventy ran past one tool
+// report_get_dataset: with them, the list of seventy ran past one tool
 // result and reached the model cut off.
 type datasetRow struct {
 	Dataset     string `json:"dataset"`
@@ -242,14 +242,14 @@ func newListReportDatasetsTool(
 	return &listReportDatasetsTool{access: newCatalogAccess(permissions)}
 }
 
-func (t *listReportDatasetsTool) Name() string { return "list_report_datasets" }
+func (t *listReportDatasetsTool) Name() string { return "report_list_datasets" }
 
 func (t *listReportDatasetsTool) Description() string {
 	return "List the datasets a new report can be built on, such as shipment, invoice or " +
-		"worker. Use it before create_report to pick the dataset, searching with query " +
+		"worker. Use it before report_create to pick the dataset, searching with query " +
 		"(\"shipment\", \"invoice\") rather than paging through all of them, then call " +
-		"describe_report_dataset for its fields. It lists kinds of data, not records: to " +
-		"find a customer or a shipment use list_customers or shipment_list."
+		"report_get_dataset for its fields. It lists kinds of data, not records: to " +
+		"find a customer or a shipment use customer_list or shipment_list."
 }
 
 func (t *listReportDatasetsTool) ParamSchema() map[string]any {
@@ -430,11 +430,11 @@ func newDescribeReportDatasetTool(
 	return &describeReportDatasetTool{access: newCatalogAccess(permissions)}
 }
 
-func (t *describeReportDatasetTool) Name() string { return "describe_report_dataset" }
+func (t *describeReportDatasetTool) Name() string { return "report_get_dataset" }
 
 func (t *describeReportDatasetTool) Description() string {
 	return "Describe one report dataset's fields, and the related datasets it can reach. " +
-		"Use it after list_report_datasets and before preview_report or create_report, and " +
+		"Use it after report_list_datasets and before report_preview or report_create, and " +
 		"write field keys and edge names exactly as given. Narrow with query (\"revenue\", " +
 		"\"delivered\") when you know what you want; a wide dataset pages with offset."
 }
@@ -445,7 +445,7 @@ func (t *describeReportDatasetTool) ParamSchema() map[string]any {
 		"properties": withPaging(map[string]any{
 			"dataset": map[string]any{
 				"type":        "string",
-				"description": "The dataset key from list_report_datasets, such as shipment.",
+				"description": "The dataset key from report_list_datasets, such as shipment.",
 			},
 			"query": map[string]any{
 				"type": "string",
@@ -480,7 +480,7 @@ func (t *describeReportDatasetTool) Query(
 	entity, ok := reportcatalog.Default.Entity(key)
 	if !ok {
 		return nil, fmt.Errorf(
-			"there is no dataset with the key %q; call list_report_datasets for the ones that exist",
+			"there is no dataset with the key %q; call report_list_datasets for the ones that exist",
 			key,
 		)
 	}
@@ -492,7 +492,7 @@ func (t *describeReportDatasetTool) Query(
 	if !readable {
 		return nil, fmt.Errorf(
 			"there is no dataset with the key %q that you can read; call "+
-				"list_report_datasets for the ones you can",
+				"report_list_datasets for the ones you can",
 			key,
 		)
 	}
@@ -533,7 +533,7 @@ func (t *describeReportDatasetTool) Query(
 	note := "Refer to a field of this dataset as {\"field\": \"<key>\"} and to a field " +
 		"of a related dataset as {\"path\": [\"<edge>\"], \"field\": \"<key>\"}, " +
 		"using only the keys each edge's targetFields lists; an edge two steps " +
-		"away needs describe_report_dataset on the first target. A measure " +
+		"away needs report_get_dataset on the first target. A measure " +
 		"column needs an agg the field lists; a dimension column groups the " +
 		"rows, and a report of dimension columns alone lists rows. When you " +
 		"already know a related record's id, filter on the field the edge's key " +
@@ -645,7 +645,7 @@ func labelIfNotKey(field *reportcatalog.Field) string {
 
 // shortEnum keeps an enum's values while they are a short list to choose
 // from. A longer one is filtered by value anyway, and the model can ask
-// preview_report for the values it sees.
+// report_preview for the values it sees.
 func shortEnum(field *reportcatalog.Field) []string {
 	values := enumValueKeys(field)
 	if len(values) > maxEnumValuesShown {
@@ -724,8 +724,8 @@ type reportDescription struct {
 	Limit        int                  `json:"limit,omitempty"`
 	Parameters   []reportParameterRow `json:"parameters,omitempty"`
 	// Definition is the report exactly as the builder saves it, so a change
-	// can be made by editing it and sending it back through update_report or
-	// preview_report rather than by rebuilding it from the summary above.
+	// can be made by editing it and sending it back through report_update or
+	// report_preview rather than by rebuilding it from the summary above.
 	Definition *report.Definition `json:"definition"`
 	Note       string             `json:"note"`
 }
@@ -738,15 +738,15 @@ func newDescribeReportTool(reports reportRunner) agentports.AgentQueryTool {
 	return &describeReportTool{reports: reports}
 }
 
-func (t *describeReportTool) Name() string { return "describe_report" }
+func (t *describeReportTool) Name() string { return "report_get" }
 
 func (t *describeReportTool) Description() string {
 	return "Show what a report contains: its dataset, columns, filters, sort, " +
 		"parameters and the full definition as the report builder saves it. Call " +
-		"this to answer \"what is in this report\", and before update_report or " +
-		"preview_report when you are going to adjust one, so you change the " +
+		"this to answer \"what is in this report\", and before report_update or " +
+		"report_preview when you are going to adjust one, so you change the " +
 		"definition that exists rather than one you imagined. Name a built-in " +
-		"report by reportKey or a saved one by definitionId, from list_reports."
+		"report by reportKey or a saved one by definitionId, from report_list."
 }
 
 func (t *describeReportTool) ParamSchema() map[string]any {
@@ -755,11 +755,11 @@ func (t *describeReportTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"reportKey": map[string]any{
 				"type":        "string",
-				"description": "The reportKey of a built-in report from list_reports.",
+				"description": "The reportKey of a built-in report from report_list.",
 			},
 			"definitionId": agenttoolschema.OfResource(map[string]any{
 				"type":        "string",
-				"description": "The definitionId of a saved report from list_reports.",
+				"description": "The definitionId of a saved report from report_list.",
 			}, permission.ResourceReport),
 		},
 		"additionalProperties": false,
@@ -837,18 +837,18 @@ func describeReport(source reportSource, actor pulid.ID) reportDescription {
 
 	switch {
 	case description.Editable:
-		description.Note = "You may change this report with update_report: send the " +
+		description.Note = "You may change this report with report_update: send the " +
 			"definition back with your edits, after checking them with " +
-			"preview_report. Describe the columns and filters to the person in " +
+			"report_preview. Describe the columns and filters to the person in " +
 			"plain words rather than pasting the definition."
 	case source.DefinitionID.IsNil():
 		description.Note = "This is a built-in report and cannot be edited in place. To " +
-			"adjust it, fork_report makes the person their own copy to change, or " +
-			"create_report builds a new one from the same definition. Describe the " +
+			"adjust it, report_fork makes the person their own copy to change, or " +
+			"report_create builds a new one from the same definition. Describe the " +
 			"columns and filters in plain words rather than pasting the definition."
 	default:
 		description.Note = "This report belongs to someone else, so only they can " +
-			"change it. create_report can build the person their own version from " +
+			"change it. report_create can build the person their own version from " +
 			"this definition. Describe the columns and filters in plain words " +
 			"rather than pasting the definition."
 	}
@@ -937,19 +937,19 @@ func newPreviewReportTool(reports reportRunner) agentports.AgentQueryTool {
 	return &previewReportTool{reports: reports}
 }
 
-func (t *previewReportTool) Name() string { return "preview_report" }
+func (t *previewReportTool) Name() string { return "report_preview" }
 
 func (t *previewReportTool) Description() string {
 	return "Run a report definition now and see its first rows, without saving it or " +
-		"producing a file. Use it to check a definition before create_report or " +
-		"update_report, to answer a quick question a small custom report can answer, " +
+		"producing a file. Use it to check a definition before report_create or " +
+		"report_update, to answer a quick question a small custom report can answer, " +
 		"or to look at what a saved or built-in report produces. Give a definition " +
-		"to preview (the shape describe_report returns and create_report takes), or " +
+		"to preview (the shape report_get returns and report_create takes), or " +
 		"name an existing report by definitionId or reportKey. The compiler checks " +
 		"every field against the person's access and says what is wrong, in " +
 		"which case fix the definition and try again rather than reporting the " +
 		"error to the person. At most " + fmt.Sprint(maxPreviewRows) + " rows come " +
-		"back; for the full result, run_report."
+		"back; for the full result, report_run."
 }
 
 func (t *previewReportTool) ParamSchema() map[string]any {
@@ -959,11 +959,11 @@ func (t *previewReportTool) ParamSchema() map[string]any {
 			"definition": report.DefinitionJSONSchema(),
 			"definitionId": agenttoolschema.OfResource(map[string]any{
 				"type":        "string",
-				"description": "Preview a saved report from list_reports instead of a definition.",
+				"description": "Preview a saved report from report_list instead of a definition.",
 			}, permission.ResourceReport),
 			"reportKey": map[string]any{
 				"type":        "string",
-				"description": "Preview a built-in report from list_reports instead of a definition.",
+				"description": "Preview a built-in report from report_list instead of a definition.",
 			},
 			"parameters": map[string]any{
 				"type": "object",
@@ -1041,7 +1041,7 @@ func (t *previewReportTool) source(
 		if errors.Is(err, errNoReportNamed) {
 			return reportSource{}, errors.New(
 				"give a definition to preview, or name a report by definitionId or " +
-					"reportKey from list_reports",
+					"reportKey from report_list",
 			)
 		}
 
@@ -1083,8 +1083,8 @@ func previewOf(source reportSource, result *reporting.PreviewResult, clk clock) 
 	case len(result.Rows) > shown:
 		preview.Note = fmt.Sprintf(
 			"The definition compiled. %d rows came back and the first %d are shown; "+
-				"for the whole result save it with create_report and run_report it, "+
-				"or run_report an existing report.",
+				"for the whole result save it with report_create and report_run it, "+
+				"or report_run an existing report.",
 			len(result.Rows), shown,
 		)
 	default:
@@ -1103,7 +1103,7 @@ func previewOf(source reportSource, result *reporting.PreviewResult, clk clock) 
 	return preview
 }
 
-// sampleShape is how a report's rows are handed to a model, by preview_report
+// sampleShape is how a report's rows are handed to a model, by report_preview
 // and by a finished run alike: keyed by column label, so the model reads a
 // table rather than positional tuples, and with date columns written as dates.
 // A date comes back from the dataset as epoch seconds, which the download

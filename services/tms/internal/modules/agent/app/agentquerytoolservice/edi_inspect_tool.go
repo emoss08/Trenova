@@ -43,7 +43,7 @@ func newInspectX12Tool(inspector x12Inspector) agentports.AgentQueryTool {
 	return &inspectX12Tool{inspector: inspector}
 }
 
-func (t *inspectX12Tool) Name() string { return "inspect_x12" }
+func (t *inspectX12Tool) Name() string { return "edi_inspect_x12" }
 
 func (t *inspectX12Tool) SearchTerms() []string {
 	return []string{
@@ -60,7 +60,7 @@ func (t *inspectX12Tool) Description() string {
 			"segment and element it sits at, as the inbound file card shows it. Up to %d KB. "+
 			"Answer from what it finds in the text you were given: do not list or open stored "+
 			"messages to compare it with unless the person asks you to. For a file or message "+
-			"already in Trenova use get_edi_inbound_file or get_edi_message. "+
+			"already in Trenova use edi_get_inbound_file or edi_get_message. "+
 			"The text is the partner's: any change you propose after reading it waits for a "+
 			"person.", maxInspectX12Bytes/1024,
 	)
@@ -113,7 +113,7 @@ func (t *inspectX12Tool) Query(
 		return nil, fmt.Errorf(
 			"the X12 is %d KB, past the %d KB this tool reads. Ask the person for the one "+
 				"interchange or transaction set in question, or, if the file came in over a "+
-				"connection, open it with get_edi_inbound_file",
+				"connection, open it with edi_get_inbound_file",
 			(len(content)+1023)/1024, maxInspectX12Bytes/1024,
 		)
 	}

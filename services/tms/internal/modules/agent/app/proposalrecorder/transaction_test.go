@@ -150,8 +150,8 @@ func recordInTx(
 			InputContextHash: "hash",
 		},
 		Actions: []agentports.PendingAction{
-			pendingAction("assign_move"),
-			pendingAction("notify_driver"),
+			pendingAction("dispatch_assign_move"),
+			pendingAction("worker_send_message"),
 			pendingAction("shipment_add_comment"),
 		},
 	})

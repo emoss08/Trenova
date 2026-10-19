@@ -81,9 +81,9 @@ func TestRecord_GroupsSeveralPendingProposalsIntoAPlan(t *testing.T) {
 	result := recordActions(
 		t,
 		plans,
-		pendingAction("assign_move"),
+		pendingAction("dispatch_assign_move"),
 		executed,
-		pendingAction("notify_driver"),
+		pendingAction("worker_send_message"),
 	)
 
 	require.NotNil(t, result.Plan)
@@ -107,7 +107,7 @@ func TestRecord_LeavesASingleProposalOnItsOwn(t *testing.T) {
 	t.Parallel()
 
 	plans := &capturingPlans{}
-	result := recordActions(t, plans, pendingAction("assign_move"))
+	result := recordActions(t, plans, pendingAction("dispatch_assign_move"))
 
 	assert.Nil(t, result.Plan)
 	assert.Empty(t, plans.created)

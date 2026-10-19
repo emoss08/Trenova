@@ -202,13 +202,13 @@ func newListEDIInboundFilesTool(inbound inboundFileReader) agentports.AgentQuery
 	return &listEDIInboundFilesTool{inbound: inbound}
 }
 
-func (t *listEDIInboundFilesTool) Name() string { return "list_edi_inbound_files" }
+func (t *listEDIInboundFilesTool) Name() string { return "edi_list_inbound_files" }
 
 func (t *listEDIInboundFilesTool) Description() string {
 	return "List the inbound EDI files trading partners sent, newest first. Each has " +
 		"the partner, how it arrived, whether it was processed, quarantined or rejected " +
 		"as a duplicate, and why it failed. Narrow to a status or a partner; " +
-		"get_edi_inbound_file opens one. The files are the partner's text."
+		"edi_get_inbound_file opens one. The files are the partner's text."
 }
 
 func (t *listEDIInboundFilesTool) ParamSchema() map[string]any {
@@ -216,7 +216,7 @@ func (t *listEDIInboundFilesTool) ParamSchema() map[string]any {
 		paramQuery:  stringParam("Words to look for in the file name."),
 		paramStatus: enumParam("Only files in this status.", inboundFileStatuses),
 		paramPartnerID: agenttoolschema.KindID("Only this partner's files, by id from "+
-			"get_edi_partner or a row of this tool.", permission.KindEDIPartner),
+			"edi_get_partner or a row of this tool.", permission.KindEDIPartner),
 	}, defaultListLimit, maxListLimit))
 }
 
@@ -347,7 +347,7 @@ func newGetEDIInboundFileTool(
 	return &getEDIInboundFileTool{inbound: inbound, access: newFieldAccess(permissions)}
 }
 
-func (t *getEDIInboundFileTool) Name() string { return "get_edi_inbound_file" }
+func (t *getEDIInboundFileTool) Name() string { return "edi_get_inbound_file" }
 
 func (t *getEDIInboundFileTool) SearchTerms() []string {
 	return []string{"fail reason", "edi error", "processing error"}
@@ -363,7 +363,7 @@ func (t *getEDIInboundFileTool) Description() string {
 func (t *getEDIInboundFileTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
 		paramInboundFileID: agenttoolschema.KindID("The inbound file's id, from "+
-			"list_edi_inbound_files or this run's subject.", permission.KindEDIInboundFile),
+			"edi_list_inbound_files or this run's subject.", permission.KindEDIInboundFile),
 		paramIncludeRaw: boolParam("Also return the raw X12, capped at 16 KB. Leave it off " +
 			"unless the parsed transactions do not explain the failure."),
 	}, paramInboundFileID)
@@ -503,7 +503,7 @@ func newGetEDIMessageTool(
 	return &getEDIMessageTool{messages: messages, access: newFieldAccess(permissions)}
 }
 
-func (t *getEDIMessageTool) Name() string { return "get_edi_message" }
+func (t *getEDIMessageTool) Name() string { return "edi_get_message" }
 
 func (t *getEDIMessageTool) SearchTerms() []string {
 	return []string{
@@ -523,7 +523,7 @@ func (t *getEDIMessageTool) Description() string {
 func (t *getEDIMessageTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
 		paramEDIMessageID: agenttoolschema.KindID("The EDI message's id, from "+
-			"list_edi_messages, get_edi_inbound_file or the page you are on.",
+			"edi_list_messages, edi_get_inbound_file or the page you are on.",
 			permission.KindEDIMessage),
 		paramIncludeRaw: boolParam("Also return the raw X12, capped at 16 KB. Leave it off " +
 			"unless the decoded document and the findings do not explain the problem."),
@@ -722,13 +722,13 @@ func newListEDITransfersTool(transfers ediTransferReader) agentports.AgentQueryT
 	return &listEDITransfersTool{transfers: transfers}
 }
 
-func (t *listEDITransfersTool) Name() string { return "list_edi_transfers" }
+func (t *listEDITransfersTool) Name() string { return "edi_list_transfers" }
 
 func (t *listEDITransfersTool) Description() string {
 	return "List EDI load tender transfers, the tenders partners sent in or this " +
 		"organization sent out. Each has the partners, status, BOL, customer and why it " +
 		"was rejected or failed. Narrow by direction and status, such as tenders pending " +
-		"approval; get_edi_transfer opens one. The tender text is the partner's."
+		"approval; edi_get_transfer opens one. The tender text is the partner's."
 }
 
 func (t *listEDITransfersTool) ParamSchema() map[string]any {
@@ -737,7 +737,7 @@ func (t *listEDITransfersTool) ParamSchema() map[string]any {
 			"this organization sent. Defaults to Inbound.", transferDirections),
 		paramStatus: enumParam("Only transfers in this status.", transferStatuses),
 		paramInboundFileID: agenttoolschema.KindID("Only the tenders one inbound file "+
-			"carried, by id from list_edi_inbound_files or this run's subject.",
+			"carried, by id from edi_list_inbound_files or this run's subject.",
 			permission.KindEDIInboundFile),
 		paramLimit: intParam(fmt.Sprintf("How many rows to return: %d unless you ask, at most %d.",
 			defaultListLimit, maxListLimit)),
@@ -889,7 +889,7 @@ func newGetEDIPartnerTool(
 	return &getEDIPartnerTool{partners: partners, access: newFieldAccess(permissions)}
 }
 
-func (t *getEDIPartnerTool) Name() string { return "get_edi_partner" }
+func (t *getEDIPartnerTool) Name() string { return "edi_get_partner" }
 
 func (t *getEDIPartnerTool) SearchTerms() []string {
 	return []string{"partner setup", "inbound enabled", "outbound enabled", "partner settings"}
@@ -898,17 +898,17 @@ func (t *getEDIPartnerTool) SearchTerms() []string {
 func (t *getEDIPartnerTool) Description() string {
 	return "Retrieve one EDI trading partner's setup and readiness checklist by id. It " +
 		"gives the code, kind, whether inbound and outbound are on and the customer it " +
-		"stands for, never transport credentials. Take the id from list_edi_partners, a " +
-		"partnerId in list_edi_inbound_files or get_edi_ack_health, or the page you are on."
+		"stands for, never transport credentials. Take the id from edi_list_partners, a " +
+		"partnerId in edi_list_inbound_files or edi_get_ack_health, or the page you are on."
 }
 
 func (t *getEDIPartnerTool) ParamSchema() map[string]any {
 	return idSchema(
 		paramPartnerID,
-		agenttoolschema.KindID("The trading partner's id, from list_edi_partners, a "+
-			"partnerId in list_edi_inbound_files or get_edi_ack_health, or the page you are "+
+		agenttoolschema.KindID("The trading partner's id, from edi_list_partners, a "+
+			"partnerId in edi_list_inbound_files or edi_get_ack_health, or the page you are "+
 			"on. A shipment's or customer's id is not a partner's: find the partner with "+
-			"list_edi_partners first.", permission.KindEDIPartner),
+			"edi_list_partners first.", permission.KindEDIPartner),
 	)
 }
 

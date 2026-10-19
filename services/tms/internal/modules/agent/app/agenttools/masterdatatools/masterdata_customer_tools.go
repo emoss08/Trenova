@@ -99,7 +99,7 @@ var customerRecord = &masterRecord[customer.Customer]{
 	entity:   common.CustomerRecordEntity,
 	idParam:  common.ParamCustomerID,
 	idsParam: "customerIds",
-	lister:   "list_customers",
+	lister:   "customer_list",
 	label:    func(entity *customer.Customer) string { return entity.Name },
 	id:       func(entity *customer.Customer) pulid.ID { return entity.ID },
 	version:  func(entity *customer.Customer) int64 { return entity.Version },
@@ -168,7 +168,7 @@ func NewCreateCustomerTool(customers CustomerKeeper, states StateLookup) agentpo
 		record: customerRecord,
 		name:   agentdefinition.ToolCreateCustomer,
 		description: "Add a customer the organization ships for: its code, name, billing " +
-			"address and DOT and MC numbers. Check list_customers first. Billing terms " +
+			"address and DOT and MC numbers. Check customer_list first. Billing terms " +
 			"start from the organization's defaults; who is emailed status updates is " +
 			"only proposed.",
 		rationale: "Adds a customer inside Trenova that shipments can be booked for; nothing " +
@@ -196,10 +196,10 @@ func NewCreateCustomerTool(customers CustomerKeeper, states StateLookup) agentpo
 func NewUpdateCustomerTool(customers CustomerKeeper, states StateLookup) agentports.AgentTool {
 	return newMasterUpdateTool(&masterUpdateSpec[customer.Customer]{
 		record: customerRecord,
-		name:   "update_customer",
+		name:   "customer_update",
 		description: "Change a customer's details: name, billing address, DOT and MC numbers, " +
 			"who is emailed status updates, and consolidation. Fields left out keep their " +
-			"value. Use update_customer_status to activate or retire it.",
+			"value. Use customer_set_status to activate or retire it.",
 		rationale: "Changes a customer inside Trenova and leaves its billing and email " +
 			"profiles alone; nothing is sent. Changing who receives status emails is held " +
 			"for a person.",
@@ -228,9 +228,9 @@ func NewUpdateCustomerStatusTool(
 ) agentports.AgentTool {
 	return newMasterStatusTool(&masterStatusSpec[customer.Customer, domaintypes.Status]{
 		record: customerRecord,
-		name:   "update_customer_status",
+		name:   "customer_set_status",
 		description: "Set one or more customers Active or Inactive, which decides whether " +
-			"shipments can be booked for them. Get the ids from list_customers.",
+			"shipments can be booked for them. Get the ids from customer_list.",
 		rationale:   "Changes whether customers are offered for booking inside Trenova; nothing is sent.",
 		searchTerms: []string{"deactivate customer", "reactivate customer", "inactive customer"},
 		statuses:    activeStatuses,

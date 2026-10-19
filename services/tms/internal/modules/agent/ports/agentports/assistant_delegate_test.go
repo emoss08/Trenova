@@ -49,7 +49,7 @@ func TestDelegateScope_TagsWhatAReaderMustNotApplyToTheReply(t *testing.T) {
 		`","delegateCallId":"call_1","text":"Saved.","reason":"ids"}`, encoded)
 
 	started, _ := scope.Tag(kernelports.StreamEvent{Event: AssistantEventToolStarted,
-		Data: AssistantToolStartedEvent{CallID: "call_d1", Name: "create_report"}})
+		Data: AssistantToolStartedEvent{CallID: "call_d1", Name: "report_create"}})
 	assert.Equal(t, AssistantEventToolStarted, started.Event, "tool events keep their names")
 	assert.Equal(t, scope.AgentID, started.Data.(AssistantToolStartedEvent).AgentID)
 

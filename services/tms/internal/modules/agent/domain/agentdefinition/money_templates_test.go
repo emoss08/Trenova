@@ -64,13 +64,13 @@ func TestTemplates_TheSettlementsClerkRunsThePayPeriod(t *testing.T) {
 
 	tools := agentdefinition.TemplateSettlementsClerk.StarterTools()
 	for _, tool := range []string{
-		"search_worker",
-		"list_carriers",
+		"worker_search",
+		"carrier_list",
 		"shipment_list",
 		"settlement_list_driver",
 		"settlement_get_driver",
 		"settlement_list_pay_events",
-		"get_worker_earnings_summary",
+		"settlement_get_driver_earnings",
 		"settlement_get_dispute",
 		"settlement_generate_driver",
 		"settlement_generate_driver_batch",
@@ -100,13 +100,13 @@ func TestTemplates_TheSettlementsClerkRunsThePayPeriod(t *testing.T) {
 		"settlement_post_carrier",
 		"settlement_record_carrier_payment",
 		"settlement_void_carrier",
-		"list_carrier_invoice_matches",
-		"list_edi_carrier_invoices",
-		"create_carrier_invoice_match",
-		"accept_carrier_invoice_match",
-		"accept_carrier_invoice_match_with_variance",
-		"reject_carrier_invoice_match",
-		"link_edi_carrier_invoice_to_carrier",
+		"carrier_list_invoice_matches",
+		"edi_list_carrier_invoices",
+		"carrier_create_invoice_match",
+		"carrier_accept_invoice_match",
+		"carrier_accept_invoice_match_with_variance",
+		"carrier_reject_invoice_match",
+		"edi_link_carrier_invoice",
 		"settlement_list_advances",
 		"settlement_issue_advance",
 		"settlement_forgive_advance",
@@ -159,8 +159,8 @@ func TestTemplates_ReceivablesWorksWhatCustomersOwe(t *testing.T) {
 
 	tools := agentdefinition.TemplateReceivables.StarterTools()
 	for _, tool := range []string{
-		"list_customers",
-		"get_customer",
+		"customer_list",
+		"customer_get",
 		"invoice_list",
 		"invoice_get",
 		"receivable_get_aging",
@@ -284,34 +284,34 @@ func TestTemplates_TheBooksKeeperKeepsTheBooksInStepAndReadyToClose(t *testing.T
 
 	tools := agentdefinition.TemplateBooksKeeper.StarterTools()
 	for _, tool := range []string{
-		"confirm_accounting_mapping_proposals",
-		"reject_accounting_mapping_proposal",
-		"release_accounting_sync",
-		"list_fiscal_periods",
-		"get_fiscal_close_blockers",
-		"lock_fiscal_period",
-		"close_fiscal_period",
-		"pause_accounting_sync",
-		"resume_accounting_sync",
-		"create_accounting_reference_record",
-		"refresh_accounting_reference_data",
+		"accounting_confirm_mapping",
+		"accounting_reject_mapping",
+		"accounting_release_sync_record",
+		"ledger_list_fiscal_periods",
+		"ledger_get_fiscal_close_blockers",
+		"ledger_lock_fiscal_period",
+		"ledger_close_fiscal_period",
+		"accounting_pause_sync",
+		"accounting_resume_sync",
+		"accounting_create_reference_record",
+		"accounting_refresh_reference_data",
 	} {
 		require.Containsf(t, tools, tool, "the books keeper needs %s", tool)
 	}
 
 	for _, tool := range []string{
-		"draft_manual_journal",
-		"revise_manual_journal_draft",
-		"submit_manual_journal",
-		"cancel_manual_journal",
-		"post_manual_journal",
-		"request_journal_reversal",
-		"cancel_journal_reversal",
-		"post_journal_reversal",
-		"reopen_fiscal_period",
-		"unlock_fiscal_period",
-		"open_fiscal_period",
-		"change_accounting_backfill",
+		"ledger_create_manual_journal",
+		"ledger_update_manual_journal",
+		"ledger_submit_manual_journal",
+		"ledger_cancel_manual_journal",
+		"ledger_post_manual_journal",
+		"ledger_create_journal_reversal",
+		"ledger_cancel_journal_reversal",
+		"ledger_post_journal_reversal",
+		"ledger_reopen_fiscal_period",
+		"ledger_unlock_fiscal_period",
+		"ledger_open_fiscal_period",
+		"accounting_update_backfill",
 	} {
 		require.NotContainsf(t, tools, tool, "the books keeper must not hold %s", tool)
 	}

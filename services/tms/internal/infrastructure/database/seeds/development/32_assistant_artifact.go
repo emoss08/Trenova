@@ -210,7 +210,7 @@ func (s *AssistantArtifactSeed) loadRefs(
 		Model(refs.draft).
 		Where(proposalCols.OrganizationID.Eq(), org.ID).
 		Where(proposalCols.BusinessUnitID.Eq(), org.BusinessUnitID).
-		Where(proposalCols.ToolName.Eq(), "send_detention_notice").
+		Where(proposalCols.ToolName.Eq(), "detention_send_notice").
 		Where(proposalCols.Status.Eq(), agent.ProposalStatusPending).
 		Limit(1).
 		Scan(ctx); err != nil {
@@ -292,7 +292,7 @@ func (s *AssistantArtifactSeed) artifacts(
 	draft := build(refs.thread(0), assistantartifact.KindEmailDraft,
 		"Detention notice to Northwind Foods",
 		map[string]any{
-			"tool":    "send_detention_notice",
+			"tool":    "detention_send_notice",
 			"to":      []string{"dispatch@northwindfoods.example"},
 			"subject": "Detention accruing on " + refs.shipments[0].ProNumber,
 			"body": "Our driver arrived at 09:12 and free time expired at 13:12. " +

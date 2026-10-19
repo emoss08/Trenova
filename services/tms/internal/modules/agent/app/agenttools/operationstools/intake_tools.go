@@ -95,14 +95,14 @@ func (t *CreateShipmentTool) SearchTerms() []string {
 func (t *CreateShipmentTool) Prerequisites() []string {
 	return []string{
 		agentdefinition.ToolFindShipmentRecords,
-		"list_customers",
-		"list_service_types",
-		"list_shipment_types",
-		"list_formula_templates",
-		"list_locations",
-		"list_commodities",
-		"list_accessorial_charges",
-		"list_equipment_types",
+		"customer_list",
+		"masterdata_list_service_types",
+		"masterdata_list_shipment_types",
+		"formula_list_templates",
+		"location_list",
+		"masterdata_list_commodities",
+		"masterdata_list_accessorial_charges",
+		"equipment_list_types",
 	}
 }
 
@@ -137,7 +137,7 @@ func (t *CreateShipmentTool) ParamSchema() map[string]any {
 				permission.ResourceDocument,
 				"The uploaded document this shipment was read from, "+
 					"when there is one: the documentId you read with intake_get_draft or "+
-					"read_attachment, usually a file on the message, this run's subject or "+
+					"agent_read_attachment, usually a file on the message, this run's subject or "+
 					"the page.",
 			),
 		},
@@ -155,23 +155,23 @@ func shipmentDraftSchema() map[string]any {
 		toolschema.KeyProperties: map[string]any{
 			common.ParamCustomerID: agenttoolschema.RecordIDText(
 				permission.ResourceCustomer,
-				"The customer, from list_customers.",
+				"The customer, from customer_list.",
 			),
 			"billToCustomerId": agenttoolschema.RecordIDText(
 				permission.ResourceCustomer,
 				"Who is billed, when not the customer, from "+
-					"list_customers.",
+					"customer_list.",
 			),
 			common.FieldServiceTypeID: agenttoolschema.RecordIDText(permission.ResourceServiceType,
-				"From list_service_types."),
+				"From masterdata_list_service_types."),
 			common.FieldShipmentTypeID: agenttoolschema.RecordIDText(
 				permission.ResourceShipmentType,
-				"From list_shipment_types.",
+				"From masterdata_list_shipment_types.",
 			),
 			"formulaTemplateId": agenttoolschema.RecordIDText(
 				permission.ResourceFormulaTemplate,
 				"The rating method that prices the freight, from "+
-					"list_formula_templates. Leave it out when the customer's rate agreement "+
+					"formula_list_templates. Leave it out when the customer's rate agreement "+
 					"covers the lane, and the contract's is used.",
 			),
 			"baseRate": common.AmountProperty(
@@ -184,11 +184,11 @@ func shipmentDraftSchema() map[string]any {
 			),
 			common.PreviewFieldTractorTypeID: agenttoolschema.RecordIDText(
 				permission.ResourceEquipmentType,
-				"A tractor equipment type, from list_equipment_types.",
+				"A tractor equipment type, from equipment_list_types.",
 			),
 			common.PreviewFieldTrailerTypeID: agenttoolschema.RecordIDText(
 				permission.ResourceEquipmentType,
-				"A trailer equipment type, from list_equipment_types.",
+				"A trailer equipment type, from equipment_list_types.",
 			),
 			"bol": common.StringProperty(
 				"The bill of lading number. It must be unique among open shipments, so "+
@@ -276,7 +276,7 @@ func stopDraftSchema() map[string]any {
 		toolschema.KeyProperties: map[string]any{
 			common.FieldLocationID: agenttoolschema.RecordIDText(
 				permission.ResourceLocation,
-				"The stop's location, from list_locations.",
+				"The stop's location, from location_list.",
 			),
 			common.FieldType: agenttoolschema.Enum(
 				"What happens at the stop.",
@@ -320,7 +320,7 @@ func commodityDraftSchema() map[string]any {
 		toolschema.KeyProperties: map[string]any{
 			"commodityId": agenttoolschema.RecordIDText(
 				permission.ResourceCommodity,
-				"The commodity, from list_commodities.",
+				"The commodity, from masterdata_list_commodities.",
 			),
 			common.FieldPieces: common.IntegerProperty(
 				"Pieces of it. Defaults to 1.",
@@ -340,7 +340,7 @@ func chargeLineDraftSchema() map[string]any {
 		toolschema.KeyProperties: map[string]any{
 			"accessorialChargeId": agenttoolschema.RecordIDText(
 				permission.ResourceAccessorialCharge,
-				"The accessorial, from list_accessorial_charges.",
+				"The accessorial, from masterdata_list_accessorial_charges.",
 			),
 			"method": agenttoolschema.Enum(
 				"How the amount is applied: Flat once, PerUnit times the unit, Percentage of "+
@@ -480,7 +480,7 @@ func (t *CreateShipmentTool) Draft(
 }
 
 // contractRating seats the rating the customer's agreement prices the lane
-// with when the call named none, as quote_shipment would have returned it, so
+// with when the call named none, as rate_quote would have returned it, so
 // the shipment is saved on the contract's rate rather than asking the person
 // for a rating method the contract already decides.
 func (t *CreateShipmentTool) contractRating(
@@ -521,8 +521,8 @@ func errNoRatingMethod(outcome string) error {
 	message := "No rate agreement prices this lane for this customer, so the price is the " +
 		"one the person or the customer's own rate confirmation gives. When neither gives " +
 		"one, ask the person for it, offering one to react to (a figure from " +
-		"quote_shipment or their recent loads on the lane, if you can get one). Send it as " +
-		"formulaTemplateId from list_formula_templates and baseRate"
+		"rate_quote or their recent loads on the lane, if you can get one). Send it as " +
+		"formulaTemplateId from formula_list_templates and baseRate"
 	if outcome != "" {
 		message += " (the agreements answered " + outcome + ")"
 	}
@@ -576,15 +576,15 @@ func (t *UpdateShipmentTool) ParamSchema() map[string]any {
 			common.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
 				"The shipment to change, from the page, shipment_list."),
 			"customerId": agenttoolschema.RecordIDText(permission.ResourceCustomer,
-				"The new customer, from list_customers."),
+				"The new customer, from customer_list."),
 			"serviceTypeId": agenttoolschema.RecordIDText(permission.ResourceServiceType,
-				"The new service type, from list_service_types."),
+				"The new service type, from masterdata_list_service_types."),
 			"shipmentTypeId": agenttoolschema.RecordIDText(permission.ResourceShipmentType,
-				"The new shipment type, from list_shipment_types."),
+				"The new shipment type, from masterdata_list_shipment_types."),
 			"tractorTypeId": agenttoolschema.RecordIDText(permission.ResourceEquipmentType,
-				"The new tractor equipment type, from list_equipment_types."),
+				"The new tractor equipment type, from equipment_list_types."),
 			"trailerTypeId": agenttoolschema.RecordIDText(permission.ResourceEquipmentType,
-				"The new trailer equipment type, from list_equipment_types."),
+				"The new trailer equipment type, from equipment_list_types."),
 			"bol": map[string]any{
 				"type":        "string",
 				"description": "The customer's BOL or reference number.",

@@ -25,11 +25,11 @@ const paramDriftDirection = "direction"
 
 const paramDriftNote = "note"
 
-const toolListDrift = "list_accounting_drift_findings"
+const toolListDrift = "accounting_list_drift_findings"
 
 const maxDriftNoteRunes = 500
 
-const driftFindingHelp = "The finding's id, from list_accounting_drift_findings."
+const driftFindingHelp = "The finding's id, from accounting_list_drift_findings."
 
 type accountingDriftOperator interface {
 	Get(
@@ -94,11 +94,11 @@ func ProvideResolveAccountingDriftTool(
 }
 
 func (t *ResolveAccountingDriftTool) Name() string {
-	return "resolve_accounting_drift"
+	return "accounting_resolve_drift_finding"
 }
 
 func (t *ResolveAccountingDriftTool) Recipe() []string {
-	return []string{"list_accounting_drift_findings", "resolve_accounting_drift"}
+	return []string{"accounting_list_drift_findings", "accounting_resolve_drift_finding"}
 }
 
 func (t *ResolveAccountingDriftTool) Description() string {
@@ -234,13 +234,13 @@ func ProvideDismissAccountingDriftTool(
 }
 
 func (t *DismissAccountingDriftTool) Name() string {
-	return "dismiss_accounting_drift"
+	return "accounting_dismiss_drift_finding"
 }
 
 func (t *DismissAccountingDriftTool) Description() string {
 	return "Dismiss an open drift finding, with the reason, keeping both sides as they are. " +
 		"An agent may dismiss only an amount difference within the reconciliation tolerance, " +
-		"which list_accounting_drift_findings marks as withinTolerance. Anything larger, and " +
+		"which accounting_list_drift_findings marks as withinTolerance. Anything larger, and " +
 		"any deleted, voided or status difference, is a person's decision."
 }
 
@@ -349,13 +349,13 @@ func ProvideCheckAccountingDriftTool(
 }
 
 func (t *CheckAccountingDriftTool) Name() string {
-	return "check_accounting_drift"
+	return "accounting_check_drift"
 }
 
 func (t *CheckAccountingDriftTool) Description() string {
 	return "Compare the accounting system with Trenova immediately instead of waiting for the " +
 		"nightly check. It runs in the background and changes nothing on either side; read " +
-		"list_accounting_drift_findings once it has finished."
+		"accounting_list_drift_findings once it has finished."
 }
 
 func (t *CheckAccountingDriftTool) SearchTerms() []string {

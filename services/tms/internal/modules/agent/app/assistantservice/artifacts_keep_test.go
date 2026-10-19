@@ -47,8 +47,8 @@ func TestArtifactRecorder_KeepsOnlyTheLookupsTheReplyPointsTo(t *testing.T) {
 
 	repo := &deletingArtifactRepo{stubArtifactRepo: &stubArtifactRepo{}}
 	recorder := keepRecorder(t, repo)
-	used, _ := recorder.observe(observation("get_customer", map[string]any{"id": "cus_1", "name": "Acme"}))
-	unused, _ := recorder.observe(observation("get_worker", map[string]any{"id": "wrk_1", "name": "Dana"}))
+	used, _ := recorder.observe(observation("customer_get", map[string]any{"id": "cus_1", "name": "Acme"}))
+	unused, _ := recorder.observe(observation("worker_get", map[string]any{"id": "wrk_1", "name": "Dana"}))
 	document, _ := recorder.observe(observation("publish_artifact", agentports.PublishedDocument{
 		Title: "Brief", Body: "# Brief",
 	}))
@@ -81,7 +81,7 @@ func TestArtifactRecorder_ADelegatesCitationsDoNotKeepItsLookups(t *testing.T) {
 	repo := &deletingArtifactRepo{stubArtifactRepo: &stubArtifactRepo{}}
 	recorder := keepRecorder(t, repo)
 	cited, _ := recorder.observe(observation("shipment_get", map[string]any{"id": "shp_1", "proNumber": "P-1"}))
-	both, _ := recorder.observe(observation("get_customer", map[string]any{"id": "cus_1", "name": "Acme"}))
+	both, _ := recorder.observe(observation("customer_get", map[string]any{"id": "cus_1", "name": "Acme"}))
 	require.NotNil(t, cited)
 	require.NotNil(t, both)
 
@@ -107,15 +107,15 @@ func TestArtifactRecorder_AnUnchangedLookupReusesItsLastVersion(t *testing.T) {
 	repo := &stubArtifactRepo{}
 	recorder := keepRecorder(t, repo)
 	first, _ := recorder.observe(agentports.ToolObservation{
-		Call: agentports.ToolCall{ID: "call_1", Name: "get_customer", Arguments: map[string]any{"id": "cus_1"}},
+		Call: agentports.ToolCall{ID: "call_1", Name: "customer_get", Arguments: map[string]any{"id": "cus_1"}},
 		Data: map[string]any{"id": "cus_1", "name": "Acme"},
 	})
 	again, _ := recorder.observe(agentports.ToolObservation{
-		Call: agentports.ToolCall{ID: "call_2", Name: "get_customer", Arguments: map[string]any{"id": "cus_1"}},
+		Call: agentports.ToolCall{ID: "call_2", Name: "customer_get", Arguments: map[string]any{"id": "cus_1"}},
 		Data: map[string]any{"id": "cus_1", "name": "Acme"},
 	})
 	changed, _ := recorder.observe(agentports.ToolObservation{
-		Call: agentports.ToolCall{ID: "call_3", Name: "get_customer", Arguments: map[string]any{"id": "cus_1"}},
+		Call: agentports.ToolCall{ID: "call_3", Name: "customer_get", Arguments: map[string]any{"id": "cus_1"}},
 		Data: map[string]any{"id": "cus_1", "name": "Acme Manufacturing"},
 	})
 

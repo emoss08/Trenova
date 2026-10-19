@@ -88,7 +88,7 @@ describe("toMemoryInput", () => {
         content: "Needs the POD within a day.",
         subjectType: "Customer",
         subjectId: "cus_1",
-        toolName: " assign_move ",
+        toolName: " dispatch_assign_move ",
         expiresAt: 1_800_000_000,
         version: 0,
       }),
@@ -97,7 +97,7 @@ describe("toMemoryInput", () => {
       content: "Needs the POD within a day.",
       subjectType: "Customer",
       subjectId: "cus_1",
-      toolName: "assign_move",
+      toolName: "dispatch_assign_move",
       expiresAt: 1_800_000_000,
       version: 0,
     });

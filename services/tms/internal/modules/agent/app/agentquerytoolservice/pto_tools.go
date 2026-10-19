@@ -61,7 +61,7 @@ func newListTimeOffTool(pto ptoLister) agentports.AgentQueryTool {
 	return &listTimeOffTool{pto: pto}
 }
 
-func (t *listTimeOffTool) Name() string { return "list_time_off" }
+func (t *listTimeOffTool) Name() string { return "worker_list_time_off" }
 
 func (t *listTimeOffTool) Description() string {
 	return "List worker (driver) time-off requests — who is out, who is asking to " +
@@ -89,8 +89,8 @@ func (t *listTimeOffTool) ParamSchema() map[string]any {
 			),
 			"workerId": agenttoolschema.OfResource(map[string]any{
 				"type": "string",
-				"description": "Narrow to one worker, by id from list_workers or " +
-					"search_worker. A name is not an id.",
+				"description": "Narrow to one worker, by id from worker_list or " +
+					"worker_search. A name is not an id.",
 			}, permission.ResourceWorker),
 			"withinDays": map[string]any{
 				"type": "integer",

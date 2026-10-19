@@ -18,7 +18,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-// maxListedRuns bounds what list_report_runs returns. A run row is small, but
+// maxListedRuns bounds what report_list_runs returns. A run row is small, but
 // the point of the tool is to find the two runs worth comparing, and a
 // hundred of them is a list nobody reads and a model picks from badly.
 const maxListedRuns = 25
@@ -31,12 +31,12 @@ func newListReportRunsTool(reports reportRunner) agentports.AgentQueryTool {
 	return &listReportRunsTool{reports: reports}
 }
 
-func (t *listReportRunsTool) Name() string { return "list_report_runs" }
+func (t *listReportRunsTool) Name() string { return "report_list_runs" }
 
 func (t *listReportRunsTool) Description() string {
 	return "List recent runs the person you are acting for made of a report, newest " +
 		"first, so you can name the two worth comparing; another person's runs are never " +
-		"listed. Use this before compare_report_runs, which needs run ids and " +
+		"listed. Use this before report_compare_runs, which needs run ids and " +
 		"has no other way to learn them. Each row says whether the run finished and " +
 		"whether its rows were stored — a run whose rows were not stored cannot be " +
 		"compared, and there is no way to recover them short of running the report again."
@@ -48,7 +48,7 @@ func (t *listReportRunsTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"definitionId": agenttoolschema.OfResource(map[string]any{
 				"type": "string",
-				"description": "The saved report to list runs of, from list_reports. " +
+				"description": "The saved report to list runs of, from report_list. " +
 					"Omit to list the person's recent runs across every report.",
 			}, permission.ResourceReport),
 			"limit": map[string]any{
@@ -164,7 +164,7 @@ func toRunRow(run *report.ReportRun) reportRunRow {
 func listedRunsNote(total, comparable int) string {
 	switch {
 	case total == 0:
-		return "There are no runs of this report yet. Run it with run_report; " +
+		return "There are no runs of this report yet. Run it with report_run; " +
 			"a comparison needs two runs of the same report."
 	case comparable == 0:
 		return "None of these runs can be compared. Run the report again — runs " +
@@ -175,7 +175,7 @@ func listedRunsNote(total, comparable int) string {
 	default:
 		return fmt.Sprintf(
 			"%d of these %d runs can be compared. Pass two of their run ids to "+
-				"compare_report_runs, earlier one first.",
+				"report_compare_runs, earlier one first.",
 			comparable, total,
 		)
 	}
@@ -189,14 +189,14 @@ func newCompareReportRunsTool(reports reportRunner) agentports.AgentQueryTool {
 	return &compareReportRunsTool{reports: reports}
 }
 
-func (t *compareReportRunsTool) Name() string { return "compare_report_runs" }
+func (t *compareReportRunsTool) Name() string { return "report_compare_runs" }
 
 func (t *compareReportRunsTool) Description() string {
 	return "Compare two finished runs of the same report and report what moved: rows " +
 		"added, rows that disappeared, rows whose numbers changed, and the totals on " +
 		"each side. This is how to answer \"what changed since last week\" — reading " +
 		"the newest run alone cannot tell you what is no longer in it. Get run ids " +
-		"from list_report_runs. Both runs must be the same report with the same " +
+		"from report_list_runs. Both runs must be the same report with the same " +
 		"columns; a report whose columns changed between the two cannot be compared, " +
 		"and the tool says so rather than lining them up by position."
 }
@@ -207,11 +207,11 @@ func (t *compareReportRunsTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"runIdA": map[string]any{
 				"type":        "string",
-				"description": "The earlier run, from list_report_runs.",
+				"description": "The earlier run, from report_list_runs.",
 			},
 			"runIdB": map[string]any{
 				"type":        "string",
-				"description": "The later run, from list_report_runs.",
+				"description": "The later run, from report_list_runs.",
 			},
 			"keys": map[string]any{
 				"type":  "array",

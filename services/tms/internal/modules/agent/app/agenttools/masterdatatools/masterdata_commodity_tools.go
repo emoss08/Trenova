@@ -107,7 +107,7 @@ var commodityRecord = &masterRecord[commodity.Commodity]{
 	entity:   commodityRecordEntity,
 	idParam:  paramCommodityID,
 	idsParam: "commodityIds",
-	lister:   "list_commodities",
+	lister:   "masterdata_list_commodities",
 	label:    func(entity *commodity.Commodity) string { return entity.Name },
 	id:       func(entity *commodity.Commodity) pulid.ID { return entity.ID },
 	version:  func(entity *commodity.Commodity) int64 { return entity.Version },
@@ -129,7 +129,7 @@ func commodityFields() []masterField[commodity.Commodity] {
 		masterText(mdDescription, "What the goods are.", mdMaxNotes, true,
 			func(c *commodity.Commodity) *string { return &c.Description }),
 		masterOptionalID(paramHazmatID, permission.ResourceHazardousMaterial,
-			"The hazardous material it is, from list_hazardous_materials, when the goods "+
+			"The hazardous material it is, from masterdata_list_hazardous_materials, when the goods "+
 				"are hazmat.",
 			func(c *commodity.Commodity) *pulid.ID { return &c.HazardousMaterialID }),
 		masterEnum("freightClass", "The NMFC freight class.", freightClasses,
@@ -168,7 +168,7 @@ func NewCreateCommodityTool(commodities CommodityKeeper) agentports.AgentTool {
 		name:   agentdefinition.ToolCreateCommodity,
 		description: "Add a commodity shipments can carry, with its freight class, " +
 			"temperature range, dimensions and handling. Name the hazardous material it is " +
-			"when it is hazmat, and check list_commodities first.",
+			"when it is hazmat, and check masterdata_list_commodities first.",
 		rationale: "Adds a commodity inside Trenova that shipments can name; nothing is sent " +
 			"and it can be made inactive.",
 		fields:      commodityFields(),
@@ -190,10 +190,10 @@ func NewCreateCommodityTool(commodities CommodityKeeper) agentports.AgentTool {
 func NewUpdateCommodityTool(commodities CommodityKeeper) agentports.AgentTool {
 	return newMasterUpdateTool(&masterUpdateSpec[commodity.Commodity]{
 		record: commodityRecord,
-		name:   "update_commodity",
+		name:   "masterdata_update_commodity",
 		description: "Change a commodity: its name, description, freight class, temperature " +
 			"range, dimensions, handling or hazardous material. Fields left out keep their " +
-			"value. Use update_commodity_status to activate or retire it.",
+			"value. Use masterdata_set_commodity_status to activate or retire it.",
 		rationale: "Changes a commodity inside Trenova; nothing is sent, and a later change " +
 			"puts it back.",
 		fields:      commodityFields(),
@@ -217,9 +217,9 @@ func NewUpdateCommodityTool(commodities CommodityKeeper) agentports.AgentTool {
 func NewUpdateCommodityStatusTool(commodities CommodityKeeper) agentports.AgentTool {
 	return newMasterStatusTool(&masterStatusSpec[commodity.Commodity, domaintypes.Status]{
 		record: commodityRecord,
-		name:   "update_commodity_status",
+		name:   "masterdata_set_commodity_status",
 		description: "Set one or more commodities Active or Inactive, which decides whether " +
-			"shipments can name them. Get the ids from list_commodities.",
+			"shipments can name them. Get the ids from masterdata_list_commodities.",
 		rationale:   "Changes whether commodities are offered for booking inside Trenova; nothing is sent.",
 		searchTerms: []string{"deactivate commodity", "retire commodity"},
 		statuses:    activeStatuses,
@@ -359,7 +359,7 @@ var hazmatRecord = &masterRecord[hazardousmaterial.HazardousMaterial]{
 	entity:   hazmatRecordEntity,
 	idParam:  paramHazmatID,
 	idsParam: "hazardousMaterialIds",
-	lister:   "list_hazardous_materials",
+	lister:   "masterdata_list_hazardous_materials",
 	label:    func(entity *hazardousmaterial.HazardousMaterial) string { return entity.Name },
 	id:       func(entity *hazardousmaterial.HazardousMaterial) pulid.ID { return entity.ID },
 	version:  func(entity *hazardousmaterial.HazardousMaterial) int64 { return entity.Version },
@@ -454,10 +454,10 @@ var mdHazmatPolicy = masterPolicy{
 func NewCreateHazardousMaterialTool(materials HazmatKeeper) agentports.AgentTool {
 	return newMasterCreateTool(&masterCreateSpec[hazardousmaterial.HazardousMaterial]{
 		record: hazmatRecord,
-		name:   "create_hazardous_material",
+		name:   "masterdata_create_hazardous_material",
 		description: "Add a hazardous material commodities can name, with its hazard class, " +
 			"UN number and packing group. Give the shipping name, placarding and emergency " +
-			"contact as the DOT table does; check list_hazardous_materials first, and a " +
+			"contact as the DOT table does; check masterdata_list_hazardous_materials first, and a " +
 			"person always approves it.",
 		rationale: "Adds a hazardous material inside Trenova; nothing is sent. Its class, " +
 			"placarding and emergency contact decide what drivers carry and post, so a " +
@@ -481,10 +481,10 @@ func NewCreateHazardousMaterialTool(materials HazmatKeeper) agentports.AgentTool
 func NewUpdateHazardousMaterialTool(materials HazmatKeeper) agentports.AgentTool {
 	return newMasterUpdateTool(&masterUpdateSpec[hazardousmaterial.HazardousMaterial]{
 		record: hazmatRecord,
-		name:   "update_hazardous_material",
+		name:   "masterdata_update_hazardous_material",
 		description: "Change a hazardous material: its class, UN number, packing group, " +
 			"shipping name, placarding, handling or emergency contact. Fields left out keep " +
-			"their value. Use update_hazardous_material_status to activate or retire it.",
+			"their value. Use masterdata_set_hazardous_material_status to activate or retire it.",
 		rationale: "Changes a hazardous material inside Trenova; nothing is sent. What " +
 			"drivers placard and who they call follows it, so a person approves every change.",
 		fields:      hazmatFields(),
@@ -509,10 +509,10 @@ func NewUpdateHazardousMaterialStatusTool(materials HazmatKeeper) agentports.Age
 	return newMasterStatusTool(
 		&masterStatusSpec[hazardousmaterial.HazardousMaterial, domaintypes.Status]{
 			record: hazmatRecord,
-			name:   "update_hazardous_material_status",
+			name:   "masterdata_set_hazardous_material_status",
 			description: "Set one or more hazardous materials Active or Inactive, which " +
 				"decides whether commodities can name them. Get the ids from " +
-				"list_hazardous_materials.",
+				"masterdata_list_hazardous_materials.",
 			rationale: "Changes whether hazardous materials are offered inside Trenova; " +
 				"nothing is sent.",
 			searchTerms: []string{"deactivate hazmat", "retire hazardous material"},

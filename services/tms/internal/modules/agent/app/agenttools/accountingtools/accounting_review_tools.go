@@ -109,10 +109,10 @@ func mappingProposalsProperty() map[string]any {
 			toolschema.KeyType: toolschema.TypeObject,
 			toolschema.KeyProperties: map[string]any{
 				ParamMappingID: agenttoolschema.KindID("The mapping's id, from "+
-					"list_accounting_mapping_gaps or get_accounting_mapping.",
+					"accounting_list_mapping_gaps or accounting_get_mapping.",
 					permission.KindAccountingMapping),
 				ParamExternalID: common.StringProperty("The proposed record's externalId, as "+
-					"list_accounting_mapping_gaps shows it under mappedTo.", 0),
+					"accounting_list_mapping_gaps shows it under mappedTo.", 0),
 			},
 			toolschema.KeyRequired:             []string{ParamMappingID, ParamExternalID},
 			toolschema.KeyAdditionalProperties: false,
@@ -185,12 +185,12 @@ func NewConfirmAccountingMappingProposalsTool(
 	mappings accountingMappingReviewer,
 ) agentports.AgentTool {
 	return common.NewReceivableTool(mappingReviewSpec(&common.ReceivableSpec{
-		Name:   "confirm_accounting_mapping_proposals",
-		Recipe: []string{"list_accounting_mapping_gaps", "confirm_accounting_mapping_proposals"},
+		Name:   "accounting_confirm_mapping",
+		Recipe: []string{"accounting_list_mapping_gaps", "accounting_confirm_mapping"},
 		Description: "Confirm Trenova's proposed accounting system matches exactly as " +
-			"list_accounting_mapping_gaps shows them, several at once, so sync can use them. " +
+			"accounting_list_mapping_gaps shows them, several at once, so sync can use them. " +
 			"A proposal that changed since it was read is refused; to choose a different " +
-			"record, use set_accounting_mapping.",
+			"record, use accounting_set_mapping.",
 		Rationale: "Decides which accounts and records Trenova's documents post to in the " +
 			"books, so a person approves it; clearing or changing a mapping undoes it.",
 		Properties: map[string]any{ParamMappingProposals: mappingProposalsProperty()},
@@ -225,15 +225,15 @@ func NewRejectAccountingMappingProposalTool(
 	mappings accountingMappingReviewer,
 ) agentports.AgentTool {
 	return common.NewReceivableTool(mappingReviewSpec(&common.ReceivableSpec{
-		Name: "reject_accounting_mapping_proposal",
+		Name: "accounting_reject_mapping",
 		Description: "Turn down the wrong record Trenova proposed for an accounting mapping, " +
 			"leaving it unmatched. That record is never proposed for it again. Use " +
-			"set_accounting_mapping when the right record is known.",
+			"accounting_set_mapping when the right record is known.",
 		Rationale: "Unmatches a proposal so it is not used; choosing a record for the mapping " +
 			"undoes it.",
 		Properties: map[string]any{
 			ParamMappingID: agenttoolschema.KindID("The mapping's id, from "+
-				"list_accounting_mapping_gaps or get_accounting_mapping. Never guess one.",
+				"accounting_list_mapping_gaps or accounting_get_mapping. Never guess one.",
 				permission.KindAccountingMapping),
 		},
 		Required: []string{ParamMappingID},
@@ -327,11 +327,11 @@ func planRelease(
 
 func NewReleaseAccountingSyncTool(sync accountingSyncReleaser) agentports.AgentTool {
 	return common.NewReceivableTool(&common.ReceivableSpec{
-		Name: "release_accounting_sync",
+		Name: "accounting_release_sync_record",
 		Recipe: []string{
-			"list_accounting_sync_records",
-			"get_accounting_sync_record",
-			"release_accounting_sync",
+			"accounting_list_sync_records",
+			"accounting_get_sync_record",
+			"accounting_release_sync_record",
 		},
 		Description: "Propose releasing documents the organization holds for approval before " +
 			"they go to the accounting system, so they are sent. Name each by its sync record; " +
@@ -351,7 +351,7 @@ func NewReleaseAccountingSyncTool(sync accountingSyncReleaser) agentports.AgentT
 				permission.ResourceAccountingSync.String(),
 				agenttoolschema.KindIDs(fmt.Sprintf(
 					"Up to %d sync records awaiting approval, from "+
-						"list_accounting_sync_records or get_accounting_sync_record.",
+						"accounting_list_sync_records or accounting_get_sync_record.",
 					maxSyncReleaseIDs,
 				), maxSyncReleaseIDs, permission.KindAccountingSyncRecord),
 			),
@@ -460,11 +460,11 @@ func planBackfillChange(
 
 func NewChangeAccountingBackfillTool(sync accountingBackfillChanger) agentports.AgentTool {
 	return common.NewReceivableTool(&common.ReceivableSpec{
-		Name: "change_accounting_backfill",
+		Name: "accounting_update_backfill",
 		Description: "Pause, resume or cancel the accounting backfill in progress when a " +
 			"person asks, such as pausing it while the books are closed. Documents already " +
 			"sent stay in the books; a cancelled backfill is requested again with " +
-			"request_accounting_backfill.",
+			"accounting_request_backfill.",
 		Resource:    permission.ResourceAccountingIntegration,
 		Operation:   permission.OpManage,
 		Egress:      agent.EgressInternal,

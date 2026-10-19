@@ -21,7 +21,7 @@ func TestRecord_KeepsTheProposalTheCallWasDecidedAs(t *testing.T) {
 
 	minted := pulid.MustNew("ap_")
 	proposal := recordOne(t, agentports.PendingAction{
-		ToolName:   "assign_move",
+		ToolName:   "dispatch_assign_move",
 		Arguments:  map[string]any{},
 		Rationale:  "cover it",
 		Tier:       agent.TierPropose,
@@ -44,7 +44,7 @@ func TestRecord_MintsAsBeforeForAnActionRecordedWithoutAnID(t *testing.T) {
 	t.Parallel()
 
 	proposal := recordOne(t, agentports.PendingAction{
-		ToolName:  "assign_move",
+		ToolName:  "dispatch_assign_move",
 		Arguments: map[string]any{},
 		Rationale: "cover it",
 		Tier:      agent.TierPropose,
@@ -60,7 +60,7 @@ func TestRecord_KeepsWhoAnAutomaticWriteRanAsAndWhen(t *testing.T) {
 
 	version := int64(9)
 	proposal := recordOne(t, agentports.PendingAction{
-		ToolName:        "assign_move",
+		ToolName:        "dispatch_assign_move",
 		Arguments:       map[string]any{},
 		Rationale:       "cover it",
 		Tier:            agent.TierAutoExecute,
@@ -95,14 +95,14 @@ func TestRecord_AnUnattendedAutomaticWriteIsExecutedByTheSystemUser(t *testing.T
 		Run: &agent.AgentRun{ID: pulid.MustNew("arun_")},
 		Actions: []agentports.PendingAction{
 			{
-				ToolName:  "assign_move",
+				ToolName:  "dispatch_assign_move",
 				Arguments: map[string]any{},
 				Rationale: "cover it",
 				Tier:      agent.TierAutoExecute,
 				Executed:  true,
 			},
 			{
-				ToolName:  "assign_move",
+				ToolName:  "dispatch_assign_move",
 				Arguments: map[string]any{},
 				Rationale: "cover the other one",
 				Tier:      agent.TierPropose,
@@ -130,7 +130,7 @@ func TestRecord_AnUnattendedWriteRanAsNoPerson(t *testing.T) {
 		},
 		Run: &agent.AgentRun{ID: pulid.MustNew("arun_")},
 		Actions: []agentports.PendingAction{{
-			ToolName:  "assign_move",
+			ToolName:  "dispatch_assign_move",
 			Arguments: map[string]any{},
 			Rationale: "cover it",
 			Tier:      agent.TierAutoExecute,
@@ -170,7 +170,7 @@ func TestRecord_OpensADelegatesRunUnderItsParentAndTask(t *testing.T) {
 			DelegateCallID:   "call_task_1",
 		},
 		Actions: []agentports.PendingAction{
-			{ToolName: "assign_move", Rationale: "cover it", Tier: agent.TierPropose},
+			{ToolName: "dispatch_assign_move", Rationale: "cover it", Tier: agent.TierPropose},
 		},
 		Evidence: messageEvidence,
 	})

@@ -120,7 +120,7 @@ func TestUserFacts_NeedWorkToSayAnything(t *testing.T) {
 		OwnedShipments: []agentprofileports.NamedCount{{Name: "InTransit", Count: 12}},
 		Customers:      []agentprofileports.NamedCount{{Name: "Northwind Foods", Count: 9}},
 		ChangedRecords: []agentprofileports.NamedCount{{Name: "shipment", Count: 140}},
-		ToolsUsed:      []agentprofileports.NamedCount{{Name: "assign_move", Count: 30}},
+		ToolsUsed:      []agentprofileports.NamedCount{{Name: "dispatch_assign_move", Count: 30}},
 	}, 30)
 	require.True(t, HasActivity(busy))
 	assert.Equal(t, "Job title: Dispatcher.", factText(busy, "person.title"))

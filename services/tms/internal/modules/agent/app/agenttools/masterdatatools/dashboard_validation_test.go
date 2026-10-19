@@ -80,9 +80,9 @@ func TestCreateDashboard_RefusesAReportIDThatDoesNotExistBeforeProposing(t *test
 
 	errs := agenttoolstest.FieldErrors(t, err)
 	assert.NotContains(t, errs, "tiles[0].definitionId")
-	assert.Contains(t, errs["tiles[1].definitionId"], "list_reports")
+	assert.Contains(t, errs["tiles[1].definitionId"], "report_list")
 	assert.Contains(t, errs["tiles[1].definitionId"], "on_time_percentage")
-	assert.Contains(t, errs["tiles[2].definitionId"], "list_reports")
+	assert.Contains(t, errs["tiles[2].definitionId"], "report_list")
 }
 
 // A built-in report is drawn by its key; a key that names nothing is refused
@@ -103,7 +103,7 @@ func TestCreateDashboard_DrawsABuiltInReportByKey(t *testing.T) {
 		"name":  "Receivables",
 		"tiles": []any{map[string]any{"kind": "table", "cannedKey": "made_up"}},
 	}))
-	assert.Contains(t, agenttoolstest.FieldErrors(t, err)["tiles[0].cannedKey"], "list_reports")
+	assert.Contains(t, agenttoolstest.FieldErrors(t, err)["tiles[0].cannedKey"], "report_list")
 
 	tiles, err := buildTiles([]map[string]any{{"kind": "table", "cannedKey": "ar_aging"}}, 0)
 	require.NoError(t, err)
@@ -137,5 +137,5 @@ func TestAddDashboardTile_RefusesADashboardThatIsNotThereBeforeProposing(t *test
 		"tile":        map[string]any{"kind": "table", "definitionId": known.String()},
 	}))
 
-	assert.Contains(t, agenttoolstest.FieldErrors(t, err)["dashboardId"], "list_dashboards")
+	assert.Contains(t, agenttoolstest.FieldErrors(t, err)["dashboardId"], "report_list_dashboards")
 }

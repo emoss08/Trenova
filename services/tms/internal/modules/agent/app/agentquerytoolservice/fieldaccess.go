@@ -21,7 +21,7 @@ import (
 
 // fieldAccess answers which of a resource's fields a person may be shown,
 // by the same sensitivity model the report compiler applies, so the worker
-// a model reads through get_worker is the worker the person could open.
+// a model reads through worker_get is the worker the person could open.
 //
 // Confidential fields are never sent to a model, whatever the person's
 // role: a date of birth or a licence number in a chat transcript is a

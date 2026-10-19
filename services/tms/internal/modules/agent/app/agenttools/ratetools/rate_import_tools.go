@@ -85,11 +85,11 @@ func targetRateImport(params map[string]any) (agentports.ToolTarget, bool) {
 
 func NewCommitRateImportTool(imports RateImportKeeper) agentports.AgentTool {
 	return common.NewReceivableTool(rateMoneySpec(&common.ReceivableSpec{
-		Name:   "commit_rate_import",
-		Recipe: []string{"list_rate_imports", "commit_rate_import"},
+		Name:   "rate_commit_import",
+		Recipe: []string{"rate_list_imports", "rate_commit_import"},
 		Description: "Propose applying a reviewed rate sheet to its agreement from the " +
 			"import's day. The lanes it changes and drops are closed out, its new rates take " +
-			"effect, and the old rates stay in history. Read it with list_rate_imports first. It " +
+			"effect, and the old rates stay in history. Read it with rate_list_imports first. It " +
 			"changes what shipments are charged, so a person always decides.",
 		Operation: permission.OpUpdate,
 		Rationale: "Changes the rates an agreement prices shipments at; only a person applies " +
@@ -161,7 +161,7 @@ type rateImportView struct {
 
 func NewDiscardRateImportTool(imports RateImportKeeper) agentports.AgentTool {
 	return common.NewReceivableTool(common.FuelInternalSpec(&common.ReceivableSpec{
-		Name: "discard_rate_import",
+		Name: "rate_discard_import",
 		Description: "Discard a rate sheet that was read and should not be applied, such as " +
 			"last month's file uploaded again. Its agreement is not changed.",
 		Resource:  permission.ResourceRateAgreement,
@@ -282,7 +282,7 @@ func rateSimulationFrom(
 
 func NewRunRateSimulationTool(simulations RateSimulationKeeper) agentports.AgentTool {
 	return common.NewReportingReceivableTool(common.FuelInternalSpec(&common.ReceivableSpec{
-		Name: "run_rate_simulation",
+		Name: "rate_run_simulation",
 		Description: "Replay past shipments against a rate agreement, usually a draft, to see " +
 			"what it would have charged or paid next to what they actually were. It runs in " +
 			"the background and changes no shipment and no rate.",

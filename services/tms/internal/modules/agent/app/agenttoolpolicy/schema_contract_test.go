@@ -14,17 +14,17 @@ import (
 // domain declares and checks itself, keyed by "tool:path", with the reason.
 // Everything under one is left to that domain; nothing else is exempt.
 var domainOwnedSchemas = map[string]string{
-	"create_report:definition": "report.DefinitionJSONSchema is the report domain's own " +
+	"report_create:definition": "report.DefinitionJSONSchema is the report domain's own " +
 		"schema; the report compiler refuses a definition it cannot compile",
-	"update_report:definition":  "as create_report",
-	"preview_report:definition": "as create_report",
-	"run_report:parameters": "keyed by the parameters each saved report declares; the " +
+	"report_update:definition":  "as report_create",
+	"report_preview:definition": "as report_create",
+	"report_run:parameters": "keyed by the parameters each saved report declares; the " +
 		"report compiler checks every value against its declaration",
-	"preview_report:parameters": "as run_report",
-	"test_formula_expression:variables": "keyed by the variables each formula declares; " +
+	"report_preview:parameters": "as report_run",
+	"formula_test_expression:variables": "keyed by the variables each formula declares; " +
 		"the formula engine checks every value against its declared type",
-	"test_formula_expression:scenarios[].variables": "as test_formula_expression:variables",
-	"propose_formula:scenarios[].variables":         "as test_formula_expression:variables",
+	"formula_test_expression:scenarios[].variables": "as formula_test_expression:variables",
+	"propose_formula:scenarios[].variables":         "as formula_test_expression:variables",
 }
 
 func domainOwned(tool, path string) bool {

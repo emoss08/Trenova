@@ -30,7 +30,7 @@ const ParamMappingID = "mappingId"
 
 const paramTargetType = "targetType"
 
-const toolGetAccountingMapping = "get_accounting_mapping"
+const toolGetAccountingMapping = "accounting_get_mapping"
 
 type accountingMappingWriter interface {
 	FindMapping(
@@ -81,8 +81,8 @@ func mappingTargetProperties() map[string]any {
 	return map[string]any{
 		ParamAccountingSystem: accountingSystemSchema(),
 		ParamMappingID: agenttoolschema.KindID(
-			"The mapping's id from list_accounting_mapping_gaps or "+
-				"get_accounting_mapping. Never guess one.",
+			"The mapping's id from accounting_list_mapping_gaps or "+
+				"accounting_get_mapping. Never guess one.",
 			permission.KindAccountingMapping,
 		),
 		paramTargetType: agenttoolschema.Enum(
@@ -91,7 +91,7 @@ func mappingTargetProperties() map[string]any {
 		),
 		paramRecordID: agenttoolschema.KindID(
 			"The Trenova customer, carrier or accessorial charge id, from "+
-				"list_customers, list_carriers or list_accessorial_charges.",
+				"customer_list, carrier_list or masterdata_list_accessorial_charges.",
 			permission.RecordKind(permission.ResourceCustomer),
 			permission.RecordKind(permission.ResourceCarrier),
 			permission.RecordKind(permission.ResourceAccessorialCharge),
@@ -99,7 +99,7 @@ func mappingTargetProperties() map[string]any {
 			permission.RecordKind(permission.ResourceGeneralLedgerAccount),
 		),
 		paramMappingKey: jsonschemautils.Text(
-			"The setting's key from list_accounting_mapping_gaps, for the " +
+			"The setting's key from accounting_list_mapping_gaps, for the " +
 				"other target types. Examples: " +
 				"\"ARAccount\", \"Freight\", \"Net30\", \"ACH\".",
 		),
@@ -213,20 +213,20 @@ func ProvideSetAccountingMappingTool(
 	return newSetAccountingMappingTool(mappings)
 }
 
-func (t *SetAccountingMappingTool) Name() string { return "set_accounting_mapping" }
+func (t *SetAccountingMappingTool) Name() string { return "accounting_set_mapping" }
 
 func (t *SetAccountingMappingTool) Recipe() []string {
 	return []string{
-		"list_accounting_mapping_gaps",
-		"get_accounting_mapping",
-		"set_accounting_mapping",
+		"accounting_list_mapping_gaps",
+		"accounting_get_mapping",
+		"accounting_set_mapping",
 	}
 }
 
 func (t *SetAccountingMappingTool) Description() string {
 	return "Choose which accounting system record a Trenova record or setting is sent as, " +
 		"and confirm it. Use an externalId from the mapping's candidates or from " +
-		"get_accounting_mapping's search options; never guess one. To accept Trenova's " +
+		"accounting_get_mapping's search options; never guess one. To accept Trenova's " +
 		"proposal, send the proposed record's externalId. Give a short reason a bookkeeper " +
 		"would accept. Only confirmed mappings are used when syncing."
 }
@@ -236,13 +236,13 @@ func (t *SetAccountingMappingTool) SearchTerms() []string {
 }
 
 func (t *SetAccountingMappingTool) Prerequisites() []string {
-	return []string{"list_accounting_mapping_gaps", toolGetAccountingMapping}
+	return []string{"accounting_list_mapping_gaps", toolGetAccountingMapping}
 }
 
 func (t *SetAccountingMappingTool) ParamSchema() map[string]any {
 	properties := mappingTargetProperties()
 	properties["externalId"] = jsonschemautils.Text(
-		"The accounting system record's id, from get_accounting_mapping's " +
+		"The accounting system record's id, from accounting_get_mapping's " +
 			"candidates or search options.",
 	)
 	properties["reason"] = jsonschemautils.Text(
@@ -335,13 +335,13 @@ func ProvideClearAccountingMappingTool(
 	return newClearAccountingMappingTool(mappings)
 }
 
-func (t *ClearAccountingMappingTool) Name() string { return "clear_accounting_mapping" }
+func (t *ClearAccountingMappingTool) Name() string { return "accounting_clear_mapping" }
 
 func (t *ClearAccountingMappingTool) Description() string {
 	return "Remove the accounting system record a Trenova record or setting is mapped to, " +
 		"so it is unmatched again and that record is never proposed for it again. Use it " +
 		"when a person says a mapping is wrong and no right record exists yet; to replace it " +
-		"with another record, use set_accounting_mapping instead."
+		"with another record, use accounting_set_mapping instead."
 }
 
 func (t *ClearAccountingMappingTool) SearchTerms() []string {
@@ -418,17 +418,17 @@ func ProvideCreateAccountingReferenceRecordTool(
 }
 
 func (t *CreateAccountingReferenceRecordTool) Name() string {
-	return "create_accounting_reference_record"
+	return "accounting_create_reference_record"
 }
 
 func (t *CreateAccountingReferenceRecordTool) Recipe() []string {
-	return []string{"get_accounting_mapping", "create_accounting_reference_record"}
+	return []string{"accounting_get_mapping", "accounting_create_reference_record"}
 }
 
 func (t *CreateAccountingReferenceRecordTool) Description() string {
 	return "Create an item, customer or vendor in the accounting system and map a Trenova " +
 		"record to it. Use it for an accessorial charge, line type, customer or carrier " +
-		"with no match there, and only when get_accounting_mapping's search finds no " +
+		"with no match there, and only when accounting_get_mapping's search finds no " +
 		"existing record; a duplicate is refused and names the existing one. Accounts, " +
 		"terms and payment methods are the bookkeeper's and are never created."
 }
@@ -525,18 +525,18 @@ func ProvideRefreshAccountingReferenceDataTool(
 }
 
 func (t *RefreshAccountingReferenceDataTool) Name() string {
-	return "refresh_accounting_reference_data"
+	return "accounting_refresh_reference_data"
 }
 
 func (t *RefreshAccountingReferenceDataTool) Recipe() []string {
-	return []string{"refresh_accounting_reference_data", "list_accounting_mapping_gaps"}
+	return []string{"accounting_refresh_reference_data", "accounting_list_mapping_gaps"}
 }
 
 func (t *RefreshAccountingReferenceDataTool) Description() string {
 	return "Read the accounting system's accounts, items, customers, vendors, terms and " +
 		"payment methods again and refresh Trenova's proposals. Use it after a person says " +
 		"they added or renamed something in the accounting system. It runs in the " +
-		"background; check list_accounting_mapping_gaps afterwards. It changes nothing in " +
+		"background; check accounting_list_mapping_gaps afterwards. It changes nothing in " +
 		"the books and never touches a confirmed mapping."
 }
 

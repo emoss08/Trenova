@@ -53,7 +53,7 @@ scenarios:
               note: the new Acme load saved as New
       - say: "put david park on it with trc-001 and a dry van"
         expect:
-          proposals: [{ tool: assign_move }]
+          proposals: [{ tool: dispatch_assign_move }]
           maxFailedCalls: 2
           rubric: >
             Assigns the new load's move to David Park, TRC-001 and a free dry van trailer
@@ -65,14 +65,14 @@ scenarios:
           executed: true
       - say: "david got to the LA terminal at 5:50 yesterday morning and left loaded at 7:05"
         expect:
-          proposals: [{ tool: "record_stop_actual|update_move_status" }]
+          proposals: [{ tool: "dispatch_record_stop_actual|dispatch_set_move_status" }]
           maxFailedCalls: 2
       - decide: approve
         expect:
           executed: true
       - say: "he got to phoenix cold storage at 2:40 yesterday afternoon and left empty at 3:30"
         expect:
-          proposals: [{ tool: "record_stop_actual|update_move_status" }]
+          proposals: [{ tool: "dispatch_record_stop_actual|dispatch_set_move_status" }]
           maxFailedCalls: 2
       - decide: approve
         expect:
@@ -175,8 +175,8 @@ scenarios:
       - say: "who can run this one? put the best driver on it"
         agent: Dispatch desk
         expect:
-          calls: ["rank_move_candidates"]
-          proposals: [{ tool: assign_move }]
+          calls: ["dispatch_rank_candidates"]
+          proposals: [{ tool: dispatch_assign_move }]
           rubric: >
             Finds the load the conversation just booked without being told its pro number, ranks
             candidates and proposes the top one, saying why.
@@ -188,7 +188,7 @@ scenarios:
           storage at 2:40 yesterday afternoon, empty by 3:30. mark it done
         agent: Dispatch desk
         expect:
-          proposals: [{ tool: "update_move_status|record_stop_actual" }]
+          proposals: [{ tool: "dispatch_set_move_status|dispatch_record_stop_actual" }]
       - decide: approve
         expect:
           executed: true
@@ -244,11 +244,11 @@ scenarios:
     steps:
       - say: "the peak ltl to chicago, nobody in house can take it. shop it to carriers"
         expect:
-          calls: ["shop_carriers"]
+          calls: ["carrier_shop"]
           noProposals: true
       - say: "give it to whoever is cheapest that's active and compliant"
         expect:
-          proposals: [{ tool: assign_move_to_carrier }]
+          proposals: [{ tool: dispatch_create_carrier_assignment }]
           rubric: >
             Picks the cheapest carrier from the shop that is Active and compliant (not Lone Star,
             which is inactive, nor Harbor Point while its compliance is pending) and proposes the
@@ -265,7 +265,7 @@ scenarios:
                 join shipment_moves sm on sm.id = p.tool_params->>'shipmentMoveId'
                 join shipments sp on sp.id = sm.shipment_id
                 where sp.pro_number = 'SEED-SHP-002' and p.status = 'Pending'
-                  and p.tool_name in ('generate_rate_confirmation', 'send_rate_confirmation')
+                  and p.tool_name in ('rate_generate_confirmation', 'rate_send_confirmation')
               equals: waiting
               note: >
                 A rate confirmation proposal is waiting, filed now or already filed after the
@@ -308,7 +308,7 @@ scenarios:
     steps:
       - say: "before we bill SEED-SHP-001, is it priced right per the acme contract?"
         expect:
-          calls: ["explain_rate|get_rate_agreement|shipment_get"]
+          calls: ["rate_explain|rate_get_agreement|shipment_get"]
           noProposals: true
           rubric: >
             Explains how SEED-SHP-001 was priced (its rating method and charges) against the Acme

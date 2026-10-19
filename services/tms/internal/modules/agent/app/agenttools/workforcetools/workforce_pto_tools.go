@@ -148,14 +148,14 @@ func newRequestWorkerPTOTool(pto ptoRequester) agentports.AgentTool {
 	properties := ptoDatesProperties()
 	properties[common.ParamWorkerID] = common.WorkerProperty()
 	spec := withSchema(wfSpec(
-		"request_worker_pto",
+		"worker_request_pto",
 		"File a time-off request for a worker who asked for it, over the days given. It "+
 			"counts the days against their policy and refuses days that overlap time off "+
 			"already booked, a blackout, or more than the balance allows. Under a policy that "+
 			"needs no approval it is approved and booked at once and the driver is told; "+
-			"otherwise it waits for approve_worker_pto.",
+			"otherwise it waits for worker_approve_pto.",
 		"Files time off the driver sees in Dash; under a policy with no approval step it is "+
-			"booked and the driver told at once, and cancel_worker_pto withdraws it.",
+			"booked and the driver told at once, and worker_cancel_pto withdraws it.",
 		permission.ResourceWorkerPTO,
 		permission.OpCreate,
 	), properties, common.ParamWorkerID, paramPTOType, paramPTOStart, paramPTOEnd)
@@ -249,7 +249,7 @@ func newUpdateWorkerPTOTool(pto ptoRequester) agentports.AgentTool {
 		common.PtoIDNote,
 	)
 	spec := targeting(withSchema(wfSpec(
-		"update_worker_pto",
+		"worker_update_pto",
 		"Change the kind, days or reason of a time-off request still waiting for a "+
 			"decision. Give only what changes. A decided request is refused; cancel it and "+
 			"file another.",
@@ -358,7 +358,7 @@ func ptoAdjustmentFrom(
 
 func newAdjustWorkerPTOBalanceTool(ledger PtoBalanceAdjuster) agentports.AgentTool {
 	spec := personOnly(withSchema(wfSpec(
-		"adjust_worker_pto_balance",
+		"worker_adjust_pto_balance",
 		"Draft a manual adjustment to a worker's time-off balance, in days, for a person to "+
 			"approve. Positive days add and negative days take away, with a note saying why, "+
 			"such as a balance carried over from a previous system.",

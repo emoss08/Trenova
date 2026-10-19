@@ -81,7 +81,7 @@ func NewGenerateRateConfirmationTool(rateCons rateConfirmations) agentports.Agen
 	return &GenerateRateConfirmationTool{rateCons: rateCons}
 }
 
-func (t *GenerateRateConfirmationTool) Name() string { return "generate_rate_confirmation" }
+func (t *GenerateRateConfirmationTool) Name() string { return "rate_generate_confirmation" }
 
 func (t *GenerateRateConfirmationTool) SearchTerms() []string {
 	return []string{"rate con", "create rate con", "carrier confirmation"}
@@ -90,17 +90,17 @@ func (t *GenerateRateConfirmationTool) SearchTerms() []string {
 func (t *GenerateRateConfirmationTool) Description() string {
 	return "Generate the rate confirmation for a move covered by an outside carrier. It is " +
 		"a new revision of the agreement, with the carrier's pay and the stops as they stand, " +
-		"rendered as a PDF and filed on the shipment. Generate after assign_move_to_carrier, " +
+		"rendered as a PDF and filed on the shipment. Generate after dispatch_create_carrier_assignment, " +
 		"or again after the rate or the stops change; a new revision voids the one before " +
-		"it. Nothing is sent: find the new revision with list_rate_confirmations and send " +
-		"it with send_rate_confirmation. A tender acceptance issues its own."
+		"it. Nothing is sent: find the new revision with rate_list_confirmations and send " +
+		"it with rate_send_confirmation. A tender acceptance issues its own."
 }
 
 func (t *GenerateRateConfirmationTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		common.PreviewFieldShipmentMoveID: agenttoolschema.RecordIDText(
 			permission.ResourceShipmentMove,
-			"The carrier-covered move, from get_dispatch_board (moveId) or shipment_get "+
+			"The carrier-covered move, from dispatch_get_board (moveId) or shipment_get "+
 				"(its moves).",
 		),
 	}, common.PreviewFieldShipmentMoveID)
@@ -206,10 +206,10 @@ func NewSendRateConfirmationTool(rateCons rateConfirmations) agentports.AgentToo
 	return &SendRateConfirmationTool{rateCons: rateCons}
 }
 
-func (t *SendRateConfirmationTool) Name() string { return "send_rate_confirmation" }
+func (t *SendRateConfirmationTool) Name() string { return "rate_send_confirmation" }
 
 func (t *SendRateConfirmationTool) Recipe() []string {
-	return []string{"list_rate_confirmations", "send_rate_confirmation"}
+	return []string{"rate_list_confirmations", "rate_send_confirmation"}
 }
 
 func (t *SendRateConfirmationTool) Description() string {
@@ -218,14 +218,14 @@ func (t *SendRateConfirmationTool) Description() string {
 		"or the carrier's own address. The recipients come from the carrier's record and " +
 		"cannot be chosen here; fix the carrier's contacts first if they are wrong. Send a " +
 		"revision that is Generated, Sent (to send it again) or Confirmed (the executed " +
-		"copy); find it with list_rate_confirmations."
+		"copy); find it with rate_list_confirmations."
 }
 
 func (t *SendRateConfirmationTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		fieldRateConfirmationID: agenttoolschema.RecordIDText(
 			permission.ResourceRateConfirmation,
-			"The revision to send, from list_rate_confirmations.",
+			"The revision to send, from rate_list_confirmations.",
 		),
 	}, fieldRateConfirmationID)
 }
@@ -288,21 +288,21 @@ func NewVoidRateConfirmationTool(rateCons rateConfirmations) agentports.AgentToo
 	return &VoidRateConfirmationTool{rateCons: rateCons}
 }
 
-func (t *VoidRateConfirmationTool) Name() string { return "void_rate_confirmation" }
+func (t *VoidRateConfirmationTool) Name() string { return "rate_void_confirmation" }
 
 func (t *VoidRateConfirmationTool) Description() string {
 	return "Void a rate confirmation so the revision stops standing and its sign link stops " +
 		"working. Voiding one the carrier confirmed returns their assignment to " +
 		"awaiting confirmation. Use it when the agreement as written is wrong and should " +
 		"not be signed; to correct it, generate a new revision instead, which voids this " +
-		"one. Say why in reason. Find the revision with list_rate_confirmations."
+		"one. Say why in reason. Find the revision with rate_list_confirmations."
 }
 
 func (t *VoidRateConfirmationTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		fieldRateConfirmationID: agenttoolschema.RecordIDText(
 			permission.ResourceRateConfirmation,
-			"The revision to void, from list_rate_confirmations.",
+			"The revision to void, from rate_list_confirmations.",
 		),
 		common.FieldReason: jsonschemautils.Text(
 			"Why the agreement is withdrawn, in a sentence a person can check.",
@@ -408,7 +408,7 @@ func NewRecordRateConfirmationConfirmedTool(rateCons rateConfirmations) agentpor
 }
 
 func (t *RecordRateConfirmationConfirmedTool) Name() string {
-	return "record_rate_confirmation_confirmed"
+	return "rate_record_confirmation"
 }
 
 func (t *RecordRateConfirmationConfirmedTool) SearchTerms() []string {
@@ -428,7 +428,7 @@ func (t *RecordRateConfirmationConfirmedTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		fieldRateConfirmationID: agenttoolschema.RecordIDText(
 			permission.ResourceRateConfirmation,
-			"The revision the carrier confirmed, from list_rate_confirmations.",
+			"The revision the carrier confirmed, from rate_list_confirmations.",
 		),
 		common.FieldConfirmedByName: jsonschemautils.Text(
 			"The name of the person at the carrier who confirmed it.",

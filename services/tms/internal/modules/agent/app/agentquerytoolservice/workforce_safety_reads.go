@@ -129,7 +129,7 @@ func newListWorkerSafetyEventsTool(
 ) agentports.AgentQueryTool {
 	access := newFieldAccess(permissions)
 	return &workforceRead{
-		name: "list_worker_safety_events",
+		name: "worker_list_safety_events",
 		description: "List safety events still open across the fleet, or one worker's with " +
 			"their roadside violations and recognitions. Leave out the worker for the fleet: " +
 			"each open event comes with its driver. Events are accidents, inspections, citations, " +
@@ -252,10 +252,10 @@ func newListDOTTestsTool(
 	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
 	return &workforceRead{
-		name: "list_dot_tests",
+		name: "worker_list_dot_tests",
 		description: "List drug and alcohol tests, newest first: one worker's, or every " +
 			"collection still open across the organization. Each row has the test type, " +
-			"substance, status and result. It yields the testId cancel_dot_test takes.",
+			"substance, status and result. It yields the testId worker_cancel_dot_test takes.",
 		resource: permission.ResourceWorkerDOTTest,
 		properties: map[string]any{
 			paramWorkerID: wfWorkerProperty("Narrow to one worker"),
@@ -366,11 +366,11 @@ func newListDOTRandomDrawsTool(
 	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
 	return &workforceRead{
-		name: "list_dot_random_draws",
+		name: "worker_list_dot_random_draws",
 		description: "List the random drug and alcohol testing pools and the rounds drawn " +
 			"from them. Pools carry their annual rates; rounds, newest first, are draft, " +
 			"final or cancelled, with how many drivers each substance needed and got. It yields the " +
-			"poolId and drawId the random testing tools take; get_dot_random_draw names " +
+			"poolId and drawId the random testing tools take; worker_get_dot_random_draw names " +
 			"who was picked.",
 		resource:   permission.ResourceDOTRandomPool,
 		properties: map[string]any{},
@@ -447,16 +447,16 @@ func newGetDOTRandomDrawTool(
 	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
 	return &workforceRead{
-		name:        "get_dot_random_draw",
+		name:        "worker_get_dot_random_draw",
 		searchTerms: []string{"who was selected", "selected drivers", "draw results"},
 		description: "Retrieve one random testing round with every driver it selected. " +
 			"Each selection has its substance, rank and where it stands: selected, " +
 			"notified, completed with its test, excused or missed. It yields the drawEntryId " +
-			"schedule_dot_test and update_dot_random_selection take.",
+			"worker_schedule_dot_test and worker_update_dot_random_selection take.",
 		resource: permission.ResourceDOTRandomPool,
 		properties: map[string]any{
 			paramDrawID: agenttoolschema.KindID(
-				"The round, from list_dot_random_draws. Never guess one.",
+				"The round, from worker_list_dot_random_draws. Never guess one.",
 				permission.KindDOTRandomDraw,
 			),
 		},

@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -21,7 +21,7 @@ type schemaTool struct {
 	ran         map[string]any
 }
 
-func (t *schemaTool) Name() string        { return "notify_driver" }
+func (t *schemaTool) Name() string        { return "worker_send_message" }
 func (t *schemaTool) Description() string { return "Message a driver." }
 func (t *schemaTool) ParamSchema() map[string]any {
 	return map[string]any{

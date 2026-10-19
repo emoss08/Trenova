@@ -7,13 +7,13 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
-	"github.com/emoss08/trenova/internal/modules/places/domain/location"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -207,7 +207,7 @@ func TestSetRequiredField_RefusesAnUnknownFieldOrRecord(t *testing.T) {
 		"field":    string(pagedraft.RequiredCustomer),
 		"recordId": pulid.MustNew("cus_").String(),
 	}, ""))
-	require.ErrorContains(t, err, "list_customers")
+	require.ErrorContains(t, err, "customer_list")
 }
 
 func TestSetStopLocation_MatchesARecordInTheCallersTenant(t *testing.T) {
@@ -256,7 +256,7 @@ func TestSetStopLocation_RefusesAnOutOfRangeStopOrAnUnreadableLocation(t *testin
 	_, err = allowed.Query(t.Context(), chatParams(map[string]any{
 		"stopIndex": 0, "locationId": pulid.MustNew("loc_").String(),
 	}, ""))
-	require.ErrorContains(t, err, "list_locations")
+	require.ErrorContains(t, err, "location_list")
 
 	denied := provideSetStopLocationTool(
 		&fakeDraftLocations{found: found}, &fakePermissions{allowed: false},

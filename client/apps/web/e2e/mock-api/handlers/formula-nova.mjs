@@ -51,11 +51,11 @@ const AGENT = {
   accent: "violet",
   systemKey: "formula_assistant",
   toolNames: [
-    "describe_formula_schema",
-    "test_formula_expression",
+    "formula_describe_schema",
+    "formula_test_expression",
     "propose_formula",
-    "list_formula_templates",
-    "get_formula_template",
+    "formula_list_templates",
+    "formula_get_template",
   ],
   starters: [
     { label: "Explain this formula", prompt: "Explain this formula, term by term" },
@@ -868,13 +868,13 @@ function planTurn(state, entry, body) {
     ? `Reading the editor: ${lines} lines, ${editor.variables.length} inputs.`
     : "Reading the editor: it is empty.";
   const schemaStep = tool(
-    "describe_formula_schema",
+    "formula_describe_schema",
     "lookup",
     { schemaId: editor.schemaId },
     `${VARIABLES.length} shipment variables, ${FUNCTIONS.length} functions`,
   );
   const priceStep = (n) =>
-    tool("test_formula_expression", "lookup", { scenarios: n }, `Priced ${n} loads`);
+    tool("formula_test_expression", "lookup", { scenarios: n }, `Priced ${n} loads`);
   const propose = (next, explanation, reply, extra = {}) => {
     const formula = proposal(editor, next, explanation, extra);
     const sample = formula.check.valid
@@ -1198,7 +1198,7 @@ function planTurn(state, entry, body) {
     const clampWord = short.clamp ? (short.clamp.bound === "min" ? "minimum" : "maximum") : null;
     return {
       reasoning: reading,
-      tools: [tool("test_formula_expression", "lookup", { totalDistance: 60 }, "Priced 1 load")],
+      tools: [tool("formula_test_expression", "lookup", { totalDistance: 60 }, "Priced 1 load")],
       reply: short.clamp
         ? `On a 60-mile load the formula produces ${money(short.raw)}, under the ${money(short.clamp.limit)} ${clampWord} in Charge policy, so the charge is raised to it. Breakdown lines still add up to the raw amount.`
         : `On a 60-mile load the formula produces ${money(short.raw)}, inside the charge policy, so it bills ${money(short.amount)}. The sample load bills ${sample.error ? "nothing" : money(sample.amount)}.`,

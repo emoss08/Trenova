@@ -156,16 +156,16 @@ func provideListFactoringSubmissionsTool(
 	}
 }
 
-func (t *listFactoringSubmissionsTool) Name() string { return "list_factoring_submissions" }
+func (t *listFactoringSubmissionsTool) Name() string { return "factoring_list_submissions" }
 
 func (t *listFactoringSubmissionsTool) Description() string {
 	return "List the schedules of accounts sent to factors, newest first, with their status " +
 		"and totals. Each has its number, factor, status (Sending, Sent, Failed, Cancelled, " +
 		"PartiallyFunded, Funded or Rejected), invoice count, expected funding, where it " +
 		"went, and for a failed one the last error. Pass a schedule's id to " +
-		"get_factoring_submission for its invoices; a failed one's id and version go to " +
-		"retry_factoring_submission or cancel_factoring_submission, and a sent one's to " +
-		"record_factoring_funding."
+		"factoring_get_submission for its invoices; a failed one's id and version go to " +
+		"factoring_retry_submission or factoring_cancel_submission, and a sent one's to " +
+		"factoring_record_funding."
 }
 
 func (t *listFactoringSubmissionsTool) SearchTerms() []string {
@@ -176,7 +176,7 @@ func (t *listFactoringSubmissionsTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramFactoringFactor: agenttoolschema.RecordIDText(
 			permission.ResourceFactoringCompany,
-			"Only schedules sent to this factor, from list_factoring_ready_invoices or invoice_get.",
+			"Only schedules sent to this factor, from factoring_list_readiness or invoice_get.",
 		),
 		paramFactoringStatus: jsonschemautils.DescribedArray(
 			"Only schedules in these statuses.",
@@ -283,7 +283,7 @@ func provideGetFactoringSubmissionTool(
 	}
 }
 
-func (t *getFactoringSubmissionTool) Name() string { return "get_factoring_submission" }
+func (t *getFactoringSubmissionTool) Name() string { return "factoring_get_submission" }
 
 func (t *getFactoringSubmissionTool) Description() string {
 	return "Read one schedule of accounts with every invoice on it and why it failed, if it " +
@@ -292,9 +292,9 @@ func (t *getFactoringSubmissionTool) Description() string {
 		"advance, fee and reserve it holds) or why it rejected it, and whether its reserve " +
 		"was released or it was charged back; the schedule has its status, where it went, " +
 		"attempts and last error. Use its version and an invoice's item id with " +
-		"record_factoring_funding, release_factoring_reserve, record_factoring_chargeback or " +
-		"reverse_factoring_chargeback, and with retry_factoring_submission or " +
-		"cancel_factoring_submission for a failed one."
+		"factoring_record_funding, factoring_release_reserve, factoring_record_chargeback or " +
+		"factoring_reverse_chargeback, and with factoring_retry_submission or " +
+		"factoring_cancel_submission for a failed one."
 }
 
 func (t *getFactoringSubmissionTool) SearchTerms() []string {
@@ -305,7 +305,7 @@ func (t *getFactoringSubmissionTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramFactoringSubmission: agenttoolschema.RecordIDText(
 			permission.ResourceFactoringSubmission,
-			"The schedule, from list_factoring_submissions.",
+			"The schedule, from factoring_list_submissions.",
 		),
 	}, paramFactoringSubmission)
 }

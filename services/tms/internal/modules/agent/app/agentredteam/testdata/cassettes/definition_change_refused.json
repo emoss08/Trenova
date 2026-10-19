@@ -10,7 +10,7 @@
         "toolCalls": [
           {
             "id": "toolu_01CASSETTETIER0001",
-            "name": "get_inbound_message",
+            "name": "inbox_get_inbound_message",
             "arguments": {
               "messageId": "imsg_01JREDTEAMEMA1100000000000"
             }

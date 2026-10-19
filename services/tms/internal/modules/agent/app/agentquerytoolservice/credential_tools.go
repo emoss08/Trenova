@@ -53,7 +53,7 @@ func newListExpiringCredentialsTool(
 	return &listExpiringCredentialsTool{repo: repo}
 }
 
-func (t *listExpiringCredentialsTool) Name() string { return "list_expiring_credentials" }
+func (t *listExpiringCredentialsTool) Name() string { return "worker_list_expiring_credentials" }
 
 func (t *listExpiringCredentialsTool) SearchTerms() []string {
 	return []string{"expiring licenses", "medical card expiry", "credentials due", "lapsed"}
@@ -63,7 +63,7 @@ func (t *listExpiringCredentialsTool) Description() string {
 	return "List worker (driver) credentials falling due, newest expiry first — " +
 		"medical cards, licences, hazmat endorsements and anything else the " +
 		"organization tracks. This is the tool for any question about who is " +
-		"expiring, lapsed, or out of compliance by a date; search_worker cannot " +
+		"expiring, lapsed, or out of compliance by a date; worker_search cannot " +
 		"filter on dates. Narrow to one kind with credentialTypeCode, such as " +
 		"MED_CARD for a medical card or CDL for a licence."
 }

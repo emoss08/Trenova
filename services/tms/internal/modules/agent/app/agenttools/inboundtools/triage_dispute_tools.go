@@ -115,13 +115,13 @@ func newLogInboundExceptionTool(
 ) agentports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
-			Name:     "log_inbound_exception",
+			Name:     "inbox_record_discrepancy",
 			Artifact: inboundMessageEntity,
 			Description: "Log a shortage, overage or damage a delivery email reports on the " +
 				"message's linked shipment, as a billing hold. That hold keeps it from being " +
 				"invoiced until someone releases it. Count what the sender reports, in the " +
 				"units they use, and never estimate. The message must be linked to its " +
-				"shipment first (link_inbound_message).",
+				"shipment first (inbox_link_inbound_message).",
 			Resource:    permission.ResourceShipmentHold,
 			Operation:   permission.OpCreate,
 			Egress:      agent.EgressInternal,
@@ -133,7 +133,7 @@ func newLogInboundExceptionTool(
 				"and a person can release it.",
 			Properties: map[string]any{
 				paramMessageID: messageIDProperty(
-					"The delivery email, from list_inbound_messages or search_inbound_messages.",
+					"The delivery email, from inbox_list_inbound_messages or inbox_search_inbound_messages.",
 				),
 				paramExceptionKind: agenttoolschema.Enum(
 					"What the delivery reported.",
@@ -161,7 +161,7 @@ func newLogInboundExceptionTool(
 				paramExceptionUnit,
 			},
 			SearchTerms: []string{"shortage", "overage", "damaged goods", "OS&D", "billing hold"},
-			Recipe:      []string{toolGetInboundMessage, "log_inbound_exception"},
+			Recipe:      []string{toolGetInboundMessage, "inbox_record_discrepancy"},
 			Target:      targetMessage,
 		},
 		common.ReceivablePlan[
@@ -279,13 +279,13 @@ func newSettleDetentionDisputeTool(
 ) agentports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
-			Name:     "settle_detention_dispute",
+			Name:     "detention_resolve_dispute",
 			Artifact: inboundMessageEntity,
 			Description: "Waive or stand by a detention charge a customer disputes by email, " +
 				"once the stop times are checked, and have Triage draft the answer for a " +
 				"person to send. Waive when the times do not support the charge; stand by " +
 				"it when arrival, departure and free time hold up. Check them first with " +
-				"get_detention_occurrence or shipment_get_tracking. A waived charge already " +
+				"detention_get_occurrence or shipment_get_tracking. A waived charge already " +
 				"invoiced is credited.",
 			Resource:    permission.ResourceDetention,
 			Operation:   permission.OpUpdate,
@@ -296,8 +296,8 @@ func newSettleDetentionDisputeTool(
 				"credit an invoice; only a person approves it.",
 			Properties: map[string]any{
 				paramMessageID: messageIDProperty(
-					"The detention dispute, from list_inbound_messages or " +
-						"search_inbound_messages.",
+					"The detention dispute, from inbox_list_inbound_messages or " +
+						"inbox_search_inbound_messages.",
 				),
 				paramStopsDecision: agenttoolschema.Enum(
 					"Waive gives the charge up; StandBy keeps it.",
@@ -308,8 +308,8 @@ func newSettleDetentionDisputeTool(
 			SearchTerms: []string{"disputed detention", "contested detention"},
 			Recipe: []string{
 				toolGetInboundMessage,
-				"get_detention_occurrence",
-				"settle_detention_dispute",
+				"detention_get_occurrence",
+				"detention_resolve_dispute",
 			},
 			Target: targetMessage,
 		},

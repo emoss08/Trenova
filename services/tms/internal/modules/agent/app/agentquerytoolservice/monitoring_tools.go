@@ -89,7 +89,7 @@ type serviceFailureRow struct {
 
 func newListServiceFailuresTool(failures serviceFailureLister) agentports.AgentQueryTool {
 	spec := listSpec{
-		name:         "list_service_failures",
+		name:         "exception_list_service_failures",
 		entityPlural: "service failures",
 		summary: "List the service failures that happened: late and missed pickups and " +
 			"deliveries, with how late, which stop, and whether anyone reviewed or resolved " +
@@ -182,11 +182,11 @@ func newListServiceFailureReasonCodesTool(codes reasonCodeSelector) agentports.A
 	return &listReasonCodesTool{codes: codes}
 }
 
-func (t *listReasonCodesTool) Name() string { return "list_service_failure_reason_codes" }
+func (t *listReasonCodesTool) Name() string { return "exception_list_service_failure_reason_codes" }
 
 func (t *listReasonCodesTool) Description() string {
 	return "The reason codes a service failure can carry, such as Weather, Shipper " +
-		"delay or Equipment. Call this before resolve_service_failure, which needs a " +
+		"delay or Equipment. Call this before exception_resolve_service_failure, which needs a " +
 		"reason code id, and pick the code whose category matches what actually " +
 		"happened; do not resolve with a code that merely sounds close."
 }
@@ -291,17 +291,17 @@ func newListDetentionDeskTool(desk detentionDeskReader) agentports.AgentQueryToo
 	return &listDetentionDeskTool{desk: desk}
 }
 
-func (t *listDetentionDeskTool) Name() string { return "list_detention_desk" }
+func (t *listDetentionDeskTool) Name() string { return "detention_list_occurrences" }
 
 func (t *listDetentionDeskTool) Description() string {
 	return "List every open detention occurrence: a truck at a stop past its free time, " +
 		"with minutes until free time ends, notice status and the amount at risk. The " +
 		"notice status says whether the customer notice is due or overdue. Urgency Lost means the notice window " +
 		"closed without a notice and the charge may not be collectable; NoticeOverdue " +
-		"and NoticeDueSoon say what to send. send_detention_notice sends it. The list " +
+		"and NoticeDueSoon say what to send. detention_send_notice sends it. The list " +
 		"also carries every stopped charge waiting on approval, as AwaitingApproval: its " +
 		"shipment cannot be invoiced until someone approves or waives it, which " +
-		"approve_detention and waive_detention propose. A running clock is priced as of " +
+		"detention_approve and detention_waive propose. A running clock is priced as of " +
 		"now, so billableMinutes and amountAtRisk are what it would bill if the truck left " +
 		"this minute. Narrow to one load with shipmentId or proNumber rather than paging " +
 		"through urgencies."
@@ -479,7 +479,7 @@ func newListWeatherAlertsTool(weather weatherReader) agentports.AgentQueryTool {
 	return &listWeatherAlertsTool{weather: weather}
 }
 
-func (t *listWeatherAlertsTool) Name() string { return "list_weather_alerts" }
+func (t *listWeatherAlertsTool) Name() string { return "insight_list_weather_alerts" }
 
 func (t *listWeatherAlertsTool) Description() string {
 	return "Active National Weather Service alerts: the event, its severity, the area " +

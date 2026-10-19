@@ -223,19 +223,19 @@ func targetScheduledWorker(params map[string]any) (agentports.ToolTarget, bool) 
 
 func NewAssignWorkerShiftTool(schedules scheduleKeeper, scope teamScope) agentports.AgentTool {
 	return common.NewReportingReceivableTool(scheduleSpec(
-		"assign_worker_shift",
+		"worker_assign_shift",
 		"Put a worker on a shift pattern from a day onward. The pattern they are on "+
 			"now ends the day before; a worker who already has a pattern starting on or "+
-			"after that day is refused. Take the shift from list_shift_templates and the "+
+			"after that day is refused. Take the shift from worker_list_shift_templates and the "+
 			"day from what the person asked for.",
 		"Changes a worker's standing schedule inside Trenova; nothing is sent, and "+
-			"end_worker_shift_assignment or a new assignment changes it back.",
+			"worker_end_shift_assignment or a new assignment changes it back.",
 		permission.OpAssign,
 		map[string]any{
 			common.ParamWorkerID: common.WorkerProperty(),
 			paramShiftTemplateID: agenttoolschema.RecordIDText(
 				permission.ResourceShiftTemplate,
-				"The shift pattern, from list_shift_templates. "+
+				"The shift pattern, from worker_list_shift_templates. "+
 					"Never guess one.",
 			),
 			common.FieldEffectiveFrom: agenttoolschema.Date("The first day the worker works it."),
@@ -352,15 +352,15 @@ func NewEndWorkerShiftAssignmentTool(
 	scope teamScope,
 ) agentports.AgentTool {
 	spec := scheduleSpec(
-		"end_worker_shift_assignment",
+		"worker_end_shift_assignment",
 		"End a worker's shift pattern after a day, leaving them on no pattern from the "+
-			"day after. Use assign_worker_shift instead to move them onto another pattern.",
+			"day after. Use worker_assign_shift instead to move them onto another pattern.",
 		"Ends a worker's standing schedule inside Trenova; nothing is sent, and "+
-			"assign_worker_shift puts them back on it.",
+			"worker_assign_shift puts them back on it.",
 		permission.OpAssign,
 		map[string]any{
 			paramShiftAssignmentID: agenttoolschema.KindID(
-				"The assignment, from get_worker_schedule. "+
+				"The assignment, from worker_get_schedule. "+
 					"Never guess one.",
 				permission.KindShiftAssignment,
 			),
@@ -475,7 +475,7 @@ func NewSetWorkerAvailabilityPreferenceTool(
 	scope teamScope,
 ) agentports.AgentTool {
 	spec := scheduleSpec(
-		"set_worker_availability_preference",
+		"worker_set_availability_preference",
 		"Record whether a worker prefers, is available for or cannot work one weekday, "+
 			"as they told the office. The rota shows it beside their pattern; it does not "+
 			"change the pattern.",
@@ -592,7 +592,7 @@ func renderPreference(
 
 func NewProposeShiftSwapTool(schedules scheduleKeeper) agentports.AgentTool {
 	return common.NewReportingReceivableTool(&common.ReceivableSpec{
-		Name:        "propose_shift_swap",
+		Name:        "worker_request_shift_swap",
 		SearchTerms: []string{"trade shifts", "shift trade", "swap shifts"},
 		Artifact:    common.WorkerRecordEntity,
 		Description: "Raise a shift swap for a worker who asked the office: they give up a " +
@@ -605,17 +605,17 @@ func NewProposeShiftSwapTool(schedules scheduleKeeper) agentports.AgentTool {
 		MaxTier:     agent.TierActWithApproval,
 		Reversible:  true,
 		Rationale: "Opens a request inside Trenova that changes nobody's schedule until it " +
-			"is approved; withdraw_shift_swap takes it back.",
+			"is approved; worker_withdraw_shift_swap takes it back.",
 		Properties: map[string]any{
 			paramRequestingWorkerID: agenttoolschema.RecordIDText(
 				permission.ResourceWorker,
 				"The worker giving the day up, from "+
-					"search_worker. Never guess one.",
+					"worker_search. Never guess one.",
 			),
 			paramCounterpartyWorkerID: agenttoolschema.RecordIDText(
 				permission.ResourceWorker,
 				"The worker asked to take it, from "+
-					"search_worker. Leave out to offer it to anyone.",
+					"worker_search. Leave out to offer it to anyone.",
 			),
 			paramShiftDate: agenttoolschema.Date("The day given up."),
 			paramCounterpartyDate: agenttoolschema.Date(
@@ -764,7 +764,7 @@ func newSwapDecisionTool(schedules scheduleKeeper, spec *swapDecisionSpec) agent
 		Properties: map[string]any{
 			paramSwapID: agenttoolschema.RecordIDText(
 				permission.ResourceShiftSwap,
-				"The swap, from get_worker_schedule. Never guess one.",
+				"The swap, from worker_get_schedule. Never guess one.",
 			),
 			common.ParamNote: common.StringProperty("What the workers are told about it.",
 				maxScheduleNote),
@@ -846,7 +846,7 @@ func newSwapDecisionTool(schedules scheduleKeeper, spec *swapDecisionSpec) agent
 
 func NewApproveShiftSwapTool(schedules scheduleKeeper) agentports.AgentTool {
 	return newSwapDecisionTool(schedules, &swapDecisionSpec{
-		name: "approve_shift_swap",
+		name: "worker_approve_shift_swap",
 		description: "Approve a shift swap the other worker has accepted, so the day " +
 			"changes hands on the rota. Only a person approves one.",
 		rationale: "Changes who works a day; approving is the office's decision, so " +
@@ -862,7 +862,7 @@ func NewApproveShiftSwapTool(schedules scheduleKeeper) agentports.AgentTool {
 
 func NewRejectShiftSwapTool(schedules scheduleKeeper) agentports.AgentTool {
 	return newSwapDecisionTool(schedules, &swapDecisionSpec{
-		name:        "reject_shift_swap",
+		name:        "worker_reject_shift_swap",
 		searchTerms: []string{"deny swap", "decline swap"},
 		description: "Reject a shift swap, with the reason the workers read, when the " +
 			"office cannot let the day change hands.",
@@ -878,7 +878,7 @@ func NewRejectShiftSwapTool(schedules scheduleKeeper) agentports.AgentTool {
 
 func NewWithdrawShiftSwapTool(schedules scheduleKeeper) agentports.AgentTool {
 	return newSwapDecisionTool(schedules, &swapDecisionSpec{
-		name: "withdraw_shift_swap",
+		name: "worker_withdraw_shift_swap",
 		description: "Withdraw a shift swap on the proposing worker's behalf, when they " +
 			"told the office they no longer want it.",
 		rationale: "Takes back a request the workers read in their portal; a person " +

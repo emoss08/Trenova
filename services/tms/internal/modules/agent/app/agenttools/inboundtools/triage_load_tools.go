@@ -114,13 +114,13 @@ func NewDraftInboundLoadTool(p triageToolParams) agentports.AgentTool {
 func newDraftInboundLoadTool(inbox inboundMessageReader, loads triageLoads) agentports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
-			Name:     "draft_inbound_load",
+			Name:     "inbox_draft_load",
 			Artifact: inboundMessageEntity,
 			Description: "Read the load a tender in Triage describes into a draft on the " +
 				"message: customer, stops, dates, equipment, weight, rate and references. It " +
 				"is read from the attached tender's document when that has one, else from " +
-				"the message body. Nothing is booked; check the draft get_inbound_message " +
-				"shows, then create it with create_inbound_load.",
+				"the message body. Nothing is booked; check the draft inbox_get_inbound_message " +
+				"shows, then create it with inbox_create_load.",
 			Resource:    permission.ResourceInboundMessage,
 			Operation:   permission.OpUpdate,
 			Egress:      agent.EgressInternal,
@@ -132,12 +132,12 @@ func newDraftInboundLoadTool(inbox inboundMessageReader, loads triageLoads) agen
 				"see; nothing is booked.",
 			Properties: map[string]any{
 				paramMessageID: messageIDProperty(
-					"The tender, from list_inbound_messages or search_inbound_messages.",
+					"The tender, from inbox_list_inbound_messages or inbox_search_inbound_messages.",
 				),
 			},
 			Required:    []string{paramMessageID},
 			SearchTerms: []string{"draft the load", "tender fields", "read out the load"},
-			Recipe:      []string{toolGetInboundMessage, "draft_inbound_load"},
+			Recipe:      []string{toolGetInboundMessage, "inbox_draft_load"},
 			Target:      targetMessage,
 		},
 		common.ReceivablePlan[*triageworkservice.LoadRequest, *triageworkservice.LoadDraftPlan]{
@@ -205,12 +205,12 @@ func NewCreateInboundLoadTool(p triageToolParams) agentports.AgentTool {
 func newCreateInboundLoadTool(loads triageLoads) agentports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
-			Name: "create_inbound_load",
+			Name: "inbox_create_load",
 			Description: "Create the shipment a tender in Triage describes, from the fields " +
-				"you checked. Start from the draft draft_inbound_load wrote, which " +
-				"get_inbound_message shows, and send every field the load should carry: one " +
+				"you checked. Start from the draft inbox_draft_load wrote, which " +
+				"inbox_get_inbound_message shows, and send every field the load should carry: one " +
 				"left out is not on it. It is billed to the customer the message is linked " +
-				"to, so link that first with link_inbound_message. A message that already " +
+				"to, so link that first with inbox_link_inbound_message. A message that already " +
 				"made its load is refused.",
 			Resource:    permission.ResourceShipment,
 			Operation:   permission.OpCreate,
@@ -223,12 +223,12 @@ func newCreateInboundLoadTool(loads triageLoads) agentports.AgentTool {
 				"so no desk books one unattended.",
 			Properties: map[string]any{
 				paramMessageID: messageIDProperty(
-					"The tender, from list_inbound_messages or search_inbound_messages.",
+					"The tender, from inbox_list_inbound_messages or inbox_search_inbound_messages.",
 				),
 				paramLoadFields: map[string]any{
 					toolschema.KeyType: toolschema.TypeArray,
 					toolschema.KeyDescription: "The load's fields, each once, as checked " +
-						"against the tender and the draft get_inbound_message shows.",
+						"against the tender and the draft inbox_get_inbound_message shows.",
 					toolschema.KeyMinItems: 1,
 					toolschema.KeyMaxItems: len(triageLoadFieldKeys.Values),
 					toolschema.KeyItems: map[string]any{
@@ -249,7 +249,7 @@ func newCreateInboundLoadTool(loads triageLoads) agentports.AgentTool {
 			},
 			Required:    []string{paramMessageID, paramLoadFields},
 			SearchTerms: []string{"enter the tender", "tender from triage"},
-			Recipe:      []string{toolGetInboundMessage, "create_inbound_load"},
+			Recipe:      []string{toolGetInboundMessage, "inbox_create_load"},
 			Target:      targetMessage,
 		},
 		common.ReceivablePlan[
@@ -386,11 +386,11 @@ func NewDiscardInboundLoadTool(p triageToolParams) agentports.AgentTool {
 func newDiscardInboundLoadTool(inbox inboundMessageReader, loads triageLoads) agentports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
-			Name:     "discard_inbound_load",
+			Name:     "inbox_discard_load",
 			Artifact: inboundMessageEntity,
 			Description: "Throw away the load drafted from a tender in Triage, when the " +
 				"draft is wrong or the tender is not going to be booked. A load already " +
-				"created from the message is refused; draft_inbound_load reads it again.",
+				"created from the message is refused; inbox_draft_load reads it again.",
 			Resource:    permission.ResourceInboundMessage,
 			Operation:   permission.OpUpdate,
 			Egress:      agent.EgressInternal,
@@ -402,12 +402,12 @@ func newDiscardInboundLoadTool(inbox inboundMessageReader, loads triageLoads) ag
 				"again and nothing is booked or sent.",
 			Properties: map[string]any{
 				paramMessageID: messageIDProperty(
-					"The tender, from list_inbound_messages or search_inbound_messages.",
+					"The tender, from inbox_list_inbound_messages or inbox_search_inbound_messages.",
 				),
 			},
 			Required:    []string{paramMessageID},
 			SearchTerms: []string{"discard the load draft", "throw away drafted load"},
-			Recipe:      []string{toolGetInboundMessage, "discard_inbound_load"},
+			Recipe:      []string{toolGetInboundMessage, "inbox_discard_load"},
 			Target:      targetMessage,
 		},
 		common.ReceivablePlan[*triageworkservice.LoadRequest, *triageworkservice.LoadDiscardPlan]{

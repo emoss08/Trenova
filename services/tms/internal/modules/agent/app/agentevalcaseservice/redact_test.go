@@ -5,12 +5,12 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -93,7 +93,7 @@ func testRedactor(t *testing.T) *Redactor {
 	t.Helper()
 
 	tools := fakeQueryRegistry{tools: map[string]agentports.AgentQueryTool{
-		"get_customer": fakeQueryTool{name: "get_customer", resource: resourceCustomer},
+		"customer_get": fakeQueryTool{name: "customer_get", resource: resourceCustomer},
 		"get_ledger":   fakeQueryTool{name: "get_ledger", resource: resourceLedger},
 	}}
 
@@ -119,7 +119,7 @@ func TestRedactor_ReplacesRestrictedAndConfidentialFields(t *testing.T) {
 	t.Parallel()
 
 	out := &redaction{}
-	redacted, ok := testRedactor(t).value("get_customer", customerRecord(), out).(map[string]any)
+	redacted, ok := testRedactor(t).value("customer_get", customerRecord(), out).(map[string]any)
 	require.True(t, ok)
 
 	assert.Equal(t, "Acme Foods", redacted["name"])
@@ -128,7 +128,7 @@ func TestRedactor_ReplacesRestrictedAndConfidentialFields(t *testing.T) {
 
 	paths := make([]string, 0, len(out.fields))
 	for _, field := range out.fields {
-		assert.Equal(t, "get_customer", field.Tool)
+		assert.Equal(t, "customer_get", field.Tool)
 		paths = append(paths, field.Path)
 	}
 	assert.Contains(t, paths, "creditLimit")
@@ -139,7 +139,7 @@ func TestRedactor_WalksNestedObjectsAndLists(t *testing.T) {
 	t.Parallel()
 
 	out := &redaction{}
-	redacted, ok := testRedactor(t).value("get_customer", customerRecord(), out).(map[string]any)
+	redacted, ok := testRedactor(t).value("customer_get", customerRecord(), out).(map[string]any)
 	require.True(t, ok)
 
 	billing, ok := redacted["billing"].(map[string]any)
@@ -164,7 +164,7 @@ func TestRedactor_UnknownFieldsTakeTheResourceDefault(t *testing.T) {
 
 	internalDefault := &redaction{}
 	notes := map[string]any{"notes": "call first"}
-	customer, ok := redactor.value("get_customer", notes, internalDefault).(map[string]any)
+	customer, ok := redactor.value("customer_get", notes, internalDefault).(map[string]any)
 	require.True(t, ok)
 	assert.Equal(
 		t,
@@ -202,11 +202,11 @@ func TestRedactor_RuntimeToolsPassThrough(t *testing.T) {
 	out := &redaction{}
 	value := testRedactor(t).value(
 		"find_tools",
-		map[string]any{"tools": []any{"get_customer"}},
+		map[string]any{"tools": []any{"customer_get"}},
 		out,
 	)
 
-	assert.Equal(t, map[string]any{"tools": []any{"get_customer"}}, value)
+	assert.Equal(t, map[string]any{"tools": []any{"customer_get"}}, value)
 	assert.Empty(t, out.fields)
 }
 
@@ -223,19 +223,19 @@ func TestRedactor_HistoryToolResultsAndArguments(t *testing.T) {
 			Role: conversation.RoleAssistant,
 			ToolCalls: []conversation.ToolCallRecord{{
 				ID:        "call_1",
-				Name:      "get_customer",
+				Name:      "customer_get",
 				Arguments: map[string]any{"name": "Acme Foods", "taxId": "12-3456789"},
 			}},
 		},
 		{
 			Role:       conversation.RoleTool,
-			ToolName:   "get_customer",
+			ToolName:   "customer_get",
 			ToolCallID: "call_1",
-			Content:    agentruntime.FenceToolResult("get_customer", payload),
+			Content:    agentruntime.FenceToolResult("customer_get", payload),
 		},
 		{
 			Role:       conversation.RoleTool,
-			ToolName:   "get_customer",
+			ToolName:   "customer_get",
 			ToolCallID: "call_2",
 			ToolFailed: true,
 			Content:    "The tool failed: customer not found",
@@ -249,7 +249,7 @@ func TestRedactor_HistoryToolResultsAndArguments(t *testing.T) {
 
 	name, body, fenced := agentruntime.UnfenceToolResult(history[2].Content)
 	require.True(t, fenced)
-	assert.Equal(t, "get_customer", name)
+	assert.Equal(t, "customer_get", name)
 	assert.Contains(t, body, "[restricted:creditLimit]")
 	assert.NotContains(t, body, "50000")
 	assert.NotContains(t, body, "000123456")
@@ -262,8 +262,8 @@ func TestRedactor_UnreadablePayloadIsRedactedWhole(t *testing.T) {
 
 	out := &redaction{}
 	content := testRedactor(t).toolContent(
-		"get_customer",
-		agentruntime.FenceToolResult("get_customer", `{"creditLimit": 50000, "name": "Ac`),
+		"customer_get",
+		agentruntime.FenceToolResult("customer_get", `{"creditLimit": 50000, "name": "Ac`),
 		out,
 	)
 
@@ -281,14 +281,14 @@ func TestRedactor_DecodedFixtureResult(t *testing.T) {
 	redactor := testRedactor(t)
 	out := &redaction{}
 	result, ok := redactor.decodedResult(
-		"get_customer",
-		agentruntime.FenceToolResult("get_customer", payload),
+		"customer_get",
+		agentruntime.FenceToolResult("customer_get", payload),
 		false,
 		out,
 	).(map[string]any)
 	require.True(t, ok)
 	assert.Equal(t, "[restricted:creditLimit]", result["creditLimit"])
 
-	failed := redactor.decodedResult("get_customer", " The tool failed ", true, out)
+	failed := redactor.decodedResult("customer_get", " The tool failed ", true, out)
 	assert.Equal(t, "The tool failed", failed)
 }

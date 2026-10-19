@@ -121,7 +121,7 @@ jobs:
       # The hybrid gates rank from evals/embeddings/nomic-embed-text.json and
       # skip until it is recorded; set the repository variable
       # TRENOVA_EVAL_REQUIRE_HYBRID to true once it is, so a missing fixture fails.
-      - name: find_tools and find_in_trenova ranking against their floors
+      - name: find_tools and agent_find_page ranking against their floors
         working-directory: ./services/tms
         env:
           TRENOVA_EVAL_REQUIRE_HYBRID: ${{ vars.TRENOVA_EVAL_REQUIRE_HYBRID || 'false' }}
@@ -133,7 +133,7 @@ jobs:
           {
             echo "## Tool selection, development and held-out"
             echo
-            grep -oE '(find_tools|find_in_trenova) by [^:]+: recall@5 [0-9.]+, top-1 [0-9.]+ over [0-9]+ requests' \
+            grep -oE '(find_tools|agent_find_page) by [^:]+: recall@5 [0-9.]+, top-1 [0-9.]+ over [0-9]+ requests' \
               "$RUNNER_TEMP/selection.log" | sed 's/^/- /' || echo "Not reported."
           } >> "$GITHUB_STEP_SUMMARY"
 

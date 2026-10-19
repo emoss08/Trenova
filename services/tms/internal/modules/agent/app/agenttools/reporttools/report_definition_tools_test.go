@@ -152,7 +152,7 @@ func ownedReport(owner pulid.ID) *report.ReportDefinition {
 /*
 The report builder is the product's own way of answering a question nobody
 wrote a report for, and a model that can only run what exists sends the person
-to go and build one. create_report saves what the model wrote through the same
+to go and build one. report_create saves what the model wrote through the same
 service the builder uses, so the compiler's field-level authorization governs
 the model exactly as it governs the person.
 */
@@ -387,7 +387,7 @@ func TestUpdateReport_RefusesSomeoneElsesReport(t *testing.T) {
 	}))
 
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "create_report")
+	assert.Contains(t, err.Error(), "report_create")
 	assert.Nil(t, writer.updated)
 }
 
@@ -457,7 +457,7 @@ func TestForkReport_RefusesAnUnknownKey(t *testing.T) {
 	}))
 
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "list_reports")
+	assert.Contains(t, err.Error(), "report_list")
 	assert.Nil(t, writer.forked)
 }
 
@@ -470,9 +470,9 @@ func TestReportDefinitionTools_DeclareTheirGates(t *testing.T) {
 
 	writer := &fakeReportWriter{}
 	tiers := map[string]agent.AutonomyTier{
-		"create_report": agent.TierAutoExecute,
-		"update_report": agent.TierActWithApproval,
-		"fork_report":   agent.TierActWithApproval,
+		"report_create": agent.TierAutoExecute,
+		"report_update": agent.TierActWithApproval,
+		"report_fork":   agent.TierActWithApproval,
 	}
 	for _, tool := range []agentports.AgentTool{
 		NewCreateReportTool(writer),
@@ -533,7 +533,7 @@ func TestCreateAndUpdateReport_ValidateTheDefinitionBeforeProposing(t *testing.T
 }
 
 /*
-create_report was sent columns twice, once inside definition and once beside
+report_create was sent columns twice, once inside definition and once beside
 it. Only definition is read, so the top-level list was dropped without a word
 and the report saved with whichever columns definition held. A part of the
 definition sent beside it is refused before a proposal exists, naming the part

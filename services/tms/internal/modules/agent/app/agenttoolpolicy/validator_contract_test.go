@@ -14,17 +14,17 @@ import (
 var validateExempt = map[string]string{
 	"shipment_update": "shipmentservice has no update plan; the tool patches the loaded " +
 		"record itself, and the service's validation runs only in Update",
-	"dismiss_insight": "insightservice dismisses in the repository; the preview applies the " +
+	"insight_dismiss": "insightservice dismisses in the repository; the preview applies the " +
 		"domain transition, which is not the code the write runs",
-	"update_tractor_status": "tractorservice has no status plan; the preview reads the units " +
+	"equipment_set_tractor_status": "tractorservice has no status plan; the preview reads the units " +
 		"through the repository",
-	"update_trailer_status": "trailerservice has no status plan; the preview reads the units " +
+	"equipment_set_trailer_status": "trailerservice has no status plan; the preview reads the units " +
 		"through the repository",
-	"email_customer": "the send has no plan function; what refuses it is the mail provider " +
+	"customer_send_email": "the send has no plan function; what refuses it is the mail provider " +
 		"at send time",
 	"shipment_request_documents": "the send has no plan function; what refuses it is the mail " +
 		"provider at send time",
-	"fork_report": "reporting has no fork plan that can refuse; NewCannedFork always builds " +
+	"report_fork": "reporting has no fork plan that can refuse; NewCannedFork always builds " +
 		"a copy and the tool refuses an unknown report key while reading its arguments",
 }
 

@@ -114,7 +114,7 @@ describe("transcriptBlocks", () => {
           content: "Started.",
           toolCalls: [{ id: "c1", name: "shipment_get", arguments: {} }],
         }),
-        message({ role: "Tool", toolCallId: "c9", toolName: "get_worker", content: "{}" }),
+        message({ role: "Tool", toolCallId: "c9", toolName: "worker_get", content: "{}" }),
         message({ content: "Finished." }),
       ],
     });
@@ -135,8 +135,8 @@ describe("transcriptBlocks", () => {
       omittedMessages: 0,
       omittedAt: 0,
       messages: [
-        message({ toolCalls: [{ id: "c1", name: "run_report", arguments: null }] }),
-        message({ role: "Tool", toolCallId: "c1", toolName: "run_report", omitted: true }),
+        message({ toolCalls: [{ id: "c1", name: "report_run", arguments: null }] }),
+        message({ role: "Tool", toolCallId: "c1", toolName: "report_run", omitted: true }),
       ],
     });
 

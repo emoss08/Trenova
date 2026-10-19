@@ -15,10 +15,10 @@ import (
 )
 
 const (
-	DraftEDIConnectionToolName = "draft_edi_connection"
+	DraftEDIConnectionToolName = "edi_draft_connection"
 
 	draftReadyNote = "Ready: point the person to the draft in the sentence that says what it " +
-		"sets up, then propose apply_edi_connection_draft with the same input and documentDigest. Nothing is written until they approve it. Tell " +
+		"sets up, then propose edi_apply_connection_draft with the same input and documentDigest. Nothing is written until they approve it. Tell " +
 		"them which credentials to enter before the connection is turned on."
 	draftBlockedNote = "Not ready. A decision whose candidate is Invalid, or whose quote states " +
 		"that value for a different field than the one you gave it, is your own misreading: " +
@@ -74,14 +74,14 @@ func (t *draftEDIConnectionTool) SearchTerms() []string {
 func (t *draftEDIConnectionTool) Description() string {
 	return "Draft a whole EDI connection from the implementation guide the person attached, " +
 		"and check it. Read the whole guide once, from the file attached to the message or " +
-		"with read_attachment, whose text marks where each page begins; never page by page. " +
+		"with agent_read_attachment, whose text marks where each page begins; never page by page. " +
 		"Then pass every setting it " +
 		"states with the exact quote and page, plus the segment rules, code mappings and gaps " +
 		"you find. It checks each quote against its page, holds back what is uncertain or " +
 		"conflicting, matches an existing EDI partner rather than adding one, picks templates, " +
 		"runs the guide's sample X12, validates every record and lists the credentials the " +
 		"person must enter. A re-run on a revised guide shows only what changes. It writes nothing, " +
-		"and it takes no documentDigest: it returns the one apply_edi_connection_draft needs."
+		"and it takes no documentDigest: it returns the one edi_apply_connection_draft needs."
 }
 
 func (t *draftEDIConnectionTool) ParamSchema() map[string]any {

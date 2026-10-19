@@ -125,7 +125,7 @@ func TestSearch_ReadsToolNamesAndRanksBeforeKind(t *testing.T) {
 
 	correction := f.record(ctx, t, &agent.Memory{
 		Kind:     agent.MemoryKindCorrection,
-		ToolName: "assign_move",
+		ToolName: "dispatch_assign_move",
 		Content:  "A person changed the tractor to the one already at the yard.",
 	})
 	instruction := f.record(ctx, t, &agent.Memory{

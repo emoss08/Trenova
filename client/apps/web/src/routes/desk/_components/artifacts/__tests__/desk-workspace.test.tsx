@@ -118,7 +118,7 @@ function workers(id: string, status: string, overrides: Partial<AssistantArtifac
     id,
     payload: {
       display: 1,
-      tool: "list_workers",
+      tool: "worker_list",
       entity: "workers",
       recordEntity: "worker",
       columns: [
@@ -226,7 +226,7 @@ describe("DeskWorkspace", () => {
     renderWorkspace();
 
     expect(await screen.findByText("Inactive")).toBeInTheDocument();
-    expect(screen.queryByText("list_workers")).not.toBeInTheDocument();
+    expect(screen.queryByText("worker_list")).not.toBeInTheDocument();
     expect(screen.queryByText("2 rows")).not.toBeInTheDocument();
     expect(screen.queryByText("1 changed")).not.toBeInTheDocument();
   });

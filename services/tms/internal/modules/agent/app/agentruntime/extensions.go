@@ -16,7 +16,7 @@ const externalContentNote = " It was not run automatically because this turn rea
 	"outside the organization (a web page, or a trading partner's text or guide it was given), " +
 	"and a change made after reading outside content always waits for a person."
 
-var outsideTextTools = []string{"inspect_x12", "draft_edi_connection"}
+var outsideTextTools = []string{"edi_inspect_x12", "edi_draft_connection"}
 
 func (s *Service) activeExtensions(
 	ctx context.Context,

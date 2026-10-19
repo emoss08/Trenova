@@ -22,8 +22,8 @@ const (
 	paramSubmissionID = "submissionId"
 	paramInvoiceIDs   = "invoiceIds"
 
-	toolListSubmissions = "list_factoring_submissions"
-	toolListReady       = "list_factoring_ready_invoices"
+	toolListSubmissions = "factoring_list_submissions"
+	toolListReady       = "factoring_list_readiness"
 
 	maxCancelReason = 500
 )
@@ -64,7 +64,7 @@ func submissionIDParam(description string) map[string]any {
 
 func submissionVersionParam() map[string]any {
 	return jsonschemautils.Integer(
-		"The schedule's version from get_factoring_submission, so a schedule someone " +
+		"The schedule's version from factoring_get_submission, so a schedule someone " +
 			"changed since is not overwritten.",
 	)
 }
@@ -97,13 +97,13 @@ func NewSubmitInvoicesToFactorTool(
 	return &SubmitInvoicesToFactorTool{submissions: submissions}
 }
 
-func (t *SubmitInvoicesToFactorTool) Name() string { return "submit_invoices_to_factor" }
+func (t *SubmitInvoicesToFactorTool) Name() string { return "factoring_create_submission" }
 
 func (t *SubmitInvoicesToFactorTool) Description() string {
 	return "Sell Ready invoices to their factor on one schedule of accounts. It builds the " +
 		"schedule PDF and CSV and each invoice's packet (the invoice and its supporting " +
 		"documents), then sends them to the factor by email or SFTP, as the factor's " +
-		"delivery settings say. Every invoice must be Ready in list_factoring_ready_invoices " +
+		"delivery settings say. Every invoice must be Ready in factoring_list_readiness " +
 		"and assigned to this factor; batch one factor's invoices per call, up to 200. " +
 		"Submitting the same invoices again returns the first schedule instead of sending twice."
 }
@@ -118,11 +118,11 @@ func (t *SubmitInvoicesToFactorTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramFactorID: agenttoolschema.RecordIDText(
 			permission.ResourceFactoringCompany,
-			"The factor every invoice is assigned to, from list_factoring_ready_invoices.",
+			"The factor every invoice is assigned to, from factoring_list_readiness.",
 		),
 		paramInvoiceIDs: agenttoolschema.RecordIDs(
 			permission.ResourceInvoice,
-			"The Ready invoices to sell, from list_factoring_ready_invoices.",
+			"The Ready invoices to sell, from factoring_list_readiness.",
 			factoring.MaxSubmissionInvoices,
 		),
 	}, paramFactorID, paramInvoiceIDs)
@@ -297,11 +297,11 @@ func NewRetryFactoringSubmissionTool(
 	return &RetryFactoringSubmissionTool{submissions: submissions}
 }
 
-func (t *RetryFactoringSubmissionTool) Name() string { return "retry_factoring_submission" }
+func (t *RetryFactoringSubmissionTool) Name() string { return "factoring_retry_submission" }
 
 func (t *RetryFactoringSubmissionTool) Description() string {
 	return "Send a schedule that failed to send again, using the factor's delivery settings " +
-		"as they are now. Read the schedule's last error with get_factoring_submission first: " +
+		"as they are now. Read the schedule's last error with factoring_get_submission first: " +
 		"retry only once the cause is fixed (the factor's inbox or SFTP settings corrected and " +
 		"tested), or it will fail the same way. A person approves every retry."
 }
@@ -317,7 +317,7 @@ func (t *RetryFactoringSubmissionTool) Prerequisites() []string {
 func (t *RetryFactoringSubmissionTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramSubmissionID: submissionIDParam(
-			"The failed schedule, from list_factoring_submissions.",
+			"The failed schedule, from factoring_list_submissions.",
 		),
 		paramVersion: submissionVersionParam(),
 	}, paramSubmissionID, paramVersion)
@@ -412,7 +412,7 @@ func NewCancelFactoringSubmissionTool(
 	return &CancelFactoringSubmissionTool{submissions: submissions}
 }
 
-func (t *CancelFactoringSubmissionTool) Name() string { return "cancel_factoring_submission" }
+func (t *CancelFactoringSubmissionTool) Name() string { return "factoring_cancel_submission" }
 
 func (t *CancelFactoringSubmissionTool) Description() string {
 	return "Cancel a schedule that failed to send and release its invoices, so they can go " +
@@ -431,7 +431,7 @@ func (t *CancelFactoringSubmissionTool) Prerequisites() []string {
 func (t *CancelFactoringSubmissionTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramSubmissionID: submissionIDParam(
-			"The failed schedule, from list_factoring_submissions.",
+			"The failed schedule, from factoring_list_submissions.",
 		),
 		paramVersion: submissionVersionParam(),
 		paramReason:  jsonschemautils.Text("Why the schedule is cancelled."),

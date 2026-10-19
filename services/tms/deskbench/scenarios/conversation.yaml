@@ -86,7 +86,7 @@ scenarios:
     steps:
       - say: "remember acme always needs 24 hours notice before we deliver"
         expect:
-          calls: ["remember"]
+          calls: ["agent_create_memory"]
           rubric: >
             Records the rule against Acme Manufacturing (not as a general instruction), and says
             whether it is kept now or waits for approval.
@@ -114,7 +114,7 @@ scenarios:
     steps:
       - say: "let me know when SEED-SHP-008 delivers in chicago"
         expect:
-          calls: ["wait_until"]
+          calls: ["agent_create_wait"]
           rubric: >
             Sets a wait for the Chicago delivery stop's arrival or departure on SEED-SHP-008,
             says what it will do when it fires, and does not poll.
@@ -125,7 +125,7 @@ scenarios:
     steps:
       - say: "whats on SEED-SHP-004 for weight, and is trc-002 free tomorrow"
         expect:
-          calls: ["shipment_get|shipment_list", "list_tractors|get_dispatch_board|shipment_list"]
+          calls: ["shipment_get|shipment_list", "equipment_list_tractors|dispatch_get_board|shipment_list"]
           noProposals: true
           rubric: Answers both, each from a lookup, in two short parts.
 

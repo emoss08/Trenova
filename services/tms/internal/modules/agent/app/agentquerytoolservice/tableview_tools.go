@@ -67,7 +67,7 @@ func newComposeTableViewTool(
 	return &composeTableViewTool{composer: composer, catalog: catalog}
 }
 
-func (t *composeTableViewTool) Name() string { return "compose_table_view" }
+func (t *composeTableViewTool) Name() string { return "report_compose_table_view" }
 
 func (t *composeTableViewTool) Description() string {
 	return "Turn a description of what someone wants to see into a filtered, sorted view " +
@@ -273,7 +273,7 @@ func urlValue(raw string) string {
 	return url.QueryEscape(raw)
 }
 
-// listDashboardsTool exists because add_dashboard_tile needs a dashboard id
+// listDashboardsTool exists because report_add_dashboard_tile needs a dashboard id
 // and nothing else hands one out. Without it the only dashboard an agent can
 // touch is one it made in the same turn.
 type listDashboardsTool struct {
@@ -291,13 +291,13 @@ func newListDashboardsTool(dashboards *reporting.Service) agentports.AgentQueryT
 	return &listDashboardsTool{dashboards: dashboards}
 }
 
-func (t *listDashboardsTool) Name() string { return "list_dashboards" }
+func (t *listDashboardsTool) Name() string { return "report_list_dashboards" }
 
 func (t *listDashboardsTool) Description() string {
 	return "List the report dashboards under Reports, with the tiles on each. Use it to find " +
-		"the dashboard somebody means before add_dashboard_tile, and to check whether a page " +
-		"for this already exists before create_dashboard. Not the person's home page — " +
-		"get_my_home_layout reads that."
+		"the dashboard somebody means before report_add_dashboard_tile, and to check whether a page " +
+		"for this already exists before report_create_dashboard. Not the person's home page — " +
+		"home_get_layout reads that."
 }
 
 func (t *listDashboardsTool) SearchTerms() []string {

@@ -64,14 +64,14 @@ func manyPoliciesService(count int, defs *fakeDefinitions) *Service {
 func surveyService(defs *fakeDefinitions, trust *fakeTrust) *Service {
 	lookup := policy("shipment_get", agent.ToolKindQuery, agent.EgressNone)
 	lookup.Effect = agent.ToolEffectLookup
-	personal := policy("add_home_widget", agent.ToolKindAction, agent.EgressPersonal)
+	personal := policy("home_add_widget", agent.ToolKindAction, agent.EgressPersonal)
 	personal.Scope = agent.ToolScopeSelf
 
 	return newService(serviceDeps{
 		policies: newFakePolicies(
 			lookup,
-			policy("assign_move", agent.ToolKindAction, agent.EgressInternal),
-			policy("email_customer", agent.ToolKindAction, agent.EgressExternalRecipient),
+			policy("dispatch_assign_move", agent.ToolKindAction, agent.EgressInternal),
+			policy("customer_send_email", agent.ToolKindAction, agent.EgressExternalRecipient),
 			personal,
 		),
 		holder:      fakeHolder{},
@@ -203,30 +203,30 @@ func TestListToolPoliciesFiltersByClassResourceKindAndSearch(t *testing.T) {
 	}
 
 	assert.Equal(t,
-		[]string{"add_home_widget", "assign_move", "email_customer", "shipment_get"},
+		[]string{"home_add_widget", "dispatch_assign_move", "customer_send_email", "shipment_get"},
 		list(memtable.Request{}),
 	)
-	assert.Equal(t, []string{"email_customer"}, list(memtable.Request{
+	assert.Equal(t, []string{"customer_send_email"}, list(memtable.Request{
 		FieldFilters: []domaintypes.FieldFilter{eq("egress", "ExternalRecipient")},
 	}))
-	assert.Equal(t, []string{"email_customer"}, list(memtable.Request{
+	assert.Equal(t, []string{"customer_send_email"}, list(memtable.Request{
 		FieldFilters: []domaintypes.FieldFilter{eq("egress", "external_recipient")},
 	}))
 	assert.Equal(t, []string{"shipment_get"}, list(memtable.Request{
 		FieldFilters: []domaintypes.FieldFilter{eq("kind", "Query")},
 	}))
-	assert.Equal(t, []string{"add_home_widget"}, list(memtable.Request{
+	assert.Equal(t, []string{"home_add_widget"}, list(memtable.Request{
 		FieldFilters: []domaintypes.FieldFilter{eq("resource", GeneralResource)},
 	}))
 	assert.Equal(t,
-		[]string{"assign_move", "email_customer", "shipment_get"},
+		[]string{"dispatch_assign_move", "customer_send_email", "shipment_get"},
 		list(memtable.Request{
 			FieldFilters: []domaintypes.FieldFilter{
 				eq("resource", permission.ResourceShipment.String()),
 			},
 		}),
 	)
-	assert.Equal(t, []string{"email_customer"}, list(memtable.Request{
+	assert.Equal(t, []string{"customer_send_email"}, list(memtable.Request{
 		Query: "  Email Cust ",
 	}))
 	assert.Empty(t, list(memtable.Request{
@@ -234,7 +234,7 @@ func TestListToolPoliciesFiltersByClassResourceKindAndSearch(t *testing.T) {
 		FieldFilters: []domaintypes.FieldFilter{eq("egress", "None")},
 	}))
 	assert.Equal(t,
-		[]string{"email_customer", "shipment_get"},
+		[]string{"customer_send_email", "shipment_get"},
 		list(memtable.Request{
 			FieldFilters: []domaintypes.FieldFilter{{
 				Field:    "egress",
@@ -258,7 +258,7 @@ func TestListToolPoliciesOrsWithinAGroupAndAndsAcrossThem(t *testing.T) {
 			eq("egress", "ExternalRecipient"),
 		}}},
 	})
-	assert.Equal(t, []string{"add_home_widget", "email_customer"}, pageNames(page))
+	assert.Equal(t, []string{"home_add_widget", "customer_send_email"}, pageNames(page))
 }
 
 func TestListToolPoliciesSortsByClassAndTierThenName(t *testing.T) {
@@ -270,14 +270,14 @@ func TestListToolPoliciesSortsByClassAndTierThenName(t *testing.T) {
 		Sort: []domaintypes.SortField{{Field: "egress", Direction: dbtype.SortDirectionDesc}},
 	})
 	assert.Equal(t,
-		[]string{"email_customer", "assign_move", "add_home_widget", "shipment_get"},
+		[]string{"customer_send_email", "dispatch_assign_move", "home_add_widget", "shipment_get"},
 		pageNames(byClass),
 	)
 
 	byTier := listRules(t, svc, memtable.Request{
 		Sort: []domaintypes.SortField{{Field: "maxTier", Direction: dbtype.SortDirectionAsc}},
 	})
-	assert.Equal(t, "email_customer", pageNames(byTier)[0],
+	assert.Equal(t, "customer_send_email", pageNames(byTier)[0],
 		"work that leaves the organization is held to approval, the lowest tier here")
 }
 
@@ -291,7 +291,7 @@ func TestListToolPoliciesFiltersByWhatRunsWithoutAPerson(t *testing.T) {
 	t.Parallel()
 
 	defs := &fakeDefinitions{all: []*agentdefinition.Definition{
-		agentWith("Dispatcher", "shipment_get", "assign_move", "email_customer"),
+		agentWith("Dispatcher", "shipment_get", "dispatch_assign_move", "customer_send_email"),
 	}}
 	svc := surveyService(defs, &fakeTrust{})
 
@@ -299,7 +299,7 @@ func TestListToolPoliciesFiltersByWhatRunsWithoutAPerson(t *testing.T) {
 		FieldFilters:      []domaintypes.FieldFilter{eq(FieldRunsWithoutPerson, true)},
 		IncludeTotalCount: true,
 	})
-	assert.Equal(t, []string{"assign_move"}, pageNames(page))
+	assert.Equal(t, []string{"dispatch_assign_move"}, pageNames(page))
 	assert.Equal(t, 1, *page.TotalCount)
 	require.NotNil(t, page.Edges[0].RunsWithoutPerson)
 	assert.True(t, *page.Edges[0].RunsWithoutPerson)
@@ -308,7 +308,7 @@ func TestListToolPoliciesFiltersByWhatRunsWithoutAPerson(t *testing.T) {
 		FieldFilters: []domaintypes.FieldFilter{eq(FieldRunsWithoutPerson, "false")},
 	})
 	assert.Equal(t,
-		[]string{"add_home_widget", "email_customer", "shipment_get"},
+		[]string{"home_add_widget", "customer_send_email", "shipment_get"},
 		pageNames(page),
 	)
 
@@ -323,7 +323,7 @@ func TestListToolPoliciesFiltersByWhatRunsWithoutAPerson(t *testing.T) {
 	require.NoError(t, err)
 	for _, edge := range shown.Edges {
 		require.NotNil(t, edge.RunsWithoutPerson, edge.View.Policy.Name)
-		assert.Equal(t, edge.View.Policy.Name == "assign_move", *edge.RunsWithoutPerson)
+		assert.Equal(t, edge.View.Policy.Name == "dispatch_assign_move", *edge.RunsWithoutPerson)
 	}
 }
 
@@ -388,8 +388,8 @@ the rules are, including the clean and tainted answers.
 func TestListAgentToolsListsEveryPickedAgentsTools(t *testing.T) {
 	t.Parallel()
 
-	dispatcher := agentWith("Dispatcher", "shipment_get", "email_customer")
-	auditor := agentWith("Auditor", "assign_move")
+	dispatcher := agentWith("Dispatcher", "shipment_get", "customer_send_email")
+	auditor := agentWith("Auditor", "dispatch_assign_move")
 	auditor.SimulationMode = true
 	defs := &fakeDefinitions{all: []*agentdefinition.Definition{dispatcher, auditor}}
 	svc := surveyService(defs, &fakeTrust{})
@@ -415,7 +415,7 @@ func TestListAgentToolsListsEveryPickedAgentsTools(t *testing.T) {
 
 	all := list(memtable.Request{IncludeTotalCount: true})
 	assert.Equal(t,
-		[]string{"Auditor/assign_move", "Dispatcher/shipment_get", "Dispatcher/email_customer"},
+		[]string{"Auditor/dispatch_assign_move", "Dispatcher/shipment_get", "Dispatcher/customer_send_email"},
 		rows(all),
 	)
 	require.NotNil(t, all.TotalCount)
@@ -423,19 +423,19 @@ func TestListAgentToolsListsEveryPickedAgentsTools(t *testing.T) {
 	assert.Equal(t, dispatcher.ID.String()+":shipment_get", all.Edges[1].Node.RowID())
 
 	assert.Equal(t,
-		[]string{"Dispatcher/shipment_get", "Dispatcher/email_customer"},
+		[]string{"Dispatcher/shipment_get", "Dispatcher/customer_send_email"},
 		rows(list(memtable.Request{
 			FieldFilters: []domaintypes.FieldFilter{eq("agentId", dispatcher.ID.String())},
 		})),
 	)
 	assert.Equal(t,
-		[]string{"Dispatcher/email_customer"},
+		[]string{"Dispatcher/customer_send_email"},
 		rows(list(memtable.Request{
 			FieldFilters: []domaintypes.FieldFilter{eq("clean", "NEEDS_APPROVAL")},
 		})),
 	)
 	assert.Equal(t,
-		[]string{"Auditor/assign_move"},
+		[]string{"Auditor/dispatch_assign_move"},
 		rows(list(memtable.Request{
 			FieldFilters: []domaintypes.FieldFilter{eq("heldBy", "simulation_mode")},
 		})),
@@ -472,12 +472,12 @@ func TestListAgentToolsNamesBetweenOneAndTenAgents(t *testing.T) {
 func TestSummaryCountsOverEveryToolAndAgent(t *testing.T) {
 	t.Parallel()
 
-	restricted := agentWith("Back office", "assign_move", "email_customer")
+	restricted := agentWith("Back office", "dispatch_assign_move", "customer_send_email")
 	restricted.AccessMode = agentdefinition.AccessRoles
-	simulated := agentWith("Rehearsal", "email_customer")
+	simulated := agentWith("Rehearsal", "customer_send_email")
 	simulated.SimulationMode = true
 	defs := &fakeDefinitions{all: []*agentdefinition.Definition{
-		agentWith("Customer desk", "shipment_get", "email_customer"),
+		agentWith("Customer desk", "shipment_get", "customer_send_email"),
 		restricted,
 		simulated,
 	}}
@@ -487,7 +487,7 @@ func TestSummaryCountsOverEveryToolAndAgent(t *testing.T) {
 	summary, err := svc.Summary(t.Context(), pagination.TenantInfo{})
 	require.NoError(t, err)
 	assert.Equal(t, 4, summary.ToolCount)
-	assert.Equal(t, 1, summary.RunWithoutPerson, "assign_move runs unattended on Back office")
+	assert.Equal(t, 1, summary.RunWithoutPerson, "dispatch_assign_move runs unattended on Back office")
 	assert.Equal(t, 1, summary.LeaveOrganization)
 	assert.Equal(t, 2, summary.OpenWithSensitive)
 	assert.Equal(t, []string{GeneralResource, permission.ResourceShipment.String()},
@@ -513,7 +513,7 @@ func TestToolPolicyLooksUpOneRuleByName(t *testing.T) {
 
 	svc := testService(&fakeDefinitions{}, &tenant.AgentControl{})
 
-	view, ok := svc.ToolPolicy("email_customer")
+	view, ok := svc.ToolPolicy("customer_send_email")
 	require.True(t, ok)
 	assert.Equal(t, "Email customer", view.Title)
 

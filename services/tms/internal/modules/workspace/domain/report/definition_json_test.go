@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// describe_report summarizes a column's field as "assignment.primaryWorker.firstName".
+// report_get summarizes a column's field as "assignment.primaryWorker.firstName".
 // A model that rebuilds a definition from that summary writes exactly this
 // shape, and it used to decode to an empty ref that failed after a person
 // had approved it.

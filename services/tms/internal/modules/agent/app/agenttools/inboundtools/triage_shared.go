@@ -28,9 +28,9 @@ const (
 	paramMessageIDs        = "messageIds"
 	maxTriageSelection     = 50
 	inboundMessageEntity   = "inbound_message"
-	toolGetInboundMessage  = "get_inbound_message"
-	toolListInboundMessage = "list_inbound_messages"
-	toolListAssignees      = "list_triage_assignees"
+	toolGetInboundMessage  = "inbox_get_inbound_message"
+	toolListInboundMessage = "inbox_list_inbound_messages"
+	toolListAssignees      = "inbox_list_triage_assignees"
 	fieldMatchReason       = "matchReason"
 )
 

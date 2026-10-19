@@ -80,7 +80,7 @@ func definition() *agentdefinition.Definition {
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
 		Name:           "Night desk",
-		ToolNames:      []string{"assign_move", "shipment_cancel"},
+		ToolNames:      []string{"dispatch_assign_move", "shipment_cancel"},
 	}
 }
 
@@ -173,14 +173,14 @@ func TestCheckRun_RefusesTheRunPastTheDailyLimit(t *testing.T) {
 func TestCheckTool_CountsOnlyToolsWithACap(t *testing.T) {
 	t.Parallel()
 
-	svc := newService(&fakeCost{}, &fakeRuns{}, &fakeTools{used: map[string]int{"assign_move": 5}})
+	svc := newService(&fakeCost{}, &fakeRuns{}, &fakeTools{used: map[string]int{"dispatch_assign_move": 5}})
 	d := definition()
-	d.ToolDailyLimits = map[string]int{"assign_move": 5}
+	d.ToolDailyLimits = map[string]int{"dispatch_assign_move": 5}
 
-	refusal, err := svc.CheckTool(t.Context(), agentports.CheckToolBudgetRequest{Definition: d, ToolName: "assign_move"})
+	refusal, err := svc.CheckTool(t.Context(), agentports.CheckToolBudgetRequest{Definition: d, ToolName: "dispatch_assign_move"})
 	require.NoError(t, err)
 	assert.Equal(t, agentports.BudgetCapTool, refusal.Cap)
-	assert.Equal(t, "assign_move", refusal.Tool)
+	assert.Equal(t, "dispatch_assign_move", refusal.Tool)
 
 	refusal, err = svc.CheckTool(t.Context(), agentports.CheckToolBudgetRequest{Definition: d, ToolName: "shipment_cancel"})
 	require.NoError(t, err)
@@ -192,18 +192,18 @@ func TestCheckTool_CountsOnlyToolsWithACap(t *testing.T) {
 func TestCheckTool_CountsWritesThisTurnHasNotRecordedYet(t *testing.T) {
 	t.Parallel()
 
-	svc := newService(&fakeCost{}, &fakeRuns{}, &fakeTools{used: map[string]int{"assign_move": 3}})
+	svc := newService(&fakeCost{}, &fakeRuns{}, &fakeTools{used: map[string]int{"dispatch_assign_move": 3}})
 	d := definition()
-	d.ToolDailyLimits = map[string]int{"assign_move": 5}
+	d.ToolDailyLimits = map[string]int{"dispatch_assign_move": 5}
 
 	refusal, err := svc.CheckTool(t.Context(), agentports.CheckToolBudgetRequest{
-		Definition: d, ToolName: "assign_move", Unrecorded: 1,
+		Definition: d, ToolName: "dispatch_assign_move", Unrecorded: 1,
 	})
 	require.NoError(t, err)
 	assert.False(t, refusal.Refused(), "four of five")
 
 	refusal, err = svc.CheckTool(t.Context(), agentports.CheckToolBudgetRequest{
-		Definition: d, ToolName: "assign_move", Unrecorded: 2,
+		Definition: d, ToolName: "dispatch_assign_move", Unrecorded: 2,
 	})
 	require.NoError(t, err)
 	assert.Equal(t, agentports.BudgetCapTool, refusal.Cap)
@@ -219,12 +219,12 @@ func TestStatus_ReportsEveryCapAndTheUnpricedCalls(t *testing.T) {
 	svc := newService(
 		cost,
 		&fakeRuns{started: 1},
-		&fakeTools{used: map[string]int{"assign_move": 2}},
+		&fakeTools{used: map[string]int{"dispatch_assign_move": 2}},
 	)
 	d := definition()
 	d.MonthlyBudgetUSD = decimalOf("50")
 	d.DailyRunLimit = 10
-	d.ToolDailyLimits = map[string]int{"assign_move": 8}
+	d.ToolDailyLimits = map[string]int{"dispatch_assign_move": 8}
 	d.SimulationMode = true
 
 	status, err := svc.Status(t.Context(), d)
@@ -236,7 +236,7 @@ func TestStatus_ReportsEveryCapAndTheUnpricedCalls(t *testing.T) {
 	assert.Equal(t, 1, status.RunsToday)
 	assert.Equal(
 		t,
-		[]agentports.ToolBudgetUse{{Tool: "assign_move", Used: 2, Limit: 8}},
+		[]agentports.ToolBudgetUse{{Tool: "dispatch_assign_move", Used: 2, Limit: 8}},
 		status.Tools,
 	)
 	assert.True(t, status.SimulationMode)

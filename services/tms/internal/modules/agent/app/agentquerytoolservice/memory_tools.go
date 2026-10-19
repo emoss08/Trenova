@@ -38,7 +38,7 @@ func newRecallMemoryTool(memories agentports.AgentMemoryService) agentports.Agen
 	return &recallMemoryTool{memories: memories}
 }
 
-func (t *recallMemoryTool) Name() string { return "recall_memory" }
+func (t *recallMemoryTool) Name() string { return "agent_list_memories" }
 
 func (t *recallMemoryTool) SearchTerms() []string {
 	return []string{"what we know", "noted before", "past instructions", "recall"}
@@ -78,8 +78,8 @@ func (t *recallMemoryTool) ParamSchema() map[string]any {
 				memoryFilterSubjectTypes,
 			),
 			"subjectId": agenttoolschema.KindID(
-				"Optional: the record's id, from list_customers, "+
-					"list_locations, search_worker or list_carriers to match subjectType, "+
+				"Optional: the record's id, from customer_list, "+
+					"location_list, worker_search or carrier_list to match subjectType, "+
 					"or the page you are on. Give it with subjectType.",
 				permission.RecordKind(permission.ResourceCustomer),
 				permission.RecordKind(permission.ResourceLocation),
@@ -88,7 +88,7 @@ func (t *recallMemoryTool) ParamSchema() map[string]any {
 			),
 			"toolName": map[string]any{
 				toolschema.KeyType:        toolschema.TypeString,
-				toolschema.KeyDescription: "Only memories about one tool, such as corrections to assign_move.",
+				toolschema.KeyDescription: "Only memories about one tool, such as corrections to dispatch_assign_move.",
 			},
 			paramLimit: map[string]any{
 				toolschema.KeyType: toolschema.TypeInteger,

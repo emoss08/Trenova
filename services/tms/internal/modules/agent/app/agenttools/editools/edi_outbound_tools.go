@@ -22,7 +22,7 @@ const toolShipmentList = "shipment_list"
 
 const ParamServiceFailureID = "serviceFailureId"
 
-const ediPartnerIDGuidance = "from list_edi_partners or get_edi_partner. Never guess one."
+const ediPartnerIDGuidance = "from edi_list_partners or edi_get_partner. Never guess one."
 
 const statusUpdateSourceHint = "shipmentId or serviceFailureId"
 
@@ -68,18 +68,18 @@ func NewSendEDILoadTenderTool(tenders loadTenderSubmitter) agentports.AgentTool 
 	return &SendEDILoadTenderTool{tenders: tenders}
 }
 
-func (t *SendEDILoadTenderTool) Name() string { return "send_edi_tender" }
+func (t *SendEDILoadTenderTool) Name() string { return "edi_send_tender" }
 
 func (t *SendEDILoadTenderTool) Prerequisites() []string {
-	return []string{toolShipmentList, "list_edi_partners"}
+	return []string{toolShipmentList, "edi_list_partners"}
 }
 
 func (t *SendEDILoadTenderTool) Recipe() []string {
 	return []string{
 		toolShipmentList,
-		"list_edi_partners",
-		"send_edi_tender",
-		"list_edi_transfers",
+		"edi_list_partners",
+		"edi_send_tender",
+		"edi_list_transfers",
 	}
 }
 
@@ -88,7 +88,7 @@ func (t *SendEDILoadTenderTool) Description() string {
 		"which it accepts or declines on its side. The partner is the customer's internal EDI " +
 		"partner unless you name one; the shipment is marked Tendered until they answer. A " +
 		"shipment with a tender already out is refused. Carriers outside Trenova are " +
-		"tendered with tender_move_to_carriers instead. A person always decides."
+		"tendered with dispatch_create_tender instead. A person always decides."
 }
 
 func (t *SendEDILoadTenderTool) ParamSchema() map[string]any {
@@ -177,7 +177,7 @@ func NewSendEDIStatusUpdateTool(documents ediDocumentGenerator) agentports.Agent
 	return &SendEDIStatusUpdateTool{documents: documents}
 }
 
-func (t *SendEDIStatusUpdateTool) Name() string { return "send_edi_status_update" }
+func (t *SendEDIStatusUpdateTool) Name() string { return "edi_send_status_update" }
 
 func (t *SendEDIStatusUpdateTool) Description() string {
 	return "Propose sending a trading partner an EDI 214 shipment status built from a " +
@@ -195,8 +195,8 @@ func (t *SendEDIStatusUpdateTool) ParamSchema() map[string]any {
 			"Report this shipment's current status. The shipment, from shipment_list or "+
 				"shipment_get."),
 		ParamServiceFailureID: agenttoolschema.RecordIDText(permission.ResourceServiceFailure,
-			"Report a late or missed stop with its reason, from list_service_failures or "+
-				"get_service_failure."),
+			"Report a late or missed stop with its reason, from exception_list_service_failures or "+
+				"exception_get_service_failure."),
 	}, paramEDIPartnerID)
 }
 

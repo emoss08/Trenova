@@ -265,7 +265,7 @@ func TestListAgentRuns_DeclaresAMarkedRunRecordRead(t *testing.T) {
 	tool := newListAgentRunsTool(nil, nil)
 	policy := tool.Policy()
 
-	assert.Equal(t, "list_agent_runs", tool.Name())
+	assert.Equal(t, "agent_list_runs", tool.Name())
 	assert.Equal(t, permission.ResourceAgentRun, policy.Resource)
 	assert.Equal(t, agent.ExternalReadMarked, policy.ReadsExternal)
 	assert.Equal(t, agent.TaintSourceRunRecord, policy.Source)
@@ -445,7 +445,7 @@ func TestGetAgentRun_AddsBoundedProposalsAndTheLastFiftySteps(t *testing.T) {
 		fixture.proposals.proposals = append(fixture.proposals.proposals, &agent.AgentProposal{
 			ID:           pulid.MustNew("apr_"),
 			RunID:        run.ID,
-			ToolName:     "assign_move",
+			ToolName:     "dispatch_assign_move",
 			Status:       agent.ProposalStatusPending,
 			AutonomyTier: agent.TierPropose,
 			CreatedAt:    int64(idx),
@@ -543,7 +543,7 @@ func TestGetAgentRun_TheIDNamesWhereItComesFrom(t *testing.T) {
 	runID, ok := properties[paramRunID].(map[string]any)
 	require.True(t, ok)
 
-	assert.Contains(t, runID["description"], "list_agent_runs")
+	assert.Contains(t, runID["description"], "agent_list_runs")
 	assert.Equal(t, agent.ExternalReadMarked, tool.Policy().ReadsExternal)
 	assert.Equal(t, agent.TaintSourceRunRecord, tool.Policy().Source)
 }

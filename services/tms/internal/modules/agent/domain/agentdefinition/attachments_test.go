@@ -47,7 +47,7 @@ func TestDescribeAttachments_SharesTheBudgetSoAShortFileIsWhole(t *testing.T) {
 	assert.Contains(t, block, strings.Repeat("a", 981)+"\n</file_text>")
 	assert.NotContains(t, block, strings.Repeat("a", 982))
 	assert.Contains(t, block,
-		"The text stops at character 981 of 30000; read_attachment with offset 981 reads on.")
+		"The text stops at character 981 of 30000; agent_read_attachment with offset 981 reads on.")
 }
 
 func TestDescribeAttachments_NamesEarlierFilesWithoutTheirText(t *testing.T) {
@@ -60,7 +60,7 @@ func TestDescribeAttachments_NamesEarlierFilesWithoutTheirText(t *testing.T) {
 	}}, 0)
 
 	assert.Contains(t, block, "- id: doc_1")
-	assert.Contains(t, block, "read a file with read_attachment")
+	assert.Contains(t, block, "read a file with agent_read_attachment")
 	assert.NotContains(t, block, "SHIPPER#1")
 	assert.NotContains(t, block, "<file_text>")
 }
@@ -74,7 +74,7 @@ func TestDescribeAttachments_SaysAFileIsStillBeingRead(t *testing.T) {
 		Reading:    agentdefinition.AttachmentReadingPending,
 	}}, agentdefinition.AttachmentTextBudget)
 
-	assert.Contains(t, block, "reading: still being read. read_attachment waits")
+	assert.Contains(t, block, "reading: still being read. agent_read_attachment waits")
 	assert.NotContains(t, block, "<file_text>")
 }
 

@@ -191,13 +191,13 @@ func provideListFactoringRemittancesTool(
 	}
 }
 
-func (t *listFactoringRemittancesTool) Name() string { return "list_factoring_remittances" }
+func (t *listFactoringRemittancesTool) Name() string { return "factoring_list_remittances" }
 
 func (t *listFactoringRemittancesTool) Description() string {
 	return "List factor remittances, newest first, with how far each has been read and booked. " +
 		"Each has its factor, file, status (Pending, NeedsMapping, Parsed, Failed, " +
 		"PartiallyApplied, Applied or Discarded), line, matched, exception and applied " +
-		"counts, and why it failed if it did. Pass one's id to get_factoring_remittance for " +
+		"counts, and why it failed if it did. Pass one's id to factoring_get_remittance for " +
 		"its lines."
 }
 
@@ -209,8 +209,8 @@ func (t *listFactoringRemittancesTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramFactoringFactor: agenttoolschema.RecordIDText(
 			permission.ResourceFactoringCompany,
-			"Only remittances from this factor, from get_factoring_remittance or "+
-				"list_factoring_ready_invoices.",
+			"Only remittances from this factor, from factoring_get_remittance or "+
+				"factoring_list_readiness.",
 		),
 		paramRemittanceStatus: jsonschemautils.DescribedArray(
 			"Only remittances in these statuses.",
@@ -315,14 +315,14 @@ func provideGetFactoringRemittanceTool(
 	}
 }
 
-func (t *getFactoringRemittanceTool) Name() string { return "get_factoring_remittance" }
+func (t *getFactoringRemittanceTool) Name() string { return "factoring_get_remittance" }
 
 func (t *getFactoringRemittanceTool) Description() string {
 	return "Read one factor remittance with its lines and how each was matched. Each line has " +
 		"its row, kind, invoice number, amounts and date as the factor printed them, its " +
 		"match status, the schedule item it is matched to, and up to three ranked suggestions " +
-		"with why. Use its version and a line id with resolve_factoring_remittance_line, and " +
-		"its version with apply_factoring_remittance or discard_factoring_remittance."
+		"with why. Use its version and a line id with factoring_resolve_remittance_line, and " +
+		"its version with factoring_apply_remittance or factoring_discard_remittance."
 }
 
 func (t *getFactoringRemittanceTool) SearchTerms() []string {
@@ -333,7 +333,7 @@ func (t *getFactoringRemittanceTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramFactoringRemittance: agenttoolschema.RecordIDText(
 			permission.ResourceFactoringRemittance,
-			"The remittance, from list_factoring_remittances.",
+			"The remittance, from factoring_list_remittances.",
 		),
 		paramRemittanceLineStatus: jsonschemautils.DescribedArray(
 			"Only lines in these match statuses; leave out for every line.",

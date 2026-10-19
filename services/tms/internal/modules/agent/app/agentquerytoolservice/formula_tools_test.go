@@ -395,10 +395,10 @@ func TestGetFormulaTemplate_IsAReadOfFormulaTemplates(t *testing.T) {
 	tool := newGetFormulaTemplateTool(&stubFormulaTemplates{}, &fakePermissions{})
 	policy := tool.Policy()
 
-	assert.Equal(t, "get_formula_template", tool.Name())
+	assert.Equal(t, "formula_get_template", tool.Name())
 	assert.Equal(t, permission.ResourceFormulaTemplate, policy.Resource)
 	assert.Equal(t, agent.ToolKindQuery, policy.Kind)
-	assert.Contains(t, tool.Description(), "list_formula_templates")
+	assert.Contains(t, tool.Description(), "formula_list_templates")
 }
 
 /*

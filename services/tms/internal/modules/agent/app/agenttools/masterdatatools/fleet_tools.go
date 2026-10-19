@@ -67,7 +67,7 @@ func NewUpdateTractorStatusTool(tractors tractorStatusUpdater) agentports.AgentT
 	return &UpdateTractorStatusTool{tractors: tractors}
 }
 
-func (t *UpdateTractorStatusTool) Name() string { return "update_tractor_status" }
+func (t *UpdateTractorStatusTool) Name() string { return "equipment_set_tractor_status" }
 
 func (t *UpdateTractorStatusTool) SearchTerms() []string {
 	return []string{"out of service", "maintenance", "available"}
@@ -80,13 +80,13 @@ func (t *UpdateTractorStatusTool) Prerequisites() []string {
 func (t *UpdateTractorStatusTool) Description() string {
 	return "Change the status of one or more tractors, which is what makes a truck " +
 		"available to dispatch or takes it off the board. " + equipmentStatusNote +
-		" Get the ids from list_tractors; a unit number is not an id."
+		" Get the ids from equipment_list_tractors; a unit number is not an id."
 }
 
 func (t *UpdateTractorStatusTool) ParamSchema() map[string]any {
 	return equipmentStatusSchema(
 		"tractorIds",
-		"The tractors to move, by id from list_tractors. One id is the normal case.",
+		"The tractors to move, by id from equipment_list_tractors. One id is the normal case.",
 		permission.ResourceTractor,
 	)
 }
@@ -138,7 +138,7 @@ func NewUpdateTrailerStatusTool(trailers trailerStatusUpdater) agentports.AgentT
 	return &UpdateTrailerStatusTool{trailers: trailers}
 }
 
-func (t *UpdateTrailerStatusTool) Name() string { return "update_trailer_status" }
+func (t *UpdateTrailerStatusTool) Name() string { return "equipment_set_trailer_status" }
 
 func (t *UpdateTrailerStatusTool) SearchTerms() []string {
 	return []string{"out of service", "maintenance", "available"}
@@ -151,13 +151,13 @@ func (t *UpdateTrailerStatusTool) Prerequisites() []string {
 func (t *UpdateTrailerStatusTool) Description() string {
 	return "Change the status of one or more trailers, which is what makes a trailer " +
 		"available to dispatch or takes it off the board. " + equipmentStatusNote +
-		" Get the ids from list_trailers; a unit number is not an id."
+		" Get the ids from equipment_list_trailers; a unit number is not an id."
 }
 
 func (t *UpdateTrailerStatusTool) ParamSchema() map[string]any {
 	return equipmentStatusSchema(
 		"trailerIds",
-		"The trailers to move, by id from list_trailers. One id is the normal case.",
+		"The trailers to move, by id from equipment_list_trailers. One id is the normal case.",
 		permission.ResourceTrailer,
 	)
 }

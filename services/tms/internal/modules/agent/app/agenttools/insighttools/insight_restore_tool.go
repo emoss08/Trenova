@@ -42,9 +42,9 @@ func restoreInsightRequest(
 
 func NewRestoreInsightTool(insights InsightRestorer) agentports.AgentTool {
 	return common.NewReceivableTool(&common.ReceivableSpec{
-		Name: "restore_insight",
+		Name: "insight_restore",
 		Description: "Put a dismissed insight back on the list of findings to act on, when " +
-			"the reason it was dismissed no longer holds. Find it with list_insights and " +
+			"the reason it was dismissed no longer holds. Find it with insight_list and " +
 			"status Dismissed.",
 		Resource:    permission.ResourceInsight,
 		Operation:   permission.OpUpdate,
@@ -53,10 +53,10 @@ func NewRestoreInsightTool(insights InsightRestorer) agentports.AgentTool {
 		MaxTier:     agent.TierAutoExecute,
 		Reversible:  true,
 		Rationale: "Returns a finding to the active list inside Trenova; nothing is sent and " +
-			"dismiss_insight takes it off again.",
+			"insight_dismiss takes it off again.",
 		Properties: map[string]any{
 			ParamInsightID: agenttoolschema.RecordIDText(permission.ResourceInsight,
-				"The dismissed insight, from list_insights. Never guess one."),
+				"The dismissed insight, from insight_list. Never guess one."),
 		},
 		Required:    []string{ParamInsightID},
 		SearchTerms: []string{"restore insight", "undismiss", "reopen finding"},

@@ -51,7 +51,7 @@ type triageFiling interface {
 
 func errAttachmentElsewhere(messageID pulid.ID) error {
 	return fmt.Errorf("that attachment is not one of message %s's attachments; take the "+
-		"attachment id from get_inbound_message for this message", messageID)
+		"attachment id from inbox_get_inbound_message for this message", messageID)
 }
 
 type filedAttachmentView struct {
@@ -131,13 +131,13 @@ func newFileInboundAttachmentTool(
 ) agentports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
-			Name:     "file_inbound_attachment",
+			Name:     "inbox_file_attachment",
 			Artifact: common.ShipmentRecordEntity,
 			Description: "File an email attachment on a shipment as a typed document, whole " +
 				"or split into page ranges that each become their own document. Whole, it is " +
 				"filed as the type you name, or as the kind it was read as when you name " +
 				"none. Only a PDF splits. A file that was not read, or is already filed, is " +
-				"refused; unfile_inbound_attachment undoes a filing.",
+				"refused; inbox_unfile_attachment undoes a filing.",
 			Resource:    permission.ResourceDocument,
 			Operation:   permission.OpUpdate,
 			Egress:      agent.EgressInternal,
@@ -149,26 +149,26 @@ func newFileInboundAttachmentTool(
 				"told and it can be unfiled.",
 			Properties: map[string]any{
 				paramMessageID: messageIDProperty(
-					"The message the attachment came on, from list_inbound_messages or " +
-						"search_inbound_messages.",
+					"The message the attachment came on, from inbox_list_inbound_messages or " +
+						"inbox_search_inbound_messages.",
 				),
 				paramAttachmentID: agenttoolschema.IDText(
-					"The attachment, from the attachments get_inbound_message lists for the " +
+					"The attachment, from the attachments inbox_get_inbound_message lists for the " +
 						"message.",
 				),
 				paramShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
 					"The shipment to file it on: the message's matched shipment from "+
-						"get_inbound_message, or one from shipment_list."),
+						"inbox_get_inbound_message, or one from shipment_list."),
 				paramDocumentTypeID: agenttoolschema.RecordIDText(
 					permission.ResourceDocumentType,
 					"Optional, for the whole file: what to file it as, from "+
-						"list_document_types. Ignored when pages are given.",
+						"document_list_types. Ignored when pages are given.",
 				),
 				paramPages: filingPagesProperty(),
 			},
 			Required:    []string{paramMessageID, paramAttachmentID, paramShipmentID},
 			SearchTerms: []string{"file attachment", "attach POD", "split pdf", "file on load"},
-			Recipe:      []string{toolGetInboundMessage, "file_inbound_attachment"},
+			Recipe:      []string{toolGetInboundMessage, "inbox_file_attachment"},
 			Target:      targetMessage,
 		},
 		common.ReceivablePlan[*fileCall, *triageworkservice.FilePlan]{
@@ -235,7 +235,7 @@ func filingPagesProperty() map[string]any {
 				},
 				paramDocumentTypeID: agenttoolschema.RecordIDText(
 					permission.ResourceDocumentType,
-					"What these pages are, from list_document_types.",
+					"What these pages are, from document_list_types.",
 				),
 			},
 			toolschema.KeyRequired: []string{
@@ -412,12 +412,12 @@ func newUnfileInboundAttachmentTool(
 ) agentports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
-			Name:     "unfile_inbound_attachment",
+			Name:     "inbox_unfile_attachment",
 			Artifact: inboundMessageEntity,
 			Description: "Take an email attachment off the shipment it was filed on, when " +
 				"it went on the wrong load or as the wrong type. A whole file returns " +
 				"to the message and any document it replaced is restored; the documents a " +
-				"split made are deleted. get_inbound_message shows where each attachment is " +
+				"split made are deleted. inbox_get_inbound_message shows where each attachment is " +
 				"filed.",
 			Resource:    permission.ResourceDocument,
 			Operation:   permission.OpUpdate,
@@ -428,17 +428,17 @@ func newUnfileInboundAttachmentTool(
 				"documents a split made, so a person approves it.",
 			Properties: map[string]any{
 				paramMessageID: messageIDProperty(
-					"The message the attachment came on, from list_inbound_messages or " +
-						"search_inbound_messages.",
+					"The message the attachment came on, from inbox_list_inbound_messages or " +
+						"inbox_search_inbound_messages.",
 				),
 				paramAttachmentID: agenttoolschema.IDText(
-					"The filed attachment, from the attachments get_inbound_message lists " +
+					"The filed attachment, from the attachments inbox_get_inbound_message lists " +
 						"for the message.",
 				),
 			},
 			Required:    []string{paramMessageID, paramAttachmentID},
 			SearchTerms: []string{"unfile attachment", "wrong load", "take document off"},
-			Recipe:      []string{toolGetInboundMessage, "unfile_inbound_attachment"},
+			Recipe:      []string{toolGetInboundMessage, "inbox_unfile_attachment"},
 			Target:      targetMessage,
 		},
 		common.ReceivablePlan[*unfileCall, *triageworkservice.UnfilePlan]{

@@ -114,7 +114,7 @@ func TestPreviewEDIDocument_RendersA214ThroughTheSendPathWithItsFindings(t *test
 	assert.Equal(t, shipmentID, req.ShipmentID)
 	assert.Equal(t, edi.TransactionSet214, req.TransactionSet)
 	assert.Equal(t, edi.DocumentDirectionOutbound, req.Direction,
-		"the request send_edi_status_update makes")
+		"the request edi_send_status_update makes")
 	assert.Equal(t, params.OrganizationID, req.TenantInfo.OrgID)
 
 	view := result.(*ediDocumentPreviewView)

@@ -12,7 +12,7 @@ import (
 )
 
 // A file's wait is set by the system when the agent finds the file still
-// being read, never asked for with wait_until.
+// being read, never asked for with agent_create_wait.
 func TestAgentsCannotAskForADocumentReadWait(t *testing.T) {
 	t.Parallel()
 

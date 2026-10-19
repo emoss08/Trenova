@@ -9,7 +9,7 @@ import type {
 
 /** A rule as the server sends it; the id is the tool's name, as the server keys it. */
 export function policy(overrides: Partial<AgentToolPolicy>): AgentToolPolicy {
-  const name = overrides.name ?? "assign_move";
+  const name = overrides.name ?? "dispatch_assign_move";
   return {
     id: name,
     name,
@@ -62,7 +62,7 @@ export function autonomy(overrides: Partial<AgentToolAutonomy>): AgentToolAutono
   };
 }
 
-/** "email_customer" reads "Email customer", as the server titles it. */
+/** "customer_send_email" reads "Email customer", as the server titles it. */
 function titleOf(name: string): string {
   const words = name.replace(/_/g, " ");
   return words.charAt(0).toUpperCase() + words.slice(1);

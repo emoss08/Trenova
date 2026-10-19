@@ -14,14 +14,14 @@ func TestExecutedCount_CountsOnlyThisToolsRealWrites(t *testing.T) {
 	t.Parallel()
 
 	actions := []agentports.PendingAction{
-		{ToolName: "assign_move", Executed: true},
-		{ToolName: "assign_move", Executed: true},
-		{ToolName: "assign_move"},
-		{ToolName: "assign_move", Executed: true, Simulated: true},
+		{ToolName: "dispatch_assign_move", Executed: true},
+		{ToolName: "dispatch_assign_move", Executed: true},
+		{ToolName: "dispatch_assign_move"},
+		{ToolName: "dispatch_assign_move", Executed: true, Simulated: true},
 		{ToolName: "hold_shipment", Executed: true},
 	}
 
-	assert.Equal(t, 2, executedCount(actions, "assign_move"))
+	assert.Equal(t, 2, executedCount(actions, "dispatch_assign_move"))
 	assert.Equal(t, 1, executedCount(actions, "hold_shipment"))
-	assert.Zero(t, executedCount(nil, "assign_move"))
+	assert.Zero(t, executedCount(nil, "dispatch_assign_move"))
 }

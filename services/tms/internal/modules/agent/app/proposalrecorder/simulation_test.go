@@ -13,7 +13,7 @@ import (
 func TestRecord_KeepsASimulatedWriteAsSimulated(t *testing.T) {
 	t.Parallel()
 
-	simulated := pendingAction("update_tractor_status")
+	simulated := pendingAction("equipment_set_tractor_status")
 	simulated.Tier = agent.TierAutoExecute
 	simulated.Simulated = true
 	simulated.Simulation = &agent.ToolSimulation{
@@ -25,7 +25,7 @@ func TestRecord_KeepsASimulatedWriteAsSimulated(t *testing.T) {
 	}
 
 	plans := &capturingPlans{}
-	result := recordActions(t, plans, simulated, pendingAction("assign_move"))
+	result := recordActions(t, plans, simulated, pendingAction("dispatch_assign_move"))
 
 	require.Len(t, result.Proposals, 2)
 	first := result.Proposals[0]

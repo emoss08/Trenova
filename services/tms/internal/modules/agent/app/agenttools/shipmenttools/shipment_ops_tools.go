@@ -223,7 +223,7 @@ func NewRerateShipmentTool(shipments shipmentOperator) agentports.AgentTool {
 		Artifact: common.ShipmentRecordEntity,
 		Description: "Price a saved shipment again from its customer's rate agreement, " +
 			"replacing its rating method, base rate and contract accessorials. Use it when the lane, the stops or the agreement changed and " +
-			"the person wants the contract price back; read explain_rate first to see it. A " +
+			"the person wants the contract price back; read rate_explain first to see it. A " +
 			"shipment whose rate is locked or that is billed is refused, and one no contract " +
 			"covers is left as it is.",
 		Resource:    permission.ResourceShipment,

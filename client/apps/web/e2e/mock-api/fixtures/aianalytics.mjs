@@ -311,15 +311,15 @@ const TOOLS_BY_TASK = {
     "lookup_rate",
     "get_hos_status",
     "update_load_status",
-    "run_report",
+    "report_run",
   ],
-  BillingDiagnosis: ["release_billing_hold", "lookup_rate", "run_report"],
+  BillingDiagnosis: ["release_billing_hold", "lookup_rate", "report_run"],
   DocumentExtraction: ["extract_document_fields"],
   DocumentClassification: ["extract_document_fields"],
-  QueryCompose: ["run_report"],
+  QueryCompose: ["report_run"],
   ScopeClassification: ["search_drivers"],
-  OperationalInsights: ["run_report"],
-  DailyBriefing: ["run_report"],
+  OperationalInsights: ["report_run"],
+  DailyBriefing: ["report_run"],
   FormulaAssistant: ["lookup_rate"],
 };
 
@@ -349,7 +349,7 @@ const TOOL_CAUSES = [
 export const FAILURE_MESSAGES = {
   WrongArguments: {
     assign_driver: '"driver_id" must be a string — got 1042',
-    run_report: '"date_range.start" is not a date: "last tuesday"',
+    report_run: '"date_range.start" is not a date: "last tuesday"',
     release_billing_hold: '"hold_id" is required',
     lookup_rate: '"lane.origin" must be a location id, got "Dallas"',
     extract_document_fields: '"fields" must list at least one field',

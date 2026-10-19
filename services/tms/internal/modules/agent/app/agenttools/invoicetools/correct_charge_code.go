@@ -41,7 +41,7 @@ func (t *CorrectChargeCodeTool) Description() string {
 	return "Correct or normalize the accessorial charge codes on a billing queue item's charges. " +
 		"Use it when a charge carries the wrong accessorial; the set you send replaces the " +
 		"item's additional charges, so include every charge that should remain, each with " +
-		"an accessorialChargeId from list_accessorial_charges. The item must be InReview " +
+		"an accessorialChargeId from masterdata_list_accessorial_charges. The item must be InReview " +
 		"first (billing_start_review)."
 }
 
@@ -86,7 +86,7 @@ func chargeLineSchema() map[string]any {
 				permission.KindAdditionalCharge),
 			chargeLineAccessorial: agenttoolschema.RecordIDText(
 				permission.ResourceAccessorialCharge,
-				"The accessorial, from list_accessorial_charges.",
+				"The accessorial, from masterdata_list_accessorial_charges.",
 			),
 			chargeLineMethod: agenttoolschema.Enum(
 				"How the amount is applied: Flat once, PerUnit times the unit, "+

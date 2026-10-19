@@ -29,7 +29,7 @@ const (
 	paramExpiresAt      = "expiresAt"
 	paramReason         = "reason"
 
-	toolListNoas = "list_factoring_noas"
+	toolListNoas = "factoring_list_noas"
 )
 
 type policySpec struct {
@@ -107,7 +107,7 @@ func noaIDParam(description string) map[string]any {
 
 func versionParam() map[string]any {
 	return jsonschemautils.Integer(
-		"The notice's version from list_factoring_noas, so a notice someone changed " +
+		"The notice's version from factoring_list_noas, so a notice someone changed " +
 			"since is not overwritten.",
 	)
 }
@@ -149,12 +149,12 @@ func NewDraftFactoringNoaTool(noas factoringports.NoaService) agentports.AgentTo
 	return &DraftFactoringNoaTool{noas: noas}
 }
 
-func (t *DraftFactoringNoaTool) Name() string { return "draft_factoring_noa" }
+func (t *DraftFactoringNoaTool) Name() string { return "factoring_create_noa" }
 
 func (t *DraftFactoringNoaTool) Description() string {
 	return "Draft a notice of assignment telling a factored customer to pay the factor. " +
-		"It sends nothing: send_factoring_noa emails the letter once it is drafted. A " +
-		"customer can have only one open notice per factor, so check list_factoring_noas " +
+		"It sends nothing: factoring_send_noa emails the letter once it is drafted. A " +
+		"customer can have only one open notice per factor, so check factoring_list_noas " +
 		"first; an invoice is not ready to factor until the customer acknowledges one."
 }
 
@@ -168,11 +168,11 @@ func (t *DraftFactoringNoaTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramCustomerID: agenttoolschema.RecordIDText(
 			permission.ResourceCustomer,
-			"The factored customer, from the invoice or list_customers.",
+			"The factored customer, from the invoice or customer_list.",
 		),
 		paramFactorID: agenttoolschema.RecordIDText(
 			permission.ResourceFactoringCompany,
-			"The factor the customer's invoices are assigned to, from invoice_get or list_factoring_ready_invoices.",
+			"The factor the customer's invoices are assigned to, from invoice_get or factoring_list_readiness.",
 		),
 		paramNotes: jsonschemautils.Text("A note printed on the letter, when there is one."),
 	}, paramCustomerID, paramFactorID)
@@ -273,14 +273,14 @@ func NewSendFactoringNoaTool(
 	return &SendFactoringNoaTool{noas: noas, senders: senders}
 }
 
-func (t *SendFactoringNoaTool) Name() string { return "send_factoring_noa" }
+func (t *SendFactoringNoaTool) Name() string { return "factoring_send_noa" }
 
 func (t *SendFactoringNoaTool) Description() string {
 	return "Email the customer the notice of assignment letter as a PDF, from the " +
 		"organization's own template, asking them to pay the factor and return a signed copy. " +
 		"It goes to the customer's invoice email recipients unless recipient names others. " +
 		"Sending the same version twice does not send twice. Once the signed copy is back, " +
-		"upload it to the notice and call record_factoring_noa_acknowledgement."
+		"upload it to the notice and call factoring_record_noa_acknowledgement."
 }
 
 func (t *SendFactoringNoaTool) SearchTerms() []string {
@@ -292,7 +292,7 @@ func (t *SendFactoringNoaTool) Prerequisites() []string { return []string{toolLi
 func (t *SendFactoringNoaTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramNoaID: noaIDParam(
-			"The drafted notice, from list_factoring_noas or draft_factoring_noa.",
+			"The drafted notice, from factoring_list_noas or factoring_create_noa.",
 		),
 		paramVersion: versionParam(),
 		paramRecipient: jsonschemautils.Text(
@@ -425,7 +425,7 @@ func NewRecordFactoringNoaAcknowledgementTool(noas factoringports.NoaService) ag
 }
 
 func (t *RecordFactoringNoaAcknowledgementTool) Name() string {
-	return "record_factoring_noa_acknowledgement"
+	return "factoring_record_noa_acknowledgement"
 }
 
 func (t *RecordFactoringNoaAcknowledgementTool) Description() string {
@@ -445,14 +445,14 @@ func (t *RecordFactoringNoaAcknowledgementTool) Prerequisites() []string {
 
 func (t *RecordFactoringNoaAcknowledgementTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		paramNoaID:   noaIDParam("The sent notice, from list_factoring_noas."),
+		paramNoaID:   noaIDParam("The sent notice, from factoring_list_noas."),
 		paramVersion: versionParam(),
 		paramAcknowledgedAt: agenttoolschema.DateTime(
 			"When the customer signed the notice. It cannot be in the future.",
 		),
 		paramSignedDocument: agenttoolschema.RecordIDText(
 			permission.ResourceDocument,
-			"The signed copy, a document uploaded to this notice, from search_documents.",
+			"The signed copy, a document uploaded to this notice, from document_list.",
 		),
 		paramExpiresAt: agenttoolschema.DateTime(
 			"When the notice stops applying, if the factor's agreement says so. Leave it " +
@@ -579,7 +579,7 @@ func NewReleaseFactoringNoaTool(noas factoringports.NoaService) agentports.Agent
 	return &ReleaseFactoringNoaTool{noas: noas}
 }
 
-func (t *ReleaseFactoringNoaTool) Name() string { return "release_factoring_noa" }
+func (t *ReleaseFactoringNoaTool) Name() string { return "factoring_release_noa" }
 
 func (t *ReleaseFactoringNoaTool) Description() string {
 	return "Release a notice of assignment, for example once the factor's release letter " +
@@ -596,7 +596,7 @@ func (t *ReleaseFactoringNoaTool) Prerequisites() []string { return []string{too
 
 func (t *ReleaseFactoringNoaTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		paramNoaID:   noaIDParam("The open notice, from list_factoring_noas."),
+		paramNoaID:   noaIDParam("The open notice, from factoring_list_noas."),
 		paramVersion: versionParam(),
 		paramReason: jsonschemautils.Text(
 			"Why the notice is released, such as the factor's release letter, in one sentence.",

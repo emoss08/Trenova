@@ -18,11 +18,11 @@ import (
 )
 
 const (
-	toolIssueCarrierTrackingLink  = "issue_carrier_tracking_link"
-	toolRevokeCarrierTrackingLink = "revoke_carrier_tracking_link"
+	toolIssueCarrierTrackingLink  = "dispatch_share_tracking_link"
+	toolRevokeCarrierTrackingLink = "dispatch_revoke_tracking_link"
 	toolShipmentGet               = "shipment_get"
 	toolShipmentList              = "shipment_list"
-	toolGetCarrier                = "get_carrier"
+	toolGetCarrier                = "carrier_get"
 	paramRecipientEmail           = "recipientEmail"
 	fieldExpiresAt                = "expiresAt"
 	fieldRevokedAt                = "revokedAt"
@@ -130,7 +130,7 @@ func newIssueCarrierTrackingLinkTool(links carrierTrackingLinker) agentports.Age
 			Description: "Email the carrier covering a brokered move a tracking link, so their " +
 				"dispatcher or driver can post check calls, arrivals and departures without " +
 				"signing in. Issuing replaces any live link on the move, which stops working. " +
-				"Send it to the address the carrier gave you or the email get_carrier shows for " +
+				"Send it to the address the carrier gave you or the email carrier_get shows for " +
 				"the carrier or its dispatch contact; never invent one. The link itself is never " +
 				"shown to you, so it cannot be pasted anywhere else.",
 			Resource:    permission.ResourceShipmentMove,
@@ -140,7 +140,7 @@ func newIssueCarrierTrackingLinkTool(links carrierTrackingLinker) agentports.Age
 			MaxTier:     agent.TierActWithApproval,
 			Reversible:  true,
 			Rationale: "Emails a link outside the organization that lets the carrier post to the " +
-				"load, and ends any link the carrier holds now; revoke_carrier_tracking_link " +
+				"load, and ends any link the carrier holds now; dispatch_revoke_tracking_link " +
 				"ends it.",
 			Target:   moveTarget,
 			Artifact: common.ShipmentRecordEntity,
@@ -148,7 +148,7 @@ func newIssueCarrierTrackingLinkTool(links carrierTrackingLinker) agentports.Age
 				ParamMoveID: moveProperty("The move to track"),
 				paramRecipientEmail: common.StringProperty(
 					"Where to email the link: the carrier's dispatch address they gave or "+
-						"get_carrier shows.",
+						"carrier_get shows.",
 					checkcall.MaxRecipientLength,
 				),
 			},
@@ -312,7 +312,7 @@ func newRevokeCarrierTrackingLinkTool(links carrierTrackingLinker) agentports.Ag
 			Description: "Stop the live carrier tracking link on a move from working, so nobody " +
 				"can post check calls through it. Use it when the link reached the wrong person, " +
 				"the carrier changed, or the person asks for it to end; issue a new one with " +
-				"issue_carrier_tracking_link if the carrier should keep posting.",
+				"dispatch_share_tracking_link if the carrier should keep posting.",
 			Resource:    permission.ResourceShipmentMove,
 			Operation:   permission.OpUpdate,
 			Egress:      agent.EgressExternalRecipient,

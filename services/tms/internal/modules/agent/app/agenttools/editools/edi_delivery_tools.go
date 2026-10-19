@@ -133,7 +133,7 @@ func NewRetryEDIMessageDeliveryTool(deliveries ediDeliveryRetrier) agentports.Ag
 	return &RetryEDIMessageDeliveryTool{deliveries: deliveries}
 }
 
-func (t *RetryEDIMessageDeliveryTool) Name() string { return "retry_edi_message_delivery" }
+func (t *RetryEDIMessageDeliveryTool) Name() string { return "edi_retry_message" }
 
 func (t *RetryEDIMessageDeliveryTool) Description() string {
 	return "Propose sending outbound EDI documents that failed to reach their trading " +
@@ -146,7 +146,7 @@ func (t *RetryEDIMessageDeliveryTool) Description() string {
 func (t *RetryEDIMessageDeliveryTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramEDIMessageIDs: agenttoolschema.OfKinds(ediRecordSubset("The outbound messages "+
-			"to send again, by id from list_edi_messages filtered to Failed or DeadLettered. "+
+			"to send again, by id from edi_list_messages filtered to Failed or DeadLettered. "+
 			"Never guess one."), permission.KindEDIMessage),
 	}, paramEDIMessageIDs)
 }
@@ -220,19 +220,19 @@ func NewReplayEDIMessageTool(deliveries ediMessageReplayer) agentports.AgentTool
 	return &ReplayEDIMessageTool{deliveries: deliveries}
 }
 
-func (t *ReplayEDIMessageTool) Name() string { return "replay_edi_message" }
+func (t *ReplayEDIMessageTool) Name() string { return "edi_replay_message" }
 
 func (t *ReplayEDIMessageTool) Description() string {
 	return "Propose sending an outbound EDI document its trading partner already " +
 		"received once more, exactly as it was generated. Use it only when the partner " +
 		"says they lost or never processed it; the partner gets it twice otherwise. A " +
-		"failed delivery is retry_edi_message_delivery's. A person always decides."
+		"failed delivery is edi_retry_message's. A person always decides."
 }
 
 func (t *ReplayEDIMessageTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramEDIMessageID: agenttoolschema.KindID("The delivered outbound message, from "+
-			"list_edi_messages filtered to Sent. Never guess one.", permission.KindEDIMessage),
+			"edi_list_messages filtered to Sent. Never guess one.", permission.KindEDIMessage),
 	}, paramEDIMessageID)
 }
 
@@ -307,14 +307,14 @@ func NewReprocessEDIInboundFilesTool(files inboundFileReprocessor) agentports.Ag
 	return &ReprocessEDIInboundFilesTool{files: files}
 }
 
-func (t *ReprocessEDIInboundFilesTool) Name() string { return "reprocess_edi_inbound_files" }
+func (t *ReprocessEDIInboundFilesTool) Name() string { return "edi_reprocess_inbound_file" }
 
 func (t *ReprocessEDIInboundFilesTool) Recipe() []string {
 	return []string{
-		"list_edi_inbound_files",
-		"get_edi_inbound_file",
-		"get_edi_partner",
-		"reprocess_edi_inbound_files",
+		"edi_list_inbound_files",
+		"edi_get_inbound_file",
+		"edi_get_partner",
+		"edi_reprocess_inbound_file",
 	}
 }
 
@@ -329,7 +329,7 @@ func (t *ReprocessEDIInboundFilesTool) Description() string {
 func (t *ReprocessEDIInboundFilesTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramEDIInboundFileIDs: agenttoolschema.OfKinds(ediRecordSubset("The inbound files "+
-			"to process again, by id from list_edi_inbound_files or get_edi_inbound_file. "+
+			"to process again, by id from edi_list_inbound_files or edi_get_inbound_file. "+
 			"Never guess one."), permission.KindEDIInboundFile),
 	}, paramEDIInboundFileIDs)
 }

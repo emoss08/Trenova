@@ -131,11 +131,11 @@ func newListAgentRunsTool(
 
 func agentRunListSpec() listSpec {
 	return listSpec{
-		name:         "list_agent_runs",
+		name:         "agent_list_runs",
 		entityPlural: "agent runs",
 		summary: "List agent runs: what each agent did, what started it, the record it " +
 			"worked on, and whether it failed, waits on a decision or is running. " +
-			"get_agent_run reads one.",
+			"agent_get_run reads one.",
 		resource: permission.ResourceAgentRun,
 		config:   querybuilder.GetFieldConfiguration((*agent.AgentRun)(nil)),
 		fields: []listField{
@@ -169,7 +169,7 @@ func agentRunListSpec() listSpec {
 				Kind:           filterEnum,
 				Values:         agentSubjectValues(),
 				ValuesUnlisted: true,
-				Note: "the kind of record the run worked on, named as get_agent_run " +
+				Note: "the kind of record the run worked on, named as agent_get_run " +
 					"reports it (" + string(agent.SubjectShipment) + ", " +
 					string(agent.SubjectBillingQueueItem) + ", " +
 					string(agent.SubjectAccountingDrift) + "); " +
@@ -436,12 +436,12 @@ func newGetAgentRunTool(
 	}
 }
 
-func (t *getAgentRunTool) Name() string { return "get_agent_run" }
+func (t *getAgentRunTool) Name() string { return "agent_get_run" }
 
 func (t *getAgentRunTool) Description() string {
 	return "Retrieve one agent run by id: which agent ran, what started it, the record it " +
 		"worked on, its status, its summary and, if it failed, why. It can add the writes " +
-		"the run proposed and its last 50 steps. Use list_agent_runs first when you do not " +
+		"the run proposed and its last 50 steps. Use agent_list_runs first when you do not " +
 		"have an id."
 }
 
@@ -450,7 +450,7 @@ func (t *getAgentRunTool) ParamSchema() map[string]any {
 		toolschema.KeyType: toolschema.TypeObject,
 		toolschema.KeyProperties: map[string]any{
 			paramRunID: agenttoolschema.RecordIDText(permission.ResourceAgentRun,
-				"The agent run's id, from list_agent_runs, a proposal, the page you are on, "+
+				"The agent run's id, from agent_list_runs, a proposal, the page you are on, "+
 					"or a mentioned record."),
 			paramIncludeProposals: map[string]any{
 				toolschema.KeyType: toolschema.TypeBoolean,

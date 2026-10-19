@@ -68,7 +68,7 @@ scenarios:
     steps:
       - say: "what would this come out to on a 90 mile run at 3 bucks a mile"
         expect:
-          calls: ["test_formula_expression"]
+          calls: ["formula_test_expression"]
           noProposals: true
           replyIncludes: ["270|250"]
           rubric: >

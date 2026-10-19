@@ -168,10 +168,10 @@ func newService(proposals *stubProposals, decider *stubDecider) *Service {
 func TestDecideMany_RefusesAMixedBatchBeforeDecidingAnything(t *testing.T) {
 	t.Parallel()
 
-	first := proposal("assign_move")
-	second := proposal("email_customer")
+	first := proposal("dispatch_assign_move")
+	second := proposal("customer_send_email")
 	planID := pulid.MustNew("apl_")
-	step := proposal("assign_move")
+	step := proposal("dispatch_assign_move")
 	step.PlanID = &planID
 	proposals := &stubProposals{byID: map[pulid.ID]*agent.AgentProposal{
 		first.ID: first, second.ID: second, step.ID: step,
@@ -209,9 +209,9 @@ func TestDecideMany_RefusesAMixedBatchBeforeDecidingAnything(t *testing.T) {
 func TestDecideMany_ReportsEachOutcomeAndCarriesOn(t *testing.T) {
 	t.Parallel()
 
-	first := proposal("assign_move")
-	second := proposal("assign_move")
-	third := proposal("assign_move")
+	first := proposal("dispatch_assign_move")
+	second := proposal("dispatch_assign_move")
+	third := proposal("dispatch_assign_move")
 	proposals := &stubProposals{byID: map[pulid.ID]*agent.AgentProposal{
 		first.ID: first, second.ID: second, third.ID: third,
 	}}
@@ -250,9 +250,9 @@ func TestDecideMany_ReportsEachOutcomeAndCarriesOn(t *testing.T) {
 func TestDecideMany_ChecksEachProposalAgainstItsOwnPreview(t *testing.T) {
 	t.Parallel()
 
-	first := proposal("assign_move")
-	second := proposal("assign_move")
-	third := proposal("assign_move")
+	first := proposal("dispatch_assign_move")
+	second := proposal("dispatch_assign_move")
+	third := proposal("dispatch_assign_move")
 	proposals := &stubProposals{byID: map[pulid.ID]*agent.AgentProposal{
 		first.ID: first, second.ID: second, third.ID: third,
 	}}
@@ -290,7 +290,7 @@ func TestDecideMany_ChecksEachProposalAgainstItsOwnPreview(t *testing.T) {
 func TestDecideMany_KeepsInternalFaultsOutOfTheRow(t *testing.T) {
 	t.Parallel()
 
-	only := proposal("assign_move")
+	only := proposal("dispatch_assign_move")
 	decider := &stubDecider{fail: map[pulid.ID]error{only.ID: errors.New("pq: connection reset")}}
 	svc := newService(
 		&stubProposals{byID: map[pulid.ID]*agent.AgentProposal{only.ID: only}},
@@ -388,7 +388,7 @@ func TestValidateBatch(t *testing.T) {
 func TestListPending_LoadsRecordsInQueueOrderAndDropsTheGone(t *testing.T) {
 	t.Parallel()
 
-	first := proposal("assign_move")
+	first := proposal("dispatch_assign_move")
 	plan := &agent.AgentPlan{
 		ID:     pulid.MustNew("apl_"),
 		Title:  "Cover the move",
@@ -416,7 +416,7 @@ func TestListPending_LoadsRecordsInQueueOrderAndDropsTheGone(t *testing.T) {
 
 	page, err := svc.ListPending(t.Context(), agentports.ListPendingDecisionsRequest{
 		First:             2,
-		ToolName:          " assign_move ",
+		ToolName:          " dispatch_assign_move ",
 		IncludeTotalCount: true,
 	})
 	require.NoError(t, err)
@@ -426,7 +426,7 @@ func TestListPending_LoadsRecordsInQueueOrderAndDropsTheGone(t *testing.T) {
 	assert.True(t, page.HasNextPage)
 	require.NotNil(t, page.TotalCount)
 	assert.Equal(t, 7, *page.TotalCount)
-	assert.Equal(t, "assign_move", queue.last.ToolName)
+	assert.Equal(t, "dispatch_assign_move", queue.last.ToolName)
 	assert.True(t, queue.last.ExcludeShadowDefinitions)
 
 	decoded, err := decodeCursor(page.Items[1].Cursor)

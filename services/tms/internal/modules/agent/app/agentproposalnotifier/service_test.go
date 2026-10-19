@@ -209,9 +209,9 @@ func TestNotifyPending_TellsEveryDeciderOnce(t *testing.T) {
 		Definition: h.definition,
 		Run:        h.run,
 		Proposals: []*agent.AgentProposal{
-			h.proposal("assign_move", agent.ProposalStatusPending, 1),
+			h.proposal("dispatch_assign_move", agent.ProposalStatusPending, 1),
 			h.proposal("shipment_add_comment", agent.ProposalStatusPending, 2),
-			h.proposal("notify_driver", agent.ProposalStatusExecuted, 3),
+			h.proposal("worker_send_message", agent.ProposalStatusExecuted, 3),
 		},
 	}))
 
@@ -254,7 +254,7 @@ func TestNotifyPending_SkipsChatRunsAndShadow(t *testing.T) {
 		Definition: h.definition,
 		Run:        &chat,
 		Proposals: []*agent.AgentProposal{
-			h.proposal("assign_move", agent.ProposalStatusPending, 1),
+			h.proposal("dispatch_assign_move", agent.ProposalStatusPending, 1),
 		},
 	}))
 	assert.Empty(t, h.notifications.created, "the person who asked is looking at the answer")
@@ -264,7 +264,7 @@ func TestNotifyPending_SkipsChatRunsAndShadow(t *testing.T) {
 		Definition: shadowed.definition,
 		Run:        shadowed.run,
 		Proposals: []*agent.AgentProposal{
-			shadowed.proposal("assign_move", agent.ProposalStatusPending, 1),
+			shadowed.proposal("dispatch_assign_move", agent.ProposalStatusPending, 1),
 		},
 	}))
 	assert.Empty(t, shadowed.notifications.created, "hidden proposals are nothing to decide")
@@ -276,8 +276,8 @@ func TestRemindPending_NotifiesAtHighPriorityAndEmailsThoseWithAnAddress(t *test
 	h := newHarness(false)
 	now := int64(1_700_100_000)
 	h.proposals.pending = []*agent.AgentProposal{
-		h.proposal("assign_move", agent.ProposalStatusPending, now-6*3600),
-		h.proposal("assign_move", agent.ProposalStatusPending, now-5*3600),
+		h.proposal("dispatch_assign_move", agent.ProposalStatusPending, now-6*3600),
+		h.proposal("dispatch_assign_move", agent.ProposalStatusPending, now-5*3600),
 	}
 
 	reminded, err := h.svc.RemindPending(t.Context(), agentports.RemindPendingProposalsRequest{
@@ -318,7 +318,7 @@ func TestRemindPending_MarksShadowedProposalsWithoutTellingAnyone(t *testing.T) 
 	h := newHarness(true)
 	now := int64(1_700_100_000)
 	h.proposals.pending = []*agent.AgentProposal{
-		h.proposal("assign_move", agent.ProposalStatusPending, now-9*3600),
+		h.proposal("dispatch_assign_move", agent.ProposalStatusPending, now-9*3600),
 	}
 
 	reminded, err := h.svc.RemindPending(t.Context(), agentports.RemindPendingProposalsRequest{
@@ -343,11 +343,11 @@ func TestDescribeTools(t *testing.T) {
 		return out
 	}
 
-	assert.Equal(t, "assign move", describeTools(mk("assign_move")))
+	assert.Equal(t, "assign move", describeTools(mk("dispatch_assign_move")))
 	assert.Equal(
 		t,
 		"assign move and notify driver",
-		describeTools(mk("assign_move", "notify_driver", "assign_move")),
+		describeTools(mk("dispatch_assign_move", "worker_send_message", "dispatch_assign_move")),
 	)
 	assert.Equal(t, "a, b, c and 2 more", describeTools(mk("a", "b", "c", "d", "e")))
 	assert.Equal(t, "a change", countChanges(1))

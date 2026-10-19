@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -34,7 +34,7 @@ func (t *reportingTool) ExecuteWithResult(
 func newReportingTool(result *agent.ToolExecutionResult, err error) *reportingTool {
 	return &reportingTool{
 		recordingTool: recordingTool{
-			name:      "create_report",
+			name:      "report_create",
 			resource:  permission.ResourceReport,
 			operation: permission.OpCreate,
 			err:       err,
@@ -46,8 +46,8 @@ func newReportingTool(result *agent.ToolExecutionResult, err error) *reportingTo
 /*
 An approved write that names what it made has that recorded with it.
 
-create_report was approved and ran, and all the conversation learned was that
-it ran. The agent then passed the proposal's id to describe_report in place of
+report_create was approved and ran, and all the conversation learned was that
+it ran. The agent then passed the proposal's id to report_get in place of
 the report's. The result is written in the same update that marks the proposal
 executed, so nothing can read it as executed without it.
 */
@@ -61,7 +61,7 @@ func TestExecute_RecordsWhatTheToolMade(t *testing.T) {
 		IDs:    map[string]string{"definitionId": "rd_01"},
 	}, nil)
 	repo := &fakeProposalRepo{}
-	proposal := testProposal("create_report", map[string]any{"name": "Shipments"})
+	proposal := testProposal("report_create", map[string]any{"name": "Shipments"})
 
 	err := newExecutor(tool, repo, &fakePermissions{allowed: true}).Execute(
 		t.Context(),
@@ -96,7 +96,7 @@ func TestExecute_BoundsWhatTheToolReports(t *testing.T) {
 		IDs:    ids,
 	}, nil)
 	repo := &fakeProposalRepo{}
-	proposal := testProposal("create_report", map[string]any{})
+	proposal := testProposal("report_create", map[string]any{})
 
 	require.NoError(t, newExecutor(tool, repo, &fakePermissions{allowed: true}).Execute(
 		t.Context(),
@@ -127,7 +127,7 @@ func TestExecute_RecordsNoResultWhenTheToolFails(t *testing.T) {
 		errors.New("name taken"),
 	)
 	repo := &fakeProposalRepo{}
-	proposal := testProposal("create_report", map[string]any{})
+	proposal := testProposal("report_create", map[string]any{})
 
 	err := newExecutor(tool, repo, &fakePermissions{allowed: true}).Execute(
 		t.Context(),

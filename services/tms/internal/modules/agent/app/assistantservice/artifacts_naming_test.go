@@ -83,7 +83,7 @@ func TestArtifactRecorder_NamesTheTurnsOwnArtifactsWithoutAQuery(t *testing.T) {
 
 	repo := &titlingArtifactRepo{stubArtifactRepo: &stubArtifactRepo{}}
 	recorder := keepRecorder(t, repo)
-	card, _ := recorder.observe(observation("get_customer", map[string]any{
+	card, _ := recorder.observe(observation("customer_get", map[string]any{
 		"id": "cus_1", "name": "Acme",
 	}))
 	require.NotNil(t, card)

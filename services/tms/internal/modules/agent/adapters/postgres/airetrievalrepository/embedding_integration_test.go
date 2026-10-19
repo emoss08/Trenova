@@ -262,7 +262,7 @@ func TestCatalogEmbeddings_AreKeyedByModelCorpusItemAndHash(t *testing.T) {
 				Vector:      axisVector(768, map[int]float32{0: 1}),
 			},
 			{
-				ItemKey:     "get_customer",
+				ItemKey:     "customer_get",
 				ContentHash: "v1",
 				Vector:      axisVector(768, map[int]float32{1: 1}),
 			},
@@ -296,13 +296,13 @@ func TestCatalogEmbeddings_AreKeyedByModelCorpusItemAndHash(t *testing.T) {
 		Corpus:   airetrieval.CatalogCorpusTools,
 		Items: []airetrieval.CatalogItemRef{
 			{ItemKey: "shipment_list", ContentHash: "v2"},
-			{ItemKey: "get_customer", ContentHash: "v1"},
-			{ItemKey: "get_customer", ContentHash: "v9"},
+			{ItemKey: "customer_get", ContentHash: "v1"},
+			{ItemKey: "customer_get", ContentHash: "v9"},
 		},
 	})
 	require.NoError(t, err)
 	require.Len(t, found, 2)
-	assert.Equal(t, "get_customer", found[0].ItemKey)
+	assert.Equal(t, "customer_get", found[0].ItemKey)
 	assert.Equal(t, "shipment_list", found[1].ItemKey)
 	assert.Equal(t, "v2", found[1].ContentHash)
 	assert.InDelta(t, 1.0, found[1].Vector()[2], 0.001)
@@ -312,7 +312,7 @@ func TestCatalogEmbeddings_AreKeyedByModelCorpusItemAndHash(t *testing.T) {
 		Corpus:   airetrieval.CatalogCorpusTools,
 		Keep: []airetrieval.CatalogItemRef{
 			{ItemKey: "shipment_list", ContentHash: "v2"},
-			{ItemKey: "get_customer", ContentHash: "v1"},
+			{ItemKey: "customer_get", ContentHash: "v1"},
 		},
 	})
 	require.NoError(t, err)

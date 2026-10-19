@@ -36,7 +36,7 @@ const paramCaptureDocType = "documentTypeId"
 
 const maxCaptureFilings = 25
 
-const captureSources = "list_capture_batches"
+const captureSources = "inbox_list_capture_batches"
 
 var captureTargetTypes = agenttoolschema.Source(
 	"capture.targetType",
@@ -194,11 +194,11 @@ func (f *captureFiling) versioned(
 
 func NewFileCaptureItemsTool(captures CaptureKeeper) agentports.AgentTool {
 	return common.NewReceivableTool(&common.ReceivableSpec{
-		Name:   "file_capture_items",
-		Recipe: []string{"list_capture_batches", "list_document_types", "file_capture_items"},
+		Name:   "inbox_file_capture_item",
+		Recipe: []string{"inbox_list_capture_batches", "document_list_types", "inbox_file_capture_item"},
 		Description: "File scanned documents from capture intake onto the shipment, worker, " +
 			"tractor, trailer, customer or carrier they belong to, as the document type they " +
-			"are. Take the documents and their suggested records from list_capture_batches.",
+			"are. Take the documents and their suggested records from inbox_list_capture_batches.",
 		Resource:    permission.ResourceCaptureBatch,
 		Operation:   permission.OpUpdate,
 		Egress:      agent.EgressInternal,
@@ -302,8 +302,8 @@ func captureFilingProperties() map[string]any {
 					paramCaptureTarget: agenttoolschema.Enum("The kind of record it "+
 						"goes on.", captureTargetTypes),
 					paramCaptureTargetID: agenttoolschema.KindID("The record it goes on, by id "+
-						"from shipment_list, search_worker, list_tractors, list_trailers, "+
-						"list_customers or list_carriers.",
+						"from shipment_list, worker_search, equipment_list_tractors, equipment_list_trailers, "+
+						"customer_list or carrier_list.",
 						permission.RecordKind(permission.ResourceShipment),
 						permission.RecordKind(permission.ResourceWorker),
 						permission.RecordKind(permission.ResourceTractor),
@@ -313,7 +313,7 @@ func captureFilingProperties() map[string]any {
 					),
 					paramCaptureDocType: agenttoolschema.RecordIDText(
 						permission.ResourceDocumentType,
-						"What kind of document it is, from list_document_types.",
+						"What kind of document it is, from document_list_types.",
 					),
 				},
 				toolschema.KeyRequired: []string{
@@ -384,7 +384,7 @@ func NewDiscardCaptureItemTool(captures CaptureKeeper) agentports.AgentTool {
 	}
 
 	return common.NewReceivableTool(&common.ReceivableSpec{
-		Name: "discard_capture_item",
+		Name: "inbox_discard_capture_item",
 		Description: "Throw away one scanned document from capture intake without filing it, " +
 			"such as a blank sheet, a duplicate or a stray page. The rest of its stack stays.",
 		Resource:    permission.ResourceCaptureBatch,
@@ -478,7 +478,7 @@ func NewDiscardCaptureBatchTool(captures CaptureKeeper) agentports.AgentTool {
 	}
 
 	return common.NewReceivableTool(&common.ReceivableSpec{
-		Name: "discard_capture_batch",
+		Name: "inbox_discard_capture_batch",
 		Description: "Throw away every unfiled document of a scanned stack in capture intake, " +
 			"when nothing left in it is worth filing. Documents already filed stay on their " +
 			"records.",

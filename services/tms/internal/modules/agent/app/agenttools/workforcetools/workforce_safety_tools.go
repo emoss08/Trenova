@@ -258,7 +258,7 @@ func SafetyToolProviders() []any {
 
 func safetyEventIDProperty() map[string]any {
 	return agenttoolschema.RecordID(permission.ResourceWorkerSafetyEvent, "The safety event",
-		"list_worker_safety_events")
+		"worker_list_safety_events")
 }
 
 func safetyEventRecord(event *worker.WorkerSafetyEvent) toolpreview.Record {
@@ -455,11 +455,11 @@ func newOpenWorkerSafetyEventTool(events SafetyKeeper) agentports.AgentTool {
 	properties := safetyEventProperties()
 	properties[common.ParamWorkerID] = common.WorkerProperty()
 	spec := withSchema(wfSpec(
-		"open_worker_safety_event",
+		"worker_open_safety_event",
 		"Record a safety event on a driver's record: an accident, incident, near miss, "+
 			"citation or roadside inspection, with when and what happened. It opens Open and "+
 			"counts its points on the driver's scorecard; roadside violations cited on an "+
-			"inspection are added after with record_safety_violation.",
+			"inspection are added after with worker_record_safety_violation.",
 		"Adds an event to a driver's safety record inside Trenova; nothing is sent to the "+
 			"driver, and it is corrected or deleted while it is open.",
 		permission.ResourceWorkerSafetyEvent,
@@ -569,10 +569,10 @@ func newUpdateWorkerSafetyEventTool(events SafetyKeeper) agentports.AgentTool {
 	properties[paramSafetyEventID] = safetyEventIDProperty()
 	properties[paramResolutionText] = wfNoteProperty("How it was resolved, kept on the event.")
 	spec := targeting(withSchema(wfSpec(
-		"update_worker_safety_event",
+		"worker_update_safety_event",
 		"Correct a safety event on a driver's record: what happened, when, the points it "+
 			"carries, the inspection result, the fine or cost. Give only what changes. It "+
-			"never moves the event's status; change_worker_safety_event_status does.",
+			"never moves the event's status; worker_set_safety_event_status does.",
 		"Corrects an event on a driver's safety record inside Trenova; nothing is sent, and "+
 			"the event is corrected again the same way.",
 		permission.ResourceWorkerSafetyEvent,
@@ -669,7 +669,7 @@ func (m *safetyEventStatusMove) run(
 
 func newChangeWorkerSafetyEventStatusTool(events SafetyKeeper) agentports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
-		"change_worker_safety_event_status",
+		"worker_set_safety_event_status",
 		"Move a safety event to under review, closed or back to open. Review marks it "+
 			"under review while it is looked into, Close resolves it with the resolution kept "+
 			"on the record, and Reopen puts a closed or reviewed event back on the open list.",
@@ -798,7 +798,7 @@ func recordDeleteFrom(key string) func(*agentports.ToolExecuteParams) (*recordDe
 
 func newDeleteWorkerSafetyEventTool(events SafetyKeeper) agentports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
-		"delete_worker_safety_event",
+		"worker_delete_safety_event",
 		"Delete a safety event recorded in error, taking its points off the driver's "+
 			"record. A closed event is history and is refused: reopen it first if it truly "+
 			"never happened.",
@@ -893,7 +893,7 @@ var recognitionFields = []string{
 
 func newGiveWorkerRecognitionTool(events SafetyKeeper) agentports.AgentTool {
 	spec := withSchema(wfSpec(
-		"give_worker_recognition",
+		"worker_record_recognition",
 		"Recognise a driver for a safety milestone, customer praise, performance or tenure. "+
 			"When it is visible to the driver, which is the default, they are told in Dash "+
 			"with the title and message you write, so write it as you would say it to them.",
@@ -959,7 +959,7 @@ func newGiveWorkerRecognitionTool(events SafetyKeeper) agentports.AgentTool {
 
 func newDeleteWorkerRecognitionTool(events SafetyKeeper) agentports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
-		"delete_worker_recognition",
+		"worker_delete_recognition",
 		"Remove a recognition given in error. If it was visible, it leaves the driver's "+
 			"record in Dash too.",
 		"Removes a recognition from a driver's record; it is given again the same way.",
@@ -968,7 +968,7 @@ func newDeleteWorkerRecognitionTool(events SafetyKeeper) agentports.AgentTool {
 	), map[string]any{
 		paramRecognitionID: agenttoolschema.RecordIDText(
 			permission.ResourceWorkerRecognition,
-			"The recognition, from list_worker_safety_events. "+
+			"The recognition, from worker_list_safety_events. "+
 				"Never guess one.",
 		),
 	}, paramRecognitionID), paramRecognitionID, permission.ResourceWorkerRecognition)
@@ -1052,7 +1052,7 @@ func newRecordSafetyViolationTool(events SafetyKeeper) agentports.AgentTool {
 	properties := violationProperties()
 	properties[paramSafetyEventID] = safetyEventIDProperty()
 	spec := withSchema(wfSpec(
-		"record_safety_violation",
+		"worker_record_safety_violation",
 		"Cite one roadside violation on a safety event, usually an inspection, with its "+
 			"BASIC, the regulation, the severity weight and whether it was out of service. "+
 			"An inspection that cited several gets one call each. It feeds the fleet's CSA "+
@@ -1202,7 +1202,7 @@ func (e *violationEdit) request(
 
 func violationIDProperty() map[string]any {
 	return agenttoolschema.KindID(
-		agenttoolschema.IDDescription("The violation", "list_worker_safety_events"),
+		agenttoolschema.IDDescription("The violation", "worker_list_safety_events"),
 		permission.KindSafetyViolation,
 	)
 }
@@ -1211,7 +1211,7 @@ func newUpdateSafetyViolationTool(events SafetyKeeper) agentports.AgentTool {
 	properties := violationProperties()
 	properties[paramViolationID] = violationIDProperty()
 	spec := targeting(withSchema(wfSpec(
-		"update_safety_violation",
+		"worker_update_safety_violation",
 		"Correct a roadside violation cited on a safety event: its BASIC, regulation, "+
 			"wording, severity weight or out-of-service flag. Give only what changes.",
 		"Corrects a cited violation inside Trenova; nothing is sent, and it is corrected "+
@@ -1274,11 +1274,11 @@ func newUpdateSafetyViolationTool(events SafetyKeeper) agentports.AgentTool {
 
 func newDeleteSafetyViolationTool(events SafetyKeeper) agentports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
-		"delete_safety_violation",
+		"worker_delete_safety_violation",
 		"Remove a roadside violation cited on a safety event in error, taking it out of "+
 			"the fleet's CSA BASIC scores.",
 		"Removes a cited violation inside Trenova; the audit trail keeps what was removed, "+
-			"and it is cited again with record_safety_violation.",
+			"and it is cited again with worker_record_safety_violation.",
 		permission.ResourceWorkerSafetyEvent,
 		permission.OpDelete,
 	), map[string]any{paramViolationID: violationIDProperty()}, paramViolationID),

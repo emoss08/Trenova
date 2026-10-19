@@ -79,7 +79,7 @@ type serviceFailureLifecycle interface {
 
 func serviceFailureIDProperty() map[string]any {
 	return agenttoolschema.RecordID(permission.ResourceServiceFailure, "The failure",
-		"list_service_failures or the page you are on")
+		"exception_list_service_failures or the page you are on")
 }
 
 func serviceFailureRecord(failure *servicefailure.ServiceFailure) toolpreview.Record {
@@ -238,13 +238,13 @@ func (e *serviceFailureEdit) request(
 
 func NewUpdateServiceFailureTool(failures serviceFailureLifecycle) agentports.AgentTool {
 	return common.NewReportingReceivableTool(&common.ReceivableSpec{
-		Name:        "update_service_failure",
+		Name:        "exception_update_service_failure",
 		SearchTerms: []string{"change reason code", "edit service failure"},
 		Artifact:    common.ServiceFailureRecordEntity,
 		Description: "Change the reason code, notes or EDI 214 code overrides on an open " +
 			"or reviewed service failure. Send only what changes; an empty string clears " +
 			"a note or override. It does not move the failure through its lifecycle: use " +
-			"review_service_failure, resolve_service_failure or void_service_failure for " +
+			"exception_review_service_failure, exception_resolve_service_failure or exception_void_service_failure for " +
 			"that.",
 		Resource:    permission.ResourceServiceFailure,
 		Operation:   permission.OpUpdate,
@@ -258,7 +258,7 @@ func NewUpdateServiceFailureTool(failures serviceFailureLifecycle) agentports.Ag
 			editools.ParamServiceFailureID: serviceFailureIDProperty(),
 			common.FieldReasonCodeID: agenttoolschema.RecordIDText(
 				permission.ResourceServiceFailureReasonCode,
-				"The reason code to set, from list_service_failure_reason_codes.",
+				"The reason code to set, from exception_list_service_failure_reason_codes.",
 			),
 			paramClearReasonCode: common.BooleanProperty("True to remove the reason code. A " +
 				"reviewed failure keeps its reason."),
@@ -434,7 +434,7 @@ func newServiceFailureTransitionTool(
 	} else {
 		properties[common.FieldReasonCodeID] = agenttoolschema.RecordIDText(
 			permission.ResourceServiceFailureReasonCode,
-			"The reason code, from list_service_failure_reason_codes. Required when the "+
+			"The reason code, from exception_list_service_failure_reason_codes. Required when the "+
 				"failure has none; otherwise replaces it.",
 		)
 	}
@@ -518,7 +518,7 @@ func newServiceFailureTransitionTool(
 
 func NewReviewServiceFailureTool(failures serviceFailureLifecycle) agentports.AgentTool {
 	return newServiceFailureTransitionTool(failures, &serviceFailureTransitionSpec{
-		name:        "review_service_failure",
+		name:        "exception_review_service_failure",
 		searchTerms: []string{"mark reviewed"},
 		description: "Mark an open service failure reviewed, with the reason code that " +
 			"explains it, once a person has looked into what happened. A reviewed " +
@@ -544,11 +544,11 @@ func NewReviewServiceFailureTool(failures serviceFailureLifecycle) agentports.Ag
 
 func NewVoidServiceFailureTool(failures serviceFailureLifecycle) agentports.AgentTool {
 	return newServiceFailureTransitionTool(failures, &serviceFailureTransitionSpec{
-		name: "void_service_failure",
+		name: "exception_void_service_failure",
 		description: "Void a service failure that should never have been opened, with " +
 			"the reason why: a wrong appointment window, a corrected arrival, a stop " +
 			"that was not late. Voiding is final. For a failure that was real and is " +
-			"now handled, use resolve_service_failure instead.",
+			"now handled, use exception_resolve_service_failure instead.",
 		operation: permission.OpArchive,
 		rationale: "Voiding a failure is final and may send an EDI 214 to the customer's " +
 			"trading partner; only a person approves it.",

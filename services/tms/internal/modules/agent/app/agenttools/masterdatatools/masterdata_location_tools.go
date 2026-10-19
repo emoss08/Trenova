@@ -74,7 +74,7 @@ var locationRecord = &masterRecord[location.Location]{
 	entity:   locationRecordEntity,
 	idParam:  paramLocationID,
 	idsParam: "locationIds",
-	lister:   "list_locations",
+	lister:   "location_list",
 	label:    func(entity *location.Location) string { return entity.Name },
 	id:       func(entity *location.Location) pulid.ID { return entity.ID },
 	version:  func(entity *location.Location) int64 { return entity.Version },
@@ -108,7 +108,7 @@ func locationFields() []masterField[location.Location] {
 		masterText(mdPostalCode, "The ZIP code.", maxPostalCodeRunes, true,
 			func(l *location.Location) *string { return &l.PostalCode }),
 		masterID(paramLocationCategoryID, permission.ResourceLocationCategory,
-			"What kind of place it is, from list_location_categories.",
+			"What kind of place it is, from location_list_categories.",
 			func(l *location.Location) *pulid.ID { return &l.LocationCategoryID }),
 	}
 }
@@ -116,10 +116,10 @@ func locationFields() []masterField[location.Location] {
 func NewUpdateLocationTool(locations LocationKeeper, states StateLookup) agentports.AgentTool {
 	return newMasterUpdateTool(&masterUpdateSpec[location.Location]{
 		record: locationRecord,
-		name:   "update_location",
+		name:   "location_update",
 		description: "Change a location's name, description, address or category. Fields " +
 			"left out keep their value, and its code never changes. Use " +
-			"update_location_status to activate or retire it.",
+			"location_set_status to activate or retire it.",
 		rationale: "Changes a location inside Trenova; nothing is sent. Its address is often " +
 			"read from a document someone outside sent, so such a change is proposed.",
 		fields:      locationFields(),
@@ -147,9 +147,9 @@ func NewUpdateLocationStatusTool(
 ) agentports.AgentTool {
 	return newMasterStatusTool(&masterStatusSpec[location.Location, domaintypes.Status]{
 		record: locationRecord,
-		name:   "update_location_status",
+		name:   "location_set_status",
 		description: "Set one or more locations Active or Inactive, which decides whether " +
-			"stops can be booked at them. Get the ids from list_locations.",
+			"stops can be booked at them. Get the ids from location_list.",
 		rationale:   "Changes whether locations are offered for booking inside Trenova; nothing is sent.",
 		searchTerms: []string{"deactivate location", "close facility", "reactivate location"},
 		statuses:    activeStatuses,

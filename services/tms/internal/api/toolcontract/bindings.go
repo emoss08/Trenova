@@ -54,28 +54,28 @@ func namedID(param string) string {
 }
 
 var Bindings = []Binding{
-	{Tool: "draft_factoring_noa", Input: "DraftFactoringNoaInput"},
+	{Tool: "factoring_create_noa", Input: "DraftFactoringNoaInput"},
 	{
-		Tool:      "send_factoring_noa",
+		Tool:      "factoring_send_noa",
 		Input:     "SendFactoringNoaInput",
 		Defaulted: map[string]string{"id": namedID(noaIDParam)},
 		Extra:     map[string]string{noaIDParam: namedID(noaIDParam)},
 	},
 	{
-		Tool:      "record_factoring_noa_acknowledgement",
+		Tool:      "factoring_record_noa_acknowledgement",
 		Input:     "AcknowledgeFactoringNoaInput",
 		Defaulted: map[string]string{"id": namedID(noaIDParam)},
 		Extra:     map[string]string{noaIDParam: namedID(noaIDParam)},
 	},
 	{
-		Tool:      "release_factoring_noa",
+		Tool:      "factoring_release_noa",
 		Input:     "ReleaseFactoringNoaInput",
 		Defaulted: map[string]string{"id": namedID(noaIDParam)},
 		Extra:     map[string]string{noaIDParam: namedID(noaIDParam)},
 	},
-	{Tool: "set_invoice_factoring_override", Input: "SetInvoiceFactoringOverrideInput"},
+	{Tool: "factoring_set_override", Input: "SetInvoiceFactoringOverrideInput"},
 	{
-		Tool:  "retry_factoring_submission",
+		Tool:  "factoring_retry_submission",
 		Input: "RetryFactoringSubmissionInput",
 		Defaulted: map[string]string{
 			"id":         namedID("submissionId"),
@@ -83,9 +83,9 @@ var Bindings = []Binding{
 		},
 		Extra: map[string]string{"submissionId": namedID("submissionId")},
 	},
-	{Tool: "request_missing_factoring_document", Input: "RequestMissingFactoringDocumentsInput"},
+	{Tool: "factoring_request_document", Input: "RequestMissingFactoringDocumentsInput"},
 	{
-		Tool:   "record_factoring_funding",
+		Tool:   "factoring_record_funding",
 		Input:  "RecordFactoringFundingInput",
 		Nested: map[string]string{"items": "FactoringFundingItemInput"},
 		Extra: map[string]string{
@@ -94,37 +94,37 @@ var Bindings = []Binding{
 		},
 	},
 	{
-		Tool:  "release_factoring_reserve",
+		Tool:  "factoring_release_reserve",
 		Input: reserveMovementInput,
 		Extra: map[string]string{"cash": decimalOf("cashMinor")},
 	},
 	{
-		Tool:  "record_factoring_chargeback",
+		Tool:  "factoring_record_chargeback",
 		Input: reserveMovementInput,
 		Extra: map[string]string{"cash": decimalOf("cashMinor")},
 	},
-	{Tool: "reverse_factoring_chargeback", Input: reserveMovementInput},
-	{Tool: "resolve_factoring_remittance_line", Input: "UpdateFactoringRemittanceLineInput"},
-	{Tool: "rematch_factoring_remittance", Input: remittanceVersionInput},
-	{Tool: "apply_factoring_remittance", Input: remittanceVersionInput},
-	{Tool: "discard_factoring_remittance", Input: "DiscardFactoringRemittanceInput"},
+	{Tool: "factoring_reverse_chargeback", Input: reserveMovementInput},
+	{Tool: "factoring_resolve_remittance_line", Input: "UpdateFactoringRemittanceLineInput"},
+	{Tool: "factoring_rematch_remittance", Input: remittanceVersionInput},
+	{Tool: "factoring_apply_remittance", Input: remittanceVersionInput},
+	{Tool: "factoring_discard_remittance", Input: "DiscardFactoringRemittanceInput"},
 	{
-		Tool:  "assign_exception",
+		Tool:  "exception_assign",
 		Input: "AssignWatchtowerItemInput",
 		Extra: map[string]string{watchtowerItemID: exceptionItemArg},
 	},
 	{
-		Tool:  "snooze_exception",
+		Tool:  "exception_snooze",
 		Input: "SnoozeWatchtowerItemInput",
 		Extra: map[string]string{watchtowerItemID: exceptionItemArg},
 	},
 	{
-		Tool:  "set_exception_due",
+		Tool:  "exception_set_due",
 		Input: "SetWatchtowerItemDueInput",
 		Extra: map[string]string{watchtowerItemID: exceptionItemArg},
 	},
 	{
-		Tool:      "resolve_exception",
+		Tool:      "exception_resolve",
 		Input:     "ResolveWatchtowerItemInput",
 		Defaulted: map[string]string{"code": resolutionCode},
 		Extra: map[string]string{
@@ -133,7 +133,7 @@ var Bindings = []Binding{
 		},
 	},
 	{
-		Tool:  "reopen_exception",
+		Tool:  "exception_reopen",
 		Input: "ReopenWatchtowerItemInput",
 		Extra: map[string]string{watchtowerItemID: exceptionItemArg},
 	},
@@ -174,28 +174,28 @@ var Bindings = []Binding{
 		},
 	},
 	{
-		Tool:      "log_check_call",
+		Tool:      "dispatch_record_check_call",
 		Input:     "LogCheckCallInput",
 		Defaulted: map[string]string{"shipmentMoveId": namedID("moveId")},
 		Extra:     map[string]string{"moveId": namedID("moveId")},
 	},
 	{
-		Tool:  "assign_exception",
+		Tool:  "exception_assign",
 		Input: "AssignWatchtowerItemInput",
 		Extra: map[string]string{watchtowerItemIDParam: exceptionIDArg},
 	},
 	{
-		Tool:  "snooze_exception",
+		Tool:  "exception_snooze",
 		Input: "SnoozeWatchtowerItemInput",
 		Extra: map[string]string{watchtowerItemIDParam: exceptionIDArg},
 	},
 	{
-		Tool:  "set_exception_due",
+		Tool:  "exception_set_due",
 		Input: "SetWatchtowerItemDueInput",
 		Extra: map[string]string{watchtowerItemIDParam: exceptionIDArg},
 	},
 	{
-		Tool:  "resolve_exception",
+		Tool:  "exception_resolve",
 		Input: "ResolveWatchtowerItemInput",
 		Defaulted: map[string]string{
 			"code": "one value under two names: the input's code, and resolutionCode, " +
@@ -208,7 +208,7 @@ var Bindings = []Binding{
 		},
 	},
 	{
-		Tool:  "reopen_exception",
+		Tool:  "exception_reopen",
 		Input: "ReopenWatchtowerItemInput",
 		Extra: map[string]string{watchtowerItemIDParam: exceptionIDArg},
 	},
@@ -217,7 +217,7 @@ var Bindings = []Binding{
 		Input: "IssueCustomerTrackingLinkInput",
 	},
 	{
-		Tool:      "issue_carrier_tracking_link",
+		Tool:      "dispatch_share_tracking_link",
 		Input:     "IssueCarrierTrackingLinkInput",
 		Defaulted: map[string]string{"shipmentMoveId": namedID("moveId")},
 		Extra:     map[string]string{"moveId": namedID("moveId")},
@@ -233,19 +233,19 @@ var Bindings = []Binding{
 		Param: "additionalCharges",
 	},
 	{
-		Tool:      "attach_worker_credential_document",
+		Tool:      "worker_attach_credential_document",
 		Input:     "AttachWorkerCredentialDocumentInput",
 		Defaulted: map[string]string{"id": namedID("credentialId")},
 		Extra:     map[string]string{"credentialId": namedID("credentialId")},
 	},
 	{
-		Tool:      "attach_worker_training_document",
+		Tool:      "worker_attach_training_document",
 		Input:     "AttachWorkerTrainingDocumentInput",
 		Defaulted: map[string]string{"id": namedID("trainingRecordId")},
 		Extra:     map[string]string{"trainingRecordId": namedID("trainingRecordId")},
 	},
 	{
-		Tool:   "draft_performance_review",
+		Tool:   "worker_update_performance_review",
 		Input:  "UpdatePerformanceReviewInput",
 		Nested: map[string]string{"ratings": "ReviewRatingInput", "goals": "ReviewGoalInput"},
 		Defaulted: map[string]string{
@@ -257,46 +257,46 @@ var Bindings = []Binding{
 		Extra: map[string]string{"reviewId": namedID("reviewId")},
 	},
 	{
-		Tool:  "give_worker_recognition",
+		Tool:  "worker_record_recognition",
 		Input: "WorkerRecognitionInput",
 	},
 	{
-		Tool:  "open_leave_case",
+		Tool:  "worker_open_leave_case",
 		Input: "OpenLeaveCaseInput",
 	},
 	{
-		Tool:  "open_worker_safety_event",
+		Tool:  "worker_open_safety_event",
 		Input: "WorkerSafetyEventInput",
 	},
 	{
-		Tool:  "record_employment_verification",
+		Tool:  "worker_record_employment_verification",
 		Input: "RecordEmploymentVerificationInput",
 	},
 	{
-		Tool:      "record_leave_day",
+		Tool:      "worker_record_leave_day",
 		Input:     "RecordLeaveDayInput",
 		Defaulted: map[string]string{"caseId": namedID("leaveCaseId")},
 		Extra:     map[string]string{"leaveCaseId": namedID("leaveCaseId")},
 	},
 	{
-		Tool:  "record_safety_violation",
+		Tool:  "worker_record_safety_violation",
 		Input: "RecordSafetyViolationInput",
 	},
 	{
-		Tool:  "record_training_completion",
+		Tool:  "worker_record_training_completion",
 		Input: "CompleteWorkerTrainingInput",
 		Extra: map[string]string{"trainingRecordId": namedID("trainingRecordId")},
 	},
 	{
-		Tool:  "record_worker_credential",
+		Tool:  "worker_record_credential",
 		Input: "WorkerCredentialInput",
 	},
 	{
-		Tool:  "record_worker_injury",
+		Tool:  "worker_record_injury",
 		Input: "RecordWorkerInjuryInput",
 	},
 	{
-		Tool:  "request_worker_pto",
+		Tool:  "worker_request_pto",
 		Input: "CreateWorkerPTOInput",
 		Defaulted: map[string]string{
 			"reason": "left out, the kind of time off is the reason: \"put it in as vacation\" " +
@@ -304,35 +304,35 @@ var Bindings = []Binding{
 		},
 	},
 	{
-		Tool:  "schedule_dot_test",
+		Tool:  "worker_schedule_dot_test",
 		Input: "RecordDOTTestInput",
 	},
 	{
-		Tool:  "start_performance_review",
+		Tool:  "worker_start_performance_review",
 		Input: "CreatePerformanceReviewInput",
 	},
 	{
-		Tool:  "start_worker_checklist",
+		Tool:  "worker_start_checklist",
 		Input: "StartWorkerChecklistInput",
 	},
 	{
-		Tool:  "update_employment_verification",
+		Tool:  "worker_update_employment_verification",
 		Input: "UpdateEmploymentVerificationInput",
 	},
 	{
-		Tool:      "update_leave_case",
+		Tool:      "worker_update_leave_case",
 		Input:     "UpdateLeaveCaseInput",
 		Defaulted: map[string]string{"caseId": namedID("leaveCaseId")},
 		Extra:     map[string]string{"leaveCaseId": namedID("leaveCaseId")},
 	},
 	{
-		Tool:      "update_leave_day",
+		Tool:      "worker_update_leave_day",
 		Input:     "UpdateLeaveDayInput",
 		Defaulted: map[string]string{"entryId": namedID("leaveDayId")},
 		Extra:     map[string]string{"leaveDayId": namedID("leaveDayId")},
 	},
 	{
-		Tool:  "update_safety_violation",
+		Tool:  "worker_update_safety_violation",
 		Input: "UpdateSafetyViolationInput",
 		Defaulted: map[string]string{
 			"id":          namedID("violationId"),
@@ -341,7 +341,7 @@ var Bindings = []Binding{
 		Extra: map[string]string{"violationId": namedID("violationId")},
 	},
 	{
-		Tool:      "update_worker_checklist_item",
+		Tool:      "worker_update_checklist_item",
 		Input:     "WorkerChecklistItemActionInput",
 		Defaulted: map[string]string{"id": namedID("checklistItemId")},
 		Extra: map[string]string{
@@ -351,7 +351,7 @@ var Bindings = []Binding{
 		},
 	},
 	{
-		Tool:  "update_worker_credential",
+		Tool:  "worker_update_credential",
 		Input: "UpdateWorkerCredentialInput",
 		Defaulted: map[string]string{
 			"id":         namedID("credentialId"),
@@ -360,11 +360,11 @@ var Bindings = []Binding{
 		Extra: map[string]string{"credentialId": namedID("credentialId")},
 	},
 	{
-		Tool:  "update_worker_injury",
+		Tool:  "worker_update_injury",
 		Input: "UpdateWorkerInjuryInput",
 	},
 	{
-		Tool:  "update_worker_pto",
+		Tool:  "worker_update_pto",
 		Input: "UpdateWorkerPTOInput",
 		Defaulted: map[string]string{
 			"id":         namedID("ptoId"),
@@ -377,7 +377,7 @@ var Bindings = []Binding{
 		Extra: map[string]string{"ptoId": namedID("ptoId")},
 	},
 	{
-		Tool:  "update_worker_safety_event",
+		Tool:  "worker_update_safety_event",
 		Input: "UpdateWorkerSafetyEventInput",
 		Defaulted: map[string]string{
 			"id":          namedID("safetyEventId"),
@@ -390,12 +390,12 @@ var Bindings = []Binding{
 		},
 		Extra: map[string]string{"safetyEventId": namedID("safetyEventId")},
 	},
-	{Tool: "record_fuel_purchase", Input: "FuelPurchaseInput", Defaulted: map[string]string{
+	{Tool: "fuel_record_purchase", Input: "FuelPurchaseInput", Defaulted: map[string]string{
 		"totalAmount": "the tool works the total out from quantity and unitPrice when a receipt " +
 			"is read out as gallons and a price, and refuses when it has neither",
 	}},
 	{
-		Tool:  "correct_fuel_purchase",
+		Tool:  "fuel_correct_purchase",
 		Input: "FuelPurchaseInput",
 		Defaulted: map[string]string{
 			"tractorId":      patchLeavesIt,
@@ -408,7 +408,7 @@ var Bindings = []Binding{
 		Extra: map[string]string{"fuelPurchaseId": namedID("fuelPurchaseId")},
 	},
 	{
-		Tool:  "assign_fuel_card",
+		Tool:  "fuel_assign_card",
 		Input: "AssignFuelCardInput",
 		Defaulted: map[string]string{
 			"id":         namedID("fuelCardId"),
@@ -416,16 +416,16 @@ var Bindings = []Binding{
 		},
 		Extra: map[string]string{"fuelCardId": namedID("fuelCardId")},
 	},
-	{Tool: "record_fuel_index_price", Input: "FuelIndexPriceInput"},
+	{Tool: "rate_record_fuel_index_price", Input: "FuelIndexPriceInput"},
 	{
-		Tool:      "correct_fuel_index_price",
+		Tool:      "rate_correct_fuel_index_price",
 		Input:     "UpdateFuelIndexPriceInput",
 		Defaulted: map[string]string{"id": namedID("fuelIndexPriceId")},
 		Extra:     map[string]string{"fuelIndexPriceId": namedID("fuelIndexPriceId")},
 	},
-	{Tool: "record_ifta_mileage_entry", Input: "IFTAMileageEntryInput"},
+	{Tool: "fuel_record_ifta_mileage_entry", Input: "IFTAMileageEntryInput"},
 	{
-		Tool:  "correct_ifta_mileage_entry",
+		Tool:  "fuel_correct_ifta_mileage_entry",
 		Input: "IFTAMileageEntryInput",
 		Defaulted: map[string]string{
 			"tractorId":      patchLeavesIt,
@@ -435,9 +435,9 @@ var Bindings = []Binding{
 		},
 		Extra: map[string]string{"iftaMileageEntryId": namedID("iftaMileageEntryId")},
 	},
-	{Tool: "generate_ifta_return", Input: "IFTAPeriodInput"},
+	{Tool: "fuel_generate_ifta_return", Input: "IFTAPeriodInput"},
 	{
-		Tool:  "create_carrier_capacity_posting",
+		Tool:  "carrier_create_capacity_posting",
 		Input: "CarrierCapacityPostingInput",
 		Extra: map[string]string{
 			"originState":      stateCode("originStateId"),
@@ -445,7 +445,7 @@ var Bindings = []Binding{
 		},
 	},
 	{
-		Tool:  "update_carrier_capacity_posting",
+		Tool:  "carrier_update_capacity_posting",
 		Input: "CarrierCapacityPostingInput",
 		Defaulted: map[string]string{
 			"carrierId":     patchLeavesIt,
@@ -460,41 +460,41 @@ var Bindings = []Binding{
 		},
 	},
 	{
-		Tool:  "create_tractor",
+		Tool:  "equipment_create_tractor",
 		Input: "TractorInput",
 		Extra: map[string]string{"state": stateCode("stateId")},
 	},
 	{
-		Tool:  "update_tractor",
+		Tool:  "equipment_update_tractor",
 		Input: "TractorPatchInput",
 		Extra: map[string]string{
 			"tractorId": "the mutation takes the tractor as its id argument, beside the input",
 			"state":     stateCode("stateId"),
 		},
 	},
-	{Tool: "locate_tractor", Input: "LocateTractorInput"},
+	{Tool: "equipment_set_tractor_location", Input: "LocateTractorInput"},
 	{
-		Tool:  "create_trailer",
+		Tool:  "equipment_create_trailer",
 		Input: "TrailerInput",
 		Extra: map[string]string{"registrationState": stateCode("registrationStateId")},
 	},
 	{
-		Tool:  "update_trailer",
+		Tool:  "equipment_update_trailer",
 		Input: "TrailerPatchInput",
 		Extra: map[string]string{
 			"trailerId":         "the mutation takes the trailer as its id argument, beside the input",
 			"registrationState": stateCode("registrationStateId"),
 		},
 	},
-	{Tool: "locate_trailer", Input: "LocateTrailerInput"},
+	{Tool: "equipment_set_trailer_location", Input: "LocateTrailerInput"},
 	{
-		Tool:      "file_capture_items",
+		Tool:      "inbox_file_capture_item",
 		Input:     "FileCaptureItemsEntryInput",
 		Param:     "items",
 		Defaulted: map[string]string{"version": readVersion},
 	},
 	{
-		Tool:  "assign_inbound_messages",
+		Tool:  "inbox_assign_inbound_message",
 		Input: "TriageSelectionInput",
 		Extra: map[string]string{
 			triageMessageIDs: triageSelectionIDs,
@@ -503,18 +503,18 @@ var Bindings = []Binding{
 		},
 	},
 	{
-		Tool:  "reopen_inbound_messages",
+		Tool:  "inbox_reopen_inbound_message",
 		Input: "TriageSelectionInput",
 		Extra: map[string]string{triageMessageIDs: triageSelectionIDs},
 	},
 	{
-		Tool:  "snooze_inbound_messages",
+		Tool:  "inbox_snooze_inbound_message",
 		Input: "SnoozeInboundMessagesInput",
 		Extra: map[string]string{triageMessageIDs: triageSelectionIDs},
 	},
-	{Tool: "create_inbound_load", Input: "TriageLoadFieldInput", Param: "fields"},
+	{Tool: "inbox_create_load", Input: "TriageLoadFieldInput", Param: "fields"},
 	{
-		Tool:   "file_inbound_attachment",
+		Tool:   "inbox_file_attachment",
 		Input:  "FileInboundAttachmentInput",
 		Nested: map[string]string{"pages": "InboundAttachmentPagesInput"},
 		Extra: map[string]string{
@@ -524,7 +524,7 @@ var Bindings = []Binding{
 		},
 	},
 	{
-		Tool:  "log_inbound_exception",
+		Tool:  "inbox_record_discrepancy",
 		Input: "LogInboundExceptionInput",
 		Extra: map[string]string{inboundMessageID: inboundMessageArg},
 	},
@@ -553,87 +553,87 @@ const (
 
 var Unbound = map[string]string{
 	"settlement_add_carrier_adjustment": pendingBinding,
-	"add_dashboard_tile":                layoutPart,
+	"report_add_dashboard_tile":         layoutPart,
 	"settlement_add_driver_adjustment":  pendingBinding,
-	"add_home_widget":                   layoutPart,
+	"home_add_widget":                   layoutPart,
 	"order_add_charge": "addOrderCharge takes the charge as scalar arguments; only its payer sp" +
 		"lit is an input object, which the tool does not take",
 	"shipment_add_charge": "adds one accessorial to a saved shipment through the shipment " +
 		"service's update; it takes the charge and its units, never the whole ShipmentInput",
-	"settlement_adjust_escrow_account":  pendingBinding,
-	"apply_carrier_intel_suggestions":   pendingBinding,
-	"receivable_apply_credit_memo":      pendingBinding,
-	"receivable_apply_customer_payment": pendingBinding,
-	"billing_approve_queue_item":        bulkDecision,
+	"settlement_adjust_escrow_account":       pendingBinding,
+	"carrier_apply_intelligence_suggestions": pendingBinding,
+	"receivable_apply_credit_memo":           pendingBinding,
+	"receivable_apply_customer_payment":      pendingBinding,
+	"billing_approve_queue_item":             bulkDecision,
 	"billing_assign_biller": "assigns one biller to a set of items; the mutation's " +
 		"input names one item, so the tool takes their ids instead",
-	"arrange_home_layout":                   layoutPart,
+	"home_arrange_layout":                   layoutPart,
 	"receivable_assess_late_charges":        pendingBinding,
-	"assign_move":                           pendingBinding,
+	"dispatch_assign_move":                  pendingBinding,
 	"settlement_attach_pay_events":          pendingBinding,
 	"billing_cancel_queue_item":             statusDecision,
-	"confirm_accounting_mapping_proposals":  pendingBinding,
-	"create_accounting_reference_record":    pendingBinding,
-	"create_carrier_invoice_match":          pendingBinding,
-	"create_dashboard":                      pendingBinding,
+	"accounting_confirm_mapping":            pendingBinding,
+	"accounting_create_reference_record":    pendingBinding,
+	"carrier_create_invoice_match":          pendingBinding,
+	"report_create_dashboard":               pendingBinding,
 	"order_create":                          pendingBinding,
 	"settlement_create_recurring_deduction": pendingBinding,
 	"settlement_create_recurring_earning":   pendingBinding,
-	"create_report":                         pendingBinding,
+	"report_create":                         pendingBinding,
 	"settlement_detach_pay_event":           pendingBinding,
-	"dismiss_accounting_drift":              pendingBinding,
-	"dispute_detention":                     pendingBinding,
+	"accounting_dismiss_drift_finding":      pendingBinding,
+	"detention_open_dispute":                pendingBinding,
 	"shipment_update_comment":               pendingBinding,
-	"email_customer": "composes any customer email; notifyShipmentDelay's input is one fixed " +
+	"customer_send_email": "composes any customer email; notifyShipmentDelay's input is one fixed " +
 		"kind of it, so the tool keeps its own parameters",
-	"fork_report":                       pendingBinding,
+	"report_fork":                       pendingBinding,
 	"settlement_generate_carrier_batch": pendingBinding,
 	"settlement_generate_driver":        pendingBinding,
 	"settlement_generate_driver_batch":  pendingBinding,
-	"guide_profile": "takes which profile the line is for as well as the line; each " +
+	"agent_guide_profile": "takes which profile the line is for as well as the line; each " +
 		"mutation fixes the profile by its name, so AgentProfileGuidanceInput carries only " +
 		"the line",
 	"billing_hold_queue_item":              statusDecision,
 	"settlement_hold_pay_event":            pendingBinding,
-	"ignore_accounting_inbound_change":     pendingBinding,
+	"accounting_ignore_inbound_change":     pendingBinding,
 	"settlement_issue_advance":             pendingBinding,
-	"link_inbound_message":                 pendingBinding,
-	"mark_inbound_message":                 pendingBinding,
+	"inbox_link_inbound_message":           pendingBinding,
+	"inbox_mark_inbound_message":           pendingBinding,
 	"billing_raise_exception":              statusDecision,
 	"settlement_open_escrow_account":       pendingBinding,
 	"invoice_open_dispute":                 pendingBinding,
-	"pause_accounting_sync":                pendingBinding,
+	"accounting_pause_sync":                pendingBinding,
 	"receivable_post_customer_payment":     pendingBinding,
-	"propose_shift_swap":                   pendingBinding,
+	"worker_request_shift_swap":            pendingBinding,
 	"settlement_recalculate_carrier":       pendingBinding,
 	"settlement_recalculate_driver":        pendingBinding,
 	"settlement_record_carrier_payment":    pendingBinding,
 	"settlement_record_driver_payment":     pendingBinding,
-	"release_accounting_sync":              pendingBinding,
-	"remember":                             pendingBinding,
+	"accounting_release_sync_record":       pendingBinding,
+	"agent_create_memory":                  pendingBinding,
 	"settlement_remove_carrier_adjustment": pendingBinding,
 	"settlement_remove_driver_adjustment":  pendingBinding,
-	"remove_home_widget":                   layoutPart,
+	"home_remove_widget":                   layoutPart,
 	"order_remove_charge":                  pendingBinding,
-	"reply_to_inbound_message": "answers the sender under the original subject in the " +
+	"inbox_send_reply": "answers the sender under the original subject in the " +
 		"organization's letterhead and settles the message; it takes the body and an email " +
 		"profile, never the subject, address or template sendInboundReply's input lets a person set",
 	"shipment_reschedule_stop": "moves one stop's window through the shipment service's update; it " +
 		"takes the stop and its new window, never the whole ShipmentInput",
-	"resolve_accounting_drift":            pendingBinding,
-	"resolve_carrier_intel_event":         pendingBinding,
-	"retry_accounting_sync":               pendingBinding,
-	"receivable_reverse_customer_payment": pendingBinding,
-	"save_table_view":                     pendingBinding,
-	"schedule_report":                     pendingBinding,
-	"billing_return_to_operations":        statusDecision,
-	"set_accounting_mapping":              pendingBinding,
-	"order_set_charge_allocations":        pendingBinding,
-	"set_worker_availability_preference":  pendingBinding,
-	"skip_accounting_sync":                pendingBinding,
-	"tender_move_to_carriers":             oneMoveTender,
-	"tender_move_to_routing_guide":        oneMoveTender,
-	"shipment_transfer_ownership":         pendingBinding,
+	"accounting_resolve_drift_finding":          pendingBinding,
+	"carrier_resolve_intelligence_event":        pendingBinding,
+	"accounting_retry_sync_record":              pendingBinding,
+	"receivable_reverse_customer_payment":       pendingBinding,
+	"report_save_table_view":                    pendingBinding,
+	"report_create_schedule":                    pendingBinding,
+	"billing_return_to_operations":              statusDecision,
+	"accounting_set_mapping":                    pendingBinding,
+	"order_set_charge_allocations":              pendingBinding,
+	"worker_set_availability_preference":        pendingBinding,
+	"accounting_skip_sync_record":               pendingBinding,
+	"dispatch_create_tender":                    oneMoveTender,
+	"dispatch_create_tender_from_routing_guide": oneMoveTender,
+	"shipment_transfer_ownership":               pendingBinding,
 	"billing_transfer": "one tool for four mutations (one shipment, its items, a bulk transfer " +
 		"and a transfer run), so no single input is its shape",
 	"billing_start_review": "moves a set of items into review by one status decision " +
@@ -644,9 +644,9 @@ var Unbound = map[string]string{
 	"order_update_charge":                   pendingBinding,
 	"settlement_update_recurring_deduction": pendingBinding,
 	"settlement_update_recurring_earning":   pendingBinding,
-	"update_report":                         pendingBinding,
-	"update_tractor_status":                 pendingBinding,
-	"update_trailer_status":                 pendingBinding,
-	"verify_carrier_equipment":              pendingBinding,
-	"waive_detention":                       pendingBinding,
+	"report_update":                         pendingBinding,
+	"equipment_set_tractor_status":          pendingBinding,
+	"equipment_set_trailer_status":          pendingBinding,
+	"carrier_verify_equipment":              pendingBinding,
+	"detention_waive":                       pendingBinding,
 }

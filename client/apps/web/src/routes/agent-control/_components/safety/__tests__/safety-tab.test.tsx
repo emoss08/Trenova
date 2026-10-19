@@ -100,7 +100,7 @@ const summary: AgentSafetySummary = {
 };
 
 const agents = [
-  definition("agdef_1", "Customer desk", { toolNames: ["email_customer"] }),
+  definition("agdef_1", "Customer desk", { toolNames: ["customer_send_email"] }),
   definition("agdef_2", "Dispatch desk"),
   definition("agdef_3", "Billing desk", { enabled: false }),
   definition("agdef_4", "Rates desk"),
@@ -109,7 +109,7 @@ const agents = [
 
 const emailCustomer = rule(
   {
-    name: "email_customer",
+    name: "customer_send_email",
     title: "Email customer",
     egress: ["ExternalRecipient"],
     leavesOrganization: true,
@@ -128,8 +128,8 @@ beforeEach(() => {
   api.fetchAgentSafetyHeaders.mockResolvedValue([]);
   api.fetchAgentToolHolders.mockResolvedValue(
     new Map([
-      ["email_customer", ["agdef_1", "agdef_2"]],
-      ["assign_move", ["agdef_1", "agdef_2", "agdef_3", "agdef_4", "agdef_5"]],
+      ["customer_send_email", ["agdef_1", "agdef_2"]],
+      ["dispatch_assign_move", ["agdef_1", "agdef_2", "agdef_3", "agdef_4", "agdef_5"]],
     ]),
   );
   api.fetchToolHolderAnswers.mockResolvedValue([]);
@@ -265,7 +265,7 @@ describe("Tool rules", () => {
   });
 
   it("draws the rules from the rule connection with the agents that hold each tool", async () => {
-    table.rows = [rule({ name: "assign_move", title: "Assign move" }, true), emailCustomer];
+    table.rows = [rule({ name: "dispatch_assign_move", title: "Assign move" }, true), emailCustomer];
     renderTab("rules");
 
     const rules = await screen.findByRole("region", { name: "Tool Rule table" });
@@ -281,7 +281,7 @@ describe("Tool rules", () => {
   it("opens a rule with who holds it and what each holder makes of it", async () => {
     api.fetchToolHolderAnswers.mockResolvedValue([
       tool(
-        "email_customer",
+        "customer_send_email",
         { answer: "NEEDS_APPROVAL", tier: "ActWithApproval" },
         { answer: "PROPOSE_ONLY", tier: "Propose" },
       ),
@@ -298,7 +298,7 @@ describe("Tool rules", () => {
     expect(await screen.findByText("Needs approval")).toBeInTheDocument();
     expect(screen.getByText("Proposes only")).toBeInTheDocument();
     expect(api.fetchToolHolderAnswers.mock.calls[0]?.slice(0, 2)).toEqual([
-      "email_customer",
+      "customer_send_email",
       ["agdef_1", "agdef_2"],
     ]);
   });
@@ -325,11 +325,11 @@ describe("By agent", () => {
         reach: {
           accessMode: "Everyone",
           roles: [],
-          warnings: [{ kind: "OpenWithSensitiveTools", tools: ["email_customer"] }],
+          warnings: [{ kind: "OpenWithSensitiveTools", tools: ["customer_send_email"] }],
         },
       }),
     ]);
-    table.rows = [tool("assign_move", { answer: "RUNS_ON_ITS_OWN" })];
+    table.rows = [tool("dispatch_assign_move", { answer: "RUNS_ON_ITS_OWN" })];
     renderTab("agents", "?safetyAgents=agdef_1");
 
     expect(await screen.findByRole("button", { name: "Limit to roles" })).toBeInTheDocument();
@@ -366,7 +366,7 @@ describe("By agent", () => {
   });
 
   it("opens a tool from an agent's row with that agent marked among the holders", async () => {
-    const email = tool("email_customer", { answer: "NEEDS_APPROVAL", tier: "ActWithApproval" });
+    const email = tool("customer_send_email", { answer: "NEEDS_APPROVAL", tier: "ActWithApproval" });
     table.rows = [email];
     table.openRow = email;
     renderTab("agents", "?safetyAgents=agdef_1");

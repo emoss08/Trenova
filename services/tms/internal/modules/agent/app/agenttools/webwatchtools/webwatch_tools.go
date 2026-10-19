@@ -335,7 +335,7 @@ func (t *StopWebWatchTool) Name() string { return agentextension.ToolStopWebWatc
 
 func (t *StopWebWatchTool) Description() string {
 	return "Stop a web watch the person no longer needs, so the vendor stops searching and " +
-		"billing for it. Find its id with list_web_watches."
+		"billing for it. Find its id with web_list_watches."
 }
 
 func (t *StopWebWatchTool) Prerequisites() []string {
@@ -345,7 +345,7 @@ func (t *StopWebWatchTool) Prerequisites() []string {
 func (t *StopWebWatchTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramWatchID: agenttoolschema.KindID(
-			"The web watch to stop, from list_web_watches.",
+			"The web watch to stop, from web_list_watches.",
 			permission.KindWebWatch,
 		),
 	}, paramWatchID)

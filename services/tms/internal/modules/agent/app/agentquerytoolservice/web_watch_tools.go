@@ -14,9 +14,9 @@ import (
 const (
 	webWatchListLimit = 25
 	webWatchDayLayout = "2006-01-02"
-	webWatchesNote    = "Stop a watch the person no longer needs with stop_web_watch. What a " +
-		"watch finds comes back to the work that set it; set a new one with watch_web."
-	noWebWatchesNote = "There are no web watches set for this person. Set one with watch_web " +
+	webWatchesNote    = "Stop a watch the person no longer needs with web_stop_watch. What a " +
+		"watch finds comes back to the work that set it; set a new one with web_watch."
+	noWebWatchesNote = "There are no web watches set for this person. Set one with web_watch " +
 		"when they ask to be told when something happens."
 )
 
@@ -33,7 +33,7 @@ func (t *listWebWatchesTool) Name() string { return agentextension.ToolListWebWa
 func (t *listWebWatchesTool) Description() string {
 	return "List the web watches set for the person: what each watches for, how often and " +
 		"until when, how often it found something new, and whether it still runs. Call it " +
-		"before stop_web_watch to find a watch's id, or to answer what is being watched."
+		"before web_stop_watch to find a watch's id, or to answer what is being watched."
 }
 
 func (t *listWebWatchesTool) ParamSchema() map[string]any {

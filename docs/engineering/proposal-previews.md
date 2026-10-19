@@ -333,12 +333,12 @@ array-of-ids parameter as a subset of one permission resource's records with
   own call stays in the thread as it sent it, and the ledger key is taken from it. A
   selection that cannot be resolved is refused to the model with the reason.
 
-  The same hook settles what a proposal may hold. `apply_edi_connection_draft` returns its
+  The same hook settles what a proposal may hold. `edi_apply_connection_draft` returns its
   arguments with every citation quote and gap summary redacted (`edispec.RedactQuotes`), so a
   credential a partner's guide prints beside a cited value never reaches the proposal, its
   preview or the approval card.
 
-  `retry_accounting_sync` takes `errorCategories` as criteria beside its `syncRecordIds`
+  `accounting_retry_sync_record` takes `errorCategories` as criteria beside its `syncRecordIds`
   subset, and pins them only when the call is filed for a person: it implements
   `ToolProposalSelectionResolver`, which the dispatch activity asks once the tier is decided
   and only when that tier is not Automatic. A proposed call naming categories alone becomes
@@ -352,10 +352,10 @@ array-of-ids parameter as a subset of one permission resource's records with
 
   The other record-subset tools keep ids only: `order_attach_shipments` (its records come
   from `shipment_list`, a general search, and the order's own rules decide membership),
-  `release_accounting_sync` (a person-only send to the books from a general list; releasing
+  `accounting_release_sync_record` (a person-only send to the books from a general list; releasing
   "everything awaiting approval" unseen is what the tool exists to prevent),
-  `set_carrier_monitoring` (billed per carrier from `list_carriers`, a general list), and
-  `retry_edi_message_delivery` and `reprocess_edi_inbound_files` (general lists of messages
+  `carrier_set_monitoring` (billed per carrier from `carrier_list`, a general list), and
+  `edi_retry_message` and `edi_reprocess_inbound_file` (general lists of messages
   and files, capped at `ediservice.MaxBulkEDIActionItems`), and `invoice_post`,
   `invoice_send`, `billing_approve_queue_item` and the four settlement approve and post
   tools (up to 50, each record previewed and run through its single-record tool; see
@@ -432,9 +432,9 @@ validation failures, detention holds), as `invoice_get` does for drafts, so chec
 is one read and one table rather than a card per item.
 
 The billing assistant template holds `billing_assign_biller`, `billing_start_review` and
-`billing_get_queue_item`, and gave up `preview_report` (the report analyst's) to stay under the 64-tool cap with room for
-an organization's own. To make room it gave up `list_insights`,
-`get_insight` (the insight analyst's) and `get_report_run` (a run's progress is already on
+`billing_get_queue_item`, and gave up `report_preview` (the report analyst's) to stay under the 64-tool cap with room for
+an organization's own. To make room it gave up `insight_list`,
+`insight_get` (the insight analyst's) and `report_get_run` (a run's progress is already on
 screen). A template is copied when an agent is made, so an existing billing agent gains the
 bulk tools only when an administrator adds them in AI control.
 

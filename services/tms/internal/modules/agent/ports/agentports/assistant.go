@@ -425,7 +425,7 @@ const AssistantEventCompactionFinished = "compaction_finished"
 const AssistantEventCompactionCancelled = "compaction_cancelled"
 
 // AssistantEventMemoryUsed names every memory the turn has used so far:
-// those its prompt carried, then each one recall_memory read back. Each
+// those its prompt carried, then each one agent_list_memories read back. Each
 // event repeats the whole list, so a reader keeps the latest.
 const AssistantEventMemoryUsed = "memory_used"
 

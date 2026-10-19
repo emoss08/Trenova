@@ -14,9 +14,9 @@ import (
 /*
 An approval that made something says what it made, and by which id.
 
-create_report was approved and ran, and the note said only "Approved
-create_report, and it ran." with the proposal's id beside it. The agent then
-called describe_report with that ap_ id instead of the rd_ id of the report it
+report_create was approved and ran, and the note said only "Approved
+report_create, and it ran." with the proposal's id beside it. The agent then
+called report_get with that ap_ id instead of the rd_ id of the report it
 had saved, and failed. The note's first line, which the thread shows, names
 the report in words; the lines after it give the agent the id to use and say
 it is not the proposal's.
@@ -26,7 +26,7 @@ func TestSendMessageStream_NamesWhatAnApprovedChangeMade(t *testing.T) {
 
 	proposal := &agent.AgentProposal{
 		ID:       pulid.MustNew("ap_"),
-		ToolName: "create_report",
+		ToolName: "report_create",
 		Status:   agent.ProposalStatusExecuted,
 		ExecutionResult: &agent.ToolExecutionResult{
 			Action: "created",
@@ -48,11 +48,11 @@ func TestSendMessageStream_NamesWhatAnApprovedChangeMade(t *testing.T) {
 	note := conversations.appended[0].Content
 	first, rest, _ := strings.Cut(note, "\n")
 	assert.Equal(t,
-		`Approved create_report, and it ran. It created the report "Shipments for Peak Distributing".`,
+		`Approved report_create, and it ran. It created the report "Shipments for Peak Distributing".`,
 		first,
 	)
 	assert.NotContains(t, first, "rd_01JPEAK", "the person-readable line carries no ids")
-	assert.Contains(t, rest, "Decision on proposal "+proposal.ID.String()+" (create_report).")
+	assert.Contains(t, rest, "Decision on proposal "+proposal.ID.String()+" (report_create).")
 	assert.Contains(t, rest,
 		"It produced definitionId rd_01JPEAK; use that id, not the proposal's, "+
 			"when you refer to what it made.")
@@ -65,7 +65,7 @@ func TestDecisionNote_SaysNothingMadeBeforeTheWriteRuns(t *testing.T) {
 	t.Parallel()
 
 	proposal := &agent.AgentProposal{
-		ToolName: "create_report",
+		ToolName: "report_create",
 		Status:   agent.ProposalStatusAccepted,
 		ExecutionResult: &agent.ToolExecutionResult{
 			Action: "created",
@@ -74,7 +74,7 @@ func TestDecisionNote_SaysNothingMadeBeforeTheWriteRuns(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, "Approved create_report; it is being carried out.", decisionLine(proposal))
+	assert.Equal(t, "Approved report_create; it is being carried out.", decisionLine(proposal))
 	assert.Empty(t, producedNote(proposal))
 }
 
@@ -83,20 +83,20 @@ func TestDecisionNote_KeepsThePlainLineWithoutAResult(t *testing.T) {
 	t.Parallel()
 
 	proposal := &agent.AgentProposal{
-		ToolName: "create_dashboard",
+		ToolName: "report_create_dashboard",
 		Status:   agent.ProposalStatusExecuted,
 	}
 
-	assert.Equal(t, "Approved create_dashboard, and it ran.", decisionLine(proposal))
+	assert.Equal(t, "Approved report_create_dashboard, and it ran.", decisionLine(proposal))
 	assert.Empty(t, producedNote(proposal))
 }
 
 func TestDecisionHeadline_IsTheFirstLineOnly(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, "Approved create_report, and it ran.",
-		decisionHeadline("  Approved create_report, and it ran.\nDecision on proposal ap_1."))
-	assert.Equal(t, "Rejected assign_move.", decisionHeadline("Rejected assign_move."))
+	assert.Equal(t, "Approved report_create, and it ran.",
+		decisionHeadline("  Approved report_create, and it ran.\nDecision on proposal ap_1."))
+	assert.Equal(t, "Rejected dispatch_assign_move.", decisionHeadline("Rejected dispatch_assign_move."))
 	assert.Empty(t, decisionHeadline(" \n "))
 }
 
@@ -141,7 +141,7 @@ func TestSendMessageStream_NamesWhatEachStepOfAPlanMade(t *testing.T) {
 	}
 	svc, conversations, _ := followUpService(t, copied)
 	svc.proposals = &stubProposalRepo{byThread: []*agent.AgentProposal{
-		copied, voided, {ID: pulid.MustNew("ap_"), ToolName: "assign_move"},
+		copied, voided, {ID: pulid.MustNew("ap_"), ToolName: "dispatch_assign_move"},
 	}}
 	svc.plans = &stubPlanStore{plans: []*agent.AgentPlan{plan}}
 	actor := testActor()

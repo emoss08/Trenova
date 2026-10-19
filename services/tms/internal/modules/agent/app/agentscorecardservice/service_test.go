@@ -187,7 +187,7 @@ runs without anybody being asked.
 func TestGet_TheLadderIgnoresTheWindow(t *testing.T) {
 	t.Parallel()
 
-	trust := &stubTrust{rows: []*agent.ToolTrust{{ToolName: "assign_move", Streak: 9}}}
+	trust := &stubTrust{rows: []*agent.ToolTrust{{ToolName: "dispatch_assign_move", Streak: 9}}}
 	svc := newService(
 		&agenttest.StubPermissions{},
 		&stubScorecards{},

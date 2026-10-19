@@ -5,10 +5,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -296,7 +296,7 @@ func TestListPayAdvances_NarrowsToTheDriverNamed(t *testing.T) {
 	_, err = tool.Query(t.Context(), agentParams(map[string]any{"query": "nobody"},
 		permission.SensitivityRestricted))
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "search_worker")
+	assert.Contains(t, err.Error(), "worker_search")
 }
 
 /*

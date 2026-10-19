@@ -113,7 +113,7 @@ func unknownFieldHint(catalog *reportcatalog.Catalog, entityKey, fieldKey string
 	}
 	fmt.Fprintf(
 		&builder,
-		" Call describe_report_dataset with dataset %q for the full list.",
+		" Call report_get_dataset with dataset %q for the full list.",
 		entity.Key,
 	)
 

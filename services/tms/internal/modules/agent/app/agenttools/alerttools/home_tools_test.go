@@ -161,25 +161,25 @@ func TestAddHomeWidget_RefusesWhatThePersonCannotHave(t *testing.T) {
 		return agenttoolstest.FieldErrors(t, tool.Validate(t.Context(), homeParams(args)))
 	}
 
-	assert.Contains(t, errorsFor(map[string]any{"key": "made-up"})["key"], "list_home_widgets")
+	assert.Contains(t, errorsFor(map[string]any{"key": "made-up"})["key"], "home_list_widgets")
 	assert.Contains(t,
 		errorsFor(map[string]any{
 			"key":    homelayout.WidgetKPI,
 			"config": map[string]any{"metric": "revenueToday"},
 		})["config.metric"],
-		"list_home_widgets", "a metric outside what the person may see")
+		"home_list_widgets", "a metric outside what the person may see")
 	assert.Contains(t,
 		errorsFor(map[string]any{
 			"key":    homelayout.WidgetReport,
 			"config": map[string]any{"definitionId": "on_time_percentage"},
 		})["config.definitionId"],
-		"list_reports", "the id the Homepage Widget Builder invented")
+		"report_list", "the id the Homepage Widget Builder invented")
 	assert.Contains(t,
 		errorsFor(map[string]any{
 			"key":    homelayout.WidgetReport,
 			"config": map[string]any{"definitionId": pulid.MustNew("rdef_").String()},
 		})["config.definitionId"],
-		"list_reports", "a report that does not exist")
+		"report_list", "a report that does not exist")
 }
 
 // The page moved on since it was read: somebody changed it in the editor
@@ -196,7 +196,7 @@ func TestHomeEdit_RefusesAStaleVersion(t *testing.T) {
 		"widgetId": "widget_1",
 	}))
 
-	assert.Contains(t, agenttoolstest.FieldErrors(t, err)["version"], "get_my_home_layout")
+	assert.Contains(t, agenttoolstest.FieldErrors(t, err)["version"], "home_get_layout")
 }
 
 func TestHomeEdit_RefusesALockedHomePage(t *testing.T) {
@@ -245,7 +245,7 @@ func TestRemoveHomeWidget(t *testing.T) {
 		agenttoolstest.FieldErrors(t, tool.Validate(t.Context(), homeParams(map[string]any{
 			"version": float64(3), "widgetId": "widget_9",
 		})))["widgetId"],
-		"get_my_home_layout")
+		"home_get_layout")
 
 	require.NoError(t, tool.Execute(t.Context(), homeParams(map[string]any{
 		"version": float64(3), "widgetId": "widget_1",

@@ -251,17 +251,17 @@ func (c *changeReviewCall) verb() string {
 
 func NewReviewEDITenderChangeTool(reviewer tenderChangeReviewer) agentports.AgentTool {
 	return &EdiChangeReviewTool{kind: changeReviewKind{
-		name:   "review_edi_tender_change",
-		recipe: []string{"list_edi_tender_changes", "review_edi_tender_change"},
+		name:   "edi_review_tender_change",
+		recipe: []string{"edi_list_tender_changes", "edi_review_tender_change"},
 		description: "Propose applying or rejecting a change another Trenova organization " +
 			"made to a load it tendered to this one over EDI, after this organization " +
 			"received it. Applying takes the new stops, dates, weights or charges onto the " +
 			"pending tender or the shipment made from it; rejecting keeps the load as it is. " +
-			"Compare the change with the load in list_edi_tender_changes first. A person " +
+			"Compare the change with the load in edi_list_tender_changes first. A person " +
 			"always decides.",
 		rationale: "Changes a load this organization committed to on another " +
 			"organization's word, and that organization sees the outcome.",
-		idGuidance: "The tender change, from list_edi_tender_changes. Never guess one.",
+		idGuidance: "The tender change, from edi_list_tender_changes. Never guess one.",
 		changeKind: permission.KindEDITenderChange,
 		plan: func(ctx context.Context, call *changeReviewCall) (*changeReviewPlan, error) {
 			change, err := reviewer.GetTenderChange(ctx, ediports.GetEDITenderChangeByIDRequest{
@@ -294,20 +294,20 @@ func NewReviewEDITenderChangeTool(reviewer tenderChangeReviewer) agentports.Agen
 
 func NewReviewEDITransferChangeTool(reviewer transferChangeReviewer) agentports.AgentTool {
 	return &EdiChangeReviewTool{kind: changeReviewKind{
-		name: "review_edi_transfer_change",
+		name: "edi_review_transfer_change",
 		recipe: []string{
-			"list_edi_transfer_changes",
+			"edi_list_transfer_changes",
 			"shipment_get_tracking",
-			"review_edi_transfer_change",
+			"edi_review_transfer_change",
 		},
 		description: "Propose applying or rejecting a status or cancellation the other " +
 			"organization on an EDI-linked load reported. It waits for review before it " +
 			"reaches this organization's shipment. Applying moves the shipment to the status reported; " +
 			"rejecting leaves it where it is. Check the shipment's own tracking first, and " +
-			"find the change with list_edi_transfer_changes. A person always decides.",
+			"find the change with edi_list_transfer_changes. A person always decides.",
 		rationale: "Changes a shipment on another organization's report, and that " +
 			"organization sees the outcome on its own shipment.",
-		idGuidance: "The transfer change, from list_edi_transfer_changes. Never guess one.",
+		idGuidance: "The transfer change, from edi_list_transfer_changes. Never guess one.",
 		changeKind: permission.KindEDITransferChange,
 		plan: func(ctx context.Context, call *changeReviewCall) (*changeReviewPlan, error) {
 			change, err := reviewer.GetTransferChange(

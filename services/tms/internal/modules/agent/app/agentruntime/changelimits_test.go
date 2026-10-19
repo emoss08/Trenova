@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -164,15 +164,15 @@ func TestRun_AChangeWithinTheLimitRuns(t *testing.T) {
 func TestRun_HoldsAnAutomaticChangeOutsideBusinessHours(t *testing.T) {
 	t.Parallel()
 
-	tool := actionTool("assign_move", agent.TierAutoExecute, nil)
+	tool := actionTool("dispatch_assign_move", agent.TierAutoExecute, nil)
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("assign_move", map[string]any{"moveId": "mv_1"}),
+		toolTurn("dispatch_assign_move", map[string]any{"moveId": "mv_1"}),
 		textTurn("It is waiting for you."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
 		&stubActionRegistry{Tools: []agentports.AgentTool{tool}}, nil)
 	rt.budgets = hoursBudgets{within: false}
-	definition := autoChangeDefinition("assign_move")
+	definition := autoChangeDefinition("dispatch_assign_move")
 	definition.BusinessHoursOnly = true
 
 	result := runOneCall(t, rt, definition)
@@ -188,15 +188,15 @@ func TestRun_HoldsAnAutomaticChangeOutsideBusinessHours(t *testing.T) {
 func TestRun_RunsAnAutomaticChangeInsideBusinessHours(t *testing.T) {
 	t.Parallel()
 
-	tool := actionTool("assign_move", agent.TierAutoExecute, nil)
+	tool := actionTool("dispatch_assign_move", agent.TierAutoExecute, nil)
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("assign_move", map[string]any{"moveId": "mv_1"}),
+		toolTurn("dispatch_assign_move", map[string]any{"moveId": "mv_1"}),
 		textTurn("Assigned."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
 		&stubActionRegistry{Tools: []agentports.AgentTool{tool}}, nil)
 	rt.budgets = hoursBudgets{within: true}
-	definition := autoChangeDefinition("assign_move")
+	definition := autoChangeDefinition("dispatch_assign_move")
 	definition.BusinessHoursOnly = true
 
 	result := runOneCall(t, rt, definition)

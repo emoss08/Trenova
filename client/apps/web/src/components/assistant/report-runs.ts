@@ -10,7 +10,7 @@ export type ThreadReportRun = {
 };
 
 /** The tools whose results name a run worth following. */
-const RUN_BEARING_TOOLS = new Set(["run_report", "get_report_run"]);
+const RUN_BEARING_TOOLS = new Set(["report_run", "report_get_run"]);
 
 /**
  * Pulls the report runs out of a turn's tool traffic.

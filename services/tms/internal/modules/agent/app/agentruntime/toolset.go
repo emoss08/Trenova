@@ -338,8 +338,8 @@ func (t *toolSet) offers(name string) bool {
 // load makes a tool the agent holds callable, with the tools its arguments
 // come from. It reports whether the tool itself was newly loaded.
 //
-// Prerequisites travel with the tool because a model handed create_dashboard
-// without list_reports does not go looking for a report id; it writes one.
+// Prerequisites travel with the tool because a model handed report_create_dashboard
+// without report_list does not go looking for a report id; it writes one.
 func (s *Service) load(set *toolSet, name string) bool {
 	if !s.loadOne(set, name) {
 		return false
@@ -642,7 +642,7 @@ func (s *Service) strongestMatch(
 }
 
 // withNamedTools puts first the tools a need names outright. The prompt lists
-// what find_tools can load by name, and a model that asked for "search_worker"
+// what find_tools can load by name, and a model that asked for "worker_search"
 // by name was handed six other tools ranked above it and searched again.
 func (s *Service) withNamedTools(
 	allowed []string,
@@ -775,7 +775,7 @@ func (s *Service) unheldOutcome(set *toolSet, name string) toolOutcome {
 // heldTools is every tool the agent holds: its core and selected tools, the
 // writes a selected tool names as its companions, and the reads its tools take
 // their arguments from. A prerequisite is granted only when it is a read — the
-// agent holding create_dashboard may look reports up, but that grants it no
+// agent holding report_create_dashboard may look reports up, but that grants it no
 // write. A companion is the one write a tool may bring, because its job cannot
 // be finished without it: shipment_create brings the customer, location and
 // commodity it may find missing. Each still answers to its own policy, so it
@@ -818,7 +818,7 @@ func (s *Service) holds(definition *agentdefinition.Definition, name string) boo
 // past its configuration — but the old answer turned that into "this system
 // does not track it", and a model repeated it as fact. Asked four times whether
 // a reports tool existed, it said no four times, growing more certain each
-// time, while list_reports sat in the catalog unassigned to that agent.
+// time, while report_list sat in the catalog unassigned to that agent.
 //
 // So the catalog is searched a second time with no allowlist, and the answer
 // distinguishes the two cases it was conflating: nothing like this exists, or

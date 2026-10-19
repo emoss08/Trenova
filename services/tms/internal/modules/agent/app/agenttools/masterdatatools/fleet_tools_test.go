@@ -257,8 +257,8 @@ func TestEquipmentStatusTools_PointAtTheListToolForIds(t *testing.T) {
 
 	assert.Contains(t,
 		NewUpdateTractorStatusTool(&fakeTractorStatusUpdater{}).Description(),
-		"list_tractors")
+		"equipment_list_tractors")
 	assert.True(t, strings.Contains(
 		NewUpdateTrailerStatusTool(&fakeTrailerStatusUpdater{}).Description(),
-		"list_trailers"))
+		"equipment_list_trailers"))
 }

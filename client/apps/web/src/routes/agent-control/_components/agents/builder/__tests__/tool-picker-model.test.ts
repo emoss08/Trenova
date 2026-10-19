@@ -30,9 +30,9 @@ const catalog = [
   tool({ name: "shipment_get" }),
   tool({ name: "shipment_list" }),
   tool({ name: "shipment_cancel", kind: "action", description: "Cancels a shipment" }),
-  tool({ name: "list_workers", resource: "worker", description: "Lists drivers" }),
+  tool({ name: "worker_list", resource: "worker", description: "Lists drivers" }),
   tool({ name: "update_worker", kind: "action", resource: "worker" }),
-  tool({ name: "approve_worker_pto", kind: "action", resource: "worker_pto" }),
+  tool({ name: "worker_approve_pto", kind: "action", resource: "worker_pto" }),
 ];
 
 const byName = (name: string) => catalog.find((entry) => entry.name === name)!;
@@ -52,26 +52,26 @@ describe("pickerGroups", () => {
     expect(reads.flatMap((group) => names(group.tools))).toEqual([
       "shipment_get",
       "shipment_list",
-      "list_workers",
+      "worker_list",
     ]);
 
     const changes = pickerGroups(catalog, [], { ...ALL, kind: "act" });
     expect(changes.flatMap((group) => names(group.tools))).toEqual([
       "shipment_cancel",
       "update_worker",
-      "approve_worker_pto",
+      "worker_approve_pto",
     ]);
   });
 
   it("shows only chosen tools when asked, across groups", () => {
-    const groups = pickerGroups(catalog, ["list_workers", "shipment_cancel"], {
+    const groups = pickerGroups(catalog, ["worker_list", "shipment_cancel"], {
       ...ALL,
       chosenOnly: true,
     });
     expect(groups.map((group) => group.resource)).toEqual(["shipment", "worker"]);
     expect(groups.flatMap((group) => names(group.tools))).toEqual([
       "shipment_cancel",
-      "list_workers",
+      "worker_list",
     ]);
   });
 
@@ -102,18 +102,18 @@ describe("checkState", () => {
 
 describe("pickerRows", () => {
   it("flattens each group into its header and then its tools", () => {
-    const groups = pickerGroups(catalog, ["list_workers"], ALL);
-    const rows = pickerRows(groups, new Set(["list_workers"]));
+    const groups = pickerGroups(catalog, ["worker_list"], ALL);
+    const rows = pickerRows(groups, new Set(["worker_list"]));
     expect(rows.map((row) => (row.kind === "group" ? `#${row.resource}` : row.tool.name))).toEqual([
       "#shipment",
       "shipment_get",
       "shipment_list",
       "shipment_cancel",
       "#worker",
-      "list_workers",
+      "worker_list",
       "update_worker",
       "#worker_pto",
-      "approve_worker_pto",
+      "worker_approve_pto",
     ]);
     const headers = rows.filter((row) => row.kind === "group");
     expect(headers.map((row) => row.state)).toEqual(["none", "some", "none"]);
@@ -121,7 +121,7 @@ describe("pickerRows", () => {
   });
 
   it("states a header over the shown tools only", () => {
-    const chosen = new Set(["list_workers"]);
+    const chosen = new Set(["worker_list"]);
     const groups = pickerGroups(catalog, [...chosen], { ...ALL, kind: "read" });
     const worker = pickerRows(groups, chosen).find(
       (row) => row.kind === "group" && row.resource === "worker",
@@ -148,18 +148,18 @@ describe("setTools", () => {
 
   it("removes the given tools and their tiers, leaving every other choice alone", () => {
     const next = setTools(
-      ["shipment_get", "shipment_cancel", "update_worker", "approve_worker_pto"],
-      { shipment_cancel: "Propose", update_worker: "AutoExecute", approve_worker_pto: "Propose" },
-      [byName("shipment_cancel"), byName("update_worker"), byName("list_workers")],
+      ["shipment_get", "shipment_cancel", "update_worker", "worker_approve_pto"],
+      { shipment_cancel: "Propose", update_worker: "AutoExecute", worker_approve_pto: "Propose" },
+      [byName("shipment_cancel"), byName("update_worker"), byName("worker_list")],
       false,
       tierFor,
     );
-    expect(next.selected).toEqual(["shipment_get", "approve_worker_pto"]);
-    expect(next.tiers).toEqual({ approve_worker_pto: "Propose" });
+    expect(next.selected).toEqual(["shipment_get", "worker_approve_pto"]);
+    expect(next.tiers).toEqual({ worker_approve_pto: "Propose" });
   });
 
   it("clearing what a filter shows leaves the hidden chosen tools untouched", () => {
-    const selected = ["shipment_get", "shipment_cancel", "list_workers"];
+    const selected = ["shipment_get", "shipment_cancel", "worker_list"];
     const shown = pickerGroups(catalog, selected, { ...ALL, kind: "read" }).flatMap(
       (group) => group.tools,
     );

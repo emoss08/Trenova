@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	toolDraftEDIConnection = "draft_edi_connection"
+	toolDraftEDIConnection = "edi_draft_connection"
 	draftKeyTitle          = "title"
 	draftKeyNote           = "note"
 	draftKeySummary        = "summary"

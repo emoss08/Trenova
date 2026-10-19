@@ -395,7 +395,7 @@ func (s *AssistantConversationSeed) insertProposal(
 		OrganizationID: refs.org.ID,
 		BusinessUnitID: refs.org.BusinessUnitID,
 		RunID:          run.ID,
-		ToolName:       "flag_for_manual_review",
+		ToolName:       "agent_request_review",
 		ToolParams: map[string]any{
 			"runId":     run.ID.String(),
 			"subjectId": refs.shipment.ID.String(),

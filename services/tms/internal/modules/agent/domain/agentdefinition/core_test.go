@@ -23,16 +23,16 @@ func TestDefinition_HoldsTheCoreToolsWithoutSelectingThem(t *testing.T) {
 	t.Parallel()
 
 	definition := validDefinition()
-	definition.ToolNames = []string{"list_reports"}
+	definition.ToolNames = []string{"report_list"}
 
 	for _, tool := range agentdefinition.CoreTools() {
 		assert.Truef(t, definition.AllowsTool(tool), "an agent must hold %s", tool)
 	}
-	assert.True(t, definition.AllowsTool("list_reports"))
-	assert.False(t, definition.AllowsTool("create_dashboard"))
+	assert.True(t, definition.AllowsTool("report_list"))
+	assert.False(t, definition.AllowsTool("report_create_dashboard"))
 
 	assert.Equal(t,
-		append(agentdefinition.CoreTools(), "list_reports"),
+		append(agentdefinition.CoreTools(), "report_list"),
 		definition.EffectiveToolNames(),
 	)
 }
@@ -41,14 +41,14 @@ func TestDefinition_EffectiveToolNamesDoesNotRepeatACoreToolAlsoSelected(t *test
 	t.Parallel()
 
 	definition := validDefinition()
-	definition.ToolNames = []string{"remember", "list_reports"}
+	definition.ToolNames = []string{"agent_create_memory", "report_list"}
 
 	names := definition.EffectiveToolNames()
 	seen := make(map[string]int, len(names))
 	for _, name := range names {
 		seen[name]++
 	}
-	assert.Equal(t, 1, seen["remember"])
+	assert.Equal(t, 1, seen["agent_create_memory"])
 	assert.Len(t, names, len(agentdefinition.CoreTools())+1)
 }
 
@@ -60,8 +60,8 @@ func TestDefinition_AcceptsTiersAndLimitsOnACoreTool(t *testing.T) {
 	definition := validDefinition()
 	definition.ToolNames = nil
 	definition.AutonomyCeiling = agent.TierAutoExecute
-	definition.ToolTiers = map[string]agent.AutonomyTier{"remember": agent.TierAutoExecute}
-	definition.ToolDailyLimits = map[string]int{"raise_exception": 5}
+	definition.ToolTiers = map[string]agent.AutonomyTier{"agent_create_memory": agent.TierAutoExecute}
+	definition.ToolDailyLimits = map[string]int{"agent_raise_exception": 5}
 
 	multiErr := errortypes.NewMultiError()
 	definition.Validate(multiErr)
@@ -72,14 +72,14 @@ func TestWithoutCoreTools_KeepsOnlyTheSelection(t *testing.T) {
 	t.Parallel()
 
 	assert.Equal(t,
-		[]string{"list_reports", "create_report"},
+		[]string{"report_list", "report_create"},
 		agentdefinition.WithoutCoreTools(
 			[]string{
-				"recall_memory",
-				"list_reports",
-				"remember",
-				"create_report",
-				"raise_exception",
+				"agent_list_memories",
+				"report_list",
+				"agent_create_memory",
+				"report_create",
+				"agent_raise_exception",
 			},
 		),
 	)
@@ -102,22 +102,22 @@ func TestHoldingReads_AddsEveryReadButOnesTheAgentSwitchedOff(t *testing.T) {
 	t.Parallel()
 
 	definition := &agentdefinition.Definition{
-		ToolNames:         []string{"shipment_get", "assign_move"},
+		ToolNames:         []string{"shipment_get", "dispatch_assign_move"},
 		DisabledToolNames: []string{"list_settlements"},
 	}
 
 	reading := definition.HoldingReads([]string{
 		"shipment_get",
-		"get_customer",
+		"customer_get",
 		"list_settlements",
 		agentdefinition.CoreToolFindInTrenova,
-		"get_customer",
+		"customer_get",
 	})
 
-	assert.Equal(t, []string{"shipment_get", "assign_move", "get_customer"}, reading.ToolNames)
+	assert.Equal(t, []string{"shipment_get", "dispatch_assign_move", "customer_get"}, reading.ToolNames)
 	assert.Equal(
 		t,
-		[]string{"shipment_get", "assign_move"},
+		[]string{"shipment_get", "dispatch_assign_move"},
 		definition.ToolNames,
 		"the stored agent keeps the tools it was configured with",
 	)

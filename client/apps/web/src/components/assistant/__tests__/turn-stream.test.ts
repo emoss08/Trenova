@@ -92,20 +92,20 @@ describe("reduceTurn", () => {
   it("marks a tool that failed, and one that became a proposal, distinctly", () => {
     const state = run([
       accepted,
-      { event: "tool_started", data: { callId: "c1", name: "get_worker", arguments: {} } },
+      { event: "tool_started", data: { callId: "c1", name: "worker_get", arguments: {} } },
       {
         event: "tool_finished",
-        data: { callId: "c1", name: "get_worker", failed: true, proposed: false, content: "boom" },
+        data: { callId: "c1", name: "worker_get", failed: true, proposed: false, content: "boom" },
       },
       {
         event: "tool_started",
-        data: { callId: "c2", name: "flag_for_manual_review", arguments: {} },
+        data: { callId: "c2", name: "agent_request_review", arguments: {} },
       },
       {
         event: "tool_finished",
         data: {
           callId: "c2",
-          name: "flag_for_manual_review",
+          name: "agent_request_review",
           failed: false,
           proposed: true,
           content: "",
@@ -127,7 +127,7 @@ describe("reduceTurn", () => {
     );
     const unheard = parseAssistantStreamEvent(
       "tool_finished",
-      '{"callId":"c2","name":"get_worker","failed":true,"content":"no","verdict":"vetoed"}',
+      '{"callId":"c2","name":"worker_get","failed":true,"content":"no","verdict":"vetoed"}',
     );
     expect(denied).not.toBeNull();
     expect(unheard).not.toBeNull();
@@ -135,7 +135,7 @@ describe("reduceTurn", () => {
     const state = run([
       accepted,
       { event: "tool_started", data: { callId: "c1", name: "update_worker", arguments: {} } },
-      { event: "tool_started", data: { callId: "c2", name: "get_worker", arguments: {} } },
+      { event: "tool_started", data: { callId: "c2", name: "worker_get", arguments: {} } },
       denied!,
       unheard!,
     ]);
@@ -632,7 +632,7 @@ describe("reduceTurn tool effects and summaries", () => {
         event: "tool_started",
         data: {
           callId: "c1",
-          name: "open_page",
+          name: "agent_open_page",
           arguments: { page: "/reports" },
           effect: "navigate",
         },
@@ -641,7 +641,7 @@ describe("reduceTurn tool effects and summaries", () => {
         event: "tool_finished",
         data: {
           callId: "c1",
-          name: "open_page",
+          name: "agent_open_page",
           failed: false,
           proposed: false,
           content: "{}",
@@ -996,13 +996,13 @@ describe("turnCitedRecords", () => {
   it("names nothing for a call that carried no records, failed, or is still running", () => {
     const state = run([
       accepted,
-      { event: "tool_started", data: { callId: "c1", name: "get_worker", arguments: {} } },
-      finished('{"callId":"c1","name":"get_worker","failed":false,"content":"{}"}'),
-      { event: "tool_started", data: { callId: "c2", name: "get_worker", arguments: {} } },
+      { event: "tool_started", data: { callId: "c1", name: "worker_get", arguments: {} } },
+      finished('{"callId":"c1","name":"worker_get","failed":false,"content":"{}"}'),
+      { event: "tool_started", data: { callId: "c2", name: "worker_get", arguments: {} } },
       finished(
-        '{"callId":"c2","name":"get_worker","failed":true,"content":"no","records":[{"type":"worker","id":"wrk_1","label":"Leon"}]}',
+        '{"callId":"c2","name":"worker_get","failed":true,"content":"no","records":[{"type":"worker","id":"wrk_1","label":"Leon"}]}',
       ),
-      { event: "tool_started", data: { callId: "c3", name: "get_customer", arguments: {} } },
+      { event: "tool_started", data: { callId: "c3", name: "customer_get", arguments: {} } },
     ]);
 
     expect(turnCitedRecords(state.segments)).toEqual([]);
@@ -1010,7 +1010,7 @@ describe("turnCitedRecords", () => {
 
   it("reads a records list it cannot parse as none rather than failing the event", () => {
     const event = finished(
-      '{"callId":"c1","name":"get_worker","failed":false,"content":"{}","records":"oops"}',
+      '{"callId":"c1","name":"worker_get","failed":false,"content":"{}","records":"oops"}',
     );
 
     expect(event.event === "tool_finished" && event.data.records).toBeNull();

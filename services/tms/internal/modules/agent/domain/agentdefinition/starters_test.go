@@ -41,7 +41,7 @@ func TestStarters_ReportBuilderAsksAboutReports(t *testing.T) {
 
 	definition := &agentdefinition.Definition{
 		Name:      "Report Builder",
-		ToolNames: []string{"create_report", "list_reports", "run_report", "describe_report_dataset"},
+		ToolNames: []string{"report_create", "report_list", "report_run", "report_get_dataset"},
 	}
 
 	starters := definition.Starters()
@@ -62,7 +62,7 @@ func TestStarters_TemplateQuestionsNeedTheirTools(t *testing.T) {
 
 	starters := agentdefinition.StartersFor(
 		agentdefinition.TemplateDispatchAssistant,
-		[]string{"list_time_off"},
+		[]string{"worker_list_time_off"},
 	)
 
 	prompts := starterPrompts(starters)
@@ -79,11 +79,11 @@ func TestStarters_CustomAgentMixesItsToolFamilies(t *testing.T) {
 	t.Parallel()
 
 	starters := agentdefinition.StartersFor("", []string{
-		"list_reports",
-		"create_report",
-		"add_home_widget",
-		"list_home_widgets",
-		"get_dispatch_board",
+		"report_list",
+		"report_create",
+		"home_add_widget",
+		"home_list_widgets",
+		"dispatch_get_board",
 	})
 
 	require.Len(t, starters, agentdefinition.MaxStarters)

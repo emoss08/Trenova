@@ -61,7 +61,7 @@ func reportBuilder() agentdefinition.RuntimeDelegate {
 		Description: "Builds and saves reports. It knows every dataset.",
 		Icon:        "receipt",
 		Accent:      "teal",
-		Tools:       []string{"create_report", "run_report"},
+		Tools:       []string{"report_create", "report_run"},
 	}
 }
 
@@ -133,17 +133,17 @@ func scriptedDelegateRun(delegate agentdefinition.RuntimeDelegate) DelegateRun {
 				{
 					Role: conversation.RoleAssistant,
 					ToolCalls: []conversation.ToolCallRecord{
-						{ID: "call_d1", Name: "create_report"},
+						{ID: "call_d1", Name: "report_create"},
 						{ID: "call_d2", Name: "share_report"},
 					},
 				},
-				{Role: conversation.RoleTool, ToolCallID: "call_d1", ToolName: "create_report"},
+				{Role: conversation.RoleTool, ToolCallID: "call_d1", ToolName: "report_create"},
 				{Role: conversation.RoleTool, ToolCallID: "call_d2", ToolName: "share_report"},
 				{Role: conversation.RoleAssistant, Content: "I saved the report."},
 			},
 			Actions: []agentports.PendingAction{
 				{
-					ToolName:   "create_report",
+					ToolName:   "report_create",
 					ToolCallID: "call_d1",
 					Tier:       agent.TierAutoExecute,
 					Executed:   true,
@@ -196,7 +196,7 @@ func TestDelegate_HandsTheTaskAndFoldsBackWhatTheDelegateDid(t *testing.T) {
 	assert.Contains(t, offered(first), delegateTaskName)
 	assert.Contains(t, first.System, "## Agents you can ask")
 	assert.Contains(t, first.System, "Report Builder (agentId "+delegate.ID.String()+")")
-	assert.Contains(t, first.System, "create_report, run_report")
+	assert.Contains(t, first.System, "report_create, report_run")
 
 	require.Len(t, fx.calls, 1)
 	assert.Equal(t, delegate.ID, fx.calls[0].Delegate.ID)
@@ -470,7 +470,7 @@ func TestStepKey_ScopeSeparatesADelegatesStepsAndLeavesTheOwnersAlone(t *testing
 	owner := pulid.MustNew("atrn_")
 	params := StepKeyParams{
 		OwnerID:  owner,
-		ToolName: "create_report",
+		ToolName: "report_create",
 		Args:     map[string]any{"name": "On-time"},
 	}
 	own := StepKey(params)

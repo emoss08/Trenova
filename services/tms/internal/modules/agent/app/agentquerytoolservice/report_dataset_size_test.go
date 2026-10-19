@@ -16,8 +16,8 @@ const toolResultBound = 12000
 /*
 Every dataset describes within one tool result, and the dataset list pages.
 
-The Report Builder transcript shows both cut off: list_report_datasets sent
-all seventy datasets with every edge, and describe_report_dataset inlined every
+The Report Builder transcript shows both cut off: report_list_datasets sent
+all seventy datasets with every edge, and report_get_dataset inlined every
 related dataset's field list. The model was left picking fields from a list it
 had been told was incomplete.
 */
@@ -28,7 +28,7 @@ func TestDescribeReportDataset_EveryDatasetFitsInOneResult(t *testing.T) {
 
 	for i := range reportcatalog.Default.Entities {
 		key := reportcatalog.Default.Entities[i].Key
-		result, err := tools["describe_report_dataset"].Query(
+		result, err := tools["report_get_dataset"].Query(
 			t.Context(),
 			testParams(map[string]any{
 				"dataset": key,
@@ -48,7 +48,7 @@ func TestListReportDatasets_APageFitsInOneResultAndSaysWhereItContinues(t *testi
 
 	_, _, tools := reportingTools(t)
 
-	result, err := tools["list_report_datasets"].Query(t.Context(), testParams(map[string]any{}))
+	result, err := tools["report_list_datasets"].Query(t.Context(), testParams(map[string]any{}))
 	require.NoError(t, err)
 
 	encoded, err := sonic.Marshal(result)
@@ -59,7 +59,7 @@ func TestListReportDatasets_APageFitsInOneResultAndSaysWhereItContinues(t *testi
 	require.True(t, outcome.HasMore, "seventy datasets do not fit one page")
 	require.NotNil(t, outcome.NextOffset)
 
-	next, err := tools["list_report_datasets"].Query(t.Context(), testParams(map[string]any{
+	next, err := tools["report_list_datasets"].Query(t.Context(), testParams(map[string]any{
 		"offset": float64(*outcome.NextOffset),
 	}))
 	require.NoError(t, err)

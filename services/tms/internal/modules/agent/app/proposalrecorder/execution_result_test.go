@@ -14,7 +14,7 @@ import (
 func TestRecord_KeepsWhatAnAutomaticWriteMade(t *testing.T) {
 	t.Parallel()
 
-	executed := pendingAction("create_report")
+	executed := pendingAction("report_create")
 	executed.Tier = agent.TierAutoExecute
 	executed.Executed = true
 	executed.ExecutionResult = &agent.ToolExecutionResult{
@@ -24,7 +24,7 @@ func TestRecord_KeepsWhatAnAutomaticWriteMade(t *testing.T) {
 		IDs:    map[string]string{"definitionId": "rd_01"},
 	}
 
-	failed := pendingAction("create_report")
+	failed := pendingAction("report_create")
 	failed.Tier = agent.TierAutoExecute
 	failed.Executed = true
 	failed.ExecutionError = "name taken"

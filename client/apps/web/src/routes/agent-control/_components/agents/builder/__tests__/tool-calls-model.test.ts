@@ -62,13 +62,13 @@ describe("toolCallRecords", () => {
       row("shipment_list", "invalid", 2),
       row("shipment_update", "ran", 3),
       row("shipment_update", "invalid", 5),
-      row("get_customer", "ran", 50),
+      row("customer_get", "ran", 50),
     ]);
 
     expect(records.map((record) => record.toolName)).toEqual([
       "shipment_update",
       "shipment_list",
-      "get_customer",
+      "customer_get",
     ]);
   });
 
@@ -127,15 +127,15 @@ describe("toolCallRecords", () => {
   });
 
   it("leaves out rows with no calls and has nothing to say for an empty scorecard", () => {
-    expect(toolCallRecords([row("get_customer", "ran", 0)])).toEqual([]);
+    expect(toolCallRecords([row("customer_get", "ran", 0)])).toEqual([]);
     expect(toolCallRecords([])).toEqual([]);
   });
 
   it("sorts a verdict this client has not heard of after the ones it knows, and counts it as failing", () => {
     const [record] = toolCallRecords([
-      row("get_customer", "rate_limited", 1),
-      row("get_customer", "failed", 1),
-      row("get_customer", "ran", 1),
+      row("customer_get", "rate_limited", 1),
+      row("customer_get", "failed", 1),
+      row("customer_get", "ran", 1),
     ]);
 
     expect(record.verdicts.map((tally) => tally.verdict)).toEqual([

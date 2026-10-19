@@ -81,7 +81,7 @@ func TestRelevance_ASubjectOrToolNameIsReadToo(t *testing.T) {
 		ID: pulid.MustNew("amem_"), Content: "Pays on the 15th.", SubjectLabel: "Acme Foods",
 	}
 	tool := &agent.Memory{
-		ID: pulid.MustNew("amem_"), Content: "Prefer the closest tractor.", ToolName: "assign_move",
+		ID: pulid.MustNew("amem_"), Content: "Prefer the closest tractor.", ToolName: "dispatch_assign_move",
 	}
 
 	relevance := Relevance("", "Assign a move for Acme", agentports.RankedMemories{

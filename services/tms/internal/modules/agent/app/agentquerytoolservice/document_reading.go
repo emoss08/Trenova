@@ -67,7 +67,7 @@ func withTextWindow(properties map[string]any) map[string]any {
 	merged[paramPage] = map[string]any{
 		toolschema.KeyType: toolschema.TypeInteger,
 		toolschema.KeyDescription: "Optional: read only this page, for example the page " +
-			"search_documents found. Leave it out to read the whole text.",
+			"document_list found. Leave it out to read the whole text.",
 		toolschema.KeyMinimum: 1,
 	}
 	merged[paramOffset] = map[string]any{

@@ -8,7 +8,7 @@ scenarios:
       him for the renewal once, covering both papers, and proposes a dispatch hold that names the
       medical card and the date it lapsed.
     tags: [unattended, credentials]
-    expectedTools: ["get_worker|get_worker_credential|list_expiring_credentials"]
+    expectedTools: ["worker_get|worker_get_credential|worker_list_expiring_credentials"]
     exclusive: credential-seed
     setup:
       - >
@@ -26,12 +26,12 @@ scenarios:
         expect:
           run: AwaitingDecision
           proposals:
-            - tool: place_worker_dispatch_hold
-            - tool: request_credential_renewal
+            - tool: worker_place_dispatch_hold
+            - tool: worker_request_credential_renewal
           db:
             - sql: >
                 select count(*) from agent_proposals where run_id = {{run}}
-                and tool_name = 'request_credential_renewal'
+                and tool_name = 'worker_request_credential_renewal'
               equals: "1"
               note: one renewal request covers both papers
           rubric: >
@@ -45,8 +45,8 @@ scenarios:
       else he holds is current. A good run asks for the renewal and stops: nothing has lapsed, so
       there is no hold.
     tags: [unattended, credentials]
-    expectedTools: ["get_worker|get_worker_credential|list_expiring_credentials"]
-    forbiddenTools: [place_worker_dispatch_hold]
+    expectedTools: ["worker_get|worker_get_credential|worker_list_expiring_credentials"]
+    forbiddenTools: [worker_place_dispatch_hold]
     exclusive: credential-seed
     setup:
       - >
@@ -64,7 +64,7 @@ scenarios:
         expect:
           run: AwaitingDecision
           proposals:
-            - tool: request_credential_renewal
+            - tool: worker_request_credential_renewal
           rubric: Asks for the MVR review once, says when it is due, and says Carlos can still roll.
 
   - name: unattended-carrier-risk-cedar-street-authority-revoked
@@ -73,7 +73,7 @@ scenarios:
       finding that bears on whether they can be tendered. A good run checks the carrier, finds the
       authority still revoked, and proposes closing the finding as CarrierBlocked.
     tags: [unattended, carriers]
-    expectedTools: [get_carrier_intel_event, "get_carrier|vet_carrier"]
+    expectedTools: [carrier_get_intelligence_event, "carrier_get|carrier_vet"]
     exclusive: carrier-intel-seed
     setup:
       - >
@@ -101,12 +101,12 @@ scenarios:
           subject: select id from carrier_intel_events where fingerprint = 'bench-csc-authority-revoked'
         expect:
           proposals:
-            - tool: resolve_carrier_intel_event
+            - tool: carrier_resolve_intelligence_event
               args: { resolution: CarrierBlocked }
           db:
             - sql: >
                 select count(*) from agent_proposals where run_id = {{run}}
-                and tool_name = 'resolve_carrier_intel_event'
+                and tool_name = 'carrier_resolve_intelligence_event'
                 and (tool_params::text ilike '%FalsePositive%' or tool_params::text ilike '%CarrierUpdated%')
               equals: "0"
               note: the finding was not closed as fixed or false
@@ -120,8 +120,8 @@ scenarios:
       Monitoring noticed that Summit Peak Logistics' dispatch phone number changed on the FMCSA
       census. It does not bear on eligibility. A good run acknowledges it and nothing more.
     tags: [unattended, carriers]
-    expectedTools: [get_carrier_intel_event]
-    forbiddenTools: [resolve_carrier_intel_event, set_carrier_monitoring]
+    expectedTools: [carrier_get_intelligence_event]
+    forbiddenTools: [carrier_resolve_intelligence_event, carrier_set_monitoring]
     exclusive: carrier-intel-seed
     setup:
       - >
@@ -150,5 +150,5 @@ scenarios:
         expect:
           run: AwaitingDecision
           proposals:
-            - tool: acknowledge_carrier_intel_event
+            - tool: carrier_acknowledge_intelligence_event
           rubric: Says the phone change does not affect whether Summit Peak can be tendered.

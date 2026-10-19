@@ -229,7 +229,7 @@ func newGetEDITransferTool(
 	return &getEDITransferTool{transfers: transfers, access: newFieldAccess(permissions)}
 }
 
-func (t *getEDITransferTool) Name() string { return "get_edi_transfer" }
+func (t *getEDITransferTool) Name() string { return "edi_get_transfer" }
 
 func (t *getEDITransferTool) Description() string {
 	return "Retrieve one EDI load tender by id, with its stops, freight and rate and the " +
@@ -243,7 +243,7 @@ func (t *getEDITransferTool) ParamSchema() map[string]any {
 	return idSchema(
 		paramEDITransferID,
 		agenttoolschema.KindID("The load tender transfer's id, from "+
-			"list_edi_transfers, a transferId in get_edi_inbound_file, or this run's subject.",
+			"edi_list_transfers, a transferId in edi_get_inbound_file, or this run's subject.",
 			permission.KindEDITransfer),
 	)
 }
@@ -472,7 +472,7 @@ func newListEDIMessagesTool(messages ediMessageLister) agentports.AgentQueryTool
 	return &listEDIMessagesTool{messages: messages}
 }
 
-func (t *listEDIMessagesTool) Name() string { return "list_edi_messages" }
+func (t *listEDIMessagesTool) Name() string { return "edi_list_messages" }
 
 func (t *listEDIMessagesTool) SearchTerms() []string {
 	return []string{"accepted with errors", "messages for this invoice"}
@@ -484,8 +484,8 @@ func (t *listEDIMessagesTool) Description() string {
 		"Filter to Failed or DeadLettered to find what did not reach a partner, by ackStatus " +
 		"to find what a partner rejected or accepted with errors, or to one shipment or " +
 		"invoice. For how acknowledgments stand overall and what is overdue, use " +
-		"get_edi_ack_health, which also counts each partner's acknowledgments. For X12 a " +
-		"person pasted, use inspect_x12 alone; stored messages are not needed to read it. " +
+		"edi_get_ack_health, which also counts each partner's acknowledgments. For X12 a " +
+		"person pasted, use edi_inspect_x12 alone; stored messages are not needed to read it. " +
 		"Never returns a document's content. Errors can repeat the partner's own text."
 }
 
@@ -499,7 +499,7 @@ func (t *listEDIMessagesTool) ParamSchema() map[string]any {
 			"214 status, 990 tender response, 997 or 999 acknowledgment.",
 			messageTransactionSets),
 		paramPartnerID: agenttoolschema.KindID("Only this partner's messages, by id from "+
-			"list_edi_partners.", permission.KindEDIPartner),
+			"edi_list_partners.", permission.KindEDIPartner),
 		paramAckStatus: enumParam("Only outbound messages whose acknowledgment stands so: "+
 			"Pending (none yet), Accepted, AcceptedWithErrors (accepted, with errors the "+
 			"partner noted) or Rejected.", messageAckStatuses),
@@ -707,7 +707,7 @@ func newListEDITenderChangesTool(changes ediTenderChangeLister) agentports.Agent
 	return &listEDITenderChangesTool{changes: changes}
 }
 
-func (t *listEDITenderChangesTool) Name() string { return "list_edi_tender_changes" }
+func (t *listEDITenderChangesTool) Name() string { return "edi_list_tender_changes" }
 
 func (t *listEDITenderChangesTool) Description() string {
 	return "List changes another Trenova organization made to loads it tendered to this " +
@@ -722,7 +722,7 @@ func (t *listEDITenderChangesTool) ParamSchema() map[string]any {
 			"waiting on a decision.", tenderChangeStatuses),
 		paramShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
 			"Only changes to the load tendered from this shipment, "+
-				"by id from a sourceShipmentId in list_edi_transfers."),
+				"by id from a sourceShipmentId in edi_list_transfers."),
 	}, defaultListLimit, maxListLimit))
 }
 
@@ -873,7 +873,7 @@ func newListEDITransferChangesTool(changes ediTransferChangeLister) agentports.A
 	return &listEDITransferChangesTool{changes: changes}
 }
 
-func (t *listEDITransferChangesTool) Name() string { return "list_edi_transfer_changes" }
+func (t *listEDITransferChangesTool) Name() string { return "edi_list_transfer_changes" }
 
 func (t *listEDITransferChangesTool) Description() string {
 	return "List statuses and cancellations the other organization on an EDI-linked load " +
@@ -887,7 +887,7 @@ func (t *listEDITransferChangesTool) ParamSchema() map[string]any {
 		paramStatus: enumParam("Only changes in this status; PendingReview for those "+
 			"waiting on a decision.", transferChangeStatuses),
 		paramShipmentLinkID: agenttoolschema.KindID("Only changes on one linked load, by the "+
-			"shipmentLinkId from list_edi_tender_changes or a row of this tool.",
+			"shipmentLinkId from edi_list_tender_changes or a row of this tool.",
 			permission.KindEDIShipmentLink),
 	}, defaultListLimit, maxListLimit))
 }
@@ -1002,13 +1002,13 @@ func newListEDIPartnersTool(partners ediPartnerLister) agentports.AgentQueryTool
 	return &listEDIPartnersTool{partners: partners}
 }
 
-func (t *listEDIPartnersTool) Name() string { return "list_edi_partners" }
+func (t *listEDIPartnersTool) Name() string { return "edi_list_partners" }
 
 func (t *listEDIPartnersTool) Description() string {
 	return "List this organization's EDI trading partners with their code, name and the " +
 		"customer each stands for. Each says whether it is another Trenova organization or " +
 		"an outside partner and whether inbound and outbound are on. Narrow to a customer to " +
-		"find its partner; get_edi_partner gives one partner's readiness."
+		"find its partner; edi_get_partner gives one partner's readiness."
 }
 
 func (t *listEDIPartnersTool) ParamSchema() map[string]any {
@@ -1017,7 +1017,7 @@ func (t *listEDIPartnersTool) ParamSchema() map[string]any {
 			"Acme. This is how to find a partner by name."),
 		paramCustomerID: agenttoolschema.RecordIDText(permission.ResourceCustomer,
 			"Only the partner that stands for this customer, by the customer's id from "+
-				"list_customers or a shipment's customerId. Never a name, and never a "+
+				"customer_list or a shipment's customerId. Never a name, and never a "+
 				"shipment's id: to find a partner by name, use query."),
 		paramStatus: enumParam("Only partners in this status.", partnerStatuses),
 	}))

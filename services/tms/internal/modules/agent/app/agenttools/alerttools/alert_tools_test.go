@@ -202,10 +202,10 @@ func TestScheduleReport_RefusesAReportThatDoesNotExistBeforeProposing(t *testing
 	require.NoError(t, tool.Validate(t.Context(), agenttoolstest.ExecuteParams(args(known.String()))))
 
 	err := tool.Validate(t.Context(), agenttoolstest.ExecuteParams(args("unbilled_aging")))
-	assert.Contains(t, agenttoolstest.FieldErrors(t, err)["definitionId"], "list_reports")
+	assert.Contains(t, agenttoolstest.FieldErrors(t, err)["definitionId"], "report_list")
 
 	err = tool.Validate(t.Context(), agenttoolstest.ExecuteParams(args(pulid.MustNew("rdef_").String())))
-	assert.Contains(t, agenttoolstest.FieldErrors(t, err)["definitionId"], "list_reports")
+	assert.Contains(t, agenttoolstest.FieldErrors(t, err)["definitionId"], "report_list")
 }
 
 // Approving the same schedule twice sent every email twice; three identical

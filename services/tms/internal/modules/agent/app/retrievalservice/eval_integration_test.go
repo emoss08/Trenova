@@ -12,19 +12,19 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentevalgate"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryservice"
-	"github.com/emoss08/trenova/internal/modules/agent/app/retrievalservice"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agentmemoryrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/airetrievalrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/conversationrepository"
-	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/retrievalsourcerepository"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentevalgate"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/retrievalservice"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/retrievalsourcerepository"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/testutil/retrievaltest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -317,11 +317,11 @@ func TestRetrievalAgainstFloors(t *testing.T) {
 	}
 
 	legs := []leg{
-		{label: "search_documents", suite: suites.documents, floors: retrievaltest.DocumentFloors,
+		{label: "document_list", suite: suites.documents, floors: retrievaltest.DocumentFloors,
 			keyword: keyword.documents},
-		{label: "search_inbound_messages", suite: suites.inbox, floors: retrievaltest.InboxFloors,
+		{label: "inbox_search_inbound_messages", suite: suites.inbox, floors: retrievaltest.InboxFloors,
 			keyword: keyword.inbox},
-		{label: "recall_memory", suite: suites.memories, floors: retrievaltest.MemoryFloors,
+		{label: "agent_list_memories", suite: suites.memories, floors: retrievaltest.MemoryFloors,
 			keyword: keyword.memories},
 	}
 	if hybrid != nil {

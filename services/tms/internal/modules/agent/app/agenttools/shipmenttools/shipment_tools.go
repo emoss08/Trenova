@@ -204,13 +204,13 @@ func NewPlaceShipmentHoldTool(holds shipmentports.ShipmentHoldService) agentport
 func (t *PlaceShipmentHoldTool) Name() string { return "shipment_place_hold" }
 
 func (t *PlaceShipmentHoldTool) Recipe() []string {
-	return []string{toolShipmentList, "list_hold_reasons", "shipment_place_hold"}
+	return []string{toolShipmentList, "masterdata_list_hold_reasons", "shipment_place_hold"}
 }
 
 func (t *PlaceShipmentHoldTool) Description() string {
 	return "Put a shipment on hold so it stops moving, billing or delivering until " +
 		"someone clears it. The reason decides what the hold blocks, so call " +
-		"list_hold_reasons first and use a real reason id rather than describing one."
+		"masterdata_list_hold_reasons first and use a real reason id rather than describing one."
 }
 
 func (t *PlaceShipmentHoldTool) ParamSchema() map[string]any {
@@ -220,7 +220,7 @@ func (t *PlaceShipmentHoldTool) ParamSchema() map[string]any {
 			common.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
 				"The shipment to hold, from the page, shipment_list."),
 			"holdReasonId": agenttoolschema.RecordIDText(permission.ResourceHoldReason,
-				"A hold reason id from list_hold_reasons."),
+				"A hold reason id from masterdata_list_hold_reasons."),
 			common.ParamNote: map[string]any{
 				"type": "string",
 				"description": "What prompted the hold, for whoever releases it. " +

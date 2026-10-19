@@ -15,7 +15,7 @@ import (
 
 const (
 	getShipmentTool    = "shipment_get"
-	listWatchtowerTool = "list_watchtower_items"
+	listWatchtowerTool = "exception_list_watchtower_items"
 )
 
 var liveQueries = []string{getShipmentTool, listWatchtowerTool}

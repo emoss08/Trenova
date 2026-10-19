@@ -127,20 +127,20 @@ func checklistRecord(checklist *worker.WorkerChecklist) toolpreview.Record {
 
 func newStartWorkerChecklistTool(checklists ChecklistKeeper) agentports.AgentTool {
 	spec := withSchema(wfSpec(
-		"start_worker_checklist",
+		"worker_start_checklist",
 		"Start a checklist for a worker from one of the organization's hand-started "+
 			"templates, such as an annual file audit. Onboarding and offboarding checklists "+
 			"start from the hire or the termination and are refused here. A template already "+
 			"open for the worker is not started twice.",
 		"Opens a checklist on the worker inside Trenova; nothing is sent, and "+
-			"cancel_worker_checklist cancels it.",
+			"worker_cancel_checklist cancels it.",
 		permission.ResourceWorkerChecklist,
 		permission.OpCreate,
 	), map[string]any{
 		common.ParamWorkerID: common.WorkerProperty(),
 		paramChecklistTemplate: agenttoolschema.RecordIDText(
 			permission.ResourceWorkerChecklistTemplate,
-			"The template, from list_worker_checklists. Never "+
+			"The template, from worker_list_checklists. Never "+
 				"guess one.",
 		),
 		paramStartedAt: agenttoolschema.Date("The day it starts, which its items fall due from. " +
@@ -299,7 +299,7 @@ func (c *checklistItemChange) run(
 
 func newUpdateWorkerChecklistItemTool(checklists ChecklistKeeper) agentports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
-		"update_worker_checklist_item",
+		"worker_update_checklist_item",
 		"Settle or reopen one item on a worker's open checklist. Complete it when it is "+
 			"done, with a document as evidence when there is one; Skip or NotApplicable with "+
 			"a note saying why; or Reopen a settled item. A checklist whose required items are all settled closes "+
@@ -310,7 +310,7 @@ func newUpdateWorkerChecklistItemTool(checklists ChecklistKeeper) agentports.Age
 		permission.OpUpdate,
 	), map[string]any{
 		paramChecklistItemID: agenttoolschema.KindID(
-			"The item, from list_worker_checklists. Never guess "+
+			"The item, from worker_list_checklists. Never guess "+
 				"one.",
 			permission.KindChecklistItem,
 		),
@@ -324,7 +324,7 @@ func newUpdateWorkerChecklistItemTool(checklists ChecklistKeeper) agentports.Age
 		paramEvidenceDocument: agenttoolschema.RecordIDText(
 			permission.ResourceDocument,
 			"For Complete: a document filed on the worker "+
-				"that shows it done, from search_documents.",
+				"that shows it done, from document_list.",
 		),
 	}, paramChecklistItemID, paramItemMove), paramChecklistItemID,
 		permission.ResourceWorkerChecklist)
@@ -410,7 +410,7 @@ func checklistMovePast(move checklistItemMove) string {
 
 func newCancelWorkerChecklistTool(checklists ChecklistKeeper) agentports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
-		"cancel_worker_checklist",
+		"worker_cancel_checklist",
 		"Cancel an open checklist that no longer applies, with the reason kept. Its items "+
 			"stay as they were.",
 		"Cancels a checklist inside Trenova; nothing is sent, and a cancelled checklist is "+
@@ -420,7 +420,7 @@ func newCancelWorkerChecklistTool(checklists ChecklistKeeper) agentports.AgentTo
 	), map[string]any{
 		paramChecklistID: agenttoolschema.RecordIDText(
 			permission.ResourceWorkerChecklist,
-			"The checklist, from list_worker_checklists. Never "+
+			"The checklist, from worker_list_checklists. Never "+
 				"guess one.",
 		),
 		common.FieldReason: common.StringProperty("Why it no longer applies.", wfShortChars),

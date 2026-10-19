@@ -36,7 +36,7 @@ scenarios:
           maxFailedCalls: 0
           rubric: >
             Answers about the file the first message carried, from the message's replayed
-            attachment and read_attachment, not from memory of an excerpt: $3,610.00, picked up
+            attachment and agent_read_attachment, not from memory of an excerpt: $3,610.00, picked up
             2027-03-15 08:00-12:00 at the Los Angeles Terminal.
       - say: Here is the revised confirmation. What changed?
         attach: [../fixtures/attachments/rate-confirmation-np-77120-revised.pdf]

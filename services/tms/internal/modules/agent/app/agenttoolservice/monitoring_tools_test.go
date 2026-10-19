@@ -98,7 +98,7 @@ func TestResolveServiceFailure_InsistsOnAReasonWhenNoneIsOnFile(t *testing.T) {
 	}))
 
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "list_service_failure_reason_codes")
+	assert.Contains(t, err.Error(), "exception_list_service_failure_reason_codes")
 	assert.Nil(t, failures.Resolved)
 
 	existing.ReasonCodeID = pulid.PtrOrNil(pulid.MustNew("sfrc_"))
@@ -456,7 +456,7 @@ func TestEmailCustomer_WillNotTellTheSameCustomerTwiceWithinTheHour(t *testing.T
 	comments.Existing = []*shipment.ShipmentComment{{
 		CreatedAt: timeutils.NowUnix() - 600,
 		Type:      shipment.CommentTypeCustomerUpdate,
-		Metadata:  map[string]any{"source": "agent", "tool": "email_customer"},
+		Metadata:  map[string]any{"source": "agent", "tool": "customer_send_email"},
 	}}
 
 	params := agenttoolstest.ExecuteParams(map[string]any{

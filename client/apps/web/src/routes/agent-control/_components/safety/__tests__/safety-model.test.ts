@@ -128,13 +128,13 @@ describe("heldByOf", () => {
     expect(
       heldByOf(
         tool(
-          "email_customer",
+          "customer_send_email",
           { heldBy: ["egress_class"] },
           { heldBy: ["egress_class", "tainted"] },
         ),
       ),
     ).toEqual(["egress_class", "tainted"]);
-    expect(heldByOf(tool("assign_move", { heldBy: [] }))).toEqual([]);
+    expect(heldByOf(tool("dispatch_assign_move", { heldBy: [] }))).toEqual([]);
   });
 });
 

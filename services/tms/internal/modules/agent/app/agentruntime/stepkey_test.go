@@ -48,19 +48,19 @@ func TestStepKey_SeparatesRunsAndRepeats(t *testing.T) {
 
 	args := map[string]any{"to": "ops@example.com"}
 	mine := StepKey(
-		StepKeyParams{OwnerID: pulid.MustNew("ar_"), ToolName: "email_customer", Args: args},
+		StepKeyParams{OwnerID: pulid.MustNew("ar_"), ToolName: "customer_send_email", Args: args},
 	)
 	theirs := StepKey(
-		StepKeyParams{OwnerID: pulid.MustNew("ar_"), ToolName: "email_customer", Args: args},
+		StepKeyParams{OwnerID: pulid.MustNew("ar_"), ToolName: "customer_send_email", Args: args},
 	)
 	assert.NotEqual(t, mine, theirs, "two runs asking for the same write are two writes")
 
 	owner := pulid.MustNew("ar_")
 	first := StepKey(
-		StepKeyParams{OwnerID: owner, ToolName: "email_customer", Args: args, Ordinal: 0},
+		StepKeyParams{OwnerID: owner, ToolName: "customer_send_email", Args: args, Ordinal: 0},
 	)
 	again := StepKey(
-		StepKeyParams{OwnerID: owner, ToolName: "email_customer", Args: args, Ordinal: 1},
+		StepKeyParams{OwnerID: owner, ToolName: "customer_send_email", Args: args, Ordinal: 1},
 	)
 	assert.NotEqual(t, first, again,
 		"two identical reminders are two reminders, not one asked for twice")
@@ -74,7 +74,7 @@ func TestStepKey_IsEmptyWhenTheArgumentsCannotBeCanonicalised(t *testing.T) {
 	// call id, which is where every run stood before the ledger existed.
 	key := StepKey(StepKeyParams{
 		OwnerID:  pulid.MustNew("ar_"),
-		ToolName: "assign_move",
+		ToolName: "dispatch_assign_move",
 		Args:     map[string]any{"cycle": make(chan int)},
 	})
 

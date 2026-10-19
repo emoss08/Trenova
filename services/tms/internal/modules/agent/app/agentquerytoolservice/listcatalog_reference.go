@@ -78,7 +78,7 @@ func newListEquipmentTypesTool(
 	})
 
 	return newListTool(listSpec{
-		name:         "list_equipment_types",
+		name:         "equipment_list_types",
 		entityPlural: "equipment types",
 		summary: "List equipment types — the trailer and tractor classes this " +
 			"organization books against, such as dry van, reefer or flatbed. Use it to " +
@@ -110,7 +110,7 @@ func newListEquipmentTypesTool(
 
 func newListFleetCodesTool(repo fleetcodeports.FleetCodeRepository) agentports.AgentQueryTool {
 	return newListTool(listSpec{
-		name:         "list_fleet_codes",
+		name:         "masterdata_list_fleet_codes",
 		entityPlural: "fleet codes",
 		summary: "List fleet codes — the groupings drivers and equipment are assigned " +
 			"to, each with its own manager and revenue goal.",
@@ -139,7 +139,7 @@ func newListServiceTypesTool(
 	repo servicetypeports.ServiceTypeRepository,
 ) agentports.AgentQueryTool {
 	return newListTool(listSpec{
-		name:         "list_service_types",
+		name:         "masterdata_list_service_types",
 		entityPlural: "service types",
 		summary: "List service types — the levels of service a shipment can be booked " +
 			"at. Use it to turn a service a person named into the id a shipment needs.",
@@ -168,7 +168,7 @@ func newListShipmentTypesTool(
 	repo shipmenttypeports.ShipmentTypeRepository,
 ) agentports.AgentQueryTool {
 	return newListTool(listSpec{
-		name:         "list_shipment_types",
+		name:         "masterdata_list_shipment_types",
 		entityPlural: "shipment types",
 		summary: "List shipment types — how this organization categorises the freight " +
 			"it moves. Use it to turn a type a person named into the id a shipment needs.",
@@ -206,7 +206,7 @@ type commodityRow struct {
 
 func newListCommoditiesTool(repo commodityports.CommodityRepository) agentports.AgentQueryTool {
 	return newListTool(listSpec{
-		name:         "list_commodities",
+		name:         "masterdata_list_commodities",
 		entityPlural: "commodities",
 		summary: "List commodities — what this organization hauls, with freight class, " +
 			"handling flags and whether the commodity is hazardous. Temperature-controlled " +
@@ -265,12 +265,12 @@ func newListHazardousMaterialsTool(
 	repo hazardousmaterialports.HazardousMaterialRepository,
 ) agentports.AgentQueryTool {
 	return newListTool(listSpec{
-		name:         "list_hazardous_materials",
+		name:         "masterdata_list_hazardous_materials",
 		entityPlural: "hazardous materials",
 		summary: "List the hazardous materials this organization is set up to haul, with " +
 			"hazard class, UN number, packing group and whether a placard is required. " +
 			"Use it for questions about hazmat rules on a load, not about which drivers " +
-			"hold a hazmat endorsement — that is list_workers.",
+			"hold a hazmat endorsement — that is worker_list.",
 		resource: permission.ResourceHazardousMaterial,
 		config:   querybuilder.GetFieldConfiguration((*hazardousmaterial.HazardousMaterial)(nil)),
 		fields: []listField{
@@ -320,7 +320,7 @@ func newListAccessorialChargesTool(
 	repo accessorialchargeports.AccessorialChargeRepository,
 ) agentports.AgentQueryTool {
 	return newListTool(listSpec{
-		name:         "list_accessorial_charges",
+		name:         "masterdata_list_accessorial_charges",
 		entityPlural: "accessorial charges",
 		summary: "List the accessorial charges this organization bills — detention, " +
 			"layover, lumper and the rest — with how each is calculated and at what rate. " +
@@ -360,7 +360,7 @@ func newListDocumentTypesTool(
 	repo documenttypeports.DocumentTypeRepository,
 ) agentports.AgentQueryTool {
 	return newListTool(listSpec{
-		name:         "list_document_types",
+		name:         "document_list_types",
 		entityPlural: "document types",
 		summary: "List the document types this organization files — rate confirmations, " +
 			"bills of lading, proofs of delivery and the rest. Use it to name a document " +
@@ -400,7 +400,7 @@ func newListLocationCategoriesTool(
 	repo locationcategoryports.LocationCategoryRepository,
 ) agentports.AgentQueryTool {
 	return newListTool(listSpec{
-		name:         "list_location_categories",
+		name:         "location_list_categories",
 		entityPlural: "location categories",
 		summary: "List location categories — how facilities are grouped, and what each " +
 			"offers: secure parking, overnight, a restroom, whether an appointment is " +
@@ -558,7 +558,7 @@ type carrierRow struct {
 
 func newListCarriersTool(repo carrierports.CarrierRepository) agentports.AgentQueryTool {
 	return newListTool(listSpec{
-		name:         "list_carriers",
+		name:         "carrier_list",
 		entityPlural: "carriers",
 		summary: "List the carriers this organization tenders freight to, narrowed by " +
 			"status, compliance, safety rating or authority number. Use it before " +
@@ -628,7 +628,7 @@ func newListHoldReasonsTool(
 	repo holdreasonports.HoldReasonRepository,
 ) agentports.AgentQueryTool {
 	return newListTool(listSpec{
-		name:         "list_hold_reasons",
+		name:         "masterdata_list_hold_reasons",
 		entityPlural: "hold reasons",
 		summary: "List the reasons a shipment can be put on hold, and what each one " +
 			"blocks — dispatch, delivery, billing. Call this before shipment_place_hold: " +

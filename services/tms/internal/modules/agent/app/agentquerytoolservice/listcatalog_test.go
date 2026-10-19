@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -91,7 +91,7 @@ func TestListCatalog_NamesAreUniqueAndPrefixed(t *testing.T) {
 Each entry authorizes against its own permission resource, which is why the
 catalog is one tool per entity rather than list_records(entity, …): the agent
 builder groups the picker by resource, so an organization can grant an agent
-list_workers without also granting list_customers.
+worker_list without also granting customer_list.
 */
 func TestListCatalog_EachEntityCarriesItsOwnResource(t *testing.T) {
 	t.Parallel()
@@ -110,7 +110,7 @@ func TestListCatalog_EachEntityCarriesItsOwnResource(t *testing.T) {
 The question that started this: "which drivers hold a current hazmat
 endorsement?" Endorsements live on the worker profile, not the worker, so
 without a traversal filter the catalog could not express it at all — and the
-model's only near-miss was list_expiring_credentials, which answers "whose is
+model's only near-miss was worker_list_expiring_credentials, which answers "whose is
 about to lapse", a different question with a plausible-looking wrong answer.
 */
 func TestListWorkers_CanFilterOnTheProfile(t *testing.T) {

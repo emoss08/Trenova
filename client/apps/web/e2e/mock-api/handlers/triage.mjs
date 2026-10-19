@@ -902,7 +902,7 @@ const AGENTS = [
     template: "BillingAssistant",
     icon: "receipt",
     accent: "teal",
-    toolNames: ["file_document", "waive_detention", "queue_carrier_pay"],
+    toolNames: ["file_document", "detention_waive", "queue_carrier_pay"],
     starters: [
       {
         label: "Check detention",
@@ -917,7 +917,7 @@ const AGENTS = [
     template: "EDIDesk",
     icon: "file",
     accent: "violet",
-    toolNames: ["draft_edi_connection", "apply_edi_connection_draft", "inspect_x12"],
+    toolNames: ["edi_draft_connection", "edi_apply_connection_draft", "edi_inspect_x12"],
     starters: [
       { label: "Set up a partner", prompt: "Set this trading partner up from their EDI guide." },
     ],

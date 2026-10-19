@@ -34,8 +34,8 @@ const (
 	paramLocations     = "locations"
 	paramCommodities   = "commodities"
 	recordsAllFound    = "Every record is in Trenova: call shipment_create with these ids."
-	recordsSomeMissing = "Propose what is missing now, in this turn, with create_customer, " +
-		"create_location (category from locationCategories) and create_commodity; do not " +
+	recordsSomeMissing = "Propose what is missing now, in this turn, with customer_create, " +
+		"location_create (category from locationCategories) and masterdata_create_commodity; do not " +
 		"ask first. Then say the shipment follows once they are approved, and call " +
 		"shipment_create with their new ids then."
 	recordsUnreadable = "you may not read these records"

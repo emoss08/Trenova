@@ -25,5 +25,5 @@ type PtoDecider interface {
 	) (*worker.WorkerPTO, error)
 }
 
-const PtoIDNote = "The id of the time-off request, from list_time_off. " +
+const PtoIDNote = "The id of the time-off request, from worker_list_time_off. " +
 	"A worker id is not a request id."

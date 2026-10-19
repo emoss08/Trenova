@@ -92,7 +92,7 @@ func (f *resumeFixture) decide(status agent.ProposalStatus, at int64) *agent.Age
 	proposal := &agent.AgentProposal{
 		ID:       pulid.MustNew("aprop_"),
 		RunID:    f.runs.run.ID,
-		ToolName: "raise_exception",
+		ToolName: "agent_raise_exception",
 		Status:   status,
 	}
 	f.proposals.proposals = append(f.proposals.proposals, proposal)
@@ -152,7 +152,7 @@ func TestResumeFollowUps_LeavesAReportedDecisionAlone(t *testing.T) {
 	f.notes.notes = []conversation.Message{{
 		Role:    conversation.RoleUser,
 		Kind:    conversation.MessageKindDecisionNote,
-		Content: "Rejected raise_exception.\nDecision on proposal " + proposal.ID.String() + ".",
+		Content: "Rejected agent_raise_exception.\nDecision on proposal " + proposal.ID.String() + ".",
 	}}
 
 	f.resume(t)

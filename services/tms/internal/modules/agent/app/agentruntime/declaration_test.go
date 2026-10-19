@@ -68,7 +68,7 @@ func TestNewToolSet_ATurnThatCannotSearchLoadsEveryCoreTool(t *testing.T) {
 
 	service, _ := deferredCoreRuntime(t)
 	set := service.newToolSet(t.Context(), toolSetRequest{
-		definition: testDefinition("list_workers", agentdefinition.CoreToolWaitUntil),
+		definition: testDefinition("worker_list", agentdefinition.CoreToolWaitUntil),
 		actor:      testActor(),
 		input:      "say hello",
 	})
@@ -88,23 +88,23 @@ func TestFindFor_LoadsWhatTheActivityFoundIntoTheTurnAsReferences(t *testing.T) 
 		Input:      "say hello",
 	}
 	turn := service.RestoreTurn(req, service.OpenTurn(t.Context(), req).State())
-	require.False(t, turn.tools.offers("list_trailers"))
+	require.False(t, turn.tools.offers("equipment_list_trailers"))
 	declared := turn.completionRequest()
 
 	found := service.FindFor(t.Context(), req, turn.ToolsState(),
 		map[string]any{"need": "trailer inspection date"})
 	turn.LoadTools(found.Loaded)
 
-	require.Contains(t, found.Loaded, "list_trailers")
-	assert.True(t, turn.tools.offers("list_trailers"))
+	require.Contains(t, found.Loaded, "equipment_list_trailers")
+	assert.True(t, turn.tools.offers("equipment_list_trailers"))
 	assert.Equal(t, declared.Tools, turn.completionRequest().Tools,
 		"loading a tool leaves what the turn declared as it was")
 	assert.Equal(t, declared.DeferredTools, turn.completionRequest().DeferredTools)
-	assert.Contains(t, turn.tools.takeLoaded(), "list_trailers",
+	assert.Contains(t, turn.tools.takeLoaded(), "equipment_list_trailers",
 		"the next tool result names it")
 
 	restored := service.RestoreTurn(req, turn.State())
-	assert.True(t, restored.tools.offers("list_trailers"), "a restored turn keeps what it loaded")
+	assert.True(t, restored.tools.offers("equipment_list_trailers"), "a restored turn keeps what it loaded")
 }
 
 func TestStreamCompletion_DeclaresEachDeferredToolInFullAndSorted(t *testing.T) {

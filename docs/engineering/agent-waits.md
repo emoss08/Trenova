@@ -6,13 +6,13 @@ shipment or from a carrier or customer, an appointment coming round, detention
 free time running out, a driver's drive time falling low, or a time.
 
 Read this before changing `domain/agentwait`, `agentwaitservice`,
-`temporaljobs/agentwaitjobs`, the `wait_until` / `cancel_wait` tools, or any of
+`temporaljobs/agentwaitjobs`, the `agent_create_wait` / `agent_cancel_wait` tools, or any of
 the places that tell waits what happened (below).
 
 ## The shape of it
 
 ```
-wait_until (tool) ──▶ agentwaitservice.Register ──▶ agent_waits row + AgentWaitWorkflow
+agent_create_wait (tool) ──▶ agentwaitservice.Register ──▶ agent_waits row + AgentWaitWorkflow
                          reads the records first        (system-queue, id agent-wait:<id>)
                                                                  │
    agent event ─▶ agentevents.Publisher ─▶ NotifyEvent ─┐        │ timer (due / expiry)
@@ -37,20 +37,20 @@ The workflow costs nothing while it waits and survives every restart.
 | `AppointmentNear` | `shipmentMoveId`, `stopId`, `minutesBefore` | `minutesBefore` before the stop's scheduled window start |
 | `FreeTimeEnding` | `detentionOccurrenceId`, `minutesBefore` | `minutesBefore` before the occurrence's free time ends |
 | `HOSDriveBelow` | `workerId`, `driveHoursBelow` | the drive clock drops below it, timed to the second while the driver drives |
-| `PortalRun` | `portalRunId` | the portal task an approved `act_on_portal` started, or a `read_portal` that stopped for a sign-in code, ends (`NotifyPortalRun` from `PortalRunWorkflow`) |
+| `PortalRun` | `portalRunId` | the portal task an approved `web_use_portal` started, or a `web_read_portal` that stopped for a sign-in code, ends (`NotifyPortalRun` from `PortalRunWorkflow`) |
 | `DocumentRead` | `documentId` | the file's extraction is saved (`document.extracted`), or a look every minute finds its reading over: text in, and no shipment draft still `Pending` |
 | `WebWatch` | `webWatchId` | the web watch finds something new (`NotifyWebWatch` from `WebWatchWorkflow`), or fails |
 
-`PortalRun` is not one an agent asks for: `wait_until` offers only `AgentKinds()`, and the
-`act_on_portal` tool registers it itself (`RegisterPortalRunWait`, idempotent per run) on the
-conversation or background run that filed the proposal, with a two-hour expiry. `read_portal`
+`PortalRun` is not one an agent asks for: `agent_create_wait` offers only `AgentKinds()`, and the
+`web_use_portal` tool registers it itself (`RegisterPortalRunWait`, idempotent per run) on the
+conversation or background run that filed the proposal, with a two-hour expiry. `web_read_portal`
 registers one on its conversation (by thread, since a query tool has no run) when the portal
 stops for a sign-in code the person can relay. While its run waits on that code, listing the
 conversation's waits attaches `signInCode` to the wait for the code box, and
 `AnnouncePortalRun` republishes the waits when the code is first asked for. See
 [agent-portal-automation.md](agent-portal-automation.md).
 
-`DocumentRead` is not one an agent asks for either. When `read_attachment` finds a
+`DocumentRead` is not one an agent asks for either. When `agent_read_attachment` finds a
 file the person attached still being read, the turn's tool observer
 (`assistantservice.WaitOnUnreadFile`) calls `WaitForDocumentRead`, which keeps one
 open wait per file and conversation, with a half-hour expiry and the plan to carry
@@ -63,12 +63,12 @@ wait saying why. A turn that reads the file in full cancels its open wait
 extraction card first. A delegated task never sets one; it reports the file to the
 agent that handed it over.
 
-`WebWatch` is not one an agent asks for either: `watch_web` registers it
+`WebWatch` is not one an agent asks for either: `web_watch` registers it
 (`RegisterWebWatchWait`, one open wait per watch) for the conversation or background run that
 set the watch, lasting as long as the watch plus an hour (`MaxWebWatchLifetimeSeconds`, the one
 kind allowed past 168 hours). Each delivery meets the waits set before its findings and sets
 the next one for the same work while the watch goes on. It cannot be cancelled on its own: it
-ends with its watch (`stop_web_watch`, or **Stop watching** on the Desk's row). Listing a
+ends with its watch (`web_stop_watch`, or **Stop watching** on the Desk's row). Listing a
 conversation's waits attaches `webWatch` (the watch, its cadence, when it ends and its findings
 so far). See [agent-web-watching.md](agent-web-watching.md).
 
@@ -158,7 +158,7 @@ closed and picks up only what it has not) and then:
 
 ## Cancelling
 
-`cancel_wait` (the agent; only a wait its own conversation or, for a background
+`agent_cancel_wait` (the agent; only a wait its own conversation or, for a background
 run, its own agent set) and `POST /assistant/threads/:threadID/waits/:waitID/cancel/`
 (the owner) close the wait as `Cancelled` and cancel its workflow. Nothing is
 picked up. A `WebWatch` wait is refused: stopping its watch closes it.
@@ -178,7 +178,7 @@ that picks the work up opens with outside content already read
 
 ## Tools
 
-`wait_until` and `cancel_wait` are core tools (every agent holds them), action
+`agent_create_wait` and `agent_cancel_wait` are core tools (every agent holds them), action
 tools at `AutoExecute`, egress `internal`, gated on `agent_run:read`, and carry
 taint. They change no record and reach nobody, so they run on their own; after a
 web read they are capped at Propose like every other write.

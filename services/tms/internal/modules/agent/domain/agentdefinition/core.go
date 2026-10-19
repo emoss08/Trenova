@@ -3,16 +3,16 @@ package agentdefinition
 import "slices"
 
 const (
-	CoreToolRecallMemory   = "recall_memory"
-	CoreToolRemember       = "remember"
-	CoreToolGuideProfile   = "guide_profile"
-	CoreToolRaiseException = "raise_exception"
-	CoreToolFlagForReview  = "flag_for_manual_review"
-	CoreToolFindInTrenova  = "find_in_trenova"
-	CoreToolOpenPage       = "open_page"
-	CoreToolWaitUntil      = "wait_until"
-	CoreToolCancelWait     = "cancel_wait"
-	CoreToolReadAttachment = "read_attachment"
+	CoreToolRecallMemory   = "agent_list_memories"
+	CoreToolRemember       = "agent_create_memory"
+	CoreToolGuideProfile   = "agent_guide_profile"
+	CoreToolRaiseException = "agent_raise_exception"
+	CoreToolFlagForReview  = "agent_request_review"
+	CoreToolFindInTrenova  = "agent_find_page"
+	CoreToolOpenPage       = "agent_open_page"
+	CoreToolWaitUntil      = "agent_create_wait"
+	CoreToolCancelWait     = "agent_cancel_wait"
+	CoreToolReadAttachment = "agent_read_attachment"
 )
 
 var coreTools = [...]string{
@@ -31,10 +31,10 @@ var coreTools = [...]string{
 // CoreTools are held by every agent without being selected. Memory, escalation,
 // review, waiting on the world and knowing the product it runs in are how an agent works at all
 // rather than what it works on, so an organization building an agent should
-// not have to know to tick them. find_in_trenova, open_page and read_attachment
+// not have to know to tick them. agent_find_page, agent_open_page and agent_read_attachment
 // answer for the person in the conversation, so a run nobody is watching goes
-// without them; read_attachment rides only on a conversation a file was
-// attached to. guide_profile writes down what a person said about the
+// without them; agent_read_attachment rides only on a conversation a file was
+// attached to. agent_guide_profile writes down what a person said about the
 // organization's business or their own work, so it rides only where a person
 // is talking to the agent.
 // find_tools and ask_user are the other two always-on tools; the runtime

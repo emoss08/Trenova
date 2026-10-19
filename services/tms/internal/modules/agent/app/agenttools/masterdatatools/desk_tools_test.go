@@ -281,7 +281,7 @@ func TestResolveCarrierIntelEvent_SaysWhatCameOfIt(t *testing.T) {
 	stub := &stubCarrierIntel{event: event}
 	tool := NewResolveCarrierIntelEventTool(stub)
 
-	require.Equal(t, "resolve_carrier_intel_event", tool.Name())
+	require.Equal(t, "carrier_resolve_intelligence_event", tool.Name())
 
 	params := agenttoolstest.DeskParams(map[string]any{
 		"eventId":    event.ID.String(),
@@ -318,7 +318,7 @@ func TestAcknowledgeCarrierIntelEvent_TakesNoOutcome(t *testing.T) {
 	stub := &stubCarrierIntel{event: event}
 	tool := NewAcknowledgeCarrierIntelEventTool(stub)
 
-	require.Equal(t, "acknowledge_carrier_intel_event", tool.Name())
+	require.Equal(t, "carrier_acknowledge_intelligence_event", tool.Name())
 	require.NotContains(t, tool.ParamSchema()["required"], "resolution")
 
 	params := agenttoolstest.DeskParams(map[string]any{

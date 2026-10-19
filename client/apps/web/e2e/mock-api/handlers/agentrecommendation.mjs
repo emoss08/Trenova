@@ -23,17 +23,17 @@ const TOOLS = {
   tender_shipment: "Tender a shipment load to a carrier for coverage",
   search_carriers: "Search carriers by lane equipment authority to cover a load",
   file_document: "File a document such as a POD bill of lading or lumper receipt on a shipment",
-  waive_detention: "Waive or approve detention charges billed on an invoice for a stop",
+  detention_waive: "Waive or approve detention charges billed on an invoice for a stop",
   queue_carrier_pay: "Queue carrier pay settlement for a delivered load invoice",
   shipment_eta: "Shipment ETA arrival time status for a customer",
   draft_reply: "Draft an email reply to a customer about status",
-  get_tractor: "Retrieve one tractor truck power unit",
-  get_trailer: "Retrieve one trailer",
-  get_worker: "Retrieve one worker driver",
-  get_location: "Retrieve one location facility",
-  get_carrier: "Retrieve one carrier",
+  equipment_get_tractor: "Retrieve one tractor truck power unit",
+  equipment_get_trailer: "Retrieve one trailer",
+  worker_get: "Retrieve one worker driver",
+  location_get: "Retrieve one location facility",
+  carrier_get: "Retrieve one carrier",
   order_get: "Retrieve one order",
-  list_tractors: "List tractors trucks by status",
+  equipment_list_tractors: "List tractors trucks by status",
   shipment_get: "Retrieve one shipment load",
 };
 
@@ -117,7 +117,7 @@ const SUMMARIES = {
   draft_reply: "Writes the email for you to review and send.",
   shipment_get: "Stops, status, equipment and references.",
   file_document: "PODs, bills of lading and lumper receipts.",
-  waive_detention: "Approve or waive detention on an invoice.",
+  detention_waive: "Approve or waive detention on an invoice.",
 };
 
 function matchTools(names) {

@@ -148,7 +148,7 @@ func provideListAccountingDriftFindingsTool(
 }
 
 func (t *listAccountingDriftFindingsTool) Name() string {
-	return "list_accounting_drift_findings"
+	return "accounting_list_drift_findings"
 }
 
 func (t *listAccountingDriftFindingsTool) Description() string {
@@ -156,7 +156,7 @@ func (t *listAccountingDriftFindingsTool) Description() string {
 		"now, newest first. Each row shows both values, who changed it there and when, " +
 		"whether the difference is within the reconciliation tolerance, and the fixes it " +
 		"offers. Filter by status, such as Open, by kind, or by document type. Pass an Open " +
-		"row's id to resolve_accounting_drift or dismiss_accounting_drift."
+		"row's id to accounting_resolve_drift_finding or accounting_dismiss_drift_finding."
 }
 
 func (t *listAccountingDriftFindingsTool) SearchTerms() []string {

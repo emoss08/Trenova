@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
@@ -32,7 +32,7 @@ func TestCompileErrorHint_NamesTheNearFieldsAndTheEdgeThatHasIt(t *testing.T) {
 	assert.Contains(t, hinted, `The stop dataset has no field "locationName".`)
 	assert.Contains(t, hinted, "locationId")
 	assert.Contains(t, hinted, "location.name")
-	assert.Contains(t, hinted, `describe_report_dataset with dataset "stop"`)
+	assert.Contains(t, hinted, `report_get_dataset with dataset "stop"`)
 	assert.Equal(t, 1, countOf(hinted, "The stop dataset has no field"),
 		"the same error twice earns one hint")
 }
@@ -73,7 +73,7 @@ func TestPreviewReport_HintsAtTheRightFieldWhenTheCompilerRefuses(t *testing.T) 
 		`validation failed: - unknown field "locationName" on entity "stop"`,
 	)
 
-	_, err := tools["preview_report"].Query(t.Context(), testParams(map[string]any{
+	_, err := tools["report_preview"].Query(t.Context(), testParams(map[string]any{
 		"definition": map[string]any{
 			"entity": "shipment",
 			"columns": []any{map[string]any{
@@ -96,7 +96,7 @@ func TestDescribeReportDataset_NamesEachEdgesTargetFields(t *testing.T) {
 
 	_, _, tools := reportingTools(t)
 
-	result, err := tools["describe_report_dataset"].Query(t.Context(), testParams(map[string]any{
+	result, err := tools["report_get_dataset"].Query(t.Context(), testParams(map[string]any{
 		"dataset": "stop",
 	}))
 	require.NoError(t, err)
@@ -119,7 +119,7 @@ func TestListReportDatasets_LeavesTargetFieldsToTheDescription(t *testing.T) {
 
 	_, _, tools := reportingTools(t)
 
-	result, err := tools["list_report_datasets"].Query(
+	result, err := tools["report_list_datasets"].Query(
 		t.Context(),
 		testParams(map[string]any{"query": "stop"}),
 	)
@@ -132,7 +132,7 @@ func TestListReportDatasets_LeavesTargetFieldsToTheDescription(t *testing.T) {
 	require.NotEmpty(
 		t,
 		rows,
-		"the listing stays short: edges and their fields are describe_report_dataset's",
+		"the listing stays short: edges and their fields are report_get_dataset's",
 	)
 }
 
@@ -152,7 +152,7 @@ func TestDescribeReportDataset_HidesBookkeepingFields(t *testing.T) {
 
 	_, _, tools := reportingTools(t)
 
-	result, err := tools["describe_report_dataset"].Query(t.Context(), testParams(map[string]any{
+	result, err := tools["report_get_dataset"].Query(t.Context(), testParams(map[string]any{
 		"dataset": "shipment",
 		"limit":   float64(maxFieldPage),
 	}))
@@ -192,7 +192,7 @@ func TestListReportDatasets_CountsTheFieldsItWouldDescribe(t *testing.T) {
 
 	_, _, tools := reportingTools(t)
 
-	result, err := tools["list_report_datasets"].Query(
+	result, err := tools["report_list_datasets"].Query(
 		t.Context(),
 		testParams(map[string]any{"query": "shipment"}),
 	)
@@ -221,7 +221,7 @@ func TestDescribeReportDataset_NamesTheReferenceKeyOfEachEdge(t *testing.T) {
 
 	_, _, tools := reportingTools(t)
 
-	result, err := tools["describe_report_dataset"].Query(t.Context(), testParams(map[string]any{
+	result, err := tools["report_get_dataset"].Query(t.Context(), testParams(map[string]any{
 		"dataset": "shipment",
 	}))
 	require.NoError(t, err)
@@ -247,7 +247,7 @@ func previewOfPeakDistributing(t *testing.T, filter map[string]any) reportPrevie
 		Rows: []reportports.ReportRow{{"PRO-1"}},
 	}
 
-	result, err := tools["preview_report"].Query(t.Context(), testParams(map[string]any{
+	result, err := tools["report_preview"].Query(t.Context(), testParams(map[string]any{
 		"definition": map[string]any{
 			"entity": "shipment",
 			"columns": []any{

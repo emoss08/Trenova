@@ -9,7 +9,7 @@ scenarios:
     steps:
       - say: "where do i change the fuel surcharge we charge customers"
         expect:
-          calls: ["find_in_trenova|open_page|get_fuel_surcharge_rates"]
+          calls: ["agent_find_page|agent_open_page|rate_list_fuel_surcharge_programs"]
           maxCalls: 4
           noProposals: true
           rubric: Names the page and how to get there, and offers to open it.
@@ -19,7 +19,7 @@ scenarios:
     steps:
       - say: "new here, how do i add a customer"
         expect:
-          calls: ["find_in_trenova|open_page"]
+          calls: ["agent_find_page|agent_open_page"]
           maxCalls: 4
           noProposals: true
           rubric: >
@@ -35,7 +35,7 @@ scenarios:
     steps:
       - say: "how many loads are delayed right now"
         expect:
-          calls: ["shipment_list|delegate_task|get_dispatch_board"]
+          calls: ["shipment_list|delegate_task|dispatch_get_board"]
           maxFailedCalls: 0
           noProposals: true
           facts:
@@ -51,7 +51,7 @@ scenarios:
     steps:
       - say: "gimme the rundown for today"
         expect:
-          calls: ["get_dispatch_board|get_daily_briefing|list_watchtower_items|shipment_list"]
+          calls: ["dispatch_get_board|insight_get_daily_briefing|exception_list_watchtower_items|shipment_list"]
           maxFailedCalls: 0
           maxCalls: 5
           noProposals: true

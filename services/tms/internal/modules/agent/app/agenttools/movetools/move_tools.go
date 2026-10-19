@@ -52,10 +52,10 @@ func ProvideRecordStopActualTool(
 	return newRecordStopActualTool(moves, reports, moveStops)
 }
 
-func (t *RecordStopActualTool) Name() string { return "record_stop_actual" }
+func (t *RecordStopActualTool) Name() string { return "dispatch_record_stop_actual" }
 
 func (t *RecordStopActualTool) Recipe() []string {
-	return []string{toolShipmentList, "shipment_get", "record_stop_actual"}
+	return []string{toolShipmentList, "shipment_get", "dispatch_record_stop_actual"}
 }
 
 func (t *RecordStopActualTool) Description() string {
@@ -74,7 +74,7 @@ func (t *RecordStopActualTool) ParamSchema() map[string]any {
 			"moveId": agenttoolschema.RecordIDText(
 				permission.ResourceShipmentMove,
 				"The move the stop belongs to, from shipment_get (its moves) or "+
-					"get_dispatch_board.",
+					"dispatch_get_board.",
 			),
 			"stopId": agenttoolschema.RecordIDText(
 				permission.ResourceShipmentStop,

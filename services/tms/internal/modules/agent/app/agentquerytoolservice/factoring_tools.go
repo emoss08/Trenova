@@ -118,7 +118,7 @@ func provideGetFactoringReadinessTool(
 	return &getFactoringReadinessTool{readiness: readiness, access: newFieldAccess(permissions)}
 }
 
-func (t *getFactoringReadinessTool) Name() string { return "get_factoring_readiness" }
+func (t *getFactoringReadinessTool) Name() string { return "factoring_get_readiness" }
 
 func (t *getFactoringReadinessTool) Description() string {
 	return "Check now whether a posted invoice is ready to sell to its factor, and why not. " +
@@ -126,7 +126,7 @@ func (t *getFactoringReadinessTool) Description() string {
 		"RecordNoaAcknowledgement, ResolveDispute, RequestDocument (with the document type " +
 		"and shipment) or ReviewShipment. An Excluded verdict means the invoice is not " +
 		"something to factor: a draft, voided, paid, a credit memo, kept out by " +
-		"set_invoice_factoring_override, or for a customer that is not factored."
+		"factoring_set_override, or for a customer that is not factored."
 }
 
 func (t *getFactoringReadinessTool) SearchTerms() []string {
@@ -137,7 +137,7 @@ func (t *getFactoringReadinessTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramFactoringInvoice: agenttoolschema.RecordIDText(
 			permission.ResourceInvoice,
-			"The invoice, from invoice_list, invoice_get or list_factoring_ready_invoices.",
+			"The invoice, from invoice_list, invoice_get or factoring_list_readiness.",
 		),
 	}, paramFactoringInvoice)
 }
@@ -190,7 +190,7 @@ func provideListFactoringReadyInvoicesTool(
 	}
 }
 
-func (t *listFactoringReadyInvoicesTool) Name() string { return "list_factoring_ready_invoices" }
+func (t *listFactoringReadyInvoicesTool) Name() string { return "factoring_list_readiness" }
 
 func (t *listFactoringReadyInvoicesTool) Description() string {
 	return "List factored customers' invoices by readiness, newest first, with the totals. " +
@@ -198,8 +198,8 @@ func (t *listFactoringReadyInvoicesTool) Description() string {
 		"being submitted. " +
 		"Ready is the default; ask for NotReady to see what is holding invoices back, each " +
 		"with its failed checks, or Submitted for what is on a schedule. Pass Ready invoices " +
-		"to submit_invoices_to_factor, one factor per call, and an invoice to " +
-		"get_factoring_readiness for every check."
+		"to factoring_create_submission, one factor per call, and an invoice to " +
+		"factoring_get_readiness for every check."
 }
 
 func (t *listFactoringReadyInvoicesTool) SearchTerms() []string {
@@ -214,11 +214,11 @@ func (t *listFactoringReadyInvoicesTool) ParamSchema() map[string]any {
 		),
 		paramFactoringFactor: agenttoolschema.RecordIDText(
 			permission.ResourceFactoringCompany,
-			"Only invoices assigned to this factor, from invoice_get or list_factoring_noas.",
+			"Only invoices assigned to this factor, from invoice_get or factoring_list_noas.",
 		),
 		paramCustomerID: agenttoolschema.RecordIDText(
 			permission.ResourceCustomer,
-			"Only this customer's invoices, from list_customers or invoice_get.",
+			"Only this customer's invoices, from customer_list or invoice_get.",
 		),
 		paramLimit: jsonschemautils.Integer(fmt.Sprintf(
 			"How many invoices to return, at most %d. Defaults to %d.",
@@ -356,7 +356,7 @@ func provideGetFactoringAgreementTool(
 	return &getFactoringAgreementTool{agreements: agreements, now: timeutils.NowUnix}
 }
 
-func (t *getFactoringAgreementTool) Name() string { return "get_factoring_agreement" }
+func (t *getFactoringAgreementTool) Name() string { return "factoring_get_agreement" }
 
 func (t *getFactoringAgreementTool) Description() string {
 	return "Get a factor's agreements, newest first, marking the one in force. Each gives " +
@@ -374,7 +374,7 @@ func (t *getFactoringAgreementTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramFactoringFactor: agenttoolschema.RecordIDText(
 			permission.ResourceFactoringCompany,
-			"The factor, from invoice_get, list_factoring_noas or list_factoring_ready_invoices.",
+			"The factor, from invoice_get, factoring_list_noas or factoring_list_readiness.",
 		),
 	}, paramFactoringFactor)
 }
@@ -474,14 +474,14 @@ func provideListFactoringNoasTool(noas factoringports.NoaService) agentports.Age
 	return &listFactoringNoasTool{noas: noas, now: timeutils.NowUnix}
 }
 
-func (t *listFactoringNoasTool) Name() string { return "list_factoring_noas" }
+func (t *listFactoringNoasTool) Name() string { return "factoring_list_noas" }
 
 func (t *listFactoringNoasTool) Description() string {
 	return "List notices of assignment, the letters telling customers to pay a factor. Each " +
 		"says who it is for, whether it was sent, acknowledged with a signed copy, or " +
 		"released, and when it expires. Effective is true only for an acknowledged, unexpired notice; an " +
 		"invoice is not ready to factor without one. Pass id and version to " +
-		"send_factoring_noa, record_factoring_noa_acknowledgement or release_factoring_noa."
+		"factoring_send_noa, factoring_record_noa_acknowledgement or factoring_release_noa."
 }
 
 func (t *listFactoringNoasTool) SearchTerms() []string {
@@ -492,11 +492,11 @@ func (t *listFactoringNoasTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramCustomerID: agenttoolschema.RecordIDText(
 			permission.ResourceCustomer,
-			"Only this customer's notices, from list_customers or invoice_get.",
+			"Only this customer's notices, from customer_list or invoice_get.",
 		),
 		paramFactoringFactor: agenttoolschema.RecordIDText(
 			permission.ResourceFactoringCompany,
-			"Only notices for this factor, from invoice_get or list_factoring_ready_invoices.",
+			"Only notices for this factor, from invoice_get or factoring_list_readiness.",
 		),
 		paramFactoringStatus: jsonschemautils.DescribedArray(
 			"Only notices in these statuses.",

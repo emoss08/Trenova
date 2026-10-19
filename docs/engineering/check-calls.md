@@ -11,7 +11,7 @@ by tracking events; see [tracking-events.md](tracking-events.md).
 
 ```
 Dispatcher (logCheckCall) ─┐                      ┌─ Arrival / Departure ─▶ RecordReported (strict)
-Agent (log_check_call)  ───┤ CheckCallService.Log ┤
+Agent (dispatch_record_check_call)  ───┤ CheckCallService.Log ┤
                            │                      └─ every kind ─▶ check_calls row
 Carrier (tracking link) ───┴ PostByToken ─────────┬─ Arrival / Departure ─▶ RecordObserved (tolerant)
                                                   └─ every kind ─▶ check_calls row
@@ -34,7 +34,7 @@ no-check-call-sweep (15 min) ─▶ ListOverdue per monitoring tenant ─▶ Rec
 | Watchtower source, observer | `agent/app/watchtowersources/checkcall.go`, `DescribeNoCheckCall` in `describe.go` |
 | Sweep | `NoCheckCallSweepWorkflow` in `agent/jobs/watchtowerjobs` (schedule `no-check-call-sweep`) |
 | GraphQL | `checkcall.graphqls`, resolvers in `resolver/checkcallresolver` |
-| Agent tools | `log_check_call`, `issue_carrier_tracking_link` and `revoke_carrier_tracking_link` in `agent/app/agenttools/movetools`, held by the load monitor |
+| Agent tools | `dispatch_record_check_call`, `dispatch_share_tracking_link` and `dispatch_revoke_tracking_link` in `agent/app/agenttools/movetools`, held by the load monitor |
 | Web | "Check calls" under move details, tracking link controls on a carrier-covered move, `/carrier-tracking/:token` |
 
 ## The record
@@ -106,8 +106,8 @@ rate or other loads.
 
 ## The agent tools
 
-`issue_carrier_tracking_link` emails a link to the carrier covering a brokered move and
-`revoke_carrier_tracking_link` ends the live one. Both reach someone outside the organization
+`dispatch_share_tracking_link` emails a link to the carrier covering a brokered move and
+`dispatch_revoke_tracking_link` ends the live one. Both reach someone outside the organization
 (the carrier gets mail, or the page it holds stops working), so both are external-recipient
 writes that default to Propose and never run past Ask first, and a run that has read outside
 text proposes them.

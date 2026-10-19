@@ -58,7 +58,7 @@ say what happened.
 The handoff asks for an Undo toast after Done and Snooze. The product's rule is that an action
 the person watches happen takes no toast, and the card leaving is that confirmation, so Done
 and Snooze say nothing. Undo lived only in that toast, so it is gone with it. A resolved item
-can still be reopened (`reopenWatchtowerItem`, and the agents' `reopen_exception`), and a
+can still be reopened (`reopenWatchtowerItem`, and the agents' `exception_reopen`), and a
 snoozed one woken through the API (`wakeWatchtowerItem`, which has no agent tool yet and is
 `pending` in write coverage).
 
@@ -75,7 +75,7 @@ The old feed's filter chips (severity and kind), its All / Mine / Unassigned / O
 the exception sheet (assign, acknowledge, start, change the due time, comment, history),
 Dismiss, and the thumbs-up rating on agent-raised rows are not in the design and are gone from
 the Desk. Every one of those writes is still in the GraphQL API and, where it was, in the agent
-tools (`assign_exception`, `set_exception_due`, `comment_on_exception`, …), so an agent asked
+tools (`exception_assign`, `exception_set_due`, `exception_add_comment`, …), so an agent asked
 from **Ask about this** can still do them. The links that used to open the feed filtered
 (`?severities=`, `?kinds=`, `?item=`) now open the queue on the first item they name.
 

@@ -75,7 +75,7 @@ func newPreviewEDIDocumentTool(
 	return &previewEDIDocumentTool{documents: documents, access: newFieldAccess(permissions)}
 }
 
-func (t *previewEDIDocumentTool) Name() string { return "preview_edi_document" }
+func (t *previewEDIDocumentTool) Name() string { return "edi_preview_x12" }
 
 func (t *previewEDIDocumentTool) SearchTerms() []string {
 	return []string{
@@ -97,11 +97,11 @@ func (t *previewEDIDocumentTool) ParamSchema() map[string]any {
 		paramTransactionSet: enumParam("Which document: 204 load tender, 214 shipment status "+
 			"or 990 tender response.", previewTransactionSets),
 		paramPartnerID: agenttoolschema.KindID("The trading partner it would go to, by id from "+
-			"list_edi_partners or get_edi_partner.", permission.KindEDIPartner),
+			"edi_list_partners or edi_get_partner.", permission.KindEDIPartner),
 		paramShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
 			"For a 204 or 214: the shipment, from shipment_list or shipment_get."),
 		paramEDITransferID: agenttoolschema.KindID("For a 990: the tender it answers, from "+
-			"list_edi_transfers.", permission.KindEDITransfer),
+			"edi_list_transfers.", permission.KindEDITransfer),
 		paramTenderResponse: enumParam("For a 990 on a tender not yet answered: preview "+
 			"accepting or declining it.", tenderResponses),
 		paramDeclineReason: stringParam(fmt.Sprintf(
@@ -266,7 +266,7 @@ func readDocumentPreviewCall(params map[string]any) (*documentPreviewCall, error
 func (c *documentPreviewCall) check990() error {
 	switch {
 	case c.transferID.IsNil():
-		return fmt.Errorf("a 990 answers a tender: give %q from list_edi_transfers",
+		return fmt.Errorf("a 990 answers a tender: give %q from edi_list_transfers",
 			paramEDITransferID)
 	case c.shipmentID.IsNotNil():
 		return fmt.Errorf("a 990 is named by %q, not %q; leave the shipment out",

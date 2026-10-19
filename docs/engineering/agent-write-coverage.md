@@ -311,15 +311,15 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Tool | Resource | Operation |
 | --- | --- | --- |
-| `act_on_portal` | portal_automation | update |
-| `escalate_detention` | detention | update |
-| `flag_for_manual_review` | agent_exception | create |
-| `notify_driver` | driver_message | create |
-| `place_worker_dispatch_hold` | worker_dispatch_hold | create |
-| `raise_exception` | agent_exception | create |
-| `request_credential_renewal` | worker_credential | update |
+| `web_use_portal` | portal_automation | update |
+| `detention_escalate` | detention | update |
+| `agent_request_review` | agent_exception | create |
+| `worker_send_message` | driver_message | create |
+| `worker_place_dispatch_hold` | worker_dispatch_hold | create |
+| `agent_raise_exception` | agent_exception | create |
+| `worker_request_credential_renewal` | worker_credential | update |
 | `shipment_request_documents` | customer_communication | create |
-| `watch_web` | web_research | read |
+| `web_watch` | web_research | read |
 
 ## Every write
 
@@ -341,37 +341,37 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation applyAccountingInboundChange` | Tool: `apply_accounting_inbound_change` |
-| `mutation changeAccountingBackfill` | Tool: `change_accounting_backfill` |
-| `mutation checkAccountingConnection` | Tool: `check_accounting_connection` |
-| `mutation checkAccountingDrift` | Tool: `check_accounting_drift` |
+| `mutation applyAccountingInboundChange` | Tool: `accounting_apply_inbound_change` |
+| `mutation changeAccountingBackfill` | Tool: `accounting_update_backfill` |
+| `mutation checkAccountingConnection` | Tool: `accounting_check_connection` |
+| `mutation checkAccountingDrift` | Tool: `accounting_check_drift` |
 | `mutation chooseAccountingCompany` | Exempt, security: Finishes the OAuth sign-in by choosing the company the authorization is for; a person holds the grant, never an agent. |
 | `mutation chooseAccountingSyncMode` | Exempt, configuration: Chooses what the organization's accounting connection sends during setup; an administrator owns the connection and it is fixed once sync is enabled. |
-| `mutation clearAccountingMapping` | Tool: `clear_accounting_mapping` |
+| `mutation clearAccountingMapping` | Tool: `accounting_clear_mapping` |
 | `mutation completeAccountingSetup` | Exempt, configuration: Connects the organization to an outside system; an administrator owns the connection and its credentials. |
-| `mutation confirmAccountingMappings` | Tool: `confirm_accounting_mapping_proposals` |
+| `mutation confirmAccountingMappings` | Tool: `accounting_confirm_mapping` |
 | `mutation connectAccountingWithCertificate` | Exempt, security: Connects with a certificate an administrator uploaded in the accounting system's console; a person sets up the credential, never an agent. |
-| `mutation createAccountingReferenceRecord` | Tool: `create_accounting_reference_record` |
+| `mutation createAccountingReferenceRecord` | Tool: `accounting_create_reference_record` |
 | `mutation disconnectAccountingSystem` | Exempt, configuration: Connects the organization to an outside system; an administrator owns the connection and its credentials. |
-| `mutation dismissAccountingDrift` | Tool: `dismiss_accounting_drift` |
+| `mutation dismissAccountingDrift` | Tool: `accounting_dismiss_drift_finding` |
 | `mutation enableAccountingSync` | Exempt, configuration: Connects the organization to an outside system; an administrator owns the connection and its credentials. |
 | `mutation finishAccountingAuthorization` | Exempt, security: Handles the OAuth app and its credentials that let Trenova act in the accounting system. |
-| `mutation ignoreAccountingInboundChange` | Tool: `ignore_accounting_inbound_change` |
-| `mutation pauseAccountingSync` | Tool: `pause_accounting_sync` |
+| `mutation ignoreAccountingInboundChange` | Tool: `accounting_ignore_inbound_change` |
+| `mutation pauseAccountingSync` | Tool: `accounting_pause_sync` |
 | `mutation prepareAccountingCertificate` | Exempt, security: Generates the key pair and certificate a person uploads in the accounting system's console to let Trenova act there. |
-| `mutation redateAccountingSync` | Tool: `redate_accounting_sync` |
-| `mutation refreshAccountingReferenceData` | Tool: `refresh_accounting_reference_data` |
-| `mutation rejectAccountingMapping` | Tool: `reject_accounting_mapping_proposal` |
-| `mutation releaseAccountingSync` | Tool: `release_accounting_sync` |
+| `mutation redateAccountingSync` | Tool: `accounting_redate_sync_record` |
+| `mutation refreshAccountingReferenceData` | Tool: `accounting_refresh_reference_data` |
+| `mutation rejectAccountingMapping` | Tool: `accounting_reject_mapping` |
+| `mutation releaseAccountingSync` | Tool: `accounting_release_sync_record` |
 | `mutation removeAccountingApp` | Exempt, security: Handles the OAuth app and its credentials that let Trenova act in the accounting system. |
 | `mutation renewAccountingCertificate` | Exempt, security: Swaps in a certificate a person uploaded in the accounting system's console; the credential is a person's act, never an agent's. |
-| `mutation requestAccountingBackfill` | Tool: `request_accounting_backfill` |
-| `mutation resolveAccountingDrift` | Tool: `resolve_accounting_drift` |
-| `mutation resumeAccountingSync` | Tool: `resume_accounting_sync` |
-| `mutation retryAccountingSync` | Tool: `retry_accounting_sync` |
+| `mutation requestAccountingBackfill` | Tool: `accounting_request_backfill` |
+| `mutation resolveAccountingDrift` | Tool: `accounting_resolve_drift_finding` |
+| `mutation resumeAccountingSync` | Tool: `accounting_resume_sync` |
+| `mutation retryAccountingSync` | Tool: `accounting_retry_sync_record` |
 | `mutation saveAccountingApp` | Exempt, security: Handles the OAuth app and its credentials that let Trenova act in the accounting system. |
-| `mutation setAccountingMapping` | Tool: `set_accounting_mapping` |
-| `mutation skipAccountingSync` | Tool: `skip_accounting_sync` |
+| `mutation setAccountingMapping` | Tool: `accounting_set_mapping` |
+| `mutation skipAccountingSync` | Tool: `accounting_skip_sync_record` |
 | `mutation startAccountingAuthorization` | Exempt, security: Handles the OAuth app and its credentials that let Trenova act in the accounting system. |
 | `mutation updateAccountingSyncSettings` | Exempt, configuration: Connects the organization to an outside system; an administrator owns the connection and its credentials. |
 
@@ -394,22 +394,22 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation approveAgentMemorySuggestion` | Exempt, agent-administration: A person curating what agents remember; an agent writes memory through remember and forget_memory. |
+| `mutation approveAgentMemorySuggestion` | Exempt, agent-administration: A person curating what agents remember; an agent writes memory through remember and agent_retire_memory. |
 | `mutation commitMyDecisionNow` | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
-| `mutation createAgentMemory` | Tool: `remember` |
+| `mutation createAgentMemory` | Tool: `agent_create_memory` |
 | `mutation decideAgentPlan`<br>twin `POST /api/v1/agent-plans/:planID/resolve/` | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
 | `mutation decideAgentProposal`<br>twin `POST /api/v1/agent-proposals/:proposalID/resolve/` | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
 | `mutation decideMyPlan` | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
 | `mutation decideMyProposal` | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
 | `mutation decideMyProposals` | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
-| `mutation dismissAgentMemorySuggestion` | Exempt, agent-administration: A person curating what agents remember; an agent writes memory through remember and forget_memory. |
+| `mutation dismissAgentMemorySuggestion` | Exempt, agent-administration: A person curating what agents remember; an agent writes memory through remember and agent_retire_memory. |
 | `mutation replayAgentRun` | Exempt, agent-administration: Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work. |
 | `mutation resolveAgentException`<br>twin `POST /api/v1/agent-exceptions/:exceptionID/resolve/` | Exempt, agent-administration: An agent exception is an agent handing a case to a person; the person resolves it. |
 | `mutation reviewAgentMemory` | Exempt, agent-administration: A person vouching for what an agent wrote after reading outside content; an agent clearing the taint on what it will read would undo the hold. |
-| `mutation setAgentMemoryStatus` | Tool: `forget_memory` |
+| `mutation setAgentMemoryStatus` | Tool: `agent_retire_memory` |
 | `mutation undoMyDecision` | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
 | `mutation updateAgentControl` | Exempt, agent-administration: The organization-wide switches and ceilings every agent runs under. |
-| `mutation updateAgentMemory` | Exempt, agent-administration: A person curating what agents remember; an agent writes memory through remember and forget_memory. |
+| `mutation updateAgentMemory` | Exempt, agent-administration: A person curating what agents remember; an agent writes memory through remember and agent_retire_memory. |
 
 ### agentdefinition
 
@@ -437,7 +437,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/agent-extensions/:type/test/`<br>agentextensionhandler.test | Exempt, read-only: Tests the vendor credentials and returns the result. |
 | `POST /api/v1/agent-portals/runs/:runID/sign-in-code/`<br>agentextensionhandler.provideSignInCode | Exempt, security: Relays a sign-in code a portal sent the person to the browser signing in for them; a second factor is given only by the person who received it, and never passes through an agent. |
 | `POST /api/v1/agent-portals/sites/`<br>agentextensionhandler.createSite | Exempt, agent-administration: Adds a portal agents may read and act on, with its sign-in; an agent that could add one could choose where its own browser goes. |
-| `POST /api/v1/agent-web-watches/:watchID/stop/`<br>agentextensionhandler.stopWebWatch | Tool: `stop_web_watch` |
+| `POST /api/v1/agent-web-watches/:watchID/stop/`<br>agentextensionhandler.stopWebWatch | Tool: `web_stop_watch` |
 | `POST /api/v1/webhooks/agent-extensions/web-watches/:orgID/:buID/:watchID/`<br>agentextensionhandler.receiveWatchDelivery | Exempt, infrastructure: A research vendor reporting a web watch's run, signed with the watch's secret; it only asks the watch to be checked now, and is not a person's decision. |
 | `PUT /api/v1/agent-extensions/:type/config/`<br>agentextensionhandler.updateConfig | Exempt, agent-administration: Configures a vendor account an organization turns on for its agents; it holds the vendor credentials. |
 | `PUT /api/v1/agent-portals/sites/:siteID/`<br>agentextensionhandler.updateSite | Exempt, agent-administration: Changes a portal's addresses, sign-in or whether agents may act on it, which bound what agents can reach; an agent must not widen its own reach. |
@@ -446,14 +446,14 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation addAgentOrganizationProfileGuidance` | Tool: `guide_profile` |
-| `mutation addMyAgentProfileGuidance` | Tool: `guide_profile` |
-| `mutation approveAgentOrganizationProfileGuidance` | Exempt, agent-administration: An administrator keeping a line someone offered about the organization; an agent offers guidance through guide_profile and never approves its own. |
-| `mutation dismissAgentOrganizationProfileGuidance` | Exempt, agent-administration: An administrator turning down a line someone offered about the organization; an agent offers guidance through guide_profile and never decides on it. |
+| `mutation addAgentOrganizationProfileGuidance` | Tool: `agent_guide_profile` |
+| `mutation addMyAgentProfileGuidance` | Tool: `agent_guide_profile` |
+| `mutation approveAgentOrganizationProfileGuidance` | Exempt, agent-administration: An administrator keeping a line someone offered about the organization; an agent offers guidance through agent_guide_profile and never approves its own. |
+| `mutation dismissAgentOrganizationProfileGuidance` | Exempt, agent-administration: An administrator turning down a line someone offered about the organization; an agent offers guidance through agent_guide_profile and never decides on it. |
 | `mutation regenerateAgentOrganizationProfile` | Exempt, agent-administration: Asks for the organization's agent profile to be written again; agents read the profile, they do not decide when it is rewritten. |
 | `mutation regenerateMyAgentProfile` | Exempt, agent-administration: Asks for a person's own agent profile to be written again; agents read the profile, they do not decide when it is rewritten. |
-| `mutation retireAgentOrganizationProfileGuidance` | Exempt, agent-administration: A person curating what agents are told about the organization; an agent records guidance through guide_profile and never retires what a person gave. |
-| `mutation retireMyAgentProfileGuidance` | Exempt, agent-administration: A person curating what agents are told about their own work; an agent records guidance through guide_profile and never retires what a person gave. |
+| `mutation retireAgentOrganizationProfileGuidance` | Exempt, agent-administration: A person curating what agents are told about the organization; an agent records guidance through agent_guide_profile and never retires what a person gave. |
+| `mutation retireMyAgentProfileGuidance` | Exempt, agent-administration: A person curating what agents are told about their own work; an agent records guidance through agent_guide_profile and never retires what a person gave. |
 
 ### agentquality
 
@@ -563,7 +563,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/assistant/threads/:threadID/artifacts/:artifactID/restore/`<br>assistanthandler.restoreDocumentVersion | Exempt, agent-administration: A person keeping or restoring their own version of a document an agent drafted in their conversation; the agent drafts through the conversation itself. |
 | `POST /api/v1/assistant/threads/:threadID/artifacts/:artifactID/rewrite/`<br>assistanthandler.rewriteDocument | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
 | `POST /api/v1/assistant/threads/:threadID/artifacts/:artifactID/versions/`<br>assistanthandler.saveDocumentVersion | Exempt, agent-administration: A person keeping or restoring their own version of a document an agent drafted in their conversation; the agent drafts through the conversation itself. |
-| `POST /api/v1/assistant/threads/:threadID/case/await-reply/`<br>assistanthandler.awaitCaseReply | Tool: `wait_until` |
+| `POST /api/v1/assistant/threads/:threadID/case/await-reply/`<br>assistanthandler.awaitCaseReply | Tool: `agent_create_wait` |
 | `POST /api/v1/assistant/threads/:threadID/case/snooze/`<br>assistanthandler.snoozeCase | Exempt, agent-administration: A case is the person's own conversation: choosing which record it is about, or putting it out of sight until later, arranges their Desk and changes no record an agent acts on. |
 | `POST /api/v1/assistant/threads/:threadID/case/ticks/`<br>assistanthandler.tickCaseItem | Exempt, agent-administration: A tick on a step the organization added for a person to tick is that person's word that it was done; an agent ticking it would vouch for itself. |
 | `POST /api/v1/assistant/threads/:threadID/case/wake/`<br>assistanthandler.wakeCase | Exempt, agent-administration: A case is the person's own conversation: choosing which record it is about, or putting it out of sight until later, arranges their Desk and changes no record an agent acts on. |
@@ -576,7 +576,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/assistant/threads/:threadID/requests/`<br>assistanthandler.requestMore | Exempt, agent-administration: Asking an administrator for access to an agent, or for more allowance, budget or daily requests, is a person's request about their own use of the assistant; an agent that could ask for its own limits to be raised would defeat them. |
 | `POST /api/v1/assistant/threads/:threadID/schedules/`<br>assistanthandler.createSchedule | Exempt, agent-administration: Scheduling a conversation to run again is a person directing an agent's work; an agent that could schedule itself would set its own workload. |
 | `POST /api/v1/assistant/threads/:threadID/turns/`<br>assistanthandler.startTurn | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
-| `POST /api/v1/assistant/threads/:threadID/waits/:waitID/cancel/`<br>assistanthandler.cancelWait | Tool: `cancel_wait` |
+| `POST /api/v1/assistant/threads/:threadID/waits/:waitID/cancel/`<br>assistanthandler.cancelWait | Tool: `agent_cancel_wait` |
 | `POST /api/v1/assistant/turns/:turnID/stop/`<br>assistanthandler.stopTurn | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
 | `PUT /api/v1/assistant/threads/:threadID/case/`<br>assistanthandler.bindCase | Exempt, agent-administration: A case is the person's own conversation: choosing which record it is about, or putting it out of sight until later, arranges their Desk and changes no record an agent acts on. |
 | `PUT /api/v1/assistant/threads/:threadID/proposals/:proposalID/edits/`<br>assistanthandler.saveProposalEdits | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
@@ -680,16 +680,16 @@ Tools that change something no person-facing write does, such as sending a messa
 | --- | --- |
 | `mutation approveCaptureDevicePairing` | Exempt, security: Approving a pairing grants a computer the person's access; only that person may do it. |
 | `mutation cancelCaptureRequest` | Exempt, security: Withdraws an instruction the caller gave one of their own paired computers; those instructions are the person's, given under the access they granted the machine, and an agent never acts through a device pairing. |
-| `mutation createCaptureCoverSheets` | Exempt, infrastructure: Issues printable routing codes that exist only to be printed and laid on paper at a scanner, returned once to the person who prints them; an agent has no printer, and file_capture_items files what the sheets route. |
+| `mutation createCaptureCoverSheets` | Exempt, infrastructure: Issues printable routing codes that exist only to be printed and laid on paper at a scanner, returned once to the person who prints them; an agent has no printer, and inbox_file_capture_item files what the sheets route. |
 | `mutation createCaptureProfile` | Exempt, configuration: Scan profiles are presets an administrator maintains for the organization's scanners. |
 | `mutation createCaptureRequest` | Exempt, security: Drives one of the caller's own paired computers, starting its scanner or catching its next print, under the access the person granted that machine; a scan also needs the person at the scanner with the paper. An agent never acts through a device pairing. |
 | `mutation deleteCaptureProfile` | Exempt, configuration: Scan profiles are presets an administrator maintains for the organization's scanners. |
 | `mutation denyCaptureDevicePairing` | Exempt, security: Denying a pairing is the person's answer to a request for their access. |
-| `mutation discardCaptureBatch` | Tool: `discard_capture_batch` |
-| `mutation discardCaptureItem` | Tool: `discard_capture_item` |
-| `mutation editCaptureItems` | Exempt, user-preference: The person arranging a scanned stack in the intake editor, looking at the page images, replaces the whole layout of the version they were looking at; pages carry no text an agent can read, so an agent would split documents blind. Filing and discarding what the split proposes are file_capture_items and discard_capture_item. |
-| `mutation fileCaptureItem` | Tool: `file_capture_items` |
-| `mutation fileCaptureItems` | Tool: `file_capture_items` |
+| `mutation discardCaptureBatch` | Tool: `inbox_discard_capture_batch` |
+| `mutation discardCaptureItem` | Tool: `inbox_discard_capture_item` |
+| `mutation editCaptureItems` | Exempt, user-preference: The person arranging a scanned stack in the intake editor, looking at the page images, replaces the whole layout of the version they were looking at; pages carry no text an agent can read, so an agent would split documents blind. Filing and discarding what the split proposes are inbox_file_capture_item and inbox_discard_capture_item. |
+| `mutation fileCaptureItem` | Tool: `inbox_file_capture_item` |
+| `mutation fileCaptureItems` | Tool: `inbox_file_capture_item` |
 | `mutation revokeCaptureDevice` | Exempt, security: Revoking a paired computer removes a person's access. |
 | `mutation revokeMyCaptureDevice` | Exempt, security: A person removing their own paired computer's access. |
 | `mutation updateCaptureProfile` | Exempt, configuration: Scan profiles are presets an administrator maintains for the organization's scanners. |
@@ -708,54 +708,54 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `PATCH /api/v1/carriers/:carrierID/`<br>carrierhandler.patch | Tool: `update_carrier` |
-| `POST /api/v1/carriers/`<br>carrierhandler.create | Tool: `create_carrier` |
-| `POST /api/v1/carriers/bulk-update-status/`<br>carrierhandler.bulkUpdateStatus | Tool: `update_carrier_status` |
-| `PUT /api/v1/carriers/:carrierID/`<br>carrierhandler.update | Tool: `update_carrier` |
+| `PATCH /api/v1/carriers/:carrierID/`<br>carrierhandler.patch | Tool: `carrier_update` |
+| `POST /api/v1/carriers/`<br>carrierhandler.create | Tool: `carrier_create` |
+| `POST /api/v1/carriers/bulk-update-status/`<br>carrierhandler.bulkUpdateStatus | Tool: `carrier_set_status` |
+| `PUT /api/v1/carriers/:carrierID/`<br>carrierhandler.update | Tool: `carrier_update` |
 
 ### carriercapacity
 
 | Write | Decision |
 | --- | --- |
-| `mutation createCarrierCapacityPosting` | Tool: `create_carrier_capacity_posting` |
-| `mutation deleteCarrierCapacityPosting` | Tool: `delete_carrier_capacity_posting` |
-| `mutation updateCarrierCapacityPosting` | Tool: `update_carrier_capacity_posting` |
+| `mutation createCarrierCapacityPosting` | Tool: `carrier_create_capacity_posting` |
+| `mutation deleteCarrierCapacityPosting` | Tool: `carrier_delete_capacity_posting` |
+| `mutation updateCarrierCapacityPosting` | Tool: `carrier_update_capacity_posting` |
 
 ### carrierintelligence
 
 | Write | Decision |
 | --- | --- |
-| `mutation acknowledgeCarrierIntelEvents` | Tool: `acknowledge_carrier_intel_event` |
-| `mutation applyCarrierIntelSuggestions` | Tool: `apply_carrier_intel_suggestions` |
+| `mutation acknowledgeCarrierIntelEvents` | Tool: `carrier_acknowledge_intelligence_event` |
+| `mutation applyCarrierIntelSuggestions` | Tool: `carrier_apply_intelligence_suggestions` |
 | `mutation grantCarrierIntelOverride` | Exempt, attestation: A person accepts accountability for using a carrier or equipment that failed vetting. |
-| `mutation importSourcedCarrier` | Tool: `import_sourced_carrier` |
-| `mutation markCarrierIntelReviewed` | Tool: `mark_carrier_intel_reviewed` |
+| `mutation importSourcedCarrier` | Tool: `carrier_import` |
+| `mutation markCarrierIntelReviewed` | Tool: `carrier_record_intelligence_review` |
 | `mutation overrideCarrierEquipmentVerification` | Exempt, attestation: A person accepts accountability for using a carrier or equipment that failed vetting. |
-| `mutation resolveCarrierIntelEvent` | Tool: `resolve_carrier_intel_event` |
+| `mutation resolveCarrierIntelEvent` | Tool: `carrier_resolve_intelligence_event` |
 | `mutation resumeCarrierIntelMonitoring` | Exempt, configuration: Turns the organization-wide carrier intelligence feed back on after it was paused; an administrator sets it once and every later lookup depends on it. |
 | `mutation revokeCarrierIntelOverride` | Exempt, attestation: A person accepts accountability for using a carrier or equipment that failed vetting. |
-| `mutation setCarrierMonitoring` | Tool: `set_carrier_monitoring` |
+| `mutation setCarrierMonitoring` | Tool: `carrier_set_monitoring` |
 | `mutation switchCarrierIntelProvider` | Exempt, configuration: Connects the organization to an outside system; an administrator owns the connection and its credentials. |
 | `mutation updateCarrierIntelControl` | Exempt, configuration: Connects the organization to an outside system; an administrator owns the connection and its credentials. |
-| `mutation verifyCarrierEquipment` | Tool: `verify_carrier_equipment` |
-| `mutation vetCarrier` | Tool: `vet_carrier` |
-| `mutation vetCustomerBroker` | Tool: `vet_customer_broker` |
+| `mutation verifyCarrierEquipment` | Tool: `carrier_verify_equipment` |
+| `mutation vetCarrier` | Tool: `carrier_vet` |
+| `mutation vetCustomerBroker` | Tool: `customer_vet_broker` |
 
 ### carriersettlement
 
 | Write | Decision |
 | --- | --- |
-| `mutation acceptCarrierInvoiceMatch` | Tool: `accept_carrier_invoice_match` |
-| `mutation acceptCarrierInvoiceMatchWithVariance` | Tool: `accept_carrier_invoice_match_with_variance` |
+| `mutation acceptCarrierInvoiceMatch` | Tool: `carrier_accept_invoice_match` |
+| `mutation acceptCarrierInvoiceMatchWithVariance` | Tool: `carrier_accept_invoice_match_with_variance` |
 | `mutation addCarrierSettlementAdjustment` | Tool: `settlement_add_carrier_adjustment` |
 | `mutation approveCarrierSettlement` | Tool: `settlement_approve_carrier` |
-| `mutation createCarrierInvoiceMatch` | Tool: `create_carrier_invoice_match` |
+| `mutation createCarrierInvoiceMatch` | Tool: `carrier_create_invoice_match` |
 | `mutation generateCarrierSettlementBatch` | Tool: `settlement_generate_carrier_batch` |
-| `mutation linkEdiCarrierInvoiceToCarrier` | Tool: `link_edi_carrier_invoice_to_carrier` |
+| `mutation linkEdiCarrierInvoiceToCarrier` | Tool: `edi_link_carrier_invoice` |
 | `mutation markCarrierSettlementPaid` | Tool: `settlement_record_carrier_payment` |
 | `mutation postCarrierSettlement` | Tool: `settlement_post_carrier` |
 | `mutation recalculateCarrierSettlement` | Tool: `settlement_recalculate_carrier` |
-| `mutation rejectCarrierInvoiceMatch` | Tool: `reject_carrier_invoice_match` |
+| `mutation rejectCarrierInvoiceMatch` | Tool: `carrier_reject_invoice_match` |
 | `mutation rejectCarrierSettlement` | Tool: `settlement_reject_carrier` |
 | `mutation removeCarrierSettlementAdjustment` | Tool: `settlement_remove_carrier_adjustment` |
 | `mutation submitCarrierSettlement` | Tool: `settlement_submit_carrier` |
@@ -779,9 +779,9 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation issueCarrierTrackingLink` | Tool: `issue_carrier_tracking_link` |
-| `mutation logCheckCall` | Tool: `log_check_call` |
-| `mutation revokeCarrierTrackingLink` | Tool: `revoke_carrier_tracking_link` |
+| `mutation issueCarrierTrackingLink` | Tool: `dispatch_share_tracking_link` |
+| `mutation logCheckCall` | Tool: `dispatch_record_check_call` |
+| `mutation revokeCarrierTrackingLink` | Tool: `dispatch_revoke_tracking_link` |
 
 ### collection
 
@@ -796,10 +796,10 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `PATCH /api/v1/commodities/:commodityID/`<br>commodityhandler.patch | Tool: `update_commodity` |
-| `POST /api/v1/commodities/`<br>commodityhandler.create | Tool: `create_commodity` |
-| `POST /api/v1/commodities/bulk-update-status/`<br>commodityhandler.bulkUpdateStatus | Tool: `update_commodity_status` |
-| `PUT /api/v1/commodities/:commodityID/`<br>commodityhandler.update | Tool: `update_commodity` |
+| `PATCH /api/v1/commodities/:commodityID/`<br>commodityhandler.patch | Tool: `masterdata_update_commodity` |
+| `POST /api/v1/commodities/`<br>commodityhandler.create | Tool: `masterdata_create_commodity` |
+| `POST /api/v1/commodities/bulk-update-status/`<br>commodityhandler.bulkUpdateStatus | Tool: `masterdata_set_commodity_status` |
+| `PUT /api/v1/commodities/:commodityID/`<br>commodityhandler.update | Tool: `masterdata_update_commodity` |
 
 ### costing
 
@@ -812,10 +812,10 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `PATCH /api/v1/customers/:customerID/`<br>customerhandler.patch | Tool: `update_customer` |
-| `POST /api/v1/customers/`<br>customerhandler.create | Tool: `create_customer` |
-| `POST /api/v1/customers/bulk-update-status/`<br>customerhandler.bulkUpdateStatus | Tool: `update_customer_status` |
-| `PUT /api/v1/customers/:customerID/`<br>customerhandler.update | Tool: `update_customer` |
+| `PATCH /api/v1/customers/:customerID/`<br>customerhandler.patch | Tool: `customer_update` |
+| `POST /api/v1/customers/`<br>customerhandler.create | Tool: `customer_create` |
+| `POST /api/v1/customers/bulk-update-status/`<br>customerhandler.bulkUpdateStatus | Tool: `customer_set_status` |
+| `PUT /api/v1/customers/:customerID/`<br>customerhandler.update | Tool: `customer_update` |
 
 ### customerpayment
 
@@ -872,25 +872,25 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation confirmDeskMemory` | Exempt, agent-administration: A person curating what agents remember; an agent writes memory through remember and forget_memory. |
-| `mutation createDeskMemory` | Tool: `remember` |
-| `mutation dismissDeskMemory` | Exempt, agent-administration: A person curating what agents remember; an agent writes memory through remember and forget_memory. |
-| `mutation reviseDeskMemory` | Exempt, agent-administration: A person curating what agents remember; an agent writes memory through remember and forget_memory. |
-| `mutation setDeskMemoryStatus` | Tool: `forget_memory` |
+| `mutation confirmDeskMemory` | Exempt, agent-administration: A person curating what agents remember; an agent writes memory through remember and agent_retire_memory. |
+| `mutation createDeskMemory` | Tool: `agent_create_memory` |
+| `mutation dismissDeskMemory` | Exempt, agent-administration: A person curating what agents remember; an agent writes memory through remember and agent_retire_memory. |
+| `mutation reviseDeskMemory` | Exempt, agent-administration: A person curating what agents remember; an agent writes memory through remember and agent_retire_memory. |
+| `mutation setDeskMemoryStatus` | Tool: `agent_retire_memory` |
 | `mutation setMemorySavingMode` | Exempt, agent-administration: Whether agents keep what they learn in the person's conversations straight away or ask first; an agent that could change it could stop asking. |
 
 ### detention
 
 | Write | Decision |
 | --- | --- |
-| `mutation approveDetentionOccurrence`<br>twin `POST /api/v1/detention/occurrences/:occurrenceID/approve/` | Tool: `approve_detention` |
+| `mutation approveDetentionOccurrence`<br>twin `POST /api/v1/detention/occurrences/:occurrenceID/approve/` | Tool: `detention_approve` |
 | `mutation createDetentionPolicy`<br>twin `POST /api/v1/detention-policies/` | Exempt, configuration: Detention policies are the commercial terms each customer agreed to; an administrator maintains them. |
 | `mutation deleteDetentionPolicy`<br>twin `DELETE /api/v1/detention-policies/:detentionPolicyID/` | Exempt, configuration: Detention policies are the commercial terms each customer agreed to; an administrator maintains them. |
 | `mutation detentionBacktest`<br>twin `POST /api/v1/detention/backtest/` | Exempt, read-only: Replays a detention policy against past stops and saves nothing. |
-| `mutation disputeDetentionOccurrence`<br>twin `POST /api/v1/detention/occurrences/:occurrenceID/dispute/` | Tool: `dispute_detention` |
-| `mutation sendDetentionNotice` | Tool: `send_detention_notice` |
+| `mutation disputeDetentionOccurrence`<br>twin `POST /api/v1/detention/occurrences/:occurrenceID/dispute/` | Tool: `detention_open_dispute` |
+| `mutation sendDetentionNotice` | Tool: `detention_send_notice` |
 | `mutation updateDetentionPolicy`<br>twin `PUT /api/v1/detention-policies/:detentionPolicyID/` | Exempt, configuration: Detention policies are the commercial terms each customer agreed to; an administrator maintains them. |
-| `mutation waiveDetentionOccurrence`<br>twin `POST /api/v1/detention/occurrences/:occurrenceID/waive/` | Tool: `waive_detention` |
+| `mutation waiveDetentionOccurrence`<br>twin `POST /api/v1/detention/occurrences/:occurrenceID/waive/` | Tool: `detention_waive` |
 
 ### detentionpolicy
 
@@ -902,11 +902,11 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation dispatchAssignMoveToCarrier`<br>twin `POST /api/v1/shipment-moves/:moveID/carrier-assignment/` | Tool: `assign_move_to_carrier` |
-| `mutation dispatchAssignMoves`<br>twin `POST /api/v1/shipment-moves/:moveID/assignment/`<br>twin `PUT /api/v1/shipment-moves/:moveID/assignment/` | Tool: `assign_move` |
-| `mutation dispatchCancelCarrierAssignment`<br>twin `DELETE /api/v1/shipment-moves/:moveID/carrier-assignment/` | Tool: `cancel_carrier_assignment` |
+| `mutation dispatchAssignMoveToCarrier`<br>twin `POST /api/v1/shipment-moves/:moveID/carrier-assignment/` | Tool: `dispatch_create_carrier_assignment` |
+| `mutation dispatchAssignMoves`<br>twin `POST /api/v1/shipment-moves/:moveID/assignment/`<br>twin `PUT /api/v1/shipment-moves/:moveID/assignment/` | Tool: `dispatch_assign_move` |
+| `mutation dispatchCancelCarrierAssignment`<br>twin `DELETE /api/v1/shipment-moves/:moveID/carrier-assignment/` | Tool: `dispatch_cancel_carrier_assignment` |
 | `mutation dispatchPlanAutoAssign` | Exempt, read-only: Plans automatic assignments for review and saves nothing. |
-| `mutation dispatchUnassignMoves`<br>twin `DELETE /api/v1/shipment-moves/:moveID/assignment/` | Tool: `unassign_moves` |
+| `mutation dispatchUnassignMoves`<br>twin `DELETE /api/v1/shipment-moves/:moveID/assignment/` | Tool: `dispatch_unassign_move` |
 
 ### dispatchcontrol
 
@@ -944,15 +944,15 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `DELETE /api/v1/documents/:documentID/`<br>documenthandler.delete | Tool: `delete_documents` |
+| `DELETE /api/v1/documents/:documentID/`<br>documenthandler.delete | Tool: `document_delete` |
 | `POST /api/v1/documents/:documentID/approve/`<br>documenthandler.approve | Exempt, attestation: Accepting a document as proof, such as a proof of delivery that lets a shipment bill, is the reviewer's sign-off on the evidence; agents may never approve. |
 | `POST /api/v1/documents/:documentID/attach-to-shipment/`<br>documenthandler.attachToShipment | Tool: `shipment_attach_document` |
 | `POST /api/v1/documents/:documentID/import-assistant/thread/`<br>documenthandler.openImportAssistantThread | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
 | `POST /api/v1/documents/:documentID/reject/`<br>documenthandler.reject | Exempt, attestation: Refusing a document as proof takes it out of the shipment's billing requirements and is the reviewer's judgement of the evidence, recorded with their reason; an agent can point out a doubtful document but does not decide it. |
-| `POST /api/v1/documents/:documentID/restore/`<br>documenthandler.restoreVersion | Tool: `restore_document_version` |
+| `POST /api/v1/documents/:documentID/restore/`<br>documenthandler.restoreVersion | Tool: `document_restore_version` |
 | `POST /api/v1/documents/:documentID/shipment-draft/reextract/`<br>documenthandler.reextractDocumentContent | Exempt, infrastructure: A repair a person asks for when the page's machine reading of a document went wrong: it runs extraction again, replaces the draft they are reviewing and archives their import assistant conversation. The extraction pipeline, not a decision, produces what replaces it. |
 | `POST /api/v1/documents/:documentID/signature/`<br>documenthandler.setSignature | Exempt, attestation: Saying a proof of delivery is signed or unsigned is the reviewer's reading of the evidence that lets a shipment bill, and it overrides what extraction read; an agent can point out a doubtful signature but does not attest to one. |
-| `POST /api/v1/documents/bulk-delete/`<br>documenthandler.bulkDelete | Tool: `delete_documents` |
+| `POST /api/v1/documents/bulk-delete/`<br>documenthandler.bulkDelete | Tool: `document_delete` |
 | `POST /api/v1/documents/upload-bulk/`<br>documenthandler.uploadBulk | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document). |
 | `POST /api/v1/documents/upload/`<br>documenthandler.upload | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document). |
 | `POST /api/v1/documents/uploads/`<br>documenthandler.createUploadSession | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document). |
@@ -1043,7 +1043,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation respondToMyAssignment` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
 | `mutation respondToMyShiftSwap` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
 | `mutation restoreMyNotifications` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
-| `mutation reviewDriverExpense` | Tool: `review_driver_expense` |
+| `mutation reviewDriverExpense` | Tool: `settlement_review_driver_expense` |
 | `mutation revokeWorkerPortalAccess` | Exempt, security: Removes a driver's sign-in to the driver portal. |
 | `mutation setMyAvailability` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
 | `mutation startSettlementDisputeReview` | Tool: `settlement_start_dispute_review` |
@@ -1106,7 +1106,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `DELETE /api/v1/edi/test-cases/:testCaseID/`<br>edihandler.deleteTestCase | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
 | `POST /api/v1/edi/as2/inbound/`<br>edihandler.receiveAS2Message | Exempt, infrastructure: Receives AS2 messages a trading partner sends; no person makes this call. |
 | `POST /api/v1/edi/catalog/partner-settings/validate/`<br>edihandler.validatePartnerSettings | Exempt, read-only: Validates, inspects, previews or tests EDI setup and saves nothing. |
-| `POST /api/v1/edi/communication-profiles/`<br>edihandler.createCommunicationProfile | Tool: `apply_edi_connection_draft` |
+| `POST /api/v1/edi/communication-profiles/`<br>edihandler.createCommunicationProfile | Tool: `edi_apply_connection_draft` |
 | `POST /api/v1/edi/communication-profiles/:profileID/poll/`<br>edihandler.pollCommunicationProfile | Exempt, infrastructure: Polls a partner mailbox now; the scheduler polls on its own. |
 | `POST /api/v1/edi/communication-profiles/:profileID/test-connection/`<br>edihandler.testCommunicationProfileConnection | Exempt, read-only: Validates, inspects, previews or tests EDI setup and saves nothing. |
 | `POST /api/v1/edi/communication-profiles/inspect-certificate/`<br>edihandler.inspectCertificate | Exempt, read-only: Validates, inspects, previews or tests EDI setup and saves nothing. |
@@ -1116,16 +1116,16 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/edi/connections/:connectionID/revoke/`<br>edihandler.revokeConnection | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
 | `POST /api/v1/edi/connections/:connectionID/suspend/`<br>edihandler.suspendConnection | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
 | `POST /api/v1/edi/control-numbers/reset/`<br>edihandler.resetControlNumber | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
-| `POST /api/v1/edi/document-profiles/`<br>edihandler.createPartnerDocumentProfile | Tool: `apply_edi_connection_draft` |
-| `POST /api/v1/edi/documents/generate/`<br>edihandler.generateDocument | Tool: `send_edi_status_update` |
+| `POST /api/v1/edi/document-profiles/`<br>edihandler.createPartnerDocumentProfile | Tool: `edi_apply_connection_draft` |
+| `POST /api/v1/edi/documents/generate/`<br>edihandler.generateDocument | Tool: `edi_send_status_update` |
 | `POST /api/v1/edi/documents/preview/`<br>edihandler.previewDocument | Exempt, read-only: Validates, inspects, previews or tests EDI setup and saves nothing. |
-| `POST /api/v1/edi/inbound-files/:fileID/reprocess/`<br>edihandler.reprocessInboundFile | Tool: `reprocess_edi_inbound_files` |
-| `POST /api/v1/edi/inbound-files/bulk-reprocess/`<br>edihandler.bulkReprocessInboundFiles | Tool: `reprocess_edi_inbound_files` |
-| `POST /api/v1/edi/load-tenders/`<br>edihandler.submitLoadTender | Tool: `send_edi_tender` |
-| `POST /api/v1/edi/messages/:messageID/replay/`<br>edihandler.replayMessageDelivery | Tool: `replay_edi_message` |
-| `POST /api/v1/edi/messages/:messageID/retry-delivery/`<br>edihandler.retryMessageDelivery | Tool: `retry_edi_message_delivery` |
-| `POST /api/v1/edi/messages/bulk-retry-delivery/`<br>edihandler.bulkRetryMessageDelivery | Tool: `retry_edi_message_delivery` |
-| `POST /api/v1/edi/partners/`<br>edihandler.createPartner | Tool: `apply_edi_connection_draft` |
+| `POST /api/v1/edi/inbound-files/:fileID/reprocess/`<br>edihandler.reprocessInboundFile | Tool: `edi_reprocess_inbound_file` |
+| `POST /api/v1/edi/inbound-files/bulk-reprocess/`<br>edihandler.bulkReprocessInboundFiles | Tool: `edi_reprocess_inbound_file` |
+| `POST /api/v1/edi/load-tenders/`<br>edihandler.submitLoadTender | Tool: `edi_send_tender` |
+| `POST /api/v1/edi/messages/:messageID/replay/`<br>edihandler.replayMessageDelivery | Tool: `edi_replay_message` |
+| `POST /api/v1/edi/messages/:messageID/retry-delivery/`<br>edihandler.retryMessageDelivery | Tool: `edi_retry_message` |
+| `POST /api/v1/edi/messages/bulk-retry-delivery/`<br>edihandler.bulkRetryMessageDelivery | Tool: `edi_retry_message` |
+| `POST /api/v1/edi/partners/`<br>edihandler.createPartner | Tool: `edi_apply_connection_draft` |
 | `POST /api/v1/edi/partners/internal-pairs/`<br>edihandler.createInternalPartnerPair | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
 | `POST /api/v1/edi/templates/`<br>edihandler.createTemplate | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
 | `POST /api/v1/edi/templates/:templateID/draft/`<br>edihandler.createDraftVersion | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
@@ -1134,24 +1134,24 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/edi/templates/:templateID/versions/:versionID/certify/`<br>edihandler.certifyTemplateVersion | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
 | `POST /api/v1/edi/templates/:templateID/versions/:versionID/rollback/`<br>edihandler.rollbackTemplateVersion | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
 | `POST /api/v1/edi/templates/:templateID/versions/:versionID/validate/`<br>edihandler.validateTemplateVersion | Exempt, read-only: Validates, inspects, previews or tests EDI setup and saves nothing. |
-| `POST /api/v1/edi/tender-changes/:changeID/apply/`<br>edihandler.applyTenderChange | Tool: `review_edi_tender_change` |
-| `POST /api/v1/edi/tender-changes/:changeID/reject/`<br>edihandler.rejectTenderChange | Tool: `review_edi_tender_change` |
+| `POST /api/v1/edi/tender-changes/:changeID/apply/`<br>edihandler.applyTenderChange | Tool: `edi_review_tender_change` |
+| `POST /api/v1/edi/tender-changes/:changeID/reject/`<br>edihandler.rejectTenderChange | Tool: `edi_review_tender_change` |
 | `POST /api/v1/edi/test-cases/`<br>edihandler.createTestCase | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
 | `POST /api/v1/edi/test-cases/:testCaseID/preview/`<br>edihandler.previewTestCase | Exempt, read-only: Validates, inspects, previews or tests EDI setup and saves nothing. |
-| `POST /api/v1/edi/transfer-changes/:changeID/apply/`<br>edihandler.applyTransferChange | Tool: `review_edi_transfer_change` |
-| `POST /api/v1/edi/transfer-changes/:changeID/reject/`<br>edihandler.rejectTransferChange | Tool: `review_edi_transfer_change` |
-| `POST /api/v1/edi/transfers/:transferID/approve/`<br>edihandler.approveTransfer | Tool: `accept_edi_tender` |
-| `POST /api/v1/edi/transfers/:transferID/cancel/`<br>edihandler.cancelTransfer | Tool: `cancel_edi_tender` |
-| `POST /api/v1/edi/transfers/:transferID/expire/`<br>edihandler.expireTransfer | Tool: `expire_edi_tender` |
-| `POST /api/v1/edi/transfers/:transferID/reject/`<br>edihandler.rejectTransfer | Tool: `decline_edi_tender` |
-| `POST /api/v1/edi/transfers/bulk-approve/`<br>edihandler.bulkApproveTransfers | Exempt, duplicate: Runs POST /api/v1/edi/transfers/:transferID/approve/ once per selected tender; accept_edi_tender answers one tender per proposal so each is previewed and pinned to its own version. |
-| `POST /api/v1/edi/transfers/bulk-reject/`<br>edihandler.bulkRejectTransfers | Exempt, duplicate: Runs POST /api/v1/edi/transfers/:transferID/reject/ once per selected tender; decline_edi_tender answers one tender per proposal so each is previewed and pinned to its own version. |
+| `POST /api/v1/edi/transfer-changes/:changeID/apply/`<br>edihandler.applyTransferChange | Tool: `edi_review_transfer_change` |
+| `POST /api/v1/edi/transfer-changes/:changeID/reject/`<br>edihandler.rejectTransferChange | Tool: `edi_review_transfer_change` |
+| `POST /api/v1/edi/transfers/:transferID/approve/`<br>edihandler.approveTransfer | Tool: `edi_accept_tender` |
+| `POST /api/v1/edi/transfers/:transferID/cancel/`<br>edihandler.cancelTransfer | Tool: `edi_cancel_tender` |
+| `POST /api/v1/edi/transfers/:transferID/expire/`<br>edihandler.expireTransfer | Tool: `edi_expire_tender` |
+| `POST /api/v1/edi/transfers/:transferID/reject/`<br>edihandler.rejectTransfer | Tool: `edi_decline_tender` |
+| `POST /api/v1/edi/transfers/bulk-approve/`<br>edihandler.bulkApproveTransfers | Exempt, duplicate: Runs POST /api/v1/edi/transfers/:transferID/approve/ once per selected tender; edi_accept_tender answers one tender per proposal so each is previewed and pinned to its own version. |
+| `POST /api/v1/edi/transfers/bulk-reject/`<br>edihandler.bulkRejectTransfers | Exempt, duplicate: Runs POST /api/v1/edi/transfers/:transferID/reject/ once per selected tender; edi_decline_tender answers one tender per proposal so each is previewed and pinned to its own version. |
 | `POST /api/v1/edi/x12/inspect/`<br>edihandler.inspectX12 | Exempt, read-only: Validates, inspects, previews or tests EDI setup and saves nothing. |
-| `PUT /api/v1/edi/communication-profiles/:profileID/`<br>edihandler.updateCommunicationProfile | Tool: `apply_edi_connection_draft` |
-| `PUT /api/v1/edi/document-profiles/:profileID/`<br>edihandler.updatePartnerDocumentProfile | Tool: `apply_edi_connection_draft` |
+| `PUT /api/v1/edi/communication-profiles/:profileID/`<br>edihandler.updateCommunicationProfile | Tool: `edi_apply_connection_draft` |
+| `PUT /api/v1/edi/document-profiles/:profileID/`<br>edihandler.updatePartnerDocumentProfile | Tool: `edi_apply_connection_draft` |
 | `PUT /api/v1/edi/mapping-profiles/:profileID/items/`<br>edihandler.updateMappingProfileItems | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
-| `PUT /api/v1/edi/partners/:partnerID/`<br>edihandler.updatePartner | Tool: `apply_edi_connection_draft` |
-| `PUT /api/v1/edi/partners/:partnerID/mapping-profile/`<br>edihandler.updateMappingProfile | Tool: `apply_edi_connection_draft` |
+| `PUT /api/v1/edi/partners/:partnerID/`<br>edihandler.updatePartner | Tool: `edi_apply_connection_draft` |
+| `PUT /api/v1/edi/partners/:partnerID/mapping-profile/`<br>edihandler.updateMappingProfile | Tool: `edi_apply_connection_draft` |
 | `PUT /api/v1/edi/templates/:templateID/`<br>edihandler.updateTemplate | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
 | `PUT /api/v1/edi/templates/:templateID/versions/:versionID/`<br>edihandler.updateTemplateVersion | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
 | `PUT /api/v1/edi/templates/:templateID/versions/:versionID/script-libraries/`<br>edihandler.replaceTemplateScriptLibraries | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
@@ -1224,31 +1224,31 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation acknowledgeFactoringNoa` | Tool: `record_factoring_noa_acknowledgement` |
+| `mutation acknowledgeFactoringNoa` | Tool: `factoring_record_noa_acknowledgement` |
 | `mutation activateFactoringAgreement` | Exempt, configuration: Factoring agreement terms (advance, reserve, fee tiers, recourse, accounting treatment) are copied from the signed contract with the factor by an administrator. |
-| `mutation applyFactoringRemittance` | Tool: `apply_factoring_remittance` |
-| `mutation cancelFactoringSubmission` | Tool: `cancel_factoring_submission` |
+| `mutation applyFactoringRemittance` | Tool: `factoring_apply_remittance` |
+| `mutation cancelFactoringSubmission` | Tool: `factoring_cancel_submission` |
 | `mutation createFactoringAgreement` | Exempt, configuration: Factoring agreement terms (advance, reserve, fee tiers, recourse, accounting treatment) are copied from the signed contract with the factor by an administrator. |
-| `mutation createFactoringRemittance` | Exempt, infrastructure: Part of uploading a factor's remittance file from a browser: the remittance holds the upload and staging reads it; remittances that arrive by email are opened by the inbound pipeline, and an agent works a read remittance with resolve_factoring_remittance_line, apply_factoring_remittance or discard_factoring_remittance. |
-| `mutation discardFactoringRemittance` | Tool: `discard_factoring_remittance` |
-| `mutation draftFactoringNoa` | Tool: `draft_factoring_noa` |
+| `mutation createFactoringRemittance` | Exempt, infrastructure: Part of uploading a factor's remittance file from a browser: the remittance holds the upload and staging reads it; remittances that arrive by email are opened by the inbound pipeline, and an agent works a read remittance with factoring_resolve_remittance_line, factoring_apply_remittance or factoring_discard_remittance. |
+| `mutation discardFactoringRemittance` | Tool: `factoring_discard_remittance` |
+| `mutation draftFactoringNoa` | Tool: `factoring_create_noa` |
 | `mutation endFactoringAgreement` | Exempt, configuration: Factoring agreement terms (advance, reserve, fee tiers, recourse, accounting treatment) are copied from the signed contract with the factor by an administrator. |
-| `mutation recordFactoringChargeback` | Tool: `record_factoring_chargeback` |
-| `mutation recordFactoringFunding` | Tool: `record_factoring_funding` |
-| `mutation releaseFactoringNoa` | Tool: `release_factoring_noa` |
-| `mutation releaseFactoringReserve` | Tool: `release_factoring_reserve` |
-| `mutation rematchFactoringRemittance` | Tool: `rematch_factoring_remittance` |
-| `mutation requestMissingFactoringDocuments` | Tool: `request_missing_factoring_document` |
-| `mutation retryFactoringSubmission` | Tool: `retry_factoring_submission` |
-| `mutation reverseFactoringChargeback` | Tool: `reverse_factoring_chargeback` |
+| `mutation recordFactoringChargeback` | Tool: `factoring_record_chargeback` |
+| `mutation recordFactoringFunding` | Tool: `factoring_record_funding` |
+| `mutation releaseFactoringNoa` | Tool: `factoring_release_noa` |
+| `mutation releaseFactoringReserve` | Tool: `factoring_release_reserve` |
+| `mutation rematchFactoringRemittance` | Tool: `factoring_rematch_remittance` |
+| `mutation requestMissingFactoringDocuments` | Tool: `factoring_request_document` |
+| `mutation retryFactoringSubmission` | Tool: `factoring_retry_submission` |
+| `mutation reverseFactoringChargeback` | Tool: `factoring_reverse_chargeback` |
 | `mutation saveFactoringTransport` | Exempt, configuration: How schedules reach a factor (its schedule inbox, or its SFTP host, account, password or key and host key) is set up by an administrator from the factor's onboarding instructions, and holds a credential no agent may read or write. |
-| `mutation sendFactoringNoa` | Tool: `send_factoring_noa` |
-| `mutation setInvoiceFactoringOverride` | Tool: `set_invoice_factoring_override` |
-| `mutation stageFactoringRemittance` | Exempt, infrastructure: Part of uploading a factor's remittance file from a browser: the remittance holds the upload and staging reads it; remittances that arrive by email are opened by the inbound pipeline, and an agent works a read remittance with resolve_factoring_remittance_line, apply_factoring_remittance or discard_factoring_remittance. |
-| `mutation submitInvoicesToFactor` | Tool: `submit_invoices_to_factor` |
+| `mutation sendFactoringNoa` | Tool: `factoring_send_noa` |
+| `mutation setInvoiceFactoringOverride` | Tool: `factoring_set_override` |
+| `mutation stageFactoringRemittance` | Exempt, infrastructure: Part of uploading a factor's remittance file from a browser: the remittance holds the upload and staging reads it; remittances that arrive by email are opened by the inbound pipeline, and an agent works a read remittance with factoring_resolve_remittance_line, factoring_apply_remittance or factoring_discard_remittance. |
+| `mutation submitInvoicesToFactor` | Tool: `factoring_create_submission` |
 | `mutation testFactoringTransport` | Exempt, configuration: Testing a factor's delivery settings connects with the administrator's stored credential and changes nothing but the recorded test result. |
 | `mutation updateFactoringAgreement` | Exempt, configuration: Factoring agreement terms (advance, reserve, fee tiers, recourse, accounting treatment) are copied from the signed contract with the factor by an administrator. |
-| `mutation updateFactoringRemittanceLine` | Tool: `resolve_factoring_remittance_line` |
+| `mutation updateFactoringRemittanceLine` | Tool: `factoring_resolve_remittance_line` |
 
 ### factoringcompany
 
@@ -1265,11 +1265,11 @@ Tools that change something no person-facing write does, such as sending a messa
 | `PATCH /api/v1/fiscal-periods/:fiscalPeriodID/`<br>fiscalperiodhandler.patch | Exempt, configuration: The fiscal calendar every posting resolves its period from; an accounting administrator lays its periods out with the fiscal year, and they change with the calendar, not with the work. |
 | `POST /api/v1/fiscal-periods/`<br>fiscalperiodhandler.create | Exempt, configuration: The fiscal calendar every posting resolves its period from; an accounting administrator lays its periods out with the fiscal year, and they change with the calendar, not with the work. |
 | `PUT /api/v1/fiscal-periods/:fiscalPeriodID/`<br>fiscalperiodhandler.update | Exempt, configuration: The fiscal calendar every posting resolves its period from; an accounting administrator lays its periods out with the fiscal year, and they change with the calendar, not with the work. |
-| `PUT /api/v1/fiscal-periods/:fiscalPeriodID/activate/`<br>fiscalperiodhandler.activate | Tool: `open_fiscal_period` |
-| `PUT /api/v1/fiscal-periods/:fiscalPeriodID/close/`<br>fiscalperiodhandler.close | Tool: `close_fiscal_period` |
-| `PUT /api/v1/fiscal-periods/:fiscalPeriodID/lock/`<br>fiscalperiodhandler.lock | Tool: `lock_fiscal_period` |
-| `PUT /api/v1/fiscal-periods/:fiscalPeriodID/reopen/`<br>fiscalperiodhandler.reopen | Tool: `reopen_fiscal_period` |
-| `PUT /api/v1/fiscal-periods/:fiscalPeriodID/unlock/`<br>fiscalperiodhandler.unlock | Tool: `unlock_fiscal_period` |
+| `PUT /api/v1/fiscal-periods/:fiscalPeriodID/activate/`<br>fiscalperiodhandler.activate | Tool: `ledger_open_fiscal_period` |
+| `PUT /api/v1/fiscal-periods/:fiscalPeriodID/close/`<br>fiscalperiodhandler.close | Tool: `ledger_close_fiscal_period` |
+| `PUT /api/v1/fiscal-periods/:fiscalPeriodID/lock/`<br>fiscalperiodhandler.lock | Tool: `ledger_lock_fiscal_period` |
+| `PUT /api/v1/fiscal-periods/:fiscalPeriodID/reopen/`<br>fiscalperiodhandler.reopen | Tool: `ledger_reopen_fiscal_period` |
+| `PUT /api/v1/fiscal-periods/:fiscalPeriodID/unlock/`<br>fiscalperiodhandler.unlock | Tool: `ledger_unlock_fiscal_period` |
 
 ### fiscalyear
 
@@ -1295,9 +1295,9 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation deleteSafetyViolation` | Tool: `delete_safety_violation` |
-| `mutation recordSafetyViolation` | Tool: `record_safety_violation` |
-| `mutation updateSafetyViolation` | Tool: `update_safety_violation` |
+| `mutation deleteSafetyViolation` | Tool: `worker_delete_safety_violation` |
+| `mutation recordSafetyViolation` | Tool: `worker_record_safety_violation` |
+| `mutation updateSafetyViolation` | Tool: `worker_update_safety_violation` |
 
 ### formulatemplate
 
@@ -1337,32 +1337,32 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation assignFuelCard` | Tool: `assign_fuel_card` |
-| `mutation cancelFuelCard` | Exempt, configuration: Fuel cards are payment instruments an administrator issues, edits and cancels with the card provider; an agent assigns a card already on file (assign_fuel_card). |
-| `mutation commitFuelPurchaseImport` | Tool: `commit_fuel_purchase_import` |
-| `mutation createFuelCard` | Exempt, configuration: Fuel cards are payment instruments an administrator issues, edits and cancels with the card provider; an agent assigns a card already on file (assign_fuel_card). |
-| `mutation createFuelPurchase` | Tool: `record_fuel_purchase` |
-| `mutation createFuelPurchaseImport` | Exempt, infrastructure: Part of uploading a statement file from a browser: the batch holds the upload and staging parses it; an agent works a staged batch with commit_fuel_purchase_import or discard_fuel_purchase_import. |
-| `mutation deleteFuelPurchase` | Tool: `delete_fuel_purchase` |
-| `mutation discardFuelPurchaseImport` | Tool: `discard_fuel_purchase_import` |
-| `mutation resolveFuelPurchaseImportRows` | Tool: `resolve_fuel_purchase_import_rows` |
-| `mutation stageFuelPurchaseImport` | Exempt, infrastructure: Part of uploading a statement file from a browser: the batch holds the upload and staging parses it; an agent works a staged batch with commit_fuel_purchase_import or discard_fuel_purchase_import. |
-| `mutation syncFuelCardFeed` | Exempt, infrastructure: Reads the card provider's feed on the connection an administrator set up, which runs on its own schedule; resolve_fuel_purchase_import_rows works the rows a run held back. |
-| `mutation updateFuelCard` | Exempt, configuration: Fuel cards are payment instruments an administrator issues, edits and cancels with the card provider; an agent assigns a card already on file (assign_fuel_card). |
-| `mutation updateFuelPurchase` | Tool: `correct_fuel_purchase` |
+| `mutation assignFuelCard` | Tool: `fuel_assign_card` |
+| `mutation cancelFuelCard` | Exempt, configuration: Fuel cards are payment instruments an administrator issues, edits and cancels with the card provider; an agent assigns a card already on file (fuel_assign_card). |
+| `mutation commitFuelPurchaseImport` | Tool: `fuel_commit_purchase_import` |
+| `mutation createFuelCard` | Exempt, configuration: Fuel cards are payment instruments an administrator issues, edits and cancels with the card provider; an agent assigns a card already on file (fuel_assign_card). |
+| `mutation createFuelPurchase` | Tool: `fuel_record_purchase` |
+| `mutation createFuelPurchaseImport` | Exempt, infrastructure: Part of uploading a statement file from a browser: the batch holds the upload and staging parses it; an agent works a staged batch with fuel_commit_purchase_import or fuel_discard_purchase_import. |
+| `mutation deleteFuelPurchase` | Tool: `fuel_delete_purchase` |
+| `mutation discardFuelPurchaseImport` | Tool: `fuel_discard_purchase_import` |
+| `mutation resolveFuelPurchaseImportRows` | Tool: `fuel_resolve_purchase_import_rows` |
+| `mutation stageFuelPurchaseImport` | Exempt, infrastructure: Part of uploading a statement file from a browser: the batch holds the upload and staging parses it; an agent works a staged batch with fuel_commit_purchase_import or fuel_discard_purchase_import. |
+| `mutation syncFuelCardFeed` | Exempt, infrastructure: Reads the card provider's feed on the connection an administrator set up, which runs on its own schedule; fuel_resolve_purchase_import_rows works the rows a run held back. |
+| `mutation updateFuelCard` | Exempt, configuration: Fuel cards are payment instruments an administrator issues, edits and cancels with the card provider; an agent assigns a card already on file (fuel_assign_card). |
+| `mutation updateFuelPurchase` | Tool: `fuel_correct_purchase` |
 
 ### fuelsurcharge
 
 | Write | Decision |
 | --- | --- |
-| `mutation addFuelIndexPrice` | Tool: `record_fuel_index_price` |
+| `mutation addFuelIndexPrice` | Tool: `rate_record_fuel_index_price` |
 | `mutation createFuelIndex` | Exempt, configuration: Fuel surcharge programs and the indexes they follow are commercial terms an administrator sets up. |
 | `mutation createFuelSurchargeProgram` | Exempt, configuration: Fuel surcharge programs and the indexes they follow are commercial terms an administrator sets up. |
 | `mutation deleteFuelIndex` | Exempt, configuration: Fuel surcharge programs and the indexes they follow are commercial terms an administrator sets up. |
-| `mutation deleteFuelIndexPrice` | Exempt, configuration: Pruning an index's price history is curation an administrator does; a manual price entered wrong is fixed with correct_fuel_index_price. |
+| `mutation deleteFuelIndexPrice` | Exempt, configuration: Pruning an index's price history is curation an administrator does; a manual price entered wrong is fixed with rate_correct_fuel_index_price. |
 | `mutation deleteFuelSurchargeProgram` | Exempt, configuration: Fuel surcharge programs and the indexes they follow are commercial terms an administrator sets up. |
 | `mutation updateFuelIndex` | Exempt, configuration: Fuel surcharge programs and the indexes they follow are commercial terms an administrator sets up. |
-| `mutation updateFuelIndexPrice` | Tool: `correct_fuel_index_price` |
+| `mutation updateFuelIndexPrice` | Tool: `rate_correct_fuel_index_price` |
 | `mutation updateFuelSurchargeProgram` | Exempt, configuration: Fuel surcharge programs and the indexes they follow are commercial terms an administrator sets up. |
 
 ### glaccount
@@ -1391,10 +1391,10 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `PATCH /api/v1/hazardous-materials/:hazardousMaterialID/`<br>hazardousmaterialhandler.patch | Tool: `update_hazardous_material` |
-| `POST /api/v1/hazardous-materials/`<br>hazardousmaterialhandler.create | Tool: `create_hazardous_material` |
-| `POST /api/v1/hazardous-materials/bulk-update-status/`<br>hazardousmaterialhandler.bulkUpdateStatus | Tool: `update_hazardous_material_status` |
-| `PUT /api/v1/hazardous-materials/:hazardousMaterialID/`<br>hazardousmaterialhandler.update | Tool: `update_hazardous_material` |
+| `PATCH /api/v1/hazardous-materials/:hazardousMaterialID/`<br>hazardousmaterialhandler.patch | Tool: `masterdata_update_hazardous_material` |
+| `POST /api/v1/hazardous-materials/`<br>hazardousmaterialhandler.create | Tool: `masterdata_create_hazardous_material` |
+| `POST /api/v1/hazardous-materials/bulk-update-status/`<br>hazardousmaterialhandler.bulkUpdateStatus | Tool: `masterdata_set_hazardous_material_status` |
+| `PUT /api/v1/hazardous-materials/:hazardousMaterialID/`<br>hazardousmaterialhandler.update | Tool: `masterdata_update_hazardous_material` |
 
 ### hazmatsegregationrule
 
@@ -1419,7 +1419,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation createHomeLayoutPreset` | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
 | `mutation deleteHomeLayoutPreset` | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
 | `mutation resetHomeLayout` | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
-| `mutation updateHomeLayout` | Tool: `add_home_widget`, `remove_home_widget`, `arrange_home_layout` |
+| `mutation updateHomeLayout` | Tool: `home_add_widget`, `home_remove_widget`, `home_arrange_layout` |
 | `mutation updateHomeLayoutPreset` | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
 
 ### iam
@@ -1446,19 +1446,19 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation amendIftaReturn` | Tool: `amend_ifta_return` |
-| `mutation backfillJurisdictionMiles` | Tool: `backfill_jurisdiction_miles` |
-| `mutation createIftaMileageEntry` | Tool: `record_ifta_mileage_entry` |
-| `mutation deleteIftaMileageEntry` | Tool: `delete_ifta_mileage_entry` |
-| `mutation deleteIftaReturn` | Tool: `delete_ifta_return` |
+| `mutation amendIftaReturn` | Tool: `fuel_amend_ifta_return` |
+| `mutation backfillJurisdictionMiles` | Tool: `fuel_backfill_jurisdiction_miles` |
+| `mutation createIftaMileageEntry` | Tool: `fuel_record_ifta_mileage_entry` |
+| `mutation deleteIftaMileageEntry` | Tool: `fuel_delete_ifta_mileage_entry` |
+| `mutation deleteIftaReturn` | Tool: `fuel_delete_ifta_return` |
 | `mutation deleteIftaTaxRate` | Exempt, configuration: IFTA tax rates are the jurisdictions' published rates an administrator loads each quarter; every return is computed from them. |
 | `mutation finalizeIftaReturn` | Exempt, attestation: A fuel tax return is signed off by the person accountable for filing it. |
-| `mutation generateIftaReturn` | Tool: `generate_ifta_return` |
+| `mutation generateIftaReturn` | Tool: `fuel_generate_ifta_return` |
 | `mutation markIftaReturnFiled` | Exempt, attestation: Records that a person filed the return with the jurisdiction. |
-| `mutation recalculateMoveJurisdictionMiles` | Tool: `recalculate_move_jurisdiction_miles` |
-| `mutation recomputeIftaReturn` | Tool: `recompute_ifta_return` |
+| `mutation recalculateMoveJurisdictionMiles` | Tool: `fuel_recalculate_jurisdiction_miles` |
+| `mutation recomputeIftaReturn` | Tool: `fuel_recalculate_ifta_return` |
 | `mutation reopenIftaReturn` | Exempt, attestation: Reopening undoes the sign-off of the person accountable for filing the return, so that person decides. |
-| `mutation updateIftaMileageEntry` | Tool: `correct_ifta_mileage_entry` |
+| `mutation updateIftaMileageEntry` | Tool: `fuel_correct_ifta_mileage_entry` |
 | `mutation upsertIftaTaxRates` | Exempt, configuration: IFTA tax rates are the jurisdictions' published rates an administrator loads each quarter; every return is computed from them. |
 
 ### inbound
@@ -1471,51 +1471,51 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation assignInboundMessages` | Tool: `assign_inbound_messages` |
+| `mutation assignInboundMessages` | Tool: `inbox_assign_inbound_message` |
 | `mutation createInboundMailbox` | Exempt, configuration: Connects the organization to an outside system; an administrator owns the connection and its credentials. |
 | `mutation createMyTriageView` | Exempt, user-preference: A saved search in one person's own Triage sidebar. |
 | `mutation deleteMyTriageView` | Exempt, user-preference: A saved search in one person's own Triage sidebar. |
-| `mutation handOffTriage` | Tool: `hand_off_triage` |
-| `mutation linkInboundMessage` | Tool: `link_inbound_message` |
+| `mutation handOffTriage` | Tool: `inbox_assign_queue` |
+| `mutation linkInboundMessage` | Tool: `inbox_link_inbound_message` |
 | `mutation readUnreadInboundMessages` | Exempt, agent-administration: Sets Nova reading the backlog it never read; it switches an agent on rather than doing an agent's work. |
 | `mutation renameMyTriageView` | Exempt, user-preference: A saved search in one person's own Triage sidebar. |
-| `mutation reopenInboundMessages` | Tool: `reopen_inbound_messages` |
-| `mutation reviewInboundMessage` | Tool: `mark_inbound_message` |
-| `mutation reviewInboundMessages` | Exempt, duplicate: The bulk form of reviewInboundMessage; mark_inbound_message settles each message. |
+| `mutation reopenInboundMessages` | Tool: `inbox_reopen_inbound_message` |
+| `mutation reviewInboundMessage` | Tool: `inbox_mark_inbound_message` |
+| `mutation reviewInboundMessages` | Exempt, duplicate: The bulk form of reviewInboundMessage; inbox_mark_inbound_message settles each message. |
 | `mutation rotateInboundMailboxToken` | Exempt, security: Replaces the secret that authenticates mail forwarded into the mailbox. |
 | `mutation sendInboundMailboxTest` | Exempt, configuration: Checks that a connected address receives mail while an administrator sets the mailbox up. |
 | `mutation setInboundMailboxApiKey` | Exempt, security: Sets the provider credential the mailbox reads forwarded mail's content with. |
 | `mutation setInboundMailboxSigningSecret` | Exempt, security: Sets the secret that authenticates mail forwarded into the mailbox. |
-| `mutation snoozeInboundMessages` | Tool: `snooze_inbound_messages` |
-| `mutation stopWaitingForInboundReply` | Tool: `wake_inbound_message` |
-| `mutation unlinkInboundMessage` | Tool: `unlink_inbound_message` |
+| `mutation snoozeInboundMessages` | Tool: `inbox_snooze_inbound_message` |
+| `mutation stopWaitingForInboundReply` | Tool: `inbox_wake_inbound_message` |
+| `mutation unlinkInboundMessage` | Tool: `inbox_unlink_inbound_message` |
 | `mutation updateInboundMailbox` | Exempt, configuration: Connects the organization to an outside system; an administrator owns the connection and its credentials. |
 | `mutation updateTriageResponseTargets` | Exempt, configuration: How long each kind of message may wait is an organization-wide setting an administrator owns. |
 | `mutation updateTriageSettings` | Exempt, configuration: The on-call person and the end of the working day are organization-wide settings an administrator owns. |
-| `mutation waitForInboundReply` | Tool: `wait_for_inbound_reply` |
-| `mutation wakeInboundMessage` | Tool: `wake_inbound_message` |
+| `mutation waitForInboundReply` | Tool: `inbox_await_reply` |
+| `mutation wakeInboundMessage` | Tool: `inbox_wake_inbound_message` |
 
 ### inboundreply
 
 | Write | Decision |
 | --- | --- |
-| `mutation blockInboundSender` | Tool: `block_inbound_sender` |
-| `mutation createInboundLoad` | Tool: `create_inbound_load` |
+| `mutation blockInboundSender` | Tool: `inbox_block_sender` |
+| `mutation createInboundLoad` | Tool: `inbox_create_load` |
 | `mutation createTriageReplyTemplate` | Exempt, configuration: Reply templates are organization-wide wording an administrator maintains; replies use them. |
-| `mutation decideInboundStops` | Tool: `settle_detention_dispute` |
+| `mutation decideInboundStops` | Tool: `detention_resolve_dispute` |
 | `mutation deleteTriageReplyTemplate` | Exempt, configuration: Reply templates are organization-wide wording an administrator maintains; replies use them. |
-| `mutation discardInboundLoad` | Tool: `discard_inbound_load` |
-| `mutation discardInboundReplyDraft` | Tool: `discard_inbound_reply_draft` |
-| `mutation draftInboundLoad` | Tool: `draft_inbound_load` |
-| `mutation draftInboundMany` | Exempt, duplicate: The bulk, background form of draftInboundReply and draftInboundLoad; draft_inbound_reply and draft_inbound_load draft each message. |
-| `mutation draftInboundReply` | Tool: `draft_inbound_reply` |
-| `mutation fileInboundAttachment` | Tool: `file_inbound_attachment` |
-| `mutation fileInboundMany` | Exempt, duplicate: The bulk form of fileInboundAttachment, filing each readable attachment by the kind it was read as; file_inbound_attachment files each one, taking that kind when no type is named. |
-| `mutation logInboundException` | Tool: `log_inbound_exception` |
-| `mutation saveInboundReplyDraft` | Tool: `draft_inbound_reply` |
-| `mutation sendInboundReply` | Tool: `reply_to_inbound_message` |
-| `mutation unblockInboundSender` | Tool: `unblock_inbound_sender` |
-| `mutation unfileInboundAttachment` | Tool: `unfile_inbound_attachment` |
+| `mutation discardInboundLoad` | Tool: `inbox_discard_load` |
+| `mutation discardInboundReplyDraft` | Tool: `inbox_discard_reply_draft` |
+| `mutation draftInboundLoad` | Tool: `inbox_draft_load` |
+| `mutation draftInboundMany` | Exempt, duplicate: The bulk, background form of draftInboundReply and draftInboundLoad; inbox_draft_reply and inbox_draft_load draft each message. |
+| `mutation draftInboundReply` | Tool: `inbox_draft_reply` |
+| `mutation fileInboundAttachment` | Tool: `inbox_file_attachment` |
+| `mutation fileInboundMany` | Exempt, duplicate: The bulk form of fileInboundAttachment, filing each readable attachment by the kind it was read as; inbox_file_attachment files each one, taking that kind when no type is named. |
+| `mutation logInboundException` | Tool: `inbox_record_discrepancy` |
+| `mutation saveInboundReplyDraft` | Tool: `inbox_draft_reply` |
+| `mutation sendInboundReply` | Tool: `inbox_send_reply` |
+| `mutation unblockInboundSender` | Tool: `inbox_unblock_sender` |
+| `mutation unfileInboundAttachment` | Tool: `inbox_unfile_attachment` |
 | `mutation updateTriageReplyTemplate` | Exempt, configuration: Reply templates are organization-wide wording an administrator maintains; replies use them. |
 
 ### inboxpresence
@@ -1529,8 +1529,8 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/insights/:insightID/dismiss/`<br>insighthandler.dismiss | Tool: `dismiss_insight` |
-| `POST /api/v1/insights/:insightID/restore/`<br>insighthandler.restore | Tool: `restore_insight` |
+| `POST /api/v1/insights/:insightID/dismiss/`<br>insighthandler.dismiss | Tool: `insight_dismiss` |
+| `POST /api/v1/insights/:insightID/restore/`<br>insighthandler.restore | Tool: `insight_restore` |
 
 ### integration
 
@@ -1615,10 +1615,10 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/accounting/journal-reversals/`<br>journalreversalhandler.create | Tool: `request_journal_reversal` |
+| `POST /api/v1/accounting/journal-reversals/`<br>journalreversalhandler.create | Tool: `ledger_create_journal_reversal` |
 | `POST /api/v1/accounting/journal-reversals/:reversalID/approve/`<br>journalreversalhandler.approve | Exempt, attestation: Approving a reversal is the second person's sign-off on taking a posted entry back out of the ledger; an agent requests reversals and never stands in as their approver. |
-| `POST /api/v1/accounting/journal-reversals/:reversalID/cancel/`<br>journalreversalhandler.cancel | Tool: `cancel_journal_reversal` |
-| `POST /api/v1/accounting/journal-reversals/:reversalID/post/`<br>journalreversalhandler.post | Tool: `post_journal_reversal` |
+| `POST /api/v1/accounting/journal-reversals/:reversalID/cancel/`<br>journalreversalhandler.cancel | Tool: `ledger_cancel_journal_reversal` |
+| `POST /api/v1/accounting/journal-reversals/:reversalID/post/`<br>journalreversalhandler.post | Tool: `ledger_post_journal_reversal` |
 | `POST /api/v1/accounting/journal-reversals/:reversalID/reject/`<br>journalreversalhandler.reject | Exempt, attestation: Turning a reversal down is the approver's half of the same sign-off, made by the accountable person reviewing it. |
 
 ### jurisdictionrule
@@ -1642,10 +1642,10 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `PATCH /api/v1/locations/:locationID/`<br>locationhandler.patch | Tool: `update_location` |
-| `POST /api/v1/locations/`<br>locationhandler.create | Tool: `create_location` |
-| `POST /api/v1/locations/bulk-update-status/`<br>locationhandler.bulkUpdateStatus | Tool: `update_location_status` |
-| `PUT /api/v1/locations/:locationID/`<br>locationhandler.update | Tool: `update_location` |
+| `PATCH /api/v1/locations/:locationID/`<br>locationhandler.patch | Tool: `location_update` |
+| `POST /api/v1/locations/`<br>locationhandler.create | Tool: `location_create` |
+| `POST /api/v1/locations/bulk-update-status/`<br>locationhandler.bulkUpdateStatus | Tool: `location_set_status` |
+| `PUT /api/v1/locations/:locationID/`<br>locationhandler.update | Tool: `location_update` |
 
 ### locationcategory
 
@@ -1660,12 +1660,12 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `POST /api/v1/accounting/manual-journals/:requestID/approve/`<br>manualjournalhandler.approve | Exempt, attestation: Approving a manual journal is the second person's sign-off on an entry someone else prepared; an agent prepares journals and never stands in as their approver. |
-| `POST /api/v1/accounting/manual-journals/:requestID/cancel/`<br>manualjournalhandler.cancel | Tool: `cancel_manual_journal` |
-| `POST /api/v1/accounting/manual-journals/:requestID/post/`<br>manualjournalhandler.post | Tool: `post_manual_journal` |
+| `POST /api/v1/accounting/manual-journals/:requestID/cancel/`<br>manualjournalhandler.cancel | Tool: `ledger_cancel_manual_journal` |
+| `POST /api/v1/accounting/manual-journals/:requestID/post/`<br>manualjournalhandler.post | Tool: `ledger_post_manual_journal` |
 | `POST /api/v1/accounting/manual-journals/:requestID/reject/`<br>manualjournalhandler.reject | Exempt, attestation: Sending a manual journal back is the approver's half of the same sign-off, made by the accountable person reviewing it. |
-| `POST /api/v1/accounting/manual-journals/:requestID/submit/`<br>manualjournalhandler.submit | Tool: `submit_manual_journal` |
-| `POST /api/v1/accounting/manual-journals/drafts/`<br>manualjournalhandler.createDraft | Tool: `draft_manual_journal` |
-| `PUT /api/v1/accounting/manual-journals/drafts/:requestID/`<br>manualjournalhandler.updateDraft | Tool: `revise_manual_journal_draft` |
+| `POST /api/v1/accounting/manual-journals/:requestID/submit/`<br>manualjournalhandler.submit | Tool: `ledger_submit_manual_journal` |
+| `POST /api/v1/accounting/manual-journals/drafts/`<br>manualjournalhandler.createDraft | Tool: `ledger_create_manual_journal` |
+| `PUT /api/v1/accounting/manual-journals/drafts/:requestID/`<br>manualjournalhandler.updateDraft | Tool: `ledger_update_manual_journal` |
 
 ### notification
 
@@ -1745,13 +1745,13 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation acknowledgeMyReview` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
 | `mutation archivePerformanceReviewTemplate` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
 | `mutation closePerformanceReview` | Exempt, attestation: Closing a review is the reviewer's sign-off on a record the worker has acknowledged; an agent drafts, it does not sign. |
-| `mutation createPerformanceReview` | Tool: `start_performance_review` |
+| `mutation createPerformanceReview` | Tool: `worker_start_performance_review` |
 | `mutation createPerformanceReviewTemplate` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
-| `mutation deletePerformanceReview` | Tool: `delete_performance_review` |
+| `mutation deletePerformanceReview` | Tool: `worker_delete_performance_review` |
 | `mutation reopenPerformanceReview` | Exempt, attestation: Reopening a submitted review withdraws the reviewer's signed assessment from the worker; only the reviewer does that. |
 | `mutation restorePerformanceReviewTemplate` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
 | `mutation submitPerformanceReview` | Exempt, attestation: Submitting is the reviewer signing the assessment and sending it to the worker to acknowledge; an agent drafts, it does not sign. |
-| `mutation updatePerformanceReview` | Tool: `draft_performance_review` |
+| `mutation updatePerformanceReview` | Tool: `worker_update_performance_review` |
 | `mutation updatePerformanceReviewTemplate` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
 
 ### permission
@@ -1772,7 +1772,7 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation adjustWorkerPtoBalance` | Tool: `adjust_worker_pto_balance` |
+| `mutation adjustWorkerPtoBalance` | Tool: `worker_adjust_pto_balance` |
 | `mutation archivePtoPolicy` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
 | `mutation assignWorkerPtoPolicy` | Exempt, configuration: Which PTO policy a worker accrues under is an HR setting an administrator assigns; requests and balances follow from it. |
 | `mutation createPtoPolicy` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
@@ -1792,27 +1792,27 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/rate-agreements/`<br>rateagreementhandler.create | Tool: `draft_rate_agreement` |
-| `POST /api/v1/rate-agreements/:rateAgreementID/approve/`<br>rateagreementhandler.review | Tool: `approve_rate_agreement` |
-| `POST /api/v1/rate-agreements/:rateAgreementID/archive/`<br>rateagreementhandler.review | Tool: `archive_rate_agreement` |
-| `POST /api/v1/rate-agreements/:rateAgreementID/duplicate/`<br>rateagreementhandler.duplicate | Tool: `duplicate_rate_agreement` |
-| `POST /api/v1/rate-agreements/:rateAgreementID/reject/`<br>rateagreementhandler.review | Tool: `reject_rate_agreement` |
-| `POST /api/v1/rate-agreements/:rateAgreementID/resume/`<br>rateagreementhandler.review | Tool: `resume_rate_agreement` |
-| `POST /api/v1/rate-agreements/:rateAgreementID/rules/amend/`<br>rateagreementhandler.amendRules | Tool: `amend_rate_agreement_rules` |
-| `POST /api/v1/rate-agreements/:rateAgreementID/submit/`<br>rateagreementhandler.review | Tool: `submit_rate_agreement` |
-| `POST /api/v1/rate-agreements/:rateAgreementID/suspend/`<br>rateagreementhandler.review | Tool: `suspend_rate_agreement` |
-| `POST /api/v1/rate-agreements/rate-increase/apply/`<br>rateagreementhandler.applyRateIncrease | Tool: `apply_rate_increase` |
+| `POST /api/v1/rate-agreements/`<br>rateagreementhandler.create | Tool: `rate_create_agreement` |
+| `POST /api/v1/rate-agreements/:rateAgreementID/approve/`<br>rateagreementhandler.review | Tool: `rate_approve_agreement` |
+| `POST /api/v1/rate-agreements/:rateAgreementID/archive/`<br>rateagreementhandler.review | Tool: `rate_archive_agreement` |
+| `POST /api/v1/rate-agreements/:rateAgreementID/duplicate/`<br>rateagreementhandler.duplicate | Tool: `rate_duplicate_agreement` |
+| `POST /api/v1/rate-agreements/:rateAgreementID/reject/`<br>rateagreementhandler.review | Tool: `rate_reject_agreement` |
+| `POST /api/v1/rate-agreements/:rateAgreementID/resume/`<br>rateagreementhandler.review | Tool: `rate_resume_agreement` |
+| `POST /api/v1/rate-agreements/:rateAgreementID/rules/amend/`<br>rateagreementhandler.amendRules | Tool: `rate_amend_agreement_rules` |
+| `POST /api/v1/rate-agreements/:rateAgreementID/submit/`<br>rateagreementhandler.review | Tool: `rate_submit_agreement` |
+| `POST /api/v1/rate-agreements/:rateAgreementID/suspend/`<br>rateagreementhandler.review | Tool: `rate_suspend_agreement` |
+| `POST /api/v1/rate-agreements/rate-increase/apply/`<br>rateagreementhandler.applyRateIncrease | Tool: `rate_apply_increase` |
 | `POST /api/v1/rate-agreements/rate-increase/preview/`<br>rateagreementhandler.previewRateIncrease | Exempt, read-only: Plans a general rate increase for review and saves nothing. |
-| `PUT /api/v1/rate-agreements/:rateAgreementID/`<br>rateagreementhandler.update | Tool: `revise_rate_agreement_draft` |
+| `PUT /api/v1/rate-agreements/:rateAgreementID/`<br>rateagreementhandler.update | Tool: `rate_update_agreement_draft` |
 
 ### rateconfirmation
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/rate-confirmations/:rateConfirmationID/confirm/`<br>rateconfirmationhandler.confirm | Tool: `record_rate_confirmation_confirmed` |
-| `POST /api/v1/rate-confirmations/:rateConfirmationID/send/`<br>rateconfirmationhandler.send | Tool: `send_rate_confirmation` |
-| `POST /api/v1/rate-confirmations/:rateConfirmationID/void/`<br>rateconfirmationhandler.void | Tool: `void_rate_confirmation` |
-| `POST /api/v1/shipment-moves/:moveID/rate-confirmations/`<br>rateconfirmationhandler.generate | Tool: `generate_rate_confirmation` |
+| `POST /api/v1/rate-confirmations/:rateConfirmationID/confirm/`<br>rateconfirmationhandler.confirm | Tool: `rate_record_confirmation` |
+| `POST /api/v1/rate-confirmations/:rateConfirmationID/send/`<br>rateconfirmationhandler.send | Tool: `rate_send_confirmation` |
+| `POST /api/v1/rate-confirmations/:rateConfirmationID/void/`<br>rateconfirmationhandler.void | Tool: `rate_void_confirmation` |
+| `POST /api/v1/shipment-moves/:moveID/rate-confirmations/`<br>rateconfirmationhandler.generate | Tool: `rate_generate_confirmation` |
 
 ### rateconfirmationpublic
 
@@ -1825,8 +1825,8 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `POST /api/v1/rate-imports/`<br>rateimporthandler.upload | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document). |
-| `POST /api/v1/rate-imports/:rateImportID/commit/`<br>rateimporthandler.commit | Tool: `commit_rate_import` |
-| `POST /api/v1/rate-imports/:rateImportID/discard/`<br>rateimporthandler.discard | Tool: `discard_rate_import` |
+| `POST /api/v1/rate-imports/:rateImportID/commit/`<br>rateimporthandler.commit | Tool: `rate_commit_import` |
+| `POST /api/v1/rate-imports/:rateImportID/discard/`<br>rateimporthandler.discard | Tool: `rate_discard_import` |
 
 ### ratematrix
 
@@ -1849,7 +1849,7 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/rate-simulations/`<br>ratesimulationhandler.create | Tool: `run_rate_simulation` |
+| `POST /api/v1/rate-simulations/`<br>ratesimulationhandler.create | Tool: `rate_run_simulation` |
 
 ### ratezone
 
@@ -1885,23 +1885,23 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation cancelReportRun` | Tool: `cancel_report_run` |
-| `mutation createReportDashboard` | Tool: `create_dashboard` |
-| `mutation createReportDefinition` | Tool: `create_report` |
-| `mutation createReportSchedule` | Tool: `schedule_report` |
+| `mutation cancelReportRun` | Tool: `report_cancel_run` |
+| `mutation createReportDashboard` | Tool: `report_create_dashboard` |
+| `mutation createReportDefinition` | Tool: `report_create` |
+| `mutation createReportSchedule` | Tool: `report_create_schedule` |
 | `mutation createReportView` | Exempt, user-preference: A saved view is one person's own columns and filters on a report page. |
-| `mutation deleteReportDashboard` | Tool: `delete_dashboard` |
-| `mutation deleteReportDefinition` | Tool: `delete_report` |
-| `mutation deleteReportSchedule` | Tool: `delete_report_schedule` |
+| `mutation deleteReportDashboard` | Tool: `report_delete_dashboard` |
+| `mutation deleteReportDefinition` | Tool: `report_delete` |
+| `mutation deleteReportSchedule` | Tool: `report_delete_schedule` |
 | `mutation deleteReportView` | Exempt, user-preference: A saved view is one person's own columns and filters on a report page. |
 | `mutation exportTableView` | Exempt, duplicate: Saves a table's view through createReportDefinition and runs it through runReport; those writes are listed under report. |
-| `mutation forkCannedReport` | Tool: `fork_report` |
-| `mutation resetCannedFork` | Tool: `reset_report_fork` |
-| `mutation runReport` | Tool: `run_report` |
+| `mutation forkCannedReport` | Tool: `report_fork` |
+| `mutation resetCannedFork` | Tool: `report_reset_fork` |
+| `mutation runReport` | Tool: `report_run` |
 | `mutation scheduleTableView` | Exempt, duplicate: Saves a table's view through createReportDefinition and schedules it through createReportSchedule; those writes are listed under report. |
-| `mutation updateReportDashboard` | Tool: `add_dashboard_tile` |
-| `mutation updateReportDefinition` | Tool: `update_report` |
-| `mutation updateReportSchedule` | Tool: `update_report_schedule` |
+| `mutation updateReportDashboard` | Tool: `report_add_dashboard_tile` |
+| `mutation updateReportDefinition` | Tool: `report_update` |
+| `mutation updateReportSchedule` | Tool: `report_update_schedule` |
 | `mutation updateReportView` | Exempt, user-preference: A saved view is one person's own columns and filters on a report page. |
 | `POST /api/v1/reports/dashboards/:dashboardID/export/`<br>reporthandler.exportDashboard | Exempt, read-only: Renders a dashboard to a file for download. |
 
@@ -1926,20 +1926,20 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `DELETE /api/v1/routing-guides/:guideID/`<br>routingguidehandler.delete | Exempt, configuration: A routing guide is the lane-by-lane carrier waterfall an administrator maintains; tender_move_to_routing_guide uses it. |
-| `POST /api/v1/routing-guides/`<br>routingguidehandler.create | Exempt, configuration: A routing guide is the lane-by-lane carrier waterfall an administrator maintains; tender_move_to_routing_guide uses it. |
-| `PUT /api/v1/routing-guides/:guideID/`<br>routingguidehandler.update | Exempt, configuration: A routing guide is the lane-by-lane carrier waterfall an administrator maintains; tender_move_to_routing_guide uses it. |
+| `DELETE /api/v1/routing-guides/:guideID/`<br>routingguidehandler.delete | Exempt, configuration: A routing guide is the lane-by-lane carrier waterfall an administrator maintains; dispatch_create_tender_from_routing_guide uses it. |
+| `POST /api/v1/routing-guides/`<br>routingguidehandler.create | Exempt, configuration: A routing guide is the lane-by-lane carrier waterfall an administrator maintains; dispatch_create_tender_from_routing_guide uses it. |
+| `PUT /api/v1/routing-guides/:guideID/`<br>routingguidehandler.update | Exempt, configuration: A routing guide is the lane-by-lane carrier waterfall an administrator maintains; dispatch_create_tender_from_routing_guide uses it. |
 
 ### scheduling
 
 | Write | Decision |
 | --- | --- |
-| `mutation assignWorkerShift` | Tool: `assign_worker_shift` |
+| `mutation assignWorkerShift` | Tool: `worker_assign_shift` |
 | `mutation createShiftTemplate` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
-| `mutation endWorkerShiftAssignment` | Tool: `end_worker_shift_assignment` |
-| `mutation proposeShiftSwap` | Tool: `propose_shift_swap` |
-| `mutation setWorkerAvailabilityPreference` | Tool: `set_worker_availability_preference` |
-| `mutation transitionShiftSwap` | Tool: `approve_shift_swap`, `reject_shift_swap`, `withdraw_shift_swap` |
+| `mutation endWorkerShiftAssignment` | Tool: `worker_end_shift_assignment` |
+| `mutation proposeShiftSwap` | Tool: `worker_request_shift_swap` |
+| `mutation setWorkerAvailabilityPreference` | Tool: `worker_set_availability_preference` |
+| `mutation transitionShiftSwap` | Tool: `worker_approve_shift_swap`, `worker_reject_shift_swap`, `worker_withdraw_shift_swap` |
 | `mutation updateShiftTemplate` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
 
 ### selfservice
@@ -1960,15 +1960,15 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `PATCH /api/v1/service-failures/:serviceFailureID/`<br>servicefailurehandler.update<br>also `PUT /api/v1/service-failures/:serviceFailureID/` | Tool: `update_service_failure` |
-| `POST /api/v1/service-failures/`<br>servicefailurehandler.createManual | Exempt, read-only: The service refuses every manual service failure: failures are opened only by evaluation against stop actuals, which evaluate_service_failures runs, so the route changes nothing. |
+| `PATCH /api/v1/service-failures/:serviceFailureID/`<br>servicefailurehandler.update<br>also `PUT /api/v1/service-failures/:serviceFailureID/` | Tool: `exception_update_service_failure` |
+| `POST /api/v1/service-failures/`<br>servicefailurehandler.createManual | Exempt, read-only: The service refuses every manual service failure: failures are opened only by evaluation against stop actuals, which exception_evaluate_service_failures runs, so the route changes nothing. |
 | `POST /api/v1/service-failures/:serviceFailureID/edi-214-payload/`<br>servicefailurehandler.buildEDI214Payload | Exempt, read-only: Builds the EDI 214 a service failure would send and returns it. |
-| `POST /api/v1/service-failures/:serviceFailureID/resolve/`<br>servicefailurehandler.resolve | Tool: `resolve_service_failure` |
-| `POST /api/v1/service-failures/:serviceFailureID/review/`<br>servicefailurehandler.review | Tool: `review_service_failure` |
-| `POST /api/v1/service-failures/:serviceFailureID/void/`<br>servicefailurehandler.void | Tool: `void_service_failure` |
-| `POST /api/v1/service-failures/bulk-evaluate/`<br>servicefailurehandler.bulkEvaluate | Tool: `evaluate_service_failures` |
-| `POST /api/v1/service-failures/evaluate-shipment/:shipmentID/`<br>servicefailurehandler.evaluateShipment | Tool: `evaluate_service_failures` |
-| `POST /api/v1/service-failures/evaluate-stop/:shipmentID/:stopID/`<br>servicefailurehandler.evaluateStop | Tool: `evaluate_service_failures` |
+| `POST /api/v1/service-failures/:serviceFailureID/resolve/`<br>servicefailurehandler.resolve | Tool: `exception_resolve_service_failure` |
+| `POST /api/v1/service-failures/:serviceFailureID/review/`<br>servicefailurehandler.review | Tool: `exception_review_service_failure` |
+| `POST /api/v1/service-failures/:serviceFailureID/void/`<br>servicefailurehandler.void | Tool: `exception_void_service_failure` |
+| `POST /api/v1/service-failures/bulk-evaluate/`<br>servicefailurehandler.bulkEvaluate | Tool: `exception_evaluate_service_failures` |
+| `POST /api/v1/service-failures/evaluate-shipment/:shipmentID/`<br>servicefailurehandler.evaluateShipment | Tool: `exception_evaluate_service_failures` |
+| `POST /api/v1/service-failures/evaluate-stop/:shipmentID/:stopID/`<br>servicefailurehandler.evaluateStop | Tool: `exception_evaluate_service_failures` |
 
 ### servicefailurereasoncode
 
@@ -2024,7 +2024,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/shipments/auto-cancel/`<br>shipmenthandler.autoCancelShipments | Exempt, infrastructure: The sweep the Temporal schedule runs over every organization to cancel shipments past the auto-cancel threshold; a person does not decide which shipments it takes, and shipment_cancel cancels one. |
 | `POST /api/v1/shipments/check-for-duplicate-bols/`<br>shipmenthandler.checkForDuplicateBOLs | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
 | `POST /api/v1/shipments/check-hazmat-segregation/`<br>shipmenthandler.checkHazmatSegregation | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
-| `POST /api/v1/shipments/delay/`<br>shipmenthandler.delayShipments | Exempt, infrastructure: The sweep the Temporal schedule runs to mark late shipments delayed from their stop windows; evaluate_service_failures records a late stop for one shipment. |
+| `POST /api/v1/shipments/delay/`<br>shipmenthandler.delayShipments | Exempt, infrastructure: The sweep the Temporal schedule runs to mark late shipments delayed from their stop windows; exception_evaluate_service_failures records a late stop for one shipment. |
 | `POST /api/v1/shipments/previous-rates/`<br>shipmenthandler.getPreviousRates | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
 | `PUT /api/v1/shipments/:shipmentID/holds/:holdID/`<br>shipmenthandler.updateHold | Tool: `shipment_update_hold` |
 
@@ -2033,9 +2033,9 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `mutation decideShipmentSuggestion` | Exempt, user-preference: A person marking an item in their own suggestion queue done or for later; it changes no record, only what that person's queue shows. |
-| `mutation notifyShipmentDelay` | Tool: `email_customer` |
-| `mutation tenderShipments` | Tool: `tender_move_to_routing_guide`, `tender_move_to_carriers` |
-| `mutation undoShipmentSuggestionDecision` | Tool: `unassign_moves`, `cancel_tender` |
+| `mutation notifyShipmentDelay` | Tool: `customer_send_email` |
+| `mutation tenderShipments` | Tool: `dispatch_create_tender_from_routing_guide`, `dispatch_create_tender` |
+| `mutation undoShipmentSuggestionDecision` | Tool: `dispatch_unassign_move`, `dispatch_cancel_tender` |
 
 ### shipmentcontrol
 
@@ -2047,10 +2047,10 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/shipment-moves/:moveID/split/`<br>shipmentmovehandler.splitMove | Tool: `split_move_at_relay` |
-| `POST /api/v1/shipment-moves/:moveID/stops/:stopID/record-actual/`<br>shipmentmovehandler.recordStopActual | Tool: `record_stop_actual` |
-| `POST /api/v1/shipment-moves/:moveID/update-status/`<br>shipmentmovehandler.updateStatus | Tool: `update_move_status` |
-| `POST /api/v1/shipment-moves/bulk-update-status/`<br>shipmentmovehandler.bulkUpdateStatus | Tool: `update_move_status` |
+| `POST /api/v1/shipment-moves/:moveID/split/`<br>shipmentmovehandler.splitMove | Tool: `dispatch_split_move` |
+| `POST /api/v1/shipment-moves/:moveID/stops/:stopID/record-actual/`<br>shipmentmovehandler.recordStopActual | Tool: `dispatch_record_stop_actual` |
+| `POST /api/v1/shipment-moves/:moveID/update-status/`<br>shipmentmovehandler.updateStatus | Tool: `dispatch_set_move_status` |
+| `POST /api/v1/shipment-moves/bulk-update-status/`<br>shipmentmovehandler.bulkUpdateStatus | Tool: `dispatch_set_move_status` |
 
 ### shipmenttype
 
@@ -2077,17 +2077,17 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `DELETE /api/v1/tca/subscriptions/:id`<br>tablechangealerthandler.deleteSubscription | Tool: `delete_table_change_alert` |
-| `PATCH /api/v1/tca/subscriptions/:id/pause`<br>tablechangealerthandler.pauseSubscription | Tool: `set_table_change_alert_status` |
-| `PATCH /api/v1/tca/subscriptions/:id/resume`<br>tablechangealerthandler.resumeSubscription | Tool: `set_table_change_alert_status` |
-| `POST /api/v1/tca/subscriptions/`<br>tablechangealerthandler.createSubscription | Tool: `create_table_change_alert` |
-| `PUT /api/v1/tca/subscriptions/:id`<br>tablechangealerthandler.updateSubscription | Tool: `update_table_change_alert` |
+| `DELETE /api/v1/tca/subscriptions/:id`<br>tablechangealerthandler.deleteSubscription | Tool: `report_delete_table_change_alert` |
+| `PATCH /api/v1/tca/subscriptions/:id/pause`<br>tablechangealerthandler.pauseSubscription | Tool: `report_set_table_change_alert_status` |
+| `PATCH /api/v1/tca/subscriptions/:id/resume`<br>tablechangealerthandler.resumeSubscription | Tool: `report_set_table_change_alert_status` |
+| `POST /api/v1/tca/subscriptions/`<br>tablechangealerthandler.createSubscription | Tool: `report_create_table_change_alert` |
+| `PUT /api/v1/tca/subscriptions/:id`<br>tablechangealerthandler.updateSubscription | Tool: `report_update_table_change_alert` |
 
 ### tableconfiguration
 
 | Write | Decision |
 | --- | --- |
-| `mutation createTableConfiguration` | Tool: `save_table_view` |
+| `mutation createTableConfiguration` | Tool: `report_save_table_view` |
 | `mutation deleteTableConfiguration` | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
 | `mutation patchTableConfiguration` | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
 | `mutation setDefaultTableConfiguration` | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
@@ -2105,7 +2105,7 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/tables/:resource/compose/`<br>tablequeryhandler.compose | Exempt, read-only: Composes a table view from a request and returns it; save_table_view saves one. |
+| `POST /api/v1/tables/:resource/compose/`<br>tablequeryhandler.compose | Exempt, read-only: Composes a table view from a request and returns it; report_save_table_view saves one. |
 
 ### telematics
 
@@ -2126,11 +2126,11 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/tenders/:tenderID/bounce/`<br>tenderhandler.bounce | Tool: `record_tender_response` |
-| `POST /api/v1/tenders/:tenderID/cancel/`<br>tenderhandler.cancel | Tool: `cancel_tender` |
-| `POST /api/v1/tenders/offers/:offerID/respond/`<br>tenderhandler.recordResponse | Tool: `record_tender_response` |
-| `POST /api/v1/tenders/spot/`<br>tenderhandler.createSpot | Tool: `tender_move_to_carriers` |
-| `POST /api/v1/tenders/waterfall/`<br>tenderhandler.createWaterfall | Tool: `tender_move_to_routing_guide` |
+| `POST /api/v1/tenders/:tenderID/bounce/`<br>tenderhandler.bounce | Tool: `dispatch_record_tender_response` |
+| `POST /api/v1/tenders/:tenderID/cancel/`<br>tenderhandler.cancel | Tool: `dispatch_cancel_tender` |
+| `POST /api/v1/tenders/offers/:offerID/respond/`<br>tenderhandler.recordResponse | Tool: `dispatch_record_tender_response` |
+| `POST /api/v1/tenders/spot/`<br>tenderhandler.createSpot | Tool: `dispatch_create_tender` |
+| `POST /api/v1/tenders/waterfall/`<br>tenderhandler.createWaterfall | Tool: `dispatch_create_tender_from_routing_guide` |
 
 ### tenderpublic
 
@@ -2156,21 +2156,21 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation bulkUpdateTractorStatus`<br>twin `POST /api/v1/tractors/bulk-update-status/` | Tool: `update_tractor_status` |
-| `mutation createTractor`<br>twin `POST /api/v1/tractors/` | Tool: `create_tractor` |
-| `mutation locateTractor` | Tool: `locate_tractor` |
-| `mutation patchTractor`<br>twin `PATCH /api/v1/tractors/:tractorID/` | Tool: `update_tractor` |
-| `mutation updateTractor`<br>twin `PUT /api/v1/tractors/:tractorID/` | Tool: `update_tractor` |
+| `mutation bulkUpdateTractorStatus`<br>twin `POST /api/v1/tractors/bulk-update-status/` | Tool: `equipment_set_tractor_status` |
+| `mutation createTractor`<br>twin `POST /api/v1/tractors/` | Tool: `equipment_create_tractor` |
+| `mutation locateTractor` | Tool: `equipment_set_tractor_location` |
+| `mutation patchTractor`<br>twin `PATCH /api/v1/tractors/:tractorID/` | Tool: `equipment_update_tractor` |
+| `mutation updateTractor`<br>twin `PUT /api/v1/tractors/:tractorID/` | Tool: `equipment_update_tractor` |
 
 ### trailer
 
 | Write | Decision |
 | --- | --- |
-| `mutation bulkUpdateTrailerStatus`<br>twin `POST /api/v1/trailers/bulk-update-status/` | Tool: `update_trailer_status` |
-| `mutation createTrailer`<br>twin `POST /api/v1/trailers/` | Tool: `create_trailer` |
-| `mutation locateTrailer`<br>twin `POST /api/v1/trailers/:trailerID/locate/` | Tool: `locate_trailer` |
-| `mutation patchTrailer`<br>twin `PATCH /api/v1/trailers/:trailerID/` | Tool: `update_trailer` |
-| `mutation updateTrailer`<br>twin `PUT /api/v1/trailers/:trailerID/` | Tool: `update_trailer` |
+| `mutation bulkUpdateTrailerStatus`<br>twin `POST /api/v1/trailers/bulk-update-status/` | Tool: `equipment_set_trailer_status` |
+| `mutation createTrailer`<br>twin `POST /api/v1/trailers/` | Tool: `equipment_create_trailer` |
+| `mutation locateTrailer`<br>twin `POST /api/v1/trailers/:trailerID/locate/` | Tool: `equipment_set_trailer_location` |
+| `mutation patchTrailer`<br>twin `PATCH /api/v1/trailers/:trailerID/` | Tool: `equipment_update_trailer` |
+| `mutation updateTrailer`<br>twin `PUT /api/v1/trailers/:trailerID/` | Tool: `equipment_update_trailer` |
 
 ### triage
 
@@ -2180,8 +2180,8 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation createTriageRule` | Exempt, agent-administration: Rules decide what Nova may do with mail on its own; a person who manages the queue sets them, never an agent. |
 | `mutation deleteTriageRule` | Exempt, agent-administration: Rules decide what Nova may do with mail on its own; a person who manages the queue sets them, never an agent. |
 | `mutation flagInboundFact` | Exempt, attestation: A person's verdict on what Nova read; it trains Nova, so an agent flagging it would grade its own reading. |
-| `mutation reopenInboundConflict` | Tool: `reopen_inbound_conflict` |
-| `mutation resolveInboundConflict` | Tool: `resolve_inbound_conflict` |
+| `mutation reopenInboundConflict` | Tool: `inbox_reopen_conflict` |
+| `mutation resolveInboundConflict` | Tool: `inbox_resolve_conflict` |
 | `mutation setTriageRuleEnabled` | Exempt, agent-administration: Rules decide what Nova may do with mail on its own; a person who manages the queue sets them, never an agent. |
 | `mutation updateTriageRule` | Exempt, agent-administration: Rules decide what Nova may do with mail on its own; a person who manages the queue sets them, never an agent. |
 
@@ -2222,30 +2222,30 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `mutation acknowledgeWatchtowerItem` | Exempt, attestation: A person saying they have seen an exception, and taking it if nobody owns it; an agent cannot see on someone's behalf. |
-| `mutation assignWatchtowerItem` | Tool: `assign_exception` |
-| `mutation commentOnWatchtowerItem` | Tool: `comment_on_exception` |
-| `mutation dismissWatchtowerItem` | Tool: `dismiss_watchtower_item` |
+| `mutation assignWatchtowerItem` | Tool: `exception_assign` |
+| `mutation commentOnWatchtowerItem` | Tool: `exception_add_comment` |
+| `mutation dismissWatchtowerItem` | Tool: `exception_dismiss_watchtower_item` |
 | `mutation handOffWatchtowerItem` | Exempt, agent-administration: Starts an agent on the item's subject, or publishes its event to the agents that subscribe; agents hand work to one another through delegate_task instead. |
 | `mutation markWatchtowerItemSeen` | Exempt, user-preference: Records that a person opened an item so it stops showing as new to them; it changes nothing anyone else sees. |
 | `mutation markWatchtowerSeen` | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
-| `mutation reopenWatchtowerItem` | Tool: `reopen_exception` |
-| `mutation resolveWatchtowerItem` | Tool: `resolve_exception` |
-| `mutation setWatchtowerItemDue` | Tool: `set_exception_due` |
-| `mutation snoozeWatchtowerItem` | Tool: `snooze_exception` |
+| `mutation reopenWatchtowerItem` | Tool: `exception_reopen` |
+| `mutation resolveWatchtowerItem` | Tool: `exception_resolve` |
+| `mutation setWatchtowerItemDue` | Tool: `exception_set_due` |
+| `mutation snoozeWatchtowerItem` | Tool: `exception_snooze` |
 | `mutation startWatchtowerItem` | Exempt, attestation: A person saying they are working an exception now, and taking it if nobody owns it; an agent cannot start work for them. |
-| `mutation wakeWatchtowerItem` | Tool: `wake_exception` |
+| `mutation wakeWatchtowerItem` | Tool: `exception_wake` |
 
 ### worker
 
 | Write | Decision |
 | --- | --- |
-| `mutation approveWorkerPTO` | Tool: `approve_worker_pto` |
-| `mutation bulkWorkerPTOAction` | Exempt, duplicate: Approves, rejects or cancels several requests at once; approve_worker_pto, reject_worker_pto and cancel_worker_pto each do one. |
-| `mutation cancelWorkerPTO` | Tool: `cancel_worker_pto` |
-| `mutation createWorkerPTO` | Tool: `request_worker_pto` |
+| `mutation approveWorkerPTO` | Tool: `worker_approve_pto` |
+| `mutation bulkWorkerPTOAction` | Exempt, duplicate: Approves, rejects or cancels several requests at once; worker_approve_pto, worker_reject_pto and worker_cancel_pto each do one. |
+| `mutation cancelWorkerPTO` | Tool: `worker_cancel_pto` |
+| `mutation createWorkerPTO` | Tool: `worker_request_pto` |
 | `mutation patchWorker`<br>twin `PATCH /api/v1/workers/:workerID/`<br>twin `PUT /api/v1/workers/:workerID/` | Exempt, attestation: Changes a worker's employment status, classification or personal record, which are HR decisions a person makes and signs. |
-| `mutation rejectWorkerPTO` | Tool: `reject_worker_pto` |
-| `mutation updateWorkerPTO` | Tool: `update_worker_pto` |
+| `mutation rejectWorkerPTO` | Tool: `worker_reject_pto` |
+| `mutation updateWorkerPTO` | Tool: `worker_update_pto` |
 | `POST /api/v1/workers/`<br>workerhandler.create | Exempt, attestation: Hiring a worker is an employment decision with its eligibility and qualification checks; a person makes it. |
 
 ### workerchecklist
@@ -2253,27 +2253,27 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `mutation archiveWorkerChecklistTemplate` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
-| `mutation cancelWorkerChecklist` | Tool: `cancel_worker_checklist` |
-| `mutation completeWorkerChecklistItem` | Tool: `update_worker_checklist_item` |
+| `mutation cancelWorkerChecklist` | Tool: `worker_cancel_checklist` |
+| `mutation completeWorkerChecklistItem` | Tool: `worker_update_checklist_item` |
 | `mutation createWorkerChecklistTemplate` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
-| `mutation markWorkerChecklistItemNotApplicable` | Tool: `update_worker_checklist_item` |
-| `mutation reopenWorkerChecklistItem` | Tool: `update_worker_checklist_item` |
+| `mutation markWorkerChecklistItemNotApplicable` | Tool: `worker_update_checklist_item` |
+| `mutation reopenWorkerChecklistItem` | Tool: `worker_update_checklist_item` |
 | `mutation restoreWorkerChecklistTemplate` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
-| `mutation skipWorkerChecklistItem` | Tool: `update_worker_checklist_item` |
-| `mutation startWorkerChecklist` | Tool: `start_worker_checklist` |
+| `mutation skipWorkerChecklistItem` | Tool: `worker_update_checklist_item` |
+| `mutation startWorkerChecklist` | Tool: `worker_start_checklist` |
 | `mutation updateWorkerChecklistTemplate` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
 
 ### workercredential
 
 | Write | Decision |
 | --- | --- |
-| `mutation archiveWorkerCredential` | Tool: `archive_worker_credential` |
+| `mutation archiveWorkerCredential` | Tool: `worker_archive_credential` |
 | `mutation archiveWorkerCredentialType` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
-| `mutation attachWorkerCredentialDocument` | Tool: `attach_worker_credential_document` |
-| `mutation createWorkerCredential` | Tool: `record_worker_credential` |
+| `mutation attachWorkerCredentialDocument` | Tool: `worker_attach_credential_document` |
+| `mutation createWorkerCredential` | Tool: `worker_record_credential` |
 | `mutation createWorkerCredentialType` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
 | `mutation restoreWorkerCredentialType` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
-| `mutation updateWorkerCredential` | Tool: `update_worker_credential` |
+| `mutation updateWorkerCredential` | Tool: `worker_update_credential` |
 | `mutation updateWorkerCredentialType` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
 | `mutation verifyWorkerCredential` | Exempt, attestation: Verifying is a person vouching that they checked the credential against the original; an agent records, it does not vouch. |
 
@@ -2281,27 +2281,27 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation deleteEmploymentVerification` | Tool: `delete_employment_verification` |
-| `mutation markEmploymentVerificationRequested` | Tool: `log_employment_verification_request` |
-| `mutation recordEmploymentVerification` | Tool: `record_employment_verification` |
-| `mutation recordEmploymentVerificationFollowUp` | Tool: `log_employment_verification_request` |
-| `mutation updateEmploymentVerification` | Tool: `update_employment_verification` |
+| `mutation deleteEmploymentVerification` | Tool: `worker_delete_employment_verification` |
+| `mutation markEmploymentVerificationRequested` | Tool: `worker_record_employment_verification_request` |
+| `mutation recordEmploymentVerification` | Tool: `worker_record_employment_verification` |
+| `mutation recordEmploymentVerificationFollowUp` | Tool: `worker_record_employment_verification_request` |
+| `mutation updateEmploymentVerification` | Tool: `worker_update_employment_verification` |
 
 ### workerdrugalcohol
 
 | Write | Decision |
 | --- | --- |
-| `mutation cancelDotRandomDraw` | Tool: `cancel_dot_random_draw` |
-| `mutation cancelDotTest` | Tool: `cancel_dot_test` |
+| `mutation cancelDotRandomDraw` | Tool: `worker_cancel_dot_random_draw` |
+| `mutation cancelDotTest` | Tool: `worker_cancel_dot_test` |
 | `mutation completeClearinghouseQuery` | Exempt, attestation: A Clearinghouse query's outcome is what FMCSA returned to the person who ran it under the carrier's account; only they record it. |
 | `mutation createDotRandomPool` | Exempt, configuration: A random testing pool sets who is tested and at what annual rate under 49 CFR 382.305; the designated employer representative maintains it. |
-| `mutation finalizeDotRandomDraw` | Tool: `finalize_dot_random_draw` |
+| `mutation finalizeDotRandomDraw` | Tool: `worker_finalize_dot_random_draw` |
 | `mutation recordClearinghouseQuery` | Exempt, attestation: A Clearinghouse query is made under the carrier's FMCSA account with the driver's consent; the person who ran it records it. |
-| `mutation recordDotTest` | Tool: `schedule_dot_test` |
+| `mutation recordDotTest` | Tool: `worker_schedule_dot_test` |
 | `mutation recordDotTestResult` | Exempt, attestation: A test result is what the lab and medical review officer reported; the person who received it records it, and a positive result reaches the Clearinghouse. |
 | `mutation recordDotViolation` | Exempt, attestation: A drug or alcohol violation is reported to the FMCSA Clearinghouse and removes the driver from safety-sensitive work; a person records it. |
-| `mutation runDotRandomDraw` | Tool: `run_dot_random_draw` |
-| `mutation updateDotRandomDrawEntry` | Tool: `update_dot_random_selection` |
+| `mutation runDotRandomDraw` | Tool: `worker_run_dot_random_draw` |
+| `mutation updateDotRandomDrawEntry` | Tool: `worker_update_dot_random_selection` |
 | `mutation updateDotRandomPool` | Exempt, configuration: A random testing pool sets who is tested and at what annual rate under 49 CFR 382.305; the designated employer representative maintains it. |
 | `mutation updateDotViolation` | Exempt, attestation: A drug or alcohol violation and its return-to-duty steps are reported to the FMCSA Clearinghouse; a person records them. |
 
@@ -2317,42 +2317,42 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `mutation certifyOshaSummary` | Exempt, attestation: OSHA requires a company executive to certify the annual injury summary. |
-| `mutation deleteWorkerInjury` | Tool: `delete_worker_injury` |
-| `mutation recordWorkerInjury` | Tool: `record_worker_injury` |
+| `mutation deleteWorkerInjury` | Tool: `worker_delete_injury` |
+| `mutation recordWorkerInjury` | Tool: `worker_record_injury` |
 | `mutation saveOshaSummary` | Exempt, attestation: The OSHA 300A summary is certified by a company executive and posted for employees; the figures are theirs to sign. |
 | `mutation uncertifyOshaSummary` | Exempt, attestation: Withdraws the executive certification of the annual injury summary. |
-| `mutation updateWorkerInjury` | Tool: `update_worker_injury` |
+| `mutation updateWorkerInjury` | Tool: `worker_update_injury` |
 
 ### workerleave
 
 | Write | Decision |
 | --- | --- |
-| `mutation closeLeaveCase` | Tool: `close_leave_case` |
+| `mutation closeLeaveCase` | Tool: `worker_close_leave_case` |
 | `mutation decideLeaveCase` | Exempt, attestation: Approving or denying leave, and designating it FMLA, is the employer's notice to the employee under 29 CFR 825.300; a person decides it. |
-| `mutation deleteLeaveDay` | Tool: `delete_leave_day` |
-| `mutation openLeaveCase` | Tool: `open_leave_case` |
+| `mutation deleteLeaveDay` | Tool: `worker_delete_leave_day` |
+| `mutation openLeaveCase` | Tool: `worker_open_leave_case` |
 | `mutation recordLeaveCertification` | Exempt, attestation: The certification is the health care provider's statement received from the employee; the person who received it records it. |
-| `mutation recordLeaveDay` | Tool: `record_leave_day` |
-| `mutation requestLeaveCertification` | Tool: `request_leave_certification` |
-| `mutation updateLeaveCase` | Tool: `update_leave_case` |
+| `mutation recordLeaveDay` | Tool: `worker_record_leave_day` |
+| `mutation requestLeaveCertification` | Tool: `worker_request_leave_certification` |
+| `mutation updateLeaveCase` | Tool: `worker_update_leave_case` |
 | `mutation updateLeaveControl` | Exempt, configuration: An organization-wide control an administrator sets once; every later write depends on it. |
-| `mutation updateLeaveDay` | Tool: `update_leave_day` |
+| `mutation updateLeaveDay` | Tool: `worker_update_leave_day` |
 
 ### workersafety
 
 | Write | Decision |
 | --- | --- |
 | `mutation acknowledgeMyDisciplinaryAction` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
-| `mutation closeWorkerSafetyEvent` | Tool: `change_worker_safety_event_status` |
-| `mutation createWorkerSafetyEvent` | Tool: `open_worker_safety_event` |
-| `mutation deleteWorkerRecognition` | Tool: `delete_worker_recognition` |
-| `mutation deleteWorkerSafetyEvent` | Tool: `delete_worker_safety_event` |
-| `mutation giveWorkerRecognition` | Tool: `give_worker_recognition` |
+| `mutation closeWorkerSafetyEvent` | Tool: `worker_set_safety_event_status` |
+| `mutation createWorkerSafetyEvent` | Tool: `worker_open_safety_event` |
+| `mutation deleteWorkerRecognition` | Tool: `worker_delete_recognition` |
+| `mutation deleteWorkerSafetyEvent` | Tool: `worker_delete_safety_event` |
+| `mutation giveWorkerRecognition` | Tool: `worker_record_recognition` |
 | `mutation issueDisciplinaryAction` | Exempt, attestation: Discipline is a manager's decision on an employee's record, which the driver acknowledges in the portal; a person issues it. |
-| `mutation reopenWorkerSafetyEvent` | Tool: `change_worker_safety_event_status` |
+| `mutation reopenWorkerSafetyEvent` | Tool: `worker_set_safety_event_status` |
 | `mutation rescindDisciplinaryAction` | Exempt, attestation: Rescinding discipline reverses a manager's decision on an employee's record; the person who owns that decision makes it. |
-| `mutation reviewWorkerSafetyEvent` | Tool: `change_worker_safety_event_status` |
-| `mutation updateWorkerSafetyEvent` | Tool: `update_worker_safety_event` |
+| `mutation reviewWorkerSafetyEvent` | Tool: `worker_set_safety_event_status` |
+| `mutation updateWorkerSafetyEvent` | Tool: `worker_update_safety_event` |
 
 ### workertraining
 
@@ -2360,14 +2360,14 @@ Tools that change something no person-facing write does, such as sending a messa
 | --- | --- |
 | `mutation acknowledgeMyTraining` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
 | `mutation archiveTrainingCourse` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
-| `mutation assignRequiredWorkerTraining` | Tool: `assign_required_worker_training` |
-| `mutation assignWorkerTraining` | Tool: `assign_worker_training` |
-| `mutation attachWorkerTrainingDocument` | Tool: `attach_worker_training_document` |
-| `mutation bulkAssignTraining` | Tool: `assign_worker_training` |
-| `mutation cancelWorkerTraining` | Tool: `close_worker_training` |
-| `mutation completeWorkerTraining` | Tool: `record_training_completion` |
+| `mutation assignRequiredWorkerTraining` | Tool: `worker_assign_required_training` |
+| `mutation assignWorkerTraining` | Tool: `worker_assign_training` |
+| `mutation attachWorkerTrainingDocument` | Tool: `worker_attach_training_document` |
+| `mutation bulkAssignTraining` | Tool: `worker_assign_training` |
+| `mutation cancelWorkerTraining` | Tool: `worker_close_training` |
+| `mutation completeWorkerTraining` | Tool: `worker_record_training_completion` |
 | `mutation createTrainingCourse` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
 | `mutation restoreTrainingCourse` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
 | `mutation startMyTraining` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
 | `mutation updateTrainingCourse` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
-| `mutation waiveWorkerTraining` | Tool: `close_worker_training` |
+| `mutation waiveWorkerTraining` | Tool: `worker_close_training` |

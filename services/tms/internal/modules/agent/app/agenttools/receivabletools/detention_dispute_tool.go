@@ -18,7 +18,7 @@ const kindDetention = "detention occurrence"
 
 func NewDisputeDetentionTool(detentions common.DetentionDisputer) agentports.AgentTool {
 	return common.NewReportingReceivableTool(&common.ReceivableSpec{
-		Name:     "dispute_detention",
+		Name:     "detention_open_dispute",
 		Artifact: common.DetentionRecordEntity,
 		Description: "Record that the customer disputes a detention charge, with what " +
 			"they said. The charge is kept as computed and held back from billing " +
@@ -34,7 +34,7 @@ func NewDisputeDetentionTool(detentions common.DetentionDisputer) agentports.Age
 			"billing; nothing is sent, but the hold is not undone by a tool.",
 		Properties: map[string]any{
 			ParamOccurrenceID: agenttoolschema.KindID(
-				"The occurrence, from list_detention_desk or "+
+				"The occurrence, from detention_list_occurrences or "+
 					"shipment_get. Never guess one.",
 				permission.KindDetentionOccurrence,
 			),

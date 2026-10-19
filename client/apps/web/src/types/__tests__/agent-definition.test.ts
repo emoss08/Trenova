@@ -64,16 +64,16 @@ describe("agentDefinitionSchema", () => {
     const parsed = agentDefinitionSchema.parse({
       ...customAgent,
       template: "DispatchAssistant",
-      toolNames: ["shipment_get", "assign_move"],
-      toolTiers: { assign_move: "ActWithApproval" },
+      toolNames: ["shipment_get", "dispatch_assign_move"],
+      toolTiers: { dispatch_assign_move: "ActWithApproval" },
       triggerMode: "Scheduled",
       cronExpression: "*/30 * * * *",
       nextRunAt: 1_758_001_000,
     });
 
     expect(parsed.template).toBe("DispatchAssistant");
-    expect(parsed.toolNames).toEqual(["shipment_get", "assign_move"]);
-    expect(parsed.toolTiers).toEqual({ assign_move: "ActWithApproval" });
+    expect(parsed.toolNames).toEqual(["shipment_get", "dispatch_assign_move"]);
+    expect(parsed.toolTiers).toEqual({ dispatch_assign_move: "ActWithApproval" });
     expect(parsed.nextRunAt).toBe(1_758_001_000);
   });
 

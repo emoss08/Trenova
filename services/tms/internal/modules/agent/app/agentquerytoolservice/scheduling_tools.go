@@ -173,7 +173,7 @@ func newGetWorkerScheduleTool(
 	}
 }
 
-func (t *getWorkerScheduleTool) Name() string { return "get_worker_schedule" }
+func (t *getWorkerScheduleTool) Name() string { return "worker_get_schedule" }
 
 func (t *getWorkerScheduleTool) Description() string {
 	return "Read one worker's schedule: the shift patterns they have been on (the current " +
@@ -186,7 +186,7 @@ func (t *getWorkerScheduleTool) ParamSchema() map[string]any {
 		"workerId",
 		agenttoolschema.RecordIDText(
 			permission.ResourceWorker,
-			"The worker, from search_worker or list_workers.",
+			"The worker, from worker_search or worker_list.",
 		),
 	)
 }
@@ -388,11 +388,11 @@ func newListShiftTemplatesTool(schedules scheduleReader) agentports.AgentQueryTo
 	return &listShiftTemplatesTool{schedules: schedules}
 }
 
-func (t *listShiftTemplatesTool) Name() string { return "list_shift_templates" }
+func (t *listShiftTemplatesTool) Name() string { return "worker_list_shift_templates" }
 
 func (t *listShiftTemplatesTool) Description() string {
 	return "List the organization's active shift patterns: the days, start time and length " +
-		"of each, and how many weeks it rotates over. assign_worker_shift takes the id."
+		"of each, and how many weeks it rotates over. worker_assign_shift takes the id."
 }
 
 func (t *listShiftTemplatesTool) ParamSchema() map[string]any {

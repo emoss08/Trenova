@@ -46,10 +46,10 @@ func ProvideCheckAccountingConnectionTool(
 	return newCheckAccountingConnectionTool(accounting)
 }
 
-func (t *CheckAccountingConnectionTool) Name() string { return "check_accounting_connection" }
+func (t *CheckAccountingConnectionTool) Name() string { return "accounting_check_connection" }
 
 func (t *CheckAccountingConnectionTool) Recipe() []string {
-	return []string{"check_accounting_connection", "get_accounting_sync_status"}
+	return []string{"accounting_check_connection", "accounting_get_connection"}
 }
 
 func (t *CheckAccountingConnectionTool) Description() string {

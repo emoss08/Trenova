@@ -4,14 +4,14 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
-	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -37,7 +37,7 @@ func inboundTaint() *agent.RunTaint {
 	taint := &agent.RunTaint{}
 	taint.Add(agent.TaintMark{
 		Source:   agent.TaintSourceInboundMessage,
-		ToolName: "get_inbound_message",
+		ToolName: "inbox_get_inbound_message",
 		CallID:   "call_1",
 		Ref:      &agent.RecordRef{EntityType: agent.TaintEntityInboundMessage, ID: "imsg_1"},
 	})
@@ -208,7 +208,7 @@ func TestPersistProposals_TieTheRunsToTheTurnAndADelegatesToItsTask(t *testing.T
 	params := proposalTestParams(nil, nil)
 	params.TurnID = turnID
 	params.Actions = []agentports.PendingAction{{
-		ToolName:  "assign_move",
+		ToolName:  "dispatch_assign_move",
 		Rationale: "Cover the move.",
 		Tier:      agent.TierPropose,
 	}}
@@ -221,7 +221,7 @@ func TestPersistProposals_TieTheRunsToTheTurnAndADelegatesToItsTask(t *testing.T
 		CallID: "call_task_3",
 		Input:  "Build the report.",
 		Actions: []agentports.PendingAction{{
-			ToolName:  "create_report",
+			ToolName:  "report_create",
 			Rationale: "Asked for it.",
 			Tier:      agent.TierPropose,
 		}},

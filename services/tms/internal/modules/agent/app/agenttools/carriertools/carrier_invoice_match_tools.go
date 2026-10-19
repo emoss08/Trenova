@@ -31,9 +31,9 @@ const maxMatchNoteChars = 1000
 
 const maxMatchProNumberChars = 100
 
-const matchSourcesTool = "list_carrier_invoice_matches"
+const matchSourcesTool = "carrier_list_invoice_matches"
 
-const ediInvoiceSourcesTool = "list_edi_carrier_invoices"
+const ediInvoiceSourcesTool = "edi_list_carrier_invoices"
 
 const fieldResolutionNote = "resolutionNote"
 
@@ -294,12 +294,12 @@ func ProvideAcceptCarrierInvoiceMatchTool(
 	s *carriersettlementservice.Service,
 ) agentports.AgentTool {
 	return &CarrierInvoiceMatchTool{matches: s, decision: matchDecision{
-		name:   "accept_carrier_invoice_match",
-		recipe: []string{"list_carrier_invoice_matches", "accept_carrier_invoice_match"},
+		name:   "carrier_accept_invoice_match",
+		recipe: []string{"carrier_list_invoice_matches", "carrier_accept_invoice_match"},
 		description: "Propose accepting a carrier's invoice that matches what the load was " +
 			"expected to cost, clearing it for payment on the carrier's settlement. A person " +
 			"always decides. An invoice with a variance needs " +
-			"accept_carrier_invoice_match_with_variance or a rejection instead.",
+			"carrier_accept_invoice_match_with_variance or a rejection instead.",
 		decision:   carriersettlementservice.MatchDecisionAccept,
 		operation:  permission.OpApprove,
 		personOnly: true,
@@ -314,7 +314,7 @@ func ProvideAcceptCarrierInvoiceMatchWithVarianceTool(
 	s *carriersettlementservice.Service,
 ) agentports.AgentTool {
 	return &CarrierInvoiceMatchTool{matches: s, decision: matchDecision{
-		name: "accept_carrier_invoice_match_with_variance",
+		name: "carrier_accept_invoice_match_with_variance",
 		description: "Propose accepting a carrier's invoice that differs from the expected " +
 			"cost and paying the difference. The variance is accrued as an adjustment on the " +
 			"carrier's next settlement. A person always decides; say why the variance is " +
@@ -333,7 +333,7 @@ func ProvideRejectCarrierInvoiceMatchTool(
 	s *carriersettlementservice.Service,
 ) agentports.AgentTool {
 	return &CarrierInvoiceMatchTool{matches: s, decision: matchDecision{
-		name: "reject_carrier_invoice_match",
+		name: "carrier_reject_invoice_match",
 		description: "Reject a carrier's invoice match that is wrong, such as an invoice for " +
 			"another load or a duplicate, with a note saying why. Nothing is paid on it; the " +
 			"carrier can send a corrected invoice.",
@@ -368,17 +368,17 @@ func ProvideCreateCarrierInvoiceMatchTool(
 	return &CreateCarrierInvoiceMatchTool{matches: s}
 }
 
-func (t *CreateCarrierInvoiceMatchTool) Name() string { return "create_carrier_invoice_match" }
+func (t *CreateCarrierInvoiceMatchTool) Name() string { return "carrier_create_invoice_match" }
 
 func (t *CreateCarrierInvoiceMatchTool) Recipe() []string {
-	return []string{"list_edi_carrier_invoices", "create_carrier_invoice_match"}
+	return []string{"edi_list_carrier_invoices", "carrier_create_invoice_match"}
 }
 
 func (t *CreateCarrierInvoiceMatchTool) Description() string {
 	return "Match a carrier's EDI invoice to the load it bills, comparing its total with " +
 		"what the carrier assignment was expected to cost. The match is Matched when within " +
 		"tolerance and Variance when not. Link the invoice to a carrier first with " +
-		"link_edi_carrier_invoice_to_carrier when it has none."
+		"edi_link_carrier_invoice when it has none."
 }
 
 func (t *CreateCarrierInvoiceMatchTool) ParamSchema() map[string]any {
@@ -554,7 +554,7 @@ func ProvideLinkEDICarrierInvoiceTool(
 }
 
 func (t *LinkEDICarrierInvoiceTool) Name() string {
-	return "link_edi_carrier_invoice_to_carrier"
+	return "edi_link_carrier_invoice"
 }
 
 func (t *LinkEDICarrierInvoiceTool) Description() string {
@@ -570,7 +570,7 @@ func (t *LinkEDICarrierInvoiceTool) ParamSchema() map[string]any {
 			ediInvoiceSourcesTool+". Never guess one.", permission.KindEDICarrierInvoice),
 		common.ParamCarrierID: agenttoolschema.RecordIDText(
 			permission.ResourceCarrier,
-			"The carrier it came from, from list_carriers or "+
+			"The carrier it came from, from carrier_list or "+
 				ediInvoiceSourcesTool+"'s suggested carrier.",
 		),
 	}, paramEDIInvoiceID, common.ParamCarrierID)

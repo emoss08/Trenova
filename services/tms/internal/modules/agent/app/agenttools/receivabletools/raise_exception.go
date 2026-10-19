@@ -61,7 +61,7 @@ func NewRaiseExceptionTool(
 	return &RaiseExceptionTool{exceptions: exceptions, subjects: subjects}
 }
 
-func (t *RaiseExceptionTool) Name() string { return "raise_exception" }
+func (t *RaiseExceptionTool) Name() string { return "agent_raise_exception" }
 
 func (t *RaiseExceptionTool) Description() string {
 	return "Hand a case to a person when you cannot resolve it: say what you tried, how " +

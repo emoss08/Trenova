@@ -109,7 +109,7 @@ func TestCarryOver_ReloadsTheToolsASearchRecorded(t *testing.T) {
 		ToolCallID: "c1",
 		ToolName:   findToolsName,
 		Content:    "These tools are now callable",
-		FoundTools: []string{"list_workers"},
+		FoundTools: []string{"worker_list"},
 	})
 
 	set := service.newToolSet(t.Context(), toolSetRequest{
@@ -121,8 +121,8 @@ func TestCarryOver_ReloadsTheToolsASearchRecorded(t *testing.T) {
 
 	require.True(t, set.disclosed)
 	sent := specNames(set.specs)
-	assert.Contains(t, sent, "list_workers", "the recorded result is reloaded as it was")
-	assert.NotContains(t, sent, "list_trailers",
+	assert.Contains(t, sent, "worker_list", "the recorded result is reloaded as it was")
+	assert.NotContains(t, sent, "equipment_list_trailers",
 		"the search is not run again when its result named what it found")
 }
 
@@ -146,8 +146,8 @@ func TestCarryOver_SearchesAgainForAResultRecordedBeforeNamesWereKept(t *testing
 
 	require.True(t, set.disclosed)
 	sent := specNames(set.specs)
-	assert.Contains(t, sent, "list_trailers", "an older result is answered by searching again")
-	assert.NotContains(t, sent, "list_workers")
+	assert.Contains(t, sent, "equipment_list_trailers", "an older result is answered by searching again")
+	assert.NotContains(t, sent, "worker_list")
 }
 
 func TestCarryOver_NeverWidensPastWhatTheAgentHolds(t *testing.T) {
@@ -156,7 +156,7 @@ func TestCarryOver_NeverWidensPastWhatTheAgentHolds(t *testing.T) {
 	service, names := wideRuntime(t)
 	held := make([]string, 0, len(names))
 	for _, name := range names {
-		if name != "list_workers" {
+		if name != "worker_list" {
 			held = append(held, name)
 		}
 	}
@@ -164,7 +164,7 @@ func TestCarryOver_NeverWidensPastWhatTheAgentHolds(t *testing.T) {
 		Role:       conversation.RoleTool,
 		ToolCallID: "c1",
 		ToolName:   findToolsName,
-		FoundTools: []string{"list_workers"},
+		FoundTools: []string{"worker_list"},
 	})
 
 	set := service.newToolSet(t.Context(), toolSetRequest{
@@ -175,7 +175,7 @@ func TestCarryOver_NeverWidensPastWhatTheAgentHolds(t *testing.T) {
 	})
 
 	require.True(t, set.disclosed)
-	assert.False(t, set.offers("list_workers"))
+	assert.False(t, set.offers("worker_list"))
 }
 
 func TestRun_RecordsWhatFindToolsFoundOnItsResult(t *testing.T) {
@@ -195,7 +195,7 @@ func TestRun_RecordsWhatFindToolsFoundOnItsResult(t *testing.T) {
 
 	require.Len(t, result.Messages, 4)
 	assert.Equal(t, findToolsName, result.Messages[2].ToolName)
-	assert.Contains(t, result.Messages[2].FoundTools, "list_expiring_credentials")
+	assert.Contains(t, result.Messages[2].FoundTools, "worker_list_expiring_credentials")
 }
 
 func TestNewToolSet_KeywordRankingIsUnchangedWithoutAVector(t *testing.T) {
@@ -205,7 +205,7 @@ func TestNewToolSet_KeywordRankingIsUnchangedWithoutAVector(t *testing.T) {
 	unavailable, _, vectorizer, similarities := semanticRuntime(
 		t,
 		agentports.UnavailableQueryVector(airetrieval.UnavailableReasonNotIndexed),
-		map[string]float64{"list_carriers": 0.99},
+		map[string]float64{"carrier_list": 0.99},
 	)
 
 	request := toolSetRequest{
@@ -231,9 +231,9 @@ func TestNewToolSet_PreselectsByMeaningWhenAVectorIsAvailable(t *testing.T) {
 
 	query := usableQuery()
 	service, names, vectorizer, similarities := semanticRuntime(t, query, map[string]float64{
-		"list_expiring_credentials": 0.83,
-		"list_workers":              0.61,
-		"list_carriers":             0.12,
+		"worker_list_expiring_credentials": 0.83,
+		"worker_list":                      0.61,
+		"carrier_list":                     0.12,
 	})
 
 	set := service.newToolSet(t.Context(), toolSetRequest{
@@ -251,9 +251,9 @@ func TestNewToolSet_PreselectsByMeaningWhenAVectorIsAvailable(t *testing.T) {
 	require.Len(t, similarities.requests, 1)
 	assert.Equal(t, airetrieval.CatalogCorpusTools, similarities.requests[0].Corpus)
 	require.NotEmpty(t, set.preselected)
-	assert.Equal(t, "list_expiring_credentials", set.preselected[0],
+	assert.Equal(t, "worker_list_expiring_credentials", set.preselected[0],
 		"the closest tool by meaning leads when no word matches")
-	assert.NotContains(t, set.preselected[:3], "list_carriers",
+	assert.NotContains(t, set.preselected[:3], "carrier_list",
 		"a tool below the similarity floor gains nothing from the vector")
 
 	state := set.state()
@@ -309,8 +309,8 @@ func TestFindFor_ReturnsNothingForNonsenseBelowTheFloor(t *testing.T) {
 	t.Parallel()
 
 	service, names, _, _ := semanticRuntime(t, usableQuery(), map[string]float64{
-		"list_carriers": 0.21,
-		"list_workers":  0.18,
+		"carrier_list": 0.21,
+		"worker_list":  0.18,
 	})
 
 	set := service.newToolSet(t.Context(), toolSetRequest{

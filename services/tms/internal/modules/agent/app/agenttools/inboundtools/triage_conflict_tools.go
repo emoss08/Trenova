@@ -105,12 +105,12 @@ func NewResolveInboundConflictTool(p triageToolParams) agentports.AgentTool {
 func newResolveInboundConflictTool(conflicts triageConflicts) agentports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
-			Name:     "resolve_inbound_conflict",
+			Name:     "inbox_resolve_conflict",
 			Artifact: inboundMessageEntity,
 			Description: "Settle a conflict Triage found on a message. A duplicate document: " +
 				"ReplaceExisting files the new one in place of the one on file, KeepBoth " +
 				"keeps both. A repeated load: SkipDuplicate when the load is already " +
-				"entered, ConfirmNew when it is a separate load. get_inbound_message lists " +
+				"entered, ConfirmNew when it is a separate load. inbox_get_inbound_message lists " +
 				"each conflict with its id and what it compares. Settle a document conflict " +
 				"before filing the attachment.",
 			Resource:    permission.ResourceInboundMessage,
@@ -123,10 +123,10 @@ func newResolveInboundConflictTool(conflicts triageConflicts) agentports.AgentTo
 				"duplicate, which later filing and booking follow, so a person approves it.",
 			Properties: map[string]any{
 				paramMessageID: messageIDProperty(
-					"The message, from list_inbound_messages or search_inbound_messages.",
+					"The message, from inbox_list_inbound_messages or inbox_search_inbound_messages.",
 				),
 				paramConflictID: agenttoolschema.IDText(
-					"The conflict, from the conflicts get_inbound_message lists for the message.",
+					"The conflict, from the conflicts inbox_get_inbound_message lists for the message.",
 				),
 				paramConflictResolution: agenttoolschema.Enum(
 					"How to settle it: ReplaceExisting or KeepBoth for a duplicate document, "+
@@ -136,7 +136,7 @@ func newResolveInboundConflictTool(conflicts triageConflicts) agentports.AgentTo
 			},
 			Required:    []string{paramMessageID, paramConflictID, paramConflictResolution},
 			SearchTerms: []string{"duplicate document", "duplicate load", "replace on file"},
-			Recipe:      []string{toolGetInboundMessage, "resolve_inbound_conflict"},
+			Recipe:      []string{toolGetInboundMessage, "inbox_resolve_conflict"},
 			Target:      targetMessage,
 		},
 		common.ReceivablePlan[
@@ -215,12 +215,12 @@ func newReopenInboundConflictTool(
 ) agentports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
-			Name:     "reopen_inbound_conflict",
+			Name:     "inbox_reopen_conflict",
 			Artifact: inboundMessageEntity,
 			Description: "Reopen a conflict on a message that was settled the wrong way, so " +
-				"it can be settled again with resolve_inbound_conflict. A document conflict " +
+				"it can be settled again with inbox_resolve_conflict. A document conflict " +
 				"whose attachment is already filed is refused: unfile it first with " +
-				"unfile_inbound_attachment. get_inbound_message lists each conflict.",
+				"inbox_unfile_attachment. inbox_get_inbound_message lists each conflict.",
 			Resource:    permission.ResourceInboundMessage,
 			Operation:   permission.OpUpdate,
 			Egress:      agent.EgressInternal,
@@ -232,16 +232,16 @@ func newReopenInboundConflictTool(
 				"filed or booked changes.",
 			Properties: map[string]any{
 				paramMessageID: messageIDProperty(
-					"The message, from list_inbound_messages or search_inbound_messages.",
+					"The message, from inbox_list_inbound_messages or inbox_search_inbound_messages.",
 				),
 				paramConflictID: agenttoolschema.IDText(
-					"The settled conflict, from the conflicts get_inbound_message lists for " +
+					"The settled conflict, from the conflicts inbox_get_inbound_message lists for " +
 						"the message.",
 				),
 			},
 			Required:    []string{paramMessageID, paramConflictID},
 			SearchTerms: []string{"reopen conflict", "undo duplicate decision"},
-			Recipe:      []string{toolGetInboundMessage, "reopen_inbound_conflict"},
+			Recipe:      []string{toolGetInboundMessage, "inbox_reopen_conflict"},
 			Target:      targetMessage,
 		},
 		common.ReceivablePlan[

@@ -54,7 +54,7 @@ func TestNewTurnSnapshot_RedactsRestrictedValuesEverywhere(t *testing.T) {
 		Question: "What is Dana Reyes paid per mile?",
 		Answer:   "Dana Reyes is paid 0.62 per mile; her license D1234567 expires soon.",
 		Tools: []ToolLine{
-			{Name: "get_worker", Summary: "Dana Reyes, license D1234567"},
+			{Name: "worker_get", Summary: "Dana Reyes, license D1234567"},
 		},
 		Redact: []string{"D1234567", "0.62", "Dana Reyes", "  ", "ab"},
 	})
@@ -70,7 +70,7 @@ func TestNewTurnSnapshot_RedactsRestrictedValuesEverywhere(t *testing.T) {
 		"[redacted] is paid [redacted] per mile; her license [redacted] expires soon.",
 		snapshot.Answer,
 	)
-	assert.Equal(t, "get_worker", snapshot.Tools[0].Name)
+	assert.Equal(t, "worker_get", snapshot.Tools[0].Name)
 }
 
 func TestNewTurnSnapshot_RedactsTheLongerValueFirst(t *testing.T) {

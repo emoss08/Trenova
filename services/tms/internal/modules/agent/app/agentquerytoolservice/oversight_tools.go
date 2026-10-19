@@ -141,7 +141,7 @@ func newListWatchtowerItemsTool(
 	return &listWatchtowerItemsTool{feed: feed, links: links}
 }
 
-func (t *listWatchtowerItemsTool) Name() string { return "list_watchtower_items" }
+func (t *listWatchtowerItemsTool) Name() string { return "exception_list_watchtower_items" }
 
 func (t *listWatchtowerItemsTool) Description() string {
 	return "List the watchtower feed of open items that need attention now, newest first: " +
@@ -748,7 +748,7 @@ func newGetDailyBriefingTool(
 	return &getDailyBriefingTool{briefings: briefings, access: newFieldAccess(permissions)}
 }
 
-func (t *getDailyBriefingTool) Name() string { return "get_daily_briefing" }
+func (t *getDailyBriefingTool) Name() string { return "insight_get_daily_briefing" }
 
 func (t *getDailyBriefingTool) Description() string {
 	return "Read the daily briefing for a role: the morning's figures on what needs " +

@@ -19,11 +19,11 @@ const UNCITED = new Set([
   "web_read",
   "ask_user",
   "find_tools",
-  "recall_memory",
-  "remember",
+  "agent_list_memories",
+  "agent_create_memory",
   "publish_artifact",
-  "open_page",
-  "raise_exception",
+  "agent_open_page",
+  "agent_raise_exception",
 ]);
 
 const MAX_LEAVES = 400;

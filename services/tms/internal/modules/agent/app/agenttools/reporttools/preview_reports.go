@@ -190,7 +190,7 @@ func (t *ForkReportTool) request(
 	entry, err := t.reports.GetCanned(key)
 	if err != nil {
 		return nil, nil, fmt.Errorf(
-			"there is no built-in report with the key %q; call list_reports for the keys that exist",
+			"there is no built-in report with the key %q; call report_list for the keys that exist",
 			key,
 		)
 	}

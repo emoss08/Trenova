@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/memtable"
@@ -27,7 +27,7 @@ func TestToolPolicyViewToModel(t *testing.T) {
 	}
 	view := agentports.AgentToolPolicyView{
 		Policy: agentports.ToolPolicy{
-			Name:          "reply_to_inbound_message",
+			Name:          "inbox_send_reply",
 			Kind:          agent.ToolKindAction,
 			Scope:         agent.ToolScopeTenant,
 			DefaultTier:   agent.TierActWithApproval,
@@ -51,8 +51,8 @@ func TestToolPolicyViewToModel(t *testing.T) {
 
 	model := ToolPolicyViewToModel(&view)
 
-	assert.Equal(t, "reply_to_inbound_message", model.ID)
-	assert.Equal(t, "reply_to_inbound_message", model.Name)
+	assert.Equal(t, "inbox_send_reply", model.ID)
+	assert.Equal(t, "inbox_send_reply", model.Name)
 	assert.Equal(t, "Reply to inbound message", model.Title)
 	assert.True(t, model.HasCondition)
 	assert.False(t, model.HasClassify)
@@ -71,7 +71,7 @@ func TestToolPolicyViewToModel(t *testing.T) {
 		"the model keeps its own copy of the classes")
 
 	selfScoped := ToolPolicyViewToModel(&agentports.AgentToolPolicyView{
-		Policy: agentports.ToolPolicy{Name: "add_home_widget", Kind: agent.ToolKindAction},
+		Policy: agentports.ToolPolicy{Name: "home_add_widget", Kind: agent.ToolKindAction},
 	})
 	assert.Nil(t, selfScoped.Needs)
 	assert.Nil(t, selfScoped.Source)

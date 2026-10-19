@@ -48,7 +48,7 @@ func columnByKey(
 	return assistantartifact.DisplayColumn{}
 }
 
-// insightListResult is list_insights as the model received it, row for row.
+// insightListResult is insight_list as the model received it, row for row.
 func insightListResult() map[string]any {
 	return map[string]any{
 		"count":       float64(1),
@@ -100,7 +100,7 @@ does not survives into the stored payload.
 func TestTableArtifact_ReadsAFindingAsAPersonDoes(t *testing.T) {
 	t.Parallel()
 
-	artifact := artifactFromObservation(observation("list_insights", insightListResult()))
+	artifact := artifactFromObservation(observation("insight_list", insightListResult()))
 	require.NotNil(t, artifact)
 
 	columns, ok := artifact.Payload["columns"].([]assistantartifact.DisplayColumn)
@@ -337,7 +337,7 @@ func TestEntityCardArtifact_DrawsAnEDIMessageByItsDocumentAndPartner(t *testing.
 	t.Parallel()
 
 	id := "edimsg_01M37R101VKZTB7TSKR30FJ0AT"
-	artifact := artifactFromObservation(observation("get_edi_message", map[string]any{
+	artifact := artifactFromObservation(observation("edi_get_message", map[string]any{
 		"id":             id,
 		"transactionSet": "210",
 		"direction":      "Outbound",

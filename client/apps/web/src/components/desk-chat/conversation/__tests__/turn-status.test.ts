@@ -15,8 +15,8 @@ function working(name: string): TurnState {
 
 describe("composer status while the agent works", () => {
   it("carries the memory mark while a memory is read or kept", () => {
-    expect(composerStatus(working("recall_memory"), t)?.pose).toBe("memory");
-    expect(composerStatus(working("remember"), t)?.pose).toBe("memory");
+    expect(composerStatus(working("agent_list_memories"), t)?.pose).toBe("memory");
+    expect(composerStatus(working("agent_create_memory"), t)?.pose).toBe("memory");
   });
 
   it("is ordinary work for any other step", () => {

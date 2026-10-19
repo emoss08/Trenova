@@ -43,12 +43,12 @@ func TestRenderTranscript_NestsADelegatesStepsUnderItsCall(t *testing.T) {
 			Content: "Make the report.", CreatedAt: 1_790_000_002},
 		{Role: conversation.RoleAssistant, Kind: conversation.MessageKindDelegated,
 			AgentDefinitionID: delegate, DelegateCallID: "call_1",
-			ToolCalls: []conversation.ToolCallRecord{{ID: "call_d1", Name: "create_report"}},
+			ToolCalls: []conversation.ToolCallRecord{{ID: "call_d1", Name: "report_create"}},
 			CreatedAt: 1_790_000_003},
 		{Role: conversation.RoleTool, Kind: conversation.MessageKindDelegated,
 			AgentDefinitionID: delegate, DelegateCallID: "call_1",
-			ToolCallID: "call_d1", ToolName: "create_report",
-			Content: "Tool \"create_report\" ran successfully.", CreatedAt: 1_790_000_004},
+			ToolCallID: "call_d1", ToolName: "report_create",
+			Content: "Tool \"report_create\" ran successfully.", CreatedAt: 1_790_000_004},
 		{Role: conversation.RoleAssistant, Kind: conversation.MessageKindDelegated,
 			AgentDefinitionID: delegate, DelegateCallID: "call_1",
 			Content: "Saved the report rd_1.", CreatedAt: 1_790_000_005},
@@ -70,7 +70,7 @@ func TestRenderTranscript_NestsADelegatesStepsUnderItsCall(t *testing.T) {
 	assert.Contains(t, body, "> ### Task · ")
 	assert.Contains(t, body, "> Make the report.")
 	assert.Contains(t, body, "> ## Report Builder · ")
-	assert.Contains(t, body, "> **Called `create_report`**")
+	assert.Contains(t, body, "> **Called `report_create`**")
 	assert.Contains(t, body, "> Saved the report rd_1.")
 	assert.Equal(t, 1, strings.Count(body, "## You · "),
 		"the task is not shown as something the person typed")

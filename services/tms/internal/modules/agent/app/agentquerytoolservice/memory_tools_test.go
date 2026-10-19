@@ -141,7 +141,7 @@ func TestRecallMemory_RefusesHalfASubject(t *testing.T) {
 }
 
 // A model that fills every field sends a subject type with no id for a search
-// about no record. Refusing it looped the model on recall_memory until the
+// about no record. Refusing it looped the model on agent_list_memories until the
 // turn gave up, so a type with no id narrows nothing.
 func TestRecallMemory_ReadsATypeWithNoIDAsNoSubject(t *testing.T) {
 	t.Parallel()

@@ -39,14 +39,14 @@ const paramEmailInline = "emailInline"
 
 const maxScheduleRecipients = 20
 
-const reportRunSupplier = "The report run, from list_report_runs or the result of run_report. " +
+const reportRunSupplier = "The report run, from report_list_runs or the result of report_run. " +
 	"Never guess one."
 
-const reportDefinitionSupplier = "The saved report, from list_reports. Never guess one."
+const reportDefinitionSupplier = "The saved report, from report_list. Never guess one."
 
-const reportDashboardSupplier = "The dashboard, from list_dashboards. Never guess one."
+const reportDashboardSupplier = "The dashboard, from report_list_dashboards. Never guess one."
 
-const reportScheduleSupplier = "The schedule, from list_report_schedules. Never guess one."
+const reportScheduleSupplier = "The schedule, from report_list_schedules. Never guess one."
 
 type ReportAdministrator interface {
 	PlanCancelRun(ctx context.Context, req *reporting.GetRunRequest) (*reporting.RunChange, error)
@@ -115,7 +115,7 @@ func NewCancelReportRunTool(reports ReportAdministrator) agentports.AgentTool {
 	}
 
 	return common.NewReceivableTool(reportInternalSpec(&common.ReceivableSpec{
-		Name: "cancel_report_run",
+		Name: "report_cancel_run",
 		Description: "Cancel a report run the person started that is still queued or " +
 			"running, such as one asked for with the wrong parameters. A finished run is " +
 			"kept as it is.",
@@ -188,9 +188,9 @@ func definitionRequestFrom(
 
 func NewDeleteReportTool(reports ReportAdministrator) agentports.AgentTool {
 	return common.NewReceivableTool(reportInternalSpec(&common.ReceivableSpec{
-		Name: "delete_report",
+		Name: "report_delete",
 		Description: "Propose deleting a saved report the person owns. Its schedules stop " +
-			"with it. Built-in reports cannot be deleted; a copy of one made with fork_report " +
+			"with it. Built-in reports cannot be deleted; a copy of one made with report_fork " +
 			"can.",
 		Operation: permission.OpDelete,
 		MaxTier:   agent.TierPropose,
@@ -246,8 +246,8 @@ func NewDeleteReportTool(reports ReportAdministrator) agentports.AgentTool {
 
 func NewResetReportForkTool(reports ReportAdministrator) agentports.AgentTool {
 	return common.NewReceivableTool(reportInternalSpec(&common.ReceivableSpec{
-		Name: "reset_report_fork",
-		Description: "Put a report copied from a built-in one with fork_report back to the " +
+		Name: "report_reset_fork",
+		Description: "Put a report copied from a built-in one with report_fork back to the " +
 			"built-in's current definition, dropping the person's changes. Its columns, " +
 			"filters and parameters become the built-in's again, as when the built-in improved.",
 		Operation: permission.OpUpdate,
@@ -308,7 +308,7 @@ func NewResetReportForkTool(reports ReportAdministrator) agentports.AgentTool {
 
 func NewDeleteDashboardTool(reports ReportAdministrator) agentports.AgentTool {
 	return common.NewReceivableTool(reportInternalSpec(&common.ReceivableSpec{
-		Name:        "delete_dashboard",
+		Name:        "report_delete_dashboard",
 		SearchTerms: []string{"remove dashboard", "delete dashboard and its tiles"},
 		Description: "Propose deleting a dashboard the person owns. The reports its tiles " +
 			"show are kept.",
@@ -523,10 +523,10 @@ func scheduleIDFrom(params *agentports.ToolExecuteParams) (scheduleEdit, error) 
 
 func NewUpdateReportScheduleTool(reports ReportAdministrator) agentports.AgentTool {
 	return common.NewReceivableTool(&common.ReceivableSpec{
-		Name: "update_report_schedule",
+		Name: "report_update_schedule",
 		Description: "Change a report schedule the person set up: when it runs, its zone, " +
 			"the formats, who it is emailed to, or switch it on or off. Fields left out keep " +
-			"their value. The report must exist; list_reports finds its id.",
+			"their value. The report must exist; report_list finds its id.",
 		Resource:    permission.ResourceReport,
 		Operation:   permission.OpExport,
 		Egress:      agent.EgressExternalRecipient,
@@ -540,7 +540,7 @@ func NewUpdateReportScheduleTool(reports ReportAdministrator) agentports.AgentTo
 				permission.KindReportSchedule),
 			paramDefinitionID: agenttoolschema.RecordIDText(
 				permission.ResourceReport,
-				"The saved report it runs, from list_reports. "+
+				"The saved report it runs, from report_list. "+
 					"Leave it out to keep it.",
 			),
 			receivabletools.ParamCronExpression: common.StringProperty(
@@ -636,7 +636,7 @@ func renderReportScheduleUpdate(
 
 func NewDeleteReportScheduleTool(reports ReportAdministrator) agentports.AgentTool {
 	return common.NewReceivableTool(reportInternalSpec(&common.ReceivableSpec{
-		Name: "delete_report_schedule",
+		Name: "report_delete_schedule",
 		Description: "Propose removing a report schedule the person set up, so the report " +
 			"stops being emailed. The report itself is kept.",
 		Operation: permission.OpExport,

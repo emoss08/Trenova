@@ -16,7 +16,7 @@ function pending(id: string): AssistantProposal {
   return {
     id,
     status: "Pending",
-    toolName: "create_report",
+    toolName: "report_create",
     executionError: "",
   } as AssistantProposal;
 }

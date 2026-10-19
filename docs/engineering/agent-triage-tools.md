@@ -15,8 +15,8 @@ page explains them.
 ## The rule
 
 The write tools live in `agenttools/inboundtools`, beside the ones that came before them
-(`link_inbound_message`, `mark_inbound_message`, `reply_to_inbound_message`); the reads
-(`get_inbound_message`, `list_triage_assignees`) live in `agentquerytoolservice`.
+(`inbox_link_inbound_message`, `inbox_mark_inbound_message`, `inbox_send_reply`); the reads
+(`inbox_get_inbound_message`, `inbox_list_triage_assignees`) live in `agentquerytoolservice`.
 
 Every write calls the service its GraphQL mutation calls (`inboundmessageservice`,
 `triageworkservice`, `inboundreplyservice`, `triageconflictservice`) and never writes
@@ -45,46 +45,46 @@ and refuses.
 
 | Tool | Resource / operation | Class | Default → most | Covers |
 | --- | --- | --- | --- | --- |
-| `list_triage_assignees` | inbound message / read | reads only | automatic | — |
-| `assign_inbound_messages` | inbound message / assign | inside | Propose → Ask first | `assignInboundMessages` |
-| `hand_off_triage` | inbound message / assign | inside | Propose → Ask first | `handOffTriage` |
-| `reopen_inbound_messages` | inbound message / update | inside | Propose → Ask first | `reopenInboundMessages` |
-| `snooze_inbound_messages` | inbound message / update | inside | Propose → Ask first | `snoozeInboundMessages` |
-| `wait_for_inbound_reply` | inbound message / update | inside | Propose → Ask first | `waitForInboundReply` |
-| `wake_inbound_message` | inbound message / update | inside | Propose → Automatic | `wakeInboundMessage`, `stopWaitingForInboundReply` |
-| `unlink_inbound_message` | inbound message / update | inside | Propose → Automatic, as the mailbox allows | `unlinkInboundMessage` |
+| `inbox_list_triage_assignees` | inbound message / read | reads only | automatic | — |
+| `inbox_assign_inbound_message` | inbound message / assign | inside | Propose → Ask first | `assignInboundMessages` |
+| `inbox_assign_queue` | inbound message / assign | inside | Propose → Ask first | `handOffTriage` |
+| `inbox_reopen_inbound_message` | inbound message / update | inside | Propose → Ask first | `reopenInboundMessages` |
+| `inbox_snooze_inbound_message` | inbound message / update | inside | Propose → Ask first | `snoozeInboundMessages` |
+| `inbox_await_reply` | inbound message / update | inside | Propose → Ask first | `waitForInboundReply` |
+| `inbox_wake_inbound_message` | inbound message / update | inside | Propose → Automatic | `wakeInboundMessage`, `stopWaitingForInboundReply` |
+| `inbox_unlink_inbound_message` | inbound message / update | inside | Propose → Automatic, as the mailbox allows | `unlinkInboundMessage` |
 
 The bulk tools take at most 50 message ids and never a folder. The assign tools are gated
 on the assign operation, which is what lets them give a message to someone other than the
 caller, and the fixed agent table (`permission.IsAgentAllowed`) grants it on inbound
-messages for them; the owner comes from `list_triage_assignees`, which also names the
+messages for them; the owner comes from `inbox_list_triage_assignees`, which also names the
 on-call person.
-`wake_inbound_message` reads how the message is parked and calls `Wake` or `StopWaiting`.
+`inbox_wake_inbound_message` reads how the message is parked and calls `Wake` or `StopWaiting`.
 A hand-off preview shows the first batch and says when there is more.
 
-`wait_for_inbound_reply` parks the message for the people working the queue. It is not the
+`inbox_await_reply` parks the message for the people working the queue. It is not the
 agent's own wait: to pick its work up when the sender answers, the agent also calls
-`wait_until` with a `Reply` wait ([agent-waits.md](agent-waits.md)). There is one wait
+`agent_create_wait` with a `Reply` wait ([agent-waits.md](agent-waits.md)). There is one wait
 mechanism per owner, and these tools add none.
 
 ## Senders, replies and loads
 
 | Tool | Resource / operation | Class | Default → most | Covers |
 | --- | --- | --- | --- | --- |
-| `block_inbound_sender` | inbound message / update | inside | Propose → Ask first | `blockInboundSender` |
-| `unblock_inbound_sender` | inbound message / update | inside | Propose → Ask first | `unblockInboundSender` |
-| `draft_inbound_reply` | inbound message / update | inside | Propose → Automatic, as the mailbox allows | `draftInboundReply`, `saveInboundReplyDraft` |
-| `discard_inbound_reply_draft` | inbound message / update | inside | Propose → Ask first | `discardInboundReplyDraft` |
-| `draft_inbound_load` | inbound message / update | inside | Propose → Automatic, as the mailbox allows | `draftInboundLoad` |
-| `discard_inbound_load` | inbound message / update | inside | Propose → Automatic, as the mailbox allows | `discardInboundLoad` |
-| `create_inbound_load` | shipment / create | inside | Ask first → Ask first, idempotent | `createInboundLoad` |
+| `inbox_block_sender` | inbound message / update | inside | Propose → Ask first | `blockInboundSender` |
+| `inbox_unblock_sender` | inbound message / update | inside | Propose → Ask first | `unblockInboundSender` |
+| `inbox_draft_reply` | inbound message / update | inside | Propose → Automatic, as the mailbox allows | `draftInboundReply`, `saveInboundReplyDraft` |
+| `inbox_discard_reply_draft` | inbound message / update | inside | Propose → Ask first | `discardInboundReplyDraft` |
+| `inbox_draft_load` | inbound message / update | inside | Propose → Automatic, as the mailbox allows | `draftInboundLoad` |
+| `inbox_discard_load` | inbound message / update | inside | Propose → Automatic, as the mailbox allows | `discardInboundLoad` |
+| `inbox_create_load` | shipment / create | inside | Ask first → Ask first, idempotent | `createInboundLoad` |
 
 Blocking silently drops an outsider's future mail, which can hide a customer or carrier from
 everyone, so it is always asked first. Unblocking names the sender by one of their messages,
-normalised the way a block records it. `draft_inbound_reply` only drafts: with a body it saves
+normalised the way a block records it. `inbox_draft_reply` only drafts: with a body it saves
 the agent's words, without one it has Triage's drafter write it (that preview is partial,
-since the words are not known yet). Sending stays with `reply_to_inbound_message` or a
-person. `create_inbound_load` is never unattended, like `shipment_create`; the Intake desk
+since the words are not known yet). Sending stays with `inbox_send_reply` or a
+person. `inbox_create_load` is never unattended, like `shipment_create`; the Intake desk
 uses it only for a tender written in the body, because a tender whose attachment became a
 document already wakes shipment intake.
 
@@ -92,26 +92,26 @@ document already wakes shipment intake.
 
 | Tool | Resource / operation | Class | Default → most | Covers |
 | --- | --- | --- | --- | --- |
-| `file_inbound_attachment` | document / update | inside | Propose → Automatic, as the mailbox allows | `fileInboundAttachment` |
-| `unfile_inbound_attachment` | document / update | inside | Propose → Ask first | `unfileInboundAttachment` |
-| `log_inbound_exception` | shipment hold / create | inside | Propose → Automatic, as the mailbox allows | `logInboundException` |
-| `settle_detention_dispute` | detention / update | money | Propose → Propose | `decideInboundStops` |
-| `resolve_inbound_conflict` | inbound message / update | inside | Propose → Ask first | `resolveInboundConflict` |
-| `reopen_inbound_conflict` | inbound message / update | inside | Propose → Automatic, as the mailbox allows | `reopenInboundConflict` |
+| `inbox_file_attachment` | document / update | inside | Propose → Automatic, as the mailbox allows | `fileInboundAttachment` |
+| `inbox_unfile_attachment` | document / update | inside | Propose → Ask first | `unfileInboundAttachment` |
+| `inbox_record_discrepancy` | shipment hold / create | inside | Propose → Automatic, as the mailbox allows | `logInboundException` |
+| `detention_resolve_dispute` | detention / update | money | Propose → Propose | `decideInboundStops` |
+| `inbox_resolve_conflict` | inbound message / update | inside | Propose → Ask first | `resolveInboundConflict` |
+| `inbox_reopen_conflict` | inbound message / update | inside | Propose → Automatic, as the mailbox allows | `reopenInboundConflict` |
 
 Filing and unfiling take the message as well as the attachment, so the mailbox's condition
 applies and the attachment is checked to belong to it. A split preview creates one document a
 range; when the attachment's page count is not stored yet it is partial, and the write
 refuses a range past the last page. Unfiling a split deletes the documents it made.
-`settle_detention_dispute` waives or stands by the disputed charge as the caller and has
+`detention_resolve_dispute` waives or stands by the disputed charge as the caller and has
 Triage draft the answer; its preview shows the billed amount a waiver gives up, from the
 disputed occurrence's stop times.
 
 ## Who holds them
 
-The Intake desk holds every tool above but `settle_detention_dispute`, which the detention
-desk holds with `get_inbound_message` and `search_inbound_messages` to read the dispute.
-`get_inbound_message` shows what the ids come from: the owner, why a message is parked, the
+The Intake desk holds every tool above but `detention_resolve_dispute`, which the detention
+desk holds with `inbox_get_inbound_message` and `inbox_search_inbound_messages` to read the dispute.
+`inbox_get_inbound_message` shows what the ids come from: the owner, why a message is parked, the
 reply and load drafted on it, each conflict with its id, and where each attachment is filed.
 
 The descriptions name the read tools their ids come from rather than "the run's subject",

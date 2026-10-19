@@ -8,11 +8,11 @@ describe("readComparison", () => {
   it("reads the stored shape and drops what it cannot place", () => {
     const comparison = readComparison({
       matches: [
-        { toolName: "assign_move", verdict: "Agreed", originalOutcome: "accepted" },
+        { toolName: "dispatch_assign_move", verdict: "Agreed", originalOutcome: "accepted" },
         { toolName: "shipment_cancel", verdict: "Made up" },
         "nonsense",
         {
-          toolName: "assign_move",
+          toolName: "dispatch_assign_move",
           verdict: "Changed",
           changes: [{ field: "primaryWorkerId", from: "wrk_a", to: "wrk_b" }],
         },

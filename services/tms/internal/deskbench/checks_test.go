@@ -153,7 +153,7 @@ func TestStepEvidence_CountsOnlyWhatWaitedForAPersonAsAProposal(t *testing.T) {
 	t.Parallel()
 
 	evidence := &stepEvidence{turns: []*TurnRecord{{Proposals: []*ProposalRecord{
-		{Tool: "raise_exception", Tier: agent.TierAutoExecute, Status: agent.ProposalStatusExecuted},
+		{Tool: "agent_raise_exception", Tier: agent.TierAutoExecute, Status: agent.ProposalStatusExecuted},
 		{Tool: "shipment_place_hold", Tier: agent.TierPropose, Status: agent.ProposalStatusPending},
 		{Tool: "billing_hold_queue_item", Tier: agent.TierActWithApproval},
 	}}}}

@@ -53,7 +53,7 @@ func TestEmailCustomerPreview_SaysNothingGoesToACustomerAlreadyTold(t *testing.T
 	comments.Existing = []*shipment.ShipmentComment{{
 		CreatedAt: timeutils.NowUnix() - 600,
 		Type:      shipment.CommentTypeCustomerUpdate,
-		Metadata:  map[string]any{"source": "agent", "tool": "email_customer"},
+		Metadata:  map[string]any{"source": "agent", "tool": "customer_send_email"},
 	}}
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		"shipmentId": pulid.MustNew("shp_").String(),

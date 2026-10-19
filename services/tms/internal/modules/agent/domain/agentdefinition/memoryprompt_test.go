@@ -42,7 +42,7 @@ func newMemoryFixture() memoryFixture {
 	}
 	f.loadedFix = &agent.Memory{
 		ID: pulid.MustNew("amem_"), Kind: agent.MemoryKindCorrection,
-		ToolName: "assign_move", Content: "Prefer the tractor already at the yard.",
+		ToolName: "dispatch_assign_move", Content: "Prefer the tractor already at the yard.",
 	}
 	f.unloadedFix = &agent.Memory{
 		ID: pulid.MustNew("amem_"), Kind: agent.MemoryKindCorrection,
@@ -64,7 +64,7 @@ func (f memoryFixture) context(pool ...*agent.Memory) *agentdefinition.RuntimeCo
 			{Type: agent.MemorySubjectLocation, ID: f.location, Relation: agent.MemoryRelationRelated},
 		},
 		Tools: []agentdefinition.ToolSummary{
-			{Name: "assign_move", Loaded: true},
+			{Name: "dispatch_assign_move", Loaded: true},
 			{Name: "send_email", Loaded: false},
 		},
 		ToolsDisclosed: true,
@@ -161,9 +161,9 @@ func TestFitMemories_CutsALongMemoryShortAndNamesItsID(t *testing.T) {
 	prompt := d.BuildSystemPrompt(agentdefinition.RuntimeContext{Memories: []*agent.Memory{long}})
 
 	assert.NotContains(t, prompt, "THE END")
-	assert.Contains(t, prompt, "… (cut short: call recall_memory with id "+long.ID.String()+
+	assert.Contains(t, prompt, "… (cut short: call agent_list_memories with id "+long.ID.String()+
 		" to read all of it)")
-	assert.Contains(t, prompt, "call recall_memory with that id")
+	assert.Contains(t, prompt, "call agent_list_memories with that id")
 }
 
 // An agent that had been told two hundred one-line facts carried every one
@@ -211,7 +211,7 @@ func TestFitMemories_LeavesOutAMemoryThatWentStale(t *testing.T) {
 
 	prompt := d.BuildSystemPrompt(rc)
 	assert.NotContains(t, prompt, "The old yard")
-	assert.Contains(t, prompt, "recall_memory still finds them")
+	assert.Contains(t, prompt, "agent_list_memories still finds them")
 }
 
 func TestBuildSystemPrompt_GroupsMemoriesByWhatTheyAreAbout(t *testing.T) {
@@ -230,7 +230,7 @@ func TestBuildSystemPrompt_GroupsMemoriesByWhatTheyAreAbout(t *testing.T) {
 	assert.Contains(t, prompt, "<organization_memory>\n### About Acme Foods (customer)\n"+
 		"- [Instruction] Send Acme's PODs within a day.\n"+
 		"- [Fact] Acme pays on the 15th.\n"+
-		"### About tool assign_move\n"+
+		"### About tool dispatch_assign_move\n"+
 		"- [Correction] Prefer the tractor already at the yard.\n"+
 		"### For the whole organization\n"+
 		"- [Fact] The yard closes at 18:00.\n"+
@@ -470,7 +470,7 @@ func TestPlanMemories_AToolOnlyOnHandWaitsForItsCall(t *testing.T) {
 
 	assert.Equal(t, []*agent.Memory{f.loadedFix}, fit.Carried)
 	assert.Empty(t, fit.Used)
-	assert.Equal(t, map[string][]pulid.ID{"assign_move": {f.loadedFix.ID}}, fit.ByTool)
+	assert.Equal(t, map[string][]pulid.ID{"dispatch_assign_move": {f.loadedFix.ID}}, fit.ByTool)
 }
 
 func TestPlanMemories_AToolPickedForTheTurnIsUsed(t *testing.T) {
@@ -499,5 +499,5 @@ func TestBuildSystemPrompt_SaysWhenEveryMemoryWasHeldBack(t *testing.T) {
 
 	assert.NotContains(t, prompt, f.orgFact.Content)
 	assert.Contains(t, prompt, "None of the memories kept for agents here bear on this message")
-	assert.Contains(t, prompt, "recall_memory")
+	assert.Contains(t, prompt, "agent_list_memories")
 }

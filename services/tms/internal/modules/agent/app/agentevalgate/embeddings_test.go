@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentevalgate"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/stretchr/testify/assert"
@@ -47,7 +47,7 @@ func syntheticInputs(kit *agentevalgate.Kit) (agentevalgate.EmbeddingInputs, map
 
 	target := -1
 	for idx, item := range items {
-		if item.Key == "list_time_off" {
+		if item.Key == "worker_list_time_off" {
 			target = idx
 		}
 	}
@@ -83,7 +83,7 @@ func TestRecordEmbeddingFixture_KeysEveryVectorByItsHash(t *testing.T) {
 	found, err := kit.HybridFinder(fixture)("glorp the frobnicator")
 	require.NoError(t, err)
 	require.NotEmpty(t, found)
-	assert.Equal(t, "list_time_off", found[0], "the fixture's vectors drive the meaning side")
+	assert.Equal(t, "worker_list_time_off", found[0], "the fixture's vectors drive the meaning side")
 
 	nothing, err := kit.HybridFinder(fixture)("zzzz")
 	require.NoError(t, err)

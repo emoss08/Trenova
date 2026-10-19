@@ -89,7 +89,7 @@ func TestInspectX12_RefusesContentPastTheCapAndSaysWhy(t *testing.T) {
 	}, ""))
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "64 KB")
-	assert.Contains(t, err.Error(), "get_edi_inbound_file")
+	assert.Contains(t, err.Error(), "edi_get_inbound_file")
 	assert.Empty(t, inspector.requests, "nothing past the cap is parsed")
 
 	_, err = tool.Query(t.Context(), agentParams(map[string]any{paramX12Content: "  "}, ""))

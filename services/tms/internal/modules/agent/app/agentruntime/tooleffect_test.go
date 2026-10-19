@@ -28,10 +28,10 @@ func effectRuntime() *Service {
 	return newRuntime(
 		&scriptedCompletion{},
 		&stubQueryRegistry{Tools: []agentports.AgentQueryTool{
-			queryTool("list_customers", nil, nil),
+			queryTool("customer_list", nil, nil),
 		}},
 		&stubActionRegistry{Tools: []agentports.AgentTool{
-			actionTool("create_report", agent.TierPropose, nil),
+			actionTool("report_create", agent.TierPropose, nil),
 		}},
 		nil,
 	)
@@ -42,8 +42,8 @@ func TestToolEffect_DerivesFromMetadataAndNamesTheRuntimeTools(t *testing.T) {
 
 	rt := effectRuntime()
 
-	assert.Equal(t, agent.ToolEffectLookup, rt.ToolEffect("list_customers"))
-	assert.Equal(t, agent.ToolEffectChange, rt.ToolEffect("create_report"))
+	assert.Equal(t, agent.ToolEffectLookup, rt.ToolEffect("customer_list"))
+	assert.Equal(t, agent.ToolEffectChange, rt.ToolEffect("report_create"))
 	assert.Equal(t, agent.ToolEffectDiscover, rt.ToolEffect(findToolsName))
 	assert.Equal(t, agent.ToolEffectAsk, rt.ToolEffect(askUserName))
 	assert.Equal(t, agent.ToolEffectPresent, rt.ToolEffect(publishArtifactName))
@@ -55,12 +55,12 @@ func TestMarkToolEffects_LabelsCallsAndResultsWithoutTouchingTheStoredCalls(t *t
 
 	rt := effectRuntime()
 	stored := []conversation.ToolCallRecord{
-		{ID: "c1", Name: "list_customers"},
+		{ID: "c1", Name: "customer_list"},
 		{ID: "c2", Name: "retired_tool"},
 	}
 	messages := []conversation.Message{
 		{Role: conversation.RoleAssistant, ToolCalls: stored},
-		{Role: conversation.RoleTool, ToolName: "list_customers", ToolCallID: "c1"},
+		{Role: conversation.RoleTool, ToolName: "customer_list", ToolCallID: "c1"},
 		{Role: conversation.RoleTool, ToolName: "retired_tool", ToolCallID: "c2"},
 		{Role: conversation.RoleUser, Content: "Thanks."},
 	}
@@ -89,7 +89,7 @@ func TestSummarizeResult(t *testing.T) {
 	}{
 		{
 			name: "one match names it",
-			tool: "list_customers",
+			tool: "customer_list",
 			document: map[string]any{
 				"count": float64(1),
 				"items": []any{map[string]any{"name": "Peak Distributing"}},
@@ -98,7 +98,7 @@ func TestSummarizeResult(t *testing.T) {
 		},
 		{
 			name: "several matches are counted",
-			tool: "list_customers",
+			tool: "customer_list",
 			document: map[string]any{
 				"count": float64(3),
 				"items": []any{map[string]any{"name": "A"}, map[string]any{}, map[string]any{}},
@@ -117,19 +117,19 @@ func TestSummarizeResult(t *testing.T) {
 		},
 		{
 			name:     "nothing matched",
-			tool:     "list_customers",
+			tool:     "customer_list",
 			document: map[string]any{"count": float64(0), "items": []any{}},
 			want:     "No customers",
 		},
 		{
 			name:     "a noun that is not a plural reads as results",
-			tool:     "list_time_off",
+			tool:     "worker_list_time_off",
 			document: []any{map[string]any{}, map[string]any{}},
 			want:     "2 results",
 		},
 		{
 			name:     "a record is named",
-			tool:     "get_worker",
+			tool:     "worker_get",
 			document: map[string]any{"firstName": "Maria", "lastName": "Ortiz"},
 			want:     "Maria Ortiz",
 		},
@@ -141,13 +141,13 @@ func TestSummarizeResult(t *testing.T) {
 		},
 		{
 			name:     "a page opened is named by its destination",
-			tool:     "open_page",
+			tool:     "agent_open_page",
 			document: map[string]any{"path": "/reports", "name": "Report library"},
 			want:     "Report library",
 		},
 		{
 			name: "a finished report run carries its row count",
-			tool: "run_report",
+			tool: "report_run",
 			document: map[string]any{
 				"reportName": "Late loads",
 				"finished":   true,
@@ -157,13 +157,13 @@ func TestSummarizeResult(t *testing.T) {
 		},
 		{
 			name:     "a queued report run is named alone",
-			tool:     "run_report",
+			tool:     "report_run",
 			document: map[string]any{"reportName": "Late loads", "finished": false},
 			want:     "Late loads",
 		},
 		{
 			name:     "a result with nothing to name has no summary",
-			tool:     "get_dispatch_board",
+			tool:     "dispatch_get_board",
 			document: map[string]any{"columns": []any{}},
 			want:     "",
 		},
@@ -180,11 +180,11 @@ func TestSummarizeResult(t *testing.T) {
 func TestSummarizeOutcome_FailedCallsHaveNone(t *testing.T) {
 	t.Parallel()
 
-	call := agentports.ToolCall{Name: "create_report", Arguments: map[string]any{"name": "Late loads"}}
+	call := agentports.ToolCall{Name: "report_create", Arguments: map[string]any{"name": "Late loads"}}
 
 	assert.Empty(t, summarizeOutcome(call, toolOutcome{failed: true, summary: "Late loads"}))
 	assert.Equal(t, "Late loads", summarizeOutcome(call, toolOutcome{
-		action: &agentports.PendingAction{ToolName: "create_report"},
+		action: &agentports.PendingAction{ToolName: "report_create"},
 	}))
 	assert.Empty(t, summarizeOutcome(call, toolOutcome{content: "done"}))
 }
@@ -207,13 +207,13 @@ func TestDrive_StampsEachMessageWhenItWasProducedAndLabelsTheToolTraffic(t *test
 	t.Parallel()
 
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("list_customers", map[string]any{"query": "peak"}),
+		toolTurn("customer_list", map[string]any{"query": "peak"}),
 		textTurn("Peak Distributing is on file."),
 	}}
 	rt := newRuntime(
 		completion,
 		&stubQueryRegistry{Tools: []agentports.AgentQueryTool{
-			queryTool("list_customers", map[string]any{
+			queryTool("customer_list", map[string]any{
 				"count": 1,
 				"items": []map[string]any{{"name": "Peak Distributing"}},
 			}, nil),
@@ -224,7 +224,7 @@ func TestDrive_StampsEachMessageWhenItWasProducedAndLabelsTheToolTraffic(t *test
 
 	var events []kernelports.StreamEvent
 	req := &agentports.RunRequest{
-		Definition: testDefinition("list_customers"),
+		Definition: testDefinition("customer_list"),
 		Actor:      testActor(),
 		Input:      "Is Peak on file?",
 	}
@@ -281,21 +281,21 @@ func TestRun_AProposedWriteIsLabelledAChangeAndNamedFromItsArguments(t *testing.
 	t.Parallel()
 
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("create_report", map[string]any{"name": "Late loads"}),
+		toolTurn("report_create", map[string]any{"name": "Late loads"}),
 		textTurn("I proposed the report."),
 	}}
 	rt := newRuntime(
 		completion,
 		&stubQueryRegistry{},
 		&stubActionRegistry{Tools: []agentports.AgentTool{
-			actionTool("create_report", agent.TierPropose, nil),
+			actionTool("report_create", agent.TierPropose, nil),
 		}},
 		nil,
 	)
 
 	var finished *agentports.AssistantToolFinishedEvent
 	result, err := rt.Run(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition("create_report"),
+		Definition: testDefinition("report_create"),
 		Actor:      testActor(),
 		Input:      "Save a late loads report.",
 		Emit: func(event kernelports.StreamEvent) {

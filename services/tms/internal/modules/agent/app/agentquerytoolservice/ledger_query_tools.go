@@ -102,12 +102,12 @@ func newListManualJournalsTool(
 	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
 	return newListTool(listSpec{
-		name:         "list_manual_journals",
+		name:         "ledger_list_manual_journals",
 		entityPlural: "manual journals",
 		summary: "List manual journal requests, newest first, with their number, status, " +
 			"accounting day and totals, and whether they balance. Narrow by status to find " +
 			"drafts to finish, journals awaiting approval, or approved ones still to post. " +
-			"get_manual_journal opens one with its lines.",
+			"ledger_get_manual_journal opens one with its lines.",
 		resource: permission.ResourceManualJournal,
 		config:   querybuilder.GetFieldConfiguration((*manualjournal.Request)(nil)),
 		fields: []listField{
@@ -183,18 +183,18 @@ func newGetManualJournalTool(
 	return &getManualJournalTool{journals: repo, access: newFieldAccess(permissions)}
 }
 
-func (t *getManualJournalTool) Name() string { return "get_manual_journal" }
+func (t *getManualJournalTool) Name() string { return "ledger_get_manual_journal" }
 
 func (t *getManualJournalTool) Description() string {
 	return "Retrieve one manual journal request by id with its lines, the account each " +
 		"posts to and its debit or credit. It also says who approved, rejected or cancelled " +
-		"it and why. Use list_manual_journals first when you have a number."
+		"it and why. Use ledger_list_manual_journals first when you have a number."
 }
 
 func (t *getManualJournalTool) ParamSchema() map[string]any {
 	return idSchema(paramManualJournalID, agenttoolschema.RecordIDText(
 		permission.ResourceManualJournal,
-		"The manual journal's id, from list_manual_journals or "+onThePage,
+		"The manual journal's id, from ledger_list_manual_journals or "+onThePage,
 	))
 }
 
@@ -281,7 +281,7 @@ func newListJournalReversalsTool(
 	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
 	return newListTool(listSpec{
-		name:         "list_journal_reversals",
+		name:         "ledger_list_journal_reversals",
 		entityPlural: "journal reversals",
 		summary: "List requests to reverse posted journal entries, newest first, with the " +
 			"entry each reverses, its status, the day it books and why. Narrow by status to " +

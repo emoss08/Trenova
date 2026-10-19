@@ -56,7 +56,7 @@ func (t *getShipmentDraftTool) Description() string {
 		"the conversation, so call it when they ask to see what was extracted and point to " +
 		"the card rather than publishing the reading. Use it before shipment_create so the " +
 		"record is built from the document rather than from memory. Every id the draft names " +
-		"still has to be resolved with list_customers and list_locations; the draft " +
+		"still has to be resolved with customer_list and location_list; the draft " +
 		"carries names and addresses, not ids."
 }
 
@@ -66,7 +66,7 @@ func (t *getShipmentDraftTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"documentId": agenttoolschema.RecordIDText(permission.ResourceDocument,
 				"The id of the uploaded document the draft was read from: "+
-					"an attachment on the message, a documentId in get_inbound_message, or "+
+					"an attachment on the message, a documentId in inbox_get_inbound_message, or "+
 					"this run's subject."),
 		},
 		"required":             []string{"documentId"},
@@ -263,25 +263,25 @@ func newQuoteShipmentTool(
 	return &quoteShipmentTool{quotes: quotes, locations: locations}
 }
 
-func (t *quoteShipmentTool) Name() string { return "quote_shipment" }
+func (t *quoteShipmentTool) Name() string { return "rate_quote" }
 
 func (t *quoteShipmentTool) SearchTerms() []string {
 	return []string{"rate quote", "price a lane", "quote a lane"}
 }
 
 func (t *quoteShipmentTool) Prerequisites() []string {
-	return []string{"list_customers", "list_service_types", "list_locations"}
+	return []string{"customer_list", "masterdata_list_service_types", "location_list"}
 }
 
 func (t *quoteShipmentTool) Recipe() []string {
-	return []string{"list_customers", "list_service_types", "list_locations", "quote_shipment"}
+	return []string{"customer_list", "masterdata_list_service_types", "location_list", "rate_quote"}
 }
 
 func (t *quoteShipmentTool) Description() string {
 	return "Price a shipment that has not been saved, from the customer's rate " +
 		"agreements and the organization's rating rules. Give the customer, the " +
 		"service type and the stops in order, each with a location id from " +
-		"list_locations and a date. Returns the linehaul amount, the currency, which " +
+		"location_list and a date. Returns the linehaul amount, the currency, which " +
 		"agreement and rule priced it, and whether a formula had to stand in because " +
 		"no agreement covered the lane. Nothing is saved: quote as many variations " +
 		"as you need before shipment_create."
@@ -292,11 +292,11 @@ func (t *quoteShipmentTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"customerId": agenttoolschema.RecordIDText(permission.ResourceCustomer,
-				"The customer being billed, from list_customers."),
+				"The customer being billed, from customer_list."),
 			"serviceTypeId": agenttoolschema.RecordIDText(permission.ResourceServiceType,
-				"The service type, from list_service_types."),
+				"The service type, from masterdata_list_service_types."),
 			"shipmentTypeId": agenttoolschema.RecordIDText(permission.ResourceShipmentType,
-				"The shipment type, from list_shipment_types."),
+				"The shipment type, from masterdata_list_shipment_types."),
 			"stops": map[string]any{
 				"type":        "array",
 				"description": "The stops in travel order: at least a pickup and a delivery.",
@@ -304,7 +304,7 @@ func (t *quoteShipmentTool) ParamSchema() map[string]any {
 					"type": "object",
 					"properties": map[string]any{
 						"locationId": agenttoolschema.RecordIDText(
-							permission.ResourceLocation, "A location id from list_locations.",
+							permission.ResourceLocation, "A location id from location_list.",
 						),
 						"type": agenttoolschema.Enum("", agenttoolschema.StopTypes),
 						"date": map[string]any{
@@ -635,7 +635,7 @@ func newShopCarriersTool(
 	return &shopCarriersTool{shopper: shopper, carriers: carriers}
 }
 
-func (t *shopCarriersTool) Name() string { return "shop_carriers" }
+func (t *shopCarriersTool) Name() string { return "carrier_shop" }
 
 func (t *shopCarriersTool) Description() string {
 	return "Price a saved shipment against carriers and rank them by contract cost, " +
@@ -659,7 +659,7 @@ func (t *shopCarriersTool) ParamSchema() map[string]any {
 			"carrierIds": agenttoolschema.OfResource(map[string]any{
 				"type":  "array",
 				"items": map[string]any{"type": "string"},
-				"description": "An explicit shortlist of carrier ids from list_carriers. " +
+				"description": "An explicit shortlist of carrier ids from carrier_list. " +
 					"Empty means the routing guide's candidates.",
 			}, permission.ResourceCarrier),
 			"limit": map[string]any{
@@ -840,7 +840,7 @@ func shopViewOf(result *ratequoteports.ShopResult) *shopView {
 }
 
 const shopPricedNote = "A priced option's cost is what that carrier's contract pays for " +
-	"the whole shipment, worked out from its rate: it is the sourced rate assign_move_to_carrier " +
+	"the whole shipment, worked out from its rate: it is the sourced rate dispatch_create_carrier_assignment " +
 	"needs. To cover a one-move shipment with that carrier, pass the cost as a Flat baseRate."
 
 func optionalPulid(params map[string]any, key string) (pulid.ID, bool, error) {

@@ -18,7 +18,7 @@ func TestOpenTurn_RanksTheOpeningToolsOnTheWrittenNeed(t *testing.T) {
 		Actor:      testActor(),
 		Input:      "which ones are due?",
 	}
-	require.False(t, service.OpenTurn(t.Context(), vague).tools.offers("list_trailers"),
+	require.False(t, service.OpenTurn(t.Context(), vague).tools.offers("equipment_list_trailers"),
 		"the bare follow-up names nothing a tool covers")
 
 	framed := *vague
@@ -28,7 +28,7 @@ func TestOpenTurn_RanksTheOpeningToolsOnTheWrittenNeed(t *testing.T) {
 	)
 	turn := service.OpenTurn(t.Context(), &framed)
 
-	assert.True(t, turn.tools.offers("list_trailers"), "the need names what the work is")
+	assert.True(t, turn.tools.offers("equipment_list_trailers"), "the need names what the work is")
 	assert.Equal(t, "list trailers by inspection date\nwhich ones are due?", turnQuery(&framed).Text,
 		"the semantic ranking reads the need too, with the message kept beside it")
 	assert.Contains(t, turn.system, "What the person wants: List the trailers")

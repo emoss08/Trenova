@@ -61,7 +61,7 @@ func TestClaim_WritesWhereAndAsWhomTheStepRan(t *testing.T) {
 		OwnerID:           pulid.MustNew("atrn_"),
 		Kind:              agentports.RunStepTool,
 		Key:               "step-1",
-		ToolName:          "assign_move",
+		ToolName:          "dispatch_assign_move",
 		TraceID:           "4bf92f3577b34da6a3ce929d0e0e4736",
 		SpanID:            "00f067aa0ba902b7",
 		DefinitionID:      definitionID,
@@ -94,7 +94,7 @@ func TestSettle_KeepsTheVerdictAndWhyACallWasRefused(t *testing.T) {
 		Key:     "step-2",
 		Status:  agentports.RunStepFailed,
 		Outcome: agentports.RunStepOutcome{
-			Content: "Tool \"assign_move\" is not permitted.",
+			Content: "Tool \"dispatch_assign_move\" is not permitted.",
 			Failed:  true,
 			Reason:  "lacks update access to shipment_move",
 			Verdict: "denied",

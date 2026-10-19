@@ -282,9 +282,9 @@ func TestRun_ATableOfRecordsToOpenIsPointedToHoweverShort(t *testing.T) {
 		ID: pulid.MustNew("art_"), Kind: "table_view", Title: "Formula templates", Rows: 3,
 		OpensRecords: true,
 	}}
-	tool := queryTool("list_formula_templates", map[string]any{"items": []any{}}, nil)
+	tool := queryTool("formula_list_templates", map[string]any{"items": []any{}}, nil)
 	result, _ := runWithObserver(t, observer.observe, []agentports.AgentQueryTool{tool},
-		toolTurn("list_formula_templates", map[string]any{"query": ""}),
+		toolTurn("formula_list_templates", map[string]any{"query": ""}),
 		textTurn("Three templates."),
 	)
 
@@ -304,9 +304,9 @@ func TestRun_AViewIsPointedToAsAView(t *testing.T) {
 		ID: pulid.MustNew("art_"), Kind: "table_view", Title: "Late loads", Rows: 3,
 		Actionable: true, Opens: true,
 	}}
-	tool := queryTool("compose_table_view", map[string]any{"path": "/shipments"}, nil)
+	tool := queryTool("report_compose_table_view", map[string]any{"path": "/shipments"}, nil)
 	result, _ := runWithObserver(t, observer.observe, []agentports.AgentQueryTool{tool},
-		toolTurn("compose_table_view", map[string]any{"entity": "shipments", "description": "late"}),
+		toolTurn("report_compose_table_view", map[string]any{"entity": "shipments", "description": "late"}),
 		textTurn("Three loads are late."),
 	)
 
@@ -331,9 +331,9 @@ func TestRun_ARankingIsPointedToHoweverShort(t *testing.T) {
 		ID: pulid.MustNew("art_"), Kind: "table_view", Title: "Drivers ranked for the move",
 		Rows: 5, Ranked: true,
 	}}
-	tool := queryTool("rank_move_candidates", map[string]any{"candidates": []any{}}, nil)
+	tool := queryTool("dispatch_rank_candidates", map[string]any{"candidates": []any{}}, nil)
 	result, _ := runWithObserver(t, observer.observe, []agentports.AgentQueryTool{tool},
-		toolTurn("rank_move_candidates", map[string]any{"shipmentMoveId": "smv_1"}),
+		toolTurn("dispatch_rank_candidates", map[string]any{"shipmentMoveId": "smv_1"}),
 		textTurn("Emily Chen is the best fit."),
 	)
 

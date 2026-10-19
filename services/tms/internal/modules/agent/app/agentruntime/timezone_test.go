@@ -16,17 +16,17 @@ func TestRun_HandsAToolTheRunsTimezoneWhereverItIsAsked(t *testing.T) {
 	t.Parallel()
 
 	tool := &validatingActionTool{
-		stubActionToolAlias: actionTool("update_report", agent.TierAutoExecute, nil),
+		stubActionToolAlias: actionTool("report_update", agent.TierAutoExecute, nil),
 	}
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("update_report", map[string]any{"definitionId": "rd_1"}),
+		toolTurn("report_update", map[string]any{"definitionId": "rd_1"}),
 		textTurn("Done."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
 		&stubActionRegistry{Tools: []agentports.AgentTool{tool}}, nil)
 
 	_, err := rt.Run(t.Context(), &agentports.RunRequest{
-		Definition: autoDefinition("update_report"),
+		Definition: autoDefinition("report_update"),
 		Actor:      testActor(),
 		Input:      "update",
 		Context:    agentdefinition.RuntimeContext{Timezone: "America/Chicago"},

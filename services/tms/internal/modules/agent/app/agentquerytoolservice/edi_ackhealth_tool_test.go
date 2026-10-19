@@ -161,8 +161,8 @@ func TestGetEDIAckHealth_GivesCountsOverdueByPartnerAndDeadLetters(t *testing.T)
 
 	require.Len(t, view.RecentDeadLettered, 1)
 	assert.Equal(t, "AS2 MDN refused", view.RecentDeadLettered[0].DeliveryError)
-	assert.Contains(t, view.FollowUp, "get_edi_message")
-	assert.Contains(t, view.FollowUp, "retry_edi_message_delivery")
+	assert.Contains(t, view.FollowUp, "edi_get_message")
+	assert.Contains(t, view.FollowUp, "edi_retry_message")
 
 	assert.ElementsMatch(t, []agent.RecordRef{
 		{EntityType: ediMessageEntity, ID: oldest.ID.String()},

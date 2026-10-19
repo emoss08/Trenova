@@ -95,14 +95,14 @@ describe("citeSteps with similar lookups", () => {
 describe("citation numbering", () => {
   it("numbers citations in reading order, skipping steps the reply never cites", () => {
     const steps = [
-      step("list_customers", { items: [{ name: "Acme" }] }),
+      step("customer_list", { items: [{ name: "Acme" }] }),
       step("find_tools", { tools: ["x"] }),
-      step("get_worker", { name: "Dana Ortiz" }),
+      step("worker_get", { name: "Dana Ortiz" }),
     ];
     const citations = citeSteps("Dana Ortiz drives for Acme.", steps);
     expect(citations.map((citation) => [citation.n, citation.step.name])).toEqual([
-      [1, "get_worker"],
-      [2, "list_customers"],
+      [1, "worker_get"],
+      [2, "customer_list"],
     ]);
   });
 

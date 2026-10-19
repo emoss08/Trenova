@@ -390,7 +390,7 @@ func newListVehiclePositionsTool(
 	return &listVehiclePositionsTool{telematics: reader, access: newFieldAccess(permissions)}
 }
 
-func (t *listVehiclePositionsTool) Name() string { return "list_vehicle_positions" }
+func (t *listVehiclePositionsTool) Name() string { return "equipment_list_positions" }
 
 func (t *listVehiclePositionsTool) SearchTerms() []string {
 	return []string{"truck location", "tractor position", "gps", "telematics", "live position"}
@@ -412,7 +412,7 @@ func (t *listVehiclePositionsTool) ParamSchema() map[string]any {
 			"tractorIds": agenttoolschema.OfResource(map[string]any{
 				"type":        "array",
 				"items":       map[string]any{"type": "string"},
-				"description": "Optional: only these tractors, by id from list_tractors.",
+				"description": "Optional: only these tractors, by id from equipment_list_tractors.",
 			}, permission.ResourceTractor),
 			"maxAgeMinutes": map[string]any{
 				"type": "integer",
@@ -538,7 +538,7 @@ func newGetWorkerHOSTool(reader telematicsReader) agentports.AgentQueryTool {
 	return &getWorkerHOSTool{telematics: reader}
 }
 
-func (t *getWorkerHOSTool) Name() string { return "get_worker_hos" }
+func (t *getWorkerHOSTool) Name() string { return "worker_get_hos" }
 
 func (t *getWorkerHOSTool) Description() string {
 	return "A driver's hours of service as the ELD last reported them: duty status and " +
@@ -557,7 +557,7 @@ func (t *getWorkerHOSTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"workerId": agenttoolschema.OfResource(map[string]any{
 				"type":        "string",
-				"description": "The driver's id, from search_worker or list_workers.",
+				"description": "The driver's id, from worker_search or worker_list.",
 			}, permission.ResourceWorker),
 		},
 		"required":             []string{"workerId"},

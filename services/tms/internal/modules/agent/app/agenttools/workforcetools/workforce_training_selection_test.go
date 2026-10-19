@@ -12,7 +12,7 @@ import (
 )
 
 /*
-A model that found the open assignment with list_worker_training, filtered to
+A model that found the open assignment with worker_list_training, filtered to
 the worker and the course, sent the assignment's id with the worker and the
 course it had filtered by, and the completion was refused for naming the
 assignment both ways. All three named the same record, so it is recorded.

@@ -77,7 +77,7 @@ user_role_assignments ──▶ permission engine ──▶ Check(resource, oper
 Anyone may keep private views of a table they can read. Sharing a view with the
 organization needs `table_configuration` create, and changing one that stays shared needs
 update; the owner may always withdraw or delete their own view
-(`tableconfigurationservice`, which the `save_table_view` agent tool goes through too). A
+(`tableconfigurationservice`, which the `report_save_table_view` agent tool goes through too). A
 reader only sees views, shared or private, of tables whose resource they can read, so a
 view's name and filters never reach someone who cannot open the table it is about.
 `reporting.reports` carries the share and change grants for new roles.

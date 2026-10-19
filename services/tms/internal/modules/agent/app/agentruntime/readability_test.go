@@ -157,9 +157,9 @@ func TestDistinctCallIDs_ReplacesAnIDTheConversationAlreadyUsed(t *testing.T) {
 	}})
 	completion := &agentports.ChatCompletionResult{ToolCalls: []agentports.ToolCall{
 		{ID: "call_0", Name: "shipment_get"},
-		{ID: "", Name: "get_customer"},
-		{ID: "toolu_unique", Name: "get_worker"},
-		{ID: "toolu_unique", Name: "get_tractor"},
+		{ID: "", Name: "customer_get"},
+		{ID: "toolu_unique", Name: "worker_get"},
+		{ID: "toolu_unique", Name: "equipment_get_tractor"},
 	}}
 
 	distinctCallIDs(completion, used, NewCallID)
@@ -188,8 +188,8 @@ func TestDistinctCallIDs_AlwaysReplacesASynthesizedID(t *testing.T) {
 	minted := 0
 	current := &agentports.ChatCompletionResult{ToolCalls: []agentports.ToolCall{
 		{ID: "call_0", SynthesizedID: true, Name: "shipment_get"},
-		{ID: "call_1", SynthesizedID: true, Name: "get_customer"},
-		{ID: "toolu_unique", Name: "get_worker"},
+		{ID: "call_1", SynthesizedID: true, Name: "customer_get"},
+		{ID: "toolu_unique", Name: "worker_get"},
 	}}
 	distinctCallIDs(current, map[string]struct{}{}, func() string {
 		minted++
@@ -203,7 +203,7 @@ func TestDistinctCallIDs_AlwaysReplacesASynthesizedID(t *testing.T) {
 	assert.Equal(t, "toolu_unique", current.ToolCalls[2].ID, "a provider's own id is kept")
 
 	plain := &agentports.ChatCompletionResult{ToolCalls: []agentports.ToolCall{
-		{ID: "toolu_1", Name: "get_worker"},
+		{ID: "toolu_1", Name: "worker_get"},
 	}}
 	distinctCallIDs(plain, map[string]struct{}{}, func() string {
 		t.Fatal("a provider's own unique id is never replaced")
@@ -224,13 +224,13 @@ func TestRun_GivesSynthesizedCallIDsOfEachTurnTheirOwnID(t *testing.T) {
 			ToolCalls: []agentports.ToolCall{{
 				ID:            "call_0",
 				SynthesizedID: true,
-				Name:          "search_worker",
+				Name:          "worker_search",
 				Arguments:     map[string]any{"query": "Maria"},
 			}},
 			ModelIdentifier: "test-model",
 		}
 	}
-	tool := queryTool("search_worker", map[string]any{"results": []any{}}, nil)
+	tool := queryTool("worker_search", map[string]any{"results": []any{}}, nil)
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		synthesized(),
 		synthesized(),
@@ -241,7 +241,7 @@ func TestRun_GivesSynthesizedCallIDsOfEachTurnTheirOwnID(t *testing.T) {
 
 	var observed []string
 	result, err := rt.Run(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition("search_worker"),
+		Definition: testDefinition("worker_search"),
 		Actor:      testActor(),
 		Input:      "Who is Maria?",
 		ToolObserver: func(observation agentports.ToolObservation) (*agentports.ShownArtifact, error) {

@@ -30,33 +30,33 @@ func TestToAdapterMessages_ReplaysWhatBecameOfEachProposal(t *testing.T) {
 			ToolCalls: []conversation.ToolCallRecord{
 				{
 					ID:        "c1",
-					Name:      "update_report",
+					Name:      "report_update",
 					Arguments: map[string]any{"definitionId": "rd_1"},
 				},
 				{
 					ID:        "c2",
-					Name:      "update_report",
+					Name:      "report_update",
 					Arguments: map[string]any{"definitionId": "rd_2"},
 				},
-				{ID: "c3", Name: "get_report_run", Arguments: map[string]any{"runId": "rrun_1"}},
+				{ID: "c3", Name: "report_get_run", Arguments: map[string]any{"runId": "rrun_1"}},
 			},
 		},
 		{
 			Role:       conversation.RoleTool,
 			ToolCallID: "c1",
-			ToolName:   "update_report",
-			Content:    "Recorded a proposal to run \"update_report\". It is awaiting a person's review.",
+			ToolName:   "report_update",
+			Content:    "Recorded a proposal to run \"report_update\". It is awaiting a person's review.",
 		},
 		{
 			Role:       conversation.RoleTool,
 			ToolCallID: "c2",
-			ToolName:   "update_report",
-			Content:    "Recorded a proposal to run \"update_report\". It is awaiting a person's review.",
+			ToolName:   "report_update",
+			Content:    "Recorded a proposal to run \"report_update\". It is awaiting a person's review.",
 		},
 		{
 			Role:       conversation.RoleTool,
 			ToolCallID: "c3",
-			ToolName:   "get_report_run",
+			ToolName:   "report_get_run",
 			Content:    "{\"status\":\"succeeded\"}",
 		},
 		{Role: conversation.RoleAssistant, Content: "Proposed two updates."},
@@ -64,13 +64,13 @@ func TestToAdapterMessages_ReplaysWhatBecameOfEachProposal(t *testing.T) {
 	outcomes := []agentports.ProposalOutcome{
 		{
 			SourceMessageID: sourceID,
-			ToolName:        "update_report",
+			ToolName:        "report_update",
 			Status:          agent.ProposalStatusExecutionFailed,
 			ExecutionError:  "validation failed: unknown field \"\" on entity \"shipment_move\"",
 		},
 		{
 			SourceMessageID: sourceID,
-			ToolName:        "update_report",
+			ToolName:        "report_update",
 			Status:          agent.ProposalStatusExecuted,
 			ExecutedAt:      &executedAt,
 		},
@@ -99,17 +99,17 @@ func TestToAdapterMessages_TellsTheModelAPendingProposalIsStillWaiting(t *testin
 		{
 			ID:        sourceID,
 			Role:      conversation.RoleAssistant,
-			ToolCalls: []conversation.ToolCallRecord{{ID: "c1", Name: "fork_report"}},
+			ToolCalls: []conversation.ToolCallRecord{{ID: "c1", Name: "report_fork"}},
 		},
 		{
 			Role:       conversation.RoleTool,
 			ToolCallID: "c1",
-			ToolName:   "fork_report",
+			ToolName:   "report_fork",
 			Content:    "Recorded a proposal",
 		},
 	}
 	outcomes := []agentports.ProposalOutcome{
-		{SourceMessageID: sourceID, ToolName: "fork_report", Status: agent.ProposalStatusPending},
+		{SourceMessageID: sourceID, ToolName: "report_fork", Status: agent.ProposalStatusPending},
 	}
 
 	messages := toAdapterMessages(history, outcomes)
@@ -126,12 +126,12 @@ func TestToAdapterMessages_LeavesResultsAloneWithNoOutcomes(t *testing.T) {
 		{
 			ID:        pulid.MustNew("amsg_"),
 			Role:      conversation.RoleAssistant,
-			ToolCalls: []conversation.ToolCallRecord{{ID: "c1", Name: "fork_report"}},
+			ToolCalls: []conversation.ToolCallRecord{{ID: "c1", Name: "report_fork"}},
 		},
 		{
 			Role:       conversation.RoleTool,
 			ToolCallID: "c1",
-			ToolName:   "fork_report",
+			ToolName:   "report_fork",
 			Content:    "Recorded a proposal",
 		},
 	}
@@ -146,15 +146,15 @@ func TestToAdapterMessages_LeavesResultsAloneWithNoOutcomes(t *testing.T) {
 func TestRun_DoesNotProposeWhatIsAlreadyPending(t *testing.T) {
 	t.Parallel()
 
-	action := actionTool("update_report", agent.TierActWithApproval, nil)
+	action := actionTool("report_update", agent.TierActWithApproval, nil)
 	args := map[string]any{"definitionId": "rd_1", "name": "Readable"}
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("update_report", args),
+		toolTurn("report_update", args),
 		textTurn("It is waiting on your card."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
 		&stubActionRegistry{Tools: []agentports.AgentTool{action}}, nil)
-	definition := testDefinition("update_report")
+	definition := testDefinition("report_update")
 	definition.AutonomyCeiling = agent.TierActWithApproval
 
 	result, err := rt.Run(t.Context(), &agentports.RunRequest{
@@ -163,7 +163,7 @@ func TestRun_DoesNotProposeWhatIsAlreadyPending(t *testing.T) {
 		Input:      "yes",
 		Proposals: []agentports.ProposalOutcome{{
 			SourceMessageID: pulid.MustNew("amsg_"),
-			ToolName:        "update_report",
+			ToolName:        "report_update",
 			ToolParams:      map[string]any{"name": "Readable", "definitionId": "rd_1"},
 			Status:          agent.ProposalStatusPending,
 		}},
@@ -178,15 +178,15 @@ func TestRun_DoesNotProposeWhatIsAlreadyPending(t *testing.T) {
 func TestRun_StillProposesWhenTheEarlierOneWasDecided(t *testing.T) {
 	t.Parallel()
 
-	action := actionTool("update_report", agent.TierActWithApproval, nil)
+	action := actionTool("report_update", agent.TierActWithApproval, nil)
 	args := map[string]any{"definitionId": "rd_1"}
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("update_report", args),
+		toolTurn("report_update", args),
 		textTurn("Proposed again."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
 		&stubActionRegistry{Tools: []agentports.AgentTool{action}}, nil)
-	definition := testDefinition("update_report")
+	definition := testDefinition("report_update")
 	definition.AutonomyCeiling = agent.TierActWithApproval
 
 	result, err := rt.Run(t.Context(), &agentports.RunRequest{
@@ -194,7 +194,7 @@ func TestRun_StillProposesWhenTheEarlierOneWasDecided(t *testing.T) {
 		Actor:      testActor(),
 		Input:      "try again",
 		Proposals: []agentports.ProposalOutcome{{
-			ToolName:   "update_report",
+			ToolName:   "report_update",
 			ToolParams: args,
 			Status:     agent.ProposalStatusRejected,
 		}},
@@ -206,15 +206,15 @@ func TestRun_StillProposesWhenTheEarlierOneWasDecided(t *testing.T) {
 func TestRun_DoesNotProposeTheSameWriteTwiceInOneTurn(t *testing.T) {
 	t.Parallel()
 
-	action := actionTool("update_report", agent.TierActWithApproval, nil)
+	action := actionTool("report_update", agent.TierActWithApproval, nil)
 	args := map[string]any{"definitionId": "rd_1"}
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		{
 			ToolCalls: []agentports.ToolCall{
-				{ID: "call_1", Name: "update_report", Arguments: args},
+				{ID: "call_1", Name: "report_update", Arguments: args},
 				{
 					ID:        "call_2",
-					Name:      "update_report",
+					Name:      "report_update",
 					Arguments: map[string]any{"definitionId": "rd_1"},
 				},
 			},
@@ -224,7 +224,7 @@ func TestRun_DoesNotProposeTheSameWriteTwiceInOneTurn(t *testing.T) {
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
 		&stubActionRegistry{Tools: []agentports.AgentTool{action}}, nil)
-	definition := testDefinition("update_report")
+	definition := testDefinition("report_update")
 	definition.AutonomyCeiling = agent.TierActWithApproval
 
 	result, err := rt.Run(t.Context(), &agentports.RunRequest{
@@ -248,16 +248,16 @@ func TestPendingDuplicate_NeverMatchesArgumentsThatCannotBeEncoded(t *testing.T)
 
 	call := agentports.ToolCall{
 		ID:        "call_2",
-		Name:      "update_report",
+		Name:      "report_update",
 		Arguments: map[string]any{"definitionId": "rd_2", "cycle": make(chan int)},
 	}
 	earlier := []agentports.ProposalOutcome{{
-		ToolName:   "update_report",
+		ToolName:   "report_update",
 		Status:     agent.ProposalStatusPending,
 		ToolParams: map[string]any{"definitionId": "rd_1", "cycle": make(chan int)},
 	}}
 	thisTurn := []agentports.PendingAction{{
-		ToolName:  "update_report",
+		ToolName:  "report_update",
 		Arguments: map[string]any{"definitionId": "rd_1", "cycle": make(chan int)},
 	}}
 
@@ -296,18 +296,18 @@ func TestRun_RefusesAProposalItsToolSaysWouldFail(t *testing.T) {
 	t.Parallel()
 
 	tool := &validatingActionTool{
-		stubActionToolAlias: actionTool("update_report", agent.TierActWithApproval, nil),
+		stubActionToolAlias: actionTool("report_update", agent.TierActWithApproval, nil),
 		invalid: errors.New(
 			"unknown field \"assignment.primaryWorker.firstName\" on entity \"shipment_move\"",
 		),
 	}
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("update_report", map[string]any{"definitionId": "rd_1"}),
+		toolTurn("report_update", map[string]any{"definitionId": "rd_1"}),
 		textTurn("I will fix the column."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
 		&stubActionRegistry{Tools: []agentports.AgentTool{tool}}, nil)
-	definition := testDefinition("update_report")
+	definition := testDefinition("report_update")
 	definition.AutonomyCeiling = agent.TierActWithApproval
 	actor := testActor()
 
@@ -327,7 +327,7 @@ func TestRun_RefusesAProposalItsToolSaysWouldFail(t *testing.T) {
 
 	tool.invalid = nil
 	completion = &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("update_report", map[string]any{"definitionId": "rd_1"}),
+		toolTurn("report_update", map[string]any{"definitionId": "rd_1"}),
 		textTurn("Proposed."),
 	}}
 	rt = newRuntime(completion, &stubQueryRegistry{},
@@ -346,7 +346,7 @@ func TestRun_RefusesAProposalItsToolSaysWouldFail(t *testing.T) {
 func TestProposalOutcomeText_SaysWhatTheApproverChanged(t *testing.T) {
 	t.Parallel()
 
-	text := proposalOutcomeText("notify_driver", agentports.ProposalOutcome{
+	text := proposalOutcomeText("worker_send_message", agentports.ProposalOutcome{
 		Status:        agent.ProposalStatusExecuted,
 		Modifications: map[string]any{"priority": "high", "message": "Call dispatch now"},
 	})
@@ -355,7 +355,7 @@ func TestProposalOutcomeText_SaysWhatTheApproverChanged(t *testing.T) {
 	assert.Contains(t, text, "ran successfully")
 
 	plain := proposalOutcomeText(
-		"notify_driver",
+		"worker_send_message",
 		agentports.ProposalOutcome{Status: agent.ProposalStatusExecuted},
 	)
 	assert.NotContains(t, plain, "after changing")

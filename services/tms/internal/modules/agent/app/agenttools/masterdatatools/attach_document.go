@@ -45,14 +45,14 @@ func NewAttachDocumentTool(documents documentAttacher) agentports.AgentTool {
 func (t *AttachDocumentTool) Name() string { return "shipment_attach_document" }
 
 func (t *AttachDocumentTool) Recipe() []string {
-	return []string{"get_inbound_message", "shipment_list", "shipment_attach_document"}
+	return []string{"inbox_get_inbound_message", "shipment_list", "shipment_attach_document"}
 }
 
 func (t *AttachDocumentTool) Description() string {
 	return "Attach a document that already exists to a shipment, so it rides with the load " +
 		"and its billing. Use it for a POD, a rate confirmation or a signed bill that arrived " +
 		"on its own and belongs to a shipment you have identified. Find the document first — " +
-		"get_document_summary and the document searches return its id. This moves an existing " +
+		"document_get_summary and the document searches return its id. This moves an existing " +
 		"file; it cannot upload one, so a document that is not in the system yet has to be " +
 		"uploaded by a person before it can be attached."
 }
@@ -63,7 +63,7 @@ func (t *AttachDocumentTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"documentId": agenttoolschema.RecordIDText(
 				permission.ResourceDocument,
-				"The document to attach, from get_document_summary or a search.",
+				"The document to attach, from document_get_summary or a search.",
 			),
 			"shipmentId": agenttoolschema.RecordIDText(
 				permission.ResourceShipment,

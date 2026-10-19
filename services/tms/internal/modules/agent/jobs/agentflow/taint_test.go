@@ -67,14 +67,14 @@ func TestRun_ATurnOpenedBeforeTaintWasKeptCountsAsTainted(t *testing.T) {
 	t.Parallel()
 
 	pay := paymentTool()
-	move := &agenttest.StubActionTool{ToolName: "assign_move", Tier: agent.TierAutoExecute}
+	move := &agenttest.StubActionTool{ToolName: "dispatch_assign_move", Tier: agent.TierAutoExecute}
 	h := newHarness(t, harnessParams{action: []agentports.AgentTool{pay, move}})
 	h.replies(
 		toolReply("receivable_post_customer_payment", map[string]any{"invoiceId": "inv_88"}),
-		toolReply("assign_move", map[string]any{"moveId": "smv_1"}),
+		toolReply("dispatch_assign_move", map[string]any{"moveId": "smv_1"}),
 		textReply("The payment waits for approval; the move is assigned."),
 	)
-	rc := runContext("receivable_post_customer_payment", "assign_move")
+	rc := runContext("receivable_post_customer_payment", "dispatch_assign_move")
 	rc.Unattended = true
 	state := h.runtime.OpenTurn(t.Context(), rc.request()).State()
 	state.Result.Taint = nil

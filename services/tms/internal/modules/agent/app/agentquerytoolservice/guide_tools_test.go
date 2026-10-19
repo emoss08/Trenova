@@ -210,7 +210,7 @@ func TestGuideTools_AreSelfScoped(t *testing.T) {
 	assert.True(t, agentports.IsSelfScoped(newOpenPageTool(&stubGuide{})))
 }
 
-// The record kinds open_page offers are exactly the ones the registry knows
+// The record kinds agent_open_page offers are exactly the ones the registry knows
 // how to open.
 func TestOpenPage_OffersTheRegistrysRecordKinds(t *testing.T) {
 	t.Parallel()

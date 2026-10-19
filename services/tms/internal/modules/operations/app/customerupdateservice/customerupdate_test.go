@@ -27,7 +27,7 @@ func agentEmailComment(at int64) *shipment.ShipmentComment {
 	return &shipment.ShipmentComment{
 		CreatedAt: at,
 		Type:      shipment.CommentTypeCustomerUpdate,
-		Metadata:  map[string]any{"source": "agent", "tool": "email_customer"},
+		Metadata:  map[string]any{"source": "agent", "tool": "customer_send_email"},
 	}
 }
 

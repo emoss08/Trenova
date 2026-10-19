@@ -107,10 +107,10 @@ func NewEvaluateServiceFailuresTool(failures ServiceFailureDecider) agentports.A
 	return &EvaluateServiceFailuresTool{failures: failures}
 }
 
-func (t *EvaluateServiceFailuresTool) Name() string { return "evaluate_service_failures" }
+func (t *EvaluateServiceFailuresTool) Name() string { return "exception_evaluate_service_failures" }
 
 func (t *EvaluateServiceFailuresTool) Recipe() []string {
-	return []string{toolShipmentGetTracking, "list_service_failures", "evaluate_service_failures"}
+	return []string{toolShipmentGetTracking, "exception_list_service_failures", "exception_evaluate_service_failures"}
 }
 
 func (t *EvaluateServiceFailuresTool) Description() string {
@@ -118,7 +118,7 @@ func (t *EvaluateServiceFailuresTool) Description() string {
 		"late or missed stop that has none. Every stop is compared against its window " +
 		"and the grace period; send stopId to check one stop, or shipmentIds to check " +
 		"several shipments in one pass. Use it when shipment_get_tracking shows a stop " +
-		"late or overdue and list_service_failures shows nothing for it, so the " +
+		"late or overdue and exception_list_service_failures shows nothing for it, so the " +
 		"failure is on record before anyone is told. It records what the stop " +
 		"actuals prove and nothing else; it cannot create a failure from a guess."
 }
@@ -332,15 +332,15 @@ func NewResolveServiceFailureTool(failures serviceFailureResolver) agentports.Ag
 	return &ResolveServiceFailureTool{failures: failures}
 }
 
-func (t *ResolveServiceFailureTool) Name() string { return "resolve_service_failure" }
+func (t *ResolveServiceFailureTool) Name() string { return "exception_resolve_service_failure" }
 
 func (t *ResolveServiceFailureTool) Recipe() []string {
 	return []string{
-		"list_service_failures",
-		"get_service_failure",
+		"exception_list_service_failures",
+		"exception_get_service_failure",
 		toolShipmentGetTracking,
-		"list_service_failure_reason_codes",
-		"resolve_service_failure",
+		"exception_list_service_failure_reason_codes",
+		"exception_resolve_service_failure",
 	}
 }
 
@@ -350,7 +350,7 @@ func (t *ResolveServiceFailureTool) SearchTerms() []string {
 
 func (t *ResolveServiceFailureTool) Description() string {
 	return "Close an open service failure with the reason it happened and a note on " +
-		"what was done. The reason code comes from list_service_failure_reason_codes " +
+		"what was done. The reason code comes from exception_list_service_failure_reason_codes " +
 		"and must match the cause; a failure that already carries one keeps it " +
 		"unless you send another. Do not resolve a failure nobody has looked into: " +
 		"the note should say what was learned, not that the stop was late."
@@ -362,11 +362,11 @@ func (t *ResolveServiceFailureTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"serviceFailureId": agenttoolschema.RecordIDText(
 				permission.ResourceServiceFailure,
-				"The failure's id, from list_service_failures.",
+				"The failure's id, from exception_list_service_failures.",
 			),
 			"reasonCodeId": agenttoolschema.RecordIDText(
 				permission.ResourceServiceFailureReasonCode,
-				"The reason code, from list_service_failure_reason_codes. "+
+				"The reason code, from exception_list_service_failure_reason_codes. "+
 					"Required when the failure has none; otherwise replaces it.",
 			),
 			"notes": map[string]any{
@@ -467,7 +467,7 @@ func (t *ResolveServiceFailureTool) request(
 	} else if existing.ReasonCodeID == nil || existing.ReasonCodeID.IsNil() {
 		return nil, nil, errors.New(
 			"this failure has no reason code yet; pick one from " +
-				"list_service_failure_reason_codes and send it as reasonCodeId",
+				"exception_list_service_failure_reason_codes and send it as reasonCodeId",
 		)
 	}
 
@@ -497,7 +497,7 @@ func NewNotifyDriverTool(drivers driverNotifier) agentports.AgentTool {
 	return &NotifyDriverTool{drivers: drivers}
 }
 
-func (t *NotifyDriverTool) Name() string { return "notify_driver" }
+func (t *NotifyDriverTool) Name() string { return "worker_send_message" }
 
 func (t *NotifyDriverTool) SearchTerms() []string {
 	return []string{"text the driver", "message the driver", "sms", "driver app"}
@@ -520,7 +520,7 @@ func (t *NotifyDriverTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"workerId": agenttoolschema.RecordIDText(
 				permission.ResourceWorker,
-				"The driver's id, from the board, tracking or search_worker.",
+				"The driver's id, from the board, tracking or worker_search.",
 			),
 			"title": map[string]any{
 				"type":        "string",
@@ -539,7 +539,7 @@ func (t *NotifyDriverTool) ParamSchema() map[string]any {
 			common.ParamShipmentID: agenttoolschema.RecordIDText(
 				permission.ResourceShipment,
 				"Optional: the shipment the message is about, so Dash can open "+
-					"it; from get_dispatch_board, shipment_get_tracking or shipment_list.",
+					"it; from dispatch_get_board, shipment_get_tracking or shipment_list.",
 			),
 		},
 		"required":             []string{"workerId", "title", "message"},
@@ -637,7 +637,7 @@ func (t *NotifyDriverTool) request(
 	return request, nil
 }
 
-// customerMailer is what email_customer needs: the shipment for its customer
+// customerMailer is what customer_send_email needs: the shipment for its customer
 // and PRO, the customer for its recipients, the template to dress the prose,
 // the mailer to send it, and the comment thread to record that it went.
 type CustomerMailer struct {
@@ -688,7 +688,7 @@ func (t *EmailCustomerTool) Name() string { return emailCustomerToolName }
 func (t *EmailCustomerTool) Recipe() []string {
 	return []string{
 		toolShipmentGetTracking,
-		"get_customer_update_preferences",
+		"customer_get_update_preferences",
 		emailCustomerToolName,
 	}
 }
@@ -714,7 +714,7 @@ func (t *EmailCustomerTool) ParamSchema() map[string]any {
 			),
 			"profileId": agenttoolschema.RecordIDText(
 				permission.ResourceEmailProfile,
-				"The email profile to send from, from list_email_profiles. Leave it out to "+
+				"The email profile to send from, from inbox_list_email_profiles. Leave it out to "+
 					"send from the profile the organization assigns to operations email, which "+
 					"is right unless the person named another.",
 			),
@@ -818,20 +818,20 @@ func NewSendDetentionNoticeTool(detentions detentionActor) agentports.AgentTool 
 	return &SendDetentionNoticeTool{detention: detentions}
 }
 
-func (t *SendDetentionNoticeTool) Name() string { return "send_detention_notice" }
+func (t *SendDetentionNoticeTool) Name() string { return "detention_send_notice" }
 
 func (t *SendDetentionNoticeTool) Prerequisites() []string {
-	return []string{"list_detention_desk", "get_detention_occurrence"}
+	return []string{"detention_list_occurrences", "detention_get_occurrence"}
 }
 
 func (t *SendDetentionNoticeTool) Recipe() []string {
-	return []string{"get_detention_occurrence", "send_detention_notice"}
+	return []string{"detention_get_occurrence", "detention_send_notice"}
 }
 
 func (t *SendDetentionNoticeTool) Description() string {
 	return "Send the customer the detention notice for an occurrence on the desk. The " +
 		"notice is the organization's own template with the arrival, the free time " +
-		"and the rate; nothing is composed here. Send it when list_detention_desk " +
+		"and the rate; nothing is composed here. Send it when detention_list_occurrences " +
 		"shows the notice window open or overdue, because a charge with no notice " +
 		"inside the policy's window is often not collectable. An occurrence whose " +
 		"policy needs no notice is refused."
@@ -842,7 +842,7 @@ func (t *SendDetentionNoticeTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"occurrenceId": agenttoolschema.KindID(
-				"The occurrence id from list_detention_desk.",
+				"The occurrence id from detention_list_occurrences.",
 				permission.KindDetentionOccurrence,
 			),
 		},
@@ -908,10 +908,10 @@ func NewWaiveDetentionTool(detentions detentionActor) agentports.AgentTool {
 	return &WaiveDetentionTool{detention: detentions}
 }
 
-func (t *WaiveDetentionTool) Name() string { return "waive_detention" }
+func (t *WaiveDetentionTool) Name() string { return "detention_waive" }
 
 func (t *WaiveDetentionTool) Recipe() []string {
-	return []string{"list_detention_desk", "get_detention_occurrence", "waive_detention"}
+	return []string{"detention_list_occurrences", "detention_get_occurrence", "detention_waive"}
 }
 
 func (t *WaiveDetentionTool) Description() string {
@@ -926,7 +926,7 @@ func (t *WaiveDetentionTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"occurrenceId": agenttoolschema.KindID(
-				"The occurrence id from list_detention_desk.",
+				"The occurrence id from detention_list_occurrences.",
 				permission.KindDetentionOccurrence,
 			),
 			common.FieldReason: agenttoolschema.Enum(

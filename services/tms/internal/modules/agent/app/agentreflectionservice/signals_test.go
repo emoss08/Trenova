@@ -59,9 +59,9 @@ func TestReadSignals_AToolThatWorkedAfterFailingIsRecoveredNotFailed(t *testing.
 
 	signals := ReadSignals(&Window{
 		Messages: []conversation.Message{
-			toolResult("assign_move", true, aitrace.OutcomeFailed),
-			toolResult("assign_move", false, aitrace.OutcomeInvalid),
-			toolResult("assign_move", false, aitrace.OutcomeRan),
+			toolResult("dispatch_assign_move", true, aitrace.OutcomeFailed),
+			toolResult("dispatch_assign_move", false, aitrace.OutcomeInvalid),
+			toolResult("dispatch_assign_move", false, aitrace.OutcomeRan),
 			toolResult("tender_load", true, aitrace.OutcomeFailed),
 		},
 	})
@@ -70,7 +70,7 @@ func TestReadSignals_AToolThatWorkedAfterFailingIsRecoveredNotFailed(t *testing.
 		agent.ReflectionSignalToolRecovered,
 		agent.ReflectionSignalToolFailed,
 	}, signalKinds(signals))
-	assert.Equal(t, "assign_move", signals[0].Detail)
+	assert.Equal(t, "dispatch_assign_move", signals[0].Detail)
 	assert.Equal(t, "tender_load", signals[1].Detail)
 }
 
@@ -153,8 +153,8 @@ func TestReadSignals_DecisionsFeedbackAndLongTasks(t *testing.T) {
 	signals := ReadSignals(&Window{
 		Messages: messages,
 		Proposals: []DecidedProposal{
-			{ToolName: "assign_move", Outcome: agent.TrustOutcomeModified},
-			{ToolName: "assign_move", Outcome: agent.TrustOutcomeModified},
+			{ToolName: "dispatch_assign_move", Outcome: agent.TrustOutcomeModified},
+			{ToolName: "dispatch_assign_move", Outcome: agent.TrustOutcomeModified},
 			{
 				ToolName: "invoice_send",
 				Outcome:  agent.TrustOutcomeRejected,
@@ -173,7 +173,7 @@ func TestReadSignals_DecisionsFeedbackAndLongTasks(t *testing.T) {
 		agent.ReflectionSignalLongTask,
 	}, signalKinds(signals))
 	assert.Equal(t, 1, signals[0].Count)
-	assert.Equal(t, "assign_move", signals[0].Detail)
+	assert.Equal(t, "dispatch_assign_move", signals[0].Detail)
 	assert.Equal(t, 2, signals[2].Count)
 }
 

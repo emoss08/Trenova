@@ -135,7 +135,7 @@ func provideGetAccountingSyncStatusTool(
 	return newGetAccountingSyncStatusTool(accounting, sync, permissions)
 }
 
-func (t *getAccountingSyncStatusTool) Name() string { return "get_accounting_sync_status" }
+func (t *getAccountingSyncStatusTool) Name() string { return "accounting_get_connection" }
 
 func (t *getAccountingSyncStatusTool) Description() string {
 	return "Get whether the accounting system is connected, to which company, and why it last failed. " +

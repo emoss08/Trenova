@@ -64,7 +64,7 @@ describe("AgentReflections", () => {
     api.fetchRecentAgentReflections.mockResolvedValue([
       reflection({
         id: "arfl_1",
-        signals: [{ kind: "ToolRecovered", count: 2, detail: "assign_move" }],
+        signals: [{ kind: "ToolRecovered", count: 2, detail: "dispatch_assign_move" }],
         changes: [
           {
             action: "Saved",
@@ -102,7 +102,7 @@ describe("AgentReflections", () => {
 
     expect(await screen.findByText("What agents learned")).toBeInTheDocument();
     const why = screen.getByRole("list", { name: "Why it looked" });
-    expect(within(why).getByText(/A tool worked after failing · assign_move/)).toBeInTheDocument();
+    expect(within(why).getByText(/A tool worked after failing · dispatch_assign_move/)).toBeInTheDocument();
     const lessons = screen.getByRole("list", { name: "Lessons" });
     expect(within(lessons).getByText("Kept")).toBeInTheDocument();
     expect(within(lessons).getByText("Offered")).toBeInTheDocument();

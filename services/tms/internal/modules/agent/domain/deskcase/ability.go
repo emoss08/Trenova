@@ -16,16 +16,16 @@ var stepTools = map[StepKey][]string{
 	StepTrackDelivery:       {"shipment_get_tracking"},
 	StepRequestPOD:          {"shipment_request_documents"},
 	StepRequestPaperwork:    {"shipment_request_documents"},
-	StepReviewRate:          {"billing_get_queue_item", "explain_rate"},
-	StepConfirmRate:         {"send_rate_confirmation", "record_rate_confirmation_confirmed"},
-	StepApproveAccessorials: {"approve_detention", "get_detention_occurrence"},
-	StepNotifyCustomer:      {"email_customer"},
-	StepClearHolds:          {"shipment_release_hold", "resolve_service_failure"},
+	StepReviewRate:          {"billing_get_queue_item", "rate_explain"},
+	StepConfirmRate:         {"rate_send_confirmation", "rate_record_confirmation"},
+	StepApproveAccessorials: {"detention_approve", "detention_get_occurrence"},
+	StepNotifyCustomer:      {"customer_send_email"},
+	StepClearHolds:          {"shipment_release_hold", "exception_resolve_service_failure"},
 	StepMarkReady:           {"billing_transfer"},
 	StepSendInvoice:         {"invoice_send"},
 	StepPostInvoice:         {"invoice_post"},
 	StepWorkDispute:         {"invoice_resolve_dispute", "invoice_list_disputes"},
-	StepFollowUpPayment:     {"receivable_send_payment_reminder", "email_customer"},
+	StepFollowUpPayment:     {"receivable_send_payment_reminder", "customer_send_email"},
 }
 
 // StepTools are the tools that can take a step, nil for a step the

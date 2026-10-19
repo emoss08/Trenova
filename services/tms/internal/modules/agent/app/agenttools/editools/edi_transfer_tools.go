@@ -26,7 +26,7 @@ const paramEDITransferID = "transferId"
 
 const maxTenderDeclineChars = 500
 
-const ediTransferIDGuidance = "The load tender transfer, from list_edi_transfers or get_edi_transfer. Never guess one."
+const ediTransferIDGuidance = "The load tender transfer, from edi_list_transfers or edi_get_transfer. Never guess one."
 
 const ediDecisionRationaleEnd = " A person always decides."
 
@@ -337,18 +337,18 @@ func planExpireTender(
 
 func NewAcceptEDILoadTenderTool(decider ediTransferDecider) agentports.AgentTool {
 	return &EdiTransferDecisionTool{edi: decider, decision: transferDecision{
-		name: "accept_edi_tender",
+		name: "edi_accept_tender",
 		recipe: []string{
-			"list_edi_transfers",
-			"get_edi_transfer",
-			"get_customer",
+			"edi_list_transfers",
+			"edi_get_transfer",
+			"customer_get",
 			toolShipmentList,
-			"quote_shipment",
-			"accept_edi_tender",
+			"rate_quote",
+			"edi_accept_tender",
 		},
 		description: "Propose accepting a load tender a trading partner sent over EDI, which " +
 			"creates the shipment from it and tells the partner. Read the tender with " +
-			"get_edi_transfer first and check its customer, stops, dates, equipment and rate " +
+			"edi_get_transfer first and check its customer, stops, dates, equipment and rate " +
 			"against what this organization hauls for that customer. A tender whose mappings " +
 			"are not complete is refused until an EDI administrator maps them. A person always " +
 			"decides; an outside partner is sent a 990 acceptance, and another Trenova " +
@@ -370,12 +370,12 @@ func NewAcceptEDILoadTenderTool(decider ediTransferDecider) agentports.AgentTool
 
 func NewDeclineEDILoadTenderTool(decider ediTransferDecider) agentports.AgentTool {
 	return &EdiTransferDecisionTool{edi: decider, decision: transferDecision{
-		name:   "decline_edi_tender",
-		recipe: []string{"list_edi_transfers", "get_edi_transfer", "decline_edi_tender"},
+		name:   "edi_decline_tender",
+		recipe: []string{"edi_list_transfers", "edi_get_transfer", "edi_decline_tender"},
 		description: "Propose declining a load tender a trading partner sent over EDI, with the " +
 			"reason they are given. Use it when the tender cannot be hauled as sent: a lane or " +
 			"equipment this organization does not run, dates it cannot make, a rate below the " +
-			"customer's agreement. Read it with get_edi_transfer first. A person always " +
+			"customer's agreement. Read it with edi_get_transfer first. A person always " +
 			"decides; an outside partner is sent a 990 decline carrying the reason.",
 		rationale: "Turns down freight a partner offered and sends them the decline; the " +
 			"partner moves the load elsewhere and it cannot be taken back.",
@@ -396,13 +396,13 @@ func NewDeclineEDILoadTenderTool(decider ediTransferDecider) agentports.AgentToo
 
 func NewCancelEDILoadTenderTool(decider ediTransferDecider) agentports.AgentTool {
 	return &EdiTransferDecisionTool{edi: decider, decision: transferDecision{
-		name:        "cancel_edi_tender",
-		recipe:      []string{"list_edi_transfers", "cancel_edi_tender"},
+		name:        "edi_cancel_tender",
+		recipe:      []string{"edi_list_transfers", "edi_cancel_tender"},
 		searchTerms: []string{"recall tender", "withdraw edi tender"},
 		description: "Propose withdrawing a load tender this organization sent to another " +
 			"organization over EDI and that it has not yet answered. The shipment's tender is " +
 			"marked canceled and the receiving organization can no longer accept it. Find it " +
-			"with list_edi_transfers, direction Outbound. A person always decides.",
+			"with edi_list_transfers, direction Outbound. A person always decides.",
 		rationale: "Withdraws freight offered to another organization, which sees the " +
 			"tender canceled; a withdrawn tender is sent afresh, never reopened.",
 		summary: summarizeCancelTender,
@@ -420,12 +420,12 @@ func NewCancelEDILoadTenderTool(decider ediTransferDecider) agentports.AgentTool
 
 func NewExpireEDILoadTenderTool(decider ediTransferDecider) agentports.AgentTool {
 	return &EdiTransferDecisionTool{edi: decider, decision: transferDecision{
-		name:   "expire_edi_tender",
-		recipe: []string{"list_edi_transfers", "expire_edi_tender"},
+		name:   "edi_expire_tender",
+		recipe: []string{"edi_list_transfers", "edi_expire_tender"},
 		description: "Propose closing an EDI load tender that went unanswered past the time " +
 			"it had to be answered in, sent or received. Nobody can accept it afterwards, and " +
 			"the shipment it was tendered from is marked expired. Check the dates with " +
-			"get_edi_transfer first. A person always decides.",
+			"edi_get_transfer first. A person always decides.",
 		rationale: "Closes a tender on both sides of the trading relationship, which the " +
 			"other side sees; an expired tender is sent afresh, never reopened.",
 		summary: summarizeExpireTender,

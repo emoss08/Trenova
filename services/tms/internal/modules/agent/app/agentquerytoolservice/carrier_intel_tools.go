@@ -84,7 +84,7 @@ func newListCarrierIntelEventsTool(
 	return &listCarrierIntelEventsTool{events: events}
 }
 
-func (t *listCarrierIntelEventsTool) Name() string { return "list_carrier_intel_events" }
+func (t *listCarrierIntelEventsTool) Name() string { return "carrier_list_intelligence_events" }
 
 func (t *listCarrierIntelEventsTool) Description() string {
 	return "List carrier intelligence events, newest first: changes found on carriers' " +
@@ -92,8 +92,8 @@ func (t *listCarrierIntelEventsTool) Description() string {
 		"the severity, what the rule did, the summary, when it was detected and whether " +
 		"anyone acknowledged or resolved it. Filter by status (openOnly for the ones not " +
 		"settled yet), severity, category such as Authority or Insurance, a carrier, or the " +
-		"days it was detected. Pass a row's id to get_carrier_intel_event for its prior and " +
-		"current values, or to acknowledge_carrier_intel_event or resolve_carrier_intel_event."
+		"days it was detected. Pass a row's id to carrier_get_intelligence_event for its prior and " +
+		"current values, or to carrier_acknowledge_intelligence_event or carrier_resolve_intelligence_event."
 }
 
 func (t *listCarrierIntelEventsTool) SearchTerms() []string {
@@ -123,7 +123,7 @@ func (t *listCarrierIntelEventsTool) ParamSchema() map[string]any {
 		),
 		paramCarrierID: agenttoolschema.RecordIDText(
 			permission.ResourceCarrier,
-			"Only this carrier's events, by id from list_carriers or get_carrier.",
+			"Only this carrier's events, by id from carrier_list or carrier_get.",
 		),
 		paramQuery: jsonschemautils.Text(
 			"Words to find in the carrier's name, its DOT number or the event's summary.",

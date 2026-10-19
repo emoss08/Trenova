@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// A subject type with no table is one raise_exception refuses outright, so a
+// A subject type with no table is one agent_raise_exception refuses outright, so a
 // new kind of subject has to say where its records live.
 func TestEverySubjectTypeHasATable(t *testing.T) {
 	t.Parallel()

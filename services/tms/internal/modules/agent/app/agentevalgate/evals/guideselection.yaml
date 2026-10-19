@@ -1,4 +1,4 @@
-# Questions about Trenova itself and the product guide pages find_in_trenova
+# Questions about Trenova itself and the product guide pages agent_find_page
 # should answer them from. A case passes top-1 when the first page is one of
 # `expect`, and recall@5 when one of them is among the first five. Keyword and
 # hybrid floors are in guideselection.floors.json, set with -update, never by

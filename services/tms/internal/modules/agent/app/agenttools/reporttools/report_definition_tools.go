@@ -96,7 +96,7 @@ func reportMetadataProperties() map[string]any {
 	}
 }
 
-// reportMetadata is what create_report and update_report read besides the
+// reportMetadata is what report_create and report_update read besides the
 // definition itself. Each field is optional on both, so a change to one of
 // them on update leaves the rest as they were.
 type reportMetadata struct {
@@ -227,7 +227,7 @@ func readDefinition(params map[string]any, required bool) (*report.Definition, e
 		if required {
 			return nil, errors.New(
 				"missing required parameter \"definition\": the report's dataset, columns " +
-					"and filters, in the shape describe_report returns",
+					"and filters, in the shape report_get returns",
 			)
 		}
 
@@ -245,38 +245,38 @@ func NewCreateReportTool(reports reportDefinitionWriter) agentports.AgentTool {
 	return &CreateReportTool{reports: reports}
 }
 
-func (t *CreateReportTool) Name() string { return "create_report" }
+func (t *CreateReportTool) Name() string { return "report_create" }
 
 func (t *CreateReportTool) Description() string {
 	return "Save a new custom report from a definition you wrote. Pick the dataset with " +
-		"list_report_datasets, the fields with describe_report_dataset, and run " +
-		"preview_report on the definition before proposing it. Send the report once, " +
+		"report_list_datasets, the fields with report_get_dataset, and run " +
+		"report_preview on the definition before proposing it. Send the report once, " +
 		"inside definition: its dataset, columns, filters and sort never go beside it. " +
 		"For \"shipments for customer X\" build a list: dimension columns only, no " +
 		"measures and no bucket, which returns one row per record. Narrow to one " +
-		"related record by its id, from list_customers, on the dataset's own key " +
+		"related record by its id, from customer_list, on the dataset's own key " +
 		"for it — {\"ref\": {\"field\": \"customerId\"}, \"operator\": \"eq\", " +
 		"\"value\": \"cus_…\"} — not by its name, which two records can share and a " +
 		"rename changes. Totals by month or customer are the only reason to add a " +
-		"measure or bucket. It saves the report and does not run it; run_report does that."
+		"measure or bucket. It saves the report and does not run it; report_run does that."
 }
 
 func (t *CreateReportTool) Prerequisites() []string {
 	return []string{
-		"list_report_datasets",
-		"describe_report_dataset",
-		"preview_report",
-		"list_customers",
+		"report_list_datasets",
+		"report_get_dataset",
+		"report_preview",
+		"customer_list",
 	}
 }
 
 func (t *CreateReportTool) Recipe() []string {
 	return []string{
-		"list_report_datasets",
-		"describe_report_dataset",
-		"preview_report",
-		"create_report",
-		"run_report",
+		"report_list_datasets",
+		"report_get_dataset",
+		"report_preview",
+		"report_create",
+		"report_run",
 	}
 }
 
@@ -400,7 +400,7 @@ func NewUpdateReportTool(reports reportDefinitionWriter) agentports.AgentTool {
 	return &UpdateReportTool{reports: reports}
 }
 
-func (t *UpdateReportTool) Name() string { return "update_report" }
+func (t *UpdateReportTool) Name() string { return "report_update" }
 
 func (t *UpdateReportTool) SearchTerms() []string {
 	return []string{"rename report", "share report", "visibility", "edit report"}
@@ -410,9 +410,9 @@ func (t *UpdateReportTool) Description() string {
 	return "Change a saved report the person owns: its definition, name, description, " +
 		"category, tags, visibility or default format. Only what you send changes; " +
 		"leave a field out to keep it. To adjust the columns or filters, call " +
-		"describe_report, edit the definition it returns, check the result with " +
-		"preview_report, and send the whole edited definition here — not a " +
-		"fragment. A built-in report has no definitionId; fork_report gives the " +
+		"report_get, edit the definition it returns, check the result with " +
+		"report_preview, and send the whole edited definition here — not a " +
+		"fragment. A built-in report has no definitionId; report_fork gives the " +
 		"person a copy of it that this tool can then change."
 }
 
@@ -420,7 +420,7 @@ func (t *UpdateReportTool) ParamSchema() map[string]any {
 	properties := reportMetadataProperties()
 	properties["definitionId"] = agenttoolschema.RecordIDText(
 		permission.ResourceReport,
-		"The definitionId of the saved report, from list_reports or describe_report.",
+		"The definitionId of the saved report, from report_list or report_get.",
 	)
 	properties[paramReportName] = map[string]any{"type": "string", "description": reportNameNote}
 	properties["definition"] = report.DefinitionJSONSchema()
@@ -536,7 +536,7 @@ func (t *UpdateReportTool) prepare(
 		if errortypes.IsNotFoundError(err) {
 			return nil, nil, fmt.Errorf(
 				"there is no saved report with the id %q that you can see; call "+
-					"list_reports for the ones that exist",
+					"report_list for the ones that exist",
 				definitionID.String(),
 			)
 		}
@@ -545,7 +545,7 @@ func (t *UpdateReportTool) prepare(
 	}
 	if existing.OwnerID != params.Actor.UserID {
 		return nil, nil, fmt.Errorf(
-			"%q belongs to someone else, so only they can change it; create_report "+
+			"%q belongs to someone else, so only they can change it; report_create "+
 				"can build the person their own version from its definition",
 			existing.Name,
 		)
@@ -620,11 +620,11 @@ func NewForkReportTool(reports reportDefinitionWriter) agentports.AgentTool {
 	return &ForkReportTool{reports: reports}
 }
 
-func (t *ForkReportTool) Name() string { return "fork_report" }
+func (t *ForkReportTool) Name() string { return "report_fork" }
 
 func (t *ForkReportTool) Description() string {
 	return "Give the person their own copy of a built-in report, so it can be adjusted " +
-		"with update_report: the built-in catalog cannot be edited in place. The " +
+		"with report_update: the built-in catalog cannot be edited in place. The " +
 		"copy keeps the original's columns, filters and parameters and belongs to " +
 		"the person you are acting for. Name it for what they mean to change, " +
 		"such as \"AR aging, 60-day buckets\"."
@@ -636,7 +636,7 @@ func (t *ForkReportTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"reportKey": map[string]any{
 				"type":        "string",
-				"description": "The reportKey of the built-in report, from list_reports.",
+				"description": "The reportKey of the built-in report, from report_list.",
 			},
 			paramReportName: map[string]any{
 				"type":        "string",
@@ -676,7 +676,7 @@ func (t *ForkReportTool) Execute(
 }
 
 // ExecuteWithResult forks the built-in report and names the copy by the id
-// describe_report, run_report and update_report take.
+// report_get, report_run and report_update take.
 func (t *ForkReportTool) ExecuteWithResult(
 	ctx context.Context,
 	params agentports.ToolExecuteParams,

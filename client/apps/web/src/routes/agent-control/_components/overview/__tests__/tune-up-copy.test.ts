@@ -10,7 +10,7 @@ const NOW = 1_800_000_000;
 const DAY = 86_400;
 
 const labels: TuneUpLabels = {
-  tool: (name) => (name === "assign_move" ? "Assign move" : name),
+  tool: (name) => (name === "dispatch_assign_move" ? "Assign move" : name),
   task: (task) => (task === "Embedding" ? "Embedding" : `Task ${task}`),
   day: (unix) => `day-${unix}`,
   now: NOW,
@@ -62,7 +62,7 @@ describe("tuneUpCopy", () => {
     const automatic = tuneUpCopy(
       tuneUp({
         kind: "RaiseToolTier",
-        toolName: "assign_move",
+        toolName: "dispatch_assign_move",
         evidence: {
           ...tuneUp({}).evidence,
           toTier: "AutoExecute",
@@ -82,7 +82,7 @@ describe("tuneUpCopy", () => {
     const askFirst = tuneUpCopy(
       tuneUp({
         kind: "RaiseToolTier",
-        toolName: "assign_move",
+        toolName: "dispatch_assign_move",
         evidence: {
           ...tuneUp({}).evidence,
           toTier: "ActWithApproval",

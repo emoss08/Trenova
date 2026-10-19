@@ -130,11 +130,11 @@ func TestToolsInKeepsTheCapabilitysToolsInItsOwnOrder(t *testing.T) {
 	assert.Equal(t,
 		[]string{agentextension.ToolWebSearch, agentextension.ToolWebRead},
 		search.ToolsIn([]string{
-			"list_workers", agentextension.ToolWebRead, agentextension.ToolWebSearch,
+			"worker_list", agentextension.ToolWebRead, agentextension.ToolWebSearch,
 			agentextension.ToolReadPortal,
 		}),
 	)
-	assert.Empty(t, search.ToolsIn([]string{"list_workers"}))
+	assert.Empty(t, search.ToolsIn([]string{"worker_list"}))
 }
 
 func TestAWatchIsSetOnlyWithTheWatchTools(t *testing.T) {
@@ -161,7 +161,7 @@ func TestACommandWithoutItsOwnToolsIsHonouredByAnyOfItsCapability(t *testing.T) 
 	assert.True(t, search.HonouredByCall(agentextension.ToolWebSearch))
 	assert.True(t, search.HonouredByCall(agentextension.ToolWebRead))
 	assert.False(t, search.HonouredByCall(agentextension.ToolReadPortal))
-	assert.False(t, search.HonouredByCall("list_workers"))
+	assert.False(t, search.HonouredByCall("worker_list"))
 
 	browser, _ := agentextension.CommandSpecFor(agentextension.CommandBrowser)
 	assert.True(t, browser.HonouredByCall(agentextension.ToolListPortalSites))

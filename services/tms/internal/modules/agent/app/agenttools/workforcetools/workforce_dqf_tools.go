@@ -160,7 +160,7 @@ func DqfToolProviders() []any {
 func verificationIDProperty() map[string]any {
 	return agenttoolschema.KindID(
 		agenttoolschema.IDDescription("The previous employer's verification",
-			"list_employment_verifications"),
+			"worker_list_employment_verifications"),
 		permission.KindEmploymentVerification,
 	)
 }
@@ -195,11 +195,11 @@ func newRecordEmploymentVerificationTool(dqf VerificationKeeper) agentports.Agen
 	properties := verificationEmployerProperties()
 	properties[common.ParamWorkerID] = common.WorkerProperty()
 	spec := withSchema(wfSpec(
-		"record_employment_verification",
+		"worker_record_employment_verification",
 		"File a previous employer on a driver's qualification file so their safety "+
 			"performance history can be asked for (49 CFR 391.23), with who to ask and the "+
 			"dates of employment from the application. It starts Pending; "+
-			"log_employment_verification_request records the request going out.",
+			"worker_record_employment_verification_request records the request going out.",
 		"Adds a previous employer to the qualification file inside Trenova; nothing is sent "+
 			"to the employer, and it is corrected or removed the same way.",
 		permission.ResourceQualification,
@@ -416,7 +416,7 @@ func newUpdateEmploymentVerificationTool(dqf VerificationKeeper) agentports.Agen
 		"document they sent.")
 	properties[wfParamDocument] = wfDocumentProperty()
 	spec := targeting(withSchema(wfSpec(
-		"update_employment_verification",
+		"worker_update_employment_verification",
 		"Correct a previous employer on the qualification file, or record their answer. "+
 			"The answer is when it came back, the accidents and drug and alcohol violations "+
 			"it reports, the findings and the document. Give only what changes, from the answer "+
@@ -494,7 +494,7 @@ type verificationRequestLog struct {
 
 func newLogEmploymentVerificationRequestTool(dqf VerificationKeeper) agentports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
-		"log_employment_verification_request",
+		"worker_record_employment_verification_request",
 		"Record that a previous employer was asked for the driver's safety performance "+
 			"history today (Requested), or chased again when they have not answered "+
 			"(FollowUp). Each follow-up is counted and dated as the good-faith effort 49 CFR "+
@@ -593,7 +593,7 @@ func newLogEmploymentVerificationRequestTool(dqf VerificationKeeper) agentports.
 
 func newDeleteEmploymentVerificationTool(dqf VerificationKeeper) agentports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
-		"delete_employment_verification",
+		"worker_delete_employment_verification",
 		"Remove a previous employer filed on the qualification file in error, such as a "+
 			"duplicate. A settled investigation is corrected, not removed.",
 		"Removes a previous employer from the qualification file; the audit trail keeps what "+

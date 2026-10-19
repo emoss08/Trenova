@@ -32,16 +32,16 @@ const (
 var toolMinutesSaved = map[string]int{
 	// Dispatch. Covering a move means reading the board, checking hours and
 	// equipment, and telling somebody.
-	"assign_move":           12,
-	"plan_dispatch":         20,
-	"rank_move_candidates":  8,
-	"shipment_place_hold":   4,
-	"shipment_release_hold": 4,
-	"record_stop_actual":    2,
-	"log_check_call":        3,
-	"shipment_cancel":       6,
-	"shipment_create":       15,
-	"quote_shipment":        8,
+	"dispatch_assign_move":        12,
+	"dispatch_plan":               20,
+	"dispatch_rank_candidates":    8,
+	"shipment_place_hold":         4,
+	"shipment_release_hold":       4,
+	"dispatch_record_stop_actual": 2,
+	"dispatch_record_check_call":  3,
+	"shipment_cancel":             6,
+	"shipment_create":             15,
+	"rate_quote":                  8,
 
 	// Billing. A charge correction is a hunt through the rate and the
 	// invoice before anything is typed.
@@ -53,29 +53,29 @@ var toolMinutesSaved = map[string]int{
 	"shipment_request_documents":                5,
 
 	// Communication. Writing the message is most of the cost.
-	"email_customer":       8,
-	"notify_driver":        4,
+	"customer_send_email":  8,
+	"worker_send_message":  4,
 	"shipment_add_comment": 2,
 
 	// Compliance and safety.
-	"approve_worker_pto":        3,
-	"reject_worker_pto":         3,
-	"cancel_worker_pto":         3,
-	"resolve_service_failure":   10,
-	"evaluate_service_failures": 15,
+	"worker_approve_pto":                  3,
+	"worker_reject_pto":                   3,
+	"worker_cancel_pto":                   3,
+	"exception_resolve_service_failure":   10,
+	"exception_evaluate_service_failures": 15,
 
 	// Reporting. Building a definition by hand is the expensive one; running
 	// a saved report is a click.
-	"create_report": 25,
-	"fork_report":   10,
-	"run_report":    1,
+	"report_create": 25,
+	"report_fork":   10,
+	"report_run":    1,
 
 	// Bookkeeping the agent does on itself. Real, but small.
-	"dismiss_insight":        1,
-	"raise_exception":        readMinutesSaved,
-	"flag_for_manual_review": readMinutesSaved,
-	"remember":               readMinutesSaved,
-	"forget_memory":          readMinutesSaved,
+	"insight_dismiss":       1,
+	"agent_raise_exception": readMinutesSaved,
+	"agent_request_review":  readMinutesSaved,
+	"agent_create_memory":   readMinutesSaved,
+	"agent_retire_memory":   readMinutesSaved,
 }
 
 // MinutesSavedFor is what one carried-out run of a tool is worth.

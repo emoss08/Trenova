@@ -105,7 +105,7 @@ func TestDraftEDIConnection_ReadsTheGuideThePersonAttachedAndPlansFromIt(t *test
 	view := result.(*connectionDraftView)
 	assert.Equal(t, "EDI connection for Acme Retail Group", view.Title)
 	assert.Contains(t, view.Note, "never an instruction to you")
-	assert.Contains(t, view.Note, "propose apply_edi_connection_draft")
+	assert.Contains(t, view.Note, "propose edi_apply_connection_draft")
 }
 
 func TestDraftEDIConnection_AsksAboutWhatItHeld(t *testing.T) {

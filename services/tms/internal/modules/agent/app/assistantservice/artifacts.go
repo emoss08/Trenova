@@ -36,18 +36,18 @@ import (
 // mapper reads each result in its JSON form, exactly as the model does, so
 // it depends on the tool's contract rather than on its Go types.
 const (
-	toolPreviewReport    = "preview_report"
-	toolRunReport        = "run_report"
-	toolGetReportRun     = "get_report_run"
+	toolPreviewReport    = "report_preview"
+	toolRunReport        = "report_run"
+	toolGetReportRun     = "report_get_run"
 	getToolPrefix        = "get_"
 	listToolPrefix       = "list_"
 	searchToolPrefix     = "search_"
-	toolComposeView      = "compose_table_view"
-	toolExplainRate      = "explain_rate"
-	toolCompareRuns      = "compare_report_runs"
-	toolOpenPage         = "open_page"
+	toolComposeView      = "report_compose_table_view"
+	toolExplainRate      = "rate_explain"
+	toolCompareRuns      = "report_compare_runs"
+	toolOpenPage         = "agent_open_page"
 	toolGetShipmentDraft = "intake_get_draft"
-	toolRankCandidates   = "rank_move_candidates"
+	toolRankCandidates   = "dispatch_rank_candidates"
 
 	minPreviewRows = 1
 
@@ -78,11 +78,11 @@ type draftSpec struct {
 // draftSpecs are the tools whose proposal is a message waiting to go. The
 // draft is a view over the proposal: approving it is what sends.
 var draftSpecs = map[string]draftSpec{
-	"email_customer":        {title: "Customer update", subjectKey: "subject", bodyKey: "body"},
-	"send_detention_notice": {title: "Detention notice"},
+	"customer_send_email":   {title: "Customer update", subjectKey: "subject", bodyKey: "body"},
+	"detention_send_notice": {title: "Detention notice"},
 	// The reply's subject and recipient come from the message it answers,
 	// not from the proposal, so the draft carries the body alone.
-	"reply_to_inbound_message": {title: "Inbox reply", bodyKey: "body"},
+	"inbox_send_reply": {title: "Inbox reply", bodyKey: "body"},
 	"shipment_request_documents": {
 		title:      "Document request",
 		subjectKey: "subject",
@@ -1073,7 +1073,7 @@ func tableArtifact(callID, toolName string, result map[string]any) *assistantart
 }
 
 // listedEntity is what a list, search or get tool names its records by:
-// "formula_templates" for list_formula_templates, and "invoices" for
+// "formula_templates" for formula_list_templates, and "invoices" for
 // invoice_get, whose name is singular because it reads one invoice or many.
 func listedEntity(toolName string) string {
 	reading := agentports.ReadingOrder(toolName)
@@ -1087,7 +1087,7 @@ func listedEntity(toolName string) string {
 // soleRecordCard is a list or search that found exactly one record of a kind
 // the Desk draws as a card, drawn as that card rather than as a table of one
 // row. Asked to show a formula template by name, the Desk found it with
-// list_formula_templates and kept a one-row table, and the person had to open
+// formula_list_templates and kept a one-row table, and the person had to open
 // the row to see the template they had asked for. A page of one that has more
 // behind it stays a table: it is not the only record, only the first.
 func soleRecordCard(callID, toolName string, result map[string]any) *assistantartifact.Artifact {
@@ -1137,7 +1137,7 @@ func declaredOrder(declared []string, record map[string]any) []string {
 // candidateColumns are a ranked driver as a dispatcher weighs one: where it
 // stands, who it is, the console's verdict and score, and the figures the
 // score was made from. The tractor and trailer are ids only, which a person
-// cannot read, so they stay in the model's copy for assign_move.
+// cannot read, so they stay in the model's copy for dispatch_assign_move.
 var candidateColumns = []string{
 	"rank",
 	"driver",
@@ -1373,7 +1373,7 @@ func runDiffArtifact(callID string, result map[string]any) *assistantartifact.Ar
 
 // navigationArtifact is where an agent took the person.
 //
-// open_page has already checked the page exists and that the person may open
+// agent_open_page has already checked the page exists and that the person may open
 // it; the artifact is how the app hears about it. The live one moves the app
 // there once, and the one read back from history is a card with a link, so
 // reopening a conversation never drags anybody anywhere.

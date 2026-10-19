@@ -50,12 +50,12 @@ func (t *RequestMissingDocsTool) Name() string { return "shipment_request_docume
 func (t *RequestMissingDocsTool) Description() string {
 	return "Request missing documentation from a party by sending them an email. Use it " +
 		"when a POD, BOL or other paper a shipment needs has not arrived. Call " +
-		"list_email_profiles first for profileId; the organization's template adds the " +
+		"inbox_list_email_profiles first for profileId; the organization's template adds the " +
 		"greeting, letterhead and sign-off. The email is sent and cannot be recalled."
 }
 
 func (t *RequestMissingDocsTool) Prerequisites() []string {
-	return []string{"list_email_profiles"}
+	return []string{"inbox_list_email_profiles"}
 }
 
 func (t *RequestMissingDocsTool) SearchTerms() []string {
@@ -68,7 +68,7 @@ func (t *RequestMissingDocsTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"profileId": agenttoolschema.RecordIDText(
 				permission.ResourceEmailProfile,
-				"The email profile to send from, from list_email_profiles; pick "+
+				"The email profile to send from, from inbox_list_email_profiles; pick "+
 					"billing for a document request when there is one.",
 			),
 			"to": map[string]any{

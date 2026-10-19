@@ -156,7 +156,7 @@ func orderMoneyProperty(what string) map[string]any {
 }
 
 func orderProperties(customerRequired bool) map[string]any {
-	customer := "The customer the order is for, from list_customers."
+	customer := "The customer the order is for, from customer_list."
 	if !customerRequired {
 		customer += " Only an order with no shipments can change customer."
 	}

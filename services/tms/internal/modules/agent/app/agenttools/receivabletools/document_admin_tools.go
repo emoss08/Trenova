@@ -28,7 +28,7 @@ const maxDocumentsPerDelete = 25
 
 const maxDocumentVersion = 10_000
 
-const documentSupplier = "from search_documents or get_document_summary"
+const documentSupplier = "from document_list or document_get_summary"
 
 const documentKind = "document"
 
@@ -104,7 +104,7 @@ func deleteDocumentsRequest(
 
 func NewDeleteDocumentsTool(documents DocumentKeeper) agentports.AgentTool {
 	return common.NewReceivableTool(&common.ReceivableSpec{
-		Name: "delete_documents",
+		Name: "document_delete",
 		Description: "Delete documents that should not be on file, such as a duplicate " +
 			"upload or a scan of the wrong paperwork. Every stored version of each goes with " +
 			"it and nothing brings them back, so it is always proposed.",
@@ -244,7 +244,7 @@ func restoreTarget(
 
 func NewRestoreDocumentVersionTool(documents DocumentKeeper) agentports.AgentTool {
 	return common.NewReceivableTool(&common.ReceivableSpec{
-		Name: "restore_document_version",
+		Name: "document_restore_version",
 		Description: "Make an earlier version of a document the current one again, when " +
 			"the newest upload was the wrong file. Every version is kept, so a later restore " +
 			"can bring the newer one back.",

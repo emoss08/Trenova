@@ -34,7 +34,7 @@ type candidateRanker interface {
 // rankMoveCandidatesTool scores every eligible driver for an uncovered move
 // the way the dispatch console does: hours of service, deadhead, equipment,
 // slack against the pickup window. It is the read that should come before
-// assign_move, so the proposal names a driver the desk would have picked.
+// dispatch_assign_move, so the proposal names a driver the desk would have picked.
 type rankMoveCandidatesTool struct {
 	ranker candidateRanker
 }
@@ -43,14 +43,14 @@ func newRankMoveCandidatesTool(ranker candidateRanker) agentports.AgentQueryTool
 	return &rankMoveCandidatesTool{ranker: ranker}
 }
 
-func (t *rankMoveCandidatesTool) Name() string { return "rank_move_candidates" }
+func (t *rankMoveCandidatesTool) Name() string { return "dispatch_rank_candidates" }
 
 func (t *rankMoveCandidatesTool) Description() string {
 	return "Rank the drivers who could cover a shipment move, scored as the dispatch " +
 		"console scores them: hours left, deadhead, slack against the window, equipment " +
 		"fit. Each candidate carries a verdict, " +
 		"the findings behind it and the factors that made its score. Call this before " +
-		"assign_move and propose from the top of the list unless a finding says why not."
+		"dispatch_assign_move and propose from the top of the list unless a finding says why not."
 }
 
 func (t *rankMoveCandidatesTool) ParamSchema() map[string]any {
@@ -59,7 +59,7 @@ func (t *rankMoveCandidatesTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"shipmentMoveId": agenttoolschema.RecordIDText(permission.ResourceShipmentMove,
 				"The move to cover: a move's id from shipment_get (each move in its "+
-					"summary carries one), a moveId from get_dispatch_board, a move's id "+
+					"summary carries one), a moveId from dispatch_get_board, a move's id "+
 					"from shipment_get_tracking, or this run's subject. Look it up first; "+
 					"never send a placeholder."),
 			"limit": map[string]any{
@@ -73,7 +73,7 @@ func (t *rankMoveCandidatesTool) ParamSchema() map[string]any {
 			"fleetCodeIds": agenttoolschema.OfResource(map[string]any{
 				"type":        "array",
 				"items":       map[string]any{"type": "string"},
-				"description": "Limit candidates to these fleets, by id from list_fleet_codes.",
+				"description": "Limit candidates to these fleets, by id from masterdata_list_fleet_codes.",
 			}, permission.ResourceFleetCode),
 		},
 		"required":             []string{"shipmentMoveId"},
@@ -177,7 +177,7 @@ func candidatesViewOf(
 	view.Count = len(view.Candidates)
 	if view.Count == 0 {
 		view.Note = "No driver can cover this move as things stand. Ask with includeBlocked " +
-			"to see who was ruled out and why, or consider a carrier with shop_carriers."
+			"to see who was ruled out and why, or consider a carrier with carrier_shop."
 	}
 
 	return view
@@ -260,11 +260,11 @@ func newPlanDispatchTool(planner dispatchPlanner) agentports.AgentQueryTool {
 	return &planDispatchTool{planner: planner}
 }
 
-func (t *planDispatchTool) Name() string { return "plan_dispatch" }
+func (t *planDispatchTool) Name() string { return "dispatch_plan" }
 
 func (t *planDispatchTool) Description() string {
 	return "Dry-run the dispatch optimizer over a window's uncovered moves: the driver it " +
-		"would put on each move and why, and what blocked the rest. Nothing is assigned. Use assign_move " +
+		"would put on each move and why, and what blocked the rest. Nothing is assigned. Use dispatch_assign_move " +
 		"on the lines you agree with, and raise what stays uncovered."
 }
 
@@ -279,13 +279,13 @@ func (t *planDispatchTool) ParamSchema() map[string]any {
 			"shipmentMoveIds": agenttoolschema.OfResource(map[string]any{
 				"type":  "array",
 				"items": map[string]any{"type": "string"},
-				"description": "Plan only these moves, by moveId from get_dispatch_board. " +
+				"description": "Plan only these moves, by moveId from dispatch_get_board. " +
 					"Empty means every uncovered move in the window.",
 			}, permission.ResourceShipmentMove),
 			"fleetCodeIds": agenttoolschema.OfResource(map[string]any{
 				"type":        "array",
 				"items":       map[string]any{"type": "string"},
-				"description": "Limit drivers to these fleets, by id from list_fleet_codes.",
+				"description": "Limit drivers to these fleets, by id from masterdata_list_fleet_codes.",
 			}, permission.ResourceFleetCode),
 		},
 		"additionalProperties": false,
@@ -370,7 +370,7 @@ func planViewOf(plan *agentports.DispatchPlan) *planView {
 		TotalScore:   plan.TotalScore,
 		Assignments:  make([]plannedAssignmentView, 0, len(plan.Assignments)),
 		Uncovered:    make([]uncoveredMoveView, 0, len(plan.Uncovered)),
-		Note: "This is a dry run: nothing was assigned. Use assign_move for each " +
+		Note: "This is a dry run: nothing was assigned. Use dispatch_assign_move for each " +
 			"line you want to act on.",
 	}
 	for _, line := range plan.Assignments {

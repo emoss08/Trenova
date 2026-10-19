@@ -25,7 +25,7 @@ import (
 	"github.com/emoss08/trenova/shared/typeutils"
 )
 
-const tractorIDSource = "from list_tractors"
+const tractorIDSource = "from equipment_list_tractors"
 
 const (
 	paramFuelIndexID       = "fuelIndexId"
@@ -125,13 +125,13 @@ func newListFuelPurchasesTool(
 	repo fuelpurchaseports.FuelPurchaseRepository,
 ) agentports.AgentQueryTool {
 	return newListTool(listSpec{
-		name:         "list_fuel_purchases",
+		name:         "fuel_list_purchases",
 		entityPlural: "fuel purchases",
 		summary: "List fuel bought for tractors, newest first, with where it was bought for " +
 			"IFTA, the fuel type, the gallons and the amount. Each also says whether tax was " +
 			"paid at the pump. Use it to find a purchase to correct with " +
-			"correct_fuel_purchase or delete_fuel_purchase, or to check a receipt was " +
-			"already recorded before record_fuel_purchase.",
+			"fuel_correct_purchase or fuel_delete_purchase, or to check a receipt was " +
+			"already recorded before fuel_record_purchase.",
 		resource: permission.ResourceFuelPurchase,
 		config:   querybuilder.GetFieldConfiguration((*fuelpurchase.FuelPurchase)(nil)),
 		fields: []listField{
@@ -151,7 +151,7 @@ func newListFuelPurchasesTool(
 			{Name: "transactionReference", Kind: filterText},
 			{Name: "cardLastFour", Kind: filterText},
 			{Name: fieldTractorID, Kind: filterText, Note: tractorIDSource},
-			{Name: "importBatchId", Kind: filterText, Note: "from list_fuel_purchase_imports"},
+			{Name: "importBatchId", Kind: filterText, Note: "from fuel_list_purchase_imports"},
 			{Name: fieldCreatedAt, Kind: filterDate, Sortable: true},
 		},
 		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
@@ -187,12 +187,12 @@ type fuelCardRow struct {
 
 func newListFuelCardsTool(repo fuelpurchaseports.FuelPurchaseRepository) agentports.AgentQueryTool {
 	return newListTool(listSpec{
-		name:         "list_fuel_cards",
+		name:         "fuel_list_cards",
 		entityPlural: "fuel cards",
 		summary: "List the organization's fuel cards with the provider, the last four " +
 			"digits, the status and the tractor or driver each is assigned to. A card a feed " +
 			"discovered is Suspended and unassigned until someone assigns it with " +
-			"assign_fuel_card, and until then its purchases wait in their import.",
+			"fuel_assign_card, and until then its purchases wait in their import.",
 		resource: permission.ResourceFuelCard,
 		config:   querybuilder.GetFieldConfiguration((*fuelpurchase.FuelCard)(nil)),
 		fields: []listField{
@@ -295,13 +295,13 @@ func newListFuelPurchaseImportsTool(
 	repo fuelpurchaseports.FuelPurchaseRepository,
 ) agentports.AgentQueryTool {
 	return newListTool(listSpec{
-		name:         "list_fuel_purchase_imports",
+		name:         "fuel_list_purchase_imports",
 		entityPlural: "fuel purchase imports",
 		summary: "List fuel card statements and feed runs staged for import, newest first, " +
 			"with how many rows are ready to commit, already on file, duplicated or in error. " +
-			"A Parsed import waits for commit_fuel_purchase_import or " +
-			"discard_fuel_purchase_import; rows held because a card or tractor was unknown " +
-			"are worked out again with resolve_fuel_purchase_import_rows.",
+			"A Parsed import waits for fuel_commit_purchase_import or " +
+			"fuel_discard_purchase_import; rows held because a card or tractor was unknown " +
+			"are worked out again with fuel_resolve_purchase_import_rows.",
 		resource: permission.ResourceFuelPurchaseImport,
 		config:   querybuilder.GetFieldConfiguration((*fuelpurchase.ImportBatch)(nil)),
 		fields: []listField{
@@ -354,19 +354,19 @@ func newListFuelIndexPricesTool(
 	return &listFuelIndexPricesTool{prices: prices}
 }
 
-func (t *listFuelIndexPricesTool) Name() string { return "list_fuel_index_prices" }
+func (t *listFuelIndexPricesTool) Name() string { return "rate_list_fuel_index_prices" }
 
 func (t *listFuelIndexPricesTool) Description() string {
 	return "List the prices on file for one fuel index, newest first, with the day each " +
 		"applies to and whether a person entered it or it was fetched. Only a manual price " +
-		"on a custom index can be corrected, with correct_fuel_index_price; " +
-		"record_fuel_index_price adds the next one."
+		"on a custom index can be corrected, with rate_correct_fuel_index_price; " +
+		"rate_record_fuel_index_price adds the next one."
 }
 
 func (t *listFuelIndexPricesTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
 		paramFuelIndexID: agenttoolschema.KindID("The fuel index, from "+
-			"get_fuel_surcharge_rates. Never guess one.", permission.KindFuelIndex),
+			"rate_list_fuel_surcharge_programs. Never guess one.", permission.KindFuelIndex),
 		"from": stringParam("The earliest price day to include, YYYY-MM-DD."),
 		"to":   stringParam("The latest price day to include, YYYY-MM-DD."),
 		paramLimit: intParam(
@@ -456,12 +456,12 @@ func newListIFTAJurisdictionsTool(repo iftaports.IFTARepository) agentports.Agen
 	return &listIFTAJurisdictionsTool{repo: repo}
 }
 
-func (t *listIFTAJurisdictionsTool) Name() string { return "list_ifta_jurisdictions" }
+func (t *listIFTAJurisdictionsTool) Name() string { return "fuel_list_ifta_jurisdictions" }
 
 func (t *listIFTAJurisdictionsTool) Description() string {
 	return "List the active states and provinces fuel tax is reported by, with each " +
 		"one's two-letter code and whether it is an IFTA member. Its id is what " +
-		"record_fuel_purchase and record_ifta_mileage_entry take. Narrow by country code, " +
+		"fuel_record_purchase and fuel_record_ifta_mileage_entry take. Narrow by country code, " +
 		"US, CA or MX."
 }
 
@@ -527,12 +527,12 @@ type iftaReturnRow struct {
 
 func newListIFTAReturnsTool(repo iftaports.IFTARepository) agentports.AgentQueryTool {
 	return newListTool(listSpec{
-		name:         "list_ifta_returns",
+		name:         "fuel_list_ifta_returns",
 		entityPlural: "IFTA returns",
 		summary: "List the organization's quarterly IFTA fuel tax returns with their status, " +
 			"miles, gallons, the net tax due and how many problems each carries. A Draft is " +
-			"recomputed with recompute_ifta_return or deleted with delete_ifta_return; a " +
-			"Filed return is corrected with amend_ifta_return.",
+			"recomputed with fuel_recalculate_ifta_return or deleted with fuel_delete_ifta_return; a " +
+			"Filed return is corrected with fuel_amend_ifta_return.",
 		resource: permission.ResourceIFTAReturn,
 		config:   querybuilder.GetFieldConfiguration((*ifta.Return)(nil)),
 		fields: []listField{
@@ -599,11 +599,11 @@ type iftaMileageRow struct {
 
 func newListIFTAMileageEntriesTool(repo iftaports.IFTARepository) agentports.AgentQueryTool {
 	return newListTool(listSpec{
-		name:         "list_ifta_mileage_entries",
+		name:         "fuel_list_ifta_mileage_entries",
 		entityPlural: "IFTA mileage entries",
 		summary: "List the jurisdiction miles entered by hand or from telematics rather than " +
 			"routed from moves. Each has the tractor, the state or province, the day and the " +
-			"quarter it counts in. correct_ifta_mileage_entry and delete_ifta_mileage_entry " +
+			"quarter it counts in. fuel_correct_ifta_mileage_entry and fuel_delete_ifta_mileage_entry " +
 			"take their ids.",
 		resource: permission.ResourceIFTAJurisdictionMileage,
 		config:   querybuilder.GetFieldConfiguration((*ifta.JurisdictionMileageEntry)(nil)),
@@ -617,7 +617,7 @@ func newListIFTAMileageEntriesTool(repo iftaports.IFTARepository) agentports.Age
 			{Name: fieldQuarter, Kind: filterNumber, Sortable: true},
 			{Name: "traveledAt", Kind: filterDate, Sortable: true},
 			{Name: fieldTractorID, Kind: filterText, Note: tractorIDSource},
-			{Name: fieldJurisdictionID, Kind: filterText, Note: "from list_ifta_jurisdictions"},
+			{Name: fieldJurisdictionID, Kind: filterText, Note: "from fuel_list_ifta_jurisdictions"},
 			{Name: "loaded", Kind: filterBool},
 		},
 		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
@@ -686,7 +686,7 @@ func newListRateImportsTool(
 	return &listRateImportsTool{imports: imports}
 }
 
-func (t *listRateImportsTool) Name() string { return "list_rate_imports" }
+func (t *listRateImportsTool) Name() string { return "rate_list_imports" }
 
 func (t *listRateImportsTool) SearchTerms() []string {
 	return []string{"rate sheet imports", "imports waiting review", "pending rate imports"}
@@ -695,14 +695,14 @@ func (t *listRateImportsTool) SearchTerms() []string {
 func (t *listRateImportsTool) Description() string {
 	return "List rate sheets uploaded against rate agreements, newest first, with the " +
 		"agreement and the day the new rates take effect. Each says how many lanes the " +
-		"sheet adds, changes and removes. A Parsed import waits for commit_rate_import or " +
-		"discard_rate_import."
+		"sheet adds, changes and removes. A Parsed import waits for rate_commit_import or " +
+		"rate_discard_import."
 }
 
 func (t *listRateImportsTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
 		"rateAgreementId": agenttoolschema.RecordIDText(permission.ResourceRateAgreement,
-			"Only the imports against this agreement, from list_rate_agreements."),
+			"Only the imports against this agreement, from rate_list_agreements."),
 		paramLimit: intParam(fmt.Sprintf("How many imports to return, at most %d.", maxListLimit)),
 	})
 }
@@ -732,7 +732,7 @@ func (t *listRateImportsTool) Query(
 		agreementID, err := pulid.Parse(raw)
 		if err != nil {
 			return nil, fmt.Errorf("%q is not a rate agreement id; find it with "+
-				"list_rate_agreements", raw)
+				"rate_list_agreements", raw)
 		}
 		req.RateAgreementID = &agreementID
 	}
@@ -795,7 +795,7 @@ func provideListReportSchedulesTool(schedules *reporting.Service) agentports.Age
 	return &listReportSchedulesTool{schedules: schedules}
 }
 
-func (t *listReportSchedulesTool) Name() string { return "list_report_schedules" }
+func (t *listReportSchedulesTool) Name() string { return "report_list_schedules" }
 
 func (t *listReportSchedulesTool) SearchTerms() []string {
 	return []string{"scheduled", "emailed", "recurring", "subscription"}
@@ -804,14 +804,14 @@ func (t *listReportSchedulesTool) SearchTerms() []string {
 func (t *listReportSchedulesTool) Description() string {
 	return "List reports on a schedule: when each runs, in what formats, who it is emailed " +
 		"to, whether it is on and when it runs next. Only the person who set a schedule up " +
-		"can change it with update_report_schedule or remove it with " +
-		"delete_report_schedule; yours says which are theirs."
+		"can change it with report_update_schedule or remove it with " +
+		"report_delete_schedule; yours says which are theirs."
 }
 
 func (t *listReportSchedulesTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
 		paramReportScheduleDef: agenttoolschema.RecordIDText(permission.ResourceReport,
-			"Only the schedules of this saved report, from list_reports."),
+			"Only the schedules of this saved report, from report_list."),
 		"enabledOnly": boolParam("Only schedules that are switched on."),
 		paramLimit: intParam(fmt.Sprintf("How many schedules to return, at most %d.",
 			maxReportSchedules)),
@@ -834,7 +834,7 @@ func (t *listReportSchedulesTool) Query(
 	if raw := strings.TrimSpace(optionalString(params.Params, paramReportScheduleDef)); raw != "" {
 		parsed, err := pulid.Parse(raw)
 		if err != nil {
-			return nil, fmt.Errorf("%q is not a report id; find it with list_reports", raw)
+			return nil, fmt.Errorf("%q is not a report id; find it with report_list", raw)
 		}
 		definitionID = parsed
 	}

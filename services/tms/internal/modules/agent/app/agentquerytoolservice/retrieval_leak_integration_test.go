@@ -9,18 +9,18 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentevalgate"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
-	"github.com/emoss08/trenova/internal/modules/agent/app/retrievalservice"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/airetrievalrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/conversationrepository"
-	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/retrievalsourcerepository"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentevalgate"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/retrievalservice"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/retrievalsourcerepository"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil/retrievaltest"
@@ -177,7 +177,7 @@ func TestSearchToolsNeverLeakAndMarkEveryRecord(t *testing.T) {
 	queries := append(documents.Queries(), inbox.Queries()...)
 	for _, query := range queries {
 		assertNoLeak(t, leakCheck{
-			tool:      tools["search_documents"],
+			tool:      tools["document_list"],
 			params:    params(permissionports.PrincipalTypeUser, query),
 			idField:   "documentId",
 			entity:    agent.TaintEntityDocument,
@@ -185,7 +185,7 @@ func TestSearchToolsNeverLeakAndMarkEveryRecord(t *testing.T) {
 			forbidden: forbidden,
 		})
 		assertNoLeak(t, leakCheck{
-			tool:      tools["search_documents"],
+			tool:      tools["document_list"],
 			params:    params(permissionports.PrincipalTypeAgent, query),
 			idField:   "documentId",
 			entity:    agent.TaintEntityDocument,
@@ -193,7 +193,7 @@ func TestSearchToolsNeverLeakAndMarkEveryRecord(t *testing.T) {
 			forbidden: forbiddenInBackground,
 		})
 		assertNoLeak(t, leakCheck{
-			tool:      tools["search_inbound_messages"],
+			tool:      tools["inbox_search_inbound_messages"],
 			params:    params(permissionports.PrincipalTypeUser, query),
 			idField:   "id",
 			entity:    agent.TaintEntityInboundMessage,
@@ -246,7 +246,7 @@ func searchTools(
 		if !ok {
 			continue
 		}
-		if name := tool.Name(); name == "search_documents" || name == "search_inbound_messages" {
+		if name := tool.Name(); name == "document_list" || name == "inbox_search_inbound_messages" {
 			tools[name] = tool
 		}
 	}

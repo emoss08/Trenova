@@ -34,7 +34,7 @@ func TestDelegate_HandsTheTurnsTaintDown(t *testing.T) {
 	delegate := reportBuilder()
 	email := agent.TaintMark{
 		Source:   agent.TaintSourceInboundMessage,
-		ToolName: "get_inbound_message",
+		ToolName: "inbox_get_inbound_message",
 		CallID:   "call_earlier",
 	}
 	rt := newRuntime(delegatingTurnScript(delegate.ID.String()),
@@ -60,7 +60,7 @@ func TestDelegate_FoldsTheDelegatesTaintBackUp(t *testing.T) {
 	delegate := reportBuilder()
 	document := agent.TaintMark{
 		Source:   agent.TaintSourceDocument,
-		ToolName: "get_document_summary",
+		ToolName: "document_get_summary",
 		CallID:   "call_d0",
 		Ref:      &agent.RecordRef{EntityType: agent.TaintEntityDocument, ID: "doc_1"},
 	}
@@ -113,7 +113,7 @@ func TestDelegate_AMarkTheTurnAlreadyHadIsNotAnnouncedAgain(t *testing.T) {
 	delegate := reportBuilder()
 	email := agent.TaintMark{
 		Source:   agent.TaintSourceInboundMessage,
-		ToolName: "get_inbound_message",
+		ToolName: "inbox_get_inbound_message",
 		CallID:   "call_earlier",
 	}
 	run := scriptedDelegateRun(delegate)

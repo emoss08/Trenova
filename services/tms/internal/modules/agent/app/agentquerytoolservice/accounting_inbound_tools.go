@@ -124,7 +124,7 @@ func provideListAccountingInboundChangesTool(
 }
 
 func (t *listAccountingInboundChangesTool) Name() string {
-	return "list_accounting_inbound_changes"
+	return "accounting_list_inbound_changes"
 }
 
 func (t *listAccountingInboundChangesTool) Description() string {
@@ -132,7 +132,7 @@ func (t *listAccountingInboundChangesTool) Description() string {
 		"or bills Trenova sent, newest first. Each says what it pays and whether it was brought " +
 		"into Trenova, and if not why. Filter by status, such as Proposed for what waits on " +
 		"a person, by kind, or by reason. Pass a Proposed row's id to " +
-		"apply_accounting_inbound_change or ignore_accounting_inbound_change."
+		"accounting_apply_inbound_change or accounting_ignore_inbound_change."
 }
 
 func (t *listAccountingInboundChangesTool) SearchTerms() []string {

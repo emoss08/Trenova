@@ -26,41 +26,41 @@ const (
 )
 
 var withheldFromEveryTemplate = map[string]string{
-	"approve_rate_agreement":      withheldRateReview,
-	"reject_rate_agreement":       withheldRateReview,
-	"settlement_assign_pay_profile":          withheldPaySetup,
-	"settlement_end_pay_assignment":          withheldPaySetup,
-	"settlement_create_recurring_deduction":  withheldPaySetup,
-	"settlement_update_recurring_deduction":  withheldPaySetup,
-	"settlement_create_recurring_earning":    withheldPaySetup,
-	"settlement_update_recurring_earning":    withheldPaySetup,
-	"settlement_open_escrow_account":         withheldPaySetup,
-	"settlement_update_escrow_account":       withheldPaySetup,
-	"settlement_close_escrow_account":        withheldPaySetup,
-	"draft_manual_journal":        withheldPrivilegedAccounting,
-	"revise_manual_journal_draft": withheldPrivilegedAccounting,
-	"submit_manual_journal":       withheldPrivilegedAccounting,
-	"post_manual_journal":         withheldPrivilegedAccounting,
-	"cancel_manual_journal":       withheldPrivilegedAccounting,
-	"request_journal_reversal":    withheldPrivilegedAccounting,
-	"post_journal_reversal":       withheldPrivilegedAccounting,
-	"cancel_journal_reversal":     withheldPrivilegedAccounting,
-	"open_fiscal_period":          withheldPrivilegedAccounting,
-	"unlock_fiscal_period":        withheldPrivilegedAccounting,
-	"reopen_fiscal_period":        withheldPrivilegedAccounting,
-	"request_accounting_backfill": withheldPrivilegedAccounting,
-	"change_accounting_backfill":  withheldPrivilegedAccounting,
-	"clear_accounting_mapping":    withheldPrivilegedAccounting,
-	"redate_accounting_sync":      withheldPrivilegedAccounting,
-	"forget_memory":               withheldMemory,
-	"settlement_generate_payroll_export":     withheldPayMovement,
-	"settlement_void_payroll_export":         withheldPayMovement,
-	"review_driver_expense":       withheldPayMovement,
-	"save_table_view":             withheldPersonalInterface,
-	"add_home_widget":             withheldPersonalInterface,
-	"remove_home_widget":          withheldPersonalInterface,
-	"arrange_home_layout":         withheldPersonalInterface,
-	"shipment_cancel":             withheldCancelShipment,
+	"rate_approve_agreement":                withheldRateReview,
+	"rate_reject_agreement":                 withheldRateReview,
+	"settlement_assign_pay_profile":         withheldPaySetup,
+	"settlement_end_pay_assignment":         withheldPaySetup,
+	"settlement_create_recurring_deduction": withheldPaySetup,
+	"settlement_update_recurring_deduction": withheldPaySetup,
+	"settlement_create_recurring_earning":   withheldPaySetup,
+	"settlement_update_recurring_earning":   withheldPaySetup,
+	"settlement_open_escrow_account":        withheldPaySetup,
+	"settlement_update_escrow_account":      withheldPaySetup,
+	"settlement_close_escrow_account":       withheldPaySetup,
+	"ledger_create_manual_journal":          withheldPrivilegedAccounting,
+	"ledger_update_manual_journal":          withheldPrivilegedAccounting,
+	"ledger_submit_manual_journal":          withheldPrivilegedAccounting,
+	"ledger_post_manual_journal":            withheldPrivilegedAccounting,
+	"ledger_cancel_manual_journal":          withheldPrivilegedAccounting,
+	"ledger_create_journal_reversal":        withheldPrivilegedAccounting,
+	"ledger_post_journal_reversal":          withheldPrivilegedAccounting,
+	"ledger_cancel_journal_reversal":        withheldPrivilegedAccounting,
+	"ledger_open_fiscal_period":             withheldPrivilegedAccounting,
+	"ledger_unlock_fiscal_period":           withheldPrivilegedAccounting,
+	"ledger_reopen_fiscal_period":           withheldPrivilegedAccounting,
+	"accounting_request_backfill":           withheldPrivilegedAccounting,
+	"accounting_update_backfill":            withheldPrivilegedAccounting,
+	"accounting_clear_mapping":              withheldPrivilegedAccounting,
+	"accounting_redate_sync_record":         withheldPrivilegedAccounting,
+	"agent_retire_memory":                   withheldMemory,
+	"settlement_generate_payroll_export":    withheldPayMovement,
+	"settlement_void_payroll_export":        withheldPayMovement,
+	"settlement_review_driver_expense":      withheldPayMovement,
+	"report_save_table_view":                withheldPersonalInterface,
+	"home_add_widget":                       withheldPersonalInterface,
+	"home_remove_widget":                    withheldPersonalInterface,
+	"home_arrange_layout":                   withheldPersonalInterface,
+	"shipment_cancel":                       withheldCancelShipment,
 }
 
 func TestTemplates_TheFocusedClerksTalkToAPersonAndOnlyPropose(t *testing.T) {
@@ -120,26 +120,26 @@ func TestTemplates_TheMasterDataStewardKeepsTheRecordsEveryoneWorksFrom(t *testi
 
 	tools := agentdefinition.TemplateMasterDataSteward.StarterTools()
 	for _, tool := range []string{
-		"create_carrier", "update_carrier", "update_carrier_status",
-		"create_customer", "update_customer", "update_customer_status",
-		"create_commodity", "update_commodity", "update_commodity_status",
-		"create_hazardous_material", "update_hazardous_material",
-		"update_hazardous_material_status",
-		"create_location", "update_location", "update_location_status",
-		"create_tractor", "update_tractor", "locate_tractor",
-		"create_trailer", "update_trailer", "locate_trailer",
-		"delete_documents", "restore_document_version",
-		"create_table_change_alert", "update_table_change_alert",
-		"set_table_change_alert_status", "delete_table_change_alert",
-		"dismiss_watchtower_item", "file_capture_items", "discard_capture_item",
-		"discard_capture_batch",
-		"list_capture_batches", "list_equipment_manufacturers", "list_table_change_alerts",
-		"list_watchtower_items",
+		"carrier_create", "carrier_update", "carrier_set_status",
+		"customer_create", "customer_update", "customer_set_status",
+		"masterdata_create_commodity", "masterdata_update_commodity", "masterdata_set_commodity_status",
+		"masterdata_create_hazardous_material", "masterdata_update_hazardous_material",
+		"masterdata_set_hazardous_material_status",
+		"location_create", "location_update", "location_set_status",
+		"equipment_create_tractor", "equipment_update_tractor", "equipment_set_tractor_location",
+		"equipment_create_trailer", "equipment_update_trailer", "equipment_set_trailer_location",
+		"document_delete", "document_restore_version",
+		"report_create_table_change_alert", "report_update_table_change_alert",
+		"report_set_table_change_alert_status", "report_delete_table_change_alert",
+		"exception_dismiss_watchtower_item", "inbox_file_capture_item", "inbox_discard_capture_item",
+		"inbox_discard_capture_batch",
+		"inbox_list_capture_batches", "equipment_list_manufacturers", "report_list_table_change_alerts",
+		"exception_list_watchtower_items",
 	} {
 		require.Containsf(t, tools, tool, "the master data steward needs %s", tool)
 	}
 
-	for _, tool := range []string{"assign_move", "invoice_post", "draft_rate_agreement"} {
+	for _, tool := range []string{"dispatch_assign_move", "invoice_post", "rate_create_agreement"} {
 		require.NotContainsf(t, tools, tool, "the master data steward must not hold %s", tool)
 	}
 }
@@ -149,20 +149,20 @@ func TestTemplates_TheWorkforceCoordinatorKeepsWorkerRecordsAndNeverPay(t *testi
 
 	tools := agentdefinition.TemplateWorkforceCoordinator.StarterTools()
 	for _, tool := range []string{
-		"get_worker",
-		"request_worker_pto", "update_worker_pto", "approve_worker_pto", "reject_worker_pto",
-		"cancel_worker_pto", "adjust_worker_pto_balance",
-		"record_worker_injury", "update_worker_injury", "delete_worker_injury",
-		"open_leave_case", "update_leave_case", "close_leave_case",
-		"record_leave_day", "update_leave_day", "delete_leave_day",
-		"start_performance_review", "draft_performance_review", "delete_performance_review",
-		"give_worker_recognition", "delete_worker_recognition",
-		"update_worker_safety_event", "delete_worker_safety_event",
-		"update_safety_violation", "delete_safety_violation",
-		"run_dot_random_draw", "finalize_dot_random_draw", "cancel_dot_random_draw",
-		"cancel_dot_test",
-		"start_worker_checklist", "cancel_worker_checklist",
-		"close_worker_training", "archive_worker_credential",
+		"worker_get",
+		"worker_request_pto", "worker_update_pto", "worker_approve_pto", "worker_reject_pto",
+		"worker_cancel_pto", "worker_adjust_pto_balance",
+		"worker_record_injury", "worker_update_injury", "worker_delete_injury",
+		"worker_open_leave_case", "worker_update_leave_case", "worker_close_leave_case",
+		"worker_record_leave_day", "worker_update_leave_day", "worker_delete_leave_day",
+		"worker_start_performance_review", "worker_update_performance_review", "worker_delete_performance_review",
+		"worker_record_recognition", "worker_delete_recognition",
+		"worker_update_safety_event", "worker_delete_safety_event",
+		"worker_update_safety_violation", "worker_delete_safety_violation",
+		"worker_run_dot_random_draw", "worker_finalize_dot_random_draw", "worker_cancel_dot_random_draw",
+		"worker_cancel_dot_test",
+		"worker_start_checklist", "worker_cancel_checklist",
+		"worker_close_training", "worker_archive_credential",
 		"shipment_record_permit", "shipment_update_permit",
 	} {
 		require.Containsf(t, tools, tool, "the workforce coordinator needs %s", tool)
@@ -172,7 +172,7 @@ func TestTemplates_TheWorkforceCoordinatorKeepsWorkerRecordsAndNeverPay(t *testi
 		"settlement_list_driver",
 		"settlement_resolve_dispute",
 		"settlement_list_payroll_exports",
-		"list_driver_expenses",
+		"settlement_list_driver_expenses",
 	} {
 		require.NotContainsf(t, tools, tool, "the workforce coordinator must not hold %s", tool)
 	}
@@ -183,18 +183,18 @@ func TestTemplates_TheFuelTaxClerkKeepsTheFuelTaxRecord(t *testing.T) {
 
 	tools := agentdefinition.TemplateFuelTaxClerk.StarterTools()
 	for _, tool := range []string{
-		"list_fuel_purchases", "record_fuel_purchase", "correct_fuel_purchase",
-		"delete_fuel_purchase",
-		"list_fuel_cards", "assign_fuel_card",
-		"list_fuel_purchase_imports", "commit_fuel_purchase_import",
-		"resolve_fuel_purchase_import_rows", "discard_fuel_purchase_import",
-		"list_ifta_returns", "generate_ifta_return", "recompute_ifta_return",
-		"amend_ifta_return", "delete_ifta_return",
-		"list_ifta_mileage_entries", "record_ifta_mileage_entry",
-		"correct_ifta_mileage_entry", "delete_ifta_mileage_entry",
-		"recalculate_move_jurisdiction_miles", "backfill_jurisdiction_miles",
-		"list_ifta_jurisdictions",
-		"list_fuel_index_prices", "record_fuel_index_price", "correct_fuel_index_price",
+		"fuel_list_purchases", "fuel_record_purchase", "fuel_correct_purchase",
+		"fuel_delete_purchase",
+		"fuel_list_cards", "fuel_assign_card",
+		"fuel_list_purchase_imports", "fuel_commit_purchase_import",
+		"fuel_resolve_purchase_import_rows", "fuel_discard_purchase_import",
+		"fuel_list_ifta_returns", "fuel_generate_ifta_return", "fuel_recalculate_ifta_return",
+		"fuel_amend_ifta_return", "fuel_delete_ifta_return",
+		"fuel_list_ifta_mileage_entries", "fuel_record_ifta_mileage_entry",
+		"fuel_correct_ifta_mileage_entry", "fuel_delete_ifta_mileage_entry",
+		"fuel_recalculate_jurisdiction_miles", "fuel_backfill_jurisdiction_miles",
+		"fuel_list_ifta_jurisdictions",
+		"rate_list_fuel_index_prices", "rate_record_fuel_index_price", "rate_correct_fuel_index_price",
 	} {
 		require.Containsf(t, tools, tool, "the fuel and IFTA clerk needs %s", tool)
 	}
@@ -205,18 +205,18 @@ func TestTemplates_TheReportAnalystBuildsRunsAndSchedulesReports(t *testing.T) {
 
 	tools := agentdefinition.TemplateReportAnalyst.StarterTools()
 	for _, tool := range []string{
-		"list_reports", "describe_report", "preview_report", "run_report", "get_report_run",
-		"list_report_runs", "compare_report_runs", "cancel_report_run",
-		"list_report_datasets", "describe_report_dataset",
-		"create_report", "update_report", "fork_report", "reset_report_fork", "delete_report",
-		"list_report_schedules", "schedule_report", "update_report_schedule",
-		"delete_report_schedule",
-		"list_dashboards", "create_dashboard", "add_dashboard_tile", "delete_dashboard",
+		"report_list", "report_get", "report_preview", "report_run", "report_get_run",
+		"report_list_runs", "report_compare_runs", "report_cancel_run",
+		"report_list_datasets", "report_get_dataset",
+		"report_create", "report_update", "report_fork", "report_reset_fork", "report_delete",
+		"report_list_schedules", "report_create_schedule", "report_update_schedule",
+		"report_delete_schedule",
+		"report_list_dashboards", "report_create_dashboard", "report_add_dashboard_tile", "report_delete_dashboard",
 	} {
 		require.Containsf(t, tools, tool, "the report analyst needs %s", tool)
 	}
 
-	for _, tool := range []string{"add_home_widget", "save_table_view", "email_customer"} {
+	for _, tool := range []string{"home_add_widget", "report_save_table_view", "customer_send_email"} {
 		require.NotContainsf(t, tools, tool, "the report analyst must not hold %s", tool)
 	}
 }
@@ -243,7 +243,7 @@ func TestTemplates_TheExistingDesksPickUpTheWritesTheirWorkNeeds(t *testing.T) {
 		agentdefinition.TemplateDispatchAssistant.StarterTools(), "shipment_uncancel",
 	)
 	require.Contains(t,
-		agentdefinition.TemplateLoadMonitor.StarterTools(), "record_stop_actual",
+		agentdefinition.TemplateLoadMonitor.StarterTools(), "dispatch_record_stop_actual",
 	)
 	require.NotContains(t,
 		agentdefinition.TemplateShipmentIntake.StarterTools(), "shipment_cancel",

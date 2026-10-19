@@ -94,7 +94,7 @@ func CredentialToolProviders() []any {
 
 func credentialIDProperty() map[string]any {
 	return agenttoolschema.RecordID(permission.ResourceWorkerCredential, "The credential",
-		"list_worker_credentials or list_expiring_credentials")
+		"worker_list_credentials or worker_list_expiring_credentials")
 }
 
 func credentialRecord(credential *worker.WorkerCredential) toolpreview.Record {
@@ -198,20 +198,20 @@ func newRecordWorkerCredentialTool(credentials CredentialKeeper) agentports.Agen
 	properties[common.ParamWorkerID] = common.WorkerProperty()
 	properties[paramCredentialTypeID] = agenttoolschema.RecordIDText(
 		permission.ResourceWorkerCredentialType,
-		"The kind of credential, from list_worker_credentials. Never guess one.",
+		"The kind of credential, from worker_list_credentials. Never guess one.",
 	)
 	properties[paramRenew] = common.BooleanProperty("Whether this renews the worker's current " +
 		"credential of the same kind, which is archived as superseded. A second active " +
 		"one is refused without it.")
 	spec := withSchema(wfSpec(
-		"record_worker_credential",
+		"worker_record_credential",
 		"Record a driver's licence, medical card, endorsement, TWIC or other credential, "+
 			"or renew the one on file. What the person says is enough: only the worker and the "+
 			"kind are required, and dates they give (\"good till oct 9 2028\") go in as said; "+
 			"the number, issuer and a scan can follow. Set renew when one of the same kind is "+
 			"on file. A person verifies it against the original; recording is not verifying.",
 		"Adds a credential to the worker's file inside Trenova, which can change whether "+
-			"they may be dispatched; nothing is sent, and archive_worker_credential retires it.",
+			"they may be dispatched; nothing is sent, and worker_archive_credential retires it.",
 		permission.ResourceWorkerCredential,
 		permission.OpCreate,
 	), properties, common.ParamWorkerID, paramCredentialTypeID)
@@ -297,7 +297,7 @@ func newUpdateWorkerCredentialTool(credentials CredentialKeeper) agentports.Agen
 	properties := credentialFactProperties()
 	properties[paramCredentialID] = credentialIDProperty()
 	spec := targeting(withSchema(wfSpec(
-		"update_worker_credential",
+		"worker_update_credential",
 		"Correct a credential on file: its number, issuer, dates, document or notes. Give "+
 			"only what changes. Changing a fact a person verified clears the verification. "+
 			"An archived credential is read-only; record a new one instead.",
@@ -366,7 +366,7 @@ func newUpdateWorkerCredentialTool(credentials CredentialKeeper) agentports.Agen
 
 func newAttachWorkerCredentialDocumentTool(credentials CredentialKeeper) agentports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
-		"attach_worker_credential_document",
+		"worker_attach_credential_document",
 		"Attach a scan of the card or certificate, already filed on the worker, to a "+
 			"credential. A new document on a verified credential clears the verification.",
 		"Links a filed document to a credential inside Trenova; attaching another replaces it.",
@@ -439,7 +439,7 @@ func newAttachWorkerCredentialDocumentTool(credentials CredentialKeeper) agentpo
 
 func newArchiveWorkerCredentialTool(credentials CredentialKeeper) agentports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
-		"archive_worker_credential",
+		"worker_archive_credential",
 		"Archive a credential that no longer applies, such as an endorsement the driver "+
 			"surrendered, with the reason. A required credential archived with no "+
 			"replacement leaves the worker out of compliance.",

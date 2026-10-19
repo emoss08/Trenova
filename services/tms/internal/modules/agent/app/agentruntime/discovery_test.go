@@ -59,7 +59,7 @@ func TestRun_FindToolsLoadsAToolIntoTheNextRequest(t *testing.T) {
 
 	service, completion, names := wideRun(t,
 		toolTurn(findToolsName, map[string]any{"need": "trailers due inspection"}),
-		toolTurn("list_trailers", map[string]any{}),
+		toolTurn("equipment_list_trailers", map[string]any{}),
 		textTurn("Two trailers are due."),
 	)
 
@@ -71,15 +71,15 @@ func TestRun_FindToolsLoadsAToolIntoTheNextRequest(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Len(t, completion.Requests, 3)
-	assert.NotContains(t, loadedIn(completion.Requests[0]), "list_trailers",
+	assert.NotContains(t, loadedIn(completion.Requests[0]), "equipment_list_trailers",
 		"the tool was not preselected for a greeting")
-	assert.Contains(t, requestTools(completion.Requests[0]), "list_trailers",
+	assert.Contains(t, requestTools(completion.Requests[0]), "equipment_list_trailers",
 		"it is declared, deferred, from the first call")
-	assert.Contains(t, loadedIn(completion.Requests[1]), "list_trailers",
+	assert.Contains(t, loadedIn(completion.Requests[1]), "equipment_list_trailers",
 		"what find_tools loaded is loaded on the next request")
 	found := completion.Requests[1].Messages[len(completion.Requests[1].Messages)-1]
 	assert.Equal(t, findToolsName, found.ToolName)
-	assert.Contains(t, found.ToolReferences, "list_trailers", "the find result names it")
+	assert.Contains(t, found.ToolReferences, "equipment_list_trailers", "the find result names it")
 	assert.Equal(t, completion.Requests[0].Tools, completion.Requests[1].Tools)
 	assert.Equal(t, "Two trailers are due.", result.Reply)
 	assert.Zero(t, result.Messages[2].ToolFailed)
@@ -89,7 +89,7 @@ func TestRun_FindToolsLoadsAToolIntoTheNextRequest(t *testing.T) {
 What a turn loaded is still loaded on the next one.
 
 The tool set used to be rebuilt from the new message alone. After find_tools
-loaded list_expiring_credentials, "yes, do that" reopened on the eight tools
+loaded worker_list_expiring_credentials, "yes, do that" reopened on the eight tools
 that ranked first against three words that name nothing, and the tool the
 conversation was about was gone.
 */
@@ -108,7 +108,7 @@ func TestNewToolSet_CarriesWhatTheLastTurnsUsedAndFound(t *testing.T) {
 		}},
 		{Role: conversation.RoleTool, Content: "These tools are now callable"},
 		{Role: conversation.RoleAssistant, ToolCalls: []conversation.ToolCallRecord{
-			{ID: "c2", Name: "run_report", Arguments: map[string]any{}},
+			{ID: "c2", Name: "report_run", Arguments: map[string]any{}},
 		}},
 		{Role: conversation.RoleTool, Content: "{}"},
 		{Role: conversation.RoleAssistant, Content: "Shall I list them?"},
@@ -123,8 +123,8 @@ func TestNewToolSet_CarriesWhatTheLastTurnsUsedAndFound(t *testing.T) {
 
 	require.True(t, set.disclosed)
 	sent := specNames(set.specs)
-	assert.Contains(t, sent, "list_expiring_credentials", "what find_tools found last turn")
-	assert.Contains(t, sent, "run_report", "what the model called last turn")
+	assert.Contains(t, sent, "worker_list_expiring_credentials", "what find_tools found last turn")
+	assert.Contains(t, sent, "report_run", "what the model called last turn")
 }
 
 // A follow-up that names nothing is ranked with the message it answers.
@@ -144,7 +144,7 @@ func TestNewToolSet_RanksAFollowUpWithTheMessageItAnswers(t *testing.T) {
 		history:    history,
 	})
 
-	assert.Contains(t, specNames(set.specs), "list_tractors")
+	assert.Contains(t, specNames(set.specs), "equipment_list_tractors")
 }
 
 // A run nobody is watching has nobody to ask. The spec is withheld, but a model
@@ -168,7 +168,7 @@ func TestRun_RefusesAQuestionInARunNobodyIsWatching(t *testing.T) {
 
 	assert.NotContains(t, requestTools(completion.Requests[0]), askUserName)
 	assert.True(t, result.Messages[2].ToolFailed)
-	assert.Contains(t, result.Messages[2].Content, "raise_exception")
+	assert.Contains(t, result.Messages[2].Content, "agent_raise_exception")
 }
 
 // find_tools is not charged against the budget, so a model with a budget of
@@ -230,7 +230,7 @@ func (t *dependentTool) Prerequisites() []string { return t.needs }
 /*
 A tool that needs an id brings the tool that hands the id out.
 
-The Homepage Widget Builder held create_dashboard and not list_reports, so it
+The Homepage Widget Builder held report_create_dashboard and not report_list, so it
 wrote "on_time_percentage" where a report id belonged. A read that a held tool
 depends on is now held with it; a write never is, since holding one write must
 not grant another.
@@ -238,18 +238,18 @@ not grant another.
 func TestRun_HoldsTheReadsAHeldToolTakesItsArgumentsFrom(t *testing.T) {
 	t.Parallel()
 
-	reports := queryTool("list_reports", []map[string]any{{"id": "rpt_1"}}, nil)
+	reports := queryTool("report_list", []map[string]any{{"id": "rpt_1"}}, nil)
 	query := &stubQueryRegistry{Tools: []agentports.AgentQueryTool{reports}}
 	action := &stubActionRegistry{Tools: []agentports.AgentTool{
 		&dependentTool{
-			StubActionTool: actionTool("create_dashboard", agent.TierPropose, nil),
-			needs:          []string{"list_reports", "delete_report"},
+			StubActionTool: actionTool("report_create_dashboard", agent.TierPropose, nil),
+			needs:          []string{"report_list", "report_delete"},
 		},
-		actionTool("delete_report", agent.TierPropose, nil),
+		actionTool("report_delete", agent.TierPropose, nil),
 	}}
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("list_reports", map[string]any{}),
-		toolTurn("delete_report", map[string]any{}),
+		toolTurn("report_list", map[string]any{}),
+		toolTurn("report_delete", map[string]any{}),
 		textTurn("Found one report."),
 	}}
 	service := newRuntime(completion, query, action, nil)
@@ -259,13 +259,13 @@ func TestRun_HoldsTheReadsAHeldToolTakesItsArgumentsFrom(t *testing.T) {
 	})
 
 	result, err := service.Run(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition("create_dashboard"),
+		Definition: testDefinition("report_create_dashboard"),
 		Actor:      testActor(),
 		Input:      "build me a dashboard",
 	})
 	require.NoError(t, err)
 
-	assert.Contains(t, requestTools(completion.Requests[0]), "list_reports",
+	assert.Contains(t, requestTools(completion.Requests[0]), "report_list",
 		"the read the dashboard tool depends on is offered with it")
 	assert.Equal(t, 1, reports.Calls)
 	assert.True(t, result.Messages[4].ToolFailed, "a write is never granted as a dependency")
@@ -284,24 +284,24 @@ A write brings the writes its job cannot be finished without.
 
 The Shipment Assistant held shipment_create and nothing that adds a customer,
 so a rate confirmation from a broker Trenova did not know ended with "no match
-was found; no shipment was created". shipment_create names create_customer,
-create_location and create_commodity as its companions: an agent holding it
+was found; no shipment was created". shipment_create names customer_create,
+location_create and masterdata_create_commodity as its companions: an agent holding it
 holds them, each still proposed, and one switched off for the agent stays off.
 */
 func TestRun_HoldsTheWritesAHeldToolNamesAsCompanions(t *testing.T) {
 	t.Parallel()
 
-	categories := queryTool("list_location_categories", []map[string]any{}, nil)
+	categories := queryTool("location_list_categories", []map[string]any{}, nil)
 	query := &stubQueryRegistry{Tools: []agentports.AgentQueryTool{categories}}
 	action := &stubActionRegistry{Tools: []agentports.AgentTool{
 		&companionTool{
 			StubActionTool: actionTool("shipment_create", agent.TierPropose, nil),
-			brings:         []string{"create_customer", "create_location"},
+			brings:         []string{"customer_create", "location_create"},
 		},
-		actionTool("create_customer", agent.TierPropose, nil),
+		actionTool("customer_create", agent.TierPropose, nil),
 		&dependentTool{
-			StubActionTool: actionTool("create_location", agent.TierPropose, nil),
-			needs:          []string{"list_location_categories"},
+			StubActionTool: actionTool("location_create", agent.TierPropose, nil),
+			needs:          []string{"location_list_categories"},
 		},
 		actionTool("delete_customer", agent.TierPropose, nil),
 	}}
@@ -312,25 +312,25 @@ func TestRun_HoldsTheWritesAHeldToolNamesAsCompanions(t *testing.T) {
 	})
 
 	held := service.heldTools(testDefinition("shipment_create"))
-	assert.Contains(t, held, "create_customer")
-	assert.Contains(t, held, "create_location")
-	assert.Contains(t, held, "list_location_categories",
+	assert.Contains(t, held, "customer_create")
+	assert.Contains(t, held, "location_create")
+	assert.Contains(t, held, "location_list_categories",
 		"a companion's own reads come with it")
 	assert.NotContains(t, held, "delete_customer")
 
 	definition := testDefinition("shipment_create")
-	definition.DisabledToolNames = []string{"create_customer"}
+	definition.DisabledToolNames = []string{"customer_create"}
 	held = service.heldTools(definition)
-	assert.NotContains(t, held, "create_customer", "a companion switched off stays off")
-	assert.Contains(t, held, "create_location")
+	assert.NotContains(t, held, "customer_create", "a companion switched off stays off")
+	assert.Contains(t, held, "location_create")
 
 	set := &toolSet{loaded: map[string]struct{}{}, allowed: service.heldTools(testDefinition(
 		"shipment_create",
 	))}
 	require.True(t, service.load(set, "shipment_create"))
-	assert.True(t, set.offers("create_customer"), "a companion is loaded with its tool")
-	assert.True(t, set.offers("create_location"))
-	assert.True(t, set.offers("list_location_categories"))
+	assert.True(t, set.offers("customer_create"), "a companion is loaded with its tool")
+	assert.True(t, set.offers("location_create"))
+	assert.True(t, set.offers("location_list_categories"))
 }
 
 /*
@@ -346,7 +346,7 @@ func TestRun_RefusalLoadsTheNearestToolsTheAgentHolds(t *testing.T) {
 	)
 	held := make([]string, 0, len(names))
 	for _, name := range names {
-		if name != "list_workers" {
+		if name != "worker_list" {
 			held = append(held, name)
 		}
 	}
@@ -360,8 +360,8 @@ func TestRun_RefusalLoadsTheNearestToolsTheAgentHolds(t *testing.T) {
 
 	refusal := result.Messages[2].Content
 	assert.Contains(t, refusal, "There is no tool named")
-	assert.Contains(t, refusal, "list_trailers")
-	assert.Contains(t, loadedIn(completion.Requests[1]), "list_trailers")
+	assert.Contains(t, refusal, "equipment_list_trailers")
+	assert.Contains(t, loadedIn(completion.Requests[1]), "equipment_list_trailers")
 }
 
 func TestRun_ADisclosedTurnNeverChangesItsToolArray(t *testing.T) {

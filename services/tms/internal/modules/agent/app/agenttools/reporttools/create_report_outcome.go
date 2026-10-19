@@ -37,8 +37,8 @@ func classifyReportVisibility(params agentports.ToolExecuteParams) agentports.Ca
 	return agentports.CallPolicy{Egress: agent.EgressPersonal}
 }
 
-// ExecuteWithResult saves the report and names it by the id describe_report,
-// run_report and update_report take, so the conversation that asked for it
+// ExecuteWithResult saves the report and names it by the id report_get,
+// report_run and report_update take, so the conversation that asked for it
 // can use it next.
 func (t *CreateReportTool) ExecuteWithResult(
 	ctx context.Context,

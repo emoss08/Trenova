@@ -23,7 +23,7 @@ func TestUnfenceToolResult_ReadsBackWhatWasFenced(t *testing.T) {
 	assert.Equal(t, "shipment_list", name)
 	assert.Equal(t, payload, got)
 
-	_, _, ok = UnfenceToolResult(`Tool "run_report" failed: no such report`)
+	_, _, ok = UnfenceToolResult(`Tool "report_run" failed: no such report`)
 	assert.False(t, ok)
 	_, _, ok = UnfenceToolResult("")
 	assert.False(t, ok)

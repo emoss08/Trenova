@@ -55,28 +55,28 @@ the tier, because colleagues book and pay against it.
 ## Carriers, customers, commodities and hazardous materials
 
 ```
-list_carriers ──► update_carrier | update_carrier_status        create_carrier
-list_customers ──► update_customer | update_customer_status     create_customer
-list_commodities ──► update_commodity | update_commodity_status create_commodity
-list_hazardous_materials ──► update_hazardous_material | update_hazardous_material_status
-                                                                create_hazardous_material
+carrier_list ──► carrier_update | carrier_set_status        carrier_create
+customer_list ──► customer_update | customer_set_status     customer_create
+masterdata_list_commodities ──► masterdata_update_commodity | masterdata_set_commodity_status masterdata_create_commodity
+masterdata_list_hazardous_materials ──► masterdata_update_hazardous_material | masterdata_set_hazardous_material_status
+                                                                masterdata_create_hazardous_material
 ```
 
 | Tool | Resource / operation | Class | Default → most | Runs only from a person's approval |
 | --- | --- | --- | --- | --- |
-| `create_carrier`, `update_carrier` | carrier / create, update | inside; money when payment or remit-to is set | Propose → Ask first (money or outside content: Propose) | only a money call |
-| `update_carrier_status` | carrier / update | inside | Propose → Ask first | no |
-| `create_customer`, `update_customer` | customer / create, update | inside; sent outside when status email recipients are set | Propose → Ask first (recipients or outside content: Propose) | no |
-| `update_customer_status` | customer / update | inside | Propose → Ask first | no |
-| `create_commodity`, `update_commodity` | commodity / create, update | inside | Propose → Ask first (from outside content: Propose) | no |
-| `update_commodity_status` | commodity / update | inside | Propose → Ask first | no |
-| `create_hazardous_material`, `update_hazardous_material` | hazardous material / create, update | inside | Propose → Propose | no |
-| `update_hazardous_material_status` | hazardous material / update | inside | Propose → Ask first | no |
+| `carrier_create`, `carrier_update` | carrier / create, update | inside; money when payment or remit-to is set | Propose → Ask first (money or outside content: Propose) | only a money call |
+| `carrier_set_status` | carrier / update | inside | Propose → Ask first | no |
+| `customer_create`, `customer_update` | customer / create, update | inside; sent outside when status email recipients are set | Propose → Ask first (recipients or outside content: Propose) | no |
+| `customer_set_status` | customer / update | inside | Propose → Ask first | no |
+| `masterdata_create_commodity`, `masterdata_update_commodity` | commodity / create, update | inside | Propose → Ask first (from outside content: Propose) | no |
+| `masterdata_set_commodity_status` | commodity / update | inside | Propose → Ask first | no |
+| `masterdata_create_hazardous_material`, `masterdata_update_hazardous_material` | hazardous material / create, update | inside | Propose → Propose | no |
+| `masterdata_set_hazardous_material_status` | hazardous material / update | inside | Propose → Ask first | no |
 
 A carrier's payment method, terms and remit-to details decide where money goes, so a call that
 sets any of them is money-class, stops at Propose and runs only from a person's approval
 (`ToolExecuteParams.ApprovedFromProposal()`); a call that touches only its name or contact
-fields stays inside. `update_carrier` loads the carrier with its contacts, insurance and EDI
+fields stays inside. `carrier_update` loads the carrier with its contacts, insurance and EDI
 channels and keeps them. A customer's status update preference and recipients decide who later
 emails go to, so a call that sets them is sent-outside and is held once the run read outside
 content; the customer's billing and email profiles are not edited here. A hazardous material's
@@ -86,15 +86,15 @@ so a person checks every one against the DOT table before it is saved.
 ## Carrier intelligence events
 
 ```
-list_carrier_intel_events ──► get_carrier_intel_event ──► acknowledge_carrier_intel_event
-                                                      ──► resolve_carrier_intel_event
+carrier_list_intelligence_events ──► carrier_get_intelligence_event ──► carrier_acknowledge_intelligence_event
+                                                      ──► carrier_resolve_intelligence_event
 ```
 
 | Tool | Resource / operation | Class | Default → most | Runs only from a person's approval |
 | --- | --- | --- | --- | --- |
-| `list_carrier_intel_events` | carrier intelligence / read | reads only | automatic | — |
+| `carrier_list_intelligence_events` | carrier intelligence / read | reads only | automatic | — |
 
-`list_carrier_intel_events` reads the events monitoring raised through
+`carrier_list_intelligence_events` reads the events monitoring raised through
 `carrierintelservice.ListEvents`, the same call the carrier intelligence page's event list
 makes, behind the `carrierintelports.CarrierIntelEventReader` port. It filters on what that
 list filters on — status (or `openOnly` for Open and Acknowledged), severity, category such as
@@ -103,27 +103,27 @@ Authority or Insurance, and a carrier — plus the days an event was detected (`
 carrier's name, DOT number and the summary. It returns 25 events newest first unless asked, at
 most 50, and a `nextCursor` while more are left. Each row is the carrier, DOT number, category,
 severity, what the rule did, the summary, when it was detected and whether it was acknowledged
-or resolved; the prior and current values stay on `get_carrier_intel_event`, which every row's
-id opens, and the same id is what `acknowledge_carrier_intel_event` and
-`resolve_carrier_intel_event` take. Before it existed the get tool's id could only come from the
+or resolved; the prior and current values stay on `carrier_get_intelligence_event`, which every row's
+id opens, and the same id is what `carrier_acknowledge_intelligence_event` and
+`carrier_resolve_intelligence_event` take. Before it existed the get tool's id could only come from the
 page or the run's subject, so "which carriers had insurance problems this week" had no answer.
 
 ## Locations, tractors and trailers
 
 | Tool | Resource / operation | Class | Default → most | Runs only from a person's approval |
 | --- | --- | --- | --- | --- |
-| `list_equipment_manufacturers` | equipment manufacturer / read | reads only | automatic | — |
-| `update_location` | location / update | inside | Propose → Ask first (from outside content: Propose) | no |
-| `update_location_status` | location / update | inside | Propose → Ask first | no |
-| `create_tractor`, `update_tractor` | tractor / create, update | inside | Propose → Ask first (from outside content: Propose) | no |
-| `create_trailer`, `update_trailer` | trailer / create, update | inside | Propose → Ask first (from outside content: Propose) | no |
-| `locate_tractor` | tractor / update | inside | Propose → Ask first | no |
-| `locate_trailer` | trailer / update | money | Propose → Propose | yes |
+| `equipment_list_manufacturers` | equipment manufacturer / read | reads only | automatic | — |
+| `location_update` | location / update | inside | Propose → Ask first (from outside content: Propose) | no |
+| `location_set_status` | location / update | inside | Propose → Ask first | no |
+| `equipment_create_tractor`, `equipment_update_tractor` | tractor / create, update | inside | Propose → Ask first (from outside content: Propose) | no |
+| `equipment_create_trailer`, `equipment_update_trailer` | trailer / create, update | inside | Propose → Ask first (from outside content: Propose) | no |
+| `equipment_set_tractor_location` | tractor / update | inside | Propose → Ask first | no |
+| `equipment_set_trailer_location` | trailer / update | money | Propose → Propose | yes |
 
-Creating a location was already `create_location`. It places the address on the map through
+Creating a location was already `location_create`. It places the address on the map through
 the organization's address lookup; without one, or when nothing is found at that state and ZIP,
-the location is saved without coordinates and the card says so. `locate_tractor` moves where Trenova thinks
-a tractor is and locating it again moves it back. `locate_trailer` adds an empty move to the
+the location is saved without coordinates and the card says so. `equipment_set_tractor_location` moves where Trenova thinks
+a tractor is and locating it again moves it back. `equipment_set_trailer_location` adds an empty move to the
 trailer's last shipment and re-rates it, which can change what that customer is charged, so
 the preview shows the shipment's total before and after and it runs only on a person's
 approval. Equipment types, manufacturers and fleet codes are named by id from their list tools
@@ -133,20 +133,20 @@ and stay configuration.
 
 | Tool | Resource / operation | Class | Default → most | Runs only from a person's approval |
 | --- | --- | --- | --- | --- |
-| `list_table_change_alerts` | table change alert / read | reads only | automatic | — |
-| `delete_documents` | document / delete | inside | Propose → Propose | no |
-| `restore_document_version` | document / update | inside | Propose → Ask first | no |
-| `restore_insight` | insight / update | inside | Ask first → Automatic | no |
-| `update_table_change_alert` | table change alert / update | inside | Propose → Automatic | no |
-| `set_table_change_alert_status` | table change alert / update | inside | Ask first → Automatic | no |
-| `delete_table_change_alert` | table change alert / delete | inside | Propose → Ask first | no |
-| `dismiss_watchtower_item` | watchtower / update | inside | Propose → Ask first | no |
+| `report_list_table_change_alerts` | table change alert / read | reads only | automatic | — |
+| `document_delete` | document / delete | inside | Propose → Propose | no |
+| `document_restore_version` | document / update | inside | Propose → Ask first | no |
+| `insight_restore` | insight / update | inside | Ask first → Automatic | no |
+| `report_update_table_change_alert` | table change alert / update | inside | Propose → Automatic | no |
+| `report_set_table_change_alert_status` | table change alert / update | inside | Ask first → Automatic | no |
+| `report_delete_table_change_alert` | table change alert / delete | inside | Propose → Ask first | no |
+| `exception_dismiss_watchtower_item` | watchtower / update | inside | Propose → Ask first | no |
 
-`delete_documents` takes at most 25 ids; one goes through the page's single delete and more
+`document_delete` takes at most 25 ids; one goes through the page's single delete and more
 through its bulk delete, and every stored version of each goes with it, so it is always
-proposed. `restore_document_version` takes any version of the document and the version number
+proposed. `document_restore_version` takes any version of the document and the version number
 to make current; the newer version is kept, so a later restore brings it back.
-`restore_insight` refuses an insight that is not dismissed and one the caller cannot see.
+`insight_restore` refuses an insight that is not dismissed and one the caller cannot see.
 
 A change alert belongs to the person who set it up, and its notices go only to them: the
 service now scopes an update to its owner in the repository as well as in the plan, and runs
@@ -157,19 +157,19 @@ and one already resolved, is refused.
 ## Capture intake
 
 ```
-list_capture_batches ──► file_capture_items
-                     ──► discard_capture_item | discard_capture_batch
+inbox_list_capture_batches ──► inbox_file_capture_item
+                     ──► inbox_discard_capture_item | inbox_discard_capture_batch
 ```
 
 | Tool | Resource / operation | Class | Default → most | Runs only from a person's approval |
 | --- | --- | --- | --- | --- |
-| `list_capture_batches` | capture batch / read | reads only | automatic | — |
-| `file_capture_items` | capture batch / update | inside | Propose → Ask first | no |
-| `discard_capture_item` | capture batch / delete | inside | Propose → Ask first | no |
-| `discard_capture_batch` | capture batch / delete | inside | Propose → Propose | no |
+| `inbox_list_capture_batches` | capture batch / read | reads only | automatic | — |
+| `inbox_file_capture_item` | capture batch / update | inside | Propose → Ask first | no |
+| `inbox_discard_capture_item` | capture batch / delete | inside | Propose → Ask first | no |
+| `inbox_discard_capture_batch` | capture batch / delete | inside | Propose → Propose | no |
 
-`list_capture_batches` shows the open stacks (ready, partly filed or failed) and the documents
-the split proposed in each. `file_capture_items` files at most 25 of them, each onto a record
+`inbox_list_capture_batches` shows the open stacks (ready, partly filed or failed) and the documents
+the split proposed in each. `inbox_file_capture_item` files at most 25 of them, each onto a record
 by `capture.targetType` and id as a document type, as the person it acts for; one goes through
 the page's single filing and more through its batch filing, and any that fail are named in the
 error. A misfiled document can be deleted. Discarding a batch drops every unfiled page with
@@ -181,7 +181,7 @@ nothing to bring them back, so it is always proposed.
 | --- | --- | --- |
 | Start a scan or catch a print on a paired computer | security | It drives one of the person's own computers under the access they granted that machine, and a scan needs the person at the scanner. |
 | Cancel a scan or print request | security | It withdraws an instruction the person gave their own paired computer. |
-| Print capture cover sheets | infrastructure | The routing codes exist only to be printed and laid on paper; `file_capture_items` files what they route. |
+| Print capture cover sheets | infrastructure | The routing codes exist only to be printed and laid on paper; `inbox_file_capture_item` files what they route. |
 | Split, merge, reorder or rotate a scanned stack's pages | user-preference | The person arranges pages looking at their images; pages carry no text an agent can read. |
 | Re-extract a shipment draft from a document | infrastructure | A repair that re-runs the extraction pipeline and replaces the draft being reviewed. |
 | Hand off a watchtower item | agent-administration | Agents hand work to one another through `delegate_task`. |
@@ -190,25 +190,25 @@ nothing to bring them back, so it is always proposed.
 
 | Template | Runs | Holds |
 | --- | --- | --- |
-| Master data steward | chat, at a Propose ceiling, Internal data access | `create_carrier`, `update_carrier`, `update_carrier_status`, `create_customer`, `update_customer`, `update_customer_status`, `create_commodity`, `update_commodity`, `update_commodity_status`, `create_hazardous_material`, `update_hazardous_material`, `update_hazardous_material_status`, `create_location`, `update_location`, `update_location_status`, `create_tractor`, `update_tractor`, `update_tractor_status`, `locate_tractor`, `create_trailer`, `update_trailer`, `update_trailer_status`, `locate_trailer`, `list_equipment_manufacturers`, `delete_documents`, `restore_document_version`, `list_table_change_alerts`, `create_table_change_alert`, `update_table_change_alert`, `set_table_change_alert_status`, `delete_table_change_alert`, `list_watchtower_items`, `dismiss_watchtower_item`, `list_capture_batches`, `file_capture_items`, `discard_capture_item`, `discard_capture_batch`, and the list and get tools each needs |
-| Customer assistant | chat, at a Propose ceiling | `create_customer`, `update_customer`, `update_customer_status`, `list_locations`, `update_location`, `update_location_status`, `list_commodities`, `create_commodity`, `update_commodity` |
-| Insight analyst | on each new insight, at a Propose ceiling | `restore_insight` |
-| Carrier risk desk | on each new carrier finding, at a Propose ceiling | `list_carrier_intel_events`, `get_carrier_intel_event`, `acknowledge_carrier_intel_event`, `resolve_carrier_intel_event` |
-| Compliance assistant | chat, Ask first | `list_carrier_intel_events`, beside its carrier vetting and monitoring tools |
-| Any agent holding `shipment_create` | as the agent runs | `create_customer`, `create_location`, `create_commodity`, as `shipment_create`'s companions, unless switched off for the agent |
+| Master data steward | chat, at a Propose ceiling, Internal data access | `carrier_create`, `carrier_update`, `carrier_set_status`, `customer_create`, `customer_update`, `customer_set_status`, `masterdata_create_commodity`, `masterdata_update_commodity`, `masterdata_set_commodity_status`, `masterdata_create_hazardous_material`, `masterdata_update_hazardous_material`, `masterdata_set_hazardous_material_status`, `location_create`, `location_update`, `location_set_status`, `equipment_create_tractor`, `equipment_update_tractor`, `equipment_set_tractor_status`, `equipment_set_tractor_location`, `equipment_create_trailer`, `equipment_update_trailer`, `equipment_set_trailer_status`, `equipment_set_trailer_location`, `equipment_list_manufacturers`, `document_delete`, `document_restore_version`, `report_list_table_change_alerts`, `report_create_table_change_alert`, `report_update_table_change_alert`, `report_set_table_change_alert_status`, `report_delete_table_change_alert`, `exception_list_watchtower_items`, `exception_dismiss_watchtower_item`, `inbox_list_capture_batches`, `inbox_file_capture_item`, `inbox_discard_capture_item`, `inbox_discard_capture_batch`, and the list and get tools each needs |
+| Customer assistant | chat, at a Propose ceiling | `customer_create`, `customer_update`, `customer_set_status`, `location_list`, `location_update`, `location_set_status`, `masterdata_list_commodities`, `masterdata_create_commodity`, `masterdata_update_commodity` |
+| Insight analyst | on each new insight, at a Propose ceiling | `insight_restore` |
+| Carrier risk desk | on each new carrier finding, at a Propose ceiling | `carrier_list_intelligence_events`, `carrier_get_intelligence_event`, `carrier_acknowledge_intelligence_event`, `carrier_resolve_intelligence_event` |
+| Compliance assistant | chat, Ask first | `carrier_list_intelligence_events`, beside its carrier vetting and monitoring tools |
+| Any agent holding `shipment_create` | as the agent runs | `customer_create`, `location_create`, `masterdata_create_commodity`, as `shipment_create`'s companions, unless switched off for the agent |
 
 The master data steward is the organization's records keeper and holds 55 of its 56 tools:
-every write on this page, the reads that find each record, `search_documents` and
-`get_document_summary` for the documents it deletes or restores, `list_document_types` for
+every write on this page, the reads that find each record, `document_list` and
+`document_get_summary` for the documents it deletes or restores, `document_list_types` for
 filing, and `shipment_list` for paperwork that belongs on a load. The customer assistant
 handles customer records and holds 53. The insight analyst dismisses insights it finds are
 noise and can bring one back. All three run at a Propose ceiling, so every write they make
-waits for a person and needs no new permission ceiling entry; `locate_trailer`, and a carrier
+waits for a person and needs no new permission ceiling entry; `equipment_set_trailer_location`, and a carrier
 change that sets payment or remit-to, still run only from that person's approval.
 
-The compliance assistant was at its 56-tool limit, so it gave up `preview_report` (the report
-analyst's; it still runs saved and built-in reports with `run_report`) to hold
-`list_carrier_intel_events`.
+The compliance assistant was at its 56-tool limit, so it gave up `report_preview` (the report
+analyst's; it still runs saved and built-in reports with `report_run`) to hold
+`carrier_list_intelligence_events`.
 
 No write on this page is left without a holder. The carrier risk desk still only says whether a
 carrier can be tendered and leaves the decision to stop using one to a person, and capture
@@ -220,13 +220,13 @@ add any of these tools to an agent it builds in AI control.
 - An agent made from the customer assistant, insight analyst, carrier risk desk or compliance
   assistant template before these tools existed keeps the tools it was saved with; an
   administrator adds them in AI control. A compliance agent saved earlier also keeps
-  `preview_report`.
-- `list_carrier_intel_events` shows at most 50 events a page; it filters on the day an event
+  `report_preview`.
+- `carrier_list_intelligence_events` shows at most 50 events a page; it filters on the day an event
   was detected, not on when the provider says the change happened. An
   organization that wants the master data steward creates it from its starter.
 - A bulk status change, a document delete and a capture filing each take at most 25 records;
-  `list_capture_batches` shows at most 10 open stacks.
+  `inbox_list_capture_batches` shows at most 10 open stacks.
 - An agent cannot edit a customer's billing or email profile, a carrier's contacts, insurance
   or EDI channels, or a location's geofence; a person does that on the page.
-- `restore_document_version` names the version by number, so a document with more than 10,000
+- `document_restore_version` names the version by number, so a document with more than 10,000
   versions cannot be restored past that by an agent.

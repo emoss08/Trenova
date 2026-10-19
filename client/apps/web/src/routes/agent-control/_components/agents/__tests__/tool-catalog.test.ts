@@ -31,8 +31,8 @@ function tool(overrides: Partial<ToolCatalogEntry>): ToolCatalogEntry {
 const catalog = [
   tool({ name: "shipment_get" }),
   tool({ name: "shipment_cancel", kind: "action", description: "Cancels a shipment" }),
-  tool({ name: "list_workers", resource: "worker", description: "Lists drivers" }),
-  tool({ name: "approve_worker_pto", kind: "action", resource: "worker_pto" }),
+  tool({ name: "worker_list", resource: "worker", description: "Lists drivers" }),
+  tool({ name: "worker_approve_pto", kind: "action", resource: "worker_pto" }),
 ];
 
 describe("groupToolsByResource", () => {
@@ -68,7 +68,7 @@ describe("groupToolsByResource", () => {
 describe("summarizeSelection", () => {
   it("counts reads and changes, with each change at its effective tier", () => {
     const summary = summarizeSelection(
-      ["shipment_get", "shipment_cancel", "approve_worker_pto", "retired_tool"],
+      ["shipment_get", "shipment_cancel", "worker_approve_pto", "retired_tool"],
       catalog,
       { shipment_cancel: "AutoExecute" },
       "ActWithApproval",
@@ -107,20 +107,20 @@ describe("toggleTool", () => {
 describe("core tools", () => {
   const withCore = [
     ...catalog,
-    tool({ name: "recall_memory", resource: "agent_memory", core: true }),
-    tool({ name: "remember", kind: "action", resource: "agent_memory", core: true }),
+    tool({ name: "agent_list_memories", resource: "agent_memory", core: true }),
+    tool({ name: "agent_create_memory", kind: "action", resource: "agent_memory", core: true }),
   ];
 
   it("splits the always-on tools from the ones an agent chooses", () => {
     const { core, selectable } = splitCoreTools(withCore);
 
-    expect(core.map((t) => t.name)).toEqual(["recall_memory", "remember"]);
+    expect(core.map((t) => t.name)).toEqual(["agent_list_memories", "agent_create_memory"]);
     expect(selectable.map((t) => t.name)).toEqual(catalog.map((t) => t.name));
   });
 
   it("does not count a core tool an older agent still lists", () => {
     const summary = summarizeSelection(
-      ["shipment_get", "recall_memory", "remember"],
+      ["shipment_get", "agent_list_memories", "agent_create_memory"],
       withCore,
       {},
       "Propose",
@@ -137,34 +137,34 @@ describe("core tools", () => {
  */
 describe("impliedReads", () => {
   const withDependencies = [
-    tool({ name: "list_reports", resource: "report" }),
-    tool({ name: "delete_report", kind: "action", resource: "report" }),
+    tool({ name: "report_list", resource: "report" }),
+    tool({ name: "report_delete", kind: "action", resource: "report" }),
     tool({
-      name: "create_dashboard",
+      name: "report_create_dashboard",
       kind: "action",
       resource: "report_dashboard",
-      prerequisites: ["list_reports", "delete_report", "missing_tool"],
+      prerequisites: ["report_list", "report_delete", "missing_tool"],
     }),
     tool({
-      name: "add_dashboard_tile",
+      name: "report_add_dashboard_tile",
       kind: "action",
       resource: "report_dashboard",
-      prerequisites: ["list_reports"],
+      prerequisites: ["report_list"],
     }),
   ];
 
   it("names each read a chosen tool depends on, with every tool that needs it", () => {
-    const implied = impliedReads(["create_dashboard", "add_dashboard_tile"], withDependencies);
+    const implied = impliedReads(["report_create_dashboard", "report_add_dashboard_tile"], withDependencies);
 
-    expect(implied.map((entry) => entry.tool.name)).toEqual(["list_reports"]);
+    expect(implied.map((entry) => entry.tool.name)).toEqual(["report_list"]);
     expect(implied[0].neededBy.map((entry) => entry.name)).toEqual([
-      "create_dashboard",
-      "add_dashboard_tile",
+      "report_create_dashboard",
+      "report_add_dashboard_tile",
     ]);
   });
 
   it("does not repeat a read that was chosen outright", () => {
-    expect(impliedReads(["create_dashboard", "list_reports"], withDependencies)).toEqual([]);
+    expect(impliedReads(["report_create_dashboard", "report_list"], withDependencies)).toEqual([]);
   });
 });
 

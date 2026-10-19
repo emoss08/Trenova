@@ -233,7 +233,7 @@ func NewUpdateInvoiceDraftTool(invoices invoiceDraftEditor) agentports.AgentTool
 				map[string]any{
 					toolschema.KeyType: toolschema.TypeArray,
 					toolschema.KeyDescription: "The documents attached to the email, from " +
-						"search_documents; replaces the list.",
+						"document_list; replaces the list.",
 					toolschema.KeyItems: map[string]any{
 						toolschema.KeyType: toolschema.TypeString,
 					},
@@ -634,7 +634,7 @@ func NewCreateInvoiceMemoTool(invoices invoiceMemoRaiser) agentports.AgentTool {
 			"person decides it, and it is never posted as it is made.",
 		Properties: map[string]any{
 			common.ParamCustomerID: agenttoolschema.RecordIDText(permission.ResourceCustomer,
-				"The customer, from list_customers or invoice_get."),
+				"The customer, from customer_list or invoice_get."),
 			common.ParamBillType: agenttoolschema.Enum("CreditMemo lowers what the customer owes; "+
 				"DebitMemo raises it.", memoBillTypes),
 			common.ParamReason: common.StringProperty(

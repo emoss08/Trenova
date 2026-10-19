@@ -19,8 +19,8 @@ func TestFeedsNamesTheToolsARecipeStepLeadsTo(t *testing.T) {
 			Recipe: []string{"shipment_list", "shipment_get", "shipment_reschedule_stop"},
 		},
 		{
-			Name:   "record_stop_actual",
-			Recipe: []string{"shipment_list", "shipment_get", "record_stop_actual"},
+			Name:   "dispatch_record_stop_actual",
+			Recipe: []string{"shipment_list", "shipment_get", "dispatch_record_stop_actual"},
 		},
 		{Name: "shipment_match_records"},
 	})
@@ -28,7 +28,7 @@ func TestFeedsNamesTheToolsARecipeStepLeadsTo(t *testing.T) {
 	assert.Equal(t, []string{"shipment_create"}, catalog.Feeds("shipment_match_records"))
 	assert.ElementsMatch(
 		t,
-		[]string{"shipment_reschedule_stop", "record_stop_actual"},
+		[]string{"shipment_reschedule_stop", "dispatch_record_stop_actual"},
 		catalog.Feeds("shipment_get"),
 	)
 	assert.Empty(t, catalog.Feeds("shipment_create"))

@@ -88,7 +88,7 @@ func TestPermittedTools_ChecksDistinctPermissionsTogetherAndAnswersTheSame(t *te
 			queryTool("shipment_get", map[string]any{}, nil),
 			queryTool("shipment_list", map[string]any{}, nil),
 			&agenttest.StubQueryTool{
-				ToolName: "get_customer",
+				ToolName: "customer_get",
 				Result:   map[string]any{},
 				Resource: permission.ResourceCustomer,
 			},
@@ -99,7 +99,7 @@ func TestPermittedTools_ChecksDistinctPermissionsTogetherAndAnswersTheSame(t *te
 	rt.permissions = permissions
 
 	permitted := rt.permittedTools(t.Context(), testActor(), []string{
-		"shipment_get", "get_customer", "shipment_list",
+		"shipment_get", "customer_get", "shipment_list",
 	})
 
 	assert.Equal(t, []string{"shipment_get", "shipment_list"}, permitted)

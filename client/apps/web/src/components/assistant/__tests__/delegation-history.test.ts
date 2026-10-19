@@ -45,7 +45,7 @@ const REPORT = {
   reply: 'I saved the report "On-time this month".',
   made: [
     {
-      toolName: "create_report",
+      toolName: "report_create",
       callId: "call_inner_1",
       tier: "AutoExecute",
       summary: "On-time this month",
@@ -92,14 +92,14 @@ function handOffThread(result: string = fenced(REPORT), failed = false) {
       ...delegated,
       delegateCallId: CALL,
       role: "Assistant",
-      toolCalls: [{ id: "call_inner_1", name: "create_report", arguments: {} }],
+      toolCalls: [{ id: "call_inner_1", name: "report_create", arguments: {} }],
     }),
     saved({
       ...delegated,
       delegateCallId: CALL,
       role: "Tool",
       toolCallId: "call_inner_1",
-      toolName: "create_report",
+      toolName: "report_create",
       content: "{}",
       summary: "On-time this month",
     }),
@@ -237,7 +237,7 @@ describe("delegateView from a saved thread", () => {
       outcome: "completed",
     });
     expect(view?.steps.map((inner) => [inner.name, inner.summary])).toEqual([
-      ["create_report", "On-time this month"],
+      ["report_create", "On-time this month"],
     ]);
     expect(view?.report?.awaiting).toHaveLength(1);
     expect(handOffHeadline(view!, t)).toBe("Asked Report Builder");

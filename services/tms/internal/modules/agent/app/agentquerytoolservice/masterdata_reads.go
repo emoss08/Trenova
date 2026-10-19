@@ -39,11 +39,11 @@ func newListEquipmentManufacturersTool(
 	repo equipmentmanufacturerports.EquipmentManufacturerRepository,
 ) agentports.AgentQueryTool {
 	return newListTool(listSpec{
-		name:         "list_equipment_manufacturers",
+		name:         "equipment_list_manufacturers",
 		entityPlural: "equipment manufacturers",
 		summary: "List equipment manufacturers — who built the tractors and trailers in " +
 			"the fleet, such as Freightliner or Utility. Use it to turn a make a person " +
-			"named into the id create_tractor and create_trailer need.",
+			"named into the id equipment_create_tractor and equipment_create_trailer need.",
 		resource: permission.ResourceEquipmentManufacturer,
 		config: querybuilder.GetFieldConfiguration(
 			(*equipmentmanufacturer.EquipmentManufacturer)(nil),
@@ -90,7 +90,7 @@ func newListTableChangeAlertsTool(
 	repo tablechangealertports.TCASubscriptionRepository,
 ) agentports.AgentQueryTool {
 	return newListTool(listSpec{
-		name:         "list_table_change_alerts",
+		name:         "report_list_table_change_alerts",
 		entityPlural: "table change alerts",
 		summary: "List the change alerts the person you are working for has set up: what " +
 			"each watches, for which changes, and whether it is Active or Paused. Only " +
@@ -245,7 +245,7 @@ func newListCaptureBatchesTool(batches captureBatchReader) agentports.AgentQuery
 	return &listCaptureBatchesTool{batches: batches}
 }
 
-func (t *listCaptureBatchesTool) Name() string { return "list_capture_batches" }
+func (t *listCaptureBatchesTool) Name() string { return "inbox_list_capture_batches" }
 
 func (t *listCaptureBatchesTool) SearchTerms() []string {
 	return []string{"capture intake", "scanned paperwork waiting", "capture queue"}
@@ -255,7 +255,7 @@ func (t *listCaptureBatchesTool) Description() string {
 	return "List scanned and printed paperwork waiting in capture intake, newest first. " +
 		"Each stack comes with the documents it was split into, what each looks like, the " +
 		"record it was matched to and how sure the match is. Use it before " +
-		"file_capture_items or discarding a scan; it never shows page images."
+		"inbox_file_capture_item or discarding a scan; it never shows page images."
 }
 
 func (t *listCaptureBatchesTool) ParamSchema() map[string]any {

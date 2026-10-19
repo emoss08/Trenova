@@ -139,7 +139,7 @@ func TestScoreSelection(t *testing.T) {
 		ForbiddenTools: []string{"shipment_cancel"},
 	}
 	turns := []*TurnRecord{toolTurnRecord(
-		"find_tools", "list_customers", "shipment_list", "shipment_cancel", "recall_memory",
+		"find_tools", "customer_list", "shipment_list", "shipment_cancel", "agent_list_memories",
 	)}
 
 	selection := scoreSelection(scenario, turns)
@@ -158,16 +158,16 @@ func TestScoreRetrieval_AgainstTheToolsThePassingTrialUsed(t *testing.T) {
 	t.Parallel()
 
 	turn := toolTurnRecord(
-		"find_tools", "shipment_get", "list_trailers", "shipment_add_comment", "get_customer",
+		"find_tools", "shipment_get", "equipment_list_trailers", "shipment_add_comment", "customer_get",
 	)
 	turn.ModelCalls = []*ModelCall{{Chat: &agentports.ChatCompletionRequest{Tools: []kernelports.ToolSpec{
-		{Name: "shipment_get"}, {Name: "shipment_add_comment"}, {Name: "get_customer"},
+		{Name: "shipment_get"}, {Name: "shipment_add_comment"}, {Name: "customer_get"},
 		{Name: "find_tools"},
 	}}}}
 	turn.Disclosures = []Disclosure{
 		{Kind: DisclosurePreselected, Ranked: []string{"shipment_get", "shipment_add_comment"}},
-		{Kind: DisclosureFound, Need: "trailers", Ranked: []string{"list_trailers"}},
-		{Kind: DisclosureFound, Need: "drivers", Ranked: []string{"list_workers"}},
+		{Kind: DisclosureFound, Need: "trailers", Ranked: []string{"equipment_list_trailers"}},
+		{Kind: DisclosureFound, Need: "drivers", Ranked: []string{"worker_list"}},
 	}
 
 	retrieval := scoreRetrieval([]*TurnRecord{turn})

@@ -88,13 +88,13 @@ describe("reduceTurn hand-offs", () => {
       wire("delegate_reasoning", { agentId: AGENT, delegateCallId: CALL, text: "Which dataset…" }),
       wire("message", {
         content: "",
-        toolCalls: [{ id: "call_inner_1", name: "create_report", arguments: {} }],
+        toolCalls: [{ id: "call_inner_1", name: "report_create", arguments: {} }],
         agentId: AGENT,
         delegateCallId: CALL,
       }),
       wire("tool_started", {
         callId: "call_inner_1",
-        name: "create_report",
+        name: "report_create",
         arguments: { name: "On-time this month" },
         effect: "change",
         agentId: AGENT,
@@ -102,7 +102,7 @@ describe("reduceTurn hand-offs", () => {
       }),
       wire("tool_finished", {
         callId: "call_inner_1",
-        name: "create_report",
+        name: "report_create",
         failed: false,
         proposed: false,
         content: "{}",
@@ -232,7 +232,7 @@ describe("reduceTurn hand-offs", () => {
         reply: "I saved the report.",
         made: [
           {
-            toolName: "create_report",
+            toolName: "report_create",
             callId: "call_inner_1",
             tier: "AutoExecute",
             summary: "On-time this month",
@@ -287,7 +287,7 @@ describe("reduceTurn hand-offs", () => {
       wire("accepted", { content: "Build it" }),
       wire("tool_started", {
         callId: "call_inner_9",
-        name: "list_reports",
+        name: "report_list",
         arguments: {},
         agentId: AGENT,
         delegateCallId: "call_unseen",
@@ -330,7 +330,7 @@ describe("reduceTurn hand-offs", () => {
       state,
       wire("tool_started", {
         callId: "call_inner_1",
-        name: "list_reports",
+        name: "report_list",
         arguments: {},
         agentId: AGENT,
         delegateCallId: CALL,
@@ -341,7 +341,7 @@ describe("reduceTurn hand-offs", () => {
       state,
       wire("tool_finished", {
         callId: "call_inner_1",
-        name: "list_reports",
+        name: "report_list",
         content: "{}",
         agentId: AGENT,
         delegateCallId: CALL,

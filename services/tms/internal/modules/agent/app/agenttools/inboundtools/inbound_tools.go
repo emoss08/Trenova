@@ -146,10 +146,10 @@ func NewLinkInboundMessageTool(inbox inboundMessageDesk) agentports.AgentTool {
 	return &LinkInboundMessageTool{inbox: inbox}
 }
 
-func (t *LinkInboundMessageTool) Name() string { return "link_inbound_message" }
+func (t *LinkInboundMessageTool) Name() string { return "inbox_link_inbound_message" }
 
 func (t *LinkInboundMessageTool) Recipe() []string {
-	return []string{"get_inbound_message", "link_inbound_message"}
+	return []string{"inbox_get_inbound_message", "inbox_link_inbound_message"}
 }
 
 func (t *LinkInboundMessageTool) Description() string {
@@ -158,7 +158,7 @@ func (t *LinkInboundMessageTool) Description() string {
 		"reason in words a person can check — the PRO in the subject, the BOL on the " +
 		"attachment, the sender being the customer's dispatcher. Every id must be one " +
 		"list or get tools returned; a record that does not exist is refused. Linking " +
-		"does not settle the message: mark_inbound_message does that."
+		"does not settle the message: inbox_mark_inbound_message does that."
 }
 
 func (t *LinkInboundMessageTool) ParamSchema() map[string]any {
@@ -166,14 +166,14 @@ func (t *LinkInboundMessageTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			paramMessageID: agenttoolschema.RecordIDText(permission.ResourceInboundMessage,
-				"The message, from the run's subject or list_inbound_messages."),
+				"The message, from the run's subject or inbox_list_inbound_messages."),
 			"shipmentId": agenttoolschema.RecordIDText(permission.ResourceShipment,
 				"Optional: the shipment the message is about, from shipment_list or "+
 					"shipment_list."),
 			"customerId": agenttoolschema.RecordIDText(permission.ResourceCustomer,
-				"Optional: the customer who sent it or who it concerns, from list_customers."),
+				"Optional: the customer who sent it or who it concerns, from customer_list."),
 			"carrierId": agenttoolschema.RecordIDText(permission.ResourceCarrier,
-				"Optional: the carrier who sent it or who it concerns, from list_carriers."),
+				"Optional: the carrier who sent it or who it concerns, from carrier_list."),
 			"reason": map[string]any{
 				"type":        "string",
 				"maxLength":   inboundmessage.MaxMatchReasonLength,
@@ -279,10 +279,10 @@ func NewMarkInboundMessageTool(inbox inboundMessageDesk) agentports.AgentTool {
 	return &MarkInboundMessageTool{inbox: inbox}
 }
 
-func (t *MarkInboundMessageTool) Name() string { return "mark_inbound_message" }
+func (t *MarkInboundMessageTool) Name() string { return "inbox_mark_inbound_message" }
 
 func (t *MarkInboundMessageTool) Recipe() []string {
-	return []string{"get_inbound_message", "mark_inbound_message"}
+	return []string{"inbox_get_inbound_message", "inbox_mark_inbound_message"}
 }
 
 func (t *MarkInboundMessageTool) SearchTerms() []string {
@@ -303,7 +303,7 @@ func (t *MarkInboundMessageTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			paramMessageID: agenttoolschema.RecordIDText(permission.ResourceInboundMessage,
-				"The message, from the run's subject or list_inbound_messages."),
+				"The message, from the run's subject or inbox_list_inbound_messages."),
 			common.FieldStatus: agenttoolschema.Enum(
 				"Actioned when it was dealt with, Ignored when there was nothing to do.",
 				inboundReviewStatuses,
@@ -471,13 +471,13 @@ func NewReplyToInboundMessageTool(p replyToInboundMessageParams) agentports.Agen
 	}
 }
 
-func (t *ReplyToInboundMessageTool) Name() string { return "reply_to_inbound_message" }
+func (t *ReplyToInboundMessageTool) Name() string { return "inbox_send_reply" }
 
 func (t *ReplyToInboundMessageTool) Recipe() []string {
 	return []string{
-		"get_inbound_message",
+		"inbox_get_inbound_message",
 		"shipment_get_tracking",
-		"reply_to_inbound_message",
+		"inbox_send_reply",
 	}
 }
 
@@ -501,9 +501,9 @@ func (t *ReplyToInboundMessageTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			paramMessageID: agenttoolschema.RecordIDText(permission.ResourceInboundMessage,
 				"The message being answered, from this run's subject or "+
-					"list_inbound_messages."),
+					"inbox_list_inbound_messages."),
 			"profileId": agenttoolschema.RecordIDText(permission.ResourceEmailProfile,
-				"The email profile to send from, from list_email_profiles. Leave it out to "+
+				"The email profile to send from, from inbox_list_email_profiles. Leave it out to "+
 					"send from the profile the organization assigns to operations email."),
 			"body": map[string]any{
 				"type":      "string",

@@ -46,26 +46,26 @@ function line(steps: ToolStep[]) {
  */
 describe("toolEffect", () => {
   it("uses the server's effect when it sent one", () => {
-    expect(toolEffect("list_customers", "change")).toBe("change");
+    expect(toolEffect("customer_list", "change")).toBe("change");
   });
 
   it.each<[string, ToolEffect]>([
-    ["open_page", "navigate"],
+    ["agent_open_page", "navigate"],
     ["find_tools", "discover"],
-    ["find_in_trenova", "discover"],
-    ["run_report", "present"],
+    ["agent_find_page", "discover"],
+    ["report_run", "present"],
     ["publish_artifact", "present"],
-    ["compare_report_runs", "present"],
-    ["compose_table_view", "present"],
+    ["report_compare_runs", "present"],
+    ["report_compose_table_view", "present"],
     ["ask_user", "ask"],
     ["request_decision", "ask"],
     ["withdraw_proposal", "ask"],
-    ["list_customers", "lookup"],
+    ["customer_list", "lookup"],
     ["shipment_get", "lookup"],
-    ["search_worker", "lookup"],
-    ["describe_report_dataset", "lookup"],
-    ["preview_report", "lookup"],
-    ["create_report", "change"],
+    ["worker_search", "lookup"],
+    ["report_get_dataset", "lookup"],
+    ["report_preview", "lookup"],
+    ["report_create", "change"],
     ["shipment_cancel", "change"],
     ["something_new", "change"],
   ])("derives %s as %s when the effect is missing", (name, effect) => {
@@ -106,15 +106,15 @@ describe("reportSummary", () => {
 });
 
 describe("groupActivity", () => {
-  // The report this came from: an open_page folded into "Looked up 1 record".
+  // The report this came from: an agent_open_page folded into "Looked up 1 record".
   it("never folds an action into the reads around it", () => {
     const groups = groupActivity([
-      step({ name: "find_in_trenova" }),
-      step({ name: "open_page" }),
-      step({ name: "get_customer" }),
+      step({ name: "agent_find_page" }),
+      step({ name: "agent_open_page" }),
+      step({ name: "customer_get" }),
       step({ name: "shipment_list" }),
-      step({ name: "create_report" }),
-      step({ name: "run_report" }),
+      step({ name: "report_create" }),
+      step({ name: "report_run" }),
     ]);
 
     expect(groups.map((group) => [group.effect, group.steps.length])).toEqual([
@@ -127,7 +127,7 @@ describe("groupActivity", () => {
   });
 
   it("keeps consecutive actions on lines of their own", () => {
-    const groups = groupActivity([step({ name: "open_page" }), step({ name: "open_page" })]);
+    const groups = groupActivity([step({ name: "agent_open_page" }), step({ name: "agent_open_page" })]);
 
     expect(groups).toHaveLength(2);
   });
@@ -135,16 +135,16 @@ describe("groupActivity", () => {
 
 describe("describeActivity", () => {
   it("names the record a single lookup found", () => {
-    expect(line([step({ name: "get_customer", summary: "Peak Distributing" })]).phrase).toBe(
+    expect(line([step({ name: "customer_get", summary: "Peak Distributing" })]).phrase).toBe(
       "Looked up Peak Distributing",
     );
   });
 
   it("counts several single-record lookups as records and names the first", () => {
     const result = line([
-      step({ name: "get_customer", summary: "Peak Distributing" }),
+      step({ name: "customer_get", summary: "Peak Distributing" }),
       step({ name: "shipment_get", summary: "PRO-1042" }),
-      step({ name: "get_worker", summary: "Maria Ortiz" }),
+      step({ name: "worker_get", summary: "Maria Ortiz" }),
     ]);
 
     expect(result.phrase).toBe("Looked up 3 records");
@@ -152,13 +152,13 @@ describe("describeActivity", () => {
   });
 
   it("says a list's count in its own words rather than the server's noun", () => {
-    expect(line([step({ name: "list_customers", summary: "3 customers" })]).phrase).toBe(
+    expect(line([step({ name: "customer_list", summary: "3 customers" })]).phrase).toBe(
       "Found 3 records",
     );
     expect(line([step({ name: "shipment_list", summary: "25+ shipments" })]).phrase).toBe(
       "Found 25+ records",
     );
-    expect(line([step({ name: "list_customers", summary: "No customers" })]).phrase).toBe(
+    expect(line([step({ name: "customer_list", summary: "No customers" })]).phrase).toBe(
       "Found nothing",
     );
   });
@@ -166,8 +166,8 @@ describe("describeActivity", () => {
   it("does not call lists records when reads of both kinds fold together", () => {
     expect(
       line([
-        step({ name: "list_customers", summary: "3 customers" }),
-        step({ name: "get_customer", summary: "Peak Distributing" }),
+        step({ name: "customer_list", summary: "3 customers" }),
+        step({ name: "customer_get", summary: "Peak Distributing" }),
       ]).phrase,
     ).toBe("Ran 2 lookups");
   });
@@ -179,15 +179,15 @@ describe("describeActivity", () => {
   });
 
   it("reads an opened page as opened", () => {
-    expect(line([step({ name: "open_page", summary: "Report library" })]).phrase).toBe(
+    expect(line([step({ name: "agent_open_page", summary: "Report library" })]).phrase).toBe(
       "Opened Report library",
     );
   });
 
   it("takes an opened page's name from its result when the summary is missing", () => {
     const content =
-      'Result from open_page\n<untrusted_data>{"path":"/reports","name":"Report library"}</untrusted_data>';
-    expect(line([step({ name: "open_page", content })]).phrase).toBe("Opened Report library");
+      'Result from agent_open_page\n<untrusted_data>{"path":"/reports","name":"Report library"}</untrusted_data>';
+    expect(line([step({ name: "agent_open_page", content })]).phrase).toBe("Opened Report library");
   });
 
   it("says the right tools were found", () => {
@@ -197,21 +197,21 @@ describe("describeActivity", () => {
   });
 
   it("reads a finished run by its report and rows", () => {
-    const result = line([step({ name: "run_report", summary: "Late loads · 42 rows" })]);
+    const result = line([step({ name: "report_run", summary: "Late loads · 42 rows" })]);
 
     expect(result.phrase).toBe("Ran Late loads");
     expect(result.detail).toBe("42 rows");
   });
 
   it("reads a run that has not finished as started", () => {
-    expect(line([step({ name: "run_report", summary: "Late loads" })]).phrase).toBe(
+    expect(line([step({ name: "report_run", summary: "Late loads" })]).phrase).toBe(
       "Started Late loads",
     );
   });
 
   it("reads a write that ran by its verb and what it wrote", () => {
     expect(
-      line([step({ name: "create_report", summary: "Shipments for Peak Distributing" })]).phrase,
+      line([step({ name: "report_create", summary: "Shipments for Peak Distributing" })]).phrase,
     ).toBe("Saved Shipments for Peak Distributing");
   });
 
@@ -250,9 +250,9 @@ describe("describeActivity", () => {
   it("says a failed call failed, with the reason", () => {
     const result = line([
       step({
-        name: "open_page",
+        name: "agent_open_page",
         status: "failed",
-        content: 'Tool "open_page" failed: you may not open that page',
+        content: 'Tool "agent_open_page" failed: you may not open that page',
       }),
     ]);
 
@@ -263,8 +263,8 @@ describe("describeActivity", () => {
 
   it("counts the failures among reads that otherwise worked", () => {
     const result = line([
-      step({ name: "get_customer", summary: "Peak Distributing" }),
-      step({ name: "get_customer", status: "failed", content: 'Tool "get_customer" failed: x' }),
+      step({ name: "customer_get", summary: "Peak Distributing" }),
+      step({ name: "customer_get", status: "failed", content: 'Tool "customer_get" failed: x' }),
     ]);
 
     expect(result.phrase).toBe("Looked up Peak Distributing");
@@ -281,7 +281,7 @@ describe("workSummary", () => {
     expect(
       workSummary(
         [
-          step({ name: "get_customer", durationSeconds: 4 }),
+          step({ name: "customer_get", durationSeconds: 4 }),
           step({ name: "shipment_update", durationSeconds: 8 }),
         ],
         t,
@@ -290,13 +290,13 @@ describe("workSummary", () => {
   });
 
   it("says one step in the singular and leaves out a time nobody measured", () => {
-    expect(workSummary([step({ name: "get_customer" })], t)).toBe("Worked through 1 step");
+    expect(workSummary([step({ name: "customer_get" })], t)).toBe("Worked through 1 step");
   });
 
   it("adds up only the steps that were timed", () => {
     expect(
       workSummary(
-        [step({ name: "get_customer" }), step({ name: "shipment_get", durationSeconds: 3 })],
+        [step({ name: "customer_get" }), step({ name: "shipment_get", durationSeconds: 3 })],
         t,
       ),
     ).toBe("Worked through 2 steps · 3s");
@@ -306,7 +306,7 @@ describe("workSummary", () => {
     expect(
       workSummary(
         [
-          step({ name: "get_customer", durationSeconds: 1 }),
+          step({ name: "customer_get", durationSeconds: 1 }),
           step({ name: "shipment_update", status: "failed", durationSeconds: 2 }),
           step({ name: "update_worker", status: "failed", verdict: "denied", durationSeconds: 2 }),
         ],
@@ -320,8 +320,8 @@ describe("currentActivity", () => {
   it("describes the step under way, not the last one finished", () => {
     const current = currentActivity(
       [
-        step({ name: "open_page", summary: "Report library" }),
-        step({ name: "run_report", status: "running", arguments: { reportKey: "late-loads" } }),
+        step({ name: "agent_open_page", summary: "Report library" }),
+        step({ name: "report_run", status: "running", arguments: { reportKey: "late-loads" } }),
       ],
       t,
     );
@@ -367,10 +367,10 @@ describe("stepsFromExchanges", () => {
   it("reads effect, summary and time from the saved call and its result", () => {
     const exchanges: ToolExchange[] = [
       {
-        call: { id: "c1", name: "open_page", arguments: { page: "/reports" }, effect: "navigate" },
+        call: { id: "c1", name: "agent_open_page", arguments: { page: "/reports" }, effect: "navigate" },
         result: saved({
           toolCallId: "c1",
-          toolName: "open_page",
+          toolName: "agent_open_page",
           content: "{}",
           summary: "Report library",
           effect: "navigate",
@@ -382,7 +382,7 @@ describe("stepsFromExchanges", () => {
     expect(stepsFromExchanges(exchanges, 1_700_000_001)).toEqual([
       {
         id: "c1",
-        name: "open_page",
+        name: "agent_open_page",
         arguments: { page: "/reports" },
         status: "done",
         content: "{}",
@@ -512,7 +512,7 @@ describe("web activity", () => {
 
   it("keeps a web search apart from the lookups in Trenova beside it", () => {
     const groups = groupActivity([
-      step({ name: "list_customers", effect: "lookup" }),
+      step({ name: "customer_list", effect: "lookup" }),
       search("ELD mandate"),
     ]);
 
@@ -555,18 +555,18 @@ describe("refusals", () => {
   });
 
   it("ignores a refusal verdict on a call that did not fail", () => {
-    expect(toolRefusal(step({ name: "get_worker", status: "done", verdict: "denied" }))).toBeNull();
+    expect(toolRefusal(step({ name: "worker_get", status: "done", verdict: "denied" }))).toBeNull();
   });
 
   it("names a folded group by its refusal only when every call shares it", () => {
     const alike = [
-      step({ name: "get_worker", status: "failed", verdict: "denied" }),
+      step({ name: "worker_get", status: "failed", verdict: "denied" }),
       step({ name: "shipment_get", status: "failed", verdict: "denied" }),
     ];
     expect(line(alike)).toMatchObject({ phrase: "Not permitted", refusal: "denied" });
 
     const mixed = [
-      step({ name: "get_worker", status: "failed", verdict: "denied" }),
+      step({ name: "worker_get", status: "failed", verdict: "denied" }),
       step({ name: "shipment_get", status: "done", summary: "S-1001" }),
     ];
     expect(line(mixed).refusal).toBeUndefined();

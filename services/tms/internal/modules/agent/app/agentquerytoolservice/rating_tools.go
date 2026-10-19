@@ -213,13 +213,13 @@ func newListRateAgreementsTool(
 	return &listRateAgreementsTool{agreements: agreements, access: newFieldAccess(permissions)}
 }
 
-func (t *listRateAgreementsTool) Name() string { return "list_rate_agreements" }
+func (t *listRateAgreementsTool) Name() string { return "rate_list_agreements" }
 
 func (t *listRateAgreementsTool) Description() string {
 	return "List rate agreements, the contracts and tariffs that price freight for a " +
 		"customer or pay a carrier. Each has its code, name, party, type, status and " +
 		"effective dates. Narrow to a customer, a carrier, a status or text; " +
-		"get_rate_agreement opens one with its lane rules."
+		"rate_get_agreement opens one with its lane rules."
 }
 
 func (t *listRateAgreementsTool) ParamSchema() map[string]any {
@@ -228,9 +228,9 @@ func (t *listRateAgreementsTool) ParamSchema() map[string]any {
 		"partyType": enumParam("Customer agreements price what a customer is billed; "+
 			"Carrier agreements price what a carrier is paid.", rateAgreementParties),
 		paramCustomerID: agenttoolschema.RecordIDText(permission.ResourceCustomer,
-			"Only this customer's agreements, by id from list_customers."),
+			"Only this customer's agreements, by id from customer_list."),
 		paramCarrierID: agenttoolschema.RecordIDText(permission.ResourceCarrier,
-			"Only this carrier's agreements, by id from list_carriers."),
+			"Only this carrier's agreements, by id from carrier_list."),
 		paramStatus: enumParam("Only agreements in this status.", rateAgreementStatuses),
 	}, defaultListLimit, maxListLimit))
 }
@@ -323,7 +323,7 @@ func newGetRateAgreementTool(
 	return &getRateAgreementTool{agreements: agreements, access: newFieldAccess(permissions)}
 }
 
-func (t *getRateAgreementTool) Name() string { return "get_rate_agreement" }
+func (t *getRateAgreementTool) Name() string { return "rate_get_agreement" }
 
 func (t *getRateAgreementTool) SearchTerms() []string {
 	return []string{"contract terms", "lane rates", "minimums"}
@@ -332,8 +332,8 @@ func (t *getRateAgreementTool) SearchTerms() []string {
 func (t *getRateAgreementTool) Description() string {
 	return "Retrieve one rate agreement, a contract or tariff, by id with its lane rules, " +
 		"rates, minimums and weight breaks. It also gives the current version, the " +
-		"accessorial schedule and the fuel surcharge binding. explain_rate says how it " +
-		"priced one shipment. Take the id from list_rate_agreements."
+		"accessorial schedule and the fuel surcharge binding. rate_explain says how it " +
+		"priced one shipment. Take the id from rate_list_agreements."
 }
 
 func (t *getRateAgreementTool) ParamSchema() map[string]any {
@@ -341,8 +341,8 @@ func (t *getRateAgreementTool) ParamSchema() map[string]any {
 		"rateAgreementId",
 		agenttoolschema.RecordIDText(
 			permission.ResourceRateAgreement,
-			"The rate agreement's id, from list_rate_agreements, "+
-				"explain_rate or the page you are on.",
+			"The rate agreement's id, from rate_list_agreements, "+
+				"rate_explain or the page you are on.",
 		),
 	)
 }
@@ -647,20 +647,20 @@ func newGetRateMatrixTool(
 	return &getRateMatrixTool{matrices: matrices, access: newFieldAccess(permissions)}
 }
 
-func (t *getRateMatrixTool) Name() string { return "get_rate_matrix" }
+func (t *getRateMatrixTool) Name() string { return "rate_get_matrix" }
 
 func (t *getRateMatrixTool) Description() string {
 	return "Retrieve one rate matrix by id: the grid of rates a lane rule prices from. " +
 		"It gives the axes (zone, zip, weight break, freight class and so on) and up to " +
 		"200 cells with their keys, ranges and values. Take the id from a rule's " +
-		"rateMatrixId in get_rate_agreement."
+		"rateMatrixId in rate_get_agreement."
 }
 
 func (t *getRateMatrixTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
 		paramRateMatrixID: agenttoolschema.RecordIDText(permission.ResourceRateMatrix,
 			"The rate matrix's id, from a rule's rateMatrixId in "+
-				"get_rate_agreement or the page you are on."),
+				"rate_get_agreement or the page you are on."),
 		"cellOffset": intParam("How many cells to skip. When a result says cellsHasMore, " +
 			"call again with its nextCellOffset."),
 	}, paramRateMatrixID)
@@ -875,7 +875,7 @@ func newGetFuelSurchargeRatesTool(fuel fuelRateReader) agentports.AgentQueryTool
 	return &getFuelSurchargeRatesTool{fuel: fuel}
 }
 
-func (t *getFuelSurchargeRatesTool) Name() string { return "get_fuel_surcharge_rates" }
+func (t *getFuelSurchargeRatesTool) Name() string { return "rate_list_fuel_surcharge_programs" }
 
 func (t *getFuelSurchargeRatesTool) SearchTerms() []string {
 	return []string{"fuel program", "diesel price in use", "surcharge schedule"}

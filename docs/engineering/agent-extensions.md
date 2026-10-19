@@ -6,15 +6,15 @@ contributes agent tools and nothing else. Each extension runs on the organizatio
 with its vendor, so its credentials, limits and cost belong to the organization.
 
 An extension provides a **capability**, and the capability owns the tools. Web research
-(`web_search`, `web_read`, and the web watch tools `watch_web`, `list_web_watches` and
-`stop_web_watch`) is the first capability; Exa and Parallel each provide it, and
+(`web_search`, `web_read`, and the web watch tools `web_watch`, `web_list_watches` and
+`web_stop_watch`) is the first capability; Exa and Parallel each provide it, and
 [agent-web-watching.md](agent-web-watching.md) describes the watches. A vendor that cannot
 serve one of its capability's tools lists it in its spec's `Unsupported` (Parallel cannot
 watch), and that tool is neither offered nor granted while the vendor serves the capability.
 Portal
-automation (`list_portal_sites`, `read_portal`, `act_on_portal`) is the second; Browser Use
+automation (`web_list_portal_sites`, `web_read_portal`, `web_use_portal`) is the second; Browser Use
 provides it, and [agent-portal-automation.md](agent-portal-automation.md) describes it. Data
-analysis (`analyze_data`) is the third; E2B provides it, and
+analysis (`report_analyze_data`) is the third; E2B provides it, and
 [agent-data-analysis.md](agent-data-analysis.md) describes it. Agents,
 the agent editor, the safety rules and the citation UI name the capability's tools, never a
 vendor, so an organization can move from one vendor to another without touching an agent.
@@ -33,7 +33,7 @@ and every tool call agree on which vendor answers.
 | Marketplace, settings, test, metering, web research, portal sites and tasks, analyses | `internal/modules/agent/app/agentextensionservice/` |
 | REST API (`/agent-extensions/...`) | `internal/api/handlers/agentextensionhandler/` |
 | Vendor connectors | `internal/infrastructure/agentextension/<vendor>connector/` over `shared/<vendor>`, registered with `connectorkit.Provide` |
-| Tools | `internal/modules/agent/app/agentquerytoolservice/` (`web_tools.go`, `web_watch_tools.go`, `portal_tools.go`, `analysis_tool.go`) for reads, `internal/modules/agent/app/agenttools/portaltools/` for `act_on_portal`, `agenttools/webwatchtools/` for `watch_web` and `stop_web_watch` |
+| Tools | `internal/modules/agent/app/agentquerytoolservice/` (`web_tools.go`, `web_watch_tools.go`, `portal_tools.go`, `analysis_tool.go`) for reads, `internal/modules/agent/app/agenttools/portaltools/` for `web_use_portal`, `agenttools/webwatchtools/` for `web_watch` and `web_stop_watch` |
 | Runtime gating and the approval rule | `internal/modules/agent/app/agentruntime/extensions.go` |
 | Extension commands (`/browser`, `/search`) | `agentextension/command.go`, `agentruntime/command.go`, `assistantservice/commands.go`, `EXTENSION_COMMANDS` in the client's `composer-commands.ts` and `use-desk-extension-commands.ts` |
 | Marketplace UI | `client/apps/web/src/routes/agent-control/_components/extensions/` |
@@ -74,8 +74,8 @@ registry, and nothing on either side names a particular command outside it.
 
 - **The registry.** `agentextension.AllCommands` lists the commands and `CommandSpecFor` gives
   each one's capability, the tools of which the turn needs at least one to honour it
-  (`Requires`: `read_portal` or `act_on_portal` for `/browser`, `web_search` for `/search`,
-  `watch_web` for `/watch`), the tools whose call honours it (`Honours`, left empty for any of
+  (`Requires`: `web_read_portal` or `web_use_portal` for `/browser`, `web_search` for `/search`,
+  `web_watch` for `/watch`), the tools whose call honours it (`Honours`, left empty for any of
   the capability's tools; `/watch` names the watch tools, since a search answers now and the
   person asked to hear later), and the words a person is refused with (`MissingTaskReason`, `DirectedReason`,
   `UnavailableReason`, harvested for translation by `shared/cmd/i18n-extract`).
@@ -129,15 +129,15 @@ registry, and nothing on either side names a particular command outside it.
 
 A tool a capability lists in `CapabilitySpec.OutsideContentTools` returns text written outside
 the organization, which may have been written to steer an agent. It is declared per tool, not per
-capability: `read_portal` returns a portal's page, while `list_portal_sites` returns what
-administrators wrote and `act_on_portal` returns only that the task started. A tool whose
+capability: `web_read_portal` returns a portal's page, while `web_list_portal_sites` returns what
+administrators wrote and `web_use_portal` returns only that the task started. A tool whose
 result is outside content only when it read something a person brought in declares
-`ReadsExternal: marked` instead and names what it read: `analyze_data` taints the run with
+`ReadsExternal: marked` instead and names what it read: `report_analyze_data` taints the run with
 each attached file it analyzed and caps nothing, because a report run is the organization's
 own data. Once a turn has a
 successful result from such a tool, every write it asks for afterwards is capped at `Propose`, whatever the tier,
 the ceiling or the private-write rule would allow, and the model is told why. An escalation
-(`raise_exception`, `flag_for_manual_review`, whose policy sets `Escalates`) is the exception: it only
+(`agent_raise_exception`, `agent_request_review`, whose policy sets `Escalates`) is the exception: it only
 records the run for a person in the organization, which is what a run that read something suspect
 should be able to do on its own. The business-hours hold passes it by for the same reason.
 
@@ -155,7 +155,7 @@ should be able to do on its own. The business-hours hold passes it by for the sa
 - A turn or run that picks up a portal task's answer from a wait opens with the flag already set
   (`RunRequest.AfterExternalContent`, from `Wait.CarriesOutsideText`), because the answer is
   quoted in its opening note rather than returned by a tool call.
-- The web tools and `read_portal` declare `ReadsExternal: always` with the `web` taint source in their
+- The web tools and `web_read_portal` declare `ReadsExternal: always` with the `web` taint source in their
   `ToolPolicy`, so a successful call also adds a `web` mark to the run's taint (see
   [agent-runtime.md](agent-runtime.md#taint-runs-that-have-read-outside-content)). While a turn
   carries the flag, dispatch hands `agenttoolpolicy.Decide` the turn's taint with a `web` mark
@@ -167,13 +167,13 @@ should be able to do on its own. The business-hours hold passes it by for the sa
 
 ### Partner text and guides
 
-`inspect_x12` and `draft_edi_connection` are not extensions, but they return text written outside
+`edi_inspect_x12` and `edi_draft_connection` are not extensions, but they return text written outside
 the organization the same way: X12 a person pasted, or an implementation guide a person attached,
 both written by a trading partner. A successful call sets the same turn flag, so every later write
 in the turn is capped at `Propose` and the model is told it read "content written outside the
 organization (a web page, or a trading partner's text or guide it was given)". Both declare
-`ReadsExternal: always`, `inspect_x12` with the `edi` source and `draft_edi_connection` with the
-`attachment` source, so the run is tainted too. The guide's write, `apply_edi_connection_draft`,
+`ReadsExternal: always`, `edi_inspect_x12` with the `edi` source and `edi_draft_connection` with the
+`attachment` source, so the run is tainted too. The guide's write, `edi_apply_connection_draft`,
 has a `Propose` ceiling of its own and carries the guide's digest; see
 [edi-spec-onboarding.md](edi-spec-onboarding.md).
 
@@ -272,5 +272,5 @@ A new capability is a new kind of thing agents can do, so it needs more than a v
    Each tool's `ToolPolicy` declares what it reads and writes, as for any other tool.
 4. If its tools act outside Trenova (a browser that submits a form, a phone call), they are
    writes: they need previews, write coverage and a `Propose` ceiling like any other write.
-   `act_on_portal` is the example: an `external_recipient` write whose preview is a `Send`, and
+   `web_use_portal` is the example: an `external_recipient` write whose preview is a `Send`, and
    which runs only from an approval.

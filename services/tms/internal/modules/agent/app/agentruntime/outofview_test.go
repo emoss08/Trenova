@@ -12,7 +12,7 @@ import (
 )
 
 /*
-A delegate raised raise_exception, the person approved it, and the next reply
+A delegate raised agent_raise_exception, the person approved it, and the next reply
 said the case was still waiting on its card: the delegate's steps are never
 replayed, so the ledger had no call to swap, and the delegate_task result the
 model did read still said the card was waiting. The decided state now reaches
@@ -30,34 +30,34 @@ func TestOutOfViewDecisions_TellsTheModelWhatBecameOfADelegatesProposal(t *testi
 	note := outOfViewDecisions(history, []agentports.ProposalOutcome{
 		{
 			SourceMessageID: pulid.MustNew("amsg_"),
-			ToolName:        "raise_exception",
+			ToolName:        "agent_raise_exception",
 			Status:          agent.ProposalStatusExecuted,
 			AutonomyTier:    agent.TierPropose,
 		},
 		{
 			SourceMessageID: visible,
-			ToolName:        "update_report",
+			ToolName:        "report_update",
 			Status:          agent.ProposalStatusRejected,
 		},
 		{
 			SourceMessageID: pulid.MustNew("amsg_"),
-			ToolName:        "create_report",
+			ToolName:        "report_create",
 			Status:          agent.ProposalStatusPending,
 		},
 		{
 			SourceMessageID: pulid.MustNew("amsg_"),
-			ToolName:        "save_table_view",
+			ToolName:        "report_save_table_view",
 			Status:          agent.ProposalStatusExecuted,
 			AutonomyTier:    agent.TierAutoExecute,
 		},
-		{ToolName: "add_home_widget", Status: agent.ProposalStatusRejected},
+		{ToolName: "home_add_widget", Status: agent.ProposalStatusRejected},
 	})
 
-	assert.Contains(t, note, `approved the proposal to run "raise_exception"`)
-	assert.NotContains(t, note, "update_report", "the ledger already swaps a call in view")
-	assert.NotContains(t, note, "create_report", "a waiting card is what the model was told")
-	assert.NotContains(t, note, "save_table_view", "a write that ran on its own was not decided")
-	assert.NotContains(t, note, "add_home_widget", "a proposal with no source is not placed")
+	assert.Contains(t, note, `approved the proposal to run "agent_raise_exception"`)
+	assert.NotContains(t, note, "report_update", "the ledger already swaps a call in view")
+	assert.NotContains(t, note, "report_create", "a waiting card is what the model was told")
+	assert.NotContains(t, note, "report_save_table_view", "a write that ran on its own was not decided")
+	assert.NotContains(t, note, "home_add_widget", "a proposal with no source is not placed")
 	assert.True(t, strings.HasSuffix(note, "]\n\n"), "the note stands apart from the question")
 }
 
@@ -69,7 +69,7 @@ func TestOutOfViewDecisions_SaysNothingWhenEverythingIsInView(t *testing.T) {
 
 	assert.Empty(t, outOfViewDecisions(history, []agentports.ProposalOutcome{{
 		SourceMessageID: source,
-		ToolName:        "update_report",
+		ToolName:        "report_update",
 		Status:          agent.ProposalStatusExecuted,
 	}}))
 	assert.Empty(t, outOfViewDecisions(history, nil))

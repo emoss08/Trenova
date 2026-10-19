@@ -19,7 +19,7 @@
           "delay": 0.8
         },
         {
-          "name": "get_worker",
+          "name": "worker_get",
           "arguments": { "workerId": "wrk_01M3Z03Z86B264TGB69Q6NCDG4" },
           "delay": 0.8
         }
@@ -35,7 +35,7 @@
           "delay": 0.4
         },
         {
-          "name": "update_move_status",
+          "name": "dispatch_set_move_status",
           "arguments": { "moveIds": ["sm_01M3Z03ZKBGEXN64ZVQ5SQ9WWX"], "status": "InTransit" },
           "delay": 0.8
         }
@@ -53,7 +53,7 @@
           "delay": 0.4
         },
         {
-          "name": "list_email_profiles",
+          "name": "inbox_list_email_profiles",
           "arguments": {},
           "delay": 0.6
         },

@@ -210,7 +210,7 @@ func provideListAccountingSyncRecordsTool(
 	return newListAccountingSyncRecordsTool(ledger)
 }
 
-func (t *listAccountingSyncRecordsTool) Name() string { return "list_accounting_sync_records" }
+func (t *listAccountingSyncRecordsTool) Name() string { return "accounting_list_sync_records" }
 
 func (t *listAccountingSyncRecordsTool) Description() string {
 	return "List the documents Trenova sends to the accounting system and where each stands, " +
@@ -218,8 +218,8 @@ func (t *listAccountingSyncRecordsTool) Description() string {
 		"reach the books, by document type, by error category, by one Trenova document, or " +
 		"search document numbers. Each row has its status, the error category, the " +
 		"plain-language resolution, how many tries it took and the accounting system's " +
-		"document number once synced. Pass a row's id to get_accounting_sync_record for its " +
-		"tries, or to retry_accounting_sync once the cause is fixed."
+		"document number once synced. Pass a row's id to accounting_get_sync_record for its " +
+		"tries, or to accounting_retry_sync_record once the cause is fixed."
 }
 
 func (t *listAccountingSyncRecordsTool) SearchTerms() []string {
@@ -376,7 +376,7 @@ func provideGetAccountingSyncRecordTool(
 	return newGetAccountingSyncRecordTool(ledger)
 }
 
-func (t *getAccountingSyncRecordTool) Name() string { return "get_accounting_sync_record" }
+func (t *getAccountingSyncRecordTool) Name() string { return "accounting_get_sync_record" }
 
 func (t *getAccountingSyncRecordTool) Description() string {
 	return "Get one accounting sync record with its status, why it last failed and every try. " +
@@ -393,8 +393,8 @@ func (t *getAccountingSyncRecordTool) SearchTerms() []string {
 func (t *getAccountingSyncRecordTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramSyncRecordID: agenttoolschema.OfKinds(jsonschemautils.Text(
-			"The sync record's id, from list_accounting_sync_records, "+
-				"get_record_accounting_sync_state, or the run's subject.",
+			"The sync record's id, from accounting_list_sync_records, "+
+				"accounting_get_sync_state, or the run's subject.",
 		), permission.KindAccountingSyncRecord),
 	}, paramSyncRecordID)
 }
@@ -464,7 +464,7 @@ func provideGetRecordAccountingSyncStateTool(
 }
 
 func (t *getRecordAccountingSyncStateTool) Name() string {
-	return "get_record_accounting_sync_state"
+	return "accounting_get_sync_state"
 }
 
 func (t *getRecordAccountingSyncStateTool) Description() string {

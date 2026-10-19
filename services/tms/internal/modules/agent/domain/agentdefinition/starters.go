@@ -64,7 +64,7 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Who should take the next uncovered move?",
 			"Rank the best available drivers for the next uncovered move and explain the top pick.",
-			"rank_move_candidates",
+			"dispatch_rank_candidates",
 		),
 		ask(
 			"What is picking up today?",
@@ -74,7 +74,7 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Who is off this week?",
 			"Which drivers have time off booked this week?",
-			"list_time_off",
+			"worker_list_time_off",
 		),
 	},
 	TemplateBillingAssistant: {
@@ -98,29 +98,29 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Which billing reports can I run?",
 			"Which reports can I run for billing, and what does each one show?",
-			"list_reports",
+			"report_list",
 		),
 	},
 	TemplateComplianceAssistant: {
 		ask(
 			"Whose credentials expire soon?",
 			"Which drivers have a credential expiring in the next 30 days?",
-			"list_expiring_credentials",
+			"worker_list_expiring_credentials",
 		),
 		ask(
 			"Who is off this week?",
 			"Which drivers have time off booked this week?",
-			"list_time_off",
+			"worker_list_time_off",
 		),
 		ask(
 			"Which equipment is out of service?",
 			"Which tractors and trailers are out of service right now?",
-			"list_tractors", "list_trailers",
+			"equipment_list_tractors", "equipment_list_trailers",
 		),
 		ask(
 			"Which compliance reports can I run?",
 			"Which reports can I run for safety and compliance?",
-			"list_reports",
+			"report_list",
 		),
 	},
 	TemplateCustomerAssistant: {
@@ -142,7 +142,7 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Look up a customer",
 			"Find a customer and summarize their account for me.",
-			"list_customers",
+			"customer_list",
 		),
 	},
 	TemplateGeneralAssistant: howToStarters,
@@ -167,17 +167,17 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Which moves are unassigned today?",
 			"Which moves on the dispatch board are still unassigned for today?",
-			"get_dispatch_board",
+			"dispatch_get_board",
 		),
 		ask(
 			"Who should take the next uncovered move?",
 			"Rank the best available drivers for the next uncovered move and explain the top pick.",
-			"rank_move_candidates",
+			"dispatch_rank_candidates",
 		),
 		ask(
 			"Which carriers could cover an open load?",
 			"Which carriers could cover today's open loads, and at what rate?",
-			"shop_carriers",
+			"carrier_shop",
 		),
 	},
 	TemplateImportAssistant: {
@@ -189,34 +189,34 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Match the stops to locations",
 			"Match each stop on the document to one of our locations.",
-			"list_locations", "intake_set_stop_location",
+			"location_list", "intake_set_stop_location",
 		),
 		ask(
 			"Which rating method should I use?",
 			"Which rating methods can this shipment be priced with?",
-			"list_formula_templates",
+			"formula_list_templates",
 		),
 	},
 	TemplateLoadMonitor: {
 		ask(
 			"Which loads are running late?",
 			"Which loads on the board are running late right now?",
-			"get_dispatch_board", "shipment_get_tracking",
+			"dispatch_get_board", "shipment_get_tracking",
 		),
 		ask(
 			"Who is low on hours?",
 			"Which drivers are running low on hours of service today?",
-			"get_worker_hos",
+			"worker_get_hos",
 		),
 		ask(
 			"Is weather affecting any loads?",
 			"Are any weather alerts affecting loads that are moving today?",
-			"list_weather_alerts",
+			"insight_list_weather_alerts",
 		),
 		ask(
 			"Which service failures are open?",
 			"Which service failures are still open, and what caused them?",
-			"list_service_failures",
+			"exception_list_service_failures",
 		),
 	},
 	TemplateShipmentIntake: {
@@ -228,12 +228,12 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Quote a shipment",
 			"Quote a shipment for me before I enter it.",
-			"quote_shipment",
+			"rate_quote",
 		),
 		ask(
 			"Which equipment types can I use?",
 			"Which equipment types can I put on a shipment?",
-			"list_equipment_types",
+			"equipment_list_types",
 		),
 	},
 	TemplateCashApplication: {
@@ -257,46 +257,46 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Where is detention building up?",
 			"Which stops are running up detention right now?",
-			"list_detention_desk",
+			"detention_list_occurrences",
 		),
 		ask(
 			"Which notices still need to go out?",
 			"Which detention cases still need a notice sent to the customer?",
-			"list_detention_desk",
+			"detention_list_occurrences",
 		),
 		ask(
 			"What should be escalated?",
 			"Which detention cases should be escalated, and why?",
-			"escalate_detention",
+			"detention_escalate",
 		),
 		ask(
 			"Which charges need approval?",
 			"Which detention charges are waiting on approval, and does the evidence support billing them?",
-			"approve_detention",
+			"detention_approve",
 		),
 	},
 	TemplateCredentialDesk: {
 		ask(
 			"Whose credentials expire soon?",
 			"Which drivers have a credential expiring in the next 30 days?",
-			"list_expiring_credentials",
+			"worker_list_expiring_credentials",
 		),
 		ask(
 			"Who needs a renewal request?",
 			"Which drivers still need a renewal request for papers that are coming due?",
-			"list_expiring_credentials", "request_credential_renewal",
+			"worker_list_expiring_credentials", "worker_request_credential_renewal",
 		),
 		ask(
 			"Look up a driver's papers",
 			"Find a driver and tell me which of their credentials are current.",
-			"get_worker_credential", "list_workers",
+			"worker_get_credential", "worker_list",
 		),
 	},
 	TemplateCustomerUpdateDesk: {
 		ask(
 			"Draft a shipment update",
 			"Draft an update to a customer about where their shipment is.",
-			"email_customer",
+			"customer_send_email",
 		),
 		ask(
 			"Look up a shipment's progress",
@@ -312,12 +312,12 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Which carriers should I watch?",
 			"Which carriers have a recent change to their authority, insurance or safety record?",
-			toolListCarrierIntelEvents, "get_carrier_intel_event", "list_carriers",
+			toolListCarrierIntelEvents, "carrier_get_intelligence_event", "carrier_list",
 		),
 		ask(
 			"Look up a carrier",
 			"Find a carrier and tell me whether they can still be given freight.",
-			"get_carrier", "list_carriers",
+			"carrier_get", "carrier_list",
 		),
 		ask(
 			"How is carrier risk monitored?",
@@ -328,12 +328,12 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"What in the inbox is unfiled?",
 			"Which messages in the inbox have not been filed against a load yet?",
-			"list_inbound_messages",
+			"inbox_list_inbound_messages",
 		),
 		ask(
 			"Which messages need a reply?",
 			"Which inbound messages are still waiting on a reply?",
-			"list_inbound_messages",
+			"inbox_list_inbound_messages",
 		),
 		ask(
 			"Find a shipment",
@@ -351,132 +351,132 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Does the rate fit the lane?",
 			"Compare this shipment's rate with a fresh quote for the same customer and stops.",
-			"explain_rate", "quote_shipment",
+			"rate_explain", "rate_quote",
 		),
 		ask(
 			"Which hold reasons can I use?",
 			"Which hold reasons are set up, and what does each one block?",
-			"list_hold_reasons",
+			"masterdata_list_hold_reasons",
 		),
 	},
 	TemplateServiceFailureDesk: {
 		ask(
 			"Which service failures are open?",
 			"Which service failures are still open, and what caused them?",
-			"list_service_failures",
+			"exception_list_service_failures",
 		),
 		ask(
 			"Why was this stop late?",
 			"Look into this shipment's late stop and tell me what caused it.",
-			"get_service_failure", "shipment_get_tracking",
+			"exception_get_service_failure", "shipment_get_tracking",
 		),
 		ask(
 			"Which reason codes can I use?",
 			"Which service failure reason codes are set up, and when does each one apply?",
-			"list_service_failure_reason_codes",
+			"exception_list_service_failure_reason_codes",
 		),
 	},
 	TemplateInsightAnalyst: {
 		ask(
 			"What stands out today?",
 			"Which open insights need my attention today?",
-			"list_insights",
+			"insight_list",
 		),
 		ask(
 			"Does this finding hold up?",
 			"Check this insight against the records behind it and tell me whether it holds up.",
-			"get_insight",
+			"insight_get",
 		),
 		ask(
 			"Which reports can I run?",
 			"Which reports can I run, and what does each one show?",
-			"list_reports",
+			"report_list",
 		),
 	},
 	TemplateEDIDesk: {
 		ask(
 			"Which EDI files are quarantined?",
 			"Which inbound EDI files are in quarantine, and why did each one fail?",
-			"list_edi_inbound_files",
+			"edi_list_inbound_files",
 		),
 		ask(
 			"Why did this EDI file fail?",
 			"Tell me why this EDI file could not be processed and what would fix it.",
-			"get_edi_inbound_file",
+			"edi_get_inbound_file",
 		),
 		ask(
 			"Is a partner ready for EDI?",
 			"Is this trading partner set up to send us EDI, and what is still missing?",
-			"get_edi_partner",
+			"edi_get_partner",
 		),
 		ask(
 			"Which tenders were rejected?",
 			"Which EDI load tenders were rejected or failed, and why?",
-			"list_edi_transfers",
+			"edi_list_transfers",
 		),
 	},
 	TemplateFactoringClerk: {
 		ask(
 			"Which invoices are ready to factor?",
 			"Which invoices are ready to sell to the factor, and how much is ready in all?",
-			"list_factoring_ready_invoices",
+			"factoring_list_readiness",
 		),
 		ask(
 			"What holds an invoice back?",
 			"Why is this invoice not ready to factor, and what clears it?",
-			"get_factoring_readiness",
+			"factoring_get_readiness",
 		),
 		ask(
 			"Which customers have no notice?",
 			"Which factored customers have no acknowledged notice of assignment?",
-			"list_factoring_noas",
+			"factoring_list_noas",
 		),
 		ask(
 			"What are the factor's terms?",
 			"What are the advance, reserve and fee terms of the factoring agreement in force?",
-			"get_factoring_agreement",
+			"factoring_get_agreement",
 		),
 		ask(
 			"Which schedules failed?",
 			"Which factoring schedules failed to send, and why?",
-			"list_factoring_submissions",
+			"factoring_list_submissions",
 		),
 		ask(
 			"What is each factor holding?",
 			"How much reserve does each factor still hold, and what fees have we paid?",
-			"get_factoring_reserve_balance",
+			"factoring_get_reserve_balance",
 		),
 	},
 	TemplateBooksKeeper: {
 		ask(
 			"What did not reach the books?",
 			"Which documents did not reach the accounting system, and why?",
-			"list_accounting_sync_records",
+			"accounting_list_sync_records",
 		),
 		ask(
 			"Did this invoice sync?",
 			"Did this invoice reach the accounting system, and if not, what is holding it?",
-			"get_record_accounting_sync_state",
+			"accounting_get_sync_state",
 		),
 		ask(
 			"Which mappings are missing?",
 			"Which mappings are still missing, and which documents are waiting on them?",
-			"list_accounting_mapping_gaps",
+			"accounting_list_mapping_gaps",
 		),
 		ask(
 			"Is the accounting connection healthy?",
 			"Is the accounting system connected and answering, and how many documents are queued?",
-			"get_accounting_sync_status",
+			"accounting_get_connection",
 		),
 		ask(
 			"Which payments from the books wait?",
 			"Which payments recorded in the accounting system wait to be applied in Trenova, and why?",
-			"list_accounting_inbound_changes",
+			"accounting_list_inbound_changes",
 		),
 		ask(
 			"Where do the books differ?",
 			"Which documents differ between the accounting system and Trenova, and how should each be fixed?",
-			"list_accounting_drift_findings",
+			"accounting_list_drift_findings",
 		),
 	},
 	TemplateSettlementsClerk: {
@@ -490,7 +490,7 @@ var templateStarters = map[Template][]starterQuestion{
 			"What has a driver earned?",
 			"What has this driver earned that is not on a settlement yet, and what advances "+
 				"do they still owe?",
-			"get_worker_earnings_summary",
+			"settlement_get_driver_earnings",
 		),
 		ask(
 			"Why is a load missing from pay?",
@@ -501,7 +501,7 @@ var templateStarters = map[Template][]starterQuestion{
 			"Which carrier invoices do not match?",
 			"Which carrier invoices differ from what the load was expected to cost, and by "+
 				"how much?",
-			"list_carrier_invoice_matches",
+			"carrier_list_invoice_matches",
 		),
 	},
 	TemplateReceivables: {
@@ -530,23 +530,23 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Is this carrier already on file?",
 			"Is this carrier already on file under its DOT or MC number, and is it active?",
-			"list_carriers",
+			"carrier_list",
 		),
 		ask(
 			"What paperwork needs filing?",
 			"Which scanned documents are waiting to be filed, and which record does each "+
 				"belong on?",
-			"list_capture_batches",
+			"inbox_list_capture_batches",
 		),
 		ask(
 			"What is on the attention feed?",
 			"Which watchtower items are open, and which are already dealt with?",
-			"list_watchtower_items",
+			"exception_list_watchtower_items",
 		),
 		ask(
 			"Add a hazardous material",
 			"Add a hazardous material from its UN number and safety data sheet.",
-			"create_hazardous_material",
+			"masterdata_create_hazardous_material",
 		),
 	},
 	TemplateWorkforceCoordinator: {
@@ -554,17 +554,17 @@ var templateStarters = map[Template][]starterQuestion{
 			"Who is asking for time off?",
 			"Which time-off requests are waiting for a decision, and what is each worker "+
 				"covering on those days?",
-			"list_time_off",
+			"worker_list_time_off",
 		),
 		ask(
 			"Which leave cases are open?",
 			"Which leave cases are open, and what does each one still need?",
-			"list_worker_leave_cases",
+			"worker_list_leave_cases",
 		),
 		ask(
 			"Draw a random testing round",
 			"Draw this period's random drug and alcohol testing round from our pool.",
-			"run_dot_random_draw",
+			"worker_run_dot_random_draw",
 		),
 		ask(
 			"Which permits are missing?",
@@ -576,71 +576,71 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Is the IFTA return ready?",
 			"Is last quarter's IFTA return drafted, and what still blocks finalizing it?",
-			"list_ifta_returns",
+			"fuel_list_ifta_returns",
 		),
 		ask(
 			"Which fuel imports are held?",
 			"Which fuel card statements have rows held back, and why?",
-			"list_fuel_purchase_imports",
+			"fuel_list_purchase_imports",
 		),
 		ask(
 			"Which fuel cards are unassigned?",
 			"Which fuel cards are not assigned to a tractor or a driver?",
-			"list_fuel_cards",
+			"fuel_list_cards",
 		),
 		ask(
 			"Record a fuel receipt",
 			"Record this fuel receipt against the tractor that bought it.",
-			"record_fuel_purchase",
+			"fuel_record_purchase",
 		),
 	},
 	TemplateReportAnalyst: {
 		ask(
 			"Which report answers this?",
 			"Which of our reports shows on-time delivery by customer, and what does it contain?",
-			"list_reports",
+			"report_list",
 		),
 		ask(
 			"What changed since last week?",
 			"Run this report again and tell me what moved since last week's run.",
-			"compare_report_runs",
+			"report_compare_runs",
 		),
 		ask(
 			"Build a report",
 			"Build a report of delivered shipments by customer for last month.",
-			"create_report",
+			"report_create",
 		),
 		ask(
 			"Email a report every week",
 			"Email this report to the operations team every Monday morning.",
-			"schedule_report",
+			"report_create_schedule",
 		),
 	},
 	TemplateFormulaAssistant: {
 		ask(
 			"Write a formula",
 			"Write a formula that charges per mile with a fuel surcharge and a minimum charge.",
-			"propose_formula", "describe_formula_schema",
+			"propose_formula", "formula_describe_schema",
 		),
 		ask(
 			"Explain this formula",
 			"Explain what this formula charges, term by term.",
-			"describe_formula_schema",
+			"formula_describe_schema",
 		),
 		ask(
 			"What would this charge?",
 			"What would this formula charge for a 500 mile load?",
-			"test_formula_expression",
+			"formula_test_expression",
 		),
 		ask(
 			"How was this rate worked out?",
 			"Explain how this shipment's rate was worked out, charge by charge.",
-			"explain_rate",
+			"rate_explain",
 		),
 		ask(
 			"Draft a rate agreement",
 			"Draft next year's rate agreement for this customer from its current one.",
-			"duplicate_rate_agreement", "revise_rate_agreement_draft",
+			"rate_duplicate_agreement", "rate_update_agreement_draft",
 		),
 	},
 }
@@ -650,34 +650,34 @@ var toolFamilies = [][]starterQuestion{
 		ask(
 			"Build a report",
 			"Build a report of in-transit shipments by customer.",
-			"create_report",
+			"report_create",
 		),
 		ask(
 			"Which reports can I run?",
 			"Which reports can I run, and what does each one show?",
-			"list_reports",
+			"report_list",
 		),
 		ask(
 			"What can I report on?",
 			"Which datasets can I build a report from, and what does each one hold?",
-			"list_report_datasets", "describe_report_dataset",
+			"report_list_datasets", "report_get_dataset",
 		),
 		ask(
 			"Change one of my reports",
 			"Add a column for delivery date to one of my reports.",
-			"update_report",
+			"report_update",
 		),
 	},
 	{
 		ask(
 			"Add a widget to my home page",
 			"Add a widget to my home page that shows today's late shipments.",
-			"add_home_widget",
+			"home_add_widget",
 		),
 		ask(
 			"What is on my home page?",
 			"What widgets are on my home page right now?",
-			"list_home_widgets", "get_my_home_layout",
+			"home_list_widgets", "home_get_layout",
 		),
 	},
 	{
@@ -685,41 +685,41 @@ var toolFamilies = [][]starterQuestion{
 			"Build a dashboard",
 			"Build a dashboard of this month's on-time delivery: its headline figures "+
 				"first, as KPI tiles if the report gives them, then the detail table.",
-			"create_dashboard", "add_dashboard_tile",
+			"report_create_dashboard", "report_add_dashboard_tile",
 		),
 		ask(
 			"Which dashboards do we have?",
 			"Which dashboards do we have, and what does each one track?",
-			"list_dashboards",
+			"report_list_dashboards",
 		),
 	},
 	{
 		ask(
 			"Which moves are unassigned today?",
 			"Which moves on the dispatch board are still unassigned for today?",
-			"get_dispatch_board",
+			"dispatch_get_board",
 		),
 		ask(
 			"Who should take the next uncovered move?",
 			"Rank the best available drivers for the next uncovered move and explain the top pick.",
-			"rank_move_candidates",
+			"dispatch_rank_candidates",
 		),
 		ask(
 			"Plan today's dispatch",
 			"Plan driver assignments for today's uncovered moves.",
-			"plan_dispatch",
+			"dispatch_plan",
 		),
 	},
 	{
 		ask(
 			"Which loads are running late?",
 			"Which loads are running late right now, based on tracking?",
-			"shipment_get_tracking", "list_vehicle_positions",
+			"shipment_get_tracking", "equipment_list_positions",
 		),
 		ask(
 			"Is weather affecting any loads?",
 			"Are any weather alerts affecting loads that are moving today?",
-			"list_weather_alerts",
+			"insight_list_weather_alerts",
 		),
 	},
 	{
@@ -738,46 +738,46 @@ var toolFamilies = [][]starterQuestion{
 		ask(
 			"Which carriers could cover an open load?",
 			"Which carriers could cover today's open loads, and at what rate?",
-			"shop_carriers",
+			"carrier_shop",
 		),
 		ask(
 			"Which carriers should I watch?",
 			"Which carriers have a recent change to their authority, insurance or safety record?",
-			toolListCarrierIntelEvents, "get_carrier_intel_event",
+			toolListCarrierIntelEvents, "carrier_get_intelligence_event",
 		),
 		ask(
 			"Look up a carrier",
 			"Find a carrier and tell me whether they can still be given freight.",
-			"list_carriers", "get_carrier",
+			"carrier_list", "carrier_get",
 		),
 	},
 	{
 		ask(
 			"Whose credentials expire soon?",
 			"Which drivers have a credential expiring in the next 30 days?",
-			"list_expiring_credentials",
+			"worker_list_expiring_credentials",
 		),
 		ask(
 			"Who is low on hours?",
 			"Which drivers are running low on hours of service today?",
-			"get_worker_hos",
+			"worker_get_hos",
 		),
 		ask(
 			"Who is off this week?",
 			"Which drivers have time off booked this week?",
-			"list_time_off",
+			"worker_list_time_off",
 		),
 		ask(
 			"Look up a driver",
 			"Find a driver and summarize where they are and what they are qualified for.",
-			"search_worker", "list_workers", "get_worker",
+			"worker_search", "worker_list", "worker_get",
 		),
 	},
 	{
 		ask(
 			"Which equipment is out of service?",
 			"Which tractors and trailers are out of service right now?",
-			"list_tractors", "list_trailers",
+			"equipment_list_tractors", "equipment_list_trailers",
 		),
 	},
 	{
@@ -825,26 +825,26 @@ var toolFamilies = [][]starterQuestion{
 			"Which carrier invoices do not match?",
 			"Which carrier invoices differ from what the load was expected to cost, and by "+
 				"how much?",
-			"list_carrier_invoice_matches",
+			"carrier_list_invoice_matches",
 		),
 	},
 	{
 		ask(
 			"Where is detention building up?",
 			"Which stops are running up detention right now?",
-			"list_detention_desk",
+			"detention_list_occurrences",
 		),
 		ask(
 			"Which service failures are open?",
 			"Which service failures are still open, and what caused them?",
-			"list_service_failures",
+			"exception_list_service_failures",
 		),
 	},
 	{
 		ask(
 			"What in the inbox is unfiled?",
 			"Which messages in the inbox have not been filed against a load yet?",
-			"list_inbound_messages",
+			"inbox_list_inbound_messages",
 		),
 	},
 	{
@@ -856,26 +856,26 @@ var toolFamilies = [][]starterQuestion{
 		ask(
 			"Quote a shipment",
 			"Quote a shipment for me before I enter it.",
-			"quote_shipment",
+			"rate_quote",
 		),
 	},
 	{
 		ask(
 			"Look up a customer",
 			"Find a customer and summarize their account for me.",
-			"list_customers", "get_customer",
+			"customer_list", "customer_get",
 		),
 	},
 	{
 		ask(
 			"What stands out today?",
 			"Which open insights need my attention today?",
-			"list_insights",
+			"insight_list",
 		),
 		ask(
 			"Alert me to a change",
 			"Alert me whenever a shipment is put on hold.",
-			"create_table_change_alert",
+			"report_create_table_change_alert",
 		),
 	},
 }

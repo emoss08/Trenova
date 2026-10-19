@@ -63,7 +63,7 @@ func TestContextBuilder_ReadsTheMemoriesOfWhatTheTurnIsAbout(t *testing.T) {
 			&scriptedCompletion{},
 			&stubQueryRegistry{},
 			&stubActionRegistry{Tools: []agentports.AgentTool{
-				actionTool("assign_move", agent.TierPropose, nil),
+				actionTool("dispatch_assign_move", agent.TierPropose, nil),
 			}},
 			nil,
 		),
@@ -73,7 +73,7 @@ func TestContextBuilder_ReadsTheMemoriesOfWhatTheTurnIsAbout(t *testing.T) {
 	shipment := pulid.MustNew("shp_").String()
 	location := pulid.MustNew("loc_").String()
 	parentRecord := pulid.MustNew("wrk_").String()
-	definition := testDefinition("assign_move")
+	definition := testDefinition("dispatch_assign_move")
 	rc, err := builder.Build(t.Context(), &agentports.RuntimeContextRequest{
 		Definition: definition,
 		Actor:      testActor(),
@@ -95,7 +95,7 @@ func TestContextBuilder_ReadsTheMemoriesOfWhatTheTurnIsAbout(t *testing.T) {
 		{Type: "location", ID: location},
 		{Type: "worker", ID: parentRecord},
 	}, memories.asked.Records)
-	assert.Equal(t, []string{"assign_move"}, memories.asked.ToolNames,
+	assert.Equal(t, []string{"dispatch_assign_move"}, memories.asked.ToolNames,
 		"memories are read for the tools the agent holds")
 	assert.Equal(t, memories.answer.Memories, rc.Memories)
 	assert.Equal(t, memories.answer.Subjects, rc.MemorySubjects)
@@ -188,7 +188,7 @@ func TestSavedOrRefreshed_ARefreshedMemoryIsUsedNotSaved(t *testing.T) {
 	assert.Nil(t, saved)
 	assert.Same(t, again, refreshed)
 
-	content := refreshedContent("remember", again)
+	content := refreshedContent("agent_create_memory", again)
 	assert.Contains(t, content, "already remembered as memory "+again.ID.String())
 	assert.Contains(t, content, "instead of saving a duplicate")
 }
@@ -252,19 +252,19 @@ func TestNoteToolMemories_AToolsMemoriesAreUsedOnceItIsCalled(t *testing.T) {
 	already := pulid.MustNew("amem_")
 	turn := rt.RestoreTurn(&agentports.RunRequest{Definition: testDefinition()}, TurnState{
 		Result:       agentports.RunResult{UsedMemoryIDs: []pulid.ID{already}},
-		ToolMemories: map[string][]pulid.ID{"assign_move": {fix}},
+		ToolMemories: map[string][]pulid.ID{"dispatch_assign_move": {fix}},
 	})
 	fx := &memoryEvents{}
 
 	turn.noteToolMemories(fx, "shipment_list")
 	assert.Empty(t, fx.events, "a call to another tool uses nothing")
 
-	turn.noteToolMemories(fx, "assign_move")
+	turn.noteToolMemories(fx, "dispatch_assign_move")
 	require.Len(t, fx.events, 1)
 	assert.Equal(t, agentports.AssistantEventMemoryUsed, fx.events[0].Event)
 	assert.Equal(t, []pulid.ID{already, fix}, turn.State().Result.UsedMemoryIDs)
 	assert.Empty(t, turn.State().ToolMemories)
 
-	turn.noteToolMemories(fx, "assign_move")
+	turn.noteToolMemories(fx, "dispatch_assign_move")
 	assert.Len(t, fx.events, 1, "a second call announces nothing new")
 }

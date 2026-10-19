@@ -129,7 +129,7 @@ func TrainingToolProviders() []any {
 
 func trainingIDProperty() map[string]any {
 	return agenttoolschema.RecordID(permission.ResourceWorkerTraining, "The training assignment",
-		"list_worker_training")
+		"worker_list_training")
 }
 
 func trainingRecord(record *worker.WorkerTrainingRecord) toolpreview.Record {
@@ -228,7 +228,7 @@ func renderTrainingAssignment(
 
 func newAssignWorkerTrainingTool(training TrainingKeeper) agentports.AgentTool {
 	spec := withSchema(wfSpec(
-		"assign_worker_training",
+		"worker_assign_training",
 		"Assign one or more training courses to one or more workers, due on the day given "+
 			"or on the course's own schedule. A course a worker already has open is left as it "+
 			"is. The driver sees each assignment in Dash.",
@@ -238,12 +238,12 @@ func newAssignWorkerTrainingTool(training TrainingKeeper) agentports.AgentTool {
 	), map[string]any{
 		paramTrainingWorkers: agenttoolschema.RecordIDs(
 			permission.ResourceWorker,
-			"The workers, from search_worker or "+
-				"list_workers.",
+			"The workers, from worker_search or "+
+				"worker_list.",
 			maxTrainingWorkers,
 		),
 		paramCourseIDs: agenttoolschema.RecordIDs(permission.ResourceTrainingCourse,
-			"The courses, from list_training_courses.", maxTrainingCourses),
+			"The courses, from worker_list_training_courses.", maxTrainingCourses),
 		wfParamDueDate: agenttoolschema.Date(
 			"When it is due, when not the course's own schedule.",
 		),
@@ -297,7 +297,7 @@ type requiredTraining struct {
 
 func newAssignRequiredWorkerTrainingTool(training TrainingKeeper) agentports.AgentTool {
 	spec := withSchema(wfSpec(
-		"assign_required_worker_training",
+		"worker_assign_required_training",
 		"Assign a worker every course the organization requires of them that they are "+
 			"missing, have failed or have let lapse. Courses already open are left alone. The "+
 			"driver sees each assignment in Dash.",
@@ -422,7 +422,7 @@ func completionFrom(
 
 // completionMatchesRecord takes a completion that names the open assignment
 // and also its worker and course. A model that found the assignment with
-// list_worker_training, filtered to the worker and the course, sent all three
+// worker_list_training, filtered to the worker and the course, sent all three
 // and was refused for naming the assignment both ways, though they agreed. A
 // worker or course that is not the assignment's is refused, since the
 // completion would land on a record other than the one the call describes.
@@ -456,7 +456,7 @@ func completionMatchesRecord(
 
 func newRecordTrainingCompletionTool(training TrainingKeeper) agentports.AgentTool {
 	spec := withSchema(wfSpec(
-		"record_training_completion",
+		"worker_record_training_completion",
 		"Record that a worker finished a training course. Give the open assignment's id, "+
 			"or the worker and course directly for a classroom session recorded after the "+
 			"fact. A scored course needs the score and fails below its passing mark; a pass sets "+
@@ -469,7 +469,7 @@ func newRecordTrainingCompletionTool(training TrainingKeeper) agentports.AgentTo
 		paramTrainingID:      trainingIDProperty(),
 		common.ParamWorkerID: common.WorkerProperty(),
 		paramCourseID: agenttoolschema.RecordIDText(permission.ResourceTrainingCourse,
-			"The course, from list_training_courses, with workerId when there is no "+
+			"The course, from worker_list_training_courses, with workerId when there is no "+
 				"trainingId. Beside trainingId it must be that assignment's course."),
 		paramCompletedAt: agenttoolschema.Date(
 			"The day it was finished. Defaults to today; never a " +
@@ -551,7 +551,7 @@ func newRecordTrainingCompletionTool(training TrainingKeeper) agentports.AgentTo
 
 func newAttachWorkerTrainingDocumentTool(training TrainingKeeper) agentports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
-		"attach_worker_training_document",
+		"worker_attach_training_document",
 		"Attach a certificate or sign-in sheet already filed on the worker to one of their "+
 			"training assignments.",
 		"Links a filed document to a training record inside Trenova; attaching another "+
@@ -628,7 +628,7 @@ type trainingClosing struct {
 
 func newCloseWorkerTrainingTool(training TrainingKeeper) agentports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
-		"close_worker_training",
+		"worker_close_training",
 		"Close an open training assignment without a completion. Waive satisfies the "+
 			"requirement for a stated reason, such as an equivalent certificate on file; "+
 			"Cancel withdraws an assignment that should never have been made.",

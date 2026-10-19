@@ -63,7 +63,7 @@ func tainted() *agent.RunTaint {
 	taint := &agent.RunTaint{}
 	taint.Add(agent.TaintMark{
 		Source:   agent.TaintSourceInboundMessage,
-		ToolName: "get_inbound_message",
+		ToolName: "inbox_get_inbound_message",
 		CallID:   "call_1",
 		Ref:      &agent.RecordRef{EntityType: "inbound_message", ID: "imsg_1"},
 	})
@@ -110,7 +110,7 @@ the owner's rules from before the spec existed, reproduced exactly.
 func TestDecide_CreateReport(t *testing.T) {
 	t.Parallel()
 
-	policy := registeredPolicy(t, "create_report")
+	policy := registeredPolicy(t, "report_create")
 	private := map[string]any{
 		"name":       "Late loads",
 		"visibility": string(report.VisibilityPrivate),
@@ -174,7 +174,7 @@ func TestDecide_CreateReport(t *testing.T) {
 				Policy: policy,
 				Params: call(person(), private),
 				Definition: definition(agent.TierAutoExecute, map[string]agent.AutonomyTier{
-					"create_report": agent.TierPropose,
+					"report_create": agent.TierPropose,
 				}),
 				TierSetByPerson: true,
 				Taint:           clean(),
@@ -188,7 +188,7 @@ func TestDecide_CreateReport(t *testing.T) {
 				Policy: policy,
 				Params: call(person(), private),
 				Definition: definition(agent.TierAutoExecute, map[string]agent.AutonomyTier{
-					"create_report": agent.TierActWithApproval,
+					"report_create": agent.TierActWithApproval,
 				}),
 				TierSetByPerson: false,
 				Taint:           clean(),
@@ -202,7 +202,7 @@ func TestDecide_CreateReport(t *testing.T) {
 func TestDecide_SaveTableViewRunsAPrivateViewUnasked(t *testing.T) {
 	t.Parallel()
 
-	policy := registeredPolicy(t, "save_table_view")
+	policy := registeredPolicy(t, "report_save_table_view")
 	runDecideCases(t, []decideCase{
 		{
 			name: "a private view is the person's own",
@@ -235,11 +235,11 @@ func TestDecide_MailboxGate(t *testing.T) {
 	t.Parallel()
 
 	earned := definition(agent.TierAutoExecute, map[string]agent.AutonomyTier{
-		"mark_inbound_message":     agent.TierAutoExecute,
-		"reply_to_inbound_message": agent.TierAutoExecute,
+		"inbox_mark_inbound_message": agent.TierAutoExecute,
+		"inbox_send_reply":           agent.TierAutoExecute,
 	})
-	mark := registeredPolicy(t, "mark_inbound_message")
-	reply := registeredPolicy(t, "reply_to_inbound_message")
+	mark := registeredPolicy(t, "inbox_mark_inbound_message")
+	reply := registeredPolicy(t, "inbox_send_reply")
 
 	runDecideCases(t, []decideCase{
 		{
@@ -344,14 +344,14 @@ func TestDecide_OutboundApprovalCap(t *testing.T) {
 	t.Parallel()
 
 	for _, name := range []string{
-		"email_customer",
-		"send_detention_notice",
-		"notify_driver",
+		"customer_send_email",
+		"detention_send_notice",
+		"worker_send_message",
 		"shipment_request_documents",
-		"request_credential_renewal",
-		"tender_move_to_routing_guide",
-		"tender_move_to_carriers",
-		"schedule_report",
+		"worker_request_credential_renewal",
+		"dispatch_create_tender_from_routing_guide",
+		"dispatch_create_tender",
+		"report_create_schedule",
 		"shipment_create",
 	} {
 		t.Run(name, func(t *testing.T) {
@@ -378,7 +378,7 @@ func TestDecide_OutboundApprovalCap(t *testing.T) {
 func TestDecide_SelfScopedTools(t *testing.T) {
 	t.Parallel()
 
-	policy := registeredPolicy(t, "add_home_widget")
+	policy := registeredPolicy(t, "home_add_widget")
 	assert.Equal(t, agent.ToolScopeSelf, policy.Scope)
 
 	runDecideCases(t, []decideCase{
@@ -400,7 +400,7 @@ func TestDecide_SelfScopedTools(t *testing.T) {
 				Policy: policy,
 				Params: call(person(), nil),
 				Definition: definition(agent.TierAutoExecute, map[string]agent.AutonomyTier{
-					"add_home_widget": agent.TierAutoExecute,
+					"home_add_widget": agent.TierAutoExecute,
 				}),
 				Taint: tainted(),
 			},
@@ -415,7 +415,7 @@ func TestDecide_SelfScopedTools(t *testing.T) {
 func TestDecide_SimulationAndShadowDoNotMoveTheTier(t *testing.T) {
 	t.Parallel()
 
-	for _, name := range []string{"assign_move", "create_report", "email_customer"} {
+	for _, name := range []string{"dispatch_assign_move", "report_create", "customer_send_email"} {
 		policy := registeredPolicy(t, name)
 		plain := definition(agent.TierAutoExecute, nil)
 		simulated := definition(agent.TierAutoExecute, nil)
@@ -440,10 +440,10 @@ func TestDecide_AgentCeiling(t *testing.T) {
 		{
 			name: "the agent's ceiling holds a tool set higher",
 			in: agenttoolpolicy.DecideInput{
-				Policy: registeredPolicy(t, "assign_move"),
+				Policy: registeredPolicy(t, "dispatch_assign_move"),
 				Params: call(person(), nil),
 				Definition: definition(agent.TierActWithApproval, map[string]agent.AutonomyTier{
-					"assign_move": agent.TierAutoExecute,
+					"dispatch_assign_move": agent.TierAutoExecute,
 				}),
 				TierSetByPerson: true,
 				Taint:           clean(),
@@ -463,7 +463,7 @@ func TestDecide_TaintHoldsWhatLeaves(t *testing.T) {
 	t.Parallel()
 
 	money := registeredPolicy(t, "receivable_post_customer_payment")
-	internal := registeredPolicy(t, "assign_move")
+	internal := registeredPolicy(t, "dispatch_assign_move")
 	actsAlone := func(name string) *agentdefinition.Definition {
 		return definition(agent.TierAutoExecute, map[string]agent.AutonomyTier{
 			name: agent.TierAutoExecute,
@@ -520,7 +520,7 @@ func TestDecide_TaintHoldsWhatLeaves(t *testing.T) {
 			in: agenttoolpolicy.DecideInput{
 				Policy:     internal,
 				Params:     call(agentPrincipal(), nil),
-				Definition: actsAlone("assign_move"),
+				Definition: actsAlone("dispatch_assign_move"),
 				Taint:      tainted(),
 			},
 			tier: agent.TierAutoExecute,
@@ -539,7 +539,7 @@ func TestDecide_TaintHoldsWhatLeaves(t *testing.T) {
 func TestDetentionMoneyDecisionsAreCappedAtPropose(t *testing.T) {
 	t.Parallel()
 
-	for _, name := range []string{"approve_detention", "waive_detention"} {
+	for _, name := range []string{"detention_approve", "detention_waive"} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
@@ -568,14 +568,14 @@ func TestPromotable(t *testing.T) {
 	t.Parallel()
 
 	cases := map[string]agent.AutonomyTier{
-		"assign_move":                      agent.TierAutoExecute,
-		"create_report":                    agent.TierAutoExecute,
+		"dispatch_assign_move":             agent.TierAutoExecute,
+		"report_create":                    agent.TierAutoExecute,
 		"shipment_add_comment":             agent.TierAutoExecute,
 		"receivable_post_customer_payment": agent.TierAutoExecute,
-		"email_customer":                   agent.TierActWithApproval,
-		"reply_to_inbound_message":         agent.TierActWithApproval,
+		"customer_send_email":              agent.TierActWithApproval,
+		"inbox_send_reply":                 agent.TierActWithApproval,
 		"shipment_create":                  agent.TierActWithApproval,
-		"schedule_report":                  agent.TierActWithApproval,
+		"report_create_schedule":           agent.TierActWithApproval,
 		"shipment_cancel":                  agent.TierActWithApproval,
 	}
 	for name, want := range cases {
@@ -608,15 +608,15 @@ func TestTierSetByPerson(t *testing.T) {
 	t.Parallel()
 
 	d := definition(agent.TierAutoExecute, map[string]agent.AutonomyTier{
-		"create_report": agent.TierAutoExecute,
+		"report_create": agent.TierAutoExecute,
 	})
 	earned := &agent.ToolTrust{EarnedTier: agent.TierAutoExecute}
 	chosen := &agent.ToolTrust{EarnedTier: agent.TierActWithApproval}
 
-	assert.False(t, agenttoolpolicy.TierSetByPerson(d, "create_report", earned))
-	assert.True(t, agenttoolpolicy.TierSetByPerson(d, "create_report", chosen))
-	assert.True(t, agenttoolpolicy.TierSetByPerson(d, "create_report", nil))
-	assert.False(t, agenttoolpolicy.TierSetByPerson(d, "assign_move", nil))
+	assert.False(t, agenttoolpolicy.TierSetByPerson(d, "report_create", earned))
+	assert.True(t, agenttoolpolicy.TierSetByPerson(d, "report_create", chosen))
+	assert.True(t, agenttoolpolicy.TierSetByPerson(d, "report_create", nil))
+	assert.False(t, agenttoolpolicy.TierSetByPerson(d, "dispatch_assign_move", nil))
 }
 
 // Whether a person set the tier matters only to a call that would otherwise
@@ -624,7 +624,7 @@ func TestTierSetByPerson(t *testing.T) {
 func TestSeeksPersonalExemption(t *testing.T) {
 	t.Parallel()
 
-	policy := registeredPolicy(t, "create_report")
+	policy := registeredPolicy(t, "report_create")
 	private := map[string]any{"name": "Late loads", "visibility": string(report.VisibilityPrivate)}
 	shared := map[string]any{"name": "Late loads", "visibility": string(report.VisibilityShared)}
 
@@ -669,7 +669,7 @@ func TestSeeksPersonalExemption(t *testing.T) {
 		{
 			name: "a personal tool the owner did not exempt",
 			in: agenttoolpolicy.DecideInput{
-				Policy: registeredPolicy(t, "add_home_widget"),
+				Policy: registeredPolicy(t, "home_add_widget"),
 				Params: call(person(), nil),
 			},
 		},
@@ -686,7 +686,7 @@ func TestSeeksPersonalExemption(t *testing.T) {
 func TestAlwaysProposes_OnlyWhenNothingLetsACallRun(t *testing.T) {
 	t.Parallel()
 
-	open := actionPolicy("update_tractor_status", agent.EgressInternal)
+	open := actionPolicy("equipment_set_tractor_status", agent.EgressInternal)
 	capped := open
 	capped.MaxTier = agent.TierActWithApproval
 	earning := open

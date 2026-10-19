@@ -27,7 +27,7 @@ describe("describeToolCall", () => {
   });
 
   it("uses the search text for a search", () => {
-    expect(describeToolCall("search_worker", { query: "Ortiz", limit: 10 })).toEqual({
+    expect(describeToolCall("worker_search", { query: "Ortiz", limit: 10 })).toEqual({
       title: "Search drivers",
       subject: "“Ortiz”",
     });
@@ -41,16 +41,16 @@ describe("describeToolCall", () => {
   });
 
   it("names the insight tools and the finding they were about", () => {
-    expect(describeToolCall("list_insights", { severity: "Critical" })).toEqual({
+    expect(describeToolCall("insight_list", { severity: "Critical" })).toEqual({
       title: "Review insights",
       subject: "Critical",
     });
-    expect(describeToolCall("get_insight", { insightId: "inst_1" })).toEqual({
+    expect(describeToolCall("insight_get", { insightId: "inst_1" })).toEqual({
       title: "Read insight",
       subject: "inst_1",
     });
     expect(
-      describeToolCall("dismiss_insight", { insightId: "inst_1", reason: "Seasonal pattern." }),
+      describeToolCall("insight_dismiss", { insightId: "inst_1", reason: "Seasonal pattern." }),
     ).toEqual({
       title: "Dismiss insight",
       subject: "inst_1",
@@ -110,7 +110,7 @@ describe("describeToolCall", () => {
 
   it("reads a relative window as a window", () => {
     expect(
-      describeToolCall("list_trailers", {
+      describeToolCall("equipment_list_trailers", {
         filters: [{ field: "registrationExpiry", operator: "nextndays", days: 30 }],
       }),
     ).toEqual({
@@ -121,7 +121,7 @@ describe("describeToolCall", () => {
 
   it("keeps a long filter list to a readable length", () => {
     expect(
-      describeToolCall("list_workers", {
+      describeToolCall("worker_list", {
         filters: [
           { field: "status", operator: "eq", value: "Active" },
           { field: "type", operator: "eq", value: "Employee" },
@@ -133,7 +133,7 @@ describe("describeToolCall", () => {
 
   it("names the report a run was started for", () => {
     expect(
-      describeToolCall("run_report", {
+      describeToolCall("report_run", {
         reportKey: "ar_aging_by_customer",
         parameters: { asOf: "2026-03-01" },
       }),
@@ -144,12 +144,12 @@ describe("describeToolCall", () => {
   });
 
   it("names a saved report by its definition id and a dataset by its key", () => {
-    expect(describeToolCall("describe_report", { definitionId: "rdef_1" })).toEqual({
+    expect(describeToolCall("report_get", { definitionId: "rdef_1" })).toEqual({
       title: "Read report",
       subject: "rdef_1",
     });
     expect(
-      describeToolCall("describe_report_dataset", { dataset: "shipment", query: "revenue" }),
+      describeToolCall("report_get_dataset", { dataset: "shipment", query: "revenue" }),
     ).toEqual({
       title: "Read dataset",
       subject: "shipment",
@@ -167,12 +167,12 @@ describe("describeToolCall", () => {
       subject: "S12345",
     });
     expect(
-      describeToolCall("resolve_service_failure", {
+      describeToolCall("exception_resolve_service_failure", {
         serviceFailureId: "sf_1",
         notes: "Shipper closed early.",
       }),
     ).toEqual({ title: "Resolve service failure", subject: "sf_1" });
-    expect(describeToolCall("send_detention_notice", { occurrenceId: "dto_1" })).toEqual({
+    expect(describeToolCall("detention_send_notice", { occurrenceId: "dto_1" })).toEqual({
       title: "Send detention notice",
       subject: "dto_1",
     });
@@ -180,7 +180,7 @@ describe("describeToolCall", () => {
 
   it("names the dataset a definition is built on", () => {
     expect(
-      describeToolCall("preview_report", {
+      describeToolCall("report_preview", {
         definition: { entity: "shipment", columns: [] },
       }),
     ).toEqual({
@@ -188,7 +188,7 @@ describe("describeToolCall", () => {
       subject: "shipment",
     });
     expect(
-      describeToolCall("create_report", {
+      describeToolCall("report_create", {
         name: "Revenue by customer",
         definition: { entity: "shipment", columns: [] },
       }),
@@ -273,26 +273,26 @@ describe("parseToolResult", () => {
 
   it("treats a proposal receipt as plain text", () => {
     const content =
-      'Recorded a proposal to run "flag_for_manual_review". It is awaiting review at the Propose tier and has not run.';
+      'Recorded a proposal to run "agent_request_review". It is awaiting review at the Propose tier and has not run.';
 
     expect(parseToolResult(content)).toEqual({ kind: "text", text: content, truncated: false });
   });
 });
 
 /**
- * open_page was drawn as "Open page" with its path run into the title, which
+ * agent_open_page was drawn as "Open page" with its path run into the title, which
  * read as "Open pagereport". It has a title of its own and names the page.
  */
 describe("describeToolCall for navigation and the guide", () => {
   it("names the page a navigation asked for", () => {
-    expect(describeToolCall("open_page", { page: "/reports/library" })).toEqual({
+    expect(describeToolCall("agent_open_page", { page: "/reports/library" })).toEqual({
       title: "Open a page",
       subject: "/reports/library",
     });
   });
 
   it("quotes the question put to the product guide", () => {
-    expect(describeToolCall("find_in_trenova", { question: "Where are reports?" })).toEqual({
+    expect(describeToolCall("agent_find_page", { question: "Where are reports?" })).toEqual({
       title: "Search the product guide",
       subject: "“Where are reports?”",
     });
@@ -302,10 +302,10 @@ describe("describeToolCall for navigation and the guide", () => {
   // done and stops rather than ending in "inst_01M37R…".
   it("never makes a record's id the subject", () => {
     expect(
-      describeToolCall("get_insight", { insightId: "inst_01M37R101VKZTB7TSKR30FJ0AT" }),
+      describeToolCall("insight_get", { insightId: "inst_01M37R101VKZTB7TSKR30FJ0AT" }),
     ).toEqual({ title: "Read insight", subject: "" });
     expect(
-      describeToolCall("get_customer", {
+      describeToolCall("customer_get", {
         customerId: "cus_01M37R101VKZTB7TSKR30FJ0AT",
         name: "Peak Distributing",
       }).subject,
@@ -313,7 +313,7 @@ describe("describeToolCall for navigation and the guide", () => {
   });
 
   it("does not take a page of results for a page of the app", () => {
-    expect(describeToolCall("list_customers", { page: 2, query: "Peak" }).subject).toBe("“Peak”");
+    expect(describeToolCall("customer_list", { page: 2, query: "Peak" }).subject).toBe("“Peak”");
   });
 });
 

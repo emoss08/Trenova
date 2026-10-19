@@ -539,18 +539,18 @@ func TestHeldTools_ReadsEachToolsPolicy(t *testing.T) {
 
 	f := newFixture(t)
 	f.service.runtime = summarizingRuntime{
-		names: []string{"shipment_get", "email_customer", "remember", "shipment_get", "gone"},
+		names: []string{"shipment_get", "customer_send_email", "agent_create_memory", "shipment_get", "gone"},
 	}
 	f.service.policies = policyTable{
 		"shipment_get": {Name: "shipment_get", Resource: "shipment"},
-		"email_customer": {
-			Name:      "email_customer",
+		"customer_send_email": {
+			Name:      "customer_send_email",
 			Resource:  "shipment",
 			Operation: permission.OpUpdate,
 			Egress:    []agent.EgressClass{agent.EgressExternalRecipient},
 		},
-		"remember": {
-			Name:     "remember",
+		"agent_create_memory": {
+			Name:     "agent_create_memory",
 			Resource: "agent_memory",
 			Scope:    agent.ToolScopeSelf,
 			Egress:   []agent.EgressClass{agent.EgressPersonal},
@@ -562,16 +562,16 @@ func TestHeldTools_ReadsEachToolsPolicy(t *testing.T) {
 	assert.Equal(t, []HeldTool{
 		{Name: "shipment_get", Resource: "shipment", Operation: permission.OpRead},
 		{
-			Name:      "email_customer",
+			Name:      "customer_send_email",
 			Resource:  "shipment",
 			Operation: permission.OpUpdate,
 			Egress:    []agent.EgressClass{agent.EgressExternalRecipient},
 		},
-		{Name: "remember", Egress: []agent.EgressClass{agent.EgressPersonal}},
+		{Name: "agent_create_memory", Egress: []agent.EgressClass{agent.EgressPersonal}},
 	}, held)
 	assert.Equal(t, []permissionports.RequiredGrant{
 		{Tool: "shipment_get", Resource: "shipment", Operation: permission.OpRead},
-		{Tool: "email_customer", Resource: "shipment", Operation: permission.OpUpdate},
+		{Tool: "customer_send_email", Resource: "shipment", Operation: permission.OpUpdate},
 	}, requiredGrants(held))
-	assert.Equal(t, []string{"email_customer"}, SensitiveTools(held, f.service.sensitive))
+	assert.Equal(t, []string{"customer_send_email"}, SensitiveTools(held, f.service.sensitive))
 }

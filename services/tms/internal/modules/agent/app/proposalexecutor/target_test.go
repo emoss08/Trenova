@@ -131,7 +131,7 @@ func TestExecute_RunsAnUnpinnedProposalUnchecked(t *testing.T) {
 	t.Parallel()
 
 	tool := &recordingTool{
-		name:      "raise_exception",
+		name:      "agent_raise_exception",
 		resource:  permission.ResourceShipment,
 		operation: permission.OpUpdate,
 	}
@@ -139,7 +139,7 @@ func TestExecute_RunsAnUnpinnedProposalUnchecked(t *testing.T) {
 	versions := &fakeVersions{version: 99}
 	executor.versions = versions
 
-	proposal := testProposal("raise_exception", map[string]any{})
+	proposal := testProposal("agent_raise_exception", map[string]any{})
 	require.NoError(
 		t,
 		executor.Execute(

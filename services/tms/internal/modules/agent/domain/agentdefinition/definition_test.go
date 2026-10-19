@@ -21,7 +21,7 @@ func validDefinition() *agentdefinition.Definition {
 		Name:            "Night dispatch helper",
 		Instructions:    "You help the night dispatch desk. Check hours of service first.",
 		AutonomyCeiling: agent.TierPropose,
-		ToolNames:       []string{"shipment_get", "flag_for_manual_review"},
+		ToolNames:       []string{"shipment_get", "agent_request_review"},
 		TriggerMode:     agentdefinition.TriggerChat,
 		Enabled:         true,
 	}
@@ -132,14 +132,14 @@ func TestValidate_RejectsToolTiersForToolsNotEnabled(t *testing.T) {
 
 	d := validDefinition()
 	d.ToolTiers = map[string]agent.AutonomyTier{
-		"shipment_get": agent.TierAutoExecute,
-		"assign_move":  agent.TierPropose,
+		"shipment_get":         agent.TierAutoExecute,
+		"dispatch_assign_move": agent.TierPropose,
 	}
 
 	errs := fieldErrors(t, d)
 	assert.True(
 		t,
-		errs["toolTiers.assign_move"],
+		errs["toolTiers.dispatch_assign_move"],
 		"a tier for a tool the agent cannot use is a mistake",
 	)
 	assert.False(t, errs["toolTiers.shipment_get"])
@@ -310,10 +310,10 @@ func TestEffectiveTier_HonoursOverridesUnderTheCeiling(t *testing.T) {
 			d := validDefinition()
 			d.AutonomyCeiling = tc.ceiling
 			if tc.override != "" {
-				d.ToolTiers = map[string]agent.AutonomyTier{"flag_for_manual_review": tc.override}
+				d.ToolTiers = map[string]agent.AutonomyTier{"agent_request_review": tc.override}
 			}
 
-			assert.Equal(t, tc.want, d.EffectiveTier("flag_for_manual_review", tc.toolTier))
+			assert.Equal(t, tc.want, d.EffectiveTier("agent_request_review", tc.toolTier))
 		})
 	}
 }
@@ -322,7 +322,7 @@ func TestAllowsTool(t *testing.T) {
 	t.Parallel()
 
 	d := validDefinition()
-	assert.True(t, d.AllowsTool("flag_for_manual_review"))
+	assert.True(t, d.AllowsTool("agent_request_review"))
 	assert.True(
 		t,
 		d.AllowsTool("shipment_get"),
@@ -429,9 +429,9 @@ exists for.
 
 The seeded "Compliance desk" — described as answering "what is expiring", with
 instructions saying medical cards are the thing most often missed — shipped
-holding get_worker and search_worker and nothing else. Asked which drivers had
+holding worker_get and worker_search and nothing else. Asked which drivers had
 a medical card expiring within thirty days, it correctly reported that it could
-not filter on dates, said out loud "I don't see list_expiring_credentials in my
+not filter on dates, said out loud "I don't see worker_list_expiring_credentials in my
 available tools", and then answered anyway from arithmetic it cannot do. It got
 the answer backwards.
 
@@ -442,14 +442,14 @@ func TestTemplates_CarryTheToolsTheirPurposeRequires(t *testing.T) {
 	t.Parallel()
 
 	assert.Contains(t, agentdefinition.TemplateComplianceAssistant.StarterTools(),
-		"list_expiring_credentials",
+		"worker_list_expiring_credentials",
 		"a compliance agent that cannot filter credentials by date cannot do its job")
 
 	assert.Contains(t, agentdefinition.TemplateDispatchAssistant.StarterTools(),
-		"list_expiring_credentials",
+		"worker_list_expiring_credentials",
 		"dispatch decides who is legal to send")
 	assert.Contains(t, agentdefinition.TemplateDispatchAssistant.StarterTools(),
-		"list_time_off",
+		"worker_list_time_off",
 		"dispatch decides who is available")
 
 	assert.Contains(t, agentdefinition.TemplateBillingAssistant.StarterTools(),
@@ -547,8 +547,8 @@ func TestApplyDefaults_LeavesNoNilWhereTheColumnRefusesOne(t *testing.T) {
 func TestApplyDefaults_KeepsTheCapsAlreadySet(t *testing.T) {
 	t.Parallel()
 
-	d := &agentdefinition.Definition{ToolDailyLimits: map[string]int{"email_customer": 5}}
+	d := &agentdefinition.Definition{ToolDailyLimits: map[string]int{"customer_send_email": 5}}
 	d.ApplyDefaults()
 
-	assert.Equal(t, 5, d.ToolDailyLimits["email_customer"])
+	assert.Equal(t, 5, d.ToolDailyLimits["customer_send_email"])
 }

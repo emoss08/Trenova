@@ -63,7 +63,7 @@ func TestRecordsTitle(t *testing.T) {
 func TestPhraseTitle(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, "Assign move", PhraseTitle("assign_move"))
+	assert.Equal(t, "Assign move", PhraseTitle("dispatch_assign_move"))
 	assert.Equal(t, "Send EDI status", PhraseTitle("send_edi_status"))
 	assert.Equal(t, "IFTA quarterly", PhraseTitle("ifta_quarterly"))
 }

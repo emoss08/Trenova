@@ -114,7 +114,7 @@ func (b *ContextBuilder) Build(
 	}
 	// Memory is read for every agent that asks for it, scoped to the
 	// organization, to the agent's own tools, and to the records the turn is
-	// about: a correction to assign_move belongs in the prompt of an agent
+	// about: a correction to dispatch_assign_move belongs in the prompt of an agent
 	// that can assign, and what was recorded about Acme belongs in a turn
 	// about one of Acme's shipments. The prompt keeps what its budget holds.
 	if definition.HasContextProvider(agentdefinition.ContextMemory) && b.memories != nil {
@@ -260,8 +260,8 @@ func (b *ContextBuilder) readMemories(
 
 // describeTrenova names the page the person is on from the product guide, and
 // says whether the turn can answer questions about Trenova itself: only with
-// a person in a conversation, the only turn that holds find_in_trenova and
-// open_page.
+// a person in a conversation, the only turn that holds agent_find_page and
+// agent_open_page.
 func (b *ContextBuilder) describeTrenova(
 	rc *agentdefinition.RuntimeContext,
 	req *agentports.RuntimeContextRequest,

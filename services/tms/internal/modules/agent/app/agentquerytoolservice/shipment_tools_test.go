@@ -55,7 +55,7 @@ func (f *fakeShipmentRepo) List(
 	return &pagination.CursorListResult[*shipment.Shipment]{Items: f.items}, nil
 }
 
-// shipment_list carried the same required-query defect as search_worker, so
+// shipment_list carried the same required-query defect as worker_search, so
 // "show me everything delivered yesterday" would have failed the same way. It
 // already took an optional status, which is the shape the query should have had
 // from the start.
@@ -154,7 +154,7 @@ func TestSearchShipments_UnfilteredEmptyResultSaysSo(t *testing.T) {
 }
 
 // shipment_list returned the stored entity for the same reason
-// search_worker did, and pays the same cost: a shipment carries its moves,
+// worker_search did, and pays the same cost: a shipment carries its moves,
 // stops, commodities and charges, none of which a list of matches needs.
 func TestSearchShipments_ReturnsTheCuratedRowNotTheStoredEntity(t *testing.T) {
 	t.Parallel()

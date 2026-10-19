@@ -39,7 +39,7 @@ import {
   ValueRows,
 } from "./connection-draft-parts";
 
-const APPLY_TOOL = "apply_edi_connection_draft";
+const APPLY_TOOL = "edi_apply_connection_draft";
 
 function matchLine(draft: ConnectionDraft, t: TranslateFn): string {
   switch (draft.partner.match) {

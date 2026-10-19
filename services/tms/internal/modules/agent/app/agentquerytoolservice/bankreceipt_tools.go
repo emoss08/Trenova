@@ -504,7 +504,7 @@ func (t *listCustomerPaymentsTool) ParamSchema() map[string]any {
 			},
 			"customerId": agenttoolschema.RecordIDText(permission.ResourceCustomer,
 				"Optional: only this customer's payments, by id from "+
-					"list_customers or a candidate's customerId in receivable_get_bank_receipt."),
+					"customer_list or a candidate's customerId in receivable_get_bank_receipt."),
 			paramStatus: agenttoolschema.Enum(
 				"Which payments to list. Defaults to Posted.", customerPaymentListStatuses,
 			),

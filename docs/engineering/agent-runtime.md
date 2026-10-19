@@ -63,8 +63,8 @@ over a `Turn`) from workflow code, through the `TurnEffects` seam:
 - **Each tool call is an activity** named for the tool: the worker's dynamic
   activity, so the Temporal UI and the SDK's metrics show each tool as itself.
   A tool that fails after its retries is reported to the model as a failed
-  call and the turn goes on. `run_report`, `compare_report_runs` and
-  `plan_dispatch` run on the heavy queue whichever queue called them. Being
+  call and the turn goes on. `report_run`, `report_compare_runs` and
+  `dispatch_plan` run on the heavy queue whichever queue called them. Being
   dynamic, its input is opaque to the tenant interceptor, so the activity binds
   the run's tenant for row-level security itself and refuses a call that names
   none (see [row-level-security.md](row-level-security.md)).
@@ -398,7 +398,7 @@ where the file's entry sits in the attachments block (`EntryStart`/`EntryEnd`),
 with the entry that replaces it when the file itself is sent (`NativeEntry`,
 rendered by `agentdefinition.RenderAttachments`). Only the current message's
 files are carried; an earlier message's are named in the replay and read with
-`read_attachment`, and a delegate's task carries none. Bytes never cross a
+`agent_read_attachment`, and a delegate's task carries none. Bytes never cross a
 durable boundary.
 
 The Anthropic adapter reads them at call time (`modeladapter/anthropicfiles.go`)
@@ -469,7 +469,7 @@ That last case is the honest limit: resume is **at-most-once, not lossless**.
 
 Outcomes over 64 KiB are dropped rather than truncated, because half a fenced
 JSON document handed back to a model is worse than none. The import assistant
-creates nothing itself: `create_location` is an approval-gated action like any
+creates nothing itself: `location_create` is an approval-gated action like any
 other, so it runs once, after a person approves it, under the ledger.
 
 ## Taint: runs that have read outside content
@@ -488,10 +488,10 @@ names each reason once.
 A write that stays inside the organization can declare one further taint hold
 (`ToolPolicy.TaintHold`: a description and the calls it applies to), which the same
 rule honours: a tainted or nil-taint call it applies to is held at
-`ActWithApproval` and names `tainted`. `remember` is the one tool that declares
+`ActWithApproval` and names `tainted`. `agent_create_memory` is the one tool that declares
 it. An `Instruction` or a `Correction` recorded after outside content waits for a
 person; a `Fact` is recorded and stays tainted. The hold shows in the safety
-table (for an agent that runs `remember` on its own, the "after outside text"
+table (for an agent that runs `agent_create_memory` on its own, the "after outside text"
 column reads "Depends on the call" and names taint among what holds it), in
 `ai-tool-safety.md` and in the tool snapshot (`taintHold`). A tainted proposal
 held this way is executed only on a person's decision, like one that leaves.
@@ -512,7 +512,7 @@ opens tainted when:
   of the prompt says who wrote it;
 - the person attached a file to the question;
 - a memory read into its prompt was written by a tainted run and nobody has
-  reviewed it since (`Memory.Taints`). A person's approval of the `remember` that
+  reviewed it since (`Memory.Taints`). A person's approval of the `agent_create_memory` that
   wrote it changes how it is rendered, not whether it taints; a review does both.
   Approving a tainted suggestion (in AI Control or on the Desk) is its review, and
   AI Control lists every Active memory that still taints with a "Reviewed, keep it"
@@ -526,14 +526,14 @@ Master-data names and notes written inside the organization are not sources.
 A shipment comment written outside it is (`record_note`, below).
 
 Web content is held more strictly: once a turn has read the web through an extension, or
-X12 a person pasted for `inspect_x12` to read, every later write is capped at `Propose`,
+X12 a person pasted for `edi_inspect_x12` to read, every later write is capped at `Propose`,
 whatever its class ([agent-extensions.md](agent-extensions.md#pasted-partner-text)). That rule rides its own flag
 (`TurnState.ExternalContent`) beside the taint, and the web read also adds a `web` mark to the
 taint, so both record it.
 
 During the turn, a tool whose policy reads outside content always
 (`ReadsExternal: always`) adds a mark when it succeeds; a `marked` tool
-(`recall_memory`, `get_agent_run`, `list_agent_runs`, `list_watchtower_items`,
+(`agent_list_memories`, `agent_get_run`, `agent_list_runs`, `exception_list_watchtower_items`,
 `shipment_get`) adds one only for a returned record that carries taint
 (`agent.TaintCarrier`). A result whose rows come from different places names
 each row's source itself (`agent.SourcedTaintCarrier`, preferred when both are
@@ -593,7 +593,7 @@ Four read tools let an agent look over the organization's own agents, and each
 is written so that reading about work never launders the outside text that
 work read.
 
-- `list_watchtower_items` reads the feed through `WatchtowerService.List`, so a
+- `exception_list_watchtower_items` reads the feed through `WatchtowerService.List`, so a
   reader sees only the kinds whose source resource they may read. It marks each
   row on its own source: an inbound message row as `inbound_message`, a
   quarantined EDI file as `edi`, a weather alert as `weather`, and an agent row
@@ -602,18 +602,18 @@ work read.
   exceptions and runs. A row whose run cannot be found is marked, not trusted.
   It never marks anything seen; `unseenOnly` follows a person's own cursor and
   is ignored for an agent principal, which has none.
-- `get_daily_briefing` reads the computed page (`ReadsExternal: never`) and drops
+- `insight_get_daily_briefing` reads the computed page (`ReadsExternal: never`) and drops
   every section whose source resource the reader may not read, and every
   watchtower line of a kind they may not read. When anything is dropped, the
   headline goes too and the remaining sections read in their computed wording,
   because the model's prose may cite a figure from what was dropped.
-- `list_agent_runs` filters on status, trigger, subject, agent and date; `mine`
+- `agent_list_runs` filters on status, trigger, subject, agent and date; `mine`
   keeps to the calling agent and is on by default when an agent principal runs
   unattended. A run on an assistant conversation is listed only to the person
   who owns that conversation (`ThreadOwnerRepository`, one batched read), and
   never to an agent principal or an API key, whose query leaves them out.
   Each tainted row is a `run_record` mark.
-- `get_agent_run` applies the same ownership rule, answering "not found" rather
+- `agent_get_run` applies the same ownership rule, answering "not found" rather
   than "forbidden", and can add the run's proposals (at most 20, when the reader
   may read proposals) and its last 50 recorded events, each reduced to its kind,
   tool and a short text: never a tool's whole result or its arguments.
@@ -625,7 +625,7 @@ What is kept:
 | `agent_runs` | `tainted`, `taint`, `tainted_at` |
 | `agent_proposals` | `tainted` (the run had read outside content when the write was decided), `taint`, `egress_class`, `held_by` |
 | `assistant_threads` | `taint`, `tainted_at` |
-| `agent_memories` | `tainted`, `taint_run_id`, for a memory `remember` wrote from a tainted or nil-taint run (`CarriesTaint`); `source_proposal_id` and `created_by_user_id` when a person approved the `remember` that wrote it; `reviewed_by_user_id` and `reviewed_at` when a person reviewed it, after which it taints no turn while `tainted` still records where it came from |
+| `agent_memories` | `tainted`, `taint_run_id`, for a memory `agent_create_memory` wrote from a tainted or nil-taint run (`CarriesTaint`); `source_proposal_id` and `created_by_user_id` when a person approved the `agent_create_memory` that wrote it; `reviewed_by_user_id` and `reviewed_at` when a person reviewed it, after which it taints no turn while `tainted` still records where it came from |
 | `agent_reflections` | `tainted`, for a look back over a window that read outside content (or whose taint is unknown); every lesson it keeps is a suggestion and carries the window's taint |
 | `shipment_comments` | `metadata.tainted`, for a note `shipment_add_comment` wrote on its own after outside content |
 
@@ -642,7 +642,7 @@ The prompt renders memories in two sections. What the organization recorded, and
 any memory a person approved (`Memory.ApprovedByPerson`: written from a proposal
 a person decided), goes under "What this organization has recorded for its
 agents", grouped under a heading per thing it is about ("About Acme Foods
-(customer)", "About tool assign_move", "For the whole organization"), where an
+(customer)", "About tool dispatch_assign_move", "For the whole organization"), where an
 Instruction is followed as if the person who recorded it were asking now. A
 tainted memory nobody approved or reviewed (`Memory.DrawnFromOutside`) goes under "Recorded
 by agents after reading outside content", fenced as
@@ -719,7 +719,7 @@ standing rules that apply to this message; then an Instruction comes before a
 Correction, a Correction before a Procedure and a Procedure before a Fact
 (`MemoryKind.Rank`). The tier-5 memories that do not bear, and anything that did
 not fit, are counted (`MemoryFit.HeldBack`). When none are carried and some were
-held back, the prompt still says memories exist and to call `recall_memory` when
+held back, the prompt still says memories exist and to call `agent_list_memories` when
 the task may depend on one.
 
 **What counts as used.** Carrying a memory and using it are different things.
@@ -738,7 +738,7 @@ and is added to `UsedMemoryIDs` and announced when the turn calls that tool
 none, so no `GetVersion` gate is needed.
 
 A memory over 1,200 characters is shown cut short with its id, and the prompt
-tells the model to read the rest with `recall_memory`. Only what was used is counted
+tells the model to read the rest with `agent_list_memories`. Only what was used is counted
 (`AgentMemoryService.RecordUse`), so `use_count` measures use rather than how
 often a memory sat in a prompt; only what fits taints the turn. A
 preview built outside a turn (`PreviewPrompt`) applies the same fit and counts
@@ -751,7 +751,7 @@ from an activity result into the delegate's open activity. Workflow code only
 copies them; a history recorded before they existed replays with none, and the
 delegate reads the memories of no record. No `GetVersion` gate.
 
-**Recall.** `recall_memory` searches a generated `search_vector` on
+**Recall.** `agent_list_memories` searches a generated `search_vector` on
 `agent_memories` (`'simple'` configuration: subject label A, content B, tool C;
 GIN index). A query is `websearch_to_tsquery` or'd with every word as a prefix,
 ranked by `ts_rank_cd`; when nothing matches every word, any **two** of its
@@ -770,13 +770,13 @@ section warns from 4,000. Recording the same sentence again returns the existing
 row only when it is unexpired, kept for the same readers (organization, or the
 same agent) and, for a clean write, not tainted.
 
-**Forgetting.** `forget_memory` retires a memory by id; it stays readable in AI
+**Forgetting.** `agent_retire_memory` retires a memory by id; it stays readable in AI
 Control and can be restored. It is on no starter template: what a memory says
 is what every later turn is told, an Instruction a person recorded among it, so
 a person retires one in AI Control rather than an agent dropping it on its own
 judgement. An organization adds the tool to an agent it builds.
 
-**Replacing.** `remember` takes `replacesMemoryId` (an id from `recall_memory`),
+**Replacing.** `agent_create_memory` takes `replacesMemoryId` (an id from `agent_list_memories`),
 and so does a lesson a look back keeps. The new memory inherits the old one's
 readers, subject and tool, and records `supersedes_id`. When it is saved active,
 the repository retires the old memory in the same transaction (only an Active or
@@ -807,7 +807,7 @@ When a conversation goes quiet or a background run settles, its agent looks back
 over what it just did and keeps what the work taught: how to do a task here (a
 Procedure), a Fact it had to work out, or what a person asked for from now on
 (an Instruction, never from a run with nobody in it). Corrections stay with
-`remember` and `RecordCorrection`. `remember` stays the tool
+`agent_create_memory` and `RecordCorrection`. `agent_create_memory` stays the tool
 for what a person says; the prompt tells the agent to save only that, because
 what it worked out for itself is kept for it by the look back. Both write
 through `AgentMemoryService.Remember`, so dedupe, replacement, taint and the
@@ -904,7 +904,7 @@ issues the same commands in the same order.
 
 A nil taint is a turn opened before the release. It counts as tainted for every
 class that leaves the organization and for a declared taint hold, which is the
-safe reading; money tools and `remember`'s Instruction and Correction notice. A delegate opened for such a turn inherits the nil.
+safe reading; money tools and `agent_create_memory`'s Instruction and Correction notice. A delegate opened for such a turn inherits the nil.
 
 ## Job profiles in one runtime
 
@@ -921,10 +921,10 @@ another agent is the profile's **mode**, worked out once when the turn opens
 | `conversation` | A person is in a Desk or panel conversation | The definition's tools, core tools, `delegate_task` when it may delegate | Every tool the person's other agents hold (below) |
 | `unattended` | An event, schedule, continuous pass or ended wait started the run | The definition's tools, no conversational tools, no self-scoped tools | Nothing: an unattended run's profile is decided by its trigger |
 | `fan_out` | A lookup another agent handed out (`Delegation.ReadOnly`) | Only the tools it holds whose effect is `lookup` | Nothing |
-| `delegated` | A task the person directed to another agent | The delegate's tools, without `open_page` | Nothing |
+| `delegated` | A task the person directed to another agent | The delegate's tools, without `agent_open_page` | Nothing |
 
-`open_page` is held only by the turn the person is in, `raise_exception` only by
-a run, and `guide_profile` only by a conversation with a person; the mode
+`agent_open_page` is held only by the turn the person is in, `agent_raise_exception` only by
+a run, and `agent_guide_profile` only by a conversation with a person; the mode
 decides each (`profileHolds`). The mode travels on `TurnState.Mode`, so a turn
 restored in workflow code is the same profile it was opened as.
 
@@ -1287,7 +1287,7 @@ for `NoAgent` the tools that would answer it, with the first sentence of each de
   the server does not know is ignored; more than eleven is refused.
 - **What counts as naming a tool.** A word that only appears in a tool's description or
   parameters is not enough on its own: "good morning team, hope the weekend went well"
-  reaches more than twenty tools that way ("morning" from `schedule_report`'s "every Monday
+  reaches more than twenty tools that way ("morning" from `report_create_schedule`'s "every Monday
   morning", "team", "went", "well"), and the embedding then picked the nearest of them at a
   similarity of 0.23. So after ranking, a question is answered `NoMatch` unless a word of it
   is in some tool's name or search terms (`Catalog.NamesAny`), its meaning reaches the
@@ -1496,7 +1496,7 @@ The anchored records are also watched for changes during the turn
 
 ### Parking work on a wait
 
-An agent can park its work until something happens with `wait_until`; the turn
+An agent can park its work until something happens with `agent_create_wait`; the turn
 ends, a workflow per wait holds the timer or listens for the event, and the work
 comes back as a turn with origin `WaitResolved` (or a run with trigger `Wait`).
 **Read [agent-waits.md](agent-waits.md) before changing it.**
@@ -1679,12 +1679,12 @@ empty customer and search beside it, which the tool read as filters given. A
 parameter whose empty value means something other than leaving it out is
 marked `toolschema.KeepEmpty` and keeps it: an update's field that an empty
 value clears (the master data kit's `clearable`, order amounts,
-`invoice_update_draft`, `update_service_failure`, a recurring series'
+`invoice_update_draft`, `exception_update_service_failure`, a recurring series'
 blackout days), and a write's list whose absence means every record, where
 an empty list read as not sent would widen the call (the pay events
 `pay_worker_now` pays, the customers `receivable_assess_late_charges` charges, the sync
-records `retry_accounting_sync` retries, the suggestions
-`apply_carrier_intel_suggestions` applies).
+records `accounting_retry_sync_record` retries, the suggestions
+`carrier_apply_intelligence_suggestions` applies).
 `TestEveryWriteWhoseOmissionWidensKeepsAnEmptyList` in the catalog contract
 holds every write whose description says leaving a parameter out means every
 record to marking it. What was left out is told back on one
@@ -1703,7 +1703,7 @@ A proposal's tool runs for its approver with the conversation its run answered,
 as the turn that filed it would have: the executor and the preview both read the
 run and, when its subject is an assistant thread, set `ThreadID`
 (`proposalexecutor.WithConversation`). A tool that reads what was attached to the
-conversation, such as `apply_edi_connection_draft`, reads it for the approver
+conversation, such as `edi_apply_connection_draft`, reads it for the approver
 too; a run about anything else leaves it unset, and a run that cannot be read
 refuses the approval rather than running without it.
 
@@ -1732,7 +1732,7 @@ a list) carries the resource it takes as `x-recordOf`, at any depth, and its
 value must carry that resource's prefix from the one table in the domain
 (`permission.Resource.IDPrefix`, held by a test to the prefix each entity's
 insert hook mints): a carrier's id sent for a customer is refused as "… is a
-carrier id; this parameter takes a customer id, from list_customers" rather
+carrier id; this parameter takes a customer id, from customer_list" rather
 than reaching the service and coming back "not found". An id whose resource
 covers several kinds of record (a qualification is an employment verification
 or a clearinghouse query), a record kept inside another's (an invoice line, a
@@ -1743,7 +1743,7 @@ place with `OfKinds` (`OfResource` for a resource), and carries the kinds as
 held to the domain's mint by the same test, and a value of none of them is
 refused naming every kind it may be. A parameter with neither mark still has
 to hold something shaped like a record id when its description names where
-the id comes from (`from list_customers`); the catalog contract test
+the id comes from (`from customer_list`); the catalog contract test
 (`TestEveryRecordIDParameterNamesItsKind`) fails on any id parameter left
 unmarked that is not listed, with its reason, among the few that hold no
 PULID. The marks are stripped from what a model is shown
@@ -1805,13 +1805,13 @@ writes per concurrent turn.
 A proposal's result says why it waits (`heldReason`: the tool's tier, the
 agent's ceiling, a change that is always a person's, what it would reach, a
 condition, outside content, business hours, or the money bound it exceeded), a permission denial says what to
-tell the person and not to try another way (`deniedAdvice`), and `remember`
+tell the person and not to try another way (`deniedAdvice`), and `agent_create_memory`
 says whether the memory is kept or only offered on a card
 (`savedMemoryContent`). A tool done as a sequence declares it
 (`agentports.RecipeTool`), and the order is shown in the prompt's tool
 section and under the tool in a `find_tools` answer, with the prerequisite
 reads that were loaded alongside it. A `find_tools` need that names a tool the
-agent holds outright (`search_worker`) loads that tool first, ahead of the ranked
+agent holds outright (`worker_search`) loads that tool first, ahead of the ranked
 matches, since the prompt lists what can be loaded by name. That is the only place the order of a
 piece of work is written: a template's starter instructions
 (`agentdefinition.Template.StarterInstructions`) hold its persona, what it puts
@@ -1831,14 +1831,14 @@ with `find_tools` first. A lookup many held recipes start from (`shipment_list`,
 A tool that works on what other tools return names them as the tools it follows
 (`agentports.FollowerTool`, `Catalog.Followers`), and loads whenever one of them loads, but only
 for an agent that already holds it and a person who may use it: following grants nothing, so an
-administrator who gave an extension's tool to chosen agents keeps that choice. `analyze_data`
-follows `run_report`, `get_report_run` and `read_attachment`. Before it did, a turn from Ask
-loaded `run_report` without it, read the report's twenty sample rows and compared periods by
+administrator who gave an extension's tool to chosen agents keeps that choice. `report_analyze_data`
+follows `report_run`, `report_get_run` and `agent_read_attachment`. Before it did, a turn from Ask
+loaded `report_run` without it, read the report's twenty sample rows and compared periods by
 paging `shipment_list`, and never asked `find_tools` for the tool that reads every row.
 
 A prerequisite only ever grants a read. A write a tool cannot finish its job without is
 declared instead as a companion (`agentports.CompanionTool`): `shipment_create` names
-`create_customer`, `create_location` and `create_commodity`, because a load from a broker
+`customer_create`, `location_create` and `masterdata_create_commodity`, because a load from a broker
 Trenova has never seen names a customer, facilities and freight that do not exist yet, and an
 agent made in AI Control that held only shipment tools ended with "no match was found; no
 shipment was created". An agent holding the tool holds its companions (`heldTools`), they load
@@ -1853,7 +1853,7 @@ proposes what is missing; once those are approved, the decision follow-up propos
 with their new ids, and a later load for the same customer goes straight to `shipment_create`
 (`deskbench/scenarios/shipment-creation.yaml`).
 
-`create_location` places the address on the map through the organization's address lookup
+`location_create` places the address on the map through the organization's address lookup
 (`kernelports.AutoCompleteService`, Google Maps) and, when there is none or it finds nothing at
 that state and ZIP, saves the location without coordinates and says so on the card: an
 automatic geofence then has no shape until the location is geocoded in Locations. A circle is
@@ -1921,7 +1921,7 @@ may say it is part of the change. A sentence that says the thing was left out
 is not a claim, and neither is one that offers to add it ("If you have the receipt, I can add the
 vendor and transaction reference": `offerPhrases`);
 a field the reply also states in a sentence that is not an offer is still held to the filed call. A one-word name counts only at the top of a call: the `codes` of
-each requirement in `apply_edi_connection_draft` is a word an EDI reply spends
+each requirement in `edi_apply_connection_draft` is a word an EDI reply spends
 on a guide's charge codes and status codes, and holding it to the filed
 requirements rewrote replies that never said the change carried any. A hit discards the reply once, the way a looping reply is (a
 `retrying` event, then the draft and a correction to the model); a reply that
@@ -1943,13 +1943,13 @@ each of them read, is shown working rather than worked in the agent's head (`num
 for filed changes too): "$6,050,147.60 is open,
 $50,147.60 without the $6,000,000 invoice" and "112 gallons at $3.89 come to $435.68" were each
 rewritten after an analysis nobody needed, while a wrong result is still unsupported, and a share
-whose two sides the reply leaves out still goes to `analyze_data`. The person's own figures are
+whose two sides the reply leaves out still goes to `report_analyze_data`. The person's own figures are
 paired the same way. The reply is read twice, and the second reading only narrows the first: a
 figure the separated reading (`ReadSeparated`) found read stays read and is an operand of the
 working (`narrowed`). The stricter reading leaves out a bare year, and a 2,000 lb unit weight in a
 tool's JSON looked like one, so "2,000 lb, so 20 of them come to 40,000 lb" was rewritten. A percentage is supported by the fraction it renders (52.3% by 0.523), and
 rounding and thousands are read as for a filed change. A hit is discarded once with a correction
-naming the figures: an agent holding `analyze_data` is told to work them out there, any other to
+naming the figures: an agent holding `report_analyze_data` is told to work them out there, any other to
 leave out what the tools do not give. A rewrite that still states one ends with a sentence naming
 the figures to check. The bench fails a step whose reply either guard corrected ("reply grounded
 without a correction").
@@ -2064,18 +2064,18 @@ later turn replays that message with the same block, so the model always knows
 which message carried which file: within the last three turns (the window tool
 results are kept whole in) with the file's text again, read while the turn is
 prepared (`earlierFileTexts`, at most `MaxMessageAttachments` files), and named
-only before that, to be read again with `read_attachment`. Without the text, a
+only before that, to be read again with `agent_read_attachment`. Without the text, a
 decision's follow-up saw its own summary of the confirmation and no document
 behind it, decided it had made the details up, and withdrew them. The same texts
 count as what the turn read for the grounding guard (`RunRequest.FileTexts`), so
 a figure quoted from a file is not taken for an invented one. Before, the files were a section of the system prompt for the turn they
 came with and nowhere after it: the model was shown a 1,200-character excerpt,
-told to call `get_document_summary`, which an agent made in AI Control did not
+told to call `document_get_summary`, which an agent made in AI Control did not
 necessarily hold, and in the next turn the files had gone. Asked twice to read a
 re-uploaded rate confirmation, gpt-6-luna answered both times that no file was
 attached.
 
-`read_attachment` is a core tool, so every agent holds it, and it rides on any
+`agent_read_attachment` is a core tool, so every agent holds it, and it rides on any
 turn of a conversation a file was attached to (`toolSetRequest.attachments`). It
 reads only the person's own uploads to this thread (`QueryToolParams.ThreadID`):
 its text in reading order, one page of it, or a window from an offset, with what
@@ -2093,7 +2093,7 @@ A file read in full ends any open wait on it, so a conversation that got the
 file another way is not picked up again for nothing. Its policy is the person's own read
 (`ToolScopeSelf`) that always reads outside content (`TaintSourceAttachment`), so
 a run nobody is watching goes without it and a turn that read a file proposes
-its later writes. `get_document_summary` stays for documents a record names.
+its later writes. `document_get_summary` stays for documents a record names.
 
 What document intelligence read off an attached rate confirmation is shown as its
 extraction card without anyone asking (`attachment_cards.go`). The card is read as
@@ -2194,13 +2194,13 @@ conversation is the same from the first call of the turn to the last.
   `StreamCompletion`), so a profile that reaches several hundred tools does not
   put their schemas into the workflow's history on every call.
 - **A small core loaded.** On a turn that can search, the core tools few turns
-  call (`wait_until`, `cancel_wait`, `flag_for_manual_review`,
-  `raise_exception`, `guide_profile`; `deferredCoreTools`) are deferred unless
+  call (`agent_create_wait`, `agent_cancel_wait`, `agent_request_review`,
+  `agent_raise_exception`, `agent_guide_profile`; `deferredCoreTools`) are deferred unless
   the request names what they do, and are found like any other. Memory and the
   product guide stay loaded, because the prompt tells the model when to use them.
-  An unattended run also loads `raise_exception` (`defersCoreTool`): handing the
+  An unattended run also loads `agent_raise_exception` (`defersCoreTool`): handing the
   case to a person is how a run that cannot resolve it ends, and left to a
-  search it lost a tie for the last slot to `wait_until` and the run ended with
+  search it lost a tie for the last slot to `agent_create_wait` and the run ended with
   nobody told. An escalation (a tool whose policy sets `Escalates`, unless a
   person set its tier) is also let past a spent tool budget, up to
   `escalationReserve` calls (`escalatesPastBudget`): a load monitor that spent
@@ -2474,10 +2474,10 @@ the page applies it once, the way a navigation artifact is followed. Nothing
 reaches the database until the person creates the shipment or saves the
 formula. `intake_set_required_field` and `intake_set_stop_location` read the record they name
 under the person's own permission and hand the page its label.
-`create_location` is an internal-egress action at `ActWithApproval`, requiring
+`location_create` is an internal-egress action at `ActWithApproval`, requiring
 location create. The formula tools price with the formula engine:
-`describe_formula_schema` lists the variables, functions and rate tables,
-`test_formula_expression` prices sample loads or a saved shipment the person
+`formula_describe_schema` lists the variables, functions and rate tables,
+`formula_test_expression` prices sample loads or a saved shipment the person
 may read, and `propose_formula` hands the editor an expression with its
 variables, an explanation and engine-priced scenarios, and, when it drafts a new
 template or the person asks for itemized lines, a name, a description, a type and
@@ -2641,7 +2641,7 @@ chat draws a refusal in its own words rather than as a failure: `denied` reads
 "Not permitted", `invalid` "Not accepted", `over_budget` "Out of budget" and
 `duplicate` "Skipped (repeat)", while `failed`, an unknown verdict, and a result
 saved before the verdict was kept read as failed. A refusal is still a failed
-result to everything that counts failures. `get_agent_run` lists each step's
+result to everything that counts failures. `agent_get_run` lists each step's
 verdict too. A proposal carries the same trace and span, its
 `step_key`, when an automatic write ran and at what version it left the record,
 and who it ran as.
@@ -2786,7 +2786,7 @@ by the expiry sweep inside its activity, and a settled step replayed from the le
 never previews again. See [proposal-previews.md](proposal-previews.md).
 
 Resolving a criteria selection to records (`ToolSelectionResolver`, `billing_transfer`'s
-`allTransferable`; `ToolProposalSelectionResolver`, `retry_accounting_sync`'s
+`allTransferable`; `ToolProposalSelectionResolver`, `accounting_retry_sync_record`'s
 `errorCategories` when proposed) took no gate: it happens inside the dispatch activity, the
 ledger key is still derived from the model's own arguments, and only the activity's result
 changes. See [proposal-previews.md](proposal-previews.md#record-subsets).
@@ -2838,8 +2838,8 @@ expenses in [agent-workforce-tools.md](agent-workforce-tools.md#who-holds-them).
 | Tool | Why no template holds it |
 | --- | --- |
 | `shipment_cancel` | Canceling a shipment is a person's call, by owner decision: it withdraws live tenders from carriers and can tell a partner over EDI. `shipment_uncancel`, which puts a canceled shipment back to New and sends nothing, stays with the dispatch assistant. |
-| `forget_memory` | A person retires a memory in AI Control; see [Forgetting](#memory-in-the-prompt). |
-| `save_table_view`, `add_home_widget`, `remove_home_widget`, `arrange_home_layout` | Each changes only the caller's own screen, a person's interface state that is no desk's job; the report analyst, the one desk near dashboards, builds report dashboards and never the person's home page. |
+| `agent_retire_memory` | A person retires a memory in AI Control; see [Forgetting](#memory-in-the-prompt). |
+| `report_save_table_view`, `home_add_widget`, `home_remove_widget`, `home_arrange_layout` | Each changes only the caller's own screen, a person's interface state that is no desk's job; the report analyst, the one desk near dashboards, builds report dashboards and never the person's home page. |
 
 ## Known limits
 

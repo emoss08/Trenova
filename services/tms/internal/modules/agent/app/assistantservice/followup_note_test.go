@@ -172,11 +172,11 @@ func TestFollowUp_ReadsAPlansNoteFromItsSteps(t *testing.T) {
 		StepCount: 2,
 	}
 	first := &agent.AgentProposal{
-		ID: pulid.MustNew("ap_"), ToolName: "assign_move", Status: agent.ProposalStatusRejected,
+		ID: pulid.MustNew("ap_"), ToolName: "dispatch_assign_move", Status: agent.ProposalStatusRejected,
 		PlanID: &plan.ID, PlanStep: 1,
 	}
 	second := &agent.AgentProposal{
-		ID: pulid.MustNew("ap_"), ToolName: "assign_move", Status: agent.ProposalStatusRejected,
+		ID: pulid.MustNew("ap_"), ToolName: "dispatch_assign_move", Status: agent.ProposalStatusRejected,
 		PlanID: &plan.ID, PlanStep: 2,
 	}
 	svc, conversations, completion := followUpService(t, first)

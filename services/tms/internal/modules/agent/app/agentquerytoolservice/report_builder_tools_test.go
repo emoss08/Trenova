@@ -6,9 +6,9 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
@@ -80,10 +80,10 @@ func savedReport(owner pulid.ID, visibility report.Visibility) *report.ReportDef
 
 /*
 A report someone saved in the builder is a report the organization can run,
-and until now the agent could not name it: list_reports read only the canned
+and until now the agent could not name it: report_list read only the canned
 catalog, so "run my revenue report" went to a fork of the built-in one or
 nowhere. A saved report rides in the same listing under its definitionId, with
-the editable flag that tells the model whether update_report is open to it.
+the editable flag that tells the model whether report_update is open to it.
 */
 func TestListReports_IncludesSavedReportsWithTheirDefinitionID(t *testing.T) {
 	t.Parallel()
@@ -95,7 +95,7 @@ func TestListReports_IncludesSavedReportsWithTheirDefinitionID(t *testing.T) {
 	hidden := savedReport(pulid.MustNew("usr_"), report.VisibilityPrivate)
 	service.definitions = []*report.ReportDefinition{mine, theirs, hidden}
 
-	result, err := tools["list_reports"].Query(t.Context(), params)
+	result, err := tools["report_list"].Query(t.Context(), params)
 	require.NoError(t, err)
 
 	outcome, ok := result.(searchOutcome)
@@ -110,7 +110,7 @@ func TestListReports_IncludesSavedReportsWithTheirDefinitionID(t *testing.T) {
 	assert.True(t, rows[1].Editable, "the owner may change it")
 	assert.Equal(t, "custom", rows[1].Kind)
 	assert.Equal(t, "private", rows[1].Visibility)
-	// A listing names the parameters; describe_report carries their shape
+	// A listing names the parameters; report_get carries their shape
 	// and allowed values.
 	assert.Equal(t, []string{"windowDays"}, rows[1].Takes)
 
@@ -131,7 +131,7 @@ func TestListReports_SearchesSavedReportsByTextAndCategory(t *testing.T) {
 		savedReport(params.Actor.UserID, report.VisibilityPrivate),
 	}
 
-	result, err := tools["list_reports"].Query(t.Context(), params)
+	result, err := tools["report_list"].Query(t.Context(), params)
 	require.NoError(t, err)
 
 	outcome, ok := result.(searchOutcome)
@@ -160,7 +160,7 @@ func TestRunReport_RunsASavedReportByDefinitionID(t *testing.T) {
 		"parameters":   map[string]any{"windowDays": 30},
 	}
 
-	result, err := tools["run_report"].Query(t.Context(), params)
+	result, err := tools["report_run"].Query(t.Context(), params)
 	require.NoError(t, err)
 
 	require.NotNil(t, service.submitted)
@@ -181,7 +181,7 @@ func TestRunReport_SaysHowToNameAReportWhenNeitherIsGiven(t *testing.T) {
 
 	service, _, tools := reportingTools(t)
 
-	_, err := tools["run_report"].Query(t.Context(), testParams(map[string]any{
+	_, err := tools["report_run"].Query(t.Context(), testParams(map[string]any{
 		"parameters": map[string]any{"asOf": "2026-03-01"},
 	}))
 
@@ -196,20 +196,20 @@ func TestRunReport_RefusesASavedReportTheActorCannotSee(t *testing.T) {
 	hidden := savedReport(pulid.MustNew("usr_"), report.VisibilityPrivate)
 	service.definitions = []*report.ReportDefinition{hidden}
 
-	_, err := tools["run_report"].Query(t.Context(), testParams(map[string]any{
+	_, err := tools["report_run"].Query(t.Context(), testParams(map[string]any{
 		"definitionId": hidden.ID.String(),
 	}))
 
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "list_reports")
+	assert.Contains(t, err.Error(), "report_list")
 	assert.Nil(t, service.submitted)
 }
 
 /*
 "What is in this report?" had no answer: the catalog row carried a name and a
-description and nothing of the report's shape. describe_report reads the
+description and nothing of the report's shape. report_get reads the
 definition back in two forms — sentences the model can relay, and the exact
-definition it would send to update_report — so an adjustment starts from what
+definition it would send to report_update — so an adjustment starts from what
 exists rather than from a reconstruction.
 */
 func TestDescribeReport_ReadsABuiltInReportBack(t *testing.T) {
@@ -218,7 +218,7 @@ func TestDescribeReport_ReadsABuiltInReportBack(t *testing.T) {
 	service, _, tools := reportingTools(t)
 	service.entries[0].Definition = revenueDefinition()
 
-	result, err := tools["describe_report"].Query(t.Context(), testParams(map[string]any{
+	result, err := tools["report_get"].Query(t.Context(), testParams(map[string]any{
 		"reportKey": "ar_aging_by_customer",
 	}))
 	require.NoError(t, err)
@@ -230,7 +230,7 @@ func TestDescribeReport_ReadsABuiltInReportBack(t *testing.T) {
 	assert.Equal(t, "canned", description.Kind)
 	assert.Equal(t, "shipment", description.Dataset)
 	assert.False(t, description.Editable, "a built-in report is forked, not edited")
-	assert.Contains(t, description.Note, "fork_report")
+	assert.Contains(t, description.Note, "report_fork")
 
 	require.Len(t, description.Columns, 2)
 	assert.Equal(t, "customer.name", description.Columns[0].Field)
@@ -259,14 +259,14 @@ func TestDescribeReport_MarksTheOwnersReportEditable(t *testing.T) {
 	service.definitions = []*report.ReportDefinition{saved}
 	params.Params = map[string]any{"definitionId": saved.ID.String()}
 
-	result, err := tools["describe_report"].Query(t.Context(), params)
+	result, err := tools["report_get"].Query(t.Context(), params)
 	require.NoError(t, err)
 
 	description, ok := result.(reportDescription)
 	require.True(t, ok)
 	assert.Equal(t, saved.ID.String(), description.DefinitionID)
 	assert.True(t, description.Editable)
-	assert.Contains(t, description.Note, "update_report")
+	assert.Contains(t, description.Note, "report_update")
 	assert.Equal(t, "active", description.Status)
 }
 
@@ -277,7 +277,7 @@ func TestDescribeReport_SaysSomeoneElsesReportIsTheirs(t *testing.T) {
 	shared := savedReport(pulid.MustNew("usr_"), report.VisibilityShared)
 	service.definitions = []*report.ReportDefinition{shared}
 
-	result, err := tools["describe_report"].Query(t.Context(), testParams(map[string]any{
+	result, err := tools["report_get"].Query(t.Context(), testParams(map[string]any{
 		"definitionId": shared.ID.String(),
 	}))
 	require.NoError(t, err)
@@ -285,8 +285,8 @@ func TestDescribeReport_SaysSomeoneElsesReportIsTheirs(t *testing.T) {
 	description, ok := result.(reportDescription)
 	require.True(t, ok)
 	assert.False(t, description.Editable)
-	assert.Contains(t, description.Note, "create_report")
-	assert.NotContains(t, description.Note, "update_report")
+	assert.Contains(t, description.Note, "report_create")
+	assert.NotContains(t, description.Note, "report_update")
 }
 
 func TestDescribeReport_NeedsAReportNamed(t *testing.T) {
@@ -294,7 +294,7 @@ func TestDescribeReport_NeedsAReportNamed(t *testing.T) {
 
 	_, _, tools := reportingTools(t)
 
-	_, err := tools["describe_report"].Query(t.Context(), testParams(map[string]any{}))
+	_, err := tools["report_get"].Query(t.Context(), testParams(map[string]any{}))
 
 	require.ErrorIs(t, err, errNoReportNamed)
 }
@@ -317,7 +317,7 @@ func TestListReportDatasets_ListsOnlyWhatTheActorMayRead(t *testing.T) {
 		},
 	}
 
-	result, err := tools["list_report_datasets"].Query(t.Context(), testParams(map[string]any{
+	result, err := tools["report_list_datasets"].Query(t.Context(), testParams(map[string]any{
 		"limit": float64(maxDatasetPage),
 	}))
 	require.NoError(t, err)
@@ -345,7 +345,7 @@ func TestListReportDatasets_NarrowsByText(t *testing.T) {
 
 	_, _, tools := reportingTools(t)
 
-	result, err := tools["list_report_datasets"].Query(
+	result, err := tools["report_list_datasets"].Query(
 		t.Context(),
 		testParams(map[string]any{"query": "freight shipments"}),
 	)
@@ -374,7 +374,7 @@ func TestDescribeReportDataset_NamesFieldsAndWhatTheActorMayReadOfThem(t *testin
 		},
 	}
 
-	result, err := tools["describe_report_dataset"].Query(t.Context(), testParams(map[string]any{
+	result, err := tools["report_get_dataset"].Query(t.Context(), testParams(map[string]any{
 		"dataset": "shipment",
 	}))
 	require.NoError(t, err)
@@ -424,7 +424,7 @@ func TestDescribeReportDataset_NarrowsFieldsByText(t *testing.T) {
 
 	_, _, tools := reportingTools(t)
 
-	result, err := tools["describe_report_dataset"].Query(t.Context(), testParams(map[string]any{
+	result, err := tools["report_get_dataset"].Query(t.Context(), testParams(map[string]any{
 		"dataset": "shipment",
 		"query":   "status",
 	}))
@@ -437,7 +437,7 @@ func TestDescribeReportDataset_NarrowsFieldsByText(t *testing.T) {
 }
 
 /*
-list_report_datasets looked for the query as one literal substring, so a
+report_list_datasets looked for the query as one literal substring, so a
 query of two words found only datasets whose text happened to hold them side
 by side. Every word now has to begin a word of the key, label, plural label or
 description, in any order.
@@ -447,7 +447,7 @@ func TestListReportDatasets_MatchesEachWordOfTheQuery(t *testing.T) {
 
 	_, _, tools := reportingTools(t)
 
-	result, err := tools["list_report_datasets"].Query(
+	result, err := tools["report_list_datasets"].Query(
 		t.Context(),
 		testParams(map[string]any{"query": "shipments freight"}),
 	)
@@ -461,7 +461,7 @@ func TestListReportDatasets_MatchesEachWordOfTheQuery(t *testing.T) {
 	}
 	assert.Contains(t, keys, "shipment", "the words need not sit together, or in order")
 
-	result, err = tools["list_report_datasets"].Query(
+	result, err = tools["report_list_datasets"].Query(
 		t.Context(),
 		testParams(map[string]any{"query": "ipment"}),
 	)
@@ -476,7 +476,7 @@ func TestListReportDatasets_SaysHowToWidenASearchThatMatchedNothing(t *testing.T
 
 	_, _, tools := reportingTools(t)
 
-	result, err := tools["list_report_datasets"].Query(
+	result, err := tools["report_list_datasets"].Query(
 		t.Context(),
 		testParams(map[string]any{"query": "shipment spreadsheets"}),
 	)
@@ -503,7 +503,7 @@ func TestDescribeReportDataset_ReadsCamelCaseKeysAsWords(t *testing.T) {
 
 	_, _, tools := reportingTools(t)
 
-	result, err := tools["describe_report_dataset"].Query(t.Context(), testParams(map[string]any{
+	result, err := tools["report_get_dataset"].Query(t.Context(), testParams(map[string]any{
 		"dataset": "shipment",
 		"query":   "tender status",
 	}))
@@ -531,7 +531,7 @@ func TestDescribeReportDataset_FindsAFieldOnARelatedDataset(t *testing.T) {
 
 	_, _, tools := reportingTools(t)
 
-	result, err := tools["describe_report_dataset"].Query(t.Context(), testParams(map[string]any{
+	result, err := tools["report_get_dataset"].Query(t.Context(), testParams(map[string]any{
 		"dataset": "shipment",
 		"query":   "arrival",
 	}))
@@ -555,7 +555,7 @@ func TestDescribeReportDataset_SaysHowToWidenASearchThatMatchedNothing(t *testin
 
 	_, _, tools := reportingTools(t)
 
-	result, err := tools["describe_report_dataset"].Query(t.Context(), testParams(map[string]any{
+	result, err := tools["report_get_dataset"].Query(t.Context(), testParams(map[string]any{
 		"dataset": "shipment",
 		"query":   "zebra crossing",
 	}))
@@ -576,12 +576,12 @@ func TestDescribeReportDataset_HidesADatasetTheActorCannotRead(t *testing.T) {
 	_, permissions, tools := reportingTools(t)
 	permissions.readable = map[string]*permissionports.ResourcePermissionDetail{}
 
-	_, err := tools["describe_report_dataset"].Query(t.Context(), testParams(map[string]any{
+	_, err := tools["report_get_dataset"].Query(t.Context(), testParams(map[string]any{
 		"dataset": "shipment",
 	}))
 
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "list_report_datasets")
+	assert.Contains(t, err.Error(), "report_list_datasets")
 }
 
 func TestDescribeReportDataset_RefusesAnUnknownDataset(t *testing.T) {
@@ -589,7 +589,7 @@ func TestDescribeReportDataset_RefusesAnUnknownDataset(t *testing.T) {
 
 	_, _, tools := reportingTools(t)
 
-	_, err := tools["describe_report_dataset"].Query(t.Context(), testParams(map[string]any{
+	_, err := tools["report_get_dataset"].Query(t.Context(), testParams(map[string]any{
 		"dataset": "spreadsheets",
 	}))
 
@@ -625,7 +625,7 @@ func TestPreviewReport_RunsAnInlineDefinitionAndKeysRowsByLabel(t *testing.T) {
 		Totals: reportports.ReportRow{nil, "2000.00"},
 	}
 
-	result, err := tools["preview_report"].Query(t.Context(), testParams(map[string]any{
+	result, err := tools["report_preview"].Query(t.Context(), testParams(map[string]any{
 		"definition": map[string]any{
 			"entity": "shipment",
 			"columns": []any{
@@ -678,7 +678,7 @@ func TestPreviewReport_CapsTheRowsItHandsBack(t *testing.T) {
 		Rows:    rows,
 	}
 
-	result, err := tools["preview_report"].Query(t.Context(), testParams(map[string]any{
+	result, err := tools["report_preview"].Query(t.Context(), testParams(map[string]any{
 		"definition": map[string]any{
 			"entity": "shipment",
 			"columns": []any{
@@ -711,7 +711,7 @@ func TestPreviewReport_PreviewsASavedReportWithItsParameters(t *testing.T) {
 		"parameters":   map[string]any{"windowDays": "90"},
 	}
 
-	result, err := tools["preview_report"].Query(t.Context(), params)
+	result, err := tools["report_preview"].Query(t.Context(), params)
 	require.NoError(t, err)
 
 	require.NotNil(t, service.previewed)
@@ -736,7 +736,7 @@ func TestPreviewReport_AsksForTheMissingParameterBeforeRunning(t *testing.T) {
 	service.definitions = []*report.ReportDefinition{saved}
 	params.Params = map[string]any{"definitionId": saved.ID.String()}
 
-	_, err := tools["preview_report"].Query(t.Context(), params)
+	_, err := tools["report_preview"].Query(t.Context(), params)
 
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "windowDays")
@@ -749,7 +749,7 @@ func TestPreviewReport_ReportsACompileErrorAsItsOwn(t *testing.T) {
 	service, _, tools := reportingTools(t)
 	service.previewErr = errors.New("field \"margin\" does not exist on shipment")
 
-	_, err := tools["preview_report"].Query(t.Context(), testParams(map[string]any{
+	_, err := tools["report_preview"].Query(t.Context(), testParams(map[string]any{
 		"definition": map[string]any{
 			"entity": "shipment",
 			"columns": []any{
@@ -772,7 +772,7 @@ func TestPreviewReport_RefusesADefinitionWithoutColumns(t *testing.T) {
 
 	service, _, tools := reportingTools(t)
 
-	_, err := tools["preview_report"].Query(t.Context(), testParams(map[string]any{
+	_, err := tools["report_preview"].Query(t.Context(), testParams(map[string]any{
 		"definition": map[string]any{"entity": "shipment"},
 	}))
 
@@ -786,7 +786,7 @@ func TestPreviewReport_NeedsSomethingToPreview(t *testing.T) {
 
 	_, _, tools := reportingTools(t)
 
-	_, err := tools["preview_report"].Query(t.Context(), testParams(map[string]any{}))
+	_, err := tools["report_preview"].Query(t.Context(), testParams(map[string]any{}))
 
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "definition")
@@ -800,7 +800,7 @@ func TestPreviewReport_DeclaresTheDefinitionShapeInItsSchema(t *testing.T) {
 
 	_, _, tools := reportingTools(t)
 
-	schema := tools["preview_report"].ParamSchema()
+	schema := tools["report_preview"].ParamSchema()
 	properties, ok := schema["properties"].(map[string]any)
 	require.True(t, ok)
 	definition, ok := properties["definition"].(map[string]any)
@@ -850,7 +850,7 @@ func TestPreviewReport_WritesDateColumnsAsReadableDates(t *testing.T) {
 	})
 	params.Timezone = "America/Chicago"
 
-	result, err := tools["preview_report"].Query(t.Context(), params)
+	result, err := tools["report_preview"].Query(t.Context(), params)
 	require.NoError(t, err)
 
 	preview := result.(reportPreview)

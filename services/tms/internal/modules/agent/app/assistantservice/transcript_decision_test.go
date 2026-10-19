@@ -14,7 +14,7 @@ import (
 A decision is not something the person said.
 
 The note sent after a decision was exported as "## You" with the agent's
-instructions under it: "Decision on proposal ap_… (create_report). Tell the
+instructions under it: "Decision on proposal ap_… (report_create). Tell the
 person in one or two sentences… Do not propose the same change again." The
 person never typed it and the thread never shows those lines. The transcript
 now heads it as a decision and shows only its first line, the one the thread
@@ -28,8 +28,8 @@ func TestTranscript_RendersADecisionNoteAsADecision(t *testing.T) {
 		Sequence: 1,
 		Role:     conversation.RoleUser,
 		Kind:     conversation.MessageKindDecisionNote,
-		Content: "Approved create_report, and it ran. It created the report \"Lanes\".\n" +
-			"Decision on proposal ap_01 (create_report). It produced definitionId rd_01; use " +
+		Content: "Approved report_create, and it ran. It created the report \"Lanes\".\n" +
+			"Decision on proposal ap_01 (report_create). It produced definitionId rd_01; use " +
 			"that id, not the proposal's, when you refer to what it made. " + followUpInstruction,
 		CreatedAt: 1_790_000_000,
 	}}}
@@ -40,7 +40,7 @@ func TestTranscript_RendersADecisionNoteAsADecision(t *testing.T) {
 
 	body := transcript.Body
 	assert.Contains(t, body, "## Decision · Sep 21, 2026 2:13:20 PM UTC\n\n"+
-		"Approved create_report, and it ran. It created the report \"Lanes\".\n")
+		"Approved report_create, and it ran. It created the report \"Lanes\".\n")
 	assert.NotContains(t, body, "## You")
 	assert.NotContains(t, body, "Decision on proposal")
 	assert.NotContains(t, body, "Tell the person")
@@ -75,7 +75,7 @@ func TestTranscript_ListsWhatAnExecutedProposalMade(t *testing.T) {
 	thread := transcriptThread()
 	conversations := &stubConversations{thread: thread}
 	proposals := &stubProposalRepo{byThread: []*agent.AgentProposal{{
-		ToolName:     "create_report",
+		ToolName:     "report_create",
 		ToolParams:   map[string]any{"name": "Lanes"},
 		Rationale:    "Asked for a saved report.",
 		AutonomyTier: agent.TierAutoExecute,

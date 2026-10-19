@@ -63,7 +63,7 @@ it away for has arrived.
 [agent-waits.md](agent-waits.md)) on the record's customer or one of its
 carriers. The party must be the record's own. The reply, matched to that party
 by `inbound_message.classified`, ends the wait and starts a turn that picks the
-case back up. The agent sets the same wait with `wait_until`, which is why the
+case back up. The agent sets the same wait with `agent_create_wait`, which is why the
 route's write coverage names that tool.
 
 ## Readiness checklist
@@ -93,7 +93,7 @@ A conversation can be a case whatever its agent holds, so a step is checked
 against the agent before it is offered (`deskcase/ability.go`). Each step
 names the tools that can take it, any one being enough (`stepTools`:
 `mark_ready` needs `billing_transfer`, `notify_customer` needs
-`email_customer`, and so on); a step the organization added names none and
+`customer_send_email`, and so on); a step the organization added names none and
 is always the agent's to try. When the case is read, `abilities`:
 
 1. asks once which of every tool the steps name the person may use

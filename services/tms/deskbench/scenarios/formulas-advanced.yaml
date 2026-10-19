@@ -45,7 +45,7 @@ scenarios:
           base it on 2.60 a mile. reefer loads get 15% on top, hazmat adds a flat 175, team service
           adds 25 cents a mile. any combination can apply
         expect:
-          calls: ["propose_formula", "describe_formula_schema"]
+          calls: ["propose_formula", "formula_describe_schema"]
           formula: ["totalDistance", "/hazmat|hasHazmat/"]
           rubric: >
             Uses the schema's own names for reefer, hazmat and team (asking or saying when one does

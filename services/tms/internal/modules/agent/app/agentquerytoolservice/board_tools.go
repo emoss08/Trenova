@@ -104,7 +104,7 @@ func newGetDispatchBoardTool(board boardReader) agentports.AgentQueryTool {
 	return &getDispatchBoardTool{board: board}
 }
 
-func (t *getDispatchBoardTool) Name() string { return "get_dispatch_board" }
+func (t *getDispatchBoardTool) Name() string { return "dispatch_get_board" }
 
 func (t *getDispatchBoardTool) Description() string {
 	return "The dispatch board: every move in the window with its urgency and coverage, " +

@@ -36,7 +36,7 @@ func coercionSchema() map[string]any {
 			"note": map[string]any{"type": "string"},
 			"customerId": map[string]any{
 				"type":        "string",
-				"description": "The customer, from list_customers. Never guess one.",
+				"description": "The customer, from customer_list. Never guess one.",
 			},
 		},
 		"required":             []string{"limit"},
@@ -136,7 +136,7 @@ func TestContractCall_RefusesAValueThatIsNotARecordId(t *testing.T) {
 	problems := argumentProblems(multiErr)
 	require.Len(t, problems, 1)
 	assert.Contains(t, problems[0], `customerId: "Acme Foods" is not a record id`)
-	assert.Contains(t, problems[0], "from list_customers")
+	assert.Contains(t, problems[0], "from customer_list")
 
 	_, err = contractCall(toolschema.NewValidator(), "stub", coercionSchema(),
 		map[string]any{"limit": 1, "customerId": "cus_01J9Z3QK8M5T7V2X4Y6W0R1N8P"})
@@ -148,7 +148,7 @@ func typedIDSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"customerId": agenttoolschema.RecordID(permission.ResourceCustomer, "The customer",
-				"list_customers"),
+				"customer_list"),
 			"invoiceIds": agenttoolschema.RecordIDs(permission.ResourceInvoice,
 				"The invoices, from invoice_list.", 10),
 			"stops": map[string]any{
@@ -157,7 +157,7 @@ func typedIDSchema() map[string]any {
 					"type": "object",
 					"properties": map[string]any{
 						"location": agenttoolschema.RecordID(permission.ResourceLocation,
-							"The stop's location", "list_locations"),
+							"The stop's location", "location_list"),
 					},
 				},
 			},
@@ -186,7 +186,7 @@ func TestContractCall_RefusesAnIDOfAnotherKind(t *testing.T) {
 	problems := argumentProblems(multiErr)
 	require.Len(t, problems, 3)
 	assert.Contains(t, problems[0], `customerId: "car_01J9Z3QK8M5T7V2X4Y6W0R1N8P" is a carrier `+
-		`id; this parameter takes a customer id, from list_customers.`)
+		`id; this parameter takes a customer id, from customer_list.`)
 	assert.Contains(t, problems[1], `invoiceIds[1]: "shp_01J9Z3QK8M5T7V2X4Y6W0R1N8P" is a `+
 		`shipment id; this parameter takes an invoice id, from invoice_list.`)
 	assert.Contains(t, problems[2], `stops[0].location: "zzz_01J9Z3QK8M5T7V2X4Y6W0R1N8P" is `+
@@ -217,7 +217,7 @@ func TestContractCall_AcceptsAnIDOfTheMarkedKind(t *testing.T) {
 func TestIDSource_ReadsWhereTheIDComesFrom(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, "list_customers", idSource("The customer, from list_customers. Never guess one."))
+	assert.Equal(t, "customer_list", idSource("The customer, from customer_list. Never guess one."))
 	assert.Equal(t, "shipment_get, shipment_list or the page you are on",
 		idSource("The shipment, from shipment_get, shipment_list or the page you are on. "+
 			"Never guess one."))

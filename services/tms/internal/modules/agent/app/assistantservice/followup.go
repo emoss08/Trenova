@@ -254,7 +254,7 @@ func followUpAsk(declined bool, note string) string {
 // producedNote names the ids an executed proposal's write produced, for the
 // agent rather than the person, so it is on the note's second line. Without
 // it the only id the agent held was the proposal's, and it passed that to
-// describe_report in place of the report it had just saved.
+// report_get in place of the report it had just saved.
 func producedNote(proposal *agent.AgentProposal) string {
 	if proposal.Status != agent.ProposalStatusExecuted {
 		return ""

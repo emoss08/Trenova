@@ -50,7 +50,7 @@ func newGetDocumentSummaryTool(
 	}
 }
 
-func (t *getDocumentSummaryTool) Name() string { return "get_document_summary" }
+func (t *getDocumentSummaryTool) Name() string { return "document_get_summary" }
 
 func (t *getDocumentSummaryTool) SearchTerms() []string {
 	return []string{"read document", "document summary", "read a rate confirmation"}
@@ -59,9 +59,9 @@ func (t *getDocumentSummaryTool) SearchTerms() []string {
 func (t *getDocumentSummaryTool) Description() string {
 	return "Read a document by id: what kind of document it looks like, how many pages, " +
 		"the text extracted from it, and the structured fields document intelligence " +
-		"found. Use it for a document a record names, or for a page search_documents " +
+		"found. Use it for a document a record names, or for a page document_list " +
 		"pointed at; a file the person attached to this conversation is read with " +
-		"read_attachment. For a rate confirmation or tender, follow with " +
+		"agent_read_attachment. For a rate confirmation or tender, follow with " +
 		"intake_get_draft for the shipment it describes. A document whose reading " +
 		"is still pending has no text yet; say so and ask again shortly."
 }
@@ -71,8 +71,8 @@ func (t *getDocumentSummaryTool) ParamSchema() map[string]any {
 		toolschema.KeyType: toolschema.TypeObject,
 		toolschema.KeyProperties: withTextWindow(map[string]any{
 			paramDocumentID: agenttoolschema.RecordIDText(permission.ResourceDocument,
-				"The document's id, from a documentId in get_inbound_message or "+
-					"get_worker_credential, a search_documents result, or this run's subject."),
+				"The document's id, from a documentId in inbox_get_inbound_message or "+
+					"worker_get_credential, a document_list result, or this run's subject."),
 		}),
 		toolschema.KeyRequired:             []string{paramDocumentID},
 		toolschema.KeyAdditionalProperties: false,

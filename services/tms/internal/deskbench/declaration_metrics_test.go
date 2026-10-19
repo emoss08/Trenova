@@ -27,7 +27,7 @@ func TestMeasureCase_CountsTheCacheReadOfEveryCallButATurnsFirst(t *testing.T) {
 		StartedAt:  time.Unix(0, 0),
 		FinishedAt: time.Unix(10, 0),
 		Steps: []*StepResult{{Turns: []*TurnRecord{
-			turnWithCalls([]string{findToolsName, "list_trailers"},
+			turnWithCalls([]string{findToolsName, "equipment_list_trailers"},
 				CallSummary{Kind: ModelCallChat, InputTokens: 900, CacheWrite: 9000},
 				CallSummary{Kind: ModelCallChat, InputTokens: 100, CacheRead: 9900},
 				CallSummary{Kind: ModelCallChat, Delegate: "call_d", InputTokens: 5000},
@@ -55,7 +55,7 @@ func TestOpeningTools_LeavesOutWhatIsDeclaredDeferred(t *testing.T) {
 		Tools: []kernelports.ToolSpec{
 			{Name: "find_tools"},
 			{Name: "shipment_get"},
-			{Name: "list_trailers", Deferred: true},
+			{Name: "equipment_list_trailers", Deferred: true},
 		},
 	}}}}
 

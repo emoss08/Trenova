@@ -7,31 +7,31 @@ where detention clusters by facility and hour — by running Python over report 
 files a person attached, in a sandbox on the organization's own vendor account. The first
 vendor is E2B.
 
-It has one tool, `analyze_data`, a read. The capability is the plan capability
+It has one tool, `report_analyze_data`, a read. The capability is the plan capability
 `agent.data_analysis` and the permission resource `data_analysis` (`read`, in the Desk
 bundle). The history is managed under `agent_extension`, like the extension itself.
 
 ## When an agent analyzes
 
-An agent that holds `analyze_data` is told, in Trenova's own rules
+An agent that holds `report_analyze_data` is told, in Trenova's own rules
 (`agentdefinition.trenovaRules`), that a figure no tool stated (a total, a share, a ranking, an
 age bucket, a trend, anything across more rows than a result showed it) is worked out with
-`analyze_data`, and that a request to analyze, explore, dig into, compare or chart data is a call
+`report_analyze_data`, and that a request to analyze, explore, dig into, compare or chart data is a call
 to it in that turn. An agent without it keeps the plain rule: do not calculate, say what you would
 need. The rule depends only on whether the tool is held, so the cached part of the prompt does not
 change from turn to turn, and it holds over instructions an organization saved before the
-extension existed ("never calculate what the report did not"). `run_report` and `get_report_run`
+extension existed ("never calculate what the report did not"). `report_run` and `report_get_run`
 say plainly when their rows are a sample, "not the data to total, count, rank or compare", and
-`analyze_data` loads whenever either of them or `read_attachment` loads (see "follows" in
+`report_analyze_data` loads whenever either of them or `agent_read_attachment` loads (see "follows" in
 [agent-runtime.md](agent-runtime.md)). Before these, the Report analyst asked to "run AR aging by
 customer and do analysis on it" read the sample, wrote its own commentary and offered the
 analysis as a next step; `deskbench/scenarios/analysis.yaml` holds that case and the rest.
 
 The rule also holds when every row is in front of the agent: a share of two columns or a total of
-one is still worked out by `analyze_data`, and `run_report` says of a complete result that a
+one is still worked out by `report_analyze_data`, and `report_run` says of a complete result that a
 figure its rows do not state is not read off them. An attached CSV, XLSX or text file is read by
-`analyze_data` as it is, so an agent never tells the person such a file cannot be read because
-`read_attachment` found no text in it. The scope classifier (`agentguard`) treats a request to
+`report_analyze_data` as it is, so an agent never tells the person such a file cannot be read because
+`agent_read_attachment` found no text in it. The scope classifier (`agentguard`) treats a request to
 analyze, chart, total or compare the organization's own data as operations work even when it names
 Python, pandas or a package, and keeps a computation unrelated to the organization's data (a
 prime, a benchmark) and a request for the sandbox's environment or keys out of scope.
@@ -39,7 +39,7 @@ prime, a benchmark) and a request for the sandbox's environment or keys out of s
 The prompt is not the only control. A reply that files nothing is held to the money and
 percentages the conversation read (see "What the reply may claim" in
 [agent-runtime.md](agent-runtime.md)): a share worked out in the agent's head is sent back once
-with a correction telling an agent that holds `analyze_data` to work it out there.
+with a correction telling an agent that holds `report_analyze_data` to work it out there.
 
 ## What the code reads
 
@@ -72,7 +72,7 @@ its columns (`AnalysisColumnSpec`: id, label, type, and how its values read, fro
 report's format). It:
 
 - **Loads each dataset as a DataFrame named after it.** A report run's columns are headed by
-  their labels, as `run_report` showed them to the model (so `df["Open Balance"]`, not
+  their labels, as `report_run` showed them to the model (so `df["Open Balance"]`, not
   `open_balance`), integers as nullable integers, decimals as floats, times as dates in the
   organization's timezone and flags as booleans. A file is read with pandas' own reader. How
   each loaded (rows, columns and dtypes, or the error) comes back as JSON and is handed to the
@@ -112,8 +112,8 @@ blame the agent's code.
 - **Taint follows the data.** The tool declares `ReadsExternal: marked` with the
   `attachment` source: a result that read an attached file names it
   (`analysisAnswer.TaintedRecords`), and the run is tainted as if the file had been read
-  with `read_attachment`. A report run is the organization's own data and taints nothing,
-  as `run_report` does not. Analysis is not in the outside-content list, so it does not cap
+  with `agent_read_attachment`. A report run is the organization's own data and taints nothing,
+  as `report_run` does not. Analysis is not in the outside-content list, so it does not cap
   later writes the way a web read does.
 - **What leaves Trenova** is the code and the datasets' bytes, sent to E2B for as long as
   the analysis runs. The catalog's data notice says so.

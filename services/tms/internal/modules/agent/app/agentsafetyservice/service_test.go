@@ -132,14 +132,14 @@ func policy(name string, kind agent.ToolKind, egress ...agent.EgressClass) agent
 }
 
 func testService(defs *fakeDefinitions, control *tenant.AgentControl) *Service {
-	personal := policy("add_home_widget", agent.ToolKindAction, agent.EgressPersonal)
+	personal := policy("home_add_widget", agent.ToolKindAction, agent.EgressPersonal)
 	personal.Scope = agent.ToolScopeSelf
 
 	return newService(serviceDeps{
 		policies: newFakePolicies(
 			policy("shipment_get", agent.ToolKindQuery, agent.EgressNone),
-			policy("assign_move", agent.ToolKindAction, agent.EgressInternal),
-			policy("email_customer", agent.ToolKindAction, agent.EgressExternalRecipient),
+			policy("dispatch_assign_move", agent.ToolKindAction, agent.EgressInternal),
+			policy("customer_send_email", agent.ToolKindAction, agent.EgressExternalRecipient),
 			personal,
 		),
 		holder:      fakeHolder{},
@@ -165,7 +165,7 @@ func TestPolicyViewsSayWhatEachToolNeeds(t *testing.T) {
 
 	svc := testService(&fakeDefinitions{}, &tenant.AgentControl{})
 
-	email, ok := svc.ToolPolicy("email_customer")
+	email, ok := svc.ToolPolicy("customer_send_email")
 	require.True(t, ok)
 	assert.Equal(t, "Email customer", email.Title)
 	assert.True(t, email.Leaves)
@@ -174,7 +174,7 @@ func TestPolicyViewsSayWhatEachToolNeeds(t *testing.T) {
 	assert.Equal(t, permission.ResourceShipment, email.Needs.Resource)
 	assert.NotEmpty(t, email.Explanation)
 
-	widget, ok := svc.ToolPolicy("add_home_widget")
+	widget, ok := svc.ToolPolicy("home_add_widget")
 	require.True(t, ok)
 	assert.Nil(t, widget.Needs, "a tool on the caller's own records needs no grant")
 	assert.False(t, widget.Leaves)
@@ -190,7 +190,7 @@ func TestAssessAnswersEachHeldToolCleanAndTainted(t *testing.T) {
 	t.Parallel()
 
 	svc := testService(&fakeDefinitions{}, &tenant.AgentControl{})
-	open := agentWith("Dispatcher", "shipment_get", "assign_move", "email_customer")
+	open := agentWith("Dispatcher", "shipment_get", "dispatch_assign_move", "customer_send_email")
 
 	answers := svc.Assess(t.Context(), &agentports.AssessAgentSafetyRequest{
 		Subject: &agentports.AgentSafetySubject{Agent: open, Control: &tenant.AgentControl{}},
@@ -204,12 +204,12 @@ func TestAssessAnswersEachHeldToolCleanAndTainted(t *testing.T) {
 
 	assert.Equal(t, agent.AutonomyRunsOnItsOwn, byName["shipment_get"].Clean.Answer)
 	assert.Equal(t, agent.AutonomyRunsOnItsOwn, byName["shipment_get"].Tainted.Answer)
-	assert.Equal(t, agent.AutonomyRunsOnItsOwn, byName["assign_move"].Clean.Answer)
-	assert.Equal(t, agent.AutonomyRunsOnItsOwn, byName["assign_move"].Tainted.Answer)
-	assert.Equal(t, agent.AutonomyNeedsApproval, byName["email_customer"].Clean.Answer)
-	assert.Equal(t, agent.AutonomyNeedsApproval, byName["email_customer"].Tainted.Answer)
+	assert.Equal(t, agent.AutonomyRunsOnItsOwn, byName["dispatch_assign_move"].Clean.Answer)
+	assert.Equal(t, agent.AutonomyRunsOnItsOwn, byName["dispatch_assign_move"].Tainted.Answer)
+	assert.Equal(t, agent.AutonomyNeedsApproval, byName["customer_send_email"].Clean.Answer)
+	assert.Equal(t, agent.AutonomyNeedsApproval, byName["customer_send_email"].Tainted.Answer)
 
-	simulated := agentWith("Rehearsal", "assign_move", "shipment_get")
+	simulated := agentWith("Rehearsal", "dispatch_assign_move", "shipment_get")
 	simulated.SimulationMode = true
 	rehearsal := svc.Assess(t.Context(), &agentports.AssessAgentSafetyRequest{
 		Subject: &agentports.AgentSafetySubject{Agent: simulated, Control: &tenant.AgentControl{}},
@@ -218,8 +218,8 @@ func TestAssessAnswersEachHeldToolCleanAndTainted(t *testing.T) {
 	assert.Equal(t, agent.AutonomySimulated, rehearsal[0].Clean.Answer)
 	assert.Equal(t, agent.AutonomyRunsOnItsOwn, rehearsal[1].Clean.Answer)
 
-	earner := agentWith("Earner", "assign_move")
-	earner.ToolTiers = map[string]agent.AutonomyTier{"assign_move": agent.TierActWithApproval}
+	earner := agentWith("Earner", "dispatch_assign_move")
+	earner.ToolTiers = map[string]agent.AutonomyTier{"dispatch_assign_move": agent.TierActWithApproval}
 	earned := svc.Assess(t.Context(), &agentports.AssessAgentSafetyRequest{
 		Subject: &agentports.AgentSafetySubject{
 			Agent:   earner,
@@ -227,7 +227,7 @@ func TestAssessAnswersEachHeldToolCleanAndTainted(t *testing.T) {
 		},
 		Trust: []*agent.ToolTrust{{
 			AgentDefinitionID: earner.ID,
-			ToolName:          "assign_move",
+			ToolName:          "dispatch_assign_move",
 			Streak:            1,
 			EarnedTier:        agent.TierActWithApproval,
 		}},
@@ -244,15 +244,15 @@ func TestReachWarnsAboutAnOpenAgentWithSensitiveToolsAndAnAgentNobodyCanUse(t *t
 
 	svc := testService(&fakeDefinitions{}, &tenant.AgentControl{})
 
-	open := agentWith("Customer desk", "assign_move", "email_customer")
+	open := agentWith("Customer desk", "dispatch_assign_move", "customer_send_email")
 	warnings := svc.ReachWarnings(&agentports.AgentReachRequest{
 		Subject: &agentports.AgentSafetySubject{Agent: open},
 	})
 	require.Len(t, warnings, 1)
 	assert.Equal(t, agentdefinition.ReachOpenWithSensitiveTools, warnings[0].Kind)
-	assert.Equal(t, []string{"email_customer"}, warnings[0].Tools)
+	assert.Equal(t, []string{"customer_send_email"}, warnings[0].Tools)
 
-	restricted := agentWith("Customer desk", "email_customer")
+	restricted := agentWith("Customer desk", "customer_send_email")
 	restricted.AccessMode = agentdefinition.AccessRoles
 	assert.Equal(t, []agentports.AgentReachWarning{{
 		Kind:  agentdefinition.ReachNoAudience,

@@ -396,7 +396,7 @@ Extensions (web search and anything like it) add agent-only tools that an organi
 on with its own vendor account; how they are gated, metered, and why a turn that read outside
 content proposes every later write, is in
 [docs/engineering/agent-extensions.md](docs/engineering/agent-extensions.md).
-Portal automation (`list_portal_sites`, `read_portal`, `act_on_portal` on a cloud browser):
+Portal automation (`web_list_portal_sites`, `web_read_portal`, `web_use_portal` on a cloud browser):
 administrator-set sites, the navigation allow-list and the post-hoc page check, sign-ins and
 authenticator keys sent as vendor secrets, texted or emailed sign-in codes relayed by the person
 into the same browser, Trenova's own address refused as a site, actions run from an approval and followed by `PortalRunWorkflow` and a
@@ -404,13 +404,13 @@ into the same browser, Trenova's own address refused as a site, actions run from
 [docs/engineering/agent-portal-automation.md](docs/engineering/agent-portal-automation.md).
 Read it before changing `portal_tasks.go`, `portal_sites.go`, `portaljobs`, `portaltools` or
 `browseruseconnector`.
-Web watching (`watch_web`, `list_web_watches`, `stop_web_watch` and the Desk's `/watch` on Exa Monitors: a scheduled
+Web watching (`web_watch`, `web_list_watches`, `web_stop_watch` and the Desk's `/watch` on Exa Monitors: a scheduled
 search that hands back only what is new, followed by `WebWatchWorkflow`, delivered through a
 `WebWatch` wait and quoted as outside text, the signed webhook only asking for a check) is in
 [docs/engineering/agent-web-watching.md](docs/engineering/agent-web-watching.md). Read it before
 changing `web_watches.go`, `webwatchtools`, `webwatchjobs`, `agentwaitservice/webwatch.go` or
 `shared/exa/monitors.go`.
-Data analysis (`analyze_data`: Python over the caller's report runs and attached files in an E2B
+Data analysis (`report_analyze_data`: Python over the caller's report runs and attached files in an E2B
 sandbox with all egress denied, charts kept with the run and drawn as the Desk's `analysis`
 artifact) is in [docs/engineering/agent-data-analysis.md](docs/engineering/agent-data-analysis.md).
 Read it before changing `analysis.go` in `agentextensionservice`, `analysis_tool.go`,
@@ -421,10 +421,10 @@ taught (`agentreflectionservice`, `reflectionjobs`, the `agent_reflections` tabl
 What agents are told about the organization's business and about the person they are
 talking to — profiles worked out from the records, written up by a model, steered by people's
 guidance and never edited by hand (`agentprofileservice`, `agentprofilejobs`, the
-`agent_profiles` and `agent_profile_guidance` tables, the `guide_profile` tool) — is in
+`agent_profiles` and `agent_profile_guidance` tables, the `agent_guide_profile` tool) — is in
 [docs/engineering/agent-profiles.md](docs/engineering/agent-profiles.md). Read it before
 adding a fact, changing the writing prompt, or touching the profile sections of the prompt.
-An agent parking its work until something happens in the world (`wait_until`, a truck
+An agent parking its work until something happens in the world (`agent_create_wait`, a truck
 reaching a stop, a reply, an appointment or free time coming round, drive time running low,
 a time) and picking it up as a new turn or run is described in
 [docs/engineering/agent-waits.md](docs/engineering/agent-waits.md).
@@ -447,7 +447,7 @@ How an agent drafts a whole EDI connection from a trading partner's implementati
 values checked against their pages, held values, secrets never taken, a change set on a revised
 guide, one proposal applied in one transaction) is in
 [docs/engineering/edi-spec-onboarding.md](docs/engineering/edi-spec-onboarding.md). Read it before
-changing `ediconnectiondraft`, `draft_edi_connection`, `apply_edi_connection_draft` or the
+changing `ediconnectiondraft`, `edi_draft_connection`, `edi_apply_connection_draft` or the
 `edi_connection_draft` Desk artifact.
 The carrier, customer, commodity, hazardous material, location and equipment tools, document,
 change alert and watchtower housekeeping, capture filing, and who holds them are in
@@ -589,7 +589,7 @@ path, the EDI 214 parser, or adding anything that records a stop actual.**
 ## Check Calls
 
 A brokered load is followed through `check_calls`: dispatchers log calls (`logCheckCall`), the
-load monitor logs them with `log_check_call`, and the carrier posts through a per-move token
+load monitor logs them with `dispatch_record_check_call`, and the carrier posts through a per-move token
 link at `/carrier-tracking/:token` without signing in. An arrival or departure also goes through
 tracking events (people strict, the carrier tolerant as source `Carrier`). With monitoring on in
 dispatch controls, an in-transit carrier load quiet past its window (customer override, else the

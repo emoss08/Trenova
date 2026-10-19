@@ -140,7 +140,7 @@ var capacityRecord = &masterRecord[carriercapacity.Posting]{
 	resource: permission.ResourceCarrierCapacityPosting,
 	entity:   capacityRecordEntity,
 	idParam:  paramPostingID,
-	lister:   "list_carrier_capacity_postings",
+	lister:   "carrier_list_capacity_postings",
 	label:    capacityLabel,
 	id:       func(entity *carriercapacity.Posting) pulid.ID { return entity.ID },
 	version:  func(entity *carriercapacity.Posting) int64 { return entity.Version },
@@ -176,10 +176,10 @@ var capacityRecord = &masterRecord[carriercapacity.Posting]{
 func capacityFields() []masterField[carriercapacity.Posting] {
 	return []masterField[carriercapacity.Posting]{
 		masterID(common.ParamCarrierID, permission.ResourceCarrier,
-			"The carrier offering the trucks, from list_carriers.",
+			"The carrier offering the trucks, from carrier_list.",
 			func(p *carriercapacity.Posting) *pulid.ID { return &p.CarrierID }),
 		masterOptionalIDPointer("originLocationId", permission.ResourceLocation,
-			"Where the trucks are, from list_locations. Give this, originState, or both.",
+			"Where the trucks are, from location_list. Give this, originState, or both.",
 			func(p *carriercapacity.Posting) **pulid.ID { return &p.OriginLocationID }),
 		masterStatePointer("originState", "The state the trucks are in, when no location "+
 			"is named.",
@@ -191,7 +191,7 @@ func capacityFields() []masterField[carriercapacity.Posting] {
 		masterStatePointer("destinationState", "Where the carrier wants to go, when it said.",
 			func(p *carriercapacity.Posting) **pulid.ID { return &p.DestinationStateID }),
 		masterOptionalIDPointer("equipmentTypeId", permission.ResourceEquipmentType,
-			"The trailer type offered, from list_equipment_types.",
+			"The trailer type offered, from equipment_list_types.",
 			func(p *carriercapacity.Posting) **pulid.ID { return &p.EquipmentTypeID }),
 		masterDateTime("availableFrom", "When the trucks are free.",
 			func(p *carriercapacity.Posting) *int64 { return &p.AvailableFrom }),
@@ -235,12 +235,12 @@ func NewCreateCarrierCapacityPostingTool(
 ) agentports.AgentTool {
 	return newMasterCreateTool(&masterCreateSpec[carriercapacity.Posting]{
 		record: capacityRecord,
-		name:   "create_carrier_capacity_posting",
+		name:   "carrier_create_capacity_posting",
 		description: "Record trucks a carrier says it has available: where they are, " +
 			"when, how many, the equipment and the rate it asked. Coverage suggestions " +
 			"and the capacity strip offer these trucks against uncovered loads.",
 		rationale: "Adds a capacity posting inside Trenova; nothing is sent to the carrier, " +
-			"and delete_carrier_capacity_posting removes it.",
+			"and carrier_delete_capacity_posting removes it.",
 		fields: capacityFields(),
 		required: []string{
 			common.ParamCarrierID,
@@ -275,7 +275,7 @@ func NewUpdateCarrierCapacityPostingTool(
 ) agentports.AgentTool {
 	return newMasterUpdateTool(&masterUpdateSpec[carriercapacity.Posting]{
 		record: capacityRecord,
-		name:   "update_carrier_capacity_posting",
+		name:   "carrier_update_capacity_posting",
 		description: "Change a carrier capacity posting: its origin, destination, window, " +
 			"truck count, equipment or rate. Fields left out keep their value.",
 		rationale: "Changes a capacity posting inside Trenova; nothing is sent, and a later " +
@@ -292,7 +292,7 @@ func NewUpdateCarrierCapacityPostingTool(
 
 func NewDeleteCarrierCapacityPostingTool(keeper CapacityKeeper) agentports.AgentTool {
 	return common.NewReceivableTool(&common.ReceivableSpec{
-		Name:        "delete_carrier_capacity_posting",
+		Name:        "carrier_delete_capacity_posting",
 		Description: "Remove a carrier capacity posting the carrier withdrew or that was entered by mistake.",
 		Resource:    permission.ResourceCarrierCapacityPosting,
 		Operation:   permission.OpDelete,
@@ -300,7 +300,7 @@ func NewDeleteCarrierCapacityPostingTool(keeper CapacityKeeper) agentports.Agent
 		DefaultTier: agent.TierPropose,
 		MaxTier:     agent.TierActWithApproval,
 		Rationale: "Removes trucks a carrier offered from Trenova; nothing is sent, and " +
-			"create_carrier_capacity_posting records them again.",
+			"carrier_create_capacity_posting records them again.",
 		Properties: map[string]any{
 			paramPostingID: agenttoolschema.RecordIDText(
 				permission.ResourceCarrierCapacityPosting,

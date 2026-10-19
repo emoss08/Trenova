@@ -9,7 +9,7 @@ scenarios:
     steps:
       - say: "run carlos rivera's settlement for last week"
         expect:
-          calls: ["search_worker|settlement_list_pay_events"]
+          calls: ["worker_search|settlement_list_pay_events"]
           proposals: [{ tool: "settlement_generate_driver|settlement_generate_driver_batch" }]
           maxFailedCalls: 2
           rubric: >
@@ -102,7 +102,7 @@ scenarios:
     steps:
       - say: "put together our IFTA return for last quarter"
         expect:
-          proposals: [{ tool: generate_ifta_return }]
+          proposals: [{ tool: fuel_generate_ifta_return }]
           maxFailedCalls: 2
           rubric: >
             Proposes generating the return for the previous calendar quarter by its dates, and
@@ -111,7 +111,7 @@ scenarios:
   - name: scheduled-report
     description: >
       A standing report that exists, put on a schedule. Earlier runs' approved schedules are
-      removed first, so the report starts with none; schedule_report refuses a repeat.
+      removed first, so the report starts with none; report_create_schedule refuses a repeat.
     agent: Report analyst
     tags: [reports, write]
     exclusive: delivered-not-billed-schedule
@@ -125,8 +125,8 @@ scenarios:
     steps:
       - say: "email me the delivered not billed report every monday at 7am"
         expect:
-          calls: ["list_reports"]
-          proposals: [{ tool: "schedule_report|fork_report" }]
+          calls: ["report_list"]
+          proposals: [{ tool: "report_create_schedule|report_fork" }]
           maxFailedCalls: 1
           maxCalls: 6
           rubric: >
@@ -150,7 +150,7 @@ scenarios:
     steps:
       - say: "email me the on-time delivery report every monday at 7am"
         expect:
-          calls: ["list_reports"]
+          calls: ["report_list"]
           maxCalls: 11
           rubric: >
             Says there is no on-time delivery report. Either offers to build one (or names the
@@ -166,7 +166,7 @@ scenarios:
     steps:
       - say: "run this quarter's DOT random drug and alcohol draw"
         expect:
-          proposals: [{ tool: run_dot_random_draw }]
+          proposals: [{ tool: worker_run_dot_random_draw }]
           maxFailedCalls: 2
 
   - name: credit-memo-for-damage

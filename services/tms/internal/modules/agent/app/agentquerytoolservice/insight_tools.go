@@ -116,15 +116,15 @@ func newListInsightsTool(insights insightReader) agentports.AgentQueryTool {
 	return &listInsightsTool{insights: insights}
 }
 
-func (t *listInsightsTool) Name() string { return "list_insights" }
+func (t *listInsightsTool) Name() string { return "insight_list" }
 
 func (t *listInsightsTool) Description() string {
 	return "List insight detector findings: service slipping for a customer, cash tied " +
 		"up in unbilled work, cost leaking at a location, compliance about to lapse. Each finding carries its measured numbers, " +
 		"the records behind it and a recommendation. Active findings are returned unless " +
 		"status says otherwise; narrow by category or severity. Only findings the person " +
-		"you are working for may see are returned. Use get_insight for one finding's " +
-		"history and the rule behind it, and dismiss_insight when a finding is not worth " +
+		"you are working for may see are returned. Use insight_get for one finding's " +
+		"history and the rule behind it, and insight_dismiss when a finding is not worth " +
 		"acting on."
 }
 
@@ -260,13 +260,13 @@ func newGetInsightTool(insights insightReader) agentports.AgentQueryTool {
 	return &getInsightTool{insights: insights}
 }
 
-func (t *getInsightTool) Name() string { return "get_insight" }
+func (t *getInsightTool) Name() string { return "insight_get" }
 
 func (t *getInsightTool) Description() string {
 	return "Read one insight in full: the finding with its numbers and records, its " +
 		"earlier runs, and the rule behind it. The earlier runs show whether it is " +
 		"getting worse; the rule says what the detector measures, when it speaks and " +
-		"what it passes over. Use the id from list_insights or from the run's subject."
+		"what it passes over. Use the id from insight_list or from the run's subject."
 }
 
 func (t *getInsightTool) ParamSchema() map[string]any {
@@ -274,7 +274,7 @@ func (t *getInsightTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"insightId": agenttoolschema.RecordIDText(permission.ResourceInsight,
-				"The insight's id, from list_insights or this run's subject."),
+				"The insight's id, from insight_list or this run's subject."),
 		},
 		"required":             []string{"insightId"},
 		"additionalProperties": false,

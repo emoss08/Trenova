@@ -120,7 +120,7 @@ func ReviewToolProviders() []any {
 
 func reviewIDProperty() map[string]any {
 	return agenttoolschema.RecordID(permission.ResourcePerformanceReview, "The review",
-		"list_performance_reviews")
+		"worker_list_performance_reviews")
 }
 
 func reviewRecord(review *worker.PerformanceReview) toolpreview.Record {
@@ -129,20 +129,20 @@ func reviewRecord(review *worker.PerformanceReview) toolpreview.Record {
 
 func newStartPerformanceReviewTool(reviews ReviewKeeper) agentports.AgentTool {
 	spec := withSchema(wfSpec(
-		"start_performance_review",
+		"worker_start_performance_review",
 		"Open a draft performance review for a worker from a review template. It covers "+
 			"a period, with the person who approves it as the reviewer. "+
-			"The template's items are copied on unrated; draft_performance_review fills them "+
+			"The template's items are copied on unrated; worker_update_performance_review fills them "+
 			"in. The worker sees nothing until the reviewer submits it.",
 		"Opens a draft review inside Trenova; the worker sees nothing, and "+
-			"delete_performance_review removes the draft.",
+			"worker_delete_performance_review removes the draft.",
 		permission.ResourcePerformanceReview,
 		permission.OpCreate,
 	), map[string]any{
 		common.ParamWorkerID: common.WorkerProperty(),
 		paramReviewTemplate: agenttoolschema.RecordIDText(
 			permission.ResourcePerformanceReviewTemplate,
-			"The review template, from list_performance_reviews. "+
+			"The review template, from worker_list_performance_reviews. "+
 				"Never guess one.",
 		),
 		paramTitle: common.StringProperty(
@@ -376,7 +376,7 @@ func reviewDraftProperties() map[string]any {
 		paramRatings: map[string]any{
 			toolschema.KeyType: toolschema.TypeArray,
 			toolschema.KeyDescription: "Scores for the review's items, each by the key " +
-				"list_performance_reviews shows. Items left out keep what they have.",
+				"worker_list_performance_reviews shows. Items left out keep what they have.",
 			toolschema.KeyMaxItems: maxReviewRatings,
 			toolschema.KeyItems: map[string]any{
 				toolschema.KeyType: toolschema.TypeObject,
@@ -416,7 +416,7 @@ func reviewDraftProperties() map[string]any {
 
 func newDraftPerformanceReviewTool(reviews ReviewKeeper) agentports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
-		"draft_performance_review",
+		"worker_update_performance_review",
 		"Fill in a draft performance review: score its items 1 to 5 with a comment each, "+
 			"and write the summary, strengths, improvements and goals. Only a draft is edited, "+
 			"and only what you give changes. Draw every score from the record, such as the "+
@@ -429,7 +429,7 @@ func newDraftPerformanceReviewTool(reviews ReviewKeeper) agentports.AgentTool {
 	), reviewDraftProperties(), paramReviewID), paramReviewID, permission.ResourcePerformanceReview)
 
 	spec.SearchTerms = []string{"review scores", "score the review", "fill in review"}
-	spec.Recipe = []string{"list_performance_reviews", "draft_performance_review"}
+	spec.Recipe = []string{"worker_list_performance_reviews", "worker_update_performance_review"}
 
 	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[
 		*reviewDraft, *performancereviewservice.ReviewChange,
@@ -485,7 +485,7 @@ func newDraftPerformanceReviewTool(reviews ReviewKeeper) agentports.AgentTool {
 
 func newDeletePerformanceReviewTool(reviews ReviewKeeper) agentports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
-		"delete_performance_review",
+		"worker_delete_performance_review",
 		"Delete a draft performance review started in error. A submitted review is part "+
 			"of the record and is refused.",
 		"Removes a draft review nobody has seen; the audit trail keeps what was removed.",

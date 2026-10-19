@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 )
 
-// PreviewedReport is the report a preview_report call ran, read again from
+// PreviewedReport is the report a report_preview call ran, read again from
 // the call's own arguments: the definition, its parameters as the preview
 // passed them, and its name.
 type PreviewedReport struct {
@@ -19,7 +19,7 @@ type PreviewedReport struct {
 	Params     map[string]any
 }
 
-// ReportOfPreview resolves what a preview_report call previewed, the same
+// ReportOfPreview resolves what a report_preview call previewed, the same
 // way the tool did, so a download of the preview is the same report whole
 // rather than a near relation of it.
 func ReportOfPreview(

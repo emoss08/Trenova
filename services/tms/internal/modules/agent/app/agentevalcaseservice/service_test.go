@@ -5,17 +5,17 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -263,7 +263,7 @@ func newWorld(t *testing.T, decision *agent.AgentDecision) *world {
 		BusinessUnitID: tenantInfo.BuID,
 		Name:           "Billing desk",
 		Instructions:   "Clear the billing queue.",
-		ToolNames:      []string{"get_customer", "update_rate"},
+		ToolNames:      []string{"customer_get", "update_rate"},
 		Version:        4,
 	}
 	thread := &conversation.Thread{
@@ -308,7 +308,7 @@ func newWorld(t *testing.T, decision *agent.AgentDecision) *world {
 			ToolCalls: []conversation.ToolCallRecord{
 				{
 					ID:        "call_1",
-					Name:      "get_customer",
+					Name:      "customer_get",
 					Arguments: map[string]any{"name": "Acme Foods"},
 				},
 				{ID: "call_2", Name: "find_tools"},
@@ -318,9 +318,9 @@ func newWorld(t *testing.T, decision *agent.AgentDecision) *world {
 		{
 			ID:         pulid.MustNew("amsg_"),
 			Role:       conversation.RoleTool,
-			ToolName:   "get_customer",
+			ToolName:   "customer_get",
 			ToolCallID: "call_1",
-			Content:    agentruntime.FenceToolResult("get_customer", payload),
+			Content:    agentruntime.FenceToolResult("customer_get", payload),
 			CreatedAt:  202,
 		},
 		{
@@ -458,7 +458,7 @@ func TestCreateFromProposal_FreezesTheTurnWithTheCorrectedParameters(t *testing.
 
 	require.Len(t, evalCase.ToolFixtures, 1, "runtime tools are not fixtures")
 	fixture := evalCase.ToolFixtures[0]
-	assert.Equal(t, "get_customer", fixture.Tool)
+	assert.Equal(t, "customer_get", fixture.Tool)
 	assert.Equal(t, map[string]any{"name": "Acme Foods"}, fixture.Args)
 	result, ok := fixture.Result.(map[string]any)
 	require.True(t, ok)
@@ -546,7 +546,7 @@ func TestCreateFromMessage_DedupesByContentHash(t *testing.T) {
 	assert.Equal(t, liked, *evalCase.SourceMessageID)
 	assert.Nil(t, evalCase.SourceFeedbackID)
 	require.Len(t, evalCase.Expected.Tools, 1)
-	assert.Equal(t, "get_customer", evalCase.Expected.Tools[0].Name)
+	assert.Equal(t, "customer_get", evalCase.Expected.Tools[0].Name)
 }
 
 func TestCreateFromFeedback_CapturesTheLikedReplyAndLinksTheRating(t *testing.T) {

@@ -120,7 +120,7 @@ func TestSettleRun_BoundsALongRunsTranscript(t *testing.T) {
 	}
 	messages = append(messages, conversation.Message{
 		Role:      conversation.RoleTool,
-		ToolName:  "run_report",
+		ToolName:  "report_run",
 		Content:   strings.Repeat("y", agent.TranscriptMessageBytes),
 		CreatedAt: 40,
 	})
@@ -140,7 +140,7 @@ func TestSettleRun_BoundsALongRunsTranscript(t *testing.T) {
 	assert.Equal(t, int64(40), last.CreatedAt, "and so is its end")
 	assert.True(t, last.Omitted, "a message over the bound keeps only who said it")
 	assert.Empty(t, last.Content)
-	assert.Equal(t, "run_report", last.ToolName)
+	assert.Equal(t, "report_run", last.ToolName)
 	assert.Equal(t, kept[run.Transcript.OmittedAt-1].CreatedAt+int64(run.Transcript.OmittedMessages)+1,
 		kept[run.Transcript.OmittedAt].CreatedAt, "the gap is counted where it fell")
 }

@@ -25,9 +25,9 @@ import (
 
 const paramWaitID = "waitId"
 
-const waitUntilName = "wait_until"
+const waitUntilName = "agent_create_wait"
 
-const cancelWaitName = "cancel_wait"
+const cancelWaitName = "agent_cancel_wait"
 
 const maxWaitHours = agentwait.MaxLifetimeSeconds / 3600
 
@@ -112,13 +112,13 @@ func (t *waitUntilTool) ParamSchema() map[string]any {
 				"For Reply: a reply about this shipment, from shipment_list or the run subject.",
 			),
 			common.ParamCarrierID: agenttoolschema.RecordIDText(permission.ResourceCarrier,
-				"For Reply: a reply from this carrier, from list_carriers."),
+				"For Reply: a reply from this carrier, from carrier_list."),
 			common.ParamCustomerID: agenttoolschema.RecordIDText(permission.ResourceCustomer,
-				"For Reply: a reply from this customer, from list_customers."),
+				"For Reply: a reply from this customer, from customer_list."),
 			common.ParamWorkerID: agenttoolschema.RecordIDText(permission.ResourceWorker,
-				"For HOSDriveBelow: the driver, from search_worker."),
+				"For HOSDriveBelow: the driver, from worker_search."),
 			"detentionOccurrenceId": agenttoolschema.KindID(
-				"For FreeTimeEnding: the detention record, from list_detention_desk or the "+
+				"For FreeTimeEnding: the detention record, from detention_list_occurrences or the "+
 					"run subject (detention.occurrence_opened names it).",
 				permission.KindDetentionOccurrence,
 			),
@@ -327,8 +327,8 @@ func NewCancelWaitTool(waits agentwaitports.AgentWaitService) agentports.AgentTo
 func (t *cancelWaitTool) Name() string { return cancelWaitName }
 
 func (t *cancelWaitTool) Description() string {
-	return "Cancel a wait you set with wait_until, when what you were waiting for no longer " +
-		"matters. The work is not picked up again. waitId is the id wait_until returned."
+	return "Cancel a wait you set with agent_create_wait, when what you were waiting for no longer " +
+		"matters. The work is not picked up again. waitId is the id agent_create_wait returned."
 }
 
 func (t *cancelWaitTool) ParamSchema() map[string]any {
@@ -336,7 +336,7 @@ func (t *cancelWaitTool) ParamSchema() map[string]any {
 		toolschema.KeyType: toolschema.TypeObject,
 		toolschema.KeyProperties: map[string]any{
 			paramWaitID: agenttoolschema.KindID(
-				"The wait to cancel, as wait_until returned it (awt_…).",
+				"The wait to cancel, as agent_create_wait returned it (awt_…).",
 				permission.KindWait,
 			),
 		},

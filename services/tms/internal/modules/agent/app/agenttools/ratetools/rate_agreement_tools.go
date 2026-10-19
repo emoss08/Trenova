@@ -138,7 +138,7 @@ const maxSampleShipments = 50000
 
 const maxPreviewLanes = 5
 
-const rateImportSupplier = "The rate import, from list_rate_imports. Never guess one."
+const rateImportSupplier = "The rate import, from rate_list_imports. Never guess one."
 
 const rateDraftTaintHold = "An agreement drafted from a rate sheet or a message someone " +
 	"outside sent is proposed, since its lanes are what the organization will charge."
@@ -247,7 +247,7 @@ func targetRateAgreement(params map[string]any) (agentports.ToolTarget, bool) {
 
 func rateAgreementIDProperty() map[string]any {
 	return agenttoolschema.RecordID(permission.ResourceRateAgreement, "The rate agreement",
-		"list_rate_agreements or get_rate_agreement")
+		"rate_list_agreements or rate_get_agreement")
 }
 
 func laneProperty(forRevision bool) map[string]any {
@@ -260,8 +260,8 @@ func laneProperty(forRevision bool) map[string]any {
 			"Any.", laneScopeTypes),
 		paramOriginValue: common.StringProperty("The origin for its scope type: a three-letter "+
 			"country code such as USA, a two-letter state code such as TX (for State and "+
-			"CityState), a postal code (Zip3, Zip5), a location from list_locations, or a "+
-			"rate zone a lane of get_rate_agreement names. Leave it out for Any.", maxLaneValue),
+			"CityState), a postal code (Zip3, Zip5), a location from location_list, or a "+
+			"rate zone a lane of rate_get_agreement names. Leave it out for Any.", maxLaneValue),
 		paramOriginCity: common.StringProperty("The origin city, for a CityState origin.",
 			maxLaneCity),
 		paramDestinationType: agenttoolschema.Enum("How the destination is named. "+
@@ -273,10 +273,10 @@ func laneProperty(forRevision bool) map[string]any {
 		paramDirection: agenttoolschema.Enum("Whether the lane also prices the reverse "+
 			"haul. Defaults to Directional.", laneDirections),
 		paramFormulaTemplateID: agenttoolschema.RecordIDText(permission.ResourceFormulaTemplate,
-			"The formula template that prices the lane, from list_formula_templates, with the "+
+			"The formula template that prices the lane, from formula_list_templates, with the "+
 				"lane's rate as its base rate. Give this or rateMatrixId."),
 		paramRateMatrixID: agenttoolschema.RecordIDText(permission.ResourceRateMatrix,
-			"The rate matrix that prices the lane, as a lane of get_rate_agreement names it. "+
+			"The rate matrix that prices the lane, as a lane of rate_get_agreement names it. "+
 				"Give this or formulaTemplateId."),
 		paramLaneRate: common.StringProperty("The lane's rate as a decimal such as 2.35, in what "+
 			"its formula template charges by.", 0),
@@ -292,7 +292,7 @@ func laneProperty(forRevision bool) map[string]any {
 	description := "The lanes, each priced through a formula template or a rate matrix."
 	if forRevision {
 		properties[paramRuleID] = agenttoolschema.KindID("A lane already on the agreement, from "+
-			"get_rate_agreement, to keep and change; leave it out for a new lane.",
+			"rate_get_agreement, to keep and change; leave it out for a new lane.",
 			permission.KindRateAgreementLane)
 		description = "Every lane of the revised agreement, replacing its lanes: a lane " +
 			"with ruleId keeps that lane and changes only what it gives, a lane without one " +
@@ -586,7 +586,7 @@ func (r laneReader) revisedLanes(
 			known, found := byID[*ruleID]
 			if !found {
 				return nil, fmt.Errorf("%s[%d]: %s is not a lane of this agreement; read "+
-					"its lanes with get_rate_agreement", paramLanes, idx, ruleID)
+					"its lanes with rate_get_agreement", paramLanes, idx, ruleID)
 			}
 			base = known
 		}
@@ -947,22 +947,22 @@ func NewDraftRateAgreementTool(
 	properties[paramPartyType] = agenttoolschema.Enum("Whether it prices what a customer is "+
 		"charged or what a carrier is paid.", partyTypes)
 	properties[common.ParamCustomerID] = agenttoolschema.RecordIDText(permission.ResourceCustomer,
-		"The customer, from list_customers, for a Customer agreement.")
+		"The customer, from customer_list, for a Customer agreement.")
 	properties[common.ParamCarrierID] = agenttoolschema.RecordIDText(permission.ResourceCarrier,
-		"The carrier, from list_carriers, for a Carrier agreement.")
+		"The carrier, from carrier_list, for a Carrier agreement.")
 	properties[paramLanes] = laneProperty(false)
 	lanes := laneReader{states: states}
 
 	return common.NewReportingReceivableTool(rateDraftSpec(&common.ReceivableSpec{
-		Name: "draft_rate_agreement",
+		Name: "rate_create_agreement",
 		Description: "Draft a rate agreement with a customer or a carrier from a rate sheet " +
 			"or a quote the person agreed: its code, name, dates, currency and lanes. It is " +
-			"saved as a draft and prices nothing until submit_rate_agreement sends it for " +
+			"saved as a draft and prices nothing until rate_submit_agreement sends it for " +
 			"review and a person approves it.",
 		Operation:  permission.OpCreate,
 		Reversible: true,
 		Rationale: "Saves a draft agreement inside Trenova that prices nothing until a person " +
-			"approves it; archive_rate_agreement retires it.",
+			"approves it; rate_archive_agreement retires it.",
 		Properties: properties,
 		Required: []string{
 			paramPartyType, paramAgreementCode, paramAgreementName, common.ParamEffectiveFrom,
@@ -1031,7 +1031,7 @@ type agreementRevision struct {
 
 var errOnlyDraftsRevise = errors.New(
 	"only a draft agreement is revised here; an agreement in review is rejected back to " +
-		"draft first, and an active one's lanes change with amend_rate_agreement_rules",
+		"draft first, and an active one's lanes change with rate_amend_agreement_rules",
 )
 
 func (r agreementRevision) Build(
@@ -1072,16 +1072,16 @@ func NewReviseRateAgreementDraftTool(
 	lanes := laneReader{states: states}
 
 	return common.NewReportingReceivableTool(rateDraftSpec(&common.ReceivableSpec{
-		Name: "revise_rate_agreement_draft",
+		Name: "rate_update_agreement_draft",
 		Recipe: []string{
-			"list_rate_agreements",
-			"get_rate_agreement",
-			"revise_rate_agreement_draft",
+			"rate_list_agreements",
+			"rate_get_agreement",
+			"rate_update_agreement_draft",
 		},
 		Description: "Rewrite a draft rate agreement before it is submitted: its header " +
 			"terms or its lanes. Fields left out keep their value. Only a draft is revised " +
-			"here; an active agreement's lanes change with amend_rate_agreement_rules. Read it " +
-			"with get_rate_agreement first for its lanes' ruleIds.",
+			"here; an active agreement's lanes change with rate_amend_agreement_rules. Read it " +
+			"with rate_get_agreement first for its lanes' ruleIds.",
 		Operation:  permission.OpUpdate,
 		Reversible: true,
 		Rationale: "Changes a draft agreement inside Trenova that prices nothing yet; a later " +
@@ -1165,10 +1165,10 @@ func NewReviseRateAgreementDraftTool(
 
 func NewDuplicateRateAgreementTool(agreements RateAgreementKeeper) agentports.AgentTool {
 	return common.NewReportingReceivableTool(rateDraftSpec(&common.ReceivableSpec{
-		Name: "duplicate_rate_agreement",
+		Name: "rate_duplicate_agreement",
 		Description: "Copy a rate agreement with its lanes, weight breaks, accessorials and " +
 			"fuel terms into a new draft, to start a renewal. The copy has none of the " +
-			"original's history or approvals; revise_rate_agreement_draft then changes it.",
+			"original's history or approvals; rate_update_agreement_draft then changes it.",
 		Operation:  permission.OpDuplicate,
 		Reversible: true,
 		Rationale: "Saves a draft copy of an agreement inside Trenova that prices nothing " +
@@ -1379,23 +1379,23 @@ func NewAgreementReviewTool(
 func AgreementReviewSteps() []*AgreementReviewStep {
 	return []*AgreementReviewStep{
 		{
-			name: "submit_rate_agreement",
+			name: "rate_submit_agreement",
 			recipe: []string{
-				"list_rate_agreements",
-				"get_rate_agreement",
-				"submit_rate_agreement",
+				"rate_list_agreements",
+				"rate_get_agreement",
+				"rate_submit_agreement",
 			},
 			searchTerms: []string{"submit for approval", "send for approval"},
 			review:      rateagreementservice.ReviewSubmit,
 			operation:   permission.OpSubmit,
 			description: "Submit a draft rate agreement for review. It prices nothing until a " +
-				"person approves it. Read it with get_rate_agreement first.",
+				"person approves it. Read it with rate_get_agreement first.",
 			rationale: "Moves a draft agreement into review inside Trenova; it prices nothing " +
 				"until a person approves it.",
 			outcome: "a reviewer approves or rejects it and it prices nothing until then",
 		},
 		{
-			name:      "approve_rate_agreement",
+			name:      "rate_approve_agreement",
 			review:    rateagreementservice.ReviewApprove,
 			operation: permission.OpApprove,
 			money:     true,
@@ -1406,7 +1406,7 @@ func AgreementReviewSteps() []*AgreementReviewStep {
 			outcome: "it prices shipments from its effective date",
 		},
 		{
-			name:        "reject_rate_agreement",
+			name:        "rate_reject_agreement",
 			review:      rateagreementservice.ReviewReject,
 			operation:   permission.OpReject,
 			needsReason: true,
@@ -1417,20 +1417,20 @@ func AgreementReviewSteps() []*AgreementReviewStep {
 			outcome: "it goes back to its author as a draft",
 		},
 		{
-			name:        "suspend_rate_agreement",
+			name:        "rate_suspend_agreement",
 			review:      rateagreementservice.ReviewSuspend,
 			operation:   permission.OpUpdate,
 			money:       true,
 			needsReason: true,
 			description: "Propose suspending an active rate agreement, such as for a customer " +
 				"on credit hold, with the reason. Shipments stop rating against it at once; " +
-				"resume_rate_agreement puts it back. A person always decides.",
+				"rate_resume_agreement puts it back. A person always decides.",
 			rationale: "Stops an agreement pricing shipments, which changes what customers " +
 				"are charged; only a person suspends one.",
 			outcome: "shipments stop rating against it until it is resumed",
 		},
 		{
-			name:      "resume_rate_agreement",
+			name:      "rate_resume_agreement",
 			review:    rateagreementservice.ReviewResume,
 			operation: permission.OpUpdate,
 			money:     true,
@@ -1441,7 +1441,7 @@ func AgreementReviewSteps() []*AgreementReviewStep {
 			outcome: "it prices shipments again",
 		},
 		{
-			name:      "archive_rate_agreement",
+			name:      "rate_archive_agreement",
 			review:    rateagreementservice.ReviewArchive,
 			operation: permission.OpArchive,
 			money:     true,
@@ -1501,10 +1501,10 @@ func NewAmendRateAgreementRulesTool(
 	lanes := laneReader{states: states}
 
 	return common.NewReceivableTool(rateMoneySpec(&common.ReceivableSpec{
-		Name: "amend_rate_agreement_rules",
+		Name: "rate_amend_agreement_rules",
 		Description: "Propose changing an active rate agreement's lanes from a day: close out " +
 			"the lanes it replaces and add their successors, keeping the old rates in history. " +
-			"Take the lanes' ruleIds from get_rate_agreement. It changes what shipments are " +
+			"Take the lanes' ruleIds from rate_get_agreement. It changes what shipments are " +
 			"charged from that day, so a person always decides.",
 		Operation: permission.OpUpdate,
 		Rationale: "Changes the rates an agreement prices shipments at; only a person amends " +
@@ -1515,7 +1515,7 @@ func NewAmendRateAgreementRulesTool(
 				"The first day the new lanes price shipments.",
 			),
 			paramSupersededRuleIDs: agenttoolschema.KindIDs("The lanes this closes out, by ruleId "+
-				"from get_rate_agreement.", maxAgreementLanes, permission.KindRateAgreementLane),
+				"from rate_get_agreement.", maxAgreementLanes, permission.KindRateAgreementLane),
 			paramLanes: laneProperty(false),
 		},
 		Required: []string{paramRateAgreementID, common.ParamEffectiveFrom},
@@ -1680,7 +1680,7 @@ func readRateIncreaseScope(
 	return nil
 }
 
-// rateIncreaseTool is apply_rate_increase, which files a call naming its
+// rateIncreaseTool is rate_apply_increase, which files a call naming its
 // agreements without the scopes it set aside, so the person approving reads
 // only the agreements that move.
 type RateIncreaseTool struct {
@@ -1742,7 +1742,7 @@ func renderRateIncrease(
 
 func NewApplyRateIncreaseTool(agreements RateAgreementKeeper) agentports.AgentTool {
 	return RateIncreaseTool{common.NewReceivableTool(rateMoneySpec(&common.ReceivableSpec{
-		Name: "apply_rate_increase",
+		Name: "rate_apply_increase",
 		Description: "Propose a general rate increase or decrease on agreements' lane rates, " +
 			"by a percent or a flat amount, from a day. It moves every lane rate on the named " +
 			"agreements, one customer's or carrier's, or every active agreement of a party " +
@@ -1757,15 +1757,15 @@ func NewApplyRateIncreaseTool(agreements RateAgreementKeeper) agentports.AgentTo
 			paramAgreementIDs: agenttoolschema.RecordIDs(
 				permission.ResourceRateAgreement,
 				"The agreements to move, from "+
-					"list_rate_agreements. When given, customerId, carrierId and partyType "+
+					"rate_list_agreements. When given, customerId, carrierId and partyType "+
 					"are ignored.",
 				maxIncreaseScope,
 			),
 			common.ParamCustomerID: agenttoolschema.RecordIDText(permission.ResourceCustomer,
-				"Every active agreement with this customer, from list_customers. Ignored "+
+				"Every active agreement with this customer, from customer_list. Ignored "+
 					"when agreementIds are named."),
 			common.ParamCarrierID: agenttoolschema.RecordIDText(permission.ResourceCarrier,
-				"Every active agreement with this carrier, from list_carriers. Ignored "+
+				"Every active agreement with this carrier, from carrier_list. Ignored "+
 					"when agreementIds are named."),
 			paramPartyType: agenttoolschema.Enum("Every active agreement of this party type, "+
 				"when no agreements, customer or carrier is named.", partyTypes),
