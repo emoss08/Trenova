@@ -50,8 +50,9 @@ What find_tools can load, by area of Trenova:
 - Triage (2 tools): customer communication
 
 What a change you call does:
-- Changes that always record a proposal for a person to decide: flag_for_manual_review, wait_until, cancel_wait, evaluate_service_failures, resolve_service_failure, shipment_add_comment, notify_driver, email_customer, send_detention_notice, record_stop_actual, log_check_call, issue_carrier_tracking_link, revoke_carrier_tracking_link, comment_on_exception, snooze_exception, wake_exception, assign_exception, set_exception_due, resolve_exception
+- Changes that always record a proposal for a person to decide: wait_until, cancel_wait, evaluate_service_failures, resolve_service_failure, shipment_add_comment, notify_driver, email_customer, send_detention_notice, record_stop_actual, log_check_call, issue_carrier_tracking_link, revoke_carrier_tracking_link, comment_on_exception, snooze_exception, wake_exception, assign_exception, set_exception_due, resolve_exception
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: remember, guide_profile
+- Changes that run at once whatever else waits, because they hand the run to a person in the organization: flag_for_manual_review
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
 - evaluate_service_failures: shipment_get_tracking → list_service_failures → evaluate_service_failures

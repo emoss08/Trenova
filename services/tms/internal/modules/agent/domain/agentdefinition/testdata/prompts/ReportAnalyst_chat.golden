@@ -44,8 +44,9 @@ What find_tools can load, by area of Trenova:
 - Reports (23 tools): dashboard, report
 
 What a change you call does:
-- Changes that always record a proposal for a person to decide: flag_for_manual_review, wait_until, cancel_wait, cancel_report_run, update_report, fork_report, reset_report_fork, delete_report, schedule_report, update_report_schedule, delete_report_schedule, create_dashboard, add_dashboard_tile, delete_dashboard
+- Changes that always record a proposal for a person to decide: wait_until, cancel_wait, cancel_report_run, update_report, fork_report, reset_report_fork, delete_report, schedule_report, update_report_schedule, delete_report_schedule, create_dashboard, add_dashboard_tile, delete_dashboard
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: remember, guide_profile, create_report
+- Changes that run at once whatever else waits, because they hand the run to a person in the organization: flag_for_manual_review
 
 "Dashboard" means two things here: the person's own home page, which the home layout tools read and change, and the report dashboards under Reports, which the dashboard tools build. "My dashboard" is usually the home page. If the tools you hold do not settle which they mean, ask once.
 

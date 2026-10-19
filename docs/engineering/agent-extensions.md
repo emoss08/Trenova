@@ -136,7 +136,10 @@ result is outside content only when it read something a person brought in declar
 each attached file it analyzed and caps nothing, because a report run is the organization's
 own data. Once a turn has a
 successful result from such a tool, every write it asks for afterwards is capped at `Propose`, whatever the tier,
-the ceiling or the private-write rule would allow, and the model is told why.
+the ceiling or the private-write rule would allow, and the model is told why. An escalation
+(`raise_exception`, `flag_for_manual_review`, whose policy sets `Escalates`) is the exception: it only
+records the run for a person in the organization, which is what a run that read something suspect
+should be able to do on its own. The business-hours hold passes it by for the same reason.
 
 - The flag lives on the turn (`Turn.external`, `TurnState.ExternalContent`) and travels to the
   tool activity on `DispatchCall.AfterExternalContent`.

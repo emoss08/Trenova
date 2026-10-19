@@ -264,6 +264,25 @@ func (s *AgentRunWorkflowTestSuite) TestWaitsForEveryDecision() {
 	s.Empty(s.expired)
 }
 
+func (s *AgentRunWorkflowTestSuite) TestCancelledWhileWaitingClosesTheRun() {
+	s.stubPrepare(s.prepared(false, 600))
+	s.stubOpen()
+	s.stubAnswer("Proposed a change.")
+	s.stubFinish(1)
+
+	s.env.RegisterDelayedCallback(s.env.CancelWorkflow, time.Minute)
+
+	s.run()
+
+	s.Require().Error(s.env.GetWorkflowError())
+	s.True(temporal.IsCanceledError(s.env.GetWorkflowError()))
+	s.Require().Len(s.expired, 1, "the pending proposals are expired")
+	s.Equal(s.payload.RunID, s.expired[0].RunID)
+	s.Require().Len(s.completed, 1)
+	s.Equal(agent.RunStatusFailed, s.completed[0].Status)
+	s.Equal(errRunStopped.Error(), s.completed[0].Error)
+}
+
 func (s *AgentRunWorkflowTestSuite) TestPrepareFailureMarksRunFailed() {
 	var a *Activities
 	s.env.OnActivity(a.PrepareRunActivity, mock.Anything, mock.Anything).

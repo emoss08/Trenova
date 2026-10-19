@@ -141,6 +141,13 @@ taint held names it among what held it, whatever else held it too.
 without a decision while that person is in the conversation, unless a person
 set the tool's tier on the agent. An unattended run never has it.
 
+**Escalation.** Raising an exception or flagging the run for manual review runs
+whatever the agent's autonomy ceiling, the turn's taint or the run being
+unattended, because it only records the run for a person inside the
+organization. A run that is unsure has to be able to hand its work to someone
+without first waiting for someone. A tier a person set for the tool on the
+agent still holds.
+
 **Unattended runs.** A run nobody is in is authorized as the agent, from the
 fixed table of what any agent may do, and never from a role: it cannot approve,
 and it cannot reach a person's own records. What it writes is attributed to the
@@ -242,6 +249,10 @@ func condition(policy *agentports.ToolPolicy) string {
 	if policy.PersonalRunsUnasked {
 		parts = append(parts, "A call on the caller's own records runs unasked while they "+
 			"are present.")
+	}
+	if policy.Escalates {
+		parts = append(parts, "Runs above the agent's ceiling: it only puts the run in front "+
+			"of a person, so it waits for no one unless a person set its tier on the agent.")
 	}
 	if len(parts) == 0 {
 		return none

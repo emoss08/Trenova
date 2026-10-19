@@ -48,8 +48,9 @@ What find_tools can load, by area of Trenova:
 - Triage (1 tool): customer communication
 
 What a change you call does:
-- Changes that always record a proposal for a person to decide: flag_for_manual_review, wait_until, cancel_wait, billing_start_review, billing_hold_queue_item, billing_release_queue_item, billing_raise_exception, billing_return_to_operations, billing_correct_charge_codes, billing_resolve_issue, billing_undo_issue, shipment_request_documents, shipment_attach_document, check_accounting_connection
+- Changes that always record a proposal for a person to decide: wait_until, cancel_wait, billing_start_review, billing_hold_queue_item, billing_release_queue_item, billing_raise_exception, billing_return_to_operations, billing_correct_charge_codes, billing_resolve_issue, billing_undo_issue, shipment_request_documents, shipment_attach_document, check_accounting_connection
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: remember, guide_profile
+- Changes that run at once whatever else waits, because they hand the run to a person in the organization: flag_for_manual_review
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
 - billing_release_queue_item: billing_list_queue_items → billing_get_queue_item → billing_release_queue_item

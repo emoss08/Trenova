@@ -156,6 +156,7 @@ type ToolSummary struct {
 	// agent: the tool's own ceiling, its egress or the agent's ceiling keeps
 	// it from ever running on its own.
 	AlwaysProposes bool
+	Escalates      bool
 }
 
 func ToolNamesOf(summaries []ToolSummary) []string {
@@ -1230,10 +1231,13 @@ func buildToolMap(areas []ToolNamespace) string {
 func changeGroups(tools []ToolSummary) string {
 	proposals := make([]string, 0, len(tools))
 	personal := make([]string, 0, 2)
+	escalations := make([]string, 0, 2)
 	decided := make([]string, 0, len(tools))
 	for _, tool := range tools {
 		switch {
 		case tool.Query:
+		case tool.Escalates:
+			escalations = append(escalations, tool.Name)
 		case tool.PersonalRunsUnasked:
 			personal = append(personal, tool.Name)
 		case tool.AlwaysProposes:
@@ -1251,6 +1255,12 @@ func changeGroups(tools []ToolSummary) string {
 		"Changes that run at once when they touch only the person's own records, and "+
 			"otherwise record a proposal",
 		personal,
+	)
+	writeToolGroup(
+		&builder,
+		"Changes that run at once whatever else waits, because they hand the run to a "+
+			"person in the organization",
+		escalations,
 	)
 	writeToolGroup(&builder, toolsDecidedPerCall, decided)
 

@@ -231,6 +231,7 @@ type StubActionTool struct {
 	MoneyVouches  []agent.TaintSource
 	// MoneyRereads are the records the stub's bound says it read again.
 	MoneyRereads []agent.SourcedRef
+	Escalates    bool
 }
 
 func (t *StubActionTool) Name() string        { return t.ToolName }
@@ -269,6 +270,7 @@ func (t *StubActionTool) Policy() agentports.ToolPolicy {
 		DefaultTier:   tier,
 		MaxTier:       agent.TierAutoExecute,
 		CarriesTaint:  t.CarriesTaint,
+		Escalates:     t.Escalates,
 		Egress:        []agent.EgressClass{egress},
 		Effect:        agent.ToolEffectChange,
 		Reversible:    true,

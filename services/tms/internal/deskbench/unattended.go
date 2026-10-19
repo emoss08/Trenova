@@ -357,7 +357,7 @@ func (b *Bench) runFire(
 		}
 	}()
 
-	fired, err := b.startRun(ctx, session, definition, fire, subjectID)
+	fired, err := b.startFreshRun(ctx, session, definition, fire, subjectID, label)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -387,6 +387,70 @@ func (b *Bench) fireSubject(ctx context.Context, session *Session, fire *Fire) (
 	}
 
 	return id, nil
+}
+
+func (b *Bench) startFreshRun(
+	ctx context.Context,
+	session *Session,
+	definition *agentdefinition.Definition,
+	fire *Fire,
+	subjectID pulid.ID,
+	label string,
+) (*firedRun, error) {
+	fired, err := b.startRun(ctx, session, definition, fire, subjectID)
+	if err == nil || fire.Schedule || !errors.Is(err, agentports.ErrAgentRunAlreadyOpen) {
+		return fired, err
+	}
+
+	workflowID, findErr := b.leftoverWorkflow(ctx, session, definition.ID, subjectID)
+	if findErr != nil {
+		return nil, errors.Join(
+			err,
+			fmt.Errorf("find the run an earlier bench left open: %w", findErr),
+		)
+	}
+	if workflowID == "" {
+		return nil, err
+	}
+	b.live.Line(label, "stopping %s, which an earlier bench left running", workflowID)
+	if cancelErr := b.watcher.CancelWorkflow(ctx, workflowID, ""); cancelErr != nil {
+		return nil, errors.Join(
+			err,
+			fmt.Errorf("stop the run an earlier bench left open: %w", cancelErr),
+		)
+	}
+
+	deadline := time.Now().Add(runSettleWithin)
+	ticker := time.NewTicker(runPollInterval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case <-ticker.C:
+		}
+		fired, err = b.startRun(ctx, session, definition, fire, subjectID)
+		if err == nil || !errors.Is(err, agentports.ErrAgentRunAlreadyOpen) ||
+			time.Now().After(deadline) {
+			return fired, err
+		}
+	}
+}
+
+func (b *Bench) leftoverWorkflow(
+	ctx context.Context,
+	session *Session,
+	definitionID, subjectID pulid.ID,
+) (string, error) {
+	values, err := b.FactValues(ctx, session,
+		"SELECT workflow_id FROM agent_runs WHERE agent_definition_id = "+runKey(definitionID)+
+			" AND subject_id = "+runKey(subjectID)+
+			" AND workflow_id IS NOT NULL ORDER BY created_at DESC LIMIT 1")
+	if err != nil || len(values) == 0 {
+		return "", err
+	}
+
+	return values[0], nil
 }
 
 func (b *Bench) startRun(

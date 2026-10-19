@@ -46,8 +46,9 @@ What find_tools can load, by area of Trenova:
 - Shipments (1 tool): shipment
 
 What a change you call does:
-- Changes that always record a proposal for a person to decide: raise_exception, flag_for_manual_review, wait_until, cancel_wait, log_collection_activity, assign_collector, schedule_collection_follow_up, send_payment_reminder, send_customer_statement, apply_customer_payment, reverse_customer_payment, apply_credit_memo, unapply_credit_memo, invoice_open_dispute, invoice_resolve_dispute, invoice_withdraw_dispute, assess_late_charges, invoice_send, invoice_share
+- Changes that always record a proposal for a person to decide: wait_until, cancel_wait, log_collection_activity, assign_collector, schedule_collection_follow_up, send_payment_reminder, send_customer_statement, apply_customer_payment, reverse_customer_payment, apply_credit_memo, unapply_credit_memo, invoice_open_dispute, invoice_resolve_dispute, invoice_withdraw_dispute, assess_late_charges, invoice_send, invoice_share
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: remember
+- Changes that run at once whatever else waits, because they hand the run to a person in the organization: raise_exception, flag_for_manual_review
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
 - log_collection_activity: list_collections_worklist → get_customer_statement → log_collection_activity

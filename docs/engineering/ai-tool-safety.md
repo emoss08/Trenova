@@ -62,6 +62,13 @@ taint held names it among what held it, whatever else held it too.
 without a decision while that person is in the conversation, unless a person
 set the tool's tier on the agent. An unattended run never has it.
 
+**Escalation.** Raising an exception or flagging the run for manual review runs
+whatever the agent's autonomy ceiling, the turn's taint or the run being
+unattended, because it only records the run for a person inside the
+organization. A run that is unsure has to be able to hand its work to someone
+without first waiting for someone. A tier a person set for the tool on the
+agent still holds.
+
 **Unattended runs.** A run nobody is in is authorized as the agent, from the
 fixed table of what any agent may do, and never from a role: it cannot approve,
 and it cannot reach a person's own records. What it writes is attributed to the
@@ -423,7 +430,7 @@ Changes records only people inside the organization see.
 | File capture items (`file_capture_items`) | Inside the organization | Ask first | — | — | Files scanned pages as documents on records inside Trenova, as the person it acts for; nothing is sent, and a misfiled document can be deleted. |
 | File inbound attachment (`file_inbound_attachment`) | Inside the organization | Automatic | A call on an inbound message runs only as far as its mailbox allows: a classified message the mailbox handles without review may run on its own, and anything held, quarantined, settled or unreadable waits for a person. | — | Files a document already in Trenova on a shipment; nobody outside is told and it can be unfiled. |
 | Finalize DOT random draw (`finalize_dot_random_draw`) | Inside the organization | Propose | — | — | Locks the round's selections as the record an auditor reads; it cannot be undone, only cancelled, so a person approves it. |
-| Flag for manual review (`flag_for_manual_review`) | Inside the organization | Automatic | — | — | Records an exception on the run for a person inside the organization to work. |
+| Flag for manual review (`flag_for_manual_review`) | Inside the organization | Automatic | Runs above the agent's ceiling: it only puts the run in front of a person, so it waits for no one unless a person set its tier on the agent. | — | Records an exception on the run for a person inside the organization to work. |
 | Forget memory (`forget_memory`) | Inside the organization | Automatic | — | — | Retires an agent memory inside Trenova: one kept for the person in the conversation, or one shared with others when that person may manage shared memory. A run with nobody in it retires none. |
 | Fork report (`fork_report`) | Inside the organization | Automatic | — | — | Saves a copy of a report inside Trenova; nothing leaves the organization. |
 | Generate IFTA return (`generate_ifta_return`) | Inside the organization | Ask first | — | — | Computes a draft return inside Trenova; nothing is filed or sent, and delete_ifta_return removes the draft. |
@@ -461,7 +468,7 @@ Changes records only people inside the organization see.
 | Pause accounting sync (`pause_accounting_sync`) | Inside the organization | Automatic | — | — | Holds what is waiting to go to the books; nothing is sent, changed or lost, and resuming sends it on. |
 | Place worker dispatch hold (`place_worker_dispatch_hold`) | Inside the organization | Automatic | — | — | Keeps a driver off new freight inside Trenova; the driver is not messaged. |
 | Propose shift swap (`propose_shift_swap`) | Inside the organization | Ask first | — | — | Opens a request inside Trenova that changes nobody's schedule until it is approved; withdraw_shift_swap takes it back. |
-| Raise exception (`raise_exception`) | Inside the organization | Automatic | — | — | Records an exception against the run itself for a person inside the organization. |
+| Raise exception (`raise_exception`) | Inside the organization | Automatic | Runs above the agent's ceiling: it only puts the run in front of a person, so it waits for no one unless a person set its tier on the agent. | — | Records an exception against the run itself for a person inside the organization. |
 | Recalculate move jurisdiction miles (`recalculate_move_jurisdiction_miles`) | Inside the organization | Ask first | — | — | Re-derives one move's jurisdiction miles inside Trenova from its stops; nothing is sent to a customer or carrier, and running it again gives the same miles. |
 | Recompute IFTA return (`recompute_ifta_return`) | Inside the organization | Automatic | — | — | Re-derives a draft return's figures inside Trenova from what is on file; nothing is filed, and running it again gives the same figures. |
 | Record employment verification (`record_employment_verification`) | Inside the organization | Ask first | — | — | Adds a previous employer to the qualification file inside Trenova; nothing is sent to the employer, and it is corrected or removed the same way. |

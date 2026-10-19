@@ -48,8 +48,9 @@ What find_tools can load, by area of Trenova:
 - Shipments (2 tools): shipment
 
 What a change you call does:
-- Changes that always record a proposal for a person to decide: raise_exception, flag_for_manual_review, wait_until, cancel_wait, record_fuel_purchase, correct_fuel_purchase, delete_fuel_purchase, assign_fuel_card, resolve_fuel_purchase_import_rows, commit_fuel_purchase_import, discard_fuel_purchase_import, record_ifta_mileage_entry, correct_ifta_mileage_entry, delete_ifta_mileage_entry, recalculate_move_jurisdiction_miles, backfill_jurisdiction_miles, generate_ifta_return, recompute_ifta_return, delete_ifta_return, amend_ifta_return, record_fuel_index_price, correct_fuel_index_price
+- Changes that always record a proposal for a person to decide: wait_until, cancel_wait, record_fuel_purchase, correct_fuel_purchase, delete_fuel_purchase, assign_fuel_card, resolve_fuel_purchase_import_rows, commit_fuel_purchase_import, discard_fuel_purchase_import, record_ifta_mileage_entry, correct_ifta_mileage_entry, delete_ifta_mileage_entry, recalculate_move_jurisdiction_miles, backfill_jurisdiction_miles, generate_ifta_return, recompute_ifta_return, delete_ifta_return, amend_ifta_return, record_fuel_index_price, correct_fuel_index_price
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: remember
+- Changes that run at once whatever else waits, because they hand the run to a person in the organization: raise_exception, flag_for_manual_review
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
 - record_fuel_purchase: list_fuel_purchases → record_fuel_purchase

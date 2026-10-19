@@ -53,6 +53,13 @@ func HeldWhenTainted(class agent.EgressClass) bool {
 
 func Decide(ctx context.Context, in DecideInput) Decision {
 	policy := in.Policy
+	if Escalates(in.Definition, &policy) {
+		return Decision{
+			Tier:   agent.TierAutoExecute,
+			Egress: policy.Classified(in.Params).Egress,
+			Source: agent.TierSourcePolicyDefault,
+		}
+	}
 	decision := Decision{
 		Tier:   toolTier(in.Definition, policy),
 		Source: toolTierSource(&in),
@@ -103,6 +110,14 @@ func Decide(ctx context.Context, in DecideInput) Decision {
 	return decision
 }
 
+func Escalates(definition *agentdefinition.Definition, policy *agentports.ToolPolicy) bool {
+	if !policy.Escalates {
+		return false
+	}
+
+	return definition == nil || !definition.SetsToolTier(policy.Name)
+}
+
 func Promotable(policy agentports.ToolPolicy) agent.AutonomyTier {
 	return maxTier(policy).AtMost(policy.EgressCeiling())
 }
@@ -118,6 +133,9 @@ func AlwaysProposes(
 	definition *agentdefinition.Definition,
 	policy agentports.ToolPolicy,
 ) bool {
+	if Escalates(definition, &policy) {
+		return false
+	}
 	if agent.TierAutoExecute.Above(Promotable(policy)) {
 		return true
 	}
@@ -132,6 +150,10 @@ func StaticTier(
 	definition *agentdefinition.Definition,
 	policy agentports.ToolPolicy,
 ) agent.AutonomyTier {
+	if Escalates(definition, &policy) {
+		return agent.TierAutoExecute
+	}
+
 	return effectiveTier(definition, policy).AtMost(maxTier(policy))
 }
 
@@ -149,6 +171,11 @@ func ExplainTier(policy agentports.ToolPolicy) string {
 	}
 	if policy.Condition != nil {
 		parts = append(parts, policy.Condition.Description)
+	}
+	if policy.Escalates {
+		parts = append(parts, "Runs on its own whatever the agent's ceiling, because it only "+
+			"puts the run in front of a person in the organization, unless a person set the "+
+			"tool's tier on the agent.")
 	}
 	if policy.PersonalRunsUnasked {
 		parts = append(parts, "A call that changes only the caller's own records runs "+

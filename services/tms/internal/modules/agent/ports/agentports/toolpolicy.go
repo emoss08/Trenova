@@ -22,6 +22,7 @@ type ToolPolicy struct {
 	Condition           *TierCondition
 	TaintHold           *TaintHold
 	PersonalRunsUnasked bool
+	Escalates           bool
 	Effect              agent.ToolEffect
 	Artifact            string
 	Reversible          bool

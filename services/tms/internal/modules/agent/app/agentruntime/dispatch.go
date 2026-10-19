@@ -210,8 +210,11 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		Taint:          decisionTaint(p.taint, p.afterExternal),
 		MoneyAllowance: s.moneyAllowance(req, p.moneySpent),
 	})
-	tier, heldForExternal := afterExternalContent(decision.Tier, p.afterExternal)
-	tier, heldForHours := s.heldForBusinessHours(ctx, req, tier)
+	tier, heldForExternal, heldForHours := decision.Tier, false, false
+	if !agenttoolpolicy.Escalates(req.Definition, &policy) {
+		tier, heldForExternal = afterExternalContent(tier, p.afterExternal)
+		tier, heldForHours = s.heldForBusinessHours(ctx, req, tier)
+	}
 	if tier != agent.TierAutoExecute {
 		if pinner, pins := tool.(agentports.ToolProposalSelectionResolver); pins {
 			pinned, pErr := pinner.ResolveProposalSelection(

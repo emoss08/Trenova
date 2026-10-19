@@ -1,6 +1,7 @@
 package agentjobs
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -38,6 +39,8 @@ const (
 	reminderBatchLimit = 500
 	reminderTimeout    = 5 * time.Minute
 )
+
+var errRunStopped = errors.New("the run was stopped while its proposals waited for a decision")
 
 var reminderOptions = workflow.ActivityOptions{
 	StartToCloseTimeout: reminderTimeout,
@@ -221,12 +224,13 @@ func (w *Workflows) AgentRunWorkflow(
 ) error {
 	var a *Activities
 	tenant := payload.TenantInfo()
+	keep, _ := workflow.NewDisconnectedContext(ctx)
 
 	prepareCtx := workflow.WithActivityOptions(ctx, withPriority(prepareActivityOptions, payload))
 	var prepared PrepareRunResult
 	if err := workflow.ExecuteActivity(prepareCtx, a.PrepareRunActivity, payload).
 		Get(prepareCtx, &prepared); err != nil {
-		_ = failRun(ctx, payload.RunID, tenant, err)
+		_ = failRun(keep, payload.RunID, tenant, err)
 		return err
 	}
 
@@ -250,7 +254,7 @@ func (w *Workflows) AgentRunWorkflow(
 		Subject:    prepared.Subject,
 		Shadow:     prepared.ShadowMode,
 	}).Get(openCtx, &opened); err != nil {
-		_ = failRun(ctx, payload.RunID, tenant, err)
+		_ = failRun(keep, payload.RunID, tenant, err)
 		return err
 	}
 
@@ -262,7 +266,7 @@ func (w *Workflows) AgentRunWorkflow(
 		)
 	}
 
-	finishCtx := workflow.WithActivityOptions(ctx, withPriority(persistActivityOptions, payload))
+	finishCtx := workflow.WithActivityOptions(keep, withPriority(persistActivityOptions, payload))
 	var finished FinishRunResult
 	if err := workflow.ExecuteActivity(finishCtx, a.FinishRunActivity, &FinishRunInput{
 		Payload:    payload,
@@ -272,31 +276,37 @@ func (w *Workflows) AgentRunWorkflow(
 		Failure:    modelcallcontract.FailureOf(runErr),
 		Events:     outcome.Events,
 	}).Get(finishCtx, &finished); err != nil {
-		_ = failRun(ctx, payload.RunID, tenant, err)
+		_ = failRun(keep, payload.RunID, tenant, err)
 		return err
 	}
 
 	if runErr != nil {
 		// What ran is recorded; a proposal made before the failure is not left
 		// waiting on a run that will never hear its decision.
-		_ = expireProposals(ctx, a, payload.RunID, tenant)
-		_ = failRun(ctx, payload.RunID, tenant, runErr)
+		_ = expireProposals(keep, a, payload.RunID, tenant)
+		_ = failRun(keep, payload.RunID, tenant, runErr)
 		return runErr
 	}
 
 	if prepared.ShadowMode {
-		return completeRun(ctx, a, payload.RunID, agent.RunStatusShadowCompleted, tenant)
+		return completeRun(keep, a, payload.RunID, agent.RunStatusShadowCompleted, tenant)
 	}
 
 	if finished.PendingProposals == 0 {
-		return completeRun(ctx, a, payload.RunID, agent.RunStatusCompleted, tenant)
+		return completeRun(keep, a, payload.RunID, agent.RunStatusCompleted, tenant)
 	}
 
-	if timedOut := awaitEveryDecision(ctx, a, payload, prepared.DecisionTimeoutSeconds); timedOut {
-		return expireProposals(ctx, a, payload.RunID, tenant)
+	timedOut := awaitEveryDecision(ctx, a, payload, prepared.DecisionTimeoutSeconds)
+	if stopped := ctx.Err(); stopped != nil {
+		_ = expireProposals(keep, a, payload.RunID, tenant)
+		_ = failRun(keep, payload.RunID, tenant, errRunStopped)
+		return stopped
+	}
+	if timedOut {
+		return expireProposals(keep, a, payload.RunID, tenant)
 	}
 
-	return completeRun(ctx, a, payload.RunID, agent.RunStatusCompleted, tenant)
+	return completeRun(keep, a, payload.RunID, agent.RunStatusCompleted, tenant)
 }
 
 // awaitEveryDecision waits until none of the run's proposals is still pending,

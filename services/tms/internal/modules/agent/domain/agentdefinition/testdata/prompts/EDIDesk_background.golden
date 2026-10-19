@@ -43,8 +43,9 @@ What find_tools can load, by area of Trenova:
 - EDI (13 tools): edi
 
 What a change you call does:
-- Changes that always record a proposal for a person to decide: raise_exception, flag_for_manual_review, wait_until, cancel_wait, reprocess_edi_inbound_files, apply_edi_connection_draft
+- Changes that always record a proposal for a person to decide: wait_until, cancel_wait, reprocess_edi_inbound_files, apply_edi_connection_draft
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: remember
+- Changes that run at once whatever else waits, because they hand the run to a person in the organization: raise_exception, flag_for_manual_review
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
 - reprocess_edi_inbound_files: list_edi_inbound_files → get_edi_inbound_file → get_edi_partner → reprocess_edi_inbound_files
