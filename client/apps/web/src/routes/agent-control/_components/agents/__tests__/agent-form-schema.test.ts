@@ -65,14 +65,14 @@ describe("agentFormSchema", () => {
   // from, so the form does not refuse it; the save drops it, with any zero.
   it("keeps daily tool limits to the agent's own tools and drops empty ones", () => {
     expect(
-      issuesOf(values({ toolNames: ["assign_move"], toolDailyLimits: { cancel_shipment: 3 } })),
+      issuesOf(values({ toolNames: ["assign_move"], toolDailyLimits: { shipment_cancel: 3 } })),
     ).toEqual({});
 
     const sent = toSaveRequest({
       ...agentFormDefaults,
       name: "Night desk",
       toolNames: ["assign_move"],
-      toolDailyLimits: { assign_move: 4, cancel_shipment: 2, remember: 0 },
+      toolDailyLimits: { assign_move: 4, shipment_cancel: 2, remember: 0 },
       monthlyBudgetUsd: 25,
     });
     expect(sent.toolDailyLimits).toEqual({ assign_move: 4 });
@@ -136,7 +136,7 @@ describe("agentFormSchema", () => {
       issuesOf(
         values({
           autonomyCeiling: "Propose",
-          toolNames: ["get_shipment"],
+          toolNames: ["shipment_get"],
           toolTiers: { assign_move: "AutoExecute" },
         }),
       ),
@@ -166,12 +166,12 @@ describe("toSaveRequest", () => {
   it("drops tool tiers for tools that are no longer selected", () => {
     const request = toSaveRequest(
       values({
-        toolNames: ["get_shipment"],
-        toolTiers: { get_shipment: "Propose", assign_move: "ActWithApproval" },
+        toolNames: ["shipment_get"],
+        toolTiers: { shipment_get: "Propose", assign_move: "ActWithApproval" },
       }),
     );
 
-    expect(request.toolTiers).toEqual({ get_shipment: "Propose" });
+    expect(request.toolTiers).toEqual({ shipment_get: "Propose" });
   });
 });
 

@@ -43,18 +43,19 @@ What find_tools can load, by area of Trenova:
 - Billing (10 tools): billing queue
 - Desk (2 tools): desk
 - Documents (1 tool): document
+- Organization settings (1 tool): email profile
 - Shipments (3 tools): shipment
 - Triage (1 tool): customer communication
 
 What a change you call does:
-- Changes that always record a proposal for a person to decide: raise_exception, flag_for_manual_review, wait_until, cancel_wait, transition_item_to_in_review, hold_billing_queue_item, release_billing_queue_item, move_billing_item_to_exception, send_billing_item_back_to_ops, correct_charge_code, resolve_billing_queue_issue, undo_billing_queue_issue, request_missing_docs, attach_document_to_shipment, check_accounting_connection
+- Changes that always record a proposal for a person to decide: raise_exception, flag_for_manual_review, wait_until, cancel_wait, billing_start_review, billing_hold_queue_item, billing_release_queue_item, billing_raise_exception, billing_return_to_operations, billing_correct_charge_codes, billing_resolve_issue, billing_undo_issue, shipment_request_documents, shipment_attach_document, check_accounting_connection
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: remember
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
-- release_billing_queue_item: list_billing_queue_items → get_billing_queue_item → release_billing_queue_item
-- resolve_billing_queue_issue: get_billing_queue_item → resolve_billing_queue_issue
-- undo_billing_queue_issue: get_billing_queue_item → undo_billing_queue_issue
-- attach_document_to_shipment: get_inbound_message → search_shipments → attach_document_to_shipment
+- billing_release_queue_item: billing_list_queue_items → billing_get_queue_item → billing_release_queue_item
+- billing_resolve_issue: billing_get_queue_item → billing_resolve_issue
+- billing_undo_issue: billing_get_queue_item → billing_undo_issue
+- shipment_attach_document: get_inbound_message → shipment_list → shipment_attach_document
 - check_accounting_connection: check_accounting_connection → get_accounting_sync_status
 
 ## Output

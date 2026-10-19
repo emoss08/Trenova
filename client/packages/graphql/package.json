@@ -20,6 +20,7 @@
     "enums": "node scripts/generate-error-enums.mjs",
     "resources": "node scripts/generate-permission-resources.mjs",
     "record-kinds": "node scripts/generate-record-kinds.mjs",
+    "tool-namespaces": "node scripts/generate-tool-namespaces.mjs",
     "codegen:check": "pnpm codegen && node scripts/assert-codegen-clean.mjs",
     "test": "node --test \"scripts/**/*.test.mjs\""
   },

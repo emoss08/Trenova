@@ -54,21 +54,21 @@ func TestTurnToolOffAndOn(t *testing.T) {
 	t.Parallel()
 
 	d := &Definition{
-		ToolNames:       []string{"post_invoices", "assign_biller"},
-		ToolTiers:       map[string]agent.AutonomyTier{"post_invoices": agent.TierActWithApproval},
-		ToolDailyLimits: map[string]int{"post_invoices": 5},
+		ToolNames:       []string{"invoice_post", "assign_biller"},
+		ToolTiers:       map[string]agent.AutonomyTier{"invoice_post": agent.TierActWithApproval},
+		ToolDailyLimits: map[string]int{"invoice_post": 5},
 	}
 	tiers := d.ToolTiers
 
-	d.TurnToolOff("post_invoices")
+	d.TurnToolOff("invoice_post")
 	assert.Equal(t, []string{"assign_biller"}, d.ToolNames)
-	assert.Equal(t, []string{"post_invoices"}, d.DisabledToolNames)
-	assert.NotContains(t, d.ToolTiers, "post_invoices")
-	assert.NotContains(t, d.ToolDailyLimits, "post_invoices")
-	assert.Contains(t, tiers, "post_invoices", "a copy sharing the old map is left alone")
+	assert.Equal(t, []string{"invoice_post"}, d.DisabledToolNames)
+	assert.NotContains(t, d.ToolTiers, "invoice_post")
+	assert.NotContains(t, d.ToolDailyLimits, "invoice_post")
+	assert.Contains(t, tiers, "invoice_post", "a copy sharing the old map is left alone")
 
-	d.TurnToolOn("post_invoices")
-	assert.Equal(t, []string{"assign_biller", "post_invoices"}, d.ToolNames)
+	d.TurnToolOn("invoice_post")
+	assert.Equal(t, []string{"assign_biller", "invoice_post"}, d.ToolNames)
 	assert.Empty(t, d.DisabledToolNames)
 }
 
@@ -78,8 +78,8 @@ func TestForgetReheldToolsAndPruneTopics(t *testing.T) {
 	kept := pulid.MustNew(IDPrefix)
 	dropped := pulid.MustNew(IDPrefix)
 	d := &Definition{
-		ToolNames:         []string{"void_invoice"},
-		DisabledToolNames: []string{"void_invoice", "send_email"},
+		ToolNames:         []string{"invoice_void"},
+		DisabledToolNames: []string{"invoice_void", "send_email"},
 		DelegateIDs:       []pulid.ID{kept},
 		DelegateTopics: map[string]string{
 			kept.String():    " Pay rates ",
@@ -116,7 +116,7 @@ func TestValidateCapabilities(t *testing.T) {
 			d.DelegateTopics = map[string]string{pulid.MustNew(IDPrefix).String(): "x"}
 		}, "delegateTopics."},
 		{"on and off at once", func(d *Definition) {
-			d.DisabledToolNames = []string{"post_invoices"}
+			d.DisabledToolNames = []string{"invoice_post"}
 		}, "disabledToolNames[0]"},
 	}
 	for _, tt := range tests {
@@ -124,7 +124,7 @@ func TestValidateCapabilities(t *testing.T) {
 			t.Parallel()
 
 			d := &Definition{
-				ToolNames:      []string{"post_invoices"},
+				ToolNames:      []string{"invoice_post"},
 				DelegateIDs:    []pulid.ID{delegate},
 				DelegateTopics: map[string]string{delegate.String(): "Pay rates"},
 			}

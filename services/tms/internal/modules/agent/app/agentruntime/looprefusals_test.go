@@ -24,15 +24,15 @@ func TestRun_KeepsTheCallsTheLoopRefusedWithoutDispatching(t *testing.T) {
 	tool := queryTool("search_worker", map[string]any{}, nil)
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		toolTurn("search_worker", map[string]any{"query": "Maria"}),
-		toolTurn("get_shipment", map[string]any{"shipmentId": "shp_1"}),
+		toolTurn("shipment_get", map[string]any{"shipmentId": "shp_1"}),
 		textTurn("I cannot look that up."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{Tools: []agentports.AgentQueryTool{
-		tool, queryTool("get_shipment", map[string]any{"id": "shp_1"}, nil),
+		tool, queryTool("shipment_get", map[string]any{"id": "shp_1"}, nil),
 	}}, &stubActionRegistry{}, nil)
 
 	result, err := rt.Run(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition("get_shipment"),
+		Definition: testDefinition("shipment_get"),
 		Actor:      testActor(),
 		Input:      "Who is Maria?",
 	})

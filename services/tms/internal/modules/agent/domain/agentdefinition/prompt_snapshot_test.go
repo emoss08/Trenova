@@ -249,8 +249,8 @@ func snapshotMemories() ([]*agent.Memory, []agent.MemorySubject) {
 	assignFix.ToolName = "assign_move"
 
 	holdFix := memory("amem_01JSNAPSHOTMEMORY00000005", agent.MemoryKindCorrection,
-		"A person rejected place_shipment_hold. Reason: holds are for billing, not dispatch.")
-	holdFix.ToolName = "place_shipment_hold"
+		"A person rejected shipment_place_hold. Reason: holds are for billing, not dispatch.")
+	holdFix.ToolName = "shipment_place_hold"
 
 	long := memory("amem_01JSNAPSHOTMEMORY00000006", agent.MemoryKindFact,
 		"Lane notes for the Texas triangle: "+strings.Repeat("Houston to Dallas runs "+
@@ -315,7 +315,7 @@ func TestPromptSnapshots_AgentsItCanAsk(t *testing.T) {
 		ID:          snapshotParentID,
 		Name:        "Shipment Desk",
 		Description: "Creates, copies and changes shipments. It holds the shipment tools.",
-		Tools:       []string{"create_shipment", "duplicate_shipment", "get_shipment"},
+		Tools:       []string{"shipment_create", "shipment_duplicate", "shipment_get"},
 	}}
 
 	system := rt.OpenTurn(t.Context(), request).State().System + "\n"

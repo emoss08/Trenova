@@ -32,7 +32,7 @@ func recommendationRuntime(
 
 	return runtimeWithTools(t, permissions, []agentports.AgentQueryTool{
 		&agenttest.StubQueryTool{
-			ToolName: "list_shipments",
+			ToolName: "shipment_list",
 			Desc:     "List shipments by status, billing state or dates.",
 			Resource: permission.ResourceShipment,
 		},
@@ -42,7 +42,7 @@ func recommendationRuntime(
 			Resource: permission.ResourceCustomer,
 		},
 		&agenttest.StubQueryTool{
-			ToolName: "list_invoices",
+			ToolName: "invoice_list",
 			Desc:     "List invoices by status or due date.",
 			Resource: permission.ResourceInvoice,
 		},
@@ -143,7 +143,7 @@ func toolNames(tools []agentports.AgentMatchTool) []string {
 func TestMatchAgent_PicksTheAgentHoldingTheToolTheQuestionNeeds(t *testing.T) {
 	t.Parallel()
 
-	dispatch := agentHolding("Dispatch helper", "list_shipments", "list_customers")
+	dispatch := agentHolding("Dispatch helper", "shipment_list", "list_customers")
 	compliance := agentHolding("Compliance assistant", "list_expiring_credentials")
 	service := recommendationRuntime(t, &agenttest.StubPermissions{}, dispatch, compliance)
 
@@ -161,8 +161,8 @@ func TestMatchAgent_PicksTheAgentHoldingTheToolTheQuestionNeeds(t *testing.T) {
 func TestMatchAgent_KeepsTheCurrentAgentWhenItFitsAsWellAsAnyOther(t *testing.T) {
 	t.Parallel()
 
-	first := agentHolding("Billing assistant", "list_invoices")
-	second := agentHolding("Accounts receivable", "list_invoices")
+	first := agentHolding("Billing assistant", "invoice_list")
+	second := agentHolding("Accounts receivable", "invoice_list")
 	service := recommendationRuntime(t, &agenttest.StubPermissions{}, first, second)
 
 	found := match(t, service, "which invoices are past due?", second.ID)
@@ -214,7 +214,7 @@ func TestMatchAgent_SaysNoAgentCanHelpWhenThePersonMayNotRunTheTool(t *testing.T
 func TestMatchAgent_SaysNoAgentCanHelpWhenNoAgentHoldsTheBestTool(t *testing.T) {
 	t.Parallel()
 
-	dispatch := agentHolding("Dispatch helper", "list_shipments", "list_customers")
+	dispatch := agentHolding("Dispatch helper", "shipment_list", "list_customers")
 	service := recommendationRuntime(t, &agenttest.StubPermissions{}, dispatch)
 
 	found := match(t, service, "which invoices are past due?", dispatch.ID)
@@ -222,7 +222,7 @@ func TestMatchAgent_SaysNoAgentCanHelpWhenNoAgentHoldsTheBestTool(t *testing.T) 
 	assert.Equal(t, agentsuggestion.MatchNoAgent, found.Outcome)
 	assert.Nil(t, found.Agent)
 	assert.Equal(t, []agentports.AgentMatchTool{{
-		Name:    "list_invoices",
+		Name:    "invoice_list",
 		Summary: "List invoices by status or due date.",
 	}}, found.Tools, "the tools that would answer it are named for whoever can add them")
 }
@@ -233,7 +233,7 @@ func TestMatchAgent_SaysNoAgentWhenOnlyALesserToolIsHeld(t *testing.T) {
 	ledger := agentHolding("Ledger helper", "summarize_ledger")
 	service := runtimeWithTools(t, &agenttest.StubPermissions{}, []agentports.AgentQueryTool{
 		&agenttest.StubQueryTool{
-			ToolName: "list_invoices",
+			ToolName: "invoice_list",
 			Desc:     "List invoices by status or due date.",
 			Resource: permission.ResourceInvoice,
 		},
@@ -249,7 +249,7 @@ func TestMatchAgent_SaysNoAgentWhenOnlyALesserToolIsHeld(t *testing.T) {
 	assert.Equal(t, agentsuggestion.MatchNoAgent, found.Outcome,
 		"an agent holding only a lesser match is not where the question belongs")
 	assert.Nil(t, found.Agent)
-	assert.Equal(t, []string{"list_invoices"}, toolNames(found.Tools))
+	assert.Equal(t, []string{"invoice_list"}, toolNames(found.Tools))
 }
 
 func TestMatchAgent_FindsTheAgentWhoseToolTiesBeyondTheFirstFewMatches(t *testing.T) {
@@ -341,8 +341,8 @@ func TestMatchAgent_LeavesOutDisabledAndUnconversationalAgentsByAskingForChatAge
 func TestMatchAgent_PrefersTheFocusedAgentOnATie(t *testing.T) {
 	t.Parallel()
 
-	generalist := agentHolding("Operations helper", "list_invoices", "list_shipments", "list_customers")
-	specialist := agentHolding("Billing assistant", "list_invoices")
+	generalist := agentHolding("Operations helper", "invoice_list", "shipment_list", "list_customers")
+	specialist := agentHolding("Billing assistant", "invoice_list")
 	service := recommendationRuntime(t, &agenttest.StubPermissions{}, generalist, specialist)
 
 	found := match(t, service, "which invoices are past due?", pulid.Nil)
@@ -354,7 +354,7 @@ func TestMatchAgent_PrefersTheFocusedAgentOnATie(t *testing.T) {
 func TestMatchAgent_MatchesNothingWhenNoToolMatches(t *testing.T) {
 	t.Parallel()
 
-	billing := agentHolding("Billing assistant", "list_invoices")
+	billing := agentHolding("Billing assistant", "invoice_list")
 	service := recommendationRuntime(t, &agenttest.StubPermissions{}, billing)
 
 	assert.Equal(t, agentsuggestion.MatchNone, match(t, service, "zzqx flarp", pulid.Nil).Outcome)
@@ -364,7 +364,7 @@ func TestMatchAgent_MatchesNothingWhenNoToolMatches(t *testing.T) {
 func TestMatchAgent_MatchesNothingForAnythingButAPerson(t *testing.T) {
 	t.Parallel()
 
-	billing := agentHolding("Billing assistant", "list_invoices")
+	billing := agentHolding("Billing assistant", "invoice_list")
 	service := recommendationRuntime(t, &agenttest.StubPermissions{}, billing)
 	actor := testActor()
 	actor.PrincipalType = permissionports.PrincipalTypeAPIKey
@@ -383,7 +383,7 @@ func TestMatchAgent_MatchesNothingForAnythingButAPerson(t *testing.T) {
 func TestMatchAgent_RefusesAQuestionPastTheLimit(t *testing.T) {
 	t.Parallel()
 
-	billing := agentHolding("Billing assistant", "list_invoices")
+	billing := agentHolding("Billing assistant", "invoice_list")
 	service := recommendationRuntime(t, &agenttest.StubPermissions{}, billing)
 
 	found, err := service.MatchAgent(t.Context(), &agentports.AgentMatchRequest{
@@ -403,8 +403,8 @@ func TestMatchAgent_NamesAtMostThreeMatchedTools(t *testing.T) {
 
 	wide := agentHolding(
 		"Operations helper",
-		"list_invoices",
-		"list_shipments",
+		"invoice_list",
+		"shipment_list",
 		"list_customers",
 		"list_workers",
 		"list_expiring_credentials",
@@ -426,7 +426,7 @@ func TestMatchAgent_KeepsTheCurrentAgentWhenOneOfItsDelegatesHoldsTheTool(t *tes
 	t.Parallel()
 
 	compliance := agentHolding("Compliance assistant", "list_expiring_credentials")
-	dispatch := agentHolding("Dispatch helper", "list_shipments", "list_customers")
+	dispatch := agentHolding("Dispatch helper", "shipment_list", "list_customers")
 	dispatch.DelegateIDs = []pulid.ID{compliance.ID}
 	service := recommendationRuntime(t, &agenttest.StubPermissions{}, dispatch, compliance)
 
@@ -447,7 +447,7 @@ func TestMatchAgent_DoesNotCountADelegateThePersonMayNotUse(t *testing.T) {
 	compliance := agentHolding("Compliance assistant", "list_expiring_credentials")
 	compliance.AccessMode = agentdefinition.AccessRoles
 	fleet := agentHolding("Fleet helper", "list_expiring_credentials", "list_workers")
-	dispatch := agentHolding("Dispatch helper", "list_shipments", "list_customers")
+	dispatch := agentHolding("Dispatch helper", "shipment_list", "list_customers")
 	dispatch.DelegateIDs = []pulid.ID{compliance.ID}
 	service := recommendationRuntime(t, &agenttest.StubPermissions{}, dispatch, compliance, fleet)
 
@@ -461,7 +461,7 @@ func TestMatchAgent_DoesNotCountADelegateThePersonMayNotUse(t *testing.T) {
 func TestMatchAgent_RanksToolsForWhatTheQuestionIsAbout(t *testing.T) {
 	t.Parallel()
 
-	shipments := agentHolding("Dispatch helper", "list_shipments")
+	shipments := agentHolding("Dispatch helper", "shipment_list")
 	customers := agentHolding("Yard accounts", "list_customers")
 	service := recommendationRuntime(t, &agenttest.StubPermissions{}, shipments, customers)
 	question := "list them by status"
@@ -480,7 +480,7 @@ func TestMatchAgent_RanksToolsForWhatTheQuestionIsAbout(t *testing.T) {
 func TestMatchAgent_IgnoresAKindOfRecordItDoesNotKnow(t *testing.T) {
 	t.Parallel()
 
-	billing := agentHolding("Billing assistant", "list_invoices")
+	billing := agentHolding("Billing assistant", "invoice_list")
 	service := recommendationRuntime(t, &agenttest.StubPermissions{}, billing)
 
 	found := match(t, service, "which invoices are past due?", billing.ID, "spaceship", "assistant_thread")
@@ -492,7 +492,7 @@ func TestMatchAgent_IgnoresAKindOfRecordItDoesNotKnow(t *testing.T) {
 func TestMatchAgent_RefusesMoreKindsOfRecordThanAQuestionCanName(t *testing.T) {
 	t.Parallel()
 
-	billing := agentHolding("Billing assistant", "list_invoices")
+	billing := agentHolding("Billing assistant", "invoice_list")
 	service := recommendationRuntime(t, &agenttest.StubPermissions{}, billing)
 	kinds := make([]string, agentports.MaxAgentMatchContextKinds+1)
 	for idx := range kinds {
@@ -513,7 +513,7 @@ func TestMatchAgent_RefusesMoreKindsOfRecordThanAQuestionCanName(t *testing.T) {
 func TestMatchAgent_DoesNotEmbedAQuestionThatNamesNothingAToolDoes(t *testing.T) {
 	t.Parallel()
 
-	billing := agentHolding("Billing assistant", "list_invoices")
+	billing := agentHolding("Billing assistant", "invoice_list")
 	service := recommendationRuntime(t, &agenttest.StubPermissions{}, billing)
 	vectorizer := &fixedVectorizer{vector: usableQuery()}
 	service.vectorizer = vectorizer
@@ -530,11 +530,11 @@ func TestMatchAgent_DoesNotEmbedAQuestionThatNamesNothingAToolDoes(t *testing.T)
 func greetingRuntime(t *testing.T) (*Service, *agentdefinition.Definition) {
 	t.Helper()
 
-	dispatch := agentHolding("Dispatch helper", "list_shipments")
+	dispatch := agentHolding("Dispatch helper", "shipment_list")
 	reports := agentHolding("Report analyst", "schedule_report")
 	service := runtimeWithTools(t, &agenttest.StubPermissions{}, []agentports.AgentQueryTool{
 		&agenttest.StubQueryTool{
-			ToolName: "list_shipments",
+			ToolName: "shipment_list",
 			Desc:     "List shipments by status, billing state or dates.",
 			Resource: permission.ResourceShipment,
 		},
@@ -566,7 +566,7 @@ func TestMatchAgent_MatchesNothingWhenNoToolComesCloseInMeaning(t *testing.T) {
 	vectorizer := &fixedVectorizer{vector: usableQuery()}
 	service.vectorizer = vectorizer
 	service.vectors = &fixedSimilarities{byKey: map[string]float64{
-		"list_shipments":  0.12,
+		"shipment_list":   0.12,
 		"schedule_report": 0.23,
 	}}
 
@@ -582,7 +582,7 @@ func TestMatchAgent_MatchesByMeaningWhenTheWordsAreOnlyInADescription(t *testing
 	service, dispatch := greetingRuntime(t)
 	service.vectorizer = &fixedVectorizer{vector: usableQuery()}
 	service.vectors = &fixedSimilarities{byKey: map[string]float64{
-		"list_shipments":  0.18,
+		"shipment_list":   0.18,
 		"schedule_report": 0.62,
 	}}
 
@@ -614,8 +614,8 @@ func (l *limitedRates) Check(
 func TestMatchAgent_MatchesByKeywordOncePastThePersonsEmbeddingRate(t *testing.T) {
 	t.Parallel()
 
-	dispatch := agentHolding("Dispatch helper", "list_shipments")
-	billing := agentHolding("Billing assistant", "list_invoices")
+	dispatch := agentHolding("Dispatch helper", "shipment_list")
+	billing := agentHolding("Billing assistant", "invoice_list")
 	service := recommendationRuntime(t, &agenttest.StubPermissions{}, dispatch, billing)
 	vectorizer := &fixedVectorizer{vector: usableQuery()}
 	rates := &limitedRates{allowed: false}
@@ -635,7 +635,7 @@ func TestMatchAgent_MatchesByKeywordOncePastThePersonsEmbeddingRate(t *testing.T
 func TestMatchAgent_SpendsNoEmbeddingRateWithoutAnEmbeddingProvider(t *testing.T) {
 	t.Parallel()
 
-	billing := agentHolding("Billing assistant", "list_invoices")
+	billing := agentHolding("Billing assistant", "invoice_list")
 	service := recommendationRuntime(t, &agenttest.StubPermissions{}, billing)
 	rates := &limitedRates{allowed: true}
 	service.rateLimits = rates
@@ -649,7 +649,7 @@ func TestMatchAgent_SpendsNoEmbeddingRateWithoutAnEmbeddingProvider(t *testing.T
 func TestMatchAgent_ReadsAPersonsAgentsOnceWhileTheyType(t *testing.T) {
 	t.Parallel()
 
-	billing := agentHolding("Billing assistant", "list_invoices")
+	billing := agentHolding("Billing assistant", "invoice_list")
 	definitions := &countingDefinitions{
 		listedDefinitions: listedDefinitions{
 			byID: map[pulid.ID]*agentdefinition.Definition{billing.ID: billing},
@@ -733,9 +733,9 @@ func heldSets(tools ...[]string) []map[string]struct{} {
 func TestBestCandidate_KeepsTheCurrentAgentWhenItHoldsTheBestMatch(t *testing.T) {
 	t.Parallel()
 
-	current := agentHolding("Billing assistant", "list_invoices")
-	wide := agentHolding("Operations helper", "list_customers", "list_shipments", "list_workers")
-	ranked := ranking("list_invoices", 4, "list_customers", 3, "list_shipments", 2, "list_workers", 1)
+	current := agentHolding("Billing assistant", "invoice_list")
+	wide := agentHolding("Operations helper", "list_customers", "shipment_list", "list_workers")
+	ranked := ranking("invoice_list", 4, "list_customers", 3, "shipment_list", 2, "list_workers", 1)
 
 	best := bestCandidate(
 		[]*agentdefinition.Definition{current, wide},
@@ -755,9 +755,9 @@ func TestBestCandidate_SuggestsOnlyAnAgentHoldingTheBestMatch(t *testing.T) {
 	t.Parallel()
 
 	current := agentHolding("Dispatch helper", "list_tractors")
-	wide := agentHolding("Operations helper", "list_customers", "list_shipments", "list_workers")
-	billing := agentHolding("Billing assistant", "list_invoices")
-	ranked := ranking("list_invoices", 4, "list_customers", 3, "list_shipments", 2, "list_workers", 1)
+	wide := agentHolding("Operations helper", "list_customers", "shipment_list", "list_workers")
+	billing := agentHolding("Billing assistant", "invoice_list")
+	ranked := ranking("invoice_list", 4, "list_customers", 3, "shipment_list", 2, "list_workers", 1)
 
 	best := bestCandidate(
 		[]*agentdefinition.Definition{current, wide, billing},
@@ -775,7 +775,7 @@ func TestBestCandidate_SuggestsOnlyAnAgentHoldingTheBestMatch(t *testing.T) {
 func TestMatchAgent_SuggestsNobodyElseOnceThePersonSwitchedToTheSuggestion(t *testing.T) {
 	t.Parallel()
 
-	dispatch := agentHolding("Dispatch helper", "list_shipments", "list_customers")
+	dispatch := agentHolding("Dispatch helper", "shipment_list", "list_customers")
 	compliance := agentHolding("Compliance assistant", "list_expiring_credentials")
 	fleet := agentHolding("Fleet helper", "list_expiring_credentials", "list_workers")
 	service := recommendationRuntime(t, &agenttest.StubPermissions{}, dispatch, compliance, fleet)
@@ -795,9 +795,9 @@ func TestMatchAgent_SuggestsNobodyElseOnceThePersonSwitchedToTheSuggestion(t *te
 func TestBestCandidate_KeepsTheCurrentAgentWhenItHoldsAToolTiedForTheBestMatch(t *testing.T) {
 	t.Parallel()
 
-	current := agentHolding("Dispatch reader", "get_shipment", "list_shipments")
-	writer := agentHolding("Shipment builder", "create_shipment")
-	ranked := ranking("create_shipment", 4, "get_shipment", 4, "list_shipments", 4)
+	current := agentHolding("Dispatch reader", "shipment_get", "shipment_list")
+	writer := agentHolding("Shipment builder", "shipment_create")
+	ranked := ranking("shipment_create", 4, "shipment_get", 4, "shipment_list", 4)
 
 	best := bestCandidate(
 		[]*agentdefinition.Definition{writer, current},
@@ -817,9 +817,9 @@ func TestBestCandidate_WeighsToolsTiedOnScoreEqually(t *testing.T) {
 	t.Parallel()
 
 	current := agentHolding("Fleet helper", "list_tractors")
-	builder := agentHolding("Shipment builder", "create_shipment")
-	reader := agentHolding("Dispatch reader", "get_shipment", "list_shipments")
-	ranked := ranking("create_shipment", 4, "get_shipment", 4, "list_shipments", 4, "list_tractors", 1)
+	builder := agentHolding("Shipment builder", "shipment_create")
+	reader := agentHolding("Dispatch reader", "shipment_get", "shipment_list")
+	ranked := ranking("shipment_create", 4, "shipment_get", 4, "shipment_list", 4, "list_tractors", 1)
 
 	best := bestCandidate(
 		[]*agentdefinition.Definition{builder, reader, current},

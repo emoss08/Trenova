@@ -4,11 +4,11 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -54,32 +54,32 @@ func TestRun_TheLoopsOwnRefusalsCarryAVerdict(t *testing.T) {
 	t.Parallel()
 
 	registered := queryTool("search_worker", map[string]any{}, nil)
-	broken := queryTool("get_shipment", nil, errors.New("connection reset"))
+	broken := queryTool("shipment_get", nil, errors.New("connection reset"))
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		callsTurn(
 			agentports.ToolCall{ID: "unknown", Name: "delete_everything"},
 			agentports.ToolCall{ID: "unheld", Name: "search_worker"},
 			agentports.ToolCall{
 				ID:             "cut_off",
-				Name:           "get_shipment",
+				Name:           "shipment_get",
 				Arguments:      map[string]any{},
 				ArgumentsError: "unexpected end of JSON input",
 			},
 			agentports.ToolCall{
 				ID:        "first",
-				Name:      "get_shipment",
+				Name:      "shipment_get",
 				Arguments: map[string]any{"id": "shp_1"},
 			},
 		),
 		callsTurn(
 			agentports.ToolCall{
 				ID:        "repeat",
-				Name:      "get_shipment",
+				Name:      "shipment_get",
 				Arguments: map[string]any{"id": "shp_1"},
 			},
 			agentports.ToolCall{
 				ID:        "spent",
-				Name:      "get_shipment",
+				Name:      "shipment_get",
 				Arguments: map[string]any{"id": "shp_2"},
 			},
 		),
@@ -88,7 +88,7 @@ func TestRun_TheLoopsOwnRefusalsCarryAVerdict(t *testing.T) {
 	rt := newRuntime(completion, &stubQueryRegistry{
 		Tools: []agentports.AgentQueryTool{registered, broken},
 	}, &stubActionRegistry{}, nil)
-	definition := testDefinition("get_shipment")
+	definition := testDefinition("shipment_get")
 	definition.MaxToolCalls = 5
 
 	req := &agentports.RunRequest{
@@ -139,11 +139,11 @@ func TestRun_AnUnattendedQuestionIsDenied(t *testing.T) {
 func TestRun_ACallThatRanCarriesNoRefusalVerdict(t *testing.T) {
 	t.Parallel()
 
-	tool := queryTool("get_shipment", map[string]any{"id": "shp_1"}, nil)
+	tool := queryTool("shipment_get", map[string]any{"id": "shp_1"}, nil)
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		callsTurn(agentports.ToolCall{
 			ID:        "read",
-			Name:      "get_shipment",
+			Name:      "shipment_get",
 			Arguments: map[string]any{"id": "shp_1"},
 		}),
 		textTurn("Found it."),
@@ -152,7 +152,7 @@ func TestRun_ACallThatRanCarriesNoRefusalVerdict(t *testing.T) {
 		Tools: []agentports.AgentQueryTool{tool},
 	}, &stubActionRegistry{}, nil)
 	req := &agentports.RunRequest{
-		Definition: testDefinition("get_shipment"),
+		Definition: testDefinition("shipment_get"),
 		Actor:      testActor(),
 		Input:      "Look it up.",
 	}
@@ -206,13 +206,13 @@ func TestAuthorize_TheRefusalNamesWhoseAccessFellShort(t *testing.T) {
 func TestRun_EachToolMessageKeepsTheVerdictTheStreamCarried(t *testing.T) {
 	t.Parallel()
 
-	tool := queryTool("get_shipment", map[string]any{"id": "shp_1"}, nil)
+	tool := queryTool("shipment_get", map[string]any{"id": "shp_1"}, nil)
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		callsTurn(
 			agentports.ToolCall{ID: "unheld", Name: "search_worker"},
 			agentports.ToolCall{
 				ID:        "read",
-				Name:      "get_shipment",
+				Name:      "shipment_get",
 				Arguments: map[string]any{"id": "shp_1"},
 			},
 		),
@@ -222,7 +222,7 @@ func TestRun_EachToolMessageKeepsTheVerdictTheStreamCarried(t *testing.T) {
 		Tools: []agentports.AgentQueryTool{tool, queryTool("search_worker", nil, nil)},
 	}, &stubActionRegistry{}, nil)
 	req := &agentports.RunRequest{
-		Definition: testDefinition("get_shipment"),
+		Definition: testDefinition("shipment_get"),
 		Actor:      testActor(),
 		Input:      "Look it up.",
 	}

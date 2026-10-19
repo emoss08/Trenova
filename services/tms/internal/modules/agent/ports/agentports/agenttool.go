@@ -120,6 +120,7 @@ type AgentTool interface {
 
 type AgentToolDescriptor struct {
 	Name         string             `json:"name"`
+	Namespace    string             `json:"namespace,omitempty"`
 	Description  string             `json:"description"`
 	Parameters   map[string]any     `json:"parameters"`
 	AutonomyTier agent.AutonomyTier `json:"autonomyTier"`
@@ -133,9 +134,6 @@ type AgentToolDescriptor struct {
 	// loads one of them loads this tool too when the agent holds it, and
 	// grants it to nobody.
 	Follows []string `json:"follows,omitempty"`
-	// BatchOf names the tool this one does to several records at once, for
-	// a tool that is the plural twin of another.
-	BatchOf string `json:"batchOf,omitempty"`
 	// Recipe is the tools a task with this one is done with, in order, the
 	// tool itself among them.
 	Recipe []string `json:"recipe,omitempty"`
@@ -169,18 +167,9 @@ type FollowerTool interface {
 	Follows() []string
 }
 
-// BatchTool is a tool that does to a list of records what another tool does
-// to one, in one call and, for a change, on one card. The prompt names each
-// pair an agent holds, so a model asked for one change across several records
-// reaches for the twin rather than calling the single tool once per record;
-// the examples it used to be given named billing tools to every agent.
-type BatchTool interface {
-	BatchOf() string
-}
-
 // RecipeTool is a tool whose use is a sequence: the lookups that hand out
 // its arguments in the order the work is done, the tool itself, and what
-// follows it. A model handed create_shipment with eight id parameters and
+// follows it. A model handed shipment_create with eight id parameters and
 // no order went looking for them one at a time, or guessed; the recipe is
 // told with the tool wherever it is named, in the prompt and in a find_tools
 // answer, so one call does what three round trips used to.
@@ -208,6 +197,7 @@ func DescribeTool(
 ) AgentToolDescriptor {
 	descriptor := AgentToolDescriptor{
 		Name:         tool.Name(),
+		Namespace:    NamespaceOf(tool.Name()),
 		Description:  tool.Description(),
 		Parameters:   tool.ParamSchema(),
 		AutonomyTier: tier,
@@ -224,9 +214,6 @@ func DescribeTool(
 	}
 	if follower, ok := tool.(FollowerTool); ok {
 		descriptor.Follows = follower.Follows()
-	}
-	if batch, ok := tool.(BatchTool); ok {
-		descriptor.BatchOf = batch.BatchOf()
 	}
 	if recipe, ok := tool.(RecipeTool); ok {
 		descriptor.Recipe = recipe.Recipe()

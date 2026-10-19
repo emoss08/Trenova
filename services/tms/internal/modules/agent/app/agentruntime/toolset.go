@@ -406,10 +406,10 @@ func (t *toolSet) takeLoaded() []string {
 
 // soleFed is the one held tool a lookup is a step of the recipe of, when it
 // is one. A lookup that exists to hand one write its arguments brings the
-// write: find_shipment_records was loaded on its own, its answer said to
-// call create_shipment next, and the model went looking for create_shipment
-// with find_tools first. A lookup many recipes start from (search_shipments,
-// get_shipment) brings none of them.
+// write: shipment_match_records was loaded on its own, its answer said to
+// call shipment_create next, and the model went looking for shipment_create
+// with find_tools first. A lookup many recipes start from (shipment_list,
+// shipment_get) brings none of them.
 func soleFed(allowed, fed []string) string {
 	held := ""
 	for _, name := range fed {
@@ -763,7 +763,7 @@ func (s *Service) unheldOutcome(set *toolSet, name string) toolOutcome {
 // their arguments from. A prerequisite is granted only when it is a read — the
 // agent holding create_dashboard may look reports up, but that grants it no
 // write. A companion is the one write a tool may bring, because its job cannot
-// be finished without it: create_shipment brings the customer, location and
+// be finished without it: shipment_create brings the customer, location and
 // commodity it may find missing. Each still answers to its own policy, so it
 // is proposed and approved like any write, and one an administrator switched
 // off for the agent stays off.

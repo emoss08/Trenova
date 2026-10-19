@@ -21,14 +21,14 @@ function ref(overrides: Partial<PreviewRef> = {}): PreviewRef {
 }
 
 /*
-assign_billing_queue_billers as the server served it: the item named by its
+billing_assign_biller as the server served it: the item named by its
 number, the biller a reference to a person. The SDL lets a reference's label be
 absent (the record is gone, or its kind had no label when the preview was
 recorded) and lets a record's label be empty.
 */
 function assignment(afterRef: PreviewRef, label = "INV2610000079") {
   return preview({
-    tool: "assign_billing_queue_billers",
+    tool: "billing_assign_biller",
     changes: [
       record({
         resource: "billing_queue",

@@ -226,7 +226,7 @@ func TestAssess_AQueryIsNeverSimulated(t *testing.T) {
 	t.Parallel()
 
 	policy := agentports.ToolPolicy{
-		Name:          "get_shipment",
+		Name:          "shipment_get",
 		Kind:          agent.ToolKindQuery,
 		DefaultTier:   agent.TierAutoExecute,
 		MaxTier:       agent.TierAutoExecute,

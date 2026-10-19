@@ -7,8 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -256,7 +256,7 @@ func TestNoteToolMemories_AToolsMemoriesAreUsedOnceItIsCalled(t *testing.T) {
 	})
 	fx := &memoryEvents{}
 
-	turn.noteToolMemories(fx, "search_shipments")
+	turn.noteToolMemories(fx, "shipment_list")
 	assert.Empty(t, fx.events, "a call to another tool uses nothing")
 
 	turn.noteToolMemories(fx, "assign_move")

@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	loopReplayRead  = "get_shipment"
+	loopReplayRead  = "shipment_get"
 	loopReplayWrite = "assign_move"
 )
 

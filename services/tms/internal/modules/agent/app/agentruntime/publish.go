@@ -30,7 +30,7 @@ const publishArtifactDescription = "Publish a written document beside the conver
 	"a screen: put the full text here in markdown and reply with two or three sentences " +
 	"pointing to it. Not for a list or a single record you looked up (those are shown to " +
 	"the person already, and the tool result says so), nor for what was read off a file " +
-	"the person attached: get_shipment_draft shows it as the file's extraction card. To revise a document you published, " +
+	"the person attached: intake_get_draft shows it as the file's extraction card. To revise a document you published, " +
 	"pass its artifactId with the whole new text; the earlier text is kept as a version. " +
 	"Cite what a sentence rests on with a footnote mark like [^1] and list each mark " +
 	"under sources."

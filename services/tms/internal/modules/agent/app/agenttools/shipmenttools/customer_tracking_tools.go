@@ -15,11 +15,11 @@ import (
 )
 
 const (
-	toolShareCustomerTrackingLink  = "share_customer_tracking_link"
-	toolRevokeCustomerTrackingLink = "revoke_customer_tracking_link"
+	toolShareCustomerTrackingLink  = "shipment_share_tracking_link"
+	toolRevokeCustomerTrackingLink = "shipment_revoke_tracking_link"
 	paramRecipientEmail            = "recipientEmail"
 	paramTrackingLinkID            = "linkId"
-	toolSearchShipments            = "search_shipments"
+	toolShipmentList               = "shipment_list"
 )
 
 type customerTrackingLinker interface {
@@ -70,7 +70,7 @@ func newShareCustomerTrackingLinkTool(tracking customerTrackingLinker) agentport
 	return common.NewReceivableTool(
 		&common.ReceivableSpec{
 			Name:   toolShareCustomerTrackingLink,
-			Recipe: []string{toolSearchShipments, toolShareCustomerTrackingLink},
+			Recipe: []string{toolShipmentList, toolShareCustomerTrackingLink},
 			Description: "Share a link to a shipment's tracking page with the customer, and email it " +
 				"when given an address. The page shows only what the customer's tracking settings " +
 				"allow and needs no sign-in. Use the address the customer asked you to send it to; " +
@@ -88,7 +88,7 @@ func newShareCustomerTrackingLinkTool(tracking customerTrackingLinker) agentport
 			Target: shipmentTarget,
 			Properties: map[string]any{
 				common.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
-					"The shipment to share, from the page, list_shipments or search_shipments."),
+					"The shipment to share, from the page, shipment_list."),
 				paramRecipientEmail: common.StringProperty(
 					"Where to email the link. Leave it out to share the link without emailing it.",
 					customertracking.MaxRecipientEmailLength,
@@ -200,7 +200,7 @@ func newRevokeCustomerTrackingLinkTool(tracking customerTrackingLinker) agentpor
 	return common.NewReceivableTool(
 		&common.ReceivableSpec{
 			Name:   toolRevokeCustomerTrackingLink,
-			Recipe: []string{toolSearchShipments, toolRevokeCustomerTrackingLink},
+			Recipe: []string{toolShipmentList, toolRevokeCustomerTrackingLink},
 			Description: "Stop every live customer tracking link on a shipment from working. Use " +
 				"it when a link reached the wrong person or the customer asks for access to end; " +
 				"share a new link afterwards if someone should keep following the load.",
@@ -214,8 +214,8 @@ func newRevokeCustomerTrackingLinkTool(tracking customerTrackingLinker) agentpor
 			Target: shipmentTarget,
 			Properties: map[string]any{
 				common.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
-					"The shipment whose links to revoke, from the page, list_shipments or "+
-						"search_shipments."),
+					"The shipment whose links to revoke, from the page, shipment_list or "+
+						"shipment_list."),
 			},
 			Required: []string{common.ParamShipmentID},
 		},

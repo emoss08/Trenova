@@ -51,7 +51,7 @@ function node(overrides: Partial<PendingProposalNode> = {}): PendingProposalNode
     organizationId: "org_1",
     businessUnitId: "bu_1",
     runId: "arun_1",
-    toolName: "create_shipment",
+    toolName: "shipment_create",
     toolParams: { shipment: { customerId: "cus_1", bol: "SEED-BOL-009", moves: [] } },
     confidence: 0.9,
     rationale: "A copy of SEED-DET-009 for next week.",
@@ -91,7 +91,7 @@ function renderCard(proposal = node()) {
 }
 
 const refused = () =>
-  preview({ tool: "create_shipment", warnings: [warning({ reasons: [reason()] })] });
+  preview({ tool: "shipment_create", warnings: [warning({ reasons: [reason()] })] });
 
 describe("DecisionCard", () => {
   it("lists each record with the value it sets and says the dry run is clear", async () => {
@@ -145,7 +145,7 @@ describe("DecisionCard", () => {
         ],
       }),
     );
-    renderCard(node({ toolName: "post_invoices" }));
+    renderCard(node({ toolName: "invoice_post" }));
 
     expect(await screen.findByText("Refused")).toBeInTheDocument();
     expect(

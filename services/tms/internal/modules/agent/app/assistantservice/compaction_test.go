@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -24,12 +24,12 @@ func longConversation(turns int) []conversation.Message {
 			conversation.Message{Role: conversation.RoleUser, Content: fmt.Sprintf("Which loads for customer %d?", turn)},
 			conversation.Message{
 				Role:      conversation.RoleAssistant,
-				ToolCalls: []conversation.ToolCallRecord{{ID: callID, Name: "list_shipments"}},
+				ToolCalls: []conversation.ToolCallRecord{{ID: callID, Name: "shipment_list"}},
 			},
 			conversation.Message{
 				Role:       conversation.RoleTool,
 				ToolCallID: callID,
-				ToolName:   "list_shipments",
+				ToolName:   "shipment_list",
 				Content:    strings.Repeat(`{"pro":"S-1001","status":"InTransit"},`, 800),
 			},
 			conversation.Message{
@@ -79,7 +79,7 @@ func TestPrepareCompaction_SummarizesEverythingBeforeTheLatestTurns(t *testing.T
 	assert.Contains(t, transcript, "Person: Which loads for customer 0?")
 	assert.Contains(t, transcript, "Agent: Customer 9 has 40 loads.")
 	assert.NotContains(t, transcript, "customer 10?", "the kept turns are not summarized")
-	assert.Contains(t, transcript, "Tool list_shipments returned: ")
+	assert.Contains(t, transcript, "Tool shipment_list returned: ")
 	assert.Less(t, len(transcript), compactionTranscriptChars, "the stretch is bounded")
 }
 

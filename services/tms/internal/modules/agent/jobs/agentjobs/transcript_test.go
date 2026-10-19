@@ -113,7 +113,7 @@ func TestSettleRun_BoundsALongRunsTranscript(t *testing.T) {
 	for idx := range 40 {
 		messages = append(messages, conversation.Message{
 			Role:      conversation.RoleTool,
-			ToolName:  "get_shipment",
+			ToolName:  "shipment_get",
 			Content:   chunk,
 			CreatedAt: int64(idx),
 		})

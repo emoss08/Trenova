@@ -129,7 +129,7 @@ func TestTransferToBilling_RefusesACriteriaSelectionThatTransfersNothing(t *test
 	_, err := sel.tool.ResolveSelection(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 		paramAllTransferable: true,
 	}))
-	require.ErrorContains(t, err, "list_billing_transfer_candidates")
+	require.ErrorContains(t, err, "billing_list_transfer_candidates")
 
 	sel.planner.candidates = &shipmentports.BillingTransferCandidateIDsResponse{}
 	sel.planner.planned = nil
@@ -244,7 +244,7 @@ func TestTransferToBilling_OffersTheCandidateFiltersToSelectEverythingThatCanGo(
 }
 
 /*
-A model that found its shipment with list_billing_transfer_candidates sent
+A model that found its shipment with billing_list_transfer_candidates sent
 the search and the status back beside the id, and the transfer refused it
 for naming filters that only narrow allTransferable, every time, until the
 turn's budget was spent. The filters cannot widen what the ids name, so they

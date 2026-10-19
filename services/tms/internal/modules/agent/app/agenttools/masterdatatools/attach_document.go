@@ -42,10 +42,10 @@ func NewAttachDocumentTool(documents documentAttacher) agentports.AgentTool {
 	return &AttachDocumentTool{documents: documents}
 }
 
-func (t *AttachDocumentTool) Name() string { return "attach_document_to_shipment" }
+func (t *AttachDocumentTool) Name() string { return "shipment_attach_document" }
 
 func (t *AttachDocumentTool) Recipe() []string {
-	return []string{"get_inbound_message", "search_shipments", "attach_document_to_shipment"}
+	return []string{"get_inbound_message", "shipment_list", "shipment_attach_document"}
 }
 
 func (t *AttachDocumentTool) Description() string {
@@ -67,8 +67,8 @@ func (t *AttachDocumentTool) ParamSchema() map[string]any {
 			),
 			"shipmentId": agenttoolschema.RecordIDText(
 				permission.ResourceShipment,
-				"The shipment it belongs to, from the page, list_shipments or "+
-					"search_shipments.",
+				"The shipment it belongs to, from the page, shipment_list or "+
+					"shipment_list.",
 			),
 		},
 		"required":             []string{"documentId", "shipmentId"},

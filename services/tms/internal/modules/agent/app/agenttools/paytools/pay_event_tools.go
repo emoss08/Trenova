@@ -33,7 +33,7 @@ const fieldOnHold = "onHold"
 
 const fieldHoldReason = "holdReason"
 
-const payEventSources = "list_driver_pay_events"
+const payEventSources = "settlement_list_pay_events"
 
 type payEventHolder interface {
 	PlanPayEventHold(
@@ -73,10 +73,10 @@ func ProvideReleaseDriverPayEventTool(s *driversettlementservice.Service) agentp
 
 func (t *PayEventHoldTool) Name() string {
 	if t.hold {
-		return "hold_driver_pay_event"
+		return "settlement_hold_pay_event"
 	}
 
-	return "release_driver_pay_event"
+	return "settlement_release_pay_event"
 }
 
 func (t *PayEventHoldTool) Description() string {
@@ -84,7 +84,7 @@ func (t *PayEventHoldTool) Description() string {
 		return "Hold a driver's accrued pay for one load so it skips settlement until " +
 			"released, with the reason. The driver is told in the driver portal why pay " +
 			"was deferred, so write the reason for them, such as paperwork still to come or a " +
-			"load under review. Use release_driver_pay_event when it is resolved."
+			"load under review. Use settlement_release_pay_event when it is resolved."
 	}
 
 	return "Release a held driver pay event back into the pool the next settlement draws " +
@@ -96,7 +96,7 @@ func (t *PayEventHoldTool) ParamSchema() map[string]any {
 	properties := map[string]any{
 		paramPayEventID: agenttoolschema.KindID(
 			"The pay event, from "+payEventSources+
-				" or the lines get_driver_settlement lists. Never guess one.",
+				" or the lines settlement_get_driver lists. Never guess one.",
 			permission.KindPayEvent,
 		),
 	}
@@ -335,10 +335,10 @@ func ProvideDetachPayEventTool(s *driversettlementservice.Service) agentports.Ag
 
 func (t *PayEventTransferTool) Name() string {
 	if t.detach {
-		return "detach_pay_event_from_settlement"
+		return "settlement_detach_pay_event"
 	}
 
-	return "attach_pay_events_to_settlement"
+	return "settlement_attach_pay_events"
 }
 
 func (t *PayEventTransferTool) Description() string {
@@ -363,7 +363,7 @@ func (t *PayEventTransferTool) ParamSchema() map[string]any {
 	var required []string
 	if t.detach {
 		properties[paramPayEventID] = agenttoolschema.KindID(
-			"The pay event on it, from the lines get_driver_settlement lists.",
+			"The pay event on it, from the lines settlement_get_driver lists.",
 			permission.KindPayEvent,
 		)
 		required = []string{common.ParamSettlementID, paramPayEventID}

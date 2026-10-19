@@ -321,7 +321,7 @@ func (s *AssistantArtifactSeed) artifacts(
 		build(refs.thread(0), assistantartifact.KindTableView,
 			"Shipments delivering today",
 			map[string]any{
-				"tool":        "list_shipments",
+				"tool":        "shipment_list",
 				"entity":      "shipment",
 				"searchedFor": []string{"delivering today", "not yet delivered"},
 				"columns":     []string{"proNumber", "customer", "status", "destination"},

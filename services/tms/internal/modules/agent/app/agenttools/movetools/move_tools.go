@@ -55,13 +55,13 @@ func ProvideRecordStopActualTool(
 func (t *RecordStopActualTool) Name() string { return "record_stop_actual" }
 
 func (t *RecordStopActualTool) Recipe() []string {
-	return []string{"search_shipments", "get_shipment", "record_stop_actual"}
+	return []string{toolShipmentList, "shipment_get", "record_stop_actual"}
 }
 
 func (t *RecordStopActualTool) Description() string {
 	return "Record that a driver arrived at or departed from a stop. This is what " +
 		"advances a shipment: the move's status and everything downstream follow from " +
-		"it. Get the move and stop ids from get_shipment, and only record what you were " +
+		"it. Get the move and stop ids from shipment_get, and only record what you were " +
 		"actually told happened — never infer an arrival from a departure, or the " +
 		"reverse. When you are told both (\"got there 5:50, left 7:05\"), record them " +
 		"in one call: action Arrive with occurredAt and departedAt."
@@ -73,13 +73,13 @@ func (t *RecordStopActualTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"moveId": agenttoolschema.RecordIDText(
 				permission.ResourceShipmentMove,
-				"The move the stop belongs to, from get_shipment (its moves) or "+
+				"The move the stop belongs to, from shipment_get (its moves) or "+
 					"get_dispatch_board.",
 			),
 			"stopId": agenttoolschema.RecordIDText(
 				permission.ResourceShipmentStop,
 				"The stop that was arrived at or departed from, from the move's "+
-					"stops in get_shipment.",
+					"stops in shipment_get.",
 			),
 			"action": agenttoolschema.Enum(
 				"Which event happened.",

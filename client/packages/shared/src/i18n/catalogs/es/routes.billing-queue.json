@@ -11,7 +11,6 @@
   "Approving them makes you their biller. You can approve only the items that already have a biller instead.": "Al aprobarlos, usted pasa a ser su facturador. En su lugar, puede aprobar solo los elementos que ya tienen facturador.",
   "Assign a biller to review this billing queue item.": "Asigne un facturador para revisar este elemento de la cola de facturación.",
   "Assign a biller to review {0, plural, one {# billing queue item} other {# billing queue items}}.": "Asigne un facturador para revisar {0, plural, one {# elemento de la cola de facturación} other {# elementos de la cola de facturación}}.",
-  "Assign biller": "Asignar facturador",
   "Assigned biller": "Facturador asignado",
   "Assigned billers": "Facturadores asignados",
   "Auto-bills": "Factura automáticamente",

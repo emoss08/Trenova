@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
-	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -31,7 +31,7 @@ func TestRunReadsASteerAtItsNextStep(t *testing.T) {
 	t.Parallel()
 
 	lookup := &agenttest.StubQueryTool{
-		ToolName: "get_shipment",
+		ToolName: "shipment_get",
 		Result:   map[string]any{"status": "InTransit"},
 	}
 	h := newHarness(t, harnessParams{query: []agentports.AgentQueryTool{lookup}})
@@ -49,14 +49,14 @@ func TestRunReadsASteerAtItsNextStep(t *testing.T) {
 					},
 				})
 				return &agentruntime.ModelReply{
-					Completion: toolReply("get_shipment", map[string]any{"shipmentId": "shp_1"}),
+					Completion: toolReply("shipment_get", map[string]any{"shipmentId": "shp_1"}),
 				}, nil
 			}
 
 			return &agentruntime.ModelReply{Completion: textReply("Switched to Werner.")}, nil
 		}).Times(2)
 
-	result := h.run(t, runContext("get_shipment"))
+	result := h.run(t, runContext("shipment_get"))
 
 	require.Empty(t, result.Err)
 	require.Len(t, asked, 2)

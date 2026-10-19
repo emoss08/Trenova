@@ -43,7 +43,7 @@ func TestReplayHistory_StartsFromTheLatestSummary(t *testing.T) {
 	t.Parallel()
 
 	history := numbered(append(append(
-		readTurn("c1", "list_shipments", "S1, S2, S3"),
+		readTurn("c1", "shipment_list", "S1, S2, S3"),
 		quietTurns(2)...),
 		conversation.Message{Role: conversation.RoleUser, Content: "And the late ones?"},
 		conversation.Message{Role: conversation.RoleAssistant, Content: "Two are late."},
@@ -73,7 +73,7 @@ func TestReplayHistory_StartsFromTheLatestSummary(t *testing.T) {
 func TestSplitForCompaction_KeepsTheLatestTurnsWhole(t *testing.T) {
 	t.Parallel()
 
-	history := numbered(append(readTurn("c1", "list_shipments", "S1"), quietTurns(3)...))
+	history := numbered(append(readTurn("c1", "shipment_list", "S1"), quietTurns(3)...))
 
 	older, through := SplitForCompaction(history)
 
@@ -130,7 +130,7 @@ func TestMeasureContext_CountsEachPartAgainstTheModelsWindow(t *testing.T) {
 	t.Parallel()
 
 	history := numbered(append(append(
-		readTurn("c1", "list_shipments", strings.Repeat("x", 3000)),
+		readTurn("c1", "shipment_list", strings.Repeat("x", 3000)),
 		readTurn("c2", "get_document_summary", strings.Repeat("y", 900))...),
 		quietTurns(2)...,
 	))

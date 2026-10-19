@@ -92,7 +92,7 @@ func TestRecord_FoldsADelegatesWritesIntoTheTurnsOnePlanInConversationOrder(t *t
 			Definition: f.delegate,
 			Open:       f.open("call_hand"),
 			Actions: []agentports.PendingAction{
-				calledAction("duplicate_shipment", "call_copy"),
+				calledAction("shipment_duplicate", "call_copy"),
 			},
 		}},
 		CallOrder: map[string]int{"call_void": 0, "call_hand": 1, "call_copy": 2},
@@ -118,7 +118,7 @@ func TestRecord_FoldsADelegatesWritesIntoTheTurnsOnePlanInConversationOrder(t *t
 	assert.Equal(t, "void_shipment", void.ToolName)
 	assert.Equal(t, parentRun.ID, void.RunID)
 	assert.Equal(t, 1, void.PlanStep)
-	assert.Equal(t, "duplicate_shipment", copied.ToolName)
+	assert.Equal(t, "shipment_duplicate", copied.ToolName)
 	assert.Equal(t, delegateRun.ID, copied.RunID, "the delegate's write stays its own")
 	assert.Equal(t, 2, copied.PlanStep)
 	assert.Equal(t, plan.ID, *copied.PlanID)
@@ -145,8 +145,8 @@ func TestRecord_NumbersTheStepsByWhereTheConversationAskedForThem(t *testing.T) 
 			Definition: f.delegate,
 			Open:       f.open("call_hand"),
 			Actions: []agentports.PendingAction{
-				calledAction("duplicate_shipment", "call_copy"),
-				calledAction("add_shipment_comment", "call_note"),
+				calledAction("shipment_duplicate", "call_copy"),
+				calledAction("shipment_add_comment", "call_note"),
 			},
 		}},
 		CallOrder: map[string]int{
@@ -161,8 +161,8 @@ func TestRecord_NumbersTheStepsByWhereTheConversationAskedForThem(t *testing.T) 
 		steps[proposal.ToolName] = proposal.PlanStep
 	}
 	assert.Equal(t, map[string]int{
-		"duplicate_shipment":   1,
-		"add_shipment_comment": 2,
+		"shipment_duplicate":   1,
+		"shipment_add_comment": 2,
 		"void_shipment":        3,
 	}, steps)
 	require.Len(t, f.plans.created, 1)
@@ -223,7 +223,7 @@ func TestRecord_ADelegatesOnlyPendingWriteStandsAlone(t *testing.T) {
 	t.Parallel()
 
 	f := newTurnFixture()
-	executed := calledAction("add_shipment_comment", "call_note")
+	executed := calledAction("shipment_add_comment", "call_note")
 	executed.Executed = true
 	_, err := f.svc.Record(t.Context(), &RecordRequest{
 		Actor:      f.actor,
@@ -234,7 +234,7 @@ func TestRecord_ADelegatesOnlyPendingWriteStandsAlone(t *testing.T) {
 			Definition: f.delegate,
 			Open:       f.open("call_hand"),
 			Actions: []agentports.PendingAction{
-				calledAction("duplicate_shipment", "call_copy"),
+				calledAction("shipment_duplicate", "call_copy"),
 			},
 		}},
 		Evidence: messageEvidence,

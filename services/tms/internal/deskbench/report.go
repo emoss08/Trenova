@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/evalsplit"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -90,20 +91,21 @@ type Measures struct {
 	Recall             Stat               `json:"recall"`
 	FirstCorrect       Stat               `json:"firstCorrect"`
 	ForbiddenCalls     Stat               `json:"forbiddenCalls"`
+	ArgumentValidity   Stat               `json:"argumentValidity"`
 	PreselectionRecall Stat               `json:"preselectionRecall"`
 	FindRecall         Stat               `json:"findRecall"`
 	FindHitRate        *float64           `json:"findHitRate,omitempty"`
 }
 
 type MatrixRow struct {
-	Scenario string   `json:"scenario"`
-	Provider string   `json:"provider"`
-	Split    Split    `json:"split,omitempty"`
-	Runs     int      `json:"runs"`
-	Passed   int      `json:"passed"`
-	Pass     Rate     `json:"pass"`
-	PassK    *float64 `json:"passK,omitempty"`
-	Measures Measures `json:"measures"`
+	Scenario string          `json:"scenario"`
+	Provider string          `json:"provider"`
+	Split    evalsplit.Split `json:"split,omitempty"`
+	Runs     int             `json:"runs"`
+	Passed   int             `json:"passed"`
+	Pass     Rate            `json:"pass"`
+	PassK    *float64        `json:"passK,omitempty"`
+	Measures Measures        `json:"measures"`
 
 	AvgSeconds    float64 `json:"avgSeconds"`
 	AvgToolCalls  float64 `json:"avgToolCalls"`
@@ -143,14 +145,14 @@ func (r *MatrixRow) tokensPerRun(schema int) float64 {
 }
 
 type CellRow struct {
-	Provider  string   `json:"provider"`
-	Split     Split    `json:"split,omitempty"`
-	Scenarios int      `json:"scenarios"`
-	Trials    int      `json:"trials"`
-	Passed    int      `json:"passed"`
-	Pass      Rate     `json:"pass"`
-	PassK     Stat     `json:"passK"`
-	Measures  Measures `json:"measures"`
+	Provider  string          `json:"provider"`
+	Split     evalsplit.Split `json:"split,omitempty"`
+	Scenarios int             `json:"scenarios"`
+	Trials    int             `json:"trials"`
+	Passed    int             `json:"passed"`
+	Pass      Rate            `json:"pass"`
+	PassK     Stat            `json:"passK"`
+	Measures  Measures        `json:"measures"`
 
 	ScenarioPass Stat `json:"scenarioPass"`
 }
@@ -532,7 +534,7 @@ func matrixRow(results []*CaseResult, k int) MatrixRow {
 func cellRows(cases []*CaseResult, matrix []MatrixRow) []CellRow {
 	type cellKey struct {
 		provider string
-		split    Split
+		split    evalsplit.Split
 	}
 	byCell := make(map[cellKey][]*CaseResult, 8)
 	rowsByCell := make(map[cellKey][]MatrixRow, 8)
@@ -598,7 +600,7 @@ type measureSeries struct {
 	seconds, firstToken, modelCalls, toolCalls, refused []float64
 	uncached, read, write, output, peak, cost           []float64
 	precision, recall, firstCorrect, forbidden          []float64
-	preselection, find                                  []float64
+	preselection, find, argumentValidity                []float64
 	findAnswers, findHits                               int
 	laterPrompt, laterRead, toolTurns, findFirst        int
 	verdicts, guards                                    map[string]float64
@@ -628,6 +630,11 @@ func (m *measureSeries) add(result *CaseResult) {
 	m.modelCalls = append(m.modelCalls, float64(metrics.ModelCalls))
 	m.toolCalls = append(m.toolCalls, float64(metrics.ToolCalls))
 	m.refused = append(m.refused, float64(metrics.RefusedCalls))
+	if metrics.ToolCalls > 0 {
+		invalid := float64(metrics.RefusedByVerdict[verdictInvalid])
+		m.argumentValidity = append(m.argumentValidity,
+			1-invalid/float64(metrics.ToolCalls))
+	}
 	m.uncached = append(m.uncached, float64(usage.InputTokens))
 	m.read = append(m.read, float64(usage.CacheReadTokens))
 	m.write = append(m.write, float64(usage.CacheWriteTokens))
@@ -697,6 +704,7 @@ func (m *measureSeries) measures(trials int) Measures {
 		Recall:             statOf(m.recall),
 		FirstCorrect:       statOf(m.firstCorrect),
 		ForbiddenCalls:     statOf(m.forbidden),
+		ArgumentValidity:   statOf(m.argumentValidity),
 		PreselectionRecall: statOf(m.preselection),
 		FindRecall:         statOf(m.find),
 		RefusedByVerdict:   perTrial(m.verdicts, trials),

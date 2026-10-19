@@ -21,13 +21,19 @@ const nounInvoice = "invoice"
 
 const nounInvoices = "invoices"
 
-const bulkApprovalDescription = "Propose approving several billing queue items in one proposal the person approves together. On your own, propose only items you reviewed and found clean; when the person asks for them, propose those items and say in reviewNotes what you could not confirm. Use it instead of approve_billing_queue_item whenever more than one item is ready. Each item is approved exactly as approve_billing_queue_item would: charges that match the agreement, the documents the customer requires and no detention charge waiting on approval. Approval creates each item's draft invoice, or puts it on a statement customer's statement, and the auto-post setting may post it; a person always decides and may untick items. An item the queue would refuse is reported, not approved, and the rest still go. Up to 50 items."
+const toolInvoicePost = "invoice_post"
 
-const bulkPostDescription = "Propose posting several draft invoices in one proposal the person approves together. Use it instead of post_invoice whenever more than one invoice is ready, rather than one proposal per invoice. Each invoice is posted exactly as post_invoice would: booked to the ledger, its shipments marked invoiced, its billing queue item settled and queued for the accounting system and, where the customer takes it, an EDI 210. It cannot be undone except by voiding, so a person always decides and may untick invoices. An invoice posting would refuse is reported, not posted, and the rest still go. Up to 50 invoices."
+const toolInvoiceSend = "invoice_send"
 
-const bulkSendDescription = "Propose emailing several invoices to their customers in one proposal the person approves together. Use it instead of send_invoice whenever more than one invoice goes out. Each invoice goes exactly as send_invoice would send it: the recipients, subject, wording and attachments come from the organization and each customer's billing profile, and nothing is chosen by you. The person approving sees every email, may untick invoices, and is who sends them. An invoice that cannot go is reported, not sent, and the rest still go. Up to 50 invoices."
+const toolInvoiceGet = "invoice_get"
 
-const bulkInvoiceIDsDescription = "The invoices, by id from list_invoices, get_invoices or the proposals that made them. Never guess one."
+const bulkApprovalDescription = "Propose approving billing queue items, one or up to 50 in one proposal the person decides together. On your own, propose only items you reviewed and found clean: charges that match the agreement, the documents the customer requires and no detention charge waiting on approval. When the person asks for items, propose those and say in reviewNotes what you could not confirm. Approval creates each item's draft invoice, or puts it on a statement customer's statement, and the auto-post setting may post it; the person may untick items. Name every ready item in one call; an item the queue would refuse is reported, not approved, and the rest still go."
+
+const bulkPostDescription = "Propose posting draft invoices, one or up to 50 in one proposal the person decides together, usually the drafts approving billing queue items just made. Posting books each to the ledger, marks its shipments invoiced, settles its billing queue item and queues it for the accounting system and, where the customer takes it, an EDI 210. It cannot be undone except by voiding, so propose it once you have checked the drafts; the person may untick invoices. Name every ready invoice in one call; one posting would refuse is reported, not posted, and the rest still go."
+
+const bulkSendDescription = "Propose emailing invoices to their customers, one or up to 50 in one proposal the person decides together. The recipients, subject, wording and attachments come from the organization and each customer's billing profile; nothing is chosen by you. Propose it after posting when the customer is not sent invoices automatically. The person approving sees every email, may untick invoices, and is who sends them. Name every invoice going out in one call; one that cannot go is reported, not sent, and the rest still go."
+
+const bulkInvoiceIDsDescription = "The invoices, by id from invoice_list, invoice_get or the proposals that made them. Never guess one."
 
 type invoiceNumberReader interface {
 	GetByIDs(
@@ -90,13 +96,17 @@ func NewPostInvoicesTool(
 	}
 }
 
-func (t *PostInvoicesTool) Name() string { return "post_invoices" }
+func (t *PostInvoicesTool) Name() string { return toolInvoicePost }
 
 func (t *PostInvoicesTool) Recipe() []string {
-	return []string{"list_invoices", "get_invoices", "post_invoices"}
+	return []string{"invoice_list", toolInvoiceGet, toolInvoicePost}
 }
 
-func (t *PostInvoicesTool) BatchOf() string { return t.single.Name() }
+func (t *PostInvoicesTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+	return t.batch.Target(params)
+}
+
+func (t *PostInvoicesTool) SearchTerms() []string { return []string{nounInvoices} }
 
 func (t *PostInvoicesTool) Description() string { return bulkPostDescription }
 
@@ -108,9 +118,9 @@ func (t *PostInvoicesTool) Policy() agentports.ToolPolicy {
 	policy := t.single.Policy()
 	policy.Name = t.Name()
 	policy.Artifact = common.InvoiceRecordEntity
-	policy.Rationale = "Books several receivables to the ledger at once and queues each for " +
-		"the accounting system and the customer's EDI; only a person posts, invoice by " +
-		"invoice exactly as post_invoice, and may untick any of them."
+	policy.Rationale = "Books receivables to the ledger and queues each for the accounting " +
+		"system and the customer's EDI; only a person posts, and may untick any of them, " +
+		"and hands-off posting is the billing-control auto-post setting."
 
 	return policy
 }
@@ -142,7 +152,7 @@ func (t *PostInvoicesTool) ExecuteWithResult(
 	ctx context.Context,
 	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
-	return t.batch.Execute(ctx, t, &params, t.single.Execute)
+	return t.batch.Execute(ctx, t, &params)
 }
 
 type SendInvoicesTool struct {
@@ -173,9 +183,13 @@ func NewSendInvoicesTool(
 	}
 }
 
-func (t *SendInvoicesTool) Name() string { return "send_invoices" }
+func (t *SendInvoicesTool) Name() string { return toolInvoiceSend }
 
-func (t *SendInvoicesTool) BatchOf() string { return t.single.Name() }
+func (t *SendInvoicesTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+	return t.batch.Target(params)
+}
+
+func (t *SendInvoicesTool) SearchTerms() []string { return []string{nounInvoices} }
 
 func (t *SendInvoicesTool) Description() string { return bulkSendDescription }
 
@@ -187,8 +201,8 @@ func (t *SendInvoicesTool) Policy() agentports.ToolPolicy {
 	policy := t.single.Policy()
 	policy.Name = t.Name()
 	policy.Artifact = common.InvoiceRecordEntity
-	policy.Rationale = "Emails several customers their invoices at once; only a person sends " +
-		"them, is named as who sent each, and sees every recipient before approving."
+	policy.Rationale = "Emails customers their invoices; only a person sends them, is named " +
+		"as who sent each, and sees every recipient before approving."
 
 	return policy
 }
@@ -220,7 +234,7 @@ func (t *SendInvoicesTool) ExecuteWithResult(
 	ctx context.Context,
 	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
-	return t.batch.Execute(ctx, t, &params, t.single.Execute)
+	return t.batch.Execute(ctx, t, &params)
 }
 
 type ApproveBillingQueueItemsTool struct {
@@ -253,24 +267,26 @@ func NewApproveBillingQueueItemsTool(
 	}
 }
 
-func (t *ApproveBillingQueueItemsTool) Name() string { return "approve_billing_queue_items" }
+func (t *ApproveBillingQueueItemsTool) Name() string { return "billing_approve_queue_item" }
 
 func (t *ApproveBillingQueueItemsTool) Recipe() []string {
 	return []string{
-		"list_billing_queue_items",
-		"get_billing_queue_items",
-		"approve_billing_queue_items",
+		"billing_list_queue_items",
+		"billing_get_queue_item",
+		"billing_approve_queue_item",
 	}
 }
 
-func (t *ApproveBillingQueueItemsTool) BatchOf() string { return t.single.Name() }
+func (t *ApproveBillingQueueItemsTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+	return t.batch.Target(params)
+}
 
 func (t *ApproveBillingQueueItemsTool) Description() string { return bulkApprovalDescription }
 
 func (t *ApproveBillingQueueItemsTool) ParamSchema() map[string]any {
 	return common.BulkIDsSchema(t.batch,
-		"The billing queue items, by id from list_billing_queue_items or "+
-			"get_billing_queue_item. Never guess one.",
+		"The billing queue items, by id from billing_list_queue_items or "+
+			"billing_get_queue_item. Never guess one.",
 		map[string]any{
 			common.ParamReviewNotes: map[string]any{
 				toolschema.KeyType:      toolschema.TypeString,
@@ -285,8 +301,7 @@ func (t *ApproveBillingQueueItemsTool) Policy() agentports.ToolPolicy {
 	policy := t.single.Policy()
 	policy.Name = t.Name()
 	policy.Rationale = "Approving creates the invoices customers are billed on, so only a " +
-		"person approves, item by item exactly as approve_billing_queue_item, and may " +
-		"untick any of them."
+		"person approves, and may untick any of them."
 
 	return policy
 }
@@ -318,5 +333,5 @@ func (t *ApproveBillingQueueItemsTool) ExecuteWithResult(
 	ctx context.Context,
 	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
-	return t.batch.Execute(ctx, t, &params, t.single.Execute)
+	return t.batch.Execute(ctx, t, &params)
 }

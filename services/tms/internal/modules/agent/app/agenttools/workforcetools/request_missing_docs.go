@@ -45,13 +45,17 @@ func NewRequestMissingDocsTool(p requestMissingDocsParams) agentports.AgentTool 
 	}
 }
 
-func (t *RequestMissingDocsTool) Name() string { return "request_missing_docs" }
+func (t *RequestMissingDocsTool) Name() string { return "shipment_request_documents" }
 
 func (t *RequestMissingDocsTool) Description() string {
 	return "Request missing documentation from a party by sending them an email. Use it " +
 		"when a POD, BOL or other paper a shipment needs has not arrived. Call " +
 		"list_email_profiles first for profileId; the organization's template adds the " +
 		"greeting, letterhead and sign-off. The email is sent and cannot be recalled."
+}
+
+func (t *RequestMissingDocsTool) Prerequisites() []string {
+	return []string{"list_email_profiles"}
 }
 
 func (t *RequestMissingDocsTool) SearchTerms() []string {

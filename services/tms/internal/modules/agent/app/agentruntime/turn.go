@@ -1065,8 +1065,12 @@ func (s *Service) FindFor(
 
 const getToolPrefix = "get_"
 
+func isFetch(name string) bool {
+	return strings.HasPrefix(agentports.ReadingOrder(name), getToolPrefix)
+}
+
 func (t *Turn) earlier(name string) []string {
-	if !strings.HasPrefix(name, getToolPrefix) {
+	if !isFetch(name) {
 		return nil
 	}
 
@@ -1074,7 +1078,7 @@ func (t *Turn) earlier(name string) []string {
 }
 
 func (t *Turn) noteShown(call *agentports.ToolCall) {
-	if !strings.HasPrefix(call.Name, getToolPrefix) || call.ID == "" {
+	if !isFetch(call.Name) || call.ID == "" {
 		return
 	}
 	if t.shown == nil {

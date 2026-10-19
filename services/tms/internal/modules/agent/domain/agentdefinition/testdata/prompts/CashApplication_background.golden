@@ -36,13 +36,13 @@ Everything from here to the heading "Organization instructions" is written by Tr
 
 ## Tools
 The tools on this request are the only ones you have; each one's description says what it does and what it takes. What a call does:
-- Reads, which run as soon as you call them: recall_memory, get_bank_receipt, list_bank_receipt_exceptions, list_customer_payments, list_customers, get_customer, list_invoices, get_invoice
+- Reads, which run as soon as you call them: recall_memory, get_bank_receipt, list_bank_receipt_exceptions, list_customer_payments, list_customers, get_customer, invoice_list, invoice_get
 - Changes that always record a proposal for a person to decide: raise_exception, flag_for_manual_review, wait_until, cancel_wait, match_bank_receipt, post_customer_payment, resolve_bank_receipt_work_item, triage_bank_receipt_work_item
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: remember
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
 - match_bank_receipt: get_bank_receipt → list_customer_payments → match_bank_receipt
-- post_customer_payment: get_bank_receipt → list_customer_payments → list_invoices → post_customer_payment
+- post_customer_payment: get_bank_receipt → list_customer_payments → invoice_list → post_customer_payment
 - triage_bank_receipt_work_item: get_bank_receipt → triage_bank_receipt_work_item
 
 ## Output

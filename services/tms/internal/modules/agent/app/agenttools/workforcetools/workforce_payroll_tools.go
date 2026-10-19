@@ -89,13 +89,13 @@ func payrollSpec(name, description, rationale string) *common.ReceivableSpec {
 
 func newGeneratePayrollExportTool(exporter PayrollExporter) agentports.AgentTool {
 	spec := withSchema(payrollSpec(
-		"generate_payroll_export",
+		"settlement_generate_payroll_export",
 		"Draft a payroll run over a pay period for a person to approve. Every approved "+
 			"timesheet week starting between the first and last day given that has not gone "+
 			"to payroll yet is totalled and locked into the run. Refused when no approved week "+
 			"is waiting.",
 		"Locks approved hours into a payroll run that pays people, so a person approves it "+
-			"and it runs as them; void_payroll_export takes it back.",
+			"and it runs as them; settlement_void_payroll_export takes it back.",
 	), map[string]any{
 		paramFirstDay:    agenttoolschema.Date("The first day of the pay period."),
 		paramLastDay:     agenttoolschema.Date("The last day of the pay period, included."),
@@ -175,7 +175,7 @@ func newGeneratePayrollExportTool(exporter PayrollExporter) agentports.AgentTool
 
 func newVoidPayrollExportTool(exporter PayrollExporter) agentports.AgentTool {
 	spec := targeting(withSchema(payrollSpec(
-		"void_payroll_export",
+		"settlement_void_payroll_export",
 		"Draft voiding a payroll run for a person to approve, with the reason: the run is "+
 			"taken back and every week in it returns to approved, ready for another run. "+
 			"A run already voided is refused.",
@@ -183,7 +183,7 @@ func newVoidPayrollExportTool(exporter PayrollExporter) agentports.AgentTool {
 			"approves it and it runs as them; a voided run stays voided.",
 	), map[string]any{
 		paramPayrollExportID: agenttoolschema.KindID(
-			"The payroll run, from list_payroll_exports. "+
+			"The payroll run, from settlement_list_payroll_exports. "+
 				"Never guess one.",
 			permission.KindPayrollExport,
 		),

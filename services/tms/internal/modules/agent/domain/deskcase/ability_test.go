@@ -37,8 +37,8 @@ does it.
 func TestAbilities(t *testing.T) {
 	t.Parallel()
 
-	shipments := holder("Shipment Assistant", "get_shipment_tracking")
-	billing := holder("Billing Assistant", "transfer_to_billing", "email_customer")
+	shipments := holder("Shipment Assistant", "shipment_get_tracking")
+	billing := holder("Billing Assistant", "billing_transfer", "email_customer")
 	steps := []deskcase.StepKey{
 		deskcase.StepTrackDelivery,
 		deskcase.StepMarkReady,
@@ -50,7 +50,7 @@ func TestAbilities(t *testing.T) {
 		Steps:     steps,
 		Own:       shipments,
 		Others:    []*deskcase.Holder{billing},
-		Permitted: permitted("get_shipment_tracking", "transfer_to_billing", "send_invoice"),
+		Permitted: permitted("shipment_get_tracking", "billing_transfer", "invoice_send"),
 	})
 
 	assert.Equal(t, deskcase.ViaAgent, got[deskcase.StepTrackDelivery].Via)
@@ -58,7 +58,7 @@ func TestAbilities(t *testing.T) {
 	assert.Equal(t, billing.ID, got[deskcase.StepMarkReady].AgentID)
 	assert.Equal(t, "Billing Assistant", got[deskcase.StepMarkReady].AgentName)
 	assert.Equal(t, deskcase.ViaPerson, got[deskcase.StepSendInvoice].Via,
-		"no agent the person may use holds send_invoice")
+		"no agent the person may use holds invoice_send")
 	assert.Equal(t, deskcase.ViaAgent, got[deskcase.StepKey("custom:callshipper")].Via,
 		"a step the organization added names no tool; the agent may try")
 }
@@ -66,7 +66,7 @@ func TestAbilities(t *testing.T) {
 func TestAbilities_AToolThePersonMayNotUseIsNotTheAgents(t *testing.T) {
 	t.Parallel()
 
-	own := holder("Billing Assistant", "transfer_to_billing")
+	own := holder("Billing Assistant", "billing_transfer")
 
 	got := deskcase.Abilities(&deskcase.AbilityInputs{
 		Steps:     []deskcase.StepKey{deskcase.StepMarkReady},
@@ -80,8 +80,8 @@ func TestAbilities_AToolThePersonMayNotUseIsNotTheAgents(t *testing.T) {
 func TestNeedsOthers(t *testing.T) {
 	t.Parallel()
 
-	own := holder("Billing Assistant", "transfer_to_billing")
-	allowed := permitted("transfer_to_billing")
+	own := holder("Billing Assistant", "billing_transfer")
+	allowed := permitted("billing_transfer")
 
 	assert.False(t, deskcase.NeedsOthers([]deskcase.StepKey{deskcase.StepMarkReady}, own, allowed),
 		"the other agents are not read when the conversation's agent can take every step")

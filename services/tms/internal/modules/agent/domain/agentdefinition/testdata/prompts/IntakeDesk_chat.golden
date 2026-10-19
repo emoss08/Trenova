@@ -52,13 +52,13 @@ What find_tools can load, by area of Trenova:
 What a change you call does:
 - Changes that always record a proposal for a person to decide: reply_to_inbound_message, discard_inbound_reply_draft, wait_for_inbound_reply, snooze_inbound_messages, reopen_inbound_messages, assign_inbound_messages, hand_off_triage, block_inbound_sender, unblock_inbound_sender, unfile_inbound_attachment, resolve_inbound_conflict, create_inbound_load, accept_edi_tender, decline_edi_tender
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: remember, guide_profile
-- Changes that run at once or are recorded as a proposal depending on what the call would reach; the result says which and why: flag_for_manual_review, wait_until, cancel_wait, link_inbound_message, unlink_inbound_message, mark_inbound_message, draft_inbound_reply, wake_inbound_message, file_inbound_attachment, reopen_inbound_conflict, log_inbound_exception, draft_inbound_load, discard_inbound_load, attach_document_to_shipment, add_shipment_comment
+- Changes that run at once or are recorded as a proposal depending on what the call would reach; the result says which and why: flag_for_manual_review, wait_until, cancel_wait, link_inbound_message, unlink_inbound_message, mark_inbound_message, draft_inbound_reply, wake_inbound_message, file_inbound_attachment, reopen_inbound_conflict, log_inbound_exception, draft_inbound_load, discard_inbound_load, shipment_attach_document, shipment_add_comment
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
 - link_inbound_message: get_inbound_message → link_inbound_message
 - unlink_inbound_message: get_inbound_message → unlink_inbound_message
 - mark_inbound_message: get_inbound_message → mark_inbound_message
-- reply_to_inbound_message: get_inbound_message → get_shipment_tracking → reply_to_inbound_message
+- reply_to_inbound_message: get_inbound_message → shipment_get_tracking → reply_to_inbound_message
 - draft_inbound_reply: get_inbound_message → draft_inbound_reply
 - discard_inbound_reply_draft: get_inbound_message → discard_inbound_reply_draft
 - snooze_inbound_messages: list_inbound_messages → snooze_inbound_messages
@@ -74,9 +74,9 @@ How a task is done with these, in order, each step's result feeding the next; sk
 - draft_inbound_load: get_inbound_message → draft_inbound_load
 - discard_inbound_load: get_inbound_message → discard_inbound_load
 - create_inbound_load: get_inbound_message → create_inbound_load
-- attach_document_to_shipment: get_inbound_message → search_shipments → attach_document_to_shipment
+- shipment_attach_document: get_inbound_message → shipment_list → shipment_attach_document
 - quote_shipment: list_customers → list_service_types → list_locations → quote_shipment
-- accept_edi_tender: list_edi_transfers → get_edi_transfer → get_customer → search_shipments → quote_shipment → accept_edi_tender
+- accept_edi_tender: list_edi_transfers → get_edi_transfer → get_customer → shipment_list → quote_shipment → accept_edi_tender
 - decline_edi_tender: list_edi_transfers → get_edi_transfer → decline_edi_tender
 
 ## Trenova itself

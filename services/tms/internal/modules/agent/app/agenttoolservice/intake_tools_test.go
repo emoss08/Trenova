@@ -155,7 +155,7 @@ func TestCreateShipment_ValidateRefusesWhatTheServiceWould(t *testing.T) {
 		Imports:   &fakeImportCompleter{},
 	})
 	validator, ok := tool.(agentports.ToolValidator)
-	require.True(t, ok, "create_shipment checks a call before it is filed")
+	require.True(t, ok, "shipment_create checks a call before it is filed")
 
 	payload := shipmentPayload(
 		pulid.MustNew("cust_"), pulid.MustNew("st_"), pulid.MustNew("loc_"), pulid.MustNew("loc_"),

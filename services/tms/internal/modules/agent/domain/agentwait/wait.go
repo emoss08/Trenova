@@ -163,20 +163,20 @@ var (
 type Wait struct {
 	bun.BaseModel `bun:"table:agent_waits,alias:awt" json:"-"`
 
-	ID                pulid.ID          `json:"id"                      bun:"id,pk,type:VARCHAR(100)"`
-	OrganizationID    pulid.ID          `json:"organizationId"          bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID    pulid.ID          `json:"businessUnitId"          bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	Kind              Kind              `json:"kind"                    bun:"kind,type:VARCHAR(50),notnull"`
-	Condition         *Condition        `json:"condition"               bun:"condition,type:JSONB,notnull"`
-	WatchID           pulid.ID          `json:"watchId,omitempty"       bun:"watch_id,type:VARCHAR(100),nullzero"`
-	Description       string            `json:"description"             bun:"description,type:TEXT,notnull"`
-	Then              string            `json:"nextStep,omitempty"      bun:"then_note,type:TEXT,nullzero"`
-	AgentDefinitionID pulid.ID          `json:"agentDefinitionId"       bun:"agent_definition_id,type:VARCHAR(100),notnull"`
-	ThreadID          pulid.ID          `json:"threadId,omitempty"      bun:"thread_id,type:VARCHAR(100),nullzero"`
-	UserID            pulid.ID          `json:"userId,omitempty"        bun:"user_id,type:VARCHAR(100),nullzero"`
-	RunID             pulid.ID          `json:"runId,omitempty"         bun:"run_id,type:VARCHAR(100),nullzero"`
-	SubjectType       agent.SubjectType `json:"subjectType,omitempty"   bun:"subject_type,type:VARCHAR(50),nullzero"`
-	SubjectID         pulid.ID          `json:"subjectId,omitempty"     bun:"subject_id,type:VARCHAR(100),nullzero"`
+	ID                pulid.ID          `json:"id"                    bun:"id,pk,type:VARCHAR(100)"`
+	OrganizationID    pulid.ID          `json:"organizationId"        bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	BusinessUnitID    pulid.ID          `json:"businessUnitId"        bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
+	Kind              Kind              `json:"kind"                  bun:"kind,type:VARCHAR(50),notnull"`
+	Condition         *Condition        `json:"condition"             bun:"condition,type:JSONB,notnull"`
+	WatchID           pulid.ID          `json:"watchId,omitempty"     bun:"watch_id,type:VARCHAR(100),nullzero"`
+	Description       string            `json:"description"           bun:"description,type:TEXT,notnull"`
+	Then              string            `json:"nextStep,omitempty"    bun:"then_note,type:TEXT,nullzero"`
+	AgentDefinitionID pulid.ID          `json:"agentDefinitionId"     bun:"agent_definition_id,type:VARCHAR(100),notnull"`
+	ThreadID          pulid.ID          `json:"threadId,omitempty"    bun:"thread_id,type:VARCHAR(100),nullzero"`
+	UserID            pulid.ID          `json:"userId,omitempty"      bun:"user_id,type:VARCHAR(100),nullzero"`
+	RunID             pulid.ID          `json:"runId,omitempty"       bun:"run_id,type:VARCHAR(100),nullzero"`
+	SubjectType       agent.SubjectType `json:"subjectType,omitempty" bun:"subject_type,type:VARCHAR(50),nullzero"`
+	SubjectID         pulid.ID          `json:"subjectId,omitempty"   bun:"subject_id,type:VARCHAR(100),nullzero"`
 	// Taint is the outside content the work had read when it set the wait.
 	// The work picks up with it, so a wait never launders what was read.
 	Taint         *agent.RunTaint `json:"-"                       bun:"taint,type:JSONB,nullzero"`
@@ -200,7 +200,7 @@ type Wait struct {
 	SignInCode *SignInCode `json:"signInCode,omitempty" bun:"-"`
 	// WebWatch is set on an open web watch wait, when a conversation's waits
 	// are listed for its owner.
-	WebWatch *WebWatchSummary `json:"webWatch,omitempty"   bun:"-"`
+	WebWatch *WebWatchSummary `json:"webWatch,omitempty" bun:"-"`
 }
 
 // WebWatchSummary is the watch a wait follows, as the conversation shows it:

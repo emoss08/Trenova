@@ -36,7 +36,7 @@ const fieldWriteOffReason = "writeOffReason"
 
 const fieldWrittenOffAt = "writtenOffAt"
 
-const advanceSourcesTool = "list_pay_advances"
+const advanceSourcesTool = "settlement_list_advances"
 
 const advanceSensitiveMark = "amountMinor"
 
@@ -56,7 +56,7 @@ func ProvideIssuePayAdvanceTool(s *driverpayservice.Service) agentports.AgentToo
 	return &IssuePayAdvanceTool{Advances: s}
 }
 
-func (t *IssuePayAdvanceTool) Name() string { return "issue_pay_advance" }
+func (t *IssuePayAdvanceTool) Name() string { return "settlement_issue_advance" }
 
 func (t *IssuePayAdvanceTool) Description() string {
 	return "Propose recording a cash or money-code advance a driver was given against future " +
@@ -78,7 +78,7 @@ func (t *IssuePayAdvanceTool) ParamSchema() map[string]any {
 		ParamAdvanceRef: common.StringProperty("The money code, card transaction or receipt "+
 			"number.", common.MaxPayReferenceChars),
 		ParamIssuedDate: agenttoolschema.Date("The day it was given; leave it out for today."),
-		common.ParamDriverPayNotes: common.StringProperty("Why it was given, for payroll.",
+		common.ParamNote: common.StringProperty("Why it was given, for payroll.",
 			common.MaxDriverPayNotes),
 	}, common.ParamWorkerID, common.ParamDriverPayAmount, ParamAdvanceSource)
 }
@@ -129,7 +129,7 @@ func (t *IssuePayAdvanceTool) entity(
 	}
 	notes, err := common.BoundedString(
 		params.Params,
-		common.ParamDriverPayNotes,
+		common.ParamNote,
 		common.MaxDriverPayNotes,
 		false,
 	)
@@ -216,7 +216,7 @@ func (t *IssuePayAdvanceTool) Preview(
 			ParamAdvanceSource,
 			ParamAdvanceRef,
 			ParamIssuedDate,
-			common.ParamDriverPayNotes,
+			common.FieldNotes,
 		),
 		toolpreview.Volatile(ParamIssuedDate),
 		toolpreview.WithRefs(map[string]permission.Resource{
@@ -256,7 +256,9 @@ func ProvideWriteOffPayAdvanceTool(s *driverpayservice.Service) agentports.Agent
 	return &WriteOffPayAdvanceTool{Advances: s}
 }
 
-func (t *WriteOffPayAdvanceTool) Name() string { return "write_off_pay_advance" }
+func (t *WriteOffPayAdvanceTool) Name() string { return "settlement_forgive_advance" }
+
+func (t *WriteOffPayAdvanceTool) SearchTerms() []string { return []string{"write off"} }
 
 func (t *WriteOffPayAdvanceTool) Description() string {
 	return "Propose writing off what is still owed on a driver's pay advance, so no more " +

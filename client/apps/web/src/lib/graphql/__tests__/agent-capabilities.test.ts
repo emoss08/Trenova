@@ -12,7 +12,7 @@ import {
 } from "../agent-capabilities";
 
 const read: AgentCapabilityTool = {
-  key: "list_invoices",
+  key: "invoice_list",
   label: "List invoices",
   write: false,
   mode: "Allowed",
@@ -21,7 +21,7 @@ const read: AgentCapabilityTool = {
 };
 
 const post: AgentCapabilityTool = {
-  key: "post_invoices",
+  key: "invoice_post",
   label: "Post invoices",
   write: true,
   mode: "AskFirst",

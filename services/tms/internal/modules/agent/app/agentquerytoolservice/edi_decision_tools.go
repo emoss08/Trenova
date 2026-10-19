@@ -504,9 +504,9 @@ func (t *listEDIMessagesTool) ParamSchema() map[string]any {
 			"Pending (none yet), Accepted, AcceptedWithErrors (accepted, with errors the "+
 			"partner noted) or Rejected.", messageAckStatuses),
 		paramShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
-			"Only messages about this shipment, by id from search_shipments or get_shipment."),
+			"Only messages about this shipment, by id from shipment_list or shipment_get."),
 		paramInvoiceID: agenttoolschema.RecordIDText(permission.ResourceInvoice,
-			"Only messages for this invoice, by id from list_invoices or get_invoice."),
+			"Only messages for this invoice, by id from invoice_list or invoice_get."),
 		paramCreatedAfter: intParam("Only messages created at or after this instant, in " +
 			"whole Unix seconds."),
 		paramCreatedBefore: intParam("Only messages created before this instant, in whole " +

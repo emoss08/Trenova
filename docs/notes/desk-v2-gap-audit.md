@@ -400,7 +400,7 @@ Paths: W=client/apps/web/src/routes/desk/_components/artifacts/desk-workspace.ts
   - document lineage/versions (add KindDocument to lineage or a version table)
   - export: PDF/DOCX render endpoint (none exists; `/documents/{id}/download/` is for uploaded documents). Markdown/text can stay client-side.
 
-**(c) Extraction.** There is no `extract`/`extraction` Kind in `assistantartifact.AllKinds()` (enums.go). The only agent path is `get_shipment_draft` (agentquerytoolservice/intake_tools.go:45), which `artifactFromObservation` turns into a generic **entity_card** through the `get_` prefix (artifacts.go:708). Its draft view has confidence but no bounding boxes or pages. To build: KindExtraction, a mapping from `get_shipment_draft` and documentintelligenceservice results (fields, confidence, bbox, page, classification %), and "Create shipment from this" as a proposal.
+**(c) Extraction.** There is no `extract`/`extraction` Kind in `assistantartifact.AllKinds()` (enums.go). The only agent path is `intake_get_draft` (agentquerytoolservice/intake_tools.go:45), which `artifactFromObservation` turns into a generic **entity_card** through the `get_` prefix (artifacts.go:708). Its draft view has confidence but no bounding boxes or pages. To build: KindExtraction, a mapping from `intake_get_draft` and documentintelligenceservice results (fields, confidence, bbox, page, classification %), and "Create shipment from this" as a proposal.
 
 **(d) CSV.**
 - Table export is client-side only (artifact-export.ts), so a truncated table loses rows.

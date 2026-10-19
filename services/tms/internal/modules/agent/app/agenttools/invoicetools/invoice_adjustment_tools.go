@@ -178,7 +178,7 @@ func adjustmentLinesProperty() map[string]any {
 			toolschema.KeyType: toolschema.TypeObject,
 			toolschema.KeyProperties: map[string]any{
 				paramInvoiceLineID: agenttoolschema.KindID(
-					"The line's id, from get_invoice's lines.", permission.KindInvoiceLine),
+					"The line's id, from invoice_get's lines.", permission.KindInvoiceLine),
 				paramCreditAmount: common.StringProperty(
 					"How much of the line to credit, as a decimal.", 0),
 				paramCreditQuantity: common.StringProperty(
@@ -202,12 +202,12 @@ func adjustmentLinesProperty() map[string]any {
 func supportingDocumentsProperty() map[string]any {
 	return agenttoolschema.RecordIDs(permission.ResourceDocument,
 		"Documents on the invoice's shipments that support it, from search_documents or "+
-			"get_shipment.", maxAdjustmentDocuments)
+			"shipment_get.", maxAdjustmentDocuments)
 }
 
 func adjustmentIDProperty(status string) map[string]any {
 	return agenttoolschema.KindID(agenttoolschema.IDDescription("The "+status+" adjustment",
-		"list_invoice_adjustments or get_invoice_adjustment"), permission.KindInvoiceAdjustment)
+		"invoice_list_adjustments or invoice_get_adjustment"), permission.KindInvoiceAdjustment)
 }
 
 func optionalPositiveDecimal(fields map[string]any, key string) (decimal.Decimal, error) {
@@ -358,8 +358,8 @@ type submissionPlan struct {
 
 func NewSubmitInvoiceAdjustmentTool(adjustments invoiceAdjuster) agentports.AgentTool {
 	return common.NewReportingReceivableTool(&common.ReceivableSpec{
-		Name:        "submit_invoice_adjustment",
-		Recipe:      []string{"get_invoice", "submit_invoice_adjustment"},
+		Name:        "invoice_submit_adjustment",
+		Recipe:      []string{toolInvoiceGet, "invoice_submit_adjustment"},
 		SearchTerms: []string{"credit and rebill", "rebill"},
 		Description: "Propose crediting, rebilling, reversing or writing off posted invoices. " +
 			"Give adjustments, one per invoice and up to 25 at once, or draftAdjustmentId to " +
@@ -390,7 +390,7 @@ func NewSubmitInvoiceAdjustmentTool(adjustments invoiceAdjuster) agentports.Agen
 					toolschema.KeyProperties: map[string]any{
 						common.ParamInvoiceID: agenttoolschema.RecordIDText(
 							permission.ResourceInvoice,
-							"The posted invoice, from list_invoices or get_invoice.",
+							"The posted invoice, from invoice_list or invoice_get.",
 						),
 						paramAdjustmentKind: adjustmentKindProperty(),
 						paramRebillStrategy: rebillStrategyProperty(),
@@ -691,11 +691,11 @@ func adjustmentResult(adjustment *invoiceadjustment.InvoiceAdjustment) *agent.To
 
 func NewSaveInvoiceAdjustmentDraftTool(adjustments invoiceAdjuster) agentports.AgentTool {
 	return common.NewReportingReceivableTool(&common.ReceivableSpec{
-		Name: "save_invoice_adjustment_draft",
+		Name: "invoice_save_adjustment_draft",
 		Description: "Save a draft credit, rebill, reversal or write-off on a posted invoice for " +
 			"a biller to review and submit; nothing is credited until it is submitted. Give " +
 			"invoiceId for a new draft, or adjustmentId to rewrite a draft already saved. The " +
-			"result names the draft, which submit_invoice_adjustment takes as draftAdjustmentId.",
+			"result names the draft, which invoice_submit_adjustment takes as draftAdjustmentId.",
 		Resource:    permission.ResourceInvoice,
 		Operation:   permission.OpUpdate,
 		Egress:      agent.EgressInternal,
@@ -710,7 +710,7 @@ func NewSaveInvoiceAdjustmentDraftTool(adjustments invoiceAdjuster) agentports.A
 		Properties: map[string]any{
 			ParamAdjustmentID: adjustmentIDProperty("draft"),
 			common.ParamInvoiceID: agenttoolschema.RecordIDText(permission.ResourceInvoice,
-				"The posted invoice a new draft adjusts, from list_invoices or get_invoice. "+
+				"The posted invoice a new draft adjusts, from invoice_list or invoice_get. "+
 					"Beside adjustmentId it must be that draft's invoice."),
 			paramAdjustmentKind: adjustmentKindProperty(),
 			paramRebillStrategy: rebillStrategyProperty(),
@@ -859,7 +859,7 @@ type adjustmentDecision struct {
 
 func NewApproveInvoiceAdjustmentTool(adjustments invoiceAdjuster) agentports.AgentTool {
 	return newDecisionTool(adjustments, true, &common.ReceivableSpec{
-		Name: "approve_invoice_adjustment",
+		Name: "invoice_approve_adjustment",
 		Description: "Propose approving an invoice adjustment that waits for approval, which " +
 			"executes it: the credit memo and any replacement invoice are made and posted. It is " +
 			"checked again against the invoice as it stands, as execution does. A person always " +
@@ -880,7 +880,7 @@ func NewApproveInvoiceAdjustmentTool(adjustments invoiceAdjuster) agentports.Age
 
 func NewRejectInvoiceAdjustmentTool(adjustments invoiceAdjuster) agentports.AgentTool {
 	return newDecisionTool(adjustments, false, &common.ReceivableSpec{
-		Name:        "reject_invoice_adjustment",
+		Name:        "invoice_reject_adjustment",
 		SearchTerms: []string{"deny adjustment", "decline adjustment"},
 		Description: "Propose rejecting an invoice adjustment that waits for approval, with the " +
 			"reason the submitter will read. Nothing is credited and the invoice is left as it " +

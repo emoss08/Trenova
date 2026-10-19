@@ -76,7 +76,7 @@ func TestRecord_GroupsSeveralPendingProposalsIntoAPlan(t *testing.T) {
 	t.Parallel()
 
 	plans := &capturingPlans{}
-	executed := pendingAction("add_shipment_comment")
+	executed := pendingAction("shipment_add_comment")
 	executed.Executed = true
 	result := recordActions(
 		t,
@@ -123,9 +123,9 @@ func TestRecord_AWithdrawnProposalIsSupersededAndOutOfThePlan(t *testing.T) {
 	t.Parallel()
 
 	plans := &capturingPlans{}
-	withdrawn := pendingAction("create_shipment")
+	withdrawn := pendingAction("shipment_create")
 	withdrawn.Withdrawn = true
-	result := recordActions(t, plans, withdrawn, pendingAction("create_shipment"))
+	result := recordActions(t, plans, withdrawn, pendingAction("shipment_create"))
 
 	assert.Nil(t, result.Plan)
 	assert.Empty(t, plans.created)

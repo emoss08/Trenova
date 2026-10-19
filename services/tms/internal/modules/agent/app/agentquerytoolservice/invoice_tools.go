@@ -24,8 +24,15 @@ type invoiceReader interface {
 		ctx context.Context,
 		req invoiceports.GetInvoiceByIDRequest,
 	) (*invoice.Invoice, error)
+	GetByIDs(
+		ctx context.Context,
+		req invoiceports.GetInvoicesByIDsRequest,
+	) ([]*invoice.Invoice, error)
 }
 
+// getInvoiceTool reads invoices by id: one in full, with every line, its
+// totals and its payment and dispute state, or several as one table a biller
+// checks before posting them.
 type getInvoiceTool struct {
 	invoices invoiceReader
 	access   fieldAccess
@@ -38,25 +45,36 @@ func newGetInvoiceTool(
 	return &getInvoiceTool{invoices: invoices, access: newFieldAccess(permissions)}
 }
 
-func (t *getInvoiceTool) Name() string { return "get_invoice" }
+func (t *getInvoiceTool) Name() string { return "invoice_get" }
 
 func (t *getInvoiceTool) Description() string {
-	return "Retrieve one invoice by id, with its line items, totals, payment and dispute " +
-		"state. Each line's id is what an invoice adjustment names. Use list_invoices first " +
-		"when you have a number or are looking for what is unpaid, and get_invoices to check " +
-		"several at once. Amounts and the memo are " +
-		"left out, and named in withheldByAccess, when your data access does not reach them."
+	return "Retrieve invoices by id: one in full, or up to 50 in one call as a table, for " +
+		"example to check a batch of drafts before posting them. One invoice comes with its " +
+		"line items, totals, payment and dispute state; a table row carries the status, " +
+		"totals, payment state and lines. Each line's id is what an invoice adjustment names. Use invoice_list first when you " +
+		"have a number or are looking for what is unpaid. An id that is not an invoice of " +
+		"this organization is named in the note. Amounts and the memo are left out, and " +
+		"named in withheldByAccess, when your data access does not reach them."
+}
+
+func (t *getInvoiceTool) SearchTerms() []string {
+	return []string{"invoices"}
 }
 
 func (t *getInvoiceTool) ParamSchema() map[string]any {
-	return idSchema(
-		"invoiceId",
-		agenttoolschema.RecordIDText(
-			permission.ResourceInvoice,
-			"The invoice's id, from list_invoices, list_ar_open_items "+
-				"or the page you are on.",
-		),
-	)
+	return map[string]any{
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
+			paramInvoiceIDs: agenttoolschema.RecordIDs(
+				permission.ResourceInvoice,
+				"The invoices' ids, from invoice_list, "+
+					"list_ar_open_items or the page you are on.",
+				maxBatchInvoices,
+			),
+		},
+		toolschema.KeyRequired:             []string{paramInvoiceIDs},
+		toolschema.KeyAdditionalProperties: false,
+	}
 }
 
 func (t *getInvoiceTool) Policy() agentports.ToolPolicy {
@@ -71,11 +89,23 @@ func (t *getInvoiceTool) Query(
 		return nil, err
 	}
 
-	id, err := requirePulid(params.Params, "invoiceId")
+	ids, err := requireIDList(params.Params, paramInvoiceIDs, maxBatchInvoices)
 	if err != nil {
 		return nil, err
 	}
+	ids = sliceutils.Dedupe(ids)
+	if len(ids) == 1 {
+		return t.one(ctx, params, ids[0])
+	}
 
+	return t.several(ctx, params, ids)
+}
+
+func (t *getInvoiceTool) one(
+	ctx context.Context,
+	params *agentports.QueryToolParams,
+	id pulid.ID,
+) (any, error) {
 	entity, err := t.invoices.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         id,
 		TenantInfo: tenantOf(params),
@@ -275,57 +305,6 @@ const (
 	batchInvoiceSearchFor = "invoices by id"
 )
 
-type invoiceBatchReader interface {
-	GetByIDs(
-		ctx context.Context,
-		req invoiceports.GetInvoicesByIDsRequest,
-	) ([]*invoice.Invoice, error)
-}
-
-type getInvoicesTool struct {
-	invoices invoiceBatchReader
-	access   fieldAccess
-}
-
-func newGetInvoicesTool(
-	invoices invoiceports.InvoiceRepository,
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return &getInvoicesTool{invoices: invoices, access: newFieldAccess(permissions)}
-}
-
-func (t *getInvoicesTool) Name() string { return "get_invoices" }
-
-func (t *getInvoicesTool) BatchOf() string { return "get_invoice" }
-
-func (t *getInvoicesTool) Description() string {
-	return "Retrieve several invoices by id in one call, each with its status, totals, " +
-		"payment state and line items. Use it instead of calling get_invoice once per " +
-		"invoice, for example to check a batch of drafts before posting them. Up to 50; an " +
-		"id that is not an invoice of this organization is named in the note. Amounts are " +
-		"left out, and named in withheldByAccess, when your data access does not reach them."
-}
-
-func (t *getInvoicesTool) ParamSchema() map[string]any {
-	return map[string]any{
-		toolschema.KeyType: toolschema.TypeObject,
-		toolschema.KeyProperties: map[string]any{
-			paramInvoiceIDs: agenttoolschema.RecordIDs(
-				permission.ResourceInvoice,
-				"The invoices' ids, from list_invoices, "+
-					"list_ar_open_items or the page you are on.",
-				maxBatchInvoices,
-			),
-		},
-		toolschema.KeyRequired:             []string{paramInvoiceIDs},
-		toolschema.KeyAdditionalProperties: false,
-	}
-}
-
-func (t *getInvoicesTool) Policy() agentports.ToolPolicy {
-	return readPolicy(t.Name(), readSpec{resource: permission.ResourceInvoice})
-}
-
 type invoiceBatchRow struct {
 	ID               string              `json:"id"`
 	Number           string              `json:"number"`
@@ -344,20 +323,11 @@ type invoiceBatchRow struct {
 	LinesTruncated   bool                `json:"linesTruncated,omitempty"`
 }
 
-func (t *getInvoicesTool) Query(
+func (t *getInvoiceTool) several(
 	ctx context.Context,
 	params *agentports.QueryToolParams,
+	ids []pulid.ID,
 ) (any, error) {
-	if err := guardQuery(params); err != nil {
-		return nil, err
-	}
-
-	ids, err := requireIDList(params.Params, paramInvoiceIDs, maxBatchInvoices)
-	if err != nil {
-		return nil, err
-	}
-	ids = sliceutils.Dedupe(ids)
-
 	entities, err := t.invoices.GetByIDs(ctx, invoiceports.GetInvoicesByIDsRequest{
 		TenantInfo: tenantOf(params),
 		InvoiceIDs: ids,

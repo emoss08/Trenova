@@ -143,7 +143,7 @@ func readHoldPatch(params *agentports.ToolExecuteParams) (*holdPatch, error) {
 	}
 	if patch.notes, err = common.OptionalBoundedText(
 		params.Params,
-		common.FieldNotes,
+		common.ParamNote,
 		maxHoldNoteChars,
 	); err != nil {
 		return nil, err
@@ -183,11 +183,11 @@ func classifyHoldVisibility(
 
 func NewUpdateShipmentHoldTool(holds holdUpdater) agentports.AgentTool {
 	base := common.NewReportingReceivableTool(&common.ReceivableSpec{
-		Name:     "update_shipment_hold",
+		Name:     "shipment_update_hold",
 		Artifact: common.ShipmentRecordEntity,
-		Description: "Change an active hold on a shipment: its severity, its notes, what it " +
+		Description: "Change an active hold on a shipment: its severity, its note, what it " +
 			"blocks (dispatch, delivery, billing) and whether the customer sees it. Send only " +
-			"what changes; everything else stays as it is. Use release_shipment_hold to clear " +
+			"what changes; everything else stays as it is. Use shipment_release_hold to clear " +
 			"a hold rather than unblocking everything. Making a hold visible to the customer " +
 			"is shown to them, so only do it when the person asked.",
 		Resource:    permission.ResourceShipmentHold,
@@ -202,12 +202,12 @@ func NewUpdateShipmentHoldTool(holds holdUpdater) agentports.AgentTool {
 			common.ParamShipmentID: common.ShipmentIDProperty("The shipment the hold is on"),
 			ParamHoldID: agenttoolschema.RecordIDText(
 				permission.ResourceShipmentHold,
-				"The hold to change, from the holds get_shipment lists or "+
+				"The hold to change, from the holds shipment_get lists or "+
 					"the page you are on. Never guess one.",
 			),
 			ParamHoldSeverity: agenttoolschema.Enum("How strongly it applies.", holdSeverities),
-			common.FieldNotes: common.StringProperty(
-				"What the hold waits on, replacing the notes on it.",
+			common.ParamNote: common.StringProperty(
+				"What the hold waits on, replacing the note on it.",
 				maxHoldNoteChars,
 			),
 			paramBlocksDispatch: common.BooleanProperty(

@@ -34,6 +34,59 @@ func KeepEmpty(property map[string]any) map[string]any {
 	return property
 }
 
+func Clamped(property map[string]any) map[string]any {
+	property[KeyClamp] = true
+
+	return property
+}
+
+func clamps(property map[string]any) bool {
+	clamped, _ := property[KeyClamp].(bool)
+
+	return clamped
+}
+
+func boundOf(property map[string]any, key string) (float64, bool) {
+	switch bound := property[key].(type) {
+	case int:
+		return float64(bound), true
+	case int64:
+		return float64(bound), true
+	case float64:
+		return bound, true
+	default:
+		return 0, false
+	}
+}
+
+func (c *coercer) clamp(property map[string]any, value any, path string) (any, bool) {
+	number, ok := value.(float64)
+	if !ok {
+		if whole, isInt := value.(int); isInt {
+			number, ok = float64(whole), true
+		}
+	}
+	if !ok || !clamps(property) {
+		return value, false
+	}
+	if most, bounded := boundOf(property, KeyMaximum); bounded && number > most {
+		c.note(path, "%s %s is past its most, %s, and was read as %s",
+			path, strconv.FormatFloat(number, 'f', -1, 64),
+			strconv.FormatFloat(most, 'f', -1, 64), strconv.FormatFloat(most, 'f', -1, 64))
+
+		return most, true
+	}
+	if least, bounded := boundOf(property, KeyMinimum); bounded && number < least {
+		c.note(path, "%s %s is below its least, %s, and was read as %s",
+			path, strconv.FormatFloat(number, 'f', -1, 64),
+			strconv.FormatFloat(least, 'f', -1, 64), strconv.FormatFloat(least, 'f', -1, 64))
+
+		return least, true
+	}
+
+	return value, false
+}
+
 func keepsEmpty(property map[string]any) bool {
 	clears, _ := property[KeyKeepEmpty].(bool)
 
@@ -305,7 +358,10 @@ func (c *coercer) value(property map[string]any, value any, path string) (any, b
 	case "array":
 		return c.array(property, value, path)
 	case "integer", "number":
-		return c.number(kind, value, path)
+		read, changed := c.number(kind, value, path)
+		bounded, clamped := c.clamp(property, read, path)
+
+		return bounded, changed || clamped
 	case "string":
 		return c.text(property, value, path)
 	case "boolean":

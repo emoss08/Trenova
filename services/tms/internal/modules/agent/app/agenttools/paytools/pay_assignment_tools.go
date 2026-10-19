@@ -28,9 +28,9 @@ const ParamEndDate = "endDate"
 
 const maxAssignmentNotes = 1000
 
-const assignmentSourcesTool = "list_pay_assignments"
+const assignmentSourcesTool = "settlement_list_pay_assignments"
 
-const payProfileSourcesTool = "list_pay_profiles"
+const payProfileSourcesTool = "settlement_list_pay_profiles"
 
 const fieldSplitPercent = "splitPercent"
 
@@ -60,7 +60,7 @@ func ProvideAssignPayProfileTool(s *driverpayservice.Service) agentports.AgentTo
 	return &AssignPayProfileTool{Assignments: s}
 }
 
-func (t *AssignPayProfileTool) Name() string { return "assign_pay_profile" }
+func (t *AssignPayProfileTool) Name() string { return "settlement_assign_pay_profile" }
 
 func (t *AssignPayProfileTool) Description() string {
 	return "Propose putting a driver on a pay profile from a date, which sets how every " +
@@ -83,7 +83,7 @@ func (t *AssignPayProfileTool) ParamSchema() map[string]any {
 		),
 		paramSplitPercent: common.AmountProperty("The driver's share of each load, as a percent; " +
 			"50 for an even team split. Leave it out for 100."),
-		common.ParamDriverPayNotes: common.StringProperty("Why the driver moves to this profile.",
+		common.ParamNote: common.StringProperty("Why the driver moves to this profile.",
 			maxAssignmentNotes),
 	}, common.ParamWorkerID, ParamPayProfileID, common.ParamEffectiveFrom)
 }
@@ -129,7 +129,7 @@ func (t *AssignPayProfileTool) entity(
 	}
 	notes, err := common.BoundedString(
 		params.Params,
-		common.ParamDriverPayNotes,
+		common.ParamNote,
 		maxAssignmentNotes,
 		false,
 	)
@@ -250,7 +250,7 @@ func (t *AssignPayProfileTool) Preview(
 			profile.Name},
 		plan.entity,
 		toolpreview.Only(common.ParamWorkerID, common.FieldEffectiveFrom, common.FieldEffectiveTo,
-			fieldSplitPercent, common.ParamDriverPayNotes),
+			fieldSplitPercent, common.FieldNotes),
 		toolpreview.WithRefs(map[string]permission.Resource{
 			common.ParamWorkerID: permission.ResourceWorker,
 		}),
@@ -311,7 +311,7 @@ func ProvideEndPayAssignmentTool(s *driverpayservice.Service) agentports.AgentTo
 	return &EndPayAssignmentTool{Assignments: s}
 }
 
-func (t *EndPayAssignmentTool) Name() string { return "end_pay_assignment" }
+func (t *EndPayAssignmentTool) Name() string { return "settlement_end_pay_assignment" }
 
 func (t *EndPayAssignmentTool) Description() string {
 	return "Propose ending a driver's pay profile assignment on a date, such as when they " +

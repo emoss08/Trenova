@@ -47,7 +47,7 @@ What find_tools can load, by area of Trenova:
 - Triage (3 tools): customer communication, triage
 
 What a change you call does:
-- Changes that always record a proposal for a person to decide: raise_exception, flag_for_manual_review, wait_until, cancel_wait, send_detention_notice, escalate_detention, approve_detention, waive_detention, add_shipment_comment, dispute_detention, settle_detention_dispute
+- Changes that always record a proposal for a person to decide: raise_exception, flag_for_manual_review, wait_until, cancel_wait, send_detention_notice, escalate_detention, approve_detention, waive_detention, shipment_add_comment, dispute_detention, settle_detention_dispute
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: remember
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:

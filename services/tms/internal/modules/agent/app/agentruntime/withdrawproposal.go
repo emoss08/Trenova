@@ -15,7 +15,7 @@ import (
 A proposal the agent itself replaced, taken back before anyone sees it.
 
 A turn's proposals are filed together when it ends, and two or more become one
-plan the person approves whole. An agent that proposed create_shipment, saw it
+plan the person approves whole. An agent that proposed shipment_create, saw it
 had sent a field nobody asked for and proposed the corrected one told the
 person to reject the first; the approval box offered both as one plan, the
 single approval ran both, and the load was entered twice. Withdrawing the

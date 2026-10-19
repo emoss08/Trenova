@@ -6,9 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -17,7 +17,7 @@ import (
 func testCatalog() []agentdefinitionports.ToolCatalogEntry {
 	return []agentdefinitionports.ToolCatalogEntry{
 		{
-			Name:      "get_shipment",
+			Name:      "shipment_get",
 			Kind:      agentdefinitionports.ToolCatalogKindQuery,
 			Resource:  permission.ResourceShipment,
 			Operation: permission.OpRead,
@@ -55,7 +55,7 @@ func chatReply() *draftReply {
 		Instructions:    "Answer questions about customers and their shipments.",
 		Guardrails:      []string{"Never promise a delivery date."},
 		TriggerMode:     string(agentdefinition.TriggerChat),
-		Tools:           []draftTool{{Name: "get_shipment", Tier: string(agent.TierPropose)}},
+		Tools:           []draftTool{{Name: "shipment_get", Tier: string(agent.TierPropose)}},
 		AutonomyCeiling: string(agent.TierActWithApproval),
 		OutputMode:      string(agentdefinition.OutputConversational),
 	}
@@ -96,7 +96,7 @@ func TestSanitizeDraftKeepsAValidDraftAndStartsItInShadow(t *testing.T) {
 	assert.Equal(t, "Customer desk", req.Name)
 	assert.Equal(t, agentdefinition.IconHeadset, req.Icon)
 	assert.Equal(t, agentdefinition.AccentTeal, req.Accent)
-	assert.Equal(t, []string{"get_shipment"}, req.ToolNames)
+	assert.Equal(t, []string{"shipment_get"}, req.ToolNames)
 	assert.Empty(t, req.ToolTiers)
 	assert.Equal(t, agent.TierActWithApproval, req.AutonomyCeiling)
 	assert.Equal(t, agentdefinition.TriggerChat, req.TriggerMode)
@@ -111,16 +111,16 @@ func TestSanitizeDraftDropsToolsTheRegistryDoesNotOffer(t *testing.T) {
 
 	reply := chatReply()
 	reply.Tools = []draftTool{
-		{Name: "get_shipment"},
+		{Name: "shipment_get"},
 		{Name: "exec_shell"},
-		{Name: "get_shipment"},
+		{Name: "shipment_get"},
 		{Name: "remember"},
 		{Name: "  update_customer  "},
 	}
 
 	req, notes := sanitize(t, reply)
 
-	assert.Equal(t, []string{"get_shipment", "update_customer"}, req.ToolNames)
+	assert.Equal(t, []string{"shipment_get", "update_customer"}, req.ToolNames)
 	require.Len(t, notes, 1)
 	assert.Equal(t, "toolNames", notes[0].Field)
 	assert.Equal(t, "exec_shell", notes[0].Value)
@@ -134,14 +134,14 @@ func TestSanitizeDraftCapsTiersAtTheToolAndTheCeiling(t *testing.T) {
 	reply.Tools = []draftTool{
 		{Name: "update_customer", Tier: string(agent.TierAutoExecute)},
 		{Name: "send_customer_email", Tier: string(agent.TierAutoExecute)},
-		{Name: "get_shipment", Tier: string(agent.TierAutoExecute)},
+		{Name: "shipment_get", Tier: string(agent.TierAutoExecute)},
 	}
 
 	req, notes := sanitize(t, reply)
 
 	assert.Equal(t, agent.TierAutoExecute, req.ToolTiers["update_customer"])
 	assert.Equal(t, agent.TierActWithApproval, req.ToolTiers["send_customer_email"])
-	assert.NotContains(t, req.ToolTiers, "get_shipment")
+	assert.NotContains(t, req.ToolTiers, "shipment_get")
 	assert.Equal(t, []string{"toolTiers.send_customer_email"}, noteFields(notes))
 
 	reply.AutonomyCeiling = string(agent.TierPropose)
@@ -331,9 +331,9 @@ func TestParseDraftReplyRefusesEmptyAndUnreadableText(t *testing.T) {
 	require.Error(t, err)
 
 	reply, err := parseDraftReply(
-		`{"name":"Desk","instructions":"Help.","tools":[{"name":"get_shipment","tier":"Propose"}]}`,
+		`{"name":"Desk","instructions":"Help.","tools":[{"name":"shipment_get","tier":"Propose"}]}`,
 	)
 	require.NoError(t, err)
 	assert.Equal(t, "Desk", reply.Name)
-	assert.Equal(t, []draftTool{{Name: "get_shipment", Tier: "Propose"}}, reply.Tools)
+	assert.Equal(t, []draftTool{{Name: "shipment_get", Tier: "Propose"}}, reply.Tools)
 }

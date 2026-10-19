@@ -149,6 +149,7 @@ func (w *WorldState) read(call *agentports.ToolCall, summary string) {
 }
 
 func RecordsRead(name string, arguments map[string]any, summary string) []agent.EntityRef {
+	name = agentports.ReadingOrder(name)
 	if !strings.HasPrefix(name, "get_") || len(arguments) == 0 {
 		return nil
 	}

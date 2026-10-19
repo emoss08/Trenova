@@ -131,13 +131,15 @@ func (a amounts) minor(value int64) string {
 }
 
 func limitProperty() map[string]any {
-	return map[string]any{
-		toolschema.KeyType: toolschema.TypeInteger,
+	return toolschema.Clamped(map[string]any{
+		toolschema.KeyType:    toolschema.TypeInteger,
+		toolschema.KeyMinimum: 1,
+		toolschema.KeyMaximum: maxReceivableRows,
 		toolschema.KeyDescription: fmt.Sprintf(
-			"How many to return, at most %d.",
-			maxReceivableRows,
+			"How many to return: %d unless you ask, at most %d.",
+			defaultReceivableRows, maxReceivableRows,
 		),
-	}
+	})
 }
 
 func receivableLimit(params map[string]any) int {
@@ -195,20 +197,20 @@ func newListInvoiceAdjustmentsTool(
 	}
 }
 
-func (t *listInvoiceAdjustmentsTool) Name() string { return "list_invoice_adjustments" }
+func (t *listInvoiceAdjustmentsTool) Name() string { return "invoice_list_adjustments" }
 
 func (t *listInvoiceAdjustmentsTool) Description() string {
 	return "List the invoice adjustments on one invoice, drafts included, or those waiting " +
 		"for an approver. With invoiceId it lists every credit, rebill and reversal made or " +
 		"drafted against the invoice and its replacements; without it, the approval queue. " +
-		"Open one with get_invoice_adjustment."
+		"Open one with invoice_get_adjustment."
 }
 
 func (t *listInvoiceAdjustmentsTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
 		paramReceivableInvoice: agenttoolschema.RecordIDText(permission.ResourceInvoice,
-			"Optional: the invoice, from list_invoices or "+
-				"get_invoice. Leave it out for the approval queue."),
+			"Optional: the invoice, from invoice_list or "+
+				"invoice_get. Leave it out for the approval queue."),
 		paramLimit: limitProperty(),
 	})
 }
@@ -379,7 +381,7 @@ func newGetInvoiceAdjustmentTool(
 	return &getInvoiceAdjustmentTool{adjustments: adjustments, access: newFieldAccess(permissions)}
 }
 
-func (t *getInvoiceAdjustmentTool) Name() string { return "get_invoice_adjustment" }
+func (t *getInvoiceAdjustmentTool) Name() string { return "invoice_get_adjustment" }
 
 func (t *getInvoiceAdjustmentTool) Description() string {
 	return "Retrieve one invoice adjustment by id: its kind, status, approval, reason, the " +
@@ -389,7 +391,7 @@ func (t *getInvoiceAdjustmentTool) Description() string {
 func (t *getInvoiceAdjustmentTool) ParamSchema() map[string]any {
 	return idSchema(
 		paramAdjustmentID,
-		agenttoolschema.KindID("The adjustment's id, from list_invoice_adjustments.",
+		agenttoolschema.KindID("The adjustment's id, from invoice_list_adjustments.",
 			permission.KindInvoiceAdjustment),
 	)
 }
@@ -490,19 +492,19 @@ func newListInvoiceDisputesTool(
 	return &listInvoiceDisputesTool{disputes: disputes, access: newFieldAccess(permissions)}
 }
 
-func (t *listInvoiceDisputesTool) Name() string { return "list_invoice_disputes" }
+func (t *listInvoiceDisputesTool) Name() string { return "invoice_list_disputes" }
 
 func (t *listInvoiceDisputesTool) Description() string {
 	return "List the dispute cases on invoices, open and closed, newest first: the reason, " +
 		"the amount in dispute, the notes and how each was resolved. Find disputed invoices " +
-		"with list_invoices filtered to disputeStatus Disputed."
+		"with invoice_list filtered to disputeStatus Disputed."
 }
 
 func (t *listInvoiceDisputesTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
 		paramReceivableInvoices: agenttoolschema.RecordIDs(
 			permission.ResourceInvoice,
-			"The invoices, from list_invoices or get_invoice.",
+			"The invoices, from invoice_list or invoice_get.",
 			maxReceivableInvoices,
 		),
 	}, paramReceivableInvoices)
@@ -599,8 +601,8 @@ func (t *listCreditMemoApplicationsTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
 		paramReceivableInvoices: agenttoolschema.RecordIDs(
 			permission.ResourceInvoice,
-			"Invoices or credit memos, from list_invoices "+
-				"or get_invoice.",
+			"Invoices or credit memos, from invoice_list "+
+				"or invoice_get.",
 			maxReceivableInvoices,
 		),
 	}, paramReceivableInvoices)
@@ -704,10 +706,10 @@ func newListInvoiceRunsTool(
 	access := newFieldAccess(permissions)
 
 	return newListTool(listSpec{
-		name:         "list_invoice_runs",
+		name:         "invoice_list_runs",
 		entityPlural: "invoice runs",
 		summary: "List invoice runs, the reviewable batches of consolidated invoices for a " +
-			"billing period, by status, number or period. Open one with get_invoice_run to " +
+			"billing period, by status, number or period. Open one with invoice_get_run to " +
 			"see its groups and items.",
 		resource: permission.ResourceInvoiceRun,
 		config:   querybuilder.GetFieldConfiguration((*invoicerun.InvoiceRun)(nil)),
@@ -792,11 +794,11 @@ func newGetInvoiceRunTool(
 	return &getInvoiceRunTool{runs: runs, access: newFieldAccess(permissions)}
 }
 
-func (t *getInvoiceRunTool) Name() string { return "get_invoice_run" }
+func (t *getInvoiceRunTool) Name() string { return "invoice_get_run" }
 
 func (t *getInvoiceRunTool) Description() string {
 	return "Retrieve one invoice run by id with each group, the invoice it would make or made, " +
-		"and the items in it: the ids adjust_invoice_run_membership moves or excludes."
+		"and the items in it: the ids invoice_adjust_run moves or excludes."
 }
 
 func (t *getInvoiceRunTool) ParamSchema() map[string]any {
@@ -804,7 +806,7 @@ func (t *getInvoiceRunTool) ParamSchema() map[string]any {
 		paramInvoiceRunID,
 		agenttoolschema.RecordIDText(
 			permission.ResourceInvoiceRun,
-			"The run's id, from list_invoice_runs.",
+			"The run's id, from invoice_list_runs.",
 		),
 	)
 }
@@ -929,13 +931,13 @@ func newListOpenStatementsTool(
 	return &listOpenStatementsTool{runs: runs, access: newFieldAccess(permissions)}
 }
 
-func (t *listOpenStatementsTool) Name() string { return "list_open_statements" }
+func (t *listOpenStatementsTool) Name() string { return "invoice_list_open_statements" }
 
 func (t *listOpenStatementsTool) Description() string {
 	return "List the open billing periods of customers billed on statements, as they stand " +
 		"now. Each shows the period, the freight on it, the invoices it would make and what " +
 		"is held back. Name a customerId to see the shipments on theirs, which " +
-		"bill_statement_now can exclude."
+		"invoice_bill_statement can exclude."
 }
 
 func (t *listOpenStatementsTool) ParamSchema() map[string]any {
@@ -1043,7 +1045,7 @@ func newListInvoiceShareCandidatesTool(shares shareCandidateLister) agentports.A
 }
 
 func (t *listInvoiceShareCandidatesTool) Name() string {
-	return "list_invoice_share_candidates"
+	return "invoice_list_share_candidates"
 }
 
 func (t *listInvoiceShareCandidatesTool) Description() string {
@@ -1054,7 +1056,7 @@ func (t *listInvoiceShareCandidatesTool) Description() string {
 func (t *listInvoiceShareCandidatesTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
 		paramReceivableInvoice: agenttoolschema.RecordIDText(permission.ResourceInvoice,
-			"The invoice, from list_invoices or get_invoice."),
+			"The invoice, from invoice_list or invoice_get."),
 		paramQuery: stringParam("Optional: part of a name or username."),
 		paramLimit: limitProperty(),
 	}, paramReceivableInvoice)

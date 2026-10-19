@@ -676,10 +676,10 @@ func (s *Service) limits(
 	return limits, nil
 }
 
-// Label is a tool's name as a person reads it: post_invoices is "Post
-// invoices".
+// Label is a tool's name as a person reads it, in reading order:
+// invoice_post is "Post invoice".
 func Label(name string) string {
-	words := strings.FieldsFunc(name, func(r rune) bool {
+	words := strings.FieldsFunc(agentports.ReadingOrder(name), func(r rune) bool {
 		return r == '_' || r == '-' || r == '.'
 	})
 	if len(words) == 0 {

@@ -158,7 +158,7 @@ func newFileInboundAttachmentTool(
 				),
 				paramShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
 					"The shipment to file it on: the message's matched shipment from "+
-						"get_inbound_message, or one from search_shipments."),
+						"get_inbound_message, or one from shipment_list."),
 				paramDocumentTypeID: agenttoolschema.RecordIDText(
 					permission.ResourceDocumentType,
 					"Optional, for the whole file: what to file it as, from "+

@@ -39,31 +39,29 @@ You hold more tools than are loaded on this turn. The loaded ones are on this re
 
 What find_tools can load, by area of Trenova:
 - AI & agents (3 tools): agent exception, agent run
-- Billing (44 tools): accessorial charge, billing queue, customer, invoice, invoice run, rate matrix
+- Billing (39 tools): accessorial charge, billing queue, customer, invoice, invoice run, rate matrix
 - Desk (6 tools): desk
 - Detention (3 tools): detention
 - Documents (1 tool): document
 - Organization settings (1 tool): email profile
 - Reports (3 tools): report
-- Shipments (8 tools): shipment, shipment comment
+- Shipments (7 tools): shipment, shipment comment
 - Triage (2 tools): customer communication
 
 What a change you call does:
-- Changes that always record a proposal for a person to decide: flag_for_manual_review, wait_until, cancel_wait, transfer_to_billing, assign_billing_queue_billers, transition_items_to_in_review, hold_billing_queue_item, move_billing_item_to_exception, send_billing_item_back_to_ops, approve_billing_queue_item, approve_billing_queue_items, cancel_billing_queue_item, post_invoice, send_invoice, post_invoices, send_invoices, request_missing_docs, add_shipment_comment, create_invoice, update_invoice_draft, generate_invoice_pdf, void_invoice, create_invoice_memo, send_invoice_edi, save_invoice_adjustment_draft, submit_invoice_adjustment, approve_invoice_adjustment, reject_invoice_adjustment, build_invoice_run, adjust_invoice_run_membership, commit_invoice_run, cancel_invoice_run, bill_statement_now, share_invoice, reassign_billing_charge, manage_billing_transfer_run, add_shipment_charge, approve_detention, send_detention_notice
+- Changes that always record a proposal for a person to decide: flag_for_manual_review, wait_until, cancel_wait, billing_transfer, billing_assign_biller, billing_start_review, billing_hold_queue_item, billing_raise_exception, billing_return_to_operations, billing_approve_queue_item, billing_cancel_queue_item, invoice_post, invoice_send, shipment_request_documents, shipment_add_comment, invoice_create, invoice_update_draft, invoice_generate_pdf, invoice_void, invoice_create_memo, invoice_send_edi, invoice_save_adjustment_draft, invoice_submit_adjustment, invoice_approve_adjustment, invoice_reject_adjustment, invoice_build_run, invoice_adjust_run, invoice_commit_run, invoice_cancel_run, invoice_bill_statement, invoice_share, billing_reassign_charge, billing_manage_transfer_run, shipment_add_charge, approve_detention, send_detention_notice
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: remember, guide_profile
 
-Several records in one call: get_billing_queue_items does get_billing_queue_item for a list, assign_billing_queue_billers does assign_billing_queue_biller for a list, transition_items_to_in_review does transition_item_to_in_review for a list, approve_billing_queue_items does approve_billing_queue_item for a list, get_invoices does get_invoice for a list, post_invoices does post_invoice for a list, send_invoices does send_invoice for a list. When the person asks about several records, or for one change across several, call the list tool once with all of them, so a change is decided once on one card; never call the single tool once per record, and load the list tool with find_tools when it is not loaded.
-
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
-- transfer_to_billing: list_billing_transfer_candidates → transfer_to_billing
-- assign_billing_queue_billers: list_billing_queue_items → get_billing_queue_items → assign_billing_queue_billers
-- approve_billing_queue_items: list_billing_queue_items → get_billing_queue_items → approve_billing_queue_items
-- post_invoices: list_invoices → get_invoices → post_invoices
+- billing_transfer: billing_list_transfer_candidates → billing_transfer
+- billing_assign_biller: billing_list_queue_items → billing_get_queue_item → billing_assign_biller
+- billing_approve_queue_item: billing_list_queue_items → billing_get_queue_item → billing_approve_queue_item
+- invoice_post: invoice_list → invoice_get → invoice_post
 - run_report: list_reports → describe_report → run_report
-- submit_invoice_adjustment: get_invoice → submit_invoice_adjustment
-- build_invoice_run: list_open_statements → build_invoice_run → get_invoice_run → commit_invoice_run
-- share_invoice: list_invoice_share_candidates → share_invoice
-- add_shipment_charge: search_shipments → list_accessorial_charges → add_shipment_charge
+- invoice_submit_adjustment: invoice_get → invoice_submit_adjustment
+- invoice_build_run: invoice_list_open_statements → invoice_build_run → invoice_get_run → invoice_commit_run
+- invoice_share: invoice_list_share_candidates → invoice_share
+- shipment_add_charge: shipment_list → list_accessorial_charges → shipment_add_charge
 - approve_detention: list_detention_desk → get_detention_occurrence → approve_detention
 - send_detention_notice: get_detention_occurrence → send_detention_notice
 

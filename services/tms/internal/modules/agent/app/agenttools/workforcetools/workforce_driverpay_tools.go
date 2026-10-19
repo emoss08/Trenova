@@ -131,7 +131,7 @@ func disputeMovesMoney(params map[string]any) bool {
 
 func payDisputeIDProperty() map[string]any {
 	return agenttoolschema.RecordID(permission.ResourceSettlementDispute, "The pay dispute",
-		"get_driver_settlement's openDisputes, get_settlement_dispute or the page you are on")
+		"settlement_get_driver's openDisputes, settlement_get_dispute or the page you are on")
 }
 
 func disputeRecord(dispute *driversettlement.Dispute) toolpreview.Record {
@@ -165,10 +165,10 @@ type disputeStart struct {
 
 func newStartSettlementDisputeReviewTool(reviewer DriverPayReviewer) agentports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
-		"start_settlement_dispute_review",
+		"settlement_start_dispute_review",
 		"Move an open pay dispute a driver raised to under review, so the driver and the "+
 			"team see someone is looking into it. It decides nothing; "+
-			"resolve_settlement_dispute does.",
+			"settlement_resolve_dispute does.",
 		"Marks the dispute as being worked inside Trenova; the driver sees its status in "+
 			"Dash, and resolving it moves it on.",
 		permission.ResourceSettlementDispute,
@@ -276,7 +276,7 @@ func resolvePayDisputeRequest(
 
 func newResolveSettlementDisputeTool(reviewer DriverPayReviewer) agentports.AgentTool {
 	spec := targeting(personOnly(withSchema(wfSpec(
-		"resolve_settlement_dispute",
+		"settlement_resolve_dispute",
 		"Draft the decision on a driver's pay dispute for a person to approve. Approve or "+
 			"deny it with a resolution note the driver reads, and for an approval, an "+
 			"optional adjustment that pays the driver back on their open draft settlement, "+
@@ -299,7 +299,7 @@ func newResolveSettlementDisputeTool(reviewer DriverPayReviewer) agentports.Agen
 		paramAdjustmentLabel: common.StringProperty("What the adjustment is for, as the driver "+
 			"and payroll read it. Required with an adjustment.", common.MaxAdjustmentDescription),
 		common.ParamPayCodeID: agenttoolschema.RecordIDText(permission.ResourcePayCode,
-			"The pay code the adjustment posts under, from list_pay_codes. Leave it out for "+
+			"The pay code the adjustment posts under, from settlement_list_pay_codes. Leave it out for "+
 				"the default account."),
 	}, common.ParamDisputeID, paramDecision, paramResolutionNote)), common.ParamDisputeID,
 		permission.ResourceSettlementDispute)
@@ -309,9 +309,9 @@ func newResolveSettlementDisputeTool(reviewer DriverPayReviewer) agentports.Agen
 	spec.Reversible = false
 	spec.SearchTerms = []string{"pay dispute", "settlement dispute", "short pay", "resolve"}
 	spec.Recipe = []string{
-		"get_driver_settlement",
-		"get_settlement_dispute",
-		"resolve_settlement_dispute",
+		"settlement_get_driver",
+		"settlement_get_dispute",
+		"settlement_resolve_dispute",
 	}
 
 	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[

@@ -25,7 +25,7 @@ that the caller is stopped and told what would have worked.
 */
 func shipments() Resource {
 	return Resource{
-		Tool:     "list_shipments",
+		Tool:     "shipment_list",
 		Resource: permission.ResourceShipment,
 		Entity:   "shipments",
 		Fields: []Field{

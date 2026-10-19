@@ -75,7 +75,7 @@ scenarios:
     steps:
       - say: "acme's last delivered load that hasn't gone to billing yet, send it over"
         expect:
-          proposals: [{ tool: transfer_to_billing }]
+          proposals: [{ tool: billing_transfer }]
           maxFailedCalls: 1
       - decide: approve
         expect:
@@ -88,7 +88,7 @@ scenarios:
     steps:
       - say: "invoice the peak denver to phoenix load"
         expect:
-          noCalls: [create_invoice]
+          noCalls: [invoice_create]
           maxFailedCalls: 1
           replyIncludes: ["SEED-SHP-009"]
           facts:

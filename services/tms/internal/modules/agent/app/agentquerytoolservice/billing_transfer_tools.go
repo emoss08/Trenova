@@ -38,7 +38,7 @@ func newListBillingTransferCandidatesTool(
 }
 
 func (t *listBillingTransferCandidatesTool) Name() string {
-	return "list_billing_transfer_candidates"
+	return "billing_list_transfer_candidates"
 }
 
 func (t *listBillingTransferCandidatesTool) Description() string {
@@ -49,7 +49,7 @@ func (t *listBillingTransferCandidatesTool) Description() string {
 		"issues, decided by the checks the transfer itself makes. totals counts and sums " +
 		"the charges of each outcome per currency, so quote them rather than adding rows " +
 		"yourself. A question about what is waiting is answered from this list; propose a " +
-		"transfer only when asked to send them. To transfer, propose one transfer_to_billing: " +
+		"transfer only when asked to send them. To transfer, propose one billing_transfer: " +
 		"allTransferable with these " +
 		"same filters when every row that can go should go, or shipmentIds for a hand-picked " +
 		"set, rather than one call per shipment."

@@ -13,18 +13,18 @@ import (
 // a shipment ready to invoice. A step the organization added names no tool:
 // what it asks is the organization's own words, and any agent may try.
 var stepTools = map[StepKey][]string{
-	StepTrackDelivery:       {"get_shipment_tracking"},
-	StepRequestPOD:          {"request_missing_docs"},
-	StepRequestPaperwork:    {"request_missing_docs"},
-	StepReviewRate:          {"get_billing_queue_item", "explain_rate"},
+	StepTrackDelivery:       {"shipment_get_tracking"},
+	StepRequestPOD:          {"shipment_request_documents"},
+	StepRequestPaperwork:    {"shipment_request_documents"},
+	StepReviewRate:          {"billing_get_queue_item", "explain_rate"},
 	StepConfirmRate:         {"send_rate_confirmation", "record_rate_confirmation_confirmed"},
 	StepApproveAccessorials: {"approve_detention", "get_detention_occurrence"},
 	StepNotifyCustomer:      {"email_customer"},
-	StepClearHolds:          {"release_shipment_hold", "resolve_service_failure"},
-	StepMarkReady:           {"transfer_to_billing"},
-	StepSendInvoice:         {"send_invoice"},
-	StepPostInvoice:         {"post_invoice"},
-	StepWorkDispute:         {"resolve_invoice_dispute", "list_invoice_disputes"},
+	StepClearHolds:          {"shipment_release_hold", "resolve_service_failure"},
+	StepMarkReady:           {"billing_transfer"},
+	StepSendInvoice:         {"invoice_send"},
+	StepPostInvoice:         {"invoice_post"},
+	StepWorkDispute:         {"invoice_resolve_dispute", "invoice_list_disputes"},
 	StepFollowUpPayment:     {"send_payment_reminder", "email_customer"},
 }
 

@@ -13,7 +13,7 @@ scenarios:
           new load for acme, pick up at the LA terminal tomorrow 8am, deliver to the chicago DC
           four days later by noon, 40k lbs dry van
         expect:
-          proposals: [{ tool: create_shipment }]
+          proposals: [{ tool: shipment_create }]
           maxFailedCalls: 2
           noRecordIds: true
           rubric: >
@@ -46,7 +46,7 @@ scenarios:
             listing rating methods for the person to pick from. Does not invent a price.
       - say: "make it 2450 flat plus a 75 dollar lumper"
         expect:
-          proposals: [{ tool: create_shipment }]
+          proposals: [{ tool: shipment_create }]
           maxFailedCalls: 1
           rubric: >
             Proposes the load on the Flat Rate method with a 2,450 base rate and a lumper
@@ -69,8 +69,8 @@ scenarios:
     steps:
       - say: "copy SEED-SHP-001 a week later, same everything"
         expect:
-          proposals: [{ tool: duplicate_shipment }]
-          noCalls: [create_shipment]
+          proposals: [{ tool: shipment_duplicate }]
+          noCalls: [shipment_create]
           maxFailedCalls: 1
           rubric: >
             Proposes duplicating SEED-SHP-001 with its stops moved a week later, rather than
@@ -85,7 +85,7 @@ scenarios:
     steps:
       - say: "SEED-SHP-004 weight is wrong, it's 38,500 not whatever we have"
         expect:
-          proposals: [{ tool: update_shipment, args: { weight: 38500 } }]
+          proposals: [{ tool: shipment_update, args: { weight: 38500 } }]
           maxFailedCalls: 1
       - decide: approve
         expect:
@@ -102,12 +102,12 @@ scenarios:
     steps:
       - say: "cancel SEED-SHP-007, customer pulled it"
         expect:
-          proposals: [{ tool: cancel_shipment }]
+          proposals: [{ tool: shipment_cancel }]
           maxFailedCalls: 1
       - decide: reject
         note: "hold off, they might rebook it this week"
         expect:
-          noCalls: [cancel_shipment]
+          noCalls: [shipment_cancel]
           noProposals: true
           rubric: Acknowledges and leaves SEED-SHP-007 as it is, without proposing anything else.
 
@@ -134,7 +134,7 @@ scenarios:
     steps:
       - say: "wheres SEED-SHP-008 right now and is it gonna make the delivery appt"
         expect:
-          calls: ["get_shipment_tracking"]
+          calls: ["shipment_get_tracking"]
           maxFailedCalls: 1
           noProposals: true
           replyIncludes: ["SEED-SHP-008"]

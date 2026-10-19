@@ -175,7 +175,7 @@ func TestBuildSystemPrompt_ALookupHandedOutSaysItChangesNothing(t *testing.T) {
 
 	assert.Contains(t, prompt, "The agent Dispatch helper handed you this lookup")
 	assert.Contains(t, prompt, "you change nothing")
-	assert.NotContains(t, prompt, "duplicate_shipment")
+	assert.NotContains(t, prompt, "shipment_duplicate")
 }
 
 // A turn working for another agent answers that agent, not the person, so
@@ -201,7 +201,7 @@ func TestBuildSystemPrompt_SaysFindToolsReachesThePersonsOtherAgents(t *testing.
 	t.Parallel()
 
 	d := validDefinition()
-	tools := []agentdefinition.ToolSummary{{Name: "list_shipments", Query: true, Loaded: true}}
+	tools := []agentdefinition.ToolSummary{{Name: "shipment_list", Query: true, Loaded: true}}
 
 	reaching := d.BuildSystemPrompt(agentdefinition.RuntimeContext{
 		Tools:         tools,

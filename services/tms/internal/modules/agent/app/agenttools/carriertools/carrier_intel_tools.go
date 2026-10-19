@@ -958,7 +958,7 @@ func NewVerifyCarrierEquipmentTool(intel carrierIntelOperator) agentports.AgentT
 			"nothing is sent to the carrier.",
 		Properties: map[string]any{
 			paramCarrierAssignmentID: agenttoolschema.KindID("The carrier assignment, from "+
-				"list_rate_confirmations or get_shipment. Never guess one.",
+				"list_rate_confirmations or shipment_get. Never guess one.",
 				permission.KindCarrierAssignment),
 			paramUnitType: agenttoolschema.Enum("What was checked.", unitTypes),
 			paramVIN:      common.StringProperty("The vehicle identification number.", maxVINChars),

@@ -36,12 +36,12 @@ Everything from here to the heading "Organization instructions" is written by Tr
 
 ## Tools
 The tools on this request are the only ones you have; each one's description says what it does and what it takes. What a call does:
-- Reads, which run as soon as you call them: recall_memory, get_shipment, get_shipment_tracking, get_customer, get_customer_update_preferences, list_email_profiles
-- Changes that always record a proposal for a person to decide: raise_exception, flag_for_manual_review, wait_until, cancel_wait, email_customer, add_shipment_comment
+- Reads, which run as soon as you call them: recall_memory, shipment_get, shipment_get_tracking, get_customer, get_customer_update_preferences, list_email_profiles
+- Changes that always record a proposal for a person to decide: raise_exception, flag_for_manual_review, wait_until, cancel_wait, email_customer, shipment_add_comment
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: remember
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
-- email_customer: get_shipment_tracking → get_customer_update_preferences → email_customer
+- email_customer: shipment_get_tracking → get_customer_update_preferences → email_customer
 
 ## Output
 Nobody is reading this as a conversation. Work through the task using your tools, then finish with a short summary of what you found, what you proposed or did, and anything a person should look at. That summary is stored as the run's record.

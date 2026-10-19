@@ -408,7 +408,7 @@ func decisionSpecs(refs *activitySeedRefs) []runSpec {
 	secondDetention.TargetVersion = refs.shipments[2].Version
 
 	executed := proposal(
-		"add_shipment_comment",
+		"shipment_add_comment",
 		agent.TierAutoExecute,
 		agent.ProposalStatusExecuted,
 		0.97,
@@ -556,7 +556,7 @@ func (s *AgentActivitySeed) insertPlan(
 
 	steps := []*agent.AgentProposal{
 		proposal(
-			"correct_charge_code",
+			"billing_correct_charge_codes",
 			agent.TierActWithApproval,
 			agent.ProposalStatusPending,
 			0.9,
@@ -585,7 +585,7 @@ func (s *AgentActivitySeed) insertPlan(
 			[]agent.EvidenceRef{{Type: "Customer", ID: refs.customers[1].ID.String()}},
 		),
 		proposal(
-			"add_shipment_comment",
+			"shipment_add_comment",
 			agent.TierAutoExecute,
 			agent.ProposalStatusPending,
 			0.95,
@@ -731,7 +731,7 @@ func trustRows(refs *activitySeedRefs) []*agent.ToolTrust {
 			OrganizationID:    refs.org.ID,
 			BusinessUnitID:    refs.org.BusinessUnitID,
 			AgentDefinitionID: refs.dispatch.ID,
-			ToolName:          "add_shipment_comment",
+			ToolName:          "shipment_add_comment",
 			Streak:            14,
 			Approvals:         16,
 			Modifications:     1,
@@ -782,7 +782,7 @@ func trustRows(refs *activitySeedRefs) []*agent.ToolTrust {
 			OrganizationID:    refs.org.ID,
 			BusinessUnitID:    refs.org.BusinessUnitID,
 			AgentDefinitionID: refs.billing.ID,
-			ToolName:          "correct_charge_code",
+			ToolName:          "billing_correct_charge_codes",
 			Streak:            5,
 			Approvals:         6,
 			Modifications:     1,

@@ -4,8 +4,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -127,14 +127,14 @@ func TestRun_HonoursTheVersionAnEarlierStepLeft(t *testing.T) {
 	t.Parallel()
 
 	tool := &recordingTool{
-		name:      "place_shipment_hold",
+		name:      "shipment_place_hold",
 		resource:  permission.ResourceShipment,
 		operation: permission.OpUpdate,
 	}
 	executor := newExecutor(tool, &fakeProposalRepo{}, &fakePermissions{allowed: true})
 	executor.versions = &fakeVersions{version: 4}
 
-	proposal := pinnedProposal("place_shipment_hold", 3)
+	proposal := pinnedProposal("shipment_place_hold", 3)
 	expected := int64(4)
 	outcome, err := executor.Run(t.Context(), &Approval{
 		Proposal:              proposal,
@@ -148,7 +148,7 @@ func TestRun_HonoursTheVersionAnEarlierStepLeft(t *testing.T) {
 	assert.Equal(t, int64(4), *outcome.TargetVersion)
 
 	stale := int64(2)
-	again := pinnedProposal("place_shipment_hold", 3)
+	again := pinnedProposal("shipment_place_hold", 3)
 	_, err = executor.Run(t.Context(), &Approval{
 		Proposal:              again,
 		Actor:                 testActor(again.OrganizationID, again.BusinessUnitID),

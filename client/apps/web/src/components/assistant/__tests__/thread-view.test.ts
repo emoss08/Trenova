@@ -43,12 +43,12 @@ describe("groupThread", () => {
         role: "Assistant",
         content: "Checking both.",
         toolCalls: [
-          { id: "c1", name: "get_shipment", arguments: { proNumber: "S1" } },
-          { id: "c2", name: "get_shipment", arguments: { proNumber: "S2" } },
+          { id: "c1", name: "shipment_get", arguments: { proNumber: "S1" } },
+          { id: "c2", name: "shipment_get", arguments: { proNumber: "S2" } },
         ],
       }),
-      message({ role: "Tool", toolCallId: "c2", toolName: "get_shipment", content: "two" }),
-      message({ role: "Tool", toolCallId: "c1", toolName: "get_shipment", content: "one" }),
+      message({ role: "Tool", toolCallId: "c2", toolName: "shipment_get", content: "two" }),
+      message({ role: "Tool", toolCallId: "c1", toolName: "shipment_get", content: "one" }),
       message({ role: "Assistant", content: "S1 is in transit; S2 delivered." }),
     ]);
 
@@ -152,13 +152,13 @@ describe("turnPlacements", () => {
     const question = message({ role: "User", content: "Where is S1?", createdAt: 1_700_000_100 });
     const first = message({
       role: "Assistant",
-      toolCalls: [{ id: "c1", name: "get_shipment", arguments: { proNumber: "S1" } }],
+      toolCalls: [{ id: "c1", name: "shipment_get", arguments: { proNumber: "S1" } }],
       createdAt: 1_700_000_103,
     });
     const result = message({
       role: "Tool",
       toolCallId: "c1",
-      toolName: "get_shipment",
+      toolName: "shipment_get",
       content: "{}",
       createdAt: 1_700_000_105,
     });

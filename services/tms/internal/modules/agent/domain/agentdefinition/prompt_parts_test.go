@@ -54,7 +54,7 @@ func TestBuildSystemPromptParts_PutsADisclosedToolSectionInTheStablePart(t *test
 	rc := fullContext()
 	rc.ToolsDisclosed = true
 	rc.Tools = []agentdefinition.ToolSummary{
-		{Name: "get_shipment", Description: "Look up a shipment", Query: true, Loaded: true},
+		{Name: "shipment_get", Description: "Look up a shipment", Query: true, Loaded: true},
 		{Name: "assign_move", Description: "Assign a move", AlwaysProposes: true},
 	}
 	rc.ToolMap = []agentdefinition.ToolNamespace{
@@ -66,7 +66,7 @@ func TestBuildSystemPromptParts_PutsADisclosedToolSectionInTheStablePart(t *test
 	assert.Contains(t, parts.Stable, "- Dispatch (2 tools): move")
 	assert.Contains(t, parts.Stable, "assign_move")
 	assert.NotContains(t, parts.Volatile, "find_tools")
-	assert.NotContains(t, parts.Volatile, "get_shipment")
+	assert.NotContains(t, parts.Volatile, "shipment_get")
 
 	rc.Tools[0].Loaded, rc.Tools[1].Loaded = false, true
 	other := d.BuildSystemPromptParts(&rc)

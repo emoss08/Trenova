@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -58,7 +58,7 @@ func (c *withdrawingCompletion) StreamChat(
 
 func proposingRuntime(completion *scriptedCompletion) *Service {
 	tool := &agenttest.StubActionTool{
-		ToolName: "create_shipment",
+		ToolName: "shipment_create",
 		Tier:     agent.TierPropose,
 		Schema:   shipmentSchema(),
 	}
@@ -77,7 +77,7 @@ func withdrawingRuntime(completion *withdrawingCompletion) *Service {
 
 func proposingRequest() *agentports.RunRequest {
 	return &agentports.RunRequest{
-		Definition: testDefinition("create_shipment"),
+		Definition: testDefinition("shipment_create"),
 		Actor:      testActor(),
 		Input:      "enter the acme load",
 		ThreadID:   pulid.MustNew("athr_"),
@@ -86,7 +86,7 @@ func proposingRequest() *agentports.RunRequest {
 }
 
 /*
-The corrected proposal replaces the first. Haiku proposed create_shipment, saw
+The corrected proposal replaces the first. Haiku proposed shipment_create, saw
 it had sent a tractor type nobody asked for, proposed it again without one and
 told the person to reject the first; the approval box offered both as one plan
 and the load was entered twice.
@@ -96,10 +96,10 @@ func TestWithdrawProposal_TakesBackTheProposalALaterOneReplaced(t *testing.T) {
 
 	completion := &withdrawingCompletion{
 		scriptedCompletion: &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-			toolTurn("create_shipment", map[string]any{
+			toolTurn("shipment_create", map[string]any{
 				"customerId": "cus_1", "notes": "with a tractor type",
 			}),
-			toolTurn("create_shipment", map[string]any{"customerId": "cus_1"}),
+			toolTurn("shipment_create", map[string]any{"customerId": "cus_1"}),
 			nil,
 			textTurn("I proposed the shipment."),
 		}},
@@ -145,7 +145,7 @@ func TestWithdrawProposal_RefusesWhatThisTurnDidNotFile(t *testing.T) {
 			t.Parallel()
 
 			completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-				toolTurn("create_shipment", map[string]any{"customerId": "cus_1"}),
+				toolTurn("shipment_create", map[string]any{"customerId": "cus_1"}),
 				toolTurn(withdrawProposalName, map[string]any{"proposalId": tc.id}),
 				textTurn("Done."),
 			}}
@@ -188,11 +188,11 @@ func TestWithdrawProposal_IsNotDeclaredWhereNothingCanBeProposed(t *testing.T) {
 		textTurn("Nothing to do."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{
-		Tools: []agentports.AgentQueryTool{queryTool("get_shipment", map[string]any{}, nil)},
+		Tools: []agentports.AgentQueryTool{queryTool("shipment_get", map[string]any{}, nil)},
 	}, &stubActionRegistry{}, nil)
 
 	_, err := rt.Run(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition("get_shipment"),
+		Definition: testDefinition("shipment_get"),
 		Actor:      testActor(),
 		Input:      "where is S-1",
 	})
@@ -205,8 +205,8 @@ func TestTurn_SendsTheSameToolsOnEveryModelCall(t *testing.T) {
 
 	completion := &withdrawingCompletion{
 		scriptedCompletion: &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-			toolTurn("create_shipment", map[string]any{"customerId": "cus_1", "notes": "a"}),
-			toolTurn("create_shipment", map[string]any{"customerId": "cus_1"}),
+			toolTurn("shipment_create", map[string]any{"customerId": "cus_1", "notes": "a"}),
+			toolTurn("shipment_create", map[string]any{"customerId": "cus_1"}),
 			nil,
 			textTurn("I proposed the shipment."),
 		}},
@@ -236,7 +236,7 @@ func TestWithdrawProposal_IsNeverOfferedToADelegate(t *testing.T) {
 	t.Parallel()
 
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("create_shipment", map[string]any{"customerId": "cus_1"}),
+		toolTurn("shipment_create", map[string]any{"customerId": "cus_1"}),
 		textTurn("Proposed."),
 	}}
 	req := proposingRequest()
@@ -256,9 +256,9 @@ func TestWithdrawProposal_AWithdrawnProposalIsNoDuplicateOfItsReplacement(t *tes
 	same := map[string]any{"customerId": "cus_1"}
 	completion := &withdrawingCompletion{
 		scriptedCompletion: &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-			toolTurn("create_shipment", same),
+			toolTurn("shipment_create", same),
 			nil,
-			toolTurn("create_shipment", same),
+			toolTurn("shipment_create", same),
 			textTurn("Proposed again."),
 		}},
 		withdrawAt: 1,

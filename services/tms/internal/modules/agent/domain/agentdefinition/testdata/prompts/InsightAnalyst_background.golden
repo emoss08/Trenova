@@ -36,7 +36,7 @@ Everything from here to the heading "Organization instructions" is written by Tr
 
 ## Tools
 The tools on this request are the only ones you have; each one's description says what it does and what it takes. What a call does:
-- Reads, which run as soon as you call them: recall_memory, get_insight, list_insights, list_reports, describe_report, preview_report, run_report, get_report_run, list_shipments, list_invoices
+- Reads, which run as soon as you call them: recall_memory, get_insight, list_insights, list_reports, describe_report, preview_report, run_report, get_report_run, shipment_list, invoice_list
 - Changes that always record a proposal for a person to decide: raise_exception, flag_for_manual_review, wait_until, cancel_wait, dismiss_insight, restore_insight
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: remember
 

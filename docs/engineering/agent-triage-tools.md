@@ -84,7 +84,7 @@ everyone, so it is always asked first. Unblocking names the sender by one of the
 normalised the way a block records it. `draft_inbound_reply` only drafts: with a body it saves
 the agent's words, without one it has Triage's drafter write it (that preview is partial,
 since the words are not known yet). Sending stays with `reply_to_inbound_message` or a
-person. `create_inbound_load` is never unattended, like `create_shipment`; the Intake desk
+person. `create_inbound_load` is never unattended, like `shipment_create`; the Intake desk
 uses it only for a tender written in the body, because a tender whose attachment became a
 document already wakes shipment intake.
 

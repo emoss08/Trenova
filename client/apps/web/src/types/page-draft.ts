@@ -102,12 +102,12 @@ export const pageDraftSchema = z.object({
 });
 
 export const pageDraftActionSchema = z.enum([
-  "accept_field",
-  "accept_all_confident",
-  "set_field_value",
-  "set_required_field",
-  "set_stop_location",
-  "set_stop_schedule",
+  "intake_accept_field",
+  "intake_accept_confident",
+  "intake_set_field",
+  "intake_set_required_field",
+  "intake_set_stop_location",
+  "intake_set_stop_schedule",
   "propose_formula",
 ]);
 

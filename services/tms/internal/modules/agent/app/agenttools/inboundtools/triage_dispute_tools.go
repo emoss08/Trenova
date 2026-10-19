@@ -285,7 +285,7 @@ func newSettleDetentionDisputeTool(
 				"once the stop times are checked, and have Triage draft the answer for a " +
 				"person to send. Waive when the times do not support the charge; stand by " +
 				"it when arrival, departure and free time hold up. Check them first with " +
-				"get_detention_occurrence or get_shipment_tracking. A waived charge already " +
+				"get_detention_occurrence or shipment_get_tracking. A waived charge already " +
 				"invoiced is credited.",
 			Resource:    permission.ResourceDetention,
 			Operation:   permission.OpUpdate,

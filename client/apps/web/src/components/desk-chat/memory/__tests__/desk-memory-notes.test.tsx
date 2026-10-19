@@ -101,7 +101,7 @@ describe("initialSaveState", () => {
 });
 
 const STEPS =
-  "1. If `search_shipments` finds nothing with a status filter, keep looking. 2. Call `list_shipments` with no status filter.";
+  "1. If `shipment_list` finds nothing with a status filter, keep looking. 2. Call `shipment_get` with no status filter.";
 
 describe("DeskMemorySaved", () => {
   it("names the memory that replaced a retired one, and offers no undo", () => {
@@ -141,7 +141,7 @@ describe("DeskMemorySaved", () => {
       "everyone",
     );
     expect(screen.getByText(/Keep these steps for/)).toBeInTheDocument();
-    expect(screen.getByText("search_shipments").tagName).toBe("CODE");
+    expect(screen.getByText("shipment_list").tagName).toBe("CODE");
     expect(screen.getAllByRole("listitem")).toHaveLength(2);
     expect(screen.getByRole("button", { name: "Not now" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Keep" })).toBeInTheDocument();
@@ -236,12 +236,12 @@ describe("DeskMemorySaved", () => {
     let editor = screen.getByRole("textbox", { name: "Memory" });
     expect(editor).toHaveFocus();
     expect(editor).toHaveValue(
-      "If `search_shipments` finds nothing with a status filter, keep looking.\nCall `list_shipments` with no status filter.",
+      "If `shipment_list` finds nothing with a status filter, keep looking.\nCall `shipment_get` with no status filter.",
     );
     fireEvent.change(editor, { target: { value: "Something else" } });
     fireEvent.keyDown(editor, { key: "Escape" });
     expect(screen.queryByRole("textbox", { name: "Memory" })).not.toBeInTheDocument();
-    expect(screen.getByText("search_shipments")).toBeInTheDocument();
+    expect(screen.getByText("shipment_list")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Edit memory" }));
     editor = screen.getByRole("textbox", { name: "Memory" });

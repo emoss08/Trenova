@@ -245,7 +245,7 @@ func argumentOutcome(name string, schema map[string]any, err error) toolOutcome 
 // aliasedArguments renames an argument the model sent under the wrong name to
 // the required parameter it plainly meant, and leaves everything else alone.
 //
-// A small model asked for a shipment by {"id": ...} when get_shipment takes
+// A small model asked for a shipment by {"id": ...} when shipment_get takes
 // shipmentId, and the call failed on a missing parameter it had in fact
 // supplied. Two readings are safe enough to act on: the same name spelled
 // another way (shipment_id, ShipmentID), and a bare "id" when exactly one

@@ -35,7 +35,7 @@ scenarios:
     steps:
       - say: "how many loads are delayed right now"
         expect:
-          calls: ["list_shipments|search_shipments|delegate_task|get_dispatch_board"]
+          calls: ["shipment_list|delegate_task|get_dispatch_board"]
           maxFailedCalls: 0
           noProposals: true
           facts:
@@ -51,7 +51,7 @@ scenarios:
     steps:
       - say: "gimme the rundown for today"
         expect:
-          calls: ["get_dispatch_board|get_daily_briefing|list_watchtower_items|list_shipments"]
+          calls: ["get_dispatch_board|get_daily_briefing|list_watchtower_items|shipment_list"]
           maxFailedCalls: 0
           maxCalls: 5
           noProposals: true

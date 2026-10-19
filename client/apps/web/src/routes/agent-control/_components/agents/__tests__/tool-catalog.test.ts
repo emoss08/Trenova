@@ -12,7 +12,7 @@ import {
 
 function tool(overrides: Partial<ToolCatalogEntry>): ToolCatalogEntry {
   return {
-    name: "get_shipment",
+    name: "shipment_get",
     description: "Reads one shipment",
     parameters: null,
     kind: "query",
@@ -29,18 +29,18 @@ function tool(overrides: Partial<ToolCatalogEntry>): ToolCatalogEntry {
 }
 
 const catalog = [
-  tool({ name: "get_shipment" }),
-  tool({ name: "cancel_shipment", kind: "action", description: "Cancels a shipment" }),
+  tool({ name: "shipment_get" }),
+  tool({ name: "shipment_cancel", kind: "action", description: "Cancels a shipment" }),
   tool({ name: "list_workers", resource: "worker", description: "Lists drivers" }),
   tool({ name: "approve_worker_pto", kind: "action", resource: "worker_pto" }),
 ];
 
 describe("groupToolsByResource", () => {
   it("groups alphabetically by label with reads before changes", () => {
-    const groups = groupToolsByResource(catalog, ["cancel_shipment", "get_shipment"]);
+    const groups = groupToolsByResource(catalog, ["shipment_cancel", "shipment_get"]);
 
     expect(groups.map((g) => g.label)).toEqual(["Shipment", "Worker", "Worker time off"]);
-    expect(groups[0].tools.map((t) => t.name)).toEqual(["get_shipment", "cancel_shipment"]);
+    expect(groups[0].tools.map((t) => t.name)).toEqual(["shipment_get", "shipment_cancel"]);
     expect(groups[0].chosen).toBe(2);
     expect(groups[1].chosen).toBe(0);
   });
@@ -48,11 +48,11 @@ describe("groupToolsByResource", () => {
   // The rail keeps saying what the agent holds while the list is narrowed,
   // so a search never makes a group look emptier than it is.
   it("narrows the tools by a query but counts the chosen over the whole group", () => {
-    const groups = groupToolsByResource(catalog, ["cancel_shipment", "get_shipment"], "drivers");
+    const groups = groupToolsByResource(catalog, ["shipment_cancel", "shipment_get"], "drivers");
 
     expect(groups.map((g) => g.label)).toEqual(["Worker"]);
     expect(
-      groupToolsByResource(catalog, ["cancel_shipment", "get_shipment"], "cancel")[0],
+      groupToolsByResource(catalog, ["shipment_cancel", "shipment_get"], "cancel")[0],
     ).toMatchObject({
       label: "Shipment",
       chosen: 2,
@@ -68,9 +68,9 @@ describe("groupToolsByResource", () => {
 describe("summarizeSelection", () => {
   it("counts reads and changes, with each change at its effective tier", () => {
     const summary = summarizeSelection(
-      ["get_shipment", "cancel_shipment", "approve_worker_pto", "retired_tool"],
+      ["shipment_get", "shipment_cancel", "approve_worker_pto", "retired_tool"],
       catalog,
-      { cancel_shipment: "AutoExecute" },
+      { shipment_cancel: "AutoExecute" },
       "ActWithApproval",
     );
 
@@ -120,7 +120,7 @@ describe("core tools", () => {
 
   it("does not count a core tool an older agent still lists", () => {
     const summary = summarizeSelection(
-      ["get_shipment", "recall_memory", "remember"],
+      ["shipment_get", "recall_memory", "remember"],
       withCore,
       {},
       "Propose",
@@ -183,12 +183,12 @@ describe("extension tools", () => {
     const { core, selectable } = splitCoreTools([tool({}), webSearch, webRead]);
 
     expect(core.map((entry) => entry.name)).toEqual(["web_search"]);
-    expect(selectable.map((entry) => entry.name)).toEqual(["get_shipment", "web_read"]);
+    expect(selectable.map((entry) => entry.name)).toEqual(["shipment_get", "web_read"]);
   });
 
   it("does not count a tool every agent already holds as chosen", () => {
     const summary = summarizeSelection(
-      ["get_shipment", "web_search", "web_read"],
+      ["shipment_get", "web_search", "web_read"],
       [tool({}), webSearch, webRead],
       {},
       "Propose",

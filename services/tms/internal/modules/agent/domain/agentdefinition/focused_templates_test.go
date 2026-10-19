@@ -21,22 +21,22 @@ const (
 		"template is at the tool cap"
 	withheldPersonalInterface = "it changes only the caller's own screen, a person's " +
 		"interface state that is no desk's job"
-	withheldCancelShipment = "canceling a shipment is a person's call; uncancel_shipment " +
+	withheldCancelShipment = "canceling a shipment is a person's call; shipment_uncancel " +
 		"stays with the dispatch assistant"
 )
 
 var withheldFromEveryTemplate = map[string]string{
 	"approve_rate_agreement":      withheldRateReview,
 	"reject_rate_agreement":       withheldRateReview,
-	"assign_pay_profile":          withheldPaySetup,
-	"end_pay_assignment":          withheldPaySetup,
-	"create_recurring_deduction":  withheldPaySetup,
-	"update_recurring_deduction":  withheldPaySetup,
-	"create_recurring_earning":    withheldPaySetup,
-	"update_recurring_earning":    withheldPaySetup,
-	"open_escrow_account":         withheldPaySetup,
-	"update_escrow_account":       withheldPaySetup,
-	"close_escrow_account":        withheldPaySetup,
+	"settlement_assign_pay_profile":          withheldPaySetup,
+	"settlement_end_pay_assignment":          withheldPaySetup,
+	"settlement_create_recurring_deduction":  withheldPaySetup,
+	"settlement_update_recurring_deduction":  withheldPaySetup,
+	"settlement_create_recurring_earning":    withheldPaySetup,
+	"settlement_update_recurring_earning":    withheldPaySetup,
+	"settlement_open_escrow_account":         withheldPaySetup,
+	"settlement_update_escrow_account":       withheldPaySetup,
+	"settlement_close_escrow_account":        withheldPaySetup,
 	"draft_manual_journal":        withheldPrivilegedAccounting,
 	"revise_manual_journal_draft": withheldPrivilegedAccounting,
 	"submit_manual_journal":       withheldPrivilegedAccounting,
@@ -53,14 +53,14 @@ var withheldFromEveryTemplate = map[string]string{
 	"clear_accounting_mapping":    withheldPrivilegedAccounting,
 	"redate_accounting_sync":      withheldPrivilegedAccounting,
 	"forget_memory":               withheldMemory,
-	"generate_payroll_export":     withheldPayMovement,
-	"void_payroll_export":         withheldPayMovement,
+	"settlement_generate_payroll_export":     withheldPayMovement,
+	"settlement_void_payroll_export":         withheldPayMovement,
 	"review_driver_expense":       withheldPayMovement,
 	"save_table_view":             withheldPersonalInterface,
 	"add_home_widget":             withheldPersonalInterface,
 	"remove_home_widget":          withheldPersonalInterface,
 	"arrange_home_layout":         withheldPersonalInterface,
-	"cancel_shipment":             withheldCancelShipment,
+	"shipment_cancel":             withheldCancelShipment,
 }
 
 func TestTemplates_TheFocusedClerksTalkToAPersonAndOnlyPropose(t *testing.T) {
@@ -139,7 +139,7 @@ func TestTemplates_TheMasterDataStewardKeepsTheRecordsEveryoneWorksFrom(t *testi
 		require.Containsf(t, tools, tool, "the master data steward needs %s", tool)
 	}
 
-	for _, tool := range []string{"assign_move", "post_invoice", "draft_rate_agreement"} {
+	for _, tool := range []string{"assign_move", "invoice_post", "draft_rate_agreement"} {
 		require.NotContainsf(t, tools, tool, "the master data steward must not hold %s", tool)
 	}
 }
@@ -163,15 +163,15 @@ func TestTemplates_TheWorkforceCoordinatorKeepsWorkerRecordsAndNeverPay(t *testi
 		"cancel_dot_test",
 		"start_worker_checklist", "cancel_worker_checklist",
 		"close_worker_training", "archive_worker_credential",
-		"record_shipment_permit", "update_shipment_permit",
+		"shipment_record_permit", "shipment_update_permit",
 	} {
 		require.Containsf(t, tools, tool, "the workforce coordinator needs %s", tool)
 	}
 
 	for _, tool := range []string{
-		"list_driver_settlements",
-		"resolve_settlement_dispute",
-		"list_payroll_exports",
+		"settlement_list_driver",
+		"settlement_resolve_dispute",
+		"settlement_list_payroll_exports",
 		"list_driver_expenses",
 	} {
 		require.NotContainsf(t, tools, tool, "the workforce coordinator must not hold %s", tool)
@@ -237,15 +237,15 @@ func TestTemplates_TheExistingDesksPickUpTheWritesTheirWorkNeeds(t *testing.T) {
 	t.Parallel()
 
 	require.Contains(t,
-		agentdefinition.TemplateDispatchAssistant.StarterTools(), "update_shipment",
+		agentdefinition.TemplateDispatchAssistant.StarterTools(), "shipment_update",
 	)
 	require.Contains(t,
-		agentdefinition.TemplateDispatchAssistant.StarterTools(), "uncancel_shipment",
+		agentdefinition.TemplateDispatchAssistant.StarterTools(), "shipment_uncancel",
 	)
 	require.Contains(t,
 		agentdefinition.TemplateLoadMonitor.StarterTools(), "record_stop_actual",
 	)
 	require.NotContains(t,
-		agentdefinition.TemplateShipmentIntake.StarterTools(), "cancel_shipment",
+		agentdefinition.TemplateShipmentIntake.StarterTools(), "shipment_cancel",
 	)
 }

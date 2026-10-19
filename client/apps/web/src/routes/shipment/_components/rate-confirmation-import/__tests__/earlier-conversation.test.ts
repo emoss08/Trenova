@@ -22,7 +22,9 @@ function history(overrides: Record<string, unknown>) {
         id: "m2",
         role: "assistant",
         text: "",
-        toolCalls: [{ name: "accept_field", status: "completed", input: "{}", output: "{}" }],
+        toolCalls: [
+          { name: "intake_accept_field", status: "completed", input: "{}", output: "{}" },
+        ],
         createdAt: 11,
       },
       { id: "m3", role: "assistant", text: "Done.", toolCalls: null, createdAt: 12 },

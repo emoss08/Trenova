@@ -175,7 +175,7 @@ func TestWorldState_ReadsWatchTheRecordsAGetCallNamed(t *testing.T) {
 
 	world := openWorld("0.1-0", nil, 100)
 	world.read(&agentports.ToolCall{
-		Name: "get_shipment",
+		Name: "shipment_get",
 		Arguments: map[string]any{
 			"shipmentId":   watchedShipment,
 			"customerID":   otherShipment,
@@ -185,7 +185,7 @@ func TestWorldState_ReadsWatchTheRecordsAGetCallNamed(t *testing.T) {
 		},
 	}, "S-1001")
 	world.read(&agentports.ToolCall{
-		Name:      "list_shipments",
+		Name:      "shipment_list",
 		Arguments: map[string]any{"customerId": "cus_01J9LISTLISTLISTLISTLIST0"},
 	}, "3 shipments")
 

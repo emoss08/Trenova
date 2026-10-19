@@ -169,7 +169,7 @@ func TestPlaceShipmentHold_RequiresARealReason(t *testing.T) {
 
 	err := tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 		"shipmentId": pulid.MustNew("shp_").String(),
-		"notes":      "Awaiting a corrected BOL.",
+		"note":       "Awaiting a corrected BOL.",
 	}))
 	require.Error(t, err)
 	assert.Nil(t, holds.placed)
@@ -187,7 +187,7 @@ func TestPlaceShipmentHold_PassesTheReasonAndNotes(t *testing.T) {
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 		"shipmentId":   shipmentID.String(),
 		"holdReasonId": reasonID.String(),
-		"notes":        "Awaiting a corrected BOL.",
+		"note":         "Awaiting a corrected BOL.",
 	})))
 
 	require.NotNil(t, holds.placed)
@@ -260,8 +260,8 @@ func TestCancelShipment_RecordsWhoCanceledIt(t *testing.T) {
 	tool := shipmenttools.NewCancelShipmentTool(shipments, nil, nil)
 
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		"shipmentId":   pulid.MustNew("shp_").String(),
-		"cancelReason": "Customer cancelled the order.",
+		"shipmentId": pulid.MustNew("shp_").String(),
+		"reason":     "Customer cancelled the order.",
 	})
 	require.NoError(t, tool.Execute(t.Context(), params))
 
@@ -300,8 +300,8 @@ func TestShipmentWriteTools_SurfaceServiceFailures(t *testing.T) {
 	shipments := &fakeShipmentService{err: failure}
 	require.ErrorIs(t,
 		shipmenttools.NewCancelShipmentTool(shipments, nil, nil).Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-			"shipmentId":   pulid.MustNew("shp_").String(),
-			"cancelReason": "duplicate booking",
+			"shipmentId": pulid.MustNew("shp_").String(),
+			"reason":     "duplicate booking",
 		})),
 		failure,
 	)

@@ -267,7 +267,7 @@ func (s *Service) promote(
 		title: fmt.Sprintf(
 			"%s now runs %s at \"%s\"",
 			change.definition.Name,
-			stringutils.HumanizeSnakeCase(change.row.ToolName),
+			stringutils.HumanizeSnakeCase(agentports.ReadingOrder(change.row.ToolName)),
 			next.Label(),
 		),
 		message: fmt.Sprintf(
@@ -306,7 +306,7 @@ func (s *Service) demote(ctx context.Context, change tierChange) error {
 			"%s lost \"%s\" on %s",
 			change.definition.Name,
 			change.current.Label(),
-			stringutils.HumanizeSnakeCase(change.row.ToolName),
+			stringutils.HumanizeSnakeCase(agentports.ReadingOrder(change.row.ToolName)),
 		),
 		message: fmt.Sprintf(
 			"The tier was earned from a streak of approvals, and a rejection or a failed run ended the streak. "+

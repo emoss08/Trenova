@@ -175,7 +175,7 @@ func TestRoutingReport_SaysHowManyWentWhereTheyShouldAndWhatChanged(t *testing.T
 			Expect:  "BillingAssistant",
 			Outcome: "BetterAgent",
 			Agent:   "Billing",
-			Tools:   []string{"list_invoices"},
+			Tools:   []string{"invoice_list"},
 			Passed:  true,
 		},
 		{Case: "aging", From: "Billing", Expect: "current", Outcome: "NoMatch"},
@@ -191,7 +191,7 @@ func TestRoutingReport_SaysHowManyWentWhereTheyShouldAndWhatChanged(t *testing.T
 	assert.Contains(
 		t,
 		summary,
-		"| ✓ past-due | Dispatch | BillingAssistant | Billing | list_invoices |",
+		"| ✓ past-due | Dispatch | BillingAssistant | Billing | invoice_list |",
 	)
 	assert.Contains(t, summary, "| ✗ aging | Billing | current | nothing |  |")
 

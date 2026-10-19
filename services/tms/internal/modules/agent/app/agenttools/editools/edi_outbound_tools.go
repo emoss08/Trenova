@@ -18,7 +18,7 @@ import (
 
 const paramEDIPartnerID = "ediPartnerId"
 
-const toolSearchShipments = "search_shipments"
+const toolShipmentList = "shipment_list"
 
 const ParamServiceFailureID = "serviceFailureId"
 
@@ -71,12 +71,12 @@ func NewSendEDILoadTenderTool(tenders loadTenderSubmitter) agentports.AgentTool 
 func (t *SendEDILoadTenderTool) Name() string { return "send_edi_tender" }
 
 func (t *SendEDILoadTenderTool) Prerequisites() []string {
-	return []string{toolSearchShipments, "list_edi_partners"}
+	return []string{toolShipmentList, "list_edi_partners"}
 }
 
 func (t *SendEDILoadTenderTool) Recipe() []string {
 	return []string{
-		toolSearchShipments,
+		toolShipmentList,
 		"list_edi_partners",
 		"send_edi_tender",
 		"list_edi_transfers",
@@ -94,7 +94,7 @@ func (t *SendEDILoadTenderTool) Description() string {
 func (t *SendEDILoadTenderTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		common.FieldShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
-			"The shipment to tender, from search_shipments or get_shipment. Never guess one."),
+			"The shipment to tender, from shipment_list or shipment_get. Never guess one."),
 		paramEDIPartnerID: agenttoolschema.KindID("The internal EDI partner that stands for "+
 			"the receiving organization, "+ediPartnerIDGuidance+" Leave it out to use the "+
 			"customer's.", permission.KindEDIPartner),
@@ -192,8 +192,8 @@ func (t *SendEDIStatusUpdateTool) ParamSchema() map[string]any {
 		paramEDIPartnerID: agenttoolschema.KindID("The trading partner to send it to, "+
 			ediPartnerIDGuidance, permission.KindEDIPartner),
 		common.FieldShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
-			"Report this shipment's current status. The shipment, from search_shipments or "+
-				"get_shipment."),
+			"Report this shipment's current status. The shipment, from shipment_list or "+
+				"shipment_get."),
 		ParamServiceFailureID: agenttoolschema.RecordIDText(permission.ResourceServiceFailure,
 			"Report a late or missed stop with its reason, from list_service_failures or "+
 				"get_service_failure."),

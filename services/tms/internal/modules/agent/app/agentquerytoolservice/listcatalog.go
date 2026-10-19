@@ -189,13 +189,12 @@ type shipmentRow struct {
 	BillingStatus      string       `json:"billingStatus,omitempty"`
 }
 
-func newListShipmentsTool(repo shipmentports.ShipmentRepository) agentports.AgentQueryTool {
-	return newListTool(listSpec{
-		name:         "list_shipments",
+func shipmentListSpec(repo shipmentports.ShipmentRepository) listSpec {
+	return listSpec{
+		name:         shipmentListName,
 		entityPlural: "shipments",
-		summary: "List shipments by status, billing state, dates or charges, such as " +
-			"picking up today. Rows carry the first pickup, last delivery and each move's " +
-			"driver. Pro numbers and cities: search_shipments.",
+		summary: "Shipments by status, billing state, dates or charges, such as picking up " +
+			"today.",
 		resource: permission.ResourceShipment,
 		config:   querybuilder.GetFieldConfiguration((*shipment.Shipment)(nil)),
 		fields: []listField{
@@ -247,7 +246,7 @@ func newListShipmentsTool(repo shipmentports.ShipmentRepository) agentports.Agen
 		count: func(ctx context.Context, opts *pagination.QueryOptions) (int, error) {
 			return countShipments(ctx, repo, opts, shipmentports.ShipmentOptions{})
 		},
-	})
+	}
 }
 
 var errNoTotal = errors.New("the shipment count was not returned")
@@ -486,7 +485,7 @@ func newListCustomersTool(repo customerports.CustomerRepository) agentports.Agen
 		name:         "list_customers",
 		entityPlural: "customers",
 		summary: "List customers narrowed by status, code, name or city, with their ids. " +
-			"Use it to turn a customer's name into an id: list_shipments filters on " +
+			"Use it to turn a customer's name into an id: shipment_list filters on " +
 			"customerId, and a report filters on customer.name.",
 		resource: permission.ResourceCustomer,
 		config:   querybuilder.GetFieldConfiguration((*customer.Customer)(nil)),
@@ -572,7 +571,7 @@ func newListLocationsTool(repo locationports.LocationRepository) agentports.Agen
 func listCatalogSpecs() []listSpec {
 	return []listSpec{
 		specOf(newListWorkersTool(nil, nil)),
-		specOf(newListShipmentsTool(nil)),
+		shipmentListSpec(nil),
 		specOf(newListTractorsTool(nil, nil)),
 		specOf(newListTrailersTool(nil)),
 		specOf(newListCustomersTool(nil)),
@@ -672,7 +671,7 @@ func applyProfile(row *workerRow, profile *worker.WorkerProfile) {
 // It is built from the same specs the list tools are, with nil repositories,
 // because what a caller may narrow an entity by is a property of the entity
 // and not of the connection. That is what lets the Ask input on a data table
-// compile "shipments in transit" into the filters list_shipments would have
+// compile "shipments in transit" into the filters shipment_list would have
 // built from the same words.
 func FilterCatalog() *filtercatalog.Catalog {
 	specs := listCatalogSpecs()

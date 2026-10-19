@@ -48,7 +48,7 @@ func NewRescheduleStopTool(
 	return &rescheduleStopTool{shipments: shipments, partners: partners}
 }
 
-func (t *rescheduleStopTool) Name() string { return "reschedule_stop" }
+func (t *rescheduleStopTool) Name() string { return "shipment_reschedule_stop" }
 
 func (t *rescheduleStopTool) SearchTerms() []string {
 	return []string{
@@ -57,17 +57,17 @@ func (t *rescheduleStopTool) SearchTerms() []string {
 }
 
 func (t *rescheduleStopTool) Prerequisites() []string {
-	return []string{"search_shipments", "get_shipment"}
+	return []string{toolShipmentList, "shipment_get"}
 }
 
 func (t *rescheduleStopTool) Recipe() []string {
-	return []string{"search_shipments", "get_shipment", "reschedule_stop"}
+	return []string{toolShipmentList, "shipment_get", "shipment_reschedule_stop"}
 }
 
 func (t *rescheduleStopTool) Description() string {
 	return "Move a saved shipment's pickup or delivery appointment: the stop's planned " +
 		"window, local to the stop. Give the new window start; the window end moves with " +
-		"it, keeping its length, unless you give one. Take the stop id from get_shipment."
+		"it, keeping its length, unless you give one. Take the stop id from shipment_get."
 }
 
 func (t *rescheduleStopTool) ParamSchema() map[string]any {
@@ -75,9 +75,9 @@ func (t *rescheduleStopTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			common.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
-				"The shipment the stop is on, from search_shipments or list_shipments."),
+				"The shipment the stop is on, from shipment_list."),
 			"stopId": agenttoolschema.RecordIDText(permission.ResourceShipmentStop,
-				"The stop to reschedule, from the moves' stops in get_shipment."),
+				"The stop to reschedule, from the moves' stops in shipment_get."),
 			paramWindowStart: agenttoolschema.LocalDateTime(
 				"When the stop's window now opens, in the stop location's local time. This is " +
 					"the plan; an actual arrival or departure goes to record_stop_actual."),
@@ -172,7 +172,7 @@ func (t *rescheduleStopTool) plan(
 	stop := stopOnShipment(after, stopID)
 	if stop == nil {
 		return nil, errortypes.NewValidationError("stopId", errortypes.ErrInvalid,
-			"That stop is not on this shipment; take the stop id from get_shipment's moves")
+			"That stop is not on this shipment; take the stop id from shipment_get's moves")
 	}
 	if stop.Status == shipment.StopStatusCompleted || stop.Status == shipment.StopStatusCanceled {
 		return nil, errortypes.NewBusinessError(
@@ -299,7 +299,7 @@ func NewAddShipmentChargeTool(
 	return &addShipmentChargeTool{shipments: shipments, accessorials: accessorials}
 }
 
-func (t *addShipmentChargeTool) Name() string { return "add_shipment_charge" }
+func (t *addShipmentChargeTool) Name() string { return "shipment_add_charge" }
 
 func (t *addShipmentChargeTool) SearchTerms() []string {
 	return []string{
@@ -309,11 +309,11 @@ func (t *addShipmentChargeTool) SearchTerms() []string {
 }
 
 func (t *addShipmentChargeTool) Prerequisites() []string {
-	return []string{"search_shipments", "list_accessorial_charges"}
+	return []string{toolShipmentList, "list_accessorial_charges"}
 }
 
 func (t *addShipmentChargeTool) Recipe() []string {
-	return []string{"search_shipments", "list_accessorial_charges", "add_shipment_charge"}
+	return []string{toolShipmentList, "list_accessorial_charges", "shipment_add_charge"}
 }
 
 func (t *addShipmentChargeTool) Description() string {
@@ -328,7 +328,7 @@ func (t *addShipmentChargeTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			common.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
-				"The shipment to charge, from search_shipments or list_shipments."),
+				"The shipment to charge, from shipment_list."),
 			"accessorialChargeId": agenttoolschema.RecordIDText(
 				permission.ResourceAccessorialCharge,
 				"The charge, from list_accessorial_charges. Not detention: a detention "+

@@ -35,7 +35,7 @@ func NewDisputeDetentionTool(detentions common.DetentionDisputer) agentports.Age
 		Properties: map[string]any{
 			ParamOccurrenceID: agenttoolschema.KindID(
 				"The occurrence, from list_detention_desk or "+
-					"get_shipment. Never guess one.",
+					"shipment_get. Never guess one.",
 				permission.KindDetentionOccurrence,
 			),
 			common.ParamNote: common.StringProperty(

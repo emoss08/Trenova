@@ -4,10 +4,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -82,7 +82,7 @@ func shipmentEntrySchema() map[string]any {
 func TestContractArguments_RefusesEachProblemAtItsPath(t *testing.T) {
 	t.Parallel()
 
-	_, _, err := contractArguments(toolschema.NewValidator(), "create_shipment",
+	_, _, err := contractArguments(toolschema.NewValidator(), "shipment_create",
 		shipmentEntrySchema(), map[string]any{
 			"shipment": map[string]any{
 				"customerId": "cust_1",
@@ -130,7 +130,7 @@ func TestContractArguments_StillAliasesAMisnamedRequiredParameter(t *testing.T) 
 	schema["required"] = []string{"shipmentId"}
 	sent := map[string]any{"shipment_id": "shp_1"}
 
-	got, aliases, err := contractArguments(toolschema.NewValidator(), "get_shipment", schema, sent)
+	got, aliases, err := contractArguments(toolschema.NewValidator(), "shipment_get", schema, sent)
 	require.NoError(t, err)
 	assert.Equal(t, map[string]any{"shipmentId": "shp_1"}, got)
 	assert.Equal(t, []argumentAlias{{From: "shipment_id", To: "shipmentId"}}, aliases)
@@ -203,19 +203,19 @@ func TestRun_ValidatesAQueryToolsArguments(t *testing.T) {
 	t.Parallel()
 
 	tool := &agenttest.StubQueryTool{
-		ToolName: "list_shipments",
+		ToolName: "shipment_list",
 		Result:   map[string]any{"items": []any{}},
 		Schema:   closedSchema("status"),
 	}
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("list_shipments", map[string]any{"status": "New", "customer": "Acme"}),
+		toolTurn("shipment_list", map[string]any{"status": "New", "customer": "Acme"}),
 		textTurn("I could not list them."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{Tools: []agentports.AgentQueryTool{tool}},
 		&stubActionRegistry{}, nil)
 
 	result, err := rt.Run(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition("list_shipments"),
+		Definition: testDefinition("shipment_list"),
 		Actor:      testActor(),
 		Input:      "Acme's new loads",
 	})

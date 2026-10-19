@@ -58,7 +58,7 @@ func NewSplitMoveTool(moves moveSplitter) agentports.AgentTool {
 		Properties: map[string]any{
 			ParamMoveID: agenttoolschema.RecordIDText(
 				permission.ResourceShipmentMove,
-				"The two-stop move to split, from get_shipment (its moves) "+
+				"The two-stop move to split, from shipment_get (its moves) "+
 					"or get_dispatch_board. Never guess one.",
 			),
 			ParamNewDeliveryLocationID: agenttoolschema.RecordIDText(

@@ -58,9 +58,9 @@ func (t *rankMoveCandidatesTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"shipmentMoveId": agenttoolschema.RecordIDText(permission.ResourceShipmentMove,
-				"The move to cover: a move's id from get_shipment (each move in its "+
+				"The move to cover: a move's id from shipment_get (each move in its "+
 					"summary carries one), a moveId from get_dispatch_board, a move's id "+
-					"from get_shipment_tracking, or this run's subject. Look it up first; "+
+					"from shipment_get_tracking, or this run's subject. Look it up first; "+
 					"never send a placeholder."),
 			"limit": map[string]any{
 				"type":        "integer",

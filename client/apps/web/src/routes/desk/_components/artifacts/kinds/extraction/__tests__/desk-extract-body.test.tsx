@@ -77,7 +77,7 @@ async function drawnPage(page: number) {
 
 const created = {
   id: "aprop_1",
-  toolName: "create_shipment",
+  toolName: "shipment_create",
   arguments: { sourceDocumentId: DOCUMENT },
   status: "Executed",
   createdAt: 10,
@@ -353,7 +353,7 @@ describe("DeskExtractBody", () => {
       proposals: [
         {
           id: "aprop_1",
-          toolName: "create_shipment",
+          toolName: "shipment_create",
           arguments: { sourceDocumentId: DOCUMENT },
           status: "Pending",
           createdAt: 10,
@@ -396,7 +396,7 @@ describe("DeskExtractBody", () => {
       proposals: [
         {
           id: "aprop_1",
-          toolName: "create_shipment",
+          toolName: "shipment_create",
           arguments: { sourceDocumentId: DOCUMENT },
           status: "ExecutionFailed",
           executionError: "The customer is inactive.",

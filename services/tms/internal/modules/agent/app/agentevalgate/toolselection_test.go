@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentevalgate"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentsearch"
 	"github.com/emoss08/trenova/internal/modules/agent/app/productguideservice"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/evalsplit"
 	"github.com/emoss08/trenova/pkg/productguide"
 	"github.com/stretchr/testify/require"
 )
@@ -21,12 +22,20 @@ const (
 	selectionFloors = "evals/toolselection.floors.json"
 	guideSuite      = "evals/guideselection.yaml"
 	guideFloors     = "evals/guideselection.floors.json"
+	selectionSplits = "evals/toolselection.splits.yaml"
 	minSelection    = 40
 	minParaphrase   = 20
 	minGuide        = 20
 
-	floorsCommand = "go test -count=1 -run 'AgainstFloors' " +
+	floorsCommand = "go test -count=1 -run 'AgainstFloors|Splits' " +
 		"./internal/modules/agent/app/agentevalgate/ -update"
+
+	selectionSplitsHeader = "# The held-out find_tools cases, by desk and by chat or unattended. Generated from\n" +
+		"# the rule in docs/engineering/desk-bench.md (Labels and splits) by running, in\n" +
+		"# services/tms:\n" +
+		"#   " + floorsCommand + "\n" +
+		"# Do not edit by hand, and never edit a description, search term or prompt against\n" +
+		"# a case listed here: the gate prints only the development cases' misses for that.\n"
 )
 
 type evalSuites struct {
@@ -158,53 +167,82 @@ func evaluate(
 	return report
 }
 
-func enforce(
-	t *testing.T,
-	label string,
-	report agentevalgate.SelectionReport,
-	floors *agentevalgate.SelectionFloors,
-) {
+type gate struct {
+	label  string
+	report agentevalgate.SelectionReport
+	floors *agentevalgate.SelectionFloors
+	held   map[string]struct{}
+	quiet  bool
+}
+
+func enforce(t *testing.T, g gate) {
 	t.Helper()
 
 	t.Logf("%s: recall@5 %.2f, top-1 %.2f over %d requests",
-		label, report.RecallAt5, report.Top1, len(report.Outcomes))
-	if misses := report.Misses(); misses != "" {
-		t.Logf("%s, requests whose first answer was not an expected one:\n%s", label, misses)
+		g.label, g.report.RecallAt5, g.report.Top1, len(g.report.Outcomes))
+	if misses := g.report.MissesExcept(g.held); misses != "" && !g.quiet {
+		t.Logf("%s, development requests whose first answer was not an expected one:\n%s",
+			g.label, misses)
 	}
-	require.Emptyf(t, report.Spurious,
+	require.Emptyf(t, g.report.Spurious,
 		"%s found something for a request nothing answers:\n%s",
-		label, report.SpuriousMatches())
-	require.NotNilf(t, floors, "%s has no floors yet; create them with: %s",
-		label, floorsCommand)
+		g.label, g.report.SpuriousMatches())
+	require.NotNilf(t, g.floors, "%s has no floors yet; create them with: %s",
+		g.label, floorsCommand)
 
-	require.GreaterOrEqualf(t, report.RecallAt5, floors.RecallAt5,
+	require.GreaterOrEqualf(t, g.report.RecallAt5, g.floors.RecallAt5,
 		"%s recall@5 fell below its floor: the ranking no longer reaches what a request "+
-			"needs\n%s", label, report.Misses())
-	require.GreaterOrEqualf(t, report.Top1, floors.Top1,
+			"needs\n%s", g.label, g.report.MissesExcept(g.held))
+	require.GreaterOrEqualf(t, g.report.Top1, g.floors.Top1,
 		"%s top-1 fell below its floor: the ranking now puts something else first\n%s",
-		label, report.Misses())
+		g.label, g.report.MissesExcept(g.held))
+}
+
+func heldOutFloors(floors agentevalgate.SelectionFloorSet) agentevalgate.SelectionFloorSet {
+	if floors.HeldOut == nil {
+		return agentevalgate.SelectionFloorSet{}
+	}
+
+	return *floors.HeldOut
+}
+
+type floorReports struct {
+	keyword        agentevalgate.SelectionReport
+	hybrid         func(*agentevalgate.EmbeddingFixture) agentevalgate.SelectionReport
+	heldOutKeyword *agentevalgate.SelectionReport
+	heldOutHybrid  func(*agentevalgate.EmbeddingFixture) agentevalgate.SelectionReport
 }
 
 func updateFloors(
 	t *testing.T,
 	path string,
-	keyword agentevalgate.SelectionReport,
-	hybrid func(*agentevalgate.EmbeddingFixture) agentevalgate.SelectionReport,
+	reports floorReports,
 	suites evalSuites,
 	kit *agentevalgate.Kit,
 ) {
 	t.Helper()
 
-	require.Empty(t, keyword.Spurious, keyword.SpuriousMatches())
+	require.Empty(t, reports.keyword.Spurious, reports.keyword.SpuriousMatches())
 	floors := existingFloors(t, path)
-	floors.Keyword = keyword.Floors()
+	floors.Keyword = reports.keyword.Floors()
+	if reports.heldOutKeyword != nil {
+		floors.HeldOut = &agentevalgate.SelectionFloorSet{Keyword: reports.heldOutKeyword.Floors()}
+	}
 	if fixture, ok := recordedFixture(t, suites, kit); ok {
-		report := hybrid(fixture)
+		report := reports.hybrid(fixture)
 		require.Empty(t, report.Spurious, report.SpuriousMatches())
 		hybridFloors := report.Floors()
 		floors.Hybrid = &hybridFloors
+		if reports.heldOutHybrid != nil {
+			heldOut := reports.heldOutHybrid(fixture).Floors()
+			floors.HeldOut.Hybrid = &heldOut
+		}
 	}
 	writeFloors(t, path, floors)
+}
+
+func selectionSplit(suites evalSuites) agentevalgate.SelectionSplit {
+	return agentevalgate.SplitSelection(agentevalgate.Combined(suites.tools, suites.paraphrase))
 }
 
 func TestToolSelectionAgainstFloors(t *testing.T) {
@@ -212,27 +250,49 @@ func TestToolSelectionAgainstFloors(t *testing.T) {
 
 	kit := newKit(t)
 	suites := loadSuites(t, kit)
+	split := selectionSplit(suites)
+	_, heldTools := split.Partition(suites.tools)
+	combined := agentevalgate.Combined(suites.tools, suites.paraphrase)
+	_, heldCombined := split.Partition(combined)
 
 	keyword := evaluate(t, &agentevalgate.SelectionSuite{
 		Cases:   suites.tools.Cases,
-		Nothing: agentevalgate.Combined(suites.tools, suites.paraphrase).Nothing,
+		Nothing: combined.Nothing,
 	}, kit.KeywordFinder())
+	heldOut := evaluate(t, heldTools, kit.KeywordFinder())
 	paraphrase := evaluate(t, &agentevalgate.SelectionSuite{Cases: suites.paraphrase.Cases},
 		kit.KeywordFinder())
 	t.Logf("paraphrases by keyword alone (not gated): recall@5 %.2f, top-1 %.2f",
 		paraphrase.RecallAt5, paraphrase.Top1)
 
 	if *update {
-		updateFloors(t, selectionFloors, keyword,
-			func(fixture *agentevalgate.EmbeddingFixture) agentevalgate.SelectionReport {
-				return evaluate(t, agentevalgate.Combined(suites.tools, suites.paraphrase),
-					kit.HybridFinder(fixture))
-			}, suites, kit)
+		updateFloors(t, selectionFloors, floorReports{
+			keyword: keyword,
+			hybrid: func(fixture *agentevalgate.EmbeddingFixture) agentevalgate.SelectionReport {
+				return evaluate(t, combined, kit.HybridFinder(fixture))
+			},
+			heldOutKeyword: &heldOut,
+			heldOutHybrid: func(fixture *agentevalgate.EmbeddingFixture) agentevalgate.SelectionReport {
+				return evaluate(t, heldCombined, kit.HybridFinder(fixture))
+			},
+		}, suites, kit)
 		return
 	}
 
 	floors := readFloors(t, selectionFloors)
-	enforce(t, "find_tools by keyword", keyword, &floors.Keyword)
+	enforce(t, gate{
+		label:  "find_tools by keyword",
+		report: keyword,
+		floors: &floors.Keyword,
+		held:   split.HeldOut,
+	})
+	held := heldOutFloors(floors)
+	enforce(t, gate{
+		label:  "find_tools by keyword, held-out",
+		report: heldOut,
+		floors: &held.Keyword,
+		quiet:  true,
+	})
 }
 
 func TestToolSelectionAgainstFloorsHybrid(t *testing.T) {
@@ -245,11 +305,49 @@ func TestToolSelectionAgainstFloorsHybrid(t *testing.T) {
 	kit := newKit(t)
 	suites := loadSuites(t, kit)
 	fixture := hybridFixture(t, suites, kit)
+	split := selectionSplit(suites)
+	combined := agentevalgate.Combined(suites.tools, suites.paraphrase)
+	_, heldCombined := split.Partition(combined)
 
-	report := evaluate(t, agentevalgate.Combined(suites.tools, suites.paraphrase),
-		kit.HybridFinder(fixture))
-	enforce(t, "find_tools by keyword and meaning", report,
-		readFloors(t, selectionFloors).Hybrid)
+	floors := readFloors(t, selectionFloors)
+	enforce(t, gate{
+		label:  "find_tools by keyword and meaning",
+		report: evaluate(t, combined, kit.HybridFinder(fixture)),
+		floors: floors.Hybrid,
+		held:   split.HeldOut,
+	})
+	enforce(t, gate{
+		label:  "find_tools by keyword and meaning, held-out",
+		report: evaluate(t, heldCombined, kit.HybridFinder(fixture)),
+		floors: heldOutFloors(floors).Hybrid,
+		quiet:  true,
+	})
+}
+
+func TestToolSelectionSplits_MatchTheLedger(t *testing.T) {
+	t.Parallel()
+
+	kit := newKit(t)
+	suites := loadSuites(t, kit)
+	ledger := selectionSplit(suites).Ledger
+
+	encoded, err := ledger.Marshal(selectionSplitsHeader)
+	require.NoError(t, err)
+	if *update {
+		require.NoError(t, agentevalgate.WriteFile(selectionSplits, encoded))
+		return
+	}
+
+	raw, err := os.ReadFile(selectionSplits)
+	require.NoError(t, err, "write the ledger with: %s", floorsCommand)
+	recorded, err := evalsplit.ParseLedger(raw)
+	require.NoError(t, err)
+	diff := ledger.Diff(recorded)
+	require.Truef(t, diff.Empty(), "the held-out selection cases changed.\njoined: %s\nleft: %s\n"+
+		"A case added to a desk moves the quota, and a renamed or merged tool can move a case "+
+		"to another desk; one that joins after living in development may have been tuned "+
+		"against. Review, then rewrite the ledger with: %s",
+		strings.Join(diff.Joined, "; "), strings.Join(diff.Left, "; "), floorsCommand)
 }
 
 func TestGuideSelectionAgainstFloors(t *testing.T) {
@@ -269,15 +367,17 @@ func TestGuideSelectionAgainstFloors(t *testing.T) {
 	keyword := evaluate(t, suites.guide, agentevalgate.GuideKeywordFinder(guide))
 
 	if *update {
-		updateFloors(t, guideFloors, keyword,
-			func(fixture *agentevalgate.EmbeddingFixture) agentevalgate.SelectionReport {
+		updateFloors(t, guideFloors, floorReports{
+			keyword: keyword,
+			hybrid: func(fixture *agentevalgate.EmbeddingFixture) agentevalgate.SelectionReport {
 				return evaluate(t, suites.guide, agentevalgate.GuideHybridFinder(guide, fixture))
-			}, suites, kit)
+			},
+		}, suites, kit)
 		return
 	}
 
 	floors := readFloors(t, guideFloors)
-	enforce(t, "find_in_trenova by keyword", keyword, &floors.Keyword)
+	enforce(t, gate{label: "find_in_trenova by keyword", report: keyword, floors: &floors.Keyword})
 }
 
 func TestGuideSelectionAgainstFloorsHybrid(t *testing.T) {
@@ -293,8 +393,11 @@ func TestGuideSelectionAgainstFloorsHybrid(t *testing.T) {
 	guide := productguideservice.NewOffline(productguide.Default)
 
 	report := evaluate(t, suites.guide, agentevalgate.GuideHybridFinder(guide, fixture))
-	enforce(t, "find_in_trenova by keyword and meaning", report,
-		readFloors(t, guideFloors).Hybrid)
+	enforce(t, gate{
+		label:  "find_in_trenova by keyword and meaning",
+		report: report,
+		floors: readFloors(t, guideFloors).Hybrid,
+	})
 }
 
 func TestParaphrasesShareNoWordWithTheirTool(t *testing.T) {

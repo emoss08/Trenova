@@ -213,6 +213,14 @@ func TokenSet(text string) map[string]struct{} {
 	return set
 }
 
+// NameTokenSet is the words a tool is named by: its name, the same name in
+// reading order and its search terms. Reading order is how a request says it,
+// so settlement_list_driver is also found as "list driver settlements" and a
+// bare shipment_list as "list shipments".
+func NameTokenSet(name, reading, terms string) map[string]struct{} {
+	return TokenSet(name + " " + reading + " " + terms)
+}
+
 // Singularize trims a trailing plural so "drivers" and "driver" are one term.
 // It is deliberately crude: the cost of a wrong stem is a slightly worse
 // ranking, not a wrong answer.

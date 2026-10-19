@@ -19,13 +19,13 @@ func readingTurn(results, size int) *agentports.ChatCompletionRequest {
 		messages = append(messages,
 			agentports.Message{
 				Role:      agentports.RoleAssistant,
-				ToolCalls: []agentports.ToolCall{{ID: callID, Name: "list_shipments"}},
+				ToolCalls: []agentports.ToolCall{{ID: callID, Name: "shipment_list"}},
 			},
 			agentports.Message{
 				Role:       agentports.RoleTool,
 				ToolCallID: callID,
-				ToolName:   "list_shipments",
-				Content:    FenceToolResult("list_shipments", strings.Repeat("r", size)),
+				ToolName:   "shipment_list",
+				Content:    FenceToolResult("shipment_list", strings.Repeat("r", size)),
 			},
 		)
 	}
@@ -53,7 +53,7 @@ func TestFitWindow_ShortensTheOldestResultsAndKeepsTheNewestWhole(t *testing.T) 
 	require.Len(t, req.Messages, len(original))
 	oldest := req.Messages[2].Content
 	assert.Contains(t, oldest, "was shortened to keep the request inside the model's context window")
-	assert.Contains(t, oldest, "call list_shipments again")
+	assert.Contains(t, oldest, "call shipment_list again")
 	assert.Less(t, len(oldest), 2_500)
 	assert.Equal(t, original[4].Content, req.Messages[4].Content,
 		"one cut was enough, so the result after it is left as it was")
@@ -61,11 +61,11 @@ func TestFitWindow_ShortensTheOldestResultsAndKeepsTheNewestWhole(t *testing.T) 
 		"the result the model has not answered yet is never cut")
 	assert.LessOrEqual(t, requestTokens(req), int(float64(window)*turnWindowShare))
 
-	assert.Len(t, original[2].Content, len(FenceToolResult("list_shipments", strings.Repeat("r", 10_000))),
+	assert.Len(t, original[2].Content, len(FenceToolResult("shipment_list", strings.Repeat("r", 10_000))),
 		"the turn's own messages are copied, not cut")
 	tool, payload, fenced := UnfenceToolResult(oldest)
 	assert.True(t, fenced, "the shortened result is still fenced, with the note outside the fence")
-	assert.Equal(t, "list_shipments", tool)
+	assert.Equal(t, "shipment_list", tool)
 	assert.Len(t, payload, squeezedToolResultChars)
 }
 
@@ -119,9 +119,9 @@ what the turn hands back to be saved keeps every read whole.
 func TestRun_ShortensEarlierReadsWhenTheTurnOutgrowsTheWindow(t *testing.T) {
 	t.Parallel()
 
-	tool := queryTool("get_shipment", map[string]any{"notes": strings.Repeat("n", 9_000)}, nil)
+	tool := queryTool("shipment_get", map[string]any{"notes": strings.Repeat("n", 9_000)}, nil)
 	read := func(id string) *agentports.ChatCompletionResult {
-		turn := toolTurn("get_shipment", map[string]any{"shipmentId": id})
+		turn := toolTurn("shipment_get", map[string]any{"shipmentId": id})
 		turn.ContextWindow = 4_096
 
 		return turn
@@ -135,7 +135,7 @@ func TestRun_ShortensEarlierReadsWhenTheTurnOutgrowsTheWindow(t *testing.T) {
 		&stubActionRegistry{}, nil)
 
 	result, err := rt.Run(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition("get_shipment"),
+		Definition: testDefinition("shipment_get"),
 		Actor:      testActor(),
 		Input:      "Which of these are late?",
 	})
@@ -156,7 +156,7 @@ func TestRun_ShortensEarlierReadsWhenTheTurnOutgrowsTheWindow(t *testing.T) {
 	assert.NotContains(t, results[2], "was shortened", "the newest read goes whole")
 
 	for _, message := range result.Messages {
-		if message.ToolName == "get_shipment" {
+		if message.ToolName == "shipment_get" {
 			assert.NotContains(t, message.Content, "was shortened", "what is saved is never cut")
 		}
 	}

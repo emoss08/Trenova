@@ -801,7 +801,7 @@ func benchLeftovers() []string {
 			JOIN assistant_threads t ON t.id = r.subject_id
 			WHERE t.title LIKE '[bench]%'
 				AND p.status = 'Executed'
-				AND p.tool_name IN ('create_shipment', 'duplicate_shipment')
+				AND p.tool_name IN ('shipment_create', 'shipment_duplicate')
 				AND p.execution_result->'record'->>'entityType' = 'shipment')`,
 		`UPDATE assignments a SET status = 'Canceled' FROM shipment_moves sm
 		WHERE a.shipment_move_id = sm.id AND sm.shipment_id IN (SELECT id FROM bench_leftovers)`,

@@ -137,8 +137,8 @@ function billingFits(): AgentMatch {
     outcome: "BetterAgent",
     agent: billing,
     tools: [
-      { name: "list_invoices", summary: "List invoices by status or due date." },
-      { name: "get_invoice", summary: "" },
+      { name: "invoice_list", summary: "List invoices by status or due date." },
+      { name: "invoice_get", summary: "" },
     ],
   };
 }
@@ -148,7 +148,7 @@ const NO_MATCH: AgentMatch = { outcome: "NoMatch", agent: null, tools: [] };
 const NO_AGENT: AgentMatch = {
   outcome: "NoAgent",
   agent: null,
-  tools: [{ name: "list_invoices", summary: "List invoices by status or due date." }],
+  tools: [{ name: "invoice_list", summary: "List invoices by status or due date." }],
 };
 
 function renderHome(onStart: DeskHomeProps["onStart"]) {
@@ -296,7 +296,7 @@ describe("Desk home suggesting the agent with the tools for a question", () => {
           ? ({
               outcome: "BetterAgent",
               agent: customerService,
-              tools: [{ name: "list_shipments", summary: "" }],
+              tools: [{ name: "shipment_list", summary: "" }],
             } as AgentMatch)
           : currentAgentId === billing.id
             ? { ...billingFits(), outcome: "CurrentAgent" }
@@ -327,7 +327,7 @@ describe("Desk home suggesting the agent with the tools for a question", () => {
           ? ({
               outcome: "BetterAgent",
               agent: customerService,
-              tools: [{ name: "list_shipments", summary: "" }],
+              tools: [{ name: "shipment_list", summary: "" }],
             } as AgentMatch)
           : billingFits(),
       );

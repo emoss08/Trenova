@@ -579,7 +579,7 @@ func TestOpenDelegate_PutsWhatWasHandedOverAfterTheTask(t *testing.T) {
 		Records: []agent.RecordRef{{EntityType: "shipment", ID: "shp_1"}},
 		Results: []agentruntime.SharedResult{{
 			CallID:   "call_read",
-			ToolName: "get_shipment",
+			ToolName: "shipment_get",
 			Content:  `{"proNumber":"PRO-1001"}`,
 		}},
 	}

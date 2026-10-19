@@ -53,7 +53,7 @@ function proposal(overrides: Partial<AssistantProposal> = {}): AssistantProposal
   return {
     id: "aprop_1",
     runId: "arun_1",
-    toolName: "update_shipment",
+    toolName: "shipment_update",
     arguments: { shipmentId: "shp_1", status: "Delayed" },
     rationale: "",
     autonomyTier: "Propose",
@@ -214,7 +214,7 @@ describe("DeskApprovalCard for a change that creates records", () => {
   it("counts the records it creates, not their parts, and acts on none", async () => {
     fetchProposalPreview.mockResolvedValue(
       preview({
-        tool: "create_shipment",
+        tool: "shipment_create",
         changes: [
           record({ record: null, entityId: null, label: "New shipment", operation: "Create" }),
           stop(1),

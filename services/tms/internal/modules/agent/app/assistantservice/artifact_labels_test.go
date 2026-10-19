@@ -12,7 +12,7 @@ import (
 func TestShownArtifact_CarriesATablesFirstColumn(t *testing.T) {
 	t.Parallel()
 
-	artifact := tableArtifact("call_1", "list_shipments", map[string]any{
+	artifact := tableArtifact("call_1", "shipment_list", map[string]any{
 		"columns": []any{"proNumber", "status"},
 		"count":   float64(2),
 		"items": []any{

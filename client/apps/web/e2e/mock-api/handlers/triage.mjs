@@ -7,7 +7,8 @@ import { publish } from "../realtime.mjs";
 import { userSelectOptions } from "./settings.mjs";
 import * as model from "./triage-model.mjs";
 
-const MOCK_ORIGIN = process.env.MOCK_API_PUBLIC_URL ?? `http://localhost:${process.env.MOCK_API_PORT ?? 8080}`;
+const MOCK_ORIGIN =
+  process.env.MOCK_API_PUBLIC_URL ?? `http://localhost:${process.env.MOCK_API_PORT ?? 8080}`;
 
 const tri = (state) => {
   model.wakeDue(state.triage);
@@ -20,7 +21,12 @@ function user(t, id) {
   if (!id) return null;
   const u = t.users.get(id);
   if (!u) return null;
-  return { id: u.id, name: u.name, emailAddress: u.emailAddress, thumbnailUrl: `${MOCK_ORIGIN}/__mock/avatar/${u.id}.svg` };
+  return {
+    id: u.id,
+    name: u.name,
+    emailAddress: u.emailAddress,
+    thumbnailUrl: `${MOCK_ORIGIN}/__mock/avatar/${u.id}.svg`,
+  };
 }
 
 function shipmentRef(t, id) {
@@ -65,7 +71,11 @@ function mailbox(t, mb) {
 }
 
 function credentials(t, { mailbox: mb, token }) {
-  return { token, webhookPath: `/api/v1/webhooks/inbound-mail/${encodeURIComponent(token)}/`, mailbox: mailbox(t, mb) };
+  return {
+    token,
+    webhookPath: `/api/v1/webhooks/inbound-mail/${encodeURIComponent(token)}/`,
+    mailbox: mailbox(t, mb),
+  };
 }
 
 function attachmentBase(a) {
@@ -89,8 +99,17 @@ function attachmentDetail(t, a) {
   return {
     ...attachmentBase(a),
     filedShipment: shipmentRef(t, a.filedShipmentId),
-    pages: a.pages.map((p) => ({ number: p.number, label: p.label, suggestedType: p.suggestedType })),
-    splitDocuments: a.splitDocuments.map((d) => ({ fromPage: d.fromPage, toPage: d.toPage, documentId: d.documentId, documentType: d.documentType })),
+    pages: a.pages.map((p) => ({
+      number: p.number,
+      label: p.label,
+      suggestedType: p.suggestedType,
+    })),
+    splitDocuments: a.splitDocuments.map((d) => ({
+      fromPage: d.fromPage,
+      toPage: d.toPage,
+      documentId: d.documentId,
+      documentType: d.documentType,
+    })),
     reading: a.reading
       ? {
           documentType: a.reading.documentType,
@@ -104,7 +123,9 @@ function attachmentDetail(t, a) {
 
 function snooze(t, m) {
   if (!model.isSnoozed(m)) return null;
-  const type = m.snoozeDocumentTypeId ? DOCUMENT_TYPES.find((d) => d.id === m.snoozeDocumentTypeId) : null;
+  const type = m.snoozeDocumentTypeId
+    ? DOCUMENT_TYPES.find((d) => d.id === m.snoozeDocumentTypeId)
+    : null;
   return {
     until: m.snoozedUntil,
     event: m.snoozeEvent,
@@ -155,12 +176,27 @@ function action(t, m, a) {
     done: a.done,
     novaCanDo: a.novaCanDo,
     attachment: attachment
-      ? { id: attachment.id, fileName: attachment.fileName, kind: attachment.kind, documentId: attachment.documentId, filedShipmentId: attachment.filedShipmentId, filedAs: attachment.filedAs, pageCount: attachment.pageCount }
+      ? {
+          id: attachment.id,
+          fileName: attachment.fileName,
+          kind: attachment.kind,
+          documentId: attachment.documentId,
+          filedShipmentId: attachment.filedShipmentId,
+          filedAs: attachment.filedAs,
+          pageCount: attachment.pageCount,
+        }
       : null,
     shipment: shipmentRef(t, a.shipmentId),
     replyPurpose: a.replyPurpose,
     refusedFileName: a.refusedFileName,
-    reply: reply ? { id: reply.id, status: reply.status, sentAt: reply.sentAt, draftedByNova: reply.draftedByNova } : null,
+    reply: reply
+      ? {
+          id: reply.id,
+          status: reply.status,
+          sentAt: reply.sentAt,
+          draftedByNova: reply.draftedByNova,
+        }
+      : null,
     loadDrafted: a.loadDrafted,
     createdShipment: shipmentRef(t, a.createdShipmentId),
     stopsDecision: a.stopsDecision,
@@ -200,7 +236,9 @@ function listFields(t, m) {
     preview: preview(m.textBody),
     attachmentCount: m.attachments.length,
     matchedShipment: shipmentRef(t, m.matchedShipmentId),
-    matchedCustomer: customer ? { id: customer.id, code: customer.code, name: customer.name } : null,
+    matchedCustomer: customer
+      ? { id: customer.id, code: customer.code, name: customer.name }
+      : null,
     threadKey: m.threadKey,
     threadCount: model.threadCount(t, m.threadKey),
     senderDomain: m.senderDomain,
@@ -209,7 +247,9 @@ function listFields(t, m) {
     dueAt: m.dueAt,
     responseTargetMinutes: model.targetMinutes(t, m.classification),
     snooze: snooze(t, m),
-    awaitingReply: model.isAwaitingReply(m) ? { since: m.awaitingSince, until: m.awaitingUntil } : null,
+    awaitingReply: model.isAwaitingReply(m)
+      ? { since: m.awaitingSince, until: m.awaitingUntil }
+      : null,
     novaRead: m.novaRead,
     handledByNova: m.handledByNova,
     actions: model.actionsOf(m).map((a) => action(t, m, a)),
@@ -254,7 +294,14 @@ function detailFields(t, m) {
     reviewer: user(t, m.reviewedBy),
     mailbox: mailbox(t, model.mailboxOf(t, m.mailboxId)),
     attachments: m.attachments.map((a) => attachmentDetail(t, a)),
-    facts: m.facts.map((f) => ({ key: f.key, label: f.label, value: f.value, quote: f.quote, tone: f.tone, flagged: f.flagged })),
+    facts: m.facts.map((f) => ({
+      key: f.key,
+      label: f.label,
+      value: f.value,
+      quote: f.quote,
+      tone: f.tone,
+      flagged: f.flagged,
+    })),
     conflicts: m.conflicts.map((c) => ({
       id: c.id,
       kind: c.kind,
@@ -269,25 +316,54 @@ function detailFields(t, m) {
       resolvedAt: c.resolvedAt,
       options: [...c.options],
     })),
-    activity: [...m.activity].sort((a, b) => a.createdAt - b.createdAt).map((line) => activityLine(t, line)),
+    activity: [...m.activity]
+      .sort((a, b) => a.createdAt - b.createdAt)
+      .map((line) => activityLine(t, line)),
     replies: m.replies.map((r) => replyShape(t, r)),
     replyDraft: replyShape(t, model.replyDraftOf(m)),
     loadDraft: m.loadDraft
-      ? { source: m.loadDraft.source, draftedAt: m.loadDraft.draftedAt, draftedByNova: m.loadDraft.draftedByNova, fields: m.loadDraft.fields.map((f) => ({ key: f.key, value: f.value })) }
+      ? {
+          source: m.loadDraft.source,
+          draftedAt: m.loadDraft.draftedAt,
+          draftedByNova: m.loadDraft.draftedByNova,
+          fields: m.loadDraft.fields.map((f) => ({ key: f.key, value: f.value })),
+        }
       : null,
   };
 }
 
 function threadFields(t, m) {
-  return { ...listFields(t, m), textBody: m.textBody, reviewNote: m.reviewNote, reviewer: user(t, m.reviewedBy) };
+  return {
+    ...listFields(t, m),
+    textBody: m.textBody,
+    reviewNote: m.reviewNote,
+    reviewer: user(t, m.reviewedBy),
+  };
 }
 
 function sample(t, { m, reference }) {
-  return { messageId: m.id, fromName: m.fromName, fromAddress: m.fromAddress, subject: m.subject, classification: m.classification, receivedAt: m.receivedAt, reference };
+  return {
+    messageId: m.id,
+    fromName: m.fromName,
+    fromAddress: m.fromAddress,
+    subject: m.subject,
+    classification: m.classification,
+    receivedAt: m.receivedAt,
+    reference,
+  };
 }
 
 function riverPoint({ m, done }) {
-  return { messageId: m.id, fromName: m.fromName, fromAddress: m.fromAddress, subject: m.subject, classification: m.classification, receivedAt: m.receivedAt, dueAt: m.dueAt, done };
+  return {
+    messageId: m.id,
+    fromName: m.fromName,
+    fromAddress: m.fromAddress,
+    subject: m.subject,
+    classification: m.classification,
+    receivedAt: m.receivedAt,
+    dueAt: m.dueAt,
+    done,
+  };
 }
 
 function deckItem(t, item) {
@@ -334,16 +410,37 @@ function rulePreview(p) {
     matched: p.matched,
     off: p.off,
     since: p.since,
-    matches: p.matches.map((x) => ({ messageId: x.messageId, fromName: x.fromName, fromAddress: x.fromAddress, subject: x.subject, receivedAt: x.receivedAt, reference: x.reference, mismatch: x.mismatch })),
+    matches: p.matches.map((x) => ({
+      messageId: x.messageId,
+      fromName: x.fromName,
+      fromAddress: x.fromAddress,
+      subject: x.subject,
+      receivedAt: x.receivedAt,
+      reference: x.reference,
+      mismatch: x.mismatch,
+    })),
   };
 }
 
 function view(t, v) {
-  return { id: v.id, name: v.name, query: v.query, position: v.position, waiting: model.viewWaiting(t, v) };
+  return {
+    id: v.id,
+    name: v.name,
+    query: v.query,
+    position: v.position,
+    waiting: model.viewWaiting(t, v),
+  };
 }
 
 function template(t, x) {
-  return { id: x.id, name: x.name, body: x.body, version: x.version, createdAt: x.createdAt, createdBy: user(t, x.createdById) };
+  return {
+    id: x.id,
+    name: x.name,
+    body: x.body,
+    version: x.version,
+    createdAt: x.createdAt,
+    createdBy: user(t, x.createdById),
+  };
 }
 
 function shipmentPeek(p) {
@@ -360,7 +457,15 @@ function shipmentPeek(p) {
     late: p.late,
     eta: p.eta,
     deliveredAt: p.deliveredAt,
-    stops: p.stops.map((s) => ({ kind: s.kind, city: s.city, state: s.state, scheduledAt: s.scheduledAt, arrivedAt: s.arrivedAt, departedAt: s.departedAt, done: s.done })),
+    stops: p.stops.map((s) => ({
+      kind: s.kind,
+      city: s.city,
+      state: s.state,
+      scheduledAt: s.scheduledAt,
+      arrivedAt: s.arrivedAt,
+      departedAt: s.departedAt,
+      done: s.done,
+    })),
     documentsOnFile: [...p.documentsOnFile],
   };
 }
@@ -376,7 +481,11 @@ function settings(t) {
 }
 
 function bulk(t, result) {
-  return { affected: result.affected, ruleId: result.ruleId, messages: result.messages.map((m) => listFields(t, m)) };
+  return {
+    affected: result.affected,
+    ruleId: result.ruleId,
+    messages: result.messages.map((m) => listFields(t, m)),
+  };
 }
 
 function briefingShape(t) {
@@ -392,11 +501,26 @@ function briefingShape(t) {
     overdue: b.overdue,
     closedByPeopleToday: b.closedByPeopleToday,
     handledByNovaToday: b.handledByNovaToday,
-    handledByNova: b.handledByNova.map((g) => ({ action: g.action, classification: g.classification, count: g.count, samples: g.samples.map((s) => sample(t, s)) })),
-    arrivals: b.arrivals.map((a) => ({ hourStart: a.hourStart, handledByNova: a.handledByNova, leftForPerson: a.leftForPerson })),
+    handledByNova: b.handledByNova.map((g) => ({
+      action: g.action,
+      classification: g.classification,
+      count: g.count,
+      samples: g.samples.map((s) => sample(t, s)),
+    })),
+    arrivals: b.arrivals.map((a) => ({
+      hourStart: a.hourStart,
+      handledByNova: a.handledByNova,
+      leftForPerson: a.leftForPerson,
+    })),
     novaPoints: b.novaPoints.map(riverPoint),
     yours: b.yours.map(riverPoint),
-    deck: b.deck.map((card) => ({ group: card.group, count: card.count, estimateMinutes: card.estimateMinutes, messageIds: card.messageIds, items: card.items.map((item) => deckItem(t, item)) })),
+    deck: b.deck.map((card) => ({
+      group: card.group,
+      count: card.count,
+      estimateMinutes: card.estimateMinutes,
+      messageIds: card.messageIds,
+      items: card.items.map((item) => deckItem(t, item)),
+    })),
     longestWaiting: deckItem(t, b.longestWaiting),
     estimateMinutes: b.estimateMinutes,
     corrections: { ...b.corrections },
@@ -432,13 +556,17 @@ export const TRIAGE_HANDLERS = {
   },
   InboundThread: (state, v) => {
     const t = tri(state);
-    const thread = t.messages.filter((m) => m.threadKey === v.threadKey).sort((a, b) => a.receivedAt - b.receivedAt);
+    const thread = t.messages
+      .filter((m) => m.threadKey === v.threadKey)
+      .sort((a, b) => a.receivedAt - b.receivedAt);
     return { inboundThread: thread.map((m) => threadFields(t, m)) };
   },
   TriageBriefing: (state) => ({ triageBriefing: briefingShape(tri(state)) }),
   MyTriageViews: (state) => {
     const t = tri(state);
-    return { myTriageViews: [...t.views].sort((a, b) => a.position - b.position).map((v) => view(t, v)) };
+    return {
+      myTriageViews: [...t.views].sort((a, b) => a.position - b.position).map((v) => view(t, v)),
+    };
   },
   TriageResponseTargets: (state) => ({ triageResponseTargets: model.responseTargets(tri(state)) }),
   TriageSettings: (state) => ({ triageSettings: settings(tri(state)) }),
@@ -455,7 +583,9 @@ export const TRIAGE_HANDLERS = {
     const t = tri(state);
     return { triageRules: t.rules.map((r) => rule(t, r)) };
   },
-  TriageRulePreview: (state, v) => ({ triageRulePreview: rulePreview(model.rulePreview(tri(state), v.input)) }),
+  TriageRulePreview: (state, v) => ({
+    triageRulePreview: rulePreview(model.rulePreview(tri(state), v.input)),
+  }),
   TriageRuleMatches: (state, v) => {
     const t = tri(state);
     return { triageRuleMatches: rulePreview(model.rulePreview(t, model.ruleOf(t, v.id))) };
@@ -463,7 +593,8 @@ export const TRIAGE_HANDLERS = {
   TriageSenderDomains: (state, v) => {
     const t = tri(state);
     const frequency = new Map();
-    for (const m of t.messages) frequency.set(m.senderDomain, (frequency.get(m.senderDomain) ?? 0) + 1);
+    for (const m of t.messages)
+      frequency.set(m.senderDomain, (frequency.get(m.senderDomain) ?? 0) + 1);
     const query = (v.query ?? "").trim().toLowerCase();
     return {
       triageSenderDomains: [...frequency.entries()]
@@ -495,7 +626,9 @@ export const TRIAGE_HANDLERS = {
     const t = tri(state);
     return { triageReplyTemplates: t.templates.map((x) => template(t, x)) };
   },
-  RenderTriageReplyTemplate: (state, v) => ({ renderTriageReplyTemplate: model.renderTemplate(tri(state), v.templateId, v.messageId) }),
+  RenderTriageReplyTemplate: (state, v) => ({
+    renderTriageReplyTemplate: model.renderTemplate(tri(state), v.templateId, v.messageId),
+  }),
   InboundReplyAttachables: (state, v) => ({
     inboundReplyAttachables: model.replyAttachables(tri(state), v.messageId).map((doc) => ({
       id: doc.id,
@@ -515,7 +648,9 @@ export const TRIAGE_HANDLERS = {
     const { shipmentId, ...rest } = stops;
     return { triageStopTimes: { shipment: shipmentRef(t, shipmentId), ...rest } };
   },
-  TriageShipmentPeek: (state, v) => ({ triageShipmentPeek: shipmentPeek(model.shipmentPeek(tri(state), v.shipmentId)) }),
+  TriageShipmentPeek: (state, v) => ({
+    triageShipmentPeek: shipmentPeek(model.shipmentPeek(tri(state), v.shipmentId)),
+  }),
   TriageCustomerPeek: (state, v) => {
     const t = tri(state);
     const p = model.customerPeek(t, v.customerId);
@@ -543,7 +678,12 @@ export const TRIAGE_HANDLERS = {
   },
   CreateInboundMailbox: (state, v) => {
     const t = tri(state);
-    return { createInboundMailbox: credentials(t, model.createMailbox(t, v.input, v.signingSecret, v.apiKey)) };
+    return {
+      createInboundMailbox: credentials(
+        t,
+        model.createMailbox(t, v.input, v.signingSecret, v.apiKey),
+      ),
+    };
   },
   UpdateInboundMailbox: (state, v) => {
     const t = tri(state);
@@ -555,7 +695,12 @@ export const TRIAGE_HANDLERS = {
   },
   SetInboundMailboxSigningSecret: (state, v) => {
     const t = tri(state);
-    return { setInboundMailboxSigningSecret: mailbox(t, model.setSecret(t, v.id, v.secret, "hasSigningSecret")) };
+    return {
+      setInboundMailboxSigningSecret: mailbox(
+        t,
+        model.setSecret(t, v.id, v.secret, "hasSigningSecret"),
+      ),
+    };
   },
   SetInboundMailboxApiKey: (state, v) => {
     const t = tri(state);
@@ -602,7 +747,9 @@ export const TRIAGE_HANDLERS = {
     const result = model.handOff(t, v.toUserId);
     return { handOffTriage: { affected: result.affected, to: user(t, result.user.id) } };
   },
-  ReadUnreadInboundMessages: (state) => ({ readUnreadInboundMessages: model.readUnread(tri(state)) }),
+  ReadUnreadInboundMessages: (state) => ({
+    readUnreadInboundMessages: model.readUnread(tri(state)),
+  }),
   CreateMyTriageView: (state, v) => {
     const t = tri(state);
     return { createMyTriageView: view(t, model.createView(t, v.name, v.query)) };
@@ -612,7 +759,9 @@ export const TRIAGE_HANDLERS = {
     return { renameMyTriageView: view(t, model.renameView(t, v.id, v.name)) };
   },
   DeleteMyTriageView: (state, v) => ({ deleteMyTriageView: model.deleteView(tri(state), v.id) }),
-  UpdateTriageResponseTargets: (state, v) => ({ updateTriageResponseTargets: model.updateTargets(tri(state), v.input ?? []) }),
+  UpdateTriageResponseTargets: (state, v) => ({
+    updateTriageResponseTargets: model.updateTargets(tri(state), v.input ?? []),
+  }),
   UpdateTriageSettings: (state, v) => {
     const t = tri(state);
     model.updateSettings(t, v.input);
@@ -633,7 +782,9 @@ export const TRIAGE_HANDLERS = {
   DeleteTriageRule: (state, v) => ({ deleteTriageRule: model.deleteRule(tri(state), v.id) }),
   CorrectInboundClassification: (state, v) => {
     const t = tri(state);
-    return { correctInboundClassification: detailFields(t, model.correct(t, v.id, v.classification)) };
+    return {
+      correctInboundClassification: detailFields(t, model.correct(t, v.id, v.classification)),
+    };
   },
   FlagInboundFact: (state, v) => {
     const t = tri(state);
@@ -641,7 +792,12 @@ export const TRIAGE_HANDLERS = {
   },
   ResolveInboundConflict: (state, v) => {
     const t = tri(state);
-    return { resolveInboundConflict: detailFields(t, model.resolveConflict(t, v.id, v.conflictId, v.resolution)) };
+    return {
+      resolveInboundConflict: detailFields(
+        t,
+        model.resolveConflict(t, v.id, v.conflictId, v.resolution),
+      ),
+    };
   },
   ReopenInboundConflict: (state, v) => {
     const t = tri(state);
@@ -653,7 +809,12 @@ export const TRIAGE_HANDLERS = {
   },
   SaveInboundReplyDraft: (state, v) => {
     const t = tri(state);
-    return { saveInboundReplyDraft: replyShape(t, model.saveDraft(t, v.messageId, v.subject, v.body, v.documentIds)) };
+    return {
+      saveInboundReplyDraft: replyShape(
+        t,
+        model.saveDraft(t, v.messageId, v.subject, v.body, v.documentIds),
+      ),
+    };
   },
   DiscardInboundReplyDraft: (state, v) => {
     const t = tri(state);
@@ -663,16 +824,22 @@ export const TRIAGE_HANDLERS = {
     const t = tri(state);
     return { sendInboundReply: replyShape(t, await model.sendReply(t, v.input)) };
   },
-  DraftInboundMany: (state, v) => ({ draftInboundMany: model.draftMany(tri(state), v.messageIds ?? []) }),
+  DraftInboundMany: (state, v) => ({
+    draftInboundMany: model.draftMany(tri(state), v.messageIds ?? []),
+  }),
   CreateTriageReplyTemplate: (state, v) => {
     const t = tri(state);
     return { createTriageReplyTemplate: template(t, model.createTemplate(t, v.input)) };
   },
   UpdateTriageReplyTemplate: (state, v) => {
     const t = tri(state);
-    return { updateTriageReplyTemplate: template(t, model.updateTemplate(t, v.id, v.version, v.input)) };
+    return {
+      updateTriageReplyTemplate: template(t, model.updateTemplate(t, v.id, v.version, v.input)),
+    };
   },
-  DeleteTriageReplyTemplate: (state, v) => ({ deleteTriageReplyTemplate: model.deleteTemplate(tri(state), v.id) }),
+  DeleteTriageReplyTemplate: (state, v) => ({
+    deleteTriageReplyTemplate: model.deleteTemplate(tri(state), v.id),
+  }),
   DraftInboundLoad: async (state, v) => {
     const t = tri(state);
     return { draftInboundLoad: detailFields(t, await model.draftLoad(t, v.messageId)) };
@@ -718,10 +885,53 @@ export const TRIAGE_HANDLERS = {
 // --- Desk hand-off: the agents a message can be handed to, and select options the Triage forms read
 
 const AGENTS = [
-  { id: "agdef_dispatch", name: "Dispatch", description: "Loads, tenders, carriers", template: "DispatchAssistant", icon: "truck", accent: "blue", toolNames: ["create_shipment", "tender_shipment", "search_carriers"], starters: [{ label: "Build a load", prompt: "Build the load this email describes." }] },
-  { id: "agdef_billing", name: "Billing", description: "Invoices, detention, pay", template: "BillingAssistant", icon: "receipt", accent: "teal", toolNames: ["file_document", "waive_detention", "queue_carrier_pay"], starters: [{ label: "Check detention", prompt: "Check the stop times and tell me if the detention stands." }] },
-  { id: "agdef_edi", name: "EDI", description: "Trading partners, X12, acknowledgments", template: "EDIDesk", icon: "file", accent: "violet", toolNames: ["draft_edi_connection", "apply_edi_connection_draft", "inspect_x12"], starters: [{ label: "Set up a partner", prompt: "Set this trading partner up from their EDI guide." }] },
-  { id: "agdef_cs", name: "Customer service", description: "Status, ETAs, replies", template: "CustomerAssistant", icon: "message", accent: "amber", toolNames: ["shipment_eta", "draft_reply"], starters: [{ label: "Send an ETA", prompt: "Draft the ETA reply for this customer." }] },
+  {
+    id: "agdef_dispatch",
+    name: "Dispatch",
+    description: "Loads, tenders, carriers",
+    template: "DispatchAssistant",
+    icon: "truck",
+    accent: "blue",
+    toolNames: ["shipment_create", "tender_shipment", "search_carriers"],
+    starters: [{ label: "Build a load", prompt: "Build the load this email describes." }],
+  },
+  {
+    id: "agdef_billing",
+    name: "Billing",
+    description: "Invoices, detention, pay",
+    template: "BillingAssistant",
+    icon: "receipt",
+    accent: "teal",
+    toolNames: ["file_document", "waive_detention", "queue_carrier_pay"],
+    starters: [
+      {
+        label: "Check detention",
+        prompt: "Check the stop times and tell me if the detention stands.",
+      },
+    ],
+  },
+  {
+    id: "agdef_edi",
+    name: "EDI",
+    description: "Trading partners, X12, acknowledgments",
+    template: "EDIDesk",
+    icon: "file",
+    accent: "violet",
+    toolNames: ["draft_edi_connection", "apply_edi_connection_draft", "inspect_x12"],
+    starters: [
+      { label: "Set up a partner", prompt: "Set this trading partner up from their EDI guide." },
+    ],
+  },
+  {
+    id: "agdef_cs",
+    name: "Customer service",
+    description: "Status, ETAs, replies",
+    template: "CustomerAssistant",
+    icon: "message",
+    accent: "amber",
+    toolNames: ["shipment_eta", "draft_reply"],
+    starters: [{ label: "Send an ETA", prompt: "Draft the ETA reply for this customer." }],
+  },
 ];
 
 export const DESK_HANDLERS = {
@@ -731,7 +941,13 @@ export const DESK_HANDLERS = {
         node: {
           ...agent,
           systemKey: "",
-          delegates: AGENTS.filter((other) => other.id !== agent.id).map((other) => ({ id: other.id, name: other.name, icon: other.icon, accent: other.accent, template: other.template })),
+          delegates: AGENTS.filter((other) => other.id !== agent.id).map((other) => ({
+            id: other.id,
+            name: other.name,
+            icon: other.icon,
+            accent: other.accent,
+            template: other.template,
+          })),
         },
       })),
       pageInfo: { hasNextPage: false, endCursor: null },
@@ -742,27 +958,69 @@ export const DESK_HANDLERS = {
     const input = v.input ?? {};
     const query = (input.query ?? "").toLowerCase();
     const options = {
-      DOCUMENT_TYPE: () => DOCUMENT_TYPES.map((d) => ({ id: d.id, label: d.code, description: d.name, meta: { name: d.name } })),
-      SHIPMENT: () => [...t.shipments.values()].map((s) => ({ id: s.id, label: s.proNumber, description: `${s.originCity}, ${s.originState} → ${s.destinationCity}, ${s.destinationState}`, meta: { bol: s.bol, poNumber: s.poNumber } })),
-      CUSTOMER: () => [...t.customers.values()].map((c) => ({ id: c.id, label: c.code, description: c.name, meta: null })),
-      CARRIER: () => [...t.carriers.values()].map((c) => ({ id: c.id, label: c.name, description: c.domain, meta: null })),
+      DOCUMENT_TYPE: () =>
+        DOCUMENT_TYPES.map((d) => ({
+          id: d.id,
+          label: d.code,
+          description: d.name,
+          meta: { name: d.name },
+        })),
+      SHIPMENT: () =>
+        [...t.shipments.values()].map((s) => ({
+          id: s.id,
+          label: s.proNumber,
+          description: `${s.originCity}, ${s.originState} → ${s.destinationCity}, ${s.destinationState}`,
+          meta: { bol: s.bol, poNumber: s.poNumber },
+        })),
+      CUSTOMER: () =>
+        [...t.customers.values()].map((c) => ({
+          id: c.id,
+          label: c.code,
+          description: c.name,
+          meta: null,
+        })),
+      CARRIER: () =>
+        [...t.carriers.values()].map((c) => ({
+          id: c.id,
+          label: c.name,
+          description: c.domain,
+          meta: null,
+        })),
       USER: () => {
-        const triageUsers = [...t.users.values()].map((u) => ({ id: u.id, label: u.name, description: u.emailAddress, meta: null }));
+        const triageUsers = [...t.users.values()].map((u) => ({
+          id: u.id,
+          label: u.name,
+          description: u.emailAddress,
+          meta: null,
+        }));
         const known = new Set(triageUsers.map((u) => u.id));
-        const team = userSelectOptions(state, {}).selectOptions.edges.map((edge) => edge.node).filter((u) => !known.has(u.id));
+        const team = userSelectOptions(state, {})
+          .selectOptions.edges.map((edge) => edge.node)
+          .filter((u) => !known.has(u.id));
         return [...triageUsers, ...team];
       },
     }[input.resource];
     let rows = options ? options() : [];
     if (input.ids?.length) rows = rows.filter((row) => input.ids.includes(row.id));
-    if (query) rows = rows.filter((row) => `${row.label} ${row.description ?? ""}`.toLowerCase().includes(query));
+    if (query)
+      rows = rows.filter((row) =>
+        `${row.label} ${row.description ?? ""}`.toLowerCase().includes(query),
+      );
     const offset = input.offset ?? 0;
     const first = input.first ?? 20;
     const page = rows.slice(offset, offset + first);
     return {
       selectOptions: {
-        edges: page.map((node, i) => ({ node, cursor: Buffer.from(`offset:${offset + i + 1}`).toString("base64url") })),
-        pageInfo: { hasNextPage: offset + first < rows.length, endCursor: page.length ? Buffer.from(`offset:${offset + page.length}`).toString("base64url") : null },
+        edges: page.map((node, i) => ({
+          node,
+          cursor: Buffer.from(`offset:${offset + i + 1}`).toString("base64url"),
+        })),
+        pageInfo: {
+          hasNextPage: offset + first < rows.length,
+          endCursor: page.length
+            ? Buffer.from(`offset:${offset + page.length}`).toString("base64url")
+            : null,
+        },
         totalCount: rows.length,
       },
     };
@@ -777,7 +1035,15 @@ function presenceEvent(action, member) {
 
 function joinPresence(state, _path, body) {
   const t = state.triage;
-  if (!body?.connectionId) return { __status: 422, body: { title: "Invalid", status: 422, errors: [{ field: "connectionId", message: "Connection is required", code: "REQUIRED" }] } };
+  if (!body?.connectionId)
+    return {
+      __status: 422,
+      body: {
+        title: "Invalid",
+        status: 422,
+        errors: [{ field: "connectionId", message: "Connection is required", code: "REQUIRED" }],
+      },
+    };
   const member = {
     userId: USER.id,
     connectionId: body.connectionId,
@@ -807,7 +1073,17 @@ function typing(state, _path, body) {
   if (!member) return { __status: 404, body: { title: "Not found", status: 404 } };
   member.activity = body.stop ? "viewing" : "writing";
   if (body.messageId) member.messageId = body.messageId;
-  publish("typing", { scope: model.PRESENCE_SCOPE, userId: member.userId, name: member.name, messageId: member.messageId, stop: !!body.stop }, { resumable: false });
+  publish(
+    "typing",
+    {
+      scope: model.PRESENCE_SCOPE,
+      userId: member.userId,
+      name: member.name,
+      messageId: member.messageId,
+      stop: !!body.stop,
+    },
+    { resumable: false },
+  );
   presenceEvent("enter", member);
   return { ok: true };
 }
@@ -838,7 +1114,8 @@ function thread(state, threadId, body = {}) {
 // --- the Desk hand-off: a conversation about a message, answered from the queue's own state
 
 const STEP_WORDS = {
-  File: (a) => `file ${a.attachment?.fileName?.replace(/\.[a-z0-9]{2,5}$/i, "") ?? "the attachment"}`,
+  File: (a) =>
+    `file ${a.attachment?.fileName?.replace(/\.[a-z0-9]{2,5}$/i, "") ?? "the attachment"}`,
   BuildLoad: () => "build the load",
   Reply: () => "answer them",
   CheckStops: () => "check the stop times",
@@ -882,17 +1159,26 @@ function deskMessage(t, thread, role, content, sequence, at, mentions) {
 // --- a document's content: a small PDF drawn from what was read off the file, so the document
 // viewer has real pages, with real text, to render and mark
 
-const pdfText = (text) => String(text).replace(/[^\x20-\x7e]/g, "-").replace(/([()\\])/g, "\\$1");
+const pdfText = (text) =>
+  String(text)
+    .replace(/[^\x20-\x7e]/g, "-")
+    .replace(/([()\\])/g, "\\$1");
 
 function documentPdf(attachment) {
-  const pages = attachment.pages?.length ? attachment.pages : [{ number: 1, label: attachment.reading?.documentType ?? "Document" }];
+  const pages = attachment.pages?.length
+    ? attachment.pages
+    : [{ number: 1, label: attachment.reading?.documentType ?? "Document" }];
   const fields = attachment.reading?.fields ?? [];
   const objects = [];
   const pageRefs = [];
   const fontRef = 3 + pages.length * 2;
   pages.forEach((page, index) => {
-    const lines = [`BT /F1 20 Tf 72 720 Td (${pdfText((page.label || "Document").toUpperCase())}) Tj ET`];
-    lines.push(`BT /F1 10 Tf 72 700 Td (${pdfText(attachment.fileName)} - page ${page.number}) Tj ET`);
+    const lines = [
+      `BT /F1 20 Tf 72 720 Td (${pdfText((page.label || "Document").toUpperCase())}) Tj ET`,
+    ];
+    lines.push(
+      `BT /F1 10 Tf 72 700 Td (${pdfText(attachment.fileName)} - page ${page.number}) Tj ET`,
+    );
     if (index === 0) {
       fields.forEach((field, row) => {
         lines.push(`BT /F1 12 Tf 72 ${660 - row * 26} Td (${pdfText(field.label)}:) Tj ET`);
@@ -905,7 +1191,8 @@ function documentPdf(attachment) {
     const stream = lines.join("\n");
     const pageId = 3 + index * 2;
     pageRefs.push(`${pageId} 0 R`);
-    objects[pageId] = `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents ${pageId + 1} 0 R /Resources << /Font << /F1 ${fontRef} 0 R >> >> >>`;
+    objects[pageId] =
+      `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents ${pageId + 1} 0 R /Resources << /Font << /F1 ${fontRef} 0 R >> >> >>`;
     objects[pageId + 1] = `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`;
   });
   objects[1] = "<< /Type /Catalog /Pages 2 0 R >>";
@@ -919,14 +1206,17 @@ function documentPdf(attachment) {
   }
   const xref = pdf.length;
   pdf += `xref\n0 ${objects.length}\n0000000000 65535 f \n`;
-  for (let id = 1; id < objects.length; id++) pdf += `${String(offsets[id]).padStart(10, "0")} 00000 n \n`;
+  for (let id = 1; id < objects.length; id++)
+    pdf += `${String(offsets[id]).padStart(10, "0")} 00000 n \n`;
   pdf += `trailer\n<< /Size ${objects.length} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
   return pdf;
 }
 
 function documentContent(state, path) {
   const documentId = /documents\/([^/]+)\//.exec(path)[1];
-  const attachment = state.triage.messages.flatMap((m) => m.attachments).find((a) => a.documentId === documentId);
+  const attachment = state.triage.messages
+    .flatMap((m) => m.attachments)
+    .find((a) => a.documentId === documentId);
   if (!attachment) return { __status: 404, body: { title: "Not found", status: 404 } };
   if (!/pdf$/i.test(attachment.fileName) && attachment.contentType !== "application/pdf") {
     return { __status: 404, body: { title: "No preview", status: 404 } };
@@ -985,7 +1275,15 @@ function startTurn(state, path, body) {
   t.assistantMessages ??= new Map();
   t.assistantTurns ??= new Map();
   const messages = t.assistantMessages.get(threadId) ?? [];
-  const user = deskMessage(t, thread, "User", body?.content ?? "", messages.length + 1, t.now(), body?.mentions);
+  const user = deskMessage(
+    t,
+    thread,
+    "User",
+    body?.content ?? "",
+    messages.length + 1,
+    t.now(),
+    body?.mentions,
+  );
   messages.push(user);
   t.assistantMessages.set(threadId, messages);
   const turnId = `aturn_mock_${t.assistantTurns.size + 1}`;
@@ -1004,17 +1302,33 @@ function followTurn(state, path) {
     ? deskAnswer(t, thread)
     : "On it — I'll keep this in the conversation so the next person can see what happened.";
   if (!turn.reply) {
-    turn.reply = deskMessage(t, thread, "Assistant", answer, messages.length + 1, t.now() + 2, null);
+    turn.reply = deskMessage(
+      t,
+      thread,
+      "Assistant",
+      answer,
+      messages.length + 1,
+      t.now() + 2,
+      null,
+    );
     messages.push(turn.reply);
     thread.lastMessageAt = turn.reply.createdAt;
   }
   const words = answer.split(/(?<= )/);
   const frames = [{ event: "accepted", data: { content: turn.content }, delay: 400 }];
   for (let i = 0; i < words.length; i += 3) {
-    frames.push({ event: "delta", data: { text: words.slice(i, i + 3).join("") }, delay: i === 0 ? 900 : 60 });
+    frames.push({
+      event: "delta",
+      data: { text: words.slice(i, i + 3).join("") },
+      delay: i === 0 ? 900 : 60,
+    });
   }
   frames.push({ event: "message", data: { content: answer, model: "mock" }, delay: 40 });
-  frames.push({ event: "done", data: { thread, messages: [turn.user, turn.reply], reply: answer, refused: false }, delay: 40 });
+  frames.push({
+    event: "done",
+    data: { thread, messages: [turn.user, turn.reply], reply: answer, refused: false },
+    delay: 40,
+  });
   return { __sse: frames };
 }
 
@@ -1035,7 +1349,13 @@ function startThread(state, _path, body) {
 function avatar(state, path) {
   const id = /\/__mock\/avatar\/([a-z_]+)\.svg$/.exec(path)[1];
   const u = state.triage.users.get(id);
-  const label = u ? u.name.split(" ").map((w) => w[0]).slice(0, 2).join("") : "?";
+  const label = u
+    ? u.name
+        .split(" ")
+        .map((w) => w[0])
+        .slice(0, 2)
+        .join("")
+    : "?";
   const hue = [...id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 7);
   return {
     __raw: `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="hsl(${hue} 32% 42%)"/><text x="32" y="40" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="600" fill="#fff">${label}</text></svg>`,
@@ -1055,14 +1375,39 @@ export const TRIAGE_ROUTES = [
   ["POST", /^\/api\/v1\/documents\/upload\/?$/, uploadDocument],
   ["GET", /^\/api\/v1\/assistant\/turns\/aturn_mock_\d+\/stream\/?$/, followTurn],
   ["GET", /^\/api\/v1\/assistant\/threads\/athr_mock_\d+\/messages\/?$/, threadMessages],
-  ["GET", /^\/api\/v1\/assistant\/threads\/athr_mock_\d+\/turns\/active\/?$/, () => ({ turn: null })],
-  ["GET", /^\/api\/v1\/assistant\/providers\/?$/, () => ({
-    results: [{ id: "aiprov_mock", name: "Claude", kind: "Anthropic", model: "claude-sonnet", trusted: true, vendor: "Anthropic" }],
-  })],
-  ["GET", /^\/api\/v1\/assistant\/threads\/athr_mock_\d+\/?$/, (state, path) => {
-    const id = /athr_mock_\d+/.exec(path)[0];
-    return state.triage.assistantThreads.get(id) ?? { __status: 404, body: { title: "Not found", status: 404 } };
-  }],
+  [
+    "GET",
+    /^\/api\/v1\/assistant\/threads\/athr_mock_\d+\/turns\/active\/?$/,
+    () => ({ turn: null }),
+  ],
+  [
+    "GET",
+    /^\/api\/v1\/assistant\/providers\/?$/,
+    () => ({
+      results: [
+        {
+          id: "aiprov_mock",
+          name: "Claude",
+          kind: "Anthropic",
+          model: "claude-sonnet",
+          trusted: true,
+          vendor: "Anthropic",
+        },
+      ],
+    }),
+  ],
+  [
+    "GET",
+    /^\/api\/v1\/assistant\/threads\/athr_mock_\d+\/?$/,
+    (state, path) => {
+      const id = /athr_mock_\d+/.exec(path)[0];
+      return (
+        state.triage.assistantThreads.get(id) ?? {
+          __status: 404,
+          body: { title: "Not found", status: 404 },
+        }
+      );
+    },
+  ],
   ["GET", /^\/__mock\/avatar\/[a-z_]+\.svg$/, avatar],
 ];
-
