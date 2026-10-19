@@ -19,6 +19,17 @@ inputs:
 runs:
   using: composite
   steps:
+    # A change to a package most of the service imports recompiles hundreds of
+    # packages on top of the restored build cache, and the runner's disk ran
+    # out linking the last binaries. The SDKs preinstalled on the image, none
+    # of which a Go job uses, are most of that disk.
+    - name: Free disk space
+      shell: bash
+      run: |
+        sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+          /opt/hostedtoolcache/CodeQL /usr/local/share/boost
+        df -h /
+
     - name: Set up Go
       uses: actions/setup-go@v6
       with:
