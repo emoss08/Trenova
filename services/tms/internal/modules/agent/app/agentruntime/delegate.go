@@ -752,10 +752,7 @@ func delegateReport(
 // happened, and what else the delegate may have begun is unconfirmed rather
 // than undone, so nothing here says a change did not happen.
 func delegateOutcome(report *agentports.AssistantDelegateFinishedEvent, lookup bool) toolOutcome {
-	encoded, err := delegateJSON.MarshalToString(report)
-	if err != nil {
-		encoded = fmt.Sprintf(`{"agent":%q,"status":%q}`, report.AgentName, report.Status)
-	}
+	encoded := encodedReport(report)
 
 	outcome := toolOutcome{
 		content: FenceToolResult(delegateTaskName, encoded) + "\n\n" + delegateNote(report, lookup),
@@ -779,6 +776,20 @@ func delegateOutcome(report *agentports.AssistantDelegateFinishedEvent, lookup b
 	}
 
 	return outcome
+}
+
+func encodedReport(report *agentports.AssistantDelegateFinishedEvent) string {
+	for {
+		encoded, err := delegateJSON.MarshalToString(report)
+		if err != nil {
+			return fmt.Sprintf(`{"agent":%q,"status":%q}`, report.AgentName, report.Status)
+		}
+		if len(encoded) <= maxToolResultChars || len(report.Findings) == 0 {
+			return encoded
+		}
+		report.Findings = report.Findings[:len(report.Findings)-1]
+		report.MoreFindings++
+	}
 }
 
 // delegateNote tells the delegating model how to read the account above it.
@@ -827,8 +838,8 @@ func lookupNote(report *agentports.AssistantDelegateFinishedEvent) string {
 
 	return "[" + name + " looked this up as the same person and changed nothing. Its " +
 		"findings are the results it read, word for word: answer from them, and when its " +
-		"reply and a finding disagree, the finding is right. Never show the person an " +
-		"id from them." + more + delegateArtifactNote(report.Reply) + "]"
+		"reply and a finding disagree, the finding is right. Name the records in them by " +
+		"number or name, never by an internal id." + more + delegateArtifactNote(report.Reply) + "]"
 }
 
 // delegateArtifactNote passes on what the delegate's reply showed. Only this
@@ -887,8 +898,8 @@ func (s *Service) PermittedTools(
 }
 
 const (
-	maxFindingBytes  = 12 << 10
-	maxFindingsBytes = 32 << 10
+	maxFindingBytes  = 8 << 10
+	maxFindingsBytes = 10 << 10
 )
 
 func delegateFindings(
