@@ -1554,12 +1554,9 @@ its first model call (`declareWithdrawal`), and the loop refuses the call with
 mid-turn: the cached prefix was written again, and on the models that bind thinking to the
 conversation (Opus, Sonnet and Haiku 5.5) every replayed thinking block was bound to the old
 list. `TestTurn_SendsTheSameToolsOnEveryModelCall` holds the tool array identical across a
-turn that proposes, withdraws and proposes again. A disclosed turn's array still grows
-mid-turn, at its end only: `resolveFind` loads what `find_tools` answered, the runner loads a
-held tool the model called without being sent it, `unheldRefusal` loads the nearest held
-tools for a name that does not exist, and `Turn.LoadTools` loads what a `find_tools`
-answered elsewhere found. `TestRun_ADisclosedTurnOnlyAppendsToItsToolArray` pins that as the
-baseline for the rebuild of context assembly. Every
+turn that proposes, withdraws and proposes again, and
+`TestRun_ADisclosedTurnNeverChangesItsToolArray` holds a disclosed turn to it while it loads
+tools ("What a provider can cache"). Every
 filing result names its proposal's id ("Recorded a proposal to run "shipment_create"
 (proposal ap_…)"), and the runtime answers the call itself, like `request_decision`: it
 marks that action `Withdrawn` on `PendingAction`, and the recorder records it
@@ -2075,37 +2072,82 @@ telling the model so.
 
 ### What a provider can cache
 
-A provider reuses the start of a prompt only while it is the same bytes, so a
-request is laid out stable first:
+A provider reuses the start of a prompt only while it is the same bytes, and
+every model call of a turn resends everything before the newest tool result. So
+a turn is declared once, when it opens, and everything a call sends before the
+conversation is the same from the first call of the turn to the last.
 
 - **Bytes.** Every request body, the tools and the replayed tool-call arguments
   included, is encoded with sorted keys (`modeladapter.requestJSON`, and the
   SDK's encoder for Anthropic); a map in Go's random order made every request
   different. `TestRequests_AreTheSameBytesEveryTime` holds every protocol to it.
+- **One tool array per turn.** `newToolSet` opens the set (the core tools, the
+  eight preselected with their companions, what recent turns used, the runtime
+  tools, a command's tools) and `freeze` declares it: what is loaded is sent in
+  full, sorted by name, and every other tool the turn holds or reaches is
+  declared **deferred** (`toolSet.deferred`, `ChatCompletionRequest.DeferredTools`).
+  Loading a tool later (`find_tools`, a call to a held tool that was not loaded,
+  a read joining a batch, the nearest tools after an unheld call) never changes
+  the declaration: it marks the tool loaded and the next tool result names it
+  (`toolSet.takeLoaded` → `Message.ToolReferences`).
+  `TestRun_ADisclosedTurnNeverChangesItsToolArray` holds the turn to it. Only
+  a turn that can search (it is disclosed, or reaches other agents' tools)
+  declares anything deferred.
+- **Deferred tools travel by name.** The turn, its workflow state and each
+  model activity's input carry a deferred tool's name, not its schema; the
+  model call fills each in from the registry (`Service.declareTools`, in
+  `StreamCompletion`), so a profile that reaches several hundred tools does not
+  put their schemas into the workflow's history on every call.
+- **A small core loaded.** On a turn that can search, the core tools few turns
+  call (`wait_until`, `cancel_wait`, `flag_for_manual_review`,
+  `raise_exception`, `guide_profile`; `deferredCoreTools`) are deferred unless
+  the request names what they do, and are found like any other. Memory and the
+  product guide stay loaded, because the prompt tells the model when to use them.
 - **System prompt.** `BuildSystemPromptParts` writes what every turn of an agent
-  shares first and the turn's own part after it. The shared part is, in order:
-  the identity line (the agent's name and description), Trenova's rules
-  (Boundaries, Working with records), the tools when all are offered (grouped
-  by what a call does, with the dashboard note only for an agent that holds
-  those tools; the request's schemas carry the descriptions),
-  the agents it may ask, artifacts, the product guide, how to answer, then the
-  organization's instructions and its Never list. The turn's own part is the
-  runtime context, memories, a disclosed tool list and proposals waiting on a
-  decision. Precedence is the order on the page: Trenova's sections bind the
-  organization's, which bind memories, which bind the message. The turn
-  carries the shared part's length (`TurnState.SystemStable`) to the adapter.
-  `agentdefinition.PromptVersion` names this shape (v7) on runs, evaluation
+  for a person shares first and the turn's own part after it. The shared part
+  is, in order: the identity line, Trenova's rules, the tool section, the agents
+  it may ask, artifacts, the product guide, how to answer, the organization's
+  instructions and its Never list, the organization's profile and the person's.
+  The tool section never names which tools a turn opened with: a disclosed one
+  says find_tools loads the rest and names **what it can load by area of
+  Trenova** (`RuntimeContext.ToolMap`, built by `Service.toolMap` from each
+  tool's permission resource: the resource's category in the permission
+  registry is the area, its display name what the area covers, so a renamed or
+  moved tool lands in its area with no list to edit), then what a change does
+  and the recipes, over every tool held. The turn's own part is the runtime
+  context, memories and proposals waiting on a decision. The turn carries the
+  shared part's length (`TurnState.SystemStable`) to the adapter.
+  `agentdefinition.PromptVersion` names this shape (v10) on runs, evaluation
   cases and fingerprints; the snapshots under
   `domain/agentdefinition/testdata/prompts` are regenerated with
   `go test -run TestPromptSnapshots ./internal/modules/agent/domain/agentdefinition/ -update`.
-- **Anthropic** gets three of its four marks: the last tool, the end of the
-  shared system part, and the last block of the conversation, which lets each
-  call of a tool loop read the exchange before it back from the cache.
-- **OpenAI** gets `prompt_cache_key`, a hash of organization, agent and version,
-  only when the provider is reached at `api.openai.com`; a server speaking the
-  same protocol elsewhere may refuse the field. Everything else (vLLM, SGLang,
-  Gemini, DeepSeek and the rest) caches prefixes on its own and needs only the
-  layout.
+- **Anthropic** declares every tool, deferred ones with `defer_loading`, and
+  answers a load with `tool_reference` blocks in the tool result that loaded
+  it, after its text (`anthropicToolResult`); a reference to anything the
+  request does not declare deferred is dropped (`referencing`), because the API
+  refuses one. The API leaves deferred tools out of the cached prefix, so the
+  marks are the last tool sent in full (a deferred tool cannot carry one), the
+  end of the shared system part, and the last block of the conversation. Since
+  nothing edits the tools mid-turn, a turn's thinking blocks stay valid on the
+  models that check the history (Haiku 5.5, Sonnet 5.5, Opus 5.5, Fable 5.1).
+  Microsoft Foundry is not known to take deferred tools, so it is sent what is
+  loaded (`anthropicDefers`).
+- **OpenAI Responses**, on OpenAI's own platform with a model that takes it
+  (gpt-5.4 and later, `toolSearchModel`), declares `find_tools` as the
+  client-executed `tool_search` (the spec marked `Searches`), leaves deferred
+  tools out of `tools`, replays a search as `tool_search_call` and its result
+  as `tool_search_output` carrying the loaded tools' full definitions, followed
+  by a developer message with what the search said. The loaded tools join the
+  end of the context, which OpenAI caches around. `allowed_tools` was not used:
+  it keeps every schema in the model's context, which is the cost deferral
+  exists to avoid. It sends `prompt_cache_key`, a hash of organization, agent
+  and version, only there too.
+- **Everything else** (Responses elsewhere, OpenAI-compatible chat servers) is
+  sent what is loaded: every tool declared in full and each deferred one a
+  result has loaded since (`loadedTools`), in declared order. The list grows
+  when a tool is loaded, and such a provider caches what it can.
+- **The final answer** keeps the tools and sends `tool_choice: none`, so it
+  reads the same cached prefix.
 
 ## Agent runs
 

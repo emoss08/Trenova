@@ -41,14 +41,22 @@ func (anthropicAdapter) Kind() aiprovider.Kind { return aiprovider.KindAnthropic
 // prompt and the conversation, each marked where its prefix is worth keeping,
 // and thinking asked for the way the configured model takes it.
 func anthropicParams(call *Call, attached *anthropicFiles) anthropic.BetaMessageNewParams {
+	tools := call.Request.Tools
+	messages := attached.messages
+	if anthropicDefers(call) {
+		messages = referencing(messages, deferredTools(tools))
+	} else {
+		tools = loadedTools(tools, messages)
+		messages = referencing(messages, nil)
+	}
 	params := anthropic.BetaMessageNewParams{
 		Model:     call.Provider.Model,
 		MaxTokens: int64(call.Request.MaxTokens),
 		System:    cachedSystem(call.Request.System, call.Request.SystemStable),
 		Messages: cachedConversation(
-			anthropicConversation(attached.messages, attached.blocks),
+			anthropicConversation(messages, attached.blocks),
 		),
-		Tools: cachedTools(toAnthropicTools(call.Request.Tools)),
+		Tools: cachedTools(toAnthropicTools(tools)),
 	}
 	if call.Request.ToolChoiceNone && len(params.Tools) > 0 {
 		none := anthropic.NewBetaToolChoiceNoneParam()
@@ -58,6 +66,11 @@ func anthropicParams(call *Call, attached *anthropicFiles) anthropic.BetaMessage
 	applyDiagnostics(&params, call)
 
 	return params
+}
+
+func anthropicDefers(call *Call) bool {
+	return declaresLoadedTool(call.Request.Tools) &&
+		call.Provider.ResolvedPlatform() != aiprovider.PlatformFoundry
 }
 
 // applyThinking asks for thinking the way the configured model takes it.
@@ -667,6 +680,11 @@ func anthropicToolResult(msg *Message) *anthropic.BetaToolResultBlockParam {
 			OfText: &anthropic.BetaTextBlockParam{Text: msg.Content},
 		}}
 	}
+	for _, name := range msg.ToolReferences {
+		result.Content = append(result.Content, anthropic.BetaToolResultBlockParamContentUnion{
+			OfToolReference: &anthropic.BetaToolReferenceBlockParam{ToolName: name},
+		})
+	}
 	if msg.IsError {
 		result.IsError = param.NewOpt(true)
 	}
@@ -681,15 +699,17 @@ func toAnthropicTools(tools []ToolSpec) []anthropic.BetaToolUnionParam {
 
 	out := make([]anthropic.BetaToolUnionParam, 0, len(tools))
 	for _, tool := range tools {
-		out = append(out, anthropic.BetaToolUnionParam{
-			OfTool: &anthropic.BetaToolParam{
-				Name:        tool.Name,
-				Description: param.NewOpt(tool.Description),
-				InputSchema: param.Override[anthropic.BetaToolInputSchemaParam](
-					toolschema.ForModel(tool.Parameters),
-				),
-			},
-		})
+		spec := &anthropic.BetaToolParam{
+			Name:        tool.Name,
+			Description: param.NewOpt(tool.Description),
+			InputSchema: param.Override[anthropic.BetaToolInputSchemaParam](
+				toolschema.ForModel(tool.Parameters),
+			),
+		}
+		if tool.Deferred {
+			spec.DeferLoading = param.NewOpt(true)
+		}
+		out = append(out, anthropic.BetaToolUnionParam{OfTool: spec})
 	}
 
 	return out
@@ -754,11 +774,15 @@ cached is everything up to the mark. An empty tool list, system prompt or
 conversation gets no mark: a breakpoint on nothing still costs a write.
 */
 func cachedTools(tools []anthropic.BetaToolUnionParam) []anthropic.BetaToolUnionParam {
-	if len(tools) == 0 {
+	for idx := len(tools) - 1; idx >= 0; idx-- {
+		if tool := tools[idx].OfTool; tool != nil && tool.DeferLoading.Value {
+			continue
+		}
+		if mark := tools[idx].GetCacheControl(); mark != nil {
+			*mark = anthropic.NewBetaCacheControlEphemeralParam()
+		}
+
 		return tools
-	}
-	if mark := tools[len(tools)-1].GetCacheControl(); mark != nil {
-		*mark = anthropic.NewBetaCacheControlEphemeralParam()
 	}
 
 	return tools

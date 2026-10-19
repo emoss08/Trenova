@@ -47,21 +47,47 @@ func TestBuildSystemPromptParts_KeepsWhatEveryTurnSharesFirst(t *testing.T) {
 	assert.Equal(t, a.Stable+a.Volatile, whole, "the whole prompt is the two parts in order")
 }
 
-// A turn that disclosed only some of its tools ranks them by the question, so
-// the tool section follows the turn rather than the agent.
-func TestBuildSystemPromptParts_PutsADisclosedToolListWithTheTurn(t *testing.T) {
+func TestBuildSystemPromptParts_PutsADisclosedToolSectionInTheStablePart(t *testing.T) {
 	t.Parallel()
 
 	d := definitionWithInstructions("Help the dispatch desk.")
 	rc := fullContext()
 	rc.ToolsDisclosed = true
 	rc.Tools = []agentdefinition.ToolSummary{
-		{Name: "shipment_get", Description: "Look up a shipment", Loaded: true},
-		{Name: "list_workers", Description: "List workers"},
+		{Name: "shipment_get", Description: "Look up a shipment", Query: true, Loaded: true},
+		{Name: "assign_move", Description: "Assign a move", AlwaysProposes: true},
+	}
+	rc.ToolMap = []agentdefinition.ToolNamespace{
+		{Name: "Dispatch", Covers: []string{"move"}, Tools: 2},
 	}
 
 	parts := d.BuildSystemPromptParts(&rc)
 
-	assert.NotContains(t, parts.Stable, "shipment_get")
-	assert.Contains(t, parts.Volatile, "shipment_get")
+	assert.Contains(t, parts.Stable, "- Dispatch (2 tools): move")
+	assert.Contains(t, parts.Stable, "assign_move")
+	assert.NotContains(t, parts.Volatile, "find_tools")
+	assert.NotContains(t, parts.Volatile, "shipment_get")
+
+	rc.Tools[0].Loaded, rc.Tools[1].Loaded = false, true
+	other := d.BuildSystemPromptParts(&rc)
+	assert.Equal(
+		t,
+		parts.Stable,
+		other.Stable,
+		"which tools a turn loaded does not move the prefix",
+	)
+}
+
+func TestBuildSystemPromptParts_PutsThePersonsProfileInTheStablePart(t *testing.T) {
+	t.Parallel()
+
+	d := definitionWithInstructions("Help the dispatch desk.")
+	rc := fullContext()
+	rc.UserProfile = "Works the Acme Foods lanes out of Dallas."
+
+	parts := d.BuildSystemPromptParts(&rc)
+
+	assert.Contains(t, parts.Stable, "## About the person you are talking to")
+	assert.Contains(t, parts.Stable, "Works the Acme Foods lanes out of Dallas.")
+	assert.NotContains(t, parts.Volatile, "Acme Foods")
 }

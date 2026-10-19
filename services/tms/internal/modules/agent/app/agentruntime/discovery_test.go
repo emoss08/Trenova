@@ -32,11 +32,27 @@ func requestTools(req *agentports.ChatCompletionRequest) []string {
 	return specNames(req.Tools)
 }
 
+func loadedIn(req *agentports.ChatCompletionRequest) []string {
+	loaded := make([]string, 0, len(req.Tools))
+	for _, spec := range req.Tools {
+		if !spec.Deferred {
+			loaded = append(loaded, spec.Name)
+		}
+	}
+	for _, message := range req.Messages {
+		loaded = append(loaded, message.ToolReferences...)
+	}
+
+	return loaded
+}
+
 /*
-find_tools works end to end: what it loads is in the very next request.
+find_tools works end to end: what it loads is loaded on the very next request.
 
 Nothing tested this through Run. The tool set grew, but a test that only looked
 at the set could not see whether the request the model answers next carried it.
+The tool was declared deferred from the first call, and the find result names
+it, so the request's tools stay as they were.
 */
 func TestRun_FindToolsLoadsAToolIntoTheNextRequest(t *testing.T) {
 	t.Parallel()
@@ -55,10 +71,16 @@ func TestRun_FindToolsLoadsAToolIntoTheNextRequest(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Len(t, completion.Requests, 3)
-	assert.NotContains(t, requestTools(completion.Requests[0]), "list_trailers",
+	assert.NotContains(t, loadedIn(completion.Requests[0]), "list_trailers",
 		"the tool was not preselected for a greeting")
-	assert.Contains(t, requestTools(completion.Requests[1]), "list_trailers",
-		"what find_tools loaded is sent with the next request")
+	assert.Contains(t, requestTools(completion.Requests[0]), "list_trailers",
+		"it is declared, deferred, from the first call")
+	assert.Contains(t, loadedIn(completion.Requests[1]), "list_trailers",
+		"what find_tools loaded is loaded on the next request")
+	found := completion.Requests[1].Messages[len(completion.Requests[1].Messages)-1]
+	assert.Equal(t, findToolsName, found.ToolName)
+	assert.Contains(t, found.ToolReferences, "list_trailers", "the find result names it")
+	assert.Equal(t, completion.Requests[0].Tools, completion.Requests[1].Tools)
 	assert.Equal(t, "Two trailers are due.", result.Reply)
 	assert.Zero(t, result.Messages[2].ToolFailed)
 }
@@ -339,10 +361,10 @@ func TestRun_RefusalLoadsTheNearestToolsTheAgentHolds(t *testing.T) {
 	refusal := result.Messages[2].Content
 	assert.Contains(t, refusal, "There is no tool named")
 	assert.Contains(t, refusal, "list_trailers")
-	assert.Contains(t, requestTools(completion.Requests[1]), "list_trailers")
+	assert.Contains(t, loadedIn(completion.Requests[1]), "list_trailers")
 }
 
-func TestRun_ADisclosedTurnOnlyAppendsToItsToolArray(t *testing.T) {
+func TestRun_ADisclosedTurnNeverChangesItsToolArray(t *testing.T) {
 	t.Parallel()
 
 	const input = "which drivers have a medical card expiring soon"
@@ -373,21 +395,22 @@ func TestRun_ADisclosedTurnOnlyAppendsToItsToolArray(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, completion.Requests, 4)
 
-	sent := make([][]string, 0, len(completion.Requests))
-	for _, req := range completion.Requests {
-		sent = append(sent, requestTools(req))
+	for idx := 1; idx < len(completion.Requests); idx++ {
+		assert.Equal(t, completion.Requests[0].Tools, completion.Requests[idx].Tools,
+			"model call %d changed the declared tools", idx+1)
 	}
-	assert.Equal(t, opening, sent[0])
-	assert.NotContains(t, sent[0], found)
-	assert.Contains(t, sent[1], found, "resolveFind loads what find_tools answered")
-	assert.NotContains(t, sent[1], called)
-	assert.Contains(t, sent[2], called,
-		"the runner loads a held tool the model called without being sent it")
-	assert.GreaterOrEqual(t, len(sent[3]), len(sent[2]),
+	declared := requestTools(completion.Requests[0])
+	assert.True(t, slices.IsSorted(declared), "the declaration is sorted by name")
+	for _, name := range names {
+		assert.Contains(t, declared, name, "every held tool is declared from the first call")
+	}
+	assert.NotContains(t, loadedIn(completion.Requests[0]), found)
+	assert.Contains(t, loadedIn(completion.Requests[1]), found,
+		"resolveFind loads what find_tools answered")
+	assert.NotContains(t, loadedIn(completion.Requests[1]), called)
+	assert.Contains(t, loadedIn(completion.Requests[2]), called,
+		"the runner loads a held tool the model called without it being loaded")
+	assert.GreaterOrEqual(t, len(loadedIn(completion.Requests[3])),
+		len(loadedIn(completion.Requests[2])),
 		"unheldRefusal loads the nearest held tools for a name that does not exist")
-	for idx := 1; idx < len(sent); idx++ {
-		require.GreaterOrEqual(t, len(sent[idx]), len(sent[idx-1]))
-		assert.Equal(t, sent[idx-1], sent[idx][:len(sent[idx-1])],
-			"model call %d removed or reordered a tool; the array only grows at its end", idx+1)
-	}
 }

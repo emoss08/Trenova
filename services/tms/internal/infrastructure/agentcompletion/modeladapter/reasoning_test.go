@@ -368,7 +368,7 @@ func TestToResponsesInput_ReplaysTheReasoningItemAheadOfItsCalls(t *testing.T) {
 			Reasoning: &ReasoningTrace{Text: "summary", Signature: "rs_1", Encrypted: "enc_1"},
 		},
 		{Role: RoleTool, ToolCallID: "call_1", Content: "{}"},
-	})
+	}, nil)
 
 	require.Len(t, items, 4)
 	assert.Equal(t, "reasoning", items[1].Type)
@@ -392,7 +392,7 @@ func TestToResponsesInput_SendsASummaryOnEveryReplayedReasoningItemOnly(t *testi
 			Reasoning: &ReasoningTrace{Signature: "rs_1"},
 		},
 		{Role: RoleTool, ToolCallID: "call_1", Content: "{}"},
-	})
+	}, nil)
 
 	encoded, err := sonic.Marshal(items)
 	require.NoError(t, err)

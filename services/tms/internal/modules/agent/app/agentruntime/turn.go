@@ -323,6 +323,9 @@ type TurnState struct {
 // from Specs.
 type ToolSetState struct {
 	Specs      []kernelports.ToolSpec `json:"specs"`
+	Deferred   []string               `json:"deferred,omitempty"`
+	Loaded     []string               `json:"loaded,omitempty"`
+	Pending    []string               `json:"pending,omitempty"`
 	Allowed    []string               `json:"allowed"`
 	Disclosed  bool                   `json:"disclosed"`
 	Unattended bool                   `json:"unattended"`
@@ -447,6 +450,9 @@ func cloneToolMemories(byTool map[string][]pulid.ID) map[string][]pulid.ID {
 func (t *toolSet) state() ToolSetState {
 	return ToolSetState{
 		Specs:      append([]kernelports.ToolSpec(nil), t.specs...),
+		Deferred:   slices.Clone(t.deferred),
+		Loaded:     t.loadedDeferred(),
+		Pending:    slices.Clone(t.pending),
 		Allowed:    append([]string(nil), t.allowed...),
 		Disclosed:  t.disclosed,
 		Unattended: t.unattended,
@@ -469,8 +475,25 @@ func restoreToolSet(state ToolSetState) *toolSet {
 	for _, spec := range state.Specs {
 		set.add(spec)
 	}
+	set.deferred = state.Deferred
+	for _, name := range state.Loaded {
+		set.loaded[name] = struct{}{}
+	}
+	set.pending = slices.Clone(state.Pending)
+	set.frozen = true
 
 	return set
+}
+
+func (t *toolSet) loadedDeferred() []string {
+	loaded := make([]string, 0, len(t.loaded)-len(t.specs))
+	for _, name := range t.deferred {
+		if _, ok := t.loaded[name]; ok {
+			loaded = append(loaded, name)
+		}
+	}
+
+	return loaded
 }
 
 // OpenTurn builds a turn: the tool set the actor may use, what earlier attempts
@@ -520,14 +543,18 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentports.RunRequest) *Tur
 		extensions: &active,
 		attachments: len(runtimeContext.Attachments) > 0 ||
 			conversation.CarriesAttachments(history),
+		command: req.Command,
 	})
 	s.notePreselected(ctx, req, tools)
 	var command agentextension.Command
-	if req.Command != "" && s.pinCommand(tools, req.Command) {
+	if tools.pinned {
 		command = req.Command
 	}
 	runtimeContext.ToolsDisclosed = tools.disclosed
 	runtimeContext.ReachesBeyond = len(tools.beyond) > 0
+	if tools.searchable() {
+		runtimeContext.ToolMap = s.toolMap(slices.Concat(tools.allowed, tools.beyond))
+	}
 	runtimeContext.Artifacts = tools.offers(publishArtifactName)
 	runtimeContext.Inline = req.Inline
 	runtimeContext.LooksUpOnly = job.mode == ProfileFanOut
@@ -659,6 +686,7 @@ func (t *Turn) completionRequest() *agentports.ChatCompletionRequest {
 		SystemStable:        t.systemStable,
 		Messages:            t.messages,
 		Tools:               t.tools.specs,
+		DeferredTools:       t.tools.deferred,
 		PreferredProviderID: preferredProvider(req, definition),
 		PinPreferred:        req.PinProvider && !req.PreferredProviderID.IsNil(),
 		Attribution:         turnAttribution(req),
@@ -724,6 +752,7 @@ func (s *Service) StreamCompletion(
 	req *agentports.ChatCompletionRequest,
 	emit kernelports.AssistantStreamEmitter,
 ) (ModelReply, error) {
+	req = s.declareTools(req)
 	ctx, tally := aitrace.WithCompletionTally(ctx)
 	reply, err := s.streamCompletion(ctx, req, emit)
 	reply.Usage = replyUsage(tally, reply)
@@ -820,6 +849,31 @@ func completionErrorType(ctx context.Context, err error) string {
 	default:
 		return "provider_error"
 	}
+}
+
+func (s *Service) declareTools(
+	req *agentports.ChatCompletionRequest,
+) *agentports.ChatCompletionRequest {
+	if len(req.DeferredTools) == 0 {
+		return req
+	}
+	declared := *req
+	declared.Tools = make([]kernelports.ToolSpec, 0, len(req.Tools)+len(req.DeferredTools))
+	declared.Tools = append(declared.Tools, req.Tools...)
+	for _, name := range req.DeferredTools {
+		spec, ok := s.specFor(name)
+		if !ok {
+			continue
+		}
+		spec.Deferred = true
+		declared.Tools = append(declared.Tools, spec)
+	}
+	slices.SortStableFunc(declared.Tools, func(a, b kernelports.ToolSpec) int {
+		return strings.Compare(a.Name, b.Name)
+	})
+	declared.DeferredTools = nil
+
+	return &declared
 }
 
 // KnowsTool reports whether name is a registered tool, read or write.
@@ -995,14 +1049,10 @@ func (s *Service) FindFor(
 		return len(s.permittedTools(ctx, req.Actor, []string{name})) == 1
 	}
 
-	before := len(set.specs)
+	set.pending = nil
 	answer := s.resolveFind(ctx, set, req.Actor, arguments)
 	s.noteFound(ctx, req, set, arguments, &answer)
-
-	loaded := make([]string, 0, len(set.specs)-before)
-	for _, spec := range set.specs[before:] {
-		loaded = append(loaded, spec.Name)
-	}
+	loaded := set.takeLoaded()
 
 	return FoundTools{
 		Content: answer.Content,

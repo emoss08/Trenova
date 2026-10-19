@@ -42,7 +42,8 @@ type Message struct {
 	// Files are the files the person attached to this user message. A model
 	// that reads files is sent each it can take as the file itself, in place
 	// of its entry in Content; any other reads Content as it is.
-	Files []MessageFile
+	Files          []MessageFile
+	ToolReferences []string
 }
 
 // MessageFile is a file attached to a user message, named by its document.

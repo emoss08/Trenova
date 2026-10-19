@@ -212,6 +212,7 @@ type RuntimeContext struct {
 	// what the system can do and tells the person it is not possible.
 	ToolsDisclosed bool
 	ReachesBeyond  bool
+	ToolMap        []ToolNamespace
 	// PendingProposals are the writes earlier turns proposed that the person
 	// has not decided yet. The model is told so it points them at the card
 	// rather than proposing the same change again.
@@ -246,6 +247,13 @@ type RuntimeContext struct {
 	OrganizationProfile string
 	// UserProfile is what the person's own records say they work on.
 	UserProfile string
+}
+
+type ToolNamespace struct {
+	Name        string
+	Covers      []string
+	MoreCovered int
+	Tools       int
 }
 
 // RuntimeDelegate is an agent the running one may hand a task to, as its
@@ -307,8 +315,12 @@ type PendingProposal struct {
 // attached out of the system prompt and onto the message they came with,
 // with their text, and names them on that message in every later turn. v9
 // tells the agent what kind of business the organization is and what the
-// person works on, from profiles worked out from their records.
-const PromptVersion = "agent-definition/v9"
+// person works on, from profiles worked out from their records. v10 is one
+// stable prefix: the tool section names what find_tools can load by area of
+// Trenova instead of listing each tool the turn did not open with, and it and
+// the person's profile sit in the cached part; a lookup handed to another
+// agent says it changes nothing.
+const PromptVersion = "agent-definition/v10"
 
 // SystemPrompt is a system prompt in the two parts a provider's prompt cache
 // cares about. Stable is the same on every turn of an agent for a person: who
@@ -347,16 +359,11 @@ func (d *Definition) BuildSystemPromptParts(rc *RuntimeContext) SystemPrompt {
 
 	// A disclosed turn always says so, whatever providers the agent carries:
 	// a model handed eight of forty tools and no word about find_tools reads
-	// the eight as the limit of what the system does. Which eight follows
-	// the question, so a disclosed list belongs to the turn.
-	var disclosedTools string
+	// the eight as the limit of what the system does. The section names what
+	// can be loaded by area, never which tools this turn opened with, so it
+	// is the same on every turn and sits in the cached part.
 	if d.HasContextProvider(ContextTools) || rc.ToolsDisclosed || rc.ReachesBeyond {
-		tools := buildToolSection(rc.Tools, rc.ToolsDisclosed, rc.ReachesBeyond)
-		if rc.ToolsDisclosed {
-			disclosedTools = tools
-		} else {
-			section(&stable, tools)
-		}
+		section(&stable, buildToolSection(rc))
 	}
 
 	section(&stable, buildDelegateSection(rc.Delegates))
@@ -385,6 +392,9 @@ func (d *Definition) BuildSystemPromptParts(rc *RuntimeContext) SystemPrompt {
 	if d.HasContextProvider(ContextOrganization) {
 		section(&stable, buildOrganizationProfileSection(rc.OrganizationProfile))
 	}
+	if d.HasContextProvider(ContextUser) {
+		section(&stable, buildUserProfileSection(rc.UserProfile))
+	}
 
 	section(&volatile, d.buildContextSection(rc))
 
@@ -397,8 +407,6 @@ func (d *Definition) BuildSystemPromptParts(rc *RuntimeContext) SystemPrompt {
 		section(&volatile, buildMemorySection(recorded))
 		section(&volatile, buildOutsideMemorySection(outside))
 	}
-
-	section(&volatile, disclosedTools)
 
 	section(&volatile, buildPendingProposalSection(rc.PendingProposals, rc.DecisionRequests))
 
@@ -618,9 +626,6 @@ func (d *Definition) buildContextSection(rc *RuntimeContext) string {
 	}
 
 	fenced := make([]string, 0, 6)
-	if d.HasContextProvider(ContextUser) && strings.TrimSpace(rc.UserProfile) != "" {
-		fenced = append(fenced, describeUserProfile(rc.UserProfile))
-	}
 	if rc.Subject != nil {
 		fenced = append(fenced, describeSubject(rc.Subject))
 	}
@@ -1043,13 +1048,21 @@ func buildOrganizationProfileSection(profile string) string {
 		orgProfileCloseTag
 }
 
-// describeUserProfile says what the person's records show they work on, so a
-// short request ("my invoices", "the Acme load") is read the way they mean it.
-func describeUserProfile(profile string) string {
-	return "- What they work on, worked out from their own records and what they told you. " +
-		"Use it to read their requests; look up anything you state:\n" +
+// buildUserProfileSection says what the person's records show they work on,
+// so a short request ("my invoices", "the Acme load") is read the way they
+// mean it. It changes once a day, like the organization's, so it sits with it
+// in the cached part rather than in each turn's context.
+func buildUserProfileSection(profile string) string {
+	profile = strings.TrimSpace(profile)
+	if profile == "" {
+		return ""
+	}
+
+	return "## About the person you are talking to\n" +
+		"What they work on, worked out from their own records and what they told you. " +
+		"Use it to read their requests; look up anything you state.\n" +
 		userProfileOpenTag + "\n" +
-		stringutils.NeutralizeCloseTag(strings.TrimSpace(profile), userProfileCloseTag) + "\n" +
+		stringutils.NeutralizeCloseTag(profile, userProfileCloseTag) + "\n" +
 		userProfileCloseTag
 }
 
@@ -1111,7 +1124,8 @@ const beyondToolsNote = " find_tools also reaches the tools of the person's othe
 	"when none of yours does the job, ask it in a few words and what it loads is yours to " +
 	"call, under the approvals those agents run it with."
 
-func buildToolSection(tools []ToolSummary, disclosed, beyond bool) string {
+func buildToolSection(rc *RuntimeContext) string {
+	tools, disclosed, beyond := rc.Tools, rc.ToolsDisclosed, rc.ReachesBeyond
 	if len(tools) == 0 {
 		return ""
 	}
@@ -1120,15 +1134,15 @@ func buildToolSection(tools []ToolSummary, disclosed, beyond bool) string {
 	builder.WriteString("## Tools\n")
 
 	if disclosed {
-		// The loaded tools are named only: their schemas are already on the
-		// request, and repeating the descriptions would spend the context the
-		// narrowing saved. The rest get one sentence each, because a model
-		// that knows what exists asks find_tools for it, and one that sees
-		// only names tells the person the system cannot do it.
+		// The loaded tools are on the request with their schemas; what else
+		// can be loaded is named by area of Trenova, because a model that
+		// knows what exists asks find_tools for it, and one that sees only
+		// what it holds tells the person the system cannot do it.
 		builder.WriteString(
 			"You hold more tools than are loaded on this turn. The loaded ones are " +
-				"callable now. Every other tool below becomes callable the moment you ask " +
-				"find_tools for it, in a few words describing what you need. Before you " +
+				"on this request and callable now. Every other tool you hold becomes " +
+				"callable the moment you ask find_tools for it, in a few words describing " +
+				"what you need. Before you " +
 				"tell the person something cannot be done, cannot be found, or is not " +
 				"tracked, call find_tools first — a tool you cannot see yet is not a tool " +
 				"you do not have, and never tell the person something is impossible " +
@@ -1137,27 +1151,7 @@ func buildToolSection(tools []ToolSummary, disclosed, beyond bool) string {
 		if beyond {
 			builder.WriteString(beyondToolsNote)
 		}
-		builder.WriteString("\n\nLoaded now:")
-		for _, tool := range tools {
-			if tool.Loaded {
-				builder.WriteString("\n- ")
-				builder.WriteString(tool.Name)
-			}
-		}
-		builder.WriteString("\n\nCallable after find_tools:")
-		for _, tool := range tools {
-			if tool.Loaded {
-				continue
-			}
-			builder.WriteString("\n- ")
-			builder.WriteString(tool.Name)
-			if description := strings.TrimSpace(
-				stringutils.FirstSentence(tool.Description),
-			); description != "" {
-				builder.WriteString(" — ")
-				builder.WriteString(description)
-			}
-		}
+		builder.WriteString(buildToolMap(rc.ToolMap))
 		// The descriptions above say what a tool does, not whether calling it
 		// changes anything yet. Without this a dispatch agent told to let a
 		// dispatcher confirm took assign_move for a change made on the spot and
@@ -1191,6 +1185,40 @@ func buildToolSection(tools []ToolSummary, disclosed, beyond bool) string {
 	writeToolGroup(&builder, "Reads, which run as soon as you call them", reads)
 	builder.WriteString(changeGroups(tools))
 	builder.WriteString(buildToolNotes(tools))
+	if beyond {
+		builder.WriteString(buildToolMap(rc.ToolMap))
+	}
+
+	return builder.String()
+}
+
+func buildToolMap(areas []ToolNamespace) string {
+	if len(areas) == 0 {
+		return ""
+	}
+
+	var builder strings.Builder
+	builder.WriteString("\n\nWhat find_tools can load, by area of Trenova:")
+	for _, area := range areas {
+		builder.WriteString("\n- ")
+		builder.WriteString(area.Name)
+		builder.WriteString(" (")
+		builder.WriteString(strconv.Itoa(area.Tools))
+		if area.Tools == 1 {
+			builder.WriteString(" tool)")
+		} else {
+			builder.WriteString(" tools)")
+		}
+		if len(area.Covers) > 0 {
+			builder.WriteString(": ")
+			builder.WriteString(strings.Join(area.Covers, ", "))
+			if area.MoreCovered > 0 {
+				builder.WriteString(" and ")
+				builder.WriteString(strconv.Itoa(area.MoreCovered))
+				builder.WriteString(" more")
+			}
+		}
+	}
 
 	return builder.String()
 }

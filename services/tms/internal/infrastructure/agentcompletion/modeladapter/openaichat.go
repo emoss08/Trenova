@@ -152,7 +152,7 @@ func (a openAIChatAdapter) Complete(ctx context.Context, call *Call) (*Response,
 		Messages: toChatMessages(
 			call.Request.System, call.Request.Messages, call.Provider.ID, call.Provider.Model,
 		),
-		Tools:      toChatTools(call.Request.Tools),
+		Tools:      toChatTools(loadedTools(call.Request.Tools, call.Request.Messages)),
 		ToolChoice: toolChoiceWire(call.Request),
 		Stream:     false,
 	}
@@ -252,7 +252,7 @@ func (a openAIChatAdapter) Stream(
 		Messages: toChatMessages(
 			call.Request.System, call.Request.Messages, call.Provider.ID, call.Provider.Model,
 		),
-		Tools:         toChatTools(call.Request.Tools),
+		Tools:         toChatTools(loadedTools(call.Request.Tools, call.Request.Messages)),
 		ToolChoice:    toolChoiceWire(call.Request),
 		Stream:        true,
 		StreamOptions: &chatStreamOptions{IncludeUsage: true},

@@ -45,14 +45,21 @@ type extensionRun struct {
 	searchErr  error
 }
 
-func runWithExtensions(t *testing.T, run extensionRun) (*agentports.RunResult, *scriptedCompletion) {
+func runWithExtensions(
+	t *testing.T,
+	run extensionRun,
+) (*agentports.RunResult, *scriptedCompletion) {
 	t.Helper()
 
 	completion := &scriptedCompletion{Turns: run.turns}
 	rt := newRuntime(
 		completion,
 		&stubQueryRegistry{Tools: []agentports.AgentQueryTool{
-			queryTool(agentextension.ToolWebSearch, map[string]any{"results": []any{}}, run.searchErr),
+			queryTool(
+				agentextension.ToolWebSearch,
+				map[string]any{"results": []any{}},
+				run.searchErr,
+			),
 			queryTool(agentextension.ToolWebRead, map[string]any{"text": "page"}, nil),
 		}},
 		&stubActionRegistry{Tools: []agentports.AgentTool{
@@ -78,7 +85,9 @@ func runWithExtensions(t *testing.T, run extensionRun) (*agentports.RunResult, *
 func offeredTools(req *agentports.ChatCompletionRequest) []string {
 	names := make([]string, 0, len(req.Tools))
 	for _, spec := range req.Tools {
-		names = append(names, spec.Name)
+		if !spec.Deferred {
+			names = append(names, spec.Name)
+		}
 	}
 
 	return names

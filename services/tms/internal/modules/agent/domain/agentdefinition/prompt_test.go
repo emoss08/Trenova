@@ -124,7 +124,10 @@ func TestBuildSystemPrompt_OpensByNamingTheAgent(t *testing.T) {
 
 	prompt := d.BuildSystemPrompt(agentdefinition.RuntimeContext{})
 
-	assert.True(t, strings.HasPrefix(prompt, "You are Night dispatch helper, an agent inside Trenova"))
+	assert.True(
+		t,
+		strings.HasPrefix(prompt, "You are Night dispatch helper, an agent inside Trenova"),
+	)
 	assert.Contains(t, prompt, "The organization describes you as: Covers loads overnight.")
 }
 
@@ -207,7 +210,10 @@ func TestBuildSystemPrompt_ExplainsDashboardOnlyToAnAgentHoldingDashboardTools(t
 	t.Parallel()
 
 	rc := fullContext()
-	rc.Tools = append(rc.Tools, agentdefinition.ToolSummary{Name: "get_my_home_layout", Query: true})
+	rc.Tools = append(
+		rc.Tools,
+		agentdefinition.ToolSummary{Name: "get_my_home_layout", Query: true},
+	)
 
 	prompt := definitionWithInstructions("Help.").BuildSystemPrompt(rc)
 
@@ -221,8 +227,12 @@ func TestBuildSystemPrompt_ExplainsTheClockLineOnTheMessage(t *testing.T) {
 
 	prompt := definitionWithInstructions("Help.").BuildSystemPrompt(fullContext())
 
-	assert.Contains(t, prompt, "- Today is: 2026-09-16 Wednesday (America/Los_Angeles). The message "+
-		"you are answering opens with a \"Now:\" line Trenova added")
+	assert.Contains(
+		t,
+		prompt,
+		"- Today is: 2026-09-16 Wednesday (America/Los_Angeles). The message "+
+			"you are answering opens with a \"Now:\" line Trenova added",
+	)
 }
 
 func TestBuildSystemPrompt_UsesADefaultPersonaWhenInstructionsAreEmpty(t *testing.T) {
@@ -429,7 +439,11 @@ func TestSystemPrompt_NamesThePageThePersonIsOn(t *testing.T) {
 	closing := strings.Index(prompt, "</page_context>")
 	require.True(t, open >= 0 && closing > open)
 	fenced := prompt[open:closing]
-	assert.Contains(t, fenced, "page: Rate matrices (Billing › Configuration files › Rate matrices)")
+	assert.Contains(
+		t,
+		fenced,
+		"page: Rate matrices (Billing › Configuration files › Rate matrices)",
+	)
 	assert.Contains(t, fenced, "about: Rates by lane.")
 }
 
@@ -648,8 +662,8 @@ func TestBuildSystemPrompt_NamesThePlanAWaitingStepBelongsTo(t *testing.T) {
 
 // A model handed eight of forty tools and a bare list of names told the
 // person the system could not do what a ninth tool did. The disclosed
-// section now says what each unloaded tool is for, in one sentence, and
-// tells the model to search before saying no.
+// section names the areas find_tools can load from, with how many tools and
+// what they cover, and tells the model to search before saying no.
 func TestBuildSystemPrompt_DisclosedSectionNamesWhatFindToolsCanLoad(t *testing.T) {
 	t.Parallel()
 
@@ -666,30 +680,32 @@ func TestBuildSystemPrompt_DisclosedSectionNamesWhatFindToolsCanLoad(t *testing.
 		Tools: []agentdefinition.ToolSummary{
 			{
 				Name:        "shipment_get",
-				Description: "Look up one shipment by PRO. Returns stops and charges.",
+				Description: "Look up one shipment by PRO.",
 				Query:       true,
 				Loaded:      true,
 			},
 			{
 				Name:        "list_reports",
-				Description: "Browse the reports a person can run. Each has parameters.",
+				Description: "Browse the reports a person can run.",
 				Query:       true,
+			},
+		},
+		ToolMap: []agentdefinition.ToolNamespace{
+			{Name: "Reports", Covers: []string{"report", "report schedule"}, Tools: 1},
+			{
+				Name:        "Shipments",
+				Covers:      []string{"shipment", "shipment move", "stop"},
+				MoreCovered: 2,
+				Tools:       9,
 			},
 		},
 	})
 
-	assert.Contains(t, prompt, "Loaded now:\n- shipment_get")
-	assert.Contains(
-		t,
-		prompt,
-		"Callable after find_tools:\n- list_reports — Browse the reports a person can run.",
-	)
-	assert.NotContains(
-		t,
-		prompt,
-		"Each has parameters",
-		"one sentence per unloaded tool, not the whole description",
-	)
+	assert.Contains(t, prompt, "What find_tools can load, by area of Trenova:\n"+
+		"- Reports (1 tool): report, report schedule\n"+
+		"- Shipments (9 tools): shipment, shipment move, stop and 2 more")
+	assert.NotContains(t, prompt, "Loaded now:")
+	assert.NotContains(t, prompt, "Callable after find_tools")
 	assert.Contains(t, prompt, "call find_tools first")
 	assert.Contains(t, prompt, "never tell")
 	assert.False(
@@ -710,7 +726,12 @@ func TestBuildSystemPrompt_TellsAConversationAgentToSaveStatedPreferences(t *tes
 	assert.Contains(t, prompt, "Never show the person a record's internal id")
 
 	delegated := validDefinition().BuildSystemPrompt(agentdefinition.RuntimeContext{DelegatedBy: "Dispatch desk"})
-	assert.NotContains(t, delegated, "## Remembering", "a delegate answers an agent, not the person")
+	assert.NotContains(
+		t,
+		delegated,
+		"## Remembering",
+		"a delegate answers an agent, not the person",
+	)
 }
 
 // The app is translated, and a dispatcher who writes in Spanish was answered
@@ -719,7 +740,9 @@ func TestBuildSystemPrompt_TellsAConversationAgentToSaveStatedPreferences(t *tes
 func TestBuildSystemPrompt_AnswersInThePersonsLanguage(t *testing.T) {
 	t.Parallel()
 
-	prompt := definitionWithInstructions("Help.").BuildSystemPrompt(agentdefinition.RuntimeContext{})
+	prompt := definitionWithInstructions(
+		"Help.",
+	).BuildSystemPrompt(agentdefinition.RuntimeContext{})
 
 	assert.Contains(t, prompt, "Answer in the language the person writes in")
 	assert.Contains(t, prompt, "the values you send to tools stay as each tool declares them")
