@@ -96,6 +96,21 @@ func TestProfile_ReachTakesTheMostPermissiveHolder(t *testing.T) {
 	assert.Equal(t, agent.TierActWithApproval, profile.beyond["post_invoice"])
 }
 
+func TestProfile_ReachLeavesOutTheWritesOfAnAgentInSimulation(t *testing.T) {
+	t.Parallel()
+
+	dispatch := agentHolding("Dispatch helper", "list_shipments")
+	billing := agentHolding("Billing helper", "list_invoices", "post_invoice")
+	billing.SimulationMode = true
+	service := profileRuntime(t, dispatch, billing)
+
+	profile := service.profileFor(t.Context(), conversationRequest(dispatch), nil)
+
+	assert.Contains(t, profile.beyond, "list_invoices", "a read changes nothing, simulated or not")
+	assert.NotContains(t, profile.beyond, "post_invoice",
+		"a write held only by an agent in simulation would otherwise run for real")
+}
+
 func TestProfile_ReachLeavesOutWhatTheAgentSwitchedOff(t *testing.T) {
 	t.Parallel()
 

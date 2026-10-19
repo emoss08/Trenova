@@ -284,8 +284,12 @@ delegate's lookups returned, unfenced, in the order it read them, every
 successful call but the runtime's own (`find_tools` and the like): the agent that
 asked works from them rather than from a retelling, which is what the
 "telephone" effect of a supervisor paraphrasing its sub-agents costs. They are
-bounded at 12 KiB each and 32 KiB together (`delegateFindings`); what is left out
-is counted in `moreFindings`, and the note says to look it up again. The saved
+bounded at 8 KiB each and 10 KiB together (`delegateFindings`), and then to what
+fits whole in one tool result (12,000 characters, `encodedReport` drops findings from
+the end until it does), so the report is never cut mid-document; what is left out
+is counted in `moreFindings`, and the note says to look it up again. Writes held
+only by an agent in simulation are never reached, since the conversation would
+run them for real. The saved
 account keeps the first ten, each cut to 400 characters.
 
 | `status` | Meaning | The call |

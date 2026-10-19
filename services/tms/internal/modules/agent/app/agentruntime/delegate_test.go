@@ -7,6 +7,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/bytedance/sonic"
+
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -597,6 +599,34 @@ func TestDelegateReport_HandsBackWhatTheLookupsReadWordForWord(t *testing.T) {
 	assert.Contains(t, outcome.content, "changed nothing")
 }
 
+func TestDelegateOutcome_KeepsTheReportWholeWithinOneToolResult(t *testing.T) {
+	t.Parallel()
+
+	report := conversation.DelegateReport{
+		AgentName: "Billing helper",
+		Status:    agentports.DelegateStatusCompleted,
+		Reply:     strings.Repeat("r", 1900),
+	}
+	for idx := range 6 {
+		report.Findings = append(report.Findings, conversation.DelegateFinding{
+			ToolName: "list_invoices",
+			CallID:   fmt.Sprintf("call_%d", idx),
+			Content:  `{"rows":["` + strings.Repeat("\"", 900) + `"]}`,
+		})
+	}
+
+	outcome := delegateOutcome(&report, true)
+
+	_, payload, fenced := UnfenceToolResult(outcome.content[:strings.Index(outcome.content, "\n\n[")])
+	require.True(t, fenced)
+	assert.LessOrEqual(t, len(payload), maxToolResultChars)
+	assert.True(t, sonic.ValidString(payload), "the report is never cut mid-document")
+	assert.NotContains(t, payload, "was cut off")
+	assert.Positive(t, report.MoreFindings, "every finding left out is counted")
+	assert.Equal(t, 6, len(report.Findings)+report.MoreFindings)
+	assert.Contains(t, outcome.content, "were left out of findings")
+}
+
 func TestDelegateReport_CountsFindingsPastWhatOneAnswerCarries(t *testing.T) {
 	t.Parallel()
 
@@ -607,15 +637,15 @@ func TestDelegateReport_CountsFindingsPastWhatOneAnswerCarries(t *testing.T) {
 			Role:       conversation.RoleTool,
 			ToolCallID: fmt.Sprintf("call_%d", idx),
 			ToolName:   "list_invoices",
-			Content:    FenceToolResult("list_invoices", strings.Repeat("x", 6<<10)),
+			Content:    FenceToolResult("list_invoices", strings.Repeat("x", 3<<10)),
 		})
 	}
 	run := DelegateRun{Result: &agentports.RunResult{Messages: messages}}
 
 	report := delegateReport(delegate, "call_1", run)
 
-	assert.Len(t, report.Findings, 5)
-	assert.Equal(t, 3, report.MoreFindings)
+	assert.Len(t, report.Findings, 3)
+	assert.Equal(t, 5, report.MoreFindings)
 	assert.Contains(t, delegateNote(&report, true), "were left out of findings")
 	assert.LessOrEqual(t, len(report.Bounded().Findings[0].Content), 2000)
 }

@@ -144,7 +144,7 @@ func (s *Service) holderTier(
 		return agent.TierAutoExecute, true
 	}
 	tool, ok := s.actionTools.Get(name)
-	if !ok {
+	if !ok || holder.SimulationMode {
 		return "", false
 	}
 
