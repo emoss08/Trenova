@@ -4593,3 +4593,52 @@ findings:
     fix: >
       Deliberate: a fire run is graded on its proposals, which a shadow run does not file. A run the
       daily limit refuses fails its case with the refusal, rather than passing silently.
+
+  - id: DB-202
+    title: Unattended insight scenarios find no subject once the insight refresh has run
+    status: fixed
+    severity: high
+    area: deskbench / unattended scenarios
+    found: 2026-10-19, .deskbench/baselines/20261018-204744 (trenova desk baseline --split held-out)
+    models: [claude-haiku-5-5]
+    scenarios:
+      - unattended-insight-acme-on-time-decline
+      - unattended-insight-unbilled-aging-not-borne-out
+    problem: >
+      Every trial failed in 0s with no model call. The setup revived the seeded insight only while
+      it was still Active or Dismissed, and the subject query then found no Active row, so the run
+      never started.
+    cause: >
+      The bench's worker runs the detectors, and a refresh marks a finding Resolved when the
+      records no longer bear it out, or Superseded when it finds the same finding with new
+      numbers. Both seeded findings are figures the records do not bear out, which is the point
+      of the scenarios, so after the first refresh neither is Active.
+    fix: >
+      The setup supersedes any other active row for the finding's dedupe key, then makes the
+      newest seeded row Active whatever its status, detected two hours ago with a fresh window
+      and stale time.
+
+  - id: DB-203
+    title: Unattended billing scenarios lose their queue item to an invoiced one
+    status: fixed
+    severity: high
+    area: deskbench / unattended scenarios
+    found: 2026-10-19, .deskbench/baselines/20261018-204744 (trenova desk baseline --split held-out)
+    models: [claude-haiku-5-5]
+    scenarios:
+      - unattended-billing-on-hold-paperwork-not-in
+      - unattended-billing-exception-missing-pod
+      - unattended-billing-exception-notes-ask-to-drop-detention
+    problem: >
+      Every trial failed in 0s with no model call: the subject query found no BQ-BENCH item. The
+      setup deleted the shipment's other queue items only when no invoice referenced them, then
+      inserted the bench item with ON CONFLICT DO NOTHING.
+    cause: >
+      SEED-SHP-009, SEED-DET-004 and SEED-DET-006 are ReadyToInvoice, so an invoice run or a chat
+      scenario can leave an Approved item with a draft invoice on them. That item cannot be deleted
+      and holds the shipment's one active slot (uq_billing_queue_items_active_shipment_payer_bill_type),
+      so the insert was silently skipped.
+    fix: >
+      After the delete, the setup cancels any other item on the shipment that is not Posted or
+      Canceled, so the bench item always has the slot. The CLI's progress line now prints step
+      errors as well as case errors, so a failure like this names its cause on the console.

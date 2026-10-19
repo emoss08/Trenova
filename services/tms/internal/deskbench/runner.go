@@ -59,6 +59,20 @@ func (c *CaseResult) Key() string {
 	return c.Scenario.Name + " @ " + c.Provider
 }
 
+func (c *CaseResult) Errors() []string {
+	errs := make([]string, 0, len(c.Steps)+1)
+	if c.Error != "" {
+		errs = append(errs, c.Error)
+	}
+	for _, step := range c.Steps {
+		if step.Error != "" {
+			errs = append(errs, "step "+strconv.Itoa(step.Index)+": "+step.Error)
+		}
+	}
+
+	return errs
+}
+
 func (c *CaseResult) ID() string {
 	return stringutils.SlugifyASCII(c.Scenario.Name, slugLength) + "--" +
 		stringutils.SlugifyASCII(c.Provider, slugLength) + "--" + strconv.Itoa(c.Repeat)

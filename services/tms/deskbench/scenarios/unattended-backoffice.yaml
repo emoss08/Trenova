@@ -340,11 +340,19 @@ scenarios:
     exclusive: insight-seed
     setup:
       - >
+        UPDATE insights SET status = 'Superseded'
+        WHERE status = 'Active' AND detector_key = 'unbilled-aging' AND headline NOT LIKE '$31,480%'
+          AND dedupe_key IN (SELECT dedupe_key FROM insights WHERE detector_key = 'unbilled-aging'
+            AND headline LIKE '$31,480%')
+      - >
         UPDATE insights SET status = 'Active', dismissed_at = NULL, dismissed_by_id = NULL,
-          dismiss_reason = NULL
+          dismiss_reason = NULL, detected_at = EXTRACT(EPOCH FROM now())::bigint - 7200,
+          window_end = EXTRACT(EPOCH FROM now())::bigint - 7200,
+          window_start = EXTRACT(EPOCH FROM now())::bigint - 7200 - 2592000,
+          stale_at = EXTRACT(EPOCH FROM now())::bigint - 7200 + 129600,
+          updated_at = EXTRACT(EPOCH FROM now())::bigint
         WHERE id = (SELECT id FROM insights WHERE detector_key = 'unbilled-aging'
-          AND headline LIKE '$31,480%' AND status IN ('Active', 'Dismissed')
-          ORDER BY detected_at DESC, id DESC LIMIT 1)
+          AND headline LIKE '$31,480%' ORDER BY detected_at DESC, id DESC LIMIT 1)
     steps:
       - fire:
           agent: InsightAnalyst
@@ -373,12 +381,22 @@ scenarios:
     exclusive: insight-seed
     setup:
       - >
+        UPDATE insights AS i SET status = 'Superseded'
+        FROM customers AS c
+        WHERE c.code = 'ACME' AND i.dedupe_key = 'ontime-decline:' || c.id
+          AND i.detector_key = 'ontime-decline' AND i.status = 'Active'
+          AND strpos(i.headline, 'has fallen 14 points to 79.6%') = 0
+      - >
         UPDATE insights SET status = 'Active', dismissed_at = NULL, dismissed_by_id = NULL,
-          dismiss_reason = NULL
+          dismiss_reason = NULL, detected_at = EXTRACT(EPOCH FROM now())::bigint - 7200,
+          window_end = EXTRACT(EPOCH FROM now())::bigint - 7200,
+          window_start = EXTRACT(EPOCH FROM now())::bigint - 7200 - 2592000,
+          stale_at = EXTRACT(EPOCH FROM now())::bigint - 7200 + 129600,
+          updated_at = EXTRACT(EPOCH FROM now())::bigint
         WHERE id = (SELECT i.id FROM insights AS i JOIN customers AS c
             ON i.dedupe_key = 'ontime-decline:' || c.id
           WHERE c.code = 'ACME' AND i.detector_key = 'ontime-decline'
-            AND i.status IN ('Active', 'Dismissed')
+            AND strpos(i.headline, 'has fallen 14 points to 79.6%') > 0
           ORDER BY i.detected_at DESC, i.id DESC LIMIT 1)
     steps:
       - fire:

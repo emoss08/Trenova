@@ -638,8 +638,8 @@ func printProgress(result *deskbench.CaseResult) {
 	fmt.Fprintf(os.Stderr, "%s %s #%d (%s, %d tool calls, %d refused)\n", mark, result.Key(),
 		result.Repeat, result.FinishedAt.Sub(result.StartedAt).Round(100*time.Millisecond),
 		toolCalls, refused)
-	if result.Error != "" {
-		fmt.Fprintf(os.Stderr, "     error: %s\n", result.Error)
+	for _, err := range result.Errors() {
+		fmt.Fprintf(os.Stderr, "     error: %s\n", err)
 	}
 }
 
