@@ -99,6 +99,19 @@ func TestLedger_RoundTripsAndNamesWhatMoved(t *testing.T) {
 
 	now := evalsplit.Ledger{stratum: {"b", "c"}}
 	diff := now.Diff(parsed)
-	assert.Equal(t, []string{"c"}, diff.Joined)
-	assert.Equal(t, []string{"a"}, diff.Left)
+	assert.Equal(t, []string{"c [Billing (chat)]"}, diff.Joined)
+	assert.Equal(t, []string{"a [Billing (chat)]"}, diff.Left)
+}
+
+func TestLedger_NamesAKeyThatMovedToAnotherStratum(t *testing.T) {
+	t.Parallel()
+
+	billing := evalsplit.Stratum{Desk: "Billing", Mode: evalsplit.Chat}
+	exceptions := evalsplit.Stratum{Desk: "Billing exceptions", Mode: evalsplit.Unattended}
+	recorded := evalsplit.Ledger{billing: {"a"}}
+	now := evalsplit.Ledger{exceptions: {"a"}}
+
+	diff := now.Diff(recorded)
+	assert.Equal(t, []string{"a [Billing exceptions (unattended)]"}, diff.Joined)
+	assert.Equal(t, []string{"a [Billing (chat)]"}, diff.Left)
 }
