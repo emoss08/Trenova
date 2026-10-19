@@ -468,9 +468,9 @@ tasks:
     cmds:
       - |
         if [ -n "{{.env}}" ]; then
-          {{.CLI_PATH}} db reset --force --env {{.env}}
+          {{.CLI_PATH}} db reset --force --seed --env {{.env}}
         else
-          {{.CLI_PATH}} db reset --force
+          {{.CLI_PATH}} db reset --force --seed
         fi
 
   db-setup:
