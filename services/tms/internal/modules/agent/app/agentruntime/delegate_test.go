@@ -592,7 +592,7 @@ func TestDelegateReport_HandsBackWhatTheLookupsReadWordForWord(t *testing.T) {
 	assert.Equal(t, read, report.Findings[0].Content)
 	assert.Equal(t, "One invoice is overdue.", report.Reply)
 
-	outcome := delegateOutcome(report, true)
+	outcome := delegateOutcome(&report, true)
 	assert.Contains(t, outcome.content, "INV-104")
 	assert.Contains(t, outcome.content, "changed nothing")
 }
@@ -616,6 +616,6 @@ func TestDelegateReport_CountsFindingsPastWhatOneAnswerCarries(t *testing.T) {
 
 	assert.Len(t, report.Findings, 5)
 	assert.Equal(t, 3, report.MoreFindings)
-	assert.Contains(t, delegateNote(report, true), "were left out of findings")
+	assert.Contains(t, delegateNote(&report, true), "were left out of findings")
 	assert.LessOrEqual(t, len(report.Bounded().Findings[0].Content), 2000)
 }

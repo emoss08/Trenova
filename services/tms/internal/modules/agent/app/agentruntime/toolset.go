@@ -432,8 +432,8 @@ func (s *Service) resolveFind(
 	var reached []agentports.AgentToolDescriptor
 	if !s.catalog.MatchesStrongly(bestMatch(callable, added), need) {
 		reached = s.reachBeyond(ctx, set, actor, need)
-		for _, descriptor := range reached {
-			names = append(names, descriptor.Name)
+		for idx := range reached {
+			names = append(names, reached[idx].Name)
 		}
 	}
 
@@ -494,9 +494,9 @@ func (s *Service) reachBeyond(
 		StrongOnly: true,
 	}))
 	reached := make([]agentports.AgentToolDescriptor, 0, len(found))
-	for _, descriptor := range found {
-		if set.offers(descriptor.Name) || s.load(set, descriptor.Name) {
-			reached = append(reached, descriptor)
+	for idx := range found {
+		if set.offers(found[idx].Name) || s.load(set, found[idx].Name) {
+			reached = append(reached, found[idx])
 		}
 	}
 

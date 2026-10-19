@@ -246,7 +246,7 @@ type DelegateRun struct {
 // did. The delegate's steps are folded into the turn's own record, tagged, and
 // its writes are kept apart so they are recorded as its own.
 func (s *Service) delegate(t *Turn, fx TurnEffects, call agentports.ToolCall) toolOutcome {
-	task, refusal := s.prepareDelegation(t, call)
+	task, refusal := s.prepareDelegation(t, &call)
 	if task == nil {
 		return refusal
 	}
@@ -255,7 +255,10 @@ func (s *Service) delegate(t *Turn, fx TurnEffects, call agentports.ToolCall) to
 	return outcome
 }
 
-func (s *Service) prepareDelegation(t *Turn, call agentports.ToolCall) (*handedTask, toolOutcome) {
+func (s *Service) prepareDelegation(
+	t *Turn,
+	call *agentports.ToolCall,
+) (*handedTask, toolOutcome) {
 	if t.req.Delegation != nil {
 		return nil, failedOutcome("%s", delegatedRefusal)
 	}
@@ -282,7 +285,7 @@ func (s *Service) prepareDelegation(t *Turn, call agentports.ToolCall) (*handedT
 	}
 	t.delegations++
 
-	return &handedTask{call: call, delegate: delegate, task: task, handed: handed}, toolOutcome{}
+	return &handedTask{call: *call, delegate: delegate, task: task, handed: handed}, toolOutcome{}
 }
 
 func (s *Service) fanOut(
@@ -306,18 +309,20 @@ func (s *Service) fanOut(
 
 	outcomes := make(map[string]toolOutcome, len(eligible))
 	tasks := make([]*handedTask, 0, len(eligible))
-	for _, call := range eligible {
+	for idx := range eligible {
+		call := &eligible[idx]
 		task, refusal := s.prepareDelegation(t, call)
 		if task == nil {
-			s.emitToolStarted(fx, &call)
+			s.emitToolStarted(fx, call)
 			outcomes[call.ID] = refusal
 			continue
 		}
 		task.fannedOut = true
 		tasks = append(tasks, task)
 	}
-	for idx, outcome := range s.handTasks(t, fx, tasks) {
-		outcomes[tasks[idx].call.ID] = outcome
+	settled := s.handTasks(t, fx, tasks)
+	for idx := range settled {
+		outcomes[tasks[idx].call.ID] = settled[idx]
 	}
 
 	return outcomes
@@ -346,7 +351,7 @@ func (s *Service) handTask(
 	call := s.startTask(t, fx, h)
 	runs := fx.Delegate(t, []DelegateCall{call})
 
-	return s.settleTask(t, fx, h, runs[0])
+	return s.settleTask(t, fx, h, &runs[0])
 }
 
 func (s *Service) handTasks(t *Turn, fx TurnEffects, tasks []*handedTask) []toolOutcome {
@@ -360,7 +365,7 @@ func (s *Service) handTasks(t *Turn, fx TurnEffects, tasks []*handedTask) []tool
 	runs := fx.Delegate(t, calls)
 	outcomes := make([]toolOutcome, 0, len(tasks))
 	for idx, task := range tasks {
-		outcome, _ := s.settleTask(t, fx, task, runs[idx])
+		outcome, _ := s.settleTask(t, fx, task, &runs[idx])
 		outcomes = append(outcomes, outcome)
 	}
 
@@ -414,10 +419,10 @@ func (s *Service) settleTask(
 	t *Turn,
 	fx TurnEffects,
 	h *handedTask,
-	run DelegateRun,
-) (toolOutcome, agentports.AssistantDelegateFinishedEvent) {
+	run *DelegateRun,
+) (outcome toolOutcome, report agentports.AssistantDelegateFinishedEvent) {
 	call, delegate := h.call, h.delegate
-	report := delegateReport(delegate, call.ID, run)
+	report = delegateReport(delegate, call.ID, *run)
 	if run.ExternalContent {
 		t.external = true
 	}
@@ -448,7 +453,9 @@ func (s *Service) settleTask(
 		Data:  report,
 	})
 
-	return delegateOutcome(report, !h.directed), report
+	outcome = delegateOutcome(&report, !h.directed)
+
+	return outcome, report
 }
 
 // ReserveCallIDs marks tool call ids as taken, so a provider that reuses one
@@ -744,7 +751,7 @@ func delegateReport(
 // that ended partway is a failed call whose writes are still named: they
 // happened, and what else the delegate may have begun is unconfirmed rather
 // than undone, so nothing here says a change did not happen.
-func delegateOutcome(report agentports.AssistantDelegateFinishedEvent, lookup bool) toolOutcome {
+func delegateOutcome(report *agentports.AssistantDelegateFinishedEvent, lookup bool) toolOutcome {
 	encoded, err := delegateJSON.MarshalToString(report)
 	if err != nil {
 		encoded = fmt.Sprintf(`{"agent":%q,"status":%q}`, report.AgentName, report.Status)
@@ -775,7 +782,7 @@ func delegateOutcome(report agentports.AssistantDelegateFinishedEvent, lookup bo
 }
 
 // delegateNote tells the delegating model how to read the account above it.
-func delegateNote(report agentports.AssistantDelegateFinishedEvent, lookup bool) string {
+func delegateNote(report *agentports.AssistantDelegateFinishedEvent, lookup bool) string {
 	name := report.AgentName
 	if lookup {
 		return lookupNote(report)
@@ -799,7 +806,7 @@ func delegateNote(report agentports.AssistantDelegateFinishedEvent, lookup bool)
 	}
 }
 
-func lookupNote(report agentports.AssistantDelegateFinishedEvent) string {
+func lookupNote(report *agentports.AssistantDelegateFinishedEvent) string {
 	name := report.AgentName
 	switch report.Status {
 	case agentports.DelegateStatusFailed, agentports.DelegateStatusStopped:
@@ -808,18 +815,20 @@ func lookupNote(report agentports.AssistantDelegateFinishedEvent) string {
 	case agentports.DelegateStatusRefused:
 		return "[" + name + "'s answer was withheld. It changed nothing; work from its " +
 			"findings without the withheld answer.]"
-	default:
-		more := ""
-		if report.MoreFindings > 0 {
-			more = " Results past what one answer may carry were left out of findings; " +
-				"look those up yourself if you need them."
-		}
-
-		return "[" + name + " looked this up as the same person and changed nothing. Its " +
-			"findings are the results it read, word for word: answer from them, and when its " +
-			"reply and a finding disagree, the finding is right. Never show the person an " +
-			"id from them." + more + delegateArtifactNote(report.Reply) + "]"
+	case agentports.DelegateStatusCompleted,
+		agentports.DelegateStatusExhausted,
+		agentports.DelegateStatusDeclined:
 	}
+	more := ""
+	if report.MoreFindings > 0 {
+		more = " Results past what one answer may carry were left out of findings; " +
+			"look those up yourself if you need them."
+	}
+
+	return "[" + name + " looked this up as the same person and changed nothing. Its " +
+		"findings are the results it read, word for word: answer from them, and when its " +
+		"reply and a finding disagree, the finding is right. Never show the person an " +
+		"id from them." + more + delegateArtifactNote(report.Reply) + "]"
 }
 
 // delegateArtifactNote passes on what the delegate's reply showed. Only this
@@ -882,9 +891,11 @@ const (
 	maxFindingsBytes = 32 << 10
 )
 
-func delegateFindings(messages []conversation.Message) ([]conversation.DelegateFinding, int) {
-	findings := make([]conversation.DelegateFinding, 0, 4)
-	total, more := 0, 0
+func delegateFindings(
+	messages []conversation.Message,
+) (findings []conversation.DelegateFinding, more int) {
+	findings = make([]conversation.DelegateFinding, 0, 4)
+	total := 0
 	for idx := range messages {
 		message := &messages[idx]
 		if message.Role != conversation.RoleTool || message.ToolFailed {
