@@ -67,17 +67,18 @@ Loaded now:
 - shipment_get
 - list_insights
 - get_insight
-- list_edi_transfers
 - get_edi_transfer
 - decline_edi_tender
 - shipment_create_recurring
+- shipment_get_tracking
 - email_customer
 
 Callable after find_tools:
 - shipment_list — Find shipments (loads) by the words people use for them, by status, or by filters on dates, charges and transfer status.
-- list_invoices — List invoices narrowed by customer, status, whether they are paid or disputed, the amount, or the invoice and due dates.
+- invoice_list — List invoices narrowed by customer, status, whether they are paid or disputed, the amount, or the invoice and due dates.
 - shipment_add_comment — Leave a note on a shipment's comment thread, where dispatch will read it.
 - list_edi_partners — List this organization's EDI trading partners with their code, name and the customer each stands for.
+- list_edi_transfers — List EDI load tender transfers, the tenders partners sent in or this organization sent out.
 - accept_edi_tender — Propose accepting a load tender a trading partner sent over EDI, which creates the shipment from it and tells the partner.
 - list_edi_tender_changes — List changes another Trenova organization made to loads it tendered to this one over EDI, and changes this organization made to loads it tendered, newest first.
 - review_edi_tender_change — Propose applying or rejecting a change another Trenova organization made to a load it tendered to this one over EDI, after this organization received it.
@@ -117,7 +118,6 @@ Callable after find_tools:
 - list_commodities — List commodities — what this organization hauls, with freight class, handling flags and whether the commodity is hazardous.
 - create_commodity — Add a commodity shipments can carry, with its freight class, temperature range, dimensions and handling.
 - update_commodity — Change a commodity: its name, description, freight class, temperature range, dimensions, handling or hazardous material.
-- shipment_get_tracking — Where a shipment is and whether it will be on time: each stop's window, actual arrival and lateness, the tractor's last position, and an arrival estimate.
 - list_email_profiles — The sending profiles email can go out from: each has a name, a sender address and a reply-to.
 - quote_shipment — Price a shipment that has not been saved, from the customer's rate agreements and the organization's rating rules.
 - shipment_share_tracking_link — Share a link to a shipment's tracking page with the customer, and email it when given an address.

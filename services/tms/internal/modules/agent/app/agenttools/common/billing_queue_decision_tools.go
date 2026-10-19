@@ -15,7 +15,7 @@ const ParamBillingQueueItemID = "billingQueueItemId"
 
 const ParamReviewNotes = "reviewNotes"
 
-const ParamCancelReason = "cancelReason"
+const FieldCancelReason = "cancelReason"
 
 const FieldCanceledByID = "canceledById"
 

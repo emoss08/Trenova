@@ -32,7 +32,7 @@ const (
 	absentNotSynced    = "not synced"
 	absentNotScheduled = "not scheduled"
 
-	syncDocumentIDSources = "list_invoices, get_invoice, list_customer_payments, " +
+	syncDocumentIDSources = "invoice_list, invoice_get, list_customer_payments, " +
 		"list_carrier_settlements or list_driver_settlements"
 )
 

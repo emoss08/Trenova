@@ -636,29 +636,29 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation assignBillingQueueBiller`<br>twin `PUT /api/v1/billing-queue/:itemID/assign/` | Tool: `assign_billing_queue_biller`, `assign_billing_queue_billers` |
-| `mutation postBillingQueueItem`<br>twin `POST /api/v1/billing-queue/:itemID/post/` | Tool: `post_invoice`, `send_invoice` |
-| `mutation releaseBillingQueueItem`<br>twin `POST /api/v1/billing-queue/:itemID/release/` | Tool: `release_billing_queue_item` |
-| `mutation resolveBillingQueueIssue`<br>twin `POST /api/v1/billing-queue/:itemID/issues/:issueID/resolve/` | Tool: `resolve_billing_queue_issue` |
-| `mutation undoBillingQueueIssue`<br>twin `POST /api/v1/billing-queue/:itemID/issues/:issueID/undo/` | Tool: `undo_billing_queue_issue` |
-| `mutation updateBillingQueueStatus`<br>twin `PUT /api/v1/billing-queue/:itemID/status/` | Tool: `approve_billing_queue_item`, `approve_billing_queue_items`, `cancel_billing_queue_item`, `hold_billing_queue_item`, `move_billing_item_to_exception`, `send_billing_item_back_to_ops`, `transition_item_to_in_review`, `transition_items_to_in_review` |
+| `mutation assignBillingQueueBiller`<br>twin `PUT /api/v1/billing-queue/:itemID/assign/` | Tool: `billing_assign_biller` |
+| `mutation postBillingQueueItem`<br>twin `POST /api/v1/billing-queue/:itemID/post/` | Tool: `invoice_post`, `invoice_send` |
+| `mutation releaseBillingQueueItem`<br>twin `POST /api/v1/billing-queue/:itemID/release/` | Tool: `billing_release_queue_item` |
+| `mutation resolveBillingQueueIssue`<br>twin `POST /api/v1/billing-queue/:itemID/issues/:issueID/resolve/` | Tool: `billing_resolve_issue` |
+| `mutation undoBillingQueueIssue`<br>twin `POST /api/v1/billing-queue/:itemID/issues/:issueID/undo/` | Tool: `billing_undo_issue` |
+| `mutation updateBillingQueueStatus`<br>twin `PUT /api/v1/billing-queue/:itemID/status/` | Tool: `billing_approve_queue_item`, `billing_cancel_queue_item`, `billing_hold_queue_item`, `billing_raise_exception`, `billing_return_to_operations`, `billing_start_review` |
 | `DELETE /api/v1/billing-queue/filter-presets/:presetId/`<br>billingqueuehandler.deleteFilterPreset | Exempt, user-preference: A saved filter on the billing queue screen. |
-| `POST /api/v1/billing-queue/:itemID/reassign-charge/`<br>billingqueuehandler.reassignCharge | Tool: `reassign_billing_charge` |
-| `POST /api/v1/billing-queue/bulk-approve/`<br>billingqueuehandler.startBulkApprove | Tool: `approve_billing_queue_items` |
-| `POST /api/v1/billing-queue/bulk-approve/:runID/cancel/`<br>billingqueuehandler.cancelBulkApprove | Exempt, infrastructure: Stops a bulk approval run the queue screen started in the background; approve_billing_queue_items approves its items within the one proposal a person decides, so an agent has no run to stop. |
+| `POST /api/v1/billing-queue/:itemID/reassign-charge/`<br>billingqueuehandler.reassignCharge | Tool: `billing_reassign_charge` |
+| `POST /api/v1/billing-queue/bulk-approve/`<br>billingqueuehandler.startBulkApprove | Tool: `billing_approve_queue_item` |
+| `POST /api/v1/billing-queue/bulk-approve/:runID/cancel/`<br>billingqueuehandler.cancelBulkApprove | Exempt, infrastructure: Stops a bulk approval run the queue screen started in the background; billing_approve_queue_item approves its items within the one proposal a person decides, so an agent has no run to stop. |
 | `POST /api/v1/billing-queue/filter-presets/`<br>billingqueuehandler.createFilterPreset | Exempt, user-preference: A saved filter on the billing queue screen. |
 | `POST /api/v1/billing-queue/pod-signatures/redetect/`<br>billingqueuehandler.redetectPODSignatures | Exempt, infrastructure: A repair a person asks for after signature detection arrived: it runs document intelligence again on the queued PODs nobody has read, and the extraction pipeline, not a decision, says whether each is signed. |
-| `POST /api/v1/billing-queue/transfer/`<br>billingqueuehandler.transfer | Tool: `transfer_to_billing` |
-| `PUT /api/v1/billing-queue/:itemID/charges/`<br>billingqueuehandler.updateCharges | Tool: `correct_charge_code` |
+| `POST /api/v1/billing-queue/transfer/`<br>billingqueuehandler.transfer | Tool: `billing_transfer` |
+| `PUT /api/v1/billing-queue/:itemID/charges/`<br>billingqueuehandler.updateCharges | Tool: `billing_correct_charge_codes` |
 | `PUT /api/v1/billing-queue/filter-presets/:presetId/`<br>billingqueuehandler.updateFilterPreset | Exempt, user-preference: A saved filter on the billing queue screen. |
 
 ### billingtransfer
 
 | Write | Decision |
 | --- | --- |
-| `mutation cancelBillingTransferRun` | Tool: `manage_billing_transfer_run` |
-| `mutation retryBillingTransferRun` | Tool: `manage_billing_transfer_run` |
-| `mutation startBillingTransferRun` | Tool: `transfer_to_billing` |
+| `mutation cancelBillingTransferRun` | Tool: `billing_manage_transfer_run` |
+| `mutation retryBillingTransferRun` | Tool: `billing_manage_transfer_run` |
+| `mutation startBillingTransferRun` | Tool: `billing_transfer` |
 
 ### briefing
 
@@ -1546,33 +1546,33 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation createInvoicesFromOrder` | Tool: `create_invoice` |
-| `mutation createInvoicesFromShipments` | Tool: `create_invoice` |
-| `mutation createMemo`<br>twin `POST /api/v1/billing/invoices/memos/` | Tool: `create_invoice_memo` |
-| `mutation sendInvoiceEdi` | Tool: `send_invoice_edi` |
-| `mutation voidInvoice`<br>twin `POST /api/v1/billing/invoices/:invoiceID/void/` | Tool: `void_invoice` |
-| `PATCH /api/v1/billing/invoices/:invoiceID/`<br>invoicehandler.updateDraft | Tool: `update_invoice_draft` |
-| `POST /api/v1/billing/invoices/:invoiceID/generate-pdf/`<br>invoicehandler.generatePDF | Tool: `generate_invoice_pdf` |
-| `POST /api/v1/billing/invoices/:invoiceID/post/`<br>invoicehandler.post | Tool: `post_invoice`, `post_invoices` |
+| `mutation createInvoicesFromOrder` | Tool: `invoice_create` |
+| `mutation createInvoicesFromShipments` | Tool: `invoice_create` |
+| `mutation createMemo`<br>twin `POST /api/v1/billing/invoices/memos/` | Tool: `invoice_create_memo` |
+| `mutation sendInvoiceEdi` | Tool: `invoice_send_edi` |
+| `mutation voidInvoice`<br>twin `POST /api/v1/billing/invoices/:invoiceID/void/` | Tool: `invoice_void` |
+| `PATCH /api/v1/billing/invoices/:invoiceID/`<br>invoicehandler.updateDraft | Tool: `invoice_update_draft` |
+| `POST /api/v1/billing/invoices/:invoiceID/generate-pdf/`<br>invoicehandler.generatePDF | Tool: `invoice_generate_pdf` |
+| `POST /api/v1/billing/invoices/:invoiceID/post/`<br>invoicehandler.post | Tool: `invoice_post` |
 | `POST /api/v1/billing/invoices/:invoiceID/preview/`<br>invoicehandler.preview | Exempt, read-only: Renders an invoice for review and saves nothing. |
-| `POST /api/v1/billing/invoices/:invoiceID/send/`<br>invoicehandler.send<br>also `POST /api/v1/billing/invoices/:invoiceID/resend/` | Tool: `send_invoice`, `send_invoices` |
-| `POST /api/v1/billing/invoices/from-order/`<br>invoicehandler.createFromOrder | Tool: `create_invoice` |
-| `POST /api/v1/billing/invoices/from-shipments/`<br>invoicehandler.createFromShipments | Tool: `create_invoice` |
+| `POST /api/v1/billing/invoices/:invoiceID/send/`<br>invoicehandler.send<br>also `POST /api/v1/billing/invoices/:invoiceID/resend/` | Tool: `invoice_send` |
+| `POST /api/v1/billing/invoices/from-order/`<br>invoicehandler.createFromOrder | Tool: `invoice_create` |
+| `POST /api/v1/billing/invoices/from-shipments/`<br>invoicehandler.createFromShipments | Tool: `invoice_create` |
 
 ### invoiceadjustment
 
 | Write | Decision |
 | --- | --- |
-| `mutation approveInvoiceAdjustment`<br>twin `POST /api/v1/billing/invoice-adjustments/:adjustmentID/approve/` | Tool: `approve_invoice_adjustment` |
-| `mutation rejectInvoiceAdjustment`<br>twin `POST /api/v1/billing/invoice-adjustments/:adjustmentID/reject/` | Tool: `reject_invoice_adjustment` |
-| `PATCH /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/`<br>invoiceadjustmenthandler.updateDraft | Tool: `save_invoice_adjustment_draft` |
+| `mutation approveInvoiceAdjustment`<br>twin `POST /api/v1/billing/invoice-adjustments/:adjustmentID/approve/` | Tool: `invoice_approve_adjustment` |
+| `mutation rejectInvoiceAdjustment`<br>twin `POST /api/v1/billing/invoice-adjustments/:adjustmentID/reject/` | Tool: `invoice_reject_adjustment` |
+| `PATCH /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/`<br>invoiceadjustmenthandler.updateDraft | Tool: `invoice_save_adjustment_draft` |
 | `POST /api/v1/billing/invoice-adjustments/bulk-preview/`<br>invoiceadjustmenthandler.bulkPreview | Exempt, read-only: Previews an invoice adjustment and saves nothing. |
-| `POST /api/v1/billing/invoice-adjustments/bulk-submit/`<br>invoiceadjustmenthandler.bulkSubmit | Tool: `submit_invoice_adjustment` |
-| `POST /api/v1/billing/invoice-adjustments/drafts/`<br>invoiceadjustmenthandler.createDraft | Tool: `save_invoice_adjustment_draft` |
+| `POST /api/v1/billing/invoice-adjustments/bulk-submit/`<br>invoiceadjustmenthandler.bulkSubmit | Tool: `invoice_submit_adjustment` |
+| `POST /api/v1/billing/invoice-adjustments/drafts/`<br>invoiceadjustmenthandler.createDraft | Tool: `invoice_save_adjustment_draft` |
 | `POST /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/preview/`<br>invoiceadjustmenthandler.previewDraft | Exempt, read-only: Previews an invoice adjustment and saves nothing. |
-| `POST /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/submit/`<br>invoiceadjustmenthandler.submitDraft | Tool: `submit_invoice_adjustment` |
+| `POST /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/submit/`<br>invoiceadjustmenthandler.submitDraft | Tool: `invoice_submit_adjustment` |
 | `POST /api/v1/billing/invoice-adjustments/preview/`<br>invoiceadjustmenthandler.preview | Exempt, read-only: Previews an invoice adjustment and saves nothing. |
-| `POST /api/v1/billing/invoice-adjustments/submit/`<br>invoiceadjustmenthandler.submit | Tool: `submit_invoice_adjustment` |
+| `POST /api/v1/billing/invoice-adjustments/submit/`<br>invoiceadjustmenthandler.submit | Tool: `invoice_submit_adjustment` |
 
 ### invoiceadjustmentcontrol
 
@@ -1584,25 +1584,25 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation openInvoiceDispute` | Tool: `open_invoice_dispute` |
-| `mutation resolveInvoiceDispute` | Tool: `resolve_invoice_dispute` |
-| `mutation withdrawInvoiceDispute` | Tool: `withdraw_invoice_dispute` |
+| `mutation openInvoiceDispute` | Tool: `invoice_open_dispute` |
+| `mutation resolveInvoiceDispute` | Tool: `invoice_resolve_dispute` |
+| `mutation withdrawInvoiceDispute` | Tool: `invoice_withdraw_dispute` |
 
 ### invoicerun
 
 | Write | Decision |
 | --- | --- |
-| `PATCH /api/v1/billing/invoice-runs/:runID/membership/`<br>invoicerunhandler.adjustMembership | Tool: `adjust_invoice_run_membership` |
-| `POST /api/v1/billing/invoice-runs/:runID/cancel/`<br>invoicerunhandler.cancel | Tool: `cancel_invoice_run` |
-| `POST /api/v1/billing/invoice-runs/:runID/commit/`<br>invoicerunhandler.commit | Tool: `commit_invoice_run` |
-| `POST /api/v1/billing/invoice-runs/preview/`<br>invoicerunhandler.preview | Tool: `build_invoice_run` |
-| `POST /api/v1/billing/statements/:customerID/bill/`<br>invoicerunhandler.billStatement | Tool: `bill_statement_now` |
+| `PATCH /api/v1/billing/invoice-runs/:runID/membership/`<br>invoicerunhandler.adjustMembership | Tool: `invoice_adjust_run` |
+| `POST /api/v1/billing/invoice-runs/:runID/cancel/`<br>invoicerunhandler.cancel | Tool: `invoice_cancel_run` |
+| `POST /api/v1/billing/invoice-runs/:runID/commit/`<br>invoicerunhandler.commit | Tool: `invoice_commit_run` |
+| `POST /api/v1/billing/invoice-runs/preview/`<br>invoicerunhandler.preview | Tool: `invoice_build_run` |
+| `POST /api/v1/billing/statements/:customerID/bill/`<br>invoicerunhandler.billStatement | Tool: `invoice_bill_statement` |
 
 ### invoiceshare
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/billing/invoices/:invoiceID/shares/`<br>invoicesharehandler.share | Tool: `share_invoice` |
+| `POST /api/v1/billing/invoices/:invoiceID/shares/`<br>invoicesharehandler.share | Tool: `invoice_share` |
 
 ### journalentry
 
@@ -1996,7 +1996,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | --- | --- |
 | `mutation acknowledgeShipmentComment` | Exempt, attestation: Acknowledging a comment says that the person it was addressed to has read it; only that person can say so. |
 | `mutation autoRateShipment`<br>twin `POST /api/v1/shipments/:shipmentID/auto-rate/` | Tool: `shipment_rerate` |
-| `mutation bulkTransferShipmentsToBilling`<br>twin `POST /api/v1/shipments/bulk-transfer-to-billing/` | Tool: `transfer_to_billing` |
+| `mutation bulkTransferShipmentsToBilling`<br>twin `POST /api/v1/shipments/bulk-transfer-to-billing/` | Tool: `billing_transfer` |
 | `mutation calculateShipmentDistance`<br>twin `POST /api/v1/shipments/calculate-distance/` | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
 | `mutation calculateShipmentLoadingOptimization`<br>twin `POST /api/v1/shipments/loading-optimization/` | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
 | `mutation calculateShipmentTotals`<br>twin `POST /api/v1/shipments/calculate-totals/` | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
@@ -2012,7 +2012,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation recalculateShipmentDistance`<br>twin `POST /api/v1/shipments/:shipmentID/recalculate-distance/` | Tool: `shipment_recalculate_distance` |
 | `mutation resolveShipmentComment` | Tool: `shipment_resolve_comment` |
 | `mutation transferShipmentOwnership`<br>twin `POST /api/v1/shipments/:shipmentID/transfer-ownership/` | Tool: `shipment_transfer_ownership` |
-| `mutation transferShipmentToBillingItems` | Tool: `transfer_to_billing` |
+| `mutation transferShipmentToBillingItems` | Tool: `billing_transfer` |
 | `mutation uncancelShipment`<br>twin `POST /api/v1/shipments/:shipmentID/uncancel/` | Tool: `shipment_uncancel` |
 | `mutation unpinShipmentComment` | Tool: `shipment_unpin_comment` |
 | `mutation unresolveShipmentComment` | Tool: `shipment_resolve_comment` |
@@ -2020,7 +2020,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation updateShipmentComment`<br>twin `PUT /api/v1/shipments/:shipmentID/comments/:commentID/` | Tool: `shipment_update_comment` |
 | `POST /api/v1/shipments/:shipmentID/holds/`<br>shipmenthandler.createHold | Tool: `shipment_place_hold` |
 | `POST /api/v1/shipments/:shipmentID/holds/:holdID/release/`<br>shipmenthandler.releaseHold | Tool: `shipment_release_hold` |
-| `POST /api/v1/shipments/:shipmentID/transfer-to-billing/`<br>shipmenthandler.transferToBilling | Tool: `transfer_to_billing` |
+| `POST /api/v1/shipments/:shipmentID/transfer-to-billing/`<br>shipmenthandler.transferToBilling | Tool: `billing_transfer` |
 | `POST /api/v1/shipments/auto-cancel/`<br>shipmenthandler.autoCancelShipments | Exempt, infrastructure: The sweep the Temporal schedule runs over every organization to cancel shipments past the auto-cancel threshold; a person does not decide which shipments it takes, and shipment_cancel cancels one. |
 | `POST /api/v1/shipments/check-for-duplicate-bols/`<br>shipmenthandler.checkForDuplicateBOLs | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
 | `POST /api/v1/shipments/check-hazmat-segregation/`<br>shipmenthandler.checkHazmatSegregation | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |

@@ -36,7 +36,7 @@ func TestRecordIDs_MarksEachItem(t *testing.T) {
 	t.Parallel()
 
 	property := agenttoolschema.RecordIDs(permission.ResourceInvoice,
-		"The invoices, from list_invoices.", 50)
+		"The invoices, from invoice_list.", 50)
 
 	items := property[toolschema.KeyItems].(map[string]any)
 	assert.Equal(t, "invoice", toolschema.RecordOf(items))

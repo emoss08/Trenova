@@ -45,7 +45,7 @@ var toolMinutesSaved = map[string]int{
 
 	// Billing. A charge correction is a hunt through the rate and the
 	// invoice before anything is typed.
-	"correct_charge_code":            10,
+	"billing_correct_charge_codes":   10,
 	"post_customer_payment":          6,
 	"match_bank_receipt":             8,
 	"resolve_bank_receipt_work_item": 6,

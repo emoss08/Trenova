@@ -25,7 +25,7 @@ func agentActor(tenantInfo pagination.TenantInfo) *permissionports.RequestActor 
 
 // Moving an item into review, onto hold, into exception or back to
 // operations creates no money and is undone by moving it again, so an agent
-// may make it. transition_item_to_in_review was built on this and failed on
+// may make it. billing_start_review was built on this and failed on
 // every unattended run while the service refused the agent outright.
 func TestUpdateStatus_AnAgentMayMoveAnItemWhereNoMoneyIsMade(t *testing.T) {
 	t.Parallel()

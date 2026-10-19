@@ -69,25 +69,25 @@ cases:
   - request: reject the vacation request
     expect: [reject_worker_pto]
   - request: which invoices are overdue
-    expect: [list_invoices]
+    expect: [invoice_list]
   - request: post these five draft invoices
-    expect: [post_invoices]
+    expect: [invoice_post]
   - request: post all of the approved draft invoices at once
-    expect: [post_invoices]
+    expect: [invoice_post]
   - request: post draft invoice 1042
-    expect: [post_invoice, post_invoices]
+    expect: [invoice_post]
   - request: email these invoices to their customers
-    expect: [send_invoices]
+    expect: [invoice_send]
   - request: send invoice 7001 to the customer
-    expect: [send_invoice, send_invoices]
+    expect: [invoice_send]
   - request: approve all of the clean billing queue items
-    expect: [approve_billing_queue_items]
+    expect: [billing_approve_queue_item]
   - request: approve billing queue item 5001
-    expect: [approve_billing_queue_item, approve_billing_queue_items]
+    expect: [billing_approve_queue_item]
   - request: check invoices 1041, 1042 and 1043 before posting them
-    expect: [get_invoices, list_invoices]
+    expect: [invoice_get, invoice_list]
   - request: show me each of these draft invoices with their totals
-    expect: [get_invoices, list_invoices]
+    expect: [invoice_get, invoice_list]
   - request: look up the customer's billing details
     expect: [get_customer, list_customers]
   - request: waive the detention charge
@@ -99,7 +99,7 @@ cases:
   - request: which stops are accruing detention
     expect: [list_detention_desk, get_detention_occurrence]
   - request: fix the wrong accessorial charge code
-    expect: [correct_charge_code]
+    expect: [billing_correct_charge_codes]
   - request: ask the shipper for the missing proof of delivery
     expect: [shipment_request_documents]
   - request: attach the BOL document to the shipment
@@ -223,7 +223,7 @@ cases:
   - request: which customers owe us money over 90 days
     expect: [get_ar_aging, list_ar_open_items]
   - request: list the open unpaid invoices for Acme with days past due
-    expect: [list_ar_open_items, list_invoices]
+    expect: [list_ar_open_items, invoice_list]
   - request: which receivables are disputed or short paid
     expect: [list_ar_open_items, list_collections_worklist]
   - request: pull the account statement for this customer
@@ -507,9 +507,9 @@ cases:
   - request: verify the carrier's truck VIN is registered to them
     expect: [verify_carrier_equipment]
   - request: reassign the fuel charge on this billing item to the other customer
-    expect: [reassign_billing_charge]
+    expect: [billing_reassign_charge]
   - request: stop the billing transfer that is still running
-    expect: [manage_billing_transfer_run]
+    expect: [billing_manage_transfer_run]
   - request: draft a manual journal entry to accrue September fuel
     expect: [draft_manual_journal]
   - request: change the lines on the draft manual journal
@@ -819,73 +819,73 @@ cases:
   - request: undo last week's payroll run, two of the timesheets in it were wrong
     expect: [void_payroll_export]
   - request: drop shipment 4412 from the proposed invoice run, it is not ready to bill
-    expect: [adjust_invoice_run_membership]
+    expect: [invoice_adjust_run]
   - request: use Acme's posted credit memo to settle their open invoices
     expect: [apply_credit_memo]
   - request: apply the unapplied cash left on Acme's posted payment to their open invoices
     expect: [apply_customer_payment]
   - request: approve the pending adjustment on invoice 2210 so the credit memo gets posted
-    expect: [approve_invoice_adjustment]
+    expect: [invoice_approve_adjustment]
   - request: deny the pending write-off adjustment on invoice 3120, the customer still owes it
-    expect: [reject_invoice_adjustment]
+    expect: [invoice_reject_adjustment]
   - request: draft a partial credit on posted invoice 1180 for the biller to review before it is submitted
-    expect: [save_invoice_adjustment_draft]
+    expect: [invoice_save_adjustment_draft]
   - request: credit and rebill posted invoice 3302 for the corrected weight
-    expect: [submit_invoice_adjustment]
+    expect: [invoice_submit_adjustment]
   - request: charge late fees on everything past due as of the end of the month
     expect: [assess_late_charges]
   - request: assign Sarah as the biller on the queue item for load 9921
-    expect: [assign_billing_queue_biller, assign_billing_queue_billers]
+    expect: [billing_assign_biller]
   - request: assign me as the biller on all of these billing queue items
-    expect: [assign_billing_queue_billers]
+    expect: [billing_assign_biller]
   - request: check these billing queue items before we post them
-    expect: [get_billing_queue_items, list_billing_queue_items]
+    expect: [billing_get_queue_item, billing_list_queue_items]
   - request: that billing queue item is a duplicate, cancel it so it never gets billed
-    expect: [cancel_billing_queue_item]
+    expect: [billing_cancel_queue_item]
   - request: park the billing item until the lumper receipt shows up
-    expect: [hold_billing_queue_item]
+    expect: [billing_hold_queue_item]
   - request: the rate on this billing item is wrong, flag it as an exception for the biller
-    expect: [move_billing_item_to_exception]
+    expect: [billing_raise_exception]
   - request: kick this billing item back to operations to fix the missing stop times
-    expect: [send_billing_item_back_to_ops]
+    expect: [billing_return_to_operations]
   - request: unblock the billing queue item and move it into review so a biller can work it
-    expect: [transition_item_to_in_review, transition_items_to_in_review]
+    expect: [billing_start_review]
   - request: move all of the waiting billing queue items into review
-    expect: [transition_items_to_in_review, assign_billing_queue_billers]
+    expect: [billing_start_review, billing_assign_biller]
   - request: send yesterday's delivered loads over to the billing queue
-    expect: [transfer_to_billing]
+    expect: [billing_transfer]
   - request: bill the statement customer's open period now instead of waiting for month end
-    expect: [bill_statement_now]
+    expect: [invoice_bill_statement]
   - request: build a consolidated invoice run for last week's approved uninvoiced freight
-    expect: [build_invoice_run]
+    expect: [invoice_build_run]
   - request: scrap the invoice run I built for the wrong period
-    expect: [cancel_invoice_run]
+    expect: [invoice_cancel_run]
   - request: commit the reviewed invoice run so the proposed invoices become drafts
-    expect: [commit_invoice_run]
+    expect: [invoice_commit_run]
   - request: draft an invoice for the delivered shipments on order 5512
-    expect: [create_invoice]
+    expect: [invoice_create]
   - request: issue a $100 goodwill credit to Acme with no shipment behind it
-    expect: [create_invoice_memo]
+    expect: [invoice_create_memo]
   - request: re-render the PDF on invoice 7781 so it shows the corrected address
-    expect: [generate_invoice_pdf]
+    expect: [invoice_generate_pdf]
   - request: the customer is short-paying invoice 4410 over a damage claim, open a dispute
-    expect: [open_invoice_dispute]
+    expect: [invoice_open_dispute]
   - request: close out the dispute on invoice 4410, we agreed to a $75 credit
-    expect: [resolve_invoice_dispute]
+    expect: [invoice_resolve_dispute]
   - request: the customer dropped their complaint about invoice 4410, withdraw the dispute
-    expect: [withdraw_invoice_dispute]
+    expect: [invoice_withdraw_dispute]
   - request: Acme's check bounced, reverse that payment
     expect: [reverse_customer_payment]
   - request: send posted invoice 6620 to the customer's EDI partner as a 210
-    expect: [send_invoice_edi]
+    expect: [invoice_send_edi]
   - request: loop my teammate Dana in on invoice 3390 with a note
-    expect: [share_invoice]
+    expect: [invoice_share]
   - request: undo the credit memo application on invoice 2004, it went to the wrong invoice
     expect: [unapply_credit_memo]
   - request: change the memo and email recipients on the draft invoice before it goes out
-    expect: [update_invoice_draft]
+    expect: [invoice_update_draft]
   - request: invoice 5523 went to the wrong customer, void it
-    expect: [void_invoice]
+    expect: [invoice_void]
   - request: close the reconciliation work item for that deposit without matching it, it was a transfer between our own accounts
     expect: [resolve_bank_receipt_work_item]
   - request: unlock September in the books so a few late postings can still land

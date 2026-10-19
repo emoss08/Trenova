@@ -55,33 +55,33 @@ Loaded now:
 - cancel_wait
 - shipment_get
 - shipment_list
-- list_billing_transfer_candidates
-- list_billing_queue_items
-- get_billing_queue_item
-- release_billing_queue_item
-- send_billing_item_back_to_ops
+- billing_list_transfer_candidates
+- billing_list_queue_items
+- billing_get_queue_item
+- billing_release_queue_item
+- billing_return_to_operations
 - shipment_request_documents
 - shipment_attach_document
 - list_email_profiles
 
 Callable after find_tools:
 - read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
-- transition_item_to_in_review — Move a billing queue item into review so a biller can work it: one waiting for review, on hold, in exception or sent back to operations.
-- hold_billing_queue_item — Put a billing queue item on hold, with a note saying what it waits on.
-- move_billing_item_to_exception — Move a billing queue item in review into exception for a biller to resolve.
-- correct_charge_code — Correct or normalize the accessorial charge codes on a billing queue item's charges.
-- resolve_billing_queue_issue — Propose settling one of a billing queue item's flagged checks with one of the choices that check offers.
-- undo_billing_queue_issue — Propose taking back how one of a billing queue item's checks was settled.
+- billing_start_review — Move billing queue items into review, one or up to 50 in one call the person decides once.
+- billing_hold_queue_item — Put a billing queue item on hold, with a note saying what it waits on.
+- billing_raise_exception — Move a billing queue item in review into exception for a biller to resolve.
+- billing_correct_charge_codes — Correct or normalize the accessorial charge codes on a billing queue item's charges.
+- billing_resolve_issue — Propose settling one of a billing queue item's flagged checks with one of the choices that check offers.
+- billing_undo_issue — Propose taking back how one of a billing queue item's checks was settled.
 - get_accounting_sync_status — Get whether the accounting system is connected, to which company, and why it last failed.
 - check_accounting_connection — Check the accounting system connection now and record whether it answers.
 
 What a change you call does:
-- Changes that always record a proposal for a person to decide: flag_for_manual_review, wait_until, cancel_wait, transition_item_to_in_review, hold_billing_queue_item, release_billing_queue_item, move_billing_item_to_exception, send_billing_item_back_to_ops, correct_charge_code, resolve_billing_queue_issue, undo_billing_queue_issue, shipment_request_documents, shipment_attach_document, check_accounting_connection
+- Changes that always record a proposal for a person to decide: flag_for_manual_review, wait_until, cancel_wait, billing_start_review, billing_hold_queue_item, billing_release_queue_item, billing_raise_exception, billing_return_to_operations, billing_correct_charge_codes, billing_resolve_issue, billing_undo_issue, shipment_request_documents, shipment_attach_document, check_accounting_connection
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: remember
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
-- release_billing_queue_item: list_billing_queue_items → get_billing_queue_item → release_billing_queue_item
-- resolve_billing_queue_issue: get_billing_queue_item → resolve_billing_queue_issue
-- undo_billing_queue_issue: get_billing_queue_item → undo_billing_queue_issue
+- billing_release_queue_item: billing_list_queue_items → billing_get_queue_item → billing_release_queue_item
+- billing_resolve_issue: billing_get_queue_item → billing_resolve_issue
+- billing_undo_issue: billing_get_queue_item → billing_undo_issue
 - shipment_attach_document: get_inbound_message → shipment_list → shipment_attach_document
 - check_accounting_connection: check_accounting_connection → get_accounting_sync_status

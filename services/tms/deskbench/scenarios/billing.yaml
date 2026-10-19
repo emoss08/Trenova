@@ -8,7 +8,7 @@ scenarios:
     steps:
       - say: "whats ready to bill"
         expect:
-          calls: ["shipment_list|list_billing_queue_items|list_billing_transfer_candidates"]
+          calls: ["shipment_list|billing_list_queue_items|billing_list_transfer_candidates"]
           maxFailedCalls: 0
           noProposals: true
           facts:
@@ -48,7 +48,7 @@ scenarios:
     steps:
       - say: "how much does acme owe us right now, anything past 30?"
         expect:
-          calls: ["get_ar_aging|list_ar_open_items|list_invoices|get_customer_statement"]
+          calls: ["get_ar_aging|list_ar_open_items|invoice_list|get_customer_statement"]
           maxFailedCalls: 1
           noProposals: true
           replyExcludes: ["$2,950", "$3,200"]
@@ -61,7 +61,7 @@ scenarios:
     steps:
       - say: "any loads that delivered but never got sent over to billing?"
         expect:
-          calls: ["shipment_list|list_billing_transfer_candidates"]
+          calls: ["shipment_list|billing_list_transfer_candidates"]
           maxFailedCalls: 0
           noProposals: true
           rubric: >

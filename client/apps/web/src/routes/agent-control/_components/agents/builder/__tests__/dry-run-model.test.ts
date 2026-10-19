@@ -64,7 +64,7 @@ describe("reduceDryRun", () => {
     const state = fold([
       ["tool_started", { callId: "c1", name: "shipment_list" }],
       ["tool_started", { callId: "c1", name: "shipment_list" }],
-      ["tool_started", { callId: "d1", name: "get_invoice", agentId: "agdef_other" }],
+      ["tool_started", { callId: "d1", name: "invoice_get", agentId: "agdef_other" }],
       ["delta", { text: "their words", agentId: "agdef_other" }],
     ]);
     expect(state.steps).toHaveLength(1);

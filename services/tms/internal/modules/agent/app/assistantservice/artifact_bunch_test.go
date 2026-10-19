@@ -67,7 +67,7 @@ func (r *bunchingRepo) Delete(_ context.Context, req *assistantartifactports.Del
 
 func invoiceRead(callID string, number string, earlier ...string) agentports.ToolObservation {
 	return agentports.ToolObservation{
-		Call: agentports.ToolCall{ID: callID, Name: "get_invoice"},
+		Call: agentports.ToolCall{ID: callID, Name: "invoice_get"},
 		Data: map[string]any{
 			"id":          pulid.MustNew("inv_").String(),
 			"number":      number,
@@ -179,7 +179,7 @@ func TestBunch_TheTurnKeepsTheTableNotTheCardsItReplaced(t *testing.T) {
 func TestArtifactFromObservation_ABatchGetIsATable(t *testing.T) {
 	t.Parallel()
 
-	artifact := artifactFromObservation(observation("get_invoices", map[string]any{
+	artifact := artifactFromObservation(observation("invoice_get", map[string]any{
 		"count":   2,
 		"columns": []any{"id", "number", "status"},
 		"items": []any{

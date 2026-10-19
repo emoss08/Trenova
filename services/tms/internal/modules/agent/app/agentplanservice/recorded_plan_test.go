@@ -94,7 +94,7 @@ func TestRecordedTurn_FilesOnePlanThatApproveAllRuns(t *testing.T) {
 	for range 5 {
 		actions = append(actions, agentports.PendingAction{
 			ProposalID: pulid.MustNew("ap_"),
-			ToolName:   "transition_item_to_in_review",
+			ToolName:   "billing_start_review",
 			Arguments:  map[string]any{"invoiceId": pulid.MustNew("inv_").String()},
 			Rationale:  "move the drafts into review",
 			Tier:       agent.TierPropose,

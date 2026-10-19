@@ -228,7 +228,7 @@ var Bindings = []Binding{
 		Extra: map[string]string{"shipmentId": shipmentIDArg},
 	},
 	{
-		Tool:  "correct_charge_code",
+		Tool:  "billing_correct_charge_codes",
 		Input: "ShipmentAdditionalChargeInput",
 		Param: "additionalCharges",
 	},
@@ -529,11 +529,11 @@ var Bindings = []Binding{
 		Extra: map[string]string{inboundMessageID: inboundMessageArg},
 	},
 	{
-		Tool:   "create_invoice_memo",
+		Tool:   "invoice_create_memo",
 		Input:  "CreateMemoInput",
 		Nested: map[string]string{"lines": "MemoLineInput"},
 		Narrowed: map[string]string{
-			"billType": "a memo is a credit or a debit; an invoice is issued by create_invoice",
+			"billType": "a memo is a credit or a debit; an invoice is issued by invoice_create",
 		},
 	},
 }
@@ -564,15 +564,14 @@ var Unbound = map[string]string{
 	"apply_carrier_intel_suggestions": pendingBinding,
 	"apply_credit_memo":               pendingBinding,
 	"apply_customer_payment":          pendingBinding,
-	"approve_billing_queue_item":      statusDecision,
-	"approve_billing_queue_items":     bulkDecision,
-	"assign_billing_queue_billers": "assigns one biller to a set of items; the mutation's " +
+	"billing_approve_queue_item":      bulkDecision,
+	"billing_assign_biller": "assigns one biller to a set of items; the mutation's " +
 		"input names one item, so the tool takes their ids instead",
 	"arrange_home_layout":                  layoutPart,
 	"assess_late_charges":                  pendingBinding,
 	"assign_move":                          pendingBinding,
 	"attach_pay_events_to_settlement":      pendingBinding,
-	"cancel_billing_queue_item":            statusDecision,
+	"billing_cancel_queue_item":            statusDecision,
 	"confirm_accounting_mapping_proposals": pendingBinding,
 	"create_accounting_reference_record":   pendingBinding,
 	"create_carrier_invoice_match":         pendingBinding,
@@ -594,15 +593,15 @@ var Unbound = map[string]string{
 	"guide_profile": "takes which profile the line is for as well as the line; each " +
 		"mutation fixes the profile by its name, so AgentProfileGuidanceInput carries only " +
 		"the line",
-	"hold_billing_queue_item":              statusDecision,
+	"billing_hold_queue_item":              statusDecision,
 	"hold_driver_pay_event":                pendingBinding,
 	"ignore_accounting_inbound_change":     pendingBinding,
 	"issue_pay_advance":                    pendingBinding,
 	"link_inbound_message":                 pendingBinding,
 	"mark_inbound_message":                 pendingBinding,
-	"move_billing_item_to_exception":       statusDecision,
+	"billing_raise_exception":              statusDecision,
 	"open_escrow_account":                  pendingBinding,
-	"open_invoice_dispute":                 pendingBinding,
+	"invoice_open_dispute":                 pendingBinding,
 	"pause_accounting_sync":                pendingBinding,
 	"post_customer_payment":                pendingBinding,
 	"propose_shift_swap":                   pendingBinding,
@@ -627,7 +626,7 @@ var Unbound = map[string]string{
 	"reverse_customer_payment":           pendingBinding,
 	"save_table_view":                    pendingBinding,
 	"schedule_report":                    pendingBinding,
-	"send_billing_item_back_to_ops":      statusDecision,
+	"billing_return_to_operations":       statusDecision,
 	"set_accounting_mapping":             pendingBinding,
 	"order_set_charge_allocations":       pendingBinding,
 	"set_worker_availability_preference": pendingBinding,
@@ -635,10 +634,9 @@ var Unbound = map[string]string{
 	"tender_move_to_carriers":            oneMoveTender,
 	"tender_move_to_routing_guide":       oneMoveTender,
 	"shipment_transfer_ownership":        pendingBinding,
-	"transfer_to_billing": "one tool for four mutations (one shipment, its items, a bulk transfer " +
+	"billing_transfer": "one tool for four mutations (one shipment, its items, a bulk transfer " +
 		"and a transfer run), so no single input is its shape",
-	"transition_item_to_in_review": statusDecision,
-	"transition_items_to_in_review": "moves a set of items into review by one status decision " +
+	"billing_start_review": "moves a set of items into review by one status decision " +
 		"each; the mutation's input decides one item, so the tool takes their ids instead",
 	"unapply_credit_memo":        pendingBinding,
 	"update_escrow_account":      pendingBinding,

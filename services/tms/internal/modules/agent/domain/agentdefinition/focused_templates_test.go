@@ -139,7 +139,7 @@ func TestTemplates_TheMasterDataStewardKeepsTheRecordsEveryoneWorksFrom(t *testi
 		require.Containsf(t, tools, tool, "the master data steward needs %s", tool)
 	}
 
-	for _, tool := range []string{"assign_move", "post_invoice", "draft_rate_agreement"} {
+	for _, tool := range []string{"assign_move", "invoice_post", "draft_rate_agreement"} {
 		require.NotContainsf(t, tools, tool, "the master data steward must not hold %s", tool)
 	}
 }

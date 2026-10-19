@@ -100,8 +100,8 @@ Loaded now:
 - list_locations
 - list_location_categories
 - shipment_list
+- intake_accept_confident
 - intake_set_stop_location
-- create_location
 
 Callable after find_tools:
 - read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
@@ -109,10 +109,10 @@ Callable after find_tools:
 - get_customer — Retrieve one customer by id, with their billing and email profiles.
 - get_formula_template — Retrieve one formula template by id, whole: its formula, variables and their defaults, breakdown lines, minimum, maximum, rounding, status and version.
 - intake_accept_field — Accept one field read from the document as correct on the import page.
-- intake_accept_confident — Accept every field the page read from the document with high confidence, at once.
 - intake_set_field — Set or correct the value of a field on the import page, such as the BOL, the weight, the pieces or the freight rate.
 - intake_set_required_field — Set the customer, service type, shipment type or rating method on the import page, by record id.
 - intake_set_stop_schedule — Set when a stop on the import page is scheduled: the start of its window and, optionally, the end.
+- create_location — Create a location record for a pickup or delivery address that has none, such as a facility read from a document.
 
 What a change you call does:
 - Changes that always record a proposal for a person to decide: flag_for_manual_review, wait_until, cancel_wait, create_location

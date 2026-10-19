@@ -150,7 +150,7 @@ func typedIDSchema() map[string]any {
 			"customerId": agenttoolschema.RecordID(permission.ResourceCustomer, "The customer",
 				"list_customers"),
 			"invoiceIds": agenttoolschema.RecordIDs(permission.ResourceInvoice,
-				"The invoices, from list_invoices.", 10),
+				"The invoices, from invoice_list.", 10),
 			"stops": map[string]any{
 				"type": "array",
 				"items": map[string]any{
@@ -188,7 +188,7 @@ func TestContractCall_RefusesAnIDOfAnotherKind(t *testing.T) {
 	assert.Contains(t, problems[0], `customerId: "car_01J9Z3QK8M5T7V2X4Y6W0R1N8P" is a carrier `+
 		`id; this parameter takes a customer id, from list_customers.`)
 	assert.Contains(t, problems[1], `invoiceIds[1]: "shp_01J9Z3QK8M5T7V2X4Y6W0R1N8P" is a `+
-		`shipment id; this parameter takes an invoice id, from list_invoices.`)
+		`shipment id; this parameter takes an invoice id, from invoice_list.`)
 	assert.Contains(t, problems[2], `stops[0].location: "zzz_01J9Z3QK8M5T7V2X4Y6W0R1N8P" is `+
 		`not a location id: location ids start with "loc_".`)
 }
@@ -303,7 +303,7 @@ func TestContractCall_RefusesDatesItCannotReadForCertain(t *testing.T) {
 The transfer that would not go.
 
 Asked to mark one shipment ready to invoice, a model filled every parameter
-transfer_to_billing declares: the one shipment's id, and beside it an empty
+billing_transfer declares: the one shipment's id, and beside it an empty
 customer, an empty search, empty delivery dates and once a list holding only
 "". The tool read the empty values as filters given and refused the call;
 the model sent it again unchanged until the turn's budget was gone. An empty

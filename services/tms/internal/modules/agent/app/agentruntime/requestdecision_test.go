@@ -282,7 +282,7 @@ func TestPublishStep_ShowsTheCardADurableTurnAskedFor(t *testing.T) {
 
 func planStep(planID pulid.ID) agentports.ProposalOutcome {
 	step := waitingOutcome(agent.ProposalStatusPending)
-	step.ToolName = "post_invoice"
+	step.ToolName = "invoice_post"
 	step.PlanID = planID
 
 	return step
@@ -341,7 +341,7 @@ func TestRequestDecision_RefusesABunchItCannotShowAsOne(t *testing.T) {
 
 	shipment := waitingOutcome(agent.ProposalStatusPending)
 	other := waitingOutcome(agent.ProposalStatusPending)
-	other.ToolName = "post_invoice"
+	other.ToolName = "invoice_post"
 	decided := waitingOutcome(agent.ProposalStatusExecuted)
 	planID := pulid.MustNew("apl_")
 	step := planStep(planID)

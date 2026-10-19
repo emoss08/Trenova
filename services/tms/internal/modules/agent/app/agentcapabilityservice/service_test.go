@@ -123,11 +123,11 @@ func newFixture() *fixture {
 		Description:     "Billing",
 		Enabled:         true,
 		AutonomyCeiling: agent.TierAutoExecute,
-		ToolNames:       []string{"list_invoices", "assign_biller", "post_invoices"},
+		ToolNames:       []string{"invoice_list", "assign_biller", "invoice_post"},
 		ToolTiers: map[string]agent.AutonomyTier{
 			"assign_biller": agent.TierAutoExecute,
 		},
-		DisabledToolNames: []string{"void_invoice"},
+		DisabledToolNames: []string{"invoice_void"},
 		DelegateIDs:       []pulid.ID{delegate.ID},
 		Version:           3,
 	}
@@ -146,12 +146,12 @@ func newFixture() *fixture {
 		Tools: &agenttest.StubActionRegistry{Tools: []agentports.AgentTool{
 			&agenttest.StubActionTool{ToolName: "assign_biller", Tier: agent.TierActWithApproval},
 			irreversibleTool{&agenttest.StubActionTool{
-				ToolName: "post_invoices", Tier: agent.TierActWithApproval,
+				ToolName: "invoice_post", Tier: agent.TierActWithApproval,
 			}},
-			&agenttest.StubActionTool{ToolName: "void_invoice", Tier: agent.TierActWithApproval},
+			&agenttest.StubActionTool{ToolName: "invoice_void", Tier: agent.TierActWithApproval},
 		}},
 		QueryTools: &agenttest.StubQueryRegistry{Tools: []agentports.AgentQueryTool{
-			&agenttest.StubQueryTool{ToolName: "list_invoices"},
+			&agenttest.StubQueryTool{ToolName: "invoice_list"},
 		}},
 		Permissions: permissions,
 	}).(*Service)
@@ -211,12 +211,12 @@ func TestGet_MapsTiersToTheModesAPersonReads(t *testing.T) {
 	assert.Len(t, assign.AllowedModes, 3)
 	assert.Empty(t, assign.LockReason)
 
-	post := toolByKey(caps.WriteTools, "post_invoices")
+	post := toolByKey(caps.WriteTools, "invoice_post")
 	assert.Equal(t, agentports.AgentCapabilityAskFirst, post.Mode, "ActWithApproval is Ask first")
 	assert.Equal(t, "Always asks · this can't be undone", post.LockReason)
 	assert.NotContains(t, post.AllowedModes, agentports.AgentCapabilityAllowed)
 
-	void := toolByKey(caps.WriteTools, "void_invoice")
+	void := toolByKey(caps.WriteTools, "invoice_void")
 	assert.Equal(t, agentports.AgentCapabilityOff, void.Mode, "a switched-off tool is still offered")
 
 	require.Len(t, caps.Handoffs, 1)
@@ -280,8 +280,8 @@ func TestUpdate_ChangesModesAndLimits(t *testing.T) {
 		Enabled: &off,
 		Tools: []agentports.AgentCapabilityToolChange{
 			{Key: "assign_biller", Mode: agentports.AgentCapabilityAskFirst},
-			{Key: "list_invoices", Mode: agentports.AgentCapabilityOff},
-			{Key: "void_invoice", Mode: agentports.AgentCapabilityAllowed},
+			{Key: "invoice_list", Mode: agentports.AgentCapabilityOff},
+			{Key: "invoice_void", Mode: agentports.AgentCapabilityAllowed},
 		},
 		DailyRequestLimit: &limit,
 		MaxChangeItems:    &items,
@@ -293,15 +293,15 @@ func TestUpdate_ChangesModesAndLimits(t *testing.T) {
 	saved := f.definitions.byID[f.agent.ID]
 	assert.False(t, saved.Enabled)
 	assert.Equal(t, agent.TierActWithApproval, saved.ToolTiers["assign_biller"])
-	assert.Equal(t, agent.TierAutoExecute, saved.ToolTiers["void_invoice"])
-	assert.NotContains(t, saved.ToolNames, "list_invoices", "Off takes the tool from the grant")
-	assert.Contains(t, saved.ToolNames, "void_invoice")
-	assert.Equal(t, []string{"list_invoices"}, saved.DisabledToolNames)
+	assert.Equal(t, agent.TierAutoExecute, saved.ToolTiers["invoice_void"])
+	assert.NotContains(t, saved.ToolNames, "invoice_list", "Off takes the tool from the grant")
+	assert.Contains(t, saved.ToolNames, "invoice_void")
+	assert.Equal(t, []string{"invoice_list"}, saved.DisabledToolNames)
 	assert.Equal(t, 150, saved.DailyRunLimit)
 	assert.Equal(t, 40, saved.MaxChangeItems)
 	assert.True(t, saved.BusinessHoursOnly)
 
-	assert.Equal(t, agentports.AgentCapabilityOff, toolByKey(caps.ReadTools, "list_invoices").Mode)
+	assert.Equal(t, agentports.AgentCapabilityOff, toolByKey(caps.ReadTools, "invoice_list").Mode)
 	assert.Equal(t, "Pay rates, people records", caps.Handoffs[0].Topic)
 }
 
@@ -313,9 +313,9 @@ func TestUpdate_RefusesAModeTheRowDoesNotOffer(t *testing.T) {
 		change agentports.AgentCapabilityToolChange
 	}{
 		{"a locked write cannot be allowed",
-			agentports.AgentCapabilityToolChange{Key: "post_invoices", Mode: agentports.AgentCapabilityAllowed}},
+			agentports.AgentCapabilityToolChange{Key: "invoice_post", Mode: agentports.AgentCapabilityAllowed}},
 		{"a read cannot ask first",
-			agentports.AgentCapabilityToolChange{Key: "list_invoices", Mode: agentports.AgentCapabilityAskFirst}},
+			agentports.AgentCapabilityToolChange{Key: "invoice_list", Mode: agentports.AgentCapabilityAskFirst}},
 		{"a tool the agent never had",
 			agentports.AgentCapabilityToolChange{Key: "delete_everything", Mode: agentports.AgentCapabilityAllowed}},
 		{"a mode that does not exist",
@@ -339,7 +339,9 @@ func TestUpdate_RefusesAModeTheRowDoesNotOffer(t *testing.T) {
 func TestLabel(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, "Post invoices", Label("post_invoices"))
+	assert.Equal(t, "Post invoice", Label("invoice_post"))
+	assert.Equal(t, "List shipments", Label("shipment_list"))
+	assert.Equal(t, "Get billing queue item", Label("billing_get_queue_item"))
 	assert.Equal(t, "Billing queue list", Label("billing.queue.list"))
 	assert.Equal(t, "Ab", Label("AB"))
 }

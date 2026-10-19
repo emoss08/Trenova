@@ -85,14 +85,14 @@ scenarios:
               note: the load completed once its delivery was recorded
       - say: "ok send it to billing"
         expect:
-          proposals: [{ tool: transfer_to_billing }]
+          proposals: [{ tool: billing_transfer }]
       - decide: approve
         expect:
           executed: true
       - say: "approve it in the billing queue"
         expect:
-          calls: ["get_billing_queue_item|list_billing_queue_items"]
-          proposals: [{ tool: approve_billing_queue_item }]
+          calls: ["billing_get_queue_item|billing_list_queue_items"]
+          proposals: [{ tool: billing_approve_queue_item }]
           rubric: >
             Opens the queue item and checks it before proposing the approval, and says what
             approving it creates (the draft invoice).
@@ -101,7 +101,7 @@ scenarios:
           executed: true
       - say: "post the invoice"
         expect:
-          proposals: [{ tool: post_invoice }]
+          proposals: [{ tool: invoice_post }]
       - decide: approve
         expect:
           executed: true
@@ -191,7 +191,7 @@ scenarios:
       - say: "bill it"
         agent: Billing exceptions
         expect:
-          proposals: [{ tool: "transfer_to_billing|create_invoice|approve_billing_queue_item" }]
+          proposals: [{ tool: "billing_transfer|invoice_create|billing_approve_queue_item" }]
           rubric: >
             Takes the next billing step for the load this conversation booked, without asking
             which load, and says what is left after it.

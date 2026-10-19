@@ -41,7 +41,7 @@ func artifactRefs(t *testing.T) *artifactSeedRefs {
 			StepCount: 3,
 		},
 		steps: []*agent.AgentProposal{
-			{ID: pulid.MustNew("aprp_"), PlanStep: 1, ToolName: "correct_charge_code"},
+			{ID: pulid.MustNew("aprp_"), PlanStep: 1, ToolName: "billing_correct_charge_codes"},
 			{ID: pulid.MustNew("aprp_"), PlanStep: 2, ToolName: "email_customer"},
 		},
 		draft: &agent.AgentProposal{

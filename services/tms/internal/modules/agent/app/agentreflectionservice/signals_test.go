@@ -79,9 +79,9 @@ func TestReadSignals_RefusalsAreNotLessons(t *testing.T) {
 
 	signals := ReadSignals(&Window{
 		Messages: []conversation.Message{
-			toolResult("send_invoice", true, aitrace.OutcomeDenied),
-			toolResult("send_invoice", true, aitrace.OutcomeOverBudget),
-			toolResult("send_invoice", true, aitrace.OutcomeDuplicate),
+			toolResult("invoice_send", true, aitrace.OutcomeDenied),
+			toolResult("invoice_send", true, aitrace.OutcomeOverBudget),
+			toolResult("invoice_send", true, aitrace.OutcomeDuplicate),
 		},
 	})
 
@@ -156,7 +156,7 @@ func TestReadSignals_DecisionsFeedbackAndLongTasks(t *testing.T) {
 			{ToolName: "assign_move", Outcome: agent.TrustOutcomeModified},
 			{ToolName: "assign_move", Outcome: agent.TrustOutcomeModified},
 			{
-				ToolName: "send_invoice",
+				ToolName: "invoice_send",
 				Outcome:  agent.TrustOutcomeRejected,
 				Reason:   "Wrong bill-to",
 			},

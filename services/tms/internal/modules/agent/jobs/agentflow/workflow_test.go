@@ -522,7 +522,7 @@ func TestRunAsksACutOffCallAgainWithMoreRoom(t *testing.T) {
 		Text:            "Transferring.",
 		Truncated:       true,
 		OutputLimit:     1024,
-		CutOffCall:      &agentports.CutOffToolCall{Name: "transfer_to_billing"},
+		CutOffCall:      &agentports.CutOffToolCall{Name: "billing_transfer"},
 		ModelIdentifier: "z-ai/glm-5.3",
 	}
 	replies := []*agentports.ChatCompletionResult{cut, textReply("Nothing is waiting.")}

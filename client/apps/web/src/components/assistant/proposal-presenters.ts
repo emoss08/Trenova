@@ -553,7 +553,7 @@ const PRESENTERS: Record<string, Presenter> = {
     };
   },
 
-  correct_charge_code: (args) => {
+  billing_correct_charge_codes: (args) => {
     const charges = Array.isArray(args.additionalCharges) ? args.additionalCharges : [];
 
     return {
@@ -751,13 +751,13 @@ const PRESENTERS: Record<string, Presenter> = {
     };
   },
 
-  post_invoices: (args) => {
+  invoice_post: (args) => {
     const count = list(args.invoiceIds).length;
 
     return {
-      title: "Post invoices",
+      title: translate("{0, plural, one {Post invoice} other {Post invoices}}", count),
       summary: translate(
-        "Post {0, plural, one {# draft invoice} other {# draft invoices}} to the ledger and queue each for the accounting system.",
+        "{0, plural, one {Post # draft invoice to the ledger and queue it for the accounting system.} other {Post # draft invoices to the ledger and queue each for the accounting system.}}",
         count,
       ),
       covered: ["invoiceIds"],
@@ -765,11 +765,11 @@ const PRESENTERS: Record<string, Presenter> = {
     };
   },
 
-  send_invoices: (args) => {
+  invoice_send: (args) => {
     const count = list(args.invoiceIds).length;
 
     return {
-      title: "Send invoices",
+      title: translate("{0, plural, one {Send invoice} other {Send invoices}}", count),
       summary: translate(
         "Email {0, plural, one {# invoice} other {# invoices}} to the customers they bill, as their billing profiles say.",
         count,
@@ -779,11 +779,14 @@ const PRESENTERS: Record<string, Presenter> = {
     };
   },
 
-  approve_billing_queue_items: (args) => {
+  billing_approve_queue_item: (args) => {
     const count = list(args.billingQueueItemIds).length;
 
     return {
-      title: "Approve billing items",
+      title: translate(
+        "{0, plural, one {Approve billing item} other {Approve billing items}}",
+        count,
+      ),
       summary: translate(
         "Approve {0, plural, one {# billing item} other {# billing items}}, creating the draft invoice each bills on.",
         count,
@@ -850,13 +853,19 @@ const PRESENTERS: Record<string, Presenter> = {
     };
   },
 
-  transition_item_to_in_review: (args) => ({
-    title: "Send to review",
-    summary: "Move this billing item into review so a biller picks it up.",
-    highlights: facts(fact("Reason", text(args.reason))),
-    covered: ["billingQueueItemId", "reason"],
-    reversible: true,
-  }),
+  billing_start_review: (args) => {
+    const count = list(args.billingQueueItemIds).length;
+
+    return {
+      title: "Send to review",
+      summary: translate(
+        "Move {0, plural, one {# billing item} other {# billing items}} into review so a biller picks {0, plural, one {it} other {them}} up.",
+        count,
+      ),
+      covered: ["billingQueueItemIds"],
+      reversible: true,
+    };
+  },
 
   flag_for_manual_review: (args) => {
     const category = humanizeEnum(text(args.category));

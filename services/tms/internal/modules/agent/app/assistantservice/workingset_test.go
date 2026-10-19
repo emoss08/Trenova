@@ -29,7 +29,7 @@ func TestTouchedRecords_CollectsWhatTheTurnWasAbout(t *testing.T) {
 	saved := []conversation.Message{
 		{Role: conversation.RoleUser, Content: "where is it"},
 		{Role: conversation.RoleAssistant, ToolCalls: []conversation.ToolCallRecord{
-			{ID: "c1", Name: "get_invoice", Arguments: map[string]any{"invoiceId": read.String()}},
+			{ID: "c1", Name: "invoice_get", Arguments: map[string]any{"invoiceId": read.String()}},
 			{ID: "c2", Name: "get_tractor", Arguments: map[string]any{"tractorId": failed.String()}},
 			{ID: "c3", Name: "shipment_list", Arguments: map[string]any{"customerId": wrote.String()}},
 		}},

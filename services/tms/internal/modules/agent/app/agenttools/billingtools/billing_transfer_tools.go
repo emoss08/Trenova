@@ -65,7 +65,7 @@ var errBothSelections = errors.New(
 )
 
 var errUnapprovedTransferSelection = errors.New(
-	"transfer_to_billing runs only on the shipments a person approved, and this call names " +
+	"billing_transfer runs only on the shipments a person approved, and this call names " +
 		"none; propose it again so the shipments it resolves to are listed",
 )
 
@@ -91,10 +91,10 @@ func NewTransferToBillingTool(
 	return &TransferToBillingTool{shipments: shipments, runs: runs}
 }
 
-func (t *TransferToBillingTool) Name() string { return "transfer_to_billing" }
+func (t *TransferToBillingTool) Name() string { return "billing_transfer" }
 
 func (t *TransferToBillingTool) Recipe() []string {
-	return []string{"list_billing_transfer_candidates", "transfer_to_billing"}
+	return []string{"billing_list_transfer_candidates", "billing_transfer"}
 }
 
 func (t *TransferToBillingTool) SearchTerms() []string {
@@ -105,9 +105,9 @@ func (t *TransferToBillingTool) Description() string {
 	return "Transfer delivered shipments to the billing queue, as the transfer-to-billing " +
 		"dialog does: each becomes a queue item a biller reviews. When the person means every " +
 		"shipment that can go (all of them, everything ready), set allTransferable to true, " +
-		"with the same filters list_billing_transfer_candidates takes, instead of copying ids: " +
+		"with the same filters billing_list_transfer_candidates takes, instead of copying ids: " +
 		"the proposal lists each shipment it resolves to. For a hand-picked set, give " +
-		"shipmentIds from list_billing_transfer_candidates. Cover every shipment in one call " +
+		"shipmentIds from billing_list_transfer_candidates. Cover every shipment in one call " +
 		"rather than one call per shipment; a shipment the checks refuse is reported, not " +
 		"transferred, and the rest still go. The person approving may untick shipments. " +
 		"Up to 100 transfer at once; more run as a background transfer."
@@ -118,7 +118,7 @@ func (t *TransferToBillingTool) ParamSchema() map[string]any {
 	properties[paramAllTransferable] = map[string]any{
 		toolschema.KeyType: toolschema.TypeBoolean,
 		toolschema.KeyDescription: "True to transfer every shipment " +
-			"list_billing_transfer_candidates says would transfer, narrowed by query, status, " +
+			"billing_list_transfer_candidates says would transfer, narrowed by query, status, " +
 			"customerId, deliveredFrom and deliveredTo. Use it instead of shipmentIds, never " +
 			"with them; leave it out when naming shipmentIds, whose filters are then ignored.",
 	}
@@ -127,7 +127,7 @@ func (t *TransferToBillingTool) ParamSchema() map[string]any {
 		agenttoolschema.OfResource(map[string]any{
 			toolschema.KeyType: toolschema.TypeArray,
 			toolschema.KeyDescription: "The shipments to transfer, by id from " +
-				"list_billing_transfer_candidates, when not allTransferable. Never guess one.",
+				"billing_list_transfer_candidates, when not allTransferable. Never guess one.",
 			toolschema.KeyMinItems: 1,
 			toolschema.KeyMaxItems: shipmentports.MaxBillingTransferCandidateIDs,
 			toolschema.KeyItems: map[string]any{
@@ -218,7 +218,7 @@ func (t *TransferToBillingTool) request(
 	case !named && !request.all:
 		return transferRequest{}, errors.New(
 			"name the shipments in shipmentIds, or set allTransferable to true to transfer " +
-				"every shipment list_billing_transfer_candidates says would transfer",
+				"every shipment billing_list_transfer_candidates says would transfer",
 		)
 	}
 
@@ -282,7 +282,7 @@ func (t *TransferToBillingTool) ResolveSelection(
 
 // withoutCriteria is a call that names its shipments, with the filters that
 // only narrow allTransferable taken off. A model that looked the shipment up
-// with list_billing_transfer_candidates sends the same query and status back
+// with billing_list_transfer_candidates sends the same query and status back
 // beside the id; they cannot widen what the ids name, so they are set aside
 // rather than refused, and the proposal a person reads holds only the ids.
 func withoutCriteria(params map[string]any) map[string]any {
@@ -325,7 +325,7 @@ func (t *TransferToBillingTool) transferable(
 	}
 	if len(candidates.IDs) == 0 {
 		return nil, nil, errors.New(
-			"no shipment outside the billing queue matches; list_billing_transfer_candidates " +
+			"no shipment outside the billing queue matches; billing_list_transfer_candidates " +
 				"with the same filters shows what is waiting",
 		)
 	}
@@ -355,7 +355,7 @@ func (t *TransferToBillingTool) transferable(
 	if len(ids) == 0 {
 		return nil, nil, fmt.Errorf(
 			"none of the %d shipments these filters select would transfer as it stands "+
-				"(%d refused, %d left with operations); list_billing_transfer_candidates says "+
+				"(%d refused, %d left with operations); billing_list_transfer_candidates says "+
 				"why each one is held",
 			len(plan.Decisions), plan.Refused, plan.Returned,
 		)

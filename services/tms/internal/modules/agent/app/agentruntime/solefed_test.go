@@ -23,7 +23,7 @@ func TestSoleFed(t *testing.T) {
 	assert.Equal(
 		t,
 		"shipment_reschedule_stop",
-		soleFed(allowed, []string{"shipment_reschedule_stop", "post_invoices"}),
+		soleFed(allowed, []string{"shipment_reschedule_stop", "invoice_post"}),
 		"a write the agent does not hold does not count",
 	)
 	assert.Empty(t, soleFed(allowed, nil))

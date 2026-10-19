@@ -42,9 +42,9 @@ var untypedIDs = map[string]string{
 		"and the planner resolves it against that entity's table before drafting",
 	"apply_edi_connection_draft.mappings[].targetId": "its kind follows the mapping's entityType, " +
 		"and the planner resolves it against that entity's table before writing",
-	"resolve_billing_queue_issue.issueId": "a billing queue check is part of its item and has " +
+	"billing_resolve_issue.issueId": "a billing queue check is part of its item and has " +
 		"no record kind; the service reads it scoped to the item id",
-	"undo_billing_queue_issue.issueId": "a billing queue check is part of its item and has " +
+	"billing_undo_issue.issueId": "a billing queue check is part of its item and has " +
 		"no record kind; the service reads it scoped to the item id",
 	"file_inbound_attachment.attachmentId": "an email attachment is part of its message and " +
 		"has no record kind; the tool checks it is one of the named message's attachments",

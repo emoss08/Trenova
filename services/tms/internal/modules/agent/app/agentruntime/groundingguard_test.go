@@ -528,19 +528,19 @@ func TestGroundingGuard_ADifferenceOfThePersonsOwnFiguresIsStated(t *testing.T) 
 	t.Parallel()
 
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("get_invoices", map[string]any{}),
+		toolTurn("invoice_get", map[string]any{}),
 		textTurn("The $3,200 check leaves $500 open on the $3,700 invoice; a $517.40 fee would not."),
 		textTurn("The $3,200 check leaves $500 open on the $3,700 invoice."),
 	}}
 	registry := &stubQueryRegistry{Tools: []agentports.AgentQueryTool{
-		&agenttest.StubQueryTool{ToolName: "get_invoices", Result: map[string]any{"total": "3700"}},
+		&agenttest.StubQueryTool{ToolName: "invoice_get", Result: map[string]any{"total": "3700"}},
 	}}
 	rt := newRuntime(completion, registry, &stubActionRegistry{}, nil)
 	fx := &groundingEffects{}
 	fx.localEffects = &localEffects{s: rt, ctx: t.Context(), emit: func(kernelports.StreamEvent) {}}
 
 	_, err := rt.Drive(rt.OpenTurn(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition("get_invoices"),
+		Definition: testDefinition("invoice_get"),
 		Actor:      testActor(),
 		Input:      "peak sent a check for 3,200 but their invoice was 3,700. what do we do with it",
 	}), fx)

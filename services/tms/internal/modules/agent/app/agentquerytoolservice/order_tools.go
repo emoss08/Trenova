@@ -172,7 +172,7 @@ func (t *getOrderTool) ParamSchema() map[string]any {
 		agenttoolschema.RecordIDText(
 			permission.ResourceOrder,
 			"The order's id, from order_list, the orderId on "+
-				"shipment_get or get_invoice, or the page you are on.",
+				"shipment_get or invoice_get, or the page you are on.",
 		),
 	)
 }

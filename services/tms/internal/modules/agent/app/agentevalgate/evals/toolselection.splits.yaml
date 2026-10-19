@@ -10,7 +10,6 @@ strata:
       mode: chat
     heldOut:
       - bill the statement customer's open period now instead of waiting for month end
-      - check these billing queue items before we post them
       - credit and rebill posted invoice 3302 for the corrected weight
       - drop shipment 4412 from the proposed invoice run, it is not ready to bill
       - issue a $100 goodwill credit to Acme with no shipment behind it
@@ -21,6 +20,7 @@ strata:
       desk: Billing exception agent
       mode: unattended
     heldOut:
+      - check these billing queue items before we post them
       - is quickbooks connected
       - park the billing item until the lumper receipt shows up
       - why is the accounting sync not working
@@ -49,6 +49,7 @@ strata:
     heldOut:
       - assign the bank receipt work item to Maria
       - match this bank receipt to the posted payment
+      - the client wired us funds, apply them to their bills
   - stratum:
       desk: Compliance assistant
       mode: chat

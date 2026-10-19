@@ -55,29 +55,25 @@ Loaded now:
 - find_in_trenova
 - wait_until
 - cancel_wait
+- shipment_get
 - shipment_list
+- shipment_get_tracking
 - intake_get_draft
-- list_customers
 - reply_to_inbound_message
 - hand_off_triage
 - shipment_attach_document
 - shipment_add_comment
-- quote_shipment
-- accept_edi_tender
-- list_service_types
-- list_locations
 
 Callable after find_tools:
 - read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
 - get_inbound_message — Read one message that arrived on a monitored address: sender, subject, body, what it was read as and how sure, and what it was matched to and why.
 - list_inbound_messages — List the inbox, newest first: mail that arrived on a monitored address, with sender, subject, what it was read as and whether it waits on a person.
 - search_inbound_messages — Search the inbox by what the mail says, best match first: the subject, the sender and the sender's own words, without the quoted thread.
-- shipment_get — Read one shipment (load) by its id or PRO number.
-- shipment_get_tracking — Where a shipment is and whether it will be on time: each stop's window, actual arrival and lateness, the tractor's last position, and an arrival estimate.
 - get_customer — Retrieve one customer by id, with their billing and email profiles.
 - get_carrier — Retrieve one carrier by id, including its authority, insurance and compliance state.
 - get_document_summary — Read a document by id: what kind of document it looks like, how many pages, the text extracted from it, and the structured fields document intelligence found.
 - search_documents — Search the text of documents: rate confirmations, bills of lading, proofs of delivery, invoices, contracts, permits and other files attached to records.
+- list_customers — List customers narrowed by status, code, name or city, with their ids.
 - list_carriers — List the carriers this organization tenders freight to, narrowed by status, compliance, safety rating or authority number.
 - list_email_profiles — The sending profiles email can go out from: each has a name, a sender address and a reply-to.
 - list_triage_assignees — List the people who can take messages in the Triage queue, with how many waiting messages each already holds, and the on-call person.
@@ -105,7 +101,11 @@ Callable after find_tools:
 - get_edi_inbound_file — Retrieve one inbound EDI file by id: its partner, status and failure reason, and each transaction set parsed from it with its control numbers.
 - list_edi_transfers — List EDI load tender transfers, the tenders partners sent in or this organization sent out.
 - get_edi_transfer — Retrieve one EDI load tender by id, with its stops, freight and rate and the mappings it still lacks.
+- quote_shipment — Price a shipment that has not been saved, from the customer's rate agreements and the organization's rating rules.
+- accept_edi_tender — Propose accepting a load tender a trading partner sent over EDI, which creates the shipment from it and tells the partner.
 - decline_edi_tender — Propose declining a load tender a trading partner sent over EDI, with the reason they are given.
+- list_service_types — List service types — the levels of service a shipment can be booked at.
+- list_locations — List locations (facilities, terminals, yards) narrowed by status, code, name or city.
 
 What a change you call does:
 - Changes that always record a proposal for a person to decide: reply_to_inbound_message, discard_inbound_reply_draft, wait_for_inbound_reply, snooze_inbound_messages, reopen_inbound_messages, assign_inbound_messages, hand_off_triage, block_inbound_sender, unblock_inbound_sender, unfile_inbound_attachment, resolve_inbound_conflict, create_inbound_load, accept_edi_tender, decline_edi_tender

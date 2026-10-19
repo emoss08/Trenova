@@ -232,9 +232,9 @@ func TestRun_ShortListsAreAnsweredInTheReply(t *testing.T) {
 	observer := &recordingObserver{shown: &agentports.ShownArtifact{
 		ID: pulid.MustNew("art_"), Kind: "table_view", Title: "Billing queue items", Rows: 9,
 	}}
-	tool := queryTool("list_billing_queue_items", map[string]any{"items": []any{}}, nil)
+	tool := queryTool("billing_list_queue_items", map[string]any{"items": []any{}}, nil)
 	result, _ := runWithObserver(t, observer.observe, []agentports.AgentQueryTool{tool},
-		toolTurn("list_billing_queue_items", map[string]any{"query": ""}),
+		toolTurn("billing_list_queue_items", map[string]any{"query": ""}),
 		textTurn("Nine items."),
 	)
 
@@ -258,9 +258,9 @@ func TestRun_AnActionableTableIsPointedToHoweverShort(t *testing.T) {
 		ID: pulid.MustNew("art_"), Kind: "table_view", Title: "Billing queue items", Rows: 2,
 		Actionable: true,
 	}}
-	tool := queryTool("list_billing_queue_items", map[string]any{"items": []any{}}, nil)
+	tool := queryTool("billing_list_queue_items", map[string]any{"items": []any{}}, nil)
 	result, _ := runWithObserver(t, observer.observe, []agentports.AgentQueryTool{tool},
-		toolTurn("list_billing_queue_items", map[string]any{"query": ""}),
+		toolTurn("billing_list_queue_items", map[string]any{"query": ""}),
 		textTurn("Two items."),
 	)
 

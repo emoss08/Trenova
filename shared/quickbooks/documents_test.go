@@ -117,7 +117,7 @@ func TestUpdateSalesAndPurchasesReadTheSyncTokenAndSendAFullUpdate(t *testing.T)
 			writes = append(writes, readJSON(t, r))
 			switch r.URL.Path {
 			case "/v3/company/" + testRealm + "/invoice":
-				_, _ = w.Write(fixture(t, "create_invoice.json"))
+				_, _ = w.Write(fixture(t, "invoice_create.json"))
 			case "/v3/company/" + testRealm + "/bill":
 				_, _ = w.Write(fixture(t, "create_bill.json"))
 			default:

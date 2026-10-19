@@ -33,7 +33,7 @@ func wideRuntime(t *testing.T) (*Service, []string) {
 		describedTool("list_trailers", "List trailers by status or inspection date."),
 		describedTool("list_customers", "List customers by status, code or city."),
 		describedTool("list_locations", "List locations by status or city."),
-		describedTool("list_invoices", "List invoices by status or due date."),
+		describedTool("invoice_list", "List invoices by status or due date."),
 		describedTool("list_carriers", "List carriers by status or authority."),
 		describedTool(
 			"list_expiring_credentials",
@@ -180,7 +180,7 @@ func TestNewToolSet_PreselectsOnTheOperatorsWords(t *testing.T) {
 			},
 		).specs,
 	)
-	assert.Contains(t, billing, "list_invoices")
+	assert.Contains(t, billing, "invoice_list")
 }
 
 // The recovery path: pre-selection guessed wrong, and the model says what it

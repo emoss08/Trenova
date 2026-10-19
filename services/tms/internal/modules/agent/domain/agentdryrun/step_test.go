@@ -11,20 +11,20 @@ func TestClassifyNamesEveryOutcome(t *testing.T) {
 	t.Parallel()
 
 	calls := []Call{
-		{CallID: "1", Tool: "get_invoice", Verdict: "ran"},
+		{CallID: "1", Tool: "invoice_get", Verdict: "ran"},
 		{CallID: "2", Tool: "update_invoice", Verdict: "proposed"},
 		{CallID: "3", Tool: "hold_invoice", Verdict: "proposed"},
 		{CallID: "4", Tool: "note_invoice", Verdict: "simulated"},
 		{CallID: "5", Tool: "shipment_cancel", Verdict: "denied", Failed: true},
 		{CallID: "6", Tool: "shipment_get", Verdict: "denied", Failed: true},
-		{CallID: "7", Tool: "get_invoice", Verdict: "invalid", Failed: true},
+		{CallID: "7", Tool: "invoice_get", Verdict: "invalid", Failed: true},
 	}
 	actions := map[string]Action{
 		"2": {Tier: agent.TierActWithApproval},
 		"3": {Tier: agent.TierPropose},
 		"4": {Tier: agent.TierAutoExecute, Simulated: true},
 	}
-	draft := Draft{Held: []string{"get_invoice", "update_invoice", "hold_invoice", "note_invoice", "shipment_get"}}
+	draft := Draft{Held: []string{"invoice_get", "update_invoice", "hold_invoice", "note_invoice", "shipment_get"}}
 
 	steps := Classify(draft, calls, actions)
 

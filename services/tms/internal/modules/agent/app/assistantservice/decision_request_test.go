@@ -200,7 +200,7 @@ func TestRequestDecision_RefusesABunchThatCannotShareACard(t *testing.T) {
 
 	first, other := waitingProposal(agent.ProposalStatusPending),
 		waitingProposal(agent.ProposalStatusPending)
-	other.ToolName = "post_invoice"
+	other.ToolName = "invoice_post"
 	decided := waitingProposal(agent.ProposalStatusExecuted)
 	fixture := newDecisionFixture(t, first, other, decided)
 

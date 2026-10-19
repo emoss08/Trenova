@@ -25,7 +25,7 @@ import (
 
 type subsetProposalTool struct{}
 
-func (subsetProposalTool) Name() string { return "transfer_to_billing" }
+func (subsetProposalTool) Name() string { return "billing_transfer" }
 
 func (subsetProposalTool) Description() string { return "Transfer shipments." }
 
@@ -66,7 +66,7 @@ func TestAgentProposalParameterFields_ExposeARecordSubset(t *testing.T) {
 	r := &Deps{Core: &base.Core{}, AgentTools: subsetToolRegistry{}}
 	fields, err := (&AgentProposalResolver{r}).ParameterFields(t.Context(), &agent.AgentProposal{
 		Status:     agent.ProposalStatusPending,
-		ToolName:   "transfer_to_billing",
+		ToolName:   "billing_transfer",
 		ToolParams: map[string]any{"shipmentIds": []any{"shp_a", "shp_b"}},
 	})
 	require.NoError(t, err)
@@ -183,7 +183,7 @@ func (h *choicesHarness) fieldsOf(
 
 	fields, err := h.resolver.ParameterFields(h.ctx, &agent.AgentProposal{
 		Status:     agent.ProposalStatusPending,
-		ToolName:   "transfer_to_billing",
+		ToolName:   "billing_transfer",
 		ToolParams: params,
 	})
 	require.NoError(t, err)

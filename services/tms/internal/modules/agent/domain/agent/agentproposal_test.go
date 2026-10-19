@@ -15,7 +15,7 @@ func baseProposal() *agent.AgentProposal {
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
 		RunID:          pulid.MustNew("ar_"),
-		ToolName:       "transition_item_to_in_review",
+		ToolName:       "billing_start_review",
 		Rationale:      "The item is ready for review",
 		AutonomyTier:   agent.TierPropose,
 		Status:         agent.ProposalStatusPending,

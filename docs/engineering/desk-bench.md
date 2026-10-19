@@ -52,7 +52,7 @@ Four things make that observable and repeatable:
   itself is covered by its own tests, not by the bench. For the same reason
   `agentports.AgentTrustService` is wrapped so the bench's approvals, its end-of-case
   rejections and its failed executions are not outcomes for earned autonomy: its streaks
-  promoted `transfer_to_billing` to AutoExecute on Billing exceptions, and the case that
+  promoted `billing_transfer` to AutoExecute on Billing exceptions, and the case that
   approves that proposal found it had already run.
 
 The worker's own log goes to `worker.log` in the run directory, so a tool's error that never
@@ -259,7 +259,7 @@ scenarios:
         page: { path: /shipments, title: Shipments }
         expect:
           calls: ["shipment_list|get_dispatch_board"]
-          noCalls: [build_invoice_run]
+          noCalls: [invoice_build_run]
           maxCalls: 6
           maxFailedCalls: 0
           replyIncludes: ["late|behind|delayed"]

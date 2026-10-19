@@ -132,7 +132,7 @@ func TestGetInvoice_NamesEachLineByTheIDAnAdjustmentTakes(t *testing.T) {
 	tool := newGetInvoiceTool(&fakeInvoiceRepo{items: []*invoice.Invoice{inv}}, &fakePermissions{})
 
 	result, err := tool.Query(t.Context(), agentParams(map[string]any{
-		"invoiceId": inv.ID.String(),
+		"invoiceIds": []any{inv.ID.String()},
 	}, ""))
 	require.NoError(t, err)
 	detail := result.(invoiceDetail)

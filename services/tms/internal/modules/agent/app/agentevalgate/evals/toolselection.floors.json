@@ -16,9 +16,9 @@
       "top1": 1
     },
     "hybrid": {
-      "cases": 162,
+      "cases": 163,
       "recallAt5": 0.91,
-      "top1": 0.81
+      "top1": 0.8
     }
   }
 }

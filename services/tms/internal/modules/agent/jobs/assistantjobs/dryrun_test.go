@@ -18,7 +18,7 @@ func TestDryRunStepsSetEachCallBesideTheWriteItBecame(t *testing.T) {
 	t.Parallel()
 
 	plan := &assistantservice.DryRunPlan{
-		Turn: agentruntime.TurnState{Held: []string{"get_invoice", "update_invoice"}},
+		Turn: agentruntime.TurnState{Held: []string{"invoice_get", "update_invoice"}},
 	}
 	outcome := &agentflow.Outcome{
 		Result: &agentports.RunResult{Actions: []agentports.PendingAction{
@@ -27,7 +27,7 @@ func TestDryRunStepsSetEachCallBesideTheWriteItBecame(t *testing.T) {
 		Events: []temporaltype.StreamItem{
 			{Event: agentports.AssistantEventToolStarted, Data: map[string]any{"callId": "1"}},
 			{Event: agentports.AssistantEventToolFinished, Data: agentports.AssistantToolFinishedEvent{
-				CallID: "1", Name: "get_invoice", Verdict: "ran",
+				CallID: "1", Name: "invoice_get", Verdict: "ran",
 			}},
 			{Event: agentports.AssistantEventToolFinished, Data: &agentports.AssistantToolFinishedEvent{
 				CallID: "2", Name: "update_invoice", Verdict: "proposed", Proposed: true,
@@ -44,7 +44,7 @@ func TestDryRunStepsSetEachCallBesideTheWriteItBecame(t *testing.T) {
 	steps := dryRunSteps(plan, outcome)
 
 	assert.Equal(t, []agentdryrun.Step{
-		{CallID: "1", Tool: "get_invoice", Outcome: agentdryrun.OutcomeRuns},
+		{CallID: "1", Tool: "invoice_get", Outcome: agentdryrun.OutcomeRuns},
 		{CallID: "2", Tool: "update_invoice", Outcome: agentdryrun.OutcomeAskFirst},
 		{CallID: "3", Tool: "shipment_cancel", Outcome: agentdryrun.OutcomeNotHeld},
 	}, steps, "a delegate's own calls are its agent's, not the draft's")

@@ -194,7 +194,7 @@ approved" or "posted" with each refusal; the person approving may untick any of 
 clerk holds the twins in place of `approve_driver_settlement`, `post_driver_settlement`,
 `approve_carrier_settlement` and `post_carrier_settlement`, which stay registered for agents
 an organization builds; see
-[proposal-previews.md](proposal-previews.md#bulk-twins-of-single-record-tools).
+[proposal-previews.md](proposal-previews.md#tools-that-take-one-record-or-many).
 
 The nine pay setup tools stay on no template: `assign_pay_profile`,
 `end_pay_assignment`, `create_recurring_deduction`, `update_recurring_deduction`,

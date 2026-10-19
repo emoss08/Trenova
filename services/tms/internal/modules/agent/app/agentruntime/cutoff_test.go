@@ -28,7 +28,7 @@ func cutMidCall(limit int) *agentports.ChatCompletionResult {
 		Truncated:       true,
 		OutputLimit:     limit,
 		OutputTokens:    limit,
-		CutOffCall:      &agentports.CutOffToolCall{Name: "transfer_to_billing"},
+		CutOffCall:      &agentports.CutOffToolCall{Name: "billing_transfer"},
 		ModelIdentifier: "z-ai/glm-5.3",
 	}
 }
@@ -57,7 +57,7 @@ func runCutOff(
 
 	completion := &scriptedCompletion{Turns: turns}
 	tool := &agenttest.StubActionTool{
-		ToolName: "transfer_to_billing",
+		ToolName: "billing_transfer",
 		Tier:     agent.TierPropose,
 	}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{
@@ -71,7 +71,7 @@ func runCutOff(
 	}
 
 	result, err := rt.Drive(rt.OpenTurn(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition("transfer_to_billing"),
+		Definition: testDefinition("billing_transfer"),
 		Actor:      testActor(),
 		Input:      "Transfer all of them to billing.",
 	}), fx)
@@ -96,7 +96,7 @@ func TestCutOffCall_IsAskedAgainWithTwiceTheRoom(t *testing.T) {
 
 	run := runCutOff(t,
 		cutMidCall(1024),
-		toolTurn("transfer_to_billing", map[string]any{"shipmentIds": []any{"shp_1"}}),
+		toolTurn("billing_transfer", map[string]any{"shipmentIds": []any{"shp_1"}}),
 		textTurn("Proposed the transfer of shp_1."),
 	)
 
@@ -106,7 +106,7 @@ func TestCutOffCall_IsAskedAgainWithTwiceTheRoom(t *testing.T) {
 	assert.Equal(t, 2048, run.completion.Requests[2].MaxTokens,
 		"the rest of the turn keeps the room it needed")
 	require.Len(t, run.result.Actions, 1)
-	assert.Equal(t, "transfer_to_billing", run.result.Actions[0].ToolName)
+	assert.Equal(t, "billing_transfer", run.result.Actions[0].ToolName)
 	assert.Equal(t, "Proposed the transfer of shp_1.", run.result.Reply)
 	assert.False(t, run.result.Truncated)
 	assert.Equal(t, []string{cutOffRetryReason}, retryingReasons(run.fx.events),
@@ -129,7 +129,7 @@ func TestCutOffCall_StillCutSaysItRanOutOfRoomAndNamesTheLimit(t *testing.T) {
 	reply := run.result.Reply
 	assert.True(t, strings.HasPrefix(reply, "I'll transfer all 21 now."))
 	assert.Contains(t, reply, "ran out of room")
-	assert.Contains(t, reply, "transfer_to_billing")
+	assert.Contains(t, reply, "billing_transfer")
 	assert.Contains(t, reply, "was not filed")
 	assert.Contains(t, reply, "1024")
 	assert.Contains(t, reply, "2048")
@@ -156,7 +156,7 @@ func TestCutOffCall_ABrokenNativeCallIsAskedAgain(t *testing.T) {
 		OutputLimit: 4096,
 		ToolCalls: []agentports.ToolCall{{
 			ID:             "call_1",
-			Name:           "transfer_to_billing",
+			Name:           "billing_transfer",
 			Arguments:      map[string]any{},
 			ArgumentsError: "unexpected end of JSON input",
 		}},
@@ -165,7 +165,7 @@ func TestCutOffCall_ABrokenNativeCallIsAskedAgain(t *testing.T) {
 
 	require.Equal(t, 2, run.completion.CallCount)
 	assert.Equal(t, 8192, run.completion.Requests[1].MaxTokens)
-	assert.Contains(t, run.result.Reply, "transfer_to_billing")
+	assert.Contains(t, run.result.Reply, "billing_transfer")
 	assert.Contains(t, run.result.Reply, "ran out of room")
 	assert.Zero(t, run.result.ToolCallsUsed, "a call that was never whole spends no budget")
 }

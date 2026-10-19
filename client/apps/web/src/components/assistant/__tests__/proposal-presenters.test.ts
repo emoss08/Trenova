@@ -102,7 +102,7 @@ describe("presentProposal", () => {
   it("shows a charge correction as the charges that would replace the current ones", () => {
     const view = presentProposal(
       proposal({
-        toolName: "correct_charge_code",
+        toolName: "billing_correct_charge_codes",
         arguments: {
           billingQueueItemId: "bqi_1",
           additionalCharges: [
@@ -673,5 +673,41 @@ describe("presentProposal — intake and tendering", () => {
       "Offer this move to carriers down the lane's routing guide, in the guide's order at its rates.",
     );
     expect(view.reversible).toBe(true);
+  });
+  it("names one invoice to post as one invoice, and a set by its count", () => {
+    const one = presentProposal(
+      proposal({ toolName: "invoice_post", arguments: { invoiceIds: ["inv_1"] } }),
+    );
+    expect(one.title).toBe("Post invoice");
+    expect(one.summary).toBe(
+      "Post 1 draft invoice to the ledger and queue it for the accounting system.",
+    );
+
+    const several = presentProposal(
+      proposal({
+        toolName: "invoice_post",
+        arguments: { invoiceIds: ["inv_1", "inv_2", "inv_3"] },
+      }),
+    );
+    expect(several.title).toBe("Post invoices");
+    expect(several.summary).toBe(
+      "Post 3 draft invoices to the ledger and queue each for the accounting system.",
+    );
+  });
+
+  it("moves the billing items it names into review", () => {
+    const one = presentProposal(
+      proposal({ toolName: "billing_start_review", arguments: { billingQueueItemIds: ["bqi_1"] } }),
+    );
+    expect(one.summary).toBe("Move 1 billing item into review so a biller picks it up.");
+
+    const two = presentProposal(
+      proposal({
+        toolName: "billing_start_review",
+        arguments: { billingQueueItemIds: ["bqi_1", "bqi_2"], billerId: "usr_1" },
+      }),
+    );
+    expect(two.summary).toBe("Move 2 billing items into review so a biller picks them up.");
+    expect(two.reversible).toBe(true);
   });
 });

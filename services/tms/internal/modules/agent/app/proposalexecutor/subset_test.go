@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// subsetTool transfers a set of shipments, the way transfer_to_billing does:
+// subsetTool transfers a set of shipments, the way billing_transfer does:
 // its ids are a subset field an approver may narrow before approving.
 type subsetTool struct {
 	ran map[string]any

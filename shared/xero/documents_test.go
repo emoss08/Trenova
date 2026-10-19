@@ -54,7 +54,7 @@ func TestCreateInvoicePutsAnAuthorisedNoTaxInvoice(t *testing.T) {
 		assertWrite(t, r, http.MethodPut, "/api.xro/2.0/Invoices")
 		assert.Equal(t, "4", r.URL.Query().Get("unitdp"))
 		body = readJSON(t, r)
-		_, _ = w.Write(fixture(t, "create_invoice.json"))
+		_, _ = w.Write(fixture(t, "invoice_create.json"))
 	})
 
 	invoice, err := client.CreateInvoice(t.Context(), testKey, freightInvoice())
@@ -104,7 +104,7 @@ func TestCreateInvoiceSendsARateOnlyWhenGiven(t *testing.T) {
 	var body map[string]any
 	client := newAPIClient(t, func(w http.ResponseWriter, r *http.Request) {
 		body = readJSON(t, r)
-		_, _ = w.Write(fixture(t, "create_invoice.json"))
+		_, _ = w.Write(fixture(t, "invoice_create.json"))
 	})
 
 	in := freightInvoice()
@@ -158,7 +158,7 @@ func TestUpdateInvoicePostsToTheInvoice(t *testing.T) {
 	client := newAPIClient(t, func(w http.ResponseWriter, r *http.Request) {
 		assertWrite(t, r, http.MethodPost, "/api.xro/2.0/Invoices/"+testInvoice)
 		body = readJSON(t, r)
-		_, _ = w.Write(fixture(t, "create_invoice.json"))
+		_, _ = w.Write(fixture(t, "invoice_create.json"))
 	})
 
 	_, err := client.UpdateInvoice(t.Context(), testKey, testInvoice, freightInvoice())
@@ -178,7 +178,7 @@ func TestVoidInvoiceSendsOnlyTheIDAndStatus(t *testing.T) {
 	client := newAPIClient(t, func(w http.ResponseWriter, r *http.Request) {
 		assertWrite(t, r, http.MethodPost, "/api.xro/2.0/Invoices/"+testInvoice)
 		body = readJSON(t, r)
-		_, _ = w.Write(fixture(t, "void_invoice.json"))
+		_, _ = w.Write(fixture(t, "invoice_void.json"))
 	})
 
 	invoice, err := client.VoidInvoice(t.Context(), testKey, testInvoice)

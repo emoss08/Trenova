@@ -18,7 +18,7 @@ import (
 	"github.com/emoss08/trenova/pkg/toolschema"
 )
 
-// ErrInvoiceNeedsAPerson is a post_invoice or send_invoice call that did
+// ErrInvoiceNeedsAPerson is a invoice_post or invoice_send call that did
 // not come from a proposal a person approved. Both tools stop at Propose;
 // this is the same rule where the invoice is posted or sent.
 var ErrInvoiceNeedsAPerson = errors.New(
@@ -106,20 +106,20 @@ func NewPostInvoiceTool(invoices invoicePoster) agentports.AgentTool {
 	return &PostInvoiceTool{invoices: invoices}
 }
 
-func (t *PostInvoiceTool) Name() string { return "post_invoice" }
+func (t *PostInvoiceTool) Name() string { return toolInvoicePost }
 
 func (t *PostInvoiceTool) Description() string {
-	return "Propose posting a draft invoice, usually the one approve_billing_queue_item just " +
+	return "Propose posting a draft invoice, usually the one billing_approve_queue_item just " +
 		"made. Posting books it to the ledger, marks its shipments invoiced, settles its " +
 		"billing queue item and queues it for the accounting system and, where the customer " +
 		"takes it, an EDI 210. It cannot be undone except by voiding, so a person always " +
 		"decides; propose it once the draft's lines and totals are right. For more than one " +
-		"invoice, propose post_invoices once with all of them instead."
+		"invoice, propose invoice_post once with all of them instead."
 }
 
 func (t *PostInvoiceTool) ParamSchema() map[string]any {
-	return invoiceSchema("The draft invoice, from approve_billing_queue_item's result, " +
-		"get_billing_queue_item or list_invoices.")
+	return invoiceSchema("The draft invoice, from billing_approve_queue_item's result, " +
+		"billing_get_queue_item or invoice_list.")
 }
 
 func (t *PostInvoiceTool) Policy() agentports.ToolPolicy {
@@ -248,18 +248,18 @@ func NewSendInvoiceTool(invoices invoiceSender) agentports.AgentTool {
 	return &SendInvoiceTool{invoices: invoices}
 }
 
-func (t *SendInvoiceTool) Name() string { return "send_invoice" }
+func (t *SendInvoiceTool) Name() string { return toolInvoiceSend }
 
 func (t *SendInvoiceTool) Description() string {
 	return "Propose emailing an invoice to the customer. The recipients, subject, wording " +
 		"and attachments come from the organization and the customer's billing profile; " +
-		"nothing is chosen by you. A person always decides. Propose it after post_invoice when the " +
+		"nothing is chosen by you. A person always decides. Propose it after invoice_post when the " +
 		"customer is not sent invoices automatically. For more than one invoice, propose " +
-		"send_invoices once with all of them instead."
+		"invoice_send once with all of them instead."
 }
 
 func (t *SendInvoiceTool) ParamSchema() map[string]any {
-	return invoiceSchema("The invoice, from list_invoices or post_invoice's proposal.")
+	return invoiceSchema("The invoice, from invoice_list or invoice_post's proposal.")
 }
 
 func (t *SendInvoiceTool) Policy() agentports.ToolPolicy {
