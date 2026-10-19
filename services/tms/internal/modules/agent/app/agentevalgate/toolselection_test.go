@@ -192,10 +192,10 @@ func enforce(t *testing.T, g gate) {
 
 	require.GreaterOrEqualf(t, g.report.RecallAt5, g.floors.RecallAt5,
 		"%s recall@5 fell below its floor: the ranking no longer reaches what a request "+
-			"needs\n%s", g.label, g.report.Misses())
+			"needs\n%s", g.label, g.report.MissesExcept(g.held))
 	require.GreaterOrEqualf(t, g.report.Top1, g.floors.Top1,
 		"%s top-1 fell below its floor: the ranking now puts something else first\n%s",
-		g.label, g.report.Misses())
+		g.label, g.report.MissesExcept(g.held))
 }
 
 func heldOutFloors(floors agentevalgate.SelectionFloorSet) agentevalgate.SelectionFloorSet {
