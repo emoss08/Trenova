@@ -99,7 +99,11 @@ func NewMatchBankReceiptTool(receipts bankReceiptMatcher) agentports.AgentTool {
 func (t *MatchBankReceiptTool) Name() string { return "receivable_match_bank_receipt" }
 
 func (t *MatchBankReceiptTool) Recipe() []string {
-	return []string{"receivable_get_bank_receipt", "receivable_list_customer_payments", "receivable_match_bank_receipt"}
+	return []string{
+		"receivable_get_bank_receipt",
+		"receivable_list_customer_payments",
+		"receivable_match_bank_receipt",
+	}
 }
 
 func (t *MatchBankReceiptTool) Description() string {

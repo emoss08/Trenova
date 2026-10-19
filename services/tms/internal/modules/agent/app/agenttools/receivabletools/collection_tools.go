@@ -265,9 +265,11 @@ func NewLogCollectionActivityTool(collections collectionports.Service) agentport
 					"Who you or the customer spoke to, if you know.",
 					maxCollectionContactChars,
 				),
-				common.ParamInvoiceID: agenttoolschema.RecordIDText(permission.ResourceInvoice,
+				common.ParamInvoiceID: agenttoolschema.RecordIDText(
+					permission.ResourceInvoice,
 					"The invoice it is about, when it is about one, from receivable_list_open_items or "+
-						"receivable_get_statement."),
+						"receivable_get_statement.",
+				),
 				paramPromisedAmount: common.AmountProperty(
 					"For a promise to pay: the amount promised as a decimal, such as 1250.00.",
 				),
@@ -428,10 +430,12 @@ func NewAssignCollectorTool(collections collectionports.Service) agentports.Agen
 			Artifact: common.CustomerRecordEntity,
 			Properties: map[string]any{
 				common.ParamCustomerID: collectionCustomerProperty(),
-				paramCollectorID: agenttoolschema.RecordIDText(permission.ResourceUser,
+				paramCollectorID: agenttoolschema.RecordIDText(
+					permission.ResourceUser,
 					"The collector's user id: a collectorId receivable_list_collection_worklist shows, or "+
 						"the person who asked. Leave it out to take the account off whoever has "+
-						"it. Never guess one."),
+						"it. Never guess one.",
+				),
 			},
 			Required:    []string{common.ParamCustomerID},
 			SearchTerms: []string{"collector", "assign collections", "who chases"},

@@ -695,6 +695,10 @@ func (t *listCollectionsWorklistTool) Description() string {
 		"receivable_get_statement before calling a customer about their balance."
 }
 
+func (t *listCollectionsWorklistTool) SearchTerms() []string {
+	return []string{"collections worklist"}
+}
+
 func (t *listCollectionsWorklistTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
 		paramAsOf:     agenttoolschema.Date("The day to rank as of. Defaults to today."),
