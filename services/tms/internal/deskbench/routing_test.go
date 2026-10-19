@@ -188,7 +188,11 @@ func TestRoutingReport_SaysHowManyWentWhereTheyShouldAndWhatChanged(t *testing.T
 	assert.Contains(t, summary, "The run compared with: 1 of 2 (50%), +0 points.")
 	assert.Contains(t, summary, "- `aging` now fails")
 	assert.Contains(t, summary, "- `past-due` now passes")
-	assert.Contains(t, summary, "| ✓ past-due | Dispatch | BillingAssistant | Billing | invoice_list |")
+	assert.Contains(
+		t,
+		summary,
+		"| ✓ past-due | Dispatch | BillingAssistant | Billing | invoice_list |",
+	)
 	assert.Contains(t, summary, "| ✗ aging | Billing | current | nothing |  |")
 
 	dir := t.TempDir()
@@ -221,4 +225,60 @@ func TestShippedRoutingCases_NameAgentsByTheirTemplates(t *testing.T) {
 				routing.Name, option)
 		}
 	}
+}
+
+func TestProfileConfusion_CountsWhatEachCaseExpectedAgainstWhatItGot(t *testing.T) {
+	t.Parallel()
+
+	dispatch := &agentdefinition.Definition{
+		ID: pulid.MustNew(
+			"agdef_",
+		), Name: "Dispatch", Template: agentdefinition.TemplateDispatchAssistant,
+	}
+	billing := &agentdefinition.Definition{
+		ID: pulid.MustNew(
+			"agdef_",
+		), Name: "Billing", Template: agentdefinition.TemplateBillingAssistant,
+	}
+	kept := &agentports.AgentMatch{Outcome: agentsuggestion.MatchCurrentAgent, Agent: dispatch}
+	moved := &agentports.AgentMatch{Outcome: agentsuggestion.MatchBetterAgent, Agent: billing}
+	nobody := &agentports.AgentMatch{Outcome: agentsuggestion.MatchNoAgent}
+
+	assert.Equal(t, "DispatchAssistant", SelectedProfile(dispatch, kept))
+	assert.Equal(t, "BillingAssistant", SelectedProfile(dispatch, moved))
+	assert.Equal(t, RoutingExpectNone, SelectedProfile(dispatch, nobody))
+	assert.Equal(t, "DispatchAssistant", ExpectedProfile("current", dispatch))
+	assert.Equal(t, "BillingAssistant", ExpectedProfile("BillingAssistant|Receivables", dispatch))
+	assert.Equal(t, RoutingExpectNothing, ExpectedProfile("Nothing", dispatch))
+
+	report := BuildRoutingReport("abc", "bench", time.Now(), []*RoutingResult{
+		{
+			Case:            "a",
+			ExpectedProfile: "BillingAssistant",
+			SelectedProfile: "BillingAssistant",
+			Passed:          true,
+		},
+		{Case: "b", ExpectedProfile: "BillingAssistant", SelectedProfile: "DispatchAssistant"},
+		{
+			Case:            "c",
+			ExpectedProfile: "DispatchAssistant",
+			SelectedProfile: "DispatchAssistant",
+			Passed:          true,
+		},
+		{Case: "d", ExpectedProfile: "none", SelectedProfile: "BillingAssistant"},
+	})
+	confusion := report.Confusion()
+
+	assert.Equal(t, []string{"BillingAssistant", "DispatchAssistant", "none"}, confusion.Profiles)
+	assert.Equal(t, 1, confusion.Counts["BillingAssistant"]["DispatchAssistant"])
+	recall, cases := confusion.Recall("BillingAssistant")
+	assert.InDelta(t, 0.5, recall, 1e-9)
+	assert.Equal(t, 2, cases)
+	precision, picked := confusion.Precision("BillingAssistant")
+	assert.InDelta(t, 0.5, precision, 1e-9)
+	assert.Equal(t, 2, picked)
+
+	rendered := RenderRouting(report, nil)
+	assert.Contains(t, rendered, "## Profile selection")
+	assert.Contains(t, rendered, "| BillingAssistant | **1** | 1 | · | 50% of 2 |")
 }

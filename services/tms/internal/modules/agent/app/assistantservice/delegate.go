@@ -121,29 +121,30 @@ func (s *Service) OpenDelegate(
 		return nil, err
 	}
 
+	readOnly := !req.Call.Directed
 	runReq := &agentports.RunRequest{
 		Definition: delegate,
 		Actor:      req.Actor,
 		Context:    s.delegateContext(ctx, parent, delegate, req),
 		Input:      agentruntime.DelegateInput(req.Call.Task, req.Call.Context),
 		ThreadID:   req.ThreadID,
-		// Earlier proposals keep the delegate from proposing again a write
-		// that is already waiting on the person.
-		Proposals: s.proposalOutcomes(ctx, &conversation.Thread{ID: req.ThreadID}, tenant),
-		// A document it publishes is kept beside the same conversation.
-		Publishes: s.artifacts != nil && !req.Inline,
-		Inline:    req.Inline,
-		StepOwner: req.StepOwner,
+		Publishes:  s.artifacts != nil && !req.Inline && !readOnly,
+		Inline:     req.Inline,
+		StepOwner:  req.StepOwner,
 		Delegation: &agentports.Delegation{
 			ParentAgentID:   parent.ID,
 			ParentAgentName: parent.Name,
 			CallID:          req.Call.Call.ID,
 			StepScope:       req.Call.StepScope,
 			MoneySpent:      req.Call.MoneySpent,
+			ReadOnly:        readOnly,
 		},
 		// The delegate reads what the task says, and the task was written
 		// by a turn that may have read outside content.
 		Taint: req.Call.Taint.Clone(),
+	}
+	if !readOnly {
+		runReq.Proposals = s.proposalOutcomes(ctx, &conversation.Thread{ID: req.ThreadID}, tenant)
 	}
 
 	return &DelegateOpening{

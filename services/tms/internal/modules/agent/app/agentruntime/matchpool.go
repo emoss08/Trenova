@@ -146,6 +146,7 @@ func (p *matchPool) permitsBest(best []string) bool {
 func (p *matchPool) delegateHolding(
 	currentID pulid.ID,
 	ranked []agenttoolcatalog.Match,
+	looksUp func(string) bool,
 ) (asked, delegate *agentdefinition.Definition, delegated []string) {
 	if currentID.IsNil() || len(ranked) == 0 {
 		return nil, nil, nil
@@ -168,7 +169,7 @@ func (p *matchPool) delegateHolding(
 		}
 		matched := make([]string, 0, len(top))
 		for _, name := range top {
-			if _, ok := p.held[idx][name]; ok {
+			if _, ok := p.held[idx][name]; ok && looksUp(name) {
 				matched = append(matched, name)
 			}
 		}

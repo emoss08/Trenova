@@ -52,15 +52,14 @@ const (
 // delegateTaskDescription is a constant for the same reason
 // findToolsDescription is: it is addressed to a model, and the i18n extractor
 // would otherwise harvest it.
-const delegateTaskDescription = "Hand a task to another agent that holds tools you " +
-	"do not, and get back what it did. It works on its own as the same person, with its " +
-	"own tools and approvals, and cannot see this conversation, so the task must say " +
-	"everything it needs and what to hand back, such as the id of what it creates. The " +
-	"result names what it made, what waits on the person's approval and what it " +
-	"published. Hand over the records the task is about by their ids in records, and " +
-	"the results of this turn's own calls it should work from in shareResults, rather than " +
-	"retyping them into the task. Use it only when your own tools cannot do the job; one " +
-	"task per call."
+const delegateTaskDescription = "Hand a lookup to another agent that holds read tools " +
+	"you do not, or split independent lookups to run side by side: several calls in one " +
+	"reply run at the same time. It works as the same person, only reads, changes nothing " +
+	"and cannot see this conversation, so the task must say everything it needs and what " +
+	"to hand back. The result is its answer and every result it read, word for word. Hand " +
+	"over the records the task is about by their ids in records, and the results of this " +
+	"turn's own calls it should work from in shareResults, rather than retyping them into " +
+	"the task. Never ask it to change anything: make every change with your own tools."
 
 // delegatedRefusal answers delegate_task from a turn that is itself working
 // for another agent. Only the agent the person is talking to delegates, so a
@@ -105,10 +104,10 @@ func delegateTaskSpec(delegates []agentdefinition.RuntimeDelegate) kernelports.T
 				},
 				delegateTaskParam: map[string]any{
 					"type": "string",
-					"description": "What the agent should do and what it should hand back, " +
-						"with every name, id, date and figure it needs. \"Create a report of " +
-						"this month's on-time deliveries by customer, save it privately, and " +
-						"return the report's id.\"",
+					"description": "What the agent should look up and what it should hand " +
+						"back, with every name, id, date and figure it needs. \"List this " +
+						"month's late deliveries for Acme Foods and hand back each load's PRO " +
+						"number and how late it was.\"",
 				},
 				delegateRecordsParam: map[string]any{
 					toolschema.KeyType:     toolschema.TypeArray,
@@ -247,24 +246,37 @@ type DelegateRun struct {
 // did. The delegate's steps are folded into the turn's own record, tagged, and
 // its writes are kept apart so they are recorded as its own.
 func (s *Service) delegate(t *Turn, fx TurnEffects, call agentports.ToolCall) toolOutcome {
+	task, refusal := s.prepareDelegation(t, &call)
+	if task == nil {
+		return refusal
+	}
+	outcome, _ := s.handTask(t, fx, task)
+
+	return outcome
+}
+
+func (s *Service) prepareDelegation(
+	t *Turn,
+	call *agentports.ToolCall,
+) (*handedTask, toolOutcome) {
 	if t.req.Delegation != nil {
-		return failedOutcome("%s", delegatedRefusal)
+		return nil, failedOutcome("%s", delegatedRefusal)
 	}
 
 	delegate, task, refusal := t.delegateFor(call.Arguments)
 	if refusal != "" {
-		return failedOutcome("Tool %q was not run: %s", delegateTaskName, refusal)
+		return nil, failedOutcome("Tool %q was not run: %s", delegateTaskName, refusal)
 	}
 	spec := delegateTaskSpec(t.delegates)
 	if err := toolschema.Validate(spec.Parameters, call.Arguments); err != nil {
-		return argumentOutcome(delegateTaskName, spec.Parameters, err)
+		return nil, argumentOutcome(delegateTaskName, spec.Parameters, err)
 	}
 	handed, refusal := t.handedOver(call.Arguments)
 	if refusal != "" {
-		return failedOutcome("Tool %q was not run: %s", delegateTaskName, refusal)
+		return nil, failedOutcome("Tool %q was not run: %s", delegateTaskName, refusal)
 	}
 	if t.delegations >= maxDelegationsPerTurn {
-		return failedOutcome(
+		return nil, failedOutcome(
 			"Tool %q was not run: this turn has already handed out %d tasks, the most one "+
 				"turn may. Answer with what the agents returned, and tell the person what is "+
 				"left.",
@@ -273,14 +285,47 @@ func (s *Service) delegate(t *Turn, fx TurnEffects, call agentports.ToolCall) to
 	}
 	t.delegations++
 
-	outcome, _ := s.handTask(t, fx, &handedTask{
-		call:     call,
-		delegate: delegate,
-		task:     task,
-		handed:   handed,
-	})
+	return &handedTask{call: *call, delegate: delegate, task: task, handed: handed}, toolOutcome{}
+}
 
-	return outcome
+func (s *Service) fanOut(
+	t *Turn,
+	fx TurnEffects,
+	calls []agentports.ToolCall,
+	used, budget int,
+) map[string]toolOutcome {
+	if !t.holds(delegateTaskName) || t.req.Delegation != nil {
+		return nil
+	}
+	eligible := make([]agentports.ToolCall, 0, len(calls))
+	for idx, call := range calls {
+		if call.Name == delegateTaskName && call.ArgumentsError == "" && used+idx < budget {
+			eligible = append(eligible, call)
+		}
+	}
+	if len(eligible) < 2 {
+		return nil
+	}
+
+	outcomes := make(map[string]toolOutcome, len(eligible))
+	tasks := make([]*handedTask, 0, len(eligible))
+	for idx := range eligible {
+		call := &eligible[idx]
+		task, refusal := s.prepareDelegation(t, call)
+		if task == nil {
+			s.emitToolStarted(fx, call)
+			outcomes[call.ID] = refusal
+			continue
+		}
+		task.fannedOut = true
+		tasks = append(tasks, task)
+	}
+	settled := s.handTasks(t, fx, tasks)
+	for idx := range settled {
+		outcomes[tasks[idx].call.ID] = settled[idx]
+	}
+
+	return outcomes
 }
 
 // handedTask is one task on its way to another agent, already checked as one
@@ -292,7 +337,8 @@ type handedTask struct {
 	handed   *DelegateContext
 	// directed says the person chose the agent, so its opening skips the
 	// check that the conversation's agent lists it.
-	directed bool
+	directed  bool
+	fannedOut bool
 }
 
 // handTask runs another agent on a task and answers the call with what it
@@ -301,8 +347,36 @@ func (s *Service) handTask(
 	t *Turn,
 	fx TurnEffects,
 	h *handedTask,
-) (outcome toolOutcome, report agentports.AssistantDelegateFinishedEvent) {
+) (toolOutcome, agentports.AssistantDelegateFinishedEvent) {
+	call := s.startTask(t, fx, h)
+	runs := fx.Delegate(t, []DelegateCall{call})
+
+	return s.settleTask(t, fx, h, &runs[0])
+}
+
+func (s *Service) handTasks(t *Turn, fx TurnEffects, tasks []*handedTask) []toolOutcome {
+	if len(tasks) == 0 {
+		return nil
+	}
+	calls := make([]DelegateCall, 0, len(tasks))
+	for _, task := range tasks {
+		calls = append(calls, s.startTask(t, fx, task))
+	}
+	runs := fx.Delegate(t, calls)
+	outcomes := make([]toolOutcome, 0, len(tasks))
+	for idx, task := range tasks {
+		outcome, _ := s.settleTask(t, fx, task, &runs[idx])
+		outcomes = append(outcomes, outcome)
+	}
+
+	return outcomes
+}
+
+func (s *Service) startTask(t *Turn, fx TurnEffects, h *handedTask) DelegateCall {
 	call, delegate, task := h.call, h.delegate, h.task
+	if h.fannedOut {
+		s.emitToolStarted(fx, &call)
+	}
 	scope := StepKey(StepKeyParams{
 		OwnerID:  t.req.StepOwner.ID,
 		ToolName: delegateTaskName,
@@ -325,7 +399,7 @@ func (s *Service) handTask(
 		},
 	})
 
-	run := fx.Delegate(t, DelegateCall{
+	return DelegateCall{
 		Call:      call,
 		Delegate:  delegate,
 		Task:      task,
@@ -338,8 +412,17 @@ func (s *Service) handTask(
 		Context:              h.handed,
 		Directed:             h.directed,
 		MoneySpent:           t.moneySpent(),
-	})
-	report = delegateReport(delegate, call.ID, run)
+	}
+}
+
+func (s *Service) settleTask(
+	t *Turn,
+	fx TurnEffects,
+	h *handedTask,
+	run *DelegateRun,
+) (outcome toolOutcome, report agentports.AssistantDelegateFinishedEvent) {
+	call, delegate := h.call, h.delegate
+	report = delegateReport(delegate, call.ID, *run)
 	if run.ExternalContent {
 		t.external = true
 	}
@@ -358,7 +441,7 @@ func (s *Service) handTask(
 			CallID:     call.ID,
 			Actions:    run.Result.Actions,
 			Model:      run.Result.Model,
-			Input:      task,
+			Input:      h.task,
 			Failed:     run.Failure != "" || run.Stopped,
 			Taint:      run.Result.Taint.Clone(),
 			Usage:      run.Result.Usage.Clone(),
@@ -370,7 +453,9 @@ func (s *Service) handTask(
 		Data:  report,
 	})
 
-	return delegateOutcome(report), report
+	outcome = delegateOutcome(&report, !h.directed)
+
+	return outcome, report
 }
 
 // ReserveCallIDs marks tool call ids as taken, so a provider that reuses one
@@ -603,6 +688,7 @@ func delegateReport(
 		Made:           []agentports.DelegateWrite{},
 		Awaiting:       []agentports.DelegateWrite{},
 		Published:      slices.Clone(run.Documents),
+		Findings:       []conversation.DelegateFinding{},
 	}
 	if report.Published == nil {
 		report.Published = []agentports.DelegateDocument{}
@@ -611,6 +697,7 @@ func delegateReport(
 	result := run.Result
 	if result != nil {
 		report.ToolCallsUsed = result.ToolCallsUsed
+		report.Findings, report.MoreFindings = delegateFindings(result.Messages)
 		for idx := range result.Actions {
 			action := &result.Actions[idx]
 			if action.Withdrawn {
@@ -664,14 +751,11 @@ func delegateReport(
 // that ended partway is a failed call whose writes are still named: they
 // happened, and what else the delegate may have begun is unconfirmed rather
 // than undone, so nothing here says a change did not happen.
-func delegateOutcome(report agentports.AssistantDelegateFinishedEvent) toolOutcome {
-	encoded, err := delegateJSON.MarshalToString(report)
-	if err != nil {
-		encoded = fmt.Sprintf(`{"agent":%q,"status":%q}`, report.AgentName, report.Status)
-	}
+func delegateOutcome(report *agentports.AssistantDelegateFinishedEvent, lookup bool) toolOutcome {
+	encoded := encodedReport(report)
 
 	outcome := toolOutcome{
-		content: FenceToolResult(delegateTaskName, encoded) + "\n\n" + delegateNote(report),
+		content: FenceToolResult(delegateTaskName, encoded) + "\n\n" + delegateNote(report, lookup),
 		summary: summaryLine(report.AgentName),
 		// The saved account is bounded so the message row stays small; the
 		// model reads the whole account above.
@@ -694,9 +778,26 @@ func delegateOutcome(report agentports.AssistantDelegateFinishedEvent) toolOutco
 	return outcome
 }
 
+func encodedReport(report *agentports.AssistantDelegateFinishedEvent) string {
+	for {
+		encoded, err := delegateJSON.MarshalToString(report)
+		if err != nil {
+			return fmt.Sprintf(`{"agent":%q,"status":%q}`, report.AgentName, report.Status)
+		}
+		if len(encoded) <= maxToolResultChars || len(report.Findings) == 0 {
+			return encoded
+		}
+		report.Findings = report.Findings[:len(report.Findings)-1]
+		report.MoreFindings++
+	}
+}
+
 // delegateNote tells the delegating model how to read the account above it.
-func delegateNote(report agentports.AssistantDelegateFinishedEvent) string {
+func delegateNote(report *agentports.AssistantDelegateFinishedEvent, lookup bool) string {
 	name := report.AgentName
+	if lookup {
+		return lookupNote(report)
+	}
 	switch report.Status {
 	case agentports.DelegateStatusFailed, agentports.DelegateStatusStopped:
 		return "[" + name + " stopped before it finished. Everything under made happened. " +
@@ -714,6 +815,31 @@ func delegateNote(report agentports.AssistantDelegateFinishedEvent) string {
 			"never show them a proposalId or any other id. Use the ids under made for your " +
 			"next step; never invent one." + delegateArtifactNote(report.Reply) + "]"
 	}
+}
+
+func lookupNote(report *agentports.AssistantDelegateFinishedEvent) string {
+	name := report.AgentName
+	switch report.Status {
+	case agentports.DelegateStatusFailed, agentports.DelegateStatusStopped:
+		return "[" + name + " stopped before it finished and changed nothing. Work from the " +
+			"findings it did return, and tell the person plainly what is still unknown.]"
+	case agentports.DelegateStatusRefused:
+		return "[" + name + "'s answer was withheld. It changed nothing; work from its " +
+			"findings without the withheld answer.]"
+	case agentports.DelegateStatusCompleted,
+		agentports.DelegateStatusExhausted,
+		agentports.DelegateStatusDeclined:
+	}
+	more := ""
+	if report.MoreFindings > 0 {
+		more = " Results past what one answer may carry were left out of findings; " +
+			"look those up yourself if you need them."
+	}
+
+	return "[" + name + " looked this up as the same person and changed nothing. Its " +
+		"findings are the results it read, word for word: answer from them, and when its " +
+		"reply and a finding disagree, the finding is right. Name the records in them by " +
+		"number or name, never by an internal id." + more + delegateArtifactNote(report.Reply) + "]"
 }
 
 // delegateArtifactNote passes on what the delegate's reply showed. Only this
@@ -771,74 +897,39 @@ func (s *Service) PermittedTools(
 	return s.permittedTools(ctx, actor, names)
 }
 
-// delegatedSearchNote answers a search that found nothing the turn can call,
-// when an agent it may ask holds what matched. Pointing the model at the agent
-// is the answer the person wants; "an administrator can add it" is not.
-func delegatedSearchNote(
-	delegates []agentdefinition.RuntimeDelegate,
-	unheld []string,
-) string {
-	return delegateHoldersNote(
-		"Nothing you can call matched. These agents you can ask hold tools that do:\n",
-		delegates,
-		unheld,
-	)
-}
+const (
+	maxFindingBytes  = 8 << 10
+	maxFindingsBytes = 10 << 10
+)
 
-func weakMatchDelegateNote(
-	delegates []agentdefinition.RuntimeDelegate,
-	unheld []string,
-) string {
-	return delegateHoldersNote(
-		"What you can call matches that only loosely. These agents you can ask hold "+
-			"tools that match it by name:\n",
-		delegates,
-		unheld,
-	)
-}
-
-func delegateHoldersNote(
-	lead string,
-	delegates []agentdefinition.RuntimeDelegate,
-	unheld []string,
-) string {
-	holding := delegatesHolding(delegates, unheld)
-	if len(holding) == 0 {
-		return ""
-	}
-
-	var b strings.Builder
-	b.WriteString(lead)
-	for _, delegate := range holding {
-		matched := make([]string, 0, len(unheld))
-		for _, name := range unheld {
-			if slices.Contains(delegate.Tools, name) {
-				matched = append(matched, name)
-			}
+func delegateFindings(
+	messages []conversation.Message,
+) (findings []conversation.DelegateFinding, more int) {
+	findings = make([]conversation.DelegateFinding, 0, 4)
+	total := 0
+	for idx := range messages {
+		message := &messages[idx]
+		if message.Role != conversation.RoleTool || message.ToolFailed {
+			continue
 		}
-		fmt.Fprintf(&b, "- %s (agentId %s): %s\n",
-			delegate.Name, delegate.ID, strings.Join(matched, ", "))
-	}
-	b.WriteString("\nHand the task to one of them with delegate_task, saying what it should " +
-		"do and what to hand back.")
-
-	return b.String()
-}
-
-// delegatesHolding names the agents the turn may ask that hold a tool, for a
-// search that found nothing the turn itself can call.
-func delegatesHolding(
-	delegates []agentdefinition.RuntimeDelegate,
-	names []string,
-) []agentdefinition.RuntimeDelegate {
-	holding := make([]agentdefinition.RuntimeDelegate, 0, len(delegates))
-	for _, delegate := range delegates {
-		if slices.ContainsFunc(names, func(name string) bool {
-			return slices.Contains(delegate.Tools, name)
-		}) {
-			holding = append(holding, delegate)
+		if _, runtime := runtimePolicyNamed(message.ToolName); runtime {
+			continue
 		}
+		toolName, payload, fenced := UnfenceToolResult(message.Content)
+		if !fenced {
+			continue
+		}
+		if len(payload) > maxFindingBytes || total+len(payload) > maxFindingsBytes {
+			more++
+			continue
+		}
+		total += len(payload)
+		findings = append(findings, conversation.DelegateFinding{
+			ToolName: toolName,
+			CallID:   message.ToolCallID,
+			Content:  payload,
+		})
 	}
 
-	return holding
+	return findings, more
 }

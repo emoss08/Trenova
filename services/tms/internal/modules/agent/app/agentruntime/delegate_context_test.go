@@ -311,7 +311,7 @@ func TestDelegateReport_NamesEachWritesProposal(t *testing.T) {
 	require.Len(t, report.Awaiting, 1)
 	assert.Equal(t, waiting, report.Awaiting[0].ProposalID)
 	assert.Equal(t, waiting, report.Bounded().Awaiting[0].ProposalID)
-	assert.Contains(t, delegateNote(report), "never show them a proposalId")
+	assert.Contains(t, delegateNote(&report, false), "never show them a proposalId")
 }
 
 // A table or record the delegate showed is kept only if the parent's answer
@@ -326,11 +326,11 @@ func TestDelegateNote_PassesOnTheArtifactsTheReplyShowed(t *testing.T) {
 			"table lists them, and [Billing queue items](artifact:art_01M42AYFPF05FCCQ4R5R1Y7EQJ) again.",
 	}
 
-	note := delegateNote(report)
+	note := delegateNote(&report, false)
 
 	assert.Equal(t, 1, strings.Count(note, "(artifact:art_01M42AYFPF05FCCQ4R5R1Y7EQJ)"))
 	assert.Contains(t, note, "one your answer does not link is not kept")
 
 	report.Reply = "Nothing to show."
-	assert.NotContains(t, delegateNote(report), "artifact:")
+	assert.NotContains(t, delegateNote(&report, false), "artifact:")
 }

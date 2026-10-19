@@ -3,8 +3,11 @@ package agentruntime
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"strings"
 	"testing"
+
+	"github.com/bytedance/sonic"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
@@ -21,15 +24,21 @@ import (
 type delegateRecorder struct {
 	*localEffects
 
-	run    DelegateRun
-	calls  []DelegateCall
-	events []kernelports.StreamEvent
+	run     DelegateRun
+	calls   []DelegateCall
+	batches []int
+	events  []kernelports.StreamEvent
 }
 
-func (fx *delegateRecorder) Delegate(_ *Turn, call DelegateCall) DelegateRun {
-	fx.calls = append(fx.calls, call)
+func (fx *delegateRecorder) Delegate(_ *Turn, calls []DelegateCall) []DelegateRun {
+	fx.batches = append(fx.batches, len(calls))
+	runs := make([]DelegateRun, 0, len(calls))
+	for _, call := range calls {
+		fx.calls = append(fx.calls, call)
+		runs = append(runs, fx.run)
+	}
 
-	return fx.run
+	return runs
 }
 
 func (fx *delegateRecorder) Emit(event kernelports.StreamEvent) {
@@ -360,9 +369,9 @@ func TestDelegate_CapsTheTasksOneTurnHandsOut(t *testing.T) {
 	assert.Len(t, result.Delegations, maxDelegationsPerTurn)
 }
 
-// A delegate that ended partway is a failed call, but what it made is still
-// named, and nothing says the rest did not happen: it is unconfirmed.
-func TestDelegate_AFailedDelegateKeepsWhatItMadeAndDeniesNothing(t *testing.T) {
+// A lookup that ended partway is a failed call that changed nothing, and the
+// delegating model is told to work from what it did read.
+func TestDelegate_AFailedLookupIsAFailedCallThatChangedNothing(t *testing.T) {
 	t.Parallel()
 
 	delegate := reportBuilder()
@@ -379,9 +388,8 @@ func TestDelegate_AFailedDelegateKeepsWhatItMadeAndDeniesNothing(t *testing.T) {
 
 	answer := result.Messages[7]
 	assert.True(t, answer.ToolFailed)
-	assert.Contains(t, answer.Content, "rd_123")
-	assert.Contains(t, answer.Content, "unconfirmed")
-	assert.NotContains(t, answer.Content, "did not happen")
+	assert.Contains(t, answer.Content, "changed nothing")
+	assert.Contains(t, answer.Content, "findings")
 	require.Len(t, result.Delegations, 1)
 	assert.True(t, result.Delegations[0].Failed)
 }
@@ -478,23 +486,6 @@ func TestStepKey_ScopeSeparatesADelegatesStepsAndLeavesTheOwnersAlone(t *testing
 	assert.NotEqual(t, scoped, other)
 }
 
-// find_tools that finds nothing the turn can call points at an agent it may
-// ask that holds what matched, rather than at an administrator.
-func TestDelegatedSearchNote_NamesTheAgentThatHoldsIt(t *testing.T) {
-	t.Parallel()
-
-	delegate := reportBuilder()
-	note := delegatedSearchNote(
-		[]agentdefinition.RuntimeDelegate{delegate},
-		[]string{"create_report", "invoice_list"},
-	)
-
-	assert.Contains(t, note, "Report Builder (agentId "+delegate.ID.String()+"): create_report")
-	assert.NotContains(t, note, "invoice_list")
-	assert.Contains(t, note, delegateTaskName)
-	assert.Empty(t, delegatedSearchNote(nil, []string{"create_report"}))
-}
-
 // The saved account is bounded, while the delegating model reads the whole
 // answer: a long reply is cut with an ellipsis on the message only.
 func TestDelegate_TheSavedAccountIsBoundedAndTheModelReadsItWhole(t *testing.T) {
@@ -517,4 +508,144 @@ func TestDelegate_TheSavedAccountIsBoundedAndTheModelReadsItWhole(t *testing.T) 
 	require.NotNil(t, answer.DelegateReport)
 	assert.True(t, strings.HasSuffix(answer.DelegateReport.Reply, "…"))
 	assert.Less(t, len(answer.DelegateReport.Reply), len(run.Result.Reply))
+}
+
+func TestDelegate_SeveralLookupsInOneReplyRunTogether(t *testing.T) {
+	t.Parallel()
+
+	billing, compliance := reportBuilder(), reportBuilder()
+	compliance.Name = "Compliance desk"
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+		{
+			ModelIdentifier: "test-model",
+			ToolCalls: []agentports.ToolCall{
+				{ID: "call_a", Name: delegateTaskName, Arguments: map[string]any{
+					"agentId": billing.ID.String(), "task": "Which invoices are overdue?",
+				}},
+				{ID: "call_b", Name: delegateTaskName, Arguments: map[string]any{
+					"agentId": compliance.ID.String(), "task": "Which medical cards lapse?",
+				}},
+			},
+		},
+		textTurn("Both are listed."),
+	}}
+	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
+	fx := &delegateRecorder{run: DelegateRun{
+		Definition: &agentdefinition.Definition{ID: billing.ID, Name: billing.Name},
+		Result:     &agentports.RunResult{Reply: "Found them."},
+	}}
+
+	result := driveWith(t, rt, delegatingRequest(billing, compliance), fx)
+
+	assert.Equal(t, []int{2}, fx.batches, "both tasks are handed out at once")
+	require.Len(t, result.Delegations, 2)
+	assert.Equal(t, "call_a", result.Delegations[0].CallID)
+	assert.Equal(t, "call_b", result.Delegations[1].CallID)
+	started := 0
+	for _, name := range fx.eventNames() {
+		if name == agentports.AssistantEventToolStarted {
+			started++
+		}
+	}
+	assert.Equal(t, 2, started, "each call is announced once")
+}
+
+func TestDelegate_OneLookupInAReplyRunsOnItsOwn(t *testing.T) {
+	t.Parallel()
+
+	delegate := reportBuilder()
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+		delegateTurn(delegate.ID, "Which invoices are overdue?"),
+		textTurn("Listed."),
+	}}
+	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
+	fx := &delegateRecorder{run: scriptedDelegateRun(delegate)}
+
+	driveWith(t, rt, delegatingRequest(delegate), fx)
+
+	assert.Equal(t, []int{1}, fx.batches)
+}
+
+func TestDelegateReport_HandsBackWhatTheLookupsReadWordForWord(t *testing.T) {
+	t.Parallel()
+
+	delegate := reportBuilder()
+	read := `{"invoices":[{"number":"INV-104","daysOverdue":12}]}`
+	run := DelegateRun{
+		Definition: &agentdefinition.Definition{ID: delegate.ID, Name: delegate.Name},
+		Result: &agentports.RunResult{
+			Reply: "One invoice is overdue.",
+			Messages: []conversation.Message{
+				{Role: conversation.RoleTool, ToolCallID: "call_d1", ToolName: "invoice_list",
+					Content: FenceToolResult("invoice_list", read)},
+				{Role: conversation.RoleTool, ToolCallID: "call_d2", ToolName: "invoice_list",
+					Content: "Tool failed.", ToolFailed: true},
+				{Role: conversation.RoleTool, ToolCallID: "call_d3", ToolName: findToolsName,
+					Content: FenceToolResult(findToolsName, "These tools are now callable")},
+			},
+		},
+	}
+
+	report := delegateReport(delegate, "call_1", run)
+
+	require.Len(t, report.Findings, 1)
+	assert.Equal(t, "invoice_list", report.Findings[0].ToolName)
+	assert.Equal(t, "call_d1", report.Findings[0].CallID)
+	assert.Equal(t, read, report.Findings[0].Content)
+	assert.Equal(t, "One invoice is overdue.", report.Reply)
+
+	outcome := delegateOutcome(&report, true)
+	assert.Contains(t, outcome.content, "INV-104")
+	assert.Contains(t, outcome.content, "changed nothing")
+}
+
+func TestDelegateOutcome_KeepsTheReportWholeWithinOneToolResult(t *testing.T) {
+	t.Parallel()
+
+	report := conversation.DelegateReport{
+		AgentName: "Billing helper",
+		Status:    agentports.DelegateStatusCompleted,
+		Reply:     strings.Repeat("r", 1900),
+	}
+	for idx := range 6 {
+		report.Findings = append(report.Findings, conversation.DelegateFinding{
+			ToolName: "invoice_list",
+			CallID:   fmt.Sprintf("call_%d", idx),
+			Content:  `{"rows":["` + strings.Repeat("\"", 900) + `"]}`,
+		})
+	}
+
+	outcome := delegateOutcome(&report, true)
+
+	_, payload, fenced := UnfenceToolResult(outcome.content[:strings.Index(outcome.content, "\n\n[")])
+	require.True(t, fenced)
+	assert.LessOrEqual(t, len(payload), maxToolResultChars)
+	assert.True(t, sonic.ValidString(payload), "the report is never cut mid-document")
+	assert.NotContains(t, payload, "was cut off")
+	assert.Positive(t, report.MoreFindings, "every finding left out is counted")
+	assert.Equal(t, 6, len(report.Findings)+report.MoreFindings)
+	assert.Contains(t, outcome.content, "were left out of findings")
+}
+
+func TestDelegateReport_CountsFindingsPastWhatOneAnswerCarries(t *testing.T) {
+	t.Parallel()
+
+	delegate := reportBuilder()
+	messages := make([]conversation.Message, 0, 8)
+	for idx := range 8 {
+		messages = append(messages, conversation.Message{
+			Role:       conversation.RoleTool,
+			ToolCallID: fmt.Sprintf("call_%d", idx),
+			ToolName:   "invoice_list",
+			Content:    FenceToolResult("invoice_list", strings.Repeat("x", 3<<10)),
+		})
+	}
+	run := DelegateRun{Result: &agentports.RunResult{Messages: messages}}
+
+	report := delegateReport(delegate, "call_1", run)
+
+	assert.Len(t, report.Findings, 3)
+	assert.Equal(t, 5, report.MoreFindings)
+	assert.Contains(t, delegateNote(&report, true), "were left out of findings")
+	assert.LessOrEqual(t, len(report.Bounded().Findings[0].Content), 2000)
 }

@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -834,7 +835,7 @@ func weakMatchRuntime(t *testing.T) *Service {
 	}
 }
 
-func TestResolveFind_PointsAtADelegateWhenTheBestNewMatchIsWeak(t *testing.T) {
+func TestResolveFind_ReachesTheToolsOfThePersonsOtherAgentsWhenItsOwnMatchWeakly(t *testing.T) {
 	t.Parallel()
 
 	service := weakMatchRuntime(t)
@@ -842,10 +843,55 @@ func TestResolveFind_PointsAtADelegateWhenTheBestNewMatchIsWeak(t *testing.T) {
 	for idx := range disclosureThreshold + 1 {
 		held = append(held, fmt.Sprintf("list_filler_%02d", idx))
 	}
-	delegate := agentdefinition.RuntimeDelegate{
-		ID:    pulid.MustNew("agdef_"),
-		Name:  "Master Data",
-		Tools: []string{"search_commodities"},
+	set := service.newToolSet(
+		t.Context(),
+		toolSetRequest{
+			definition: testDefinition(held...),
+			actor:      testActor(),
+			input:      "hello",
+			beyond:     map[string]agent.AutonomyTier{"search_commodities": agent.TierAutoExecute},
+		},
+	)
+	require.True(t, set.disclosed)
+	require.NotContains(t, specNames(set.specs), "search_commodities")
+
+	answer := findContent(t, service, set, map[string]any{"need": "commodity"})
+
+	assert.Contains(t, answer, "shipment_list", "the weak match still loads")
+	assert.Contains(t, answer, beyondLead)
+	assert.Contains(t, answer, "search_commodities")
+	assert.Contains(t, specNames(set.specs), "search_commodities")
+}
+
+func TestResolveFind_ReachesBeyondOnATurnThatHoldsFewTools(t *testing.T) {
+	t.Parallel()
+
+	service := weakMatchRuntime(t)
+	set := service.newToolSet(
+		t.Context(),
+		toolSetRequest{
+			definition: testDefinition("shipment_list"),
+			actor:      testActor(),
+			input:      "hello",
+			beyond:     map[string]agent.AutonomyTier{"search_commodities": agent.TierAutoExecute},
+		},
+	)
+	require.False(t, set.disclosed)
+	require.Contains(t, specNames(set.specs), findToolsName)
+
+	answer := findContent(t, service, set, map[string]any{"need": "commodity"})
+
+	assert.Contains(t, answer, "search_commodities")
+	assert.Contains(t, specNames(set.specs), "search_commodities")
+}
+
+func TestResolveFind_NeverReachesWhatAStrongOwnMatchCovers(t *testing.T) {
+	t.Parallel()
+
+	service := weakMatchRuntime(t)
+	held := []string{"search_commodities"}
+	for idx := range disclosureThreshold + 1 {
+		held = append(held, fmt.Sprintf("list_filler_%02d", idx))
 	}
 	set := service.newToolSet(
 		t.Context(),
@@ -853,18 +899,15 @@ func TestResolveFind_PointsAtADelegateWhenTheBestNewMatchIsWeak(t *testing.T) {
 			definition: testDefinition(held...),
 			actor:      testActor(),
 			input:      "hello",
-			delegates:  []agentdefinition.RuntimeDelegate{delegate},
+			beyond:     map[string]agent.AutonomyTier{"shipment_list": agent.TierAutoExecute},
 		},
 	)
-	require.True(t, set.disclosed)
-	require.NotContains(t, specNames(set.specs), "shipment_list",
-		"the fixture depends on the shipments list not being preselected")
 
 	answer := findContent(t, service, set, map[string]any{"need": "commodity"})
 
-	assert.Contains(t, answer, "shipment_list", "the weak match still loads")
-	assert.Contains(t, answer, "Master Data (agentId "+delegate.ID.String()+"): search_commodities")
-	assert.Contains(t, answer, delegateTaskName)
+	assert.Contains(t, answer, "search_commodities")
+	assert.NotContains(t, answer, beyondLead)
+	assert.NotContains(t, specNames(set.specs), "shipment_list")
 }
 
 func TestResolveFind_AStrongNewMatchNeedsNoDelegate(t *testing.T) {

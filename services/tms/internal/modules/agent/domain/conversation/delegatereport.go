@@ -20,6 +20,8 @@ const (
 	maxReportDocuments   = 10
 	maxWriteSummaryRunes = 200
 	maxWriteErrorRunes   = 500
+	maxReportFindings    = 10
+	maxFindingRunes      = 400
 )
 
 // DelegateStatus is how a task handed to another agent ended.
@@ -67,9 +69,17 @@ type DelegateReport struct {
 	// MoreMade, MoreAwaiting and MorePublished count what a bounded account
 	// left out of each list, so a reader can say there was more rather than
 	// imply the list is whole.
-	MoreMade      int `json:"moreMade,omitempty"`
-	MoreAwaiting  int `json:"moreAwaiting,omitempty"`
-	MorePublished int `json:"morePublished,omitempty"`
+	MoreMade      int               `json:"moreMade,omitempty"`
+	MoreAwaiting  int               `json:"moreAwaiting,omitempty"`
+	MorePublished int               `json:"morePublished,omitempty"`
+	Findings      []DelegateFinding `json:"findings"`
+	MoreFindings  int               `json:"moreFindings,omitempty"`
+}
+
+type DelegateFinding struct {
+	ToolName string `json:"toolName"`
+	CallID   string `json:"callId"`
+	Content  string `json:"content"`
 }
 
 // DelegateWrite is one write another agent made or proposed on a task.
@@ -123,6 +133,7 @@ func (r *DelegateReport) Bounded() *DelegateReport {
 	bounded.Made, bounded.MoreMade = boundedWrites(r.Made, r.MoreMade)
 	bounded.Awaiting, bounded.MoreAwaiting = boundedWrites(r.Awaiting, r.MoreAwaiting)
 	bounded.Published, bounded.MorePublished = boundedDocuments(r.Published, r.MorePublished)
+	bounded.Findings, bounded.MoreFindings = boundedFindings(r.Findings, r.MoreFindings)
 
 	return bounded
 }
@@ -163,4 +174,22 @@ func boundedDocuments(documents []DelegateDocument, more int) ([]DelegateDocumen
 	}
 
 	return out, max(more, 0) + len(documents) - kept
+}
+
+func boundedFindings(
+	findings []DelegateFinding,
+	more int,
+) (out []DelegateFinding, left int) {
+	kept := min(len(findings), maxReportFindings)
+	out = make([]DelegateFinding, 0, kept)
+	for idx := range kept {
+		finding := &findings[idx]
+		out = append(out, DelegateFinding{
+			ToolName: stringutils.OneLine(finding.ToolName, maxReportNameRunes),
+			CallID:   stringutils.TruncateRunes(finding.CallID, maxReportIDRunes),
+			Content:  stringutils.Ellipsize(finding.Content, maxFindingRunes),
+		})
+	}
+
+	return out, max(more, 0) + len(findings) - kept
 }

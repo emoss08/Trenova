@@ -329,28 +329,57 @@ func (fx *workflowEffects) NewCallID() string {
 	return id
 }
 
-// Delegate opens another agent's turn on the task, in an activity, and drives
-// it here, in this workflow, with the same effects: each of its model and tool
-// calls is an activity of this execution, its events reach this run's reader
-// tagged with the task, and a stop that cancels this run cancels them too.
+// Delegate opens each other agent's turn on its task, in an activity, and
+// drives it here, in this workflow, with the same effects: each of its model
+// and tool calls is an activity of this execution, its events reach this run's
+// reader tagged with the task, and a stop that cancels this run cancels them
+// too. Several tasks run side by side, each in its own coroutine, and what they
+// kept is folded in in the order the calls were made.
 func (fx *workflowEffects) Delegate(
 	_ *agentruntime.Turn,
-	call agentruntime.DelegateCall,
-) agentruntime.DelegateRun {
+	calls []agentruntime.DelegateCall,
+) []agentruntime.DelegateRun {
+	runs := make([]agentruntime.DelegateRun, len(calls))
+	outcomes := make([]Outcome, len(calls))
+	if len(calls) == 1 {
+		runs[0], outcomes[0] = fx.delegate(fx.ctx, &calls[0])
+	} else {
+		wg := workflow.NewWaitGroup(fx.ctx)
+		for idx := range calls {
+			wg.Add(1)
+			workflow.Go(fx.ctx, func(ctx workflow.Context) {
+				defer wg.Done()
+				runs[idx], outcomes[idx] = fx.delegate(ctx, &calls[idx])
+			})
+		}
+		wg.Wait(fx.ctx)
+	}
+	for idx := range outcomes {
+		fx.outcome.Artifacts = append(fx.outcome.Artifacts, outcomes[idx].Artifacts...)
+		fx.outcome.Events = append(fx.outcome.Events, outcomes[idx].Events...)
+	}
+
+	return runs
+}
+
+func (fx *workflowEffects) delegate(
+	ctx workflow.Context,
+	call *agentruntime.DelegateCall,
+) (agentruntime.DelegateRun, Outcome) {
 	var a *Activities
-	ctx := workflow.WithActivityOptions(fx.ctx, fx.openDelegateOptions(call.Delegate.Name))
+	openCtx := workflow.WithActivityOptions(ctx, fx.openDelegateOptions(call.Delegate.Name))
 
 	var opened DelegateOpening
-	err := workflow.ExecuteActivity(ctx, a.OpenDelegateActivity, &OpenDelegateInput{
+	err := workflow.ExecuteActivity(openCtx, a.OpenDelegateActivity, &OpenDelegateInput{
 		Run:  fx.run,
-		Call: call,
-	}).Get(ctx, &opened)
+		Call: *call,
+	}).Get(openCtx, &opened)
 	if err != nil {
-		return declinedDelegate(call, err)
+		return declinedDelegate(*call, err), Outcome{}
 	}
 
 	sub := &workflowEffects{
-		ctx:     fx.ctx,
+		ctx:     ctx,
 		runtime: fx.runtime,
 		run:     opened.Run,
 		events:  fx.events,
@@ -359,9 +388,6 @@ func (fx *workflowEffects) Delegate(
 	turn.ReserveCallIDs(call.CallIDs)
 	turn.CarryExternalContent(call.AfterExternalContent)
 	result, err := fx.runtime.Drive(turn, sub)
-
-	fx.outcome.Artifacts = append(fx.outcome.Artifacts, sub.outcome.Artifacts...)
-	fx.outcome.Events = append(fx.outcome.Events, sub.outcome.Events...)
 
 	run := agentruntime.DelegateRun{
 		Definition:      opened.Run.Definition,
@@ -377,7 +403,7 @@ func (fx *workflowEffects) Delegate(
 		}
 	}
 
-	return run
+	return run, sub.outcome
 }
 
 // declinedDelegate is a task whose agent's turn could not be opened. A

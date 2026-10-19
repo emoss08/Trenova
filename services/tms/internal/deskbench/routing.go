@@ -134,19 +134,21 @@ func loadRoutingFile(file string) ([]*RoutingCase, error) {
 }
 
 type RoutingResult struct {
-	Case     string   `json:"case"`
-	Ask      string   `json:"ask"`
-	From     string   `json:"from"`
-	About    []string `json:"about,omitempty"`
-	Expect   string   `json:"expect"`
-	Outcome  string   `json:"outcome"`
-	Agent    string   `json:"agent,omitempty"`
-	Delegate string   `json:"delegate,omitempty"`
-	Tools    []string `json:"tools,omitempty"`
-	Passed   bool     `json:"passed"`
-	Note     string   `json:"note,omitempty"`
-	Error    string   `json:"error,omitempty"`
-	Millis   int64    `json:"millis"`
+	Case            string   `json:"case"`
+	Ask             string   `json:"ask"`
+	From            string   `json:"from"`
+	About           []string `json:"about,omitempty"`
+	Expect          string   `json:"expect"`
+	Outcome         string   `json:"outcome"`
+	Agent           string   `json:"agent,omitempty"`
+	Delegate        string   `json:"delegate,omitempty"`
+	Tools           []string `json:"tools,omitempty"`
+	ExpectedProfile string   `json:"expectedProfile,omitempty"`
+	SelectedProfile string   `json:"selectedProfile,omitempty"`
+	Passed          bool     `json:"passed"`
+	Note            string   `json:"note,omitempty"`
+	Error           string   `json:"error,omitempty"`
+	Millis          int64    `json:"millis"`
 }
 
 func (r *RoutingResult) Got() string {
@@ -221,6 +223,8 @@ func (b *Bench) routeOne(
 	from, err := session.Agent(ctx, routing.From)
 	if err != nil {
 		result.Error = err.Error()
+		result.ExpectedProfile = ExpectedProfile(routing.Expect, nil)
+		result.SelectedProfile = profileError
 		return result
 	}
 	result.From = from.Name
@@ -233,6 +237,8 @@ func (b *Bench) routeOne(
 	})
 	if err != nil {
 		result.Error = err.Error()
+		result.ExpectedProfile = ExpectedProfile(routing.Expect, from)
+		result.SelectedProfile = profileError
 		return result
 	}
 
@@ -247,6 +253,11 @@ func (b *Bench) routeOne(
 		result.Tools = append(result.Tools, tool.Name)
 	}
 	result.Passed = RoutingPasses(routing.Expect, from, found)
+	result.SelectedProfile = SelectedProfile(from, found)
+	result.ExpectedProfile = ExpectedProfile(routing.Expect, from)
+	if result.Passed {
+		result.ExpectedProfile = result.SelectedProfile
+	}
 	if !result.Passed {
 		if agents, listErr := session.Agents(ctx); listErr == nil {
 			result.Note = UnreachableExpectation(routing.Expect, agents)
@@ -254,6 +265,53 @@ func (b *Bench) routeOne(
 	}
 
 	return result
+}
+
+const profileError = "error"
+
+func profileOf(definition *agentdefinition.Definition) string {
+	switch {
+	case definition == nil:
+		return RoutingExpectNone
+	case definition.Template != "":
+		return string(definition.Template)
+	default:
+		return definition.Name
+	}
+}
+
+func SelectedProfile(from *agentdefinition.Definition, found *agentports.AgentMatch) string {
+	if found == nil {
+		return profileError
+	}
+	switch found.Outcome {
+	case agentsuggestion.MatchBetterAgent:
+		return profileOf(found.Agent)
+	case agentsuggestion.MatchCurrentAgent:
+		return profileOf(from)
+	case agentsuggestion.MatchNoAgent:
+		return RoutingExpectNone
+	case agentsuggestion.MatchNone:
+		return RoutingExpectNothing
+	}
+
+	return profileError
+}
+
+func ExpectedProfile(expect string, from *agentdefinition.Definition) string {
+	first, _, _ := strings.Cut(expect, "|")
+	first = strings.TrimSpace(first)
+	switch strings.ToLower(first) {
+	case RoutingExpectCurrent:
+		if from == nil {
+			return RoutingExpectCurrent
+		}
+		return profileOf(from)
+	case RoutingExpectNone, RoutingExpectNothing:
+		return strings.ToLower(first)
+	}
+
+	return first
 }
 
 func UnreachableExpectation(expect string, agents []*agentdefinition.Definition) string {
@@ -346,6 +404,7 @@ type RoutingReport struct {
 	Passed    int              `json:"passed"`
 	Total     int              `json:"total"`
 	Cases     []*RoutingResult `json:"cases"`
+	Profiles  ProfileConfusion `json:"profiles"`
 }
 
 func BuildRoutingReport(
@@ -369,6 +428,57 @@ func BuildRoutingReport(
 	return report
 }
 
+type ProfileConfusion struct {
+	Profiles []string                  `json:"profiles"`
+	Counts   map[string]map[string]int `json:"counts"`
+}
+
+func (r *RoutingReport) Confusion() ProfileConfusion {
+	confusion := ProfileConfusion{Counts: make(map[string]map[string]int, 8)}
+	seen := make(map[string]struct{}, 8)
+	for _, result := range r.Cases {
+		expected, selected := result.ExpectedProfile, result.SelectedProfile
+		if expected == "" || selected == "" {
+			continue
+		}
+		row, ok := confusion.Counts[expected]
+		if !ok {
+			row = make(map[string]int, 4)
+			confusion.Counts[expected] = row
+		}
+		row[selected]++
+		seen[expected], seen[selected] = struct{}{}, struct{}{}
+	}
+	for profile := range seen {
+		confusion.Profiles = append(confusion.Profiles, profile)
+	}
+	slices.Sort(confusion.Profiles)
+
+	return confusion
+}
+
+func (c ProfileConfusion) Recall(profile string) (share float64, total int) {
+	for _, count := range c.Counts[profile] {
+		total += count
+	}
+	if total == 0 {
+		return 0, 0
+	}
+
+	return float64(c.Counts[profile][profile]) / float64(total), total
+}
+
+func (c ProfileConfusion) Precision(profile string) (share float64, total int) {
+	for _, row := range c.Counts {
+		total += row[profile]
+	}
+	if total == 0 {
+		return 0, 0
+	}
+
+	return float64(c.Counts[profile][profile]) / float64(total), total
+}
+
 func (r *RoutingReport) Accuracy() float64 {
 	if r == nil || r.Total == 0 {
 		return 0
@@ -381,6 +491,7 @@ func (r *RoutingReport) Write(dir string, baseline *RoutingReport) error {
 	if err := os.MkdirAll(dir, dirMode); err != nil {
 		return fmt.Errorf("create %s: %w", dir, err)
 	}
+	r.Profiles = r.Confusion()
 	encoded, err := reportJSON.MarshalIndent(r, "", "  ")
 	if err != nil {
 		return fmt.Errorf("encode the routing report: %w", err)
@@ -451,6 +562,8 @@ func RenderRouting(r, baseline *RoutingReport) string {
 		}
 	}
 
+	out.WriteString(renderConfusion(r.Confusion()))
+
 	out.WriteString("\n| Case | Asked from | Expected | Got | Tools |\n|---|---|---|---|---|\n")
 	for _, result := range r.Cases {
 		mark := "✓"
@@ -473,6 +586,55 @@ func RenderRouting(r, baseline *RoutingReport) string {
 			markdownCell(strings.Join(result.Tools, ", ")),
 		)
 	}
+
+	return out.String()
+}
+
+func renderConfusion(confusion ProfileConfusion) string {
+	if len(confusion.Profiles) == 0 {
+		return ""
+	}
+
+	var out strings.Builder
+	out.WriteString("\n## Profile selection\n\nRows are the profile a case expected, columns " +
+		"the one the match left it with; the diagonal is right.\n\n| Expected \\ Selected |")
+	for _, profile := range confusion.Profiles {
+		fmt.Fprintf(&out, " %s |", markdownCell(profile))
+	}
+	out.WriteString(" Recall |\n|---|")
+	for range confusion.Profiles {
+		out.WriteString("---|")
+	}
+	out.WriteString("---|\n")
+	for _, expected := range confusion.Profiles {
+		recall, total := confusion.Recall(expected)
+		if total == 0 {
+			continue
+		}
+		fmt.Fprintf(&out, "| %s |", markdownCell(expected))
+		for _, selected := range confusion.Profiles {
+			count := confusion.Counts[expected][selected]
+			switch {
+			case count == 0:
+				out.WriteString(" · |")
+			case expected == selected:
+				fmt.Fprintf(&out, " **%d** |", count)
+			default:
+				fmt.Fprintf(&out, " %d |", count)
+			}
+		}
+		fmt.Fprintf(&out, " %.0f%% of %d |\n", recall*100, total)
+	}
+	out.WriteString("| Precision |")
+	for _, selected := range confusion.Profiles {
+		precision, total := confusion.Precision(selected)
+		if total == 0 {
+			out.WriteString(" · |")
+			continue
+		}
+		fmt.Fprintf(&out, " %.0f%% |", precision*100)
+	}
+	out.WriteString(" |\n")
 
 	return out.String()
 }

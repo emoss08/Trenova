@@ -142,6 +142,7 @@ type ToolSummary struct {
 	Description string
 	Tier        agent.AutonomyTier
 	Query       bool
+	Lookup      bool
 	// Loaded says the tool's schema is on this turn's request. Meaningful
 	// only when the turn disclosed a subset; the rest load through find_tools.
 	Loaded bool
@@ -210,6 +211,7 @@ type RuntimeContext struct {
 	// the alternative is a model that reads a short tool list as the limit of
 	// what the system can do and tells the person it is not possible.
 	ToolsDisclosed bool
+	ReachesBeyond  bool
 	// PendingProposals are the writes earlier turns proposed that the person
 	// has not decided yet. The model is told so it points them at the card
 	// rather than proposing the same change again.
@@ -236,6 +238,7 @@ type RuntimeContext struct {
 	// DelegatedBy names the agent that handed this turn its task, when it is
 	// working for another agent rather than for the person directly.
 	DelegatedBy string
+	LooksUpOnly bool
 	Anchors     []RuntimeAnchor
 	// OrganizationProfile is what the organization's records and its people's
 	// guidance say about the business, written up each night. It is the same
@@ -347,8 +350,8 @@ func (d *Definition) BuildSystemPromptParts(rc *RuntimeContext) SystemPrompt {
 	// the eight as the limit of what the system does. Which eight follows
 	// the question, so a disclosed list belongs to the turn.
 	var disclosedTools string
-	if d.HasContextProvider(ContextTools) || rc.ToolsDisclosed {
-		tools := buildToolSection(rc.Tools, rc.ToolsDisclosed)
+	if d.HasContextProvider(ContextTools) || rc.ToolsDisclosed || rc.ReachesBeyond {
+		tools := buildToolSection(rc.Tools, rc.ToolsDisclosed, rc.ReachesBeyond)
 		if rc.ToolsDisclosed {
 			disclosedTools = tools
 		} else {
@@ -366,7 +369,9 @@ func (d *Definition) BuildSystemPromptParts(rc *RuntimeContext) SystemPrompt {
 		section(&stable, guideSection)
 	}
 
-	if delegator := strings.TrimSpace(rc.DelegatedBy); delegator != "" {
+	if delegator := strings.TrimSpace(rc.DelegatedBy); delegator != "" && rc.LooksUpOnly {
+		section(&stable, buildLookupOutputSection(delegator))
+	} else if delegator != "" {
 		section(&stable, buildDelegatedOutputSection(delegator))
 	} else {
 		section(&stable, d.buildOutputSection(rc.Inline))
@@ -421,17 +426,15 @@ func buildDelegateSection(delegates []RuntimeDelegate) string {
 	var builder strings.Builder
 	builder.WriteString("## Agents you can ask\n")
 	builder.WriteString(
-		"When the person asks for something your own tools cannot do and one of these " +
-			"agents holds the tools for it, hand it the task with delegate_task. It works on " +
-			"its own, with its own tools and approvals, as the same person, and cannot see " +
-			"this conversation: put everything it needs in the task, hand over the records " +
+		"These agents look things up for you. When answering needs lookups one of them " +
+			"holds the tools for, or several independent lookups that can run side by side, " +
+			"hand each to an agent with delegate_task; several calls in one reply run at the " +
+			"same time. Each works as the same person, only reads, changes nothing and cannot " +
+			"see this conversation: put everything it needs in the task, hand over the records " +
 			"the task is about in records by their kind and id and the results of your own " +
-			"calls it should work from in shareResults, and say what to hand back. Ask for a " +
-			"record to be made with a tool, never described in words: to copy one, ask for it " +
-			"to be copied with shipment_duplicate or the tool that copies it. One task per " +
-			"call, and only when your own tools cannot do the job. Then tell the person " +
-			"plainly what the other agent did and what still waits on them on its card; a " +
-			"waiting proposal's proposalId is for request_decision, not for the person.\n",
+			"calls it should work from in shareResults, and say what to hand back. You get " +
+			"back its answer and every result it read, word for word, so work from those " +
+			"rather than asking again. Every change is yours to make with your own tools.\n",
 	)
 	builder.WriteString(delegatesOpenTag)
 	for _, delegate := range delegates {
@@ -485,6 +488,18 @@ func buildDelegatedOutputSection(delegator string) string {
 		"up a list or a record, point to the table or card your tool result names rather " +
 		"than listing its rows. Never claim a change you did not make through a tool, and " +
 		"never hand another agent the task."
+}
+
+func buildLookupOutputSection(delegator string) string {
+	return "## Output\nThe agent " + delegator + " handed you this lookup on behalf of the " +
+		"person it is talking to. You act as that person, and you hold only tools that read: " +
+		"you change nothing. Nobody reads your reply but that agent, which is also handed " +
+		"every tool result you read, word for word, and you cannot ask the person anything, " +
+		"so do the task with what you have. Open each record handed over with the task by " +
+		"its id with your own tools. Finish with a short plain answer: what you found, each " +
+		"record by its number or name with its id, and what you could not find and why. Do " +
+		"not copy out rows a tool returned, since the agent has them, and never state a " +
+		"figure no tool returned."
 }
 
 // artifactSection tells the model what the person already sees. Without it a
@@ -1092,7 +1107,11 @@ func describeMentions(mentions []RuntimeMention) string {
 const toolsDecidedPerCall = "Changes that run at once or are recorded as a proposal " +
 	"depending on what the call would reach; the result says which and why"
 
-func buildToolSection(tools []ToolSummary, disclosed bool) string {
+const beyondToolsNote = " find_tools also reaches the tools of the person's other agents: " +
+	"when none of yours does the job, ask it in a few words and what it loads is yours to " +
+	"call, under the approvals those agents run it with."
+
+func buildToolSection(tools []ToolSummary, disclosed, beyond bool) string {
 	if len(tools) == 0 {
 		return ""
 	}
@@ -1115,6 +1134,9 @@ func buildToolSection(tools []ToolSummary, disclosed bool) string {
 				"you do not have, and never tell the person something is impossible " +
 				"without searching for it first.",
 		)
+		if beyond {
+			builder.WriteString(beyondToolsNote)
+		}
 		builder.WriteString("\n\nLoaded now:")
 		for _, tool := range tools {
 			if tool.Loaded {
@@ -1151,10 +1173,15 @@ func buildToolSection(tools []ToolSummary, disclosed bool) string {
 
 	// The schemas on the request already carry every description, so the
 	// section says only what the schema cannot: what a call does.
-	builder.WriteString(
-		"The tools on this request are the only ones you have; each one's description " +
-			"says what it does and what it takes. What a call does:",
-	)
+	if beyond {
+		builder.WriteString("The tools on this request are your own; each one's description " +
+			"says what it does and what it takes." + beyondToolsNote + " What a call does:")
+	} else {
+		builder.WriteString(
+			"The tools on this request are the only ones you have; each one's description " +
+				"says what it does and what it takes. What a call does:",
+		)
+	}
 	reads := make([]string, 0, len(tools))
 	for _, tool := range tools {
 		if tool.Query {

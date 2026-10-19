@@ -906,6 +906,80 @@ A nil taint is a turn opened before the release. It counts as tainted for every
 class that leaves the organization and for a declared taint hold, which is the
 safe reading; money tools and `remember`'s Instruction and Correction notice. A delegate opened for such a turn inherits the nil.
 
+## Job profiles in one runtime
+
+Desk is one runtime. An agent definition is a **job profile**: the unit people
+relate to (a job description and the work a person in that job would do) and
+the unit of permissions, autonomy, budget, schedule and events. What the model
+is shown is built from the profile by the same code on every surface, and what
+differs between a person's conversation, an unattended run and a task handed to
+another agent is the profile's **mode**, worked out once when the turn opens
+(`agentruntime.profileFor`, `profile.go`):
+
+| Mode | When | Holds | Reaches |
+|---|---|---|---|
+| `conversation` | A person is in a Desk or panel conversation | The definition's tools, core tools, `delegate_task` when it may delegate | Every tool the person's other agents hold (below) |
+| `unattended` | An event, schedule, continuous pass or ended wait started the run | The definition's tools, no conversational tools, no self-scoped tools | Nothing: an unattended run's profile is decided by its trigger |
+| `fan_out` | A lookup another agent handed out (`Delegation.ReadOnly`) | Only the tools it holds whose effect is `lookup` | Nothing |
+| `delegated` | A task the person directed to another agent | The delegate's tools, without `open_page` | Nothing |
+
+`open_page` is held only by the turn the person is in, `raise_exception` only by
+a run, and `guide_profile` only by a conversation with a person; the mode
+decides each (`profileHolds`). The mode travels on `TurnState.Mode`, so a turn
+restored in workflow code is the same profile it was opened as.
+
+### Discovery across desks
+
+Picking an agent is a soft default. A conversation turn reaches the tools the
+person's other enabled chat agents hold (`beyondFor`: `OtherUsableAgents`, then
+each one's `heldTools`), less the core tools, its own, and anything its own
+definition switched off. The palette (inline) and a turn without a thread reach
+nothing beyond. Each reached tool carries a ceiling: the most permissive static
+tier any holding agent would run it at (`agenttoolpolicy.StaticTier` over that
+agent's ceiling and tool tiers; a read is `AutoExecute`). So a Dispatch
+conversation asked to "bill it and email the customer" finds the billing tools
+without a hand-off, and they run no higher than the Billing assistant would run
+them, and no higher than the Dispatch agent's own ceiling either.
+
+- **Held, not shown.** Reached tools are narrowed to the person's permissions
+  and the organization's extensions like any other (`permittedWith`), kept on
+  the tool set (`toolSet.beyond`, `ToolSetState.Beyond`) and on the turn
+  (`Turn.beyond`, `TurnState.Beyond`), and never preselected: the turn opens
+  with its own tools ranked as before.
+- **Found by `find_tools`.** When the turn's own tools match a need only weakly,
+  `find_tools` searches the reached ones too, strong matches only, and loads
+  them under "These come from the desks of the person's other agents"
+  (`reachBeyond`). A turn that holds few enough tools to be sent all of them is
+  still offered `find_tools` when it reaches beyond them.
+- **Decided under the holder's ceiling.** The loop treats a reached tool as
+  held (`Turn.holds`), and each call carries its ceiling
+  (`DispatchCall.Beyond`, from `Turn.beyondTier`) through `DispatchStep` and the
+  ledger to `dispatch`, which runs it only on a conversation turn
+  (`Service.reachable`) and decides it with `DecideInput.HolderCeiling`. A
+  ceiling that holds the call is recorded as `agent_ceiling` in `HeldBy`, the
+  same reason the agent's own ceiling gives, because it is one: the holding
+  agent's. Permission, schema, validator, preview and taint checks are the
+  same as for any call.
+- **Hand-off stays for what nobody reaches.** `find_tools` names another agent
+  only for a tool no agent of the person's holds within reach, as before.
+
+### Delegation is read-only fan-out
+
+`delegate_task` hands lookups to other agents, several at once: every call in
+one reply runs side by side, and each answers with its reply and every result
+it read, word for word (`DelegateReport.Findings`). A delegate's turn is the
+`fan_out` profile; a change is made by the conversation's own turn, through
+what it holds or reaches. See [agent-delegation.md](agent-delegation.md).
+
+### Choosing a profile
+
+Unattended runs choose their profile deterministically: the event or schedule
+starts the definitions that subscribe to it. In chat the person's pick, or the
+Desk's pre-turn match ("Matching a question to an agent" below), chooses it,
+and because the chosen profile reaches the others' tools a near miss costs a
+search, not a hand-off. The routing bench reports the match as a profile
+selection with a confusion matrix ([desk-bench.md](desk-bench.md#routing)).
+
 ## Chat turns
 
 Every assistant question is answered by `AssistantTurnWorkflow`, ID
@@ -1074,14 +1148,16 @@ publishes nothing.
 
 ### Handing a task to another agent
 
-The agent a person is talking to may hand a task to another agent on its
-allowlist with `delegate_task`, naming the records the task is about and sharing
-results of its own calls as data. The other agent's turn runs inline in the same
-`AssistantTurnWorkflow`, through the same `Drive` and effects, as its own agent
-and as the same person; its events reach the same stream tagged with
-`agentId` and `delegateCallId`, its steps are saved to the thread as
-`Delegated` messages the model never reads again, and its writes are recorded as
-its own, in one plan with the turn's when several wait on the person. One level only.
+The agent a person is talking to may hand lookups to other agents on its
+allowlist with `delegate_task`, naming the records each task is about and
+sharing results of its own calls as data; several calls in one reply run side by
+side. Each other agent's turn runs inline in the same `AssistantTurnWorkflow`,
+through the same `Drive` and effects, as the `fan_out` profile of its own agent
+and as the same person: it holds only lookups, and hands back its reply and the
+results it read word for word. Its events reach the same stream tagged with
+`agentId` and `delegateCallId`, and its steps are saved to the thread as
+`Delegated` messages the model never reads again. A task the person directs to
+another agent keeps that agent's writes, recorded as its own. One level only.
 **Read [agent-delegation.md](agent-delegation.md)
 before changing it.**
 
@@ -1096,7 +1172,7 @@ is built from the same parts. The answer is one of four outcomes:
 | Outcome | When |
 |---|---|
 | `BetterAgent` | Another agent the person may use holds a best match and the agent the question would go to does not |
-| `CurrentAgent` | The agent the question would go to holds a best match, itself or through an agent on its delegate allowlist |
+| `CurrentAgent` | The agent the question would go to holds a best match, itself or, for a lookup, through an agent on its delegate allowlist |
 | `NoAgent` | Tools match the question, but none of the best of them (every tool tied for the top score) is one the person's agents hold and may use |
 | `NoMatch` | No tool matches, or the person is not one who can be matched |
 
