@@ -7,9 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -34,11 +34,11 @@ func TestSendMessageStream_KeepsWhatRanWhenTheModelFailsPartway(t *testing.T) {
 	t.Parallel()
 
 	tool := &agenttest.StubQueryTool{
-		ToolName: "get_shipment",
+		ToolName: "shipment_get",
 		Result:   map[string]any{"proNumber": "S1"},
 	}
 	completion := &scriptedCompletion{
-		Turns:  []*agentports.ChatCompletionResult{lookupTurn("get_shipment")},
+		Turns:  []*agentports.ChatCompletionResult{lookupTurn("shipment_get")},
 		Errors: map[int]error{1: errors.New("every configured chat provider failed")},
 	}
 	svc := newService(completion, &stubQueryRegistry{
@@ -50,7 +50,7 @@ func TestSendMessageStream_KeepsWhatRanWhenTheModelFailsPartway(t *testing.T) {
 		Title:             "Dispatch",
 	}}
 	svc.conversations = conversations
-	svc.definitions = &stubDefinitions{definition: testDefinition("get_shipment")}
+	svc.definitions = &stubDefinitions{definition: testDefinition("shipment_get")}
 	actor := testActor()
 
 	_, err := svc.sendMessage(t.Context(), &agentports.SendMessageRequest{
@@ -216,7 +216,7 @@ func TestTurnResult_KeepsWhenEachMessageWasWritten(t *testing.T) {
 		Messages: []conversation.Message{
 			{Role: conversation.RoleUser, Content: "Where is S1?", CreatedAt: 100},
 			{Role: conversation.RoleAssistant, Content: "Looking it up.", CreatedAt: 130},
-			{Role: conversation.RoleTool, ToolName: "get_shipment", CreatedAt: 160},
+			{Role: conversation.RoleTool, ToolName: "shipment_get", CreatedAt: 160},
 			{Role: conversation.RoleAssistant, Content: "S1 is in Denver.", CreatedAt: 250},
 		},
 	}

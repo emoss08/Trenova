@@ -24,6 +24,7 @@ on:
       - "services/tms/internal/modules/agent/app/agentscoring/**"
       - "services/tms/internal/modules/agent/app/agentredteam/**"
       - "services/tms/internal/modules/agent/app/agentevalgate/**"
+      - "services/tms/internal/modules/agent/domain/evalsplit/**"
       - "services/tms/internal/modules/agent/app/productguideservice/**"
       - "services/tms/pkg/productguide/catalog_gen.json"
       - "services/tms/internal/modules/agent/ports/agentports/agenttool.go"
@@ -52,6 +53,7 @@ on:
       - "services/tms/internal/modules/agent/app/agentscoring/**"
       - "services/tms/internal/modules/agent/app/agentredteam/**"
       - "services/tms/internal/modules/agent/app/agentevalgate/**"
+      - "services/tms/internal/modules/agent/domain/evalsplit/**"
       - "services/tms/internal/modules/agent/app/productguideservice/**"
       - "services/tms/pkg/productguide/catalog_gen.json"
       - "services/tms/internal/modules/agent/ports/agentports/agenttool.go"
@@ -126,8 +128,14 @@ jobs:
         run: |
           set -euo pipefail
           go test -tags=nomsgpack -count=1 -v \
-            -run 'AgainstFloors|TestParaphrasesShareNoWordWithTheirTool|EmbeddingFixture' \
-            ./internal/modules/agent/app/agentevalgate/
+            -run 'AgainstFloors|Splits|TestParaphrasesShareNoWordWithTheirTool|EmbeddingFixture' \
+            ./internal/modules/agent/app/agentevalgate/ | tee "$RUNNER_TEMP/selection.log"
+          {
+            echo "## Tool selection, development and held-out"
+            echo
+            grep -oE '(find_tools|find_in_trenova) by [^:]+: recall@5 [0-9.]+, top-1 [0-9.]+ over [0-9]+ requests' \
+              "$RUNNER_TEMP/selection.log" | sed 's/^/- /' || echo "Not reported."
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Argument parsing and aliasing
         working-directory: ./services/tms

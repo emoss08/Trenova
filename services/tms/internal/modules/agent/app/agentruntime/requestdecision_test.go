@@ -40,7 +40,7 @@ func (o *decisionObserver) observe(
 func waitingOutcome(status agent.ProposalStatus) agentports.ProposalOutcome {
 	return agentports.ProposalOutcome{
 		ProposalID: pulid.MustNew("aprop_"),
-		ToolName:   "create_shipment",
+		ToolName:   "shipment_create",
 		Rationale:  "Copy PRO-100 for Tuesday.",
 		Status:     status,
 	}
@@ -149,7 +149,7 @@ func TestRequestDecision_ShowsTheCardAgainAndSaysTypingDecidesNothing(t *testing
 	require.Len(t, observer.seen, 1)
 	assert.Equal(t, agentports.DecisionRequest{
 		ProposalID: waiting.ProposalID,
-		ToolName:   "create_shipment",
+		ToolName:   "shipment_create",
 	}, observer.seen[0].Data)
 
 	content, failed := toolResult(run.result, requestDecisionName)
@@ -282,7 +282,7 @@ func TestPublishStep_ShowsTheCardADurableTurnAskedFor(t *testing.T) {
 
 func planStep(planID pulid.ID) agentports.ProposalOutcome {
 	step := waitingOutcome(agent.ProposalStatusPending)
-	step.ToolName = "post_invoice"
+	step.ToolName = "invoice_post"
 	step.PlanID = planID
 
 	return step
@@ -330,7 +330,7 @@ func TestRequestDecision_ShowsSeveralProposalsOfOneToolAsOneCard(t *testing.T) {
 	assert.Equal(t, agentports.DecisionRequest{
 		ProposalID:  first.ProposalID,
 		ProposalIDs: []pulid.ID{first.ProposalID, second.ProposalID},
-		ToolName:    "create_shipment",
+		ToolName:    "shipment_create",
 	}, observer.seen[0].Data)
 	_, failed := toolResult(run.result, requestDecisionName)
 	assert.False(t, failed)
@@ -341,7 +341,7 @@ func TestRequestDecision_RefusesABunchItCannotShowAsOne(t *testing.T) {
 
 	shipment := waitingOutcome(agent.ProposalStatusPending)
 	other := waitingOutcome(agent.ProposalStatusPending)
-	other.ToolName = "post_invoice"
+	other.ToolName = "invoice_post"
 	decided := waitingOutcome(agent.ProposalStatusExecuted)
 	planID := pulid.MustNew("apl_")
 	step := planStep(planID)

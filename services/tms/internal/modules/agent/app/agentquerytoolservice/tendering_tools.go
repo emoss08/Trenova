@@ -74,10 +74,10 @@ func (t *listShipmentTendersTool) Description() string {
 func (t *listShipmentTendersTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
 		paramShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
-			"The shipment, from search_shipments, get_shipment or "+
+			"The shipment, from shipment_list, shipment_get or "+
 				"the page you are on."),
 		paramShipmentMoveID: agenttoolschema.RecordIDText(permission.ResourceShipmentMove,
-			"Only this move's tenders, by id from get_shipment "+
+			"Only this move's tenders, by id from shipment_get "+
 				"(its moves) or get_dispatch_board."),
 	}, paramShipmentID)
 }
@@ -251,7 +251,7 @@ func (t *listRateConfirmationsTool) Description() string {
 func (t *listRateConfirmationsTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
 		paramShipmentMoveID: agenttoolschema.RecordIDText(permission.ResourceShipmentMove,
-			"The move, from get_shipment (its moves) or "+
+			"The move, from shipment_get (its moves) or "+
 				"get_dispatch_board."),
 	}, paramShipmentMoveID)
 }

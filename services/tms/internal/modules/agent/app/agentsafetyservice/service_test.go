@@ -4,14 +4,14 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentaccessservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -137,7 +137,7 @@ func testService(defs *fakeDefinitions, control *tenant.AgentControl) *Service {
 
 	return newService(serviceDeps{
 		policies: newFakePolicies(
-			policy("get_shipment", agent.ToolKindQuery, agent.EgressNone),
+			policy("shipment_get", agent.ToolKindQuery, agent.EgressNone),
 			policy("assign_move", agent.ToolKindAction, agent.EgressInternal),
 			policy("email_customer", agent.ToolKindAction, agent.EgressExternalRecipient),
 			personal,
@@ -190,7 +190,7 @@ func TestAssessAnswersEachHeldToolCleanAndTainted(t *testing.T) {
 	t.Parallel()
 
 	svc := testService(&fakeDefinitions{}, &tenant.AgentControl{})
-	open := agentWith("Dispatcher", "get_shipment", "assign_move", "email_customer")
+	open := agentWith("Dispatcher", "shipment_get", "assign_move", "email_customer")
 
 	answers := svc.Assess(t.Context(), &agentports.AssessAgentSafetyRequest{
 		Subject: &agentports.AgentSafetySubject{Agent: open, Control: &tenant.AgentControl{}},
@@ -202,14 +202,14 @@ func TestAssessAnswersEachHeldToolCleanAndTainted(t *testing.T) {
 		byName[answer.PolicyName] = answer
 	}
 
-	assert.Equal(t, agent.AutonomyRunsOnItsOwn, byName["get_shipment"].Clean.Answer)
-	assert.Equal(t, agent.AutonomyRunsOnItsOwn, byName["get_shipment"].Tainted.Answer)
+	assert.Equal(t, agent.AutonomyRunsOnItsOwn, byName["shipment_get"].Clean.Answer)
+	assert.Equal(t, agent.AutonomyRunsOnItsOwn, byName["shipment_get"].Tainted.Answer)
 	assert.Equal(t, agent.AutonomyRunsOnItsOwn, byName["assign_move"].Clean.Answer)
 	assert.Equal(t, agent.AutonomyRunsOnItsOwn, byName["assign_move"].Tainted.Answer)
 	assert.Equal(t, agent.AutonomyNeedsApproval, byName["email_customer"].Clean.Answer)
 	assert.Equal(t, agent.AutonomyNeedsApproval, byName["email_customer"].Tainted.Answer)
 
-	simulated := agentWith("Rehearsal", "assign_move", "get_shipment")
+	simulated := agentWith("Rehearsal", "assign_move", "shipment_get")
 	simulated.SimulationMode = true
 	rehearsal := svc.Assess(t.Context(), &agentports.AssessAgentSafetyRequest{
 		Subject: &agentports.AgentSafetySubject{Agent: simulated, Control: &tenant.AgentControl{}},

@@ -346,7 +346,7 @@ func TestRoleCoverage_FullPartialAndNone(t *testing.T) {
 		RoleIDs:        requested,
 		Required: []permissionports.RequiredGrant{
 			{
-				Tool:      "get_shipment",
+				Tool:      "shipment_get",
 				Resource:  permission.ResourceShipment,
 				Operation: permission.OpRead,
 			},

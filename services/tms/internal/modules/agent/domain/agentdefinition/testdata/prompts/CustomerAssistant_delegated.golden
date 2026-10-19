@@ -34,7 +34,7 @@ What find_tools can load, by area of Trenova:
 - EDI (4 tools): edi
 - Organization settings (1 tool): email profile
 - Reports (2 tools): insight
-- Shipments (11 tools): commodity, order, recurring shipment, service failure, service type, shipment
+- Shipments (10 tools): commodity, order, recurring shipment, service failure, service type, shipment
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
 - quote_shipment: list_customers → list_service_types → list_locations → quote_shipment

@@ -4,11 +4,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
-	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace/aitracetest"
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -23,18 +23,18 @@ func TestRunStampsEachEventWithTheWorkflowsClock(t *testing.T) {
 	t.Parallel()
 
 	lookup := &agenttest.StubQueryTool{
-		ToolName: "get_shipment",
+		ToolName: "shipment_get",
 		Result:   map[string]any{"status": "InTransit"},
 	}
 	h := newHarness(t, harnessParams{query: []agentports.AgentQueryTool{lookup}})
 	h.replies(
-		toolReply("get_shipment", map[string]any{"proNumber": "12345"}),
+		toolReply("shipment_get", map[string]any{"proNumber": "12345"}),
 		textReply("It is in transit."),
 	)
 	started := time.Date(2026, time.March, 2, 9, 30, 0, 0, time.UTC)
 	h.env.SetStartTime(started)
 
-	result := h.run(t, runContext("get_shipment"))
+	result := h.run(t, runContext("shipment_get"))
 
 	require.NotEmpty(t, result.Outcome.Events)
 	for _, event := range result.Outcome.Events {

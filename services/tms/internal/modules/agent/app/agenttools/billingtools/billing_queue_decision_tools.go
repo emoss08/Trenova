@@ -22,7 +22,6 @@ import (
 
 const paramExceptionReasonCode = "exceptionReasonCode"
 
-const paramDecisionNotes = "notes"
 
 const paramBillerID = "billerId"
 
@@ -70,8 +69,8 @@ func (t *BillingQueueDecisionTool) ParamSchema() map[string]any {
 	properties := map[string]any{
 		common.ParamBillingQueueItemID: agenttoolschema.OfKinds(map[string]any{
 			toolschema.KeyType: toolschema.TypeString,
-			toolschema.KeyDescription: "The billing queue item, from list_billing_queue_items, " +
-				"get_billing_queue_item or this run's subject. Never guess one.",
+			toolschema.KeyDescription: "The billing queue item, from billing_list_queue_items, " +
+				"billing_get_queue_item or this run's subject. Never guess one.",
 		}, permission.KindBillingQueueItem),
 	}
 	for name, property := range t.decision.properties {
@@ -327,13 +326,13 @@ func fillException(
 		)
 	}
 	req.ExceptionReasonCode = &code
-	req.ExceptionNotes = strings.TrimSpace(common.OptionalString(params, paramDecisionNotes))
+	req.ExceptionNotes = strings.TrimSpace(common.OptionalString(params, common.ParamNote))
 
 	return nil
 }
 
 func fillHold(params map[string]any, req *billingqueueports.UpdateBillingQueueStatusRequest) error {
-	notes, err := common.RequireString(params, paramDecisionNotes)
+	notes, err := common.RequireString(params, common.ParamNote)
 	if err != nil {
 		return err
 	}
@@ -355,7 +354,7 @@ func fillCancel(
 	params map[string]any,
 	req *billingqueueports.UpdateBillingQueueStatusRequest,
 ) error {
-	reason, err := common.RequireString(params, common.ParamCancelReason)
+	reason, err := common.RequireString(params, common.ParamReason)
 	if err != nil {
 		return err
 	}
@@ -374,12 +373,12 @@ func fillCancel(
 
 func NewSendBackToOpsTool(billing common.BillingQueueDecider) agentports.AgentTool {
 	return &BillingQueueDecisionTool{billing: billing, decision: queueDecision{
-		name: "send_billing_item_back_to_ops",
+		name: "billing_return_to_operations",
 		description: "Send a billing queue item in review back to operations to fix, with a " +
 			"reason. Use it when the fix belongs to the shipment rather than the bill: a missing " +
 			"document operations must collect, a wrong weight, a missing reference number. " +
 			"Operations sees a high-priority note on the shipment saying why. Read the item " +
-			"with get_billing_queue_item first. Notes are required when the reason is Other.",
+			"with billing_get_queue_item first. Notes are required when the reason is Other.",
 		status:           billingqueue.StatusSentBackToOps,
 		egress:           agent.EgressInternal,
 		defaultTo:        agent.TierPropose,
@@ -389,7 +388,7 @@ func NewSendBackToOpsTool(billing common.BillingQueueDecider) agentports.AgentTo
 			"it creates no money and the item comes back when operations fixes it.",
 		properties: map[string]any{
 			paramExceptionReasonCode: reasonCodeProperty("Why it goes back."),
-			paramDecisionNotes: notesProperty("What operations has to fix, in a sentence " +
+			common.ParamNote: notesProperty("What operations has to fix, in a sentence " +
 				"they can act on. Required when the reason is Other."),
 		},
 		required: []string{paramExceptionReasonCode},
@@ -399,7 +398,7 @@ func NewSendBackToOpsTool(billing common.BillingQueueDecider) agentports.AgentTo
 
 func NewMoveToExceptionTool(billing common.BillingQueueDecider) agentports.AgentTool {
 	return &BillingQueueDecisionTool{billing: billing, decision: queueDecision{
-		name: "move_billing_item_to_exception",
+		name: "billing_raise_exception",
 		description: "Move a billing queue item in review into exception for a biller to " +
 			"resolve. Use it when the bill itself is wrong: a rate that disagrees with the agreement, " +
 			"a disputed accessorial, a duplicate charge. Give the reason and notes that say " +
@@ -413,17 +412,17 @@ func NewMoveToExceptionTool(billing common.BillingQueueDecider) agentports.Agent
 			"and a biller moves it back when it is resolved.",
 		properties: map[string]any{
 			paramExceptionReasonCode: reasonCodeProperty("What is wrong with the bill."),
-			paramDecisionNotes: notesProperty("What is wrong and what would clear it, with " +
+			common.ParamNote: notesProperty("What is wrong and what would clear it, with " +
 				"the figures you checked."),
 		},
-		required: []string{paramExceptionReasonCode, paramDecisionNotes},
+		required: []string{paramExceptionReasonCode, common.ParamNote},
 		fill:     fillException,
 	}}
 }
 
 func NewHoldBillingQueueItemTool(billing common.BillingQueueDecider) agentports.AgentTool {
 	return &BillingQueueDecisionTool{billing: billing, decision: queueDecision{
-		name:        "hold_billing_queue_item",
+		name:        "billing_hold_queue_item",
 		searchTerms: []string{"park item", "park until"},
 		description: "Put a billing queue item on hold, with a note saying what it waits on. " +
 			"Use it when an item waiting for or in review cannot be billed yet but nothing is " +
@@ -437,17 +436,17 @@ func NewHoldBillingQueueItemTool(billing common.BillingQueueDecider) agentports.
 		rationale: "Parks an item inside Trenova with a note; it creates no money and is " +
 			"undone by moving the item on.",
 		properties: map[string]any{
-			paramDecisionNotes: notesProperty("What the item waits on, so whoever takes it " +
+			common.ParamNote: notesProperty("What the item waits on, so whoever takes it " +
 				"off hold knows when."),
 		},
-		required: []string{paramDecisionNotes},
+		required: []string{common.ParamNote},
 		fill:     fillHold,
 	}}
 }
 
 func NewCancelBillingQueueItemTool(billing common.BillingQueueDecider) agentports.AgentTool {
 	return &BillingQueueDecisionTool{billing: billing, decision: queueDecision{
-		name: "cancel_billing_queue_item",
+		name: "billing_cancel_queue_item",
 		description: "Propose canceling a billing queue item that should never be billed, " +
 			"such as a duplicate of another item. Canceling drops the charge from billing for " +
 			"good, so a person always decides; say which item it duplicates or why it must not " +
@@ -460,13 +459,13 @@ func NewCancelBillingQueueItemTool(billing common.BillingQueueDecider) agentport
 		rationale: "Drops a charge from billing for good, so only a person decides; the " +
 			"agent proposes it.",
 		properties: map[string]any{
-			common.ParamCancelReason: map[string]any{
+			common.ParamReason: map[string]any{
 				toolschema.KeyType:        toolschema.TypeString,
 				toolschema.KeyMaxLength:   maxCancelReasonChars,
 				toolschema.KeyDescription: "Why it must not bill, in a short phrase.",
 			},
 		},
-		required: []string{common.ParamCancelReason},
+		required: []string{common.ParamReason},
 		fill:     fillCancel,
 	}}
 }
@@ -481,7 +480,7 @@ func NewAssignBillerTool(billing common.BillingQueueDecider) agentports.AgentToo
 	return &AssignBillerTool{billing: billing}
 }
 
-func (t *AssignBillerTool) Name() string { return "assign_billing_queue_biller" }
+func (t *AssignBillerTool) Name() string { return toolAssignBiller }
 
 func (t *AssignBillerTool) SearchTerms() []string {
 	return []string{"biller", "reviewer"}
@@ -493,7 +492,7 @@ func (t *AssignBillerTool) Description() string {
 		"asked, which is what \"assign me\", \"start reviewing\" or \"get these ready to " +
 		"post\" means; name a biller only when they named one or the customer's default " +
 		"biller is on another of its items. Never guess a user id. For more than one item, " +
-		"call assign_billing_queue_billers once with all of them instead."
+		"call billing_assign_biller once with all of them instead."
 }
 
 func (t *AssignBillerTool) ParamSchema() map[string]any {
@@ -503,7 +502,7 @@ func (t *AssignBillerTool) ParamSchema() map[string]any {
 			common.ParamBillingQueueItemID: agenttoolschema.OfKinds(map[string]any{
 				toolschema.KeyType: toolschema.TypeString,
 				toolschema.KeyDescription: "The billing queue item, from " +
-					"list_billing_queue_items or get_billing_queue_item.",
+					"billing_list_queue_items or billing_get_queue_item.",
 			}, permission.KindBillingQueueItem),
 			paramBillerID: billerProperty(),
 		},
@@ -516,7 +515,7 @@ func billerProperty() map[string]any {
 	return agenttoolschema.OfResource(map[string]any{
 		toolschema.KeyType: toolschema.TypeString,
 		toolschema.KeyDescription: "The biller's user id, when the person named one or " +
-			"the customer's default biller is the assignedBillerId get_billing_queue_item " +
+			"the customer's default biller is the assignedBillerId billing_get_queue_item " +
 			"shows on another of its items. Leave it out to assign the person who asked. " +
 			"Never guess one.",
 	}, permission.ResourceUser)

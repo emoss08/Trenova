@@ -195,12 +195,12 @@ nothing to bring them back, so it is always proposed.
 | Insight analyst | on each new insight, at a Propose ceiling | `restore_insight` |
 | Carrier risk desk | on each new carrier finding, at a Propose ceiling | `list_carrier_intel_events`, `get_carrier_intel_event`, `acknowledge_carrier_intel_event`, `resolve_carrier_intel_event` |
 | Compliance assistant | chat, Ask first | `list_carrier_intel_events`, beside its carrier vetting and monitoring tools |
-| Any agent holding `create_shipment` | as the agent runs | `create_customer`, `create_location`, `create_commodity`, as `create_shipment`'s companions, unless switched off for the agent |
+| Any agent holding `shipment_create` | as the agent runs | `create_customer`, `create_location`, `create_commodity`, as `shipment_create`'s companions, unless switched off for the agent |
 
 The master data steward is the organization's records keeper and holds 55 of its 56 tools:
 every write on this page, the reads that find each record, `search_documents` and
 `get_document_summary` for the documents it deletes or restores, `list_document_types` for
-filing, and `search_shipments` for paperwork that belongs on a load. The customer assistant
+filing, and `shipment_list` for paperwork that belongs on a load. The customer assistant
 handles customer records and holds 53. The insight analyst dismisses insights it finds are
 noise and can bring one back. All three run at a Propose ceiling, so every write they make
 waits for a person and needs no new permission ceiling entry; `locate_trailer`, and a carrier

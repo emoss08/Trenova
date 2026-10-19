@@ -1,6 +1,5 @@
 defaults:
   tags: [unattended, backoffice]
-  split: development
 
 scenarios:
   - name: unattended-cash-receipt-is-a-tax-refund
@@ -9,7 +8,7 @@ scenarios:
       It is not a customer payment. A good run sees that from the memo and reference, proposes
       closing the work item as not a customer payment, and posts nothing.
     tags: [unattended, cash]
-    expectedTools: [get_bank_receipt, "list_customer_payments|list_invoices"]
+    expectedTools: [get_bank_receipt, "list_customer_payments|invoice_list"]
     forbiddenTools: [post_customer_payment, match_bank_receipt]
     exclusive: cash-seed
     setup:
@@ -335,7 +334,7 @@ scenarios:
       The records hold far less than that. A good run checks the figure against FreshHaul's
       loads, says it does not hold up, and leaves the insight active for a person.
     tags: [unattended, insights]
-    expectedTools: [get_insight, "list_shipments|run_report|preview_report"]
+    expectedTools: [get_insight, "shipment_list|run_report|preview_report"]
     forbiddenTools: [dismiss_insight]
     exclusive: insight-seed
     setup:
@@ -375,7 +374,6 @@ scenarios:
       Acme's recent deliveries against that, gives the likely cause from what it read, and does
       not dismiss a finding it cannot explain away.
     tags: [unattended, insights]
-    split: held-out
     expectedTools: [get_insight]
     forbiddenTools: [dismiss_insight]
     exclusive: insight-seed

@@ -15,7 +15,7 @@ import { claimDraftEdit, nextDraftEdits } from "../page-draft-edits";
 function edit(overrides: Record<string, unknown> = {}) {
   return {
     surface: "shipment_import",
-    action: "accept_field",
+    action: "intake_accept_field",
     fieldKey: "loadNumber",
     label: "Load Number",
     ...overrides,
@@ -53,13 +53,21 @@ describe("nextDraftEdits", () => {
       event({ id: "aart_1", draft: edit({ fieldKey: "loadNumber" }) }),
       event({
         id: "aart_2",
-        draft: edit({ action: "set_stop_location", fieldKey: "", stopIndex: 1, value: "loc_1" }),
+        draft: edit({
+          action: "intake_set_stop_location",
+          fieldKey: "",
+          stopIndex: 1,
+          value: "loc_1",
+        }),
       }),
     ];
 
     const edits = nextDraftEdits(announced, "shipment_import", claims());
 
-    expect(edits.map((item) => item.action)).toEqual(["accept_field", "set_stop_location"]);
+    expect(edits.map((item) => item.action)).toEqual([
+      "intake_accept_field",
+      "intake_set_stop_location",
+    ]);
     expect(edits[1].stopIndex).toBe(1);
     expect(edits[1].value).toBe("loc_1");
   });
@@ -77,7 +85,11 @@ describe("nextDraftEdits", () => {
 
   it("stops at stop 0, which is a real stop and not an absent index", () => {
     const [applied] = nextDraftEdits(
-      [event({ draft: edit({ action: "set_stop_location", stopIndex: 0, value: "loc_9" }) })],
+      [
+        event({
+          draft: edit({ action: "intake_set_stop_location", stopIndex: 0, value: "loc_9" }),
+        }),
+      ],
       "shipment_import",
       claims(),
     );

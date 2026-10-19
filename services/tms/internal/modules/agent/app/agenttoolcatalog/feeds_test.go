@@ -13,23 +13,23 @@ func TestFeedsNamesTheToolsARecipeStepLeadsTo(t *testing.T) {
 	t.Parallel()
 
 	catalog := New([]agentports.AgentToolDescriptor{
-		{Name: "create_shipment", Recipe: []string{"find_shipment_records", "create_shipment"}},
+		{Name: "shipment_create", Recipe: []string{"shipment_match_records", "shipment_create"}},
 		{
-			Name:   "reschedule_stop",
-			Recipe: []string{"search_shipments", "get_shipment", "reschedule_stop"},
+			Name:   "shipment_reschedule_stop",
+			Recipe: []string{"shipment_list", "shipment_get", "shipment_reschedule_stop"},
 		},
 		{
 			Name:   "record_stop_actual",
-			Recipe: []string{"search_shipments", "get_shipment", "record_stop_actual"},
+			Recipe: []string{"shipment_list", "shipment_get", "record_stop_actual"},
 		},
-		{Name: "find_shipment_records"},
+		{Name: "shipment_match_records"},
 	})
 
-	assert.Equal(t, []string{"create_shipment"}, catalog.Feeds("find_shipment_records"))
+	assert.Equal(t, []string{"shipment_create"}, catalog.Feeds("shipment_match_records"))
 	assert.ElementsMatch(
 		t,
-		[]string{"reschedule_stop", "record_stop_actual"},
-		catalog.Feeds("get_shipment"),
+		[]string{"shipment_reschedule_stop", "record_stop_actual"},
+		catalog.Feeds("shipment_get"),
 	)
-	assert.Empty(t, catalog.Feeds("create_shipment"))
+	assert.Empty(t, catalog.Feeds("shipment_create"))
 }

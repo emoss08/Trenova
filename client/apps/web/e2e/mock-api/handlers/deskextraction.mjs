@@ -1,5 +1,5 @@
 // A Desk conversation about a file a person attached: the agent reads it with
-// get_shipment_draft and the extraction artifact shows what was read. The
+// intake_get_draft and the extraction artifact shows what was read. The
 // `extraction` scenario field picks the file and how it was read (see
 // EXTRACTION_VARIANTS), and `extractionStage` how far the shipment has got:
 // "idle" (not asked for), "proposed" (waiting on approval), "created" (the
@@ -77,7 +77,7 @@ function messages(state) {
       toolCalls: [
         {
           id: "call_ex_draft",
-          name: "get_shipment_draft",
+          name: "intake_get_draft",
           arguments: { documentId: document.documentId },
           effect: "lookup",
         },
@@ -85,7 +85,7 @@ function messages(state) {
     }),
     message("amsg_ex_t1_r1", 3, "Tool", "{}", at + 9, {
       toolCallId: "call_ex_draft",
-      toolName: "get_shipment_draft",
+      toolName: "intake_get_draft",
       effect: "lookup",
       toolVerdict: "ran",
       summary: `Read ${document.fileName}`,
@@ -106,7 +106,7 @@ function messages(state) {
       toolCalls: [
         {
           id: "call_ex_create",
-          name: "create_shipment",
+          name: "shipment_create",
           arguments: { sourceDocumentId: document.documentId },
           effect: "change",
         },
@@ -114,7 +114,7 @@ function messages(state) {
     }),
     message("amsg_ex_t2_r1", 7, "Tool", "{}", asked + 7, {
       toolCallId: "call_ex_create",
-      toolName: "create_shipment",
+      toolName: "shipment_create",
       effect: "change",
       toolVerdict: "proposed",
       summary: "Proposed creating the shipment",
@@ -145,7 +145,7 @@ function proposals(state) {
     {
       id: EXTRACTION_PROPOSAL_ID,
       runId: "",
-      toolName: "create_shipment",
+      toolName: "shipment_create",
       arguments: { sourceDocumentId: document.documentId, proNumber: "" },
       rationale: "Create the shipment read from Northline's rate confirmation.",
       autonomyTier: "Propose",

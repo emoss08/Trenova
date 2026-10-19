@@ -23,7 +23,7 @@ func testCatalog() *Catalog {
 			"List workers (drivers) narrowed by status, employment type or fleet.",
 		),
 		descriptor(
-			"list_shipments",
+			"shipment_list",
 			"List shipments narrowed by status, billing state, dates or charges.",
 		),
 		descriptor(
@@ -72,7 +72,7 @@ func TestRank_ResolvesOperatorVocabulary(t *testing.T) {
 		names(catalog.Rank(nil, "which drivers are on the roster?", 3))[0])
 	assert.Equal(t, "list_tractors",
 		names(catalog.Rank(nil, "which trucks are out of service?", 3))[0])
-	assert.Equal(t, "list_shipments",
+	assert.Equal(t, "shipment_list",
 		names(catalog.Rank(nil, "what loads delivered yesterday?", 3))[0])
 }
 
@@ -259,7 +259,7 @@ func TestFind_MatchesAToolsSearchTermsAsItsName(t *testing.T) {
 func TestFind_ReachesAToolThroughItsParameters(t *testing.T) {
 	t.Parallel()
 
-	shipments := descriptor("list_shipments", "List shipments by status.")
+	shipments := descriptor("shipment_list", "List shipments by status.")
 	shipments.Parameters = map[string]any{
 		"type": "object",
 		"properties": map[string]any{
@@ -277,7 +277,7 @@ func TestFind_ReachesAToolThroughItsParameters(t *testing.T) {
 
 	found := names(catalog.Rank(nil, "customer", 3))
 
-	assert.Equal(t, []string{"list_customers", "list_shipments", "list_workers"}, found)
+	assert.Equal(t, []string{"list_customers", "shipment_list", "list_workers"}, found)
 }
 
 func TestPrerequisitesAndQuery_ComeFromTheDescriptor(t *testing.T) {
@@ -356,7 +356,7 @@ func TestRank_DoesNotBringAlongFamilies(t *testing.T) {
 func parameterOnlyCatalog() *Catalog {
 	return New([]agentports.AgentToolDescriptor{
 		{
-			Name:        "list_shipments",
+			Name:        "shipment_list",
 			Description: "List shipments narrowed by status or dates.",
 			Parameters: map[string]any{
 				"type": "object",
@@ -378,16 +378,16 @@ func TestFindHybrid_StrongOnlyKeepsOnlyNameAndDescriptionMatches(t *testing.T) {
 
 	catalog := parameterOnlyCatalog()
 
-	assert.Equal(t, []string{"list_shipments"},
+	assert.Equal(t, []string{"shipment_list"},
 		names(catalog.FindHybrid(Query{Text: "shipments carrying a commodity", Limit: 6})))
 	assert.Empty(t, names(catalog.FindHybrid(Query{
-		Allowed:    []string{"list_shipments", "list_workers"},
+		Allowed:    []string{"shipment_list", "list_workers"},
 		Text:       "commodity",
 		Limit:      6,
 		StrongOnly: true,
 	})))
-	assert.Equal(t, []string{"list_shipments"}, names(catalog.FindHybrid(Query{
-		Allowed: []string{"list_shipments", "list_workers"},
+	assert.Equal(t, []string{"shipment_list"}, names(catalog.FindHybrid(Query{
+		Allowed: []string{"shipment_list", "list_workers"},
 		Text:    "commodity",
 		Limit:   6,
 	})))
@@ -404,13 +404,13 @@ func TestFindHybrid_StrongOnlyAppliesToTheSemanticRankingToo(t *testing.T) {
 	catalog := parameterOnlyCatalog()
 
 	found := names(catalog.FindHybrid(Query{
-		Allowed:    []string{"list_shipments", "list_workers"},
+		Allowed:    []string{"shipment_list", "list_workers"},
 		Text:       "commodity",
 		Limit:      6,
 		StrongOnly: true,
 		Semantic: NewSemantic(map[string]float64{
-			"list_shipments": 0.1,
-			"list_workers":   0.1,
+			"shipment_list": 0.1,
+			"list_workers":  0.1,
 		}),
 	}))
 
@@ -423,7 +423,7 @@ func TestMatchesStrongly(t *testing.T) {
 	catalog := parameterOnlyCatalog()
 
 	assert.True(t, catalog.MatchesStrongly("list_commodities", "which commodity is hazmat"))
-	assert.False(t, catalog.MatchesStrongly("list_shipments", "commodity"))
+	assert.False(t, catalog.MatchesStrongly("shipment_list", "commodity"))
 	assert.False(t, catalog.MatchesStrongly("no_such_tool", "commodity"))
 }
 
@@ -457,8 +457,8 @@ func TestMatch_GivesToolsThatMatchEquallyTheSameScore(t *testing.T) {
 	t.Parallel()
 
 	catalog := New([]agentports.AgentToolDescriptor{
-		{Name: "create_shipment", Description: "Create a shipment."},
-		{Name: "get_shipment", Description: "Retrieve one shipment."},
+		{Name: "shipment_create", Description: "Create a shipment."},
+		{Name: "shipment_get", Description: "Retrieve one shipment."},
 	})
 
 	matches := catalog.Match(Query{Text: "shipment", Limit: 6})
@@ -472,24 +472,24 @@ func TestMatch_KeepsATieWhenEmbeddingsJoinTheRanking(t *testing.T) {
 	t.Parallel()
 
 	catalog := New([]agentports.AgentToolDescriptor{
-		{Name: "create_shipment", Description: "Create a shipment."},
-		{Name: "get_shipment", Description: "Retrieve one shipment."},
-		{Name: "list_invoices", Description: "List invoices."},
+		{Name: "shipment_create", Description: "Create a shipment."},
+		{Name: "shipment_get", Description: "Retrieve one shipment."},
+		{Name: "invoice_list", Description: "List invoices."},
 	})
 
 	matches := catalog.Match(Query{
 		Text:  "shipment",
 		Limit: 6,
 		Semantic: NewSemantic(map[string]float64{
-			"create_shipment": 0.62,
-			"get_shipment":    0.62,
-			"list_invoices":   0.11,
+			"shipment_create": 0.62,
+			"shipment_get":    0.62,
+			"invoice_list":   0.11,
 		}),
 	})
 
 	require.GreaterOrEqual(t, len(matches), 2)
 	assert.ElementsMatch(t,
-		[]string{"create_shipment", "get_shipment"},
+		[]string{"shipment_create", "shipment_get"},
 		[]string{matches[0].Name, matches[1].Name},
 	)
 	assert.Equal(t, matches[0].Score, matches[1].Score,
@@ -500,7 +500,7 @@ func TestMentionsAny_FindsAQuestionThatNamesSomethingAToolDoes(t *testing.T) {
 	t.Parallel()
 
 	catalog := New([]agentports.AgentToolDescriptor{
-		{Name: "list_invoices", Description: "List invoices by status."},
+		{Name: "invoice_list", Description: "List invoices by status."},
 	})
 
 	assert.True(t, catalog.MentionsAny(nil, "which invoices are past due"))
@@ -512,12 +512,12 @@ func TestMentionsAny_LooksOnlyAtTheToolsAllowed(t *testing.T) {
 	t.Parallel()
 
 	catalog := New([]agentports.AgentToolDescriptor{
-		{Name: "list_invoices", Description: "List invoices by status."},
-		{Name: "get_shipment", Description: "Get a shipment by its number."},
+		{Name: "invoice_list", Description: "List invoices by status."},
+		{Name: "shipment_get", Description: "Get a shipment by its number."},
 	})
 
-	assert.True(t, catalog.MentionsAny([]string{"list_invoices"}, "which invoices are past due"))
-	assert.False(t, catalog.MentionsAny([]string{"get_shipment"}, "which invoices are past due"))
+	assert.True(t, catalog.MentionsAny([]string{"invoice_list"}, "which invoices are past due"))
+	assert.False(t, catalog.MentionsAny([]string{"shipment_get"}, "which invoices are past due"))
 	assert.False(t, catalog.MentionsAny([]string{}, "which invoices are past due"))
 	assert.False(t, catalog.MentionsAny([]string{"unknown_tool"}, "which invoices are past due"))
 }

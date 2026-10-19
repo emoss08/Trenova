@@ -503,7 +503,7 @@ func TestUpdateShipmentHold_ChangesOnlyWhatIsSentAndKeepsTheVersion(t *testing.T
 		shipmenttools.ParamHoldID:         holds.current.ID.String(),
 		shipmenttools.ParamBlocksBilling:  true,
 		shipmenttools.ParamHoldSeverity:   "Blocking",
-		common.FieldNotes:                 " BOL received, billing waits on the POD ",
+		common.ParamNote:                  " BOL received, billing waits on the POD ",
 		shipmenttools.ParamBlocksDelivery: false,
 	})
 

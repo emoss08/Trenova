@@ -21,7 +21,7 @@ func validDefinition() *agentdefinition.Definition {
 		Name:            "Night dispatch helper",
 		Instructions:    "You help the night dispatch desk. Check hours of service first.",
 		AutonomyCeiling: agent.TierPropose,
-		ToolNames:       []string{"get_shipment", "flag_for_manual_review"},
+		ToolNames:       []string{"shipment_get", "flag_for_manual_review"},
 		TriggerMode:     agentdefinition.TriggerChat,
 		Enabled:         true,
 	}
@@ -98,7 +98,7 @@ func TestValidate_AllowsToolsOnAnyTemplate(t *testing.T) {
 
 	d := validDefinition()
 	d.Template = agentdefinition.TemplateGeneralAssistant
-	d.ToolNames = []string{"correct_charge_code"}
+	d.ToolNames = []string{"billing_correct_charge_codes"}
 
 	assert.False(t, fieldErrors(t, d)["toolNames"],
 		"a template is a starting point, not a bound on what an organization may enable")
@@ -132,7 +132,7 @@ func TestValidate_RejectsToolTiersForToolsNotEnabled(t *testing.T) {
 
 	d := validDefinition()
 	d.ToolTiers = map[string]agent.AutonomyTier{
-		"get_shipment": agent.TierAutoExecute,
+		"shipment_get": agent.TierAutoExecute,
 		"assign_move":  agent.TierPropose,
 	}
 
@@ -142,11 +142,11 @@ func TestValidate_RejectsToolTiersForToolsNotEnabled(t *testing.T) {
 		errs["toolTiers.assign_move"],
 		"a tier for a tool the agent cannot use is a mistake",
 	)
-	assert.False(t, errs["toolTiers.get_shipment"])
+	assert.False(t, errs["toolTiers.shipment_get"])
 
 	d = validDefinition()
-	d.ToolTiers = map[string]agent.AutonomyTier{"get_shipment": agent.AutonomyTier("Whenever")}
-	assert.True(t, fieldErrors(t, d)["toolTiers.get_shipment"])
+	d.ToolTiers = map[string]agent.AutonomyTier{"shipment_get": agent.AutonomyTier("Whenever")}
+	assert.True(t, fieldErrors(t, d)["toolTiers.shipment_get"])
 }
 
 func TestValidate_ScheduledNeedsAValidCronAndTimezone(t *testing.T) {
@@ -325,10 +325,10 @@ func TestAllowsTool(t *testing.T) {
 	assert.True(t, d.AllowsTool("flag_for_manual_review"))
 	assert.True(
 		t,
-		d.AllowsTool("get_shipment"),
+		d.AllowsTool("shipment_get"),
 		"read tools are enabled the same way write tools are",
 	)
-	assert.False(t, d.AllowsTool("correct_charge_code"))
+	assert.False(t, d.AllowsTool("billing_correct_charge_codes"))
 }
 
 func TestIsSystem_And_EffectiveShadow(t *testing.T) {
@@ -453,54 +453,47 @@ func TestTemplates_CarryTheToolsTheirPurposeRequires(t *testing.T) {
 		"dispatch decides who is available")
 
 	assert.Contains(t, agentdefinition.TemplateBillingAssistant.StarterTools(),
-		"list_shipments")
+		"shipment_list")
 }
 
 // The billing assistant works the whole lifecycle with the person it is
 // talking to: it finds what can transfer and proposes the transfer, reviews
 // queue items and proposes each decision, and proposes posting and sending
 // the invoice approval made. The exception desk runs unattended, so it holds
-// the reads and the three decisions that make no money, never an approval,
+// the reads and the four decisions that make no money, never an approval,
 // a cancellation, a transfer or a post.
 func TestTemplates_BillingAgentsHoldTheLifecycleTheyWork(t *testing.T) {
 	t.Parallel()
 
 	reads := []string{
-		"list_billing_transfer_candidates",
-		"list_billing_queue_items",
-		"get_billing_queue_item",
+		"billing_list_transfer_candidates",
+		"billing_list_queue_items",
+		"billing_get_queue_item",
 	}
-	assistantReads := []string{"get_billing_queue_items"}
+	assistantReads := []string{"billing_get_queue_item"}
 	moneyless := []string{
-		"send_billing_item_back_to_ops",
-		"move_billing_item_to_exception",
-		"hold_billing_queue_item",
+		"billing_return_to_operations",
+		"billing_raise_exception",
+		"billing_hold_queue_item",
+		"billing_start_review",
 	}
 	settlements := []string{
-		"release_billing_queue_item",
-		"resolve_billing_queue_issue",
-		"undo_billing_queue_issue",
+		"billing_release_queue_item",
+		"billing_resolve_issue",
+		"billing_undo_issue",
 	}
 	personal := []string{
-		"transfer_to_billing",
-		"approve_billing_queue_item",
-		"cancel_billing_queue_item",
-		"assign_billing_queue_billers",
-		"transition_items_to_in_review",
-		"post_invoice",
-		"send_invoice",
-		"approve_billing_queue_items",
-		"post_invoices",
-		"send_invoices",
+		"billing_transfer",
+		"billing_approve_queue_item",
+		"billing_cancel_queue_item",
+		"billing_assign_biller",
+		"invoice_post",
+		"invoice_send",
 	}
 
 	assistant := agentdefinition.TemplateBillingAssistant.StarterTools()
 	for _, tool := range slices.Concat(reads, assistantReads, moneyless, personal) {
 		assert.Contains(t, assistant, tool)
-	}
-	for _, single := range []string{"assign_billing_queue_biller", "transition_item_to_in_review"} {
-		assert.NotContains(t, assistant, single,
-			"the assistant holds the twin, which takes one item as well as fifty")
 	}
 
 	desk := agentdefinition.TemplateBillingException.StarterTools()

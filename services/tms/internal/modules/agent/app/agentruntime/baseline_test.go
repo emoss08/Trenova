@@ -9,9 +9,9 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -62,9 +62,9 @@ func heldRun(
 ) *agentports.RunResult {
 	t.Helper()
 
-	tool := &targetedStubTool{actionTool("place_shipment_hold", agent.TierPropose, nil)}
+	tool := &targetedStubTool{actionTool("shipment_place_hold", agent.TierPropose, nil)}
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("place_shipment_hold", map[string]any{"shipmentId": shipmentID.String()}),
+		toolTurn("shipment_place_hold", map[string]any{"shipmentId": shipmentID.String()}),
 		textTurn("I have proposed a hold."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{
@@ -74,7 +74,7 @@ func heldRun(
 	rt.previews = previews
 
 	result, err := rt.Run(t.Context(), &agentports.RunRequest{
-		Definition:   testDefinition("place_shipment_hold"),
+		Definition:   testDefinition("shipment_place_hold"),
 		Actor:        testActor(),
 		Input:        "hold it",
 		UsagePurpose: purpose,
@@ -146,9 +146,9 @@ func TestRun_TakesTheTargetFromTheBaselineSnapshot(t *testing.T) {
 func TestRun_ASimulatedWriteReadsTheBaselinePreview(t *testing.T) {
 	t.Parallel()
 
-	tool := &targetedStubTool{actionTool("place_shipment_hold", agent.TierAutoExecute, nil)}
+	tool := &targetedStubTool{actionTool("shipment_place_hold", agent.TierAutoExecute, nil)}
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("place_shipment_hold", map[string]any{"shipmentId": pulid.MustNew("shp_").String()}),
+		toolTurn("shipment_place_hold", map[string]any{"shipmentId": pulid.MustNew("shp_").String()}),
 		textTurn("held"),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{
@@ -156,7 +156,7 @@ func TestRun_ASimulatedWriteReadsTheBaselinePreview(t *testing.T) {
 	}, nil)
 	previews := &recordingPreviews{}
 	rt.previews = previews
-	definition := testDefinition("place_shipment_hold")
+	definition := testDefinition("shipment_place_hold")
 	definition.AutonomyCeiling = agent.TierAutoExecute
 	definition.SimulationMode = true
 
@@ -224,18 +224,18 @@ func TestRun_ASimulatedWriteNeverPreviewsAgainOutsideTheSnapshot(t *testing.T) {
 
 	tool := &countingPreviewTool{
 		targetedStubTool: &targetedStubTool{
-			actionTool("place_shipment_hold", agent.TierAutoExecute, nil),
+			actionTool("shipment_place_hold", agent.TierAutoExecute, nil),
 		},
 	}
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("place_shipment_hold", map[string]any{"shipmentId": pulid.MustNew("shp_").String()}),
+		toolTurn("shipment_place_hold", map[string]any{"shipmentId": pulid.MustNew("shp_").String()}),
 		textTurn("held"),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{
 		Tools: []agentports.AgentTool{tool},
 	}, nil)
 	rt.previews = failingPreviews{}
-	definition := testDefinition("place_shipment_hold")
+	definition := testDefinition("shipment_place_hold")
 	definition.AutonomyCeiling = agent.TierAutoExecute
 	definition.SimulationMode = true
 
@@ -307,17 +307,17 @@ func (p *refusingPreviews) Baseline(
 func TestRun_DoesNotFileAProposalWhoseBaselineWouldBeRefused(t *testing.T) {
 	t.Parallel()
 
-	tool := &targetedStubTool{actionTool("create_shipment", agent.TierActWithApproval, nil)}
+	tool := &targetedStubTool{actionTool("shipment_create", agent.TierActWithApproval, nil)}
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("create_shipment", map[string]any{"shipmentId": pulid.MustNew("shp_").String()}),
+		toolTurn("shipment_create", map[string]any{"shipmentId": pulid.MustNew("shp_").String()}),
 		textTurn("Which BOL should I use?"),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{
 		Tools: []agentports.AgentTool{tool},
 	}, nil)
-	previews := &refusingPreviews{refuseTool: "create_shipment"}
+	previews := &refusingPreviews{refuseTool: "shipment_create"}
 	rt.previews = previews
-	definition := testDefinition("create_shipment")
+	definition := testDefinition("shipment_create")
 	definition.AutonomyCeiling = agent.TierActWithApproval
 
 	result, err := rt.Run(t.Context(), &agentports.RunRequest{
@@ -334,7 +334,7 @@ func TestRun_DoesNotFileAProposalWhoseBaselineWouldBeRefused(t *testing.T) {
 
 	told := result.Messages[2]
 	assert.True(t, told.ToolFailed)
-	assert.Contains(t, told.Content, `"create_shipment" was not proposed`)
+	assert.Contains(t, told.Content, `"shipment_create" was not proposed`)
 	assert.Contains(t, told.Content,
 		"BOL: BOL is already in use by shipment(s) with Pro Number(s): SEED-DET-009")
 	assert.Contains(t, told.Content, "shipment.bol")
@@ -353,28 +353,28 @@ func TestRun_FilesAWriteAnEarlierStepMayMakeValid(t *testing.T) {
 	t.Parallel()
 
 	shipmentID := pulid.MustNew("shp_")
-	hold := &targetedStubTool{actionTool("place_shipment_hold", agent.TierPropose, nil)}
-	cancel := &targetedStubTool{actionTool("cancel_shipment", agent.TierPropose, nil)}
+	hold := &targetedStubTool{actionTool("shipment_place_hold", agent.TierPropose, nil)}
+	cancel := &targetedStubTool{actionTool("shipment_cancel", agent.TierPropose, nil)}
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("place_shipment_hold", map[string]any{"shipmentId": shipmentID.String()}),
-		toolTurn("cancel_shipment", map[string]any{"shipmentId": shipmentID.String()}),
+		toolTurn("shipment_place_hold", map[string]any{"shipmentId": shipmentID.String()}),
+		toolTurn("shipment_cancel", map[string]any{"shipmentId": shipmentID.String()}),
 		textTurn("Both are waiting for you."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{
 		Tools: []agentports.AgentTool{hold, cancel},
 	}, nil)
-	previews := &refusingPreviews{refuseTool: "cancel_shipment"}
+	previews := &refusingPreviews{refuseTool: "shipment_cancel"}
 	rt.previews = previews
 
 	result, err := rt.Run(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition("place_shipment_hold", "cancel_shipment"),
+		Definition: testDefinition("shipment_place_hold", "shipment_cancel"),
 		Actor:      testActor(),
 		Input:      "hold then cancel",
 	})
 	require.NoError(t, err)
 
 	require.Len(t, result.Actions, 2, "the later step is filed with the earlier one")
-	assert.Equal(t, "cancel_shipment", result.Actions[1].ToolName)
+	assert.Equal(t, "shipment_cancel", result.Actions[1].ToolName)
 	require.Len(t, previews.asked, 2)
 	assert.False(t, previews.asked[0].FileRefused)
 	assert.True(t, previews.asked[1].FileRefused, "its baseline is kept, as any filed step's is")

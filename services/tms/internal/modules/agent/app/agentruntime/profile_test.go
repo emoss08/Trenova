@@ -22,18 +22,18 @@ func profileRuntime(t *testing.T, agents ...*agentdefinition.Definition) *Servic
 
 	query := &stubQueryRegistry{Tools: []agentports.AgentQueryTool{
 		&agenttest.StubQueryTool{
-			ToolName: "list_shipments",
+			ToolName: "shipment_list",
 			Desc:     "List shipments by status or dates.",
 			Resource: permission.ResourceShipment,
 		},
 		&agenttest.StubQueryTool{
-			ToolName: "list_invoices",
+			ToolName: "invoice_list",
 			Desc:     "List invoices by status or due date.",
 			Resource: permission.ResourceInvoice,
 		},
 	}}
 	action := &stubActionRegistry{Tools: []agentports.AgentTool{
-		&agenttest.StubActionTool{ToolName: "post_invoice", Tier: agent.TierAutoExecute},
+		&agenttest.StubActionTool{ToolName: "invoice_post", Tier: agent.TierAutoExecute},
 		&agenttest.StubActionTool{ToolName: "assign_move", Tier: agent.TierAutoExecute},
 	}}
 	byID := make(map[pulid.ID]*agentdefinition.Definition, len(agents))
@@ -66,70 +66,70 @@ func conversationRequest(definition *agentdefinition.Definition) *agentports.Run
 func TestProfile_AConversationReachesTheToolsThePersonsOtherAgentsHold(t *testing.T) {
 	t.Parallel()
 
-	dispatch := agentHolding("Dispatch helper", "list_shipments", "assign_move")
-	billing := agentHolding("Billing helper", "list_invoices", "post_invoice")
+	dispatch := agentHolding("Dispatch helper", "shipment_list", "assign_move")
+	billing := agentHolding("Billing helper", "invoice_list", "invoice_post")
 	billing.AutonomyCeiling = agent.TierActWithApproval
 	service := profileRuntime(t, dispatch, billing)
 
 	profile := service.profileFor(t.Context(), conversationRequest(dispatch), nil)
 
 	assert.Equal(t, ProfileConversation, profile.mode)
-	assert.Equal(t, agent.TierAutoExecute, profile.beyond["list_invoices"])
-	assert.Equal(t, agent.TierActWithApproval, profile.beyond["post_invoice"],
+	assert.Equal(t, agent.TierAutoExecute, profile.beyond["invoice_list"])
+	assert.Equal(t, agent.TierActWithApproval, profile.beyond["invoice_post"],
 		"a reached write runs no higher than the agent holding it would run it")
-	assert.NotContains(t, profile.beyond, "list_shipments", "its own tools are held, not reached")
+	assert.NotContains(t, profile.beyond, "shipment_list", "its own tools are held, not reached")
 	assert.NotContains(t, profile.beyond, "assign_move")
 }
 
 func TestProfile_ReachTakesTheMostPermissiveHolder(t *testing.T) {
 	t.Parallel()
 
-	dispatch := agentHolding("Dispatch helper", "list_shipments")
-	cautious := agentHolding("Billing reviewer", "post_invoice")
+	dispatch := agentHolding("Dispatch helper", "shipment_list")
+	cautious := agentHolding("Billing reviewer", "invoice_post")
 	cautious.AutonomyCeiling = agent.TierPropose
-	trusted := agentHolding("Billing clerk", "post_invoice")
+	trusted := agentHolding("Billing clerk", "invoice_post")
 	trusted.AutonomyCeiling = agent.TierActWithApproval
 	service := profileRuntime(t, dispatch, cautious, trusted)
 
 	profile := service.profileFor(t.Context(), conversationRequest(dispatch), nil)
 
-	assert.Equal(t, agent.TierActWithApproval, profile.beyond["post_invoice"])
+	assert.Equal(t, agent.TierActWithApproval, profile.beyond["invoice_post"])
 }
 
 func TestProfile_ReachLeavesOutTheWritesOfAnAgentInSimulation(t *testing.T) {
 	t.Parallel()
 
-	dispatch := agentHolding("Dispatch helper", "list_shipments")
-	billing := agentHolding("Billing helper", "list_invoices", "post_invoice")
+	dispatch := agentHolding("Dispatch helper", "shipment_list")
+	billing := agentHolding("Billing helper", "invoice_list", "invoice_post")
 	billing.SimulationMode = true
 	service := profileRuntime(t, dispatch, billing)
 
 	profile := service.profileFor(t.Context(), conversationRequest(dispatch), nil)
 
-	assert.Contains(t, profile.beyond, "list_invoices", "a read changes nothing, simulated or not")
-	assert.NotContains(t, profile.beyond, "post_invoice",
+	assert.Contains(t, profile.beyond, "invoice_list", "a read changes nothing, simulated or not")
+	assert.NotContains(t, profile.beyond, "invoice_post",
 		"a write held only by an agent in simulation would otherwise run for real")
 }
 
 func TestProfile_ReachLeavesOutWhatTheAgentSwitchedOff(t *testing.T) {
 	t.Parallel()
 
-	dispatch := agentHolding("Dispatch helper", "list_shipments")
-	dispatch.DisabledToolNames = []string{"post_invoice"}
-	billing := agentHolding("Billing helper", "list_invoices", "post_invoice")
+	dispatch := agentHolding("Dispatch helper", "shipment_list")
+	dispatch.DisabledToolNames = []string{"invoice_post"}
+	billing := agentHolding("Billing helper", "invoice_list", "invoice_post")
 	service := profileRuntime(t, dispatch, billing)
 
 	profile := service.profileFor(t.Context(), conversationRequest(dispatch), nil)
 
-	assert.Contains(t, profile.beyond, "list_invoices")
-	assert.NotContains(t, profile.beyond, "post_invoice")
+	assert.Contains(t, profile.beyond, "invoice_list")
+	assert.NotContains(t, profile.beyond, "invoice_post")
 }
 
 func TestProfile_OnlyAConversationWithAPersonReachesBeyondItsAgent(t *testing.T) {
 	t.Parallel()
 
-	dispatch := agentHolding("Dispatch helper", "list_shipments")
-	billing := agentHolding("Billing helper", "list_invoices")
+	dispatch := agentHolding("Dispatch helper", "shipment_list")
+	billing := agentHolding("Billing helper", "invoice_list")
 	service := profileRuntime(t, dispatch, billing)
 
 	cases := map[string]func(*agentports.RunRequest){
@@ -155,7 +155,7 @@ func TestProfile_OnlyAConversationWithAPersonReachesBeyondItsAgent(t *testing.T)
 func TestProfile_ALookupHandedOutHoldsOnlyWhatReads(t *testing.T) {
 	t.Parallel()
 
-	billing := agentHolding("Billing helper", "list_invoices", "post_invoice")
+	billing := agentHolding("Billing helper", "invoice_list", "invoice_post")
 	service := profileRuntime(t, billing)
 	req := conversationRequest(billing)
 	req.Delegation = &agentports.Delegation{ParentAgentID: pulid.MustNew("agdef_"), ReadOnly: true}
@@ -163,8 +163,8 @@ func TestProfile_ALookupHandedOutHoldsOnlyWhatReads(t *testing.T) {
 	profile := service.profileFor(t.Context(), req, nil)
 
 	assert.Equal(t, ProfileFanOut, profile.mode)
-	assert.Contains(t, profile.held, "list_invoices")
-	assert.NotContains(t, profile.held, "post_invoice")
+	assert.Contains(t, profile.held, "invoice_list")
+	assert.NotContains(t, profile.held, "invoice_post")
 	assert.NotContains(t, profile.held, agentdefinition.CoreToolRemember)
 	assert.NotContains(t, profile.held, delegateTaskName)
 }
@@ -172,7 +172,7 @@ func TestProfile_ALookupHandedOutHoldsOnlyWhatReads(t *testing.T) {
 func TestProfile_ATaskThePersonDirectedKeepsItsWrites(t *testing.T) {
 	t.Parallel()
 
-	billing := agentHolding("Billing helper", "list_invoices", "post_invoice")
+	billing := agentHolding("Billing helper", "invoice_list", "invoice_post")
 	service := profileRuntime(t, billing)
 	req := conversationRequest(billing)
 	req.Delegation = &agentports.Delegation{ParentAgentID: pulid.MustNew("agdef_")}
@@ -180,30 +180,30 @@ func TestProfile_ATaskThePersonDirectedKeepsItsWrites(t *testing.T) {
 	profile := service.profileFor(t.Context(), req, nil)
 
 	assert.Equal(t, ProfileDelegated, profile.mode)
-	assert.Contains(t, profile.held, "post_invoice")
+	assert.Contains(t, profile.held, "invoice_post")
 	assert.NotContains(t, profile.held, agentdefinition.CoreToolOpenPage)
 }
 
 func TestOpenTurn_AReachedWriteIsDecidedUnderItsHoldersCeiling(t *testing.T) {
 	t.Parallel()
 
-	dispatch := agentHolding("Dispatch helper", "list_shipments")
+	dispatch := agentHolding("Dispatch helper", "shipment_list")
 	dispatch.AutonomyCeiling = agent.TierAutoExecute
-	billing := agentHolding("Billing helper", "post_invoice")
+	billing := agentHolding("Billing helper", "invoice_post")
 	billing.AutonomyCeiling = agent.TierPropose
 	service := profileRuntime(t, dispatch, billing)
 
 	turn := service.OpenTurn(t.Context(), conversationRequest(dispatch))
 
-	require.True(t, turn.holds("post_invoice"))
-	call := turn.dispatchCall(&agentports.ToolCall{ID: "call_1", Name: "post_invoice"}, "")
+	require.True(t, turn.holds("invoice_post"))
+	call := turn.dispatchCall(&agentports.ToolCall{ID: "call_1", Name: "invoice_post"}, "")
 	assert.Equal(t, agent.TierPropose, call.Beyond)
 	assert.Empty(t, turn.dispatchCall(
-		&agentports.ToolCall{ID: "call_2", Name: "list_shipments"}, "",
+		&agentports.ToolCall{ID: "call_2", Name: "shipment_list"}, "",
 	).Beyond, "a tool the agent holds is decided as its own")
 
 	decision := agenttoolpolicy.Decide(t.Context(), agenttoolpolicy.DecideInput{
-		Policy:        (&agenttest.StubActionTool{ToolName: "post_invoice", Tier: agent.TierAutoExecute}).Policy(),
+		Policy:        (&agenttest.StubActionTool{ToolName: "invoice_post", Tier: agent.TierAutoExecute}).Policy(),
 		Definition:    dispatch,
 		HolderCeiling: call.Beyond,
 	})
@@ -214,27 +214,27 @@ func TestOpenTurn_AReachedWriteIsDecidedUnderItsHoldersCeiling(t *testing.T) {
 func TestTurnState_KeepsWhatTheTurnReaches(t *testing.T) {
 	t.Parallel()
 
-	dispatch := agentHolding("Dispatch helper", "list_shipments")
-	billing := agentHolding("Billing helper", "list_invoices")
+	dispatch := agentHolding("Dispatch helper", "shipment_list")
+	billing := agentHolding("Billing helper", "invoice_list")
 	service := profileRuntime(t, dispatch, billing)
 	req := conversationRequest(dispatch)
 
 	restored := service.RestoreTurn(req, service.OpenTurn(t.Context(), req).State())
 
-	assert.True(t, restored.holds("list_invoices"))
+	assert.True(t, restored.holds("invoice_list"))
 	assert.Equal(t, ProfileConversation, restored.Mode())
-	assert.Contains(t, restored.ToolsState().Beyond, "list_invoices")
+	assert.Contains(t, restored.ToolsState().Beyond, "invoice_list")
 }
 
 func TestDispatchStep_RunsAReachedWriteUnderItsHoldersCeiling(t *testing.T) {
 	t.Parallel()
 
-	dispatch := agentHolding("Dispatch helper", "list_shipments")
+	dispatch := agentHolding("Dispatch helper", "shipment_list")
 	dispatch.AutonomyCeiling = agent.TierAutoExecute
 	service := profileRuntime(t)
 	service.arguments = toolschema.NewValidator()
 	req := conversationRequest(dispatch)
-	call := agentports.ToolCall{ID: "call_1", Name: "post_invoice", Arguments: map[string]any{}}
+	call := agentports.ToolCall{ID: "call_1", Name: "invoice_post", Arguments: map[string]any{}}
 
 	refused := service.DispatchStep(t.Context(), req, DispatchCall{Call: call})
 	reached := service.DispatchStep(t.Context(), req, DispatchCall{

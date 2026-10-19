@@ -70,7 +70,7 @@ describe("classifyMessage", () => {
 
   it("renders a tool result as a lookup", () => {
     expect(
-      classifyMessage(message({ role: "Tool", toolName: "get_shipment", content: "{}" })),
+      classifyMessage(message({ role: "Tool", toolName: "shipment_get", content: "{}" })),
     ).toBe("tool");
   });
 
@@ -81,7 +81,7 @@ describe("classifyMessage", () => {
   });
 
   it("renders a failed tool result as a lookup, not a refusal", () => {
-    const failed = message({ role: "Tool", toolName: "get_shipment", toolFailed: true });
+    const failed = message({ role: "Tool", toolName: "shipment_get", toolFailed: true });
 
     expect(classifyMessage(failed)).toBe("tool");
   });
@@ -92,7 +92,7 @@ describe("classifyMessage", () => {
     const toolCall = message({
       role: "Assistant",
       content: "",
-      toolCalls: [{ id: "call_1", name: "get_shipment", arguments: { shipmentId: "shp_1" } }],
+      toolCalls: [{ id: "call_1", name: "shipment_get", arguments: { shipmentId: "shp_1" } }],
     });
 
     expect(classifyMessage(toolCall)).toBe("assistant");

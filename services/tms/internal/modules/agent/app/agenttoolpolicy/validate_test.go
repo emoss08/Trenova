@@ -32,9 +32,9 @@ func validAction() Spec {
 
 func validQuery() Spec {
 	return Spec{
-		ToolName: "get_shipment",
+		ToolName: "shipment_get",
 		Policy: agentports.ToolPolicy{
-			Name:          "get_shipment",
+			Name:          "shipment_get",
 			Kind:          agent.ToolKindQuery,
 			Resource:      permission.ResourceShipment,
 			Operation:     permission.OpRead,

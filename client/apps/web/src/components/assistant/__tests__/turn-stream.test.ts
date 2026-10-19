@@ -60,17 +60,17 @@ describe("reduceTurn", () => {
         event: "message",
         data: {
           content: "Let me check.",
-          toolCalls: [{ id: "c1", name: "get_shipment" }],
+          toolCalls: [{ id: "c1", name: "shipment_get" }],
           model: "m",
         },
       },
       {
         event: "tool_started",
-        data: { callId: "c1", name: "get_shipment", arguments: { proNumber: "S1" } },
+        data: { callId: "c1", name: "shipment_get", arguments: { proNumber: "S1" } },
       },
       {
         event: "tool_finished",
-        data: { callId: "c1", name: "get_shipment", failed: false, proposed: false, content: "{}" },
+        data: { callId: "c1", name: "shipment_get", failed: false, proposed: false, content: "{}" },
       },
       { event: "delta", data: { text: "S1 is in transit." } },
     ]);
@@ -80,7 +80,7 @@ describe("reduceTurn", () => {
       {
         kind: "tool",
         callId: "c1",
-        name: "get_shipment",
+        name: "shipment_get",
         arguments: { proNumber: "S1" },
         status: "done",
         content: "{}",
@@ -249,7 +249,7 @@ describe("reduceTurn reasoning", () => {
     const state = run([
       accepted,
       { event: "reasoning", data: { text: "Look it up." } },
-      { event: "tool_started", data: { callId: "c1", name: "get_shipment", arguments: {} } },
+      { event: "tool_started", data: { callId: "c1", name: "shipment_get", arguments: {} } },
     ]);
 
     expect(state.segments[0]).toEqual({ kind: "reasoning", text: "Look it up.", closed: true });
@@ -260,10 +260,10 @@ describe("reduceTurn reasoning", () => {
     const state = run([
       accepted,
       { event: "reasoning", data: { text: "First." } },
-      { event: "tool_started", data: { callId: "c1", name: "get_shipment", arguments: {} } },
+      { event: "tool_started", data: { callId: "c1", name: "shipment_get", arguments: {} } },
       {
         event: "tool_finished",
-        data: { callId: "c1", name: "get_shipment", failed: false, proposed: false, content: "{}" },
+        data: { callId: "c1", name: "shipment_get", failed: false, proposed: false, content: "{}" },
       },
       { event: "reasoning", data: { text: "Second." } },
     ]);
@@ -284,10 +284,10 @@ describe("reduceTurn restarts and refusals", () => {
   it("withdraws the partial reply on retrying and keeps the tools that ran", () => {
     const state = run([
       accepted,
-      { event: "tool_started", data: { callId: "c1", name: "get_shipment", arguments: {} } },
+      { event: "tool_started", data: { callId: "c1", name: "shipment_get", arguments: {} } },
       {
         event: "tool_finished",
-        data: { callId: "c1", name: "get_shipment", failed: false, proposed: false, content: "{}" },
+        data: { callId: "c1", name: "shipment_get", failed: false, proposed: false, content: "{}" },
       },
       { event: "reasoning", data: { text: "Let me think." } },
       { event: "delta", data: { text: "S1 is in " } },
@@ -330,14 +330,14 @@ describe("reduceTurn restarts and refusals", () => {
         event: "message",
         data: {
           content: "Let me check S1.",
-          toolCalls: [{ id: "c1", name: "get_shipment" }],
+          toolCalls: [{ id: "c1", name: "shipment_get" }],
           model: "m",
         },
       },
-      { event: "tool_started", data: { callId: "c1", name: "get_shipment", arguments: {} } },
+      { event: "tool_started", data: { callId: "c1", name: "shipment_get", arguments: {} } },
       {
         event: "tool_finished",
-        data: { callId: "c1", name: "get_shipment", failed: false, proposed: false, content: "{}" },
+        data: { callId: "c1", name: "shipment_get", failed: false, proposed: false, content: "{}" },
       },
       { event: "reasoning", data: { text: "It is in Dallas." } },
       { event: "delta", data: { text: "S1 is in " } },
@@ -353,7 +353,7 @@ describe("reduceTurn restarts and refusals", () => {
       {
         kind: "tool",
         callId: "c1",
-        name: "get_shipment",
+        name: "shipment_get",
         arguments: {},
         status: "done",
         content: "{}",
@@ -366,7 +366,7 @@ describe("reduceTurn restarts and refusals", () => {
       accepted,
       {
         event: "message",
-        data: { content: "Checking.", toolCalls: [{ id: "c1", name: "get_shipment" }], model: "m" },
+        data: { content: "Checking.", toolCalls: [{ id: "c1", name: "shipment_get" }], model: "m" },
       },
       { event: "reasoning", data: { text: "Hmm" } },
       {
@@ -670,10 +670,10 @@ describe("reduceTurn tool effects and summaries", () => {
   it("leaves effect and summary unset for an older server", () => {
     const state = run([
       accepted,
-      { event: "tool_started", data: { callId: "c1", name: "get_shipment", arguments: {} } },
+      { event: "tool_started", data: { callId: "c1", name: "shipment_get", arguments: {} } },
       {
         event: "tool_finished",
-        data: { callId: "c1", name: "get_shipment", failed: false, proposed: false, content: "{}" },
+        data: { callId: "c1", name: "shipment_get", failed: false, proposed: false, content: "{}" },
       },
     ]);
 
@@ -697,7 +697,7 @@ describe("advanceTurn", () => {
     );
     state = advanceTurn(
       state,
-      { event: "tool_started", data: { callId: "c1", name: "get_shipment", arguments: {} } },
+      { event: "tool_started", data: { callId: "c1", name: "shipment_get", arguments: {} } },
       2_000,
     );
     state = advanceTurn(state, { event: "delta", data: { text: "…" } }, 2_500);
@@ -705,7 +705,7 @@ describe("advanceTurn", () => {
       state,
       {
         event: "tool_finished",
-        data: { callId: "c1", name: "get_shipment", failed: false, proposed: false, content: "{}" },
+        data: { callId: "c1", name: "shipment_get", failed: false, proposed: false, content: "{}" },
       },
       5_000,
     );
@@ -718,14 +718,14 @@ describe("advanceTurn", () => {
   it("does not restamp a call that has already finished", () => {
     let state = advanceTurn(
       initialTurnState("Q"),
-      { event: "tool_started", data: { callId: "c1", name: "get_shipment", arguments: {} } },
+      { event: "tool_started", data: { callId: "c1", name: "shipment_get", arguments: {} } },
       1_000,
     );
     state = advanceTurn(
       state,
       {
         event: "tool_finished",
-        data: { callId: "c1", name: "get_shipment", failed: false, proposed: false, content: "{}" },
+        data: { callId: "c1", name: "shipment_get", failed: false, proposed: false, content: "{}" },
       },
       2_000,
     );
@@ -801,11 +801,11 @@ describe("reduceTurn reply_replaced", () => {
       accepted,
       wire("message", {
         content: "Let me check.",
-        toolCalls: [{ id: "c1", name: "list_shipments" }],
+        toolCalls: [{ id: "c1", name: "shipment_list" }],
         model: "m",
       }),
-      wire("tool_started", { callId: "c1", name: "list_shipments", arguments: {} }),
-      wire("tool_finished", { callId: "c1", name: "list_shipments", content: "{}" }),
+      wire("tool_started", { callId: "c1", name: "shipment_list", arguments: {} }),
+      wire("tool_finished", { callId: "c1", name: "shipment_list", content: "{}" }),
       wire("reasoning", { text: "Two are late." }),
       wire("delta", { text: "PRO-1 (ID shp_01M3Q2Y4SRFE0YW60JY6F5NRW7) " }),
       wire("delta", { text: "is late." }),
@@ -819,7 +819,7 @@ describe("reduceTurn reply_replaced", () => {
       {
         kind: "tool",
         callId: "c1",
-        name: "list_shipments",
+        name: "shipment_list",
         arguments: {},
         status: "done",
         content: "{}",
@@ -976,13 +976,13 @@ describe("turnCitedRecords", () => {
   it("lists each record the finished tools named once, in the order they came", () => {
     const state = run([
       accepted,
-      { event: "tool_started", data: { callId: "c1", name: "list_shipments", arguments: {} } },
+      { event: "tool_started", data: { callId: "c1", name: "shipment_list", arguments: {} } },
       finished(
-        '{"callId":"c1","name":"list_shipments","failed":false,"content":"[]","records":[{"type":"shipment","id":"shp_1","label":"S-1"},{"type":"worker","id":"wrk_1","label":"Leon Park"}]}',
+        '{"callId":"c1","name":"shipment_list","failed":false,"content":"[]","records":[{"type":"shipment","id":"shp_1","label":"S-1"},{"type":"worker","id":"wrk_1","label":"Leon Park"}]}',
       ),
-      { event: "tool_started", data: { callId: "c2", name: "get_shipment", arguments: {} } },
+      { event: "tool_started", data: { callId: "c2", name: "shipment_get", arguments: {} } },
       finished(
-        '{"callId":"c2","name":"get_shipment","failed":false,"content":"{}","records":[{"type":"shipment","id":"shp_1","label":"S-1"},{"type":"customer","id":"cus_1","label":"Acme"}]}',
+        '{"callId":"c2","name":"shipment_get","failed":false,"content":"{}","records":[{"type":"shipment","id":"shp_1","label":"S-1"},{"type":"customer","id":"cus_1","label":"Acme"}]}',
       ),
     ]);
 

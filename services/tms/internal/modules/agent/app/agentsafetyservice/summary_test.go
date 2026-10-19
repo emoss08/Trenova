@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -62,7 +62,7 @@ func TestToolHoldersListsEachAgentOnceUnderEveryToolItHolds(t *testing.T) {
 	assert.Equal(t, []pulid.ID{first.ID, second.ID}, byTool["email_customer"])
 	assert.Equal(t, []pulid.ID{first.ID}, byTool["assign_move"])
 	assert.NotContains(t, byTool, "unregistered_tool")
-	assert.NotContains(t, byTool, "get_shipment")
+	assert.NotContains(t, byTool, "shipment_get")
 }
 
 type fakeRules struct {
@@ -102,7 +102,7 @@ func TestTheOrganizationsToolRulesShapeEverySafetyRead(t *testing.T) {
 	assert.Same(t, held, views["assign_move"].Override)
 	assert.Same(t, reset, views["email_customer"].Override, "a reset rule keeps its version for the next edit")
 	assert.Equal(t, agent.TierAutoExecute, views["email_customer"].Policy.MaxTier)
-	assert.Nil(t, views["get_shipment"].Override)
+	assert.Nil(t, views["shipment_get"].Override)
 
 	assessed := svc.Assess(t.Context(), &agentports.AssessAgentSafetyRequest{
 		Subject: &agentports.AgentSafetySubject{Agent: desk, Control: &tenant.AgentControl{}},

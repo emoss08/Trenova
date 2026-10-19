@@ -23,11 +23,11 @@ import (
 )
 
 const (
-	toolReleaseBillingQueueItem  = "release_billing_queue_item"
-	toolResolveBillingQueueIssue = "resolve_billing_queue_issue"
-	toolUndoBillingQueueIssue    = "undo_billing_queue_issue"
-	toolGetBillingQueueItem      = "get_billing_queue_item"
-	toolListBillingQueueItems    = "list_billing_queue_items"
+	toolReleaseBillingQueueItem  = "billing_release_queue_item"
+	toolResolveBillingQueueIssue = "billing_resolve_issue"
+	toolUndoBillingQueueIssue    = "billing_undo_issue"
+	toolGetBillingQueueItem      = "billing_get_queue_item"
+	toolListBillingQueueItems    = "billing_list_queue_items"
 	paramIssueID                 = "issueId"
 	paramOptionKey               = "optionKey"
 	checkStateOpen               = "Open"
@@ -71,13 +71,13 @@ type queueReviewer interface {
 func queueItemProperty() map[string]any {
 	return agenttoolschema.OfKinds(map[string]any{
 		toolschema.KeyType: toolschema.TypeString,
-		toolschema.KeyDescription: "The billing queue item, from list_billing_queue_items, " +
-			"get_billing_queue_item or this run's subject. Never guess one.",
+		toolschema.KeyDescription: "The billing queue item, from billing_list_queue_items, " +
+			"billing_get_queue_item or this run's subject. Never guess one.",
 	}, permission.KindBillingQueueItem)
 }
 
 func issueProperty() map[string]any {
-	return common.StringProperty("The check, by the id get_billing_queue_item lists under the "+
+	return common.StringProperty("The check, by the id billing_get_queue_item lists under the "+
 		"item's issues. Never guess one.", 0)
 }
 
@@ -110,8 +110,8 @@ func newReleaseBillingQueueItemTool(
 				toolReleaseBillingQueueItem,
 			},
 			Description: "Take a billing queue item off hold and back to the status the hold " +
-				"found it in, the counterpart of hold_billing_queue_item. A hold was put on for " +
-				"a reason: read the item's review notes with get_billing_queue_item and release " +
+				"found it in, the counterpart of billing_hold_queue_item. A hold was put on for " +
+				"a reason: read the item's review notes with billing_get_queue_item and release " +
 				"it only when the record shows that what it waited on has arrived, never because " +
 				"nothing looks wrong.",
 			Resource:    permission.ResourceBillingQueue,
@@ -123,7 +123,7 @@ func newReleaseBillingQueueItemTool(
 			TaintHold: "What the hold waited on is what outside text would claim has arrived, " +
 				"so a run that has read it proposes the release rather than making it.",
 			Rationale: "Moves an item back into the review queue inside Trenova; it creates no " +
-				"money and hold_billing_queue_item puts it back on hold.",
+				"money and billing_hold_queue_item puts it back on hold.",
 			Target:   queueTarget,
 			Artifact: billingQueueRecordEntity,
 			Properties: map[string]any{
@@ -375,7 +375,7 @@ func newResolveBillingQueueIssueTool(review queueReviewer) agentports.AgentTool 
 				"one of the choices that check offers. A choice bills a charge as it stands, " +
 				"takes it off, reprices it, bills without the paperwork, or asks the driver for " +
 				"a signed POD. " +
-				"get_billing_queue_item lists each check's issueId and its options with their " +
+				"billing_get_queue_item lists each check's issueId and its options with their " +
 				"optionKey; use them exactly. Settling can change what the customer is charged, " +
 				"so a person always decides, and asking the driver settles nothing until the " +
 				"paperwork arrives.",
@@ -389,7 +389,7 @@ func newResolveBillingQueueIssueTool(review queueReviewer) agentports.AgentTool 
 			PersonOnly:  true,
 			Reversible:  true,
 			Rationale: "Decides what a customer is billed for a flagged charge, or messages " +
-				"the driver for paperwork, so only a person settles it; undo_billing_queue_issue " +
+				"the driver for paperwork, so only a person settles it; billing_undo_issue " +
 				"takes it back.",
 			Target:   queueTarget,
 			Artifact: billingQueueRecordEntity,
@@ -397,7 +397,7 @@ func newResolveBillingQueueIssueTool(review queueReviewer) agentports.AgentTool 
 				common.ParamBillingQueueItemID: queueItemProperty(),
 				paramIssueID:                   issueProperty(),
 				paramOptionKey: common.StringProperty(
-					"The optionKey of the choice, exactly as get_billing_queue_item lists it "+
+					"The optionKey of the choice, exactly as billing_get_queue_item lists it "+
 						"under the check.",
 					maxOptionKeyChars,
 				),
@@ -551,7 +551,7 @@ func newUndoBillingQueueIssueTool(review queueReviewer) agentports.AgentTool {
 			Prerequisites: []string{toolGetBillingQueueItem},
 			Description: "Propose taking back how one of a billing queue item's checks was " +
 				"settled. The check is open again and any charge the settlement removed or " +
-				"repriced is put back as it was. get_billing_queue_item lists each check's " +
+				"repriced is put back as it was. billing_get_queue_item lists each check's " +
 				"issueId and whether its settlement can be undone; only a settled check on an " +
 				"item still in review can be. It can change what the customer is charged, so a " +
 				"person always decides.",

@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/app/tablequeryservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
@@ -44,7 +44,7 @@ func (s *stubComposer) Compose(
 
 func viewCatalog() *filtercatalog.Catalog {
 	return filtercatalog.New(filtercatalog.Resource{
-		Tool:     "list_shipments",
+		Tool:     "shipment_list",
 		Resource: permission.ResourceShipment,
 		Entity:   "shipments",
 		Fields: []filtercatalog.Field{
@@ -203,7 +203,7 @@ func TestComposeTableView_OffersOnlyTheTablesItCanBuild(t *testing.T) {
 /*
 A view is run once through the table's own list, so the card beside the
 conversation can say how many rows opening it will show and what the first
-few are. The fake list below stands in for list_shipments: what matters here
+few are. The fake list below stands in for shipment_list: what matters here
 is that the view's own filters reach the fetch, and that the count stops at
 its limit rather than reading the whole table.
 */
@@ -227,7 +227,7 @@ func viewRows(n int) []any {
 func runnableViewTool(rows []any) (*composeTableViewTool, *capturedList) {
 	capture := &capturedList{rows: rows}
 	list := buildListTool(&listSpec{
-		name:         "list_shipments",
+		name:         "shipment_list",
 		entityPlural: "shipments",
 		summary:      "List shipments.",
 		resource:     permission.ResourceShipment,

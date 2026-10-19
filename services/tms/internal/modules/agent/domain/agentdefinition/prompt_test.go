@@ -43,7 +43,7 @@ func fullContext() agentdefinition.RuntimeContext {
 			Title:      "Shipment S-1001",
 		},
 		Tools: []agentdefinition.ToolSummary{
-			{Name: "get_shipment", Description: "Looks up a shipment", Query: true},
+			{Name: "shipment_get", Description: "Looks up a shipment", Query: true},
 			{
 				Name:        "assign_move",
 				Description: "Assigns a driver",
@@ -147,7 +147,7 @@ func TestBuildSystemPrompt_ListsToolsByWhatACallDoesWithoutRepeatingDescriptions
 			Tier:        agent.TierAutoExecute,
 		},
 		agentdefinition.ToolSummary{
-			Name:           "post_invoices",
+			Name:           "invoice_post",
 			Tier:           agent.TierPropose,
 			AlwaysProposes: true,
 		},
@@ -155,9 +155,9 @@ func TestBuildSystemPrompt_ListsToolsByWhatACallDoesWithoutRepeatingDescriptions
 
 	prompt := definitionWithInstructions("Help.").BuildSystemPrompt(rc)
 
-	assert.Contains(t, prompt, "- Reads, which run as soon as you call them: get_shipment")
+	assert.Contains(t, prompt, "- Reads, which run as soon as you call them: shipment_get")
 	assert.Contains(t, prompt,
-		"- Changes that always record a proposal for a person to decide: post_invoices")
+		"- Changes that always record a proposal for a person to decide: invoice_post")
 	assert.Contains(t, prompt,
 		"- Changes that run at once or are recorded as a proposal depending on what the "+
 			"call would reach; the result says which and why: assign_move, update_tractor_status")
@@ -167,35 +167,6 @@ func TestBuildSystemPrompt_ListsToolsByWhatACallDoesWithoutRepeatingDescriptions
 		"the schema on the request carries the description")
 	assert.NotContains(t, prompt, "Several records in one call")
 	assert.NotContains(t, prompt, "\"Dashboard\" means two things")
-}
-
-// The rule about plural twins named billing's tools to every agent. It now
-// names the twins the agent holds, and only when it holds one.
-func TestBuildSystemPrompt_NamesThePluralTwinsTheAgentHolds(t *testing.T) {
-	t.Parallel()
-
-	rc := fullContext()
-	rc.Tools = append(
-		rc.Tools,
-		agentdefinition.ToolSummary{Name: "post_invoice", Tier: agent.TierPropose},
-		agentdefinition.ToolSummary{
-			Name:    "post_invoices",
-			Tier:    agent.TierPropose,
-			BatchOf: "post_invoice",
-		},
-		agentdefinition.ToolSummary{Name: "get_invoices", Query: true, BatchOf: "get_invoice"},
-	)
-
-	prompt := definitionWithInstructions("Help.").BuildSystemPrompt(rc)
-
-	assert.Contains(t, prompt,
-		"Several records in one call: post_invoices does post_invoice for a list, "+
-			"get_invoices does get_invoice for a list.")
-	assert.Contains(t, prompt, "never call the single tool once per record.")
-
-	rc.ToolsDisclosed = true
-	disclosed := definitionWithInstructions("Help.").BuildSystemPrompt(rc)
-	assert.Contains(t, disclosed, "load the list tool with find_tools when it is not loaded")
 }
 
 // remember saves a memory kept for the person alone at once, and the static
@@ -222,16 +193,16 @@ func TestBuildSystemPrompt_NamesTheOrderAToolIsUsedIn(t *testing.T) {
 
 	rc := fullContext()
 	rc.Tools = append(rc.Tools, agentdefinition.ToolSummary{
-		Name:   "create_shipment",
+		Name:   "shipment_create",
 		Tier:   agent.TierPropose,
-		Recipe: []string{"list_customers", "list_locations", "quote_shipment", "create_shipment"},
+		Recipe: []string{"list_customers", "list_locations", "quote_shipment", "shipment_create"},
 	})
 
 	prompt := definitionWithInstructions("Help.").BuildSystemPrompt(rc)
 
 	assert.Contains(t, prompt, "How a task is done with these, in order")
 	assert.Contains(t, prompt,
-		"- create_shipment: list_customers → list_locations → quote_shipment → create_shipment")
+		"- shipment_create: list_customers → list_locations → quote_shipment → shipment_create")
 }
 
 // "Dashboard" is ambiguous only for an agent that can touch one.
@@ -304,7 +275,7 @@ func TestBuildSystemPrompt_RendersRuntimeContext(t *testing.T) {
 	assert.Contains(t, prompt, "<page_context>")
 	assert.Contains(t, prompt, "Shipment S-1001")
 	assert.Contains(t, prompt, "## Tools")
-	assert.Contains(t, prompt, "get_shipment")
+	assert.Contains(t, prompt, "shipment_get")
 	assert.Contains(t, prompt, "assign_move")
 	assert.Contains(t, prompt, "needs a person's approval")
 }
@@ -655,14 +626,14 @@ func TestBuildSystemPrompt_ListsTheWaitingProposalIdsForRequestDecision(t *testi
 	prompt := d.BuildSystemPrompt(agentdefinition.RuntimeContext{
 		PendingProposals: []agentdefinition.PendingProposal{{
 			ProposalID: id,
-			ToolName:   "create_shipment",
+			ToolName:   "shipment_create",
 			Rationale:  "Copy PRO-100 for Tuesday.",
 		}},
 		DecisionRequests: true,
 	})
 
 	assert.Contains(t, prompt,
-		"- create_shipment (proposalId aprop_01JWAITING0000000000000000) — Copy PRO-100")
+		"- shipment_create (proposalId aprop_01JWAITING0000000000000000) — Copy PRO-100")
 	assert.Contains(t, prompt, "call request_decision with its proposalId")
 	assert.Contains(t, prompt, "not by typing")
 	assert.NotContains(t, prompt, "tell them the proposal is waiting for their approval")
@@ -678,12 +649,12 @@ func TestBuildSystemPrompt_NamesThePlanAWaitingStepBelongsTo(t *testing.T) {
 		PendingProposals: []agentdefinition.PendingProposal{{
 			ProposalID: pulid.ID("aprop_01JSTEP000000000000000000"),
 			PlanID:     pulid.ID("apl_01JPLAN0000000000000000000"),
-			ToolName:   "post_invoice",
+			ToolName:   "invoice_post",
 		}},
 		DecisionRequests: true,
 	})
 
-	assert.Contains(t, prompt, "- post_invoice (proposalId aprop_01JSTEP000000000000000000, "+
+	assert.Contains(t, prompt, "- invoice_post (proposalId aprop_01JSTEP000000000000000000, "+
 		"a step of planId apl_01JPLAN0000000000000000000)")
 	assert.Contains(t, prompt, "pass their ids together in proposalIds")
 	assert.Contains(t, prompt, "a plan's steps are decided together: pass its planId")
@@ -708,7 +679,7 @@ func TestBuildSystemPrompt_DisclosedSectionNamesWhatFindToolsCanLoad(t *testing.
 		ToolsDisclosed: true,
 		Tools: []agentdefinition.ToolSummary{
 			{
-				Name:        "get_shipment",
+				Name:        "shipment_get",
 				Description: "Look up one shipment by PRO.",
 				Query:       true,
 				Loaded:      true,

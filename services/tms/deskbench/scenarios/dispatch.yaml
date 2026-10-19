@@ -8,7 +8,7 @@ scenarios:
     steps:
       - say: "how many loads we got rolling rn"
         expect:
-          calls: ["list_shipments|search_shipments|get_dispatch_board|run_report"]
+          calls: ["shipment_list|get_dispatch_board|run_report"]
           maxCalls: 5
           maxFailedCalls: 0
           noProposals: true
@@ -25,7 +25,7 @@ scenarios:
       - say: "anything running late? need to know before my 9am call"
         page: { path: /shipments, title: Shipments }
         expect:
-          calls: ["list_shipments|search_shipments|get_dispatch_board|list_service_failures"]
+          calls: ["shipment_list|get_dispatch_board|list_service_failures"]
           maxFailedCalls: 0
           noProposals: true
           noRecordIds: true
@@ -43,7 +43,7 @@ scenarios:
     steps:
       - say: "wheres the sunbelt load thats going up to chicago"
         expect:
-          calls: ["search_shipments|list_shipments|get_shipment|get_shipment_tracking"]
+          calls: ["shipment_list|shipment_get|shipment_get_tracking"]
           maxFailedCalls: 1
           noProposals: true
           replyIncludes: ["SEED-SHP-008"]
@@ -58,7 +58,7 @@ scenarios:
     steps:
       - say: "which loads still need a driver"
         expect:
-          calls: ["list_shipments|search_shipments|get_dispatch_board"]
+          calls: ["shipment_list|get_dispatch_board"]
           maxFailedCalls: 0
           noProposals: true
           rubric: >
@@ -80,7 +80,7 @@ scenarios:
     steps:
       - say: "the freshhaul reefer thats late, is it the one going to LA? whats the holdup"
         expect:
-          calls: ["search_shipments|list_shipments|get_shipment"]
+          calls: ["shipment_list|shipment_get"]
           maxFailedCalls: 1
           noProposals: true
           replyIncludes: ["SEED-SHP-010"]
@@ -133,7 +133,7 @@ scenarios:
     steps:
       - say: "did the acme steel load deliver yet? and if so did we bill it"
         expect:
-          calls: ["search_shipments|list_shipments|get_shipment"]
+          calls: ["shipment_list|shipment_get"]
           maxFailedCalls: 1
           noProposals: true
           replyIncludes: ["SEED-SHP-005", "deliver"]

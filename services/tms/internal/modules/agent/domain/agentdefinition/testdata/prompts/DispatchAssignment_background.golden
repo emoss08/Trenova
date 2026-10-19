@@ -42,8 +42,8 @@ What a change you call does:
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: remember
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
-- assign_move: get_shipment → rank_move_candidates → assign_move
-- assign_move_to_carrier: get_shipment → shop_carriers → assign_move_to_carrier
+- assign_move: shipment_get → rank_move_candidates → assign_move
+- assign_move_to_carrier: shipment_get → shop_carriers → assign_move_to_carrier
 - send_rate_confirmation: list_rate_confirmations → send_rate_confirmation
 
 ## Output

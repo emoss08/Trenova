@@ -78,7 +78,7 @@ func TestSendMessageStream_SaysWhyAnApprovedChangeFailed(t *testing.T) {
 		"Choose a rating method: no rate agreement covers this lane")
 	proposal := &agent.AgentProposal{
 		ID:             pulid.MustNew("ap_"),
-		ToolName:       "create_shipment",
+		ToolName:       "shipment_create",
 		Status:         agent.ProposalStatusExecutionFailed,
 		ExecutionError: refused.Error(),
 	}
@@ -94,7 +94,7 @@ func TestSendMessageStream_SaysWhyAnApprovedChangeFailed(t *testing.T) {
 
 	headline := decisionHeadline(conversations.appended[0].Content)
 	assert.Equal(t,
-		"Approved create_shipment, but it failed when it ran: validation failed: "+
+		"Approved shipment_create, but it failed when it ran: validation failed: "+
 			"bol: BOL is already in use by shipment(s) with Pro Number(s): SEED-DET-009; "+
 			"formulaTemplateId: Choose a rating method: no rate agreement covers this lane",
 		headline,
@@ -287,7 +287,7 @@ func (s *stubPlanStore) ExpirePendingByThread(
 	return 0, nil
 }
 
-// "Approved update_shipment, and it ran" left the agent nothing to say, and
+// "Approved shipment_update, and it ran" left the agent nothing to say, and
 // gpt-6-luna reported the weight change without the weight. A write that
 // reports no result says what it ran with, the approver's changes winning.
 func TestRanWith_NamesTheApprovedValuesOfAWriteWithNoResult(t *testing.T) {
@@ -296,7 +296,7 @@ func TestRanWith_NamesTheApprovedValuesOfAWriteWithNoResult(t *testing.T) {
 	proposal := &agent.AgentProposal{
 		ID:       pulid.MustNew("ap_"),
 		Status:   agent.ProposalStatusExecuted,
-		ToolName: "update_shipment",
+		ToolName: "shipment_update",
 		ToolParams: map[string]any{
 			"shipmentId": "shp_1",
 			"weight":     float64(38500),

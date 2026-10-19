@@ -32,8 +32,9 @@ type SelectionFloors struct {
 }
 
 type SelectionFloorSet struct {
-	Keyword SelectionFloors  `json:"keyword"`
-	Hybrid  *SelectionFloors `json:"hybrid,omitempty"`
+	Keyword SelectionFloors    `json:"keyword"`
+	Hybrid  *SelectionFloors   `json:"hybrid,omitempty"`
+	HeldOut *SelectionFloorSet `json:"heldOut,omitempty"`
 }
 
 type Finder func(request string) ([]string, error)
@@ -232,9 +233,16 @@ func (r SelectionReport) Floors() SelectionFloors {
 }
 
 func (r SelectionReport) Misses() string {
+	return r.MissesExcept(nil)
+}
+
+func (r SelectionReport) MissesExcept(held map[string]struct{}) string {
 	var builder strings.Builder
 	for _, outcome := range r.Outcomes {
 		if outcome.Top1() {
+			continue
+		}
+		if _, skip := held[outcome.Case.Request]; skip {
 			continue
 		}
 		position := "not in the top 5"

@@ -1,6 +1,5 @@
 defaults:
   tags: [unattended, compliance]
-  split: development
 
 scenarios:
   - name: unattended-credentials-robert-medical-card-lapsed
@@ -46,7 +45,6 @@ scenarios:
       else he holds is current. A good run asks for the renewal and stops: nothing has lapsed, so
       there is no hold.
     tags: [unattended, credentials]
-    split: held-out
     expectedTools: ["get_worker|get_worker_credential|list_expiring_credentials"]
     forbiddenTools: [place_worker_dispatch_hold]
     exclusive: credential-seed
@@ -122,7 +120,6 @@ scenarios:
       Monitoring noticed that Summit Peak Logistics' dispatch phone number changed on the FMCSA
       census. It does not bear on eligibility. A good run acknowledges it and nothing more.
     tags: [unattended, carriers]
-    split: held-out
     expectedTools: [get_carrier_intel_event]
     forbiddenTools: [resolve_carrier_intel_event, set_carrier_monitoring]
     exclusive: carrier-intel-seed

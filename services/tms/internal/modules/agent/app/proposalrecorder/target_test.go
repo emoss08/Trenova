@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -56,7 +56,7 @@ func TestRecord_KeepsThePinnedTargetOnTheProposal(t *testing.T) {
 
 	id := pulid.MustNew("shp_")
 	proposal := recordOne(t, agentports.PendingAction{
-		ToolName:  "place_shipment_hold",
+		ToolName:  "shipment_place_hold",
 		Arguments: map[string]any{"shipmentId": id.String()},
 		Rationale: "it is late",
 		Tier:      agent.TierPropose,

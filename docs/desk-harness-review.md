@@ -1445,6 +1445,45 @@ gain.**
 - **Check:** tool count down, write coverage unchanged, the contract tests passing; selection
   accuracy and argument validity up on held-out cases.
 
+**Phase 3 progress.** The held-out split is in place before any tool changes: scenarios and
+`find_tools` cases are held out by a fixed rule, a quarter of each desk, chat and unattended apart
+(`desk-bench.md`, "Labels and splits"). The held-out figures below are the eval gate's `find_tools`
+ranking by keyword and meaning over the held-out cases, read from the gate's log after each PR.
+Argument validity on held-out scenarios is read from a bench run (`trenova desk run --split
+held-out`) when one is made for a PR.
+
+| PR | Modules | Tools before → after | Write coverage (tools / exempt / pending) | Held-out recall@5 | Held-out top-1 |
+|---|---|---|---|---|---|
+| Held-out split | none (measurement only) | 649 → 649 | 459 / 710 / 0, unchanged | 0.92 (161 cases) | 0.81 |
+| Shipments, orders, import page | `shipment`, `order`, `intake` (55 tools namespaced) | 649 → 648 | 459 / 710 / 0, unchanged | 0.9193 → 0.9193 | 0.8137 → 0.8137 |
+| Billing queue and invoices | `billing`, `invoice` (47 tools namespaced; 7 single/batch pairs merged) | 648 → 641 | 459 / 710 / 0, unchanged | 0.9193 → 0.9193 | 0.8137 → 0.8137 |
+| Settlements and pay | `settlement` (56 tools namespaced; 4 single/batch pairs merged) | 641 → 637 | 459 / 710 / 0, unchanged | 0.9193 → 0.9193 | 0.8137 → 0.8137 |
+
+The shipment row is measured on the held-out set the split PR recorded (161 cases), so both
+figures read the same cases; the module's merges moved three cases between splits, which the
+ledger now records. On the development cases the same PR moved hybrid top-1 from 0.7702 to
+0.7745 and recall@5 from 0.9149 to 0.9128 (one case, an accounting request whose ranking moved
+with the renamed tools' embeddings), and keyword recall@5 over every case from 0.9287 to 0.9319.
+
+The billing row reads the same 161 cases. On the development cases it moved hybrid top-1 from
+0.7745 to 0.7766 and recall@5 from 0.9128 to 0.9149, and keyword top-1 from 0.8830 to 0.8872 with
+recall@5 from 0.9255 to 0.9213 (two cases). Two causes found on the way are fixed for every
+later module: keyword ties broke on the alphabetical name, so a namespace prefix (`billing_`)
+decided which of two equal answers came first, and they now break on the name in reading order;
+and a name that carries another area's noun (`billing_transfer_shipments`) name-matched every
+question about that noun. The merges moved two cases between strata; one, a miss in both, joined
+the held-out set, so the gate's own held-out hybrid top-1 reads 132 of 163 (0.8098) where it read
+132 of 162, and its floor is written as 0.80.
+
+The settlement row reads the same 161 cases. Held-out keyword ranking is unchanged as well
+(recall@5 0.9503, top-1 0.9130). On the development cases hybrid top-1 moved from 0.7766 to
+0.7787 and keyword recall@5 from 0.9213 to 0.9234, while keyword top-1 fell from 0.8872 to
+0.8809: three requests ("hold the driver's pay", "post every approved carrier settlement",
+"generate this pay period's settlements for our carriers") had matched words the old names or
+the batch tools' generic search terms ("every", "once") carried. Settlement records come in two
+kinds, so the namespace declares the qualifiers `driver` and `carrier`, and a name is indexed in
+reading order too, which gave the list tools back their plural.
+
 **Phase 4: a single front door and job profiles (3–4 weeks).**
 
 - One runtime: an agent definition supplies a profile.

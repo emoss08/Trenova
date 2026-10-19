@@ -662,8 +662,11 @@ func (s *Service) PlanGuidance(
 		return nil, err
 	}
 	if count >= agentprofile.MaxActiveGuidance {
-		return nil, errortypes.NewValidationError("content", errortypes.ErrInvalid,
-			"This profile already has 50 lines of guidance, kept or offered. Retire or dismiss one that no longer holds first.")
+		return nil, errortypes.NewValidationError(
+			"content",
+			errortypes.ErrInvalid,
+			"This profile already has 50 lines of guidance, kept or offered. Retire or dismiss one that no longer holds first.",
+		)
 	}
 
 	source := req.Source

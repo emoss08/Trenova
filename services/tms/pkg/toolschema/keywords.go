@@ -36,6 +36,7 @@ const (
 	KeyRecordOf     = "x-recordOf"
 	KeyRecordKinds  = "x-recordKinds"
 	KeyKeepEmpty    = "x-keepEmpty"
+	KeyClamp        = "x-clamp"
 	extensionPrefix = "x-"
 )
 

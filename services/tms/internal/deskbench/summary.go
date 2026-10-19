@@ -7,6 +7,8 @@ import (
 	"strings"
 	"text/tabwriter"
 	"time"
+
+	"github.com/emoss08/trenova/internal/modules/agent/domain/evalsplit"
 )
 
 type CompareEntry struct {
@@ -168,14 +170,16 @@ func renderCells(b *strings.Builder, cells []CellRow, k int) {
 	b.WriteString("\nTool selection and retrieval by model:\n")
 	table = tabwriter.NewWriter(b, 0, 2, 2, ' ', 0)
 	fmt.Fprintln(table, "MODEL\tSPLIT\tPRECISION\tRECALL\tFIRST RIGHT\tFORBIDDEN\t"+
-		"PRESELECTION R@8\tFIND RECALL\tFIND HITS\tOPENS WITH FIND\tREFUSED BY VERDICT\t"+
+		"ARGS VALID\tPRESELECTION R@8\tFIND RECALL\tFIND HITS\tOPENS WITH FIND\t"+
+		"REFUSED BY VERDICT\t"+
 		"RE-ASKS BY GUARD")
 	for idx := range cells {
 		cell := &cells[idx]
 		m := &cell.Measures
-		fmt.Fprintf(table, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+		fmt.Fprintf(table, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
 			cell.Provider, splitLabel(cell.Split), statCell(m.Precision, 2),
 			statCell(m.Recall, 2), statCell(m.FirstCorrect, 1), statCell(m.ForbiddenCalls, 2),
+			statCell(m.ArgumentValidity, 2),
 			statCell(m.PreselectionRecall, 2), statCell(m.FindRecall, 2),
 			percentCell(m.FindHitRate), percentCell(m.FindFirstShare),
 			perTrialCounts(m.RefusedByVerdict),
@@ -278,7 +282,7 @@ func renderTroubles(b *strings.Builder, r *Report) {
 	}
 }
 
-func splitLabel(split Split) string {
+func splitLabel(split evalsplit.Split) string {
 	if split == "" {
 		return "all"
 	}

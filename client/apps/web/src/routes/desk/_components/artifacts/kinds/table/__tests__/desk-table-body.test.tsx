@@ -232,7 +232,7 @@ describe("DeskTableBody with shipments", () => {
     renderTable(
       artifact({
         display: 1,
-        tool: "list_shipments",
+        tool: "shipment_list",
         entity: "shipments",
         recordEntity: "shipment",
         columns: [{ key: "proNumber", label: "Pro number", type: "text" }],
@@ -260,7 +260,7 @@ describe("DeskTableBody with billing queue items", () => {
     renderTable(
       artifact({
         display: 1,
-        tool: "list_billing_queue_items",
+        tool: "billing_list_queue_items",
         entity: "billing_queue_items",
         recordEntity: "billing_queue_item",
         columns: [

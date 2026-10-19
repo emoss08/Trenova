@@ -163,8 +163,8 @@ customer configuration.
 
 | Tool | Does | Tier |
 |---|---|---|
-| `share_customer_tracking_link` | issues a link and, given an address, emails it | Propose → Ask first |
-| `revoke_customer_tracking_link` | revokes every live link on a shipment | Propose → Ask first |
+| `shipment_share_tracking_link` | issues a link and, given an address, emails it | Propose → Ask first |
+| `shipment_revoke_tracking_link` | revokes every live link on a shipment | Propose → Ask first |
 
 Both previews come from the service's preview methods. Sharing is egress `CustomerVisible`, plus
 `ExternalRecipient` when it emails someone. Agents may not update shipments unattended, so the

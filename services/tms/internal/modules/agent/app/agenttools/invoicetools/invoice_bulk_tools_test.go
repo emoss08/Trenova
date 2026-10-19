@@ -218,7 +218,9 @@ func TestPostInvoices_RefusesMoreThanFiftyAndDropsRepeats(t *testing.T) {
 	params := agenttoolstest.ApprovedParams(map[string]any{paramInvoiceIDs: agenttoolstest.IdList(append(ids, ids[0]))})
 	result, err := tool.ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
-	assert.Equal(t, "1 of 1 posted", result.Name)
+	assert.Equal(t, "INV-8000", result.Name, "one invoice reports as posting one invoice does")
+	require.NotNil(t, result.Record)
+	assert.Equal(t, ids[0].String(), result.Record.ID)
 	assert.Len(t, poster.posted, 1)
 }
 
@@ -436,4 +438,32 @@ func TestBulkTools_RefuseAnotherTenantsActor(t *testing.T) {
 	_, err = tool.ExecuteWithResult(t.Context(), params)
 	require.ErrorIs(t, err, common.ErrTenantMismatch)
 	assert.Empty(t, poster.posted)
+}
+
+// A call naming one invoice is posting one invoice: the person sees the
+// single tool's own preview, and the proposal is pinned to that invoice's
+// version, which a call naming several cannot be.
+func TestPostInvoices_OneInvoiceIsPreviewedAndPinnedAsPostingOneIs(t *testing.T) {
+	t.Parallel()
+
+	poster, ids, numbers := batchOfDrafts(2)
+	tool := NewPostInvoicesTool(poster, numbers).(*PostInvoicesTool)
+	single := &PostInvoiceTool{invoices: poster}
+
+	one := map[string]any{paramInvoiceIDs: agenttoolstest.IdList(ids[:1])}
+	preview, err := tool.Preview(t.Context(), agenttoolstest.ExecuteParams(one))
+	require.NoError(t, err)
+	want, err := single.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
+		common.ParamInvoiceID: ids[0].String(),
+	}))
+	require.NoError(t, err)
+	assert.Equal(t, want, preview)
+
+	target, ok := tool.Target(one)
+	require.True(t, ok)
+	assert.Equal(t, permission.ResourceInvoice, target.Resource)
+	assert.Equal(t, ids[0], target.ID)
+
+	_, ok = tool.Target(map[string]any{paramInvoiceIDs: agenttoolstest.IdList(ids)})
+	assert.False(t, ok, "a call over several invoices has no one record to pin")
 }

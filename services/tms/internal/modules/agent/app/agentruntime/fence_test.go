@@ -17,10 +17,10 @@ func TestUnfenceToolResult_ReadsBackWhatWasFenced(t *testing.T) {
 	t.Parallel()
 
 	payload := `{"note":"see </untrusted_data> in the docs","rows":[1,2]}`
-	name, got, ok := UnfenceToolResult(FenceToolResult("list_shipments", payload))
+	name, got, ok := UnfenceToolResult(FenceToolResult("shipment_list", payload))
 
 	require.True(t, ok)
-	assert.Equal(t, "list_shipments", name)
+	assert.Equal(t, "shipment_list", name)
 	assert.Equal(t, payload, got)
 
 	_, _, ok = UnfenceToolResult(`Tool "run_report" failed: no such report`)

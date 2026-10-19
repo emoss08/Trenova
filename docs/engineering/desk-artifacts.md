@@ -220,7 +220,7 @@ card, and its scrolling frames give way (`.dk-apage` visible, `.dk-apage-body` c
 scrolls with the window and sticky has a scroller to stick in.
 
 **The shipment.** `shipment-stage.ts` works out where it stands from the server and the
-conversation, never from the component: the newest `create_shipment` proposal whose
+conversation, never from the component: the newest `shipment_create` proposal whose
 `sourceDocumentId` is the file (waiting, creating, created and linked with `recordPath`, failed
 with the server's reason, declined, expired, simulated), `attachedShipmentId`, the conversation's
 running turn (`assistant.activeTurns`), and what the card asked (`documentAsks` in the Desk
@@ -236,7 +236,7 @@ The body is its own chunk (`lazyComponent` in `desk-workspace.tsx`), and `Extrac
 drawn on the card's own classes, stands in for both the code and the payload.
 
 The agent
-opens it by reading a draft with `get_shipment_draft`, and a file the person attaches opens it
+opens it by reading a draft with `intake_get_draft`, and a file the person attaches opens it
 without anyone asking (`assistantservice/attachment_cards.go`; see "Files a person attaches" in
 [agent-runtime.md](agent-runtime.md)). Both are one lineage per document, so a later reading
 (the model's after the rule-based one) is a new version of the same card. The summary keeps

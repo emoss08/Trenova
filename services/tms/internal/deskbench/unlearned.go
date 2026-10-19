@@ -19,7 +19,7 @@ func (unlearned) AfterRun(context.Context, *agentports.ReflectOnRunRequest) {}
 
 // untrusted keeps the bench's decisions out of the earned-autonomy ledger.
 // The bench approves the same proposals run after run and rejects whatever a
-// case leaves waiting, so its streaks promoted transfer_to_billing to
+// case leaves waiting, so its streaks promoted billing_transfer to
 // AutoExecute on Billing exceptions and the case that approves its proposal
 // found nothing to approve; the rejections would have taken tiers back the
 // same way.

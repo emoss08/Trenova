@@ -272,7 +272,7 @@ note on how to read it. It is the same object the reader receives as
   "awaiting": [{"toolName": "share_report", "callId": "call_…", "tier": "Propose",
                 "summary": "On-time this month", "proposalId": "ap_…"}],
   "published": [{"id": "aart_…", "kind": "document", "title": "Report notes"}],
-  "findings": [{"toolName": "list_invoices", "callId": "call_…",
+  "findings": [{"toolName": "invoice_list", "callId": "call_…",
                 "content": "{\"invoices\":[{\"number\":\"INV-104\",\"daysOverdue\":12}]}"}],
   "toolCallsUsed": 2
 }

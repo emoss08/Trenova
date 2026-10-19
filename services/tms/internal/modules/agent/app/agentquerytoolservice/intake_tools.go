@@ -46,7 +46,7 @@ func newGetShipmentDraftTool(drafts draftReader) agentports.AgentQueryTool {
 	return &getShipmentDraftTool{drafts: drafts}
 }
 
-func (t *getShipmentDraftTool) Name() string { return "get_shipment_draft" }
+func (t *getShipmentDraftTool) Name() string { return "intake_get_draft" }
 
 func (t *getShipmentDraftTool) Description() string {
 	return "Read the shipment draft extracted from an uploaded document: the fields and " +
@@ -54,7 +54,7 @@ func (t *getShipmentDraftTool) Description() string {
 		"include BOL, customer, rate, pieces, weight and dates; stops carry addresses " +
 		"and dates. The person sees what it read as the document's extraction card beside " +
 		"the conversation, so call it when they ask to see what was extracted and point to " +
-		"the card rather than publishing the reading. Use it before create_shipment so the " +
+		"the card rather than publishing the reading. Use it before shipment_create so the " +
 		"record is built from the document rather than from memory. Every id the draft names " +
 		"still has to be resolved with list_customers and list_locations; the draft " +
 		"carries names and addresses, not ids."
@@ -284,7 +284,7 @@ func (t *quoteShipmentTool) Description() string {
 		"list_locations and a date. Returns the linehaul amount, the currency, which " +
 		"agreement and rule priced it, and whether a formula had to stand in because " +
 		"no agreement covered the lane. Nothing is saved: quote as many variations " +
-		"as you need before create_shipment."
+		"as you need before shipment_create."
 }
 
 func (t *quoteShipmentTool) ParamSchema() map[string]any {
@@ -650,8 +650,8 @@ func (t *shopCarriersTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"shipmentId": agenttoolschema.RecordIDText(permission.ResourceShipment,
-				"The saved shipment to price, from search_shipments or "+
-					"list_shipments, or the page you are on."),
+				"The saved shipment to price, from shipment_list or "+
+					"shipment_list, or the page you are on."),
 			"strategy": agenttoolschema.Enum(
 				"How to rank the options. Defaults to the organization's own choice.",
 				shopStrategies,

@@ -133,7 +133,7 @@ type recurringShipmentKeeper interface {
 
 func recurringShipmentIDProperty(what string) map[string]any {
 	return agenttoolschema.RecordID(permission.ResourceRecurringShipment, what,
-		"list_recurring_shipments")
+		"shipment_list_recurring")
 }
 
 func targetRecurringShipment(params map[string]any) (agentports.ToolTarget, bool) {
@@ -409,7 +409,7 @@ func NewCreateRecurringShipmentTool(series recurringShipmentKeeper) agentports.A
 		"(customer, stops, commodities and charges)")
 
 	return common.NewReceivableTool(&common.ReceivableSpec{
-		Name:        "create_recurring_shipment",
+		Name:        "shipment_create_recurring",
 		SearchTerms: []string{"every weekday", "repeat every week", "standing lane"},
 		Description: "Start a recurring shipment: a series that copies one saved shipment " +
 			"on a schedule, for a customer's standing lane. Give the source shipment, a " +
@@ -512,11 +512,11 @@ func NewUpdateRecurringShipmentTool(series recurringShipmentKeeper) agentports.A
 	properties[paramRecurringShipmentID] = recurringShipmentIDProperty("The series to change")
 
 	return common.NewReceivableTool(&common.ReceivableSpec{
-		Name: "update_recurring_shipment",
+		Name: "shipment_update_recurring",
 		Description: "Change a recurring shipment's name, schedule, timezone, dates, " +
 			"limits, blackout days or whether it generates on its own. Send only what " +
 			"changes; an empty endDate removes the end. Pause or resume it with " +
-			"set_recurring_shipment_status.",
+			"shipment_set_recurring_status.",
 		Resource:    permission.ResourceRecurringShipment,
 		Operation:   permission.OpUpdate,
 		Egress:      agent.EgressInternal,
@@ -612,7 +612,7 @@ func (c *seriesStatusChange) request(
 
 func NewSetRecurringShipmentStatusTool(series recurringShipmentKeeper) agentports.AgentTool {
 	return common.NewReceivableTool(&common.ReceivableSpec{
-		Name: "set_recurring_shipment_status",
+		Name: "shipment_set_recurring_status",
 		Description: "Pause a recurring shipment so it creates nothing, resume it (Active) " +
 			"from its next future slot without back-filling what it missed, or end it " +
 			"(Expired). A resumed series with no slot left ends on its own.",
@@ -695,7 +695,7 @@ func NewSetRecurringShipmentStatusTool(series recurringShipmentKeeper) agentport
 
 func NewGenerateRecurringShipmentTool(series recurringShipmentKeeper) agentports.AgentTool {
 	return common.NewReportingReceivableTool(&common.ReceivableSpec{
-		Name:        "generate_recurring_shipment",
+		Name:        "shipment_generate_recurring",
 		SearchTerms: []string{"next occurrence", "generate early", "next slot", "spin up"},
 		Artifact:    common.ShipmentRecordEntity,
 		Description: "Create the shipment for a recurring shipment's next slot now, or for " +

@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -41,9 +41,9 @@ func TestRun_TheFilingBaselineReadsTheRunsTimezone(t *testing.T) {
 	t.Parallel()
 
 	shipmentID := pulid.MustNew("shp_")
-	tool := &targetedStubTool{actionTool("place_shipment_hold", agent.TierPropose, nil)}
+	tool := &targetedStubTool{actionTool("shipment_place_hold", agent.TierPropose, nil)}
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("place_shipment_hold", map[string]any{"shipmentId": shipmentID.String()}),
+		toolTurn("shipment_place_hold", map[string]any{"shipmentId": shipmentID.String()}),
 		textTurn("I have proposed a hold."),
 	}}
 	previews := &recordingPreviews{target: &agentports.ProposalTarget{
@@ -58,7 +58,7 @@ func TestRun_TheFilingBaselineReadsTheRunsTimezone(t *testing.T) {
 	rt.previews = previews
 
 	_, err := rt.Run(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition("place_shipment_hold"),
+		Definition: testDefinition("shipment_place_hold"),
 		Actor:      testActor(),
 		Input:      "hold it",
 		Context:    agentdefinition.RuntimeContext{Timezone: "America/Denver"},

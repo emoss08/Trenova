@@ -92,7 +92,7 @@ sends it to the case's agent as the person's own message.
 A conversation can be a case whatever its agent holds, so a step is checked
 against the agent before it is offered (`deskcase/ability.go`). Each step
 names the tools that can take it, any one being enough (`stepTools`:
-`mark_ready` needs `transfer_to_billing`, `notify_customer` needs
+`mark_ready` needs `billing_transfer`, `notify_customer` needs
 `email_customer`, and so on); a step the organization added names none and
 is always the agent's to try. When the case is read, `abilities`:
 

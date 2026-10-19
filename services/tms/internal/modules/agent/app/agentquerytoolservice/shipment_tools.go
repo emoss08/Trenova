@@ -18,8 +18,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/ports/commodityports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/shipmenttypeports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -60,15 +62,16 @@ func newGetShipmentTool(
 	}
 }
 
-func (t *getShipmentTool) Name() string { return "get_shipment" }
+func (t *getShipmentTool) Name() string { return "shipment_get" }
 
 func (t *getShipmentTool) Description() string {
-	return "Retrieve one shipment (load) by its id, with its stops, the driver and equipment " +
-		"assigned to each move, the holds on it now and its newest comments. It returns a " +
-		"summary with each stop's window in the stop's local time; pass detail full only " +
-		"when you need a field the summary leaves out. Each hold carries the holdId " +
-		"update_shipment_hold and release_shipment_hold take. Use search_shipments first " +
-		"when you only have a pro number or customer name."
+	return "Read one shipment (load) by its id or PRO number. It shows the customer and " +
+		"rating, each move's stops with their windows in the stop's local time, who drives " +
+		"it and with what equipment, the holds on it now and its newest comments. Pass " +
+		"detail full only " +
+		"for a field the summary leaves out. Each hold carries the holdId " +
+		"shipment_update_hold and shipment_release_hold take. Find it with shipment_list " +
+		"when you have only a customer, a place or a BOL."
 }
 
 func (t *getShipmentTool) SearchTerms() []string {
@@ -79,11 +82,8 @@ func (t *getShipmentTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"shipmentId": agenttoolschema.OfResource(map[string]any{
-				"type": "string",
-				"description": "The shipment's id, from search_shipments or list_shipments, " +
-					"the page you are on, or this run's subject.",
-			}, permission.ResourceShipment),
+			paramShipmentID: shipmentRefProperty(),
+			paramProNumber:  proNumberProperty(),
 			paramDetail: agenttoolschema.Enum(
 				"How much to return. Omit it for the summary: the customer, the rating, "+
 					"the moves with their stops, assignment and carrier, the commodities, "+
@@ -91,7 +91,6 @@ func (t *getShipmentTool) ParamSchema() map[string]any {
 				shipmentDetailLevels,
 			),
 		},
-		"required":             []string{"shipmentId"},
 		"additionalProperties": false,
 	}
 }
@@ -115,29 +114,13 @@ func (t *getShipmentTool) Query(
 		return nil, err
 	}
 
-	shipmentID, err := requirePulid(params.Params, "shipmentId")
-	if err != nil {
-		return nil, err
-	}
-
 	detail, err := shipmentDetailOf(params.Params)
 	if err != nil {
 		return nil, err
 	}
 
-	tenant := pagination.TenantInfo{
-		OrgID:  params.OrganizationID,
-		BuID:   params.BusinessUnitID,
-		UserID: params.Actor.UserID,
-	}
-	entity, err := t.repo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
-		ID:         shipmentID,
-		TenantInfo: tenant,
-		ShipmentOptions: shipmentports.ShipmentOptions{
-			ExpandShipmentDetails: true,
-			IncludeCustomer:       true,
-		},
-	})
+	tenant := tenantOf(params)
+	entity, err := loadShipment(ctx, t.repo, tenant, params.Params)
 	if err != nil {
 		return nil, err
 	}
@@ -242,12 +225,19 @@ func (t *getShipmentTool) recentComments(
 	return page.Items, nil
 }
 
-type searchShipmentsTool struct {
-	repo    shipmentports.ShipmentRepository
-	parties shipmentPartySources
+const (
+	shipmentListName         = "shipment_list"
+	defaultShipmentWordLimit = 10
+)
+
+type shipmentListTool struct {
+	repo         shipmentports.ShipmentRepository
+	parties      shipmentPartySources
+	list         *listTool
+	filterFields agenttoolschema.EnumSource[string]
 }
 
-func provideSearchShipmentsTool(
+func provideShipmentListTool(
 	repo shipmentports.ShipmentRepository,
 	customers customerports.CustomerRepository,
 	locations locationports.LocationRepository,
@@ -255,7 +245,7 @@ func provideSearchShipmentsTool(
 	commodities commodityports.CommodityRepository,
 	types shipmenttypeports.ShipmentTypeRepository,
 ) agentports.AgentQueryTool {
-	return newSearchShipmentsTool(repo, shipmentPartySources{
+	return newShipmentListTool(repo, shipmentPartySources{
 		customers:   customers,
 		locations:   locations,
 		workers:     workers,
@@ -264,66 +254,105 @@ func provideSearchShipmentsTool(
 	})
 }
 
-func newSearchShipmentsTool(
+func newShipmentListTool(
 	repo shipmentports.ShipmentRepository,
 	parties shipmentPartySources,
-) agentports.AgentQueryTool {
-	return &searchShipmentsTool{repo: repo, parties: parties}
-}
+) *shipmentListTool {
+	spec := shipmentListSpec(repo)
+	list := buildListTool(&spec)
+	fields := make([]string, 0, len(spec.fields))
+	for _, name := range list.fields.Names() {
+		if name != paramStatus {
+			fields = append(fields, name)
+		}
+	}
 
-func (t *searchShipmentsTool) Name() string { return "search_shipments" }
-
-func (t *searchShipmentsTool) Description() string {
-	return "Find shipments by the words people use for them: a pro number or BOL, a " +
-		"customer's name or code, a stop's place or city, the driver, or what it carries. Words naming a customer, a place or a " +
-		"driver narrow to loads matching each, so \"sunbelt chicago\" finds Sunbelt's " +
-		"loads through Chicago and \"jane chicago\" Jane's load there. " +
-		"Narrow by status too. Call it with no query to see the most recent shipments. " +
-		"Each row carries its first pickup, final stop and who is driving each move " +
-		"(or that it needs a driver); open one with get_shipment only for more than that."
-}
-
-func (t *searchShipmentsTool) SearchTerms() []string {
-	return []string{
-		"pro number", "bol number", "reference number", "customer's load", "load going to",
-		"load from", "shipments for a customer", "shipments through a city",
+	return &shipmentListTool{
+		repo:         repo,
+		parties:      parties,
+		list:         list,
+		filterFields: agenttoolschema.Derived(shipmentListName+".filterField", fields),
 	}
 }
 
-func (t *searchShipmentsTool) ParamSchema() map[string]any {
+func (t *shipmentListTool) Name() string { return shipmentListName }
+
+func (t *shipmentListTool) Description() string {
+	return "Find shipments (loads) by the words people use for them, by status, or by " +
+		"filters on dates, charges and transfer status. Words match a pro number or BOL, a " +
+		"customer's name or code, a stop's place or city, the driver or what it carries; " +
+		"several words each narrow, so \"sunbelt chicago\" finds Sunbelt's loads through " +
+		"Chicago. With no words and no filters it lists the newest. Each row has the first " +
+		"pickup, the final stop and who drives each move; open one with shipment_get only " +
+		"for more."
+}
+
+func (t *shipmentListTool) SearchTerms() []string {
+	return []string{"pro number", "bol number", "reference number"}
+}
+
+func (t *shipmentListTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
-			"query": map[string]any{
-				"type": "string",
-				"description": "Optional words to match: a pro number, BOL, customer, or " +
-					"stop location or city. Omit to list shipments unfiltered.",
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
+			paramQuery: map[string]any{
+				toolschema.KeyType: toolschema.TypeString,
+				toolschema.KeyDescription: "Words to match: a pro number, BOL, customer, stop " +
+					"place or city, driver or commodity. Omit to list by status and filters alone.",
 			},
 			paramStatus: map[string]any{
-				"type":  "array",
-				"items": agenttoolschema.Enum("", listShipmentStatuses),
-				"description": "Only shipments in these statuses, all in one call; omit for " +
-					"every status. Not picked up yet is New, PartiallyAssigned and Assigned; " +
-					"on the road is InTransit and Delayed. A load the person calls late or " +
-					"running behind is Delayed. There is no Delivered: a delivered load is " +
-					"Completed, ReadyToInvoice or Invoiced.",
+				toolschema.KeyType:  toolschema.TypeArray,
+				toolschema.KeyItems: agenttoolschema.Enum("", listShipmentStatuses),
+				toolschema.KeyDescription: "Only shipments in these statuses, all in one call; " +
+					"omit for every status. Not picked up yet is New, PartiallyAssigned and " +
+					"Assigned; on the road is InTransit and Delayed. A load the person calls " +
+					"late or running behind is Delayed. There is no Delivered: a delivered load " +
+					"is Completed, ReadyToInvoice or Invoiced.",
 			},
-			"limit": map[string]any{
-				"type":        "integer",
-				"description": "How many results to return, at most 25",
-			},
+			paramFilters:       t.filtersSchema(),
+			paramSortBy:        t.list.sortSchema(),
+			paramSortDirection: sortDirectionSchema(),
+			paramLimit: toolschema.Clamped(map[string]any{
+				toolschema.KeyType:    toolschema.TypeInteger,
+				toolschema.KeyMinimum: 1,
+				toolschema.KeyMaximum: maxListLimit,
+				toolschema.KeyDescription: fmt.Sprintf("How many rows to return: %d when you "+
+					"give words, %d otherwise, at most %d.",
+					defaultShipmentWordLimit, defaultListLimit, maxListLimit),
+			}),
+			paramOffset: pageSchema(defaultListLimit, maxListLimit)[paramOffset],
 		},
-		"additionalProperties": false,
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
-func (t *searchShipmentsTool) Policy() agentports.ToolPolicy {
+func (t *shipmentListTool) filtersSchema() map[string]any {
+	schema := filtersSchema(t.filterFields, t.list.operators)
+	schema[toolschema.KeyDescription] = "Conditions beside status, combined with AND: billingTransferStatus " +
+		"(" + strings.Join(
+		billingTransferStates,
+		"|",
+	) + "; isnull means never transferred), " +
+		"freightTerms (" + strings.Join(
+		freightTerms,
+		"|",
+	) + "), customerId (from " +
+		"customer_list, never guessed), proNumber, bol, the dates actualShipDate, " +
+		"actualDeliveryDate, billedAt, canceledAt and createdAt, and the numbers " +
+		"totalChargeAmount and weight. Give value for one comparison, values for in and " +
+		"notin, days for nextndays and lastndays, and nothing for isnull, isnotnull, today, " +
+		"yesterday and tomorrow." + listDateRule
+
+	return schema
+}
+
+func (t *shipmentListTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceShipment,
 	})
 }
 
-func (t *searchShipmentsTool) Query(
+func (t *shipmentListTool) Query(
 	ctx context.Context,
 	params *agentports.QueryToolParams,
 ) (any, error) {
@@ -331,86 +360,101 @@ func (t *searchShipmentsTool) Query(
 		return nil, err
 	}
 
-	// Optional for the same reason as on search_worker: the repository applies a
-	// text search only when the term is non-empty, so requiring one here refused
-	// a call the layer beneath would have served.
-	query := optionalString(params.Params, "query")
-
-	// A model asked for "all shipments" will happily request a limit of 10000,
-	// which would blow the context window and the query budget at once.
-	limit := optionalInt(params.Params, "limit", defaultSearchLimit)
-	if limit <= 0 || limit > maxSearchLimit {
-		limit = defaultSearchLimit
-	}
-
-	// Unvalidated, this passed whatever the model sent straight to the
-	// repository, which matched nothing and returned an empty page the model
-	// reported as "there are no shipments in that state". The schema used to
-	// name "Delivered" here, which is not one of the statuses, so the tool was
-	// instructing its caller to produce exactly that.
 	statuses, err := shipmentStatusFilter(params.Params)
 	if err != nil {
 		return nil, err
 	}
 
-	found, err := t.search(ctx, params, query, statuses, limit)
+	query := optionalString(params.Params, "query")
+	if query == "" {
+		return t.list.Query(ctx, withStatusFilter(params, statuses))
+	}
+
+	return t.searchWords(ctx, params, query, statuses)
+}
+
+func withStatusFilter(
+	params *agentports.QueryToolParams,
+	statuses []shipment.Status,
+) *agentports.QueryToolParams {
+	listed := make(map[string]any, len(params.Params)+1)
+	for key, value := range params.Params {
+		if key != paramStatus {
+			listed[key] = value
+		}
+	}
+	if len(statuses) > 0 {
+		filters, _ := listed[paramFilters].([]any)
+		values := make([]any, 0, len(statuses))
+		for _, status := range statuses {
+			values = append(values, string(status))
+		}
+		listed[paramFilters] = append(slices.Clone(filters), map[string]any{
+			paramField:    paramStatus,
+			paramOperator: "in",
+			paramValues:   values,
+		})
+	}
+
+	copied := *params
+	copied.Params = listed
+
+	return &copied
+}
+
+type wordSearch struct {
+	params   *agentports.QueryToolParams
+	query    string
+	statuses []shipment.Status
+	window   page
+	filters  []domaintypes.FieldFilter
+	sorting  []domaintypes.SortField
+}
+
+func (t *shipmentListTool) searchWords(
+	ctx context.Context,
+	params *agentports.QueryToolParams,
+	query string,
+	statuses []shipment.Status,
+) (any, error) {
+	criteria := filtercatalog.NewCriteria("shipments").At(clockFor(params))
+	filters, err := t.list.buildFilters(params.Params, criteria)
 	if err != nil {
 		return nil, err
 	}
-	criteria, rows := found.criteria, found.rows
-	if len(rows) > 0 || len(statuses) == 0 || query == "" {
-		full := len(rows) >= limit
-		var sampled []string
-		if full {
-			if rows, sampled, err = t.withEachStatus(
-				ctx,
-				params,
-				query,
-				statuses,
-				rows,
-			); err != nil {
-				return nil, err
-			}
-		}
-		outcome := searchResult(criteria, rows, len(rows))
-		if full && found.byParty {
-			outcome.HasMore = true
-			outcome.Note = fmt.Sprintf(
-				"These are the first %d of more shipments the words match. If the one meant is "+
-					"not here, search again with a status, a date or a pro number rather than "+
-					"asking the person to choose from this page.", limit)
-		}
-		if len(sampled) > 0 {
-			outcome.HasMore = true
-			outcome.Note = strings.TrimSpace(outcome.Note + " " + fmt.Sprintf(
-				"The newest matches filled the page, so the newest match in each other status "+
-					"asked for is added after them (%s): read each row's status, as the one "+
-					"meant may be one of those.", stringutils.JoinAlternatives(sampled)))
-		}
-		if full && !found.byParty {
-			outcome.HasMore = true
-			if total, countErr := countShipments(ctx, t.repo, &pagination.QueryOptions{
-				TenantInfo: pagination.TenantInfo{
-					OrgID:  params.OrganizationID,
-					BuID:   params.BusinessUnitID,
-					UserID: params.Actor.UserID,
-				},
-				Query: query,
-			}, shipmentports.ShipmentOptions{Statuses: statuses}); countErr == nil &&
-				total > len(rows) {
-				outcome.Total = &total
-			}
-		}
-
-		return outcome, nil
+	sorting, err := t.list.buildSort(params.Params)
+	if err != nil {
+		return nil, err
 	}
 
-	relaxed, err := t.search(ctx, params, query, nil, limit)
+	search := &wordSearch{
+		params:   params,
+		query:    query,
+		statuses: statuses,
+		window:   readPage(params.Params, defaultShipmentWordLimit, maxListLimit),
+		filters:  filters,
+		sorting:  sorting,
+	}
+	found, err := t.search(ctx, search, criteria)
+	if err != nil {
+		return nil, err
+	}
+	if len(found.rows) > 0 || len(statuses) == 0 {
+		return t.wordOutcome(ctx, search, found)
+	}
+
+	relaxed, err := t.search(ctx, &wordSearch{
+		params:  params,
+		query:   query,
+		window:  search.window,
+		filters: filters,
+		sorting: sorting,
+	}, filtercatalog.NewCriteria("shipments").At(clockFor(params)))
 	if err != nil {
 		return nil, err
 	}
 	if len(relaxed.rows) == 0 {
-		return searchResult(criteria, rows, 0), nil
+		return searchResult(found.criteria, found.rows, 0), nil
 	}
 
 	outcome := searchResult(relaxed.criteria, relaxed.rows, len(relaxed.rows))
@@ -422,18 +466,57 @@ func (t *searchShipmentsTool) Query(
 	return outcome, nil
 }
 
-// withEachStatus adds, to a page the newest matches filled, the newest match
-// in each status asked for that the page does not show. Asked for "the reefer
-// to LA running behind" across five statuses, Haiku was shown ten new loads
-// to Los Angeles and never the delayed one, and asked which load was meant.
-func (t *searchShipmentsTool) withEachStatus(
+func (t *shipmentListTool) wordOutcome(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
-	query string,
-	statuses []shipment.Status,
+	search *wordSearch,
+	found *shipmentSearch,
+) (any, error) {
+	rows := found.rows
+	full := len(rows) >= search.window.limit
+	var sampled []string
+	if full && search.window.offset == 0 {
+		var err error
+		if rows, sampled, err = t.withEachStatus(ctx, search, rows); err != nil {
+			return nil, err
+		}
+	}
+
+	outcome := searchResult(found.criteria, rows, len(rows))
+	switch {
+	case full && found.byParty:
+		outcome.HasMore = true
+		outcome.Note = fmt.Sprintf(
+			"These are the first %d of more shipments the words match. If the one meant is "+
+				"not here, search again with a status, a date or a pro number rather than "+
+				"asking the person to choose from this page.", search.window.limit)
+	case full:
+		outcome = outcome.paged(search.window, true)
+		if total, err := countShipments(ctx, t.repo, &pagination.QueryOptions{
+			TenantInfo:   tenantOf(search.params),
+			Query:        search.query,
+			FieldFilters: search.filters,
+		}, shipmentports.ShipmentOptions{Statuses: search.statuses}); err == nil &&
+			total > len(rows) {
+			outcome.Total = &total
+		}
+	}
+	if len(sampled) > 0 {
+		outcome.HasMore = true
+		outcome.Note = strings.TrimSpace(outcome.Note + " " + fmt.Sprintf(
+			"The newest matches filled the page, so the newest match in each other status "+
+				"asked for is added after them (%s): read each row's status, as the one "+
+				"meant may be one of those.", stringutils.JoinAlternatives(sampled)))
+	}
+
+	return outcome, nil
+}
+
+func (t *shipmentListTool) withEachStatus(
+	ctx context.Context,
+	search *wordSearch,
 	rows []shipmentRow,
 ) ([]shipmentRow, []string, error) {
-	if len(statuses) < 2 {
+	if len(search.statuses) < 2 {
 		return rows, nil, nil
 	}
 
@@ -444,12 +527,19 @@ func (t *searchShipmentsTool) withEachStatus(
 		seen[rows[idx].ID] = struct{}{}
 	}
 
-	sampled := make([]string, 0, len(statuses))
-	for _, status := range statuses {
+	sampled := make([]string, 0, len(search.statuses))
+	for _, status := range search.statuses {
 		if _, ok := shown[string(status)]; ok {
 			continue
 		}
-		found, err := t.search(ctx, params, query, []shipment.Status{status}, 1)
+		one := *search
+		one.statuses = []shipment.Status{status}
+		one.window = page{limit: 1}
+		found, err := t.search(
+			ctx,
+			&one,
+			filtercatalog.NewCriteria("shipments").At(clockFor(search.params)),
+		)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -472,29 +562,27 @@ type shipmentSearch struct {
 	byParty  bool
 }
 
-func (t *searchShipmentsTool) search(
+func (t *shipmentListTool) search(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
-	query string,
-	statuses []shipment.Status,
-	limit int,
+	search *wordSearch,
+	criteria *filtercatalog.Criteria,
 ) (*shipmentSearch, error) {
-	criteria := filtercatalog.NewCriteria("shipments").At(clockFor(params))
-	criteria.Text(query)
-	criteria.Field("status", statusNames(statuses))
+	criteria.Text(search.query)
+	criteria.Field(paramStatus, statusNames(search.statuses))
 
 	result, err := t.repo.List(ctx, &shipmentports.ListShipmentsRequest{
 		Filter: &pagination.QueryOptions{
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  params.OrganizationID,
-				BuID:   params.BusinessUnitID,
-				UserID: params.Actor.UserID,
+			TenantInfo: tenantOf(search.params),
+			Pagination: pagination.Info{
+				Limit:  search.window.limit,
+				Offset: search.window.offset,
 			},
-			Pagination: pagination.Info{Limit: limit},
-			Query:      query,
+			Query:        search.query,
+			FieldFilters: search.filters,
+			Sort:         search.sorting,
 		},
 		ShipmentOptions: shipmentports.ShipmentOptions{
-			Statuses:        statuses,
+			Statuses:        search.statuses,
 			IncludeCustomer: true,
 			IncludeRoute:    true,
 		},
@@ -509,12 +597,14 @@ func (t *searchShipmentsTool) search(
 	}
 
 	direct := len(rows)
-	if query != "" && len(rows) < limit {
+	if search.window.offset == 0 && len(rows) < search.window.limit {
 		rows, err = t.addPartyMatches(ctx, &partySearch{
-			params:   params,
-			query:    query,
-			statuses: statuses,
-			limit:    limit,
+			params:   search.params,
+			query:    search.query,
+			statuses: search.statuses,
+			limit:    search.window.limit,
+			filters:  search.filters,
+			sorting:  search.sorting,
 			criteria: criteria,
 		}, rows)
 		if err != nil {
@@ -530,25 +620,29 @@ type partySearch struct {
 	query    string
 	statuses []shipment.Status
 	limit    int
+	filters  []domaintypes.FieldFilter
+	sorting  []domaintypes.SortField
 	criteria *filtercatalog.Criteria
 }
 
-func (t *searchShipmentsTool) addPartyMatches(
+func (t *shipmentListTool) addPartyMatches(
 	ctx context.Context,
 	search *partySearch,
 	rows []shipmentRow,
 ) ([]shipmentRow, error) {
-	tenant := pagination.TenantInfo{
-		OrgID:  search.params.OrganizationID,
-		BuID:   search.params.BusinessUnitID,
-		UserID: search.params.Actor.UserID,
-	}
-
+	tenant := tenantOf(search.params)
 	parties, err := t.resolveParties(ctx, tenant, search.query)
 	if err != nil || parties.empty() {
 		return rows, err
 	}
 
+	return t.appendPartyRows(ctx, search, tenant, partyLookups(parties, search.criteria), rows)
+}
+
+func partyLookups(
+	parties *shipmentParties,
+	criteria *filtercatalog.Criteria,
+) []shipmentports.ShipmentOptions {
 	lookups := make([]shipmentports.ShipmentOptions, 0, 5)
 	if parties.allFromDifferentWords() || parties.onlyPlacesFromDifferentWords() {
 		places := partiesByTerm(parties.locations)
@@ -568,19 +662,19 @@ func (t *searchShipmentsTool) addPartyMatches(
 		}
 		lookups = append(lookups, combined)
 		if len(parties.customers) > 0 {
-			search.criteria.Field("customer", partyNames(parties.customers))
+			criteria.Field("customer", partyNames(parties.customers))
 		}
 		for _, place := range places {
-			search.criteria.Field("with a stop at", partyNames(place))
+			criteria.Field("with a stop at", partyNames(place))
 		}
 		if len(parties.workers) > 0 {
-			search.criteria.Field("driven by", partyNames(parties.workers))
+			criteria.Field("driven by", partyNames(parties.workers))
 		}
 		if len(parties.commodities) > 0 {
-			search.criteria.Field("carrying", partyNames(parties.commodities))
+			criteria.Field("carrying", partyNames(parties.commodities))
 		}
 		if len(parties.types) > 0 {
-			search.criteria.Field("of type", partyNames(parties.types))
+			criteria.Field("of type", partyNames(parties.types))
 		}
 	} else {
 		if len(parties.customers) > 0 {
@@ -588,35 +682,45 @@ func (t *searchShipmentsTool) addPartyMatches(
 				lookups,
 				shipmentports.ShipmentOptions{CustomerIDs: partyIDs(parties.customers)},
 			)
-			search.criteria.Field("or customer", partyNames(parties.customers))
+			criteria.Field("or customer", partyNames(parties.customers))
 		}
 		if len(parties.locations) > 0 {
 			lookups = append(lookups, shipmentports.ShipmentOptions{
 				StopLocationIDs: partyIDs(parties.locations),
 			})
-			search.criteria.Field("or a stop at", partyNames(parties.locations))
+			criteria.Field("or a stop at", partyNames(parties.locations))
 		}
 		if len(parties.workers) > 0 {
 			lookups = append(
 				lookups,
 				shipmentports.ShipmentOptions{WorkerIDs: partyIDs(parties.workers)},
 			)
-			search.criteria.Field("or driven by", partyNames(parties.workers))
+			criteria.Field("or driven by", partyNames(parties.workers))
 		}
 		if len(parties.commodities) > 0 {
 			lookups = append(lookups, shipmentports.ShipmentOptions{
 				CommodityIDs: partyIDs(parties.commodities),
 			})
-			search.criteria.Field("or carrying", partyNames(parties.commodities))
+			criteria.Field("or carrying", partyNames(parties.commodities))
 		}
 		if len(parties.types) > 0 {
 			lookups = append(lookups, shipmentports.ShipmentOptions{
 				ShipmentTypeIDs: partyIDs(parties.types),
 			})
-			search.criteria.Field("or of type", partyNames(parties.types))
+			criteria.Field("or of type", partyNames(parties.types))
 		}
 	}
 
+	return lookups
+}
+
+func (t *shipmentListTool) appendPartyRows(
+	ctx context.Context,
+	search *partySearch,
+	tenant pagination.TenantInfo,
+	lookups []shipmentports.ShipmentOptions,
+	rows []shipmentRow,
+) ([]shipmentRow, error) {
 	seen := make(map[string]struct{}, search.limit)
 	for idx := range rows {
 		seen[rows[idx].ID] = struct{}{}
@@ -630,8 +734,10 @@ func (t *searchShipmentsTool) addPartyMatches(
 		options.IncludeRoute = true
 		result, listErr := t.repo.List(ctx, &shipmentports.ListShipmentsRequest{
 			Filter: &pagination.QueryOptions{
-				TenantInfo: tenant,
-				Pagination: pagination.Info{Limit: search.limit},
+				TenantInfo:   tenant,
+				Pagination:   pagination.Info{Limit: search.limit},
+				FieldFilters: search.filters,
+				Sort:         search.sorting,
 			},
 			ShipmentOptions: options,
 		})

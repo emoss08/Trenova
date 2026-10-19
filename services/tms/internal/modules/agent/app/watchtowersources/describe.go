@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
@@ -131,12 +133,14 @@ func DescribeProposal(
 		SourceKind: watchtower.SourceAgentProposal,
 		SourceID:   entity.ID.String(),
 		Severity:   watchtower.SeverityInfo,
-		Title:      who + " wants to " + stringutils.HumanizeSnakeCase(entity.ToolName),
-		Summary:    entity.Rationale,
-		Path:       pathDecisions + "?run=" + entity.RunID.String(),
+		Title: who + " wants to " + stringutils.HumanizeSnakeCase(
+			agentports.ReadingOrder(entity.ToolName),
+		),
+		Summary: entity.Rationale,
+		Path:    pathDecisions + "?run=" + entity.RunID.String(),
 		Facts: []watchtower.Fact{
 			fact("Agent", who),
-			fact("Change", stringutils.HumanizeSnakeCase(entity.ToolName)),
+			fact("Change", stringutils.HumanizeSnakeCase(agentports.ReadingOrder(entity.ToolName))),
 		},
 		OccurredAt: entity.CreatedAt,
 	}

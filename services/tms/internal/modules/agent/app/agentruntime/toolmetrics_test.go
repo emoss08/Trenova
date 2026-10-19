@@ -64,12 +64,12 @@ func TestRun_CountsEveryToolCallByToolAndVerdict(t *testing.T) {
 			agentports.ToolCall{ID: "invented", Name: "delete_everything"},
 			agentports.ToolCall{
 				ID:        "ran",
-				Name:      "get_shipment",
+				Name:      "shipment_get",
 				Arguments: map[string]any{"id": "shp_1"},
 			},
 			agentports.ToolCall{
 				ID:             "cut_off",
-				Name:           "get_shipment",
+				Name:           "shipment_get",
 				Arguments:      map[string]any{},
 				ArgumentsError: "unexpected end of JSON input",
 			},
@@ -77,19 +77,19 @@ func TestRun_CountsEveryToolCallByToolAndVerdict(t *testing.T) {
 		textTurn("Done."),
 	}}
 	rt, registry := countedRuntime(completion, &stubQueryRegistry{
-		Tools: []agentports.AgentQueryTool{queryTool("get_shipment", map[string]any{}, nil)},
+		Tools: []agentports.AgentQueryTool{queryTool("shipment_get", map[string]any{}, nil)},
 	})
 
 	_, err := rt.Run(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition("get_shipment"),
+		Definition: testDefinition("shipment_get"),
 		Actor:      testActor(),
 		Input:      "Look it up.",
 	})
 	require.NoError(t, err)
 
 	counts := toolOutcomeCounts(t, registry)
-	assert.InDelta(t, 1, counts[[2]string{"get_shipment", aitrace.OutcomeRan}], 0)
-	assert.InDelta(t, 1, counts[[2]string{"get_shipment", aitrace.OutcomeInvalid}], 0)
+	assert.InDelta(t, 1, counts[[2]string{"shipment_get", aitrace.OutcomeRan}], 0)
+	assert.InDelta(t, 1, counts[[2]string{"shipment_get", aitrace.OutcomeInvalid}], 0)
 	assert.InDelta(t, 1, counts[[2]string{unregisteredToolLabel, aitrace.OutcomeInvalid}], 0)
 	_, named := counts[[2]string{"delete_everything", aitrace.OutcomeInvalid}]
 	assert.False(t, named, "an invented name never becomes a label")
@@ -107,14 +107,14 @@ func TestDrive_DoesNotCountCallsWhileReplaying(t *testing.T) {
 	t.Parallel()
 
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("get_shipment", map[string]any{"id": "shp_1"}),
+		toolTurn("shipment_get", map[string]any{"id": "shp_1"}),
 		textTurn("Done."),
 	}}
 	rt, registry := countedRuntime(completion, &stubQueryRegistry{
-		Tools: []agentports.AgentQueryTool{queryTool("get_shipment", map[string]any{}, nil)},
+		Tools: []agentports.AgentQueryTool{queryTool("shipment_get", map[string]any{}, nil)},
 	})
 	req := &agentports.RunRequest{
-		Definition: testDefinition("get_shipment"),
+		Definition: testDefinition("shipment_get"),
 		Actor:      testActor(),
 		Input:      "Look it up.",
 	}
@@ -135,7 +135,7 @@ func TestRestoreTurn_KeepsTheProviderKindItsOutcomesAreLabelledWith(t *testing.T
 
 	rt, _ := countedRuntime(&scriptedCompletion{}, &stubQueryRegistry{})
 	req := &agentports.RunRequest{
-		Definition: testDefinition("get_shipment"),
+		Definition: testDefinition("shipment_get"),
 		Actor:      testActor(),
 		Input:      "Look it up.",
 	}

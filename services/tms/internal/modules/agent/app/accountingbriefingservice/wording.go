@@ -22,7 +22,10 @@ func text(value string) accountingbriefports.AccountingBriefingSegment {
 	return accountingbriefports.AccountingBriefingSegment{Text: value}
 }
 
-func linked(value string, link accountingbrief.Link) accountingbriefports.AccountingBriefingSegment {
+func linked(
+	value string,
+	link accountingbrief.Link,
+) accountingbriefports.AccountingBriefingSegment {
 	return accountingbriefports.AccountingBriefingSegment{Text: value, Link: &link}
 }
 
@@ -201,7 +204,9 @@ func aheadClauses(f accountingbrief.Facts) []clause {
 	if f.Concentrated() {
 		clauses = append(clauses, clause{
 			linked(f.TopCustomerName, accountingbrief.LinkTopCustomer),
-			text(" holds " + strconv.Itoa(f.TopCustomerSharePercent()) + "% of everything past due"),
+			text(
+				" holds " + strconv.Itoa(f.TopCustomerSharePercent()) + "% of everything past due",
+			),
 		})
 	}
 	if f.DSOMoved() {

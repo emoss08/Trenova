@@ -81,7 +81,7 @@ func TestAlreadyTold(t *testing.T) {
 			items: []*shipment.ShipmentComment{{
 				CreatedAt: now - 60,
 				Type:      shipment.CommentTypeCustomerUpdate,
-				Metadata:  map[string]any{"source": "agent", "tool": "add_shipment_comment"},
+				Metadata:  map[string]any{"source": "agent", "tool": "shipment_add_comment"},
 			}},
 			want: false,
 		},

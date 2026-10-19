@@ -5,12 +5,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -35,8 +35,8 @@ func testPolicies() fakePolicies {
 			Kind:  agent.ToolKindAction,
 			Scope: agent.ToolScopeSelf,
 		},
-		"get_shipment": {
-			Name:     "get_shipment",
+		"shipment_get": {
+			Name:     "shipment_get",
 			Kind:     agent.ToolKindQuery,
 			Resource: permission.ResourceShipment,
 		},
@@ -102,7 +102,7 @@ func TestRedactor_DropsTheSelfScopeOwner(t *testing.T) {
 func TestRedactor_BoundsTheArguments(t *testing.T) {
 	t.Parallel()
 
-	redacted, err := testRedactor().Arguments("get_shipment", map[string]any{
+	redacted, err := testRedactor().Arguments("shipment_get", map[string]any{
 		"a": strings.Repeat("x ", aiaudit.MaxArgumentsBytes),
 		"b": "small",
 	})

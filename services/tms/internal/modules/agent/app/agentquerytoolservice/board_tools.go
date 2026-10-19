@@ -113,11 +113,11 @@ func (t *getDispatchBoardTool) Description() string {
 		"its pickup and delivery windows. This is the one call for \"what is late\", " +
 		"\"what is uncovered\" and \"who is free\". Urgency follows the pickup window, " +
 		"so each late move's lateTo says whether it is late to pick up or to deliver; " +
-		"check get_shipment_tracking on a late move " +
+		"check shipment_get_tracking on a late move " +
 		"before acting on it, since arrivals are sometimes recorded late. A rundown or " +
 		"a list answers from the board as it stands, saying what each is late to do, " +
 		"rather than tracking each move. To act on one load, such as a note or a " +
-		"change, find it with search_shipments."
+		"change, find it with shipment_list."
 }
 
 func (t *getDispatchBoardTool) ParamSchema() map[string]any {

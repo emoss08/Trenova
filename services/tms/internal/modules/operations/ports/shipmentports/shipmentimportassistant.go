@@ -11,7 +11,7 @@ type ShipmentImportSuggestion struct {
 	Prompt      string `json:"prompt"`
 	Type        string `json:"type,omitempty"`        // "prompt" (default), "input", or "action"
 	Placeholder string `json:"placeholder,omitempty"` // placeholder for input type
-	Action      string `json:"action,omitempty"`      // action ID for action type (e.g. "create_shipment")
+	Action      string `json:"action,omitempty"`      // action ID for action type (e.g. "shipment_create")
 	SubmitLabel string `json:"submitLabel,omitempty"` // label for the submit button (default: "Search" for input type)
 }
 

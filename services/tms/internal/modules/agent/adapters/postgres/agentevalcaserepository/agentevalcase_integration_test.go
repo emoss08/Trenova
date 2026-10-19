@@ -87,16 +87,16 @@ func (f *fixture) newCase(t *testing.T, input string) *agentquality.EvalCase {
 		Status:            agentquality.CaseStatusActive,
 		Trigger:           agent.RunTriggerChat,
 		Input:             input,
-		HeldTools:         []string{"get_shipment", "place_shipment_hold"},
+		HeldTools:         []string{"shipment_get", "shipment_place_hold"},
 		ToolFixtures: []agentquality.ToolFixture{{
-			Tool:   "get_shipment",
+			Tool:   "shipment_get",
 			Args:   map[string]any{"id": "shp_1"},
 			Result: map[string]any{"proNumber": "S-100", "creditLimit": "[restricted:creditLimit]"},
 		}},
 		Expected: agentquality.Expected{
 			ToolMode: agentquality.ToolMatchAnyOrder,
 			Tools: []agentquality.ExpectedTool{{
-				Name: "place_shipment_hold",
+				Name: "shipment_place_hold",
 				Args: map[string]any{"shipmentId": "shp_1"},
 			}},
 			MustMention: []string{"hold"},
@@ -125,12 +125,12 @@ func TestCreateAndRead_RoundTripsEveryFrozenField(t *testing.T) {
 		TenantInfo: f.tenant,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, []string{"get_shipment", "place_shipment_hold"}, read.HeldTools)
+	assert.Equal(t, []string{"shipment_get", "shipment_place_hold"}, read.HeldTools)
 	require.Len(t, read.ToolFixtures, 1)
-	assert.Equal(t, "get_shipment", read.ToolFixtures[0].Tool)
+	assert.Equal(t, "shipment_get", read.ToolFixtures[0].Tool)
 	assert.Equal(t, agentquality.ToolMatchAnyOrder, read.Expected.ToolMode)
 	require.Len(t, read.Expected.Tools, 1)
-	assert.Equal(t, "place_shipment_hold", read.Expected.Tools[0].Name)
+	assert.Equal(t, "shipment_place_hold", read.Expected.Tools[0].Name)
 	assert.Equal(t, created.ContentHash, read.ContentHash)
 }
 

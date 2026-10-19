@@ -558,12 +558,12 @@ writes:
     exempt: user-preference
     reason: "A saved filter on the billing queue screen."
   "POST /api/v1/billing-queue/:itemID/reassign-charge/":
-    tools: [reassign_billing_charge]
+    tools: [billing_reassign_charge]
   "POST /api/v1/billing-queue/bulk-approve/":
-    tools: [approve_billing_queue_items]
+    tools: [billing_approve_queue_item]
   "POST /api/v1/billing-queue/bulk-approve/:runID/cancel/":
     exempt: infrastructure
-    reason: "Stops a bulk approval run the queue screen started in the background; approve_billing_queue_items approves its items within the one proposal a person decides, so an agent has no run to stop."
+    reason: "Stops a bulk approval run the queue screen started in the background; billing_approve_queue_item approves its items within the one proposal a person decides, so an agent has no run to stop."
   "POST /api/v1/billing-queue/filter-presets/":
     exempt: user-preference
     reason: "A saved filter on the billing queue screen."
@@ -571,32 +571,32 @@ writes:
     exempt: infrastructure
     reason: "A repair a person asks for after signature detection arrived: it runs document intelligence again on the queued PODs nobody has read, and the extraction pipeline, not a decision, says whether each is signed."
   "POST /api/v1/billing-queue/transfer/":
-    tools: [transfer_to_billing]
+    tools: [billing_transfer]
   "PUT /api/v1/billing-queue/:itemID/charges/":
-    tools: [correct_charge_code]
+    tools: [billing_correct_charge_codes]
   "PUT /api/v1/billing-queue/filter-presets/:presetId/":
     exempt: user-preference
     reason: "A saved filter on the billing queue screen."
   "mutation assignBillingQueueBiller":
-    tools: [assign_billing_queue_biller, assign_billing_queue_billers]
+    tools: [billing_assign_biller]
   "mutation postBillingQueueItem":
-    tools: [post_invoice, send_invoice]
+    tools: [invoice_post, invoice_send]
   "mutation releaseBillingQueueItem":
-    tools: [release_billing_queue_item]
+    tools: [billing_release_queue_item]
   "mutation resolveBillingQueueIssue":
-    tools: [resolve_billing_queue_issue]
+    tools: [billing_resolve_issue]
   "mutation undoBillingQueueIssue":
-    tools: [undo_billing_queue_issue]
+    tools: [billing_undo_issue]
   "mutation updateBillingQueueStatus":
-    tools: [approve_billing_queue_item, approve_billing_queue_items, cancel_billing_queue_item, hold_billing_queue_item, move_billing_item_to_exception, send_billing_item_back_to_ops, transition_item_to_in_review, transition_items_to_in_review]
+    tools: [billing_approve_queue_item, billing_cancel_queue_item, billing_hold_queue_item, billing_raise_exception, billing_return_to_operations, billing_start_review]
 
   # billingtransfer
   "mutation cancelBillingTransferRun":
-    tools: [manage_billing_transfer_run]
+    tools: [billing_manage_transfer_run]
   "mutation retryBillingTransferRun":
-    tools: [manage_billing_transfer_run]
+    tools: [billing_manage_transfer_run]
   "mutation startBillingTransferRun":
-    tools: [transfer_to_billing]
+    tools: [billing_transfer]
 
   # briefing
   "mutation markBriefingRead":
@@ -741,34 +741,34 @@ writes:
   "mutation acceptCarrierInvoiceMatchWithVariance":
     tools: [accept_carrier_invoice_match_with_variance]
   "mutation addCarrierSettlementAdjustment":
-    tools: [add_carrier_settlement_adjustment]
+    tools: [settlement_add_carrier_adjustment]
   "mutation approveCarrierSettlement":
-    tools: [approve_carrier_settlement, approve_carrier_settlements]
+    tools: [settlement_approve_carrier]
   "mutation createCarrierInvoiceMatch":
     tools: [create_carrier_invoice_match]
   "mutation generateCarrierSettlementBatch":
-    tools: [generate_carrier_settlement_batch]
+    tools: [settlement_generate_carrier_batch]
   "mutation linkEdiCarrierInvoiceToCarrier":
     tools: [link_edi_carrier_invoice_to_carrier]
   "mutation markCarrierSettlementPaid":
-    tools: [record_carrier_settlement_payment]
+    tools: [settlement_record_carrier_payment]
   "mutation postCarrierSettlement":
-    tools: [post_carrier_settlement, post_carrier_settlements]
+    tools: [settlement_post_carrier]
   "mutation recalculateCarrierSettlement":
-    tools: [recalculate_carrier_settlement]
+    tools: [settlement_recalculate_carrier]
   "mutation rejectCarrierInvoiceMatch":
     tools: [reject_carrier_invoice_match]
   "mutation rejectCarrierSettlement":
-    tools: [reject_carrier_settlement]
+    tools: [settlement_reject_carrier]
   "mutation removeCarrierSettlementAdjustment":
-    tools: [remove_carrier_settlement_adjustment]
+    tools: [settlement_remove_carrier_adjustment]
   "mutation submitCarrierSettlement":
-    tools: [submit_carrier_settlement]
+    tools: [settlement_submit_carrier]
   "mutation updateCarrierSettlementControl":
     exempt: configuration
     reason: "An organization-wide control an administrator sets once; every later write depends on it."
   "mutation voidCarrierSettlement":
-    tools: [void_carrier_settlement]
+    tools: [settlement_void_carrier]
 
   # carriertrackingpublic
   "POST /api/v1/carrier-tracking-links/:token/check-calls/":
@@ -793,9 +793,9 @@ writes:
 
   # customertracking
   "mutation issueCustomerTrackingLink":
-    tools: [share_customer_tracking_link]
+    tools: [shipment_share_tracking_link]
   "mutation revokeCustomerTrackingLink":
-    tools: [revoke_customer_tracking_link]
+    tools: [shipment_revoke_tracking_link]
   "mutation updateCustomerTrackingProfile":
     exempt: configuration
     reason: "What a customer's tracking page shows and which status emails it gets is a commercial agreement with the customer, set by a person on the customer record."
@@ -990,7 +990,7 @@ writes:
     exempt: attestation
     reason: "Accepting a document as proof, such as a proof of delivery that lets a shipment bill, is the reviewer's sign-off on the evidence; agents may never approve."
   "POST /api/v1/documents/:documentID/attach-to-shipment/":
-    tools: [attach_document_to_shipment]
+    tools: [shipment_attach_document]
   "POST /api/v1/documents/:documentID/import-assistant/thread/":
     exempt: agent-administration
     reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
@@ -1009,25 +1009,25 @@ writes:
     tools: [delete_documents]
   "POST /api/v1/documents/upload-bulk/":
     exempt: infrastructure
-    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment)."
+    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document)."
   "POST /api/v1/documents/upload/":
     exempt: infrastructure
-    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment)."
+    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document)."
   "POST /api/v1/documents/uploads/":
     exempt: infrastructure
-    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment)."
+    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document)."
   "POST /api/v1/documents/uploads/:uploadSessionID/cancel/":
     exempt: infrastructure
-    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment)."
+    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document)."
   "POST /api/v1/documents/uploads/:uploadSessionID/complete/":
     exempt: infrastructure
-    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment)."
+    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document)."
   "POST /api/v1/documents/uploads/:uploadSessionID/parts/":
     exempt: infrastructure
-    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment)."
+    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document)."
   "PUT /api/v1/documents/uploads/:uploadSessionID/parts/:partNumber/":
     exempt: infrastructure
-    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment)."
+    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document)."
 
   # documentcontrol
   "PUT /api/v1/document-controls/":
@@ -1190,7 +1190,7 @@ writes:
     exempt: counterparty
     reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
   "mutation resolveSettlementDispute":
-    tools: [resolve_settlement_dispute]
+    tools: [settlement_resolve_dispute]
   "mutation respondToMyAssignment":
     exempt: counterparty
     reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
@@ -1209,7 +1209,7 @@ writes:
     exempt: counterparty
     reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
   "mutation startSettlementDisputeReview":
-    tools: [start_settlement_dispute_review]
+    tools: [settlement_start_dispute_review]
   "mutation submitMyExpense":
     exempt: counterparty
     reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
@@ -1228,19 +1228,19 @@ writes:
 
   # driversettlement
   "mutation addDriverSettlementAdjustment":
-    tools: [add_driver_settlement_adjustment]
+    tools: [settlement_add_driver_adjustment]
   "mutation adjustEscrowAccount":
-    tools: [adjust_escrow_account]
+    tools: [settlement_adjust_escrow_account]
   "mutation approveDriverSettlement":
-    tools: [approve_driver_settlement]
+    tools: [settlement_approve_driver]
   "mutation assignPayProfileToWorker":
-    tools: [assign_pay_profile]
+    tools: [settlement_assign_pay_profile]
   "mutation attachPayEventsToSettlement":
-    tools: [attach_pay_events_to_settlement]
+    tools: [settlement_attach_pay_events]
   "mutation bulkDriverSettlementAction":
-    tools: [approve_driver_settlements, post_driver_settlements, record_driver_settlement_payment, submit_driver_settlement]
+    tools: [settlement_approve_driver, settlement_post_driver, settlement_record_driver_payment, settlement_submit_driver]
   "mutation closeEscrowAccount":
-    tools: [close_escrow_account]
+    tools: [settlement_close_escrow_account]
   "mutation createPayCode":
     exempt: configuration
     reason: "Pay codes and pay profiles are the pay rules an administrator authors once; every settlement is computed from them, and assigning one to a driver is its own tool."
@@ -1248,41 +1248,41 @@ writes:
     exempt: configuration
     reason: "Pay codes and pay profiles are the pay rules an administrator authors once; every settlement is computed from them, and assigning one to a driver is its own tool."
   "mutation createRecurringDeduction":
-    tools: [create_recurring_deduction]
+    tools: [settlement_create_recurring_deduction]
   "mutation createRecurringEarning":
-    tools: [create_recurring_earning]
+    tools: [settlement_create_recurring_earning]
   "mutation detachPayEventFromSettlement":
-    tools: [detach_pay_event_from_settlement]
+    tools: [settlement_detach_pay_event]
   "mutation endWorkerPayAssignment":
-    tools: [end_pay_assignment]
+    tools: [settlement_end_pay_assignment]
   "mutation generateDriverSettlement":
-    tools: [generate_driver_settlement]
+    tools: [settlement_generate_driver]
   "mutation generateSettlementBatch":
-    tools: [generate_driver_settlement_batch]
+    tools: [settlement_generate_driver_batch]
   "mutation holdDriverPayEvent":
-    tools: [hold_driver_pay_event]
+    tools: [settlement_hold_pay_event]
   "mutation issuePayAdvance":
-    tools: [issue_pay_advance]
+    tools: [settlement_issue_advance]
   "mutation markDriverSettlementPaid":
-    tools: [record_driver_settlement_payment]
+    tools: [settlement_record_driver_payment]
   "mutation openEscrowAccount":
-    tools: [open_escrow_account]
+    tools: [settlement_open_escrow_account]
   "mutation payWorkerNow":
-    tools: [pay_driver_now]
+    tools: [settlement_pay_now]
   "mutation postDriverSettlement":
-    tools: [post_driver_settlement]
+    tools: [settlement_post_driver]
   "mutation recalculateDriverSettlement":
-    tools: [recalculate_driver_settlement]
+    tools: [settlement_recalculate_driver]
   "mutation rejectDriverSettlement":
-    tools: [reject_driver_settlement]
+    tools: [settlement_reject_driver]
   "mutation releaseDriverPayEvent":
-    tools: [release_driver_pay_event]
+    tools: [settlement_release_pay_event]
   "mutation removeDriverSettlementAdjustment":
-    tools: [remove_driver_settlement_adjustment]
+    tools: [settlement_remove_driver_adjustment]
   "mutation submitDriverSettlement":
-    tools: [submit_driver_settlement]
+    tools: [settlement_submit_driver]
   "mutation updateEscrowAccount":
-    tools: [update_escrow_account]
+    tools: [settlement_update_escrow_account]
   "mutation updatePayCode":
     exempt: configuration
     reason: "Pay codes and pay profiles are the pay rules an administrator authors once; every settlement is computed from them, and assigning one to a driver is its own tool."
@@ -1290,16 +1290,16 @@ writes:
     exempt: configuration
     reason: "Pay codes and pay profiles are the pay rules an administrator authors once; every settlement is computed from them, and assigning one to a driver is its own tool."
   "mutation updateRecurringDeduction":
-    tools: [update_recurring_deduction]
+    tools: [settlement_update_recurring_deduction]
   "mutation updateRecurringEarning":
-    tools: [update_recurring_earning]
+    tools: [settlement_update_recurring_earning]
   "mutation updateSettlementControl":
     exempt: configuration
     reason: "An organization-wide control an administrator sets once; every later write depends on it."
   "mutation voidDriverSettlement":
-    tools: [void_driver_settlement]
+    tools: [settlement_void_driver]
   "mutation writeOffPayAdvance":
-    tools: [write_off_pay_advance]
+    tools: [settlement_forgive_advance]
 
   # edi
   "DELETE /api/v1/edi/mapping-profiles/:profileID/items/:mappingItemID/":
@@ -2123,55 +2123,55 @@ writes:
 
   # invoice
   "PATCH /api/v1/billing/invoices/:invoiceID/":
-    tools: [update_invoice_draft]
+    tools: [invoice_update_draft]
   "POST /api/v1/billing/invoices/:invoiceID/generate-pdf/":
-    tools: [generate_invoice_pdf]
+    tools: [invoice_generate_pdf]
   "POST /api/v1/billing/invoices/:invoiceID/post/":
-    tools: [post_invoice, post_invoices]
+    tools: [invoice_post]
   "POST /api/v1/billing/invoices/:invoiceID/preview/":
     exempt: read-only
     reason: "Renders an invoice for review and saves nothing."
   "POST /api/v1/billing/invoices/:invoiceID/send/":
-    tools: [send_invoice, send_invoices]
+    tools: [invoice_send]
   "POST /api/v1/billing/invoices/from-order/":
-    tools: [create_invoice]
+    tools: [invoice_create]
   "POST /api/v1/billing/invoices/from-shipments/":
-    tools: [create_invoice]
+    tools: [invoice_create]
   "mutation createInvoicesFromOrder":
-    tools: [create_invoice]
+    tools: [invoice_create]
   "mutation createInvoicesFromShipments":
-    tools: [create_invoice]
+    tools: [invoice_create]
   "mutation createMemo":
-    tools: [create_invoice_memo]
+    tools: [invoice_create_memo]
   "mutation sendInvoiceEdi":
-    tools: [send_invoice_edi]
+    tools: [invoice_send_edi]
   "mutation voidInvoice":
-    tools: [void_invoice]
+    tools: [invoice_void]
 
   # invoiceadjustment
   "PATCH /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/":
-    tools: [save_invoice_adjustment_draft]
+    tools: [invoice_save_adjustment_draft]
   "POST /api/v1/billing/invoice-adjustments/bulk-preview/":
     exempt: read-only
     reason: "Previews an invoice adjustment and saves nothing."
   "POST /api/v1/billing/invoice-adjustments/bulk-submit/":
-    tools: [submit_invoice_adjustment]
+    tools: [invoice_submit_adjustment]
   "POST /api/v1/billing/invoice-adjustments/drafts/":
-    tools: [save_invoice_adjustment_draft]
+    tools: [invoice_save_adjustment_draft]
   "POST /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/preview/":
     exempt: read-only
     reason: "Previews an invoice adjustment and saves nothing."
   "POST /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/submit/":
-    tools: [submit_invoice_adjustment]
+    tools: [invoice_submit_adjustment]
   "POST /api/v1/billing/invoice-adjustments/preview/":
     exempt: read-only
     reason: "Previews an invoice adjustment and saves nothing."
   "POST /api/v1/billing/invoice-adjustments/submit/":
-    tools: [submit_invoice_adjustment]
+    tools: [invoice_submit_adjustment]
   "mutation approveInvoiceAdjustment":
-    tools: [approve_invoice_adjustment]
+    tools: [invoice_approve_adjustment]
   "mutation rejectInvoiceAdjustment":
-    tools: [reject_invoice_adjustment]
+    tools: [invoice_reject_adjustment]
 
   # invoiceadjustmentcontrol
   "PUT /api/v1/invoice-adjustment-controls/":
@@ -2180,27 +2180,27 @@ writes:
 
   # invoicedispute
   "mutation openInvoiceDispute":
-    tools: [open_invoice_dispute]
+    tools: [invoice_open_dispute]
   "mutation resolveInvoiceDispute":
-    tools: [resolve_invoice_dispute]
+    tools: [invoice_resolve_dispute]
   "mutation withdrawInvoiceDispute":
-    tools: [withdraw_invoice_dispute]
+    tools: [invoice_withdraw_dispute]
 
   # invoicerun
   "PATCH /api/v1/billing/invoice-runs/:runID/membership/":
-    tools: [adjust_invoice_run_membership]
+    tools: [invoice_adjust_run]
   "POST /api/v1/billing/invoice-runs/:runID/cancel/":
-    tools: [cancel_invoice_run]
+    tools: [invoice_cancel_run]
   "POST /api/v1/billing/invoice-runs/:runID/commit/":
-    tools: [commit_invoice_run]
+    tools: [invoice_commit_run]
   "POST /api/v1/billing/invoice-runs/preview/":
-    tools: [build_invoice_run]
+    tools: [invoice_build_run]
   "POST /api/v1/billing/statements/:customerID/bill/":
-    tools: [bill_statement_now]
+    tools: [invoice_bill_statement]
 
   # invoiceshare
   "POST /api/v1/billing/invoices/:invoiceID/shares/":
-    tools: [share_invoice]
+    tools: [invoice_share]
 
   # journalentry
   "mutation approveJournalEntries":
@@ -2311,25 +2311,25 @@ writes:
 
   # order
   "mutation addOrderCharge":
-    tools: [add_order_charge]
+    tools: [order_add_charge]
   "mutation attachOrderShipments":
-    tools: [attach_order_shipments]
+    tools: [order_attach_shipments]
   "mutation cancelOrder":
-    tools: [cancel_order]
+    tools: [order_cancel]
   "mutation closeOrder":
-    tools: [close_order]
+    tools: [order_close]
   "mutation createOrder":
-    tools: [create_order]
+    tools: [order_create]
   "mutation detachOrderShipment":
-    tools: [detach_order_shipment]
+    tools: [order_detach_shipment]
   "mutation removeOrderCharge":
-    tools: [remove_order_charge]
+    tools: [order_remove_charge]
   "mutation setOrderChargeAllocations":
-    tools: [set_order_charge_allocations]
+    tools: [order_set_charge_allocations]
   "mutation updateOrder":
-    tools: [update_order]
+    tools: [order_update]
   "mutation updateOrderCharge":
-    tools: [update_order_charge]
+    tools: [order_update_charge]
 
   # organization
   "DELETE /api/v1/organizations/:id/logo":
@@ -2337,7 +2337,7 @@ writes:
     reason: "The organization's logo on every document it sends."
   "POST /api/v1/organizations/:id/logo":
     exempt: infrastructure
-    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment)."
+    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document)."
   "PUT /api/v1/organizations/:id/microsoft-sso":
     exempt: security
     reason: "Single sign-on decides who can sign in to the organization."
@@ -2423,9 +2423,9 @@ writes:
     exempt: attestation
     reason: "Waiving a permit requirement is a named person accepting the compliance risk of moving the load without that state's permit."
   "POST /api/v1/shipments/:shipmentID/permits/":
-    tools: [record_shipment_permit]
+    tools: [shipment_record_permit]
   "PUT /api/v1/shipments/:shipmentID/permits/:permitID/":
-    tools: [update_shipment_permit]
+    tools: [shipment_update_permit]
 
   # ptopolicy
   "mutation adjustWorkerPtoBalance":
@@ -2505,7 +2505,7 @@ writes:
   # rateimport
   "POST /api/v1/rate-imports/":
     exempt: infrastructure
-    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment)."
+    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document)."
   "POST /api/v1/rate-imports/:rateImportID/commit/":
     tools: [commit_rate_import]
   "POST /api/v1/rate-imports/:rateImportID/discard/":
@@ -2576,16 +2576,16 @@ writes:
 
   # recurringshipment
   "POST /api/v1/recurring-shipments/":
-    tools: [create_recurring_shipment]
+    tools: [shipment_create_recurring]
   "POST /api/v1/recurring-shipments/:recurringShipmentID/generate/":
-    tools: [generate_recurring_shipment]
+    tools: [shipment_generate_recurring]
   "POST /api/v1/recurring-shipments/match/":
     exempt: read-only
     reason: "Finds the recurring shipment a new shipment matches and saves nothing."
   "PUT /api/v1/recurring-shipments/:recurringShipmentID/":
-    tools: [update_recurring_shipment]
+    tools: [shipment_update_recurring]
   "PUT /api/v1/recurring-shipments/:recurringShipmentID/status/":
-    tools: [set_recurring_shipment_status]
+    tools: [shipment_set_recurring_status]
 
   # report
   "POST /api/v1/reports/dashboards/:dashboardID/export/":
@@ -2768,14 +2768,14 @@ writes:
 
   # shipment
   "POST /api/v1/shipments/:shipmentID/holds/":
-    tools: [place_shipment_hold]
+    tools: [shipment_place_hold]
   "POST /api/v1/shipments/:shipmentID/holds/:holdID/release/":
-    tools: [release_shipment_hold]
+    tools: [shipment_release_hold]
   "POST /api/v1/shipments/:shipmentID/transfer-to-billing/":
-    tools: [transfer_to_billing]
+    tools: [billing_transfer]
   "POST /api/v1/shipments/auto-cancel/":
     exempt: infrastructure
-    reason: "The sweep the Temporal schedule runs over every organization to cancel shipments past the auto-cancel threshold; a person does not decide which shipments it takes, and cancel_shipment cancels one."
+    reason: "The sweep the Temporal schedule runs over every organization to cancel shipments past the auto-cancel threshold; a person does not decide which shipments it takes, and shipment_cancel cancels one."
   "POST /api/v1/shipments/check-for-duplicate-bols/":
     exempt: read-only
     reason: "Computes a figure or a check for the shipment form and saves nothing."
@@ -2789,14 +2789,14 @@ writes:
     exempt: read-only
     reason: "Computes a figure or a check for the shipment form and saves nothing."
   "PUT /api/v1/shipments/:shipmentID/holds/:holdID/":
-    tools: [update_shipment_hold]
+    tools: [shipment_update_hold]
   "mutation acknowledgeShipmentComment":
     exempt: attestation
     reason: "Acknowledging a comment says that the person it was addressed to has read it; only that person can say so."
   "mutation autoRateShipment":
-    tools: [rerate_shipment]
+    tools: [shipment_rerate]
   "mutation bulkTransferShipmentsToBilling":
-    tools: [transfer_to_billing]
+    tools: [billing_transfer]
   "mutation calculateShipmentDistance":
     exempt: read-only
     reason: "Computes a figure or a check for the shipment form and saves nothing."
@@ -2807,7 +2807,7 @@ writes:
     exempt: read-only
     reason: "Computes a figure or a check for the shipment form and saves nothing."
   "mutation cancelShipment":
-    tools: [cancel_shipment]
+    tools: [shipment_cancel]
   "mutation checkShipmentDuplicateBol":
     exempt: read-only
     reason: "Computes a figure or a check for the shipment form and saves nothing."
@@ -2815,36 +2815,36 @@ writes:
     exempt: read-only
     reason: "Computes a figure or a check for the shipment form and saves nothing."
   "mutation createShipment":
-    tools: [create_shipment]
+    tools: [shipment_create]
   "mutation createShipmentComment":
-    tools: [add_shipment_comment]
+    tools: [shipment_add_comment]
   "mutation deleteShipmentComment":
-    tools: [delete_shipment_comment]
+    tools: [shipment_delete_comment]
   "mutation duplicateShipment":
-    tools: [duplicate_shipment]
+    tools: [shipment_duplicate]
   "mutation pinShipmentComment":
-    tools: [pin_shipment_comment]
+    tools: [shipment_pin_comment]
   "mutation previewShipmentContractRate":
     exempt: read-only
     reason: "Computes a figure or a check for the shipment form and saves nothing."
   "mutation recalculateShipmentDistance":
-    tools: [recalculate_shipment_distance]
+    tools: [shipment_recalculate_distance]
   "mutation resolveShipmentComment":
-    tools: [resolve_shipment_comment]
+    tools: [shipment_resolve_comment]
   "mutation transferShipmentOwnership":
-    tools: [transfer_shipment_ownership]
+    tools: [shipment_transfer_ownership]
   "mutation transferShipmentToBillingItems":
-    tools: [transfer_to_billing]
+    tools: [billing_transfer]
   "mutation uncancelShipment":
-    tools: [uncancel_shipment]
+    tools: [shipment_uncancel]
   "mutation unpinShipmentComment":
-    tools: [unpin_shipment_comment]
+    tools: [shipment_unpin_comment]
   "mutation unresolveShipmentComment":
-    tools: [resolve_shipment_comment]
+    tools: [shipment_resolve_comment]
   "mutation updateShipment":
-    tools: [update_shipment, reschedule_stop, add_shipment_charge]
+    tools: [shipment_update, shipment_reschedule_stop, shipment_add_charge]
   "mutation updateShipmentComment":
-    tools: [edit_shipment_comment]
+    tools: [shipment_update_comment]
 
   # shipmentboard
   "mutation decideShipmentSuggestion":
@@ -3009,7 +3009,7 @@ writes:
     exempt: attestation
     reason: "Time clock entries are the wage record a worker's pay is computed from; only the worker or a supervisor who saw the time may change them."
   "mutation generatePayrollExport":
-    tools: [generate_payroll_export]
+    tools: [settlement_generate_payroll_export]
   "mutation recordTimeEntry":
     exempt: attestation
     reason: "Time clock entries are the wage record a worker's pay is computed from; only the worker or a supervisor who saw the time may enter them."
@@ -3017,7 +3017,7 @@ writes:
     exempt: attestation
     reason: "Submitting and approving hours for payroll is a sign-off by the worker and their manager."
   "mutation voidPayrollExport":
-    tools: [void_payroll_export]
+    tools: [settlement_void_payroll_export]
 
   # tractor
   "mutation bulkUpdateTractorStatus":

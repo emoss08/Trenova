@@ -56,7 +56,7 @@ function deniedRun(): AgentRunTranscript {
         reasoning: "The move needs a driver.",
         toolCalls: [
           { id: "c1", name: "update_worker", arguments: { id: "wrk_1" } },
-          { id: "c2", name: "get_shipment", arguments: { id: "shp_1" } },
+          { id: "c2", name: "shipment_get", arguments: { id: "shp_1" } },
         ],
       }),
       message({
@@ -70,7 +70,7 @@ function deniedRun(): AgentRunTranscript {
       message({
         role: "Tool",
         toolCallId: "c2",
-        toolName: "get_shipment",
+        toolName: "shipment_get",
         toolSummary: "S-1001",
         toolVerdict: "ran",
         content: "{}",
@@ -112,7 +112,7 @@ describe("transcriptBlocks", () => {
       messages: [
         message({
           content: "Started.",
-          toolCalls: [{ id: "c1", name: "get_shipment", arguments: {} }],
+          toolCalls: [{ id: "c1", name: "shipment_get", arguments: {} }],
         }),
         message({ role: "Tool", toolCallId: "c9", toolName: "get_worker", content: "{}" }),
         message({ content: "Finished." }),

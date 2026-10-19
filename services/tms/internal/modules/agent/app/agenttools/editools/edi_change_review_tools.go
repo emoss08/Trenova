@@ -297,7 +297,7 @@ func NewReviewEDITransferChangeTool(reviewer transferChangeReviewer) agentports.
 		name: "review_edi_transfer_change",
 		recipe: []string{
 			"list_edi_transfer_changes",
-			"get_shipment_tracking",
+			"shipment_get_tracking",
 			"review_edi_transfer_change",
 		},
 		description: "Propose applying or rejecting a status or cancellation the other " +

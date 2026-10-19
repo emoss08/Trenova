@@ -119,7 +119,7 @@ type commentPermissions interface {
 
 func commentIDProperty() map[string]any {
 	return agenttoolschema.RecordID(permission.ResourceShipmentComment, "The comment",
-		"the recentComments get_shipment lists or the page you are on")
+		"the recentComments shipment_get lists or the page you are on")
 }
 
 func commentRecord(comment *shipment.ShipmentComment) toolpreview.Record {
@@ -285,7 +285,7 @@ func BoolPointer(value bool) *bool { return &value }
 
 func NewPinShipmentCommentTool(comments commentModerator) agentports.AgentTool {
 	return newCommentToggleTool(comments, &commentToggleSpec{
-		name: "pin_shipment_comment",
+		name: "shipment_pin_comment",
 		description: "Pin a comment to the top of a shipment's thread so dispatch sees " +
 			"it first. Use it for the note that says what the shipment is waiting on or how it " +
 			"must be handled. A reply cannot be pinned, and a shipment keeps at most " +
@@ -302,7 +302,7 @@ func NewPinShipmentCommentTool(comments commentModerator) agentports.AgentTool {
 
 func NewUnpinShipmentCommentTool(comments commentModerator) agentports.AgentTool {
 	return newCommentToggleTool(comments, &commentToggleSpec{
-		name: "unpin_shipment_comment",
+		name: "shipment_unpin_comment",
 		description: "Take a pinned comment off the top of a shipment's thread once " +
 			"what it said no longer applies.",
 		operation: permission.OpUnpin,
@@ -317,10 +317,10 @@ func NewUnpinShipmentCommentTool(comments commentModerator) agentports.AgentTool
 
 func NewResolveShipmentCommentTool(comments commentModerator) agentports.AgentTool {
 	return newCommentToggleTool(comments, &commentToggleSpec{
-		name: "resolve_shipment_comment",
+		name: "shipment_resolve_comment",
 		description: "Mark a comment on a shipment resolved once what it asked for is " +
 			"done, or reopen one with resolved=false when it is not. Say what settled it " +
-			"in a reply with add_shipment_comment first, so the thread shows why.",
+			"in a reply with shipment_add_comment first, so the thread shows why.",
 		operation: permission.OpResolve,
 		rationale: "Marks a shipment's own comment settled inside Trenova; reopening " +
 			"undoes it and nothing is sent.",
@@ -492,7 +492,7 @@ func NewEditShipmentCommentTool(
 	permissions commentPermissions,
 ) agentports.AgentTool {
 	base := common.NewReportingReceivableTool(&common.ReceivableSpec{
-		Name:        "edit_shipment_comment",
+		Name:        "shipment_update_comment",
 		SearchTerms: []string{"fix comment", "reword comment", "typo"},
 		Artifact:    common.ShipmentRecordEntity,
 		Description: "Change the text, visibility, priority or acknowledgment request " +
@@ -625,12 +625,12 @@ func NewDeleteShipmentCommentTool(
 	permissions commentPermissions,
 ) agentports.AgentTool {
 	return common.NewReportingReceivableTool(&common.ReceivableSpec{
-		Name:     "delete_shipment_comment",
+		Name:     "shipment_delete_comment",
 		Artifact: common.ShipmentRecordEntity,
 		Description: "Delete a comment from a shipment's thread: your own, or another " +
 			"person's when the person you act for may moderate comments. One with replies " +
 			"is left as a placeholder so the replies keep their place. Prefer " +
-			"resolve_shipment_comment for a note that was right at the time.",
+			"shipment_resolve_comment for a note that was right at the time.",
 		Resource:    permission.ResourceShipmentComment,
 		Operation:   permission.OpDelete,
 		Egress:      agent.EgressInternal,

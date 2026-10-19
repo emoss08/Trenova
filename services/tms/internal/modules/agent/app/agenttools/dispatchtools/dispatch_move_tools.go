@@ -76,7 +76,7 @@ func (t *UnassignMovesTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		fieldMoveIDs: agenttoolschema.OfResource(jsonschemautils.DescribedArray(
 			"The moves to take the driver off, by id from get_dispatch_board (moveId) or "+
-				"get_shipment (its moves). One move is the normal case.",
+				"shipment_get (its moves). One move is the normal case.",
 			jsonschemautils.String(0),
 			maxMovesPerDispatchChange,
 		), permission.ResourceShipmentMove),
@@ -228,7 +228,7 @@ func (t *UpdateMoveStatusTool) Description() string {
 func (t *UpdateMoveStatusTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		fieldMoveIDs: agenttoolschema.OfResource(jsonschemautils.DescribedArray(
-			"The moves to change, by id from get_dispatch_board (moveId) or get_shipment "+
+			"The moves to change, by id from get_dispatch_board (moveId) or shipment_get "+
 				"(its moves). One move is the normal case.",
 			jsonschemautils.String(0),
 			maxMovesPerDispatchChange,

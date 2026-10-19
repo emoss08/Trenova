@@ -221,12 +221,12 @@ func renderLateCharges(
 
 func NewShareInvoiceTool(shares invoiceSharer) agentports.AgentTool {
 	return common.NewReceivableTool(&common.ReceivableSpec{
-		Name:        "share_invoice",
-		Recipe:      []string{"list_invoice_share_candidates", "share_invoice"},
+		Name:        "invoice_share",
+		Recipe:      []string{"invoice_list_share_candidates", "invoice_share"},
 		SearchTerms: []string{"loop in teammate", "teammate", "colleague"},
 		Description: "Propose sharing an invoice with teammates, who get a notification and an " +
 			"email with your note and a link to it. Pick them with " +
-			"list_invoice_share_candidates, which lists only people who may read invoices. " +
+			"invoice_list_share_candidates, which lists only people who may read invoices. " +
 			"It is sent in the name of the person who approves it, so a person always decides.",
 		Resource:    permission.ResourceInvoice,
 		Operation:   permission.OpRead,
@@ -238,10 +238,10 @@ func NewShareInvoiceTool(shares invoiceSharer) agentports.AgentTool {
 			"with a note they read as theirs; only that person sends it.",
 		Properties: map[string]any{
 			common.ParamInvoiceID: agenttoolschema.RecordIDText(permission.ResourceInvoice,
-				"The invoice, from list_invoices or get_invoice."),
+				"The invoice, from invoice_list or invoice_get."),
 			paramUserIDs: agenttoolschema.RecordIDs(
 				permission.ResourceUser,
-				"The teammates, from list_invoice_share_candidates.",
+				"The teammates, from invoice_list_share_candidates.",
 				invoice.MaxShareRecipients,
 			),
 			paramShareNote: common.StringProperty("A note for them, such as what to look at.",

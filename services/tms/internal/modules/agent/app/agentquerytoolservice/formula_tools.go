@@ -382,7 +382,7 @@ func (t *testFormulaExpressionTool) ParamSchema() map[string]any {
 				"match what is billed."),
 			"shipmentId": agenttoolschema.RecordIDText(permission.ResourceShipment,
 				"Optional: price a saved shipment instead of sample loads, "+
-					"from list_shipments or search_shipments."),
+					"from shipment_list."),
 		},
 		"required":             []string{"expression"},
 		"additionalProperties": false,

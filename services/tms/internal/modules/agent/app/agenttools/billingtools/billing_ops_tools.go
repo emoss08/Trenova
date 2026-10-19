@@ -50,7 +50,7 @@ type chargeReassigner interface {
 
 func NewReassignBillingChargeTool(billing chargeReassigner) agentports.AgentTool {
 	return common.NewReportingReceivableTool(&common.ReceivableSpec{
-		Name:     "reassign_billing_charge",
+		Name:     "billing_reassign_charge",
 		Artifact: billingQueueRecordEntity,
 		Description: "Move who pays one charge on a shipment in billing review: its freight " +
 			"or one accessorial, whole to another payer or split among several. A payer " +
@@ -67,8 +67,8 @@ func NewReassignBillingChargeTool(billing chargeReassigner) agentports.AgentTool
 			"their queue items; only a person reassigns a charge.",
 		Properties: map[string]any{
 			common.ParamItemID: agenttoolschema.KindID(
-				"The billing queue item, from list_billing_queue_items "+
-					"or get_billing_queue_item. Never guess one.",
+				"The billing queue item, from billing_list_queue_items "+
+					"or billing_get_queue_item. Never guess one.",
 				permission.KindBillingQueueItem,
 			),
 			paramChargeKind: agenttoolschema.Enum(
@@ -76,7 +76,7 @@ func NewReassignBillingChargeTool(billing chargeReassigner) agentports.AgentTool
 				reassignableKinds,
 			),
 			paramAdditionalChargeID: agenttoolschema.KindID("The accessorial charge, from the "+
-				"shipment's charges get_billing_queue_item lists. Needed for Accessorial.",
+				"shipment's charges billing_get_queue_item lists. Needed for Accessorial.",
 				permission.KindAdditionalCharge),
 			common.ParamAllocations: common.AllocationsProperty("The payers and their shares."),
 		},
@@ -273,11 +273,11 @@ type transferRunCall struct {
 
 func NewManageBillingTransferRunTool(runs transferRunKeeper) agentports.AgentTool {
 	return common.NewReportingReceivableTool(&common.ReceivableSpec{
-		Name:     "manage_billing_transfer_run",
+		Name:     "billing_manage_transfer_run",
 		Artifact: billingQueueRecordEntity,
 		Description: "Stop a background transfer to billing that is still running, or " +
 			"Retry the shipments a finished one could not transfer. Take the run id from " +
-			"transfer_to_billing's result. Only the person who started a transfer can stop " +
+			"billing_transfer's result. Only the person who started a transfer can stop " +
 			"it; shipments already transferred stay in the queue.",
 		Resource:    permission.ResourceShipment,
 		Operation:   permission.OpUpdate,
@@ -289,7 +289,7 @@ func NewManageBillingTransferRunTool(runs transferRunKeeper) agentports.AgentToo
 			"and a stopped run is retried the same way.",
 		Properties: map[string]any{
 			resultRunID: agenttoolschema.KindID(
-				"The billing transfer run, from transfer_to_billing's "+
+				"The billing transfer run, from billing_transfer's "+
 					"result. Never guess one.",
 				permission.KindBillingTransferRun,
 			),

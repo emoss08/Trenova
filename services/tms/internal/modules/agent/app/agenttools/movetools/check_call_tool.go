@@ -76,7 +76,7 @@ func ProvideLogCheckCallTool(
 func (t *LogCheckCallTool) Name() string { return "log_check_call" }
 
 func (t *LogCheckCallTool) Recipe() []string {
-	return []string{"search_shipments", "get_shipment", "log_check_call"}
+	return []string{toolShipmentList, "shipment_get", "log_check_call"}
 }
 
 func (t *LogCheckCallTool) Description() string {
@@ -84,7 +84,7 @@ func (t *LogCheckCallTool) Description() string {
 		"whether it is late, and when it expects the next stop. " +
 		"Record what the carrier or driver said in their words. Use kind Update for a position or delay report; use Arrival or " +
 		"Departure only when you were told the truck reached or left a stop, which also " +
-		"records that stop's actual time. Get the move and stop ids from get_shipment. " +
+		"records that stop's actual time. Get the move and stop ids from shipment_get. " +
 		"Only log what you were told — never infer a position, a delay or an arrival."
 }
 
@@ -94,7 +94,7 @@ func (t *LogCheckCallTool) ParamSchema() map[string]any {
 		toolschema.KeyProperties: map[string]any{
 			ParamMoveID: agenttoolschema.RecordIDText(
 				permission.ResourceShipmentMove,
-				"The move the check call is about, from get_shipment (its moves).",
+				"The move the check call is about, from shipment_get (its moves).",
 			),
 			paramKind: agenttoolschema.Enum(
 				"Update for a position or delay report; Arrival or Departure when the "+
@@ -104,7 +104,7 @@ func (t *LogCheckCallTool) ParamSchema() map[string]any {
 			common.ParamStopID: agenttoolschema.RecordIDText(
 				permission.ResourceShipmentStop,
 				"Required for Arrival and Departure: the stop reached or left, from the "+
-					"move's stops in get_shipment. Leave it out for an Update.",
+					"move's stops in shipment_get. Leave it out for an Update.",
 			),
 			fieldReportedAt: agenttoolschema.LocalDateTime(
 				"When the truck was where the caller said. Leave it out unless you were " +

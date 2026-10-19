@@ -141,7 +141,7 @@ func TestRunTranscript_StatesWhatTheRunLeftOut(t *testing.T) {
 			{
 				Role:      "Assistant",
 				Omitted:   true,
-				ToolCalls: []agent.TranscriptToolCall{{ID: "c1", Name: "list_shipments"}},
+				ToolCalls: []agent.TranscriptToolCall{{ID: "c1", Name: "shipment_list"}},
 				CreatedAt: 1_790_000_001,
 			},
 			{Role: "Assistant", Content: "All loads are on time.", CreatedAt: 1_790_000_080},
@@ -156,13 +156,13 @@ func TestRunTranscript_StatesWhatTheRunLeftOut(t *testing.T) {
 
 	body := file.Body
 	assert.Contains(t, body, "- **Messages:** 3 kept, 12 left out\n")
-	assert.Contains(t, body, "**Called `list_shipments`**\n\n---")
+	assert.Contains(t, body, "**Called `shipment_list`**\n\n---")
 	assert.Contains(t, body, "## Overnight check · Sep 21, 2026 2:13:21 PM UTC\n\n"+
 		transcriptTrimmedNote)
 	assert.Contains(t, body, "\n---\n\n_12 messages left out here: the run kept its opening "+
 		"and its end within its size limit._\n\n---\n\n## Overnight check · "+
 		"Sep 21, 2026 2:14:40 PM UTC")
-	assert.Less(t, strings.Index(body, "list_shipments"), strings.Index(body, "12 messages"))
+	assert.Less(t, strings.Index(body, "shipment_list"), strings.Index(body, "12 messages"))
 	assert.Less(t, strings.Index(body, "12 messages"), strings.Index(body, "All loads"))
 }
 

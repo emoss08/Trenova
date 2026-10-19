@@ -72,7 +72,7 @@ func (t *SetInvoiceFactoringOverrideTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramInvoiceID: agenttoolschema.RecordIDText(
 			permission.ResourceInvoice,
-			"The invoice, from list_invoices or list_factoring_ready_invoices.",
+			"The invoice, from invoice_list or list_factoring_ready_invoices.",
 		),
 		paramOverride: agenttoolschema.Enum(
 			"Exclude keeps it out of factoring; Default follows the customer's factoring.",

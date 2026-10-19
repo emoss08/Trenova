@@ -249,7 +249,7 @@ func (t *listReportDatasetsTool) Description() string {
 		"worker. Use it before create_report to pick the dataset, searching with query " +
 		"(\"shipment\", \"invoice\") rather than paging through all of them, then call " +
 		"describe_report_dataset for its fields. It lists kinds of data, not records: to " +
-		"find a customer or a shipment use list_customers or list_shipments."
+		"find a customer or a shipment use list_customers or shipment_list."
 }
 
 func (t *listReportDatasetsTool) ParamSchema() map[string]any {

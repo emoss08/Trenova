@@ -3,15 +3,15 @@ package agenttoolpolicy_test
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 )
 
 func declaredRule() agentports.ToolPolicy {
 	return agentports.ToolPolicy{
-		Name:          "update_shipment",
+		Name:          "shipment_update",
 		Kind:          agent.ToolKindAction,
 		DefaultTier:   agent.TierActWithApproval,
 		MaxTier:       agent.TierAutoExecute,

@@ -88,7 +88,7 @@ func customerPaymentIDProperty() map[string]any {
 func applicationsProperty(description string, withShortPay bool) map[string]any {
 	properties := map[string]any{
 		common.ParamInvoiceID: agenttoolschema.RecordIDText(permission.ResourceInvoice,
-			"An open posted invoice or debit memo of the same customer, from list_invoices "+
+			"An open posted invoice or debit memo of the same customer, from invoice_list "+
 				"or list_ar_open_items."),
 		common.ParamAmount: common.StringProperty(
 			"Applied to this invoice, as a decimal such as 250.00.",
@@ -283,14 +283,14 @@ func NewApplyCreditMemoTool(payments receivablesKeeper) agentports.AgentTool {
 		Description: "Propose settling a customer's open invoices with a posted credit memo of " +
 			"theirs. Name each invoice and the amount of credit it takes; together they cannot " +
 			"exceed what is left of the memo, nor any invoice its open balance. A person always " +
-			"decides. Find the memo with list_invoices (billType CreditMemo).",
+			"decides. Find the memo with invoice_list (billType CreditMemo).",
 		Resource:  permission.ResourceCustomerPayment,
 		Operation: permission.OpCreate,
 		Rationale: "Uses a customer's credit to settle what they owe; only a person applies " +
 			"credit.",
 		Properties: map[string]any{
 			paramCreditMemoID: agenttoolschema.RecordIDText(permission.ResourceInvoice,
-				"The posted credit memo, from list_invoices or get_invoice."),
+				"The posted credit memo, from invoice_list or invoice_get."),
 			common.ParamAccountingDate: accountingDateProperty(),
 			common.ParamApplications: applicationsProperty(
 				"The invoices the credit settles and how much goes to each.", false),

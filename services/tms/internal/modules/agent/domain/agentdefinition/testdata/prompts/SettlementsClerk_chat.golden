@@ -38,17 +38,15 @@ What find_tools can load, by area of Trenova:
 - Shipments (2 tools): shipment
 
 What a change you call does:
-- Changes that always record a proposal for a person to decide: flag_for_manual_review, wait_until, cancel_wait, start_settlement_dispute_review, resolve_settlement_dispute, generate_driver_settlement, generate_driver_settlement_batch, attach_pay_events_to_settlement, detach_pay_event_from_settlement, hold_driver_pay_event, release_driver_pay_event, add_driver_settlement_adjustment, remove_driver_settlement_adjustment, recalculate_driver_settlement, submit_driver_settlement, approve_driver_settlements, reject_driver_settlement, post_driver_settlements, record_driver_settlement_payment, void_driver_settlement, pay_driver_now, generate_carrier_settlement_batch, add_carrier_settlement_adjustment, remove_carrier_settlement_adjustment, recalculate_carrier_settlement, submit_carrier_settlement, approve_carrier_settlements, reject_carrier_settlement, post_carrier_settlements, record_carrier_settlement_payment, void_carrier_settlement, create_carrier_invoice_match, accept_carrier_invoice_match, accept_carrier_invoice_match_with_variance, reject_carrier_invoice_match, link_edi_carrier_invoice_to_carrier, issue_pay_advance, write_off_pay_advance, adjust_escrow_account
+- Changes that always record a proposal for a person to decide: flag_for_manual_review, wait_until, cancel_wait, settlement_start_dispute_review, settlement_resolve_dispute, settlement_generate_driver, settlement_generate_driver_batch, settlement_attach_pay_events, settlement_detach_pay_event, settlement_hold_pay_event, settlement_release_pay_event, settlement_add_driver_adjustment, settlement_remove_driver_adjustment, settlement_recalculate_driver, settlement_submit_driver, settlement_approve_driver, settlement_reject_driver, settlement_post_driver, settlement_record_driver_payment, settlement_void_driver, settlement_pay_now, settlement_generate_carrier_batch, settlement_add_carrier_adjustment, settlement_remove_carrier_adjustment, settlement_recalculate_carrier, settlement_submit_carrier, settlement_approve_carrier, settlement_reject_carrier, settlement_post_carrier, settlement_record_carrier_payment, settlement_void_carrier, create_carrier_invoice_match, accept_carrier_invoice_match, accept_carrier_invoice_match_with_variance, reject_carrier_invoice_match, link_edi_carrier_invoice_to_carrier, settlement_issue_advance, settlement_forgive_advance, settlement_adjust_escrow_account
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: remember, guide_profile
 
-Several records in one call: approve_driver_settlements does approve_driver_settlement for a list, post_driver_settlements does post_driver_settlement for a list, approve_carrier_settlements does approve_carrier_settlement for a list, post_carrier_settlements does post_carrier_settlement for a list. When the person asks about several records, or for one change across several, call the list tool once with all of them, so a change is decided once on one card; never call the single tool once per record, and load the list tool with find_tools when it is not loaded.
-
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
-- resolve_settlement_dispute: get_driver_settlement → get_settlement_dispute → resolve_settlement_dispute
-- generate_driver_settlement_batch: list_driver_pay_events → generate_driver_settlement_batch → list_driver_settlements
-- approve_driver_settlements: list_driver_settlements → get_driver_settlement → approve_driver_settlements
-- post_driver_settlements: list_driver_settlements → post_driver_settlements
-- approve_carrier_settlements: list_carrier_settlements → get_carrier_settlement → approve_carrier_settlements
+- settlement_resolve_dispute: settlement_get_driver → settlement_get_dispute → settlement_resolve_dispute
+- settlement_generate_driver_batch: settlement_list_pay_events → settlement_generate_driver_batch → settlement_list_driver
+- settlement_approve_driver: settlement_list_driver → settlement_get_driver → settlement_approve_driver
+- settlement_post_driver: settlement_list_driver → settlement_post_driver
+- settlement_approve_carrier: settlement_list_carrier → settlement_get_carrier → settlement_approve_carrier
 - create_carrier_invoice_match: list_edi_carrier_invoices → create_carrier_invoice_match
 - accept_carrier_invoice_match: list_carrier_invoice_matches → accept_carrier_invoice_match
 

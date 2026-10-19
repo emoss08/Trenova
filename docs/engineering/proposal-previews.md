@@ -40,7 +40,7 @@ simulation reads it, capped at 8 KiB.
 Message, Param}`: `toolpreview.WouldFail(err)` splits a validation `MultiError` into one reason
 a field (a refusal of the whole write is a reason with no field), and
 `toolpreview.LocateReasons` walks the tool's parameter schema to name the parameter each field
-rides in (`bol` is `shipment.bol` for `create_shipment`). The preview service locates reasons
+rides in (`bol` is `shipment.bol` for `shipment_create`). The preview service locates reasons
 for every tool, including a failing `ToolValidator`. GraphQL serves them as
 `AgentPreviewWarning.reasons`. The client lists each reason ("BOL: already in use by shipment
 SEED-DET-009"), falling back to `Message` without its leading sentence, never the bare "would
@@ -250,7 +250,7 @@ digest that no longer matches, and hands each step the preview it was approved o
 earlier step changed runs against the version that step left
 (`ExpectedTargetVersion`, from `DecisionOutcome.ExecutedTargetVersion`); a record moved by
 anything else still stops the plan. A plan whose steps each target a different record of one
-resource (five `post_invoice` steps) has no step resting on another, so every step runs,
+resource (five `invoice_post` steps) has no step resting on another, so every step runs,
 each settles on its own, and the plan records the steps that completed and, as its failure,
 each step that did not with its reason; a plan with a shared record, several resources or
 an untargeted step keeps the stop at the first failure.
@@ -295,7 +295,7 @@ chat's editable fields (`agentports.ProposalFields`).
 A write over a set of records can let the person approving it drop some. A tool marks an
 array-of-ids parameter as a subset of one permission resource's records with
 `toolschema.RecordSubset(resource, property)`, which sets the `x-subsetOf` keyword;
-`transfer_to_billing.shipmentIds` is one, over `shipment`.
+`billing_transfer.shipmentIds` is one, over `shipment`.
 
 - **The form.** `toolschema.Fields` reads the parameter as kind `RecordSubset` with its
   `Resource`, and GraphQL serves both on `AgentProposal.parameterFields`:
@@ -324,7 +324,7 @@ array-of-ids parameter as a subset of one permission resource's records with
   same goes for `x-enumOf`, the source an enum's values were taken from
   (`agenttoolschema.Enum`).
 
-- **Selecting by criteria.** A subset tool that also takes criteria (`transfer_to_billing`'s
+- **Selecting by criteria.** A subset tool that also takes criteria (`billing_transfer`'s
   `allTransferable` with the candidates filters) implements `ToolSelectionResolver`. The
   dispatch activity resolves the call to concrete ids after the argument contract and
   before the tier, validation, baseline and filing, so `PendingAction.Arguments` holds the
@@ -350,90 +350,89 @@ array-of-ids parameter as a subset of one permission resource's records with
   filed before pinning) is refused and asked to be proposed again. An automatic retry has no
   approval to keep faith with, so it still reads its categories when it runs, with no cap.
 
-  The other record-subset tools keep ids only: `attach_order_shipments` (its records come
-  from `search_shipments`, a general search, and the order's own rules decide membership),
+  The other record-subset tools keep ids only: `order_attach_shipments` (its records come
+  from `shipment_list`, a general search, and the order's own rules decide membership),
   `release_accounting_sync` (a person-only send to the books from a general list; releasing
   "everything awaiting approval" unseen is what the tool exists to prevent),
   `set_carrier_monitoring` (billed per carrier from `list_carriers`, a general list), and
   `retry_edi_message_delivery` and `reprocess_edi_inbound_files` (general lists of messages
-  and files, capped at `ediservice.MaxBulkEDIActionItems`), and `post_invoices`,
-  `send_invoices`, `approve_billing_queue_items` and the four settlement approve and post
-  twins (up to 50, each record previewed and run through its single-record tool; see
-  [Bulk twins](#bulk-twins-of-single-record-tools)).
+  and files, capped at `ediservice.MaxBulkEDIActionItems`), and `invoice_post`,
+  `invoice_send`, `billing_approve_queue_item` and the four settlement approve and post
+  tools (up to 50, each record previewed and run through its single-record tool; see
+  [Tools that take one record or many](#tools-that-take-one-record-or-many)).
   None of them has a candidates read that decides each record the way the write would.
 
 A preview still shows at most 20 records, so a subset of more is shown in part; the
 parameter's value is the whole list, and the field's choices list it all. The approval form
 shows each preview record's outcome on its row and the rest by label.
 
-### Bulk twins of single-record tools
+### Tools that take one record or many
 
-Posting five drafts used to be five `get_invoice` calls and five `post_invoice` proposals the
-person approved one by one, and a pay period's settlements one approval and one posting
-proposal each. Seven person-only billing and settlement steps now each have a bulk twin that
-takes up to 50 records as a record subset, so the person approving sees one card, may untick
-records, and approves exactly the set that remains:
+Posting five drafts used to be five invoice reads and five posting proposals the person
+approved one by one, and a pay period's settlements one approval and one posting proposal
+each. A person-only billing or settlement step that applies to a set of records takes up to 50
+of them as a record subset, so the person approving sees one card, may untick records, and
+approves exactly the set that remains:
 
-| Bulk tool | Parameter | Runs each record as |
+| Tool | Parameter | Each record runs as |
 | --- | --- | --- |
-| `approve_billing_queue_items` | `billingQueueItemIds` (billing queue), `reviewNotes` | `approve_billing_queue_item` |
-| `assign_billing_queue_billers` | `billingQueueItemIds` (billing queue), `billerId` (optional: the person asking) | `assign_billing_queue_biller` |
-| `transition_items_to_in_review` | `billingQueueItemIds` (billing queue), `billerId` (optional: the person asking) | `transition_item_to_in_review` |
-| `post_invoices` | `invoiceIds` (invoice) | `post_invoice` |
-| `send_invoices` | `invoiceIds` (invoice) | `send_invoice` |
-| `approve_driver_settlements` | `settlementIds` (driver settlement) | `approve_driver_settlement` |
-| `post_driver_settlements` | `settlementIds` (driver settlement) | `post_driver_settlement` |
-| `approve_carrier_settlements` | `settlementIds` (carrier settlement) | `approve_carrier_settlement` |
-| `post_carrier_settlements` | `settlementIds` (carrier settlement) | `post_carrier_settlement` |
+| `billing_approve_queue_item` | `billingQueueItemIds` (billing queue), `reviewNotes` | `ApproveBillingQueueItemTool` |
+| `billing_assign_biller` | `billingQueueItemIds` (billing queue), `billerId` (optional: the person asking) | `AssignBillerTool` |
+| `billing_start_review` | `billingQueueItemIds` (billing queue), `billerId` (optional: the person asking) | `TransitionToInReviewTool` |
+| `invoice_post` | `invoiceIds` (invoice) | `PostInvoiceTool` |
+| `invoice_send` | `invoiceIds` (invoice) | `SendInvoiceTool` |
+| `settlement_approve_driver` | `settlementIds` (driver settlement) | the driver settlement's approve decision |
+| `settlement_post_driver` | `settlementIds` (driver settlement) | the driver settlement's post decision |
+| `settlement_approve_carrier` | `settlementIds` (carrier settlement) | the carrier settlement's approve decision |
+| `settlement_post_carrier` | `settlementIds` (carrier settlement) | the carrier settlement's post decision |
 
-Each bulk tool wraps its single-record tool (`agenttools/common/bulk_records.go`) and copies
-its policy: the same class, permission and floor. A twin of a person-only tool runs only from a
-person's approval; a twin of a tool that may run on its own (`assign_billing_queue_billers`,
-`transition_items_to_in_review`) runs wherever its single would, and the review twin is held
-to what its most guarded item allows, so one held item among ten waiting ones still puts the
-call before a person. The preview runs the single tool's
-own preview for each of the first 20 records and keeps that record's change, with a `What
-happens` field carrying the single preview's sentence, refusals first; a larger set is
-`Partial` and says the rest are checked when it runs. A record the single tool would refuse,
-one already posted, or one not found in the caller's tenant is shown as refused and the rest
-still go; only a set of which nothing would go carries `would_fail`, which is also what
-`Validate` refuses. Execution runs only from a person's approval, as the approver, record by
-record through the single tool (so every single-record guard, including
-`ApprovedFromProposal`, still applies), on the approved ids only, and reports "N of M posted;
-refused: …". A run in which every record was refused fails. The single tools stay, pinned to
-their record, and their descriptions point to the bulk tool when there is more than one
-record.
+Each such tool wraps a single-record tool (`agenttools/common/bulk_records.go`) and copies its
+policy: the same class, permission and floor. Phase 3 merged each of them with its
+single-record tool, so the single-record tool is an implementation the registered tool runs,
+not a tool of its own. A call naming one record is the single tool's call: its
+preview, its validation, its target (so the proposal is pinned to that record's version) and
+its result, unchanged. A tool over a person-only step runs only from a person's approval; one
+over a step that may run on its own (`billing_assign_biller`, `billing_start_review`) runs
+wherever its single would, and `billing_start_review` is held to what its most guarded item
+allows, so one held item among ten waiting ones still puts the call before a person. For
+several records the preview runs the single tool's own preview for each of the first 20 and
+keeps that record's change, with a `What happens` field carrying the single preview's
+sentence, refusals first; a larger set is `Partial` and says the rest are checked when it
+runs. A record the single tool would refuse, one already posted, or one not found in the
+caller's tenant is shown as refused and the rest still go; only a set of which nothing would
+go carries `would_fail`, which is also what `Validate` refuses. Execution runs only from a
+person's approval, as the approver, record by record through the single tool (so every
+single-record guard, including `ApprovedFromProposal`, still applies), on the approved ids
+only, and reports "N of M posted; refused: …". A run in which every record was refused fails.
 
-The settlement twins (`agenttools/settlementtools/settlement_bulk_tools.go`) build their single tool
-from the same lifecycle text and ledger, so each settlement is planned and performed by
-`PlanAction` and `Perform` exactly as the single approve or post would, including the
-journal entry a posting books and, for a driver, the driver-visible egress that classifies
-each call as money. The record-subset choices and a refused settlement in the outcome are
-named by settlement number. The settlements clerk holds the four twins in place of the four
-singles (still 56 tools): a twin takes one settlement as well as fifty, so the clerk loses
-nothing, and the singles stay registered for agents an organization builds.
+The settlement tools (`agenttools/settlementtools/settlement_bulk_tools.go`) build their
+single-settlement decision from the same lifecycle text and ledger, so each settlement is
+planned and performed by `PlanAction` and `Perform` exactly as one settlement's approval or
+posting is, including the journal entry a posting books and, for a driver, the
+driver-visible egress that classifies each call as money. The record-subset choices and a
+refused settlement in the outcome are named by settlement number.
 
-`get_invoices` reads up to 50 invoices by id in one call (`InvoiceRepository.GetByIDs`,
-tenant-scoped, amounts gated as `get_invoice` gates them) and names ids that are not an
-invoice of the organization. `list_invoices` and `list_billing_queue_items` also filter on
+`invoice_get` reads one invoice in full, or up to 50 by id in one call as a table
+(`InvoiceRepository.GetByIDs`, tenant-scoped, amounts gated as for one invoice), and names ids
+that are not an invoice of the organization; `billing_get_queue_item` does the same for queue
+items. `invoice_list` and `billing_list_queue_items` also filter on
 `id` with `in`.
 
-Two billing-queue steps that are not money also have twins, because eleven items waiting on a
-biller were eleven proposals: `assign_billing_queue_billers` and `transition_items_to_in_review`.
+Two billing-queue steps that are not money also take a set, because eleven items waiting on a
+biller were eleven proposals: `billing_assign_biller` and `billing_start_review`.
 Both take `billerId` as optional and, when it is absent, assign **the person asking**: "assign
 me", "start reviewing these" and "get these ready to post" name nobody else, and an item in
 review must carry a biller (`CheckStatusFields`), which is what used to fail a plan at step 1
-after the person had approved it. `transition_item_to_in_review` now assigns that biller as it
+after the person had approved it. `billing_start_review` now assigns that biller as it
 moves an item with nobody on it, validates the move it previews, and pins its target so a plan
 of such steps runs each on its own record. An unattended agent is nobody's biller, so a call
-from one that names none is refused with the parameter it needs. `get_billing_queue_items`
+from one that names none is refused with the parameter it needs. `billing_get_queue_item`
 reads up to 50 items in one call with what blocks each (approvable, missing documents,
-validation failures, detention holds), as `get_invoices` does for drafts, so checking a queue
+validation failures, detention holds), as `invoice_get` does for drafts, so checking a queue
 is one read and one table rather than a card per item.
 
-The billing assistant template holds the twins in place of `assign_billing_queue_biller` and
-`transition_item_to_in_review` (a twin takes one item as well as fifty), plus `get_billing_queue_items`,
-and gave up `preview_report` (the report analyst's) to stay under the 64-tool cap with room for
+The billing assistant template holds `billing_assign_biller`, `billing_start_review` and
+`billing_get_queue_item`, and gave up `preview_report` (the report analyst's) to stay under the 64-tool cap with room for
 an organization's own. To make room it gave up `list_insights`,
 `get_insight` (the insight analyst's) and `get_report_run` (a run's progress is already on
 screen). A template is copied when an agent is made, so an existing billing agent gains the

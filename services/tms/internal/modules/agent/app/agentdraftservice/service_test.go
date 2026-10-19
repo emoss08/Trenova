@@ -10,9 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -152,7 +152,7 @@ const validDraftReply = `{
   "eventKinds": [],
   "intervalSeconds": 0,
   "tools": [
-    {"name": "get_shipment", "tier": "Propose"},
+    {"name": "shipment_get", "tier": "Propose"},
     {"name": "send_customer_email", "tier": "AutoExecute"},
     {"name": "exec_shell", "tier": "AutoExecute"}
   ],
@@ -192,7 +192,7 @@ func TestDraftFromDescriptionAsksTheChatProvidersAndSavesNothing(t *testing.T) {
 	require.NotNil(t, definitions.drafted)
 	assert.True(t, definitions.drafted.ID.IsNil())
 	assert.Equal(t, "Delivery desk", draft.Name)
-	assert.Equal(t, []string{"get_shipment", "send_customer_email"}, draft.ToolNames)
+	assert.Equal(t, []string{"shipment_get", "send_customer_email"}, draft.ToolNames)
 	assert.Equal(
 		t,
 		map[string]agent.AutonomyTier{"send_customer_email": agent.TierActWithApproval},

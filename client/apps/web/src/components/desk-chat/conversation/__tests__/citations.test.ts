@@ -41,7 +41,7 @@ describe("stepAnchors", () => {
 
 describe("citeSteps", () => {
   const queue = step("list_billing_queue", { items: [] }, "15 items");
-  const shipment = step("get_shipment", { proNumber: "SEED-SHP-001", status: "New" });
+  const shipment = step("shipment_get", { proNumber: "SEED-SHP-001", status: "New" });
 
   it("cites each step after the phrase that repeats what it found", () => {
     const text = "There are 15 items in the billing queue. SEED-SHP-001 is still New.";
@@ -74,15 +74,15 @@ describe("citeSteps", () => {
 describe("withCitations", () => {
   it("writes each citation in as a link after its phrase", () => {
     const text = "SEED-SHP-001 is New.";
-    const citations = citeSteps(text, [step("get_shipment", { proNumber: "SEED-SHP-001" })]);
+    const citations = citeSteps(text, [step("shipment_get", { proNumber: "SEED-SHP-001" })]);
     expect(withCitations(text, citations)).toBe(`SEED-SHP-001[1](${CITATION_HREF}1) is New.`);
   });
 });
 
 describe("citeSteps with similar lookups", () => {
   it("cites each lookup at what only it found, not at what both share", () => {
-    const first = step("get_shipment", { proNumber: "SEED-SHP-001", status: "New" });
-    const second = step("get_shipment", { proNumber: "SEED-SHP-002", status: "New" });
+    const first = step("shipment_get", { proNumber: "SEED-SHP-001", status: "New" });
+    const second = step("shipment_get", { proNumber: "SEED-SHP-002", status: "New" });
     const text = "SEED-SHP-001 is still New. SEED-SHP-002 is also New.";
     const citations = citeSteps(text, [first, second]);
     expect(citations.map((citation) => text.slice(0, citation.offset))).toEqual([

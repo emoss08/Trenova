@@ -463,8 +463,8 @@ func TestListPending_IsEmptyUnderOrganizationShadow(t *testing.T) {
 func TestDecideMany_RecordsTheNoteOnEveryProposal(t *testing.T) {
 	t.Parallel()
 
-	first := proposal("post_invoice")
-	second := proposal("post_invoice")
+	first := proposal("invoice_post")
+	second := proposal("invoice_post")
 	decider := &stubDecider{}
 	svc := newService(
 		&stubProposals{byID: map[pulid.ID]*agent.AgentProposal{first.ID: first, second.ID: second}},
@@ -488,7 +488,7 @@ func TestDecideMany_RecordsTheNoteOnEveryProposal(t *testing.T) {
 func TestRecent_PairsEachDecisionWithItsProposalAndDropsTheGone(t *testing.T) {
 	t.Parallel()
 
-	kept := proposal("post_invoices")
+	kept := proposal("invoice_post")
 	gone := pulid.MustNew("ap_")
 	queue := &stubQueue{recent: []agentports.RecentDecisionEntry{
 		{DecisionID: pulid.MustNew("adec_"), ProposalID: kept.ID, Decision: "Accepted", DecidedByName: "Jordan Pike", DecidedAt: 50},

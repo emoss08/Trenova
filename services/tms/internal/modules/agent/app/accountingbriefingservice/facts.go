@@ -149,7 +149,11 @@ func foldBalances(facts *accountingbrief.Facts, snapshot *ledgerSnapshot) {
 	}
 }
 
-func foldDrafts(facts *accountingbrief.Facts, drafts *customerledgerports.ARDraftInvoices, now int64) {
+func foldDrafts(
+	facts *accountingbrief.Facts,
+	drafts *customerledgerports.ARDraftInvoices,
+	now int64,
+) {
 	if drafts == nil || drafts.Count <= 0 {
 		return
 	}
@@ -177,7 +181,8 @@ func foldOpenItems(
 		if item == nil || item.OpenAmountMinor <= 0 {
 			continue
 		}
-		if item.DaysPastDue >= crossingFrom && item.DaysPastDue < accountingbrief.PastDueThresholdDays {
+		if item.DaysPastDue >= crossingFrom &&
+			item.DaysPastDue < accountingbrief.PastDueThresholdDays {
 			facts.CrossingNinetyInvoices++
 			facts.CrossingNinetyMinor += item.OpenAmountMinor
 		}

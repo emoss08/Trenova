@@ -37,7 +37,7 @@ var instantKeySuffixes = []string{"time", "windowstart", "windowend", "arrival",
 // Keys that say nothing to the model about the record in front of it. The
 // tenant is the one the conversation is in, and a nested record's version and
 // audit stamps repeat on every commodity, stop and charge of a shipment; the
-// get_shipment the Dispatch desk read carried twenty of each.
+// shipment_get the Dispatch desk read carried twenty of each.
 //
 // A record's own version stays at the top level, where a write that checks it
 // reads it from.

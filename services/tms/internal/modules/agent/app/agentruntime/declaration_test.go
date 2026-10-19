@@ -146,9 +146,9 @@ func TestToolMap_GroupsTheToolsByAreaOfTrenova(t *testing.T) {
 	t.Parallel()
 
 	query := &stubQueryRegistry{Tools: []agentports.AgentQueryTool{
-		&agenttest.StubQueryTool{ToolName: "list_shipments", Resource: permission.ResourceShipment},
-		&agenttest.StubQueryTool{ToolName: "get_shipment", Resource: permission.ResourceShipment},
-		&agenttest.StubQueryTool{ToolName: "list_invoices", Resource: permission.ResourceInvoice},
+		&agenttest.StubQueryTool{ToolName: "shipment_list", Resource: permission.ResourceShipment},
+		&agenttest.StubQueryTool{ToolName: "shipment_get", Resource: permission.ResourceShipment},
+		&agenttest.StubQueryTool{ToolName: "invoice_list", Resource: permission.ResourceInvoice},
 	}}
 	service := &Service{
 		logger:      zap.NewNop(),
@@ -158,7 +158,7 @@ func TestToolMap_GroupsTheToolsByAreaOfTrenova(t *testing.T) {
 	}
 
 	areas := service.toolMap([]string{
-		"list_shipments", "get_shipment", "list_invoices", "list_shipments", "find_tools",
+		"shipment_list", "shipment_get", "invoice_list", "shipment_list", "find_tools",
 	})
 
 	require.Len(t, areas, 2, "a runtime tool has no area; a name given twice counts once")

@@ -1,6 +1,5 @@
 defaults:
   tags: [unattended, monitoring]
-  split: development
 
 scenarios:
   - name: unattended-monitor-late-delivery-reads-the-board-first
@@ -12,7 +11,7 @@ scenarios:
       late stop's failures evaluated.
     expectedTools:
       - get_dispatch_board
-      - "get_shipment_tracking|get_shipment"
+      - "shipment_get_tracking|shipment_get"
       - list_service_failures
     exclusive: dispatch-board
     setup:
@@ -58,7 +57,6 @@ scenarios:
       Acme's SEED-SHP-001 pickup window opened two hours ago at the Los Angeles Terminal and no
       driver or carrier is on the move. A good monitor run cannot fix coverage itself, so it flags
       the uncovered move for a person with the evidence.
-    split: held-out
     expectedTools: [get_dispatch_board]
     exclusive: dispatch-board
     setup:
@@ -256,8 +254,7 @@ scenarios:
       does. A good run tells Sunbelt's traffic desk the stop, the time it left and the next stop
       with its window, and nothing internal.
     tags: [unattended, customer-updates]
-    split: held-out
-    expectedTools: [get_customer_update_preferences, "get_shipment|get_shipment_tracking"]
+    expectedTools: [get_customer_update_preferences, "shipment_get|shipment_get_tracking"]
     exclusive: dispatch-board
     setup:
       - *shp008-no-forwarded-note
@@ -343,7 +340,6 @@ scenarios:
       for arrival and departure updates. A good run resolves the failure with a facility or
       consignee code and a note, and sends Acme one email covering it.
     tags: [unattended, service-failures]
-    split: held-out
     expectedTools: ["get_service_failure|list_service_failures", list_service_failure_reason_codes]
     forbiddenTools: [void_service_failure]
     exclusive: service-failure-seed
@@ -428,7 +424,7 @@ scenarios:
       email. A good run leaves the failure open with what a person has to find out, and emails no
       one.
     tags: [unattended, service-failures]
-    expectedTools: ["get_service_failure|list_service_failures", "get_shipment_tracking|get_shipment"]
+    expectedTools: ["get_service_failure|list_service_failures", "shipment_get_tracking|shipment_get"]
     forbiddenTools: [resolve_service_failure, void_service_failure, email_customer]
     exclusive: service-failure-seed
     setup:

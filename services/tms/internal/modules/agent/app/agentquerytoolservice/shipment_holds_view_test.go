@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -43,8 +43,8 @@ func (f *fakeHoldLister) ListByShipmentID(
 }
 
 /*
-update_shipment_hold and release_shipment_hold take a holdId, and before this
-nothing an agent could read named one: get_shipment left the holds out, so a
+shipment_update_hold and shipment_release_hold take a holdId, and before this
+nothing an agent could read named one: shipment_get left the holds out, so a
 request to lift the hold on a load ended in a guessed id or a question back to
 the person. The holds in force are listed; a released hold is history, and the
 text of a hold an integration raised is outside the organization's words.

@@ -102,18 +102,24 @@ func (b *RecordBatch) ids(
 	return sliceutils.Dedupe(ids), nil
 }
 
+func (b *RecordBatch) singleArguments(params map[string]any, id pulid.ID) map[string]any {
+	arguments := make(map[string]any, len(b.Shared)+1)
+	arguments[b.SingleParam] = id.String()
+	for _, key := range b.Shared {
+		if value, ok := params[key]; ok {
+			arguments[key] = value
+		}
+	}
+
+	return arguments
+}
+
 func (b *RecordBatch) singleParams(
 	params *agentports.ToolExecuteParams,
 	id pulid.ID,
 ) agentports.ToolExecuteParams {
 	single := *params
-	single.Params = make(map[string]any, len(b.Shared)+1)
-	single.Params[b.SingleParam] = id.String()
-	for _, key := range b.Shared {
-		if value, ok := params.Params[key]; ok {
-			single.Params[key] = value
-		}
-	}
+	single.Params = b.singleArguments(params.Params, id)
 	if params.IdempotencyKey != "" {
 		single.IdempotencyKey = params.IdempotencyKey + ":" + id.String()
 	}
@@ -129,6 +135,9 @@ func (b *RecordBatch) Preview(
 	ids, err := b.ids(tool, params)
 	if err != nil {
 		return nil, err
+	}
+	if len(ids) == 1 {
+		return b.Single.Preview(ctx, b.singleParams(params, ids[0]))
 	}
 
 	checked := ids[:min(len(ids), agent.MaxPreviewRecords)]
@@ -283,12 +292,42 @@ func (b *RecordBatch) Validate(
 	tool agentports.AgentTool,
 	params *agentports.ToolExecuteParams,
 ) error {
+	if validator, validates := b.Single.(agentports.ToolValidator); validates {
+		ids, err := b.ids(tool, params)
+		if err != nil {
+			return err
+		}
+		if len(ids) == 1 {
+			return validator.Validate(ctx, b.singleParams(params, ids[0]))
+		}
+	}
+
 	preview, err := b.Preview(ctx, tool, params)
 	if err != nil {
 		return err
 	}
 
 	return toolpreview.Refused(preview)
+}
+
+// Target is the record a call naming one record acts on, as the single tool
+// names it, so a proposal for one record is pinned to its version like the
+// single tool's was. A call naming several has no one target.
+func (b *RecordBatch) Target(params map[string]any) (agentports.ToolTarget, bool) {
+	targeted, ok := b.Single.(agentports.TargetedTool)
+	if !ok {
+		return agentports.ToolTarget{}, false
+	}
+	ids, err := RequirePulidSlice(params, b.Param, MaxBulkRecords)
+	if err != nil {
+		return agentports.ToolTarget{}, false
+	}
+	ids = sliceutils.Dedupe(ids)
+	if len(ids) != 1 {
+		return agentports.ToolTarget{}, false
+	}
+
+	return targeted.Target(b.singleArguments(params, ids[0]))
 }
 
 type batchFailure struct {
@@ -300,7 +339,6 @@ func (b *RecordBatch) Execute(
 	ctx context.Context,
 	tool agentports.AgentTool,
 	params *agentports.ToolExecuteParams,
-	run func(ctx context.Context, params agentports.ToolExecuteParams) error,
 ) (*agent.ToolExecutionResult, error) {
 	if err := GuardExecute(tool, *params); err != nil {
 		return nil, err
@@ -313,10 +351,13 @@ func (b *RecordBatch) Execute(
 	if err != nil {
 		return nil, err
 	}
+	if len(ids) == 1 {
+		return b.executeOne(ctx, params, ids[0])
+	}
 
 	failures := make([]batchFailure, 0, len(ids))
 	for _, id := range ids {
-		if runErr := run(ctx, b.singleParams(params, id)); runErr != nil {
+		if runErr := b.Single.Execute(ctx, b.singleParams(params, id)); runErr != nil {
 			if errors.Is(runErr, context.Canceled) || errors.Is(runErr, context.DeadlineExceeded) {
 				return nil, runErr
 			}
@@ -335,6 +376,27 @@ func (b *RecordBatch) Execute(
 		Name:   outcome,
 		Total:  len(ids),
 		Failed: b.failedItems(ctx, params, failures),
+	}, nil
+}
+
+// executeOne runs a call naming one record as the single tool's own call:
+// its result when it reports one, and its own refusal when it fails, rather
+// than a count of one.
+func (b *RecordBatch) executeOne(
+	ctx context.Context,
+	params *agentports.ToolExecuteParams,
+	id pulid.ID,
+) (*agent.ToolExecutionResult, error) {
+	result, err := agentports.ExecuteTool(ctx, b.Single, b.singleParams(params, id))
+	if err != nil || result != nil {
+		return result, err
+	}
+
+	return &agent.ToolExecutionResult{
+		Action: b.Past,
+		Kind:   b.Nouns,
+		Name:   b.outcome(ctx, params, 1, nil),
+		Total:  1,
 	}, nil
 }
 

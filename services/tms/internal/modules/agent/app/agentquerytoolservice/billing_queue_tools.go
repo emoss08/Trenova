@@ -19,12 +19,13 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 const (
-	paramBillingQueueItemID = "billingQueueItemId"
 	fieldAllocatedTotal     = "allocatedTotalAmount"
 	maxBillingQueueLines    = 50
 	secondsPerDayInQueue    = 86400
@@ -94,10 +95,10 @@ func buildBillingQueueList(
 	access fieldAccess,
 ) agentports.AgentQueryTool {
 	return newListTool(listSpec{
-		name:         "list_billing_queue_items",
+		name:         "billing_list_queue_items",
 		entityPlural: "billing queue items",
 		summary: "List billing queue items, the shipments waiting on a biller. Open one with " +
-			"get_billing_queue_item before deciding it; Posted items need status Posted.",
+			"billing_get_queue_item before deciding it; Posted items need status Posted.",
 		resource: permission.ResourceBillingQueue,
 		config:   querybuilder.GetFieldConfiguration((*billingqueue.BillingQueueItem)(nil)),
 		fields: []listField{
@@ -267,27 +268,38 @@ func newGetBillingQueueItemTool(
 	}
 }
 
-func (t *getBillingQueueItemTool) Name() string { return "get_billing_queue_item" }
+func (t *getBillingQueueItemTool) Name() string { return "billing_get_queue_item" }
 
 func (t *getBillingQueueItemTool) Description() string {
-	return "Open one billing queue item with its payer, shipment and the charges this payer " +
-		"is billed. It also shows the detention charges holding it, its exception and review " +
-		"notes, what its shipment still lacks for billing, and the invoice it made once approved. " +
-		"Its issues are the flagged checks, each with the issueId, whether it is Open or Settled, " +
-		"the options a biller settles it with by optionKey, and whether its settlement can be " +
-		"undone. Read it before proposing approve_billing_queue_item, hold_billing_queue_item, " +
-		"release_billing_queue_item, move_billing_item_to_exception, send_billing_item_back_to_ops, " +
-		"cancel_billing_queue_item, resolve_billing_queue_issue or undo_billing_queue_issue. " +
-		"Amounts are left out, and named in withheldByAccess, when your data access does not " +
-		"reach them."
+	return "Open billing queue items by id: one in full, or up to 50 as a table of what " +
+		"blocks each item's approval and what its shipment still lacks for billing. " +
+		"One item comes with its payer, shipment and the charges this payer is billed, the " +
+		"detention charges holding it, its exception and review notes, and the invoice it " +
+		"made once approved. Its issues are the flagged checks, each with the issueId, " +
+		"whether it is Open or Settled, the options a biller settles it with by optionKey, " +
+		"and whether its settlement can be undone. Read an item before approving, holding, " +
+		"releasing, canceling or sending it back, or settling one of its issues; read the set " +
+		"before assigning, moving into review, approving or posting several. An id that is " +
+		"not a queue item of this organization is named in the note. Amounts are left out, " +
+		"and named in withheldByAccess, when your data access does not reach them."
+}
+
+func (t *getBillingQueueItemTool) SearchTerms() []string {
+	return []string{"billing queue", "readiness"}
 }
 
 func (t *getBillingQueueItemTool) ParamSchema() map[string]any {
-	return idSchema(
-		paramBillingQueueItemID,
-		agenttoolschema.KindID("The item's id, from list_billing_queue_items, "+
-			"this run's subject or "+onThePage, permission.KindBillingQueueItem),
-	)
+	return map[string]any{
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
+			paramBillingQueueItemIDs: agenttoolschema.KindIDs("The items' ids, from "+
+				"billing_list_queue_items, this run's subject, "+onThePage+" or the "+
+				"proposals that named them.", maxBatchBillingQueueItems,
+				permission.KindBillingQueueItem),
+		},
+		toolschema.KeyRequired:             []string{paramBillingQueueItemIDs},
+		toolschema.KeyAdditionalProperties: false,
+	}
 }
 
 func (t *getBillingQueueItemTool) Policy() agentports.ToolPolicy {
@@ -347,26 +359,31 @@ func (t *getBillingQueueItemTool) Query(
 		return nil, err
 	}
 
-	id, err := requirePulid(params.Params, paramBillingQueueItemID)
+	ids, err := requireIDList(params.Params, paramBillingQueueItemIDs, maxBatchBillingQueueItems)
 	if err != nil {
 		return nil, err
 	}
+	ids = sliceutils.Dedupe(ids)
 
 	gate := t.access.gate(ctx, params, permission.ResourceBillingQueue)
-	detail, err := t.reader().detail(ctx, tenantOf(params), id, gate)
-	if err != nil {
-		return nil, err
-	}
-	detail.Withheld = gate.Withheld()
+	if len(ids) == 1 {
+		detail, detailErr := t.reader().detail(ctx, tenantOf(params), ids[0], gate)
+		if detailErr != nil {
+			return nil, detailErr
+		}
+		detail.Withheld = gate.Withheld()
 
-	return *detail, nil
+		return *detail, nil
+	}
+
+	return t.several(ctx, params, ids, gate)
 }
 
 func (t *getBillingQueueItemTool) reader() queueDetailReader {
 	return queueDetailReader{items: t.items, readiness: t.readiness, invoices: t.invoices}
 }
 
-// queueDetailReader builds the detail of one item the way get_billing_queue_item
+// queueDetailReader builds the detail of one item the way billing_get_queue_item
 // shows it, for that tool and for the batch read that shows several.
 type queueDetailReader struct {
 	items     billingQueueReader

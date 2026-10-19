@@ -172,7 +172,7 @@ func (t *DraftFactoringNoaTool) ParamSchema() map[string]any {
 		),
 		paramFactorID: agenttoolschema.RecordIDText(
 			permission.ResourceFactoringCompany,
-			"The factor the customer's invoices are assigned to, from get_invoice or list_factoring_ready_invoices.",
+			"The factor the customer's invoices are assigned to, from invoice_get or list_factoring_ready_invoices.",
 		),
 		paramNotes: jsonschemautils.Text("A note printed on the letter, when there is one."),
 	}, paramCustomerID, paramFactorID)

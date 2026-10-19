@@ -29,21 +29,21 @@ func wideRuntime(t *testing.T) (*Service, []string) {
 
 	tools := []*agenttest.StubQueryTool{
 		describedTool("list_workers", "List workers (drivers) by status or employment type."),
-		describedTool("list_shipments", "List shipments by status, billing state or dates."),
+		describedTool("shipment_list", "List shipments by status, billing state or dates."),
 		describedTool("list_tractors", "List tractors (power units) by status."),
 		describedTool("list_trailers", "List trailers by status or inspection date."),
 		describedTool("list_customers", "List customers by status, code or city."),
 		describedTool("list_locations", "List locations by status or city."),
-		describedTool("list_invoices", "List invoices by status or due date."),
+		describedTool("invoice_list", "List invoices by status or due date."),
 		describedTool("list_carriers", "List carriers by status or authority."),
 		describedTool(
 			"list_expiring_credentials",
 			"Worker credentials falling due: medical cards, licences, hazmat.",
 		),
-		describedTool("get_shipment", "Retrieve one shipment by id."),
+		describedTool("shipment_get", "Retrieve one shipment by id."),
 		describedTool("get_worker", "Retrieve one worker by id."),
 		describedTool("search_worker", "Search workers by name."),
-		describedTool("search_shipments", "Search shipments by pro number."),
+		describedTool("shipment_get_tracking", "Track a shipment by pro number."),
 		describedTool("list_reports", "List the reports this organization can run."),
 		describedTool("run_report", "Start a report run."),
 	}
@@ -181,7 +181,7 @@ func TestNewToolSet_PreselectsOnTheOperatorsWords(t *testing.T) {
 			},
 		).specs,
 	)
-	assert.Contains(t, billing, "list_invoices")
+	assert.Contains(t, billing, "invoice_list")
 }
 
 // The recovery path: pre-selection guessed wrong, and the model says what it
@@ -314,7 +314,7 @@ func TestSystemPrompt_SaysTheToolListIsPartialWhenDisclosed(t *testing.T) {
 func TestSystemPrompt_DisclosedSectionNamesAreasNotTools(t *testing.T) {
 	t.Parallel()
 
-	definition := testDefinition("list_reports", "get_shipment")
+	definition := testDefinition("list_reports", "shipment_get")
 	summaries := []agentdefinition.ToolSummary{
 		{
 			Name:        "list_reports",
@@ -322,7 +322,7 @@ func TestSystemPrompt_DisclosedSectionNamesAreasNotTools(t *testing.T) {
 			Query:       true,
 		},
 		{
-			Name:        "get_shipment",
+			Name:        "shipment_get",
 			Description: "Retrieve one shipment by id. Includes stops and moves.",
 			Query:       true,
 			Loaded:      true,
@@ -634,16 +634,16 @@ func TestNewToolSet_OffersOnlyWhatThePersonMayUse(t *testing.T) {
 	)
 
 	offered := specNames(set.specs)
-	assert.NotContains(t, offered, "list_shipments")
-	assert.NotContains(t, offered, "get_shipment")
-	assert.NotContains(t, set.allowed, "search_shipments")
+	assert.NotContains(t, offered, "shipment_list")
+	assert.NotContains(t, offered, "shipment_get")
+	assert.NotContains(t, set.allowed, "shipment_list")
 	assert.Contains(t, set.allowed, "list_workers")
 
 	answer := findContent(t, service, set, map[string]any{"need": "search shipments by pro number"})
 	assert.NotContains(
 		t,
 		answer,
-		"search_shipments",
+		"shipment_list",
 		"find_tools cannot reach a tool the person may not use",
 	)
 }
@@ -784,7 +784,7 @@ func weakMatchRuntime(t *testing.T) *Service {
 
 	tools := []agentports.AgentQueryTool{
 		&agenttest.StubQueryTool{
-			ToolName: "list_shipments",
+			ToolName: "shipment_list",
 			Desc:     "List shipments by status or dates.",
 			Schema: map[string]any{
 				"type": "object",
@@ -822,7 +822,7 @@ func TestResolveFind_ReachesTheToolsOfThePersonsOtherAgentsWhenItsOwnMatchWeakly
 	t.Parallel()
 
 	service := weakMatchRuntime(t)
-	held := []string{"list_shipments"}
+	held := []string{"shipment_list"}
 	for idx := range disclosureThreshold + 1 {
 		held = append(held, fmt.Sprintf("list_filler_%02d", idx))
 	}
@@ -840,7 +840,7 @@ func TestResolveFind_ReachesTheToolsOfThePersonsOtherAgentsWhenItsOwnMatchWeakly
 
 	answer := findContent(t, service, set, map[string]any{"need": "commodity"})
 
-	assert.Contains(t, answer, "list_shipments", "the weak match still loads")
+	assert.Contains(t, answer, "shipment_list", "the weak match still loads")
 	assert.Contains(t, answer, beyondLead)
 	assert.Contains(t, answer, "search_commodities")
 	assert.True(t, set.offers("search_commodities"))
@@ -853,7 +853,7 @@ func TestResolveFind_ReachesBeyondOnATurnThatHoldsFewTools(t *testing.T) {
 	set := service.newToolSet(
 		t.Context(),
 		toolSetRequest{
-			definition: testDefinition("list_shipments"),
+			definition: testDefinition("shipment_list"),
 			actor:      testActor(),
 			input:      "hello",
 			beyond:     map[string]agent.AutonomyTier{"search_commodities": agent.TierAutoExecute},
@@ -882,7 +882,7 @@ func TestResolveFind_NeverReachesWhatAStrongOwnMatchCovers(t *testing.T) {
 			definition: testDefinition(held...),
 			actor:      testActor(),
 			input:      "hello",
-			beyond:     map[string]agent.AutonomyTier{"list_shipments": agent.TierAutoExecute},
+			beyond:     map[string]agent.AutonomyTier{"shipment_list": agent.TierAutoExecute},
 		},
 	)
 
@@ -890,7 +890,7 @@ func TestResolveFind_NeverReachesWhatAStrongOwnMatchCovers(t *testing.T) {
 
 	assert.Contains(t, answer, "search_commodities")
 	assert.NotContains(t, answer, beyondLead)
-	assert.False(t, set.offers("list_shipments"))
+	assert.False(t, set.offers("shipment_list"))
 }
 
 func TestResolveFind_AStrongNewMatchNeedsNoDelegate(t *testing.T) {
@@ -910,7 +910,7 @@ func TestResolveFind_AStrongNewMatchNeedsNoDelegate(t *testing.T) {
 			delegates: []agentdefinition.RuntimeDelegate{{
 				ID:    pulid.MustNew("agdef_"),
 				Name:  "Operations",
-				Tools: []string{"list_shipments"},
+				Tools: []string{"shipment_list"},
 			}},
 		},
 	)
@@ -938,7 +938,7 @@ func TestResolveFind_NamesOnlyStrongMatchesBeyondTheAgent(t *testing.T) {
 	answer := findContent(t, service, set, map[string]any{"need": "commodity"})
 
 	assert.Contains(t, answer, "search_commodities")
-	assert.NotContains(t, answer, "list_shipments",
+	assert.NotContains(t, answer, "shipment_list",
 		"a tool that only takes the word as a parameter is not what was asked for")
 }
 
@@ -952,8 +952,8 @@ func TestSearchesLeft_SpeaksUpOnlyNearTheCap(t *testing.T) {
 }
 
 /*
-gpt-6-luna asked find_tools for "search_worker, list_driver_settlements and
-list_pay_advances" by name, was handed six other tools ranked above
+gpt-6-luna asked find_tools for "search_worker, settlement_list_driver and
+settlement_list_advances" by name, was handed six other tools ranked above
 search_worker, and searched a fourth time for it. A tool the need names
 outright, and the agent holds, comes first.
 */

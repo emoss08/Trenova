@@ -95,16 +95,16 @@ func targetInvoiceRun(params map[string]any) (agentports.ToolTarget, bool) {
 
 func invoiceRunIDProperty() map[string]any {
 	return agenttoolschema.RecordID(permission.ResourceInvoiceRun, "The invoice run",
-		"list_invoice_runs or get_invoice_run")
+		"invoice_list_runs or invoice_get_run")
 }
 
 func NewBuildInvoiceRunTool(runs invoiceRunKeeper) agentports.AgentTool {
 	return common.NewReceivableTool(&common.ReceivableSpec{
-		Name: "build_invoice_run",
+		Name: "invoice_build_run",
 		Description: "Build an invoice run: a reviewable proposal of the consolidated invoices " +
 			"for customers' approved, uninvoiced freight over a period. Nothing is invoiced " +
-			"until the run is committed with commit_invoice_run. Find the run afterwards with " +
-			"list_invoice_runs, newest first.",
+			"until the run is committed with invoice_commit_run. Find the run afterwards with " +
+			"invoice_list_runs, newest first.",
 		Resource:    permission.ResourceInvoiceRun,
 		Operation:   permission.OpCreate,
 		Egress:      agent.EgressInternal,
@@ -112,12 +112,12 @@ func NewBuildInvoiceRunTool(runs invoiceRunKeeper) agentports.AgentTool {
 		MaxTier:     agent.TierAutoExecute,
 		Reversible:  true,
 		Rationale: "Builds a proposal of invoices inside Trenova for a biller to review; it " +
-			"invoices nothing and is discarded with cancel_invoice_run.",
+			"invoices nothing and is discarded with invoice_cancel_run.",
 		Properties: map[string]any{
 			common.ParamCustomerIDs: agenttoolschema.RecordIDs(
 				permission.ResourceCustomer,
 				"The customers to bill, from list_customers or "+
-					"list_open_statements.",
+					"invoice_list_open_statements.",
 				maxRunCustomers,
 			),
 			common.ParamPeriodStart: agenttoolschema.Date("The first day of the period."),
@@ -132,12 +132,12 @@ func NewBuildInvoiceRunTool(runs invoiceRunKeeper) agentports.AgentTool {
 			common.ParamPeriodEnd,
 		},
 		SearchTerms:   []string{"statement billing", "consolidated billing", "bill the period"},
-		Prerequisites: []string{"list_open_statements", "list_customers"},
+		Prerequisites: []string{"invoice_list_open_statements", "list_customers"},
 		Recipe: []string{
-			"list_open_statements",
-			"build_invoice_run",
-			"get_invoice_run",
-			"commit_invoice_run",
+			"invoice_list_open_statements",
+			"invoice_build_run",
+			"invoice_get_run",
+			"invoice_commit_run",
 		},
 	}, common.ReceivablePlan[*invoicerunports.PreviewInvoiceRunRequest, *invoicerun.InvoiceRun]{
 		Request: buildRunRequest,
@@ -213,10 +213,10 @@ func buildRunRequest(
 
 func NewAdjustInvoiceRunMembershipTool(runs invoiceRunKeeper) agentports.AgentTool {
 	itemProperty := agenttoolschema.KindID("A shipment on the run, by the item id "+
-		"get_invoice_run lists under each group.", permission.KindInvoiceRunItem)
+		"invoice_get_run lists under each group.", permission.KindInvoiceRunItem)
 
 	return common.NewReceivableTool(&common.ReceivableSpec{
-		Name: "adjust_invoice_run_membership",
+		Name: "invoice_adjust_run",
 		SearchTerms: []string{
 			"exclude shipment",
 			"remove from invoice run",
@@ -259,7 +259,7 @@ func NewAdjustInvoiceRunMembershipTool(runs invoiceRunKeeper) agentports.AgentTo
 				},
 			},
 			paramInclude: agenttoolschema.KindIDs("Excluded shipments to put back, by the item "+
-				"id get_invoice_run lists.", maxRunEdits, permission.KindInvoiceRunItem),
+				"id invoice_get_run lists.", maxRunEdits, permission.KindInvoiceRunItem),
 			paramMoves: map[string]any{
 				toolschema.KeyType:        toolschema.TypeArray,
 				toolschema.KeyDescription: "Shipments to move to another invoice of the same customer.",
@@ -269,7 +269,7 @@ func NewAdjustInvoiceRunMembershipTool(runs invoiceRunKeeper) agentports.AgentTo
 					toolschema.KeyProperties: map[string]any{
 						common.ParamItemID: itemProperty,
 						paramTargetGroupID: agenttoolschema.KindID(
-							"The invoice it moves to, by the group id get_invoice_run lists.",
+							"The invoice it moves to, by the group id invoice_get_run lists.",
 							permission.KindInvoiceRunGroup),
 					},
 					toolschema.KeyRequired: []string{
@@ -432,7 +432,7 @@ func commitRunRequest(
 
 func NewCommitInvoiceRunTool(runs invoiceRunKeeper) agentports.AgentTool {
 	return common.NewReceivableTool(&common.ReceivableSpec{
-		Name: "commit_invoice_run",
+		Name: "invoice_commit_run",
 		Description: "Propose committing an invoice run, which turns each of its proposed " +
 			"invoices into a draft invoice for the customer. A group below the customer's " +
 			"minimum, or whose shipments were invoiced or re-approved elsewhere since it was " +
@@ -474,7 +474,7 @@ func NewCommitInvoiceRunTool(runs invoiceRunKeeper) agentports.AgentTool {
 
 func NewCancelInvoiceRunTool(runs invoiceRunKeeper) agentports.AgentTool {
 	return common.NewReceivableTool(&common.ReceivableSpec{
-		Name: "cancel_invoice_run",
+		Name: "invoice_cancel_run",
 		Description: "Cancel an invoice run that will never be committed, such as one built " +
 			"for the wrong period or customers. Its shipments stay approved for the next run. " +
 			"Say why; the reason is kept on the run.",
@@ -484,7 +484,7 @@ func NewCancelInvoiceRunTool(runs invoiceRunKeeper) agentports.AgentTool {
 		DefaultTier: agent.TierPropose,
 		MaxTier:     agent.TierActWithApproval,
 		Rationale: "Discards a proposal of invoices; nothing was invoiced, and a new run is " +
-			"built with build_invoice_run.",
+			"built with invoice_build_run.",
 		Properties: map[string]any{
 			ParamInvoiceRunID:  invoiceRunIDProperty(),
 			common.ParamReason: common.StringProperty("Why it is canceled.", maxRunReasonChars),
@@ -535,11 +535,11 @@ func NewCancelInvoiceRunTool(runs invoiceRunKeeper) agentports.AgentTool {
 
 func NewBillStatementNowTool(runs invoiceRunKeeper) agentports.AgentTool {
 	return common.NewReceivableTool(&common.ReceivableSpec{
-		Name: "bill_statement_now",
+		Name: "invoice_bill_statement",
 		Description: "Propose billing a statement customer's open period now, before its cycle " +
 			"closes, with the reason recorded on the run. Shipments you name in exclude stay on " +
 			"the statement for the period's end. The customer's next boundary does not move. A " +
-			"person always decides; read list_open_statements first.",
+			"person always decides; read invoice_list_open_statements first.",
 		Resource:    permission.ResourceInvoiceRun,
 		Operation:   permission.OpApprove,
 		Egress:      agent.EgressMoney,
@@ -551,7 +551,7 @@ func NewBillStatementNowTool(runs invoiceRunKeeper) agentports.AgentTool {
 		Properties: map[string]any{
 			common.ParamCustomerID: agenttoolschema.RecordIDText(
 				permission.ResourceCustomer,
-				"The statement customer, from list_open_statements.",
+				"The statement customer, from invoice_list_open_statements.",
 			),
 			common.ParamReason: common.StringProperty("Why it is billed before the cycle closes.",
 				maxRunReasonChars),
@@ -563,7 +563,7 @@ func NewBillStatementNowTool(runs invoiceRunKeeper) agentports.AgentTool {
 					toolschema.KeyType: toolschema.TypeObject,
 					toolschema.KeyProperties: map[string]any{
 						paramBillingQueueItems: agenttoolschema.KindID(
-							"The shipment's billing queue item, from list_open_statements.",
+							"The shipment's billing queue item, from invoice_list_open_statements.",
 							permission.KindBillingQueueItem),
 						common.ParamReason: common.StringProperty(
 							"Why it is held back.",

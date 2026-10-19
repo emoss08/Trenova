@@ -35,7 +35,7 @@ const paramEscrowOccurredDate = "occurredDate"
 
 const maxEscrowDescription = 255
 
-const escrowSourcesTool = "list_escrow_accounts"
+const escrowSourcesTool = "settlement_list_escrow_accounts"
 
 const escrowBalanceMark = "balanceMinor"
 
@@ -148,7 +148,7 @@ func ProvideOpenEscrowAccountTool(s *driverpayservice.Service) agentports.AgentT
 	return &OpenEscrowAccountTool{escrow: s}
 }
 
-func (t *OpenEscrowAccountTool) Name() string { return "open_escrow_account" }
+func (t *OpenEscrowAccountTool) Name() string { return "settlement_open_escrow_account" }
 
 func (t *OpenEscrowAccountTool) Description() string {
 	return "Propose opening an owner-operator's escrow account under their lease, with the " +
@@ -314,12 +314,12 @@ func ProvideUpdateEscrowAccountTool(s *driverpayservice.Service) agentports.Agen
 	return &UpdateEscrowAccountTool{escrow: s}
 }
 
-func (t *UpdateEscrowAccountTool) Name() string { return "update_escrow_account" }
+func (t *UpdateEscrowAccountTool) Name() string { return "settlement_update_escrow_account" }
 
 func (t *UpdateEscrowAccountTool) Description() string {
 	return "Propose changing an escrow account's target balance or the interest it earns, " +
 		"as an amended lease sets them. The balance itself changes only through " +
-		"contributions and adjust_escrow_account. A person always decides."
+		"contributions and settlement_adjust_escrow_account. A person always decides."
 }
 
 func (t *UpdateEscrowAccountTool) SearchTerms() []string {
@@ -465,7 +465,7 @@ func ProvideAdjustEscrowAccountTool(s *driverpayservice.Service) agentports.Agen
 	return &AdjustEscrowAccountTool{escrow: s}
 }
 
-func (t *AdjustEscrowAccountTool) Name() string { return "adjust_escrow_account" }
+func (t *AdjustEscrowAccountTool) Name() string { return "settlement_adjust_escrow_account" }
 
 func (t *AdjustEscrowAccountTool) Description() string {
 	return "Propose a manual adjustment to an owner-operator's escrow balance, with what it " +
@@ -655,12 +655,12 @@ func ProvideCloseEscrowAccountTool(s *driverpayservice.Service) agentports.Agent
 	return &CloseEscrowAccountTool{escrow: s}
 }
 
-func (t *CloseEscrowAccountTool) Name() string { return "close_escrow_account" }
+func (t *CloseEscrowAccountTool) Name() string { return "settlement_close_escrow_account" }
 
 func (t *CloseEscrowAccountTool) Description() string {
 	return "Propose closing an owner-operator's escrow account when their lease ends, " +
 		"refunding whatever balance remains to them. Settle any lease obligations with " +
-		"adjust_escrow_account first. It cannot be reopened, so a person always decides."
+		"settlement_adjust_escrow_account first. It cannot be reopened, so a person always decides."
 }
 
 func (t *CloseEscrowAccountTool) ParamSchema() map[string]any {

@@ -32,6 +32,8 @@ const (
 	stopIndexDescription = "The stop's number as the page draft lists it, counting from 0."
 )
 
+const importPageTerm = "import page"
+
 func importDraftToolProviders() []any {
 	return []any{
 		newAcceptFieldTool,
@@ -115,7 +117,7 @@ func (t *acceptFieldTool) ParamSchema() map[string]any {
 func (t *acceptFieldTool) Policy() agentports.ToolPolicy { return draftPolicy(t.Name()) }
 
 func (t *acceptFieldTool) SearchTerms() []string {
-	return []string{"accept", "confirm", "extracted", "correct", "approve value", "import"}
+	return []string{"accept extracted value", "confirm draft field", importPageTerm}
 }
 
 func (t *acceptFieldTool) Query(
@@ -166,7 +168,7 @@ func (t *acceptAllConfidentTool) Policy() agentports.ToolPolicy {
 }
 
 func (t *acceptAllConfidentTool) SearchTerms() []string {
-	return []string{"accept all", "high confidence", "bulk accept", "import"}
+	return []string{"accept all extracted", "high confidence", importPageTerm}
 }
 
 func (t *acceptAllConfidentTool) Query(
@@ -210,7 +212,7 @@ func (t *setFieldValueTool) ParamSchema() map[string]any {
 func (t *setFieldValueTool) Policy() agentports.ToolPolicy { return draftPolicy(t.Name()) }
 
 func (t *setFieldValueTool) SearchTerms() []string {
-	return []string{"set", "change", "correct", "bol", "weight", "pieces", "rate", "import"}
+	return []string{"correct extracted value", "draft field", importPageTerm}
 }
 
 func (t *setFieldValueTool) Query(
@@ -395,10 +397,7 @@ func (t *setRequiredFieldTool) ParamSchema() map[string]any {
 func (t *setRequiredFieldTool) Policy() agentports.ToolPolicy { return draftPolicy(t.Name()) }
 
 func (t *setRequiredFieldTool) SearchTerms() []string {
-	return []string{
-		"customer", "service type", "shipment type", "rating method", "formula template",
-		"required", "import",
-	}
+	return []string{"draft required field", importPageTerm}
 }
 
 func (t *setRequiredFieldTool) Query(
@@ -494,7 +493,7 @@ func (t *setStopLocationTool) ParamSchema() map[string]any {
 func (t *setStopLocationTool) Policy() agentports.ToolPolicy { return draftPolicy(t.Name()) }
 
 func (t *setStopLocationTool) SearchTerms() []string {
-	return []string{"stop", "location", "match", "pickup", "delivery", "facility", "import"}
+	return []string{"match draft stop", importPageTerm}
 }
 
 func (t *setStopLocationTool) Query(
@@ -568,15 +567,12 @@ func (t *setStopScheduleTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"stopIndex": map[string]any{"type": "integer", "description": stopIndexDescription},
-			"windowStart": map[string]any{
-				"type": "string",
-				"description": "The date and time the window opens, as YYYY-MM-DDTHH:MM in " +
-					"the organization's time zone, or with an offset.",
-			},
-			"windowEnd": map[string]any{
-				"type":        "string",
-				"description": "Optional: when the window closes, in the same form.",
-			},
+			"windowStart": agenttoolschema.LocalDateTime(
+				"When the window opens, in the organization's time zone.",
+			),
+			"windowEnd": agenttoolschema.LocalDateTime(
+				"Optional: when the window closes, in the organization's time zone.",
+			),
 		},
 		"required":             []string{"stopIndex", "windowStart"},
 		"additionalProperties": false,
@@ -586,7 +582,13 @@ func (t *setStopScheduleTool) ParamSchema() map[string]any {
 func (t *setStopScheduleTool) Policy() agentports.ToolPolicy { return draftPolicy(t.Name()) }
 
 func (t *setStopScheduleTool) SearchTerms() []string {
-	return []string{"schedule", "window", "appointment", "pickup time", "delivery date", "import"}
+	return []string{
+		"draft stop window",
+		"pickup time",
+		"delivery date",
+		"appointment",
+		importPageTerm,
+	}
 }
 
 func (t *setStopScheduleTool) Query(

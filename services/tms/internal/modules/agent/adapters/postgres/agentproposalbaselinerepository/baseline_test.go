@@ -33,7 +33,7 @@ func TestCreate_KeepsTheFirstBaselineForAProposal(t *testing.T) {
 		ProposalID:     pulid.MustNew("ap_"),
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
-		ToolName:       "cancel_shipment",
+		ToolName:       "shipment_cancel",
 		Preview:        &agent.ToolPreview{Summary: "Would cancel."},
 	}
 

@@ -391,7 +391,7 @@ func TestCreateInvoiceMemo_PreviewsTheMemoAndNeverPostsIt(t *testing.T) {
 		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "Would raise a draft CreditMemo to Acme Foods for -75.50 USD")
-	assert.Contains(t, preview.Summary, "post_invoice")
+	assert.Contains(t, preview.Summary, "invoice_post")
 	require.Len(t, preview.Changes, 1)
 
 	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrNeedsAPersonsApproval)

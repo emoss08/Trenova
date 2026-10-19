@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -46,7 +46,7 @@ func TestExecute_RefusesWhenTheRecordChangedSinceTheProposal(t *testing.T) {
 	t.Parallel()
 
 	tool := &recordingTool{
-		name:      "place_shipment_hold",
+		name:      "shipment_place_hold",
 		resource:  permission.ResourceShipment,
 		operation: permission.OpUpdate,
 	}
@@ -54,7 +54,7 @@ func TestExecute_RefusesWhenTheRecordChangedSinceTheProposal(t *testing.T) {
 	executor := newExecutor(tool, repo, &fakePermissions{allowed: true})
 	executor.versions = &fakeVersions{version: 5}
 
-	proposal := pinnedProposal("place_shipment_hold", 3)
+	proposal := pinnedProposal("shipment_place_hold", 3)
 	err := executor.Execute(
 		t.Context(),
 		proposal,
@@ -74,7 +74,7 @@ func TestExecute_RunsWhenTheRecordIsUnchanged(t *testing.T) {
 	t.Parallel()
 
 	tool := &recordingTool{
-		name:      "place_shipment_hold",
+		name:      "shipment_place_hold",
 		resource:  permission.ResourceShipment,
 		operation: permission.OpUpdate,
 	}
@@ -82,7 +82,7 @@ func TestExecute_RunsWhenTheRecordIsUnchanged(t *testing.T) {
 	versions := &fakeVersions{version: 3}
 	executor.versions = versions
 
-	proposal := pinnedProposal("place_shipment_hold", 3)
+	proposal := pinnedProposal("shipment_place_hold", 3)
 	require.NoError(
 		t,
 		executor.Execute(
@@ -105,14 +105,14 @@ func TestExecute_RefusesWhenTheRecordCannotBeRead(t *testing.T) {
 	t.Parallel()
 
 	tool := &recordingTool{
-		name:      "place_shipment_hold",
+		name:      "shipment_place_hold",
 		resource:  permission.ResourceShipment,
 		operation: permission.OpUpdate,
 	}
 	executor := newExecutor(tool, &fakeProposalRepo{}, &fakePermissions{allowed: true})
 	executor.versions = &fakeVersions{err: errors.New("no rows")}
 
-	proposal := pinnedProposal("place_shipment_hold", 3)
+	proposal := pinnedProposal("shipment_place_hold", 3)
 	err := executor.Execute(
 		t.Context(),
 		proposal,

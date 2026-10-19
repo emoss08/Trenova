@@ -3,10 +3,10 @@ package assistantjobs
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdryrun"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdryrun"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -18,7 +18,7 @@ func TestDryRunStepsSetEachCallBesideTheWriteItBecame(t *testing.T) {
 	t.Parallel()
 
 	plan := &assistantservice.DryRunPlan{
-		Turn: agentruntime.TurnState{Held: []string{"get_invoice", "update_invoice"}},
+		Turn: agentruntime.TurnState{Held: []string{"invoice_get", "update_invoice"}},
 	}
 	outcome := &agentflow.Outcome{
 		Result: &agentports.RunResult{Actions: []agentports.PendingAction{
@@ -27,16 +27,16 @@ func TestDryRunStepsSetEachCallBesideTheWriteItBecame(t *testing.T) {
 		Events: []temporaltype.StreamItem{
 			{Event: agentports.AssistantEventToolStarted, Data: map[string]any{"callId": "1"}},
 			{Event: agentports.AssistantEventToolFinished, Data: agentports.AssistantToolFinishedEvent{
-				CallID: "1", Name: "get_invoice", Verdict: "ran",
+				CallID: "1", Name: "invoice_get", Verdict: "ran",
 			}},
 			{Event: agentports.AssistantEventToolFinished, Data: &agentports.AssistantToolFinishedEvent{
 				CallID: "2", Name: "update_invoice", Verdict: "proposed", Proposed: true,
 			}},
 			{Event: agentports.AssistantEventToolFinished, Data: map[string]any{
-				"callId": "3", "name": "cancel_shipment", "verdict": "denied", "failed": true,
+				"callId": "3", "name": "shipment_cancel", "verdict": "denied", "failed": true,
 			}},
 			{Event: agentports.AssistantEventToolFinished, Data: agentports.AssistantToolFinishedEvent{
-				CallID: "4", Name: "get_shipment", Verdict: "ran", AgentID: pulid.MustNew("agdef_"),
+				CallID: "4", Name: "shipment_get", Verdict: "ran", AgentID: pulid.MustNew("agdef_"),
 			}},
 		},
 	}
@@ -44,9 +44,9 @@ func TestDryRunStepsSetEachCallBesideTheWriteItBecame(t *testing.T) {
 	steps := dryRunSteps(plan, outcome)
 
 	assert.Equal(t, []agentdryrun.Step{
-		{CallID: "1", Tool: "get_invoice", Outcome: agentdryrun.OutcomeRuns},
+		{CallID: "1", Tool: "invoice_get", Outcome: agentdryrun.OutcomeRuns},
 		{CallID: "2", Tool: "update_invoice", Outcome: agentdryrun.OutcomeAskFirst},
-		{CallID: "3", Tool: "cancel_shipment", Outcome: agentdryrun.OutcomeNotHeld},
+		{CallID: "3", Tool: "shipment_cancel", Outcome: agentdryrun.OutcomeNotHeld},
 	}, steps, "a delegate's own calls are its agent's, not the draft's")
 }
 

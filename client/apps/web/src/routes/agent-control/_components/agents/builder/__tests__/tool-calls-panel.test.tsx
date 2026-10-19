@@ -31,18 +31,18 @@ describe("ToolCallsPanel", () => {
         loading={false}
         failed={false}
         verdicts={[
-          row("list_shipments", "ran", 40),
-          row("update_shipment", "ran", 1),
-          row("update_shipment", "invalid", 3, [{ reason: "stop 2 has no location", calls: 3 }]),
+          row("shipment_list", "ran", 40),
+          row("shipment_update", "ran", 1),
+          row("shipment_update", "invalid", 3, [{ reason: "stop 2 has no location", calls: 3 }]),
         ]}
       />,
     );
 
     const [first, second] = toolButtons();
-    expect(first).toHaveTextContent(title("update_shipment"));
+    expect(first).toHaveTextContent(title("shipment_update"));
     expect(first).toHaveTextContent("75%");
     expect(first).toHaveTextContent("Not accepted");
-    expect(second).toHaveTextContent(title("list_shipments"));
+    expect(second).toHaveTextContent(title("shipment_list"));
     expect(second).toHaveTextContent("0%");
     expect(screen.getByText("3 of 44 calls didn't go through")).toBeInTheDocument();
   });
@@ -54,9 +54,9 @@ describe("ToolCallsPanel", () => {
         loading={false}
         failed={false}
         verdicts={[
-          row("update_shipment", "ran", 1),
-          row("update_shipment", "invalid", 3, [{ reason: "stop 2 has no location", calls: 3 }]),
-          row("update_shipment", "failed", 1),
+          row("shipment_update", "ran", 1),
+          row("shipment_update", "invalid", 3, [{ reason: "stop 2 has no location", calls: 3 }]),
+          row("shipment_update", "failed", 1),
         ]}
       />,
     );

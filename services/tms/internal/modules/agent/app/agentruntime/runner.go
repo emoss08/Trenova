@@ -934,7 +934,6 @@ func (s *Service) summarize(
 				Description: tool.Description(),
 				Query:       true,
 				Lookup:      agentports.EffectOf(tool) == agent.ToolEffectLookup,
-				BatchOf:     batchOf(tool),
 				Recipe:      recipeOf(tool),
 			})
 			continue
@@ -952,20 +951,11 @@ func (s *Service) summarize(
 			Tier:                agenttoolpolicy.StaticTier(definition, policy),
 			PersonalRunsUnasked: policy.PersonalRunsUnasked && !tierSetFor(definition, name),
 			AlwaysProposes:      agenttoolpolicy.AlwaysProposes(definition, policy),
-			BatchOf:             batchOf(tool),
 			Recipe:              recipeOf(tool),
 		})
 	}
 
 	return summaries
-}
-
-func batchOf(tool any) string {
-	if batch, ok := tool.(agentports.BatchTool); ok {
-		return batch.BatchOf()
-	}
-
-	return ""
 }
 
 // tierSetFor reports a tool whose tier a person set on the agent, which
