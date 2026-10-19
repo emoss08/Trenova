@@ -206,19 +206,28 @@ a turn is a regression; across turns it is disclosure loading tools.
 ## Baseline and sweep
 
 `trenova desk baseline` (`task desk-baseline`) runs every scenario in every cell of
-`services/tms/deskbench/baseline.yaml` (Haiku 5.5 at low and medium, Sonnet 5.5, Opus 5.5,
-gpt-6-luna and gpt-6.1-sol, 4 trials, pass^4) and writes `baseline.md` and `baseline.json` beside
+`services/tms/deskbench/baseline.yaml` (Haiku 5.5, the default model, at low and medium effort,
+4 trials, pass^4) and writes `baseline.md` and `baseline.json` beside
 the usual run files in `.deskbench/baselines/<time>/`. Every cell must name a provider the
 organization has; `trenova desk providers` lists them. `--split`, `--tag` and `--parallel` narrow
 it as they do `run`. Later runs compare against it with `--compare .deskbench/baselines/<time>`.
+
+The baseline is what the context-assembly rebuild is compared against, and that comparison is the
+same model before and after, so the matrix holds only the model the product defaults to. A larger
+model is not a standing cell: when Haiku fails a scenario and it is unclear whether the model or
+the harness is at fault, run that scenario once on it (`trenova desk run --provider
+claude-sonnet-5-5 --repeat 1`). Another model's cell goes in a spec of your own passed with
+`--spec`. The report gives each cell's cost, so run one split first (`--split held-out`) and
+scale from what it spent.
 
 `trenova desk sweep` (`task desk-sweep`) sets `ai.toolDisclosureThreshold` from data. For each
 held count N (8, 12, 20, 30) the scenario's agent is copied as `Bench · Sweep · <name>` holding
 the tools the scenario's labels need plus the agent's others up to N, and every scenario runs
 once with every held tool sent (`all`) and once disclosed (the 8 ranked plus `find_tools`). A
 scenario needing more than N tools, or an agent holding fewer, is skipped at that point. Each
-point is a run under `.deskbench/sweeps/<time>/<mode>-<N>/`, and `sweep.md` / `sweep.json` at the
-top line them up by model. Set the threshold to the largest N at which `all` is at least as good.
+point is a run under `.deskbench/sweeps/<time>/<mode>-<N>/`, repeated twice (`sweep.repeat`; two
+trials leave pass^4 unreported, and the threshold reads the pass rate), and `sweep.md` /
+`sweep.json` at the top line them up by model. Set the threshold to the largest N at which `all` is at least as good.
 
 ## Agents
 

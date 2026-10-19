@@ -61,7 +61,8 @@ ledger and taint stay exactly as they are.
 6. Add code mode.
 
 Success is measured as pass^4, tool-selection accuracy, steps, tokens and cost per completed task,
-across Haiku 5.5, Sonnet 5.5, Opus 5.5, gpt-6-luna and gpt-6.1-sol.
+on Haiku 5.5, the default model, at low and medium effort. Larger models are run only on the
+scenarios Haiku fails, to tell a model's limit from a harness defect.
 
 This is an architecture review of Desk, Trenova's agent harness. It is not a change
 proposal for any one file. Numbers come from the source at the commit this was
