@@ -5628,7 +5628,7 @@
     },
     {
       "name": "shipment_list",
-      "description": "List shipments by status, billing state, dates or charges: anything with a date or threshold, such as picking up today or delivered yesterday. shipment_list matches text like a pro number. Filters: status (New|PartiallyAssigned|Assigned|InTransit|Delayed|PartiallyCompleted|ReadyToInvoice|Completed|Invoiced|Canceled): no Delivered; a delivered load is Completed, then ReadyToInvoice, then Invoiced. For when it delivered, filter actualDeliveryDate; billingTransferStatus (ReadyForReview|InReview|OnHold|Exception|SentBackToOps|Approved|Posted|Canceled): isnull means never transferred; freightTerms (Prepaid|Collect|ThirdParty); customerId (text): from list_customers, never guessed; text: proNumber, bol; date: actualShipDate, actualDeliveryDate, billedAt, canceledAt, createdAt; number: totalChargeAmount, weight. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "description": "Find shipments (loads) by the words people use for them, by status, or by filters on dates, charges and transfer status. Words match a pro number or BOL, a customer's name or code, a stop's place or city, the driver or what it carries; several words each narrow, so \"sunbelt chicago\" finds Sunbelt's loads through Chicago. With no words and no filters it lists the newest. Each row has the first pickup, the final stop and who drives each move; open one with shipment_get only for more.",
       "kind": "query",
       "resource": "shipment",
       "operation": "read",
@@ -5688,19 +5688,6 @@
       "reversible": true,
       "core": false,
       "effect": "change",
-      "prerequisites": [],
-      "grantedToEveryAgent": false
-    },
-    {
-      "name": "shipment_list",
-      "description": "List shipments, optionally narrowed by free text such as a pro number, BOL, customer name, or city, and by status. Call it with no query to see the most recent shipments. Returns matches with their ids, which shipment_get can then expand.",
-      "kind": "query",
-      "resource": "shipment",
-      "operation": "read",
-      "defaultAutonomyTier": "",
-      "reversible": true,
-      "core": false,
-      "effect": "lookup",
       "prerequisites": [],
       "grantedToEveryAgent": false
     },

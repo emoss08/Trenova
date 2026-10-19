@@ -28,7 +28,6 @@ agents:
       customer or a carrier are the person's decisions.
     tools:
       - shipment_list
-      - shipment_list
       - shipment_get
       - shipment_get_tracking
       - list_customers
@@ -104,7 +103,6 @@ agents:
     tools:
       - shipment_get
       - shipment_list
-      - shipment_list
       - shipment_get_tracking
       - search_worker
       - get_worker
@@ -151,7 +149,6 @@ agents:
 
       Every shipment, customer, location and commodity you enter waits for a person's approval.
     tools:
-      - shipment_list
       - shipment_list
       - shipment_get
       - shipment_get_tracking
