@@ -50,3 +50,11 @@ export const TOOL_NAMESPACE_QUALIFIERS: Readonly<
 > = {
   settlement: ["driver", "carrier"],
 };
+
+/**
+ * The kinds of record in a namespace that keep their own name: an object that opens with one
+ * reads without the namespace, so receivable_get_bank_receipt reads as get_bank_receipt.
+ */
+export const TOOL_NAMESPACE_RECORDS: Readonly<Partial<Record<ToolNamespace, readonly string[]>>> = {
+  receivable: ["bank_receipt", "customer_payment"],
+};

@@ -18,6 +18,17 @@ describe("toolNameInReadingOrder", () => {
     expect(toolNameInReadingOrder("settlement_list_pay_events")).toBe("list_settlement_pay_events");
   });
 
+  it("reads a record the namespace names on its own without the namespace", () => {
+    expect(toolNameInReadingOrder("receivable_get_bank_receipt")).toBe("get_bank_receipt");
+    expect(toolNameInReadingOrder("receivable_list_customer_payments")).toBe(
+      "list_customer_payments",
+    );
+    expect(toolNameInReadingOrder("receivable_get_aging")).toBe("get_receivable_aging");
+    expect(toolNameInReadingOrder("receivable_apply_credit_memo")).toBe(
+      "apply_receivable_credit_memo",
+    );
+  });
+
   it("leaves a name outside a namespace as it is", () => {
     expect(toolNameInReadingOrder("list_workers")).toBe("list_workers");
     expect(toolNameInReadingOrder("remember")).toBe("remember");
