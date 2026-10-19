@@ -29,7 +29,7 @@ scenarios:
       The billing lead is asked to have Operations put a load on hold. A delegate only looks
       things up, so the hold is proposed in this conversation, from the tool the person's
       operations agent holds, and never by the delegate.
-    agent: Billing lead
+    agent: Bench · Billing lead
     tags: [delegation, write]
     expectedTools: [shipment_place_hold]
     steps:

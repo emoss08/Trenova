@@ -609,15 +609,22 @@ func anthropicConversation(
 			// a role of its own. The results of one turn's calls share a
 			// message: sent one per message, they teach the model to stop
 			// calling tools in parallel.
-			block := anthropic.BetaContentBlockParamUnion{OfToolResult: anthropicToolResult(msg)}
+			result, note := anthropicToolResult(msg)
+			block := anthropic.BetaContentBlockParamUnion{OfToolResult: result}
 			if last, results := lastToolResults(out); last != nil {
 				last.Content = slices.Insert(last.Content, results, block)
-				continue
+			} else {
+				out = append(out, anthropic.BetaMessageParam{
+					Role:    anthropic.BetaMessageParamRoleUser,
+					Content: []anthropic.BetaContentBlockParamUnion{block},
+				})
 			}
-			out = append(out, anthropic.BetaMessageParam{
-				Role:    anthropic.BetaMessageParamRoleUser,
-				Content: []anthropic.BetaContentBlockParamUnion{block},
-			})
+			if note != nil {
+				last := &out[len(out)-1]
+				last.Content = append(last.Content, anthropic.BetaContentBlockParamUnion{
+					OfText: note,
+				})
+			}
 		case RoleAssistant:
 			blocks := make([]anthropic.BetaContentBlockParamUnion, 0, len(msg.ToolCalls)+2)
 			if i >= currentTurn {
@@ -718,24 +725,43 @@ func lastToolResults(
 }
 
 // anthropicToolResult carries a tool's output as a text block. An empty
-// output sends no content, since an empty text block is refused.
-func anthropicToolResult(msg *Message) *anthropic.BetaToolResultBlockParam {
+// output sends no content, since an empty text block is refused. A result
+// that loads tools holds only their references, since the API refuses a
+// reference beside any other content, and its text comes back as a note to
+// send after every result of the message, named by the call it answers.
+func anthropicToolResult(
+	msg *Message,
+) (*anthropic.BetaToolResultBlockParam, *anthropic.BetaTextBlockParam) {
 	result := &anthropic.BetaToolResultBlockParam{ToolUseID: msg.ToolCallID}
-	if msg.Content != "" {
-		result.Content = []anthropic.BetaToolResultBlockParamContentUnion{{
-			OfText: &anthropic.BetaTextBlockParam{Text: msg.Content},
-		}}
+	if msg.IsError {
+		result.IsError = param.NewOpt(true)
 	}
+	if len(msg.ToolReferences) == 0 || msg.IsError {
+		if msg.Content != "" {
+			result.Content = []anthropic.BetaToolResultBlockParamContentUnion{{
+				OfText: &anthropic.BetaTextBlockParam{Text: msg.Content},
+			}}
+		}
+		return result, nil
+	}
+
+	result.Content = make(
+		[]anthropic.BetaToolResultBlockParamContentUnion,
+		0,
+		len(msg.ToolReferences),
+	)
 	for _, name := range msg.ToolReferences {
 		result.Content = append(result.Content, anthropic.BetaToolResultBlockParamContentUnion{
 			OfToolReference: &anthropic.BetaToolReferenceBlockParam{ToolName: name},
 		})
 	}
-	if msg.IsError {
-		result.IsError = param.NewOpt(true)
+	if strings.TrimSpace(msg.Content) == "" {
+		return result, nil
 	}
 
-	return result
+	return result, &anthropic.BetaTextBlockParam{
+		Text: msg.ToolName + " (" + msg.ToolCallID + "):\n" + msg.Content,
+	}
 }
 
 func toAnthropicTools(tools []ToolSpec) []anthropic.BetaToolUnionParam {

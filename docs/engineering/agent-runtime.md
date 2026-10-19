@@ -946,11 +946,13 @@ them, and no higher than the Dispatch agent's own ceiling either.
   the tool set (`toolSet.beyond`, `ToolSetState.Beyond`) and on the turn
   (`Turn.beyond`, `TurnState.Beyond`), and never preselected: the turn opens
   with its own tools ranked as before.
-- **Found by `find_tools`.** When the turn's own tools match a need only weakly,
-  `find_tools` searches the reached ones too, strong matches only, and loads
-  them under "These come from the desks of the person's other agents"
-  (`reachBeyond`). A turn that holds few enough tools to be sent all of them is
-  still offered `find_tools` when it reaches beyond them.
+- **Found by `find_tools`.** `find_tools` searches the reached tools too, strong
+  matches only, and loads one that matches the need more strongly than the best
+  of the turn's own matches (`Catalog.StrongScore`) under "These come from the
+  desks of the person's other agents" (`reachBeyond`). Weak is relative: a
+  dispatch tool that says "customer" once must not stand in for the AR aging
+  read that names the need outright. A turn that holds few enough tools to be
+  sent all of them is still offered `find_tools` when it reaches beyond them.
 - **Decided under the holder's ceiling.** The loop treats a reached tool as
   held (`Turn.holds`), and each call carries its ceiling
   (`DispatchCall.Beyond`, from `Turn.beyondTier`) through `DispatchStep` and the
@@ -2193,6 +2195,10 @@ conversation is the same from the first call of the turn to the last.
   `raise_exception`, `guide_profile`; `deferredCoreTools`) are deferred unless
   the request names what they do, and are found like any other. Memory and the
   product guide stay loaded, because the prompt tells the model when to use them.
+  An unattended run also loads `raise_exception` (`defersCoreTool`): handing the
+  case to a person is how a run that cannot resolve it ends, and left to a
+  search it lost a tie for the last slot to `wait_until` and the run ended with
+  nobody told.
 - **System prompt.** `BuildSystemPromptParts` writes what every turn of an agent
   for a person shares first and the turn's own part after it. The shared part
   is, in order: the identity line, Trenova's rules, the domain primer, the tool section, the agents

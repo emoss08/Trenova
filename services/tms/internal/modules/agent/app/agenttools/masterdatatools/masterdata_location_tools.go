@@ -74,7 +74,7 @@ var locationRecord = &masterRecord[location.Location]{
 	entity:   locationRecordEntity,
 	idParam:  paramLocationID,
 	idsParam: "locationIds",
-	supplier: "from list_locations",
+	lister:   "list_locations",
 	label:    func(entity *location.Location) string { return entity.Name },
 	id:       func(entity *location.Location) pulid.ID { return entity.ID },
 	version:  func(entity *location.Location) int64 { return entity.Version },

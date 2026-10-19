@@ -179,7 +179,7 @@ var tractorRecord = &masterRecord[tractor.Tractor]{
 	resource: permission.ResourceTractor,
 	entity:   tractorRecordEntity,
 	idParam:  common.ParamTractorID,
-	supplier: "from list_tractors",
+	lister:   "list_tractors",
 	label:    func(entity *tractor.Tractor) string { return entity.Code },
 	id:       func(entity *tractor.Tractor) pulid.ID { return entity.ID },
 	version:  func(entity *tractor.Tractor) int64 { return entity.Version },
@@ -382,7 +382,7 @@ var trailerRecord = &masterRecord[trailer.Trailer]{
 	resource: permission.ResourceTrailer,
 	entity:   trailerRecordEntity,
 	idParam:  paramTrailerID,
-	supplier: "from list_trailers",
+	lister:   "list_trailers",
 	label:    func(entity *trailer.Trailer) string { return entity.Code },
 	id:       func(entity *trailer.Trailer) pulid.ID { return entity.ID },
 	version:  func(entity *trailer.Trailer) int64 { return entity.Version },
@@ -528,12 +528,12 @@ func locateRequestFrom(
 }
 
 func locateProperties(
-	unitKey, unit, supplier string,
+	unitKey, unit, lister string,
 	resource permission.Resource,
 ) map[string]any {
 	return map[string]any{
 		unitKey: agenttoolschema.RecordIDText(resource,
-			fmt.Sprintf("The %s, %s. Never guess one.", unit, supplier)),
+			fmt.Sprintf("The %s, from %s. Never guess one.", unit, lister)),
 		paramNewLocationID: agenttoolschema.RecordIDText(permission.ResourceLocation,
 			"Where it is now, from list_locations. Never guess one."),
 	}
@@ -565,11 +565,12 @@ func NewLocateTractorTool(tractors TractorKeeper) agentports.AgentTool {
 		Properties: locateProperties(
 			common.ParamTractorID,
 			tractorRecordEntity,
-			"from list_tractors",
+			tractorRecord.lister,
 			permission.ResourceTractor,
 		),
-		Required:    []string{common.ParamTractorID, paramNewLocationID},
-		SearchTerms: []string{"locate tractor", "relocate truck", "move tractor", "yard"},
+		Required:      []string{common.ParamTractorID, paramNewLocationID},
+		SearchTerms:   []string{"locate tractor", "relocate truck", "move tractor", "yard"},
+		Prerequisites: []string{tractorRecord.lister, locationRecord.lister},
 		Target: func(params map[string]any) (agentports.ToolTarget, bool) {
 			return common.TargetOf(params, common.ParamTractorID, permission.ResourceTractor)
 		},
@@ -638,10 +639,11 @@ func NewLocateTrailerTool(trailers TrailerKeeper) agentports.AgentTool {
 		Artifact:    trailerRecordEntity,
 		Rationale: "Adds an empty move to the trailer's last shipment and re-rates it, which " +
 			"can change what that customer is charged, so it runs only on a person's approval.",
-		Properties: locateProperties(paramTrailerID, trailerRecordEntity, "from list_trailers",
+		Properties: locateProperties(paramTrailerID, trailerRecordEntity, trailerRecord.lister,
 			permission.ResourceTrailer),
-		Required:    []string{paramTrailerID, paramNewLocationID},
-		SearchTerms: []string{"locate trailer", "trailer location", "move trailer", "drop yard"},
+		Required:      []string{paramTrailerID, paramNewLocationID},
+		SearchTerms:   []string{"locate trailer", "trailer location", "move trailer", "drop yard"},
+		Prerequisites: []string{trailerRecord.lister, locationRecord.lister},
 		Target: func(params map[string]any) (agentports.ToolTarget, bool) {
 			return common.TargetOf(params, paramTrailerID, permission.ResourceTrailer)
 		},

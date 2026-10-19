@@ -3,6 +3,7 @@ package deskbench
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 )
@@ -22,6 +23,11 @@ func TestReplyStates_ReadsASmallCountInWords(t *testing.T) {
 		{reply: "nothing was saved for anyone", value: "1", want: false},
 		{reply: "saved forty profiles", value: "40", want: false},
 		{reply: "saved 2.5 profiles", value: "2.5", want: true},
+		{reply: "No delivered shipments are waiting", value: "0", want: true},
+		{reply: "none are waiting", value: "0", want: true},
+		{reply: "0 shipments are waiting", value: "0", want: true},
+		{reply: "nineteen shipments are waiting", value: "0", want: false},
+		{reply: "know of three loads", value: "0", want: false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.reply, func(t *testing.T) {
@@ -131,4 +137,21 @@ func TestNoDelegateCalls_GradesOnlyWhatADelegateCalled(t *testing.T) {
 	})
 	assert.False(t, delegated.Passed)
 	assert.Equal(t, "shipment_place_hold (unregistered)", delegated.Detail)
+}
+
+func TestStepEvidence_CountsOnlyWhatWaitedForAPersonAsAProposal(t *testing.T) {
+	t.Parallel()
+
+	evidence := &stepEvidence{turns: []*TurnRecord{{Proposals: []*ProposalRecord{
+		{Tool: "raise_exception", Tier: agent.TierAutoExecute, Status: agent.ProposalStatusExecuted},
+		{Tool: "shipment_place_hold", Tier: agent.TierPropose, Status: agent.ProposalStatusPending},
+		{Tool: "billing_hold_queue_item", Tier: agent.TierActWithApproval},
+	}}}}
+
+	proposals := evidence.proposals()
+	names := make([]string, 0, len(proposals))
+	for _, proposal := range proposals {
+		names = append(names, proposal.Tool)
+	}
+	assert.Equal(t, []string{"shipment_place_hold", "billing_hold_queue_item"}, names)
 }

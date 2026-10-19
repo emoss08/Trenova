@@ -35,14 +35,7 @@
       {
         "content": [
           {
-            "cache_control": {
-              "type": "ephemeral"
-            },
             "content": [
-              {
-                "text": "These tools are now callable:\n- list_trailers: List trailers",
-                "type": "text"
-              },
               {
                 "tool_name": "list_trailers",
                 "type": "tool_reference"
@@ -50,6 +43,13 @@
             ],
             "tool_use_id": "call_find",
             "type": "tool_result"
+          },
+          {
+            "cache_control": {
+              "type": "ephemeral"
+            },
+            "text": "find_tools (call_find):\nThese tools are now callable:\n- list_trailers: List trailers",
+            "type": "text"
           }
         ],
         "role": "user"

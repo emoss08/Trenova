@@ -162,7 +162,7 @@ var carrierRecord = &masterRecord[carrier.Carrier]{
 	entity:   common.CarrierRecordEntity,
 	idParam:  common.ParamCarrierID,
 	idsParam: "carrierIds",
-	supplier: "from list_carriers",
+	lister:   "list_carriers",
 	label:    func(entity *carrier.Carrier) string { return entity.Name },
 	id:       func(entity *carrier.Carrier) pulid.ID { return entity.ID },
 	version:  func(entity *carrier.Carrier) int64 { return entity.Version },

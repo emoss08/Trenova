@@ -140,7 +140,7 @@ var capacityRecord = &masterRecord[carriercapacity.Posting]{
 	resource: permission.ResourceCarrierCapacityPosting,
 	entity:   capacityRecordEntity,
 	idParam:  paramPostingID,
-	supplier: "from list_carrier_capacity_postings",
+	lister:   "list_carrier_capacity_postings",
 	label:    capacityLabel,
 	id:       func(entity *carriercapacity.Posting) pulid.ID { return entity.ID },
 	version:  func(entity *carriercapacity.Posting) int64 { return entity.Version },
@@ -304,12 +304,13 @@ func NewDeleteCarrierCapacityPostingTool(keeper CapacityKeeper) agentports.Agent
 		Properties: map[string]any{
 			paramPostingID: agenttoolschema.RecordIDText(
 				permission.ResourceCarrierCapacityPosting,
-				"The posting to remove, "+capacityRecord.supplier+". Never guess one.",
+				"The posting to remove, from "+capacityRecord.lister+". Never guess one.",
 			),
 		},
-		Required:    []string{paramPostingID},
-		SearchTerms: []string{"remove carrier capacity", "withdraw truck posting"},
-		Target:      capacityRecord.target,
+		Required:      []string{paramPostingID},
+		SearchTerms:   []string{"remove carrier capacity", "withdraw truck posting"},
+		Prerequisites: []string{capacityRecord.lister},
+		Target:        capacityRecord.target,
 	}, common.ReceivablePlan[pulid.ID, *carriercapacity.Posting]{
 		Request: func(params *agentports.ToolExecuteParams) (pulid.ID, error) {
 			return common.RequirePulid(params.Params, paramPostingID)

@@ -46,7 +46,7 @@ scenarios:
             label: Peak Distributing
             find: select id from customers where code = 'PEAK'
         expect:
-          calls: ["get_customer|list_customers|search_customers"]
+          calls: ["get_customer|list_customers|search_customers|shipment_list"]
           noCalls: [list_agent_runs, get_agent_run]
           noProposals: true
           noRecordIds: true

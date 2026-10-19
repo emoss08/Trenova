@@ -511,17 +511,80 @@ func TestAnthropicAdapter_DefersToolsAndLoadsThemByReference(t *testing.T) {
 	require.NotContains(t, byName["get_shipment"], "cache_control")
 
 	messages := body["messages"].([]any)
-	result := messages[len(messages)-1].(map[string]any)["content"].([]any)[0].(map[string]any)
+	blocks := messages[len(messages)-1].(map[string]any)["content"].([]any)
+	require.Len(t, blocks, 2, "the result, then its text")
+	result := blocks[0].(map[string]any)
 	require.Equal(t, "tool_result", result["type"])
-	content := result["content"].([]any)
-	require.Len(
+	require.Equal(
 		t,
-		content,
-		2,
-		"the text, and one reference: only a declared deferred tool is named",
+		[]any{map[string]any{"type": "tool_reference", "tool_name": "list_trailers"}},
+		result["content"],
+		"only the references: the API refuses one beside text, and only a declared deferred tool is named",
 	)
-	require.Equal(t, map[string]any{"type": "tool_reference", "tool_name": "list_trailers"},
-		content[1])
+	note := blocks[1].(map[string]any)
+	require.Equal(t, "text", note["type"])
+	require.Equal(
+		t,
+		"find_tools (call_find):\nThese tools are now callable:\n- list_trailers: List trailers",
+		note["text"],
+	)
+}
+
+func TestAnthropicConversation_PutsLoadedToolsTextAfterEveryResult(t *testing.T) {
+	t.Parallel()
+
+	out := anthropicConversation([]Message{
+		{Role: RoleUser, Content: "Which trailers and workers are due?"},
+		{
+			Role: RoleAssistant,
+			ToolCalls: []ToolCall{
+				{ID: "call_find", Name: "find_tools"},
+				{ID: "call_ship", Name: "get_shipment"},
+				{ID: "call_quiet", Name: "find_tools"},
+			},
+		},
+		{
+			Role: RoleTool, ToolCallID: "call_find", ToolName: "find_tools",
+			Content:        "These tools are now callable:\n- list_trailers: List trailers",
+			ToolReferences: []string{"list_trailers"},
+		},
+		{Role: RoleTool, ToolCallID: "call_ship", ToolName: "get_shipment", Content: "S-1"},
+		{
+			Role: RoleTool, ToolCallID: "call_quiet", ToolName: "find_tools",
+			ToolReferences: []string{"list_workers"},
+		},
+	}, nil, false)
+
+	blocks := out[len(out)-1].Content
+	require.Len(t, blocks, 4)
+	require.Equal(t, "call_find", blocks[0].OfToolResult.ToolUseID)
+	require.Len(t, blocks[0].OfToolResult.Content, 1)
+	require.NotNil(t, blocks[0].OfToolResult.Content[0].OfToolReference)
+	require.Equal(t, "call_ship", blocks[1].OfToolResult.ToolUseID)
+	require.Equal(t, "S-1", blocks[1].OfToolResult.Content[0].OfText.Text)
+	require.Equal(t, "call_quiet", blocks[2].OfToolResult.ToolUseID)
+	require.Len(t, blocks[2].OfToolResult.Content, 1)
+	require.Equal(t, "list_workers", blocks[2].OfToolResult.Content[0].OfToolReference.ToolName)
+	require.Contains(t, blocks[3].OfText.Text, "find_tools (call_find):")
+}
+
+func TestAnthropicConversation_KeepsAnErrorResultsTextInside(t *testing.T) {
+	t.Parallel()
+
+	out := anthropicConversation([]Message{
+		{Role: RoleUser, Content: "find trailers"},
+		{Role: RoleAssistant, ToolCalls: []ToolCall{{ID: "call_find", Name: "find_tools"}}},
+		{
+			Role: RoleTool, ToolCallID: "call_find", ToolName: "find_tools", IsError: true,
+			Content: "find_tools failed", ToolReferences: []string{"list_trailers"},
+		},
+	}, nil, false)
+
+	blocks := out[len(out)-1].Content
+	require.Len(t, blocks, 1)
+	content := blocks[0].OfToolResult.Content
+	require.Len(t, content, 1)
+	require.Equal(t, "find_tools failed", content[0].OfText.Text)
 }
 
 func TestAnthropicAdapter_OnFoundrySendsWhatIsLoaded(t *testing.T) {

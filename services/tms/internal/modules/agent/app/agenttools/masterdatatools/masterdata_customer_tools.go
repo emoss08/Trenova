@@ -99,7 +99,7 @@ var customerRecord = &masterRecord[customer.Customer]{
 	entity:   common.CustomerRecordEntity,
 	idParam:  common.ParamCustomerID,
 	idsParam: "customerIds",
-	supplier: "from list_customers",
+	lister:   "list_customers",
 	label:    func(entity *customer.Customer) string { return entity.Name },
 	id:       func(entity *customer.Customer) pulid.ID { return entity.ID },
 	version:  func(entity *customer.Customer) int64 { return entity.Version },

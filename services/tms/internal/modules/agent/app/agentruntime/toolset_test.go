@@ -758,6 +758,37 @@ func TestNewToolSet_CoreToolsDoNotCountTowardNarrowing(t *testing.T) {
 		"the preselected tools, the two core tools, find_tools and ask_user")
 }
 
+func TestNewToolSet_AnUnattendedRunHoldsItsEscalationFromTheStart(t *testing.T) {
+	t.Parallel()
+
+	service, names := coreRuntime(t)
+	query := service.queryTools.(*stubQueryRegistry)
+	query.Tools = append(query.Tools,
+		describedTool("raise_exception", "Hand a case to a person when you cannot resolve it."),
+		describedTool("wait_until", "Park this work until something happens."),
+	)
+	service.catalog = agenttoolcatalog.NewFromRegistries(agenttoolcatalog.Params{
+		QueryTools:  query,
+		ActionTools: service.actionTools,
+	})
+
+	for _, unattended := range []bool{true, false} {
+		set := service.newToolSet(
+			t.Context(),
+			toolSetRequest{
+				definition: testDefinition(names...),
+				actor:      testActor(),
+				input:      "which drivers are available",
+				unattended: unattended,
+			},
+		)
+		require.True(t, set.disclosed)
+		assert.Equal(t, unattended, set.offers("raise_exception"),
+			"only a run has nobody to ask, and its escalation must not wait on a search")
+		assert.False(t, set.offers("wait_until"))
+	}
+}
+
 func TestResolveFind_ListsTheCallableMatchesFirst(t *testing.T) {
 	t.Parallel()
 
@@ -779,7 +810,7 @@ func TestResolveFind_ListsTheCallableMatchesFirst(t *testing.T) {
 	assert.True(t, set.offers("list_expiring_credentials"))
 }
 
-func weakMatchRuntime(t *testing.T) *Service {
+func weakMatchRuntime(t *testing.T, extra ...agentports.AgentQueryTool) *Service {
 	t.Helper()
 
 	tools := []agentports.AgentQueryTool{
@@ -802,6 +833,7 @@ func weakMatchRuntime(t *testing.T) *Service {
 	for idx := range disclosureThreshold + 1 {
 		tools = append(tools, describedTool(fmt.Sprintf("list_filler_%02d", idx), "Filler."))
 	}
+	tools = append(tools, extra...)
 
 	query := &stubQueryRegistry{Tools: tools}
 	action := &stubActionRegistry{}
@@ -891,6 +923,46 @@ func TestResolveFind_NeverReachesWhatAStrongOwnMatchCovers(t *testing.T) {
 	assert.Contains(t, answer, "search_commodities")
 	assert.NotContains(t, answer, beyondLead)
 	assert.False(t, set.offers("shipment_list"))
+}
+
+func TestResolveFind_ReachesPastAnOwnToolThatSharesOneWordWithTheNeed(t *testing.T) {
+	t.Parallel()
+
+	service := weakMatchRuntime(
+		t,
+		describedTool(
+			"shipment_update_hold",
+			"Change an active hold on a shipment and whether the customer sees it.",
+		),
+		describedTool(
+			"get_ar_aging",
+			"Summarize accounts receivable aging: which customers owe money and how overdue it is.",
+		),
+	)
+	held := []string{"shipment_update_hold"}
+	for idx := range disclosureThreshold + 1 {
+		held = append(held, fmt.Sprintf("list_filler_%02d", idx))
+	}
+	set := service.newToolSet(
+		t.Context(),
+		toolSetRequest{
+			definition: testDefinition(held...),
+			actor:      testActor(),
+			input:      "hello",
+			beyond:     map[string]agent.AutonomyTier{"get_ar_aging": agent.TierAutoExecute},
+		},
+	)
+
+	answer := findContent(
+		t,
+		service,
+		set,
+		map[string]any{"need": "accounts receivable aging by customer"},
+	)
+
+	assert.Contains(t, answer, beyondLead)
+	assert.Contains(t, answer, "get_ar_aging")
+	assert.True(t, set.offers("get_ar_aging"))
 }
 
 func TestResolveFind_AStrongNewMatchNeedsNoDelegate(t *testing.T) {

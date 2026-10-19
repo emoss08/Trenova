@@ -135,7 +135,8 @@ agents:
       - list_tractors
       - update_tractor_status
 
-  - name: Shipment desk
+  - &shipment-desk
+    name: Shipment desk
     description: >
       Enters and keeps shipments: books a load from a message or a rate confirmation, sets up
       the customer, places and freight a load names that are not in Trenova yet, and corrects or
@@ -155,6 +156,28 @@ agents:
       - shipment_create
       - shipment_update
       - shipment_cancel
+
+  - <<: *shipment-desk
+    name: Shipment Assistant
+
+  - name: Formula Desk
+    description: >
+      Answers questions about pricing formulas in the Desk: reads the organization's templates,
+      explains what one charges and why, and drafts an expression for the person to save in the
+      formula studio.
+    maxToolCalls: 8
+    autonomyCeiling: Propose
+    instructions: |
+      You help a trucking company's pricing team with rating formulas. Read the templates that
+      exist before suggesting a new one, and explain a charge in the person's terms: miles,
+      stops, weight and minimums.
+
+      Formulas are written and saved in the formula studio and approved by an administrator. Give
+      the person the expression and send them there; never say you created or saved a template.
+    tools:
+      - list_formula_templates
+      - get_formula_template
+      - explain_rate
 
 
   - name: EDI desk

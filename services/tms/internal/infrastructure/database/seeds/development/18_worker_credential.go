@@ -33,7 +33,7 @@ func NewWorkerCredentialSeed() *WorkerCredentialSeed {
 	seed := &WorkerCredentialSeed{}
 	seed.BaseSeed = *seedhelpers.NewBaseSeed(
 		"WorkerCredential",
-		"1.0.0",
+		"1.1.0",
 		"Seeds credential types and per-worker credentials mirrored from worker profiles",
 		[]common.Environment{common.EnvDevelopment},
 	)
@@ -168,7 +168,7 @@ type seedCredential struct {
 
 func (s *WorkerCredentialSeed) plan(wrk *worker.Worker, index int) []seedCredential {
 	profile := wrk.Profile
-	plan := make([]seedCredential, 0, 8)
+	plan := make([]seedCredential, 0, 11)
 	if profile == nil {
 		return plan
 	}
@@ -216,6 +216,21 @@ func (s *WorkerCredentialSeed) plan(wrk *worker.Worker, index int) []seedCredent
 		issuedAgo: 365 - mvrDays,
 		verified:  true,
 	})
+	plan = append(plan,
+		seedCredential{code: "ROAD_TEST", noExpiry: true, issuedAgo: 1400, verified: true},
+		seedCredential{
+			code:      "ANNUAL_REVIEW",
+			expiresIn: 250 - int64(index)*7,
+			issuedAgo: 115 + int64(index)*7,
+			verified:  true,
+		},
+		seedCredential{
+			code:      "VIOLATION_CERT",
+			expiresIn: 250 - int64(index)*7,
+			issuedAgo: 115 + int64(index)*7,
+			verified:  true,
+		},
+	)
 
 	if profile.Endorsement.RequiresHazmatExpiry() {
 		plan = append(plan, seedCredential{

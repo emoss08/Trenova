@@ -6,7 +6,7 @@ scenarios:
     description: >
       A whole load entered from one message, the way it comes off a phone call: customer by
       nickname, places by what dispatch calls them, dates relative to today.
-    agent: Shipment Assistant
+    agent: Bench · Shipment Assistant
     exclusive: acme-shipments
     steps:
       - say: >
@@ -78,7 +78,7 @@ scenarios:
 
   - name: correct-a-weight
     description: The most ordinary edit, with the number written the way people write it.
-    agent: Shipment Assistant
+    agent: Bench · Shipment Assistant
     exclusive: SEED-SHP-004
     setup:
       - UPDATE shipments SET weight = 38000 WHERE pro_number = 'SEED-SHP-004'
@@ -98,7 +98,7 @@ scenarios:
     description: >
       A cancellation the person takes back before approving it. The follow-up must leave the
       load alone and not argue.
-    agent: Shipment Assistant
+    agent: Bench · Shipment Assistant
     steps:
       - say: "cancel SEED-SHP-007, customer pulled it"
         expect:
@@ -113,7 +113,7 @@ scenarios:
 
   - name: where-is-it-will-it-make-it
     description: Tracking and an on-time judgement in one question.
-    agent: Shipment Assistant
+    agent: Bench · Shipment Assistant
     tags: [read, tracking]
     setup: &seed-shp-008-in-transit
       - >
@@ -131,6 +131,25 @@ scenarios:
       - >
         UPDATE shipments SET status = 'InTransit'
         WHERE pro_number = 'SEED-SHP-008' AND status <> 'InTransit'
+      - >
+        INSERT INTO assignments
+          (id, organization_id, business_unit_id, shipment_move_id, primary_worker_id, tractor_id,
+           trailer_id, status)
+        SELECT 'asn_01JBENCH0000000000000SHP08', sm.organization_id, sm.business_unit_id, sm.id,
+          w.id, t.id, tr.id, 'InProgress'
+        FROM shipment_moves AS sm
+        JOIN shipments AS sp ON sp.id = sm.shipment_id
+        JOIN workers AS w ON w.organization_id = sm.organization_id
+          AND w.first_name = 'John' AND w.last_name = 'Smith'
+        JOIN tractors AS t ON t.organization_id = sm.organization_id AND t.code = 'TRC-003'
+        JOIN trailers AS tr ON tr.organization_id = sm.organization_id AND tr.code = 'TRL-002'
+        WHERE sp.pro_number = 'SEED-SHP-008' AND sm.sequence = 1
+          AND NOT EXISTS (SELECT 1 FROM assignments AS a
+            WHERE a.shipment_move_id = sm.id AND a.status <> 'Canceled')
+        ON CONFLICT DO NOTHING
+      - >
+        UPDATE assignments SET status = 'InProgress'
+        WHERE id = 'asn_01JBENCH0000000000000SHP08' AND status <> 'InProgress'
     steps:
       - say: "wheres SEED-SHP-008 right now and is it gonna make the delivery appt"
         expect:

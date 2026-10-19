@@ -7936,6 +7936,9 @@
         "remove carrier capacity",
         "withdraw truck posting"
       ],
+      "prerequisites": [
+        "list_carrier_capacity_postings"
+      ],
       "policy": {
         "kind": "action",
         "resource": "carrier_capacity_posting",
@@ -24288,6 +24291,10 @@
         "move tractor",
         "yard"
       ],
+      "prerequisites": [
+        "list_tractors",
+        "list_locations"
+      ],
       "policy": {
         "kind": "action",
         "resource": "tractor",
@@ -24339,6 +24346,10 @@
         "trailer location",
         "move trailer",
         "drop yard"
+      ],
+      "prerequisites": [
+        "list_trailers",
+        "list_locations"
       ],
       "policy": {
         "kind": "action",
@@ -41274,6 +41285,9 @@
         "remit to",
         "carrier details"
       ],
+      "prerequisites": [
+        "list_carriers"
+      ],
       "policy": {
         "kind": "action",
         "resource": "carrier",
@@ -41408,6 +41422,9 @@
         "change truck posting",
         "capacity rate"
       ],
+      "prerequisites": [
+        "list_carrier_capacity_postings"
+      ],
       "policy": {
         "kind": "action",
         "resource": "carrier_capacity_posting",
@@ -41469,6 +41486,9 @@
         "deactivate carrier",
         "do not use",
         "reactivate carrier"
+      ],
+      "prerequisites": [
+        "list_carriers"
       ],
       "policy": {
         "kind": "action",
@@ -41612,6 +41632,9 @@
         "freight class",
         "temperature range"
       ],
+      "prerequisites": [
+        "list_commodities"
+      ],
       "policy": {
         "kind": "action",
         "resource": "commodity",
@@ -41671,6 +41694,9 @@
       "searchTerms": [
         "deactivate commodity",
         "retire commodity"
+      ],
+      "prerequisites": [
+        "list_commodities"
       ],
       "policy": {
         "kind": "action",
@@ -41796,6 +41822,9 @@
         "customer address",
         "status update emails"
       ],
+      "prerequisites": [
+        "list_customers"
+      ],
       "policy": {
         "kind": "action",
         "resource": "customer",
@@ -41857,6 +41886,9 @@
         "deactivate customer",
         "reactivate customer",
         "inactive customer"
+      ],
+      "prerequisites": [
+        "list_customers"
       ],
       "policy": {
         "kind": "action",
@@ -42253,6 +42285,9 @@
         "packing group",
         "erg guide"
       ],
+      "prerequisites": [
+        "list_hazardous_materials"
+      ],
       "policy": {
         "kind": "action",
         "resource": "hazardous_material",
@@ -42312,6 +42347,9 @@
       "searchTerms": [
         "deactivate hazmat",
         "retire hazardous material"
+      ],
+      "prerequisites": [
+        "list_hazardous_materials"
       ],
       "policy": {
         "kind": "action",
@@ -42569,6 +42607,9 @@
         "fix address",
         "dock"
       ],
+      "prerequisites": [
+        "list_locations"
+      ],
       "policy": {
         "kind": "action",
         "resource": "location",
@@ -42629,6 +42670,9 @@
         "deactivate location",
         "close facility",
         "reactivate location"
+      ],
+      "prerequisites": [
+        "list_locations"
       ],
       "policy": {
         "kind": "action",
@@ -43619,6 +43663,9 @@
         "reassign truck driver",
         "registration renewal"
       ],
+      "prerequisites": [
+        "list_tractors"
+      ],
       "policy": {
         "kind": "action",
         "resource": "tractor",
@@ -43681,6 +43728,9 @@
         "out of service",
         "maintenance",
         "available"
+      ],
+      "prerequisites": [
+        "list_tractors"
       ],
       "policy": {
         "kind": "action",
@@ -43830,6 +43880,9 @@
         "trailer inspection",
         "registration renewal"
       ],
+      "prerequisites": [
+        "list_trailers"
+      ],
       "policy": {
         "kind": "action",
         "resource": "trailer",
@@ -43892,6 +43945,9 @@
         "out of service",
         "maintenance",
         "available"
+      ],
+      "prerequisites": [
+        "list_trailers"
       ],
       "policy": {
         "kind": "action",

@@ -118,7 +118,7 @@ scenarios:
       The same life of a load the way a team works it: the shipment desk books it, dispatch covers
       and runs it, billing invoices it. Each step is handed to the agent that owns it from one
       conversation, as a person does with the agent picker.
-    agent: Shipment Assistant
+    agent: Bench · Shipment Assistant
     exclusive: peak-shipments
     setup:
       - >

@@ -33,7 +33,7 @@ type masterRecord[T any] struct {
 	entity   string
 	idParam  string
 	idsParam string
-	supplier string
+	lister   string
 	label    func(*T) string
 	id       func(*T) pulid.ID
 	version  func(*T) int64
@@ -859,20 +859,21 @@ func newMasterUpdateTool[T any](spec *masterUpdateSpec[T]) agentports.AgentTool 
 	record := spec.record
 	properties := masterProperties(spec.fields, true)
 	properties[record.idParam] = agenttoolschema.RecordIDText(record.resource,
-		fmt.Sprintf("The %s to change, %s. Never guess one.", record.kind, record.supplier))
+		fmt.Sprintf("The %s to change, from %s. Never guess one.", record.kind, record.lister))
 
 	return common.NewReportingReceivableTool(spec.policy.apply(&common.ReceivableSpec{
-		Name:        spec.name,
-		Description: spec.description,
-		Resource:    record.resource,
-		Operation:   permission.OpUpdate,
-		Artifact:    record.artifact(),
-		Reversible:  true,
-		Rationale:   spec.rationale,
-		Properties:  properties,
-		Required:    []string{record.idParam},
-		SearchTerms: spec.searchTerms,
-		Target:      record.target,
+		Name:          spec.name,
+		Description:   spec.description,
+		Resource:      record.resource,
+		Operation:     permission.OpUpdate,
+		Artifact:      record.artifact(),
+		Reversible:    true,
+		Rationale:     spec.rationale,
+		Properties:    properties,
+		Required:      []string{record.idParam},
+		SearchTerms:   spec.searchTerms,
+		Prerequisites: []string{record.lister},
+		Target:        record.target,
 	}), common.ReceivablePlan[*masterEdit, *masterChanged[T]]{
 		Request: spec.edit,
 		Plan: func(
@@ -988,13 +989,14 @@ func newMasterStatusTool[T any, S ~string](spec *masterStatusSpec[T, S]) agentpo
 		Rationale:   spec.rationale,
 		Properties: map[string]any{
 			record.idsParam: agenttoolschema.RecordIDs(record.resource, fmt.Sprintf(
-				"The %s records to change, by id %s. One id is the normal case.",
-				record.kind, record.supplier), maxMasterRecordsPerStatusChange),
+				"The %s records to change, by id from %s. One id is the normal case.",
+				record.kind, record.lister), maxMasterRecordsPerStatusChange),
 			common.FieldStatus: agenttoolschema.Enum("The status to set. "+spec.statusNote,
 				spec.statuses),
 		},
-		Required:    []string{record.idsParam, common.FieldStatus},
-		SearchTerms: spec.searchTerms,
+		Required:      []string{record.idsParam, common.FieldStatus},
+		SearchTerms:   spec.searchTerms,
+		Prerequisites: []string{record.lister},
 	}), common.ReceivablePlan[*masterStatusChange[S], *masterStatusPlanned[T]]{
 		Request: spec.change,
 		Plan: func(

@@ -362,15 +362,16 @@ scenarios:
       Asked from the Desk on 2026-10-18. The person gives the gallons and
       the price; their product is their own figures multiplied, not a figure to start a sandbox
       for. The guard rewrote "$435.68" and the agent ran analyze_data to multiply two numbers.
+      A conversation reaches the fuel clerk's tools, so the purchase itself is proposed here.
     agent: Report analyst
     steps:
       - say: "log 112 gallons of diesel for TRC-001 bought in Texas yesterday at $3.89"
         expect:
           noCalls: [analyze_data]
-          noProposals: true
+          proposals: [{ tool: record_fuel_purchase, args: { quantity: 112, unitPrice: 3.89 } }]
           rubric: >
-            Says it cannot record fuel purchases itself and points to Fuel purchases with the
-            values to enter. If it gives the total, it is $435.68.
+            Proposes the purchase for TRC-001 in Texas with the person's own figures and says it
+            waits for approval. If it gives the total, it is $435.68.
 
   - name: analysis-trend-chart
     description: >

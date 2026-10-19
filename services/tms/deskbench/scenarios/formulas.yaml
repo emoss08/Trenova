@@ -80,7 +80,7 @@ scenarios:
       The same request made in the Desk rather than the studio. Formulas are authored in the
       studio and approved by an administrator, so the agent should draft or explain and send the
       person there, not claim to have saved a template.
-    agent: Formula Desk
+    agent: Bench · Formula Desk
     tags: [desk]
     steps:
       - say: "make me a new pricing formula for flatbed: 3.10 a mile plus a 150 tarp fee"

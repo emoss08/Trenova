@@ -13,6 +13,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/shared/intutils"
@@ -66,7 +67,11 @@ func (e *stepEvidence) reply() string {
 func (e *stepEvidence) proposals() []*ProposalRecord {
 	proposals := make([]*ProposalRecord, 0, 2)
 	for _, turn := range e.turns {
-		proposals = append(proposals, turn.Proposals...)
+		for _, proposal := range turn.Proposals {
+			if proposal.Tier != agent.TierAutoExecute {
+				proposals = append(proposals, proposal)
+			}
+		}
 	}
 
 	return proposals
@@ -341,13 +346,18 @@ func turnsCompleted(evidence *stepEvidence) CheckResult {
 		return CheckResult{Name: "a turn ran", Passed: false, Detail: "no turn started"}
 	}
 
+	stopped := evidence.run != nil && evidence.run.Stopped
 	problems := make([]string, 0, 1)
 	for _, turn := range evidence.turns {
-		if turn.Status.Terminal() && turn.Failure == "" && turn.CaptureError == "" {
+		failure := turn.Failure
+		if stopped {
+			failure = ""
+		}
+		if turn.Status.Terminal() && failure == "" && turn.CaptureError == "" {
 			continue
 		}
 		problems = append(problems, fmt.Sprintf("%s %s: %s",
-			turn.TurnID, turn.Status, joinErrors(turn.Failure, turn.CaptureError)))
+			turn.TurnID, turn.Status, joinErrors(failure, turn.CaptureError)))
 	}
 
 	return CheckResult{
@@ -758,11 +768,16 @@ func replyStates(reply, value string) bool {
 	return folded != "" && strings.Contains(stringutils.NormalizeIdentifier(reply), folded)
 }
 
+var zeroInWords = regexp.MustCompile(`(?i)\b(zero|none|nothing|no)\b`)
+
 func statesInWords(reply string, number decimal.Decimal) bool {
 	if !number.IsInteger() || number.IsNegative() {
 		return false
 	}
 	count := int(number.IntPart())
+	if count == 0 {
+		return zeroInWords.MatchString(reply)
+	}
 	word := intutils.SmallNumberWord(count)
 	if word == strconv.Itoa(count) {
 		return false

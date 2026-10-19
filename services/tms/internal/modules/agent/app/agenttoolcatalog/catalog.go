@@ -267,13 +267,13 @@ func (c *Catalog) Find(
 	return c.withFamilies(c.allowedSet(allowed), c.rank(allowed, query, limit, 1, false))
 }
 
-func (c *Catalog) MatchesStrongly(name, query string) bool {
+func (c *Catalog) StrongScore(name, query string) int {
 	index, ok := c.byName[name]
 	if !ok {
-		return false
+		return 0
 	}
 
-	return score(&c.entries[index], agentsearch.Terms(query), true) > 0
+	return score(&c.entries[index], agentsearch.Terms(query), true)
 }
 
 func (c *Catalog) MentionsAny(allowed []string, query string) bool {

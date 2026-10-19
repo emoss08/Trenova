@@ -62,7 +62,7 @@ scenarios:
     description: >
       Eleven FreshHaul reefers to LA exist locally; "the freshhaul load" is not one of them, so the
       agent should ask, not pick one.
-    agent: Shipment Assistant
+    agent: Bench · Shipment Assistant
     steps:
       - say: "cancel the freshhaul load to LA"
         expect:

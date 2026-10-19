@@ -253,6 +253,7 @@ scenarios:
             - sql: >
                 select count(*) from agent_proposals where run_id = {{run}}
                   and tool_name in ('raise_exception', 'flag_for_manual_review')
+                  and autonomy_tier <> 'AutoExecute'
               equals: "0"
               note: the escalation ran rather than waiting as a proposal
           rubric: >

@@ -73,6 +73,10 @@ func (t *UpdateTractorStatusTool) SearchTerms() []string {
 	return []string{"out of service", "maintenance", "available"}
 }
 
+func (t *UpdateTractorStatusTool) Prerequisites() []string {
+	return []string{tractorRecord.lister}
+}
+
 func (t *UpdateTractorStatusTool) Description() string {
 	return "Change the status of one or more tractors, which is what makes a truck " +
 		"available to dispatch or takes it off the board. " + equipmentStatusNote +
@@ -138,6 +142,10 @@ func (t *UpdateTrailerStatusTool) Name() string { return "update_trailer_status"
 
 func (t *UpdateTrailerStatusTool) SearchTerms() []string {
 	return []string{"out of service", "maintenance", "available"}
+}
+
+func (t *UpdateTrailerStatusTool) Prerequisites() []string {
+	return []string{trailerRecord.lister}
 }
 
 func (t *UpdateTrailerStatusTool) Description() string {

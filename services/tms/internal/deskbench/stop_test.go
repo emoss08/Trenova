@@ -7,6 +7,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -90,4 +91,34 @@ func TestStopWaitingRun_FailsTheCaseWhenTheRunWasNotWaiting(t *testing.T) {
 	require.Len(t, checks, 1)
 	assert.False(t, checks[0].Passed)
 	assert.Equal(t, "it was Completed, not waiting for a decision", checks[0].Detail)
+}
+
+func TestTurnsCompleted_TakesTheStopTheBenchMadeAsTheRunsOutcome(t *testing.T) {
+	t.Parallel()
+
+	turn := &TurnRecord{
+		Status:  conversation.AssistantTurnStatusFailed,
+		Failure: "the run was stopped while its proposals waited for a decision",
+	}
+
+	stopped := turnsCompleted(&stepEvidence{
+		turns: []*TurnRecord{turn},
+		run:   &runOutcome{Stopping: true, Stopped: true},
+	})
+	assert.True(t, stopped.Passed, stopped.Detail)
+
+	failed := turnsCompleted(&stepEvidence{
+		turns: []*TurnRecord{turn},
+		run:   &runOutcome{Stopping: true},
+	})
+	assert.False(t, failed.Passed, "a run the bench did not stop failed on its own")
+
+	captured := turnsCompleted(&stepEvidence{
+		turns: []*TurnRecord{{
+			Status:       conversation.AssistantTurnStatusFailed,
+			CaptureError: "the stopped run did not close within 1m",
+		}},
+		run: &runOutcome{Stopping: true, Stopped: true},
+	})
+	assert.False(t, captured.Passed)
 }

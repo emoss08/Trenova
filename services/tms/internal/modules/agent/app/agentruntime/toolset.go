@@ -217,7 +217,7 @@ func (s *Service) openToolSet(ctx context.Context, req *toolSetRequest) *toolSet
 		if name == agentdefinition.CoreToolReadAttachment && !req.attachments {
 			continue
 		}
-		if searchable && slices.Contains(deferredCoreTools, name) {
+		if searchable && defersCoreTool(name, req.unattended) {
 			waiting = append(waiting, name)
 			continue
 		}
@@ -275,6 +275,14 @@ var deferredCoreTools = []string{
 	agentdefinition.CoreToolGuideProfile,
 	agentdefinition.CoreToolRaiseException,
 	agentdefinition.CoreToolWaitUntil,
+}
+
+func defersCoreTool(name string, unattended bool) bool {
+	if unattended && name == agentdefinition.CoreToolRaiseException {
+		return false
+	}
+
+	return slices.Contains(deferredCoreTools, name)
 }
 
 // addConversational adds the tools that only mean something with a person
@@ -542,12 +550,9 @@ func (s *Service) resolveFind(
 		}
 	}
 
-	var reached []agentports.AgentToolDescriptor
-	if !s.catalog.MatchesStrongly(bestMatch(callable, added), need) {
-		reached = s.reachBeyond(ctx, set, actor, need)
-		for idx := range reached {
-			names = append(names, reached[idx].Name)
-		}
+	reached := s.reachBeyond(ctx, set, actor, need, s.strongestMatch(need, callable, added))
+	for idx := range reached {
+		names = append(names, reached[idx].Name)
 	}
 
 	if len(added) == 0 && len(callable) == 0 && len(reached) == 0 {
@@ -595,6 +600,7 @@ func (s *Service) reachBeyond(
 	set *toolSet,
 	actor *permissionports.RequestActor,
 	need string,
+	ownScore int,
 ) []agentports.AgentToolDescriptor {
 	if len(set.beyond) == 0 {
 		return nil
@@ -608,12 +614,29 @@ func (s *Service) reachBeyond(
 	}))
 	reached := make([]agentports.AgentToolDescriptor, 0, len(found))
 	for idx := range found {
+		if ownScore > 0 && s.catalog.StrongScore(found[idx].Name, need) <= ownScore {
+			continue
+		}
 		if set.offers(found[idx].Name) || s.load(set, found[idx].Name) {
 			reached = append(reached, found[idx])
 		}
 	}
 
 	return reached
+}
+
+func (s *Service) strongestMatch(
+	need string,
+	matches ...[]agentports.AgentToolDescriptor,
+) int {
+	strongest := 0
+	for _, descriptors := range matches {
+		for idx := range descriptors {
+			strongest = max(strongest, s.catalog.StrongScore(descriptors[idx].Name, need))
+		}
+	}
+
+	return strongest
 }
 
 // withNamedTools puts first the tools a need names outright. The prompt lists
@@ -657,17 +680,6 @@ func (s *Service) withNamedTools(
 
 func notToolNameRune(r rune) bool {
 	return (r < 'a' || r > 'z') && (r < '0' || r > '9') && r != '_'
-}
-
-func bestMatch(callable, added []agentports.AgentToolDescriptor) string {
-	if len(added) > 0 {
-		return added[0].Name
-	}
-	if len(callable) > 0 {
-		return callable[0].Name
-	}
-
-	return ""
 }
 
 // writeToolLines names each tool by its first sentence, and for one done

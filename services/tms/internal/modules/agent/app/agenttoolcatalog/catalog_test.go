@@ -417,14 +417,19 @@ func TestFindHybrid_StrongOnlyAppliesToTheSemanticRankingToo(t *testing.T) {
 	assert.Empty(t, found)
 }
 
-func TestMatchesStrongly(t *testing.T) {
+func TestStrongScore(t *testing.T) {
 	t.Parallel()
 
 	catalog := parameterOnlyCatalog()
 
-	assert.True(t, catalog.MatchesStrongly("list_commodities", "which commodity is hazmat"))
-	assert.False(t, catalog.MatchesStrongly("shipment_list", "commodity"))
-	assert.False(t, catalog.MatchesStrongly("no_such_tool", "commodity"))
+	assert.Positive(t, catalog.StrongScore("list_commodities", "which commodity is hazmat"))
+	assert.Greater(
+		t,
+		catalog.StrongScore("list_commodities", "which commodity is hazmat"),
+		catalog.StrongScore("list_commodities", "which commodity"),
+	)
+	assert.Zero(t, catalog.StrongScore("shipment_list", "commodity"))
+	assert.Zero(t, catalog.StrongScore("no_such_tool", "commodity"))
 }
 
 // Match is what a search found and nothing more: an agent recommendation
@@ -483,7 +488,7 @@ func TestMatch_KeepsATieWhenEmbeddingsJoinTheRanking(t *testing.T) {
 		Semantic: NewSemantic(map[string]float64{
 			"shipment_create": 0.62,
 			"shipment_get":    0.62,
-			"invoice_list":   0.11,
+			"invoice_list":    0.11,
 		}),
 	})
 

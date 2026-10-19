@@ -4736,3 +4736,463 @@ findings:
     fix: >
       The desk is the fire step's template. splits.yaml is regenerated, and
       TestScenarioStratum_GroupsAnUnattendedScenarioByItsTemplate pins it.
+
+  - id: DB-208
+    title: A find_tools result that loads tools is refused by the Claude API
+    status: fixed
+    severity: critical
+    area: model adapter / anthropic deferred tools
+    found: 2026-10-19, .deskbench/runs/20261019-125417-run (Pass 1, the new scenarios)
+    models: [claude-haiku-5-5]
+    scenarios:
+      - dispatch-desk-reaches-the-ar-aging
+      - unattended-billing-stopped-while-waiting-closes-the-run
+    problem: >
+      Every turn whose find_tools call loaded a tool failed on the next model call with a 400,
+      "Tool definitions/code execution functions cannot be mixed with other content". The Desk
+      showed "The assistant could not finish this reply" and unattended runs ended Failed.
+    evidence: >
+      10 of the 400s in that run's worker.log; calls/dispatch-desk-reaches-the-ar-aging--…--1/
+      turn01-call012.json is the tool message with both Content and ToolReferences. No earlier
+      local run had sent a tool reference: deferred loading arrived in #822 that morning.
+    cause: >
+      anthropicToolResult put find_tools' explanation and the tool_reference blocks in one
+      tool_result. The API takes a tool_result that loads tools only when it holds nothing but
+      tool_reference blocks, and the wire golden pinned the refused shape.
+    fix: >
+      A result that loads tools holds only its references; its text goes in a text block after
+      every tool_result of the message, opened with the tool and call it answers
+      ("find_tools (toolu_…):"), so two searches in one reply stay apart. An error result, or one
+      left with no references, keeps its text inside as before. This matches the Responses
+      adapter, which already sends the text apart from tool_search_output.
+    files:
+      - services/tms/internal/infrastructure/agentcompletion/modeladapter/anthropic.go
+      - services/tms/internal/infrastructure/agentcompletion/modeladapter/anthropicwire_internal_test.go
+      - services/tms/internal/infrastructure/agentcompletion/modeladapter/testdata/anthropic_wire/deferred_haiku_5_5_medium_stream.json
+    fixedIn: >
+      .deskbench/runs/20261019-131140-run and 20261019-132324-run: no 400 in either worker.log; dispatch-desk-reaches-the-ar-aging 3/3, unattended-billing-stopped-while-waiting-closes-the-run 3/3 (20261019-132930-run).
+
+
+  - id: DB-209
+    title: On a fresh database every unattended run is a shadow run and no proposal can be decided
+    status: fixed
+    severity: high
+    area: deskbench / agent controls
+    found: 2026-10-19, .deskbench/runs/20261019-125417-run (Pass 1)
+    models: [claude-haiku-5-5]
+    scenarios:
+      - unattended-billing-escalation-runs-under-a-propose-ceiling
+      - unattended-billing-escalation-keeps-a-tier-a-person-set
+      - approve-two-settlements-in-one-go
+    problem: >
+      The escalation runs ended ShadowCompleted with raise_exception Simulated or Pending, and
+      every decision the bench made, its end-of-case rejections included, was refused with
+      "Proposals cannot be actioned while all agents are paused". A proposal left Pending by one
+      trial was counted by the next trial's database check (approve-two-settlements #2 got 2,
+      want 1).
+    evidence: >
+      agent_controls.shadow_mode was true for the bench organization, its row created when the
+      database was reset that morning; live.log lines "could not reject … all agents are paused".
+    cause: >
+      A new organization's agent control starts with shadow mode ("Pause all agents") on
+      (agentcontrolrepository GetOrCreate), and EffectiveShadow ORs it with the agent's own flag.
+      The bench turns the agent's shadow off but never the organization's, so its results
+      depended on whether someone had flipped the switch on that database.
+    fix: >
+      The bench's worker reads the agent control through unshadowed, which reports shadow mode
+      off and keeps the stored switch on any update, so runs and decisions are live in the
+      bench's own process and the person's setting is never written.
+    files:
+      - services/tms/internal/deskbench/unshadowed.go
+      - services/tms/internal/deskbench/unshadowed_test.go
+      - services/tms/internal/deskbench/app.go
+    fixedIn: >
+      .deskbench/runs/20261019-131140-run: approve-two-settlements-in-one-go 1/2 → 3/3, unattended-billing-escalation-keeps-a-tier-a-person-set 0/2 → 3/3, no refused decision in live.log.
+
+
+  - id: DB-210
+    title: find_tools never reaches the person's other agents when one word of the need is in an own tool
+    status: fixed
+    severity: high
+    area: agent runtime / find_tools discovery across desks
+    found: 2026-10-19, .deskbench/runs/20261019-125417-run and 20261019-131140-run
+    models: [claude-haiku-5-5]
+    scenarios:
+      - dispatch-desk-reaches-the-ar-aging
+      - billing-lead-delegate-never-writes
+    problem: >
+      Asked for "accounts receivable aging by customer", the dispatch desk loaded
+      shipment_update_hold and searched four times without finding get_ar_aging. The billing
+      lead, asked to put a load on hold, was told "Nothing new matched" and sent the person to do
+      it by hand, although shipment_place_hold was among the tools the turn could reach.
+    evidence: >
+      find_tools results in both transcripts list only own tools; get_ar_aging and
+      shipment_place_hold are in the turns' declared tool names.
+    cause: >
+      resolveFind searched beyond the agent only when its best own match did not
+      MatchesStrongly, and that was true for any single shared word in a name or description:
+      "customer" in shipment_update_hold's description, "shipment" in the billing queue tools.
+    fix: >
+      The reached tools are always searched, and one is loaded when it matches the need more
+      strongly than the best own match (Catalog.StrongScore); a reached tool that only matches a
+      parameter, or one an own tool matches as well, still is not.
+    files:
+      - services/tms/internal/modules/agent/app/agentruntime/toolset.go
+      - services/tms/internal/modules/agent/app/agentruntime/toolset_test.go
+      - services/tms/internal/modules/agent/app/agenttoolcatalog/catalog.go
+      - services/tms/internal/modules/agent/app/agenttoolcatalog/catalog_test.go
+    fixedIn: >
+      .deskbench/runs/20261019-132324-run: dispatch-desk-reaches-the-ar-aging 0/3 → 3/3 (get_ar_aging loaded from the Receivables desk), billing-lead-delegate-never-writes 0/3 → 3/3.
+
+
+  - id: DB-211
+    title: billing-lead-delegate-never-writes named its agent without the bench prefix
+    status: fixed
+    severity: low
+    area: deskbench / scenarios
+    found: 2026-10-19, .deskbench/runs/20261019-125417-run
+    scenarios: [billing-lead-delegate-never-writes]
+    problem: The case never ran ("no enabled chat agent named \"Billing lead\"").
+    cause: >
+      Bench agents are created as "Bench · <name>" and every other scenario names them so; #828
+      wrote "Billing lead".
+    fix: The scenario names "Bench · Billing lead".
+    files:
+      - services/tms/deskbench/scenarios/profiles.yaml
+    fixedIn: >
+      .deskbench/runs/20261019-131140-run: the case runs; 3/3 in 20261019-132324-run.
+
+
+  - id: DB-212
+    title: The Propose-ceiling escalation check counted the escalation that ran
+    status: fixed
+    severity: low
+    area: deskbench / scenarios
+    found: 2026-10-19, .deskbench/runs/20261019-131140-run
+    models: [claude-haiku-5-5]
+    scenarios: [unattended-billing-escalation-runs-under-a-propose-ceiling]
+    problem: >
+      Every trial failed "the escalation ran rather than waiting as a proposal — got 1, want 0"
+      while its raise_exception had run.
+    evidence: >
+      The trials' raise_exception rows are Executed at AutoExecute with no decision; the tier
+      case's are Propose and held by tool_tier.
+    cause: >
+      A tool that runs at once is recorded as a proposal row with status Executed, and the check
+      counted every raise_exception row.
+    fix: The check counts rows whose autonomy tier is not AutoExecute.
+    files:
+      - services/tms/deskbench/scenarios/unattended-billing.yaml
+    fixedIn: >
+      .deskbench/runs/20261019-132324-run: unattended-billing-escalation-runs-under-a-propose-ceiling 0/3 → 3/3.
+
+
+  - id: DB-213
+    title: The development seed has no email profile, so a run cannot ask for a document
+    status: open
+    severity: medium
+    area: development seed / email profiles
+    found: 2026-10-19, .deskbench/runs/20261019-131140-run
+    models: [claude-haiku-5-5]
+    scenarios:
+      - unattended-billing-exception-missing-pod
+      - unattended-billing-stopped-while-waiting-closes-the-run
+    problem: >
+      On a freshly seeded database, shipment_request_documents cannot be proposed:
+      list_email_profiles answers "No email profiles are visible to you in this organization",
+      and the run escalates instead, so nothing waits to be stopped.
+    evidence: email_profiles was empty after the reset; the scenarios passed on earlier databases.
+    cause: >
+      No seed creates an email profile (13_detention.go creates customer email profiles only);
+      older development databases had one made by hand.
+    fix: >
+      Not fixed in code. An email profile was created by hand for this run. A development seed
+      for one, or setup in the scenarios that need it, would make a fresh database enough.
+
+  - id: DB-214
+    title: Two parallel get calls of one kind merge into one table and drop the first card
+    status: open
+    severity: medium
+    area: agent runtime / result artifacts
+    found: 2026-10-19, .deskbench/runs/20261019-125417-run
+    models: [claude-haiku-5-5]
+    scenarios: [approve-two-settlements-in-one-go]
+    problem: >
+      settlement_get_driver called twice in one reply produced a "Driver settlement" card and then
+      a "Driver settlements (2)" table, and the card was removed (artifact_removed). The model had
+      linked the card for Jane Doe, so the reply lost that link and the table link sat beside
+      Sarah Williams alone.
+    evidence: >
+      transcript of approve-two-settlements-in-one-go #2, model call #8 to the reply; event
+      artifact_removed art_01M5AHE0XPY8E7ZMT3DZXACHMS.
+    cause: >
+      By design (assistantservice/artifact_bunch.go) a second get of one tool in a turn folds the
+      earlier card into a table and retires the card. When the two calls run in parallel, the
+      first call's result has already offered the model the card's link, so the reply links an
+      artifact that is gone and the reply pass drops the link.
+    fix: >
+      Not fixed; no case failed on it. The result of a call whose card a later call in the same
+      batch retired needs to name the table instead, which changes how a batch's results are
+      put together.
+
+  - id: DB-215
+    title: A run the bench stopped on purpose failed the case's "every turn finished" check
+    status: fixed
+    severity: medium
+    area: deskbench / checks
+    found: 2026-10-19, .deskbench/runs/20261019-132324-run
+    models: [claude-haiku-5-5]
+    scenarios: [unattended-billing-stopped-while-waiting-closes-the-run]
+    problem: >
+      Every trial passed its own checks (stopped while waiting, ended Failed, proposal expired,
+      the run says why) and still failed "every turn finished — Failed: the run was stopped while
+      its proposals waited for a decision".
+    cause: >
+      stopWaitingRun copies the stopped run's error into the turn's Failure, and turnsCompleted
+      fails any turn with a Failure, so the outcome a stopWhileWaiting step asks for counted
+      against it.
+    fix: >
+      turnsCompleted takes a run the bench stopped as the step's outcome and ignores its failure;
+      a capture error still fails it, and a run the bench did not stop still fails on its own
+      error.
+    files:
+      - services/tms/internal/deskbench/checks.go
+      - services/tms/internal/deskbench/stop_test.go
+    fixedIn: >
+      .deskbench/runs/20261019-132930-run: unattended-billing-stopped-while-waiting-closes-the-run 0/3 → 3/3.
+
+  - id: DB-216
+    title: Seven scenarios named agents that only existed on an older database
+    status: open
+    severity: high
+    area: deskbench / scenarios and bench agents
+    found: 2026-10-19, .deskbench/runs/20261019-133049-run (Pass 2)
+    models: [claude-haiku-5-5]
+    scenarios:
+      - ambiguous-load-asks
+      - create-shipment-from-a-sentence
+      - correct-a-weight
+      - cancel-then-think-better
+      - where-is-it-will-it-make-it
+      - lifecycle-handed-between-agents
+      - formula-asked-for-in-the-desk
+    problem: >
+      None of them ran: "no enabled chat agent named \"Shipment Assistant\"" (six) and "\"Formula
+      Desk\"" (one) on a freshly seeded database.
+    cause: >
+      Both were made by hand in AI Control on an earlier database; neither the seed nor
+      deskbench/agents.yaml creates them. Bench · Shipment desk was written as the stand-in
+      ("holds the same tools as an agent an organization would build") but these scenarios were
+      never moved to it.
+    fix: >
+      agents.yaml defines Shipment Assistant (the Shipment desk spec, by YAML merge) and Formula
+      Desk, and the scenarios name them with the bench prefix. Naming them, not repointing them at
+      Shipment desk, keeps each scenario's stratum, so splits.yaml does not move
+      (TestScenarioSplits passes unchanged).
+    files:
+      - services/tms/deskbench/agents.yaml
+      - services/tms/deskbench/scenarios/shipments.yaml
+      - services/tms/deskbench/scenarios/conversation.yaml
+      - services/tms/deskbench/scenarios/lifecycle.yaml
+      - services/tms/deskbench/scenarios/formulas.yaml
+
+  - id: DB-217
+    title: Every seeded driver is non-compliant, so no load can be assigned
+    status: open
+    severity: high
+    area: development seed / worker credentials
+    found: 2026-10-19, .deskbench/runs/20261019-133049-run (Pass 2)
+    models: [claude-haiku-5-5]
+    scenarios: [assign-a-driver, lifecycle-one-agent-book-to-posted-invoice]
+    problem: >
+      search_worker reported David Park "Credentials are not compliant" and the agent would not
+      propose the assignment; every worker profile on the fresh database was NonCompliant.
+    evidence: >
+      worker_profiles.compliance_status NonCompliant for all eight drivers while their seeded
+      credentials were Active and in date.
+    cause: >
+      The driver qualification migration (20261016000000) added three required credential types
+      (ROAD_TEST, ANNUAL_REVIEW, VIOLATION_CERT); the credential seed derives compliance with the
+      domain's rule but never seeded those types, so every driver was missing three.
+    fix: >
+      The credential seed gives every driver the three (road test without expiry, the two annual
+      ones about eight months out) and is v1.1.0, so `trenova db seed` applies it to an existing
+      database; ON CONFLICT on the one-active-per-type index skips what is there and compliance is
+      derived again. Six of eight drivers are compliant after it; the seed's deliberately expired
+      medical card stays.
+    files:
+      - services/tms/internal/infrastructure/database/seeds/development/18_worker_credential.go
+
+  - id: DB-218
+    title: The SEED-SHP-008 in-transit setup leaves the moving leg without a driver
+    status: open
+    severity: medium
+    area: deskbench / scenarios
+    found: 2026-10-19, .deskbench/runs/20261019-133049-run (Pass 2)
+    models: [claude-haiku-5-5]
+    scenarios: [mark-a-move-delivered, where-is-it-will-it-make-it]
+    problem: >
+      Told "driver on SEED-SHP-008 just delivered", the agent found the move in transit with no
+      driver and asked which driver, so nothing was proposed.
+    cause: >
+      The shared setup puts the second move InTransit but the seed has no assignment on it; older
+      databases had one from earlier work. The state it built cannot happen in the product.
+    fix: >
+      The setup also puts John Smith, TRC-003 and TRL-002 on that move (a fixed assignment id,
+      put back in progress when a run completed it).
+    files:
+      - services/tms/deskbench/scenarios/shipments.yaml
+
+  - id: DB-219
+    title: Writes that name their id source only in prose are preselected without it
+    status: open
+    severity: medium
+    area: agent tools / prerequisites
+    found: 2026-10-19, .deskbench/runs/20261019-133049-run (Pass 2)
+    models: [claude-haiku-5-5]
+    scenarios: [tractor-in-the-shop, assign-a-driver]
+    problem: >
+      Asked "is trc-004 back from the shop yet", the turn opened with list_trailers and
+      update_tractor_status but not list_tractors, and searched trailers five times for TRC-004.
+    cause: >
+      update_tractor_status says "Get the ids from list_tractors" but declares no Prerequisites,
+      so preselection, which loads a tool's declared prerequisites beside it, did not load the
+      read. The master-data kit's edit, status and delete tools had the same gap: each record
+      named its list tool only as prose ("from list_carriers").
+    fix: >
+      A master record names its list tool (lister); the kit writes it into the descriptions and
+      declares it as the edit, status, delete and locate tools' prerequisite, and
+      update_tractor_status and update_trailer_status declare theirs. The catalog snapshot
+      gains only the prerequisite lists; no description text changed.
+    files:
+      - services/tms/internal/modules/agent/app/agenttools/masterdatatools/masterdata_kit.go
+      - services/tms/internal/modules/agent/app/agenttools/masterdatatools/fleet_tools.go
+      - services/tms/internal/modules/agent/app/agentevalgate/testdata/catalog.golden.json
+
+  - id: DB-220
+    title: A fact whose truth is zero failed a reply that said "no" or "none"
+    status: open
+    severity: low
+    area: deskbench / checks
+    found: 2026-10-19, .deskbench/runs/20261019-133049-run (Pass 2)
+    models: [claude-haiku-5-5]
+    scenarios: [ready-to-invoice]
+    problem: >
+      "No delivered shipments are waiting to be transferred to billing" failed "truth 0; missing
+      from reply: 0", though the scenario's note says an empty group need not be named as zero.
+    cause: statesInWords read 0 only as "zero".
+    fix: A zero is stated by zero, none, nothing or no.
+    files:
+      - services/tms/internal/deskbench/checks.go
+      - services/tms/internal/deskbench/checks_test.go
+
+  - id: DB-221
+    title: The proposals checks counted tools that ran at once
+    status: open
+    severity: medium
+    area: deskbench / checks
+    found: 2026-10-19, .deskbench/runs/20261019-133049-run (Pass 2)
+    models: [claude-haiku-5-5]
+    scenarios:
+      - unattended-insight-acme-on-time-decline
+      - unattended-insight-unbilled-aging-not-borne-out
+    problem: >
+      Both insight runs failed "no proposals — raise_exception" for an escalation that had run.
+    cause: >
+      A run's rows come from agent_proposals, which records a tool that ran at AutoExecute too
+      (raise_exception since DB-205, create_report and remember in chat), and the proposals and
+      noProposals checks counted every row.
+    fix: >
+      A proposal, for both checks, is a row that waited for a person: its tier is not
+      AutoExecute. The transcript still lists every row.
+    files:
+      - services/tms/internal/deskbench/checks.go
+      - services/tms/internal/deskbench/checks_test.go
+
+  - id: DB-222
+    title: An unattended run's escalation was deferred and lost to wait_until in find_tools
+    status: open
+    severity: high
+    area: agent runtime / deferred core tools
+    found: 2026-10-19, .deskbench/runs/20261019-133049-run (Pass 2)
+    models: [claude-haiku-5-5]
+    scenarios: [unattended-monitor-pickup-window-open-nobody-on-it]
+    problem: >
+      LoadMonitor found SEED-SHP-001's pickup window open with nobody on it, searched twice for a
+      way to raise an exception, was offered flag_for_manual_review (billing items only), and
+      ended flagging nothing.
+    evidence: >
+      raise_exception is declared deferred in the run's tool list; replaying the run's need on the
+      catalog ranks it 8, tied with wait_until and get_dispatch_board, below the six-result cap.
+    cause: >
+      #822 defers the core tools "few turns call" on every turn that can search, raise_exception
+      among them. Its own description says it only works inside an agent run: for a run it is how
+      an unresolved case ends, and leaving it to a search made that depend on a tie-break.
+    fix: >
+      An unattended run loads raise_exception from the start (defersCoreTool); a chat turn still
+      defers it. agent-runtime.md says so.
+    files:
+      - services/tms/internal/modules/agent/app/agentruntime/toolset.go
+      - services/tms/internal/modules/agent/app/agentruntime/toolset_test.go
+      - docs/engineering/agent-runtime.md
+
+  - id: DB-223
+    title: Two scenario expectations predate a conversation reaching other desks' tools
+    status: open
+    severity: low
+    area: deskbench / scenarios
+    found: 2026-10-19, .deskbench/runs/20261019-133049-run (Pass 2)
+    models: [claude-haiku-5-5]
+    scenarios: [analysis-not-for-the-persons-own-arithmetic, palette-customer-by-name]
+    problem: >
+      The report analyst proposed record_fuel_purchase from the fuel clerk's desk and failed "no
+      proposals"; the palette answered Peak's question from shipment_list on the mentioned
+      customer's id and failed "called get_customer or list_customers or search_customers".
+    cause: >
+      The first was written when the report analyst could not record a purchase (#821 made the
+      other desks' tools reachable); the second asked for a customer lookup the mention had
+      already made unnecessary. Neither scenario's point (no analyze_data for arithmetic; no
+      answer from agent runs) was missed.
+    fix: >
+      The fuel case expects the purchase proposed with the person's figures; the palette case
+      also accepts shipment_list.
+    files:
+      - services/tms/deskbench/scenarios/analysis.yaml
+      - services/tms/deskbench/scenarios/palette.yaml
+
+  - id: DB-224
+    title: The development seed posts no invoices, so receivables scenarios read an empty ledger
+    status: open
+    severity: medium
+    area: development seed / invoices
+    found: 2026-10-19, .deskbench/runs/20261019-133049-run (Pass 2)
+    models: [claude-haiku-5-5]
+    scenarios:
+      - analysis-ar-aging-asked-outright
+      - analysis-chart-asked-for
+      - analysis-follow-up-revises-the-analysis
+      - analysis-two-reports-together
+      - analysis-figure-checked-against-the-database
+    problem: >
+      The AR aging and open invoice reports returned no rows, and the agent rightly said there was
+      nothing to analyze instead of calling analyze_data.
+    evidence: >
+      At 13:31 no invoice was Posted; the one Posted invoice was posted at 13:44 by
+      lifecycle-one-agent-book-to-posted-invoice in the same run.
+    cause: >
+      The seed creates draft invoices only; older databases had posted invoices from earlier runs.
+    fix: Not fixed. A development seed of posted, partly paid and overdue invoices is needed.
+
+  - id: DB-225
+    title: No portal site is set up on a fresh database
+    status: open
+    severity: low
+    area: environment / portal automation
+    found: 2026-10-19, .deskbench/runs/20261019-133049-run (Pass 2)
+    models: [claude-haiku-5-5]
+    scenarios: [portal-what-can-you-reach, portal-detail-without-record-ids]
+    problem: list_portal_sites returned no sites; the scenarios expect the "Trenova App" site.
+    cause: >
+      Portal sites are set by an administrator with the cloud browser vendor's account; the older
+      database had one.
+    fix: Not fixed; it needs a site configured with the vendor account.
