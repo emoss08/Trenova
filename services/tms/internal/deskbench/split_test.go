@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/deskbench"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/evalsplit"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -108,4 +109,26 @@ func TestLoadScenarios_RefusesAHandWrittenHeldOutSplit(t *testing.T) {
 
 	_, err := deskbench.LoadScenarios([]string{file})
 	require.ErrorContains(t, err, "assigned by rule")
+}
+
+func TestScenarioStratum_GroupsAnUnattendedScenarioByItsTemplate(t *testing.T) {
+	t.Parallel()
+
+	fired := func(event string) *deskbench.Scenario {
+		return &deskbench.Scenario{
+			Name: "unattended-" + event,
+			Steps: []deskbench.Step{{Fire: &deskbench.Fire{
+				Agent: "BillingException",
+				Event: agent.EventKind(event),
+			}}},
+		}
+	}
+
+	exception := fired("billing_queue.item_exception")
+	hold := fired("billing_queue.item_on_hold")
+
+	assert.Equal(t, evalsplit.Stratum{Desk: "BillingException", Mode: evalsplit.Unattended},
+		exception.Stratum())
+	assert.Equal(t, exception.Stratum(), hold.Stratum(),
+		"one template is one desk, whatever event fires it")
 }

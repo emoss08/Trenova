@@ -110,6 +110,7 @@ func (t *FlagManualReviewTool) Policy() agentports.ToolPolicy {
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
+		Escalates:     true,
 		Effect:        agent.ToolEffectChange,
 		Reversible:    true,
 		ReadsExternal: agent.ExternalReadNever,

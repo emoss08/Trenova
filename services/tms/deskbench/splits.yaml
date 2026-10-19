@@ -11,10 +11,35 @@ strata:
       - billing-agent-asked-a-dispatch-question
       - send-a-delivered-load-to-billing
   - stratum:
+      desk: BillingException
+      mode: unattended
+    heldOut:
+      - unattended-billing-on-hold-paperwork-not-in
+  - stratum:
+      desk: CarrierRiskDesk
+      mode: unattended
+    heldOut:
+      - unattended-carrier-risk-cedar-street-authority-revoked
+  - stratum:
       desk: Compliance desk
       mode: chat
     heldOut:
       - expiring-soon
+  - stratum:
+      desk: CredentialDesk
+      mode: unattended
+    heldOut:
+      - unattended-credentials-carlos-mvr-review-due-in-a-month
+  - stratum:
+      desk: CustomerUpdateDesk
+      mode: unattended
+    heldOut:
+      - unattended-customer-update-departure-on-a-covered-move
+  - stratum:
+      desk: DetentionDesk
+      mode: unattended
+    heldOut:
+      - unattended-detention-notice-due-freshhaul
   - stratum:
       desk: Dispatch desk
       mode: chat
@@ -28,11 +53,21 @@ strata:
       - portal-read-only-site-refuses-booking
       - portal-site-not-set-up
   - stratum:
+      desk: DispatchAssignment
+      mode: unattended
+    heldOut:
+      - unattended-dispatch-globaltrade-move-loses-driver-inside-window
+  - stratum:
       desk: EDI desk
       mode: chat
     heldOut:
       - edi-accepted-with-errors
       - edi-preview-214
+  - stratum:
+      desk: EDIDesk
+      mode: unattended
+    heldOut:
+      - unattended-edi-quarantine-missing-isa-header
   - stratum:
       desk: Exceptions
       mode: chat
@@ -51,6 +86,26 @@ strata:
       mode: chat
     heldOut:
       - where-do-i-set-fuel-surcharge
+  - stratum:
+      desk: InsightAnalyst
+      mode: unattended
+    heldOut:
+      - unattended-insight-unbilled-aging-not-borne-out
+  - stratum:
+      desk: IntakeDesk
+      mode: unattended
+    heldOut:
+      - unattended-intake-peak-asks-where-po-88213-is
+  - stratum:
+      desk: LoadEntryCheck
+      mode: unattended
+    heldOut:
+      - unattended-entry-check-rate-far-below-contract
+  - stratum:
+      desk: LoadMonitor
+      mode: unattended
+    heldOut:
+      - unattended-monitor-late-delivery-reads-the-board-first
   - stratum:
       desk: Master data steward
       mode: chat
@@ -83,6 +138,11 @@ strata:
       - analysis-trend-chart
       - revenue-by-customer
   - stratum:
+      desk: ServiceFailureDesk
+      mode: unattended
+    heldOut:
+      - unattended-service-failure-receiver-closed-dock
+  - stratum:
       desk: Settlements clerk
       mode: chat
     heldOut:
@@ -100,72 +160,12 @@ strata:
       - shipment-desk-creates-a-location
       - shipment-from-a-rate-confirmation-with-new-parties
   - stratum:
-      desk: Workforce coordinator
-      mode: chat
-    heldOut:
-      - whos-off-this-week
-  - stratum:
-      desk: carrier_intel.event_opened for CarrierRiskDesk
-      mode: unattended
-    heldOut:
-      - unattended-carrier-risk-cedar-street-authority-revoked
-  - stratum:
-      desk: detention.notice_due for DetentionDesk
-      mode: unattended
-    heldOut:
-      - unattended-detention-notice-due-freshhaul
-  - stratum:
-      desk: detention.occurrence_opened for DetentionDesk
-      mode: unattended
-    heldOut:
-      - unattended-detention-clock-opens-notice-already-sent
-  - stratum:
-      desk: document.extracted for ShipmentIntake
+      desk: ShipmentIntake
       mode: unattended
     heldOut:
       - unattended-intake-acme-tender-document-ready-to-enter
   - stratum:
-      desk: edi.file_quarantined for EDIDesk
-      mode: unattended
+      desk: Workforce coordinator
+      mode: chat
     heldOut:
-      - unattended-edi-quarantine-missing-isa-header
-  - stratum:
-      desk: inbound_message.classified for IntakeDesk
-      mode: unattended
-    heldOut:
-      - unattended-intake-peak-asks-where-po-88213-is
-  - stratum:
-      desk: insight.detected for InsightAnalyst
-      mode: unattended
-    heldOut:
-      - unattended-insight-unbilled-aging-not-borne-out
-  - stratum:
-      desk: scheduled run of LoadMonitor
-      mode: unattended
-    heldOut:
-      - unattended-monitor-late-delivery-reads-the-board-first
-  - stratum:
-      desk: service_failure.detected for ServiceFailureDesk
-      mode: unattended
-    heldOut:
-      - unattended-service-failure-receiver-closed-dock
-  - stratum:
-      desk: shipment.created for LoadEntryCheck
-      mode: unattended
-    heldOut:
-      - unattended-entry-check-rate-far-below-contract
-  - stratum:
-      desk: shipment_move.arrived for CustomerUpdateDesk
-      mode: unattended
-    heldOut:
-      - unattended-customer-update-arrival-customer-wants-nothing
-  - stratum:
-      desk: shipment_move.unassigned for DispatchAssignment
-      mode: unattended
-    heldOut:
-      - unattended-dispatch-globaltrade-move-loses-driver-inside-window
-  - stratum:
-      desk: worker_credential.expiring for CredentialDesk
-      mode: unattended
-    heldOut:
-      - unattended-credentials-carlos-mvr-review-due-in-a-month
+      - whos-off-this-week

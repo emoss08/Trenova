@@ -1860,7 +1860,8 @@ still drawn around a point, so it still needs one.
 The prompt's tool section groups changes only by what is certain before a
 call: a change that always records a proposal (`ToolSummary.AlwaysProposes`,
 from `agenttoolpolicy.AlwaysProposes`: the tool's promotable tier, its egress
-or the agent's ceiling keeps it below AutoExecute), one that runs at once for
+or the agent's ceiling keeps it below AutoExecute, except for an escalation, a
+tool whose policy sets `Escalates`, which runs at once whatever the ceiling), one that runs at once for
 the person's own records (`PersonalRunsUnasked`), and the rest, which run at
 once or are recorded as a proposal depending on what the call reaches, with
 the result saying which and why. It used to call a tool whose static tier was
@@ -2255,6 +2256,13 @@ conversation is the same from the first call of the turn to the last.
    decided; the run recounts what is still pending after each one, which is
    right for a plan that decides several steps under one signal and for a
    proposal decided twice in a race.
+
+Whatever ends the run, its record is written on a disconnected context, as a
+stopped assistant turn's is. A run cancelled while it waits for decisions
+expires what is still pending and is recorded as failed ("the run was stopped
+while its proposals waited for a decision"). Before this, every activity after
+the cancellation ran on the cancelled context and none could start, so the
+run stayed `AwaitingDecision` with its proposals pending for good.
 
 An approved proposal is executed by the decision service, not by the run: that
 path carries the modification checks, the trust ledger, memory and follow-ups,

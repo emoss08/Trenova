@@ -123,6 +123,7 @@ func (t *RaiseExceptionTool) Policy() agentports.ToolPolicy {
 		DefaultTier:   agent.TierAutoExecute,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
+		Escalates:     true,
 		Effect:        agent.ToolEffectChange,
 		ReadsExternal: agent.ExternalReadNever,
 		Rationale: "Records an exception against the run itself for a person inside the " +

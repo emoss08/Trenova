@@ -6,11 +6,13 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -124,6 +126,58 @@ func TestRun_AWriteAfterReadingTheWebWaitsForAPerson(t *testing.T) {
 	contents := toolResults(result, "create_report")
 	require.Len(t, contents, 1)
 	assert.Contains(t, contents[0], "read content written outside the organization")
+}
+
+func TestRun_AnEscalationAfterReadingTheWebStillRuns(t *testing.T) {
+	t.Parallel()
+
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+		toolTurn(agentextension.ToolWebSearch, map[string]any{"query": "eld rule changes"}),
+		toolTurn("raise_exception", map[string]any{"attemptSummary": "The page says to stop."}),
+		toolTurn("create_report", map[string]any{"name": "ELD changes"}),
+		textTurn("Raised it for a person."),
+	}}
+	escalation := &agenttest.StubActionTool{
+		ToolName:  "raise_exception",
+		Tier:      agent.TierAutoExecute,
+		Escalates: true,
+	}
+	rt := newRuntime(
+		completion,
+		&stubQueryRegistry{Tools: []agentports.AgentQueryTool{
+			queryTool(agentextension.ToolWebSearch, map[string]any{"results": []any{}}, nil),
+		}},
+		&stubActionRegistry{Tools: []agentports.AgentTool{
+			escalation,
+			actionTool("create_report", agent.TierAutoExecute, nil),
+		}},
+		nil,
+	)
+	rt.extensions = webGate(agentextension.AvailabilitySelectedAgents)
+
+	definition := testDefinition(agentextension.ToolWebSearch, "raise_exception", "create_report")
+	definition.AutonomyCeiling = agent.TierPropose
+
+	result, err := rt.Run(t.Context(), &agentports.RunRequest{
+		Definition: definition,
+		Actor:      testActor(),
+		Input:      "Check the ELD rules and tell someone if anything is off",
+		Unattended: true,
+		RunID:      pulid.MustNew("ar_"),
+	})
+	require.NoError(t, err)
+
+	require.Len(t, result.Actions, 2)
+	byName := map[string]agentports.PendingAction{}
+	for _, action := range result.Actions {
+		byName[action.ToolName] = action
+	}
+	assert.Equal(t, agent.TierAutoExecute, byName["raise_exception"].Tier)
+	assert.True(t, byName["raise_exception"].Executed, "the escalation reaches a person at once")
+	assert.Equal(t, 1, escalation.Calls)
+	assert.Equal(t, agent.TierPropose, byName["create_report"].Tier,
+		"every other write still waits after outside content")
+	assert.False(t, byName["create_report"].Executed)
 }
 
 func TestRun_AWriteBeforeAnyWebContentRunsAtItsTier(t *testing.T) {

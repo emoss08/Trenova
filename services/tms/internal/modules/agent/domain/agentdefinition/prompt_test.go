@@ -186,6 +186,22 @@ func TestBuildSystemPrompt_ListsPersonalToolsAsRunningAtOnceForThePerson(t *test
 	assert.NotContains(t, prompt, "records a proposal: remember")
 }
 
+func TestBuildSystemPrompt_ListsEscalationsAsRunningAtOnce(t *testing.T) {
+	t.Parallel()
+
+	rc := fullContext()
+	rc.Tools = append(rc.Tools, agentdefinition.ToolSummary{
+		Name: "raise_exception", Tier: agent.TierAutoExecute, Escalates: true,
+	})
+
+	prompt := definitionWithInstructions("Help.").BuildSystemPrompt(rc)
+
+	assert.Contains(t, prompt, "- Changes that run at once whatever else waits, because they "+
+		"hand the run to a person in the organization: raise_exception")
+	assert.NotContains(t, prompt, "the result says which and why: raise_exception")
+	assert.NotContains(t, prompt, "for a person to decide: raise_exception")
+}
+
 // A tool done as a sequence names the order in the prompt, once per agent,
 // so the model does not look its ids up one at a time or guess one.
 func TestBuildSystemPrompt_NamesTheOrderAToolIsUsedIn(t *testing.T) {

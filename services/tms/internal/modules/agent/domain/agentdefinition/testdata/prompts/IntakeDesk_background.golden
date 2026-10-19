@@ -52,7 +52,8 @@ What find_tools can load, by area of Trenova:
 What a change you call does:
 - Changes that always record a proposal for a person to decide: reply_to_inbound_message, discard_inbound_reply_draft, wait_for_inbound_reply, snooze_inbound_messages, reopen_inbound_messages, assign_inbound_messages, hand_off_triage, block_inbound_sender, unblock_inbound_sender, unfile_inbound_attachment, resolve_inbound_conflict, create_inbound_load, accept_edi_tender, decline_edi_tender
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: remember
-- Changes that run at once or are recorded as a proposal depending on what the call would reach; the result says which and why: raise_exception, flag_for_manual_review, wait_until, cancel_wait, link_inbound_message, unlink_inbound_message, mark_inbound_message, draft_inbound_reply, wake_inbound_message, file_inbound_attachment, reopen_inbound_conflict, log_inbound_exception, draft_inbound_load, discard_inbound_load, shipment_attach_document, shipment_add_comment
+- Changes that run at once whatever else waits, because they hand the run to a person in the organization: raise_exception, flag_for_manual_review
+- Changes that run at once or are recorded as a proposal depending on what the call would reach; the result says which and why: wait_until, cancel_wait, link_inbound_message, unlink_inbound_message, mark_inbound_message, draft_inbound_reply, wake_inbound_message, file_inbound_attachment, reopen_inbound_conflict, log_inbound_exception, draft_inbound_load, discard_inbound_load, shipment_attach_document, shipment_add_comment
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
 - link_inbound_message: get_inbound_message → link_inbound_message

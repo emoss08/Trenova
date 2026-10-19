@@ -41,7 +41,10 @@ const generalAssistantDesk = "General assistant"
 
 func (s *Scenario) Stratum() evalsplit.Stratum {
 	if s.Unattended() {
-		return evalsplit.Stratum{Desk: s.Steps[0].Fire.Label(), Mode: evalsplit.Unattended}
+		return evalsplit.Stratum{
+			Desk: string(s.Steps[0].Fire.Template()),
+			Mode: evalsplit.Unattended,
+		}
 	}
 
 	desk := s.Agent

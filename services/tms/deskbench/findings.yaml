@@ -4672,3 +4672,67 @@ findings:
       The poll reads the run with GetByID, which carries its status but not its transcript, and
       the transcript is read once when the loop ends. TestAwaitLoop_EndsOnTheStatusTheRunRecords
       fails on the old poll.
+
+  - id: DB-205
+    title: An unattended agent can only propose handing its work to a person
+    status: fixed
+    severity: high
+    area: agent runtime / tool policy
+    found: 2026-10-19, .deskbench/baselines/20261018-221415 (trenova desk baseline --split held-out)
+    models: [claude-haiku-5-5]
+    scenarios:
+      - unattended-edi-quarantine-tender-without-stops
+      - unattended-monitor-pickup-window-open-nobody-on-it
+      - unattended-credentials-carlos-mvr-review-due-in-a-month
+    problem: >
+      Every "flagged for a person" check failed: the EDI and load monitor runs raised no exception,
+      and the credential runs showed raise_exception among their proposals. The bench rejects
+      what is left pending when a case ends, so no exception was ever recorded.
+    cause: >
+      raise_exception runs automatically by its own policy, but the agent's autonomy ceiling capped
+      it like any other write. The EDI desk, the load monitor and the credential desk start capped at
+      Propose or ActWithApproval, so an unattended run could only propose an escalation and a person
+      had to approve the hand-off before it reached the exception queue.
+    fix: >
+      raise_exception and flag_for_manual_review set ToolPolicy.Escalates and run whatever the
+      ceiling, the taint or the run being unattended, unless a person set the tool's tier on the
+      agent. AlwaysProposes, StaticTier and the safety doc agree.
+
+  - id: DB-206
+    title: A cancelled agent run stays open and blocks its subject
+    status: fixed
+    severity: high
+    area: agent runtime / AgentRunWorkflow; deskbench / unattended runs
+    found: 2026-10-19, .deskbench/baselines/20261018-221415 (trenova desk baseline --split held-out)
+    models: [claude-haiku-5-5]
+    scenarios: [unattended-insight-acme-on-time-decline]
+    problem: >
+      Every trial failed at once with "this agent already has an open run for that subject". The run
+      an interrupted bench had left was still running in Temporal an hour later, waiting for a
+      decision on its proposal.
+    cause: >
+      AgentRunWorkflow wrote the run's end on the workflow's own context, so after a cancellation no
+      activity could start: the record stayed AwaitingDecision with its proposals pending. A bench
+      killed before its cleanup leaves the workflow running, and the subject's workflow id refuses
+      every later fire.
+    fix: >
+      AgentRunWorkflow closes the record on a disconnected context, and a run cancelled while it
+      waits expires what is pending and is recorded as failed. A fire refused because the bench's
+      own agent already has a run for the subject stops that run's workflow and fires again.
+
+  - id: DB-207
+    title: An unattended desk was split into one stratum per event
+    status: fixed
+    severity: medium
+    area: deskbench / splits
+    found: 2026-10-19, review of the held-out split rule
+    problem: >
+      BillingException's three scenarios held none out, and DetentionDesk held out two of four,
+      where the rule gives one each.
+    cause: >
+      Scenario.Stratum named an unattended scenario's desk by Fire.Label(), "<event> for
+      <Agent>", so each event a template is fired by became a stratum of its own; the documented
+      rule names the desk by the template.
+    fix: >
+      The desk is the fire step's template. splits.yaml is regenerated, and
+      TestScenarioStratum_GroupsAnUnattendedScenarioByItsTemplate pins it.
