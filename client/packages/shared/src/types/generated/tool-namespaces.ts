@@ -56,5 +56,25 @@ export const TOOL_NAMESPACE_QUALIFIERS: Readonly<
  * reads without the namespace, so receivable_get_bank_receipt reads as get_bank_receipt.
  */
 export const TOOL_NAMESPACE_RECORDS: Readonly<Partial<Record<ToolNamespace, readonly string[]>>> = {
+  dispatch: ["carrier_assignment", "tender"],
+  equipment: ["tractor", "trailer"],
+  exception: ["service_failure", "watchtower_item"],
+  fuel: ["ifta_jurisdiction", "ifta_mileage_entry", "ifta_return"],
+  inbox: ["capture_batch", "email_profile", "inbound_message"],
+  ledger: ["fiscal_period", "journal_entry", "journal_reversal", "manual_journal"],
+  masterdata: [
+    "accessorial_charge",
+    "commodity",
+    "fleet_code",
+    "hazardous_material",
+    "hold_reason",
+    "service_type",
+    "shipment_type",
+  ],
+  rate: ["fuel_index", "fuel_surcharge_program"],
   receivable: ["bank_receipt", "customer_payment"],
+  report: ["dashboard", "table_change_alert"],
+  settlement: ["driver_expense"],
+  web: ["portal_site"],
+  worker: ["performance_review", "shift_swap", "shift_template", "training_course"],
 };

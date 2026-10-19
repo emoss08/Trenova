@@ -603,12 +603,13 @@ export function madeChange(name: string, subject: string, t: TranslateFn): strin
   if (subject === "") {
     return t("Made a change");
   }
-  const verb = name.split("_", 1)[0];
+  const reading = toolNameInReadingOrder(name);
+  const verb = reading.split("_", 1)[0];
   switch (verb) {
     case "create":
-      return name.endsWith("_report") ? t("Saved {0}", subject) : t("Created {0}", subject);
+      return reading.endsWith("_report") ? t("Saved {0}", subject) : t("Created {0}", subject);
     case "update":
-      return name.endsWith("_report") ? t("Saved {0}", subject) : t("Updated {0}", subject);
+      return reading.endsWith("_report") ? t("Saved {0}", subject) : t("Updated {0}", subject);
     case "fork":
       return t("Copied {0}", subject);
     case "add":

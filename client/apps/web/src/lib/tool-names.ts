@@ -42,10 +42,38 @@ function opensWithRecord(namespace: ToolNamespace, object: readonly string[]): b
   );
 }
 
+const IRREGULAR_PLURALS: Readonly<Record<string, string>> = {
+  person: "people",
+  child: "children",
+  criterion: "criteria",
+  matrix: "matrices",
+  vertex: "vertices",
+  appendix: "appendices",
+  analysis: "analyses",
+  basis: "bases",
+  datum: "data",
+};
+
+const IRREGULAR_SINGULARS: ReadonlySet<string> = new Set(Object.values(IRREGULAR_PLURALS));
+
+/** The plural of a snake_case noun's last word, as the server's stringutils.PluralNoun forms it. */
 function plural(noun: string): string {
-  if (/[^aeiou]y$/u.test(noun)) {
-    return `${noun.slice(0, -1)}ies`;
+  const cut = noun.lastIndexOf("_") + 1;
+  const head = noun.slice(0, cut);
+  const last = noun.slice(cut);
+  if (last === "") {
+    return noun;
+  }
+  const irregular = IRREGULAR_PLURALS[last];
+  if (irregular !== undefined) {
+    return head + irregular;
+  }
+  if (IRREGULAR_SINGULARS.has(last)) {
+    return noun;
+  }
+  if (/[^aeiou]y$/u.test(last)) {
+    return `${head}${last.slice(0, -1)}ies`;
   }
 
-  return noun.endsWith("s") ? `${noun}es` : `${noun}s`;
+  return /(?:s|x|z|ch|sh)$/u.test(last) ? `${noun}es` : `${noun}s`;
 }

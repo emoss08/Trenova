@@ -307030,6 +307030,15 @@
       "routes/journal-review"
     ]
   },
+  "accounting_retry_sync_record runs from an approval only on the records a person approved, and this proposal names none; propose it again so the records its error categories resolve to are listed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "across all tracked balances": {
     "sites": 1,
     "scope": [
@@ -313268,15 +313277,6 @@
     ],
     "areas": [
       "routes/worker"
-    ]
-  },
-  "accounting_retry_sync_record runs from an approval only on the records a person approved, and this proposal names none; propose it again so the records its error categories resolve to are listed": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "returns outside text": {

@@ -261,7 +261,7 @@ describe("ProposalPreview", () => {
         "This action can't say exactly what it would change. It would run with the values below.",
       ),
     ).toBeInTheDocument();
-    expect(screen.getByText("Flag for manual review")).toBeInTheDocument();
+    expect(screen.getByText("Request agent review")).toBeInTheDocument();
     expect(screen.getByText("High")).toBeInTheDocument();
   });
 
