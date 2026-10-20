@@ -9,6 +9,7 @@ allowBuilds:
   sharp: true
 overrides:
   "@codemirror/view": "6.43.6"
+  "@tanstack/query-core": "5.102.8"
 # Packages that must resolve once (see singleton-packages.ts). Every
 # package.json references them as "catalog:" so versions cannot drift.
 catalog:
