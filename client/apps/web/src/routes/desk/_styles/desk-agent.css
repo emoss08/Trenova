@@ -227,23 +227,6 @@
 }
 
 /* ---- threadx.css: hand-off menu ---- */
-.dk-hom {
-  position: relative;
-}
-.dk-hom-p {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 6px);
-  z-index: 30;
-  width: 300px;
-  padding: 4px;
-  border-radius: 12px;
-  background: var(--dsk-raised);
-  box-shadow:
-    var(--dsk-lift-hi),
-    0 0 0 1px var(--dsk-b-sub);
-  animation: dk-pop 200ms var(--dk-spring) both;
-}
 .dk-hom-h {
   display: flex;
   flex-direction: column;

@@ -64,6 +64,14 @@
 :is(.dsk, .dk-chat) svg {
   flex: none;
 }
+/* A Desk popover is portalled out of the room, so it carries the frame itself
+   (.dk-chat, from deskPopoverClass in desk-popover.ts) and the room's type,
+   over the shared popover's own. */
+.dk-float {
+  font: 400 13px/1.45 var(--font-sans);
+  letter-spacing: -0.005em;
+  -webkit-font-smoothing: antialiased;
+}
 
 .dsk {
   position: relative;
