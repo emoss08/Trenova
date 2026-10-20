@@ -132,6 +132,10 @@ func attemptUsage(attempt *usageAttempt, cost *decimal.Decimal) *aitrace.Usage {
 	if outcome.FinishReason != "" {
 		usage.FinishReasons = []string{outcome.FinishReason}
 	}
+	if outcome.Advisor.Used() {
+		usage.Advisor = outcome.Advisor
+		usage.AdvisorCostUSD = outcome.Advisor.Cost(attempt.provider.Kind)
+	}
 
 	return usage
 }

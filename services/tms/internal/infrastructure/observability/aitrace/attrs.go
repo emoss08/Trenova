@@ -107,6 +107,16 @@ const (
 )
 
 const (
+	AIAdvisorModel            = attribute.Key("trenova.ai.advisor.model")
+	AIAdvisorCalls            = attribute.Key("trenova.ai.advisor.calls")
+	AIAdvisorInputTokens      = attribute.Key("trenova.ai.advisor.input_tokens")
+	AIAdvisorOutputTokens     = attribute.Key("trenova.ai.advisor.output_tokens")
+	AIAdvisorCacheReadTokens  = attribute.Key("trenova.ai.advisor.cache_read_tokens")
+	AIAdvisorCacheWriteTokens = attribute.Key("trenova.ai.advisor.cache_write_tokens")
+	AIAdvisorCostUSD          = attribute.Key("trenova.ai.advisor.cost_usd")
+)
+
+const (
 	EventProviderBusyWait = "provider.busy_wait"
 	EventProviderResting  = "provider.resting"
 	EventWaitSeconds      = attribute.Key("wait_s")

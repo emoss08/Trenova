@@ -71,13 +71,10 @@ func (p *pricer) price(
 	if priced.provider == nil || !priced.provider.Priced() {
 		return callPrice{}
 	}
-	cost := aiprovider.WithAdvisorCost(
-		priced.provider.CostFor(tokens.raw),
-		priced.provider.Kind,
-		tokens.advisor,
-	)
-
-	return callPrice{cost: cost, source: priced.source}
+	return callPrice{
+		cost:   priced.provider.AdvisedCostFor(tokens.raw, tokens.advisor),
+		source: priced.source,
+	}
 }
 
 func (p *pricer) lookup(

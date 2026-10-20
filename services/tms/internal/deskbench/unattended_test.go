@@ -340,6 +340,33 @@ func TestPricer_PricesTheAdvisorsTokensAtTheAdvisorsRate(t *testing.T) {
 		"the router's charge already holds the advisor")
 }
 
+func TestPricer_PricesEachExecutorIterationOnItsOwnTier(t *testing.T) {
+	t.Parallel()
+
+	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
+	haiku := &aiprovider.Provider{
+		ID: pulid.MustNew("aiprv_"), Kind: aiprovider.KindAnthropicMessages, Model: "claude-haiku-5-5",
+	}
+	pricer := newPricer(&fakeProviders{provider: haiku}, fakeReference{})
+	price := pricer.price(t.Context(), tenant, &tokenCount{
+		provider: haiku.ID, model: "claude-haiku-5-5",
+		raw: aiprovider.TokenUsage{Input: 120_000, Output: 2_000},
+		advisor: &aiprovider.AdvisorUsage{
+			Model:  "claude-opus-5-5",
+			Calls:  1,
+			Tokens: aiprovider.TokenUsage{Input: 10_000, Output: 1_000},
+			Executor: []aiprovider.TokenUsage{
+				{Input: 60_000, Output: 1_000},
+				{Input: 60_000, Output: 1_000},
+			},
+		},
+	})
+
+	require.NotNil(t, price.cost)
+	assert.True(t, price.cost.Equal(decimal.RequireFromString("0.073")), price.cost.String(),
+		"each 60K-prompt iteration at Haiku 5.5's short rates, not the summed 120K at the long ones")
+}
+
 func TestUsageOf_CountsTheAdvisorApart(t *testing.T) {
 	t.Parallel()
 

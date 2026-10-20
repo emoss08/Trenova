@@ -8,7 +8,6 @@ import (
 	"github.com/anthropics/anthropic-sdk-go/packages/param"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 )
 
 const anthropicAdvisorBeta = anthropic.AnthropicBetaAdvisorTool2026_03_01
@@ -17,31 +16,46 @@ const (
 	anthropicServerToolUseBlock = conversation.ProviderBlockServerToolUse
 	anthropicAdvisorResultBlock = conversation.ProviderBlockAdvisorToolResult
 	anthropicAdvisorIteration   = "advisor_message"
+	anthropicExecutorIteration  = "message"
 	anthropicAdvisorResult      = "advisor_result"
 	anthropicAdvisorRedacted    = "advisor_redacted_result"
 )
 
+func servesAdvisor(call *Call) bool {
+	return call.Request != nil && call.Provider != nil &&
+		call.Provider.ResolvedPlatform().ServesAdvisor()
+}
+
 func advisorFor(call *Call) *AdvisorSpec {
-	if call.Request == nil || call.Provider == nil ||
-		!call.Provider.ResolvedPlatform().ServesAdvisor() {
+	if !servesAdvisor(call) {
 		return nil
 	}
 	if spec := call.Request.Advisor; spec != nil && spec.Model != "" {
 		return spec
 	}
-	messages := call.Request.Messages
-	for idx := len(messages) - 1; idx >= 0; idx-- {
+
+	return nil
+}
+
+func sendsAdvisorBeta(call *Call, advisor *AdvisorSpec) bool {
+	if !servesAdvisor(call) {
+		return false
+	}
+
+	return advisor != nil || replaysAdvice(call.Request.Messages)
+}
+
+func replaysAdvice(messages []Message) bool {
+	for idx := range messages {
 		msg := &messages[idx]
-		if msg.Role != RoleAssistant ||
-			!msg.Reasoning.ReplayableBy(string(aiprovider.KindAnthropicMessages)) {
-			continue
-		}
-		if model := msg.Reasoning.AdvisorModel(); model != "" {
-			return agentports.DefaultAdvisor(model)
+		if msg.Role == RoleAssistant &&
+			msg.Reasoning.ReplayableBy(string(aiprovider.KindAnthropicMessages)) &&
+			msg.Reasoning.HoldsServerTools() {
+			return true
 		}
 	}
 
-	return nil
+	return false
 }
 
 func withoutAdvice(messages []Message) []Message {
@@ -94,22 +108,34 @@ func anthropicAdvisorUsage(
 	if spec != nil {
 		usage.Model = spec.Model
 	}
+	executor := make([]aiprovider.TokenUsage, 0, len(iterations))
 	for idx := range iterations {
 		iteration := &iterations[idx]
-		if iteration.Type != anthropicAdvisorIteration {
-			continue
+		tokens := aiprovider.TokenUsage{
+			Input:      int(iteration.InputTokens),
+			Output:     int(iteration.OutputTokens),
+			CacheRead:  int(iteration.CacheReadInputTokens),
+			CacheWrite: int(iteration.CacheCreationInputTokens),
 		}
-		usage.Calls++
-		if iteration.Model != "" {
-			usage.Model = iteration.Model
+		switch iteration.Type {
+		case anthropicExecutorIteration:
+			executor = append(executor, tokens)
+		case anthropicAdvisorIteration:
+			usage.Calls++
+			if iteration.Model != "" {
+				usage.Model = iteration.Model
+			}
+			usage.Tokens.Input += tokens.Input
+			usage.Tokens.Output += tokens.Output
+			usage.Tokens.CacheRead += tokens.CacheRead
+			usage.Tokens.CacheWrite += tokens.CacheWrite
 		}
-		usage.Tokens.Input += int(iteration.InputTokens)
-		usage.Tokens.Output += int(iteration.OutputTokens)
-		usage.Tokens.CacheRead += int(iteration.CacheReadInputTokens)
-		usage.Tokens.CacheWrite += int(iteration.CacheCreationInputTokens)
 	}
 	if !usage.Used() {
 		return nil
+	}
+	if len(executor) > 0 {
+		usage.Executor = executor
 	}
 
 	return &usage
@@ -189,7 +215,7 @@ func replayProviderBlocks(
 	current bool,
 ) []anthropic.BetaContentBlockParamUnion {
 	out := make([]anthropic.BetaContentBlockParamUnion, 0, len(stored)+1)
-	textKept := false
+	var storedText strings.Builder
 	for idx := range stored {
 		block := &stored[idx]
 		switch block.Type {
@@ -209,10 +235,10 @@ func replayProviderBlocks(
 				})
 			}
 		case anthropicTextBlock:
+			storedText.WriteString(block.Text)
 			if strings.TrimSpace(block.Text) == "" {
 				continue
 			}
-			textKept = textKept || block.Text == content
 			out = append(out, anthropic.BetaContentBlockParamUnion{
 				OfText: &anthropic.BetaTextBlockParam{Text: block.Text},
 			})
@@ -233,7 +259,8 @@ func replayProviderBlocks(
 			})
 		}
 	}
-	if !textKept && strings.TrimSpace(content) != "" {
+	if kept := strings.TrimSpace(content); kept != "" &&
+		strings.TrimSpace(storedText.String()) != kept {
 		out = append(out, anthropic.BetaContentBlockParamUnion{
 			OfText: &anthropic.BetaTextBlockParam{Text: content},
 		})

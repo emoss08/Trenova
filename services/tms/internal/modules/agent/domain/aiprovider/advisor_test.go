@@ -9,10 +9,29 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestWithAdvisorCost(t *testing.T) {
+func pricedProvider(model, input, output string) *aiprovider.Provider {
+	in, out := decimal.RequireFromString(input), decimal.RequireFromString(output)
+
+	return &aiprovider.Provider{
+		Kind:                 aiprovider.KindAnthropicMessages,
+		Model:                model,
+		InputCostPerMillion:  &in,
+		OutputCostPerMillion: &out,
+	}
+}
+
+func assertCost(t *testing.T, want string, got *decimal.Decimal, msg string) {
+	t.Helper()
+
+	require.NotNil(t, got, msg)
+	assert.True(t, got.Equal(decimal.RequireFromString(want)), "%s: got %s", msg, got.String())
+}
+
+func TestProvider_AdvisedCostFor(t *testing.T) {
 	t.Parallel()
 
-	executor := decimal.RequireFromString("0.5")
+	executor := pricedProvider("house-model", "0.5", "0")
+	usage := aiprovider.TokenUsage{Input: 1_000_000}
 	advisor := &aiprovider.AdvisorUsage{
 		Model: "claude-opus-5-5",
 		Calls: 1,
@@ -21,19 +40,52 @@ func TestWithAdvisorCost(t *testing.T) {
 		},
 	}
 
-	total := aiprovider.WithAdvisorCost(&executor, aiprovider.KindAnthropicMessages, advisor)
-	require.NotNil(t, total)
-	assert.True(t, total.Equal(decimal.RequireFromString("29.7")), total.String(),
+	assertCost(t, "29.7", executor.AdvisedCostFor(usage, advisor),
 		"$4 input, $0.20 cache read, $5 cache write and $20 output, on top of the executor")
-
-	assert.Equal(t, &executor,
-		aiprovider.WithAdvisorCost(&executor, aiprovider.KindAnthropicMessages, nil))
-	assert.Nil(t, aiprovider.WithAdvisorCost(nil, aiprovider.KindAnthropicMessages, advisor),
-		"an unpriced executor stays unpriced")
-	assert.Nil(t, aiprovider.WithAdvisorCost(&executor, aiprovider.KindAnthropicMessages,
+	assertCost(t, "0.5", executor.AdvisedCostFor(usage, nil), "no advisor, the executor alone")
+	assert.Nil(t, (&aiprovider.Provider{Kind: aiprovider.KindAnthropicMessages}).
+		AdvisedCostFor(usage, advisor), "an unpriced executor stays unpriced")
+	assert.Nil(t, executor.AdvisedCostFor(usage,
 		&aiprovider.AdvisorUsage{Model: "house-advisor", Calls: 1}),
 		"an advisor without a list price leaves the call unpriced rather than undercounted")
 	assert.False(t, (&aiprovider.AdvisorUsage{Model: "claude-opus-5-5"}).Used())
+
+	assertCost(t, "0.5", executor.AdvisedCostForTask(aiprovider.TaskEmbedding, usage, advisor),
+		"a task that generates nothing is priced on its input alone")
+}
+
+func TestProvider_AdvisedCostFor_PricesEachExecutorIterationOnItsOwnTier(t *testing.T) {
+	t.Parallel()
+
+	haiku := pricedProvider("claude-haiku-5-5", "0.10", "0.50")
+	summed := aiprovider.TokenUsage{Input: 120_000, Output: 2_000}
+	advisor := &aiprovider.AdvisorUsage{
+		Model:  "claude-opus-5-5",
+		Calls:  1,
+		Tokens: aiprovider.TokenUsage{Input: 10_000, Output: 1_000},
+		Executor: []aiprovider.TokenUsage{
+			{Input: 60_000, Output: 1_000},
+			{Input: 60_000, Output: 1_000},
+		},
+	}
+
+	assertCost(t, "0.065", haiku.CostFor(summed),
+		"the summed prompt alone would cross Haiku 5.5's long-prompt line")
+	assertCost(t, "0.073", haiku.AdvisedCostFor(summed, advisor),
+		"two 60K-prompt iterations at the short rates ($0.013) plus the advisor at Opus 5.5's ($0.06)")
+
+	long := *advisor
+	long.Executor = []aiprovider.TokenUsage{
+		{Input: 110_000, Output: 1_000},
+		{Input: 10_000, Output: 1_000},
+	}
+	assertCost(t, "0.119", haiku.AdvisedCostFor(summed, &long),
+		"only the iteration over the line is priced at the long rates")
+
+	unsplit := *advisor
+	unsplit.Executor = []aiprovider.TokenUsage{{Input: 60_000, Output: 1_000}}
+	assertCost(t, "0.125", haiku.AdvisedCostFor(summed, &unsplit),
+		"iterations that do not add up to the reported usage price the reported usage")
 }
 
 func TestPlatform_ServesAdvisorOnlyOnTheClaudeAPIAndClaudePlatformOnAWS(t *testing.T) {

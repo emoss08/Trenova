@@ -117,6 +117,7 @@ func (s *Service) record(ctx context.Context, attempt *usageAttempt) {
 		row.CacheReadTokens = attempt.outcome.CacheReadTokens
 		row.CacheWriteTokens = attempt.outcome.CacheWriteTokens
 		row.CostUSD = attempt.outcome.cost(attempt.provider, attempt.task)
+		recordAdvisor(row, attempt.outcome.Advisor, attempt.provider.Kind)
 	}
 
 	providerName := attempt.provider.Name
@@ -133,6 +134,23 @@ func (s *Service) record(ctx context.Context, attempt *usageAttempt) {
 			)
 		}
 	}()
+}
+
+func recordAdvisor(
+	row *aiusage.AIUsageRecord,
+	advisor *aiprovider.AdvisorUsage,
+	kind aiprovider.Kind,
+) {
+	if !advisor.Used() {
+		return
+	}
+	row.AdvisorModel = advisor.Model
+	row.AdvisorCalls = advisor.Calls
+	row.AdvisorInputTokens = advisor.Tokens.Input
+	row.AdvisorOutputTokens = advisor.Tokens.Output
+	row.AdvisorCacheReadTokens = advisor.Tokens.CacheRead
+	row.AdvisorCacheWriteTokens = advisor.Tokens.CacheWrite
+	row.AdvisorCostUSD = advisor.Cost(kind)
 }
 
 // classifyError names a failure in one of a handful of words, so a summary

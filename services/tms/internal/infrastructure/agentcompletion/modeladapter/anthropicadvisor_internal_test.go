@@ -154,6 +154,10 @@ func TestAnthropicAdapter_ReadsAnAdvisedReplyWithoutShowingTheAdvice(t *testing.
 		Tokens: aiprovider.TokenUsage{
 			Input: 2500, Output: 700, CacheRead: 1000, CacheWrite: 200,
 		},
+		Executor: []aiprovider.TokenUsage{
+			{Input: 500, Output: 40},
+			{Input: 400, Output: 80},
+		},
 	}, resp.Advisor)
 
 	require.NotNil(t, resp.Reasoning)
@@ -234,9 +238,99 @@ func TestAnthropicAdapter_StreamsEachAdvisorResultKind(t *testing.T) {
 				Model:  "claude-opus-5-5",
 				Calls:  1,
 				Tokens: aiprovider.TokenUsage{Input: 1200, Output: 400},
+				Executor: []aiprovider.TokenUsage{
+					{Input: 300, Output: 10},
+					{Input: 400, Output: 20},
+				},
 			}, resp.Advisor)
 		})
 	}
+}
+
+const advisorAroundTextReply = `{"id":"msg_03","model":"claude-haiku-5-5","stop_reason":"end_turn",` +
+	`"content":[` +
+	`{"type":"text","text":"Let me check. "},` +
+	`{"type":"server_tool_use","id":"srvtoolu_2","name":"advisor","input":{}},` +
+	`{"type":"advisor_tool_result","tool_use_id":"srvtoolu_2",` +
+	`"content":{"type":"advisor_result","text":"Look at the last stop.","stop_reason":"end_turn"}},` +
+	`{"type":"text","text":"S1 is in Dallas."}],` +
+	`"usage":{"input_tokens":700,"output_tokens":30}}`
+
+func advisorAroundTextStream() string {
+	return "event: message_start\n" +
+		`data: {"type":"message_start","message":{"id":"msg_04","model":"claude-haiku-5-5",` +
+		`"usage":{"input_tokens":700,"output_tokens":1}}}` + "\n\n" +
+		"event: content_block_start\n" +
+		`data: {"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}}` +
+		"\n\n" +
+		"event: content_block_delta\n" +
+		`data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta",` +
+		`"text":"Let me check. "}}` + "\n\n" +
+		"event: content_block_stop\n" +
+		`data: {"type":"content_block_stop","index":0}` + "\n\n" +
+		"event: content_block_start\n" +
+		`data: {"type":"content_block_start","index":1,"content_block":` +
+		`{"type":"server_tool_use","id":"srvtoolu_2","name":"advisor","input":{}}}` + "\n\n" +
+		"event: content_block_stop\n" +
+		`data: {"type":"content_block_stop","index":1}` + "\n\n" +
+		"event: content_block_start\n" +
+		`data: {"type":"content_block_start","index":2,"content_block":` +
+		`{"type":"advisor_tool_result","tool_use_id":"srvtoolu_2","content":` +
+		`{"type":"advisor_result","text":"Look at the last stop.","stop_reason":"end_turn"}}}` +
+		"\n\n" +
+		"event: content_block_stop\n" +
+		`data: {"type":"content_block_stop","index":2}` + "\n\n" +
+		"event: content_block_start\n" +
+		`data: {"type":"content_block_start","index":3,"content_block":{"type":"text","text":""}}` +
+		"\n\n" +
+		"event: content_block_delta\n" +
+		`data: {"type":"content_block_delta","index":3,"delta":{"type":"text_delta",` +
+		`"text":"S1 is in Dallas."}}` + "\n\n" +
+		"event: content_block_stop\n" +
+		`data: {"type":"content_block_stop","index":3}` + "\n\n" +
+		"event: message_delta\n" +
+		`data: {"type":"message_delta","delta":{"stop_reason":"end_turn"},` +
+		`"usage":{"output_tokens":30}}` + "\n\n" +
+		"event: message_stop\n" +
+		`data: {"type":"message_stop"}` + "\n\n"
+}
+
+func assertTextAroundTheAdvice(t *testing.T, resp *Response) {
+	t.Helper()
+
+	assert.Equal(t, "Let me check. S1 is in Dallas.", resp.Text,
+		"every text block, in order, with the advice between them left out")
+	require.NotNil(t, resp.Reasoning)
+	replayed := replayProviderBlocks(resp.Reasoning.Blocks, resp.Text, true)
+	texts := make([]string, 0, 2)
+	for idx := range replayed {
+		if replayed[idx].OfText != nil {
+			texts = append(texts, replayed[idx].OfText.Text)
+		}
+	}
+	assert.Equal(t, []string{"Let me check. ", "S1 is in Dallas."}, texts,
+		"the joined reply is not sent back a second time after its own blocks")
+}
+
+func TestAnthropicAdapter_JoinsTheTextOnBothSidesOfTheAdvice(t *testing.T) {
+	t.Parallel()
+
+	server, _ := wireServer(t, "application/json", advisorAroundTextReply)
+	request := advisorRequest()
+	resp, err := NewAnthropicAdapter().Complete(t.Context(), advisorCall(t, server.URL, &request))
+	require.NoError(t, err)
+	assertTextAroundTheAdvice(t, resp)
+}
+
+func TestAnthropicAdapter_StreamsTheTextOnBothSidesOfTheAdvice(t *testing.T) {
+	t.Parallel()
+
+	server, _ := wireServer(t, "text/event-stream", advisorAroundTextStream())
+	request := advisorRequest()
+	resp, deltas := streamWith(t, NewAnthropicAdapter(), advisorCall(t, server.URL, &request))
+	assert.Equal(t, []string{"Let me check. ", "S1 is in Dallas."}, deltas)
+	assert.Equal(t, strings.Join(deltas, ""), resp.Text, "the reply is what streamed")
+	assertTextAroundTheAdvice(t, resp)
 }
 
 func advisedHistory(advice *ReasoningTrace) []Message {
@@ -275,27 +369,8 @@ func messageBlocks(t *testing.T, body map[string]any, index int) []map[string]an
 	return blocks
 }
 
-func TestAnthropicAdapter_ReplaysTheAdviceUnchangedAndKeepsTheAdvisor(t *testing.T) {
-	t.Parallel()
-
-	first, _ := wireServer(t, "application/json", advisorBlockingReply)
-	request := advisorRequest()
-	resp, err := NewAnthropicAdapter().Complete(t.Context(), advisorCall(t, first.URL, &request))
-	require.NoError(t, err)
-
-	server, captured := wireServer(t, "application/json", wireBlockingReply)
-	next := Request{Messages: advisedHistory(resp.Reasoning), Tools: wireTools()}
-	_, err = NewAnthropicAdapter().Complete(t.Context(), advisorCall(t, server.URL, &next))
-	require.NoError(t, err)
-
-	capture := captured()
-	assert.Contains(t, capture.Headers["Anthropic-Beta"], "advisor-tool-2026-03-01",
-		"a conversation that consulted the advisor keeps declaring it")
-	tools := bodyTools(t, capture.Body)
-	assert.Equal(t, "advisor", tools[len(tools)-1]["name"])
-	assert.Equal(t, "claude-opus-5-5", tools[len(tools)-1]["model"])
-
-	assert.Equal(t, []map[string]any{
+func replayedAdvice() []map[string]any {
+	return []map[string]any{
 		{"type": "thinking", "thinking": "plan", "signature": "sig_a"},
 		{"type": "server_tool_use", "id": "srvtoolu_1", "name": "advisor", "input": map[string]any{}},
 		{
@@ -313,7 +388,60 @@ func TestAnthropicAdapter_ReplaysTheAdviceUnchangedAndKeepsTheAdvisor(t *testing
 			"type": "tool_use", "id": "toolu_1", "name": "get_shipment",
 			"input": map[string]any{"number": "S1"},
 		},
-	}, messageBlocks(t, capture.Body, 1), "the assistant turn goes back in the order it came")
+	}
+}
+
+func advisedReply(t *testing.T) *Response {
+	t.Helper()
+
+	first, _ := wireServer(t, "application/json", advisorBlockingReply)
+	request := advisorRequest()
+	resp, err := NewAnthropicAdapter().Complete(t.Context(), advisorCall(t, first.URL, &request))
+	require.NoError(t, err)
+
+	return resp
+}
+
+func TestAnthropicAdapter_ReplaysTheAdviceUnchangedWhileTheAdvisorIsAsked(t *testing.T) {
+	t.Parallel()
+
+	resp := advisedReply(t)
+	server, captured := wireServer(t, "application/json", wireBlockingReply)
+	next := Request{
+		Messages: advisedHistory(resp.Reasoning),
+		Tools:    wireTools(),
+		Advisor:  agentports.DefaultAdvisor(""),
+	}
+	_, err := NewAnthropicAdapter().Complete(t.Context(), advisorCall(t, server.URL, &next))
+	require.NoError(t, err)
+
+	capture := captured()
+	assert.Contains(t, capture.Headers["Anthropic-Beta"], "advisor-tool-2026-03-01")
+	tools := bodyTools(t, capture.Body)
+	assert.Equal(t, "advisor", tools[len(tools)-1]["name"])
+	assert.Equal(t, "claude-opus-5-5", tools[len(tools)-1]["model"])
+	assert.Equal(t, replayedAdvice(), messageBlocks(t, capture.Body, 1),
+		"the assistant turn goes back in the order it came")
+}
+
+func TestAnthropicAdapter_ReplaysTheAdviceWithOnlyTheBetaWhenTheAdvisorIsNotAsked(t *testing.T) {
+	t.Parallel()
+
+	resp := advisedReply(t)
+	server, captured := wireServer(t, "application/json", wireBlockingReply)
+	next := Request{Messages: advisedHistory(resp.Reasoning), Tools: wireTools()}
+	_, err := NewAnthropicAdapter().Complete(t.Context(), advisorCall(t, server.URL, &next))
+	require.NoError(t, err)
+
+	capture := captured()
+	assert.Contains(t, capture.Headers["Anthropic-Beta"], "advisor-tool-2026-03-01",
+		"the beta lets the API read the advice the history holds")
+	for _, tool := range bodyTools(t, capture.Body) {
+		assert.NotEqual(t, "advisor", tool["name"], "a request that does not ask is not advised")
+		assert.NotEqual(t, "advisor_20260301", tool["type"])
+	}
+	assert.Equal(t, replayedAdvice(), messageBlocks(t, capture.Body, 1),
+		"the advice still goes back unchanged")
 }
 
 func TestAnthropicConversation_KeepsAdviceOfEarlierTurnsButNotTheirThinking(t *testing.T) {
@@ -373,31 +501,36 @@ func TestAnthropicConversation_ReplaysAnAdvisorErrorAsItCame(t *testing.T) {
 		"a reply text the blocks do not hold still goes back")
 }
 
-func TestAdvisorFor_PrefersTheRequestThenTheHistory(t *testing.T) {
+func TestAdvisorFor_ComesOnlyFromTheRequestAndTheHistoryOnlyAsksForTheBeta(t *testing.T) {
 	t.Parallel()
 
 	direct := &aiprovider.Provider{Kind: aiprovider.KindAnthropicMessages}
-	asked := &Request{Advisor: agentports.DefaultAdvisor("claude-fable-5-1")}
-	assert.Equal(t, "claude-fable-5-1",
-		advisorFor(&Call{Provider: direct, Request: asked}).Model)
+	asked := &Call{Provider: direct, Request: &Request{
+		Advisor: agentports.DefaultAdvisor("claude-fable-5-1"),
+	}}
+	assert.Equal(t, "claude-fable-5-1", advisorFor(asked).Model)
+	assert.True(t, sendsAdvisorBeta(asked, advisorFor(asked)))
 
 	advice := &ReasoningTrace{Blocks: []ProviderBlock{
 		{Type: "advisor_tool_result", Model: "claude-opus-5-5"},
 	}}
-	held := &Request{Messages: advisedHistory(advice)}
-	assert.Equal(t, agentports.DefaultAdvisor(""),
-		advisorFor(&Call{Provider: direct, Request: held}))
+	held := &Call{Provider: direct, Request: &Request{Messages: advisedHistory(advice)}}
+	assert.Nil(t, advisorFor(held), "advice in the history does not declare the advisor")
+	assert.True(t, sendsAdvisorBeta(held, nil), "it only sends the beta that lets it be read")
 
 	foreign := &ReasoningTrace{
 		ProviderKind: string(aiprovider.KindOpenAIResponses),
 		Blocks:       []ProviderBlock{{Type: "advisor_tool_result", Model: "claude-opus-5-5"}},
 	}
-	other := &Request{Messages: []Message{{Role: RoleAssistant, Reasoning: foreign}}}
-	assert.Nil(t, advisorFor(&Call{Provider: direct, Request: other}))
-	assert.Nil(t, advisorFor(&Call{
-		Provider: direct,
-		Request:  &Request{Messages: UserMessage("hi")},
-	}))
+	other := &Call{Provider: direct, Request: &Request{
+		Messages: []Message{{Role: RoleAssistant, Reasoning: foreign}},
+	}}
+	assert.Nil(t, advisorFor(other))
+	assert.False(t, sendsAdvisorBeta(other, nil), "another protocol's blocks are not replayed")
+
+	plain := &Call{Provider: direct, Request: &Request{Messages: UserMessage("hi")}}
+	assert.Nil(t, advisorFor(plain))
+	assert.False(t, sendsAdvisorBeta(plain, nil))
 }
 
 func TestAdvisorFor_OnlyOnPlatformsThatServeIt(t *testing.T) {
@@ -414,16 +547,18 @@ func TestAdvisorFor_OnlyOnPlatformsThatServeIt(t *testing.T) {
 		asked := advisorFor(&Call{Provider: provider, Request: &Request{
 			Advisor: agentports.DefaultAdvisor(""),
 		}})
-		held := advisorFor(&Call{Provider: provider, Request: &Request{
+		heldCall := &Call{Provider: provider, Request: &Request{
 			Messages: advisedHistory(advice),
-		}})
+		}}
+		assert.Nil(t, advisorFor(heldCall), "%s: advice in the history never declares it", platform)
+		held := sendsAdvisorBeta(heldCall, nil)
 		if platform.ServesAdvisor() {
 			assert.NotNil(t, asked, platform)
-			assert.NotNil(t, held, platform)
+			assert.True(t, held, "%s reads the replayed advice under the beta", platform)
 			continue
 		}
 		assert.Nil(t, asked, "%s refuses the advisor tool", platform)
-		assert.Nil(t, held, "%s refuses a history that keeps it declared", platform)
+		assert.False(t, held, "%s is sent the history without the advice instead", platform)
 	}
 }
 

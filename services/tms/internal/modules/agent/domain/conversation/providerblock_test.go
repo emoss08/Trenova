@@ -59,3 +59,18 @@ func TestReasoningTrace_WithoutServerTools(t *testing.T) {
 		stripped.Blocks)
 	assert.Len(t, advised.Blocks, 4)
 }
+
+func TestReasoningTrace_HoldsServerTools(t *testing.T) {
+	t.Parallel()
+
+	var none *ReasoningTrace
+	assert.False(t, none.HoldsServerTools())
+	assert.False(t, (&ReasoningTrace{Blocks: []ProviderBlock{{Type: "text"}}}).HoldsServerTools())
+	assert.True(t, (&ReasoningTrace{Blocks: []ProviderBlock{
+		{Type: "text"},
+		{Type: ProviderBlockAdvisorToolResult},
+	}}).HoldsServerTools())
+	assert.True(t, (&ReasoningTrace{Blocks: []ProviderBlock{
+		{Type: ProviderBlockServerToolUse},
+	}}).HoldsServerTools())
+}

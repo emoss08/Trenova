@@ -40,20 +40,33 @@ func (t *ReasoningTrace) AdvisorModel() string {
 	return ""
 }
 
-func (t *ReasoningTrace) WithoutServerTools() *ReasoningTrace {
+func (t *ReasoningTrace) HoldsServerTools() bool {
 	if t == nil {
-		return nil
+		return false
+	}
+	for idx := range t.Blocks {
+		if isServerToolBlock(t.Blocks[idx].Type) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func isServerToolBlock(kind string) bool {
+	return kind == ProviderBlockServerToolUse || kind == ProviderBlockAdvisorToolResult
+}
+
+func (t *ReasoningTrace) WithoutServerTools() *ReasoningTrace {
+	if !t.HoldsServerTools() {
+		return t
 	}
 	kept := make([]ProviderBlock, 0, len(t.Blocks))
 	for idx := range t.Blocks {
-		switch t.Blocks[idx].Type {
-		case ProviderBlockServerToolUse, ProviderBlockAdvisorToolResult:
+		if isServerToolBlock(t.Blocks[idx].Type) {
 			continue
 		}
 		kept = append(kept, t.Blocks[idx])
-	}
-	if len(kept) == len(t.Blocks) {
-		return t
 	}
 	trace := *t
 	trace.Blocks = kept

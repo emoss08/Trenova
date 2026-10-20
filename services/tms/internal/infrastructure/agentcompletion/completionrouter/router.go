@@ -199,11 +199,7 @@ type runOutcome struct {
 }
 
 func (o *runOutcome) cost(provider *aiprovider.Provider, task aiprovider.Task) *decimal.Decimal {
-	return aiprovider.WithAdvisorCost(
-		provider.CostForTask(task, o.tokenUsage()),
-		provider.Kind,
-		o.Advisor,
-	)
+	return provider.AdvisedCostForTask(task, o.tokenUsage(), o.Advisor)
 }
 
 // tokenUsage is what the provider reported, in the shape a price is read

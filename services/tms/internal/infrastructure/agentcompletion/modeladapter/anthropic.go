@@ -51,7 +51,8 @@ func anthropicParams(call *Call, attached *anthropicFiles) anthropic.BetaMessage
 		messages = referencing(messages, nil)
 	}
 	advisor := advisorFor(call)
-	if advisor == nil {
+	beta := sendsAdvisorBeta(call, advisor)
+	if !beta {
 		messages = withoutAdvice(messages)
 	}
 	params := anthropic.BetaMessageNewParams{
@@ -63,7 +64,7 @@ func anthropicParams(call *Call, attached *anthropicFiles) anthropic.BetaMessage
 		),
 		Tools: cachedTools(advisedTools(toAnthropicTools(tools), advisor)),
 	}
-	if advisor != nil {
+	if beta {
 		params.Betas = append(params.Betas, anthropicAdvisorBeta)
 	}
 	if call.Request.ToolChoiceNone && len(params.Tools) > 0 {
@@ -856,16 +857,14 @@ func toolUseInput(arguments map[string]any) map[string]any {
 }
 
 func splitAnthropicContent(blocks []anthropicBlock) (string, []ToolCall) {
-	var text string
+	var written strings.Builder
 	toolCalls := make([]ToolCall, 0, len(blocks))
 
 	for idx := range blocks {
 		block := &blocks[idx]
 		switch block.Type {
 		case anthropicTextBlock:
-			if text == "" && strings.TrimSpace(block.Text) != "" {
-				text = block.Text
-			}
+			written.WriteString(block.Text)
 		case anthropicToolUseBlock:
 			toolCalls = append(toolCalls, ToolCall{
 				ID:             block.ID,
@@ -874,6 +873,10 @@ func splitAnthropicContent(blocks []anthropicBlock) (string, []ToolCall) {
 				ArgumentsError: block.InputError,
 			})
 		}
+	}
+	text := written.String()
+	if strings.TrimSpace(text) == "" {
+		text = ""
 	}
 
 	if len(toolCalls) == 0 {

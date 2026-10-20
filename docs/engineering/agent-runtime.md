@@ -416,19 +416,30 @@ the field. The Anthropic adapter (`modeladapter/anthropicadvisor.go`):
   The advice is `advisor_result` (plaintext advisors), `advisor_redacted_result` (an Opus 5.5
   advisor, among others: an opaque `encrypted_content` that can only be sent back) or
   `advisor_tool_result_error`. It never becomes `Response.Text`, never streams to the text
-  sink and never joins the readable thinking.
+  sink and never joins the readable thinking. `Response.Text` is every text block of the reply
+  joined in order, the same text the sink was streamed, so a reply that writes before and
+  after consulting the advisor keeps both parts, blocking or streamed.
 - **Replays them unchanged.** An assistant message with stored blocks is rebuilt from them,
   in order, then its tool calls: thinking only in the current turn (as for any thinking), the
-  server tool blocks and text on every turn. The API refuses a history holding
-  `advisor_tool_result` blocks without the tool, so `advisorFor` declares the advisor
-  whenever a replayed message holds advice, at the model recorded on the result block, even
-  when the request no longer asks.
+  server tool blocks and text on every turn. Only the request's own `Advisor` declares the
+  tool (`advisorFor`); advice in the history never does. A history holding
+  `advisor_tool_result` blocks is accepted without the tool as long as the
+  `advisor-tool-2026-03-01` beta is sent, so on a platform that serves the advisor
+  `sendsAdvisorBeta` sends the beta alone and the blocks go back unchanged; a later turn that
+  does not ask is not advised. On a platform that does not serve it the blocks are left out
+  (`withoutAdvice`) and no beta is sent.
 - **Counts the advisor apart.** The executor's usage is unchanged; the advisor's own calls come
   as `advisor_message` entries in `usage.iterations` and become `Response.Advisor`
-  (`aiprovider.AdvisorUsage`: model, calls, tokens). The router prices them at the advisor
-  model's list price (`aiprovider.WithAdvisorCost`) and adds them to the call's cost, on the
-  result, the usage record and the span. An advisor with no list price leaves the call
-  unpriced rather than undercounted.
+  (`aiprovider.AdvisorUsage`: model, calls, tokens, and the executor's own `message`
+  iterations as `Executor`). The router prices the call with
+  `aiprovider.Provider.AdvisedCostForTask`: each executor iteration on its own price tier
+  (Haiku 5.5's long-prompt rates apply to an iteration whose own prompt passes 100,000 tokens,
+  not to the summed usage of several shorter ones), plus the advisor's tokens at the advisor
+  model's list price, on the result, the usage record and the span. When the iterations do
+  not add up to the reported usage the reported usage is priced as one call. The summed usage
+  stays the call's token counts. An advisor with no list price leaves the call unpriced rather
+  than undercounted. The usage row and the span also carry the advisor's model, calls, tokens
+  and its share of the cost (see [ai-tracing.md](ai-tracing.md)).
 
 ### Files the person attached
 
@@ -2275,8 +2286,9 @@ conversation is the same from the first call of the turn to the last.
   models that check the history (Haiku 5.5, Sonnet 5.5, Opus 5.5, Fable 5.1).
   Microsoft Foundry is not known to take deferred tools, so it is sent what is
   loaded (`anthropicDefers`). An advisor ("The advisor" above) is declared after
-  every client tool and takes the tools' mark; a conversation that has consulted
-  it keeps declaring it, so the array stays the same across its turns, and its
+  every client tool and takes the tools' mark, only while the request asks for
+  it, so the array stays the same within a turn; a later turn that does not ask
+  sends the tools without it (a new tools prefix) under the advisor beta, and its
   replayed advice is the same bytes on every later call.
 - **OpenAI Responses**, on OpenAI's own platform with a model that takes it
   (gpt-5.4 and later, `toolSearchModel`), declares `find_tools` as the
