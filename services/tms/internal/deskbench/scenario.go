@@ -47,6 +47,9 @@ type ScriptMode string
 const (
 	ModeDiscrete = ScriptMode("discrete")
 	ModeScript   = ScriptMode("script")
+	// ModeScriptWrites is a script that may also prepare changes, which are
+	// proposed as one batch: the code-mode half of a batch-write pair.
+	ModeScriptWrites = ScriptMode("script_writes")
 )
 
 func (m ScriptMode) Override() codemode.Override {
@@ -55,6 +58,8 @@ func (m ScriptMode) Override() codemode.Override {
 		return codemode.OverrideOff
 	case ModeScript:
 		return codemode.OverrideOn
+	case ModeScriptWrites:
+		return codemode.OverrideWrites
 	default:
 		return codemode.OverrideDefault
 	}
@@ -484,7 +489,8 @@ func loadScenarioFile(file string) ([]*Scenario, error) {
 }
 
 // validatePairs holds every paired scenario to its other half: the same task,
-// once in discrete mode and once in script mode, in the same file.
+// once in discrete mode and once in script mode (script_writes for a batch of
+// changes), in the same file.
 func validatePairs(scenarios []*Scenario) error {
 	halves := make(map[string][]*Scenario, len(scenarios))
 	order := make([]string, 0, len(scenarios))
@@ -499,7 +505,8 @@ func validatePairs(scenarios []*Scenario) error {
 	}
 	for _, pair := range order {
 		found := halves[pair]
-		if len(found) != 2 || found[0].Mode == found[1].Mode {
+		if len(found) != 2 || found[0].Mode == found[1].Mode ||
+			(found[0].Mode != ModeDiscrete && found[1].Mode != ModeDiscrete) {
 			return fmt.Errorf("pair %q needs one discrete and one script scenario", pair)
 		}
 		if found[0].Agent != found[1].Agent || len(found[0].Steps) != len(found[1].Steps) {
@@ -692,8 +699,8 @@ func (s *Scenario) validateMode() error {
 	switch {
 	case s.Mode == "" && s.Pair == "":
 		return nil
-	case s.Mode != ModeDiscrete && s.Mode != ModeScript:
-		return fmt.Errorf("%s: mode is discrete or script, not %q", s.Name, s.Mode)
+	case s.Mode != ModeDiscrete && s.Mode != ModeScript && s.Mode != ModeScriptWrites:
+		return fmt.Errorf("%s: mode is discrete, script or script_writes, not %q", s.Name, s.Mode)
 	case s.Pair == "":
 		return fmt.Errorf("%s: a scenario with a mode names the pair it belongs to", s.Name)
 	case s.Unattended() || s.Palette || s.Formula != nil:

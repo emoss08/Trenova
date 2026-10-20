@@ -95,6 +95,11 @@ type AgentSpec struct {
 	Unattended   bool     `yaml:"unattended"`
 	Extensions   bool     `yaml:"extensions"`
 	CodeMode     bool     `yaml:"codeMode"`
+	// CodeModeWrites lets the case's scripts prepare changes, as the bench
+	// forces it for a batch-write case.
+	CodeModeWrites bool `yaml:"codeModeWrites"`
+	// Denied are the permissions, as resource:operation, the person lacks.
+	Denied []string `yaml:"denied"`
 }
 
 type Step struct {
@@ -122,6 +127,10 @@ type ScriptExpect struct {
 	Read    []string `yaml:"read"`
 	Refused []string `yaml:"refused"`
 	Limit   string   `yaml:"limit"`
+	// Prepared are the changes the broker held for the batch, and Batch how
+	// many steps the batch filed: nil when the case does not say.
+	Prepared []string `yaml:"prepared"`
+	Batch    *int     `yaml:"batch"`
 }
 
 type KnownGap struct {
