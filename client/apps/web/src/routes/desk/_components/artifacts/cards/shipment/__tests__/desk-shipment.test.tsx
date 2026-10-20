@@ -899,7 +899,7 @@ describe("DeskShipment", () => {
     expect(rail?.querySelectorAll("a.dk-rec-doc")).toHaveLength(11);
     expect(screen.getByRole("link", { name: /Manage/ })).toHaveAttribute(
       "href",
-      "/shipment-management/shipments?expanded=shp_1&panelType=edit&panelEntityId=shp_1",
+      "/shipment-management/shipments?expanded=shp_1&panelType=edit&panelEntityId=shp_1&tab=documents",
     );
   });
 

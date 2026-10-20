@@ -1,9 +1,27 @@
 package agentquerytoolservice
 
 import (
+	"errors"
 	"fmt"
 
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
+	"github.com/emoss08/trenova/shared/hashutils"
+	"github.com/emoss08/trenova/shared/jsonutils"
+)
+
+const cursorScopeLength = 16
+
+var errOffsetOnCursorList = errors.New(
+	"this list pages with after, the nextCursor of the previous page, not offset. Call " +
+		"it again without offset, passing that nextCursor as after for the next page",
+)
+
+var errStaleCursor = errors.New(
+	"after is not a nextCursor this tool returned for these same arguments: the query, " +
+		"filters, status or sort changed since that page, or the cursor was altered. Call " +
+		"it again without after to start from the first page",
 )
 
 // page is one window of a list: how many rows, from where.
@@ -88,4 +106,96 @@ func withPaging(properties map[string]any, fallback, most int) map[string]any {
 	}
 
 	return properties
+}
+
+type cursorWindow struct {
+	limit int
+	after string
+	scope string
+	info  pagination.CursorInfo
+}
+
+func readCursorWindow(
+	tool string,
+	params map[string]any,
+	fallback, most int,
+) (cursorWindow, error) {
+	if optionalInt(params, paramOffset, 0) != 0 {
+		return cursorWindow{}, errOffsetOnCursorList
+	}
+	scope, err := cursorScope(tool, params)
+	if err != nil {
+		return cursorWindow{}, err
+	}
+
+	window := cursorWindow{
+		limit: readLimit(params, fallback, most),
+		after: optionalString(params, paramAfter),
+		scope: scope,
+	}
+	key := ""
+	if window.after != "" {
+		if key, err = pagination.DecodeKeyCursor(scope, window.after); err != nil {
+			return cursorWindow{}, errStaleCursor
+		}
+	}
+	if window.info, err = pagination.NewCursorInfo(window.limit, key); err != nil {
+		return cursorWindow{}, errStaleCursor
+	}
+	window.info.IncludeTotalCount = false
+
+	return window, nil
+}
+
+func firstCursorWindow(limit int) cursorWindow {
+	return cursorWindow{limit: limit, info: pagination.CursorInfo{Limit: limit}}
+}
+
+func cursorScope(tool string, params map[string]any) (string, error) {
+	shape := make(map[string]any, len(params))
+	for key, value := range params {
+		if key == paramLimit || key == paramAfter || key == paramOffset {
+			continue
+		}
+		shape[key] = value
+	}
+
+	encoded, err := jsonutils.CanonicalMarshal(shape)
+	if err != nil {
+		return "", fmt.Errorf("read the arguments a page cursor is bound to: %w", err)
+	}
+
+	return hashutils.SHA256Hex(tool + ":" + string(encoded))[:cursorScopeLength], nil
+}
+
+func (w *cursorWindow) first() bool {
+	return w.after == ""
+}
+
+func (w *cursorWindow) next(cursor string) string {
+	if cursor == "" {
+		return ""
+	}
+
+	return pagination.EncodeKeyCursor(w.scope, cursor)
+}
+
+func refuseStaleCursor(err error) error {
+	var invalid *errortypes.Error
+	if errors.As(err, &invalid) && invalid.Field == paramAfter {
+		return errStaleCursor
+	}
+
+	return err
+}
+
+func cursorPageSchema(fallback, most int) map[string]any {
+	return map[string]any{
+		paramLimit: limitSchema(fallback, most),
+		paramAfter: map[string]any{
+			toolschema.KeyType: toolschema.TypeString,
+			toolschema.KeyDescription: "The nextCursor of the previous page, with every other " +
+				"argument unchanged; omit for the first page.",
+		},
+	}
 }

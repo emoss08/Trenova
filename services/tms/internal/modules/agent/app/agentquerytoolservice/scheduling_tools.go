@@ -112,18 +112,21 @@ func newListRecurringShipmentsTool(
 			{Name: "nextOccurrenceAt", Kind: filterDate, Sortable: true},
 			{Name: fieldCreatedAt, Kind: filterDate, Sortable: true},
 		},
-		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
+		fetch: func(ctx context.Context, opts *pagination.QueryOptions, _ pagination.CursorInfo) (listPage, error) {
 			result, err := repo.List(
 				ctx,
 				&recurringshipmentports.ListRecurringShipmentsRequest{Filter: opts},
 			)
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
 
-			return listRows(result.Items, func(item *recurringshipment.RecurringShipment) any {
-				return recurringShipmentRowFrom(item)
-			}), nil
+			return offsetListPage(
+				result.Items,
+				func(item *recurringshipment.RecurringShipment) any {
+					return recurringShipmentRowFrom(item)
+				},
+			), nil
 		},
 	})
 }

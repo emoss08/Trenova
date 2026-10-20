@@ -77,14 +77,14 @@ func newListEquipmentManufacturersTool(
 			{Name: listFieldName, Kind: filterText, Sortable: true},
 			{Name: listFieldDescription, Kind: filterText},
 		},
-		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
+		fetch: func(ctx context.Context, opts *pagination.QueryOptions, _ pagination.CursorInfo) (listPage, error) {
 			result, err := repo.List(ctx,
 				&equipmentmanufacturerports.ListEquipmentManufacturersRequest{Filter: opts})
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
 
-			return listRows(
+			return offsetListPage(
 				result.Items,
 				func(item *equipmentmanufacturer.EquipmentManufacturer) any {
 					return codedRow{
@@ -131,16 +131,16 @@ func newListTableChangeAlertsTool(
 			{Name: listFieldName, Kind: filterText, Sortable: true},
 			{Name: "tableName", Kind: filterText},
 		},
-		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
+		fetch: func(ctx context.Context, opts *pagination.QueryOptions, _ pagination.CursorInfo) (listPage, error) {
 			result, err := repo.List(
 				ctx,
 				&tablechangealertports.ListTCASubscriptionsRequest{Filter: opts},
 			)
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
 
-			return listRows(result.Items, func(item *tablechangealert.TCASubscription) any {
+			return offsetListPage(result.Items, func(item *tablechangealert.TCASubscription) any {
 				return tableChangeAlertRow{
 					ID:             item.ID.String(),
 					Name:           item.Name,
