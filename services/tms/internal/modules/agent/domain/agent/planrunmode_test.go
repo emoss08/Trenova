@@ -66,6 +66,14 @@ func TestPlanRunModeOf(t *testing.T) {
 			want: agent.PlanRunModeInOrder,
 		},
 		{
+			name: "a missing first step",
+			steps: []*agent.AgentProposal{
+				nil,
+				{TargetResource: "invoice", TargetID: pulid.MustNew("inv_")},
+			},
+			want: agent.PlanRunModeInOrder,
+		},
+		{
 			name: "a missing step",
 			steps: []*agent.AgentProposal{
 				{TargetResource: "invoice", TargetID: pulid.MustNew("inv_")},

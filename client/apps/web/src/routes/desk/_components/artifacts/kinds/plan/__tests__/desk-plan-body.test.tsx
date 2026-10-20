@@ -484,6 +484,34 @@ describe("DeskPlanBody once approved", () => {
     expect(screen.getByText("Oct 20, 2:00 PM")).toBeInTheDocument();
   });
 
+  it("keeps its own words when a later plan follows a plan that finished", async () => {
+    listedPlans = [
+      plan({ status: "Completed", decidedByUserId: "usr_me" }),
+      plan({ id: "apl_2", title: "Something else", createdAt: NOW - 60 }),
+    ];
+    listedSteps = steps(["Executed", "Executed"]);
+    renderPlan();
+
+    await screen.findByText("Done");
+    expect(screen.getByText("Ran as approved.")).toBeInTheDocument();
+    expect(screen.queryByText("A later plan in this conversation takes it from here.")).toBeNull();
+  });
+
+  it("folds a step that was open while the plan waited once the plan has run", async () => {
+    listedPlans = [plan()];
+    listedSteps = steps(["Pending", "Pending"]);
+    const client = renderPlan();
+
+    expect(await screen.findByText("Oct 20, 2:00 PM")).toBeInTheDocument();
+    listedPlans = [plan({ status: "Completed", decidedByUserId: "usr_me" })];
+    listedSteps = steps(["Executed", "Executed"]);
+    await client.invalidateQueries();
+
+    const fold = await screen.findByRole("button", { name: /Changed 1 field on S-1001/ });
+    expect(fold).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByText("Oct 20, 2:00 PM")).toBeNull();
+  });
+
   it("calls a plan whose every step ran done", async () => {
     listedPlans = [plan({ status: "Completed", decidedByUserId: "usr_me" })];
     listedSteps = steps(["Executed", "Executed"]);

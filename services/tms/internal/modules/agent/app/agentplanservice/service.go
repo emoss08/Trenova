@@ -314,7 +314,7 @@ func (s *Service) claimAndRun(
 		Approval: agentports.PlanApproval{
 			ReasonCode:    req.ReasonCode,
 			Note:          agent.NormalizeDecisionNote(req.Note),
-			PreviewDigest: prepared.shown.digest(req.PreviewDigest),
+			PreviewDigest: prepared.settledDigest(from),
 		},
 	})
 	if err != nil {

@@ -254,7 +254,7 @@ describe("foldedLine", () => {
 });
 
 describe("recordsTouched", () => {
-  it("lists each record once with every step that changes it, and counts the hidden ones", () => {
+  it("lists each record once with every step that changes it, and counts hidden records, not hidden fields", () => {
     const views = planSteps(
       payload,
       [step(), step({ id: "aprop_2", planStep: 2 })],
@@ -269,7 +269,7 @@ describe("recordsTouched", () => {
             proposalId: "aprop_2",
             step: 2,
             preview: preview({
-              withheldCount: 1,
+              withheldCount: 3,
               changes: [
                 record({ fields: [field({ label: "Detention" })] }),
                 record({ withheld: true }),
@@ -286,7 +286,7 @@ describe("recordsTouched", () => {
     expect(records[0].label).toBe("S-1001");
     expect(records[0].steps).toEqual([1, 2]);
     expect(records[0].fields).toEqual(["Appointment", "Detention"]);
-    expect(withheld).toBe(2);
+    expect(withheld).toBe(1);
     expect(recordLine(records[0], t)).toBe("Appointment, Detention");
   });
 });

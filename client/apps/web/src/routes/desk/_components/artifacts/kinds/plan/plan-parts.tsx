@@ -123,7 +123,7 @@ function StepChange({ change }: { change: PreviewRecordChange }) {
 /** What a step will change, or changed: every record it touches, open or folded to one line. */
 function StepChanges({ step, folded }: { step: PlanStepView; folded: boolean }) {
   const t = useT();
-  const [open, setOpen] = useState(!folded);
+  const [open, setOpen] = useState(false);
   const regionId = useId();
   const preview = step.preview;
   if (preview === null) {

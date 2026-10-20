@@ -232,7 +232,7 @@ Looks something up. Nothing changes and nothing is sent.
 | List hold reasons (`masterdata_list_hold_reasons`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List service types (`masterdata_list_service_types`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List shipment types (`masterdata_list_shipment_types`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
-| Name plan (`name_plan`) | Reads only | Automatic | — | — | Names the plan the person approves the turn's proposals as; it changes no record and only words what the person is asked. |
+| Name plan (`name_plan`) | Reads only | Automatic | — | — | Names the plan the person approves the turn's proposals as. It writes no business record: the name is kept only as the plan's own title, beside the previewed changes the approval rests on. |
 | Get order (`order_get`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List orders (`order_list`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Explain rate (`rate_explain`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |

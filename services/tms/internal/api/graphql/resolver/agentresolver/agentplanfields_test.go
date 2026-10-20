@@ -2,6 +2,7 @@ package agentresolver
 
 import (
 	"context"
+	"sync"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
@@ -41,6 +42,7 @@ func (u *planDeciders) GetByIDs(
 type planStepLister struct {
 	agentports.AgentProposalRepository
 
+	mu       sync.Mutex
 	steps    []*agent.AgentProposal
 	requests []agentports.ListAgentProposalsByPlansRequest
 }
@@ -49,6 +51,8 @@ func (l *planStepLister) ListByPlans(
 	_ context.Context,
 	req agentports.ListAgentProposalsByPlansRequest,
 ) ([]*agent.AgentProposal, error) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
 	l.requests = append(l.requests, req)
 
 	return l.steps, nil

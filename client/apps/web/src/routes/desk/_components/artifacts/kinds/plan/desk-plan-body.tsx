@@ -173,8 +173,9 @@ function PlanCard({
   const canAct = ownsThread && thread.canContinue;
   const canDecide = canAct && phase === "awaiting";
   const canUndo = canAct && phase === "undoable" && plan.decidedByUserId === viewerId;
-  const later = supersededBy(plan, plans);
-  const canFinish = canAct && unfinished(phase, views) && later === null;
+  const stoppedShort = unfinished(phase, views);
+  const later = stoppedShort ? supersededBy(plan, plans) : null;
+  const canFinish = canAct && stoppedShort && later === null;
   const reviewRequired = reviewRequiredFor(
     previewQuery.data,
     steps.length === 0 || steps.some((step) => step.reviewRequired),

@@ -21,7 +21,7 @@ func (m PlanRunMode) IsValid() bool {
 func (m PlanRunMode) String() string { return string(m) }
 
 func PlanRunModeOf(steps []*AgentProposal) PlanRunMode {
-	if len(steps) < 2 {
+	if len(steps) < 2 || steps[0] == nil {
 		return PlanRunModeInOrder
 	}
 

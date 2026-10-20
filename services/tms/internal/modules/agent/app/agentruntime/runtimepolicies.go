@@ -67,8 +67,9 @@ var runtimePolicySpecs = []runtimePolicySpec{
 		scope:     agent.ToolScopeRun,
 		egress:    agent.EgressNone,
 		effect:    agent.ToolEffectAsk,
-		rationale: "Names the plan the person approves the turn's proposals as; it changes no " +
-			"record and only words what the person is asked.",
+		rationale: "Names the plan the person approves the turn's proposals as. It writes no " +
+			"business record: the name is kept only as the plan's own title, beside the " +
+			"previewed changes the approval rests on.",
 	},
 	{
 		name:      delegateTaskName,

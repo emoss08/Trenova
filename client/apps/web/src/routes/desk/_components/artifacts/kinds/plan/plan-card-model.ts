@@ -252,7 +252,6 @@ export function recordsTouched(steps: readonly PlanStepView[]): {
       }
       records.set(key, record);
     }
-    withheld += step.preview?.withheldCount ?? 0;
   }
 
   return { records: [...records.values()], withheld };
