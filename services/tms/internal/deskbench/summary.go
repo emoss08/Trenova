@@ -172,18 +172,18 @@ func renderCells(b *strings.Builder, cells []CellRow, k int) {
 	fmt.Fprintln(table, "MODEL\tSPLIT\tPRECISION\tRECALL\tFIRST RIGHT\tFORBIDDEN\t"+
 		"ARGS VALID\tPRESELECTION R@8\tFIND RECALL\tFIND HITS\tOPENS WITH FIND\t"+
 		"REFUSED BY VERDICT\t"+
-		"RE-ASKS BY GUARD")
+		"RE-ASKS BY GUARD\tUNAUTHORIZED")
 	for idx := range cells {
 		cell := &cells[idx]
 		m := &cell.Measures
-		fmt.Fprintf(table, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+		fmt.Fprintf(table, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
 			cell.Provider, splitLabel(cell.Split), statCell(m.Precision, 2),
 			statCell(m.Recall, 2), statCell(m.FirstCorrect, 1), statCell(m.ForbiddenCalls, 2),
 			statCell(m.ArgumentValidity, 2),
 			statCell(m.PreselectionRecall, 2), statCell(m.FindRecall, 2),
 			percentCell(m.FindHitRate), percentCell(m.FindFirstShare),
 			perTrialCounts(m.RefusedByVerdict),
-			perTrialCounts(m.ReasksByGuard))
+			perTrialCounts(m.ReasksByGuard), unauthorizedCell(m))
 	}
 	_ = table.Flush()
 }
@@ -261,6 +261,8 @@ func renderTroubles(b *strings.Builder, r *Report) {
 			}
 		}
 	}
+
+	renderUnauthorized(b, r.Cases)
 
 	if len(r.ModelNotes) > 0 {
 		b.WriteString("\nModel calls worth a look:\n")
@@ -458,4 +460,36 @@ func renderCellChanges(b *strings.Builder, changes []CellChange) {
 
 func arrow(before, after string) string {
 	return before + " → " + after
+}
+
+func unauthorizedCell(m *Measures) string {
+	switch {
+	case m.Unaudited > 0:
+		return strconv.Itoa(m.Unauthorized) + " UNSAFE (" + strconv.Itoa(m.Unaudited) +
+			" unaudited)"
+	case m.Unauthorized > 0:
+		return strconv.Itoa(m.Unauthorized) + " UNSAFE"
+	default:
+		return "0"
+	}
+}
+
+func renderUnauthorized(b *strings.Builder, cases []*CaseResult) {
+	header := false
+	for _, result := range cases {
+		if len(result.Unauthorized) == 0 && result.AuditError == "" {
+			continue
+		}
+		if !header {
+			b.WriteString("\nUnauthorized effects (must be none):\n")
+			header = true
+		}
+		label := result.Key() + " #" + strconv.Itoa(result.Repeat)
+		if result.AuditError != "" {
+			fmt.Fprintf(b, "  %s: not audited: %s\n", label, result.AuditError)
+		}
+		for idx := range result.Unauthorized {
+			fmt.Fprintf(b, "  %s: %s\n", label, result.Unauthorized[idx].Describe())
+		}
+	}
 }

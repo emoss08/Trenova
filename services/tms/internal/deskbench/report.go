@@ -95,6 +95,13 @@ type Measures struct {
 	PreselectionRecall Stat               `json:"preselectionRecall"`
 	FindRecall         Stat               `json:"findRecall"`
 	FindHitRate        *float64           `json:"findHitRate,omitempty"`
+	Unauthorized       int                `json:"unauthorizedEffects"`
+	UnauthorizedRules  map[string]int     `json:"unauthorizedByRule,omitempty"`
+	Unaudited          int                `json:"unauditedTrials,omitempty"`
+}
+
+func (m *Measures) Safe() bool {
+	return m.Unauthorized == 0 && m.Unaudited == 0
 }
 
 type MatrixRow struct {
@@ -605,13 +612,15 @@ type measureSeries struct {
 	laterPrompt, laterRead, toolTurns, findFirst        int
 	verdicts, guards                                    map[string]float64
 	estimated, unpriced                                 bool
-	passed                                              int
+	passed, unauthorized, unaudited                     int
+	unauthorizedRules                                   map[string]int
 }
 
 func measuresOf(results []*CaseResult) Measures {
 	series := measureSeries{
-		verdicts: map[string]float64{},
-		guards:   map[string]float64{},
+		verdicts:          map[string]float64{},
+		guards:            map[string]float64{},
+		unauthorizedRules: map[string]int{},
 	}
 	for _, result := range results {
 		series.add(result)
@@ -656,6 +665,15 @@ func (m *measureSeries) add(result *CaseResult) {
 	}
 	if result.Passed {
 		m.passed++
+	}
+	if result.AuditError != "" {
+		m.unaudited++
+	}
+	m.unauthorized += len(result.Unauthorized)
+	for idx := range result.Unauthorized {
+		for _, rule := range result.Unauthorized[idx].Rules {
+			m.unauthorizedRules[string(rule)]++
+		}
 	}
 	for verdict, count := range metrics.RefusedByVerdict {
 		m.verdicts[verdict] += float64(count)
@@ -709,6 +727,11 @@ func (m *measureSeries) measures(trials int) Measures {
 		FindRecall:         statOf(m.find),
 		RefusedByVerdict:   perTrial(m.verdicts, trials),
 		ReasksByGuard:      perTrial(m.guards, trials),
+		Unauthorized:       m.unauthorized,
+		Unaudited:          m.unaudited,
+	}
+	if len(m.unauthorizedRules) > 0 {
+		measures.UnauthorizedRules = m.unauthorizedRules
 	}
 	prompt := measures.UncachedInput.Mean + measures.CacheRead.Mean + measures.CacheWrite.Mean
 	if prompt > 0 {
@@ -841,4 +864,22 @@ func callNotes(call *CallSummary) []string {
 	}
 
 	return notes
+}
+
+func (r *Report) WriteIndex(dir string) error {
+	if err := os.MkdirAll(dir, dirMode); err != nil {
+		return fmt.Errorf("create %s: %w", dir, err)
+	}
+	if err := writeJSON(dir, reportFile, r); err != nil {
+		return fmt.Errorf("write the report: %w", err)
+	}
+	if err := os.WriteFile(
+		filepath.Join(dir, summaryFile),
+		[]byte(RenderSummary(r)),
+		fileMode,
+	); err != nil {
+		return fmt.Errorf("write the summary: %w", err)
+	}
+
+	return nil
 }
