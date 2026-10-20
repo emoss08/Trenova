@@ -20,6 +20,13 @@ func TestNamedPlanTitle(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, strings.Repeat("ü", 80), title)
 
+	title, err = agent.NamedPlanTitle("Bill\x00 the\x1b wait\u0085 now\x7f")
+	require.NoError(t, err)
+	assert.Equal(t, "Bill the wait now", title)
+
+	_, err = agent.NamedPlanTitle("\x00\x07")
+	require.ErrorIs(t, err, agent.ErrPlanTitleEmpty)
+
 	_, err = agent.NamedPlanTitle(" \n\t ")
 	require.ErrorIs(t, err, agent.ErrPlanTitleEmpty)
 

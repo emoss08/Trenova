@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -94,7 +95,12 @@ var (
 )
 
 func NamedPlanTitle(raw string) (string, error) {
-	title := strings.Join(strings.Fields(raw), " ")
+	title := strings.Join(strings.Fields(strings.Map(func(r rune) rune {
+		if unicode.IsControl(r) && !unicode.IsSpace(r) {
+			return -1
+		}
+		return r
+	}, raw)), " ")
 	switch {
 	case title == "":
 		return "", ErrPlanTitleEmpty

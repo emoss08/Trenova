@@ -1718,7 +1718,7 @@ A plan's name is the line the person reads above its steps, on the plan card and
 approval box. It used to be "Dispatch: 4 changes" every time. Every turn that is offered
 `withdraw_proposal` is also given `name_plan {title}` (`agentruntime/nameplan.go`,
 `declareNamePlan`) from its first model call, so the tool array never changes mid-turn. The
-runtime answers it itself: `agent.NamedPlanTitle` folds the title to one line of plain text
+runtime answers it itself: `agent.NamedPlanTitle` drops control characters, folds the title to one line of plain text
 and refuses an empty one or one over `agent.MaxNamedPlanTitleLength` (80) characters, and the
 last name the turn gave rides `RunResult.PlanTitle` to the recorder (`RecordRequest.PlanTitle`),
 which names the turn's own plan with it when two or more writes are filed (`planTitle` in
