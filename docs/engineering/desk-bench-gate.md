@@ -61,12 +61,16 @@ The advisor is Anthropic's alone, so it has no `gpt-6-luna` cell.
 That is 5 × 4 × 188 ≈ 3,800 trials on the full set and 4 × 4 × the pair count on the pairs. Cells
 run in the order above, so the Haiku cells that most of the decisions read finish first.
 
-**Budget.** Before run 1, the local session runs `claude-haiku-5-5@medium` and
-`claude-sonnet-5-5@medium` on the held-out split once each (`--repeat 1`), and projects run 1's
-total cost and time from what they spent per trial, scaling `gpt-6-luna` by its list prices against
-Sonnet's. It goes on without asking when the projection is at most **$250 and 14 hours**; above
-either, it stops and reports the projection by cell. During the run it stops at 125% of the
-projected cost. These figures are a starting bound, set before any trial has been priced.
+**Budget.** Before run 1, `trenova desk gate --probe` runs every cell once on every tenth
+development scenario of its group, and projects run 1's cost and time from what each cell spent per
+trial. Run 1 starts without asking when the projection is at most **$250 and 14 hours**; above
+either, or with a cell it could not price, the local session stops and reports the projection by
+cell. During the run it stops at 125% of the projected cost, and no decision is drawn from a run cut
+short. These figures are a starting bound, set before any trial has been priced.
+
+The approved plan probed two cells on the held-out split and scaled `gpt-6-luna` from list prices.
+Building it, the probe moved to a development sample of every cell: it measures each cell instead
+of scaling one, and it reads no held-out case before run 1.
 
 ## What is measured
 
@@ -106,8 +110,9 @@ runtime that misjudges its own authority is still caught.
 Notation: P4(cell, set) is pass^4 averaged over the scenarios of `set`. A route is a profile mode of
 the runtime (`agentruntime.profileFor`): **chat** (conversation turns, palette and formula studio
 included), **unattended** (event and scheduled runs), **delegated** (a delegate's read-only
-fan-out). A scenario belongs to the route its turns run in; a chat scenario that delegates counts
-toward chat, and its delegates' turns toward delegated. Routes are profile modes rather than desks
+fan-out). A scenario's route is **unattended** when it fires a run, **delegated** when it is tagged
+`delegation` or expects `delegate_task`, and **chat** otherwise. Two scenarios are delegated today,
+fewer than the 5 a route needs, so delegated takes chat's choice unless more are written. Routes are profile modes rather than desks
 because a desk has 2 to 13 development scenarios, too few to tell two efforts apart at 4 trials,
 while each profile mode differs in what it asks of the model (a person waiting, a run nobody is
 watching, a read-only fan-out) and has enough scenarios to decide on. Run 1 is the gate run; run 2 is the
@@ -205,20 +210,23 @@ whatever they show.
 
 Each merges through its own PR before the run.
 
-1. **The gate run and its measures** (this branch, no dependency):
+1. **The gate run and its measures** (own PR, no dependency):
    - `Measures.Unauthorized` and its six rules, reported per trial, per cell and in `summary.md`;
    - `trenova desk gate --spec deskbench/gate.yaml` (`task desk-gate`): the matrix above as one run
      (cells with their own scenario selectors), `gate.md` / `gate.json` with each rule evaluated
      from the report and the figures it used, and `--confirm <gate run>` for run 2, held-out only,
-     evaluating the held-out conditions;
+     evaluating the held-out conditions; run 2 also runs the configuration each route replaces, so a
+   route whose choice does not hold is measured as it would ship;
    - transcripts and call files written by split (`development/`, `held-out/`, `adversarial/`), so
      only development traces are handed over;
+   - `--probe`, the budget projection above, and a spend cap on the run;
+   - a `setup` on a step, run just before it, for the stale-approval pair;
    - the code-mode pairs (below), tagged `codemode`, which run in discrete mode until 5a lands.
 2. **The advisor** (own PR, no dependency): the Anthropic adapter declares `advisor_20260301`
    (`advisor-tool-2026-03-01`) when a call asks for it, replays `advisor_tool_result` blocks
    (encrypted with an Opus 5.5 advisor) unchanged on later calls, and counts advisor tokens and cost
-   in usage; a provider setting (advisor model, max uses) off by default; the bench's `+advisor`
-   suffix. Since the tool array is fixed for a turn and the API refuses a history holding advisor
+   in usage; a request-level option the runtime passes through; the bench's `+advisor` suffix. The
+   provider setting in AI Control is built only if the rule offers the advisor on some route. Since the tool array is fixed for a turn and the API refuses a history holding advisor
    results without the tool, a conversation keeps the advisor declared once it has consulted it.
 3. **Code mode in the bench** (own PR, after 5a): the `+code` suffix sets whatever per-turn switch 5a
    gives code mode. If 5a enables code mode only per provider, the suffix sets that for the cell.
@@ -252,11 +260,11 @@ cd services/tms
 git checkout master && git pull
 task docker-up && task db-reset
 trenova desk providers                                   # the cells' providers must be listed
-trenova desk gate --spec deskbench/gate.yaml --split held-out --only claude-haiku-5-5@low  # cost probe
-trenova desk gate --spec deskbench/gate.yaml             # run 1, every split
+trenova desk gate --probe --parallel 4                   # budget probe: probe.md
+trenova desk gate --budget .deskbench/gates/<time>-probe --parallel 4   # run 1, every split
 # hand over: .deskbench/gates/<time>/gate.md, summary.md, development/
-trenova desk run --tag <affected> --split development --repeat 4 ...  # rewrite rounds
-trenova desk gate --confirm .deskbench/gates/<time> --split held-out  # run 2
+trenova desk run --name <affected> --split development --repeat 4 ...  # rewrite rounds
+trenova desk gate --confirm .deskbench/gates/<time> --parallel 4        # run 2, held-out
 ```
 
 Results land in `.deskbench/gates/<time>/` (`gate.md`, `gate.json`, `summary.md`, `report.json`,
