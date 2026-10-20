@@ -420,13 +420,6 @@ func (s *stubProposalRepo) ListByPlan(
 	return nil, nil
 }
 
-func (s *stubProposalRepo) ListByPlans(
-	context.Context,
-	agentports.ListAgentProposalsByPlansRequest,
-) ([]*agent.AgentProposal, error) {
-	return nil, nil
-}
-
 func (s *stubProposalRepo) SkipPendingByPlan(
 	context.Context,
 	agentports.SkipPendingByPlanRequest,
