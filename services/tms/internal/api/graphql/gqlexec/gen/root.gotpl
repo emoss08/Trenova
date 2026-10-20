@@ -1,9 +1,9 @@
 {{ reserveImport "context" }}
 {{ reserveImport "sync" }}
-{{ reserveImport "github.com/vektah/gqlparser/v2" "gqlparser" }}
 {{ reserveImport "github.com/vektah/gqlparser/v2/ast" }}
 {{ reserveImport "github.com/99designs/gqlgen/graphql" }}
 {{ reserveImport $.Runtime }}
+{{ reserveImport $.SchemaSource }}
 {{- range $s := $.Shards }}
 {{ reserveImport $s.ImportPath }}
 {{- end }}
@@ -85,10 +85,4 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 	})
 }
 
-var sources = []*ast.Source{
-{{- range $source := $.Data.AugmentedSources }}
-	{Name: {{ $source.RelativePath | quote }}, Input: {{ $source.Source | rawQuote }}, BuiltIn: {{ $source.BuiltIn }}},
-{{- end }}
-}
-
-var parsedSchema = gqlparser.MustLoadSchema(sources...)
+var parsedSchema = schemasource.Parsed

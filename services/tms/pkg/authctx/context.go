@@ -42,6 +42,7 @@ const (
 	PrincipalTypeUser          = "session_user"
 	PrincipalTypeAPIKey        = "api_key"
 	PrincipalTypeCaptureDevice = "capture_device"
+	PrincipalTypeAgent         = "agent"
 )
 
 func SetLocale(c *gin.Context, locale string) {
@@ -228,6 +229,13 @@ func (ac *AuthContext) IsCaptureDevice() bool {
 	return ac.PrincipalType == PrincipalTypeCaptureDevice && ac.CaptureDeviceID.IsNotNil()
 }
 
+func (ac *AuthContext) IsAgent() bool {
+	if ac == nil {
+		return false
+	}
+	return ac.PrincipalType == PrincipalTypeAgent
+}
+
 func (ac *AuthContext) IsAPIKey() bool {
 	if ac == nil {
 		return false
@@ -237,6 +245,9 @@ func (ac *AuthContext) IsAPIKey() bool {
 
 func GetAuthContext(c *gin.Context) *AuthContext {
 	ac := authContextFromGin(c)
+	if ac.PrincipalType == PrincipalTypeAgent {
+		return &AuthContext{}
+	}
 	switch ac.PrincipalType {
 	case "":
 		switch {

@@ -15,7 +15,13 @@ import (
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
-const shardSuffix = "exec"
+const (
+	shardSuffix = "exec"
+	// schemaSourcePackage holds the schema's text and its parsed form on
+	// their own, so code that validates operations against the schema (the
+	// agent read path) need not import the whole executor.
+	schemaSourcePackage = "schemasource"
+)
 
 type shardData struct {
 	Name          string
@@ -72,11 +78,12 @@ type childErr struct {
 }
 
 type rootData struct {
-	Data        *codegen.Data
-	Runtime     string
-	WorkerLimit int64
-	Shards      []*shardData
-	Roots       []string
+	Data         *codegen.Data
+	Runtime      string
+	WorkerLimit  int64
+	Shards       []*shardData
+	Roots        []string
+	SchemaSource string
 }
 
 type planner struct {
@@ -122,6 +129,9 @@ func buildPlan(data *codegen.Data, runtimeImport string) (*rootData, error) {
 		Runtime:     runtimeImport,
 		WorkerLimit: workerLimit(data.Config.Exec.WorkerLimit),
 		Roots:       resolverRoots(data),
+		SchemaSource: path.Join(
+			data.Config.Exec.ImportPath(), shardSuffix, schemaSourcePackage,
+		),
 	}
 	for _, s := range p.shards {
 		s.finalize()

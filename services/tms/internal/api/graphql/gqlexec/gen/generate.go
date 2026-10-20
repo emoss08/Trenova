@@ -28,6 +28,8 @@ var (
 	shardTemplate string
 	//go:embed root.gotpl
 	rootTemplate string
+	//go:embed schemasource.gotpl
+	schemaSourceTemplate string
 )
 
 func run(ctx context.Context, configPath string) error {
@@ -237,6 +239,22 @@ func writeExec(cfg *config.Config, root *rootData) error {
 		}); err != nil {
 			return fmt.Errorf("render shard %s: %w", s.Name, err)
 		}
+	}
+
+	sourceDir := filepath.Join(execDir, shardSuffix, schemaSourcePackage)
+	if err := os.MkdirAll(sourceDir, 0o755); err != nil {
+		return fmt.Errorf("create %s: %w", sourceDir, err)
+	}
+	if err := templates.Render(templates.Options{
+		PackageName:     schemaSourcePackage,
+		Filename:        filepath.Join(sourceDir, "schema.generated.go"),
+		Template:        schemaSourceTemplate,
+		Data:            root,
+		GeneratedHeader: true,
+		Packages:        cfg.Packages,
+		PruneOptions:    cfg.GetPruneOptions(),
+	}); err != nil {
+		return fmt.Errorf("render schema source: %w", err)
 	}
 
 	if err := templates.Render(templates.Options{
