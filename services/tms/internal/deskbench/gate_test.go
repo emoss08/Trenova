@@ -17,7 +17,6 @@ const (
 	medium  = "claude-haiku-5-5@medium"
 	sonnet  = "claude-sonnet-5-5@medium"
 	advisor = "claude-haiku-5-5@low+advisor"
-	code    = "claude-haiku-5-5@low+code"
 )
 
 func gateSpec() *GateSpec {
@@ -27,13 +26,12 @@ func gateSpec() *GateSpec {
 		Before: medium,
 		Budget: GateBudget{MaxUSD: 10, MaxHours: 2, Overrun: 1.25, ProbeEvery: 2},
 		Groups: []GateGroup{
-			{Name: "full", Cells: []string{low, medium, sonnet, advisor}},
-			{Name: "pairs", Cells: []string{code}, Tags: []string{codeModeTag}},
+			{Name: "full", Cells: []string{low, medium, sonnet}},
+			{Name: "advisor", Cells: []string{advisor}, AdvisorRoutes: true},
 		},
-		Effort:   EffortRule{Candidates: []string{low, medium}, Within: 0.03, MinScenarios: 2},
-		Advisor:  AdvisorRule{Cell: advisor, Gain: 0.05, CostBar: sonnet},
-		CodeMode: []CodePair{{Model: "Haiku 5.5", Code: code, Discrete: low}},
-		HeldOut:  HeldOutRule{Tolerance: 0.03, SelectionSlack: 0.02},
+		Effort:  EffortRule{Candidates: []string{low, medium}, Within: 0.02, MinScenarios: 2},
+		Advisor: AdvisorRule{Cell: advisor, Reference: sonnet, Gap: 0.10, Gain: 0.05},
+		HeldOut: HeldOutRule{Tolerance: 0.03, SelectionSlack: 0.02},
 	}
 	if err := spec.validate(); err != nil {
 		panic(err)
@@ -100,8 +98,12 @@ func TestGateSpec_RefusesRulesThatNameNoRunCell(t *testing.T) {
 	t.Parallel()
 
 	spec := gateSpec()
-	spec.Advisor.CostBar = "gpt-6-luna@medium"
+	spec.Advisor.Reference = "gpt-6-luna@medium"
 	require.ErrorIs(t, spec.validate(), ErrGateSpec)
+
+	spec = gateSpec()
+	spec.Groups[1].AdvisorRoutes = false
+	require.ErrorIs(t, spec.validate(), ErrGateSpec, "the advisor runs only where it may help")
 
 	spec = gateSpec()
 	spec.Before = sonnet
@@ -121,15 +123,15 @@ func TestRouteOf(t *testing.T) {
 	assert.Equal(t, RouteUnattended, RouteOf(unattended("c", evalsplit.Development)))
 }
 
-func TestEvaluateGate_ChoosesTheCheaperEffortWithinTheMargin(t *testing.T) {
+func TestEvaluateGate_ChoosesTheLowestEffortWithinTwoPoints(t *testing.T) {
 	t.Parallel()
 
 	a, b := chat("a", evalsplit.Development), chat("b", evalsplit.Development)
 	u1, u2 := unattended("u1", evalsplit.Development), unattended("u2", evalsplit.Development)
 	cases := trials(
-		trialPlan{a, low, 4, "0.01"}, trialPlan{b, low, 4, "0.01"},
-		trialPlan{a, medium, 4, "0.02"}, trialPlan{b, medium, 4, "0.02"},
-		trialPlan{u1, low, 2, "0.01"}, trialPlan{u2, low, 2, "0.01"},
+		trialPlan{a, low, 4, "0.02"}, trialPlan{b, low, 4, "0.02"},
+		trialPlan{a, medium, 4, "0.01"}, trialPlan{b, medium, 4, "0.01"},
+		trialPlan{u1, low, 3, "0.01"}, trialPlan{u2, low, 4, "0.01"},
 		trialPlan{u1, medium, 4, "0.03"}, trialPlan{u2, medium, 4, "0.03"},
 	)
 
@@ -138,10 +140,29 @@ func TestEvaluateGate_ChoosesTheCheaperEffortWithinTheMargin(t *testing.T) {
 	for _, decision := range result.Efforts {
 		byRoute[decision.Route] = decision
 	}
-	assert.Equal(t, low, byRoute[RouteChat].Chosen, "equal pass^4, low is cheaper")
-	assert.Equal(t, medium, byRoute[RouteUnattended].Chosen, "low is not within 0.03")
+	assert.Equal(t, low, byRoute[RouteChat].Chosen,
+		"equal pass^4: the lower effort, even though medium costs less here")
+	assert.Equal(t, medium, byRoute[RouteUnattended].Chosen, "low is 0.125 behind, not within 0.02")
 	assert.Equal(t, low, byRoute[RouteDelegated].Chosen)
 	assert.True(t, byRoute[RouteDelegated].Inherited, "no delegated scenarios: takes chat's")
+}
+
+func TestAdvisorRoutes_OnlyWhereHaikuTrailsTheReferenceByTenPoints(t *testing.T) {
+	t.Parallel()
+
+	a, b := chat("a", evalsplit.Development), chat("b", evalsplit.Development)
+	u1, u2 := unattended("u1", evalsplit.Development), unattended("u2", evalsplit.Development)
+	cases := trials(
+		trialPlan{a, low, 3, "0.01"}, trialPlan{b, low, 3, "0.01"},
+		trialPlan{a, medium, 3, "0.02"}, trialPlan{b, medium, 3, "0.02"},
+		trialPlan{a, sonnet, 4, "0.40"}, trialPlan{b, sonnet, 4, "0.40"},
+		trialPlan{u1, low, 4, "0.01"}, trialPlan{u2, low, 4, "0.01"},
+		trialPlan{u1, medium, 4, "0.02"}, trialPlan{u2, medium, 4, "0.02"},
+		trialPlan{u1, sonnet, 4, "0.40"}, trialPlan{u2, sonnet, 4, "0.40"},
+	)
+
+	assert.Equal(t, []Route{RouteChat, RouteDelegated}, AdvisorRoutes(gateSpec(), cases),
+		"chat trails Sonnet by 0.75; unattended does not trail; delegated takes chat's")
 }
 
 func TestEvaluateGate_OffersTheAdvisorOnlyWhenEveryConditionHolds(t *testing.T) {
@@ -166,36 +187,21 @@ func TestEvaluateGate_OffersTheAdvisorOnlyWhenEveryConditionHolds(t *testing.T) 
 	assert.Contains(t, result.Advisors[0].Reason, "no unauthorized effect")
 }
 
-func TestEvaluateGate_CodeModeMustBeatDiscreteSafely(t *testing.T) {
+func TestEvaluateGate_NoAdvisorWhereHaikuIsCloseToTheReference(t *testing.T) {
 	t.Parallel()
 
-	p1 := chat("p1", evalsplit.Development, codeModeTag)
-	p2 := chat("p2", evalsplit.Development, codeModeTag)
-	p3 := chat("p3", evalsplit.Development, codeModeTag)
-	base := []trialPlan{
-		{p1, low, 2, "0.01"}, {p2, low, 3, "0.01"}, {p3, low, 4, "0.01"},
-		{p1, medium, 2, "0.02"}, {p2, medium, 3, "0.02"}, {p3, medium, 4, "0.02"},
-	}
+	a, b := chat("a", evalsplit.Development), chat("b", evalsplit.Development)
+	cases := trials(
+		trialPlan{a, low, 4, "0.01"}, trialPlan{b, low, 4, "0.01"},
+		trialPlan{a, medium, 4, "0.02"}, trialPlan{b, medium, 4, "0.02"},
+		trialPlan{a, sonnet, 4, "0.40"}, trialPlan{b, sonnet, 4, "0.40"},
+	)
 
-	cases := trials(append(base,
-		trialPlan{p1, code, 4, "0.01"}, trialPlan{p2, code, 4, "0.01"},
-		trialPlan{p3, code, 4, "0.01"})...)
 	result := EvaluateGate(gateSpec(), cases)
-	require.Len(t, result.CodeMode, 1)
-	assert.True(t, result.CodeMode[0].Enabled, result.CodeMode[0].Reason)
-
-	cases = trials(append(base,
-		trialPlan{p1, code, 4, "0.01"}, trialPlan{p2, code, 4, "0.01"},
-		trialPlan{p3, code, 2, "0.01"})...)
-	result = EvaluateGate(gateSpec(), cases)
-	assert.False(t, result.CodeMode[0].Enabled, "p3 is a hard regression")
-	assert.Equal(t, []string{"p3"}, result.CodeMode[0].Regressions)
-
-	cases = trials(append(base,
-		trialPlan{p1, code, 2, "0.01"}, trialPlan{p2, code, 3, "0.01"},
-		trialPlan{p3, code, 4, "0.01"})...)
-	result = EvaluateGate(gateSpec(), cases)
-	assert.False(t, result.CodeMode[0].Enabled, "a tie is not a win")
+	require.NotEmpty(t, result.Advisors)
+	assert.False(t, result.Advisors[0].Eligible)
+	assert.False(t, result.Advisors[0].Offered)
+	assert.Contains(t, result.Advisors[0].Reason, "not tried")
 }
 
 func TestConfirmGate_AVetoedRouteKeepsTheBeforeCell(t *testing.T) {
@@ -251,11 +257,12 @@ func TestProject_ScalesTheProbeToThePlannedTrials(t *testing.T) {
 	assert.Len(t, probed, 5, "every second development scenario")
 
 	probe := make([]*CaseResult, 0, 4)
-	for _, cell := range []string{low, medium, sonnet, advisor, code} {
+	for _, cell := range []string{low, medium, sonnet, advisor} {
 		probe = append(probe, trials(trialPlan{probed[0], cell, 1, "0.10"})[0])
 	}
 	projection := Project(spec, probe, scenarios, 2)
-	assert.InDelta(t, 4*40*0.10, projection.Cost, 1e-9, "four cells, ten scenarios, four trials")
+	assert.InDelta(t, 4*40*0.10, projection.Cost, 1e-9,
+		"four cells, ten scenarios, four trials; the advisor cell is projected on every route")
 	assert.False(t, projection.Within, "$16 is over the $10 budget")
 	assert.InDelta(t, projection.Cost*1.25, projection.Cap, 1e-9)
 	assert.True(t, strings.Contains(projection.Render(), "Within budget: no"))

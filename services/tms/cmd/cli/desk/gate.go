@@ -280,8 +280,7 @@ func runGateMatrix(
 	limit := &spendCap{limit: projection.Cap, cancel: cancel}
 
 	started := time.Now()
-	cases, runErr := runGroups(ctx, root, "gate", spec.Repeat, spec.PassK,
-		gateRuns(spec.Groups, scenarios), limit)
+	cases, runErr := runMatrix(ctx, root, spec, scenarios, limit)
 	if err = writeGateRun(root, gateMeta("gate", spec.PassK, started), cases); err != nil {
 		return errors.Join(runErr, err)
 	}
@@ -306,6 +305,44 @@ func runGateMatrix(
 	fmt.Fprintf(os.Stderr, "confirm it with: trenova desk gate --confirm %s\n", root)
 
 	return runErr
+}
+
+func runMatrix(
+	ctx context.Context,
+	root string,
+	spec *deskbench.GateSpec,
+	scenarios []*deskbench.Scenario,
+	limit *spendCap,
+) ([]*deskbench.CaseResult, error) {
+	first := make([]deskbench.GateGroup, 0, len(spec.Groups))
+	deferred := make([]deskbench.GateGroup, 0, 1)
+	for idx := range spec.Groups {
+		if spec.Groups[idx].AdvisorRoutes {
+			deferred = append(deferred, spec.Groups[idx])
+			continue
+		}
+		first = append(first, spec.Groups[idx])
+	}
+
+	cases, runErr := runGroups(ctx, root, "gate", spec.Repeat, spec.PassK,
+		gateRuns(first, scenarios), limit)
+	if len(deferred) == 0 || ctx.Err() != nil {
+		return cases, runErr
+	}
+
+	routes := deskbench.AdvisorRoutes(spec, cases)
+	if len(routes) == 0 {
+		fmt.Fprintln(os.Stderr, "the advisor is tried on no route: Haiku is within the gap everywhere")
+		return cases, runErr
+	}
+	fmt.Fprintf(os.Stderr, "trying the advisor on: %v\n", routes)
+	for idx := range deferred {
+		deferred[idx].Routes = routes
+	}
+	more, moreErr := runGroups(ctx, root, "gate", spec.Repeat, spec.PassK,
+		gateRuns(deferred, scenarios), limit)
+
+	return append(cases, more...), errors.Join(runErr, moreErr)
 }
 
 func runGateConfirm(parent context.Context, scenarios []*deskbench.Scenario) error {

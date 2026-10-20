@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
-	"sort"
 	"strings"
 	"time"
 
@@ -56,15 +55,14 @@ func RouteOf(scenario *Scenario) Route {
 }
 
 type GateSpec struct {
-	Repeat   int         `yaml:"repeat"   json:"repeat"`
-	PassK    int         `yaml:"passK"    json:"passK"`
-	Before   string      `yaml:"before"   json:"before"`
-	Budget   GateBudget  `yaml:"budget"   json:"budget"`
-	Groups   []GateGroup `yaml:"groups"   json:"groups"`
-	Effort   EffortRule  `yaml:"effort"   json:"effort"`
-	Advisor  AdvisorRule `yaml:"advisor"  json:"advisor"`
-	CodeMode []CodePair  `yaml:"codeMode" json:"codeMode,omitempty"`
-	HeldOut  HeldOutRule `yaml:"heldOut"  json:"heldOut"`
+	Repeat  int         `yaml:"repeat"  json:"repeat"`
+	PassK   int         `yaml:"passK"   json:"passK"`
+	Before  string      `yaml:"before"  json:"before"`
+	Budget  GateBudget  `yaml:"budget"  json:"budget"`
+	Groups  []GateGroup `yaml:"groups"  json:"groups"`
+	Effort  EffortRule  `yaml:"effort"  json:"effort"`
+	Advisor AdvisorRule `yaml:"advisor" json:"advisor"`
+	HeldOut HeldOutRule `yaml:"heldOut" json:"heldOut"`
 }
 
 type GateBudget struct {
@@ -75,11 +73,12 @@ type GateBudget struct {
 }
 
 type GateGroup struct {
-	Name   string            `yaml:"name"   json:"name"`
-	Cells  []string          `yaml:"cells"  json:"cells"`
-	Tags   []string          `yaml:"tags"   json:"tags,omitempty"`
-	Routes []Route           `yaml:"routes" json:"routes,omitempty"`
-	Splits []evalsplit.Split `yaml:"splits" json:"splits,omitempty"`
+	Name          string            `yaml:"name"          json:"name"`
+	Cells         []string          `yaml:"cells"         json:"cells"`
+	Tags          []string          `yaml:"tags"          json:"tags,omitempty"`
+	Routes        []Route           `yaml:"routes"        json:"routes,omitempty"`
+	Splits        []evalsplit.Split `yaml:"splits"        json:"splits,omitempty"`
+	AdvisorRoutes bool              `yaml:"advisorRoutes" json:"advisorRoutes,omitempty"`
 }
 
 func (g *GateGroup) Selects(scenario *Scenario) bool {
@@ -100,21 +99,15 @@ type EffortRule struct {
 }
 
 type AdvisorRule struct {
-	Cell    string  `yaml:"cell"    json:"cell,omitempty"`
-	Gain    float64 `yaml:"gain"    json:"gain"`
-	CostBar string  `yaml:"costBar" json:"costBar,omitempty"`
-}
-
-type CodePair struct {
-	Model    string `yaml:"model"    json:"model"`
-	Code     string `yaml:"code"     json:"code"`
-	Discrete string `yaml:"discrete" json:"discrete"`
+	Cell      string  `yaml:"cell"      json:"cell,omitempty"`
+	Reference string  `yaml:"reference" json:"reference,omitempty"`
+	Gap       float64 `yaml:"gap"       json:"gap"`
+	Gain      float64 `yaml:"gain"      json:"gain"`
 }
 
 type HeldOutRule struct {
-	Tolerance       float64 `yaml:"tolerance"       json:"tolerance"`
-	SelectionSlack  float64 `yaml:"selectionSlack"  json:"selectionSlack"`
-	CodeModeMinimum float64 `yaml:"codeModeMinimum" json:"codeModeMinimum"`
+	Tolerance      float64 `yaml:"tolerance"      json:"tolerance"`
+	SelectionSlack float64 `yaml:"selectionSlack" json:"selectionSlack"`
 }
 
 var ErrGateSpec = errors.New("the gate spec is incomplete")
@@ -196,6 +189,12 @@ func (s *GateSpec) validateGroups() error {
 	return nil
 }
 
+func (s *GateSpec) advisorGrouped() bool {
+	return slices.ContainsFunc(s.Groups, func(g GateGroup) bool {
+		return g.AdvisorRoutes && slices.Contains(g.Cells, s.Advisor.Cell)
+	})
+}
+
 func (g *GateGroup) validate() error {
 	if len(g.Cells) == 0 {
 		return fmt.Errorf("%w: group %s names no cell", ErrGateSpec, g.Name)
@@ -229,26 +228,19 @@ func (s *GateSpec) validateRules() error {
 		return fmt.Errorf("%w: name the effort candidates", ErrGateSpec)
 	case !slices.Contains(s.Effort.Candidates, s.Before):
 		return fmt.Errorf("%w: before must be one of the effort candidates", ErrGateSpec)
-	case s.Advisor.Cell != "" && s.Advisor.CostBar == "":
-		return fmt.Errorf("%w: the advisor needs a cost bar", ErrGateSpec)
+	case s.Advisor.Cell != "" && s.Advisor.Reference == "":
+		return fmt.Errorf("%w: the advisor needs a reference cell", ErrGateSpec)
+	case s.Advisor.Cell != "" && !s.advisorGrouped():
+		return fmt.Errorf("%w: the advisor cell runs in a group with advisorRoutes", ErrGateSpec)
 	}
 
 	checks := []struct{ what, cell string }{
 		{"before", s.Before},
 		{"advisor cell", s.Advisor.Cell},
-		{"advisor cost bar", s.Advisor.CostBar},
+		{"advisor reference", s.Advisor.Reference},
 	}
 	for _, cell := range s.Effort.Candidates {
 		checks = append(checks, struct{ what, cell string }{"effort candidate", cell})
-	}
-	for idx := range s.CodeMode {
-		pair := &s.CodeMode[idx]
-		if pair.Model == "" {
-			return fmt.Errorf("%w: a code-mode pair names no model", ErrGateSpec)
-		}
-		checks = append(checks,
-			struct{ what, cell string }{"code-mode cell", pair.Code},
-			struct{ what, cell string }{"code-mode discrete cell", pair.Discrete})
 	}
 	for _, check := range checks {
 		if err := need(check.what, check.cell); err != nil {
@@ -424,12 +416,6 @@ func onRoute(route Route, split evalsplit.Split) func(*Scenario) bool {
 	return func(s *Scenario) bool { return s.Split == split && RouteOf(s) == route }
 }
 
-func codePairs(split evalsplit.Split) func(*Scenario) bool {
-	return func(s *Scenario) bool { return s.Split == split && slices.Contains(s.Tags, codeModeTag) }
-}
-
-const codeModeTag = "codemode"
-
 type EffortDecision struct {
 	Route      Route        `json:"route"`
 	Chosen     string       `json:"chosen"`
@@ -444,7 +430,8 @@ type AdvisorDecision struct {
 	Inherited bool        `json:"inheritedFromChat,omitempty"`
 	Advisor   GateFigure  `json:"advisor"`
 	Chosen    GateFigure  `json:"chosenEffort"`
-	CostBar   GateFigure  `json:"costBar"`
+	Reference GateFigure  `json:"reference"`
+	Eligible  bool        `json:"eligible"`
 	Safety    cellSafety  `json:"safety"`
 	Reason    string      `json:"reason"`
 	Checks    []GateCheck `json:"checks"`
@@ -454,31 +441,6 @@ type GateCheck struct {
 	Name   string `json:"name"`
 	Passed bool   `json:"passed"`
 	Detail string `json:"detail"`
-}
-
-type PairDifference struct {
-	Scenario string   `json:"scenario"`
-	Code     *float64 `json:"code,omitempty"`
-	Discrete *float64 `json:"discrete,omitempty"`
-	CodeWins int      `json:"codePassed"`
-	DiscWins int      `json:"discretePassed"`
-	Trials   int      `json:"trials"`
-}
-
-type CodeModeDecision struct {
-	Model       string           `json:"model"`
-	Code        string           `json:"code"`
-	Discrete    string           `json:"discrete"`
-	Considered  bool             `json:"considered"`
-	Enabled     bool             `json:"enabled"`
-	Safety      cellSafety       `json:"safety"`
-	MeanDiff    *float64         `json:"meanDifference,omitempty"`
-	Wins        int              `json:"wins"`
-	Losses      int              `json:"losses"`
-	Regressions []string         `json:"hardRegressions,omitempty"`
-	Pairs       []PairDifference `json:"pairs"`
-	Checks      []GateCheck      `json:"checks"`
-	Reason      string           `json:"reason"`
 }
 
 type HeldOutBefore struct {
@@ -502,10 +464,68 @@ type GateResult struct {
 	FinishedAt    time.Time             `json:"finishedAt"`
 	Efforts       []EffortDecision      `json:"efforts"`
 	Advisors      []AdvisorDecision     `json:"advisors,omitempty"`
-	CodeMode      []CodeModeDecision    `json:"codeMode,omitempty"`
 	Configuration mixedSelection        `json:"configuration"`
 	HeldOut       HeldOutBefore         `json:"heldOutBefore"`
 	Safety        map[string]cellSafety `json:"safety"`
+}
+
+func chooseEfforts(spec *GateSpec, table *scoreTable) []EffortDecision {
+	decisions := make([]EffortDecision, 0, len(AllRoutes()))
+	chat := ""
+	for _, route := range AllRoutes() {
+		decision := decideEffort(spec, table, route, chat)
+		if route == RouteChat {
+			chat = decision.Chosen
+		}
+		decisions = append(decisions, decision)
+	}
+
+	return decisions
+}
+
+func AdvisorRoutes(spec *GateSpec, cases []*CaseResult) []Route {
+	if spec.Advisor.Cell == "" {
+		return nil
+	}
+	table := newScoreTable(cases, spec.PassK)
+	routes := make([]Route, 0, len(AllRoutes()))
+	chatEligible := false
+	for _, decision := range chooseEfforts(spec, table) {
+		eligible, _ := advisorEligible(spec, table, decision.Route, decision.Chosen)
+		if decision.Inherited {
+			eligible = chatEligible
+		}
+		if decision.Route == RouteChat {
+			chatEligible = eligible
+		}
+		if eligible {
+			routes = append(routes, decision.Route)
+		}
+	}
+
+	return routes
+}
+
+func advisorEligible(
+	spec *GateSpec,
+	table *scoreTable,
+	route Route,
+	chosen string,
+) (bool, GateCheck) {
+	keep := onRoute(route, evalsplit.Development)
+	haiku := table.figure(chosen, keep)
+	reference := table.figure(spec.Advisor.Reference, keep)
+	check := GateCheck{Name: fmt.Sprintf("%s at least %.2f below %s", chosen, spec.Advisor.Gap,
+		spec.Advisor.Reference)}
+	if haiku.PassK == nil || reference.PassK == nil {
+		check.Detail = "a pass^k is missing"
+		return false, check
+	}
+	gap := *reference.PassK - *haiku.PassK
+	check.Passed = gap >= spec.Advisor.Gap-1e-9
+	check.Detail = fmt.Sprintf("%.3f against %.3f (gap %.3f)", *haiku.PassK, *reference.PassK, gap)
+
+	return check.Passed, check
 }
 
 func EvaluateGate(spec *GateSpec, cases []*CaseResult) *GateResult {
@@ -520,10 +540,9 @@ func EvaluateGate(spec *GateSpec, cases []*CaseResult) *GateResult {
 	}
 
 	efforts := map[Route]string{}
-	for _, route := range AllRoutes() {
-		decision := decideEffort(spec, table, route, efforts[RouteChat])
-		efforts[route] = decision.Chosen
-		result.Efforts = append(result.Efforts, decision)
+	result.Efforts = chooseEfforts(spec, table)
+	for _, decision := range result.Efforts {
+		efforts[decision.Route] = decision.Chosen
 	}
 
 	advised := map[Route]bool{}
@@ -541,19 +560,6 @@ func EvaluateGate(spec *GateSpec, cases []*CaseResult) *GateResult {
 		}
 	}
 
-	for idx := range spec.CodeMode {
-		pair := &spec.CodeMode[idx]
-		decision := decideCodeMode(table, pair)
-		decision.Considered = pair.Discrete == efforts[RouteChat] ||
-			!slices.Contains(spec.Effort.Candidates, pair.Discrete)
-		if !decision.Considered {
-			decision.Enabled = false
-			decision.Reason = "not the effort this model runs at (" + efforts[RouteChat] +
-				"); " + decision.Reason
-		}
-		result.CodeMode = append(result.CodeMode, decision)
-	}
-
 	result.HeldOut = heldOutBefore(spec, table, result.Configuration)
 
 	return result
@@ -562,16 +568,14 @@ func EvaluateGate(spec *GateSpec, cases []*CaseResult) *GateResult {
 func decideEffort(spec *GateSpec, table *scoreTable, route Route, chat string) EffortDecision {
 	decision := EffortDecision{Route: route}
 	best := -1.0
+	scenarios := 0
 	for _, cell := range spec.Effort.Candidates {
 		figure := table.figure(cell, onRoute(route, evalsplit.Development))
 		decision.Candidates = append(decision.Candidates, figure)
+		scenarios = max(scenarios, figure.Scenarios)
 		if figure.PassK != nil && *figure.PassK > best {
 			best = *figure.PassK
 		}
-	}
-	scenarios := 0
-	for idx := range decision.Candidates {
-		scenarios = max(scenarios, decision.Candidates[idx].Scenarios)
 	}
 	if route != RouteChat && scenarios < spec.Effort.MinScenarios && chat != "" {
 		decision.Chosen = chat
@@ -586,36 +590,17 @@ func decideEffort(spec *GateSpec, table *scoreTable, route Route, chat string) E
 		return decision
 	}
 
-	var chosen *GateFigure
 	for idx := range decision.Candidates {
 		figure := &decision.Candidates[idx]
-		if figure.PassK == nil || *figure.PassK < best-spec.Effort.Within-1e-9 {
-			continue
-		}
-		switch {
-		case chosen == nil:
-			chosen = figure
-		case cheaper(figure, chosen):
-			chosen = figure
+		if figure.PassK != nil && *figure.PassK >= best-spec.Effort.Within-1e-9 {
+			decision.Chosen = figure.Cell
+			break
 		}
 	}
-	decision.Chosen = chosen.Cell
-	decision.Reason = fmt.Sprintf(
-		"best pass^%d %.3f; within %.2f of it, %s costs least per completed task",
-		spec.PassK, best, spec.Effort.Within, chosen.Cell)
+	decision.Reason = fmt.Sprintf("best pass^%d %.3f; %s is the lowest effort within %.2f of it",
+		spec.PassK, best, decision.Chosen, spec.Effort.Within)
 
 	return decision
-}
-
-func cheaper(a, b *GateFigure) bool {
-	switch {
-	case a.CostPerPass == nil:
-		return false
-	case b.CostPerPass == nil:
-		return true
-	default:
-		return *a.CostPerPass < *b.CostPerPass
-	}
 }
 
 func decideAdvisor(
@@ -627,16 +612,24 @@ func decideAdvisor(
 ) AdvisorDecision {
 	keep := onRoute(route, evalsplit.Development)
 	decision := AdvisorDecision{
-		Route:   route,
-		Advisor: table.figure(spec.Advisor.Cell, keep),
-		Chosen:  table.figure(chosen, keep),
-		CostBar: table.figure(spec.Advisor.CostBar, keep),
-		Safety:  table.safety(spec.Advisor.Cell),
+		Route:     route,
+		Advisor:   table.figure(spec.Advisor.Cell, keep),
+		Chosen:    table.figure(chosen, keep),
+		Reference: table.figure(spec.Advisor.Reference, keep),
+		Safety:    table.safety(spec.Advisor.Cell),
 	}
-	if route != RouteChat && decision.Advisor.Scenarios < spec.Effort.MinScenarios {
+	if route != RouteChat && decision.Chosen.Scenarios < spec.Effort.MinScenarios {
 		decision.Offered = chatOffered
 		decision.Inherited = true
 		decision.Reason = "too few development scenarios: takes chat's decision"
+		return decision
+	}
+
+	eligible, gap := advisorEligible(spec, table, route, chosen)
+	decision.Eligible = eligible
+	if !eligible {
+		decision.Checks = []GateCheck{gap}
+		decision.Reason = "not tried: " + gap.Name + " (" + gap.Detail + ")"
 		return decision
 	}
 
@@ -651,11 +644,11 @@ func decideAdvisor(
 	} else {
 		gain.Detail = "a pass^k is missing"
 	}
-	cost := GateCheck{Name: "cost per completed task no higher than " + spec.Advisor.CostBar}
-	if decision.Advisor.CostPerPass != nil && decision.CostBar.CostPerPass != nil {
-		cost.Passed = *decision.Advisor.CostPerPass <= *decision.CostBar.CostPerPass
+	cost := GateCheck{Name: "cost per completed task no higher than " + spec.Advisor.Reference}
+	if decision.Advisor.CostPerPass != nil && decision.Reference.CostPerPass != nil {
+		cost.Passed = *decision.Advisor.CostPerPass <= *decision.Reference.CostPerPass
 		cost.Detail = fmt.Sprintf("$%.4f against $%.4f",
-			*decision.Advisor.CostPerPass, *decision.CostBar.CostPerPass)
+			*decision.Advisor.CostPerPass, *decision.Reference.CostPerPass)
 	} else {
 		cost.Detail = "a cost per completed task is missing"
 	}
@@ -664,98 +657,11 @@ func decideAdvisor(
 		Passed: decision.Safety.Safe(),
 		Detail: safetyDetail(decision.Safety),
 	}
-	decision.Checks = []GateCheck{gain, cost, safe}
+	decision.Checks = []GateCheck{gap, gain, cost, safe}
 	decision.Offered = gain.Passed && cost.Passed && safe.Passed
 	decision.Reason = checksReason(decision.Checks)
 
 	return decision
-}
-
-func decideCodeMode(table *scoreTable, pair *CodePair) CodeModeDecision {
-	decision := CodeModeDecision{
-		Model:    pair.Model,
-		Code:     pair.Code,
-		Discrete: pair.Discrete,
-		Safety:   table.safety(pair.Code),
-	}
-	decision.Pairs = pairDifferences(table, pair, evalsplit.Development)
-
-	diffs := make([]float64, 0, len(decision.Pairs))
-	for idx := range decision.Pairs {
-		p := &decision.Pairs[idx]
-		if p.Code == nil || p.Discrete == nil {
-			continue
-		}
-		diff := *p.Code - *p.Discrete
-		diffs = append(diffs, diff)
-		switch {
-		case diff > 1e-9:
-			decision.Wins++
-		case diff < -1e-9:
-			decision.Losses++
-		}
-		if p.Trials > 0 && p.DiscWins == p.Trials && p.CodeWins*2 <= p.Trials {
-			decision.Regressions = append(decision.Regressions, p.Scenario)
-		}
-	}
-	if len(diffs) > 0 {
-		mean := meanOf(diffs)
-		decision.MeanDiff = &mean
-	}
-
-	safe := GateCheck{
-		Name:   "no unauthorized effect in any code-mode trial",
-		Passed: decision.Safety.Safe(),
-		Detail: safetyDetail(decision.Safety),
-	}
-	beats := GateCheck{Name: "beats discrete on development pairs"}
-	if decision.MeanDiff != nil {
-		beats.Passed = *decision.MeanDiff > 1e-9 && decision.Wins >= decision.Losses
-		beats.Detail = fmt.Sprintf("mean difference %+.3f over %d pairs, %d wins, %d losses",
-			*decision.MeanDiff, len(diffs), decision.Wins, decision.Losses)
-	} else {
-		beats.Detail = "no development pair has both halves"
-	}
-	hard := GateCheck{
-		Name:   "no hard regression",
-		Passed: len(decision.Regressions) == 0,
-		Detail: "none",
-	}
-	if !hard.Passed {
-		hard.Detail = strings.Join(decision.Regressions, ", ")
-	}
-	decision.Checks = []GateCheck{safe, beats, hard}
-	decision.Enabled = safe.Passed && beats.Passed && hard.Passed
-	decision.Reason = checksReason(decision.Checks)
-
-	return decision
-}
-
-func pairDifferences(table *scoreTable, pair *CodePair, split evalsplit.Split) []PairDifference {
-	code := table.scenarios(pair.Code, codePairs(split))
-	discrete := table.scenarios(pair.Discrete, codePairs(split))
-	names := make([]string, 0, len(code))
-	for name := range code {
-		if _, ok := discrete[name]; ok {
-			names = append(names, name)
-		}
-	}
-	sort.Strings(names)
-
-	pairs := make([]PairDifference, 0, len(names))
-	for _, name := range names {
-		c, d := code[name], discrete[name]
-		pairs = append(pairs, PairDifference{
-			Scenario: name,
-			Code:     c.p4,
-			Discrete: d.p4,
-			CodeWins: c.passed,
-			DiscWins: d.passed,
-			Trials:   min(c.trials, d.trials),
-		})
-	}
-
-	return pairs
 }
 
 func heldOutBefore(spec *GateSpec, table *scoreTable, chosen mixedSelection) HeldOutBefore {
@@ -849,7 +755,7 @@ func (r *GateResult) ConfirmGroups() []GateGroup {
 			add(r.Spec.Before, route)
 		}
 	}
-	groups := make([]GateGroup, 0, len(order)+len(r.CodeMode))
+	groups := make([]GateGroup, 0, len(order))
 	for _, cell := range order {
 		groups = append(groups, GateGroup{
 			Name:   "confirm " + cell,
@@ -858,19 +764,6 @@ func (r *GateResult) ConfirmGroups() []GateGroup {
 			Splits: []evalsplit.Split{evalsplit.HeldOut},
 		})
 	}
-	for idx := range r.CodeMode {
-		decision := &r.CodeMode[idx]
-		if !decision.Enabled {
-			continue
-		}
-		groups = append(groups, GateGroup{
-			Name:   "confirm code mode " + decision.Model,
-			Cells:  []string{decision.Code, decision.Discrete},
-			Tags:   []string{codeModeTag},
-			Splits: []evalsplit.Split{evalsplit.HeldOut},
-		})
-	}
-
 	return groups
 }
 
@@ -883,15 +776,6 @@ type RouteConfirmation struct {
 	Detail string     `json:"detail"`
 }
 
-type CodeModeConfirmation struct {
-	Model    string           `json:"model"`
-	MeanDiff *float64         `json:"meanDifference,omitempty"`
-	Pairs    []PairDifference `json:"pairs"`
-	Safety   cellSafety       `json:"safety"`
-	Holds    bool             `json:"holds"`
-	Detail   string           `json:"detail"`
-}
-
 type HeadlineFigures struct {
 	Figure           GateFigure `json:"figure"`
 	LaterCacheShare  *float64   `json:"laterCacheReadShare,omitempty"`
@@ -902,17 +786,16 @@ type HeadlineFigures struct {
 }
 
 type GateConfirmation struct {
-	Gate          string                 `json:"gate"`
-	Run           string                 `json:"run"`
-	Commit        string                 `json:"commit,omitempty"`
-	StartedAt     time.Time              `json:"startedAt"`
-	FinishedAt    time.Time              `json:"finishedAt"`
-	Routes        []RouteConfirmation    `json:"routes"`
-	CodeMode      []CodeModeConfirmation `json:"codeMode,omitempty"`
-	Descriptions  GateCheck              `json:"descriptions"`
-	Configuration mixedSelection         `json:"configuration"`
-	Before        HeadlineFigures        `json:"before"`
-	After         HeadlineFigures        `json:"after"`
+	Gate          string              `json:"gate"`
+	Run           string              `json:"run"`
+	Commit        string              `json:"commit,omitempty"`
+	StartedAt     time.Time           `json:"startedAt"`
+	FinishedAt    time.Time           `json:"finishedAt"`
+	Routes        []RouteConfirmation `json:"routes"`
+	Descriptions  GateCheck           `json:"descriptions"`
+	Configuration mixedSelection      `json:"configuration"`
+	Before        HeadlineFigures     `json:"before"`
+	After         HeadlineFigures     `json:"after"`
 }
 
 func ConfirmGate(gate *GateResult, run1, run2 []*CaseResult) *GateConfirmation {
@@ -928,12 +811,6 @@ func ConfirmGate(gate *GateResult, run1, run2 []*CaseResult) *GateConfirmation {
 			confirmation.Configuration[route] = check.Cell
 		}
 		confirmation.Routes = append(confirmation.Routes, check)
-	}
-	for idx := range gate.CodeMode {
-		if gate.CodeMode[idx].Enabled {
-			confirmation.CodeMode = append(confirmation.CodeMode,
-				confirmCodeMode(spec, second, &gate.CodeMode[idx]))
-		}
 	}
 	confirmation.Descriptions = confirmDescriptions(spec, first, second, gate.Configuration)
 
@@ -968,37 +845,6 @@ func confirmRoute(
 	check.Holds = *check.After.PassK >= floor-1e-9
 	check.Detail = fmt.Sprintf("%.3f against %s's %.3f, floor %.3f",
 		*check.After.PassK, spec.Before, *check.Before.PassK, floor)
-
-	return check
-}
-
-func confirmCodeMode(
-	spec *GateSpec,
-	second *scoreTable,
-	decision *CodeModeDecision,
-) CodeModeConfirmation {
-	pair := CodePair{Model: decision.Model, Code: decision.Code, Discrete: decision.Discrete}
-	check := CodeModeConfirmation{
-		Model:  decision.Model,
-		Pairs:  pairDifferences(second, &pair, evalsplit.HeldOut),
-		Safety: second.safety(decision.Code),
-	}
-	diffs := make([]float64, 0, len(check.Pairs))
-	for idx := range check.Pairs {
-		p := &check.Pairs[idx]
-		if p.Code != nil && p.Discrete != nil {
-			diffs = append(diffs, *p.Code-*p.Discrete)
-		}
-	}
-	if len(diffs) == 0 {
-		check.Detail = "no held-out pair has both halves"
-		return check
-	}
-	mean := meanOf(diffs)
-	check.MeanDiff = &mean
-	check.Holds = mean >= spec.HeldOut.CodeModeMinimum-1e-9 && check.Safety.Safe()
-	check.Detail = fmt.Sprintf("mean difference %+.3f over %d held-out pairs; %s",
-		mean, len(diffs), safetyDetail(check.Safety))
 
 	return check
 }

@@ -76,27 +76,9 @@ func (r *GateResult) Render() string {
 		}
 	}
 
-	b.WriteString("\n## (a) Code mode\n\n")
-	if len(r.CodeMode) == 0 {
-		b.WriteString("No code-mode pair is in the spec, so code mode stays off for every model.\n")
-	}
-	for idx := range r.CodeMode {
-		decision := &r.CodeMode[idx]
-		fmt.Fprintf(&b, "- %s (%s against %s): enabled %s. %s\n", decision.Model, decision.Code,
-			decision.Discrete, yesNo(decision.Enabled), decision.Reason)
-		for _, check := range decision.Checks {
-			fmt.Fprintf(&b, "  - %s: %s (%s)\n", check.Name, yesNo(check.Passed), check.Detail)
-		}
-	}
-
 	b.WriteString("\n## The configuration run 2 confirms\n\n")
 	for _, route := range AllRoutes() {
 		fmt.Fprintf(&b, "- %s: %s\n", route, r.Configuration[route])
-	}
-	for idx := range r.CodeMode {
-		if r.CodeMode[idx].Enabled {
-			fmt.Fprintf(&b, "- code mode on for %s\n", r.CodeMode[idx].Model)
-		}
 	}
 
 	r.renderHeldOut(&b)
@@ -136,14 +118,6 @@ func (c *GateConfirmation) Render() string {
 
 	fmt.Fprintf(&b, "\n## Descriptions\n\n- %s: %s. %s\n", c.Descriptions.Name,
 		yesNo(c.Descriptions.Passed), c.Descriptions.Detail)
-
-	b.WriteString("\n## Code mode\n\n")
-	if len(c.CodeMode) == 0 {
-		b.WriteString("No model had code mode enabled by run 1.\n")
-	}
-	for _, check := range c.CodeMode {
-		fmt.Fprintf(&b, "- %s: holds %s. %s\n", check.Model, yesNo(check.Holds), check.Detail)
-	}
 
 	b.WriteString("\n## Configuration kept\n\n")
 	for _, route := range AllRoutes() {

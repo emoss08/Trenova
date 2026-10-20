@@ -267,6 +267,8 @@ A route is one of the runtime's profile modes: `unattended` for a scenario that 
 `delegated` for one tagged `delegation` or expecting `delegate_task`, `chat` for the rest. A group
 of the spec names its cells and, optionally, the tags, routes and splits of the scenarios it runs;
 groups run in the order written, each case recording the cell it ran as (`cell` in `report.json`).
+A group marked `advisorRoutes` runs last, only on the routes where the chosen Haiku effort trails
+the advisor rule's reference by its `gap`.
 
 1. `--probe` runs every cell once on every `budget.probeEvery`-th development scenario of its
    group and writes `probe.md` and `probe.json`: each cell's cost and time per trial, scaled to the

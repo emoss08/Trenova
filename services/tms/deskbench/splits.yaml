@@ -46,7 +46,6 @@ strata:
       mode: chat
     heldOut:
       - briefing-in-plain-words
-      - codemode-denver-tomorrow-who-needs-a-driver
       - duplicate-a-load-for-next-week
       - ids-never-shown
       - in-transit-count
@@ -117,7 +116,6 @@ strata:
       desk: Operations
       mode: chat
     heldOut:
-      - codemode-la-pickup-ahead-note-not-hold
       - lifecycle-rate-check-before-billing
       - load-with-no-price-and-no-contract
       - records-in-play-are-dated
