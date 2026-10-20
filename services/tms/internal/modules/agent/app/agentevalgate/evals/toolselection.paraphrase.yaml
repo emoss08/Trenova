@@ -9,7 +9,7 @@ cases:
   - request: who's out on leave this week
     expect: [worker_list_time_off]
   - request: is anyone's medical certificate about to lapse
-    expect: [worker_list_expiring_credentials, worker_get_credential]
+    expect: [worker_list_credentials, worker_get_credential]
   - request: ping the trucker that pickup slipped to three
     expect: [worker_send_message]
   - request: let the buyer know we are running late
@@ -59,7 +59,7 @@ cases:
   - request: chart revenue per client each month
     expect: [report_create_dashboard, report_run]
   - request: have a human look at this
-    expect: [agent_request_review, agent_raise_exception]
+    expect: [agent_raise_exception]
   - request: what's happening with safety scores on haulers we use
     expect: [carrier_list_intelligence_events, carrier_get_intelligence_event, carrier_acknowledge_intelligence_event, carrier_get]
   - request: which haulers lost their cover or operating permission lately

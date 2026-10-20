@@ -87,10 +87,9 @@ func (t *workforceRead) Query(
 
 func wfWorkerProperty(what string) map[string]any {
 	return map[string]any{
-		toolschema.KeyType: toolschema.TypeString,
-		toolschema.KeyDescription: what + ", by id from worker_search or worker_list. A " +
-			"name is not an id.",
-		toolschema.KeyRecordOf: permission.ResourceWorker.String(),
+		toolschema.KeyType:        toolschema.TypeString,
+		toolschema.KeyDescription: what + ", by id from worker_list. A name is not an id.",
+		toolschema.KeyRecordOf:    permission.ResourceWorker.String(),
 	}
 }
 

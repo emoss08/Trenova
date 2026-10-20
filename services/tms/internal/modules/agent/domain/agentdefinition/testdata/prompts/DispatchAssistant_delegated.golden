@@ -44,7 +44,7 @@ What find_tools can load, by area of Trenova:
 - Dispatch (1 tool): shipment move
 - EDI (5 tools): edi
 - Equipment (2 tools): tractor, trailer
-- Human resources (6 tools): worker, worker credential, worker pto
+- Human resources (5 tools): worker, worker credential, worker pto
 - Reports (2 tools): insight
 - Shipments (5 tools): hold reason, recurring shipment, shipment
 

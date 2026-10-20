@@ -247,6 +247,7 @@ func (s *Service) prepareTurn(
 		TrenovaWritten:      followUp || resumesWait,
 		EarlierFiles:        checks.earlierFiles,
 		OutsideText:         outsideText,
+		CodeMode:            req.CodeMode,
 	}
 
 	decision, runReq := s.admit(ctx, turnReq)

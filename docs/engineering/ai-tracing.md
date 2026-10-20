@@ -112,7 +112,17 @@ or thinking, also kept in the usage row's `first_token_ms` and the
 `ai.cacheDiagnostics` on, a chat attempt on the Claude API also carries
 `trenova.ai.cache_miss.reason` (the API's `cache_miss_reason` type, or `pending`)
 and, for a changed prompt, `trenova.ai.cache_miss.missed_tokens`; see "Why a
-prompt cache missed" in agent-runtime.md. Events:
+prompt cache missed" in agent-runtime.md. A chat attempt whose executor consulted
+Anthropic's advisor ("The advisor" in agent-runtime.md) also carries
+`trenova.ai.advisor.model`, `trenova.ai.advisor.calls`,
+`trenova.ai.advisor.input_tokens`, `trenova.ai.advisor.output_tokens`,
+`trenova.ai.advisor.cache_read_tokens`, `trenova.ai.advisor.cache_write_tokens`
+and `trenova.ai.advisor.cost_usd` (the advisor's share at its model's list
+price; absent when it has none). The `gen_ai.usage.*` counts stay the
+executor's own, while `trenova.ai.cost_usd` is the whole call, advisor included.
+The usage row keeps the same in `advisor_model`, `advisor_calls`,
+`advisor_input_tokens`, `advisor_output_tokens`, `advisor_cache_read_tokens`,
+`advisor_cache_write_tokens` and `advisor_cost_usd`. Events:
 `provider.busy_wait{wait_s}` for each wait on a provider answering 429 or 5xx,
 `provider.resting` when the attempt put the provider to rest.
 

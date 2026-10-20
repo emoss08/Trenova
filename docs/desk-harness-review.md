@@ -1462,6 +1462,8 @@ held-out`) when one is made for a PR.
 | Settlements and pay | `settlement` (56 tools namespaced; 4 single/batch pairs merged) | 641 → 637 | 459 / 710 / 0, unchanged | 0.9193 → 0.9193 | 0.8137 → 0.8137 |
 | Receivables | `receivable` (22 tools namespaced; no merges) | 637 → 637 | unchanged, 0 pending | 0.91 → 0.91 | 0.81 → 0.81 |
 | Every remaining tool | 23 more namespaces, `accounting` to `worker` (450 tools namespaced; no merges) | 637 → 637 | unchanged, 0 pending | 0.9141 → 0.9202 | 0.8098 → 0.8344 |
+| Overlapping tools | `worker`, `inbox`, `accounting`, `agent` (5 merges) | 637 → 632 | unchanged, 0 pending | 0.9202 → 0.93 | 0.8344 → 0.82 |
+| Typed reads through GraphQL: reference data | `equipment_list_manufacturers`, `equipment_list_types`, `document_list_types`, `location_list_categories` and seven `masterdata` lists read their screen's persisted operation | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
 
 The shipment row is measured on the held-out set the split PR recorded (161 cases), so both
 figures read the same cases; the module's merges moved three cases between splits, which the
@@ -1515,6 +1517,36 @@ so no term was added for them. Model-facing text that still named `remember` now
 remains of Phase 3 is the merges: overlapping tools found while writing the rename map (worker
 search into the worker list, single and batch pairs, carrier intelligence acknowledge and
 resolve).
+
+The merges row folds five tools into the tool that reads or writes the same records under the
+same permission: `worker_search` into `worker_list`, which ranks the closest name first;
+`worker_list_expiring_credentials` into `worker_list_credentials`, which lists one worker's
+credentials or what falls due across the organization, soonest first; `inbox_search_inbound_messages`
+into `inbox_list_inbound_messages`, whose query ranks mail by what it says under the list's
+filters; `accounting_get_sync_state` into `accounting_list_sync_records` through `documentIds`;
+and `agent_request_review` into `agent_raise_exception`, which takes evidence. The held-out sets
+grew by two cases each as the merged tools' cases moved between strata. By keyword, held-out
+recall@5 holds at 0.99 and top-1 at 0.95 over 145 cases. With meaning, held-out recall@5 rose to
+0.93 and top-1 fell to 0.82 over 165, written as the floor rather than tuned against; among the
+misses, "reply to the inbound email from the broker" now ranks the inbox list above
+`inbox_send_reply`, because the list carries the search tool's mail vocabulary. On the development
+cases, the merged tools' text was corrected where a merge cost a request its answer: the exception
+tool's first sentence says it flags a case for a person to review, the credential list's "medical card
+expiry" term, which drew requests to record a new card, became "about to lapse", the sync record list dropped a "reach" that pulled in EDI
+deliveries, and the worker list takes back "find a driver". "Look up David Park as a driver by
+name" still misses with meaning, because "park" draws the wait tool first. Pairs that look alike
+but differ in what they do stay apart: generating one driver's settlement and the period's batch,
+accepting a carrier invoice match with or without its variance, acknowledging and resolving a
+carrier finding, and confirming proposed accounting mappings against setting one.
+
+The reference data row is the first of the typed-reads modules
+([agent-graphql-reads.md](engineering/agent-graphql-reads.md)): eleven lists now read the
+persisted operation their page sends, through the read executor, with typed parameters derived
+from the record's filter configuration in place of the generic `filters`, and the cursor paging
+the paging fix put in place. Each description now names its typed parameters, as the repository
+lists' did. Over 165 held-out cases, hybrid recall@5 holds at 0.93 and top-1 at 0.82; by keyword,
+over 145, recall@5 holds at 0.99 and top-1 at 0.95. The floors are unchanged, and nothing was tuned
+against the held-out cases.
 
 **Phase 4: a single front door and job profiles (3–4 weeks).**
 

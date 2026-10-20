@@ -4,11 +4,13 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { useRichT } from "@trenova/shared/i18n/rich";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { cn } from "@trenova/shared/lib/utils";
 import { Link } from "react-router";
 import type { OfferedMatch } from "../agent-recommendation-state";
 import { DeskAgentTile } from "../desk-agent-tile";
 import { deskLinkClass, deskSmallIconClass } from "../desk-button-styles";
 import { DeskIcon } from "../desk-icons";
+import { deskPopoverClass } from "../desk-popover";
 
 /**
  * A small note floating just above the composer, where the terms reminder
@@ -64,7 +66,7 @@ export function DeskAgentRecommendation({
             side="top"
             align="start"
             sideOffset={10}
-            className="w-80 gap-0 rounded-lg bg-dsk-raised p-0 text-dsk-fg ui-lift-float"
+            className={cn(deskPopoverClass, "w-80")}
           >
             <div className="dk-arec-pop" data-slot="agent-recommendation-why">
               <div className="dk-arec-pop-h">{t("Why {0}", suggested.name)}</div>

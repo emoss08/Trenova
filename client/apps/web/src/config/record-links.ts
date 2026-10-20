@@ -126,6 +126,11 @@ export const RECORD_LINKS = {
     path: "/fuel/purchases",
     params: { panelType: "edit", panelEntityId: "{id}" },
   },
+  fuel_card: {
+    label: "Fuel card",
+    path: "/fuel/configuration-files/fuel-cards",
+    params: { panelType: "edit", panelEntityId: "{id}" },
+  },
   billing_queue_item: {
     label: "Billing queue item",
     path: "/billing/queue",

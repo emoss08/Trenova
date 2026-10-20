@@ -690,115 +690,6 @@ func newListEmploymentVerificationsTool(
 	}
 }
 
-type credentialRow struct {
-	ID               string       `json:"id"`
-	CredentialTypeID string       `json:"credentialTypeId"`
-	CredentialType   string       `json:"credentialType,omitempty"`
-	Status           string       `json:"status"`
-	Number           string       `json:"number,omitempty"`
-	IssuingAuthority string       `json:"issuingAuthority,omitempty"`
-	IssuedAt         optionalDate `json:"issuedAt"`
-	ExpiresAt        optionalDate `json:"expiresAt"`
-	Verified         bool         `json:"verified"`
-	HasDocument      bool         `json:"hasDocument"`
-}
-
-type credentialTypeRow struct {
-	ID         string `json:"id"`
-	Code       string `json:"code"`
-	Name       string `json:"name"`
-	Category   string `json:"category"`
-	IsRequired bool   `json:"isRequired"`
-}
-
-type workerCredentials struct {
-	Credentials []credentialRow     `json:"credentials"`
-	Types       []credentialTypeRow `json:"credentialTypes,omitempty"`
-	Withheld    []string            `json:"withheldByAccess,omitempty"`
-}
-
-func newListWorkerCredentialsTool(
-	credentials wfCredentialReader,
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	access := newFieldAccess(permissions)
-	return &workforceRead{
-		name: "worker_list_credentials",
-		description: "List one worker's licences, medical cards, endorsements and other " +
-			"credentials. Each has its dates and whether it is verified; the credential " +
-			"types the organization tracks come with them. It yields the credentialId and " +
-			"credentialTypeId the credential tools take.",
-		resource: permission.ResourceWorkerCredential,
-		properties: map[string]any{
-			paramWorkerID:        wfWorkerProperty("The worker"),
-			paramIncludeArchived: wfBoolProperty("Also return archived credentials."),
-		},
-		required: []string{paramWorkerID},
-		access:   access,
-		run: func(
-			ctx context.Context,
-			params *agentports.QueryToolParams,
-			gate *fieldGate,
-		) (any, error) {
-			workerID, err := requirePulid(params.Params, paramWorkerID)
-			if err != nil {
-				return nil, err
-			}
-			found, err := credentials.ListForWorker(ctx, tenantOf(params), workerID,
-				optionalBool(params.Params, paramIncludeArchived))
-			if err != nil {
-				return nil, err
-			}
-			result := &workerCredentials{Credentials: make([]credentialRow, 0, len(found))}
-			for _, credential := range found {
-				row := credentialRow{
-					ID:               credential.ID.String(),
-					CredentialTypeID: credential.CredentialTypeID.String(),
-					Status:           string(credential.Status),
-					Number:           gatedText(gate, "number", credential.Number),
-					IssuingAuthority: credential.IssuingAuthority,
-					IssuedAt:         pointerDate(credential.IssuedAt),
-					ExpiresAt: expectedDate(
-						typeutils.ValueOrZero(credential.ExpiresAt),
-						absentNotExpiring,
-					),
-					Verified:    credential.IsVerified(),
-					HasDocument: credential.DocumentID.IsNotNil(),
-				}
-				if credential.CredentialType != nil {
-					row.CredentialType = credential.CredentialType.Name
-				}
-				result.Credentials = append(result.Credentials, row)
-			}
-			if access.mayRead(ctx, params, permission.ResourceWorkerCredentialType) {
-				types, typeErr := credentials.ListTypes(
-					ctx,
-					&workerports.ListCredentialTypesRequest{
-						Filter: catalogFilter(params),
-						Cursor: pagination.CursorInfo{Limit: maxCatalogRows},
-						Status: activeStatus,
-					},
-				)
-				if typeErr != nil {
-					return nil, typeErr
-				}
-				result.Types = make([]credentialTypeRow, 0, len(types.Items))
-				for _, kind := range types.Items {
-					result.Types = append(result.Types, credentialTypeRow{
-						ID:         kind.ID.String(),
-						Code:       kind.Code,
-						Name:       kind.Name,
-						Category:   string(kind.Category),
-						IsRequired: kind.IsRequired,
-					})
-				}
-			}
-			result.Withheld = gate.Withheld()
-			return result, nil
-		},
-	}
-}
-
 type injuryRow struct {
 	ID               string       `json:"id"`
 	WorkerID         string       `json:"workerId"`
@@ -941,13 +832,6 @@ func provideListEmploymentVerificationsTool(
 	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
 	return newListEmploymentVerificationsTool(s, permissions)
-}
-
-func provideListWorkerCredentialsTool(
-	s *workercredentialservice.Service,
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return newListWorkerCredentialsTool(s, permissions)
 }
 
 func provideListWorkerInjuriesTool(

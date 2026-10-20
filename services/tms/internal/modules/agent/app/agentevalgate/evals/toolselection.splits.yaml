@@ -59,12 +59,15 @@ strata:
       - close the safety event now that the brakes are fixed
       - deny the shift swap between Carla and Ben, we need coverage that day
       - import the carrier we found in sourcing by its DOT number
+      - put Maria on the early shift pattern from Monday
+      - record the driver's new medical card
       - what shift schedule is the driver on
   - stratum:
       desk: Credential desk
       mode: unattended
     heldOut:
       - ping the trucker that pickup slipped to three
+      - search worker by name Emily Chen
       - which driver licenses and medical cards expire this month
   - stratum:
       desk: Customer assistant
@@ -89,10 +92,10 @@ strata:
       desk: Detention desk
       mode: unattended
     heldOut:
+      - pull up what the broker wrote to our shared mailbox
       - read the email that came in from the shipper
       - send the customer a detention notice
       - the detention clock at the Kroger DC needs a person to work it, hand it off
-      - waive the detention charge
   - stratum:
       desk: Dispatch assistant
       mode: chat
@@ -109,7 +112,7 @@ strata:
       mode: unattended
     heldOut:
       - assign a driver and tractor to the move
-      - search worker by name Emily Chen
+      - generate the rate con for the carrier covering this move
       - shop carriers for a rate on this lane
   - stratum:
       desk: EDI desk
@@ -155,12 +158,12 @@ strata:
       mode: unattended
     heldOut:
       - hand off the triage inbox to the on call person for the night
-      - pull up what the broker wrote to our shared mailbox
       - read out the load from the tender in triage into a draft
       - reply to the inbound email from the broker
       - unblock the sender we blocked by mistake so their mail reaches triage again
       - unfile the attachment, it went on the wrong load
       - unlink the wrong shipment from this inbound message
+      - unsnooze that inbound message, the POD already came in
   - stratum:
       desk: Load entry check
       mode: unattended
@@ -272,7 +275,6 @@ strata:
       - approve the driver's PTO request
       - change Ana's pending time-off request to three days instead of two
       - correct the fine amount on Mark's safety event
-      - delete the duplicate injury case on the OSHA log
       - draw this quarter's random drug and alcohol testing round
       - finalize the draft random testing round so the selections stand
       - fix the end date on Rita's leave case and add the doctor's note

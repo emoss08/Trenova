@@ -32,7 +32,7 @@ func testCatalog() *Catalog {
 		),
 		descriptor("customer_list", "List customers narrowed by status, code, name or city."),
 		descriptor(
-			"worker_list_expiring_credentials",
+			"worker_list_credentials",
 			"Worker credentials falling due: medical cards, licences, hazmat endorsements.",
 		),
 		descriptor("report_run", "Start one of the reports from report_list."),
@@ -88,7 +88,7 @@ func TestRank_FindsTheCredentialToolForAnEndorsementQuestion(t *testing.T) {
 	t.Parallel()
 
 	ranked := names(testCatalog().Rank(nil, "who has a hazmat endorsement", 3))
-	assert.Contains(t, ranked, "worker_list_expiring_credentials")
+	assert.Contains(t, ranked, "worker_list_credentials")
 }
 
 // Pre-selection narrows what the model must choose between; it must never

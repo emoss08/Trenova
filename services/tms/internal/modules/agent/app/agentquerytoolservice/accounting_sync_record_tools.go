@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
@@ -69,8 +70,7 @@ type accountingSyncLedgerReader interface {
 	) ([]*accountingsync.AccountingSyncAttempt, error)
 	ObjectStates(
 		ctx context.Context,
-		tenantInfo pagination.TenantInfo,
-		objectIDs []pulid.ID,
+		req *accountingsyncports.AccountingSyncObjectStatesRequest,
 	) (map[pulid.ID]*accountingsyncports.AccountingSyncObjectState, error)
 }
 
@@ -212,22 +212,43 @@ func provideListAccountingSyncRecordsTool(
 func (t *listAccountingSyncRecordsTool) Name() string { return "accounting_list_sync_records" }
 
 func (t *listAccountingSyncRecordsTool) Description() string {
-	return "List the documents Trenova sends to the accounting system and where each stands, " +
-		"newest first. Filter by status, such as Blocked and DeadLettered for what did not " +
-		"reach the books, by document type, by error category, by one Trenova document, or " +
-		"search document numbers. Each row has its status, the error category, the " +
-		"plain-language resolution, how many tries it took and the accounting system's " +
-		"document number once synced. Pass a row's id to accounting_get_sync_record for its " +
-		"tries, or to accounting_retry_sync_record once the cause is fixed."
+	return "List the documents Trenova sends to the accounting system and where each " +
+		"stands, or say whether particular Trenova documents or parties reached it. " +
+		"Filter one system's records, newest first, by status (Blocked and DeadLettered " +
+		"did not reach the books), document type or error category, or search document " +
+		"numbers. Or pass documentIds of invoices, memos, payments, customers, settlements, " +
+		"carriers or drivers: each gets whether it is tracked, its current record and what " +
+		"that means, across every syncing system unless you name one; a settlement shows " +
+		"its bill or bill payment, whichever needs attention, else the latest, and no " +
+		"record means it was never sent. A record has its status, error category, " +
+		"resolution, tries and the accounting system's number once synced; pass its id " +
+		"to accounting_get_sync_record for the tries or accounting_retry_sync_record once " +
+		"the cause is fixed."
 }
 
 func (t *listAccountingSyncRecordsTool) SearchTerms() []string {
-	return []string{"failed", "blocked", "ledger", "not synced"}
+	return []string{"failed", "blocked", "ledger", "not synced", "synced", "did it sync"}
 }
 
 func (t *listAccountingSyncRecordsTool) ParamSchema() map[string]any {
+	system := accountingSystemParam()
+	system[toolschema.KeyDescription] = "The accounting system, such as \"QuickBooksOnline\" " +
+		"or \"Xero\". Required to list records; with documentIds, only that system's " +
+		"records answer, and without it every system that syncs does."
+
 	return jsonschemautils.Object(map[string]any{
-		paramAccountingSystem: accountingSystemParam(),
+		paramAccountingSystem: system,
+		paramDocumentIDs: agenttoolschema.OfKinds(jsonschemautils.DescribedArray(
+			fmt.Sprintf(
+				"Up to %d Trenova document ids, from %s, or the record on screen, to say "+
+					"whether each reached the accounting system. The filters below list "+
+					"records instead and are left out with it.",
+				syncStateMaxDocuments,
+				syncDocumentIDSources,
+			),
+			jsonschemautils.String(0),
+			syncStateMaxDocuments,
+		), syncDocumentKinds...),
 		paramSyncStatus: jsonschemautils.DescribedArray(
 			"Only records in these statuses. Blocked and DeadLettered need a person; "+
 				"AwaitingApproval waits to be released.",
@@ -244,10 +265,6 @@ func (t *listAccountingSyncRecordsTool) ParamSchema() map[string]any {
 			agenttoolschema.Enum("An error category.", agenttoolschema.SyncErrorCategories),
 			len(accountingsync.AllSyncErrorCategories()),
 		),
-		paramDocumentID: agenttoolschema.OfKinds(jsonschemautils.Text(
-			"Only the records of one Trenova document, by its id from "+
-				syncDocumentIDSources+".",
-		), syncDocumentKinds...),
 		paramQuery: jsonschemautils.Text(
 			"Words to find in Trenova or accounting system document numbers.",
 		),
@@ -255,7 +272,7 @@ func (t *listAccountingSyncRecordsTool) ParamSchema() map[string]any {
 		paramAfter: jsonschemautils.Text(
 			"The nextCursor from a previous call of this tool, for the next page.",
 		),
-	}, paramAccountingSystem)
+	})
 }
 
 func (t *listAccountingSyncRecordsTool) Policy() agentports.ToolPolicy {
@@ -267,7 +284,10 @@ func (t *listAccountingSyncRecordsTool) request(
 ) (*accountingsyncports.ListAccountingSyncRecordsRequest, error) {
 	system, err := requireAccountingSystem(params.Params)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf(
+			"%w to list sync records; to ask whether particular documents synced, pass %q",
+			err, paramDocumentIDs,
+		)
 	}
 	statuses, err := optionalEnums(
 		params.Params,
@@ -293,10 +313,6 @@ func (t *listAccountingSyncRecordsTool) request(
 	if err != nil {
 		return nil, err
 	}
-	documentID, err := optionalID(params.Params, paramDocumentID)
-	if err != nil {
-		return nil, fmt.Errorf("parameter %q is not a valid id: %w", paramDocumentID, err)
-	}
 	limit := min(
 		max(optionalInt(params.Params, paramLimit, syncRecordsDefaultLimit), 1),
 		syncRecordsMaxLimit,
@@ -317,7 +333,6 @@ func (t *listAccountingSyncRecordsTool) request(
 		Statuses:        statuses,
 		ObjectTypes:     types,
 		ErrorCategories: categories,
-		ObjectID:        documentID,
 		Search:          optionalString(params.Params, paramQuery),
 		Cursor:          cursor,
 	}, nil
@@ -330,6 +345,14 @@ func (t *listAccountingSyncRecordsTool) Query(
 	if err := guardQuery(params); err != nil {
 		return nil, err
 	}
+	ids, err := syncDocumentIDs(params.Params)
+	if err != nil {
+		return nil, err
+	}
+	if len(ids) > 0 {
+		return t.states(ctx, params, ids)
+	}
+
 	req, err := t.request(params)
 	if err != nil {
 		return nil, err
@@ -353,6 +376,98 @@ func (t *listAccountingSyncRecordsTool) Query(
 	}
 	if result.NextCursor, err = page.NextCursor(); err != nil {
 		return nil, fmt.Errorf("encode the next page's cursor: %w", err)
+	}
+
+	return result, nil
+}
+
+var syncListOnlyParams = []string{
+	paramSyncStatus,
+	paramSyncDocumentType,
+	paramSyncErrorCategory,
+	paramQuery,
+	paramAfter,
+}
+
+func syncDocumentIDs(params map[string]any) ([]pulid.ID, error) {
+	raw := sliceutils.DedupeStrings(optionalStrings(params, paramDocumentIDs))
+	if len(raw) == 0 {
+		return nil, nil
+	}
+	if len(raw) > syncStateMaxDocuments {
+		return nil, fmt.Errorf(
+			"parameter %q holds %d ids, more than the %d one call looks up; split it",
+			paramDocumentIDs, len(raw), syncStateMaxDocuments,
+		)
+	}
+	for _, key := range syncListOnlyParams {
+		if len(optionalStrings(params, key)) > 0 {
+			return nil, fmt.Errorf(
+				"parameter %q lists records and does not apply to %q, which answers for "+
+					"each document; leave one of them out",
+				key, paramDocumentIDs,
+			)
+		}
+	}
+
+	ids := make([]pulid.ID, 0, len(raw))
+	for _, value := range raw {
+		id, err := pulid.Parse(value)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"%q in %q is not a valid id: %w",
+				value,
+				paramDocumentIDs,
+				err,
+			)
+		}
+		ids = append(ids, id)
+	}
+
+	return ids, nil
+}
+
+func (t *listAccountingSyncRecordsTool) states(
+	ctx context.Context,
+	params *agentports.QueryToolParams,
+	ids []pulid.ID,
+) (*accountingSyncStatesResult, error) {
+	req := &accountingsyncports.AccountingSyncObjectStatesRequest{
+		TenantInfo: tenantOf(params),
+		ObjectIDs:  ids,
+	}
+	if optionalString(params.Params, paramAccountingSystem) != "" {
+		system, err := requireAccountingSystem(params.Params)
+		if err != nil {
+			return nil, err
+		}
+		req.IntegrationType = system
+	}
+
+	states, err := t.ledger.ObjectStates(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	result := &accountingSyncStatesResult{States: make([]accountingSyncStateRow, 0, len(ids))}
+	for _, id := range ids {
+		state, ok := states[id]
+		if !ok || state == nil || state.Record == nil {
+			result.States = append(result.States, accountingSyncStateRow{
+				DocumentID: id.String(),
+				WhatThisMeans: "Nothing was sent for this document: sending has not started, " +
+					"it is dated before the start date, or it is not a document that syncs.",
+			})
+			continue
+		}
+		row := accountingSyncRecordRowFrom(state.Record)
+		result.States = append(result.States, accountingSyncStateRow{
+			DocumentID:    id.String(),
+			Tracked:       true,
+			Provider:      state.ProviderName,
+			Record:        &row,
+			WhatThisMeans: accountingSyncMeaning(state.Record, state.ProviderName),
+		})
 	}
 
 	return result, nil
@@ -389,8 +504,7 @@ func (t *getAccountingSyncRecordTool) SearchTerms() []string {
 func (t *getAccountingSyncRecordTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramSyncRecordID: agenttoolschema.OfKinds(jsonschemautils.Text(
-			"The sync record's id, from accounting_list_sync_records, "+
-				"accounting_get_sync_state, or the run's subject.",
+			"The sync record's id, from accounting_list_sync_records or the run's subject.",
 		), permission.KindAccountingSyncRecord),
 	}, paramSyncRecordID)
 }
@@ -441,134 +555,4 @@ func (t *getAccountingSyncRecordTool) Query(
 	}
 
 	return detail, nil
-}
-
-type getRecordAccountingSyncStateTool struct {
-	ledger accountingSyncLedgerReader
-}
-
-func newGetRecordAccountingSyncStateTool(
-	ledger accountingSyncLedgerReader,
-) agentports.AgentQueryTool {
-	return &getRecordAccountingSyncStateTool{ledger: ledger}
-}
-
-func provideGetRecordAccountingSyncStateTool(
-	ledger accountingsyncports.AccountingSyncService,
-) agentports.AgentQueryTool {
-	return newGetRecordAccountingSyncStateTool(ledger)
-}
-
-func (t *getRecordAccountingSyncStateTool) Name() string {
-	return "accounting_get_sync_state"
-}
-
-func (t *getRecordAccountingSyncStateTool) Description() string {
-	return "Get whether Trenova documents or parties reached the accounting system, by " +
-		"their Trenova ids. It covers invoices, credit and debit memos, customer payments, " +
-		"customers, carrier and owner-operator settlements, carriers and drivers. A " +
-		"settlement is sent as a bill and its " +
-		"payment as a bill payment; the answer shows whichever needs attention, else the " +
-		"latest. Each answer says " +
-		"whether the document is tracked, its current sync record with status and " +
-		"resolution, and what that means. Use it when asked whether a particular document " +
-		"synced; a document with no record was never sent, usually because sending had not " +
-		"started or it is dated before the start date."
-}
-
-func (t *getRecordAccountingSyncStateTool) SearchTerms() []string {
-	return []string{"reach", "synced", "did it sync"}
-}
-
-func (t *getRecordAccountingSyncStateTool) ParamSchema() map[string]any {
-	return jsonschemautils.Object(map[string]any{
-		paramDocumentIDs: agenttoolschema.OfKinds(jsonschemautils.DescribedArray(
-			fmt.Sprintf(
-				"Up to %d Trenova document ids, from %s, or the record on screen.",
-				syncStateMaxDocuments,
-				syncDocumentIDSources,
-			),
-			jsonschemautils.String(0),
-			syncStateMaxDocuments,
-		), syncDocumentKinds...),
-	}, paramDocumentIDs)
-}
-
-func (t *getRecordAccountingSyncStateTool) Policy() agentports.ToolPolicy {
-	return readPolicy(t.Name(), readSpec{resource: permission.ResourceAccountingSync})
-}
-
-func (t *getRecordAccountingSyncStateTool) documentIDs(
-	params *agentports.QueryToolParams,
-) ([]pulid.ID, error) {
-	raw := sliceutils.DedupeStrings(optionalStrings(params.Params, paramDocumentIDs))
-	if len(raw) == 0 {
-		return nil, fmt.Errorf(
-			"parameter %q must name at least one document id",
-			paramDocumentIDs,
-		)
-	}
-	if len(raw) > syncStateMaxDocuments {
-		return nil, fmt.Errorf(
-			"parameter %q holds %d ids, more than the %d one call looks up; split it",
-			paramDocumentIDs, len(raw), syncStateMaxDocuments,
-		)
-	}
-
-	ids := make([]pulid.ID, 0, len(raw))
-	for _, value := range raw {
-		id, err := pulid.Parse(value)
-		if err != nil {
-			return nil, fmt.Errorf(
-				"%q in %q is not a valid id: %w",
-				value,
-				paramDocumentIDs,
-				err,
-			)
-		}
-		ids = append(ids, id)
-	}
-
-	return ids, nil
-}
-
-func (t *getRecordAccountingSyncStateTool) Query(
-	ctx context.Context,
-	params *agentports.QueryToolParams,
-) (any, error) {
-	if err := guardQuery(params); err != nil {
-		return nil, err
-	}
-	ids, err := t.documentIDs(params)
-	if err != nil {
-		return nil, err
-	}
-
-	states, err := t.ledger.ObjectStates(ctx, tenantOf(params), ids)
-	if err != nil {
-		return nil, err
-	}
-
-	result := &accountingSyncStatesResult{States: make([]accountingSyncStateRow, 0, len(ids))}
-	for _, id := range ids {
-		state, ok := states[id]
-		if !ok || state == nil || state.Record == nil {
-			result.States = append(result.States, accountingSyncStateRow{
-				DocumentID: id.String(),
-				WhatThisMeans: "Nothing was sent for this document: sending has not started, " +
-					"it is dated before the start date, or it is not a document that syncs.",
-			})
-			continue
-		}
-		row := accountingSyncRecordRowFrom(state.Record)
-		result.States = append(result.States, accountingSyncStateRow{
-			DocumentID:    id.String(),
-			Tracked:       true,
-			Provider:      state.ProviderName,
-			Record:        &row,
-			WhatThisMeans: accountingSyncMeaning(state.Record, state.ProviderName),
-		})
-	}
-
-	return result, nil
 }

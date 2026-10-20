@@ -610,12 +610,12 @@ func NewProposeShiftSwapTool(schedules scheduleKeeper) agentports.AgentTool {
 			paramRequestingWorkerID: agenttoolschema.RecordIDText(
 				permission.ResourceWorker,
 				"The worker giving the day up, from "+
-					"worker_search. Never guess one.",
+					"worker_list. Never guess one.",
 			),
 			paramCounterpartyWorkerID: agenttoolschema.RecordIDText(
 				permission.ResourceWorker,
 				"The worker asked to take it, from "+
-					"worker_search. Leave out to offer it to anyone.",
+					"worker_list. Leave out to offer it to anyone.",
 			),
 			paramShiftDate: agenttoolschema.Date("The day given up."),
 			paramCounterpartyDate: agenttoolschema.Date(

@@ -29,7 +29,7 @@ func (t *AssignMoveTool) Prerequisites() []string {
 	return []string{
 		"shipment_get",
 		"dispatch_rank_candidates",
-		"worker_search",
+		"worker_list",
 		"equipment_list_tractors",
 		"equipment_list_trailers",
 	}
@@ -58,7 +58,7 @@ func (t *AssignMoveTool) ParamSchema() map[string]any {
 			"primaryWorkerId": agenttoolschema.RecordIDText(
 				permission.ResourceWorker,
 				"The driver to put on the move, from dispatch_rank_candidates, "+
-					"dispatch_plan, worker_search or worker_list.",
+					"dispatch_plan or worker_list.",
 			),
 			"tractorId": agenttoolschema.RecordIDText(
 				permission.ResourceTractor,
@@ -72,8 +72,7 @@ func (t *AssignMoveTool) ParamSchema() map[string]any {
 			),
 			"secondaryWorkerId": agenttoolschema.RecordIDText(
 				permission.ResourceWorker,
-				"A second driver for a team move, from worker_list or "+
-					"worker_search.",
+				"A second driver for a team move, from worker_list.",
 			),
 		},
 		"required":             []string{"shipmentMoveId", "primaryWorkerId", "tractorId"},

@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -57,16 +58,19 @@ const (
 )
 
 type Usage struct {
-	ModelCalls       int              `json:"modelCalls"`
-	InputTokens      int              `json:"inputTokens"`
-	CacheReadTokens  int              `json:"cacheReadTokens"`
-	CacheWriteTokens int              `json:"cacheWriteTokens"`
-	OutputTokens     int              `json:"outputTokens"`
-	ReasoningTokens  int              `json:"reasoningTokens"`
-	CostUSD          *decimal.Decimal `json:"costUsd,omitempty"`
-	EstimatedCalls   int              `json:"estimatedCalls,omitempty"`
-	UnpricedCalls    int              `json:"unpricedCalls,omitempty"`
-	ModelTime        time.Duration    `json:"modelTimeNs"`
+	ModelCalls          int              `json:"modelCalls"`
+	InputTokens         int              `json:"inputTokens"`
+	CacheReadTokens     int              `json:"cacheReadTokens"`
+	CacheWriteTokens    int              `json:"cacheWriteTokens"`
+	OutputTokens        int              `json:"outputTokens"`
+	ReasoningTokens     int              `json:"reasoningTokens"`
+	AdvisorCalls        int              `json:"advisorCalls,omitempty"`
+	AdvisorPromptTokens int              `json:"advisorPromptTokens,omitempty"`
+	AdvisorOutputTokens int              `json:"advisorOutputTokens,omitempty"`
+	CostUSD             *decimal.Decimal `json:"costUsd,omitempty"`
+	EstimatedCalls      int              `json:"estimatedCalls,omitempty"`
+	UnpricedCalls       int              `json:"unpricedCalls,omitempty"`
+	ModelTime           time.Duration    `json:"modelTimeNs"`
 }
 
 func (u *Usage) PromptTokens() int {
@@ -80,6 +84,9 @@ func (u *Usage) add(other Usage) {
 	u.CacheWriteTokens += other.CacheWriteTokens
 	u.OutputTokens += other.OutputTokens
 	u.ReasoningTokens += other.ReasoningTokens
+	u.AdvisorCalls += other.AdvisorCalls
+	u.AdvisorPromptTokens += other.AdvisorPromptTokens
+	u.AdvisorOutputTokens += other.AdvisorOutputTokens
 	u.EstimatedCalls += other.EstimatedCalls
 	u.UnpricedCalls += other.UnpricedCalls
 	u.ModelTime += other.ModelTime
@@ -157,6 +164,7 @@ type CallSummary struct {
 	CacheWrite      int                             `json:"cacheWriteTokens,omitempty"`
 	OutputTokens    int                             `json:"outputTokens"`
 	ReasoningTokens int                             `json:"reasoningTokens"`
+	Advisor         *aiprovider.AdvisorUsage        `json:"advisor,omitempty"`
 	CostUSD         *decimal.Decimal                `json:"costUsd,omitempty"`
 	PriceSource     PriceSource                     `json:"priceSource,omitempty"`
 	Reask           string                          `json:"reask,omitempty"`

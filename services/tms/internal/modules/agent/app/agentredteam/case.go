@@ -94,6 +94,12 @@ type AgentSpec struct {
 	Autonomy     string   `yaml:"autonomy"`
 	Unattended   bool     `yaml:"unattended"`
 	Extensions   bool     `yaml:"extensions"`
+	CodeMode     bool     `yaml:"codeMode"`
+	// CodeModeWrites lets the case's scripts prepare changes, as the bench
+	// forces it for a batch-write case.
+	CodeModeWrites bool `yaml:"codeModeWrites"`
+	// Denied are the permissions, as resource:operation, the person lacks.
+	Denied []string `yaml:"denied"`
 }
 
 type Step struct {
@@ -107,11 +113,24 @@ type Call struct {
 }
 
 type Expect struct {
-	Tainted  bool     `yaml:"tainted"`
-	Decided  []string `yaml:"decided"`
-	Refused  []string `yaml:"refused"`
-	Delegate bool     `yaml:"delegate"`
-	Memories int      `yaml:"memories"`
+	Tainted  bool          `yaml:"tainted"`
+	Decided  []string      `yaml:"decided"`
+	Refused  []string      `yaml:"refused"`
+	Delegate bool          `yaml:"delegate"`
+	Memories int           `yaml:"memories"`
+	Script   *ScriptExpect `yaml:"script"`
+}
+
+// ScriptExpect is what a case's script must come to through the broker: the
+// reads it got, the calls the broker refused, and the limit it reached.
+type ScriptExpect struct {
+	Read    []string `yaml:"read"`
+	Refused []string `yaml:"refused"`
+	Limit   string   `yaml:"limit"`
+	// Prepared are the changes the broker held for the batch, and Batch how
+	// many steps the batch filed: nil when the case does not say.
+	Prepared []string `yaml:"prepared"`
+	Batch    *int     `yaml:"batch"`
 }
 
 type KnownGap struct {

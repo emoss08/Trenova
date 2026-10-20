@@ -1,13 +1,15 @@
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { Button } from "@trenova/shared/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { useCallback, useMemo, useReducer, useRef } from "react";
+import { useMemo, useReducer } from "react";
 import { DeskAgentTile } from "@/components/desk-chat/desk-agent-tile";
 import { DeskIcon } from "@/components/desk-chat/desk-icons";
+import { deskPopoverClass } from "@/components/desk-chat/desk-popover";
 import { DeskTip } from "@/components/desk-chat/desk-tip";
-import { useOutsideDismiss } from "@/components/desk-chat/use-outside-dismiss";
 import { HANDOFF_MENU_CLOSED, handoffMenuReducer, handoffTargets } from "./handoff-state";
 import { useHandOffThread } from "./use-hand-off-thread";
 import { useHandoffSuggestion } from "./use-handoff-suggestion";
@@ -33,10 +35,7 @@ export function DeskHandoffMenu({
   facts?: readonly string[];
 }) {
   const t = useT();
-  const root = useRef<HTMLSpanElement>(null);
   const [state, dispatch] = useReducer(handoffMenuReducer, HANDOFF_MENU_CLOSED);
-  const close = useCallback(() => dispatch({ type: "close" }), []);
-  useOutsideDismiss(root, state.open, close);
 
   // The reply being written and the thread's saved history, narrowed to the
   // suggestion: the menu re-renders only when the suggestion changes, not on
@@ -52,63 +51,74 @@ export function DeskHandoffMenu({
   const handoff = useHandOffThread(threadId, facts);
 
   return (
-    <span className="dk-hom" ref={root}>
+    <Popover
+      open={state.open}
+      onOpenChange={(open) => dispatch(open ? { type: "toggle" } : { type: "close" })}
+    >
       <DeskTip label={t("Hand off to another agent")}>
-        <Button
-          variant="quiet"
-          size="icon-sm"
-          className={cn(
-            "size-7.5 rounded-lg text-dsk-subtle transition-colors duration-140 hover:bg-dsk-hover hover:text-dsk-fg",
-            state.open && "bg-dsk-hover text-dsk-fg",
-          )}
-          aria-label={t("Hand off to another agent")}
-          aria-expanded={state.open}
-          aria-haspopup="menu"
+        <PopoverTrigger
           disabled={state.pendingAgentId !== null}
-          onClick={() => dispatch({ type: "toggle" })}
+          render={
+            <Button
+              variant="quiet"
+              size="icon-sm"
+              className={cn(
+                "size-7.5 rounded-lg text-dsk-subtle transition-colors duration-140 hover:bg-dsk-hover hover:text-dsk-fg",
+                state.open && "bg-dsk-hover text-dsk-fg",
+              )}
+              aria-label={t("Hand off to another agent")}
+              aria-haspopup="menu"
+            />
+          }
         >
           <DeskIcon name="handoff" size={14} />
-        </Button>
+        </PopoverTrigger>
       </DeskTip>
-      {state.open && (
-        <div className="dk-hom-p" role="menu">
-          <div className="dk-hom-h">
-            <b>{t("Hand off to")}</b>
-            <span>{t("Carries over a summary, pinned facts and pinned artifacts")}</span>
-          </div>
-          {targets.length === 0 ? (
-            <p className="dk-hom-empty">{t("There is no other agent you can hand this to.")}</p>
-          ) : (
-            targets.map((target) => (
-              <Button
-                key={target.id}
-                variant="bare"
-                size="bare"
-                role="menuitem"
-                className="flex w-full gap-2.5 rounded-lg px-2 py-1.75 text-left hover:bg-dsk-hover"
-                onClick={() => {
-                  dispatch({ type: "pick", agentId: target.id });
-                  handoff.mutate(target.id, { onSettled: () => dispatch({ type: "settled" }) });
-                }}
-              >
-                <DeskAgentTile agent={target} size="xs" />
-                <span className="flex min-w-0 flex-col">
-                  <b className="text-sm font-medium">{target.name}</b>
-                  {suggestedIds.has(target.id) && (
-                    <span className="flex items-center gap-1 text-xs text-dsk-fg2">
-                      <AssistMark className="size-3 shrink-0" aria-hidden />
-                      {t("Holds what this conversation needs")}
-                    </span>
-                  )}
-                  <em className="truncate text-xs text-dsk-subtle not-italic">
-                    {target.description}
-                  </em>
-                </span>
-              </Button>
-            ))
-          )}
+      <PopoverContent
+        align="end"
+        sideOffset={6}
+        className={cn(deskPopoverClass, "dk-hom-p w-75 p-1")}
+      >
+        <div className="dk-hom-h">
+          <b>{t("Hand off to")}</b>
+          <span>{t("Carries over a summary, pinned facts and pinned artifacts")}</span>
         </div>
-      )}
-    </span>
+        {targets.length === 0 ? (
+          <p className="dk-hom-empty">{t("There is no other agent you can hand this to.")}</p>
+        ) : (
+          <ScrollArea viewportClassName="max-h-[min(60vh,420px)]" maskVariant="raised">
+            <div role="menu">
+              {targets.map((target) => (
+                <Button
+                  key={target.id}
+                  variant="bare"
+                  size="bare"
+                  role="menuitem"
+                  className="flex w-full gap-2.5 rounded-lg px-2 py-1.75 text-left hover:bg-dsk-hover"
+                  onClick={() => {
+                    dispatch({ type: "pick", agentId: target.id });
+                    handoff.mutate(target.id, { onSettled: () => dispatch({ type: "settled" }) });
+                  }}
+                >
+                  <DeskAgentTile agent={target} size="xs" />
+                  <span className="flex min-w-0 flex-col">
+                    <b className="text-sm font-medium">{target.name}</b>
+                    {suggestedIds.has(target.id) && (
+                      <span className="flex items-center gap-1 text-xs text-dsk-fg2">
+                        <AssistMark className="size-3 shrink-0" aria-hidden />
+                        {t("Holds what this conversation needs")}
+                      </span>
+                    )}
+                    <em className="truncate text-xs text-dsk-subtle not-italic">
+                      {target.description}
+                    </em>
+                  </span>
+                </Button>
+              ))}
+            </div>
+          </ScrollArea>
+        )}
+      </PopoverContent>
+    </Popover>
   );
 }

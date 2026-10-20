@@ -149,8 +149,8 @@ func newFileInboundAttachmentTool(
 				"told and it can be unfiled.",
 			Properties: map[string]any{
 				paramMessageID: messageIDProperty(
-					"The message the attachment came on, from inbox_list_inbound_messages or " +
-						"inbox_search_inbound_messages.",
+					"The message the attachment came on, from inbox_list_inbound_messages, " +
+						"newest first or by query.",
 				),
 				paramAttachmentID: agenttoolschema.IDText(
 					"The attachment, from the attachments inbox_get_inbound_message lists for the " +
@@ -428,8 +428,8 @@ func newUnfileInboundAttachmentTool(
 				"documents a split made, so a person approves it.",
 			Properties: map[string]any{
 				paramMessageID: messageIDProperty(
-					"The message the attachment came on, from inbox_list_inbound_messages or " +
-						"inbox_search_inbound_messages.",
+					"The message the attachment came on, from inbox_list_inbound_messages, " +
+						"newest first or by query.",
 				),
 				paramAttachmentID: agenttoolschema.IDText(
 					"The filed attachment, from the attachments inbox_get_inbound_message lists " +

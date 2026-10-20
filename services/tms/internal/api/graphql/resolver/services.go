@@ -123,6 +123,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driverpayservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/fueldeskcardservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/fuelpurchaseservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/iftaservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
@@ -287,6 +288,7 @@ type Params struct {
 	ManualJournalService         *manualjournalservice.Service
 	JournalEntryService          *journalentryservice.Service
 	JournalCards                 *journalcardservice.Service
+	FuelDeskCards                *fueldeskcardservice.Service
 	JournalReview                journalentryports.JournalReviewService
 	JournalReversalService       *journalreversalservice.Service
 	AuditService                 auditports.AuditService
@@ -518,6 +520,7 @@ type Services struct {
 	ManualJournalService         *manualjournalservice.Service
 	JournalEntryService          *journalentryservice.Service
 	JournalCards                 *journalcardservice.Service
+	FuelDeskCards                *fueldeskcardservice.Service
 	JournalReview                journalentryports.JournalReviewService
 	JournalReversalService       *journalreversalservice.Service
 	AuditService                 auditports.AuditService
@@ -755,6 +758,7 @@ func newServices(p *Params) *Services {
 		ManualJournalService:         p.ManualJournalService,
 		JournalEntryService:          p.JournalEntryService,
 		JournalCards:                 p.JournalCards,
+		FuelDeskCards:                p.FuelDeskCards,
 		JournalReview:                p.JournalReview,
 		JournalReversalService:       p.JournalReversalService,
 		AuditService:                 p.AuditService,

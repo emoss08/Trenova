@@ -2,11 +2,14 @@ package agentruntime
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"slices"
 	"strings"
 	"time"
+
+	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
@@ -30,6 +33,9 @@ type toolOutcome struct {
 	content string
 	failed  bool
 	action  *agentports.PendingAction
+	// batch is what a script prepared and filed for a person as one batch;
+	// none of it ran.
+	batch []agentports.PendingAction
 	// data is what a query tool returned, before it was encoded for the
 	// model. The caller may turn it into something a person sees.
 	data any
@@ -93,6 +99,12 @@ type dispatchParams struct {
 	afterExternal bool
 	beyond        agent.AutonomyTier
 	stepKey       string
+	// scriptStepKey is set for a write a script prepared: the ledger step of
+	// the script. The call is decided and previewed as any write is, and
+	// handed back as an intent; it never runs before a person approves the
+	// script's batch.
+	scriptStepKey string
+	gate          scriptGate
 }
 
 func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
@@ -141,6 +153,10 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 			return argumentOutcome(call.Name, tool.ParamSchema(), err)
 		}
 		call.Arguments = contract.args
+
+		if tool.Policy().Script == agentports.ScriptRunner {
+			return s.runScriptTool(ctx, &p, tool, &call)
+		}
 
 		outcome := s.runQueryTool(ctx, req, tool, call)
 		if note := contract.note(); note != "" && !outcome.failed {
@@ -209,9 +225,10 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		Unattended:     req.Unattended,
 		Taint:          decisionTaint(p.taint, p.afterExternal),
 		MoneyAllowance: s.moneyAllowance(req, p.moneySpent),
+		FromScript:     p.scriptStepKey != "",
 	})
 	tier, heldForExternal, heldForHours := decision.Tier, false, false
-	if !agenttoolpolicy.Escalates(req.Definition, &policy) {
+	if p.scriptStepKey != "" || !agenttoolpolicy.Escalates(req.Definition, &policy) {
 		tier, heldForExternal = afterExternalContent(tier, p.afterExternal)
 		tier, heldForHours = s.heldForBusinessHours(ctx, req, tier)
 	}
@@ -243,6 +260,11 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		MoneyMinor:    decision.MoneyMinor,
 		MoneyCurrency: decision.MoneyCurrency,
 		Tainted:       p.taint.Tainted() || p.afterExternal,
+		ScriptStepKey: p.scriptStepKey,
+	}
+	if p.scriptStepKey != "" && tier == agent.TierAutoExecute {
+		return refusedOutcome(aitrace.OutcomeInvalid, "a prepared change would run on its own",
+			"Tool %q was not prepared: a change from a script never runs on its own.", call.Name)
 	}
 	if heldForExternal && !slices.Contains(action.HeldBy, agenttoolpolicy.HeldByTainted) {
 		action.HeldBy = append(slices.Clone(action.HeldBy), agenttoolpolicy.HeldByTainted)
@@ -317,13 +339,14 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		}
 		action.Target = target
 
-		content := fmt.Sprintf(
-			"Recorded a proposal to run %q (proposal %s). It is awaiting a person's review at "+
-				"the %s tier and has not run.",
-			call.Name,
-			action.ProposalID,
-			tier,
-		) + heldReason(action.HeldBy, decision.Egress) + filingEcho(baseline, call.Arguments)
+		content := s.filedText(ctx, &filedTextParams{
+			req:      req,
+			toolName: call.Name,
+			action:   action,
+			tier:     tier,
+			prepared: p.scriptStepKey != "",
+		}) +
+			heldReason(action.HeldBy, decision.Egress) + filingEcho(baseline, call.Arguments)
 		if note := p.argumentNote; note != "" {
 			content += "\n" + note
 		}
@@ -352,6 +375,27 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 	}
 
 	return s.executeAction(ctx, actionParams{dispatchParams: p, tool: tool, action: action})
+}
+
+type filedTextParams struct {
+	req      *agentports.RunRequest
+	toolName string
+	action   *agentports.PendingAction
+	tier     agent.AutonomyTier
+	prepared bool
+}
+
+func (s *Service) filedText(ctx context.Context, p *filedTextParams) string {
+	if p.prepared {
+		return fmt.Sprintf(
+			"Prepared a change to run %q. Nothing has run: when the script ends it is filed "+
+				"with the script's other changes as one batch, which a person approves or rejects "+
+				"as a whole.",
+			p.toolName,
+		)
+	}
+
+	return proposedText(p.toolName, p.action.ProposalID, p.tier, s.proposalHold(ctx, p.req))
 }
 
 func unresolvedSelection(toolName, verb string, err error) toolOutcome {
@@ -664,6 +708,23 @@ func (s *Service) runQueryTool(
 	tool agentports.AgentQueryTool,
 	call agentports.ToolCall,
 ) toolOutcome {
+	return s.runQueryToolWith(ctx, req, tool, &call, &queryExtras{})
+}
+
+// queryExtras is what only the tool that runs a script is handed: the broker
+// its reads go through and the step it is claimed under.
+type queryExtras struct {
+	broker  codemode.Broker
+	stepKey string
+}
+
+func (s *Service) runQueryToolWith(
+	ctx context.Context,
+	req *agentports.RunRequest,
+	tool agentports.AgentQueryTool,
+	call *agentports.ToolCall,
+	extras *queryExtras,
+) toolOutcome {
 	data, err := tool.Query(ctx, &agentports.QueryToolParams{
 		OrganizationID:    req.Actor.OrganizationID,
 		BusinessUnitID:    req.Actor.BusinessUnitID,
@@ -674,7 +735,19 @@ func (s *Service) runQueryTool(
 		DataAccessCeiling: req.Definition.DataAccessSensitivity(),
 		ThreadID:          req.ThreadID,
 		RunID:             req.RunID,
+		Broker:            extras.broker,
+		StepKey:           extras.stepKey,
 	})
+	if refused, ok := errors.AsType[*agentports.ReadRefusedError](err); ok {
+		return refusedOutcome(
+			aitrace.OutcomeDenied,
+			fmt.Sprintf("lacks %s access to %s", permission.OpRead, refused.Resource.String()),
+			"Tool %q is not permitted: %s. %s",
+			call.Name,
+			deniedAccess(req.Actor, permission.OpRead, refused.Resource),
+			deniedAdvice(req.Actor, permission.OpRead, refused.Resource),
+		)
+	}
 	if err != nil {
 		return refusedOutcome(aitrace.OutcomeFailed, err.Error(),
 			"Tool %q failed: %s", call.Name, err.Error())
@@ -690,7 +763,7 @@ func (s *Service) runQueryTool(
 		content: FenceToolResult(call.Name, encoded),
 		data:    data,
 		summary: summarizeResult(call.Name, document),
-		taint:   callTaint(s.ruled(ctx, req, tool.Policy()), call, data, timeutils.NowUnix()),
+		taint:   callTaint(s.ruled(ctx, req, tool.Policy()), *call, data, timeutils.NowUnix()),
 		verdict: aitrace.OutcomeRan,
 	}
 	if recall, ok := data.(agentports.MemoryRecall); ok {
@@ -817,6 +890,11 @@ func heldReason(heldBy []string, egress agent.EgressClass) string {
 			reasons = append(reasons, "this turn read text written outside the organization")
 		case agenttoolpolicy.HeldByBusinessHours:
 			reasons = append(reasons, "it is outside this agent's business hours")
+		case agenttoolpolicy.HeldByScriptIntent:
+			reasons = append(
+				reasons,
+				"a script prepared it, and a person approves the script's batch",
+			)
 		default:
 			if reason, ok := moneyHeldReasons[key]; ok {
 				reasons = append(reasons, reason)

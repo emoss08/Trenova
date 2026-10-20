@@ -110,7 +110,7 @@ scenarios:
     steps:
       - say: "carlos needs next friday off, put it in as vacation"
         expect:
-          calls: ["worker_search|worker_list"]
+          calls: ["worker_list"]
           proposals: [{ tool: worker_request_pto }]
           maxFailedCalls: 1
           rubric: >
@@ -165,7 +165,7 @@ scenarios:
     steps:
       - say: "jane got her new med card today, good till oct 9 2028"
         expect:
-          calls: ["worker_search|worker_list|worker_list_credentials"]
+          calls: ["worker_list|worker_list_credentials"]
           proposals: [{ tool: "worker_record_credential|worker_update_credential" }]
           maxFailedCalls: 1
           rubric: >

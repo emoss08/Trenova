@@ -411,7 +411,7 @@ func (t *RequestCredentialRenewalTool) Name() string { return "worker_request_cr
 
 func (t *RequestCredentialRenewalTool) Recipe() []string {
 	return []string{
-		"worker_list_expiring_credentials",
+		"worker_list_credentials",
 		"worker_get",
 		"worker_request_credential_renewal",
 	}
@@ -438,7 +438,7 @@ func (t *RequestCredentialRenewalTool) ParamSchema() map[string]any {
 			"credentialIds": agenttoolschema.OfResource(map[string]any{
 				"type": "array",
 				"description": "Every credential this ask covers, by the id " +
-					"worker_list_expiring_credentials or worker_get_credential returns, or the one " +
+					"worker_list_credentials or worker_get_credential returns, or the one " +
 					"the event that started this run names. Never invent one.",
 				schemaItems: map[string]any{"type": "string"},
 				"minItems":  1,
@@ -567,7 +567,7 @@ func NewPlaceWorkerDispatchHoldTool(workers workerHolder) agentports.AgentTool {
 func (t *PlaceWorkerDispatchHoldTool) Name() string { return "worker_place_dispatch_hold" }
 
 func (t *PlaceWorkerDispatchHoldTool) Recipe() []string {
-	return []string{"worker_list_expiring_credentials", "worker_get", "worker_place_dispatch_hold"}
+	return []string{"worker_list_credentials", "worker_get", "worker_place_dispatch_hold"}
 }
 
 func (t *PlaceWorkerDispatchHoldTool) SearchTerms() []string {

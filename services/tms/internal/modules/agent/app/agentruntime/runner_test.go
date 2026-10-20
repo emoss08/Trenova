@@ -169,9 +169,9 @@ func TestRun_AnswersAndRecordsTheTurn(t *testing.T) {
 func TestRun_RefusesAToolNotEnabledEvenWhenRegistered(t *testing.T) {
 	t.Parallel()
 
-	tool := queryTool("worker_search", map[string]any{}, nil)
+	tool := queryTool("worker_list", map[string]any{}, nil)
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("worker_search", map[string]any{"query": "Maria"}),
+		toolTurn("worker_list", map[string]any{"query": "Maria"}),
 		textTurn("I cannot look that up."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{Tools: []agentports.AgentQueryTool{tool}},
@@ -596,7 +596,7 @@ func TestToolSummaries_DescribeOnlyEnabledRegisteredTools(t *testing.T) {
 
 	query := &stubQueryRegistry{Tools: []agentports.AgentQueryTool{
 		queryTool("shipment_get", nil, nil),
-		queryTool("worker_search", nil, nil),
+		queryTool("worker_list", nil, nil),
 	}}
 	action := &stubActionRegistry{Tools: []agentports.AgentTool{
 		actionTool("dispatch_assign_move", agent.TierActWithApproval, nil),
@@ -1371,10 +1371,10 @@ was then.
 func TestRestoreTurn_DecidesFromTheToolsHeldWhenTheTurnOpened(t *testing.T) {
 	t.Parallel()
 
-	tool := queryTool("worker_search", map[string]any{"results": []any{}}, nil)
+	tool := queryTool("worker_list", map[string]any{"results": []any{}}, nil)
 	script := func() *scriptedCompletion {
 		return &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-			toolTurn("worker_search", map[string]any{"query": "Maria"}),
+			toolTurn("worker_list", map[string]any{"query": "Maria"}),
 			textTurn("Nobody by that name."),
 		}}
 	}
@@ -1382,12 +1382,12 @@ func TestRestoreTurn_DecidesFromTheToolsHeldWhenTheTurnOpened(t *testing.T) {
 		&stubActionRegistry{}, nil)
 
 	opened := &agentports.RunRequest{
-		Definition: testDefinition("worker_search"),
+		Definition: testDefinition("worker_list"),
 		Actor:      testActor(),
 		Input:      "Who is Maria?",
 	}
 	state := rt.OpenTurn(t.Context(), opened).State()
-	require.Contains(t, state.Held, "worker_search")
+	require.Contains(t, state.Held, "worker_list")
 
 	encoded, err := sonic.Marshal(state)
 	require.NoError(t, err)
@@ -1412,7 +1412,7 @@ func TestRestoreTurn_DecidesFromTheToolsHeldWhenTheTurnOpened(t *testing.T) {
 		return fx.dispatched
 	}
 
-	assert.Equal(t, []string{"worker_search"}, drive(carried),
+	assert.Equal(t, []string{"worker_list"}, drive(carried),
 		"the call is dispatched as it was when the turn opened")
 }
 

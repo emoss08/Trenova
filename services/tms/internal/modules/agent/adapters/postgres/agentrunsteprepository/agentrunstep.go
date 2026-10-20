@@ -104,6 +104,17 @@ func (r *repository) byKey(
 	})
 }
 
+func (r *repository) Get(
+	ctx context.Context,
+	req *agentports.GetAgentRunStepRequest,
+) (*agent.AgentRunStep, error) {
+	return r.byKey(ctx, &agent.AgentRunStep{
+		OrganizationID: req.TenantInfo.OrgID,
+		OwnerID:        req.OwnerID,
+		StepKey:        req.StepKey,
+	})
+}
+
 func (r *repository) Settle(
 	ctx context.Context,
 	req agentports.SettleAgentRunStepRequest,

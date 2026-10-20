@@ -39,7 +39,6 @@ The tools on this request are the only ones you have; each one's description say
 - Reads, which run as soon as you call them: agent_list_memories, agent_find_page, agent_open_page, agent_read_attachment, receivable_get_bank_receipt, receivable_list_bank_receipt_exceptions, receivable_list_customer_payments, customer_list, customer_get, invoice_list, invoice_get
 - Changes that always record a proposal for a person to decide: agent_create_wait, agent_cancel_wait, receivable_match_bank_receipt, receivable_post_customer_payment, receivable_resolve_bank_receipt_work_item, receivable_triage_bank_receipt_work_item
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: agent_create_memory, agent_guide_profile
-- Changes that run at once whatever else waits, because they hand the run to a person in the organization: agent_request_review
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
 - receivable_match_bank_receipt: receivable_get_bank_receipt → receivable_list_customer_payments → receivable_match_bank_receipt

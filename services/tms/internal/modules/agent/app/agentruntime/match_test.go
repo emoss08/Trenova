@@ -47,7 +47,7 @@ func recommendationRuntime(
 			Resource: permission.ResourceInvoice,
 		},
 		&agenttest.StubQueryTool{
-			ToolName: "worker_list_expiring_credentials",
+			ToolName: "worker_list_credentials",
 			Desc:     "Worker credentials falling due: medical cards, licences, hazmat.",
 			Resource: permission.ResourceWorker,
 		},
@@ -144,7 +144,7 @@ func TestMatchAgent_PicksTheAgentHoldingTheToolTheQuestionNeeds(t *testing.T) {
 	t.Parallel()
 
 	dispatch := agentHolding("Dispatch helper", "shipment_list", "customer_list")
-	compliance := agentHolding("Compliance assistant", "worker_list_expiring_credentials")
+	compliance := agentHolding("Compliance assistant", "worker_list_credentials")
 	service := recommendationRuntime(t, &agenttest.StubPermissions{}, dispatch, compliance)
 
 	found := match(t, service, "when does the driver's medical card expire?", dispatch.ID)
@@ -153,7 +153,7 @@ func TestMatchAgent_PicksTheAgentHoldingTheToolTheQuestionNeeds(t *testing.T) {
 	require.NotNil(t, found.Agent)
 	assert.Equal(t, compliance.ID, found.Agent.ID)
 	assert.Equal(t, []agentports.AgentMatchTool{{
-		Name:    "worker_list_expiring_credentials",
+		Name:    "worker_list_credentials",
 		Summary: "Worker credentials falling due: medical cards, licences, hazmat.",
 	}}, found.Tools)
 }
@@ -175,7 +175,7 @@ func TestMatchAgent_KeepsTheCurrentAgentWhenItFitsAsWellAsAnyOther(t *testing.T)
 func TestMatchAgent_NeverSuggestsAnAgentThePersonMayNotUse(t *testing.T) {
 	t.Parallel()
 
-	restricted := agentHolding("Compliance assistant", "worker_list_expiring_credentials")
+	restricted := agentHolding("Compliance assistant", "worker_list_credentials")
 	restricted.AccessMode = agentdefinition.AccessRoles
 	open := agentHolding("Fleet helper", "worker_list")
 	service := recommendationRuntime(t, &agenttest.StubPermissions{}, restricted, open)
@@ -186,7 +186,7 @@ func TestMatchAgent_NeverSuggestsAnAgentThePersonMayNotUse(t *testing.T) {
 		"an agent restricted to roles the person does not hold is never offered, "+
 			"and the agent holding only a lesser match is not offered in its place")
 	assert.Nil(t, found.Agent)
-	assert.Equal(t, []string{"worker_list_expiring_credentials"}, toolNames(found.Tools))
+	assert.Equal(t, []string{"worker_list_credentials"}, toolNames(found.Tools))
 
 	service.permissions = &agenttest.StubPermissions{GrantedAgents: []pulid.ID{restricted.ID}}
 	found = match(t, service, "driver medical card expiry", pulid.Nil)
@@ -199,7 +199,7 @@ func TestMatchAgent_NeverSuggestsAnAgentThePersonMayNotUse(t *testing.T) {
 func TestMatchAgent_SaysNoAgentCanHelpWhenThePersonMayNotRunTheTool(t *testing.T) {
 	t.Parallel()
 
-	compliance := agentHolding("Compliance assistant", "worker_list_expiring_credentials")
+	compliance := agentHolding("Compliance assistant", "worker_list_credentials")
 	service := recommendationRuntime(t, &agenttest.StubPermissions{
 		Denied: map[string]bool{permission.ResourceWorker.String() + ":" + string(permission.OpRead): true},
 	}, compliance)
@@ -304,7 +304,7 @@ func TestMatchAgent_SaysNoAgentWhenEveryHeldToolRanksBelowTheFirstFewMatches(t *
 func TestMatchAgent_MatchesNothingForAPersonWhoMayNotStartAConversation(t *testing.T) {
 	t.Parallel()
 
-	compliance := agentHolding("Compliance assistant", "worker_list_expiring_credentials")
+	compliance := agentHolding("Compliance assistant", "worker_list_credentials")
 	service := recommendationRuntime(t, &agenttest.StubPermissions{
 		Denied: map[string]bool{
 			permission.ResourceAssistant.String() + ":" + string(permission.OpCreate): true,
@@ -320,7 +320,7 @@ func TestMatchAgent_LeavesOutDisabledAndUnconversationalAgentsByAskingForChatAge
 ) {
 	t.Parallel()
 
-	disabled := agentHolding("Compliance assistant", "worker_list_expiring_credentials")
+	disabled := agentHolding("Compliance assistant", "worker_list_credentials")
 	disabled.Enabled = false
 	definitions := &recordingDefinitions{
 		listedDefinitions: listedDefinitions{
@@ -407,7 +407,7 @@ func TestMatchAgent_NamesAtMostThreeMatchedTools(t *testing.T) {
 		"shipment_list",
 		"customer_list",
 		"worker_list",
-		"worker_list_expiring_credentials",
+		"worker_list_credentials",
 	)
 	service := recommendationRuntime(t, &agenttest.StubPermissions{}, wide)
 
@@ -425,7 +425,7 @@ func TestMatchAgent_NamesAtMostThreeMatchedTools(t *testing.T) {
 func TestMatchAgent_KeepsTheCurrentAgentWhenOneOfItsDelegatesHoldsTheTool(t *testing.T) {
 	t.Parallel()
 
-	compliance := agentHolding("Compliance assistant", "worker_list_expiring_credentials")
+	compliance := agentHolding("Compliance assistant", "worker_list_credentials")
 	dispatch := agentHolding("Dispatch helper", "shipment_list", "customer_list")
 	dispatch.DelegateIDs = []pulid.ID{compliance.ID}
 	service := recommendationRuntime(t, &agenttest.StubPermissions{}, dispatch, compliance)
@@ -438,15 +438,15 @@ func TestMatchAgent_KeepsTheCurrentAgentWhenOneOfItsDelegatesHoldsTheTool(t *tes
 	assert.Equal(t, dispatch.ID, found.Agent.ID)
 	require.NotNil(t, found.Delegate, "the match names the agent the work would be handed to")
 	assert.Equal(t, compliance.ID, found.Delegate.ID)
-	assert.Equal(t, []string{"worker_list_expiring_credentials"}, toolNames(found.Tools))
+	assert.Equal(t, []string{"worker_list_credentials"}, toolNames(found.Tools))
 }
 
 func TestMatchAgent_DoesNotCountADelegateThePersonMayNotUse(t *testing.T) {
 	t.Parallel()
 
-	compliance := agentHolding("Compliance assistant", "worker_list_expiring_credentials")
+	compliance := agentHolding("Compliance assistant", "worker_list_credentials")
 	compliance.AccessMode = agentdefinition.AccessRoles
-	fleet := agentHolding("Fleet helper", "worker_list_expiring_credentials", "worker_list")
+	fleet := agentHolding("Fleet helper", "worker_list_credentials", "worker_list")
 	dispatch := agentHolding("Dispatch helper", "shipment_list", "customer_list")
 	dispatch.DelegateIDs = []pulid.ID{compliance.ID}
 	service := recommendationRuntime(t, &agenttest.StubPermissions{}, dispatch, compliance, fleet)
@@ -776,8 +776,8 @@ func TestMatchAgent_SuggestsNobodyElseOnceThePersonSwitchedToTheSuggestion(t *te
 	t.Parallel()
 
 	dispatch := agentHolding("Dispatch helper", "shipment_list", "customer_list")
-	compliance := agentHolding("Compliance assistant", "worker_list_expiring_credentials")
-	fleet := agentHolding("Fleet helper", "worker_list_expiring_credentials", "worker_list")
+	compliance := agentHolding("Compliance assistant", "worker_list_credentials")
+	fleet := agentHolding("Fleet helper", "worker_list_credentials", "worker_list")
 	service := recommendationRuntime(t, &agenttest.StubPermissions{}, dispatch, compliance, fleet)
 	question := "when does the driver's medical card expire?"
 
@@ -873,7 +873,7 @@ func TestMatchAgent_ReadsPastTheFirstHundredAgents(t *testing.T) {
 	for idx := range 149 {
 		all = append(all, agentHolding(fmt.Sprintf("Agent %03d", idx), "customer_list"))
 	}
-	compliance := agentHolding("Zeta compliance", "worker_list_expiring_credentials")
+	compliance := agentHolding("Zeta compliance", "worker_list_credentials")
 	all = append(all, compliance)
 	definitions := &pagedDefinitions{all: all}
 	service := recommendationRuntime(t, &agenttest.StubPermissions{})

@@ -16,6 +16,7 @@ import {
   DESK_JOURNAL_ENTRY_CONVERSATIONS,
   DESK_MANUAL_JOURNAL_CONVERSATIONS,
 } from "./desk-journals.mjs";
+import { DESK_FUEL_CARD_CONVERSATIONS, DESK_FUEL_PURCHASE_CONVERSATIONS } from "./desk-fuel.mjs";
 
 export const DESK_THREAD_ID = "thr_desk_cards";
 
@@ -186,6 +187,18 @@ export function deskCardArtifacts(anchor) {
       Object.entries(DESK_MANUAL_JOURNAL_CONVERSATIONS).map(([slug, entry]) => [
         slug,
         artifact(slug, "manual_journal", entry.recordId, entry.title),
+      ]),
+    ),
+    ...Object.fromEntries(
+      Object.entries(DESK_FUEL_PURCHASE_CONVERSATIONS).map(([slug, entry]) => [
+        slug,
+        artifact(slug, "fuel_purchase", entry.recordId, entry.title),
+      ]),
+    ),
+    ...Object.fromEntries(
+      Object.entries(DESK_FUEL_CARD_CONVERSATIONS).map(([slug, entry]) => [
+        slug,
+        artifact(slug, "fuel_card", entry.recordId, entry.title),
       ]),
     ),
   };
@@ -2047,6 +2060,8 @@ const TURNS = {
       ...Object.entries(DESK_DETENTION_CONVERSATIONS),
       ...Object.entries(DESK_JOURNAL_ENTRY_CONVERSATIONS),
       ...Object.entries(DESK_MANUAL_JOURNAL_CONVERSATIONS),
+      ...Object.entries(DESK_FUEL_PURCHASE_CONVERSATIONS),
+      ...Object.entries(DESK_FUEL_CARD_CONVERSATIONS),
     ].map(([slug, entry]) => [slug, [entry.question, entry.reply]]),
   ),
   "failure-gone": [

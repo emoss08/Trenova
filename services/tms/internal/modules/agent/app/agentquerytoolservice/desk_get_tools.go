@@ -184,8 +184,8 @@ func (t *getWorkerCredentialTool) Name() string { return "worker_get_credential"
 func (t *getWorkerCredentialTool) Description() string {
 	return "Retrieve one worker credential by id: its type, the worker who holds it, its " +
 		"status, and when it was issued and expires. It also says whether it was verified " +
-		"and whether a document is on file. Use worker_list_expiring_credentials first when you " +
-		"do not have an id."
+		"and whether a document is on file. Use worker_list_credentials first when you do " +
+		"not have an id."
 }
 
 func (t *getWorkerCredentialTool) ParamSchema() map[string]any {
@@ -194,7 +194,7 @@ func (t *getWorkerCredentialTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"credentialId": agenttoolschema.RecordIDText(
 				permission.ResourceWorkerCredential,
-				"The worker credential's id, from worker_list_expiring_credentials "+
+				"The worker credential's id, from worker_list_credentials "+
 					"or the page you are on.",
 			),
 		},

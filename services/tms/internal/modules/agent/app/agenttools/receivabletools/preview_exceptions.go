@@ -87,19 +87,3 @@ func (t *RaiseExceptionTool) Preview(
 
 	return previewRaisedException(request)
 }
-
-func (t *FlagManualReviewTool) Preview(
-	_ context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	if err := common.GuardPreview(t, &params); err != nil {
-		return nil, err
-	}
-
-	request, err := t.request(&params)
-	if err != nil {
-		return nil, err
-	}
-
-	return previewRaisedException(request)
-}

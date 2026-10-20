@@ -57,7 +57,7 @@ type composeTableViewTool struct {
 	catalog  *filtercatalog.Catalog
 	// lists is the list tool for each resource, set when the registry is
 	// built, which runs a view the way listing that table would.
-	lists map[permission.Resource]*listTool
+	lists map[permission.Resource]viewRunner
 }
 
 func newComposeTableViewTool(

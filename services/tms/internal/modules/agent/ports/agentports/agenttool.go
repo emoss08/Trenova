@@ -6,6 +6,7 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -67,6 +68,13 @@ type ToolPreviewer interface {
 // fix the call, rather than after a person has approved it.
 type ToolValidator interface {
 	Validate(ctx context.Context, params ToolExecuteParams) error
+}
+
+// ToolRecordSplitter is a tool over a set of records that says, for a call
+// naming several, the call of itself naming each record alone: a script's
+// batch keeps one step, and one preview, per record.
+type ToolRecordSplitter interface {
+	SplitRecords(params map[string]any) ([]map[string]any, error)
 }
 
 type ToolSelectionResolver interface {
@@ -305,4 +313,20 @@ type AgentToolRegistry interface {
 	Get(name string) (AgentTool, bool)
 	All() []AgentTool
 	Descriptors() []AgentToolDescriptor
+}
+
+// PreparableFromScript holds a script's write surface to tools whose every
+// call names the record it changes and previews it, so a script's batch
+// keeps one step and one preview per record a person approves.
+func PreparableFromScript(tool AgentTool) bool {
+	policy := tool.Policy()
+	if !policy.PreparableFromScript() || agentextension.IsExtensionTool(tool.Name()) {
+		return false
+	}
+	if _, previews := tool.(ToolPreviewer); !previews {
+		return false
+	}
+	_, targeted := tool.(TargetedTool)
+
+	return targeted
 }

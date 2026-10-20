@@ -106,6 +106,11 @@ func (r *Core) RequireAuth(ctx context.Context) (*authctx.AuthContext, error) {
 	if !ok || authCtx == nil {
 		return nil, errortypes.NewAuthenticationError("Authentication required")
 	}
+	if authCtx.IsAgent() {
+		return nil, errortypes.NewAuthorizationError(
+			"An agent may not use an operation that checks no permission",
+		)
+	}
 
 	return authCtx, nil
 }

@@ -122,7 +122,6 @@ const (
 	toolListTrailers       = "equipment_list_trailers"
 	toolListWorkers        = "worker_list"
 	toolShipmentList       = "shipment_list"
-	toolSearchWorker       = "worker_search"
 
 	toolShipmentAddComment  = "shipment_add_comment"
 	toolShipmentGetTracking = "shipment_get_tracking"
@@ -192,7 +191,6 @@ func masterDataStewardTools() []string {
 
 func workforceCoordinatorTools() []string {
 	return []string{
-		toolSearchWorker,
 		toolListWorkers,
 		toolGetWorker,
 		toolShipmentList,
@@ -254,7 +252,7 @@ func fuelTaxClerkTools() []string {
 	return []string{
 		toolListTractors,
 		"equipment_get_tractor",
-		toolSearchWorker,
+		toolListWorkers,
 		toolShipmentList,
 		toolShipmentGet,
 		toolSearchDocuments,

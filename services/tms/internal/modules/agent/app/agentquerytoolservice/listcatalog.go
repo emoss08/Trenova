@@ -1,8 +1,10 @@
 package agentquerytoolservice
 
 import (
+	"cmp"
 	"context"
 	"errors"
+	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -24,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/typeutils"
 )
 
@@ -104,9 +107,16 @@ func newListWorkersTool(
 	return newListTool(listSpec{
 		name:         "worker_list",
 		entityPlural: "workers",
-		summary: "List workers (drivers) by employment or qualification. worker_search " +
-			"finds a name; worker_list_expiring_credentials, credentials. \"none on file\" " +
-			"was never recorded: worse than expiring soon.",
+		summary: "Find workers (drivers) by name, closest first, or the roster by employment " +
+			"or qualification. Credentials due: worker_list_credentials. " +
+			"\"none on file\" was never recorded: worse than expiring soon.",
+		searchTerms: []string{
+			"look up a driver by name", "find a driver", "driver roster", "worker directory",
+			"employee by name",
+		},
+		queryNote: "A worker's name, first, last or both; each word matches the start of a " +
+			"name and the closest names come first. Omit it to list the roster or to filter " +
+			"on a field.",
 		resource: permission.ResourceWorker,
 		config:   querybuilder.GetFieldConfiguration((*worker.Worker)(nil)),
 		fields: []listField{
@@ -149,25 +159,68 @@ func newListWorkersTool(
 			{Name: "profile.medicalCardExpiry", Kind: filterDate, Sortable: true},
 			{Name: "profile.twicExpiry", Kind: filterDate, Sortable: true},
 		},
-		access:     newFieldAccess(permissions),
-		gatedField: workerGatedField,
+		access:        newFieldAccess(permissions),
+		gatedField:    workerGatedField,
+		pagesByCursor: true,
 		fetchGated: func(
 			ctx context.Context,
 			opts *pagination.QueryOptions,
+			cursor pagination.CursorInfo,
 			gate *fieldGate,
-		) ([]any, error) {
-			result, err := repo.List(ctx, &workerports.ListWorkersRequest{Filter: opts})
+		) (listPage, error) {
+			result, err := repo.List(
+				ctx,
+				&workerports.ListWorkersRequest{Filter: opts, Cursor: cursor},
+			)
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
-
 			showCity := gate.show(workerCityField, workerCityField)
 
-			return listRows(result.Items, func(item *worker.Worker) any {
+			listed, err := cursorListPage(result, func(item *worker.Worker) any {
 				return toGatedWorkerRow(item, showCity)
-			}), nil
+			})
+			if err != nil {
+				return listPage{}, err
+			}
+			if len(opts.Sort) == 0 {
+				listed.rows = rankWorkersByName(opts.Query, result.Items, listed.rows)
+			}
+
+			return listed, nil
 		},
 	})
+}
+
+func rankWorkersByName(query string, items []*worker.Worker, rows []any) []any {
+	if strings.TrimSpace(query) == "" || len(items) < 2 || len(items) != len(rows) {
+		return rows
+	}
+
+	type scored struct {
+		row   any
+		score float64
+	}
+	ranked := make([]scored, 0, len(items))
+	for idx, item := range items {
+		ranked = append(ranked, scored{row: rows[idx], score: workerNameScore(query, item)})
+	}
+	slices.SortStableFunc(ranked, func(a, b scored) int {
+		return cmp.Compare(b.score, a.score)
+	})
+	out := make([]any, 0, len(ranked))
+	for idx := range ranked {
+		out = append(out, ranked[idx].row)
+	}
+
+	return out
+}
+
+func workerNameScore(query string, item *worker.Worker) float64 {
+	return max(
+		stringutils.NameSimilarity(query, workerName(item)),
+		stringutils.NameSimilarity(query, item.LastName+" "+item.FirstName),
+	)
 }
 
 func workerGatedField(field string) string {
@@ -227,21 +280,23 @@ func shipmentListSpec(repo shipmentports.ShipmentRepository) listSpec {
 			{Name: "weight", Kind: filterNumber},
 			{Name: "createdAt", Kind: filterDate, Sortable: true},
 		},
-		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
+		pagesByCursor: true,
+		fetch: func(ctx context.Context, opts *pagination.QueryOptions, cursor pagination.CursorInfo) (listPage, error) {
 			result, err := repo.List(ctx, &shipmentports.ListShipmentsRequest{
 				Filter: opts,
+				Cursor: cursor,
 				ShipmentOptions: shipmentports.ShipmentOptions{
 					IncludeCustomer: true,
 					IncludeRoute:    true,
 				},
 			})
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
 
-			return listRows(result.Items, func(item *shipment.Shipment) any {
+			return cursorListPage(result, func(item *shipment.Shipment) any {
 				return toShipmentRow(item)
-			}), nil
+			})
 		},
 		count: func(ctx context.Context, opts *pagination.QueryOptions) (int, error) {
 			return countShipments(ctx, repo, opts, shipmentports.ShipmentOptions{})
@@ -369,28 +424,31 @@ func newListTractorsTool(
 			"find tractor by unit number", "locate tractor", "tractor unit number",
 			"available tractors",
 		},
-		resource: permission.ResourceTractor,
-		config:   querybuilder.GetFieldConfiguration((*tractor.Tractor)(nil)),
-		fields:   equipmentFields(),
-		access:   newFieldAccess(permissions),
+		resource:      permission.ResourceTractor,
+		config:        querybuilder.GetFieldConfiguration((*tractor.Tractor)(nil)),
+		fields:        equipmentFields(),
+		access:        newFieldAccess(permissions),
+		pagesByCursor: true,
 		fetchJoined: func(
 			ctx context.Context,
 			opts *pagination.QueryOptions,
+			cursor pagination.CursorInfo,
 			mayRead func(permission.Resource) bool,
-		) ([]any, error) {
+		) (listPage, error) {
 			nameDrivers := mayRead(permission.ResourceWorker)
 			result, err := repo.List(ctx, &tractorports.ListTractorsRequest{
 				Filter: opts,
+				Cursor: cursor,
 				TractorRelationIncludes: tractorports.TractorRelationIncludes{
 					IncludePrimaryWorker: nameDrivers,
 					IncludeEquipmentType: true,
 				},
 			})
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
 
-			return listRows(result.Items, func(item *tractor.Tractor) any {
+			return cursorListPage(result, func(item *tractor.Tractor) any {
 				row := equipmentRow{
 					ID:            item.ID.String(),
 					Code:          item.Code,
@@ -410,7 +468,7 @@ func newListTractorsTool(
 				}
 
 				return row
-			}), nil
+			})
 		},
 	})
 }
@@ -433,21 +491,23 @@ func newListTrailersTool(repo trailerports.TrailerRepository) agentports.AgentQu
 		searchTerms: []string{
 			"find trailer by unit number", "available dry vans",
 		},
-		resource: permission.ResourceTrailer,
-		config:   querybuilder.GetFieldConfiguration((*trailer.Trailer)(nil)),
-		fields:   fields,
-		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
+		resource:      permission.ResourceTrailer,
+		config:        querybuilder.GetFieldConfiguration((*trailer.Trailer)(nil)),
+		fields:        fields,
+		pagesByCursor: true,
+		fetch: func(ctx context.Context, opts *pagination.QueryOptions, cursor pagination.CursorInfo) (listPage, error) {
 			result, err := repo.List(ctx, &trailerports.ListTrailersRequest{
 				Filter: opts,
+				Cursor: cursor,
 				TrailerRelationIncludes: trailerports.TrailerRelationIncludes{
 					IncludeEquipmentType: true,
 				},
 			})
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
 
-			return listRows(result.Items, func(item *trailer.Trailer) any {
+			return cursorListPage(result, func(item *trailer.Trailer) any {
 				row := equipmentRow{
 					ID:            item.ID.String(),
 					Code:          item.Code,
@@ -465,7 +525,7 @@ func newListTrailersTool(repo trailerports.TrailerRepository) agentports.AgentQu
 				row.EquipmentType = equipmentTypeName(item.EquipmentType)
 
 				return row
-			}), nil
+			})
 		},
 	})
 }
@@ -498,13 +558,13 @@ func newListCustomersTool(repo customerports.CustomerRepository) agentports.Agen
 			{Name: "mcNumber", Kind: filterText},
 			{Name: "createdAt", Kind: filterDate, Sortable: true},
 		},
-		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
+		fetch: func(ctx context.Context, opts *pagination.QueryOptions, _ pagination.CursorInfo) (listPage, error) {
 			result, err := repo.List(ctx, &customerports.ListCustomerRequest{Filter: opts})
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
 
-			return listRows(result.Items, func(item *customer.Customer) any {
+			return offsetListPage(result.Items, func(item *customer.Customer) any {
 				return customerRow{
 					ID:        item.ID.String(),
 					Code:      item.Code,
@@ -544,13 +604,13 @@ func newListLocationsTool(repo locationports.LocationRepository) agentports.Agen
 			{Name: "postalCode", Kind: filterText},
 			{Name: "createdAt", Kind: filterDate, Sortable: true},
 		},
-		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
+		fetch: func(ctx context.Context, opts *pagination.QueryOptions, _ pagination.CursorInfo) (listPage, error) {
 			result, err := repo.List(ctx, &locationports.ListLocationRequest{Filter: opts})
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
 
-			return listRows(result.Items, func(item *location.Location) any {
+			return offsetListPage(result.Items, func(item *location.Location) any {
 				return locationRow{
 					ID:      item.ID.String(),
 					Code:    item.Code,
@@ -607,11 +667,11 @@ func specOf(tool agentports.AgentQueryTool) listSpec {
 // applyProfile copies the qualification roll-up onto the row. A worker without a
 // profile is a record mid-onboarding, not an error: the fields stay empty rather
 // than reporting a lapsed licence nobody has yet entered.
-// toWorkerRow is the one worker projection. worker_search used to return the
-// stored entity instead, which cost six times the bytes for the same answer —
-// eight drivers overran the tool-result cap and were truncated mid-record — and
-// reported an unrecorded credential as a bare null, which is the reading that
-// caused the incident these rows exist to prevent.
+// toWorkerRow is the one worker projection. The worker name search used to
+// return the stored entity instead, which cost six times the bytes for the
+// same answer — eight drivers overran the tool-result cap and were truncated
+// mid-record — and reported an unrecorded credential as a bare null, which is
+// the reading that caused the incident these rows exist to prevent.
 func toWorkerRow(item *worker.Worker) workerRow {
 	row := workerRow{
 		ID:                item.ID.String(),

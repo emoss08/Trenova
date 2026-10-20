@@ -190,7 +190,7 @@ func fuelPurchaseProperties(forCorrection bool) map[string]any {
 		common.ParamTractorID: agenttoolschema.RecordIDText(permission.ResourceTractor,
 			"The tractor the fuel went into, from equipment_list_tractors."+keep),
 		common.ParamWorkerID: agenttoolschema.RecordIDText(permission.ResourceWorker,
-			"The driver who bought it, from worker_search or worker_list. Leave it out to "+
+			"The driver who bought it, from worker_list. Leave it out to "+
 				"take the card's driver."+keep),
 		paramJurisdictionID: agenttoolschema.KindID("The state or province the fuel was "+
 			"bought in, from fuel_list_ifta_jurisdictions; it decides which line of the return the "+
@@ -958,7 +958,7 @@ func NewAssignFuelCardTool(cards FuelCardKeeper) agentports.AgentTool {
 			paramAssignedTractorID: agenttoolschema.RecordIDText(permission.ResourceTractor,
 				"The tractor that carries the card, from equipment_list_tractors."),
 			paramAssignedWorkerID: agenttoolschema.RecordIDText(permission.ResourceWorker,
-				"The driver who carries the card, from worker_search or worker_list."),
+				"The driver who carries the card, from worker_list."),
 		},
 		Required: []string{paramFuelCardID},
 		Target: func(params map[string]any) (agentports.ToolTarget, bool) {

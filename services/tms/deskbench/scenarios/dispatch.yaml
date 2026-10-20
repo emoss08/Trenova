@@ -109,7 +109,7 @@ scenarios:
     steps:
       - say: "who's free to run tomorrow? anyone on pto?"
         expect:
-          calls: ["worker_list|worker_search|worker_get_schedule|worker_list_time_off|dispatch_get_board"]
+          calls: ["worker_list|worker_get_schedule|worker_list_time_off|dispatch_get_board"]
           maxFailedCalls: 0
           noProposals: true
           rubric: >

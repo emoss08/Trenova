@@ -1,6 +1,7 @@
 package agenttoolpolicy_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
@@ -84,7 +85,6 @@ func TestToolsThatReadOutsideTextSayWhere(t *testing.T) {
 	cases := map[string]agent.ExternalRead{
 		"inbox_get_inbound_message":               agent.ExternalReadAlways,
 		"inbox_list_inbound_messages":             agent.ExternalReadAlways,
-		"inbox_search_inbound_messages":           agent.ExternalReadAlways,
 		"document_list":                           agent.ExternalReadAlways,
 		"document_get_summary":                    agent.ExternalReadAlways,
 		"intake_get_draft":                        agent.ExternalReadAlways,
@@ -191,7 +191,6 @@ func TestEveryRegisteredToolIsInTheClassItWasGiven(t *testing.T) {
 		"invoice_create_memo":                 {agent.EgressMoney},
 		"invoice_void":                        {agent.EgressMoney},
 		"invoice_send_edi":                    {agent.EgressExternalRecipient},
-		"agent_request_review":                {agent.EgressInternal},
 		"agent_raise_exception":               {agent.EgressInternal},
 		"agent_create_wait":                   {agent.EgressInternal},
 		"agent_cancel_wait":                   {agent.EgressInternal},
@@ -675,5 +674,69 @@ func TestEveryToolACaseStepNamesIsRegistered(t *testing.T) {
 	for _, tool := range deskcase.AllStepTools() {
 		_, ok := names[tool]
 		assert.Truef(t, ok, "case steps name %q, which is not a registered tool", tool)
+	}
+}
+
+// A script's broker runs only reads: a write, a self-scoped tool, an extension
+// tool and the script tool itself are never callable from a script, whatever
+// their policy otherwise says.
+func TestScriptsCallOnlyReads(t *testing.T) {
+	t.Parallel()
+
+	tools := buildRegistered(t)
+	runners := 0
+	for _, tool := range tools.Queries {
+		policy := tool.Policy()
+		if policy.Script == agentports.ScriptRunner {
+			runners++
+			assert.False(t, policy.CallableFromScript(), "%s never runs inside a script", tool.Name())
+		}
+		if !policy.CallableFromScript() {
+			continue
+		}
+		assert.Equal(t, agent.ToolEffectLookup, policy.EffectiveEffect(), tool.Name())
+		assert.NotEqual(t, agent.ToolScopeSelf, policy.Scope, tool.Name())
+	}
+	assert.Equal(t, 1, runners, "agent_run_script is the one tool that runs scripts")
+	for _, tool := range tools.Actions {
+		policy := tool.Policy()
+		assert.False(t, policy.CallableFromScript(), "%s is a write", tool.Name())
+	}
+}
+
+// A script prepares only writes a person can approve record by record: each
+// names the record it changes and previews it, changes the tenant's records
+// rather than the agent's own work, never escalates on its own and holds no
+// taint of its own. The tools that are the agent's own work stay out.
+func TestScriptsPrepareOnlyWritesThatNameAndPreviewTheirRecord(t *testing.T) {
+	t.Parallel()
+
+	tools := buildRegistered(t)
+	preparable := 0
+	for _, tool := range tools.Actions {
+		if !agentports.PreparableFromScript(tool) {
+			continue
+		}
+		preparable++
+		policy := tool.Policy()
+		assert.Equal(t, agent.ToolScopeTenant, policy.Scope, tool.Name())
+		assert.False(t, policy.Escalates, tool.Name())
+		assert.Nil(t, policy.TaintHold, tool.Name())
+		assert.NotEqual(t, agent.ToolEffectLookup, policy.EffectiveEffect(), tool.Name())
+		assert.False(t, strings.HasPrefix(tool.Name(), "agent_"), tool.Name())
+		_, previews := tool.(agentports.ToolPreviewer)
+		_, targeted := tool.(agentports.TargetedTool)
+		assert.True(t, previews && targeted, "%s names and previews its record", tool.Name())
+	}
+	assert.Positive(t, preparable, "scripts have writes they may prepare")
+
+	for _, name := range []string{
+		"agent_create_memory", "agent_create_wait", "agent_raise_exception",
+	} {
+		for _, tool := range tools.Actions {
+			if tool.Name() == name {
+				assert.False(t, agentports.PreparableFromScript(tool), "%s is the agent's own work", name)
+			}
+		}
 	}
 }

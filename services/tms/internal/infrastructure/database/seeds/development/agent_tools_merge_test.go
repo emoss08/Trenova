@@ -14,20 +14,20 @@ The merge behind the re-seed.
 An agent seeded before a tool existed keeps the list it was created with, and
 the seed short-circuits once anything is there, so `task db-seed` used to leave
 it stale forever — only a db-reset, which drops the developer's data, would
-refresh it. The compliance agent shipped holding worker_get and worker_search
+refresh it. The compliance agent shipped holding worker_get and worker_list
 and could not answer the question it exists for.
 */
 func TestMergeToolNames_AddsWhatTheTemplateGained(t *testing.T) {
 	t.Parallel()
 
 	merged, changed := mergeToolNames(
-		[]string{"worker_get", "worker_search"},
-		[]string{"worker_get", "worker_search", "worker_list_expiring_credentials", "worker_list_time_off"},
+		[]string{"worker_get", "worker_list"},
+		[]string{"worker_get", "worker_list", "worker_list_credentials", "worker_list_time_off"},
 	)
 
 	assert.True(t, changed)
 	assert.Equal(t,
-		[]string{"worker_get", "worker_search", "worker_list_expiring_credentials", "worker_list_time_off"},
+		[]string{"worker_get", "worker_list", "worker_list_credentials", "worker_list_time_off"},
 		merged)
 }
 
@@ -52,11 +52,11 @@ func TestMergeToolNames_PreservesTheExistingOrder(t *testing.T) {
 	t.Parallel()
 
 	merged, _ := mergeToolNames(
-		[]string{"worker_search", "worker_get"},
-		[]string{"worker_get", "worker_search", "worker_list_time_off"},
+		[]string{"worker_list", "worker_get"},
+		[]string{"worker_get", "worker_list", "worker_list_time_off"},
 	)
 
-	assert.Equal(t, []string{"worker_search", "worker_get", "worker_list_time_off"}, merged)
+	assert.Equal(t, []string{"worker_list", "worker_get", "worker_list_time_off"}, merged)
 }
 
 // Nothing to add means no UPDATE is issued at all, which is what makes

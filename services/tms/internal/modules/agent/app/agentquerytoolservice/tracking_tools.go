@@ -559,7 +559,7 @@ func (t *getWorkerHOSTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"workerId": agenttoolschema.OfResource(map[string]any{
 				"type":        "string",
-				"description": "The driver's id, from worker_search or worker_list.",
+				"description": "The driver's id, from worker_list.",
 			}, permission.ResourceWorker),
 		},
 		"required":             []string{"workerId"},

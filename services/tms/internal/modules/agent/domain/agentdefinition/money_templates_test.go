@@ -64,7 +64,7 @@ func TestTemplates_TheSettlementsClerkRunsThePayPeriod(t *testing.T) {
 
 	tools := agentdefinition.TemplateSettlementsClerk.StarterTools()
 	for _, tool := range []string{
-		"worker_search",
+		"worker_list",
 		"carrier_list",
 		"shipment_list",
 		"settlement_list_driver",

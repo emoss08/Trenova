@@ -391,6 +391,54 @@ func TestSearchInboundMessagesRespectsFieldVisibility(t *testing.T) {
 	assert.Empty(t, denied.Hits)
 }
 
+func TestSearchInboundMessagesKeepsOnlyMailInsideTheFilter(t *testing.T) {
+	t.Parallel()
+
+	mailboxID := pulid.MustNew("imbx_")
+	waiting := &inboundmessage.InboundMessage{
+		ID:             pulid.MustNew("imsg_"),
+		OrganizationID: testTenant.OrgID,
+		MailboxID:      mailboxID,
+		Status:         inboundmessage.StatusInReview,
+		Classification: inboundmessage.ClassificationTender,
+		Subject:        "Pickup moved to Thursday",
+		TextBody:       "Please move the pickup to Thursday.",
+	}
+	handled := &inboundmessage.InboundMessage{
+		ID:             pulid.MustNew("imsg_"),
+		OrganizationID: testTenant.OrgID,
+		MailboxID:      mailboxID,
+		Status:         inboundmessage.StatusActioned,
+		Classification: inboundmessage.ClassificationTender,
+		Subject:        "Pickup confirmed",
+		TextBody:       "The pickup is confirmed.",
+	}
+	sources := &fakeSources{
+		messages: []*inboundmessage.InboundMessage{waiting, handled},
+		keyword: []agentports.RetrievalKeywordHit{
+			{SourceID: handled.ID, Rank: 0.9},
+			{SourceID: waiting.ID, Rank: 0.5},
+		},
+	}
+	searcher := newTestSearcher(newFakeRetrievalRepo(activeSettings()), sources, nil)
+	filter := agentports.InboundMessageFilter{
+		Statuses:       []inboundmessage.Status{inboundmessage.StatusInReview},
+		Classification: inboundmessage.ClassificationTender,
+		MailboxID:      mailboxID,
+	}
+	req := searchRequest("pickup", &fakeAccess{})
+	req.Messages = filter
+
+	result, err := searcher.SearchInboundMessages(t.Context(), req)
+	require.NoError(t, err)
+
+	require.Len(t, sources.searched, 1)
+	assert.Equal(t, filter, sources.searched[0].Messages,
+		"the keyword leg narrows in the database")
+	require.Len(t, result.Hits, 1, "a hit outside the filter is dropped, whichever leg found it")
+	assert.Equal(t, waiting.ID, result.Hits[0].Message.ID)
+}
+
 func TestSnippetCentresOnTheFirstTermAndStaysWithinTheLimit(t *testing.T) {
 	t.Parallel()
 

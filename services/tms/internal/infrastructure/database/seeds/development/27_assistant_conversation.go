@@ -395,12 +395,12 @@ func (s *AssistantConversationSeed) insertProposal(
 		OrganizationID: refs.org.ID,
 		BusinessUnitID: refs.org.BusinessUnitID,
 		RunID:          run.ID,
-		ToolName:       "agent_request_review",
+		ToolName:       "agent_raise_exception",
 		ToolParams: map[string]any{
-			"runId":     run.ID.String(),
-			"subjectId": refs.shipment.ID.String(),
-			"category":  string(agent.CategoryMissingBOL),
-			"severity":  string(agent.SeverityMedium),
+			"subjectType": string(agent.SubjectShipment),
+			"subjectId":   refs.shipment.ID.String(),
+			"category":    string(agent.CategoryMissingBOL),
+			"severity":    string(agent.SeverityMedium),
 			"attemptSummary": "Signed bill of lading is missing and the shipment rate " +
 				"disagrees with the customer's rate agreement.",
 			"evidence": []map[string]any{{

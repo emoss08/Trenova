@@ -3,6 +3,7 @@ package agentports
 import (
 	"context"
 	"slices"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -32,8 +33,46 @@ type ToolPolicy struct {
 	Sources             []agent.TaintSource
 	CarriesTaint        bool
 	CapsLaterWrites     bool
+	Script              ScriptUse
 	Rationale           string
 }
+
+// ScriptUse says what a script may do with a tool: call it through the
+// broker (the default for a read), never call it, or run the script itself.
+type ScriptUse string
+
+const (
+	ScriptCallable = ScriptUse("")
+	ScriptExcluded = ScriptUse("excluded")
+	ScriptRunner   = ScriptUse("runner")
+)
+
+// CallableFromScript says a script's broker may run the tool: a read whose
+// policy does not keep it from scripts, that touches only what the caller may
+// read and reads nothing from outside the organization a script could relay
+// into a later write.
+func (p *ToolPolicy) CallableFromScript() bool {
+	return p.Kind == agent.ToolKindQuery &&
+		p.EffectiveEffect() == agent.ToolEffectLookup &&
+		p.Script == ScriptCallable &&
+		p.Scope != agent.ToolScopeSelf
+}
+
+// PreparableFromScript says a script may prepare the tool's write as an
+// intent, filed in the script's batch for a person: a change to the tenant's
+// records that does not escalate, hold for taint on its own terms or belong
+// to the agent's own work (its waits, memories and exceptions).
+func (p *ToolPolicy) PreparableFromScript() bool {
+	return p.Kind == agent.ToolKindAction &&
+		p.EffectiveEffect() != agent.ToolEffectLookup &&
+		p.Script == ScriptCallable &&
+		p.Scope == agent.ToolScopeTenant &&
+		!p.Escalates &&
+		p.TaintHold == nil &&
+		!strings.HasPrefix(p.Name, agentNamespacePrefix)
+}
+
+const agentNamespacePrefix = "agent_"
 
 func (p ToolPolicy) HeldWhenTainted() bool {
 	return p.TaintHold != nil || slices.ContainsFunc(p.Egress, agent.EgressClass.Leaves)

@@ -50,6 +50,7 @@ type Request struct {
 	// inside a few seconds asks for None, so a model that thinks unless told
 	// otherwise answers at once instead of spending its budget thinking.
 	Reasoning aiprovider.ReasoningEffort
+	Advisor   *AdvisorSpec
 }
 
 // Response is a normalized reply. Text is the raw model output; the router is
@@ -95,6 +96,7 @@ type Response struct {
 	// missed against the call before this one. Nil when it was not asked, or
 	// found nothing to report.
 	CacheDiagnosis *CacheDiagnosis
+	Advisor        *aiprovider.AdvisorUsage
 }
 
 // Adapter speaks one wire protocol.

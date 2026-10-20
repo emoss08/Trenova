@@ -390,6 +390,57 @@ than any it names takes the newest known constraints.
   `trenova.ai.thinking_dropped`. A value that keeps appearing is the harness editing a
   conversation it should hold still.
 
+### The advisor
+
+A chat call may ask for Anthropic's advisor tool (`ChatCompletionRequest.Advisor`: model, max
+uses, max tokens): the executor model consults a more capable one mid-reply, on Anthropic's side.
+Only the desk bench asks for it today (the `+advisor` cell suffix in
+[desk-bench.md](desk-bench.md)); there is no provider setting, and the OpenAI adapters ignore
+the field. The Anthropic adapter (`modeladapter/anthropicadvisor.go`):
+
+- **Only where it is served.** The advisor is declared only on the Claude API and Claude Platform
+  on AWS (`Platform.ServesAdvisor`); Bedrock, Vertex AI and Foundry refuse a request that
+  declares it. On those platforms a request's advisor is ignored, and the stored
+  `server_tool_use` and `advisor_tool_result` blocks are left out when a conversation that
+  consulted the advisor elsewhere is replayed, so its text and thinking still go back. The bench
+  refuses a `+advisor` cell on such a provider.
+
+- **Declares it last.** `advisor_20260301` goes after every client tool, never deferred, with
+  `caching: {type: "ephemeral", ttl: "5m"}` for the advisor's own prompt and the
+  `advisor-tool-2026-03-01` beta. It carries the tools' cache mark, and since the request's
+  advisor is fixed for the turn the tool array still does not change within it.
+- **Keeps the reply's blocks in order.** A reply that used a server tool is stored as
+  `ReasoningTrace.Blocks` (`conversation.ProviderBlock`): its thinking, text,
+  `server_tool_use` and `advisor_tool_result` blocks in the order they came, inside the
+  `reasoning` JSONB the message already has, so nothing new crosses Temporal or the database.
+  The advice is `advisor_result` (plaintext advisors), `advisor_redacted_result` (an Opus 5.5
+  advisor, among others: an opaque `encrypted_content` that can only be sent back) or
+  `advisor_tool_result_error`. It never becomes `Response.Text`, never streams to the text
+  sink and never joins the readable thinking. `Response.Text` is every text block of the reply
+  joined in order, the same text the sink was streamed, so a reply that writes before and
+  after consulting the advisor keeps both parts, blocking or streamed.
+- **Replays them unchanged.** An assistant message with stored blocks is rebuilt from them,
+  in order, then its tool calls: thinking only in the current turn (as for any thinking), the
+  server tool blocks and text on every turn. Only the request's own `Advisor` declares the
+  tool (`advisorFor`); advice in the history never does. A history holding
+  `advisor_tool_result` blocks is accepted without the tool as long as the
+  `advisor-tool-2026-03-01` beta is sent, so on a platform that serves the advisor
+  `sendsAdvisorBeta` sends the beta alone and the blocks go back unchanged; a later turn that
+  does not ask is not advised. On a platform that does not serve it the blocks are left out
+  (`withoutAdvice`) and no beta is sent.
+- **Counts the advisor apart.** The executor's usage is unchanged; the advisor's own calls come
+  as `advisor_message` entries in `usage.iterations` and become `Response.Advisor`
+  (`aiprovider.AdvisorUsage`: model, calls, tokens, and the executor's own `message`
+  iterations as `Executor`). The router prices the call with
+  `aiprovider.Provider.AdvisedCostForTask`: each executor iteration on its own price tier
+  (Haiku 5.5's long-prompt rates apply to an iteration whose own prompt passes 100,000 tokens,
+  not to the summed usage of several shorter ones), plus the advisor's tokens at the advisor
+  model's list price, on the result, the usage record and the span. When the iterations do
+  not add up to the reported usage the reported usage is priced as one call. The summed usage
+  stays the call's token counts. An advisor with no list price leaves the call unpriced rather
+  than undercounted. The usage row and the span also carry the advisor's model, calls, tokens
+  and its share of the cost (see [ai-tracing.md](ai-tracing.md)).
+
 ### Files the person attached
 
 A turn's user message carries the files attached to it as references
@@ -1661,6 +1712,14 @@ report; a delegated turn is never offered the tool. The AI audit trail records t
 superseded proposal's `filed` event and the `withdraw_proposal` call like any runtime step,
 with no new event kind or canonical field.
 
+A filing a shadow switch holds says so. When the organization's agents are paused, or the
+agent is in shadow, the filing result reads "It has not run, and no one can approve it yet:"
+followed by which switch is on and where it is turned off in AI Control, and tells the model
+not to say the change waits on the person's approval (`proposalHold` in `heldproposal.go`,
+read through `agentshadow.Resolver` only when a call is filed). Without it the reply said
+"it waits on your approval" while the server refused every decision, and every organization
+starts paused. A hold that cannot be read leaves the usual wording.
+
 ### What a tool receives
 
 Every call's arguments go through `contractCall` (`agentruntime/arguments.go`,
@@ -1811,7 +1870,7 @@ says whether the memory is kept or only offered on a card
 (`agentports.RecipeTool`), and the order is shown in the prompt's tool
 section and under the tool in a `find_tools` answer, with the prerequisite
 reads that were loaded alongside it. A `find_tools` need that names a tool the
-agent holds outright (`worker_search`) loads that tool first, ahead of the ranked
+agent holds outright (`worker_list`) loads that tool first, ahead of the ranked
 matches, since the prompt lists what can be loaded by name. That is the only place the order of a
 piece of work is written: a template's starter instructions
 (`agentdefinition.Template.StarterInstructions`) hold its persona, what it puts
@@ -2194,8 +2253,8 @@ conversation is the same from the first call of the turn to the last.
   `StreamCompletion`), so a profile that reaches several hundred tools does not
   put their schemas into the workflow's history on every call.
 - **A small core loaded.** On a turn that can search, the core tools few turns
-  call (`agent_create_wait`, `agent_cancel_wait`, `agent_request_review`,
-  `agent_raise_exception`, `agent_guide_profile`; `deferredCoreTools`) are deferred unless
+  call (`agent_create_wait`, `agent_cancel_wait`, `agent_raise_exception`,
+  `agent_guide_profile`; `deferredCoreTools`) are deferred unless
   the request names what they do, and are found like any other. Memory and the
   product guide stay loaded, because the prompt tells the model when to use them.
   An unattended run also loads `agent_raise_exception` (`defersCoreTool`): handing the
@@ -2234,7 +2293,11 @@ conversation is the same from the first call of the turn to the last.
   nothing edits the tools mid-turn, a turn's thinking blocks stay valid on the
   models that check the history (Haiku 5.5, Sonnet 5.5, Opus 5.5, Fable 5.1).
   Microsoft Foundry is not known to take deferred tools, so it is sent what is
-  loaded (`anthropicDefers`).
+  loaded (`anthropicDefers`). An advisor ("The advisor" above) is declared after
+  every client tool and takes the tools' mark, only while the request asks for
+  it, so the array stays the same within a turn; a later turn that does not ask
+  sends the tools without it (a new tools prefix) under the advisor beta, and its
+  replayed advice is the same bytes on every later call.
 - **OpenAI Responses**, on OpenAI's own platform with a model that takes it
   (gpt-5.4 and later, `toolSearchModel`), declares `find_tools` as the
   client-executed `tool_search` (the spec marked `Searches`), leaves deferred

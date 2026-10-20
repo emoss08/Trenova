@@ -9,7 +9,7 @@ scenarios:
     steps:
       - say: "run carlos rivera's settlement for last week"
         expect:
-          calls: ["worker_search|settlement_list_pay_events"]
+          calls: ["worker_list|settlement_list_pay_events"]
           proposals: [{ tool: "settlement_generate_driver|settlement_generate_driver_batch" }]
           maxFailedCalls: 2
           rubric: >

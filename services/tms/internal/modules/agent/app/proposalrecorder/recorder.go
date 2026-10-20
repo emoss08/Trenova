@@ -10,11 +10,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -66,6 +68,15 @@ type Params struct {
 	// Watchtower puts what is waiting on a person onto the one feed they
 	// read; without it the decision still stands, unannounced.
 	Watchtower watchtowerports.WatchtowerProjector `optional:"true"`
+	// ScriptSteps reads back the script a batch came from, so the plan keeps
+	// it after the run's steps are swept. Without it a batch is filed with
+	// its script step's key alone.
+	ScriptSteps ScriptStepReader `optional:"true"`
+}
+
+// ScriptStepReader is the one read the recorder makes on the step ledger.
+type ScriptStepReader interface {
+	Get(ctx context.Context, req *agentports.GetAgentRunStepRequest) (*agent.AgentRunStep, error)
 }
 
 // PlanStore is the one write the recorder makes on plans.
@@ -83,6 +94,7 @@ type Service struct {
 	notifier   agentports.AgentProposalNotifier
 	activity   agentports.AgentActivityPublisher
 	watchtower watchtowerports.WatchtowerProjector
+	scripts    ScriptStepReader
 }
 
 func New(p Params) *Service {
@@ -93,8 +105,17 @@ func New(p Params) *Service {
 	svc.plans = p.Plans
 	svc.activity = p.Activity
 	svc.watchtower = p.Watchtower
+	svc.scripts = p.ScriptSteps
 
 	return svc
+}
+
+// WithScriptSteps gives a recorder built with NewWithStores the ledger it
+// reads a batch's script from.
+func (s *Service) WithScriptSteps(steps ScriptStepReader) *Service {
+	s.scripts = steps
+
+	return s
 }
 
 // WithTransactor gives a recorder built with NewWithStores the transaction
@@ -172,7 +193,10 @@ type RecordResult struct {
 	Run       *agent.AgentRun
 	Proposals []*agent.AgentProposal
 	// Plan is set when the run's pending proposals were grouped into one.
-	Plan      *agent.AgentPlan
+	Plan *agent.AgentPlan
+	// Batches are the plans of a script's intents, one per script that
+	// prepared two or more; a script's single intent is a proposal.
+	Batches   []*agent.AgentPlan
 	Delegated []DelegatedRecord
 }
 
@@ -238,13 +262,13 @@ func (s *Service) Record(ctx context.Context, req *RecordRequest) (*RecordResult
 	}
 
 	groups := req.groups()
-	var plan *agent.AgentPlan
+	var plans filedPlans
 	err := s.inTx(ctx, func(txCtx context.Context) error {
 		written, err := s.write(txCtx, req, groups)
 		if err != nil {
 			return err
 		}
-		plan = written
+		plans = written
 
 		return nil
 	})
@@ -262,18 +286,41 @@ func (s *Service) Record(ctx context.Context, req *RecordRequest) (*RecordResult
 		}
 		all = append(all, group.proposals...)
 	}
-	s.announce(ctx, req.Actor, all, plan)
-	s.projectPlan(ctx, planDefinition(groups, plan), plan)
+	s.announce(ctx, req.Actor, all, plans.all())
+	for _, plan := range plans.all() {
+		s.projectPlan(ctx, planDefinition(groups, plan), plan)
+	}
 	for _, group := range groups {
 		s.project(ctx, group.definition, group.proposals)
 	}
 
-	return recordResult(groups, plan), nil
+	return recordResult(groups, plans), nil
 }
 
-func recordResult(groups []*runGroup, plan *agent.AgentPlan) *RecordResult {
+// filedPlans are the decisions a record opened: the turn's own plan of the
+// model's calls, and one batch for each script that prepared several writes.
+type filedPlans struct {
+	turn    *agent.AgentPlan
+	batches []*agent.AgentPlan
+}
+
+func (p filedPlans) all() []*agent.AgentPlan {
+	all := make([]*agent.AgentPlan, 0, len(p.batches)+1)
+	if p.turn != nil {
+		all = append(all, p.turn)
+	}
+
+	return append(all, p.batches...)
+}
+
+func recordResult(groups []*runGroup, plans filedPlans) *RecordResult {
 	own := groups[0]
-	result := &RecordResult{Run: own.run, Proposals: own.proposals, Plan: plan}
+	result := &RecordResult{
+		Run:       own.run,
+		Proposals: own.proposals,
+		Plan:      plans.turn,
+		Batches:   plans.batches,
+	}
 	if result.Proposals == nil {
 		result.Proposals = []*agent.AgentProposal{}
 	}
@@ -323,9 +370,11 @@ func (s *Service) write(
 	ctx context.Context,
 	req *RecordRequest,
 	groups []*runGroup,
-) (*agent.AgentPlan, error) {
+) (filedPlans, error) {
 	now := timeutils.NowUnix()
 	steps := make([]planStep, 0, len(req.Actions))
+	scripts := make(map[string][]planStep)
+	scriptOrder := make([]string, 0)
 	for _, group := range groups {
 		if !group.records(req.OpenEmptyRuns) {
 			continue
@@ -333,7 +382,7 @@ func (s *Service) write(
 		if group.run == nil {
 			opened, err := s.openRun(ctx, req.Actor, group)
 			if err != nil {
-				return nil, err
+				return filedPlans{}, err
 			}
 			group.run = opened
 		}
@@ -342,27 +391,43 @@ func (s *Service) write(
 		for idx := range group.actions {
 			proposal := s.proposalFor(req, group, &group.actions[idx], now)
 			group.proposals = append(group.proposals, proposal)
-			if proposal.Status == agent.ProposalStatusPending {
-				steps = append(steps, planStep{
+			if proposal.Status != agent.ProposalStatusPending {
+				continue
+			}
+			if key := proposal.ScriptStepKey; key != "" {
+				if _, seen := scripts[key]; !seen {
+					scriptOrder = append(scriptOrder, key)
+				}
+				scripts[key] = append(scripts[key], planStep{
 					proposal: proposal,
 					callID:   group.actions[idx].ToolCallID,
-					position: len(steps),
+					position: len(scripts[key]),
 				})
+
+				continue
 			}
+			steps = append(steps, planStep{
+				proposal: proposal,
+				callID:   group.actions[idx].ToolCallID,
+				position: len(steps),
+			})
 		}
 	}
 
 	orderSteps(steps, req.CallOrder)
-	plan, err := s.openPlan(ctx, req.Actor, groups, steps, now)
+	var plans filedPlans
+	turn, err := s.planSteps(ctx, req, groups, steps, "", now)
 	if err != nil {
-		return nil, err
+		return filedPlans{}, err
 	}
-	if plan != nil {
-		for idx, step := range steps {
-			planID := plan.ID
-			step.proposal.PlanID = &planID
-			step.proposal.PlanStep = idx + 1
-			step.proposal.ExpiresAt = plan.ExpiresAt
+	plans.turn = turn
+	for _, key := range scriptOrder {
+		batch, batchErr := s.planSteps(ctx, req, groups, scripts[key], key, now)
+		if batchErr != nil {
+			return filedPlans{}, batchErr
+		}
+		if batch != nil {
+			plans.batches = append(plans.batches, batch)
 		}
 	}
 
@@ -371,15 +436,47 @@ func (s *Service) write(
 			multiErr := errortypes.NewMultiError()
 			proposal.Validate(multiErr)
 			if multiErr.HasErrors() {
-				return nil, multiErr
+				return filedPlans{}, multiErr
 			}
 
 			created, createErr := s.proposals.Create(ctx, proposal)
 			if createErr != nil {
-				return nil, createErr
+				return filedPlans{}, createErr
 			}
 			group.proposals[idx] = created
 		}
+	}
+
+	return plans, nil
+}
+
+// planSteps opens the plan its steps are decided as, when there are two or
+// more, and ties each step to it in order. A script's intents are kept in
+// the order the script prepared them.
+func (s *Service) planSteps(
+	ctx context.Context,
+	req *RecordRequest,
+	groups []*runGroup,
+	steps []planStep,
+	scriptStepKey string,
+	now int64,
+) (*agent.AgentPlan, error) {
+	plan, err := s.openPlan(ctx, &planOpening{
+		actor:         req.Actor,
+		groups:        groups,
+		steps:         steps,
+		scriptStepKey: scriptStepKey,
+		script:        s.scriptOrigin(ctx, req, scriptStepKey),
+		now:           now,
+	})
+	if err != nil || plan == nil {
+		return nil, err
+	}
+	for idx, step := range steps {
+		planID := plan.ID
+		step.proposal.PlanID = &planID
+		step.proposal.PlanStep = idx + 1
+		step.proposal.ExpiresAt = plan.ExpiresAt
 	}
 
 	return plan, nil
@@ -407,6 +504,7 @@ func (s *Service) proposalFor(
 		AutonomyTier:    proposalTier(action.Tier),
 		Status:          agent.ProposalStatusPending,
 		SourceMessageID: sourceMessageID,
+		ScriptStepKey:   action.ScriptStepKey,
 	}
 	if req.Evidence != nil {
 		proposal.Evidence = req.Evidence(*action, sourceMessageID)
@@ -451,13 +549,17 @@ func (s planStep) at(callOrder map[string]int) int {
 // at least two of them, whichever agent filed each. One pending action is a
 // proposal, as before; two or more are a sequence, run in the order the
 // conversation asked for them.
-func (s *Service) openPlan(
-	ctx context.Context,
-	actor *permissionports.RequestActor,
-	groups []*runGroup,
-	steps []planStep,
-	now int64,
-) (*agent.AgentPlan, error) {
+type planOpening struct {
+	actor         *permissionports.RequestActor
+	groups        []*runGroup
+	steps         []planStep
+	scriptStepKey string
+	script        *agent.ScriptOrigin
+	now           int64
+}
+
+func (s *Service) openPlan(ctx context.Context, p *planOpening) (*agent.AgentPlan, error) {
+	actor, groups, steps, scriptStepKey, now := p.actor, p.groups, p.steps, p.scriptStepKey, p.now
 	if s.plans == nil || len(steps) < 2 {
 		return nil, nil
 	}
@@ -482,11 +584,13 @@ func (s *Service) openPlan(
 		OrganizationID: actor.OrganizationID,
 		BusinessUnitID: actor.BusinessUnitID,
 		RunID:          owner.run.ID,
-		Title:          planTitle(owner.definition, len(steps)),
+		Title:          planTitle(owner.definition, len(steps), scriptStepKey != ""),
 		Summary:        planSummary(owner.run, rationale),
 		Status:         agent.PlanStatusPending,
 		StepCount:      len(steps),
 		ExpiresAt:      now + int64(agent.DefaultProposalTTL.Seconds()),
+		ScriptStepKey:  scriptStepKey,
+		Script:         p.script,
 	}
 
 	multiErr := errortypes.NewMultiError()
@@ -498,8 +602,11 @@ func (s *Service) openPlan(
 	return s.plans.Create(ctx, plan)
 }
 
-func planTitle(definition *agentdefinition.Definition, steps int) string {
+func planTitle(definition *agentdefinition.Definition, steps int, fromScript bool) string {
 	title := fmt.Sprintf("%d changes", steps)
+	if fromScript {
+		title += " from a script"
+	}
 	if definition != nil && strings.TrimSpace(definition.Name) != "" {
 		title = definition.Name + ": " + title
 	}
@@ -706,7 +813,7 @@ func (s *Service) announce(
 	ctx context.Context,
 	actor *permissionports.RequestActor,
 	proposals []*agent.AgentProposal,
-	plan *agent.AgentPlan,
+	plans []*agent.AgentPlan,
 ) {
 	if s.activity == nil {
 		return
@@ -716,7 +823,7 @@ func (s *Service) announce(
 	for _, proposal := range proposals {
 		s.activity.ProposalChanged(ctx, proposal, auditActor, agentports.ActivityCreated)
 	}
-	if plan != nil {
+	for _, plan := range plans {
 		s.activity.PlanChanged(ctx, plan, auditActor, agentports.ActivityCreated)
 	}
 }
@@ -760,4 +867,55 @@ func definitionName(definition *agentdefinition.Definition) string {
 	}
 
 	return definition.Name
+}
+
+// scriptOrigin reads the script a batch came from out of the step it ran
+// under: the chat turn's or the run's ledger, whichever owns the turn. A
+// script that cannot be read leaves the batch with its step's key alone; it
+// is still filed, since the script is the batch's record, not its authority.
+func (s *Service) scriptOrigin(
+	ctx context.Context,
+	req *RecordRequest,
+	scriptStepKey string,
+) *agent.ScriptOrigin {
+	if s.scripts == nil || scriptStepKey == "" {
+		return nil
+	}
+	owner := pulid.Nil
+	switch {
+	case req.Run != nil:
+		owner = req.Run.ID
+	case req.Open != nil:
+		owner = req.Open.TurnID
+	}
+	if owner.IsNil() {
+		return nil
+	}
+
+	step, err := s.scripts.Get(ctx, &agentports.GetAgentRunStepRequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID: req.Actor.OrganizationID,
+			BuID:  req.Actor.BusinessUnitID,
+		},
+		OwnerID: owner,
+		StepKey: scriptStepKey,
+	})
+	if err != nil || step == nil {
+		s.logger.Warn("the script a batch came from could not be read; the batch is filed "+
+			"with its step alone", zap.String("step", scriptStepKey), zap.Error(err))
+		return nil
+	}
+
+	return scriptOriginOf(step.Arguments)
+}
+
+func scriptOriginOf(arguments map[string]any) *agent.ScriptOrigin {
+	title, _ := arguments[agentextension.ParamScriptTitle].(string)
+	purpose, _ := arguments[agentextension.ParamScriptPurpose].(string)
+	code, _ := arguments[agentextension.ParamScriptCode].(string)
+	if title == "" && purpose == "" && code == "" {
+		return nil
+	}
+
+	return &agent.ScriptOrigin{Title: title, Purpose: purpose, Code: code}
 }

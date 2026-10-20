@@ -78,24 +78,23 @@ func newListEquipmentTypesTool(
 	})
 
 	return newListTool(listSpec{
-		name:         "equipment_list_types",
-		entityPlural: "equipment types",
-		summary: "List equipment types — the trailer and tractor classes this " +
-			"organization books against, such as dry van, reefer or flatbed. Use it to " +
-			"turn an equipment name a person used into the id other tools need.",
-		resource: permission.ResourceEquipmentType,
-		config:   querybuilder.GetFieldConfiguration((*equipmenttype.EquipmentType)(nil)),
-		fields:   fields,
-		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
+		name:          toolListEquipmentTypes,
+		entityPlural:  "equipment types",
+		summary:       equipmentTypesSummary,
+		resource:      permission.ResourceEquipmentType,
+		config:        querybuilder.GetFieldConfiguration((*equipmenttype.EquipmentType)(nil)),
+		fields:        fields,
+		pagesByCursor: true,
+		fetch: func(ctx context.Context, opts *pagination.QueryOptions, cursor pagination.CursorInfo) (listPage, error) {
 			result, err := repo.List(
 				ctx,
-				&equipmenttypeports.ListEquipmentTypesRequest{Filter: opts},
+				&equipmenttypeports.ListEquipmentTypesRequest{Filter: opts, Cursor: cursor},
 			)
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
 
-			return listRows(result.Items, func(item *equipmenttype.EquipmentType) any {
+			return cursorListPage(result, func(item *equipmenttype.EquipmentType) any {
 				return codedRow{
 					ID:          item.ID.String(),
 					Code:        item.Code,
@@ -103,27 +102,26 @@ func newListEquipmentTypesTool(
 					Status:      string(item.Status),
 					Name:        string(item.Class),
 				}
-			}), nil
+			})
 		},
 	})
 }
 
 func newListFleetCodesTool(repo fleetcodeports.FleetCodeRepository) agentports.AgentQueryTool {
 	return newListTool(listSpec{
-		name:         "masterdata_list_fleet_codes",
+		name:         toolListFleetCodes,
 		entityPlural: "fleet codes",
-		summary: "List fleet codes — the groupings drivers and equipment are assigned " +
-			"to, each with its own manager and revenue goal.",
-		resource: permission.ResourceFleetCode,
-		config:   querybuilder.GetFieldConfiguration((*fleetcode.FleetCode)(nil)),
-		fields:   codedFields(),
-		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
+		summary:      fleetCodesSummary,
+		resource:     permission.ResourceFleetCode,
+		config:       querybuilder.GetFieldConfiguration((*fleetcode.FleetCode)(nil)),
+		fields:       codedFields(),
+		fetch: func(ctx context.Context, opts *pagination.QueryOptions, _ pagination.CursorInfo) (listPage, error) {
 			result, err := repo.List(ctx, &fleetcodeports.ListFleetCodesRequest{Filter: opts})
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
 
-			return listRows(result.Items, func(item *fleetcode.FleetCode) any {
+			return offsetListPage(result.Items, func(item *fleetcode.FleetCode) any {
 				return codedRow{
 					ID:          item.ID.String(),
 					Code:        item.Code,
@@ -141,18 +139,17 @@ func newListServiceTypesTool(
 	return newListTool(listSpec{
 		name:         toolMasterdataListServiceTypes,
 		entityPlural: "service types",
-		summary: "List service types — the levels of service a shipment can be booked " +
-			"at. Use it to turn a service a person named into the id a shipment needs.",
-		resource: permission.ResourceServiceType,
-		config:   querybuilder.GetFieldConfiguration((*servicetype.ServiceType)(nil)),
-		fields:   codedFields(),
-		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
+		summary:      serviceTypesSummary,
+		resource:     permission.ResourceServiceType,
+		config:       querybuilder.GetFieldConfiguration((*servicetype.ServiceType)(nil)),
+		fields:       codedFields(),
+		fetch: func(ctx context.Context, opts *pagination.QueryOptions, _ pagination.CursorInfo) (listPage, error) {
 			result, err := repo.List(ctx, &servicetypeports.ListServiceTypesRequest{Filter: opts})
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
 
-			return listRows(result.Items, func(item *servicetype.ServiceType) any {
+			return offsetListPage(result.Items, func(item *servicetype.ServiceType) any {
 				return codedRow{
 					ID:          item.ID.String(),
 					Code:        item.Code,
@@ -168,20 +165,19 @@ func newListShipmentTypesTool(
 	repo shipmenttypeports.ShipmentTypeRepository,
 ) agentports.AgentQueryTool {
 	return newListTool(listSpec{
-		name:         "masterdata_list_shipment_types",
+		name:         toolListShipmentTypes,
 		entityPlural: "shipment types",
-		summary: "List shipment types — how this organization categorises the freight " +
-			"it moves. Use it to turn a type a person named into the id a shipment needs.",
-		resource: permission.ResourceShipmentType,
-		config:   querybuilder.GetFieldConfiguration((*shipmenttype.ShipmentType)(nil)),
-		fields:   codedFields(),
-		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
+		summary:      shipmentTypesSummary,
+		resource:     permission.ResourceShipmentType,
+		config:       querybuilder.GetFieldConfiguration((*shipmenttype.ShipmentType)(nil)),
+		fields:       codedFields(),
+		fetch: func(ctx context.Context, opts *pagination.QueryOptions, _ pagination.CursorInfo) (listPage, error) {
 			result, err := repo.List(ctx, &shipmenttypeports.ListShipmentTypesRequest{Filter: opts})
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
 
-			return listRows(result.Items, func(item *shipmenttype.ShipmentType) any {
+			return offsetListPage(result.Items, func(item *shipmenttype.ShipmentType) any {
 				return codedRow{
 					ID:          item.ID.String(),
 					Code:        item.Code,
@@ -206,13 +202,11 @@ type commodityRow struct {
 
 func newListCommoditiesTool(repo commodityports.CommodityRepository) agentports.AgentQueryTool {
 	return newListTool(listSpec{
-		name:         "masterdata_list_commodities",
-		entityPlural: "commodities",
-		summary: "List commodities — what this organization hauls, with freight class, " +
-			"handling flags and whether the commodity is hazardous. Temperature-controlled " +
-			"commodities carry a min or max temperature.",
-		resource: permission.ResourceCommodity,
-		config:   querybuilder.GetFieldConfiguration((*commodity.Commodity)(nil)),
+		name:         toolListCommodities,
+		entityPlural: pluralCommodities,
+		summary:      commoditiesSummary,
+		resource:     permission.ResourceCommodity,
+		config:       querybuilder.GetFieldConfiguration((*commodity.Commodity)(nil)),
 		fields: []listField{
 			{Name: "status", Kind: filterEnum, Values: statusValues},
 			{Name: "name", Kind: filterText, Sortable: true},
@@ -221,19 +215,19 @@ func newListCommoditiesTool(repo commodityports.CommodityRepository) agentports.
 			{Name: "stackable", Kind: filterBool},
 			{Name: "fragile", Kind: filterBool},
 			{
-				Name: "hazardousMaterialId",
+				Name: fieldHazardousMaterialID,
 				Kind: filterText,
 				Note: "set when the commodity is hazmat; use isnotnull to find all of them",
 			},
 			{Name: "createdAt", Kind: filterDate, Sortable: true},
 		},
-		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
+		fetch: func(ctx context.Context, opts *pagination.QueryOptions, _ pagination.CursorInfo) (listPage, error) {
 			result, err := repo.List(ctx, &commodityports.ListCommodityRequest{Filter: opts})
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
 
-			return listRows(result.Items, func(item *commodity.Commodity) any {
+			return offsetListPage(result.Items, func(item *commodity.Commodity) any {
 				return commodityRow{
 					ID:            item.ID.String(),
 					Name:          item.Name,
@@ -265,44 +259,46 @@ func newListHazardousMaterialsTool(
 	repo hazardousmaterialports.HazardousMaterialRepository,
 ) agentports.AgentQueryTool {
 	return newListTool(listSpec{
-		name:         "masterdata_list_hazardous_materials",
+		name:         toolListHazardousMaterials,
 		entityPlural: "hazardous materials",
-		summary: "List the hazardous materials this organization is set up to haul, with " +
-			"hazard class, UN number, packing group and whether a placard is required. " +
-			"Use it for questions about hazmat rules on a load, not about which drivers " +
-			"hold a hazmat endorsement — that is worker_list.",
-		resource: permission.ResourceHazardousMaterial,
-		config:   querybuilder.GetFieldConfiguration((*hazardousmaterial.HazardousMaterial)(nil)),
+		summary:      hazardousMaterialsSummary,
+		resource:     permission.ResourceHazardousMaterial,
+		config: querybuilder.GetFieldConfiguration(
+			(*hazardousmaterial.HazardousMaterial)(nil),
+		),
 		fields: []listField{
 			{Name: "status", Kind: filterEnum, Values: statusValues},
 			{Name: "code", Kind: filterText, Sortable: true},
 			{Name: "name", Kind: filterText, Sortable: true},
-			{Name: "unNumber", Kind: filterText, Note: "the UN/NA identification number"},
+			{Name: fieldUNNumber, Kind: filterText, Note: noteUNNumber},
 			{Name: "placardRequired", Kind: filterBool},
 			{Name: "marinePollutant", Kind: filterBool},
 			{Name: "createdAt", Kind: filterDate, Sortable: true},
 		},
-		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
+		fetch: func(ctx context.Context, opts *pagination.QueryOptions, _ pagination.CursorInfo) (listPage, error) {
 			result, err := repo.List(
 				ctx, &hazardousmaterialports.ListHazardousMaterialsRequest{Filter: opts},
 			)
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
 
-			return listRows(result.Items, func(item *hazardousmaterial.HazardousMaterial) any {
-				return hazmatRow{
-					ID:               item.ID.String(),
-					Code:             item.Code,
-					Name:             item.Name,
-					Class:            string(item.Class),
-					UNNumber:         item.UNNumber,
-					PackingGroup:     string(item.PackingGroup),
-					PlacardRequired:  item.PlacardRequired,
-					MarinePollutant:  item.MarinePollutant,
-					InhalationHazard: item.InhalationHazard,
-				}
-			}), nil
+			return offsetListPage(
+				result.Items,
+				func(item *hazardousmaterial.HazardousMaterial) any {
+					return hazmatRow{
+						ID:               item.ID.String(),
+						Code:             item.Code,
+						Name:             item.Name,
+						Class:            string(item.Class),
+						UNNumber:         item.UNNumber,
+						PackingGroup:     string(item.PackingGroup),
+						PlacardRequired:  item.PlacardRequired,
+						MarinePollutant:  item.MarinePollutant,
+						InhalationHazard: item.InhalationHazard,
+					}
+				},
+			), nil
 		},
 	})
 }
@@ -320,13 +316,13 @@ func newListAccessorialChargesTool(
 	repo accessorialchargeports.AccessorialChargeRepository,
 ) agentports.AgentQueryTool {
 	return newListTool(listSpec{
-		name:         "masterdata_list_accessorial_charges",
+		name:         toolListAccessorialCharges,
 		entityPlural: "accessorial charges",
-		summary: "List the accessorial charges this organization bills — detention, " +
-			"layover, lumper and the rest — with how each is calculated and at what rate. " +
-			"Use it before proposing a charge so the code and amount are the real ones.",
-		resource: permission.ResourceAccessorialCharge,
-		config:   querybuilder.GetFieldConfiguration((*accessorialcharge.AccessorialCharge)(nil)),
+		summary:      accessorialChargesSummary,
+		resource:     permission.ResourceAccessorialCharge,
+		config: querybuilder.GetFieldConfiguration(
+			(*accessorialcharge.AccessorialCharge)(nil),
+		),
 		fields: []listField{
 			{Name: "status", Kind: filterEnum, Values: statusValues},
 			{Name: "code", Kind: filterText, Sortable: true},
@@ -334,24 +330,27 @@ func newListAccessorialChargesTool(
 			{Name: "amount", Kind: filterNumber, Sortable: true},
 			{Name: "createdAt", Kind: filterDate, Sortable: true},
 		},
-		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
+		fetch: func(ctx context.Context, opts *pagination.QueryOptions, _ pagination.CursorInfo) (listPage, error) {
 			result, err := repo.List(
 				ctx, &accessorialchargeports.ListAccessorialChargeRequest{Filter: opts},
 			)
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
 
-			return listRows(result.Items, func(item *accessorialcharge.AccessorialCharge) any {
-				return accessorialRow{
-					ID:          item.ID.String(),
-					Code:        item.Code,
-					Description: item.Description,
-					Status:      string(item.Status),
-					Method:      string(item.Method),
-					Amount:      item.Amount.String(),
-				}
-			}), nil
+			return offsetListPage(
+				result.Items,
+				func(item *accessorialcharge.AccessorialCharge) any {
+					return accessorialRow{
+						ID:          item.ID.String(),
+						Code:        item.Code,
+						Description: item.Description,
+						Status:      string(item.Status),
+						Method:      string(item.Method),
+						Amount:      item.Amount.String(),
+					}
+				},
+			), nil
 		},
 	})
 }
@@ -360,31 +359,29 @@ func newListDocumentTypesTool(
 	repo documenttypeports.DocumentTypeRepository,
 ) agentports.AgentQueryTool {
 	return newListTool(listSpec{
-		name:         "document_list_types",
+		name:         toolListDocumentTypes,
 		entityPlural: "document types",
-		summary: "List the document types this organization files — rate confirmations, " +
-			"bills of lading, proofs of delivery and the rest. Use it to name a document " +
-			"correctly when asking for one or attaching one.",
-		resource: permission.ResourceDocumentType,
-		config:   querybuilder.GetFieldConfiguration((*documenttype.DocumentType)(nil)),
+		summary:      documentTypesSummary,
+		resource:     permission.ResourceDocumentType,
+		config:       querybuilder.GetFieldConfiguration((*documenttype.DocumentType)(nil)),
 		fields: []listField{
 			{Name: "code", Kind: filterText, Sortable: true},
 			{Name: "name", Kind: filterText, Sortable: true},
 			{Name: "description", Kind: filterText},
 			{
-				Name: "isSystem",
+				Name: fieldIsSystem,
 				Kind: filterBool,
-				Note: "true for the types Trenova defines and an operator cannot remove",
+				Note: noteSystemDocumentType,
 			},
 			{Name: "createdAt", Kind: filterDate, Sortable: true},
 		},
-		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
+		fetch: func(ctx context.Context, opts *pagination.QueryOptions, _ pagination.CursorInfo) (listPage, error) {
 			result, err := repo.List(ctx, &documenttypeports.ListDocumentTypesRequest{Filter: opts})
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
 
-			return listRows(result.Items, func(item *documenttype.DocumentType) any {
+			return offsetListPage(result.Items, func(item *documenttype.DocumentType) any {
 				return codedRow{
 					ID:          item.ID.String(),
 					Code:        item.Code,
@@ -400,13 +397,11 @@ func newListLocationCategoriesTool(
 	repo locationcategoryports.LocationCategoryRepository,
 ) agentports.AgentQueryTool {
 	return newListTool(listSpec{
-		name:         "location_list_categories",
+		name:         toolListLocationCategories,
 		entityPlural: "location categories",
-		summary: "List location categories — how facilities are grouped, and what each " +
-			"offers: secure parking, overnight, a restroom, whether an appointment is " +
-			"required. Use it for questions about where a driver can stop.",
-		resource: permission.ResourceLocationCategory,
-		config:   querybuilder.GetFieldConfiguration((*locationcategory.LocationCategory)(nil)),
+		summary:      locationCategoriesSummary,
+		resource:     permission.ResourceLocationCategory,
+		config:       querybuilder.GetFieldConfiguration((*locationcategory.LocationCategory)(nil)),
 		fields: []listField{
 			{Name: "name", Kind: filterText, Sortable: true},
 			{Name: "description", Kind: filterText},
@@ -416,15 +411,15 @@ func newListLocationCategoriesTool(
 			{Name: "hasRestroom", Kind: filterBool},
 			{Name: "createdAt", Kind: filterDate, Sortable: true},
 		},
-		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
+		fetch: func(ctx context.Context, opts *pagination.QueryOptions, _ pagination.CursorInfo) (listPage, error) {
 			result, err := repo.List(
 				ctx, &locationcategoryports.ListLocationCategoriesRequest{Filter: opts},
 			)
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
 
-			return listRows(result.Items, func(item *locationcategory.LocationCategory) any {
+			return offsetListPage(result.Items, func(item *locationcategory.LocationCategory) any {
 				return codedRow{
 					ID:          item.ID.String(),
 					Name:        item.Name,
@@ -511,16 +506,17 @@ func newListInvoicesTool(
 		fetchGated: func(
 			ctx context.Context,
 			opts *pagination.QueryOptions,
+			_ pagination.CursorInfo,
 			gate *fieldGate,
-		) ([]any, error) {
+		) (listPage, error) {
 			result, err := repo.List(ctx, &invoiceports.ListInvoicesRequest{Filter: opts})
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
 
 			showTotal := gate.show("totalAmount", "totalAmount")
 
-			return listRows(result.Items, func(item *invoice.Invoice) any {
+			return offsetListPage(result.Items, func(item *invoice.Invoice) any {
 				row := invoiceRow{
 					ID:               item.ID.String(),
 					Number:           item.Number,
@@ -589,13 +585,13 @@ func newListCarriersTool(repo carrierports.CarrierRepository) agentports.AgentQu
 			},
 			{Name: "createdAt", Kind: filterDate, Sortable: true},
 		},
-		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
+		fetch: func(ctx context.Context, opts *pagination.QueryOptions, _ pagination.CursorInfo) (listPage, error) {
 			result, err := repo.List(ctx, &carrierports.ListCarrierRequest{Filter: opts})
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
 
-			return listRows(result.Items, func(item *carrier.Carrier) any {
+			return offsetListPage(result.Items, func(item *carrier.Carrier) any {
 				return carrierRow{
 					ID:               item.ID.String(),
 					Code:             item.Code,
@@ -628,14 +624,11 @@ func newListHoldReasonsTool(
 	repo holdreasonports.HoldReasonRepository,
 ) agentports.AgentQueryTool {
 	return newListTool(listSpec{
-		name:         "masterdata_list_hold_reasons",
+		name:         toolListHoldReasons,
 		entityPlural: "hold reasons",
-		summary: "List the reasons a shipment can be put on hold, and what each one " +
-			"blocks — dispatch, delivery, billing. Call this before shipment_place_hold: " +
-			"the reason decides the hold's behaviour, so it has to be one this " +
-			"organization actually configured rather than one you describe.",
-		resource: permission.ResourceHoldReason,
-		config:   querybuilder.GetFieldConfiguration((*holdreason.HoldReason)(nil)),
+		summary:      holdReasonsSummary,
+		resource:     permission.ResourceHoldReason,
+		config:       querybuilder.GetFieldConfiguration((*holdreason.HoldReason)(nil)),
 		fields: []listField{
 			{
 				Name: "type",
@@ -650,20 +643,20 @@ func newListHoldReasonsTool(
 			{Name: "code", Kind: filterText, Sortable: true},
 			{Name: "label", Kind: filterText, Sortable: true},
 			{
-				Name: "active",
+				Name: fieldActive,
 				Kind: filterBool,
-				Note: "only an active reason can be used on a new hold",
+				Note: noteActiveHoldReason,
 			},
 			{Name: "defaultBlocksDispatch", Kind: filterBool},
 			{Name: "defaultBlocksBilling", Kind: filterBool},
 		},
-		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
+		fetch: func(ctx context.Context, opts *pagination.QueryOptions, _ pagination.CursorInfo) (listPage, error) {
 			result, err := repo.List(ctx, &holdreasonports.ListHoldReasonRequest{Filter: opts})
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
 
-			return listRows(result.Items, func(item *holdreason.HoldReason) any {
+			return offsetListPage(result.Items, func(item *holdreason.HoldReason) any {
 				return holdReasonRow{
 					ID:             item.ID.String(),
 					Code:           item.Code,

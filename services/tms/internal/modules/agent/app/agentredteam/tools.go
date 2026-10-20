@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolservice"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
@@ -28,6 +29,7 @@ type toolDeps struct {
 	comments    *commentDesk
 	watchtower  *watchtowerDesk
 	permissions *permissionDesk
+	scripts     *scriptDesk
 }
 
 func newToolDeps(rec *recorder, responses map[string]map[string]any) toolDeps {
@@ -48,6 +50,7 @@ func newToolDeps(rec *recorder, responses map[string]map[string]any) toolDeps {
 		comments:    &commentDesk{rec: rec, response: responses[getShipmentTool]},
 		watchtower:  &watchtowerDesk{rec: rec, response: responses[listWatchtowerTool]},
 		permissions: &permissionDesk{rec: rec},
+		scripts:     &scriptDesk{rec: rec},
 	}
 }
 
@@ -60,6 +63,7 @@ func (d toolDeps) fakes() []reflect.Value {
 		reflect.ValueOf(d.comments),
 		reflect.ValueOf(d.watchtower),
 		reflect.ValueOf(d.permissions),
+		reflect.ValueOf(d.scripts),
 	}
 }
 
@@ -93,7 +97,7 @@ func buildTools(rec *recorder, responses map[string]map[string]any) (builtTools,
 				response: responses[typed.Name()],
 			})
 		case agentports.AgentTool:
-			built.actions = append(built.actions, &recordingAction{inner: typed, rec: rec})
+			built.actions = append(built.actions, recordedAction(typed, rec))
 		default:
 			return builtTools{}, fmt.Errorf("%T builds neither a query nor an action tool",
 				provider)
@@ -266,4 +270,48 @@ func followsOf(tool any) []string {
 	}
 
 	return nil
+}
+
+// recordedAction records a write's runs. A write a script may prepare keeps
+// the record it names, its preview and, for a tool over a set of records, the
+// split into one call per record, so the broker sees the tool as it is.
+func recordedAction(tool agentports.AgentTool, rec *recorder) agentports.AgentTool {
+	recording := &recordingAction{inner: tool, rec: rec}
+	if !agentports.PreparableFromScript(tool) {
+		return recording
+	}
+	preparable := &recordingPreparable{recordingAction: recording}
+	if splitter, splits := tool.(agentports.ToolRecordSplitter); splits {
+		return &recordingSplitter{recordingPreparable: preparable, splitter: splitter}
+	}
+
+	return preparable
+}
+
+type recordingPreparable struct {
+	*recordingAction
+}
+
+func (a *recordingPreparable) Target(params map[string]any) (agentports.ToolTarget, bool) {
+	targeted, _ := a.inner.(agentports.TargetedTool)
+
+	return targeted.Target(params)
+}
+
+func (a *recordingPreparable) Preview(
+	ctx context.Context,
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+) (*agent.ToolPreview, error) {
+	previewer, _ := a.inner.(agentports.ToolPreviewer)
+
+	return previewer.Preview(ctx, params)
+}
+
+type recordingSplitter struct {
+	*recordingPreparable
+	splitter agentports.ToolRecordSplitter
+}
+
+func (a *recordingSplitter) SplitRecords(params map[string]any) ([]map[string]any, error) {
+	return a.splitter.SplitRecords(params)
 }

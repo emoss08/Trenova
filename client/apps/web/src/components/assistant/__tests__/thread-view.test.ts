@@ -63,13 +63,13 @@ describe("groupThread", () => {
 
   it("still shows a tool result whose call is missing rather than dropping it", () => {
     const entries = groupThread([
-      message({ role: "Tool", toolCallId: "orphan", toolName: "worker_search", content: "x" }),
+      message({ role: "Tool", toolCallId: "orphan", toolName: "worker_list", content: "x" }),
       message({ role: "Assistant", content: "Done." }),
     ]);
 
     expect(entries[0].kind).toBe("assistant");
     if (entries[0].kind !== "assistant") throw new Error("expected an assistant entry");
-    expect(entries[0].tools[0]?.call.name).toBe("worker_search");
+    expect(entries[0].tools[0]?.call.name).toBe("worker_list");
     expect(entries[0].tools[0]?.result?.content).toBe("x");
   });
 

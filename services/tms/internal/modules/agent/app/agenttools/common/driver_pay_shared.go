@@ -98,7 +98,7 @@ func ErrUnknownValue(key, raw string, names []string) error {
 func WorkerProperty() map[string]any {
 	return agenttoolschema.RecordIDText(
 		permission.ResourceWorker,
-		"The driver, from worker_search or worker_list. Never guess one.",
+		"The driver, from worker_list. Never guess one.",
 	)
 }
 

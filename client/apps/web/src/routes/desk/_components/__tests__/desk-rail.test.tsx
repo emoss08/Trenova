@@ -1,5 +1,10 @@
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
-import { useDeskSettingsStore } from "@/stores/desk-settings-store";
+import {
+  DESK_RAIL_DEFAULT_WIDTH,
+  DESK_RAIL_MAX_WIDTH,
+  DESK_RAIL_MIN_WIDTH,
+  useDeskSettingsStore,
+} from "@/stores/desk-settings-store";
 import { stubLayout } from "@/test/layout";
 import type { AssistantThread } from "@/types/assistant";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -121,7 +126,10 @@ function RailHarness({
   ...props
 }: RailOptions & {
   onLoadMore: DeskRailProps["onLoadMore"];
-  handlers: Pick<DeskRailProps, "onSearch" | "onSettings" | "onSetPinned" | "onDelete">;
+  handlers: Pick<
+    DeskRailProps,
+    "onSearch" | "onSettings" | "onSetPinned" | "onDelete" | "onFold"
+  >;
 }) {
   const collapsed = useDeskSettingsStore((store) => store.collapsedShelves);
   const edges = deskShelfEdges(HARNESS_NOW, "UTC");
@@ -148,6 +156,7 @@ function RailHarness({
         watchtowerCount={0}
         decisionsCount={0}
         decisionsWaitHere={false}
+        folded={false}
         shelves={shelves}
         today={edges.today}
         noConversations={shelves.every((shelf) => shelf.threads.length === 0 && shelf.count === 0)}
@@ -182,6 +191,7 @@ function renderRail(options: RailOptions = {}) {
     onSettings: vi.fn(),
     onSetPinned: vi.fn(),
     onDelete: vi.fn(),
+    onFold: vi.fn(),
   };
   const onLoadMore = vi.fn<(shelf: DeskShelfKey) => void>();
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -206,7 +216,11 @@ let restoreLayout = () => {};
 beforeEach(() => {
   state.live = new Set();
   scheduled.byThread = new Map();
-  useDeskSettingsStore.setState({ collapsedShelves: [] });
+  useDeskSettingsStore.setState({
+    collapsedShelves: [],
+    railWidth: DESK_RAIL_DEFAULT_WIDTH,
+    railFolded: false,
+  });
   restoreLayout = stubLayout(320);
 });
 
@@ -530,6 +544,151 @@ describe("DeskRail", () => {
     fireEvent.click(screen.getByRole("button", { name: "Desk settings" }));
     expect(handlers.onSearch).toHaveBeenCalled();
     expect(handlers.onSettings).toHaveBeenCalled();
+  });
+});
+
+/** The rail's edge, which drags. */
+function railEdge() {
+  return screen.getByRole("separator", { name: "Resize sidebar" });
+}
+
+/** Takes hold of the rail's edge at `from` and lets go at `to`, moving through `via` on the way. */
+function dragEdge(from: number, to: number, via: number[] = []) {
+  const edge = railEdge();
+  const pointer = { pointerId: 1, button: 0 };
+  fireEvent.pointerDown(edge, { ...pointer, clientX: from });
+  for (const x of [...via, to]) {
+    fireEvent.pointerMove(edge, { ...pointer, clientX: x });
+  }
+  fireEvent.pointerUp(edge, { ...pointer, clientX: to });
+}
+
+/**
+ * The rail is as wide as the person drags it, between its bounds, and folds
+ * away from the button left of the logo or by dragging its edge well past
+ * the narrowest.
+ */
+describe("DeskRail width and fold", () => {
+  it("puts the fold first in the top row, before the logo", () => {
+    renderRail();
+
+    const top = screen.getByRole("img", { name: "Trenova" }).parentElement as HTMLElement;
+    const fold = screen.getByRole("button", { name: "Hide sidebar" });
+    expect(top.firstElementChild).toBe(fold);
+  });
+
+  it("folds from the button left of the logo", () => {
+    const { handlers } = renderRail();
+
+    fireEvent.click(screen.getByRole("button", { name: "Hide sidebar" }));
+
+    expect(handlers.onFold).toHaveBeenCalledTimes(1);
+  });
+
+  it("draws the width the person left it at", () => {
+    useDeskSettingsStore.setState({ railWidth: 288 });
+    renderRail();
+
+    const rail = screen.getByRole("complementary", { name: "Desk" });
+    expect(rail.style.getPropertyValue("--dk-rail-w")).toBe("288px");
+    expect(railEdge()).toHaveAttribute("aria-valuenow", "288");
+  });
+
+  it("widens and narrows as its edge is dragged, and keeps the width", () => {
+    renderRail();
+
+    dragEdge(232, 300);
+    const rail = screen.getByRole("complementary", { name: "Desk" });
+    expect(useDeskSettingsStore.getState().railWidth).toBe(300);
+    expect(rail.style.getPropertyValue("--dk-rail-w")).toBe("300px");
+
+    dragEdge(300, 260);
+    expect(useDeskSettingsStore.getState().railWidth).toBe(260);
+  });
+
+  it("stops at its widest and its narrowest", () => {
+    const { handlers } = renderRail();
+
+    dragEdge(232, 900);
+    expect(useDeskSettingsStore.getState().railWidth).toBe(DESK_RAIL_MAX_WIDTH);
+
+    dragEdge(DESK_RAIL_MAX_WIDTH, DESK_RAIL_MIN_WIDTH - 20);
+    expect(useDeskSettingsStore.getState().railWidth).toBe(DESK_RAIL_MIN_WIDTH);
+    expect(handlers.onFold).not.toHaveBeenCalled();
+  });
+
+  it("folds when its edge is let go well past the narrowest, keeping the width it had", () => {
+    const { handlers } = renderRail();
+
+    dragEdge(232, 60, [180]);
+
+    expect(handlers.onFold).toHaveBeenCalledTimes(1);
+    expect(useDeskSettingsStore.getState().railWidth).toBe(DESK_RAIL_DEFAULT_WIDTH);
+  });
+
+  it("offers the fold while the edge is held well past the narrowest, and withdraws it", () => {
+    const { handlers } = renderRail();
+    const edge = railEdge();
+    const pointer = { pointerId: 1, button: 0 };
+
+    fireEvent.pointerDown(edge, { ...pointer, clientX: 232 });
+    fireEvent.pointerMove(edge, { ...pointer, clientX: 60 });
+    expect(edge).toHaveAttribute("data-folding");
+
+    fireEvent.pointerMove(edge, { ...pointer, clientX: 220 });
+    expect(edge).not.toHaveAttribute("data-folding");
+    fireEvent.pointerUp(edge, { ...pointer, clientX: 220 });
+
+    expect(handlers.onFold).not.toHaveBeenCalled();
+    expect(useDeskSettingsStore.getState().railWidth).toBe(220);
+  });
+
+  it("does not fold when the drag is cancelled", () => {
+    const { handlers } = renderRail();
+    const edge = railEdge();
+    const pointer = { pointerId: 1, button: 0 };
+
+    fireEvent.pointerDown(edge, { ...pointer, clientX: 232 });
+    fireEvent.pointerMove(edge, { ...pointer, clientX: 40 });
+    fireEvent.pointerCancel(edge, { ...pointer, clientX: 40 });
+
+    expect(handlers.onFold).not.toHaveBeenCalled();
+    expect(edge).not.toHaveAttribute("data-folding");
+  });
+
+  it("puts the width back on a double click", () => {
+    useDeskSettingsStore.setState({ railWidth: 320 });
+    renderRail();
+
+    fireEvent.doubleClick(railEdge());
+
+    expect(useDeskSettingsStore.getState().railWidth).toBe(DESK_RAIL_DEFAULT_WIDTH);
+  });
+
+  it("moves its edge from the keyboard, and folds on Enter", () => {
+    const { handlers } = renderRail();
+    const edge = railEdge();
+
+    fireEvent.keyDown(edge, { key: "ArrowRight" });
+    expect(useDeskSettingsStore.getState().railWidth).toBe(DESK_RAIL_DEFAULT_WIDTH + 16);
+    fireEvent.keyDown(edge, { key: "ArrowLeft" });
+    fireEvent.keyDown(edge, { key: "ArrowLeft" });
+    expect(useDeskSettingsStore.getState().railWidth).toBe(DESK_RAIL_DEFAULT_WIDTH - 16);
+    fireEvent.keyDown(edge, { key: "End" });
+    expect(useDeskSettingsStore.getState().railWidth).toBe(DESK_RAIL_MAX_WIDTH);
+    fireEvent.keyDown(edge, { key: "Home" });
+    expect(useDeskSettingsStore.getState().railWidth).toBe(DESK_RAIL_MIN_WIDTH);
+    fireEvent.keyDown(edge, { key: "Enter" });
+    expect(handlers.onFold).toHaveBeenCalledTimes(1);
+  });
+
+  it("takes no focus and draws no edge while folded", () => {
+    renderRail({ folded: true });
+
+    const rail = screen.getByRole("complementary", { hidden: true });
+    expect(rail).toHaveAttribute("data-folded");
+    expect(rail).toHaveAttribute("inert");
+    expect(screen.queryByRole("separator", { hidden: true })).not.toBeInTheDocument();
   });
 });
 

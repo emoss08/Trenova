@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/fueldeskcardservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/fuelpurchaseservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
@@ -677,4 +678,127 @@ func (r *QueryResolver) FuelPurchaseImportTemplate(ctx context.Context, provider
 	fileName, content := r.FuelPurchaseService.Template(provider)
 
 	return &gqlmodel.FuelImportTemplate{FileName: fileName, Content: content}, nil
+}
+
+func (r *FuelCardDeskCardResolver) LastPurchasedAt(ctx context.Context, obj *fueldeskcardservice.FuelCardCard) (*int, error) {
+	return base.IntPtr(obj.LastPurchasedAt), nil
+}
+
+func (r *FuelFeedStatusResolver) LastPolledAt(ctx context.Context, obj *fuelpurchase.CardFeedState) (*int, error) {
+	if obj.LastPolledAt == 0 {
+		return nil, nil
+	}
+	return base.IntPtr(&obj.LastPolledAt), nil
+}
+
+func (r *FuelFeedStatusResolver) LastSuccessAt(ctx context.Context, obj *fuelpurchase.CardFeedState) (*int, error) {
+	if obj.LastSuccessAt == 0 {
+		return nil, nil
+	}
+	return base.IntPtr(&obj.LastSuccessAt), nil
+}
+
+func (r *FuelFeedStatusResolver) LastError(ctx context.Context, obj *fuelpurchase.CardFeedState) (*string, error) {
+	return base.StringPtrFromValue(obj.LastError), nil
+}
+
+func (r *FuelHeldSpendResolver) Gallons(ctx context.Context, obj *fueldeskcardservice.HeldSpend) (string, error) {
+	return obj.Gallons.String(), nil
+}
+
+func (r *FuelHeldSpendResolver) TotalAmount(ctx context.Context, obj *fueldeskcardservice.HeldSpend) (string, error) {
+	return base.MinorString(obj.TotalAmountMinor), nil
+}
+
+func (r *FuelJurisdictionGallonsResolver) Jurisdiction(ctx context.Context, obj *fueldeskcardservice.JurisdictionGallons) (*ifta.Jurisdiction, error) {
+	return base.LoadJurisdiction(ctx, &obj.JurisdictionID)
+}
+
+func (r *FuelJurisdictionGallonsResolver) Gallons(ctx context.Context, obj *fueldeskcardservice.JurisdictionGallons) (string, error) {
+	return obj.Gallons.String(), nil
+}
+
+func (r *FuelPurchaseIFTAResolver) TaxPaidGallons(ctx context.Context, obj *fueldeskcardservice.PurchaseIFTA) (string, error) {
+	return obj.TaxPaidGallons.String(), nil
+}
+
+func (r *FuelPurchaseIFTAResolver) RatePerGallon(ctx context.Context, obj *fueldeskcardservice.PurchaseIFTA) (*string, error) {
+	return base.NullDecimalToStringPtr(obj.RatePerGallon), nil
+}
+
+func (r *FuelPurchaseIFTAResolver) TaxPaidCredit(ctx context.Context, obj *fueldeskcardservice.PurchaseIFTA) (*string, error) {
+	if !obj.TaxPaidCredit.Valid {
+		return nil, nil
+	}
+	credit := obj.TaxPaidCredit.Decimal.StringFixed(2)
+	return &credit, nil
+}
+
+func (r *FuelPurchaseIFTAResolver) TractorGallons(ctx context.Context, obj *fueldeskcardservice.PurchaseIFTA) (string, error) {
+	return obj.TractorGallons.String(), nil
+}
+
+func (r *FuelSpendResolver) Gallons(ctx context.Context, obj *fueldeskcardservice.Spend) (string, error) {
+	return obj.Gallons.String(), nil
+}
+
+func (r *FuelSpendResolver) UntaxedGallons(ctx context.Context, obj *fueldeskcardservice.Spend) (string, error) {
+	return obj.UntaxedGallons.String(), nil
+}
+
+func (r *FuelSpendResolver) TotalAmount(ctx context.Context, obj *fueldeskcardservice.Spend) (string, error) {
+	return base.MinorString(obj.TotalAmountMinor), nil
+}
+
+func (r *QueryResolver) FuelPurchaseDeskCard(ctx context.Context, id string) (*fueldeskcardservice.PurchaseCard, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFuelPurchase, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	purchaseID, err := base.RequiredID("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.FuelDeskCards.GetPurchaseCard(ctx, &fueldeskcardservice.GetPurchaseCardRequest{
+		TenantInfo: base.TenantInfo(authCtx),
+		PurchaseID: purchaseID,
+		IncludeProvenance: r.HasPermission(
+			ctx,
+			authCtx,
+			permission.ResourceFuelPurchaseImport,
+			permission.OpRead,
+		),
+		IncludeCreatedBy: true,
+	})
+}
+
+func (r *QueryResolver) FuelCardDeskCard(ctx context.Context, id string) (*fueldeskcardservice.FuelCardCard, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFuelCard, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	cardID, err := base.RequiredID("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.FuelDeskCards.GetFuelCardCard(ctx, &fueldeskcardservice.GetFuelCardCardRequest{
+		TenantInfo: base.TenantInfo(authCtx),
+		CardID:     cardID,
+		IncludePurchases: r.HasPermission(
+			ctx,
+			authCtx,
+			permission.ResourceFuelPurchase,
+			permission.OpRead,
+		),
+		IncludeImports: r.HasPermission(
+			ctx,
+			authCtx,
+			permission.ResourceFuelPurchaseImport,
+			permission.OpRead,
+		),
+	})
 }

@@ -10,7 +10,17 @@ import (
 const reviewRequiredDetail = "preview_required"
 
 func (p *AgentProposal) ApprovalNeedsReview() bool {
-	return p.Tainted || p.EgressClass.ApprovalNeedsReview()
+	return p.Tainted || p.FromScript() || p.EgressClass.ApprovalNeedsReview()
+}
+
+// FromScript reports a write a script prepared rather than one the model
+// called: nobody saw it before its preview, so approving it always needs one.
+func (p *AgentProposal) FromScript() bool {
+	return p.ScriptStepKey != ""
+}
+
+func (p *AgentPlan) FromScript() bool {
+	return p.ScriptStepKey != ""
 }
 
 func PlanNeedsReview(steps []*AgentProposal) bool {

@@ -31,7 +31,10 @@ function thread(overrides: Partial<AssistantThread> = {}): AssistantThread {
   };
 }
 
-function renderBar(overrides: Partial<AssistantThread> = {}) {
+function renderBar(
+  overrides: Partial<AssistantThread> = {},
+  rail: { onUnfoldRail?: () => void } = {},
+) {
   const handlers = {
     onOpenAgent: vi.fn(),
     onToggleWorkspace: vi.fn(),
@@ -52,6 +55,7 @@ function renderBar(overrides: Partial<AssistantThread> = {}) {
           artifactCount={0}
           newArtifact={false}
           pending={false}
+          {...rail}
           {...handlers}
         />
       </MemoryRouter>
@@ -102,6 +106,21 @@ describe("DeskTopBar", () => {
     for (const name of ["Make this a case", "Hand off to another agent", "More actions"]) {
       expect(screen.getByRole("button", { name })).not.toHaveAttribute("title");
     }
+  });
+
+  it("opens the folded rail again from the bar", () => {
+    const onUnfoldRail = vi.fn();
+    renderBar({}, { onUnfoldRail });
+
+    fireEvent.click(screen.getByRole("button", { name: "Show sidebar" }));
+
+    expect(onUnfoldRail).toHaveBeenCalledTimes(1);
+  });
+
+  it("offers no way to open the rail while it is open", () => {
+    renderBar();
+
+    expect(screen.queryByRole("button", { name: "Show sidebar" })).not.toBeInTheDocument();
   });
 });
 

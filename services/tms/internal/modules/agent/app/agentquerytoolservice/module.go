@@ -51,6 +51,7 @@ func ToolProviders() []any {
 		fuelRateReadProviders(),
 		workforceQueryToolProviders(),
 		masterDataReadProviders(),
+		referenceReadProviders(),
 	}
 
 	size := 0
@@ -71,7 +72,6 @@ func coreToolProviders() []any {
 		provideGetAccountingSyncStatusTool,
 		provideListAccountingSyncRecordsTool,
 		provideGetAccountingSyncRecordTool,
-		provideGetRecordAccountingSyncStateTool,
 		provideListAccountingInboundChangesTool,
 		provideListAccountingDriftFindingsTool,
 		provideListAccountingMappingGapsTool,
@@ -79,8 +79,6 @@ func coreToolProviders() []any {
 		newGetShipmentTool,
 		provideShipmentListTool,
 		provideGetWorkerTool,
-		newSearchWorkerTool,
-		newListExpiringCredentialsTool,
 		newRecallMemoryTool,
 		newComposeTableViewTool,
 		newExplainRateTool,
@@ -92,17 +90,7 @@ func coreToolProviders() []any {
 		newListLocationsTool,
 		newListInvoicesTool,
 		newListCarriersTool,
-		newListEquipmentTypesTool,
-		newListFleetCodesTool,
-		newListServiceTypesTool,
-		newListShipmentTypesTool,
-		newListCommoditiesTool,
 		newListCarrierCapacityPostingsTool,
-		newListHazardousMaterialsTool,
-		newListAccessorialChargesTool,
-		newListDocumentTypesTool,
-		newListLocationCategoriesTool,
-		newListHoldReasonsTool,
 		newGetCustomerTool,
 		newGetCarrierTool,
 		newGetTractorTool,
@@ -155,7 +143,6 @@ func coreToolProviders() []any {
 		provideListInboundMessagesTool,
 		provideListTriageAssigneesTool,
 		provideSearchDocumentsTool,
-		provideSearchInboundMessagesTool,
 		newGetMyHomeLayoutTool,
 		newListHomeWidgetsTool,
 		newFindInTrenovaTool,
@@ -166,6 +153,7 @@ func coreToolProviders() []any {
 		newReadPortalTool,
 		newListWebWatchesTool,
 		provideAnalyzeDataTool,
+		newRunScriptTool,
 	}
 }
 
@@ -402,8 +390,10 @@ func provideGetInboundMessageTool(
 
 func provideListInboundMessagesTool(
 	messages *inboundmessageservice.Service,
+	searcher agentports.RetrievalSearcher,
+	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
-	return newListInboundMessagesTool(messages)
+	return newListInboundMessagesTool(messages, searcher, permissions)
 }
 
 func provideListTriageAssigneesTool(
@@ -418,11 +408,4 @@ func provideSearchDocumentsTool(
 	threads agentports.ThreadOwnerRepository,
 ) agentports.AgentQueryTool {
 	return newSearchDocumentsTool(searcher, permissions, threads)
-}
-
-func provideSearchInboundMessagesTool(
-	searcher agentports.RetrievalSearcher,
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return newSearchInboundMessagesTool(searcher, permissions)
 }

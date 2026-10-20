@@ -11,10 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec/internal/e2e/generated/exec/fleetexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec/internal/e2e/generated/exec/peopleexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec/internal/e2e/generated/exec/preludeexec"
+	"github.com/emoss08/trenova/internal/api/graphql/gqlexec/internal/e2e/generated/exec/schemasource"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec/internal/e2e/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec/internal/e2e/model"
-	gqlparser "github.com/vektah/gqlparser/v2"
-	"github.com/vektah/gqlparser/v2/ast"
 )
 
 type Config = graphql.Config[ResolverRoot, DirectiveRoot, ComplexityRoot]
@@ -89,88 +88,4 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 	})
 }
 
-var sources = []*ast.Source{
-	{Name: "../schema/fleet.graphqls", Input: `interface Node {
-  id: ID!
-}
-
-enum Status {
-  ACTIVE
-  INACTIVE
-}
-
-type Owner {
-  id: ID!
-  name: String!
-}
-
-type Truck implements Node {
-  id: ID!
-  name: String!
-  status: Status!
-  owner: Owner
-  displayName: String!
-  tags: [String!]!
-  capacity: Int
-  loadCount(since: Int = 7): Int!
-  failing: String!
-  nullableFailing: String
-}
-
-input TruckFilter {
-  status: Status = ACTIVE
-  nameContains: String
-  page: PageInput
-}
-
-input RenameTruckInput {
-  id: ID!
-  name: String!
-  note: String @goField(omittable: true)
-}
-
-type Query {
-  node(id: ID!): Node
-  trucks(filter: TruckFilter): [Truck!]!
-  truck(id: ID!): Truck
-  search(text: String!): [SearchResult!]!
-  panics: String
-  echoFilter(filter: TruckFilter!): String!
-}
-
-type Mutation {
-  renameTruck(input: RenameTruckInput!): Truck!
-}
-`, BuiltIn: false},
-	{Name: "../schema/people.graphqls", Input: `directive @goField(
-  forceResolver: Boolean
-  name: String
-  omittable: Boolean
-) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
-
-type Driver implements Node {
-  id: ID!
-  name: String!
-  rating: Float!
-  truck: Truck
-}
-
-union SearchResult = Truck | Driver
-
-input PageInput {
-  first: Int = 10
-  after: String
-}
-
-extend type Query {
-  drivers(page: PageInput): [Driver!]!
-  mixed: [Truck]
-}
-
-extend type Mutation {
-  touch(ids: [ID!]!): [String!]!
-}
-`, BuiltIn: false},
-}
-
-var parsedSchema = gqlparser.MustLoadSchema(sources...)
+var parsedSchema = schemasource.Parsed

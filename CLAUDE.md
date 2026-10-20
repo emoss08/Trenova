@@ -415,6 +415,12 @@ sandbox with all egress denied, charts kept with the run and drawn as the Desk's
 artifact) is in [docs/engineering/agent-data-analysis.md](docs/engineering/agent-data-analysis.md).
 Read it before changing `analysis.go` in `agentextensionservice`, `analysis_tool.go`,
 `e2bconnector` or `shared/e2b`.
+Code mode (`agent_run_script`: a short read-only Python script in the same sandbox whose every read
+goes through a Go broker that runs it as one of the agent's own reads through `dispatch`, taint
+unioned by the broker, gated per model by `domain/codemode/models.yaml`, which ships empty) is in
+[docs/engineering/agent-code-mode.md](docs/engineering/agent-code-mode.md). Read it before changing
+`domain/codemode`, `scriptbroker.go` or `scripttool.go` in `agentruntime`, `script_tool.go`,
+`script.go` in `agentextensionservice`, or `RunCodeStream` in `shared/e2b`.
 How an agent looks back over a quiet conversation or a settled run and keeps what the work
 taught (`agentreflectionservice`, `reflectionjobs`, the `agent_reflections` table) is under
 "Learning from the work" in agent-runtime.md.
@@ -461,6 +467,13 @@ now, and the approval carries its digest; tools implement `ToolPreviewer` with
 [docs/engineering/proposal-previews.md](docs/engineering/proposal-previews.md) before
 changing `toolpreview`, `proposalpreviewservice`, a tool's `Preview`, or how a proposal is
 decided.**
+Agent list and get tools read through the persisted GraphQL operation the screen uses, run in
+the worker by a read executor that holds only the shards and resolvers those operations reach;
+typed parameters are derived from the operation and the entity's filter configuration, and the
+data access ceiling is applied by the field guard. **Read
+[docs/engineering/agent-graphql-reads.md](docs/engineering/agent-graphql-reads.md) before
+converting a read tool, changing `agentread`, `gqlext`, `reads.yml` or the field guard, or
+editing an operation a tool reads through.**
 Every agent tool is named `<namespace>_<verb>[_<object>]` from the namespaces in
 `agentports.ToolNamespaces()`, with one convention for ids, paging, free text and dates, and a
 rename carries no alias; **read

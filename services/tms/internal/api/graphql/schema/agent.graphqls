@@ -255,6 +255,8 @@ type AgentProposal {
   evidence: [AgentEvidenceRef!]!
   autonomyTier: AgentAutonomyTier!
   status: AgentProposalStatus!
+  "Whether a script prepared this change for a batch, rather than the model calling it."
+  fromScript: Boolean!
   "Why the approved write failed, written for the person; empty unless status is ExecutionFailed."
   executionError: String!
   "The plan this proposal is a step of, when it is one; absent for a proposal decided on its own."
@@ -275,7 +277,7 @@ type AgentProposal {
   taint: AgentRunTaint
   "Where the write reaches, as it was proposed and then as it ran. Null for a proposal recorded before it was kept."
   egressClass: AgentEgressClass
-  "What held the write below running on its own: agent_ceiling, tool_max, egress_class, condition, tainted, tool_tier, personal_exemption, business_hours or one of the money_ bounds."
+  "What held the write below running on its own: agent_ceiling, tool_max, egress_class, condition, tainted, tool_tier, personal_exemption, business_hours, script_intent or one of the money_ bounds."
   heldBy: [String!]!
   "Approving it needs the digest of the preview the approver was shown: it moves money, reaches a customer, a driver or someone outside, or was proposed after the run read outside text."
   reviewRequired: Boolean!
@@ -350,9 +352,18 @@ type AgentPlan {
   commitsAt: Timestamp
   "When the approval was undone in its undo window; absent if it was not."
   undoneAt: Timestamp
+  "The script whose prepared changes are the plan's steps; absent for a plan of the model's own calls."
+  script: AgentPlanScript
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
+}
+
+"The script a batch of changes came from, as the model asked for it."
+type AgentPlanScript {
+  title: String!
+  purpose: String!
+  code: String!
 }
 
 type AgentException {

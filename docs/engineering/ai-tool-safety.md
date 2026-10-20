@@ -10,7 +10,7 @@ policies, so this page cannot drift from what runs: CI regenerates it and fails
 when it differs. Each tool is listed once, under the furthest class its work
 can reach.
 
-Tools listed: 637.
+Tools listed: 633.
 
 ## The model
 
@@ -62,8 +62,8 @@ taint held names it among what held it, whatever else held it too.
 without a decision while that person is in the conversation, unless a person
 set the tool's tier on the agent. An unattended run never has it.
 
-**Escalation.** Raising an exception or flagging the run for manual review runs
-whatever the agent's autonomy ceiling, the turn's taint or the run being
+**Escalation.** Raising an exception, which hands the run to a person for
+review, runs whatever the agent's autonomy ceiling, the turn's taint or the run being
 unattended, because it only records the run for a person inside the
 organization. A run that is unsure has to be able to hand its work to someone
 without first waiting for someone. A tier a person set for the tool on the
@@ -88,9 +88,9 @@ and Confidential fields never reach a model at all.
 
 | Class | Means | Runs at most | Held once tainted | Tools that reach it |
 | --- | --- | --- | --- | --- |
-| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 213 |
+| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 210 |
 | The caller's own records | Changes only the records of the person using the agent. | Automatic | No | 9 |
-| Inside the organization | Changes records only people inside the organization see. | Automatic | No | 267 |
+| Inside the organization | Changes records only people inside the organization see. | Automatic | No | 266 |
 | Seen by a customer | Changes something a customer can see. | Ask first | Yes | 5 |
 | Seen by a driver | Changes something a driver can see. | Ask first | Yes | 23 |
 | Sent outside the organization | Sends to someone outside the organization. | Ask first | Yes | 43 |
@@ -105,7 +105,6 @@ Looks something up. Nothing changes and nothing is sent.
 | Get accounting connection (`accounting_get_connection`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get accounting mapping (`accounting_get_mapping`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get accounting sync record (`accounting_get_sync_record`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
-| Get accounting sync state (`accounting_get_sync_state`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List accounting drift findings (`accounting_list_drift_findings`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List accounting inbound changes (`accounting_list_inbound_changes`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List accounting mapping gaps (`accounting_list_mapping_gaps`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
@@ -116,6 +115,7 @@ Looks something up. Nothing changes and nothing is sent.
 | List agent runs (`agent_list_runs`) | Reads only | Automatic | — | When the record is marked, from run record | Lists agent runs, whose summaries may repeat outside text a run read; a run on a conversation is listed only to the person who owns it. |
 | Open agent page (`agent_open_page`) | Reads only | Automatic | — | — | Opens a page in the caller's own browser; nothing changes and nothing is sent. |
 | Read agent attachment (`agent_read_attachment`) | Reads only | Automatic | — | Always, from attachment | Reads text from a file the person attached to their own conversation; nothing changes and nothing is sent. |
+| Run agent script (`agent_run_script`) | Reads only | Automatic | — | When the record is marked, from record note, inbound message, document, EDI, bank receipt, weather, attachment, memory or run record | Runs a short script in a sandbox that cannot reach the network; every read it makes is one of the agent's own reads, run as the person under the same checks, and the call carries the taint of every read that brought outside text in. It changes nothing itself: a change it prepares is proposed with the rest of its batch for a person to approve. |
 | Ask user (`ask_user`) | Reads only | Automatic | — | — | Asks the person in the conversation a question; nothing is saved or sent. |
 | Get billing queue item (`billing_get_queue_item`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List billing queue items (`billing_list_queue_items`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
@@ -192,9 +192,8 @@ Looks something up. Nothing changes and nothing is sent.
 | Get inbound message (`inbox_get_inbound_message`) | Reads only | Automatic | — | Always, from inbound message | Reads mail an outsider wrote; nothing changes and nothing is sent. |
 | List capture batches (`inbox_list_capture_batches`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List email profiles (`inbox_list_email_profiles`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
-| List inbound messages (`inbox_list_inbound_messages`) | Reads only | Automatic | — | Always, from inbound message | Lists mail outsiders wrote, subjects and senders included; nothing changes and nothing is sent. |
+| List inbound messages (`inbox_list_inbound_messages`) | Reads only | Automatic | — | Always, from inbound message | Lists and searches mail outsiders wrote, subjects, senders and bodies included; nothing changes and nothing is sent. |
 | List inbox triage assignees (`inbox_list_triage_assignees`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
-| Search inbound messages (`inbox_search_inbound_messages`) | Reads only | Automatic | — | Always, from inbound message | Searches mail outsiders wrote, subjects, senders and bodies included; nothing changes and nothing is sent. |
 | Get insight (`insight_get`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get insight daily briefing (`insight_get_daily_briefing`) | Reads only | Automatic | — | — | Reads the morning's computed figures, and only the sections the caller may read; it changes nothing, not even whether the briefing was read. |
 | List insights (`insight_list`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
@@ -305,7 +304,6 @@ Looks something up. Nothing changes and nothing is sent.
 | List worker DOT random draws (`worker_list_dot_random_draws`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List worker DOT tests (`worker_list_dot_tests`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List worker employment verifications (`worker_list_employment_verifications`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
-| List worker expiring credentials (`worker_list_expiring_credentials`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List worker injuries (`worker_list_injuries`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List worker leave cases (`worker_list_leave_cases`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List performance reviews (`worker_list_performance_reviews`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
@@ -314,7 +312,6 @@ Looks something up. Nothing changes and nothing is sent.
 | List worker time off (`worker_list_time_off`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List worker training (`worker_list_training`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List training courses (`worker_list_training_courses`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
-| Search worker (`worker_search`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 
 ## The caller's own records
 
@@ -356,7 +353,6 @@ Changes records only people inside the organization see.
 | Create agent wait (`agent_create_wait`) | Inside the organization | Automatic | — | Carries outside text into later runs | Parks the agent's own work until something happens and starts it again then; it changes no record and reaches nobody. |
 | Guide agent profile (`agent_guide_profile`) | The caller's own records, inside the organization | Automatic | Each call is classified by what it reaches. Guidance recorded after the run read text from outside the organization waits for a person's approval, because every later prompt is written from it. A call on the caller's own records runs unasked while they are present. | Carries outside text into later runs | Adds a line every later write-up of a profile honours. Guidance about the person's own work reaches only their conversations; guidance about the organization reaches everyone's. |
 | Raise agent exception (`agent_raise_exception`) | Inside the organization | Automatic | Runs above the agent's ceiling: it only puts the run in front of a person, so it waits for no one unless a person set its tier on the agent. | — | Records an exception against the run itself for a person inside the organization. |
-| Request agent review (`agent_request_review`) | Inside the organization | Automatic | Runs above the agent's ceiling: it only puts the run in front of a person, so it waits for no one unless a person set its tier on the agent. | — | Records an exception on the run for a person inside the organization to work. |
 | Retire agent memory (`agent_retire_memory`) | Inside the organization | Automatic | — | — | Retires an agent memory inside Trenova: one kept for the person in the conversation, or one shared with others when that person may manage shared memory. A run with nobody in it retires none. |
 | Assign billing biller (`billing_assign_biller`) | Inside the organization | Automatic | — | — | Names who reviews billing queue items inside Trenova; it creates no money and is changed by assigning someone else. |
 | Hold billing queue item (`billing_hold_queue_item`) | Inside the organization | Automatic | Its notes are what a biller or operations reads next, so a run that has read outside text proposes it rather than writing it. | — | Parks an item inside Trenova with a note; it creates no money and is undone by moving the item on. |

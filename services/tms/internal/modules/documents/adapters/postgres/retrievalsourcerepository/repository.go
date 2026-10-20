@@ -459,6 +459,15 @@ func (r *repository) SearchInboundMessages(
 				Where(matchesAnyWord(&cols.SearchVector, "english"), plan.query).
 				OrderExpr(rankColumn + " DESC").
 				OrderExpr(cols.ReceivedAt.OrderDesc())
+			if len(req.Messages.Statuses) > 0 {
+				q = q.Where(cols.Status.In(), bun.List(req.Messages.Statuses))
+			}
+			if req.Messages.Classification != "" {
+				q = q.Where(cols.Classification.Eq(), req.Messages.Classification)
+			}
+			if req.Messages.MailboxID.IsNotNil() {
+				q = q.Where(cols.MailboxID.Eq(), req.Messages.MailboxID)
+			}
 
 			hits := make([]agentports.RetrievalKeywordHit, 0, plan.limit)
 			if err = q.OrderExpr(cols.ID.OrderAsc()).

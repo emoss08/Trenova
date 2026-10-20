@@ -5,14 +5,14 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -256,6 +256,40 @@ func TestListBillingTransferCandidates_PlansOnlyThePage(t *testing.T) {
 	require.Len(t, page.Decisions, 2)
 	assert.Equal(t, second.ID, page.Decisions[0].ShipmentID)
 	assert.Equal(t, third.ID, page.Decisions[1].ShipmentID)
+}
+
+func TestListBillingTransferCandidates_HasNoMoreAtTheCandidateCap(t *testing.T) {
+	t.Parallel()
+
+	f := newPlanFixture(t)
+	capped := make([]pulid.ID, shipmentports.MaxBillingTransferCandidateIDs)
+	for i := range capped {
+		capped[i] = pulid.MustNew("shp_")
+	}
+	f.repo.EXPECT().
+		ListBillingTransferCandidateIDs(mock.Anything, mock.Anything).
+		Return(&shipmentports.BillingTransferCandidateIDsResult{
+			IDs:        capped,
+			TotalCount: shipmentports.MaxBillingTransferCandidateIDs + 50,
+		}, nil).
+		Once()
+
+	page, err := f.svc.ListBillingTransferCandidates(
+		t.Context(),
+		&shipmentports.ListBillingTransferCandidatesRequest{
+			Filter: &pagination.QueryOptions{
+				TenantInfo: f.tenant(),
+				Pagination: pagination.Info{
+					Limit:  10,
+					Offset: shipmentports.MaxBillingTransferCandidateIDs,
+				},
+			},
+		},
+	)
+
+	require.NoError(t, err)
+	assert.Empty(t, page.Decisions)
+	assert.False(t, page.HasMore, "a page past the candidates that can be read is the last")
 }
 
 func TestListBillingTransferCandidates_RefusesAStatusTheDialogDoesNotOffer(t *testing.T) {

@@ -175,7 +175,7 @@ describe("presentProposal", () => {
   it("reads a flag as a sentence and carries severity separately", () => {
     const view = presentProposal(
       proposal({
-        toolName: "agent_request_review",
+        toolName: "agent_raise_exception",
         arguments: {
           subjectId: "shp_01M2PRNXAMQNKK9HK9V5B817QE",
           category: "MissingBOL",
@@ -195,16 +195,16 @@ describe("presentProposal", () => {
 
   /**
    * With no disclosure left on the card, anything a presenter names is the only
-   * thing shown. The run id, the subject's PULID and the raw evidence blob are
+   * thing shown. The subject's kind, its PULID and the raw evidence blob are
    * bookkeeping for the audit trail, not inputs to a yes or no, and printing
    * them was the whole reason the old Details panel read as a dump.
    */
   it("keeps a flag's bookkeeping off the card", () => {
     const view = presentProposal(
       proposal({
-        toolName: "agent_request_review",
+        toolName: "agent_raise_exception",
         arguments: {
-          runId: "ar_01M2PRQ1C0QN91R9TNRXSSSFZ5",
+          subjectType: "Shipment",
           subjectId: "shp_01M2PRNXAMQNKK9HK9V5B817QE",
           category: "MissingBOL",
           severity: "Medium",
@@ -216,7 +216,7 @@ describe("presentProposal", () => {
     );
 
     const labels = view.highlights.map((entry) => entry.label);
-    for (const noise of ["run Id", "subject Id", "evidence", "category", "severity"]) {
+    for (const noise of ["subject Type", "subject Id", "evidence", "category", "severity"]) {
       expect(labels, `${noise} should not be on the card`).not.toContain(noise);
     }
   });
@@ -224,7 +224,7 @@ describe("presentProposal", () => {
   it("omits a blast radius of one rather than stating the obvious", () => {
     const wide = presentProposal(
       proposal({
-        toolName: "agent_request_review",
+        toolName: "agent_raise_exception",
         arguments: { category: "RateMismatch", severity: "High", blastRadius: 7 },
       }),
     );

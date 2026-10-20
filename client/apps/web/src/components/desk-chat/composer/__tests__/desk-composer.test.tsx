@@ -1,7 +1,8 @@
 import type { ComposerAttachment, ComposerPayload } from "@/components/assistant/composer-types";
 import type { AssistantEntityRef } from "@/types/assistant";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { MemoryRouter } from "react-router";
 import { registerCatalogSource, setLocale, translate } from "@trenova/shared/i18n/runtime";
@@ -376,5 +377,40 @@ describe("DeskComposer slash commands in another language", () => {
       "¿Cuál es el estado del envío S12345 ahora mismo y hay algo que lo retenga?",
       { attachments: [], mentions: [] },
     );
+  });
+});
+
+/**
+ * The attach button opens its menu as a popover over the composer: Upload
+ * closes it and opens the composer's own file picker, so the pick lands even
+ * though the menu has gone; Esc folds it back onto the button.
+ */
+describe("DeskComposer's attach menu", () => {
+  it("closes and opens the file picker when Upload is chosen", async () => {
+    const user = userEvent.setup();
+    const pick = vi.spyOn(HTMLInputElement.prototype, "click").mockImplementation(() => undefined);
+    renderComposer({ onSend: vi.fn() });
+
+    await user.click(screen.getByRole("button", { name: "Attach files" }));
+    await user.click(screen.getByRole("menuitem", { name: /Upload from computer/ }));
+
+    expect(pick).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(screen.queryByRole("menu")).toBeNull());
+    pick.mockRestore();
+  });
+
+  it("opens on its first choice and closes on Esc, back onto the attach button", async () => {
+    const user = userEvent.setup();
+    renderComposer({ onSend: vi.fn() });
+    const attach = screen.getByRole("button", { name: "Attach files" });
+
+    await user.click(attach);
+    await waitFor(() =>
+      expect(screen.getByRole("menuitem", { name: /Upload from computer/ })).toHaveFocus(),
+    );
+    await user.keyboard("{Escape}");
+
+    await waitFor(() => expect(screen.queryByRole("menu")).toBeNull());
+    expect(attach).toHaveFocus();
   });
 });

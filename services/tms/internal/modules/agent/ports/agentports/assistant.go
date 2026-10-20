@@ -4,6 +4,8 @@ import (
 	"context"
 	"io"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
+
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
@@ -98,6 +100,7 @@ type SendMessageRequest struct {
 	// a task run from this conversation in place of its own agent's reply.
 	// The conversation's agent need not list it: the person chose it.
 	DirectedAgentID pulid.ID
+	CodeMode        codemode.Override
 }
 
 // AskRequest is a quick question from anywhere in the application. It runs
@@ -220,6 +223,9 @@ type AssistantPlan struct {
 	// AgentID and AgentName are the agent whose proposals the plan groups.
 	AgentID   pulid.ID `json:"agentId,omitempty"`
 	AgentName string   `json:"agentName,omitempty"`
+	// Script is the script whose prepared changes are the plan's steps;
+	// absent for a plan of the model's own calls.
+	Script *agent.ScriptOrigin `json:"script,omitempty"`
 }
 
 // AssistantArtifact is what a turn produced besides words, as the Desk shows

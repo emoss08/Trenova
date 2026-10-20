@@ -62,6 +62,7 @@ func summarizeCall(call *ModelCall, priceOf callPricing) CallSummary {
 	summary.CacheWrite = tokens.write
 	summary.OutputTokens = tokens.output
 	summary.ReasoningTokens = tokens.reasoning
+	summary.Advisor = tokens.advisor
 	if priceOf != nil {
 		price := priceOf(call)
 		summary.CostUSD = price.cost
@@ -111,6 +112,7 @@ type tokenCount struct {
 	model     string
 	provider  pulid.ID
 	charged   *decimal.Decimal
+	advisor   *aiprovider.AdvisorUsage
 }
 
 func callTokens(call *ModelCall) tokenCount {
@@ -129,6 +131,7 @@ func callTokens(call *ModelCall) tokenCount {
 		count.model = result.ModelIdentifier
 		count.provider = result.ProviderID
 		count.charged = result.CostUSD
+		count.advisor = result.Advisor
 	case call.StructuredResult != nil:
 		result := call.StructuredResult
 		count.raw = aiprovider.TokenUsage{
@@ -172,6 +175,12 @@ func usageOf(calls []*ModelCall, priceOf callPricing) (usage Usage, models []str
 			CacheWriteTokens: tokens.write,
 			OutputTokens:     tokens.output,
 			ReasoningTokens:  tokens.reasoning,
+		}
+		if advisor := tokens.advisor; advisor.Used() {
+			next.AdvisorCalls = advisor.Calls
+			next.AdvisorPromptTokens = advisor.Tokens.Input + advisor.Tokens.CacheRead +
+				advisor.Tokens.CacheWrite
+			next.AdvisorOutputTokens = advisor.Tokens.Output
 		}
 		price := callPrice{cost: tokens.charged, source: PriceSourceProvider}
 		if priceOf != nil {

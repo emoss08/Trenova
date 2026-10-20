@@ -12,6 +12,11 @@ const (
 	ToolWatchWeb        = "web_watch"
 	ToolListWebWatches  = "web_list_watches"
 	ToolStopWebWatch    = "web_stop_watch"
+	ToolRunScript       = "agent_run_script"
+	// The run-script tool's parameters a batch reads its origin back from.
+	ParamScriptTitle   = "title"
+	ParamScriptPurpose = "purpose"
+	ParamScriptCode    = "code"
 )
 
 // WebWatchTools are the web research tools that watch the web over time,
@@ -24,10 +29,16 @@ const (
 	CapabilityWebResearch      = Capability("WebResearch")
 	CapabilityPortalAutomation = Capability("PortalAutomation")
 	CapabilityDataAnalysis     = Capability("DataAnalysis")
+	CapabilityCodeMode         = Capability("CodeMode")
 )
 
 func AllCapabilities() []Capability {
-	return []Capability{CapabilityWebResearch, CapabilityPortalAutomation, CapabilityDataAnalysis}
+	return []Capability{
+		CapabilityWebResearch,
+		CapabilityPortalAutomation,
+		CapabilityDataAnalysis,
+		CapabilityCodeMode,
+	}
 }
 
 func (c Capability) String() string { return string(c) }
@@ -71,6 +82,11 @@ var capabilities = map[Capability]CapabilitySpec{
 		Tools:       []string{ToolAnalyzeData},
 		Unchecked:   "the analysis could not run",
 		RequestNoun: "analyses",
+	},
+	CapabilityCodeMode: {
+		Tools:       []string{ToolRunScript},
+		Unchecked:   "the script could not run",
+		RequestNoun: "scripts",
 	},
 }
 
@@ -118,14 +134,16 @@ func ActiveFrom(records []*Extension) Active {
 		if !ok {
 			continue
 		}
-		if _, taken := active[spec.Capability]; taken {
-			continue
-		}
 		record := byType[typ]
 		if !record.Ready(spec) {
 			continue
 		}
-		active[spec.Capability] = ActiveExtension{Type: typ, Availability: record.Availability}
+		for _, c := range spec.ServedBy(record.Configuration) {
+			if _, taken := active[c]; taken {
+				continue
+			}
+			active[c] = ActiveExtension{Type: typ, Availability: record.Availability}
+		}
 	}
 
 	return active
@@ -166,7 +184,7 @@ func (a Active) Grants() []string {
 			continue
 		}
 		spec, _ := SpecFor(served.Type)
-		granted = append(granted, spec.Tools()...)
+		granted = append(granted, spec.ToolsOf(c)...)
 	}
 
 	return granted

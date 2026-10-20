@@ -58,24 +58,23 @@ type callPrice struct {
 func (p *pricer) price(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	providerID pulid.ID,
-	model string,
-	usage aiprovider.TokenUsage,
-	charged *decimal.Decimal,
+	tokens *tokenCount,
 ) callPrice {
-	if charged != nil {
-		return callPrice{cost: charged, source: PriceSourceProvider}
+	if tokens.charged != nil {
+		return callPrice{cost: tokens.charged, source: PriceSourceProvider}
 	}
-	if p == nil || providerID.IsNil() {
+	if p == nil || tokens.provider.IsNil() {
 		return callPrice{}
 	}
 
-	priced := p.lookup(ctx, tenant, providerID, model)
+	priced := p.lookup(ctx, tenant, tokens.provider, tokens.model)
 	if priced.provider == nil || !priced.provider.Priced() {
 		return callPrice{}
 	}
-
-	return callPrice{cost: priced.provider.CostFor(usage), source: priced.source}
+	return callPrice{
+		cost:   priced.provider.AdvisedCostFor(tokens.raw, tokens.advisor),
+		source: priced.source,
+	}
 }
 
 func (p *pricer) lookup(
@@ -117,21 +116,14 @@ func (p *pricer) resolve(
 		return pricedProvider{provider: stored, source: PriceSourceProvider}
 	}
 
-	estimated := *stored
 	if model == "" {
 		model = stored.Model
 	}
-	estimated.Model = model
-	if card, listed := aiprovider.ListPrice(stored.Kind, model); listed {
-		input, output := card.InputCostPerMillion, card.OutputCostPerMillion
-		read, write := card.CacheReadCostPerMillion(), card.CacheWriteCostPerMillion()
-		estimated.InputCostPerMillion = &input
-		estimated.OutputCostPerMillion = &output
-		estimated.CacheReadCostPerMillion = &read
-		estimated.CacheWriteCostPerMillion = &write
-
-		return pricedProvider{provider: &estimated, source: PriceSourceListPrice}
+	if listed, ok := aiprovider.ListPriced(stored, model); ok {
+		return pricedProvider{provider: listed, source: PriceSourceListPrice}
 	}
+	estimated := *stored
+	estimated.Model = model
 	if p.reference == nil {
 		return pricedProvider{}
 	}
@@ -153,8 +145,7 @@ func (b *Bench) priceOf(ctx context.Context, session *Session) callPricing {
 	return func(call *ModelCall) callPrice {
 		tokens := callTokens(call)
 
-		return b.pricer.price(ctx, session.Tenant, tokens.provider, tokens.model, tokens.raw,
-			tokens.charged)
+		return b.pricer.price(ctx, session.Tenant, &tokens)
 	}
 }
 

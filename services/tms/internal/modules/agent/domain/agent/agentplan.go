@@ -65,6 +65,12 @@ type AgentPlan struct {
 	ApprovalReasonCode    string `json:"-" bun:"approval_reason_code,type:VARCHAR(100),nullzero"`
 	ApprovalNote          string `json:"-" bun:"approval_note,type:TEXT,nullzero"`
 	ApprovalPreviewDigest string `json:"-" bun:"approval_preview_digest,type:VARCHAR(64),nullzero"`
+	// ScriptStepKey is the ledger step of the script whose intents are the
+	// plan's steps; empty for a plan of the model's own calls.
+	ScriptStepKey string `json:"scriptStepKey" bun:"script_step_key,type:VARCHAR(120),nullzero"`
+	// Script is what the script that wrote the plan was asked to do and the
+	// code it ran, kept with the plan once the run's steps are swept.
+	Script *ScriptOrigin `json:"script" bun:"script,type:JSONB,nullzero"`
 
 	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -147,3 +153,10 @@ func (p *AgentPlan) BeforeAppendModel(_ context.Context, query bun.Query) error 
 }
 
 func (*AgentPlan) IsPendingDecision() {}
+
+// ScriptOrigin is the script a batch came from, as the model asked for it.
+type ScriptOrigin struct {
+	Title   string `json:"title"`
+	Purpose string `json:"purpose"`
+	Code    string `json:"code"`
+}

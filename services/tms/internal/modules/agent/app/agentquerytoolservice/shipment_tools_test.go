@@ -55,7 +55,7 @@ func (f *fakeShipmentRepo) List(
 	return &pagination.CursorListResult[*shipment.Shipment]{Items: f.items}, nil
 }
 
-// shipment_list carried the same required-query defect as worker_search, so
+// shipment_list carried the same required-query defect as the worker name search, so
 // "show me everything delivered yesterday" would have failed the same way. It
 // already took an optional status, which is the shape the query should have had
 // from the start.
@@ -154,7 +154,7 @@ func TestSearchShipments_UnfilteredEmptyResultSaysSo(t *testing.T) {
 }
 
 // shipment_list returned the stored entity for the same reason
-// worker_search did, and pays the same cost: a shipment carries its moves,
+// the worker name search did, and pays the same cost: a shipment carries its moves,
 // stops, commodities and charges, none of which a list of matches needs.
 func TestSearchShipments_ReturnsTheCuratedRowNotTheStoredEntity(t *testing.T) {
 	t.Parallel()
@@ -1165,7 +1165,6 @@ func TestShipmentList_NarrowsASearchByWordsWithTheFiltersAndPagesIt(t *testing.T
 				"field": "billingTransferStatus", "operator": "isnull",
 			}},
 			"sortBy": "createdAt",
-			"offset": float64(10),
 			"limit":  float64(5),
 		}))
 	require.NoError(t, err)
@@ -1173,9 +1172,77 @@ func TestShipmentList_NarrowsASearchByWordsWithTheFiltersAndPagesIt(t *testing.T
 	assert.Equal(t, "acme", repo.captured.Filter.Query)
 	require.Len(t, repo.captured.Filter.FieldFilters, 1)
 	assert.Equal(t, "billingTransferStatus", repo.captured.Filter.FieldFilters[0].Field)
-	assert.Equal(t, 10, repo.captured.Filter.Pagination.Offset)
+	assert.Zero(t, repo.captured.Filter.Pagination.Offset)
 	assert.Equal(t, 5, repo.captured.Filter.Pagination.Limit)
+	assert.Equal(t, 5, repo.captured.Cursor.Limit)
 	assert.NotEmpty(t, repo.captured.Filter.Sort)
+}
+
+type pagedShipmentRepo struct {
+	shipmentports.ShipmentRepository
+
+	captured *shipmentports.ListShipmentsRequest
+	items    []*shipment.Shipment
+}
+
+func (f *pagedShipmentRepo) List(
+	_ context.Context,
+	req *shipmentports.ListShipmentsRequest,
+) (*pagination.CursorListResult[*shipment.Shipment], error) {
+	if req.Cursor.IncludeTotalCount {
+		total := len(f.items)
+		return &pagination.CursorListResult[*shipment.Shipment]{TotalCount: &total}, nil
+	}
+	f.captured = req
+
+	return pageAfter(f.items, req.Cursor), nil
+}
+
+func TestShipmentList_PagesByCursor(t *testing.T) {
+	t.Parallel()
+
+	items := make([]*shipment.Shipment, 0, 8)
+	for idx := range 8 {
+		items = append(items, &shipment.Shipment{
+			ID:        pulid.MustNew("shp_"),
+			ProNumber: fmt.Sprintf("P%d", idx),
+			Status:    shipment.StatusInTransit,
+		})
+	}
+
+	for name, tc := range map[string]struct {
+		args    map[string]any
+		changed map[string]any
+	}{
+		"listed": {
+			args:    map[string]any{"status": "InTransit"},
+			changed: map[string]any{"status": "New"},
+		},
+		"searched by words": {
+			args:    map[string]any{"query": "acme"},
+			changed: map[string]any{"query": "acme", "sortBy": "createdAt"},
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			repo := &pagedShipmentRepo{items: items}
+			tool := newShipmentListTool(repo, shipmentPartySources{})
+			params := testParams(nil)
+
+			assertCursorPaging(t, cursorPagingCase{
+				query: func(args map[string]any) (any, error) {
+					params.Params = args
+					return tool.Query(t.Context(), params)
+				},
+				received: func() pagination.CursorInfo { return repo.captured.Cursor },
+				args:     tc.args,
+				changed:  tc.changed,
+				ids:      cursorIDs(items),
+				limit:    3,
+			})
+		})
+	}
 }
 
 func TestShipmentListSchema_OffersStatusOnceAndNotAgainAsAFilter(t *testing.T) {

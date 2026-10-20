@@ -177,6 +177,12 @@ type DispatchCall struct {
 	// and the delegating turn's, have moved and not yet recorded.
 	MoneySpent agent.MoneyUse     `json:"moneySpent,omitzero"`
 	Beyond     agent.AutonomyTier `json:"beyond,omitempty"`
+	// Model and Provider are what answered the completion that asked for the
+	// call, and ScriptPosition is how many scripts the turn has asked for up
+	// to and including this one; the code-mode gate reads all three.
+	Model          string          `json:"model,omitempty"`
+	Provider       aiprovider.Kind `json:"provider,omitempty"`
+	ScriptPosition int             `json:"scriptPosition,omitempty"`
 }
 
 // ToolOutcome is what one tool call came to.
@@ -184,6 +190,8 @@ type ToolOutcome struct {
 	Content string                    `json:"content"`
 	Failed  bool                      `json:"failed"`
 	Action  *agentports.PendingAction `json:"action,omitempty"`
+	// Batch is what a script prepared, filed as one batch for a person.
+	Batch []agentports.PendingAction `json:"batch,omitempty"`
 	// Publishes marks a document still to be kept. What the model reads is
 	// written once it has been.
 	Publishes bool   `json:"publishes,omitempty"`
@@ -213,6 +221,7 @@ func (o toolOutcome) exported() ToolOutcome {
 		Content:        o.content,
 		Failed:         o.failed,
 		Action:         o.action,
+		Batch:          o.batch,
 		Publishes:      o.publishes,
 		Summary:        o.summary,
 		DelegateReport: o.delegateReport,
@@ -232,6 +241,7 @@ func (o ToolOutcome) internal() toolOutcome {
 		content:        o.Content,
 		failed:         o.Failed,
 		action:         o.Action,
+		batch:          o.Batch,
 		publishes:      o.Publishes,
 		summary:        o.Summary,
 		delegateReport: o.DelegateReport,
@@ -521,6 +531,9 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentports.RunRequest) *Tur
 
 	job := s.profileFor(ctx, req, granted)
 	held := job.held
+	if !s.codeMode.Offered(req.CodeMode) {
+		held, job.beyond = s.withoutScripts(definition, held, job.beyond)
+	}
 	var delegates []agentdefinition.RuntimeDelegate
 	if req.MayDelegate() {
 		delegates = slices.Clone(runtimeContext.Delegates)
@@ -1028,6 +1041,11 @@ func (s *Service) DispatchStep(
 		ordinal:        call.Ordinal,
 		taint:          call.Taint,
 		afterExternal:  call.AfterExternalContent,
+		gate: scriptGate{
+			model:    call.Model,
+			provider: call.Provider,
+			position: call.ScriptPosition,
+		},
 	})
 	outcome.summary = summarizeOutcome(call.Call, outcome)
 

@@ -385,7 +385,7 @@ func TestRun_AReplayedStepShowsWhatTheOriginalCallShowed(t *testing.T) {
 	t.Parallel()
 
 	ledger := newKeyedLedger()
-	search := queryTool("worker_search", map[string]any{
+	search := queryTool("worker_list", map[string]any{
 		"results": []any{map[string]any{"name": "Maria Ortiz"}},
 	}, nil)
 	runID := pulid.MustNew("ar_")
@@ -394,7 +394,7 @@ func TestRun_AReplayedStepShowsWhatTheOriginalCallShowed(t *testing.T) {
 	shown := make([]any, 0, 2)
 	for attempt := 1; attempt <= 2; attempt++ {
 		completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-			toolTurn("worker_search", map[string]any{"query": "Maria"}),
+			toolTurn("worker_list", map[string]any{"query": "Maria"}),
 			textTurn("Maria Ortiz."),
 		}}
 		rt := newRuntime(completion,
@@ -402,7 +402,7 @@ func TestRun_AReplayedStepShowsWhatTheOriginalCallShowed(t *testing.T) {
 			&stubActionRegistry{}, nil)
 
 		_, err := rt.Run(t.Context(), &agentports.RunRequest{
-			Definition: testDefinition("worker_search"),
+			Definition: testDefinition("worker_list"),
 			Actor:      testActor(),
 			Input:      "Who is Maria?",
 			RunID:      runID,

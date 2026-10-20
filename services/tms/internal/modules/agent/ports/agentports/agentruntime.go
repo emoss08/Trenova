@@ -3,6 +3,8 @@ package agentports
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
+
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
@@ -58,6 +60,10 @@ type PendingAction struct {
 	// record. Empty for an action recorded before it was kept, which the
 	// recorder mints as it always has.
 	ProposalID pulid.ID `json:"proposalId,omitempty"`
+	// ScriptStepKey is the ledger step of the script that prepared this
+	// action as an intent. The intents of one script are filed as one batch,
+	// apart from the turn's other writes, and none of them ran.
+	ScriptStepKey string `json:"scriptStepKey,omitempty"`
 	// TraceID and SpanID are the tool span the call was decided in, so a
 	// decision made hours later can link back to it.
 	TraceID string `json:"traceId,omitempty"`
@@ -146,6 +152,12 @@ type RunRequest struct {
 	// Such a turn runs as the same person with its own agent's tools, tiers
 	// and budget, and never hands the task on.
 	Delegation *Delegation
+	// CodeMode forces the code-mode gate for the turn; empty follows the
+	// shipped model ledger.
+	CodeMode codemode.Override
+	// ScriptScope separates the steps of the reads a script made from the
+	// turn's own steps; empty for every call the model made itself.
+	ScriptScope string
 	// Taint is the outside content the turn already carries when it opens:
 	// its thread's, the agent's that handed it a task. The turn adds what its
 	// own subject, attachments and memories bring.
@@ -193,11 +205,18 @@ func (r *RunRequest) KeepsDocuments() bool {
 // StepScope is what the turn's step keys are namespaced by: empty for a turn
 // working for the person directly.
 func (r *RunRequest) StepScope() string {
-	if r.Delegation == nil {
-		return ""
+	scope := ""
+	if r.Delegation != nil {
+		scope = r.Delegation.StepScope
+	}
+	if r.ScriptScope == "" {
+		return scope
+	}
+	if scope == "" {
+		return r.ScriptScope
 	}
 
-	return r.Delegation.StepScope
+	return scope + "|" + r.ScriptScope
 }
 
 // MayDelegate reports whether the turn may hand a task to another agent: a

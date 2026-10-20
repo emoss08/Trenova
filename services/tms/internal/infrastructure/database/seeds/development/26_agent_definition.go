@@ -74,8 +74,8 @@ func (s *AgentDefinitionSeed) Run(ctx context.Context, tx bun.Tx) error {
 				// templated agents up to their template's current tool list:
 				// the catalog grows, and an agent seeded before a tool existed
 				// otherwise stays unable to answer what it was created for. The
-				// compliance agent shipped holding worker_get and worker_search
-				// and could not look up an expiring medical card.
+				// compliance agent shipped holding worker_get and the worker name
+				// search and could not look up an expiring medical card.
 				if err = s.reconcileToolNames(ctx, tx, org.ID, org.BusinessUnitID); err != nil {
 					return err
 				}
@@ -412,7 +412,7 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 				"shipment_list",
 				"worker_list",
 				"worker_list_time_off",
-				"worker_list_expiring_credentials",
+				"worker_list_credentials",
 			},
 			AutonomyCeiling: agent.TierPropose,
 			TriggerMode:     agentdefinition.TriggerScheduled,

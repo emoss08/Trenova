@@ -40,6 +40,7 @@ type RetrievalKeywordSearchRequest struct {
 	TenantInfo pagination.TenantInfo
 	Query      string
 	Limit      int
+	Messages   InboundMessageFilter
 }
 
 type RetrievalKeywordHit struct {

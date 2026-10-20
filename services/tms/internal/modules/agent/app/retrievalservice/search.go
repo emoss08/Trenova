@@ -140,6 +140,7 @@ func (s *Searcher) legs(
 			TenantInfo: req.TenantInfo,
 			Query:      plan.query,
 			Limit:      plan.candidates,
+			Messages:   req.Messages,
 		})
 		if err != nil {
 			return fmt.Errorf("search %s by keyword: %w", sourceType, err)
@@ -416,7 +417,7 @@ func (s *Searcher) SearchInboundMessages(
 	}
 	for _, hit := range fused {
 		message, ok := byID[hit.ID]
-		if !ok || !req.Access.MayReadRecord(
+		if !ok || !req.Messages.Admits(message) || !req.Access.MayReadRecord(
 			ctx, permission.ResourceInboundMessage, message.ID.String()) {
 			continue
 		}

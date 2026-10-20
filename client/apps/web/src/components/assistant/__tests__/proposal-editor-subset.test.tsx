@@ -91,6 +91,7 @@ function pendingNode(
   return {
     id: "aprop_1",
     reviewRequired: false,
+    hold: null,
     organizationId: "org_1",
     businessUnitId: "bu_1",
     runId: "arun_1",

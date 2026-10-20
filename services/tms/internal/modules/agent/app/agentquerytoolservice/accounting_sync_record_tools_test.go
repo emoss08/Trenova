@@ -34,7 +34,7 @@ type fakeSyncLedger struct {
 
 	summarized bool
 	listed     *accountingsyncports.ListAccountingSyncRecordsRequest
-	asked      []pulid.ID
+	asked      *accountingsyncports.AccountingSyncObjectStatesRequest
 }
 
 func (f *fakeSyncLedger) Summary(
@@ -75,10 +75,9 @@ func (f *fakeSyncLedger) ListAttempts(
 
 func (f *fakeSyncLedger) ObjectStates(
 	_ context.Context,
-	_ pagination.TenantInfo,
-	ids []pulid.ID,
+	req *accountingsyncports.AccountingSyncObjectStatesRequest,
 ) (map[pulid.ID]*accountingsyncports.AccountingSyncObjectState, error) {
-	f.asked = ids
+	f.asked = req
 	return f.states, nil
 }
 
@@ -301,12 +300,10 @@ func TestListAccountingSyncRecords_FiltersAndPagesTheLedger(t *testing.T) {
 		records: []*accountingsync.AccountingSyncRecord{blockedInvoiceRecord()},
 		hasMore: true,
 	}
-	documentID := pulid.MustNew("inv_")
 	params := accountingQueryParams("QuickBooksOnline")
 	params.Params["status"] = []any{"Blocked", "DeadLettered"}
 	params.Params["documentType"] = "Invoice"
 	params.Params["errorCategory"] = []any{"Mapping"}
-	params.Params["documentId"] = documentID.String()
 	params.Params["query"] = " INV-1042 "
 	params.Params["limit"] = 500.0
 
@@ -324,7 +321,8 @@ func TestListAccountingSyncRecords_FiltersAndPagesTheLedger(t *testing.T) {
 		ledger.listed.ObjectTypes)
 	assert.Equal(t, []accountingsync.SyncErrorCategory{accountingsync.SyncErrorMapping},
 		ledger.listed.ErrorCategories)
-	assert.Equal(t, documentID, ledger.listed.ObjectID)
+	assert.True(t, ledger.listed.ObjectID.IsNil())
+	assert.Nil(t, ledger.asked, "a list never reads document states")
 	assert.Equal(t, "INV-1042", ledger.listed.Search)
 	assert.Equal(t, syncRecordsMaxLimit, ledger.listed.Cursor.Limit)
 	assert.False(t, ledger.listed.Cursor.IncludeTotalCount)
@@ -361,7 +359,7 @@ func TestListAccountingSyncRecords_RefusesWhatItCannotFilterOn(t *testing.T) {
 		{"status": []any{"Stuck"}},
 		{"documentType": "Bill"},
 		{"errorCategory": "Timeout"},
-		{"documentId": "not-an-id"},
+		{"documentIds": []any{"not-an-id"}},
 		{"after": "not-a-cursor"},
 	} {
 		params := accountingQueryParams("QuickBooksOnline")
@@ -372,10 +370,15 @@ func TestListAccountingSyncRecords_RefusesWhatItCannotFilterOn(t *testing.T) {
 		require.Error(t, err, extra)
 	}
 	assert.Nil(t, ledger.listed)
+	assert.Nil(t, ledger.asked)
+
+	_, err := tool.Query(t.Context(), accountingQueryParams(""))
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "documentIds", "a list without a system says how to ask instead")
 
 	params := accountingQueryParams("QuickBooksOnline")
 	params.OrganizationID = pulid.MustNew("org_")
-	_, err := tool.Query(t.Context(), params)
+	_, err = tool.Query(t.Context(), params)
 	require.ErrorIs(t, err, ErrTenantMismatch)
 }
 
@@ -420,7 +423,7 @@ func TestGetAccountingSyncRecord_ReturnsTheTriesAndNothingSent(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestGetRecordAccountingSyncState_AnswersForEveryDocumentAsked(t *testing.T) {
+func TestListAccountingSyncRecords_AnswersForEveryDocumentAsked(t *testing.T) {
 	t.Parallel()
 
 	payment := syncedPaymentRecord()
@@ -440,14 +443,19 @@ func TestGetRecordAccountingSyncState_AnswersForEveryDocumentAsked(t *testing.T)
 		payment.ObjectID.String(),
 	}}
 
-	out, err := newGetRecordAccountingSyncStateTool(ledger).Query(t.Context(), params)
+	out, err := newListAccountingSyncRecordsTool(ledger).Query(t.Context(), params)
 	require.NoError(t, err)
 	result, ok := out.(*accountingSyncStatesResult)
 	require.True(t, ok)
 
-	assert.Equal(t, []pulid.ID{payment.ObjectID, unsent}, ledger.asked)
+	require.NotNil(t, ledger.asked)
+	assert.Equal(t, []pulid.ID{payment.ObjectID, unsent}, ledger.asked.ObjectIDs)
+	assert.Empty(t, ledger.asked.IntegrationType, "without a system every syncing system answers")
+	assert.Equal(t, params.OrganizationID, ledger.asked.TenantInfo.OrgID)
+	assert.Nil(t, ledger.listed, "asking after documents never lists the ledger")
 	require.Len(t, result.States, 2)
 	assert.True(t, result.States[0].Tracked)
+	assert.Equal(t, "QuickBooks Online", result.States[0].Provider)
 	require.NotNil(t, result.States[0].Record)
 	assert.Equal(t, "PMT-412", result.States[0].Record.ExternalNumber)
 	assert.Equal(t, "https://app.qbo.intuit.com/app/recvpayment?txnId=412",
@@ -457,26 +465,59 @@ func TestGetRecordAccountingSyncState_AnswersForEveryDocumentAsked(t *testing.T)
 	assert.False(t, result.States[1].Tracked)
 	assert.Equal(t, unsent.String(), result.States[1].DocumentID)
 	assert.Nil(t, result.States[1].Record)
+	assert.Contains(t, result.States[1].WhatThisMeans, "Nothing was sent for this document")
 	assertNoSecrets(t, result)
 }
 
-func TestGetRecordAccountingSyncState_RefusesABadList(t *testing.T) {
+func TestListAccountingSyncRecords_AsksOneSystemWhenNamed(t *testing.T) {
 	t.Parallel()
 
 	ledger := &fakeSyncLedger{}
-	tool := newGetRecordAccountingSyncStateTool(ledger)
+	documentID := pulid.MustNew("inv_")
+	params := accountingQueryParams("Xero")
+	params.Params["documentIds"] = documentID.String()
+
+	out, err := newListAccountingSyncRecordsTool(ledger).Query(t.Context(), params)
+	require.NoError(t, err)
+
+	require.NotNil(t, ledger.asked)
+	assert.Equal(t, integration.TypeXero, ledger.asked.IntegrationType)
+	assert.Equal(t, []pulid.ID{documentID}, ledger.asked.ObjectIDs)
+	result := out.(*accountingSyncStatesResult)
+	require.Len(t, result.States, 1)
+	assert.False(t, result.States[0].Tracked)
+}
+
+func TestListAccountingSyncRecords_RefusesABadDocumentList(t *testing.T) {
+	t.Parallel()
+
+	ledger := &fakeSyncLedger{}
+	tool := newListAccountingSyncRecordsTool(ledger)
 	tooMany := make([]any, 0, syncStateMaxDocuments+1)
 	for range syncStateMaxDocuments + 1 {
 		tooMany = append(tooMany, pulid.MustNew("inv_").String())
 	}
+	documentIDs := []any{pulid.MustNew("inv_").String()}
 
-	for _, ids := range []any{nil, []any{}, []any{"nope"}, tooMany} {
+	for name, extra := range map[string]map[string]any{
+		"an id that is not one": {"documentIds": []any{"nope"}},
+		"too many ids":          {"documentIds": tooMany},
+		"a system it does not sync with": {
+			"documentIds": documentIDs, "system": "SageIntacct",
+		},
+		"a status filter":   {"documentIds": documentIDs, "status": []any{"Blocked"}},
+		"a document type":   {"documentIds": documentIDs, "documentType": "Invoice"},
+		"an error category": {"documentIds": documentIDs, "errorCategory": []any{"Mapping"}},
+		"words":             {"documentIds": documentIDs, "query": "INV-1042"},
+		"a cursor":          {"documentIds": documentIDs, "after": "abc"},
+	} {
 		params := accountingQueryParams("QuickBooksOnline")
-		params.Params = map[string]any{"documentIds": ids}
+		params.Params = extra
 		_, err := tool.Query(t.Context(), params)
-		require.Error(t, err)
+		require.Error(t, err, name)
 	}
 	assert.Nil(t, ledger.asked)
+	assert.Nil(t, ledger.listed)
 }
 
 func TestAccountingSyncLedgerTools_ReadTheSyncLedger(t *testing.T) {
@@ -486,7 +527,6 @@ func TestAccountingSyncLedgerTools_ReadTheSyncLedger(t *testing.T) {
 	for _, tool := range []agentports.AgentQueryTool{
 		newListAccountingSyncRecordsTool(ledger),
 		newGetAccountingSyncRecordTool(ledger),
-		newGetRecordAccountingSyncStateTool(ledger),
 	} {
 		policy := tool.Policy()
 		assert.Equal(t, permission.ResourceAccountingSync, policy.Resource, tool.Name())

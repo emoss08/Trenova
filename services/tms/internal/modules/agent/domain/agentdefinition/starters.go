@@ -105,7 +105,7 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Whose credentials expire soon?",
 			"Which drivers have a credential expiring in the next 30 days?",
-			toolListExpiringQualifications,
+			toolListWorkerCredentials,
 		),
 		ask(
 			"Who is off this week?",
@@ -279,12 +279,12 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Whose credentials expire soon?",
 			"Which drivers have a credential expiring in the next 30 days?",
-			toolListExpiringQualifications,
+			toolListWorkerCredentials,
 		),
 		ask(
 			"Who needs a renewal request?",
 			"Which drivers still need a renewal request for papers that are coming due?",
-			toolListExpiringQualifications, "worker_request_credential_renewal",
+			toolListWorkerCredentials, "worker_request_credential_renewal",
 		),
 		ask(
 			"Look up a driver's papers",
@@ -456,7 +456,7 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Did this invoice sync?",
 			"Did this invoice reach the accounting system, and if not, what is holding it?",
-			"accounting_get_sync_state",
+			"accounting_list_sync_records",
 		),
 		ask(
 			"Which mappings are missing?",
@@ -755,7 +755,7 @@ var toolFamilies = [][]starterQuestion{
 		ask(
 			"Whose credentials expire soon?",
 			"Which drivers have a credential expiring in the next 30 days?",
-			toolListExpiringQualifications,
+			toolListWorkerCredentials,
 		),
 		ask(
 			"Who is low on hours?",
@@ -770,7 +770,7 @@ var toolFamilies = [][]starterQuestion{
 		ask(
 			"Look up a driver",
 			"Find a driver and summarize where they are and what they are qualified for.",
-			toolSearchWorker, toolListWorkers, toolGetWorker,
+			toolListWorkers, toolGetWorker,
 		),
 	},
 	{

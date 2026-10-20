@@ -945,7 +945,13 @@ func (r *QueryResolver) AccountingSyncObjectStates(ctx context.Context, objectId
 		return nil, err
 	}
 
-	states, err := r.AccountingSync.ObjectStates(ctx, base.TenantInfo(authCtx), ids)
+	states, err := r.AccountingSync.ObjectStates(
+		ctx,
+		&accountingsyncports.AccountingSyncObjectStatesRequest{
+			TenantInfo: base.TenantInfo(authCtx),
+			ObjectIDs:  ids,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

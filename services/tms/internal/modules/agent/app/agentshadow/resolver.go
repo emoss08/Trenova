@@ -86,7 +86,7 @@ func (r *Resolver) ForDefinition(
 		return Verdict{}, err
 	}
 
-	return verdictFor(orgShadow, definition), nil
+	return VerdictFor(orgShadow, definition), nil
 }
 
 func (r *Resolver) ForRun(
@@ -154,7 +154,7 @@ func (r *Resolver) ForRuns(
 			definitions[run.AgentDefinitionID] = definition
 		}
 
-		verdicts[id] = verdictFor(orgShadow, definition)
+		verdicts[id] = VerdictFor(orgShadow, definition)
 	}
 
 	return verdicts, nil
@@ -185,7 +185,15 @@ func (r *Resolver) definition(
 	return definition, nil
 }
 
-func verdictFor(orgShadow bool, definition *agentdefinition.Definition) Verdict {
+func (v Verdict) Hold() *agentports.ProposalHold {
+	if !v.Shadow() {
+		return nil
+	}
+
+	return &agentports.ProposalHold{Reason: string(v.Cause), AgentName: v.AgentName}
+}
+
+func VerdictFor(orgShadow bool, definition *agentdefinition.Definition) Verdict {
 	if orgShadow {
 		return Verdict{Cause: CauseOrganization}
 	}

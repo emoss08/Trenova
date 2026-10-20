@@ -86,24 +86,23 @@ func TestRaiseException_PreviewWarnsOutsideARun(t *testing.T) {
 	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
 }
 
-func TestFlagForManualReview_PreviewMatchesWhatIsSaved(t *testing.T) {
+func TestRaiseException_FlagsABillingQueueItemWithItsEvidence(t *testing.T) {
 	t.Parallel()
 
 	exceptions := &savingExceptions{}
-	tool := NewFlagManualReviewTool(exceptions).(*FlagManualReviewTool)
+	subjects := &fakeSubjectRepository{exists: true}
+	tool := NewRaiseExceptionTool(exceptions, subjects).(*RaiseExceptionTool)
 	itemID := pulid.MustNew("bqi_")
-	params := agenttoolstest.ExecuteParams(map[string]any{
-		"runId":          pulid.MustNew("arun_").String(),
-		"subjectId":      itemID.String(),
-		"category":       string(agent.CategoryOther),
-		"severity":       string(agent.SeverityHigh),
-		"attemptSummary": "The rate confirmation and the invoice disagree by $120.",
-		"evidence": []any{map[string]any{
-			"type": "document",
-			"id":   pulid.MustNew("doc_").String(),
-			"note": "rate confirmation",
-		}},
-	})
+	documentID := pulid.MustNew("doc_")
+	params := raiseExceptionParams("BillingQueueItem", itemID)
+	params.Params["category"] = string(agent.CategoryIncorrectRates)
+	params.Params["severity"] = string(agent.SeverityHigh)
+	params.Params["attemptSummary"] = "The rate confirmation and the invoice disagree by $120."
+	params.Params["evidence"] = []any{map[string]any{
+		"type": "document",
+		"id":   " " + documentID.String() + " ",
+		"note": "rate confirmation",
+	}}
 
 	preview := agenttoolstest.PreviewWithoutWrites(t, &exceptions.guard, func() (*agent.ToolPreview, error) {
 		return tool.Preview(t.Context(), params)
@@ -113,9 +112,61 @@ func TestFlagForManualReview_PreviewMatchesWhatIsSaved(t *testing.T) {
 	assert.Equal(t, "High", agenttoolstest.FieldByPath(t, change, "severity").After)
 	about := agenttoolstest.FieldByPath(t, change, "subjectId")
 	require.NotNil(t, about.AfterRef)
+	assert.Equal(t, permission.ResourceBillingQueue, about.AfterRef.Resource)
 	assert.Equal(t, itemID, about.AfterRef.ID)
+	assert.Contains(t, preview.Summary, "billing queue item")
 
+	require.NoError(t, tool.Validate(t.Context(), params))
 	require.NoError(t, tool.Execute(t.Context(), params))
 	agenttoolstest.RequireCreateParity(t, change, exceptions.saved,
 		raisedExceptionOptions(exceptions.saved.SubjectType)...)
+
+	saved := exceptions.saved
+	assert.Equal(t, agent.SubjectBillingQueueItem, saved.SubjectType)
+	assert.Equal(t, itemID, saved.SubjectID)
+	assert.Equal(t, agent.CategoryIncorrectRates, saved.Category)
+	assert.Equal(t, params.RunID, saved.RunID, "the run is the runtime's, never the model's")
+	assert.Equal(t, []agent.EvidenceRef{
+		{Type: "agent_run", ID: params.RunID.String(), Note: "raised by the agent"},
+		{Type: "document", ID: documentID.String(), Note: "rate confirmation"},
+	}, saved.Evidence, "the run comes first, then the records the agent named")
+	require.Len(t, subjects.asked, 3)
+	assert.Equal(t, agent.SubjectBillingQueueItem, subjects.asked[0].SubjectType)
+}
+
+func TestRaiseException_KeepsTheRunAsEvidenceWhenNoneIsGiven(t *testing.T) {
+	t.Parallel()
+
+	exceptions := &savingExceptions{}
+	tool := NewRaiseExceptionTool(exceptions, &fakeSubjectRepository{exists: true})
+	params := raiseExceptionParams("BillingQueueItem", pulid.MustNew("bqi_"))
+
+	require.NoError(t, tool.Execute(t.Context(), params))
+
+	require.NotNil(t, exceptions.saved)
+	assert.Equal(t, []agent.EvidenceRef{
+		{Type: "agent_run", ID: params.RunID.String(), Note: "raised by the agent"},
+	}, exceptions.saved.Evidence)
+}
+
+func TestRaiseException_RefusesEvidenceWithoutATypeOrAnID(t *testing.T) {
+	t.Parallel()
+
+	for name, evidence := range map[string]any{
+		"no id":        []any{map[string]any{"type": "document"}},
+		"a blank type": []any{map[string]any{"type": " ", "id": pulid.MustNew("doc_").String()}},
+		"not a list":   "the rate confirmation",
+	} {
+		exceptions := &savingExceptions{}
+		subjects := &fakeSubjectRepository{exists: true}
+		tool := NewRaiseExceptionTool(exceptions, subjects)
+		params := raiseExceptionParams("BillingQueueItem", pulid.MustNew("bqi_"))
+		params.Params["evidence"] = evidence
+
+		validator, ok := tool.(agentports.ToolValidator)
+		require.True(t, ok)
+		require.Error(t, validator.Validate(t.Context(), params), name)
+		require.Error(t, tool.Execute(t.Context(), params), name)
+		assert.Nil(t, exceptions.saved, name)
+	}
 }

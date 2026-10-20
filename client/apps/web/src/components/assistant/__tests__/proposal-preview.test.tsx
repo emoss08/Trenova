@@ -240,13 +240,13 @@ describe("ProposalPreview", () => {
       <ProposalPreview
         preview={preview({
           coverage: "Unavailable",
-          tool: "agent_request_review",
+          tool: "agent_raise_exception",
           changes: [
             record({
               resource: "",
               record: null,
               entityId: null,
-              label: "agent_request_review",
+              label: "agent_raise_exception",
               operation: "Run",
               version: null,
               fields: [field({ path: "severity", label: "Severity", before: null, after: "High" })],
@@ -261,7 +261,7 @@ describe("ProposalPreview", () => {
         "This action can't say exactly what it would change. It would run with the values below.",
       ),
     ).toBeInTheDocument();
-    expect(screen.getByText("Request agent review")).toBeInTheDocument();
+    expect(screen.getByText("Raise agent exception")).toBeInTheDocument();
     expect(screen.getByText("High")).toBeInTheDocument();
   });
 
@@ -273,7 +273,7 @@ describe("ProposalPreview", () => {
         preview={preview({
           coverage: "Unavailable",
           warnings: [{ code: "preview_failed", args: [], message: "", reasons: [] }],
-          tool: "agent_request_review",
+          tool: "agent_raise_exception",
           changes: [],
         })}
       />,

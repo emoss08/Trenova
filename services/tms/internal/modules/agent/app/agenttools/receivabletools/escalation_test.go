@@ -16,7 +16,6 @@ import (
 func escalationPolicies() map[string]agentports.ToolPolicy {
 	return map[string]agentports.ToolPolicy{
 		"agent_raise_exception": (&receivabletools.RaiseExceptionTool{}).Policy(),
-		"agent_request_review":  (&receivabletools.FlagManualReviewTool{}).Policy(),
 	}
 }
 

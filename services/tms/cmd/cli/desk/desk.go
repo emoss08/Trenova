@@ -226,8 +226,9 @@ func init() {
 	findingsCmd.Flags().StringVar(&flags.format, "format", formatMarkdown, "md, csv or json")
 
 	initBaseline()
+	initGate()
 	DeskCmd.AddCommand(askCmd, runCmd, routeCmd, findingsCmd, cleanCmd, agentsCmd, providersCmd,
-		baselineCmd, sweepCmd)
+		baselineCmd, sweepCmd, gateCmd)
 }
 
 func runAsk(cmd *cobra.Command, args []string) error {
@@ -420,6 +421,7 @@ type executeOptions struct {
 	threshold *int
 	label     string
 	outDir    string
+	noWrite   bool
 }
 
 func thresholdFlag() *int {
@@ -501,8 +503,10 @@ func execute(
 		report.Comparison = deskbench.Compare(baseline, report)
 		report.CellChanges = deskbench.CompareCells(baseline, report)
 	}
-	if err = report.Write(outDir); err != nil {
-		return nil, outDir, err
+	if !run.noWrite {
+		if err = report.Write(outDir); err != nil {
+			return nil, outDir, err
+		}
 	}
 	if run.kind == "run" {
 		if err = markLatest(outDir); err != nil {

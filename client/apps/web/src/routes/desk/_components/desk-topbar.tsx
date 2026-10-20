@@ -46,6 +46,7 @@ export function DeskTopBar({
   onDownload,
   onRename,
   onOpenRail,
+  onUnfoldRail,
 }: {
   place: DeskPlace;
   thread: AssistantThread | null;
@@ -69,6 +70,8 @@ export function DeskTopBar({
   onRename: (title: string) => void;
   /** Opens the rail over the page, where it is folded away on a phone. */
   onOpenRail?: () => void;
+  /** Opens the rail again beside the page, given only while it is folded away. */
+  onUnfoldRail?: () => void;
 }) {
   const t = useT();
   const timezone = resolveUserTimezone(useAuthStore((state) => state.user?.timezone));
@@ -86,6 +89,19 @@ export function DeskTopBar({
             onClick={onOpenRail}
           >
             <DeskIcon name="menu" size={16} />
+          </Button>
+        </DeskTip>
+      )}
+      {onUnfoldRail && (
+        <DeskTip label={t("Show sidebar")}>
+          <Button
+            variant="quiet"
+            size="icon-sm"
+            className={cn(deskIconClass, "-ml-1.5 max-[720px]:hidden")}
+            aria-label={t("Show sidebar")}
+            onClick={onUnfoldRail}
+          >
+            <DeskIcon name="rail" size={15} />
           </Button>
         </DeskTip>
       )}

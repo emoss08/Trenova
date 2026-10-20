@@ -41,6 +41,7 @@ var hiddenKeys = map[string]struct{}{
 	"truncated":       {},
 	"hasmore":         {},
 	"nextoffset":      {},
+	"nextcursor":      {},
 	"offset":          {},
 }
 

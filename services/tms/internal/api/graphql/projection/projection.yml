@@ -1,4 +1,6 @@
 aliases:
+  AgentProposal:
+    fromScript: scriptStepKey
   AgentControl:
     agentMoneyCallCeiling: agentMoneyCallCeilingMinor
     agentMoneyRunAmount: agentMoneyRunAmountMinor
@@ -207,6 +209,7 @@ virtuals:
     - agentMoneyCurrency
   AgentProposal:
     - run
+    - hold
     - reviewRequired
     - parameterFields
     - modifications
@@ -217,6 +220,7 @@ virtuals:
     - taints
   AgentPlan:
     - run
+    - hold
   AgentRun:
     - definition
     - handedBy
@@ -563,6 +567,13 @@ always:
   AgentProposal:
     - tainted
     - egressClass
+    - status
+    - runId
+    - organizationId
+  AgentPlan:
+    - status
+    - runId
+    - organizationId
   WatchtowerItem:
     - status
     - resolvedAt

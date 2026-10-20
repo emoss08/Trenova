@@ -193,7 +193,7 @@ func TestSearchToolsNeverLeakAndMarkEveryRecord(t *testing.T) {
 			forbidden: forbiddenInBackground,
 		})
 		assertNoLeak(t, leakCheck{
-			tool:      tools["inbox_search_inbound_messages"],
+			tool:      tools["inbox_list_inbound_messages"],
 			params:    params(permissionports.PrincipalTypeUser, query),
 			idField:   "id",
 			entity:    agent.TaintEntityInboundMessage,
@@ -246,7 +246,7 @@ func searchTools(
 		if !ok {
 			continue
 		}
-		if name := tool.Name(); name == "document_list" || name == "inbox_search_inbound_messages" {
+		if name := tool.Name(); name == "document_list" || name == "inbox_list_inbound_messages" {
 			tools[name] = tool
 		}
 	}

@@ -113,6 +113,10 @@ func (t *AssignBillersTool) Preview(
 	return t.batch.Preview(ctx, t, &params)
 }
 
+func (t *AssignBillersTool) SplitRecords(params map[string]any) ([]map[string]any, error) {
+	return t.batch.Split(params)
+}
+
 func (t *AssignBillersTool) Validate(
 	ctx context.Context,
 	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
@@ -232,6 +236,12 @@ func (t *TransitionItemsToInReviewTool) Preview(
 	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	return t.batch.Preview(ctx, t, &params)
+}
+
+func (t *TransitionItemsToInReviewTool) SplitRecords(
+	params map[string]any,
+) ([]map[string]any, error) {
+	return t.batch.Split(params)
 }
 
 func (t *TransitionItemsToInReviewTool) Validate(
