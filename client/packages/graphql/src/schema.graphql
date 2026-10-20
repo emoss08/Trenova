@@ -16791,6 +16791,44 @@ type FuelCardConnection {
   totalCount: Int
 }
 
+type FuelCardDeskCard {
+  card: FuelCard!
+  """Null when the card's provider has no feed."""
+  feed: FuelFeedStatus
+  """
+  Statement rows matched to the card that could not post yet, newest first; the first ten. Empty to a reader who may not read fuel imports.
+  """
+  held: [FuelPurchaseImportRow!]!
+  """
+  The imports holding those rows, which working them out again runs against.
+  """
+  heldBatches: [FuelPurchaseImportBatch!]!
+  heldCount: Int!
+  heldSpend: [FuelHeldSpend!]!
+  lastPurchasedAt: Timestamp
+  """
+  This month's purchases on the card, one row per currency. Empty to a reader who may not read fuel purchases.
+  """
+  month: [FuelSpend!]!
+  """
+  The start of the current month in the organization's time zone, which the month's totals run from.
+  """
+  monthStart: Timestamp!
+  purchaseCount: Int!
+  quarter: Int!
+  """
+  This quarter's IFTA fuel on the card by jurisdiction, most gallons first.
+  """
+  quarterByJurisdiction: [FuelJurisdictionGallons!]!
+  """The card's latest purchases, newest first."""
+  recent: [FuelPurchase!]!
+  """
+  For a cancelled card, the active cards now carried by its tractor or driver.
+  """
+  successors: [FuelCard!]!
+  year: Int!
+}
+
 type FuelCardEdge {
   cursor: String!
   node: FuelCard!
@@ -16815,6 +16853,7 @@ enum FuelCardProvider {
   Comdata
   EFS
   Other
+  Ramp
   WEX
 }
 
@@ -16866,6 +16905,21 @@ type FuelCostResolution {
   priceDate: String!
   pricePerGallon: Decimal
   source: EffectiveRateSource!
+}
+
+"""The watermark of a provider's transaction feed."""
+type FuelFeedStatus {
+  failureCount: Int!
+  lastError: String
+  lastPolledAt: Timestamp
+  lastSuccessAt: Timestamp
+}
+
+"""What the rows held against a card come to in one currency."""
+type FuelHeldSpend {
+  currencyCode: String!
+  gallons: Decimal!
+  totalAmount: Decimal!
 }
 
 enum FuelImportFormat {
@@ -16961,6 +17015,13 @@ enum FuelIndexSource {
   EIA
 }
 
+type FuelJurisdictionGallons {
+  gallons: Decimal!
+  jurisdiction: IFTAJurisdiction!
+  jurisdictionId: ID!
+  purchaseCount: Int!
+}
+
 type FuelProgramCurrentRate {
   flatAmount: Decimal
   matchedRow: FuelSurchargeTableRow
@@ -17030,9 +17091,52 @@ type FuelPurchaseConnection {
   totalCount: Int
 }
 
+type FuelPurchaseDeskCard {
+  """
+  Who entered the purchase; null when a feed recorded it or the reader may not read users.
+  """
+  createdBy: User
+  ifta: FuelPurchaseIFTA!
+  """
+  The same tractor's last road-fuel fill before this one that recorded an odometer; null when this fill has no odometer or none came before it.
+  """
+  previousFill: FuelPurchase
+  """
+  Null for a purchase entered by hand, or for a reader who may not read fuel imports.
+  """
+  provenance: FuelPurchaseProvenance
+  purchase: FuelPurchase!
+}
+
 type FuelPurchaseEdge {
   cursor: String!
   node: FuelPurchase!
+}
+
+"""
+What one purchase adds to its quarter's IFTA return in the jurisdiction it was bought in.
+"""
+type FuelPurchaseIFTA {
+  """
+  Whether the fuel is IFTA fuel at all. DEF, reefer fuel and other spend are not.
+  """
+  countsForIfta: Boolean!
+  quarter: Int!
+  """
+  The jurisdiction's rate per gallon for this fuel in that quarter; null when none is on file.
+  """
+  ratePerGallon: Decimal
+  """
+  The tax-paid gallons at that rate: the credit the return takes for this purchase. Null without a rate.
+  """
+  taxPaidCredit: Decimal
+  taxPaidGallons: Decimal!
+  """
+  The same tractor's IFTA fuel bought in the same jurisdiction and quarter, this purchase included.
+  """
+  tractorGallons: Decimal!
+  tractorPurchaseCount: Int!
+  year: Int!
 }
 
 """
@@ -17274,6 +17378,18 @@ input FuelPurchaseInput {
   workerId: ID
 }
 
+"""
+The card statement row an imported purchase was committed from, and the import that read it.
+"""
+type FuelPurchaseProvenance {
+  batch: FuelPurchaseImportBatch!
+  """
+  How the tractor, card and jurisdiction were matched, one note per decision a person might question.
+  """
+  resolutionNotes: [String!]!
+  rowNumber: Int!
+}
+
 enum FuelPurchaseSource {
   CardImport
   Manual
@@ -17301,6 +17417,15 @@ input FuelPurchasesInput {
 enum FuelQuantityUnit {
   Gallon
   Litre
+}
+
+"""What a card bought in one currency over a window."""
+type FuelSpend {
+  currencyCode: String!
+  gallons: Decimal!
+  purchaseCount: Int!
+  totalAmount: Decimal!
+  untaxedGallons: Decimal!
 }
 
 enum FuelSurchargeDateBasis {
@@ -24093,6 +24218,8 @@ type Query {
   formulaTemplate(id: ID!): FormulaTemplate
   formulaTemplates(input: DataTableConnectionInput!): FormulaTemplateConnection!
   fuelCard(id: ID!): FuelCard!
+  """A fuel card as the Desk card draws it, read in one pass."""
+  fuelCardDeskCard(id: ID!): FuelCardDeskCard!
   fuelCards(input: FuelCardsInput!): FuelCardConnection!
   fuelDashboard: [FuelIndexLatestPrice!]!
   fuelIndex(id: ID!): FuelIndex
@@ -24100,6 +24227,8 @@ type Query {
   fuelIndexes(input: DataTableConnectionInput!): FuelIndexConnection!
   fuelProgramCurrentRates: [FuelProgramCurrentRate!]!
   fuelPurchase(id: ID!): FuelPurchase!
+  """A fuel purchase as the Desk card draws it, read in one pass."""
+  fuelPurchaseDeskCard(id: ID!): FuelPurchaseDeskCard!
   fuelPurchaseImport(id: ID!): FuelPurchaseImportBatch!
   fuelPurchaseImportTemplate(provider: FuelCardProvider!): FuelImportTemplate!
   fuelPurchaseImports(input: FuelPurchaseImportsInput!): FuelPurchaseImportBatchConnection!

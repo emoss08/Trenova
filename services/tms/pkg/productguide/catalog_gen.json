@@ -1,5 +1,5 @@
 {
-  "version": "sha256:7efac97cdef62e3a906c3f3a142b3572c936905df638d7beb10d093d8b5737b9",
+  "version": "sha256:faf05bb98ea18d24b78c8f8aea0b114c9c9d578e51fdbc3b2fe4a5ebeff9acd6",
   "modules": [
     {
       "id": "home",
@@ -18632,13 +18632,24 @@
       "deskCard": true
     },
     {
+      "entity": "fuel_card",
+      "label": "Fuel card",
+      "path": "/fuel/configuration-files/fuel-cards",
+      "params": {
+        "panelType": "edit",
+        "panelEntityId": "{id}"
+      },
+      "deskCard": true
+    },
+    {
       "entity": "fuel_purchase",
       "label": "Fuel purchase",
       "path": "/fuel/purchases",
       "params": {
         "panelType": "edit",
         "panelEntityId": "{id}"
-      }
+      },
+      "deskCard": true
     },
     {
       "entity": "hazardous_material",

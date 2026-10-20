@@ -1,0 +1,95 @@
+fragment DeskFuelCardPurchaseFields on FuelPurchase {
+  id
+  purchasedAt
+  vendor
+  vendorCity
+  fuelType
+  gallons
+  totalAmount
+  currencyCode
+  taxPaid
+  jurisdiction {
+    id
+    code
+  }
+}
+
+query DeskFuelCardCard($id: ID!) {
+  fuelCardDeskCard(id: $id) {
+    card {
+      ...FuelCardFields
+      assignedTractor {
+        id
+        code
+        make
+        model
+      }
+    }
+    monthStart
+    year
+    quarter
+    month {
+      currencyCode
+      purchaseCount
+      gallons
+      untaxedGallons
+      totalAmount
+    }
+    quarterByJurisdiction {
+      jurisdictionId
+      jurisdiction {
+        id
+        code
+        name
+        countryCode
+      }
+      gallons
+      purchaseCount
+    }
+    purchaseCount
+    lastPurchasedAt
+    recent {
+      ...DeskFuelCardPurchaseFields
+    }
+    held {
+      id
+      rowNumber
+      status
+      error
+      importBatchId
+      resolutionNotes
+      parsed {
+        purchasedAt
+        vendor
+        vendorCity
+        jurisdictionCode
+        fuelType
+        gallons
+        totalAmount
+        currencyCode
+        tractorCode
+      }
+    }
+    heldCount
+    heldSpend {
+      currencyCode
+      gallons
+      totalAmount
+    }
+    heldBatches {
+      id
+      version
+      provider
+      origin
+    }
+    feed {
+      lastPolledAt
+      lastSuccessAt
+      failureCount
+      lastError
+    }
+    successors {
+      ...FuelCardFields
+    }
+  }
+}

@@ -4,15 +4,27 @@ package fuelpurchaseresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	fueldeskcardservice "github.com/emoss08/trenova/internal/modules/settlement/app/fueldeskcardservice"
 	fuelpurchaseservice "github.com/emoss08/trenova/internal/modules/settlement/app/fuelpurchaseservice"
 )
 
 type Deps struct {
 	*base.Core
+	FuelDeskCards       *fueldeskcardservice.Service
 	FuelPurchaseService *fuelpurchaseservice.Service
 }
 
+type FuelCardDeskCardResolver struct{ *Deps }
+
 type FuelCardResolver struct{ *Deps }
+
+type FuelFeedStatusResolver struct{ *Deps }
+
+type FuelHeldSpendResolver struct{ *Deps }
+
+type FuelJurisdictionGallonsResolver struct{ *Deps }
+
+type FuelPurchaseIFTAResolver struct{ *Deps }
 
 type FuelPurchaseImportBatchResolver struct{ *Deps }
 
@@ -21,6 +33,8 @@ type FuelPurchaseImportRowResolver struct{ *Deps }
 type FuelPurchaseImportSummaryResolver struct{ *Deps }
 
 type FuelPurchaseResolver struct{ *Deps }
+
+type FuelSpendResolver struct{ *Deps }
 
 type MutationResolver struct{ *Deps }
 

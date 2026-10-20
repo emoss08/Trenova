@@ -254,6 +254,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/fueldeskcardservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
@@ -442,10 +443,16 @@ type ResolverRoot interface {
 	FleetSafetyTerminal() FleetSafetyTerminalResolver
 	FormulaTemplate() FormulaTemplateResolver
 	FuelCard() FuelCardResolver
+	FuelCardDeskCard() FuelCardDeskCardResolver
+	FuelFeedStatus() FuelFeedStatusResolver
+	FuelHeldSpend() FuelHeldSpendResolver
+	FuelJurisdictionGallons() FuelJurisdictionGallonsResolver
 	FuelPurchase() FuelPurchaseResolver
+	FuelPurchaseIFTA() FuelPurchaseIFTAResolver
 	FuelPurchaseImportBatch() FuelPurchaseImportBatchResolver
 	FuelPurchaseImportRow() FuelPurchaseImportRowResolver
 	FuelPurchaseImportSummary() FuelPurchaseImportSummaryResolver
+	FuelSpend() FuelSpendResolver
 	IFTAFleetMPG() IFTAFleetMPGResolver
 	IFTAJurisdiction() IFTAJurisdictionResolver
 	IFTAJurisdictionMileageEntry() IFTAJurisdictionMileageEntryResolver
@@ -1472,6 +1479,26 @@ type FuelCardResolver interface {
 	AssignedTractor(ctx context.Context, obj *fuelpurchase.FuelCard) (*tractor.Tractor, error)
 }
 
+type FuelCardDeskCardResolver interface {
+	LastPurchasedAt(ctx context.Context, obj *fueldeskcardservice.FuelCardCard) (*int, error)
+}
+
+type FuelFeedStatusResolver interface {
+	LastPolledAt(ctx context.Context, obj *fuelpurchase.CardFeedState) (*int, error)
+	LastSuccessAt(ctx context.Context, obj *fuelpurchase.CardFeedState) (*int, error)
+	LastError(ctx context.Context, obj *fuelpurchase.CardFeedState) (*string, error)
+}
+
+type FuelHeldSpendResolver interface {
+	Gallons(ctx context.Context, obj *fueldeskcardservice.HeldSpend) (string, error)
+	TotalAmount(ctx context.Context, obj *fueldeskcardservice.HeldSpend) (string, error)
+}
+
+type FuelJurisdictionGallonsResolver interface {
+	Jurisdiction(ctx context.Context, obj *fueldeskcardservice.JurisdictionGallons) (*ifta.Jurisdiction, error)
+	Gallons(ctx context.Context, obj *fueldeskcardservice.JurisdictionGallons) (string, error)
+}
+
 type FuelPurchaseResolver interface {
 	WorkerID(ctx context.Context, obj *fuelpurchase.FuelPurchase) (*string, error)
 	FuelCardID(ctx context.Context, obj *fuelpurchase.FuelPurchase) (*string, error)
@@ -1486,6 +1513,13 @@ type FuelPurchaseResolver interface {
 	Worker(ctx context.Context, obj *fuelpurchase.FuelPurchase) (*worker.Worker, error)
 	Jurisdiction(ctx context.Context, obj *fuelpurchase.FuelPurchase) (*ifta.Jurisdiction, error)
 	FuelCard(ctx context.Context, obj *fuelpurchase.FuelPurchase) (*fuelpurchase.FuelCard, error)
+}
+
+type FuelPurchaseIFTAResolver interface {
+	TaxPaidGallons(ctx context.Context, obj *fueldeskcardservice.PurchaseIFTA) (string, error)
+	RatePerGallon(ctx context.Context, obj *fueldeskcardservice.PurchaseIFTA) (*string, error)
+	TaxPaidCredit(ctx context.Context, obj *fueldeskcardservice.PurchaseIFTA) (*string, error)
+	TractorGallons(ctx context.Context, obj *fueldeskcardservice.PurchaseIFTA) (string, error)
 }
 
 type FuelPurchaseImportBatchResolver interface {
@@ -1520,6 +1554,12 @@ type FuelPurchaseImportSummaryResolver interface {
 	ByJurisdiction(ctx context.Context, obj *fuelpurchase.ImportSummary) (map[string]any, error)
 	EarliestPurchasedAt(ctx context.Context, obj *fuelpurchase.ImportSummary) (*int, error)
 	LatestPurchasedAt(ctx context.Context, obj *fuelpurchase.ImportSummary) (*int, error)
+}
+
+type FuelSpendResolver interface {
+	Gallons(ctx context.Context, obj *fueldeskcardservice.Spend) (string, error)
+	UntaxedGallons(ctx context.Context, obj *fueldeskcardservice.Spend) (string, error)
+	TotalAmount(ctx context.Context, obj *fueldeskcardservice.Spend) (string, error)
 }
 
 type IFTAFleetMPGResolver interface {
@@ -2995,6 +3035,8 @@ type QueryResolver interface {
 	FuelPurchaseImports(ctx context.Context, input gqlmodel.FuelPurchaseImportsInput) (*gqlmodel.FuelPurchaseImportBatchConnection, error)
 	FuelPurchaseImport(ctx context.Context, id string) (*fuelpurchase.ImportBatch, error)
 	FuelPurchaseImportTemplate(ctx context.Context, provider fuelpurchase.CardProvider) (*gqlmodel.FuelImportTemplate, error)
+	FuelPurchaseDeskCard(ctx context.Context, id string) (*fueldeskcardservice.PurchaseCard, error)
+	FuelCardDeskCard(ctx context.Context, id string) (*fueldeskcardservice.FuelCardCard, error)
 	FuelIndexes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FuelIndexConnection, error)
 	FuelIndex(ctx context.Context, id string) (*gqlmodel.FuelIndex, error)
 	FuelIndexPriceHistory(ctx context.Context, indexID string, from *string, to *string, limit *int) ([]*gqlmodel.FuelIndexPrice, error)
@@ -4054,10 +4096,16 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"FleetSafetyTerminal":                func() any { return r.FleetSafetyTerminal() },
 			"FormulaTemplate":                    func() any { return r.FormulaTemplate() },
 			"FuelCard":                           func() any { return r.FuelCard() },
+			"FuelCardDeskCard":                   func() any { return r.FuelCardDeskCard() },
+			"FuelFeedStatus":                     func() any { return r.FuelFeedStatus() },
+			"FuelHeldSpend":                      func() any { return r.FuelHeldSpend() },
+			"FuelJurisdictionGallons":            func() any { return r.FuelJurisdictionGallons() },
 			"FuelPurchase":                       func() any { return r.FuelPurchase() },
+			"FuelPurchaseIFTA":                   func() any { return r.FuelPurchaseIFTA() },
 			"FuelPurchaseImportBatch":            func() any { return r.FuelPurchaseImportBatch() },
 			"FuelPurchaseImportRow":              func() any { return r.FuelPurchaseImportRow() },
 			"FuelPurchaseImportSummary":          func() any { return r.FuelPurchaseImportSummary() },
+			"FuelSpend":                          func() any { return r.FuelSpend() },
 			"IFTAFleetMPG":                       func() any { return r.IFTAFleetMPG() },
 			"IFTAJurisdiction":                   func() any { return r.IFTAJurisdiction() },
 			"IFTAJurisdictionMileageEntry":       func() any { return r.IFTAJurisdictionMileageEntry() },
@@ -22616,6 +22664,7 @@ enum FuelCardProvider {
   Comdata
   EFS
   WEX
+  Ramp
   Other
 }
 
@@ -23151,6 +23200,98 @@ input FuelPurchaseImportRowsInput {
   statuses: [FuelPurchaseImportRowStatus!]
 }
 
+"What one purchase adds to its quarter's IFTA return in the jurisdiction it was bought in."
+type FuelPurchaseIFTA {
+  year: Int!
+  quarter: Int!
+  "Whether the fuel is IFTA fuel at all. DEF, reefer fuel and other spend are not."
+  countsForIfta: Boolean!
+  taxPaidGallons: Decimal!
+  "The jurisdiction's rate per gallon for this fuel in that quarter; null when none is on file."
+  ratePerGallon: Decimal
+  "The tax-paid gallons at that rate: the credit the return takes for this purchase. Null without a rate."
+  taxPaidCredit: Decimal
+  "The same tractor's IFTA fuel bought in the same jurisdiction and quarter, this purchase included."
+  tractorGallons: Decimal!
+  tractorPurchaseCount: Int!
+}
+
+"The card statement row an imported purchase was committed from, and the import that read it."
+type FuelPurchaseProvenance {
+  batch: FuelPurchaseImportBatch!
+  rowNumber: Int!
+  "How the tractor, card and jurisdiction were matched, one note per decision a person might question."
+  resolutionNotes: [String!]!
+}
+
+type FuelPurchaseDeskCard {
+  purchase: FuelPurchase!
+  ifta: FuelPurchaseIFTA!
+  "The same tractor's last road-fuel fill before this one that recorded an odometer; null when this fill has no odometer or none came before it."
+  previousFill: FuelPurchase
+  "Null for a purchase entered by hand, or for a reader who may not read fuel imports."
+  provenance: FuelPurchaseProvenance
+  "Who entered the purchase; null when a feed recorded it or the reader may not read users."
+  createdBy: User
+}
+
+"What a card bought in one currency over a window."
+type FuelSpend {
+  currencyCode: String!
+  purchaseCount: Int!
+  gallons: Decimal!
+  untaxedGallons: Decimal!
+  totalAmount: Decimal!
+}
+
+type FuelJurisdictionGallons {
+  jurisdictionId: ID!
+  jurisdiction: IFTAJurisdiction!
+  gallons: Decimal!
+  purchaseCount: Int!
+}
+
+"What the rows held against a card come to in one currency."
+type FuelHeldSpend {
+  currencyCode: String!
+  gallons: Decimal!
+  totalAmount: Decimal!
+}
+
+"The watermark of a provider's transaction feed."
+type FuelFeedStatus {
+  lastPolledAt: Timestamp
+  lastSuccessAt: Timestamp
+  failureCount: Int!
+  lastError: String
+}
+
+type FuelCardDeskCard {
+  card: FuelCard!
+  "The start of the current month in the organization's time zone, which the month's totals run from."
+  monthStart: Timestamp!
+  year: Int!
+  quarter: Int!
+  "This month's purchases on the card, one row per currency. Empty to a reader who may not read fuel purchases."
+  month: [FuelSpend!]!
+  "This quarter's IFTA fuel on the card by jurisdiction, most gallons first."
+  quarterByJurisdiction: [FuelJurisdictionGallons!]!
+  purchaseCount: Int!
+  lastPurchasedAt: Timestamp
+  "The card's latest purchases, newest first."
+  recent: [FuelPurchase!]!
+  "Statement rows matched to the card that could not post yet, newest first; the first ten. Empty to a reader who may not read fuel imports."
+  held: [FuelPurchaseImportRow!]!
+  heldCount: Int!
+  heldSpend: [FuelHeldSpend!]!
+  "The imports holding those rows, which working them out again runs against."
+  heldBatches: [FuelPurchaseImportBatch!]!
+  "Null when the card's provider has no feed."
+  feed: FuelFeedStatus
+  "For a cancelled card, the active cards now carried by its tractor or driver."
+  successors: [FuelCard!]!
+}
+
 extend type Query {
   fuelCards(input: FuelCardsInput!): FuelCardConnection!
   fuelCard(id: ID!): FuelCard!
@@ -23159,6 +23300,10 @@ extend type Query {
   fuelPurchaseImports(input: FuelPurchaseImportsInput!): FuelPurchaseImportBatchConnection!
   fuelPurchaseImport(id: ID!): FuelPurchaseImportBatch!
   fuelPurchaseImportTemplate(provider: FuelCardProvider!): FuelImportTemplate!
+  "A fuel purchase as the Desk card draws it, read in one pass."
+  fuelPurchaseDeskCard(id: ID!): FuelPurchaseDeskCard!
+  "A fuel card as the Desk card draws it, read in one pass."
+  fuelCardDeskCard(id: ID!): FuelCardDeskCard!
 }
 
 extend type Mutation {

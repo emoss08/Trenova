@@ -4060,6 +4060,68 @@ models:
         resolver: true
       resolvedTractor:
         resolver: true
+  FuelPurchaseIFTA:
+    model:
+      - github.com/emoss08/trenova/internal/modules/settlement/app/fueldeskcardservice.PurchaseIFTA
+    fields:
+      countsForIfta:
+        fieldName: CountsForIFTA
+      taxPaidGallons:
+        resolver: true
+      ratePerGallon:
+        resolver: true
+      taxPaidCredit:
+        resolver: true
+      tractorGallons:
+        resolver: true
+  FuelPurchaseProvenance:
+    model:
+      - github.com/emoss08/trenova/internal/modules/settlement/app/fueldeskcardservice.Provenance
+  FuelPurchaseDeskCard:
+    model:
+      - github.com/emoss08/trenova/internal/modules/settlement/app/fueldeskcardservice.PurchaseCard
+  FuelSpend:
+    model:
+      - github.com/emoss08/trenova/internal/modules/settlement/app/fueldeskcardservice.Spend
+    fields:
+      gallons:
+        resolver: true
+      untaxedGallons:
+        resolver: true
+      totalAmount:
+        resolver: true
+  FuelJurisdictionGallons:
+    model:
+      - github.com/emoss08/trenova/internal/modules/settlement/app/fueldeskcardservice.JurisdictionGallons
+    fields:
+      jurisdiction:
+        resolver: true
+      gallons:
+        resolver: true
+  FuelHeldSpend:
+    model:
+      - github.com/emoss08/trenova/internal/modules/settlement/app/fueldeskcardservice.HeldSpend
+    fields:
+      gallons:
+        resolver: true
+      totalAmount:
+        resolver: true
+  FuelFeedStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase.CardFeedState
+    fields:
+      lastPolledAt:
+        resolver: true
+      lastSuccessAt:
+        resolver: true
+      lastError:
+        resolver: true
+  FuelCardDeskCard:
+    model:
+      - github.com/emoss08/trenova/internal/modules/settlement/app/fueldeskcardservice.FuelCardCard
+    fields:
+      lastPurchasedAt:
+        resolver: true
   IFTAJurisdictionStatus:
     model:
       - github.com/emoss08/trenova/internal/modules/settlement/domain/ifta.JurisdictionStatus

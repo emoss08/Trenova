@@ -9,6 +9,7 @@ import {
   IFTA_MILEAGE_SOURCE_LABELS,
   IFTA_QUARTER_LABELS,
   IFTA_RETURN_STATUS_LABELS,
+  countsForIfta,
   fuelCardProviderSchema,
   fuelCardStatusSchema,
   fuelPurchaseImportStatusSchema,
@@ -49,7 +50,7 @@ describe("fuel and IFTA enum schemas", () => {
   });
 
   it("matches the wire values of the smaller enums", () => {
-    expect(fuelCardProviderSchema.options).toEqual(["Comdata", "EFS", "WEX", "Other"]);
+    expect(fuelCardProviderSchema.options).toEqual(["Comdata", "EFS", "WEX", "Ramp", "Other"]);
     expect(fuelCardStatusSchema.options).toEqual(["Active", "Suspended", "Cancelled"]);
     expect(fuelQuantityUnitSchema.options).toEqual(["Gallon", "Litre"]);
     expect(fuelPurchaseSourceSchema.options).toEqual(["Manual", "CardImport"]);
@@ -105,5 +106,27 @@ describe("fuel and IFTA labels", () => {
     expect(IFTA_MILEAGE_SOURCE_LABELS.RouteCalculation).toBe("Route calculation");
     expect(IFTA_QUARTER_LABELS["1"]).toBe("Q1 (Jan–Mar)");
     expect(IFTA_QUARTER_LABELS["4"]).toBe("Q4 (Oct–Dec)");
+  });
+});
+
+describe("countsForIfta", () => {
+  it("counts the motor fuels the server's CountsForIFTA counts and leaves DEF, reefer fuel and other out", () => {
+    const counted = iftaFuelTypeSchema.options.filter((fuelType) => countsForIfta(fuelType));
+    expect(counted).toEqual([
+      "Diesel",
+      "Gasoline",
+      "Gasohol",
+      "Propane",
+      "CNG",
+      "LNG",
+      "Ethanol",
+      "Methanol",
+      "E85",
+      "M85",
+      "A55",
+      "Biodiesel",
+      "Electricity",
+      "Hydrogen",
+    ]);
   });
 });
