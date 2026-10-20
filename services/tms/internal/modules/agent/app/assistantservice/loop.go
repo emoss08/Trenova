@@ -58,12 +58,13 @@ type TurnRequest struct {
 }
 
 type TurnResult struct {
-	Reply    string
-	Decision agentguard.Decision
-	Messages []conversation.Message
-	Actions  []agentports.PendingAction
-	Model    string
-	Provider pulid.ID
+	Reply     string
+	Decision  agentguard.Decision
+	Messages  []conversation.Message
+	Actions   []agentports.PendingAction
+	PlanTitle string
+	Model     string
+	Provider  pulid.ID
 }
 
 // admit asks the scope guard about a question and, when it may be answered,
@@ -164,12 +165,13 @@ func turnResultOf(
 	}
 
 	result := &TurnResult{
-		Reply:    run.Reply,
-		Decision: decision,
-		Messages: run.Messages,
-		Actions:  run.Actions,
-		Model:    run.Model,
-		Provider: run.ProviderID,
+		Reply:     run.Reply,
+		Decision:  decision,
+		Messages:  run.Messages,
+		Actions:   run.Actions,
+		PlanTitle: run.PlanTitle,
+		Model:     run.Model,
+		Provider:  run.ProviderID,
 	}
 
 	if len(result.Messages) > 0 {
@@ -399,12 +401,13 @@ func interruptedTurn(
 	})
 
 	return &TurnResult{
-		Reply:    notice,
-		Decision: decision,
-		Messages: messages,
-		Actions:  run.Actions,
-		Model:    run.Model,
-		Provider: run.ProviderID,
+		Reply:     notice,
+		Decision:  decision,
+		Messages:  messages,
+		Actions:   run.Actions,
+		PlanTitle: run.PlanTitle,
+		Model:     run.Model,
+		Provider:  run.ProviderID,
 	}
 }
 

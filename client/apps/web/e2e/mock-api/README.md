@@ -411,6 +411,23 @@ shaped as `connectionDraftArtifact` stores them. It shoots each stage in light a
 page quote on hover, the document types, the approval and the revised control numbers, and writes
 to `e2e/mock-api/screenshots/desk-edi-draft` by default.
 
+A plan, several of an agent's writes decided as one, has its own walkthrough:
+
+```bash
+node e2e/mock-api/desk-plan-screenshots.mjs [outDir] [name,name,...]
+```
+
+It opens `/desk/c/athr_desk_plan/a/recover-s-240201` (`handlers/deskplan.mjs`), the Dispatch
+agent's four steps to recover S-240201 after the receiver's dock turned it away, at the stage
+the `deskPlan` scenario field names: `awaiting`, `held` (a shadow switch), `approving` (inside
+its undo window), `running`, `failed` (step 3 refused, step 4 skipped), `done`, `declined`,
+`expired` or `superseded` (failed, with a later plan in the conversation). The thread's plans,
+proposals and `MyPlanPreview` are answered from `fixtures/desk-plan.mjs`; `DecideMyPlan` and
+`UndoMyDecision` move the stage on, and an approval with a digest other than the preview's is
+refused as a conflict. It shoots every stage on the artifact's page in light and dark, beside
+the conversation, in a narrow window, a folded step opened, the decline dialog and the skeleton,
+and writes to `e2e/mock-api/screenshots/desk-plan` by default.
+
 The Desk's extraction artifact, what document intelligence read off a file, has its own
 walkthrough:
 

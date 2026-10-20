@@ -940,3 +940,33 @@ func (r *AgentControlResolver) AgentMoneyCurrency(ctx context.Context, obj *tena
 
 	return strings.ToUpper(strings.TrimSpace(books.FunctionalCurrencyCode)), nil
 }
+
+func (r *AgentPlanResolver) DecidedBy(ctx context.Context, obj *agent.AgentPlan) (*tenant.User, error) {
+	if obj.DecidedByUserID == nil {
+		return nil, nil
+	}
+
+	user, err := base.LoadUser(ctx, *obj.DecidedByUserID)
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (r *AgentPlanResolver) RunMode(ctx context.Context, obj *agent.AgentPlan) (agent.PlanRunMode, error) {
+	if !loaders.Available(ctx) {
+		return "", errortypes.NewBusinessError("The plan's steps cannot be read here")
+	}
+
+	steps, err := loaders.AgentPlanStepsByPlanID(ctx, obj.ID.String())
+	if err != nil {
+		return "", err
+	}
+
+	return agent.PlanRunModeOf(steps), nil
+}

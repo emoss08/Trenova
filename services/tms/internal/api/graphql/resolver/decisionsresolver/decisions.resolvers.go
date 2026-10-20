@@ -158,11 +158,7 @@ func (r *QueryResolver) PendingDecisions(ctx context.Context, input gqlmodel.Pen
 		default:
 			continue
 		}
-		edges = append(edges, &gqlmodel.PendingDecisionEdge{
-			Node:   node,
-			Cursor: item.Cursor,
-			Hold:   pendingDecisionHold(item.Hold),
-		})
+		edges = append(edges, &gqlmodel.PendingDecisionEdge{Node: node, Cursor: item.Cursor})
 	}
 
 	pageInfo := &gqlmodel.PageInfo{HasNextPage: page.HasNextPage}
@@ -193,36 +189,17 @@ func (r *QueryResolver) PendingDecisionSummary(ctx context.Context) (*gqlmodel.P
 		return nil, err
 	}
 
-	summary, err := r.AgentDecisionQueueService.Summary(ctx, base.TenantInfo(authCtx), usable)
+	tenant := base.TenantInfo(authCtx)
+	summary, err := r.AgentDecisionQueueService.Summary(ctx, tenant, usable)
+	if err != nil {
+		return nil, err
+	}
+	actionable, err := r.AgentDecisionQueueService.Count(ctx, tenant, usable)
 	if err != nil {
 		return nil, err
 	}
 
-	out := &gqlmodel.PendingDecisionSummary{
-		Total:   summary.Total,
-		Held:    summary.Held,
-		ByAgent: make([]*gqlmodel.PendingDecisionAgentCount, 0, len(summary.ByAgent)),
-		ByTool:  make([]*gqlmodel.PendingDecisionToolCount, 0, len(summary.ByTool)),
-	}
-	for _, row := range summary.ByAgent {
-		out.ByAgent = append(out.ByAgent, &gqlmodel.PendingDecisionAgentCount{
-			AgentDefinitionID: row.AgentDefinitionID.String(),
-			AgentName:         row.AgentName,
-			Count:             row.Count,
-		})
-	}
-	for _, row := range summary.ByTool {
-		out.ByTool = append(out.ByTool, &gqlmodel.PendingDecisionToolCount{
-			ToolName: row.ToolName,
-			Count:    row.Count,
-		})
-	}
-	if summary.OldestAt != nil {
-		oldest := int(*summary.OldestAt)
-		out.OldestAt = &oldest
-	}
-
-	return out, nil
+	return pendingDecisionSummary(summary, actionable), nil
 }
 
 func (r *QueryResolver) RecentDecisions(ctx context.Context, since int, first *int) ([]*gqlmodel.RecentDecision, error) {
@@ -273,17 +250,20 @@ func (r *QueryResolver) RecentDecisions(ctx context.Context, since int, first *i
 }
 
 func (r *AgentPlanResolver) Hold(ctx context.Context, obj *agent.AgentPlan) (*gqlmodel.PendingDecisionHold, error) {
-	if obj.Status != agent.PlanStatusPending {
-		return nil, nil //nolint:nilnil // a decided plan is held by nothing
-	}
-
-	return loadHold(ctx, obj.OrganizationID, obj.RunID)
+	return planHold(ctx, obj)
 }
 
 func (r *AgentProposalResolver) Hold(ctx context.Context, obj *agent.AgentProposal) (*gqlmodel.PendingDecisionHold, error) {
-	if obj.Status != agent.ProposalStatusPending {
-		return nil, nil //nolint:nilnil // a decided proposal is held by nothing
-	}
+	return proposalHold(ctx, obj)
+}
 
-	return loadHold(ctx, obj.OrganizationID, obj.RunID)
+func (r *PendingDecisionEdgeResolver) Hold(ctx context.Context, obj *gqlmodel.PendingDecisionEdge) (*gqlmodel.PendingDecisionHold, error) {
+	switch node := obj.Node.(type) {
+	case *agent.AgentProposal:
+		return proposalHold(ctx, node)
+	case *agent.AgentPlan:
+		return planHold(ctx, node)
+	default:
+		return nil, nil //nolint:nilnil // only a proposal or a plan waits on a decision
+	}
 }

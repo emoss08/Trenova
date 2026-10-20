@@ -40,6 +40,10 @@ fragment AgentProposalTableRowFields on AgentProposal {
     reason
     agentName
   }
+  run {
+    id
+    agentDefinitionId
+  }
   reviewRequired
   traceId
   traceUrl

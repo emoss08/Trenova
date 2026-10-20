@@ -510,6 +510,7 @@ func (a *Activities) settleRun(
 		Definition: p.Definition,
 		Run:        run,
 		Actions:    p.Outcome.Actions,
+		PlanTitle:  p.Outcome.PlanTitle,
 		Subject:    p.Subject,
 		TenantInfo: tenant,
 		Taint:      p.Outcome.Taint,
@@ -1031,6 +1032,7 @@ type recordProposalsParams struct {
 	Definition *agentdefinition.Definition
 	Run        *agent.AgentRun
 	Actions    []agentports.PendingAction
+	PlanTitle  string
 	Subject    *agentdefinition.RuntimeSubject
 	TenantInfo pagination.TenantInfo
 	Taint      *agent.RunTaint
@@ -1074,6 +1076,7 @@ func (a *Activities) recordProposals(
 		Definition: p.Definition,
 		Run:        p.Run,
 		Actions:    p.Actions,
+		PlanTitle:  p.PlanTitle,
 		Evidence:   subjectEvidence(p.Subject, p.Run.ID),
 		Taint:      p.Taint,
 	})

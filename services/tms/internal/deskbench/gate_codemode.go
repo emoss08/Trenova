@@ -303,11 +303,13 @@ type codeModeTarget struct {
 
 func (r *GateResult) codeModeTargets() []codeModeTarget {
 	targets := make([]codeModeTarget, 0, len(r.CodeMode))
+	seen := make(map[CellModel]bool, len(r.CodeMode))
 	for idx := range r.CodeMode {
 		decision := &r.CodeMode[idx]
-		if !decision.Recommended {
+		if !decision.Recommended || seen[decision.Model] {
 			continue
 		}
+		seen[decision.Model] = true
 		target := codeModeTarget{model: decision.Model, run1: decision.Cell, cell: decision.Cell}
 		for _, route := range AllRoutes() {
 			cell := r.Configuration[route]

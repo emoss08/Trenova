@@ -116,6 +116,7 @@ export function CardHead({
   subtitle,
   lead,
   figure,
+  under,
   meta,
 }: {
   /** Short identifiers, set apart by dots; the first reads strongest. */
@@ -129,6 +130,8 @@ export function CardHead({
   /** A mark before the title that says who the record is, such as a person's initials. */
   lead?: ReactNode;
   figure?: ReactNode;
+  /** What sits under the name, above where the record stands: a plan's track. */
+  under?: ReactNode;
   meta?: ReactNode;
 }) {
   return (
@@ -163,6 +166,7 @@ export function CardHead({
         </div>
         {figure && <div className="dk-rec-amt">{figure}</div>}
       </div>
+      {under}
       {meta && <div className="dk-rec-meta">{meta}</div>}
     </div>
   );

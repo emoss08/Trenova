@@ -38,6 +38,10 @@ aliases:
     voidedBy: voidedById
   AgentToolRule:
     updatedBy: updatedById
+  AgentPlan:
+    decidedBy: decidedByUserId
+    decisionNote: approvalNote
+    previewDigest: approvalPreviewDigest
   Shipment:
     stage: status
   CaptureBatch:
@@ -221,6 +225,7 @@ virtuals:
   AgentPlan:
     - run
     - hold
+    - runMode
   AgentRun:
     - definition
     - handedBy

@@ -1862,6 +1862,18 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
 			},
 			{
+				Name:       "decidedBy",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "User",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agent.AgentPlan)
+					return gqlexec.Resolver[resolverAgentPlan](ec, "AgentPlan").DecidedBy(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
+			},
+			{
 				Name:     "decidedAt",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
@@ -1869,6 +1881,38 @@ var Shard = &gqlexec.Shard{
 					return obj.DecidedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
+				Name:     "decisionNote",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agent.AgentPlan)
+					return obj.ApprovalNote, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "previewDigest",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agent.AgentPlan)
+					return obj.ApprovalPreviewDigest, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:       "runMode",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild21,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agent.AgentPlan)
+					return gqlexec.Resolver[resolverAgentPlan](ec, "AgentPlan").RunMode(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNAgentPlanRunMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐPlanRunMode),
 			},
 			{
 				Name:     "expiresAt",
@@ -2123,7 +2167,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "autonomyTier",
 				NonNull:  true,
-				ChildErr: errNoChild21,
+				ChildErr: errNoChild22,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentProposal)
 					return obj.AutonomyTier, nil
@@ -2133,7 +2177,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild22,
+				ChildErr: errNoChild23,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentProposal)
 					return obj.Status, nil
@@ -2248,7 +2292,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "egressClass",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild23,
+				ChildErr:   errNoChild24,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentProposal)
 					return gqlexec.Resolver[resolverAgentProposal](ec, "AgentProposal").EgressClass(ctx, obj)
@@ -2419,7 +2463,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "kind",
 				NonNull:  true,
-				ChildErr: errNoChild24,
+				ChildErr: errNoChild25,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*toolschema.Field)
 					return obj.Kind, nil
@@ -2573,7 +2617,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "subjectType",
 				NonNull:  true,
-				ChildErr: errNoChild25,
+				ChildErr: errNoChild26,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.Reflection)
 					return obj.SubjectType, nil
@@ -2630,7 +2674,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild26,
+				ChildErr: errNoChild27,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.Reflection)
 					return obj.Status, nil
@@ -2639,7 +2683,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "skipReason",
-				ChildErr: errNoChild27,
+				ChildErr: errNoChild28,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.Reflection)
 					return obj.SkipReason, nil
@@ -2774,7 +2818,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "action",
 				NonNull:  true,
-				ChildErr: errNoChild28,
+				ChildErr: errNoChild29,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.ReflectionChange)
 					return obj.Action, nil
@@ -2899,7 +2943,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "kind",
 				NonNull:  true,
-				ChildErr: errNoChild29,
+				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.ReflectionSignal)
 					return obj.Kind, nil
@@ -2961,7 +3005,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "agentType",
 				NonNull:  true,
-				ChildErr: errNoChild30,
+				ChildErr: errNoChild31,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentRun)
 					return obj.AgentType, nil
@@ -3021,7 +3065,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild31,
+				ChildErr: errNoChild32,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentRun)
 					return obj.Status, nil
@@ -3150,7 +3194,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "parentOwnerKind",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild32,
+				ChildErr:   errNoChild33,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.AgentRun)
 					return gqlexec.Resolver[resolverAgentRun](ec, "AgentRun").ParentOwnerKind(ctx, obj)
@@ -3500,7 +3544,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "source",
 				NonNull:  true,
-				ChildErr: errNoChild33,
+				ChildErr: errNoChild34,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agent.TaintMark)
 					return obj.Source, nil
@@ -3614,7 +3658,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "from",
 				NonNull:  true,
-				ChildErr: errNoChild21,
+				ChildErr: errNoChild22,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentports.ToolPromotion)
 					return obj.From, nil
@@ -3624,7 +3668,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "to",
 				NonNull:  true,
-				ChildErr: errNoChild21,
+				ChildErr: errNoChild22,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentports.ToolPromotion)
 					return obj.To, nil
@@ -4084,6 +4128,7 @@ var Shard = &gqlexec.Shard{
 		{Root: "AgentDecision", Check: func(r any) bool { _, ok := r.(resolverAgentDecision); return ok }},
 		{Root: "AgentEvaluation", Check: func(r any) bool { _, ok := r.(resolverAgentEvaluation); return ok }},
 		{Root: "AgentMemory", Check: func(r any) bool { _, ok := r.(resolverAgentMemory); return ok }},
+		{Root: "AgentPlan", Check: func(r any) bool { _, ok := r.(resolverAgentPlan); return ok }},
 		{Root: "AgentProposal", Check: func(r any) bool { _, ok := r.(resolverAgentProposal); return ok }},
 		{Root: "AgentProposalField", Check: func(r any) bool { _, ok := r.(resolverAgentProposalField); return ok }},
 		{Root: "AgentReflection", Check: func(r any) bool { _, ok := r.(resolverAgentReflection); return ok }},
@@ -4116,6 +4161,11 @@ type resolverAgentEvaluation interface {
 type resolverAgentMemory interface {
 	Supersedes(ctx context.Context, obj *agent.Memory) (*agent.Memory, error)
 	ReplacedBy(ctx context.Context, obj *agent.Memory) (*agent.Memory, error)
+}
+
+type resolverAgentPlan interface {
+	DecidedBy(ctx context.Context, obj *agent.AgentPlan) (*tenant.User, error)
+	RunMode(ctx context.Context, obj *agent.AgentPlan) (agent.PlanRunMode, error)
 }
 
 type resolverAgentProposal interface {
@@ -4204,19 +4254,20 @@ var (
 	errNoChild18 = errors.New("field of type AgentMemorySubjectType does not have child fields")
 	errNoChild19 = errors.New("field of type AgentMemoryScope does not have child fields")
 	errNoChild20 = errors.New("field of type AgentPlanStatus does not have child fields")
-	errNoChild21 = errors.New("field of type AgentAutonomyTier does not have child fields")
-	errNoChild22 = errors.New("field of type AgentProposalStatus does not have child fields")
-	errNoChild23 = errors.New("field of type AgentEgressClass does not have child fields")
-	errNoChild24 = errors.New("field of type AgentProposalFieldKind does not have child fields")
-	errNoChild25 = errors.New("field of type AgentReflectionSubject does not have child fields")
-	errNoChild26 = errors.New("field of type AgentReflectionStatus does not have child fields")
-	errNoChild27 = errors.New("field of type AgentReflectionSkip does not have child fields")
-	errNoChild28 = errors.New("field of type AgentReflectionAction does not have child fields")
-	errNoChild29 = errors.New("field of type AgentReflectionSignalKind does not have child fields")
-	errNoChild30 = errors.New("field of type AgentType does not have child fields")
-	errNoChild31 = errors.New("field of type AgentRunStatus does not have child fields")
-	errNoChild32 = errors.New("field of type AgentRunEventOwnerKind does not have child fields")
-	errNoChild33 = errors.New("field of type AgentTaintSource does not have child fields")
+	errNoChild21 = errors.New("field of type AgentPlanRunMode does not have child fields")
+	errNoChild22 = errors.New("field of type AgentAutonomyTier does not have child fields")
+	errNoChild23 = errors.New("field of type AgentProposalStatus does not have child fields")
+	errNoChild24 = errors.New("field of type AgentEgressClass does not have child fields")
+	errNoChild25 = errors.New("field of type AgentProposalFieldKind does not have child fields")
+	errNoChild26 = errors.New("field of type AgentReflectionSubject does not have child fields")
+	errNoChild27 = errors.New("field of type AgentReflectionStatus does not have child fields")
+	errNoChild28 = errors.New("field of type AgentReflectionSkip does not have child fields")
+	errNoChild29 = errors.New("field of type AgentReflectionAction does not have child fields")
+	errNoChild30 = errors.New("field of type AgentReflectionSignalKind does not have child fields")
+	errNoChild31 = errors.New("field of type AgentType does not have child fields")
+	errNoChild32 = errors.New("field of type AgentRunStatus does not have child fields")
+	errNoChild33 = errors.New("field of type AgentRunEventOwnerKind does not have child fields")
+	errNoChild34 = errors.New("field of type AgentTaintSource does not have child fields")
 )
 
 func field_Mutation_decideAgentProposal_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -5570,6 +5621,14 @@ func marshalNAgentPlanEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapi�
 	return ec.MarshalType(ctx, sel, "AgentPlanEdge", v)
 }
 
+func marshalNAgentPlanRunMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐPlanRunMode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agent.PlanRunMode) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
 func marshalNAgentPlanStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐPlanStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agent.PlanStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
@@ -6203,4 +6262,11 @@ func marshalOTimestamp2ᚖint64(ctx context.Context, ec *gqlexec.Exec, sel ast.S
 	}
 	res := graphql.MarshalInt64(*v)
 	return res
+}
+
+func marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.User) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "User", v)
 }

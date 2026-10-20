@@ -445,6 +445,7 @@ type RunResult struct {
 	// writes them to the step ledger, and the scorecard counts every failed
 	// call rather than only those a tool refused.
 	LoopRefusals []LoopRefusal `json:",omitempty"`
+	PlanTitle    string        `json:",omitempty"`
 }
 
 func (r *RunResult) ServedFingerprint() *agent.Fingerprint {
