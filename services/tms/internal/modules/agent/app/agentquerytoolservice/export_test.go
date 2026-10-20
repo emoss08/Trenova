@@ -1,9 +1,12 @@
 package agentquerytoolservice
 
 import (
+	"context"
+
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/pkg/domaintypes"
 )
 
 // The external tests read through the real GraphQL reader, which this
@@ -71,4 +74,17 @@ func ConvertedListTool(
 	}
 
 	return nil, errGraphQLReadUnbound
+}
+
+// RunView reads a composed view through a list tool, as compose does.
+func RunView(
+	ctx context.Context,
+	tool agentports.AgentQueryTool,
+	params *agentports.QueryToolParams,
+	filters []domaintypes.FieldFilter,
+	sorting []domaintypes.SortField,
+) error {
+	_, err := tool.(viewRunner).runView(ctx, params, "", filters, sorting, 5)
+
+	return err
 }
