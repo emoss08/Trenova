@@ -20,11 +20,14 @@ const (
 	OverrideDefault = Override("")
 	OverrideOn      = Override("on")
 	OverrideOff     = Override("off")
+	// OverrideWrites forces code mode on with writes, for the bench's and the
+	// red team's batch-write cases; OverrideOn forces it on to read only.
+	OverrideWrites = Override("writes")
 )
 
 func (o Override) IsValid() bool {
 	switch o {
-	case OverrideDefault, OverrideOn, OverrideOff:
+	case OverrideDefault, OverrideOn, OverrideOff, OverrideWrites:
 		return true
 	default:
 		return false
@@ -140,7 +143,7 @@ func (g Gate) Offered(override Override) bool {
 	switch override {
 	case OverrideOff:
 		return false
-	case OverrideOn:
+	case OverrideOn, OverrideWrites:
 		return g.Forced
 	case OverrideDefault:
 		return g.Ledger.Any()
@@ -153,9 +156,9 @@ func (g Gate) Decide(override Override, provider aiprovider.Kind, model string) 
 	switch {
 	case override == OverrideOff:
 		return Decision{Reason: "code mode is turned off for this turn"}
-	case override == OverrideOn && g.Forced:
-		return Decision{Allowed: true, Writes: true}
-	case override == OverrideOn:
+	case (override == OverrideOn || override == OverrideWrites) && g.Forced:
+		return Decision{Allowed: true, Writes: override == OverrideWrites}
+	case override == OverrideOn || override == OverrideWrites:
 		return Decision{Reason: "code mode can be forced on only in development and test"}
 	case g.Ledger.Enabled(provider, model):
 		return Decision{Allowed: true, Writes: g.Ledger.Writes(provider, model)}

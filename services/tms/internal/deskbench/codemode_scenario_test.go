@@ -100,5 +100,5 @@ func TestLoadScenarios_RefusesAPairWithoutBothHalves(t *testing.T) {
 		"      - say: \"late loads?\"",
 	}, "\n")+"\n"), 0o600))
 	_, err := deskbench.LoadScenarios([]string{file})
-	require.ErrorContains(t, err, "mode is discrete or script")
+	require.ErrorContains(t, err, "mode is discrete, script or script_writes")
 }

@@ -99,7 +99,12 @@ func TestShippedLedgerLetsNoModelWrite(t *testing.T) {
 	for _, entry := range codemode.Shipped().Models {
 		assert.False(t, entry.Writes, "%s: no model's scripts write until the bench earns it", entry.Model)
 	}
-	assert.True(t, codemode.Gate{Forced: true}.Decide(
-		codemode.OverrideOn, aiprovider.KindAnthropicMessages, "any").Writes,
-		"the bench's forced run exercises writes")
+	forced := codemode.Gate{Forced: true}
+	assert.False(t, forced.Decide(codemode.OverrideOn, aiprovider.KindAnthropicMessages, "any").Writes,
+		"code mode forced on reads only")
+	writes := forced.Decide(codemode.OverrideWrites, aiprovider.KindAnthropicMessages, "any")
+	assert.True(t, writes.Allowed && writes.Writes, "the bench forces writes on by asking for them")
+	assert.False(t, codemode.Gate{}.Decide(
+		codemode.OverrideWrites, aiprovider.KindAnthropicMessages, "any").Allowed,
+		"writes are forced only where the bench runs")
 }

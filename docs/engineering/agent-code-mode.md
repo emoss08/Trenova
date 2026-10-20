@@ -430,7 +430,7 @@ harness's sandbox (`scriptDesk`) plays through the **real** broker and `dispatch
 - `print <text>`.
 
 `expect.script` names what must have been read, what the broker must have refused and the
-limit that must have been reached. A new invariant, `script_reads_only`, fails any case where a
+limit that must have been reached. A new invariant, `script_reads_only` (since 5b `script_writes_held`), fails any case where a
 write a script named came back other than refused, or ran. Every existing invariant
 (`dispatch_within_held`, `tenant_scoped`, `leaving_write_held`, …) holds over the broker's reads
 too.
