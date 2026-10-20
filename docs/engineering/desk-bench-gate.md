@@ -126,6 +126,11 @@ The pairs, their `mode` and `pair` fields and the side-by-side pair report come 
 gate reads them once they land; this harness adds the unauthorized-effects audit the last condition
 needs. Each enabled model goes into `codemode.models.yaml`.
 
+**Re-checked in run 2.** The rewrites (b) and the efforts (c) change what every model sees, so
+run 2 runs the held-out pairs again, under the final configuration, for every model run 1
+enabled. A model that no longer meets the rule comes back out of `codemode.models.yaml` in the
+same PR. Both runs' figures are reported side by side.
+
 ### (b) Tool descriptions
 
 **Inputs.** Only development-split material:
@@ -229,8 +234,8 @@ Each merges through its own PR before the run.
    - it replays `advisor_tool_result` blocks unchanged;
    - it counts advisor tokens and cost;
    - the bench gets the `+advisor` suffix.
-3. **Code mode in the gate** (after 5a): the gate reads 5a's `mode` and `pair` fields and applies
-   rule (a) to the held-out pairs.
+3. **Code mode in the gate** (after 5a): the gate reads 5a's `mode` and `pair` fields, applies
+   rule (a) to the held-out pairs in run 1, and again in run 2 for every model run 1 enabled.
 
 ## Running it
 
@@ -277,3 +282,7 @@ and the transcripts by split. Run 2's results land in `.deskbench/gates/<time>-c
 - **Effort and advisor:**
   - the lowest effort per route within 2 points of pass^4 of the best;
   - the advisor tried only on routes where Haiku's pass^4 is at least 10 points below Sonnet's.
+- **Where the owner's answers differ**, they stand: `gpt-6-luna@medium` stays in the matrix, and
+  effort is always set on the provider.
+- **Code mode in run 2:** re-checked on the held-out pairs under the final configuration, as
+  above.
