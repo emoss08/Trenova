@@ -24,13 +24,13 @@ that do not depend on them do not wait.
 | Dependency | State on 2026-10-20 |
 |---|---|
 | Agent list paging fix | Merged (#835, #839) |
-| Typed filters on GraphQL reads (Phase 3) | Open (#842) |
+| Typed filters on GraphQL reads (Phase 3) | Merged (#842) |
 | Phase 5a, code mode for reads, and the paired scenarios | Merged (#837) |
-| Phase 5b, code mode batch writes | Merged (#838) |
+| Phase 5b, code mode batch writes | Merged (#838, #849) |
 | Approval-cards fix, and held proposals shown | Merged (#843, #844) |
 | The gate run, its measures and step setup | Merged (#840) |
 | The advisor in the Anthropic adapter, and `+advisor` cells | Merged (#841) |
-| Code mode in the gate, rule (a) | This change |
+| Code mode in the gate, rule (a) | Merged (#848) |
 
 ## The matrix
 
@@ -286,9 +286,8 @@ mode per model, effort per route and the advisor. Follow these steps in order an
 step says to stop.
 
 Work in services/tms. Prerequisites: check each one, and stop and tell me if any fails:
-1. `git checkout master && git pull`. Then check that master carries #842 (typed filters on
-   GraphQL reads). If it does not, stop: the run waits on it. #835, #837, #838, #840, #841,
-   #843 and #844 are already merged.
+1. `git checkout master && git pull`. Every PR the run waits on is merged (#835, #837, #838,
+   #840, #841, #842, #843, #844, #848, #849); if `git log` lacks any of them, stop.
 2. `task docker-up`, then `task db-reset`. This drops, migrates and seeds
    the development database. Never point the bench at any other database: it approves real
    writes.
