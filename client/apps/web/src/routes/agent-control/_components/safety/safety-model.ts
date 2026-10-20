@@ -132,6 +132,7 @@ export const HELD_BY_KEYS = [
   "money_run_amount",
   "money_day_calls",
   "money_day_amount",
+  "script_intent",
 ] as const;
 
 /** Every reason a held tool goes no further, before or after outside text, each once. */
@@ -187,6 +188,8 @@ export function heldByLabel(t: TranslateFn, key: string): string {
       return t("Day's change count reached");
     case "money_day_amount":
       return t("Day's money limit reached");
+    case "script_intent":
+      return t("Prepared by a script");
     default:
       return key;
   }

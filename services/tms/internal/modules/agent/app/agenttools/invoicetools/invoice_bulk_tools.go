@@ -132,6 +132,10 @@ func (t *PostInvoicesTool) Preview(
 	return t.batch.Preview(ctx, t, &params)
 }
 
+func (t *PostInvoicesTool) SplitRecords(params map[string]any) ([]map[string]any, error) {
+	return t.batch.Split(params)
+}
+
 func (t *PostInvoicesTool) Validate(
 	ctx context.Context,
 	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
@@ -212,6 +216,10 @@ func (t *SendInvoicesTool) Preview(
 	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	return t.batch.Preview(ctx, t, &params)
+}
+
+func (t *SendInvoicesTool) SplitRecords(params map[string]any) ([]map[string]any, error) {
+	return t.batch.Split(params)
 }
 
 func (t *SendInvoicesTool) Validate(
@@ -311,6 +319,12 @@ func (t *ApproveBillingQueueItemsTool) Preview(
 	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	return t.batch.Preview(ctx, t, &params)
+}
+
+func (t *ApproveBillingQueueItemsTool) SplitRecords(
+	params map[string]any,
+) ([]map[string]any, error) {
+	return t.batch.Split(params)
 }
 
 func (t *ApproveBillingQueueItemsTool) Validate(

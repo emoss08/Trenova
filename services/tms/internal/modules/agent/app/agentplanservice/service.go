@@ -320,7 +320,7 @@ func (s *Service) claimAndRun(
 
 	if req.Decision == agent.DecisionRejected {
 		s.rejectSteps(ctx, req, prepared.steps, actor)
-		s.logDecision(plan, actor, "Agent plan rejected")
+		s.logDecision(plan, prepared.steps, actor, "Agent plan rejected")
 		s.announce(ctx, plan, actor, agentports.ActivityUpdated)
 		s.followUp(ctx, plan, req.TenantInfo)
 
@@ -334,7 +334,7 @@ func (s *Service) claimAndRun(
 		actor:   actor,
 		preview: prepared.shown,
 	})
-	s.logDecision(plan, actor, "Agent plan approved and executed")
+	s.logDecision(plan, prepared.steps, actor, "Agent plan approved and executed")
 	action := agentports.ActivityUpdated
 	if from == agent.PlanStatusApproving {
 		action = agentports.ActivityCommitted
@@ -898,6 +898,7 @@ func (s *Service) rejectSteps(
 
 func (s *Service) logDecision(
 	plan *agent.AgentPlan,
+	steps []*agent.AgentProposal,
 	actor *permissionports.RequestActor,
 	comment string,
 ) {
@@ -914,7 +915,7 @@ func (s *Service) logDecision(
 		PrincipalType:  auditActor.PrincipalType,
 		PrincipalID:    auditActor.PrincipalID,
 		APIKeyID:       auditActor.APIKeyID,
-		CurrentState:   jsonutils.MustToJSON(plan),
+		CurrentState:   decisionState(plan, steps),
 		OrganizationID: plan.OrganizationID,
 		BusinessUnitID: plan.BusinessUnitID,
 		Critical:       true,
@@ -964,4 +965,28 @@ func shadowRefusal(verdict agentshadow.Verdict) error {
 		"Plans cannot be actioned while all agents are paused. " +
 			"Turn off \"Pause all agents\" on the AI Control overview, then decide again",
 	)
+}
+
+// decisionState is the plan as decided and, when any step was decided after
+// its run read outside content, that content's marks: the trail says what
+// may have steered the changes, a script's batch above all.
+func decisionState(plan *agent.AgentPlan, steps []*agent.AgentProposal) map[string]any {
+	state := jsonutils.MustToJSON(plan)
+	tainted := false
+	taint := &agent.RunTaint{}
+	for _, step := range steps {
+		if step != nil && step.Tainted {
+			tainted = true
+			taint.Merge(step.Taint)
+		}
+	}
+	if !tainted {
+		return state
+	}
+	state["tainted"] = true
+	if taint.Tainted() {
+		state["taint"] = jsonutils.MustToJSON(taint)
+	}
+
+	return state
 }

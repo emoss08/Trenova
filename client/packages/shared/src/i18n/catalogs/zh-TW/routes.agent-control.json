@@ -1192,6 +1192,7 @@
   "Platform": "平台",
   "Platform settings": "平台設定",
   "Preferred provider": "偏好供應商",
+  "Prepared by a script": "由指令碼準備",
   "Present": "在場",
   "Present on both sides but could not be compared": "兩邊皆有值，但無法比較",
   "Previews every write, never makes one": "預覽每項寫入，但從不實際寫入",

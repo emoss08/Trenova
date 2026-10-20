@@ -5194,7 +5194,7 @@ type AgentProposal {
   """
   executionError: String!
   """
-  What held the write below running on its own: agent_ceiling, tool_max, egress_class, condition, tainted, tool_tier, personal_exemption, business_hours or one of the money_ bounds.
+  What held the write below running on its own: agent_ceiling, tool_max, egress_class, condition, tainted, tool_tier, personal_exemption, business_hours, script_intent or one of the money_ bounds.
   """
   heldBy: [String!]!
   """

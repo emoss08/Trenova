@@ -98,6 +98,10 @@ type AgentProposal struct {
 	ExecutedByUserID      pulid.ID `json:"executedByUserId"      bun:"executed_by_user_id,type:VARCHAR(100),nullzero"`
 	ExecutedTargetVersion *int64   `json:"executedTargetVersion" bun:"executed_target_version,type:BIGINT,nullzero"`
 
+	// ScriptStepKey is the ledger step of the script that wrote this proposal
+	// as an intent; empty for a write the model called itself.
+	ScriptStepKey string `json:"scriptStepKey" bun:"script_step_key,type:VARCHAR(120),nullzero"`
+
 	// PendingModifications is the wording a person changed on the proposal
 	// and has not yet approved with, keyed by parameter, kept so the edit
 	// survives a reload. Set only while the proposal is pending; deciding it

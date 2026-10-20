@@ -275,7 +275,7 @@ type AgentProposal {
   taint: AgentRunTaint
   "Where the write reaches, as it was proposed and then as it ran. Null for a proposal recorded before it was kept."
   egressClass: AgentEgressClass
-  "What held the write below running on its own: agent_ceiling, tool_max, egress_class, condition, tainted, tool_tier, personal_exemption, business_hours or one of the money_ bounds."
+  "What held the write below running on its own: agent_ceiling, tool_max, egress_class, condition, tainted, tool_tier, personal_exemption, business_hours, script_intent or one of the money_ bounds."
   heldBy: [String!]!
   "Approving it needs the digest of the preview the approver was shown: it moves money, reaches a customer, a driver or someone outside, or was proposed after the run read outside text."
   reviewRequired: Boolean!

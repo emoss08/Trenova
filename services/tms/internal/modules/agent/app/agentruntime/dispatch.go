@@ -95,6 +95,11 @@ type dispatchParams struct {
 	afterExternal bool
 	beyond        agent.AutonomyTier
 	stepKey       string
+	// scriptStepKey is set for a write a script prepared: the ledger step of
+	// the script. The call is decided and previewed as any write is, and
+	// handed back as an intent; it never runs before a person approves the
+	// script's batch.
+	scriptStepKey string
 	gate          scriptGate
 }
 
@@ -216,9 +221,10 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		Unattended:     req.Unattended,
 		Taint:          decisionTaint(p.taint, p.afterExternal),
 		MoneyAllowance: s.moneyAllowance(req, p.moneySpent),
+		FromScript:     p.scriptStepKey != "",
 	})
 	tier, heldForExternal, heldForHours := decision.Tier, false, false
-	if !agenttoolpolicy.Escalates(req.Definition, &policy) {
+	if p.scriptStepKey != "" || !agenttoolpolicy.Escalates(req.Definition, &policy) {
 		tier, heldForExternal = afterExternalContent(tier, p.afterExternal)
 		tier, heldForHours = s.heldForBusinessHours(ctx, req, tier)
 	}
@@ -250,6 +256,11 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		MoneyMinor:    decision.MoneyMinor,
 		MoneyCurrency: decision.MoneyCurrency,
 		Tainted:       p.taint.Tainted() || p.afterExternal,
+		ScriptStepKey: p.scriptStepKey,
+	}
+	if p.scriptStepKey != "" && tier == agent.TierAutoExecute {
+		return refusedOutcome(aitrace.OutcomeInvalid, "a prepared change would run on its own",
+			"Tool %q was not prepared: a change from a script never runs on its own.", call.Name)
 	}
 	if heldForExternal && !slices.Contains(action.HeldBy, agenttoolpolicy.HeldByTainted) {
 		action.HeldBy = append(slices.Clone(action.HeldBy), agenttoolpolicy.HeldByTainted)
@@ -324,7 +335,13 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		}
 		action.Target = target
 
-		content := proposedText(call.Name, action.ProposalID, tier, s.proposalHold(ctx, req)) +
+		content := s.filedText(ctx, &filedTextParams{
+			req:      req,
+			toolName: call.Name,
+			action:   action,
+			tier:     tier,
+			prepared: p.scriptStepKey != "",
+		}) +
 			heldReason(action.HeldBy, decision.Egress) + filingEcho(baseline, call.Arguments)
 		if note := p.argumentNote; note != "" {
 			content += "\n" + note
@@ -354,6 +371,27 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 	}
 
 	return s.executeAction(ctx, actionParams{dispatchParams: p, tool: tool, action: action})
+}
+
+type filedTextParams struct {
+	req      *agentports.RunRequest
+	toolName string
+	action   *agentports.PendingAction
+	tier     agent.AutonomyTier
+	prepared bool
+}
+
+func (s *Service) filedText(ctx context.Context, p *filedTextParams) string {
+	if p.prepared {
+		return fmt.Sprintf(
+			"Prepared a change to run %q. Nothing has run: when the script ends it is filed "+
+				"with the script's other changes as one batch, which a person approves or rejects "+
+				"as a whole.",
+			p.toolName,
+		)
+	}
+
+	return proposedText(p.toolName, p.action.ProposalID, p.tier, s.proposalHold(ctx, p.req))
 }
 
 func unresolvedSelection(toolName, verb string, err error) toolOutcome {
@@ -838,6 +876,11 @@ func heldReason(heldBy []string, egress agent.EgressClass) string {
 			reasons = append(reasons, "this turn read text written outside the organization")
 		case agenttoolpolicy.HeldByBusinessHours:
 			reasons = append(reasons, "it is outside this agent's business hours")
+		case agenttoolpolicy.HeldByScriptIntent:
+			reasons = append(
+				reasons,
+				"a script prepared it, and a person approves the script's batch",
+			)
 		default:
 			if reason, ok := moneyHeldReasons[key]; ok {
 				reasons = append(reasons, reason)

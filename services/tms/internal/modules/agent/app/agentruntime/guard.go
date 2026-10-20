@@ -50,6 +50,9 @@ type guardedDispatchParams struct {
 	// organization, so no write may run without a person.
 	afterExternal bool
 	beyond        agent.AutonomyTier
+	// scriptStepKey is the ledger step of the script whose broker made the
+	// call; a write under it is an intent and never runs.
+	scriptStepKey string
 	gate          scriptGate
 	caller        string
 	callIndex     int
@@ -106,6 +109,7 @@ func (s *Service) guardedDispatch(
 			taint:          p.taint,
 			afterExternal:  p.afterExternal,
 			beyond:         p.beyond,
+			scriptStepKey:  p.scriptStepKey,
 			gate:           p.gate,
 		})
 		finishToolSpan(span, &outcome, p.afterExternal)
@@ -188,6 +192,7 @@ func (s *Service) claimAndDispatch(
 		afterExternal:  p.afterExternal,
 		beyond:         p.beyond,
 		stepKey:        key,
+		scriptStepKey:  p.scriptStepKey,
 		gate:           p.gate,
 	})
 
