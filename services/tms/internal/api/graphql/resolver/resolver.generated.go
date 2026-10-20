@@ -358,6 +358,7 @@ type Resolver struct {
 	payProfile                         *driversettlementresolver.PayProfileResolver
 	payProfileComponent                *driversettlementresolver.PayProfileComponentResolver
 	payRateOverride                    *driversettlementresolver.PayRateOverrideResolver
+	pendingDecisionEdge                *decisionsresolver.PendingDecisionEdgeResolver
 	performanceReview                  *performancereviewresolver.PerformanceReviewResolver
 	performanceReviewTemplate          *performancereviewresolver.PerformanceReviewTemplateResolver
 	plannedPTOAccrual                  *ptopolicyresolver.PlannedPTOAccrualResolver
@@ -1471,6 +1472,7 @@ func FromServices(s *Services) *Resolver {
 		payProfile:                &driversettlementresolver.PayProfileResolver{Deps: driversettlementDeps},
 		payProfileComponent:       &driversettlementresolver.PayProfileComponentResolver{Deps: driversettlementDeps},
 		payRateOverride:           &driversettlementresolver.PayRateOverrideResolver{Deps: driversettlementDeps},
+		pendingDecisionEdge:       &decisionsresolver.PendingDecisionEdgeResolver{Deps: decisionsDeps},
 		performanceReview:         &performancereviewresolver.PerformanceReviewResolver{Deps: performancereviewDeps},
 		performanceReviewTemplate: &performancereviewresolver.PerformanceReviewTemplateResolver{Deps: performancereviewDeps},
 		plannedPTOAccrual:         &ptopolicyresolver.PlannedPTOAccrualResolver{Deps: ptopolicyDeps},
@@ -2675,6 +2677,10 @@ func (r *Resolver) PayProfileComponent() generated.PayProfileComponentResolver {
 
 func (r *Resolver) PayRateOverride() generated.PayRateOverrideResolver {
 	return r.payRateOverride
+}
+
+func (r *Resolver) PendingDecisionEdge() generated.PendingDecisionEdgeResolver {
+	return r.pendingDecisionEdge
 }
 
 func (r *Resolver) PerformanceReview() generated.PerformanceReviewResolver {

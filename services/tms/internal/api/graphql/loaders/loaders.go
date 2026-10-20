@@ -89,6 +89,7 @@ type FactoryParams struct {
 	AgentMemoryReplacement                    *AgentMemoryReplacementLoaderFactory
 	AgentDefinitionByID                       *AgentDefinitionByIDLoaderFactory
 	AgentsPaused                              *AgentsPausedLoaderFactory
+	AgentPlanHold                             *AgentPlanHoldLoaderFactory
 	SuggestedAgentByEventKind                 *SuggestedAgentByEventKindLoaderFactory
 	ThreadAgentByID                           *ThreadAgentByIDLoaderFactory
 	UsableAgentByID                           *UsableAgentByIDLoaderFactory
@@ -177,6 +178,7 @@ type Factory struct {
 	agentMemoryReplacement                    *AgentMemoryReplacementLoaderFactory
 	agentDefinitionByID                       *AgentDefinitionByIDLoaderFactory
 	agentsPaused                              *AgentsPausedLoaderFactory
+	agentPlanHold                             *AgentPlanHoldLoaderFactory
 	suggestedAgentByEventKind                 *SuggestedAgentByEventKindLoaderFactory
 	threadAgentByID                           *ThreadAgentByIDLoaderFactory
 	usableAgentByID                           *UsableAgentByIDLoaderFactory
@@ -265,6 +267,7 @@ type set struct {
 	agentMemoryReplacement                    *dataloadgen.Loader[string, *agent.Memory]
 	agentDefinitionByID                       *dataloadgen.Loader[string, *agentdefinition.Definition]
 	agentsPaused                              *dataloadgen.Loader[string, bool]
+	agentPlanHold                             *dataloadgen.Loader[string, *agentports.ProposalHold]
 	suggestedAgentByEventKind                 *dataloadgen.Loader[string, *agentdefinition.Definition]
 	threadAgentByID                           *dataloadgen.Loader[string, *conversation.Thread]
 	usableAgentByID                           *dataloadgen.Loader[string, *agentdefinition.Definition]
@@ -360,6 +363,7 @@ func NewFactory(p FactoryParams) *Factory {
 		agentMemoryReplacement:                    p.AgentMemoryReplacement,
 		agentDefinitionByID:                       p.AgentDefinitionByID,
 		agentsPaused:                              p.AgentsPaused,
+		agentPlanHold:                             p.AgentPlanHold,
 		suggestedAgentByEventKind:                 p.SuggestedAgentByEventKind,
 		threadAgentByID:                           p.ThreadAgentByID,
 		usableAgentByID:                           p.UsableAgentByID,
@@ -501,6 +505,7 @@ func newSet(f *Factory, tenantInfo pagination.TenantInfo) *set {
 		),
 		agentDefinitionByID: newAgentDefinitionByIDLoader(f.agentDefinitionByID, tenantInfo),
 		agentsPaused:        newAgentsPausedLoader(f.agentsPaused, tenantInfo),
+		agentPlanHold:       newAgentPlanHoldLoader(f.agentPlanHold, tenantInfo),
 		suggestedAgentByEventKind: newSuggestedAgentByEventKindLoader(
 			f.suggestedAgentByEventKind,
 			tenantInfo,

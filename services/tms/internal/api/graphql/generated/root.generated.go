@@ -507,6 +507,7 @@ type ResolverRoot interface {
 	PayProfile() PayProfileResolver
 	PayProfileComponent() PayProfileComponentResolver
 	PayRateOverride() PayRateOverrideResolver
+	PendingDecisionEdge() PendingDecisionEdgeResolver
 	PerformanceReview() PerformanceReviewResolver
 	PerformanceReviewTemplate() PerformanceReviewTemplateResolver
 	PlannedPTOAccrual() PlannedPTOAccrualResolver
@@ -2621,6 +2622,10 @@ type PayRateOverrideResolver interface {
 	Rate(ctx context.Context, obj *driverpay.RateOverride) (string, error)
 }
 
+type PendingDecisionEdgeResolver interface {
+	Hold(ctx context.Context, obj *gqlmodel.PendingDecisionEdge) (*gqlmodel.PendingDecisionHold, error)
+}
+
 type PerformanceReviewResolver interface {
 	ReviewerID(ctx context.Context, obj *worker.PerformanceReview) (*string, error)
 	OverallScore(ctx context.Context, obj *worker.PerformanceReview) (*string, error)
@@ -4162,6 +4167,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"PayProfile":                         func() any { return r.PayProfile() },
 			"PayProfileComponent":                func() any { return r.PayProfileComponent() },
 			"PayRateOverride":                    func() any { return r.PayRateOverride() },
+			"PendingDecisionEdge":                func() any { return r.PendingDecisionEdge() },
 			"PerformanceReview":                  func() any { return r.PerformanceReview() },
 			"PerformanceReviewTemplate":          func() any { return r.PerformanceReviewTemplate() },
 			"PlannedPTOAccrual":                  func() any { return r.PlannedPTOAccrual() },

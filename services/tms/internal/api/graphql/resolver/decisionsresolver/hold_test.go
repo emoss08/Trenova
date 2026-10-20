@@ -162,25 +162,39 @@ func TestAgentProposalHold_IsAbsentOnceDecided(t *testing.T) {
 	assert.Zero(t, world.controls.reads)
 }
 
-func TestAgentPlanHold_NamesTheSwitchWhileItWaits(t *testing.T) {
+/*
+PendingDecisionEdge.hold is deprecated for the node's own hold and keeps
+answering what the node answers, so a client still on the edge field sees the
+same hold the Desk card does.
+*/
+func TestPendingDecisionEdgeHold_AnswersWhatItsNodeAnswers(t *testing.T) {
 	t.Parallel()
 
 	world := newHoldWorld(t, false)
-	resolver := &AgentPlanResolver{}
-	plan := &agent.AgentPlan{
-		ID:             pulid.MustNew("apl_"),
-		OrganizationID: world.tenant.OrgID,
-		RunID:          world.shadeRun,
-		Status:         agent.PlanStatusPending,
-	}
+	resolver := &PendingDecisionEdgeResolver{}
 
-	hold, err := resolver.Hold(world.ctx, plan)
+	held, err := resolver.Hold(world.ctx, &gqlmodel.PendingDecisionEdge{
+		Node: world.proposal(world.shadeRun, agent.ProposalStatusPending),
+	})
 	require.NoError(t, err)
-	require.NotNil(t, hold)
-	assert.Equal(t, gqlmodel.PendingDecisionHoldReasonAgentShadow, hold.Reason)
+	assert.Equal(t, &gqlmodel.PendingDecisionHold{
+		Reason:    gqlmodel.PendingDecisionHoldReasonAgentShadow,
+		AgentName: "Billing exceptions",
+	}, held)
 
-	plan.Status = agent.PlanStatusRejected
-	hold, err = resolver.Hold(world.ctx, plan)
+	free, err := resolver.Hold(world.ctx, &gqlmodel.PendingDecisionEdge{
+		Node: world.proposal(world.liveRun, agent.ProposalStatusPending),
+	})
 	require.NoError(t, err)
-	assert.Nil(t, hold)
+	assert.Nil(t, free)
+}
+
+func TestPendingDecisionSummary_HeldIsWhatTheBadgeLeavesOut(t *testing.T) {
+	t.Parallel()
+
+	summary := &agentports.PendingDecisionSummary{Total: 5}
+
+	assert.Equal(t, 2, pendingDecisionSummary(summary, 3).Held)
+	assert.Equal(t, 5, pendingDecisionSummary(summary, 0).Held, "a pause holds everything")
+	assert.Equal(t, 0, pendingDecisionSummary(summary, 5).Held)
 }

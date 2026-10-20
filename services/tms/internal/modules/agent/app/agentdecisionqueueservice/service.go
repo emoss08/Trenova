@@ -74,10 +74,6 @@ func (s *Service) ListPending(
 	if withheld(req.Usable) {
 		return &agentports.PendingDecisionsPage{Items: []agentports.PendingDecision{}}, nil
 	}
-	paused, err := s.shadow.Organization(ctx, req.TenantInfo)
-	if err != nil {
-		return nil, err
-	}
 
 	limit := req.First
 	if limit <= 0 {
@@ -112,7 +108,7 @@ func (s *Service) ListPending(
 		return nil, err
 	}
 
-	items, err := s.loadEntries(ctx, req.TenantInfo, page.Entries, paused)
+	items, err := s.loadEntries(ctx, req.TenantInfo, page.Entries)
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +132,6 @@ func (s *Service) loadEntries(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	entries []agentports.PendingDecisionEntry,
-	paused bool,
 ) ([]agentports.PendingDecision, error) {
 	proposalIDs := make([]pulid.ID, 0, len(entries))
 	planIDs := make([]pulid.ID, 0, len(entries))
@@ -183,11 +178,7 @@ func (s *Service) loadEntries(
 		if err != nil {
 			return nil, err
 		}
-		item := agentports.PendingDecision{
-			CreatedAt: entry.CreatedAt,
-			Cursor:    cursor,
-			Hold:      holdOf(entry, paused),
-		}
+		item := agentports.PendingDecision{CreatedAt: entry.CreatedAt, Cursor: cursor}
 		switch entry.Kind {
 		case agentports.PendingDecisionProposal:
 			proposal, ok := proposalsByID[entry.ID]
@@ -218,11 +209,16 @@ func (s *Service) Count(
 	if withheld(usable) {
 		return 0, nil
 	}
+	paused, err := s.shadow.Organization(ctx, tenant)
+	if err != nil || paused {
+		return 0, err
+	}
 
 	return s.queue.CountPending(ctx, agentports.ListPendingDecisionsQuery{
-		TenantInfo: tenant,
-		Audience:   audienceOf(usable),
-		Now:        timeutils.NowUnix(),
+		TenantInfo:     tenant,
+		Audience:       audienceOf(usable),
+		Now:            timeutils.NowUnix(),
+		ActionableOnly: true,
 	})
 }
 
@@ -279,20 +275,6 @@ func (s *Service) Recent(
 	return out, nil
 }
 
-func holdOf(entry agentports.PendingDecisionEntry, paused bool) *agentports.ProposalHold {
-	switch {
-	case paused:
-		return &agentports.ProposalHold{Reason: string(agentshadow.CauseOrganization)}
-	case entry.Shadow:
-		return &agentports.ProposalHold{
-			Reason:    string(agentshadow.CauseDefinition),
-			AgentName: entry.AgentName,
-		}
-	default:
-		return nil
-	}
-}
-
 func withheld(usable *permissionports.UsableAgents) bool {
 	return usable != nil && !usable.Assistant
 }
@@ -316,24 +298,11 @@ func (s *Service) Summary(
 			ByTool:  []agentports.PendingDecisionToolCount{},
 		}, nil
 	}
-	paused, err := s.shadow.Organization(ctx, tenant)
-	if err != nil {
-		return nil, err
-	}
-
-	summary, err := s.queue.Summary(ctx, agentports.PendingDecisionSummaryRequest{
+	return s.queue.Summary(ctx, agentports.PendingDecisionSummaryRequest{
 		TenantInfo: tenant,
 		Audience:   audienceOf(usable),
 		Now:        timeutils.NowUnix(),
 	})
-	if err != nil {
-		return nil, err
-	}
-	if paused {
-		summary.Held = summary.Total
-	}
-
-	return summary, nil
 }
 
 // DecideMany decides several proposals of one tool the same way. It refuses

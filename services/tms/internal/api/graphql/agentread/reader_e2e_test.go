@@ -188,23 +188,25 @@ func TestReader_RefusesWhatTheScreenRefuses(t *testing.T) {
 		Denied: []string{permission.ResourceEquipmentManufacturer.String()},
 	}, repo)
 
-	for name, actor := range map[string]*permissionports.RequestActor{
-		"a person": agentreadtest.Person(),
-		"an agent": agentreadtest.Agent(agentreadtest.Person()),
-	} {
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
+	t.Run("actors", func(t *testing.T) {
+		for name, actor := range map[string]*permissionports.RequestActor{
+			"a person": agentreadtest.Person(),
+			"an agent": agentreadtest.Agent(agentreadtest.Person()),
+		} {
+			t.Run(name, func(t *testing.T) {
+				t.Parallel()
 
-			result, err := agentreadtest.Read(t.Context(), reader,
-				actor, manufacturerTable,
-				map[string]any{"input": map[string]any{"first": 10}},
-				permission.SensitivityInternal)
+				result, err := agentreadtest.Read(t.Context(), reader,
+					actor, manufacturerTable,
+					map[string]any{"input": map[string]any{"first": 10}},
+					permission.SensitivityInternal)
 
-			require.NoError(t, err)
-			require.NotEmpty(t, result.Errors)
-			assert.Equal(t, agentports.GraphQLCodeForbidden, result.Errors[0].Code)
-		})
-	}
+				require.NoError(t, err)
+				require.NotEmpty(t, result.Errors)
+				assert.Equal(t, agentports.GraphQLCodeForbidden, result.Errors[0].Code)
+			})
+		}
+	})
 	assert.Empty(t, repo.requests(), "a refused read never reaches the repository")
 }
 

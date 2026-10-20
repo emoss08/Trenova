@@ -11131,8 +11131,7 @@ type PendingDecisionHold {
 type PendingDecisionEdge {
   node: PendingDecision!
   cursor: String!
-  "Set while a switch keeps it from being decided; absent when a person can decide it now."
-  hold: PendingDecisionHold
+  hold: PendingDecisionHold @deprecated(reason: "Read hold on the node: AgentProposal.hold or AgentPlan.hold.")
 }
 
 type PendingDecisionConnection {

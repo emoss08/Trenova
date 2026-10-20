@@ -710,16 +710,7 @@ func planVerdict(
 	if !plan.Status.Decidable() {
 		return agentshadow.Verdict{}
 	}
-	if verdict := verdicts[plan.RunID]; verdict.Shadow() {
-		return verdict
-	}
-	for _, runID := range stepRuns {
-		if verdict := verdicts[runID]; verdict.Shadow() {
-			return verdict
-		}
-	}
-
-	return agentshadow.Verdict{}
+	return agentshadow.PlanVerdict(verdicts, plan.RunID, stepRuns)
 }
 
 func toAssistantPlan(

@@ -190,6 +190,10 @@ func (s *Service) CommitApproval(ctx context.Context, req *agentports.CommitAppr
 			open = append(open, decision.ID)
 		}
 	}
+	open, err = s.withdrawHeld(ctx, tenant, group, open, actor.AuditActor())
+	if err != nil {
+		return err
+	}
 	claimed, err := s.decisionRepo.MarkCommitted(ctx, agentports.SettleAgentDecisionsRequest{
 		IDs:        open,
 		TenantInfo: tenant,
@@ -256,7 +260,34 @@ func (s *Service) commitOne(
 		return
 	}
 
-	if _, err := s.proposalRepo.UpdateStatus(ctx, agentports.UpdateAgentProposalStatusRequest{
+	pending, err := s.proposalRepo.GetByID(ctx, agentports.GetAgentProposalByIDRequest{
+		ID:         *decision.ProposalID,
+		TenantInfo: &tenant,
+	})
+	if err != nil {
+		s.l.Error("a committed approval's proposal could not be read",
+			zap.String("proposal", decision.ProposalID.String()), zap.Error(err))
+
+		return
+	}
+	if pending.Status != agent.ProposalStatusApproving {
+		return
+	}
+	verdict, err := s.heldVerdict(ctx, tenant, pending)
+	if err != nil {
+		s.l.Error("whether a committed approval's proposal is held could not be read",
+			zap.String("proposal", decision.ProposalID.String()), zap.Error(err))
+
+		return
+	}
+	if verdict.Shadow() {
+		s.reopen(ctx, tenant, pending.ID)
+		s.logHeld(pending, verdict, actor.AuditActor())
+
+		return
+	}
+
+	if _, err = s.proposalRepo.UpdateStatus(ctx, agentports.UpdateAgentProposalStatusRequest{
 		ID:         *decision.ProposalID,
 		Status:     proposalStatusFor(decision.Decision),
 		FromStatus: agent.ProposalStatusApproving,

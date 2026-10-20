@@ -78,6 +78,10 @@ models:
   Decimal:
     model:
       - github.com/99designs/gqlgen/graphql.String
+  PendingDecisionEdge:
+    fields:
+      hold:
+        resolver: true
   Shipment:
     fields:
       orderNumber:

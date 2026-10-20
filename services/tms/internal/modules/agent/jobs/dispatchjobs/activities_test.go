@@ -406,6 +406,13 @@ func (s *stubProposalRepo) CountExecutedTool(
 	return 0, nil
 }
 
+func (s *stubProposalRepo) ListByPlans(
+	context.Context,
+	agentports.ListAgentProposalsByPlansRequest,
+) ([]*agent.AgentProposal, error) {
+	return nil, nil
+}
+
 func (s *stubProposalRepo) ListByPlan(
 	context.Context,
 	agentports.ListAgentProposalsByPlanRequest,

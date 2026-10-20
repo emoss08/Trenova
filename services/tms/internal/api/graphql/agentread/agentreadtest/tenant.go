@@ -16,6 +16,9 @@ import (
 // who reads in it.
 type Tenant struct {
 	Actor *permissionports.RequestActor
+	// StateID is a US state written for the tenant, for records that need an
+	// address.
+	StateID pulid.ID
 }
 
 // Scope is the tenant's database scope, which row-level security reads.
@@ -60,11 +63,14 @@ func SeedTenant(t *testing.T, admin *bun.DB, label string) *Tenant {
 	require.NoError(t, tx.Commit())
 	user := person.ID
 
-	return &Tenant{Actor: &permissionports.RequestActor{
-		PrincipalType:  permissionports.PrincipalTypeUser,
-		PrincipalID:    user,
-		UserID:         user,
-		OrganizationID: org,
-		BusinessUnitID: bu,
-	}}
+	return &Tenant{
+		Actor: &permissionports.RequestActor{
+			PrincipalType:  permissionports.PrincipalTypeUser,
+			PrincipalID:    user,
+			UserID:         user,
+			OrganizationID: org,
+			BusinessUnitID: bu,
+		},
+		StateID: pulid.ID(state),
+	}
 }

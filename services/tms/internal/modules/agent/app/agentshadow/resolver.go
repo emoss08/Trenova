@@ -185,6 +185,23 @@ func (r *Resolver) definition(
 	return definition, nil
 }
 
+func PlanVerdict(
+	verdicts map[pulid.ID]Verdict,
+	runID pulid.ID,
+	stepRunIDs []pulid.ID,
+) Verdict {
+	if verdict := verdicts[runID]; verdict.Shadow() {
+		return verdict
+	}
+	for _, stepRunID := range stepRunIDs {
+		if verdict := verdicts[stepRunID]; verdict.Shadow() {
+			return verdict
+		}
+	}
+
+	return Verdict{}
+}
+
 func (v Verdict) Hold() *agentports.ProposalHold {
 	if !v.Shadow() {
 		return nil
