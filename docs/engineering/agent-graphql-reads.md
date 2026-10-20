@@ -228,10 +228,24 @@ The rule, for each listed tool:
 
    More than one candidate in a tier, or none at all, fails generation, naming the field and the
    candidates.
-4. **Overrides.** Where the rule picks wrong, the tool's line in `reads.yml` names the operation
-   and gives a `reason`. An override with no reason fails generation. So does a stale one, which
-   names the operation the rule would pick anyway. The rule is the mapping; an override is a
-   recorded exception.
+4. **Named bindings.** Where the rule picks wrong or finds nothing, the tool's line in
+   `reads.yml` names the operation and gives a `reason`, and the generator proves the binding
+   rather than taking it on trust:
+   - the operation is persisted and reads one root field;
+   - the field's shape matches the tool's verb: a connection, a list or an `items` container for
+     a list tool, one record for a get;
+   - the field's resolver checks the tool's own resource for read. The generator reads the check
+     from the resolver's code, and `TestGraphQLReadsCheckTheToolsOwnResource` holds every bound
+     tool's policy resource to it, so a read meets the same check `authorize` made.
+
+   A named binding with no reason fails generation. So does one that names the operation the rule
+   would pick anyway. A list tool never binds to a connection read that selects no `pageInfo`,
+   because it could not page. Where the node's type binds to a generated model (`gqlmodel`), the
+   line also names the `entity` whose filter configuration the resolver compiles with.
+
+   The rule binds about two in five of the tools with an operation (49 of 119 in the trial
+   recorded in the inventory). Tool names follow the product's words, not always their record
+   kind's, so the rest are named and proven.
 
 `TestEveryBoundOperationIsPersistedAsItIsRun` holds each bound operation to the manifest byte for
 byte, so a client edit that re-hashes an operation fails until the generator runs again.
@@ -617,3 +631,6 @@ reasoning for each is above.
    that the screen does not make.
 6. **The `Desk*` operation is preferred.** A list with none reads its table's operation, unless
    its module's PR adds a `Desk<Plural>` operation, backed by the result-size figures it records.
+7. **Bindings the rule cannot find are named in `reads.yml` and proven** by shape and by the
+   resource their resolver checks, never trusted. No resource-only rule was possible: most
+   resources are checked by several root fields (`edi` by thirteen).
