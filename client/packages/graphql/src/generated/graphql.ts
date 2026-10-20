@@ -9126,6 +9126,8 @@ export type WorkerPtoEntriesInput = {
   filterGroups?: Array<FilterGroupInput> | null | undefined;
   first?: number | null | undefined;
   includeWorker?: boolean | null | undefined;
+  /** true matches leave on at any point between startDateFrom and startDateTo, including leave that began before startDateFrom and is still running; false matches only leave that starts in that window. */
+  overlapping?: boolean | null | undefined;
   query?: string | null | undefined;
   sort?: Array<SortFieldInput> | null | undefined;
   startDateFrom?: number | null | undefined;

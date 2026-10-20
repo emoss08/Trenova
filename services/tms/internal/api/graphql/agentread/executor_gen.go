@@ -236,6 +236,11 @@ var operations = []Operation{
 		Document: "query DeskWorkers($input: DataTableConnectionInput!) { workers(input: $input) { edges { node { assignmentBlocked availableForDispatch canBeAssigned city createdAt driverType externalId firstName fleetCode { code id } fleetCodeId id lastName profile { cdlClass cdlRestrictions complianceStatus eldExempt endorsement hazmatExpiry isQualified lastComplianceCheck lastMvrCheck licenseExpiry medicalCardExpiry mvrDueDate physicalDueDate shortHaulExempt twicExpiry } status type wholeName } } pageInfo { endCursor hasNextPage } } }",
 	},
 	{
+		Name:     "WorkerPtoTable",
+		Hash:     "sha256:abf71b65ef60aa73f2ba26a10bd87f0746377d78969a808aec7b3bb07ff60f2f",
+		Document: "fragment WorkerDataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment WorkerPtoActorFields on User { id name } fragment WorkerPtoRowFields on WorkerPTO { approver { ...WorkerPtoActorFields } approverId autoApproved balanceAfterDays businessUnitId cancellationReason cancelledBy { ...WorkerPtoActorFields } cancelledById createdAt days endDate id organizationId reason rejectionReason rejector { ...WorkerPtoActorFields } rejectorId startDate status type updatedAt version worker { ...WorkerPtoWorkerFields } workerId } fragment WorkerPtoWorkerFields on Worker { firstName id lastName profilePicUrl wholeName } query WorkerPtoTable($includeTotalCount: Boolean = true, $input: WorkerPTOEntriesInput!) { workerPTOEntries(input: $input) { edges { node { ...WorkerPtoRowFields } } pageInfo { ...WorkerDataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+	},
+	{
 		Name:     "TrainingCourseTable",
 		Hash:     "sha256:3950fe64badf5834025ac8f16b197ff3d30925f841658c84a7182d628bf5b23d",
 		Document: "fragment TrainingCourseFields on TrainingCourse { businessUnitId category code contentUrl createdAt delivery description dueDaysAfterAssignment durationMinutes id isRequired name openRecordCount organizationId passingScore renewalWindowDays requiredForDriverTypes requiresAcknowledgement sortOrder status updatedAt validityMonths version } query TrainingCourseTable($includeTotalCount: Boolean = true, $input: TrainingCoursesInput!) { trainingCourses(input: $input) { edges { cursor node { ...TrainingCourseFields } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) } }",

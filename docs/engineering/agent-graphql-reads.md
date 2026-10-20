@@ -326,14 +326,23 @@ built as for `DataTableConnectionInput`, and the generator's supplied-variable c
 input under its own name. The input's other fields are the screen's own filters and become
 parameters sent on the input (`OnInput`), not as field filters: a single enum takes one value, a
 `Timestamp` named for a range end (`startDateFrom`, `startDateTo`) is a day in the organization's
-zone, an `ID` follows the reference rule. A field a record parameter already names, and an
-`include*` toggle the screen sets for its own rendering, is left out. Being arguments the screen
-sends, they are not judged by a record field's sensitivity. The near-miss probes keep them while
-dropping one field filter at a time.
+zone, an `ID` follows the reference rule, and a `Boolean` the schema describes is a switch whose
+description is the schema's own (`overlapping`). A range end on the input takes the place of the
+record's range parameter of the same name, because the resolver reads it with the screen's meaning:
+time off's `startDateFrom` with `overlapping` matches leave already under way, which a field filter
+on `startDate` cannot. Any other name a record parameter already takes keeps the record's, which can
+match several values (`status`). An `include*` toggle the screen sets for its own rendering is left
+out. Being arguments the screen sends, they are not judged by a record field's sensitivity. The
+near-miss probes drop one field filter at a time and then one input field at a time (never a
+switch), so an empty page names the status or the window that kept every row out.
 
 **Defaults.** A spec's `defaults` are the values a call that omits a parameter reads with, named
 in that parameter's note: `worker_list_training_courses` reads the active courses unless the call
-names a status, as its repository tool always did.
+names a status, as its repository tool always did. `defaultsAt` are defaults that depend on the
+day, applied together only when the call gives none of them: `worker_list_time_off` reads the leave
+on at any point from today through 14 days out, counted by the calendar in the organization's zone
+so a change of clocks moves neither end, and naming either date replaces that window whole.
+`inputs` are input fields every call sends as the screen sets them (each request's worker).
 
 **Operations on another bespoke input** (`FuelPurchasesInput`, `WatchtowerItemsInput`,
 `FactoringNoaListInput`, the side `filter:` inputs, …). Each input field is a parameter under its
@@ -508,6 +517,7 @@ Each module's PR:
 | Equipment | `equipment_list_tractors` | none | a driver (`primaryWorker`, `secondaryWorker`) shows only its id to a reader who cannot read workers, as the repository tool left `assignedTo` out |
 | Equipment | `equipment_list_trailers` | none | every field the table selects is Internal |
 | Workforce | `worker_list_training_courses` | none | every field the table selects is Internal |
+| Workforce | `worker_list_time_off` | `reason`, `rejectionReason`, `cancellationReason`, `balanceAfterDays` | `worker_pto` declared no field sensitivities, so under its Restricted default every field but `id` would be withheld at Internal; its dates, status, type, days and people are now declared Internal, and a leave's reasons and balance stay Restricted, where the repository row returned the reason and decision ungated. Each request's `worker` shows only its id to a reader who cannot read workers |
 | Workforce | `worker_list` | none | reads `DeskWorkers`, which selects only what the Desk reads (no address, contact, personnel or Confidential profile fields); `city` is Restricted and withheld at Internal, as the repository row gated it |
 
 None of the repository-backed reference, party or equipment lists was gated, so at a person's role ceiling below

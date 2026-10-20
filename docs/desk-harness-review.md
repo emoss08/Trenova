@@ -1467,6 +1467,7 @@ held-out`) when one is made for a PR.
 | Typed reads through GraphQL: parties | `customer_list`, `location_list`, `carrier_list` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
 | Typed reads through GraphQL: equipment | `equipment_list_tractors`, `equipment_list_trailers` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
 | Typed reads through GraphQL: workers | `worker_list` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
+| Typed reads through GraphQL: time off | `worker_list_time_off` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
 
 The shipment row is measured on the held-out set the split PR recorded (161 cases), so both
 figures read the same cases; the module's merges moved three cases between splits, which the
@@ -1567,6 +1568,15 @@ workers from each. The list keeps the repository row's rules as named hooks: the
 first for a name search, and a NonCompliant credential folded into `canBeAssigned`. Its profile
 filters (endorsement, CDL class, compliance, credential dates) are derived from the profile's own
 fields. Held-out ranking is unchanged.
+
+The time off row converts `worker_list_time_off`, whose default window reads leave that overlaps
+the next two weeks, including leave that began earlier and is still running, which the screen's
+start-date bounds could not say. `WorkerPTOEntriesInput` gains an additive `overlapping` field that
+the resolver passes to the repository's existing overlap filter (`gqlschema-diff`: one safe change),
+with a Postgres test that leave begun before the window is read only when it overlaps. Converting
+it also found that `worker_pto` declared no field sensitivities, so its Restricted default would
+have withheld every field at the default agent data access; the operational fields are now
+declared Internal and a leave's reasons stay Restricted. Held-out ranking is unchanged.
 
 **Phase 4: a single front door and job profiles (3–4 weeks).**
 

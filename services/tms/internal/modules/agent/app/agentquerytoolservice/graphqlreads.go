@@ -168,19 +168,45 @@ func (r *graphQLRead) tableInput() (name, typ string, ok bool) {
 	return "", "", false
 }
 
+// withInputParams adds the input's own parameters to the record's. A range
+// end on the input takes the place of the record's of the same name, as the
+// resolver reads it with the screen's meaning (time off's startDateFrom with
+// overlapping); any other name the record already takes keeps the record's,
+// which can match several values.
+func withInputParams(record, onInput []graphQLParam) []graphQLParam {
+	ranges := make(map[string]struct{}, len(onInput))
+	for _, param := range onInput {
+		if param.Kind == paramDayFrom || param.Kind == paramDayTo {
+			ranges[param.Name] = struct{}{}
+		}
+	}
+	out := slices.DeleteFunc(slices.Clone(record), func(param graphQLParam) bool {
+		_, shadowed := ranges[param.Name]
+		return shadowed
+	})
+	taken := make(map[string]struct{}, len(out))
+	for _, param := range out {
+		taken[param.Name] = struct{}{}
+	}
+	for _, param := range onInput {
+		if _, dup := taken[param.Name]; !dup {
+			out = append(out, param)
+		}
+	}
+
+	return out
+}
+
 // inputParams are a table-shaped input's own fields as parameters, sent on
 // the input: the screen's filters (a PTO status, a worker) beside the
-// table's. A field a record parameter already names, and an include*
-// toggle the screen sets for its own rendering, is left out.
-func inputParams(typ string, taken map[string]struct{}) []graphQLParam {
+// table's. An include* toggle the screen sets for its own rendering is left
+// out.
+func inputParams(typ string) []graphQLParam {
 	var out []graphQLParam
 	for idx := range graphQLInputs[typ] {
 		field := &graphQLInputs[typ][idx]
 		if _, core := tableInputFields[field.Name]; core ||
 			strings.HasPrefix(field.Name, includePrefix) || field.Kind == graphQLKindInput {
-			continue
-		}
-		if _, dup := taken[field.Name]; dup {
 			continue
 		}
 		for _, param := range inputFieldParams(field) {
@@ -193,7 +219,8 @@ func inputParams(typ string, taken map[string]struct{}) []graphQLParam {
 }
 
 // inputFieldParams is one input field's parameter. A Timestamp named for a
-// range end (startDateFrom) is a day, read in the organization's zone.
+// range end (startDateFrom) is a day, read in the organization's zone, and a
+// described Boolean is a switch its own description explains (overlapping).
 func inputFieldParams(field *graphQLField) []graphQLParam {
 	words := stringutils.HumanizeSnakeCase(stringutils.ConvertCamelToSnake(field.Name))
 	describe := func(fallback string) string {
@@ -203,6 +230,8 @@ func inputFieldParams(field *graphQLField) []graphQLParam {
 		return fallback
 	}
 	if field.Type == graphQLTypeTimestamp {
+		words = stringutils.HumanizeSnakeCase(stringutils.ConvertCamelToSnake(
+			strings.TrimSuffix(strings.TrimSuffix(field.Name, suffixFrom), suffixTo)))
 		switch {
 		case strings.HasSuffix(field.Name, suffixFrom):
 			return []graphQLParam{{Name: field.Name, Field: field.Name, Kind: paramDayFrom,
@@ -214,6 +243,13 @@ func inputFieldParams(field *graphQLField) []graphQLParam {
 					" is this day or earlier, in the organization's timezone."))}}
 		}
 		return nil
+	}
+	if field.Type == graphQLTypeBoolean && field.Description != "" {
+		return []graphQLParam{{Name: field.Name, Field: field.Name, Kind: paramEquals,
+			Schema: map[string]any{
+				toolschema.KeyType:        toolschema.TypeBoolean,
+				toolschema.KeyDescription: field.Description,
+			}}}
 	}
 	if field.Kind == graphQLKindEnum && !field.List {
 		return []graphQLParam{{Name: field.Name, Field: field.Name, Kind: paramEquals,

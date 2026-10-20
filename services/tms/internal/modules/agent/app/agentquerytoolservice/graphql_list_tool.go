@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"slices"
 	"strings"
 
@@ -73,6 +74,12 @@ type graphQLListSpec struct {
 	// defaults are parameter values a call that omits them reads with (the
 	// active courses, not the retired ones), named in their notes.
 	defaults map[string]any
+	// defaultsAt are defaults that depend on the day (time off from today),
+	// applied together only when a call gives none of them.
+	defaultsAt func(clk clock) map[string]any
+	// inputs are input fields every call sends, as the screen sets them for
+	// its own rendering (each time-off request's worker).
+	inputs   map[string]any
 	resource permission.Resource
 	// reads is what the tool's records carry from outside the organization,
 	// declared as every read tool declares it (readSpec).
@@ -114,12 +121,7 @@ func newGraphQLListTool(
 	if !ok {
 		return nil, fmt.Errorf("%s: %s takes no table input", spec.name, read.Operation)
 	}
-	params := read.typedParams()
-	taken := make(map[string]struct{}, len(params))
-	for _, param := range params {
-		taken[param.Name] = struct{}{}
-	}
-	params = append(params, inputParams(inputType, taken)...)
+	params := withInputParams(read.typedParams(), inputParams(inputType))
 	slices.SortFunc(params, func(a, b graphQLParam) int { return strings.Compare(a.Name, b.Name) })
 	params, err := referenced(spec.name, params, spec.references)
 	if err != nil {
@@ -210,7 +212,7 @@ func annotate(
 func graphQLListSpecs() []graphQLListSpec {
 	return slices.Concat(
 		referenceReadSpecs(), partyReadSpecs(), equipmentReadSpecs(), workerReadSpecs(),
-		trainingReadSpecs(),
+		trainingReadSpecs(), timeOffReadSpecs(),
 	)
 }
 
@@ -277,13 +279,26 @@ func (t *graphQLListTool) Description() string {
 }
 
 // withDefaults is a call's arguments with the spec's defaults for those it
-// omits.
-func (t *graphQLListTool) withDefaults(args map[string]any) map[string]any {
-	if len(t.spec.defaults) == 0 {
+// omits, and its day-dependent defaults when it omits all of them.
+func (t *graphQLListTool) withDefaults(args map[string]any, clk clock) map[string]any {
+	var dated map[string]any
+	if t.spec.defaultsAt != nil {
+		dated = t.spec.defaultsAt(clk)
+		for name := range dated {
+			if raw, given := args[name]; given && raw != nil {
+				dated = nil
+				break
+			}
+		}
+	}
+	if len(t.spec.defaults) == 0 && len(dated) == 0 {
 		return args
 	}
-	out := make(map[string]any, len(args)+len(t.spec.defaults))
+	out := make(map[string]any, len(args)+len(t.spec.defaults)+len(dated))
 	for name, value := range t.spec.defaults {
+		out[name] = value
+	}
+	for name, value := range dated {
 		out[name] = value
 	}
 	for name, value := range args {
@@ -396,7 +411,7 @@ func (t *graphQLListTool) Query(
 		return nil, err
 	}
 
-	args := t.withDefaults(params.Params)
+	args := t.withDefaults(params.Params, clk)
 	filters, err := compileFilters(t.params, args, clk)
 	if err != nil {
 		return nil, err
@@ -410,7 +425,7 @@ func (t *graphQLListTool) Query(
 		return nil, err
 	}
 	query := strings.TrimSpace(optionalString(params.Params, graphQLParamQuery))
-	criteria := t.criteria(t.withDefaults(params.Params), query)
+	criteria := t.criteria(args, query)
 
 	page, err := t.page(ctx, params, &pageRequest{
 		query:   query,
@@ -474,7 +489,10 @@ func (t *graphQLListTool) page(
 	params *agentports.QueryToolParams,
 	req *pageRequest,
 ) (*graphQLPage, error) {
-	input := make(map[string]any, len(req.inputs)+5)
+	input := make(map[string]any, len(t.spec.inputs)+len(req.inputs)+5)
+	for name, value := range t.spec.inputs {
+		input[name] = value
+	}
 	for name, value := range req.inputs {
 		input[name] = value
 	}
@@ -719,13 +737,33 @@ func (t *graphQLListTool) nearMiss(
 			query: query, inputs: inputs, filters: rest, limit: 1,
 		})
 		if err == nil && len(page.items) > 0 {
-			return fmt.Sprintf("No %s matched every condition. Without the condition on %v "+
-				"some do, so that one alone keeps them out.", t.spec.entityPlural,
-				filters[idx][paramField])
+			return t.keptOut(filters[idx][paramField])
+		}
+	}
+	for _, name := range slices.Sorted(maps.Keys(inputs)) {
+		if _, toggle := inputs[name].(bool); toggle {
+			continue
+		}
+		if probes >= maxNearMissProbes {
+			break
+		}
+		probes++
+		rest := maps.Clone(inputs)
+		delete(rest, name)
+		page, err := t.page(ctx, params, &pageRequest{
+			query: query, inputs: rest, filters: filters, limit: 1,
+		})
+		if err == nil && len(page.items) > 0 {
+			return t.keptOut(name)
 		}
 	}
 
 	return ""
+}
+
+func (t *graphQLListTool) keptOut(condition any) string {
+	return fmt.Sprintf("No %s matched every condition. Without the condition on %v "+
+		"some do, so that one alone keeps them out.", t.spec.entityPlural, condition)
 }
 
 // runView reads a composed table view through the same operation, so the

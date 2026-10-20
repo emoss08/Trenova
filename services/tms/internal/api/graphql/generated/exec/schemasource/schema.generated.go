@@ -30634,6 +30634,8 @@ input WorkerPTOEntriesInput {
   type: PTOType
   startDateFrom: Timestamp
   startDateTo: Timestamp
+  "true matches leave on at any point between startDateFrom and startDateTo, including leave that began before startDateFrom and is still running; false matches only leave that starts in that window."
+  overlapping: Boolean = false
   workerId: ID
   includeWorker: Boolean = false
 }

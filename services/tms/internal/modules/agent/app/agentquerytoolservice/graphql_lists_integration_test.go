@@ -32,6 +32,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentmanufacturerports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmenttypeports"
+	"github.com/emoss08/trenova/internal/modules/identity/app/workerptoservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/parties/adapters/postgres/carrierrepository"
@@ -68,6 +69,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
+	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workerptorepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workerrepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workertrainingrepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
@@ -155,6 +157,7 @@ func convertedListCases(conn *postgres.Connection) ([]referenceCase, agentread.R
 	carriers := carrierrepository.New(carrierrepository.Params{DB: conn, Logger: logger})
 	workers := workerrepository.New(workerrepository.Params{DB: conn, Logger: logger})
 	training := workertrainingrepository.New(workertrainingrepository.Params{DB: conn, Logger: logger})
+	timeOff := workerptorepository.New(workerptorepository.Params{DB: conn, Logger: logger})
 	manufacturers := equipmentmanufacturerrepository.New(
 		equipmentmanufacturerrepository.Params{DB: conn, Logger: logger})
 	tractors := tractorrepository.New(tractorrepository.Params{DB: conn, Logger: logger})
@@ -199,6 +202,9 @@ func convertedListCases(conn *postgres.Connection) ([]referenceCase, agentread.R
 		}),
 		WorkerService: workerservice.New(workerservice.Params{
 			Logger: logger, Repo: workers, CustomFieldsValuesService: customFields,
+		}),
+		WorkerPTOService: workerptoservice.New(workerptoservice.Params{
+			Logger: logger, Repo: timeOff, WorkerRepo: workers,
 		}),
 		TrailerService: trailerservice.New(trailerservice.Params{
 			Logger: logger, Repo: trailers, CustomFieldsValuesService: customFields,
@@ -439,12 +445,46 @@ func convertedListCases(conn *postgres.Connection) ([]referenceCase, agentread.R
 				return created(row, err)
 			},
 		},
+		{
+			tool: "worker_list_time_off", marked: approved,
+			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
+				driver, err := workers.Create(ctx, testWorker(tenant, "T"+label, false, pulid.Nil))
+				if err != nil {
+					return pulid.Nil, err
+				}
+				return writeLeaveUnderWay(ctx, timeOff, driver, marked)
+			},
+		},
 	}
 
 	return cases, services
 }
 
+// writeLeaveUnderWay writes leave that began three days ago and is still
+// running, which the default window reads only because it overlaps.
+func writeLeaveUnderWay(
+	ctx context.Context,
+	repo workerports.WorkerPTORepository,
+	driver *worker.Worker,
+	marked bool,
+) (pulid.ID, error) {
+	now := timeutils.NowUnix()
+	status := worker.PTOStatusRequested
+	if marked {
+		status = worker.PTOStatusApproved
+	}
+	row, err := repo.Create(ctx, &worker.WorkerPTO{
+		BusinessUnitID: driver.BusinessUnitID, OrganizationID: driver.OrganizationID,
+		WorkerID: driver.ID, Status: status, Type: worker.PTOTypeVacation,
+		StartDate: now - 3*timeutils.SecondsPerDay, EndDate: now + 2*timeutils.SecondsPerDay,
+		Days: decimal.NewFromInt(5), Reason: "Family trip",
+	})
+
+	return created(row, err)
+}
+
 var (
+	approved        = map[string]any{"status": []any{"Approved"}}
 	outOfService    = map[string]any{"status": []any{"OutOfService"}}
 	oldOutOfService = map[string]any{"filters": []any{map[string]any{
 		"field": "status", "operator": "in", "values": []any{"OutOfService"},
