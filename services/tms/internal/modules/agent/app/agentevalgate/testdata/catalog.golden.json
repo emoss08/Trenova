@@ -2624,6 +2624,7 @@
               "factoring_remittance",
               "factoring_submission",
               "formula_template",
+              "fuel_card",
               "fuel_purchase",
               "hazardous_material",
               "inbound_message",
