@@ -12504,7 +12504,7 @@
             "type": "boolean"
           },
           "iftaQualified": {
-            "description": "Whether the tractor's miles and fuel enter the IFTA return. Only records that are, or are not, ifta qualified.",
+            "description": "Whether the tractor's miles and fuel enter the IFTA return. true for only the records whose iftaQualified is true, false for only those whose iftaQualified is false.",
             "type": "boolean"
           },
           "lastKnownLocationId": {
