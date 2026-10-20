@@ -116337,6 +116337,15 @@
       "apps/web/components"
     ]
   },
+  "Hide the script": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Hide the waiting messages": {
     "sites": 1,
     "scope": [
@@ -238896,6 +238905,15 @@
       "routes/admin"
     ]
   },
+  "Show the script": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Show the waiting messages": {
     "sites": 1,
     "scope": [
@@ -304597,6 +304615,24 @@
       "routes/agent-control"
     ]
   },
+  "Written by a script": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Written by a script: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Written by hand": {
     "sites": 1,
     "scope": [
@@ -315227,6 +315263,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "the prepared change could not be described": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "the quarter": {

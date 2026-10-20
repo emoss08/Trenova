@@ -4791,6 +4791,10 @@ type AgentPlan {
   """The run that raised this plan, for the agent behind it."""
   run: AgentRun
   runId: ID!
+  """
+  The script whose prepared changes are the plan's steps; absent for a plan of the model's own calls.
+  """
+  script: AgentPlanScript
   status: AgentPlanStatus!
   stepCount: Int!
   summary: String!
@@ -4845,6 +4849,13 @@ type AgentPlanPreview {
   stale: Boolean!
   steps: [AgentPlanStepPreview!]!
   withheldCount: Int!
+}
+
+"""The script a batch of changes came from, as the model asked for it."""
+type AgentPlanScript {
+  code: String!
+  purpose: String!
+  title: String!
 }
 
 enum AgentPlanStatus {
@@ -5193,6 +5204,10 @@ type AgentProposal {
   Why the approved write failed, written for the person; empty unless status is ExecutionFailed.
   """
   executionError: String!
+  """
+  Whether a script prepared this change for a batch, rather than the model calling it.
+  """
+  fromScript: Boolean!
   """
   What held the write below running on its own: agent_ceiling, tool_max, egress_class, condition, tainted, tool_tier, personal_exemption, business_hours, script_intent or one of the money_ bounds.
   """

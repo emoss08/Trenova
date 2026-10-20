@@ -2235,6 +2235,9 @@ models:
   AgentPlanStatus:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agent.PlanStatus
+  AgentPlanScript:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ScriptOrigin
   AgentPlan:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agent.AgentPlan

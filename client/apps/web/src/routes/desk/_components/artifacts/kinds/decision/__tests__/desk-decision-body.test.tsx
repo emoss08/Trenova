@@ -273,3 +273,47 @@ describe("DeskDecisionBody approving a plan", () => {
     expect(decideMyPlan).not.toHaveBeenCalled();
   });
 });
+
+describe("DeskDecisionBody showing a script's batch", () => {
+  it("says a script wrote the batch, what it was for, and shows its code on request", async () => {
+    listedPlans = [
+      plan({
+        script: {
+          title: "Hold Range's uncovered loads",
+          purpose: "Hold every Range load out of Denver with nobody on it.",
+          code: "for load in loads:\n    trenova.shipment.place_hold(shipmentId=load)",
+        },
+      }),
+    ];
+    listed = [
+      proposal({ id: "aprop_1", planId: "apl_1", planStep: 1, reviewRequired: true }),
+      proposal({ id: "aprop_2", planId: "apl_1", planStep: 2, reviewRequired: true }),
+    ];
+    fetchPlanPreview.mockResolvedValue(
+      planPreview({ digest: "sha256:plan", reviewRequired: true }),
+    );
+    renderBody([], "apl_1");
+
+    expect(
+      await screen.findByText("Written by a script: Hold Range's uncovered loads"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Hold every Range load out of Denver with nobody on it."),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/place_hold/)).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Show the script" }));
+
+    expect(await screen.findByText(/place_hold/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Hide the script" })).toBeInTheDocument();
+  });
+
+  it("names no script for a plan of the model's own calls", async () => {
+    listedPlans = [plan()];
+    listed = [proposal({ id: "aprop_1", planId: "apl_1", planStep: 1, reviewRequired: false })];
+    renderBody([], "apl_1");
+
+    expect(await screen.findByText("Post these payments")).toBeInTheDocument();
+    expect(screen.queryByText(/Written by a script/)).not.toBeInTheDocument();
+  });
+});

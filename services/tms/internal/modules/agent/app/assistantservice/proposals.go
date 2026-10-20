@@ -685,6 +685,7 @@ func toAssistantPlan(
 		ExpiresAt:       plan.ExpiresAt,
 		Hold:            hold,
 		CreatedAt:       plan.CreatedAt,
+		Script:          plan.Script,
 	}
 }
 

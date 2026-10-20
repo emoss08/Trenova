@@ -1,4 +1,6 @@
 aliases:
+  AgentProposal:
+    fromScript: scriptStepKey
   AgentControl:
     agentMoneyCallCeiling: agentMoneyCallCeilingMinor
     agentMoneyRunAmount: agentMoneyRunAmountMinor
