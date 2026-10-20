@@ -18,12 +18,12 @@ import { z } from "zod";
 
 export const MAX_REASON_LENGTH = 500;
 
-function reasonSchema(maxLength: number) {
+function reasonSchema(maxLength: number, optional: boolean) {
   return z.object({
     reason: z
       .string()
       .trim()
-      .min(1, { error: () => translate("Say why") })
+      .min(optional ? 0 : 1, { error: () => translate("Say why") })
       .max(maxLength, {
         error: () => translate("Keep the reason under {0} characters", maxLength),
       }),
@@ -40,6 +40,10 @@ type ReasonDialogProps = {
   destructive?: boolean;
   /** The longest reason the server keeps; 500 characters unless the record allows another. */
   maxLength?: number;
+  /** When true the person may confirm without writing anything. */
+  optional?: boolean;
+  /** The field's label; "Reason" unless the words are a note rather than a reason. */
+  label?: string;
   pending: boolean;
   onConfirm: (reason: string) => void;
   onOpenChange: (open: boolean) => void;
@@ -47,7 +51,9 @@ type ReasonDialogProps = {
 
 /**
  * Asks why before a step that needs a reason: a remittance line ignored, a
- * manual journal rejected or cancelled.
+ * manual journal rejected or cancelled. With `optional` it asks for a note
+ * the person may leave empty, such as what they tell an agent when declining
+ * its plan.
  */
 export function ReasonDialog({
   open,
@@ -57,6 +63,8 @@ export function ReasonDialog({
   confirmLabel,
   destructive = false,
   maxLength = MAX_REASON_LENGTH,
+  optional = false,
+  label,
   pending,
   onConfirm,
   onOpenChange,
@@ -64,7 +72,7 @@ export function ReasonDialog({
   const t = useT();
   const formId = useId();
   const form = useForm<ReasonValues>({
-    resolver: zodResolver(reasonSchema(maxLength)) as Resolver<ReasonValues>,
+    resolver: zodResolver(reasonSchema(maxLength, optional)) as Resolver<ReasonValues>,
     defaultValues: { reason: "" },
   });
   const { reset } = form;
@@ -93,10 +101,10 @@ export function ReasonDialog({
                 <TextareaField
                   control={form.control}
                   name="reason"
-                  label={t("Reason")}
+                  label={label ?? t("Reason")}
                   placeholder={placeholder}
                   rows={3}
-                  rules={{ required: true }}
+                  rules={{ required: !optional }}
                 />
               </FormControl>
             </FormGroup>

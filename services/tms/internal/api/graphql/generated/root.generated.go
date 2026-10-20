@@ -800,6 +800,8 @@ type AgentMemoryResolver interface {
 }
 
 type AgentPlanResolver interface {
+	DecidedBy(ctx context.Context, obj *agent.AgentPlan) (*tenant.User, error)
+	RunMode(ctx context.Context, obj *agent.AgentPlan) (agent.PlanRunMode, error)
 	Run(ctx context.Context, obj *agent.AgentPlan) (*agent.AgentRun, error)
 	Hold(ctx context.Context, obj *agent.AgentPlan) (*gqlmodel.PendingDecisionHold, error)
 }

@@ -27186,6 +27186,30 @@
       }
     },
     {
+      "name": "name_plan",
+      "policy": {
+        "kind": "runtime",
+        "resource": "assistant",
+        "operation": "read",
+        "scope": "run",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "ask",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Names the plan the person approves the turn's proposals as. It writes no business record: the name is kept only as the plan's own title, beside the previewed changes the approval rests on."
+      }
+    },
+    {
       "name": "order_add_charge",
       "description": "Add an order-level charge, one billed once for the whole order rather than on a shipment: a consolidation fee, a quoted flat rate. Give allocations only to split it among several payers; left out, the order's customer pays it all.",
       "parameters": {

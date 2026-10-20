@@ -583,22 +583,23 @@ func (r *repository) ListByPlans(
 	ctx context.Context,
 	req agentports.ListAgentProposalsByPlansRequest,
 ) ([]*agent.AgentProposal, error) {
-	proposals := make([]*agent.AgentProposal, 0)
 	if len(req.PlanIDs) == 0 {
-		return proposals, nil
+		return []*agent.AgentProposal{}, nil
 	}
 
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentProposal, error) {
 		cols := agentcol.AgentProposalColumns
+		proposals := make([]*agent.AgentProposal, 0, len(req.PlanIDs)*2)
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&proposals).
-			Column(cols.ID.Name, cols.PlanID.Name, cols.RunID.Name).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return agentcol.AgentProposalScopeTenant(sq, req.TenantInfo).
 					Where(cols.PlanID.In(), bun.List(req.PlanIDs))
 			}).
+			OrderExpr(cols.PlanStep.OrderAsc()).
+			Order(cols.CreatedAt.OrderAsc(), cols.ID.OrderAsc()).
 			Scan(ctx)
 		if err != nil {
 			r.l.Error("failed to list agent proposals by plans", zap.Error(err))

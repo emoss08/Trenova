@@ -50,3 +50,28 @@ func TestUpdateStatus_KeepsTheApprovalWithTheWindowAndClearsItOnReopen(t *testin
 	require.NoError(t, err)
 	require.NoError(t, sqlMock.ExpectationsWereMet())
 }
+
+func TestUpdateStatus_ADecisionWithoutAWindowKeepsItsNoteAndDigest(t *testing.T) {
+	t.Parallel()
+
+	conn, sqlMock := dbtest.NewSQLMock(t)
+	repo := &repository{db: conn, l: zap.NewNop()}
+	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
+	planID, deciderID := pulid.MustNew("apl_"), pulid.MustNew("usr_")
+
+	sqlMock.ExpectQuery(`UPDATE "agent_plans" AS "apl" SET status = 'Rejected', updated_at = \d+, ` +
+		`version = version \+ 1, decided_by_user_id = '` + deciderID.String() + `', ` +
+		`decided_at = 9, approval_reason_code = NULL, approval_note = 'Not today', ` +
+		`approval_preview_digest = NULL WHERE`).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "status"}).AddRow(planID.String(), "Rejected"))
+	_, err := repo.UpdateStatus(t.Context(), agentports.UpdateAgentPlanStatusRequest{
+		ID:              planID,
+		TenantInfo:      tenant,
+		Status:          agent.PlanStatusRejected,
+		DecidedByUserID: deciderID,
+		DecidedAt:       9,
+		Approval:        agentports.PlanApproval{Note: "Not today"},
+	})
+	require.NoError(t, err)
+	require.NoError(t, sqlMock.ExpectationsWereMet())
+}

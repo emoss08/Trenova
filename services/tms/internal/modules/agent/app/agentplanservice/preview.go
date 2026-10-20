@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 // shownPlan is the plan preview an approval approved, and whether its
@@ -27,6 +28,22 @@ func (p *shownPlan) annotate(req *agentports.DecideAgentProposalRequest, proposa
 
 	req.StepPreview = p.preview.StepFor(proposalID)
 	req.StepPreviewReviewed = p.reviewed
+}
+
+func (p *preparedPlan) settledDigest(from agent.PlanStatus) string {
+	if from != agent.PlanStatusApproving {
+		return p.shown.digest()
+	}
+
+	return stringutils.FirstNonEmpty(p.shown.digest(), p.plan.ApprovalPreviewDigest)
+}
+
+func (p *shownPlan) digest() string {
+	if p == nil || p.preview == nil {
+		return ""
+	}
+
+	return p.preview.Digest
 }
 
 // settlePreview works out what approving a plan approves: every pending

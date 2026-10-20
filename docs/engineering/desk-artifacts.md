@@ -83,7 +83,7 @@ kinds or two cards use moves to `kinds/artifact-body-parts.tsx`, `record-card/` 
 `skeletons/`; a kind or a card never imports another's folder, except that a report
 is drawn as a table and reads `kinds/table/`. Shared card styles are the `dk-rec-*` classes in
 `routes/desk/_styles/desk-v2.css`; a card's own styles take its own prefix
-(`dk-bi-*` for the billing item, `dk-ft-*` for the formula template, `dk-sh-*` for the
+(`dk-pln-*` for the plan, `dk-bi-*` for the billing item, `dk-ft-*` for the formula template, `dk-sh-*` for the
 shipment, `dk-cu-*` for the customer, `dk-ra-*` for the rate agreement, `dk-tr-*` for the
 tractor, `dk-tl-*` for the trailer, `dk-wk-*` for the worker, `dk-lo-*` for the location, `dk-ca-*` for the carrier, `dk-or-*` for the order, `dk-svf-*` for the service failure, `dk-edi-*` for the EDI message, `dk-eif-*` for the EDI inbound file, `dk-tdr-*` for the EDI transfer, `dk-inv-*` for the invoice, `dk-pay-*` for the worker settlement, `dk-cset-*` for the carrier settlement, `dk-dtn-*` for the detention charge, `dk-edp-*` for the EDI partner, `dk-jen-*` for the journal entry, `dk-mj-*` for the manual journal, `dk-fpu-*` for the fuel purchase, `dk-fcd-*` for the fuel card; the parts the two settlement cards share are `dk-rec-*` in `record-card/`, and so are the parts the two journal cards share: `dk-rec-jrnl`, `dk-rec-eqn`, `dk-rec-jref`, `dk-rec-seal` and `dk-rec-period`; the two fuel cards share `dk-fu-*`). An artifact kind drawn on the card frame takes one too:
 `dk-ecd-*` for the EDI connection draft.
@@ -137,6 +137,53 @@ drops the note meant for the model, cuts each sample's parse to its version and 
 trims mappings, samples and gaps to the payload limit with the full mapping count kept
 (`assistantservice/edi_connection_draft.go`). A redraft of the same guide is a new version,
 and the reply must always link it (`ShownArtifact.MustBeLinked`).
+
+## The plan
+
+`plan` is several of a turn's writes decided as one (`agentplanservice`): the
+`assistantservice` recorder files the artifact with the plan's id, title, summary and its steps'
+proposal ids, and `kinds/plan/` reads everything else live, so the card is the plan as it
+stands. It reads the thread's plans (`GET /threads/:id/plans/`, `AssistantPlan`), its
+proposals (one per step) and the plan's preview (`myPlanPreview`: every step's records, each
+field from → to, the money it moves, the message it sends, with a decided step's preview as
+recorded at its decision). `plan-card-model.ts` holds every reading as pure functions:
+
+- **Phase** (`planPhase`): awaiting, held (a shadow switch), undoable (approved and inside its
+  undo window, `commitsAt` still ahead), running, failed, done, declined or expired.
+- **The track**: a segment a step under the plan's name (`CardHead`'s `under` slot), and the
+  steps down a line, each node coloured by its own proposal's status (`stepTone`): waiting, up
+  next, running, ran, did not go through, not run.
+- **How it runs**: `AssistantPlan.runMode` is `agent.PlanRunModeOf(steps)`, the same function
+  the executor calls, so the card's "stops at the first failure" or "every step runs on its
+  own" can never disagree with what runs.
+- **Folding**: before a decision, and while an approval can still be undone, every change is
+  open. Once the plan has run, each step folds to one line ("Changed 3 fields on S-240201 ·
+  +$120.00", `foldedLine`) behind a disclosure, except a step that failed or carries a warning.
+- **Records it touches** (`recordsTouched`): each record once, with the steps that change it;
+  one the reader may not see is counted, never named.
+- **Approval** (`planLog`): who proposed it, who decided it (`decidedByName`, resolved on the
+  server, never a single-user read per row), the note they wrote (`decisionNote`, plain text),
+  the digest it was approved against (`previewDigest`), the commit after the undo window, and
+  each step.
+
+The person who owns the conversation, while its agent can still be asked
+(`thread.canContinue`), decides the plan on the card through the approval box's own
+mutation (`decideMyPlan`), approving with the digest of the preview the card shows. A digest
+that moved is refused as a conflict: the card reads the preview again and says so
+(`ChangedNotice`), with no toast. Decline asks for an optional note (`ReasonDialog` with
+`optional`, at most 2000 characters) that goes to the agent with the decision. Inside the undo
+window the decider sees "Can be undone for 0:08" counting on `useNowSeconds` and Undo
+(`undoMyDecision`). A plan that failed, or expired with steps undone, offers "Ask the agent
+to finish it", which posts the person's own message into the thread (`askAgent`) naming the
+plan, the step it stopped at and the server's failure text; anything the agent does in reply
+is a new proposal decided as usual, and the button is gone once a later plan in the
+conversation takes over (`supersededBy`). No success toast follows any of these: the card
+redraws with the decision.
+
+The mock API serves the plan as `athr_desk_plan` with the `deskPlan` scenario field (awaiting,
+held, approving, running, failed, done, declined, expired, superseded), and
+`e2e/mock-api/desk-plan-screenshots.mjs` shoots every stage. While the plans, steps or preview
+are read the card draws `PlanSkeleton`, which `ArtifactBodySkeleton` draws too.
 
 ## The extraction card
 

@@ -1,6 +1,7 @@
 package assistantservice
 
 import (
+	"cmp"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -18,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -60,10 +62,11 @@ type persistProposalsParams struct {
 	Actor      *permissionports.RequestActor
 	// Saved are the messages as persisted, used to tie each proposal to the
 	// assistant turn that asked for it.
-	Saved   []conversation.Message
-	Actions []agentports.PendingAction
-	Model   string
-	Input   string
+	Saved     []conversation.Message
+	Actions   []agentports.PendingAction
+	PlanTitle string
+	Model     string
+	Input     string
 	// Failed records the run as having ended before the turn finished.
 	Failed bool
 	// Artifacts, when set, views each outbound message as a draft and the
@@ -130,6 +133,7 @@ func (s *Service) persistProposals(
 			fingerprint: params.Fingerprint,
 		}),
 		Actions:          params.Actions,
+		PlanTitle:        params.PlanTitle,
 		Taint:            params.Taint,
 		Delegated:        delegated,
 		OpenEmptyRuns:    true,
@@ -583,19 +587,20 @@ func (s *Service) ListThreadPlans(
 		return nil, err
 	}
 
-	runIDs := make([]pulid.ID, 0, len(stored))
-	for _, plan := range stored {
-		if plan.Status.Decidable() {
-			runIDs = append(runIDs, plan.RunID)
-		}
-	}
-	stepRuns, err := s.planStepRuns(ctx, &req, len(runIDs) > 0)
+	steps, err := s.threadPlanSteps(ctx, &req, len(stored) > 0)
 	if err != nil {
 		return nil, err
 	}
+
+	runIDs := make([]pulid.ID, 0, len(stored))
+	deciders := make([]pulid.ID, 0, len(stored))
 	for _, plan := range stored {
 		if plan.Status.Decidable() {
-			runIDs = append(runIDs, stepRuns[plan.ID]...)
+			runIDs = append(runIDs, plan.RunID)
+			runIDs = append(runIDs, stepRuns(steps[plan.ID])...)
+		}
+		if plan.DecidedByUserID != nil && plan.DecidedByUserID.IsNotNil() {
+			deciders = append(deciders, *plan.DecidedByUserID)
 		}
 	}
 	verdicts, err := s.shadow.ForRuns(ctx, req.TenantInfo, sliceutils.Dedupe(runIDs))
@@ -608,10 +613,14 @@ func (s *Service) ListThreadPlans(
 		planRuns = append(planRuns, plan.RunID)
 	}
 	proposers := s.proposersOf(ctx, req.TenantInfo, planRuns)
+	names := s.userNames(ctx, req.TenantInfo, sliceutils.Dedupe(deciders))
 
 	plans := make([]agentports.AssistantPlan, 0, len(stored))
 	for _, plan := range stored {
-		out := toAssistantPlan(plan, planVerdict(verdicts, plan, stepRuns[plan.ID]).Hold())
+		planSteps := steps[plan.ID]
+		out := toAssistantPlan(plan, planVerdict(verdicts, plan, stepRuns(planSteps)).Hold())
+		out.RunMode = agent.PlanRunModeOf(planSteps)
+		out.DecidedByName = names[out.DecidedByUserID]
 		if by, ok := proposers[plan.RunID]; ok {
 			out.AgentID, out.AgentName = by.id, by.name
 		}
@@ -621,14 +630,14 @@ func (s *Service) ListThreadPlans(
 	return plans, nil
 }
 
-func (s *Service) planStepRuns(
+func (s *Service) threadPlanSteps(
 	ctx context.Context,
 	req *agentports.GetThreadRequest,
 	needed bool,
-) (map[pulid.ID][]pulid.ID, error) {
-	runs := make(map[pulid.ID][]pulid.ID)
+) (map[pulid.ID][]*agent.AgentProposal, error) {
+	steps := make(map[pulid.ID][]*agent.AgentProposal)
 	if !needed || s.proposals == nil {
-		return runs, nil
+		return steps, nil
 	}
 
 	stored, err := s.proposals.ListByThread(ctx, agentports.ListAgentProposalsByThreadRequest{
@@ -640,14 +649,57 @@ func (s *Service) planStepRuns(
 	}
 
 	for _, proposal := range stored {
-		if proposal == nil || proposal.PlanID == nil ||
-			slices.Contains(runs[*proposal.PlanID], proposal.RunID) {
+		if proposal == nil || proposal.PlanID == nil {
 			continue
 		}
-		runs[*proposal.PlanID] = append(runs[*proposal.PlanID], proposal.RunID)
+		steps[*proposal.PlanID] = append(steps[*proposal.PlanID], proposal)
+	}
+	for planID := range steps {
+		slices.SortStableFunc(steps[planID], func(a, b *agent.AgentProposal) int {
+			return cmp.Compare(a.PlanStep, b.PlanStep)
+		})
 	}
 
-	return runs, nil
+	return steps, nil
+}
+
+func stepRuns(steps []*agent.AgentProposal) []pulid.ID {
+	runs := make([]pulid.ID, 0, len(steps))
+	for _, step := range steps {
+		if !slices.Contains(runs, step.RunID) {
+			runs = append(runs, step.RunID)
+		}
+	}
+
+	return runs
+}
+
+func (s *Service) userNames(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	ids []pulid.ID,
+) map[pulid.ID]string {
+	names := make(map[pulid.ID]string, len(ids))
+	if s.users == nil || len(ids) == 0 {
+		return names
+	}
+
+	users, err := s.users.GetByIDs(ctx, tenantports.GetUsersByIDsRequest{
+		TenantInfo: tenant,
+		UserIDs:    ids,
+	})
+	if err != nil {
+		s.logger.Warn("could not read who decided a conversation's plans", zap.Error(err))
+
+		return names
+	}
+	for _, user := range users {
+		if user != nil {
+			names[user.ID] = user.Name
+		}
+	}
+
+	return names
 }
 
 func planVerdict(
@@ -682,7 +734,12 @@ func toAssistantPlan(
 		FailureError:    plan.FailureError,
 		DecidedAt:       plan.DecidedAt,
 		DecidedByUserID: decidedBy,
+		DecisionNote:    plan.ApprovalNote,
+		PreviewDigest:   plan.ApprovalPreviewDigest,
 		ExpiresAt:       plan.ExpiresAt,
+		CommitsAt:       plan.CommitsAt,
+		UndoneAt:        plan.UndoneAt,
+		RunMode:         agent.PlanRunModeInOrder,
 		Hold:            hold,
 		CreatedAt:       plan.CreatedAt,
 		Script:          plan.Script,

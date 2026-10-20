@@ -4775,7 +4775,15 @@ type AgentPlan {
   completedSteps: Int!
   createdAt: Timestamp!
   decidedAt: Timestamp
+  """
+  Who decided the plan; absent while it waits, or when the reader may not see them.
+  """
+  decidedBy: User
   decidedByUserId: ID
+  """
+  What the decider wrote with the decision, as plain text; empty when they wrote nothing.
+  """
+  decisionNote: String!
   expiresAt: Timestamp
   """
   The step whose write failed and stopped the plan; absent while none has.
@@ -4788,9 +4796,17 @@ type AgentPlan {
   hold: PendingDecisionHold
   id: ID!
   organizationId: ID!
+  """
+  The digest of the preview an approval was made on; empty for a rejection and while the plan waits.
+  """
+  previewDigest: String!
   """The run that raised this plan, for the agent behind it."""
   run: AgentRun
   runId: ID!
+  """
+  How the steps run once approved: in order, stopping at the first that fails, or every step on its own.
+  """
+  runMode: AgentPlanRunMode!
   """
   The script whose prepared changes are the plan's steps; absent for a plan of the model's own calls.
   """
@@ -4849,6 +4865,18 @@ type AgentPlanPreview {
   stale: Boolean!
   steps: [AgentPlanStepPreview!]!
   withheldCount: Int!
+}
+
+"""How an approved plan's steps run."""
+enum AgentPlanRunMode {
+  """
+  Every step runs, because each changes a different record of one kind; a failure stops none of the others.
+  """
+  EachStep
+  """
+  In order, stopping at the first step that fails; the steps after it are skipped.
+  """
+  InOrder
 }
 
 """The script a batch of changes came from, as the model asked for it."""

@@ -173,7 +173,7 @@ type Resolver struct {
 	agentEvaluation                    *agentresolver.AgentEvaluationResolver
 	agentInstructionFinding            *agentdefinitionresolver.AgentInstructionFindingResolver
 	agentMemory                        *agentresolver.AgentMemoryResolver
-	agentPlan                          *decisionsresolver.AgentPlanResolver
+	agentPlan                          *agentPlanResolver
 	agentPreviewFieldChange            *agentpreviewresolver.AgentPreviewFieldChangeResolver
 	agentPreviewMessage                *agentpreviewresolver.AgentPreviewMessageResolver
 	agentPreviewMoney                  *agentpreviewresolver.AgentPreviewMoneyResolver
@@ -1173,13 +1173,16 @@ func FromServices(s *Services) *Resolver {
 			agentAgentDecision:        &agentAgentDecision{Deps: agentDeps},
 			agentpreviewAgentDecision: &agentpreviewAgentDecision{Deps: agentpreviewDeps},
 		},
-		agentDefinition:          &agentdefinitionresolver.AgentDefinitionResolver{Deps: agentdefinitionDeps},
-		agentDraft:               &agentdefinitionresolver.AgentDraftResolver{Deps: agentdefinitionDeps},
-		agentEvalCase:            &agentqualityresolver.AgentEvalCaseResolver{Deps: agentqualityDeps},
-		agentEvaluation:          &agentresolver.AgentEvaluationResolver{Deps: agentDeps},
-		agentInstructionFinding:  &agentdefinitionresolver.AgentInstructionFindingResolver{Deps: agentdefinitionDeps},
-		agentMemory:              &agentresolver.AgentMemoryResolver{Deps: agentDeps},
-		agentPlan:                &decisionsresolver.AgentPlanResolver{Deps: decisionsDeps},
+		agentDefinition:         &agentdefinitionresolver.AgentDefinitionResolver{Deps: agentdefinitionDeps},
+		agentDraft:              &agentdefinitionresolver.AgentDraftResolver{Deps: agentdefinitionDeps},
+		agentEvalCase:           &agentqualityresolver.AgentEvalCaseResolver{Deps: agentqualityDeps},
+		agentEvaluation:         &agentresolver.AgentEvaluationResolver{Deps: agentDeps},
+		agentInstructionFinding: &agentdefinitionresolver.AgentInstructionFindingResolver{Deps: agentdefinitionDeps},
+		agentMemory:             &agentresolver.AgentMemoryResolver{Deps: agentDeps},
+		agentPlan: &agentPlanResolver{
+			agentAgentPlan:     &agentAgentPlan{Deps: agentDeps},
+			decisionsAgentPlan: &decisionsAgentPlan{Deps: decisionsDeps},
+		},
 		agentPreviewFieldChange:  &agentpreviewresolver.AgentPreviewFieldChangeResolver{Deps: agentpreviewDeps},
 		agentPreviewMessage:      &agentpreviewresolver.AgentPreviewMessageResolver{Deps: agentpreviewDeps},
 		agentPreviewMoney:        &agentpreviewresolver.AgentPreviewMoneyResolver{Deps: agentpreviewDeps},
@@ -1814,6 +1817,11 @@ func (r *Resolver) AgentMemory() generated.AgentMemoryResolver {
 
 func (r *Resolver) AgentPlan() generated.AgentPlanResolver {
 	return r.agentPlan
+}
+
+type agentPlanResolver struct {
+	*agentAgentPlan
+	*decisionsAgentPlan
 }
 
 func (r *Resolver) AgentPreviewFieldChange() generated.AgentPreviewFieldChangeResolver {
@@ -3111,6 +3119,8 @@ func (r *Resolver) WorkerTrainingRecord() generated.WorkerTrainingRecordResolver
 type (
 	agentAgentDecision              = agentresolver.AgentDecisionResolver
 	agentpreviewAgentDecision       = agentpreviewresolver.AgentDecisionResolver
+	agentAgentPlan                  = agentresolver.AgentPlanResolver
+	decisionsAgentPlan              = decisionsresolver.AgentPlanResolver
 	agentAgentProposal              = agentresolver.AgentProposalResolver
 	decisionsAgentProposal          = decisionsresolver.AgentProposalResolver
 	agentAgentRun                   = agentresolver.AgentRunResolver
