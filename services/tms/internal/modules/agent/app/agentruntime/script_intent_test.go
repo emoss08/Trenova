@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const intentScriptStep = "script-step"
+const scriptStep = "script-step"
 
 // intentDispatch dispatches a write the way a script's broker does: as the
 // person, with the turn's taint, under the script's ledger step.
@@ -43,7 +43,7 @@ func intentDispatch(
 		},
 		taint:         &agent.RunTaint{},
 		stepKey:       "intent-step-1",
-		scriptStepKey: intentScriptStep,
+		scriptStepKey: scriptStep,
 	}
 	if mutate != nil {
 		mutate(&p)
@@ -63,7 +63,7 @@ func TestDispatch_AScriptsWriteIsAnIntentThatNeverRuns(t *testing.T) {
 	assert.Equal(t, aitrace.OutcomeProposed, outcome.verdict)
 	assert.False(t, outcome.action.Executed)
 	assert.Equal(t, agent.TierActWithApproval, outcome.action.Tier)
-	assert.Equal(t, intentScriptStep, outcome.action.ScriptStepKey)
+	assert.Equal(t, scriptStep, outcome.action.ScriptStepKey)
 	assert.Contains(t, outcome.action.HeldBy, agenttoolpolicy.HeldByScriptIntent)
 	assert.Contains(t, outcome.content, "Nothing has run")
 	assert.NotContains(t, outcome.content, "Recorded a proposal")
@@ -111,7 +111,7 @@ func TestDispatch_AScriptsWriteTheActorMayNotMakeIsRefused(t *testing.T) {
 		},
 		call:          agentports.ToolCall{ID: "script-step:1", Name: tool.ToolName},
 		taint:         &agent.RunTaint{},
-		scriptStepKey: intentScriptStep,
+		scriptStepKey: scriptStep,
 	})
 
 	assert.Zero(t, tool.Calls)
@@ -213,7 +213,7 @@ func TestDispatch_NoPathRunsAScriptsWrite(t *testing.T) {
 			ledger := newKeyedLedger()
 			runID := pulid.MustNew("ar_")
 			for attempt := range 3 {
-				outcome := guardedWrite(t, tool, path.args, ledger, runID, intentScriptStep)
+				outcome := guardedWrite(t, tool, path.args, ledger, runID, scriptStep)
 				require.NotNil(t, outcome.action, "attempt %d: %s", attempt+1, outcome.content)
 				assert.False(t, outcome.action.Executed, "attempt %d", attempt+1)
 				assert.NotEqual(t, agent.TierAutoExecute, outcome.action.Tier)
@@ -224,7 +224,7 @@ func TestDispatch_NoPathRunsAScriptsWrite(t *testing.T) {
 			for _, step := range ledger.steps {
 				require.NotNil(t, step.Outcome.Action)
 				assert.False(t, step.Outcome.Action.Executed, "the ledger records no executed write")
-				assert.Equal(t, intentScriptStep, step.Outcome.Action.ScriptStepKey)
+				assert.Equal(t, scriptStep, step.Outcome.Action.ScriptStepKey)
 			}
 		})
 	}
