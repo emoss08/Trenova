@@ -9,16 +9,26 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 const scriptStep = "script-step"
 
-func intent(tool string, id string) (string, map[string]any, *agentports.PendingAction) {
+func intent(tool string, id string) (codemode.Call, *agentports.PendingAction) {
 	args := map[string]any{"invoiceIds": []any{id}}
+	call := codemode.Call{
+		Tool:      tool,
+		Arguments: args,
+		Target: &agentports.ToolTarget{
+			Resource: permission.ResourceInvoice,
+			ID:       pulid.ID("inv_" + id),
+		},
+	}
 
-	return tool, args, &agentports.PendingAction{
+	return call, &agentports.PendingAction{
 		ToolName:  tool,
 		Arguments: args,
 		Tier:      agent.TierActWithApproval,
@@ -30,10 +40,10 @@ func intent(tool string, id string) (string, map[string]any, *agentports.Pending
 func hold(t *testing.T, outbox *codemode.Outbox, tool string, id string) int {
 	t.Helper()
 
-	name, args, action := intent(tool, id)
-	key, err := outbox.Admit(name, args)
+	call, action := intent(tool, id)
+	admission, err := outbox.Admit(call)
 	require.NoError(t, err)
-	seq, err := outbox.Hold(key, action)
+	seq, err := outbox.Hold(admission, action)
 	require.NoError(t, err)
 
 	return seq
@@ -41,6 +51,19 @@ func hold(t *testing.T, outbox *codemode.Outbox, tool string, id string) int {
 
 func completed() codemode.Settlement {
 	return codemode.Settlement{Completed: true}
+}
+
+func settled(
+	t *testing.T,
+	outbox *codemode.Outbox,
+	settlement codemode.Settlement,
+) []agentports.PendingAction {
+	t.Helper()
+
+	filed, err := outbox.Settle(settlement)
+	require.NoError(t, err)
+
+	return filed
 }
 
 func TestOutbox_FilesEveryIntentOnceInTheOrderPrepared(t *testing.T) {
@@ -51,14 +74,15 @@ func TestOutbox_FilesEveryIntentOnceInTheOrderPrepared(t *testing.T) {
 		assert.Equal(t, idx+1, hold(t, outbox, "invoice_post", fmt.Sprintf("inv_%d", idx)))
 	}
 
-	filed := outbox.Settle(completed())
+	filed := settled(t, outbox, completed())
 	require.Len(t, filed, 7)
 	for idx, action := range filed {
 		assert.Equal(t, []any{fmt.Sprintf("inv_%d", idx)}, action.Arguments["invoiceIds"])
 		assert.Equal(t, scriptStep, action.ScriptStepKey)
 		assert.False(t, action.Executed)
 	}
-	assert.Nil(t, outbox.Settle(completed()), "a batch is filed once")
+	_, err := outbox.Settle(completed())
+	require.ErrorIs(t, err, codemode.ErrOutboxFiled, "a batch is filed once")
 }
 
 func TestOutbox_FilesNothingForAScriptThatDidNotFinish(t *testing.T) {
@@ -68,26 +92,53 @@ func TestOutbox_FilesNothingForAScriptThatDidNotFinish(t *testing.T) {
 	hold(t, outbox, "invoice_post", "inv_1")
 	hold(t, outbox, "invoice_post", "inv_2")
 
-	assert.Empty(t, outbox.Settle(codemode.Settlement{Completed: false}))
-	_, err := outbox.Admit("invoice_post", map[string]any{"invoiceIds": []any{"inv_3"}})
+	assert.Empty(t, settled(t, outbox, codemode.Settlement{Completed: false}))
+	call, _ := intent("invoice_post", "inv_3")
+	_, err := outbox.Admit(call)
 	require.ErrorIs(t, err, codemode.ErrOutboxFiled)
 }
 
-func TestOutbox_RefusesADuplicateAndKeepsTheFirst(t *testing.T) {
+func TestOutbox_FoldsAnIdenticalIntentIntoTheFirst(t *testing.T) {
 	t.Parallel()
 
 	outbox := codemode.NewOutbox(scriptStep, 500)
 	hold(t, outbox, "invoice_post", "inv_1")
 
 	for range 2 {
-		_, err := outbox.Admit("invoice_post", map[string]any{"invoiceIds": []any{"inv_1"}})
-		require.ErrorIs(t, err, codemode.ErrDuplicateIntent)
-		assert.Contains(t, err.Error(), "change 1")
+		call, action := intent("invoice_post", "inv_1")
+		admission, err := outbox.Admit(call)
+		require.NoError(t, err)
+		assert.Equal(t, 1, admission.Folded, "the same change asked for again is change 1")
+		seq, err := outbox.Hold(admission, action)
+		require.NoError(t, err)
+		assert.Equal(t, 1, seq)
 	}
-	_, err := outbox.Admit("invoice_send", map[string]any{"invoiceIds": []any{"inv_1"}})
-	require.NoError(t, err, "another tool on the same record is another change")
+	assert.Equal(t, 2, hold(t, outbox, "invoice_send", "inv_1"),
+		"another tool on the same record is another change")
 
-	assert.Len(t, outbox.Settle(completed()), 1)
+	assert.Len(t, settled(t, outbox, completed()), 2)
+}
+
+func TestOutbox_RefusesTheBatchForTwoDifferentChangesToOneRecord(t *testing.T) {
+	t.Parallel()
+
+	outbox := codemode.NewOutbox(scriptStep, 500)
+	hold(t, outbox, "invoice_post", "inv_1")
+	hold(t, outbox, "invoice_post", "inv_2")
+
+	call, _ := intent("invoice_post", "inv_1")
+	call.Arguments = map[string]any{"invoiceIds": []any{"inv_1"}, "note": "post it twice"}
+	_, err := outbox.Admit(call)
+	require.ErrorIs(t, err, codemode.ErrConflictingIntents)
+	assert.Contains(t, err.Error(), "changes 1 and 3", "both changes are named")
+
+	call, _ = intent("invoice_post", "inv_9")
+	_, err = outbox.Admit(call)
+	require.ErrorIs(t, err, codemode.ErrConflictingIntents, "a refused batch takes nothing more")
+
+	filed, err := outbox.Settle(completed())
+	require.ErrorIs(t, err, codemode.ErrConflictingIntents)
+	assert.Empty(t, filed, "neither change is picked: nothing is filed")
 }
 
 func TestOutbox_RefusesAnIntentPastTheBatchsSize(t *testing.T) {
@@ -98,9 +149,10 @@ func TestOutbox_RefusesAnIntentPastTheBatchsSize(t *testing.T) {
 		hold(t, outbox, "invoice_post", fmt.Sprintf("inv_%d", idx))
 	}
 
-	_, err := outbox.Admit("invoice_post", map[string]any{"invoiceIds": []any{"inv_over"}})
+	call, _ := intent("invoice_post", "inv_over")
+	_, err := outbox.Admit(call)
 	require.ErrorIs(t, err, codemode.ErrBatchTooLarge)
-	assert.Len(t, outbox.Settle(completed()), codemode.MaxBatchSteps)
+	assert.Len(t, settled(t, outbox, completed()), codemode.MaxBatchSteps)
 }
 
 func TestOutbox_HoldsTheAgentsChangeLimitWhenItIsSmaller(t *testing.T) {
@@ -111,7 +163,8 @@ func TestOutbox_HoldsTheAgentsChangeLimitWhenItIsSmaller(t *testing.T) {
 		hold(t, outbox, "invoice_post", fmt.Sprintf("inv_%d", idx))
 	}
 
-	_, err := outbox.Admit("invoice_post", map[string]any{"invoiceIds": []any{"inv_over"}})
+	call, _ := intent("invoice_post", "inv_over")
+	_, err := outbox.Admit(call)
 	require.ErrorIs(t, err, codemode.ErrBatchTooLarge)
 }
 
@@ -127,11 +180,11 @@ func TestOutbox_RefusesACallThatRanOrWouldRun(t *testing.T) {
 			t.Parallel()
 
 			outbox := codemode.NewOutbox(scriptStep, 500)
-			tool, args, action := intent("invoice_post", "inv_1")
+			call, action := intent("invoice_post", "inv_1")
 			mutate(action)
-			key, err := outbox.Admit(tool, args)
+			admission, err := outbox.Admit(call)
 			require.NoError(t, err)
-			_, err = outbox.Hold(key, action)
+			_, err = outbox.Hold(admission, action)
 			require.ErrorIs(t, err, codemode.ErrIntentRan)
 			assert.Zero(t, outbox.Len())
 		})
@@ -142,15 +195,15 @@ func TestOutbox_HoldsACopyTheCallerCannotChange(t *testing.T) {
 	t.Parallel()
 
 	outbox := codemode.NewOutbox(scriptStep, 500)
-	tool, args, action := intent("invoice_post", "inv_1")
-	key, err := outbox.Admit(tool, args)
+	call, action := intent("invoice_post", "inv_1")
+	admission, err := outbox.Admit(call)
 	require.NoError(t, err)
-	_, err = outbox.Hold(key, action)
+	_, err = outbox.Hold(admission, action)
 	require.NoError(t, err)
-	args["invoiceIds"] = []any{"inv_other"}
+	call.Arguments["invoiceIds"] = []any{"inv_other"}
 	action.Tier = agent.TierAutoExecute
 
-	filed := outbox.Settle(completed())
+	filed := settled(t, outbox, completed())
 	require.Len(t, filed, 1)
 	assert.Equal(t, []any{"inv_1"}, filed[0].Arguments["invoiceIds"])
 	assert.Equal(t, agent.TierActWithApproval, filed[0].Tier)
@@ -169,7 +222,7 @@ func TestOutbox_DecidesEveryIntentAgainWithTheScriptsWholeTaint(t *testing.T) {
 	hold(t, outbox, "invoice_post", "inv_2")
 
 	redecided := 0
-	filed := outbox.Settle(codemode.Settlement{
+	filed := settled(t, outbox, codemode.Settlement{
 		Completed: true,
 		Tainted:   true,
 		Redecide: func(*agentports.PendingAction) agenttoolpolicy.Decision {
@@ -200,7 +253,7 @@ func TestOutbox_CapsEveryIntentAtProposeAfterOutsideContent(t *testing.T) {
 	outbox := codemode.NewOutbox(scriptStep, 500)
 	hold(t, outbox, "invoice_post", "inv_1")
 
-	filed := outbox.Settle(codemode.Settlement{Completed: true, ExternalContent: true})
+	filed := settled(t, outbox, codemode.Settlement{Completed: true, ExternalContent: true})
 	require.Len(t, filed, 1)
 	assert.Equal(t, agent.TierPropose, filed[0].Tier)
 	assert.True(t, filed[0].Tainted)
@@ -213,7 +266,7 @@ func TestOutbox_NeverFilesAnIntentThatRunsOnItsOwn(t *testing.T) {
 	outbox := codemode.NewOutbox(scriptStep, 500)
 	hold(t, outbox, "invoice_post", "inv_1")
 
-	filed := outbox.Settle(codemode.Settlement{
+	filed := settled(t, outbox, codemode.Settlement{
 		Completed: true,
 		Redecide: func(*agentports.PendingAction) agenttoolpolicy.Decision {
 			return agenttoolpolicy.Decision{Tier: agent.TierAutoExecute}
@@ -231,17 +284,17 @@ func TestOutbox_AdmitsConcurrentCallsWithoutLosingOrRepeatingOne(t *testing.T) {
 	var wg sync.WaitGroup
 	for idx := range 40 {
 		wg.Go(func() {
-			tool, args, action := intent("invoice_post", fmt.Sprintf("inv_%d", idx%20))
-			key, err := outbox.Admit(tool, args)
+			call, action := intent("invoice_post", fmt.Sprintf("inv_%d", idx%20))
+			admission, err := outbox.Admit(call)
 			if err != nil {
 				return
 			}
-			_, _ = outbox.Hold(key, action)
+			_, _ = outbox.Hold(admission, action)
 		})
 	}
 	wg.Wait()
 
-	assert.Len(t, outbox.Settle(completed()), 20)
+	assert.Len(t, settled(t, outbox, completed()), 20)
 }
 
 type splittingTool struct {

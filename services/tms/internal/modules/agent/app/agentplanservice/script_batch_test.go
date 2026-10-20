@@ -152,3 +152,49 @@ func TestDecide_AScriptBatchsDecisionIsAuditedAsTheScriptsBatch(t *testing.T) {
 	assert.Equal(t, h.actor.UserID, entry.UserID)
 	assert.Equal(t, scriptStep, entry.CurrentState["scriptStepKey"], "the entry names the script")
 }
+
+func TestDecide_AScriptBatchThatReadOutsideContentNamesItInTheAudit(t *testing.T) {
+	t.Parallel()
+
+	h := newScriptHarness(t, 2)
+	h.svc.previews = &fakePreviews{}
+	audit := &recordedAudit{}
+	h.svc.audit = audit
+	h.req.PreviewDigest = "plan-digest"
+	taint := &agent.RunTaint{}
+	taint.Add(agent.TaintMark{
+		Source:   agent.TaintSourceInboundMessage,
+		ToolName: "inbox_get_inbound_message",
+		CallID:   "script-step:3",
+		Ref:      &agent.RecordRef{EntityType: "inbound_message", ID: "imsg_1"},
+	})
+	for _, step := range h.steps.steps {
+		step.Tainted, step.Taint = true, taint
+	}
+
+	_, err := h.svc.Decide(t.Context(), h.req, h.actor)
+	require.NoError(t, err)
+
+	require.Len(t, audit.entries, 1)
+	recorded, ok := audit.entries[0].CurrentState["taint"].(map[string]any)
+	require.True(t, ok, "the entry records what outside content the batch read")
+	assert.NotEmpty(t, recorded)
+	assert.Equal(t, true, audit.entries[0].CurrentState["tainted"])
+}
+
+func TestDecide_AnUntaintedBatchRecordsNoTaint(t *testing.T) {
+	t.Parallel()
+
+	h := newScriptHarness(t, 2)
+	h.svc.previews = &fakePreviews{}
+	audit := &recordedAudit{}
+	h.svc.audit = audit
+	h.req.PreviewDigest = "plan-digest"
+
+	_, err := h.svc.Decide(t.Context(), h.req, h.actor)
+	require.NoError(t, err)
+
+	require.Len(t, audit.entries, 1)
+	assert.NotContains(t, audit.entries[0].CurrentState, "taint")
+	assert.NotContains(t, audit.entries[0].CurrentState, "tainted")
+}

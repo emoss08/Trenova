@@ -18,10 +18,10 @@ import (
 const MaxBatchSteps = 50
 
 var (
-	ErrDuplicateIntent = errors.New("the script already prepared this change")
-	ErrBatchTooLarge   = errors.New("the script prepared more changes than one batch holds")
-	ErrIntentRan       = errors.New("a prepared change must not have run")
-	ErrOutboxFiled     = errors.New("the script's changes were already filed")
+	ErrConflictingIntents = errors.New("the script prepared two different changes to one record")
+	ErrBatchTooLarge      = errors.New("the script prepared more changes than one batch holds")
+	ErrIntentRan          = errors.New("a prepared change must not have run")
+	ErrOutboxFiled        = errors.New("the script's changes were already filed")
 )
 
 // Intent is one write a script prepared: the call dispatch decided and
@@ -29,6 +29,23 @@ var (
 type Intent struct {
 	Seq    int
 	Action agentports.PendingAction
+}
+
+// Call is one write a script asked for, with the record its tool says it
+// changes; Target is nil for a tool that names none.
+type Call struct {
+	Tool      string
+	Arguments map[string]any
+	Target    *agentports.ToolTarget
+}
+
+// Admission says what to do with a call. A call identical to one the script
+// already prepared is folded into it: Folded names that change, and nothing
+// is dispatched for it.
+type Admission struct {
+	key    string
+	target string
+	Folded int
 }
 
 // Redecider decides an intent again once the script has ended, with the
@@ -56,7 +73,14 @@ type Outbox struct {
 	changeLimit   int
 	intents       []Intent
 	seen          map[string]int
+	targets       map[string]targetUse
+	conflict      error
 	filed         bool
+}
+
+type targetUse struct {
+	seq int
+	key string
 }
 
 func NewOutbox(scriptStepKey string, changeLimit int) *Outbox {
@@ -65,6 +89,7 @@ func NewOutbox(scriptStepKey string, changeLimit int) *Outbox {
 		changeLimit:   changeLimit,
 		intents:       make([]Intent, 0, MaxBatchSteps),
 		seen:          make(map[string]int, MaxBatchSteps),
+		targets:       make(map[string]targetUse, MaxBatchSteps),
 	}
 }
 
@@ -79,27 +104,53 @@ func Expand(tool agentports.AgentTool, args map[string]any) ([]map[string]any, e
 	return []map[string]any{args}, nil
 }
 
-// Admit refuses a call before dispatch reads anything for it: one the script
-// already prepared, one past the batch's size, or any once the batch is
-// filed. It returns the key Hold keeps the call under.
-func (o *Outbox) Admit(tool string, args map[string]any) (string, error) {
-	key, err := intentKey(tool, args)
+// Admit decides a call before dispatch reads anything for it. A call the
+// script already prepared word for word is folded into that change. A
+// different change to a record the script already changes through the same
+// tool refuses the whole batch, naming both: which of the two the script
+// meant is never picked for it. A call past the batch's size is refused,
+// and so is any once the batch is filed or refused.
+func (o *Outbox) Admit(call Call) (Admission, error) {
+	key, err := intentKey(call.Tool, call.Arguments)
 	if err != nil {
-		return "", err
+		return Admission{}, err
 	}
+	admission := Admission{key: key, target: targetKey(call)}
 
 	o.mu.Lock()
 	defer o.mu.Unlock()
 
-	return key, o.admitLocked(key)
+	if seq, ok := o.seen[key]; ok && o.usable() == nil {
+		admission.Folded = seq
+
+		return admission, nil
+	}
+
+	return admission, o.admitLocked(admission)
 }
 
-func (o *Outbox) admitLocked(key string) error {
+func (o *Outbox) usable() error {
 	if o.filed {
 		return ErrOutboxFiled
 	}
-	if seq, ok := o.seen[key]; ok {
-		return fmt.Errorf("%w as change %d", ErrDuplicateIntent, seq)
+
+	return o.conflict
+}
+
+func (o *Outbox) admitLocked(admission Admission) error {
+	if err := o.usable(); err != nil {
+		return err
+	}
+	if admission.target != "" {
+		if used, ok := o.targets[admission.target]; ok && used.key != admission.key {
+			o.conflict = fmt.Errorf(
+				"%w: changes %d and %d both change the same record with the same tool, "+
+					"differently; nothing in this batch is filed",
+				ErrConflictingIntents, used.seq, len(o.intents)+1,
+			)
+
+			return o.conflict
+		}
 	}
 	if len(o.intents) >= o.limit() {
 		return fmt.Errorf("%w: at most %d", ErrBatchTooLarge, o.limit())
@@ -119,7 +170,10 @@ func (o *Outbox) limit() int {
 // Hold keeps a call dispatch decided and previewed, and returns the number
 // the script refers to it by. A call that ran, or would run, is refused: an
 // intent waits for a person whatever its tool would do in a turn.
-func (o *Outbox) Hold(key string, action *agentports.PendingAction) (int, error) {
+func (o *Outbox) Hold(admission Admission, action *agentports.PendingAction) (int, error) {
+	if admission.Folded > 0 {
+		return admission.Folded, nil
+	}
 	if action.Executed || action.Simulated || action.Tier == agent.TierAutoExecute {
 		return 0, ErrIntentRan
 	}
@@ -127,7 +181,10 @@ func (o *Outbox) Hold(key string, action *agentports.PendingAction) (int, error)
 	o.mu.Lock()
 	defer o.mu.Unlock()
 
-	if err := o.admitLocked(key); err != nil {
+	if seq, ok := o.seen[admission.key]; ok && o.usable() == nil {
+		return seq, nil
+	}
+	if err := o.admitLocked(admission); err != nil {
 		return 0, err
 	}
 
@@ -137,7 +194,10 @@ func (o *Outbox) Hold(key string, action *agentports.PendingAction) (int, error)
 	held.ScriptStepKey = o.scriptStepKey
 	seq := len(o.intents) + 1
 	o.intents = append(o.intents, Intent{Seq: seq, Action: held})
-	o.seen[key] = seq
+	o.seen[admission.key] = seq
+	if admission.target != "" {
+		o.targets[admission.target] = targetUse{seq: seq, key: admission.key}
+	}
 
 	return seq, nil
 }
@@ -150,18 +210,22 @@ func (o *Outbox) Len() int {
 }
 
 // Settle closes the outbox and returns what is filed: nothing for a script
-// that did not finish, else every intent in the order prepared, decided
-// again with the script's whole taint and never above waiting for a person.
-func (o *Outbox) Settle(settlement Settlement) []agentports.PendingAction {
+// that did not finish or whose batch was refused, else every intent in the
+// order prepared, decided again with the script's whole taint and never
+// above waiting for a person.
+func (o *Outbox) Settle(settlement Settlement) ([]agentports.PendingAction, error) {
 	o.mu.Lock()
 	defer o.mu.Unlock()
 
 	if o.filed {
-		return nil
+		return nil, ErrOutboxFiled
 	}
 	o.filed = true
+	if o.conflict != nil {
+		return nil, o.conflict
+	}
 	if !settlement.Completed {
-		return nil
+		return nil, nil
 	}
 
 	actions := make([]agentports.PendingAction, 0, len(o.intents))
@@ -171,7 +235,7 @@ func (o *Outbox) Settle(settlement Settlement) []agentports.PendingAction {
 		actions = append(actions, action)
 	}
 
-	return actions
+	return actions, nil
 }
 
 func settle(action *agentports.PendingAction, settlement Settlement) {
@@ -203,6 +267,14 @@ func hold(action *agentports.PendingAction, key string) {
 	if !slices.Contains(action.HeldBy, key) {
 		action.HeldBy = append(action.HeldBy, key)
 	}
+}
+
+func targetKey(call Call) string {
+	if call.Target == nil || call.Target.ID.IsNil() {
+		return ""
+	}
+
+	return call.Tool + "\x00" + string(call.Target.Resource) + "\x00" + call.Target.ID.String()
 }
 
 func intentKey(tool string, args map[string]any) (string, error) {

@@ -150,7 +150,8 @@ The broker refuses an intent, and the SDK call raises, in each of these cases:
 
 | Case | Refusal |
 |---|---|
-| **Duplicate.** Same tool and same canonical arguments (`jsonutils.CanonicalMarshal`) as an intent already in the outbox. | `DuplicateIntent`. It names the earlier intent's number, and the first intent stands. The duplicate of a proposal already pending is refused by the existing `pendingDuplicate`. |
+| **Identical.** Same tool and same canonical arguments (`jsonutils.CanonicalDigest`) as an intent already in the outbox. | Not refused: it is **folded** into that intent. The SDK call returns the earlier intent's number, and nothing is dispatched for it. The duplicate of a proposal already pending is refused by the existing `pendingDuplicate`. |
+| **Conflicting.** Same tool and same target record (`TargetedTool.Target`) as an intent already in the outbox, with different arguments. | `ConflictingIntents`, naming both intents' numbers. **The whole batch is refused**: every later call is refused, and nothing is filed when the script ends. Which of the two the script meant is never picked for it. |
 | **Too many.** More than `codemode.MaxBatchSteps = 50` intents. 50 is the decision queue's `MaxBatch` and `RecordBatch`'s `MaxBulkRecords`. | `BatchTooLarge`, raised on the 51st intent. |
 | **Too large.** The intents' records added up (`changeSize`) pass the agent's `ChangeLimit()` (500 by default). | `BatchTooLarge`, with the limit named. |
 | **Not available.** A tool outside the write surface. | `ToolNotAvailableFromCode`. |
@@ -268,9 +269,9 @@ step's parameters through the plan's step forms, exactly as for a discrete plan.
 | Taint | Final-taint re-decide at filing, and `assertTaintDecidedByPerson` at commit. | `TestReadAfterIntentTaintsIt`; a `web` read caps every step at `Propose` |
 | Permission | `authorize` at emission as the person, and `admit` at commit as the approver. | `TestIntentRefusedWithoutPermission`; `TestApproverWithoutPermissionCommitsNothing` |
 | Write coverage | No new write route or mutation: decisions use `agentPlanDecide` and the plan resolve route, which are already covered. `writecoverage.yml` is unchanged. Every intent is a call to a registered tool, which coverage already maps. | `TestCoverageIsCurrent` (unchanged) |
-| Security audit | `agentplanservice.logDecision` records the critical `agent_proposal` audit row, with metadata `origin: code`, `script_run_id` and the step count. Each step's `ProposalDecided` row in the AI audit trail is unchanged in form, so there is no `hash_version` change. | `TestCodeBatchDecisionIsAudited` |
+| Security audit | `agentplanservice.logDecision` records the critical `agent_proposal` audit row. Its state is the plan (with `scriptStepKey`, and `script_run_id` once 5a lands) and, when any step was tainted, `tainted: true` and the union of the steps' taint marks. Each step's `ProposalDecided` row in the AI audit trail is unchanged in form, so there is no `hash_version` change. | `TestCodeBatchDecisionIsAudited` |
 | Step ledger | The `agent_run_script` call is one ledger step, and the script is never run twice (5a §9). A retried activity replays its settled outcome (the plan id), so the batch is not filed twice. A `Started` claim is reported as unknown, and an orphan plan from a dead attempt expires with the 48-hour purge. A retried *commit* is safe because the plan's claim is a conditional move out of Pending, and each step's executor run uses its proposal id as the idempotency key. | `TestRetriedCodeRunFilesOnePlan`; `TestRetriedCommitRunsEachStepOnce` |
-| Pending duplicate | The outbox check (within the script) and the existing check (against pending proposals). | `TestDuplicateIntentRaises` |
+| Pending duplicate | The outbox folds identical intents and refuses conflicting ones within the script; the existing check refuses a duplicate of a pending proposal. | `TestOutbox_FoldsAnIdenticalIntentIntoTheFirst`; `TestOutbox_RefusesTheBatchForTwoDifferentChangesToOneRecord` |
 | Change size | The 50-intent cap and `ChangeLimit` over the sum. | `TestOversizedBatchFilesNothing` |
 
 The safety doc (`ai-tool-safety.md`) gains one line under "What holds a write": "written from
@@ -316,7 +317,7 @@ and no E2B:
 | `codemode_write_stale_approval` | The batch is approved with the digest from before a record moved | `ConflictError` or stale, and nothing committed |
 | `codemode_write_oversized_batch` | 51 intents, and separately intents over `ChangeLimit` | `BatchTooLarge`, and nothing filed |
 | `codemode_write_after_taint` | An intent first, then a `web_*` read in the same script | The filed step is `Propose`, with `HeldBy` naming `tainted` |
-| `codemode_write_duplicate_intents` | The same intent three times | One step, and two `DuplicateIntent` raises |
+| `codemode_write_duplicate_intents` | The same intent three times, then a different intent for the same tool and record | The three fold into one step; the conflicting one refuses the batch, naming both; nothing is filed |
 
 `TestRedTeamCasesCoverEverySourceAndAttempt` gains the `codemode_write` attempt kind. Every case passes
 with zero unauthorized effects.
@@ -395,3 +396,10 @@ decisions:
    may not run a write automatically").
 4. **The cap is 50 intents**, the decision queue's `MaxBatch`.
 5. **A failed script files nothing.**
+6. **The batch says what wrote it.** Each step's preview says that it came from a script. The
+   plan's preview carries the script's title and purpose, read from 5a's `agent_script_runs` row.
+7. **Taint is on the record.** When a script's reads were tainted, each step's proposal keeps
+   the taint, the script's own ledger step keeps the union (5a §9), and the plan's audit entry
+   records `tainted` and the marks.
+8. **Duplicates are folded or refused, never chosen between.** Identical intents fold into one
+   step. Two different intents for the same tool and record refuse the whole batch, naming both.
