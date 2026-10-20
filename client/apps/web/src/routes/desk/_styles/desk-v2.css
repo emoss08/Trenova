@@ -16173,9 +16173,16 @@ i.dk-ecd-src {
   font-weight: 500;
   color: var(--dsk-fg);
 }
-.dk-fcd-nobody > svg {
+.dk-fcd-ni {
+  display: inline-grid;
   flex: none;
-  margin-top: 2px;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  border: 1px solid var(--dsk-b-strong);
+  border-radius: 50%;
+  color: var(--dsk-fg2);
 }
 .dk-fcd-wait {
   display: flex;

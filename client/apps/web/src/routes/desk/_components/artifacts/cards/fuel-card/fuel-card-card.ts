@@ -9,7 +9,7 @@ import type {
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { countsForIfta, FUEL_CARD_PROVIDER_LABELS } from "@trenova/shared/types/fuel-ifta-enums";
 import type { CardCheckState, CardStatusMark, CardTone } from "../../record-card/record-card";
-import { cardMonth, cardMoment, money } from "../../record-card/record-card-values";
+import { cardDay, cardMonth, cardMoment, money } from "../../record-card/record-card-values";
 
 export function isUnassigned(
   card: Pick<DeskFuelCardRecord, "assignedTractorId" | "assignedWorkerId">,
@@ -49,7 +49,7 @@ export function cardSubtitle(card: DeskFuelCardRecord, now: number, t: Translate
     return t(
       "{0} fleet card · first seen {1} in the {0} transaction file",
       provider,
-      cardMonth(card.discoveredAt),
+      cardDay(card.discoveredAt),
     );
   }
   if (!card.expiresAt) return t("{0} fleet card", provider);
@@ -120,6 +120,11 @@ export function cardFigure(card: DeskFuelCardCard, t: TranslateFn): CardFigure |
 
 function monthName(seconds: number): string {
   return new Date(seconds * 1000).toLocaleDateString(undefined, { month: "long" });
+}
+
+/** Under the month's figures: which month they are for and the quarter it falls in. */
+export function monthScope(card: DeskFuelCardCard, t: TranslateFn): string {
+  return t("{0} so far · Q{1} {2}", monthName(card.monthStart), card.quarter, card.year);
 }
 
 /** This month's spend summed across currencies' counts and gallons, for the strip under the card. */

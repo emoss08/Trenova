@@ -2,7 +2,7 @@ import type { DeskFuelCardCard } from "@/lib/graphql/fuel-desk-cards";
 import { translate } from "@trenova/shared/i18n/runtime";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { describe, expect, it, vi } from "vitest";
-import { cardMoment, cardMonth } from "../../../record-card/record-card-values";
+import { cardDay, cardMoment, cardMonth } from "../../../record-card/record-card-values";
 import {
   barHint,
   cardFacts,
@@ -17,6 +17,7 @@ import {
   heldReason,
   holderFact,
   jurisdictionShare,
+  monthScope,
   monthTotals,
   postHeldRows,
   purchaseTax,
@@ -85,7 +86,7 @@ describe("the card's head", () => {
     );
     const found = discoveredCard().card;
     expect(cardSubtitle(found, NOW, t)).toBe(
-      `WEX fleet card · first seen ${cardMonth(found.discoveredAt)} in the WEX transaction file`,
+      `WEX fleet card · first seen ${cardDay(found.discoveredAt)} in the WEX transaction file`,
     );
     const cancelled = cancelledCard().card;
     expect(cardSubtitle(cancelled, NOW, t)).toBe(
@@ -180,6 +181,10 @@ describe("the card's purchases", () => {
       untaxedGallons: 0,
       averagePerGallon: null,
     });
+  });
+
+  it("names the month the figures are for and its quarter", () => {
+    expect(monthScope(activeCard(), t)).toBe("October so far · Q4 2026");
   });
 
   it("marks each purchase taxed, untaxed, or spend IFTA leaves out", () => {

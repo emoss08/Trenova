@@ -758,6 +758,24 @@
       "routes/desk"
     ]
   },
+  "+{0} mi since the fill on {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "+{0} mi since {1} on {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "+{0} more": {
     "sites": 9,
     "scope": [
@@ -3125,6 +3143,15 @@
       "go/other"
     ]
   },
+  "= {0} gal": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   ">24h": {
     "sites": 1,
     "scope": [
@@ -3766,6 +3793,15 @@
       "go/other"
     ]
   },
+  "A cancelled card can't be reopened; add its replacement on the fuel cards page": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "A cancelled card cannot be assigned": {
     "sites": 1,
     "scope": [
@@ -3873,6 +3909,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "A card the feed hasn't seen before is held as suspended until someone assigns it to a driver or a tractor.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "A carrier": {
@@ -11964,12 +12009,14 @@
     ]
   },
   "A55": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "go/other",
+      "routes/desk"
     ]
   },
   "A55 (55% methanol)": {
@@ -15632,7 +15679,7 @@
     ]
   },
   "Active": {
-    "sites": 92,
+    "sites": 93,
     "scope": [
       "go",
       "ts"
@@ -18459,7 +18506,7 @@
     ]
   },
   "Added": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -31468,11 +31515,12 @@
     ]
   },
   "Assign card": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/fuel-card"
     ]
   },
@@ -31520,6 +31568,15 @@
     ],
     "areas": [
       "routes/organization"
+    ]
+  },
+  "Assign it to the driver or tractor that carries it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Assign manually": {
@@ -31774,6 +31831,15 @@
     ]
   },
   "Assign, edit and track it on the shipment board": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Assign, suspend or cancel it on the fuel cards page": {
     "sites": 1,
     "scope": [
       "ts"
@@ -32069,6 +32135,33 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Assigning it activates the card": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Assigning it activates the card and posts what's waiting": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Assigning it ties the card to who carries it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Assigning...": {
@@ -35460,6 +35553,15 @@
       "routes/reports"
     ]
   },
+  "Avg / gal": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Avg days to pay": {
     "sites": 1,
     "scope": [
@@ -35766,6 +35868,15 @@
     ],
     "areas": [
       "routes/customer"
+    ]
+  },
+  "BIO": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "BIPD insurance": {
@@ -36222,7 +36333,7 @@
     ]
   },
   "Back to the table": {
-    "sites": 23,
+    "sites": 25,
     "scope": [
       "ts"
     ],
@@ -36249,7 +36360,7 @@
     ]
   },
   "Back to {0}": {
-    "sites": 19,
+    "sites": 21,
     "scope": [
       "ts"
     ],
@@ -37706,6 +37817,15 @@
   },
   "Before it can be approved": {
     "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Before it was cancelled": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -42330,6 +42450,15 @@
       "routes/ar-aging"
     ]
   },
+  "CNG": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "CPM {0}": {
     "sites": 1,
     "scope": [
@@ -43741,7 +43870,7 @@
     ]
   },
   "Cancelled": {
-    "sites": 22,
+    "sites": 24,
     "scope": [
       "go",
       "ts"
@@ -43840,13 +43969,14 @@
     ]
   },
   "Cancelled {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "packages/shared/lib"
+      "packages/shared/lib",
+      "routes/desk"
     ]
   },
   "Cancelled {0} by {1}; nothing reached the general ledger": {
@@ -44723,7 +44853,7 @@
     ]
   },
   "Card": {
-    "sites": 6,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -44731,6 +44861,7 @@
     "areas": [
       "apps/web/lib",
       "go/other",
+      "routes/desk",
       "routes/fuel-card"
     ]
   },
@@ -44779,13 +44910,41 @@
       "go/other"
     ]
   },
-  "Card import": {
+  "Card belongs to another tractor": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "packages/shared/types"
+      "routes/desk"
+    ]
+  },
+  "Card belongs with this unit": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Card import": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/types",
+      "routes/desk"
+    ]
+  },
+  "Card isn't assigned": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Card last four": {
@@ -44804,6 +44963,24 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Card number": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Card was cancelled": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Cards": {
@@ -50074,12 +50251,13 @@
     ]
   },
   "Checks": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/agent-control",
+      "routes/desk",
       "routes/factoring"
     ]
   },
@@ -62376,6 +62554,15 @@
       "go/other"
     ]
   },
+  "Correct or delete it on the purchase's page": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Correct recorded employment events": {
     "sites": 1,
     "scope": [
@@ -62428,6 +62615,15 @@
     ],
     "areas": [
       "routes/time-attendance"
+    ]
+  },
+  "Correct what's flagged on the purchase's page": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Corrected": {
@@ -64332,6 +64528,15 @@
       "go/other"
     ]
   },
+  "Counts": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Counts Toward Guarantee": {
     "sites": 1,
     "scope": [
@@ -64366,6 +64571,15 @@
     ],
     "areas": [
       "apps/dash/_components"
+    ]
+  },
+  "Counts for IFTA, {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Counts toward guaranteed minimum": {
@@ -69136,6 +69350,15 @@
       "routes/carrier"
     ]
   },
+  "DEF": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "DEF purchases": {
     "sites": 1,
     "scope": [
@@ -69427,6 +69650,15 @@
     ]
   },
   "DR": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "DSL": {
     "sites": 1,
     "scope": [
       "ts"
@@ -76554,7 +76786,7 @@
     ]
   },
   "Details": {
-    "sites": 17,
+    "sites": 18,
     "scope": [
       "go",
       "ts"
@@ -82698,7 +82930,7 @@
     ]
   },
   "Driver": {
-    "sites": 49,
+    "sites": 50,
     "scope": [
       "go",
       "ts"
@@ -85046,12 +85278,14 @@
     ]
   },
   "E85": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "go/other",
+      "routes/desk"
     ]
   },
   "E85 (85% ethanol)": {
@@ -86174,6 +86408,15 @@
       "go/other"
     ]
   },
+  "ETH": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "EUR (€)": {
     "sites": 1,
     "scope": [
@@ -86190,6 +86433,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "EV": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Each PTO type may only have one rule": {
@@ -92150,12 +92402,30 @@
     ]
   },
   "Entered by hand": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "routes/desk"
+    ]
+  },
+  "Entered by hand without a fuel card": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Entered by {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
       "routes/desk"
     ]
   },
@@ -98077,7 +98347,7 @@
     ]
   },
   "Expires": {
-    "sites": 20,
+    "sites": 22,
     "scope": [
       "go",
       "ts"
@@ -98087,6 +98357,7 @@
       "go/other",
       "routes/admin",
       "routes/agent-control",
+      "routes/desk",
       "routes/detention-policy",
       "routes/factoring-company",
       "routes/fuel-card",
@@ -100081,6 +100352,15 @@
     ],
     "areas": [
       "routes/fuel-management"
+    ]
+  },
+  "FUEL": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "FX Rate": {
@@ -106109,6 +106389,15 @@
       "routes/desk"
     ]
   },
+  "First fill with an odometer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "First hazardous material class": {
     "sites": 1,
     "scope": [
@@ -107051,6 +107340,15 @@
     "areas": [
       "apps/web/config",
       "routes/fleet-code"
+    ]
+  },
+  "Fleet fuel": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Fleet groupings": {
@@ -108539,11 +108837,12 @@
     ]
   },
   "Found": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/insights"
     ]
   },
@@ -108554,6 +108853,15 @@
     ],
     "areas": [
       "routes/accounting-drift"
+    ]
+  },
+  "Found by the feed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Found by the hourly check": {
@@ -109821,12 +110129,14 @@
     ]
   },
   "Fuel card": {
-    "sites": 4,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/config",
       "apps/web/lib",
+      "routes/desk",
       "routes/fuel-card",
       "routes/fuel-purchase"
     ]
@@ -110037,12 +110347,13 @@
     ]
   },
   "Fuel purchase": {
-    "sites": 3,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/config",
+      "routes/desk",
       "routes/fuel-purchase"
     ]
   },
@@ -110844,6 +111155,15 @@
       "routes/recurring-deduction"
     ]
   },
+  "GAS": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "GBP (£)": {
     "sites": 1,
     "scope": [
@@ -111193,6 +111513,15 @@
       "routes/edi"
     ]
   },
+  "GSH": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Gallery": {
     "sites": 1,
     "scope": [
@@ -111212,7 +111541,7 @@
     ]
   },
   "Gallons": {
-    "sites": 6,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -111220,6 +111549,7 @@
     "areas": [
       "go/other",
       "packages/shared/types",
+      "routes/desk",
       "routes/fuel-purchase"
     ]
   },
@@ -113770,6 +114100,15 @@
       "go/other"
     ]
   },
+  "H2": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "HHS-certified laboratory": {
     "sites": 1,
     "scope": [
@@ -115359,6 +115698,24 @@
       "routes/worker-credential-type"
     ]
   },
+  "Held by {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Held by {0} and {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Held for review: notice not sent in time": {
     "sites": 1,
     "scope": [
@@ -115896,12 +116253,13 @@
     ]
   },
   "Hide sidebar": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "Hide the assistant button": {
@@ -117532,6 +117890,15 @@
       "routes/agent-control"
     ]
   },
+  "How it was filed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "How it was paid for and whether fuel tax was included at the pump.": {
     "sites": 1,
     "scope": [
@@ -118426,6 +118793,15 @@
       "routes/random-testing"
     ]
   },
+  "How the purchase was filed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "How the rate applies: per hour, per day, or flat.": {
     "sites": 1,
     "scope": [
@@ -119026,6 +119402,15 @@
       "go/other"
     ]
   },
+  "IFTA fuel only. DEF, reefer fuel and other spend are left out.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "IFTA jurisdiction not found": {
     "sites": 2,
     "scope": [
@@ -119042,6 +119427,15 @@
     ],
     "areas": [
       "routes/tractor"
+    ]
+  },
+  "IFTA reports in US gallons, so litres are converted when the purchase is saved.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "IFTA returns": {
@@ -119071,6 +119465,15 @@
     "areas": [
       "apps/web/config",
       "routes/ifta-tax-rate"
+    ]
+  },
+  "IFTA, {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "II - medium danger": {
@@ -120373,6 +120776,24 @@
     ],
     "areas": [
       "routes/fuel-purchase"
+    ]
+  },
+  "Imported from a {0} statement": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Imported from {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Imported templates start as drafts.": {
@@ -127928,6 +128349,15 @@
       "routes/agent-control"
     ]
   },
+  "Its next purchases are matched to the driver and tractor you choose.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Its note is what accounts payable reads about the carrier's invoice, so a run that has read outside text proposes it.": {
     "sites": 1,
     "scope": [
@@ -130694,6 +131124,15 @@
       "routes/desk"
     ]
   },
+  "LNG": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "LOC": {
     "sites": 1,
     "scope": [
@@ -130710,6 +131149,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "LPG": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "LTL": {
@@ -131839,6 +132287,15 @@
       "routes/carrier-monitoring"
     ]
   },
+  "Last purchases": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Last quarter": {
     "sites": 1,
     "scope": [
@@ -131882,6 +132339,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Last read {0}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Last reply failed": {
@@ -132114,6 +132580,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Last used {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Last verified": {
@@ -138312,6 +138787,24 @@
       "routes/desk"
     ]
   },
+  "Loading the fuel card…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Loading the fuel purchase…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Loading the holiday calendar": {
     "sites": 1,
     "scope": [
@@ -140508,12 +141001,14 @@
     ]
   },
   "M85": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "go/other",
+      "routes/desk"
     ]
   },
   "M85 (85% methanol)": {
@@ -140709,6 +141204,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "MTH": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "MVR Due Date": {
@@ -152001,6 +152505,15 @@
       "packages/shared/lib"
     ]
   },
+  "Never read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Never require": {
     "sites": 1,
     "scope": [
@@ -153274,11 +153787,12 @@
     ]
   },
   "Next card": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/inbox"
     ]
   },
@@ -153570,6 +154084,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Next purchase": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Next query due": {
@@ -155172,6 +155695,15 @@
       "routes/admin"
     ]
   },
+  "No card": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "No carrier agreement covers this lane, so the carrier's pay could not be priced": {
     "sites": 2,
     "scope": [
@@ -156514,6 +157046,15 @@
       "routes/desk"
     ]
   },
+  "No driver or tractor": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "No driver profile on file": {
     "sites": 1,
     "scope": [
@@ -156612,6 +157153,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "No earlier fill for this tractor recorded one to measure from": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "No earlier ratings": {
@@ -158627,6 +159177,15 @@
       "routes/table-change-alert"
     ]
   },
+  "No odometer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "No odometer reading": {
     "sites": 1,
     "scope": [
@@ -158661,6 +159220,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "No one yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "No one, hold them for me": {
@@ -159723,7 +160291,7 @@
     ]
   },
   "No reason was given.": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -162233,7 +162801,7 @@
     ]
   },
   "None": {
-    "sites": 51,
+    "sites": 52,
     "scope": [
       "go",
       "ts"
@@ -162681,6 +163249,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Not IFTA fuel": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Not Rated": {
@@ -163517,6 +164094,15 @@
       "routes/agent-control"
     ]
   },
+  "Not labelled": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Not linked": {
     "sites": 2,
     "scope": [
@@ -163918,11 +164504,12 @@
     ]
   },
   "Not recorded": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/inbox",
       "routes/osha"
     ]
@@ -164616,7 +165203,7 @@
     ]
   },
   "Notes": {
-    "sites": 60,
+    "sites": 61,
     "scope": [
       "go",
       "ts"
@@ -166545,6 +167132,15 @@
     ],
     "areas": [
       "routes/intake"
+    ]
+  },
+  "Nothing to fix": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Nothing to jump back into yet.": {
@@ -168721,7 +169317,7 @@
     ]
   },
   "Odometer": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
@@ -168743,6 +169339,15 @@
       "packages/shared/types"
     ]
   },
+  "Odometer didn't move on": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Odometer is whole miles": {
     "sites": 1,
     "scope": [
@@ -168750,6 +169355,15 @@
     ],
     "areas": [
       "packages/shared/types"
+    ]
+  },
+  "Odometer moved on": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Odometer, mi": {
@@ -170180,6 +170794,15 @@
     ],
     "areas": [
       "routes/scheduling"
+    ]
+  },
+  "On {0}, with the tractor, driver and place chosen by hand": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "On · after {0} clean": {
@@ -174188,6 +174811,15 @@
       "routes/home"
     ]
   },
+  "Open card": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Open carrier": {
     "sites": 6,
     "scope": [
@@ -174959,6 +175591,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Open purchase": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Open queue item": {
@@ -181536,6 +182177,33 @@
     ],
     "areas": [
       "apps/dash/_components"
+    ]
+  },
+  "Paid at the pump, so these gallons are credited against what is owed to {0}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Paid at the pump, so these gallons are credited against what {0} owes {1}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Paid at the pump. No {0} rate is on file for Q{1} {2} to value the credit.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Paid by": {
@@ -191271,6 +191939,15 @@
       "routes/journal-entry"
     ]
   },
+  "Posting what's waiting…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Posting writes each invoice to the ledger and delivers it as its customer's billing profile says. A posted invoice can only be corrected by an adjustment.": {
     "sites": 1,
     "scope": [
@@ -192382,11 +193059,12 @@
     ]
   },
   "Previous card": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/inbox"
     ]
   },
@@ -192588,6 +193266,15 @@
       "routes/desk"
     ]
   },
+  "Previous purchase": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Previous rates": {
     "sites": 1,
     "scope": [
@@ -192760,6 +193447,24 @@
     ],
     "areas": [
       "routes/fuel-management"
+    ]
+  },
+  "Price / L": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Price / gal": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Price a formula": {
@@ -193848,6 +194553,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Product": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Product and account notices": {
@@ -195314,7 +196028,7 @@
     ]
   },
   "Provider": {
-    "sites": 38,
+    "sites": 39,
     "scope": [
       "go",
       "ts"
@@ -195326,6 +196040,7 @@
       "routes/agent-control",
       "routes/carrier",
       "routes/carrier-monitoring",
+      "routes/desk",
       "routes/fuel-card",
       "routes/fuel-feed-run",
       "routes/fuel-purchase",
@@ -195747,6 +196462,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Provider's card ID": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Providers": {
@@ -196282,6 +197006,24 @@
       "routes/carrier-cost-event"
     ]
   },
+  "Purchases": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Purchases on it are matched by the unit on the receipt until it is assigned.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Purchases on this card import and record normally.": {
     "sites": 1,
     "scope": [
@@ -196773,6 +197515,15 @@
       "template/invoice.pdf"
     ]
   },
+  "Qty × price": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Qty × rate": {
     "sites": 1,
     "scope": [
@@ -196936,7 +197687,7 @@
     ]
   },
   "Quantity": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
@@ -196945,6 +197696,7 @@
       "apps/web/lib",
       "go/other",
       "packages/shared/lib",
+      "routes/desk",
       "routes/fuel-purchase",
       "template/invoice.pdf"
     ]
@@ -197761,7 +198513,34 @@
       "routes/ifta-tax-rate"
     ]
   },
+  "Q{0} {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Q{0} {1} · for IFTA": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "RC": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "RFR": {
     "sites": 1,
     "scope": [
       "ts"
@@ -198070,12 +198849,14 @@
     ]
   },
   "Ramp": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "go/other",
+      "packages/shared/types"
     ]
   },
   "Ramp runs on commercial Visa rather than a fleet network, so a transaction carries the merchant and the amount but not the gallons. Those rows wait in the review queue for somebody to add the pump detail before they can count toward IFTA.": {
@@ -200896,6 +201677,15 @@
       "routes/fuel-management"
     ]
   },
+  "Read every hour by the {0} connection": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Read factoring schedule": {
     "sites": 1,
     "scope": [
@@ -200958,6 +201748,15 @@
     ],
     "areas": [
       "routes/fuel-feed-run"
+    ]
+  },
+  "Read from the {0} transaction file": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Read from {0}": {
@@ -202951,6 +203750,15 @@
       "go/other"
     ]
   },
+  "Receipt as recorded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Receipt date": {
     "sites": 1,
     "scope": [
@@ -203389,6 +204197,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Recent purchases": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Recent searches": {
@@ -206183,6 +207000,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Ref": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Ref {0}": {
@@ -213404,12 +214230,13 @@
     ]
   },
   "Resize sidebar": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "Resize the assistant. Use the arrow keys, or double-click to reset.": {
@@ -218886,11 +219713,12 @@
     ]
   },
   "Row {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/factoring-remittance"
     ]
   },
@@ -218964,6 +219792,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Row {0} of {1} · {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Row {0}: {1} of invoice {2}": {
@@ -237857,12 +238694,13 @@
     ]
   },
   "Show sidebar": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "Show the assistant": {
@@ -240638,6 +241476,15 @@
       "apps/web/components"
     ]
   },
+  "Someone who can import fuel statements then posts what's waiting on it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Someone who can post invoices posts this one.": {
     "sites": 1,
     "scope": [
@@ -241902,14 +242749,15 @@
     ]
   },
   "Spend": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/admin",
-      "routes/agent-control"
+      "routes/agent-control",
+      "routes/desk"
     ]
   },
   "Spend (USD)": {
@@ -241938,6 +242786,15 @@
     "areas": [
       "routes/admin",
       "routes/carrier-monitoring"
+    ]
+  },
+  "Spend only": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Split": {
@@ -247644,7 +248501,7 @@
     ]
   },
   "Suspended": {
-    "sites": 14,
+    "sites": 15,
     "scope": [
       "go",
       "ts"
@@ -247654,6 +248511,15 @@
       "go/other",
       "packages/shared/components",
       "packages/shared/types",
+      "routes/desk"
+    ]
+  },
+  "Suspended until assigned": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
       "routes/desk"
     ]
   },
@@ -249455,6 +250321,15 @@
       "go/other"
     ]
   },
+  "Tax already paid": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Tax due": {
     "sites": 1,
     "scope": [
@@ -249511,12 +250386,22 @@
     ]
   },
   "Tax paid": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk",
+      "routes/fuel-purchase"
+    ]
+  },
+  "Tax paid in {0}": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/fuel-purchase"
+      "routes/desk"
     ]
   },
   "Tax-Paid Gallons": {
@@ -249538,11 +250423,12 @@
     ]
   },
   "Tax-paid gallons": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/ifta-return"
     ]
   },
@@ -254504,6 +255390,15 @@
       "routes/agent-control"
     ]
   },
+  "The card": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "The card and transaction reference came from the statement and are read-only here, so the same statement cannot be counted twice if it is imported again. {0}": {
     "sites": 1,
     "scope": [
@@ -254520,6 +255415,15 @@
     ],
     "areas": [
       "routes/fuel-purchase"
+    ]
+  },
+  "The card was assigned, but an import holding its rows refused: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "The cards drivers fuel with — which provider issued each one, who carries it, and which unit it is tied to. Imported statements are matched to purchases through these cards.": {
@@ -258401,6 +259305,15 @@
       "routes/factoring-submission"
     ]
   },
+  "The feed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "The feeder is empty": {
     "sites": 1,
     "scope": [
@@ -259347,6 +260260,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "The import could not be worked again": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "The increase could not be applied": {
@@ -265959,6 +266881,15 @@
       "routes/fuel-purchase"
     ]
   },
+  "The statement named no card on file": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "The states, cities, postal codes, and locations this zone is a union of.": {
     "sites": 1,
     "scope": [
@@ -267850,6 +268781,15 @@
       "go/other"
     ]
   },
+  "The {0} feed is failing": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "The {0} journal does not balance": {
     "sites": 1,
     "scope": [
@@ -268466,6 +269406,24 @@
     ]
   },
   "These follow rules kept elsewhere. You can move them with Reorder, but not turn them off.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "These gallons count toward the quarter's fuel, but earn no {0} credit because tax wasn't paid on them.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "These gallons count toward {0}'s fuel for the quarter, but earn no {1} credit because tax wasn't paid on them.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -271106,6 +272064,24 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "This fuel card could not be read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "This fuel purchase could not be read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "This guide has no carrier entries.": {
@@ -277519,7 +278495,7 @@
     ]
   },
   "Total": {
-    "sites": 46,
+    "sites": 47,
     "scope": [
       "go",
       "ts"
@@ -277925,6 +278901,15 @@
       "routes/detention-policy"
     ]
   },
+  "Total differs from quantity × price": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Total equity": {
     "sites": 1,
     "scope": [
@@ -277996,6 +278981,15 @@
     ],
     "areas": [
       "routes/balance-sheet"
+    ]
+  },
+  "Total matches quantity × price": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Total miles": {
@@ -278525,7 +279519,7 @@
     ]
   },
   "Tractor": {
-    "sites": 37,
+    "sites": 38,
     "scope": [
       "go",
       "ts"
@@ -285177,12 +286171,22 @@
     ]
   },
   "Untaxed": {
-    "sites": 2,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/fuel-purchase"
+    ]
+  },
+  "Untaxed in {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Until": {
@@ -289431,7 +290435,7 @@
     ]
   },
   "Versions": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -291805,7 +292809,7 @@
     ]
   },
   "Waiting": {
-    "sites": 14,
+    "sites": 15,
     "scope": [
       "ts"
     ],
@@ -291890,6 +292894,15 @@
       "routes/inbox"
     ]
   },
+  "Waiting for its card to be assigned": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Waiting for its file": {
     "sites": 1,
     "scope": [
@@ -291934,6 +292947,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Waiting for the import to be committed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Waiting for the indexer to reach it": {
@@ -292254,6 +293276,15 @@
     ]
   },
   "Waiting on them to accept": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Waiting on this card": {
     "sites": 1,
     "scope": [
       "ts"
@@ -293052,6 +294083,24 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Was held by {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Was held by {0} and {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Was idling": {
@@ -298212,6 +299261,15 @@
       "routes/desk"
     ]
   },
+  "Where it fuels": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Where it happened": {
     "sites": 1,
     "scope": [
@@ -299718,11 +300776,12 @@
     ]
   },
   "Who holds it": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/org-structure"
     ]
   },
@@ -300428,7 +301487,7 @@
     ]
   },
   "Why it was cancelled": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -301540,6 +302599,24 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Without one, the miles per gallon for this fill can't be worked out": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Without one, {0}'s miles per gallon for this fill can't be worked out": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Without tools it can only explain how Trenova works.": {
@@ -307358,6 +308435,15 @@
       "routes/dispatch-console"
     ]
   },
+  "at {0}/gal": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "auto": {
     "sites": 1,
     "scope": [
@@ -310951,6 +312037,15 @@
       "routes/home"
     ]
   },
+  "from {0} L": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "from {0} to {1}": {
     "sites": 1,
     "scope": [
@@ -313596,6 +314691,24 @@
       "routes/rate-agreement"
     ]
   },
+  "spent in {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "spent in {0} · {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5...": {
     "sites": 1,
     "scope": [
@@ -313885,6 +314998,15 @@
     ],
     "areas": [
       "routes/factoring-remittance"
+    ]
+  },
+  "the full number is never stored": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "the guide": {
@@ -314850,6 +315972,15 @@
     ]
   },
   "waiting on your approval": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "waiting to post · {0}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -316466,6 +317597,24 @@
       "routes/dispatch-console"
     ]
   },
+  "{0, plural, one {# failed run} other {# failed runs}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0, plural, one {# failed run} other {# failed runs}} · {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0, plural, one {# failed sign-in} other {# failed sign-ins}} in the last {1, plural, one {# day} other {# days}}": {
     "sites": 1,
     "scope": [
@@ -316720,7 +317869,7 @@
     ]
   },
   "{0, plural, one {# in all} other {# in all}}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -318028,6 +319177,33 @@
       "routes/time-attendance"
     ]
   },
+  "{0, plural, one {# purchase waiting} other {# purchases waiting}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0, plural, one {# purchase} other {# purchases}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0, plural, one {# purchase} other {# purchases}} · {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0, plural, one {# purchase} other {# purchases}} · {1} gallons before rounding": {
     "sites": 1,
     "scope": [
@@ -318997,7 +320173,7 @@
     ]
   },
   "{0, plural, one {# to check} other {# to check}}": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -320722,6 +321898,15 @@
       "routes/admin"
     ]
   },
+  "{0, plural, one {The purchase waiting on it is posted once it's assigned.} other {The # purchases waiting on it are posted once it's assigned.}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0, plural, one {The run reached its time limit after # shipment; the figures cover only that one.} other {The run reached its time limit after # shipments; the figures cover only those.}}": {
     "sites": 1,
     "scope": [
@@ -321491,6 +322676,24 @@
       "routes/worker"
     ]
   },
+  "{0} = {1}, {2} less than the {3} entered": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0} = {1}, {2} more than the {3} entered": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0} B": {
     "sites": 2,
     "scope": [
@@ -321629,6 +322832,15 @@
       "apps/web/components",
       "packages/shared/lib",
       "routes/admin"
+    ]
+  },
+  "{0} L": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0} MB": {
@@ -322386,12 +323598,13 @@
     ]
   },
   "{0} at {1}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "apps/web/lib",
+      "routes/desk"
     ]
   },
   "{0} at-risk · {1} in-transit": {
@@ -322903,6 +324116,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "{0} card ending {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0} carrier": {
@@ -323983,6 +325205,15 @@
       "routes/shipment"
     ]
   },
+  "{0} feed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0} fell back to production, {1} pending": {
     "sites": 1,
     "scope": [
@@ -324091,6 +325322,51 @@
       "routes/inbox"
     ]
   },
+  "{0} fleet card": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0} fleet card · cancelled {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0} fleet card · expired {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0} fleet card · expires {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0} fleet card · first seen {1} in the {0} transaction file": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0} for production": {
     "sites": 1,
     "scope": [
@@ -324188,6 +325464,24 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "{0} gal": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0} gal · {1, plural, one {# purchase} other {# purchases}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0} gallons of {1} bought in {2} on {3}{4} will be removed outright.": {
@@ -324522,6 +325816,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "{0} has no tractor or driver on it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0} has no usable records of this kind yet.": {
@@ -324905,6 +326208,15 @@
       "routes/settings"
     ]
   },
+  "{0} in {1} this quarter": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0} in {1}s": {
     "sites": 1,
     "scope": [
@@ -325177,6 +326489,15 @@
       "go/other"
     ]
   },
+  "{0} is assigned to another tractor": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0} is assigned to the move at {1} instead of the offered {2}, and the rest of the tender is closed.": {
     "sites": 1,
     "scope": [
@@ -325186,6 +326507,24 @@
       "routes/dispatch-console"
     ]
   },
+  "{0} is assigned to {1}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0} is assigned to {1} and {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0} is billed on a {1} statement. Invoicing this freight on its own takes it off that statement — say why to continue.": {
     "sites": 1,
     "scope": [
@@ -325193,6 +326532,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "{0} is carried by {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0} is connected. New mail on {1} shows up in Waiting on you.": {
@@ -326136,6 +327484,15 @@
       "apps/web/components"
     ]
   },
+  "{0} isn't motor fuel IFTA taxes, so it is spend only and stays off the quarter's return.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0} issued": {
     "sites": 1,
     "scope": [
@@ -326607,7 +327964,7 @@
     ]
   },
   "{0} mi": {
-    "sites": 19,
+    "sites": 20,
     "scope": [
       "ts"
     ],
@@ -326630,6 +327987,24 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "{0} mi is no further than the {1} mi recorded at {2} on {3}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0} mi is no further than the {1} mi recorded on {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0} mi left": {
@@ -327820,6 +329195,24 @@
       "apps/web/components",
       "routes/desk",
       "routes/formula-template"
+    ]
+  },
+  "{0} of {1} shown. Every purchase on the card is on the purchases page.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0} of {1} shown. The rest are on the fuel imports page.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0} of {1} sign-in attempts didn't succeed. Many from one address can be someone guessing passwords.": {
@@ -329559,6 +330952,15 @@
       "routes/inbox"
     ]
   },
+  "{0} so far · Q{1} {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0} source cannot be used with transaction set {1}; expected {2}": {
     "sites": 1,
     "scope": [
@@ -329602,6 +331004,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "{0} statement": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0} still accruing days": {
@@ -330157,6 +331568,15 @@
       "template/notification.dash.training_due"
     ]
   },
+  "{0} transaction file": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0} turned off": {
     "sites": 1,
     "scope": [
@@ -330446,6 +331866,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "{0} was cancelled before this purchase was recorded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0} was created, but {1} was mapped to {2} meanwhile; map it again if that is wrong": {
@@ -331024,6 +332453,15 @@
       "routes/desk"
     ]
   },
+  "{0} · Tractor": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0} · avg {1}": {
     "sites": 1,
     "scope": [
@@ -331094,6 +332532,15 @@
     ],
     "areas": [
       "routes/benefits"
+    ]
+  },
+  "{0} · ending {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0} · filed on {1}": {
@@ -331568,6 +333015,15 @@
       "routes/carrier-sourcing"
     ]
   },
+  "{0} · {1} mpg": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0} · {1} ms": {
     "sites": 1,
     "scope": [
@@ -331711,6 +333167,15 @@
     ],
     "areas": [
       "routes/random-testing"
+    ]
+  },
+  "{0} · {1}, {2} at {3}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0} · {1}-week rotation": {

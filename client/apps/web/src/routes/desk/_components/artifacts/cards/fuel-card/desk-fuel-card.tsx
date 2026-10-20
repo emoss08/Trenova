@@ -52,6 +52,7 @@ import {
   feedCheck,
   formatGallons,
   isUnassigned,
+  monthScope,
   monthTotals,
   postHeldRows,
   recentNote,
@@ -351,9 +352,7 @@ function FuelCardCard({
                   },
                 ]}
               />
-              <span className="dk-fcd-scope">
-                {t("{0} so far · Q{1} {2}", cardMonth(card.monthStart), card.quarter, card.year)}
-              </span>
+              <span className="dk-fcd-scope">{monthScope(card, t)}</span>
             </>
           )}
           {cancelled &&

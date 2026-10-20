@@ -110,7 +110,9 @@ export function FuelCardHolders({
       <div className="dk-fcd-holds">
         <span className="dk-fcd-cap">{t("Who holds it")}</span>
         <div className="dk-fcd-nobody">
-          <CardIcon name="info" size={12} stroke={2.4} />
+          <span className="dk-fcd-ni" aria-hidden>
+            <CardIcon name="info" size={11} stroke={2.4} />
+          </span>
           <span>
             <b>{t("No one yet")}</b>
             <span>
