@@ -22,9 +22,9 @@ import (
 )
 
 const (
-	paramScriptTitle   = "title"
-	paramScriptPurpose = "purpose"
-	paramScriptCode    = "code"
+	paramScriptTitle   = agentextension.ParamScriptTitle
+	paramScriptPurpose = agentextension.ParamScriptPurpose
+	paramScriptCode    = agentextension.ParamScriptCode
 	paramScriptInputs  = "inputs"
 	paramInputName     = "name"
 	paramInputValue    = "value"
