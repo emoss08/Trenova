@@ -636,6 +636,21 @@ func AgentDefinitionByIDThunk(
 	)
 }
 
+func AgentsPaused(ctx context.Context, orgID string) (bool, error) {
+	return load(ctx, orgID, func(s *set) *dataloadgen.Loader[string, bool] {
+		return s.agentsPaused
+	})
+}
+
+func (f *AgentsPausedLoaderFactory) Attach(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) context.Context {
+	return attach(ctx, func(s *set) {
+		s.agentsPaused = newAgentsPausedLoader(f, tenantInfo)
+	})
+}
+
 func (f *AgentDefinitionByIDLoaderFactory) Attach(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,

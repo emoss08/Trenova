@@ -20506,7 +20506,7 @@
     ]
   },
   "Agent plan not found": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -20552,15 +20552,6 @@
       "go/other"
     ]
   },
-  "Agent proposal not found": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Agent proposals wait for you": {
     "sites": 1,
     "scope": [
@@ -20586,6 +20577,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Agent read-only scripts": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Agent run": {
@@ -20766,6 +20766,15 @@
       "go/other"
     ]
   },
+  "Agents answering a question that needs many reads with one short read-only script, through an enabled extension": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Agents are not learning from their work in this organization. Turn learning on in AI Control first.": {
     "sites": 1,
     "scope": [
@@ -20773,6 +20782,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Agents are paused for the organization": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Agents ask before saving anything": {
@@ -24027,6 +24045,17 @@
       "apps/web/components"
     ]
   },
+  "An administrator can turn this off.": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "routes/agent-control",
+      "routes/desk"
+    ]
+  },
   "An administrator decides whether everyone gets it. Keep a copy for yourself?": {
     "sites": 1,
     "scope": [
@@ -26404,6 +26433,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Answers a question that needs many reads with one short Python script whose every read is the agent's own, checked as the person.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Answers from your records": {
@@ -61619,7 +61657,7 @@
     ]
   },
   "Copied": {
-    "sites": 18,
+    "sites": 19,
     "scope": [
       "ts"
     ],
@@ -61709,7 +61747,7 @@
     ]
   },
   "Copy": {
-    "sites": 19,
+    "sites": 20,
     "scope": [
       "ts"
     ],
@@ -115639,7 +115677,7 @@
     ]
   },
   "Held": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -115849,6 +115887,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "Held, not yet decidable": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Hello {0},": {
@@ -134584,6 +134631,15 @@
       "go/other"
     ]
   },
+  "Let agents run read-only scripts over what this person may read": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Let agents search and read the web for this person": {
     "sites": 1,
     "scope": [
@@ -150215,6 +150271,15 @@
       "routes/billing-queue"
     ]
   },
+  "Must be true or false": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Must be valid JSON": {
     "sites": 1,
     "scope": [
@@ -164160,7 +164225,7 @@
     ]
   },
   "Not now": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -202142,6 +202207,24 @@
       "routes/driver-settlement"
     ]
   },
+  "Read-only scripts": {
+    "sites": 3,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Read-only scripts are turned off for this organization. Answer with the discrete reads.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Read-only until you approve": {
     "sites": 1,
     "scope": [
@@ -202567,6 +202650,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Reads per script": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Reads the full text of a page a search returned.": {
@@ -215570,11 +215662,12 @@
     ]
   },
   "Resume agents": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/agent-control"
     ]
   },
@@ -216995,7 +217088,7 @@
     ]
   },
   "Review": {
-    "sites": 24,
+    "sites": 25,
     "scope": [
       "go",
       "ts"
@@ -220229,6 +220322,15 @@
       "go/other"
     ]
   },
+  "Run a read-only script": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Run a request on a schedule and post the results here": {
     "sites": 1,
     "scope": [
@@ -220649,7 +220751,7 @@
     ]
   },
   "Run the plan": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -227344,6 +227446,15 @@
     ]
   },
   "Seconds per analysis": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Seconds per script": {
     "sites": 1,
     "scope": [
       "go"
@@ -265966,6 +266077,15 @@
       "routes/worker"
     ]
   },
+  "The script is empty. Send the Python to run.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The search didn't run": {
     "sites": 1,
     "scope": [
@@ -270036,6 +270156,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "This agent is in shadow": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "This agent is restricted to roles and no role is granted it, so nobody can use it.": {
@@ -282605,6 +282734,15 @@
       "routes/worker"
     ]
   },
+  "Turn off shadow": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Turn off two-factor authentication": {
     "sites": 1,
     "scope": [
@@ -290598,7 +290736,7 @@
     ]
   },
   "View": {
-    "sites": 127,
+    "sites": 128,
     "scope": [
       "go",
       "ts"
@@ -308024,6 +308162,15 @@
       "apps/web/components"
     ]
   },
+  "a script needs a broker to read through": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "a shipment": {
     "sites": 1,
     "scope": [
@@ -315090,6 +315237,15 @@
       "routes/shipment"
     ]
   },
+  "the read's answer could not be encoded": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "the recording": {
     "sites": 1,
     "scope": [
@@ -315097,6 +315253,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "the script was stopped": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "the shipment": {
@@ -315164,7 +315329,7 @@
     ]
   },
   "the {0} extension cannot run code": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -316867,7 +317032,7 @@
     ]
   },
   "{0, plural, one {# change} other {# changes}}": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -318266,11 +318431,12 @@
     ]
   },
   "{0, plural, one {# line} other {# lines}}": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/admin",
       "routes/desk",
       "routes/formula-template"
@@ -319988,7 +320154,7 @@
     ]
   },
   "{0, plural, one {# step} other {# steps}}": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -326607,6 +326773,15 @@
     ]
   },
   "{0} is in a closed period, so it books on {1}, the first open day.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "{0} is in shadow": {
     "sites": 1,
     "scope": [
       "ts"

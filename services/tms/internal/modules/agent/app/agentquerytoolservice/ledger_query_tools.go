@@ -126,17 +126,18 @@ func newListManualJournalsTool(
 		fetchGated: func(
 			ctx context.Context,
 			opts *pagination.QueryOptions,
+			_ pagination.CursorInfo,
 			gate *fieldGate,
-		) ([]any, error) {
+		) (listPage, error) {
 			result, err := repo.List(
 				ctx,
 				&manualjournalports.ListManualJournalRequest{Filter: opts},
 			)
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
 
-			return listRows(result.Items, func(item *manualjournal.Request) any {
+			return offsetListPage(result.Items, func(item *manualjournal.Request) any {
 				return manualJournalRowFrom(item, gate)
 			}), nil
 		},
@@ -304,17 +305,18 @@ func newListJournalReversalsTool(
 		fetchGated: func(
 			ctx context.Context,
 			opts *pagination.QueryOptions,
+			_ pagination.CursorInfo,
 			gate *fieldGate,
-		) ([]any, error) {
+		) (listPage, error) {
 			result, err := repo.List(
 				ctx,
 				&journalreversalports.ListJournalReversalsRequest{Filter: opts},
 			)
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
 
-			return listRows(result.Items, func(item *journalreversal.Reversal) any {
+			return offsetListPage(result.Items, func(item *journalreversal.Reversal) any {
 				row := journalReversalRow{
 					ID:                     item.ID.String(),
 					Status:                 string(item.Status),

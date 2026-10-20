@@ -41,6 +41,16 @@ func (s *Service) startToolSpan(
 	return aitrace.StartTool(ctx, spec)
 }
 
+func markCaller(span trace.Span, caller string, index int) {
+	if caller == "" {
+		caller = aitrace.CallerModel
+	}
+	span.SetAttributes(aitrace.AIToolCaller.String(caller))
+	if caller == aitrace.CallerScript {
+		span.SetAttributes(aitrace.AICodeModeCallIndex.Int(index))
+	}
+}
+
 func runAnchor(req *agentports.RunRequest) aitrace.Anchor {
 	if anchor := aitrace.ForRun(req.StepOwner, req.Delegation); anchor.IsValid() {
 		return anchor

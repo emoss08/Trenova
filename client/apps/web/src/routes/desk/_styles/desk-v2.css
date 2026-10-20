@@ -801,7 +801,8 @@
   scrollbar-color: var(--dsk-b) transparent;
   animation: dk-nl 300ms var(--dk-settle) both;
 }
-.dk-ax-body code {
+/* inline code only: a block's code is laid out and coloured by HighlightedCode */
+.dk-ax-body code:where(:not(pre *)) {
   font: 11px var(--dk-plex);
   color: var(--dsk-fg2);
   padding: 1px 5px;

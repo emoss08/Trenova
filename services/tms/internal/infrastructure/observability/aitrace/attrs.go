@@ -36,6 +36,8 @@ const (
 	OperationEmbeddings  = "embeddings"
 	OperationExecuteTool = "execute_tool"
 	ToolTypeFunction     = "function"
+	CallerModel          = "model"
+	CallerScript         = "script"
 )
 
 const (
@@ -78,6 +80,17 @@ const (
 	AIToolKind             = attribute.Key("trenova.ai.tool.kind")
 	AIStepKey              = attribute.Key("trenova.ai.step.key")
 	AIStepState            = attribute.Key("trenova.ai.step.state")
+	AIToolCaller           = attribute.Key("trenova.ai.tool.caller")
+	AICodeModeCallIndex    = attribute.Key("trenova.ai.codemode.call_index")
+	AICodeModeCalls        = attribute.Key("trenova.ai.codemode.calls")
+	AICodeModeRows         = attribute.Key("trenova.ai.codemode.rows")
+	AICodeModeBytes        = attribute.Key("trenova.ai.codemode.bytes")
+	AICodeModeLimitHit     = attribute.Key("trenova.ai.codemode.limit_hit")
+	AICodeModeStatus       = attribute.Key("trenova.ai.codemode.status")
+	AICodeModeBrokerMs     = attribute.Key("trenova.ai.codemode.broker_ms")
+	AICodeModeReplyMs      = attribute.Key("trenova.ai.codemode.reply_ms")
+	AICodeModeRoundTripMs  = attribute.Key("trenova.ai.codemode.round_trip_ms")
+	AICodeModePollMs       = attribute.Key("trenova.ai.codemode.poll_ms")
 	AITier                 = attribute.Key("trenova.ai.tier")
 	AITierSource           = attribute.Key("trenova.ai.tier.source")
 	AIHeldBy               = attribute.Key("trenova.ai.held_by")

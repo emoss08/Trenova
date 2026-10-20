@@ -55,6 +55,9 @@ const PLAN_STATUS: Record<AgentPlanStatus, { label: string; variant: Variant }> 
   Expired: { label: "Expired", variant: "neutral" },
 };
 
+/** A waiting change a switch keeps anyone from deciding: the pause, or the agent's shadow switch. */
+const HELD_STATUS: { label: string; variant: Variant } = { label: "Held", variant: "neutral" };
+
 const EVALUATION_STATUS: Record<AgentEvaluationStatus, { label: string; variant: Variant }> = {
   Pending: { label: "Queued", variant: "neutral" },
   Running: { label: "Replaying", variant: "info" },
@@ -150,14 +153,22 @@ export const RunStatusBadge = ({ value, t }: { value: AgentRunStatus; t: Transla
 );
 export const ProposalStatusBadge = ({
   value,
+  held = false,
   t,
 }: {
   value: AgentProposalStatus;
+  held?: boolean;
   t: TranslateFn;
-}) => <Labelled entry={PROPOSAL_STATUS[value]} t={t} />;
-export const PlanStatusBadge = ({ value, t }: { value: AgentPlanStatus; t: TranslateFn }) => (
-  <Labelled entry={PLAN_STATUS[value]} t={t} />
-);
+}) => <Labelled entry={held && value === "Pending" ? HELD_STATUS : PROPOSAL_STATUS[value]} t={t} />;
+export const PlanStatusBadge = ({
+  value,
+  held = false,
+  t,
+}: {
+  value: AgentPlanStatus;
+  held?: boolean;
+  t: TranslateFn;
+}) => <Labelled entry={held && value === "Pending" ? HELD_STATUS : PLAN_STATUS[value]} t={t} />;
 export const EvaluationStatusBadge = ({
   value,
   t,

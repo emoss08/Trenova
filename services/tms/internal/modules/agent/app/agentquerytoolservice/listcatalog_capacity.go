@@ -97,15 +97,15 @@ func newListCarrierCapacityPostingsTool(
 			},
 			{Name: fieldCreatedAt, Kind: filterDate, Sortable: true},
 		},
-		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
+		fetch: func(ctx context.Context, opts *pagination.QueryOptions, _ pagination.CursorInfo) (listPage, error) {
 			result, err := repo.List(ctx, &carriercapacityports.ListCarrierCapacityPostingsRequest{
 				Filter: opts,
 			})
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
 
-			return listRows(result.Items, func(item *carriercapacity.Posting) any {
+			return offsetListPage(result.Items, func(item *carriercapacity.Posting) any {
 				return toCapacityPostingRow(item)
 			}), nil
 		},

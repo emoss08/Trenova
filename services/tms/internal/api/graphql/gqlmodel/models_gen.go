@@ -6392,11 +6392,22 @@ type PendingDecisionConnection struct {
 type PendingDecisionEdge struct {
 	Node   PendingDecision `json:"node"`
 	Cursor string          `json:"cursor"`
+	// Set while a switch keeps it from being decided; absent when a person can decide it now.
+	Hold *PendingDecisionHold `json:"hold,omitempty"`
+}
+
+// A switch that keeps a waiting decision from being taken. The server refuses a decision on it until the switch is off.
+type PendingDecisionHold struct {
+	Reason PendingDecisionHoldReason `json:"reason"`
+	// The agent in shadow; empty for the organization's pause.
+	AgentName string `json:"agentName"`
 }
 
 // The queue in numbers: how much is waiting, from whom, of what, and for how long.
 type PendingDecisionSummary struct {
-	Total    int                          `json:"total"`
+	Total int `json:"total"`
+	// How many of total a switch keeps from being decided.
+	Held     int                          `json:"held"`
 	ByAgent  []*PendingDecisionAgentCount `json:"byAgent"`
 	ByTool   []*PendingDecisionToolCount  `json:"byTool"`
 	OldestAt *int                         `json:"oldestAt,omitempty"`
@@ -12927,6 +12938,64 @@ func (e *NotificationState) UnmarshalJSON(b []byte) error {
 }
 
 func (e NotificationState) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// Which switch keeps a waiting decision from being taken.
+type PendingDecisionHoldReason string
+
+const (
+	// Every agent in the organization is paused on the AI Control overview.
+	PendingDecisionHoldReasonOrganizationPaused PendingDecisionHoldReason = "OrganizationPaused"
+	// The agent that raised it is in shadow.
+	PendingDecisionHoldReasonAgentShadow PendingDecisionHoldReason = "AgentShadow"
+)
+
+var AllPendingDecisionHoldReason = []PendingDecisionHoldReason{
+	PendingDecisionHoldReasonOrganizationPaused,
+	PendingDecisionHoldReasonAgentShadow,
+}
+
+func (e PendingDecisionHoldReason) IsValid() bool {
+	switch e {
+	case PendingDecisionHoldReasonOrganizationPaused, PendingDecisionHoldReasonAgentShadow:
+		return true
+	}
+	return false
+}
+
+func (e PendingDecisionHoldReason) String() string {
+	return string(e)
+}
+
+func (e *PendingDecisionHoldReason) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PendingDecisionHoldReason(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PendingDecisionHoldReason", str)
+	}
+	return nil
+}
+
+func (e PendingDecisionHoldReason) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *PendingDecisionHoldReason) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e PendingDecisionHoldReason) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

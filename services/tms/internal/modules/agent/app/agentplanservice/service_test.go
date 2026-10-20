@@ -126,10 +126,6 @@ type fakeShadow struct {
 	runs   map[pulid.ID]bool
 }
 
-func (f fakeShadow) Organization(context.Context, pagination.TenantInfo) (bool, error) {
-	return f.shadow, nil
-}
-
 func (f fakeShadow) ForRun(
 	_ context.Context,
 	_ pagination.TenantInfo,
@@ -342,4 +338,38 @@ func TestDecide_AGatedPlanCanAlwaysBeRejectedUnseen(t *testing.T) {
 
 	_, err := h.svc.Decide(t.Context(), h.req, h.actor)
 	require.NoError(t, err)
+}
+
+func (f *fakePlans) ListConnection(
+	context.Context,
+	*agentports.ListAgentPlanConnectionRequest,
+) (*pagination.CursorListResult[*agent.AgentPlan], error) {
+	return &pagination.CursorListResult[*agent.AgentPlan]{Items: []*agent.AgentPlan{f.plan}}, nil
+}
+
+/*
+AI Control lists every plan, those a switch holds included, and opens one by
+its id: a held plan says it is held where its buttons would be, rather than
+vanishing while it waits. Only a decision on it is refused.
+*/
+func TestListConnectionAndGetByID_KeepAPlanTheOrganizationPauseHolds(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t, 2, true)
+
+	listed, err := h.svc.ListConnection(t.Context(), &agentports.ListAgentPlanConnectionRequest{
+		Filter: &pagination.QueryOptions{TenantInfo: h.req.TenantInfo},
+	})
+	require.NoError(t, err)
+	require.Equal(t, []*agent.AgentPlan{h.plans.plan}, listed.Items)
+
+	found, err := h.svc.GetByID(t.Context(), agentports.GetAgentPlanByIDRequest{
+		ID:         h.plans.plan.ID,
+		TenantInfo: h.req.TenantInfo,
+	})
+	require.NoError(t, err)
+	require.Equal(t, h.plans.plan, found)
+
+	_, err = h.svc.Decide(t.Context(), h.req, h.actor)
+	require.Error(t, err, "a decision on a held plan is still refused")
 }

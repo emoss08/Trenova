@@ -393,6 +393,7 @@ func TestResource_String(t *testing.T) {
 		{ResourceWebResearch, "web_research"},
 		{ResourcePortalAutomation, "portal_automation"},
 		{ResourceDataAnalysis, "data_analysis"},
+		{ResourceCodeMode, "code_mode"},
 		{ResourceReport, "report"},
 	}
 
@@ -437,6 +438,7 @@ func TestRegistry_RegisterAll_KnownResources(t *testing.T) {
 		ResourceWebResearch.String(),
 		ResourcePortalAutomation.String(),
 		ResourceDataAnalysis.String(),
+		ResourceCodeMode.String(),
 		ResourceShipment.String(),
 		ResourceServiceFailure.String(),
 		ResourceServiceFailureReasonCode.String(),

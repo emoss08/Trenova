@@ -22,9 +22,6 @@ type ListAgentPlanConnectionRequest struct {
 	Filter  *pagination.QueryOptions `json:"filter"`
 	Cursor  pagination.CursorInfo    `json:"-"`
 	Columns []string                 `json:"-"`
-	// ExcludeShadowDefinitions hides plans whose agent is in shadow, the way
-	// the proposal list does; a plan nobody may decide is not activity.
-	ExcludeShadowDefinitions bool `json:"-"`
 }
 
 // UpdateAgentPlanStatusRequest moves a plan between statuses. FromStatus, when

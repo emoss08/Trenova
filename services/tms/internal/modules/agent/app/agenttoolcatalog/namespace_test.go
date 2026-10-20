@@ -103,6 +103,15 @@ func conventionProblems(tool string, properties map[string]any, path string) []s
 				problems = append(problems, fmt.Sprintf("%s.%s: declare its maximum", tool, at))
 			}
 		}
+		if param == "after" {
+			if _, paged := properties["limit"]; !paged {
+				problems = append(problems, fmt.Sprintf("%s.%s: an after pages a limit", tool, at))
+			}
+			if _, offset := properties["offset"]; offset {
+				problems = append(problems, fmt.Sprintf(
+					"%s.%s: a list pages by after or by offset, never both", tool, at))
+			}
+		}
 		if param == "offset" {
 			if _, paged := properties["limit"]; !paged {
 				problems = append(problems, fmt.Sprintf("%s.%s: an offset pages a limit", tool, at))

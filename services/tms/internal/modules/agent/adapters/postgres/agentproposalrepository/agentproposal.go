@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -54,9 +53,6 @@ func (r *repository) filterQuery(
 	)
 
 	q = q.Apply(agentcol.AgentProposalApplyTenant(req.Filter.TenantInfo))
-	if req.ExcludeShadowDefinitions {
-		q = excludeShadowDefinitions(q)
-	}
 
 	return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
 		Offset(int64(req.Filter.Pagination.SafeOffset())).
@@ -105,9 +101,6 @@ func (r *repository) applyTotalCountFilters(
 	)
 
 	q = q.Apply(agentcol.AgentProposalApplyTenant(req.Filter.TenantInfo))
-	if req.ExcludeShadowDefinitions {
-		q = excludeShadowDefinitions(q)
-	}
 
 	return q
 }
@@ -126,39 +119,8 @@ func (r *repository) applyCursorPageFilters(
 	if err != nil {
 		return nil, err
 	}
-	if req.ExcludeShadowDefinitions {
-		q = excludeShadowDefinitions(q)
-	}
 
 	return q, nil
-}
-
-func excludeShadowDefinitions(q *bun.SelectQuery) *bun.SelectQuery {
-	proposals := agentcol.AgentProposalColumns
-	runs := agentcol.AgentRunColumns
-	definitions := agentdefinitioncol.DefinitionColumns
-
-	return q.Where(
-		"NOT EXISTS (SELECT 1 FROM ? AS ? JOIN ? AS ? ON ? = ? AND ? = ? AND ? = ? "+
-			"WHERE ? = ? AND ? = ? AND ? = ? AND ? = TRUE)",
-		bun.Ident(agentcol.AgentRunTable.Name),
-		bun.Ident(agentcol.AgentRunTable.Alias),
-		bun.Ident(agentdefinitioncol.DefinitionTable.Name),
-		bun.Ident(agentdefinitioncol.DefinitionTable.Alias),
-		bun.Safe(definitions.ID.Qualified()),
-		bun.Safe(runs.AgentDefinitionID.Qualified()),
-		bun.Safe(definitions.OrganizationID.Qualified()),
-		bun.Safe(runs.OrganizationID.Qualified()),
-		bun.Safe(definitions.BusinessUnitID.Qualified()),
-		bun.Safe(runs.BusinessUnitID.Qualified()),
-		bun.Safe(runs.ID.Qualified()),
-		bun.Safe(proposals.RunID.Qualified()),
-		bun.Safe(runs.OrganizationID.Qualified()),
-		bun.Safe(proposals.OrganizationID.Qualified()),
-		bun.Safe(runs.BusinessUnitID.Qualified()),
-		bun.Safe(proposals.BusinessUnitID.Qualified()),
-		bun.Safe(definitions.ShadowMode.Qualified()),
-	)
 }
 
 func applyAgentProposalColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {

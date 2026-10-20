@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
+
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
@@ -52,6 +54,7 @@ type TurnRequest struct {
 	// OutsideText says the turn's input carries text written outside the
 	// organization, such as a portal's answer a wait picked up.
 	OutsideText bool
+	CodeMode    codemode.Override
 }
 
 type TurnResult struct {
@@ -125,6 +128,7 @@ func (s *Service) admit(
 		// Text written outside the organization in the turn's own input holds
 		// every write it asks for, as reading the web in the turn would.
 		AfterExternalContent: req.OutsideText,
+		CodeMode:             req.CodeMode,
 	}
 }
 

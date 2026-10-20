@@ -9,6 +9,7 @@ strata:
       mode: chat
     heldOut:
       - billing-agent-asked-a-dispatch-question
+      - pair:invoices-vs-shipment-charges
       - send-a-delivered-load-to-billing
   - stratum:
       desk: BillingException
@@ -25,7 +26,7 @@ strata:
       desk: Compliance desk
       mode: chat
     heldOut:
-      - expiring-soon
+      - pair:whats-down-in-the-fleet
   - stratum:
       desk: CredentialDesk
       mode: unattended
@@ -51,8 +52,10 @@ strata:
       - in-transit-count
       - load-by-description
       - off-topic-code-request
+      - pair:covered-load-note-not-hold
+      - pair:delayed-loads-holds-and-comments
+      - pair:denver-tomorrow-who-needs-a-driver
       - portal-read-only-site-refuses-booking
-      - portal-site-not-set-up
   - stratum:
       desk: DispatchAssignment
       mode: unattended
@@ -128,7 +131,7 @@ strata:
       desk: Receivables
       mode: chat
     heldOut:
-      - nothing-open-for-acme
+      - pair:past-sixty-by-customer
   - stratum:
       desk: Report analyst
       mode: chat

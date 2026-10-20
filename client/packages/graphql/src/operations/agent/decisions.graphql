@@ -32,6 +32,10 @@ fragment PendingProposalFields on AgentProposal {
     }
   }
   modifications
+  hold {
+    reason
+    agentName
+  }
   evidence {
     type
     id
@@ -96,6 +100,10 @@ query PendingDecisions($input: PendingDecisionsInput!, $includeTotalCount: Boole
   pendingDecisions(input: $input) {
     edges {
       cursor
+      hold {
+        reason
+        agentName
+      }
       node {
         __typename
         ... on AgentProposal {
@@ -117,6 +125,7 @@ query PendingDecisions($input: PendingDecisionsInput!, $includeTotalCount: Boole
 query PendingDecisionSummary {
   pendingDecisionSummary {
     total
+    held
     byAgent {
       agentDefinitionId
       agentName

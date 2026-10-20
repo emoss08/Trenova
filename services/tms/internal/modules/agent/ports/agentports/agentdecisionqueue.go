@@ -22,6 +22,8 @@ type PendingDecisionEntry struct {
 	Kind      PendingDecisionKind `bun:"kind"`
 	ID        pulid.ID            `bun:"id"`
 	CreatedAt int64               `bun:"created_at"`
+	Shadow    bool                `bun:"shadow"`
+	AgentName string              `bun:"agent_name"`
 }
 
 // PendingDecisionCursor is where a page ended: the entry's time and id,
@@ -41,9 +43,6 @@ type ListPendingDecisionsQuery struct {
 	// one kind of write.
 	AgentDefinitionID pulid.ID
 	ToolName          string
-	// ExcludeShadowDefinitions hides what agents in shadow mode proposed,
-	// which nobody can approve.
-	ExcludeShadowDefinitions bool
 	// Audience keeps only what agents the person may use raised; nil keeps
 	// everything.
 	Audience *kernelports.AgentAudience
@@ -71,16 +70,16 @@ type PendingDecisionToolCount struct {
 // which agents, of which kinds, and how long the oldest has waited.
 type PendingDecisionSummary struct {
 	Total    int
+	Held     int
 	ByAgent  []PendingDecisionAgentCount
 	ByTool   []PendingDecisionToolCount
 	OldestAt *int64
 }
 
 type PendingDecisionSummaryRequest struct {
-	TenantInfo               pagination.TenantInfo
-	ExcludeShadowDefinitions bool
-	Audience                 *kernelports.AgentAudience
-	Now                      int64
+	TenantInfo pagination.TenantInfo
+	Audience   *kernelports.AgentAudience
+	Now        int64
 }
 
 // AgentDecisionQueueRepository reads what is waiting on a person across

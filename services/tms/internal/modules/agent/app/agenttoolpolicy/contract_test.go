@@ -675,3 +675,30 @@ func TestEveryToolACaseStepNamesIsRegistered(t *testing.T) {
 		assert.Truef(t, ok, "case steps name %q, which is not a registered tool", tool)
 	}
 }
+
+// A script's broker runs only reads: a write, a self-scoped tool, an extension
+// tool and the script tool itself are never callable from a script, whatever
+// their policy otherwise says.
+func TestScriptsCallOnlyReads(t *testing.T) {
+	t.Parallel()
+
+	tools := buildRegistered(t)
+	runners := 0
+	for _, tool := range tools.Queries {
+		policy := tool.Policy()
+		if policy.Script == agentports.ScriptRunner {
+			runners++
+			assert.False(t, policy.CallableFromScript(), "%s never runs inside a script", tool.Name())
+		}
+		if !policy.CallableFromScript() {
+			continue
+		}
+		assert.Equal(t, agent.ToolEffectLookup, policy.EffectiveEffect(), tool.Name())
+		assert.NotEqual(t, agent.ToolScopeSelf, policy.Scope, tool.Name())
+	}
+	assert.Equal(t, 1, runners, "agent_run_script is the one tool that runs scripts")
+	for _, tool := range tools.Actions {
+		policy := tool.Policy()
+		assert.False(t, policy.CallableFromScript(), "%s is a write", tool.Name())
+	}
+}
