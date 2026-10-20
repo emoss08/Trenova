@@ -20,4 +20,6 @@ type AgentRunResolver struct{ *Deps }
 
 type MutationResolver struct{ *Deps }
 
+type PendingDecisionEdgeResolver struct{ *Deps }
+
 type QueryResolver struct{ *Deps }
