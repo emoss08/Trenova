@@ -187,7 +187,7 @@ func writeGateRun(root string, meta deskbench.ReportMeta, cases []*deskbench.Cas
 	if err := deskbench.BuildReport(meta, cases).WriteIndex(root); err != nil {
 		return err
 	}
-	for split, report := range deskbench.SplitReports(meta, cases) {
+	for split, report := range deskbench.SplitReports(&meta, cases) {
 		if err := report.Write(filepath.Join(root, string(split))); err != nil {
 			return err
 		}

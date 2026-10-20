@@ -161,6 +161,23 @@ func (s *GateSpec) validate() error {
 	if s.Repeat < s.PassK {
 		return fmt.Errorf("%w: repeat %d is fewer than passK %d", ErrGateSpec, s.Repeat, s.PassK)
 	}
+	if err := s.validateGroups(); err != nil {
+		return err
+	}
+	if err := s.validateRules(); err != nil {
+		return err
+	}
+	if s.Budget.Overrun < 1 {
+		s.Budget.Overrun = 1
+	}
+	if s.Budget.ProbeEvery <= 0 {
+		s.Budget.ProbeEvery = 10
+	}
+
+	return nil
+}
+
+func (s *GateSpec) validateGroups() error {
 	if len(s.Groups) == 0 {
 		return fmt.Errorf("%w: name at least one group of cells", ErrGateSpec)
 	}
@@ -171,21 +188,33 @@ func (s *GateSpec) validate() error {
 			return fmt.Errorf("%w: every group needs its own name", ErrGateSpec)
 		}
 		names = append(names, group.Name)
-		if len(group.Cells) == 0 {
-			return fmt.Errorf("%w: group %s names no cell", ErrGateSpec, group.Name)
-		}
-		for _, route := range group.Routes {
-			if !route.IsValid() {
-				return fmt.Errorf("%w: group %s: %q is not a route", ErrGateSpec, group.Name, route)
-			}
-		}
-		for _, split := range group.Splits {
-			if !split.IsValid() {
-				return fmt.Errorf("%w: group %s: %q is not a split", ErrGateSpec, group.Name, split)
-			}
+		if err := group.validate(); err != nil {
+			return err
 		}
 	}
 
+	return nil
+}
+
+func (g *GateGroup) validate() error {
+	if len(g.Cells) == 0 {
+		return fmt.Errorf("%w: group %s names no cell", ErrGateSpec, g.Name)
+	}
+	for _, route := range g.Routes {
+		if !route.IsValid() {
+			return fmt.Errorf("%w: group %s: %q is not a route", ErrGateSpec, g.Name, route)
+		}
+	}
+	for _, split := range g.Splits {
+		if !split.IsValid() {
+			return fmt.Errorf("%w: group %s: %q is not a split", ErrGateSpec, g.Name, split)
+		}
+	}
+
+	return nil
+}
+
+func (s *GateSpec) validateRules() error {
 	cells := s.Cells()
 	need := func(what, cell string) error {
 		if cell == "" || slices.Contains(cells, cell) {
@@ -193,51 +222,38 @@ func (s *GateSpec) validate() error {
 		}
 		return fmt.Errorf("%w: %s %q is in no group", ErrGateSpec, what, cell)
 	}
-	if s.Before == "" {
-		return fmt.Errorf("%w: name the configuration the product runs today as before", ErrGateSpec)
-	}
-	if err := need("before", s.Before); err != nil {
-		return err
-	}
-	if len(s.Effort.Candidates) == 0 {
+	switch {
+	case s.Before == "":
+		return fmt.Errorf("%w: name today's configuration as before", ErrGateSpec)
+	case len(s.Effort.Candidates) == 0:
 		return fmt.Errorf("%w: name the effort candidates", ErrGateSpec)
-	}
-	if !slices.Contains(s.Effort.Candidates, s.Before) {
+	case !slices.Contains(s.Effort.Candidates, s.Before):
 		return fmt.Errorf("%w: before must be one of the effort candidates", ErrGateSpec)
+	case s.Advisor.Cell != "" && s.Advisor.CostBar == "":
+		return fmt.Errorf("%w: the advisor needs a cost bar", ErrGateSpec)
+	}
+
+	checks := []struct{ what, cell string }{
+		{"before", s.Before},
+		{"advisor cell", s.Advisor.Cell},
+		{"advisor cost bar", s.Advisor.CostBar},
 	}
 	for _, cell := range s.Effort.Candidates {
-		if err := need("effort candidate", cell); err != nil {
-			return err
-		}
-	}
-	if s.Advisor.Cell != "" {
-		if err := need("advisor cell", s.Advisor.Cell); err != nil {
-			return err
-		}
-		if s.Advisor.CostBar == "" {
-			return fmt.Errorf("%w: the advisor needs a cost bar", ErrGateSpec)
-		}
-		if err := need("advisor cost bar", s.Advisor.CostBar); err != nil {
-			return err
-		}
+		checks = append(checks, struct{ what, cell string }{"effort candidate", cell})
 	}
 	for idx := range s.CodeMode {
 		pair := &s.CodeMode[idx]
 		if pair.Model == "" {
 			return fmt.Errorf("%w: a code-mode pair names no model", ErrGateSpec)
 		}
-		if err := need("code-mode cell", pair.Code); err != nil {
+		checks = append(checks,
+			struct{ what, cell string }{"code-mode cell", pair.Code},
+			struct{ what, cell string }{"code-mode discrete cell", pair.Discrete})
+	}
+	for _, check := range checks {
+		if err := need(check.what, check.cell); err != nil {
 			return err
 		}
-		if err := need("code-mode discrete cell", pair.Discrete); err != nil {
-			return err
-		}
-	}
-	if s.Budget.Overrun < 1 {
-		s.Budget.Overrun = 1
-	}
-	if s.Budget.ProbeEvery <= 0 {
-		s.Budget.ProbeEvery = 10
 	}
 
 	return nil
@@ -400,8 +416,8 @@ func (t *scoreTable) safety(cell string) cellSafety {
 	return safety
 }
 
-func inSplit(split evalsplit.Split) func(*Scenario) bool {
-	return func(s *Scenario) bool { return s.Split == split }
+func heldOutOnly(s *Scenario) bool {
+	return s.Split == evalsplit.HeldOut
 }
 
 func onRoute(route Route, split evalsplit.Split) func(*Scenario) bool {
@@ -624,7 +640,9 @@ func decideAdvisor(
 		return decision
 	}
 
-	gain := GateCheck{Name: fmt.Sprintf("pass^%d gain of at least %.2f", spec.PassK, spec.Advisor.Gain)}
+	gain := GateCheck{
+		Name: fmt.Sprintf("pass^%d gain of at least %.2f", spec.PassK, spec.Advisor.Gain),
+	}
 	if decision.Advisor.PassK != nil && decision.Chosen.PassK != nil {
 		diff := *decision.Advisor.PassK - *decision.Chosen.PassK
 		gain.Passed = diff >= spec.Advisor.Gain-1e-9
@@ -746,8 +764,8 @@ func heldOutBefore(spec *GateSpec, table *scoreTable, chosen mixedSelection) Hel
 		before[route] = spec.Before
 	}
 	held := HeldOutBefore{
-		Before:     table.mixedFigure(before, inSplit(evalsplit.HeldOut)),
-		Chosen:     table.mixedFigure(chosen, inSplit(evalsplit.HeldOut)),
+		Before:     table.mixedFigure(before, heldOutOnly),
+		Chosen:     table.mixedFigure(chosen, heldOutOnly),
 		BeforeByRt: map[Route]GateFigure{},
 		ChosenByRt: map[Route]GateFigure{},
 		Selection:  map[string]selectionFigure{},
@@ -756,7 +774,7 @@ func heldOutBefore(spec *GateSpec, table *scoreTable, chosen mixedSelection) Hel
 		held.BeforeByRt[route] = table.figure(spec.Before, onRoute(route, evalsplit.HeldOut))
 		held.ChosenByRt[route] = table.figure(chosen[route], onRoute(route, evalsplit.HeldOut))
 	}
-	held.Selection[chosen.label()] = table.mixedSelectionFigure(chosen, inSplit(evalsplit.HeldOut))
+	held.Selection[chosen.label()] = table.mixedSelectionFigure(chosen, heldOutOnly)
 
 	return held
 }
@@ -788,7 +806,8 @@ func (t *scoreTable) mixedSelectionFigure(
 }
 
 func safetyDetail(safety cellSafety) string {
-	detail := fmt.Sprintf("%d unauthorized effects in %d trials", safety.Unauthorized, safety.Trials)
+	detail := fmt.Sprintf("%d unauthorized effects in %d trials",
+		safety.Unauthorized, safety.Trials)
 	if safety.Unaudited > 0 {
 		detail += fmt.Sprintf(", %d trials not audited", safety.Unaudited)
 	}
@@ -903,79 +922,20 @@ func ConfirmGate(gate *GateResult, run1, run2 []*CaseResult) *GateConfirmation {
 	confirmation := &GateConfirmation{Configuration: mixedSelection{}}
 
 	for _, route := range AllRoutes() {
-		cell := gate.Configuration[route]
-		check := RouteConfirmation{
-			Route:  route,
-			Cell:   cell,
-			Before: first.figure(spec.Before, onRoute(route, evalsplit.HeldOut)),
-			After:  second.figure(cell, onRoute(route, evalsplit.HeldOut)),
-		}
-		switch {
-		case check.After.PassK == nil || check.Before.PassK == nil:
-			check.Holds = check.After.Scenarios == 0 && check.Before.Scenarios == 0
-			check.Detail = "no held-out scenario on this route"
-		default:
-			floor := *check.Before.PassK - spec.HeldOut.Tolerance
-			check.Holds = *check.After.PassK >= floor-1e-9
-			check.Detail = fmt.Sprintf("%.3f against %s's %.3f, floor %.3f",
-				*check.After.PassK, spec.Before, *check.Before.PassK, floor)
-		}
+		check := confirmRoute(spec, first, second, route, gate.Configuration[route])
 		confirmation.Configuration[route] = spec.Before
 		if check.Holds {
-			confirmation.Configuration[route] = cell
+			confirmation.Configuration[route] = check.Cell
 		}
 		confirmation.Routes = append(confirmation.Routes, check)
 	}
-
 	for idx := range gate.CodeMode {
-		decision := &gate.CodeMode[idx]
-		if !decision.Enabled {
-			continue
+		if gate.CodeMode[idx].Enabled {
+			confirmation.CodeMode = append(confirmation.CodeMode,
+				confirmCodeMode(spec, second, &gate.CodeMode[idx]))
 		}
-		pair := CodePair{Model: decision.Model, Code: decision.Code, Discrete: decision.Discrete}
-		check := CodeModeConfirmation{
-			Model:  decision.Model,
-			Pairs:  pairDifferences(second, &pair, evalsplit.HeldOut),
-			Safety: second.safety(decision.Code),
-		}
-		diffs := make([]float64, 0, len(check.Pairs))
-		for _, p := range check.Pairs {
-			if p.Code != nil && p.Discrete != nil {
-				diffs = append(diffs, *p.Code-*p.Discrete)
-			}
-		}
-		if len(diffs) > 0 {
-			mean := meanOf(diffs)
-			check.MeanDiff = &mean
-			check.Holds = mean >= spec.HeldOut.CodeModeMinimum-1e-9 && check.Safety.Safe()
-			check.Detail = fmt.Sprintf("mean difference %+.3f over %d held-out pairs; %s",
-				mean, len(diffs), safetyDetail(check.Safety))
-		} else {
-			check.Detail = "no held-out pair has both halves"
-		}
-		confirmation.CodeMode = append(confirmation.CodeMode, check)
 	}
-
-	chosenBefore := first.mixedFigure(gate.Configuration, inSplit(evalsplit.HeldOut))
-	chosenAfter := second.mixedFigure(gate.Configuration, inSplit(evalsplit.HeldOut))
-	selBefore := first.mixedSelectionFigure(gate.Configuration, inSplit(evalsplit.HeldOut))
-	selAfter := second.mixedSelectionFigure(gate.Configuration, inSplit(evalsplit.HeldOut))
-	descriptions := GateCheck{Name: "held-out pass^k, recall and argument validity hold"}
-	switch {
-	case chosenBefore.PassK == nil || chosenAfter.PassK == nil:
-		descriptions.Detail = "a held-out pass^k is missing"
-	default:
-		slack := spec.HeldOut.SelectionSlack
-		descriptions.Passed = *chosenAfter.PassK >= *chosenBefore.PassK-1e-9 &&
-			notLowerBy(selBefore.Recall, selAfter.Recall, slack) &&
-			notLowerBy(selBefore.ArgumentValidity, selAfter.ArgumentValidity, slack)
-		descriptions.Detail = fmt.Sprintf(
-			"pass^%d %.3f → %.3f; recall %s → %s; argument validity %s → %s",
-			spec.PassK, *chosenBefore.PassK, *chosenAfter.PassK,
-			fixedOrDash(selBefore.Recall), fixedOrDash(selAfter.Recall),
-			fixedOrDash(selBefore.ArgumentValidity), fixedOrDash(selAfter.ArgumentValidity))
-	}
-	confirmation.Descriptions = descriptions
+	confirmation.Descriptions = confirmDescriptions(spec, first, second, gate.Configuration)
 
 	beforeSelection := mixedSelection{}
 	for _, route := range AllRoutes() {
@@ -987,8 +947,92 @@ func ConfirmGate(gate *GateResult, run1, run2 []*CaseResult) *GateConfirmation {
 	return confirmation
 }
 
+func confirmRoute(
+	spec *GateSpec,
+	first, second *scoreTable,
+	route Route,
+	cell string,
+) RouteConfirmation {
+	check := RouteConfirmation{
+		Route:  route,
+		Cell:   cell,
+		Before: first.figure(spec.Before, onRoute(route, evalsplit.HeldOut)),
+		After:  second.figure(cell, onRoute(route, evalsplit.HeldOut)),
+	}
+	if check.After.PassK == nil || check.Before.PassK == nil {
+		check.Holds = check.After.Scenarios == 0 && check.Before.Scenarios == 0
+		check.Detail = "no held-out scenario on this route"
+		return check
+	}
+	floor := *check.Before.PassK - spec.HeldOut.Tolerance
+	check.Holds = *check.After.PassK >= floor-1e-9
+	check.Detail = fmt.Sprintf("%.3f against %s's %.3f, floor %.3f",
+		*check.After.PassK, spec.Before, *check.Before.PassK, floor)
+
+	return check
+}
+
+func confirmCodeMode(
+	spec *GateSpec,
+	second *scoreTable,
+	decision *CodeModeDecision,
+) CodeModeConfirmation {
+	pair := CodePair{Model: decision.Model, Code: decision.Code, Discrete: decision.Discrete}
+	check := CodeModeConfirmation{
+		Model:  decision.Model,
+		Pairs:  pairDifferences(second, &pair, evalsplit.HeldOut),
+		Safety: second.safety(decision.Code),
+	}
+	diffs := make([]float64, 0, len(check.Pairs))
+	for idx := range check.Pairs {
+		p := &check.Pairs[idx]
+		if p.Code != nil && p.Discrete != nil {
+			diffs = append(diffs, *p.Code-*p.Discrete)
+		}
+	}
+	if len(diffs) == 0 {
+		check.Detail = "no held-out pair has both halves"
+		return check
+	}
+	mean := meanOf(diffs)
+	check.MeanDiff = &mean
+	check.Holds = mean >= spec.HeldOut.CodeModeMinimum-1e-9 && check.Safety.Safe()
+	check.Detail = fmt.Sprintf("mean difference %+.3f over %d held-out pairs; %s",
+		mean, len(diffs), safetyDetail(check.Safety))
+
+	return check
+}
+
+func confirmDescriptions(
+	spec *GateSpec,
+	first, second *scoreTable,
+	chosen mixedSelection,
+) GateCheck {
+	keep := heldOutOnly
+	before := first.mixedFigure(chosen, keep)
+	after := second.mixedFigure(chosen, keep)
+	selBefore := first.mixedSelectionFigure(chosen, keep)
+	selAfter := second.mixedSelectionFigure(chosen, keep)
+	check := GateCheck{Name: "held-out pass^k, recall and argument validity hold"}
+	if before.PassK == nil || after.PassK == nil {
+		check.Detail = "a held-out pass^k is missing"
+		return check
+	}
+	slack := spec.HeldOut.SelectionSlack
+	check.Passed = *after.PassK >= *before.PassK-1e-9 &&
+		notLowerBy(selBefore.Recall, selAfter.Recall, slack) &&
+		notLowerBy(selBefore.ArgumentValidity, selAfter.ArgumentValidity, slack)
+	check.Detail = fmt.Sprintf(
+		"pass^%d %.3f → %.3f; recall %s → %s; argument validity %s → %s",
+		spec.PassK, *before.PassK, *after.PassK,
+		fixedOrDash(selBefore.Recall), fixedOrDash(selAfter.Recall),
+		fixedOrDash(selBefore.ArgumentValidity), fixedOrDash(selAfter.ArgumentValidity))
+
+	return check
+}
+
 func headline(table *scoreTable, cells mixedSelection) HeadlineFigures {
-	keep := inSplit(evalsplit.HeldOut)
+	keep := heldOutOnly
 	figures := HeadlineFigures{Figure: table.mixedFigure(cells, keep)}
 	picked := make([]*CaseResult, 0, 64)
 	for _, route := range AllRoutes() {
@@ -1203,7 +1247,7 @@ func LoadProjection(path string) (*Projection, error) {
 	return projection, nil
 }
 
-func SplitReports(meta ReportMeta, cases []*CaseResult) map[evalsplit.Split]*Report {
+func SplitReports(meta *ReportMeta, cases []*CaseResult) map[evalsplit.Split]*Report {
 	bySplit := map[evalsplit.Split][]*CaseResult{}
 	for _, result := range cases {
 		split := evalsplit.Development
@@ -1214,7 +1258,7 @@ func SplitReports(meta ReportMeta, cases []*CaseResult) map[evalsplit.Split]*Rep
 	}
 	reports := make(map[evalsplit.Split]*Report, len(bySplit))
 	for split, picked := range bySplit {
-		reports[split] = BuildReport(meta, picked)
+		reports[split] = BuildReport(*meta, picked)
 	}
 
 	return reports

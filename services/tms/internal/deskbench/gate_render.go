@@ -6,7 +6,7 @@ import (
 	"text/tabwriter"
 )
 
-func figureCells(figure *GateFigure) (string, string) {
+func figureCells(figure *GateFigure) (pass, cost string) {
 	return fixedOrDash(figure.PassK), dollarsOrDash(figure.CostPerPass)
 }
 
@@ -66,7 +66,8 @@ func (r *GateResult) Render() string {
 
 	if len(r.Advisors) > 0 {
 		b.WriteString("\n## (c) The advisor\n\n")
-		for _, decision := range r.Advisors {
+		for idx := range r.Advisors {
+			decision := &r.Advisors[idx]
 			fmt.Fprintf(&b, "- %s: offered %s. %s\n", decision.Route, yesNo(decision.Offered),
 				decision.Reason)
 			for _, check := range decision.Checks {
@@ -98,13 +99,7 @@ func (r *GateResult) Render() string {
 		}
 	}
 
-	b.WriteString("\n## Held out, as run 1 measured it\n\n")
-	beforePass, beforeCost := figureCells(&r.HeldOut.Before)
-	chosenPass, chosenCost := figureCells(&r.HeldOut.Chosen)
-	fmt.Fprintf(&b, "- before (%s): pass^%d %s, %s per completed task, %d scenarios\n",
-		r.Spec.Before, k, beforePass, beforeCost, r.HeldOut.Before.Scenarios)
-	fmt.Fprintf(&b, "- chosen configuration, without rewrites: pass^%d %s, %s per completed "+
-		"task\n", k, chosenPass, chosenCost)
+	r.renderHeldOut(&b)
 
 	return b.String()
 }
@@ -118,7 +113,8 @@ func (c *GateConfirmation) Render() string {
 	}
 	b.WriteString(".\n\n## Headline\n\n")
 	table := tabwriter.NewWriter(&b, 0, 2, 2, ' ', 0)
-	fmt.Fprintln(table, "\tPASS^K\t$/PASS\tCACHED 2+\tFIRST RIGHT\tRECALL\tARGS VALID\tUNAUTHORIZED")
+	fmt.Fprintln(table,
+		"\tPASS^K\t$/PASS\tCACHED 2+\tFIRST RIGHT\tRECALL\tARGS VALID\tUNAUTHORIZED")
 	for _, row := range []struct {
 		name    string
 		figures *HeadlineFigures
@@ -132,7 +128,8 @@ func (c *GateConfirmation) Render() string {
 	_ = table.Flush()
 
 	b.WriteString("\n## Routes\n\n")
-	for _, route := range c.Routes {
+	for idx := range c.Routes {
+		route := &c.Routes[idx]
 		fmt.Fprintf(&b, "- %s on %s: holds %s. %s\n", route.Route, route.Cell,
 			yesNo(route.Holds), route.Detail)
 	}
@@ -175,4 +172,15 @@ func (p *Projection) Render() string {
 		p.Cost, p.Hours, p.Parallel, p.MaxUSD, p.MaxHours, yesNo(p.Within), p.Cap)
 
 	return b.String()
+}
+
+func (r *GateResult) renderHeldOut(b *strings.Builder) {
+	k := r.Spec.PassK
+	b.WriteString("\n## Held out, as run 1 measured it\n\n")
+	beforePass, beforeCost := figureCells(&r.HeldOut.Before)
+	chosenPass, chosenCost := figureCells(&r.HeldOut.Chosen)
+	fmt.Fprintf(b, "- before (%s): pass^%d %s, %s per completed task, %d scenarios\n",
+		r.Spec.Before, k, beforePass, beforeCost, r.HeldOut.Before.Scenarios)
+	fmt.Fprintf(b, "- chosen configuration, without rewrites: pass^%d %s, %s per completed "+
+		"task\n", k, chosenPass, chosenCost)
 }
