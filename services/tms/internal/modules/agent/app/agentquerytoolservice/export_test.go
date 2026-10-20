@@ -6,3 +6,8 @@ var (
 	ProvideListEquipmentManufacturersTool = provideListEquipmentManufacturersTool
 	NewListEquipmentManufacturersTool     = newListEquipmentManufacturersTool
 )
+
+var (
+	ErrStaleCursor        = errStaleCursor
+	ErrOffsetOnCursorList = errOffsetOnCursorList
+)

@@ -20,7 +20,6 @@ import (
 
 const (
 	graphQLVerbList   = "list"
-	graphQLParamAfter = "after"
 	graphQLParamQuery = "query"
 	graphQLListLimit  = 25
 	graphQLListMost   = 50
@@ -101,7 +100,7 @@ func newGraphQLListTool(
 		read:        read,
 		input:       input,
 		params:      params,
-		sortable:    agenttoolschema.Derived(spec.name+".sortBy", read.sortable()),
+		sortable:    agenttoolschema.Derived(spec.name+".graphqlSortBy", read.sortable()),
 		reader:      reader,
 		permissions: permissions,
 		registry:    fieldsensitivity.DefaultRegistry(),
@@ -139,11 +138,8 @@ func (t *graphQLListTool) ParamSchema() map[string]any {
 			listSortDirections,
 		)
 	}
-	properties[paramLimit] = limitSchema(graphQLListLimit, graphQLListMost)
-	properties[graphQLParamAfter] = map[string]any{
-		toolschema.KeyType: toolschema.TypeString,
-		toolschema.KeyDescription: "Where the next page starts. When a result says hasMore, " +
-			"call again with its nextCursor and the same filters and order.",
+	for name, property := range cursorPageSchema(graphQLListLimit, graphQLListMost) {
+		properties[name] = property
 	}
 
 	return map[string]any{
@@ -192,6 +188,10 @@ func (t *graphQLListTool) Query(
 	if err != nil {
 		return nil, err
 	}
+	window, err := readCursorWindow(t.Name(), params.Params, graphQLListLimit, graphQLListMost)
+	if err != nil {
+		return nil, err
+	}
 	query := strings.TrimSpace(optionalString(params.Params, graphQLParamQuery))
 	criteria := t.criteria(params.Params, query)
 
@@ -199,8 +199,8 @@ func (t *graphQLListTool) Query(
 		query:   query,
 		filters: filters,
 		sort:    t.sort(params.Params),
-		limit:   readLimit(params.Params, graphQLListLimit, graphQLListMost),
-		after:   strings.TrimSpace(optionalString(params.Params, graphQLParamAfter)),
+		limit:   window.limit,
+		after:   window.info.After,
 	})
 	if err != nil {
 		return nil, err
@@ -215,7 +215,7 @@ func (t *graphQLListTool) Query(
 		WithheldByAccess: page.withheld,
 	}
 	if page.hasMore {
-		outcome.NextCursor = page.endCursor
+		outcome.NextCursor = window.next(page.endCursor)
 	}
 	if len(page.withheld) > 0 {
 		outcome.WithheldNote = withheldNote
@@ -238,7 +238,7 @@ type pageRequest struct {
 	after   string
 }
 
-type listPage struct {
+type graphQLPage struct {
 	items     []map[string]any
 	hasMore   bool
 	endCursor string
@@ -250,7 +250,7 @@ func (t *graphQLListTool) page(
 	ctx context.Context,
 	params *agentports.QueryToolParams,
 	req *pageRequest,
-) (*listPage, error) {
+) (*graphQLPage, error) {
 	input := map[string]any{inputFirst: req.limit}
 	if req.after != "" {
 		input[inputAfter] = req.after
@@ -280,7 +280,7 @@ func (t *graphQLListTool) page(
 	}
 
 	connection, _ := result.Data[t.read.RootField].(map[string]any)
-	page := &listPage{first: req.after == "", withheld: t.relativeWithheld(result.Withheld)}
+	page := &graphQLPage{first: req.after == "", withheld: t.relativeWithheld(result.Withheld)}
 	edges, _ := connection[connectionEdges].([]any)
 	page.items = make([]map[string]any, 0, len(edges))
 	for _, edge := range edges {

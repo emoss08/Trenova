@@ -269,6 +269,48 @@ func TestGraphQLListTool_TwoPagesNeverRepeatARow(t *testing.T) {
 	assert.NotContains(t, second, "nextCursor")
 }
 
+// A cursor is bound to the tool and the arguments that produced it: changed
+// filters, an altered cursor or an offset are refused with the same errors
+// the repository lists return.
+func TestGraphQLListTool_KeepsTheCursorContract(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t, &mocks.DenyResourcesPermissionEngine{})
+	person := agentreadtest.Person()
+
+	first, err := h.query(t, person, map[string]any{"status": []any{"Active"}, "limit": 3})
+	require.NoError(t, err)
+	cursor, _ := first["nextCursor"].(string)
+	require.NotEmpty(t, cursor)
+
+	for name, args := range map[string]map[string]any{
+		"changed filters": {"status": []any{"Inactive"}, "limit": 3, "after": cursor},
+		"altered cursor":  {"status": []any{"Active"}, "limit": 3, "after": cursor + "x"},
+		"a raw cursor":    {"status": []any{"Active"}, "limit": 3, "after": "not-a-cursor"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			_, err := h.query(t, person, args)
+			require.ErrorIs(t, err, agentquerytoolservice.ErrStaleCursor)
+		})
+	}
+
+	t.Run("offset", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := h.query(t, person, map[string]any{"limit": 3, "offset": 3})
+		require.ErrorIs(t, err, agentquerytoolservice.ErrOffsetOnCursorList)
+	})
+
+	t.Run("a smaller page", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := h.query(t, person, map[string]any{"status": []any{"Active"}, "limit": 2, "after": cursor})
+		require.NoError(t, err)
+	})
+}
+
 // The permission check the tool's read meets is the one dispatch's
 // authorize makes and the screen's resolver makes: the same principal, the
 // same resource and operation, the same answer.
@@ -283,7 +325,7 @@ func TestGraphQLListTool_RefusesExactlyWhatAuthorizeRefuses(t *testing.T) {
 		},
 	}
 	actors := map[string]*permissionports.RequestActor{
-		"a person":          person,
+		"a person":            person,
 		"an unattended agent": agentreadtest.Agent(person),
 	}
 	for engineName, engine := range engines {
@@ -349,6 +391,59 @@ func TestGraphQLListTool_ReadsWhatTheRepositoryToolRead(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// Walking every page of the GraphQL tool reads, without a repeat, exactly the
+// rows walking every page of the repository tool read.
+func TestGraphQLListTool_PagesThroughWhatTheRepositoryToolPagedThrough(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t, &mocks.DenyResourcesPermissionEngine{})
+	old := agentquerytoolservice.NewListEquipmentManufacturersTool(h.repo)
+	person := agentreadtest.Person()
+
+	var converted []string
+	args := map[string]any{"limit": 2}
+	for pages := 0; ; pages++ {
+		require.Less(t, pages, 10, "the GraphQL tool never reached its last page")
+		got, err := h.query(t, person, args)
+		require.NoError(t, err)
+		converted = append(converted, itemIDs(got)...)
+		cursor, _ := got["nextCursor"].(string)
+		if got["hasMore"] != true {
+			break
+		}
+		require.NotEmpty(t, cursor)
+		args = map[string]any{"limit": 2, "after": cursor}
+	}
+
+	var before []string
+	oldArgs := map[string]any{"limit": 2}
+	for pages := 0; ; pages++ {
+		require.Less(t, pages, 10, "the repository tool never reached its last page")
+		got, err := old.Query(t.Context(), &agentports.QueryToolParams{
+			OrganizationID: person.OrganizationID,
+			BusinessUnitID: person.BusinessUnitID,
+			Actor:          person,
+			Params:         oldArgs,
+		})
+		require.NoError(t, err)
+		page := asMap(t, got)
+		before = append(before, itemIDs(page)...)
+		next, ok := page["nextOffset"]
+		if !ok {
+			break
+		}
+		oldArgs = map[string]any{"limit": 2, "offset": next}
+	}
+
+	require.Greater(t, len(converted), 2, "the walk must cross a page")
+	assert.ElementsMatch(t, before, converted)
+	seen := make(map[string]bool, len(converted))
+	for _, id := range converted {
+		assert.False(t, seen[id], "row %v read twice", id)
+		seen[id] = true
 	}
 }
 

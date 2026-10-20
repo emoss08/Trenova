@@ -11803,7 +11803,7 @@
         "additionalProperties": false,
         "properties": {
           "after": {
-            "description": "Where the next page starts. When a result says hasMore, call again with its nextCursor and the same filters and order.",
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
             "type": "string"
           },
           "createdAtFrom": {
@@ -11851,7 +11851,7 @@
               "updatedAt"
             ],
             "type": "string",
-            "x-enumOf": "equipment_list_manufacturers.sortBy"
+            "x-enumOf": "equipment_list_manufacturers.graphqlSortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
