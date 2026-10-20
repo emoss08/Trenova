@@ -350,13 +350,17 @@ func compact(node map[string]any) map[string]any {
 	return out
 }
 
-// columns are the record's fields in the order the operation selects them.
+// columns are the fields the operation selects on the record, in schema
+// order, that the page's rows carry.
 func (t *graphQLListTool) columns(items []map[string]any) []string {
 	if len(items) == 0 {
 		return nil
 	}
 	out := make([]string, 0, len(t.read.Fields))
 	for _, field := range t.read.Fields {
+		if !field.Selected {
+			continue
+		}
 		for _, item := range items {
 			if _, ok := item[field.Name]; ok {
 				out = append(out, field.Name)

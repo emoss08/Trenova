@@ -23,6 +23,7 @@ type field struct {
 	Kind        string
 	List        bool
 	NonNull     bool
+	Selected    bool
 	Enum        []string
 	Description string
 }
@@ -109,6 +110,7 @@ var graphQLInputs = map[string][]graphQLField{
 }
 {{ define "field" -}}
 {Name: {{ quote .Name }}, Type: {{ quote .Type }}, Kind: {{ quote .Kind }}, List: {{ .List }}, NonNull: {{ .NonNull }}
+{{- if .Selected }}, Selected: true{{ end }}
 {{- if .Enum }}, Enum: []string{ {{- range $i, $v := .Enum }}{{ if $i }}, {{ end }}{{ quote $v }}{{ end -}} }{{ end }}
 {{- if .Description }}, Description: {{ quote .Description }}{{ end }}},
 {{- end }}
@@ -196,15 +198,35 @@ func variables(doc *ast.QueryDocument) []variable {
 	return out
 }
 
-// nodeFields are the fields the operation selects on each record it reads,
-// with their schema types: the connection's node for a list, the result for
-// a get.
+// nodeFields are every field of the record type the tool reads, in schema
+// order, each marked with whether the operation selects it: a filter is
+// offered on any field the server lets a table filter on, and a result
+// carries only what the operation selects.
 func nodeFields(schema *ast.Schema, b *binding) []field {
+	selected := selectedFields(b)
+	def := schema.Types[b.Node]
+	out := make([]field, 0, len(def.Fields))
+	for _, definition := range def.Fields {
+		if strings.HasPrefix(definition.Name, "__") {
+			continue
+		}
+		f := describeField(schema, definition.Name, definition.Type, definition.Description)
+		_, f.Selected = selected[definition.Name]
+		out = append(out, f)
+	}
+
+	return out
+}
+
+// selectedFields are the fields the operation selects on each record it
+// reads: the connection's node for a list, the result for a get.
+func selectedFields(b *binding) map[string]struct{} {
 	doc := b.Operation.Query
 	fragments := make(map[string]*ast.FragmentDefinition, len(doc.Fragments))
 	for _, fragment := range doc.Fragments {
 		fragments[fragment.Name] = fragment
 	}
+	out := make(map[string]struct{})
 	var root *ast.Field
 	for _, selection := range doc.Operations[0].SelectionSet {
 		if f, ok := selection.(*ast.Field); ok && f.Name == b.RootField.Name {
@@ -212,28 +234,15 @@ func nodeFields(schema *ast.Schema, b *binding) []field {
 		}
 	}
 	if root == nil {
-		return nil
+		return out
 	}
 	set := root.SelectionSet
 	if b.Verb == verbList {
 		set = childSet(collect(set, fragments), edgesField)
 		set = childSet(collect(set, fragments), nodeField)
 	}
-
-	def := schema.Types[b.Node]
-	seen := make(map[string]struct{})
-	var out []field
 	for _, f := range collect(set, fragments) {
-		if _, dup := seen[f.Name]; dup || strings.HasPrefix(f.Name, "__") {
-			continue
-		}
-		seen[f.Name] = struct{}{}
-		definition := def.Fields.ForName(f.Name)
-		if definition == nil {
-			continue
-		}
-		out = append(out, describeField(schema, definition.Name, definition.Type,
-			definition.Description))
+		out[f.Name] = struct{}{}
 	}
 
 	return out

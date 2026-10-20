@@ -15,14 +15,22 @@ const (
 )
 
 type executorPlan struct {
-	Shards    []shardImport
-	Imports   []importLine
-	Params    []paramField
-	Core      string
-	Deps      []depsBlock
-	Objects   []*objectResolver
-	Queries   []*rootResolver
-	Mutations []*rootResolver
+	Shards     []shardImport
+	Imports    []importLine
+	Params     []paramField
+	Core       string
+	Deps       []depsBlock
+	Objects    []*objectResolver
+	Composites []*compositePlan
+}
+
+// compositePlan is an object the read executor builds as a composite, as
+// the full root does, of the included packages' shares only.
+type compositePlan struct {
+	Object  string
+	Var     string
+	Type    string
+	Members []*rootResolver
 }
 
 type shardImport struct {
@@ -115,13 +123,14 @@ func (p *planner) addShards(generatedDir string, shards []string) ([]string, err
 	return sortedKeys(required), nil
 }
 
-// addResolvers binds every resolver root a shard asks for: Query and
-// Mutation as composites of the included packages' own, and each object's
-// resolver as the full root builds it.
+// addResolvers binds every resolver root a shard asks for: a composite
+// (Query, Mutation, or an object whose resolvers span schema files) of the
+// included packages' shares, and any other object's resolver as the full
+// root builds it.
 func (p *planner) addResolvers(shards, required []string) {
 	for _, root := range required {
-		if root == rootQuery || root == rootMutation {
-			p.addRoot(shards, root)
+		if p.w.composites[root] {
+			p.addComposite(shards, root)
 			continue
 		}
 		resolver, ok := p.w.objects[root]
@@ -135,20 +144,27 @@ func (p *planner) addResolvers(shards, required []string) {
 	}
 }
 
-func (p *planner) addRoot(shards []string, root string) {
+func (p *planner) addComposite(shards []string, root string) {
+	lower := strings.ToLower(root[:1]) + root[1:]
+	composite := &compositePlan{
+		Object: root,
+		Var:    lower,
+		Type:   lower + "Resolver",
+	}
 	for _, shard := range shards {
 		resolver, ok := p.w.roots[shard+root]
 		if !ok {
 			continue
 		}
-		if root == rootQuery {
-			p.plan.Queries = append(p.plan.Queries, resolver)
-		} else {
-			p.plan.Mutations = append(p.plan.Mutations, resolver)
-		}
+		composite.Members = append(composite.Members, resolver)
 		p.deps[resolver.Deps] = struct{}{}
 		p.packages[resolver.Package] = struct{}{}
 	}
+	if len(composite.Members) == 0 {
+		p.problems = append(p.problems, "no included package builds a share of "+root)
+		return
+	}
+	p.plan.Composites = append(p.plan.Composites, composite)
 }
 
 // use records the Params fields and packages an expression copied from

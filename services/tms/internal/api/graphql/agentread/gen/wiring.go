@@ -39,9 +39,13 @@ type wiring struct {
 	deps map[string]*depsLiteral
 	// objects are each object resolver's constructor, by object name.
 	objects map[string]*objectResolver
-	// roots are each package's Query and Mutation resolver, by alias
-	// (customerQuery), with the package they name.
+	// roots are each package's share of a composite resolver, by alias
+	// (customerQuery, customerCustomerBillingProfile), with the package it
+	// names: Query, Mutation and any object whose resolvers live in more than
+	// one schema file are built as composites of them.
 	roots map[string]*rootResolver
+	// composites are the objects the resolver root builds as composites.
+	composites map[string]bool
 
 	services *servicesSource
 }
@@ -102,18 +106,16 @@ func loadWiring(resolverDir string) (*wiring, error) {
 		return nil, fmt.Errorf("parse %s: %w", path, err)
 	}
 	w := &wiring{
-		fset:    fset,
-		imports: importAliases(file),
-		deps:    make(map[string]*depsLiteral),
-		objects: make(map[string]*objectResolver),
-		roots:   make(map[string]*rootResolver),
+		fset:       fset,
+		imports:    importAliases(file),
+		deps:       make(map[string]*depsLiteral),
+		objects:    make(map[string]*objectResolver),
+		roots:      make(map[string]*rootResolver),
+		composites: make(map[string]bool),
 	}
 
 	src := w.readRoot(file)
 	w.matchObjects(src)
-	for _, root := range []string{"query", "mutation"} {
-		w.matchRoots(src, root)
-	}
 
 	if w.services, err = loadServicesSource(resolverDir); err != nil {
 		return nil, err
@@ -162,6 +164,11 @@ func (w *wiring) matchObjects(src *rootSource) {
 		if !ok {
 			continue
 		}
+		if composite, isComposite := localComposite(lit); isComposite {
+			w.composites[object] = true
+			w.matchComposite(src, composite)
+			continue
+		}
 		pkg, typ, deps, ok := depsConstructor(w.fset, lit)
 		if !ok {
 			continue
@@ -170,15 +177,19 @@ func (w *wiring) matchObjects(src *rootSource) {
 	}
 }
 
-func (w *wiring) matchRoots(src *rootSource, root string) {
-	lit, ok := src.fields[root]
-	if !ok {
-		return
-	}
+// localComposite is a resolver the root builds from a type of its own,
+// embedding each package's share: `&queryResolver{customerQuery: ...}`.
+func localComposite(lit *ast.UnaryExpr) (*ast.CompositeLit, bool) {
 	composite, ok := lit.X.(*ast.CompositeLit)
 	if !ok {
-		return
+		return nil, false
 	}
+	_, local := composite.Type.(*ast.Ident)
+
+	return composite, local
+}
+
+func (w *wiring) matchComposite(src *rootSource, composite *ast.CompositeLit) {
 	for _, elt := range composite.Elts {
 		kv, isKV := elt.(*ast.KeyValueExpr)
 		if !isKV {

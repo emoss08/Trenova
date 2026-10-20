@@ -256,9 +256,9 @@ snapshot shows it.
 Each parameter is derived from the operation's variables and the node type, within
 [agent-tool-conventions.md](agent-tool-conventions.md).
 
-**Operations on `DataTableConnectionInput`** (most `*Table` operations). Every field the server's
-filter configuration marks filterable (`FilterableFields`, `NestedFields`) and the node type
-selects becomes a parameter. Its type comes from the field's GraphQL type:
+**Operations on `DataTableConnectionInput`** (most `*Table` operations). Every field of the node
+type that the server's filter configuration marks filterable (`FilterableFields`, `NestedFields`)
+becomes a parameter. Its type comes from the field's GraphQL type:
 
 | Node field type | Parameter | Compiled to `fieldFilters` |
 |---|---|---|
@@ -275,8 +275,11 @@ selects becomes a parameter. Its type comes from the field's GraphQL type:
 - **Limit.** `limit` maps to `first`, `minimum` 1, `maximum` 50, marked `toolschema.Clamped`.
 - **Paging.** `after` maps to `after`.
 - **Total count.** `includeTotalCount` is sent `false`, unless the tool reports a total.
-- **Hidden from the model.** A filterable field the operation does not select is not offered:
-  the screen cannot filter on what it does not show either.
+- **Every filterable field, selected or not.** Parameters come from every field of the record
+  type that the filter configuration marks filterable, not only the ones the operation selects:
+  the resolver accepts the filter either way, and the old catalogs filtered by fields no table
+  shows (`customer_list` by `mcNumber`, the tractor and trailer lists by `ownershipType` and
+  `leaseEndDate`). The operation's selection decides only what a result carries.
 - **Withheld fields.** A field above the caller's ceiling, or in a `@protected` group the caller
   lacks, is refused as a filter or sort before the read, with the same message today's
   `refuseWithheldFields` gives.
@@ -387,11 +390,27 @@ so the ceiling refuses it too.
 **A record's id is never withheld.** Row-level security has already decided the row may be read,
 and the id carries none of the row's content. A tool needs it to name the row in the next call.
 
-**Lists that were never gated now are.** Of the 37 repository-backed list tools, nine applied the
-ceiling (`fetchGated`); the rest returned every column they projected, whatever the caller's
-tier. Through the guard, every converted tool applies it. A converted tool therefore withholds at
-least what it did before, and sometimes more. The parity test (below) checks the "at least"; a
-field it now withholds that it did not is reported in the module's PR.
+## The ceiling now applies to every read
+
+Converting a tool closes a real gap. Of the 37 repository-backed list tools, only nine applied the
+agent's data access ceiling (`fetchGated`): `worker_list`, `invoice_list`,
+`billing_list_queue_items`, `ledger_list_accounts`, `ledger_list_fiscal_periods`,
+`ledger_list_manual_journals`, `ledger_list_journal_reversals`, `order_list` and
+`invoice_list_runs`. The other 28 returned every column they projected, whatever the agent's or
+the person's tier. Through the guard, every converted read applies the ceiling, so a converted
+tool withholds at least what it did before, and sometimes more.
+
+Each module's PR:
+
+- lists, per tool, every field it now withholds that it did not, at the default agent data
+  access (Internal) and at a person's role ceiling;
+- updates the tool's description wherever it names a newly withheld field, so the model is told
+  the field can be withheld rather than finding it missing;
+- runs the parity test, which fails a converted tool that withholds less than its old path.
+
+| Module | Tool | Newly withheld at Internal | Notes |
+|---|---|---|---|
+| Reference data | `equipment_list_manufacturers` | none | every manufacturer field is Internal |
 
 ## Permissions, data scopes and refusals
 

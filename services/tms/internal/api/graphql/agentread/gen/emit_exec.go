@@ -66,27 +66,17 @@ func NewSchema(p ResolverParams) Schema {
 {{- end }}
 	}
 {{- end }}
-{{- if .Plan.Queries }}
-	query := &queryResolver{
-{{- range .Plan.Queries }}
-		{{ .Alias }}: &{{ .Alias }}{Deps: {{ .Deps }}},
-{{- end }}
-	}
-{{- end }}
-{{- if .Plan.Mutations }}
-	mutation := &mutationResolver{
-{{- range .Plan.Mutations }}
+{{- range .Plan.Composites }}
+	{{ .Var }} := &{{ .Type }}{
+{{- range .Members }}
 		{{ .Alias }}: &{{ .Alias }}{Deps: {{ .Deps }}},
 {{- end }}
 	}
 {{- end }}
 
 	return newSchema(shards, map[string]func() any{
-{{- if .Plan.Queries }}
-		"Query": func() any { return query },
-{{- end }}
-{{- if .Plan.Mutations }}
-		"Mutation": func() any { return mutation },
+{{- range .Plan.Composites }}
+		{{ quote .Object }}: func() any { return {{ .Var }} },
 {{- end }}
 {{- range .Plan.Objects }}
 		{{ quote .Object }}: func() any { return &{{ .Package }}.{{ .Type }}{Deps: {{ .Deps }}} },
@@ -97,27 +87,19 @@ func NewSchema(p ResolverParams) Schema {
 func Operations() []Operation {
 	return operations
 }
-{{ if .Plan.Queries }}
-type queryResolver struct {
-{{- range .Plan.Queries }}
+{{- range .Plan.Composites }}
+type {{ .Type }} struct {
+{{- range .Members }}
 	*{{ .Alias }}
 {{- end }}
 }
 {{ end }}
-{{- if .Plan.Mutations }}
-type mutationResolver struct {
-{{- range .Plan.Mutations }}
-	*{{ .Alias }}
-{{- end }}
-}
-{{ end }}
-{{- if or .Plan.Queries .Plan.Mutations }}
+{{- if .Plan.Composites }}
 type (
-{{- range .Plan.Queries }}
+{{- range .Plan.Composites }}
+{{- range .Members }}
 	{{ .Alias }} = {{ .Package }}.{{ .Type }}
 {{- end }}
-{{- range .Plan.Mutations }}
-	{{ .Alias }} = {{ .Package }}.{{ .Type }}
 {{- end }}
 )
 {{- end }}

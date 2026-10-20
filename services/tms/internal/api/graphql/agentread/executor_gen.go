@@ -218,6 +218,12 @@ func NewSchema(p ResolverParams) Schema {
 		Core:           core,
 		TrailerService: p.TrailerService,
 	}
+	mutation := &mutationResolver{
+		equipmentmanufacturerMutation: &equipmentmanufacturerMutation{Deps: equipmentmanufacturerDeps},
+		equipmenttypeMutation:         &equipmenttypeMutation{Deps: equipmenttypeDeps},
+		tenantMutation:                &tenantMutation{Deps: tenantDeps},
+		trailerMutation:               &trailerMutation{Deps: trailerDeps},
+	}
 	query := &queryResolver{
 		accessorialchargeQuery:     &accessorialchargeQuery{Deps: accessorialchargeDeps},
 		commodityQuery:             &commodityQuery{Deps: commodityDeps},
@@ -233,16 +239,10 @@ func NewSchema(p ResolverParams) Schema {
 		tenantQuery:                &tenantQuery{Deps: tenantDeps},
 		trailerQuery:               &trailerQuery{Deps: trailerDeps},
 	}
-	mutation := &mutationResolver{
-		equipmentmanufacturerMutation: &equipmentmanufacturerMutation{Deps: equipmentmanufacturerDeps},
-		equipmenttypeMutation:         &equipmenttypeMutation{Deps: equipmenttypeDeps},
-		tenantMutation:                &tenantMutation{Deps: tenantDeps},
-		trailerMutation:               &trailerMutation{Deps: trailerDeps},
-	}
 
 	return newSchema(shards, map[string]func() any{
-		"Query":             func() any { return query },
 		"Mutation":          func() any { return mutation },
+		"Query":             func() any { return query },
 		"AccessorialCharge": func() any { return &accessorialchargeresolver.AccessorialChargeResolver{Deps: accessorialchargeDeps} },
 		"Commodity":         func() any { return &commodityresolver.CommodityResolver{Deps: commodityDeps} },
 		"LocationCategory":  func() any { return &locationcategoryresolver.LocationCategoryResolver{Deps: locationcategoryDeps} },
@@ -253,6 +253,13 @@ func NewSchema(p ResolverParams) Schema {
 
 func Operations() []Operation {
 	return operations
+}
+
+type mutationResolver struct {
+	*equipmentmanufacturerMutation
+	*equipmenttypeMutation
+	*tenantMutation
+	*trailerMutation
 }
 
 type queryResolver struct {
@@ -271,14 +278,11 @@ type queryResolver struct {
 	*trailerQuery
 }
 
-type mutationResolver struct {
-	*equipmentmanufacturerMutation
-	*equipmenttypeMutation
-	*tenantMutation
-	*trailerMutation
-}
-
 type (
+	equipmentmanufacturerMutation = equipmentmanufacturerresolver.MutationResolver
+	equipmenttypeMutation         = equipmenttyperesolver.MutationResolver
+	tenantMutation                = tenantresolver.MutationResolver
+	trailerMutation               = trailerresolver.MutationResolver
 	accessorialchargeQuery        = accessorialchargeresolver.QueryResolver
 	commodityQuery                = commodityresolver.QueryResolver
 	documenttypeQuery             = documenttyperesolver.QueryResolver
@@ -292,8 +296,4 @@ type (
 	shipmenttypeQuery             = shipmenttyperesolver.QueryResolver
 	tenantQuery                   = tenantresolver.QueryResolver
 	trailerQuery                  = trailerresolver.QueryResolver
-	equipmentmanufacturerMutation = equipmentmanufacturerresolver.MutationResolver
-	equipmenttypeMutation         = equipmenttyperesolver.MutationResolver
-	tenantMutation                = tenantresolver.MutationResolver
-	trailerMutation               = trailerresolver.MutationResolver
 )

@@ -41,6 +41,7 @@ type graphQLField struct {
 	Kind        string
 	List        bool
 	NonNull     bool
+	Selected    bool
 	Enum        []string
 	Description string
 }
@@ -110,12 +111,11 @@ type graphQLParam struct {
 	Schema map[string]any
 }
 
-// typedParams derives a list tool's parameters from its operation: every field
-// the operation selects on its records that the entity's own filter
-// configuration (the one the resolver compiles fieldFilters with) marks
-// filterable, typed by its schema type. A field the operation does not
-// select is not offered, because the screen cannot filter on what it does
-// not show either.
+// typedParams derives a list tool's parameters from its record type: every
+// field the entity's own filter configuration (the one the resolver compiles
+// fieldFilters with) marks filterable, typed by its schema type. The
+// operation's selection decides only what a result carries; a field the
+// table does not show can still narrow it, as the resolver accepts.
 func (r *graphQLRead) typedParams() []graphQLParam {
 	config := querybuilder.GetFieldConfiguration(r.Entity())
 	params := make([]graphQLParam, 0, len(r.Fields))
@@ -134,8 +134,7 @@ func (r *graphQLRead) typedParams() []graphQLParam {
 	return params
 }
 
-// sortable is every field the operation selects that the server can order
-// the list by.
+// sortable is every field of the record the server can order the list by.
 func (r *graphQLRead) sortable() []string {
 	config := querybuilder.GetFieldConfiguration(r.Entity())
 	out := make([]string, 0, len(r.Fields))
