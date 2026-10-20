@@ -288,3 +288,47 @@ func TestCompile_RegistriesOverTheSameShardsDoNotShareObjects(t *testing.T) {
 		"compiling a second registry leaves the first one's fields alone")
 	assert.Nil(t, part.objects["Query"].field("any"))
 }
+
+// A field selected on an interface runs on whichever object the value is, so
+// each possible object's executor must hold it.
+func TestValidateOperations_ChecksAnInterfaceFieldOnEveryPossibleObject(t *testing.T) {
+	t.Parallel()
+
+	schema := gqlparser.MustLoadSchema(&ast.Source{Input: `
+interface Named { name: String }
+type Dog implements Named { name: String }
+type Cat implements Named { name: String }
+type Query { named: Named }
+`})
+	shard := func(catName bool) []*Shard {
+		catFields := []*Field{}
+		if catName {
+			catFields = append(catFields, &Field{Name: "name"})
+		}
+		return []*Shard{{
+			Name: "pets",
+			Objects: []*Object{
+				{Name: "Dog", Implementors: []string{"Dog", "Named"}},
+				{Name: "Cat", Implementors: []string{"Cat", "Named"}},
+				{Name: "Query", Implementors: []string{"Query"}, Root: true},
+			},
+			Fields: []Fields{
+				{Object: "Dog", Fields: []*Field{{Name: "name"}}},
+				{Object: "Cat", Fields: catFields},
+				{Object: "Query", Fields: []*Field{{Name: "named"}}},
+			},
+			Abstracts: []Abstract{{Name: "Named"}},
+		}}
+	}
+	doc := operationsDocument(t, schema, `query Named { named { name } }`)
+
+	complete, err := Compile(shard(true))
+	require.NoError(t, err)
+	assert.NoError(t, complete.validateOperations(schema, []*ast.QueryDocument{doc}, nil))
+
+	missing, err := Compile(shard(false))
+	require.NoError(t, err)
+	err = missing.validateOperations(schema, []*ast.QueryDocument{doc}, nil)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "field Cat.name has no executor")
+}

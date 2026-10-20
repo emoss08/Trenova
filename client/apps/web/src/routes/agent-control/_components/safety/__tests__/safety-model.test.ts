@@ -76,6 +76,7 @@ describe("labels", () => {
       "money_run_amount",
       "money_day_calls",
       "money_day_amount",
+      "script_intent",
     ]) {
       expect(heldByLabel(t, key)).not.toBe(key);
     }

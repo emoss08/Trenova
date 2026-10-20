@@ -69,6 +69,13 @@ type ToolValidator interface {
 	Validate(ctx context.Context, params ToolExecuteParams) error
 }
 
+// ToolRecordSplitter is a tool over a set of records that says, for a call
+// naming several, the call of itself naming each record alone: a script's
+// batch keeps one step, and one preview, per record.
+type ToolRecordSplitter interface {
+	SplitRecords(params map[string]any) ([]map[string]any, error)
+}
+
 type ToolSelectionResolver interface {
 	ResolveSelection(ctx context.Context, params ToolExecuteParams) (map[string]any, error)
 }

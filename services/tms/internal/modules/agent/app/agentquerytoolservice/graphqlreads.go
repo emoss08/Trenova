@@ -239,7 +239,8 @@ func scalarParams(
 			Schema: map[string]any{
 				toolschema.KeyType: toolschema.TypeBoolean,
 				toolschema.KeyDescription: describe(
-					"Only records that are, or are not, " + words + ".",
+					"true for only the records whose " + field.Name + " is true, false for " +
+						"only those whose " + field.Name + " is false.",
 				),
 			},
 		}}

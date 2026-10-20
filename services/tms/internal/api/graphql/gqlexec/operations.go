@@ -114,13 +114,21 @@ func (w *operationWalk) field(typeName string, field *ast.Field) {
 		w.problem("field " + typeName + "." + field.Name + " is not in the schema")
 		return
 	}
-	if def.Kind == ast.Object {
+	switch def.Kind {
+	case ast.Object:
 		obj, ok := w.reg.objects[typeName]
 		if !ok {
 			w.problem("object " + typeName + " has no executor")
 		} else if obj.field(field.Name) == nil {
 			w.problem("field " + typeName + "." + field.Name + " has no executor")
 		}
+	case ast.Interface:
+		for _, possible := range w.schema.PossibleTypes[typeName] {
+			if obj, ok := w.reg.objects[possible.Name]; ok && obj.field(field.Name) == nil {
+				w.problem("field " + possible.Name + "." + field.Name + " has no executor")
+			}
+		}
+	case ast.Scalar, ast.Union, ast.Enum, ast.InputObject:
 	}
 	for _, argument := range definition.Arguments {
 		w.input(argument.Type.Name())

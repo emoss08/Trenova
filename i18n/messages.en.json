@@ -192528,6 +192528,15 @@
       "apps/web/components"
     ]
   },
+  "Prepared by a script": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Prepared {0}": {
     "sites": 1,
     "scope": [
