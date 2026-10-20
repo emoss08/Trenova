@@ -63,6 +63,8 @@ type GateSpec struct {
 	Effort  EffortRule  `yaml:"effort"  json:"effort"`
 	Advisor AdvisorRule `yaml:"advisor" json:"advisor"`
 	HeldOut HeldOutRule `yaml:"heldOut" json:"heldOut"`
+
+	CodeMode CodeModeRule `yaml:"codeMode" json:"codeMode"`
 }
 
 type GateBudget struct {
@@ -248,7 +250,7 @@ func (s *GateSpec) validateRules() error {
 		}
 	}
 
-	return nil
+	return s.CodeMode.validate(cells)
 }
 
 type scoreTable struct {
@@ -409,11 +411,13 @@ func (t *scoreTable) safety(cell string) cellSafety {
 }
 
 func heldOutOnly(s *Scenario) bool {
-	return s.Split == evalsplit.HeldOut
+	return s.Split == evalsplit.HeldOut && !scriptHalf(s)
 }
 
 func onRoute(route Route, split evalsplit.Split) func(*Scenario) bool {
-	return func(s *Scenario) bool { return s.Split == split && RouteOf(s) == route }
+	return func(s *Scenario) bool {
+		return s.Split == split && RouteOf(s) == route && !scriptHalf(s)
+	}
 }
 
 type EffortDecision struct {
@@ -467,6 +471,8 @@ type GateResult struct {
 	Configuration mixedSelection        `json:"configuration"`
 	HeldOut       HeldOutBefore         `json:"heldOutBefore"`
 	Safety        map[string]cellSafety `json:"safety"`
+	Models        map[string]CellModel  `json:"models"`
+	CodeMode      []CodeModeDecision    `json:"codeMode,omitempty"`
 }
 
 func chooseEfforts(spec *GateSpec, table *scoreTable) []EffortDecision {
@@ -534,10 +540,13 @@ func EvaluateGate(spec *GateSpec, cases []*CaseResult) *GateResult {
 		Spec:          spec,
 		Configuration: mixedSelection{},
 		Safety:        map[string]cellSafety{},
+		Models:        map[string]CellModel{},
 	}
 	for _, cell := range spec.Cells() {
 		result.Safety[cell] = table.safety(cell)
+		result.Models[cell] = table.model(cell)
 	}
+	result.CodeMode = evaluateCodeMode(spec, table)
 
 	efforts := map[Route]string{}
 	result.Efforts = chooseEfforts(spec, table)
@@ -764,7 +773,8 @@ func (r *GateResult) ConfirmGroups() []GateGroup {
 			Splits: []evalsplit.Split{evalsplit.HeldOut},
 		})
 	}
-	return groups
+
+	return append(groups, r.codeModeConfirmGroups(byCell)...)
 }
 
 type RouteConfirmation struct {
@@ -796,6 +806,7 @@ type GateConfirmation struct {
 	Configuration mixedSelection      `json:"configuration"`
 	Before        HeadlineFigures     `json:"before"`
 	After         HeadlineFigures     `json:"after"`
+	CodeMode      []CodeModeRecheck   `json:"codeMode,omitempty"`
 }
 
 func ConfirmGate(gate *GateResult, run1, run2 []*CaseResult) *GateConfirmation {
@@ -820,6 +831,7 @@ func ConfirmGate(gate *GateResult, run1, run2 []*CaseResult) *GateConfirmation {
 	}
 	confirmation.Before = headline(first, beforeSelection)
 	confirmation.After = headline(second, confirmation.Configuration)
+	confirmation.CodeMode = recheckCodeMode(gate, second)
 
 	return confirmation
 }

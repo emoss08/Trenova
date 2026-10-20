@@ -2,6 +2,7 @@ package deskbench
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 	"text/tabwriter"
 )
@@ -70,11 +71,11 @@ func (r *GateResult) Render() string {
 			decision := &r.Advisors[idx]
 			fmt.Fprintf(&b, "- %s: offered %s. %s\n", decision.Route, yesNo(decision.Offered),
 				decision.Reason)
-			for _, check := range decision.Checks {
-				fmt.Fprintf(&b, "  - %s: %s (%s)\n", check.Name, yesNo(check.Passed), check.Detail)
-			}
+			renderChecks(&b, decision.Checks)
 		}
 	}
+
+	r.renderCodeMode(&b)
 
 	b.WriteString("\n## The configuration run 2 confirms\n\n")
 	for _, route := range AllRoutes() {
@@ -123,6 +124,8 @@ func (c *GateConfirmation) Render() string {
 	for _, route := range AllRoutes() {
 		fmt.Fprintf(&b, "- %s: %s\n", route, c.Configuration[route])
 	}
+
+	c.renderCodeMode(&b)
 
 	return b.String()
 }
@@ -176,4 +179,78 @@ func RenderFigures(r *Report) string {
 	_ = table.Flush()
 
 	return b.String()
+}
+
+func (r *GateResult) renderCodeMode(b *strings.Builder) {
+	if len(r.CodeMode) == 0 {
+		return
+	}
+	k := r.Spec.PassK
+	fmt.Fprintf(b, "\n## (a) Code mode, per model\n\nHeld-out pairs, discrete against script "+
+		"mode; the adversarial pairs for safety. A recommended model is re-checked in run 2 "+
+		"before it is proposed for codemode/models.yaml; the gate never writes that file.\n\n")
+	table := tabwriter.NewWriter(b, 0, 2, 2, ' ', 0)
+	fmt.Fprintf(table, "CELL\tKIND\tPAIRS\tDISCRETE PASS^%d\tSCRIPT PASS^%d\tDISCRETE $/PASS\t"+
+		"SCRIPT $/PASS\n", k, k)
+	for idx := range r.CodeMode {
+		decision := &r.CodeMode[idx]
+		rows := append(slices.Clone(decision.Work), decision.AllWork, decision.Controls)
+		rows[len(rows)-2].Kind = "all work"
+		rows[len(rows)-1].Kind = "controls"
+		for at := range rows {
+			writePairRow(table, decision.Cell, &rows[at])
+		}
+	}
+	_ = table.Flush()
+	for idx := range r.CodeMode {
+		decision := &r.CodeMode[idx]
+		fmt.Fprintf(b, "- %s: recommended %s. %s\n", decision.Cell, yesNo(decision.Recommended),
+			decision.Reason)
+		renderChecks(b, decision.Checks)
+	}
+}
+
+func writePairRow(table *tabwriter.Writer, cell string, row *PairFigures) {
+	discretePass, discreteCost := figureCells(&row.Discrete)
+	scriptPass, scriptCost := figureCells(&row.Script)
+	fmt.Fprintf(table, "%s\t%s\t%d\t%s\t%s\t%s\t%s\n", cell, row.Kind, row.Pairs,
+		discretePass, scriptPass, discreteCost, scriptCost)
+}
+
+func renderChecks(b *strings.Builder, checks []GateCheck) {
+	for _, check := range checks {
+		fmt.Fprintf(b, "  - %s: %s (%s)\n", check.Name, yesNo(check.Passed), check.Detail)
+	}
+}
+
+func (c *GateConfirmation) renderCodeMode(b *strings.Builder) {
+	if len(c.CodeMode) == 0 {
+		return
+	}
+	b.WriteString("\n## (a) Code mode, re-checked\n\nEach model run 1 recommended, on its " +
+		"configured cell where the configuration runs it. A model that holds is proposed for " +
+		"codemode/models.yaml in a pull request that cites both runs; this command never writes " +
+		"the file.\n\n")
+	for idx := range c.CodeMode {
+		recheck := &c.CodeMode[idx]
+		fmt.Fprintf(b, "- %s %s on %s (run 1: %s): holds %s. %s\n", recheck.Model.Provider,
+			recheck.Model.Model, recheck.Cell, recheck.Run1, yesNo(recheck.Holds),
+			recheck.Run2.Reason)
+		renderChecks(b, recheck.Run2.Checks)
+	}
+	entries := make([]string, 0, len(c.CodeMode))
+	for idx := range c.CodeMode {
+		if c.CodeMode[idx].Entry != "" {
+			entries = append(entries, c.CodeMode[idx].Entry)
+		}
+	}
+	if len(entries) == 0 {
+		b.WriteString("\nNo model is proposed for codemode/models.yaml.\n")
+		return
+	}
+	b.WriteString("\nProposed entries for codemode/models.yaml:\n\n```yaml\n")
+	for _, entry := range entries {
+		b.WriteString(entry)
+	}
+	b.WriteString("```\n")
 }
