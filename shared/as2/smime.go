@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"sync"
 
 	"github.com/smallstep/pkcs7"
 )
@@ -77,17 +76,12 @@ func Verify(content, signature []byte, certificate *x509.Certificate) error {
 	return nil
 }
 
-var encryptMutex sync.Mutex
-
 func Encrypt(content []byte, certificate *x509.Certificate, algorithm string) ([]byte, error) {
-	encryption, err := encryptionAlgorithmID(algorithm)
+	selected, err := lookupContentCipher(algorithm)
 	if err != nil {
 		return nil, err
 	}
-	encryptMutex.Lock()
-	defer encryptMutex.Unlock()
-	pkcs7.ContentEncryptionAlgorithm = encryption
-	ciphertext, err := pkcs7.Encrypt(content, []*x509.Certificate{certificate})
+	ciphertext, err := encryptEnvelope(content, certificate, selected)
 	if err != nil {
 		return nil, fmt.Errorf("as2: encrypt content: %w", err)
 	}
@@ -99,6 +93,13 @@ func Decrypt(
 	certificate *x509.Certificate,
 	key crypto.PrivateKey,
 ) ([]byte, error) {
+	algorithm, err := envelopeContentAlgorithm(ciphertext)
+	if err != nil {
+		return nil, err
+	}
+	if algorithm.Equal(oidDESCBC) {
+		return nil, ErrInsecureEncryptionAlgorithm
+	}
 	parsed, err := pkcs7.Parse(ciphertext)
 	if err != nil {
 		return nil, fmt.Errorf("as2: parse enveloped data: %w", err)
@@ -150,22 +151,5 @@ func signingDigestOID(algorithm string) (asn1.ObjectIdentifier, error) {
 		return pkcs7.OIDDigestAlgorithmSHA512, nil
 	default:
 		return nil, fmt.Errorf("%w: %s", ErrUnsupportedSigningAlgorithm, algorithm)
-	}
-}
-
-func encryptionAlgorithmID(algorithm string) (int, error) {
-	switch normalizeAlgorithm(algorithm, EncryptionAlgorithmAES256CBC) {
-	case EncryptionAlgorithmTripleDES:
-		return pkcs7.EncryptionAlgorithmDESCBC, nil
-	case EncryptionAlgorithmAES128CBC:
-		return pkcs7.EncryptionAlgorithmAES128CBC, nil
-	case EncryptionAlgorithmAES256CBC:
-		return pkcs7.EncryptionAlgorithmAES256CBC, nil
-	case EncryptionAlgorithmAES128GCM:
-		return pkcs7.EncryptionAlgorithmAES128GCM, nil
-	case EncryptionAlgorithmAES256GCM:
-		return pkcs7.EncryptionAlgorithmAES256GCM, nil
-	default:
-		return 0, fmt.Errorf("%w: %s", ErrUnsupportedEncryptionAlgorithm, algorithm)
 	}
 }
