@@ -69,3 +69,42 @@ func TestGateIsForcedOnlyWhereTheBenchRuns(t *testing.T) {
 	assert.True(t, forced.Decide(codemode.OverrideOn, aiprovider.KindAnthropicMessages, "any").Allowed)
 	assert.False(t, forced.Offered(codemode.OverrideDefault))
 }
+
+func TestLedgerRefusesWritesWithoutTheRunThatEarnedThem(t *testing.T) {
+	t.Parallel()
+
+	base := "models:\n  - provider: AnthropicMessages\n    model: claude-sonnet-5-5\n" +
+		"    run: r\n    decided: d\n"
+	_, err := codemode.ParseLedger([]byte(base + "    writes: true\n"))
+	require.ErrorIs(t, err, codemode.ErrUnearnedWrites)
+
+	reads, err := codemode.ParseLedger([]byte(base))
+	require.NoError(t, err)
+	readOnly := codemode.Gate{Ledger: reads}.Decide(
+		codemode.OverrideDefault, aiprovider.KindAnthropicMessages, "claude-sonnet-5-5")
+	assert.True(t, readOnly.Allowed)
+	assert.False(t, readOnly.Writes, "a model earns reads and writes separately")
+
+	writes, err := codemode.ParseLedger([]byte(base + "    writes: true\n    writesRun: w\n"))
+	require.NoError(t, err)
+	assert.True(t, codemode.Gate{Ledger: writes}.Decide(
+		codemode.OverrideDefault, aiprovider.KindAnthropicMessages, "claude-sonnet-5-5").Writes)
+	assert.False(t, codemode.Gate{Ledger: writes}.Decide(
+		codemode.OverrideDefault, aiprovider.KindAnthropicMessages, "claude-haiku-5-5").Writes)
+}
+
+func TestShippedLedgerLetsNoModelWrite(t *testing.T) {
+	t.Parallel()
+
+	for _, entry := range codemode.Shipped().Models {
+		assert.False(t, entry.Writes, "%s: no model's scripts write until the bench earns it", entry.Model)
+	}
+	forced := codemode.Gate{Forced: true}
+	assert.False(t, forced.Decide(codemode.OverrideOn, aiprovider.KindAnthropicMessages, "any").Writes,
+		"code mode forced on reads only")
+	writes := forced.Decide(codemode.OverrideWrites, aiprovider.KindAnthropicMessages, "any")
+	assert.True(t, writes.Allowed && writes.Writes, "the bench forces writes on by asking for them")
+	assert.False(t, codemode.Gate{}.Decide(
+		codemode.OverrideWrites, aiprovider.KindAnthropicMessages, "any").Allowed,
+		"writes are forced only where the bench runs")
+}

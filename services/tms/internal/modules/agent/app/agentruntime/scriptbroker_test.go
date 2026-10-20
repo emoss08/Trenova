@@ -265,7 +265,7 @@ func TestBrokerRefusesWhereTheToolRefuses(t *testing.T) {
 	assert.Zero(t, customer.Calls, "the read never ran, through either path")
 }
 
-func TestBrokerRefusesAWriteNamingPhase5b(t *testing.T) {
+func TestBrokerRefusesAWriteWhenTheModelMayNotWrite(t *testing.T) {
 	t.Parallel()
 
 	void := actionTool("invoice_void", agent.TierAutoExecute, nil)
@@ -275,7 +275,7 @@ func TestBrokerRefusesAWriteNamingPhase5b(t *testing.T) {
 	require.Len(t, h.script.replies, 1)
 	reply := h.script.replies[0]
 	assert.Equal(t, codemode.CallInvalid, reply.Status)
-	assert.Contains(t, reply.Message, "Phase 5b")
+	assert.Contains(t, reply.Message, "reads only")
 	assert.Zero(t, void.Calls, "a script never runs a write")
 	for _, step := range h.ledger.byCallID() {
 		assert.NotEqual(t, "invoice_void", step.ToolName, "no step is claimed for a write")

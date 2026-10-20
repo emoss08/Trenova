@@ -1,6 +1,7 @@
 package runstepledger
 
 import (
+	"errors"
 	"context"
 	"testing"
 
@@ -41,6 +42,13 @@ func (f *fakeStepRepo) List(
 	agentports.ListAgentRunStepsRequest,
 ) ([]*agent.AgentRunStep, error) {
 	return f.rows, nil
+}
+
+func (f *fakeStepRepo) Get(
+	context.Context,
+	*agentports.GetAgentRunStepRequest,
+) (*agent.AgentRunStep, error) {
+	return nil, errors.New("not used")
 }
 
 func (f *fakeStepRepo) Prune(context.Context, agentports.PruneAgentRunStepsRequest) (int, error) {
