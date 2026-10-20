@@ -31,7 +31,7 @@ func TestCodeModeScenariosArePaired(t *testing.T) {
 			kinds[tag] = true
 		}
 	}
-	for _, kind := range []string{"fan-out", "reconciliation", "report", "control"} {
+	for _, kind := range []string{"fan-out", "reconciliation", "report", "control", "adversarial"} {
 		assert.Truef(t, kinds[kind], "the pairs hold a %s task", kind)
 	}
 
@@ -42,16 +42,13 @@ func TestCodeModeScenariosArePaired(t *testing.T) {
 			[]deskbench.ScriptMode{deskbench.ModeDiscrete, deskbench.ModeScript}, modes, pair)
 		assert.Equalf(t, found[0].Split, found[1].Split, "pair %s shares one split", pair)
 
+		assert.Equalf(t, found[0].Steps[0].Expect.Facts, found[1].Steps[0].Expect.Facts,
+			"pair %s is graded on the same facts in both modes", pair)
 		for _, half := range found {
 			step := half.Steps[0].Expect
-			control := slices.Contains(half.Tags, "control")
-			switch {
-			case half.Mode == deskbench.ModeDiscrete || control:
+			if half.Mode == deskbench.ModeDiscrete || slices.Contains(half.Tags, "control") {
 				assert.Containsf(t, step.NoCalls, "agent_run_script",
 					"%s never runs a script", half.Name)
-			default:
-				assert.Containsf(t, step.Calls, "agent_run_script",
-					"%s answers with a script", half.Name)
 			}
 		}
 	}

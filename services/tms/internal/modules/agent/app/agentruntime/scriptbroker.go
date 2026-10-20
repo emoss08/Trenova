@@ -337,15 +337,19 @@ func limitReply(limit codemode.Limit, message string) codemode.Reply {
 	return codemode.Reply{Status: codemode.CallLimit, Limit: limit, Message: message}
 }
 
-var limitMessages = map[codemode.Limit]string{
-	codemode.LimitCall:  "the read's answer is larger than one read may hand a script; narrow it",
-	codemode.LimitRows:  "the script has read every row it may",
-	codemode.LimitBytes: "the script has read every byte it may",
-}
-
 func limitMessage(limit codemode.Limit) string {
-	if message, ok := limitMessages[limit]; ok {
-		return message
+	switch limit {
+	case codemode.LimitCall:
+		return "the read's answer is larger than one read may hand a script; narrow it"
+	case codemode.LimitRows:
+		return "the script has read every row it may"
+	case codemode.LimitBytes:
+		return "the script has read every byte it may"
+	case codemode.LimitCalls:
+		return "the script has made every read it may"
+	case codemode.LimitNone, codemode.LimitWall, codemode.LimitOutput, codemode.LimitResult,
+		codemode.LimitMemory, codemode.LimitCPU, codemode.LimitFrame:
+		return "the script reached a limit"
 	}
 
 	return "the script reached a limit"
@@ -363,13 +367,13 @@ func shapeOf(encoded []byte) (rows int, withheld []string) {
 	case []any:
 		return len(value), nil
 	case map[string]any:
-		rows := 1
+		longest := 1
 		for key, field := range value {
-			if list, isList := field.([]any); isList && key != withheldKey && len(list) > rows {
-				rows = len(list)
+			if list, isList := field.([]any); isList && key != withheldKey && len(list) > longest {
+				longest = len(list)
 			}
 		}
-		return rows, withheldOf(value[withheldKey])
+		return longest, withheldOf(value[withheldKey])
 	default:
 		return 1, nil
 	}

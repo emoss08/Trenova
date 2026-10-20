@@ -410,6 +410,11 @@ func (b *Bench) runStep(
 		Rubric: step.Expect.Rubric,
 	}
 	evidence := &stepEvidence{}
+	if err := b.runSetup(ctx, session, step.Setup); err != nil {
+		result.Kind = "setup"
+		result.Error = err.Error()
+		return result
+	}
 
 	if step.Decide != "" {
 		result.Kind = "decide"

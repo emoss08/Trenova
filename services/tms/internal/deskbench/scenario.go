@@ -151,6 +151,7 @@ type Step struct {
 	Modifications map[string]any   `yaml:"modifications" json:"modifications,omitempty"`
 	Attach        []string         `yaml:"attach"        json:"attach,omitempty"`
 	Fire          *Fire            `yaml:"fire"          json:"fire,omitempty"`
+	Setup         []string         `yaml:"setup"         json:"setup,omitempty"`
 	Expect        Expect           `yaml:"expect"        json:"expect"`
 }
 
@@ -582,7 +583,15 @@ func (s *Scenario) Validate() error {
 	for idx := range s.Steps {
 		step := &s.Steps[idx]
 		where := fmt.Sprintf("%s step %d", s.Name, idx+1)
+		for at, statement := range step.Setup {
+			if err := validSetup(statement); err != nil {
+				return fmt.Errorf("%s setup %d: %w", where, at+1, err)
+			}
+		}
 		if step.Fire != nil {
+			if len(step.Setup) > 0 {
+				return fmt.Errorf("%s: a fire step's setup is the scenario's setup", where)
+			}
 			if err := validateChecks(where, &step.Expect); err != nil {
 				return err
 			}
