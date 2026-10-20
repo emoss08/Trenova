@@ -105,7 +105,7 @@ func newListWorkersTool(
 	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
 	return newListTool(listSpec{
-		name:         "worker_list",
+		name:         toolWorkerList,
 		entityPlural: "workers",
 		summary: "Find workers (drivers) by name, closest first, or the roster by employment " +
 			"or qualification. Credentials due: worker_list_credentials. " +
@@ -389,9 +389,7 @@ func equipmentFields() []listField {
 			Name:   "status",
 			Kind:   filterEnum,
 			Values: equipmentStatuses,
-			Note: "Available means it can be dispatched, OutOfService means it " +
-				"cannot, AtMaintenance means it is in the shop, and Sold means it " +
-				"has left the fleet",
+			Note:   noteEquipmentStatus,
 		},
 		{Name: "ownershipType", Kind: filterEnum, Values: ownershipTypes},
 		{Name: "code", Kind: filterText, Sortable: true},
@@ -403,7 +401,7 @@ func equipmentFields() []listField {
 			Name:     "registrationExpiry",
 			Kind:     filterDate,
 			Sortable: true,
-			Note:     "when the plate lapses",
+			Note:     notePlateLapses,
 		},
 		{Name: "leaseEndDate", Kind: filterDate, Sortable: true},
 		{Name: "createdAt", Kind: filterDate, Sortable: true},
@@ -415,11 +413,9 @@ func newListTractorsTool(
 	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
 	return newListTool(listSpec{
-		name:         "equipment_list_tractors",
-		entityPlural: "tractors",
-		summary: "List tractors (power units) narrowed by status, ownership, or a " +
-			"registration or lease date. Use it for questions about which units are out " +
-			"of service or coming due for plates.",
+		name:         toolListTractors,
+		entityPlural: pluralTractors,
+		summary:      tractorsSummary,
 		searchTerms: []string{
 			"find tractor by unit number", "locate tractor", "tractor unit number",
 			"available tractors",
@@ -478,16 +474,13 @@ func newListTrailersTool(repo trailerports.TrailerRepository) agentports.AgentQu
 		Name:     "lastInspectionDate",
 		Kind:     filterDate,
 		Sortable: true,
-		Note:     "the last annual inspection",
+		Note:     noteLastInspection,
 	})
 
 	return newListTool(listSpec{
-		name:         "equipment_list_trailers",
-		entityPlural: "trailers",
-		summary: "List trailers narrowed by status, ownership, or a registration, " +
-			"lease or inspection date, each with its equipment type (dry van, reefer, " +
-			"flatbed). Use it for questions about which trailers are out of service or " +
-			"overdue for inspection.",
+		name:         toolListTrailers,
+		entityPlural: pluralTrailers,
+		summary:      trailersSummary,
 		searchTerms: []string{
 			"find trailer by unit number", "available dry vans",
 		},

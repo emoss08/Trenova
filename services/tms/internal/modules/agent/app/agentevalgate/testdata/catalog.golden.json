@@ -12408,7 +12408,7 @@
     },
     {
       "name": "equipment_list_tractors",
-      "description": "List tractors (power units) narrowed by status, ownership, or a registration or lease date. Use it for questions about which units are out of service or coming due for plates. Filters: status (Available|OutOfService|AtMaintenance|Sold): Available means it can be dispatched, OutOfService means it cannot, AtMaintenance means it is in the shop, and Sold means it has left the fleet; ownershipType (CompanyOwned|Leased|OwnerOperator); registrationExpiry (date): when the plate lapses; text: code, make, model, licensePlateNumber; number: year; date: leaseEndDate, createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "description": "List tractors (power units) narrowed by status, ownership, or a registration or lease date. Use it for questions about which units are out of service or coming due for plates. Filters: code, createdAtFrom/To, equipmentManufacturerId, equipmentTypeId, externalId, fleetCodeId, fuelType, hasFleetCode, hasLastKnownLocation, hasOwnerWorker, hasSecondaryWorker, hasState, iftaQualified, lastKnownLocationId, lastKnownLocationName, leaseEndDateFrom/To, leaseReference, lessorName, licensePlateNumber, make, model, ownerWorkerId, ownershipType, primaryWorkerId, registrationExpiryFrom/To, registrationNumber, secondaryWorkerId, status, updatedAtFrom/To, vin, yearMin/Max.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -12416,74 +12416,133 @@
             "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
             "type": "string"
           },
-          "filters": {
-            "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
+          "code": {
+            "description": "Only records whose code contains this text.",
+            "type": "string"
+          },
+          "createdAtFrom": {
+            "description": "Only records whose created at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "createdAtTo": {
+            "description": "Only records whose created at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "equipmentManufacturerId": {
+            "description": "The manufacturer, from equipment_list_manufacturers. Never guess one.",
+            "type": "string",
+            "x-recordOf": "equipment_manufacturer"
+          },
+          "equipmentTypeId": {
+            "description": "The equipment type, from equipment_list_types. Never guess one.",
+            "type": "string",
+            "x-recordOf": "equipment_type"
+          },
+          "externalId": {
+            "description": "Only records whose external id contains this text.",
+            "type": "string"
+          },
+          "fleetCodeId": {
+            "description": "The fleet code, from masterdata_list_fleet_codes. Never guess one.",
+            "type": "string",
+            "x-recordOf": "fleet_code"
+          },
+          "fuelType": {
+            "description": "The fuel the tractor burns. Its miles land on this fuel type's lines of an\nIFTA return. Only records whose fuel type is one of these.",
             "items": {
-              "additionalProperties": false,
-              "properties": {
-                "days": {
-                  "maximum": 3650,
-                  "minimum": 1,
-                  "type": "integer"
-                },
-                "field": {
-                  "enum": [
-                    "status",
-                    "ownershipType",
-                    "code",
-                    "make",
-                    "model",
-                    "licensePlateNumber",
-                    "year",
-                    "registrationExpiry",
-                    "leaseEndDate",
-                    "createdAt"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "equipment_list_tractors.field"
-                },
-                "operator": {
-                  "enum": [
-                    "eq",
-                    "ne",
-                    "in",
-                    "notin",
-                    "isnull",
-                    "isnotnull",
-                    "contains",
-                    "startswith",
-                    "endswith",
-                    "gt",
-                    "gte",
-                    "lt",
-                    "lte",
-                    "lastndays",
-                    "nextndays",
-                    "today",
-                    "yesterday",
-                    "tomorrow"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "equipment_list_tractors.operator"
-                },
-                "value": {
-                  "type": "string"
-                },
-                "values": {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                }
-              },
-              "required": [
-                "field",
-                "operator"
+              "enum": [
+                "Diesel",
+                "Gasoline",
+                "Gasohol",
+                "Propane",
+                "CNG",
+                "LNG",
+                "Ethanol",
+                "Methanol",
+                "E85",
+                "M85",
+                "A55",
+                "Biodiesel",
+                "Electricity",
+                "Hydrogen",
+                "DEF",
+                "Reefer",
+                "Other"
               ],
-              "type": "object"
+              "type": "string",
+              "x-enumOf": "graphql.IFTAFuelType"
             },
-            "maxItems": 6,
+            "minItems": 1,
             "type": "array"
+          },
+          "hasFleetCode": {
+            "description": "true for only records that have a fleet code, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasLastKnownLocation": {
+            "description": "true for only records that have a last known location, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasOwnerWorker": {
+            "description": "The owner-operator who owns the tractor, when it is theirs. true for only records that have a owner worker, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasSecondaryWorker": {
+            "description": "true for only records that have a secondary worker, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasState": {
+            "description": "true for only records that have a state, false for only those that have none.",
+            "type": "boolean"
+          },
+          "iftaQualified": {
+            "description": "Whether the tractor's miles and fuel enter the IFTA return. Only records that are, or are not, ifta qualified.",
+            "type": "boolean"
+          },
+          "lastKnownLocationId": {
+            "description": "The location it was last seen at, from location_list. Never guess one.",
+            "type": "string",
+            "x-recordOf": "location"
+          },
+          "lastKnownLocationName": {
+            "description": "Only records whose last known location name contains this text.",
+            "type": "string"
+          },
+          "leaseEndDateFrom": {
+            "description": "When the lease on a leased tractor ends. Only records whose lease end date is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "leaseEndDateTo": {
+            "description": "When the lease on a leased tractor ends. Only records whose lease end date is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "leaseReference": {
+            "description": "The lessor's reference for the lease. Only records whose lease reference contains this text.",
+            "type": "string"
+          },
+          "lessorName": {
+            "description": "The lessor a leased tractor is leased from. Only records whose lessor name contains this text.",
+            "type": "string"
+          },
+          "licensePlateNumber": {
+            "description": "Only records whose license plate number contains this text.",
+            "type": "string"
           },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 50.",
@@ -12492,21 +12551,100 @@
             "type": "integer",
             "x-clamp": true
           },
-          "query": {
-            "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
+          "make": {
+            "description": "Only records whose make contains this text.",
             "type": "string"
+          },
+          "model": {
+            "description": "Only records whose model contains this text.",
+            "type": "string"
+          },
+          "ownerWorkerId": {
+            "description": "The worker, from worker_list. Never guess one.",
+            "type": "string",
+            "x-recordOf": "worker"
+          },
+          "ownershipType": {
+            "description": "Who owns the tractor: the company, a lessor, or the owner-operator who drives it. Only records whose ownership type is one of these.",
+            "items": {
+              "enum": [
+                "CompanyOwned",
+                "Leased",
+                "OwnerOperator"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.EquipmentOwnershipType"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "primaryWorkerId": {
+            "description": "The worker, from worker_list. Never guess one.",
+            "type": "string",
+            "x-recordOf": "worker"
+          },
+          "query": {
+            "description": "Optional free text matched across the searchable columns. Omit it when you are narrowing by a field.",
+            "type": "string"
+          },
+          "registrationExpiryFrom": {
+            "description": "Only records whose registration expiry is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01. When the plate lapses.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "registrationExpiryTo": {
+            "description": "Only records whose registration expiry is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "registrationNumber": {
+            "description": "Only records whose registration number contains this text.",
+            "type": "string"
+          },
+          "secondaryWorkerId": {
+            "description": "The worker, from worker_list. Never guess one.",
+            "type": "string",
+            "x-recordOf": "worker"
           },
           "sortBy": {
             "description": "Field to order by. Defaults to most recently created.",
             "enum": [
               "code",
-              "year",
-              "registrationExpiry",
+              "createdAt",
+              "equipmentManufacturerId",
+              "equipmentTypeId",
+              "externalId",
+              "fleetCodeId",
+              "fuelType",
+              "iftaQualified",
+              "lastKnownLocationId",
+              "lastKnownLocationName",
               "leaseEndDate",
-              "createdAt"
+              "leaseReference",
+              "lessorName",
+              "licensePlateNumber",
+              "make",
+              "model",
+              "ownerWorkerId",
+              "ownershipType",
+              "primaryWorkerId",
+              "registrationExpiry",
+              "registrationNumber",
+              "secondaryWorkerId",
+              "stateId",
+              "status",
+              "updatedAt",
+              "vin",
+              "year"
             ],
             "type": "string",
-            "x-enumOf": "equipment_list_tractors.sortBy"
+            "x-enumOf": "equipment_list_tractors.graphqlSortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -12516,6 +12654,49 @@
             ],
             "type": "string",
             "x-enumOf": "list.sortDirection"
+          },
+          "status": {
+            "description": "Only records whose status is one of these. Available means it can be dispatched, OutOfService means it cannot, AtMaintenance means it is in the shop, and Sold means it has left the fleet.",
+            "items": {
+              "enum": [
+                "Available",
+                "OutOfService",
+                "AtMaintenance",
+                "Sold"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.EquipmentStatus"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "updatedAtFrom": {
+            "description": "Only records whose updated at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "updatedAtTo": {
+            "description": "Only records whose updated at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "vin": {
+            "description": "Only records whose vin contains this text.",
+            "type": "string"
+          },
+          "yearMax": {
+            "description": "Only records whose year is at most this.",
+            "type": "integer"
+          },
+          "yearMin": {
+            "description": "Only records whose year is at least this.",
+            "type": "integer"
           }
         },
         "type": "object"
@@ -12550,7 +12731,7 @@
     },
     {
       "name": "equipment_list_trailers",
-      "description": "List trailers narrowed by status, ownership, or a registration, lease or inspection date, each with its equipment type (dry van, reefer, flatbed). Use it for questions about which trailers are out of service or overdue for inspection. Filters: status (Available|OutOfService|AtMaintenance|Sold): Available means it can be dispatched, OutOfService means it cannot, AtMaintenance means it is in the shop, and Sold means it has left the fleet; ownershipType (CompanyOwned|Leased|OwnerOperator); registrationExpiry (date): when the plate lapses; lastInspectionDate (date): the last annual inspection; text: code, make, model, licensePlateNumber; number: year; date: leaseEndDate, createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "description": "List trailers narrowed by status, ownership, or a registration, lease or inspection date, each with its equipment type (dry van, reefer, flatbed). Use it for questions about which trailers are out of service or overdue for inspection. Filters: code, createdAtFrom/To, equipmentManufacturerId, equipmentTypeId, externalId, fleetCodeId, hasFleetCode, hasLastKnownLocation, hasOwnerWorker, hasRegistrationState, lastInspectionDateFrom/To, lastKnownLocationId, lastKnownLocationName, leaseEndDateFrom/To, leaseReference, lessorName, licensePlateNumber, make, maxLoadWeightMin/Max, model, ownerWorkerId, ownershipType, registrationExpiryFrom/To, registrationNumber, status, updatedAtFrom/To, vin, yearMin/Max.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -12558,75 +12739,113 @@
             "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
             "type": "string"
           },
-          "filters": {
-            "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
-            "items": {
-              "additionalProperties": false,
-              "properties": {
-                "days": {
-                  "maximum": 3650,
-                  "minimum": 1,
-                  "type": "integer"
-                },
-                "field": {
-                  "enum": [
-                    "status",
-                    "ownershipType",
-                    "code",
-                    "make",
-                    "model",
-                    "licensePlateNumber",
-                    "year",
-                    "registrationExpiry",
-                    "leaseEndDate",
-                    "createdAt",
-                    "lastInspectionDate"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "equipment_list_trailers.field"
-                },
-                "operator": {
-                  "enum": [
-                    "eq",
-                    "ne",
-                    "in",
-                    "notin",
-                    "isnull",
-                    "isnotnull",
-                    "contains",
-                    "startswith",
-                    "endswith",
-                    "gt",
-                    "gte",
-                    "lt",
-                    "lte",
-                    "lastndays",
-                    "nextndays",
-                    "today",
-                    "yesterday",
-                    "tomorrow"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "equipment_list_trailers.operator"
-                },
-                "value": {
-                  "type": "string"
-                },
-                "values": {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                }
-              },
-              "required": [
-                "field",
-                "operator"
-              ],
-              "type": "object"
-            },
-            "maxItems": 6,
-            "type": "array"
+          "code": {
+            "description": "Only records whose code contains this text.",
+            "type": "string"
+          },
+          "createdAtFrom": {
+            "description": "Only records whose created at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "createdAtTo": {
+            "description": "Only records whose created at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "equipmentManufacturerId": {
+            "description": "The manufacturer, from equipment_list_manufacturers. Never guess one.",
+            "type": "string",
+            "x-recordOf": "equipment_manufacturer"
+          },
+          "equipmentTypeId": {
+            "description": "The equipment type, from equipment_list_types. Never guess one.",
+            "type": "string",
+            "x-recordOf": "equipment_type"
+          },
+          "externalId": {
+            "description": "Only records whose external id contains this text.",
+            "type": "string"
+          },
+          "fleetCodeId": {
+            "description": "The fleet code, from masterdata_list_fleet_codes. Never guess one.",
+            "type": "string",
+            "x-recordOf": "fleet_code"
+          },
+          "hasFleetCode": {
+            "description": "true for only records that have a fleet code, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasLastKnownLocation": {
+            "description": "true for only records that have a last known location, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasOwnerWorker": {
+            "description": "The owner-operator who owns the trailer, when it is theirs. true for only records that have a owner worker, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasRegistrationState": {
+            "description": "true for only records that have a registration state, false for only those that have none.",
+            "type": "boolean"
+          },
+          "lastInspectionDateFrom": {
+            "description": "Only records whose last inspection date is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01. The last annual inspection.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "lastInspectionDateTo": {
+            "description": "Only records whose last inspection date is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "lastKnownLocationId": {
+            "description": "The location it was last seen at, from location_list. Never guess one.",
+            "type": "string",
+            "x-recordOf": "location"
+          },
+          "lastKnownLocationName": {
+            "description": "Only records whose last known location name contains this text.",
+            "type": "string"
+          },
+          "leaseEndDateFrom": {
+            "description": "When the lease on a leased trailer ends. Only records whose lease end date is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "leaseEndDateTo": {
+            "description": "When the lease on a leased trailer ends. Only records whose lease end date is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "leaseReference": {
+            "description": "The lessor's reference for the lease. Only records whose lease reference contains this text.",
+            "type": "string"
+          },
+          "lessorName": {
+            "description": "The lessor a leased trailer is leased from. Only records whose lessor name contains this text.",
+            "type": "string"
+          },
+          "licensePlateNumber": {
+            "description": "Only records whose license plate number contains this text.",
+            "type": "string"
           },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 50.",
@@ -12635,22 +12854,96 @@
             "type": "integer",
             "x-clamp": true
           },
+          "make": {
+            "description": "Only records whose make contains this text.",
+            "type": "string"
+          },
+          "maxLoadWeightMax": {
+            "description": "Only records whose max load weight is at most this.",
+            "type": "integer"
+          },
+          "maxLoadWeightMin": {
+            "description": "Only records whose max load weight is at least this.",
+            "type": "integer"
+          },
+          "model": {
+            "description": "Only records whose model contains this text.",
+            "type": "string"
+          },
+          "ownerWorkerId": {
+            "description": "The worker, from worker_list. Never guess one.",
+            "type": "string",
+            "x-recordOf": "worker"
+          },
+          "ownershipType": {
+            "description": "Who owns the trailer: the company, a lessor, or an owner-operator. Only records whose ownership type is one of these.",
+            "items": {
+              "enum": [
+                "CompanyOwned",
+                "Leased",
+                "OwnerOperator"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.EquipmentOwnershipType"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
           "query": {
-            "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
+            "description": "Optional free text matched across the searchable columns. Omit it when you are narrowing by a field.",
+            "type": "string"
+          },
+          "registrationExpiryFrom": {
+            "description": "Only records whose registration expiry is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01. When the plate lapses.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "registrationExpiryTo": {
+            "description": "Only records whose registration expiry is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "registrationNumber": {
+            "description": "Only records whose registration number contains this text.",
             "type": "string"
           },
           "sortBy": {
             "description": "Field to order by. Defaults to most recently created.",
             "enum": [
               "code",
-              "year",
-              "registrationExpiry",
-              "leaseEndDate",
               "createdAt",
-              "lastInspectionDate"
+              "equipmentManufacturerId",
+              "equipmentTypeId",
+              "externalId",
+              "fleetCodeId",
+              "lastInspectionDate",
+              "lastKnownLocationId",
+              "lastKnownLocationName",
+              "leaseEndDate",
+              "leaseReference",
+              "lessorName",
+              "licensePlateNumber",
+              "make",
+              "maxLoadWeight",
+              "model",
+              "ownerWorkerId",
+              "ownershipType",
+              "registrationExpiry",
+              "registrationNumber",
+              "registrationStateId",
+              "status",
+              "updatedAt",
+              "vin",
+              "year"
             ],
             "type": "string",
-            "x-enumOf": "equipment_list_trailers.sortBy"
+            "x-enumOf": "equipment_list_trailers.graphqlSortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -12660,6 +12953,49 @@
             ],
             "type": "string",
             "x-enumOf": "list.sortDirection"
+          },
+          "status": {
+            "description": "Only records whose status is one of these. Available means it can be dispatched, OutOfService means it cannot, AtMaintenance means it is in the shop, and Sold means it has left the fleet.",
+            "items": {
+              "enum": [
+                "Available",
+                "OutOfService",
+                "AtMaintenance",
+                "Sold"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.EquipmentStatus"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "updatedAtFrom": {
+            "description": "Only records whose updated at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "updatedAtTo": {
+            "description": "Only records whose updated at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "vin": {
+            "description": "Only records whose vin contains this text.",
+            "type": "string"
+          },
+          "yearMax": {
+            "description": "Only records whose year is at most this.",
+            "type": "integer"
+          },
+          "yearMin": {
+            "description": "Only records whose year is at least this.",
+            "type": "integer"
           }
         },
         "type": "object"

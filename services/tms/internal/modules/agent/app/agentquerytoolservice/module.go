@@ -84,8 +84,6 @@ func coreToolProviders() []any {
 		newExplainRateTool,
 		newListDashboardsTool,
 		newListWorkersTool,
-		newListTractorsTool,
-		newListTrailersTool,
 		newListInvoicesTool,
 		newListCarrierCapacityPostingsTool,
 		newGetCustomerTool,

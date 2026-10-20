@@ -5,6 +5,8 @@ package agentquerytoolservice_test
 import (
 	"context"
 	"fmt"
+	"maps"
+	"slices"
 	"strconv"
 	"testing"
 
@@ -14,11 +16,29 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/equipmenttyperepository"
+	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/equipmentmanufacturerrepository"
+	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/tractorrepository"
+	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/trailerrepository"
+	"github.com/emoss08/trenova/internal/modules/equipment/app/tractorservice"
+	"github.com/emoss08/trenova/internal/modules/equipment/app/trailerservice"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentmanufacturerports"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmenttypeports"
+	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workerrepository"
+	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/customfieldrepository"
+	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/customfieldvaluerepository"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/customfieldservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/fleetcoderepository"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/equipmenttypeservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/fleetcodeservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/m2msync"
 	"github.com/emoss08/trenova/internal/modules/parties/adapters/postgres/carrierrepository"
@@ -127,6 +147,21 @@ func convertedListCases(conn *postgres.Connection) ([]referenceCase, agentread.R
 	})
 	locations := locationrepository.New(locationrepository.Params{DB: conn, Logger: logger})
 	carriers := carrierrepository.New(carrierrepository.Params{DB: conn, Logger: logger})
+	workers := workerrepository.New(workerrepository.Params{DB: conn, Logger: logger})
+	manufacturers := equipmentmanufacturerrepository.New(
+		equipmentmanufacturerrepository.Params{DB: conn, Logger: logger})
+	tractors := tractorrepository.New(tractorrepository.Params{DB: conn, Logger: logger})
+	trailers := trailerrepository.New(trailerrepository.Params{DB: conn, Logger: logger})
+	customFields := customfieldservice.NewValuesService(customfieldservice.ValuesServiceParams{
+		Logger: logger,
+		ValueRepo: customfieldvaluerepository.New(
+			customfieldvaluerepository.Params{DB: conn, Logger: logger}),
+		DefinitionRepo: customfieldrepository.New(
+			customfieldrepository.Params{DB: conn, Logger: logger}),
+	})
+	parts := &equipmentParts{
+		types: equipmentTypes, manufacturers: manufacturers, workers: workers,
+	}
 
 	services := agentread.ResolverParams{
 		EquipmentTypeService: equipmenttypeservice.New(
@@ -149,6 +184,12 @@ func convertedListCases(conn *postgres.Connection) ([]referenceCase, agentread.R
 		CustomerService:   customerservice.New(customerservice.Params{Logger: logger, Repo: customers}),
 		LocationService:   locationservice.New(locationservice.Params{Logger: logger, Repo: locations}),
 		CarrierService:    carrierservice.New(carrierservice.Params{Logger: logger, Repo: carriers}),
+		TractorService: tractorservice.New(tractorservice.Params{
+			Logger: logger, Repo: tractors, CustomFieldsValuesService: customFields,
+		}),
+		TrailerService: trailerservice.New(trailerservice.Params{
+			Logger: logger, Repo: trailers, CustomFieldsValuesService: customFields,
+		}),
 	}
 
 	systemTyped, systemOld := boolFilter("isSystem", true)
@@ -332,9 +373,107 @@ func convertedListCases(conn *postgres.Connection) ([]referenceCase, agentread.R
 				return created(row, err)
 			},
 		},
+		{
+			tool: "equipment_list_tractors", marked: outOfService, oldMarked: oldOutOfService,
+			old: agentquerytoolservice.NewListTractorsTool(tractors, &mocks.DenyResourcesPermissionEngine{}),
+			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
+				typeID, makeID, driverID, err := parts.write(ctx, tenant, "P"+label)
+				if err != nil {
+					return pulid.Nil, err
+				}
+				bu, org := tenantOf(tenant)
+				row, err := tractors.Create(ctx, &tractor.Tractor{
+					BusinessUnitID: bu, OrganizationID: org, Status: equipmentStatusOf(marked),
+					Code: label, EquipmentTypeID: typeID, EquipmentManufacturerID: makeID,
+					PrimaryWorkerID: driverID, FuelType: domaintypes.IFTAFuelTypeDiesel,
+				})
+				return created(row, err)
+			},
+		},
+		{
+			tool: "equipment_list_trailers", marked: outOfService, oldMarked: oldOutOfService,
+			old: agentquerytoolservice.NewListTrailersTool(trailers),
+			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
+				typeID, makeID, _, err := parts.write(ctx, tenant, "R"+label)
+				if err != nil {
+					return pulid.Nil, err
+				}
+				bu, org := tenantOf(tenant)
+				row, err := trailers.Create(ctx, &trailer.Trailer{
+					BusinessUnitID: bu, OrganizationID: org, Status: equipmentStatusOf(marked),
+					Code: label, EquipmentTypeID: typeID, EquipmentManufacturerID: makeID,
+				})
+				return created(row, err)
+			},
+		},
 	}
 
 	return cases, services
+}
+
+var (
+	outOfService    = map[string]any{"status": []any{"OutOfService"}}
+	oldOutOfService = map[string]any{"filters": []any{map[string]any{
+		"field": "status", "operator": "in", "values": []any{"OutOfService"},
+	}}}
+)
+
+func equipmentStatusOf(marked bool) domaintypes.EquipmentStatus {
+	if marked {
+		return domaintypes.EquipmentStatusOOS
+	}
+
+	return domaintypes.EquipmentStatusAvailable
+}
+
+// equipmentParts writes what a tractor or trailer row needs before it: an
+// equipment type, a manufacturer and a driver.
+type equipmentParts struct {
+	types         equipmenttypeports.EquipmentTypeRepository
+	manufacturers equipmentmanufacturerports.EquipmentManufacturerRepository
+	workers       workerports.WorkerRepository
+}
+
+func (p *equipmentParts) write(
+	ctx context.Context,
+	tenant *agentreadtest.Tenant,
+	label string,
+) (typeID, makeID, driverID pulid.ID, err error) {
+	bu, org := tenant.Actor.BusinessUnitID, tenant.Actor.OrganizationID
+	kind, err := p.types.Create(ctx, &equipmenttype.EquipmentType{
+		BusinessUnitID: bu, OrganizationID: org, Status: domaintypes.StatusActive,
+		Code: label, Class: equipmenttype.ClassTractor,
+		DeckType: equipmenttype.DeckTypeFlatbed,
+	})
+	if err != nil {
+		return pulid.Nil, pulid.Nil, pulid.Nil, err
+	}
+	maker, err := p.manufacturers.Create(ctx, &equipmentmanufacturer.EquipmentManufacturer{
+		BusinessUnitID: bu, OrganizationID: org, Status: domaintypes.StatusActive,
+		Name: "Maker " + label,
+	})
+	if err != nil {
+		return pulid.Nil, pulid.Nil, pulid.Nil, err
+	}
+	now := timeutils.NowUnix()
+	driver, err := p.workers.Create(ctx, &worker.Worker{
+		BusinessUnitID: bu, OrganizationID: org, StateID: tenant.StateID,
+		Status: domaintypes.StatusActive, Type: worker.WorkerTypeEmployee,
+		DriverType: worker.DriverTypeOTR, FirstName: "Driver", LastName: label,
+		AddressLine1: "1 Main", City: "Dallas", PostalCode: "75001",
+		Gender: worker.GenderMale,
+		Profile: &worker.WorkerProfile{
+			DOB:           now - 86400*365*30,
+			LicenseNumber: "DL" + label + tenant.Actor.OrganizationID.String()[4:10],
+			LicenseExpiry: now + 86400*365,
+			HireDate:      now - 86400*365,
+		},
+	})
+	if err != nil {
+		return pulid.Nil, pulid.Nil, pulid.Nil, err
+	}
+
+	return kind.ID, maker.ID, driver.ID, nil
 }
 
 func created[T interface{ GetID() pulid.ID }](row T, err error) (pulid.ID, error) {
@@ -494,4 +633,45 @@ func TestConvertedLists_ReadWhatTheRepositoryToolsReadUnderRowLevelSecurity(t *t
 			})
 		})
 	}
+}
+
+// A tractor's drivers are workers. A reader who may read tractors but not
+// workers is told no driver's name on either path: the repository tool left
+// assignedTo out, and the GraphQL tool keeps only each driver's id.
+func TestConvertedLists_ATractorsDriversFollowWorkerRead(t *testing.T) {
+	_, admin, dsn, cleanup := seedtest.SetupTestDBWithDSN(t)
+	t.Cleanup(cleanup)
+
+	conn := dbtest.NewRLSConnection(t, admin, dsn)
+	cases, services := convertedListCases(conn)
+	idx := slices.IndexFunc(cases, func(c referenceCase) bool {
+		return c.tool == "equipment_list_tractors"
+	})
+	require.GreaterOrEqual(t, idx, 0)
+	tenant := agentreadtest.SeedTenant(t, admin, "A")
+	ours := writeReferenceRows(t, &cases[idx], tenant, "A")
+
+	engine := &mocks.DenyResourcesPermissionEngine{
+		Denied: []string{permission.ResourceWorker.String()},
+	}
+	reader := agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine, Resolvers: services})
+	converted, err := agentquerytoolservice.ConvertedListTool("equipment_list_tractors", reader, engine)
+	require.NoError(t, err)
+	old := agentquerytoolservice.NewListTractorsTool(
+		tractorrepository.New(tractorrepository.Params{DB: conn, Logger: zap.NewNop()}), engine)
+
+	before := callTool(t, ours.ctx, old, tenant.Actor, map[string]any{"limit": 50})
+	for _, item := range before["items"].([]any) {
+		assert.NotContains(t, item.(map[string]any), "assignedTo")
+	}
+
+	page := callTool(t, ours.ctx, converted, tenant.Actor, map[string]any{"limit": 50})
+	items, _ := page["items"].([]any)
+	require.Len(t, items, referenceRowsPerTenant)
+	for _, item := range items {
+		driver, ok := item.(map[string]any)["primaryWorker"].(map[string]any)
+		require.True(t, ok, "the driver's id is still named")
+		assert.Equal(t, []string{"id"}, slices.Collect(maps.Keys(driver)))
+	}
+	assert.Contains(t, page["withheldByAccess"], "primaryWorker.wholeName")
 }

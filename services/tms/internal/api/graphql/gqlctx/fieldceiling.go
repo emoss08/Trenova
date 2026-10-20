@@ -14,6 +14,7 @@ type fieldCeilingKey struct{}
 
 type ResourceCeilings interface {
 	For(ctx context.Context, resource permission.Resource) permission.FieldSensitivity
+	Reads(ctx context.Context, resource permission.Resource) bool
 }
 
 // FieldCeiling is an agent read's data access ceiling and the record of what
@@ -49,6 +50,15 @@ func (c *FieldCeiling) For(
 	}
 
 	return c.ceilings.For(ctx, resource)
+}
+
+// Reads reports whether the reader may read a resource at all.
+func (c *FieldCeiling) Reads(ctx context.Context, resource permission.Resource) bool {
+	if c.ceilings == nil {
+		return true
+	}
+
+	return c.ceilings.Reads(ctx, resource)
 }
 
 // Withhold records a field the read may not show. A field answered null

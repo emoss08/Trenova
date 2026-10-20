@@ -196,7 +196,7 @@ func annotate(
 // graphQLListSpecs are every list tool, module by module, that reads
 // through GraphQL by a spec alone.
 func graphQLListSpecs() []graphQLListSpec {
-	return slices.Concat(referenceReadSpecs(), partyReadSpecs())
+	return slices.Concat(referenceReadSpecs(), partyReadSpecs(), equipmentReadSpecs())
 }
 
 // graphQLListProviders registers each spec as its own list tool.

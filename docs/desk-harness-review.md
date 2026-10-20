@@ -1465,6 +1465,7 @@ held-out`) when one is made for a PR.
 | Overlapping tools | `worker`, `inbox`, `accounting`, `agent` (5 merges) | 637 → 632 | unchanged, 0 pending | 0.9202 → 0.93 | 0.8344 → 0.82 |
 | Typed reads through GraphQL: reference data | `equipment_list_manufacturers`, `equipment_list_types`, `document_list_types`, `location_list_categories` and seven `masterdata` lists read their screen's persisted operation | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
 | Typed reads through GraphQL: parties | `customer_list`, `location_list`, `carrier_list` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
+| Typed reads through GraphQL: equipment | `equipment_list_tractors`, `equipment_list_trailers` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
 
 The shipment row is measured on the held-out set the split PR recorded (161 cases), so both
 figures read the same cases; the module's merges moved three cases between splits, which the
@@ -1553,6 +1554,11 @@ The parties row converts the customer, location and carrier lists the same way. 
 descriptions now name every filterable field of the record, the carrier's forty-odd among them,
 and held-out ranking is unchanged: hybrid recall@5 0.93 and top-1 0.82 over 165 cases, keyword
 0.99 and 0.95 over 145.
+
+The equipment row converts the tractor and trailer lists. Converting the tractor list found that
+the repository tools made a check the screen does not: a tractor's driver was named only to a
+reader who could read workers. An agent read now gates a nested record by its own kind's read
+permission and shows only its id where that is refused. Held-out ranking is unchanged.
 
 **Phase 4: a single front door and job profiles (3–4 weeks).**
 

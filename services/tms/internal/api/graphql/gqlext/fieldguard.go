@@ -207,9 +207,10 @@ func (e *FieldGuardExtension) InterceptField(
 }
 
 // withholds reports whether an agent read's ceiling hides a field other than
-// a record's id: a nested
-// user, organization or business unit beyond its id and name, or a field
-// the registry ranks above the ceiling on the resource that carries it.
+// a record's id: a nested user, organization or business unit beyond its id
+// and name, any field of a record whose resource the reader cannot read, or
+// a field the registry ranks above the ceiling on the resource that carries
+// it.
 func (e *FieldGuardExtension) withholds(
 	ctx context.Context,
 	ceiling *gqlctx.FieldCeiling,
@@ -225,6 +226,9 @@ func (e *FieldGuardExtension) withholds(
 	resource, ok := e.resourceOf(fc)
 	if !ok {
 		return false
+	}
+	if !ceiling.Reads(ctx, resource) {
+		return true
 	}
 
 	return !fieldsensitivity.VisibleAt(
