@@ -89,6 +89,7 @@ trenova desk route                                              # score where qu
 task desk-ask -- "how many loads did we deliver this week"
 task desk-bench -- --repeat 3
 trenova desk run --provider claude-haiku-5-5@low --provider claude-haiku-5-5@medium  # effort cells
+trenova desk run --provider claude-haiku-5-5@low --provider claude-haiku-5-5@low+advisor  # advisor cell
 trenova desk run --split held-out --pass-k 4 --repeat 4         # one split, pass^4
 trenova desk run --tag unattended                               # fired event and schedule runs
 trenova desk run --tool-threshold 0                             # always disclose (8 + find_tools)
@@ -105,7 +106,9 @@ trenova desk gate --confirm .deskbench/gates/<time>             # confirm it on 
 order, which is what a person who never opens the model picker gets. A provider may end in
 `@effort` (`off`, `none`, `minimal`, `low`, `medium`, `high`) to override its reasoning effort for
 that cell. Each `--provider` is a cell, and a cell is pinned: its calls never fail over to another
-provider, so every row of the matrix measures one model at one effort. `--tool-threshold N`
+provider, so every row of the matrix measures one model at one effort. A cell may also end in
+suffixes after the effort, each starting with `+`; an unknown suffix is an error.
+`--tool-threshold N`
 overrides `ai.toolDisclosureThreshold` for the run (`0` always discloses, a large number never
 does). `--agent` takes an
 agent's name, id or template and defaults to the general assistant, the agent Ask uses.
@@ -119,6 +122,25 @@ Desk tab does not follow a bench turn live (the API reads turn streams from its 
 namespace), so a conversation appears once its turns finish. A formula scenario's studio thread
 is always removed at the end, since the studio keeps one thread per person and template and the
 next run would otherwise replay this one's history.
+
+### Cells: `+advisor`
+
+`+advisor` gives the cell's model Anthropic's advisor tool: `claude-haiku-5-5@low+advisor` is
+Haiku 5.5 at low effort that may consult Claude Opus 5.5 up to twice per model call.
+`+advisor=<model>` names another advisor model; the API refuses a pair whose advisor is less
+capable than the executor, with a 400 on the first call. The suffix is refused on the default
+provider and on any provider that does not speak the Anthropic Messages API. The cell's label
+carries it (`Haiku 5.5 (claude-haiku-5-5) @low +advisor`), so it is its own row of the matrix.
+
+The suffix rides on the cell's pin, as the effort does: every chat call of the case's thread gets
+`ChatCompletionRequest.Advisor`, and the Anthropic adapter declares `advisor_20260301` (beta
+`advisor-tool-2026-03-01`) after the agent's own tools. There is no provider setting or product
+switch; the bench is the only thing that turns it on. A call's advisor consultations are counted
+apart from the executor's tokens (`advisor` on each call in `calls/`, `advisorCalls`,
+`advisorPromptTokens` and `advisorOutputTokens` in `usage`) and priced at the advisor model's list
+price, inside the call's cost. A call whose advisor model has no list price is left unpriced
+rather than counted at the executor's rate. How the advice is kept and replayed is in
+[agent-runtime.md](agent-runtime.md), "The advisor".
 
 `desk run` compares with the previous run by default (`.deskbench/latest`), printing the
 scenarios whose pass rate or refused-call rate moved, and exits non-zero when a case fails.

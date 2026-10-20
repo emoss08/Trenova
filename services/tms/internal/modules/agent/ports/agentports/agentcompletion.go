@@ -106,6 +106,7 @@ type ChatCompletionRequest struct {
 	ToolChoiceNone bool                       `json:"toolChoiceNone,omitempty"`
 	Reask          string                     `json:"reask,omitempty"`
 	Reasoning      aiprovider.ReasoningEffort `json:"reasoning,omitempty"`
+	Advisor        *AdvisorSpec               `json:"advisor,omitempty"`
 	MaxTokens      int
 	// PreferredProviderID asks for one configured provider first. It is honoured
 	// only when that provider is enabled and serves the task; otherwise the usual
@@ -190,6 +191,26 @@ type ChatCompletionResult struct {
 	// FallbackFrom is the provider asked first when another one answered:
 	// the reader is told which model replied and which one didn't.
 	FallbackFrom *ChatProviderFailure
+	Advisor      *aiprovider.AdvisorUsage
+}
+
+const (
+	DefaultAdvisorModel   = "claude-opus-5-5"
+	DefaultAdvisorMaxUses = 2
+)
+
+type AdvisorSpec struct {
+	Model     string `json:"model"`
+	MaxUses   int    `json:"maxUses,omitempty"`
+	MaxTokens int    `json:"maxTokens,omitempty"`
+}
+
+func DefaultAdvisor(model string) *AdvisorSpec {
+	if model == "" {
+		model = DefaultAdvisorModel
+	}
+
+	return &AdvisorSpec{Model: model, MaxUses: DefaultAdvisorMaxUses}
 }
 
 // ChatProviderFailure is one provider that was asked and didn't answer.

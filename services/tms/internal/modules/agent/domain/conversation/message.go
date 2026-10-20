@@ -253,7 +253,8 @@ type ReasoningTrace struct {
 	// ProviderKind names the protocol that produced the trace. A signature
 	// only means something to the provider that signed it, and a thread can
 	// change model between turns, so an adapter replays only its own.
-	ProviderKind string `json:"providerKind,omitempty"`
+	ProviderKind string          `json:"providerKind,omitempty"`
+	Blocks       []ProviderBlock `json:"blocks,omitempty"`
 }
 
 // ReplayableBy reports whether an adapter of the given kind may send this

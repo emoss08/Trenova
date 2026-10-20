@@ -125,6 +125,8 @@ type Usage struct {
 	// CacheMissedTokens its estimate of how much came after that point.
 	CacheMissReason   string
 	CacheMissedTokens int64
+	Advisor           *aiprovider.AdvisorUsage
+	AdvisorCostUSD    *decimal.Decimal
 }
 
 func StartModelCall(ctx context.Context, spec *ModelCallSpec) (context.Context, trace.Span) {
@@ -328,8 +330,29 @@ func RecordUsage(span trace.Span, usage *Usage) {
 	if usage.CostUSD != nil {
 		attrs = append(attrs, AICostUSD.Float64(usage.CostUSD.InexactFloat64()))
 	}
+	attrs = appendAdvisor(attrs, usage)
 
 	span.SetAttributes(attrs...)
+}
+
+func appendAdvisor(attrs []attribute.KeyValue, usage *Usage) []attribute.KeyValue {
+	advisor := usage.Advisor
+	if !advisor.Used() {
+		return attrs
+	}
+	attrs = appendString(attrs, AIAdvisorModel, advisor.Model)
+	attrs = append(attrs,
+		AIAdvisorCalls.Int(advisor.Calls),
+		AIAdvisorInputTokens.Int(advisor.Tokens.Input),
+		AIAdvisorOutputTokens.Int(advisor.Tokens.Output),
+		AIAdvisorCacheReadTokens.Int(advisor.Tokens.CacheRead),
+		AIAdvisorCacheWriteTokens.Int(advisor.Tokens.CacheWrite),
+	)
+	if usage.AdvisorCostUSD != nil {
+		attrs = append(attrs, AIAdvisorCostUSD.Float64(usage.AdvisorCostUSD.InexactFloat64()))
+	}
+
+	return attrs
 }
 
 func MarkFailed(span trace.Span, errorType string) {

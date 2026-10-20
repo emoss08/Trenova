@@ -297,10 +297,8 @@ func (b *Bench) runCase(ctx context.Context, opts *RunOptions, planned plannedCa
 		return result
 	}
 	result.ThreadID = conv.Thread.ID.String()
-	if cell.Effort != "" {
-		unpin := b.recorder.Pin(conv.Thread.ID, ProviderPin{Effort: cell.Effort})
-		defer unpin()
-	}
+	unpin := b.recorder.Pin(conv.Thread.ID, ProviderPin{Effort: cell.Effort, Advisor: cell.Advisor})
+	defer unpin()
 	if conv.Agent != nil {
 		result.Agent = conv.Agent.Name
 	}

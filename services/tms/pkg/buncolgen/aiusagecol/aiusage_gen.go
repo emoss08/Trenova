@@ -50,81 +50,95 @@ var AIUsageRecordTable = buncolgen.TableInfo{
 //	q.Where(AIUsageRecordColumns.ID.Eq(), id)           // WHERE aiu.id = ?
 //	q.Order(AIUsageRecordColumns.CreatedAt.OrderDesc())  // ORDER BY aiu.created_at DESC
 var AIUsageRecordColumns = struct {
-	ID                     buncolgen.Column // "id" → qualified: "aiu.id"
-	BusinessUnitID         buncolgen.Column // "business_unit_id" → qualified: "aiu.business_unit_id"
-	OrganizationID         buncolgen.Column // "organization_id" → qualified: "aiu.organization_id"
-	ProviderID             buncolgen.Column // "provider_id" → qualified: "aiu.provider_id"
-	ProviderKind           buncolgen.Column // "provider_kind" → qualified: "aiu.provider_kind"
-	Model                  buncolgen.Column // "model" → qualified: "aiu.model"
-	Task                   buncolgen.Column // "task" → qualified: "aiu.task"
-	Surface                buncolgen.Column // "surface" → qualified: "aiu.surface"
-	UserID                 buncolgen.Column // "user_id" → qualified: "aiu.user_id"
-	AgentDefinitionID      buncolgen.Column // "agent_definition_id" → qualified: "aiu.agent_definition_id"
-	ThreadID               buncolgen.Column // "thread_id" → qualified: "aiu.thread_id"
-	RunID                  buncolgen.Column // "run_id" → qualified: "aiu.run_id"
-	Feature                buncolgen.Column // "feature" → qualified: "aiu.feature"
-	SubjectType            buncolgen.Column // "subject_type" → qualified: "aiu.subject_type"
-	SubjectID              buncolgen.Column // "subject_id" → qualified: "aiu.subject_id"
-	Succeeded              buncolgen.Column // "succeeded" → qualified: "aiu.succeeded"
-	ErrorClass             buncolgen.Column // "error_class" → qualified: "aiu.error_class"
-	ErrorMessage           buncolgen.Column // "error_message" → qualified: "aiu.error_message"
-	Streamed               buncolgen.Column // "streamed" → qualified: "aiu.streamed"
-	LatencyMs              buncolgen.Column // "latency_ms" → qualified: "aiu.latency_ms"
-	InputTokens            buncolgen.Column // "input_tokens" → qualified: "aiu.input_tokens"
-	OutputTokens           buncolgen.Column // "output_tokens" → qualified: "aiu.output_tokens"
-	ReasoningTokens        buncolgen.Column // "reasoning_tokens" → qualified: "aiu.reasoning_tokens"
-	CostUSD                buncolgen.Column // "cost_usd" → qualified: "aiu.cost_usd"
-	TraceID                buncolgen.Column // "trace_id" → qualified: "aiu.trace_id"
-	SpanID                 buncolgen.Column // "span_id" → qualified: "aiu.span_id"
-	OwnerKind              buncolgen.Column // "owner_kind" → qualified: "aiu.owner_kind"
-	OwnerID                buncolgen.Column // "owner_id" → qualified: "aiu.owner_id"
-	DelegateCallID         buncolgen.Column // "delegate_call_id" → qualified: "aiu.delegate_call_id"
-	AgentDefinitionVersion buncolgen.Column // "agent_definition_version" → qualified: "aiu.agent_definition_version"
-	Attempt                buncolgen.Column // "attempt" → qualified: "aiu.attempt"
-	Failover               buncolgen.Column // "failover" → qualified: "aiu.failover"
-	CacheReadTokens        buncolgen.Column // "cache_read_tokens" → qualified: "aiu.cache_read_tokens"
-	CacheWriteTokens       buncolgen.Column // "cache_write_tokens" → qualified: "aiu.cache_write_tokens"
-	FirstTokenMs           buncolgen.Column // "first_token_ms" → qualified: "aiu.first_token_ms"
-	RecordedAtMs           buncolgen.Column // "recorded_at_ms" → qualified: "aiu.recorded_at_ms"
-	CreatedAt              buncolgen.Column // "created_at" → qualified: "aiu.created_at"
+	ID                      buncolgen.Column // "id" → qualified: "aiu.id"
+	BusinessUnitID          buncolgen.Column // "business_unit_id" → qualified: "aiu.business_unit_id"
+	OrganizationID          buncolgen.Column // "organization_id" → qualified: "aiu.organization_id"
+	ProviderID              buncolgen.Column // "provider_id" → qualified: "aiu.provider_id"
+	ProviderKind            buncolgen.Column // "provider_kind" → qualified: "aiu.provider_kind"
+	Model                   buncolgen.Column // "model" → qualified: "aiu.model"
+	Task                    buncolgen.Column // "task" → qualified: "aiu.task"
+	Surface                 buncolgen.Column // "surface" → qualified: "aiu.surface"
+	UserID                  buncolgen.Column // "user_id" → qualified: "aiu.user_id"
+	AgentDefinitionID       buncolgen.Column // "agent_definition_id" → qualified: "aiu.agent_definition_id"
+	ThreadID                buncolgen.Column // "thread_id" → qualified: "aiu.thread_id"
+	RunID                   buncolgen.Column // "run_id" → qualified: "aiu.run_id"
+	Feature                 buncolgen.Column // "feature" → qualified: "aiu.feature"
+	SubjectType             buncolgen.Column // "subject_type" → qualified: "aiu.subject_type"
+	SubjectID               buncolgen.Column // "subject_id" → qualified: "aiu.subject_id"
+	Succeeded               buncolgen.Column // "succeeded" → qualified: "aiu.succeeded"
+	ErrorClass              buncolgen.Column // "error_class" → qualified: "aiu.error_class"
+	ErrorMessage            buncolgen.Column // "error_message" → qualified: "aiu.error_message"
+	Streamed                buncolgen.Column // "streamed" → qualified: "aiu.streamed"
+	LatencyMs               buncolgen.Column // "latency_ms" → qualified: "aiu.latency_ms"
+	InputTokens             buncolgen.Column // "input_tokens" → qualified: "aiu.input_tokens"
+	OutputTokens            buncolgen.Column // "output_tokens" → qualified: "aiu.output_tokens"
+	ReasoningTokens         buncolgen.Column // "reasoning_tokens" → qualified: "aiu.reasoning_tokens"
+	CostUSD                 buncolgen.Column // "cost_usd" → qualified: "aiu.cost_usd"
+	TraceID                 buncolgen.Column // "trace_id" → qualified: "aiu.trace_id"
+	SpanID                  buncolgen.Column // "span_id" → qualified: "aiu.span_id"
+	OwnerKind               buncolgen.Column // "owner_kind" → qualified: "aiu.owner_kind"
+	OwnerID                 buncolgen.Column // "owner_id" → qualified: "aiu.owner_id"
+	DelegateCallID          buncolgen.Column // "delegate_call_id" → qualified: "aiu.delegate_call_id"
+	AgentDefinitionVersion  buncolgen.Column // "agent_definition_version" → qualified: "aiu.agent_definition_version"
+	Attempt                 buncolgen.Column // "attempt" → qualified: "aiu.attempt"
+	Failover                buncolgen.Column // "failover" → qualified: "aiu.failover"
+	CacheReadTokens         buncolgen.Column // "cache_read_tokens" → qualified: "aiu.cache_read_tokens"
+	CacheWriteTokens        buncolgen.Column // "cache_write_tokens" → qualified: "aiu.cache_write_tokens"
+	FirstTokenMs            buncolgen.Column // "first_token_ms" → qualified: "aiu.first_token_ms"
+	RecordedAtMs            buncolgen.Column // "recorded_at_ms" → qualified: "aiu.recorded_at_ms"
+	AdvisorModel            buncolgen.Column // "advisor_model" → qualified: "aiu.advisor_model"
+	AdvisorCalls            buncolgen.Column // "advisor_calls" → qualified: "aiu.advisor_calls"
+	AdvisorInputTokens      buncolgen.Column // "advisor_input_tokens" → qualified: "aiu.advisor_input_tokens"
+	AdvisorOutputTokens     buncolgen.Column // "advisor_output_tokens" → qualified: "aiu.advisor_output_tokens"
+	AdvisorCacheReadTokens  buncolgen.Column // "advisor_cache_read_tokens" → qualified: "aiu.advisor_cache_read_tokens"
+	AdvisorCacheWriteTokens buncolgen.Column // "advisor_cache_write_tokens" → qualified: "aiu.advisor_cache_write_tokens"
+	AdvisorCostUSD          buncolgen.Column // "advisor_cost_usd" → qualified: "aiu.advisor_cost_usd"
+	CreatedAt               buncolgen.Column // "created_at" → qualified: "aiu.created_at"
 }{
-	ID:                     buncolgen.NewColumn("id", "aiu"),
-	BusinessUnitID:         buncolgen.NewColumn("business_unit_id", "aiu"),
-	OrganizationID:         buncolgen.NewColumn("organization_id", "aiu"),
-	ProviderID:             buncolgen.NewColumn("provider_id", "aiu"),
-	ProviderKind:           buncolgen.NewColumn("provider_kind", "aiu"),
-	Model:                  buncolgen.NewColumn("model", "aiu"),
-	Task:                   buncolgen.NewColumn("task", "aiu"),
-	Surface:                buncolgen.NewColumn("surface", "aiu"),
-	UserID:                 buncolgen.NewColumn("user_id", "aiu"),
-	AgentDefinitionID:      buncolgen.NewColumn("agent_definition_id", "aiu"),
-	ThreadID:               buncolgen.NewColumn("thread_id", "aiu"),
-	RunID:                  buncolgen.NewColumn("run_id", "aiu"),
-	Feature:                buncolgen.NewColumn("feature", "aiu"),
-	SubjectType:            buncolgen.NewColumn("subject_type", "aiu"),
-	SubjectID:              buncolgen.NewColumn("subject_id", "aiu"),
-	Succeeded:              buncolgen.NewColumn("succeeded", "aiu"),
-	ErrorClass:             buncolgen.NewColumn("error_class", "aiu"),
-	ErrorMessage:           buncolgen.NewColumn("error_message", "aiu"),
-	Streamed:               buncolgen.NewColumn("streamed", "aiu"),
-	LatencyMs:              buncolgen.NewColumn("latency_ms", "aiu"),
-	InputTokens:            buncolgen.NewColumn("input_tokens", "aiu"),
-	OutputTokens:           buncolgen.NewColumn("output_tokens", "aiu"),
-	ReasoningTokens:        buncolgen.NewColumn("reasoning_tokens", "aiu"),
-	CostUSD:                buncolgen.NewColumn("cost_usd", "aiu"),
-	TraceID:                buncolgen.NewColumn("trace_id", "aiu"),
-	SpanID:                 buncolgen.NewColumn("span_id", "aiu"),
-	OwnerKind:              buncolgen.NewColumn("owner_kind", "aiu"),
-	OwnerID:                buncolgen.NewColumn("owner_id", "aiu"),
-	DelegateCallID:         buncolgen.NewColumn("delegate_call_id", "aiu"),
-	AgentDefinitionVersion: buncolgen.NewColumn("agent_definition_version", "aiu"),
-	Attempt:                buncolgen.NewColumn("attempt", "aiu"),
-	Failover:               buncolgen.NewColumn("failover", "aiu"),
-	CacheReadTokens:        buncolgen.NewColumn("cache_read_tokens", "aiu"),
-	CacheWriteTokens:       buncolgen.NewColumn("cache_write_tokens", "aiu"),
-	FirstTokenMs:           buncolgen.NewColumn("first_token_ms", "aiu"),
-	RecordedAtMs:           buncolgen.NewColumn("recorded_at_ms", "aiu"),
-	CreatedAt:              buncolgen.NewColumn("created_at", "aiu"),
+	ID:                      buncolgen.NewColumn("id", "aiu"),
+	BusinessUnitID:          buncolgen.NewColumn("business_unit_id", "aiu"),
+	OrganizationID:          buncolgen.NewColumn("organization_id", "aiu"),
+	ProviderID:              buncolgen.NewColumn("provider_id", "aiu"),
+	ProviderKind:            buncolgen.NewColumn("provider_kind", "aiu"),
+	Model:                   buncolgen.NewColumn("model", "aiu"),
+	Task:                    buncolgen.NewColumn("task", "aiu"),
+	Surface:                 buncolgen.NewColumn("surface", "aiu"),
+	UserID:                  buncolgen.NewColumn("user_id", "aiu"),
+	AgentDefinitionID:       buncolgen.NewColumn("agent_definition_id", "aiu"),
+	ThreadID:                buncolgen.NewColumn("thread_id", "aiu"),
+	RunID:                   buncolgen.NewColumn("run_id", "aiu"),
+	Feature:                 buncolgen.NewColumn("feature", "aiu"),
+	SubjectType:             buncolgen.NewColumn("subject_type", "aiu"),
+	SubjectID:               buncolgen.NewColumn("subject_id", "aiu"),
+	Succeeded:               buncolgen.NewColumn("succeeded", "aiu"),
+	ErrorClass:              buncolgen.NewColumn("error_class", "aiu"),
+	ErrorMessage:            buncolgen.NewColumn("error_message", "aiu"),
+	Streamed:                buncolgen.NewColumn("streamed", "aiu"),
+	LatencyMs:               buncolgen.NewColumn("latency_ms", "aiu"),
+	InputTokens:             buncolgen.NewColumn("input_tokens", "aiu"),
+	OutputTokens:            buncolgen.NewColumn("output_tokens", "aiu"),
+	ReasoningTokens:         buncolgen.NewColumn("reasoning_tokens", "aiu"),
+	CostUSD:                 buncolgen.NewColumn("cost_usd", "aiu"),
+	TraceID:                 buncolgen.NewColumn("trace_id", "aiu"),
+	SpanID:                  buncolgen.NewColumn("span_id", "aiu"),
+	OwnerKind:               buncolgen.NewColumn("owner_kind", "aiu"),
+	OwnerID:                 buncolgen.NewColumn("owner_id", "aiu"),
+	DelegateCallID:          buncolgen.NewColumn("delegate_call_id", "aiu"),
+	AgentDefinitionVersion:  buncolgen.NewColumn("agent_definition_version", "aiu"),
+	Attempt:                 buncolgen.NewColumn("attempt", "aiu"),
+	Failover:                buncolgen.NewColumn("failover", "aiu"),
+	CacheReadTokens:         buncolgen.NewColumn("cache_read_tokens", "aiu"),
+	CacheWriteTokens:        buncolgen.NewColumn("cache_write_tokens", "aiu"),
+	FirstTokenMs:            buncolgen.NewColumn("first_token_ms", "aiu"),
+	RecordedAtMs:            buncolgen.NewColumn("recorded_at_ms", "aiu"),
+	AdvisorModel:            buncolgen.NewColumn("advisor_model", "aiu"),
+	AdvisorCalls:            buncolgen.NewColumn("advisor_calls", "aiu"),
+	AdvisorInputTokens:      buncolgen.NewColumn("advisor_input_tokens", "aiu"),
+	AdvisorOutputTokens:     buncolgen.NewColumn("advisor_output_tokens", "aiu"),
+	AdvisorCacheReadTokens:  buncolgen.NewColumn("advisor_cache_read_tokens", "aiu"),
+	AdvisorCacheWriteTokens: buncolgen.NewColumn("advisor_cache_write_tokens", "aiu"),
+	AdvisorCostUSD:          buncolgen.NewColumn("advisor_cost_usd", "aiu"),
+	CreatedAt:               buncolgen.NewColumn("created_at", "aiu"),
 }
 
 // AIUsageRecordFieldMap maps JSON API field names to database column names.
@@ -132,43 +146,50 @@ var AIUsageRecordColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by AIUsageRecord.GetStaticFieldMap().
 var AIUsageRecordFieldMap = map[string]string{
-	"id":                     "id",
-	"businessUnitId":         "business_unit_id",
-	"organizationId":         "organization_id",
-	"providerId":             "provider_id",
-	"providerKind":           "provider_kind",
-	"model":                  "model",
-	"task":                   "task",
-	"surface":                "surface",
-	"userId":                 "user_id",
-	"agentDefinitionId":      "agent_definition_id",
-	"threadId":               "thread_id",
-	"runId":                  "run_id",
-	"feature":                "feature",
-	"subjectType":            "subject_type",
-	"subjectId":              "subject_id",
-	"succeeded":              "succeeded",
-	"errorClass":             "error_class",
-	"errorMessage":           "error_message",
-	"streamed":               "streamed",
-	"latencyMs":              "latency_ms",
-	"inputTokens":            "input_tokens",
-	"outputTokens":           "output_tokens",
-	"reasoningTokens":        "reasoning_tokens",
-	"costUsd":                "cost_usd",
-	"traceId":                "trace_id",
-	"spanId":                 "span_id",
-	"ownerKind":              "owner_kind",
-	"ownerId":                "owner_id",
-	"delegateCallId":         "delegate_call_id",
-	"agentDefinitionVersion": "agent_definition_version",
-	"attempt":                "attempt",
-	"failover":               "failover",
-	"cacheReadTokens":        "cache_read_tokens",
-	"cacheWriteTokens":       "cache_write_tokens",
-	"firstTokenMs":           "first_token_ms",
-	"recordedAtMs":           "recorded_at_ms",
-	"createdAt":              "created_at",
+	"id":                      "id",
+	"businessUnitId":          "business_unit_id",
+	"organizationId":          "organization_id",
+	"providerId":              "provider_id",
+	"providerKind":            "provider_kind",
+	"model":                   "model",
+	"task":                    "task",
+	"surface":                 "surface",
+	"userId":                  "user_id",
+	"agentDefinitionId":       "agent_definition_id",
+	"threadId":                "thread_id",
+	"runId":                   "run_id",
+	"feature":                 "feature",
+	"subjectType":             "subject_type",
+	"subjectId":               "subject_id",
+	"succeeded":               "succeeded",
+	"errorClass":              "error_class",
+	"errorMessage":            "error_message",
+	"streamed":                "streamed",
+	"latencyMs":               "latency_ms",
+	"inputTokens":             "input_tokens",
+	"outputTokens":            "output_tokens",
+	"reasoningTokens":         "reasoning_tokens",
+	"costUsd":                 "cost_usd",
+	"traceId":                 "trace_id",
+	"spanId":                  "span_id",
+	"ownerKind":               "owner_kind",
+	"ownerId":                 "owner_id",
+	"delegateCallId":          "delegate_call_id",
+	"agentDefinitionVersion":  "agent_definition_version",
+	"attempt":                 "attempt",
+	"failover":                "failover",
+	"cacheReadTokens":         "cache_read_tokens",
+	"cacheWriteTokens":        "cache_write_tokens",
+	"firstTokenMs":            "first_token_ms",
+	"recordedAtMs":            "recorded_at_ms",
+	"advisorModel":            "advisor_model",
+	"advisorCalls":            "advisor_calls",
+	"advisorInputTokens":      "advisor_input_tokens",
+	"advisorOutputTokens":     "advisor_output_tokens",
+	"advisorCacheReadTokens":  "advisor_cache_read_tokens",
+	"advisorCacheWriteTokens": "advisor_cache_write_tokens",
+	"advisorCostUsd":          "advisor_cost_usd",
+	"createdAt":               "created_at",
 }
 
 // AIUsageRecordInsertableColumns lists column names suitable for INSERT statements on the "ai_usage_records" table.
@@ -209,6 +230,13 @@ var AIUsageRecordInsertableColumns = []string{
 	"cache_read_tokens",
 	"cache_write_tokens",
 	"first_token_ms",
+	"advisor_model",
+	"advisor_calls",
+	"advisor_input_tokens",
+	"advisor_output_tokens",
+	"advisor_cache_read_tokens",
+	"advisor_cache_write_tokens",
+	"advisor_cost_usd",
 	"created_at",
 }
 
@@ -262,42 +290,49 @@ func AIUsageRecordApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *
 //	AIUsageRecordFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var AIUsageRecordFilter = struct {
-	ID                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	ProviderID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "providerId" → DB: "provider_id"
-	ProviderKind           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "providerKind" → DB: "provider_kind"
-	Model                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "model" → DB: "model"
-	Task                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "task" → DB: "task"
-	Surface                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "surface" → DB: "surface"
-	UserID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "userId" → DB: "user_id"
-	AgentDefinitionID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentDefinitionId" → DB: "agent_definition_id"
-	ThreadID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "threadId" → DB: "thread_id"
-	RunID                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "runId" → DB: "run_id"
-	Feature                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "feature" → DB: "feature"
-	SubjectType            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subjectType" → DB: "subject_type"
-	SubjectID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subjectId" → DB: "subject_id"
-	Succeeded              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "succeeded" → DB: "succeeded"
-	ErrorClass             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "errorClass" → DB: "error_class"
-	ErrorMessage           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "errorMessage" → DB: "error_message"
-	Streamed               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "streamed" → DB: "streamed"
-	LatencyMs              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "latencyMs" → DB: "latency_ms"
-	InputTokens            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "inputTokens" → DB: "input_tokens"
-	OutputTokens           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "outputTokens" → DB: "output_tokens"
-	ReasoningTokens        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reasoningTokens" → DB: "reasoning_tokens"
-	CostUSD                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "costUsd" → DB: "cost_usd"
-	TraceID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "traceId" → DB: "trace_id"
-	SpanID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "spanId" → DB: "span_id"
-	OwnerKind              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ownerKind" → DB: "owner_kind"
-	OwnerID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ownerId" → DB: "owner_id"
-	DelegateCallID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "delegateCallId" → DB: "delegate_call_id"
-	AgentDefinitionVersion func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentDefinitionVersion" → DB: "agent_definition_version"
-	Attempt                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "attempt" → DB: "attempt"
-	Failover               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failover" → DB: "failover"
-	CacheReadTokens        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cacheReadTokens" → DB: "cache_read_tokens"
-	CacheWriteTokens       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cacheWriteTokens" → DB: "cache_write_tokens"
-	FirstTokenMs           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "firstTokenMs" → DB: "first_token_ms"
-	CreatedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	ID                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	ProviderID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "providerId" → DB: "provider_id"
+	ProviderKind            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "providerKind" → DB: "provider_kind"
+	Model                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "model" → DB: "model"
+	Task                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "task" → DB: "task"
+	Surface                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "surface" → DB: "surface"
+	UserID                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "userId" → DB: "user_id"
+	AgentDefinitionID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentDefinitionId" → DB: "agent_definition_id"
+	ThreadID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "threadId" → DB: "thread_id"
+	RunID                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "runId" → DB: "run_id"
+	Feature                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "feature" → DB: "feature"
+	SubjectType             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subjectType" → DB: "subject_type"
+	SubjectID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subjectId" → DB: "subject_id"
+	Succeeded               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "succeeded" → DB: "succeeded"
+	ErrorClass              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "errorClass" → DB: "error_class"
+	ErrorMessage            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "errorMessage" → DB: "error_message"
+	Streamed                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "streamed" → DB: "streamed"
+	LatencyMs               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "latencyMs" → DB: "latency_ms"
+	InputTokens             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "inputTokens" → DB: "input_tokens"
+	OutputTokens            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "outputTokens" → DB: "output_tokens"
+	ReasoningTokens         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reasoningTokens" → DB: "reasoning_tokens"
+	CostUSD                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "costUsd" → DB: "cost_usd"
+	TraceID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "traceId" → DB: "trace_id"
+	SpanID                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "spanId" → DB: "span_id"
+	OwnerKind               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ownerKind" → DB: "owner_kind"
+	OwnerID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ownerId" → DB: "owner_id"
+	DelegateCallID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "delegateCallId" → DB: "delegate_call_id"
+	AgentDefinitionVersion  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentDefinitionVersion" → DB: "agent_definition_version"
+	Attempt                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "attempt" → DB: "attempt"
+	Failover                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failover" → DB: "failover"
+	CacheReadTokens         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cacheReadTokens" → DB: "cache_read_tokens"
+	CacheWriteTokens        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cacheWriteTokens" → DB: "cache_write_tokens"
+	FirstTokenMs            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "firstTokenMs" → DB: "first_token_ms"
+	AdvisorModel            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "advisorModel" → DB: "advisor_model"
+	AdvisorCalls            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "advisorCalls" → DB: "advisor_calls"
+	AdvisorInputTokens      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "advisorInputTokens" → DB: "advisor_input_tokens"
+	AdvisorOutputTokens     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "advisorOutputTokens" → DB: "advisor_output_tokens"
+	AdvisorCacheReadTokens  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "advisorCacheReadTokens" → DB: "advisor_cache_read_tokens"
+	AdvisorCacheWriteTokens func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "advisorCacheWriteTokens" → DB: "advisor_cache_write_tokens"
+	AdvisorCostUSD          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "advisorCostUsd" → DB: "advisor_cost_usd"
+	CreatedAt               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("id", op, value)
@@ -403,6 +438,27 @@ var AIUsageRecordFilter = struct {
 	},
 	FirstTokenMs: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("firstTokenMs", op, value)
+	},
+	AdvisorModel: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("advisorModel", op, value)
+	},
+	AdvisorCalls: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("advisorCalls", op, value)
+	},
+	AdvisorInputTokens: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("advisorInputTokens", op, value)
+	},
+	AdvisorOutputTokens: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("advisorOutputTokens", op, value)
+	},
+	AdvisorCacheReadTokens: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("advisorCacheReadTokens", op, value)
+	},
+	AdvisorCacheWriteTokens: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("advisorCacheWriteTokens", op, value)
+	},
+	AdvisorCostUSD: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("advisorCostUsd", op, value)
 	},
 	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("createdAt", op, value)
