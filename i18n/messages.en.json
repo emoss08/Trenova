@@ -20728,6 +20728,15 @@
       "go/other"
     ]
   },
+  "Agents are paused for the organization": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Agents ask before saving anything": {
     "sites": 1,
     "scope": [
@@ -23972,6 +23981,15 @@
     ]
   },
   "An admin can connect one in Agent Control.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "An administrator can turn this off.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -115494,6 +115512,15 @@
       "routes/billing-queue"
     ]
   },
+  "Held, not yet decidable": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Hello {0},": {
     "sites": 26,
     "scope": [
@@ -163574,7 +163601,7 @@
     ]
   },
   "Not now": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -214743,11 +214770,12 @@
     ]
   },
   "Resume agents": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/agent-control"
     ]
   },
@@ -216168,7 +216196,7 @@
     ]
   },
   "Review": {
-    "sites": 24,
+    "sites": 25,
     "scope": [
       "go",
       "ts"
@@ -219812,7 +219840,7 @@
     ]
   },
   "Run the plan": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -269080,6 +269108,15 @@
       "routes/agent-control"
     ]
   },
+  "This agent is in shadow": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "This agent is restricted to roles and no role is granted it, so nobody can use it.": {
     "sites": 1,
     "scope": [
@@ -281609,6 +281646,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Turn off shadow": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Turn off two-factor authentication": {
@@ -315736,7 +315782,7 @@
     ]
   },
   "{0, plural, one {# change} other {# changes}}": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -318812,7 +318858,7 @@
     ]
   },
   "{0, plural, one {# step} other {# steps}}": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -325259,6 +325305,15 @@
     ]
   },
   "{0} is in a closed period, so it books on {1}, the first open day.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "{0} is in shadow": {
     "sites": 1,
     "scope": [
       "ts"

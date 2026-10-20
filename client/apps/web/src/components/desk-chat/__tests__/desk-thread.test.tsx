@@ -1,4 +1,5 @@
 import type { ThreadAsks, ThreadAskRequest } from "@/components/assistant/ask-requests";
+import { approvalQueue } from "@/components/assistant/approval-queue";
 import type { AssistantMessage, AssistantThread } from "@/types/assistant";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
@@ -14,6 +15,8 @@ const conversation = vi.hoisted(() => ({
   providersReady: true,
   /** Entries the thread holds after the opening question and reply. */
   more: [] as unknown[],
+  /** The decision the dock asks, and the whole queue it was picked from. */
+  queue: [] as unknown[],
 }));
 
 vi.mock("@/lib/queries/assistant", async (importOriginal) => ({
@@ -117,7 +120,7 @@ vi.mock("@/components/assistant/use-thread-model", () => ({
     answer: conversation.answer,
     asks: conversation.asks,
     block: null,
-    current: null,
+    current: conversation.queue.length > 0 ? { entry: conversation.queue[0], index: 0 } : null,
     decided: () => undefined,
     deferAll: () => undefined,
     dismiss: async () => undefined,
@@ -128,12 +131,12 @@ vi.mock("@/components/assistant/use-thread-model", () => ({
     providerId: "",
     providers: [],
     providersReady: conversation.providersReady,
-    queue: [],
+    queue: conversation.queue,
     resumeAll: () => undefined,
     retry: null,
     send: async () => undefined,
     setProviderId: () => undefined,
-    showDock: false,
+    showDock: conversation.queue.length > 0,
     stop: () => undefined,
     suggestions: [],
     waits: { open: [], byId: new Map(), cancel: async () => undefined },
@@ -156,6 +159,7 @@ afterEach(() => {
   conversation.answer = () => undefined;
   conversation.providersReady = true;
   conversation.more = [];
+  conversation.queue = [];
 });
 
 const thread = {
@@ -390,5 +394,52 @@ describe("DeskThread's open question", () => {
 
     expect(screen.queryByRole("region", { name: "Question from the agent" })).toBeNull();
     expect(screen.getByText("Not answered yet")).toBeInTheDocument();
+  });
+});
+
+/*
+A turn that raised a change while the organization's agents are paused
+said "it waits on your approval" and docked nothing: the change was held,
+and a held change was dropped from the queue. The dock now asks it, naming
+the pause in place of the approval.
+*/
+describe("DeskThread's dock for a held change", () => {
+  it("asks the held change in the composer's place, with nothing to approve", () => {
+    conversation.queue = approvalQueue(
+      [
+        {
+          id: "ap_1",
+          runId: "ar_1",
+          toolName: "home_add_widget",
+          arguments: { key: "fleet-status", version: 0 },
+          rationale: "",
+          autonomyTier: "ActWithApproval",
+          status: "Pending",
+          sourceMessageId: "msg_a",
+          executedAt: null,
+          executionError: "",
+          expiresAt: 0,
+          hold: { reason: "OrganizationPaused", agentName: "" },
+          planId: "",
+          planStep: 0,
+          fields: [],
+          createdAt: 100,
+          decidedAt: null,
+          decidedByUserId: "",
+          decisionNote: "",
+          reviewRequired: false,
+        },
+      ],
+      [],
+      null,
+      1_000,
+    );
+
+    renderThread();
+
+    const card = screen.getByRole("group", { name: "Held, not yet decidable" });
+    expect(card.textContent).toContain("Agents are paused for the organization");
+    expect(screen.queryByRole("button", { name: /^Approve/ })).toBeNull();
+    expect(screen.queryByText(/to approve/)).toBeNull();
   });
 });

@@ -1723,7 +1723,7 @@ export function DeskThread({
                         onCompact={() => void compaction.compact()}
                       />
                       <div className="dk-hint">
-                        {showCard ? (
+                        {showCard && model.current?.entry.hold === null ? (
                           <span>
                             {rt("Press <kbd/> to approve", {
                               kbd: () => <span className="dk-kbd">⌘↵</span>,

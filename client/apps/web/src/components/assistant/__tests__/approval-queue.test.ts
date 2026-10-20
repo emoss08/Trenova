@@ -1,4 +1,8 @@
-import type { AssistantPlan, AssistantProposal } from "@/types/assistant";
+import {
+  assistantProposalListSchema,
+  type AssistantPlan,
+  type AssistantProposal,
+} from "@/types/assistant";
 import { describe, expect, it } from "vitest";
 import {
   MAX_BATCH_PROPOSALS,
@@ -6,6 +10,7 @@ import {
   currentEntry,
   decisionArtifactFor,
   focusKeys,
+  holdSwitch,
   holdsFocus,
   isDeferred,
   planKey,
@@ -183,7 +188,7 @@ describe("approvalQueue", () => {
     expect(queue.map((entry) => entry.members.length)).toEqual([MAX_BATCH_PROPOSALS, 2]);
   });
 
-  it("lists only what can be decided now", () => {
+  it("lists what waits on a person, held or not, and leaves out what is history", () => {
     const queue = approvalQueue(
       [
         proposal({ id: "held", hold: { reason: "OrganizationPaused", agentName: "" } }),
@@ -199,7 +204,113 @@ describe("approvalQueue", () => {
       NOW,
     );
 
-    expect(queue.map((entry) => entry.key)).toEqual([proposalKey("orphan_step")]);
+    expect(queue.map((entry) => [entry.key, entry.hold])).toEqual([
+      [planKey("apl_held"), { reason: "AgentShadow", agentName: "Billing" }],
+      [proposalKey("held"), { reason: "OrganizationPaused", agentName: "" }],
+      [proposalKey("orphan_step"), null],
+    ]);
+  });
+
+  /*
+  Every organization starts with its agents paused, and a pause holds every
+  proposal it raises. Dropping held proposals from the queue left a turn that
+  said "it waits on your approval" with no card anywhere in the Desk.
+  */
+  it("asks a proposal held by the organization's pause, as the proposals route serves it", () => {
+    const served = assistantProposalListSchema.parse({
+      results: [
+        {
+          id: "ap_01M5CRKNHVDKMZFY187BJ7YDSN",
+          runId: "ar_01M5CRKPH3WP32T1JXJ2B72E3T",
+          toolName: "home_add_widget",
+          arguments: { _owner: "usr_1", key: "fleet-status", version: 0 },
+          rationale: "Asked to add home widget",
+          autonomyTier: "ActWithApproval",
+          status: "Pending",
+          sourceMessageId: "amsg_01M5CRKPGXGTAGHT2X9PBNEGSS",
+          confidence: 0,
+          executedAt: null,
+          executionError: "",
+          expiresAt: NOW + 3600,
+          hold: { reason: "OrganizationPaused", agentName: "" },
+          planId: null,
+          planStep: 0,
+          simulatedAt: null,
+          simulation: null,
+          fields: [
+            {
+              name: "key",
+              label: "Key",
+              description: "The widget, by the key home_list_widgets gives.",
+              kind: "Text",
+              required: true,
+              options: [],
+              readOnly: false,
+            },
+          ],
+          modifications: null,
+          pendingModifications: null,
+          agentId: "agdef_1",
+          agentName: "Dispatch desk",
+          createdAt: NOW - 10,
+          decidedAt: null,
+          decidedByUserId: null,
+          decisionNote: "",
+          reviewRequired: false,
+        },
+      ],
+    });
+
+    const queue = approvalQueue(served.results, [], null, NOW);
+
+    expect(queue).toHaveLength(1);
+    expect(queue[0]).toMatchObject({
+      kind: "proposal",
+      key: proposalKey("ap_01M5CRKNHVDKMZFY187BJ7YDSN"),
+      hold: { reason: "OrganizationPaused", agentName: "" },
+    });
+    expect(currentEntry(queue, new Set())?.entry.key).toBe(
+      proposalKey("ap_01M5CRKNHVDKMZFY187BJ7YDSN"),
+    );
+  });
+
+  it("never batches a held write with a live one of the same tool", () => {
+    const queue = approvalQueue(
+      [
+        proposal({ id: "live", createdAt: 100 }),
+        proposal({
+          id: "held",
+          createdAt: 101,
+          hold: { reason: "AgentShadow", agentName: "Billing" },
+        }),
+      ],
+      [],
+      null,
+      NOW,
+    );
+
+    expect(queue.map((entry) => [entry.kind, entry.members, entry.hold?.reason ?? null])).toEqual([
+      ["proposal", [proposalKey("live")], null],
+      ["proposal", [proposalKey("held")], "AgentShadow"],
+    ]);
+  });
+
+  it("never asks a held write to be decided together with live ones", () => {
+    const queue = approvalQueue(
+      [
+        proposal({ id: "a", runId: "arun_1" }),
+        proposal({
+          id: "b",
+          runId: "arun_2",
+          hold: { reason: "OrganizationPaused", agentName: "" },
+        }),
+      ],
+      [],
+      { proposalIds: ["a", "b"], planId: "" },
+      NOW,
+    );
+
+    expect(queue.every((entry) => entry.kind === "proposal")).toBe(true);
   });
 });
 
@@ -237,6 +348,96 @@ describe("currentEntry", () => {
     });
     expect(currentEntry(queue, deferred, { proposalIds: [], planId: "apl_1" })?.index).toBe(2);
     expect(currentEntry(queue, new Set(), { proposalIds: ["gone"], planId: "" })?.index).toBe(0);
+  });
+});
+
+describe("currentEntry with held writes", () => {
+  it("shows what can be decided before what a switch holds, and the held one once nothing else waits", () => {
+    const queue = approvalQueue(
+      [
+        proposal({
+          id: "held",
+          runId: "arun_1",
+          createdAt: 100,
+          hold: { reason: "OrganizationPaused", agentName: "" },
+        }),
+        proposal({ id: "live", runId: "arun_2", createdAt: 200 }),
+      ],
+      [],
+      null,
+      NOW,
+    );
+
+    expect(currentEntry(queue, new Set())).toMatchObject({
+      index: 1,
+      entry: { key: proposalKey("live") },
+    });
+    expect(currentEntry(queue, new Set([proposalKey("live")]))).toMatchObject({
+      index: 0,
+      entry: { key: proposalKey("held") },
+    });
+    expect(currentEntry(queue, new Set([proposalKey("live"), proposalKey("held")]))).toBeNull();
+  });
+});
+
+describe("holdSwitch", () => {
+  it("names nothing for a write no switch holds", () => {
+    const [entry] = approvalQueue([proposal()], [], null, NOW);
+
+    expect(holdSwitch(entry)).toBeNull();
+  });
+
+  it("sends the organization's pause to the AI Control overview", () => {
+    const [entry] = approvalQueue(
+      [proposal({ hold: { reason: "OrganizationPaused", agentName: "" } })],
+      [],
+      null,
+      NOW,
+    );
+
+    expect(holdSwitch(entry)).toEqual({ scope: "organization", to: "/admin/agent-control" });
+  });
+
+  it("sends an agent's shadow switch to that agent's sheet", () => {
+    const [entry] = approvalQueue(
+      [
+        proposal({
+          agentId: "agdef_billing",
+          agentName: "Billing exceptions",
+          hold: { reason: "AgentShadow", agentName: "Billing" },
+        }),
+      ],
+      [],
+      null,
+      NOW,
+    );
+
+    expect(holdSwitch(entry)).toEqual({
+      scope: "agent",
+      to: "/admin/agent-control?tab=agents&openAgent=agdef_billing",
+      agentName: "Billing",
+    });
+  });
+
+  it("names a held plan's agent when the hold does not", () => {
+    const [entry] = approvalQueue(
+      [],
+      [
+        plan({
+          agentId: "agdef_plan",
+          agentName: "Recovery",
+          hold: { reason: "AgentShadow", agentName: "" },
+        }),
+      ],
+      null,
+      NOW,
+    );
+
+    expect(holdSwitch(entry)).toEqual({
+      scope: "agent",
+      to: "/admin/agent-control?tab=agents&openAgent=agdef_plan",
+      agentName: "Recovery",
+    });
   });
 });
 
