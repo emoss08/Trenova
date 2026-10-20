@@ -5,6 +5,9 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
+
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
@@ -105,7 +108,7 @@ type Service struct {
 	pools      matchPools
 	matchable  func() []string
 	registry   *permission.Registry
-	shadow     shadowVerdicts
+	codeMode   codemode.Gate
 }
 
 func New(p Params) *Service {
@@ -135,7 +138,16 @@ func New(p Params) *Service {
 		pools:       newMatchPools(),
 		matchable:   matchableTools(p.Catalog),
 		registry:    permission.NewRegistry(),
-		shadow:      shadowFrom(p.Shadow),
+		codeMode:    codeModeGate(p.Config),
+	}
+}
+
+// codeModeGate is the shipped model ledger, forced open on request only in a
+// development or test deployment, where the desk bench runs.
+func codeModeGate(cfg *config.Config) codemode.Gate {
+	return codemode.Gate{
+		Ledger: codemode.Shipped(),
+		Forced: cfg != nil && (cfg.App.IsDevelopment() || cfg.App.IsTest()),
 	}
 }
 
@@ -604,7 +616,32 @@ func (t *Turn) dispatchCall(call *agentports.ToolCall, completionText string) Di
 		Earlier:              t.earlier(call.Name),
 		MoneySpent:           t.moneySpent(),
 		Beyond:               t.beyondTier(call.Name),
+		Model:                t.result.Model,
+		Provider:             t.providerKind,
+		ScriptPosition:       t.scriptPosition(call),
 	}
+}
+
+// scriptPosition is how many calls to the script tool the turn has made up to
+// and including this one, zero for any other tool.
+func (t *Turn) scriptPosition(call *agentports.ToolCall) int {
+	if call.Name != agentextension.ToolRunScript {
+		return 0
+	}
+	position := 0
+	for idx := range t.result.Messages {
+		for _, made := range t.result.Messages[idx].ToolCalls {
+			if made.Name != agentextension.ToolRunScript {
+				continue
+			}
+			position++
+			if made.ID == call.ID {
+				return position
+			}
+		}
+	}
+
+	return position + 1
 }
 
 // settleDispatched folds what a dispatched call came to into the turn: the

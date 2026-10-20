@@ -20532,6 +20532,15 @@
       "go/other"
     ]
   },
+  "Agent read-only scripts": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Agent run": {
     "sites": 3,
     "scope": [
@@ -20702,6 +20711,15 @@
     ]
   },
   "Agents answer questions a report alone does not — margin by lane over a quarter, which customers drift past their payment terms, where detention clusters by facility and hour — by running Python over the report results and spreadsheets they were given, and show the figures and charts beside the reply. The code runs in a sandbox that cannot reach the internet.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Agents answering a question that needs many reads with one short read-only script, through an enabled extension": {
     "sites": 1,
     "scope": [
       "go"
@@ -26368,6 +26386,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Answers a question that needs many reads with one short Python script whose every read is the agent's own, checked as the person.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Answers from your records": {
@@ -134130,6 +134157,15 @@
       "go/other"
     ]
   },
+  "Let agents run read-only scripts over what this person may read": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Let agents search and read the web for this person": {
     "sites": 1,
     "scope": [
@@ -149730,6 +149766,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "Must be true or false": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Must be valid JSON": {
@@ -201364,6 +201409,24 @@
       "routes/driver-settlement"
     ]
   },
+  "Read-only scripts": {
+    "sites": 3,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Read-only scripts are turned off for this organization. Answer with the discrete reads.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Read-only until you approve": {
     "sites": 1,
     "scope": [
@@ -201789,6 +201852,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Reads per script": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Reads the full text of a page a search returned.": {
@@ -219415,6 +219487,15 @@
       "go/other"
     ]
   },
+  "Run a read-only script": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Run a request on a schedule and post the results here": {
     "sites": 1,
     "scope": [
@@ -226530,6 +226611,15 @@
     ]
   },
   "Seconds per analysis": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Seconds per script": {
     "sites": 1,
     "scope": [
       "go"
@@ -265068,6 +265158,15 @@
       "routes/worker"
     ]
   },
+  "The script is empty. Send the Python to run.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The search didn't run": {
     "sites": 1,
     "scope": [
@@ -289636,7 +289735,7 @@
     ]
   },
   "View": {
-    "sites": 127,
+    "sites": 128,
     "scope": [
       "go",
       "ts"
@@ -306989,6 +307088,15 @@
       "apps/web/components"
     ]
   },
+  "a script needs a broker to read through": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "a shipment": {
     "sites": 1,
     "scope": [
@@ -314010,6 +314118,15 @@
       "routes/shipment"
     ]
   },
+  "the read's answer could not be encoded": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "the recording": {
     "sites": 1,
     "scope": [
@@ -314017,6 +314134,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "the script was stopped": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "the shipment": {
@@ -314084,7 +314210,7 @@
     ]
   },
   "the {0} extension cannot run code": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],

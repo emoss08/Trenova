@@ -32,7 +32,29 @@ type ToolPolicy struct {
 	Sources             []agent.TaintSource
 	CarriesTaint        bool
 	CapsLaterWrites     bool
+	Script              ScriptUse
 	Rationale           string
+}
+
+// ScriptUse says what a script may do with a tool: call it through the
+// broker (the default for a read), never call it, or run the script itself.
+type ScriptUse string
+
+const (
+	ScriptCallable = ScriptUse("")
+	ScriptExcluded = ScriptUse("excluded")
+	ScriptRunner   = ScriptUse("runner")
+)
+
+// CallableFromScript says a script's broker may run the tool: a read whose
+// policy does not keep it from scripts, that touches only what the caller may
+// read and reads nothing from outside the organization a script could relay
+// into a later write.
+func (p *ToolPolicy) CallableFromScript() bool {
+	return p.Kind == agent.ToolKindQuery &&
+		p.EffectiveEffect() == agent.ToolEffectLookup &&
+		p.Script == ScriptCallable &&
+		p.Scope != agent.ToolScopeSelf
 }
 
 func (p ToolPolicy) HeldWhenTainted() bool {
