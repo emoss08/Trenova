@@ -4782,6 +4782,10 @@ type AgentPlan {
   """
   failedStep: Int
   failureError: String!
+  """
+  Set while it waits and a switch keeps it from being decided; absent once decided or when a person can decide it now.
+  """
+  hold: PendingDecisionHold
   id: ID!
   organizationId: ID!
   """The run that raised this plan, for the agent behind it."""
@@ -5193,6 +5197,10 @@ type AgentProposal {
   What held the write below running on its own: agent_ceiling, tool_max, egress_class, condition, tainted, tool_tier, personal_exemption, business_hours or one of the money_ bounds.
   """
   heldBy: [String!]!
+  """
+  Set while it waits and a switch keeps it from being decided; absent once decided or when a person can decide it now.
+  """
+  hold: PendingDecisionHold
   id: ID!
   """
   The values the approver changed before approving, keyed by parameter. Absent when approved as proposed.

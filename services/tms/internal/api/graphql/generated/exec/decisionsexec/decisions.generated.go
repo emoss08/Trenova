@@ -41,6 +41,18 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOAgentRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐAgentRun),
 			},
+			{
+				Name:       "hold",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "PendingDecisionHold",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agent.AgentPlan)
+					return gqlexec.Resolver[resolverAgentPlan](ec, "AgentPlan").Hold(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOPendingDecisionHold2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPendingDecisionHold),
+			},
 		}},
 		{Object: "AgentProposal", Fields: []*gqlexec.Field{
 			{
@@ -54,6 +66,18 @@ var Shard = &gqlexec.Shard{
 					return gqlexec.Resolver[resolverAgentProposal](ec, "AgentProposal").Run(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOAgentRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐAgentRun),
+			},
+			{
+				Name:       "hold",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "PendingDecisionHold",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agent.AgentProposal)
+					return gqlexec.Resolver[resolverAgentProposal](ec, "AgentProposal").Hold(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOPendingDecisionHold2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPendingDecisionHold),
 			},
 		}},
 		{Object: "AgentProposalDecisionResult", Fields: []*gqlexec.Field{
@@ -476,10 +500,12 @@ var Shard = &gqlexec.Shard{
 
 type resolverAgentPlan interface {
 	Run(ctx context.Context, obj *agent.AgentPlan) (*agent.AgentRun, error)
+	Hold(ctx context.Context, obj *agent.AgentPlan) (*gqlmodel.PendingDecisionHold, error)
 }
 
 type resolverAgentProposal interface {
 	Run(ctx context.Context, obj *agent.AgentProposal) (*agent.AgentRun, error)
+	Hold(ctx context.Context, obj *agent.AgentProposal) (*gqlmodel.PendingDecisionHold, error)
 }
 
 type resolverAgentRun interface {

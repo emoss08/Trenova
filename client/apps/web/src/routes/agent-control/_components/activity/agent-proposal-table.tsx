@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { decidable } from "./activity-model";
 import { DataTable } from "@/components/data-table/data-table";
 import { usePermission } from "@/hooks/use-permission";
 import {
@@ -114,7 +115,7 @@ export default function AgentProposalTable() {
       label: t("Approve"),
       icon: CheckIcon,
       onClick: (row) => decide(row.original, "Accepted"),
-      hidden: (row) => !canDecide || row.original.status !== "Pending",
+      hidden: (row) => !decidable(row.original, canDecide),
     },
     {
       id: "modify",
@@ -122,9 +123,7 @@ export default function AgentProposalTable() {
       icon: Edit02Icon,
       onClick: (row) => modify(row.original),
       hidden: (row) =>
-        !canDecide ||
-        row.original.status !== "Pending" ||
-        row.original.parameterFields.length === 0,
+        !decidable(row.original, canDecide) || row.original.parameterFields.length === 0,
     },
     {
       id: "reject",
@@ -132,7 +131,7 @@ export default function AgentProposalTable() {
       icon: XCloseIcon,
       variant: "destructive",
       onClick: (row) => decide(row.original, "Rejected"),
-      hidden: (row) => !canDecide || row.original.status !== "Pending",
+      hidden: (row) => !decidable(row.original, canDecide),
     },
   ];
 

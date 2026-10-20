@@ -79,12 +79,9 @@ export function usePendingDecisions(filter: PendingDecisionFilter, enabled = tru
           const node = edge.node;
           const hold = edge.hold ?? null;
           if (node.__typename === "AgentProposal") {
+            const proposal = getFragmentData(PendingProposalFieldsFragmentDoc, node);
             return [
-              {
-                ...getFragmentData(PendingProposalFieldsFragmentDoc, node),
-                __typename: "AgentProposal",
-                hold,
-              },
+              { ...proposal, __typename: "AgentProposal", hold: hold ?? proposal.hold ?? null },
             ];
           }
           if (node.__typename === "AgentPlan") {
@@ -161,7 +158,6 @@ export function useRecentDecisions(since: number, enabled = true) {
           ...getFragmentData(PendingProposalFieldsFragmentDoc, row.proposal),
           executionError: row.proposal.executionError,
           __typename: "AgentProposal",
-          hold: null,
         },
       })),
   });

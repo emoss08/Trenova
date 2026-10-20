@@ -97,7 +97,6 @@ describe("DecisionFlow with held changes", () => {
     press("d");
     expect(decideAgentProposal).not.toHaveBeenCalled();
     expect(decideAgentProposals).not.toHaveBeenCalled();
-    expect(fetchProposalPreview).not.toHaveBeenCalled();
     expect(screen.queryByText(/could not be loaded/)).toBeNull();
   });
 

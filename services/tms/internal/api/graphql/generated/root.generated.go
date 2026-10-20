@@ -794,6 +794,7 @@ type AgentMemoryResolver interface {
 
 type AgentPlanResolver interface {
 	Run(ctx context.Context, obj *agent.AgentPlan) (*agent.AgentRun, error)
+	Hold(ctx context.Context, obj *agent.AgentPlan) (*gqlmodel.PendingDecisionHold, error)
 }
 
 type AgentPreviewFieldChangeResolver interface {
@@ -845,6 +846,7 @@ type AgentProposalResolver interface {
 	ReviewRequired(ctx context.Context, obj *agent.AgentProposal) (bool, error)
 	TraceURL(ctx context.Context, obj *agent.AgentProposal) (*string, error)
 	Run(ctx context.Context, obj *agent.AgentProposal) (*agent.AgentRun, error)
+	Hold(ctx context.Context, obj *agent.AgentProposal) (*gqlmodel.PendingDecisionHold, error)
 }
 
 type AgentProposalFieldResolver interface {
@@ -15373,11 +15375,15 @@ type RecentDecision {
 extend type AgentProposal {
   "The run that raised this proposal, for the agent behind it."
   run: AgentRun
+  "Set while it waits and a switch keeps it from being decided; absent once decided or when a person can decide it now."
+  hold: PendingDecisionHold
 }
 
 extend type AgentPlan {
   "The run that raised this plan, for the agent behind it."
   run: AgentRun
+  "Set while it waits and a switch keeps it from being decided; absent once decided or when a person can decide it now."
+  hold: PendingDecisionHold
 }
 
 extend type AgentRun {

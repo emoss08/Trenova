@@ -559,7 +559,6 @@
   "Its history is on the transfers page": "其歷程記錄位於傳輸頁面",
   "Its reversal": "其沖銷",
   "Its shipments settled without another bill": "其運單已結清，不再另行開票",
-  "Its steps and what they would change show once it can be decided.": "可以決定時，將顯示其步驟以及它們會變更的內容。",
   "Its terms count from the invoice date, so 1 of its {0} days has run while it waits to be posted.": "其帳期從發票日期起算，因此在等待過帳期間，{0} 天中已過去 1 天。",
   "Its terms count from the invoice date, so {0} of its {1} days have run while it waits to be posted.": "其帳期從發票日期起算，因此在等待過帳期間，{1} 天中已過去 {0} 天。",
   "Its transaction sets are listed once its envelope is read.": "讀取封包後將列出其交易集。",

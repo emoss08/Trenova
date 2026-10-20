@@ -1039,7 +1039,9 @@ that can be decided is shown before a held one, and ⌘↵ does nothing on a hel
 change is never dropped from the box: with the pause on by default, dropping it once left a
 reply saying "it waits on your approval" with nothing to approve anywhere. Decisions lists
 and counts held changes the same way: each row says "held", and the bar names the switch and
-links to it in place of Decline and Approve, with their keys off.
+links to it in place of Decline and Approve, with their keys off. AI Control's activity lists
+show them too: the status reads "Held", the row's menu offers no decision, and the proposal's
+sheet names the switch where Approve and Reject were.
 
 **The transcript keeps a quiet card per decision.** Each proposal or plan is one card in
 the conversation — the outcome's mark, "Proposed: …" with the record it is about, and the

@@ -271,3 +271,19 @@ func (r *QueryResolver) RecentDecisions(ctx context.Context, since int, first *i
 
 	return out, nil
 }
+
+func (r *AgentPlanResolver) Hold(ctx context.Context, obj *agent.AgentPlan) (*gqlmodel.PendingDecisionHold, error) {
+	if obj.Status != agent.PlanStatusPending {
+		return nil, nil //nolint:nilnil // a decided plan is held by nothing
+	}
+
+	return loadHold(ctx, obj.OrganizationID, obj.RunID)
+}
+
+func (r *AgentProposalResolver) Hold(ctx context.Context, obj *agent.AgentProposal) (*gqlmodel.PendingDecisionHold, error) {
+	if obj.Status != agent.ProposalStatusPending {
+		return nil, nil //nolint:nilnil // a decided proposal is held by nothing
+	}
+
+	return loadHold(ctx, obj.OrganizationID, obj.RunID)
+}

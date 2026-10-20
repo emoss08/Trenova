@@ -32,6 +32,10 @@ fragment PendingProposalFields on AgentProposal {
     }
   }
   modifications
+  hold {
+    reason
+    agentName
+  }
   evidence {
     type
     id

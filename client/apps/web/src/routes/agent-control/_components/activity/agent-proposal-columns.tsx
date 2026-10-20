@@ -35,7 +35,9 @@ export function getProposalColumns(t: TranslateFn): ColumnDef<AgentProposalRow>[
     {
       accessorKey: "status",
       header: t("Status"),
-      cell: ({ row }) => <ProposalStatusBadge value={row.original.status} t={t} />,
+      cell: ({ row }) => (
+        <ProposalStatusBadge value={row.original.status} held={row.original.hold != null} t={t} />
+      ),
       size: 180,
       meta: {
         label: t("Status"),

@@ -20459,7 +20459,7 @@
     ]
   },
   "Agent plan not found": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -20502,15 +20502,6 @@
     ],
     "areas": [
       "apps/web/lib",
-      "go/other"
-    ]
-  },
-  "Agent proposal not found": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
       "go/other"
     ]
   },
@@ -23990,12 +23981,13 @@
     ]
   },
   "An administrator can turn this off.": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/agent-control",
       "routes/desk"
     ]
   },
@@ -115319,7 +115311,7 @@
     ]
   },
   "Held": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -128029,15 +128021,6 @@
     ]
   },
   "Its shipments settled without another bill": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
-  "Its steps and what they would change show once it can be decided.": {
     "sites": 1,
     "scope": [
       "ts"
