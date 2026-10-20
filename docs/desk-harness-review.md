@@ -1461,6 +1461,7 @@ held-out`) when one is made for a PR.
 | Billing queue and invoices | `billing`, `invoice` (47 tools namespaced; 7 single/batch pairs merged) | 648 → 641 | 459 / 710 / 0, unchanged | 0.9193 → 0.9193 | 0.8137 → 0.8137 |
 | Settlements and pay | `settlement` (56 tools namespaced; 4 single/batch pairs merged) | 641 → 637 | 459 / 710 / 0, unchanged | 0.9193 → 0.9193 | 0.8137 → 0.8137 |
 | Receivables | `receivable` (22 tools namespaced; no merges) | 637 → 637 | unchanged, 0 pending | 0.91 → 0.91 | 0.81 → 0.81 |
+| Every remaining tool | 23 more namespaces, `accounting` to `worker` (450 tools namespaced; no merges) | 637 → 637 | unchanged, 0 pending | 0.9141 → 0.9202 | 0.8098 → 0.8344 |
 
 The shipment row is measured on the held-out set the split PR recorded (161 cases), so both
 figures read the same cases; the module's merges moved three cases between splits, which the
@@ -1495,6 +1496,25 @@ for "who should collections call first today"; its search term "collections work
 back. Bank receipts and customer payments keep their own names in reading order through the
 namespace's `Records` (`receivable_get_bank_receipt` reads `get_bank_receipt`), so the Cash
 application agent's subject read, cards and record links are unchanged.
+
+The last row namespaces every tool still outside one, so the ratchet now holds at zero and a new
+tool without a namespace fails it. Kinds of record a namespace names on its own (tractors,
+trailers, commodities, journal entries, fiscal periods, tenders and two dozen more) are its
+`Records`, so cards, subject reads and record links read as before. The hybrid figures above
+read the gate's 163 held-out cases. By keyword, held-out recall@5 fell from 1.00 to 0.993 (one
+case: "shop carriers for a rate on this lane" no longer finds `carrier_shop` in the top five)
+and top-1 from 0.993 to 0.951 (seven cases); none is tuned against, and the floors are written
+as 0.99 and 0.95. On the development cases six tools lost a word their old name carried and get
+it back as a search term (`agent_create_memory` "remember", `agent_retire_memory` "forget
+memory", `dispatch_create_tender` "tender to carriers", `rate_quote` "quote shipment",
+`ledger_create_manual_journal` "draft manual journal", `fuel_recalculate_jurisdiction_miles`
+"move jurisdiction miles"). Three development requests still rank a different tool first,
+because that tool's new name gained one of the request's words; the expected tool lost nothing,
+so no term was added for them. Model-facing text that still named `remember` now names
+`agent_create_memory`, and a red-team script that called the removed name was corrected. What
+remains of Phase 3 is the merges: overlapping tools found while writing the rename map (worker
+search into the worker list, single and batch pairs, carrier intelligence acknowledge and
+resolve).
 
 **Phase 4: a single front door and job profiles (3–4 weeks).**
 
