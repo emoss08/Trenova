@@ -286,10 +286,17 @@ trials leave pass^4 unreported, and the threshold reads the pass rate), and `swe
 ## The gate
 
 `trenova desk gate` (`task desk-gate`) runs `deskbench/gate.yaml` as one run and decides from it,
-by rules the spec fixes before the run, which effort each route runs at and whether the advisor is
-offered on it; a second run confirms the decisions on the held-out split. Code mode is decided by
-Phase 5a's rule once its paired scenarios land, and the gate does not read them yet. The plan, the rules and why they are what they are, are in
+by rules the spec fixes before the run, which models code mode should be enabled for, which
+effort each route runs at, and whether the advisor is offered on it; a second run confirms the
+decisions on the held-out split. The plan, the rules and why they are what they are, are in
 [desk-bench-gate.md](desk-bench-gate.md).
+
+Code mode is judged per cell of the spec's `codeMode` rule on Phase 5a's paired scenarios
+(`mode` and `pair`), by that phase's rule: on the held-out pairs, no pass^k loss in script mode
+for any work kind; cost per completed task `costCut` lower or pass^k `passGain` higher; the
+controls within `controlWithin`; and no unauthorized effect on the adversarial pairs. Script
+halves are left out of every other figure the gate reads, because the product runs no script
+until a model is in `codemode/models.yaml`. The gate recommends; it never writes that file.
 
 A route is one of the runtime's profile modes: `unattended` for a scenario that fires a run,
 `delegated` for one tagged `delegation` or expecting `delegate_task`, `chat` for the rest. A group
@@ -313,7 +320,10 @@ the advisor rule's reference by its `gap`.
 3. `--confirm <gate>` runs the configuration the gate chose, and the configuration it replaces,
    on the held-out scenarios of each route, and writes `confirm.md` and `confirm.json`: whether
    each route's choice holds, the description check on the scenarios both runs hold, and the
-   before and after figures. Its own run sits under `sealed/` in its directory.
+   before and after figures. Each model run 1 recommended for code mode is judged again on the
+   cell the configuration runs it at (its held-out pairs, and its adversarial pairs again); one
+   that holds is listed with the `codemode/models.yaml` entry a pull request would add. Its own
+   run sits under `sealed/` in its directory.
 
 ## Agents
 

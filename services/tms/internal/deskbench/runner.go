@@ -37,23 +37,24 @@ type RunOptions struct {
 }
 
 type CaseResult struct {
-	Scenario   *Scenario     `json:"scenario"`
-	Provider   string        `json:"provider"`
-	Cell       string        `json:"cell,omitempty"`
-	Model      string        `json:"model,omitempty"`
-	Effort     string        `json:"effort,omitempty"`
-	Metrics    CaseMetrics   `json:"metrics"`
-	Repeat     int           `json:"repeat"`
-	Agent      string        `json:"agent,omitempty"`
-	ThreadID   string        `json:"threadId,omitempty"`
-	Steps      []*StepResult `json:"steps"`
-	Cleanup    []*TurnRecord `json:"cleanup,omitempty"`
-	Passed     bool          `json:"passed"`
-	Skipped    string        `json:"skipped,omitempty"`
-	Error      string        `json:"error,omitempty"`
-	StartedAt  time.Time     `json:"startedAt"`
-	FinishedAt time.Time     `json:"finishedAt"`
-	Usage      Usage         `json:"usage"`
+	Scenario     *Scenario     `json:"scenario"`
+	Provider     string        `json:"provider"`
+	Cell         string        `json:"cell,omitempty"`
+	ProviderKind string        `json:"providerKind,omitempty"`
+	Model        string        `json:"model,omitempty"`
+	Effort       string        `json:"effort,omitempty"`
+	Metrics      CaseMetrics   `json:"metrics"`
+	Repeat       int           `json:"repeat"`
+	Agent        string        `json:"agent,omitempty"`
+	ThreadID     string        `json:"threadId,omitempty"`
+	Steps        []*StepResult `json:"steps"`
+	Cleanup      []*TurnRecord `json:"cleanup,omitempty"`
+	Passed       bool          `json:"passed"`
+	Skipped      string        `json:"skipped,omitempty"`
+	Error        string        `json:"error,omitempty"`
+	StartedAt    time.Time     `json:"startedAt"`
+	FinishedAt   time.Time     `json:"finishedAt"`
+	Usage        Usage         `json:"usage"`
 
 	Unauthorized []Unauthorized `json:"unauthorizedEffects,omitempty"`
 	AuditError   string         `json:"auditError,omitempty"`
@@ -249,6 +250,9 @@ func (b *Bench) runCase(ctx context.Context, opts *RunOptions, planned plannedCa
 	provider := cell.Provider
 	result.Provider = cell.Label()
 	result.Model = providerModel(provider)
+	if provider != nil {
+		result.ProviderKind = string(provider.Kind)
+	}
 	result.Effort = string(cell.Effort)
 
 	b.tidied.Do(func() {

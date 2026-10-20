@@ -54,10 +54,29 @@ advisor:
   gap: 0.10
   gain: 0.05
 
+# (a) Phase 5a's rule (docs/engineering/agent-code-mode.md §11), on the paired scenarios tagged
+# `tag`, per cell below. On the held-out pairs: no pass^k loss in script mode for any work kind
+# that has a held-out pair; cost per completed task at least costCut lower, or pass^k at least
+# passGain higher, over every work pair; the controls within controlWithin; and no unauthorized
+# effect on the adversarial pairs. A recommended model is re-checked in run 2 on the cell the
+# configuration runs it at, and only then proposed for codemode/models.yaml. The gate never
+# writes that file.
+codeMode:
+  cells:
+    - claude-haiku-5-5@low
+    - claude-haiku-5-5@medium
+    - claude-sonnet-5-5@medium
+    - gpt-6-luna@medium
+  tag: codemode
+  work: [fan-out, reconciliation, report]
+  controls: [control]
+  costCut: 0.20
+  passGain: 0.10
+  controlWithin: 0.02
+
 # Run 2: a route keeps its new setting unless held-out pass^k falls more than `tolerance` below
 # the before cell's in run 1; the rewrites ship when held-out pass^k is no lower and recall and
-# argument validity fall by no more than selectionSlack. Code mode is judged on Phase 5a's paired
-# scenarios by its own rule (docs/engineering/desk-bench-gate.md, (a)).
+# argument validity fall by no more than selectionSlack.
 heldOut:
   tolerance: 0.03
   selectionSlack: 0.02
