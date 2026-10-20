@@ -13,6 +13,7 @@ import {
 } from "@trenova/graphql/generated/graphql";
 import { getFragmentData } from "@trenova/graphql/fragment-data";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import type { ProposalHold } from "@/types/assistant";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 
 export const PENDING_DECISIONS_KEY = "pending-decisions";
@@ -20,8 +21,17 @@ export const PENDING_DECISION_SUMMARY_KEY = "pending-decision-summary";
 const PAGE_SIZE = 25;
 const REFETCH_INTERVAL = 60_000;
 
-export type PendingProposalNode = PendingProposalFieldsFragment & { __typename: "AgentProposal" };
-export type PendingPlanNode = PendingPlanFieldsFragment & { __typename: "AgentPlan" };
+/** The switch keeping a waiting decision from being taken; null when a person can take it now. */
+export type PendingDecisionHold = ProposalHold | null;
+
+export type PendingProposalNode = PendingProposalFieldsFragment & {
+  __typename: "AgentProposal";
+  hold: PendingDecisionHold;
+};
+export type PendingPlanNode = PendingPlanFieldsFragment & {
+  __typename: "AgentPlan";
+  hold: PendingDecisionHold;
+};
 export type PendingDecisionNode = PendingProposalNode | PendingPlanNode;
 export type PlanStepNode = PendingProposalFieldsFragment;
 
@@ -67,17 +77,20 @@ export function usePendingDecisions(filter: PendingDecisionFilter, enabled = tru
       nodes: data.pages.flatMap((page) =>
         page.pendingDecisions.edges.flatMap((edge): PendingDecisionNode[] => {
           const node = edge.node;
+          const hold = edge.hold ?? null;
           if (node.__typename === "AgentProposal") {
+            const proposal = getFragmentData(PendingProposalFieldsFragmentDoc, node);
             return [
-              {
-                ...getFragmentData(PendingProposalFieldsFragmentDoc, node),
-                __typename: "AgentProposal",
-              },
+              { ...proposal, __typename: "AgentProposal", hold: hold ?? proposal.hold ?? null },
             ];
           }
           if (node.__typename === "AgentPlan") {
             return [
-              { ...getFragmentData(PendingPlanFieldsFragmentDoc, node), __typename: "AgentPlan" },
+              {
+                ...getFragmentData(PendingPlanFieldsFragmentDoc, node),
+                __typename: "AgentPlan",
+                hold,
+              },
             ];
           }
           return [];

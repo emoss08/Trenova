@@ -572,6 +572,21 @@ func (r *Registry) registerBillingResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceCodeMode.String(),
+		DisplayName: "Read-only scripts",
+		Description: "Agents answering a question that needs many reads with one short read-only script, through an enabled extension",
+		Category:    "Desk",
+		Operations: []OperationDefinition{
+			{
+				Operation:   OpRead,
+				DisplayName: "View",
+				Description: "Let agents run read-only scripts over what this person may read",
+			},
+		},
+		DefaultSensitivity: SensitivityInternal,
+	})
+
+	_ = r.Register(&ResourceDefinition{
 		Resource:    ResourceAIProvider.String(),
 		DisplayName: "AI Provider",
 		Description: "Model endpoints, including self-hosted servers, and their task routing",

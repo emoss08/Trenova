@@ -15778,3 +15778,553 @@ i.dk-ecd-src {
     display: none;
   }
 }
+
+/* The fuel purchase and fuel card cards */
+.dk-fpu,
+.dk-fcd {
+  container: dkfuel / inline-size;
+}
+/* a warning beside a section's title and on a head's figure */
+.dk-rec-sh > span.dk-warn-t {
+  color: var(--dsk-warn-fg);
+}
+.dk-rec-amt b.dk-warn {
+  color: var(--dsk-warn-fg);
+}
+.dk-fu-dim {
+  margin-left: 4px;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--dsk-subtle);
+}
+
+/* the network's card in small, leading a fuel card's head */
+.dk-rec-hrow > .dk-fu-lead {
+  align-self: center;
+}
+.dk-rec-hrow > .dk-fu-lead + .dk-rec-who {
+  flex: 1;
+}
+.dk-fu-lead.dk-off {
+  filter: grayscale(1);
+  opacity: 0.55;
+}
+
+/* rows naming a person, a unit or a card */
+.dk-rec-row.dk-fu-seat,
+.dk-rec-row.dk-fu-cardrow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--dsk-b-sub);
+  border-radius: 8px;
+  background: var(--dsk-card);
+  text-align: left;
+  color: var(--dsk-fg);
+}
+.dk-rec-row.dk-fu-cardrow {
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+}
+.dk-rec-row.dk-fu-seat:hover,
+.dk-rec-row.dk-fu-cardrow:hover {
+  background: var(--dsk-hover);
+}
+.dk-fu-seat > svg,
+.dk-fu-cardrow > svg {
+  color: var(--dsk-faint);
+}
+.dk-fu-unit {
+  display: inline-grid;
+  place-items: center;
+  min-width: 30px;
+  height: 30px;
+  padding: 0 6px;
+  border: 1px solid var(--dsk-b-sub);
+  border-radius: 6px;
+  background: var(--dsk-sunken);
+  font: 600 9.5px/1 var(--dk-plex);
+  white-space: nowrap;
+  color: var(--dsk-fg2);
+}
+
+/* a fuel purchase: the receipt as it was recorded beside what it does to IFTA */
+.dk-fpu-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
+  align-items: start;
+  gap: 16px;
+}
+.dk-fpu-slip {
+  margin: 0;
+  padding: 16px 18px 14px;
+  border: 1px solid var(--dsk-b-sub);
+  border-radius: 4px;
+  background: var(--dsk-paper);
+  font: 12px/1.55 var(--dk-plex);
+  color: var(--dsk-fg);
+  -webkit-mask: radial-gradient(circle 4px at 6px 100%, transparent 98%, #000) 0 0 / 12px 100%;
+  mask: radial-gradient(circle 4px at 6px 100%, transparent 98%, #000) 0 0 / 12px 100%;
+}
+.dark .dk-fpu-slip {
+  background: var(--dsk-sunken);
+}
+.dk-fpu-slip header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed var(--dsk-b-strong);
+  text-align: center;
+}
+.dk-fpu-slip header b {
+  font-weight: 600;
+}
+.dk-fpu-slip header span {
+  font-size: 11px;
+  color: var(--dsk-subtle);
+}
+.dk-fpu-slip dl {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 10px 0 0;
+}
+.dk-fpu-slip dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.dk-fpu-slip dt {
+  color: var(--dsk-subtle);
+}
+.dk-fpu-slip dd {
+  margin: 0;
+  text-align: right;
+}
+.dk-fpu-slip .dk-fpu-conv dd {
+  margin-top: -3px;
+  font-size: 11px;
+  color: var(--dsk-subtle);
+}
+.dk-fpu-slip .dk-fpu-diff dd {
+  text-decoration: underline wavy var(--dsk-warn);
+  text-underline-offset: 3px;
+  color: var(--dsk-warn-fg);
+}
+.dk-fpu-slip .dk-fpu-miss dd {
+  color: var(--dsk-warn-fg);
+}
+.dk-fpu-total {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding: 8px 0;
+  border-top: 1px dashed var(--dsk-b-strong);
+  border-bottom: 1px dashed var(--dsk-b-strong);
+  font-size: 13px;
+}
+.dk-fpu-total b {
+  font-weight: 600;
+}
+.dk-fpu-slip .dk-fpu-tail {
+  margin-top: 8px;
+  font-size: 11px;
+}
+.dk-fpu-ifta {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--dsk-b-sub);
+  border-radius: 10px;
+  background: var(--dsk-card);
+}
+.dk-fpu-juris {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+.dk-fpu-juris > span:nth-child(2) {
+  display: flex;
+  flex-direction: column;
+}
+.dk-fpu-juris b {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--dsk-fg);
+}
+.dk-fpu-juris > span:nth-child(2) > span {
+  font-size: 12px;
+  color: var(--dsk-subtle);
+}
+.dk-fpu-code {
+  display: inline-grid;
+  place-items: center;
+  min-width: 34px;
+  height: 30px;
+  padding: 0 6px;
+  border: 1px solid var(--dsk-b);
+  border-radius: 6px;
+  background: var(--dsk-sunken);
+  font: 600 12px/1 var(--dk-plex);
+  color: var(--dsk-fg);
+}
+.dk-fpu-ifta dl {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  border-top: 1px solid var(--dsk-b-sub);
+}
+.dk-fpu-ifta dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--dsk-b-sub);
+  font-size: 12.5px;
+}
+.dk-fpu-ifta dt {
+  color: var(--dsk-subtle);
+}
+.dk-fpu-ifta dd {
+  margin: 0;
+  font-family: var(--dk-plex);
+  font-size: 12px;
+  text-align: right;
+  color: var(--dsk-fg);
+}
+.dk-fpu-ifta .dk-fpu-zero dd {
+  color: var(--dsk-warn-fg);
+}
+.dk-fpu-ifta p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--dsk-fg2);
+}
+
+/* a fuel card: the card as it is printed, and who holds it */
+.dk-fcd-hero {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  align-items: start;
+  gap: 20px;
+}
+.dk-fcd-face {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  aspect-ratio: 1.586;
+  overflow: hidden;
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: var(--fc-fill, var(--dsk-ink));
+  color: var(--fc-ink);
+}
+/* the network's colour and what it prints on it are the brand's own in either theme, as FuelCardMark draws them */
+.dk-fcd-face.dk-ink-light {
+  --fc-ink: #fff;
+}
+.dk-fcd-face.dk-ink-dark {
+  --fc-ink: #171717;
+  border: 1px solid var(--dsk-b);
+}
+.dk-fcd-face.dk-plain {
+  --fc-fill: var(--dsk-sunken);
+  --fc-ink: var(--dsk-fg);
+  border: 1px solid var(--dsk-b);
+}
+.dk-fcd-face::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, rgb(255 255 255 / 0.1), transparent 55%);
+  pointer-events: none;
+}
+.dk-fcd-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.dk-fcd-brand {
+  display: block;
+  width: 76px;
+}
+.dk-fcd-brand b {
+  font-size: 13px;
+  font-weight: 600;
+}
+.dk-fcd-kind {
+  font-size: 10.5px;
+  opacity: 0.75;
+}
+.dk-fcd-chip {
+  display: grid;
+  grid-template-rows: repeat(3, 1fr);
+  width: 34px;
+  height: 26px;
+  margin-top: 14px;
+  padding: 4px 0;
+  border-radius: 5px;
+  background: color-mix(in srgb, currentColor 28%, transparent);
+}
+.dk-fcd-chip i {
+  border-top: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+}
+.dk-fcd-num {
+  display: flex;
+  gap: 12px;
+  margin-top: auto;
+  font: 500 15px/1 var(--dk-plex);
+  letter-spacing: 0.06em;
+}
+.dk-fcd-num em {
+  font-style: normal;
+  opacity: 0.6;
+}
+.dk-fcd-num b {
+  font-weight: 600;
+}
+.dk-fcd-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  font-size: 11.5px;
+}
+.dk-fcd-foot span {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.dk-fcd-foot small {
+  font-size: 9px;
+  opacity: 0.65;
+}
+.dk-fcd-holder {
+  position: absolute;
+  top: 50%;
+  right: 18px;
+  font: 500 10.5px/1 var(--dk-plex);
+  letter-spacing: 0.08em;
+  opacity: 0.8;
+}
+.dk-fcd-face.dk-pending {
+  outline: 2px dashed var(--dsk-warn);
+  outline-offset: 3px;
+}
+.dk-fcd-face.dk-cancelled {
+  filter: grayscale(1);
+  opacity: 0.5;
+}
+.dk-fcd-stamp {
+  position: absolute;
+  top: 48%;
+  left: 50%;
+  padding: 4px 12px;
+  border: 2px solid currentColor;
+  border-radius: 4px;
+  font: 700 15px/1 var(--dk-plex);
+  letter-spacing: 0.06em;
+  transform: translate(-50%, -50%) rotate(-12deg);
+}
+.dk-fcd-side {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.dk-fcd-holds {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.dk-fcd-cap {
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-fcd-scope {
+  margin-top: -6px;
+  font-size: 11px;
+  color: var(--dsk-subtle);
+}
+.dk-fcd-nobody {
+  display: flex;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px dashed var(--dsk-b-strong);
+  border-radius: 8px;
+  color: var(--dsk-fg2);
+}
+.dk-fcd-nobody > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+.dk-fcd-nobody b {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-fcd-ni {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  border: 1px solid var(--dsk-b-strong);
+  border-radius: 50%;
+  color: var(--dsk-fg2);
+}
+.dk-fcd-wait {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--dsk-warn-sub);
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--dsk-warn-fg);
+}
+.dk-fcd-wait b {
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.dk-fcd-void {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.dk-fcd-void blockquote {
+  margin: 0;
+  padding: 10px 12px;
+  border-left: 2px solid var(--dsk-b-strong);
+  border-radius: 0 8px 8px 0;
+  background: var(--dsk-sunken);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--dsk-fg);
+}
+.dk-fcd-by {
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-rec-row.dk-fcd-buy {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr) 34px 78px 76px 72px;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--dsk-sunken);
+  text-align: left;
+  color: var(--dsk-fg);
+}
+a.dk-fcd-buy:hover,
+button.dk-fcd-buy:hover {
+  background: var(--dsk-hover);
+}
+.dk-rec-row.dk-fcd-buy.dk-held {
+  border: 1px dashed var(--dsk-b-strong);
+  background: transparent;
+}
+.dk-fcd-buy .dk-rec-board-at b {
+  white-space: nowrap;
+}
+.dk-fcd-juris {
+  font: 600 11px/1 var(--dk-plex);
+  text-align: center;
+  color: var(--dsk-fg2);
+}
+.dk-fcd-gal,
+.dk-fcd-amt {
+  font: 12px/1 var(--dk-plex);
+  text-align: right;
+  color: var(--dsk-fg2);
+}
+.dk-fcd-amt {
+  color: var(--dsk-fg);
+}
+.dk-fcd-buy > [data-slot="badge"] {
+  justify-self: end;
+}
+.dk-fcd-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-fcd-bars li {
+  display: grid;
+  grid-template-columns: 34px 110px minmax(0, 1fr) 84px;
+  align-items: center;
+  gap: 10px;
+  font-size: 12.5px;
+}
+.dk-fcd-bars .dk-fpu-code {
+  min-width: 30px;
+  height: 22px;
+  font-size: 11px;
+}
+.dk-fcd-bn {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--dsk-fg2);
+}
+.dk-fcd-track {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--dsk-sunken);
+}
+.dk-fcd-track i {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: var(--dsk-fg2);
+}
+.dk-fcd-bars b {
+  font: 500 12px/1 var(--dk-plex);
+  text-align: right;
+  color: var(--dsk-fg);
+}
+.dk-fcd-bnote {
+  margin: 8px 0 0;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-rec-skel .dk-fcd-face {
+  display: block;
+}
+@container dkfuel (max-width: 640px) {
+  .dk-fpu-hero,
+  .dk-fcd-hero {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dk-fcd-face {
+    max-width: 320px;
+  }
+  .dk-rec-row.dk-fcd-buy {
+    grid-template-columns: 84px minmax(0, 1fr) auto;
+  }
+  .dk-fcd-buy .dk-fcd-juris,
+  .dk-fcd-buy .dk-fcd-gal,
+  .dk-fcd-buy > [data-slot="badge"] {
+    display: none;
+  }
+}

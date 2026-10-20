@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -169,9 +168,6 @@ func (r *repository) ListConnection(
 							(*agent.AgentPlan)(nil),
 						)
 						sq = sq.Apply(agentcol.AgentPlanApplyTenant(req.Filter.TenantInfo))
-						if req.ExcludeShadowDefinitions {
-							sq = excludeShadowDefinitions(sq)
-						}
 
 						return sq
 					}).
@@ -209,9 +205,6 @@ func (r *repository) ListConnection(
 						if applyErr != nil {
 							return nil, applyErr
 						}
-						if req.ExcludeShadowDefinitions {
-							sq = excludeShadowDefinitions(sq)
-						}
 
 						return sq, nil
 					},
@@ -224,36 +217,6 @@ func (r *repository) ListConnection(
 
 			return result, nil
 		},
-	)
-}
-
-// excludeShadowDefinitions hides plans whose agent is in shadow, with the
-// same subquery the proposal list uses.
-func excludeShadowDefinitions(q *bun.SelectQuery) *bun.SelectQuery {
-	plans := agentcol.AgentPlanColumns
-	runs := agentcol.AgentRunColumns
-	definitions := agentdefinitioncol.DefinitionColumns
-
-	return q.Where(
-		"NOT EXISTS (SELECT 1 FROM ? AS ? JOIN ? AS ? ON ? = ? AND ? = ? AND ? = ? "+
-			"WHERE ? = ? AND ? = ? AND ? = ? AND ? = TRUE)",
-		bun.Ident(agentcol.AgentRunTable.Name),
-		bun.Ident(agentcol.AgentRunTable.Alias),
-		bun.Ident(agentdefinitioncol.DefinitionTable.Name),
-		bun.Ident(agentdefinitioncol.DefinitionTable.Alias),
-		bun.Safe(definitions.ID.Qualified()),
-		bun.Safe(runs.AgentDefinitionID.Qualified()),
-		bun.Safe(definitions.OrganizationID.Qualified()),
-		bun.Safe(runs.OrganizationID.Qualified()),
-		bun.Safe(definitions.BusinessUnitID.Qualified()),
-		bun.Safe(runs.BusinessUnitID.Qualified()),
-		bun.Safe(runs.ID.Qualified()),
-		bun.Safe(plans.RunID.Qualified()),
-		bun.Safe(runs.OrganizationID.Qualified()),
-		bun.Safe(plans.OrganizationID.Qualified()),
-		bun.Safe(runs.BusinessUnitID.Qualified()),
-		bun.Safe(plans.BusinessUnitID.Qualified()),
-		bun.Safe(definitions.ShadowMode.Qualified()),
 	)
 }
 

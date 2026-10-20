@@ -1,5 +1,11 @@
 import { decideBatch } from "@/components/assistant/approval-actions";
-import { pendingEdits, type ApprovalEntry } from "@/components/assistant/approval-queue";
+import {
+  holdActionText,
+  holdReasonText,
+  holdSwitch,
+  pendingEdits,
+  type ApprovalEntry,
+} from "@/components/assistant/approval-queue";
 import {
   canApprove,
   gateDigest,
@@ -19,6 +25,7 @@ import {
 } from "@/components/assistant/proposal-preview/use-proposal-preview";
 import { presentProposal } from "@/components/assistant/proposal-presenters";
 import { handleMutationError } from "@/hooks/use-api-mutation";
+import { usePermission } from "@/hooks/use-permission";
 import { decideMyPlan, decideMyProposal } from "@/lib/graphql/agent-decisions";
 import {
   invalidateProposalViews,
@@ -31,7 +38,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
+import { buttonVariants } from "@trenova/shared/lib/variants/button";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useEffect, useState, type MutableRefObject } from "react";
+import { Link } from "react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { DeskIcon } from "../desk-icons";
 import {
@@ -76,6 +86,10 @@ function hold(undo: CardProps["undo"], held: Held) {
  * it can be undone, and Review, Not now and Approve. ⌘↵ approves.
  */
 export function DeskApprovalCard(props: CardProps) {
+  if (props.entry.hold !== null) {
+    return <HeldCard entry={props.entry} onReview={props.onReview} onDefer={props.onDefer} />;
+  }
+
   switch (props.entry.kind) {
     case "proposal":
       return <ProposalCard {...props} entry={props.entry} />;
@@ -388,6 +402,84 @@ function BatchCard({
       )}
     </>
   );
+}
+
+/**
+ * A change that waits on the person while a switch keeps anyone from deciding
+ * it: what it is, which switch holds it, and where that switch is turned off
+ * for someone who may turn it off. There is nothing to approve, so ⌘↵ does
+ * nothing; the card takes its buttons once the switch is off and the
+ * proposals are read again.
+ */
+function HeldCard({ entry, onReview, onDefer }: Pick<CardProps, "entry" | "onReview" | "onDefer">) {
+  const t = useT();
+  const held = holdSwitch(entry);
+  const { allowed: canResume } = usePermission(Resource.AgentControl, Operation.Update);
+  const { allowed: canEditAgent } = usePermission(Resource.AgentDefinition, Operation.Update);
+  const { title, scope } = heldSummary(entry, t);
+
+  if (held === null) {
+    return null;
+  }
+  const canTurnOff = held.scope === "organization" ? canResume : canEditAgent;
+  const why = holdReasonText(held, t);
+
+  return (
+    <div className="dk-dcx dk-ec-held" role="group" aria-label={t("Held, not yet decidable")}>
+      <span className="dk-dcx-i">
+        <DeskIcon name="pause" size={15} stroke={2} />
+      </span>
+      <span className="dk-dcx-t">
+        <b>
+          {title} {scope && <span className="dk-dcx-s">{scope}</span>}
+        </b>
+        <span className="dk-dcx-d">
+          {why}
+          {!canTurnOff && (
+            <span className="dk-dcx-m">· {t("An administrator can turn this off.")}</span>
+          )}
+        </span>
+      </span>
+      <Button
+        variant="quiet"
+        size="sm"
+        className={cn(plainButton, leadButton)}
+        onClick={() => onReview(entry)}
+      >
+        {t("Review")}
+      </Button>
+      <Button variant="quiet" size="sm" className={plainButton} onClick={onDefer}>
+        {t("Not now")}
+      </Button>
+      {canTurnOff && (
+        <Link
+          to={held.to}
+          data-slot="button"
+          className={cn(buttonVariants({ size: "sm" }), approveButton)}
+        >
+          {holdActionText(held, t)}
+        </Link>
+      )}
+    </div>
+  );
+}
+
+/** The held card's title and scope: the change, the batch or the plan, and how much of it. */
+function heldSummary(entry: ApprovalEntry, t: TranslateFn): { title: string; scope: string } {
+  switch (entry.kind) {
+    case "proposal":
+      return { title: t(presentProposal(entry.proposal).title), scope: "" };
+    case "batch":
+      return {
+        title: t(presentProposal(entry.proposals[0]).title),
+        scope: t("{0, plural, one {# change} other {# changes}}", entry.proposals.length),
+      };
+    default:
+      return {
+        title: entry.plan.title || t("Run the plan"),
+        scope: t("{0, plural, one {# step} other {# steps}}", entry.plan.stepCount),
+      };
+  }
 }
 
 /** What an approval will do when its undo window closes, e.g. "Assign biller on 11 items". */

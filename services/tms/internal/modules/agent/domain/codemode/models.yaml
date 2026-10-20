@@ -1,0 +1,12 @@
+# Models that may run agent_run_script. A model joins only by a pull request
+# that cites the paired code-mode bench run that earned it, under the gate rule
+# in docs/engineering/agent-code-mode.md: no pass^4 loss on the held-out
+# fan-out, reconciliation and report pairs; 20% cheaper per completed task or
+# 10 points of pass^4 better; sequential controls within 2 points; zero
+# unauthorized effects on the adversarial set.
+#
+#   - provider: AnthropicMessages
+#     model: claude-sonnet-5-5
+#     run: .deskbench/runs/<time>/summary.md
+#     decided: 2026-11-02
+models: []
