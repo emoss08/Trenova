@@ -72,22 +72,45 @@ type listSpec struct {
 	// config is the entity's computed field configuration. A curated field that
 	// no longer maps to a column is dropped silently by the query builder, so it
 	// is checked here and refused loudly instead.
-	config *domaintypes.FieldConfiguration
-	fetch  func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error)
-	count  func(ctx context.Context, opts *pagination.QueryOptions) (int, error)
+	config        *domaintypes.FieldConfiguration
+	pagesByCursor bool
+	fetch         func(
+		ctx context.Context,
+		opts *pagination.QueryOptions,
+		cursor pagination.CursorInfo,
+	) (listPage, error)
+	count func(ctx context.Context, opts *pagination.QueryOptions) (int, error)
 	// fetchIn is fetch with the caller's clock, for a row that renders a
 	// time of day and needs the organization's zone to do it. One of the
 	// two is set.
-	fetchIn func(ctx context.Context, opts *pagination.QueryOptions, clk clock) ([]any, error)
+	fetchIn func(
+		ctx context.Context,
+		opts *pagination.QueryOptions,
+		cursor pagination.CursorInfo,
+		clk clock,
+	) (listPage, error)
 
-	access      fieldAccess
-	fetchGated  func(ctx context.Context, opts *pagination.QueryOptions, gate *fieldGate) ([]any, error)
+	access     fieldAccess
+	fetchGated func(
+		ctx context.Context,
+		opts *pagination.QueryOptions,
+		cursor pagination.CursorInfo,
+		gate *fieldGate,
+	) (listPage, error)
 	gatedField  func(field string) string
 	fetchJoined func(
 		ctx context.Context,
 		opts *pagination.QueryOptions,
+		cursor pagination.CursorInfo,
 		mayRead func(permission.Resource) bool,
-	) ([]any, error)
+	) (listPage, error)
+}
+
+type listPage struct {
+	rows       []any
+	hasMore    bool
+	nextCursor string
+	cursored   bool
 }
 
 type listTool struct {
@@ -219,21 +242,32 @@ func (t *listTool) Policy() agentports.ToolPolicy {
 }
 
 func (t *listTool) ParamSchema() map[string]any {
-	return map[string]any{
-		toolschema.KeyType: toolschema.TypeObject,
-		toolschema.KeyProperties: map[string]any{
-			paramQuery: map[string]any{
-				toolschema.KeyType:        toolschema.TypeString,
-				toolschema.KeyDescription: t.queryDescription(),
-			},
-			paramFilters:       filtersSchema(t.fields, t.operators),
-			paramSortBy:        t.sortSchema(),
-			paramSortDirection: sortDirectionSchema(),
-			paramLimit:         pageSchema(defaultListLimit, maxListLimit)[paramLimit],
-			paramOffset:        pageSchema(defaultListLimit, maxListLimit)[paramOffset],
+	properties := map[string]any{
+		paramQuery: map[string]any{
+			toolschema.KeyType:        toolschema.TypeString,
+			toolschema.KeyDescription: t.queryDescription(),
 		},
+		paramFilters:       filtersSchema(t.fields, t.operators),
+		paramSortBy:        t.sortSchema(),
+		paramSortDirection: sortDirectionSchema(),
+	}
+	for name, property := range t.pagingSchema() {
+		properties[name] = property
+	}
+
+	return map[string]any{
+		toolschema.KeyType:                 toolschema.TypeObject,
+		toolschema.KeyProperties:           properties,
 		toolschema.KeyAdditionalProperties: false,
 	}
+}
+
+func (t *listTool) pagingSchema() map[string]any {
+	if t.spec.pagesByCursor {
+		return cursorPageSchema(defaultListLimit, maxListLimit)
+	}
+
+	return pageSchema(defaultListLimit, maxListLimit)
 }
 
 func (t *listTool) queryDescription() string {
@@ -319,7 +353,10 @@ func (t *listTool) Query(
 		return nil, err
 	}
 
-	window := readPage(params.Params, defaultListLimit, maxListLimit)
+	window, err := t.readWindow(params.Params)
+	if err != nil {
+		return nil, err
+	}
 
 	opts := &pagination.QueryOptions{
 		TenantInfo: pagination.TenantInfo{
@@ -327,25 +364,30 @@ func (t *listTool) Query(
 			BuID:   params.BusinessUnitID,
 			UserID: params.Actor.UserID,
 		},
-		Pagination:   pagination.Info{Limit: window.fetch(), Offset: window.offset},
+		Pagination:   window.pagination(),
 		Query:        query,
 		FieldFilters: filters,
 		Sort:         sorting,
 	}
 
-	rows, err := t.fetchRows(ctx, params, opts, gate, criteria)
+	fetched, err := t.fetchRows(ctx, &listFetch{
+		params:   params,
+		opts:     opts,
+		cursor:   window.cursor.info,
+		gate:     gate,
+		criteria: criteria,
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	rows, more := trim(window, rows)
-	outcome := searchResult(criteria, rows, len(rows)).paged(window, more)
+	outcome, more := window.outcome(criteria, fetched)
 	if more && t.spec.count != nil {
 		if total, countErr := t.spec.count(ctx, opts); countErr == nil {
 			outcome.Total = &total
 		}
 	}
-	if len(rows) == 0 && window.offset == 0 {
+	if outcome.Count == 0 && window.first() {
 		if note := t.nearMiss(ctx, &nearMissRequest{
 			params:   params,
 			opts:     opts,
@@ -363,27 +405,112 @@ func (t *listTool) Query(
 	return outcome, nil
 }
 
+type listWindow struct {
+	offset   page
+	cursor   cursorWindow
+	byCursor bool
+}
+
+func (t *listTool) readWindow(params map[string]any) (listWindow, error) {
+	if !t.spec.pagesByCursor {
+		return listWindow{offset: readPage(params, defaultListLimit, maxListLimit)}, nil
+	}
+
+	cursor, err := readCursorWindow(t.Name(), params, defaultListLimit, maxListLimit)
+	if err != nil {
+		return listWindow{}, err
+	}
+
+	return listWindow{cursor: cursor, byCursor: true}, nil
+}
+
+func (t *listTool) firstWindow(limit int) listWindow {
+	if t.spec.pagesByCursor {
+		return listWindow{cursor: firstCursorWindow(limit), byCursor: true}
+	}
+
+	return listWindow{offset: page{limit: limit}}
+}
+
+func (w *listWindow) pagination() pagination.Info {
+	if w.byCursor {
+		return pagination.Info{Limit: w.cursor.limit}
+	}
+
+	return pagination.Info{Limit: w.offset.fetch(), Offset: w.offset.offset}
+}
+
+func (w *listWindow) first() bool {
+	return w.offset.offset == 0 && w.cursor.first()
+}
+
+func (w *listWindow) rows(fetched listPage) ([]any, bool) {
+	if w.byCursor {
+		return fetched.rows, fetched.hasMore
+	}
+
+	return trim(w.offset, fetched.rows)
+}
+
+func (w *listWindow) outcome(
+	criteria *filtercatalog.Criteria,
+	fetched listPage,
+) (searchOutcome, bool) {
+	rows, more := w.rows(fetched)
+	outcome := searchResult(criteria, rows, len(rows))
+	if w.byCursor {
+		outcome.cursorPaged(&w.cursor, more, fetched.nextCursor)
+
+		return outcome, more
+	}
+
+	return outcome.paged(w.offset, more), more
+}
+
+type listFetch struct {
+	params   *agentports.QueryToolParams
+	opts     *pagination.QueryOptions
+	cursor   pagination.CursorInfo
+	gate     *fieldGate
+	criteria *filtercatalog.Criteria
+}
+
 // fetchRows reads one window of rows the way the list's spec says to: through
 // the field gate, joined with what the reader may see, on the caller's clock,
 // or plainly.
-func (t *listTool) fetchRows(
-	ctx context.Context,
-	params *agentports.QueryToolParams,
-	opts *pagination.QueryOptions,
-	gate *fieldGate,
-	criteria *filtercatalog.Criteria,
-) ([]any, error) {
+func (t *listTool) fetchRows(ctx context.Context, req *listFetch) (listPage, error) {
+	fetched, err := t.fetchPage(ctx, req)
+	if err != nil {
+		return listPage{}, refuseStaleCursor(err)
+	}
+	if fetched.cursored != t.spec.pagesByCursor {
+		return listPage{}, fmt.Errorf(
+			"%s pages its repository the wrong way: its spec and its fetch disagree on "+
+				"cursor paging",
+			t.spec.name,
+		)
+	}
+
+	return fetched, nil
+}
+
+func (t *listTool) fetchPage(ctx context.Context, req *listFetch) (listPage, error) {
 	switch {
-	case gate != nil:
-		return t.spec.fetchGated(ctx, opts, gate)
+	case req.gate != nil:
+		return t.spec.fetchGated(ctx, req.opts, req.cursor, req.gate)
 	case t.spec.fetchJoined != nil:
-		return t.spec.fetchJoined(ctx, opts, func(resource permission.Resource) bool {
-			return t.spec.access.mayRead(ctx, params, resource)
-		})
+		return t.spec.fetchJoined(
+			ctx,
+			req.opts,
+			req.cursor,
+			func(resource permission.Resource) bool {
+				return t.spec.access.mayRead(ctx, req.params, resource)
+			},
+		)
 	case t.spec.fetchIn != nil:
-		return t.spec.fetchIn(ctx, opts, criteria.Clock)
+		return t.spec.fetchIn(ctx, req.opts, req.cursor, req.criteria.Clock)
 	default:
-		return t.spec.fetch(ctx, opts)
+		return t.spec.fetch(ctx, req.opts, req.cursor)
 	}
 }
 
@@ -414,22 +541,29 @@ func (t *listTool) runView(
 	criteria := filtercatalog.NewCriteria(t.spec.entityPlural).At(clockFor(params))
 	criteria.Text(query)
 
-	rows, err := t.fetchRows(ctx, params, &pagination.QueryOptions{
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  params.OrganizationID,
-			BuID:   params.BusinessUnitID,
-			UserID: params.Actor.UserID,
+	window := t.firstWindow(limit)
+	fetched, err := t.fetchRows(ctx, &listFetch{
+		params: params,
+		opts: &pagination.QueryOptions{
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  params.OrganizationID,
+				BuID:   params.BusinessUnitID,
+				UserID: params.Actor.UserID,
+			},
+			Pagination:   window.pagination(),
+			Query:        query,
+			FieldFilters: filters,
+			Sort:         sorting,
 		},
-		Pagination:   pagination.Info{Limit: limit + 1},
-		Query:        query,
-		FieldFilters: filters,
-		Sort:         sorting,
-	}, gate, criteria)
+		cursor:   window.cursor.info,
+		gate:     gate,
+		criteria: criteria,
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	rows, more := trim(page{limit: limit}, rows)
+	rows, more := window.rows(fetched)
 	run := &viewRun{outcome: searchResult(criteria, rows, len(rows)), more: more}
 	if gate != nil {
 		run.withheld = gate.Withheld()
@@ -539,6 +673,27 @@ func (t *listTool) buildSort(params map[string]any) ([]domaintypes.SortField, er
 		optionalString(params, "sortBy"),
 		optionalString(params, "sortDirection"),
 	)
+}
+
+func cursorListPage[T any](
+	result *pagination.CursorListResult[T],
+	row func(T) any,
+) (listPage, error) {
+	next, err := result.NextCursor()
+	if err != nil {
+		return listPage{}, fmt.Errorf("encode the next page's cursor: %w", err)
+	}
+
+	return listPage{
+		rows:       listRows(result.Items, row),
+		hasMore:    result.HasNextPage,
+		nextCursor: next,
+		cursored:   true,
+	}, nil
+}
+
+func offsetListPage[T any](items []T, row func(T) any) listPage {
+	return listPage{rows: listRows(items, row)}
 }
 
 // listRows projects repository entities into the compact shapes the catalog

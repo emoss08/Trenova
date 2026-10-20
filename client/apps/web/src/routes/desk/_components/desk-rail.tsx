@@ -25,6 +25,7 @@ import type { DeskShelfKey } from "@/components/desk-chat/rail/desk-threads";
 import { shelfHeading } from "@/components/desk-chat/rail/rail-parts";
 import { useRichT } from "@trenova/shared/i18n/rich";
 import { deskIconClass } from "@/components/desk-chat/desk-button-styles";
+import { DeskRailFrame } from "./desk-rail-frame";
 import { DeskRailList } from "./desk-rail-list";
 import { DeskRailThreadRow, type DeskRailRowActions } from "./desk-rail-row";
 
@@ -72,10 +73,14 @@ export type DeskRailProps = {
   onSettings: () => void;
   onSetPinned: (thread: AssistantThread, pinned: boolean) => void;
   onDelete: (thread: AssistantThread) => void;
+  /** The rail is folded away beside the page. */
+  folded: boolean;
+  /** Folds the rail away, or on a phone puts its sheet back. */
+  onFold: () => void;
 };
 
 /**
- * The Desk's rail: the logo, search and a new conversation across the top,
+ * The Desk's rail: its fold, the logo, search and a new conversation across the top,
  * the Desk's places, then every conversation shelved by when it was last
  * touched. Each shelf folds away from its heading, and a folded shelf reads
  * nothing more. Each conversation is one line
@@ -106,6 +111,8 @@ export function DeskRail({
   onSettings,
   onSetPinned,
   onDelete,
+  folded,
+  onFold,
 }: DeskRailProps) {
   const t = useT();
   const rt = useRichT();
@@ -228,8 +235,18 @@ export function DeskRail({
   const name = user?.name ?? user?.username ?? "";
 
   return (
-    <aside className="dk-sb" aria-label={t("Desk")}>
+    <DeskRailFrame folded={folded} onFold={onFold}>
       <div className="dk-sb-top">
+        <Button
+          variant="quiet"
+          size="icon-sm"
+          className={deskIconClass}
+          title={t("Hide sidebar")}
+          aria-label={t("Hide sidebar")}
+          onClick={onFold}
+        >
+          <DeskIcon name="rail" size={15} />
+        </Button>
         <img className="dk-sb-logo" src={logo} alt={t("Trenova")} />
         <span style={{ flex: 1 }} />
         <Button
@@ -372,6 +389,6 @@ export function DeskRail({
         onConfirm={deletion.confirm}
         onClose={deletion.cancel}
       />
-    </aside>
+    </DeskRailFrame>
   );
 }

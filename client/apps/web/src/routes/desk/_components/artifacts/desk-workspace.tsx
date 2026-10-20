@@ -1,4 +1,5 @@
 import { Button } from "@trenova/shared/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { assistant } from "@/lib/queries/assistant";
 import { apiService } from "@/services/api";
@@ -20,6 +21,7 @@ import {
 } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
 import type { LiveArtifacts } from "../desk-layout";
+import { deskPopoverClass } from "@/components/desk-chat/desk-popover";
 import { useOutsideDismiss } from "@/components/desk-chat/use-outside-dismiss";
 import {
   DeskArtifactBodySkeleton,
@@ -233,24 +235,8 @@ function VersionPicker({
 }) {
   const t = useT();
   const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLSpanElement>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
-  // Closing hands focus back to the button when it was inside the list, so
-  // it is not dropped on the page when the list goes.
-  const close = useCallback(() => {
-    if (rootRef.current?.contains(document.activeElement)) {
-      buttonRef.current?.focus();
-    }
-    setOpen(false);
-  }, []);
-  useOutsideDismiss(rootRef, open, close);
   const last = lineage.versions.length - 1;
-  useEffect(() => {
-    if (open) {
-      listRef.current?.querySelector<HTMLElement>("[aria-selected='true']")?.focus();
-    }
-  }, [open]);
   const onListKey = (event: React.KeyboardEvent<HTMLDivElement>) => {
     const options = [...(listRef.current?.querySelectorAll<HTMLElement>("[role='option']") ?? [])];
     const at = options.indexOf(document.activeElement as HTMLElement);
@@ -268,63 +254,67 @@ function VersionPicker({
       event.preventDefault();
       options[next]?.focus();
     } else if (event.key === "Tab") {
-      close();
+      setOpen(false);
     }
   };
 
   return (
-    <span className="dk-axv" ref={rootRef}>
-      <Button
-        variant="bare"
-        size="bare"
-        className={versionTriggerClass(index !== last)}
-        ref={buttonRef}
-        title={t("Versions")}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        onClick={() => setOpen((value) => !value)}
-      >
-        v{index + 1}
-        <ArtIcon name="down" size={9} stroke={2.6} />
-      </Button>
-      {open && (
-        <div
-          className="dk-axv-pop"
-          role="listbox"
-          aria-label={t("Versions")}
-          ref={listRef}
-          onKeyDown={onListKey}
+    <span className="dk-axv">
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger
+          render={
+            <Button
+              variant="bare"
+              size="bare"
+              className={versionTriggerClass(index !== last)}
+              title={t("Versions")}
+              aria-haspopup="listbox"
+            />
+          }
         >
-          {[...lineage.versions].reverse().map((version) => {
-            const at = lineage.versions.indexOf(version);
-            return (
-              <Button
-                key={version.id}
-                variant="bare"
-                size="bare"
-                role="option"
-                aria-selected={at === index}
-                tabIndex={at === index ? 0 : -1}
-                className={VERSION_OPTION_CLASS}
-                onClick={() => {
-                  onChange(at);
-                  close();
-                }}
-              >
-                <b>v{at + 1}</b>
-                <span>
-                  <em>{versionNote(version, lineage.versions[at - 1] ?? null, t)}</em>
-                  <i>
-                    {shortTime(version.createdAt)}
-                    {at === last ? ` · ${t("Latest")}` : ""}
-                  </i>
-                </span>
-                {at === index && <ArtIcon name="check" size={12} stroke={2.4} />}
-              </Button>
-            );
-          })}
-        </div>
-      )}
+          v{index + 1}
+          <ArtIcon name="down" size={9} stroke={2.6} />
+        </PopoverTrigger>
+        <PopoverContent
+          align="end"
+          sideOffset={6}
+          initialFocus={() =>
+            listRef.current?.querySelector<HTMLElement>("[aria-selected='true']") ?? true
+          }
+          className={cn(deskPopoverClass, "w-67.5 p-1")}
+        >
+          <div role="listbox" aria-label={t("Versions")} ref={listRef} onKeyDown={onListKey}>
+            {[...lineage.versions].reverse().map((version) => {
+              const at = lineage.versions.indexOf(version);
+              return (
+                <Button
+                  key={version.id}
+                  variant="bare"
+                  size="bare"
+                  role="option"
+                  aria-selected={at === index}
+                  tabIndex={at === index ? 0 : -1}
+                  className={VERSION_OPTION_CLASS}
+                  onClick={() => {
+                    onChange(at);
+                    setOpen(false);
+                  }}
+                >
+                  <b>v{at + 1}</b>
+                  <span>
+                    <em>{versionNote(version, lineage.versions[at - 1] ?? null, t)}</em>
+                    <i>
+                      {shortTime(version.createdAt)}
+                      {at === last ? ` · ${t("Latest")}` : ""}
+                    </i>
+                  </span>
+                  {at === index && <ArtIcon name="check" size={12} stroke={2.4} />}
+                </Button>
+              );
+            })}
+          </div>
+        </PopoverContent>
+      </Popover>
     </span>
   );
 }

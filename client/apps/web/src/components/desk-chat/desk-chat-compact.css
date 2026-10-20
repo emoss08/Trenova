@@ -91,26 +91,6 @@
   max-width: 110px;
 }
 
-/* Every menu that opens from the composer hangs above the whole composer, as
-   wide as it is, instead of from its own button. */
-.dk-dense .dk-cmp {
-  position: relative;
-}
-.dk-dense .dk-cmp :is(.dk-ap, .dk-pc, .dk-mp2, .dk-cx) {
-  position: static;
-}
-.dk-dense .dk-cmp :is(.dk-ap-pop, .dk-pc-pop, .dk-mp2-pop, .dk-cx-pop, .dk-am) {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: auto;
-  bottom: calc(100% + 8px);
-  width: auto;
-  max-width: none;
-  transform: none;
-  transform-origin: bottom center;
-}
-
 /* A change waiting on the person: its words take the row, and its actions
    move to their own row under a hairline, on the right. */
 .dk-dense .dk-dcx {

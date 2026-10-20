@@ -6,6 +6,7 @@ import type { AssistantThread, CaseParty } from "@/types/assistant";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useState, type ReactNode } from "react";
@@ -172,70 +173,72 @@ function CaseActions({
   const parties = deskCase.view?.parties ?? [];
 
   return (
-    <div role="menu" className="flex max-h-[min(70vh,520px)] flex-col overflow-y-auto p-1">
-      <div className="flex flex-col gap-0.5 px-2 pt-1.5 pb-1">
-        <p className="truncate text-sm font-medium">{caseRecordTitle(summary.record, t)}</p>
-        <p className="text-muted-foreground truncate text-xs">
-          {caseStateLabel(summary, now, timezone, t)}
-        </p>
-      </div>
-      {state === "Snoozed" && (
-        <MenuItem icon="play" label={t("Wake it now")} onClick={() => onRun(deskCase.wake)} />
-      )}
-      {!settled && (
-        <>
-          <MenuGroup label={t("Snooze")} />
-          {snoozePresets(now, timezone).map((preset) => (
-            <MenuItem
-              key={preset.key}
-              icon="clock"
-              label={presetLabel(preset.key, t)}
-              note={turnTime(preset.until, timezone, t)}
-              onClick={() => onRun(() => deskCase.snooze("Time", preset.until))}
-            />
-          ))}
-          {shipment && (
-            <>
+    <ScrollArea viewportClassName="max-h-[min(70vh,520px)]" maskVariant="popover">
+      <div role="menu" className="flex flex-col p-1">
+        <div className="flex flex-col gap-0.5 px-2 pt-1.5 pb-1">
+          <p className="truncate text-sm font-medium">{caseRecordTitle(summary.record, t)}</p>
+          <p className="text-muted-foreground truncate text-xs">
+            {caseStateLabel(summary, now, timezone, t)}
+          </p>
+        </div>
+        {state === "Snoozed" && (
+          <MenuItem icon="play" label={t("Wake it now")} onClick={() => onRun(deskCase.wake)} />
+        )}
+        {!settled && (
+          <>
+            <MenuGroup label={t("Snooze")} />
+            {snoozePresets(now, timezone).map((preset) => (
               <MenuItem
-                icon="truck"
-                label={t("Until the next appointment")}
-                note={t("Moves when the appointment does")}
-                onClick={() => onRun(() => deskCase.snooze("Appointment"))}
+                key={preset.key}
+                icon="clock"
+                label={presetLabel(preset.key, t)}
+                note={turnTime(preset.until, timezone, t)}
+                onClick={() => onRun(() => deskCase.snooze("Time", preset.until))}
               />
-              <MenuItem
-                icon="route"
-                label={t("Until the ETA")}
-                note={t("Follows the truck's estimate")}
-                onClick={() => onRun(() => deskCase.snooze("ETA"))}
-              />
-            </>
-          )}
-          <MenuItem icon="clock" label={t("Pick a time…")} onClick={onPickTime} />
-          {parties.length > 0 && (
-            <>
-              <MenuGroup label={t("Wait for a reply from")} />
-              {parties.map((party) => (
+            ))}
+            {shipment && (
+              <>
                 <MenuItem
-                  key={`${party.kind}:${party.id}`}
-                  icon={party.kind === "Customer" ? "headset" : "truck"}
-                  label={partyLabel(party, t)}
-                  note={t("Picks the case back up when they answer")}
-                  onClick={() => onRun(() => deskCase.awaitReply(party))}
+                  icon="truck"
+                  label={t("Until the next appointment")}
+                  note={t("Moves when the appointment does")}
+                  onClick={() => onRun(() => deskCase.snooze("Appointment"))}
                 />
-              ))}
-            </>
-          )}
-        </>
-      )}
-      <MenuGroup label={t("Case")} />
-      <MenuItem icon="link" label={t("Move to another record")} onClick={onMove} />
-      <MenuItem
-        icon="x"
-        label={t("Stop treating this as a case")}
-        note={t("The conversation stays; it is no longer about the record")}
-        onClick={() => onRun(deskCase.unbind)}
-      />
-    </div>
+                <MenuItem
+                  icon="route"
+                  label={t("Until the ETA")}
+                  note={t("Follows the truck's estimate")}
+                  onClick={() => onRun(() => deskCase.snooze("ETA"))}
+                />
+              </>
+            )}
+            <MenuItem icon="clock" label={t("Pick a time…")} onClick={onPickTime} />
+            {parties.length > 0 && (
+              <>
+                <MenuGroup label={t("Wait for a reply from")} />
+                {parties.map((party) => (
+                  <MenuItem
+                    key={`${party.kind}:${party.id}`}
+                    icon={party.kind === "Customer" ? "headset" : "truck"}
+                    label={partyLabel(party, t)}
+                    note={t("Picks the case back up when they answer")}
+                    onClick={() => onRun(() => deskCase.awaitReply(party))}
+                  />
+                ))}
+              </>
+            )}
+          </>
+        )}
+        <MenuGroup label={t("Case")} />
+        <MenuItem icon="link" label={t("Move to another record")} onClick={onMove} />
+        <MenuItem
+          icon="x"
+          label={t("Stop treating this as a case")}
+          note={t("The conversation stays; it is no longer about the record")}
+          onClick={() => onRun(deskCase.unbind)}
+        />
+      </div>
+    </ScrollArea>
   );
 }
 
@@ -265,7 +268,13 @@ function SnoozeTimePicker({
       }}
     >
       <div className="flex items-center gap-1">
-        <Button size="icon-xs" variant="ghost" type="button" aria-label={t("Back")} onClick={onBack}>
+        <Button
+          size="icon-xs"
+          variant="ghost"
+          type="button"
+          aria-label={t("Back")}
+          onClick={onBack}
+        >
           <DeskIcon name="chevL" size={13} />
         </Button>
         <p className="text-sm font-medium">{t("Snooze until")}</p>
