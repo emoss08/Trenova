@@ -451,6 +451,7 @@ func loadScenarioFile(file string) ([]*Scenario, error) {
 	var doc struct {
 		Defaults  Scenario    `yaml:"defaults"`
 		Scenarios []*Scenario `yaml:"scenarios"`
+		Shared    yaml.Node   `yaml:"shared"`
 	}
 	decoder := yaml.NewDecoder(bytes.NewReader(raw))
 	decoder.KnownFields(true)
