@@ -133,4 +133,3 @@ func TestDecode_ReportsWithheldFieldsAndStripsNonNullOnes(t *testing.T) {
 	assert.Equal(t, []string{"worker.email", "worker.phoneNumber"}, result.Withheld)
 	assert.Equal(t, map[string]any{"id": "wrk_1", "phoneNumber": nil}, result.Data["worker"])
 }
-
