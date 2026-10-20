@@ -817,6 +817,8 @@ func heldReason(heldBy []string, egress agent.EgressClass) string {
 			reasons = append(reasons, "this turn read text written outside the organization")
 		case agenttoolpolicy.HeldByBusinessHours:
 			reasons = append(reasons, "it is outside this agent's business hours")
+		case agenttoolpolicy.HeldByScriptIntent:
+			reasons = append(reasons, "a script prepared it, and a person approves the script's batch")
 		default:
 			if reason, ok := moneyHeldReasons[key]; ok {
 				reasons = append(reasons, reason)

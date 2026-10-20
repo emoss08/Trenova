@@ -95,6 +95,9 @@ type AgentProposal struct {
 	TraceID               string   `json:"traceId"               bun:"trace_id,type:VARCHAR(32),nullzero"`
 	SpanID                string   `json:"spanId"                bun:"span_id,type:VARCHAR(16),nullzero"`
 	StepKey               string   `json:"stepKey"               bun:"step_key,type:VARCHAR(120),nullzero"`
+	// ScriptStepKey is the ledger step of the script that wrote this proposal
+	// as an intent; empty for a write the model called itself.
+	ScriptStepKey string `json:"scriptStepKey" bun:"script_step_key,type:VARCHAR(120),nullzero"`
 	ExecutedByUserID      pulid.ID `json:"executedByUserId"      bun:"executed_by_user_id,type:VARCHAR(100),nullzero"`
 	ExecutedTargetVersion *int64   `json:"executedTargetVersion" bun:"executed_target_version,type:BIGINT,nullzero"`
 

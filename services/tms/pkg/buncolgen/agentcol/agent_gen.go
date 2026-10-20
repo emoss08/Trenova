@@ -600,6 +600,7 @@ var AgentPlanColumns = struct {
 	ApprovalReasonCode    buncolgen.Column // "approval_reason_code" → qualified: "apl.approval_reason_code"
 	ApprovalNote          buncolgen.Column // "approval_note" → qualified: "apl.approval_note"
 	ApprovalPreviewDigest buncolgen.Column // "approval_preview_digest" → qualified: "apl.approval_preview_digest"
+	ScriptStepKey         buncolgen.Column // "script_step_key" → qualified: "apl.script_step_key"
 	Version               buncolgen.Column // "version" → qualified: "apl.version"
 	CreatedAt             buncolgen.Column // "created_at" → qualified: "apl.created_at"
 	UpdatedAt             buncolgen.Column // "updated_at" → qualified: "apl.updated_at"
@@ -624,6 +625,7 @@ var AgentPlanColumns = struct {
 	ApprovalReasonCode:    buncolgen.NewColumn("approval_reason_code", "apl"),
 	ApprovalNote:          buncolgen.NewColumn("approval_note", "apl"),
 	ApprovalPreviewDigest: buncolgen.NewColumn("approval_preview_digest", "apl"),
+	ScriptStepKey:         buncolgen.NewColumn("script_step_key", "apl"),
 	Version:               buncolgen.NewColumn("version", "apl"),
 	CreatedAt:             buncolgen.NewColumn("created_at", "apl"),
 	UpdatedAt:             buncolgen.NewColumn("updated_at", "apl"),
@@ -651,6 +653,7 @@ var AgentPlanFieldMap = map[string]string{
 	"commitsAt":       "commits_at",
 	"undoneAt":        "undone_at",
 	"undoneByUserId":  "undone_by_user_id",
+	"scriptStepKey":   "script_step_key",
 	"version":         "version",
 	"createdAt":       "created_at",
 	"updatedAt":       "updated_at",
@@ -679,6 +682,7 @@ var AgentPlanInsertableColumns = []string{
 	"approval_reason_code",
 	"approval_note",
 	"approval_preview_digest",
+	"script_step_key",
 	"version",
 	"created_at",
 	"updated_at",
@@ -766,6 +770,7 @@ var AgentPlanFilter = struct {
 	CommitsAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "commitsAt" → DB: "commits_at"
 	UndoneAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "undoneAt" → DB: "undone_at"
 	UndoneByUserID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "undoneByUserId" → DB: "undone_by_user_id"
+	ScriptStepKey   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "scriptStepKey" → DB: "script_step_key"
 	Version         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -820,6 +825,9 @@ var AgentPlanFilter = struct {
 	},
 	UndoneByUserID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("undoneByUserId", op, value)
+	},
+	ScriptStepKey: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("scriptStepKey", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("version", op, value)
@@ -891,6 +899,7 @@ var AgentProposalColumns = struct {
 	TraceID               buncolgen.Column // "trace_id" → qualified: "ap.trace_id"
 	SpanID                buncolgen.Column // "span_id" → qualified: "ap.span_id"
 	StepKey               buncolgen.Column // "step_key" → qualified: "ap.step_key"
+	ScriptStepKey         buncolgen.Column // "script_step_key" → qualified: "ap.script_step_key"
 	ExecutedByUserID      buncolgen.Column // "executed_by_user_id" → qualified: "ap.executed_by_user_id"
 	ExecutedTargetVersion buncolgen.Column // "executed_target_version" → qualified: "ap.executed_target_version"
 	PendingModifications  buncolgen.Column // "pending_modifications" → qualified: "ap.pending_modifications"
@@ -931,6 +940,7 @@ var AgentProposalColumns = struct {
 	TraceID:               buncolgen.NewColumn("trace_id", "ap"),
 	SpanID:                buncolgen.NewColumn("span_id", "ap"),
 	StepKey:               buncolgen.NewColumn("step_key", "ap"),
+	ScriptStepKey:         buncolgen.NewColumn("script_step_key", "ap"),
 	ExecutedByUserID:      buncolgen.NewColumn("executed_by_user_id", "ap"),
 	ExecutedTargetVersion: buncolgen.NewColumn("executed_target_version", "ap"),
 	PendingModifications:  buncolgen.NewColumn("pending_modifications", "ap"),
@@ -977,6 +987,7 @@ var AgentProposalFieldMap = map[string]string{
 	"traceId":               "trace_id",
 	"spanId":                "span_id",
 	"stepKey":               "step_key",
+	"scriptStepKey":         "script_step_key",
 	"executedByUserId":      "executed_by_user_id",
 	"executedTargetVersion": "executed_target_version",
 	"pendingModifications":  "pending_modifications",
@@ -1021,6 +1032,7 @@ var AgentProposalInsertableColumns = []string{
 	"trace_id",
 	"span_id",
 	"step_key",
+	"script_step_key",
 	"executed_by_user_id",
 	"executed_target_version",
 	"pending_modifications",
@@ -1127,6 +1139,7 @@ var AgentProposalFilter = struct {
 	TraceID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "traceId" → DB: "trace_id"
 	SpanID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "spanId" → DB: "span_id"
 	StepKey               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "stepKey" → DB: "step_key"
+	ScriptStepKey         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "scriptStepKey" → DB: "script_step_key"
 	ExecutedByUserID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "executedByUserId" → DB: "executed_by_user_id"
 	ExecutedTargetVersion func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "executedTargetVersion" → DB: "executed_target_version"
 	PendingModifications  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "pendingModifications" → DB: "pending_modifications"
@@ -1232,6 +1245,9 @@ var AgentProposalFilter = struct {
 	},
 	StepKey: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("stepKey", op, value)
+	},
+	ScriptStepKey: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("scriptStepKey", op, value)
 	},
 	ExecutedByUserID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("executedByUserId", op, value)

@@ -58,6 +58,10 @@ type PendingAction struct {
 	// record. Empty for an action recorded before it was kept, which the
 	// recorder mints as it always has.
 	ProposalID pulid.ID `json:"proposalId,omitempty"`
+	// ScriptStepKey is the ledger step of the script that prepared this
+	// action as an intent. The intents of one script are filed as one batch,
+	// apart from the turn's other writes, and none of them ran.
+	ScriptStepKey string `json:"scriptStepKey,omitempty"`
 	// TraceID and SpanID are the tool span the call was decided in, so a
 	// decision made hours later can link back to it.
 	TraceID string `json:"traceId,omitempty"`
