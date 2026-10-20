@@ -43,6 +43,7 @@ func (s *Service) runScriptTool(
 		parentCallID:  call.ID,
 		taint:         p.taint,
 		afterExternal: p.afterExternal,
+		writes:        decision.Writes,
 	})
 	outcome := s.runQueryToolWith(
 		ctx,
@@ -51,7 +52,21 @@ func (s *Service) runScriptTool(
 		call,
 		&queryExtras{broker: broker, stepKey: p.stepKey},
 	)
-	outcome.taint = append(outcome.taint, broker.taintMarks()...)
+	marks := broker.taintMarks()
+	outcome.taint = append(outcome.taint, marks...)
+
+	read := p.taint.Clone()
+	if read == nil && len(marks) > 0 {
+		read = &agent.RunTaint{}
+	}
+	read.Absorb(marks)
+	outcome.batch = broker.settle(ctx, &scriptSettlement{
+		completed:     !outcome.failed && scriptCompleted(outcome.data),
+		taint:         read,
+		afterExternal: p.afterExternal,
+		beyond:        p.beyond,
+		moneySpent:    p.moneySpent,
+	})
 
 	return outcome
 }
@@ -78,4 +93,10 @@ func (s *Service) withoutScripts(
 
 func isScriptRunner(name string) bool {
 	return name == agentextension.ToolRunScript
+}
+
+func scriptCompleted(data any) bool {
+	completion, ok := data.(codemode.Completion)
+
+	return ok && completion.ScriptCompleted()
 }

@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -126,6 +127,9 @@ func Run(ctx context.Context, p RunParams) (*Outcome, error) {
 	if c.Agent.CodeMode {
 		req.CodeMode = codemode.OverrideOn
 	}
+	if c.Agent.CodeModeWrites {
+		req.CodeMode = codemode.OverrideWrites
+	}
 	if c.Agent.Unattended {
 		req.RunID = RunID
 	} else {
@@ -185,12 +189,14 @@ func newRuntime(
 	kit := agentevalgate.FromTools(built.queries, built.actions, agentruntime.RuntimePolicies())
 	params := agentevalgate.RuntimeParams{
 		Completion:  completion,
-		Permissions: &agenttest.StubPermissions{},
+		Permissions: &agenttest.StubPermissions{Denied: deniedOf(c.Agent.Denied)},
+		Versions:    pinnedVersions{},
 	}
-	if c.Agent.Extensions || c.Agent.CodeMode {
+	scripts := c.Agent.CodeMode || c.Agent.CodeModeWrites
+	if c.Agent.Extensions || scripts {
 		params.Extensions = extensionGate{}
 	}
-	params.CodeMode = c.Agent.CodeMode
+	params.CodeMode = scripts
 
 	return kit, kit.NewRuntime(params), nil
 }
@@ -582,3 +588,29 @@ func (*effects) Interject(*agentruntime.Turn, *agentruntime.WorldCheck) agentrun
 }
 
 func (*effects) Now() int64 { return FixedNow }
+
+// pinnedVersions pins every record at one version, as a record the run never
+// changes stands: a case's batch is pinned the way the API pins it.
+type pinnedVersions struct{}
+
+const pinnedVersion = 1
+
+func (pinnedVersions) Version(
+	context.Context,
+	pagination.TenantInfo,
+	agentports.ToolTarget,
+) (int64, error) {
+	return pinnedVersion, nil
+}
+
+func deniedOf(permissions []string) map[string]bool {
+	if len(permissions) == 0 {
+		return nil
+	}
+	denied := make(map[string]bool, len(permissions))
+	for _, permission := range permissions {
+		denied[permission] = true
+	}
+
+	return denied
+}

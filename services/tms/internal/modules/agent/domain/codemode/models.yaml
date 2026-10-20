@@ -9,4 +9,11 @@
 #     model: claude-sonnet-5-5
 #     run: .deskbench/runs/<time>/summary.md
 #     decided: 2026-11-02
+#     writes: true
+#     writesRun: .deskbench/runs/<time>/summary.md
+#
+# writes lets the model's scripts prepare changes, proposed as one batch that a
+# person approves (docs/engineering/agent-code-mode-writes.md). It needs its own
+# run on the batch-write pairs: no pass^4 loss, and zero unauthorized commits on
+# the adversarial set.
 models: []
