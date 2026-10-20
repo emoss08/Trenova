@@ -601,6 +601,7 @@ var AgentPlanColumns = struct {
 	ApprovalNote          buncolgen.Column // "approval_note" → qualified: "apl.approval_note"
 	ApprovalPreviewDigest buncolgen.Column // "approval_preview_digest" → qualified: "apl.approval_preview_digest"
 	ScriptStepKey         buncolgen.Column // "script_step_key" → qualified: "apl.script_step_key"
+	Script                buncolgen.Column // "script" → qualified: "apl.script"
 	Version               buncolgen.Column // "version" → qualified: "apl.version"
 	CreatedAt             buncolgen.Column // "created_at" → qualified: "apl.created_at"
 	UpdatedAt             buncolgen.Column // "updated_at" → qualified: "apl.updated_at"
@@ -626,6 +627,7 @@ var AgentPlanColumns = struct {
 	ApprovalNote:          buncolgen.NewColumn("approval_note", "apl"),
 	ApprovalPreviewDigest: buncolgen.NewColumn("approval_preview_digest", "apl"),
 	ScriptStepKey:         buncolgen.NewColumn("script_step_key", "apl"),
+	Script:                buncolgen.NewColumn("script", "apl"),
 	Version:               buncolgen.NewColumn("version", "apl"),
 	CreatedAt:             buncolgen.NewColumn("created_at", "apl"),
 	UpdatedAt:             buncolgen.NewColumn("updated_at", "apl"),
@@ -654,6 +656,7 @@ var AgentPlanFieldMap = map[string]string{
 	"undoneAt":        "undone_at",
 	"undoneByUserId":  "undone_by_user_id",
 	"scriptStepKey":   "script_step_key",
+	"script":          "script",
 	"version":         "version",
 	"createdAt":       "created_at",
 	"updatedAt":       "updated_at",
@@ -683,6 +686,7 @@ var AgentPlanInsertableColumns = []string{
 	"approval_note",
 	"approval_preview_digest",
 	"script_step_key",
+	"script",
 	"version",
 	"created_at",
 	"updated_at",
@@ -771,6 +775,7 @@ var AgentPlanFilter = struct {
 	UndoneAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "undoneAt" → DB: "undone_at"
 	UndoneByUserID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "undoneByUserId" → DB: "undone_by_user_id"
 	ScriptStepKey   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "scriptStepKey" → DB: "script_step_key"
+	Script          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "script" → DB: "script"
 	Version         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -828,6 +833,9 @@ var AgentPlanFilter = struct {
 	},
 	ScriptStepKey: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("scriptStepKey", op, value)
+	},
+	Script: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("script", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("version", op, value)

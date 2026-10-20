@@ -3,6 +3,7 @@ package agentports
 import (
 	"context"
 	"slices"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -56,6 +57,22 @@ func (p *ToolPolicy) CallableFromScript() bool {
 		p.Script == ScriptCallable &&
 		p.Scope != agent.ToolScopeSelf
 }
+
+// PreparableFromScript says a script may prepare the tool's write as an
+// intent, filed in the script's batch for a person: a change to the tenant's
+// records that does not escalate, hold for taint on its own terms or belong
+// to the agent's own work (its waits, memories and exceptions).
+func (p *ToolPolicy) PreparableFromScript() bool {
+	return p.Kind == agent.ToolKindAction &&
+		p.EffectiveEffect() != agent.ToolEffectLookup &&
+		p.Script == ScriptCallable &&
+		p.Scope == agent.ToolScopeTenant &&
+		!p.Escalates &&
+		p.TaintHold == nil &&
+		!strings.HasPrefix(p.Name, agentNamespacePrefix)
+}
+
+const agentNamespacePrefix = "agent_"
 
 func (p ToolPolicy) HeldWhenTainted() bool {
 	return p.TaintHold != nil || slices.ContainsFunc(p.Egress, agent.EgressClass.Leaves)

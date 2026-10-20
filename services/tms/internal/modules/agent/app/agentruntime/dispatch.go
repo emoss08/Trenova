@@ -33,6 +33,9 @@ type toolOutcome struct {
 	content string
 	failed  bool
 	action  *agentports.PendingAction
+	// batch is what a script prepared and filed for a person as one batch;
+	// none of it ran.
+	batch []agentports.PendingAction
 	// data is what a query tool returned, before it was encoded for the
 	// model. The caller may turn it into something a person sees.
 	data any

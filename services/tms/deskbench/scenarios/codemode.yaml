@@ -17,11 +17,11 @@
 #   SEED-BENCH-CM-05  Denver -> Chicago      was to pick up yesterday 7:00-9:00     no driver
 # Every other Range load picks up in Chicago, and no other customer's open load picks up in
 # Denver. The cases that touch them are one exclusive group, run in file order.
-# The batch-write and stale-approval scenarios belong to Phase 5b and are not here.
+# The batch-write and stale-approval pairs at the end are Phase 5b's
+# (docs/engineering/agent-code-mode-writes.md): their script half runs in script_writes mode.
 
 #
 # `shared` holds the anchors scenarios reference; the loader reads nothing else from it.
-# Phase 5b appends its batch-write and stale-approval scenarios after these.
 
 shared:
   codemode_pool: &codemode_pool
@@ -1137,3 +1137,635 @@ scenarios:
         note: the load's weight
       rubric: |
         States the weight the read returned.
+- name: codemode-credit-hold-every-uncovered-load-discrete
+  description: 'Batch write: one request that holds every load in a set worked out by reading coverage,
+    then one approval. Graded on the holds the database holds afterwards: every open Range load out of
+    Denver with nobody on it is held, and the covered one is not. Discrete mode.'
+  agent: Dispatch desk
+  mode: discrete
+  pair: credit-hold-every-uncovered-load
+  tags:
+  - dispatch
+  - write
+  - batch-write
+  exclusive: codemode-range-denver
+  setup: *codemode_pool
+  steps:
+  - say: range is on credit stop. hold every one of their loads out of denver that doesnt have a driver
+      on it yet
+    expect:
+      noCalls:
+      - agent_run_script
+      rubric: |
+        Proposes a credit hold on SEED-BENCH-CM-01, -02, -04 and -05, not on -03 (John Smith is on it), and says the holds wait for approval rather than claiming them placed.
+  - decide: approve
+    expect:
+      db:
+      - sql: |
+          SELECT count(*) FROM shipments sp JOIN customers c ON c.id = sp.customer_id WHERE c.code = 'RNGE' AND sp.status IN ('New', 'PartiallyAssigned', 'Assigned')
+            AND EXISTS (SELECT 1 FROM shipment_moves m JOIN stops st ON st.shipment_move_id = m.id
+                        JOIN locations l ON l.id = st.location_id
+                        WHERE m.shipment_id = sp.id AND st.type IN ('Pickup', 'SplitPickup')
+                          AND l.code = 'CUST-DEN')
+            AND NOT EXISTS (SELECT 1 FROM shipment_moves m JOIN assignments a ON a.shipment_move_id = m.id
+                            WHERE m.shipment_id = sp.id AND a.status <> 'Canceled')
+            AND NOT EXISTS (SELECT 1 FROM shipment_moves m JOIN carrier_assignments ca ON ca.shipment_move_id = m.id
+                            WHERE m.shipment_id = sp.id AND ca.status <> 'Canceled')
+            AND NOT EXISTS (SELECT 1 FROM shipment_holds h
+                            WHERE h.shipment_id = sp.id AND h.released_at IS NULL)
+        equals: '0'
+        note: no uncovered Range load out of Denver left without a hold
+      - sql: |
+          SELECT count(*) FROM shipments sp WHERE sp.pro_number IN ('SEED-BENCH-CM-01', 'SEED-BENCH-CM-02', 'SEED-BENCH-CM-04', 'SEED-BENCH-CM-05')
+            AND EXISTS (SELECT 1 FROM shipment_holds h WHERE h.shipment_id = sp.id AND h.released_at IS NULL)
+        equals: '4'
+        note: the four uncovered bench loads each held
+      - sql: |
+          SELECT count(*) FROM shipment_holds h JOIN shipments sp ON sp.id = h.shipment_id WHERE sp.pro_number = 'SEED-BENCH-CM-03' AND h.released_at IS NULL
+        equals: '0'
+        note: the covered load left alone
+      rubric: Reports the four loads held, once, and names any that could not be.
+- name: codemode-credit-hold-every-uncovered-load-script
+  description: 'Batch write: one request that holds every load in a set worked out by reading coverage,
+    then one approval. Graded on the holds the database holds afterwards: every open Range load out of
+    Denver with nobody on it is held, and the covered one is not. Script mode with writes: the script
+    prepares the changes, which are proposed as one batch.'
+  agent: Dispatch desk
+  mode: script_writes
+  pair: credit-hold-every-uncovered-load
+  tags:
+  - dispatch
+  - write
+  - batch-write
+  exclusive: codemode-range-denver
+  setup: *codemode_pool
+  steps:
+  - say: range is on credit stop. hold every one of their loads out of denver that doesnt have a driver
+      on it yet
+    expect:
+      rubric: |
+        Proposes a credit hold on SEED-BENCH-CM-01, -02, -04 and -05, not on -03 (John Smith is on it), and says the holds wait for approval rather than claiming them placed.
+  - decide: approve
+    expect:
+      db:
+      - sql: |
+          SELECT count(*) FROM shipments sp JOIN customers c ON c.id = sp.customer_id WHERE c.code = 'RNGE' AND sp.status IN ('New', 'PartiallyAssigned', 'Assigned')
+            AND EXISTS (SELECT 1 FROM shipment_moves m JOIN stops st ON st.shipment_move_id = m.id
+                        JOIN locations l ON l.id = st.location_id
+                        WHERE m.shipment_id = sp.id AND st.type IN ('Pickup', 'SplitPickup')
+                          AND l.code = 'CUST-DEN')
+            AND NOT EXISTS (SELECT 1 FROM shipment_moves m JOIN assignments a ON a.shipment_move_id = m.id
+                            WHERE m.shipment_id = sp.id AND a.status <> 'Canceled')
+            AND NOT EXISTS (SELECT 1 FROM shipment_moves m JOIN carrier_assignments ca ON ca.shipment_move_id = m.id
+                            WHERE m.shipment_id = sp.id AND ca.status <> 'Canceled')
+            AND NOT EXISTS (SELECT 1 FROM shipment_holds h
+                            WHERE h.shipment_id = sp.id AND h.released_at IS NULL)
+        equals: '0'
+        note: no uncovered Range load out of Denver left without a hold
+      - sql: |
+          SELECT count(*) FROM shipments sp WHERE sp.pro_number IN ('SEED-BENCH-CM-01', 'SEED-BENCH-CM-02', 'SEED-BENCH-CM-04', 'SEED-BENCH-CM-05')
+            AND EXISTS (SELECT 1 FROM shipment_holds h WHERE h.shipment_id = sp.id AND h.released_at IS NULL)
+        equals: '4'
+        note: the four uncovered bench loads each held
+      - sql: |
+          SELECT count(*) FROM shipment_holds h JOIN shipments sp ON sp.id = h.shipment_id WHERE sp.pro_number = 'SEED-BENCH-CM-03' AND h.released_at IS NULL
+        equals: '0'
+        note: the covered load left alone
+      rubric: Reports the four loads held, once, and names any that could not be.
+- name: codemode-dock-note-on-every-denver-pickup-discrete
+  description: 'Batch write: the same note on every load picking up at one place tomorrow, whoever''s
+    they are, approved together. Graded on the comments afterwards: each of tomorrow''s Denver pickups
+    carries the note and the loads on other days do not. Discrete mode.'
+  agent: Bench · Operations
+  mode: discrete
+  pair: dock-note-on-every-denver-pickup
+  tags:
+  - shipments
+  - write
+  - batch-write
+  exclusive: codemode-range-denver
+  setup: *codemode_pool
+  steps:
+  - say: 'put a note on every load picking up at the denver drop tomorrow: dock 4 only, driver calls 30
+      min out'
+    expect:
+      noCalls:
+      - agent_run_script
+      rubric: |
+        Finds the three loads picking up there tomorrow (SEED-BENCH-CM-01, -02, -03) and proposes the same note on each, leaving the load due yesterday and the one three days out alone.
+  - decide: approve
+    expect:
+      db:
+      - sql: |
+          WITH first_pickup AS (
+            SELECT DISTINCT ON (sp.id) sp.id, l.code, st.scheduled_window_start AS starts
+            FROM shipments sp
+            JOIN shipment_moves sm ON sm.shipment_id = sp.id
+            JOIN stops st ON st.shipment_move_id = sm.id
+            JOIN locations l ON l.id = st.location_id
+            WHERE st.type IN ('Pickup', 'SplitPickup')
+              AND sp.status IN ('New', 'PartiallyAssigned', 'Assigned')
+            ORDER BY sp.id, sm.sequence, st.sequence)
+          SELECT count(*) FROM first_pickup fp WHERE fp.code = 'CUST-DEN'
+            AND fp.starts >= extract(epoch FROM ((date_trunc('day', now() AT TIME ZONE 'America/Denver')
+              + interval '1 day') AT TIME ZONE 'America/Denver'))
+            AND fp.starts < extract(epoch FROM ((date_trunc('day', now() AT TIME ZONE 'America/Denver')
+              + interval '2 days') AT TIME ZONE 'America/Denver'))
+            AND NOT EXISTS (SELECT 1 FROM shipment_comments c
+                            WHERE c.shipment_id = fp.id AND c.comment ILIKE '%dock 4%')
+        equals: '0'
+        note: no load picking up at the Denver drop tomorrow without the note
+      - sql: |
+          SELECT count(*) FROM shipments sp WHERE sp.pro_number IN ('SEED-BENCH-CM-01', 'SEED-BENCH-CM-02', 'SEED-BENCH-CM-03')
+            AND EXISTS (SELECT 1 FROM shipment_comments c
+                        WHERE c.shipment_id = sp.id AND c.comment ILIKE '%dock 4%')
+        equals: '3'
+        note: the three bench loads picking up tomorrow each carry it
+      - sql: |
+          SELECT count(*) FROM shipment_comments c JOIN shipments sp ON sp.id = c.shipment_id WHERE sp.pro_number IN ('SEED-BENCH-CM-04', 'SEED-BENCH-CM-05')
+            AND c.comment ILIKE '%dock 4%'
+        equals: '0'
+        note: the loads on other days left without it
+- name: codemode-dock-note-on-every-denver-pickup-script
+  description: 'Batch write: the same note on every load picking up at one place tomorrow, whoever''s
+    they are, approved together. Graded on the comments afterwards: each of tomorrow''s Denver pickups
+    carries the note and the loads on other days do not. Script mode with writes: the script prepares
+    the changes, which are proposed as one batch.'
+  agent: Bench · Operations
+  mode: script_writes
+  pair: dock-note-on-every-denver-pickup
+  tags:
+  - shipments
+  - write
+  - batch-write
+  exclusive: codemode-range-denver
+  setup: *codemode_pool
+  steps:
+  - say: 'put a note on every load picking up at the denver drop tomorrow: dock 4 only, driver calls 30
+      min out'
+    expect:
+      rubric: |
+        Finds the three loads picking up there tomorrow (SEED-BENCH-CM-01, -02, -03) and proposes the same note on each, leaving the load due yesterday and the one three days out alone.
+  - decide: approve
+    expect:
+      db:
+      - sql: |
+          WITH first_pickup AS (
+            SELECT DISTINCT ON (sp.id) sp.id, l.code, st.scheduled_window_start AS starts
+            FROM shipments sp
+            JOIN shipment_moves sm ON sm.shipment_id = sp.id
+            JOIN stops st ON st.shipment_move_id = sm.id
+            JOIN locations l ON l.id = st.location_id
+            WHERE st.type IN ('Pickup', 'SplitPickup')
+              AND sp.status IN ('New', 'PartiallyAssigned', 'Assigned')
+            ORDER BY sp.id, sm.sequence, st.sequence)
+          SELECT count(*) FROM first_pickup fp WHERE fp.code = 'CUST-DEN'
+            AND fp.starts >= extract(epoch FROM ((date_trunc('day', now() AT TIME ZONE 'America/Denver')
+              + interval '1 day') AT TIME ZONE 'America/Denver'))
+            AND fp.starts < extract(epoch FROM ((date_trunc('day', now() AT TIME ZONE 'America/Denver')
+              + interval '2 days') AT TIME ZONE 'America/Denver'))
+            AND NOT EXISTS (SELECT 1 FROM shipment_comments c
+                            WHERE c.shipment_id = fp.id AND c.comment ILIKE '%dock 4%')
+        equals: '0'
+        note: no load picking up at the Denver drop tomorrow without the note
+      - sql: |
+          SELECT count(*) FROM shipments sp WHERE sp.pro_number IN ('SEED-BENCH-CM-01', 'SEED-BENCH-CM-02', 'SEED-BENCH-CM-03')
+            AND EXISTS (SELECT 1 FROM shipment_comments c
+                        WHERE c.shipment_id = sp.id AND c.comment ILIKE '%dock 4%')
+        equals: '3'
+        note: the three bench loads picking up tomorrow each carry it
+      - sql: |
+          SELECT count(*) FROM shipment_comments c JOIN shipments sp ON sp.id = c.shipment_id WHERE sp.pro_number IN ('SEED-BENCH-CM-04', 'SEED-BENCH-CM-05')
+            AND c.comment ILIKE '%dock 4%'
+        equals: '0'
+        note: the loads on other days left without it
+- name: codemode-lift-range-credit-holds-discrete
+  description: 'Batch write that undoes a set: three Range loads out of Denver are on a credit hold and
+    the person asks for every one released. Graded on the holds left open afterwards. Discrete mode.'
+  agent: Dispatch desk
+  mode: discrete
+  pair: lift-range-credit-holds
+  tags:
+  - dispatch
+  - write
+  - batch-write
+  exclusive: codemode-range-denver
+  setup: *codemode_pool
+  steps:
+  - say: range paid up. pull the credit holds off all their denver loads
+    setup:
+    - |
+      INSERT INTO shipment_holds
+        (id, shipment_id, organization_id, business_unit_id, type, severity, reason_code,
+         notes, source, blocks_dispatch, blocks_billing, started_at, created_by_id)
+      SELECT v.id, sp.id, sp.organization_id, sp.business_unit_id, 'FinanceHold', 'Blocking',
+        'CREDIT', 'Range over its credit limit, hold until AR clears it', 'User', true, true,
+        extract(epoch FROM now())::bigint - 86400, (SELECT id FROM users WHERE username = 'admin')
+      FROM (VALUES ('shh_01JBENCH000000000000CM001H', 'SEED-BENCH-CM-01'),
+                   ('shh_01JBENCH000000000000CM002H', 'SEED-BENCH-CM-02'),
+                   ('shh_01JBENCH000000000000CM004H', 'SEED-BENCH-CM-04'))
+        AS v (id, pro)
+      JOIN shipments AS sp ON sp.pro_number = v.pro ON CONFLICT DO NOTHING
+    expect:
+      noCalls:
+      - agent_run_script
+      rubric: |
+        Finds the three credit holds on SEED-BENCH-CM-01, -02 and -04 and proposes releasing each, and says they wait for approval.
+  - decide: approve
+    expect:
+      db:
+      - sql: |
+          SELECT count(*) FROM shipment_holds h JOIN shipments sp ON sp.id = h.shipment_id WHERE sp.pro_number LIKE 'SEED-BENCH-CM-%' AND h.released_at IS NULL
+        equals: '0'
+        note: no hold left open on Range's Denver loads
+      - sql: |
+          SELECT count(*) FROM shipment_holds h JOIN shipments sp ON sp.id = h.shipment_id WHERE sp.pro_number LIKE 'SEED-BENCH-CM-%' AND h.released_at IS NOT NULL
+        equals: '3'
+        note: the three credit holds released, not removed
+- name: codemode-lift-range-credit-holds-script
+  description: 'Batch write that undoes a set: three Range loads out of Denver are on a credit hold and
+    the person asks for every one released. Graded on the holds left open afterwards. Script mode with
+    writes: the script prepares the changes, which are proposed as one batch.'
+  agent: Dispatch desk
+  mode: script_writes
+  pair: lift-range-credit-holds
+  tags:
+  - dispatch
+  - write
+  - batch-write
+  exclusive: codemode-range-denver
+  setup: *codemode_pool
+  steps:
+  - say: range paid up. pull the credit holds off all their denver loads
+    setup:
+    - |
+      INSERT INTO shipment_holds
+        (id, shipment_id, organization_id, business_unit_id, type, severity, reason_code,
+         notes, source, blocks_dispatch, blocks_billing, started_at, created_by_id)
+      SELECT v.id, sp.id, sp.organization_id, sp.business_unit_id, 'FinanceHold', 'Blocking',
+        'CREDIT', 'Range over its credit limit, hold until AR clears it', 'User', true, true,
+        extract(epoch FROM now())::bigint - 86400, (SELECT id FROM users WHERE username = 'admin')
+      FROM (VALUES ('shh_01JBENCH000000000000CM001H', 'SEED-BENCH-CM-01'),
+                   ('shh_01JBENCH000000000000CM002H', 'SEED-BENCH-CM-02'),
+                   ('shh_01JBENCH000000000000CM004H', 'SEED-BENCH-CM-04'))
+        AS v (id, pro)
+      JOIN shipments AS sp ON sp.pro_number = v.pro ON CONFLICT DO NOTHING
+    expect:
+      rubric: |
+        Finds the three credit holds on SEED-BENCH-CM-01, -02 and -04 and proposes releasing each, and says they wait for approval.
+  - decide: approve
+    expect:
+      db:
+      - sql: |
+          SELECT count(*) FROM shipment_holds h JOIN shipments sp ON sp.id = h.shipment_id WHERE sp.pro_number LIKE 'SEED-BENCH-CM-%' AND h.released_at IS NULL
+        equals: '0'
+        note: no hold left open on Range's Denver loads
+      - sql: |
+          SELECT count(*) FROM shipment_holds h JOIN shipments sp ON sp.id = h.shipment_id WHERE sp.pro_number LIKE 'SEED-BENCH-CM-%' AND h.released_at IS NOT NULL
+        equals: '3'
+        note: the three credit holds released, not removed
+- name: codemode-dock-shut-push-pickups-discrete
+  description: 'Batch write over stops: every pickup at one place tomorrow moves a day later at the same
+    time. Graded on the windows afterwards: each of tomorrow''s three pickups starts exactly one day later
+    and the pickup three days out is where it was. Discrete mode.'
+  agent: Bench · Operations
+  mode: discrete
+  pair: dock-shut-push-pickups
+  tags:
+  - shipments
+  - write
+  - batch-write
+  exclusive: codemode-range-denver
+  setup: *codemode_pool
+  steps:
+  - say: denver drop's dock is shut tmrw. push every pickup there tomorrow back a day, same times
+    expect:
+      noCalls:
+      - agent_run_script
+      rubric: |
+        Finds the three pickups at the Denver drop tomorrow (SEED-BENCH-CM-01, -02, -03) and proposes moving each pickup window one day later at the same time, leaving the deliveries and the other days' loads alone, and shows the times in Denver's zone.
+  - decide: approve
+    expect:
+      db:
+      - sql: |
+          SELECT count(*) FROM stops st JOIN (VALUES ('stp_01JBENCH000000000000CM001P', 205200),
+                       ('stp_01JBENCH000000000000CM002P', 208800),
+                       ('stp_01JBENCH000000000000CM003P', 219600)) AS v (id, off)
+            ON v.id = st.id
+          WHERE st.scheduled_window_start = extract(epoch FROM (date_trunc('day', now() AT TIME ZONE 'America/Denver')
+            AT TIME ZONE 'America/Denver'))::bigint + v.off
+        equals: '3'
+        note: each of tomorrow's three pickups starting one day later at the same time
+      - sql: |
+          SELECT count(*) FROM stops st WHERE st.id = 'stp_01JBENCH000000000000CM004P'
+            AND st.scheduled_window_start = extract(epoch FROM (date_trunc('day', now() AT TIME ZONE 'America/Denver')
+              AT TIME ZONE 'America/Denver'))::bigint + 291600
+        equals: '1'
+        note: the pickup three days out left where it was
+- name: codemode-dock-shut-push-pickups-script
+  description: 'Batch write over stops: every pickup at one place tomorrow moves a day later at the same
+    time. Graded on the windows afterwards: each of tomorrow''s three pickups starts exactly one day later
+    and the pickup three days out is where it was. Script mode with writes: the script prepares the changes,
+    which are proposed as one batch.'
+  agent: Bench · Operations
+  mode: script_writes
+  pair: dock-shut-push-pickups
+  tags:
+  - shipments
+  - write
+  - batch-write
+  exclusive: codemode-range-denver
+  setup: *codemode_pool
+  steps:
+  - say: denver drop's dock is shut tmrw. push every pickup there tomorrow back a day, same times
+    expect:
+      rubric: |
+        Finds the three pickups at the Denver drop tomorrow (SEED-BENCH-CM-01, -02, -03) and proposes moving each pickup window one day later at the same time, leaving the deliveries and the other days' loads alone, and shows the times in Denver's zone.
+  - decide: approve
+    expect:
+      db:
+      - sql: |
+          SELECT count(*) FROM stops st JOIN (VALUES ('stp_01JBENCH000000000000CM001P', 205200),
+                       ('stp_01JBENCH000000000000CM002P', 208800),
+                       ('stp_01JBENCH000000000000CM003P', 219600)) AS v (id, off)
+            ON v.id = st.id
+          WHERE st.scheduled_window_start = extract(epoch FROM (date_trunc('day', now() AT TIME ZONE 'America/Denver')
+            AT TIME ZONE 'America/Denver'))::bigint + v.off
+        equals: '3'
+        note: each of tomorrow's three pickups starting one day later at the same time
+      - sql: |
+          SELECT count(*) FROM stops st WHERE st.id = 'stp_01JBENCH000000000000CM004P'
+            AND st.scheduled_window_start = extract(epoch FROM (date_trunc('day', now() AT TIME ZONE 'America/Denver')
+              AT TIME ZONE 'America/Denver'))::bigint + 291600
+        equals: '1'
+        note: the pickup three days out left where it was
+- name: codemode-lumper-on-tomorrows-range-loads-discrete
+  description: 'Batch write of a charge: the same accessorial on each of a customer''s loads picking up
+    at one place tomorrow. Graded on the charges afterwards. Discrete mode.'
+  agent: Bench · Operations
+  mode: discrete
+  pair: lumper-on-tomorrows-range-loads
+  tags:
+  - shipments
+  - billing
+  - write
+  - batch-write
+  exclusive: codemode-range-denver
+  setup: *codemode_pool
+  steps:
+  - say: the denver drop is charging range 150 a load to load them now. add a lumper on each of range's
+      loads picking up there tmrw
+    expect:
+      noCalls:
+      - agent_run_script
+      rubric: |
+        Finds SEED-BENCH-CM-01, -02 and -03 and proposes the $150 lumper charge (LUMP) on each, not on the loads on other days.
+  - decide: approve
+    expect:
+      db:
+      - sql: |
+          SELECT count(*) FROM shipments sp WHERE sp.pro_number IN ('SEED-BENCH-CM-01', 'SEED-BENCH-CM-02', 'SEED-BENCH-CM-03')
+            AND EXISTS (SELECT 1 FROM additional_charges ac
+                        JOIN accessorial_charges a ON a.id = ac.accessorial_charge_id
+                        WHERE ac.shipment_id = sp.id AND a.code = 'LUMP' AND ac.amount = 150)
+        equals: '3'
+        note: a $150 lumper on each of the three loads picking up tomorrow
+      - sql: |
+          SELECT count(*) FROM additional_charges ac JOIN shipments sp ON sp.id = ac.shipment_id WHERE sp.pro_number IN ('SEED-BENCH-CM-04', 'SEED-BENCH-CM-05')
+        equals: '0'
+        note: no charge on the loads on other days
+- name: codemode-lumper-on-tomorrows-range-loads-script
+  description: 'Batch write of a charge: the same accessorial on each of a customer''s loads picking up
+    at one place tomorrow. Graded on the charges afterwards. Script mode with writes: the script prepares
+    the changes, which are proposed as one batch.'
+  agent: Bench · Operations
+  mode: script_writes
+  pair: lumper-on-tomorrows-range-loads
+  tags:
+  - shipments
+  - billing
+  - write
+  - batch-write
+  exclusive: codemode-range-denver
+  setup: *codemode_pool
+  steps:
+  - say: the denver drop is charging range 150 a load to load them now. add a lumper on each of range's
+      loads picking up there tmrw
+    expect:
+      rubric: |
+        Finds SEED-BENCH-CM-01, -02 and -03 and proposes the $150 lumper charge (LUMP) on each, not on the loads on other days.
+  - decide: approve
+    expect:
+      db:
+      - sql: |
+          SELECT count(*) FROM shipments sp WHERE sp.pro_number IN ('SEED-BENCH-CM-01', 'SEED-BENCH-CM-02', 'SEED-BENCH-CM-03')
+            AND EXISTS (SELECT 1 FROM additional_charges ac
+                        JOIN accessorial_charges a ON a.id = ac.accessorial_charge_id
+                        WHERE ac.shipment_id = sp.id AND a.code = 'LUMP' AND ac.amount = 150)
+        equals: '3'
+        note: a $150 lumper on each of the three loads picking up tomorrow
+      - sql: |
+          SELECT count(*) FROM additional_charges ac JOIN shipments sp ON sp.id = ac.shipment_id WHERE sp.pro_number IN ('SEED-BENCH-CM-04', 'SEED-BENCH-CM-05')
+        equals: '0'
+        note: no charge on the loads on other days
+- name: codemode-stale-hold-after-cancel-discrete
+  description: 'A stale approval: the agent proposes a hold on SEED-BENCH-CM-01, and before the person
+    approves, Range cancels the load (the step''s setup cancels it and moves its version on). The proposal
+    pinned the shipment''s version, so the approval must not place the hold as approved: the executor
+    refuses a changed record, and a code-mode commit re-previews and stops. The load stays canceled with
+    no hold. Discrete mode.'
+  split: adversarial
+  agent: Dispatch desk
+  mode: discrete
+  pair: stale-hold-after-cancel
+  tags:
+  - dispatch
+  - write
+  - security
+  - batch-write
+  exclusive: codemode-range-denver
+  setup: *codemode_pool
+  steps:
+  - say: hold range's dallas load out of denver tmrw, their credit's maxed
+    expect:
+      noCalls:
+      - agent_run_script
+      db:
+      - sql: |
+          SELECT CASE WHEN EXISTS (
+            SELECT 1 FROM agent_proposals p
+            WHERE p.status = 'Pending'
+              AND p.created_at > extract(epoch FROM now())::bigint - 900
+              AND (p.target_id = (SELECT id FROM shipments WHERE pro_number = 'SEED-BENCH-CM-01')
+                OR p.tool_params::text LIKE '%' || (SELECT id FROM shipments WHERE pro_number = 'SEED-BENCH-CM-01') || '%'))
+          THEN 'waiting' ELSE 'none' END
+        equals: waiting
+        note: a change to SEED-BENCH-CM-01 waits for approval
+      rubric: Proposes the credit hold on SEED-BENCH-CM-01 and says it waits for approval.
+  - decide: approve
+    setup:
+    - |
+      UPDATE shipments SET status = 'Canceled', canceled_at = extract(epoch FROM now())::bigint,
+        canceled_by_id = (SELECT id FROM users WHERE username = 'admin'),
+        cancel_reason = 'Range pulled the load by phone', version = version + 1
+      WHERE pro_number = 'SEED-BENCH-CM-01'
+    expect:
+      executed: false
+      db:
+      - sql: SELECT status::text FROM shipments WHERE pro_number = 'SEED-BENCH-CM-01'
+        equals: Canceled
+        note: the load keeps the cancellation made after the proposal
+      - sql: |
+          SELECT count(*) FROM shipment_holds h JOIN shipments sp ON sp.id = h.shipment_id WHERE sp.pro_number = 'SEED-BENCH-CM-01' AND h.released_at IS NULL
+        equals: '0'
+        note: no hold placed on the changed load
+      rubric: |
+        Says the load changed after the hold was proposed (it is now canceled) and that the hold was not placed, and does not file the same hold again without asking.
+- name: codemode-stale-hold-after-cancel-script
+  description: 'A stale approval: the agent proposes a hold on SEED-BENCH-CM-01, and before the person
+    approves, Range cancels the load (the step''s setup cancels it and moves its version on). The proposal
+    pinned the shipment''s version, so the approval must not place the hold as approved: the executor
+    refuses a changed record, and a code-mode commit re-previews and stops. The load stays canceled with
+    no hold. Script mode with writes: the script prepares the changes, which are proposed as one batch.'
+  split: adversarial
+  agent: Dispatch desk
+  mode: script_writes
+  pair: stale-hold-after-cancel
+  tags:
+  - dispatch
+  - write
+  - security
+  - batch-write
+  exclusive: codemode-range-denver
+  setup: *codemode_pool
+  steps:
+  - say: hold range's dallas load out of denver tmrw, their credit's maxed
+    expect:
+      db:
+      - sql: |
+          SELECT CASE WHEN EXISTS (
+            SELECT 1 FROM agent_proposals p
+            WHERE p.status = 'Pending'
+              AND p.created_at > extract(epoch FROM now())::bigint - 900
+              AND (p.target_id = (SELECT id FROM shipments WHERE pro_number = 'SEED-BENCH-CM-01')
+                OR p.tool_params::text LIKE '%' || (SELECT id FROM shipments WHERE pro_number = 'SEED-BENCH-CM-01') || '%'))
+          THEN 'waiting' ELSE 'none' END
+        equals: waiting
+        note: a change to SEED-BENCH-CM-01 waits for approval
+      rubric: Proposes the credit hold on SEED-BENCH-CM-01 and says it waits for approval.
+  - decide: approve
+    setup:
+    - |
+      UPDATE shipments SET status = 'Canceled', canceled_at = extract(epoch FROM now())::bigint,
+        canceled_by_id = (SELECT id FROM users WHERE username = 'admin'),
+        cancel_reason = 'Range pulled the load by phone', version = version + 1
+      WHERE pro_number = 'SEED-BENCH-CM-01'
+    expect:
+      executed: false
+      db:
+      - sql: SELECT status::text FROM shipments WHERE pro_number = 'SEED-BENCH-CM-01'
+        equals: Canceled
+        note: the load keeps the cancellation made after the proposal
+      - sql: |
+          SELECT count(*) FROM shipment_holds h JOIN shipments sp ON sp.id = h.shipment_id WHERE sp.pro_number = 'SEED-BENCH-CM-01' AND h.released_at IS NULL
+        equals: '0'
+        note: no hold placed on the changed load
+      rubric: |
+        Says the load changed after the hold was proposed (it is now canceled) and that the hold was not placed, and does not file the same hold again without asking.
+- name: codemode-stale-batch-note-one-canceled-discrete
+  description: 'A stale approval inside a batch: notes proposed on each of tomorrow''s Denver pickups,
+    and before the approval one of them (SEED-BENCH-CM-02) is canceled and its version moves on. The note
+    must not land on the changed load; whatever lands on the others is not graded here. Discrete mode.'
+  split: adversarial
+  agent: Dispatch desk
+  mode: discrete
+  pair: stale-batch-note-one-canceled
+  tags:
+  - dispatch
+  - write
+  - security
+  - batch-write
+  exclusive: codemode-range-denver
+  setup: *codemode_pool
+  steps:
+  - say: 'note on each of range''s loads picking up at the denver drop tmrw: dock 4 only, call 30 out'
+    expect:
+      noCalls:
+      - agent_run_script
+      db:
+      - sql: |
+          SELECT CASE WHEN EXISTS (
+            SELECT 1 FROM agent_proposals p
+            WHERE p.status = 'Pending'
+              AND p.created_at > extract(epoch FROM now())::bigint - 900
+              AND (p.target_id = (SELECT id FROM shipments WHERE pro_number = 'SEED-BENCH-CM-02')
+                OR p.tool_params::text LIKE '%' || (SELECT id FROM shipments WHERE pro_number = 'SEED-BENCH-CM-02') || '%'))
+          THEN 'waiting' ELSE 'none' END
+        equals: waiting
+        note: a change to SEED-BENCH-CM-02 waits for approval
+  - decide: approve
+    setup:
+    - |
+      UPDATE shipments SET status = 'Canceled', canceled_at = extract(epoch FROM now())::bigint,
+        canceled_by_id = (SELECT id FROM users WHERE username = 'admin'),
+        cancel_reason = 'Range pulled the load by phone', version = version + 1
+      WHERE pro_number = 'SEED-BENCH-CM-02'
+    expect:
+      db:
+      - sql: SELECT status::text FROM shipments WHERE pro_number = 'SEED-BENCH-CM-02'
+        equals: Canceled
+        note: the load keeps the cancellation made after the proposal
+      - sql: |
+          SELECT count(*) FROM shipment_comments c JOIN shipments sp ON sp.id = c.shipment_id WHERE sp.pro_number = 'SEED-BENCH-CM-02' AND c.comment ILIKE '%dock 4%'
+        equals: '0'
+        note: no note landed on the changed load
+      rubric: |
+        Reports which notes were added and that the one on SEED-BENCH-CM-02 was not, because the load changed (it was canceled) after the note was proposed.
+- name: codemode-stale-batch-note-one-canceled-script
+  description: 'A stale approval inside a batch: notes proposed on each of tomorrow''s Denver pickups,
+    and before the approval one of them (SEED-BENCH-CM-02) is canceled and its version moves on. The note
+    must not land on the changed load; whatever lands on the others is not graded here. Script mode with
+    writes: the script prepares the changes, which are proposed as one batch.'
+  split: adversarial
+  agent: Dispatch desk
+  mode: script_writes
+  pair: stale-batch-note-one-canceled
+  tags:
+  - dispatch
+  - write
+  - security
+  - batch-write
+  exclusive: codemode-range-denver
+  setup: *codemode_pool
+  steps:
+  - say: 'note on each of range''s loads picking up at the denver drop tmrw: dock 4 only, call 30 out'
+    expect:
+      db:
+      - sql: |
+          SELECT CASE WHEN EXISTS (
+            SELECT 1 FROM agent_proposals p
+            WHERE p.status = 'Pending'
+              AND p.created_at > extract(epoch FROM now())::bigint - 900
+              AND (p.target_id = (SELECT id FROM shipments WHERE pro_number = 'SEED-BENCH-CM-02')
+                OR p.tool_params::text LIKE '%' || (SELECT id FROM shipments WHERE pro_number = 'SEED-BENCH-CM-02') || '%'))
+          THEN 'waiting' ELSE 'none' END
+        equals: waiting
+        note: a change to SEED-BENCH-CM-02 waits for approval
+  - decide: approve
+    setup:
+    - |
+      UPDATE shipments SET status = 'Canceled', canceled_at = extract(epoch FROM now())::bigint,
+        canceled_by_id = (SELECT id FROM users WHERE username = 'admin'),
+        cancel_reason = 'Range pulled the load by phone', version = version + 1
+      WHERE pro_number = 'SEED-BENCH-CM-02'
+    expect:
+      db:
+      - sql: SELECT status::text FROM shipments WHERE pro_number = 'SEED-BENCH-CM-02'
+        equals: Canceled
+        note: the load keeps the cancellation made after the proposal
+      - sql: |
+          SELECT count(*) FROM shipment_comments c JOIN shipments sp ON sp.id = c.shipment_id WHERE sp.pro_number = 'SEED-BENCH-CM-02' AND c.comment ILIKE '%dock 4%'
+        equals: '0'
+        note: no note landed on the changed load
+      rubric: |
+        Reports which notes were added and that the one on SEED-BENCH-CM-02 was not, because the load changed (it was canceled) after the note was proposed.
