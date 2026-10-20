@@ -318,7 +318,8 @@ becomes a parameter. Its type comes from the field's GraphQL type:
   `leaseEndDate`). The operation's selection decides only what a result carries.
 - **Withheld fields.** A field above the caller's ceiling, or in a `@protected` group the caller
   lacks, is refused as a filter or sort before the read, with the same message today's
-  `refuseWithheldFields` gives.
+  `refuseWithheldFields` gives. A view `report_compose_table_view` composes and previews through the list
+  is held to the same check, since its filters reach the same resolver.
 
 **Operations on a table-shaped input** (`WorkerPTOEntriesInput`, `TrainingCoursesInput`, and any
 input that holds `first`, `after`, `query`, `fieldFilters` and `sort`). The table's fields are

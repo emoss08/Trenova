@@ -669,6 +669,16 @@ func (t *graphQLListTool) refuseWithheld(
 	if sortBy := optionalString(params.Params, paramSortBy); sortBy != "" {
 		fields = append(fields, sortBy)
 	}
+
+	return t.refuseFields(ctx, params, fields)
+}
+
+// refuseFields refuses the first of fields the caller may not be shown.
+func (t *graphQLListTool) refuseFields(
+	ctx context.Context,
+	params *agentports.QueryToolParams,
+	fields []string,
+) error {
 	if len(fields) == 0 {
 		return nil
 	}
@@ -768,7 +778,8 @@ func (t *graphQLListTool) keptOut(condition any) string {
 
 // runView reads a composed table view through the same operation, so the
 // count and rows a view previews are what listing the table shows the same
-// person.
+// person, and refuses a view that filters or orders by a field that person
+// may not be shown, as a call is refused.
 func (t *graphQLListTool) runView(
 	ctx context.Context,
 	params *agentports.QueryToolParams,
@@ -777,6 +788,17 @@ func (t *graphQLListTool) runView(
 	sorting []domaintypes.SortField,
 	limit int,
 ) (*viewRun, error) {
+	fields := make([]string, 0, len(filters)+len(sorting))
+	for _, filter := range filters {
+		fields = append(fields, filter.Field)
+	}
+	for _, field := range sorting {
+		fields = append(fields, field.Field)
+	}
+	if err := t.refuseFields(ctx, params, fields); err != nil {
+		return nil, err
+	}
+
 	req := &pageRequest{query: query, limit: limit}
 	for _, filter := range filters {
 		req.filters = append(req.filters, map[string]any{

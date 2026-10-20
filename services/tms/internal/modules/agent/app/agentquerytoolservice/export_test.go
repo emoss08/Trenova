@@ -1,11 +1,13 @@
 package agentquerytoolservice
 
 import (
+	"context"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -103,4 +105,17 @@ func ExpectedMention(tool agentports.AgentQueryTool, name string) (string, bool)
 	}
 
 	return "", false
+}
+
+// RunView reads a composed view through a list tool, as compose does.
+func RunView(
+	ctx context.Context,
+	tool agentports.AgentQueryTool,
+	params *agentports.QueryToolParams,
+	filters []domaintypes.FieldFilter,
+	sorting []domaintypes.SortField,
+) error {
+	_, err := tool.(viewRunner).runView(ctx, params, "", filters, sorting, 5)
+
+	return err
 }
