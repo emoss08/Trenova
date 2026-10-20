@@ -38,9 +38,11 @@ func AsExtension(constructor any) any {
 }
 
 func NewServer(p ServerParams) *gqlhandler.Server {
-	srv := gqlhandler.New(gqlext.NewCostLimitedSchema(generated.NewExecutableSchema(generated.Config{
-		Resolvers: p.Resolver,
-	})))
+	srv := gqlhandler.New(
+		gqlext.NewCostLimitedSchema(generated.NewExecutableSchema(generated.Config{
+			Resolvers: p.Resolver,
+		})),
+	)
 	srv.AddTransport(transport.POST{})
 	srv.SetQueryCache(lru.New[*ast.QueryDocument](queryCacheSize))
 	srv.SetParserTokenLimit(parserTokenLimit)

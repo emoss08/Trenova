@@ -320,6 +320,10 @@ tasks:
       # `go tool gqlgen generate`: it writes gqlgen's single-package executor
       # next to the sharded one and the build breaks.
       - go run ./internal/api/graphql/gqlexec/gen
+      # The agent read path's executor and tool bindings are written from the
+      # executor above and the persisted operations; see
+      # docs/engineering/agent-graphql-reads.md.
+      - go run ./internal/api/graphql/agentread/gen
 
   gqlgen-check:
     desc: Check GraphQL server generated code is up to date

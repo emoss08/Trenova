@@ -78,7 +78,7 @@ type Reader struct {
 
 var _ agentports.GraphQLReader = (*Reader)(nil)
 
-func New(p Params) *Reader {
+func New(p Params) *Reader { //nolint:gocritic // fx params are passed by value
 	exec := executor.New(gqlext.NewCostLimitedSchema(p.Schema.ExecutableSchema))
 	exec.SetQueryCache(lru.New[*ast.QueryDocument](queryCacheSize))
 	exec.SetParserTokenLimit(parserTokenLimit)
@@ -133,11 +133,13 @@ func (r *Reader) Read(
 	ctx = gqlctx.WithPermissionMemo(ctx, gqlctx.NewPermissionMemo())
 	ctx = gqlctx.WithResponseStatus(ctx, status)
 	ctx = gqlctx.WithFieldCeiling(ctx, ceiling)
-	ctx = r.loaders.Attach(ctx, pagination.TenantInfo{
-		OrgID:  auth.OrganizationID,
-		BuID:   auth.BusinessUnitID,
-		UserID: auth.UserID,
-	})
+	if r.loaders != nil {
+		ctx = r.loaders.Attach(ctx, pagination.TenantInfo{
+			OrgID:  auth.OrganizationID,
+			BuID:   auth.BusinessUnitID,
+			UserID: auth.UserID,
+		})
+	}
 
 	response, cost := r.dispatch(ctx, op, req.Variables)
 	result, err := decode(response, ceiling)
@@ -165,7 +167,8 @@ func (r *Reader) dispatch(
 	ctx context.Context,
 	op Operation,
 	variables map[string]any,
-) (*graphql.Response, int) {
+) (response *graphql.Response, cost int) {
+	ctx = graphql.StartOperationTrace(ctx)
 	params := &graphql.RawParams{
 		Query:         op.Document,
 		OperationName: op.Name,
@@ -181,7 +184,6 @@ func (r *Reader) dispatch(
 		return r.exec.DispatchError(graphql.WithOperationContext(ctx, rc), errs), 0
 	}
 
-	cost := 0
 	if stats := extension.GetComplexityStats(graphql.WithOperationContext(ctx, rc)); stats != nil {
 		cost = stats.Complexity
 	}

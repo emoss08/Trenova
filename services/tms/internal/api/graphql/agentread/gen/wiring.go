@@ -22,6 +22,7 @@ const (
 	newServicesFunc  = "newServices"
 	paramsType       = "Params"
 	coreField        = "Core"
+	depsKey          = "Deps"
 	rootQuery        = "Query"
 	rootMutation     = "Mutation"
 )
@@ -85,6 +86,14 @@ type paramField struct {
 	Tag  string
 }
 
+// rootSource is what the resolver root's generated file declares, before
+// it is matched up into wiring.
+type rootSource struct {
+	fields    map[string]*ast.UnaryExpr
+	aliases   map[string]string
+	accessors map[string]string
+}
+
 func loadWiring(resolverDir string) (*wiring, error) {
 	fset := token.NewFileSet()
 	path := filepath.Join(resolverDir, resolverRootFile)
@@ -100,70 +109,10 @@ func loadWiring(resolverDir string) (*wiring, error) {
 		roots:   make(map[string]*rootResolver),
 	}
 
-	fields := make(map[string]*ast.UnaryExpr)
-	aliases := make(map[string]string)
-	accessors := make(map[string]string)
-	for _, decl := range file.Decls {
-		switch d := decl.(type) {
-		case *ast.FuncDecl:
-			if d.Name.Name == fromServices {
-				w.readFromServices(d, fields)
-				continue
-			}
-			if object, field, ok := accessor(d); ok {
-				accessors[object] = field
-			}
-		case *ast.GenDecl:
-			for _, spec := range d.Specs {
-				ts, ok := spec.(*ast.TypeSpec)
-				if !ok || !ts.Assign.IsValid() {
-					continue
-				}
-				if sel, isSel := ts.Type.(*ast.SelectorExpr); isSel {
-					aliases[ts.Name.Name] = exprString(fset, sel)
-				}
-			}
-		}
-	}
-
-	for object, field := range accessors {
-		lit, ok := fields[field]
-		if !ok {
-			continue
-		}
-		pkg, typ, deps, ok := depsConstructor(fset, lit)
-		if !ok {
-			continue
-		}
-		w.objects[object] = &objectResolver{Object: object, Package: pkg, Type: typ, Deps: deps}
-	}
+	src := w.readRoot(file)
+	w.matchObjects(src)
 	for _, root := range []string{"query", "mutation"} {
-		lit, ok := fields[root]
-		if !ok {
-			continue
-		}
-		composite, ok := lit.X.(*ast.CompositeLit)
-		if !ok {
-			continue
-		}
-		for _, elt := range composite.Elts {
-			kv, isKV := elt.(*ast.KeyValueExpr)
-			if !isKV {
-				continue
-			}
-			alias := exprString(fset, kv.Key)
-			inner, isUnary := kv.Value.(*ast.UnaryExpr)
-			if !isUnary {
-				continue
-			}
-			deps := depsOf(fset, inner)
-			target, known := aliases[alias]
-			if !known || deps == "" {
-				continue
-			}
-			pkg, typ, _ := strings.Cut(target, ".")
-			w.roots[alias] = &rootResolver{Alias: alias, Package: pkg, Type: typ, Deps: deps}
-		}
+		w.matchRoots(src, root)
 	}
 
 	if w.services, err = loadServicesSource(resolverDir); err != nil {
@@ -173,44 +122,92 @@ func loadWiring(resolverDir string) (*wiring, error) {
 	return w, nil
 }
 
+func (w *wiring) readRoot(file *ast.File) *rootSource {
+	src := &rootSource{
+		fields:    make(map[string]*ast.UnaryExpr),
+		aliases:   make(map[string]string),
+		accessors: make(map[string]string),
+	}
+	for _, decl := range file.Decls {
+		switch d := decl.(type) {
+		case *ast.FuncDecl:
+			if d.Name.Name == fromServices {
+				w.readFromServices(d, src.fields)
+			} else if object, field, ok := accessor(d); ok {
+				src.accessors[object] = field
+			}
+		case *ast.GenDecl:
+			w.readAliases(d, src.aliases)
+		}
+	}
+
+	return src
+}
+
+func (w *wiring) readAliases(decl *ast.GenDecl, aliases map[string]string) {
+	for _, spec := range decl.Specs {
+		ts, ok := spec.(*ast.TypeSpec)
+		if !ok || !ts.Assign.IsValid() {
+			continue
+		}
+		if sel, isSel := ts.Type.(*ast.SelectorExpr); isSel {
+			aliases[ts.Name.Name] = exprString(w.fset, sel)
+		}
+	}
+}
+
+func (w *wiring) matchObjects(src *rootSource) {
+	for object, field := range src.accessors {
+		lit, ok := src.fields[field]
+		if !ok {
+			continue
+		}
+		pkg, typ, deps, ok := depsConstructor(w.fset, lit)
+		if !ok {
+			continue
+		}
+		w.objects[object] = &objectResolver{Object: object, Package: pkg, Type: typ, Deps: deps}
+	}
+}
+
+func (w *wiring) matchRoots(src *rootSource, root string) {
+	lit, ok := src.fields[root]
+	if !ok {
+		return
+	}
+	composite, ok := lit.X.(*ast.CompositeLit)
+	if !ok {
+		return
+	}
+	for _, elt := range composite.Elts {
+		kv, isKV := elt.(*ast.KeyValueExpr)
+		if !isKV {
+			continue
+		}
+		inner, isUnary := kv.Value.(*ast.UnaryExpr)
+		if !isUnary {
+			continue
+		}
+		alias := exprString(w.fset, kv.Key)
+		deps := depsOf(w.fset, inner)
+		target, known := src.aliases[alias]
+		if !known || deps == "" {
+			continue
+		}
+		pkg, typ, _ := strings.Cut(target, ".")
+		w.roots[alias] = &rootResolver{Alias: alias, Package: pkg, Type: typ, Deps: deps}
+	}
+}
+
 func (w *wiring) readFromServices(fn *ast.FuncDecl, fields map[string]*ast.UnaryExpr) {
 	for _, stmt := range fn.Body.List {
 		switch s := stmt.(type) {
 		case *ast.AssignStmt:
-			if len(s.Lhs) != 1 || len(s.Rhs) != 1 {
-				continue
+			if literal, ok := w.depsAssignment(s); ok {
+				w.deps[literal.Var] = literal
 			}
-			name := exprString(w.fset, s.Lhs[0])
-			unary, ok := s.Rhs[0].(*ast.UnaryExpr)
-			if !ok {
-				continue
-			}
-			lit, ok := unary.X.(*ast.CompositeLit)
-			if !ok {
-				continue
-			}
-			pkg, _, _ := strings.Cut(exprString(w.fset, lit.Type), ".")
-			literal := &depsLiteral{Var: name, Package: pkg}
-			for _, elt := range lit.Elts {
-				kv, isKV := elt.(*ast.KeyValueExpr)
-				if !isKV {
-					continue
-				}
-				service := strings.TrimPrefix(exprString(w.fset, kv.Value), "s.")
-				literal.Fields = append(literal.Fields, depsField{
-					Name: exprString(w.fset, kv.Key), Service: service,
-				})
-			}
-			w.deps[name] = literal
 		case *ast.ReturnStmt:
-			if len(s.Results) != 1 {
-				continue
-			}
-			unary, ok := s.Results[0].(*ast.UnaryExpr)
-			if !ok {
-				continue
-			}
-			lit, ok := unary.X.(*ast.CompositeLit)
+			lit, ok := returnedLiteral(s)
 			if !ok {
 				continue
 			}
@@ -227,34 +224,79 @@ func (w *wiring) readFromServices(fn *ast.FuncDecl, fields map[string]*ast.Unary
 	}
 }
 
+// depsAssignment reads `customerDeps := &customerresolver.Deps{...}`.
+func (w *wiring) depsAssignment(s *ast.AssignStmt) (*depsLiteral, bool) {
+	if len(s.Lhs) != 1 || len(s.Rhs) != 1 {
+		return nil, false
+	}
+	unary, ok := s.Rhs[0].(*ast.UnaryExpr)
+	if !ok {
+		return nil, false
+	}
+	lit, ok := unary.X.(*ast.CompositeLit)
+	if !ok {
+		return nil, false
+	}
+	pkg, _, _ := strings.Cut(exprString(w.fset, lit.Type), ".")
+	literal := &depsLiteral{Var: exprString(w.fset, s.Lhs[0]), Package: pkg}
+	for _, elt := range lit.Elts {
+		kv, isKV := elt.(*ast.KeyValueExpr)
+		if !isKV {
+			continue
+		}
+		literal.Fields = append(literal.Fields, depsField{
+			Name:    exprString(w.fset, kv.Key),
+			Service: strings.TrimPrefix(exprString(w.fset, kv.Value), "s."),
+		})
+	}
+
+	return literal, true
+}
+
+func returnedLiteral(s *ast.ReturnStmt) (*ast.CompositeLit, bool) {
+	if len(s.Results) != 1 {
+		return nil, false
+	}
+	unary, ok := s.Results[0].(*ast.UnaryExpr)
+	if !ok {
+		return nil, false
+	}
+	lit, ok := unary.X.(*ast.CompositeLit)
+
+	return lit, ok
+}
+
 // accessor reads `func (r *Resolver) Customer() generated.CustomerResolver {
 // return r.customer }` as the object and the field holding its resolver.
-func accessor(fn *ast.FuncDecl) (string, string, bool) {
+func accessor(fn *ast.FuncDecl) (object, field string, ok bool) {
 	if fn.Recv == nil || len(fn.Body.List) != 1 {
 		return "", "", false
 	}
-	ret, ok := fn.Body.List[0].(*ast.ReturnStmt)
-	if !ok || len(ret.Results) != 1 {
+	ret, isReturn := fn.Body.List[0].(*ast.ReturnStmt)
+	if !isReturn || len(ret.Results) != 1 {
 		return "", "", false
 	}
-	sel, ok := ret.Results[0].(*ast.SelectorExpr)
-	if !ok {
+	sel, isSel := ret.Results[0].(*ast.SelectorExpr)
+	if !isSel {
 		return "", "", false
 	}
 
 	return fn.Name.Name, sel.Sel.Name, true
 }
 
-func depsConstructor(fset *token.FileSet, expr *ast.UnaryExpr) (string, string, string, bool) {
-	lit, ok := expr.X.(*ast.CompositeLit)
-	if !ok {
+func depsConstructor(
+	fset *token.FileSet,
+	expr *ast.UnaryExpr,
+) (pkg, typ, deps string, ok bool) {
+	lit, isLit := expr.X.(*ast.CompositeLit)
+	if !isLit {
 		return "", "", "", false
 	}
 	pkg, typ, found := strings.Cut(exprString(fset, lit.Type), ".")
 	if !found {
 		return "", "", "", false
 	}
-	deps := depsOf(fset, expr)
+	deps = depsOf(fset, expr)
 
 	return pkg, typ, deps, deps != ""
 }
@@ -265,7 +307,7 @@ func depsOf(fset *token.FileSet, expr *ast.UnaryExpr) string {
 		return ""
 	}
 	for _, elt := range lit.Elts {
-		if kv, isKV := elt.(*ast.KeyValueExpr); isKV && exprString(fset, kv.Key) == "Deps" {
+		if kv, isKV := elt.(*ast.KeyValueExpr); isKV && exprString(fset, kv.Key) == depsKey {
 			return exprString(fset, kv.Value)
 		}
 	}
@@ -289,56 +331,10 @@ func loadServicesSource(resolverDir string) (*servicesSource, error) {
 	for _, decl := range file.Decls {
 		switch d := decl.(type) {
 		case *ast.GenDecl:
-			for _, spec := range d.Specs {
-				ts, ok := spec.(*ast.TypeSpec)
-				if !ok || ts.Name.Name != paramsType {
-					continue
-				}
-				st, ok := ts.Type.(*ast.StructType)
-				if !ok {
-					continue
-				}
-				for _, field := range st.Fields.List {
-					tag := ""
-					if field.Tag != nil {
-						tag, _ = strconv.Unquote(field.Tag.Value)
-					}
-					for _, name := range field.Names {
-						src.params[name.Name] = paramField{
-							Name: name.Name, Type: exprString(fset, field.Type), Tag: tag,
-						}
-					}
-				}
-			}
+			src.readParams(fset, d)
 		case *ast.FuncDecl:
-			if d.Name.Name != newServicesFunc {
-				continue
-			}
-			for _, stmt := range d.Body.List {
-				ret, ok := stmt.(*ast.ReturnStmt)
-				if !ok || len(ret.Results) != 1 {
-					continue
-				}
-				unary, ok := ret.Results[0].(*ast.UnaryExpr)
-				if !ok {
-					continue
-				}
-				lit, ok := unary.X.(*ast.CompositeLit)
-				if !ok {
-					continue
-				}
-				for _, elt := range lit.Elts {
-					kv, isKV := elt.(*ast.KeyValueExpr)
-					if !isKV {
-						continue
-					}
-					name := exprString(fset, kv.Key)
-					if name == coreField {
-						src.core = exprString(fset, kv.Value)
-						continue
-					}
-					src.exprs[name] = exprString(fset, kv.Value)
-				}
+			if d.Name.Name == newServicesFunc {
+				src.readNewServices(fset, d)
 			}
 		}
 	}
@@ -347,6 +343,55 @@ func loadServicesSource(resolverDir string) (*servicesSource, error) {
 	}
 
 	return src, nil
+}
+
+func (src *servicesSource) readParams(fset *token.FileSet, decl *ast.GenDecl) {
+	for _, spec := range decl.Specs {
+		ts, ok := spec.(*ast.TypeSpec)
+		if !ok || ts.Name.Name != paramsType {
+			continue
+		}
+		st, ok := ts.Type.(*ast.StructType)
+		if !ok {
+			continue
+		}
+		for _, field := range st.Fields.List {
+			tag := ""
+			if field.Tag != nil {
+				tag, _ = strconv.Unquote(field.Tag.Value)
+			}
+			for _, name := range field.Names {
+				src.params[name.Name] = paramField{
+					Name: name.Name, Type: exprString(fset, field.Type), Tag: tag,
+				}
+			}
+		}
+	}
+}
+
+func (src *servicesSource) readNewServices(fset *token.FileSet, fn *ast.FuncDecl) {
+	for _, stmt := range fn.Body.List {
+		ret, ok := stmt.(*ast.ReturnStmt)
+		if !ok {
+			continue
+		}
+		lit, ok := returnedLiteral(ret)
+		if !ok {
+			continue
+		}
+		for _, elt := range lit.Elts {
+			kv, isKV := elt.(*ast.KeyValueExpr)
+			if !isKV {
+				continue
+			}
+			name := exprString(fset, kv.Key)
+			if name == coreField {
+				src.core = exprString(fset, kv.Value)
+				continue
+			}
+			src.exprs[name] = exprString(fset, kv.Value)
+		}
+	}
 }
 
 func importAliases(file *ast.File) map[string]string {

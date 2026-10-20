@@ -25,7 +25,7 @@ func newSchema(
 	}
 	docs := make([]*ast.QueryDocument, 0, len(ops))
 	for _, op := range ops {
-		doc, gqlErr := gqlparser.LoadQuery(schemasource.Parsed, op.Document)
+		doc, gqlErr := gqlparser.LoadQueryWithRules(schemasource.Parsed, op.Document, nil)
 		if gqlErr != nil {
 			panic(fmt.Errorf("agentread: operation %s does not validate: %w", op.Name, gqlErr))
 		}

@@ -100,10 +100,12 @@ type FieldGuardExtension struct {
 // another record carries them, as the agent tools always have: the person
 // who created a customer is named, not described.
 var reducedTypes = map[string]map[string]struct{}{
-	"User":         {"id": {}, "name": {}},
-	"Organization": {"id": {}, "name": {}},
-	"BusinessUnit": {"id": {}, "name": {}},
+	"User":         reducedFields,
+	"Organization": reducedFields,
+	"BusinessUnit": reducedFields,
 }
+
+var reducedFields = map[string]struct{}{"id": {}, "name": {}}
 
 var _ interface {
 	graphql.HandlerExtension
@@ -135,7 +137,10 @@ func (e *FieldGuardExtension) Validate(schema graphql.ExecutableSchema) error {
 // ResourceTypes maps each object type named for a registered resource
 // (Customer is customer, BillingQueueItem is billing_queue_item) to it. A
 // type with no resource of its own belongs to the record that carries it.
-func ResourceTypes(schema *ast.Schema, registry *permission.Registry) map[string]permission.Resource {
+func ResourceTypes(
+	schema *ast.Schema,
+	registry *permission.Registry,
+) map[string]permission.Resource {
 	out := make(map[string]permission.Resource)
 	if schema == nil || registry == nil {
 		return out
@@ -184,13 +189,13 @@ func (e *FieldGuardExtension) InterceptField(
 		if agentRead {
 			ceiling.Withhold(fc.Path(), false)
 		}
-		return nil, nil
+		return nil, nil //nolint:nilnil // a withheld field is answered null
 	}
 	if agentRead && e.withholds(ctx, ceiling, fc) {
 		nonNull := fc.Field.Definition != nil && fc.Field.Definition.Type.NonNull
 		ceiling.Withhold(fc.Path(), nonNull)
 		if !nonNull {
-			return nil, nil
+			return nil, nil //nolint:nilnil // a withheld field is answered null
 		}
 	}
 	return next(ctx)

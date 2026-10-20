@@ -145,7 +145,10 @@ func writeTools(
 	for p, alias := range aliases {
 		data.Imports = append(data.Imports, importLine{Alias: alias, Path: p})
 	}
-	sort.Slice(data.Imports, func(i, j int) bool { return data.Imports[i].Path < data.Imports[j].Path })
+	sort.Slice(
+		data.Imports,
+		func(i, j int) bool { return data.Imports[i].Path < data.Imports[j].Path },
+	)
 	data.Names = sortedKeys(data.Inputs)
 
 	var buf bytes.Buffer
@@ -183,7 +186,10 @@ func variables(doc *ast.QueryDocument) []variable {
 	out := make([]variable, 0, len(op.VariableDefinitions))
 	for _, v := range op.VariableDefinitions {
 		out = append(out, variable{
-			Name: v.Variable, Type: v.Type.Name(), NonNull: v.Type.NonNull, List: v.Type.Elem != nil,
+			Name:    v.Variable,
+			Type:    v.Type.Name(),
+			NonNull: v.Type.NonNull,
+			List:    v.Type.Elem != nil,
 		})
 	}
 
@@ -210,8 +216,8 @@ func nodeFields(schema *ast.Schema, b *binding) []field {
 	}
 	set := root.SelectionSet
 	if b.Verb == verbList {
-		set = childSet(collect(set, fragments), edgesField, fragments)
-		set = childSet(collect(set, fragments), nodeField, fragments)
+		set = childSet(collect(set, fragments), edgesField)
+		set = childSet(collect(set, fragments), nodeField)
 	}
 
 	def := schema.Types[b.Node]
@@ -251,11 +257,7 @@ func collect(set ast.SelectionSet, fragments map[string]*ast.FragmentDefinition)
 	return out
 }
 
-func childSet(
-	fields []*ast.Field,
-	name string,
-	fragments map[string]*ast.FragmentDefinition,
-) ast.SelectionSet {
+func childSet(fields []*ast.Field, name string) ast.SelectionSet {
 	var out ast.SelectionSet
 	for _, f := range fields {
 		if f.Name == name {

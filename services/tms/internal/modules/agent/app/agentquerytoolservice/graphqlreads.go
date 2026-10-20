@@ -59,21 +59,30 @@ const (
 
 	dataTableInput = "DataTableConnectionInput"
 
-	suffixFrom   = "From"
-	suffixTo     = "To"
-	suffixMin    = "Min"
-	suffixMax    = "Max"
+	suffixFrom = "From"
+	suffixTo   = "To"
+	suffixMin  = "Min"
+	suffixMax  = "Max"
 )
 
 // unfilteredFields are selected by every operation but are never what a
 // person narrows a list by: the tenant, the row's version, and its id, which
 // a get reads.
 var unfilteredFields = map[string]struct{}{
-	"id":             {},
-	"organizationId": {},
-	"businessUnitId": {},
-	"version":        {},
+	recordIDField:        {},
+	tenantOrganizationID: {},
+	tenantBusinessUnitID: {},
+	rowVersion:           {},
 }
+
+const (
+	tenantOrganizationID = "organizationId"
+	tenantBusinessUnitID = "businessUnitId"
+	rowVersion           = "version"
+	recordIDField        = "id"
+	filterOperator       = "operator"
+	filterValue          = "value"
+)
 
 // paramKind is how a typed parameter compiles into the operation's filters.
 type paramKind int
@@ -159,8 +168,10 @@ func paramsFor(field graphQLField) ([]graphQLParam, error) {
 			Field: field.Name,
 			Kind:  paramIn,
 			Schema: map[string]any{
-				toolschema.KeyType:        toolschema.TypeArray,
-				toolschema.KeyDescription: describe("Only records whose " + words + " is one of these."),
+				toolschema.KeyType: toolschema.TypeArray,
+				toolschema.KeyDescription: describe(
+					"Only records whose " + words + " is one of these.",
+				),
 				toolschema.KeyItems: map[string]any{
 					toolschema.KeyType: toolschema.TypeString,
 					toolschema.KeyEnum: slices.Clone(field.Enum),
@@ -190,8 +201,10 @@ func paramsFor(field graphQLField) ([]graphQLParam, error) {
 		return []graphQLParam{{
 			Name: field.Name, Field: field.Name, Kind: paramEquals,
 			Schema: map[string]any{
-				toolschema.KeyType:        toolschema.TypeBoolean,
-				toolschema.KeyDescription: describe("Only records that are, or are not, " + words + "."),
+				toolschema.KeyType: toolschema.TypeBoolean,
+				toolschema.KeyDescription: describe(
+					"Only records that are, or are not, " + words + ".",
+				),
 			},
 		}}, nil
 	case graphQLTypeID:
@@ -211,20 +224,32 @@ func paramsFor(field graphQLField) ([]graphQLParam, error) {
 		}
 		return []graphQLParam{
 			{
-				Name: field.Name + suffixMin, Field: field.Name, Kind: paramAtLeast,
-				Schema: withDescription(number, describe("Only records whose "+words+" is at least this."+unit)),
+				Name:  field.Name + suffixMin,
+				Field: field.Name,
+				Kind:  paramAtLeast,
+				Schema: withDescription(
+					number,
+					describe("Only records whose "+words+" is at least this."+unit),
+				),
 			},
 			{
-				Name: field.Name + suffixMax, Field: field.Name, Kind: paramAtMost,
-				Schema: withDescription(number, describe("Only records whose "+words+" is at most this."+unit)),
+				Name:  field.Name + suffixMax,
+				Field: field.Name,
+				Kind:  paramAtMost,
+				Schema: withDescription(
+					number,
+					describe("Only records whose "+words+" is at most this."+unit),
+				),
 			},
 		}, nil
 	case graphQLTypeString:
 		return []graphQLParam{{
 			Name: field.Name, Field: field.Name, Kind: paramContains,
 			Schema: map[string]any{
-				toolschema.KeyType:        toolschema.TypeString,
-				toolschema.KeyDescription: describe("Only records whose " + words + " contains this text."),
+				toolschema.KeyType: toolschema.TypeString,
+				toolschema.KeyDescription: describe(
+					"Only records whose " + words + " contains this text.",
+				),
 			},
 		}}, nil
 	}
@@ -256,11 +281,11 @@ func compileFilters(
 		if !present || raw == nil {
 			continue
 		}
-		filter, err := compileFilter(param, args, clk)
+		filter, sent, err := compileFilter(param, args, clk)
 		if err != nil {
 			return nil, err
 		}
-		if filter != nil {
+		if sent {
 			out = append(out, filter)
 		}
 	}
@@ -268,43 +293,47 @@ func compileFilters(
 	return out, nil
 }
 
-func compileFilter(param graphQLParam, args map[string]any, clk clock) (map[string]any, error) {
-	filter := func(operator dbtype.Operator, value any) map[string]any {
-		return map[string]any{"field": param.Field, "operator": string(operator), "value": value}
+// compileFilter is one parameter's filter, and whether the call asked for
+// one: an empty list or blank text narrows nothing.
+func compileFilter(
+	param graphQLParam,
+	args map[string]any,
+	clk clock,
+) (filter map[string]any, sent bool, err error) {
+	compare := func(operator dbtype.Operator, value any) map[string]any {
+		return map[string]any{
+			paramField:     param.Field,
+			filterOperator: string(operator),
+			filterValue:    value,
+		}
 	}
 
 	switch param.Kind {
 	case paramIn:
 		values := optionalStrings(args, param.Name)
-		if len(values) == 0 {
-			return nil, nil
-		}
-		return filter(dbtype.OpIn, values), nil
+		return compare(dbtype.OpIn, values), len(values) > 0, nil
 	case paramEquals:
-		return filter(dbtype.OpEqual, args[param.Name]), nil
+		return compare(dbtype.OpEqual, args[param.Name]), true, nil
 	case paramContains:
 		text := strings.TrimSpace(optionalString(args, param.Name))
-		if text == "" {
-			return nil, nil
-		}
-		return filter(dbtype.OpContains, text), nil
+		return compare(dbtype.OpContains, text), text != "", nil
 	case paramDayFrom:
-		day, err := readDay(args, param.Name, clk)
-		if err != nil {
-			return nil, err
+		day, dayErr := readDay(args, param.Name, clk)
+		if dayErr != nil {
+			return nil, false, dayErr
 		}
-		return filter(dbtype.OpGreaterThanOrEqual, day), nil
+		return compare(dbtype.OpGreaterThanOrEqual, day), true, nil
 	case paramDayTo:
-		day, err := readDay(args, param.Name, clk)
-		if err != nil {
-			return nil, err
+		day, dayErr := readDay(args, param.Name, clk)
+		if dayErr != nil {
+			return nil, false, dayErr
 		}
-		return filter(dbtype.OpLessThanOrEqual, endOfDay(clk, day)), nil
+		return compare(dbtype.OpLessThanOrEqual, endOfDay(clk, day)), true, nil
 	case paramAtLeast:
-		return filter(dbtype.OpGreaterThanOrEqual, args[param.Name]), nil
+		return compare(dbtype.OpGreaterThanOrEqual, args[param.Name]), true, nil
 	case paramAtMost:
-		return filter(dbtype.OpLessThanOrEqual, args[param.Name]), nil
+		return compare(dbtype.OpLessThanOrEqual, args[param.Name]), true, nil
 	}
 
-	return nil, fmt.Errorf("parameter %q has no filter", param.Name)
+	return nil, false, fmt.Errorf("parameter %q has no filter", param.Name)
 }

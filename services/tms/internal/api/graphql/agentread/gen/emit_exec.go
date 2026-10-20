@@ -140,5 +140,5 @@ func writeGo(path string, src []byte) error {
 		return fmt.Errorf("format %s: %w\n%s", path, err, src)
 	}
 
-	return os.WriteFile(path, formatted, 0o644)
+	return os.WriteFile(path, formatted, 0o600)
 }

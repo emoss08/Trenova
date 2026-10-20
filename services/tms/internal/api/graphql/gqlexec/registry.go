@@ -110,8 +110,16 @@ func (r *Registry) addTypes(s *Shard) error {
 		if _, dup := r.objects[obj.Name]; dup {
 			return fmt.Errorf("gqlexec: object %q registered twice", obj.Name)
 		}
-		obj.index = make(map[string]*Field)
-		r.objects[obj.Name] = obj
+		// Each registry indexes its own copy: shards are package-level values,
+		// and a process can compile them into more than one registry (the API's
+		// executor and the agent read executor), each with different shards
+		// extending the same object.
+		r.objects[obj.Name] = &Object{
+			Name:         obj.Name,
+			Implementors: obj.Implementors,
+			Root:         obj.Root,
+			index:        make(map[string]*Field),
+		}
 	}
 	for _, a := range s.Abstracts {
 		if _, dup := r.abstracts[a.Name]; dup {

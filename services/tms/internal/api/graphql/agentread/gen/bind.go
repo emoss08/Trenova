@@ -109,7 +109,7 @@ func loadOperations(schema *ast.Schema, path string) (map[string]*operation, err
 
 	out := make(map[string]*operation, len(manifest))
 	for hash, text := range manifest {
-		doc, gqlErr := gqlparser.LoadQuery(schema, text)
+		doc, gqlErr := gqlparser.LoadQueryWithRules(schema, text, nil)
 		if gqlErr != nil {
 			return nil, fmt.Errorf("persisted operation %s does not validate: %w", hash, gqlErr)
 		}
@@ -187,7 +187,10 @@ func rootReads(schema *ast.Schema) []rootRead {
 	return out
 }
 
-func readShape(schema *ast.Schema, field *ast.FieldDefinition) (string, string, bool) {
+func readShape(
+	schema *ast.Schema,
+	field *ast.FieldDefinition,
+) (verb, node string, ok bool) {
 	if field.Type.Elem != nil {
 		return "", "", false
 	}
@@ -244,13 +247,17 @@ func bind(
 	return bindings, nil
 }
 
-func bindOne(catalog map[string]*operation, candidates []rootRead, r read) (*binding, string) {
-	ruled, rootRead, problem := ruleOperation(catalog, candidates, r.Tool)
+func bindOne(
+	catalog map[string]*operation,
+	candidates []rootRead,
+	r read,
+) (b *binding, problem string) {
+	ruled, ruledRoot, problem := ruleOperation(catalog, candidates, r.Tool)
 	switch {
 	case r.Operation == "" && problem != "":
 		return nil, problem
 	case r.Operation == "":
-		return newBinding(r, ruled, rootRead, ""), ""
+		return newBinding(r, ruled, ruledRoot, ""), ""
 	case ruled != nil && ruled.Name == r.Operation:
 		return nil, fmt.Sprintf("%s names %s, which the rule picks anyway; remove the override",
 			r.Tool, r.Operation)
@@ -273,8 +280,12 @@ func bindOne(catalog map[string]*operation, candidates []rootRead, r read) (*bin
 		}
 	}
 
-	return nil, fmt.Sprintf("%s names %s, whose root field %s reads no record the tool is named for",
-		r.Tool, r.Operation, chosen.Roots[0])
+	return nil, fmt.Sprintf(
+		"%s names %s, whose root field %s reads no record the tool is named for",
+		r.Tool,
+		r.Operation,
+		chosen.Roots[0],
+	)
 }
 
 func describe(op *operation, problem string) string {
@@ -304,7 +315,7 @@ func ruleOperation(
 	catalog map[string]*operation,
 	candidates []rootRead,
 	tool string,
-) (*operation, rootRead, string) {
+) (op *operation, rr rootRead, problem string) {
 	if len(candidates) == 0 {
 		return nil, rootRead{}, tool + ": no Query root field reads the record it is named for"
 	}
@@ -317,7 +328,7 @@ func ruleOperation(
 			"the operation", tool, strings.Join(names, ", "))
 	}
 
-	rr := candidates[0]
+	rr = candidates[0]
 	var ops []*operation
 	for _, op := range catalog {
 		if len(op.Roots) == 1 && op.Roots[0] == rr.field.Name {

@@ -274,3 +274,17 @@ func TestNewSchema_ValidatesOnlyItsOperationsWhenGiven(t *testing.T) {
 		NewSchema(SchemaConfig{Registry: reg, Parsed: schema})
 	})
 }
+
+func TestCompile_RegistriesOverTheSameShardsDoNotShareObjects(t *testing.T) {
+	t.Parallel()
+
+	shards := registryShards()
+	whole, err := Compile(shards)
+	require.NoError(t, err)
+	part, err := Compile(shards[:1])
+	require.NoError(t, err)
+
+	assert.NotNil(t, whole.objects["Query"].field("any"),
+		"compiling a second registry leaves the first one's fields alone")
+	assert.Nil(t, part.objects["Query"].field("any"))
+}

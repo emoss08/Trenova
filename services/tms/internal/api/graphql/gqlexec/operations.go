@@ -7,6 +7,14 @@ import (
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
+type operationWalk struct {
+	reg       *Registry
+	schema    *ast.Schema
+	fragments map[string]*ast.FragmentDefinition
+	problems  map[string]struct{}
+	seenTypes map[string]struct{}
+}
+
 // validateOperations is validate for an executor built from some of the
 // schema's shards: it checks that every type and field the given operations
 // can reach has an executor, and that every input their arguments take can be
@@ -62,14 +70,6 @@ func (w *operationWalk) document(doc *ast.QueryDocument) {
 		}
 		w.selections(root.Name, op.SelectionSet)
 	}
-}
-
-type operationWalk struct {
-	reg       *Registry
-	schema    *ast.Schema
-	fragments map[string]*ast.FragmentDefinition
-	problems  map[string]struct{}
-	seenTypes map[string]struct{}
 }
 
 func (w *operationWalk) problem(text string) {
