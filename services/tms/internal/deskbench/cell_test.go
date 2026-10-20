@@ -121,3 +121,21 @@ func TestCheckAdvisor_NeedsAnAnthropicProvider(t *testing.T) {
 	require.ErrorIs(t, checkAdvisor(nil, advisor), errAdvisorNeedsAnthropic,
 		"the default provider cannot be checked, so it is refused")
 }
+
+func TestCheckAdvisor_NeedsAPlatformThatServesIt(t *testing.T) {
+	t.Parallel()
+
+	advisor := agentports.DefaultAdvisor("")
+	for _, platform := range aiprovider.AllPlatforms() {
+		provider := &aiprovider.Provider{
+			Kind:     aiprovider.KindAnthropicMessages,
+			Platform: platform,
+		}
+		err := checkAdvisor(provider, advisor)
+		if platform.ServesAdvisor() {
+			require.NoError(t, err, platform)
+			continue
+		}
+		require.ErrorContains(t, err, "does not serve the advisor tool", platform)
+	}
+}

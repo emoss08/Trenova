@@ -376,22 +376,84 @@ func TestAnthropicConversation_ReplaysAnAdvisorErrorAsItCame(t *testing.T) {
 func TestAdvisorFor_PrefersTheRequestThenTheHistory(t *testing.T) {
 	t.Parallel()
 
+	direct := &aiprovider.Provider{Kind: aiprovider.KindAnthropicMessages}
 	asked := &Request{Advisor: agentports.DefaultAdvisor("claude-fable-5-1")}
-	assert.Equal(t, "claude-fable-5-1", advisorFor(&Call{Request: asked}).Model)
+	assert.Equal(t, "claude-fable-5-1",
+		advisorFor(&Call{Provider: direct, Request: asked}).Model)
 
 	advice := &ReasoningTrace{Blocks: []ProviderBlock{
 		{Type: "advisor_tool_result", Model: "claude-opus-5-5"},
 	}}
 	held := &Request{Messages: advisedHistory(advice)}
-	assert.Equal(t, agentports.DefaultAdvisor(""), advisorFor(&Call{Request: held}))
+	assert.Equal(t, agentports.DefaultAdvisor(""),
+		advisorFor(&Call{Provider: direct, Request: held}))
 
 	foreign := &ReasoningTrace{
 		ProviderKind: string(aiprovider.KindOpenAIResponses),
 		Blocks:       []ProviderBlock{{Type: "advisor_tool_result", Model: "claude-opus-5-5"}},
 	}
 	other := &Request{Messages: []Message{{Role: RoleAssistant, Reasoning: foreign}}}
-	assert.Nil(t, advisorFor(&Call{Request: other}))
-	assert.Nil(t, advisorFor(&Call{Request: &Request{Messages: UserMessage("hi")}}))
+	assert.Nil(t, advisorFor(&Call{Provider: direct, Request: other}))
+	assert.Nil(t, advisorFor(&Call{
+		Provider: direct,
+		Request:  &Request{Messages: UserMessage("hi")},
+	}))
+}
+
+func TestAdvisorFor_OnlyOnPlatformsThatServeIt(t *testing.T) {
+	t.Parallel()
+
+	advice := &ReasoningTrace{Blocks: []ProviderBlock{
+		{Type: "advisor_tool_result", Model: "claude-opus-5-5"},
+	}}
+	for _, platform := range aiprovider.AllPlatforms() {
+		provider := &aiprovider.Provider{
+			Kind:     aiprovider.KindAnthropicMessages,
+			Platform: platform,
+		}
+		asked := advisorFor(&Call{Provider: provider, Request: &Request{
+			Advisor: agentports.DefaultAdvisor(""),
+		}})
+		held := advisorFor(&Call{Provider: provider, Request: &Request{
+			Messages: advisedHistory(advice),
+		}})
+		if platform.ServesAdvisor() {
+			assert.NotNil(t, asked, platform)
+			assert.NotNil(t, held, platform)
+			continue
+		}
+		assert.Nil(t, asked, "%s refuses the advisor tool", platform)
+		assert.Nil(t, held, "%s refuses a history that keeps it declared", platform)
+	}
+}
+
+func TestWithoutAdvice_DropsServerToolBlocksAndKeepsTheRest(t *testing.T) {
+	t.Parallel()
+
+	advised := &ReasoningTrace{Blocks: []ProviderBlock{
+		{Type: anthropicThinkingBlock, Text: "plan", Signature: "sig_a"},
+		{Type: anthropicServerToolUseBlock, ID: "srvtoolu_1", Name: "advisor"},
+		{Type: anthropicAdvisorResultBlock, ToolUseID: "srvtoolu_1"},
+		{Type: anthropicTextBlock, Text: "Checking the shipment."},
+	}}
+	plain := &ReasoningTrace{Text: "thought"}
+	messages := []Message{
+		{Role: RoleUser, Content: "where is S1"},
+		{Role: RoleAssistant, Content: "Checking the shipment.", Reasoning: advised},
+		{Role: RoleAssistant, Content: "Done.", Reasoning: plain},
+	}
+
+	out := withoutAdvice(messages)
+	require.Len(t, out, 3)
+	assert.Equal(t, []ProviderBlock{
+		{Type: anthropicThinkingBlock, Text: "plan", Signature: "sig_a"},
+		{Type: anthropicTextBlock, Text: "Checking the shipment."},
+	}, out[1].Reasoning.Blocks)
+	assert.Same(t, plain, out[2].Reasoning)
+	assert.Len(t, messages[1].Reasoning.Blocks, 4, "the caller's history is not changed")
+
+	untouched := []Message{{Role: RoleAssistant, Reasoning: plain}}
+	assert.Equal(t, &untouched[0], &withoutAdvice(untouched)[0], "nothing to drop, nothing copied")
 }
 
 func TestOpenAIAdapters_IgnoreTheAdvisor(t *testing.T) {

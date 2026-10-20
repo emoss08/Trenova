@@ -1,6 +1,7 @@
 package modeladapter
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/anthropics/anthropic-sdk-go"
@@ -21,7 +22,8 @@ const (
 )
 
 func advisorFor(call *Call) *AdvisorSpec {
-	if call.Request == nil {
+	if call.Request == nil || call.Provider == nil ||
+		!call.Provider.ResolvedPlatform().ServesAdvisor() {
 		return nil
 	}
 	if spec := call.Request.Advisor; spec != nil && spec.Model != "" {
@@ -40,6 +42,25 @@ func advisorFor(call *Call) *AdvisorSpec {
 	}
 
 	return nil
+}
+
+func withoutAdvice(messages []Message) []Message {
+	var out []Message
+	for idx := range messages {
+		trace := messages[idx].Reasoning.WithoutServerTools()
+		if trace == messages[idx].Reasoning {
+			continue
+		}
+		if out == nil {
+			out = slices.Clone(messages)
+		}
+		out[idx].Reasoning = trace
+	}
+	if out == nil {
+		return messages
+	}
+
+	return out
 }
 
 func advisedTools(

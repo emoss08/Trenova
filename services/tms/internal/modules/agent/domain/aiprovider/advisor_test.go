@@ -35,3 +35,18 @@ func TestWithAdvisorCost(t *testing.T) {
 		"an advisor without a list price leaves the call unpriced rather than undercounted")
 	assert.False(t, (&aiprovider.AdvisorUsage{Model: "claude-opus-5-5"}).Used())
 }
+
+func TestPlatform_ServesAdvisorOnlyOnTheClaudeAPIAndClaudePlatformOnAWS(t *testing.T) {
+	t.Parallel()
+
+	served := make([]aiprovider.Platform, 0, 2)
+	for _, platform := range aiprovider.AllPlatforms() {
+		if platform.ServesAdvisor() {
+			served = append(served, platform)
+		}
+	}
+	assert.Equal(t, []aiprovider.Platform{
+		aiprovider.PlatformDirect,
+		aiprovider.PlatformClaudeAWS,
+	}, served)
+}

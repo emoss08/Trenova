@@ -51,6 +51,9 @@ func anthropicParams(call *Call, attached *anthropicFiles) anthropic.BetaMessage
 		messages = referencing(messages, nil)
 	}
 	advisor := advisorFor(call)
+	if advisor == nil {
+		messages = withoutAdvice(messages)
+	}
 	params := anthropic.BetaMessageNewParams{
 		Model:     call.Provider.Model,
 		MaxTokens: int64(call.Request.MaxTokens),

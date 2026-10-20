@@ -398,6 +398,13 @@ Only the desk bench asks for it today (the `+advisor` cell suffix in
 [desk-bench.md](desk-bench.md)); there is no provider setting, and the OpenAI adapters ignore
 the field. The Anthropic adapter (`modeladapter/anthropicadvisor.go`):
 
+- **Only where it is served.** The advisor is declared only on the Claude API and Claude Platform
+  on AWS (`Platform.ServesAdvisor`); Bedrock, Vertex AI and Foundry refuse a request that
+  declares it. On those platforms a request's advisor is ignored, and the stored
+  `server_tool_use` and `advisor_tool_result` blocks are left out when a conversation that
+  consulted the advisor elsewhere is replayed, so its text and thinking still go back. The bench
+  refuses a `+advisor` cell on such a provider.
+
 - **Declares it last.** `advisor_20260301` goes after every client tool, never deferred, with
   `caching: {type: "ephemeral", ttl: "5m"}` for the advisor's own prompt and the
   `advisor-tool-2026-03-01` beta. It carries the tools' cache mark, and since the request's

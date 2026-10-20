@@ -127,6 +127,10 @@ func checkAdvisor(provider *aiprovider.Provider, advisor *agentports.AdvisorSpec
 	if provider == nil || provider.Kind != aiprovider.KindAnthropicMessages {
 		return errAdvisorNeedsAnthropic
 	}
+	if platform := provider.ResolvedPlatform(); !platform.ServesAdvisor() {
+		return fmt.Errorf("%s%s: %s does not serve the advisor tool; use the Claude API or "+
+			"Claude Platform on AWS", suffixSeparator, advisorSuffix, platform)
+	}
 
 	return nil
 }

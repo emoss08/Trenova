@@ -39,3 +39,24 @@ func (t *ReasoningTrace) AdvisorModel() string {
 
 	return ""
 }
+
+func (t *ReasoningTrace) WithoutServerTools() *ReasoningTrace {
+	if t == nil {
+		return nil
+	}
+	kept := make([]ProviderBlock, 0, len(t.Blocks))
+	for idx := range t.Blocks {
+		switch t.Blocks[idx].Type {
+		case ProviderBlockServerToolUse, ProviderBlockAdvisorToolResult:
+			continue
+		}
+		kept = append(kept, t.Blocks[idx])
+	}
+	if len(kept) == len(t.Blocks) {
+		return t
+	}
+	trace := *t
+	trace.Blocks = kept
+
+	return &trace
+}

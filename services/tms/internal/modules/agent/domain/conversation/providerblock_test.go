@@ -37,3 +37,25 @@ func TestReasoningTrace_KeepsProviderBlocksThroughStorage(t *testing.T) {
 	assert.Empty(t, none.AdvisorModel())
 	assert.Empty(t, (&ReasoningTrace{Text: "only thinking"}).AdvisorModel())
 }
+
+func TestReasoningTrace_WithoutServerTools(t *testing.T) {
+	t.Parallel()
+
+	var none *ReasoningTrace
+	assert.Nil(t, none.WithoutServerTools())
+
+	plain := &ReasoningTrace{Blocks: []ProviderBlock{{Type: "text"}}}
+	assert.Same(t, plain, plain.WithoutServerTools())
+
+	advised := &ReasoningTrace{Text: "t", Blocks: []ProviderBlock{
+		{Type: "thinking"},
+		{Type: ProviderBlockServerToolUse},
+		{Type: ProviderBlockAdvisorToolResult},
+		{Type: "text"},
+	}}
+	stripped := advised.WithoutServerTools()
+	assert.Equal(t, "t", stripped.Text)
+	assert.Equal(t, []ProviderBlock{{Type: "thinking"}, {Type: "text"}},
+		stripped.Blocks)
+	assert.Len(t, advised.Blocks, 4)
+}
