@@ -1,5 +1,6 @@
 import { AnalysisChartImage } from "@/components/assistant/analysis-chart-image";
 import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
+import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { analysisRunStatusAttrs } from "@/lib/analysis-run";
 import { formatAnalysisValue, isNumericKind } from "@/lib/analysis-values";
 import type {
@@ -8,9 +9,18 @@ import type {
   AnalysisRunStatus,
   AnalysisTable,
 } from "@/types/agent-extension";
-import { ChevronDownIcon } from "@trenova/shared/components/icons";
+import {
+  CheckIcon,
+  ChevronRightIcon,
+  CodeSnippet02Icon,
+  Copy01Icon,
+  Database01Icon,
+  TerminalSquareIcon,
+  type IconComponent,
+} from "@trenova/shared/components/icons";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Collapsible,
   CollapsibleContent,
@@ -28,6 +38,7 @@ import {
 import { useT } from "@trenova/shared/i18n/use-t";
 import { phaseTone } from "@trenova/shared/lib/status-phase";
 import { cn } from "@trenova/shared/lib/utils";
+import { useState, type ReactNode } from "react";
 
 export type AnalysisDatasetView = {
   name: string;
@@ -56,6 +67,13 @@ export type AnalysisView = {
   failure: string;
   truncated: boolean;
 };
+
+const CODE_LANGUAGE = "python";
+
+// Each line of code is numbered by a CSS counter in a gutter that stays put while the code
+// scrolls sideways, so the numbers are never selected or copied with the code.
+const NUMBERED_LINE_CLASS =
+  "before:sticky before:left-0 before:inline-block before:w-12 before:bg-sunken before:pr-4 before:text-right before:text-foreground-subtle before:tabular-nums before:select-none before:content-[counter(line)] before:[counter-increment:line]";
 
 /**
  * The charts and tables in the order the analysis showed them. A run kept before the order was
@@ -129,7 +147,7 @@ export function AnalysisResult({ analysis }: { analysis: AnalysisView }) {
           {analysis.results.map((result, index) => (
             <pre
               key={`${index}-${result.slice(0, 16)}`}
-              className="bg-muted/40 overflow-x-auto rounded-md border p-2 font-mono text-xs whitespace-pre-wrap"
+              className="bg-sunken text-foreground rounded-surface scrollbar-overlay max-h-72 overflow-auto border px-3 py-2 font-mono text-xs leading-relaxed whitespace-pre-wrap break-words"
             >
               {result}
             </pre>
@@ -162,31 +180,7 @@ export function AnalysisResult({ analysis }: { analysis: AnalysisView }) {
 
       <DatasetsRead datasets={analysis.datasets} />
 
-      {(analysis.output !== "" || analysis.code !== "") && (
-        <div className="flex flex-col gap-2 border-t pt-3">
-          {analysis.output !== "" && (
-            <Fold label={t("What it printed")} defaultOpen={!shown}>
-              <pre className="bg-muted/40 max-h-72 overflow-auto rounded-md border p-2 font-mono text-xs whitespace-pre">
-                {analysis.output}
-              </pre>
-              {analysis.truncated && (
-                <p className="text-muted-foreground mt-1 text-xs">
-                  {t("Only the end of what it printed is kept here.")}
-                </p>
-              )}
-            </Fold>
-          )}
-          {analysis.code !== "" && (
-            <Fold label={t("Code")} defaultOpen={false}>
-              <HighlightedCode
-                code={analysis.code}
-                language="python"
-                className="max-h-96 text-xs"
-              />
-            </Fold>
-          )}
-        </div>
-      )}
+      <AnalysisWorkings analysis={analysis} outputOpen={!shown} />
     </div>
   );
 }
@@ -199,9 +193,9 @@ function AnalysisTableView({ table }: { table: AnalysisTable }) {
   return (
     <section aria-label={table.title || t("Table")} className="flex flex-col gap-1.5">
       {table.title !== "" && <h4 className="text-sm font-medium">{table.title}</h4>}
-      <div className="max-h-96 overflow-auto rounded-md border">
+      <div className="rounded-surface scrollbar-overlay max-h-96 overflow-auto border">
         <Table className="text-xs">
-          <TableHeader className="bg-muted/40 sticky top-0">
+          <TableHeader className="bg-sunken sticky top-0">
             <TableRow>
               {table.columns.map((column, index) => (
                 <TableHead
@@ -251,13 +245,16 @@ function DatasetsRead({ datasets }: { datasets: AnalysisDatasetView[] }) {
   }
 
   return (
-    <div className="text-muted-foreground flex flex-wrap items-center gap-1.5 text-xs">
-      <span>{t("From")}</span>
-      <ul aria-label={t("Datasets read")} className="flex flex-wrap gap-1.5">
+    <div className="text-foreground-muted flex flex-wrap items-center gap-1.5 text-xs">
+      <span className="inline-flex items-center gap-1">
+        <Database01Icon className="size-3.5" aria-hidden />
+        {t("From")}
+      </span>
+      <ul aria-label={t("Datasets read")} className="flex min-w-0 flex-wrap gap-1.5">
         {datasets.map((dataset) => (
           <li
             key={dataset.name}
-            className="bg-muted/50 text-foreground rounded-badge px-1.5 py-0.5"
+            className="bg-sunken text-foreground rounded-badge max-w-full truncate border px-1.5 py-0.5"
             title={dataset.path}
           >
             {dataset.source === "ReportRun" && dataset.rows > 0
@@ -274,22 +271,122 @@ function DatasetsRead({ datasets }: { datasets: AnalysisDatasetView[] }) {
   );
 }
 
-function Fold({
+/**
+ * How the analysis got its answer, framed as one panel beneath the findings: what it printed
+ * and the code that ran, each folded under its own header with a way to copy it. Both scroll
+ * inside the panel, so a long line never widens the card.
+ */
+function AnalysisWorkings({
+  analysis,
+  outputOpen,
+}: {
+  analysis: AnalysisView;
+  outputOpen: boolean;
+}) {
+  const t = useT();
+  const code = analysis.code.trimEnd();
+  if (analysis.output === "" && code === "") {
+    return null;
+  }
+
+  return (
+    <div className="rounded-surface divide-y overflow-hidden border">
+      {analysis.output !== "" && (
+        <WorkingsSection
+          icon={TerminalSquareIcon}
+          label={t("What it printed")}
+          copyText={analysis.output}
+          defaultOpen={outputOpen}
+        >
+          <pre className="scrollbar-overlay text-foreground max-h-72 overflow-auto px-4 py-3 font-mono text-xs leading-relaxed whitespace-pre">
+            {analysis.output}
+          </pre>
+          {analysis.truncated && (
+            <p className="text-foreground-muted border-t px-4 py-2 text-xs">
+              {t("Only the end of what it printed is kept here.")}
+            </p>
+          )}
+        </WorkingsSection>
+      )}
+      {code !== "" && (
+        <WorkingsSection
+          icon={CodeSnippet02Icon}
+          label={t("Code")}
+          meta={
+            <>
+              <span>{CODE_LANGUAGE}</span>
+              <span aria-hidden>·</span>
+              <span>{t("{0, plural, one {# line} other {# lines}}", code.split("\n").length)}</span>
+            </>
+          }
+          copyText={code}
+          defaultOpen={false}
+        >
+          <div className="scrollbar-overlay max-h-96 overflow-auto">
+            <HighlightedCode
+              code={code}
+              language={CODE_LANGUAGE}
+              className="w-max min-w-full py-3 pr-4 [counter-reset:line]"
+              lineClassName={NUMBERED_LINE_CLASS}
+            />
+          </div>
+        </WorkingsSection>
+      )}
+    </div>
+  );
+}
+
+function WorkingsSection({
+  icon: Icon,
   label,
+  meta,
+  copyText,
   defaultOpen,
   children,
 }: {
+  icon: IconComponent;
   label: string;
+  meta?: ReactNode;
+  copyText: string;
   defaultOpen: boolean;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
+  const t = useT();
+  const [open, setOpen] = useState(defaultOpen);
+  const { copy, isCopied } = useCopyToClipboard();
+
   return (
-    <Collapsible defaultOpen={defaultOpen} className="flex flex-col gap-1.5">
-      <CollapsibleTrigger className="ui-focus-ring group text-muted-foreground hover:text-foreground flex w-fit items-center gap-1 rounded-sm text-xs font-medium">
-        <ChevronDownIcon className="size-3.5 transition-transform group-data-[panel-open]:rotate-180" />
-        {label}
-      </CollapsibleTrigger>
-      <CollapsibleContent>{children}</CollapsibleContent>
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <div className="flex h-9 items-center gap-2 pr-1.5 pl-2">
+        <CollapsibleTrigger className="ui-focus-ring text-foreground-muted hover:text-foreground flex min-w-0 flex-1 items-center gap-2 self-stretch rounded-sm pl-1 text-left text-xs">
+          <ChevronRightIcon
+            className={cn(
+              "text-foreground-subtle size-3.5 shrink-0 transition-transform",
+              open && "rotate-90",
+            )}
+            aria-hidden
+          />
+          <Icon className="size-3.5 shrink-0" aria-hidden />
+          <span className="text-foreground shrink-0 font-medium">{label}</span>
+          {meta && (
+            <span className="text-foreground-subtle flex min-w-0 items-center gap-1.5 truncate font-mono">
+              {meta}
+            </span>
+          )}
+        </CollapsibleTrigger>
+        {open && (
+          <Button
+            variant="ghost"
+            size="xs"
+            className="text-foreground-muted shrink-0"
+            onClick={() => void copy(copyText, { timeout: 1500 })}
+          >
+            {isCopied ? <CheckIcon aria-hidden /> : <Copy01Icon aria-hidden />}
+            {isCopied ? t("Copied") : t("Copy")}
+          </Button>
+        )}
+      </div>
+      <CollapsibleContent className="bg-sunken border-t">{children}</CollapsibleContent>
     </Collapsible>
   );
 }

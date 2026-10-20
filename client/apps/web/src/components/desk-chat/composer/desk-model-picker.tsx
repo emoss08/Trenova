@@ -1,10 +1,11 @@
 import type { AssistantProviderOption } from "@/types/assistant";
 import { Button } from "@trenova/shared/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import {
   Fragment,
-  useCallback,
   useEffect,
   useId,
   useMemo,
@@ -14,7 +15,7 @@ import {
   type KeyboardEvent,
 } from "react";
 import { DeskIcon } from "../desk-icons";
-import { useOutsideDismiss } from "../use-outside-dismiss";
+import { deskPopoverClass, useComposerPopover } from "../desk-popover";
 import { DeskBrandMark, GeminiGradient, REEL_VENDORS, VENDOR_NAMES } from "./desk-brand-mark";
 
 /** The marks the Auto chip's reel turns through, starting and ending on Auto. */
@@ -118,26 +119,24 @@ export function DeskModelPicker({
 }) {
   const t = useT();
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [highlighted, setHighlighted] = useState(0);
+  const onOpenChange = (next: boolean) => {
+    if (next) {
+      setQuery("");
+      setHighlighted(0);
+    }
+    setOpen(next);
+  };
   useEffect(() => {
     if (openSignal > 0) {
       setOpen(true);
     }
   }, [openSignal]);
-  const [query, setQuery] = useState("");
-  const [highlighted, setHighlighted] = useState(0);
   const [spin, setSpin] = useState(0);
-  const rootRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
   const listId = useId();
-  // Focus that was in the popover goes back to the chip when it closes.
-  const close = useCallback(() => {
-    if (rootRef.current?.contains(document.activeElement)) {
-      buttonRef.current?.focus();
-    }
-    setOpen(false);
-  }, []);
-  useOutsideDismiss(rootRef, open, close);
+  const { anchor, wide } = useComposerPopover();
 
   const selected = options.find((option) => option.id === value) ?? null;
 
@@ -157,22 +156,6 @@ export function DeskModelPicker({
     return showAuto ? [{ auto: true }, ...matched] : matched;
   }, [options, query]);
 
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-    const timer = window.setTimeout(() => inputRef.current?.focus(), 30);
-    return () => window.clearTimeout(timer);
-  }, [open]);
-
-  const toggle = () => {
-    if (!open) {
-      setQuery("");
-      setHighlighted(0);
-    }
-    setOpen(!open);
-  };
-
   const pick = (row: Row | undefined) => {
     if (!row || (!row.auto && row.option.unavailable)) {
       return;
@@ -182,7 +165,7 @@ export function DeskModelPicker({
       setSpin((count) => count + 1);
     }
     onChange(id);
-    close();
+    setOpen(false);
   };
 
   const onKeyDown = (event: KeyboardEvent) => {
@@ -203,22 +186,23 @@ export function DeskModelPicker({
   }
 
   return (
-    <div className="dk-mp2" ref={rootRef}>
+    <Popover open={open} onOpenChange={onOpenChange}>
       <GeminiGradient />
-      <Button
-        variant="bare"
-        size="bare"
-        ref={buttonRef}
-        className={cn(
-          "dk-mp2-b h-7 max-w-50 gap-1.75 rounded-badge pr-2 pl-1.75 text-sm text-dsk-muted transition-colors duration-150 hover:bg-dsk-hover hover:text-dsk-fg",
-          open && "dk-on bg-dsk-hover text-dsk-fg",
-          !selected && "dk-auto relative isolate text-dsk-fg2 hover:text-dsk-fg2",
-        )}
+      <PopoverTrigger
         disabled={disabled}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        aria-label={t("Choose which model answers")}
-        onClick={toggle}
+        render={
+          <Button
+            variant="bare"
+            size="bare"
+            className={cn(
+              "dk-mp2-b h-7 max-w-50 gap-1.75 rounded-badge pr-2 pl-1.75 text-sm text-dsk-muted transition-colors duration-150 hover:bg-dsk-hover hover:text-dsk-fg",
+              open && "dk-on bg-dsk-hover text-dsk-fg",
+              !selected && "dk-auto relative isolate text-dsk-fg2 hover:text-dsk-fg2",
+            )}
+            aria-haspopup="listbox"
+            aria-label={t("Choose which model answers")}
+          />
+        }
       >
         {selected ? (
           <span className="dk-mp2-bi" key={spin}>
@@ -252,27 +236,36 @@ export function DeskModelPicker({
         >
           <path d="M6 9l6 6 6-6" />
         </svg>
-      </Button>
-      {open && (
-        <div className="dk-mp2-pop" onKeyDown={onKeyDown}>
-          <div className="dk-mp2-s">
-            <DeskIcon name="search" size={13} />
-            <input
-              ref={inputRef}
-              value={query}
-              onChange={(event) => {
-                setQuery(event.target.value);
-                setHighlighted(0);
-              }}
-              placeholder={t("Search models…")}
-              aria-label={t("Search models")}
-              role="combobox"
-              aria-expanded
-              aria-autocomplete="list"
-              aria-controls={listId}
-              aria-activedescendant={rows[highlighted] ? `${listId}-${highlighted}` : undefined}
-            />
-          </div>
+      </PopoverTrigger>
+      <PopoverContent
+        side="top"
+        align="end"
+        alignOffset={wide ? 0 : -40}
+        sideOffset={8}
+        anchor={anchor}
+        initialFocus={inputRef}
+        className={cn(deskPopoverClass, wide ? "w-(--anchor-width)" : "w-85")}
+        onKeyDown={onKeyDown}
+      >
+        <div className="dk-mp2-s">
+          <DeskIcon name="search" size={13} />
+          <input
+            ref={inputRef}
+            value={query}
+            onChange={(event) => {
+              setQuery(event.target.value);
+              setHighlighted(0);
+            }}
+            placeholder={t("Search models…")}
+            aria-label={t("Search models")}
+            role="combobox"
+            aria-expanded
+            aria-autocomplete="list"
+            aria-controls={listId}
+            aria-activedescendant={rows[highlighted] ? `${listId}-${highlighted}` : undefined}
+          />
+        </div>
+        <ScrollArea viewportClassName="max-h-82.5" maskVariant="raised">
           <div
             className="dk-mp2-l"
             role="listbox"
@@ -395,18 +388,18 @@ export function DeskModelPicker({
               <div className="dk-mp2-empty">{t("No models match “{0}”", query)}</div>
             )}
           </div>
-          <div className="dk-mp2-f">
-            {hasReplies ? (
-              <>
-                <DeskIcon name="info" size={12} />
-                {t("Switching re-reads this conversation before the next reply.")}
-              </>
-            ) : (
-              t("Your organization's admins choose which models are available.")
-            )}
-          </div>
+        </ScrollArea>
+        <div className="dk-mp2-f">
+          {hasReplies ? (
+            <>
+              <DeskIcon name="info" size={12} />
+              {t("Switching re-reads this conversation before the next reply.")}
+            </>
+          ) : (
+            t("Your organization's admins choose which models are available.")
+          )}
         </div>
-      )}
-    </div>
+      </PopoverContent>
+    </Popover>
   );
 }
