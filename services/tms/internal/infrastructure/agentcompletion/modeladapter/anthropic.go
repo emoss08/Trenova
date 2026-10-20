@@ -10,6 +10,7 @@ import (
 	"github.com/anthropics/anthropic-sdk-go/packages/param"
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -49,6 +50,7 @@ func anthropicParams(call *Call, attached *anthropicFiles) anthropic.BetaMessage
 		tools = loadedTools(tools, messages)
 		messages = referencing(messages, nil)
 	}
+	advisor := advisorFor(call)
 	params := anthropic.BetaMessageNewParams{
 		Model:     call.Provider.Model,
 		MaxTokens: int64(call.Request.MaxTokens),
@@ -56,7 +58,10 @@ func anthropicParams(call *Call, attached *anthropicFiles) anthropic.BetaMessage
 		Messages: cachedConversation(
 			anthropicConversation(messages, attached.blocks, anthropicNotices(call)),
 		),
-		Tools: cachedTools(toAnthropicTools(tools)),
+		Tools: cachedTools(advisedTools(toAnthropicTools(tools), advisor)),
+	}
+	if advisor != nil {
+		params.Betas = append(params.Betas, anthropicAdvisorBeta)
 	}
 	if call.Request.ToolChoiceNone && len(params.Tools) > 0 {
 		none := anthropic.NewBetaToolChoiceNoneParam()
@@ -232,6 +237,8 @@ func (a anthropicAdapter) complete(
 
 	content := anthropicContent(message.Content)
 	text, toolCalls := splitAnthropicContent(content)
+	advisor := advisorFor(call)
+	advised := anthropicAdvisorUsage(message.Usage.Iterations, advisor)
 
 	return &Response{
 		Text:             text,
@@ -243,12 +250,13 @@ func (a anthropicAdapter) complete(
 		CacheWriteTokens: int(message.Usage.CacheCreationInputTokens),
 		Refused:          message.StopReason == anthropic.BetaStopReasonRefusal,
 		Truncated:        message.StopReason == anthropic.BetaStopReasonMaxTokens,
-		Reasoning:        anthropicReasoning(content),
+		Reasoning:        anthropicReasoning(content, advisorModelOf(advised, advisor)),
 		OutputLimit:      int(params.MaxTokens),
 		ThinkingDropped:  thinkingDropped(message.InputTransformations),
 		MessageID:        message.ID,
 		CacheDiagnosis:   anthropicDiagnosis(message),
 		Files:            attached.report,
+		Advisor:          advised,
 	}, nil
 }
 
@@ -265,6 +273,8 @@ type anthropicBlock struct {
 	Thinking   string
 	Signature  string
 	Data       string
+	ToolUseID  string
+	Result     *conversation.ServerToolResult
 }
 
 func anthropicContent(blocks []anthropic.BetaContentBlockUnion) []anthropicBlock {
@@ -280,8 +290,18 @@ func anthropicContent(blocks []anthropic.BetaContentBlockUnion) []anthropicBlock
 			Signature: block.Signature,
 			Data:      block.Data,
 		}
-		if block.Type == anthropicToolUseBlock {
+		switch block.Type {
+		case anthropicToolUseBlock, anthropicServerToolUseBlock:
 			read.Arguments, read.InputError = decodeArguments(string(block.Input))
+		case anthropicAdvisorResultBlock:
+			read.ToolUseID = block.ToolUseID
+			read.Result = &conversation.ServerToolResult{
+				Type:             block.Content.Type,
+				Text:             block.Content.Text,
+				EncryptedContent: block.Content.EncryptedContent,
+				StopReason:       block.Content.StopReason,
+				ErrorCode:        block.Content.ErrorCode,
+			}
 		}
 		content = append(content, read)
 	}
@@ -376,6 +396,7 @@ func (a anthropicAdapter) stream(
 		dropped    int
 		messageID  string
 		diagnosis  *CacheDiagnosis
+		iterations anthropic.BetaIterationsUsage
 		blocks     = map[int64]*anthropicStreamBlock{}
 		order      []int64
 	)
@@ -396,6 +417,9 @@ func (a anthropicAdapter) stream(
 			})
 			dropped = thinkingDropped(event.Message.InputTransformations)
 			messageID = event.Message.ID
+			if len(event.Message.Usage.Iterations) > 0 {
+				iterations = event.Message.Usage.Iterations
+			}
 			diagnosis = anthropicDiagnosis(&event.Message)
 		case "content_block_start":
 			blocks[event.Index] = openedBlock(&event.ContentBlock)
@@ -430,6 +454,9 @@ func (a anthropicAdapter) stream(
 				CacheReadInputTokens:     event.Usage.CacheReadInputTokens,
 				CacheCreationInputTokens: event.Usage.CacheCreationInputTokens,
 			})
+			if len(event.Usage.Iterations) > 0 {
+				iterations = event.Usage.Iterations
+			}
 		}
 	}
 	err = anthropicStreamFailure(stream.Err())
@@ -442,6 +469,8 @@ func (a anthropicAdapter) stream(
 
 	content := streamedContent(blocks, order)
 	text, toolCalls := splitAnthropicContent(content)
+	advisor := advisorFor(call)
+	advised := anthropicAdvisorUsage(iterations, advisor)
 
 	return &Response{
 		Text:             text,
@@ -453,12 +482,13 @@ func (a anthropicAdapter) stream(
 		CacheWriteTokens: int(usage.CacheCreationInputTokens),
 		Refused:          stopReason == string(anthropic.BetaStopReasonRefusal),
 		Truncated:        stopReason == string(anthropic.BetaStopReasonMaxTokens),
-		Reasoning:        anthropicReasoning(content),
+		Reasoning:        anthropicReasoning(content, advisorModelOf(advised, advisor)),
 		OutputLimit:      int(params.MaxTokens),
 		ThinkingDropped:  dropped,
 		MessageID:        messageID,
 		CacheDiagnosis:   diagnosis,
 		Files:            attached.report,
+		Advisor:          advised,
 	}, nil
 }
 
@@ -474,6 +504,21 @@ func openedBlock(
 		Data:      start.Data,
 	}}
 	block.text.WriteString(start.Text)
+	switch start.Type {
+	case anthropicServerToolUseBlock:
+		if input, ok := start.Input.(map[string]any); ok {
+			block.block.Arguments = input
+		}
+	case anthropicAdvisorResultBlock:
+		block.block.ToolUseID = start.ToolUseID
+		block.block.Result = &conversation.ServerToolResult{
+			Type:             start.Content.Type,
+			Text:             start.Content.Text,
+			EncryptedContent: start.Content.EncryptedContent,
+			StopReason:       start.Content.StopReason,
+			ErrorCode:        start.Content.ErrorCode,
+		}
+	}
 
 	return block
 }
@@ -492,6 +537,10 @@ func streamedContent(blocks map[int64]*anthropicStreamBlock, order []int64) []an
 			block.Thinking = streamed.thinking.String()
 		case anthropicToolUseBlock:
 			block.Arguments, block.InputError = decodeArguments(streamed.input.String())
+		case anthropicServerToolUseBlock:
+			if streamed.input.Len() > 0 {
+				block.Arguments, block.InputError = decodeArguments(streamed.input.String())
+			}
 		}
 		content = append(content, block)
 	}
@@ -516,8 +565,9 @@ func anthropicStreamFailure(err error) error {
 
 // anthropicReasoning gathers the thinking blocks of a reply into one trace.
 // Redacted blocks carry nothing readable and are kept only to be replayed.
-func anthropicReasoning(blocks []anthropicBlock) *ReasoningTrace {
+func anthropicReasoning(blocks []anthropicBlock, advisorModel string) *ReasoningTrace {
 	var trace ReasoningTrace
+	trace.Blocks = providerBlocksOf(blocks, advisorModel)
 	var text strings.Builder
 	found := false
 	for idx := range blocks {
@@ -532,7 +582,7 @@ func anthropicReasoning(blocks []anthropicBlock) *ReasoningTrace {
 			trace.Redacted = append(trace.Redacted, block.Data)
 		}
 	}
-	if !found {
+	if !found && trace.Blocks == nil {
 		return nil
 	}
 	trace.Text = text.String()
@@ -627,13 +677,20 @@ func anthropicConversation(
 			}
 		case RoleAssistant:
 			blocks := make([]anthropic.BetaContentBlockParamUnion, 0, len(msg.ToolCalls)+2)
-			if i >= currentTurn {
-				blocks = append(blocks, replayThinking(msg.Reasoning)...)
-			}
-			if strings.TrimSpace(msg.Content) != "" {
-				blocks = append(blocks, anthropic.BetaContentBlockParamUnion{
-					OfText: &anthropic.BetaTextBlockParam{Text: msg.Content},
-				})
+			if stored := storedBlocks(msg.Reasoning); len(stored) > 0 {
+				blocks = append(
+					blocks,
+					replayProviderBlocks(stored, msg.Content, i >= currentTurn)...,
+				)
+			} else {
+				if i >= currentTurn {
+					blocks = append(blocks, replayThinking(msg.Reasoning)...)
+				}
+				if strings.TrimSpace(msg.Content) != "" {
+					blocks = append(blocks, anthropic.BetaContentBlockParamUnion{
+						OfText: &anthropic.BetaTextBlockParam{Text: msg.Content},
+					})
+				}
 			}
 			for _, tc := range msg.ToolCalls {
 				blocks = append(blocks, anthropic.BetaContentBlockParamUnion{

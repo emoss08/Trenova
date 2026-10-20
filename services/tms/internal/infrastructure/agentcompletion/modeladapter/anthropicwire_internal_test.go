@@ -10,6 +10,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/stretchr/testify/require"
 )
 
@@ -129,6 +130,46 @@ func wireHistory() []Message {
 			IsError:    true,
 		},
 	}
+}
+
+func advisedWireHistory() []Message {
+	earlier := &ReasoningTrace{
+		Text:         "earlier turn",
+		Signature:    "sig_earlier",
+		ProviderKind: string(aiprovider.KindAnthropicMessages),
+		Blocks: []ProviderBlock{
+			{Type: "thinking", Text: "earlier turn", Signature: "sig_earlier"},
+			{Type: "server_tool_use", ID: "srvtoolu_1", Name: "advisor", Input: map[string]any{}},
+			{
+				Type: "advisor_tool_result", ToolUseID: "srvtoolu_1", Model: "claude-opus-5-5",
+				Result: &conversation.ServerToolResult{
+					Type: "advisor_redacted_result", EncryptedContent: "enc_earlier",
+					StopReason: "end_turn",
+				},
+			},
+			{Type: "text", Text: "Looking it up."},
+		},
+	}
+	current := &ReasoningTrace{
+		Text:         "this turn",
+		Signature:    "sig_current",
+		ProviderKind: string(aiprovider.KindAnthropicMessages),
+		Blocks: []ProviderBlock{
+			{Type: "thinking", Text: "this turn", Signature: "sig_current"},
+			{Type: "server_tool_use", ID: "srvtoolu_2", Name: "advisor", Input: map[string]any{}},
+			{
+				Type: "advisor_tool_result", ToolUseID: "srvtoolu_2", Model: "claude-opus-5-5",
+				Result: &conversation.ServerToolResult{
+					Type: "advisor_tool_result_error", ErrorCode: "max_uses_exceeded",
+				},
+			},
+		},
+	}
+	history := wireHistory()
+	history[1].Reasoning = earlier
+	history[5].Reasoning = current
+
+	return history
 }
 
 func wireTools() []ToolSpec {
@@ -257,8 +298,18 @@ func wireCases() []wireCase {
 	)
 	finalAnswer.ToolChoiceNone = true
 	deferred := deferredWireRequest()
+	advised := agent
+	advised.Messages = advisedWireHistory()
+	advised.Advisor = &AdvisorSpec{Model: "claude-opus-5-5", MaxUses: 2}
 
 	return []wireCase{
+		{
+			name:    "advisor_haiku_5_5_low_stream",
+			model:   "claude-haiku-5-5",
+			effort:  aiprovider.ReasoningLow,
+			stream:  true,
+			request: advised,
+		},
 		{
 			name:    "agent_opus_5_5_off_stream",
 			model:   "claude-opus-5-5",

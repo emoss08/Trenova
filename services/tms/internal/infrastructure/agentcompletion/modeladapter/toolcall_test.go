@@ -56,6 +56,7 @@ func callFor(kind aiprovider.Kind, baseURL string, req *Request) *Call {
 			SchemaName:     req.SchemaName,
 			MaxTokens:      512,
 			Reasoning:      req.Reasoning,
+			Advisor:        req.Advisor,
 		},
 	}
 }

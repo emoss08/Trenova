@@ -144,6 +144,7 @@ func TestRecorderPin_HoldsARunToItsCell(t *testing.T) {
 	assert.Equal(t, providerID, req.PreferredProviderID)
 	assert.True(t, req.PinPreferred)
 	assert.Equal(t, aiprovider.ReasoningLow, req.Reasoning)
+	assert.Nil(t, req.Advisor)
 
 	release()
 	other := &agentports.ChatCompletionRequest{
@@ -151,6 +152,41 @@ func TestRecorderPin_HoldsARunToItsCell(t *testing.T) {
 	}
 	recorder.pin(other)
 	assert.False(t, other.PinPreferred)
+}
+
+func TestRecorderPin_HandsTheCellsAdvisorToEveryCall(t *testing.T) {
+	t.Parallel()
+
+	recorder := NewRecorder(nil)
+	threadID := pulid.MustNew("athr_")
+	cell := Cell{
+		Provider: &aiprovider.Provider{
+			ID: pulid.MustNew("aiprv_"), Kind: aiprovider.KindAnthropicMessages,
+			Model: "claude-haiku-5-5",
+		},
+		Effort:  aiprovider.ReasoningLow,
+		Advisor: agentports.DefaultAdvisor(""),
+	}
+	release := recorder.Pin(threadID, ProviderPin{Effort: cell.Effort, Advisor: cell.Advisor})
+	defer release()
+
+	first := &agentports.ChatCompletionRequest{
+		Attribution: aiusageports.AIUsageAttribution{ThreadID: threadID},
+	}
+	recorder.pin(first)
+	require.NotNil(t, first.Advisor)
+	assert.Equal(t, agentports.AdvisorSpec{Model: "claude-opus-5-5", MaxUses: 2}, *first.Advisor)
+	assert.Equal(t, aiprovider.ReasoningLow, first.Reasoning)
+
+	first.Advisor.MaxUses = 9
+	second := &agentports.ChatCompletionRequest{
+		Attribution: aiusageports.AIUsageAttribution{ThreadID: threadID},
+	}
+	recorder.pin(second)
+	assert.Equal(t, 2, second.Advisor.MaxUses, "each call gets its own copy of the pin's advisor")
+	assert.Equal(t, ProviderPin{
+		ProviderID: cell.Provider.ID, Effort: cell.Effort, Advisor: cell.Advisor,
+	}, cell.pin())
 }
 
 func TestTranscriptTools_PairsCallsWithTheirResults(t *testing.T) {
@@ -221,8 +257,10 @@ func TestPricer_PricesAnUnpricedProviderFromTheListThenTheReference(t *testing.T
 		ID: pulid.MustNew("aiprv_"), Kind: aiprovider.KindAnthropicMessages, Model: "claude-haiku-5-5",
 	}
 	listed := newPricer(&fakeProviders{provider: haiku}, fakeReference{})
-	price := listed.price(t.Context(), tenant, haiku.ID, "claude-haiku-5-5",
-		aiprovider.TokenUsage{Input: 1_000_000, CacheRead: 1_000_000, Output: 1_000_000}, nil)
+	price := listed.price(t.Context(), tenant, &tokenCount{
+		provider: haiku.ID, model: "claude-haiku-5-5",
+		raw: aiprovider.TokenUsage{Input: 1_000_000, CacheRead: 1_000_000, Output: 1_000_000},
+	})
 	require.NotNil(t, price.cost)
 	assert.Equal(t, PriceSourceListPrice, price.source)
 	assert.True(t, price.cost.Equal(decimal.RequireFromString("3.05")), price.cost.String(),
@@ -232,15 +270,18 @@ func TestPricer_PricesAnUnpricedProviderFromTheListThenTheReference(t *testing.T
 		ID: pulid.MustNew("aiprv_"), Kind: aiprovider.KindOpenAIResponses, Model: "gpt-6-luna",
 	}
 	referenced := newPricer(&fakeProviders{provider: luna}, fakeReference{})
-	price = referenced.price(t.Context(), tenant, luna.ID, "gpt-6-luna",
-		aiprovider.TokenUsage{Input: 1_000_000, CacheRead: 500_000, Output: 100_000}, nil)
+	price = referenced.price(t.Context(), tenant, &tokenCount{
+		provider: luna.ID, model: "gpt-6-luna",
+		raw: aiprovider.TokenUsage{Input: 1_000_000, CacheRead: 500_000, Output: 100_000},
+	})
 	require.NotNil(t, price.cost)
 	assert.Equal(t, PriceSourceReference, price.source)
 	assert.True(t, price.cost.Equal(decimal.RequireFromString("1.35")), price.cost.String())
 
 	charged := decimal.RequireFromString("0.5")
-	price = referenced.price(t.Context(), tenant, luna.ID, "gpt-6-luna", aiprovider.TokenUsage{},
-		&charged)
+	price = referenced.price(t.Context(), tenant, &tokenCount{
+		provider: luna.ID, model: "gpt-6-luna", charged: &charged,
+	})
 	assert.Equal(t, PriceSourceProvider, price.source)
 }
 
@@ -254,12 +295,73 @@ func TestPricer_PricesEachModelAProviderServedOnItsOwn(t *testing.T) {
 	pricer := newPricer(&fakeProviders{provider: gateway}, fakeReference{})
 	usage := aiprovider.TokenUsage{Input: 1_000, Output: 1_000}
 
-	haiku := pricer.price(t.Context(), tenant, gateway.ID, "claude-haiku-5-5", usage, nil)
-	opus := pricer.price(t.Context(), tenant, gateway.ID, "claude-opus-5-5", usage, nil)
+	haiku := pricer.price(t.Context(), tenant, &tokenCount{
+		provider: gateway.ID, model: "claude-haiku-5-5", raw: usage,
+	})
+	opus := pricer.price(t.Context(), tenant, &tokenCount{
+		provider: gateway.ID, model: "claude-opus-5-5", raw: usage,
+	})
 	require.NotNil(t, haiku.cost)
 	require.NotNil(t, opus.cost)
 	assert.True(t, opus.cost.GreaterThan(*haiku.cost),
 		"a failover to another model on the same provider is priced at that model's rate")
+}
+
+func TestPricer_PricesTheAdvisorsTokensAtTheAdvisorsRate(t *testing.T) {
+	t.Parallel()
+
+	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
+	haiku := &aiprovider.Provider{
+		ID: pulid.MustNew("aiprv_"), Kind: aiprovider.KindAnthropicMessages, Model: "claude-haiku-5-5",
+	}
+	pricer := newPricer(&fakeProviders{provider: haiku}, fakeReference{})
+	tokens := tokenCount{
+		provider: haiku.ID, model: "claude-haiku-5-5",
+		raw: aiprovider.TokenUsage{Input: 10_000, Output: 10_000},
+		advisor: &aiprovider.AdvisorUsage{
+			Model:  "claude-opus-5-5",
+			Calls:  1,
+			Tokens: aiprovider.TokenUsage{Input: 1_000_000, Output: 100_000},
+		},
+	}
+
+	price := pricer.price(t.Context(), tenant, &tokens)
+	require.NotNil(t, price.cost)
+	assert.True(t, price.cost.Equal(decimal.RequireFromString("6.006")), price.cost.String(),
+		"Haiku 5.5 at $0.10/$0.50 plus Opus 5.5 at $4/$20")
+
+	tokens.advisor.Model = "house-advisor"
+	unpriced := pricer.price(t.Context(), tenant, &tokens)
+	assert.Nil(t, unpriced.cost, "an advisor without a price leaves the call unpriced")
+
+	charged := decimal.RequireFromString("1.25")
+	tokens.charged = &charged
+	assert.True(t, pricer.price(t.Context(), tenant, &tokens).cost.Equal(charged),
+		"the router's charge already holds the advisor")
+}
+
+func TestUsageOf_CountsTheAdvisorApart(t *testing.T) {
+	t.Parallel()
+
+	call := &ModelCall{ChatResult: &agentports.ChatCompletionResult{
+		ModelIdentifier: "claude-haiku-5-5",
+		InputTokens:     100,
+		OutputTokens:    20,
+		ProviderKind:    aiprovider.KindAnthropicMessages,
+		Advisor: &aiprovider.AdvisorUsage{
+			Model:  "claude-opus-5-5",
+			Calls:  2,
+			Tokens: aiprovider.TokenUsage{Input: 300, CacheRead: 50, Output: 40},
+		},
+	}}
+
+	usage, _ := usageOf([]*ModelCall{call}, nil)
+	assert.Equal(t, 100, usage.InputTokens)
+	assert.Equal(t, 20, usage.OutputTokens)
+	assert.Equal(t, 2, usage.AdvisorCalls)
+	assert.Equal(t, 350, usage.AdvisorPromptTokens)
+	assert.Equal(t, 40, usage.AdvisorOutputTokens)
+	assert.Equal(t, "claude-opus-5-5", summarizeCall(call, nil).Advisor.Model)
 }
 
 func TestCaseErrors_NamesTheStepAFireFailedIn(t *testing.T) {

@@ -195,6 +195,15 @@ type runOutcome struct {
 	ProviderKind     aiprovider.Kind
 	LatencyMs        int64
 	CostUSD          *decimal.Decimal
+	Advisor          *aiprovider.AdvisorUsage
+}
+
+func (o *runOutcome) cost(provider *aiprovider.Provider, task aiprovider.Task) *decimal.Decimal {
+	return aiprovider.WithAdvisorCost(
+		provider.CostForTask(task, o.tokenUsage()),
+		provider.Kind,
+		o.Advisor,
+	)
 }
 
 // tokenUsage is what the provider reported, in the shape a price is read

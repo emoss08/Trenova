@@ -103,7 +103,7 @@ func attemptCost(attempt *usageAttempt) *decimal.Decimal {
 		return nil
 	}
 
-	return attempt.provider.CostForTask(attempt.task, attempt.outcome.tokenUsage())
+	return attempt.outcome.cost(attempt.provider, attempt.task)
 }
 
 func attemptUsage(attempt *usageAttempt, cost *decimal.Decimal) *aitrace.Usage {

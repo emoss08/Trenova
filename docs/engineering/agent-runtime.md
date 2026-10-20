@@ -390,6 +390,39 @@ than any it names takes the newest known constraints.
   `trenova.ai.thinking_dropped`. A value that keeps appearing is the harness editing a
   conversation it should hold still.
 
+### The advisor
+
+A chat call may ask for Anthropic's advisor tool (`ChatCompletionRequest.Advisor`: model, max
+uses, max tokens): the executor model consults a more capable one mid-reply, on Anthropic's side.
+Only the desk bench asks for it today (the `+advisor` cell suffix in
+[desk-bench.md](desk-bench.md)); there is no provider setting, and the OpenAI adapters ignore
+the field. The Anthropic adapter (`modeladapter/anthropicadvisor.go`):
+
+- **Declares it last.** `advisor_20260301` goes after every client tool, never deferred, with
+  `caching: {type: "ephemeral", ttl: "5m"}` for the advisor's own prompt and the
+  `advisor-tool-2026-03-01` beta. It carries the tools' cache mark, and since the request's
+  advisor is fixed for the turn the tool array still does not change within it.
+- **Keeps the reply's blocks in order.** A reply that used a server tool is stored as
+  `ReasoningTrace.Blocks` (`conversation.ProviderBlock`): its thinking, text,
+  `server_tool_use` and `advisor_tool_result` blocks in the order they came, inside the
+  `reasoning` JSONB the message already has, so nothing new crosses Temporal or the database.
+  The advice is `advisor_result` (plaintext advisors), `advisor_redacted_result` (an Opus 5.5
+  advisor, among others: an opaque `encrypted_content` that can only be sent back) or
+  `advisor_tool_result_error`. It never becomes `Response.Text`, never streams to the text
+  sink and never joins the readable thinking.
+- **Replays them unchanged.** An assistant message with stored blocks is rebuilt from them,
+  in order, then its tool calls: thinking only in the current turn (as for any thinking), the
+  server tool blocks and text on every turn. The API refuses a history holding
+  `advisor_tool_result` blocks without the tool, so `advisorFor` declares the advisor
+  whenever a replayed message holds advice, at the model recorded on the result block, even
+  when the request no longer asks.
+- **Counts the advisor apart.** The executor's usage is unchanged; the advisor's own calls come
+  as `advisor_message` entries in `usage.iterations` and become `Response.Advisor`
+  (`aiprovider.AdvisorUsage`: model, calls, tokens). The router prices them at the advisor
+  model's list price (`aiprovider.WithAdvisorCost`) and adds them to the call's cost, on the
+  result, the usage record and the span. An advisor with no list price leaves the call
+  unpriced rather than undercounted.
+
 ### Files the person attached
 
 A turn's user message carries the files attached to it as references
@@ -2234,7 +2267,10 @@ conversation is the same from the first call of the turn to the last.
   nothing edits the tools mid-turn, a turn's thinking blocks stay valid on the
   models that check the history (Haiku 5.5, Sonnet 5.5, Opus 5.5, Fable 5.1).
   Microsoft Foundry is not known to take deferred tools, so it is sent what is
-  loaded (`anthropicDefers`).
+  loaded (`anthropicDefers`). An advisor ("The advisor" above) is declared after
+  every client tool and takes the tools' mark; a conversation that has consulted
+  it keeps declaring it, so the array stays the same across its turns, and its
+  replayed advice is the same bytes on every later call.
 - **OpenAI Responses**, on OpenAI's own platform with a model that takes it
   (gpt-5.4 and later, `toolSearchModel`), declares `find_tools` as the
   client-executed `tool_search` (the spec marked `Searches`), leaves deferred
