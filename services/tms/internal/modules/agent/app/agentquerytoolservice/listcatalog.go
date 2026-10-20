@@ -111,7 +111,8 @@ func newListWorkersTool(
 			"or qualification. Credentials due: worker_list_credentials. " +
 			"\"none on file\" was never recorded: worse than expiring soon.",
 		searchTerms: []string{
-			"look up a driver by name", "driver roster", "worker directory", "employee by name",
+			"look up a driver by name", "find a driver", "driver roster", "worker directory",
+			"employee by name",
 		},
 		queryNote: "A worker's name, first, last or both; each word matches the start of a " +
 			"name and the closest names come first. Omit it to list the roster or to filter " +

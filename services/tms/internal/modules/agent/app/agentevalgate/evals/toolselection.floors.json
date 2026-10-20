@@ -11,14 +11,14 @@
   },
   "heldOut": {
     "keyword": {
-      "cases": 143,
+      "cases": 145,
       "recallAt5": 0.99,
       "top1": 0.95
     },
     "hybrid": {
-      "cases": 163,
+      "cases": 165,
       "recallAt5": 0.92,
-      "top1": 0.83
+      "top1": 0.82
     }
   }
 }

@@ -65,7 +65,7 @@ func NewRaiseExceptionTool(
 func (t *RaiseExceptionTool) Name() string { return "agent_raise_exception" }
 
 func (t *RaiseExceptionTool) Description() string {
-	return "Hand a case to a person when you cannot resolve it: say what you tried, how " +
+	return "Flag a case for a person to review when you cannot resolve it: say what you tried, how " +
 		"severe it is and which record it concerns. Name the records that show the " +
 		"problem as evidence. Use this instead of guessing. It is for " +
 		"a problem with a record or a run that a person must resolve, not for requesting a " +

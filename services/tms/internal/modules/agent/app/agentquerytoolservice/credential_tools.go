@@ -188,7 +188,7 @@ func provideListWorkerCredentialsTool(
 func (t *listWorkerCredentialsTool) Name() string { return toolWorkerListCredentials }
 
 func (t *listWorkerCredentialsTool) SearchTerms() []string {
-	return []string{"expiring licenses", "medical card expiry", "credentials due", "lapsed"}
+	return []string{"expiring licenses", "credentials due", "about to lapse", "lapsed"}
 }
 
 func (t *listWorkerCredentialsTool) Description() string {

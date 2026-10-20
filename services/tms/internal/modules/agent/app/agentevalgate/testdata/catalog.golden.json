@@ -1142,7 +1142,6 @@
         "blocked",
         "ledger",
         "not synced",
-        "reach",
         "synced",
         "did it sync"
       ],
@@ -2691,7 +2690,7 @@
     },
     {
       "name": "agent_raise_exception",
-      "description": "Hand a case to a person when you cannot resolve it: say what you tried, how severe it is and which record it concerns. Name the records that show the problem as evidence. Use this instead of guessing. It is for a problem with a record or a run that a person must resolve, not for requesting a product feature or reporting that a tool cannot do something; for that, tell the person plainly what cannot be done. It only works inside an agent run.",
+      "description": "Flag a case for a person to review when you cannot resolve it: say what you tried, how severe it is and which record it concerns. Name the records that show the problem as evidence. Use this instead of guessing. It is for a problem with a record or a run that a person must resolve, not for requesting a product feature or reporting that a tool cannot do something; for that, tell the person plainly what cannot be done. It only works inside an agent run.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -41550,6 +41549,7 @@
       },
       "searchTerms": [
         "look up a driver by name",
+        "find a driver",
         "driver roster",
         "worker directory",
         "employee by name"
@@ -41670,8 +41670,8 @@
       },
       "searchTerms": [
         "expiring licenses",
-        "medical card expiry",
         "credentials due",
+        "about to lapse",
         "lapsed"
       ],
       "policy": {

@@ -227,7 +227,7 @@ func (t *listAccountingSyncRecordsTool) Description() string {
 }
 
 func (t *listAccountingSyncRecordsTool) SearchTerms() []string {
-	return []string{"failed", "blocked", "ledger", "not synced", "reach", "synced", "did it sync"}
+	return []string{"failed", "blocked", "ledger", "not synced", "synced", "did it sync"}
 }
 
 func (t *listAccountingSyncRecordsTool) ParamSchema() map[string]any {
