@@ -1463,6 +1463,7 @@ held-out`) when one is made for a PR.
 | Receivables | `receivable` (22 tools namespaced; no merges) | 637 → 637 | unchanged, 0 pending | 0.91 → 0.91 | 0.81 → 0.81 |
 | Every remaining tool | 23 more namespaces, `accounting` to `worker` (450 tools namespaced; no merges) | 637 → 637 | unchanged, 0 pending | 0.9141 → 0.9202 | 0.8098 → 0.8344 |
 | Overlapping tools | `worker`, `inbox`, `accounting`, `agent` (5 merges) | 637 → 632 | unchanged, 0 pending | 0.9202 → 0.93 | 0.8344 → 0.82 |
+| Typed reads through GraphQL: reference data | `equipment_list_manufacturers`, `equipment_list_types`, `document_list_types`, `location_list_categories` and seven `masterdata` lists read their screen's persisted operation | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
 
 The shipment row is measured on the held-out set the split PR recorded (161 cases), so both
 figures read the same cases; the module's merges moved three cases between splits, which the
@@ -1537,6 +1538,15 @@ name" still misses with meaning, because "park" draws the wait tool first. Pairs
 but differ in what they do stay apart: generating one driver's settlement and the period's batch,
 accepting a carrier invoice match with or without its variance, acknowledging and resolving a
 carrier finding, and confirming proposed accounting mappings against setting one.
+
+The reference data row is the first of the typed-reads modules
+([agent-graphql-reads.md](engineering/agent-graphql-reads.md)): eleven lists now read the
+persisted operation their page sends, through the read executor, with typed parameters derived
+from the record's filter configuration in place of the generic `filters`, and the cursor paging
+the paging fix put in place. Each description now names its typed parameters, as the repository
+lists' did. Over 165 held-out cases, hybrid recall@5 holds at 0.93 and top-1 at 0.82; by keyword,
+over 145, recall@5 holds at 0.99 and top-1 at 0.95. The floors are unchanged, and nothing was tuned
+against the held-out cases.
 
 **Phase 4: a single front door and job profiles (3–4 weeks).**
 

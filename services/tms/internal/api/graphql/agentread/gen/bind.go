@@ -31,7 +31,20 @@ const (
 	itemsField   = "items"
 	pageInfo     = "pageInfo"
 	readingSplit = "_"
+
+	listInput         = "DataTableConnectionInput"
+	includeTotalCount = "includeTotalCount"
+	idType            = "ID"
 )
+
+// supplied are the variables a tool of each verb sends, by name and type: a
+// list builds the table input and turns the total count off, a get sends the
+// record's id. An operation that requires any other variable cannot be read
+// by the tool's typed parameters.
+var supplied = map[string]map[string]string{
+	verbList: {"": listInput, includeTotalCount: "Boolean"},
+	verbGet:  {idArgument: idType},
+}
 
 // read is one entry of reads.yml: a tool that reads through GraphQL. The
 // operation is worked out by the rule; naming one that differs needs a
@@ -272,6 +285,47 @@ func bind(
 }
 
 func bindOne(
+	catalog map[string]*operation,
+	candidates []rootRead,
+	r read,
+) (b *binding, problem string) {
+	b, problem = chooseBinding(catalog, candidates, r)
+	if problem != "" {
+		return nil, problem
+	}
+	if problem = unsupplied(b); problem != "" {
+		return nil, problem
+	}
+
+	return b, ""
+}
+
+// unsupplied names the required variables of a binding's operation that its
+// tool's parameters cannot supply.
+func unsupplied(b *binding) string {
+	want := supplied[b.Verb]
+	var missing []string
+	for _, variable := range b.Operation.Query.Operations[0].VariableDefinitions {
+		if !variable.Type.NonNull || variable.DefaultValue != nil {
+			continue
+		}
+		if typ, ok := want[variable.Variable]; ok && typ == variable.Type.Name() {
+			continue
+		}
+		if typ, ok := want[""]; ok && typ == variable.Type.Name() {
+			continue
+		}
+		missing = append(missing, "$"+variable.Variable+": "+variable.Type.String())
+	}
+	if len(missing) == 0 {
+		return ""
+	}
+
+	return fmt.Sprintf("%s reads %s, which requires %s; a %s tool's parameters cannot supply it",
+		b.Tool, b.Operation.Name, strings.Join(missing, ", "), b.Verb)
+}
+
+func chooseBinding(
 	catalog map[string]*operation,
 	candidates []rootRead,
 	r read,

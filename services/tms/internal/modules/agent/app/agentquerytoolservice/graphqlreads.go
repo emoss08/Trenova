@@ -64,6 +64,8 @@ const (
 	suffixTo   = "To"
 	suffixMin  = "Min"
 	suffixMax  = "Max"
+	suffixID   = "Id"
+	prefixHas  = "has"
 )
 
 // unfilteredFields are selected by every operation but are never what a
@@ -99,6 +101,8 @@ const (
 	paramDayTo
 	paramAtLeast
 	paramAtMost
+	paramPresent
+	paramReference
 )
 
 // graphQLParam is one typed parameter of a tool that reads through GraphQL,
@@ -215,13 +219,17 @@ func scalarParams(
 			},
 		}}
 	case graphQLTypeID:
-		return []graphQLParam{{
-			Name: field.Name, Field: field.Name, Kind: paramEquals,
+		params := []graphQLParam{{
+			Name: field.Name, Field: field.Name, Kind: paramReference,
 			Schema: map[string]any{
 				toolschema.KeyType:        toolschema.TypeString,
 				toolschema.KeyDescription: describe("Only records with this " + words + "."),
 			},
 		}}
+		if present, ok := presenceParam(field, describe); ok {
+			params = append(params, present)
+		}
+		return params
 	case graphQLTypeInt, graphQLTypeFloat, graphQLTypeDecimal:
 		number := map[string]any{toolschema.KeyType: toolschema.TypeInteger}
 		unit := ""
@@ -262,6 +270,30 @@ func scalarParams(
 	}
 
 	return nil
+}
+
+// presenceParam is the has<Thing> parameter a nullable reference becomes, so
+// a call can ask for the records that have one, or lack one, without naming
+// which.
+func presenceParam(field *graphQLField, describe func(string) string) (graphQLParam, bool) {
+	thing, ok := strings.CutSuffix(field.Name, suffixID)
+	if field.NonNull || !ok || thing == "" {
+		return graphQLParam{}, false
+	}
+	words := stringutils.HumanizeSnakeCase(stringutils.ConvertCamelToSnake(thing))
+
+	return graphQLParam{
+		Name:  prefixHas + strings.ToUpper(thing[:1]) + thing[1:],
+		Field: field.Name,
+		Kind:  paramPresent,
+		Schema: map[string]any{
+			toolschema.KeyType: toolschema.TypeBoolean,
+			toolschema.KeyDescription: describe(
+				"true for only records that have a " + words + ", false for only those " +
+					"that have none.",
+			),
+		},
+	}, true
 }
 
 func withDescription(schema map[string]any, description string) map[string]any {
@@ -319,7 +351,7 @@ func compileFilter(
 	case paramIn:
 		values := optionalStrings(args, param.Name)
 		return compare(dbtype.OpIn, values), len(values) > 0, nil
-	case paramEquals:
+	case paramEquals, paramReference:
 		return compare(dbtype.OpEqual, args[param.Name]), true, nil
 	case paramContains:
 		text := strings.TrimSpace(optionalString(args, param.Name))
@@ -340,6 +372,15 @@ func compileFilter(
 		return compare(dbtype.OpGreaterThanOrEqual, args[param.Name]), true, nil
 	case paramAtMost:
 		return compare(dbtype.OpLessThanOrEqual, args[param.Name]), true, nil
+	case paramPresent:
+		has, ok := args[param.Name].(bool)
+		if !ok {
+			return nil, false, fmt.Errorf("%s must be true or false", param.Name)
+		}
+		if has {
+			return compare(dbtype.OpIsNotNull, nil), true, nil
+		}
+		return compare(dbtype.OpIsNull, nil), true, nil
 	}
 
 	return nil, false, fmt.Errorf("parameter %q has no filter", param.Name)

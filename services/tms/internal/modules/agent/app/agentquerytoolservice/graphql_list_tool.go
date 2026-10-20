@@ -55,10 +55,26 @@ type graphQLListSpec struct {
 	summary      string
 	searchTerms  []string
 	queryNote    string
-	resource     permission.Resource
+	// notes add what the schema does not say to a derived parameter's
+	// description, keyed by the parameter's name.
+	notes map[string]string
+	// references name, for each id field, the resource its ids belong to
+	// and the tool that supplies one. An id field with none is offered only
+	// as its has<Thing> parameter: a model has no honest way to get an id no
+	// tool lists.
+	references map[string]idReference
+	resource   permission.Resource
 	// reads is what the tool's records carry from outside the organization,
 	// declared as every read tool declares it (readSpec).
 	reads readSpec
+}
+
+// idReference is where a list's id parameter points: the resource, what the
+// id is, and the tool a model gets one from.
+type idReference struct {
+	resource permission.Resource
+	what     string
+	source   string
 }
 
 type graphQLListTool struct {
@@ -93,7 +109,13 @@ func newGraphQLListTool(
 	if input == "" {
 		return nil, fmt.Errorf("%s: %s takes no %s", spec.name, read.Operation, dataTableInput)
 	}
-	params := read.typedParams()
+	params, err := referenced(spec.name, read.typedParams(), spec.references)
+	if err != nil {
+		return nil, err
+	}
+	if params, err = annotate(spec.name, params, spec.notes); err != nil {
+		return nil, err
+	}
 
 	return &graphQLListTool{
 		spec:        *spec,
@@ -107,9 +129,94 @@ func newGraphQLListTool(
 	}, nil
 }
 
+// referenced types each id parameter by the resource its spec names, drops
+// the ones it names none for, and refuses a reference to no id parameter.
+func referenced(
+	tool string,
+	params []graphQLParam,
+	references map[string]idReference,
+) ([]graphQLParam, error) {
+	out := make([]graphQLParam, 0, len(params))
+	used := 0
+	for _, param := range params {
+		if param.Kind != paramReference {
+			out = append(out, param)
+			continue
+		}
+		ref, ok := references[param.Name]
+		if !ok {
+			continue
+		}
+		param.Schema = agenttoolschema.RecordID(ref.resource, ref.what, ref.source)
+		out = append(out, param)
+		used++
+	}
+	if used == len(references) {
+		return out, nil
+	}
+	for name := range references {
+		if !slices.ContainsFunc(out, func(p graphQLParam) bool { return p.Name == name }) {
+			return nil, fmt.Errorf("%s references %q, which is not one of its id parameters",
+				tool, name)
+		}
+	}
+
+	return out, nil
+}
+
+// annotate appends each note to its parameter's description, and refuses a
+// note for a parameter the tool does not take.
+func annotate(
+	tool string,
+	params []graphQLParam,
+	notes map[string]string,
+) ([]graphQLParam, error) {
+	matched := 0
+	for idx := range params {
+		note, ok := notes[params[idx].Name]
+		if !ok {
+			continue
+		}
+		description, _ := params[idx].Schema[toolschema.KeyDescription].(string)
+		params[idx].Schema = withDescription(params[idx].Schema, description+" "+note)
+		matched++
+	}
+	if matched == len(notes) {
+		return params, nil
+	}
+	for name := range notes {
+		if !slices.ContainsFunc(params, func(p graphQLParam) bool { return p.Name == name }) {
+			return nil, fmt.Errorf("%s notes %q, which is not one of its parameters", tool, name)
+		}
+	}
+
+	return params, nil
+}
+
 func (t *graphQLListTool) Name() string { return t.spec.name }
 
-func (t *graphQLListTool) Description() string { return t.spec.summary }
+// Description is the summary and every typed parameter by name, so a model
+// choosing a tool sees what it can narrow the list by. A range is named once,
+// by its lower end: createdAtFrom/To, amountMin/Max.
+func (t *graphQLListTool) Description() string {
+	names := make([]string, 0, len(t.params))
+	for _, param := range t.params {
+		switch param.Kind {
+		case paramDayTo, paramAtMost:
+		case paramDayFrom:
+			names = append(names, param.Name+"/"+suffixTo)
+		case paramAtLeast:
+			names = append(names, param.Name+"/"+suffixMax)
+		case paramIn, paramEquals, paramContains, paramPresent, paramReference:
+			names = append(names, param.Name)
+		}
+	}
+	if len(names) == 0 {
+		return t.spec.summary
+	}
+
+	return t.spec.summary + " Filters: " + strings.Join(names, ", ") + "."
+}
 
 func (t *graphQLListTool) SearchTerms() []string { return t.spec.searchTerms }
 

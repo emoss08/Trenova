@@ -239,7 +239,10 @@ The rule, for each listed tool:
      tool's policy resource to it, so a read meets the same check `authorize` made.
 
    A named binding with no reason fails generation. So does one that names the operation the rule
-   would pick anyway. A list tool never binds to a connection read that selects no `pageInfo`,
+   would pick anyway. So does any binding, by rule or by name, whose operation requires a
+   variable the tool's verb cannot send: a list sends its `DataTableConnectionInput` and
+   `includeTotalCount`, a get sends `id`, and a required `$region` would leave every call
+   failing at the server. A list tool never binds to a connection read that selects no `pageInfo`,
    because it could not page. Where the node's type binds to a generated model (`gqlmodel`), the
    line also names the `entity` whose filter configuration the resolver compiles with.
 
@@ -280,14 +283,18 @@ becomes a parameter. Its type comes from the field's GraphQL type:
 | other enum | `<field>`: list of the enum's values | `in` |
 | `Timestamp` | `<field>From`, `<field>To`: `agenttoolschema.Date` (or `DateTime` where the field is an instant people name to the minute) | `gte` / `lte` on the organization's day bounds |
 | `Boolean` | `<field>`: boolean | `eq` |
-| `ID` | `<field>` (or `<field>s` as a list): `RecordIDText` of the referenced resource | `eq` / `in` |
+| `ID` | `<field>`: `RecordID` of the resource the tool's `references` entry names, with the tool that supplies one; a nullable one also gives `has<Thing>`: boolean | `eq`; `isnotnull` / `isnull` |
 | `Int`, `Float`, `Decimal` | `<field>Min`, `<field>Max` | `gte` / `lte` |
 | `String` | `<field>`: string | `contains` (`eq` for codes the configuration marks exact) |
 
+- **An id with nowhere to get it is not offered.** An `ID` field the tool's `references` does not
+  name is left out, keeping only its `has<Thing>` parameter when it is nullable: a model has no
+  honest way to get an id no tool lists (`masterdata_list_fleet_codes` takes no `managerId`,
+  because no tool lists users). A reference to a field the record lacks fails construction.
 - **Free text and sorting.** `query` maps to the input's `query`. `sortBy` is an enum of
   `SortableFields`, and `sortDirection` is `asc|desc`.
 - **Limit.** `limit` maps to `first`, `minimum` 1, `maximum` 50, marked `toolschema.Clamped`.
-- **Paging.** `after` maps to `after`.
+- **Paging.** `after` is the scoped cursor of the previous page (see Paging).
 - **Total count.** `includeTotalCount` is sent `false`, unless the tool reports a total.
 - **Every filterable field, selected or not.** Parameters come from every field of the record
   type that the filter configuration marks filterable, not only the ones the operation selects:
@@ -319,8 +326,15 @@ sentence and the search terms. Descriptions are edited against traces, which a g
 do. A parameter's description is the schema field's description, followed by a sentence its kind
 writes ("Only records whose status is one of these."; "… is on or after this day, in the
 organization's timezone."). A converted tool's `filtercatalog` note, where it says more than that,
-moves into the schema field's description in the module's PR, so the screen's schema documents it
-too.
+moves to the spec's `notes`, keyed by parameter, and is appended to that parameter's description.
+A note for a parameter the tool does not take fails construction. Notes stay with the tool rather
+than in the schema because they are written for a model choosing a call ("only an active reason
+can be used on a new hold"), and a schema description edit is a schema change for every client.
+
+The tool's description is its summary followed by every typed parameter by name
+("Filters: active, code, createdAtFrom/To, …"), as the repository lists' were, so a model choosing
+among tools, and the ranking that embeds descriptions, sees what each list narrows by.
+`TestReferenceReads_DescribeEveryParameter` holds each converted tool to it.
 
 The parameters are derived when the tool is built, not when the code is generated, because the
 filter configuration is computed from the entity at runtime (`querybuilder.GetFieldConfiguration`).
@@ -334,19 +348,22 @@ composer, which compiles against the same configuration.
 
 ## Paging
 
-Paging is the connection's own:
+Paging is the connection's own, under the cursor contract the paging fix put on every
+cursor-paged list (`paging.go`):
 
 - `limit` maps to `first`;
-- `after` maps to `after`;
-- the result carries `hasMore` from `pageInfo.hasNextPage`, and `nextCursor` from
-  `pageInfo.endCursor` when there is a next page.
+- the result carries `hasMore` from `pageInfo.hasNextPage`, and, when there is a next page,
+  `nextCursor`: the connection's `endCursor` wrapped by `pagination.EncodeKeyCursor` in a scope
+  hashed from the tool's name and every argument but `limit` and `after`;
+- `after` is read by `readCursorWindow`, which unwraps it in the call's own scope and passes the
+  connection cursor inside to the operation's `after`.
 
-That is the convention the paging fix introduces for repository-backed lists, so the model sees no
-change in shape when a tool converts.
-
-The cursor encodes the sort, so a call that changes `sortBy` and passes an old `after` gets the
-server's "Cursor is invalid". The tool turns it into "the cursor belongs to a different sort;
-start again without `after`".
+So a model sees the same shape whichever path a list reads through. A cursor sent with changed
+filters, query or sort, an altered cursor, or one the tool never returned is refused before the
+read with `errStaleCursor` ("call it again without after"), and `offset` with
+`errOffsetOnCursorList`. `TestGraphQLListTool_KeepsTheCursorContract` holds both, and
+`TestGraphQLListTool_PagesThroughWhatTheRepositoryToolPagedThrough` walks every page of both paths
+and compares them.
 
 Three kinds of root field do not page this way, and their tools say so:
 
@@ -425,6 +442,20 @@ Each module's PR:
 | Module | Tool | Newly withheld at Internal | Notes |
 |---|---|---|---|
 | Reference data | `equipment_list_manufacturers` | none | every manufacturer field is Internal |
+| Reference data | `equipment_list_types` | none | every field is Internal |
+| Reference data | `masterdata_list_fleet_codes` | none | every field is Internal; the nested `manager` reduces to `id` and `name` |
+| Reference data | `masterdata_list_service_types` | none | every field is Internal |
+| Reference data | `masterdata_list_shipment_types` | none | every field is Internal |
+| Reference data | `masterdata_list_commodities` | none | every field is Internal |
+| Reference data | `masterdata_list_hazardous_materials` | none | every field is Internal, the emergency contact and phone among them |
+| Reference data | `masterdata_list_accessorial_charges` | none | every field is Internal |
+| Reference data | `document_list_types` | none | every field is Internal |
+| Reference data | `location_list_categories` | none | every field is Internal |
+| Reference data | `masterdata_list_hold_reasons` | none | every field is Internal |
+
+None of the repository-backed reference lists was gated, so at a person's role ceiling below
+Internal each now withholds every field but `id`, where it used to return them all. No description
+names a field that is newly withheld at Internal, so none changed.
 
 ## Permissions, data scopes and refusals
 
@@ -541,12 +572,23 @@ Five tests:
 5. **Two pages, no repeats.** Page one, then `after: nextCursor`, return disjoint rows, and
    `hasMore` is false at the end.
 
-Each module's PR also adds an integration test on Postgres (`TRENOVA_TEST_POSTGRES_DSN`). The
-first PR adds the harness's database mode. The test:
+Each module's PR also adds an integration test on Postgres (build tag `integration`,
+`seedtest.SetupTestDBWithDSN`), over the real repositories under an RLS connection, with two
+tenants written by `agentreadtest.SeedTenant`. For every converted tool it:
 
-- seeds a tenant with RLS in `enforce`;
-- pages and filters a real connection through the reader as a person with an "own" scope;
-- asserts the rows match the handler's.
+- walks every page through the tool and gets each of the tenant's rows once and none of the
+  other's;
+- walks every page of the repository tool and gets the same rows;
+- narrows by a typed filter and gets what the repository tool's filter got;
+- reads at a role ceiling of Public and finds every withheld field absent from every row.
+
+For kinds that declare an "own" or "team" scope (shipments, orders, invoices, workers), the
+module's test also reads as a person narrowed by `readscope` and asserts the GraphQL path returns
+the rows the repository path returned for that person.
+
+The reference module's test is `TestReferenceReads_ReadWhatTheRepositoryToolsReadUnderRowLevelSecurity`;
+`TestReferenceReads_RefuseExactlyWhatAuthorizeRefuses` covers refusal for each converted list, as
+a person and as an unattended agent.
 
 ## Tools with no GraphQL equivalent
 
@@ -591,7 +633,6 @@ matches text. Each reads through its operation for its filters, and keeps its ra
 
 | PR | Contents |
 |---|---|
-| This one | The design, for approval. No code. |
 | 1 | The reader, generator, harness and worker module, plus the first module: reference data (`masterdata`, `equipment_list_types`, `document_list_types`, `location_list_categories`; plain `DataTableConnectionInput` lists). Worker build figures. Conventions doc updated: the Filters row becomes "typed parameters", and the Paging row points here. |
 | 2 | Parties: `customer`, `location`, `carrier`. |
 | 3 | Equipment: tractors, trailers, manufacturers. |
@@ -634,3 +675,7 @@ reasoning for each is above.
 7. **Bindings the rule cannot find are named in `reads.yml` and proven** by shape and by the
    resource their resolver checks, never trusted. No resource-only rule was possible: most
    resources are checked by several root fields (`edi` by thirteen).
+8. **Filter notes live on the tool spec, not the schema.** They are prose for a model, edited
+   against traces, and the schema is the screen's contract.
+9. **An id parameter needs a source.** A list offers an id filter only where a tool supplies that
+   id; otherwise only `has<Thing>`.

@@ -4,7 +4,6 @@ package agentread_test
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
@@ -36,36 +35,17 @@ type seededTenant struct {
 func seedTenant(t *testing.T, admin *bun.DB, label string, active int) *seededTenant {
 	t.Helper()
 
-	ctx := t.Context()
-	org, bu, user := pulid.MustNew("org_"), pulid.MustNew("bu_"), pulid.MustNew("usr_")
-	state := "us_" + strings.ToLower(label) + org.String()[4:12]
-	exec := func(query string, args ...any) {
-		t.Helper()
-		_, err := admin.ExecContext(ctx, query, args...)
-		require.NoError(t, err)
-	}
-	exec("INSERT INTO us_states (id, name, abbreviation) VALUES (?, ?, ?)",
-		state, "State "+label, label+"X")
-	exec("INSERT INTO business_units (id, name, code) VALUES (?, ?, ?)",
-		bu, "BU "+label, "BU"+label+bu.String()[3:9])
-	exec(`INSERT INTO organizations (id, state_id, business_unit_id, name, scac_code, dot_number,
-		bucket_name, address_line1, city, postal_code)
-		VALUES (?, ?, ?, ?, ?, ?, ?, 'Line 1', 'City', '75001')`,
-		org, state, bu, "Org "+label, "SC"+label+"X", "10"+label, "bucket-"+strings.ToLower(label))
-
-	tenant := &seededTenant{actor: &permissionports.RequestActor{
-		PrincipalType:  permissionports.PrincipalTypeUser,
-		PrincipalID:    user,
-		UserID:         user,
-		OrganizationID: org,
-		BusinessUnitID: bu,
-	}}
+	written := agentreadtest.SeedTenant(t, admin, label)
+	tenant := &seededTenant{actor: written.Actor}
 	insert := func(name, status string, createdAt int64) pulid.ID {
+		t.Helper()
 		id := pulid.MustNew("em_")
-		exec(`INSERT INTO equipment_manufacturers (id, business_unit_id, organization_id, status,
-			name, description, created_at, updated_at)
+		_, err := admin.ExecContext(t.Context(), `INSERT INTO equipment_manufacturers (id,
+			business_unit_id, organization_id, status, name, description, created_at, updated_at)
 			VALUES (?, ?, ?, ?, ?, '', ?, ?)`,
-			id, bu, org, status, name, createdAt, createdAt)
+			id, tenant.actor.BusinessUnitID, tenant.actor.OrganizationID, status, name,
+			createdAt, createdAt)
+		require.NoError(t, err)
 		return id
 	}
 	for i := range active {
