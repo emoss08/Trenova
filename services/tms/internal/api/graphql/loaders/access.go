@@ -642,6 +642,21 @@ func AgentsPaused(ctx context.Context, orgID string) (bool, error) {
 	})
 }
 
+func AgentPlanHold(ctx context.Context, planID string) (*agentports.ProposalHold, error) {
+	return load(ctx, planID, func(s *set) *dataloadgen.Loader[string, *agentports.ProposalHold] {
+		return s.agentPlanHold
+	})
+}
+
+func (f *AgentPlanHoldLoaderFactory) Attach(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) context.Context {
+	return attach(ctx, func(s *set) {
+		s.agentPlanHold = newAgentPlanHoldLoader(f, tenantInfo)
+	})
+}
+
 func (f *AgentsPausedLoaderFactory) Attach(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,

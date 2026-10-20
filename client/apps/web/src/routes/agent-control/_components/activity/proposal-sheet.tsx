@@ -51,7 +51,7 @@ export function ProposalSheet({
     onClose();
   };
   const pending = proposal?.status === "Pending";
-  const held = pending ? holdSwitchOf(proposal?.hold, undefined) : null;
+  const held = pending ? holdSwitchOf(proposal?.hold, { agentId: proposal?.run?.agentDefinitionId }) : null;
   const { allowed: canResume } = usePermission(Resource.AgentControl, Operation.Update);
   const { allowed: canEditAgent } = usePermission(Resource.AgentDefinition, Operation.Update);
   const canTurnOff = held?.scope === "organization" ? canResume : canEditAgent;

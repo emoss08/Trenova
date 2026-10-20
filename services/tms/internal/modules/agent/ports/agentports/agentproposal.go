@@ -153,6 +153,11 @@ type ListAgentProposalsByPlanRequest struct {
 	TenantInfo pagination.TenantInfo
 }
 
+type ListAgentProposalsByPlansRequest struct {
+	PlanIDs    []pulid.ID
+	TenantInfo pagination.TenantInfo
+}
+
 // SkipPendingByPlanRequest marks every still-pending step of a plan as
 // skipped, once an earlier step has failed.
 type SkipPendingByPlanRequest struct {
@@ -198,6 +203,10 @@ type AgentProposalRepository interface {
 	ListByPlan(
 		ctx context.Context,
 		req ListAgentProposalsByPlanRequest,
+	) ([]*agent.AgentProposal, error)
+	ListByPlans(
+		ctx context.Context,
+		req ListAgentProposalsByPlansRequest,
 	) ([]*agent.AgentProposal, error)
 	ListByRun(
 		ctx context.Context,

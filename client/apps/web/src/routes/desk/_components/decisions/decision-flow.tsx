@@ -445,8 +445,8 @@ export function DecisionFlow() {
           subtitle={
             <>
               {formatTimeAgo(item.node.createdAt * 1000)}
-              {item.reversible ? "" : ` · ${t("final")}`}
-              {item.held && ` · ${t("held")}`}
+              {item.reversible ? "" : ` · ${t("Can't be undone")}`}
+              {item.held && ` · ${t("Held, not yet decidable")}`}
             </>
           }
           trailing={!seen.has(item.id) && <QueueUnseenDot label={t("Not opened yet")} />}

@@ -579,6 +579,37 @@ func (r *repository) ListByPlan(
 	})
 }
 
+func (r *repository) ListByPlans(
+	ctx context.Context,
+	req agentports.ListAgentProposalsByPlansRequest,
+) ([]*agent.AgentProposal, error) {
+	proposals := make([]*agent.AgentProposal, 0)
+	if len(req.PlanIDs) == 0 {
+		return proposals, nil
+	}
+
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentProposal, error) {
+		cols := agentcol.AgentProposalColumns
+
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&proposals).
+			Column(cols.ID.Name, cols.PlanID.Name, cols.RunID.Name).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return agentcol.AgentProposalScopeTenant(sq, req.TenantInfo).
+					Where(cols.PlanID.In(), bun.List(req.PlanIDs))
+			}).
+			Scan(ctx)
+		if err != nil {
+			r.l.Error("failed to list agent proposals by plans", zap.Error(err))
+
+			return nil, fmt.Errorf("list agent proposals by plans: %w", err)
+		}
+
+		return proposals, nil
+	})
+}
+
 // SkipPendingByPlan closes every step of a plan that is still pending once an
 // earlier step has failed: they were never decided against and did not
 // expire, and the record should say so.

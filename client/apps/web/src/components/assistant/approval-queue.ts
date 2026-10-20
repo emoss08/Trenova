@@ -1,3 +1,4 @@
+import { AI_CONTROL_PATH, aiControlAgentPath } from "@/routes/agent-control/ai-control-tabs";
 import type { DecisionFocus } from "@/stores/assistant-store";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import type {
@@ -328,18 +329,12 @@ export function holdSwitchOf(
     return null;
   }
   if (hold.reason === "OrganizationPaused") {
-    return { scope: "organization", to: "/admin/agent-control" };
-  }
-
-  const agentId = proposer?.agentId ?? "";
-  const params = new URLSearchParams({ tab: "agents" });
-  if (agentId !== "") {
-    params.set("openAgent", agentId);
+    return { scope: "organization", to: AI_CONTROL_PATH };
   }
 
   return {
     scope: "agent",
-    to: `/admin/agent-control?${params.toString()}`,
+    to: aiControlAgentPath(proposer?.agentId),
     agentName: hold.agentName || proposer?.agentName || "",
   };
 }

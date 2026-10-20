@@ -23,7 +23,6 @@ type PendingDecisionEntry struct {
 	ID        pulid.ID            `bun:"id"`
 	CreatedAt int64               `bun:"created_at"`
 	Shadow    bool                `bun:"shadow"`
-	AgentName string              `bun:"agent_name"`
 }
 
 // PendingDecisionCursor is where a page ended: the entry's time and id,
@@ -47,7 +46,8 @@ type ListPendingDecisionsQuery struct {
 	// everything.
 	Audience *kernelports.AgentAudience
 	// Now is the clock the expiry check reads.
-	Now int64
+	Now            int64
+	ActionableOnly bool
 }
 
 type PendingDecisionsPageRow struct {
@@ -70,7 +70,6 @@ type PendingDecisionToolCount struct {
 // which agents, of which kinds, and how long the oldest has waited.
 type PendingDecisionSummary struct {
 	Total    int
-	Held     int
 	ByAgent  []PendingDecisionAgentCount
 	ByTool   []PendingDecisionToolCount
 	OldestAt *int64
