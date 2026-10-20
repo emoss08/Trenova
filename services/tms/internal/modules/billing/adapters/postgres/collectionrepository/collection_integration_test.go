@@ -255,6 +255,7 @@ func setupNonRecourseEnv(t *testing.T) *nonRecourseEnv {
 		Column("id", "customer_id", "pro_number", "bol").
 		Where("organization_id = ?", org.ID).
 		Where("business_unit_id = ?", org.BusinessUnitID).
+		Apply(seedtest.ShipmentsWithoutReceivables).
 		Limit(1).
 		Scan(ctx, &shp))
 

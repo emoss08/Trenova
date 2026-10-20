@@ -318,7 +318,7 @@ func TestCloseFiscalYearReusesAnExistingAdjustingPeriod(t *testing.T) {
 		PeriodNumber:          13,
 		PeriodType:            fiscalperiod.PeriodTypeAdjusting,
 		Status:                fiscalperiod.StatusInactive,
-		Name:                  "Adjusting Period - FY 2031",
+		Name:                  "Adjusting Period - FY 2021",
 		StartDate:             f.closedPeriod.StartDate,
 		EndDate:               f.closedPeriod.EndDate,
 		IsAdjusting:           true,
@@ -549,10 +549,10 @@ func setupCloseFixture(t *testing.T, ctx context.Context, db *bun.DB) closeFixtu
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
 		Status:         fiscalyear.StatusOpen,
-		Year:           2031,
-		Name:           "FY 2031",
-		StartDate:      time.Date(2031, time.January, 1, 0, 0, 0, 0, time.UTC).Unix(),
-		EndDate:        time.Date(2031, time.December, 31, 23, 59, 59, 0, time.UTC).Unix(),
+		Year:           2021,
+		Name:           "FY 2021",
+		StartDate:      time.Date(2021, time.January, 1, 0, 0, 0, 0, time.UTC).Unix(),
+		EndDate:        time.Date(2021, time.December, 31, 23, 59, 59, 0, time.UTC).Unix(),
 	})
 	require.NoError(t, err)
 
@@ -560,10 +560,10 @@ func setupCloseFixture(t *testing.T, ctx context.Context, db *bun.DB) closeFixtu
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
 		Status:         fiscalyear.StatusOpen,
-		Year:           2032,
-		Name:           "FY 2032",
-		StartDate:      time.Date(2032, time.January, 1, 0, 0, 0, 0, time.UTC).Unix(),
-		EndDate:        time.Date(2032, time.December, 31, 23, 59, 59, 0, time.UTC).Unix(),
+		Year:           2022,
+		Name:           "FY 2022",
+		StartDate:      time.Date(2022, time.January, 1, 0, 0, 0, 0, time.UTC).Unix(),
+		EndDate:        time.Date(2022, time.December, 31, 23, 59, 59, 0, time.UTC).Unix(),
 		IsCurrent:      true,
 	})
 	require.NoError(t, err)
@@ -575,7 +575,7 @@ func setupCloseFixture(t *testing.T, ctx context.Context, db *bun.DB) closeFixtu
 		PeriodNumber:   1,
 		PeriodType:     fiscalperiod.PeriodTypeMonth,
 		Status:         fiscalperiod.StatusOpen,
-		Name:           "Period 1 - FY 2031",
+		Name:           "Period 1 - FY 2021",
 		StartDate:      closingYear.StartDate,
 		EndDate:        closingYear.EndDate,
 	})
@@ -588,7 +588,7 @@ func setupCloseFixture(t *testing.T, ctx context.Context, db *bun.DB) closeFixtu
 		PeriodNumber:   1,
 		PeriodType:     fiscalperiod.PeriodTypeMonth,
 		Status:         fiscalperiod.StatusOpen,
-		Name:           "Period 1 - FY 2032",
+		Name:           "Period 1 - FY 2022",
 		StartDate:      nextYear.StartDate,
 		EndDate:        nextYear.EndDate,
 	})

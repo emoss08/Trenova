@@ -48,6 +48,13 @@ func TestRepairJournalsWritesTheMissingDriverPaymentJournal(t *testing.T) {
 		Limit(1).
 		Scan(ctx, &settlement))
 
+	_, err = db.NewUpdate().
+		Table("accounting_controls").
+		Set("default_cash_account_id = NULL").
+		Where("organization_id = ?", settlement.OrganizationID).
+		Exec(ctx)
+	require.NoError(t, err)
+
 	preview, err := repairJournals(ctx, conn, settlement.OrganizationID, true)
 	require.NoError(t, err)
 	assert.Zero(t, preview.PaymentsJournaled)

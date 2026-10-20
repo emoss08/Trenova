@@ -94,28 +94,28 @@ func TestListJournalEntries(t *testing.T) {
 			Limit(1).
 			Scan(ctx, &user),
 	)
-	nowTime := time.Now().UTC()
+	entryTime := time.Date(2021, time.March, 15, 12, 0, 0, 0, time.UTC)
 	fy, fp := fiscaltest.OpenPeriod(t, ctx, fiscaltest.OpenPeriodParams{
 		DB:             db,
 		OrganizationID: org.ID,
 		BusinessUnitID: org.BusinessUnitID,
-		At:             nowTime.Unix(),
+		At:             entryTime.Unix(),
 	})
 
 	batchID := pulid.MustNew("jb_")
-	now := nowTime.Unix()
+	entryAt := entryTime.Unix()
 	_, err = db.NewInsert().
-		Model(&journalBatchRecord{ID: batchID, OrganizationID: org.ID, BusinessUnitID: org.BusinessUnitID, BatchNumber: "JB-LIST-1", BatchType: "System", Status: "Posted", Description: "Batch", AccountingDate: now, FiscalYearID: fy.ID, FiscalPeriodID: fp.ID, CreatedByID: user.ID}).
+		Model(&journalBatchRecord{ID: batchID, OrganizationID: org.ID, BusinessUnitID: org.BusinessUnitID, BatchNumber: "JB-LIST-1", BatchType: "System", Status: "Posted", Description: "Batch", AccountingDate: entryAt, FiscalYearID: fy.ID, FiscalPeriodID: fp.ID, CreatedByID: user.ID}).
 		Exec(ctx)
 	require.NoError(t, err)
 	entryOneID := pulid.MustNew("je_")
 	entryTwoID := pulid.MustNew("je_")
 	_, err = db.NewInsert().
-		Model(&journalEntryRecord{ID: entryOneID, OrganizationID: org.ID, BusinessUnitID: org.BusinessUnitID, BatchID: batchID, FiscalYearID: fy.ID, FiscalPeriodID: fp.ID, EntryNumber: "JE-100", EntryDate: now, EntryType: "Standard", AccountingDate: now, Status: "Posted", ReferenceType: "InvoicePosted", ReferenceID: pulid.MustNew("inv_").String(), Description: "Invoice posting", TotalDebit: 100, TotalCredit: 100, CreatedByID: user.ID}).
+		Model(&journalEntryRecord{ID: entryOneID, OrganizationID: org.ID, BusinessUnitID: org.BusinessUnitID, BatchID: batchID, FiscalYearID: fy.ID, FiscalPeriodID: fp.ID, EntryNumber: "JE-100", EntryDate: entryAt, EntryType: "Standard", AccountingDate: entryAt, Status: "Posted", ReferenceType: "InvoicePosted", ReferenceID: pulid.MustNew("inv_").String(), Description: "Invoice posting", TotalDebit: 100, TotalCredit: 100, CreatedByID: user.ID}).
 		Exec(ctx)
 	require.NoError(t, err)
 	_, err = db.NewInsert().
-		Model(&journalEntryRecord{ID: entryTwoID, OrganizationID: org.ID, BusinessUnitID: org.BusinessUnitID, BatchID: batchID, FiscalYearID: fy.ID, FiscalPeriodID: fp.ID, EntryNumber: "JE-200", EntryDate: now + 10, EntryType: "Standard", AccountingDate: now + 10, Status: "Pending", ReferenceType: "ManualJournalPosted", ReferenceID: pulid.MustNew("mjr_").String(), Description: "Manual journal", TotalDebit: 200, TotalCredit: 200, CreatedByID: user.ID}).
+		Model(&journalEntryRecord{ID: entryTwoID, OrganizationID: org.ID, BusinessUnitID: org.BusinessUnitID, BatchID: batchID, FiscalYearID: fy.ID, FiscalPeriodID: fp.ID, EntryNumber: "JE-200", EntryDate: entryAt + 10, EntryType: "Standard", AccountingDate: entryAt + 10, Status: "Pending", ReferenceType: "ManualJournalPosted", ReferenceID: pulid.MustNew("mjr_").String(), Description: "Manual journal", TotalDebit: 200, TotalCredit: 200, CreatedByID: user.ID}).
 		Exec(ctx)
 	require.NoError(t, err)
 
