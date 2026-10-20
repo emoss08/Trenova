@@ -2,6 +2,10 @@ package agent
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"strings"
+	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -61,10 +65,12 @@ type AgentPlan struct {
 	CommitsAt      *int64    `json:"commitsAt"      bun:"commits_at,type:BIGINT,nullzero"`
 	UndoneAt       *int64    `json:"undoneAt"       bun:"undone_at,type:BIGINT,nullzero"`
 	UndoneByUserID *pulid.ID `json:"undoneByUserId" bun:"undone_by_user_id,type:VARCHAR(100),nullzero"`
-	// The approval the window carries until it commits.
+	// The decision as it was made: its reason, the decider's note and the
+	// digest of the preview they decided on. An approval in its undo window
+	// carries them until it commits.
 	ApprovalReasonCode    string `json:"-" bun:"approval_reason_code,type:VARCHAR(100),nullzero"`
-	ApprovalNote          string `json:"-" bun:"approval_note,type:TEXT,nullzero"`
-	ApprovalPreviewDigest string `json:"-" bun:"approval_preview_digest,type:VARCHAR(64),nullzero"`
+	ApprovalNote          string `json:"approvalNote"          bun:"approval_note,type:TEXT,nullzero"`
+	ApprovalPreviewDigest string `json:"approvalPreviewDigest" bun:"approval_preview_digest,type:VARCHAR(64),nullzero"`
 	// ScriptStepKey is the ledger step of the script whose intents are the
 	// plan's steps; empty for a plan of the model's own calls.
 	ScriptStepKey string `json:"scriptStepKey" bun:"script_step_key,type:VARCHAR(120),nullzero"`
@@ -79,6 +85,25 @@ type AgentPlan struct {
 }
 
 const maxPlanTitleLength = 200
+
+const MaxNamedPlanTitleLength = 80
+
+var (
+	ErrPlanTitleEmpty   = errors.New("title must name the plan")
+	ErrPlanTitleTooLong = fmt.Errorf("title is at most %d characters", MaxNamedPlanTitleLength)
+)
+
+func NamedPlanTitle(raw string) (string, error) {
+	title := strings.Join(strings.Fields(raw), " ")
+	switch {
+	case title == "":
+		return "", ErrPlanTitleEmpty
+	case utf8.RuneCountInString(title) > MaxNamedPlanTitleLength:
+		return "", ErrPlanTitleTooLong
+	default:
+		return title, nil
+	}
+}
 
 // PlanToolName is how a plan reads where a tool's name would: several
 // writes decided as one, not any single tool's.

@@ -29,6 +29,14 @@ func (p *shownPlan) annotate(req *agentports.DecideAgentProposalRequest, proposa
 	req.StepPreviewReviewed = p.reviewed
 }
 
+func (p *shownPlan) digest(named string) string {
+	if named != "" || p == nil || p.preview == nil {
+		return named
+	}
+
+	return p.preview.Digest
+}
+
 // settlePreview works out what approving a plan approves: every pending
 // step previewed as the decider would see it, each projected from the steps
 // before it. A plan with a step whose record moved on is refused, and a plan

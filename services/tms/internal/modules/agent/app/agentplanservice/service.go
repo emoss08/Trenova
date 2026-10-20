@@ -311,6 +311,11 @@ func (s *Service) claimAndRun(
 		FromStatus:      from,
 		DecidedByUserID: actor.UserID,
 		DecidedAt:       now,
+		Approval: agentports.PlanApproval{
+			ReasonCode:    req.ReasonCode,
+			Note:          agent.NormalizeDecisionNote(req.Note),
+			PreviewDigest: prepared.shown.digest(req.PreviewDigest),
+		},
 	})
 	if err != nil {
 		return nil, err
@@ -627,7 +632,7 @@ type recordKey struct {
 // comparing against it refused the second of two changes to one record every
 // time, although the approver approved both together.
 func (s *Service) runSteps(ctx context.Context, r *stepRun) *agent.AgentPlan {
-	if independent(r.steps) {
+	if agent.PlanRunModeOf(r.steps) == agent.PlanRunModeEachStep {
 		return s.runIndependent(ctx, r)
 	}
 
@@ -790,26 +795,6 @@ func (s *Service) signal(
 	if err := s.decisions.SignalRun(ctx, lastReq, last, plan.RunID); err != nil {
 		s.l.Error("failed to signal agent workflow for plan", zap.Error(err))
 	}
-}
-
-func independent(steps []*agent.AgentProposal) bool {
-	if len(steps) < 2 {
-		return false
-	}
-
-	resource := steps[0].TargetResource
-	seen := make(map[pulid.ID]struct{}, len(steps))
-	for _, step := range steps {
-		if step.TargetID.IsNil() || step.TargetResource == "" || step.TargetResource != resource {
-			return false
-		}
-		if _, repeated := seen[step.TargetID]; repeated {
-			return false
-		}
-		seen[step.TargetID] = struct{}{}
-	}
-
-	return true
 }
 
 func (s *Service) failAt(

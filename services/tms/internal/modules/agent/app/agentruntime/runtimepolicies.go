@@ -62,6 +62,15 @@ var runtimePolicySpecs = []runtimePolicySpec{
 			"anyone has seen it; it changes no record and only narrows what the person is asked.",
 	},
 	{
+		name:      namePlanName,
+		operation: permission.OpRead,
+		scope:     agent.ToolScopeRun,
+		egress:    agent.EgressNone,
+		effect:    agent.ToolEffectAsk,
+		rationale: "Names the plan the person approves the turn's proposals as; it changes no " +
+			"record and only words what the person is asked.",
+	},
+	{
 		name:      delegateTaskName,
 		operation: permission.OpCreate,
 		scope:     agent.ToolScopeRun,

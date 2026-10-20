@@ -1646,3 +1646,18 @@ func (f *CarrierInvoiceMatchesByMoveIDLoaderFactory) Attach(
 		s.carrierInvoiceMatchesByMoveID = newCarrierInvoiceMatchesByMoveIDLoader(f, tenantInfo)
 	})
 }
+
+func AgentPlanStepsByPlanID(ctx context.Context, key string) ([]*agent.AgentProposal, error) {
+	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, []*agent.AgentProposal] {
+		return s.agentPlanStepsByPlanID
+	})
+}
+
+func (f *AgentPlanStepsByPlanIDLoaderFactory) Attach(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) context.Context {
+	return attach(ctx, func(s *set) {
+		s.agentPlanStepsByPlanID = newAgentPlanStepsByPlanIDLoader(f, tenantInfo)
+	})
+}

@@ -97,20 +97,3 @@ func TestDecide_AnUntargetedStepKeepsThePlanInOrder(t *testing.T) {
 
 	assert.Len(t, h.decider.decided, 1)
 }
-
-func TestIndependent_ReadsTheStepsTargets(t *testing.T) {
-	t.Parallel()
-
-	shared := pulid.MustNew("inv_")
-	steps := []*agent.AgentProposal{
-		{TargetResource: "invoice", TargetID: pulid.MustNew("inv_")},
-		{TargetResource: "invoice", TargetID: pulid.MustNew("inv_")},
-	}
-	assert.True(t, independent(steps))
-
-	steps[1].TargetID = shared
-	steps = append(steps, &agent.AgentProposal{TargetResource: "invoice", TargetID: shared})
-	assert.False(t, independent(steps))
-
-	assert.False(t, independent(steps[:1]), "one step has nothing to be independent of")
-}

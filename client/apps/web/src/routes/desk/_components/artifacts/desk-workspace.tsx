@@ -42,6 +42,7 @@ import { DeskDecisionBody } from "./kinds/decision/desk-decision-body";
 import { DeskDiffBody } from "./kinds/diff/desk-diff-body";
 import { DeskEmailBody } from "./kinds/email/desk-email-body";
 import { DeskPlanBody } from "./kinds/plan/desk-plan-body";
+import { PlanSkeleton } from "./kinds/plan/plan-skeleton";
 import { DeskRateBody } from "./kinds/rate/desk-rate-body";
 import { DeskRecordBody } from "./kinds/record/desk-record-body";
 import { DeskReportRunBody } from "./kinds/report/desk-report-run-body";
@@ -460,6 +461,9 @@ function ArtifactBodySkeleton({ artifact }: { artifact: AssistantArtifact }) {
   }
   if (artifact.kind === "portal_task") {
     return <PortalTaskSkeleton />;
+  }
+  if (artifact.kind === "plan") {
+    return <PlanSkeleton />;
   }
   const resource =
     artifact.kind === "entity_card" && typeof artifact.payload.entity === "string"

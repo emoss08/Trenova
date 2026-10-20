@@ -82,6 +82,7 @@ type FactoryParams struct {
 	WorkerLeaveEntriesByCaseID                *WorkerLeaveEntriesByCaseIDLoaderFactory
 	FiscalPeriodsByFiscalYearID               *FiscalPeriodsByFiscalYearIDLoaderFactory
 	AgentDecisionsByProposalID                *AgentDecisionsByProposalIDLoaderFactory
+	AgentPlanStepsByPlanID                    *AgentPlanStepsByPlanIDLoaderFactory
 	AgentRunByID                              *AgentRunByIDLoaderFactory
 	AgentRunTranscriptByID                    *AgentRunTranscriptByIDLoaderFactory
 	AgentMemoryByID                           *AgentMemoryByIDLoaderFactory
@@ -169,6 +170,7 @@ type Factory struct {
 	workerLeaveEntriesByCaseID                *WorkerLeaveEntriesByCaseIDLoaderFactory
 	fiscalPeriodsByFiscalYearID               *FiscalPeriodsByFiscalYearIDLoaderFactory
 	agentDecisionsByProposalID                *AgentDecisionsByProposalIDLoaderFactory
+	agentPlanStepsByPlanID                    *AgentPlanStepsByPlanIDLoaderFactory
 	agentRunByID                              *AgentRunByIDLoaderFactory
 	agentRunTranscriptByID                    *AgentRunTranscriptByIDLoaderFactory
 	agentMemoryByID                           *AgentMemoryByIDLoaderFactory
@@ -256,6 +258,7 @@ type set struct {
 	workerLeaveEntriesByCaseID                *dataloadgen.Loader[string, []*worker.WorkerLeaveEntry]
 	fiscalPeriodsByFiscalYearID               *dataloadgen.Loader[string, []*fiscalperiod.FiscalPeriod]
 	agentDecisionsByProposalID                *dataloadgen.Loader[string, []*agent.AgentDecision]
+	agentPlanStepsByPlanID                    *dataloadgen.Loader[string, []*agent.AgentProposal]
 	agentRunByID                              *dataloadgen.Loader[string, *agent.AgentRun]
 	agentRunTranscriptByID                    *dataloadgen.Loader[string, *agent.AgentRun]
 	agentMemoryByID                           *dataloadgen.Loader[string, *agent.Memory]
@@ -350,6 +353,7 @@ func NewFactory(p FactoryParams) *Factory {
 		workerLeaveEntriesByCaseID:                p.WorkerLeaveEntriesByCaseID,
 		fiscalPeriodsByFiscalYearID:               p.FiscalPeriodsByFiscalYearID,
 		agentDecisionsByProposalID:                p.AgentDecisionsByProposalID,
+		agentPlanStepsByPlanID:                    p.AgentPlanStepsByPlanID,
 		agentRunByID:                              p.AgentRunByID,
 		agentRunTranscriptByID:                    p.AgentRunTranscriptByID,
 		agentMemoryByID:                           p.AgentMemoryByID,
@@ -481,6 +485,10 @@ func newSet(f *Factory, tenantInfo pagination.TenantInfo) *set {
 		),
 		agentDecisionsByProposalID: newAgentDecisionsByProposalIDLoader(
 			f.agentDecisionsByProposalID,
+			tenantInfo,
+		),
+		agentPlanStepsByPlanID: newAgentPlanStepsByPlanIDLoader(
+			f.agentPlanStepsByPlanID,
 			tenantInfo,
 		),
 		agentRunByID:    newAgentRunByIDLoader(f.agentRunByID, tenantInfo),

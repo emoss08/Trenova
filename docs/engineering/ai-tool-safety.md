@@ -10,7 +10,7 @@ policies, so this page cannot drift from what runs: CI regenerates it and fails
 when it differs. Each tool is listed once, under the furthest class its work
 can reach.
 
-Tools listed: 633.
+Tools listed: 634.
 
 ## The model
 
@@ -88,7 +88,7 @@ and Confidential fields never reach a model at all.
 
 | Class | Means | Runs at most | Held once tainted | Tools that reach it |
 | --- | --- | --- | --- | --- |
-| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 210 |
+| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 211 |
 | The caller's own records | Changes only the records of the person using the agent. | Automatic | No | 9 |
 | Inside the organization | Changes records only people inside the organization see. | Automatic | No | 266 |
 | Seen by a customer | Changes something a customer can see. | Ask first | Yes | 5 |
@@ -232,6 +232,7 @@ Looks something up. Nothing changes and nothing is sent.
 | List hold reasons (`masterdata_list_hold_reasons`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List service types (`masterdata_list_service_types`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List shipment types (`masterdata_list_shipment_types`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| Name plan (`name_plan`) | Reads only | Automatic | — | — | Names the plan the person approves the turn's proposals as; it changes no record and only words what the person is asked. |
 | Get order (`order_get`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List orders (`order_list`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Explain rate (`rate_explain`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |

@@ -636,27 +636,29 @@ var AgentPlanColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by AgentPlan.GetStaticFieldMap().
 var AgentPlanFieldMap = map[string]string{
-	"id":              "id",
-	"businessUnitId":  "business_unit_id",
-	"organizationId":  "organization_id",
-	"runId":           "run_id",
-	"title":           "title",
-	"summary":         "summary",
-	"status":          "status",
-	"stepCount":       "step_count",
-	"completedSteps":  "completed_steps",
-	"failedStep":      "failed_step",
-	"failureError":    "failure_error",
-	"decidedByUserId": "decided_by_user_id",
-	"decidedAt":       "decided_at",
-	"expiresAt":       "expires_at",
-	"commitsAt":       "commits_at",
-	"undoneAt":        "undone_at",
-	"undoneByUserId":  "undone_by_user_id",
-	"scriptStepKey":   "script_step_key",
-	"version":         "version",
-	"createdAt":       "created_at",
-	"updatedAt":       "updated_at",
+	"id":                    "id",
+	"businessUnitId":        "business_unit_id",
+	"organizationId":        "organization_id",
+	"runId":                 "run_id",
+	"title":                 "title",
+	"summary":               "summary",
+	"status":                "status",
+	"stepCount":             "step_count",
+	"completedSteps":        "completed_steps",
+	"failedStep":            "failed_step",
+	"failureError":          "failure_error",
+	"decidedByUserId":       "decided_by_user_id",
+	"decidedAt":             "decided_at",
+	"expiresAt":             "expires_at",
+	"commitsAt":             "commits_at",
+	"undoneAt":              "undone_at",
+	"undoneByUserId":        "undone_by_user_id",
+	"approvalNote":          "approval_note",
+	"approvalPreviewDigest": "approval_preview_digest",
+	"scriptStepKey":         "script_step_key",
+	"version":               "version",
+	"createdAt":             "created_at",
+	"updatedAt":             "updated_at",
 }
 
 // AgentPlanInsertableColumns lists column names suitable for INSERT statements on the "agent_plans" table.
@@ -753,27 +755,29 @@ func AgentPlanApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.
 //	AgentPlanFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var AgentPlanFilter = struct {
-	ID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	RunID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "runId" → DB: "run_id"
-	Title           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "title" → DB: "title"
-	Summary         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "summary" → DB: "summary"
-	Status          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
-	StepCount       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "stepCount" → DB: "step_count"
-	CompletedSteps  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "completedSteps" → DB: "completed_steps"
-	FailedStep      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failedStep" → DB: "failed_step"
-	FailureError    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failureError" → DB: "failure_error"
-	DecidedByUserID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "decidedByUserId" → DB: "decided_by_user_id"
-	DecidedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "decidedAt" → DB: "decided_at"
-	ExpiresAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expiresAt" → DB: "expires_at"
-	CommitsAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "commitsAt" → DB: "commits_at"
-	UndoneAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "undoneAt" → DB: "undone_at"
-	UndoneByUserID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "undoneByUserId" → DB: "undone_by_user_id"
-	ScriptStepKey   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "scriptStepKey" → DB: "script_step_key"
-	Version         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	RunID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "runId" → DB: "run_id"
+	Title                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "title" → DB: "title"
+	Summary               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "summary" → DB: "summary"
+	Status                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	StepCount             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "stepCount" → DB: "step_count"
+	CompletedSteps        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "completedSteps" → DB: "completed_steps"
+	FailedStep            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failedStep" → DB: "failed_step"
+	FailureError          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failureError" → DB: "failure_error"
+	DecidedByUserID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "decidedByUserId" → DB: "decided_by_user_id"
+	DecidedAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "decidedAt" → DB: "decided_at"
+	ExpiresAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expiresAt" → DB: "expires_at"
+	CommitsAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "commitsAt" → DB: "commits_at"
+	UndoneAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "undoneAt" → DB: "undone_at"
+	UndoneByUserID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "undoneByUserId" → DB: "undone_by_user_id"
+	ApprovalNote          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "approvalNote" → DB: "approval_note"
+	ApprovalPreviewDigest func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "approvalPreviewDigest" → DB: "approval_preview_digest"
+	ScriptStepKey         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "scriptStepKey" → DB: "script_step_key"
+	Version               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("id", op, value)
@@ -825,6 +829,12 @@ var AgentPlanFilter = struct {
 	},
 	UndoneByUserID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("undoneByUserId", op, value)
+	},
+	ApprovalNote: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("approvalNote", op, value)
+	},
+	ApprovalPreviewDigest: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("approvalPreviewDigest", op, value)
 	},
 	ScriptStepKey: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("scriptStepKey", op, value)

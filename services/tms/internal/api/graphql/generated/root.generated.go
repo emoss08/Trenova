@@ -800,6 +800,8 @@ type AgentMemoryResolver interface {
 }
 
 type AgentPlanResolver interface {
+	DecidedBy(ctx context.Context, obj *agent.AgentPlan) (*tenant.User, error)
+	RunMode(ctx context.Context, obj *agent.AgentPlan) (agent.PlanRunMode, error)
 	Run(ctx context.Context, obj *agent.AgentPlan) (*agent.AgentRun, error)
 	Hold(ctx context.Context, obj *agent.AgentPlan) (*gqlmodel.PendingDecisionHold, error)
 }
@@ -6346,6 +6348,14 @@ enum AgentProposalFieldKind {
   RecordSubset
 }
 
+"How an approved plan's steps run."
+enum AgentPlanRunMode {
+  "In order, stopping at the first step that fails; the steps after it are skipped."
+  InOrder
+  "Every step runs, because each changes a different record of one kind; a failure stops none of the others."
+  EachStep
+}
+
 "Several proposals from one run, decided once and run in order."
 type AgentPlan {
   id: ID!
@@ -6361,7 +6371,15 @@ type AgentPlan {
   failedStep: Int
   failureError: String!
   decidedByUserId: ID
+  "Who decided the plan; absent while it waits, or when the reader may not see them."
+  decidedBy: User
   decidedAt: Timestamp
+  "What the decider wrote with the decision, as plain text; empty when they wrote nothing."
+  decisionNote: String!
+  "The digest of the preview an approval was made on; empty for a rejection and while the plan waits."
+  previewDigest: String!
+  "How the steps run once approved: in order, stopping at the first that fails, or every step on its own."
+  runMode: AgentPlanRunMode!
   expiresAt: Timestamp
   "When an approval in its undo window starts to run, unless it is undone first."
   commitsAt: Timestamp

@@ -6591,6 +6591,15 @@
       "routes/detention-policy"
     ]
   },
+  "A later plan in this conversation takes it from here.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "A leg that is {0} cannot be invoiced.": {
     "sites": 1,
     "scope": [
@@ -7104,6 +7113,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "A message": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "A message can be marked handled or ignored, nothing else": {
@@ -8555,6 +8573,15 @@
       "apps/web/components"
     ]
   },
+  "A record": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "A record changed after it was written; the evidence chain no longer verifies": {
     "sites": 1,
     "scope": [
@@ -8598,6 +8625,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "A record you cannot see": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "A recurring shipment already covers this lane": {
@@ -24565,6 +24601,15 @@
       "go/other"
     ]
   },
+  "An approval was taken back in its undo window": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "An approved document must record when it was approved": {
     "sites": 1,
     "scope": [
@@ -28113,7 +28158,7 @@
     ]
   },
   "Approval": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -28643,6 +28688,15 @@
       "go/other"
     ]
   },
+  "Approve plan": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Approve records": {
     "sites": 1,
     "scope": [
@@ -28881,7 +28935,7 @@
     ]
   },
   "Approved": {
-    "sites": 60,
+    "sites": 61,
     "scope": [
       "go",
       "ts"
@@ -28941,6 +28995,15 @@
       "routes/worker"
     ]
   },
+  "Approved against {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Approved and locked, ready to post to the general ledger.": {
     "sites": 1,
     "scope": [
@@ -28987,7 +29050,7 @@
     ]
   },
   "Approved by {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -29677,11 +29740,12 @@
     ]
   },
   "Archived {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/worker"
     ]
   },
@@ -30786,6 +30850,15 @@
   },
   "Ask the agent to check {0}": {
     "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Ask the agent to finish it": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -35678,7 +35751,7 @@
     ]
   },
   "Awaiting approval": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -35686,6 +35759,7 @@
       "apps/web/components",
       "apps/web/hooks",
       "packages/shared/lib",
+      "routes/desk",
       "routes/journal-review",
       "routes/time-attendance"
     ]
@@ -35764,6 +35838,15 @@
   },
   "Awaiting their decision": {
     "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Awaiting your approval": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -43050,6 +43133,15 @@
       "routes/worker"
     ]
   },
+  "Can be undone for {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Can hand work to": {
     "sites": 1,
     "scope": [
@@ -48333,6 +48425,15 @@
       "routes/rate-agreement"
     ]
   },
+  "Changed 1 field on {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Changed at provider": {
     "sites": 1,
     "scope": [
@@ -48462,6 +48563,15 @@
     ]
   },
   "Changed {0} and {1, plural, one {# more} other {# more}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Changed {0} fields on {1}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -71867,6 +71977,24 @@
       "routes/desk"
     ]
   },
+  "Decided whole · every step runs on its own": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Decided whole · stops at the first failure": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Decided {0}": {
     "sites": 1,
     "scope": [
@@ -72128,7 +72256,7 @@
     ]
   },
   "Decline": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
@@ -72147,6 +72275,15 @@
     ],
     "areas": [
       "apps/dash/_components"
+    ]
+  },
+  "Decline plan": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Decline reason": {
@@ -72194,6 +72331,15 @@
       "apps/dash/_components"
     ]
   },
+  "Decline this plan?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Decline time off": {
     "sites": 1,
     "scope": [
@@ -72231,7 +72377,7 @@
     ]
   },
   "Declined": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
@@ -72247,7 +72393,7 @@
     ]
   },
   "Declined by {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -74829,6 +74975,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Deleted {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Deletes every page not already filed": {
@@ -81878,7 +82033,7 @@
     ]
   },
   "Done": {
-    "sites": 40,
+    "sites": 41,
     "scope": [
       "ts"
     ],
@@ -95996,6 +96151,24 @@
       "apps/web/lib"
     ]
   },
+  "Every step had its turn": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Every step runs": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Every stop a driver is sitting on right now": {
     "sites": 1,
     "scope": [
@@ -98316,7 +98489,7 @@
     ]
   },
   "Expired": {
-    "sites": 37,
+    "sites": 38,
     "scope": [
       "go",
       "ts"
@@ -98351,6 +98524,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Expired without a decision": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Expired yesterday": {
@@ -98462,12 +98644,13 @@
     ]
   },
   "Expires {0}": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/desk",
       "routes/shipment"
     ]
   },
@@ -101120,7 +101303,7 @@
     ]
   },
   "Failed": {
-    "sites": 72,
+    "sites": 73,
     "scope": [
       "go",
       "ts"
@@ -103234,12 +103417,13 @@
     ]
   },
   "Failed {0}": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "packages/shared/lib",
+      "routes/desk",
       "routes/factoring-company",
       "routes/invoice"
     ]
@@ -116336,6 +116520,15 @@
       "apps/web/components"
     ]
   },
+  "Hide the changes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Hide the waiting messages": {
     "sites": 1,
     "scope": [
@@ -127770,6 +127963,15 @@
       "template/notification.dash.load_assigned"
     ]
   },
+  "It is decided in the conversation it was proposed in.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "It is still a draft. Fix the problem and post it.": {
     "sites": 1,
     "scope": [
@@ -138958,6 +139160,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Loading the plan…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Loading the portal task": {
@@ -153478,12 +153689,13 @@
     ]
   },
   "New record": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "New recovery codes": {
@@ -153713,12 +153925,13 @@
     ]
   },
   "New {0}": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "Newest": {
@@ -162435,6 +162648,15 @@
       "routes/agent-control"
     ]
   },
+  "Nobody decided it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Nobody decided on the original, so this says nothing yet.": {
     "sites": 1,
     "scope": [
@@ -162961,6 +163183,24 @@
       "routes/worker"
     ]
   },
+  "None of its steps went through.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "None of its steps will run. Anything you write here goes to the agent with the decision.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "None of the selected carriers have a DOT number to monitor": {
     "sites": 2,
     "scope": [
@@ -163103,6 +163343,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "None of these ran": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "None of these rows are carriers": {
@@ -164657,6 +164906,15 @@
       "routes/agent-control"
     ]
   },
+  "Not run": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Not run yet": {
     "sites": 1,
     "scope": [
@@ -165172,6 +165430,15 @@
       "routes/inbox"
     ]
   },
+  "Note for the agent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Note for the reviewer": {
     "sites": 3,
     "scope": [
@@ -165573,6 +165840,24 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Nothing changed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Nothing changed. The agent was told.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Nothing changes — the worker already has that type": {
@@ -170403,7 +170688,7 @@
     ]
   },
   "On hold": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -177223,7 +177508,7 @@
     ]
   },
   "Optional": {
-    "sites": 17,
+    "sites": 18,
     "scope": [
       "ts"
     ],
@@ -189705,7 +189990,7 @@
     ]
   },
   "Plan": {
-    "sites": 10,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
@@ -193011,12 +193296,13 @@
     ]
   },
   "Preview {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/desk",
       "routes/edi"
     ]
   },
@@ -195877,6 +196163,15 @@
       "go/other"
     ]
   },
+  "Propose the rest of the plan, fixed so it goes through, for me to approve.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Propose voiding an invoice. A draft is voided in place; a posted one through a full-reversal adjustment that credits it, which may wait for an approver. Its freight is rebilled or canceled as you say. Unapply payments and credits first. A person always decides.": {
     "sites": 1,
     "scope": [
@@ -195910,12 +196205,13 @@
     ]
   },
   "Proposed by {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "Proposed change": {
@@ -198943,12 +199239,13 @@
     ]
   },
   "Ran": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/agent-control",
+      "routes/desk",
       "routes/fuel-feed-run"
     ]
   },
@@ -198959,6 +199256,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Ran as approved.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Ran for": {
@@ -198979,13 +199285,23 @@
       "routes/agent-control"
     ]
   },
+  "Ran the tool": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Ran {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/desk",
       "routes/reports"
     ]
   },
@@ -206436,6 +206752,15 @@
   },
   "Records it names": {
     "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Records it touches": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -220933,7 +221258,7 @@
     ]
   },
   "Running": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
@@ -220945,6 +221270,7 @@
       "go/other",
       "routes/admin",
       "routes/agent-control",
+      "routes/desk",
       "routes/invoice-adjustment-batch",
       "routes/time-attendance"
     ]
@@ -221008,6 +221334,15 @@
       "routes/desk"
     ]
   },
+  "Running step {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Running the readiness check and transferring...": {
     "sites": 1,
     "scope": [
@@ -221056,11 +221391,12 @@
     ]
   },
   "Running…": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/detention-policy"
     ]
   },
@@ -221120,6 +221456,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Runs in order": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Runs its own fleet": {
@@ -238832,6 +239177,15 @@
       "routes/settings"
     ]
   },
+  "Show the changes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Show the first {0}": {
     "sites": 1,
     "scope": [
@@ -241475,7 +241829,7 @@
     ]
   },
   "Someone": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "ts"
     ],
@@ -244783,6 +245137,24 @@
       "routes/scheduling"
     ]
   },
+  "Starts from what step {0} leaves": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Starts from what steps {0} leave": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Starts immediately": {
     "sites": 1,
     "scope": [
@@ -245870,12 +246242,13 @@
     ]
   },
   "Step {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "Step {0} changes this record first; it is shown as it would be after that step.": {
@@ -245885,6 +246258,24 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Step {0} did not go through": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Step {0} did not run.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Step {0} of {1} · last changed {2}": {
@@ -245905,8 +246296,35 @@
       "routes/desk"
     ]
   },
+  "Step {0} ran": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Step {0} stopped the plan, so the steps after it did not run.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Step {0} went through.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Steps": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -245943,12 +246361,31 @@
     ]
   },
   "Steps {0}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "routes/desk"
+    ]
+  },
+  "Steps {0} did not run.": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/desk"
+    ]
+  },
+  "Steps {0} went through.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Still inside the granted free time": {
@@ -246582,7 +247019,7 @@
     ]
   },
   "Stopped": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -246599,6 +247036,24 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Stopped at step {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Stopped at the first failure": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Stopped at {0} of {1}": {
@@ -254087,12 +254542,14 @@
     ]
   },
   "The agent": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "go/other",
+      "routes/desk"
     ]
   },
   "The agent as it is now answers the case with every write simulated.": {
@@ -263064,6 +263521,15 @@
       "routes/desk"
     ]
   },
+  "The other steps still ran.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "The outstanding balance will no longer be recovered from future settlements.": {
     "sites": 1,
     "scope": [
@@ -263518,6 +263984,42 @@
       "routes/admin"
     ]
   },
+  "The plan \"{0}\" expired before anyone decided it, so none of its steps ran. Propose what is still needed again, with the records as they are now, for me to approve.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "The plan \"{0}\" expired with steps {1} not run. Propose them again, with the records as they are now, for me to approve.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "The plan \"{0}\" stopped at step {1}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "The plan \"{0}\" stopped at step {1}: {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "The plan \"{0}\" would not go through as it stands. Fix it and propose it again; ask me for anything you need.": {
     "sites": 1,
     "scope": [
@@ -263597,6 +264099,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The plan's steps cannot be read here": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
     ]
   },
   "The planned delivery window.": {
@@ -267107,6 +267618,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The steps left run on their own; nothing here needs you.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "The steps this message asks for, and what it tells you": {
@@ -273686,6 +274206,15 @@
       "go/other"
     ]
   },
+  "This plan is on hold": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "This plan is {0}, not waiting to go through": {
     "sites": 1,
     "scope": [
@@ -274772,6 +275301,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "This step did not go through": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "This step follows a rule set elsewhere and stays required": {
@@ -284468,7 +285006,7 @@
     ]
   },
   "Undo": {
-    "sites": 23,
+    "sites": 24,
     "scope": [
       "ts"
     ],
@@ -286614,11 +287152,12 @@
     ]
   },
   "Up next": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/shipment"
     ]
   },
@@ -292956,7 +293495,7 @@
     ]
   },
   "Waiting": {
-    "sites": 15,
+    "sites": 16,
     "scope": [
       "ts"
     ],
@@ -292985,6 +293524,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Waiting for a decision": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Waiting for a first match": {
@@ -295805,6 +296353,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Went through after the undo window": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "West region, last quarter": {
@@ -305180,7 +305737,7 @@
     ]
   },
   "You": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "ts"
     ],
@@ -305235,6 +305792,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "You approve exactly what is shown here.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "You are about to close {0}.": {
@@ -309331,15 +309897,6 @@
     ],
     "areas": [
       "routes/shipment"
-    ]
-  },
-  "did not run": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
     ]
   },
   "differ in the books": {
@@ -314946,6 +315503,15 @@
       "routes/inbox"
     ]
   },
+  "steps run": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "still holds": {
     "sites": 1,
     "scope": [
@@ -315535,6 +316101,15 @@
       "routes/onboarding"
     ]
   },
+  "to approve": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "to ask": {
     "sites": 1,
     "scope": [
@@ -315915,15 +316490,6 @@
       "routes/inbox"
     ]
   },
-  "up next": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
   "up to {0}": {
     "sites": 1,
     "scope": [
@@ -316143,15 +316709,6 @@
     ],
     "areas": [
       "routes/home"
-    ]
-  },
-  "waiting on your approval": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
     ]
   },
   "waiting to post · {0}": {
@@ -317041,7 +317598,7 @@
     ]
   },
   "{0, plural, one {# change} other {# changes}}": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -318633,6 +319190,15 @@
       "apps/web/components"
     ]
   },
+  "{0, plural, one {# message} other {# messages}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0, plural, one {# mile} other {# miles}}": {
     "sites": 2,
     "scope": [
@@ -318714,6 +319280,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0, plural, one {# more field} other {# more fields}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0, plural, one {# more finding} other {# more findings}}": {
@@ -319487,13 +320062,23 @@
       "apps/web/components"
     ]
   },
+  "{0, plural, one {# record you cannot see} other {# records you cannot see}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0, plural, one {# record} other {# records}}": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/desk",
       "routes/reports"
     ]
   },
@@ -320162,8 +320747,26 @@
       "routes/intake"
     ]
   },
+  "{0, plural, one {# step did not go through} other {# steps did not go through}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0, plural, one {# step was skipped} other {# steps were skipped}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0, plural, one {# step} other {# steps}}": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -320990,6 +321593,15 @@
       "apps/web/components"
     ]
   },
+  "{0, plural, one {Changed # field} other {Changed # fields}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0, plural, one {Chase # missed promise} other {Chase # missed promises}} · {1}": {
     "sites": 1,
     "scope": [
@@ -321413,6 +322025,15 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "{0, plural, one {Message to # recipient} other {Message to # recipients}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0, plural, one {New reply} other {New replies}}": {
@@ -322254,6 +322875,15 @@
       "routes/edi"
     ]
   },
+  "{0, plural, one {The step ran} other {All # steps ran}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0, plural, one {This changes # row.} other {This changes # rows.}}": {
     "sites": 1,
     "scope": [
@@ -322585,6 +323215,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "{0, plural, one {on # record} other {on # records}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0, plural, one {open on # invoice} other {open on # invoices}}": {
@@ -323500,12 +324139,13 @@
     ]
   },
   "{0} and {1} more": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/accounting-inbound"
+      "routes/accounting-inbound",
+      "routes/desk"
     ]
   },
   "{0} and {1} more sources, opens in a new tab": {
@@ -323580,6 +324220,24 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "{0} approved the plan": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0} approved the plan as previewed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0} approved, {1} failed": {
@@ -324693,6 +325351,15 @@
     ],
     "areas": [
       "routes/benefits"
+    ]
+  },
+  "{0} declined the plan": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0} declined the request because the account's payment failed. Update billing with {0}": {
@@ -329027,7 +329694,7 @@
     ]
   },
   "{0} of {1}": {
-    "sites": 35,
+    "sites": 36,
     "scope": [
       "ts"
     ],
@@ -329078,6 +329745,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "{0} of {1} changes are in place.": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0} of {1} checks pass": {
@@ -329426,7 +330102,7 @@
       "apps/web/components"
     ]
   },
-  "{0} of {1} steps done": {
+  "{0} of {1} steps went through": {
     "sites": 1,
     "scope": [
       "ts"
@@ -329481,7 +330157,7 @@
     ]
   },
   "{0} of {1} went through": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -330140,6 +330816,15 @@
     "areas": [
       "routes/fleet-safety",
       "routes/worker"
+    ]
+  },
+  "{0} proposed {1, plural, one {# change} other {# changes}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0} provided every section of the profile.": {

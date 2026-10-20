@@ -151,6 +151,7 @@ type RecordRequest struct {
 	Run              *agent.AgentRun
 	Open             *OpenRunRequest
 	Actions          []agentports.PendingAction
+	PlanTitle        string
 	SourceMessageIDs map[string]pulid.ID
 	Evidence         EvidenceFunc
 	// Taint is the outside content the run read. The run keeps it, and each
@@ -395,13 +396,25 @@ func (s *Service) write(
 
 	orderSteps(steps, req.CallOrder)
 	var plans filedPlans
-	turn, err := s.planSteps(ctx, req.Actor, groups, steps, "", now)
+	turn, err := s.planSteps(ctx, &planOpening{
+		actor:  req.Actor,
+		groups: groups,
+		steps:  steps,
+		title:  req.PlanTitle,
+		now:    now,
+	})
 	if err != nil {
 		return filedPlans{}, err
 	}
 	plans.turn = turn
 	for _, key := range scriptOrder {
-		batch, batchErr := s.planSteps(ctx, req.Actor, groups, scripts[key], key, now)
+		batch, batchErr := s.planSteps(ctx, &planOpening{
+			actor:         req.Actor,
+			groups:        groups,
+			steps:         scripts[key],
+			scriptStepKey: key,
+			now:           now,
+		})
 		if batchErr != nil {
 			return filedPlans{}, batchErr
 		}
@@ -432,19 +445,21 @@ func (s *Service) write(
 // planSteps opens the plan its steps are decided as, when there are two or
 // more, and ties each step to it in order. A script's intents are kept in
 // the order the script prepared them.
-func (s *Service) planSteps(
-	ctx context.Context,
-	actor *permissionports.RequestActor,
-	groups []*runGroup,
-	steps []planStep,
-	scriptStepKey string,
-	now int64,
-) (*agent.AgentPlan, error) {
-	plan, err := s.openPlan(ctx, actor, groups, steps, scriptStepKey, now)
+type planOpening struct {
+	actor         *permissionports.RequestActor
+	groups        []*runGroup
+	steps         []planStep
+	scriptStepKey string
+	title         string
+	now           int64
+}
+
+func (s *Service) planSteps(ctx context.Context, opening *planOpening) (*agent.AgentPlan, error) {
+	plan, err := s.openPlan(ctx, opening)
 	if err != nil || plan == nil {
 		return nil, err
 	}
-	for idx, step := range steps {
+	for idx, step := range opening.steps {
 		planID := plan.ID
 		step.proposal.PlanID = &planID
 		step.proposal.PlanStep = idx + 1
@@ -521,14 +536,9 @@ func (s planStep) at(callOrder map[string]int) int {
 // at least two of them, whichever agent filed each. One pending action is a
 // proposal, as before; two or more are a sequence, run in the order the
 // conversation asked for them.
-func (s *Service) openPlan(
-	ctx context.Context,
-	actor *permissionports.RequestActor,
-	groups []*runGroup,
-	steps []planStep,
-	scriptStepKey string,
-	now int64,
-) (*agent.AgentPlan, error) {
+func (s *Service) openPlan(ctx context.Context, opening *planOpening) (*agent.AgentPlan, error) {
+	actor, groups, steps := opening.actor, opening.groups, opening.steps
+	scriptStepKey, now := opening.scriptStepKey, opening.now
 	if s.plans == nil || len(steps) < 2 {
 		return nil, nil
 	}
@@ -553,7 +563,7 @@ func (s *Service) openPlan(
 		OrganizationID: actor.OrganizationID,
 		BusinessUnitID: actor.BusinessUnitID,
 		RunID:          owner.run.ID,
-		Title:          planTitle(owner.definition, len(steps), scriptStepKey != ""),
+		Title:          planTitle(opening.title, owner.definition, len(steps), scriptStepKey != ""),
 		Summary:        planSummary(owner.run, rationale),
 		Status:         agent.PlanStatusPending,
 		StepCount:      len(steps),
@@ -570,7 +580,16 @@ func (s *Service) openPlan(
 	return s.plans.Create(ctx, plan)
 }
 
-func planTitle(definition *agentdefinition.Definition, steps int, fromScript bool) string {
+func planTitle(
+	named string,
+	definition *agentdefinition.Definition,
+	steps int,
+	fromScript bool,
+) string {
+	if title, err := agent.NamedPlanTitle(named); err == nil {
+		return title
+	}
+
 	title := fmt.Sprintf("%d changes", steps)
 	if fromScript {
 		title += " from a script"

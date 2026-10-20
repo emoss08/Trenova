@@ -482,6 +482,21 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentports.RunResult, error) 
 				continue
 			}
 
+			if call.Name == namePlanName {
+				outcome := refusedOutcome(aitrace.OutcomeDenied,
+					"the turn is not offered plan naming", "%s", unofferedNaming)
+				if t.req.Delegation != nil {
+					outcome = refusedOutcome(aitrace.OutcomeDenied,
+						"a delegated task cannot name the plan", "%s", delegatedNaming)
+				}
+				if tools.offers(namePlanName) {
+					outcome = t.namePlan(call.Arguments)
+				}
+				result.ToolCallsUsed++
+				s.recordToolResult(t, fx, call, outcome)
+				continue
+			}
+
 			if call.Name == publishArtifactName {
 				outcome := publishOutcome(call.Arguments)
 				if !tools.offers(publishArtifactName) {

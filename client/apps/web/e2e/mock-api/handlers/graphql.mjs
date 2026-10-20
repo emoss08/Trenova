@@ -5,6 +5,7 @@ import { DESK_HANDLERS, TRIAGE_HANDLERS } from "./triage.mjs";
 import { TriageError } from "./triage-model.mjs";
 import { DESK_CARD_HANDLERS } from "./deskcards.mjs";
 import { EDI_DRAFT_HANDLERS } from "./deskedidraft.mjs";
+import { DESK_PLAN_HANDLERS } from "./deskplan.mjs";
 import {
   matchAgent,
   recordAgentSuggestion,
@@ -1167,6 +1168,7 @@ const HANDLERS = {
   ...TRIAGE_HANDLERS,
   ...DESK_CARD_HANDLERS,
   ...EDI_DRAFT_HANDLERS,
+  ...DESK_PLAN_HANDLERS,
   ...FORMULA_HANDLERS,
   SelectOptions: (state, v) => {
     const cards = DESK_CARD_HANDLERS.SelectOptions(state, v);

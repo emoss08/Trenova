@@ -9756,6 +9756,7 @@
   "The pickup window has already closed, so no driver can make it and on-time is not judged. Assign whoever ran or will run the load, and reschedule the pickup if it has not happened yet": "La ventana de recolección ya cerró, así que ningún conductor puede llegar a tiempo y no se evalúa la puntualidad. Asigne a quien realizó o realizará la carga, y reprograme la recolección si aún no ha ocurrido",
   "The pivot field cannot also be selected as a dimension": "El campo dinámico no se puede seleccionar además como dimensión",
   "The plan's steps cannot be read": "No se pueden leer los pasos del plan",
+  "The plan's steps cannot be read here": "Los pasos del plan no se pueden leer aquí",
   "The planned delivery window.": "La ventana de entrega prevista.",
   "The planned pickup window.": "La ventana de recogida prevista.",
   "The policy or handbook a driver is being asked to read and sign.": "La política o el manual que se pide al conductor que lea y firme.",

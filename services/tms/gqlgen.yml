@@ -2231,12 +2231,23 @@ models:
   AgentPlanStatus:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agent.PlanStatus
+  AgentPlanRunMode:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.PlanRunMode
   AgentPlan:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agent.AgentPlan
     fields:
       run:
         resolver: true
+      decidedBy:
+        resolver: true
+      runMode:
+        resolver: true
+      decisionNote:
+        fieldName: ApprovalNote
+      previewDigest:
+        fieldName: ApprovalPreviewDigest
   AgentMemoryKind:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agent.MemoryKind
