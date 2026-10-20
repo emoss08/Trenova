@@ -14,3 +14,15 @@ taken in headless Chromium. The agent called `home_add_widget`, a plan of two
 | `05-desk-live-approve.png` | With the pause off, a new turn's proposal docks with Approve. |
 | `06-desk-held-plan.png` | A held plan of two steps. |
 | `07-desk-held-email.png` | A held email draft, with the draft open in the workspace. |
+| `08-decisions-held.png` | Decisions with the pause on: every waiting change listed and counted (13 in the rail), each marked held; the bar names the pause and links to "Resume agents", with no Approve or Decline. On `master` this page read "Queue clear" and the rail 0 (see `01`). |
+| `09-decisions-live-approve.png` | Decisions with the pause off: the same queue, decidable. |
+
+The tool result the model reads for a held proposal now says so. From the seeded stack with
+the pause on:
+
+> Recorded a proposal to run "home_add_widget" (proposal ap_…) at the Propose tier. It has
+> not run, and no one can approve it yet: every agent in this organization is paused in AI
+> Control, so a person must resume agents there before anyone can approve it. Tell the person
+> that, and do not say it waits on their approval.
+
+(The mock model's reply text is scripted, so the screenshots still show its fixed sentence.)
