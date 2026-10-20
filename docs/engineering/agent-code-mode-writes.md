@@ -152,7 +152,7 @@ The broker refuses an intent, and the SDK call raises, in each of these cases:
 |---|---|
 | **Identical.** Same tool and same canonical arguments (`jsonutils.CanonicalDigest`) as an intent already in the outbox. | Not refused: it is **folded** into that intent. The SDK call returns the earlier intent's number, and nothing is dispatched for it. The duplicate of a proposal already pending is refused by the existing `pendingDuplicate`. |
 | **Conflicting.** Same tool and same target record (`TargetedTool.Target`) as an intent already in the outbox, with different arguments. | `ConflictingIntents`, naming both intents' numbers. **The whole batch is refused**: every later call is refused, and nothing is filed when the script ends. Which of the two the script meant is never picked for it. |
-| **Too many.** More than `codemode.MaxBatchSteps = 50` intents. 50 is the decision queue's `MaxBatch` and `RecordBatch`'s `MaxBulkRecords`. | `BatchTooLarge`, raised on the 51st intent. |
+| **Too many.** More than `scriptoutbox.MaxBatchSteps = 50` intents. 50 is the decision queue's `MaxBatch` and `RecordBatch`'s `MaxBulkRecords`. | `BatchTooLarge`, raised on the 51st intent. |
 | **Too large.** The intents' records added up (`changeSize`) pass the agent's `ChangeLimit()` (500 by default). | `BatchTooLarge`, with the limit named. |
 | **Not available.** A tool outside the write surface. | `ToolNotAvailableFromCode`. |
 | **No permission.** The person may not perform the write. | Dispatch's own permission refusal. The intent is never kept. |

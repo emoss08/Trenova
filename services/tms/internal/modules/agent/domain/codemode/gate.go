@@ -36,14 +36,24 @@ type EnabledModel struct {
 	Model    string          `yaml:"model"`
 	Run      string          `yaml:"run"`
 	Decided  string          `yaml:"decided"`
+	// Writes lets the model's scripts prepare changes, which are proposed as
+	// one batch and never run before a person approves it. It needs its own
+	// bench run on the batch-write pairs, WritesRun.
+	Writes    bool   `yaml:"writes"`
+	WritesRun string `yaml:"writesRun"`
 }
 
 type Ledger struct {
 	Models []EnabledModel `yaml:"models"`
 }
 
-var ErrUnearnedModel = errors.New(
-	"codemode: a model is enabled without the bench run that earned it",
+var (
+	ErrUnearnedModel = errors.New(
+		"codemode: a model is enabled without the bench run that earned it",
+	)
+	ErrUnearnedWrites = errors.New(
+		"codemode: a model's scripts may write without the batch-write run that earned it",
+	)
 )
 
 func ParseLedger(data []byte) (Ledger, error) {
@@ -58,6 +68,9 @@ func ParseLedger(data []byte) (Ledger, error) {
 		}
 		if strings.TrimSpace(entry.Run) == "" || strings.TrimSpace(entry.Decided) == "" {
 			return Ledger{}, fmt.Errorf("%w: %s", ErrUnearnedModel, entry.Model)
+		}
+		if entry.Writes && strings.TrimSpace(entry.WritesRun) == "" {
+			return Ledger{}, fmt.Errorf("%w: %s", ErrUnearnedWrites, entry.Model)
 		}
 	}
 
@@ -81,17 +94,30 @@ func ShippedError() error {
 }
 
 func (l Ledger) Enabled(provider aiprovider.Kind, model string) bool {
+	_, found := l.entry(provider, model)
+
+	return found
+}
+
+// Writes reports a model whose scripts may prepare changes.
+func (l Ledger) Writes(provider aiprovider.Kind, model string) bool {
+	entry, found := l.entry(provider, model)
+
+	return found && entry.Writes
+}
+
+func (l Ledger) entry(provider aiprovider.Kind, model string) (EnabledModel, bool) {
 	model = strings.TrimSpace(model)
 	if model == "" {
-		return false
+		return EnabledModel{}, false
 	}
 	for idx := range l.Models {
 		if l.Models[idx].Provider == provider && strings.EqualFold(l.Models[idx].Model, model) {
-			return true
+			return l.Models[idx], true
 		}
 	}
 
-	return false
+	return EnabledModel{}, false
 }
 
 func (l Ledger) Any() bool {
@@ -105,7 +131,9 @@ type Gate struct {
 
 type Decision struct {
 	Allowed bool
-	Reason  string
+	// Writes says the script may prepare changes as well as read.
+	Writes bool
+	Reason string
 }
 
 func (g Gate) Offered(override Override) bool {
@@ -126,11 +154,11 @@ func (g Gate) Decide(override Override, provider aiprovider.Kind, model string) 
 	case override == OverrideOff:
 		return Decision{Reason: "code mode is turned off for this turn"}
 	case override == OverrideOn && g.Forced:
-		return Decision{Allowed: true}
+		return Decision{Allowed: true, Writes: true}
 	case override == OverrideOn:
 		return Decision{Reason: "code mode can be forced on only in development and test"}
 	case g.Ledger.Enabled(provider, model):
-		return Decision{Allowed: true}
+		return Decision{Allowed: true, Writes: g.Ledger.Writes(provider, model)}
 	default:
 		name := strings.TrimSpace(model)
 		if name == "" {

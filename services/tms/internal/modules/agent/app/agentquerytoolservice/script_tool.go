@@ -41,6 +41,12 @@ const (
 		"same script unchanged. calls lists what each read returned or why it was refused."
 	scriptStoppedNote = "The script was stopped at a limit. Read less, or split the work, " +
 		"and run it again; or answer with what it returned."
+	scriptBatchFiledNote = " The changes it prepared are proposed as one batch: nothing has " +
+		"run, and a person approves or rejects them as a whole. Say that they wait for approval; " +
+		"never say they were made."
+	scriptBatchDroppedNote = " The script did not finish, so none of the changes it prepared " +
+		"was proposed. Fix it and run it again."
+	scriptBatchRefusedNote = " None of the changes it prepared was proposed: "
 )
 
 var errScriptBrokerMissing = errors.New("agent_run_script runs only through the agent runtime")
@@ -170,18 +176,25 @@ type scriptLimitsAnswer struct {
 }
 
 type scriptAnswer struct {
-	Title            string                 `json:"title"`
-	Status           string                 `json:"status"`
-	Output           string                 `json:"output"`
-	Result           sonic.NoCopyRawMessage `json:"result,omitempty"`
-	Calls            []scriptCallAnswer     `json:"calls"`
-	Refusals         []scriptCallAnswer     `json:"refusals,omitempty"`
-	Limits           scriptLimitsAnswer     `json:"limits"`
-	Error            *codemode.ScriptError  `json:"error,omitempty"`
-	Failure          string                 `json:"failure,omitempty"`
-	DurationMs       int64                  `json:"durationMs"`
-	WithheldByAccess []string               `json:"withheldByAccess,omitempty"`
-	Note             string                 `json:"note"`
+	Title            string                    `json:"title"`
+	Status           string                    `json:"status"`
+	Output           string                    `json:"output"`
+	Result           sonic.NoCopyRawMessage    `json:"result,omitempty"`
+	Calls            []scriptCallAnswer        `json:"calls"`
+	Refusals         []scriptCallAnswer        `json:"refusals,omitempty"`
+	Limits           scriptLimitsAnswer        `json:"limits"`
+	Error            *codemode.ScriptError     `json:"error,omitempty"`
+	Failure          string                    `json:"failure,omitempty"`
+	DurationMs       int64                     `json:"durationMs"`
+	WithheldByAccess []string                  `json:"withheldByAccess,omitempty"`
+	Changes          []codemode.PreparedChange `json:"changes,omitempty"`
+	Note             string                    `json:"note"`
+}
+
+// ScriptCompleted reports a script that ran to its end, the only one whose
+// prepared changes are proposed.
+func (a *scriptAnswer) ScriptCompleted() bool {
+	return a.Status == string(agentextensionports.ScriptSucceeded)
 }
 
 func (t *runScriptTool) Query(
@@ -303,6 +316,7 @@ func scriptAnswerOf(
 		agentextensionports.ScriptFailed:
 		answer.Note = scriptStoppedNote
 	}
+	answer.Note += batchNote(answer, &summary.Batch)
 
 	return answer
 }
@@ -365,4 +379,21 @@ func markScriptSpan(
 		}
 	}
 	span.SetAttributes(attrs...)
+}
+
+// batchNote says what became of the changes a script prepared: proposed as
+// one batch for a person, or none of them, and why.
+func batchNote(answer *scriptAnswer, batch *codemode.Batch) string {
+	if len(batch.Changes) == 0 && batch.Refusal == "" {
+		return ""
+	}
+	answer.Changes = batch.Changes
+	switch {
+	case batch.Refusal != "":
+		return scriptBatchRefusedNote + batch.Refusal + "."
+	case !answer.ScriptCompleted():
+		return scriptBatchDroppedNote
+	default:
+		return scriptBatchFiledNote
+	}
 }

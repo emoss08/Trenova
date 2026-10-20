@@ -1,4 +1,4 @@
-package codemode
+package scriptoutbox
 
 import (
 	"errors"
@@ -200,6 +200,15 @@ func (o *Outbox) Hold(admission Admission, action *agentports.PendingAction) (in
 	}
 
 	return seq, nil
+}
+
+// Refusal is why the batch will not be filed, once two different changes to
+// one record have refused it; nil while it may be.
+func (o *Outbox) Refusal() error {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+
+	return o.conflict
 }
 
 func (o *Outbox) Len() int {
