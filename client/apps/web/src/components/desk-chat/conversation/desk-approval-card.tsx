@@ -36,6 +36,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
+import { buttonVariants } from "@trenova/shared/lib/variants/button";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useEffect, useState, type MutableRefObject } from "react";
 import { Link } from "react-router";
@@ -454,14 +455,13 @@ function HeldCard({ entry, onReview, onDefer }: Pick<CardProps, "entry" | "onRev
         {t("Not now")}
       </Button>
       {canTurnOff && (
-        <Button
-          size="sm"
-          className={approveButton}
-          nativeButton={false}
-          render={<Link to={held.to} />}
+        <Link
+          to={held.to}
+          data-slot="button"
+          className={cn(buttonVariants({ size: "sm" }), approveButton)}
         >
           {held.scope === "organization" ? t("Resume agents") : t("Turn off shadow")}
-        </Button>
+        </Link>
       )}
     </div>
   );
