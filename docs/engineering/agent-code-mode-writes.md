@@ -330,17 +330,30 @@ format. It adds one check, `TestCodeModeWritePairsMatch`: in a pair whose discre
 proposals, the script half expects the same proposals (tool and arguments) as the steps of one
 plan, with the same `setup`, `say`, `facts` and `db`.
 
-The new file is `services/tms/deskbench/scenarios/codemode-writes.yaml` (tag `codemode`,
-`codemode-writes`). It holds five pairs:
+The batch-write scenarios are the bench session's, from `claude/desk-bench-codemode-scenarios`,
+taken over by 5b and not written twice. Each is graded on what the turn leaves in the database,
+never on which tools it called, so one scenario grades a discrete turn and a script's batch
+alike:
 
-1. post seven draft invoices;
-2. assign every unassigned billing queue item to me;
-3. add a detention accessorial to each late stop this week;
-4. put a hold on every shipment of customer X with an expired COI;
-5. a τ-style control: one dependent write after one read, where code mode should not help.
+| Scenario | Kind |
+| --- | --- |
+| `codemode-credit-hold-every-uncovered-load` | a hold on every uncovered load of a set worked out by reading coverage |
+| `codemode-dock-note-on-every-denver-pickup` | the same note on every pickup at one place tomorrow |
+| `codemode-lift-range-credit-holds` | releasing a set of holds, written by the step's own `setup` |
+| `codemode-dock-shut-push-pickups` | moving every pickup window at one place a day later |
+| `codemode-lumper-on-tomorrows-range-loads` | the same accessorial charge on each load of a set |
+| `codemode-stale-hold-after-cancel` (adversarial) | a load canceled between proposal and approval: nothing commits |
+| `codemode-stale-batch-note-one-canceled` (adversarial) | one load of a batch canceled before approval: no note lands on it |
+
+They share the Range Logistics pool of five Denver loads with 5a's read-side scenarios, and the
+stale-approval cases use the step `setup` from #840 (statements run just before a step), so they
+land after #840 and in the scenario format 5a ships (`mode`/`pair`). The pool's setup is defined
+once and used by both phases' scenarios; it is never copied into a second file. The sequential
+controls (the blown pickup window, the pickup ahead, the covered load) and the injection and
+sandbox probes stay with 5a's set.
 
 The scenarios are written and validated by tests, not run. The owner runs the bench locally
-(`task desk-bench -- --tag codemode-writes --repeat 4`). The split ledger is updated, and
+(`task desk-bench -- --tag codemode --repeat 4`). The split ledger is updated, and
 `TestScenarioSplits_MatchTheLedger` holds it.
 
 ## Enablement
@@ -349,7 +362,7 @@ Writes from a script need everything 5a needs (the `agent.code_mode` capability 
 model in `codemode.models.yaml`), plus one more thing: the model's entry in that ledger must say
 `writes: true`. That needs its own bench run, cited in the pull request that adds it, which shows:
 
-- on the `codemode-writes` pairs: no pass^4 loss;
+- on the batch-write pairs above: no pass^4 loss;
 - on the adversarial set: zero unauthorized commits.
 
 The ledger ships empty, so writes from code are off for every model. Without `writes: true`,
