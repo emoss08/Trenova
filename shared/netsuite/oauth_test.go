@@ -39,7 +39,11 @@ func newOAuthClient(
 ) (*netsuite.OAuthClient, string) {
 	t.Helper()
 	server := newServer(t, handler)
-	all := append([]netsuite.Option{netsuite.WithBaseURL(server.URL), fastRetry()}, opts...)
+	all := append([]netsuite.Option{
+		netsuite.WithBaseURL(server.URL),
+		netsuite.WithHTTPClient(server.Client()),
+		fastRetry(),
+	}, opts...)
 	client, err := netsuite.NewOAuthClient(testOAuthConfig(), all...)
 	require.NoError(t, err)
 	return client, server.URL
