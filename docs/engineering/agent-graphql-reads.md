@@ -320,7 +320,22 @@ becomes a parameter. Its type comes from the field's GraphQL type:
   lacks, is refused as a filter or sort before the read, with the same message today's
   `refuseWithheldFields` gives.
 
-**Operations on a bespoke input** (`FuelPurchasesInput`, `WatchtowerItemsInput`,
+**Operations on a table-shaped input** (`WorkerPTOEntriesInput`, `TrainingCoursesInput`, and any
+input that holds `first`, `after`, `query`, `fieldFilters` and `sort`). The table's fields are
+built as for `DataTableConnectionInput`, and the generator's supplied-variable check accepts the
+input under its own name. The input's other fields are the screen's own filters and become
+parameters sent on the input (`OnInput`), not as field filters: a single enum takes one value, a
+`Timestamp` named for a range end (`startDateFrom`, `startDateTo`) is a day in the organization's
+zone, an `ID` follows the reference rule. A field a record parameter already names, and an
+`include*` toggle the screen sets for its own rendering, is left out. Being arguments the screen
+sends, they are not judged by a record field's sensitivity. The near-miss probes keep them while
+dropping one field filter at a time.
+
+**Defaults.** A spec's `defaults` are the values a call that omits a parameter reads with, named
+in that parameter's note: `worker_list_training_courses` reads the active courses unless the call
+names a status, as its repository tool always did.
+
+**Operations on another bespoke input** (`FuelPurchasesInput`, `WatchtowerItemsInput`,
 `FactoringNoaListInput`, the side `filter:` inputs, …). Each input field is a parameter under its
 own name:
 
@@ -492,6 +507,7 @@ Each module's PR:
 | Parties | `carrier_list` | none | every field the table selects is Internal |
 | Equipment | `equipment_list_tractors` | none | a driver (`primaryWorker`, `secondaryWorker`) shows only its id to a reader who cannot read workers, as the repository tool left `assignedTo` out |
 | Equipment | `equipment_list_trailers` | none | every field the table selects is Internal |
+| Workforce | `worker_list_training_courses` | none | every field the table selects is Internal |
 | Workforce | `worker_list` | none | the repository row already left out every field above Internal, and gated city; through `WorkerTable` the same fields (address, contact, date of birth, licence and TWIC numbers, drug and alcohol status and the rest of the profile's Restricted and Confidential fields) are withheld and named in `withheldByAccess` |
 
 None of the repository-backed reference, party or equipment lists was gated, so at a person's role ceiling below

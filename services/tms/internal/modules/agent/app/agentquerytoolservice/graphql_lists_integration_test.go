@@ -69,7 +69,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workerrepository"
+	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workertrainingrepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/customfieldrepository"
@@ -99,11 +101,14 @@ const (
 // to write a row for a tenant (marked rows are the ones its filter selects),
 // and that filter as the GraphQL tool and the repository tool each take it.
 type referenceCase struct {
-	tool      string
-	write     func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error)
-	marked    map[string]any
-	oldMarked map[string]any
-	old       agentports.AgentQueryTool
+	// readsActiveByDefault marks a list whose call with no arguments leaves
+	// out the marked rows (training courses read the active ones).
+	readsActiveByDefault bool
+	tool                 string
+	write                func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error)
+	marked               map[string]any
+	oldMarked            map[string]any
+	old                  agentports.AgentQueryTool
 }
 
 func statusOf(marked bool) domaintypes.Status {
@@ -149,6 +154,7 @@ func convertedListCases(conn *postgres.Connection) ([]referenceCase, agentread.R
 	locations := locationrepository.New(locationrepository.Params{DB: conn, Logger: logger})
 	carriers := carrierrepository.New(carrierrepository.Params{DB: conn, Logger: logger})
 	workers := workerrepository.New(workerrepository.Params{DB: conn, Logger: logger})
+	training := workertrainingrepository.New(workertrainingrepository.Params{DB: conn, Logger: logger})
 	manufacturers := equipmentmanufacturerrepository.New(
 		equipmentmanufacturerrepository.Params{DB: conn, Logger: logger})
 	tractors := tractorrepository.New(tractorrepository.Params{DB: conn, Logger: logger})
@@ -187,6 +193,9 @@ func convertedListCases(conn *postgres.Connection) ([]referenceCase, agentread.R
 		CarrierService:    carrierservice.New(carrierservice.Params{Logger: logger, Repo: carriers}),
 		TractorService: tractorservice.New(tractorservice.Params{
 			Logger: logger, Repo: tractors, CustomFieldsValuesService: customFields,
+		}),
+		WorkerTrainingService: workertrainingservice.New(workertrainingservice.Params{
+			Logger: logger, Repo: training, WorkerRepo: workers,
 		}),
 		WorkerService: workerservice.New(workerservice.Params{
 			Logger: logger, Repo: workers, CustomFieldsValuesService: customFields,
@@ -418,6 +427,18 @@ func convertedListCases(conn *postgres.Connection) ([]referenceCase, agentread.R
 				return created(row, err)
 			},
 		},
+		{
+			tool: "worker_list_training_courses", marked: inactive, readsActiveByDefault: true,
+			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
+				bu, org := tenantOf(tenant)
+				row, err := training.CreateCourse(ctx, &worker.TrainingCourse{
+					BusinessUnitID: bu, OrganizationID: org, Status: statusOf(marked),
+					Code: label, Name: "Course " + label, Category: worker.TrainingCategorySafety,
+					Delivery: worker.TrainingDeliveryOnline, DurationMinutes: 30,
+				})
+				return created(row, err)
+			},
+		},
 	}
 
 	return cases, services
@@ -592,27 +613,40 @@ func TestConvertedLists_ReadWhatTheRepositoryToolsReadUnderRowLevelSecurity(t *t
 			other := writeReferenceRows(t, c, theirs, "B")
 			actor := mine.Actor
 
+			byDefault := ours.rows
+			if c.readsActiveByDefault {
+				byDefault = slices.DeleteFunc(slices.Clone(ours.rows), func(id string) bool {
+					return slices.Contains(ours.marked, id)
+				})
+			}
+
 			t.Run("every page once, and nothing of another tenant", func(t *testing.T) {
 				ids, pages := walk(t, ours.ctx, converted, actor, nil)
 				assert.Greater(t, pages, 1, "the walk must cross a page")
-				assert.ElementsMatch(t, ours.rows, ids)
+				assert.ElementsMatch(t, byDefault, ids)
 				for _, id := range other.rows {
 					assert.NotContains(t, ids, id)
 				}
 			})
 
-			t.Run("the same rows the repository tool paged through", func(t *testing.T) {
-				converted, _ := walk(t, ours.ctx, converted, actor, nil)
-				before, _ := walk(t, ours.ctx, c.old, actor, nil)
-				assert.ElementsMatch(t, before, converted)
+			t.Run("a typed filter narrows to what it names", func(t *testing.T) {
+				converted, _ := walk(t, ours.ctx, converted, actor, c.marked)
+				assert.ElementsMatch(t, ours.marked, converted)
 			})
 
-			t.Run("a typed filter narrows as the repository tool's filter did", func(t *testing.T) {
-				converted, _ := walk(t, ours.ctx, converted, actor, c.marked)
-				before, _ := walk(t, ours.ctx, c.old, actor, c.oldMarked)
-				assert.ElementsMatch(t, ours.marked, converted)
-				assert.ElementsMatch(t, before, converted)
-			})
+			if c.old != nil {
+				t.Run("the same rows the repository tool paged through", func(t *testing.T) {
+					converted, _ := walk(t, ours.ctx, converted, actor, nil)
+					before, _ := walk(t, ours.ctx, c.old, actor, nil)
+					assert.ElementsMatch(t, before, converted)
+				})
+
+				t.Run("a typed filter narrows as the repository tool's filter did", func(t *testing.T) {
+					converted, _ := walk(t, ours.ctx, converted, actor, c.marked)
+					before, _ := walk(t, ours.ctx, c.old, actor, c.oldMarked)
+					assert.ElementsMatch(t, before, converted)
+				})
+			}
 
 			t.Run("a field the role cannot see stays withheld", func(t *testing.T) {
 				hidden, err := agentquerytoolservice.ConvertedListTool(c.tool, public, &publicRole{})
@@ -621,7 +655,7 @@ func TestConvertedLists_ReadWhatTheRepositoryToolsReadUnderRowLevelSecurity(t *t
 				withheld, _ := page["withheldByAccess"].([]any)
 				require.NotEmpty(t, withheld)
 				items, _ := page["items"].([]any)
-				require.Len(t, items, referenceRowsPerTenant)
+				require.Len(t, items, len(byDefault))
 				for _, item := range items {
 					row, _ := item.(map[string]any)
 					assert.Contains(t, row, "id")

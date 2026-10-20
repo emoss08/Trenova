@@ -123,6 +123,135 @@ type graphQLParam struct {
 	// Holder is the GraphQL type of a nested record a dotted Field belongs
 	// to (WorkerProfile for profile.cdlClass); empty for the record's own.
 	Holder string
+	// OnInput marks a parameter that is one of the input's own fields
+	// (WorkerPTOEntriesInput.workerId), sent as that field rather than as a
+	// field filter. Like any argument the screen sends, it is not judged by
+	// a record field's sensitivity.
+	OnInput bool
+}
+
+// tableInputFields are what a table-shaped input holds for the table itself;
+// its other fields are the screen's own filters.
+var tableInputFields = map[string]struct{}{
+	inputFirst: {}, inputAfter: {}, inputQuery: {}, inputFieldFilters: {}, inputSort: {},
+	inputFilterGroups: {},
+}
+
+const (
+	includePrefix     = "include"
+	inputFilterGroups = "filterGroups"
+	graphQLKindInput  = "input"
+)
+
+// tableShaped reports whether an input holds a table's fields, as
+// DataTableConnectionInput does, under its own name.
+func tableShaped(fields []graphQLField) bool {
+	have := 0
+	for _, field := range fields {
+		if _, core := tableInputFields[field.Name]; core && field.Name != inputFilterGroups {
+			have++
+		}
+	}
+
+	return have == len(tableInputFields)-1
+}
+
+// tableInput is the variable a list's operation takes its table input in,
+// and that input's type.
+func (r *graphQLRead) tableInput() (name, typ string, ok bool) {
+	for _, variable := range r.Variables {
+		if variable.Type == dataTableInput || tableShaped(graphQLInputs[variable.Type]) {
+			return variable.Name, variable.Type, true
+		}
+	}
+
+	return "", "", false
+}
+
+// inputParams are a table-shaped input's own fields as parameters, sent on
+// the input: the screen's filters (a PTO status, a worker) beside the
+// table's. A field a record parameter already names, and an include*
+// toggle the screen sets for its own rendering, is left out.
+func inputParams(typ string, taken map[string]struct{}) []graphQLParam {
+	var out []graphQLParam
+	for idx := range graphQLInputs[typ] {
+		field := &graphQLInputs[typ][idx]
+		if _, core := tableInputFields[field.Name]; core ||
+			strings.HasPrefix(field.Name, includePrefix) || field.Kind == graphQLKindInput {
+			continue
+		}
+		if _, dup := taken[field.Name]; dup {
+			continue
+		}
+		for _, param := range inputFieldParams(field) {
+			param.OnInput = true
+			out = append(out, param)
+		}
+	}
+
+	return out
+}
+
+// inputFieldParams is one input field's parameter. A Timestamp named for a
+// range end (startDateFrom) is a day, read in the organization's zone.
+func inputFieldParams(field *graphQLField) []graphQLParam {
+	words := stringutils.HumanizeSnakeCase(stringutils.ConvertCamelToSnake(field.Name))
+	describe := func(fallback string) string {
+		if field.Description != "" {
+			return field.Description + " " + fallback
+		}
+		return fallback
+	}
+	if field.Type == graphQLTypeTimestamp {
+		switch {
+		case strings.HasSuffix(field.Name, suffixFrom):
+			return []graphQLParam{{Name: field.Name, Field: field.Name, Kind: paramDayFrom,
+				Schema: agenttoolschema.Date(describe("Only records whose " + words +
+					" is this day or later, in the organization's timezone."))}}
+		case strings.HasSuffix(field.Name, suffixTo):
+			return []graphQLParam{{Name: field.Name, Field: field.Name, Kind: paramDayTo,
+				Schema: agenttoolschema.Date(describe("Only records whose " + words +
+					" is this day or earlier, in the organization's timezone."))}}
+		}
+		return nil
+	}
+	if field.Kind == graphQLKindEnum && !field.List {
+		return []graphQLParam{{Name: field.Name, Field: field.Name, Kind: paramEquals,
+			Schema: agenttoolschema.Enum(describe("Only records whose "+words+" is this."),
+				agenttoolschema.Derived(graphQLEnumSource+field.Type, field.Enum))}}
+	}
+
+	return paramsFor(field)
+}
+
+// compileInputs is the input fields a call's on-input parameters set.
+func compileInputs(params []graphQLParam, args map[string]any, clk clock) (map[string]any, error) {
+	out := make(map[string]any)
+	for _, param := range params {
+		raw, present := args[param.Name]
+		if !param.OnInput || !present || raw == nil {
+			continue
+		}
+		switch param.Kind {
+		case paramDayFrom:
+			day, err := readDay(args, param.Name, clk)
+			if err != nil {
+				return nil, err
+			}
+			out[param.Field] = day
+		case paramDayTo:
+			day, err := readDay(args, param.Name, clk)
+			if err != nil {
+				return nil, err
+			}
+			out[param.Field] = endOfDay(clk, day)
+		case paramIn, paramEquals, paramContains, paramAtLeast, paramAtMost, paramPresent,
+			paramReference:
+			out[param.Field] = raw
+		}
+	}
+
+	return out, nil
 }
 
 // typedParams derives a list tool's parameters from its record type: every
@@ -404,7 +533,7 @@ func compileFilters(
 	out := make([]map[string]any, 0, len(params))
 	for _, param := range params {
 		raw, present := args[param.Name]
-		if !present || raw == nil {
+		if param.OnInput || !present || raw == nil {
 			continue
 		}
 		filter, sent, err := compileFilter(param, args, clk)

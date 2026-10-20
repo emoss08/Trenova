@@ -26,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/trailerexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/usstateexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/workerexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/workertrainingexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	accessorialchargeresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/accessorialchargeresolver"
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
@@ -48,6 +49,7 @@ import (
 	tractorresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/tractorresolver"
 	trailerresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/trailerresolver"
 	workerresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/workerresolver"
+	workertrainingresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/workertrainingresolver"
 	config "github.com/emoss08/trenova/internal/infrastructure/config"
 	agentports "github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	equipmentmanufacturerservice "github.com/emoss08/trenova/internal/modules/equipment/app/equipmentmanufacturerservice"
@@ -72,7 +74,9 @@ import (
 	holdreasonservice "github.com/emoss08/trenova/internal/modules/reference/app/holdreasonservice"
 	servicetypeservice "github.com/emoss08/trenova/internal/modules/reference/app/servicetypeservice"
 	shipmenttypeservice "github.com/emoss08/trenova/internal/modules/reference/app/shipmenttypeservice"
+	driverportalservice "github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice"
 	workerservice "github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
+	workertrainingservice "github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
 	workerports "github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"go.uber.org/fx"
 	zap "go.uber.org/zap"
@@ -95,6 +99,7 @@ type ResolverParams struct {
 	DispatchAutoAssignService    agentports.DispatchAutoAssignService
 	DispatchConsoleService       agentports.DispatchConsoleService
 	DocumentTypeService          *documenttypeservice.Service
+	DriverPortalService          *driverportalservice.Service
 	EquipmentManufacturerService *equipmentmanufacturerservice.Service
 	EquipmentTypeService         *equipmenttypeservice.Service
 	FleetCodeService             *fleetcodeservice.Service
@@ -112,6 +117,7 @@ type ResolverParams struct {
 	TrailerService               *trailerservice.Service
 	WorkerPTOService             workerports.WorkerPTOService
 	WorkerService                *workerservice.Service
+	WorkerTrainingService        *workertrainingservice.Service
 }
 
 var shards = []*gqlexec.Shard{
@@ -138,6 +144,7 @@ var shards = []*gqlexec.Shard{
 	trailerexec.Shard,
 	usstateexec.Shard,
 	workerexec.Shard,
+	workertrainingexec.Shard,
 }
 
 // operations are the persisted operations agent tools read through, each
@@ -227,6 +234,11 @@ var operations = []Operation{
 		Name:     "WorkerTable",
 		Hash:     "sha256:e9ee7e749dc0eb15e4f0a379d789595467e46cbca4783137b1028ebc7d336b06",
 		Document: "fragment WorkerDataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment WorkerFleetCodeFields on FleetCode { code color id } fragment WorkerProfileTableFields on WorkerProfile { businessUnitId cdlClass cdlRestrictions complianceStatus createdAt disqualificationReason dob drugAlcoholStatus eldExempt endorsement hazmatExpiry hireDate id isQualified lastComplianceCheck lastDrugTest lastMvrCheck licenseExpiry licenseNumber licenseState { ...WorkerUsStateFields } licenseStateId medicalCardExpiry medicalExaminerName medicalExaminerNpi mvrDueDate nextCredentialExpiry nextTrainingDue organizationId physicalDueDate safetyRating safetyScore shortHaulExempt terminationDate trainingHealth twicCardNumber twicExpiry updatedAt version workerId } fragment WorkerTableRowFields on Worker { addressLine1 addressLine2 assignmentBlocked availableForDispatch businessUnitId canBeAssigned city createdAt customFields driverType email emergencyContactName emergencyContactPhone externalId firstName fleetCode { ...WorkerFleetCodeFields } fleetCodeId gender id lastName leaveType managerId organizationId phoneNumber postalCode profile { ...WorkerProfileTableFields } profilePicUrl state { ...WorkerUsStateFields } stateId status type updatedAt version wholeName } fragment WorkerUsStateFields on UsState { abbreviation id name } query WorkerTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { workers(input: $input) { edges { node { ...WorkerTableRowFields } } pageInfo { ...WorkerDataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "TrainingCourseTable",
+		Hash:     "sha256:3950fe64badf5834025ac8f16b197ff3d30925f841658c84a7182d628bf5b23d",
+		Document: "fragment TrainingCourseFields on TrainingCourse { businessUnitId category code contentUrl createdAt delivery description dueDaysAfterAssignment durationMinutes id isRequired name openRecordCount organizationId passingScore renewalWindowDays requiredForDriverTypes requiresAcknowledgement sortOrder status updatedAt validityMonths version } query TrainingCourseTable($includeTotalCount: Boolean = true, $input: TrainingCoursesInput!) { trainingCourses(input: $input) { edges { cursor node { ...TrainingCourseFields } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) } }",
 	},
 }
 
@@ -321,6 +333,11 @@ func NewSchema(p ResolverParams) Schema {
 		Core:          core,
 		WorkerService: p.WorkerService,
 	}
+	workertrainingDeps := &workertrainingresolver.Deps{
+		Core:                  core,
+		WorkerTrainingService: p.WorkerTrainingService,
+		DriverPortalService:   p.DriverPortalService,
+	}
 	customerBillingProfile := &customerBillingProfileResolver{
 		customerCustomerBillingProfile: &customerCustomerBillingProfile{Deps: customerDeps},
 	}
@@ -333,6 +350,7 @@ func NewSchema(p ResolverParams) Schema {
 		tractorMutation:               &tractorMutation{Deps: tractorDeps},
 		trailerMutation:               &trailerMutation{Deps: trailerDeps},
 		workerMutation:                &workerMutation{Deps: workerDeps},
+		workertrainingMutation:        &workertrainingMutation{Deps: workertrainingDeps},
 	}
 	query := &queryResolver{
 		accessorialchargeQuery:     &accessorialchargeQuery{Deps: accessorialchargeDeps},
@@ -355,6 +373,7 @@ func NewSchema(p ResolverParams) Schema {
 		tractorQuery:               &tractorQuery{Deps: tractorDeps},
 		trailerQuery:               &trailerQuery{Deps: trailerDeps},
 		workerQuery:                &workerQuery{Deps: workerDeps},
+		workertrainingQuery:        &workertrainingQuery{Deps: workertrainingDeps},
 	}
 
 	return newSchema(shards, map[string]func() any{
@@ -409,16 +428,19 @@ func NewSchema(p ResolverParams) Schema {
 		"CarrierSourcingResult": func() any {
 			return &carrierintelligenceresolver.CarrierSourcingResultResolver{Deps: carrierintelligenceDeps}
 		},
-		"Commodity":         func() any { return &commodityresolver.CommodityResolver{Deps: commodityDeps} },
-		"Customer":          func() any { return &carrierintelligenceresolver.CustomerResolver{Deps: carrierintelligenceDeps} },
-		"LocationCategory":  func() any { return &locationcategoryresolver.LocationCategoryResolver{Deps: locationcategoryDeps} },
-		"PTOChartDataPoint": func() any { return &workerresolver.PTOChartDataPointResolver{Deps: workerDeps} },
-		"Tractor":           func() any { return &tractorresolver.TractorResolver{Deps: tractorDeps} },
-		"Trailer":           func() any { return &trailerresolver.TrailerResolver{Deps: trailerDeps} },
-		"User":              func() any { return &tenantresolver.UserResolver{Deps: tenantDeps} },
-		"Worker":            func() any { return &workerresolver.WorkerResolver{Deps: workerDeps} },
-		"WorkerPTO":         func() any { return &workerresolver.WorkerPTOResolver{Deps: workerDeps} },
-		"WorkerProfile":     func() any { return &workerresolver.WorkerProfileResolver{Deps: workerDeps} },
+		"Commodity":            func() any { return &commodityresolver.CommodityResolver{Deps: commodityDeps} },
+		"Customer":             func() any { return &carrierintelligenceresolver.CustomerResolver{Deps: carrierintelligenceDeps} },
+		"LocationCategory":     func() any { return &locationcategoryresolver.LocationCategoryResolver{Deps: locationcategoryDeps} },
+		"PTOChartDataPoint":    func() any { return &workerresolver.PTOChartDataPointResolver{Deps: workerDeps} },
+		"PortalTraining":       func() any { return &workertrainingresolver.PortalTrainingResolver{Deps: workertrainingDeps} },
+		"Tractor":              func() any { return &tractorresolver.TractorResolver{Deps: tractorDeps} },
+		"Trailer":              func() any { return &trailerresolver.TrailerResolver{Deps: trailerDeps} },
+		"TrainingCourse":       func() any { return &workertrainingresolver.TrainingCourseResolver{Deps: workertrainingDeps} },
+		"User":                 func() any { return &tenantresolver.UserResolver{Deps: tenantDeps} },
+		"Worker":               func() any { return &workerresolver.WorkerResolver{Deps: workerDeps} },
+		"WorkerPTO":            func() any { return &workerresolver.WorkerPTOResolver{Deps: workerDeps} },
+		"WorkerProfile":        func() any { return &workerresolver.WorkerProfileResolver{Deps: workerDeps} },
+		"WorkerTrainingRecord": func() any { return &workertrainingresolver.WorkerTrainingRecordResolver{Deps: workertrainingDeps} },
 	}, operations)
 }
 
@@ -439,6 +461,7 @@ type mutationResolver struct {
 	*tractorMutation
 	*trailerMutation
 	*workerMutation
+	*workertrainingMutation
 }
 
 type queryResolver struct {
@@ -462,6 +485,7 @@ type queryResolver struct {
 	*tractorQuery
 	*trailerQuery
 	*workerQuery
+	*workertrainingQuery
 }
 
 type (
@@ -474,6 +498,7 @@ type (
 	tractorMutation                = tractorresolver.MutationResolver
 	trailerMutation                = trailerresolver.MutationResolver
 	workerMutation                 = workerresolver.MutationResolver
+	workertrainingMutation         = workertrainingresolver.MutationResolver
 	accessorialchargeQuery         = accessorialchargeresolver.QueryResolver
 	carrierQuery                   = carrierresolver.QueryResolver
 	carrierintelligenceQuery       = carrierintelligenceresolver.QueryResolver
@@ -494,4 +519,5 @@ type (
 	tractorQuery                   = tractorresolver.QueryResolver
 	trailerQuery                   = trailerresolver.QueryResolver
 	workerQuery                    = workerresolver.QueryResolver
+	workertrainingQuery            = workertrainingresolver.QueryResolver
 )

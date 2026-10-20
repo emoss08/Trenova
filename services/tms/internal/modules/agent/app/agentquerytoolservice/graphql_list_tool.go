@@ -69,7 +69,10 @@ type graphQLListSpec struct {
 	rank func(query string, rows []map[string]any) []map[string]any
 	// shape applies to each row what the screen's resolver does not, given
 	// the fields withheld from it.
-	shape    func(row map[string]any, withheld map[string]struct{})
+	shape func(row map[string]any, withheld map[string]struct{})
+	// defaults are parameter values a call that omits them reads with (the
+	// active courses, not the retired ones), named in their notes.
+	defaults map[string]any
 	resource permission.Resource
 	// reads is what the tool's records carry from outside the organization,
 	// declared as every read tool declares it (readSpec).
@@ -107,16 +110,18 @@ func newGraphQLListTool(
 	if read.Verb != graphQLVerbList {
 		return nil, fmt.Errorf("%s reads %s, which is not a list", spec.name, read.Operation)
 	}
-	input := ""
-	for _, variable := range read.Variables {
-		if variable.Type == dataTableInput {
-			input = variable.Name
-		}
+	input, inputType, ok := read.tableInput()
+	if !ok {
+		return nil, fmt.Errorf("%s: %s takes no table input", spec.name, read.Operation)
 	}
-	if input == "" {
-		return nil, fmt.Errorf("%s: %s takes no %s", spec.name, read.Operation, dataTableInput)
+	params := read.typedParams()
+	taken := make(map[string]struct{}, len(params))
+	for _, param := range params {
+		taken[param.Name] = struct{}{}
 	}
-	params, err := referenced(spec.name, read.typedParams(), spec.references)
+	params = append(params, inputParams(inputType, taken)...)
+	slices.SortFunc(params, func(a, b graphQLParam) int { return strings.Compare(a.Name, b.Name) })
+	params, err := referenced(spec.name, params, spec.references)
 	if err != nil {
 		return nil, err
 	}
@@ -205,6 +210,7 @@ func annotate(
 func graphQLListSpecs() []graphQLListSpec {
 	return slices.Concat(
 		referenceReadSpecs(), partyReadSpecs(), equipmentReadSpecs(), workerReadSpecs(),
+		trainingReadSpecs(),
 	)
 }
 
@@ -270,11 +276,31 @@ func (t *graphQLListTool) Description() string {
 	return b.String()
 }
 
+// withDefaults is a call's arguments with the spec's defaults for those it
+// omits.
+func (t *graphQLListTool) withDefaults(args map[string]any) map[string]any {
+	if len(t.spec.defaults) == 0 {
+		return args
+	}
+	out := make(map[string]any, len(args)+len(t.spec.defaults))
+	for name, value := range t.spec.defaults {
+		out[name] = value
+	}
+	for name, value := range args {
+		out[name] = value
+	}
+
+	return out
+}
+
 // describable reports whether a parameter's field can be filtered at the
 // default agent data access. A description names only those: the schema
 // still offers every parameter, and a reader above the default may use one
 // the description leaves out.
 func (t *graphQLListTool) describable(param graphQLParam) bool {
+	if param.OnInput {
+		return true
+	}
 	resource, name := t.fieldOwner(param.Field)
 
 	return fieldsensitivity.Visible(t.registry, resource, name, permission.SensitivityInternal)
@@ -370,7 +396,12 @@ func (t *graphQLListTool) Query(
 		return nil, err
 	}
 
-	filters, err := compileFilters(t.params, params.Params, clk)
+	args := t.withDefaults(params.Params)
+	filters, err := compileFilters(t.params, args, clk)
+	if err != nil {
+		return nil, err
+	}
+	inputs, err := compileInputs(t.params, args, clk)
 	if err != nil {
 		return nil, err
 	}
@@ -379,10 +410,11 @@ func (t *graphQLListTool) Query(
 		return nil, err
 	}
 	query := strings.TrimSpace(optionalString(params.Params, graphQLParamQuery))
-	criteria := t.criteria(params.Params, query)
+	criteria := t.criteria(t.withDefaults(params.Params), query)
 
 	page, err := t.page(ctx, params, &pageRequest{
 		query:   query,
+		inputs:  inputs,
 		filters: filters,
 		sort:    t.sort(params.Params),
 		limit:   window.limit,
@@ -412,7 +444,7 @@ func (t *graphQLListTool) Query(
 	}
 	if len(page.items) == 0 && page.first {
 		outcome.Note = criteria.EmptyNote()
-		if near := t.nearMiss(ctx, params, query, filters); near != "" {
+		if near := t.nearMiss(ctx, params, query, inputs, filters); near != "" {
 			outcome.Note = near
 		}
 	}
@@ -422,6 +454,7 @@ func (t *graphQLListTool) Query(
 
 type pageRequest struct {
 	query   string
+	inputs  map[string]any
 	filters []map[string]any
 	sort    []map[string]any
 	limit   int
@@ -441,7 +474,11 @@ func (t *graphQLListTool) page(
 	params *agentports.QueryToolParams,
 	req *pageRequest,
 ) (*graphQLPage, error) {
-	input := map[string]any{inputFirst: req.limit}
+	input := make(map[string]any, len(req.inputs)+5)
+	for name, value := range req.inputs {
+		input[name] = value
+	}
+	input[inputFirst] = req.limit
 	if req.after != "" {
 		input[inputAfter] = req.after
 	}
@@ -607,7 +644,7 @@ func (t *graphQLListTool) refuseWithheld(
 ) error {
 	fields := make([]string, 0, len(t.params)+1)
 	for _, param := range t.params {
-		if raw, present := params.Params[param.Name]; present && raw != nil {
+		if raw, present := params.Params[param.Name]; present && raw != nil && !param.OnInput {
 			fields = append(fields, param.Field)
 		}
 	}
@@ -658,12 +695,15 @@ func (t *graphQLListTool) nearMiss(
 	ctx context.Context,
 	params *agentports.QueryToolParams,
 	query string,
+	inputs map[string]any,
 	filters []map[string]any,
 ) string {
 	probes := 0
 	if query != "" {
 		probes++
-		if page, err := t.page(ctx, params, &pageRequest{filters: filters, limit: 1}); err == nil &&
+		if page, err := t.page(ctx, params, &pageRequest{
+			inputs: inputs, filters: filters, limit: 1,
+		}); err == nil &&
 			len(page.items) > 0 {
 			return fmt.Sprintf("Nothing matched the text %q, but %s do match the other "+
 				"conditions. Try different words, or drop the text.", query, t.spec.entityPlural)
@@ -675,7 +715,9 @@ func (t *graphQLListTool) nearMiss(
 		}
 		probes++
 		rest := slices.Delete(slices.Clone(filters), idx, idx+1)
-		page, err := t.page(ctx, params, &pageRequest{query: query, filters: rest, limit: 1})
+		page, err := t.page(ctx, params, &pageRequest{
+			query: query, inputs: inputs, filters: rest, limit: 1,
+		})
 		if err == nil && len(page.items) > 0 {
 			return fmt.Sprintf("No %s matched every condition. Without the condition on %v "+
 				"some do, so that one alone keeps them out.", t.spec.entityPlural,

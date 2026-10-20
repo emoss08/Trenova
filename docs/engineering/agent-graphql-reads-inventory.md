@@ -321,18 +321,17 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 | `worker_list_performance_reviews` | op | workerPerformanceReviews (+ performanceReviewTemplates) | WorkerPerformanceReviews (+ PerformanceReviewTemplateTable) | unpaged list | workerId | Same ListReviews / ListTemplates. |
 | `worker_list_safety_events` | partial | workerSafetyEvents (+ workerSafetyViolations, workerRecognitions) | WorkerSafetyEvents (+ WorkerSafetyViolations, WorkerRecognitions) | unpaged list | workerId (required) | Per-worker read matches. Without workerId the tool lists open events fleet-wide (ListOpenEvents); fleetSafety only returns an openEvents count. |
 | `worker_list_shift_templates` | op | shiftTemplates | ShiftTemplates | limit only | activeOnly, limit | Same ListTemplates. |
-| `worker_list_time_off` | op | workerPTOEntries (alt upcomingWorkerPTO) | WorkerPtoTable (alt UpcomingWorkerPto) | cursor | bespoke WorkerPTOEntriesInput (DataTable + status, type, startDateFrom/To, workerId) | Same WorkerPTOService.List. withinDays/startingFrom/startingBefore -> startDateFrom/To. |
+| `worker_list_time_off` | partial | workerPTOEntries (alt upcomingWorkerPTO) | WorkerPtoTable (alt UpcomingWorkerPto) | cursor | bespoke WorkerPTOEntriesInput (DataTable + status, type, startDateFrom/To, workerId) | Same WorkerPTOService.List. withinDays/startingFrom/startingBefore -> startDateFrom/To. Kept on its repository path: `withinDays` reads leave that overlaps a window (including leave that began earlier and is still running) with a default window, which `startDateFrom/To` on the start date cannot express; the input needs an overlap field first. |
 | `worker_list_training` | op | workerTrainingRecords | WorkerTrainingRecords | unpaged list | workerId, includeClosed | Same ListForWorker. |
-| `worker_list_training_courses` | op | trainingCourses | TrainingCourseTable (alt ActiveTrainingCourses) | cursor | bespoke TrainingCoursesInput (DataTable + status, category) | Same ListCourses with status Active. |
 
 ## Counts per class
 
 | class | tools |
 |---|---|
-| op, not yet converted | 102 |
-| op, converted (rows removed) | 17 |
+| op, not yet converted | 100 |
+| op, converted (rows removed) | 18 |
 | field-no-op | 6 |
-| partial | 30 |
+| partial | 31 |
 | none | 21 |
 | **total** | **176** |
 

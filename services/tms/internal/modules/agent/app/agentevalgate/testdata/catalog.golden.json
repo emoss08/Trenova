@@ -43924,10 +43924,208 @@
     },
     {
       "name": "worker_list_training_courses",
-      "description": "List the organization's active training courses with their category, delivery, passing score, how long a pass lasts and whether they are required. It yields the courseId the training tools take.",
+      "description": "List the organization's training courses with their category, delivery, passing score, how long a pass lasts and whether they are required. It yields the courseId the training tools take. Filters: category, code, contentUrl, createdAtFrom/To, delivery, description, dueDaysAfterAssignmentMin/Max, durationMinutesMin/Max, isRequired, name, passingScoreMin/Max, renewalWindowDaysMin/Max, requiresAcknowledgement, sortOrderMin/Max, status, updatedAtFrom/To, validityMonthsMin/Max.",
       "parameters": {
         "additionalProperties": false,
-        "properties": {},
+        "properties": {
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
+          "category": {
+            "description": "Only records whose category is one of these.",
+            "items": {
+              "enum": [
+                "Safety",
+                "Compliance",
+                "Equipment",
+                "Orientation",
+                "HazardousMaterials",
+                "Other"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.TrainingCategory"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "code": {
+            "description": "Only records whose code contains this text.",
+            "type": "string"
+          },
+          "contentUrl": {
+            "description": "Only records whose content url contains this text.",
+            "type": "string"
+          },
+          "createdAtFrom": {
+            "description": "Only records whose created at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "createdAtTo": {
+            "description": "Only records whose created at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "delivery": {
+            "description": "Only records whose delivery is one of these.",
+            "items": {
+              "enum": [
+                "Online",
+                "Classroom",
+                "OnTheJob",
+                "Document"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.TrainingDelivery"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "description": {
+            "description": "Only records whose description contains this text.",
+            "type": "string"
+          },
+          "dueDaysAfterAssignmentMax": {
+            "description": "Only records whose due days after assignment is at most this.",
+            "type": "integer"
+          },
+          "dueDaysAfterAssignmentMin": {
+            "description": "Only records whose due days after assignment is at least this.",
+            "type": "integer"
+          },
+          "durationMinutesMax": {
+            "description": "Only records whose duration minutes is at most this.",
+            "type": "integer"
+          },
+          "durationMinutesMin": {
+            "description": "Only records whose duration minutes is at least this.",
+            "type": "integer"
+          },
+          "isRequired": {
+            "description": "true for only the records whose isRequired is true, false for only those whose isRequired is false.",
+            "type": "boolean"
+          },
+          "limit": {
+            "description": "How many rows to return: 25 unless you ask, at most 50.",
+            "maximum": 50,
+            "minimum": 1,
+            "type": "integer",
+            "x-clamp": true
+          },
+          "name": {
+            "description": "Only records whose name contains this text.",
+            "type": "string"
+          },
+          "passingScoreMax": {
+            "description": "Percentage a completion must reach; null for pass/fail-free courses. Only records whose passing score is at most this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "passingScoreMin": {
+            "description": "Percentage a completion must reach; null for pass/fail-free courses. Only records whose passing score is at least this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "query": {
+            "description": "Optional free text matched across the searchable columns. Omit it when you are narrowing by a field.",
+            "type": "string"
+          },
+          "renewalWindowDaysMax": {
+            "description": "Only records whose renewal window days is at most this.",
+            "type": "integer"
+          },
+          "renewalWindowDaysMin": {
+            "description": "Only records whose renewal window days is at least this.",
+            "type": "integer"
+          },
+          "requiresAcknowledgement": {
+            "description": "true for only the records whose requiresAcknowledgement is true, false for only those whose requiresAcknowledgement is false.",
+            "type": "boolean"
+          },
+          "sortBy": {
+            "description": "Field to order by. Defaults to most recently created.",
+            "enum": [
+              "category",
+              "code",
+              "contentUrl",
+              "createdAt",
+              "delivery",
+              "description",
+              "dueDaysAfterAssignment",
+              "durationMinutes",
+              "isRequired",
+              "name",
+              "passingScore",
+              "renewalWindowDays",
+              "requiresAcknowledgement",
+              "sortOrder",
+              "status",
+              "updatedAt",
+              "validityMonths"
+            ],
+            "type": "string",
+            "x-enumOf": "worker_list_training_courses.graphqlSortBy"
+          },
+          "sortDirection": {
+            "description": "asc for oldest or smallest first, desc for newest or largest.",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
+          },
+          "sortOrderMax": {
+            "description": "Only records whose sort order is at most this.",
+            "type": "integer"
+          },
+          "sortOrderMin": {
+            "description": "Only records whose sort order is at least this.",
+            "type": "integer"
+          },
+          "status": {
+            "description": "Only records whose status is one of these. Defaults to Active, the courses in use; name Inactive too for retired ones.",
+            "items": {
+              "enum": [
+                "Active",
+                "Inactive"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.EntityStatus"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "updatedAtFrom": {
+            "description": "Only records whose updated at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "updatedAtTo": {
+            "description": "Only records whose updated at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "validityMonthsMax": {
+            "description": "Months a completion stays valid; null for one-time courses. Only records whose validity months is at most this.",
+            "type": "integer"
+          },
+          "validityMonthsMin": {
+            "description": "Months a completion stays valid; null for one-time courses. Only records whose validity months is at least this.",
+            "type": "integer"
+          }
+        },
         "type": "object"
       },
       "policy": {
