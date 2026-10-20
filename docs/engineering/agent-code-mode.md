@@ -579,18 +579,12 @@ attributes and the registry entries. The runner reaches E2B only through `Sandbo
 
 ## 15. Known limits
 
-- **One step is left for the owner.** The eval gate's embedding fixture
-  (`agentevalgate/evals/embeddings/nomic-embed-text.json`) needs a vector for the new tool's
-  description. It is recorded from a local Ollama `nomic-embed-text`, which this change could
-  not run, so `TestToolSelectionAgainstFloorsHybrid` and `TestGuideSelectionAgainstFloorsHybrid`
-  report the fixture stale until it is re-recorded:
-
-  ```bash
-  cd services/tms && ollama pull nomic-embed-text && \
-    TRENOVA_EVAL_OLLAMA_URL=http://localhost:11434 go test -count=1 -run 'TestRecordEmbeddingFixture' \
-    ./internal/modules/agent/app/agentevalgate/ -record && \
-    go test -count=1 -run 'AgainstFloors' ./internal/modules/agent/app/agentevalgate/ -update
-  ```
+- **The tool's embedding.** `agent_run_script`'s vector in the eval gate's fixture
+  (`agentevalgate/evals/embeddings/nomic-embed-text.json`) was recorded from a local Ollama
+  `nomic-embed-text`. With it, every floor holds unchanged from master: keyword recall@5 1.00 and
+  top-1 0.96 over 557 development cases (0.99 and 0.95 over 145 held-out), hybrid 0.92 and 0.79
+  over 631 (0.93 and 0.82 over 165 held-out). A change to the tool's description is re-recorded
+  the same way (generated-artifacts.md, "Agent prompt and tool snapshots").
 - **Root may raise its own rlimits.** E2B runs the sandbox's processes as the unprivileged
   `user`, so the hard limits hold there; the local integration test that checks this skips
   when the tests run as root.
