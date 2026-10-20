@@ -22,9 +22,9 @@ import (
 )
 
 const (
-	paramScriptTitle   = "title"
-	paramScriptPurpose = "purpose"
-	paramScriptCode    = "code"
+	paramScriptTitle   = agentextension.ParamScriptTitle
+	paramScriptPurpose = agentextension.ParamScriptPurpose
+	paramScriptCode    = agentextension.ParamScriptCode
 	paramScriptInputs  = "inputs"
 	paramInputName     = "name"
 	paramInputValue    = "value"
@@ -41,6 +41,12 @@ const (
 		"same script unchanged. calls lists what each read returned or why it was refused."
 	scriptStoppedNote = "The script was stopped at a limit. Read less, or split the work, " +
 		"and run it again; or answer with what it returned."
+	scriptBatchFiledNote = " The changes it prepared are proposed as one batch: nothing has " +
+		"run, and a person approves or rejects them as a whole. Say that they wait for approval; " +
+		"never say they were made."
+	scriptBatchDroppedNote = " The script did not finish, so none of the changes it prepared " +
+		"was proposed. Fix it and run it again."
+	scriptBatchRefusedNote = " None of the changes it prepared was proposed: "
 )
 
 var errScriptBrokerMissing = errors.New("agent_run_script runs only through the agent runtime")
@@ -56,17 +62,18 @@ func newRunScriptTool(runner agentextensionports.ScriptRunner) agentports.AgentQ
 func (t *runScriptTool) Name() string { return agentextension.ToolRunScript }
 
 func (t *runScriptTool) Description() string {
-	return "Run a short read-only Python script that calls the reads you hold, for questions " +
-		"that need many reads joined, compared or totalled. Use it to go over every record of " +
-		"a list (each customer past terms with their last payment), to reconcile two sources, " +
-		"or for a report across many records; for one or two reads in a row, call the reads " +
-		"themselves. Call a read as trenova.<namespace>.<the rest of its name>(**parameters), " +
-		"such as trenova.shipment.list(status=[\"InTransit\"]) for shipment_list; parameters " +
-		"and results are exactly the tool's. trenova.tools() lists the reads, " +
-		"help(trenova.shipment.list) gives one's parameters, trenova.gather(a.defer(...), " +
-		"b.defer(...)) runs several at once, and a refused read raises trenova.Refused. " +
-		"Only what you print and one trenova.result(value) come back. A script changes " +
-		"nothing and cannot reach the internet."
+	return "Run a short Python script that calls the reads you hold, for questions " +
+		"that need many reads joined, compared or totalled. Use it for every record of a list, " +
+		"two sources reconciled, or a report over many records; for one or two reads in a row, " +
+		"call the reads themselves. Call a read as trenova.<namespace>.<the rest of its " +
+		"name>(**parameters), as trenova.shipment.list(status=[\"InTransit\"]) for " +
+		"shipment_list; parameters and results are exactly the tool's. trenova.tools() lists " +
+		"what you may call, help(trenova.shipment.list) gives one's parameters, " +
+		"trenova.gather(a.defer(...), b.defer(...)) runs several at once, and a refused call " +
+		"raises trenova.Refused. Only what you print and one trenova.result(value) come back. " +
+		"A script cannot reach the internet and changes nothing: a call to a change " +
+		"trenova.tools() lists prepares it, and what it prepared is proposed as one batch " +
+		"for a person to approve."
 }
 
 func (t *runScriptTool) ParamSchema() map[string]any {
@@ -131,7 +138,8 @@ func (t *runScriptTool) Policy() agentports.ToolPolicy {
 		rationale: "Runs a short script in a sandbox that cannot reach the network; every read " +
 			"it makes is one of the agent's own reads, run as the person under the same checks, " +
 			"and the call carries the taint of every read that brought outside text in. It " +
-			"changes nothing.",
+			"changes nothing itself: a change it prepares is proposed with the rest of its " +
+			"batch for a person to approve.",
 	})
 	policy.Script = agentports.ScriptRunner
 	policy.Sources = scriptTaintSources
@@ -170,18 +178,25 @@ type scriptLimitsAnswer struct {
 }
 
 type scriptAnswer struct {
-	Title            string                 `json:"title"`
-	Status           string                 `json:"status"`
-	Output           string                 `json:"output"`
-	Result           sonic.NoCopyRawMessage `json:"result,omitempty"`
-	Calls            []scriptCallAnswer     `json:"calls"`
-	Refusals         []scriptCallAnswer     `json:"refusals,omitempty"`
-	Limits           scriptLimitsAnswer     `json:"limits"`
-	Error            *codemode.ScriptError  `json:"error,omitempty"`
-	Failure          string                 `json:"failure,omitempty"`
-	DurationMs       int64                  `json:"durationMs"`
-	WithheldByAccess []string               `json:"withheldByAccess,omitempty"`
-	Note             string                 `json:"note"`
+	Title            string                    `json:"title"`
+	Status           string                    `json:"status"`
+	Output           string                    `json:"output"`
+	Result           sonic.NoCopyRawMessage    `json:"result,omitempty"`
+	Calls            []scriptCallAnswer        `json:"calls"`
+	Refusals         []scriptCallAnswer        `json:"refusals,omitempty"`
+	Limits           scriptLimitsAnswer        `json:"limits"`
+	Error            *codemode.ScriptError     `json:"error,omitempty"`
+	Failure          string                    `json:"failure,omitempty"`
+	DurationMs       int64                     `json:"durationMs"`
+	WithheldByAccess []string                  `json:"withheldByAccess,omitempty"`
+	Changes          []codemode.PreparedChange `json:"changes,omitempty"`
+	Note             string                    `json:"note"`
+}
+
+// ScriptCompleted reports a script that ran to its end, the only one whose
+// prepared changes are proposed.
+func (a *scriptAnswer) ScriptCompleted() bool {
+	return a.Status == string(agentextensionports.ScriptSucceeded)
 }
 
 func (t *runScriptTool) Query(
@@ -303,6 +318,7 @@ func scriptAnswerOf(
 		agentextensionports.ScriptFailed:
 		answer.Note = scriptStoppedNote
 	}
+	answer.Note += batchNote(answer, &summary.Batch)
 
 	return answer
 }
@@ -365,4 +381,21 @@ func markScriptSpan(
 		}
 	}
 	span.SetAttributes(attrs...)
+}
+
+// batchNote says what became of the changes a script prepared: proposed as
+// one batch for a person, or none of them, and why.
+func batchNote(answer *scriptAnswer, batch *codemode.Batch) string {
+	if len(batch.Changes) == 0 && batch.Refusal == "" {
+		return ""
+	}
+	answer.Changes = batch.Changes
+	switch {
+	case batch.Refusal != "":
+		return scriptBatchRefusedNote + batch.Refusal + "."
+	case !answer.ScriptCompleted():
+		return scriptBatchDroppedNote
+	default:
+		return scriptBatchFiledNote
+	}
 }

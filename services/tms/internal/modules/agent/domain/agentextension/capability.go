@@ -13,6 +13,10 @@ const (
 	ToolListWebWatches  = "web_list_watches"
 	ToolStopWebWatch    = "web_stop_watch"
 	ToolRunScript       = "agent_run_script"
+	// The run-script tool's parameters a batch reads its origin back from.
+	ParamScriptTitle   = "title"
+	ParamScriptPurpose = "purpose"
+	ParamScriptCode    = "code"
 )
 
 // WebWatchTools are the web research tools that watch the web over time,

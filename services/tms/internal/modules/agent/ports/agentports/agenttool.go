@@ -6,6 +6,7 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -312,4 +313,20 @@ type AgentToolRegistry interface {
 	Get(name string) (AgentTool, bool)
 	All() []AgentTool
 	Descriptors() []AgentToolDescriptor
+}
+
+// PreparableFromScript holds a script's write surface to tools whose every
+// call names the record it changes and previews it, so a script's batch
+// keeps one step and one preview per record a person approves.
+func PreparableFromScript(tool AgentTool) bool {
+	policy := tool.Policy()
+	if !policy.PreparableFromScript() || agentextension.IsExtensionTool(tool.Name()) {
+		return false
+	}
+	if _, previews := tool.(ToolPreviewer); !previews {
+		return false
+	}
+	_, targeted := tool.(TargetedTool)
+
+	return targeted
 }
