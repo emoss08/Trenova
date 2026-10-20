@@ -12,7 +12,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/scriptoutbox"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -37,7 +36,7 @@ func (s *Service) scriptWriteIndex(
 	candidates := make([]string, 0, len(held))
 	for _, name := range held {
 		tool, ok := s.actionTools.Get(name)
-		if !ok || !scriptMayPrepare(tool) {
+		if !ok || !agentports.PreparableFromScript(tool) {
 			continue
 		}
 		candidates = append(candidates, name)
@@ -58,23 +57,6 @@ func (s *Service) scriptWriteIndex(
 	}
 
 	return index
-}
-
-// scriptMayPrepare holds the write surface to tools whose every call names
-// the record it changes and previews it: a script's batch keeps one step and
-// one preview per record.
-func scriptMayPrepare(tool agentports.AgentTool) bool {
-	policy := tool.Policy()
-	if !policy.PreparableFromScript() || agentextension.IsExtensionTool(tool.Name()) ||
-		ReadsExternalContent(tool.Name()) {
-		return false
-	}
-	if _, previews := tool.(agentports.ToolPreviewer); !previews {
-		return false
-	}
-	_, targeted := tool.(agentports.TargetedTool)
-
-	return targeted
 }
 
 // prepare takes a write the script asked for through everything dispatch

@@ -62,7 +62,7 @@ func newRunScriptTool(runner agentextensionports.ScriptRunner) agentports.AgentQ
 func (t *runScriptTool) Name() string { return agentextension.ToolRunScript }
 
 func (t *runScriptTool) Description() string {
-	return "Run a short read-only Python script that calls the reads you hold, for questions " +
+	return "Run a short Python script that calls the reads you hold, for questions " +
 		"that need many reads joined, compared or totalled. Use it to go over every record of " +
 		"a list (each customer past terms with their last payment), to reconcile two sources, " +
 		"or for a report across many records; for one or two reads in a row, call the reads " +
@@ -71,8 +71,10 @@ func (t *runScriptTool) Description() string {
 		"and results are exactly the tool's. trenova.tools() lists the reads, " +
 		"help(trenova.shipment.list) gives one's parameters, trenova.gather(a.defer(...), " +
 		"b.defer(...)) runs several at once, and a refused read raises trenova.Refused. " +
-		"Only what you print and one trenova.result(value) come back. A script changes " +
-		"nothing and cannot reach the internet."
+		"Only what you print and one trenova.result(value) come back. A script cannot " +
+		"reach the internet and changes nothing itself: where trenova.tools() lists a change " +
+		"you hold, calling it prepares that change, and when the script ends everything it " +
+		"prepared is proposed as one batch for a person to approve."
 }
 
 func (t *runScriptTool) ParamSchema() map[string]any {

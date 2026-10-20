@@ -1,8 +1,11 @@
-"""Trenova's read-only SDK for agent scripts.
+"""Trenova's SDK for agent scripts.
 
-Every call is one of the agent's own reads, run by Trenova as the person.
-Nothing here can reach the network: a call is written as a request frame on
-standard output and answered by Trenova through a file.
+Every call is one of the agent's own tools, run by Trenova as the person. A
+read answers with its result. A change, where the turn may prepare one, never
+runs: Trenova prepares it, and when the script ends every change it prepared
+is proposed as one batch for a person to approve. Nothing here can reach the
+network: a call is written as a request frame on standard output and answered
+by Trenova through a file.
 """
 
 import itertools
@@ -88,6 +91,7 @@ class _Pending:
 class _Tool:
     def __init__(self, entry):
         self.name = entry["name"]
+        self.writes = bool(entry.get("writes"))
         self.__doc__ = _describe(entry)
 
     def __call__(self, **args):
@@ -99,11 +103,13 @@ class _Tool:
         return _Pending(self.name, args)
 
     def __repr__(self):
-        return "<trenova read %s>" % self.name
+        return "<trenova %s %s>" % ("change" if self.writes else "read", self.name)
 
 
 def _describe(entry):
     lines = [entry["name"], "", entry.get("description", "")]
+    if entry.get("writes"):
+        lines += ["", "A change: calling it prepares it for the script's batch; it does not run."]
     props = (entry.get("parameters") or {}).get("properties") or {}
     required = set((entry.get("parameters") or {}).get("required") or [])
     if props:
@@ -141,7 +147,7 @@ def __getattr__(name):
 
 
 def tools():
-    """The reads this script may call, by name."""
+    """The reads this script may call, and the changes it may prepare, by name."""
     return sorted(_INDEX)
 
 
