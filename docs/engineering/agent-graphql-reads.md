@@ -508,7 +508,7 @@ Each module's PR:
 | Equipment | `equipment_list_tractors` | none | a driver (`primaryWorker`, `secondaryWorker`) shows only its id to a reader who cannot read workers, as the repository tool left `assignedTo` out |
 | Equipment | `equipment_list_trailers` | none | every field the table selects is Internal |
 | Workforce | `worker_list_training_courses` | none | every field the table selects is Internal |
-| Workforce | `worker_list` | none | the repository row already left out every field above Internal, and gated city; through `WorkerTable` the same fields (address, contact, date of birth, licence and TWIC numbers, drug and alcohol status and the rest of the profile's Restricted and Confidential fields) are withheld and named in `withheldByAccess` |
+| Workforce | `worker_list` | none | reads `DeskWorkers`, which selects only what the Desk reads (no address, contact, personnel or Confidential profile fields); `city` is Restricted and withheld at Internal, as the repository row gated it |
 
 None of the repository-backed reference, party or equipment lists was gated, so at a person's role ceiling below
 Internal each now withholds every field but `id`, where it used to return them all. No description
@@ -737,9 +737,9 @@ reasoning for each is above.
    checks a nested kind's read permission and shows only the id where it is refused.
 6. **The `Desk*` operation is preferred.** A list with none reads its table's operation, unless
    its module's PR adds a `Desk<Plural>` operation, backed by the result-size figures it records.
-   `worker_list` reads `WorkerTable`, which selects about thirty fields an agent at Internal never
-   sees, so every result names them in `withheldByAccess`; a `DeskWorkers` operation selecting
-   what the Desk reads is the follow-up, with the client's codegen.
+   `worker_list` reads `DeskWorkers` rather than `WorkerTable`, which selects about thirty fields
+   an agent at Internal is never shown. `withheldByAccess` is one list per response, by path
+   without row indices, however many rows a page holds.
 7. **Bindings the rule cannot find are named in `reads.yml` and proven** by shape and by the
    resource their resolver checks, never trusted. No resource-only rule was possible: most
    resources are checked by several root fields (`edi` by thirteen).
