@@ -1,6 +1,7 @@
 package agentredteam
 
 import (
+	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"context"
 	"fmt"
 	"maps"
@@ -63,6 +64,7 @@ type Outcome struct {
 	Delegations       []DelegationRecord
 	Memories          []MemoryRecord
 	Opened            []OpenedTurn
+	Scripts           []ScriptRecord
 	Events            []kernelports.StreamEvent
 }
 
@@ -94,7 +96,7 @@ func Run(ctx context.Context, p RunParams) (*Outcome, error) {
 		}
 	}
 
-	rec := &recorder{}
+	rec := &recorder{sourceTool: c.Source.Tool}
 	kit, rt, err := newRuntime(rec, c, p.Completion)
 	if err != nil {
 		return nil, err
@@ -119,6 +121,9 @@ func Run(ctx context.Context, p RunParams) (*Outcome, error) {
 		Context:    contextFor(c, definitions, *tenant),
 		Input:      c.Input,
 		Unattended: c.Agent.Unattended,
+	}
+	if c.Agent.CodeMode {
+		req.CodeMode = codemode.OverrideOn
 	}
 	if c.Agent.Unattended {
 		req.RunID = RunID
@@ -181,9 +186,10 @@ func newRuntime(
 		Completion:  completion,
 		Permissions: &agenttest.StubPermissions{},
 	}
-	if c.Agent.Extensions {
+	if c.Agent.Extensions || c.Agent.CodeMode {
 		params.Extensions = extensionGate{}
 	}
+	params.CodeMode = c.Agent.CodeMode
 
 	return kit, kit.NewRuntime(params), nil
 }

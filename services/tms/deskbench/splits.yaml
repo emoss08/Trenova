@@ -9,6 +9,7 @@ strata:
       mode: chat
     heldOut:
       - billing-agent-asked-a-dispatch-question
+      - pair:invoices-vs-shipment-charges
       - send-a-delivered-load-to-billing
   - stratum:
       desk: BillingException
@@ -51,6 +52,7 @@ strata:
       - in-transit-count
       - load-by-description
       - off-topic-code-request
+      - pair:delayed-loads-holds-and-comments
       - portal-read-only-site-refuses-booking
       - portal-site-not-set-up
   - stratum:
@@ -128,7 +130,7 @@ strata:
       desk: Receivables
       mode: chat
     heldOut:
-      - nothing-open-for-acme
+      - pair:past-terms-with-last-payment
   - stratum:
       desk: Report analyst
       mode: chat

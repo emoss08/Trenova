@@ -48,6 +48,7 @@ type Sandbox struct {
 type SandboxRequest struct {
 	Settings map[string]string
 	Metadata map[string]string
+	Lifetime time.Duration
 }
 
 type SandboxFile struct {
@@ -75,10 +76,13 @@ type SandboxExecution struct {
 	Incomplete bool
 }
 
+type OutputFilter func(stream, text string) (string, error)
+
 type RunCodeRequest struct {
 	Sandbox *Sandbox
 	Code    string
 	Timeout time.Duration
+	Output  OutputFilter
 }
 
 // SandboxProvider runs code in a vendor's sandbox that can reach nothing on

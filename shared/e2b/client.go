@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"io"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -272,6 +273,7 @@ type Session struct {
 	sandbox *Sandbox
 	files   *restx.Client
 	runner  *restx.Client
+	stream  *streamTarget
 	timeout time.Duration
 }
 
@@ -312,7 +314,53 @@ func openSession(sandbox *Sandbox, runTimeout time.Duration, cfg *options) (*Ses
 		return nil, err
 	}
 
-	return &Session{sandbox: sandbox, files: files, runner: runner, timeout: runTimeout}, nil
+	stream, err := streamTargetOf(sandbox, cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Session{
+		sandbox: sandbox,
+		files:   files,
+		runner:  runner,
+		stream:  stream,
+		timeout: runTimeout,
+	}, nil
+}
+
+type streamTarget struct {
+	url     string
+	headers http.Header
+	client  *http.Client
+}
+
+func streamTargetOf(sandbox *Sandbox, cfg *options) (*streamTarget, error) {
+	base := cfg.sandboxURL
+	if base == "" {
+		base = "https://" + strconv.Itoa(jupyterPort) + "-" + sandbox.SandboxID + "." + sandbox.Host()
+	}
+	parsed, err := url.Parse(strings.TrimRight(base, "/") + "/execute")
+	if err != nil || parsed.Host == "" {
+		return nil, fmt.Errorf("%w: the sandbox address is invalid", ErrInvalidRequest)
+	}
+
+	headers := http.Header{}
+	headers.Set(headerAccessToken, sandbox.EnvdAccessToken)
+	headers.Set(headerSandboxID, sandbox.SandboxID)
+	headers.Set(headerSandboxPort, strconv.Itoa(jupyterPort))
+	headers.Set("Content-Type", "application/json")
+	headers.Set("Accept", "application/x-ndjson")
+	headers.Set("User-Agent", cfg.userAgent)
+	if token := sandbox.TrafficToken(); token != "" {
+		headers.Set(headerTrafficToken, token)
+	}
+
+	client := cfg.httpClient
+	if client == nil {
+		client = &http.Client{}
+	}
+
+	return &streamTarget{url: parsed.String(), headers: headers, client: client}, nil
 }
 
 func portClient(
@@ -437,6 +485,67 @@ func (s *Session) RunCode(ctx context.Context, code string) (*Execution, error) 
 	return ParseExecution(resp.Body)
 }
 
+// RunCodeStream runs Python as one cell like RunCode, and hands every piece of
+// output to filter as it arrives, keeping in the logs only what filter returns.
+// A filter error stops the run. It is never retried.
+func (s *Session) RunCodeStream(
+	ctx context.Context,
+	code string,
+	filter OutputFilter,
+) (*Execution, error) {
+	if strings.TrimSpace(code) == "" {
+		return nil, fmt.Errorf("%w: code is required", ErrInvalidRequest)
+	}
+	if s.stream == nil {
+		return nil, fmt.Errorf("%w: the session cannot stream", ErrInvalidRequest)
+	}
+
+	runCtx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+
+	body, err := sonic.Marshal(executeRequest{Code: code, Language: languagePython})
+	if err != nil {
+		return nil, fmt.Errorf("e2b: encode code: %w", err)
+	}
+	req, err := http.NewRequestWithContext(
+		runCtx, http.MethodPost, s.stream.url, bytes.NewReader(body),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("e2b: build run: %w", err)
+	}
+	req.Header = s.stream.headers.Clone()
+
+	resp, err := s.stream.client.Do(req)
+	if err != nil {
+		return nil, s.runError(ctx, runCtx, err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		detail, _ := io.ReadAll(io.LimitReader(resp.Body, 4<<10))
+		return nil, fmt.Errorf("%w: %s: status %d: %s", ErrUnexpectedPayload, endpointExecute,
+			resp.StatusCode, strings.TrimSpace(string(detail)))
+	}
+
+	reader := newExecutionReader(filter)
+	readErr := reader.read(io.LimitReader(resp.Body, maxRunResponseBytes))
+	if readErr != nil {
+		if runCtx.Err() != nil {
+			return nil, s.runError(ctx, runCtx, readErr)
+		}
+		return nil, readErr
+	}
+
+	return reader.finish()
+}
+
+func (s *Session) runError(ctx, runCtx context.Context, err error) error {
+	if errors.Is(runCtx.Err(), context.DeadlineExceeded) && ctx.Err() == nil {
+		return context.DeadlineExceeded
+	}
+
+	return err
+}
+
 type outputLine struct {
 	Type         string         `json:"type"`
 	Text         *string        `json:"text"`
@@ -453,54 +562,104 @@ type outputLine struct {
 // stream that ends before the interpreter says the cell finished is
 // ErrIncompleteRun, with what it did read.
 func ParseExecution(body []byte) (*Execution, error) {
-	execution := &Execution{}
-	var stdout, stderr strings.Builder
-	finished := false
+	reader := newExecutionReader(nil)
+	if err := reader.read(bytes.NewReader(body)); err != nil {
+		return nil, err
+	}
 
-	scanner := bufio.NewScanner(bytes.NewReader(body))
+	return reader.finish()
+}
+
+type OutputFilter func(stream, text string) (string, error)
+
+type executionReader struct {
+	execution Execution
+	stdout    strings.Builder
+	stderr    strings.Builder
+	finished  bool
+	filter    OutputFilter
+}
+
+func newExecutionReader(filter OutputFilter) *executionReader {
+	return &executionReader{filter: filter}
+}
+
+func (r *executionReader) read(body io.Reader) error {
+	scanner := bufio.NewScanner(body)
 	scanner.Buffer(make([]byte, 0, 64<<10), maxRunResponseBytes)
 	for scanner.Scan() {
-		line := bytes.TrimSpace(scanner.Bytes())
-		if len(line) == 0 {
-			continue
-		}
-		var out outputLine
-		if err := sonic.Unmarshal(line, &out); err != nil {
-			return nil, fmt.Errorf("%w: %s: %w", ErrUnexpectedPayload, endpointExecute, err)
-		}
-
-		switch out.Type {
-		case "stdout":
-			execution.Truncated = appendLog(&stdout, out.Text) || execution.Truncated
-		case "stderr":
-			execution.Truncated = appendLog(&stderr, out.Text) || execution.Truncated
-		case "result":
-			result, err := resultOf(&out)
-			if err != nil {
-				return nil, err
-			}
-			execution.Results = append(execution.Results, result)
-		case "error":
-			execution.Error = &ExecutionError{
-				Name:      deref(out.Name),
-				Value:     deref(out.Value),
-				Traceback: deref(out.Traceback),
-			}
-		case "end_of_execution":
-			finished = true
+		if err := r.line(scanner.Bytes()); err != nil {
+			return err
 		}
 	}
 	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("%w: %s: %w", ErrUnexpectedPayload, endpointExecute, err)
+		return fmt.Errorf("%w: %s: %w", ErrUnexpectedPayload, endpointExecute, err)
 	}
 
-	execution.Stdout = stdout.String()
-	execution.Stderr = stderr.String()
-	if !finished && execution.Error == nil {
-		return execution, ErrIncompleteRun
+	return nil
+}
+
+func (r *executionReader) line(raw []byte) error {
+	line := bytes.TrimSpace(raw)
+	if len(line) == 0 {
+		return nil
+	}
+	var out outputLine
+	if err := sonic.Unmarshal(line, &out); err != nil {
+		return fmt.Errorf("%w: %s: %w", ErrUnexpectedPayload, endpointExecute, err)
 	}
 
-	return execution, nil
+	switch out.Type {
+	case "stdout", "stderr":
+		kept, err := r.filtered(out.Type, out.Text)
+		if err != nil {
+			return err
+		}
+		log := &r.stdout
+		if out.Type == "stderr" {
+			log = &r.stderr
+		}
+		r.execution.Truncated = appendLog(log, kept) || r.execution.Truncated
+	case "result":
+		result, err := resultOf(&out)
+		if err != nil {
+			return err
+		}
+		r.execution.Results = append(r.execution.Results, result)
+	case "error":
+		r.execution.Error = &ExecutionError{
+			Name:      deref(out.Name),
+			Value:     deref(out.Value),
+			Traceback: deref(out.Traceback),
+		}
+	case "end_of_execution":
+		r.finished = true
+	}
+
+	return nil
+}
+
+func (r *executionReader) filtered(stream string, text *string) (*string, error) {
+	if r.filter == nil || text == nil {
+		return text, nil
+	}
+	kept, err := r.filter(stream, *text)
+	if err != nil {
+		return nil, err
+	}
+
+	return &kept, nil
+}
+
+func (r *executionReader) finish() (*Execution, error) {
+	execution := r.execution
+	execution.Stdout = r.stdout.String()
+	execution.Stderr = r.stderr.String()
+	if !r.finished && execution.Error == nil {
+		return &execution, ErrIncompleteRun
+	}
+
+	return &execution, nil
 }
 
 func resultOf(out *outputLine) (Result, error) {

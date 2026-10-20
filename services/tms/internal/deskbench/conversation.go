@@ -1,6 +1,7 @@
 package deskbench
 
 import (
+	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"context"
 	"errors"
 	"fmt"
@@ -72,6 +73,7 @@ type Conversation struct {
 	turns    []*TurnRecord
 	formula  *formulaState
 	palette  bool
+	CodeMode codemode.Override
 }
 
 func (s *Session) Open(ctx context.Context, req OpenConversation) (*Conversation, error) {
@@ -162,6 +164,7 @@ func (c *Conversation) Say(ctx context.Context, u *Utterance) ([]*TurnRecord, er
 				DirectedAgentID:       u.Directed,
 				AttachmentDocumentIDs: attached,
 				Awaited:               true,
+				CodeMode:              c.CodeMode,
 			},
 		}
 		var runID string

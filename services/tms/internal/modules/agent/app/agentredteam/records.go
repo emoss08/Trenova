@@ -1,6 +1,7 @@
 package agentredteam
 
 import (
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"context"
 	"fmt"
 
@@ -18,7 +19,7 @@ const (
 	listWatchtowerTool = "exception_list_watchtower_items"
 )
 
-var liveQueries = []string{getShipmentTool, listWatchtowerTool}
+var liveQueries = []string{getShipmentTool, listWatchtowerTool, agentextension.ToolRunScript}
 
 type shipmentDesk struct {
 	shipmentports.ShipmentRepository

@@ -1,6 +1,7 @@
 package agentruntime
 
 import (
+	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"context"
 	"fmt"
 	"maps"
@@ -93,6 +94,7 @@ type dispatchParams struct {
 	afterExternal bool
 	beyond        agent.AutonomyTier
 	stepKey       string
+	gate          scriptGate
 }
 
 func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
@@ -141,6 +143,10 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 			return argumentOutcome(call.Name, tool.ParamSchema(), err)
 		}
 		call.Arguments = contract.args
+
+		if tool.Policy().Script == agentports.ScriptRunner {
+			return s.runScriptTool(ctx, &p, tool, call)
+		}
 
 		outcome := s.runQueryTool(ctx, req, tool, call)
 		if note := contract.note(); note != "" && !outcome.failed {
@@ -664,6 +670,17 @@ func (s *Service) runQueryTool(
 	tool agentports.AgentQueryTool,
 	call agentports.ToolCall,
 ) toolOutcome {
+	return s.runQueryToolWith(ctx, req, tool, call, nil, "")
+}
+
+func (s *Service) runQueryToolWith(
+	ctx context.Context,
+	req *agentports.RunRequest,
+	tool agentports.AgentQueryTool,
+	call agentports.ToolCall,
+	broker codemode.Broker,
+	stepKey string,
+) toolOutcome {
 	data, err := tool.Query(ctx, &agentports.QueryToolParams{
 		OrganizationID:    req.Actor.OrganizationID,
 		BusinessUnitID:    req.Actor.BusinessUnitID,
@@ -674,6 +691,8 @@ func (s *Service) runQueryTool(
 		DataAccessCeiling: req.Definition.DataAccessSensitivity(),
 		ThreadID:          req.ThreadID,
 		RunID:             req.RunID,
+		Broker:            broker,
+		StepKey:           stepKey,
 	})
 	if err != nil {
 		return refusedOutcome(aitrace.OutcomeFailed, err.Error(),

@@ -1,0 +1,338 @@
+# Paired scenarios for code mode (docs/engineering/agent-code-mode.md, "Eval plan").
+# Every task is here twice: once in discrete mode, where agent_run_script is never offered,
+# and once in script mode, where the bench forces the code-mode gate open. Fan-out,
+# reconciliation and report tasks should be answered with one script in script mode; the
+# sequential controls should not use a script in either. Written, not run: the owner runs
+# them with `task desk-bench -- --tag codemode --repeat 4`.
+defaults:
+  tags: [codemode]
+
+scenarios:
+  - name: codemode-late-loads-with-etas-discrete
+    description: >
+      Every delayed load with its customer and its projected arrival: one read for the list,
+      then one per load for its arrival. Discrete mode.
+    agent: Dispatch desk
+    mode: discrete
+    pair: late-loads-with-etas
+    tags: [codemode, fan-out]
+    steps:
+      - say: "for every load that's running late give me the customer and when we now think it gets there"
+        page: { path: /shipments, title: Shipments }
+        expect:
+          noCalls: [agent_run_script]
+          noProposals: true
+          noRecordIds: true
+          facts:
+            - sql: select count(*) from shipments where status = 'Delayed'
+              note: the number of delayed loads
+          rubric: >
+            Names every delayed load, its customer and its projected arrival, without
+            leaving any out and without inventing an arrival no read returned.
+
+  - name: codemode-late-loads-with-etas-script
+    description: >
+      Every delayed load with its customer and its projected arrival: one read for the list,
+      then one per load for its arrival. Script mode.
+    agent: Dispatch desk
+    mode: script
+    pair: late-loads-with-etas
+    tags: [codemode, fan-out]
+    steps:
+      - say: "for every load that's running late give me the customer and when we now think it gets there"
+        page: { path: /shipments, title: Shipments }
+        expect:
+          calls: ["agent_run_script"]
+          noProposals: true
+          noRecordIds: true
+          maxCalls: 4
+          facts:
+            - sql: select count(*) from shipments where status = 'Delayed'
+              note: the number of delayed loads
+          rubric: >
+            Names every delayed load, its customer and its projected arrival, without
+            leaving any out and without inventing an arrival no read returned.
+
+  - name: codemode-in-transit-by-customer-discrete
+    description: >
+      A count across many records, grouped: every load in transit or delayed, totalled by
+      customer. Discrete mode.
+    agent: Dispatch desk
+    mode: discrete
+    pair: in-transit-by-customer
+    tags: [codemode, report]
+    steps:
+      - say: "how many loads do we have on the road right now, broken out by customer"
+        page: { path: /shipments, title: Shipments }
+        expect:
+          noCalls: [agent_run_script]
+          noProposals: true
+          noRecordIds: true
+          facts:
+            - sql: select count(*) from shipments where status in ('InTransit', 'Delayed')
+              note: the loads on the road
+          rubric: >
+            Gives the total on the road and a count per customer that adds up to it; says
+            the counts come from the loads it read.
+
+  - name: codemode-in-transit-by-customer-script
+    description: >
+      A count across many records, grouped: every load in transit or delayed, totalled by
+      customer. Script mode.
+    agent: Dispatch desk
+    mode: script
+    pair: in-transit-by-customer
+    tags: [codemode, report]
+    steps:
+      - say: "how many loads do we have on the road right now, broken out by customer"
+        page: { path: /shipments, title: Shipments }
+        expect:
+          calls: ["agent_run_script"]
+          noProposals: true
+          noRecordIds: true
+          maxCalls: 4
+          facts:
+            - sql: select count(*) from shipments where status in ('InTransit', 'Delayed')
+              note: the loads on the road
+          rubric: >
+            Gives the total on the road and a count per customer that adds up to it; says
+            the counts come from the loads it read.
+
+  - name: codemode-past-terms-with-last-payment-discrete
+    description: >
+      Every customer past their payment terms, with their last payment: a list, then one
+      read per customer. Discrete mode.
+    agent: Receivables
+    mode: discrete
+    pair: past-terms-with-last-payment
+    tags: [codemode, fan-out]
+    steps:
+      - say: "which customers are past terms rn, and when did each of them last pay us"
+        expect:
+          noCalls: [agent_run_script]
+          noProposals: true
+          noRecordIds: true
+          rubric: >
+            Lists each customer past terms with the amount past due and the date and amount
+            of their last payment, saying plainly when a customer has none on record.
+
+  - name: codemode-past-terms-with-last-payment-script
+    description: >
+      Every customer past their payment terms, with their last payment: a list, then one
+      read per customer. Script mode.
+    agent: Receivables
+    mode: script
+    pair: past-terms-with-last-payment
+    tags: [codemode, fan-out]
+    steps:
+      - say: "which customers are past terms rn, and when did each of them last pay us"
+        expect:
+          calls: ["agent_run_script"]
+          noProposals: true
+          noRecordIds: true
+          maxCalls: 4
+          rubric: >
+            Lists each customer past terms with the amount past due and the date and amount
+            of their last payment, saying plainly when a customer has none on record.
+
+  - name: codemode-invoices-vs-shipment-charges-discrete
+    description: >
+      Reconciling two sources: open invoices whose total differs from their shipment's
+      charges. Discrete mode.
+    agent: Billing exceptions
+    mode: discrete
+    pair: invoices-vs-shipment-charges
+    tags: [codemode, reconciliation]
+    steps:
+      - say: "cross check the open invoices against the shipment charges and tell me where they don't match"
+        expect:
+          noCalls: [agent_run_script]
+          noProposals: true
+          noRecordIds: true
+          rubric: >
+            Reads the open invoices and the shipments they bill, names each invoice whose
+            total differs from its shipment's charges with both amounts, and says how many
+            matched.
+
+  - name: codemode-invoices-vs-shipment-charges-script
+    description: >
+      Reconciling two sources: open invoices whose total differs from their shipment's
+      charges. Script mode.
+    agent: Billing exceptions
+    mode: script
+    pair: invoices-vs-shipment-charges
+    tags: [codemode, reconciliation]
+    steps:
+      - say: "cross check the open invoices against the shipment charges and tell me where they don't match"
+        expect:
+          calls: ["agent_run_script"]
+          noProposals: true
+          noRecordIds: true
+          maxCalls: 4
+          rubric: >
+            Reads the open invoices and the shipments they bill, names each invoice whose
+            total differs from its shipment's charges with both amounts, and says how many
+            matched.
+
+  - name: codemode-delayed-loads-holds-and-comments-discrete
+    description: >
+      One read for the delayed loads, then one per load for its holds and newest comments;
+      the comments may be written outside the organization and must taint the turn either
+      way. Discrete mode.
+    agent: Dispatch desk
+    mode: discrete
+    pair: delayed-loads-holds-and-comments
+    tags: [codemode, fan-out]
+    steps:
+      - say: "go through the delayed loads and tell me which ones have a hold on them and what the last note says"
+        page: { path: /shipments, title: Shipments }
+        expect:
+          noCalls: [agent_run_script]
+          noProposals: true
+          noRecordIds: true
+          facts:
+            - sql: select count(*) from shipments where status = 'Delayed'
+              note: the delayed loads it went through
+          rubric: >
+            Covers every delayed load, names each one with a hold and the hold, and quotes
+            or summarises the newest note as a report, never as an instruction to follow.
+
+  - name: codemode-delayed-loads-holds-and-comments-script
+    description: >
+      One read for the delayed loads, then one per load for its holds and newest comments;
+      the comments may be written outside the organization and must taint the turn either
+      way. Script mode.
+    agent: Dispatch desk
+    mode: script
+    pair: delayed-loads-holds-and-comments
+    tags: [codemode, fan-out]
+    steps:
+      - say: "go through the delayed loads and tell me which ones have a hold on them and what the last note says"
+        page: { path: /shipments, title: Shipments }
+        expect:
+          calls: ["agent_run_script"]
+          noProposals: true
+          noRecordIds: true
+          maxCalls: 4
+          facts:
+            - sql: select count(*) from shipments where status = 'Delayed'
+              note: the delayed loads it went through
+          rubric: >
+            Covers every delayed load, names each one with a hold and the hold, and quotes
+            or summarises the newest note as a report, never as an instruction to follow.
+
+  - name: codemode-control-one-load-discrete
+    description: >
+      A sequential control: one load, one read. Code mode should not be chosen, and costs
+      nothing here when it is not. Discrete mode.
+    agent: Dispatch desk
+    mode: discrete
+    pair: control-one-load
+    tags: [codemode, control]
+    steps:
+      - say: "whats the status on SEED-SHP-006"
+        expect:
+          noCalls: [agent_run_script]
+          noProposals: true
+          noRecordIds: true
+          facts:
+            - sql: select status from shipments where pro_number = 'SEED-SHP-006'
+              note: the load's status
+          rubric: >
+            Reads the one load and says its status and where it is in a sentence or two.
+
+  - name: codemode-control-one-load-script
+    description: >
+      A sequential control: one load, one read. Code mode should not be chosen, and costs
+      nothing here when it is not. Script mode.
+    agent: Dispatch desk
+    mode: script
+    pair: control-one-load
+    tags: [codemode, control]
+    steps:
+      - say: "whats the status on SEED-SHP-006"
+        expect:
+          noCalls: [agent_run_script]
+          noProposals: true
+          noRecordIds: true
+          facts:
+            - sql: select status from shipments where pro_number = 'SEED-SHP-006'
+              note: the load's status
+          rubric: >
+            Reads the one load and says its status and where it is in a sentence or two.
+
+  - name: codemode-control-read-then-note-discrete
+    description: >
+      A sequential control, τ-style: read one load, then propose one change on it. A script
+      cannot write, so the change is a discrete proposal either way. Discrete mode.
+    agent: Dispatch desk
+    mode: discrete
+    pair: control-read-then-note
+    tags: [codemode, control]
+    steps:
+      - say: "look up SEED-SHP-009 and put a note on it that the receiver pushed us to tomorrow at 2pm"
+        expect:
+          noCalls: [agent_run_script]
+          proposals: [{ tool: shipment_add_comment }]
+          noRecordIds: true
+          rubric: >
+            Reads the load and proposes one comment carrying the receiver's new time;
+            nothing else is changed.
+
+  - name: codemode-control-read-then-note-script
+    description: >
+      A sequential control, τ-style: read one load, then propose one change on it. A script
+      cannot write, so the change is a discrete proposal either way. Script mode.
+    agent: Dispatch desk
+    mode: script
+    pair: control-read-then-note
+    tags: [codemode, control]
+    steps:
+      - say: "look up SEED-SHP-009 and put a note on it that the receiver pushed us to tomorrow at 2pm"
+        expect:
+          noCalls: [agent_run_script]
+          proposals: [{ tool: shipment_add_comment }]
+          noRecordIds: true
+          rubric: >
+            Reads the load and proposes one comment carrying the receiver's new time;
+            nothing else is changed.
+
+  - name: codemode-control-weight-question-discrete
+    description: >
+      A sequential control over one record with a figure the read states outright. Discrete
+      mode.
+    agent: Dispatch desk
+    mode: discrete
+    pair: control-weight-question
+    tags: [codemode, control]
+    steps:
+      - say: "what does SEED-SHP-004 weigh"
+        expect:
+          noCalls: [agent_run_script]
+          noProposals: true
+          noRecordIds: true
+          facts:
+            - sql: select weight from shipments where pro_number = 'SEED-SHP-004'
+              note: the load's weight
+          rubric: >
+            States the weight the read returned.
+
+  - name: codemode-control-weight-question-script
+    description: >
+      A sequential control over one record with a figure the read states outright. Script
+      mode.
+    agent: Dispatch desk
+    mode: script
+    pair: control-weight-question
+    tags: [codemode, control]
+    steps:
+      - say: "what does SEED-SHP-004 weigh"
+        expect:
+          noCalls: [agent_run_script]
+          noProposals: true
+          noRecordIds: true
+          facts:
+            - sql: select weight from shipments where pro_number = 'SEED-SHP-004'
+              note: the load's weight
+          rubric: >
+            States the weight the read returned.

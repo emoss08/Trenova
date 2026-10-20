@@ -28,6 +28,7 @@ type toolDeps struct {
 	comments    *commentDesk
 	watchtower  *watchtowerDesk
 	permissions *permissionDesk
+	scripts     *scriptDesk
 }
 
 func newToolDeps(rec *recorder, responses map[string]map[string]any) toolDeps {
@@ -48,6 +49,7 @@ func newToolDeps(rec *recorder, responses map[string]map[string]any) toolDeps {
 		comments:    &commentDesk{rec: rec, response: responses[getShipmentTool]},
 		watchtower:  &watchtowerDesk{rec: rec, response: responses[listWatchtowerTool]},
 		permissions: &permissionDesk{rec: rec},
+		scripts:     &scriptDesk{rec: rec},
 	}
 }
 
@@ -60,6 +62,7 @@ func (d toolDeps) fakes() []reflect.Value {
 		reflect.ValueOf(d.comments),
 		reflect.ValueOf(d.watchtower),
 		reflect.ValueOf(d.permissions),
+		reflect.ValueOf(d.scripts),
 	}
 }
 

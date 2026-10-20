@@ -1,6 +1,7 @@
 package agentports
 
 import (
+	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"context"
 	"io"
 
@@ -98,6 +99,7 @@ type SendMessageRequest struct {
 	// a task run from this conversation in place of its own agent's reply.
 	// The conversation's agent need not list it: the person chose it.
 	DirectedAgentID pulid.ID
+	CodeMode        codemode.Override
 }
 
 // AskRequest is a quick question from anywhere in the application. It runs

@@ -1,6 +1,7 @@
 package agentports
 
 import (
+	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -25,6 +26,12 @@ type QueryToolParams struct {
 	DataAccessCeiling permission.FieldSensitivity
 	ThreadID          pulid.ID
 	RunID             pulid.ID
+	// Broker is set only for the tool that runs a script: every read the
+	// script makes goes through it, as the run's actor.
+	Broker codemode.Broker
+	// StepKey is the step the call is claimed under, for the tool that runs a
+	// script to name its sandbox.
+	StepKey string
 }
 
 // AgentQueryTool reads data and returns it.
