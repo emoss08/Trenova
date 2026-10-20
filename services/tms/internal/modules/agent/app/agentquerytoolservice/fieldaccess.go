@@ -43,51 +43,16 @@ func (a fieldAccess) withThreads(threads agentports.ThreadOwnerRepository) field
 	return a
 }
 
-// ceiling is the most sensitive tier the actor may be shown on a resource.
-// An agent principal reads at its definition's data access, Internal when it
-// has none. A person reads at their own role's tier, lowered to the agent's
-// data access when an agent is working for them. An authorization that
-// cannot be resolved reads at Internal.
+// ceiling is the most sensitive tier the actor may be shown on a resource,
+// worked out by fieldsensitivity.AgentCeiling, which the GraphQL read path
+// applies too, so a tool and an operation never disagree on it.
 func (a fieldAccess) ceiling(
 	ctx context.Context,
 	params *agentports.QueryToolParams,
 	resource permission.Resource,
 ) permission.FieldSensitivity {
-	granted := agentDataAccess(params.DataAccessCeiling)
-	if params.Actor == nil || !params.Actor.IsUser() {
-		if granted == "" {
-			return permission.SensitivityInternal
-		}
-
-		return granted
-	}
-
-	person := a.personCeiling(ctx, params, resource)
-	if granted != "" && person.Level() > granted.Level() {
-		return granted
-	}
-
-	return person
-}
-
-func agentDataAccess(granted permission.FieldSensitivity) permission.FieldSensitivity {
-	switch {
-	case granted == "":
-		return ""
-	case granted.CanAccess(permission.SensitivityRestricted):
-		return permission.SensitivityRestricted
-	default:
-		return permission.SensitivityInternal
-	}
-}
-
-func (a fieldAccess) personCeiling(
-	ctx context.Context,
-	params *agentports.QueryToolParams,
-	resource permission.Resource,
-) permission.FieldSensitivity {
-	return fieldsensitivity.PersonCeiling(
-		ctx, a.permissions, params.Actor.UserID, params.OrganizationID, resource,
+	return fieldsensitivity.AgentCeiling(
+		ctx, a.permissions, params.Actor, params.DataAccessCeiling, resource,
 	)
 }
 
@@ -345,7 +310,7 @@ func (a fieldAccess) gate(
 }
 
 func agentLimit(params *agentports.QueryToolParams) permission.FieldSensitivity {
-	granted := agentDataAccess(params.DataAccessCeiling)
+	granted := fieldsensitivity.AgentDataAccess(params.DataAccessCeiling)
 	if granted == "" && (params.Actor == nil || !params.Actor.IsUser()) {
 		return permission.SensitivityInternal
 	}

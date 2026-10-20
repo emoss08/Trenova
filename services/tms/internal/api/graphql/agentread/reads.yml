@@ -1,0 +1,17 @@
+# The agent tools that read through a persisted GraphQL operation. The
+# operation each one reads is worked out by the rule in agentread/gen (the
+# Desk's operation on the tool's root field, else the table's, else the only
+# one); name an operation only to differ from the rule, with the reason.
+# See docs/engineering/agent-graphql-reads.md.
+reads:
+  - tool: document_list_types
+  - tool: equipment_list_manufacturers
+  - tool: equipment_list_types
+  - tool: location_list_categories
+  - tool: masterdata_list_accessorial_charges
+  - tool: masterdata_list_commodities
+  - tool: masterdata_list_fleet_codes
+  - tool: masterdata_list_hazardous_materials
+  - tool: masterdata_list_hold_reasons
+  - tool: masterdata_list_service_types
+  - tool: masterdata_list_shipment_types

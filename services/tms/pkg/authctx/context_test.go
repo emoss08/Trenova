@@ -345,3 +345,19 @@ func TestSetSessionAuthContext_ActivationOnlyWhereTheOrganizationAsksForIt(t *te
 	require.True(t, ok)
 	assert.Equal(t, []pulid.ID{role}, activation.ActiveRoleIDs)
 }
+
+func TestGetAuthContext_NeverReadsAnAgentPrincipalFromARequest(t *testing.T) {
+	t.Parallel()
+
+	c := newTestContext()
+	c.Set(string(authctx.TypeKey), authctx.PrincipalTypeAgent)
+	c.Set(string(authctx.ActorKey), pulid.MustNew("agd_"))
+	c.Set(string(authctx.OrgIDKey), pulid.MustNew("org_"))
+
+	got := authctx.GetAuthContext(c)
+
+	assert.False(t, got.IsAgent())
+	assert.Empty(t, got.PrincipalType)
+	assert.True(t, got.PrincipalID.IsNil())
+	assert.True(t, got.OrganizationID.IsNil())
+}

@@ -1,0 +1,10 @@
+{{ reserveImport "github.com/vektah/gqlparser/v2" "gqlparser" }}
+{{ reserveImport "github.com/vektah/gqlparser/v2/ast" }}
+
+var Sources = []*ast.Source{
+{{- range $source := $.Data.AugmentedSources }}
+	{Name: {{ $source.RelativePath | quote }}, Input: {{ $source.Source | rawQuote }}, BuiltIn: {{ $source.BuiltIn }}},
+{{- end }}
+}
+
+var Parsed = gqlparser.MustLoadSchema(Sources...)

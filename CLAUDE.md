@@ -467,6 +467,13 @@ now, and the approval carries its digest; tools implement `ToolPreviewer` with
 [docs/engineering/proposal-previews.md](docs/engineering/proposal-previews.md) before
 changing `toolpreview`, `proposalpreviewservice`, a tool's `Preview`, or how a proposal is
 decided.**
+Agent list and get tools read through the persisted GraphQL operation the screen uses, run in
+the worker by a read executor that holds only the shards and resolvers those operations reach;
+typed parameters are derived from the operation and the entity's filter configuration, and the
+data access ceiling is applied by the field guard. **Read
+[docs/engineering/agent-graphql-reads.md](docs/engineering/agent-graphql-reads.md) before
+converting a read tool, changing `agentread`, `gqlext`, `reads.yml` or the field guard, or
+editing an operation a tool reads through.**
 Every agent tool is named `<namespace>_<verb>[_<object>]` from the namespaces in
 `agentports.ToolNamespaces()`, with one convention for ids, paging, free text and dates, and a
 rename carries no alias; **read

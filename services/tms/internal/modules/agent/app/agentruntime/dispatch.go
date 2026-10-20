@@ -2,6 +2,7 @@ package agentruntime
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"slices"
@@ -737,6 +738,16 @@ func (s *Service) runQueryToolWith(
 		Broker:            extras.broker,
 		StepKey:           extras.stepKey,
 	})
+	if refused, ok := errors.AsType[*agentports.ReadRefusedError](err); ok {
+		return refusedOutcome(
+			aitrace.OutcomeDenied,
+			fmt.Sprintf("lacks %s access to %s", permission.OpRead, refused.Resource.String()),
+			"Tool %q is not permitted: %s. %s",
+			call.Name,
+			deniedAccess(req.Actor, permission.OpRead, refused.Resource),
+			deniedAdvice(req.Actor, permission.OpRead, refused.Resource),
+		)
+	}
 	if err != nil {
 		return refusedOutcome(aitrace.OutcomeFailed, err.Error(),
 			"Tool %q failed: %s", call.Name, err.Error())
