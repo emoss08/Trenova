@@ -5,6 +5,7 @@ import {
   type AgentControl,
 } from "@/lib/graphql/agent-control";
 import { aiControl } from "@/lib/queries/ai-control";
+import { assistant } from "@/lib/queries/assistant";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useQueryClient } from "@tanstack/react-query";
 import { controlInput } from "../agent-control-options";
@@ -24,7 +25,12 @@ export function usePauseAgents(control: AgentControl | undefined) {
     resourceName: t("Organization-wide settings"),
     onSuccess: async (saved) => {
       queryClient.setQueryData(AGENT_CONTROL_QUERY_KEY, saved);
-      await queryClient.invalidateQueries({ queryKey: aiControl._def });
+      // Every waiting proposal is held or freed with the pause, so the
+      // conversations' approval cards are read again with it.
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: aiControl._def }),
+        queryClient.invalidateQueries({ queryKey: assistant._def }),
+      ]);
     },
   });
 }

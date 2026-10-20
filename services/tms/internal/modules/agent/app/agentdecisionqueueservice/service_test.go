@@ -25,6 +25,14 @@ type stubQueue struct {
 	last       agentports.ListPendingDecisionsQuery
 	recent     []agentports.RecentDecisionEntry
 	lastRecent agentports.ListRecentDecisionsQuery
+	summary    *agentports.PendingDecisionSummary
+}
+
+func (q *stubQueue) Summary(
+	_ context.Context,
+	_ agentports.PendingDecisionSummaryRequest,
+) (*agentports.PendingDecisionSummary, error) {
+	return q.summary, nil
 }
 
 func (q *stubQueue) ListPending(
@@ -427,7 +435,8 @@ func TestListPending_LoadsRecordsInQueueOrderAndDropsTheGone(t *testing.T) {
 	require.NotNil(t, page.TotalCount)
 	assert.Equal(t, 7, *page.TotalCount)
 	assert.Equal(t, "dispatch_assign_move", queue.last.ToolName)
-	assert.True(t, queue.last.ExcludeShadowDefinitions)
+	assert.Nil(t, page.Items[0].Hold)
+	assert.Nil(t, page.Items[1].Hold)
 
 	decoded, err := decodeCursor(page.Items[1].Cursor)
 	require.NoError(t, err)
@@ -441,23 +450,94 @@ func TestListPending_LoadsRecordsInQueueOrderAndDropsTheGone(t *testing.T) {
 	require.Error(t, err)
 }
 
-// With the organization in shadow mode nothing can be approved, so the
-// queue is empty rather than a list of rows without buttons.
-func TestListPending_IsEmptyUnderOrganizationShadow(t *testing.T) {
+// Every organization starts with its agents paused. What they proposed
+// still waits on a person, so the queue lists and counts it, each item
+// marked with the switch that holds it, rather than reading empty.
+func TestListPending_MarksEveryItemHeldUnderTheOrganizationPause(t *testing.T) {
 	t.Parallel()
 
+	waiting := proposal("home_add_widget")
 	svc := &Service{
-		l:      zap.NewNop(),
-		queue:  &stubQueue{page: &agentports.PendingDecisionsPageRow{}},
-		shadow: stubShadow{shadow: true},
+		l: zap.NewNop(),
+		queue: &stubQueue{
+			page: &agentports.PendingDecisionsPageRow{Entries: []agentports.PendingDecisionEntry{
+				{Kind: agentports.PendingDecisionProposal, ID: waiting.ID, CreatedAt: 10},
+			}},
+			count: 1,
+			summary: &agentports.PendingDecisionSummary{
+				Total:   3,
+				Held:    1,
+				ByAgent: []agentports.PendingDecisionAgentCount{},
+				ByTool:  []agentports.PendingDecisionToolCount{},
+			},
+		},
+		proposals: &stubProposals{byID: map[pulid.ID]*agent.AgentProposal{waiting.ID: waiting}},
+		plans:     &stubPlans{},
+		shadow:    stubShadow{shadow: true},
 	}
+
 	page, err := svc.ListPending(t.Context(), agentports.ListPendingDecisionsRequest{})
 	require.NoError(t, err)
-	assert.Empty(t, page.Items)
+	require.Len(t, page.Items, 1)
+	assert.Equal(t, waiting, page.Items[0].Proposal)
+	assert.Equal(t, &agentports.ProposalHold{Reason: "OrganizationPaused"}, page.Items[0].Hold)
+
+	count, err := svc.Count(t.Context(), pagination.TenantInfo{}, nil)
+	require.NoError(t, err)
+	assert.Equal(t, 1, count)
 
 	summary, err := svc.Summary(t.Context(), pagination.TenantInfo{}, nil)
 	require.NoError(t, err)
-	assert.Zero(t, summary.Total)
+	assert.Equal(t, 3, summary.Total)
+	assert.Equal(t, 3, summary.Held, "the pause holds everything waiting")
+}
+
+func TestListPending_MarksWhatAnAgentInShadowRaisedAsHeldByItsSwitch(t *testing.T) {
+	t.Parallel()
+
+	held := proposal("billing_transfer")
+	live := proposal("dispatch_assign_move")
+	svc := &Service{
+		l: zap.NewNop(),
+		queue: &stubQueue{
+			page: &agentports.PendingDecisionsPageRow{Entries: []agentports.PendingDecisionEntry{
+				{
+					Kind:      agentports.PendingDecisionProposal,
+					ID:        held.ID,
+					CreatedAt: 20,
+					Shadow:    true,
+					AgentName: "Billing exceptions",
+				},
+				{Kind: agentports.PendingDecisionProposal, ID: live.ID, CreatedAt: 10},
+			}},
+			summary: &agentports.PendingDecisionSummary{
+				Total:   2,
+				Held:    1,
+				ByAgent: []agentports.PendingDecisionAgentCount{},
+				ByTool:  []agentports.PendingDecisionToolCount{},
+			},
+		},
+		proposals: &stubProposals{byID: map[pulid.ID]*agent.AgentProposal{
+			held.ID: held,
+			live.ID: live,
+		}},
+		plans:  &stubPlans{},
+		shadow: stubShadow{},
+	}
+
+	page, err := svc.ListPending(t.Context(), agentports.ListPendingDecisionsRequest{})
+	require.NoError(t, err)
+	require.Len(t, page.Items, 2)
+	assert.Equal(t, &agentports.ProposalHold{
+		Reason:    "AgentShadow",
+		AgentName: "Billing exceptions",
+	}, page.Items[0].Hold)
+	assert.Nil(t, page.Items[1].Hold)
+
+	summary, err := svc.Summary(t.Context(), pagination.TenantInfo{}, nil)
+	require.NoError(t, err)
+	assert.Equal(t, 2, summary.Total)
+	assert.Equal(t, 1, summary.Held)
 }
 
 func TestDecideMany_RecordsTheNoteOnEveryProposal(t *testing.T) {

@@ -4954,15 +4954,19 @@
 .dk-dcx.dk-ec-would .dk-dcx-d {
   color: var(--dsk-muted);
 }
-.dk-dcx.dk-ec-stale {
+.dk-dcx.dk-ec-stale,
+.dk-dcx.dk-ec-held {
   background: var(--dsk-sunken);
   box-shadow: 0 0 0 1px var(--dsk-b);
 }
-.dk-dcx.dk-ec-stale .dk-dcx-i {
+.dk-dcx.dk-ec-stale .dk-dcx-i,
+.dk-dcx.dk-ec-held .dk-dcx-i {
   color: var(--dsk-muted);
 }
 .dk-dcx.dk-ec-stale .dk-dcx-s,
-.dk-dcx.dk-ec-stale .dk-dcx-d {
+.dk-dcx.dk-ec-stale .dk-dcx-d,
+.dk-dcx.dk-ec-held .dk-dcx-s,
+.dk-dcx.dk-ec-held .dk-dcx-d {
   color: var(--dsk-muted);
 }
 /* meter */
@@ -8239,13 +8243,16 @@
   padding: 10px 10px 10px 14px;
   animation: dk-dec-rise 520ms var(--dk-spring) both;
 }
-.dk-dock .dk-c.dk-has-dec > .dk-dcx:not(.dk-ok):not(.dk-ec-would):not(.dk-ec-stale) {
+.dk-dock
+  .dk-c.dk-has-dec
+  > .dk-dcx:not(.dk-ok):not(.dk-ec-would):not(.dk-ec-stale):not(.dk-ec-held) {
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--dsk-warn) 32%, transparent);
 }
 .dk-dock .dk-c.dk-has-dec > .dk-dcx.dk-ec-would {
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--dk-t) 32%, transparent);
 }
-.dk-dock .dk-c.dk-has-dec > .dk-dcx.dk-ec-stale {
+.dk-dock .dk-c.dk-has-dec > .dk-dcx.dk-ec-stale,
+.dk-dock .dk-c.dk-has-dec > .dk-dcx.dk-ec-held {
   box-shadow: inset 0 0 0 1px var(--dsk-b);
 }
 .dk-dock .dk-c.dk-has-dec > .dk-dcx.dk-ok,

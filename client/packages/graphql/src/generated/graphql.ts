@@ -5950,6 +5950,13 @@ export type PayrollExportStatus =
   | 'Generated'
   | 'Voided';
 
+/** Which switch keeps a waiting decision from being taken. */
+export type PendingDecisionHoldReason =
+  /** The agent that raised it is in shadow. */
+  | 'AgentShadow'
+  /** Every agent in the organization is paused on the AI Control overview. */
+  | 'OrganizationPaused';
+
 export type PendingDecisionsInput = {
   after?: string | null | undefined;
   /** Only this agent's work. */
@@ -10195,7 +10202,7 @@ export type AiTrainingExportHistoryQueryVariables = Exact<{ [key: string]: never
 
 export type AiTrainingExportHistoryQuery = { aiTrainingExportHistory: Array<{ exportId: string, examples: number, trainExamples: number, validationExamples: number, consentGrantedAt: number, exportedAt: number }> };
 
-export type PendingProposalFieldsFragment = { id: string, reviewRequired: boolean, organizationId: string, businessUnitId: string, runId: string, toolName: string, toolParams: unknown, confidence: number, rationale: string, autonomyTier: AgentAutonomyTier, status: AgentProposalStatus, planId: string | null, planStep: number, simulatedAt: number | null, simulation: unknown, modifications: unknown, version: number, createdAt: number, updatedAt: number, parameterFields: Array<{ name: string, label: string, description: string, kind: AgentProposalFieldKind, required: boolean, options: Array<string>, minimum: number | null, maximum: number | null, maxLength: number | null, readOnly: boolean, resource: string | null, choices: Array<{ id: string, label: string }> | null }>, evidence: Array<{ type: string, id: string, note: string }>, run: { id: string, agentDefinitionId: string, trigger: AgentRunTrigger, subjectType: AgentSubjectType, subjectId: string, summary: string, definition: { id: string, name: string, template: AgentTemplate | null, icon: string, accent: string } | null } | null } & { ' $fragmentName'?: 'PendingProposalFieldsFragment' };
+export type PendingProposalFieldsFragment = { id: string, reviewRequired: boolean, organizationId: string, businessUnitId: string, runId: string, toolName: string, toolParams: unknown, confidence: number, rationale: string, autonomyTier: AgentAutonomyTier, status: AgentProposalStatus, planId: string | null, planStep: number, simulatedAt: number | null, simulation: unknown, modifications: unknown, version: number, createdAt: number, updatedAt: number, parameterFields: Array<{ name: string, label: string, description: string, kind: AgentProposalFieldKind, required: boolean, options: Array<string>, minimum: number | null, maximum: number | null, maxLength: number | null, readOnly: boolean, resource: string | null, choices: Array<{ id: string, label: string }> | null }>, hold: { reason: PendingDecisionHoldReason, agentName: string } | null, evidence: Array<{ type: string, id: string, note: string }>, run: { id: string, agentDefinitionId: string, trigger: AgentRunTrigger, subjectType: AgentSubjectType, subjectId: string, summary: string, definition: { id: string, name: string, template: AgentTemplate | null, icon: string, accent: string } | null } | null } & { ' $fragmentName'?: 'PendingProposalFieldsFragment' };
 
 export type PendingPlanFieldsFragment = { id: string, organizationId: string, businessUnitId: string, runId: string, title: string, summary: string, stepCount: number, completedSteps: number, failedStep: number | null, failureError: string, decidedByUserId: string | null, decidedAt: number | null, expiresAt: number | null, version: number, createdAt: number, updatedAt: number, planStatus: AgentPlanStatus, run: { id: string, agentDefinitionId: string, trigger: AgentRunTrigger, subjectType: AgentSubjectType, subjectId: string, summary: string, definition: { id: string, name: string, template: AgentTemplate | null, icon: string, accent: string } | null } | null } & { ' $fragmentName'?: 'PendingPlanFieldsFragment' };
 
@@ -10205,7 +10212,7 @@ export type PendingDecisionsQueryVariables = Exact<{
 }>;
 
 
-export type PendingDecisionsQuery = { pendingDecisions: { totalCount?: number | null, edges: Array<{ cursor: string, node:
+export type PendingDecisionsQuery = { pendingDecisions: { totalCount?: number | null, edges: Array<{ cursor: string, hold: { reason: PendingDecisionHoldReason, agentName: string } | null, node:
         | (
           { __typename: 'AgentPlan' }
           & { ' $fragmentRefs'?: { 'PendingPlanFieldsFragment': PendingPlanFieldsFragment } }
@@ -10219,7 +10226,7 @@ export type PendingDecisionsQuery = { pendingDecisions: { totalCount?: number | 
 export type PendingDecisionSummaryQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type PendingDecisionSummaryQuery = { pendingDecisionSummary: { total: number, oldestAt: number | null, byAgent: Array<{ agentDefinitionId: string, agentName: string, count: number }>, byTool: Array<{ toolName: string, count: number }> } };
+export type PendingDecisionSummaryQuery = { pendingDecisionSummary: { total: number, held: number, oldestAt: number | null, byAgent: Array<{ agentDefinitionId: string, agentName: string, count: number }>, byTool: Array<{ toolName: string, count: number }> } };
 
 export type PlanStepsQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -10541,7 +10548,7 @@ export type AgentReflectionsQueryVariables = Exact<{
 
 export type AgentReflectionsQuery = { agentReflections: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AgentReflectionRowFieldsFragment': AgentReflectionRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
-export type AgentPlanTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, runId: string, title: string, summary: string, status: AgentPlanStatus, stepCount: number, completedSteps: number, failedStep: number | null, failureError: string, decidedByUserId: string | null, decidedAt: number | null, expiresAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AgentPlanTableRowFieldsFragment' };
+export type AgentPlanTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, runId: string, title: string, summary: string, status: AgentPlanStatus, stepCount: number, completedSteps: number, failedStep: number | null, failureError: string, decidedByUserId: string | null, decidedAt: number | null, expiresAt: number | null, version: number, createdAt: number, updatedAt: number, hold: { reason: PendingDecisionHoldReason, agentName: string } | null } & { ' $fragmentName'?: 'AgentPlanTableRowFieldsFragment' };
 
 export type AgentPlanTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -10677,7 +10684,7 @@ export type RegenerateMyAgentProfileMutation = { regenerateMyAgentProfile: boole
 
 export type AgentEvidenceRefFieldsFragment = { type: string, id: string, note: string } & { ' $fragmentName'?: 'AgentEvidenceRefFieldsFragment' };
 
-export type AgentProposalTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, runId: string, toolName: string, toolParams: unknown, confidence: number, rationale: string, autonomyTier: AgentAutonomyTier, status: AgentProposalStatus, modifications: unknown, tainted: boolean, egressClass: AgentEgressClass | null, heldBy: Array<string>, reviewRequired: boolean, traceId: string, traceUrl: string | null, version: number, createdAt: number, updatedAt: number, parameterFields: Array<{ name: string, label: string, description: string, kind: AgentProposalFieldKind, required: boolean, options: Array<string>, minimum: number | null, maximum: number | null, maxLength: number | null, readOnly: boolean, resource: string | null, choices: Array<{ id: string, label: string }> | null }> } & { ' $fragmentName'?: 'AgentProposalTableRowFieldsFragment' };
+export type AgentProposalTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, runId: string, toolName: string, toolParams: unknown, confidence: number, rationale: string, autonomyTier: AgentAutonomyTier, status: AgentProposalStatus, modifications: unknown, tainted: boolean, egressClass: AgentEgressClass | null, heldBy: Array<string>, reviewRequired: boolean, traceId: string, traceUrl: string | null, version: number, createdAt: number, updatedAt: number, parameterFields: Array<{ name: string, label: string, description: string, kind: AgentProposalFieldKind, required: boolean, options: Array<string>, minimum: number | null, maximum: number | null, maxLength: number | null, readOnly: boolean, resource: string | null, choices: Array<{ id: string, label: string }> | null }>, hold: { reason: PendingDecisionHoldReason, agentName: string } | null } & { ' $fragmentName'?: 'AgentProposalTableRowFieldsFragment' };
 
 export type AgentProposalDetailFieldsFragment = (
   { evidence: Array<{ ' $fragmentRefs'?: { 'AgentEvidenceRefFieldsFragment': AgentEvidenceRefFieldsFragment } }> }

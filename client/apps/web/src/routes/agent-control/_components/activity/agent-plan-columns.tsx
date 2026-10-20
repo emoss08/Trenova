@@ -24,7 +24,9 @@ export function getPlanColumns(t: TranslateFn): ColumnDef<AgentPlanRow>[] {
     {
       accessorKey: "status",
       header: t("Status"),
-      cell: ({ row }) => <PlanStatusBadge value={row.original.status} t={t} />,
+      cell: ({ row }) => (
+        <PlanStatusBadge value={row.original.status} held={row.original.hold != null} t={t} />
+      ),
       size: 170,
       meta: {
         label: t("Status"),

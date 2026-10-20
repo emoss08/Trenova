@@ -545,6 +545,8 @@ var PayProfileComponentSpec TypeSpec
 
 var PayrollExportSpec TypeSpec
 
+var PendingDecisionHoldSpec TypeSpec
+
 var PerformanceReviewSpec TypeSpec
 
 var PerformanceReviewTemplateSpec TypeSpec
@@ -3790,6 +3792,9 @@ func init() {
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
+			"status",
+			"run_id",
+			"organization_id",
 		},
 		Fields: []FieldSpec{
 			{
@@ -3871,6 +3876,10 @@ func init() {
 			{
 				Name:    "run",
 				Special: "run",
+			},
+			{
+				Name:    "hold",
+				Special: "hold",
 			},
 		},
 	}
@@ -3989,6 +3998,9 @@ func init() {
 			"created_at",
 			"tainted",
 			"egress_class",
+			"status",
+			"run_id",
+			"organization_id",
 		},
 		Fields: []FieldSpec{
 			{
@@ -4106,6 +4118,10 @@ func init() {
 			{
 				Name:    "run",
 				Special: "run",
+			},
+			{
+				Name:    "hold",
+				Special: "hold",
 			},
 		},
 	}
@@ -21193,6 +21209,25 @@ func init() {
 			{
 				Name:        "version",
 				FieldMapKey: "version",
+			},
+		},
+	}
+
+	PendingDecisionHoldSpec = TypeSpec{
+		TypeName: "PendingDecisionHold",
+		FieldMap: aiauditcol.AIAuditEventFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "reason",
+				FieldMapKey: "reason",
+			},
+			{
+				Name:        "agentName",
+				FieldMapKey: "agentName",
 			},
 		},
 	}

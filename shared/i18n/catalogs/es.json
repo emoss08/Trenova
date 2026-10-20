@@ -979,7 +979,6 @@
   "Agent principals cannot reassign billing charges": "Los principales de tipo agente no pueden reasignar cargos de facturación",
   "Agent principals cannot transition billing queue items; a human must decide": "Los principales de tipo agente no pueden cambiar el estado de los elementos de la cola de facturación; debe decidirlo una persona",
   "Agent profiles": "Perfiles para agentes",
-  "Agent proposal not found": "No se encontró la propuesta del agente",
   "Agent quality regressed": "La calidad del agente empeoró",
   "Agent run failed": "Falló la ejecución del agente",
   "Agent run not found": "No se encontró la ejecución del agente",

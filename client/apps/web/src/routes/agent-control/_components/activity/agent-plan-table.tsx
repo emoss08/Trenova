@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { decidable } from "./activity-model";
 import { DataTable } from "@/components/data-table/data-table";
 import { usePermission } from "@/hooks/use-permission";
 import {
@@ -80,7 +81,7 @@ export default function AgentPlanTable() {
       label: t("Approve all"),
       icon: CheckIcon,
       onClick: (row) => decide(row, "Accepted"),
-      hidden: (row) => !canDecide || row.original.status !== "Pending",
+      hidden: (row) => !decidable(row.original, canDecide),
     },
     {
       id: "reject",
@@ -88,7 +89,7 @@ export default function AgentPlanTable() {
       icon: XCloseIcon,
       variant: "destructive",
       onClick: (row) => decide(row, "Rejected"),
-      hidden: (row) => !canDecide || row.original.status !== "Pending",
+      hidden: (row) => !decidable(row.original, canDecide),
     },
   ];
 

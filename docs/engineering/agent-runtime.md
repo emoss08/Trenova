@@ -1661,6 +1661,14 @@ report; a delegated turn is never offered the tool. The AI audit trail records t
 superseded proposal's `filed` event and the `withdraw_proposal` call like any runtime step,
 with no new event kind or canonical field.
 
+A filing a shadow switch holds says so. When the organization's agents are paused, or the
+agent is in shadow, the filing result reads "It has not run, and no one can approve it yet:"
+followed by which switch is on and where it is turned off in AI Control, and tells the model
+not to say the change waits on the person's approval (`proposalHold` in `heldproposal.go`,
+read through `agentshadow.Resolver` only when a call is filed). Without it the reply said
+"it waits on your approval" while the server refused every decision, and every organization
+starts paused. A hold that cannot be read leaves the usual wording.
+
 ### What a tool receives
 
 Every call's arguments go through `contractCall` (`agentruntime/arguments.go`,

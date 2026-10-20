@@ -979,7 +979,6 @@
   "Agent principals cannot reassign billing charges": "代理程序主体不得重新指派计费费用",
   "Agent principals cannot transition billing queue items; a human must decide": "代理程序主体不得变更计费队列项目的状态；须由真人裁决",
   "Agent profiles": "智能体概况",
-  "Agent proposal not found": "找不到该代理程序提案",
   "Agent quality regressed": "智能体质量退步",
   "Agent run failed": "智能体运行失败",
   "Agent run not found": "找不到智能体运行",

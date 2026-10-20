@@ -20459,7 +20459,7 @@
     ]
   },
   "Agent plan not found": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -20502,15 +20502,6 @@
     ],
     "areas": [
       "apps/web/lib",
-      "go/other"
-    ]
-  },
-  "Agent proposal not found": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
       "go/other"
     ]
   },
@@ -20744,6 +20735,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Agents are paused for the organization": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Agents ask before saving anything": {
@@ -23996,6 +23996,17 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "An administrator can turn this off.": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "routes/agent-control",
+      "routes/desk"
     ]
   },
   "An administrator decides whether everyone gets it. Keep a copy for yourself?": {
@@ -61468,7 +61479,7 @@
     ]
   },
   "Copied": {
-    "sites": 18,
+    "sites": 19,
     "scope": [
       "ts"
     ],
@@ -61558,7 +61569,7 @@
     ]
   },
   "Copy": {
-    "sites": 19,
+    "sites": 20,
     "scope": [
       "ts"
     ],
@@ -115327,7 +115338,7 @@
     ]
   },
   "Held": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -115519,6 +115530,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "Held, not yet decidable": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Hello {0},": {
@@ -115923,12 +115943,13 @@
     ]
   },
   "Hide sidebar": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "Hide the assistant button": {
@@ -163619,7 +163640,7 @@
     ]
   },
   "Not now": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -213476,12 +213497,13 @@
     ]
   },
   "Resize sidebar": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "Resize the assistant. Use the arrow keys, or double-click to reset.": {
@@ -214815,11 +214837,12 @@
     ]
   },
   "Resume agents": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/agent-control"
     ]
   },
@@ -216240,7 +216263,7 @@
     ]
   },
   "Review": {
-    "sites": 24,
+    "sites": 25,
     "scope": [
       "go",
       "ts"
@@ -219893,7 +219916,7 @@
     ]
   },
   "Run the plan": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -237947,12 +237970,13 @@
     ]
   },
   "Show sidebar": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "Show the assistant": {
@@ -269179,6 +269203,15 @@
       "routes/agent-control"
     ]
   },
+  "This agent is in shadow": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "This agent is restricted to roles and no role is granted it, so nobody can use it.": {
     "sites": 1,
     "scope": [
@@ -281710,6 +281743,15 @@
       "routes/worker"
     ]
   },
+  "Turn off shadow": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Turn off two-factor authentication": {
     "sites": 1,
     "scope": [
@@ -289530,7 +289572,7 @@
     ]
   },
   "Versions": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -315862,7 +315904,7 @@
     ]
   },
   "{0, plural, one {# change} other {# changes}}": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -317243,11 +317285,12 @@
     ]
   },
   "{0, plural, one {# line} other {# lines}}": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/admin",
       "routes/desk",
       "routes/formula-template"
@@ -318938,7 +318981,7 @@
     ]
   },
   "{0, plural, one {# step} other {# steps}}": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -325385,6 +325428,15 @@
     ]
   },
   "{0} is in a closed period, so it books on {1}, the first open day.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "{0} is in shadow": {
     "sites": 1,
     "scope": [
       "ts"

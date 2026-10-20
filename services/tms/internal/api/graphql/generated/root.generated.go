@@ -794,6 +794,7 @@ type AgentMemoryResolver interface {
 
 type AgentPlanResolver interface {
 	Run(ctx context.Context, obj *agent.AgentPlan) (*agent.AgentRun, error)
+	Hold(ctx context.Context, obj *agent.AgentPlan) (*gqlmodel.PendingDecisionHold, error)
 }
 
 type AgentPreviewFieldChangeResolver interface {
@@ -845,6 +846,7 @@ type AgentProposalResolver interface {
 	ReviewRequired(ctx context.Context, obj *agent.AgentProposal) (bool, error)
 	TraceURL(ctx context.Context, obj *agent.AgentProposal) (*string, error)
 	Run(ctx context.Context, obj *agent.AgentProposal) (*agent.AgentRun, error)
+	Hold(ctx context.Context, obj *agent.AgentProposal) (*gqlmodel.PendingDecisionHold, error)
 }
 
 type AgentProposalFieldResolver interface {
@@ -15277,9 +15279,26 @@ decided as a whole. A plan's steps never appear on their own.
 """
 union PendingDecision = AgentProposal | AgentPlan
 
+"Which switch keeps a waiting decision from being taken."
+enum PendingDecisionHoldReason {
+  "Every agent in the organization is paused on the AI Control overview."
+  OrganizationPaused
+  "The agent that raised it is in shadow."
+  AgentShadow
+}
+
+"A switch that keeps a waiting decision from being taken. The server refuses a decision on it until the switch is off."
+type PendingDecisionHold {
+  reason: PendingDecisionHoldReason!
+  "The agent in shadow; empty for the organization's pause."
+  agentName: String!
+}
+
 type PendingDecisionEdge {
   node: PendingDecision!
   cursor: String!
+  "Set while a switch keeps it from being decided; absent when a person can decide it now."
+  hold: PendingDecisionHold
 }
 
 type PendingDecisionConnection {
@@ -15312,6 +15331,8 @@ type PendingDecisionToolCount {
 "The queue in numbers: how much is waiting, from whom, of what, and for how long."
 type PendingDecisionSummary {
   total: Int!
+  "How many of total a switch keeps from being decided."
+  held: Int!
   byAgent: [PendingDecisionAgentCount!]!
   byTool: [PendingDecisionToolCount!]!
   oldestAt: Timestamp
@@ -15354,11 +15375,15 @@ type RecentDecision {
 extend type AgentProposal {
   "The run that raised this proposal, for the agent behind it."
   run: AgentRun
+  "Set while it waits and a switch keeps it from being decided; absent once decided or when a person can decide it now."
+  hold: PendingDecisionHold
 }
 
 extend type AgentPlan {
   "The run that raised this plan, for the agent behind it."
   run: AgentRun
+  "Set while it waits and a switch keeps it from being decided; absent once decided or when a person can decide it now."
+  hold: PendingDecisionHold
 }
 
 extend type AgentRun {
