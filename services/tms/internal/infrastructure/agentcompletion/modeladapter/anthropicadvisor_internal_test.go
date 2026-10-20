@@ -607,3 +607,38 @@ func TestOpenAIAdapters_IgnoreTheAdvisor(t *testing.T) {
 		assert.NotContains(t, strings.ToLower(sent), "advisor", adapter.Kind())
 	}
 }
+
+func TestAnthropicConversation_ReplacesStoredTextTheMessageNoLongerHolds(t *testing.T) {
+	t.Parallel()
+
+	blocks := replayProviderBlocks([]ProviderBlock{
+		{Type: "text", Text: "Checking the shipment."},
+		{Type: "server_tool_use", ID: "srvtoolu_1", Name: "advisor"},
+		{
+			Type: "advisor_tool_result", ToolUseID: "srvtoolu_1",
+			Result: &conversation.ServerToolResult{Type: "advisor_result", Text: "Ask for the BOL."},
+		},
+		{Type: "text", Text: "It needs a BOL."},
+	}, "The shipment needs a BOL.", true)
+
+	require.Len(t, blocks, 3)
+	require.NotNil(t, blocks[0].OfServerToolUse)
+	require.NotNil(t, blocks[1].OfAdvisorToolResult)
+	assert.Equal(t, "The shipment needs a BOL.", blocks[2].OfText.Text,
+		"the stored text is replaced once rather than sent beside the message's")
+}
+
+func TestAnthropicConversation_KeepsStoredTextTheMessageMatches(t *testing.T) {
+	t.Parallel()
+
+	blocks := replayProviderBlocks([]ProviderBlock{
+		{Type: "text", Text: "Checking the shipment. "},
+		{Type: "server_tool_use", ID: "srvtoolu_1", Name: "advisor"},
+		{Type: "text", Text: "It needs a BOL."},
+	}, "Checking the shipment. It needs a BOL.", true)
+
+	require.Len(t, blocks, 3)
+	assert.Equal(t, "Checking the shipment. ", blocks[0].OfText.Text)
+	require.NotNil(t, blocks[1].OfServerToolUse)
+	assert.Equal(t, "It needs a BOL.", blocks[2].OfText.Text)
+}

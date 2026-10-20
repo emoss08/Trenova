@@ -214,8 +214,8 @@ func replayProviderBlocks(
 	content string,
 	current bool,
 ) []anthropic.BetaContentBlockParamUnion {
+	replace := replacesStoredText(stored, content)
 	out := make([]anthropic.BetaContentBlockParamUnion, 0, len(stored)+1)
-	var storedText strings.Builder
 	for idx := range stored {
 		block := &stored[idx]
 		switch block.Type {
@@ -235,8 +235,7 @@ func replayProviderBlocks(
 				})
 			}
 		case anthropicTextBlock:
-			storedText.WriteString(block.Text)
-			if strings.TrimSpace(block.Text) == "" {
+			if replace || strings.TrimSpace(block.Text) == "" {
 				continue
 			}
 			out = append(out, anthropic.BetaContentBlockParamUnion{
@@ -259,14 +258,28 @@ func replayProviderBlocks(
 			})
 		}
 	}
-	if kept := strings.TrimSpace(content); kept != "" &&
-		strings.TrimSpace(storedText.String()) != kept {
+	if replace {
 		out = append(out, anthropic.BetaContentBlockParamUnion{
 			OfText: &anthropic.BetaTextBlockParam{Text: content},
 		})
 	}
 
 	return out
+}
+
+func replacesStoredText(stored []ProviderBlock, content string) bool {
+	kept := strings.TrimSpace(content)
+	if kept == "" {
+		return false
+	}
+	var storedText strings.Builder
+	for idx := range stored {
+		if stored[idx].Type == anthropicTextBlock {
+			storedText.WriteString(stored[idx].Text)
+		}
+	}
+
+	return strings.TrimSpace(storedText.String()) != kept
 }
 
 func advisorResultParam(
