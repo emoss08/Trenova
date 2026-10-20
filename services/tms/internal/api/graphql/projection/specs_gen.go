@@ -435,6 +435,8 @@ var FormulaTemplateSpec TypeSpec
 
 var FuelCardSpec TypeSpec
 
+var FuelFeedStatusSpec TypeSpec
+
 var FuelIndexSpec TypeSpec
 
 var FuelIndexPriceSpec TypeSpec
@@ -16066,6 +16068,30 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &TractorSpec,
 				},
+			},
+		},
+	}
+
+	FuelFeedStatusSpec = TypeSpec{
+		TypeName:      "FuelFeedStatus",
+		FieldMap:      fuelpurchasecol.CardFeedStateFieldMap,
+		AlwaysColumns: []string{},
+		Fields: []FieldSpec{
+			{
+				Name:        "lastPolledAt",
+				FieldMapKey: "lastPolledAt",
+			},
+			{
+				Name:        "lastSuccessAt",
+				FieldMapKey: "lastSuccessAt",
+			},
+			{
+				Name:        "failureCount",
+				FieldMapKey: "failureCount",
+			},
+			{
+				Name:        "lastError",
+				FieldMapKey: "lastError",
 			},
 		},
 	}

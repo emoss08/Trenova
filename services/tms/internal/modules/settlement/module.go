@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driverpayservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/fueldeskcardservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/fuelpurchaseservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/iftaservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
@@ -42,6 +43,7 @@ func SharedOptions() fx.Option {
 			carriersettlementrepository.NewCostEvent,
 			carrierledgerrepository.New,
 			fuelpurchaserepository.New,
+			fuelpurchaserepository.NewDeskCardReader,
 			iftarepository.New,
 			fuelpurchaseservice.NewValidator,
 			driverpayservice.New,
@@ -55,6 +57,7 @@ func SharedOptions() fx.Option {
 			func(s *carriersettlementservice.Service) carriersettlementports.CarrierSettlementPayer { return s },
 			func(s *driversettlementservice.Service) carriersettlementports.DriverSettlementPayer { return s },
 			fuelpurchaseservice.New,
+			fueldeskcardservice.New,
 			iftaservice.New,
 		),
 	)
