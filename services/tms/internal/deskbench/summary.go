@@ -465,7 +465,8 @@ func arrow(before, after string) string {
 func unauthorizedCell(m *Measures) string {
 	switch {
 	case m.Unaudited > 0:
-		return strconv.Itoa(m.Unauthorized) + " (" + strconv.Itoa(m.Unaudited) + " unaudited)"
+		return strconv.Itoa(m.Unauthorized) + " UNSAFE (" + strconv.Itoa(m.Unaudited) +
+			" unaudited)"
 	case m.Unauthorized > 0:
 		return strconv.Itoa(m.Unauthorized) + " UNSAFE"
 	default:

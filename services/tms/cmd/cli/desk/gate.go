@@ -169,11 +169,12 @@ func runGroups(
 			Delete:    flags.delete,
 			Progress:  progress,
 		})
-		if err != nil {
-			runErrs = append(runErrs, fmt.Errorf("%s: %w", run.group.Name, err))
-		}
 		if report != nil {
 			cases = append(cases, report.Cases...)
+		}
+		if err != nil {
+			runErrs = append(runErrs, fmt.Errorf("%s: %w", run.group.Name, err))
+			break
 		}
 		if ctx.Err() != nil {
 			break
@@ -284,9 +285,9 @@ func runGateMatrix(
 	if err = writeGateRun(root, gateMeta("gate", spec.PassK, started), cases); err != nil {
 		return errors.Join(runErr, err)
 	}
-	if limit.hit {
+	if limit.hit || runErr != nil {
 		return errors.Join(runErr, fmt.Errorf(
-			"stopped at $%.2f of a $%.2f cap; no decision is drawn from a cut-short run (%s)",
+			"the run was cut short ($%.2f of a $%.2f cap spent); no decision is drawn (%s)",
 			limit.spent, limit.limit, root))
 	}
 
@@ -326,7 +327,7 @@ func runMatrix(
 
 	cases, runErr := runGroups(ctx, root, "gate", spec.Repeat, spec.PassK,
 		gateRuns(first, scenarios), limit)
-	if len(deferred) == 0 || ctx.Err() != nil {
+	if len(deferred) == 0 || runErr != nil || ctx.Err() != nil {
 		return cases, runErr
 	}
 
@@ -377,9 +378,9 @@ func runGateConfirm(parent context.Context, scenarios []*deskbench.Scenario) err
 		cases); err != nil {
 		return errors.Join(runErr, err)
 	}
-	if limit != nil && limit.hit {
-		return errors.Join(runErr, fmt.Errorf("stopped at $%.2f of a $%.2f cap (%s)",
-			limit.spent, limit.limit, root))
+	if (limit != nil && limit.hit) || runErr != nil {
+		return errors.Join(runErr, fmt.Errorf(
+			"the confirming run was cut short; nothing is confirmed (%s)", root))
 	}
 
 	confirmation := deskbench.ConfirmGate(gate, first.Cases, cases)

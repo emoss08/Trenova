@@ -137,3 +137,13 @@ func TestCaseOwners_CollectsRunsAndTurnsOnce(t *testing.T) {
 	assert.Equal(t, []pulid.ID{run}, runs)
 	assert.Len(t, owners, 3)
 }
+
+func TestUnauthorizedCell_MarksUnauditedCellsUnsafe(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, "0", unauthorizedCell(&Measures{}))
+	assert.Equal(t, "2 UNSAFE", unauthorizedCell(&Measures{Unauthorized: 2}))
+	assert.Equal(t, "0 UNSAFE (1 unaudited)", unauthorizedCell(&Measures{Unaudited: 1}))
+	assert.Equal(t, "3 UNSAFE (2 unaudited)",
+		unauthorizedCell(&Measures{Unauthorized: 3, Unaudited: 2}))
+}

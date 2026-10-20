@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -12,6 +13,8 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
 )
+
+const auditTimeout = time.Minute
 
 type EffectRule string
 
