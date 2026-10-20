@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -116,4 +117,115 @@ func TestDispatch_AScriptsWriteTheActorMayNotMakeIsRefused(t *testing.T) {
 	assert.Zero(t, tool.Calls)
 	assert.Nil(t, outcome.action, "no intent is kept for a write the person may not make")
 	assert.True(t, outcome.failed)
+}
+
+type writePath struct {
+	name string
+	tool func() *agenttest.StubActionTool
+	args map[string]any
+}
+
+func writePaths() []writePath {
+	return []writePath{
+		{
+			name: "an internal write at AutoExecute",
+			tool: func() *agenttest.StubActionTool {
+				return &agenttest.StubActionTool{
+					ToolName: "dispatch_assign_move",
+					Tier:     agent.TierAutoExecute,
+				}
+			},
+			args: map[string]any{"moveId": "mv_1"},
+		},
+		{
+			name: "a money write within its bounds",
+			tool: moneyTool,
+			args: map[string]any{"invoiceId": "inv_1"},
+		},
+		{
+			name: "a reversible internal write the agent may make alone",
+			tool: func() *agenttest.StubActionTool {
+				return &agenttest.StubActionTool{
+					ToolName: "shipment_add_comment",
+					Tier:     agent.TierAutoExecute,
+					Resource: "shipment",
+				}
+			},
+			args: map[string]any{"shipmentId": "shp_1", "body": "Checked."},
+		},
+	}
+}
+
+// guardedWrite dispatches one call under the run's ledger, as an attempt of
+// the run does, and as a script's broker does when scriptStepKey is set.
+func guardedWrite(
+	t *testing.T,
+	tool *agenttest.StubActionTool,
+	args map[string]any,
+	ledger *keyedLedger,
+	runID pulid.ID,
+	scriptStepKey string,
+) toolOutcome {
+	t.Helper()
+
+	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{},
+		&stubActionRegistry{Tools: []agentports.AgentTool{tool}}, nil)
+	rt.budgets = &moneyBudgets{Limits: roomyMoneyLimits()}
+
+	return rt.guardedDispatch(t.Context(), &guardedDispatchParams{
+		req: &agentports.RunRequest{
+			Definition: autoDefinition(tool.ToolName),
+			Actor:      testActor(),
+			Input:      "do it",
+			RunID:      runID,
+			Steps:      ledger,
+			StepOwner: agentports.RunStepOwner{
+				Kind: agentports.RunStepOwnerAgentRun,
+				ID:   runID,
+			},
+			Attempt: 1,
+		},
+		call:          agentports.ToolCall{ID: "call_1", Name: tool.ToolName, Arguments: args},
+		ordinal:       1,
+		taint:         &agent.RunTaint{},
+		scriptStepKey: scriptStepKey,
+	})
+}
+
+/*
+No path runs a script's write: not a tool the agent may run alone, not a
+money write inside its bounds, not a reversible internal one, and not a
+retried activity replaying the step. Each case first shows that the same call
+outside a script does run, so the test would see a path that ran.
+*/
+func TestDispatch_NoPathRunsAScriptsWrite(t *testing.T) {
+	t.Parallel()
+
+	for _, path := range writePaths() {
+		t.Run(path.name, func(t *testing.T) {
+			t.Parallel()
+
+			control := path.tool()
+			ran := guardedWrite(t, control, path.args, newKeyedLedger(), pulid.MustNew("ar_"), "")
+			require.Equal(t, 1, control.Calls, "outside a script the call runs: %s", ran.content)
+
+			tool := path.tool()
+			ledger := newKeyedLedger()
+			runID := pulid.MustNew("ar_")
+			for attempt := range 3 {
+				outcome := guardedWrite(t, tool, path.args, ledger, runID, scriptStep)
+				require.NotNil(t, outcome.action, "attempt %d: %s", attempt+1, outcome.content)
+				assert.False(t, outcome.action.Executed, "attempt %d", attempt+1)
+				assert.NotEqual(t, agent.TierAutoExecute, outcome.action.Tier)
+			}
+
+			assert.Zero(t, tool.Calls, "no attempt reaches the tool's Execute")
+			require.Len(t, ledger.steps, 1, "every attempt reads the one step")
+			for _, step := range ledger.steps {
+				require.NotNil(t, step.Outcome.Action)
+				assert.False(t, step.Outcome.Action.Executed, "the ledger records no executed write")
+				assert.Equal(t, scriptStep, step.Outcome.Action.ScriptStepKey)
+			}
+		})
+	}
 }
