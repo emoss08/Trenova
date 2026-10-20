@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -118,4 +120,35 @@ func TestDecide_AScriptBatchCanAlwaysBeRejectedUnseen(t *testing.T) {
 	plan, err := h.svc.Decide(t.Context(), h.req, h.actor)
 	require.NoError(t, err)
 	assert.Equal(t, agent.PlanStatusRejected, plan.Status)
+}
+
+type recordedAudit struct {
+	entries []*auditports.LogActionParams
+}
+
+func (a *recordedAudit) LogAction(params *auditports.LogActionParams, _ ...auditports.LogOption) error {
+	a.entries = append(a.entries, params)
+
+	return nil
+}
+
+func TestDecide_AScriptBatchsDecisionIsAuditedAsTheScriptsBatch(t *testing.T) {
+	t.Parallel()
+
+	h := newScriptHarness(t, 2)
+	h.svc.previews = &fakePreviews{}
+	audit := &recordedAudit{}
+	h.svc.audit = audit
+	h.req.PreviewDigest = "plan-digest"
+
+	_, err := h.svc.Decide(t.Context(), h.req, h.actor)
+	require.NoError(t, err)
+
+	require.Len(t, audit.entries, 1)
+	entry := audit.entries[0]
+	assert.True(t, entry.Critical)
+	assert.Equal(t, permission.ResourceAgentProposal, entry.Resource)
+	assert.Equal(t, h.plans.plan.ID.String(), entry.ResourceID)
+	assert.Equal(t, h.actor.UserID, entry.UserID)
+	assert.Equal(t, scriptStep, entry.CurrentState["scriptStepKey"], "the entry names the script")
 }
