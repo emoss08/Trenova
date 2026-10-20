@@ -347,8 +347,9 @@ alike:
 
 They share the Range Logistics pool of five Denver loads with 5a's read-side scenarios, and the
 stale-approval cases use the step `setup` from #840 (statements run just before a step), so they
-land after #840 and in the scenario format 5a ships (`mode`/`pair`). The pool's setup is defined
-once and used by both phases' scenarios; it is never copied into a second file. The sequential
+land after #840 and in the scenario format 5a ships (`mode`/`pair`). Both phases' scenarios live in
+one file, `deskbench/scenarios/codemode.yaml`, which 5a owns along with the pool's anchor at its
+top; 5b appends these seven entries and edits only them, so the pool is never copied. The sequential
 controls (the blown pickup window, the pickup ahead, the covered load) and the injection and
 sandbox probes stay with 5a's set.
 
