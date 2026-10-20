@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -73,6 +74,7 @@ type Params struct {
 	RateLimits  kernelports.RateLimitStore                     `optional:"true"`
 	Config      *config.Config                                 `optional:"true"`
 	Disclosures agentports.ToolDisclosureObserver              `optional:"true"`
+	Shadow      *agentshadow.Resolver                          `optional:"true"`
 }
 
 type Service struct {
@@ -103,6 +105,7 @@ type Service struct {
 	pools      matchPools
 	matchable  func() []string
 	registry   *permission.Registry
+	shadow     shadowVerdicts
 }
 
 func New(p Params) *Service {
@@ -132,7 +135,16 @@ func New(p Params) *Service {
 		pools:       newMatchPools(),
 		matchable:   matchableTools(p.Catalog),
 		registry:    permission.NewRegistry(),
+		shadow:      shadowFrom(p.Shadow),
 	}
+}
+
+func shadowFrom(resolver *agentshadow.Resolver) shadowVerdicts {
+	if resolver == nil {
+		return nil
+	}
+
+	return resolver
 }
 
 func (s *Service) Run(

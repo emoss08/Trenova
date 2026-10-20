@@ -22,6 +22,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "PendingDecisionAgentCount", Implementors: []string{"PendingDecisionAgentCount"}},
 		{Name: "PendingDecisionConnection", Implementors: []string{"PendingDecisionConnection"}},
 		{Name: "PendingDecisionEdge", Implementors: []string{"PendingDecisionEdge"}},
+		{Name: "PendingDecisionHold", Implementors: []string{"PendingDecisionHold"}},
 		{Name: "PendingDecisionSummary", Implementors: []string{"PendingDecisionSummary"}},
 		{Name: "PendingDecisionToolCount", Implementors: []string{"PendingDecisionToolCount"}},
 		{Name: "RecentDecision", Implementors: []string{"RecentDecision"}},
@@ -223,6 +224,38 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
+			{
+				Name:      "hold",
+				HasChild:  true,
+				ChildType: "PendingDecisionHold",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.PendingDecisionEdge)
+					return obj.Hold, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOPendingDecisionHold2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPendingDecisionHold),
+			},
+		}},
+		{Object: "PendingDecisionHold", Fields: []*gqlexec.Field{
+			{
+				Name:     "reason",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.PendingDecisionHold)
+					return obj.Reason, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNPendingDecisionHoldReason2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPendingDecisionHoldReason),
+			},
+			{
+				Name:     "agentName",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.PendingDecisionHold)
+					return obj.AgentName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
 		}},
 		{Object: "PendingDecisionSummary", Fields: []*gqlexec.Field{
 			{
@@ -232,6 +265,16 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.PendingDecisionSummary)
 					return obj.Total, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "held",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.PendingDecisionSummary)
+					return obj.Held, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
@@ -259,7 +302,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "oldestAt",
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.PendingDecisionSummary)
 					return obj.OldestAt, nil
@@ -345,7 +388,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "decision",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RecentDecision)
 					return obj.Decision, nil
@@ -395,7 +438,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "decidedAt",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RecentDecision)
 					return obj.DecidedAt, nil
@@ -460,8 +503,9 @@ var (
 	errNoChild2 = errors.New("field of type Boolean does not have child fields")
 	errNoChild3 = errors.New("field of type Int does not have child fields")
 	errNoChild4 = errors.New("field of type PendingDecision does not have child fields")
-	errNoChild5 = errors.New("field of type Timestamp does not have child fields")
-	errNoChild6 = errors.New("field of type AgentDecisionType does not have child fields")
+	errNoChild5 = errors.New("field of type PendingDecisionHoldReason does not have child fields")
+	errNoChild6 = errors.New("field of type Timestamp does not have child fields")
+	errNoChild7 = errors.New("field of type AgentDecisionType does not have child fields")
 )
 
 func marshalAbstractPendingDecision(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v any) graphql.Marshaler {
@@ -828,6 +872,10 @@ func marshalNPendingDecisionEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "PendingDecisionEdge", v)
 }
 
+func marshalNPendingDecisionHoldReason2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPendingDecisionHoldReason(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v gqlmodel.PendingDecisionHoldReason) graphql.Marshaler {
+	return v
+}
+
 func marshalNPendingDecisionSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPendingDecisionSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.PendingDecisionSummary) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
@@ -911,6 +959,13 @@ func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.Selection
 	}
 	res := graphql.MarshalInt(*v)
 	return res
+}
+
+func marshalOPendingDecisionHold2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPendingDecisionHold(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.PendingDecisionHold) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "PendingDecisionHold", v)
 }
 
 func marshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *string) graphql.Marshaler {

@@ -317,13 +317,8 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		}
 		action.Target = target
 
-		content := fmt.Sprintf(
-			"Recorded a proposal to run %q (proposal %s). It is awaiting a person's review at "+
-				"the %s tier and has not run.",
-			call.Name,
-			action.ProposalID,
-			tier,
-		) + heldReason(action.HeldBy, decision.Egress) + filingEcho(baseline, call.Arguments)
+		content := proposedText(call.Name, action.ProposalID, tier, s.proposalHold(ctx, req)) +
+			heldReason(action.HeldBy, decision.Egress) + filingEcho(baseline, call.Arguments)
 		if note := p.argumentNote; note != "" {
 			content += "\n" + note
 		}

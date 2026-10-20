@@ -23990,12 +23990,13 @@
     ]
   },
   "An administrator can turn this off.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "An administrator decides whether everyone gets it. Keep a copy for yourself?": {
@@ -128028,6 +128029,15 @@
     ]
   },
   "Its shipments settled without another bill": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Its steps and what they would change show once it can be decided.": {
     "sites": 1,
     "scope": [
       "ts"

@@ -5950,6 +5950,13 @@ export type PayrollExportStatus =
   | 'Generated'
   | 'Voided';
 
+/** Which switch keeps a waiting decision from being taken. */
+export type PendingDecisionHoldReason =
+  /** The agent that raised it is in shadow. */
+  | 'AgentShadow'
+  /** Every agent in the organization is paused on the AI Control overview. */
+  | 'OrganizationPaused';
+
 export type PendingDecisionsInput = {
   after?: string | null | undefined;
   /** Only this agent's work. */
@@ -10205,7 +10212,7 @@ export type PendingDecisionsQueryVariables = Exact<{
 }>;
 
 
-export type PendingDecisionsQuery = { pendingDecisions: { totalCount?: number | null, edges: Array<{ cursor: string, node:
+export type PendingDecisionsQuery = { pendingDecisions: { totalCount?: number | null, edges: Array<{ cursor: string, hold: { reason: PendingDecisionHoldReason, agentName: string } | null, node:
         | (
           { __typename: 'AgentPlan' }
           & { ' $fragmentRefs'?: { 'PendingPlanFieldsFragment': PendingPlanFieldsFragment } }
@@ -10219,7 +10226,7 @@ export type PendingDecisionsQuery = { pendingDecisions: { totalCount?: number | 
 export type PendingDecisionSummaryQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type PendingDecisionSummaryQuery = { pendingDecisionSummary: { total: number, oldestAt: number | null, byAgent: Array<{ agentDefinitionId: string, agentName: string, count: number }>, byTool: Array<{ toolName: string, count: number }> } };
+export type PendingDecisionSummaryQuery = { pendingDecisionSummary: { total: number, held: number, oldestAt: number | null, byAgent: Array<{ agentDefinitionId: string, agentName: string, count: number }>, byTool: Array<{ toolName: string, count: number }> } };
 
 export type PlanStepsQueryVariables = Exact<{
   input: DataTableConnectionInput;

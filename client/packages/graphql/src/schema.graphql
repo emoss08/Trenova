@@ -22860,7 +22860,28 @@ type PendingDecisionConnection {
 
 type PendingDecisionEdge {
   cursor: String!
+  """
+  Set while a switch keeps it from being decided; absent when a person can decide it now.
+  """
+  hold: PendingDecisionHold
   node: PendingDecision!
+}
+
+"""
+A switch that keeps a waiting decision from being taken. The server refuses a decision on it until the switch is off.
+"""
+type PendingDecisionHold {
+  """The agent in shadow; empty for the organization's pause."""
+  agentName: String!
+  reason: PendingDecisionHoldReason!
+}
+
+"""Which switch keeps a waiting decision from being taken."""
+enum PendingDecisionHoldReason {
+  """The agent that raised it is in shadow."""
+  AgentShadow
+  """Every agent in the organization is paused on the AI Control overview."""
+  OrganizationPaused
 }
 
 """
@@ -22869,6 +22890,8 @@ The queue in numbers: how much is waiting, from whom, of what, and for how long.
 type PendingDecisionSummary {
   byAgent: [PendingDecisionAgentCount!]!
   byTool: [PendingDecisionToolCount!]!
+  """How many of total a switch keeps from being decided."""
+  held: Int!
   oldestAt: Timestamp
   total: Int!
 }

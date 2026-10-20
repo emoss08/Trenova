@@ -3,8 +3,10 @@ package decisionsresolver
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -31,4 +33,15 @@ func loadAgentRun(ctx context.Context, runID pulid.ID) (*agent.AgentRun, error) 
 	}
 
 	return run, nil
+}
+
+func pendingDecisionHold(hold *agentports.ProposalHold) *gqlmodel.PendingDecisionHold {
+	if hold == nil {
+		return nil
+	}
+
+	return &gqlmodel.PendingDecisionHold{
+		Reason:    gqlmodel.PendingDecisionHoldReason(hold.Reason),
+		AgentName: hold.AgentName,
+	}
 }

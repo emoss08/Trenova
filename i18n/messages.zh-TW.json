@@ -13770,6 +13770,7 @@
   "Its runs and audit trail are kept. Open proposals are withdrawn and people can no longer pick it in Desk.": "其執行記錄與稽核軌跡會保留。未決提議將被撤回，人員也無法再於 Desk 中選擇它。",
   "Its scheduled requests go with it.": "其已排程的請求將一併刪除。",
   "Its shipments settled without another bill": "其運單已結清，不再另行開票",
+  "Its steps and what they would change show once it can be decided.": "可以決定時，將顯示其步驟以及它們會變更的內容。",
   "Its suite runs": "其測試套件執行",
   "Its tasks fall to the next provider in line. The stored key is deleted.": "它的任務會交給下一個供應商。已儲存的金鑰會被刪除。",
   "Its terms count from the invoice date, so 1 of its {0} days has run while it waits to be posted.": "其帳期從發票日期起算，因此在等待過帳期間，{0} 天中已過去 1 天。",

@@ -158,7 +158,11 @@ func (r *QueryResolver) PendingDecisions(ctx context.Context, input gqlmodel.Pen
 		default:
 			continue
 		}
-		edges = append(edges, &gqlmodel.PendingDecisionEdge{Node: node, Cursor: item.Cursor})
+		edges = append(edges, &gqlmodel.PendingDecisionEdge{
+			Node:   node,
+			Cursor: item.Cursor,
+			Hold:   pendingDecisionHold(item.Hold),
+		})
 	}
 
 	pageInfo := &gqlmodel.PageInfo{HasNextPage: page.HasNextPage}
@@ -196,6 +200,7 @@ func (r *QueryResolver) PendingDecisionSummary(ctx context.Context) (*gqlmodel.P
 
 	out := &gqlmodel.PendingDecisionSummary{
 		Total:   summary.Total,
+		Held:    summary.Held,
 		ByAgent: make([]*gqlmodel.PendingDecisionAgentCount, 0, len(summary.ByAgent)),
 		ByTool:  make([]*gqlmodel.PendingDecisionToolCount, 0, len(summary.ByTool)),
 	}

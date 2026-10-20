@@ -1037,7 +1037,9 @@ without Approve: a muted pause row naming the switch, with Review, Not now and, 
 who may turn the switch off, a link to it ("Resume agents" or "Turn off shadow"). A change
 that can be decided is shown before a held one, and ⌘↵ does nothing on a held row. A held
 change is never dropped from the box: with the pause on by default, dropping it once left a
-reply saying "it waits on your approval" with nothing to approve anywhere.
+reply saying "it waits on your approval" with nothing to approve anywhere. Decisions lists
+and counts held changes the same way: each row says "held", and the bar names the switch and
+links to it in place of Decline and Approve, with their keys off.
 
 **The transcript keeps a quiet card per decision.** Each proposal or plan is one card in
 the conversation — the outcome's mark, "Proposed: …" with the record it is about, and the

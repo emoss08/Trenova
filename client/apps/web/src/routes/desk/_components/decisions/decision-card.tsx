@@ -237,7 +237,10 @@ function ProposalCard({
   const t = useT();
   const proposal = useMemo(() => asAssistantProposal(node), [node]);
   const view = useMemo(() => presentProposal(proposal), [proposal]);
-  const previewQuery = useProposalPreview({ scope: "approver", id: node.id });
+  // A held change can't be decided, and the server reads no preview of it
+  // until the switch holding it is off; its arguments are what it shows.
+  const held = node.hold !== null;
+  const previewQuery = useProposalPreview({ scope: "approver", id: node.id, enabled: !held });
   const approval = useApprovalGate(previewQuery);
   const preview = previewQuery.data;
   const facts = useMemo(() => approvalFacts(preview, t), [preview, t]);
@@ -287,54 +290,58 @@ function ProposalCard({
       </h1>
       <p className="dk-dc2-why">{node.rationale || view.summary}</p>
 
-      <PreviewLoadState
-        query={previewQuery}
-        changed={approval.changed}
-        fallback={<Highlights rows={view.highlights} />}
-        reviewRequired={reviewRequired}
-      >
-        {(data) =>
-          rows && rows.length > 0 ? (
-            <div className="dk-dc2-diff">
-              <div className="dk-dc2-dh">
-                <span>
-                  {data.changes
-                    .find((change) => !change.withheld)
-                    ?.fields.find((field) => !field.withheld && field.path !== OUTCOME_FIELD)
-                    ?.label ?? ""}
-                </span>
-                <span className={cn("dk-dc2-rev", !view.reversible && "dk-hard")}>
-                  {view.reversible ? t("Reversible") : t("Can't be undone")}
-                </span>
+      {held ? (
+        <Highlights rows={view.highlights} />
+      ) : (
+        <PreviewLoadState
+          query={previewQuery}
+          changed={approval.changed}
+          fallback={<Highlights rows={view.highlights} />}
+          reviewRequired={reviewRequired}
+        >
+          {(data) =>
+            rows && rows.length > 0 ? (
+              <div className="dk-dc2-diff">
+                <div className="dk-dc2-dh">
+                  <span>
+                    {data.changes
+                      .find((change) => !change.withheld)
+                      ?.fields.find((field) => !field.withheld && field.path !== OUTCOME_FIELD)
+                      ?.label ?? ""}
+                  </span>
+                  <span className={cn("dk-dc2-rev", !view.reversible && "dk-hard")}>
+                    {view.reversible ? t("Reversible") : t("Can't be undone")}
+                  </span>
+                </div>
+                {rows.slice(0, SHOWN_ROWS).map((row, index) => (
+                  <div
+                    key={`${row.key}-${index}`}
+                    className={cn("dk-dc2-dr", row.refused && "dk-bad")}
+                  >
+                    <span className="dk-dc2-dk">{row.key}</span>
+                    <s>{row.before}</s>
+                    <i aria-hidden>→</i>
+                    <span className="sr-only">{t("to")}</span>
+                    <b title={row.refused ?? undefined}>
+                      {row.refused ? t("Refused") : row.after}
+                      {row.refused && <span className="sr-only">: {row.refused}</span>}
+                    </b>
+                  </div>
+                ))}
+                {facts.count > Math.min(rows.length, SHOWN_ROWS) && (
+                  <div className="dk-dc2-more">
+                    {t("+ {0} more like these", facts.count - Math.min(rows.length, SHOWN_ROWS))}
+                  </div>
+                )}
               </div>
-              {rows.slice(0, SHOWN_ROWS).map((row, index) => (
-                <div
-                  key={`${row.key}-${index}`}
-                  className={cn("dk-dc2-dr", row.refused && "dk-bad")}
-                >
-                  <span className="dk-dc2-dk">{row.key}</span>
-                  <s>{row.before}</s>
-                  <i aria-hidden>→</i>
-                  <span className="sr-only">{t("to")}</span>
-                  <b title={row.refused ?? undefined}>
-                    {row.refused ? t("Refused") : row.after}
-                    {row.refused && <span className="sr-only">: {row.refused}</span>}
-                  </b>
-                </div>
-              ))}
-              {facts.count > Math.min(rows.length, SHOWN_ROWS) && (
-                <div className="dk-dc2-more">
-                  {t("+ {0} more like these", facts.count - Math.min(rows.length, SHOWN_ROWS))}
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="dk-dc2-full">
-              <ProposalPreview preview={data} wouldFail={wouldFail} />
-            </div>
-          )
-        }
-      </PreviewLoadState>
+            ) : (
+              <div className="dk-dc2-full">
+                <ProposalPreview preview={data} wouldFail={wouldFail} />
+              </div>
+            )
+          }
+        </PreviewLoadState>
+      )}
 
       {run && (
         <div className={cn("dk-dc2-sim", run.warn && "dk-warn")}>
@@ -376,8 +383,9 @@ function PlanCard({
   onDeclineWith,
 }: CardProps & { node: PendingPlanNode }) {
   const t = useT();
-  const stepsQuery = usePlanSteps(node.id);
-  const previewQuery = usePlanPreview({ scope: "approver", id: node.id });
+  const held = node.hold !== null;
+  const stepsQuery = usePlanSteps(held ? null : node.id);
+  const previewQuery = usePlanPreview({ scope: "approver", id: node.id, enabled: !held });
   const approval = useApprovalGate(previewQuery);
   const stepsById = useMemo(
     () => new Map((stepsQuery.data ?? []).map((step) => [step.id, step])),
@@ -415,22 +423,28 @@ function PlanCard({
       </h1>
       {node.summary !== "" && <p className="dk-dc2-why">{node.summary}</p>}
       <div className="dk-dc2-full">
-        <PreviewLoadState
-          query={previewQuery}
-          changed={approval.changed}
-          reviewRequired={reviewRequired}
-        >
-          {(plan) => (
-            <PlanPreview
-              plan={plan}
-              stepTitle={(proposalId) => {
-                const step = stepsById.get(proposalId);
-                return step ? presentProposal(asAssistantProposal(step)).summary : null;
-              }}
-              wouldFail={wouldFail}
-            />
-          )}
-        </PreviewLoadState>
+        {held ? (
+          <p className="dk-dc2-why">
+            {t("Its steps and what they would change show once it can be decided.")}
+          </p>
+        ) : (
+          <PreviewLoadState
+            query={previewQuery}
+            changed={approval.changed}
+            reviewRequired={reviewRequired}
+          >
+            {(plan) => (
+              <PlanPreview
+                plan={plan}
+                stepTitle={(proposalId) => {
+                  const step = stepsById.get(proposalId);
+                  return step ? presentProposal(asAssistantProposal(step)).summary : null;
+                }}
+                wouldFail={wouldFail}
+              />
+            )}
+          </PreviewLoadState>
+        )}
       </div>
       <div className="dk-dc2-sim">
         <span className="dk-dc2-simh">

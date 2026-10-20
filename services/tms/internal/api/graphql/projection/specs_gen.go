@@ -545,6 +545,8 @@ var PayProfileComponentSpec TypeSpec
 
 var PayrollExportSpec TypeSpec
 
+var PendingDecisionHoldSpec TypeSpec
+
 var PerformanceReviewSpec TypeSpec
 
 var PerformanceReviewTemplateSpec TypeSpec
@@ -21193,6 +21195,25 @@ func init() {
 			{
 				Name:        "version",
 				FieldMapKey: "version",
+			},
+		},
+	}
+
+	PendingDecisionHoldSpec = TypeSpec{
+		TypeName: "PendingDecisionHold",
+		FieldMap: aiauditcol.AIAuditEventFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "reason",
+				FieldMapKey: "reason",
+			},
+			{
+				Name:        "agentName",
+				FieldMapKey: "agentName",
 			},
 		},
 	}

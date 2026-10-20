@@ -1,4 +1,5 @@
 import type { DecisionFocus } from "@/stores/assistant-store";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import type {
   AssistantArtifact,
   AssistantPlan,
@@ -315,14 +316,22 @@ export type HoldSwitch =
   | { scope: "agent"; to: string; agentName: string };
 
 export function holdSwitch(entry: ApprovalEntry): HoldSwitch | null {
-  if (entry.hold === null) {
+  return holdSwitchOf(entry.hold, proposerOf(entry));
+}
+
+/** The switch a hold names, for a proposal or plan raised by the given agent. */
+export function holdSwitchOf(
+  hold: ProposalHold | null | undefined,
+  proposer: { agentId?: string | null; agentName?: string | null } | undefined,
+): HoldSwitch | null {
+  if (!hold) {
     return null;
   }
-  if (entry.hold.reason === "OrganizationPaused") {
+  if (hold.reason === "OrganizationPaused") {
     return { scope: "organization", to: "/admin/agent-control" };
   }
 
-  const agentId = proposerOf(entry)?.agentId ?? "";
+  const agentId = proposer?.agentId ?? "";
   const params = new URLSearchParams({ tab: "agents" });
   if (agentId !== "") {
     params.set("openAgent", agentId);
@@ -331,8 +340,24 @@ export function holdSwitch(entry: ApprovalEntry): HoldSwitch | null {
   return {
     scope: "agent",
     to: `/admin/agent-control?${params.toString()}`,
-    agentName: entry.hold.agentName || proposerOf(entry)?.agentName || "",
+    agentName: hold.agentName || proposer?.agentName || "",
   };
+}
+
+/** Why a held change can't be decided, in a few words: the switch that is on. */
+export function holdReasonText(held: HoldSwitch, t: TranslateFn): string {
+  if (held.scope === "organization") {
+    return t("Agents are paused for the organization");
+  }
+
+  return held.agentName !== ""
+    ? t("{0} is in shadow", held.agentName)
+    : t("This agent is in shadow");
+}
+
+/** What turns the switch off, as the label of the link to it. */
+export function holdActionText(held: HoldSwitch, t: TranslateFn): string {
+  return held.scope === "organization" ? t("Resume agents") : t("Turn off shadow");
 }
 
 function proposerOf(

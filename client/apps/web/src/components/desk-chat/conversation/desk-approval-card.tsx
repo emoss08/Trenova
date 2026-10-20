@@ -1,5 +1,7 @@
 import { decideBatch } from "@/components/assistant/approval-actions";
 import {
+  holdActionText,
+  holdReasonText,
   holdSwitch,
   pendingEdits,
   type ApprovalEntry,
@@ -420,12 +422,7 @@ function HeldCard({ entry, onReview, onDefer }: Pick<CardProps, "entry" | "onRev
     return null;
   }
   const canTurnOff = held.scope === "organization" ? canResume : canEditAgent;
-  const why =
-    held.scope === "organization"
-      ? t("Agents are paused for the organization")
-      : held.agentName !== ""
-        ? t("{0} is in shadow", held.agentName)
-        : t("This agent is in shadow");
+  const why = holdReasonText(held, t);
 
   return (
     <div className="dk-dcx dk-ec-held" role="group" aria-label={t("Held, not yet decidable")}>
@@ -460,7 +457,7 @@ function HeldCard({ entry, onReview, onDefer }: Pick<CardProps, "entry" | "onRev
           data-slot="button"
           className={cn(buttonVariants({ size: "sm" }), approveButton)}
         >
-          {held.scope === "organization" ? t("Resume agents") : t("Turn off shadow")}
+          {holdActionText(held, t)}
         </Link>
       )}
     </div>
