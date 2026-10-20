@@ -83,17 +83,19 @@ type GraphQLReader interface {
 }
 
 type GraphQLReadRequest struct {
-	Actor     *permissionports.RequestActor
-	Operation string          // a generated binding's operation name, never query text
-	Variables map[string]any
-	Ceiling   permission.FieldSensitivity // the agent's data-access ceiling
+	Actor             *permissionports.RequestActor
+	Operation         string                      // a generated binding's operation name, never query text
+	Variables         map[string]any
+	DataAccessCeiling permission.FieldSensitivity // the agent's data-access ceiling
+	RequestID         string                      // the run's, so logs join
 }
 
 type GraphQLReadResult struct {
-	Data     []byte   // the operation's `data`, sonic-encoded
-	Errors   []GraphQLReadError // path, message, extensions.code
-	Withheld []string // field paths nulled by @protected or the ceiling
-	Cost     int      // the complexity the budget charged
+	Data       map[string]any     // the operation's `data`, decoded; a tool reads Data[rootField]
+	Errors     []GraphQLReadError // path, message, extensions.code
+	Withheld   []string           // field paths withheld by @protected or the ceiling
+	Cost       int                // the complexity the budget charged
+	RetryAfter time.Duration      // set when the budget refused the read
 }
 ```
 
@@ -104,10 +106,10 @@ type GraphQLReadResult struct {
   in the generated binding table, so the safelist holds in every environment. This is stricter
   than HTTP outside production, which also accepts raw query text.
 - **Executor.** It builds a gqlgen `executor.Executor` over the read executor described
-  below, wrapped in the same `newCostLimitedSchema`. It adds the same extensions, in the same
+  below, wrapped in the same `gqlext.NewCostLimitedSchema`. It adds the same extensions, in the same
   order: depth limit, `FixedComplexityLimit`, `CostBudgetExtension`, the edition extensions,
   `ReadOnlyExtension`, `FieldGuardExtension` and `ObservabilityExtension`. `NewServer` and the
-  reader take that list from one function (`serverExtensions`), so a new extension reaches both.
+  reader take that list from one function (`gqlext.Extensions`), so a new extension reaches both.
 - **No HTTP.** It runs `CreateOperationContext` and `DispatchOperation` directly. There is no
   request body, so the body-size limit does not apply; the variables are bounded by the tool's
   own clamps instead (`limit`, list lengths, string lengths).
@@ -145,16 +147,17 @@ the bound operations reach:
   resolver types of the packages the bound root fields live in. Each shard checks only the
   methods it calls, so a partial composite satisfies it.
 - **Services.** The **services are only the ones those resolver packages name**. The generator
-  writes `agentread.Services` (an `fx.In` struct) from the same per-package `Deps` analysis
+  writes `agentread.ResolverParams` (an `fx.In` struct) from the same per-package `Deps` analysis
   `task gqlgen` already does, so the worker graph takes, say, the customer and location services,
   and not the shipment import assistant.
-- **Startup check.** Instead of the whole-schema check, `Registry.ValidateOperations` walks each
-  bound operation's selection against the registry. A selected field with no executor, or an
+- **Startup check.** Instead of the whole-schema check, `gqlexec.NewSchema` runs the registry's
+  `validateOperations` whenever `SchemaConfig.Operations` is set, walking each bound operation's
+  selection against the registry, through every possible type of an interface or union. A selected field with no executor, or an
   object with no resolver, panics at startup with the list, exactly as `NewExecutableSchema`
   panics for the whole schema.
 
 The executor takes the same extensions as `NewServer`, from one function both call
-(`serverExtensions`), so a new extension reaches both.
+(`gqlext.Extensions`), so a new extension reaches both.
 
 **Rejected: routing read tools to a queue the API polls.** `heavyTools` already moves three tools
 to another queue, so it fits the loop. But a code-mode script's reads run inside one activity, and

@@ -83,7 +83,7 @@ func TestReader_PagesAndFiltersARealConnectionUnderRowLevelSecurity(t *testing.T
 		BusinessUnitID: mine.actor.BusinessUnitID,
 		UserID:         mine.actor.UserID,
 	})
-	read := func(input map[string]any) map[string]any {
+	read := func(t *testing.T, input map[string]any) map[string]any {
 		t.Helper()
 		result, err := agentreadtest.Read(ctx, reader, mine.actor, manufacturerTable,
 			map[string]any{"includeTotalCount": false, "input": input}, permission.SensitivityInternal)
@@ -93,10 +93,10 @@ func TestReader_PagesAndFiltersARealConnectionUnderRowLevelSecurity(t *testing.T
 
 	t.Run("two pages cover the tenant's active rows once and nothing of another's", func(t *testing.T) {
 		active := []any{map[string]any{"field": "status", "operator": "in", "value": []any{"Active"}}}
-		first := read(map[string]any{"first": 3, "fieldFilters": active})
+		first := read(t, map[string]any{"first": 3, "fieldFilters": active})
 		info := first["pageInfo"].(map[string]any)
 		require.Equal(t, true, info["hasNextPage"])
-		second := read(map[string]any{"first": 3, "after": info["endCursor"], "fieldFilters": active})
+		second := read(t, map[string]any{"first": 3, "after": info["endCursor"], "fieldFilters": active})
 		assert.Equal(t, false, second["pageInfo"].(map[string]any)["hasNextPage"])
 
 		seen := append(nodeIDs(t, first), nodeIDs(t, second)...)
@@ -111,7 +111,7 @@ func TestReader_PagesAndFiltersARealConnectionUnderRowLevelSecurity(t *testing.T
 	})
 
 	t.Run("a typed status filter narrows the connection", func(t *testing.T) {
-		inactive := read(map[string]any{"first": 10, "fieldFilters": []any{
+		inactive := read(t, map[string]any{"first": 10, "fieldFilters": []any{
 			map[string]any{"field": "status", "operator": "in", "value": []any{"Inactive"}},
 		}})
 

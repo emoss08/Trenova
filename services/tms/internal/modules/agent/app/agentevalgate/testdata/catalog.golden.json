@@ -5140,7 +5140,7 @@
             "type": "integer"
           },
           "intelReviewRequired": {
-            "description": "Only records that are, or are not, intel review required.",
+            "description": "true for only the records whose intelReviewRequired is true, false for only those whose intelReviewRequired is false.",
             "type": "boolean"
           },
           "intelRiskLevel": {
@@ -5148,7 +5148,7 @@
             "type": "string"
           },
           "is1099Eligible": {
-            "description": "Only records that are, or are not, is1099 eligible.",
+            "description": "true for only the records whose is1099Eligible is true, false for only those whose is1099Eligible is false.",
             "type": "boolean"
           },
           "limit": {
@@ -5360,7 +5360,7 @@
             "type": "string"
           },
           "w9OnFile": {
-            "description": "Only records that are, or are not, w9 on file.",
+            "description": "true for only the records whose w9OnFile is true, false for only those whose w9OnFile is false.",
             "type": "boolean"
           }
         },
@@ -6765,11 +6765,11 @@
             "type": "string"
           },
           "allowConsolidation": {
-            "description": "Only records that are, or are not, allow consolidation.",
+            "description": "true for only the records whose allowConsolidation is true, false for only those whose allowConsolidation is false.",
             "type": "boolean"
           },
           "brokerVettingEnabled": {
-            "description": "Only records that are, or are not, broker vetting enabled.",
+            "description": "true for only the records whose brokerVettingEnabled is true, false for only those whose brokerVettingEnabled is false.",
             "type": "boolean"
           },
           "city": {
@@ -6809,7 +6809,7 @@
             "type": "string"
           },
           "exclusiveConsolidation": {
-            "description": "Only records that are, or are not, exclusive consolidation.",
+            "description": "true for only the records whose exclusiveConsolidation is true, false for only those whose exclusiveConsolidation is false.",
             "type": "boolean"
           },
           "externalId": {
@@ -6817,7 +6817,7 @@
             "type": "string"
           },
           "isGeocoded": {
-            "description": "Only records that are, or are not, is geocoded.",
+            "description": "true for only the records whose isGeocoded is true, false for only those whose isGeocoded is false.",
             "type": "boolean"
           },
           "latitudeMax": {
@@ -9115,7 +9115,7 @@
             "type": "array"
           },
           "isSystem": {
-            "description": "Only records that are, or are not, is system. true for the types Trenova defines and an operator cannot remove.",
+            "description": "true for only the records whose isSystem is true, false for only those whose isSystem is false. true for the types Trenova defines and an operator cannot remove.",
             "type": "boolean"
           },
           "limit": {
@@ -24788,7 +24788,7 @@
             "type": "array"
           },
           "isGeocoded": {
-            "description": "Only records that are, or are not, is geocoded.",
+            "description": "true for only the records whose isGeocoded is true, false for only those whose isGeocoded is false.",
             "type": "boolean"
           },
           "latitudeMax": {
@@ -24934,7 +24934,7 @@
             "type": "string"
           },
           "allowsOvernight": {
-            "description": "Only records that are, or are not, allows overnight.",
+            "description": "true for only the records whose allowsOvernight is true, false for only those whose allowsOvernight is false.",
             "type": "boolean"
           },
           "color": {
@@ -24978,11 +24978,11 @@
             "type": "array"
           },
           "hasRestroom": {
-            "description": "Only records that are, or are not, has restroom.",
+            "description": "true for only the records whose hasRestroom is true, false for only those whose hasRestroom is false.",
             "type": "boolean"
           },
           "hasSecureParking": {
-            "description": "Only records that are, or are not, has secure parking.",
+            "description": "true for only the records whose hasSecureParking is true, false for only those whose hasSecureParking is false.",
             "type": "boolean"
           },
           "limit": {
@@ -25001,7 +25001,7 @@
             "type": "string"
           },
           "requiresAppointment": {
-            "description": "Only records that are, or are not, requires appointment.",
+            "description": "true for only the records whose requiresAppointment is true, false for only those whose requiresAppointment is false.",
             "type": "boolean"
           },
           "sortBy": {
@@ -25729,7 +25729,7 @@
             "type": "string"
           },
           "fragile": {
-            "description": "Only records that are, or are not, fragile.",
+            "description": "true for only the records whose fragile is true, false for only those whose fragile is false.",
             "type": "boolean"
           },
           "freightClass": {
@@ -25853,7 +25853,7 @@
             "x-enumOf": "list.sortDirection"
           },
           "stackable": {
-            "description": "Only records that are, or are not, stackable.",
+            "description": "true for only the records whose stackable is true, false for only those whose stackable is false.",
             "type": "boolean"
           },
           "status": {
@@ -26154,11 +26154,11 @@
             "type": "string"
           },
           "inhalationHazard": {
-            "description": "Only records that are, or are not, inhalation hazard.",
+            "description": "true for only the records whose inhalationHazard is true, false for only those whose inhalationHazard is false.",
             "type": "boolean"
           },
           "isReportableQuantity": {
-            "description": "Only records that are, or are not, is reportable quantity.",
+            "description": "true for only the records whose isReportableQuantity is true, false for only those whose isReportableQuantity is false.",
             "type": "boolean"
           },
           "labelCodes": {
@@ -26173,7 +26173,7 @@
             "x-clamp": true
           },
           "marinePollutant": {
-            "description": "Only records that are, or are not, marine pollutant.",
+            "description": "true for only the records whose marinePollutant is true, false for only those whose marinePollutant is false.",
             "type": "boolean"
           },
           "name": {
@@ -26195,7 +26195,7 @@
             "type": "array"
           },
           "placardRequired": {
-            "description": "Only records that are, or are not, placard required.",
+            "description": "true for only the records whose placardRequired is true, false for only those whose placardRequired is false.",
             "type": "boolean"
           },
           "properShippingName": {
@@ -26321,7 +26321,7 @@
         "additionalProperties": false,
         "properties": {
           "active": {
-            "description": "Only records that are, or are not, active. Only an active reason can be used on a new hold.",
+            "description": "true for only the records whose active is true, false for only those whose active is false. Only an active reason can be used on a new hold.",
             "type": "boolean"
           },
           "after": {
@@ -26349,15 +26349,15 @@
             "type": "string"
           },
           "defaultBlocksBilling": {
-            "description": "Only records that are, or are not, default blocks billing.",
+            "description": "true for only the records whose defaultBlocksBilling is true, false for only those whose defaultBlocksBilling is false.",
             "type": "boolean"
           },
           "defaultBlocksDelivery": {
-            "description": "Only records that are, or are not, default blocks delivery.",
+            "description": "true for only the records whose defaultBlocksDelivery is true, false for only those whose defaultBlocksDelivery is false.",
             "type": "boolean"
           },
           "defaultBlocksDispatch": {
-            "description": "Only records that are, or are not, default blocks dispatch.",
+            "description": "true for only the records whose defaultBlocksDispatch is true, false for only those whose defaultBlocksDispatch is false.",
             "type": "boolean"
           },
           "defaultSeverity": {
@@ -26375,7 +26375,7 @@
             "type": "array"
           },
           "defaultVisibleToCustomer": {
-            "description": "Only records that are, or are not, default visible to customer.",
+            "description": "true for only the records whose defaultVisibleToCustomer is true, false for only those whose defaultVisibleToCustomer is false.",
             "type": "boolean"
           },
           "description": {

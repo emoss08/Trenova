@@ -50,7 +50,6 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 |---|---|---|---|---|---|---|
 | `carrier_get` | op | carrier | DeskCarrierCard | n/a | id | Same CarrierRepository.GetByID via CarrierService.Get. |
 | `carrier_get_intelligence_event` | op | carrierIntelEvent | CarrierIntelEvent | n/a | id | Tool repo.GetByIDs; resolver CarrierIntelService. No Desk op. |
-| `carrier_list` | op | carriers | CarrierTable | cursor | DataTable fieldFilters only | repo.List (offset) vs repo.ListConnection (cursor), same querybuilder filter config. |
 | `carrier_list_capacity_postings` | field-no-op | carrierCapacityPostings | propose DeskCarrierCapacityPostings | cursor | DataTable + typed carrierId, openOnly | Root field reads the same CarrierCapacityPostingRepository; no persisted op selects it. |
 | `carrier_list_intelligence_events` | op | carrierIntelEvents | CarrierIntelEventTable (alt CarrierIntelEventInbox) | cursor | DataTable + bespoke CarrierIntelEventFilterInput (statuses, severities, categories, carrierId, openOnly) | Same CarrierIntelService.ListEvents. fromDate/toDate (DetectedFrom/To) not typed: send as fieldFilters on detectedAt. Picked Table (no Desk op); Inbox is the triage view. |
 | `carrier_list_invoice_matches` | op | carrierInvoiceMatches | CarrierInvoiceMatches | limit/offset | typed args status, carrierId | Same CarrierSettlementService.ListInvoiceMatches. |
@@ -61,7 +60,6 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 |---|---|---|---|---|---|---|
 | `customer_get` | op | customer | DeskCustomerCard | n/a | id | Same CustomerRepository.GetByID via CustomerService.Get. |
 | `customer_get_update_preferences` | field-no-op | customer | propose DeskCustomerUpdatePreferences | n/a | id | customer exposes statusUpdatePreference/statusUpdateRecipients, but no persisted op selects them (DeskCustomerCard does not); fallback recipients need emailProfile.toRecipients. |
-| `customer_list` | op | customers | CustomerTable | cursor | DataTable fieldFilters only | repo.List vs ListConnection, same filter config. |
 
 ## detention
 
@@ -83,7 +81,6 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 |---|---|---|---|---|---|---|
 | `document_get_summary` | none | - | - | - | - | Document content and extraction summary (DocumentContentService) have no Query root; documents are read through REST. |
 | `document_list` | none | - | - | - | - | Semantic/vector retrieval (RetrievalSearcher.SearchDocuments); no GraphQL document search. |
-| `document_list_types` | op | documentTypes | DocumentTypeTable | cursor | DataTable fieldFilters only | Same DocumentTypeRepository list (offset vs cursor). |
 
 ## edi
 
@@ -108,11 +105,9 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 |---|---|---|---|---|---|---|
 | `equipment_get_tractor` | op | tractor | DeskTractorCard | n/a | id | Same TractorRepository.GetByID. |
 | `equipment_get_trailer` | op | trailer | DeskTrailerCard | n/a | id | Same TrailerRepository.GetByID. |
-| `equipment_list_manufacturers` | op | equipmentManufacturers | EquipmentManufacturerTable | cursor | DataTable fieldFilters only | Same repository. |
 | `equipment_list_positions` | partial | vehiclePositions (+ vehiclePosition) | VehiclePositions (+ DeskTractorPosition per tractor) | unpaged list | maxAgeSeconds only | Same TelematicsService.ListVehiclePositions (telematics live read). maxAgeMinutes -> maxAgeSeconds; tractorIds filter missing (vehiclePosition(tractorId) is one at a time). |
 | `equipment_list_tractors` | op | tractors | TractorTable | cursor | DataTable + typed status, include* flags | Same repository list. |
 | `equipment_list_trailers` | op | trailers | TrailerTable | cursor | DataTable + typed status | Same repository list. |
-| `equipment_list_types` | op | equipmentTypes | EquipmentTypeTable | cursor | DataTable + typed classes | Same repository list. |
 
 ## exception
 
@@ -219,20 +214,11 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 | tool | class | root field | operation (or proposed new op name) | paging | filter shape | notes (missing params / reason) |
 |---|---|---|---|---|---|---|
 | `location_get` | op | location | DeskLocationCard | n/a | id | Same LocationRepository.GetByID. |
-| `location_list` | op | locations | LocationTable | cursor | DataTable fieldFilters only | Same repository list. |
-| `location_list_categories` | op | locationCategories | LocationCategoryTable | cursor | DataTable fieldFilters only | Same repository list. |
 
 ## masterdata
 
 | tool | class | root field | operation (or proposed new op name) | paging | filter shape | notes (missing params / reason) |
 |---|---|---|---|---|---|---|
-| `masterdata_list_accessorial_charges` | op | accessorialCharges | AccessorialChargeTable | cursor | DataTable fieldFilters only | Same repository list. |
-| `masterdata_list_commodities` | op | commodities | CommodityTable | cursor | DataTable fieldFilters only | Same repository list. |
-| `masterdata_list_fleet_codes` | op | fleetCodes | FleetCodeTable | cursor | DataTable fieldFilters only | Same repository list. |
-| `masterdata_list_hazardous_materials` | op | hazardousMaterials | HazardousMaterialTable | cursor | DataTable fieldFilters only | Same repository list. |
-| `masterdata_list_hold_reasons` | op | holdReasons | HoldReasonTable | cursor | DataTable fieldFilters only | Same repository list. |
-| `masterdata_list_service_types` | op | serviceTypes | ServiceTypeTable | cursor | DataTable fieldFilters only | Same repository list. |
-| `masterdata_list_shipment_types` | op | shipmentTypes | ShipmentTypeTable | cursor | DataTable fieldFilters only | Same repository list. |
 
 ## order
 
@@ -346,7 +332,8 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 
 | class | tools |
 |---|---|
-| op | 119 |
+| op, not yet converted | 105 |
+| op, converted (rows removed) | 14 |
 | field-no-op | 6 |
 | partial | 30 |
 | none | 21 |
