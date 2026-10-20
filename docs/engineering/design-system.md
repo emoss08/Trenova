@@ -1031,6 +1031,17 @@ quiet text, `aria-hidden` with the button carrying `aria-keyshortcuts` (⌘/Ctrl
 approves, Esc opens the note, Alt+L decides later; Enter alone never approves), and are left
 out in the narrow panel. Decided later, the box folds into a `warning-subtle` pill above the
 composer that says how many wait and reopens it. One decision at a time, the oldest first.
+A change a switch holds (the organization's pause, or the proposing agent's shadow switch)
+still waits on the person, and the server refuses a decision on it, so the box asks it
+without Approve: a muted pause row naming the switch, with Review, Not now and, for someone
+who may turn the switch off, a link to it ("Resume agents" or "Turn off shadow"). A change
+that can be decided is shown before a held one, and ⌘↵ does nothing on a held row. A held
+change is never dropped from the box: with the pause on by default, dropping it once left a
+reply saying "it waits on your approval" with nothing to approve anywhere. Decisions lists
+and counts held changes the same way: each row says "held", and the bar names the switch and
+links to it in place of Decline and Approve, with their keys off. AI Control's activity lists
+show them too: the status reads "Held", the row's menu offers no decision, and the proposal's
+sheet names the switch where Approve and Reject were.
 
 **The transcript keeps a quiet card per decision.** Each proposal or plan is one card in
 the conversation — the outcome's mark, "Proposed: …" with the record it is about, and the

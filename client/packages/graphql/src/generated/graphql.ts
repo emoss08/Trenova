@@ -4439,6 +4439,7 @@ export type FuelCardProvider =
   | 'Comdata'
   | 'EFS'
   | 'Other'
+  | 'Ramp'
   | 'WEX';
 
 /** Active and Suspended move between each other; Cancelled is terminal. */
@@ -5949,6 +5950,13 @@ export type PayrollExportStatus =
   | 'Draft'
   | 'Generated'
   | 'Voided';
+
+/** Which switch keeps a waiting decision from being taken. */
+export type PendingDecisionHoldReason =
+  /** The agent that raised it is in shadow. */
+  | 'AgentShadow'
+  /** Every agent in the organization is paused on the AI Control overview. */
+  | 'OrganizationPaused';
 
 export type PendingDecisionsInput = {
   after?: string | null | undefined;
@@ -10195,7 +10203,7 @@ export type AiTrainingExportHistoryQueryVariables = Exact<{ [key: string]: never
 
 export type AiTrainingExportHistoryQuery = { aiTrainingExportHistory: Array<{ exportId: string, examples: number, trainExamples: number, validationExamples: number, consentGrantedAt: number, exportedAt: number }> };
 
-export type PendingProposalFieldsFragment = { id: string, reviewRequired: boolean, organizationId: string, businessUnitId: string, runId: string, toolName: string, toolParams: unknown, confidence: number, rationale: string, autonomyTier: AgentAutonomyTier, status: AgentProposalStatus, planId: string | null, planStep: number, simulatedAt: number | null, simulation: unknown, modifications: unknown, version: number, createdAt: number, updatedAt: number, parameterFields: Array<{ name: string, label: string, description: string, kind: AgentProposalFieldKind, required: boolean, options: Array<string>, minimum: number | null, maximum: number | null, maxLength: number | null, readOnly: boolean, resource: string | null, choices: Array<{ id: string, label: string }> | null }>, evidence: Array<{ type: string, id: string, note: string }>, run: { id: string, agentDefinitionId: string, trigger: AgentRunTrigger, subjectType: AgentSubjectType, subjectId: string, summary: string, definition: { id: string, name: string, template: AgentTemplate | null, icon: string, accent: string } | null } | null } & { ' $fragmentName'?: 'PendingProposalFieldsFragment' };
+export type PendingProposalFieldsFragment = { id: string, reviewRequired: boolean, organizationId: string, businessUnitId: string, runId: string, toolName: string, toolParams: unknown, confidence: number, rationale: string, autonomyTier: AgentAutonomyTier, status: AgentProposalStatus, planId: string | null, planStep: number, simulatedAt: number | null, simulation: unknown, modifications: unknown, version: number, createdAt: number, updatedAt: number, parameterFields: Array<{ name: string, label: string, description: string, kind: AgentProposalFieldKind, required: boolean, options: Array<string>, minimum: number | null, maximum: number | null, maxLength: number | null, readOnly: boolean, resource: string | null, choices: Array<{ id: string, label: string }> | null }>, hold: { reason: PendingDecisionHoldReason, agentName: string } | null, evidence: Array<{ type: string, id: string, note: string }>, run: { id: string, agentDefinitionId: string, trigger: AgentRunTrigger, subjectType: AgentSubjectType, subjectId: string, summary: string, definition: { id: string, name: string, template: AgentTemplate | null, icon: string, accent: string } | null } | null } & { ' $fragmentName'?: 'PendingProposalFieldsFragment' };
 
 export type PendingPlanFieldsFragment = { id: string, organizationId: string, businessUnitId: string, runId: string, title: string, summary: string, stepCount: number, completedSteps: number, failedStep: number | null, failureError: string, decidedByUserId: string | null, decidedAt: number | null, expiresAt: number | null, version: number, createdAt: number, updatedAt: number, planStatus: AgentPlanStatus, run: { id: string, agentDefinitionId: string, trigger: AgentRunTrigger, subjectType: AgentSubjectType, subjectId: string, summary: string, definition: { id: string, name: string, template: AgentTemplate | null, icon: string, accent: string } | null } | null } & { ' $fragmentName'?: 'PendingPlanFieldsFragment' };
 
@@ -10205,7 +10213,7 @@ export type PendingDecisionsQueryVariables = Exact<{
 }>;
 
 
-export type PendingDecisionsQuery = { pendingDecisions: { totalCount?: number | null, edges: Array<{ cursor: string, node:
+export type PendingDecisionsQuery = { pendingDecisions: { totalCount?: number | null, edges: Array<{ cursor: string, hold: { reason: PendingDecisionHoldReason, agentName: string } | null, node:
         | (
           { __typename: 'AgentPlan' }
           & { ' $fragmentRefs'?: { 'PendingPlanFieldsFragment': PendingPlanFieldsFragment } }
@@ -10219,7 +10227,7 @@ export type PendingDecisionsQuery = { pendingDecisions: { totalCount?: number | 
 export type PendingDecisionSummaryQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type PendingDecisionSummaryQuery = { pendingDecisionSummary: { total: number, oldestAt: number | null, byAgent: Array<{ agentDefinitionId: string, agentName: string, count: number }>, byTool: Array<{ toolName: string, count: number }> } };
+export type PendingDecisionSummaryQuery = { pendingDecisionSummary: { total: number, held: number, oldestAt: number | null, byAgent: Array<{ agentDefinitionId: string, agentName: string, count: number }>, byTool: Array<{ toolName: string, count: number }> } };
 
 export type PlanStepsQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -10541,7 +10549,7 @@ export type AgentReflectionsQueryVariables = Exact<{
 
 export type AgentReflectionsQuery = { agentReflections: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AgentReflectionRowFieldsFragment': AgentReflectionRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
-export type AgentPlanTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, runId: string, title: string, summary: string, status: AgentPlanStatus, stepCount: number, completedSteps: number, failedStep: number | null, failureError: string, decidedByUserId: string | null, decidedAt: number | null, expiresAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AgentPlanTableRowFieldsFragment' };
+export type AgentPlanTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, runId: string, title: string, summary: string, status: AgentPlanStatus, stepCount: number, completedSteps: number, failedStep: number | null, failureError: string, decidedByUserId: string | null, decidedAt: number | null, expiresAt: number | null, version: number, createdAt: number, updatedAt: number, hold: { reason: PendingDecisionHoldReason, agentName: string } | null } & { ' $fragmentName'?: 'AgentPlanTableRowFieldsFragment' };
 
 export type AgentPlanTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -10677,7 +10685,7 @@ export type RegenerateMyAgentProfileMutation = { regenerateMyAgentProfile: boole
 
 export type AgentEvidenceRefFieldsFragment = { type: string, id: string, note: string } & { ' $fragmentName'?: 'AgentEvidenceRefFieldsFragment' };
 
-export type AgentProposalTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, runId: string, toolName: string, toolParams: unknown, confidence: number, rationale: string, autonomyTier: AgentAutonomyTier, status: AgentProposalStatus, modifications: unknown, tainted: boolean, egressClass: AgentEgressClass | null, heldBy: Array<string>, reviewRequired: boolean, traceId: string, traceUrl: string | null, version: number, createdAt: number, updatedAt: number, parameterFields: Array<{ name: string, label: string, description: string, kind: AgentProposalFieldKind, required: boolean, options: Array<string>, minimum: number | null, maximum: number | null, maxLength: number | null, readOnly: boolean, resource: string | null, choices: Array<{ id: string, label: string }> | null }> } & { ' $fragmentName'?: 'AgentProposalTableRowFieldsFragment' };
+export type AgentProposalTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, runId: string, toolName: string, toolParams: unknown, confidence: number, rationale: string, autonomyTier: AgentAutonomyTier, status: AgentProposalStatus, modifications: unknown, tainted: boolean, egressClass: AgentEgressClass | null, heldBy: Array<string>, reviewRequired: boolean, traceId: string, traceUrl: string | null, version: number, createdAt: number, updatedAt: number, parameterFields: Array<{ name: string, label: string, description: string, kind: AgentProposalFieldKind, required: boolean, options: Array<string>, minimum: number | null, maximum: number | null, maxLength: number | null, readOnly: boolean, resource: string | null, choices: Array<{ id: string, label: string }> | null }>, hold: { reason: PendingDecisionHoldReason, agentName: string } | null } & { ' $fragmentName'?: 'AgentProposalTableRowFieldsFragment' };
 
 export type AgentProposalDetailFieldsFragment = (
   { evidence: Array<{ ' $fragmentRefs'?: { 'AgentEvidenceRefFieldsFragment': AgentEvidenceRefFieldsFragment } }> }
@@ -14241,6 +14249,18 @@ export type FormulaTemplateTableQueryVariables = Exact<{
 
 export type FormulaTemplateTableQuery = { formulaTemplates: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'FormulaTemplateTableRowFieldsFragment': FormulaTemplateTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
+export type DeskFuelCardPurchaseFieldsFragment = { id: string, purchasedAt: number, vendor: string | null, vendorCity: string | null, fuelType: IftaFuelType, gallons: string, totalAmount: string, currencyCode: string, taxPaid: boolean, jurisdiction: { id: string, code: string } } & { ' $fragmentName'?: 'DeskFuelCardPurchaseFieldsFragment' };
+
+export type DeskFuelCardCardQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeskFuelCardCardQuery = { fuelCardDeskCard: { monthStart: number, year: number, quarter: number, purchaseCount: number, lastPurchasedAt: number | null, heldCount: number, card: (
+      { assignedTractor: { id: string, code: string, make: string, model: string } | null }
+      & { ' $fragmentRefs'?: { 'FuelCardFieldsFragment': FuelCardFieldsFragment } }
+    ), month: Array<{ currencyCode: string, purchaseCount: number, gallons: string, untaxedGallons: string, totalAmount: string }>, quarterByJurisdiction: Array<{ jurisdictionId: string, gallons: string, purchaseCount: number, jurisdiction: { id: string, code: string, name: string, countryCode: string } }>, recent: Array<{ ' $fragmentRefs'?: { 'DeskFuelCardPurchaseFieldsFragment': DeskFuelCardPurchaseFieldsFragment } }>, held: Array<{ id: string, rowNumber: number, status: FuelPurchaseImportRowStatus, error: string | null, importBatchId: string, resolutionNotes: Array<string>, parsed: { purchasedAt: number | null, vendor: string | null, vendorCity: string | null, jurisdictionCode: string | null, fuelType: IftaFuelType | null, gallons: string | null, totalAmount: string | null, currencyCode: string | null, tractorCode: string | null } | null }>, heldSpend: Array<{ currencyCode: string, gallons: string, totalAmount: string }>, heldBatches: Array<{ id: string, version: number, provider: FuelCardProvider, origin: FuelPurchaseImportOrigin }>, feed: { lastPolledAt: number | null, lastSuccessAt: number | null, failureCount: number, lastError: string | null } | null, successors: Array<{ ' $fragmentRefs'?: { 'FuelCardFieldsFragment': FuelCardFieldsFragment } }> } };
+
 export type FuelCardFieldsFragment = { id: string, businessUnitId: string, organizationId: string, provider: FuelCardProvider, lastFour: string, label: string, externalCardId: string | null, assignedWorkerId: string | null, assignedTractorId: string | null, status: FuelCardStatus, expiresAt: number | null, cancelledAt: number | null, cancelReason: string | null, notes: string | null, discoveredAt: number | null, version: number, createdAt: number, updatedAt: number, assignedWorker: { id: string, wholeName: string, firstName: string, lastName: string } | null, assignedTractor: { id: string, code: string } | null } & { ' $fragmentName'?: 'FuelCardFieldsFragment' };
 
 export type FuelCardTableQueryVariables = Exact<{
@@ -14367,6 +14387,16 @@ export type FuelPurchaseImportTableQueryVariables = Exact<{
 
 
 export type FuelPurchaseImportTableQuery = { fuelPurchaseImports: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'FuelPurchaseImportBatchFieldsFragment': FuelPurchaseImportBatchFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
+export type DeskFuelPurchaseCardQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeskFuelPurchaseCardQuery = { fuelPurchaseDeskCard: { purchase: (
+      { tractor: { id: string, code: string, make: string, model: string } | null, fuelCard: { ' $fragmentRefs'?: { 'FuelCardFieldsFragment': FuelCardFieldsFragment } } | null }
+      & { ' $fragmentRefs'?: { 'FuelPurchaseFieldsFragment': FuelPurchaseFieldsFragment } }
+    ), ifta: { year: number, quarter: number, countsForIfta: boolean, taxPaidGallons: string, ratePerGallon: string | null, taxPaidCredit: string | null, tractorGallons: string, tractorPurchaseCount: number }, previousFill: { id: string, purchasedAt: number, vendor: string | null, vendorCity: string | null, odometer: number | null } | null, provenance: { rowNumber: number, resolutionNotes: Array<string>, batch: { id: string, provider: FuelCardProvider, origin: FuelPurchaseImportOrigin, fileName: string | null, rowCount: number, createdAt: number } } | null, createdBy: { id: string, name: string } | null } };
 
 export type FuelPurchaseFieldsFragment = { id: string, businessUnitId: string, organizationId: string, tractorId: string, workerId: string | null, jurisdictionId: string, fuelCardId: string | null, cardLastFour: string | null, purchasedAt: number, vendor: string | null, vendorCity: string | null, fuelType: IftaFuelType, quantity: string, quantityUnit: FuelQuantityUnit, gallons: string, unitPrice: string | null, totalAmount: string, currencyCode: string, odometer: number | null, transactionReference: string | null, source: FuelPurchaseSource, importBatchId: string | null, taxPaid: boolean, notes: string | null, createdById: string | null, version: number, createdAt: number, updatedAt: number, tractor: { id: string, code: string } | null, worker: { id: string, wholeName: string, firstName: string, lastName: string } | null, jurisdiction: { id: string, countryCode: string, code: string, name: string }, fuelCard: { id: string, provider: FuelCardProvider, lastFour: string, label: string } | null } & { ' $fragmentName'?: 'FuelPurchaseFieldsFragment' };
 
@@ -18944,8 +18974,10 @@ export { FiscalPeriodFieldsFragmentDoc, FiscalYearTableRowFieldsFragmentDoc, Fis
 export { FleetCodeTableRowFieldsFragmentDoc, FleetCodeTableDocument } from "./documents/fleet-code/table";
 export { FleetSafetyDocument, WorkerSafetyViolationsDocument, RecordSafetyViolationDocument, UpdateSafetyViolationDocument, DeleteSafetyViolationDocument } from "./documents/fleet-safety/operations";
 export { FormulaTemplateTableRowFieldsFragmentDoc, FormulaTemplateTableDocument } from "./documents/formula-template/table";
+export { DeskFuelCardPurchaseFieldsFragmentDoc, DeskFuelCardCardDocument } from "./documents/fuel-card/desk";
 export { FuelCardFieldsFragmentDoc, FuelCardTableDocument, FuelCardDocument, CreateFuelCardDocument, UpdateFuelCardDocument, CancelFuelCardDocument, AssignFuelCardDocument, SyncFuelCardFeedDocument } from "./documents/fuel-card/operations";
 export { FuelPurchaseImportBatchFieldsFragmentDoc, FuelPurchaseImportRowFieldsFragmentDoc, FuelPurchaseImportDocument, FuelPurchaseImportRowsDocument, FuelPurchaseImportTemplateDocument, CreateFuelPurchaseImportDocument, StageFuelPurchaseImportDocument, CommitFuelPurchaseImportDocument, DiscardFuelPurchaseImportDocument, ResolveFuelPurchaseImportRowsDocument, FuelPurchaseImportTableDocument } from "./documents/fuel-purchase-import/operations";
+export { DeskFuelPurchaseCardDocument } from "./documents/fuel-purchase/desk";
 export { FuelPurchaseFieldsFragmentDoc, FuelPurchaseTableDocument, FuelPurchaseDocument, CreateFuelPurchaseDocument, UpdateFuelPurchaseDocument, DeleteFuelPurchaseDocument } from "./documents/fuel-purchase/operations";
 export { FuelIndexFieldsFragmentDoc, FuelSurchargeProgramFieldsFragmentDoc, FuelIndexTableDocument, FuelSurchargeProgramTableDocument, FuelSurchargeProgramDetailDocument, FuelDashboardDocument, FuelIndexPriceHistoryDocument, FuelProgramCurrentRatesDocument, GenerateFuelSurchargeTableDocument, EiaSeriesOptionsDocument, CreateFuelIndexDocument, UpdateFuelIndexDocument, DeleteFuelIndexDocument, AddFuelIndexPriceDocument, UpdateFuelIndexPriceDocument, DeleteFuelIndexPriceDocument, CreateFuelSurchargeProgramDocument, UpdateFuelSurchargeProgramDocument, DeleteFuelSurchargeProgramDocument } from "./documents/fuel-surcharge/operations";
 export { HazardousMaterialTableRowFieldsFragmentDoc, HazardousMaterialTableDocument } from "./documents/hazardous-material/table";

@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
+
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
@@ -72,6 +74,7 @@ type Conversation struct {
 	turns    []*TurnRecord
 	formula  *formulaState
 	palette  bool
+	CodeMode codemode.Override
 }
 
 func (s *Session) Open(ctx context.Context, req OpenConversation) (*Conversation, error) {
@@ -162,6 +165,7 @@ func (c *Conversation) Say(ctx context.Context, u *Utterance) ([]*TurnRecord, er
 				DirectedAgentID:       u.Directed,
 				AttachmentDocumentIDs: attached,
 				Awaited:               true,
+				CodeMode:              c.CodeMode,
 			},
 		}
 		var runID string

@@ -36,6 +36,10 @@ fragment AgentProposalTableRowFields on AgentProposal {
   tainted
   egressClass
   heldBy
+  hold {
+    reason
+    agentName
+  }
   reviewRequired
   traceId
   traceUrl

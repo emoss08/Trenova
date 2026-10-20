@@ -1,7 +1,13 @@
 import type { DecisionFocus } from "@/stores/assistant-store";
-import type { AssistantArtifact, AssistantPlan, AssistantProposal } from "@/types/assistant";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
+import type {
+  AssistantArtifact,
+  AssistantPlan,
+  AssistantProposal,
+  ProposalHold,
+} from "@/types/assistant";
 import { classifyPlan } from "./plan-state";
-import { classifyProposal } from "./proposal-state";
+import { classifyProposal, type ProposalPresentation } from "./proposal-state";
 
 /** The most proposals one batch decision takes; the server refuses more. */
 export const MAX_BATCH_PROPOSALS = 50;
@@ -17,6 +23,11 @@ export const MAX_BATCH_PROPOSALS = 50;
  *
  * `members` are the keys deferral remembers: an entry is deferred only while
  * every one of them is, so a write that joins it later opens the box again.
+ *
+ * `hold` is the switch keeping the entry from being decided: the
+ * organization's pause or the agent's own shadow switch. A held entry still
+ * waits on the person, so it is asked like any other, with the switch named
+ * in place of the approval; the server refuses a decision until it is off.
  */
 export type ApprovalEntry =
   | {
@@ -24,6 +35,7 @@ export type ApprovalEntry =
       key: string;
       createdAt: number;
       members: string[];
+      hold: ProposalHold | null;
       proposal: AssistantProposal;
     }
   | {
@@ -31,6 +43,7 @@ export type ApprovalEntry =
       key: string;
       createdAt: number;
       members: string[];
+      hold: ProposalHold | null;
       toolName: string;
       proposals: AssistantProposal[];
     }
@@ -39,6 +52,7 @@ export type ApprovalEntry =
       key: string;
       createdAt: number;
       members: string[];
+      hold: ProposalHold | null;
       plan: AssistantPlan;
       steps: AssistantProposal[];
     };
@@ -78,7 +92,14 @@ export function focusKeys(focus: DecisionFocus): string[] {
 function proposalEntry(proposal: AssistantProposal): ApprovalEntry {
   const key = proposalKey(proposal.id);
 
-  return { kind: "proposal", key, createdAt: proposal.createdAt, members: [key], proposal };
+  return {
+    kind: "proposal",
+    key,
+    createdAt: proposal.createdAt,
+    members: [key],
+    hold: proposal.hold ?? null,
+    proposal,
+  };
 }
 
 function batchEntry(toolName: string, proposals: AssistantProposal[]): ApprovalEntry {
@@ -89,6 +110,7 @@ function batchEntry(toolName: string, proposals: AssistantProposal[]): ApprovalE
     key: `batch:${proposals.map((proposal) => proposal.id).join(",")}`,
     createdAt: Math.min(...proposals.map((proposal) => proposal.createdAt)),
     members,
+    hold: proposals[0]?.hold ?? null,
     toolName,
     proposals,
   };
@@ -141,7 +163,7 @@ function requestedTogether(
 
   const byId = new Map(
     standalone
-      .filter((proposal) => pendingEdits(proposal) === null)
+      .filter((proposal) => !proposal.hold && pendingEdits(proposal) === null)
       .map((proposal) => [proposal.id, proposal]),
   );
   const requested = focus.proposalIds
@@ -160,8 +182,9 @@ function requestedTogether(
  * entry, except that writes of one tool raised by the same turn are one
  * batch, and so are proposals the agent asked the person to decide together.
  * Proposals from different turns are never merged: each was proposed on its
- * own and is decided against the preview it was shown with. Only what can be
- * decided now is listed; a held or expired write is history, not a question.
+ * own and is decided against the preview it was shown with. What waits on
+ * the person is listed, held or not; an expired or decided write is history,
+ * not a question.
  */
 export function approvalQueue(
   proposals: readonly AssistantProposal[],
@@ -179,14 +202,14 @@ export function approvalQueue(
       stepsByPlan.set(proposal.planId, steps);
       continue;
     }
-    if (classifyProposal(proposal, now) === "awaiting") {
+    if (waitsOnPerson(classifyProposal(proposal, now))) {
       standalone.push(proposal);
     }
   }
 
   const entries: ApprovalEntry[] = [];
   for (const plan of plans) {
-    if (classifyPlan(plan, now) !== "awaiting") {
+    if (!waitsOnPerson(classifyPlan(plan, now))) {
       continue;
     }
     const key = planKey(plan.id);
@@ -195,6 +218,7 @@ export function approvalQueue(
       key,
       createdAt: plan.createdAt,
       members: [key],
+      hold: plan.hold ?? null,
       plan,
       steps: (stepsByPlan.get(plan.id) ?? []).sort((a, b) => a.planStep - b.planStep),
     });
@@ -217,7 +241,9 @@ export function approvalQueue(
       entries.push(proposalEntry(proposal));
       continue;
     }
-    const group = `${proposal.runId}\u0000${proposal.toolName}`;
+    // A hold is the run's, so a run's writes are held together; the reason
+    // is in the key all the same, so a batch is never part held.
+    const group = `${proposal.runId}\u0000${proposal.toolName}\u0000${proposal.hold?.reason ?? ""}`;
     const members = byRunAndTool.get(group);
     if (members) {
       members.push(proposal);
@@ -230,6 +256,11 @@ export function approvalQueue(
   }
 
   return entries.sort((a, b) => a.createdAt - b.createdAt || a.key.localeCompare(b.key));
+}
+
+/** Whether a card in this state still waits on a person: undecided, held or not. */
+function waitsOnPerson(state: ProposalPresentation): boolean {
+  return state === "awaiting" || state === "held";
 }
 
 /** Whether the person put this entry off: every write in it is deferred. */
@@ -252,7 +283,9 @@ export function holdsFocus(entry: ApprovalEntry, focus: DecisionFocus): boolean 
 /**
  * The entry the approval box shows, and its place in the queue: the one the
  * agent asked about when there is one still waiting, otherwise the oldest
- * the person has not put off. Null when everything waiting was deferred.
+ * the person has not put off and can decide now, otherwise the oldest held
+ * one, so a pause never hides that something waits. Null when everything
+ * waiting was deferred.
  */
 export function currentEntry(
   queue: readonly ApprovalEntry[],
@@ -266,7 +299,76 @@ export function currentEntry(
     }
   }
 
-  const index = queue.findIndex((entry) => !isDeferred(entry, deferred));
+  const decidable = queue.findIndex((entry) => entry.hold === null && !isDeferred(entry, deferred));
+  const index =
+    decidable >= 0 ? decidable : queue.findIndex((entry) => !isDeferred(entry, deferred));
 
   return index >= 0 ? { entry: queue[index], index } : null;
+}
+
+/**
+ * The switch holding an entry and where it is turned off: the organization's
+ * pause on the AI Control overview, or the proposing agent's own shadow
+ * switch on its sheet. Null when nothing holds it.
+ */
+export type HoldSwitch =
+  | { scope: "organization"; to: string }
+  | { scope: "agent"; to: string; agentName: string };
+
+export function holdSwitch(entry: ApprovalEntry): HoldSwitch | null {
+  return holdSwitchOf(entry.hold, proposerOf(entry));
+}
+
+/** The switch a hold names, for a proposal or plan raised by the given agent. */
+export function holdSwitchOf(
+  hold: ProposalHold | null | undefined,
+  proposer: { agentId?: string | null; agentName?: string | null } | undefined,
+): HoldSwitch | null {
+  if (!hold) {
+    return null;
+  }
+  if (hold.reason === "OrganizationPaused") {
+    return { scope: "organization", to: "/admin/agent-control" };
+  }
+
+  const agentId = proposer?.agentId ?? "";
+  const params = new URLSearchParams({ tab: "agents" });
+  if (agentId !== "") {
+    params.set("openAgent", agentId);
+  }
+
+  return {
+    scope: "agent",
+    to: `/admin/agent-control?${params.toString()}`,
+    agentName: hold.agentName || proposer?.agentName || "",
+  };
+}
+
+/** Why a held change can't be decided, in a few words: the switch that is on. */
+export function holdReasonText(held: HoldSwitch, t: TranslateFn): string {
+  if (held.scope === "organization") {
+    return t("Agents are paused for the organization");
+  }
+
+  return held.agentName !== ""
+    ? t("{0} is in shadow", held.agentName)
+    : t("This agent is in shadow");
+}
+
+/** What turns the switch off, as the label of the link to it. */
+export function holdActionText(held: HoldSwitch, t: TranslateFn): string {
+  return held.scope === "organization" ? t("Resume agents") : t("Turn off shadow");
+}
+
+function proposerOf(
+  entry: ApprovalEntry,
+): Pick<AssistantProposal, "agentId" | "agentName"> | undefined {
+  switch (entry.kind) {
+    case "proposal":
+      return entry.proposal;
+    case "batch":
+      return entry.proposals[0];
+    default:
+      return entry.plan;
+  }
 }

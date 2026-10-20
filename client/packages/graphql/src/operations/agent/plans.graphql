@@ -13,6 +13,10 @@ fragment AgentPlanTableRowFields on AgentPlan {
   decidedByUserId
   decidedAt
   expiresAt
+  hold {
+    reason
+    agentName
+  }
   version
   createdAt
   updatedAt

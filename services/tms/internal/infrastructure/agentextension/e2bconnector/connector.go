@@ -130,6 +130,9 @@ func (c *Connector) StartSandbox(
 	}
 
 	lifetime := time.Duration(settings.RunSeconds)*time.Second + sandboxLifeMargin
+	if req.Lifetime > 0 {
+		lifetime = req.Lifetime + sandboxLifeMargin
+	}
 	created, err := client.CreateSandbox(ctx, &e2b.CreateSandboxRequest{
 		TemplateID:          settings.Template,
 		TimeoutSeconds:      int(lifetime / time.Second),
@@ -200,7 +203,12 @@ func (c *Connector) RunCode(
 		return nil, err
 	}
 
-	execution, err := session.RunCode(ctx, req.Code)
+	var execution *e2b.Execution
+	if req.Output != nil {
+		execution, err = session.RunCodeStream(ctx, req.Code, e2b.OutputFilter(req.Output))
+	} else {
+		execution, err = session.RunCode(ctx, req.Code)
+	}
 	switch {
 	case errors.Is(err, context.DeadlineExceeded) && ctx.Err() == nil:
 		return &agentextensionports.SandboxExecution{TimedOut: true}, nil
