@@ -268,6 +268,12 @@ var agentAllowedPermissions = map[Resource]map[Operation]struct{}{
 	ResourceDataAnalysis: {
 		OpRead: {},
 	},
+	// Running a short script whose every read is one of the agent's own reads,
+	// checked as the person, in a sandbox that cannot reach the network. It
+	// changes nothing.
+	ResourceCodeMode: {
+		OpRead: {},
+	},
 	ResourceBriefing: {
 		OpRead: {},
 	},

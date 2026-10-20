@@ -383,12 +383,18 @@ func (b *Bench) openCase(
 		}
 	}
 
-	return session.Open(ctx, OpenConversation{
+	conv, err := session.Open(ctx, OpenConversation{
 		Label:    planned.label(),
 		Agent:    definition,
 		Provider: provider,
 		Title:    fmt.Sprintf("%s #%d", planned.scenario.Name, planned.repeat),
 	})
+	if err != nil {
+		return nil, err
+	}
+	conv.CodeMode = planned.scenario.Mode.Override()
+
+	return conv, nil
 }
 
 func (b *Bench) runStep(
@@ -404,6 +410,11 @@ func (b *Bench) runStep(
 		Rubric: step.Expect.Rubric,
 	}
 	evidence := &stepEvidence{}
+	if err := b.runSetup(ctx, session, step.Setup); err != nil {
+		result.Kind = "setup"
+		result.Error = err.Error()
+		return result
+	}
 
 	if step.Decide != "" {
 		result.Kind = "decide"
