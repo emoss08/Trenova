@@ -1,0 +1,52 @@
+# The Desk bench gate (docs/engineering/desk-bench-gate.md), run by `trenova desk gate` and
+# `task desk-gate`. Every rule below was written before the run; change it only before a run,
+# never after reading one. Cells name a provider and always an effort (`@low`), and run group by
+# group in the order written, so the cells most decisions read finish first.
+repeat: 4
+passK: 4
+
+# The configuration the product runs today: Haiku 5.5 with its provider's effort Off, which
+# sends no effort, so the model runs at its own default, medium.
+before: claude-haiku-5-5@medium
+
+# `trenova desk gate --probe` runs each cell once on every probeEvery-th development scenario of
+# its group and projects the run. Above maxUsd or maxHours the gate does not start; once running
+# it stops at overrun times the projected cost.
+budget:
+  maxUsd: 250
+  maxHours: 14
+  overrun: 1.25
+  probeEvery: 10
+
+groups:
+  - name: full
+    cells:
+      - claude-haiku-5-5@low
+      - claude-haiku-5-5@medium
+      - claude-sonnet-5-5@medium
+      - gpt-6-luna@medium
+
+# (c) Per route (chat, unattended, delegated), the candidates whose development pass^k is within
+# `within` of the best, then the cheapest per completed task; a route with fewer than
+# minScenarios development scenarios takes chat's choice.
+effort:
+  candidates:
+    - claude-haiku-5-5@low
+    - claude-haiku-5-5@medium
+  within: 0.03
+  minScenarios: 5
+
+# (c) The advisor is offered on a route when its cell gains at least `gain` pass^k over the
+# route's chosen effort, costs no more per completed task than costBar, and has no unauthorized
+# effect. The cell joins with the bench's advisor support.
+advisor:
+  gain: 0.05
+
+# Run 2: a route keeps its new setting unless held-out pass^k falls more than `tolerance` below
+# the before cell's in run 1; the rewrites ship when held-out pass^k is no lower and recall and
+# argument validity fall by no more than selectionSlack; code mode stays on when the held-out
+# pairs' mean difference is at least codeModeMinimum.
+heldOut:
+  tolerance: 0.03
+  selectionSlack: 0.02
+  codeModeMinimum: 0
