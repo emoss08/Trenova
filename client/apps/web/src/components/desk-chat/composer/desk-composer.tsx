@@ -20,6 +20,7 @@ import type { AssistantEntityRef } from "@/types/assistant";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Kbd, KbdGroup } from "@trenova/shared/components/ui/kbd";
+import { Popover, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { useRichT } from "@trenova/shared/i18n/rich";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatAltShortcut, isMacPlatform } from "@trenova/shared/lib/shortcuts";
@@ -29,6 +30,7 @@ import { DeskIcon } from "../desk-icons";
 import { DeskAgentPicker } from "./desk-agent-picker";
 import { MAX_ATTACHMENTS, type DeskAttachments } from "./desk-attachments";
 import { deskIconClass, deskIconOnClass, deskLinkClass } from "../desk-button-styles";
+import { ComposerPopoverContext } from "../desk-popover";
 import { DeskCapturePanel, type DeskScans } from "./desk-capture";
 import { DeskDictate } from "./desk-dictate";
 import { DeskMentionMirror, DeskMentionPicker, useDeskMentions } from "./desk-mentions";
@@ -198,6 +200,9 @@ export function DeskComposer({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [menu, setMenu] = useState<"menu" | "capture" | null>(null);
+  // The composer its menus hang over; in a dense Desk they span it.
+  const [frame, setFrame] = useState<HTMLDivElement | null>(null);
+  const dense = Boolean(frame?.closest(".dk-dense"));
   const markTermsSeen = useDeskStore((state) => state.markTermsSeen);
   const settings = useDeskSettingsStore((state) => state.settings);
   const empty = value === "";
@@ -394,212 +399,222 @@ export function DeskComposer({
           </div>
         </div>
       )}
-      <div
-        className={cn(
-          "dk-cmp",
-          busy && "dk-busy",
-          home && "dk-hm",
-          lock && "dk-ec dk-off",
-          busy && status?.pose === "check" && "dk-ec dk-r-check",
-          busy && status?.pose === "retry" && "dk-ec dk-r-retry",
-          dropping && "dk-drop-on",
-          dropping && drag?.hot && "dk-drop-hot",
-          compacting && "dk-cmpg",
-        )}
-      >
-        {dropping && (
-          <span className={cn("dk-drop-tag", full && "dk-full")}>
-            {full ? t("Message full") : drag?.hot ? t("Release to attach") : t("Drop here")}
-          </span>
-        )}
-        <span className="dk-cmp-ring" aria-hidden />
-        {/* One region that is always there, so what the agent is doing is read
+      <ComposerPopoverContext value={{ element: frame, dense }}>
+        <div
+          ref={setFrame}
+          className={cn(
+            "dk-cmp",
+            busy && "dk-busy",
+            home && "dk-hm",
+            lock && "dk-ec dk-off",
+            busy && status?.pose === "check" && "dk-ec dk-r-check",
+            busy && status?.pose === "retry" && "dk-ec dk-r-retry",
+            dropping && "dk-drop-on",
+            dropping && drag?.hot && "dk-drop-hot",
+            compacting && "dk-cmpg",
+          )}
+        >
+          {dropping && (
+            <span className={cn("dk-drop-tag", full && "dk-full")}>
+              {full ? t("Message full") : drag?.hot ? t("Release to attach") : t("Drop here")}
+            </span>
+          )}
+          <span className="dk-cmp-ring" aria-hidden />
+          {/* One region that is always there, so what the agent is doing is read
             out as it settles: a step that flashes past is not, and neither is
             a countdown's every second. */}
-        <span className="sr-only" role="status" aria-live="polite" aria-atomic>
-          {spokenStatus}
-        </span>
-        {(busy || wait > 0) && status && (
-          <div className="dk-cmp-st dk-ec-st" key={status.text}>
-            {status.pose === "check" ? (
-              <span className="dk-ec-shield">
-                <DeskIcon name="shield" size={13} stroke={2} />
-              </span>
-            ) : status.pose === "memory" ? (
-              <span className="dk-mem-sti">
-                <DeskIcon name="memory" size={13} />
-              </span>
-            ) : status.countdown ? (
-              <DeskCountdown from={status.countdown} key={status.extra ?? status.text} />
-            ) : (
-              <span className="dk-cmp-st-d" />
-            )}
-            <span className={status.pose === "retry" ? undefined : "dk-shim"}>{status.text}</span>
-            {(status.extra || status.action) && <span className="dk-ec-sp" />}
-            {status.extra && <span className="dk-ec-att">{status.extra}</span>}
-            {status.action && (
-              <Button
-                variant="bare"
-                size="bare"
-                className={deskLinkClass}
-                onClick={status.action.onClick}
-              >
-                {status.action.label}
-              </Button>
-            )}
-          </div>
-        )}
-        {compacting && (
-          <div className="dk-cmp-st dk-cx-st">
-            <DeskContextDrain
-              from={compacting.before}
-              to={compacting.after}
-              window={compacting.window}
-            />
-            <span className="dk-shim dk-cx-stt">
-              {compacting.auto
-                ? t("Context is nearly full · compacting…")
-                : t("Compacting the conversation…")}
-            </span>
-            <span className="dk-ec-sp" />
-            {onCancelCompact && (
-              <Button
-                variant="bare"
-                size="bare"
-                className={deskLinkClass}
-                onClick={onCancelCompact}
-              >
-                {t("Cancel")}
-              </Button>
-            )}
-          </div>
-        )}
-        {attachments && !lock && <DeskAttachRow attachments={attachments} />}
-        {dropping && drag && (
-          <DeskDropGhosts count={drag.count} taken={attachments?.items.length ?? 0} />
-        )}
-        {lock ? (
-          <div className="dk-ec-offmsg">{lock}</div>
-        ) : (
-          <div className="dk-cmp-ta">
-            <DeskMentionPicker mentions={mention} />
-            <DeskSlashMenu slash={slash} agentName={agent?.name ?? t("the agent")} />
-            {slash.parsed && slash.started ? (
-              <DeskSlashMirror slash={slash} />
-            ) : (
-              <DeskMentionMirror value={value} mentions={mentions} />
-            )}
-            <textarea
-              ref={textareaRef}
-              rows={2}
-              value={value}
-              disabled={disabled || Boolean(compacting)}
-              className={slash.parsed && slash.started ? "dk-sl-on" : undefined}
-              placeholder={
-                typing || offering
-                  ? ""
-                  : compacting
-                    ? t("You can reply once compacting finishes")
-                    : steering
-                      ? ""
-                      : (placeholder ??
-                        (agent ? t("Reply to {0}…", agent.name) : t("Ask the Desk anything…")))
-              }
-              aria-label={agent ? t("Message {0}", agent.name) : t("Message the Desk")}
-              aria-describedby={offering ? offerId : undefined}
-              aria-keyshortcuts={offering ? "Tab ArrowRight" : undefined}
-              onChange={(event) => {
-                if (dictation.phase !== "idle") {
-                  dictation.release();
-                }
-                onChange(event.target.value);
-                mention.detect(event.target.value, event.target.selectionStart);
-              }}
-              onSelect={(event) =>
-                mention.detect(event.currentTarget.value, event.currentTarget.selectionStart)
-              }
-              onKeyDown={onKeyDown}
-            />
-            {steering && !typing && !compacting && value === "" && (
-              <div className="dk-tw dk-steer-ph" aria-hidden>
-                {rt(
-                  "Steer {0}, or <keys/> to queue a follow-up…",
-                  { keys: () => <QueueKeys mac={mac} /> },
-                  agent?.name ?? t("the agent"),
-                )}
-              </div>
-            )}
-            {offering && (
-              <div className="dk-tw dk-tw-offer">
-                <span id={offerId} className="sr-only">
-                  {t("Suggested answer: {0}. Press Tab to use it.", suggestedAnswer)}
+          <span className="sr-only" role="status" aria-live="polite" aria-atomic>
+            {spokenStatus}
+          </span>
+          {(busy || wait > 0) && status && (
+            <div className="dk-cmp-st dk-ec-st" key={status.text}>
+              {status.pose === "check" ? (
+                <span className="dk-ec-shield">
+                  <DeskIcon name="shield" size={13} stroke={2} />
                 </span>
-                <span className="dk-tw-offer-v" aria-hidden>
-                  {suggestedAnswer}
+              ) : status.pose === "memory" ? (
+                <span className="dk-mem-sti">
+                  <DeskIcon name="memory" size={13} />
                 </span>
+              ) : status.countdown ? (
+                <DeskCountdown from={status.countdown} key={status.extra ?? status.text} />
+              ) : (
+                <span className="dk-cmp-st-d" />
+              )}
+              <span className={status.pose === "retry" ? undefined : "dk-shim"}>{status.text}</span>
+              {(status.extra || status.action) && <span className="dk-ec-sp" />}
+              {status.extra && <span className="dk-ec-att">{status.extra}</span>}
+              {status.action && (
                 <Button
                   variant="bare"
                   size="bare"
-                  className="dk-tw-tab dk-tw-use"
-                  tabIndex={-1}
-                  aria-label={t("Use the suggested answer")}
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={acceptSuggestion}
+                  className={deskLinkClass}
+                  onClick={status.action.onClick}
                 >
-                  <span className="dk-kbd">Tab</span> <span className="dk-tw-w">{t("to use")}</span>
+                  {status.action.label}
                 </Button>
-              </div>
-            )}
-            {typing && (
-              <div className="dk-tw" aria-hidden>
-                <span>{typed.text}</span>
-                <i className="dk-tw-c" />
-                {typed.done && (
-                  <span className="dk-tw-tab">
-                    <span className="dk-kbd">Tab</span>{" "}
-                    <span className="dk-tw-w">{t("to use")} · </span>
-                    <span className="dk-kbd">⌘{typed.index + 1}</span>{" "}
-                    <span className="dk-tw-w">{t("to ask")}</span>
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-        <div className="dk-cmp-b">
-          {attachments && (
-            <span className="relative">
-              <Button
-                variant="quiet"
-                size="bare"
-                className={cn(deskIconClass, menu && deskIconOnClass)}
-                title={full ? t("Up to {0} files per message", MAX_ATTACHMENTS) : t("Attach files")}
-                aria-label={t("Attach files")}
-                aria-haspopup="menu"
-                aria-expanded={menu !== null}
-                data-attach-toggle
-                disabled={Boolean(lock) || Boolean(compacting) || full}
-                onClick={() => setMenu((current) => (current ? null : "menu"))}
-              >
-                <DeskIcon name="plus" size={16} />
-              </Button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                hidden
-                onChange={(event) => {
-                  if (event.target.files) {
-                    attachments.add(event.target.files);
-                  }
-                  event.target.value = "";
-                }}
+              )}
+            </div>
+          )}
+          {compacting && (
+            <div className="dk-cmp-st dk-cx-st">
+              <DeskContextDrain
+                from={compacting.before}
+                to={compacting.after}
+                window={compacting.window}
               />
-              {menu && (
+              <span className="dk-shim dk-cx-stt">
+                {compacting.auto
+                  ? t("Context is nearly full · compacting…")
+                  : t("Compacting the conversation…")}
+              </span>
+              <span className="dk-ec-sp" />
+              {onCancelCompact && (
+                <Button
+                  variant="bare"
+                  size="bare"
+                  className={deskLinkClass}
+                  onClick={onCancelCompact}
+                >
+                  {t("Cancel")}
+                </Button>
+              )}
+            </div>
+          )}
+          {attachments && !lock && <DeskAttachRow attachments={attachments} />}
+          {dropping && drag && (
+            <DeskDropGhosts count={drag.count} taken={attachments?.items.length ?? 0} />
+          )}
+          {lock ? (
+            <div className="dk-ec-offmsg">{lock}</div>
+          ) : (
+            <div className="dk-cmp-ta">
+              <DeskMentionPicker mentions={mention} />
+              <DeskSlashMenu slash={slash} agentName={agent?.name ?? t("the agent")} />
+              {slash.parsed && slash.started ? (
+                <DeskSlashMirror slash={slash} />
+              ) : (
+                <DeskMentionMirror value={value} mentions={mentions} />
+              )}
+              <textarea
+                ref={textareaRef}
+                rows={2}
+                value={value}
+                disabled={disabled || Boolean(compacting)}
+                className={slash.parsed && slash.started ? "dk-sl-on" : undefined}
+                placeholder={
+                  typing || offering
+                    ? ""
+                    : compacting
+                      ? t("You can reply once compacting finishes")
+                      : steering
+                        ? ""
+                        : (placeholder ??
+                          (agent ? t("Reply to {0}…", agent.name) : t("Ask the Desk anything…")))
+                }
+                aria-label={agent ? t("Message {0}", agent.name) : t("Message the Desk")}
+                aria-describedby={offering ? offerId : undefined}
+                aria-keyshortcuts={offering ? "Tab ArrowRight" : undefined}
+                onChange={(event) => {
+                  if (dictation.phase !== "idle") {
+                    dictation.release();
+                  }
+                  onChange(event.target.value);
+                  mention.detect(event.target.value, event.target.selectionStart);
+                }}
+                onSelect={(event) =>
+                  mention.detect(event.currentTarget.value, event.currentTarget.selectionStart)
+                }
+                onKeyDown={onKeyDown}
+              />
+              {steering && !typing && !compacting && value === "" && (
+                <div className="dk-tw dk-steer-ph" aria-hidden>
+                  {rt(
+                    "Steer {0}, or <keys/> to queue a follow-up…",
+                    { keys: () => <QueueKeys mac={mac} /> },
+                    agent?.name ?? t("the agent"),
+                  )}
+                </div>
+              )}
+              {offering && (
+                <div className="dk-tw dk-tw-offer">
+                  <span id={offerId} className="sr-only">
+                    {t("Suggested answer: {0}. Press Tab to use it.", suggestedAnswer)}
+                  </span>
+                  <span className="dk-tw-offer-v" aria-hidden>
+                    {suggestedAnswer}
+                  </span>
+                  <Button
+                    variant="bare"
+                    size="bare"
+                    className="dk-tw-tab dk-tw-use"
+                    tabIndex={-1}
+                    aria-label={t("Use the suggested answer")}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={acceptSuggestion}
+                  >
+                    <span className="dk-kbd">Tab</span>{" "}
+                    <span className="dk-tw-w">{t("to use")}</span>
+                  </Button>
+                </div>
+              )}
+              {typing && (
+                <div className="dk-tw" aria-hidden>
+                  <span>{typed.text}</span>
+                  <i className="dk-tw-c" />
+                  {typed.done && (
+                    <span className="dk-tw-tab">
+                      <span className="dk-kbd">Tab</span>{" "}
+                      <span className="dk-tw-w">{t("to use")} · </span>
+                      <span className="dk-kbd">⌘{typed.index + 1}</span>{" "}
+                      <span className="dk-tw-w">{t("to ask")}</span>
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+          <div className="dk-cmp-b">
+            {attachments && (
+              <Popover
+                open={menu !== null}
+                onOpenChange={(open) => setMenu((current) => (open ? (current ?? "menu") : null))}
+              >
+                <PopoverTrigger
+                  disabled={Boolean(lock) || Boolean(compacting) || full}
+                  render={
+                    <Button
+                      variant="quiet"
+                      size="bare"
+                      className={cn(deskIconClass, menu && deskIconOnClass)}
+                      title={
+                        full ? t("Up to {0} files per message", MAX_ATTACHMENTS) : t("Attach files")
+                      }
+                      aria-label={t("Attach files")}
+                      aria-haspopup="menu"
+                    />
+                  }
+                >
+                  <DeskIcon name="plus" size={16} />
+                </PopoverTrigger>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  hidden
+                  onChange={(event) => {
+                    if (event.target.files) {
+                      attachments.add(event.target.files);
+                    }
+                    event.target.value = "";
+                  }}
+                />
                 <DeskAttachMenu
-                  onPickFiles={attachments.add}
+                  onUpload={() => {
+                    setMenu(null);
+                    fileInputRef.current?.click();
+                  }}
                   onScan={scans ? () => setMenu("capture") : undefined}
-                  onClose={() => setMenu(null)}
                 >
                   {menu === "capture" && scans ? (
                     <DeskCapturePanel
@@ -609,95 +624,98 @@ export function DeskComposer({
                     />
                   ) : undefined}
                 </DeskAttachMenu>
-              )}
-            </span>
-          )}
-          {agent && onAgentChange && (
-            <DeskAgentPicker
-              agent={agent}
-              onSelect={onAgentChange}
-              recentIds={recentAgentIds}
-              lastUsedAt={agentLastUsedAt}
-              disabled={busy}
-              openSignal={agentPickerSignal}
-            />
-          )}
-          {extras}
-          <span className="flex-1" />
-          {model}
-          {meter}
-          {!lock && dictationAllowed && settings.mic === "on" && (
-            <DeskDictate
-              dictation={dictation}
-              disabled={(busy && !steering) || disabled || Boolean(compacting)}
-            />
-          )}
-          {steering && canSend && !filesOnly && (
-            <Button
-              variant="quiet"
-              size="bare"
-              className={deskIconClass}
-              title={t("Queue it to send after this reply ({0})", queueKeysLabel)}
-              aria-label={t("Queue a follow-up")}
-              onClick={() => send(value, "queue")}
-            >
-              <DeskIcon name="enter" size={15} />
-            </Button>
-          )}
-          {busy && steering && canSend ? (
-            <Button
-              variant="bare"
-              size="bare"
-              className={sendClass}
-              title={
-                filesOnly
-                  ? t("Queue it to send after this reply ({0})", queueKeysLabel)
-                  : t("Steer the reply under way (↵)")
-              }
-              aria-label={filesOnly ? t("Queue a follow-up") : t("Steer the reply")}
-              onClick={() => send(value)}
-            >
-              <DeskIcon name="up" size={15} stroke={2.2} />
-            </Button>
-          ) : busy ? (
-            <Button
-              variant="bare"
-              size="bare"
-              className={cn(sendClass, "bg-transparent ring-[1.5px] ring-dsk-b-strong ring-inset")}
-              title={t("Stop")}
-              aria-label={t("Stop the reply")}
-              onClick={onStop}
-            >
-              <span className="size-2.5 rounded-[2.5px] bg-dsk-fg" />
-            </Button>
-          ) : (
-            <Button
-              variant="bare"
-              size="bare"
-              className={cn(sendClass, lock && wait > 0 && "disabled:opacity-55")}
-              disabled={!canSend || wait > 0}
-              title={
-                wait > 0
-                  ? t("You can send again in a moment")
-                  : uploading
-                    ? t("Waiting for the files to finish uploading")
-                    : t("Send")
-              }
-              aria-label={t("Send")}
-              onClick={() => send(value)}
-            >
-              {wait > 0 ? (
-                <DeskCountdown from={wait} size={18} tone="ink" />
-              ) : uploading ? (
-                <span className="dk-send-wait" />
-              ) : (
+              </Popover>
+            )}
+            {agent && onAgentChange && (
+              <DeskAgentPicker
+                agent={agent}
+                onSelect={onAgentChange}
+                recentIds={recentAgentIds}
+                lastUsedAt={agentLastUsedAt}
+                disabled={busy}
+                openSignal={agentPickerSignal}
+              />
+            )}
+            {extras}
+            <span className="flex-1" />
+            {model}
+            {meter}
+            {!lock && dictationAllowed && settings.mic === "on" && (
+              <DeskDictate
+                dictation={dictation}
+                disabled={(busy && !steering) || disabled || Boolean(compacting)}
+              />
+            )}
+            {steering && canSend && !filesOnly && (
+              <Button
+                variant="quiet"
+                size="bare"
+                className={deskIconClass}
+                title={t("Queue it to send after this reply ({0})", queueKeysLabel)}
+                aria-label={t("Queue a follow-up")}
+                onClick={() => send(value, "queue")}
+              >
+                <DeskIcon name="enter" size={15} />
+              </Button>
+            )}
+            {busy && steering && canSend ? (
+              <Button
+                variant="bare"
+                size="bare"
+                className={sendClass}
+                title={
+                  filesOnly
+                    ? t("Queue it to send after this reply ({0})", queueKeysLabel)
+                    : t("Steer the reply under way (↵)")
+                }
+                aria-label={filesOnly ? t("Queue a follow-up") : t("Steer the reply")}
+                onClick={() => send(value)}
+              >
                 <DeskIcon name="up" size={15} stroke={2.2} />
-              )}
-            </Button>
-          )}
+              </Button>
+            ) : busy ? (
+              <Button
+                variant="bare"
+                size="bare"
+                className={cn(
+                  sendClass,
+                  "bg-transparent ring-[1.5px] ring-dsk-b-strong ring-inset",
+                )}
+                title={t("Stop")}
+                aria-label={t("Stop the reply")}
+                onClick={onStop}
+              >
+                <span className="size-2.5 rounded-[2.5px] bg-dsk-fg" />
+              </Button>
+            ) : (
+              <Button
+                variant="bare"
+                size="bare"
+                className={cn(sendClass, lock && wait > 0 && "disabled:opacity-55")}
+                disabled={!canSend || wait > 0}
+                title={
+                  wait > 0
+                    ? t("You can send again in a moment")
+                    : uploading
+                      ? t("Waiting for the files to finish uploading")
+                      : t("Send")
+                }
+                aria-label={t("Send")}
+                onClick={() => send(value)}
+              >
+                {wait > 0 ? (
+                  <DeskCountdown from={wait} size={18} tone="ink" />
+                ) : uploading ? (
+                  <span className="dk-send-wait" />
+                ) : (
+                  <DeskIcon name="up" size={15} stroke={2.2} />
+                )}
+              </Button>
+            )}
+          </div>
+          {note && <div className="dk-ec-cnote">{note}</div>}
         </div>
-        {note && <div className="dk-ec-cnote">{note}</div>}
-      </div>
+      </ComposerPopoverContext>
     </>
   );
 }

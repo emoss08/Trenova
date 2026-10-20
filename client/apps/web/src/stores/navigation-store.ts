@@ -1,4 +1,5 @@
 import type { ModuleId } from "@/config/navigation.types";
+import { clampInteger } from "@trenova/shared/lib/utils";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -27,10 +28,7 @@ export const RAIL_PANEL_MAX_WIDTH = 320;
 export const RAIL_PANEL_DEFAULT_WIDTH = 224;
 
 export function clampRailPanelWidth(width: number): number {
-  if (!Number.isFinite(width)) {
-    return RAIL_PANEL_DEFAULT_WIDTH;
-  }
-  return Math.min(RAIL_PANEL_MAX_WIDTH, Math.max(RAIL_PANEL_MIN_WIDTH, Math.round(width)));
+  return clampInteger(width, RAIL_PANEL_MIN_WIDTH, RAIL_PANEL_MAX_WIDTH, RAIL_PANEL_DEFAULT_WIDTH);
 }
 
 export const useNavigationStore = create<NavigationState>()(

@@ -2,21 +2,15 @@ import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { assistant } from "@/lib/queries/assistant";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatCompactAge } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
-import {
-  useCallback,
-  useEffect,
-  useId,
-  useMemo,
-  useRef,
-  useState,
-  type KeyboardEvent,
-} from "react";
+import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { DeskAgentTile } from "../desk-agent-tile";
 import { DeskIcon } from "../desk-icons";
-import { useOutsideDismiss } from "../use-outside-dismiss";
+import { deskPopoverClass, useComposerPopover } from "../desk-popover";
 
 const nowInSeconds = () => Math.floor(Date.now() / 1000);
 
@@ -44,26 +38,24 @@ export function DeskAgentPicker({
 }) {
   const t = useT();
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [highlighted, setHighlighted] = useState(0);
+  const onOpenChange = (next: boolean) => {
+    if (next) {
+      setQuery("");
+      setHighlighted(0);
+    }
+    setOpen(next);
+  };
   useEffect(() => {
     if (openSignal > 0) {
       setOpen(true);
     }
   }, [openSignal]);
-  const [query, setQuery] = useState("");
-  const [highlighted, setHighlighted] = useState(0);
-  const rootRef = useRef<HTMLSpanElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
   const listId = useId();
-  // Focus that was in the popover goes back to the chip when it closes.
-  const close = useCallback(() => {
-    if (rootRef.current?.contains(document.activeElement)) {
-      buttonRef.current?.focus();
-    }
-    setOpen(false);
-  }, []);
-  useOutsideDismiss(rootRef, open, close);
+  const { anchor, wide } = useComposerPopover();
   const agentsQuery = useQuery({ ...assistant.myAgents(), enabled: open });
   const [now] = useState(nowInSeconds);
 
@@ -87,22 +79,6 @@ export function DeskAgentPicker({
   const flat = useMemo(() => [...recent, ...rest], [recent, rest]);
 
   useEffect(() => {
-    if (!open) {
-      return;
-    }
-    const timer = window.setTimeout(() => inputRef.current?.focus(), 30);
-    return () => window.clearTimeout(timer);
-  }, [open]);
-
-  const toggle = () => {
-    if (!open) {
-      setQuery("");
-      setHighlighted(0);
-    }
-    setOpen(!open);
-  };
-
-  useEffect(() => {
     listRef.current
       ?.querySelector<HTMLElement>(`[data-i="${highlighted}"]`)
       ?.scrollIntoView({ block: "nearest" });
@@ -113,7 +89,7 @@ export function DeskAgentPicker({
       return;
     }
     onSelect(candidate);
-    close();
+    setOpen(false);
   };
 
   const onKeyDown = (event: KeyboardEvent) => {
@@ -173,20 +149,21 @@ export function DeskAgentPicker({
   };
 
   return (
-    <span className="dk-ap" ref={rootRef}>
-      <Button
-        variant="bare"
-        size="bare"
-        ref={buttonRef}
-        className={cn(
-          "h-7 max-w-55 gap-1.75 rounded-badge pr-1.75 pl-1 text-sm text-dsk-fg2 transition-colors duration-150 hover:bg-dsk-hover hover:text-dsk-fg",
-          open && "bg-dsk-hover text-dsk-fg",
-        )}
+    <Popover open={open} onOpenChange={onOpenChange}>
+      <PopoverTrigger
         disabled={disabled}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        aria-label={t("Asking {0}. Choose another agent", agent.name)}
-        onClick={toggle}
+        render={
+          <Button
+            variant="bare"
+            size="bare"
+            className={cn(
+              "h-7 max-w-55 gap-1.75 rounded-badge pr-1.75 pl-1 text-sm text-dsk-fg2 transition-colors duration-150 hover:bg-dsk-hover hover:text-dsk-fg",
+              open && "bg-dsk-hover text-dsk-fg",
+            )}
+            aria-haspopup="listbox"
+            aria-label={t("Asking {0}. Choose another agent", agent.name)}
+          />
+        }
       >
         <DeskAgentTile key={agent.id} agent={agent} size="xs" className="dk-at-confirm" />
         <span className="dk-ap-bn">{agent.name}</span>
@@ -204,27 +181,36 @@ export function DeskAgentPicker({
         >
           <path d="M8 9l4-4 4 4M8 15l4 4 4-4" />
         </svg>
-      </Button>
-      {open && (
-        <div className="dk-ap-pop" onKeyDown={onKeyDown}>
-          <div className="dk-ap-s">
-            <DeskIcon name="search" size={13} />
-            <input
-              ref={inputRef}
-              value={query}
-              onChange={(event) => {
-                setQuery(event.target.value);
-                setHighlighted(0);
-              }}
-              placeholder={t("Search agents")}
-              role="combobox"
-              aria-expanded
-              aria-autocomplete="list"
-              aria-controls={listId}
-              aria-activedescendant={flat[highlighted] ? `${listId}-${highlighted}` : undefined}
-              aria-label={t("Search agents")}
-            />
-          </div>
+      </PopoverTrigger>
+      <PopoverContent
+        side="top"
+        align="start"
+        alignOffset={wide ? 0 : -6}
+        sideOffset={8}
+        anchor={anchor}
+        initialFocus={inputRef}
+        className={cn(deskPopoverClass, wide ? "w-(--anchor-width)" : "w-80")}
+        onKeyDown={onKeyDown}
+      >
+        <div className="dk-ap-s">
+          <DeskIcon name="search" size={13} />
+          <input
+            ref={inputRef}
+            value={query}
+            onChange={(event) => {
+              setQuery(event.target.value);
+              setHighlighted(0);
+            }}
+            placeholder={t("Search agents")}
+            role="combobox"
+            aria-expanded
+            aria-autocomplete="list"
+            aria-controls={listId}
+            aria-activedescendant={flat[highlighted] ? `${listId}-${highlighted}` : undefined}
+            aria-label={t("Search agents")}
+          />
+        </div>
+        <ScrollArea viewportClassName="max-h-[min(320px,calc(100vh-260px))]" maskVariant="raised">
           <div
             className="dk-ap-l"
             ref={listRef}
@@ -248,8 +234,8 @@ export function DeskAgentPicker({
               </>
             )}
           </div>
-        </div>
-      )}
-    </span>
+        </ScrollArea>
+      </PopoverContent>
+    </Popover>
   );
 }

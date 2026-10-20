@@ -726,15 +726,16 @@ func newListInvoiceRunsTool(
 		fetchGated: func(
 			ctx context.Context,
 			opts *pagination.QueryOptions,
+			_ pagination.CursorInfo,
 			gate *fieldGate,
-		) ([]any, error) {
+		) (listPage, error) {
 			result, err := runs.List(ctx, &invoicerunports.ListInvoiceRunsRequest{Filter: opts})
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
 			show := amounts{show: gate.show(fieldTotalAmount, fieldTotalAmount)}
 
-			return listRows(result.Items, func(run *invoicerun.InvoiceRun) any {
+			return offsetListPage(result.Items, func(run *invoicerun.InvoiceRun) any {
 				return invoiceRunRowFrom(run, show)
 			}), nil
 		},

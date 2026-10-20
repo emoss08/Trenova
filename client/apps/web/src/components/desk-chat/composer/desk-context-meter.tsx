@@ -7,13 +7,14 @@ import {
 } from "@/components/assistant/compaction";
 import type { ContextUsage, ThreadBudget } from "@/types/assistant";
 import { Button } from "@trenova/shared/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { formatUnixMonthDay, formatUnixTime } from "@trenova/shared/lib/date";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { cn } from "@trenova/shared/lib/utils";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { DeskIcon } from "../desk-icons";
-import { useOutsideDismiss } from "../use-outside-dismiss";
+import { deskPopoverClass, useComposerPopover } from "../desk-popover";
 
 /** The meter's ring: how full the context is, drawn clockwise from the top. */
 export function DeskContextRing({ share, size = 16 }: { share: number; size?: number }) {
@@ -163,32 +164,41 @@ export function DeskContextMeter({
   const timezone = useAuthStore((state) => state.user?.timezone) || "UTC";
   const [open, setOpen] = useState(false);
   const [more, setMore] = useState(false);
-  const ref = useRef<HTMLSpanElement>(null);
-  useOutsideDismiss(ref, open, () => setOpen(false));
+  const { anchor, wide } = useComposerPopover();
 
   const view = meterView(usage);
   const rows = usageRows(budget, timezone, t);
 
   return (
-    <span className={cn("dk-cx", view.tone && `dk-${view.tone}`)} ref={ref}>
-      <Button
-        variant="bare"
-        size="bare"
-        className={cn(
-          "h-7 min-w-7 justify-center gap-1.25 rounded-badge px-1.5 text-dsk-muted transition-colors duration-150 hover:bg-dsk-hover hover:text-dsk-fg",
-          open && "bg-dsk-hover text-dsk-fg",
-          compacting && "[&_.dk-cx-ring]:animate-[dk-spin_1.1s_linear_infinite]",
-        )}
-        title={compacting ? t("Compacting…") : t("Context {0}% used", view.pct)}
-        aria-label={compacting ? t("Compacting…") : t("Context {0}% used", view.pct)}
-        aria-expanded={open}
-        onClick={() => setOpen((value) => !value)}
-      >
-        <DeskContextRing share={view.share} />
-        {view.showPct && <span className="dk-cx-pc">{view.pct}%</span>}
-      </Button>
-      {open && (
-        <div className="dk-cx-pop" role="dialog" aria-label={t("Context window")}>
+    <span className={cn("dk-cx", view.tone && `dk-${view.tone}`)}>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger
+          render={
+            <Button
+              variant="bare"
+              size="bare"
+              className={cn(
+                "h-7 min-w-7 justify-center gap-1.25 rounded-badge px-1.5 text-dsk-muted transition-colors duration-150 hover:bg-dsk-hover hover:text-dsk-fg",
+                open && "bg-dsk-hover text-dsk-fg",
+                compacting && "[&_.dk-cx-ring]:animate-[dk-spin_1.1s_linear_infinite]",
+              )}
+              title={compacting ? t("Compacting…") : t("Context {0}% used", view.pct)}
+              aria-label={compacting ? t("Compacting…") : t("Context {0}% used", view.pct)}
+            />
+          }
+        >
+          <DeskContextRing share={view.share} />
+          {view.showPct && <span className="dk-cx-pc">{view.pct}%</span>}
+        </PopoverTrigger>
+        <PopoverContent
+          side="top"
+          align="end"
+          alignOffset={wide ? 0 : -8}
+          sideOffset={8}
+          anchor={anchor}
+          aria-label={t("Context window")}
+          className={cn(deskPopoverClass, "dk-cx-pop", wide ? "w-(--anchor-width)" : "w-85")}
+        >
           <Button
             variant="bare"
             size="bare"
@@ -313,8 +323,8 @@ export function DeskContextMeter({
               {t("See detailed breakdown")}
             </Button>
           </div>
-        </div>
-      )}
+        </PopoverContent>
+      </Popover>
     </span>
   );
 }

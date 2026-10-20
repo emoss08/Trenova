@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   chunk,
+  clampInteger,
   limitUtf8Bytes,
   downloadJsonFile,
   downloadTextFile,
@@ -421,5 +422,21 @@ describe("limitUtf8Bytes", () => {
     expect(new TextEncoder().encode(limitUtf8Bytes("é".repeat(100), 61)).length).toBe(60);
     expect(limitUtf8Bytes("a😀b", 4)).toBe("a");
     expect(limitUtf8Bytes("abc", 0)).toBe("");
+  });
+});
+
+describe("clampInteger", () => {
+  it("rounds a number inside the bounds to a whole one", () => {
+    expect(clampInteger(231.6, 200, 340, 232)).toBe(232);
+  });
+
+  it("holds a number outside the bounds at the nearer one", () => {
+    expect(clampInteger(120, 200, 340, 232)).toBe(200);
+    expect(clampInteger(900, 200, 340, 232)).toBe(340);
+  });
+
+  it("reads anything that is not a number as the fallback", () => {
+    expect(clampInteger(Number.NaN, 200, 340, 232)).toBe(232);
+    expect(clampInteger(Number.POSITIVE_INFINITY, 200, 340, 232)).toBe(232);
   });
 });
