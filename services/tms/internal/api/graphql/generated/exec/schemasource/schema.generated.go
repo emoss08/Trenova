@@ -2051,7 +2051,7 @@ type AgentProposal {
   taint: AgentRunTaint
   "Where the write reaches, as it was proposed and then as it ran. Null for a proposal recorded before it was kept."
   egressClass: AgentEgressClass
-  "What held the write below running on its own: agent_ceiling, tool_max, egress_class, condition, tainted, tool_tier, personal_exemption, business_hours or one of the money_ bounds."
+  "What held the write below running on its own: agent_ceiling, tool_max, egress_class, condition, tainted, tool_tier, personal_exemption, business_hours, script_intent or one of the money_ bounds."
   heldBy: [String!]!
   "Approving it needs the digest of the preview the approver was shown: it moves money, reaches a customer, a driver or someone outside, or was proposed after the run read outside text."
   reviewRequired: Boolean!
@@ -11086,9 +11086,26 @@ decided as a whole. A plan's steps never appear on their own.
 """
 union PendingDecision = AgentProposal | AgentPlan
 
+"Which switch keeps a waiting decision from being taken."
+enum PendingDecisionHoldReason {
+  "Every agent in the organization is paused on the AI Control overview."
+  OrganizationPaused
+  "The agent that raised it is in shadow."
+  AgentShadow
+}
+
+"A switch that keeps a waiting decision from being taken. The server refuses a decision on it until the switch is off."
+type PendingDecisionHold {
+  reason: PendingDecisionHoldReason!
+  "The agent in shadow; empty for the organization's pause."
+  agentName: String!
+}
+
 type PendingDecisionEdge {
   node: PendingDecision!
   cursor: String!
+  "Set while a switch keeps it from being decided; absent when a person can decide it now."
+  hold: PendingDecisionHold
 }
 
 type PendingDecisionConnection {
@@ -11121,6 +11138,8 @@ type PendingDecisionToolCount {
 "The queue in numbers: how much is waiting, from whom, of what, and for how long."
 type PendingDecisionSummary {
   total: Int!
+  "How many of total a switch keeps from being decided."
+  held: Int!
   byAgent: [PendingDecisionAgentCount!]!
   byTool: [PendingDecisionToolCount!]!
   oldestAt: Timestamp
@@ -11163,11 +11182,15 @@ type RecentDecision {
 extend type AgentProposal {
   "The run that raised this proposal, for the agent behind it."
   run: AgentRun
+  "Set while it waits and a switch keeps it from being decided; absent once decided or when a person can decide it now."
+  hold: PendingDecisionHold
 }
 
 extend type AgentPlan {
   "The run that raised this plan, for the agent behind it."
   run: AgentRun
+  "Set while it waits and a switch keeps it from being decided; absent once decided or when a person can decide it now."
+  hold: PendingDecisionHold
 }
 
 extend type AgentRun {
@@ -18400,6 +18423,7 @@ enum FuelCardProvider {
   Comdata
   EFS
   WEX
+  Ramp
   Other
 }
 
@@ -18935,6 +18959,98 @@ input FuelPurchaseImportRowsInput {
   statuses: [FuelPurchaseImportRowStatus!]
 }
 
+"What one purchase adds to its quarter's IFTA return in the jurisdiction it was bought in."
+type FuelPurchaseIFTA {
+  year: Int!
+  quarter: Int!
+  "Whether the fuel is IFTA fuel at all. DEF, reefer fuel and other spend are not."
+  countsForIfta: Boolean!
+  taxPaidGallons: Decimal!
+  "The jurisdiction's rate per gallon for this fuel in that quarter; null when none is on file."
+  ratePerGallon: Decimal
+  "The tax-paid gallons at that rate: the credit the return takes for this purchase. Null without a rate."
+  taxPaidCredit: Decimal
+  "The same tractor's IFTA fuel bought in the same jurisdiction and quarter, this purchase included."
+  tractorGallons: Decimal!
+  tractorPurchaseCount: Int!
+}
+
+"The card statement row an imported purchase was committed from, and the import that read it."
+type FuelPurchaseProvenance {
+  batch: FuelPurchaseImportBatch!
+  rowNumber: Int!
+  "How the tractor, card and jurisdiction were matched, one note per decision a person might question."
+  resolutionNotes: [String!]!
+}
+
+type FuelPurchaseDeskCard {
+  purchase: FuelPurchase!
+  ifta: FuelPurchaseIFTA!
+  "The same tractor's last road-fuel fill before this one that recorded an odometer; null when this fill has no odometer or none came before it."
+  previousFill: FuelPurchase
+  "Null for a purchase entered by hand, or for a reader who may not read fuel imports."
+  provenance: FuelPurchaseProvenance
+  "Who entered the purchase; null when a feed recorded it or the reader may not read users."
+  createdBy: User
+}
+
+"What a card bought in one currency over a window."
+type FuelSpend {
+  currencyCode: String!
+  purchaseCount: Int!
+  gallons: Decimal!
+  untaxedGallons: Decimal!
+  totalAmount: Decimal!
+}
+
+type FuelJurisdictionGallons {
+  jurisdictionId: ID!
+  jurisdiction: IFTAJurisdiction!
+  gallons: Decimal!
+  purchaseCount: Int!
+}
+
+"What the rows held against a card come to in one currency."
+type FuelHeldSpend {
+  currencyCode: String!
+  gallons: Decimal!
+  totalAmount: Decimal!
+}
+
+"The watermark of a provider's transaction feed."
+type FuelFeedStatus {
+  lastPolledAt: Timestamp
+  lastSuccessAt: Timestamp
+  failureCount: Int!
+  lastError: String
+}
+
+type FuelCardDeskCard {
+  card: FuelCard!
+  "The start of the current month in the organization's time zone, which the month's totals run from."
+  monthStart: Timestamp!
+  year: Int!
+  quarter: Int!
+  "This month's purchases on the card, one row per currency. Empty to a reader who may not read fuel purchases."
+  month: [FuelSpend!]!
+  "This quarter's IFTA fuel on the card by jurisdiction, most gallons first."
+  quarterByJurisdiction: [FuelJurisdictionGallons!]!
+  purchaseCount: Int!
+  lastPurchasedAt: Timestamp
+  "The card's latest purchases, newest first."
+  recent: [FuelPurchase!]!
+  "Statement rows matched to the card that could not post yet, newest first; the first ten. Empty to a reader who may not read fuel imports."
+  held: [FuelPurchaseImportRow!]!
+  heldCount: Int!
+  heldSpend: [FuelHeldSpend!]!
+  "The imports holding those rows, which working them out again runs against."
+  heldBatches: [FuelPurchaseImportBatch!]!
+  "Null when the card's provider has no feed."
+  feed: FuelFeedStatus
+  "For a cancelled card, the active cards now carried by its tractor or driver."
+  successors: [FuelCard!]!
+}
+
 extend type Query {
   fuelCards(input: FuelCardsInput!): FuelCardConnection!
   fuelCard(id: ID!): FuelCard!
@@ -18943,6 +19059,10 @@ extend type Query {
   fuelPurchaseImports(input: FuelPurchaseImportsInput!): FuelPurchaseImportBatchConnection!
   fuelPurchaseImport(id: ID!): FuelPurchaseImportBatch!
   fuelPurchaseImportTemplate(provider: FuelCardProvider!): FuelImportTemplate!
+  "A fuel purchase as the Desk card draws it, read in one pass."
+  fuelPurchaseDeskCard(id: ID!): FuelPurchaseDeskCard!
+  "A fuel card as the Desk card draws it, read in one pass."
+  fuelCardDeskCard(id: ID!): FuelCardDeskCard!
 }
 
 extend type Mutation {
