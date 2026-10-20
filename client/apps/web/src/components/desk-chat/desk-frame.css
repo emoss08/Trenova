@@ -70,7 +70,7 @@
   width: 100%;
   height: 100dvh;
   display: grid;
-  grid-template-columns: 232px minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr);
   background: var(--dsk-canvas);
   color: var(--dsk-fg);
   font: 400 13px/1.45 var(--font-sans);
@@ -117,12 +117,52 @@
 .dark :is(.dsk, .dk-chat) .dk-sb {
   background: var(--dsk-rail);
 }
+/* The Desk's rail is as wide as its person dragged it (desk-rail-frame.tsx)
+   and folds away to nothing beside the page. Its contents keep that width
+   while it folds or opens, so nothing inside reflows on the way. */
+.dsk > .dk-sb {
+  width: var(--dk-rail-w, 232px);
+}
+.dk-sb-in {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+@media (min-width: 721px) {
+  .dsk > .dk-sb-rs {
+    position: relative;
+    z-index: 1;
+    clip-path: inset(0 -6px 0 0);
+    transition:
+      width 240ms var(--dk-settle),
+      border-color 240ms var(--dk-settle);
+  }
+  .dsk > .dk-sb-rs:has(> .dk-sb-rz[data-dragging]) {
+    transition: none;
+  }
+  .dsk > .dk-sb-rs > .dk-sb-in {
+    width: calc(var(--dk-rail-w, 232px) - 1px);
+    transition: opacity 160ms ease;
+  }
+  .dsk > .dk-sb-rs[data-folded] {
+    width: 0;
+    border-right-color: transparent;
+  }
+  .dsk > .dk-sb-rs[data-folded] > .dk-sb-in {
+    opacity: 0;
+  }
+  .dsk > .dk-sb-rs:has(> .dk-sb-rz[data-folding]) > .dk-sb-in {
+    opacity: 0.45;
+  }
+}
 .dk-sb-top {
   display: flex;
   align-items: center;
   gap: 8px;
   height: 52px;
-  padding: 0 8px 0 14px;
+  padding: 0 8px;
   font-size: 13px;
 }
 .dk-sb-top b {

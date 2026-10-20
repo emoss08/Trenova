@@ -205,6 +205,11 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
     setRailPath(pathname);
     setRailOpen(false);
   }
+  // Beside the page the rail folds away and stays folded until it is opened
+  // again; its sheet on a phone is never folded.
+  const railFoldKept = useDeskSettingsStore((state) => state.railFolded);
+  const setRailFolded = useDeskSettingsStore((state) => state.setRailFolded);
+  const railFolded = railFoldKept && !railOpen;
   // Settings open on the section a link asks for (`/desk?settings=checklists`
   // is where the retired case checklist page now sends people), else on the
   // first. The request is taken off the address once it has opened them.
@@ -548,6 +553,10 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
       } else if (key === "\\" && activeThread !== null) {
         event.preventDefault();
         togglePane();
+      } else if (key === "b" && !event.shiftKey) {
+        event.preventDefault();
+        const { railFolded: folded, setRailFolded: fold } = useDeskSettingsStore.getState();
+        fold(!folded);
       } else if (key === "j" && activeThread !== null) {
         event.preventDefault();
         const { pane: current, browsing, setBrowsing } = useDeskStore.getState();
@@ -640,6 +649,14 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
           onSetPinned={(thread, pinned) => pinMutation.mutate({ thread, pinned })}
           onDelete={(thread) => deleteMutation.mutate(thread)}
           activeThread={activeThread}
+          folded={railFolded}
+          onFold={() => {
+            if (railOpen) {
+              setRailOpen(false);
+            } else {
+              setRailFolded(true);
+            }
+          }}
         />
         {railOpen && (
           <Button
@@ -653,6 +670,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
         <div className="dk-mainc">
           <DeskTopBar
             onOpenRail={() => setRailOpen(true)}
+            onUnfoldRail={railFolded ? () => setRailFolded(false) : undefined}
             place={place}
             thread={activeThread}
             agent={place === "agent" ? pageAgent : activeAgent}

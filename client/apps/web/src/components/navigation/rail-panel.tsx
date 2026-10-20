@@ -4,84 +4,14 @@ import { moduleDisplayLabel, moduleSidebarView } from "@/components/navigation/s
 import { HomePanel } from "@/components/navigation/home-panel";
 import { useSidebarNavigation } from "@/hooks/use-sidebar-navigation";
 import {
-  clampRailPanelWidth,
   RAIL_PANEL_DEFAULT_WIDTH,
   RAIL_PANEL_MAX_WIDTH,
   RAIL_PANEL_MIN_WIDTH,
   useNavigationStore,
 } from "@/stores/navigation-store";
+import { PanelResizeHandle } from "@/components/elements/panel-resize-handle";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { cn } from "@trenova/shared/lib/utils";
-import { useCallback, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
-
-/**
- * The panel's edge, which drags. It is a line the pointer can take hold of,
- * with a little more to grab than it shows, and a double click puts the
- * width back.
- */
-function ResizeHandle({ width }: { width: number }) {
-  const t = useT();
-  const setWidth = useNavigationStore((state) => state.setRailPanelWidth);
-  const [dragging, setDragging] = useState(false);
-  const origin = useRef<{ x: number; width: number } | null>(null);
-
-  const onPointerDown = useCallback(
-    (event: ReactPointerEvent<HTMLDivElement>) => {
-      if (event.button !== 0) return;
-      event.preventDefault();
-      origin.current = { x: event.clientX, width };
-      event.currentTarget.setPointerCapture(event.pointerId);
-      setDragging(true);
-    },
-    [width],
-  );
-
-  const onPointerMove = useCallback(
-    (event: ReactPointerEvent<HTMLDivElement>) => {
-      if (!origin.current) return;
-      setWidth(clampRailPanelWidth(origin.current.width + event.clientX - origin.current.x));
-    },
-    [setWidth],
-  );
-
-  const onPointerUp = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
-    origin.current = null;
-    event.currentTarget.releasePointerCapture(event.pointerId);
-    setDragging(false);
-  }, []);
-
-  return (
-    <div
-      role="separator"
-      aria-orientation="vertical"
-      aria-label={t("Resize sidebar")}
-      aria-valuemin={RAIL_PANEL_MIN_WIDTH}
-      aria-valuemax={RAIL_PANEL_MAX_WIDTH}
-      aria-valuenow={width}
-      tabIndex={0}
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
-      onPointerCancel={onPointerUp}
-      onDoubleClick={() => setWidth(RAIL_PANEL_DEFAULT_WIDTH)}
-      onKeyDown={(event) => {
-        if (event.key === "ArrowLeft") setWidth(width - 16);
-        if (event.key === "ArrowRight") setWidth(width + 16);
-      }}
-      className={cn(
-        "ui-focus-ring group absolute inset-y-0 -right-1 z-10 w-2 cursor-col-resize outline-none select-none",
-      )}
-    >
-      <span
-        aria-hidden
-        className={cn(
-          "absolute inset-y-0 left-[3px] w-0.5 transition-colors",
-          dragging ? "bg-border-strong" : "bg-transparent group-hover:bg-border-strong",
-        )}
-      />
-    </div>
-  );
-}
 
 function PanelHeading({ children }: { children: string }) {
   return (
@@ -133,6 +63,7 @@ export function RailPanelBody() {
 export function RailPanel({ shown }: { shown: boolean }) {
   const t = useT();
   const width = useNavigationStore((state) => state.railPanelWidth);
+  const setWidth = useNavigationStore((state) => state.setRailPanelWidth);
 
   return (
     <aside
@@ -147,7 +78,16 @@ export function RailPanel({ shown }: { shown: boolean }) {
       <div style={{ width }} className="flex h-full min-h-0 flex-col">
         <RailPanelBody />
       </div>
-      {shown && <ResizeHandle width={width} />}
+      {shown && (
+        <PanelResizeHandle
+          width={width}
+          min={RAIL_PANEL_MIN_WIDTH}
+          max={RAIL_PANEL_MAX_WIDTH}
+          defaultWidth={RAIL_PANEL_DEFAULT_WIDTH}
+          onResize={setWidth}
+          label={t("Resize sidebar")}
+        />
+      )}
     </aside>
   );
 }
