@@ -1,9 +1,12 @@
 package agentquerytoolservice
 
 import (
+	"context"
+
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/pkg/domaintypes"
 )
 
 // The external tests read through the real GraphQL reader, which this
@@ -29,11 +32,14 @@ var (
 	NewListDocumentTypesTool      = newListDocumentTypesTool
 	NewListLocationCategoriesTool = newListLocationCategoriesTool
 	NewListHoldReasonsTool        = newListHoldReasonsTool
+	NewListCustomersTool          = newListCustomersTool
+	NewListLocationsTool          = newListLocationsTool
+	NewListCarriersTool           = newListCarriersTool
 )
 
-// ReferenceReadNames are the reference lists read through GraphQL.
-func ReferenceReadNames() []string {
-	specs := referenceReadSpecs()
+// ConvertedListNames are the list tools read through GraphQL by a spec.
+func ConvertedListNames() []string {
+	specs := graphQLListSpecs()
 	names := make([]string, 0, len(specs))
 	for idx := range specs {
 		names = append(names, specs[idx].name)
@@ -42,9 +48,9 @@ func ReferenceReadNames() []string {
 	return names
 }
 
-// ReferenceReadResource is the resource a reference list reads.
-func ReferenceReadResource(name string) permission.Resource {
-	specs := referenceReadSpecs()
+// ConvertedListResource is the resource a converted list reads.
+func ConvertedListResource(name string) permission.Resource {
+	specs := graphQLListSpecs()
 	for idx := range specs {
 		if specs[idx].name == name {
 			return specs[idx].resource
@@ -54,13 +60,13 @@ func ReferenceReadResource(name string) permission.Resource {
 	return ""
 }
 
-// ReferenceReadTool is the registered reference list of that name.
-func ReferenceReadTool(
+// ConvertedListTool is the registered converted list of that name.
+func ConvertedListTool(
 	name string,
 	reader agentports.GraphQLReader,
 	permissions permissionports.PermissionEngine,
 ) (agentports.AgentQueryTool, error) {
-	specs := referenceReadSpecs()
+	specs := graphQLListSpecs()
 	for idx := range specs {
 		if specs[idx].name == name {
 			return newGraphQLListTool(&specs[idx], reader, permissions)
@@ -68,4 +74,17 @@ func ReferenceReadTool(
 	}
 
 	return nil, errGraphQLReadUnbound
+}
+
+// RunView reads a composed view through a list tool, as compose does.
+func RunView(
+	ctx context.Context,
+	tool agentports.AgentQueryTool,
+	params *agentports.QueryToolParams,
+	filters []domaintypes.FieldFilter,
+	sorting []domaintypes.SortField,
+) error {
+	_, err := tool.(viewRunner).runView(ctx, params, "", filters, sorting, 5)
+
+	return err
 }

@@ -83,17 +83,19 @@ type GraphQLReader interface {
 }
 
 type GraphQLReadRequest struct {
-	Actor     *permissionports.RequestActor
-	Operation string          // a generated binding's operation name, never query text
-	Variables map[string]any
-	Ceiling   permission.FieldSensitivity // the agent's data-access ceiling
+	Actor             *permissionports.RequestActor
+	Operation         string                      // a generated binding's operation name, never query text
+	Variables         map[string]any
+	DataAccessCeiling permission.FieldSensitivity // the agent's data-access ceiling
+	RequestID         string                      // the run's, so logs join
 }
 
 type GraphQLReadResult struct {
-	Data     []byte   // the operation's `data`, sonic-encoded
-	Errors   []GraphQLReadError // path, message, extensions.code
-	Withheld []string // field paths nulled by @protected or the ceiling
-	Cost     int      // the complexity the budget charged
+	Data       map[string]any     // the operation's `data`, decoded; a tool reads Data[rootField]
+	Errors     []GraphQLReadError // path, message, extensions.code
+	Withheld   []string           // field paths withheld by @protected or the ceiling
+	Cost       int                // the complexity the budget charged
+	RetryAfter time.Duration      // set when the budget refused the read
 }
 ```
 
@@ -104,10 +106,10 @@ type GraphQLReadResult struct {
   in the generated binding table, so the safelist holds in every environment. This is stricter
   than HTTP outside production, which also accepts raw query text.
 - **Executor.** It builds a gqlgen `executor.Executor` over the read executor described
-  below, wrapped in the same `newCostLimitedSchema`. It adds the same extensions, in the same
+  below, wrapped in the same `gqlext.NewCostLimitedSchema`. It adds the same extensions, in the same
   order: depth limit, `FixedComplexityLimit`, `CostBudgetExtension`, the edition extensions,
   `ReadOnlyExtension`, `FieldGuardExtension` and `ObservabilityExtension`. `NewServer` and the
-  reader take that list from one function (`serverExtensions`), so a new extension reaches both.
+  reader take that list from one function (`gqlext.Extensions`), so a new extension reaches both.
 - **No HTTP.** It runs `CreateOperationContext` and `DispatchOperation` directly. There is no
   request body, so the body-size limit does not apply; the variables are bounded by the tool's
   own clamps instead (`limit`, list lengths, string lengths).
@@ -145,16 +147,17 @@ the bound operations reach:
   resolver types of the packages the bound root fields live in. Each shard checks only the
   methods it calls, so a partial composite satisfies it.
 - **Services.** The **services are only the ones those resolver packages name**. The generator
-  writes `agentread.Services` (an `fx.In` struct) from the same per-package `Deps` analysis
+  writes `agentread.ResolverParams` (an `fx.In` struct) from the same per-package `Deps` analysis
   `task gqlgen` already does, so the worker graph takes, say, the customer and location services,
   and not the shipment import assistant.
-- **Startup check.** Instead of the whole-schema check, `Registry.ValidateOperations` walks each
-  bound operation's selection against the registry. A selected field with no executor, or an
+- **Startup check.** Instead of the whole-schema check, `gqlexec.NewSchema` runs the registry's
+  `validateOperations` whenever `SchemaConfig.Operations` is set, walking each bound operation's
+  selection against the registry, through every possible type of an interface or union. A selected field with no executor, or an
   object with no resolver, panics at startup with the list, exactly as `NewExecutableSchema`
   panics for the whole schema.
 
 The executor takes the same extensions as `NewServer`, from one function both call
-(`serverExtensions`), so a new extension reaches both.
+(`gqlext.Extensions`), so a new extension reaches both.
 
 **Rejected: routing read tools to a queue the API polls.** `heavyTools` already moves three tools
 to another queue, so it fits the loop. But a code-mode script's reads run inside one activity, and
@@ -291,6 +294,11 @@ becomes a parameter. Its type comes from the field's GraphQL type:
   name is left out, keeping only its `has<Thing>` parameter when it is nullable: a model has no
   honest way to get an id no tool lists (`masterdata_list_fleet_codes` takes no `managerId`,
   because no tool lists users). A reference to a field the record lacks fails construction.
+- **Names follow the conventions.** A parameter takes the name
+  [agent-tool-conventions.md](agent-tool-conventions.md) gives free text (`notes` becomes `note`),
+  and its filter still names the field.
+- **Not every field is something a person says.** The tenant, the row's version, its id and the
+  Google Places id an address was geocoded to (`placeId`) are never parameters.
 - **Free text and sorting.** `query` maps to the input's `query`. `sortBy` is an enum of
   `SortableFields`, and `sortDirection` is `asc|desc`.
 - **Limit.** `limit` maps to `first`, `minimum` 1, `maximum` 50, marked `toolschema.Clamped`.
@@ -303,7 +311,8 @@ becomes a parameter. Its type comes from the field's GraphQL type:
   `leaseEndDate`). The operation's selection decides only what a result carries.
 - **Withheld fields.** A field above the caller's ceiling, or in a `@protected` group the caller
   lacks, is refused as a filter or sort before the read, with the same message today's
-  `refuseWithheldFields` gives.
+  `refuseWithheldFields` gives. A view `report_compose_table_view` composes and previews through the list
+  is held to the same check, since its filters reach the same resolver.
 
 **Operations on a bespoke input** (`FuelPurchasesInput`, `WatchtowerItemsInput`,
 `FactoringNoaListInput`, the side `filter:` inputs, …). Each input field is a parameter under its
@@ -334,7 +343,7 @@ can be used on a new hold"), and a schema description edit is a schema change fo
 The tool's description is its summary followed by every typed parameter by name
 ("Filters: active, code, createdAtFrom/To, …"), as the repository lists' were, so a model choosing
 among tools, and the ranking that embeds descriptions, sees what each list narrows by.
-`TestReferenceReads_DescribeEveryParameter` holds each converted tool to it.
+`TestConvertedLists_DescribeEveryParameter` holds each converted tool to it.
 
 The parameters are derived when the tool is built, not when the code is generated, because the
 filter configuration is computed from the entity at runtime (`querybuilder.GetFieldConfiguration`).
@@ -452,8 +461,11 @@ Each module's PR:
 | Reference data | `document_list_types` | none | every field is Internal |
 | Reference data | `location_list_categories` | none | every field is Internal |
 | Reference data | `masterdata_list_hold_reasons` | none | every field is Internal |
+| Parties | `customer_list` | none | every field the table selects is Internal |
+| Parties | `location_list` | none | every field the table selects is Internal |
+| Parties | `carrier_list` | none | every field the table selects is Internal |
 
-None of the repository-backed reference lists was gated, so at a person's role ceiling below
+None of the repository-backed reference or party lists was gated, so at a person's role ceiling below
 Internal each now withholds every field but `id`, where it used to return them all. No description
 names a field that is newly withheld at Internal, so none changed.
 
@@ -586,9 +598,14 @@ For kinds that declare an "own" or "team" scope (shipments, orders, invoices, wo
 module's test also reads as a person narrowed by `readscope` and asserts the GraphQL path returns
 the rows the repository path returned for that person.
 
-The reference module's test is `TestReferenceReads_ReadWhatTheRepositoryToolsReadUnderRowLevelSecurity`;
-`TestReferenceReads_RefuseExactlyWhatAuthorizeRefuses` covers refusal for each converted list, as
-a person and as an unattended agent.
+Every list converted by a spec is listed once, in `graphQLListSpecs`, which registers them and
+which the tests range over: `TestConvertedLists_ReadWhatTheRepositoryToolsReadUnderRowLevelSecurity`
+holds each to the above, and `TestConvertedLists_RefuseExactlyWhatAuthorizeRefuses` covers refusal
+for each, as a person and as an unattended agent. A module's PR adds its specs and its cases.
+
+A repository-backed list that another tool composes (`shipment_get` reads its customers and
+locations through `newListCustomersTool` and `newListLocationsTool`) keeps that use until the
+composing tool's own module converts it.
 
 ## Tools with no GraphQL equivalent
 
