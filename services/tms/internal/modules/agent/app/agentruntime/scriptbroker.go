@@ -10,6 +10,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/scriptoutbox"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
@@ -23,8 +24,12 @@ const (
 	withheldKey       = "withheldByAccess"
 )
 
-const scriptWriteRefusal = "A script reads only: %q changes something, and changes from a script " +
-	"arrive in Phase 5b. Propose the change with its own tool, outside the script."
+const scriptWriteRefusal = "A script on this model reads only: %q changes something. Propose " +
+	"the change with its own tool, outside the script."
+
+const scriptUnpreparedRefusal = "%q changes something a script may not prepare: a script " +
+	"prepares only changes that name the record they change. Propose it with its own tool, " +
+	"outside the script."
 
 type scriptBroker struct {
 	s             *Service
@@ -33,6 +38,9 @@ type scriptBroker struct {
 	afterExternal bool
 	index         []codemode.Read
 	names         map[string]struct{}
+	writeNames    map[string]struct{}
+	scriptStepKey string
+	outbox        *scriptoutbox.Outbox
 
 	mu       sync.Mutex
 	callID   string
@@ -42,6 +50,7 @@ type scriptBroker struct {
 	usage    codemode.Usage
 	marks    []agent.TaintMark
 	withheld []string
+	prepared []codemode.PreparedChange
 }
 
 type scriptBrokerParams struct {
@@ -50,6 +59,9 @@ type scriptBrokerParams struct {
 	parentCallID  string
 	taint         *agent.RunTaint
 	afterExternal bool
+	// writes lets the script prepare changes, which the code-mode gate
+	// allows only for a model the batch-write bench earned it for.
+	writes bool
 }
 
 func (s *Service) newScriptBroker(ctx context.Context, p *scriptBrokerParams) *scriptBroker {
@@ -70,6 +82,15 @@ func (s *Service) newScriptBroker(ctx context.Context, p *scriptBrokerParams) *s
 	}
 	broker.slots = make(chan struct{}, broker.limits.Concurrent)
 	broker.index = s.scriptIndex(ctx, p.req)
+	broker.writeNames = map[string]struct{}{}
+	if p.writes {
+		broker.scriptStepKey = scope
+		broker.outbox = scriptoutbox.NewOutbox(scope, p.req.Definition.ChangeLimit())
+		for _, write := range s.scriptWriteIndex(ctx, p.req) {
+			broker.index = append(broker.index, write)
+			broker.writeNames[write.Name] = struct{}{}
+		}
+	}
 	broker.names = make(map[string]struct{}, len(broker.index))
 	for idx := range broker.index {
 		broker.names[broker.index[idx].Name] = struct{}{}
@@ -142,6 +163,9 @@ func (b *scriptBroker) Read(ctx context.Context, call codemode.Call) codemode.Re
 		})
 		return reply
 	}
+	if _, writes := b.writeNames[call.Tool]; writes {
+		return b.prepare(ctx, call)
+	}
 
 	b.mu.Lock()
 	if b.usage.Calls >= b.limits.Calls {
@@ -201,9 +225,13 @@ func (b *scriptBroker) refusal(call codemode.Call) (codemode.Reply, bool) {
 		return codemode.Reply{}, false
 	}
 	if _, isAction := b.s.actionTools.Get(call.Tool); isAction {
+		refusal := scriptWriteRefusal
+		if b.outbox != nil {
+			refusal = scriptUnpreparedRefusal
+		}
 		return codemode.Reply{
 			Status:  codemode.CallInvalid,
-			Message: fmt.Sprintf(scriptWriteRefusal, call.Tool),
+			Message: fmt.Sprintf(refusal, call.Tool),
 		}, true
 	}
 	if tool, isQuery := b.s.queryTools.Get(call.Tool); isQuery &&
@@ -310,6 +338,7 @@ func (b *scriptBroker) Summary() codemode.Summary {
 		Calls:    calls,
 		Usage:    b.usage,
 		Withheld: slices.Clone(b.withheld),
+		Batch:    b.batchLocked(),
 	}
 }
 

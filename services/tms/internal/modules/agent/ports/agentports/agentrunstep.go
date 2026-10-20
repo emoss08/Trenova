@@ -21,6 +21,13 @@ type ListAgentRunStepsRequest struct {
 	OwnerID    pulid.ID
 }
 
+// GetAgentRunStepRequest reads one step by the key it was claimed under.
+type GetAgentRunStepRequest struct {
+	TenantInfo pagination.TenantInfo
+	OwnerID    pulid.ID
+	StepKey    string
+}
+
 // SettleAgentRunStepRequest closes a claimed step.
 type SettleAgentRunStepRequest struct {
 	TenantInfo pagination.TenantInfo
@@ -47,5 +54,6 @@ type AgentRunStepRepository interface {
 	// Record files a step that needs no claim, such as a model reply.
 	Record(ctx context.Context, step *agent.AgentRunStep) error
 	List(ctx context.Context, req ListAgentRunStepsRequest) ([]*agent.AgentRunStep, error)
+	Get(ctx context.Context, req *GetAgentRunStepRequest) (*agent.AgentRunStep, error)
 	Prune(ctx context.Context, req PruneAgentRunStepsRequest) (int, error)
 }

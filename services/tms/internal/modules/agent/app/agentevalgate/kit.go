@@ -27,6 +27,8 @@ type RuntimeParams struct {
 	// CodeMode opens the code-mode gate the way the desk bench forces it, for
 	// a red-team case that runs a script.
 	CodeMode bool
+	// Versions pins the record a proposal would change, as the API does.
+	Versions agentports.RecordVersionReader
 }
 
 func NewKit() (*Kit, error) {
@@ -71,6 +73,7 @@ func (k *Kit) NewRuntime(p RuntimeParams) *agentruntime.Service {
 		Catalog:     k.Catalog,
 		Extensions:  p.Extensions,
 		Config:      codeModeConfig(p.CodeMode),
+		Versions:    p.Versions,
 	})
 }
 

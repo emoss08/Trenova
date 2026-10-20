@@ -746,6 +746,7 @@ func (s *Service) recordToolResult(
 	if outcome.action != nil {
 		result.Actions = append(result.Actions, *outcome.action)
 	}
+	result.Actions = append(result.Actions, outcome.batch...)
 	outcome = fx.Observe(t, &call, outcome.exported()).internal()
 	s.countToolOutcome(t, fx, call.Name, &outcome)
 	t.keepShown(&outcome)

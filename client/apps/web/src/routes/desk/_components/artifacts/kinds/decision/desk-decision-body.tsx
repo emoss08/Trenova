@@ -15,6 +15,7 @@ import {
   unreviewedRequired,
 } from "@/components/assistant/proposal-preview/preview-gate";
 import { Notice } from "../artifact-body-parts";
+import { BatchScript } from "./batch-script";
 import {
   ReviewBlocker,
   ReviewedChange,
@@ -147,6 +148,7 @@ export function DeskDecisionBody({ artifact }: { artifact: AssistantArtifact }) 
         </span>
       </div>
       <p className="dk-ax-note">{scope.join(" · ")}</p>
+      {plan?.script && <BatchScript script={plan.script} />}
       <div className="dk-ax-decl">
         {proposals.slice(0, DECISION_ROWS).map((proposal) => {
           const shown = presentProposal(proposal);

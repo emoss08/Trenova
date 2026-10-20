@@ -1,6 +1,7 @@
 package agenttoolpolicy_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
@@ -700,5 +701,42 @@ func TestScriptsCallOnlyReads(t *testing.T) {
 	for _, tool := range tools.Actions {
 		policy := tool.Policy()
 		assert.False(t, policy.CallableFromScript(), "%s is a write", tool.Name())
+	}
+}
+
+// A script prepares only writes a person can approve record by record: each
+// names the record it changes and previews it, changes the tenant's records
+// rather than the agent's own work, never escalates on its own and holds no
+// taint of its own. The tools that are the agent's own work stay out.
+func TestScriptsPrepareOnlyWritesThatNameAndPreviewTheirRecord(t *testing.T) {
+	t.Parallel()
+
+	tools := buildRegistered(t)
+	preparable := 0
+	for _, tool := range tools.Actions {
+		if !agentports.PreparableFromScript(tool) {
+			continue
+		}
+		preparable++
+		policy := tool.Policy()
+		assert.Equal(t, agent.ToolScopeTenant, policy.Scope, tool.Name())
+		assert.False(t, policy.Escalates, tool.Name())
+		assert.Nil(t, policy.TaintHold, tool.Name())
+		assert.NotEqual(t, agent.ToolEffectLookup, policy.EffectiveEffect(), tool.Name())
+		assert.False(t, strings.HasPrefix(tool.Name(), "agent_"), tool.Name())
+		_, previews := tool.(agentports.ToolPreviewer)
+		_, targeted := tool.(agentports.TargetedTool)
+		assert.True(t, previews && targeted, "%s names and previews its record", tool.Name())
+	}
+	assert.Positive(t, preparable, "scripts have writes they may prepare")
+
+	for _, name := range []string{
+		"agent_create_memory", "agent_create_wait", "agent_raise_exception",
+	} {
+		for _, tool := range tools.Actions {
+			if tool.Name() == name {
+				assert.False(t, agentports.PreparableFromScript(tool), "%s is the agent's own work", name)
+			}
+		}
 	}
 }
