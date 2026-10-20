@@ -525,6 +525,7 @@ type PendingDecision struct {
 	Proposal  *agent.AgentProposal
 	Plan      *agent.AgentPlan
 	CreatedAt int64
+	Hold      *ProposalHold
 	// Cursor is where a page continues from after this entry.
 	Cursor string
 }

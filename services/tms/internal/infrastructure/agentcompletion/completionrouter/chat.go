@@ -135,7 +135,7 @@ func (s *Service) runChat(
 			if first := firstOtherThan(failures, provider.ID); first != nil {
 				result.FallbackFrom = first
 			}
-			result.CostUSD = provider.CostFor(outcome.tokenUsage())
+			result.CostUSD = outcome.cost(provider, aiprovider.TaskAssistantChat)
 
 			return result, nil
 		}
@@ -502,6 +502,7 @@ func (s *Service) attemptChat(
 			Tools:          req.Tools,
 			ToolChoiceNone: req.ToolChoiceNone,
 			Reasoning:      req.Reasoning,
+			Advisor:        req.Advisor,
 			MaxTokens:      maxTokens,
 			// A chat turn drives tools, so it is sampled for exactness: the
 			// model has to name a tool that exists and fill its arguments
@@ -627,6 +628,7 @@ func (s *Service) attemptChat(
 		OutputLimit:       cmp.Or(resp.OutputLimit, maxTokens),
 		CutOffCall:        resp.CutOffCall,
 		ContextWindow:     provider.ConfiguredContextWindow(),
+		Advisor:           resp.Advisor,
 	}, streamed, nil
 }
 
@@ -829,5 +831,6 @@ func chatOutcome(
 		Truncated:        result.Truncated,
 		ThinkingDropped:  streamed.thinkingDropped,
 		CacheDiagnosis:   streamed.cacheDiagnosis,
+		Advisor:          result.Advisor,
 	}
 }

@@ -103,7 +103,7 @@ func attemptCost(attempt *usageAttempt) *decimal.Decimal {
 		return nil
 	}
 
-	return attempt.provider.CostForTask(attempt.task, attempt.outcome.tokenUsage())
+	return attempt.outcome.cost(attempt.provider, attempt.task)
 }
 
 func attemptUsage(attempt *usageAttempt, cost *decimal.Decimal) *aitrace.Usage {
@@ -131,6 +131,10 @@ func attemptUsage(attempt *usageAttempt, cost *decimal.Decimal) *aitrace.Usage {
 	}
 	if outcome.FinishReason != "" {
 		usage.FinishReasons = []string{outcome.FinishReason}
+	}
+	if outcome.Advisor.Used() {
+		usage.Advisor = outcome.Advisor
+		usage.AdvisorCostUSD = outcome.Advisor.Cost(attempt.provider.Kind)
 	}
 
 	return usage

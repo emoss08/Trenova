@@ -55,7 +55,6 @@ type stepDecider interface {
 }
 
 type shadowReader interface {
-	Organization(ctx context.Context, tenantInfo pagination.TenantInfo) (bool, error)
 	ForRun(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -177,35 +176,13 @@ func (s *Service) GetByID(
 	ctx context.Context,
 	req agentports.GetAgentPlanByIDRequest,
 ) (*agent.AgentPlan, error) {
-	plan, err := s.plans.GetByID(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	verdict, err := s.shadow.ForRun(ctx, req.TenantInfo, plan.RunID)
-	if err != nil {
-		return nil, err
-	}
-	if verdict.Shadow() {
-		return nil, errortypes.NewNotFoundError("Agent plan not found")
-	}
-
-	return plan, nil
+	return s.plans.GetByID(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
 	req *agentports.ListAgentPlanConnectionRequest,
 ) (*pagination.CursorListResult[*agent.AgentPlan], error) {
-	shadow, err := s.shadow.Organization(ctx, req.Filter.TenantInfo)
-	if err != nil {
-		return nil, err
-	}
-	if shadow {
-		return &pagination.CursorListResult[*agent.AgentPlan]{Items: []*agent.AgentPlan{}}, nil
-	}
-	req.ExcludeShadowDefinitions = true
-
 	return s.plans.ListConnection(ctx, req)
 }
 

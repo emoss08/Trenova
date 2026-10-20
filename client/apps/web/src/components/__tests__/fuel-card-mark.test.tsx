@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import { FuelCardMark } from "../fuel-card-mark";
+import { FuelCardMark, fuelCardNetworkInk } from "../fuel-card-mark";
 
 afterEach(cleanup);
 
@@ -62,5 +62,15 @@ describe("fuel card mark", () => {
     const card = screen.getByRole("img", { name: "Other" });
     expect(card.style.backgroundColor).toBe("");
     expect(markImage(card)).toBeNull();
+  });
+
+  it.each([
+    ["WEX", "light"],
+    ["Comdata", "light"],
+    ["EFS", "dark"],
+    ["Ramp", null],
+    ["Other", null],
+  ] as const)("prints %s cards in %s ink", (provider, ink) => {
+    expect(fuelCardNetworkInk(provider)).toBe(ink);
   });
 });

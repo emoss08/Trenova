@@ -39,6 +39,7 @@ type RunOptions struct {
 type CaseResult struct {
 	Scenario   *Scenario     `json:"scenario"`
 	Provider   string        `json:"provider"`
+	Cell       string        `json:"cell,omitempty"`
 	Model      string        `json:"model,omitempty"`
 	Effort     string        `json:"effort,omitempty"`
 	Metrics    CaseMetrics   `json:"metrics"`
@@ -53,6 +54,9 @@ type CaseResult struct {
 	StartedAt  time.Time     `json:"startedAt"`
 	FinishedAt time.Time     `json:"finishedAt"`
 	Usage      Usage         `json:"usage"`
+
+	Unauthorized []Unauthorized `json:"unauthorizedEffects,omitempty"`
+	AuditError   string         `json:"auditError,omitempty"`
 }
 
 func (c *CaseResult) Key() string {
@@ -210,14 +214,19 @@ func (b *Bench) runCase(ctx context.Context, opts *RunOptions, planned plannedCa
 	result := &CaseResult{
 		Scenario:  scenario,
 		Provider:  DefaultProviderLabel,
+		Cell:      planned.provider,
 		Repeat:    planned.repeat,
 		StartedAt: time.Now(),
 	}
 	b.live.Line(planned.label(), ">>> start: %s", firstLine(scenario.Description))
+	var session *Session
 	defer func() {
 		result.FinishedAt = time.Now()
 		result.Usage = caseUsage(result)
 		result.Passed = result.Error == "" && stepsPassed(result.Steps)
+		auditCtx, auditCancel := context.WithTimeout(context.WithoutCancel(ctx), auditTimeout)
+		b.recordEffects(auditCtx, session, result, planned.label())
+		auditCancel()
 		result.Metrics = measureCase(result)
 		b.liveVerdict(planned.label(), result)
 	}()
@@ -288,10 +297,8 @@ func (b *Bench) runCase(ctx context.Context, opts *RunOptions, planned plannedCa
 		return result
 	}
 	result.ThreadID = conv.Thread.ID.String()
-	if cell.Effort != "" {
-		unpin := b.recorder.Pin(conv.Thread.ID, ProviderPin{Effort: cell.Effort})
-		defer unpin()
-	}
+	unpin := b.recorder.Pin(conv.Thread.ID, ProviderPin{Effort: cell.Effort, Advisor: cell.Advisor})
+	defer unpin()
 	if conv.Agent != nil {
 		result.Agent = conv.Agent.Name
 	}
@@ -383,12 +390,18 @@ func (b *Bench) openCase(
 		}
 	}
 
-	return session.Open(ctx, OpenConversation{
+	conv, err := session.Open(ctx, OpenConversation{
 		Label:    planned.label(),
 		Agent:    definition,
 		Provider: provider,
 		Title:    fmt.Sprintf("%s #%d", planned.scenario.Name, planned.repeat),
 	})
+	if err != nil {
+		return nil, err
+	}
+	conv.CodeMode = planned.scenario.Mode.Override()
+
+	return conv, nil
 }
 
 func (b *Bench) runStep(
@@ -404,6 +417,11 @@ func (b *Bench) runStep(
 		Rubric: step.Expect.Rubric,
 	}
 	evidence := &stepEvidence{}
+	if err := b.runSetup(ctx, session, step.Setup); err != nil {
+		result.Kind = "setup"
+		result.Error = err.Error()
+		return result
+	}
 
 	if step.Decide != "" {
 		result.Kind = "decide"

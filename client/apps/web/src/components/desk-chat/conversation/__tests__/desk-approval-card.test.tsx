@@ -10,6 +10,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { Operation } from "@trenova/shared/types/permission";
 import { DeskApprovalCard } from "../desk-approval-card";
 
 const fetchProposalPreview =
@@ -35,12 +36,22 @@ vi.mock("@/lib/graphql/agent-decisions", () => ({
   decideAgentProposal: vi.fn(),
 }));
 
+const permissions = vi.hoisted(() => ({ allowed: new Set<string>() }));
+
+vi.mock("@/hooks/use-permission", () => ({
+  usePermission: (resource: string, operation: number) => ({
+    allowed: permissions.allowed.has(`${resource}:${operation}`),
+    isLoading: false,
+  }),
+}));
+
 beforeEach(() => {
   decideMyProposal.mockResolvedValue({ commitsAt: null });
 });
 
 afterEach(() => {
   cleanup();
+  permissions.allowed.clear();
   fetchProposalPreview.mockReset();
   fetchPlanPreview.mockReset();
   decideMyProposal.mockReset();
@@ -527,5 +538,69 @@ describe("DeskApprovalCard and changes that must be reviewed", () => {
       ["aprop_1", "aprop_2"],
       expect.objectContaining({ decision: "Accepted", previewDigests: [] }),
     );
+  });
+});
+
+/*
+A switch that holds a change, the organization's pause or the agent's own
+shadow switch, keeps the server from taking a decision on it. The change
+still waits on the person, so the dock asks it: what it is, which switch
+holds it and where that switch is turned off, with nothing to approve.
+*/
+describe("DeskApprovalCard for a held change", () => {
+  const paused = { reason: "OrganizationPaused" as const, agentName: "" };
+
+  it("names the organization's pause and offers to resume agents to someone who may", () => {
+    permissions.allowed.add("agent_control:" + String(Operation.Update));
+    const { approveRef } = renderCard([proposal({ hold: paused })]);
+
+    const card = screen.getByRole("group", { name: "Held, not yet decidable" });
+    expect(card.textContent).toContain("Agents are paused for the organization");
+    expect(within(card).queryByRole("button", { name: /^Approve/ })).toBeNull();
+    expect(within(card).getByRole("link", { name: "Resume agents" }).getAttribute("href")).toBe(
+      "/admin/agent-control",
+    );
+    expect(approveRef.current).toBeNull();
+    expect(fetchProposalPreview).not.toHaveBeenCalled();
+  });
+
+  it("tells someone who may not resume agents that an administrator can", () => {
+    renderCard([proposal({ hold: paused })]);
+
+    const card = screen.getByRole("group", { name: "Held, not yet decidable" });
+    expect(within(card).queryByRole("link")).toBeNull();
+    expect(card.textContent).toContain("An administrator can turn this off.");
+  });
+
+  it("names the agent in shadow and links to its sheet", () => {
+    permissions.allowed.add("agent_definition:" + String(Operation.Update));
+    renderCard([
+      proposal({
+        agentId: "agdef_billing",
+        agentName: "Billing exceptions",
+        hold: { reason: "AgentShadow", agentName: "Billing exceptions" },
+      }),
+    ]);
+
+    const card = screen.getByRole("group", { name: "Held, not yet decidable" });
+    expect(card.textContent).toContain("Billing exceptions is in shadow");
+    expect(within(card).getByRole("link", { name: "Turn off shadow" }).getAttribute("href")).toBe(
+      "/admin/agent-control?tab=agents&openAgent=agdef_billing",
+    );
+  });
+
+  it("holds a plan whole, with its steps counted", () => {
+    renderCard(
+      [
+        proposal({ id: "s1", planId: "apl_1", planStep: 1 }),
+        proposal({ id: "s2", planId: "apl_1", planStep: 2 }),
+      ],
+      [plan({ hold: paused })],
+    );
+
+    const card = screen.getByRole("group", { name: "Held, not yet decidable" });
+    expect(card.textContent).toContain("Reprice two loads");
+    expect(card.textContent).toContain("2 steps");
+    expect(fetchPlanPreview).not.toHaveBeenCalled();
   });
 });

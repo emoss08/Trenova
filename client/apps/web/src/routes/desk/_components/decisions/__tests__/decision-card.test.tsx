@@ -46,6 +46,7 @@ const SHIPMENT_FIELD: ParameterField = {
 function node(overrides: Partial<PendingProposalNode> = {}): PendingProposalNode {
   return {
     __typename: "AgentProposal",
+    hold: null,
     id: "aprop_1",
     reviewRequired: false,
     organizationId: "org_1",

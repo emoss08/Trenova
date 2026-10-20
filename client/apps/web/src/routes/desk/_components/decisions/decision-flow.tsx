@@ -1,4 +1,10 @@
 import {
+  holdActionText,
+  holdReasonText,
+  holdSwitchOf,
+  type HoldSwitch,
+} from "@/components/assistant/approval-queue";
+import {
   ProposalEditor,
   type EditorFocus,
   type ProposalEditorRequest,
@@ -22,7 +28,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { DeskAgentTile } from "@/components/desk-chat/desk-agent-tile";
 import { AlertCircleIcon, CheckIcon, XCloseIcon } from "@trenova/shared/components/icons";
@@ -58,14 +64,27 @@ type Item = {
   tool: string;
   title: string;
   reversible: boolean;
+  /** The switch keeping it from being decided; null when it can be decided now. */
+  held: HoldSwitch | null;
 };
 
 function itemOf(node: PendingDecisionNode): Item {
+  const held = holdSwitchOf(node.hold, {
+    agentId: node.run?.definition?.id ?? node.run?.agentDefinitionId ?? null,
+    agentName: node.run?.definition?.name ?? null,
+  });
   if (isPendingPlan(node)) {
-    return { node, id: node.id, tool: "plan", title: node.title, reversible: true };
+    return { node, id: node.id, tool: "plan", title: node.title, reversible: true, held };
   }
   const view = presentProposal(asAssistantProposal(node));
-  return { node, id: node.id, tool: node.toolName, title: view.title, reversible: view.reversible };
+  return {
+    node,
+    id: node.id,
+    tool: node.toolName,
+    title: view.title,
+    reversible: view.reversible,
+    held,
+  };
 }
 
 function readSeen(): Set<string> {
@@ -103,6 +122,8 @@ export function DecisionFlow() {
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const { allowed: canDecide } = usePermission(Resource.AgentProposal, Operation.Update);
+  const { allowed: canResume } = usePermission(Resource.AgentControl, Operation.Update);
+  const { allowed: canEditAgent } = usePermission(Resource.AgentDefinition, Operation.Update);
   const queue = usePendingDecisions({});
   const [since] = useState(startOfToday);
   const recent = useRecentDecisions(since);
@@ -164,8 +185,11 @@ export function DecisionFlow() {
   // Deciding every write like this one together: the ids, or null for one at a time.
   const like = useMemo(
     () =>
-      current && isPendingProposal(current.node)
-        ? items.filter((item) => item.tool === current.tool && isPendingProposal(item.node))
+      current && current.held === null && isPendingProposal(current.node)
+        ? items.filter(
+            (item) =>
+              item.tool === current.tool && item.held === null && isPendingProposal(item.node),
+          )
         : [],
     [current, items],
   );
@@ -242,7 +266,7 @@ export function DecisionFlow() {
   );
 
   const approve = useCallback(async () => {
-    if (!current || busy || !canDecide) return;
+    if (!current || busy || !canDecide || current.held) return;
     const ids = batch ?? [current.id];
     if (ids.length === 1 && !gate?.approvable) return;
     if (ids.length > 1 && batchUnreviewed.length > 0) return;
@@ -293,7 +317,7 @@ export function DecisionFlow() {
 
   const decline = useCallback(
     (initialReason?: string) => {
-      if (!current || busy || !canDecide) return;
+      if (!current || busy || !canDecide || current.held) return;
       const ids = batch ?? [current.id];
       const node = current.node;
       setDialog({
@@ -331,6 +355,7 @@ export function DecisionFlow() {
 
   const editable =
     current !== null &&
+    current.held === null &&
     isPendingProposal(current.node) &&
     current.node.parameterFields.length > 0 &&
     batch === null;
@@ -421,6 +446,7 @@ export function DecisionFlow() {
             <>
               {formatTimeAgo(item.node.createdAt * 1000)}
               {item.reversible ? "" : ` · ${t("final")}`}
+              {item.held && ` · ${t("held")}`}
             </>
           }
           trailing={!seen.has(item.id) && <QueueUnseenDot label={t("Not opened yet")} />}
@@ -573,7 +599,12 @@ export function DecisionFlow() {
               {queue.hasNextPage ? "+" : ""}
             </span>
             <QueueBarSpacer />
-            {canDecide ? (
+            {current.held ? (
+              <HeldBar
+                held={current.held}
+                canTurnOff={current.held.scope === "organization" ? canResume : canEditAgent}
+              />
+            ) : canDecide ? (
               <>
                 {editable && (
                   <Button
@@ -608,6 +639,29 @@ export function DecisionFlow() {
 
       <ReasonDialog request={dialog} onClose={() => setDialog(null)} />
       <ProposalEditor request={editor} onClose={() => setEditor(null)} />
+    </>
+  );
+}
+
+/**
+ * In place of the decision, for a change a switch holds: which switch, and a
+ * link to it for someone who may turn it off. The server refuses a decision
+ * while the switch is on, so there is nothing here to approve or decline.
+ */
+function HeldBar({ held, canTurnOff }: { held: HoldSwitch; canTurnOff: boolean }) {
+  const t = useT();
+
+  return (
+    <>
+      <span className="dk-dc2-qe" role="status">
+        {holdReasonText(held, t)}
+        {!canTurnOff && ` · ${t("An administrator can turn this off.")}`}
+      </span>
+      {canTurnOff && (
+        <Link to={held.to} className={LINK_CLASS}>
+          {holdActionText(held, t)}
+        </Link>
+      )}
     </>
   );
 }

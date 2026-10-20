@@ -122,7 +122,12 @@ rebuilds the last 30 days from the sources.
   usage rows and no unit keeps the old meaning. `cost_usd` is priced per call by the provider's prices, with
   cache reads and writes at their own rates (the entered price, else the model's list rate from
   `aiprovider.ListPrice`, else the protocol's multiple) and Haiku 5.5's long-prompt rates above
-  100,000 prompt tokens.
+  100,000 prompt tokens (per executor iteration when the call consulted the advisor). A call
+  that consulted Anthropic's advisor carries the advisor's cost inside `cost_usd`, while its
+  token columns are the executor's alone (the advisor's are in the usage row's `advisor_*`
+  columns). Nothing here divides a cost by tokens: costs are read per run and per completed
+  run, and tokens beside them, so the advisor's share needs no split. A per-token figure added
+  later must take `advisor_cost_usd` out of the cost, or add the advisor's tokens, first.
 
 ## The query
 

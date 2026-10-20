@@ -4,6 +4,7 @@ import type { PendingPlanNode, PendingProposalNode } from "../use-pending-decisi
 export function proposalNode(overrides: Partial<PendingProposalNode> = {}): PendingProposalNode {
   return {
     __typename: "AgentProposal",
+    hold: null,
     id: "aprop_1",
     reviewRequired: true,
     organizationId: "org_1",
@@ -34,6 +35,7 @@ export function proposalNode(overrides: Partial<PendingProposalNode> = {}): Pend
 export function planNode(overrides: Partial<PendingPlanNode> = {}): PendingPlanNode {
   return {
     __typename: "AgentPlan",
+    hold: null,
     id: "apl_1",
     organizationId: "org_1",
     businessUnitId: "bu_1",

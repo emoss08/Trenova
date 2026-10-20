@@ -1,0 +1,49 @@
+query DeskFuelPurchaseCard($id: ID!) {
+  fuelPurchaseDeskCard(id: $id) {
+    purchase {
+      ...FuelPurchaseFields
+      tractor {
+        id
+        code
+        make
+        model
+      }
+      fuelCard {
+        ...FuelCardFields
+      }
+    }
+    ifta {
+      year
+      quarter
+      countsForIfta
+      taxPaidGallons
+      ratePerGallon
+      taxPaidCredit
+      tractorGallons
+      tractorPurchaseCount
+    }
+    previousFill {
+      id
+      purchasedAt
+      vendor
+      vendorCity
+      odometer
+    }
+    provenance {
+      batch {
+        id
+        provider
+        origin
+        fileName
+        rowCount
+        createdAt
+      }
+      rowNumber
+      resolutionNotes
+    }
+    createdBy {
+      id
+      name
+    }
+  }
+}

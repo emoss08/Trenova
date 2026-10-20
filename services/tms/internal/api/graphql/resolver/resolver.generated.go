@@ -293,10 +293,16 @@ type Resolver struct {
 	fleetSafetyTerminal                *fleetsafetyresolver.FleetSafetyTerminalResolver
 	formulaTemplate                    *formulatemplateresolver.FormulaTemplateResolver
 	fuelCard                           *fuelpurchaseresolver.FuelCardResolver
+	fuelCardDeskCard                   *fuelpurchaseresolver.FuelCardDeskCardResolver
+	fuelFeedStatus                     *fuelpurchaseresolver.FuelFeedStatusResolver
+	fuelHeldSpend                      *fuelpurchaseresolver.FuelHeldSpendResolver
+	fuelJurisdictionGallons            *fuelpurchaseresolver.FuelJurisdictionGallonsResolver
 	fuelPurchase                       *fuelpurchaseresolver.FuelPurchaseResolver
+	fuelPurchaseIFTA                   *fuelpurchaseresolver.FuelPurchaseIFTAResolver
 	fuelPurchaseImportBatch            *fuelpurchaseresolver.FuelPurchaseImportBatchResolver
 	fuelPurchaseImportRow              *fuelpurchaseresolver.FuelPurchaseImportRowResolver
 	fuelPurchaseImportSummary          *fuelpurchaseresolver.FuelPurchaseImportSummaryResolver
+	fuelSpend                          *fuelpurchaseresolver.FuelSpendResolver
 	iFTAFleetMPG                       *iftaresolver.IFTAFleetMPGResolver
 	iFTAJurisdiction                   *iftaresolver.IFTAJurisdictionResolver
 	iFTAJurisdictionMileageEntry       *iftaresolver.IFTAJurisdictionMileageEntryResolver
@@ -776,6 +782,7 @@ func FromServices(s *Services) *Resolver {
 	}
 	fuelpurchaseDeps := &fuelpurchaseresolver.Deps{
 		Core:                s.Core,
+		FuelDeskCards:       s.FuelDeskCards,
 		FuelPurchaseService: s.FuelPurchaseService,
 	}
 	fuelsurchargeDeps := &fuelsurchargeresolver.Deps{
@@ -1300,10 +1307,16 @@ func FromServices(s *Services) *Resolver {
 		fleetSafetyTerminal:          &fleetsafetyresolver.FleetSafetyTerminalResolver{Deps: fleetsafetyDeps},
 		formulaTemplate:              &formulatemplateresolver.FormulaTemplateResolver{Deps: formulatemplateDeps},
 		fuelCard:                     &fuelpurchaseresolver.FuelCardResolver{Deps: fuelpurchaseDeps},
+		fuelCardDeskCard:             &fuelpurchaseresolver.FuelCardDeskCardResolver{Deps: fuelpurchaseDeps},
+		fuelFeedStatus:               &fuelpurchaseresolver.FuelFeedStatusResolver{Deps: fuelpurchaseDeps},
+		fuelHeldSpend:                &fuelpurchaseresolver.FuelHeldSpendResolver{Deps: fuelpurchaseDeps},
+		fuelJurisdictionGallons:      &fuelpurchaseresolver.FuelJurisdictionGallonsResolver{Deps: fuelpurchaseDeps},
 		fuelPurchase:                 &fuelpurchaseresolver.FuelPurchaseResolver{Deps: fuelpurchaseDeps},
+		fuelPurchaseIFTA:             &fuelpurchaseresolver.FuelPurchaseIFTAResolver{Deps: fuelpurchaseDeps},
 		fuelPurchaseImportBatch:      &fuelpurchaseresolver.FuelPurchaseImportBatchResolver{Deps: fuelpurchaseDeps},
 		fuelPurchaseImportRow:        &fuelpurchaseresolver.FuelPurchaseImportRowResolver{Deps: fuelpurchaseDeps},
 		fuelPurchaseImportSummary:    &fuelpurchaseresolver.FuelPurchaseImportSummaryResolver{Deps: fuelpurchaseDeps},
+		fuelSpend:                    &fuelpurchaseresolver.FuelSpendResolver{Deps: fuelpurchaseDeps},
 		iFTAFleetMPG:                 &iftaresolver.IFTAFleetMPGResolver{Deps: iftaDeps},
 		iFTAJurisdiction:             &iftaresolver.IFTAJurisdictionResolver{Deps: iftaDeps},
 		iFTAJurisdictionMileageEntry: &iftaresolver.IFTAJurisdictionMileageEntryResolver{Deps: iftaDeps},
@@ -2292,8 +2305,28 @@ func (r *Resolver) FuelCard() generated.FuelCardResolver {
 	return r.fuelCard
 }
 
+func (r *Resolver) FuelCardDeskCard() generated.FuelCardDeskCardResolver {
+	return r.fuelCardDeskCard
+}
+
+func (r *Resolver) FuelFeedStatus() generated.FuelFeedStatusResolver {
+	return r.fuelFeedStatus
+}
+
+func (r *Resolver) FuelHeldSpend() generated.FuelHeldSpendResolver {
+	return r.fuelHeldSpend
+}
+
+func (r *Resolver) FuelJurisdictionGallons() generated.FuelJurisdictionGallonsResolver {
+	return r.fuelJurisdictionGallons
+}
+
 func (r *Resolver) FuelPurchase() generated.FuelPurchaseResolver {
 	return r.fuelPurchase
+}
+
+func (r *Resolver) FuelPurchaseIFTA() generated.FuelPurchaseIFTAResolver {
+	return r.fuelPurchaseIFTA
 }
 
 func (r *Resolver) FuelPurchaseImportBatch() generated.FuelPurchaseImportBatchResolver {
@@ -2306,6 +2339,10 @@ func (r *Resolver) FuelPurchaseImportRow() generated.FuelPurchaseImportRowResolv
 
 func (r *Resolver) FuelPurchaseImportSummary() generated.FuelPurchaseImportSummaryResolver {
 	return r.fuelPurchaseImportSummary
+}
+
+func (r *Resolver) FuelSpend() generated.FuelSpendResolver {
+	return r.fuelSpend
 }
 
 func (r *Resolver) IFTAFleetMPG() generated.IFTAFleetMPGResolver {

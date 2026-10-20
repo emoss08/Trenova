@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
@@ -18,7 +20,7 @@ const (
 	listWatchtowerTool = "exception_list_watchtower_items"
 )
 
-var liveQueries = []string{getShipmentTool, listWatchtowerTool}
+var liveQueries = []string{getShipmentTool, listWatchtowerTool, agentextension.ToolRunScript}
 
 type shipmentDesk struct {
 	shipmentports.ShipmentRepository

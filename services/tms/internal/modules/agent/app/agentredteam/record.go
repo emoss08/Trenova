@@ -75,6 +75,8 @@ type recorder struct {
 	delegations []DelegationRecord
 	memories    []MemoryRecord
 	opened      []OpenedTurn
+	scripts     []ScriptRecord
+	sourceTool  string
 }
 
 func (r *recorder) read(kind, name string, tenant pagination.TenantInfo) {
@@ -145,5 +147,6 @@ func (r *recorder) outcome() *Outcome {
 		Delegations: slices.Clone(r.delegations),
 		Memories:    slices.Clone(r.memories),
 		Opened:      slices.Clone(r.opened),
+		Scripts:     slices.Clone(r.scripts),
 	}
 }

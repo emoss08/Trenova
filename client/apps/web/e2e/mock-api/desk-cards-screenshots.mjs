@@ -209,6 +209,20 @@ const CARDS = [
     empty: "manual-posted",
     gone: "manual-gone",
   },
+  {
+    card: "fuel-purchase",
+    loaded: "fuel-pilot",
+    attention: "fuel-yard",
+    empty: "fuel-petro",
+    gone: "fuel-gone",
+  },
+  {
+    card: "fuel-card",
+    loaded: "fuelcard-active",
+    attention: "fuelcard-found",
+    empty: "fuelcard-cancelled",
+    gone: "fuelcard-gone",
+  },
 ];
 
 function shotsFor({ card, loaded, attention, empty, gone }) {

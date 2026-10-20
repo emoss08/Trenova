@@ -23,6 +23,8 @@ type (
 	// its bytes as read for a model that reads files itself.
 	MessageFile        = agentports.MessageFile
 	MessageFileContent = agentports.MessageFileContent
+	AdvisorSpec        = agentports.AdvisorSpec
+	ProviderBlock      = conversation.ProviderBlock
 )
 
 const (

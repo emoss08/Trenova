@@ -6,6 +6,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
@@ -52,6 +53,17 @@ type guardedDispatchParams struct {
 	// scriptStepKey is the ledger step of the script whose broker made the
 	// call; a write under it is an intent and never runs.
 	scriptStepKey string
+	gate          scriptGate
+	caller        string
+	callIndex     int
+}
+
+// scriptGate is what decides whether a call may run a script: the model that
+// asked for it and how many scripts the turn asked for up to it.
+type scriptGate struct {
+	model    string
+	provider aiprovider.Kind
+	position int
 }
 
 // guardedDispatch runs one tool call at most once across every attempt of a
@@ -83,6 +95,7 @@ func (s *Service) guardedDispatch(
 	}
 
 	ctx, span := s.startToolSpan(ctx, req, &p.call, key)
+	markCaller(span, p.caller, p.callIndex)
 	defer span.End()
 
 	if key == "" {
@@ -97,6 +110,7 @@ func (s *Service) guardedDispatch(
 			afterExternal:  p.afterExternal,
 			beyond:         p.beyond,
 			scriptStepKey:  p.scriptStepKey,
+			gate:           p.gate,
 		})
 		finishToolSpan(span, &outcome, p.afterExternal)
 
@@ -179,6 +193,7 @@ func (s *Service) claimAndDispatch(
 		beyond:         p.beyond,
 		stepKey:        key,
 		scriptStepKey:  p.scriptStepKey,
+		gate:           p.gate,
 	})
 
 	step.Status = agentports.RunStepCompleted

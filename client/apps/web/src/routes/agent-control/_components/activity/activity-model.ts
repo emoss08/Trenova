@@ -57,3 +57,15 @@ export const PENDING_PROPOSAL_FILTERS: FieldFilter[] = [
 export const OPEN_EXCEPTION_FILTERS: FieldFilter[] = [
   { field: "resolutionState", operator: "in", value: ["Open", "InReview"] },
 ];
+
+/**
+ * Whether a person may decide this proposal or plan from the activity lists:
+ * they hold the right, it waits, and no switch holds it. The server refuses a
+ * decision on a held one, so its buttons are not offered.
+ */
+export function decidable(
+  row: { status: string; hold?: { reason: string } | null },
+  canDecide: boolean,
+): boolean {
+  return canDecide && row.status === "Pending" && row.hold == null;
+}

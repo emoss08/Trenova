@@ -26,6 +26,11 @@ import { deskCarrierSettlements, deskDriverSettlements } from "../fixtures/desk-
 import { deskDetentions } from "../fixtures/desk-detention.mjs";
 import { deskEdiPartners } from "../fixtures/desk-edi-partners.mjs";
 import { deskJournalEntries, deskManualJournals } from "../fixtures/desk-journals.mjs";
+import {
+  DESK_FUEL_PURCHASE_DOCUMENTS,
+  deskFuelCards,
+  deskFuelPurchases,
+} from "../fixtures/desk-fuel.mjs";
 import { hash } from "../state.mjs";
 import { TriageError } from "./triage-model.mjs";
 import { userSelectOptions } from "./settings.mjs";
@@ -529,6 +534,22 @@ export const DESK_CARD_HANDLERS = {
     }
     return { manualJournalCard: card };
   },
+  DeskFuelPurchaseCard: (state, variables) => {
+    if (held(state)) return HOLD;
+    const card = deskFuelPurchases(state.anchor)[variables.id];
+    if (!card) {
+      throw new TriageError("FuelPurchase not found", { code: "NOT_FOUND", type: "not-found" });
+    }
+    return { fuelPurchaseDeskCard: card };
+  },
+  DeskFuelCardCard: (state, variables) => {
+    if (held(state)) return HOLD;
+    const card = deskFuelCards(state.anchor)[variables.id];
+    if (!card) {
+      throw new TriageError("FuelCard not found", { code: "NOT_FOUND", type: "not-found" });
+    }
+    return { fuelCardDeskCard: card };
+  },
   ApproveJournalEntries: (state, variables) => journalReview(state, variables, "Approved"),
   PostJournalEntries: (state, variables) => journalReview(state, variables, "Posted"),
   DeskDetentionCard: (state, variables) => {
@@ -1003,6 +1024,8 @@ export const DESK_CARD_ROUTES = [
       return missing ?? fixture.agreement;
     },
   ],
+  // The extension commands the Desk's composer offers; the mock turns no extension on.
+  ["GET", /^\/api\/v1\/assistant\/agents\/[^/]+\/commands\/?$/, () => ({ commands: [] })],
   [
     "GET",
     /^\/api\/v1\/assistant\/providers\/?$/,
@@ -1079,6 +1102,18 @@ export const DESK_CARD_ROUTES = [
       if (!fixture || empty(state)) return [];
       return fixture.documents.map((file, index) =>
         deskDocument(kind, id, file, index, state.anchor),
+      );
+    },
+  ],
+  [
+    "GET",
+    /^\/api\/v1\/documents\/resource\/fuel_purchase\/([a-z0-9_]+)\/?$/,
+    (state, path) => {
+      if (held(state)) return HOLD;
+      const id = path.match(/fuel_purchase\/([a-z0-9_]+)/)?.[1] ?? "";
+      if (empty(state)) return [];
+      return (DESK_FUEL_PURCHASE_DOCUMENTS[id] ?? []).map((file, index) =>
+        deskDocument("fuel_purchase", id, file, index, state.anchor),
       );
     },
   ],

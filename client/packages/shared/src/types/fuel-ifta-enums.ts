@@ -48,13 +48,24 @@ export const IFTA_FUEL_TYPE_LABELS: Record<IftaFuelType, string> = defineLabels(
   Other: "Other",
 });
 
-export const fuelCardProviderSchema = z.enum(["Comdata", "EFS", "WEX", "Other"]);
+const NOT_IFTA_FUELS: ReadonlySet<IftaFuelType> = new Set(["DEF", "Reefer", "Other"]);
+
+/**
+ * Whether a fuel is motor fuel the IFTA return taxes, as the server decides it
+ * (`IFTAFuelType.CountsForIFTA`): DEF, reefer fuel and anything else is spend only.
+ */
+export function countsForIfta(fuelType: IftaFuelType): boolean {
+  return !NOT_IFTA_FUELS.has(fuelType);
+}
+
+export const fuelCardProviderSchema = z.enum(["Comdata", "EFS", "WEX", "Ramp", "Other"]);
 export type FuelCardProvider = z.infer<typeof fuelCardProviderSchema>;
 
 export const FUEL_CARD_PROVIDER_LABELS: Record<FuelCardProvider, string> = defineLabels({
   Comdata: "Comdata",
   EFS: "EFS",
   WEX: "WEX",
+  Ramp: "Ramp",
   Other: "Other",
 });
 
