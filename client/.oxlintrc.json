@@ -8,7 +8,7 @@
         "unicorn"
     ],
     "categories": {
-        "correctness": "warn"
+        "correctness": "error"
     },
     "env": {
         "builtin": true,
@@ -167,7 +167,10 @@
                 ],
                 "patterns": [
                     {
-                        "group": ["@untitledui/icons/*", "@hugeicons/*"],
+                        "group": [
+                            "@untitledui/icons/*",
+                            "@hugeicons/*"
+                        ],
                         "message": "Import icons from @trenova/shared/components/icons."
                     }
                 ]
