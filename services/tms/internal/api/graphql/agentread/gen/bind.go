@@ -28,6 +28,8 @@ const (
 	edgesField   = "edges"
 	nodeField    = "node"
 	idArgument   = "id"
+	itemsField   = "items"
+	pageInfo     = "pageInfo"
 	readingSplit = "_"
 )
 
@@ -38,6 +40,10 @@ type read struct {
 	Tool      string `yaml:"tool"`
 	Operation string `yaml:"operation,omitempty"`
 	Reason    string `yaml:"reason,omitempty"`
+	// Entity is the Go record whose filter configuration the resolver
+	// compiles filters with, named when the GraphQL type binds to a
+	// generated model rather than to the entity itself.
+	Entity string `yaml:"entity,omitempty"`
 }
 
 type readsFile struct {
@@ -142,6 +148,7 @@ type binding struct {
 	Node     string
 	Resource permission.Resource
 	Reason   string
+	Entity   string
 }
 
 // rootRead is what one Query root field reads, by the rule.
@@ -163,7 +170,10 @@ func rootReads(schema *ast.Schema) []rootRead {
 	out := make([]rootRead, 0, len(schema.Query.Fields))
 	for _, field := range schema.Query.Fields {
 		verb, node, ok := readShape(schema, field)
-		if !ok {
+		if !ok || (verb == verbGet && field.Arguments.ForName(idArgument) == nil) {
+			continue
+		}
+		if verb == verbList && field.Type.Elem != nil {
 			continue
 		}
 		resource := permission.Resource(stringutils.ConvertCamelToSnake(node))
@@ -191,12 +201,17 @@ func readShape(
 	schema *ast.Schema,
 	field *ast.FieldDefinition,
 ) (verb, node string, ok bool) {
-	if field.Type.Elem != nil {
-		return "", "", false
-	}
 	def := schema.Types[field.Type.Name()]
 	if def == nil || def.Kind != ast.Object {
 		return "", "", false
+	}
+	if field.Type.Elem != nil {
+		return verbList, def.Name, true
+	}
+	if items := def.Fields.ForName(itemsField); items != nil && items.Type.Elem != nil {
+		if node := schema.Types[items.Type.Name()]; node != nil && node.Kind == ast.Object {
+			return verbList, node.Name, true
+		}
 	}
 	if strings.HasSuffix(def.Name, connection) {
 		edges := def.Fields.ForName(edgesField)
@@ -213,18 +228,27 @@ func readShape(
 		}
 		return verbList, node.Type.Name(), true
 	}
-	if field.Arguments.ForName(idArgument) != nil {
+	if len(field.Arguments) > 0 {
 		return verbGet, def.Name, true
 	}
 
 	return "", "", false
 }
 
+// boundSchema and boundChecks are what a named binding is proven against;
+// bind sets them once for the run.
+var (
+	boundSchema *ast.Schema
+	boundChecks map[string]string
+)
+
 func bind(
 	schema *ast.Schema,
 	catalog map[string]*operation,
 	reads []read,
+	checks map[string]string,
 ) ([]*binding, error) {
+	boundSchema, boundChecks = schema, checks
 	byTool := make(map[string][]rootRead)
 	for _, rr := range rootReads(schema) {
 		byTool[rr.tool] = append(byTool[rr.tool], rr)
@@ -274,18 +298,41 @@ func bindOne(
 		return nil, fmt.Sprintf("%s names %s, which reads %d root fields; a tool reads one",
 			r.Tool, r.Operation, len(chosen.Roots))
 	}
-	for _, candidate := range candidates {
-		if candidate.field.Name == chosen.Roots[0] {
-			return newBinding(r, chosen, candidate, r.Reason), ""
-		}
+
+	return namedBinding(r, chosen)
+}
+
+// namedBinding binds a tool to the operation reads.yml names. The root field
+// it reads must have the shape the tool's verb says, and the resource its
+// resolver checks becomes the binding's, which a test holds to the tool's
+// own policy.
+func namedBinding(r read, chosen *operation) (b *binding, problem string) {
+	field := boundSchema.Query.Fields.ForName(chosen.Roots[0])
+	if field == nil {
+		return nil, fmt.Sprintf("%s: %s is not a Query field", r.Tool, chosen.Roots[0])
+	}
+	verb, node, ok := readShape(boundSchema, field)
+	want, _, _ := strings.Cut(agentports.ReadingOrder(r.Tool), readingSplit)
+	if !ok || verb != want {
+		return nil, fmt.Sprintf("%s is a %s tool, but %s reads %s, which is not one",
+			r.Tool, want, r.Operation, chosen.Roots[0])
+	}
+	resource, checked := checkedResource(boundChecks, field.Name)
+	if !checked {
+		return nil, fmt.Sprintf("%s: the resolver of %s checks no read permission, so the "+
+			"tool's own could not be held to it", r.Tool, field.Name)
 	}
 
-	return nil, fmt.Sprintf(
-		"%s names %s, whose root field %s reads no record the tool is named for",
-		r.Tool,
-		r.Operation,
-		chosen.Roots[0],
-	)
+	return &binding{
+		Tool:      r.Tool,
+		Verb:      verb,
+		Operation: chosen,
+		RootField: field,
+		Node:      node,
+		Resource:  permission.Resource(resource),
+		Reason:    r.Reason,
+		Entity:    r.Entity,
+	}, ""
 }
 
 func describe(op *operation, problem string) string {
@@ -297,14 +344,20 @@ func describe(op *operation, problem string) string {
 }
 
 func newBinding(r read, op *operation, rr rootRead, reason string) *binding {
+	resource := rr.resource
+	if checked, ok := checkedResource(boundChecks, rr.field.Name); ok {
+		resource = permission.Resource(checked)
+	}
+
 	return &binding{
 		Tool:      r.Tool,
 		Verb:      rr.verb,
 		Operation: op,
 		RootField: rr.field,
 		Node:      rr.node,
-		Resource:  rr.resource,
+		Resource:  resource,
 		Reason:    reason,
+		Entity:    r.Entity,
 	}
 }
 
@@ -331,7 +384,7 @@ func ruleOperation(
 	rr = candidates[0]
 	var ops []*operation
 	for _, op := range catalog {
-		if len(op.Roots) == 1 && op.Roots[0] == rr.field.Name {
+		if len(op.Roots) == 1 && op.Roots[0] == rr.field.Name && pages(op, rr) {
 			ops = append(ops, op)
 		}
 	}
@@ -368,6 +421,32 @@ func ruleOperation(
 
 	return nil, rr, fmt.Sprintf("%s: no persisted query reads %s alone; add one", tool,
 		rr.field.Name)
+}
+
+// pages reports whether an operation can serve a list tool's paging: a
+// connection read must select its pageInfo, or a tool reading through it
+// could never offer the next page.
+func pages(op *operation, rr rootRead) bool {
+	if rr.verb != verbList || rr.field.Type.Elem != nil {
+		return true
+	}
+	for _, selection := range op.Query.Operations[0].SelectionSet {
+		root, ok := selection.(*ast.Field)
+		if !ok || root.Name != rr.field.Name {
+			continue
+		}
+		fragments := make(map[string]*ast.FragmentDefinition, len(op.Query.Fragments))
+		for _, fragment := range op.Query.Fragments {
+			fragments[fragment.Name] = fragment
+		}
+		for _, f := range collect(root.SelectionSet, fragments) {
+			if f.Name == pageInfo {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 func sortedKeys[V any](m map[string]V) []string {

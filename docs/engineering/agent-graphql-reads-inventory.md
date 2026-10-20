@@ -351,3 +351,43 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 | partial | 30 |
 | none | 21 |
 | **total** | **176** |
+
+## Binding trial (2026-10-20)
+
+Each of the 119 `op` tools was run alone through `agentread/gen`. A tool binds either by the rule
+(root field, record kind, tool name, then the Desk's, the table's or the only operation) or by a
+named operation in `reads.yml`, which the generator proves: the operation reads one root field,
+the field's shape matches the tool's verb, and the field's resolver checks the tool's own resource
+for read.
+
+- **By the rule:** 49 tools.
+- **By a named operation** (the one this inventory picked): 46 tools.
+- **Not yet:** 22 tools, each with the generator's reason below. Most need `entity` named in
+  `reads.yml`, because their type binds to a generated model (`gqlmodel`) rather than to the
+  record the resolver filters. A few have a shape no list or get tool reads (no arguments at all,
+  a catalog, two root fields), and are decided in their module's PR.
+
+| Tool | Named operation | Generator says |
+|---|---|---|
+| `detention_get_occurrence` | `DeskDetentionCard` | DetentionOccurrenceDetail binds to no Go type; name the entity in reads.yml |
+| `dispatch_get_board` | `DispatchBoard` | DispatchBoard binds to no Go type; name the entity in reads.yml |
+| `edi_get_partner` | `DeskEdiPartnerCard` | EdiPartnerCard binds to no Go type; name the entity in reads.yml |
+| `factoring_get_submission` | `FactoringSubmissionDetail` | factoring_get_submission is a get tool, but FactoringSubmissionDetail reads factoringSubmission, which is not one |
+| `home_get_layout` | `HomeLayout` | home_get_layout is a get tool, but HomeLayout reads homeLayout, which is not one |
+| `home_list_widgets` | `HomeWidgetCatalog` | home_list_widgets is a list tool, but HomeWidgetCatalog reads homeWidgetCatalog, which is not one |
+| `rate_list_agreements` | `DeskCustomerRateAgreements` | RateAgreement binds to no Go type; name the entity in reads.yml |
+| `rate_list_fuel_index_prices` | `FuelIndexPriceHistory` | FuelIndexPrice binds to no Go type; name the entity in reads.yml |
+| `rate_list_fuel_surcharge_programs` | `FuelProgramCurrentRates` | FuelProgramCurrentRate binds to no Go type; name the entity in reads.yml |
+| `receivable_list_credit_memo_applications` | `DeskInvoiceCard` | receivable_list_credit_memo_applications is a list tool, but DeskInvoiceCard reads invoice, which is not one |
+| `report_get` | `ReportDefinitionById` | ReportDefinition binds to no Go type; name the entity in reads.yml |
+| `report_get_dataset` | `ReportCatalog` | report_get_dataset is a get tool, but ReportCatalog reads reportCatalog, which is not one |
+| `report_get_run` | `ReportRunById` | ReportRun binds to no Go type; name the entity in reads.yml |
+| `report_list` | `ReportDefinitionsTable` | ReportDefinition binds to no Go type; name the entity in reads.yml |
+| `report_list_dashboards` | `ReportDashboards` | ReportDashboard binds to no Go type; name the entity in reads.yml |
+| `report_list_datasets` | `ReportCatalog` | report_list_datasets is a list tool, but ReportCatalog reads reportCatalog, which is not one |
+| `report_list_runs` | `ReportRunsTable` | ReportRun binds to no Go type; name the entity in reads.yml |
+| `report_list_schedules` | `ReportSchedules` | ReportSchedule binds to no Go type; name the entity in reads.yml |
+| `settlement_list_payroll_exports` | `PayrollExports` | the resolver of payrollExports checks no read permission, so the tool's own could not be held to it |
+| `shipment_list` | `DeskRecordShipments` | Shipment binds to no Go type; name the entity in reads.yml |
+| `worker_get_hos` | `DeskWorkerHos` | worker_get_hos names DeskWorkerHos, which reads 2 root fields; a tool reads one |
+| `worker_get_schedule` | `WorkerShiftAssignments` | worker_get_schedule is a get tool, but WorkerShiftAssignments reads workerShiftAssignments, which is not one |

@@ -63,7 +63,11 @@ func run(opts *options) error {
 		return err
 	}
 
-	bindings, err := bind(schema, catalog, reads)
+	checks, err := readChecks(opts.resolver)
+	if err != nil {
+		return err
+	}
+	bindings, err := bind(schema, catalog, reads, checks)
 	if err != nil {
 		return err
 	}

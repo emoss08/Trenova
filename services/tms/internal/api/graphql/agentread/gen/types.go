@@ -7,6 +7,10 @@ import (
 	"github.com/99designs/gqlgen/codegen/config"
 )
 
+// generatedModels is gqlgen's model package; a type bound there is a shape
+// for the wire, not the entity the resolver filters.
+const generatedModels = "gqlmodel"
+
 // goType is the Go type a GraphQL object binds to, as gqlgen's binder sees
 // it: its package path and name.
 type goType struct {
@@ -32,15 +36,24 @@ func goTypes(configPath string, bindings []*binding) (map[string]goType, error) 
 	out := make(map[string]goType, len(bindings))
 	var problems []string
 	for _, b := range bindings {
-		model, ok := cfg.Models[b.Node]
-		if !ok || len(model.Model) == 0 {
-			problems = append(problems, b.Tool+": "+b.Node+" binds to no Go type")
-			continue
+		full := b.Entity
+		if full == "" {
+			model, ok := cfg.Models[b.Node]
+			if !ok || len(model.Model) == 0 {
+				problems = append(problems, b.Tool+": "+b.Node+" binds to no Go type; "+
+					"name the entity in reads.yml")
+				continue
+			}
+			full = model.Model[0]
 		}
-		full := model.Model[0]
 		idx := strings.LastIndex(full, ".")
 		if idx < 0 {
 			problems = append(problems, b.Tool+": "+b.Node+" binds to "+full)
+			continue
+		}
+		if b.Entity == "" && strings.HasSuffix(full[:idx], "/"+generatedModels) {
+			problems = append(problems, b.Tool+": "+b.Node+" binds to the generated "+full+
+				", which has no filter configuration; name the entity in reads.yml")
 			continue
 		}
 		out[b.Node] = goType{Path: full[:idx], Name: full[idx+1:]}

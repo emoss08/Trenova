@@ -1,6 +1,7 @@
 package agentquerytoolservice
 
 import (
+	"reflect"
 	"slices"
 	"testing"
 
@@ -111,4 +112,29 @@ func TestTypedParamsRefuseADayThatIsNotADay(t *testing.T) {
 		filtercatalog.NewClock("UTC"))
 
 	assert.ErrorContains(t, err, "createdAtFrom")
+}
+
+// A tool reads only through a root field whose resolver checks the tool's
+// own resource for read, so the check its read meets is the one dispatch's
+// authorize already made.
+func TestGraphQLReadsCheckTheToolsOwnResource(t *testing.T) {
+	t.Parallel()
+
+	for _, provider := range ToolProviders() {
+		fn := reflect.ValueOf(provider)
+		args := make([]reflect.Value, fn.Type().NumIn())
+		for idx := range args {
+			args[idx] = reflect.Zero(fn.Type().In(idx))
+		}
+		tool, ok := fn.Call(args)[0].Interface().(agentports.AgentQueryTool)
+		if !ok || tool == nil {
+			continue
+		}
+		read, bound := graphQLReads[tool.Name()]
+		if !bound {
+			continue
+		}
+		assert.Equalf(t, read.Resource, tool.Policy().Resource.String(),
+			"%s reads %s, whose resolver checks %s", tool.Name(), read.Operation, read.Resource)
+	}
 }
