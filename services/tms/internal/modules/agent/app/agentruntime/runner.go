@@ -109,6 +109,7 @@ type Service struct {
 	matchable  func() []string
 	registry   *permission.Registry
 	codeMode   codemode.Gate
+	shadow     shadowVerdicts
 }
 
 func New(p Params) *Service {
@@ -139,6 +140,7 @@ func New(p Params) *Service {
 		matchable:   matchableTools(p.Catalog),
 		registry:    permission.NewRegistry(),
 		codeMode:    codeModeGate(p.Config),
+		shadow:      shadowFrom(p.Shadow),
 	}
 }
 
