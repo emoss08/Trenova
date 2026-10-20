@@ -233,7 +233,7 @@ unchanged, and there is no address inside the sandbox to reach.
 
 `e2bconnector`'s test asserts both flags on every create (it already does for analysis). A new
 `TestScriptSandboxCreatesWithNoEgress` asserts the same for the script runner's request. The
-red-team probe (§9) runs `socket.create_connection` and `urllib` against an outside host and a
+red-team probe (§10) runs `socket.create_connection` and `urllib` against an outside host and a
 Trenova host from inside a script, and expects both to fail.
 
 ### 5.2 The channel
@@ -540,7 +540,7 @@ are `GET`.
 - **Re-previewed at commit.** When the person decides, every item is previewed again, and the
   stale-version refusal applies. An item whose world moved is refused, not committed on stale
   authority (review §2.3: 207 of 216 invalidated runs committed anyway without this check).
-  The digest rule applies by class (§8.2 item 3), so a money or customer-visible item cannot be
+  The digest rule applies by class (review §8.2 item 3), so a money or customer-visible item cannot be
   approved unreviewed.
 - **Taint holds every intent.** A tainted script's intents are proposed whatever their class,
   and money intents always are. A script may not run a write automatically in 5b.
