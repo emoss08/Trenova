@@ -50,7 +50,7 @@ const (
 // policy does not keep it from scripts, that touches only what the caller may
 // read and reads nothing from outside the organization a script could relay
 // into a later write.
-func (p ToolPolicy) CallableFromScript() bool {
+func (p *ToolPolicy) CallableFromScript() bool {
 	return p.Kind == agent.ToolKindQuery &&
 		p.EffectiveEffect() == agent.ToolEffectLookup &&
 		p.Script == ScriptCallable &&

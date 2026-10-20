@@ -1,11 +1,12 @@
 package assistantservice
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"context"
 	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"

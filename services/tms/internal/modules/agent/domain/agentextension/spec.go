@@ -38,35 +38,40 @@ type Spec struct {
 
 	// Switched are further capabilities the same account serves once the
 	// organization turns on the boolean setting named for each.
-	Switched map[Capability]string
+	Switched []SwitchedCapability
+}
+
+type SwitchedCapability struct {
+	Capability Capability
+	Setting    string
 }
 
 // ServedBy are the capabilities an extension with this configuration serves:
 // its own, and each switched one whose setting is on.
-func (s Spec) ServedBy(configuration map[string]any) []Capability {
+func (s *Spec) ServedBy(configuration map[string]any) []Capability {
 	served := make([]Capability, 0, 1+len(s.Switched))
 	served = append(served, s.Capability)
-	for _, c := range AllCapabilities() {
-		key, switched := s.Switched[c]
-		if switched && configspec.ReadString(configuration, key) == "true" {
-			served = append(served, c)
+	for _, switched := range s.Switched {
+		if configspec.ReadString(configuration, switched.Setting) == "true" {
+			served = append(served, switched.Capability)
 		}
 	}
 
 	return served
 }
 
-func (s Spec) Serves(c Capability) bool {
+func (s *Spec) Serves(c Capability) bool {
 	if c == s.Capability {
 		return true
 	}
-	_, switched := s.Switched[c]
 
-	return switched
+	return slices.ContainsFunc(s.Switched, func(switched SwitchedCapability) bool {
+		return switched.Capability == c
+	})
 }
 
 // ToolsOf are the tools of one capability this vendor serves.
-func (s Spec) ToolsOf(c Capability) []string {
+func (s *Spec) ToolsOf(c Capability) []string {
 	if !s.Serves(c) {
 		return nil
 	}
@@ -143,7 +148,8 @@ func SpecFor(t Type) (Spec, bool) {
 func TypesFor(c Capability) []Type {
 	types := make([]Type, 0, 1)
 	for _, typ := range AllTypes() {
-		if specs[typ].Serves(c) {
+		spec := specs[typ]
+		if spec.Serves(c) {
 			types = append(types, typ)
 		}
 	}

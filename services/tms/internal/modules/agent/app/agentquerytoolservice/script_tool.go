@@ -299,7 +299,8 @@ func scriptAnswerOf(
 		answer.Note = scriptDoneNote
 	case agentextensionports.ScriptErrored:
 		answer.Note = scriptErrorNote
-	default:
+	case agentextensionports.ScriptTimedOut, agentextensionports.ScriptStopped,
+		agentextensionports.ScriptFailed:
 		answer.Note = scriptStoppedNote
 	}
 

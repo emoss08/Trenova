@@ -110,7 +110,9 @@ func (s *Service) scriptIndex(ctx context.Context, req *agentports.RunRequest) [
 func scriptMayCall(tool agentports.AgentQueryTool) bool {
 	name := tool.Name()
 
-	return tool.Policy().CallableFromScript() &&
+	policy := tool.Policy()
+
+	return policy.CallableFromScript() &&
 		!ReadsExternalContent(name) &&
 		!agentextension.IsExtensionTool(name)
 }
@@ -125,17 +127,17 @@ func (b *scriptBroker) Index() []codemode.Read {
 	return b.index
 }
 
-func (b *scriptBroker) Bound(limits codemode.Limits) {
+func (b *scriptBroker) Bound(limits *codemode.Limits) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	b.limits = limits
+	b.limits = *limits
 	b.slots = make(chan struct{}, max(limits.Concurrent, 1))
 }
 
 func (b *scriptBroker) Read(ctx context.Context, call codemode.Call) codemode.Reply {
 	if reply, refused := b.refusal(call); refused {
-		b.record(codemode.CallSummary{
+		b.record(&codemode.CallSummary{
 			Seq: call.Seq, Tool: call.Tool, Status: reply.Status, Message: reply.Message,
 		})
 		return reply
@@ -146,7 +148,7 @@ func (b *scriptBroker) Read(ctx context.Context, call codemode.Call) codemode.Re
 		b.hitLocked(codemode.LimitCalls)
 		b.mu.Unlock()
 		reply := limitReply(codemode.LimitCalls, "the script has made every read it may")
-		b.record(codemode.CallSummary{
+		b.record(&codemode.CallSummary{
 			Seq: call.Seq, Tool: call.Tool, Status: reply.Status, Message: reply.Message,
 		})
 		return reply
@@ -184,7 +186,7 @@ func (b *scriptBroker) Read(ctx context.Context, call codemode.Call) codemode.Re
 
 	if outcome.failed {
 		reply := codemode.Reply{Status: failedStatus(outcome.verdict), Message: outcome.content}
-		b.record(codemode.CallSummary{
+		b.record(&codemode.CallSummary{
 			Seq: call.Seq, Tool: call.Tool, Status: reply.Status, BrokerMs: elapsed,
 			Message: reply.Message,
 		})
@@ -222,8 +224,11 @@ func (b *scriptBroker) refusal(call codemode.Call) (codemode.Reply, bool) {
 func (b *scriptBroker) deliver(call codemode.Call, data any, elapsed int64) codemode.Reply {
 	encoded, err := sonic.Marshal(data)
 	if err != nil {
-		reply := codemode.Reply{Status: codemode.CallFailed, Message: "the read's answer could not be encoded"}
-		b.record(codemode.CallSummary{
+		reply := codemode.Reply{
+			Status:  codemode.CallFailed,
+			Message: "the read's answer could not be encoded",
+		}
+		b.record(&codemode.CallSummary{
 			Seq: call.Seq, Tool: call.Tool, Status: reply.Status, BrokerMs: elapsed,
 			Message: reply.Message,
 		})
@@ -246,7 +251,7 @@ func (b *scriptBroker) deliver(call codemode.Call, data any, elapsed int64) code
 		b.hitLocked(hit)
 		b.mu.Unlock()
 		reply := limitReply(hit, limitMessage(hit))
-		b.record(codemode.CallSummary{
+		b.record(&codemode.CallSummary{
 			Seq: call.Seq, Tool: call.Tool, Status: reply.Status, Rows: rows,
 			Bytes: len(encoded), BrokerMs: elapsed, Message: reply.Message,
 		})
@@ -261,7 +266,7 @@ func (b *scriptBroker) deliver(call codemode.Call, data any, elapsed int64) code
 	}
 	b.mu.Unlock()
 
-	b.record(codemode.CallSummary{
+	b.record(&codemode.CallSummary{
 		Seq: call.Seq, Tool: call.Tool, Status: codemode.CallOK, Rows: rows,
 		Bytes: len(encoded), BrokerMs: elapsed,
 	})
@@ -275,11 +280,11 @@ func (b *scriptBroker) hitLocked(limit codemode.Limit) {
 	}
 }
 
-func (b *scriptBroker) record(summary codemode.CallSummary) {
+func (b *scriptBroker) record(summary *codemode.CallSummary) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	b.calls = append(b.calls, summary)
+	b.calls = append(b.calls, *summary)
 }
 
 func (b *scriptBroker) NoteReply(seq int, ms int64) {
@@ -332,22 +337,23 @@ func limitReply(limit codemode.Limit, message string) codemode.Reply {
 	return codemode.Reply{Status: codemode.CallLimit, Limit: limit, Message: message}
 }
 
+var limitMessages = map[codemode.Limit]string{
+	codemode.LimitCall:  "the read's answer is larger than one read may hand a script; narrow it",
+	codemode.LimitRows:  "the script has read every row it may",
+	codemode.LimitBytes: "the script has read every byte it may",
+}
+
 func limitMessage(limit codemode.Limit) string {
-	switch limit {
-	case codemode.LimitCall:
-		return "the read's answer is larger than one read may hand a script; narrow it"
-	case codemode.LimitRows:
-		return "the script has read every row it may"
-	case codemode.LimitBytes:
-		return "the script has read every byte it may"
-	default:
-		return "the script reached a limit"
+	if message, ok := limitMessages[limit]; ok {
+		return message
 	}
+
+	return "the script reached a limit"
 }
 
 // shapeOf counts the rows an answer holds (a list's length, or the longest
 // list at its top level) and the fields its tool withheld from the caller.
-func shapeOf(encoded []byte) (int, []string) {
+func shapeOf(encoded []byte) (rows int, withheld []string) {
 	var decoded any
 	if err := sonic.Unmarshal(encoded, &decoded); err != nil {
 		return 1, nil

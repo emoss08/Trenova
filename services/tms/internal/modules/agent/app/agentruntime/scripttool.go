@@ -22,7 +22,7 @@ func (s *Service) runScriptTool(
 	ctx context.Context,
 	p *dispatchParams,
 	tool agentports.AgentQueryTool,
-	call agentports.ToolCall,
+	call *agentports.ToolCall,
 ) toolOutcome {
 	req := p.req
 	decision := s.codeMode.Decide(req.CodeMode, p.gate.provider, p.gate.model)
@@ -44,7 +44,13 @@ func (s *Service) runScriptTool(
 		taint:         p.taint,
 		afterExternal: p.afterExternal,
 	})
-	outcome := s.runQueryToolWith(ctx, req, tool, call, broker, p.stepKey)
+	outcome := s.runQueryToolWith(
+		ctx,
+		req,
+		tool,
+		call,
+		&queryExtras{broker: broker, stepKey: p.stepKey},
+	)
 	outcome.taint = append(outcome.taint, broker.taintMarks()...)
 
 	return outcome
@@ -56,17 +62,18 @@ func (s *Service) withoutScripts(
 	definition *agentdefinition.Definition,
 	held []string,
 	beyond map[string]agent.AutonomyTier,
-) ([]string, map[string]agent.AutonomyTier) {
+) (kept []string, reached map[string]agent.AutonomyTier) {
 	if held == nil {
 		held = s.heldTools(definition)
 	}
-	kept := slices.DeleteFunc(slices.Clone(held), isScriptRunner)
-	if _, reached := beyond[agentextension.ToolRunScript]; reached {
-		beyond = maps.Clone(beyond)
-		delete(beyond, agentextension.ToolRunScript)
+	kept = slices.DeleteFunc(slices.Clone(held), isScriptRunner)
+	reached = beyond
+	if _, found := beyond[agentextension.ToolRunScript]; found {
+		reached = maps.Clone(beyond)
+		delete(reached, agentextension.ToolRunScript)
 	}
 
-	return kept, beyond
+	return kept, reached
 }
 
 func isScriptRunner(name string) bool {

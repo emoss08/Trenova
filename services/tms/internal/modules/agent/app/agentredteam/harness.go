@@ -1,13 +1,14 @@
 package agentredteam
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"context"
 	"fmt"
 	"maps"
 	"slices"
 	"strings"
 	"sync"
+
+	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"

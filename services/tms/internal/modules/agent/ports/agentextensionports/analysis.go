@@ -18,13 +18,19 @@ type ListAnalysisRunsRequest struct {
 }
 
 type AnalysisRunRepository interface {
-	Create(ctx context.Context, run *agentextension.AnalysisRun) (*agentextension.AnalysisRun, error)
+	Create(
+		ctx context.Context,
+		run *agentextension.AnalysisRun,
+	) (*agentextension.AnalysisRun, error)
 	Get(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		id pulid.ID,
 	) (*agentextension.AnalysisRun, error)
-	Update(ctx context.Context, run *agentextension.AnalysisRun) (*agentextension.AnalysisRun, error)
+	Update(
+		ctx context.Context,
+		run *agentextension.AnalysisRun,
+	) (*agentextension.AnalysisRun, error)
 	List(ctx context.Context, req *ListAnalysisRunsRequest) ([]*agentextension.AnalysisRun, error)
 	SaveCharts(ctx context.Context, charts []*agentextension.AnalysisChart) error
 	GetChart(

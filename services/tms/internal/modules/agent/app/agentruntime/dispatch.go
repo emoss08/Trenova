@@ -1,13 +1,14 @@
 package agentruntime
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"context"
 	"fmt"
 	"maps"
 	"slices"
 	"strings"
 	"time"
+
+	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
@@ -145,7 +146,7 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		call.Arguments = contract.args
 
 		if tool.Policy().Script == agentports.ScriptRunner {
-			return s.runScriptTool(ctx, &p, tool, call)
+			return s.runScriptTool(ctx, &p, tool, &call)
 		}
 
 		outcome := s.runQueryTool(ctx, req, tool, call)
@@ -670,16 +671,22 @@ func (s *Service) runQueryTool(
 	tool agentports.AgentQueryTool,
 	call agentports.ToolCall,
 ) toolOutcome {
-	return s.runQueryToolWith(ctx, req, tool, call, nil, "")
+	return s.runQueryToolWith(ctx, req, tool, &call, &queryExtras{})
+}
+
+// queryExtras is what only the tool that runs a script is handed: the broker
+// its reads go through and the step it is claimed under.
+type queryExtras struct {
+	broker  codemode.Broker
+	stepKey string
 }
 
 func (s *Service) runQueryToolWith(
 	ctx context.Context,
 	req *agentports.RunRequest,
 	tool agentports.AgentQueryTool,
-	call agentports.ToolCall,
-	broker codemode.Broker,
-	stepKey string,
+	call *agentports.ToolCall,
+	extras *queryExtras,
 ) toolOutcome {
 	data, err := tool.Query(ctx, &agentports.QueryToolParams{
 		OrganizationID:    req.Actor.OrganizationID,
@@ -691,8 +698,8 @@ func (s *Service) runQueryToolWith(
 		DataAccessCeiling: req.Definition.DataAccessSensitivity(),
 		ThreadID:          req.ThreadID,
 		RunID:             req.RunID,
-		Broker:            broker,
-		StepKey:           stepKey,
+		Broker:            extras.broker,
+		StepKey:           extras.stepKey,
 	})
 	if err != nil {
 		return refusedOutcome(aitrace.OutcomeFailed, err.Error(),
@@ -709,7 +716,7 @@ func (s *Service) runQueryToolWith(
 		content: FenceToolResult(call.Name, encoded),
 		data:    data,
 		summary: summarizeResult(call.Name, document),
-		taint:   callTaint(s.ruled(ctx, req, tool.Policy()), call, data, timeutils.NowUnix()),
+		taint:   callTaint(s.ruled(ctx, req, tool.Policy()), *call, data, timeutils.NowUnix()),
 		verdict: aitrace.OutcomeRan,
 	}
 	if recall, ok := data.(agentports.MemoryRecall); ok {

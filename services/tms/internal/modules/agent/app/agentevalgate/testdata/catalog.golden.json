@@ -2971,6 +2971,104 @@
       }
     },
     {
+      "name": "agent_run_script",
+      "description": "Run a short read-only Python script that calls the reads you hold, for questions that need many reads joined, compared or totalled. Use it to go over every record of a list (each customer past terms with their last payment), to reconcile two sources, or for a report across many records; for one or two reads in a row, call the reads themselves. Call a read as trenova.<namespace>.<the rest of its name>(**parameters), such as trenova.shipment.list(status=[\"InTransit\"]) for shipment_list; parameters and results are exactly the tool's. trenova.tools() lists the reads, help(trenova.shipment.list) gives one's parameters, trenova.gather(a.defer(...), b.defer(...)) runs several at once, and a refused read raises trenova.Refused. Only what you print and one trenova.result(value) come back. A script changes nothing and cannot reach the internet.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "description": "The Python to run. import trenova is done for you; print() what you need to answer and pass one summary to trenova.result().",
+            "maxLength": 20000,
+            "type": "string"
+          },
+          "inputs": {
+            "description": "Values the script reads from trenova.inputs by name, such as a date or a list of ids, so the same script can run again with others.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "name": {
+                  "description": "The name the script reads it by.",
+                  "maxLength": 64,
+                  "type": "string"
+                },
+                "value": {
+                  "description": "The value, as text.",
+                  "maxLength": 16384,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name",
+                "value"
+              ],
+              "type": "object"
+            },
+            "maxItems": 32,
+            "type": "array"
+          },
+          "purpose": {
+            "description": "What the script answers, in one plain sentence the person will read.",
+            "maxLength": 500,
+            "type": "string"
+          },
+          "title": {
+            "description": "A short name for what the script works out, three to eight words, such as \"Customers past terms\".",
+            "maxLength": 80,
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "purpose",
+          "code"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "for each",
+        "every one of",
+        "each of them",
+        "reconcile",
+        "cross-check",
+        "across all",
+        "script",
+        "batch read",
+        "go through all"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "code_mode",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "marked",
+        "source": "record_note",
+        "sources": [
+          "inbound_message",
+          "document",
+          "edi",
+          "bank_receipt",
+          "weather",
+          "attachment",
+          "memory",
+          "run_record"
+        ],
+        "carriesTaint": false,
+        "rationale": "Runs a short script in a sandbox that cannot reach the network; every read it makes is one of the agent's own reads, run as the person under the same checks, and the call carries the taint of every read that brought outside text in. It changes nothing."
+      }
+    },
+    {
       "name": "ask_user",
       "policy": {
         "kind": "runtime",

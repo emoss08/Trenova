@@ -1,10 +1,11 @@
 package assistantcontract
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"context"
 	"errors"
 	"time"
+
+	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"

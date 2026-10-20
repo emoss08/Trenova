@@ -1,11 +1,12 @@
 package agentredteam
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"context"
 	"fmt"
 	"slices"
 	"strings"
+
+	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"

@@ -30,7 +30,7 @@ type SandboxConfig struct {
 	RPCDir      string `json:"rpcDir"`
 }
 
-func ConfigFor(nonce string, limits Limits) SandboxConfig {
+func ConfigFor(nonce string, limits *Limits) SandboxConfig {
 	return SandboxConfig{
 		Nonce:       nonce,
 		PollMs:      PollInterval.Milliseconds(),

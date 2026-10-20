@@ -337,7 +337,9 @@ type streamTarget struct {
 func streamTargetOf(sandbox *Sandbox, cfg *options) (*streamTarget, error) {
 	base := cfg.sandboxURL
 	if base == "" {
-		base = "https://" + strconv.Itoa(jupyterPort) + "-" + sandbox.SandboxID + "." + sandbox.Host()
+		base = "https://" + strconv.Itoa(
+			jupyterPort,
+		) + "-" + sandbox.SandboxID + "." + sandbox.Host()
 	}
 	parsed, err := url.Parse(strings.TrimRight(base, "/") + "/execute")
 	if err != nil || parsed.Host == "" {
@@ -403,7 +405,10 @@ func portClient(
 // WriteFile writes a file into the sandbox, creating its folders.
 func (s *Session) WriteFile(ctx context.Context, path string, content []byte) error {
 	if !strings.HasPrefix(path, "/") || strings.Contains(path, "..") {
-		return fmt.Errorf("%w: a file path must be absolute and stay where it points", ErrInvalidRequest)
+		return fmt.Errorf(
+			"%w: a file path must be absolute and stay where it points",
+			ErrInvalidRequest,
+		)
 	}
 
 	var body bytes.Buffer

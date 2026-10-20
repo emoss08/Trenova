@@ -262,11 +262,11 @@ func servedTools(
 
 // servedToolsOf lists every tool the vendor can serve: its capability's, and
 // those of each capability a setting of it switches on.
-func servedToolsOf(spec agentextension.Spec) []agentextensionports.AgentExtensionTool {
-	tools := servedTools(capabilityDefinitions[spec.Capability].Tools, spec)
+func servedToolsOf(spec *agentextension.Spec) []agentextensionports.AgentExtensionTool {
+	tools := servedTools(capabilityDefinitions[spec.Capability].Tools, *spec)
 	for _, c := range agentextension.AllCapabilities() {
 		if c != spec.Capability && spec.Serves(c) {
-			tools = append(tools, servedTools(capabilityDefinitions[c].Tools, spec)...)
+			tools = append(tools, servedTools(capabilityDefinitions[c].Tools, *spec)...)
 		}
 	}
 
@@ -295,7 +295,7 @@ func catalogItem(
 		WebsiteURL:          def.WebsiteURL,
 		PricingURL:          def.PricingURL,
 		Capabilities:        def.Capabilities,
-		Tools:               servedToolsOf(spec),
+		Tools:               servedToolsOf(&spec),
 		DataNotice:          def.DataNotice,
 		Featured:            def.Featured,
 		SortOrder:           def.SortOrder,

@@ -139,7 +139,7 @@ func (t *stubScriptTool) Query(ctx context.Context, params *agentports.QueryTool
 	if params.Broker == nil {
 		return nil, errors.New("no broker")
 	}
-	params.Broker.Bound(codemode.LimitsFor(60, 60))
+	params.Broker.Bound(new(codemode.LimitsFor(60, 60)))
 	for _, step := range t.steps {
 		t.replies = append(t.replies, step(ctx, params.Broker))
 	}
@@ -408,7 +408,7 @@ func TestBrokerHoldsTheScriptToItsLimits(t *testing.T) {
 	broker := h.rt.newScriptBroker(t.Context(), &scriptBrokerParams{
 		req: h.req, parentKey: "parent", parentCallID: "call_script", taint: &agent.RunTaint{},
 	})
-	broker.Bound(codemode.Limits{
+	broker.Bound(&codemode.Limits{
 		Calls: 3, Rows: 5000, Bytes: 8 << 20, CallBytes: 1 << 20, Concurrent: 8,
 	})
 
@@ -428,14 +428,14 @@ func TestBrokerHoldsTheScriptToItsLimits(t *testing.T) {
 	small := h.rt.newScriptBroker(t.Context(), &scriptBrokerParams{
 		req: h.req, parentKey: "other", parentCallID: "call_other", taint: &agent.RunTaint{},
 	})
-	small.Bound(codemode.Limits{Calls: 10, Rows: 100_000, Bytes: 1 << 30, CallBytes: 1024, Concurrent: 8})
+	small.Bound(&codemode.Limits{Calls: 10, Rows: 100_000, Bytes: 1 << 30, CallBytes: 1024, Concurrent: 8})
 	assert.Equal(t, codemode.LimitCall,
 		small.Read(t.Context(), codemode.Call{Seq: 1, Tool: "shipment_list"}).Limit)
 
 	totals := h.rt.newScriptBroker(t.Context(), &scriptBrokerParams{
 		req: h.req, parentKey: "totals", parentCallID: "call_totals", taint: &agent.RunTaint{},
 	})
-	totals.Bound(codemode.Limits{Calls: 10, Rows: 100_000, Bytes: 60_000, CallBytes: 1 << 20, Concurrent: 8})
+	totals.Bound(&codemode.Limits{Calls: 10, Rows: 100_000, Bytes: 60_000, CallBytes: 1 << 20, Concurrent: 8})
 	assert.Equal(t, codemode.CallOK, totals.Read(t.Context(), codemode.Call{Seq: 1, Tool: "shipment_list"}).Status)
 	assert.Equal(t, codemode.LimitBytes,
 		totals.Read(t.Context(), codemode.Call{Seq: 2, Tool: "shipment_list"}).Limit)
@@ -471,7 +471,7 @@ func TestBrokerSemaphoreBoundsConcurrentDispatches(t *testing.T) {
 	broker := h.rt.newScriptBroker(t.Context(), &scriptBrokerParams{
 		req: h.req, parentKey: "parent", parentCallID: "call_script", taint: &agent.RunTaint{},
 	})
-	broker.Bound(codemode.LimitsFor(60, 200))
+	broker.Bound(new(codemode.LimitsFor(60, 200)))
 
 	var wg sync.WaitGroup
 	for seq := 1; seq <= 40; seq++ {

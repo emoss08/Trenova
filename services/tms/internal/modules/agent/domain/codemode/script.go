@@ -29,10 +29,10 @@ type Call struct {
 }
 
 type Reply struct {
-	Status  CallStatus      `json:"status"`
+	Status  CallStatus             `json:"status"`
 	Data    sonic.NoCopyRawMessage `json:"data,omitempty"`
-	Message string          `json:"message,omitempty"`
-	Limit   Limit           `json:"limit,omitempty"`
+	Message string                 `json:"message,omitempty"`
+	Limit   Limit                  `json:"limit,omitempty"`
 }
 
 type CallSummary struct {
@@ -58,7 +58,7 @@ type Usage struct {
 
 type Broker interface {
 	Index() []Read
-	Bound(limits Limits)
+	Bound(limits *Limits)
 	Read(ctx context.Context, call Call) Reply
 	NoteReply(seq int, ms int64)
 	Summary() Summary

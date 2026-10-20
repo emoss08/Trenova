@@ -107,7 +107,7 @@ func (s *Service) RunScript(
 		return nil, err
 	}
 	limits := codemode.LimitsFor(call.settings.ScriptSeconds, call.settings.ScriptReads)
-	req.Broker.Bound(limits)
+	req.Broker.Bound(&limits)
 
 	metered := meteredCall{
 		tenant: req.TenantInfo,
@@ -164,7 +164,7 @@ func (s *Service) runScript(
 	if err != nil {
 		return nil, fmt.Errorf("mint the script's nonce: %w", err)
 	}
-	files, err := scriptFiles(req, nonce, attempt.limits, inputs)
+	files, err := scriptFiles(req, nonce, &attempt.limits, inputs)
 	if err != nil {
 		return nil, err
 	}
@@ -232,7 +232,7 @@ func newNonce() (string, error) {
 func scriptFiles(
 	req *agentextensionports.ScriptRequest,
 	nonce string,
-	limits codemode.Limits,
+	limits *codemode.Limits,
 	inputs []byte,
 ) ([]agentextensionports.SandboxFile, error) {
 	config, err := sonic.Marshal(codemode.ConfigFor(nonce, limits))

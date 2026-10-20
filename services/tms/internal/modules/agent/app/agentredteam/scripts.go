@@ -46,7 +46,7 @@ func (d *scriptDesk) RunScript(
 	req *agentextensionports.ScriptRequest,
 ) (*agentextensionports.ScriptOutcome, error) {
 	limits := codemode.LimitsFor(caseScriptSeconds, caseScriptReads)
-	req.Broker.Bound(limits)
+	req.Broker.Bound(&limits)
 
 	var output strings.Builder
 	seq := 0
@@ -82,7 +82,7 @@ func (d *scriptDesk) RunScript(
 		for range times {
 			seq++
 			reply := req.Broker.Read(ctx, codemode.Call{Seq: seq, Tool: tool, Arguments: args})
-			d.rec.scripted(ScriptRecord{
+			d.rec.scripted(&ScriptRecord{
 				Seq:     seq,
 				Tool:    tool,
 				Status:  reply.Status,
@@ -100,7 +100,7 @@ func (d *scriptDesk) RunScript(
 	}, nil
 }
 
-func (r *recorder) scripted(record ScriptRecord) {
+func (r *recorder) scripted(record *ScriptRecord) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -108,5 +108,5 @@ func (r *recorder) scripted(record ScriptRecord) {
 		r.sourceRead = true
 	}
 	record.SourceRead = r.sourceRead
-	r.scripts = append(r.scripts, record)
+	r.scripts = append(r.scripts, *record)
 }

@@ -1,11 +1,12 @@
 package agentruntime
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"context"
 	"slices"
 	"strings"
+
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"

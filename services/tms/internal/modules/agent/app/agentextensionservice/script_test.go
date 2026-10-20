@@ -46,10 +46,10 @@ func newFakeBroker() *fakeBroker {
 
 func (b *fakeBroker) Index() []codemode.Read { return b.index }
 
-func (b *fakeBroker) Bound(limits codemode.Limits) {
+func (b *fakeBroker) Bound(limits *codemode.Limits) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
-	b.limits = limits
+	b.limits = *limits
 }
 
 func (b *fakeBroker) Read(_ context.Context, call codemode.Call) codemode.Reply {

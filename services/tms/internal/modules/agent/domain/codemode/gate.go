@@ -42,7 +42,9 @@ type Ledger struct {
 	Models []EnabledModel `yaml:"models"`
 }
 
-var ErrUnearnedModel = errors.New("codemode: a model is enabled without the bench run that earned it")
+var ErrUnearnedModel = errors.New(
+	"codemode: a model is enabled without the bench run that earned it",
+)
 
 func ParseLedger(data []byte) (Ledger, error) {
 	var ledger Ledger
@@ -112,8 +114,10 @@ func (g Gate) Offered(override Override) bool {
 		return false
 	case OverrideOn:
 		return g.Forced
-	default:
+	case OverrideDefault:
 		return g.Ledger.Any()
+	default:
+		return false
 	}
 }
 

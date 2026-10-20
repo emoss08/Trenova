@@ -84,7 +84,9 @@ func e2bSpec() Spec {
 				HelpText: scriptReadsHelp,
 			},
 		},
-		Switched:            map[Capability]string{CapabilityCodeMode: ConfigKeyCodeMode},
+		Switched: []SwitchedCapability{
+			{Capability: CapabilityCodeMode, Setting: ConfigKeyCodeMode},
+		},
 		SupportsTestConnect: true,
 		DefaultDailyLimit:   DefaultDailyAnalyses,
 		Validate: func(values map[string]string, multiErr *errortypes.MultiError) {
