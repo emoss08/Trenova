@@ -642,6 +642,21 @@ func AgentsPaused(ctx context.Context, orgID string) (bool, error) {
 	})
 }
 
+func AgentPlanHold(ctx context.Context, planID string) (*agentports.ProposalHold, error) {
+	return load(ctx, planID, func(s *set) *dataloadgen.Loader[string, *agentports.ProposalHold] {
+		return s.agentPlanHold
+	})
+}
+
+func (f *AgentPlanHoldLoaderFactory) Attach(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) context.Context {
+	return attach(ctx, func(s *set) {
+		s.agentPlanHold = newAgentPlanHoldLoader(f, tenantInfo)
+	})
+}
+
 func (f *AgentsPausedLoaderFactory) Attach(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -1644,5 +1659,20 @@ func (f *CarrierInvoiceMatchesByMoveIDLoaderFactory) Attach(
 ) context.Context {
 	return attach(ctx, func(s *set) {
 		s.carrierInvoiceMatchesByMoveID = newCarrierInvoiceMatchesByMoveIDLoader(f, tenantInfo)
+	})
+}
+
+func AgentPlanStepsByPlanID(ctx context.Context, key string) ([]*agent.AgentProposal, error) {
+	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, []*agent.AgentProposal] {
+		return s.agentPlanStepsByPlanID
+	})
+}
+
+func (f *AgentPlanStepsByPlanIDLoaderFactory) Attach(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) context.Context {
+	return attach(ctx, func(s *set) {
+		s.agentPlanStepsByPlanID = newAgentPlanStepsByPlanIDLoader(f, tenantInfo)
 	})
 }

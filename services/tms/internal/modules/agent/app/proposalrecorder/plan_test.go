@@ -43,6 +43,17 @@ func recordActions(
 ) *RecordResult {
 	t.Helper()
 
+	return recordNamedActions(t, plans, "", actions...)
+}
+
+func recordNamedActions(
+	t *testing.T,
+	plans *capturingPlans,
+	planTitle string,
+	actions ...agentports.PendingAction,
+) *RecordResult {
+	t.Helper()
+
 	orgID, buID := pulid.MustNew("org_"), pulid.MustNew("bu_")
 	store := &capturingStore{}
 	result, err := NewWithStores(
@@ -62,8 +73,9 @@ func recordActions(
 				BusinessUnitID: buID,
 				Summary:        "Cover the two open moves",
 			},
-			Actions:  actions,
-			Evidence: messageEvidence,
+			Actions:   actions,
+			PlanTitle: planTitle,
+			Evidence:  messageEvidence,
 		})
 	require.NoError(t, err)
 

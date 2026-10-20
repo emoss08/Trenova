@@ -5,6 +5,7 @@
 import { deskThread } from "../fixtures/desk-cards.mjs";
 import { deskCaseThreads } from "./deskcase.mjs";
 import { ediDraftThreads } from "./deskedidraft.mjs";
+import { deskPlanThreads } from "./deskplan.mjs";
 import { extractionThreads } from "./deskextraction.mjs";
 import { formulaThreads } from "./formula-nova.mjs";
 
@@ -24,6 +25,7 @@ function threads(state) {
     cards,
     ...deskCaseThreads(state),
     ...ediDraftThreads(state),
+    ...deskPlanThreads(state),
     ...extractionThreads(state),
     ...triage,
     ...formulaThreads(state),

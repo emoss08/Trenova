@@ -78,6 +78,10 @@ models:
   Decimal:
     model:
       - github.com/99designs/gqlgen/graphql.String
+  PendingDecisionEdge:
+    fields:
+      hold:
+        resolver: true
   Shipment:
     fields:
       orderNumber:
@@ -2231,6 +2235,9 @@ models:
   AgentPlanStatus:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agent.PlanStatus
+  AgentPlanRunMode:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.PlanRunMode
   AgentPlanScript:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ScriptOrigin
@@ -2240,6 +2247,14 @@ models:
     fields:
       run:
         resolver: true
+      decidedBy:
+        resolver: true
+      runMode:
+        resolver: true
+      decisionNote:
+        fieldName: ApprovalNote
+      previewDigest:
+        fieldName: ApprovalPreviewDigest
   AgentMemoryKind:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agent.MemoryKind

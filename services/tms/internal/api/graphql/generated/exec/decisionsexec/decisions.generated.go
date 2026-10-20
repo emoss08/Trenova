@@ -249,12 +249,14 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
-				Name:      "hold",
-				HasChild:  true,
-				ChildType: "PendingDecisionHold",
+				Name:       "hold",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "PendingDecisionHold",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.PendingDecisionEdge)
-					return obj.Hold, nil
+					return gqlexec.Resolver[resolverPendingDecisionEdge](ec, "PendingDecisionEdge").Hold(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOPendingDecisionHold2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPendingDecisionHold),
 			},
@@ -494,6 +496,7 @@ var Shard = &gqlexec.Shard{
 		{Root: "AgentProposal", Check: func(r any) bool { _, ok := r.(resolverAgentProposal); return ok }},
 		{Root: "AgentRun", Check: func(r any) bool { _, ok := r.(resolverAgentRun); return ok }},
 		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
+		{Root: "PendingDecisionEdge", Check: func(r any) bool { _, ok := r.(resolverPendingDecisionEdge); return ok }},
 		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
 	},
 }
@@ -515,6 +518,10 @@ type resolverAgentRun interface {
 
 type resolverMutation interface {
 	DecideAgentProposals(ctx context.Context, ids []string, input gqlmodel.DecideAgentProposalsInput) ([]*gqlmodel.AgentProposalDecisionResult, error)
+}
+
+type resolverPendingDecisionEdge interface {
+	Hold(ctx context.Context, obj *gqlmodel.PendingDecisionEdge) (*gqlmodel.PendingDecisionHold, error)
 }
 
 type resolverQuery interface {

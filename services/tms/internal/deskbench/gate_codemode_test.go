@@ -269,3 +269,37 @@ func TestEvaluateGate_AScriptWritesHalfPairsAndStaysOutOfTheProductFigures(t *te
 	assert.InDelta(t, 1.0, *result.HeldOut.Before.PassK, 1e-9)
 	assert.Equal(t, 1, result.HeldOut.Before.Scenarios, "only the discrete half counts")
 }
+
+func TestConfirmGate_RechecksAModelOnceWhenTwoOfItsCellsAreRecommended(t *testing.T) {
+	t.Parallel()
+
+	pairs := newCodeModePairs()
+	spec := codeModeSpec()
+	spec.CodeMode.Cells = []string{low, medium}
+	run1 := gateCases(development(low), development(medium),
+		codeModeTrials(low, pairs, cheaperScript), codeModeTrials(medium, pairs, cheaperScript))
+	for _, result := range run1 {
+		result.Model = "claude-haiku-5-5"
+		result.ProviderKind = "AnthropicMessages"
+	}
+	gate := EvaluateGate(spec, run1)
+	require.True(t, decisionFor(t, gate, low).Recommended)
+	require.True(t, decisionFor(t, gate, medium).Recommended)
+
+	adversarial := 0
+	for _, group := range gate.ConfirmGroups() {
+		if group.Splits[0] == evalsplit.Adversarial {
+			adversarial++
+		}
+	}
+	assert.Equal(t, 1, adversarial, "one model, one adversarial re-run")
+
+	run2 := codeModeTrials(low, pairs, cheaperScript)
+	for _, result := range run2 {
+		result.Model = "claude-haiku-5-5"
+		result.ProviderKind = "AnthropicMessages"
+	}
+	confirmed := ConfirmGate(gate, run1, run2)
+	require.Len(t, confirmed.CodeMode, 1, "one ledger entry per model")
+	assert.Equal(t, low, confirmed.CodeMode[0].Run1, "the first recommended cell")
+}

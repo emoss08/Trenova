@@ -247,6 +247,7 @@ func (s *Service) openToolSet(ctx context.Context, req *toolSetRequest) *toolSet
 		}
 		set.addConversational(*req)
 		s.declareWithdrawal(set, req.delegated)
+		s.declareNamePlan(set, req.delegated)
 
 		return set
 	}
@@ -267,6 +268,7 @@ func (s *Service) openToolSet(ctx context.Context, req *toolSetRequest) *toolSet
 	set.add(findToolsSpec())
 	set.addConversational(*req)
 	s.declareWithdrawal(set, req.delegated)
+	s.declareNamePlan(set, req.delegated)
 
 	return set
 }
@@ -450,7 +452,7 @@ func (s *Service) carryOver(set *toolSet, history []conversation.Message) {
 		for _, call := range message.ToolCalls {
 			switch call.Name {
 			case askUserName, publishArtifactName, delegateTaskName, requestDecisionName,
-				withdrawProposalName:
+				withdrawProposalName, namePlanName:
 			case findToolsName:
 				if names, stored := found[call.ID]; stored {
 					for _, name := range names {

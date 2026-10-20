@@ -73,7 +73,6 @@
   "Approved {0, plural, one {# PTO request} other {# PTO requests}}": "已核准 {0, plural, other {# 筆有薪假申請}}",
   "Approved {0, plural, one {# PTO request} other {# PTO requests}}; {1} failed": "已核准 {0, plural, other {# 筆有薪假申請}}；{1} 筆失敗",
   "Archive {0}": "封存 {0}",
-  "Archived {0}": "已封存 {0}",
   "Archiving removes this credential from the active file. Use Renew instead when the worker has a newer card.": "封存會將此證照從有效檔案中移除。若駕駛員已取得較新的證卡，請改用「更新」。",
   "Arrow keys move a month and T returns to today {0}": "方向鍵可切換月份，按 T 可回到今天 {0}",
   "Assembled on read from the credentials, documents, previous-employer investigations and testing record. 49 CFR 391.51.": "於讀取時，由證照、文件、前雇主查核與檢測紀錄彙整而成。49 CFR 391.51。",

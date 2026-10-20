@@ -142,6 +142,19 @@ func (f fakeShadow) ForRun(
 	return agentshadow.Verdict{}, nil
 }
 
+func (f fakeShadow) ForRuns(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	runIDs []pulid.ID,
+) (map[pulid.ID]agentshadow.Verdict, error) {
+	verdicts := make(map[pulid.ID]agentshadow.Verdict, len(runIDs))
+	for _, runID := range runIDs {
+		verdicts[runID], _ = f.ForRun(ctx, tenant, runID)
+	}
+
+	return verdicts, nil
+}
+
 type harness struct {
 	svc     *Service
 	plans   *fakePlans
@@ -372,4 +385,57 @@ func TestListConnectionAndGetByID_KeepAPlanTheOrganizationPauseHolds(t *testing.
 
 	_, err = h.svc.Decide(t.Context(), h.req, h.actor)
 	require.Error(t, err, "a decision on a held plan is still refused")
+	assert.Equal(t, shadowRefusal(agentshadow.Verdict{Cause: agentshadow.CauseOrganization}).Error(),
+		err.Error())
+	assert.Empty(t, h.plans.statuses, "a held plan is not moved out of Pending")
+	assert.Empty(t, h.decider.decided, "no step of a held plan is decided")
+}
+
+func (f *fakeSteps) ListByPlans(
+	context.Context,
+	agentports.ListAgentProposalsByPlansRequest,
+) ([]*agent.AgentProposal, error) {
+	return f.steps, nil
+}
+
+/*
+A plan read on AI Control or the Desk says it is held by the same rule a
+decision on it is refused by: a step a delegate raised from an agent in
+shadow holds the whole plan, though the plan's own run is free.
+*/
+func TestPlanHolds_HoldsAPlanByAStepAnotherRunRaisedAsDecideRefusesIt(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t, 2, false)
+	delegateRun := pulid.MustNew("arun_")
+	planID := h.plans.plan.ID
+	h.steps.steps[1].RunID = delegateRun
+	h.steps.steps[0].PlanID = &planID
+	h.steps.steps[1].PlanID = &planID
+	h.svc.shadow = fakeShadow{runs: map[pulid.ID]bool{delegateRun: true}}
+
+	holds, err := h.svc.PlanHolds(t.Context(), h.req.TenantInfo, []*agent.AgentPlan{h.plans.plan})
+	require.NoError(t, err)
+	assert.Equal(t, map[pulid.ID]*agentports.ProposalHold{
+		planID: {Reason: string(agentshadow.CauseDefinition), AgentName: "Shipment Desk"},
+	}, holds)
+
+	_, err = h.svc.Decide(t.Context(), h.req, h.actor)
+	require.ErrorContains(t, err, "Shipment Desk")
+}
+
+func TestPlanHolds_LeavesADecidedPlanAndAFreeOneUnheld(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t, 1, true)
+	h.plans.plan.Status = agent.PlanStatusRejected
+
+	holds, err := h.svc.PlanHolds(t.Context(), h.req.TenantInfo, []*agent.AgentPlan{h.plans.plan})
+	require.NoError(t, err)
+	assert.Empty(t, holds)
+
+	free := newHarness(t, 1, false)
+	holds, err = free.svc.PlanHolds(t.Context(), free.req.TenantInfo, []*agent.AgentPlan{free.plans.plan})
+	require.NoError(t, err)
+	assert.Empty(t, holds)
 }

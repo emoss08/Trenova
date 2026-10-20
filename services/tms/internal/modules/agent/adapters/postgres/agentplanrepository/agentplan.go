@@ -255,6 +255,11 @@ func (r *repository) UpdateStatus(
 				Set(cols.ApprovalPreviewDigest.Set(), stringutils.Ptr(req.Approval.PreviewDigest)).
 				Set(cols.UndoneAt.SetNull()).
 				Set(cols.UndoneByUserID.SetNull())
+		} else if req.DecidedByUserID.IsNotNil() {
+			query = query.
+				Set(cols.ApprovalReasonCode.Set(), stringutils.Ptr(req.Approval.ReasonCode)).
+				Set(cols.ApprovalNote.Set(), stringutils.Ptr(req.Approval.Note)).
+				Set(cols.ApprovalPreviewDigest.Set(), stringutils.Ptr(req.Approval.PreviewDigest))
 		}
 		if req.Reopen {
 			query = query.

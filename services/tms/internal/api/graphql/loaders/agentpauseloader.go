@@ -3,6 +3,7 @@ package loaders
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -42,6 +43,43 @@ func newAgentsPausedLoader(f *AgentsPausedLoaderFactory,
 			}
 
 			return paused, nil
+		},
+	))
+}
+
+type AgentPlanHoldLoaderFactoryParams struct {
+	fx.In
+
+	Plans       agentports.AgentPlanRepository
+	PlanService agentports.AgentPlanService
+}
+
+type AgentPlanHoldLoaderFactory struct {
+	plans       agentports.AgentPlanRepository
+	planService agentports.AgentPlanService
+}
+
+func NewAgentPlanHoldLoaderFactory(p AgentPlanHoldLoaderFactoryParams) *AgentPlanHoldLoaderFactory {
+	return &AgentPlanHoldLoaderFactory{plans: p.Plans, planService: p.PlanService}
+}
+
+func newAgentPlanHoldLoader(f *AgentPlanHoldLoaderFactory,
+	tenantInfo pagination.TenantInfo,
+) *dataloadgen.Loader[string, *agentports.ProposalHold] {
+	return newLoader(batchValueFunc(
+		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID]*agentports.ProposalHold, error) {
+			if f.plans == nil || f.planService == nil {
+				return map[pulid.ID]*agentports.ProposalHold{}, nil
+			}
+			plans, err := f.plans.ListByIDs(ctx, agentports.ListAgentPlansByIDsRequest{
+				IDs:        ids,
+				TenantInfo: tenantInfo,
+			})
+			if err != nil {
+				return nil, err
+			}
+
+			return f.planService.PlanHolds(ctx, tenantInfo, plans)
 		},
 	))
 }

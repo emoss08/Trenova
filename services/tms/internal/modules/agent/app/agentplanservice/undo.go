@@ -56,7 +56,7 @@ func (s *Service) approveDeferred(
 		Approval: agentports.PlanApproval{
 			ReasonCode:    req.ReasonCode,
 			Note:          req.Note,
-			PreviewDigest: req.PreviewDigest,
+			PreviewDigest: prepared.shown.digest(),
 		},
 	})
 	if err != nil {
@@ -78,7 +78,7 @@ func (s *Service) approveDeferred(
 		PlanID:          plan.ID,
 		ReasonCode:      req.ReasonCode,
 		Note:            req.Note,
-		PreviewDigest:   req.PreviewDigest,
+		PreviewDigest:   prepared.shown.digest(),
 		CommitsAt:       commitsAt,
 	}); err != nil {
 		s.l.Error("a plan approval could not be scheduled; taking it back",

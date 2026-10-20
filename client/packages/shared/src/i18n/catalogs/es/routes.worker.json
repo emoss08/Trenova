@@ -73,7 +73,6 @@
   "Approved {0, plural, one {# PTO request} other {# PTO requests}}": "{0, plural, one {# solicitud de tiempo libre remunerado aprobada} other {# solicitudes de tiempo libre remunerado aprobadas}}",
   "Approved {0, plural, one {# PTO request} other {# PTO requests}}; {1} failed": "{0, plural, one {# solicitud de tiempo libre remunerado aprobada} other {# solicitudes de tiempo libre remunerado aprobadas}}; {1} fallaron",
   "Archive {0}": "Archivar {0}",
-  "Archived {0}": "Se archivó {0}",
   "Archiving removes this credential from the active file. Use Renew instead when the worker has a newer card.": "Al archivar, esta credencial se retira del expediente activo. Utilice Renovar cuando el trabajador tenga una tarjeta más reciente.",
   "Arrow keys move a month and T returns to today {0}": "Las teclas de flecha avanzan un mes y T vuelve a hoy {0}",
   "Assembled on read from the credentials, documents, previous-employer investigations and testing record. 49 CFR 391.51.": "Se compone al consultarlo a partir de las credenciales, los documentos, las investigaciones de empleadores anteriores y el registro de pruebas. 49 CFR 391.51.",

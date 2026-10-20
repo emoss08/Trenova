@@ -4052,46 +4052,6 @@
   font-weight: 600;
   margin-bottom: 2px;
 }
-.dk-ax-prog span {
-  display: block;
-  height: 100%;
-  background: var(--dsk-success);
-  border-radius: 2px;
-  animation: dk-grow 900ms var(--dk-settle) both;
-}
-.dk-ax-sn {
-  position: relative;
-  z-index: 1;
-  width: 23px;
-  height: 23px;
-  flex: none;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  font: 500 10.5px var(--dk-plex);
-  background: var(--dsk-card);
-  color: var(--dsk-subtle);
-  box-shadow: inset 0 0 0 1px var(--dsk-b);
-}
-.dk-ax-plan li.dk-st-done .dk-ax-sn {
-  background: var(--dsk-success);
-  color: var(--dsk-on-solid);
-  box-shadow: none;
-}
-.dk-ax-plan li.dk-st-wait .dk-ax-sn {
-  color: var(--dsk-warn-fg);
-  box-shadow: inset 0 0 0 1.5px var(--dsk-warn);
-  animation: dk-breathe 1.8s ease-in-out infinite;
-}
-.dk-ax-plan li b {
-  display: block;
-  font-weight: 500;
-  font-size: 13px;
-  line-height: 1.4;
-}
-.dk-ax-plan li.dk-st-done b {
-  color: var(--dsk-muted);
-}
 .dk-ax-bt i {
   display: block;
   height: 100%;

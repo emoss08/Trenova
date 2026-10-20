@@ -6390,10 +6390,9 @@ type PendingDecisionConnection struct {
 }
 
 type PendingDecisionEdge struct {
-	Node   PendingDecision `json:"node"`
-	Cursor string          `json:"cursor"`
-	// Set while a switch keeps it from being decided; absent when a person can decide it now.
-	Hold *PendingDecisionHold `json:"hold,omitempty"`
+	Node   PendingDecision      `json:"node"`
+	Cursor string               `json:"cursor"`
+	Hold   *PendingDecisionHold `json:"hold,omitempty"`
 }
 
 // A switch that keeps a waiting decision from being taken. The server refuses a decision on it until the switch is off.
