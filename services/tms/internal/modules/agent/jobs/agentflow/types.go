@@ -22,6 +22,8 @@ package agentflow
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
+
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
@@ -125,6 +127,8 @@ type RunContext struct {
 	// Inline says the reply is read with nothing beside it, so no tool result
 	// is kept as an artifact.
 	Inline bool `json:"inline,omitempty"`
+	// CodeMode forces the code-mode gate for the run.
+	CodeMode codemode.Override `json:"codeMode,omitempty"`
 }
 
 // Scope is how the run's events are tagged for its reader: empty for the
@@ -158,6 +162,7 @@ func NewRunContext(req *agentports.RunRequest, priorityKey int) RunContext {
 		Delegation:          req.Delegation,
 		Records:             req.Records,
 		Inline:              req.Inline,
+		CodeMode:            req.CodeMode,
 	}
 }
 
@@ -180,6 +185,7 @@ func (rc *RunContext) request() *agentports.RunRequest {
 		Delegation:          rc.Delegation,
 		Records:             rc.Records,
 		Inline:              rc.Inline,
+		CodeMode:            rc.CodeMode,
 	}
 }
 

@@ -48,6 +48,13 @@ func (p Platform) IsValid() bool {
 	return slices.Contains(AllPlatforms(), p)
 }
 
+// ServesAdvisor reports whether the platform takes Anthropic's advisor tool.
+// Only the Claude API and Claude Platform on AWS do; Bedrock, Vertex AI and
+// Foundry refuse a request that declares it.
+func (p Platform) ServesAdvisor() bool {
+	return p == PlatformDirect || p == PlatformClaudeAWS
+}
+
 // PlatformAuth is how a request to a platform proves who sent it.
 type PlatformAuth string
 

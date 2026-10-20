@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
+
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolsimulation"
@@ -94,6 +96,7 @@ type dispatchParams struct {
 	afterExternal bool
 	beyond        agent.AutonomyTier
 	stepKey       string
+	gate          scriptGate
 }
 
 func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
@@ -142,6 +145,10 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 			return argumentOutcome(call.Name, tool.ParamSchema(), err)
 		}
 		call.Arguments = contract.args
+
+		if tool.Policy().Script == agentports.ScriptRunner {
+			return s.runScriptTool(ctx, &p, tool, &call)
+		}
 
 		outcome := s.runQueryTool(ctx, req, tool, call)
 		if note := contract.note(); note != "" && !outcome.failed {
@@ -318,13 +325,8 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		}
 		action.Target = target
 
-		content := fmt.Sprintf(
-			"Recorded a proposal to run %q (proposal %s). It is awaiting a person's review at "+
-				"the %s tier and has not run.",
-			call.Name,
-			action.ProposalID,
-			tier,
-		) + heldReason(action.HeldBy, decision.Egress) + filingEcho(baseline, call.Arguments)
+		content := proposedText(call.Name, action.ProposalID, tier, s.proposalHold(ctx, req)) +
+			heldReason(action.HeldBy, decision.Egress) + filingEcho(baseline, call.Arguments)
 		if note := p.argumentNote; note != "" {
 			content += "\n" + note
 		}
@@ -665,6 +667,23 @@ func (s *Service) runQueryTool(
 	tool agentports.AgentQueryTool,
 	call agentports.ToolCall,
 ) toolOutcome {
+	return s.runQueryToolWith(ctx, req, tool, &call, &queryExtras{})
+}
+
+// queryExtras is what only the tool that runs a script is handed: the broker
+// its reads go through and the step it is claimed under.
+type queryExtras struct {
+	broker  codemode.Broker
+	stepKey string
+}
+
+func (s *Service) runQueryToolWith(
+	ctx context.Context,
+	req *agentports.RunRequest,
+	tool agentports.AgentQueryTool,
+	call *agentports.ToolCall,
+	extras *queryExtras,
+) toolOutcome {
 	data, err := tool.Query(ctx, &agentports.QueryToolParams{
 		OrganizationID:    req.Actor.OrganizationID,
 		BusinessUnitID:    req.Actor.BusinessUnitID,
@@ -675,6 +694,8 @@ func (s *Service) runQueryTool(
 		DataAccessCeiling: req.Definition.DataAccessSensitivity(),
 		ThreadID:          req.ThreadID,
 		RunID:             req.RunID,
+		Broker:            extras.broker,
+		StepKey:           extras.stepKey,
 	})
 	if refused, ok := errors.AsType[*agentports.ReadRefusedError](err); ok {
 		return refusedOutcome(
@@ -701,7 +722,7 @@ func (s *Service) runQueryTool(
 		content: FenceToolResult(call.Name, encoded),
 		data:    data,
 		summary: summarizeResult(call.Name, document),
-		taint:   callTaint(s.ruled(ctx, req, tool.Policy()), call, data, timeutils.NowUnix()),
+		taint:   callTaint(s.ruled(ctx, req, tool.Policy()), *call, data, timeutils.NowUnix()),
 		verdict: aitrace.OutcomeRan,
 	}
 	if recall, ok := data.(agentports.MemoryRecall); ok {

@@ -255,6 +255,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/fueldeskcardservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
@@ -441,10 +442,16 @@ type ResolverRoot interface {
 	FleetSafetyTerminal() FleetSafetyTerminalResolver
 	FormulaTemplate() FormulaTemplateResolver
 	FuelCard() FuelCardResolver
+	FuelCardDeskCard() FuelCardDeskCardResolver
+	FuelFeedStatus() FuelFeedStatusResolver
+	FuelHeldSpend() FuelHeldSpendResolver
+	FuelJurisdictionGallons() FuelJurisdictionGallonsResolver
 	FuelPurchase() FuelPurchaseResolver
+	FuelPurchaseIFTA() FuelPurchaseIFTAResolver
 	FuelPurchaseImportBatch() FuelPurchaseImportBatchResolver
 	FuelPurchaseImportRow() FuelPurchaseImportRowResolver
 	FuelPurchaseImportSummary() FuelPurchaseImportSummaryResolver
+	FuelSpend() FuelSpendResolver
 	IFTAFleetMPG() IFTAFleetMPGResolver
 	IFTAJurisdiction() IFTAJurisdictionResolver
 	IFTAJurisdictionMileageEntry() IFTAJurisdictionMileageEntryResolver
@@ -793,6 +800,7 @@ type AgentMemoryResolver interface {
 
 type AgentPlanResolver interface {
 	Run(ctx context.Context, obj *agent.AgentPlan) (*agent.AgentRun, error)
+	Hold(ctx context.Context, obj *agent.AgentPlan) (*gqlmodel.PendingDecisionHold, error)
 }
 
 type AgentPreviewFieldChangeResolver interface {
@@ -844,6 +852,7 @@ type AgentProposalResolver interface {
 	ReviewRequired(ctx context.Context, obj *agent.AgentProposal) (bool, error)
 	TraceURL(ctx context.Context, obj *agent.AgentProposal) (*string, error)
 	Run(ctx context.Context, obj *agent.AgentProposal) (*agent.AgentRun, error)
+	Hold(ctx context.Context, obj *agent.AgentProposal) (*gqlmodel.PendingDecisionHold, error)
 }
 
 type AgentProposalFieldResolver interface {
@@ -1469,6 +1478,26 @@ type FuelCardResolver interface {
 	AssignedTractor(ctx context.Context, obj *fuelpurchase.FuelCard) (*tractor.Tractor, error)
 }
 
+type FuelCardDeskCardResolver interface {
+	LastPurchasedAt(ctx context.Context, obj *fueldeskcardservice.FuelCardCard) (*int, error)
+}
+
+type FuelFeedStatusResolver interface {
+	LastPolledAt(ctx context.Context, obj *fuelpurchase.CardFeedState) (*int, error)
+	LastSuccessAt(ctx context.Context, obj *fuelpurchase.CardFeedState) (*int, error)
+	LastError(ctx context.Context, obj *fuelpurchase.CardFeedState) (*string, error)
+}
+
+type FuelHeldSpendResolver interface {
+	Gallons(ctx context.Context, obj *fueldeskcardservice.HeldSpend) (string, error)
+	TotalAmount(ctx context.Context, obj *fueldeskcardservice.HeldSpend) (string, error)
+}
+
+type FuelJurisdictionGallonsResolver interface {
+	Jurisdiction(ctx context.Context, obj *fueldeskcardservice.JurisdictionGallons) (*ifta.Jurisdiction, error)
+	Gallons(ctx context.Context, obj *fueldeskcardservice.JurisdictionGallons) (string, error)
+}
+
 type FuelPurchaseResolver interface {
 	WorkerID(ctx context.Context, obj *fuelpurchase.FuelPurchase) (*string, error)
 	FuelCardID(ctx context.Context, obj *fuelpurchase.FuelPurchase) (*string, error)
@@ -1483,6 +1512,13 @@ type FuelPurchaseResolver interface {
 	Worker(ctx context.Context, obj *fuelpurchase.FuelPurchase) (*worker.Worker, error)
 	Jurisdiction(ctx context.Context, obj *fuelpurchase.FuelPurchase) (*ifta.Jurisdiction, error)
 	FuelCard(ctx context.Context, obj *fuelpurchase.FuelPurchase) (*fuelpurchase.FuelCard, error)
+}
+
+type FuelPurchaseIFTAResolver interface {
+	TaxPaidGallons(ctx context.Context, obj *fueldeskcardservice.PurchaseIFTA) (string, error)
+	RatePerGallon(ctx context.Context, obj *fueldeskcardservice.PurchaseIFTA) (*string, error)
+	TaxPaidCredit(ctx context.Context, obj *fueldeskcardservice.PurchaseIFTA) (*string, error)
+	TractorGallons(ctx context.Context, obj *fueldeskcardservice.PurchaseIFTA) (string, error)
 }
 
 type FuelPurchaseImportBatchResolver interface {
@@ -1517,6 +1553,12 @@ type FuelPurchaseImportSummaryResolver interface {
 	ByJurisdiction(ctx context.Context, obj *fuelpurchase.ImportSummary) (map[string]any, error)
 	EarliestPurchasedAt(ctx context.Context, obj *fuelpurchase.ImportSummary) (*int, error)
 	LatestPurchasedAt(ctx context.Context, obj *fuelpurchase.ImportSummary) (*int, error)
+}
+
+type FuelSpendResolver interface {
+	Gallons(ctx context.Context, obj *fueldeskcardservice.Spend) (string, error)
+	UntaxedGallons(ctx context.Context, obj *fueldeskcardservice.Spend) (string, error)
+	TotalAmount(ctx context.Context, obj *fueldeskcardservice.Spend) (string, error)
 }
 
 type IFTAFleetMPGResolver interface {
@@ -2992,6 +3034,8 @@ type QueryResolver interface {
 	FuelPurchaseImports(ctx context.Context, input gqlmodel.FuelPurchaseImportsInput) (*gqlmodel.FuelPurchaseImportBatchConnection, error)
 	FuelPurchaseImport(ctx context.Context, id string) (*fuelpurchase.ImportBatch, error)
 	FuelPurchaseImportTemplate(ctx context.Context, provider fuelpurchase.CardProvider) (*gqlmodel.FuelImportTemplate, error)
+	FuelPurchaseDeskCard(ctx context.Context, id string) (*fueldeskcardservice.PurchaseCard, error)
+	FuelCardDeskCard(ctx context.Context, id string) (*fueldeskcardservice.FuelCardCard, error)
 	FuelIndexes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FuelIndexConnection, error)
 	FuelIndex(ctx context.Context, id string) (*gqlmodel.FuelIndex, error)
 	FuelIndexPriceHistory(ctx context.Context, indexID string, from *string, to *string, limit *int) ([]*gqlmodel.FuelIndexPrice, error)
@@ -4051,10 +4095,16 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"FleetSafetyTerminal":                func() any { return r.FleetSafetyTerminal() },
 			"FormulaTemplate":                    func() any { return r.FormulaTemplate() },
 			"FuelCard":                           func() any { return r.FuelCard() },
+			"FuelCardDeskCard":                   func() any { return r.FuelCardDeskCard() },
+			"FuelFeedStatus":                     func() any { return r.FuelFeedStatus() },
+			"FuelHeldSpend":                      func() any { return r.FuelHeldSpend() },
+			"FuelJurisdictionGallons":            func() any { return r.FuelJurisdictionGallons() },
 			"FuelPurchase":                       func() any { return r.FuelPurchase() },
+			"FuelPurchaseIFTA":                   func() any { return r.FuelPurchaseIFTA() },
 			"FuelPurchaseImportBatch":            func() any { return r.FuelPurchaseImportBatch() },
 			"FuelPurchaseImportRow":              func() any { return r.FuelPurchaseImportRow() },
 			"FuelPurchaseImportSummary":          func() any { return r.FuelPurchaseImportSummary() },
+			"FuelSpend":                          func() any { return r.FuelSpend() },
 			"IFTAFleetMPG":                       func() any { return r.IFTAFleetMPG() },
 			"IFTAJurisdiction":                   func() any { return r.IFTAJurisdiction() },
 			"IFTAJurisdictionMileageEntry":       func() any { return r.IFTAJurisdictionMileageEntry() },

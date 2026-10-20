@@ -33,7 +33,6 @@
   "Remittance matched again": "Remesa emparejada de nuevo",
   "Remittance totals": "Totales de la remesa",
   "Remitted {0}": "Remitida el {0}",
-  "Row {0}": "Fila {0}",
   "Row {0} ({1}) pays which invoice on the factor's schedules?": "¿Qué factura de las relaciones de la empresa de factoraje paga la fila {0} ({1})?",
   "Row {0}: {1} of invoice {2}": "Fila {0}: {1} de la factura {2}",
   "Say which column of {0} holds each field. Leave a field out when the file has no such column.": "Indique qué columna de {0} contiene cada campo. Omita un campo cuando el archivo no tenga esa columna.",

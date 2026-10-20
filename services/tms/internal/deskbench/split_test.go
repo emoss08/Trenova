@@ -67,10 +67,15 @@ func TestScenarioSplits_HoldOutEveryDeskWithTwoScenarios(t *testing.T) {
 
 	members := map[evalsplit.Stratum]int{}
 	held := map[evalsplit.Stratum]int{}
+	counted := map[string]struct{}{}
 	for _, scenario := range scenarios {
 		if scenario.Split == evalsplit.Adversarial {
 			continue
 		}
+		if _, pairCounted := counted[scenario.SplitKey()]; pairCounted {
+			continue
+		}
+		counted[scenario.SplitKey()] = struct{}{}
 		members[scenario.Stratum()]++
 		if scenario.Split == evalsplit.HeldOut {
 			held[scenario.Stratum()]++

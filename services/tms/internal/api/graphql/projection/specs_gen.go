@@ -435,6 +435,8 @@ var FormulaTemplateSpec TypeSpec
 
 var FuelCardSpec TypeSpec
 
+var FuelFeedStatusSpec TypeSpec
+
 var FuelIndexSpec TypeSpec
 
 var FuelIndexPriceSpec TypeSpec
@@ -544,6 +546,8 @@ var PayProfileSpec TypeSpec
 var PayProfileComponentSpec TypeSpec
 
 var PayrollExportSpec TypeSpec
+
+var PendingDecisionHoldSpec TypeSpec
 
 var PerformanceReviewSpec TypeSpec
 
@@ -3790,6 +3794,9 @@ func init() {
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
+			"status",
+			"run_id",
+			"organization_id",
 		},
 		Fields: []FieldSpec{
 			{
@@ -3871,6 +3878,10 @@ func init() {
 			{
 				Name:    "run",
 				Special: "run",
+			},
+			{
+				Name:    "hold",
+				Special: "hold",
 			},
 		},
 	}
@@ -3989,6 +4000,9 @@ func init() {
 			"created_at",
 			"tainted",
 			"egress_class",
+			"status",
+			"run_id",
+			"organization_id",
 		},
 		Fields: []FieldSpec{
 			{
@@ -4106,6 +4120,10 @@ func init() {
 			{
 				Name:    "run",
 				Special: "run",
+			},
+			{
+				Name:    "hold",
+				Special: "hold",
 			},
 		},
 	}
@@ -16070,6 +16088,30 @@ func init() {
 		},
 	}
 
+	FuelFeedStatusSpec = TypeSpec{
+		TypeName:      "FuelFeedStatus",
+		FieldMap:      fuelpurchasecol.CardFeedStateFieldMap,
+		AlwaysColumns: []string{},
+		Fields: []FieldSpec{
+			{
+				Name:        "lastPolledAt",
+				FieldMapKey: "lastPolledAt",
+			},
+			{
+				Name:        "lastSuccessAt",
+				FieldMapKey: "lastSuccessAt",
+			},
+			{
+				Name:        "failureCount",
+				FieldMapKey: "failureCount",
+			},
+			{
+				Name:        "lastError",
+				FieldMapKey: "lastError",
+			},
+		},
+	}
+
 	FuelIndexSpec = TypeSpec{
 		TypeName: "FuelIndex",
 		FieldMap: fuelsurchargecol.FuelIndexFieldMap,
@@ -21193,6 +21235,25 @@ func init() {
 			{
 				Name:        "version",
 				FieldMapKey: "version",
+			},
+		},
+	}
+
+	PendingDecisionHoldSpec = TypeSpec{
+		TypeName: "PendingDecisionHold",
+		FieldMap: aiauditcol.AIAuditEventFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "reason",
+				FieldMapKey: "reason",
+			},
+			{
+				Name:        "agentName",
+				FieldMapKey: "agentName",
 			},
 		},
 	}

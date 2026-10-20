@@ -986,6 +986,7 @@
   "Quarterly": "Trimestral",
   "Queued": "En cola",
   "Queued behind a higher-ranked carrier; nothing has been sent yet.": "En cola detrás de un transportista mejor clasificado; aún no se ha enviado nada.",
+  "Ramp": "Escalonado",
   "Random": "Aleatorio",
   "Rank is required": "El rango es obligatorio",
   "Rank must be at least 1": "El orden debe ser al menos 1",

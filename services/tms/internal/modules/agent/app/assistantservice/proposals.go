@@ -170,7 +170,7 @@ func (s *Service) persistProposals(
 		if verdictErr != nil {
 			return nil, verdictErr
 		}
-		hold := holdFor(verdict)
+		hold := verdict.Hold()
 		for _, proposal := range group.proposals {
 			out := toAssistantProposal(proposal, hold)
 			out.AgentID = group.definition.ID
@@ -254,19 +254,6 @@ func tenantOf(actor *permissionports.RequestActor) pagination.TenantInfo {
 		OrgID:  actor.OrganizationID,
 		BuID:   actor.BusinessUnitID,
 		UserID: actor.UserID,
-	}
-}
-
-// holdFor turns a shadow verdict into what the card shows. Nothing is held
-// by a live verdict.
-func holdFor(verdict agentshadow.Verdict) *agentports.ProposalHold {
-	if !verdict.Shadow() {
-		return nil
-	}
-
-	return &agentports.ProposalHold{
-		Reason:    string(verdict.Cause),
-		AgentName: verdict.AgentName,
 	}
 }
 
@@ -398,7 +385,7 @@ func (s *Service) ListThreadProposals(
 
 	proposals := make([]agentports.AssistantProposal, 0, len(stored))
 	for _, proposal := range stored {
-		out := toAssistantProposal(proposal, holdFor(verdicts[proposal.RunID]))
+		out := toAssistantProposal(proposal, verdicts[proposal.RunID].Hold())
 		out.Fields = s.editableFields(proposal)
 		if decision := decided[proposal.ID]; decision != nil {
 			decidedAt := decision.CreatedAt
@@ -624,7 +611,7 @@ func (s *Service) ListThreadPlans(
 
 	plans := make([]agentports.AssistantPlan, 0, len(stored))
 	for _, plan := range stored {
-		out := toAssistantPlan(plan, holdFor(planVerdict(verdicts, plan, stepRuns[plan.ID])))
+		out := toAssistantPlan(plan, planVerdict(verdicts, plan, stepRuns[plan.ID]).Hold())
 		if by, ok := proposers[plan.RunID]; ok {
 			out.AgentID, out.AgentName = by.id, by.name
 		}

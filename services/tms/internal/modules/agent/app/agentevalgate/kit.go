@@ -1,6 +1,7 @@
 package agentevalgate
 
 import (
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
@@ -23,6 +24,9 @@ type RuntimeParams struct {
 	Completion  agentports.CompletionService
 	Permissions permissionports.PermissionEngine
 	Extensions  agentextensionports.AgentExtensionGate
+	// CodeMode opens the code-mode gate the way the desk bench forces it, for
+	// a red-team case that runs a script.
+	CodeMode bool
 }
 
 func NewKit() (*Kit, error) {
@@ -66,5 +70,14 @@ func (k *Kit) NewRuntime(p RuntimeParams) *agentruntime.Service {
 		Permissions: p.Permissions,
 		Catalog:     k.Catalog,
 		Extensions:  p.Extensions,
+		Config:      codeModeConfig(p.CodeMode),
 	})
+}
+
+func codeModeConfig(open bool) *config.Config {
+	if !open {
+		return nil
+	}
+
+	return &config.Config{App: config.AppConfig{Env: config.EnvTest}}
 }

@@ -1,4 +1,12 @@
+import {
+  holdActionText,
+  holdReasonText,
+  holdSwitchOf,
+} from "@/components/assistant/approval-queue";
+import { usePermission } from "@/hooks/use-permission";
 import type { AgentProposalRow } from "@/lib/graphql/agent-activity-tables";
+import { Operation, Resource } from "@trenova/shared/types/permission";
+import { Link } from "react-router";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
@@ -43,6 +51,10 @@ export function ProposalSheet({
     onClose();
   };
   const pending = proposal?.status === "Pending";
+  const held = pending ? holdSwitchOf(proposal?.hold, undefined) : null;
+  const { allowed: canResume } = usePermission(Resource.AgentControl, Operation.Update);
+  const { allowed: canEditAgent } = usePermission(Resource.AgentDefinition, Operation.Update);
+  const canTurnOff = held?.scope === "organization" ? canResume : canEditAgent;
   const title = proposal ? proposal.rationale || proposal.toolName : t("Proposal");
 
   return (
@@ -61,7 +73,7 @@ export function ProposalSheet({
                 <b>{title}</b>
                 <span className="mono">{proposal.toolName}</span>
               </div>
-              <ProposalStatusBadge value={proposal.status} t={t} />
+              <ProposalStatusBadge value={proposal.status} held={held !== null} t={t} />
             </>
           )
         }
@@ -99,7 +111,21 @@ export function ProposalSheet({
               </div>
             )}
             <div className="ad-bar sh-f">
-              {pending && actions?.canDecide ? (
+              {held ? (
+                <span className="ad-h" role="status">
+                  {holdReasonText(held, t)}
+                  {canTurnOff ? (
+                    <>
+                      {" · "}
+                      <Link className="lnk" to={held.to}>
+                        {holdActionText(held, t)}
+                      </Link>
+                    </>
+                  ) : (
+                    ` · ${t("An administrator can turn this off.")}`
+                  )}
+                </span>
+              ) : pending && actions?.canDecide ? (
                 <>
                   <Button
                     type="button"
@@ -120,7 +146,12 @@ export function ProposalSheet({
                       {t("Approve with changes")}
                     </Button>
                   )}
-                  <Button type="button" variant="outline" size="sm" onClick={() => actions.reject(proposal)}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => actions.reject(proposal)}
+                  >
                     {t("Reject")}
                   </Button>
                 </>

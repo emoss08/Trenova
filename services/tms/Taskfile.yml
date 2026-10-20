@@ -135,6 +135,12 @@ tasks:
     cmds:
       - "{{.CLI_PATH}} desk sweep {{.CLI_ARGS}}"
 
+  desk-gate:
+    desc: Run the Desk bench gate in deskbench/gate.yaml (--probe, then --budget <probe>, then --confirm <gate>)
+    deps: [build-cli]
+    cmds:
+      - "{{.CLI_PATH}} desk gate {{.CLI_ARGS}}"
+
   desk-route:
     desc: Score how well the questions under deskbench/routing are matched to their agent
     deps: [build-cli]

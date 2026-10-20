@@ -10,7 +10,7 @@ policies, so this page cannot drift from what runs: CI regenerates it and fails
 when it differs. Each tool is listed once, under the furthest class its work
 can reach.
 
-Tools listed: 632.
+Tools listed: 633.
 
 ## The model
 
@@ -88,7 +88,7 @@ and Confidential fields never reach a model at all.
 
 | Class | Means | Runs at most | Held once tainted | Tools that reach it |
 | --- | --- | --- | --- | --- |
-| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 209 |
+| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 210 |
 | The caller's own records | Changes only the records of the person using the agent. | Automatic | No | 9 |
 | Inside the organization | Changes records only people inside the organization see. | Automatic | No | 266 |
 | Seen by a customer | Changes something a customer can see. | Ask first | Yes | 5 |
@@ -115,6 +115,7 @@ Looks something up. Nothing changes and nothing is sent.
 | List agent runs (`agent_list_runs`) | Reads only | Automatic | — | When the record is marked, from run record | Lists agent runs, whose summaries may repeat outside text a run read; a run on a conversation is listed only to the person who owns it. |
 | Open agent page (`agent_open_page`) | Reads only | Automatic | — | — | Opens a page in the caller's own browser; nothing changes and nothing is sent. |
 | Read agent attachment (`agent_read_attachment`) | Reads only | Automatic | — | Always, from attachment | Reads text from a file the person attached to their own conversation; nothing changes and nothing is sent. |
+| Run agent script (`agent_run_script`) | Reads only | Automatic | — | When the record is marked, from record note, inbound message, document, EDI, bank receipt, weather, attachment, memory or run record | Runs a short script in a sandbox that cannot reach the network; every read it makes is one of the agent's own reads, run as the person under the same checks, and the call carries the taint of every read that brought outside text in. It changes nothing. |
 | Ask user (`ask_user`) | Reads only | Automatic | — | — | Asks the person in the conversation a question; nothing is saved or sent. |
 | Get billing queue item (`billing_get_queue_item`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List billing queue items (`billing_list_queue_items`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |

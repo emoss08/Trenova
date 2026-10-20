@@ -33,7 +33,6 @@
   "Remittance matched again": "已重新比對匯款通知",
   "Remittance totals": "匯款通知合計",
   "Remitted {0}": "已於 {0} 匯款",
-  "Row {0}": "第 {0} 列",
   "Row {0} ({1}) pays which invoice on the factor's schedules?": "第 {0} 列（{1}）支付的是承購公司清單上的哪一張發票？",
   "Row {0}: {1} of invoice {2}": "第 {0} 列：發票 {2} 的{1}",
   "Say which column of {0} holds each field. Leave a field out when the file has no such column.": "請指明 {0} 中哪一欄存放各欄位。檔案中若無此欄，請略過該欄位。",

@@ -60,10 +60,11 @@ type Recorder struct {
 type ProviderPin struct {
 	ProviderID pulid.ID
 	Effort     aiprovider.ReasoningEffort
+	Advisor    *agentports.AdvisorSpec
 }
 
 func (p ProviderPin) empty() bool {
-	return p.ProviderID.IsNil() && p.Effort == ""
+	return p.ProviderID.IsNil() && p.Effort == "" && p.Advisor == nil
 }
 
 func NewRecorder(inner agentports.CompletionService) *Recorder {
@@ -103,6 +104,10 @@ func (r *Recorder) pin(req *agentports.ChatCompletionRequest) {
 	}
 	if pin.Effort != "" {
 		req.Reasoning = pin.Effort
+	}
+	if pin.Advisor != nil {
+		advisor := *pin.Advisor
+		req.Advisor = &advisor
 	}
 }
 

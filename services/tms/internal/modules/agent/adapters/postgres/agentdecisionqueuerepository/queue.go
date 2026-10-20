@@ -58,7 +58,8 @@ func (u *unionQuery) write(fragment string, args ...any) {
 }
 
 // pendingUnion writes the subquery; the caller selects from it as "q" with
-// the columns kind, id, created_at, agent_definition_id and agent_name.
+// the columns kind, id, created_at, agent_definition_id, agent_name, shadow
+// and tool_name.
 func pendingUnion(req agentports.ListPendingDecisionsQuery) *unionQuery {
 	proposals := agentcol.AgentProposalColumns
 	plans := agentcol.AgentPlanColumns
@@ -89,9 +90,6 @@ func pendingUnion(req agentports.ListPendingDecisionsQuery) *unionQuery {
 		if !req.AgentDefinitionID.IsNil() {
 			u.write(" AND "+runs.AgentDefinitionID.Qualified()+" = ?", req.AgentDefinitionID)
 		}
-		if req.ExcludeShadowDefinitions {
-			u.write(" AND COALESCE(" + definitions.ShadowMode.Qualified() + ", FALSE) = FALSE")
-		}
 		writeAudience(u, req.Audience)
 	}
 
@@ -99,6 +97,7 @@ func pendingUnion(req agentports.ListPendingDecisionsQuery) *unionQuery {
 		proposals.CreatedAt.Qualified()+" AS created_at, "+
 		runs.AgentDefinitionID.Qualified()+" AS agent_definition_id, "+
 		"COALESCE("+definitions.Name.Qualified()+", '') AS agent_name, "+
+		"COALESCE("+definitions.ShadowMode.Qualified()+", FALSE) AS shadow, "+
 		proposals.ToolName.Qualified()+" AS tool_name"+
 		" FROM "+agentcol.AgentProposalTable.Name+" AS "+agentcol.AgentProposalTable.Alias,
 		string(agentports.PendingDecisionProposal))
@@ -124,6 +123,7 @@ func pendingUnion(req agentports.ListPendingDecisionsQuery) *unionQuery {
 		plans.CreatedAt.Qualified()+" AS created_at, "+
 		runs.AgentDefinitionID.Qualified()+" AS agent_definition_id, "+
 		"COALESCE("+definitions.Name.Qualified()+", '') AS agent_name, "+
+		"COALESCE("+definitions.ShadowMode.Qualified()+", FALSE) AS shadow, "+
 		"? AS tool_name"+
 		" FROM "+agentcol.AgentPlanTable.Name+" AS "+agentcol.AgentPlanTable.Alias,
 		string(agentports.PendingDecisionPlan), agent.PlanToolName)
@@ -186,7 +186,7 @@ func (r *repository) ListPending(
 
 			inner := pendingUnion(req)
 			q := &unionQuery{}
-			q.write("SELECT kind, id, created_at FROM (")
+			q.write("SELECT kind, id, created_at, shadow, agent_name FROM (")
 			q.write(inner.sql.String(), inner.args...)
 			q.write(") AS q")
 			if req.After != nil {
@@ -248,20 +248,21 @@ func (r *repository) Summary(
 		r.db,
 		func(ctx context.Context) (*agentports.PendingDecisionSummary, error) {
 			listReq := agentports.ListPendingDecisionsQuery{
-				TenantInfo:               req.TenantInfo,
-				ExcludeShadowDefinitions: req.ExcludeShadowDefinitions,
-				Audience:                 req.Audience,
-				Now:                      req.Now,
+				TenantInfo: req.TenantInfo,
+				Audience:   req.Audience,
+				Now:        req.Now,
 			}
 			db := r.db.DBForContext(ctx)
 
 			var totals struct {
 				Total    int    `bun:"total"`
+				Held     int    `bun:"held"`
 				OldestAt *int64 `bun:"oldest_at"`
 			}
 			inner := pendingUnion(listReq)
 			q := &unionQuery{}
-			q.write("SELECT COUNT(*) AS total, MIN(created_at) AS oldest_at FROM (")
+			q.write("SELECT COUNT(*) AS total, COUNT(*) FILTER (WHERE shadow) AS held, " +
+				"MIN(created_at) AS oldest_at FROM (")
 			q.write(inner.sql.String(), inner.args...)
 			q.write(") AS q")
 			if err := db.NewRaw(q.sql.String(), q.args...).Scan(ctx, &totals); err != nil {
@@ -272,6 +273,7 @@ func (r *repository) Summary(
 
 			summary := &agentports.PendingDecisionSummary{
 				Total:   totals.Total,
+				Held:    totals.Held,
 				ByAgent: []agentports.PendingDecisionAgentCount{},
 				ByTool:  []agentports.PendingDecisionToolCount{},
 			}

@@ -415,6 +415,12 @@ sandbox with all egress denied, charts kept with the run and drawn as the Desk's
 artifact) is in [docs/engineering/agent-data-analysis.md](docs/engineering/agent-data-analysis.md).
 Read it before changing `analysis.go` in `agentextensionservice`, `analysis_tool.go`,
 `e2bconnector` or `shared/e2b`.
+Code mode (`agent_run_script`: a short read-only Python script in the same sandbox whose every read
+goes through a Go broker that runs it as one of the agent's own reads through `dispatch`, taint
+unioned by the broker, gated per model by `domain/codemode/models.yaml`, which ships empty) is in
+[docs/engineering/agent-code-mode.md](docs/engineering/agent-code-mode.md). Read it before changing
+`domain/codemode`, `scriptbroker.go` or `scripttool.go` in `agentruntime`, `script_tool.go`,
+`script.go` in `agentextensionservice`, or `RunCodeStream` in `shared/e2b`.
 How an agent looks back over a quiet conversation or a settled run and keeps what the work
 taught (`agentreflectionservice`, `reflectionjobs`, the `agent_reflections` table) is under
 "Learning from the work" in agent-runtime.md.
