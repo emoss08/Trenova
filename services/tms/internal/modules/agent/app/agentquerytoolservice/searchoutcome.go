@@ -39,9 +39,10 @@ type searchOutcome struct {
 	Note string `json:"note,omitempty"`
 	// Offset, HasMore and NextOffset say where this page sits in the whole,
 	// so a full page is never mistaken for the whole set.
-	Offset     int  `json:"offset,omitempty"`
-	HasMore    bool `json:"hasMore"`
-	NextOffset *int `json:"nextOffset,omitempty"`
+	Offset     int    `json:"offset,omitempty"`
+	HasMore    bool   `json:"hasMore"`
+	NextOffset *int   `json:"nextOffset,omitempty"`
+	NextCursor string `json:"nextCursor,omitempty"`
 }
 
 // paged records where a page sits in the whole list.
@@ -52,6 +53,13 @@ func (o searchOutcome) paged(p page, hasMore bool) searchOutcome {
 		next := p.offset + p.limit
 		o.NextOffset = &next
 	}
+
+	return o
+}
+
+func (o searchOutcome) cursorPaged(window cursorWindow, hasMore bool, next string) searchOutcome {
+	o.HasMore = hasMore
+	o.NextCursor = window.next(next)
 
 	return o
 }

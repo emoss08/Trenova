@@ -320,7 +320,7 @@ func (t *shipmentListTool) ParamSchema() map[string]any {
 					"give words, %d otherwise, at most %d.",
 					defaultShipmentWordLimit, defaultListLimit, maxListLimit),
 			}),
-			paramOffset: pageSchema(defaultListLimit, maxListLimit)[paramOffset],
+			paramAfter: cursorPageSchema(defaultListLimit, maxListLimit)[paramAfter],
 		},
 		toolschema.KeyAdditionalProperties: false,
 	}
@@ -406,7 +406,7 @@ type wordSearch struct {
 	params   *agentports.QueryToolParams
 	query    string
 	statuses []shipment.Status
-	window   page
+	window   cursorWindow
 	filters  []domaintypes.FieldFilter
 	sorting  []domaintypes.SortField
 }
@@ -427,11 +427,21 @@ func (t *shipmentListTool) searchWords(
 		return nil, err
 	}
 
+	window, err := readCursorWindow(
+		t.Name(),
+		params.Params,
+		defaultShipmentWordLimit,
+		maxListLimit,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	search := &wordSearch{
 		params:   params,
 		query:    query,
 		statuses: statuses,
-		window:   readPage(params.Params, defaultShipmentWordLimit, maxListLimit),
+		window:   window,
 		filters:  filters,
 		sorting:  sorting,
 	}
@@ -439,7 +449,7 @@ func (t *shipmentListTool) searchWords(
 	if err != nil {
 		return nil, err
 	}
-	if len(found.rows) > 0 || len(statuses) == 0 {
+	if len(found.rows) > 0 || len(statuses) == 0 || !search.window.first() {
 		return t.wordOutcome(ctx, search, found)
 	}
 
@@ -474,7 +484,7 @@ func (t *shipmentListTool) wordOutcome(
 	rows := found.rows
 	full := len(rows) >= search.window.limit
 	var sampled []string
-	if full && search.window.offset == 0 {
+	if full && search.window.first() {
 		var err error
 		if rows, sampled, err = t.withEachStatus(ctx, search, rows); err != nil {
 			return nil, err
@@ -489,8 +499,8 @@ func (t *shipmentListTool) wordOutcome(
 			"These are the first %d of more shipments the words match. If the one meant is "+
 				"not here, search again with a status, a date or a pro number rather than "+
 				"asking the person to choose from this page.", search.window.limit)
-	case full:
-		outcome = outcome.paged(search.window, true)
+	case found.hasMore:
+		outcome = outcome.cursorPaged(search.window, true, found.nextCursor)
 		if total, err := countShipments(ctx, t.repo, &pagination.QueryOptions{
 			TenantInfo:   tenantOf(search.params),
 			Query:        search.query,
@@ -534,7 +544,7 @@ func (t *shipmentListTool) withEachStatus(
 		}
 		one := *search
 		one.statuses = []shipment.Status{status}
-		one.window = page{limit: 1}
+		one.window = firstCursorWindow(1)
 		found, err := t.search(
 			ctx,
 			&one,
@@ -557,9 +567,11 @@ func (t *shipmentListTool) withEachStatus(
 }
 
 type shipmentSearch struct {
-	criteria *filtercatalog.Criteria
-	rows     []shipmentRow
-	byParty  bool
+	criteria   *filtercatalog.Criteria
+	rows       []shipmentRow
+	byParty    bool
+	hasMore    bool
+	nextCursor string
 }
 
 func (t *shipmentListTool) search(
@@ -572,15 +584,13 @@ func (t *shipmentListTool) search(
 
 	result, err := t.repo.List(ctx, &shipmentports.ListShipmentsRequest{
 		Filter: &pagination.QueryOptions{
-			TenantInfo: tenantOf(search.params),
-			Pagination: pagination.Info{
-				Limit:  search.window.limit,
-				Offset: search.window.offset,
-			},
+			TenantInfo:   tenantOf(search.params),
+			Pagination:   pagination.Info{Limit: search.window.limit},
 			Query:        search.query,
 			FieldFilters: search.filters,
 			Sort:         search.sorting,
 		},
+		Cursor: search.window.info,
 		ShipmentOptions: shipmentports.ShipmentOptions{
 			Statuses:        search.statuses,
 			IncludeCustomer: true,
@@ -588,7 +598,11 @@ func (t *shipmentListTool) search(
 		},
 	})
 	if err != nil {
-		return nil, err
+		return nil, refuseStaleCursor(err)
+	}
+	next, err := result.NextCursor()
+	if err != nil {
+		return nil, fmt.Errorf("encode the next page's cursor: %w", err)
 	}
 
 	rows := make([]shipmentRow, 0, len(result.Items))
@@ -597,7 +611,7 @@ func (t *shipmentListTool) search(
 	}
 
 	direct := len(rows)
-	if search.window.offset == 0 && len(rows) < search.window.limit {
+	if search.window.first() && len(rows) < search.window.limit {
 		rows, err = t.addPartyMatches(ctx, &partySearch{
 			params:   search.params,
 			query:    search.query,
@@ -612,7 +626,13 @@ func (t *shipmentListTool) search(
 		}
 	}
 
-	return &shipmentSearch{criteria: criteria, rows: rows, byParty: len(rows) > direct}, nil
+	return &shipmentSearch{
+		criteria:   criteria,
+		rows:       rows,
+		byParty:    len(rows) > direct,
+		hasMore:    result.HasNextPage,
+		nextCursor: next,
+	}, nil
 }
 
 type partySearch struct {

@@ -117,10 +117,6 @@ func fuelPurchaseRowFrom(item *fuelpurchase.FuelPurchase) fuelPurchaseRow {
 	return row
 }
 
-func cursorOf(opts *pagination.QueryOptions) pagination.CursorInfo {
-	return pagination.CursorInfo{Limit: opts.Pagination.Limit}
-}
-
 func newListFuelPurchasesTool(
 	repo fuelpurchaseports.FuelPurchaseRepository,
 ) agentports.AgentQueryTool {
@@ -154,20 +150,21 @@ func newListFuelPurchasesTool(
 			{Name: "importBatchId", Kind: filterText, Note: "from fuel_list_purchase_imports"},
 			{Name: fieldCreatedAt, Kind: filterDate, Sortable: true},
 		},
-		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
+		pagesByCursor: true,
+		fetch: func(ctx context.Context, opts *pagination.QueryOptions, cursor pagination.CursorInfo) (listPage, error) {
 			result, err := repo.ListPurchases(ctx, &fuelpurchaseports.ListFuelPurchasesRequest{
 				Filter:              opts,
-				Cursor:              cursorOf(opts),
+				Cursor:              cursor,
 				IncludeTractor:      true,
 				IncludeJurisdiction: true,
 			})
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
 
-			return listRows(result.Items, func(item *fuelpurchase.FuelPurchase) any {
+			return cursorListPage(result, func(item *fuelpurchase.FuelPurchase) any {
 				return fuelPurchaseRowFrom(item)
-			}), nil
+			})
 		},
 	})
 }
@@ -211,16 +208,17 @@ func newListFuelCardsTool(repo fuelpurchaseports.FuelPurchaseRepository) agentpo
 			{Name: "discoveredAt", Kind: filterDate, Sortable: true},
 			{Name: fieldCreatedAt, Kind: filterDate, Sortable: true},
 		},
-		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
+		pagesByCursor: true,
+		fetch: func(ctx context.Context, opts *pagination.QueryOptions, cursor pagination.CursorInfo) (listPage, error) {
 			result, err := repo.ListCards(ctx, &fuelpurchaseports.ListFuelCardsRequest{
 				Filter: opts,
-				Cursor: cursorOf(opts),
+				Cursor: cursor,
 			})
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
 
-			return listRows(result.Items, func(item *fuelpurchase.FuelCard) any {
+			return cursorListPage(result, func(item *fuelpurchase.FuelCard) any {
 				row := fuelCardRow{
 					ID:               item.ID.String(),
 					Provider:         string(item.Provider),
@@ -242,7 +240,7 @@ func newListFuelCardsTool(repo fuelpurchaseports.FuelPurchaseRepository) agentpo
 				}
 
 				return row
-			}), nil
+			})
 		},
 	})
 }
@@ -320,18 +318,19 @@ func newListFuelPurchaseImportsTool(
 			{Name: "stagedAt", Kind: filterDate, Sortable: true},
 			{Name: fieldCreatedAt, Kind: filterDate, Sortable: true},
 		},
-		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
+		pagesByCursor: true,
+		fetch: func(ctx context.Context, opts *pagination.QueryOptions, cursor pagination.CursorInfo) (listPage, error) {
 			result, err := repo.ListImportBatches(ctx, &fuelpurchaseports.ListImportBatchesRequest{
 				Filter: opts,
-				Cursor: cursorOf(opts),
+				Cursor: cursor,
 			})
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
 
-			return listRows(result.Items, func(item *fuelpurchase.ImportBatch) any {
+			return cursorListPage(result, func(item *fuelpurchase.ImportBatch) any {
 				return fuelImportRowFrom(item)
-			}), nil
+			})
 		},
 	})
 }
@@ -543,16 +542,17 @@ func newListIFTAReturnsTool(repo iftaports.IFTARepository) agentports.AgentQuery
 			{Name: fieldQuarter, Kind: filterNumber, Sortable: true},
 			{Name: fieldCreatedAt, Kind: filterDate, Sortable: true},
 		},
-		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
+		pagesByCursor: true,
+		fetch: func(ctx context.Context, opts *pagination.QueryOptions, cursor pagination.CursorInfo) (listPage, error) {
 			result, err := repo.ListReturns(ctx, &iftaports.ListReturnsRequest{
 				Filter: opts,
-				Cursor: cursorOf(opts),
+				Cursor: cursor,
 			})
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
 
-			return listRows(result.Items, func(item *ifta.Return) any {
+			return cursorListPage(result, func(item *ifta.Return) any {
 				return iftaReturnRow{
 					ID:               item.ID.String(),
 					Year:             item.Year,
@@ -574,7 +574,7 @@ func newListIFTAReturnsTool(repo iftaports.IFTARepository) agentports.AgentQuery
 						"not filed",
 					),
 				}
-			}), nil
+			})
 		},
 	})
 }
@@ -622,18 +622,19 @@ func newListIFTAMileageEntriesTool(repo iftaports.IFTARepository) agentports.Age
 			},
 			{Name: "loaded", Kind: filterBool},
 		},
-		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
+		pagesByCursor: true,
+		fetch: func(ctx context.Context, opts *pagination.QueryOptions, cursor pagination.CursorInfo) (listPage, error) {
 			result, err := repo.ListMileageEntries(ctx, &iftaports.ListMileageEntriesRequest{
 				Filter:              opts,
-				Cursor:              cursorOf(opts),
+				Cursor:              cursor,
 				IncludeTractor:      true,
 				IncludeJurisdiction: true,
 			})
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
 
-			return listRows(result.Items, func(item *ifta.JurisdictionMileageEntry) any {
+			return cursorListPage(result, func(item *ifta.JurisdictionMileageEntry) any {
 				row := iftaMileageRow{
 					ID:             item.ID.String(),
 					TractorID:      item.TractorID.String(),
@@ -657,7 +658,7 @@ func newListIFTAMileageEntriesTool(repo iftaports.IFTARepository) agentports.Age
 				}
 
 				return row
-			}), nil
+			})
 		},
 	})
 }

@@ -128,14 +128,15 @@ func newListOrdersTool(
 		fetchGated: func(
 			ctx context.Context,
 			opts *pagination.QueryOptions,
+			_ pagination.CursorInfo,
 			gate *fieldGate,
-		) ([]any, error) {
+		) (listPage, error) {
 			result, err := repo.List(ctx, &orderports.ListOrdersRequest{Filter: opts})
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
 
-			return listRows(result.Items, func(item *order.Order) any {
+			return offsetListPage(result.Items, func(item *order.Order) any {
 				return orderRowFrom(item, gate)
 			}), nil
 		},

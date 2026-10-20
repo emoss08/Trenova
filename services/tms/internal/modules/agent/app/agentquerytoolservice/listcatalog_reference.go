@@ -83,19 +83,20 @@ func newListEquipmentTypesTool(
 		summary: "List equipment types — the trailer and tractor classes this " +
 			"organization books against, such as dry van, reefer or flatbed. Use it to " +
 			"turn an equipment name a person used into the id other tools need.",
-		resource: permission.ResourceEquipmentType,
-		config:   querybuilder.GetFieldConfiguration((*equipmenttype.EquipmentType)(nil)),
-		fields:   fields,
-		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
+		resource:      permission.ResourceEquipmentType,
+		config:        querybuilder.GetFieldConfiguration((*equipmenttype.EquipmentType)(nil)),
+		fields:        fields,
+		pagesByCursor: true,
+		fetch: func(ctx context.Context, opts *pagination.QueryOptions, cursor pagination.CursorInfo) (listPage, error) {
 			result, err := repo.List(
 				ctx,
-				&equipmenttypeports.ListEquipmentTypesRequest{Filter: opts},
+				&equipmenttypeports.ListEquipmentTypesRequest{Filter: opts, Cursor: cursor},
 			)
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
 
-			return listRows(result.Items, func(item *equipmenttype.EquipmentType) any {
+			return cursorListPage(result, func(item *equipmenttype.EquipmentType) any {
 				return codedRow{
 					ID:          item.ID.String(),
 					Code:        item.Code,
@@ -103,7 +104,7 @@ func newListEquipmentTypesTool(
 					Status:      string(item.Status),
 					Name:        string(item.Class),
 				}
-			}), nil
+			})
 		},
 	})
 }
@@ -117,13 +118,13 @@ func newListFleetCodesTool(repo fleetcodeports.FleetCodeRepository) agentports.A
 		resource: permission.ResourceFleetCode,
 		config:   querybuilder.GetFieldConfiguration((*fleetcode.FleetCode)(nil)),
 		fields:   codedFields(),
-		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
+		fetch: func(ctx context.Context, opts *pagination.QueryOptions, _ pagination.CursorInfo) (listPage, error) {
 			result, err := repo.List(ctx, &fleetcodeports.ListFleetCodesRequest{Filter: opts})
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
 
-			return listRows(result.Items, func(item *fleetcode.FleetCode) any {
+			return offsetListPage(result.Items, func(item *fleetcode.FleetCode) any {
 				return codedRow{
 					ID:          item.ID.String(),
 					Code:        item.Code,
@@ -146,13 +147,13 @@ func newListServiceTypesTool(
 		resource: permission.ResourceServiceType,
 		config:   querybuilder.GetFieldConfiguration((*servicetype.ServiceType)(nil)),
 		fields:   codedFields(),
-		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
+		fetch: func(ctx context.Context, opts *pagination.QueryOptions, _ pagination.CursorInfo) (listPage, error) {
 			result, err := repo.List(ctx, &servicetypeports.ListServiceTypesRequest{Filter: opts})
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
 
-			return listRows(result.Items, func(item *servicetype.ServiceType) any {
+			return offsetListPage(result.Items, func(item *servicetype.ServiceType) any {
 				return codedRow{
 					ID:          item.ID.String(),
 					Code:        item.Code,
@@ -175,13 +176,13 @@ func newListShipmentTypesTool(
 		resource: permission.ResourceShipmentType,
 		config:   querybuilder.GetFieldConfiguration((*shipmenttype.ShipmentType)(nil)),
 		fields:   codedFields(),
-		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
+		fetch: func(ctx context.Context, opts *pagination.QueryOptions, _ pagination.CursorInfo) (listPage, error) {
 			result, err := repo.List(ctx, &shipmenttypeports.ListShipmentTypesRequest{Filter: opts})
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
 
-			return listRows(result.Items, func(item *shipmenttype.ShipmentType) any {
+			return offsetListPage(result.Items, func(item *shipmenttype.ShipmentType) any {
 				return codedRow{
 					ID:          item.ID.String(),
 					Code:        item.Code,
@@ -227,13 +228,13 @@ func newListCommoditiesTool(repo commodityports.CommodityRepository) agentports.
 			},
 			{Name: "createdAt", Kind: filterDate, Sortable: true},
 		},
-		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
+		fetch: func(ctx context.Context, opts *pagination.QueryOptions, _ pagination.CursorInfo) (listPage, error) {
 			result, err := repo.List(ctx, &commodityports.ListCommodityRequest{Filter: opts})
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
 
-			return listRows(result.Items, func(item *commodity.Commodity) any {
+			return offsetListPage(result.Items, func(item *commodity.Commodity) any {
 				return commodityRow{
 					ID:            item.ID.String(),
 					Name:          item.Name,
@@ -282,15 +283,15 @@ func newListHazardousMaterialsTool(
 			{Name: "marinePollutant", Kind: filterBool},
 			{Name: "createdAt", Kind: filterDate, Sortable: true},
 		},
-		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
+		fetch: func(ctx context.Context, opts *pagination.QueryOptions, _ pagination.CursorInfo) (listPage, error) {
 			result, err := repo.List(
 				ctx, &hazardousmaterialports.ListHazardousMaterialsRequest{Filter: opts},
 			)
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
 
-			return listRows(result.Items, func(item *hazardousmaterial.HazardousMaterial) any {
+			return offsetListPage(result.Items, func(item *hazardousmaterial.HazardousMaterial) any {
 				return hazmatRow{
 					ID:               item.ID.String(),
 					Code:             item.Code,
@@ -334,15 +335,15 @@ func newListAccessorialChargesTool(
 			{Name: "amount", Kind: filterNumber, Sortable: true},
 			{Name: "createdAt", Kind: filterDate, Sortable: true},
 		},
-		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
+		fetch: func(ctx context.Context, opts *pagination.QueryOptions, _ pagination.CursorInfo) (listPage, error) {
 			result, err := repo.List(
 				ctx, &accessorialchargeports.ListAccessorialChargeRequest{Filter: opts},
 			)
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
 
-			return listRows(result.Items, func(item *accessorialcharge.AccessorialCharge) any {
+			return offsetListPage(result.Items, func(item *accessorialcharge.AccessorialCharge) any {
 				return accessorialRow{
 					ID:          item.ID.String(),
 					Code:        item.Code,
@@ -378,13 +379,13 @@ func newListDocumentTypesTool(
 			},
 			{Name: "createdAt", Kind: filterDate, Sortable: true},
 		},
-		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
+		fetch: func(ctx context.Context, opts *pagination.QueryOptions, _ pagination.CursorInfo) (listPage, error) {
 			result, err := repo.List(ctx, &documenttypeports.ListDocumentTypesRequest{Filter: opts})
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
 
-			return listRows(result.Items, func(item *documenttype.DocumentType) any {
+			return offsetListPage(result.Items, func(item *documenttype.DocumentType) any {
 				return codedRow{
 					ID:          item.ID.String(),
 					Code:        item.Code,
@@ -416,15 +417,15 @@ func newListLocationCategoriesTool(
 			{Name: "hasRestroom", Kind: filterBool},
 			{Name: "createdAt", Kind: filterDate, Sortable: true},
 		},
-		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
+		fetch: func(ctx context.Context, opts *pagination.QueryOptions, _ pagination.CursorInfo) (listPage, error) {
 			result, err := repo.List(
 				ctx, &locationcategoryports.ListLocationCategoriesRequest{Filter: opts},
 			)
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
 
-			return listRows(result.Items, func(item *locationcategory.LocationCategory) any {
+			return offsetListPage(result.Items, func(item *locationcategory.LocationCategory) any {
 				return codedRow{
 					ID:          item.ID.String(),
 					Name:        item.Name,
@@ -511,16 +512,17 @@ func newListInvoicesTool(
 		fetchGated: func(
 			ctx context.Context,
 			opts *pagination.QueryOptions,
+			_ pagination.CursorInfo,
 			gate *fieldGate,
-		) ([]any, error) {
+		) (listPage, error) {
 			result, err := repo.List(ctx, &invoiceports.ListInvoicesRequest{Filter: opts})
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
 
 			showTotal := gate.show("totalAmount", "totalAmount")
 
-			return listRows(result.Items, func(item *invoice.Invoice) any {
+			return offsetListPage(result.Items, func(item *invoice.Invoice) any {
 				row := invoiceRow{
 					ID:               item.ID.String(),
 					Number:           item.Number,
@@ -589,13 +591,13 @@ func newListCarriersTool(repo carrierports.CarrierRepository) agentports.AgentQu
 			},
 			{Name: "createdAt", Kind: filterDate, Sortable: true},
 		},
-		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
+		fetch: func(ctx context.Context, opts *pagination.QueryOptions, _ pagination.CursorInfo) (listPage, error) {
 			result, err := repo.List(ctx, &carrierports.ListCarrierRequest{Filter: opts})
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
 
-			return listRows(result.Items, func(item *carrier.Carrier) any {
+			return offsetListPage(result.Items, func(item *carrier.Carrier) any {
 				return carrierRow{
 					ID:               item.ID.String(),
 					Code:             item.Code,
@@ -657,13 +659,13 @@ func newListHoldReasonsTool(
 			{Name: "defaultBlocksDispatch", Kind: filterBool},
 			{Name: "defaultBlocksBilling", Kind: filterBool},
 		},
-		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
+		fetch: func(ctx context.Context, opts *pagination.QueryOptions, _ pagination.CursorInfo) (listPage, error) {
 			result, err := repo.List(ctx, &holdreasonports.ListHoldReasonRequest{Filter: opts})
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
 
-			return listRows(result.Items, func(item *holdreason.HoldReason) any {
+			return offsetListPage(result.Items, func(item *holdreason.HoldReason) any {
 				return holdReasonRow{
 					ID:             item.ID.String(),
 					Code:           item.Code,
