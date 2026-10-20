@@ -225,7 +225,7 @@ func TestValidateOperations_AcceptsAnExecutorHoldingOnlyWhatItsOperationsReach(t
 
 	doc := operationsDocument(t, schema, `query Things { thing { id name } }`)
 
-	assert.NoError(t, reg.validateOperations(schema, doc, nil),
+	assert.NoError(t, reg.validateOperations(schema, []*ast.QueryDocument{doc}, nil),
 		"Query.other and Owner are never reached, so their shards are not needed")
 	assert.Error(t, reg.validate(schema, nil), "the whole schema is not executable")
 }
@@ -240,7 +240,7 @@ func TestValidateOperations_ReportsAReachedTypeWithNoExecutor(t *testing.T) {
 	doc := operationsDocument(t, schema,
 		`query Things { thing { id ...OwnerFields } } fragment OwnerFields on Thing { owner { name } }`)
 
-	err = reg.validateOperations(schema, doc, nil)
+	err = reg.validateOperations(schema, []*ast.QueryDocument{doc}, nil)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "object Owner has no executor")
 }
@@ -254,7 +254,7 @@ func TestValidateOperations_ReportsAnInputItCannotDecode(t *testing.T) {
 
 	doc := operationsDocument(t, schema, `query Things($f: ThingFilter) { thing(filter: $f) { id } }`)
 
-	err = reg.validateOperations(schema, doc, nil)
+	err = reg.validateOperations(schema, []*ast.QueryDocument{doc}, nil)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "input NestedFilter has no decoder")
 }
@@ -268,7 +268,7 @@ func TestNewSchema_ValidatesOnlyItsOperationsWhenGiven(t *testing.T) {
 	doc := operationsDocument(t, schema, `query Things { thing { id } }`)
 
 	assert.NotPanics(t, func() {
-		NewSchema(SchemaConfig{Registry: reg, Parsed: schema, Operations: doc})
+		NewSchema(SchemaConfig{Registry: reg, Parsed: schema, Operations: []*ast.QueryDocument{doc}})
 	})
 	assert.Panics(t, func() {
 		NewSchema(SchemaConfig{Registry: reg, Parsed: schema})

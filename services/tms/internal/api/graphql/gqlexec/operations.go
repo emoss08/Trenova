@@ -14,33 +14,17 @@ import (
 // itself stays whole, so an operation is validated exactly as on HTTP.
 func (r *Registry) validateOperations(
 	schema *ast.Schema,
-	doc *ast.QueryDocument,
+	docs []*ast.QueryDocument,
 	resolvers map[string]func() any,
 ) error {
 	walk := &operationWalk{
 		reg:       r,
 		schema:    schema,
-		fragments: make(map[string]*ast.FragmentDefinition, len(doc.Fragments)),
 		problems:  make(map[string]struct{}),
 		seenTypes: make(map[string]struct{}),
 	}
-	for _, fragment := range doc.Fragments {
-		walk.fragments[fragment.Name] = fragment
-	}
-
-	for _, op := range doc.Operations {
-		root := schema.Query
-		if op.Operation == ast.Mutation {
-			root = schema.Mutation
-		}
-		if root == nil {
-			walk.problem("operation " + op.Name + " has no root type")
-			continue
-		}
-		for _, variable := range op.VariableDefinitions {
-			walk.input(variable.Type.Name())
-		}
-		walk.selections(root.Name, op.SelectionSet)
+	for _, doc := range docs {
+		walk.document(doc)
 	}
 
 	walk.resolvers(resolvers)
@@ -56,6 +40,28 @@ func (r *Registry) validateOperations(
 	sort.Strings(problems)
 
 	return fmt.Errorf("gqlexec: executor cannot run its operations: %v", problems)
+}
+
+func (w *operationWalk) document(doc *ast.QueryDocument) {
+	w.fragments = make(map[string]*ast.FragmentDefinition, len(doc.Fragments))
+	for _, fragment := range doc.Fragments {
+		w.fragments[fragment.Name] = fragment
+	}
+
+	for _, op := range doc.Operations {
+		root := w.schema.Query
+		if op.Operation == ast.Mutation {
+			root = w.schema.Mutation
+		}
+		if root == nil {
+			w.problem("operation " + op.Name + " has no root type")
+			continue
+		}
+		for _, variable := range op.VariableDefinitions {
+			w.input(variable.Type.Name())
+		}
+		w.selections(root.Name, op.SelectionSet)
+	}
 }
 
 type operationWalk struct {

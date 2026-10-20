@@ -18,7 +18,7 @@ type SchemaConfig struct {
 	// Operations, when set, are the only operations this executor runs. Its
 	// registry then holds only the shards they reach, and is validated
 	// against them rather than against the whole schema.
-	Operations *ast.QueryDocument
+	Operations []*ast.QueryDocument
 }
 
 type Schema struct {

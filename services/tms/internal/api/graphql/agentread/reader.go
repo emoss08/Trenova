@@ -64,7 +64,6 @@ type Params struct {
 
 	Config      *config.Config
 	Schema      Schema
-	Operations  []Operation `name:"agent_read_operations"`
 	Loaders     *loaders.Factory
 	Permissions permissionports.PermissionEngine
 }
@@ -89,8 +88,8 @@ func New(p Params) *Reader {
 	exec.SetErrorPresenter(gqlext.ErrorPresenter(p.Config))
 	exec.SetRecoverFunc(gqlext.Recover)
 
-	operations := make(map[string]Operation, len(p.Operations))
-	for _, op := range p.Operations {
+	operations := make(map[string]Operation, len(Operations()))
+	for _, op := range Operations() {
 		operations[op.Name] = op
 	}
 

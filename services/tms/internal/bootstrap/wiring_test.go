@@ -195,3 +195,28 @@ func TestWiring_BestEffortPortsAreActuallyProvided(t *testing.T) {
 		})
 	}
 }
+
+/*
+Agent tools read through persisted GraphQL operations, and they run on the
+worker as well as in the API. Nothing asks for the reader until a converted
+tool does, and fx.ValidateApp checks only what is asked for, so these ask for
+it in both processes and in both worker binaries.
+*/
+func TestWiring_EveryProcessBuildsTheAgentGraphQLReader(t *testing.T) {
+	t.Parallel()
+
+	need := fx.Invoke(func(agentports.GraphQLReader) {})
+	graphs := map[string][]fx.Option{
+		"api":           {bootstrap.Options(), bootstrap.APIOptions(), need},
+		"worker":        {bootstrap.Options(), bootstrap.WorkerOptions(), need},
+		"worker binary": {core.Options(), workerapp.Modules(), workerapp.Options(), need},
+		"api binary":    {core.Options(), apiapp.Options(), need},
+	}
+	for name, options := range graphs {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			require.NoError(t, fx.ValidateApp(options...))
+		})
+	}
+}

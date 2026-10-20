@@ -3,8 +3,11 @@ package api
 
 import (
 	graphqlapi "github.com/emoss08/trenova/internal/api/graphql"
+	"github.com/emoss08/trenova/internal/api/graphql/agentread"
+	"github.com/emoss08/trenova/internal/api/graphql/gqlext"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"go.uber.org/fx"
 )
 
@@ -98,13 +101,25 @@ var graphQLResolverModule = fx.Module("api-graphql-resolvers", fx.Provide(
 	resolver.New,
 ))
 
+var graphQLExtensionModule = fx.Module("api-graphql-extensions", fx.Provide(
+	gqlext.NewObservabilityExtension,
+	gqlext.NewCostBudgetExtension,
+	gqlext.NewReadOnlyExtension,
+	gqlext.NewFieldGuardExtension,
+))
+
 var graphQLServerModule = fx.Module("api-graphql-server", fx.Provide(
 	graphqlapi.NewPersistedOperationManifest,
-	graphqlapi.NewObservabilityExtension,
-	graphqlapi.NewCostBudgetExtension,
-	graphqlapi.NewReadOnlyExtension,
-	graphqlapi.NewFieldGuardExtension,
 	graphqlapi.NewServer,
+))
+
+// agentReadModule runs agent tools' reads through their persisted
+// operations. Its executor holds only the shards and resolvers those
+// operations reach (agentread/executor_gen.go), so the worker can take it
+// without the full resolver root.
+var agentReadModule = fx.Module("api-graphql-agent-read", fx.Provide(
+	agentread.NewSchema,
+	fx.Annotate(agentread.New, fx.As(new(agentports.GraphQLReader))),
 ))
 
 var graphQLHandlerModule = fx.Module("api-graphql-handler", fx.Provide(
@@ -114,7 +129,19 @@ var graphQLHandlerModule = fx.Module("api-graphql-handler", fx.Provide(
 var GraphQLModule = fx.Module(
 	"api-graphql",
 	graphQLLoaderModule,
+	graphQLExtensionModule,
 	graphQLResolverModule,
 	graphQLServerModule,
 	graphQLHandlerModule,
+	agentReadModule,
+)
+
+// AgentReadWorkerModule is what the worker needs to run agent tools' reads:
+// the loaders, the extensions every executor runs and the read executor,
+// and not the API's resolver root, server or handler.
+var AgentReadWorkerModule = fx.Module(
+	"worker-graphql-agent-read",
+	graphQLLoaderModule,
+	graphQLExtensionModule,
+	agentReadModule,
 )
