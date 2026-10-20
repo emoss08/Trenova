@@ -1,5 +1,6 @@
 import type { AgentProposalRow } from "@/lib/graphql/agent-activity-tables";
 import { stubLayout } from "@/test/layout";
+import { translate } from "@trenova/shared/i18n/runtime";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen } from "@testing-library/react";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
@@ -28,7 +29,7 @@ afterEach(() => {
   permissions.manage = true;
 });
 
-const t = (text: string) => text;
+const t = translate;
 const paused = { reason: "OrganizationPaused" as const, agentName: "" };
 
 function wrap(children: ReactNode) {

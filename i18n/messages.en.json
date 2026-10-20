@@ -61452,7 +61452,7 @@
     ]
   },
   "Copied": {
-    "sites": 18,
+    "sites": 19,
     "scope": [
       "ts"
     ],
@@ -61542,7 +61542,7 @@
     ]
   },
   "Copy": {
-    "sites": 19,
+    "sites": 20,
     "scope": [
       "ts"
     ],
@@ -115916,12 +115916,13 @@
     ]
   },
   "Hide sidebar": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "Hide the assistant button": {
@@ -213424,12 +213425,13 @@
     ]
   },
   "Resize sidebar": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "Resize the assistant. Use the arrow keys, or double-click to reset.": {
@@ -237878,12 +237880,13 @@
     ]
   },
   "Show sidebar": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "Show the assistant": {
@@ -289470,7 +289473,7 @@
     ]
   },
   "Versions": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -317156,11 +317159,12 @@
     ]
   },
   "{0, plural, one {# line} other {# lines}}": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/admin",
       "routes/desk",
       "routes/formula-template"
