@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/querycost"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -103,8 +104,7 @@ func (e *CostBudgetExtension) MutateOperationContext(
 		return nil
 	}
 
-	key := authCtx.OrganizationID.String() + "|" + authCtx.UserID.String()
-	retryAfter, allowed := e.allow(key, cost)
+	retryAfter, allowed := e.allow(budgetKey(authCtx), cost)
 	if allowed {
 		return nil
 	}
@@ -187,4 +187,15 @@ func retryAfterFor(limiter *rate.Limiter, now time.Time, cost int) time.Duration
 	}
 
 	return retryAfter
+}
+
+// budgetKey is whose bucket an operation is charged to: a person's own, and
+// an unattended agent's own, which has no person behind it.
+func budgetKey(authCtx *authctx.AuthContext) string {
+	principal := authCtx.UserID
+	if authCtx.IsAgent() {
+		principal = authCtx.PrincipalID
+	}
+
+	return authCtx.OrganizationID.String() + "|" + principal.String()
 }
