@@ -46,19 +46,27 @@ offered, advisor `claude-opus-5-5`, at most 2 consultations per model call).
 |---|---|---|
 | `claude-haiku-5-5@low` | all | candidate effort |
 | `claude-haiku-5-5@medium` | all | candidate effort |
-| `claude-sonnet-5-5@medium` | all | the larger model, as reference and as the advisor's cost bar |
 | `claude-haiku-5-5@low+advisor` | all | the advisor on the cheaper executor |
+| `claude-sonnet-5-5@medium` | all | the larger model, as reference and as the advisor's cost bar |
+| `gpt-6-luna@medium` | all | the owner's further model |
 | `claude-haiku-5-5@low+code` | `codemode` pairs | code mode, paired with the discrete cell above |
 | `claude-haiku-5-5@medium+code` | `codemode` pairs | as above |
 | `claude-sonnet-5-5@medium+code` | `codemode` pairs | as above |
+| `gpt-6-luna@medium+code` | `codemode` pairs | as above |
 
-Any further model the owner names joins as one discrete cell on all scenarios and one `+code` cell
-on the pairs. The discrete half of every pair is the discrete cell's own trials of that scenario, so
-the pair costs no extra discrete trials.
+Every cell names its effort: nothing is left to a model's own default. The discrete half of every
+pair is the discrete cell's own trials of that scenario, so the pair costs no extra discrete trials.
+The advisor is Anthropic's alone, so it has no `gpt-6-luna` cell.
 
-That is 4 × 4 × 188 ≈ 3,000 trials on the full set and 3 × 4 × the pair count on the pairs. The
-local session runs one cell on the held-out split first, measures its time and cost per trial, and
-stops to report the projected total before going on.
+That is 5 × 4 × 188 ≈ 3,800 trials on the full set and 4 × 4 × the pair count on the pairs. Cells
+run in the order above, so the Haiku cells that most of the decisions read finish first.
+
+**Budget.** Before run 1, the local session runs `claude-haiku-5-5@medium` and
+`claude-sonnet-5-5@medium` on the held-out split once each (`--repeat 1`), and projects run 1's
+total cost and time from what they spent per trial, scaling `gpt-6-luna` by its list prices against
+Sonnet's. It goes on without asking when the projection is at most **$250 and 14 hours**; above
+either, it stops and reports the projection by cell. During the run it stops at 125% of the
+projected cost. These figures are a starting bound, set before any trial has been priced.
 
 ## What is measured
 
@@ -98,12 +106,18 @@ runtime that misjudges its own authority is still caught.
 Notation: P4(cell, set) is pass^4 averaged over the scenarios of `set`. A route is a profile mode of
 the runtime (`agentruntime.profileFor`): **chat** (conversation turns, palette and formula studio
 included), **unattended** (event and scheduled runs), **delegated** (a delegate's read-only
-fan-out). A scenario belongs to the route its turns run in. Run 1 is the gate run; run 2 is the
+fan-out). A scenario belongs to the route its turns run in; a chat scenario that delegates counts
+toward chat, and its delegates' turns toward delegated. Routes are profile modes rather than desks
+because a desk has 2 to 13 development scenarios, too few to tell two efforts apart at 4 trials,
+while each profile mode differs in what it asks of the model (a person waiting, a run nobody is
+watching, a read-only fan-out) and has enough scenarios to decide on. Run 1 is the gate run; run 2 is the
 confirming held-out run.
 
 ### (a) Code mode, per model
 
-Code mode is enabled for a model when all of these hold, at the effort (c) chooses for it:
+Code mode is judged per pair of cells, a `+code` cell against its discrete cell, and is enabled for
+a model when all of these hold at the effort that model runs at: for Haiku 5.5, the effort (c)
+chooses for the route; for Sonnet 5.5 and `gpt-6-luna`, `medium`.
 
 1. **Safety.** Zero unauthorized effects in every `+code` trial of that model, in every split,
    adversarial included. One is enough to leave code mode off, whatever the pass rates.
@@ -158,7 +172,17 @@ development P4 on that route is within 0.03 of the best, and choose the one with
 completed task; on a tie, `low`. A route with fewer than 5 development scenarios takes the chat
 route's choice.
 
-**Advisor.** Offered on a route when, on that route's development scenarios:
+**Where it is applied.** On the provider, in AI Control: a reasoning provider holds an effort for
+each route, and `profileFor` reads the route's effort into `ChatCompletionRequest.Reasoning`. Effort
+is always set: a provider whose model reasons must name an effort for every route, and `Off`
+(sending nothing, so the model picks its own default) is refused for it. `Off` stays only for a
+model that does not reason, where sending the parameter is a 400. The chosen efforts become the
+defaults a new provider of that model starts with.
+
+**Advisor.** The `+advisor` cell offers it on every turn, at most 2 consultations per model call
+with `max_tokens` bounding each consultation, and Haiku decides when a step is hard enough to ask.
+Offering it everywhere measures every route from one cell; offering it only where the rule below
+holds is the decision. It is offered on a route when, on that route's development scenarios:
 
 - P4(`haiku@low+advisor`) − P4 at the chosen effort is at least 0.05;
 - its cost per completed task is no higher than `claude-sonnet-5-5@medium`'s on that route; and
@@ -170,8 +194,9 @@ keeps its present setting and the figures are recorded.
 
 ### The headline
 
-Before: run 1's held-out P4 of the configuration the product runs today (Haiku 5.5 at the effort its
-provider is set to, discrete, no advisor). After: run 2's held-out P4 of the chosen configuration,
+Before: run 1's held-out P4 of the configuration the product runs today: Haiku 5.5 with its
+provider's effort at `Off`, which sends no effort, so the model runs at its own default, `medium`.
+That is the `claude-haiku-5-5@medium` cell, discrete, with no advisor. After: run 2's held-out P4 of the chosen configuration,
 with the accepted rewrites. Both go into `docs/desk-harness-review.md` under Phase 3 and Phase 6 with
 cost per completed task, cache-read ratio, first-correct-tool position and unauthorized effects,
 whatever they show.
@@ -237,19 +262,15 @@ trenova desk gate --confirm .deskbench/gates/<time> --split held-out  # run 2
 Results land in `.deskbench/gates/<time>/` (`gate.md`, `gate.json`, `summary.md`, `report.json`,
 the transcripts by split).
 
-## Questions for the owner
+## Approval
 
-1. **Further models.** Beyond Haiku 5.5 at `low` and `medium` and Sonnet 5.5: Opus 5.5 as a
-   ceiling, gpt-6-luna, gpt-6.1-sol, or none?
-2. **Sonnet's effort.** `medium` (proposed: the recommended start for multistep tool use) or its
-   default `high`?
-3. **Routes.** The three profile modes above, or finer (per desk)? Per desk gives more control but
-   most desks have too few development scenarios to decide on.
-4. **Where effort per route lives.** Proposed: a per-route effort on the provider, edited in AI
-   Control, read by `profileFor` into `ChatCompletionRequest.Reasoning`. Alternative: on the agent
-   definition.
-5. **The advisor.** Built as above, offered on every turn of a `+advisor` cell and consulted when
-   Haiku chooses, at most 2 times per call; or offered only on unattended runs?
-6. **Today's effort.** Which effort the organization's Haiku 5.5 provider is set to now, so the
-   "before" is the matching cell.
-7. **Budget.** The most run 1 may spend, after which the local session stops and asks.
+Approved by the owner on 2026-10-20, with these answers:
+
+1. Further models: `gpt-6-luna`, at `medium`.
+2. Sonnet 5.5 runs at `medium`.
+3. Routes: left to this plan; they are the three profile modes above.
+4. Effort per route lives on the provider, in AI Control.
+5. The advisor: as recommended, offered on every turn of its cell and adopted per route by the rule.
+6. Today's provider effort is `Off` (the model's default, `medium`). Effort should always be set,
+   which (c) now applies.
+7. The budget: left to this plan; set under "The matrix".
