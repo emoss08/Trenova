@@ -979,7 +979,6 @@
   "Agent principals cannot reassign billing charges": "代理程式主體不得重新指派帳務費用",
   "Agent principals cannot transition billing queue items; a human must decide": "代理程式主體不得變更帳務佇列項目的狀態；須由真人裁決",
   "Agent profiles": "代理概況",
-  "Agent proposal not found": "找不到該代理程式提案",
   "Agent quality regressed": "代理品質退步",
   "Agent run failed": "代理執行失敗",
   "Agent run not found": "找不到代理執行",
