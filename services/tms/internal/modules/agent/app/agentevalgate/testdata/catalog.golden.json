@@ -11969,6 +11969,10 @@
       "parameters": {
         "additionalProperties": false,
         "properties": {
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
           "filters": {
             "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
             "items": {
@@ -12045,11 +12049,6 @@
             "type": "integer",
             "x-clamp": true
           },
-          "offset": {
-            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
-            "minimum": 0,
-            "type": "integer"
-          },
           "query": {
             "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
             "type": "string"
@@ -12112,6 +12111,10 @@
       "parameters": {
         "additionalProperties": false,
         "properties": {
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
           "filters": {
             "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
             "items": {
@@ -12189,11 +12192,6 @@
             "type": "integer",
             "x-clamp": true
           },
-          "offset": {
-            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
-            "minimum": 0,
-            "type": "integer"
-          },
           "query": {
             "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
             "type": "string"
@@ -12255,6 +12253,10 @@
       "parameters": {
         "additionalProperties": false,
         "properties": {
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
           "filters": {
             "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
             "items": {
@@ -12325,11 +12327,6 @@
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
-          },
-          "offset": {
-            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
-            "minimum": 0,
-            "type": "integer"
           },
           "query": {
             "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
@@ -16928,6 +16925,10 @@
       "parameters": {
         "additionalProperties": false,
         "properties": {
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
           "filters": {
             "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
             "items": {
@@ -16999,11 +17000,6 @@
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
-          },
-          "offset": {
-            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
-            "minimum": 0,
-            "type": "integer"
           },
           "query": {
             "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
@@ -17098,6 +17094,10 @@
       "parameters": {
         "additionalProperties": false,
         "properties": {
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
           "filters": {
             "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
             "items": {
@@ -17171,11 +17171,6 @@
             "type": "integer",
             "x-clamp": true
           },
-          "offset": {
-            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
-            "minimum": 0,
-            "type": "integer"
-          },
           "query": {
             "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
             "type": "string"
@@ -17230,6 +17225,10 @@
       "parameters": {
         "additionalProperties": false,
         "properties": {
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
           "filters": {
             "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
             "items": {
@@ -17297,11 +17296,6 @@
             "type": "integer",
             "x-clamp": true
           },
-          "offset": {
-            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
-            "minimum": 0,
-            "type": "integer"
-          },
           "query": {
             "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
             "type": "string"
@@ -17356,6 +17350,10 @@
       "parameters": {
         "additionalProperties": false,
         "properties": {
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
           "filters": {
             "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
             "items": {
@@ -17427,11 +17425,6 @@
             "type": "integer",
             "x-clamp": true
           },
-          "offset": {
-            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
-            "minimum": 0,
-            "type": "integer"
-          },
           "query": {
             "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
             "type": "string"
@@ -17485,6 +17478,10 @@
       "parameters": {
         "additionalProperties": false,
         "properties": {
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
           "filters": {
             "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
             "items": {
@@ -17560,11 +17557,6 @@
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
-          },
-          "offset": {
-            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
-            "minimum": 0,
-            "type": "integer"
           },
           "query": {
             "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
@@ -37815,6 +37807,10 @@
       "parameters": {
         "additionalProperties": false,
         "properties": {
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
           "filters": {
             "description": "Conditions beside status, combined with AND: billingTransferStatus (ReadyForReview|InReview|OnHold|Exception|SentBackToOps|Approved|Posted|Canceled; isnull means never transferred), freightTerms (Prepaid|Collect|ThirdParty), customerId (from customer_list, never guessed), proNumber, bol, the dates actualShipDate, actualDeliveryDate, billedAt, canceledAt and createdAt, and the numbers totalChargeAmount and weight. Give value for one comparison, values for in and notin, days for nextndays and lastndays, and nothing for isnull, isnotnull, today, yesterday and tomorrow. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
             "items": {
@@ -37892,11 +37888,6 @@
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
-          },
-          "offset": {
-            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
-            "minimum": 0,
-            "type": "integer"
           },
           "query": {
             "description": "Words to match: a pro number, BOL, customer, stop place or city, driver or commodity. Omit to list by status and filters alone.",
@@ -41430,6 +41421,10 @@
       "parameters": {
         "additionalProperties": false,
         "properties": {
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
           "filters": {
             "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
             "items": {
@@ -41511,11 +41506,6 @@
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
-          },
-          "offset": {
-            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
-            "minimum": 0,
-            "type": "integer"
           },
           "query": {
             "description": "A worker's name, first, last or both; each word matches the start of a name and the closest names come first. Omit it to list the roster or to filter on a field.",

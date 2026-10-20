@@ -261,8 +261,8 @@ func TestWriteTableCSV_ReadsEveryPage(t *testing.T) {
 	var offsets []int
 	var out bytes.Buffer
 
-	err := writeTableCSV(&out, func(offset int) (map[string]any, error) {
-		offsets = append(offsets, offset)
+	err := writeTableCSV(&out, func(at tablePosition) (map[string]any, error) {
+		offsets = append(offsets, at.offset)
 		return pages[len(offsets)-1], nil
 	}, "shipments")
 	require.NoError(t, err)
@@ -273,12 +273,54 @@ func TestWriteTableCSV_ReadsEveryPage(t *testing.T) {
 	assert.Contains(t, string(lines[3]), `"P-3, late"`)
 }
 
-func TestWriteTableCSV_StopsWhenTheListFails(t *testing.T) {
+func TestWriteTableCSV_FollowsTheNextCursorOfACursorList(t *testing.T) {
 	t.Parallel()
 
-	err := writeTableCSV(&bytes.Buffer{}, func(int) (map[string]any, error) {
-		return nil, errors.New("not allowed")
+	pages := []map[string]any{
+		{
+			"columns": []any{"proNumber"},
+			"items":   []any{map[string]any{"proNumber": "P-1"}},
+			"hasMore": true, "nextCursor": "c1",
+		},
+		{
+			"columns": []any{"proNumber"},
+			"items":   []any{map[string]any{"proNumber": "P-2"}},
+			"hasMore": false,
+		},
+	}
+	var asked []tablePosition
+	var out bytes.Buffer
+
+	err := writeTableCSV(&out, func(at tablePosition) (map[string]any, error) {
+		asked = append(asked, at)
+		return pages[len(asked)-1], nil
+	}, "shipments")
+	require.NoError(t, err)
+
+	assert.Equal(t, []tablePosition{{}, {after: "c1"}}, asked)
+	assert.Contains(t, out.String(), "P-2")
+}
+
+func TestWriteTableCSV_RefusesACursorThatDoesNotMove(t *testing.T) {
+	t.Parallel()
+
+	page := map[string]any{
+		"columns": []any{"proNumber"},
+		"items":   []any{map[string]any{"proNumber": "P-1"}},
+		"hasMore": true, "nextCursor": "c1",
+	}
+
+	err := writeTableCSV(&bytes.Buffer{}, func(tablePosition) (map[string]any, error) {
+		return page, nil
 	}, "shipments")
 	require.Error(t, err)
 }
 
+func TestWriteTableCSV_StopsWhenTheListFails(t *testing.T) {
+	t.Parallel()
+
+	err := writeTableCSV(&bytes.Buffer{}, func(tablePosition) (map[string]any, error) {
+		return nil, errors.New("not allowed")
+	}, "shipments")
+	require.Error(t, err)
+}

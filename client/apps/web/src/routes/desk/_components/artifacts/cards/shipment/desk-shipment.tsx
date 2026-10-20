@@ -167,9 +167,8 @@ function ShipmentCard({
   const margin = marginOf(shipment);
   const miles = totalMiles(moves);
   const billing = billingPhase(shipment);
-  const shipmentPath = recordPath("shipment", recordId, {
-    tab: "documents",
-  });
+  const shipmentPath = recordPath("shipment", recordId);
+  const documentsPath = recordPath("shipment", recordId, { tab: "documents" });
   const neighbors = neighborsIn(order, recordId);
 
   const { data: readiness } = useQuery({
@@ -354,7 +353,7 @@ function ShipmentCard({
         </CardSection>
       )}
 
-      <CardDocuments resourceType="shipment" resourceId={recordId} manageTo={shipmentPath} />
+      <CardDocuments resourceType="shipment" resourceId={recordId} manageTo={documentsPath} />
 
       <CardBar>
         <CardBarHint>{t("Assign, edit and track it on the shipment board")}</CardBarHint>

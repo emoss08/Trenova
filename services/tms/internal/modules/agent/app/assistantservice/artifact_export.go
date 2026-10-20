@@ -173,13 +173,20 @@ func (s *Service) exportTable(
 		DataAccessCeiling: s.ceilingOf(ctx, req),
 	}
 
-	return writeTableCSV(sink, func(offset int) (map[string]any, error) {
+	return writeTableCSV(sink, func(at tablePosition) (map[string]any, error) {
 		arguments := make(map[string]any, len(source.arguments)+2)
 		for key, value := range source.arguments {
-			arguments[key] = value
+			if key != "offset" && key != "after" {
+				arguments[key] = value
+			}
 		}
 		arguments["limit"] = exportPageRows
-		arguments["offset"] = offset
+		switch {
+		case at.after != "":
+			arguments["after"] = at.after
+		case at.offset > 0:
+			arguments["offset"] = at.offset
+		}
 		params.Params = arguments
 
 		data, err := tool.Query(ctx, params)
@@ -195,19 +202,24 @@ func (s *Service) exportTable(
 	}, entity)
 }
 
+type tablePosition struct {
+	offset int
+	after  string
+}
+
 // writeTableCSV pages through a list and writes what a person reads of it:
 // the columns the table shows, with their labels, and every row.
 func writeTableCSV(
 	sink io.Writer,
-	read func(offset int) (map[string]any, error),
+	read func(at tablePosition) (map[string]any, error),
 	entity string,
 ) error {
 	writer := csv.NewWriter(sink)
 	var columns []assistantartifact.DisplayColumn
 	written := 0
-	offset := 0
+	at := tablePosition{}
 	for written < maxExportRows {
-		page, err := read(offset)
+		page, err := read(at)
 		if err != nil {
 			return err
 		}
@@ -243,11 +255,18 @@ func writeTableCSV(
 		if !typeutils.BoolOf(page["hasMore"]) {
 			break
 		}
-		next := int(numberOf(page, "nextOffset"))
-		if next <= offset {
-			next = offset + len(rows)
+		if cursor := typeutils.StringOfTrimmed(page["nextCursor"]); cursor != "" {
+			if cursor == at.after {
+				return errors.New("the list returned the same page cursor twice")
+			}
+			at = tablePosition{after: cursor}
+			continue
 		}
-		offset = next
+		next := int(numberOf(page, "nextOffset"))
+		if next <= at.offset {
+			next = at.offset + len(rows)
+		}
+		at = tablePosition{offset: next}
 	}
 	writer.Flush()
 

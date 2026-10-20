@@ -100,7 +100,7 @@ func (s *service) ListBillingTransferCandidates(
 	result := &shipmentports.BillingTransferCandidates{
 		Decisions:  []shipmentports.BillingTransferDecision{},
 		TotalCount: candidates.TotalCount,
-		HasMore:    candidates.TotalCount > offset+limit,
+		HasMore:    len(candidates.IDs) > offset+limit,
 	}
 	if offset >= len(candidates.IDs) {
 		return result, nil

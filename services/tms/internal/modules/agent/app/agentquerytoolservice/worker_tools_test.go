@@ -528,3 +528,44 @@ func TestExpiringCredentialRow_CarriesNoCredentialNumber(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotContains(t, string(encoded), "number")
 }
+
+type pagedWorkerRepo struct {
+	workerports.WorkerRepository
+
+	captured *workerports.ListWorkersRequest
+	items    []*worker.Worker
+}
+
+func (f *pagedWorkerRepo) List(
+	_ context.Context,
+	req *workerports.ListWorkersRequest,
+) (*pagination.CursorListResult[*worker.Worker], error) {
+	f.captured = req
+
+	return pageAfter(f.items, req.Cursor), nil
+}
+
+func TestListWorkers_PagesByCursor(t *testing.T) {
+	t.Parallel()
+
+	items := make([]*worker.Worker, 0, 7)
+	for range 7 {
+		items = append(items, namedWorker("Luis", "Ortiz"))
+	}
+	repo := &pagedWorkerRepo{items: items}
+	tool := newListWorkersTool(repo, &fakePermissions{})
+	params := testParams(nil)
+
+	assertCursorPaging(t, cursorPagingCase{
+		query: func(args map[string]any) (any, error) {
+			params.Params = args
+			return tool.Query(t.Context(), params)
+		},
+		received: func() pagination.CursorInfo { return repo.captured.Cursor },
+		args:     map[string]any{"query": "Ortiz"},
+		changed:  map[string]any{"query": "Ortega"},
+		ids:      cursorIDs(items),
+		limit:    3,
+	})
+	assert.Zero(t, repo.captured.Filter.Pagination.Offset, "a cursor list is never offset")
+}

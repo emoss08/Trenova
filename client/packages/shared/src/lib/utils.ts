@@ -172,6 +172,14 @@ export function clampUnit(value: number): number {
   return Math.min(1, Math.max(0, value));
 }
 
+/** A whole number between `min` and `max`; anything that is not a number reads as `fallback`. */
+export function clampInteger(value: number, min: number, max: number, fallback: number): number {
+  if (!Number.isFinite(value)) {
+    return fallback;
+  }
+  return Math.min(max, Math.max(min, Math.round(value)));
+}
+
 export function formatCurrency(num: number, currency: string = "USD"): string {
   return numberFormatter({
     style: "currency",
