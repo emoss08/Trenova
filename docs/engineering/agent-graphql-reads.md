@@ -194,37 +194,50 @@ ceiling travels beside it, in the context (below).
 
 ## Mapping tools to operations
 
-The mapping is derived, not hand-kept. `internal/api/graphql/agentread/gen` (`go generate
-./internal/api/graphql/agentread/...`, a new step in `Codegen Checks`) reads three sources:
+The mapping is derived, not hand-kept. `go run ./internal/api/graphql/agentread/gen` runs as
+the last step of `task gqlgen` and in `Codegen Checks`. It reads four sources:
 
-- the schema (`schema/*.graphqls`);
-- the persisted manifest;
-- the server's filter configuration for each node type: `querybuilder.GetFieldConfiguration`
-  for the entity that `projection/specs_gen.go` binds the type to.
+- **`agentread/reads.yml`**: the tools that read through GraphQL. This is the state of the
+  migration: one line per converted tool, and nothing else unless an operation is overridden.
+- **The schema** (`schema/*.graphqls`).
+- **The persisted manifest** (`persisted-documents.json`).
+- **The generated executor and resolver root** (`generated/exec`, `resolver/resolver.generated.go`,
+  `resolver/services.go`), for the wiring below.
 
-It writes `agentread/bindings_gen.go` and `agentread/bindings_gen.json`; the JSON is read by the
-agent module through the port and kept in the catalog snapshot.
+It writes two files:
+
+- `agentread/executor_gen.go`: the read executor, holding the bound operations byte for byte.
+- `agentquerytoolservice/graphqlreads_gen.go`: for each tool, its operation, root field and node
+  type, the fields the operation selects on the node, the input types its variables take, and a
+  constructor for the node's Go entity, read from gqlgen's own binder.
+
+The rule, for each listed tool:
 
 1. **Root field to record kind.** A Query root field returning `XConnection` (a list) or `X` with
    an `id` argument (a get) reads the record kind the permission registry maps `X` to
    ([record-kinds.md](record-kinds.md)). A type no kind claims gets no tool.
 2. **Record kind to tool.** The tool is `agentports.ToolNameFor("list_" + plural(kind))` or
    `ToolNameFor("get_" + kind)`. This is the reading-order rule the conventions already use, so
-   `tractors` becomes `equipment_list_tractors` and `customer` becomes `customer_get`. A root field
-   whose kind has no namespace gets no tool.
+   `tractors` becomes `equipment_list_tractors` and `customer` becomes `customer_get`. A listed
+   tool no root field is named for fails generation.
 3. **Tool to operation.** Among the persisted queries whose only root field is that field, the
    rule picks the first of:
-   - the `Desk<Type>Card` / `DeskRecord<Plural>` operation, written for the Desk and compact;
+   - a `Desk*` operation, written for the Desk and compact;
    - `<Type>Table`;
    - the only operation.
 
-   More than one candidate left, or none, fails generation, naming the field and the candidates.
-4. **Overrides.** Where the rule picks wrong, `agentread/overrides.go` names the operation and
-   says why, in the shape `internal/api/toolcontract` uses for writes. A stale override, one the
-   rule would now pick anyway, fails the generator. The rule is the mapping; an override is a
+   More than one candidate in a tier, or none at all, fails generation, naming the field and the
+   candidates.
+4. **Overrides.** Where the rule picks wrong, the tool's line in `reads.yml` names the operation
+   and gives a `reason`. An override with no reason fails generation. So does a stale one, which
+   names the operation the rule would pick anyway. The rule is the mapping; an override is a
    recorded exception.
 
-`TestEveryReadToolReadsThroughGraphQL` (in `agenttoolcatalog`) holds three rules:
+`TestEveryBoundOperationIsPersistedAsItIsRun` holds each bound operation to the manifest byte for
+byte, so a client edit that re-hashes an operation fails until the generator runs again.
+
+With the first conversion, `TestEveryReadToolReadsThroughGraphQL` (in `agenttoolcatalog`) holds
+three rules:
 
 - Every registered `list` and `get` tool is a generated binding, or appears in `agentread.NoGraphQL`
   with its reason.
@@ -234,8 +247,9 @@ agent module through the port and kept in the catalog snapshot.
   test and lowered by each module's PR.
 
 When a module's operation changes on the client, `pnpm --filter @trenova/graphql codegen`
-re-hashes it and `go generate` rebinds the tool. A field the operation stops selecting leaves the
-tool's result, and the catalog snapshot shows it.
+re-hashes it and `task gqlgen` (or `go run ./internal/api/graphql/agentread/gen`) rebinds the tool.
+A field the operation stops selecting leaves the tool's result and its parameters, and the catalog
+snapshot shows it.
 
 ## Typed parameters
 
@@ -285,9 +299,17 @@ field, so `shipment_get` with `proNumber` reads `shipments` filtered by `proNumb
 
 **What stays hand-written** is model-facing prose: the summary, the "use this rather than …"
 sentence and the search terms. Descriptions are edited against traces, which a generator cannot
-do. The parameter descriptions come from the schema's field descriptions, then from the
-`filtercatalog` note where the schema has none. A parameter whose source has neither fails
-generation, so a parameter is never undocumented.
+do. A parameter's description is the schema field's description, followed by a sentence its kind
+writes ("Only records whose status is one of these."; "… is on or after this day, in the
+organization's timezone."). A converted tool's `filtercatalog` note, where it says more than that,
+moves into the schema field's description in the module's PR, so the screen's schema documents it
+too.
+
+The parameters are derived when the tool is built, not when the code is generated, because the
+filter configuration is computed from the entity at runtime (`querybuilder.GetFieldConfiguration`).
+The catalog snapshot (`TestToolCatalogSnapshot`) pins the result, so a schema or configuration
+change that moves a parameter shows in review. `TestGraphQLReadsKeepEveryFilterTheCatalogOffered`
+fails a conversion that loses a filter the tool's catalog entry offered.
 
 The generic `filters` parameter, `filtercatalog` notes duplicated in `listcatalog*.go`, and the
 `listDateRule` prose leave with the last module. `FilterCatalog()` stays for the data-table "Ask"
@@ -372,7 +394,10 @@ whether that field is withheld.
   RLS to the same statements the screen runs. Nothing in the tool filters by owner.
 - **Unattended runs.** They read as `PrincipalTypeAgent`. The engine applies the agent ceiling
   and the organization's unattended role, as it does today.
-- **Cost budget.** Each read is charged to the caller's token bucket (organization and principal).
+- **Cost budget.** Each read is charged to the caller's token bucket: a person's own, and an
+  unattended agent's own (`budgetKey`), never one bucket shared by every agent in an
+  organization. Buckets are kept per process, as they already are per API replica, so the
+  worker's reads and the screen's requests draw on separate buckets of the same size.
   A read refused for budget (`OPERATION_COST_BUDGET_EXCEEDED`) becomes a failed outcome that
   names the wait (`Retry-After`). It is not retried by the activity: the model decides whether
   the read is still worth making.
