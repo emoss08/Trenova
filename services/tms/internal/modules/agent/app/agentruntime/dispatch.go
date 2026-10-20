@@ -93,6 +93,11 @@ type dispatchParams struct {
 	afterExternal bool
 	beyond        agent.AutonomyTier
 	stepKey       string
+	// scriptStepKey is set for a write a script prepared: the ledger step of
+	// the script. The call is decided and previewed as any write is, and
+	// handed back as an intent; it never runs before a person approves the
+	// script's batch.
+	scriptStepKey string
 }
 
 func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
@@ -209,9 +214,10 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		Unattended:     req.Unattended,
 		Taint:          decisionTaint(p.taint, p.afterExternal),
 		MoneyAllowance: s.moneyAllowance(req, p.moneySpent),
+		FromScript:     p.scriptStepKey != "",
 	})
 	tier, heldForExternal, heldForHours := decision.Tier, false, false
-	if !agenttoolpolicy.Escalates(req.Definition, &policy) {
+	if p.scriptStepKey != "" || !agenttoolpolicy.Escalates(req.Definition, &policy) {
 		tier, heldForExternal = afterExternalContent(tier, p.afterExternal)
 		tier, heldForHours = s.heldForBusinessHours(ctx, req, tier)
 	}
@@ -243,6 +249,11 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		MoneyMinor:    decision.MoneyMinor,
 		MoneyCurrency: decision.MoneyCurrency,
 		Tainted:       p.taint.Tainted() || p.afterExternal,
+		ScriptStepKey: p.scriptStepKey,
+	}
+	if p.scriptStepKey != "" && tier == agent.TierAutoExecute {
+		return refusedOutcome(aitrace.OutcomeInvalid, "a prepared change would run on its own",
+			"Tool %q was not prepared: a change from a script never runs on its own.", call.Name)
 	}
 	if heldForExternal && !slices.Contains(action.HeldBy, agenttoolpolicy.HeldByTainted) {
 		action.HeldBy = append(slices.Clone(action.HeldBy), agenttoolpolicy.HeldByTainted)
@@ -317,13 +328,8 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		}
 		action.Target = target
 
-		content := fmt.Sprintf(
-			"Recorded a proposal to run %q (proposal %s). It is awaiting a person's review at "+
-				"the %s tier and has not run.",
-			call.Name,
-			action.ProposalID,
-			tier,
-		) + heldReason(action.HeldBy, decision.Egress) + filingEcho(baseline, call.Arguments)
+		content := filedText(call.Name, action, p.scriptStepKey != "") +
+			heldReason(action.HeldBy, decision.Egress) + filingEcho(baseline, call.Arguments)
 		if note := p.argumentNote; note != "" {
 			content += "\n" + note
 		}
@@ -352,6 +358,25 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 	}
 
 	return s.executeAction(ctx, actionParams{dispatchParams: p, tool: tool, action: action})
+}
+
+func filedText(toolName string, action *agentports.PendingAction, prepared bool) string {
+	if prepared {
+		return fmt.Sprintf(
+			"Prepared a change to run %q. Nothing has run: when the script ends it is filed "+
+				"with the script's other changes as one batch, which a person approves or rejects "+
+				"as a whole.",
+			toolName,
+		)
+	}
+
+	return fmt.Sprintf(
+		"Recorded a proposal to run %q (proposal %s). It is awaiting a person's review at "+
+			"the %s tier and has not run.",
+		toolName,
+		action.ProposalID,
+		action.Tier,
+	)
 }
 
 func unresolvedSelection(toolName, verb string, err error) toolOutcome {
@@ -818,7 +843,10 @@ func heldReason(heldBy []string, egress agent.EgressClass) string {
 		case agenttoolpolicy.HeldByBusinessHours:
 			reasons = append(reasons, "it is outside this agent's business hours")
 		case agenttoolpolicy.HeldByScriptIntent:
-			reasons = append(reasons, "a script prepared it, and a person approves the script's batch")
+			reasons = append(
+				reasons,
+				"a script prepared it, and a person approves the script's batch",
+			)
 		default:
 			if reason, ok := moneyHeldReasons[key]; ok {
 				reasons = append(reasons, reason)
