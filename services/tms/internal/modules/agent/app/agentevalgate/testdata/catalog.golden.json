@@ -8730,73 +8730,79 @@
     },
     {
       "name": "document_list_types",
-      "description": "List the document types this organization files — rate confirmations, bills of lading, proofs of delivery and the rest. Use it to name a document correctly when asking for one or attaching one. Filters: isSystem (boolean): true for the types Trenova defines and an operator cannot remove; text: code, name, description; date: createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "description": "List the document types this organization files — rate confirmations, bills of lading, proofs of delivery and the rest. Use it to name a document correctly when asking for one or attaching one. Filters: code, color, createdAtFrom/To, description, documentCategory, documentClassification, isSystem, name, updatedAtFrom/To.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
-          "filters": {
-            "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
+          "code": {
+            "description": "Only records whose code contains this text.",
+            "type": "string"
+          },
+          "color": {
+            "description": "Only records whose color contains this text.",
+            "type": "string"
+          },
+          "createdAtFrom": {
+            "description": "Only records whose created at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "createdAtTo": {
+            "description": "Only records whose created at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "description": {
+            "description": "Only records whose description contains this text.",
+            "type": "string"
+          },
+          "documentCategory": {
+            "description": "Only records whose document category is one of these.",
             "items": {
-              "additionalProperties": false,
-              "properties": {
-                "days": {
-                  "maximum": 3650,
-                  "minimum": 1,
-                  "type": "integer"
-                },
-                "field": {
-                  "enum": [
-                    "code",
-                    "name",
-                    "description",
-                    "isSystem",
-                    "createdAt"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "document_list_types.field"
-                },
-                "operator": {
-                  "enum": [
-                    "eq",
-                    "ne",
-                    "contains",
-                    "startswith",
-                    "endswith",
-                    "in",
-                    "notin",
-                    "isnull",
-                    "isnotnull",
-                    "gt",
-                    "gte",
-                    "lt",
-                    "lte",
-                    "lastndays",
-                    "nextndays",
-                    "today",
-                    "yesterday",
-                    "tomorrow"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "document_list_types.operator"
-                },
-                "value": {
-                  "type": "string"
-                },
-                "values": {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                }
-              },
-              "required": [
-                "field",
-                "operator"
+              "enum": [
+                "Shipment",
+                "Worker",
+                "Regulatory",
+                "Profile",
+                "Branding",
+                "Invoice",
+                "Contract",
+                "Other"
               ],
-              "type": "object"
+              "type": "string",
+              "x-enumOf": "graphql.DocumentCategory"
             },
-            "maxItems": 6,
+            "minItems": 1,
             "type": "array"
+          },
+          "documentClassification": {
+            "description": "Only records whose document classification is one of these.",
+            "items": {
+              "enum": [
+                "Public",
+                "Private",
+                "Sensitive",
+                "Regulatory"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.DocumentClassification"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "isSystem": {
+            "description": "Only records that are, or are not, is system. true for the types Trenova defines and an operator cannot remove.",
+            "type": "boolean"
           },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 50.",
@@ -8805,24 +8811,29 @@
             "type": "integer",
             "x-clamp": true
           },
-          "offset": {
-            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
-            "minimum": 0,
-            "type": "integer"
+          "name": {
+            "description": "Only records whose name contains this text.",
+            "type": "string"
           },
           "query": {
-            "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
+            "description": "Optional free text matched across the searchable columns. Omit it when you are narrowing by a field.",
             "type": "string"
           },
           "sortBy": {
             "description": "Field to order by. Defaults to most recently created.",
             "enum": [
               "code",
+              "color",
+              "createdAt",
+              "description",
+              "documentCategory",
+              "documentClassification",
+              "isSystem",
               "name",
-              "createdAt"
+              "updatedAt"
             ],
             "type": "string",
-            "x-enumOf": "document_list_types.sortBy"
+            "x-enumOf": "document_list_types.graphqlSortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -8832,6 +8843,22 @@
             ],
             "type": "string",
             "x-enumOf": "list.sortDirection"
+          },
+          "updatedAtFrom": {
+            "description": "Only records whose updated at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "updatedAtTo": {
+            "description": "Only records whose updated at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
           }
         },
         "type": "object"
@@ -11897,62 +11924,33 @@
     },
     {
       "name": "equipment_list_manufacturers",
-      "description": "List equipment manufacturers — who built the tractors and trailers in the fleet, such as Freightliner or Utility. Use it to turn a make a person named into the id equipment_create_tractor and equipment_create_trailer need. Filters: status (Active|Inactive); text: name, description.",
+      "description": "List equipment manufacturers — who built the tractors and trailers in the fleet, such as Freightliner or Utility. Use it to turn a make a person named into the id equipment_create_tractor and equipment_create_trailer need. Filters: createdAtFrom/To, description, name, status, updatedAtFrom/To.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
-          "filters": {
-            "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
-            "items": {
-              "additionalProperties": false,
-              "properties": {
-                "days": {
-                  "maximum": 3650,
-                  "minimum": 1,
-                  "type": "integer"
-                },
-                "field": {
-                  "enum": [
-                    "status",
-                    "name",
-                    "description"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "equipment_list_manufacturers.field"
-                },
-                "operator": {
-                  "enum": [
-                    "eq",
-                    "ne",
-                    "in",
-                    "notin",
-                    "isnull",
-                    "isnotnull",
-                    "contains",
-                    "startswith",
-                    "endswith"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "equipment_list_manufacturers.operator"
-                },
-                "value": {
-                  "type": "string"
-                },
-                "values": {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                }
-              },
-              "required": [
-                "field",
-                "operator"
-              ],
-              "type": "object"
-            },
-            "maxItems": 6,
-            "type": "array"
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
+          "createdAtFrom": {
+            "description": "Only records whose created at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "createdAtTo": {
+            "description": "Only records whose created at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "description": {
+            "description": "Only records whose description contains this text.",
+            "type": "string"
           },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 50.",
@@ -11961,22 +11959,25 @@
             "type": "integer",
             "x-clamp": true
           },
-          "offset": {
-            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
-            "minimum": 0,
-            "type": "integer"
+          "name": {
+            "description": "Only records whose name contains this text.",
+            "type": "string"
           },
           "query": {
-            "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
+            "description": "Optional free text matched across the searchable columns. Omit it when you are narrowing by a field.",
             "type": "string"
           },
           "sortBy": {
             "description": "Field to order by. Defaults to most recently created.",
             "enum": [
-              "name"
+              "createdAt",
+              "description",
+              "name",
+              "status",
+              "updatedAt"
             ],
             "type": "string",
-            "x-enumOf": "equipment_list_manufacturers.sortBy"
+            "x-enumOf": "equipment_list_manufacturers.graphqlSortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -11986,6 +11987,35 @@
             ],
             "type": "string",
             "x-enumOf": "list.sortDirection"
+          },
+          "status": {
+            "description": "Only records whose status is one of these.",
+            "items": {
+              "enum": [
+                "Active",
+                "Inactive"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.EntityStatus"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "updatedAtFrom": {
+            "description": "Only records whose updated at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "updatedAtTo": {
+            "description": "Only records whose updated at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
           }
         },
         "type": "object"
@@ -12348,7 +12378,7 @@
     },
     {
       "name": "equipment_list_types",
-      "description": "List equipment types — the trailer and tractor classes this organization books against, such as dry van, reefer or flatbed. Use it to turn an equipment name a person used into the id other tools need. Filters: status (Active|Inactive); class (Tractor|Trailer|Container|Other); text: code, description; date: createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "description": "List equipment types — the trailer and tractor classes this organization books against, such as dry van, reefer or flatbed. Use it to turn an equipment name a person used into the id other tools need. Filters: class, code, color, createdAtFrom/To, description, interiorLengthMin/Max, status, updatedAtFrom/To.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -12356,69 +12386,56 @@
             "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
             "type": "string"
           },
-          "filters": {
-            "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
+          "class": {
+            "description": "Only records whose class is one of these.",
             "items": {
-              "additionalProperties": false,
-              "properties": {
-                "days": {
-                  "maximum": 3650,
-                  "minimum": 1,
-                  "type": "integer"
-                },
-                "field": {
-                  "enum": [
-                    "status",
-                    "code",
-                    "description",
-                    "createdAt",
-                    "class"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "equipment_list_types.field"
-                },
-                "operator": {
-                  "enum": [
-                    "eq",
-                    "ne",
-                    "in",
-                    "notin",
-                    "isnull",
-                    "isnotnull",
-                    "contains",
-                    "startswith",
-                    "endswith",
-                    "gt",
-                    "gte",
-                    "lt",
-                    "lte",
-                    "lastndays",
-                    "nextndays",
-                    "today",
-                    "yesterday",
-                    "tomorrow"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "equipment_list_types.operator"
-                },
-                "value": {
-                  "type": "string"
-                },
-                "values": {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                }
-              },
-              "required": [
-                "field",
-                "operator"
+              "enum": [
+                "Tractor",
+                "Trailer",
+                "Container",
+                "Other"
               ],
-              "type": "object"
+              "type": "string",
+              "x-enumOf": "graphql.EquipmentClass"
             },
-            "maxItems": 6,
+            "minItems": 1,
             "type": "array"
+          },
+          "code": {
+            "description": "Only records whose code contains this text.",
+            "type": "string"
+          },
+          "color": {
+            "description": "Only records whose color contains this text.",
+            "type": "string"
+          },
+          "createdAtFrom": {
+            "description": "Only records whose created at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "createdAtTo": {
+            "description": "Only records whose created at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "description": {
+            "description": "Only records whose description contains this text.",
+            "type": "string"
+          },
+          "interiorLengthMax": {
+            "description": "Only records whose interior length is at most this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "interiorLengthMin": {
+            "description": "Only records whose interior length is at least this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
           },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 50.",
@@ -12428,17 +12445,23 @@
             "x-clamp": true
           },
           "query": {
-            "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
+            "description": "Optional free text matched across the searchable columns. Omit it when you are narrowing by a field.",
             "type": "string"
           },
           "sortBy": {
             "description": "Field to order by. Defaults to most recently created.",
             "enum": [
+              "class",
               "code",
-              "createdAt"
+              "color",
+              "createdAt",
+              "description",
+              "interiorLength",
+              "status",
+              "updatedAt"
             ],
             "type": "string",
-            "x-enumOf": "equipment_list_types.sortBy"
+            "x-enumOf": "equipment_list_types.graphqlSortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -12448,6 +12471,35 @@
             ],
             "type": "string",
             "x-enumOf": "list.sortDirection"
+          },
+          "status": {
+            "description": "Only records whose status is one of these.",
+            "items": {
+              "enum": [
+                "Active",
+                "Inactive"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.EntityStatus"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "updatedAtFrom": {
+            "description": "Only records whose updated at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "updatedAtTo": {
+            "description": "Only records whose updated at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
           }
         },
         "type": "object"
@@ -24486,75 +24538,65 @@
     },
     {
       "name": "location_list_categories",
-      "description": "List location categories — how facilities are grouped, and what each offers: secure parking, overnight, a restroom, whether an appointment is required. Use it for questions about where a driver can stop. Filters: text: name, description; boolean: hasSecureParking, requiresAppointment, allowsOvernight, hasRestroom; date: createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "description": "List location categories — how facilities are grouped, and what each offers: secure parking, overnight, a restroom, whether an appointment is required. Use it for questions about where a driver can stop. Filters: allowsOvernight, color, createdAtFrom/To, description, facilityType, hasRestroom, hasSecureParking, name, requiresAppointment, type, updatedAtFrom/To.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
-          "filters": {
-            "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
+          "allowsOvernight": {
+            "description": "Only records that are, or are not, allows overnight.",
+            "type": "boolean"
+          },
+          "color": {
+            "description": "Only records whose color contains this text.",
+            "type": "string"
+          },
+          "createdAtFrom": {
+            "description": "Only records whose created at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "createdAtTo": {
+            "description": "Only records whose created at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "description": {
+            "description": "Only records whose description contains this text.",
+            "type": "string"
+          },
+          "facilityType": {
+            "description": "Only records whose facility type is one of these.",
             "items": {
-              "additionalProperties": false,
-              "properties": {
-                "days": {
-                  "maximum": 3650,
-                  "minimum": 1,
-                  "type": "integer"
-                },
-                "field": {
-                  "enum": [
-                    "name",
-                    "description",
-                    "hasSecureParking",
-                    "requiresAppointment",
-                    "allowsOvernight",
-                    "hasRestroom",
-                    "createdAt"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "location_list_categories.field"
-                },
-                "operator": {
-                  "enum": [
-                    "eq",
-                    "ne",
-                    "contains",
-                    "startswith",
-                    "endswith",
-                    "in",
-                    "notin",
-                    "isnull",
-                    "isnotnull",
-                    "gt",
-                    "gte",
-                    "lt",
-                    "lte",
-                    "lastndays",
-                    "nextndays",
-                    "today",
-                    "yesterday",
-                    "tomorrow"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "location_list_categories.operator"
-                },
-                "value": {
-                  "type": "string"
-                },
-                "values": {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                }
-              },
-              "required": [
-                "field",
-                "operator"
+              "enum": [
+                "CrossDock",
+                "StorageWarehouse",
+                "ColdStorage",
+                "HazmatFacility",
+                "IntermodalFacility"
               ],
-              "type": "object"
+              "type": "string",
+              "x-enumOf": "graphql.FacilityType"
             },
-            "maxItems": 6,
+            "minItems": 1,
             "type": "array"
+          },
+          "hasRestroom": {
+            "description": "Only records that are, or are not, has restroom.",
+            "type": "boolean"
+          },
+          "hasSecureParking": {
+            "description": "Only records that are, or are not, has secure parking.",
+            "type": "boolean"
           },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 50.",
@@ -24563,23 +24605,35 @@
             "type": "integer",
             "x-clamp": true
           },
-          "offset": {
-            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
-            "minimum": 0,
-            "type": "integer"
+          "name": {
+            "description": "Only records whose name contains this text.",
+            "type": "string"
           },
           "query": {
-            "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
+            "description": "Optional free text matched across the searchable columns. Omit it when you are narrowing by a field.",
             "type": "string"
+          },
+          "requiresAppointment": {
+            "description": "Only records that are, or are not, requires appointment.",
+            "type": "boolean"
           },
           "sortBy": {
             "description": "Field to order by. Defaults to most recently created.",
             "enum": [
+              "allowsOvernight",
+              "color",
+              "createdAt",
+              "description",
+              "facilityType",
+              "hasRestroom",
+              "hasSecureParking",
               "name",
-              "createdAt"
+              "requiresAppointment",
+              "type",
+              "updatedAt"
             ],
             "type": "string",
-            "x-enumOf": "location_list_categories.sortBy"
+            "x-enumOf": "location_list_categories.graphqlSortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -24589,6 +24643,42 @@
             ],
             "type": "string",
             "x-enumOf": "list.sortDirection"
+          },
+          "type": {
+            "description": "Only records whose type is one of these.",
+            "items": {
+              "enum": [
+                "Terminal",
+                "Warehouse",
+                "DistributionCenter",
+                "TruckStop",
+                "RestArea",
+                "CustomerLocation",
+                "Port",
+                "RailYard",
+                "MaintenanceFacility"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.LocationCategoryType"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "updatedAtFrom": {
+            "description": "Only records whose updated at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "updatedAtTo": {
+            "description": "Only records whose updated at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
           }
         },
         "type": "object"
@@ -25063,73 +25153,45 @@
     },
     {
       "name": "masterdata_list_accessorial_charges",
-      "description": "List the accessorial charges this organization bills — detention, layover, lumper and the rest — with how each is calculated and at what rate. Use it before proposing a charge so the code and amount are the real ones. Filters: status (Active|Inactive); text: code, description; number: amount; date: createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "description": "List the accessorial charges this organization bills — detention, layover, lumper and the rest — with how each is calculated and at what rate. Use it before proposing a charge so the code and amount are the real ones. Filters: amountMin/Max, code, createdAtFrom/To, description, method, rateUnit, status, updatedAtFrom/To.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
-          "filters": {
-            "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
-            "items": {
-              "additionalProperties": false,
-              "properties": {
-                "days": {
-                  "maximum": 3650,
-                  "minimum": 1,
-                  "type": "integer"
-                },
-                "field": {
-                  "enum": [
-                    "status",
-                    "code",
-                    "description",
-                    "amount",
-                    "createdAt"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "masterdata_list_accessorial_charges.field"
-                },
-                "operator": {
-                  "enum": [
-                    "eq",
-                    "ne",
-                    "in",
-                    "notin",
-                    "isnull",
-                    "isnotnull",
-                    "contains",
-                    "startswith",
-                    "endswith",
-                    "gt",
-                    "gte",
-                    "lt",
-                    "lte",
-                    "lastndays",
-                    "nextndays",
-                    "today",
-                    "yesterday",
-                    "tomorrow"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "masterdata_list_accessorial_charges.operator"
-                },
-                "value": {
-                  "type": "string"
-                },
-                "values": {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                }
-              },
-              "required": [
-                "field",
-                "operator"
-              ],
-              "type": "object"
-            },
-            "maxItems": 6,
-            "type": "array"
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
+          "amountMax": {
+            "description": "Only records whose amount is at most this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "amountMin": {
+            "description": "Only records whose amount is at least this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "code": {
+            "description": "Only records whose code contains this text.",
+            "type": "string"
+          },
+          "createdAtFrom": {
+            "description": "Only records whose created at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "createdAtTo": {
+            "description": "Only records whose created at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "description": {
+            "description": "Only records whose description contains this text.",
+            "type": "string"
           },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 50.",
@@ -25138,24 +25200,53 @@
             "type": "integer",
             "x-clamp": true
           },
-          "offset": {
-            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
-            "minimum": 0,
-            "type": "integer"
+          "method": {
+            "description": "Only records whose method is one of these.",
+            "items": {
+              "enum": [
+                "Flat",
+                "PerUnit",
+                "Percentage"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.AccessorialMethod"
+            },
+            "minItems": 1,
+            "type": "array"
           },
           "query": {
-            "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
+            "description": "Optional free text matched across the searchable columns. Omit it when you are narrowing by a field.",
             "type": "string"
+          },
+          "rateUnit": {
+            "description": "Only records whose rate unit is one of these.",
+            "items": {
+              "enum": [
+                "Mile",
+                "Hour",
+                "Day",
+                "Stop"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.RateUnit"
+            },
+            "minItems": 1,
+            "type": "array"
           },
           "sortBy": {
             "description": "Field to order by. Defaults to most recently created.",
             "enum": [
-              "code",
               "amount",
-              "createdAt"
+              "code",
+              "createdAt",
+              "description",
+              "method",
+              "rateUnit",
+              "status",
+              "updatedAt"
             ],
             "type": "string",
-            "x-enumOf": "masterdata_list_accessorial_charges.sortBy"
+            "x-enumOf": "masterdata_list_accessorial_charges.graphqlSortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -25165,6 +25256,35 @@
             ],
             "type": "string",
             "x-enumOf": "list.sortDirection"
+          },
+          "status": {
+            "description": "Only records whose status is one of these.",
+            "items": {
+              "enum": [
+                "Active",
+                "Inactive"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.EntityStatus"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "updatedAtFrom": {
+            "description": "Only records whose updated at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "updatedAtTo": {
+            "description": "Only records whose updated at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
           }
         },
         "type": "object"
@@ -25193,76 +25313,75 @@
     },
     {
       "name": "masterdata_list_commodities",
-      "description": "List commodities — what this organization hauls, with freight class, handling flags and whether the commodity is hazardous. Temperature-controlled commodities carry a min or max temperature. Filters: status (Active|Inactive); hazardousMaterialId (text): set when the commodity is hazmat; use isnotnull to find all of them; text: name, description, freightClass; boolean: stackable, fragile; date: createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "description": "List commodities — what this organization hauls, with freight class, handling flags and whether the commodity is hazardous. Temperature-controlled commodities carry a min or max temperature. Filters: createdAtFrom/To, description, fragile, freightClass, hasHazardousMaterial, hazardousMaterialId, linearFeetPerUnitMin/Max, loadingInstructions, maxQuantityPerShipmentMin/Max, maxTemperatureMin/Max, minTemperatureMin/Max, name, stackable, status, updatedAtFrom/To, weightPerUnitMin/Max.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
-          "filters": {
-            "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
+          "createdAtFrom": {
+            "description": "Only records whose created at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "createdAtTo": {
+            "description": "Only records whose created at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "description": {
+            "description": "Only records whose description contains this text.",
+            "type": "string"
+          },
+          "fragile": {
+            "description": "Only records that are, or are not, fragile.",
+            "type": "boolean"
+          },
+          "freightClass": {
+            "description": "Only records whose freight class is one of these.",
             "items": {
-              "additionalProperties": false,
-              "properties": {
-                "days": {
-                  "maximum": 3650,
-                  "minimum": 1,
-                  "type": "integer"
-                },
-                "field": {
-                  "enum": [
-                    "status",
-                    "name",
-                    "description",
-                    "freightClass",
-                    "stackable",
-                    "fragile",
-                    "hazardousMaterialId",
-                    "createdAt"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "masterdata_list_commodities.field"
-                },
-                "operator": {
-                  "enum": [
-                    "eq",
-                    "ne",
-                    "in",
-                    "notin",
-                    "isnull",
-                    "isnotnull",
-                    "contains",
-                    "startswith",
-                    "endswith",
-                    "gt",
-                    "gte",
-                    "lt",
-                    "lte",
-                    "lastndays",
-                    "nextndays",
-                    "today",
-                    "yesterday",
-                    "tomorrow"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "masterdata_list_commodities.operator"
-                },
-                "value": {
-                  "type": "string"
-                },
-                "values": {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                }
-              },
-              "required": [
-                "field",
-                "operator"
+              "enum": [
+                "Class50",
+                "Class55",
+                "Class60",
+                "Class65",
+                "Class70",
+                "Class77_5",
+                "Class85",
+                "Class92_5",
+                "Class100",
+                "Class110",
+                "Class125",
+                "Class150",
+                "Class175",
+                "Class200",
+                "Class250",
+                "Class300",
+                "Class400",
+                "Class500"
               ],
-              "type": "object"
+              "type": "string",
+              "x-enumOf": "graphql.FreightClass"
             },
-            "maxItems": 6,
+            "minItems": 1,
             "type": "array"
+          },
+          "hasHazardousMaterial": {
+            "description": "true for only records that have a hazardous material, false for only those that have none. A commodity with a hazardous material is hazmat.",
+            "type": "boolean"
+          },
+          "hazardousMaterialId": {
+            "description": "The hazardous material the commodity is, from masterdata_list_hazardous_materials. Never guess one.",
+            "type": "string",
+            "x-recordOf": "hazardous_material"
           },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 50.",
@@ -25271,23 +25390,71 @@
             "type": "integer",
             "x-clamp": true
           },
-          "offset": {
-            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
-            "minimum": 0,
+          "linearFeetPerUnitMax": {
+            "description": "Only records whose linear feet per unit is at most this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "linearFeetPerUnitMin": {
+            "description": "Only records whose linear feet per unit is at least this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "loadingInstructions": {
+            "description": "Only records whose loading instructions contains this text.",
+            "type": "string"
+          },
+          "maxQuantityPerShipmentMax": {
+            "description": "Only records whose max quantity per shipment is at most this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "maxQuantityPerShipmentMin": {
+            "description": "Only records whose max quantity per shipment is at least this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "maxTemperatureMax": {
+            "description": "Only records whose max temperature is at most this.",
             "type": "integer"
           },
+          "maxTemperatureMin": {
+            "description": "Only records whose max temperature is at least this.",
+            "type": "integer"
+          },
+          "minTemperatureMax": {
+            "description": "Only records whose min temperature is at most this.",
+            "type": "integer"
+          },
+          "minTemperatureMin": {
+            "description": "Only records whose min temperature is at least this.",
+            "type": "integer"
+          },
+          "name": {
+            "description": "Only records whose name contains this text.",
+            "type": "string"
+          },
           "query": {
-            "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
+            "description": "Optional free text matched across the searchable columns. Omit it when you are narrowing by a field.",
             "type": "string"
           },
           "sortBy": {
             "description": "Field to order by. Defaults to most recently created.",
             "enum": [
+              "createdAt",
+              "description",
+              "fragile",
+              "freightClass",
+              "hazardousMaterialId",
+              "linearFeetPerUnit",
+              "loadingInstructions",
+              "maxQuantityPerShipment",
+              "maxTemperature",
+              "minTemperature",
               "name",
-              "createdAt"
+              "stackable",
+              "status",
+              "updatedAt",
+              "weightPerUnit"
             ],
             "type": "string",
-            "x-enumOf": "masterdata_list_commodities.sortBy"
+            "x-enumOf": "masterdata_list_commodities.graphqlSortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -25297,6 +25464,47 @@
             ],
             "type": "string",
             "x-enumOf": "list.sortDirection"
+          },
+          "stackable": {
+            "description": "Only records that are, or are not, stackable.",
+            "type": "boolean"
+          },
+          "status": {
+            "description": "Only records whose status is one of these.",
+            "items": {
+              "enum": [
+                "Active",
+                "Inactive"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.EntityStatus"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "updatedAtFrom": {
+            "description": "Only records whose updated at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "updatedAtTo": {
+            "description": "Only records whose updated at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "weightPerUnitMax": {
+            "description": "Only records whose weight per unit is at most this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "weightPerUnitMin": {
+            "description": "Only records whose weight per unit is at least this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
           }
         },
         "type": "object"
@@ -25325,72 +25533,49 @@
     },
     {
       "name": "masterdata_list_fleet_codes",
-      "description": "List fleet codes — the groupings drivers and equipment are assigned to, each with its own manager and revenue goal. Filters: status (Active|Inactive); text: code, description; date: createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "description": "List fleet codes — the groupings drivers and equipment are assigned to, each with its own manager and revenue goal. Filters: code, color, createdAtFrom/To, deadheadGoalMin/Max, description, mileageGoalMin/Max, revenueGoalMin/Max, status, updatedAtFrom/To.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
-          "filters": {
-            "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
-            "items": {
-              "additionalProperties": false,
-              "properties": {
-                "days": {
-                  "maximum": 3650,
-                  "minimum": 1,
-                  "type": "integer"
-                },
-                "field": {
-                  "enum": [
-                    "status",
-                    "code",
-                    "description",
-                    "createdAt"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "masterdata_list_fleet_codes.field"
-                },
-                "operator": {
-                  "enum": [
-                    "eq",
-                    "ne",
-                    "in",
-                    "notin",
-                    "isnull",
-                    "isnotnull",
-                    "contains",
-                    "startswith",
-                    "endswith",
-                    "gt",
-                    "gte",
-                    "lt",
-                    "lte",
-                    "lastndays",
-                    "nextndays",
-                    "today",
-                    "yesterday",
-                    "tomorrow"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "masterdata_list_fleet_codes.operator"
-                },
-                "value": {
-                  "type": "string"
-                },
-                "values": {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                }
-              },
-              "required": [
-                "field",
-                "operator"
-              ],
-              "type": "object"
-            },
-            "maxItems": 6,
-            "type": "array"
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
+          "code": {
+            "description": "Only records whose code contains this text.",
+            "type": "string"
+          },
+          "color": {
+            "description": "Only records whose color contains this text.",
+            "type": "string"
+          },
+          "createdAtFrom": {
+            "description": "Only records whose created at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "createdAtTo": {
+            "description": "Only records whose created at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "deadheadGoalMax": {
+            "description": "Only records whose deadhead goal is at most this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "deadheadGoalMin": {
+            "description": "Only records whose deadhead goal is at least this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "description": {
+            "description": "Only records whose description contains this text.",
+            "type": "string"
           },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 50.",
@@ -25399,23 +25584,42 @@
             "type": "integer",
             "x-clamp": true
           },
-          "offset": {
-            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
-            "minimum": 0,
-            "type": "integer"
+          "mileageGoalMax": {
+            "description": "Only records whose mileage goal is at most this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "mileageGoalMin": {
+            "description": "Only records whose mileage goal is at least this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
           },
           "query": {
-            "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
+            "description": "Optional free text matched across the searchable columns. Omit it when you are narrowing by a field.",
+            "type": "string"
+          },
+          "revenueGoalMax": {
+            "description": "Only records whose revenue goal is at most this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "revenueGoalMin": {
+            "description": "Only records whose revenue goal is at least this. Write it as a decimal, such as 1250.00.",
             "type": "string"
           },
           "sortBy": {
             "description": "Field to order by. Defaults to most recently created.",
             "enum": [
               "code",
-              "createdAt"
+              "color",
+              "createdAt",
+              "deadheadGoal",
+              "description",
+              "managerId",
+              "mileageGoal",
+              "revenueGoal",
+              "status",
+              "updatedAt"
             ],
             "type": "string",
-            "x-enumOf": "masterdata_list_fleet_codes.sortBy"
+            "x-enumOf": "masterdata_list_fleet_codes.graphqlSortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -25425,6 +25629,35 @@
             ],
             "type": "string",
             "x-enumOf": "list.sortDirection"
+          },
+          "status": {
+            "description": "Only records whose status is one of these.",
+            "items": {
+              "enum": [
+                "Active",
+                "Inactive"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.EntityStatus"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "updatedAtFrom": {
+            "description": "Only records whose updated at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "updatedAtTo": {
+            "description": "Only records whose updated at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
           }
         },
         "type": "object"
@@ -25453,75 +25686,97 @@
     },
     {
       "name": "masterdata_list_hazardous_materials",
-      "description": "List the hazardous materials this organization is set up to haul, with hazard class, UN number, packing group and whether a placard is required. Use it for questions about hazmat rules on a load, not about which drivers hold a hazmat endorsement — that is worker_list. Filters: status (Active|Inactive); unNumber (text): the UN/NA identification number; text: code, name; boolean: placardRequired, marinePollutant; date: createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "description": "List the hazardous materials this organization is set up to haul, with hazard class, UN number, packing group and whether a placard is required. Use it for questions about hazmat rules on a load, not about which drivers hold a hazmat endorsement — that is worker_list. Filters: class, code, createdAtFrom/To, description, emergencyContact, emergencyContactPhoneNumber, ergGuideNumber, handlingInstructions, inhalationHazard, isReportableQuantity, labelCodes, marinePollutant, name, packingGroup, placardRequired, properShippingName, quantityThreshold, specialProvisions, status, subsidiaryHazardClass, unNumber, updatedAtFrom/To.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
-          "filters": {
-            "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
+          "class": {
+            "description": "Only records whose class is one of these.",
             "items": {
-              "additionalProperties": false,
-              "properties": {
-                "days": {
-                  "maximum": 3650,
-                  "minimum": 1,
-                  "type": "integer"
-                },
-                "field": {
-                  "enum": [
-                    "status",
-                    "code",
-                    "name",
-                    "unNumber",
-                    "placardRequired",
-                    "marinePollutant",
-                    "createdAt"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "masterdata_list_hazardous_materials.field"
-                },
-                "operator": {
-                  "enum": [
-                    "eq",
-                    "ne",
-                    "in",
-                    "notin",
-                    "isnull",
-                    "isnotnull",
-                    "contains",
-                    "startswith",
-                    "endswith",
-                    "gt",
-                    "gte",
-                    "lt",
-                    "lte",
-                    "lastndays",
-                    "nextndays",
-                    "today",
-                    "yesterday",
-                    "tomorrow"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "masterdata_list_hazardous_materials.operator"
-                },
-                "value": {
-                  "type": "string"
-                },
-                "values": {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                }
-              },
-              "required": [
-                "field",
-                "operator"
+              "enum": [
+                "HazardClass1",
+                "HazardClass1And1",
+                "HazardClass1And2",
+                "HazardClass1And3",
+                "HazardClass1And4",
+                "HazardClass1And5",
+                "HazardClass1And6",
+                "HazardClass2And1",
+                "HazardClass2And2",
+                "HazardClass2And3",
+                "HazardClass3",
+                "HazardClass4And1",
+                "HazardClass4And2",
+                "HazardClass4And3",
+                "HazardClass5And1",
+                "HazardClass5And2",
+                "HazardClass6And1",
+                "HazardClass6And2",
+                "HazardClass7",
+                "HazardClass8",
+                "HazardClass9"
               ],
-              "type": "object"
+              "type": "string",
+              "x-enumOf": "graphql.HazardousClass"
             },
-            "maxItems": 6,
+            "minItems": 1,
             "type": "array"
+          },
+          "code": {
+            "description": "Only records whose code contains this text.",
+            "type": "string"
+          },
+          "createdAtFrom": {
+            "description": "Only records whose created at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "createdAtTo": {
+            "description": "Only records whose created at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "description": {
+            "description": "Only records whose description contains this text.",
+            "type": "string"
+          },
+          "emergencyContact": {
+            "description": "Only records whose emergency contact contains this text.",
+            "type": "string"
+          },
+          "emergencyContactPhoneNumber": {
+            "description": "Only records whose emergency contact phone number contains this text.",
+            "type": "string"
+          },
+          "ergGuideNumber": {
+            "description": "Only records whose erg guide number contains this text.",
+            "type": "string"
+          },
+          "handlingInstructions": {
+            "description": "Only records whose handling instructions contains this text.",
+            "type": "string"
+          },
+          "inhalationHazard": {
+            "description": "Only records that are, or are not, inhalation hazard.",
+            "type": "boolean"
+          },
+          "isReportableQuantity": {
+            "description": "Only records that are, or are not, is reportable quantity.",
+            "type": "boolean"
+          },
+          "labelCodes": {
+            "description": "Only records whose label codes contains this text.",
+            "type": "string"
           },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 50.",
@@ -25530,24 +25785,72 @@
             "type": "integer",
             "x-clamp": true
           },
-          "offset": {
-            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
-            "minimum": 0,
-            "type": "integer"
+          "marinePollutant": {
+            "description": "Only records that are, or are not, marine pollutant.",
+            "type": "boolean"
+          },
+          "name": {
+            "description": "Only records whose name contains this text.",
+            "type": "string"
+          },
+          "packingGroup": {
+            "description": "Only records whose packing group is one of these.",
+            "items": {
+              "enum": [
+                "I",
+                "II",
+                "III"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.PackingGroup"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "placardRequired": {
+            "description": "Only records that are, or are not, placard required.",
+            "type": "boolean"
+          },
+          "properShippingName": {
+            "description": "Only records whose proper shipping name contains this text.",
+            "type": "string"
+          },
+          "quantityThreshold": {
+            "description": "Only records whose quantity threshold contains this text.",
+            "type": "string"
           },
           "query": {
-            "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
+            "description": "Optional free text matched across the searchable columns. Omit it when you are narrowing by a field.",
             "type": "string"
           },
           "sortBy": {
             "description": "Field to order by. Defaults to most recently created.",
             "enum": [
+              "class",
               "code",
+              "createdAt",
+              "description",
+              "emergencyContact",
+              "emergencyContactPhoneNumber",
+              "ergGuideNumber",
+              "handlingInstructions",
+              "inhalationHazard",
+              "isReportableQuantity",
+              "labelCodes",
+              "marinePollutant",
               "name",
-              "createdAt"
+              "packingGroup",
+              "placardRequired",
+              "properShippingName",
+              "quantityThreshold",
+              "specialProvisions",
+              "status",
+              "subsidiaryHazardClass",
+              "unNumber",
+              "updatedAt"
             ],
             "type": "string",
-            "x-enumOf": "masterdata_list_hazardous_materials.sortBy"
+            "x-enumOf": "masterdata_list_hazardous_materials.graphqlSortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -25557,6 +25860,47 @@
             ],
             "type": "string",
             "x-enumOf": "list.sortDirection"
+          },
+          "specialProvisions": {
+            "description": "Only records whose special provisions contains this text.",
+            "type": "string"
+          },
+          "status": {
+            "description": "Only records whose status is one of these.",
+            "items": {
+              "enum": [
+                "Active",
+                "Inactive"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.EntityStatus"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "subsidiaryHazardClass": {
+            "description": "Only records whose subsidiary hazard class contains this text.",
+            "type": "string"
+          },
+          "unNumber": {
+            "description": "Only records whose un number contains this text. The UN/NA identification number.",
+            "type": "string"
+          },
+          "updatedAtFrom": {
+            "description": "Only records whose updated at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "updatedAtTo": {
+            "description": "Only records whose updated at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
           }
         },
         "type": "object"
@@ -25585,65 +25929,75 @@
     },
     {
       "name": "masterdata_list_hold_reasons",
-      "description": "List the reasons a shipment can be put on hold, and what each one blocks — dispatch, delivery, billing. Call this before shipment_place_hold: the reason decides the hold's behaviour, so it has to be one this organization actually configured rather than one you describe. Filters: type (OperationalHold|ComplianceHold|CustomerHold|FinanceHold); active (boolean): only an active reason can be used on a new hold; text: code, label; boolean: defaultBlocksDispatch, defaultBlocksBilling.",
+      "description": "List the reasons a shipment can be put on hold, and what each one blocks — dispatch, delivery, billing. Call this before shipment_place_hold: the reason decides the hold's behaviour, so it has to be one this organization actually configured rather than one you describe. Filters: active, code, createdAtFrom/To, defaultBlocksBilling, defaultBlocksDelivery, defaultBlocksDispatch, defaultSeverity, defaultVisibleToCustomer, description, label, sortOrderMin/Max, type, updatedAtFrom/To.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
-          "filters": {
-            "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
+          "active": {
+            "description": "Only records that are, or are not, active. Only an active reason can be used on a new hold.",
+            "type": "boolean"
+          },
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
+          "code": {
+            "description": "Only records whose code contains this text.",
+            "type": "string"
+          },
+          "createdAtFrom": {
+            "description": "Only records whose created at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "createdAtTo": {
+            "description": "Only records whose created at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "defaultBlocksBilling": {
+            "description": "Only records that are, or are not, default blocks billing.",
+            "type": "boolean"
+          },
+          "defaultBlocksDelivery": {
+            "description": "Only records that are, or are not, default blocks delivery.",
+            "type": "boolean"
+          },
+          "defaultBlocksDispatch": {
+            "description": "Only records that are, or are not, default blocks dispatch.",
+            "type": "boolean"
+          },
+          "defaultSeverity": {
+            "description": "Only records whose default severity is one of these.",
             "items": {
-              "additionalProperties": false,
-              "properties": {
-                "days": {
-                  "maximum": 3650,
-                  "minimum": 1,
-                  "type": "integer"
-                },
-                "field": {
-                  "enum": [
-                    "type",
-                    "code",
-                    "label",
-                    "active",
-                    "defaultBlocksDispatch",
-                    "defaultBlocksBilling"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "masterdata_list_hold_reasons.field"
-                },
-                "operator": {
-                  "enum": [
-                    "eq",
-                    "ne",
-                    "in",
-                    "notin",
-                    "isnull",
-                    "isnotnull",
-                    "contains",
-                    "startswith",
-                    "endswith"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "masterdata_list_hold_reasons.operator"
-                },
-                "value": {
-                  "type": "string"
-                },
-                "values": {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                }
-              },
-              "required": [
-                "field",
-                "operator"
+              "enum": [
+                "Informational",
+                "Advisory",
+                "Blocking"
               ],
-              "type": "object"
+              "type": "string",
+              "x-enumOf": "graphql.HoldSeverity"
             },
-            "maxItems": 6,
+            "minItems": 1,
             "type": "array"
+          },
+          "defaultVisibleToCustomer": {
+            "description": "Only records that are, or are not, default visible to customer.",
+            "type": "boolean"
+          },
+          "description": {
+            "description": "Only records whose description contains this text.",
+            "type": "string"
+          },
+          "label": {
+            "description": "Only records whose label contains this text.",
+            "type": "string"
           },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 50.",
@@ -25652,23 +26006,30 @@
             "type": "integer",
             "x-clamp": true
           },
-          "offset": {
-            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
-            "minimum": 0,
-            "type": "integer"
-          },
           "query": {
-            "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
+            "description": "Optional free text matched across the searchable columns. Omit it when you are narrowing by a field.",
             "type": "string"
           },
           "sortBy": {
             "description": "Field to order by. Defaults to most recently created.",
             "enum": [
+              "active",
               "code",
-              "label"
+              "createdAt",
+              "defaultBlocksBilling",
+              "defaultBlocksDelivery",
+              "defaultBlocksDispatch",
+              "defaultSeverity",
+              "defaultVisibleToCustomer",
+              "description",
+              "externalMap",
+              "label",
+              "sortOrder",
+              "type",
+              "updatedAt"
             ],
             "type": "string",
-            "x-enumOf": "masterdata_list_hold_reasons.sortBy"
+            "x-enumOf": "masterdata_list_hold_reasons.graphqlSortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -25678,6 +26039,45 @@
             ],
             "type": "string",
             "x-enumOf": "list.sortDirection"
+          },
+          "sortOrderMax": {
+            "description": "Only records whose sort order is at most this.",
+            "type": "integer"
+          },
+          "sortOrderMin": {
+            "description": "Only records whose sort order is at least this.",
+            "type": "integer"
+          },
+          "type": {
+            "description": "Only records whose type is one of these.",
+            "items": {
+              "enum": [
+                "OperationalHold",
+                "ComplianceHold",
+                "CustomerHold",
+                "FinanceHold"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.HoldType"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "updatedAtFrom": {
+            "description": "Only records whose updated at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "updatedAtTo": {
+            "description": "Only records whose updated at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
           }
         },
         "type": "object"
@@ -25706,72 +26106,41 @@
     },
     {
       "name": "masterdata_list_service_types",
-      "description": "List service types — the levels of service a shipment can be booked at. Use it to turn a service a person named into the id a shipment needs. Filters: status (Active|Inactive); text: code, description; date: createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "description": "List service types — the levels of service a shipment can be booked at. Use it to turn a service a person named into the id a shipment needs. Filters: code, color, createdAtFrom/To, description, status, updatedAtFrom/To.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
-          "filters": {
-            "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
-            "items": {
-              "additionalProperties": false,
-              "properties": {
-                "days": {
-                  "maximum": 3650,
-                  "minimum": 1,
-                  "type": "integer"
-                },
-                "field": {
-                  "enum": [
-                    "status",
-                    "code",
-                    "description",
-                    "createdAt"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "masterdata_list_service_types.field"
-                },
-                "operator": {
-                  "enum": [
-                    "eq",
-                    "ne",
-                    "in",
-                    "notin",
-                    "isnull",
-                    "isnotnull",
-                    "contains",
-                    "startswith",
-                    "endswith",
-                    "gt",
-                    "gte",
-                    "lt",
-                    "lte",
-                    "lastndays",
-                    "nextndays",
-                    "today",
-                    "yesterday",
-                    "tomorrow"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "masterdata_list_service_types.operator"
-                },
-                "value": {
-                  "type": "string"
-                },
-                "values": {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                }
-              },
-              "required": [
-                "field",
-                "operator"
-              ],
-              "type": "object"
-            },
-            "maxItems": 6,
-            "type": "array"
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
+          "code": {
+            "description": "Only records whose code contains this text.",
+            "type": "string"
+          },
+          "color": {
+            "description": "Only records whose color contains this text.",
+            "type": "string"
+          },
+          "createdAtFrom": {
+            "description": "Only records whose created at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "createdAtTo": {
+            "description": "Only records whose created at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "description": {
+            "description": "Only records whose description contains this text.",
+            "type": "string"
           },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 50.",
@@ -25780,23 +26149,22 @@
             "type": "integer",
             "x-clamp": true
           },
-          "offset": {
-            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
-            "minimum": 0,
-            "type": "integer"
-          },
           "query": {
-            "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
+            "description": "Optional free text matched across the searchable columns. Omit it when you are narrowing by a field.",
             "type": "string"
           },
           "sortBy": {
             "description": "Field to order by. Defaults to most recently created.",
             "enum": [
               "code",
-              "createdAt"
+              "color",
+              "createdAt",
+              "description",
+              "status",
+              "updatedAt"
             ],
             "type": "string",
-            "x-enumOf": "masterdata_list_service_types.sortBy"
+            "x-enumOf": "masterdata_list_service_types.graphqlSortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -25806,6 +26174,35 @@
             ],
             "type": "string",
             "x-enumOf": "list.sortDirection"
+          },
+          "status": {
+            "description": "Only records whose status is one of these.",
+            "items": {
+              "enum": [
+                "Active",
+                "Inactive"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.EntityStatus"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "updatedAtFrom": {
+            "description": "Only records whose updated at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "updatedAtTo": {
+            "description": "Only records whose updated at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
           }
         },
         "type": "object"
@@ -25834,72 +26231,41 @@
     },
     {
       "name": "masterdata_list_shipment_types",
-      "description": "List shipment types — how this organization categorises the freight it moves. Use it to turn a type a person named into the id a shipment needs. Filters: status (Active|Inactive); text: code, description; date: createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "description": "List shipment types — how this organization categorises the freight it moves. Use it to turn a type a person named into the id a shipment needs. Filters: code, color, createdAtFrom/To, description, status, updatedAtFrom/To.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
-          "filters": {
-            "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
-            "items": {
-              "additionalProperties": false,
-              "properties": {
-                "days": {
-                  "maximum": 3650,
-                  "minimum": 1,
-                  "type": "integer"
-                },
-                "field": {
-                  "enum": [
-                    "status",
-                    "code",
-                    "description",
-                    "createdAt"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "masterdata_list_shipment_types.field"
-                },
-                "operator": {
-                  "enum": [
-                    "eq",
-                    "ne",
-                    "in",
-                    "notin",
-                    "isnull",
-                    "isnotnull",
-                    "contains",
-                    "startswith",
-                    "endswith",
-                    "gt",
-                    "gte",
-                    "lt",
-                    "lte",
-                    "lastndays",
-                    "nextndays",
-                    "today",
-                    "yesterday",
-                    "tomorrow"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "masterdata_list_shipment_types.operator"
-                },
-                "value": {
-                  "type": "string"
-                },
-                "values": {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                }
-              },
-              "required": [
-                "field",
-                "operator"
-              ],
-              "type": "object"
-            },
-            "maxItems": 6,
-            "type": "array"
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
+          "code": {
+            "description": "Only records whose code contains this text.",
+            "type": "string"
+          },
+          "color": {
+            "description": "Only records whose color contains this text.",
+            "type": "string"
+          },
+          "createdAtFrom": {
+            "description": "Only records whose created at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "createdAtTo": {
+            "description": "Only records whose created at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "description": {
+            "description": "Only records whose description contains this text.",
+            "type": "string"
           },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 50.",
@@ -25908,23 +26274,22 @@
             "type": "integer",
             "x-clamp": true
           },
-          "offset": {
-            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
-            "minimum": 0,
-            "type": "integer"
-          },
           "query": {
-            "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
+            "description": "Optional free text matched across the searchable columns. Omit it when you are narrowing by a field.",
             "type": "string"
           },
           "sortBy": {
             "description": "Field to order by. Defaults to most recently created.",
             "enum": [
               "code",
-              "createdAt"
+              "color",
+              "createdAt",
+              "description",
+              "status",
+              "updatedAt"
             ],
             "type": "string",
-            "x-enumOf": "masterdata_list_shipment_types.sortBy"
+            "x-enumOf": "masterdata_list_shipment_types.graphqlSortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -25934,6 +26299,35 @@
             ],
             "type": "string",
             "x-enumOf": "list.sortDirection"
+          },
+          "status": {
+            "description": "Only records whose status is one of these.",
+            "items": {
+              "enum": [
+                "Active",
+                "Inactive"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.EntityStatus"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "updatedAtFrom": {
+            "description": "Only records whose updated at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "updatedAtTo": {
+            "description": "Only records whose updated at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
           }
         },
         "type": "object"

@@ -237,7 +237,7 @@ func runnableViewTool(rows []any) (*composeTableViewTool, *capturedList) {
 		fetch: capture.fetch,
 	})
 	tool, _ := viewTool(composed())
-	tool.lists = map[permission.Resource]*listTool{permission.ResourceShipment: list}
+	tool.lists = map[permission.Resource]viewRunner{permission.ResourceShipment: list}
 
 	return tool, capture
 }

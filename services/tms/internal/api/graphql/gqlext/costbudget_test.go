@@ -1,4 +1,4 @@
-package graphql
+package gqlext
 
 import (
 	"context"
@@ -216,4 +216,25 @@ func TestCostBudgetExtension_CleanupDropsIdlePrincipals(t *testing.T) {
 	ext.now = func() time.Time { return start.Add(2 * time.Minute) }
 	require.Nil(t, ext.MutateOperationContext(second, costedOperationContext(10)))
 	assert.Len(t, ext.budgets, 1)
+}
+
+func TestBudgetKey_ChargesEachUnattendedAgentItsOwnBucket(t *testing.T) {
+	t.Parallel()
+
+	org := pulid.MustNew("org_")
+	first := &authctx.AuthContext{
+		PrincipalType: authctx.PrincipalTypeAgent, PrincipalID: pulid.MustNew("agd_"),
+		OrganizationID: org,
+	}
+	second := &authctx.AuthContext{
+		PrincipalType: authctx.PrincipalTypeAgent, PrincipalID: pulid.MustNew("agd_"),
+		OrganizationID: org,
+	}
+	person := &authctx.AuthContext{
+		PrincipalType: authctx.PrincipalTypeUser, PrincipalID: pulid.MustNew("usr_"),
+		UserID: pulid.MustNew("usr_"), OrganizationID: org,
+	}
+
+	assert.NotEqual(t, budgetKey(first), budgetKey(second))
+	assert.Equal(t, org.String()+"|"+person.UserID.String(), budgetKey(person))
 }

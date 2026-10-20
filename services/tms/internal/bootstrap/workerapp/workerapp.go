@@ -63,6 +63,7 @@ func OptionsFor(e *edition.Edition) fx.Option {
 		// enabled, so its Temporal activity, AI and database metrics can be
 		// scraped too. Off, it opens no port and cannot collide with the API's.
 		apimodule.WorkerMonitoringServerModule,
+		apimodule.AgentReadWorkerModule,
 		modulesinfra.DoclingModule,
 		temporaljobs.WorkerModule,
 		agentjobs.WorkerModule,
