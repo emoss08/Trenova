@@ -21,14 +21,18 @@ type capturedList struct {
 	rows   []any
 }
 
-func (c *capturedList) fetch(_ context.Context, opts *pagination.QueryOptions) ([]any, error) {
+func (c *capturedList) fetch(
+	_ context.Context,
+	opts *pagination.QueryOptions,
+	_ pagination.CursorInfo,
+) (listPage, error) {
 	if c.opts == nil {
 		c.opts = opts
 	} else {
 		c.probes = append(c.probes, opts)
 	}
 
-	return c.rows, nil
+	return offsetListPage(c.rows, func(row any) any { return row }), nil
 }
 
 // probeSpec stands in for a catalog entry. The framework is what these tests

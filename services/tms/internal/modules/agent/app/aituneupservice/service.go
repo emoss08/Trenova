@@ -23,7 +23,7 @@ import (
 )
 
 const (
-	agentPageSize = 200
+	agentPageSize = pagination.MaxLimit
 	maxAgents     = 2000
 	secondsPerDay = 24 * 60 * 60
 )

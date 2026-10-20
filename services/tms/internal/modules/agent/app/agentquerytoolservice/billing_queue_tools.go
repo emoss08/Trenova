@@ -136,23 +136,24 @@ func buildBillingQueueList(
 		fetchGated: func(
 			ctx context.Context,
 			opts *pagination.QueryOptions,
+			_ pagination.CursorInfo,
 			gate *fieldGate,
-		) ([]any, error) {
+		) (listPage, error) {
 			if lister == nil {
-				return nil, errortypes.NewConflictError("The billing queue is unavailable")
+				return listPage{}, errortypes.NewConflictError("The billing queue is unavailable")
 			}
 			result, err := lister.List(ctx, &billingqueueports.ListBillingQueueItemsRequest{
 				Filter:        opts,
 				IncludePosted: asksForPosted(opts.FieldFilters),
 			})
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
 
 			showAmount := gate.show(fieldAllocatedTotal, fieldAmount)
 			now := timeutils.NowUnix()
 
-			return listRows(result.Items, func(item *billingqueue.BillingQueueItem) any {
+			return offsetListPage(result.Items, func(item *billingqueue.BillingQueueItem) any {
 				return billingQueueRowFrom(item, showAmount, now)
 			}), nil
 		},
