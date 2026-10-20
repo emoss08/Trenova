@@ -193,6 +193,10 @@ func (t *SettlementBulkTool[E]) Preview(
 	return t.batch.Preview(ctx, t, &params)
 }
 
+func (t *SettlementBulkTool[E]) SplitRecords(params map[string]any) ([]map[string]any, error) {
+	return t.batch.Split(params)
+}
+
 func (t *SettlementBulkTool[E]) Validate(
 	ctx context.Context,
 	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value

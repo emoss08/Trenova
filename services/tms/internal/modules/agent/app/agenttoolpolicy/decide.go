@@ -23,6 +23,9 @@ const (
 	// HeldByBusinessHours marks a write held for a person because the agent
 	// may only change things on its own in business hours, and it was not.
 	HeldByBusinessHours = "business_hours"
+	// HeldByScriptIntent marks a write a script prepared: it waits for a
+	// person to approve the script's batch, whatever else would let it run.
+	HeldByScriptIntent = "script_intent"
 )
 
 type MoneyAllowanceReader func(context.Context) (agent.MoneyAllowance, error)
@@ -36,6 +39,9 @@ type DecideInput struct {
 	TierSetByPerson bool
 	Taint           *agent.RunTaint
 	MoneyAllowance  MoneyAllowanceReader
+	// FromScript is set for an intent a script prepared, which never runs
+	// before a person approves the batch it is filed in.
+	FromScript bool
 }
 
 type Decision struct {
@@ -53,7 +59,7 @@ func HeldWhenTainted(class agent.EgressClass) bool {
 
 func Decide(ctx context.Context, in DecideInput) Decision {
 	policy := in.Policy
-	if Escalates(in.Definition, &policy) {
+	if !in.FromScript && Escalates(in.Definition, &policy) {
 		return Decision{
 			Tier:   agent.TierAutoExecute,
 			Egress: policy.Classified(in.Params).Egress,
@@ -101,6 +107,10 @@ func Decide(ctx context.Context, in DecideInput) Decision {
 	if taintHolds {
 		decision.lower(agent.TierActWithApproval, HeldByTainted)
 		decision.hold(HeldByTainted)
+	}
+	if in.FromScript {
+		decision.lower(agent.TierActWithApproval, HeldByScriptIntent)
+		decision.hold(HeldByScriptIntent)
 	}
 	if decision.Tier != agent.TierAutoExecute {
 		decision.MoneyMinor = nil

@@ -127,6 +127,30 @@ func (b *RecordBatch) singleParams(
 	return single
 }
 
+// Split is the call naming each record alone, in the order named and each
+// once, with the parameters every record shares.
+func (b *RecordBatch) Split(params map[string]any) ([]map[string]any, error) {
+	ids, err := RequirePulidSlice(params, b.Param, MaxBulkRecords)
+	if err != nil {
+		return nil, err
+	}
+	ids = sliceutils.Dedupe(ids)
+
+	calls := make([]map[string]any, 0, len(ids))
+	for _, id := range ids {
+		call := make(map[string]any, len(b.Shared)+1)
+		call[b.Param] = []any{id.String()}
+		for _, key := range b.Shared {
+			if value, ok := params[key]; ok {
+				call[key] = value
+			}
+		}
+		calls = append(calls, call)
+	}
+
+	return calls, nil
+}
+
 func (b *RecordBatch) Preview(
 	ctx context.Context,
 	tool agentports.AgentTool,
