@@ -320,7 +320,7 @@ A scenario with a `formula:` block talks to the Formula Studio's own assistant i
 agent: the bench opens the studio's page thread (`OpenPageThread`, origin `Formula`), on the
 template named by `template` (looked up by name; leave it out for a new formula, and `type`
 sets the template type, `FreightCharge` by default), and sends the studio's draft with every
-message, as the page does. Each `propose_formula` edit the agent makes is applied to that draft
+message, as the page does. Each `formula_propose` edit the agent makes is applied to that draft
 before the next message, the way the studio applies it, so a follow-up edits what the agent
 wrote, and the transcript shows the draft after every step.
 
@@ -330,7 +330,7 @@ wrote, and the transcript shows the draft after every step.
     steps:
       - say: "change this so every stop after the second one adds 75"
         expect:
-          calls: ["propose_formula"]
+          calls: ["formula_propose"]
           formula: ["totalDistance", "totalStops"]
 ```
 

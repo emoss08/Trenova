@@ -33,7 +33,7 @@ var ownKeys = map[string]struct{}{
 var untypedIDs = map[string]string{
 	"formula_describe_schema.schemaId": "the name of a formula schema, such as shipment",
 	"formula_test_expression.schemaId": "the name of a formula schema, such as shipment",
-	"propose_formula.schemaId":         "the name of a formula schema, such as shipment",
+	"formula_propose.schemaId":         "the name of a formula schema, such as shipment",
 	"home_arrange_layout.widgetIds": "home layout widget ids are names NextWidgetID " +
 		"gives a widget, not PULIDs",
 	"agent_open_page.recordId": "its kind follows the entity parameter, drawn from the " +

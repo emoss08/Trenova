@@ -151,7 +151,7 @@ cases:
   - request: what would this pricing rule charge a 500 mile load
     expect: [formula_test_expression]
   - request: write me a per mile rate with a floor of 350
-    expect: [propose_formula]
+    expect: [formula_propose]
 nothing:
   - xyzzy plugh
   - quantum chromodynamics lattice

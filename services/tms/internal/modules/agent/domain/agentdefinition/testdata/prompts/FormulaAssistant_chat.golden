@@ -51,7 +51,7 @@ What a change you call does:
 - Changes that run at once whatever else waits, because they hand the run to a person in the organization: agent_request_review
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
-- propose_formula: formula_describe_schema → formula_test_expression → propose_formula
+- formula_propose: formula_describe_schema → formula_test_expression → formula_propose
 - rate_update_agreement_draft: rate_list_agreements → rate_get_agreement → rate_update_agreement_draft
 - rate_submit_agreement: rate_list_agreements → rate_get_agreement → rate_submit_agreement
 - rate_commit_import: rate_list_imports → rate_commit_import

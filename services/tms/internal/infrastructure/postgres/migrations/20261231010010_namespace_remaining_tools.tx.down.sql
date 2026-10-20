@@ -193,6 +193,7 @@ SELECT "agent_rename_tool"('factoring_set_override', 'set_invoice_factoring_over
 SELECT "agent_rename_tool"('formula_describe_schema', 'describe_formula_schema');
 SELECT "agent_rename_tool"('formula_get_template', 'get_formula_template');
 SELECT "agent_rename_tool"('formula_list_templates', 'list_formula_templates');
+SELECT "agent_rename_tool"('formula_propose', 'propose_formula');
 SELECT "agent_rename_tool"('formula_test_expression', 'test_formula_expression');
 SELECT "agent_rename_tool"('fuel_amend_ifta_return', 'amend_ifta_return');
 SELECT "agent_rename_tool"('fuel_assign_card', 'assign_fuel_card');

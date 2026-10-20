@@ -24,7 +24,7 @@ var domainOwnedSchemas = map[string]string{
 	"formula_test_expression:variables": "keyed by the variables each formula declares; " +
 		"the formula engine checks every value against its declared type",
 	"formula_test_expression:scenarios[].variables": "as formula_test_expression:variables",
-	"propose_formula:scenarios[].variables":         "as formula_test_expression:variables",
+	"formula_propose:scenarios[].variables":         "as formula_test_expression:variables",
 }
 
 func domainOwned(tool, path string) bool {

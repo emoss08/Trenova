@@ -12,7 +12,7 @@ scenarios:
           ltl rating: under 500 lbs is 45 a hundredweight, 500 to 1999 is 38, 2000 to 4999 is 32,
           5000 and up is 28. minimum charge 125
         expect:
-          calls: ["propose_formula"]
+          calls: ["formula_propose"]
           maxFailedCalls: 2
           formula:
             - '/\b(totalWeight|weight)\b/'
@@ -31,7 +31,7 @@ scenarios:
           per mile but it depends on length of haul: up to 250 miles is 3.40 a mile, 251 to 600 is
           2.75, over 600 is 2.30. whole trip at the one rate, not stacked
         expect:
-          calls: ["propose_formula"]
+          calls: ["formula_propose"]
           formula: ["totalDistance"]
           rubric: >
             Picks one rate for the whole trip by its distance band (not a tiered sum), with the
@@ -45,7 +45,7 @@ scenarios:
           base it on 2.60 a mile. reefer loads get 15% on top, hazmat adds a flat 175, team service
           adds 25 cents a mile. any combination can apply
         expect:
-          calls: ["propose_formula", "formula_describe_schema"]
+          calls: ["formula_propose", "formula_describe_schema"]
           formula: ["totalDistance", "/hazmat|hasHazmat/"]
           rubric: >
             Uses the schema's own names for reefer, hazmat and team (asking or saying when one does
@@ -62,7 +62,7 @@ scenarios:
           fuel surcharge per our contracts: peg is 1.25 a gallon, for every 6 cents the DOE average
           is above the peg add a penny a mile. nothing if diesel is under the peg
         expect:
-          calls: ["propose_formula"]
+          calls: ["formula_propose"]
           formula: ["totalDistance"]
           rubric: >
             Builds max(0, floor((index - peg) / 0.06)) * 0.01 * miles (or its equivalent), reads
@@ -77,7 +77,7 @@ scenarios:
           detention: 2 hours free, then 75 an hour billed in half hour increments, rounded up.
           cap it at 600 a stop
         expect:
-          calls: ["propose_formula"]
+          calls: ["formula_propose"]
           formula: ["/ceil|round/"]
           rubric: >
             Charges nothing within the free time, rounds the time beyond it up to the half hour at
@@ -92,19 +92,19 @@ scenarios:
     steps:
       - say: "3.10 a mile with a 450 minimum"
         expect:
-          calls: ["propose_formula"]
+          calls: ["formula_propose"]
           formula: ["totalDistance"]
       - say: "make the minimum 500"
         expect:
-          calls: ["propose_formula"]
+          calls: ["formula_propose"]
           formula: ["totalDistance"]
       - say: "and charge 85 for each stop past the first two"
         expect:
-          calls: ["propose_formula"]
+          calls: ["formula_propose"]
           formula: ["totalDistance", '/totalStops|len\(stops\)|count\(stops/']
       - say: "actually drop the minimum entirely"
         expect:
-          calls: ["propose_formula"]
+          calls: ["formula_propose"]
           formula: ["totalDistance", '/totalStops|len\(stops\)|count\(stops/']
           rubric: >
             Removes the minimum and keeps the per-mile and stop charge exactly as they were built,
@@ -121,5 +121,5 @@ scenarios:
           rubric: Explains the formula term by term and confirms it has no minimum.
       - say: "add a 300 minimum"
         expect:
-          calls: ["propose_formula"]
+          calls: ["formula_propose"]
           formula: ["/max\\s*\\(/", "fuelSurchargePercent"]

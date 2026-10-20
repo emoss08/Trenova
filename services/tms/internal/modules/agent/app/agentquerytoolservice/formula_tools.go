@@ -360,7 +360,7 @@ func (t *testFormulaExpressionTool) Name() string { return "formula_test_express
 func (t *testFormulaExpressionTool) Description() string {
 	return "Price a formula expression with Trenova's formula engine, for sample loads or " +
 		"against a saved shipment. Use it to check a formula runs and to learn what it " +
-		"charges; say an amount only when this or propose_formula gave it."
+		"charges; say an amount only when this or formula_propose gave it."
 }
 
 func (t *testFormulaExpressionTool) ParamSchema() map[string]any {

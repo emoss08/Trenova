@@ -451,9 +451,9 @@ cases:
   - request: what would this formula charge for a sample load
     expect: [formula_test_expression]
   - request: write a formula that charges per mile with a minimum
-    expect: [propose_formula]
+    expect: [formula_propose]
   - request: propose a rating formula with a hazmat surcharge
-    expect: [propose_formula]
+    expect: [formula_propose]
   - request: reopen the canceled shipment, the load is back on
     expect: [shipment_uncancel]
   - request: make Maria the owner of shipment 4471

@@ -179,6 +179,7 @@ Looks something up. Nothing changes and nothing is sent.
 | Describe formula schema (`formula_describe_schema`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get formula template (`formula_get_template`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List formula templates (`formula_list_templates`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| Propose formula (`formula_propose`) | Reads only | Automatic | — | — | Changes the person's own editor, which they can undo; nothing is saved and nothing is sent. |
 | Test formula expression (`formula_test_expression`) | Reads only | Automatic | — | — | Prices an expression with the formula engine, for sample values or a shipment the caller may read; nothing is saved and nothing is sent. |
 | List fuel cards (`fuel_list_cards`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List IFTA jurisdictions (`fuel_list_ifta_jurisdictions`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
@@ -234,7 +235,6 @@ Looks something up. Nothing changes and nothing is sent.
 | List shipment types (`masterdata_list_shipment_types`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get order (`order_get`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List orders (`order_list`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
-| Propose formula (`propose_formula`) | Reads only | Automatic | — | — | Changes the person's own editor, which they can undo; nothing is saved and nothing is sent. |
 | Explain rate (`rate_explain`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get rate agreement (`rate_get_agreement`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get rate matrix (`rate_get_matrix`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |

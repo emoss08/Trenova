@@ -101,7 +101,7 @@ const TOOL_TITLES: Record<string, string> = defineLabels({
   location_create: "Create location",
   formula_describe_schema: "Read the formula reference",
   formula_test_expression: "Price a formula",
-  propose_formula: "Propose a formula",
+  formula_propose: "Propose a formula",
   report_compose_table_view: "Build a table",
   report_compare_runs: "Compare report runs",
   publish_artifact: "Publish a document",

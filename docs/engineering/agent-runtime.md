@@ -2467,7 +2467,7 @@ subject is still readable.
 
 **Draft tools present; they do not save.** `intake_accept_field`,
 `intake_accept_confident`, `intake_set_field`, `intake_set_required_field`,
-`intake_set_stop_location`, `intake_set_stop_schedule` and `propose_formula` are query tools
+`intake_set_stop_location`, `intake_set_stop_schedule` and `formula_propose` are query tools
 with self scope and effect `present`. Each returns a `pagedraft.Edit`; the
 turn saves it as a `draft_edit` artifact and the artifact event carries it, and
 the page applies it once, the way a navigation artifact is followed. Nothing
@@ -2478,7 +2478,7 @@ under the person's own permission and hand the page its label.
 location create. The formula tools price with the formula engine:
 `formula_describe_schema` lists the variables, functions and rate tables,
 `formula_test_expression` prices sample loads or a saved shipment the person
-may read, and `propose_formula` hands the editor an expression with its
+may read, and `formula_propose` hands the editor an expression with its
 variables, an explanation and engine-priced scenarios, and, when it drafts a new
 template or the person asks for itemized lines, a name, a description, a type and
 breakdown lines, each line priced by the engine as part of the proposal's check. It requires formula

@@ -620,7 +620,7 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Write a formula",
 			"Write a formula that charges per mile with a fuel surcharge and a minimum charge.",
-			"propose_formula", "formula_describe_schema",
+			"formula_propose", "formula_describe_schema",
 		),
 		ask(
 			"Explain this formula",

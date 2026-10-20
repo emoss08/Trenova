@@ -127,7 +127,7 @@ function ReplyProposal({
   const proposal = useMemo((): FormulaProposal | null => {
     const artifact = data?.results.find((item) => item.id === artifactId) ?? data?.results.at(-1);
     const parsed = pageDraftEditSchema.safeParse(artifact?.payload);
-    if (!parsed.success || parsed.data.action !== "propose_formula") return null;
+    if (!parsed.success || parsed.data.action !== "formula_propose") return null;
     return parsed.data.formula ?? null;
   }, [artifactId, data]);
 
@@ -249,7 +249,7 @@ export function NovaPane() {
   // stays in the thread for the person to read, never in the editor.
   const onDraftEdit = useCallback(
     (edit: PageDraftEdit, artifactId: string) => {
-      if (edit.action !== "propose_formula" || !edit.formula) return;
+      if (edit.action !== "formula_propose" || !edit.formula) return;
       const proposal = edit.formula;
       if (!proposal.check.valid) {
         setRecord(artifactId, { state: "pending", before: null });

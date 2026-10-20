@@ -2796,7 +2796,7 @@
       "grantedToEveryAgent": false
     },
     {
-      "name": "propose_formula",
+      "name": "formula_propose",
       "description": "Change the formula in the person's editor: the expression, its variables, the charge policy, breakdown lines, and for a new template its name and description. The page applies the change the moment you call this; the person sees it in their editor, can undo it, and nothing is saved until they save. Call it for every change the person asks for — add, remove, fix, rename, set a default, change the minimum — with the whole formula as it should be after the change. Keep everything they did not ask to change exactly as the page draft shows it. Never describe a change without making it.",
       "kind": "query",
       "resource": "formula_template",
@@ -2810,7 +2810,7 @@
     },
     {
       "name": "formula_test_expression",
-      "description": "Price a formula expression with Trenova's formula engine, for sample loads or against a saved shipment. Use it to check a formula runs and to learn what it charges; say an amount only when this or propose_formula gave it.",
+      "description": "Price a formula expression with Trenova's formula engine, for sample loads or against a saved shipment. Use it to check a formula runs and to learn what it charges; say an amount only when this or formula_propose gave it.",
       "kind": "query",
       "resource": "formula_template",
       "operation": "read",

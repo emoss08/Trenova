@@ -292,6 +292,7 @@ SELECT "agent_rename_tool"('post_journal_reversal', 'ledger_post_journal_reversa
 SELECT "agent_rename_tool"('post_manual_journal', 'ledger_post_manual_journal');
 SELECT "agent_rename_tool"('preview_edi_document', 'edi_preview_x12');
 SELECT "agent_rename_tool"('preview_report', 'report_preview');
+SELECT "agent_rename_tool"('propose_formula', 'formula_propose');
 SELECT "agent_rename_tool"('propose_shift_swap', 'worker_request_shift_swap');
 SELECT "agent_rename_tool"('quote_shipment', 'rate_quote');
 SELECT "agent_rename_tool"('raise_exception', 'agent_raise_exception');

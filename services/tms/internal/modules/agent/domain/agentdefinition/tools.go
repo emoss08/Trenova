@@ -596,7 +596,7 @@ func (t Template) StarterTools() []string {
 		return []string{
 			"formula_describe_schema",
 			"formula_test_expression",
-			"propose_formula",
+			"formula_propose",
 			toolListFormulaTemplates,
 			toolGetFormulaTemplate,
 			"rate_list_agreements",

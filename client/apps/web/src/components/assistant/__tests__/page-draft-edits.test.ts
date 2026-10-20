@@ -105,7 +105,7 @@ describe("nextDraftEdits", () => {
         id: "aart_formula",
         draft: {
           surface: "formula",
-          action: "propose_formula",
+          action: "formula_propose",
           formula: {
             schemaId: "shipment",
             expression: "1",
@@ -121,7 +121,7 @@ describe("nextDraftEdits", () => {
     expect(nextDraftEdits(announced, "shipment_import", claim)).toEqual([]);
     // Only the page's own changes are claimed; the formula one is left for its page.
     expect(nextDraftEdits(announced, "formula", claim).map((item) => item.action)).toEqual([
-      "propose_formula",
+      "formula_propose",
     ]);
   });
 
@@ -143,7 +143,7 @@ describe("assistantArtifactEventSchema", () => {
     const parsed = event({
       draft: {
         surface: "formula",
-        action: "propose_formula",
+        action: "formula_propose",
         formula: {
           schemaId: "shipment",
           expression: "totalDistance * 2",
