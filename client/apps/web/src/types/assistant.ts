@@ -1774,6 +1774,14 @@ export const assistantPlanSchema = z.object({
   /** The agent whose proposals the plan groups. */
   agentId: z.string().nullish(),
   agentName: z.string().nullish(),
+  /** The script whose prepared changes are the plan's steps; absent for the model's own calls. */
+  script: z
+    .object({
+      title: z.string().default(""),
+      purpose: z.string().default(""),
+      code: z.string().default(""),
+    })
+    .nullish(),
 });
 
 export const assistantPlanListSchema = z.object({

@@ -20,6 +20,9 @@ type Read struct {
 	Name        string         `json:"name"`
 	Description string         `json:"description"`
 	Parameters  map[string]any `json:"parameters"`
+	// Writes marks a tool whose call the script prepares as a change for a
+	// person to approve, rather than a read it runs.
+	Writes bool `json:"writes,omitempty"`
 }
 
 type Call struct {
@@ -68,4 +71,25 @@ type Summary struct {
 	Calls    []CallSummary
 	Usage    Usage
 	Withheld []string
+	Batch    Batch
+}
+
+// Batch is what a script prepared to change. Nothing in it has run: when the
+// script ends it is proposed as one batch for a person, unless Refusal says
+// why it is not.
+type Batch struct {
+	Changes []PreparedChange `json:"changes,omitempty"`
+	Refusal string           `json:"refusal,omitempty"`
+}
+
+type PreparedChange struct {
+	Intent  int    `json:"intent"`
+	Tool    string `json:"tool"`
+	Summary string `json:"summary,omitempty"`
+}
+
+// Completion is what the tool that ran a script answers with: whether the
+// script ran to its end, the only way its prepared changes are proposed.
+type Completion interface {
+	ScriptCompleted() bool
 }

@@ -190,6 +190,8 @@ type ToolOutcome struct {
 	Content string                    `json:"content"`
 	Failed  bool                      `json:"failed"`
 	Action  *agentports.PendingAction `json:"action,omitempty"`
+	// Batch is what a script prepared, filed as one batch for a person.
+	Batch []agentports.PendingAction `json:"batch,omitempty"`
 	// Publishes marks a document still to be kept. What the model reads is
 	// written once it has been.
 	Publishes bool   `json:"publishes,omitempty"`
@@ -219,6 +221,7 @@ func (o toolOutcome) exported() ToolOutcome {
 		Content:        o.content,
 		Failed:         o.failed,
 		Action:         o.action,
+		Batch:          o.batch,
 		Publishes:      o.publishes,
 		Summary:        o.summary,
 		DelegateReport: o.delegateReport,
@@ -238,6 +241,7 @@ func (o ToolOutcome) internal() toolOutcome {
 		content:        o.Content,
 		failed:         o.Failed,
 		action:         o.Action,
+		batch:          o.Batch,
 		publishes:      o.Publishes,
 		summary:        o.Summary,
 		delegateReport: o.DelegateReport,

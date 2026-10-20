@@ -38,6 +38,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "AgentPlan", Implementors: []string{"AgentPlan", "PendingDecision"}},
 		{Name: "AgentPlanConnection", Implementors: []string{"AgentPlanConnection"}},
 		{Name: "AgentPlanEdge", Implementors: []string{"AgentPlanEdge"}},
+		{Name: "AgentPlanScript", Implementors: []string{"AgentPlanScript"}},
 		{Name: "AgentProposal", Implementors: []string{"AgentProposal", "PendingDecision"}},
 		{Name: "AgentProposalConnection", Implementors: []string{"AgentProposalConnection"}},
 		{Name: "AgentProposalEdge", Implementors: []string{"AgentProposalEdge"}},
@@ -1941,6 +1942,16 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
 			},
 			{
+				Name:      "script",
+				HasChild:  true,
+				ChildType: "AgentPlanScript",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agent.AgentPlan)
+					return obj.Script, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOAgentPlanScript2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐScriptOrigin),
+			},
+			{
 				Name:     "version",
 				NonNull:  true,
 				ChildErr: errNoChild1,
@@ -2023,6 +2034,38 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AgentPlanEdge)
 					return obj.Cursor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
+		{Object: "AgentPlanScript", Fields: []*gqlexec.Field{
+			{
+				Name:     "title",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agent.ScriptOrigin)
+					return obj.Title, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "purpose",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agent.ScriptOrigin)
+					return obj.Purpose, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "code",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agent.ScriptOrigin)
+					return obj.Code, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -2140,6 +2183,17 @@ var Shard = &gqlexec.Shard{
 					return obj.Status, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentProposalStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐProposalStatus),
+			},
+			{
+				Name:     "fromScript",
+				NonNull:  true,
+				IsMethod: true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agent.AgentProposal)
+					return obj.FromScript(), nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
 			{
 				Name:     "executionError",
@@ -6081,6 +6135,13 @@ func marshalOAgentPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodules�
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "AgentPlan", v)
+}
+
+func marshalOAgentPlanScript2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐScriptOrigin(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agent.ScriptOrigin) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "AgentPlanScript", v)
 }
 
 func marshalOAgentProposal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐAgentProposal(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agent.AgentProposal) graphql.Marshaler {

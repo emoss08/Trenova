@@ -751,6 +751,7 @@ func toAssistantPlan(
 		RunMode:         agent.PlanRunModeInOrder,
 		Hold:            hold,
 		CreatedAt:       plan.CreatedAt,
+		Script:          plan.Script,
 	}
 }
 

@@ -255,6 +255,8 @@ type AgentProposal {
   evidence: [AgentEvidenceRef!]!
   autonomyTier: AgentAutonomyTier!
   status: AgentProposalStatus!
+  "Whether a script prepared this change for a batch, rather than the model calling it."
+  fromScript: Boolean!
   "Why the approved write failed, written for the person; empty unless status is ExecutionFailed."
   executionError: String!
   "The plan this proposal is a step of, when it is one; absent for a proposal decided on its own."
@@ -366,9 +368,18 @@ type AgentPlan {
   commitsAt: Timestamp
   "When the approval was undone in its undo window; absent if it was not."
   undoneAt: Timestamp
+  "The script whose prepared changes are the plan's steps; absent for a plan of the model's own calls."
+  script: AgentPlanScript
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
+}
+
+"The script a batch of changes came from, as the model asked for it."
+type AgentPlanScript {
+  title: String!
+  purpose: String!
+  code: String!
 }
 
 type AgentException {

@@ -10,11 +10,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -66,6 +68,15 @@ type Params struct {
 	// Watchtower puts what is waiting on a person onto the one feed they
 	// read; without it the decision still stands, unannounced.
 	Watchtower watchtowerports.WatchtowerProjector `optional:"true"`
+	// ScriptSteps reads back the script a batch came from, so the plan keeps
+	// it after the run's steps are swept. Without it a batch is filed with
+	// its script step's key alone.
+	ScriptSteps ScriptStepReader `optional:"true"`
+}
+
+// ScriptStepReader is the one read the recorder makes on the step ledger.
+type ScriptStepReader interface {
+	Get(ctx context.Context, req *agentports.GetAgentRunStepRequest) (*agent.AgentRunStep, error)
 }
 
 // PlanStore is the one write the recorder makes on plans.
@@ -83,6 +94,7 @@ type Service struct {
 	notifier   agentports.AgentProposalNotifier
 	activity   agentports.AgentActivityPublisher
 	watchtower watchtowerports.WatchtowerProjector
+	scripts    ScriptStepReader
 }
 
 func New(p Params) *Service {
@@ -93,8 +105,17 @@ func New(p Params) *Service {
 	svc.plans = p.Plans
 	svc.activity = p.Activity
 	svc.watchtower = p.Watchtower
+	svc.scripts = p.ScriptSteps
 
 	return svc
+}
+
+// WithScriptSteps gives a recorder built with NewWithStores the ledger it
+// reads a batch's script from.
+func (s *Service) WithScriptSteps(steps ScriptStepReader) *Service {
+	s.scripts = steps
+
+	return s
 }
 
 // WithTransactor gives a recorder built with NewWithStores the transaction
@@ -413,6 +434,7 @@ func (s *Service) write(
 			groups:        groups,
 			steps:         scripts[key],
 			scriptStepKey: key,
+			script:        s.scriptOrigin(ctx, req, key),
 			now:           now,
 		})
 		if batchErr != nil {
@@ -450,6 +472,7 @@ type planOpening struct {
 	groups        []*runGroup
 	steps         []planStep
 	scriptStepKey string
+	script        *agent.ScriptOrigin
 	title         string
 	now           int64
 }
@@ -569,6 +592,7 @@ func (s *Service) openPlan(ctx context.Context, opening *planOpening) (*agent.Ag
 		StepCount:      len(steps),
 		ExpiresAt:      now + int64(agent.DefaultProposalTTL.Seconds()),
 		ScriptStepKey:  scriptStepKey,
+		Script:         opening.script,
 	}
 
 	multiErr := errortypes.NewMultiError()
@@ -854,4 +878,55 @@ func definitionName(definition *agentdefinition.Definition) string {
 	}
 
 	return definition.Name
+}
+
+// scriptOrigin reads the script a batch came from out of the step it ran
+// under: the chat turn's or the run's ledger, whichever owns the turn. A
+// script that cannot be read leaves the batch with its step's key alone; it
+// is still filed, since the script is the batch's record, not its authority.
+func (s *Service) scriptOrigin(
+	ctx context.Context,
+	req *RecordRequest,
+	scriptStepKey string,
+) *agent.ScriptOrigin {
+	if s.scripts == nil || scriptStepKey == "" {
+		return nil
+	}
+	owner := pulid.Nil
+	switch {
+	case req.Run != nil:
+		owner = req.Run.ID
+	case req.Open != nil:
+		owner = req.Open.TurnID
+	}
+	if owner.IsNil() {
+		return nil
+	}
+
+	step, err := s.scripts.Get(ctx, &agentports.GetAgentRunStepRequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID: req.Actor.OrganizationID,
+			BuID:  req.Actor.BusinessUnitID,
+		},
+		OwnerID: owner,
+		StepKey: scriptStepKey,
+	})
+	if err != nil || step == nil {
+		s.logger.Warn("the script a batch came from could not be read; the batch is filed "+
+			"with its step alone", zap.String("step", scriptStepKey), zap.Error(err))
+		return nil
+	}
+
+	return scriptOriginOf(step.Arguments)
+}
+
+func scriptOriginOf(arguments map[string]any) *agent.ScriptOrigin {
+	title, _ := arguments[agentextension.ParamScriptTitle].(string)
+	purpose, _ := arguments[agentextension.ParamScriptPurpose].(string)
+	code, _ := arguments[agentextension.ParamScriptCode].(string)
+	if title == "" && purpose == "" && code == "" {
+		return nil
+	}
+
+	return &agent.ScriptOrigin{Title: title, Purpose: purpose, Code: code}
 }

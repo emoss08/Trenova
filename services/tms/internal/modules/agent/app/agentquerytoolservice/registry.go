@@ -8,6 +8,7 @@
 package agentquerytoolservice
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math"
@@ -18,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -76,17 +78,36 @@ func NewRegistry(p RegistryParams) agentports.AgentQueryToolRegistry {
 	return &registry{byName: byName, ordered: ordered}
 }
 
+// viewRunner reads a composed view through a table's own list: the
+// repository list tools and the ones that read through GraphQL alike.
+type viewRunner interface {
+	runView(
+		ctx context.Context,
+		params *agentports.QueryToolParams,
+		query string,
+		filters []domaintypes.FieldFilter,
+		sorting []domaintypes.SortField,
+		limit int,
+	) (*viewRun, error)
+}
+
 // linkViewsToLists gives the view composer each table's list tool, so a view
 // it composes is counted and previewed through the same fetch that listing
 // the table uses. It is wired here because both are tools the registry
 // collects; neither can be handed the other when it is built.
 func linkViewsToLists(tools []agentports.AgentQueryTool) {
-	lists := make(map[permission.Resource]*listTool)
+	lists := make(map[permission.Resource]viewRunner)
+	link := func(resource permission.Resource, list viewRunner) {
+		if _, taken := lists[resource]; !taken {
+			lists[resource] = list
+		}
+	}
 	for _, tool := range tools {
-		if list, ok := tool.(*listTool); ok {
-			if _, taken := lists[list.spec.resource]; !taken {
-				lists[list.spec.resource] = list
-			}
+		switch list := tool.(type) {
+		case *listTool:
+			link(list.spec.resource, list)
+		case *graphQLListTool:
+			link(list.spec.resource, list)
 		}
 	}
 	for _, tool := range tools {

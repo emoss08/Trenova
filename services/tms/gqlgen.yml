@@ -2234,6 +2234,9 @@ models:
   AgentPlanRunMode:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agent.PlanRunMode
+  AgentPlanScript:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ScriptOrigin
   AgentPlan:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agent.AgentPlan

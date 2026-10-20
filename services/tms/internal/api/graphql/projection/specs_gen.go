@@ -3880,6 +3880,10 @@ func init() {
 				FieldMapKey: "undoneAt",
 			},
 			{
+				Name:        "script",
+				FieldMapKey: "script",
+			},
+			{
 				Name:        "version",
 				FieldMapKey: "version",
 			},
@@ -4064,6 +4068,10 @@ func init() {
 			{
 				Name:        "status",
 				FieldMapKey: "status",
+			},
+			{
+				Name:        "fromScript",
+				FieldMapKey: "scriptStepKey",
 			},
 			{
 				Name:        "executionError",

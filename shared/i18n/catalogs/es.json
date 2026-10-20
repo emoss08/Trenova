@@ -11521,6 +11521,7 @@
   "suspension": "suspensión",
   "template": "plantilla",
   "termination": "despido",
+  "the prepared change could not be described": "no se pudo describir el cambio preparado",
   "the read's answer could not be encoded": "no se pudo codificar la respuesta de la lectura",
   "the script was stopped": "el script se detuvo",
   "the stored credential is not a usable Google service account key": "la credencial guardada no es una clave de cuenta de servicio de Google válida",

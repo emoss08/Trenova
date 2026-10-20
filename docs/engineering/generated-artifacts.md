@@ -210,6 +210,26 @@ package. The job also runs the prompt-injection red-team suite; see
   mangle the generated constants (`DETENTION_POLICY` became `DetentionPOLicy`). Those few
   fields keep explicit `fieldName:` overrides instead.
 
+## Agent GraphQL reads
+
+`go run ./internal/api/graphql/agentread/gen` is the last step of `task gqlgen` and of the
+`GraphQL server generated code` step in `Codegen Checks`. It writes the agent read executor
+(`internal/api/graphql/agentread/executor_gen.go`) and the tool bindings
+(`internal/modules/agent/app/agentquerytoolservice/graphqlreads_gen.go`) from
+`agentread/reads.yml`, the persisted operations and the generated executor. It fails, naming the
+tool, when:
+
+- a listed tool's record has no Query root field, or several;
+- no persisted query, or more than one in a tier, reads that root field alone;
+- an override in `reads.yml` has no `reason`, or names the operation the rule picks anyway;
+- a shard the operations reach asks for a resolver the full root does not build.
+
+Editing a bound operation on the client re-hashes it, and
+`TestEveryBoundOperationIsPersistedAsItIsRun` fails until the generator runs again. Adding a
+schema file or a resolver dependency that a bound operation reaches changes the executor's
+shards or `ResolverParams`, so regenerate after `task gqlgen` whenever either moves. See
+[agent-graphql-reads.md](agent-graphql-reads.md).
+
 ## Schema changes
 
 `task gqlschema-diff` (and the CI step) fails on breaking changes. Swapping a field between
