@@ -37,7 +37,7 @@ cases:
   - request: track the shipment location
     expect: [shipment_get_tracking]
   - request: which driver licenses and medical cards expire this month
-    expect: [worker_list_expiring_credentials]
+    expect: [worker_list_credentials]
   - request: ask the driver to renew their medical card
     expect: [worker_request_credential_renewal]
   - request: how many hours of service does the driver have left
@@ -127,7 +127,7 @@ cases:
   - request: how do I set up a rate matrix in Trenova
     expect: [agent_find_page]
   - request: flag this for a person to review
-    expect: [agent_request_review, agent_raise_exception]
+    expect: [agent_raise_exception]
   - request: what are the carrier risk alerts
     expect: [carrier_list_intelligence_events, carrier_get_intelligence_event, carrier_acknowledge_intelligence_event]
   - request: which carriers had authority or insurance problems this week
@@ -157,17 +157,17 @@ cases:
   - request: which permit document lists the oversize route through Ohio
     expect: [document_list]
   - request: find the email where the shipper complained about a late pickup
-    expect: [inbox_search_inbound_messages]
+    expect: [inbox_list_inbound_messages]
   - request: search the inbox for messages about load 4471
-    expect: [inbox_search_inbound_messages, inbox_list_inbound_messages]
+    expect: [inbox_list_inbound_messages]
   - request: did a broker email us about a rate increase
-    expect: [inbox_search_inbound_messages]
+    expect: [inbox_list_inbound_messages]
   - request: look for the message asking to reschedule the delivery appointment
-    expect: [inbox_search_inbound_messages]
+    expect: [inbox_list_inbound_messages]
   - request: which emails mention a damaged shipment
-    expect: [inbox_search_inbound_messages]
+    expect: [inbox_list_inbound_messages]
   - request: find mail from Globex about detention charges
-    expect: [inbox_search_inbound_messages]
+    expect: [inbox_list_inbound_messages]
   - request: is quickbooks connected
     expect: [accounting_get_connection]
   - request: why is the accounting sync not working
@@ -193,7 +193,7 @@ cases:
   - request: why did this sync record fail and how many tries did it take
     expect: [accounting_get_sync_record, accounting_list_sync_records]
   - request: did invoice 1042 reach quickbooks
-    expect: [accounting_get_sync_state, accounting_list_sync_records]
+    expect: [accounting_list_sync_records]
   - request: retry the failed quickbooks sync now that the outage is over
     expect: [accounting_retry_sync_record]
   - request: skip that invoice, we entered it in quickbooks by hand
@@ -1111,10 +1111,10 @@ cases:
   - request: dismiss that insight about empty miles, it is not worth acting on
     expect: [insight_dismiss]
   - request: Look up David Park as a driver by name.
-    expect: [worker_search, worker_get]
+    expect: [worker_list, worker_get]
   - request: search worker by name Emily Chen
-    expect: [worker_search, worker_get]
+    expect: [worker_list, worker_get]
   - request: locate tractor TRC-002 and available dry van trailers for dispatch
     expect: [equipment_list_tractors, equipment_list_trailers]
   - request: Find David Park in the worker roster so I can identify his settlement
-    expect: [worker_search, worker_get]
+    expect: [worker_list, worker_get]

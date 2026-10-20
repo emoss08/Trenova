@@ -11,17 +11,17 @@ const (
 
 	toolInvoiceGet = "invoice_get"
 
-	toolListExpiringQualifications = "worker_list_expiring_credentials"
-	toolListInsights               = "insight_list"
-	toolGetInsight                 = "insight_get"
-	toolGetWorkerHOS               = "worker_get_hos"
-	toolListEmailProfiles          = "inbox_list_email_profiles"
-	toolListAccessorialCharges     = "masterdata_list_accessorial_charges"
-	toolExplainRate                = "rate_explain"
-	toolSendDetentionNotice        = "detention_send_notice"
-	toolSendCustomerEmail          = "customer_send_email"
-	toolRateQuote                  = "rate_quote"
-	toolListFormulaTemplates       = "formula_list_templates"
+	toolListWorkerCredentials  = "worker_list_credentials"
+	toolListInsights           = "insight_list"
+	toolGetInsight             = "insight_get"
+	toolGetWorkerHOS           = "worker_get_hos"
+	toolListEmailProfiles      = "inbox_list_email_profiles"
+	toolListAccessorialCharges = "masterdata_list_accessorial_charges"
+	toolExplainRate            = "rate_explain"
+	toolSendDetentionNotice    = "detention_send_notice"
+	toolSendCustomerEmail      = "customer_send_email"
+	toolRateQuote              = "rate_quote"
+	toolListFormulaTemplates   = "formula_list_templates"
 )
 
 func (t Template) StarterTools() []string {
@@ -30,11 +30,10 @@ func (t Template) StarterTools() []string {
 		return []string{
 			toolShipmentList,
 			toolGetWorker,
-			toolSearchWorker,
 			toolListWorkers,
 			"equipment_list_tractors",
 			"equipment_list_trailers",
-			toolListExpiringQualifications,
+			toolListWorkerCredentials,
 			"worker_list_time_off",
 			"masterdata_list_hold_reasons",
 			"carrier_shop",
@@ -141,9 +140,8 @@ func (t Template) StarterTools() []string {
 	case TemplateComplianceAssistant:
 		return []string{
 			toolGetWorker,
-			toolSearchWorker,
 			toolListWorkers,
-			toolListExpiringQualifications,
+			toolListWorkerCredentials,
 			"worker_list_time_off",
 			"equipment_list_tractors",
 			"equipment_list_trailers",
@@ -169,7 +167,6 @@ func (t Template) StarterTools() []string {
 			"carrier_apply_intelligence_suggestions",
 			"carrier_import",
 			"carrier_verify_equipment",
-			"worker_list_credentials",
 			"worker_record_credential",
 			"worker_update_credential",
 			"worker_attach_credential_document",
@@ -303,14 +300,14 @@ func (t Template) StarterTools() []string {
 			toolShipmentAddComment,
 			"detention_open_dispute",
 			"inbox_get_inbound_message",
-			"inbox_search_inbound_messages",
+			"inbox_list_inbound_messages",
 			"detention_resolve_dispute",
 		}
 	case TemplateCredentialDesk:
 		return []string{
 			toolGetWorker,
 			"worker_get_credential",
-			toolListExpiringQualifications,
+			toolListWorkerCredentials,
 			toolListWorkers,
 			"worker_request_credential_renewal",
 			"worker_place_dispatch_hold",
@@ -342,7 +339,6 @@ func (t Template) StarterTools() []string {
 		return []string{
 			"inbox_get_inbound_message",
 			"inbox_list_inbound_messages",
-			"inbox_search_inbound_messages",
 			toolShipmentGet,
 			toolShipmentList,
 			toolShipmentGetTracking,
@@ -426,7 +422,7 @@ func (t Template) StarterTools() []string {
 			toolShipmentGet,
 			toolShipmentList,
 			toolGetWorker,
-			toolSearchWorker,
+			toolListWorkers,
 			"dispatch_get_board",
 			"dispatch_rank_candidates",
 			"dispatch_plan",
@@ -567,7 +563,6 @@ func (t Template) StarterTools() []string {
 			"accounting_get_connection",
 			"accounting_list_sync_records",
 			"accounting_get_sync_record",
-			"accounting_get_sync_state",
 			"accounting_retry_sync_record",
 			"accounting_skip_sync_record",
 			"accounting_pause_sync",
@@ -644,7 +639,7 @@ func (t Template) StarterTools() []string {
 
 func settlementsClerkTools() []string {
 	return []string{
-		toolSearchWorker,
+		toolListWorkers,
 		toolListCarriers,
 		toolShipmentList,
 		toolShipmentGet,

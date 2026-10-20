@@ -1811,7 +1811,7 @@ says whether the memory is kept or only offered on a card
 (`agentports.RecipeTool`), and the order is shown in the prompt's tool
 section and under the tool in a `find_tools` answer, with the prerequisite
 reads that were loaded alongside it. A `find_tools` need that names a tool the
-agent holds outright (`worker_search`) loads that tool first, ahead of the ranked
+agent holds outright (`worker_list`) loads that tool first, ahead of the ranked
 matches, since the prompt lists what can be loaded by name. That is the only place the order of a
 piece of work is written: a template's starter instructions
 (`agentdefinition.Template.StarterInstructions`) hold its persona, what it puts
@@ -2194,8 +2194,8 @@ conversation is the same from the first call of the turn to the last.
   `StreamCompletion`), so a profile that reaches several hundred tools does not
   put their schemas into the workflow's history on every call.
 - **A small core loaded.** On a turn that can search, the core tools few turns
-  call (`agent_create_wait`, `agent_cancel_wait`, `agent_request_review`,
-  `agent_raise_exception`, `agent_guide_profile`; `deferredCoreTools`) are deferred unless
+  call (`agent_create_wait`, `agent_cancel_wait`, `agent_raise_exception`,
+  `agent_guide_profile`; `deferredCoreTools`) are deferred unless
   the request names what they do, and are found like any other. Memory and the
   product guide stay loaded, because the prompt tells the model when to use them.
   An unattended run also loads `agent_raise_exception` (`defersCoreTool`): handing the

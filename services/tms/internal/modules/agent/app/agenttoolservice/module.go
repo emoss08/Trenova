@@ -113,7 +113,6 @@ func ToolProviders() []any {
 		alerttools.NewCreateTableChangeAlertTool,
 		workforcetools.NewRequestMissingDocsTool,
 		provideAttachDocumentTool,
-		receivabletools.NewFlagManualReviewTool,
 		masterdatatools.NewAssignMoveTool,
 		receivabletools.NewRaiseExceptionTool,
 		carriertools.NewWaitUntilTool,

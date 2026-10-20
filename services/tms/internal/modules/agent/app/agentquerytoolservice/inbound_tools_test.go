@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -183,7 +185,7 @@ func TestListInboundMessages_TranslatesTheFilters(t *testing.T) {
 
 			messages := &fakeInboundMessages{}
 			params := testParams(tc.params)
-			_, err := newListInboundMessagesTool(messages).Query(t.Context(), params)
+			_, err := newListInboundMessagesTool(messages, nil, nil).Query(t.Context(), params)
 			require.NoError(t, err)
 
 			got := messages.gotList
@@ -209,7 +211,7 @@ func TestListInboundMessages_RowsCarryAPreviewNotTheBody(t *testing.T) {
 	}}}
 
 	result, err := newListInboundMessagesTool(
-		messages,
+		messages, nil, nil,
 	).Query(t.Context(), testParams(map[string]any{}))
 	require.NoError(t, err)
 
@@ -242,7 +244,7 @@ func TestListInboundMessages_RowsHandOutTheMailboxAndNoneOfItsSecrets(t *testing
 	}}}
 
 	result, err := newListInboundMessagesTool(
-		messages,
+		messages, nil, nil,
 	).Query(t.Context(), testParams(map[string]any{}))
 	require.NoError(t, err)
 
@@ -282,7 +284,7 @@ func TestGetInboundMessage_NamesTheMailboxIDTheListFiltersBy(t *testing.T) {
 	assert.Equal(t, mailboxID.String(), view.MailboxID)
 	assert.Equal(t, "loads@carrier.example", view.Mailbox)
 
-	schema := newListInboundMessagesTool(messages).ParamSchema()
+	schema := newListInboundMessagesTool(messages, nil, nil).ParamSchema()
 	properties, _ := schema["properties"].(map[string]any)
 	mailbox, _ := properties["mailboxId"].(map[string]any)
 	description, _ := mailbox["description"].(string)
@@ -315,7 +317,7 @@ func TestListInboundMessages_RefusesAnUnknownFilterRatherThanDroppingIt(t *testi
 			t.Parallel()
 
 			messages := &fakeInboundMessages{}
-			_, err := newListInboundMessagesTool(messages).Query(
+			_, err := newListInboundMessagesTool(messages, nil, nil).Query(
 				t.Context(),
 				testParams(tc.params),
 			)
@@ -325,4 +327,169 @@ func TestListInboundMessages_RefusesAnUnknownFilterRatherThanDroppingIt(t *testi
 			assert.Nil(t, messages.gotList, "nothing is listed under a filter that was dropped")
 		})
 	}
+}
+
+func TestListInboundMessages_RanksByWhatTheMailSaysWhenGivenWords(t *testing.T) {
+	t.Parallel()
+
+	message := &inboundmessage.InboundMessage{
+		ID:             pulid.MustNew("imsg_"),
+		Status:         inboundmessage.StatusInReview,
+		Classification: inboundmessage.ClassificationDetentionDispute,
+		ReceivedAt:     1_790_000_000,
+	}
+	searcher := &fakeRetrievalSearcher{messages: &agentports.InboundMessageSearchResult{
+		Hits: []agentports.InboundMessageSearchHit{{
+			Message: message,
+			Subject: "Detention charges on invoice 7781",
+			From:    "ap@globex.test",
+			Snippet: "We dispute the detention.",
+			Match:   agentports.RetrievalMatchWords,
+		}},
+		Semantics: agentports.RetrievalSemantics{Used: true},
+	}}
+	messages := &fakeInboundMessages{}
+	tool := newListInboundMessagesTool(messages, searcher, &fakePermissions{allowed: true})
+
+	result, err := tool.Query(t.Context(), testParams(map[string]any{
+		"query": "  detention dispute ",
+	}))
+	require.NoError(t, err)
+
+	assert.Nil(t, messages.gotList, "words are ranked by the searcher, not listed newest first")
+	require.Len(t, searcher.requests, 1)
+	asked := searcher.requests[0]
+	assert.Equal(t, "detention dispute", asked.Query)
+	assert.Equal(t, inboundSearchDefaultLimit, asked.Limit)
+	assert.NotNil(t, asked.Access)
+	assert.Equal(t, agentports.InboundMessageFilter{}, asked.Messages)
+
+	outcome := result.(*retrievalOutcome)
+	assert.Equal(t, "words and meaning", outcome.SearchedBy)
+	rows := outcome.Items.([]inboundSearchRow)
+	require.Len(t, rows, 1)
+	assert.Equal(t, message.ID.String(), rows[0].ID)
+	assert.Equal(t, "Detention charges on invoice 7781", rows[0].Subject)
+	assert.Equal(t, "We dispute the detention.", rows[0].Snippet)
+	assert.True(t, rows[0].NeedsReview)
+	assert.Equal(t, "DetentionDispute", rows[0].Classification)
+	assert.Equal(t, "words", rows[0].Match)
+	assert.Equal(t, []agent.RecordRef{
+		{EntityType: agent.TaintEntityInboundMessage, ID: message.ID.String()},
+	}, outcome.TaintedRecords(), "every message returned is marked as outside text")
+	assert.Contains(t, outcome.SearchedFor, `text matching "detention dispute"`)
+}
+
+func TestListInboundMessages_RanksWordsWithinTheFilters(t *testing.T) {
+	t.Parallel()
+
+	mailboxID := pulid.MustNew("imbx_")
+	searcher := &fakeRetrievalSearcher{messages: &agentports.InboundMessageSearchResult{
+		Hits: []agentports.InboundMessageSearchHit{},
+	}}
+	messages := &fakeInboundMessages{}
+	tool := newListInboundMessagesTool(messages, searcher, &fakePermissions{allowed: true})
+
+	result, err := tool.Query(t.Context(), testParams(map[string]any{
+		"query":          "reschedule the delivery appointment",
+		"status":         "waiting",
+		"classification": "StatusRequest",
+		"mailboxId":      mailboxID.String(),
+		"limit":          500,
+	}))
+	require.NoError(t, err)
+
+	assert.Nil(t, messages.gotList)
+	require.Len(t, searcher.requests, 1)
+	asked := searcher.requests[0]
+	assert.Equal(t, inboundListLimit, asked.Limit)
+	assert.Equal(t, agentports.InboundMessageFilter{
+		Statuses: []inboundmessage.Status{
+			inboundmessage.StatusInReview,
+			inboundmessage.StatusQuarantined,
+		},
+		Classification: inboundmessage.ClassificationStatusRequest,
+		MailboxID:      mailboxID,
+	}, asked.Messages)
+
+	outcome := result.(*retrievalOutcome)
+	assert.Zero(t, outcome.Count)
+	assert.NotEmpty(t, outcome.Note)
+	assert.Empty(t, outcome.TaintedRecords())
+	for _, term := range []string{"status waiting", "kind StatusRequest", "mailbox " + mailboxID.String()} {
+		assert.Contains(t, outcome.SearchedFor, term)
+	}
+}
+
+func TestListInboundMessages_ListsTheNewestWithoutWords(t *testing.T) {
+	t.Parallel()
+
+	searcher := &fakeRetrievalSearcher{}
+	messages := &fakeInboundMessages{items: []*inboundmessage.InboundMessage{{
+		ID:          pulid.MustNew("inm_"),
+		Status:      inboundmessage.StatusInReview,
+		FromAddress: "ap@broker.example",
+		Subject:     "Invoice 4471",
+	}}}
+	tool := newListInboundMessagesTool(messages, searcher, &fakePermissions{allowed: true})
+
+	result, err := tool.Query(t.Context(), testParams(map[string]any{
+		"query":  "   ",
+		"status": "InReview",
+	}))
+	require.NoError(t, err)
+
+	assert.Empty(t, searcher.requests, "blank words list the newest rather than search")
+	require.NotNil(t, messages.gotList)
+	assert.Empty(t, messages.gotList.Filter.Query, "the list no longer runs its own text match")
+	assert.Equal(t, []inboundmessage.Status{inboundmessage.StatusInReview}, messages.gotList.Statuses)
+	assert.Equal(t, inboundListDefaultLimit, messages.gotList.Cursor.Limit)
+
+	outcome := result.(searchOutcome)
+	rows := outcome.Items.([]inboundMessageRow)
+	require.Len(t, rows, 1)
+	assert.Equal(t, "Invoice 4471", rows[0].Subject)
+}
+
+func TestListInboundMessages_RefusesABadFilterBeforeSearching(t *testing.T) {
+	t.Parallel()
+
+	searcher := &fakeRetrievalSearcher{}
+	tool := newListInboundMessagesTool(&fakeInboundMessages{}, searcher, &fakePermissions{allowed: true})
+
+	for _, params := range []map[string]any{
+		{"query": "detention", "status": "Deleted"},
+		{"query": "detention", "classification": "Spam"},
+		{"query": "detention", "mailboxId": "not-an-id"},
+	} {
+		_, err := tool.Query(t.Context(), testParams(params))
+		require.Error(t, err, params)
+	}
+	assert.Empty(t, searcher.requests)
+}
+
+func TestInboundMessageFilter_AdmitsOnlyWhatItNames(t *testing.T) {
+	t.Parallel()
+
+	mailboxID := pulid.MustNew("imbx_")
+	message := &inboundmessage.InboundMessage{
+		Status:         inboundmessage.StatusInReview,
+		Classification: inboundmessage.ClassificationTender,
+		MailboxID:      mailboxID,
+	}
+
+	assert.True(t, (&agentports.InboundMessageFilter{}).Admits(message))
+	assert.False(t, (&agentports.InboundMessageFilter{}).Admits(nil))
+	assert.True(t, (&agentports.InboundMessageFilter{
+		Statuses:       []inboundmessage.Status{inboundmessage.StatusQuarantined, inboundmessage.StatusInReview},
+		Classification: inboundmessage.ClassificationTender,
+		MailboxID:      mailboxID,
+	}).Admits(message))
+	assert.False(t, (&agentports.InboundMessageFilter{
+		Statuses: []inboundmessage.Status{inboundmessage.StatusActioned},
+	}).Admits(message))
+	assert.False(t, (&agentports.InboundMessageFilter{
+		Classification: inboundmessage.ClassificationStatusRequest,
+	}).Admits(message))
+	assert.False(t, (&agentports.InboundMessageFilter{MailboxID: pulid.MustNew("imbx_")}).Admits(message))
 }

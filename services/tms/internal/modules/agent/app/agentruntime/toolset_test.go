@@ -37,12 +37,12 @@ func wideRuntime(t *testing.T) (*Service, []string) {
 		describedTool("invoice_list", "List invoices by status or due date."),
 		describedTool("carrier_list", "List carriers by status or authority."),
 		describedTool(
-			"worker_list_expiring_credentials",
+			"worker_list_credentials",
 			"Worker credentials falling due: medical cards, licences, hazmat.",
 		),
 		describedTool("shipment_get", "Retrieve one shipment by id."),
 		describedTool("worker_get", "Retrieve one worker by id."),
-		describedTool("worker_search", "Search workers by name."),
+		describedTool("worker_get_hos", "Read a driver's hours of service."),
 		describedTool("shipment_get_tracking", "Track a shipment by pro number."),
 		describedTool("report_list", "List the reports this organization can run."),
 		describedTool("report_run", "Start a report run."),
@@ -236,7 +236,7 @@ func TestResolveFind_CannotReachPastTheAgentsConfiguration(t *testing.T) {
 
 	findContent(t, service, set, map[string]any{"need": "driver medical card expiry"})
 
-	assert.False(t, set.offers("worker_list_expiring_credentials"))
+	assert.False(t, set.offers("worker_list_credentials"))
 	for _, name := range specNames(set.specs) {
 		// The two the agent holds, plus the two the runtime answers itself.
 		// Neither built-in reads anything, so neither widens the agent.
@@ -373,12 +373,12 @@ func TestResolveFind_SaysAToolExistsButIsNotEnabled(t *testing.T) {
 
 	answer := findContent(t, service, set, map[string]any{"need": "driver medical card expiry"})
 
-	require.Contains(t, names, "worker_list_expiring_credentials")
+	require.Contains(t, names, "worker_list_credentials")
 	assert.Contains(t, answer, "not enabled for this agent")
-	assert.Contains(t, answer, "worker_list_expiring_credentials")
+	assert.Contains(t, answer, "worker_list_credentials")
 	assert.Contains(t, answer, "AI Control")
 	assert.Contains(t, answer, "Do not say the system has no such capability")
-	assert.NotContains(t, specNames(set.specs), "worker_list_expiring_credentials",
+	assert.NotContains(t, specNames(set.specs), "worker_list_credentials",
 		"naming a tool must not load it")
 }
 
@@ -395,7 +395,7 @@ func TestResolveFind_NamesThePersonsOtherAgentThatHoldsTheTool(t *testing.T) {
 	service, _ := wideRuntime(t)
 	definition := testDefinition("customer_list", "location_list")
 	compliance := chatAgent("Compliance assistant")
-	compliance.ToolNames = []string{"worker_list_expiring_credentials"}
+	compliance.ToolNames = []string{"worker_list_credentials"}
 	unrelated := chatAgent("Report builder")
 	unrelated.ToolNames = []string{"report_list"}
 	service.permissions = &agenttest.StubPermissions{}
@@ -414,7 +414,7 @@ func TestResolveFind_NamesThePersonsOtherAgentThatHoldsTheTool(t *testing.T) {
 
 	answer := findContent(t, service, set, map[string]any{"need": "driver medical card expiry"})
 
-	assert.Contains(t, answer, "- Compliance assistant: worker_list_expiring_credentials")
+	assert.Contains(t, answer, "- Compliance assistant: worker_list_credentials")
 	assert.NotContains(t, answer, "Report builder")
 	assert.Contains(t, answer, "Hand off to another agent")
 	assert.NotContains(t, answer, "AI Control",
@@ -430,7 +430,7 @@ func TestResolveFind_RecordsTheAgentsItNamesForTheHandOffMenu(t *testing.T) {
 	service, _ := wideRuntime(t)
 	definition := testDefinition("customer_list", "location_list")
 	compliance := chatAgent("Compliance assistant")
-	compliance.ToolNames = []string{"worker_list_expiring_credentials"}
+	compliance.ToolNames = []string{"worker_list_credentials"}
 	unrelated := chatAgent("Report builder")
 	unrelated.ToolNames = []string{"report_list"}
 	service.permissions = &agenttest.StubPermissions{}
@@ -469,7 +469,7 @@ func TestRun_SavesTheAgentsFindToolsNamedOnItsResult(t *testing.T) {
 	)
 	definition := testDefinition("customer_list", "location_list")
 	compliance := chatAgent("Compliance assistant")
-	compliance.ToolNames = []string{"worker_list_expiring_credentials"}
+	compliance.ToolNames = []string{"worker_list_credentials"}
 	service.permissions = &agenttest.StubPermissions{}
 	service.definitions = &listedDefinitions{byID: map[pulid.ID]*agentdefinition.Definition{
 		compliance.ID: compliance,
@@ -801,13 +801,13 @@ func TestResolveFind_ListsTheCallableMatchesFirst(t *testing.T) {
 	})
 
 	callable := strings.Index(answer, "- worker_list")
-	loaded := strings.Index(answer, "- worker_list_expiring_credentials")
+	loaded := strings.Index(answer, "- worker_list_credentials")
 	require.GreaterOrEqual(t, callable, 0, answer)
 	require.GreaterOrEqual(t, loaded, 0, answer)
 	assert.Less(t, callable, loaded, "what the model can already call is named first")
 	assert.Contains(t, answer, "already loaded")
 	assert.Contains(t, answer, "now callable")
-	assert.True(t, set.offers("worker_list_expiring_credentials"))
+	assert.True(t, set.offers("worker_list_credentials"))
 }
 
 func weakMatchRuntime(t *testing.T, extra ...agentports.AgentQueryTool) *Service {
@@ -1024,9 +1024,9 @@ func TestSearchesLeft_SpeaksUpOnlyNearTheCap(t *testing.T) {
 }
 
 /*
-gpt-6-luna asked find_tools for "worker_search, settlement_list_driver and
+gpt-6-luna asked find_tools for "worker_list, settlement_list_driver and
 settlement_list_advances" by name, was handed six other tools ranked above
-worker_search, and searched a fourth time for it. A tool the need names
+worker_list, and searched a fourth time for it. A tool the need names
 outright, and the agent holds, comes first.
 */
 func TestResolveFind_LoadsTheToolsANeedNamesOutright(t *testing.T) {

@@ -217,7 +217,7 @@ func TestAssignMove_LoadsTheLookupsItsIDsComeFrom(t *testing.T) {
 	t.Parallel()
 
 	tool := &AssignMoveTool{}
-	for _, read := range []string{"worker_search", "equipment_list_tractors", "equipment_list_trailers"} {
+	for _, read := range []string{"worker_list", "equipment_list_tractors", "equipment_list_trailers"} {
 		assert.Contains(t, tool.Prerequisites(), read)
 	}
 }

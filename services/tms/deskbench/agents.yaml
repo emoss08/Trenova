@@ -33,7 +33,6 @@ agents:
       - customer_list
       - customer_get
       - location_list
-      - worker_search
       - worker_list
       - worker_get
       - worker_get_hos
@@ -104,11 +103,10 @@ agents:
       - shipment_get
       - shipment_list
       - shipment_get_tracking
-      - worker_search
+      - worker_list
       - worker_get
       - worker_get_hos
-      - worker_list
-      - worker_list_expiring_credentials
+      - worker_list_credentials
       - customer_list
       - customer_get
       - customer_get_update_preferences

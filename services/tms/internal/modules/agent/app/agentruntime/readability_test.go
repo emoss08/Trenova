@@ -224,13 +224,13 @@ func TestRun_GivesSynthesizedCallIDsOfEachTurnTheirOwnID(t *testing.T) {
 			ToolCalls: []agentports.ToolCall{{
 				ID:            "call_0",
 				SynthesizedID: true,
-				Name:          "worker_search",
+				Name:          "worker_list",
 				Arguments:     map[string]any{"query": "Maria"},
 			}},
 			ModelIdentifier: "test-model",
 		}
 	}
-	tool := queryTool("worker_search", map[string]any{"results": []any{}}, nil)
+	tool := queryTool("worker_list", map[string]any{"results": []any{}}, nil)
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		synthesized(),
 		synthesized(),
@@ -241,7 +241,7 @@ func TestRun_GivesSynthesizedCallIDsOfEachTurnTheirOwnID(t *testing.T) {
 
 	var observed []string
 	result, err := rt.Run(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition("worker_search"),
+		Definition: testDefinition("worker_list"),
 		Actor:      testActor(),
 		Input:      "Who is Maria?",
 		ToolObserver: func(observation agentports.ToolObservation) (*agentports.ShownArtifact, error) {

@@ -60,39 +60,130 @@ func testParams(params map[string]any) *agentports.QueryToolParams {
 A model that omits an optional argument is not making a mistake, and a tool that
 treats the omission as one turns a question into a dead end. This happened in
 production: asked which drivers had a medical card expiring soon, the model
-called this tool with no query, was told the parameter "must be a non-empty
-string", searched for the literal word "driver" instead, matched nobody, and
-told the customer their system had no drivers in it.
+called the name search with no query, was told the parameter "must be a
+non-empty string", searched for the literal word "driver" instead, matched
+nobody, and told the customer their system had no drivers in it.
 
 The repository never needed the term. ApplyCursorFilters only applies a text
 search when Query is non-empty (pkg/querybuilder/cursor_sort.go), so an empty
-one already means "everything, newest first" — the tool was rejecting a call the
-layer beneath it would have served.
+one already means "everything, newest first".
 */
-func TestSearchWorker_ListsWithoutAQuery(t *testing.T) {
+func TestListWorkers_ListsTheRosterWithoutAQuery(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeWorkerRepo{items: []*worker.Worker{{ID: pulid.MustNew("wrk_")}}}
-	tool := newSearchWorkerTool(repo, &fakePermissions{})
+	tool := newListWorkersTool(repo, &fakePermissions{})
 
 	result, err := tool.Query(t.Context(), testParams(map[string]any{}))
 	require.NoError(t, err)
 	require.NotNil(t, repo.captured, "the repository should have been asked")
 
 	assert.Empty(t, repo.captured.Filter.Query, "an absent query filters on nothing")
-	assert.NotNil(t, result)
+	rows, _ := listedRows[workerRow](t, result)
+	assert.Len(t, rows, 1)
 }
 
-func TestSearchWorker_PassesAQueryThrough(t *testing.T) {
+func TestListWorkers_PassesANameQueryThrough(t *testing.T) {
 	t.Parallel()
 
-	repo := &fakeWorkerRepo{}
-	tool := newSearchWorkerTool(repo, &fakePermissions{})
+	repo := &fakeWorkerRepo{items: []*worker.Worker{namedWorker("Luis", "Ortiz")}}
+	tool := newListWorkersTool(repo, &fakePermissions{})
 
 	_, err := tool.Query(t.Context(), testParams(map[string]any{"query": "  Ortiz  "}))
 	require.NoError(t, err)
 
 	assert.Equal(t, "Ortiz", repo.captured.Filter.Query, "a query is trimmed, not dropped")
+}
+
+func TestListWorkers_QueryMatchesFirstAndLastName(t *testing.T) {
+	t.Parallel()
+
+	config := (&worker.Worker{}).GetPostgresSearchConfig()
+	names := make([]string, 0, len(config.SearchableFields))
+	for _, field := range config.SearchableFields {
+		names = append(names, field.Name)
+	}
+
+	assert.True(t, config.UseSearchVector)
+	assert.Contains(t, names, "first_name")
+	assert.Contains(t, names, "last_name")
+}
+
+func namedWorker(first, last string) *worker.Worker {
+	return &worker.Worker{ID: pulid.MustNew("wrk_"), FirstName: first, LastName: last}
+}
+
+func TestListWorkers_PutsTheClosestNameFirst(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		query string
+		items []*worker.Worker
+		first string
+	}{
+		{
+			query: "Maria Ortiz",
+			items: []*worker.Worker{
+				namedWorker("Mark", "Ortega"),
+				namedWorker("Luis", "Ortiz"),
+				namedWorker("Maria", "Ortiz"),
+			},
+			first: "Maria Ortiz",
+		},
+		{
+			query: "Ortiz",
+			items: []*worker.Worker{
+				namedWorker("Sam", "Ortega"),
+				namedWorker("Luis", "Ortiz"),
+			},
+			first: "Luis Ortiz",
+		},
+		{
+			query: "ortiz maria",
+			items: []*worker.Worker{
+				namedWorker("Mario", "Ortino"),
+				namedWorker("Maria", "Ortiz"),
+			},
+			first: "Maria Ortiz",
+		},
+	} {
+		tool := newListWorkersTool(&fakeWorkerRepo{items: tc.items}, &fakePermissions{})
+
+		result, err := tool.Query(t.Context(), testParams(map[string]any{"query": tc.query}))
+		require.NoError(t, err)
+
+		rows, _ := listedRows[workerRow](t, result)
+		require.Len(t, rows, len(tc.items), tc.query)
+		assert.Equal(t, tc.first, rows[0].Name, tc.query)
+	}
+}
+
+func TestListWorkers_KeepsTheRequestedSortOverTheNameRank(t *testing.T) {
+	t.Parallel()
+
+	items := []*worker.Worker{namedWorker("Mark", "Ortega"), namedWorker("Maria", "Ortiz")}
+	tool := newListWorkersTool(&fakeWorkerRepo{items: items}, &fakePermissions{})
+
+	result, err := tool.Query(t.Context(), testParams(map[string]any{
+		"query":  "Maria Ortiz",
+		"sortBy": "lastName",
+	}))
+	require.NoError(t, err)
+
+	rows, _ := listedRows[workerRow](t, result)
+	require.Len(t, rows, 2)
+	assert.Equal(t, "Mark Ortega", rows[0].Name, "an asked-for order is the repository's")
+}
+
+func TestListWorkers_DescribesTheNameSearchAndTheCredentialList(t *testing.T) {
+	t.Parallel()
+
+	tool := newListWorkersTool(&fakeWorkerRepo{}, &fakePermissions{})
+
+	assert.Contains(t, tool.Description(), "by name")
+	assert.Contains(t, tool.Description(), "worker_list_credentials")
+	assert.Contains(t, tool.Description(), "none on file")
+	assert.Contains(t, tool.(*listTool).SearchTerms(), "look up a driver by name")
 }
 
 /*
@@ -101,11 +192,11 @@ cannot tell them apart from a bare []. It said "there are no driver records
 currently in the Trenova system" — a confident claim about the customer's
 database, from a search that matched nothing.
 */
-func TestSearchWorker_EmptyResultSaysWhatItSearched(t *testing.T) {
+func TestListWorkers_EmptyNameSearchSaysWhatItSearched(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeWorkerRepo{items: nil}
-	tool := newSearchWorkerTool(repo, &fakePermissions{})
+	tool := newListWorkersTool(repo, &fakePermissions{})
 
 	result, err := tool.Query(t.Context(), testParams(map[string]any{"query": "Ortiz"}))
 	require.NoError(t, err)
@@ -118,11 +209,11 @@ func TestSearchWorker_EmptyResultSaysWhatItSearched(t *testing.T) {
 	assert.NotEmpty(t, outcome.Note, "an empty result explains itself")
 }
 
-func TestSearchWorker_RejectsAMismatchedActor(t *testing.T) {
+func TestListWorkers_RejectsAMismatchedActor(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeWorkerRepo{}
-	tool := newSearchWorkerTool(repo, &fakePermissions{})
+	tool := newListWorkersTool(repo, &fakePermissions{})
 
 	params := testParams(map[string]any{})
 	params.Actor.OrganizationID = pulid.MustNew("org_")
@@ -130,16 +221,6 @@ func TestSearchWorker_RejectsAMismatchedActor(t *testing.T) {
 	_, err := tool.Query(t.Context(), params)
 	require.ErrorIs(t, err, ErrTenantMismatch)
 	assert.Nil(t, repo.captured, "a mismatched actor never reaches the repository")
-}
-
-func TestSearchWorker_IsNamedForOneWorker(t *testing.T) {
-	t.Parallel()
-
-	assert.Equal(
-		t,
-		"worker_search",
-		newSearchWorkerTool(&fakeWorkerRepo{}, &fakePermissions{}).Name(),
-	)
 }
 
 /*
@@ -154,13 +235,13 @@ func TestRegistry_ResolvesTheLegacyWorkerSearchName(t *testing.T) {
 
 	reg := NewRegistry(RegistryParams{
 		Tools: []agentports.AgentQueryTool{
-			newSearchWorkerTool(&fakeWorkerRepo{}, &fakePermissions{}),
+			newListWorkersTool(&fakeWorkerRepo{}, &fakePermissions{}),
 		},
 	})
 
 	tool, ok := reg.Get("search_workers")
 	require.True(t, ok, "an agent saved before the rename still has its tool")
-	assert.Equal(t, "worker_search", tool.Name())
+	assert.Equal(t, "worker_list", tool.Name())
 }
 
 func TestRegistry_DoesNotAdvertiseTheLegacyName(t *testing.T) {
@@ -168,7 +249,7 @@ func TestRegistry_DoesNotAdvertiseTheLegacyName(t *testing.T) {
 
 	reg := NewRegistry(RegistryParams{
 		Tools: []agentports.AgentQueryTool{
-			newSearchWorkerTool(&fakeWorkerRepo{}, &fakePermissions{}),
+			newListWorkersTool(&fakeWorkerRepo{}, &fakePermissions{}),
 		},
 	})
 
@@ -179,7 +260,7 @@ func TestRegistry_DoesNotAdvertiseTheLegacyName(t *testing.T) {
 }
 
 /*
-Search returns the same curated row the list tools return, not the stored
+A name search returns the same curated row the roster does, not the stored
 entity.
 
 It used to return the entity. For a nearly empty worker that was 1,398 bytes
@@ -193,7 +274,7 @@ them.
 The entity also reported an unrecorded credential as a bare null, which is the
 reading that produced a wrong compliance answer.
 */
-func TestSearchWorker_ReturnsTheCuratedRowNotTheStoredEntity(t *testing.T) {
+func TestListWorkers_ReturnsTheCuratedRowNotTheStoredEntity(t *testing.T) {
 	t.Parallel()
 
 	expiry := int64(1791591001)
@@ -204,16 +285,13 @@ func TestSearchWorker_ReturnsTheCuratedRowNotTheStoredEntity(t *testing.T) {
 		Profile:   &worker.WorkerProfile{MedicalCardExpiry: &expiry},
 	}}}
 
-	result, err := newSearchWorkerTool(
+	result, err := newListWorkersTool(
 		repo,
 		&fakePermissions{},
-	).Query(t.Context(), testParams(map[string]any{}))
+	).Query(t.Context(), testParams(map[string]any{"query": "Mike"}))
 	require.NoError(t, err)
 
-	gated, ok := result.(*gatedOutcome)
-	require.True(t, ok)
-	rows, ok := gated.Items.([]workerRow)
-	require.True(t, ok, "search must return the curated row, not the entity")
+	rows, _ := listedRows[workerRow](t, result)
 	require.Len(t, rows, 1)
 
 	assert.Equal(t, "Mike Johnson", rows[0].Name)
@@ -226,10 +304,10 @@ func TestSearchWorker_ReturnsTheCuratedRowNotTheStoredEntity(t *testing.T) {
 	}
 }
 
-// The absence semantics the rows carry have to reach search too, or the path
-// the incident actually used is still the one that reports a missing
+// The absence semantics the rows carry have to reach a name search too, or
+// the path the incident actually used is still the one that reports a missing
 // certificate as nothing at all.
-func TestSearchWorker_SaysWhenACredentialIsNotOnFile(t *testing.T) {
+func TestListWorkers_SaysWhenACredentialIsNotOnFile(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeWorkerRepo{items: []*worker.Worker{{
@@ -237,15 +315,14 @@ func TestSearchWorker_SaysWhenACredentialIsNotOnFile(t *testing.T) {
 		Profile: &worker.WorkerProfile{},
 	}}}
 
-	result, err := newSearchWorkerTool(
+	result, err := newListWorkersTool(
 		repo,
 		&fakePermissions{},
-	).Query(t.Context(), testParams(map[string]any{}))
+	).Query(t.Context(), testParams(map[string]any{"query": "Park"}))
 	require.NoError(t, err)
 
-	gated, ok := result.(*gatedOutcome)
-	require.True(t, ok)
-	encoded, err := sonic.Marshal(gated.Items)
+	rows, _ := listedRows[workerRow](t, result)
+	encoded, err := sonic.Marshal(rows)
 	require.NoError(t, err)
 
 	assert.Contains(t, string(encoded), "none on file")

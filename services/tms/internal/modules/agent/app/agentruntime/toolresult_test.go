@@ -76,7 +76,7 @@ func TestHumanizeDates_NamesTheNearDaysRatherThanCountingThem(t *testing.T) {
 /*
 A count is not an instant.
 
-daysUntilExpiry is already shipped by worker_list_expiring_credentials and its name
+daysUntilExpiry is already shipped by worker_list_credentials and its name
 ends in "expiry", so the name test alone would rewrite 21 into a date in 1970.
 The range check is what stops it, and it is the reason both tests are applied
 rather than either one.

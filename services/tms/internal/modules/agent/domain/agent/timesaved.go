@@ -73,7 +73,6 @@ var toolMinutesSaved = map[string]int{
 	// Bookkeeping the agent does on itself. Real, but small.
 	"insight_dismiss":       1,
 	"agent_raise_exception": readMinutesSaved,
-	"agent_request_review":  readMinutesSaved,
 	"agent_create_memory":   readMinutesSaved,
 	"agent_retire_memory":   readMinutesSaved,
 }

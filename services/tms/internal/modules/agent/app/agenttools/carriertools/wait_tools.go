@@ -116,7 +116,7 @@ func (t *waitUntilTool) ParamSchema() map[string]any {
 			common.ParamCustomerID: agenttoolschema.RecordIDText(permission.ResourceCustomer,
 				"For Reply: a reply from this customer, from customer_list."),
 			common.ParamWorkerID: agenttoolschema.RecordIDText(permission.ResourceWorker,
-				"For HOSDriveBelow: the driver, from worker_search."),
+				"For HOSDriveBelow: the driver, from worker_list."),
 			"detentionOccurrenceId": agenttoolschema.KindID(
 				"For FreeTimeEnding: the detention record, from detention_list_occurrences or the "+
 					"run subject (detention.occurrence_opened names it).",

@@ -89,7 +89,7 @@ func TestRun_FindToolsLoadsAToolIntoTheNextRequest(t *testing.T) {
 What a turn loaded is still loaded on the next one.
 
 The tool set used to be rebuilt from the new message alone. After find_tools
-loaded worker_list_expiring_credentials, "yes, do that" reopened on the eight tools
+loaded worker_list_credentials, "yes, do that" reopened on the eight tools
 that ranked first against three words that name nothing, and the tool the
 conversation was about was gone.
 */
@@ -123,7 +123,7 @@ func TestNewToolSet_CarriesWhatTheLastTurnsUsedAndFound(t *testing.T) {
 
 	require.True(t, set.disclosed)
 	sent := specNames(set.specs)
-	assert.Contains(t, sent, "worker_list_expiring_credentials", "what find_tools found last turn")
+	assert.Contains(t, sent, "worker_list_credentials", "what find_tools found last turn")
 	assert.Contains(t, sent, "report_run", "what the model called last turn")
 }
 

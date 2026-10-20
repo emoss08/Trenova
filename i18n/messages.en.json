@@ -49352,15 +49352,6 @@
       "apps/web/components"
     ]
   },
-  "Check accounting sync state": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "Check again": {
     "sites": 1,
     "scope": [
@@ -49518,6 +49509,15 @@
       "routes/shipment"
     ]
   },
+  "Check credentials": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Check digit": {
     "sites": 1,
     "scope": [
@@ -49528,15 +49528,6 @@
     ]
   },
   "Check driver hours": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
-  "Check expiring credentials": {
     "sites": 1,
     "scope": [
       "ts"
@@ -105554,6 +105545,15 @@
       "routes/carrier-sourcing"
     ]
   },
+  "Find drivers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Find it on the invoice's adjustment panel; it must have executed against this invoice.": {
     "sites": 1,
     "scope": [
@@ -134055,7 +134055,7 @@
       "routes/admin"
     ]
   },
-  "Let a blocked sender's mail reach the Triage queue again on the source it arrives on. Name the sender by one of their messages: their mail since the block sits under Ignored, which inbox_search_inbound_messages and inbox_list_inbound_messages find. Messages already ignored stay settled; inbox_reopen_inbound_message returns any that still matter to the queue.": {
+  "Let a blocked sender's mail reach the Triage queue again on the source it arrives on. Name the sender by one of their messages: their mail since the block sits under Ignored, which inbox_list_inbound_messages finds with status Ignored or a query naming the sender. Messages already ignored stay settled; inbox_reopen_inbound_message returns any that still matter to the queue.": {
     "sites": 1,
     "scope": [
       "go"
@@ -135951,15 +135951,6 @@
     ]
   },
   "List document types": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
-  "List drivers": {
     "sites": 1,
     "scope": [
       "ts"
@@ -225623,15 +225614,6 @@
     ],
     "areas": [
       "routes/dispatch-console"
-    ]
-  },
-  "Search drivers": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Search drivers by name, tractor code, or fleet": {

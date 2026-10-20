@@ -266,6 +266,7 @@ type fakeSources struct {
 	ids       []pulid.ID
 	keyword   []agentports.RetrievalKeywordHit
 	listed    []agentports.ListRetrievalSourceIDsRequest
+	searched  []agentports.RetrievalKeywordSearchRequest
 }
 
 func (f *fakeSources) ListModelKeys(
@@ -321,9 +322,11 @@ func (f *fakeSources) SearchDocuments(
 }
 
 func (f *fakeSources) SearchInboundMessages(
-	context.Context,
-	agentports.RetrievalKeywordSearchRequest,
+	_ context.Context,
+	req agentports.RetrievalKeywordSearchRequest,
 ) ([]agentports.RetrievalKeywordHit, error) {
+	f.searched = append(f.searched, req)
+
 	return f.keyword, nil
 }
 

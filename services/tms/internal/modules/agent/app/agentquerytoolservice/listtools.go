@@ -66,6 +66,7 @@ type listSpec struct {
 	entityPlural string
 	summary      string
 	searchTerms  []string
+	queryNote    string
 	resource     permission.Resource
 	fields       []listField
 	// config is the entity's computed field configuration. A curated field that
@@ -222,9 +223,8 @@ func (t *listTool) ParamSchema() map[string]any {
 		toolschema.KeyType: toolschema.TypeObject,
 		toolschema.KeyProperties: map[string]any{
 			paramQuery: map[string]any{
-				toolschema.KeyType: toolschema.TypeString,
-				toolschema.KeyDescription: "Optional free text matched across the searchable " +
-					"columns. Omit it when you are filtering on a field.",
+				toolschema.KeyType:        toolschema.TypeString,
+				toolschema.KeyDescription: t.queryDescription(),
 			},
 			paramFilters:       filtersSchema(t.fields, t.operators),
 			paramSortBy:        t.sortSchema(),
@@ -234,6 +234,15 @@ func (t *listTool) ParamSchema() map[string]any {
 		},
 		toolschema.KeyAdditionalProperties: false,
 	}
+}
+
+func (t *listTool) queryDescription() string {
+	if t.spec.queryNote != "" {
+		return t.spec.queryNote
+	}
+
+	return "Optional free text matched across the searchable columns. Omit it when you are " +
+		"filtering on a field."
 }
 
 func filtersSchema(

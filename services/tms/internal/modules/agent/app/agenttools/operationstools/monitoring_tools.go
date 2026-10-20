@@ -529,7 +529,7 @@ func (t *NotifyDriverTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"workerId": agenttoolschema.RecordIDText(
 				permission.ResourceWorker,
-				"The driver's id, from the board, tracking or worker_search.",
+				"The driver's id, from the board, tracking or worker_list.",
 			),
 			"title": map[string]any{
 				"type":        "string",

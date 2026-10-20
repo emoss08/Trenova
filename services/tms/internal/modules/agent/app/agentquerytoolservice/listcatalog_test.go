@@ -110,7 +110,7 @@ func TestListCatalog_EachEntityCarriesItsOwnResource(t *testing.T) {
 The question that started this: "which drivers hold a current hazmat
 endorsement?" Endorsements live on the worker profile, not the worker, so
 without a traversal filter the catalog could not express it at all — and the
-model's only near-miss was worker_list_expiring_credentials, which answers "whose is
+model's only near-miss was the expiring-credentials list, which answers "whose is
 about to lapse", a different question with a plausible-looking wrong answer.
 */
 func TestListWorkers_CanFilterOnTheProfile(t *testing.T) {
@@ -307,31 +307,4 @@ func TestListWorkers_WithholdsTheCityBelowTheCeiling(t *testing.T) {
 	rows, withheld = listedRows[workerRow](t, result)
 	assert.Equal(t, "Joliet", rows[0].City)
 	assert.Empty(t, withheld)
-}
-
-func TestSearchWorker_WithholdsTheCityBelowTheCeiling(t *testing.T) {
-	t.Parallel()
-
-	tool := newSearchWorkerTool(&fakeWorkerRepo{items: []*worker.Worker{rosterWorker()}},
-		&fakePermissions{allowed: true})
-
-	for _, tc := range []struct {
-		ceiling  permission.FieldSensitivity
-		city     string
-		withheld []string
-	}{
-		{ceiling: permission.SensitivityInternal, city: "", withheld: []string{"city"}},
-		{ceiling: permission.SensitivityRestricted, city: "Joliet"},
-	} {
-		result, err := tool.Query(t.Context(), agentParams(map[string]any{}, tc.ceiling))
-		require.NoError(t, err)
-
-		gated, ok := result.(*gatedOutcome)
-		require.True(t, ok)
-		rows, ok := gated.Items.([]workerRow)
-		require.True(t, ok)
-		require.Len(t, rows, 1)
-		assert.Equal(t, tc.city, rows[0].City, tc.ceiling)
-		assert.Equal(t, tc.withheld, gated.Withheld, tc.ceiling)
-	}
 }

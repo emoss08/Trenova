@@ -312,7 +312,6 @@ Tools that change something no person-facing write does, such as sending a messa
 | Tool | Resource | Operation |
 | --- | --- | --- |
 | `agent_raise_exception` | agent_exception | create |
-| `agent_request_review` | agent_exception | create |
 | `detention_escalate` | detention | update |
 | `shipment_request_documents` | customer_communication | create |
 | `web_use_portal` | portal_automation | update |

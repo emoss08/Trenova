@@ -47,7 +47,7 @@ type registry struct {
 // These are deliberately absent from Descriptors, so the model is never offered
 // a name we no longer want it to learn.
 var legacyToolNames = map[string]string{
-	"search_workers": "worker_search",
+	"search_workers": "worker_list",
 }
 
 func NewRegistry(p RegistryParams) agentports.AgentQueryToolRegistry {

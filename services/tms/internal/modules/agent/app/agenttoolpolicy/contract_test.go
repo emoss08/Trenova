@@ -84,7 +84,6 @@ func TestToolsThatReadOutsideTextSayWhere(t *testing.T) {
 	cases := map[string]agent.ExternalRead{
 		"inbox_get_inbound_message":               agent.ExternalReadAlways,
 		"inbox_list_inbound_messages":             agent.ExternalReadAlways,
-		"inbox_search_inbound_messages":           agent.ExternalReadAlways,
 		"document_list":                           agent.ExternalReadAlways,
 		"document_get_summary":                    agent.ExternalReadAlways,
 		"intake_get_draft":                        agent.ExternalReadAlways,
@@ -191,7 +190,6 @@ func TestEveryRegisteredToolIsInTheClassItWasGiven(t *testing.T) {
 		"invoice_create_memo":                 {agent.EgressMoney},
 		"invoice_void":                        {agent.EgressMoney},
 		"invoice_send_edi":                    {agent.EgressExternalRecipient},
-		"agent_request_review":                {agent.EgressInternal},
 		"agent_raise_exception":               {agent.EgressInternal},
 		"agent_create_wait":                   {agent.EgressInternal},
 		"agent_cancel_wait":                   {agent.EgressInternal},

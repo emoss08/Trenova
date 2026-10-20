@@ -62,7 +62,7 @@ describe("toolEffect", () => {
     ["withdraw_proposal", "ask"],
     ["customer_list", "lookup"],
     ["shipment_get", "lookup"],
-    ["worker_search", "lookup"],
+    ["worker_list", "lookup"],
     ["report_get_dataset", "lookup"],
     ["report_preview", "lookup"],
     ["report_create", "change"],

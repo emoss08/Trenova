@@ -141,8 +141,8 @@ taint held names it among what held it, whatever else held it too.
 without a decision while that person is in the conversation, unless a person
 set the tool's tier on the agent. An unattended run never has it.
 
-**Escalation.** Raising an exception or flagging the run for manual review runs
-whatever the agent's autonomy ceiling, the turn's taint or the run being
+**Escalation.** Raising an exception, which hands the run to a person for
+review, runs whatever the agent's autonomy ceiling, the turn's taint or the run being
 unattended, because it only records the run for a person inside the
 organization. A run that is unsure has to be able to hand its work to someone
 without first waiting for someone. A tier a person set for the tool on the

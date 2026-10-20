@@ -87,8 +87,8 @@ func newBlockInboundSenderTool(senders triageSenders) agentports.AgentTool {
 				"customer or carrier from everyone, so a person always approves it.",
 			Properties: map[string]any{
 				paramMessageID: messageIDProperty(
-					"A message from the sender, from inbox_list_inbound_messages or " +
-						"inbox_search_inbound_messages.",
+					"A message from the sender, from inbox_list_inbound_messages, " +
+						"newest first or by query.",
 				),
 			},
 			Required:    []string{paramMessageID},
@@ -174,9 +174,10 @@ func newUnblockInboundSenderTool(
 			Artifact: inboundMessageEntity,
 			Description: "Let a blocked sender's mail reach the Triage queue again on the " +
 				"source it arrives on. Name the sender by one of their messages: their mail " +
-				"since the block sits under Ignored, which inbox_search_inbound_messages and " +
-				"inbox_list_inbound_messages find. Messages already ignored stay settled; " +
-				"inbox_reopen_inbound_message returns any that still matter to the queue.",
+				"since the block sits under Ignored, which inbox_list_inbound_messages finds " +
+				"with status Ignored or a query naming the sender. Messages already ignored " +
+				"stay settled; inbox_reopen_inbound_message returns any that still matter to " +
+				"the queue.",
 			Resource:    permission.ResourceInboundMessage,
 			Operation:   permission.OpUpdate,
 			Egress:      agent.EgressInternal,
@@ -187,13 +188,13 @@ func newUnblockInboundSenderTool(
 				"mail the organization reads, so a person approves it.",
 			Properties: map[string]any{
 				paramMessageID: messageIDProperty(
-					"A message from the blocked sender, from inbox_search_inbound_messages or " +
-						"inbox_list_inbound_messages.",
+					"A message from the blocked sender, from inbox_list_inbound_messages " +
+						"with a query naming the sender.",
 				),
 			},
 			Required:    []string{paramMessageID},
 			SearchTerms: []string{"unblock sender", "allow sender"},
-			Recipe:      []string{"inbox_search_inbound_messages", "inbox_unblock_sender"},
+			Recipe:      []string{"inbox_list_inbound_messages", "inbox_unblock_sender"},
 			Target:      targetMessage,
 		},
 		common.ReceivablePlan[

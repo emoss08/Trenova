@@ -130,7 +130,7 @@ func TestGetWorkerCredential_IsGatedOnTheCredentialResource(t *testing.T) {
 	tool := newGetWorkerCredentialTool(&stubWorkerCredentials{}, &fakePermissions{})
 	assert.Equal(t, permission.ResourceWorkerCredential, tool.Policy().Resource)
 	assert.Equal(t, "worker_get_credential", tool.Name())
-	assert.Contains(t, tool.Description(), "worker_list_expiring_credentials")
+	assert.Contains(t, tool.Description(), "worker_list_credentials")
 }
 
 func TestDeskGetTools_AreGatedOnTheirRecordsResource(t *testing.T) {

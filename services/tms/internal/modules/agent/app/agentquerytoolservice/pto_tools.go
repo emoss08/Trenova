@@ -90,8 +90,8 @@ func (t *listTimeOffTool) ParamSchema() map[string]any {
 			),
 			"workerId": agenttoolschema.OfResource(map[string]any{
 				toolschema.KeyType: toolschema.TypeString,
-				toolschema.KeyDescription: "Narrow to one worker, by id from worker_list or " +
-					"worker_search. A name is not an id.",
+				toolschema.KeyDescription: "Narrow to one worker, by id from worker_list. A " +
+					"name is not an id.",
 			}, permission.ResourceWorker),
 			"withinDays": map[string]any{
 				"type": "integer",

@@ -879,7 +879,7 @@ const PRESENTERS: Record<string, Presenter> = {
     };
   },
 
-  agent_request_review: (args) => {
+  agent_raise_exception: (args) => {
     const category = humanizeEnum(text(args.category));
     const affected = Number(args.blastRadius ?? 0);
 
@@ -893,10 +893,10 @@ const PRESENTERS: Record<string, Presenter> = {
         fact("What the agent found", text(args.attemptSummary)),
         affected > 1 ? fact("Records affected", String(affected)) : null,
       ),
-      // The run id, the subject's key and the evidence blob belong to the audit
+      // The subject's kind and key and the evidence blob belong to the audit
       // trail. Severity and category are already the badge and the sentence.
       covered: [
-        "runId",
+        "subjectType",
         "subjectId",
         "category",
         "severity",

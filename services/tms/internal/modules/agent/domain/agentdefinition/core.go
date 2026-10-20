@@ -7,7 +7,6 @@ const (
 	CoreToolRemember       = "agent_create_memory"
 	CoreToolGuideProfile   = "agent_guide_profile"
 	CoreToolRaiseException = "agent_raise_exception"
-	CoreToolFlagForReview  = "agent_request_review"
 	CoreToolFindInTrenova  = "agent_find_page"
 	CoreToolOpenPage       = "agent_open_page"
 	CoreToolWaitUntil      = "agent_create_wait"
@@ -20,7 +19,6 @@ var coreTools = [...]string{
 	CoreToolRemember,
 	CoreToolGuideProfile,
 	CoreToolRaiseException,
-	CoreToolFlagForReview,
 	CoreToolFindInTrenova,
 	CoreToolOpenPage,
 	CoreToolWaitUntil,
@@ -29,7 +27,7 @@ var coreTools = [...]string{
 }
 
 // CoreTools are held by every agent without being selected. Memory, escalation,
-// review, waiting on the world and knowing the product it runs in are how an agent works at all
+// waiting on the world and knowing the product it runs in are how an agent works at all
 // rather than what it works on, so an organization building an agent should
 // not have to know to tick them. agent_find_page, agent_open_page and agent_read_attachment
 // answer for the person in the conversation, so a run nobody is watching goes

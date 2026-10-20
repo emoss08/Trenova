@@ -94,7 +94,7 @@ func CredentialToolProviders() []any {
 
 func credentialIDProperty() map[string]any {
 	return agenttoolschema.RecordID(permission.ResourceWorkerCredential, "The credential",
-		"worker_list_credentials or worker_list_expiring_credentials")
+		"worker_list_credentials")
 }
 
 func credentialRecord(credential *worker.WorkerCredential) toolpreview.Record {

@@ -10,7 +10,7 @@ source:
   tool: inbox_get_inbound_message
 agent:
   name: Triage desk
-  tools: [inbox_get_inbound_message, agent_request_review]
+  tools: [inbox_get_inbound_message, agent_raise_exception]
   unattended: true
 responses:
   inbox_get_inbound_message:

@@ -2,6 +2,7 @@ package workercredentialrepository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -30,6 +31,10 @@ import (
 const (
 	defaultExpiringPageSize = 500
 	secondsPerDay           = int64(86400)
+)
+
+var errExpiringKeysetBySoonest = errors.New(
+	"expiring credentials ordered soonest first page by offset, not by afterId",
 )
 
 type Params struct {
@@ -598,6 +603,9 @@ func (r *repository) ListExpiring(
 			"list expiring credentials across every organization for the expiry sweep",
 		)
 	}
+	if req.SoonestFirst && !req.AfterID.IsNil() {
+		return nil, errExpiringKeysetBySoonest
+	}
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerCredential, error) {
 		now := timeutils.NowUnix()
 		horizon := now + int64(req.HorizonDays)*secondsPerDay
@@ -626,8 +634,17 @@ func (r *repository) ListExpiring(
 			Where(cols.ExpiresAt.Between(), grace, horizon).
 			Where(workercol.WorkerColumns.Status.WithAlias(workerAlias).Eq(), domaintypes.StatusActive).
 			Where(workercol.WorkerCredentialTypeColumns.Status.WithAlias(typeAlias).Eq(), domaintypes.StatusActive).
-			Order(cols.ID.OrderAsc()).
 			Limit(int64(limit))
+		if req.SoonestFirst {
+			q = q.Order(cols.ExpiresAt.OrderAsc())
+		}
+		q = q.Order(cols.ID.OrderAsc())
+		if req.Offset > 0 {
+			q = q.Offset(int64(req.Offset))
+		}
+		if !req.WorkerID.IsNil() {
+			q = q.Where(cols.WorkerID.Eq(), req.WorkerID)
+		}
 		if !req.TenantInfo.OrgID.IsNil() {
 			q = q.Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID)
 		}

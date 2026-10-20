@@ -296,7 +296,7 @@ func TestListPayAdvances_NarrowsToTheDriverNamed(t *testing.T) {
 	_, err = tool.Query(t.Context(), agentParams(map[string]any{"query": "nobody"},
 		permission.SensitivityRestricted))
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "worker_search")
+	assert.Contains(t, err.Error(), "worker_list")
 }
 
 /*

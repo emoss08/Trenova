@@ -1,0 +1,1 @@
+-- A merged tool keeps its name: the tools it absorbed are gone from the code, so an agent that held one keeps the merged tool.
