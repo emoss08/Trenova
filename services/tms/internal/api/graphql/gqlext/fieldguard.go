@@ -105,7 +105,12 @@ var reducedTypes = map[string]map[string]struct{}{
 	"BusinessUnit": reducedFields,
 }
 
-var reducedFields = map[string]struct{}{"id": {}, "name": {}}
+var reducedFields = map[string]struct{}{recordIDField: {}, "name": {}}
+
+// recordIDField is how a read names its rows. It is never withheld by a
+// ceiling: row-level security has already decided the row may be read, and
+// an id carries none of the row's content.
+const recordIDField = "id"
 
 var _ interface {
 	graphql.HandlerExtension
@@ -201,7 +206,8 @@ func (e *FieldGuardExtension) InterceptField(
 	return next(ctx)
 }
 
-// withholds reports whether an agent read's ceiling hides a field: a nested
+// withholds reports whether an agent read's ceiling hides a field other than
+// a record's id: a nested
 // user, organization or business unit beyond its id and name, or a field
 // the registry ranks above the ceiling on the resource that carries it.
 func (e *FieldGuardExtension) withholds(
@@ -209,6 +215,9 @@ func (e *FieldGuardExtension) withholds(
 	ceiling *gqlctx.FieldCeiling,
 	fc *graphql.FieldContext,
 ) bool {
+	if fc.Field.Name == recordIDField {
+		return false
+	}
 	if kept, reduced := reducedTypes[fc.Object]; reduced && nested(fc) {
 		_, keep := kept[fc.Field.Name]
 		return !keep

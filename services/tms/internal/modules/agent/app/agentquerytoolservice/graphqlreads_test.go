@@ -29,8 +29,7 @@ func TestGraphQLReadsDeriveTheirTypedParameters(t *testing.T) {
 		t.Run(tool, func(t *testing.T) {
 			t.Parallel()
 
-			params, err := read.typedParams()
-			require.NoError(t, err)
+			params := read.typedParams()
 			require.NotEmpty(t, params, "a list tool reads by at least one typed parameter")
 
 			names := make(map[string]struct{}, len(params))
@@ -62,8 +61,7 @@ func TestGraphQLReadsKeepEveryFilterTheCatalogOffered(t *testing.T) {
 		t.Run(tool, func(t *testing.T) {
 			t.Parallel()
 
-			params, err := read.typedParams()
-			require.NoError(t, err)
+			params := read.typedParams()
 			sources := make([]string, 0, len(params))
 			for _, param := range params {
 				sources = append(sources, param.Field)
@@ -80,8 +78,7 @@ func TestTypedParamsCompileIntoTheOperationsFilters(t *testing.T) {
 	t.Parallel()
 
 	read := graphQLReads["masterdata_list_hazardous_materials"]
-	params, err := read.typedParams()
-	require.NoError(t, err)
+	params := read.typedParams()
 	clk := filtercatalog.NewClock("America/Chicago")
 
 	filters, err := compileFilters(params, map[string]any{
@@ -107,10 +104,10 @@ func TestTypedParamsCompileIntoTheOperationsFilters(t *testing.T) {
 func TestTypedParamsRefuseADayThatIsNotADay(t *testing.T) {
 	t.Parallel()
 
-	params, err := graphQLReads["masterdata_list_hazardous_materials"].typedParams()
-	require.NoError(t, err)
+	read := graphQLReads["masterdata_list_hazardous_materials"]
+	params := read.typedParams()
 
-	_, err = compileFilters(params, map[string]any{"createdAtFrom": "last week"},
+	_, err := compileFilters(params, map[string]any{"createdAtFrom": "last week"},
 		filtercatalog.NewClock("UTC"))
 
 	assert.ErrorContains(t, err, "createdAtFrom")

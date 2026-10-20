@@ -59,3 +59,15 @@ const (
 	GraphQLCodeUnauthorized   = string(errortypes.ErrUnauthorized)
 	GraphQLCodeBudgetExceeded = "OPERATION_COST_BUDGET_EXCEEDED"
 )
+
+// ReadRefusedError is a read the resolver refused: the same refusal the
+// person's screen would show. dispatch reports it as denied, with the advice
+// it gives for a permission the person lacks, never as a failed call.
+type ReadRefusedError struct {
+	Resource permission.Resource
+	Message  string
+}
+
+func (e *ReadRefusedError) Error() string {
+	return "the read was refused: " + e.Message
+}

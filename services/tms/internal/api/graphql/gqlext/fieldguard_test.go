@@ -577,3 +577,19 @@ func TestFieldGuardWithholdsAProtectedFieldFromAnAgentReadAndSaysSo(t *testing.T
 	assert.False(t, resolved)
 	assert.Equal(t, []string{"rateAgreement.marginFloorPercent"}, ceiling.Withheld())
 }
+
+func TestFieldGuardNeverWithholdsARecordsID(t *testing.T) {
+	t.Parallel()
+
+	guard := newCeilingGuard(t)
+	ctx, ceiling := agentRead(t, guard, permission.SensitivityPublic)
+
+	result, resolved := resolveNested(t, guard, ctx,
+		fieldStep{object: "Query", field: "worker"},
+		fieldStep{object: "Worker", field: "id", nonNull: true},
+	)
+
+	assert.Equal(t, "stored value", result)
+	assert.True(t, resolved)
+	assert.Empty(t, ceiling.Withheld())
+}

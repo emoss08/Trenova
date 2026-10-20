@@ -1,0 +1,393 @@
+package agentquerytoolservice_test
+
+import (
+	"context"
+	"errors"
+	"slices"
+	"strings"
+	"sync"
+	"testing"
+
+	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/api/graphql/agentread"
+	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/equipment/app/equipmentmanufacturerservice"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentmanufacturerports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/pkg/dbtype"
+	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/readscope"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
+)
+
+// manufacturerRows serves both paths a tool has had: the repository list the
+// old tool paged by offset, and the connection the GraphQL resolver pages by
+// cursor, over the same rows and the same filters.
+type manufacturerRows struct {
+	equipmentmanufacturerports.EquipmentManufacturerRepository
+
+	rows []*equipmentmanufacturer.EquipmentManufacturer
+
+	mu          sync.Mutex
+	connections []*equipmentmanufacturerports.ListEquipmentManufacturerConnectionRequest
+}
+
+func (m *manufacturerRows) matching(filter *pagination.QueryOptions) []*equipmentmanufacturer.EquipmentManufacturer {
+	out := make([]*equipmentmanufacturer.EquipmentManufacturer, 0, len(m.rows))
+	for _, row := range m.rows {
+		if matches(row, filter) {
+			out = append(out, row)
+		}
+	}
+
+	return out
+}
+
+func matches(row *equipmentmanufacturer.EquipmentManufacturer, filter *pagination.QueryOptions) bool {
+	if filter == nil {
+		return true
+	}
+	if filter.Query != "" && !strings.Contains(strings.ToLower(row.Name), strings.ToLower(filter.Query)) {
+		return false
+	}
+	for _, f := range filter.FieldFilters {
+		switch {
+		case f.Field == "status" && f.Operator == dbtype.OpIn:
+			if !slices.Contains(stringsOf(f.Value), string(row.Status)) {
+				return false
+			}
+		case f.Field == "name" && f.Operator == dbtype.OpContains:
+			if !strings.Contains(strings.ToLower(row.Name), strings.ToLower(f.Value.(string))) {
+				return false
+			}
+		}
+	}
+
+	return true
+}
+
+func stringsOf(value any) []string {
+	switch v := value.(type) {
+	case []string:
+		return v
+	case []any:
+		out := make([]string, 0, len(v))
+		for _, item := range v {
+			out = append(out, item.(string))
+		}
+		return out
+	}
+
+	return nil
+}
+
+func (m *manufacturerRows) List(
+	_ context.Context,
+	req *equipmentmanufacturerports.ListEquipmentManufacturersRequest,
+) (*pagination.ListResult[*equipmentmanufacturer.EquipmentManufacturer], error) {
+	rows := m.matching(req.Filter)
+	start := min(req.Filter.Pagination.Offset, len(rows))
+	end := min(start+req.Filter.Pagination.Limit, len(rows))
+
+	return &pagination.ListResult[*equipmentmanufacturer.EquipmentManufacturer]{
+		Items: rows[start:end], Total: len(rows),
+	}, nil
+}
+
+func (m *manufacturerRows) ListConnection(
+	_ context.Context,
+	req *equipmentmanufacturerports.ListEquipmentManufacturerConnectionRequest,
+) (*pagination.CursorListResult[*equipmentmanufacturer.EquipmentManufacturer], error) {
+	m.mu.Lock()
+	m.connections = append(m.connections, req)
+	m.mu.Unlock()
+
+	rows := m.matching(req.Filter)
+	start := 0
+	if after := req.Cursor.Cursor.ID; after.IsNotNil() {
+		for idx, row := range rows {
+			if row.ID == after {
+				start = idx + 1
+			}
+		}
+	}
+	end := min(start+req.Cursor.Limit+1, len(rows))
+
+	return pagination.NewCursorListResult(rows[start:end], req.Cursor.Limit), nil
+}
+
+func (m *manufacturerRows) lastConnection() *equipmentmanufacturerports.ListEquipmentManufacturerConnectionRequest {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	return m.connections[len(m.connections)-1]
+}
+
+func seedManufacturers() *manufacturerRows {
+	repo := &manufacturerRows{}
+	for idx, name := range []string{"Freightliner", "Kenworth", "Peterbilt", "Utility", "Wabash"} {
+		repo.rows = append(repo.rows, &equipmentmanufacturer.EquipmentManufacturer{
+			ID: pulid.MustNew("em_"), Name: name, Status: domaintypes.StatusActive,
+			CreatedAt: int64(1_760_000_000 + idx),
+		})
+	}
+	repo.rows = append(repo.rows, &equipmentmanufacturer.EquipmentManufacturer{
+		ID: pulid.MustNew("em_"), Name: "Fruehauf", Status: domaintypes.StatusInactive,
+		CreatedAt: 1_750_000_000,
+	})
+
+	return repo
+}
+
+type harness struct {
+	repo   *manufacturerRows
+	engine permissionports.PermissionEngine
+	tool   agentports.AgentQueryTool
+}
+
+func newHarness(t *testing.T, engine permissionports.PermissionEngine) *harness {
+	t.Helper()
+
+	repo := seedManufacturers()
+	reader := agentreadtest.NewReader(t, agentreadtest.Options{
+		Engine: engine,
+		Resolvers: agentread.ResolverParams{
+			EquipmentManufacturerService: equipmentmanufacturerservice.New(
+				equipmentmanufacturerservice.Params{Logger: zap.NewNop(), Repo: repo},
+			),
+		},
+	})
+	tool, err := agentquerytoolservice.ProvideListEquipmentManufacturersTool(reader, engine)
+	require.NoError(t, err)
+
+	return &harness{repo: repo, engine: engine, tool: tool}
+}
+
+func (h *harness) query(
+	t *testing.T,
+	actor *permissionports.RequestActor,
+	args map[string]any,
+) (map[string]any, error) {
+	t.Helper()
+
+	data, err := h.tool.Query(readscope.With(t.Context(), nil), &agentports.QueryToolParams{
+		OrganizationID: actor.OrganizationID,
+		BusinessUnitID: actor.BusinessUnitID,
+		Actor:          actor,
+		Timezone:       "America/Chicago",
+		Params:         args,
+		RunID:          pulid.MustNew("ar_"),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return asMap(t, data), nil
+}
+
+func asMap(t *testing.T, data any) map[string]any {
+	t.Helper()
+
+	encoded, err := sonic.Marshal(data)
+	require.NoError(t, err)
+	var out map[string]any
+	require.NoError(t, sonic.Unmarshal(encoded, &out))
+
+	return out
+}
+
+func itemIDs(outcome map[string]any) []string {
+	items, _ := outcome["items"].([]any)
+	ids := make([]string, 0, len(items))
+	for _, item := range items {
+		ids = append(ids, item.(map[string]any)["id"].(string))
+	}
+
+	return ids
+}
+
+func TestGraphQLListTool_TypedFiltersReachTheOperation(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t, &mocks.DenyResourcesPermissionEngine{})
+
+	outcome, err := h.query(t, agentreadtest.Person(), map[string]any{
+		"status":        []any{"Active"},
+		"name":          "worth",
+		"createdAtFrom": "2025-01-01",
+		"sortBy":        "name",
+		"sortDirection": "desc",
+		"limit":         10,
+	})
+
+	require.NoError(t, err)
+	assert.Len(t, itemIDs(outcome), 1, "only Kenworth is active and named like it")
+	req := h.repo.lastConnection()
+	got := make(map[string]dbtype.Operator, len(req.Filter.FieldFilters))
+	for _, f := range req.Filter.FieldFilters {
+		got[f.Field] = f.Operator
+	}
+	assert.Equal(t, map[string]dbtype.Operator{
+		"status": dbtype.OpIn, "name": dbtype.OpContains, "createdAt": dbtype.OpGreaterThanOrEqual,
+	}, got)
+	require.Len(t, req.Filter.Sort, 1)
+	assert.Equal(t, "name", req.Filter.Sort[0].Field)
+	assert.Equal(t, 10, req.Cursor.Limit)
+}
+
+func TestGraphQLListTool_TwoPagesNeverRepeatARow(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t, &mocks.DenyResourcesPermissionEngine{})
+	person := agentreadtest.Person()
+	active := []any{"Active"}
+
+	first, err := h.query(t, person, map[string]any{"status": active, "limit": 3})
+	require.NoError(t, err)
+	require.Equal(t, true, first["hasMore"])
+	cursor, _ := first["nextCursor"].(string)
+	require.NotEmpty(t, cursor)
+
+	second, err := h.query(t, person, map[string]any{"status": active, "limit": 3, "after": cursor})
+	require.NoError(t, err)
+
+	assert.Len(t, itemIDs(first), 3)
+	assert.Len(t, itemIDs(second), 2)
+	for _, id := range itemIDs(second) {
+		assert.NotContains(t, itemIDs(first), id)
+	}
+	assert.Equal(t, false, second["hasMore"])
+	assert.NotContains(t, second, "nextCursor")
+}
+
+// The permission check the tool's read meets is the one dispatch's
+// authorize makes and the screen's resolver makes: the same principal, the
+// same resource and operation, the same answer.
+func TestGraphQLListTool_RefusesExactlyWhatAuthorizeRefuses(t *testing.T) {
+	t.Parallel()
+
+	person := agentreadtest.Person()
+	engines := map[string]permissionports.PermissionEngine{
+		"granted": &mocks.DenyResourcesPermissionEngine{},
+		"denied": &mocks.DenyResourcesPermissionEngine{
+			Denied: []string{permission.ResourceEquipmentManufacturer.String()},
+		},
+	}
+	actors := map[string]*permissionports.RequestActor{
+		"a person":          person,
+		"an unattended agent": agentreadtest.Agent(person),
+	}
+	for engineName, engine := range engines {
+		for actorName, actor := range actors {
+			t.Run(engineName+"/"+actorName, func(t *testing.T) {
+				t.Parallel()
+
+				check, err := engine.Check(t.Context(),
+					actor.PermissionCheck(permission.ResourceEquipmentManufacturer, permission.OpRead))
+				require.NoError(t, err)
+
+				_, readErr := newHarness(t, engine).query(t, actor, map[string]any{"limit": 5})
+
+				var refused *agentports.ReadRefusedError
+				assert.Equal(t, !check.Allowed, errors.As(readErr, &refused),
+					"authorize allowed=%v, the read returned %v", check.Allowed, readErr)
+				if check.Allowed {
+					assert.NoError(t, readErr)
+				}
+			})
+		}
+	}
+}
+
+// The repository-backed tool and the GraphQL one read the same rows for the
+// same call, and the GraphQL one withholds at least what the old one did.
+func TestGraphQLListTool_ReadsWhatTheRepositoryToolRead(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t, &mocks.DenyResourcesPermissionEngine{})
+	old := agentquerytoolservice.NewListEquipmentManufacturersTool(h.repo)
+	person := agentreadtest.Person()
+
+	for name, args := range map[string]map[string]any{
+		"every row":     {"limit": 50},
+		"active ones":   {"limit": 50, "status": []any{"Active"}},
+		"inactive ones": {"limit": 50, "status": []any{"Inactive"}},
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			converted, err := h.query(t, person, args)
+			require.NoError(t, err)
+
+			oldArgs := map[string]any{"limit": 50}
+			if status, ok := args["status"]; ok {
+				oldArgs["filters"] = []any{map[string]any{
+					"field": "status", "operator": "in", "values": status,
+				}}
+			}
+			before, err := old.Query(t.Context(), &agentports.QueryToolParams{
+				OrganizationID: person.OrganizationID,
+				BusinessUnitID: person.BusinessUnitID,
+				Actor:          person,
+				Params:         oldArgs,
+			})
+			require.NoError(t, err)
+
+			assert.ElementsMatch(t, itemIDs(asMap(t, before)), itemIDs(converted))
+			if withheld, ok := asMap(t, before)["withheldByAccess"].([]any); ok {
+				for _, field := range withheld {
+					assert.Contains(t, converted["withheldByAccess"], field)
+				}
+			}
+		})
+	}
+}
+
+// publicRole is a person whose role reaches only public fields, so every
+// internal field of a manufacturer, the non-null name among them, is hidden.
+type publicRole struct {
+	mocks.DenyResourcesPermissionEngine
+}
+
+func (publicRole) GetResourcePermissions(
+	context.Context,
+	pulid.ID,
+	pulid.ID,
+	string,
+) (*permissionports.ResourcePermissionDetail, error) {
+	return &permissionports.ResourcePermissionDetail{MaxSensitivity: permission.SensitivityPublic}, nil
+}
+
+func TestGraphQLListTool_AWithheldFieldStaysWithheld(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t, &publicRole{})
+	person := agentreadtest.Person()
+
+	outcome, err := h.query(t, person, map[string]any{"limit": 2})
+	require.NoError(t, err)
+
+	items, _ := outcome["items"].([]any)
+	require.Len(t, items, 2, "the rows are still read; only what they hold is withheld")
+	for _, item := range items {
+		row := item.(map[string]any)
+		assert.NotContains(t, row, "name", "a withheld non-null field never reaches the tool")
+		assert.NotContains(t, row, "status")
+		assert.NotEmpty(t, row["id"])
+	}
+	assert.Contains(t, outcome["withheldByAccess"], "name")
+	assert.NotEmpty(t, outcome["withheldNote"])
+
+	_, err = h.query(t, person, map[string]any{"name": "Kenworth"})
+	require.Error(t, err, "filtering on a hidden field would leak it a row at a time")
+	assert.Contains(t, err.Error(), "name")
+}

@@ -378,9 +378,20 @@ before the result leaves the adapter. Either way the tool never holds the value.
 reader returns them. The tool reports them as `withheldByAccess`, with today's `withheldNote`, so
 the model knows the value exists and is hidden and does not report it as empty.
 
-**Filters.** A filter or sort on a withheld field is refused before the read. The generator knows
-each parameter's source field, so the tool asks the same guard, `FieldGuardExtension.Withheld`,
-whether that field is withheld.
+**Filters.** A filter or sort on a withheld field is refused before the read. The generator
+knows each parameter's source field, and the tool asks the same question the guard does, of the
+same function: `fieldsensitivity.Visible` against `fieldsensitivity.AgentCeiling` for the tool's
+resource. Every `@protected` field is classified confidential (`fieldguard_test.go` holds that),
+so the ceiling refuses it too.
+
+**A record's id is never withheld.** Row-level security has already decided the row may be read,
+and the id carries none of the row's content. A tool needs it to name the row in the next call.
+
+**Lists that were never gated now are.** Of the 37 repository-backed list tools, nine applied the
+ceiling (`fetchGated`); the rest returned every column they projected, whatever the caller's
+tier. Through the guard, every converted tool applies it. A converted tool therefore withholds at
+least what it did before, and sometimes more. The parity test (below) checks the "at least"; a
+field it now withholds that it did not is reported in the module's PR.
 
 ## Permissions, data scopes and refusals
 
@@ -479,22 +490,23 @@ result's encoded size, before and after, for its largest list.
 
 ## Tests
 
-Each converted tool is covered by tests from one table-driven harness,
-`agentread/agentreadtest`. The harness runs the tool, and the same operation through the HTTP
-handler, against the same resolvers. Four tests:
+Each converted tool's tests read through the real reader (`agentread/agentreadtest`, which builds
+it as the application does), over the real resolver and service, with the repository faked.
+Five tests:
 
-1. **Typed filters reach the operation.** Each typed parameter appears in the variables (or
-   `fieldFilters`) the operation receives, with the right operator and day bounds in the
-   organization's zone.
-2. **Refusals match the screen.** A person without `resource:read`, and a person whose data scope
-   excludes the record, are refused by the tool exactly as the handler refuses them:
-   - the same resource and operation;
-   - the same rows missing under "own" or "team";
-   - the same denied outcome.
-3. **Withheld stays withheld.** A `@protected` field, and a field above the agent's ceiling, come
-   back null and in `withheldByAccess`. Filtering on either is refused before the read.
-4. **Two pages, no repeats.** Page one, then `after: nextCursor`, returns disjoint items and the
-   right `hasMore`.
+1. **Typed filters reach the operation.** Each typed parameter appears in the filters the
+   repository receives, with the right operator and day bounds in the organization's zone.
+2. **Refusals match `authorize`.** For a granting and a denying engine, as a person and as an
+   unattended agent, the read is refused exactly when `authorize(actor, resource, read)` refuses,
+   and a refusal is a `ReadRefusedError`, which dispatch reports as denied, not failed.
+3. **Parity with the repository tool.** The old tool and the converted one, over the same rows,
+   return the same records for the same call. The converted one withholds at least what the old
+   one did.
+4. **Withheld stays withheld.** At a ceiling below a field's tier, the field, including a
+   non-null one, never reaches the tool's result, and is named in `withheldByAccess`. Filtering on
+   it is refused before the read.
+5. **Two pages, no repeats.** Page one, then `after: nextCursor`, return disjoint rows, and
+   `hasMore` is false at the end.
 
 Each module's PR also adds an integration test on Postgres (`TRENOVA_TEST_POSTGRES_DSN`). The
 first PR adds the harness's database mode. The test:

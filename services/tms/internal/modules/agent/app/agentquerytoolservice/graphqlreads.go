@@ -80,8 +80,11 @@ const (
 	tenantBusinessUnitID = "businessUnitId"
 	rowVersion           = "version"
 	recordIDField        = "id"
-	filterOperator       = "operator"
-	filterValue          = "value"
+	// graphQLEnumSource names an enum parameter's values by the schema's own
+	// enum type, which is where they are declared.
+	graphQLEnumSource = "graphql."
+	filterOperator    = "operator"
+	filterValue       = "value"
 )
 
 // paramKind is how a typed parameter compiles into the operation's filters.
@@ -113,30 +116,27 @@ type graphQLParam struct {
 // filterable, typed by its schema type. A field the operation does not
 // select is not offered, because the screen cannot filter on what it does
 // not show either.
-func (r graphQLRead) typedParams() ([]graphQLParam, error) {
+func (r *graphQLRead) typedParams() []graphQLParam {
 	config := querybuilder.GetFieldConfiguration(r.Entity())
 	params := make([]graphQLParam, 0, len(r.Fields))
-	for _, field := range r.Fields {
+	for idx := range r.Fields {
+		field := &r.Fields[idx]
 		if _, skip := unfilteredFields[field.Name]; skip || field.List {
 			continue
 		}
 		if !config.FilterableFields[field.Name] {
 			continue
 		}
-		derived, err := paramsFor(field)
-		if err != nil {
-			return nil, fmt.Errorf("%s: %w", r.Operation, err)
-		}
-		params = append(params, derived...)
+		params = append(params, paramsFor(field)...)
 	}
 	slices.SortFunc(params, func(a, b graphQLParam) int { return strings.Compare(a.Name, b.Name) })
 
-	return params, nil
+	return params
 }
 
 // sortable is every field the operation selects that the server can order
 // the list by.
-func (r graphQLRead) sortable() []string {
+func (r *graphQLRead) sortable() []string {
 	config := querybuilder.GetFieldConfiguration(r.Entity())
 	out := make([]string, 0, len(r.Fields))
 	for _, field := range r.Fields {
@@ -152,7 +152,7 @@ func (r graphQLRead) sortable() []string {
 	return out
 }
 
-func paramsFor(field graphQLField) ([]graphQLParam, error) {
+func paramsFor(field *graphQLField) []graphQLParam {
 	words := stringutils.HumanizeSnakeCase(stringutils.ConvertCamelToSnake(field.Name))
 	describe := func(fallback string) string {
 		if field.Description != "" {
@@ -172,17 +172,25 @@ func paramsFor(field graphQLField) ([]graphQLParam, error) {
 				toolschema.KeyDescription: describe(
 					"Only records whose " + words + " is one of these.",
 				),
-				toolschema.KeyItems: map[string]any{
-					toolschema.KeyType: toolschema.TypeString,
-					toolschema.KeyEnum: slices.Clone(field.Enum),
-				},
+				toolschema.KeyItems: agenttoolschema.Enum(
+					"", agenttoolschema.Derived(graphQLEnumSource+field.Type, field.Enum),
+				),
 				toolschema.KeyMinItems: 1,
 			},
-		}}, nil
+		}}
 	case field.Kind != graphQLKindScalar:
-		return nil, nil
+		return nil
 	}
 
+	return scalarParams(field, words, describe)
+}
+
+// scalarParams are the parameters a scalar field becomes, by its schema type.
+func scalarParams(
+	field *graphQLField,
+	words string,
+	describe func(string) string,
+) []graphQLParam {
 	switch field.Type {
 	case graphQLTypeTimestamp:
 		return []graphQLParam{
@@ -196,7 +204,7 @@ func paramsFor(field graphQLField) ([]graphQLParam, error) {
 				Schema: agenttoolschema.Date(describe("Only records whose " + words +
 					" is on or before this day, in the organization's timezone.")),
 			},
-		}, nil
+		}
 	case graphQLTypeBoolean:
 		return []graphQLParam{{
 			Name: field.Name, Field: field.Name, Kind: paramEquals,
@@ -206,7 +214,7 @@ func paramsFor(field graphQLField) ([]graphQLParam, error) {
 					"Only records that are, or are not, " + words + ".",
 				),
 			},
-		}}, nil
+		}}
 	case graphQLTypeID:
 		return []graphQLParam{{
 			Name: field.Name, Field: field.Name, Kind: paramEquals,
@@ -214,7 +222,7 @@ func paramsFor(field graphQLField) ([]graphQLParam, error) {
 				toolschema.KeyType:        toolschema.TypeString,
 				toolschema.KeyDescription: describe("Only records with this " + words + "."),
 			},
-		}}, nil
+		}}
 	case graphQLTypeInt, graphQLTypeFloat, graphQLTypeDecimal:
 		number := map[string]any{toolschema.KeyType: toolschema.TypeInteger}
 		unit := ""
@@ -241,7 +249,7 @@ func paramsFor(field graphQLField) ([]graphQLParam, error) {
 					describe("Only records whose "+words+" is at most this."+unit),
 				),
 			},
-		}, nil
+		}
 	case graphQLTypeString:
 		return []graphQLParam{{
 			Name: field.Name, Field: field.Name, Kind: paramContains,
@@ -251,10 +259,10 @@ func paramsFor(field graphQLField) ([]graphQLParam, error) {
 					"Only records whose " + words + " contains this text.",
 				),
 			},
-		}}, nil
+		}}
 	}
 
-	return nil, nil
+	return nil
 }
 
 func withDescription(schema map[string]any, description string) map[string]any {
