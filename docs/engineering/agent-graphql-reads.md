@@ -311,7 +311,8 @@ becomes a parameter. Its type comes from the field's GraphQL type:
   `leaseEndDate`). The operation's selection decides only what a result carries.
 - **Withheld fields.** A field above the caller's ceiling, or in a `@protected` group the caller
   lacks, is refused as a filter or sort before the read, with the same message today's
-  `refuseWithheldFields` gives.
+  `refuseWithheldFields` gives. A view `report_compose_table_view` composes and previews through the list
+  is held to the same check, since its filters reach the same resolver.
 
 **Operations on a bespoke input** (`FuelPurchasesInput`, `WatchtowerItemsInput`,
 `FactoringNoaListInput`, the side `filter:` inputs, …). Each input field is a parameter under its
@@ -342,7 +343,7 @@ can be used on a new hold"), and a schema description edit is a schema change fo
 The tool's description is its summary followed by every typed parameter by name
 ("Filters: active, code, createdAtFrom/To, …"), as the repository lists' were, so a model choosing
 among tools, and the ranking that embeds descriptions, sees what each list narrows by.
-`TestReferenceReads_DescribeEveryParameter` holds each converted tool to it.
+`TestConvertedLists_DescribeEveryParameter` holds each converted tool to it.
 
 The parameters are derived when the tool is built, not when the code is generated, because the
 filter configuration is computed from the entity at runtime (`querybuilder.GetFieldConfiguration`).
