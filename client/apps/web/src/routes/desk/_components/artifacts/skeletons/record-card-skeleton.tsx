@@ -59,6 +59,7 @@ export function CardHeadSkeleton({
   meta,
   stepper = false,
   lead = false,
+  under,
 }: {
   /** The kicker's pieces, as widths in pixels. */
   kicker: readonly number[];
@@ -70,6 +71,8 @@ export function CardHeadSkeleton({
   stepper?: boolean;
   /** True for a person's or a company's initials; any other node is drawn as the mark's outline. */
   lead?: ReactNode;
+  /** What sits under the name, above where the record stands, in its own outline. */
+  under?: ReactNode;
 }) {
   return (
     <div className="dk-rec-head">
@@ -93,6 +96,7 @@ export function CardHeadSkeleton({
           </div>
         )}
       </div>
+      {under}
       <div className="dk-rec-meta">
         <SkeletonBar w="72px" className="dk-rec-sk-pill" />
         {meta.map((piece, index) => (

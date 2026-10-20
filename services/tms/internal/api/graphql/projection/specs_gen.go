@@ -3848,8 +3848,24 @@ func init() {
 				FieldMapKey: "decidedByUserId",
 			},
 			{
+				Name:        "decidedBy",
+				FieldMapKey: "decidedByUserId",
+			},
+			{
 				Name:        "decidedAt",
 				FieldMapKey: "decidedAt",
+			},
+			{
+				Name:        "decisionNote",
+				FieldMapKey: "approvalNote",
+			},
+			{
+				Name:        "previewDigest",
+				FieldMapKey: "approvalPreviewDigest",
+			},
+			{
+				Name:    "runMode",
+				Special: "runMode",
 			},
 			{
 				Name:        "expiresAt",

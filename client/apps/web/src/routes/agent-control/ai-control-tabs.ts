@@ -36,6 +36,17 @@ export const AGENT_OPEN_PARAM = "openAgent";
 
 export const agentOpenParser = parseAsString.withOptions({ history: "push", shallow: true });
 
+export const AI_CONTROL_PATH = "/admin/agent-control";
+
+/** The Agents tab, with the given agent's sheet open when there is one. */
+export function aiControlAgentPath(agentId?: string | null): string {
+  const params = new URLSearchParams({ [AI_CONTROL_TAB_PARAM]: "agents" });
+  if (agentId) {
+    params.set(AGENT_OPEN_PARAM, agentId);
+  }
+  return `${AI_CONTROL_PATH}?${params.toString()}`;
+}
+
 /**
  * The agent builder is a page of its own over the Agents tab, not a table's
  * panel, so it keeps its own keys: the agent it edits, or what a new one

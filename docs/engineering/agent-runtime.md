@@ -1712,6 +1712,22 @@ report; a delegated turn is never offered the tool. The AI audit trail records t
 superseded proposal's `filed` event and the `withdraw_proposal` call like any runtime step,
 with no new event kind or canonical field.
 
+### The agent names its plan
+
+A plan's name is the line the person reads above its steps, on the plan card and in the
+approval box. It used to be "Dispatch: 4 changes" every time. Every turn that is offered
+`withdraw_proposal` is also given `name_plan {title}` (`agentruntime/nameplan.go`,
+`declareNamePlan`) from its first model call, so the tool array never changes mid-turn. The
+runtime answers it itself: `agent.NamedPlanTitle` drops control characters, folds the title to one line of plain text
+and refuses an empty one or one over `agent.MaxNamedPlanTitleLength` (80) characters, and the
+last name the turn gave rides `RunResult.PlanTitle` to the recorder (`RecordRequest.PlanTitle`),
+which names the turn's own plan with it when two or more writes are filed (`planTitle` in
+`proposalrecorder`). A turn with no name, or a script's batch, keeps "Agent: N changes". A
+delegated turn is never offered the tool: the agent that handed the task names the plan. The
+name is model-written text, drawn as plain text and never as markdown. `agent_plans.title`
+is not part of the AI audit trail's canonical form, so naming a plan changes no
+`hash_version`.
+
 A filing a shadow switch holds says so. When the organization's agents are paused, or the
 agent is in shadow, the filing result reads "It has not run, and no one can approve it yet:"
 followed by which switch is on and where it is turned off in AI Control, and tells the model

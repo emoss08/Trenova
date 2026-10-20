@@ -9756,6 +9756,7 @@
   "The pickup window has already closed, so no driver can make it and on-time is not judged. Assign whoever ran or will run the load, and reschedule the pickup if it has not happened yet": "提貨時段已結束，任何駕駛員都無法準時抵達，因此不評估準時性。請指派已執行或將執行此貨載的人員，若尚未提貨，請重新安排提貨時間",
   "The pivot field cannot also be selected as a dimension": "樞紐欄位不得同時選為維度",
   "The plan's steps cannot be read": "無法讀取計畫的步驟",
+  "The plan's steps cannot be read here": "無法在此讀取計畫的步驟",
   "The planned delivery window.": "預定的送貨時段。",
   "The planned pickup window.": "預定的取貨時段。",
   "The policy or handbook a driver is being asked to read and sign.": "要求駕駛員閱讀並簽署的政策或手冊。",

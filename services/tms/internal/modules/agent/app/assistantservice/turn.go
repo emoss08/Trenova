@@ -420,6 +420,7 @@ func (s *Service) FinishTurn(
 		Actor:       req.Actor,
 		Saved:       saved,
 		Actions:     turn.Actions,
+		PlanTitle:   turn.PlanTitle,
 		Model:       turn.Model,
 		Input:       plan.Input,
 		Artifacts:   artifacts,

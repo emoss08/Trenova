@@ -33,6 +33,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -60,6 +61,11 @@ type shadowReader interface {
 		tenantInfo pagination.TenantInfo,
 		runID pulid.ID,
 	) (agentshadow.Verdict, error)
+	ForRuns(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		runIDs []pulid.ID,
+	) (map[pulid.ID]agentshadow.Verdict, error)
 }
 
 type runReader interface {
@@ -311,6 +317,11 @@ func (s *Service) claimAndRun(
 		FromStatus:      from,
 		DecidedByUserID: actor.UserID,
 		DecidedAt:       now,
+		Approval: agentports.PlanApproval{
+			ReasonCode:    req.ReasonCode,
+			Note:          agent.NormalizeDecisionNote(req.Note),
+			PreviewDigest: prepared.settledDigest(from),
+		},
 	})
 	if err != nil {
 		return nil, err
@@ -499,17 +510,74 @@ func (s *Service) refuseShadowedSteps(
 	plan *agent.AgentPlan,
 	steps []*agent.AgentProposal,
 ) error {
-	for _, runID := range otherStepRuns(plan, steps) {
-		verdict, err := s.shadow.ForRun(ctx, tenant, runID)
-		if err != nil {
-			return err
-		}
-		if verdict.Shadow() {
-			return shadowRefusal(verdict)
-		}
+	stepRuns := otherStepRuns(plan, steps)
+	verdicts, err := s.shadow.ForRuns(ctx, tenant, append([]pulid.ID{plan.RunID}, stepRuns...))
+	if err != nil {
+		return err
+	}
+	if verdict := agentshadow.PlanVerdict(verdicts, plan.RunID, stepRuns); verdict.Shadow() {
+		return shadowRefusal(verdict)
 	}
 
 	return nil
+}
+
+func (s *Service) PlanHolds(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	plans []*agent.AgentPlan,
+) (map[pulid.ID]*agentports.ProposalHold, error) {
+	holds := make(map[pulid.ID]*agentports.ProposalHold, len(plans))
+	waiting := make([]pulid.ID, 0, len(plans))
+	for _, plan := range plans {
+		if plan != nil && plan.Status == agent.PlanStatusPending {
+			waiting = append(waiting, plan.ID)
+		}
+	}
+	if len(waiting) == 0 {
+		return holds, nil
+	}
+
+	steps, err := s.proposals.ListByPlans(ctx, agentports.ListAgentProposalsByPlansRequest{
+		PlanIDs:    waiting,
+		TenantInfo: tenant,
+	})
+	if err != nil {
+		return nil, err
+	}
+	stepsByPlan := make(map[pulid.ID][]*agent.AgentProposal, len(waiting))
+	for _, step := range steps {
+		if step.PlanID != nil {
+			stepsByPlan[*step.PlanID] = append(stepsByPlan[*step.PlanID], step)
+		}
+	}
+
+	runs := make([]pulid.ID, 0, len(waiting))
+	stepRuns := make(map[pulid.ID][]pulid.ID, len(waiting))
+	for _, plan := range plans {
+		if plan == nil || plan.Status != agent.PlanStatusPending {
+			continue
+		}
+		stepRuns[plan.ID] = otherStepRuns(plan, stepsByPlan[plan.ID])
+		runs = append(runs, plan.RunID)
+		runs = append(runs, stepRuns[plan.ID]...)
+	}
+	verdicts, err := s.shadow.ForRuns(ctx, tenant, sliceutils.Dedupe(runs))
+	if err != nil {
+		return nil, err
+	}
+
+	for _, plan := range plans {
+		if plan == nil || plan.Status != agent.PlanStatusPending {
+			continue
+		}
+		hold := agentshadow.PlanVerdict(verdicts, plan.RunID, stepRuns[plan.ID]).Hold()
+		if hold != nil {
+			holds[plan.ID] = hold
+		}
+	}
+
+	return holds, nil
 }
 
 // assertMayUseAgent refuses a plan from an agent the actor may not use. An
@@ -627,7 +695,7 @@ type recordKey struct {
 // comparing against it refused the second of two changes to one record every
 // time, although the approver approved both together.
 func (s *Service) runSteps(ctx context.Context, r *stepRun) *agent.AgentPlan {
-	if independent(r.steps) {
+	if agent.PlanRunModeOf(r.steps) == agent.PlanRunModeEachStep {
 		return s.runIndependent(ctx, r)
 	}
 
@@ -790,26 +858,6 @@ func (s *Service) signal(
 	if err := s.decisions.SignalRun(ctx, lastReq, last, plan.RunID); err != nil {
 		s.l.Error("failed to signal agent workflow for plan", zap.Error(err))
 	}
-}
-
-func independent(steps []*agent.AgentProposal) bool {
-	if len(steps) < 2 {
-		return false
-	}
-
-	resource := steps[0].TargetResource
-	seen := make(map[pulid.ID]struct{}, len(steps))
-	for _, step := range steps {
-		if step.TargetID.IsNil() || step.TargetResource == "" || step.TargetResource != resource {
-			return false
-		}
-		if _, repeated := seen[step.TargetID]; repeated {
-			return false
-		}
-		seen[step.TargetID] = struct{}{}
-	}
-
-	return true
 }
 
 func (s *Service) failAt(

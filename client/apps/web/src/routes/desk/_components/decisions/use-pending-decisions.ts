@@ -77,21 +77,13 @@ export function usePendingDecisions(filter: PendingDecisionFilter, enabled = tru
       nodes: data.pages.flatMap((page) =>
         page.pendingDecisions.edges.flatMap((edge): PendingDecisionNode[] => {
           const node = edge.node;
-          const hold = edge.hold ?? null;
           if (node.__typename === "AgentProposal") {
             const proposal = getFragmentData(PendingProposalFieldsFragmentDoc, node);
-            return [
-              { ...proposal, __typename: "AgentProposal", hold: hold ?? proposal.hold ?? null },
-            ];
+            return [{ ...proposal, __typename: "AgentProposal", hold: proposal.hold ?? null }];
           }
           if (node.__typename === "AgentPlan") {
-            return [
-              {
-                ...getFragmentData(PendingPlanFieldsFragmentDoc, node),
-                __typename: "AgentPlan",
-                hold,
-              },
-            ];
+            const plan = getFragmentData(PendingPlanFieldsFragmentDoc, node);
+            return [{ ...plan, __typename: "AgentPlan", hold: plan.hold ?? null }];
           }
           return [];
         }),

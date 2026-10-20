@@ -1148,51 +1148,6 @@
   color: var(--dsk-success-fg);
   animation: dk-mkswap 400ms var(--dk-spring) both;
 }
-/* plan */
-.dk-ax-lead {
-  margin: 0;
-  font-size: 14px;
-  line-height: 1.55;
-  color: var(--dsk-fg2);
-}
-.dk-ax-prog {
-  margin-top: 16px;
-  height: 4px;
-  border-radius: 2px;
-  background: var(--dsk-sunken);
-  overflow: hidden;
-}
-.dk-ax-prog-l {
-  margin-top: 6px;
-  font: 11px var(--dk-plex);
-  color: var(--dsk-subtle);
-}
-.dk-ax-plan ol {
-  list-style: none;
-  margin: 16px 0 0;
-  padding: 0;
-  position: relative;
-}
-.dk-ax-plan ol::before {
-  content: "";
-  position: absolute;
-  left: 11px;
-  top: 14px;
-  bottom: 14px;
-  width: 1px;
-  background: var(--dsk-b);
-}
-.dk-ax-plan li {
-  position: relative;
-  display: flex;
-  gap: 12px;
-  padding: 8px 0;
-  animation: dk-mprow 360ms var(--dk-settle) both;
-}
-.dk-ax-plan li div > span {
-  font-size: 11.5px;
-  color: var(--dsk-subtle);
-}
 /* report */
 .dk-ax-repm {
   display: flex;
@@ -16326,5 +16281,414 @@ button.dk-fcd-buy:hover {
   .dk-fcd-buy .dk-fcd-gal,
   .dk-fcd-buy > [data-slot="badge"] {
     display: none;
+  }
+}
+/* the plan: its steps as a track, what each changes from what to what, the records it touches and its approval */
+.dk-pln {
+  container: dkplan / inline-size;
+}
+.dk-pln-track {
+  display: flex;
+  gap: 3px;
+  height: 6px;
+  margin-top: 12px;
+}
+.dk-pln-track i {
+  flex: 1;
+  border-radius: 3px;
+  background: var(--dsk-sunken);
+  box-shadow: inset 0 0 0 1px var(--dsk-b-sub);
+  transition: background 240ms var(--dk-settle);
+}
+.dk-pln-track i.dk-wait {
+  box-shadow: inset 0 0 0 1px var(--dsk-b-strong);
+}
+.dk-pln-track i.dk-done {
+  background: var(--dsk-success);
+  box-shadow: none;
+}
+.dk-pln-track i.dk-run {
+  background: var(--dsk-blue);
+  box-shadow: none;
+  opacity: 0.55;
+}
+.dk-pln-track i.dk-fail {
+  background: var(--danger);
+  box-shadow: none;
+}
+.dk-pln-track i.dk-skip {
+  background: transparent;
+}
+.dk-pln-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.dk-pln-step {
+  position: relative;
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  column-gap: 12px;
+  padding-bottom: 18px;
+}
+.dk-pln-step::before {
+  content: "";
+  position: absolute;
+  left: 11.5px;
+  top: 26px;
+  bottom: 2px;
+  width: 1px;
+  background: var(--dsk-b);
+}
+.dk-pln-step.dk-done::before {
+  background: var(--dsk-success);
+}
+.dk-pln-step:last-child {
+  padding-bottom: 4px;
+}
+.dk-pln-step:last-child::before {
+  display: none;
+}
+.dk-pln-n {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font: 500 11.5px var(--dk-plex);
+  color: var(--dsk-fg2);
+  background: var(--dsk-card);
+  box-shadow: inset 0 0 0 1.5px var(--dsk-b-strong);
+}
+.dk-done > .dk-pln-n {
+  color: var(--dsk-success-fg);
+  background: var(--dsk-success-sub);
+  box-shadow: none;
+}
+.dk-run > .dk-pln-n {
+  color: var(--dsk-blue-fg);
+  background: var(--dsk-blue-sub);
+  box-shadow: inset 0 0 0 1.5px var(--dsk-blue);
+}
+.dk-fail > .dk-pln-n {
+  color: var(--danger-subtle-foreground);
+  background: var(--danger-subtle);
+  box-shadow: none;
+}
+.dk-skip > .dk-pln-n {
+  color: var(--dsk-faint);
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--dsk-b-sub);
+}
+.dk-pln-body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.dk-pln-h {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 24px;
+}
+.dk-pln-h > div {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding-top: 2px;
+}
+.dk-pln-h b {
+  font-weight: 500;
+  color: var(--dsk-fg);
+  overflow-wrap: anywhere;
+}
+.dk-pln-h span {
+  font-size: 12px;
+  color: var(--dsk-subtle);
+}
+.dk-pln-h code {
+  font: 11px var(--dk-plex);
+  color: var(--dsk-subtle);
+}
+.dk-skip .dk-pln-h b {
+  color: var(--dsk-subtle);
+}
+.dk-pln-at {
+  flex: none;
+  padding-top: 4px;
+  font-size: 11.5px;
+  white-space: nowrap;
+  color: var(--dsk-subtle);
+}
+.dk-run .dk-pln-at {
+  color: var(--dsk-blue-fg);
+}
+.dk-fail .dk-pln-at {
+  color: var(--danger-subtle-foreground);
+}
+.dk-pln-chg {
+  overflow: hidden;
+  border: 1px solid var(--dsk-b);
+  border-radius: 10px;
+  background: var(--dsk-card);
+}
+.dk-skip .dk-pln-chg {
+  opacity: 0.65;
+}
+.dk-pln-rec {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  font-size: 12px;
+  background: var(--dsk-sunken);
+  border-bottom: 1px solid var(--dsk-b-sub);
+}
+.dk-pln-rec:last-child {
+  border-bottom: 0;
+}
+.dk-pln-rec > svg {
+  flex: none;
+  color: var(--dsk-subtle);
+}
+.dk-pln-rec b {
+  min-width: 0;
+  font-weight: 500;
+  color: var(--dsk-fg);
+  overflow-wrap: anywhere;
+}
+.dk-pln-rec em {
+  flex: none;
+  margin-left: auto;
+  padding: 1px 6px;
+  font-size: 11px;
+  font-style: normal;
+  color: var(--dsk-subtle);
+  border-radius: var(--radius-label);
+  background: var(--dsk-card);
+  box-shadow: inset 0 0 0 1px var(--dsk-b-sub);
+}
+.dk-pln-f {
+  display: grid;
+  grid-template-columns: minmax(110px, 170px) minmax(0, 1fr);
+  gap: 5px 12px;
+  margin: 0;
+  padding: 8px 10px;
+}
+.dk-pln-f dt {
+  padding-top: 1px;
+  font-size: 12px;
+  color: var(--dsk-subtle);
+}
+.dk-pln-f dd {
+  min-width: 0;
+  margin: 0;
+  font-size: 12px;
+}
+.dk-pln-more {
+  padding: 0 10px 8px;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-pln-x {
+  padding: 8px 10px;
+}
+.dk-pln-dep {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-pln-warn {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--dsk-warn-fg);
+  background: var(--dsk-warn-sub);
+}
+.dk-pln-warn.dk-bad {
+  color: var(--danger-subtle-foreground);
+  background: var(--danger-subtle);
+}
+.dk-pln-warn > svg {
+  flex: none;
+  margin-top: 2px;
+}
+.dk-pln-err {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--danger-subtle-foreground);
+  background: var(--danger-subtle);
+  overflow-wrap: anywhere;
+}
+.dk-pln-err b {
+  font-weight: 500;
+}
+.dk-pln-res {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--dsk-success-fg);
+}
+.dk-pln-fold {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 32px;
+  padding: 6px 10px;
+  border: 1px solid var(--dsk-b-sub);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 12px;
+  text-align: start;
+  color: var(--dsk-fg2);
+  background: var(--dsk-sunken);
+  cursor: pointer;
+  transition: background 140ms;
+}
+.dk-pln-fold:hover {
+  background: var(--dsk-hover);
+}
+.dk-pln-fold:focus-visible {
+  outline: 2px solid var(--dsk-ring);
+  outline-offset: 1px;
+}
+.dk-pln-fold > span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dk-pln-fold > svg {
+  flex: none;
+  color: var(--dsk-subtle);
+  transition: transform 160ms var(--dk-settle);
+}
+.dk-pln-fold[aria-expanded="true"] > svg {
+  transform: rotate(90deg);
+}
+.dk-pln-recs {
+  overflow: hidden;
+  border: 1px solid var(--dsk-b);
+  border-radius: 12px;
+}
+.dk-pln-recs .dk-rec-row {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+.dk-pln-recs .dk-rec-row > svg {
+  color: var(--dsk-subtle);
+}
+.dk-pln-recs .dk-rec-row > div {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.dk-pln-recs .dk-rec-row > div b {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.dk-pln-recs .dk-rec-row > div span {
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-pln-recs .dk-rec-row:not(a) {
+  cursor: default;
+}
+.dk-pln-recs .dk-rec-row:not(a):hover {
+  background: transparent;
+}
+.dk-pln-sn {
+  display: flex;
+  gap: 3px;
+}
+.dk-pln-sn i {
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font: 500 10.5px var(--dk-plex);
+  font-style: normal;
+  color: var(--dsk-fg2);
+  background: var(--dsk-sunken);
+  box-shadow: inset 0 0 0 1px var(--dsk-b-sub);
+}
+.dk-pln-hidden {
+  padding: 8px 12px;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+  border-top: 1px solid var(--dsk-b-sub);
+}
+.dk-pln-dig {
+  font: 11px var(--dk-plex);
+  color: var(--dsk-subtle);
+}
+.dk-pln-note {
+  margin: 3px 0 2px;
+  padding: 6px 9px;
+  border-left: 2px solid var(--dsk-b-strong);
+  font-size: 12px;
+  color: var(--dsk-fg2);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.dk-pln-undo {
+  font: 500 12px var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-fg2);
+}
+.dk-pln-sk-step {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  column-gap: 12px;
+  padding-bottom: 18px;
+}
+.dk-pln-sk-step > div {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 4px;
+}
+.dk-pln-sk-seg {
+  flex: 1;
+  border-radius: 3px;
+}
+.dk-pln-sk-node {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+}
+.dk-pln-sk-box {
+  height: 76px;
+  border-radius: 10px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .dk-pln-track i,
+  .dk-pln-fold,
+  .dk-pln-fold > svg {
+    transition: none;
+  }
+}
+@container dkplan (max-width: 560px) {
+  .dk-pln-f {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1px 0;
+  }
+  .dk-pln-f dd {
+    margin-bottom: 6px;
   }
 }

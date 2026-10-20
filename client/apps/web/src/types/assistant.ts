@@ -744,6 +744,8 @@ export const toolExecutionResultSchema = z.object({
       }),
     )
     .nullish(),
+  /** Where the record stands once the write ran, in a few words: "Posted, 2300.00 USD to FreshHaul Foods, unpaid". */
+  state: z.string().nullish(),
 });
 
 /** One write the other agent made or proposed on the task. */
@@ -1705,10 +1707,7 @@ export const assistantProposalSchema = z.object({
   /** Who decided it; empty while it waits. */
   decidedByUserId: optionalIdSchema,
   /** What the person told the agent with the decision; empty when they said nothing. */
-  decisionNote: z
-    .string()
-    .nullish()
-    .transform((value) => value ?? ""),
+  decisionNote: z.string().nullish(),
   /**
    * Whether the server approves it only with the digest of a preview the
    * person was shown: money, what a customer or a driver sees, what is sent
@@ -1735,9 +1734,17 @@ export const proposalEditsSchema = z.object({
  * Several writes one run asked for, decided together and run in the order the
  * agent asked. Its steps are the proposals that carry its id.
  */
+/**
+ * How an approved plan's steps run: in order, stopping at the first that
+ * fails, or every step on its own because each changes a different record.
+ * A mode this build does not know reads as in order, the stricter of the two.
+ */
+export const planRunModeSchema = z.enum(["InOrder", "EachStep"]).catch("InOrder");
+
 export const assistantPlanSchema = z.object({
   id: z.string(),
   runId: z.string().optional().default(""),
+  /** The plan's name: the agent's own words when it named it, else "Agent: N changes". Plain text. */
   title: z.string(),
   summary: z.string().optional().default(""),
   status: planStatusSchema,
@@ -1749,6 +1756,17 @@ export const assistantPlanSchema = z.object({
   decidedAt: z.number().nullish(),
   /** Who decided the plan; empty while it waits. */
   decidedByUserId: optionalIdSchema,
+  /** The decider's name; empty while it waits or when they cannot be read. */
+  decidedByName: z.string().nullish(),
+  /** What the decider wrote with the decision, as plain text; empty when they wrote nothing. */
+  decisionNote: z.string().nullish(),
+  /** The digest of the preview an approval was made on; empty for a rejection or a waiting plan. */
+  previewDigest: z.string().nullish(),
+  /** When an approval in its undo window goes through, unless it is undone first. */
+  commitsAt: z.number().nullish(),
+  /** When an approval was undone in its window. */
+  undoneAt: z.number().nullish(),
+  runMode: planRunModeSchema.nullish(),
   /** When a pending plan stops being decidable. */
   expiresAt: z.number().nullish().default(0),
   hold: proposalHoldSchema.nullish(),
@@ -2176,6 +2194,7 @@ export type RecordRef = z.infer<typeof recordRefSchema>;
 export type ProposalFieldKind = z.infer<typeof proposalFieldKindSchema>;
 export type ProposalHold = z.infer<typeof proposalHoldSchema>;
 export type AssistantPlan = z.infer<typeof assistantPlanSchema>;
+export type PlanRunMode = z.infer<typeof planRunModeSchema>;
 export type PlanStatus = z.infer<typeof planStatusSchema>;
 export type PlanDecision = z.infer<typeof planDecisionSchema>;
 
