@@ -164,3 +164,113 @@ func TestValidate_SkipsResolverChecksWithoutResolvers(t *testing.T) {
 		"Query": func() any { return nil },
 	}))
 }
+
+const operationsTestSchema = `
+type Thing { id: ID! name: String! owner: Owner }
+type Owner { id: ID! name: String! }
+input ThingFilter { name: String, nested: NestedFilter }
+input NestedFilter { id: ID }
+type Query { thing(filter: ThingFilter): Thing other: Owner }
+`
+
+func operationsSchema(t *testing.T) *ast.Schema {
+	t.Helper()
+
+	schema, err := gqlparser.LoadSchema(&ast.Source{Name: "operations", Input: operationsTestSchema})
+	require.NoError(t, err)
+	return schema
+}
+
+func operationsDocument(t *testing.T, schema *ast.Schema, query string) *ast.QueryDocument {
+	t.Helper()
+
+	doc, err := gqlparser.LoadQuery(schema, query)
+	require.Empty(t, err)
+	return doc
+}
+
+func thingShards(withOwner, withNested bool) []*Shard {
+	inputs := []Input{{Name: "ThingFilter"}}
+	if withNested {
+		inputs = append(inputs, Input{Name: "NestedFilter"})
+	}
+	shards := []*Shard{{
+		Name: "things",
+		Objects: []*Object{
+			{Name: "Thing", Implementors: []string{"Thing"}},
+			{Name: "Query", Implementors: []string{"Query"}, Root: true},
+		},
+		Fields: []Fields{
+			{Object: "Thing", Fields: []*Field{{Name: "id"}, {Name: "name"}, {Name: "owner"}}},
+			{Object: "Query", Fields: []*Field{{Name: "thing"}}},
+		},
+		Inputs: inputs,
+	}}
+	if withOwner {
+		shards = append(shards, &Shard{
+			Name:    "owners",
+			Objects: []*Object{{Name: "Owner", Implementors: []string{"Owner"}}},
+			Fields:  []Fields{{Object: "Owner", Fields: []*Field{{Name: "id"}, {Name: "name"}}}},
+		})
+	}
+	return shards
+}
+
+func TestValidateOperations_AcceptsAnExecutorHoldingOnlyWhatItsOperationsReach(t *testing.T) {
+	t.Parallel()
+
+	schema := operationsSchema(t)
+	reg, err := Compile(thingShards(false, true))
+	require.NoError(t, err)
+
+	doc := operationsDocument(t, schema, `query Things { thing { id name } }`)
+
+	assert.NoError(t, reg.validateOperations(schema, doc, nil),
+		"Query.other and Owner are never reached, so their shards are not needed")
+	assert.Error(t, reg.validate(schema, nil), "the whole schema is not executable")
+}
+
+func TestValidateOperations_ReportsAReachedTypeWithNoExecutor(t *testing.T) {
+	t.Parallel()
+
+	schema := operationsSchema(t)
+	reg, err := Compile(thingShards(false, true))
+	require.NoError(t, err)
+
+	doc := operationsDocument(t, schema,
+		`query Things { thing { id ...OwnerFields } } fragment OwnerFields on Thing { owner { name } }`)
+
+	err = reg.validateOperations(schema, doc, nil)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "object Owner has no executor")
+}
+
+func TestValidateOperations_ReportsAnInputItCannotDecode(t *testing.T) {
+	t.Parallel()
+
+	schema := operationsSchema(t)
+	reg, err := Compile(thingShards(true, false))
+	require.NoError(t, err)
+
+	doc := operationsDocument(t, schema, `query Things($f: ThingFilter) { thing(filter: $f) { id } }`)
+
+	err = reg.validateOperations(schema, doc, nil)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "input NestedFilter has no decoder")
+}
+
+func TestNewSchema_ValidatesOnlyItsOperationsWhenGiven(t *testing.T) {
+	t.Parallel()
+
+	schema := operationsSchema(t)
+	reg, err := Compile(thingShards(false, true))
+	require.NoError(t, err)
+	doc := operationsDocument(t, schema, `query Things { thing { id } }`)
+
+	assert.NotPanics(t, func() {
+		NewSchema(SchemaConfig{Registry: reg, Parsed: schema, Operations: doc})
+	})
+	assert.Panics(t, func() {
+		NewSchema(SchemaConfig{Registry: reg, Parsed: schema})
+	})
+}

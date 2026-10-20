@@ -1,4 +1,4 @@
-package graphql
+package gqlext
 
 import (
 	"context"
@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/vektah/gqlparser/v2/ast"
 	"go.uber.org/fx"
 )
@@ -19,6 +20,8 @@ const (
 	fieldGuardExtensionName = "ProtectedFieldGuard"
 	protectedDirective      = "protected"
 	protectedGroupArgument  = "group"
+	rootQuery               = "Query"
+	rootMutation            = "Mutation"
 )
 
 type ProtectedFieldMap map[string]map[string]permission.FieldGroup
@@ -87,8 +90,19 @@ type FieldGuardParams struct {
 }
 
 type FieldGuardExtension struct {
-	engine permissionports.PermissionEngine
-	fields ProtectedFieldMap
+	engine    permissionports.PermissionEngine
+	fields    ProtectedFieldMap
+	registry  *permission.Registry
+	resources map[string]permission.Resource
+}
+
+// reducedTypes are the records an agent read shows only by id and name when
+// another record carries them, as the agent tools always have: the person
+// who created a customer is named, not described.
+var reducedTypes = map[string]map[string]struct{}{
+	"User":         {"id": {}, "name": {}},
+	"Organization": {"id": {}, "name": {}},
+	"BusinessUnit": {"id": {}, "name": {}},
 }
 
 var _ interface {
@@ -98,7 +112,10 @@ var _ interface {
 } = (*FieldGuardExtension)(nil)
 
 func NewFieldGuardExtension(p FieldGuardParams) *FieldGuardExtension {
-	return &FieldGuardExtension{engine: p.PermissionEngine}
+	return &FieldGuardExtension{
+		engine:   p.PermissionEngine,
+		registry: fieldsensitivity.DefaultRegistry(),
+	}
 }
 
 func (*FieldGuardExtension) ExtensionName() string {
@@ -111,7 +128,29 @@ func (e *FieldGuardExtension) Validate(schema graphql.ExecutableSchema) error {
 		return err
 	}
 	e.fields = fields
+	e.resources = ResourceTypes(schema.Schema(), e.registry)
 	return nil
+}
+
+// ResourceTypes maps each object type named for a registered resource
+// (Customer is customer, BillingQueueItem is billing_queue_item) to it. A
+// type with no resource of its own belongs to the record that carries it.
+func ResourceTypes(schema *ast.Schema, registry *permission.Registry) map[string]permission.Resource {
+	out := make(map[string]permission.Resource)
+	if schema == nil || registry == nil {
+		return out
+	}
+	for name, def := range schema.Types {
+		if def.Kind != ast.Object || def.BuiltIn {
+			continue
+		}
+		resource := stringutils.ConvertCamelToSnake(name)
+		if registry.HasResource(resource) {
+			out[name] = permission.Resource(resource)
+		}
+	}
+
+	return out
 }
 
 type fieldVisibilityKey struct{}
@@ -139,14 +178,65 @@ func (e *FieldGuardExtension) InterceptField(
 	if fc == nil || fc.Field.Field == nil {
 		return next(ctx)
 	}
-	group, protected := e.fields.Group(fc.Object, fc.Field.Name)
-	if !protected {
-		return next(ctx)
+	ceiling, agentRead := gqlctx.FieldCeilingFrom(ctx)
+	if group, protected := e.fields.Group(fc.Object, fc.Field.Name); protected &&
+		!e.visible(ctx).Has(group) {
+		if agentRead {
+			ceiling.Withhold(fc.Path(), false)
+		}
+		return nil, nil
 	}
-	if e.visible(ctx).Has(group) {
-		return next(ctx)
+	if agentRead && e.withholds(ctx, ceiling, fc) {
+		nonNull := fc.Field.Definition != nil && fc.Field.Definition.Type.NonNull
+		ceiling.Withhold(fc.Path(), nonNull)
+		if !nonNull {
+			return nil, nil
+		}
 	}
-	return nil, nil
+	return next(ctx)
+}
+
+// withholds reports whether an agent read's ceiling hides a field: a nested
+// user, organization or business unit beyond its id and name, or a field
+// the registry ranks above the ceiling on the resource that carries it.
+func (e *FieldGuardExtension) withholds(
+	ctx context.Context,
+	ceiling *gqlctx.FieldCeiling,
+	fc *graphql.FieldContext,
+) bool {
+	if kept, reduced := reducedTypes[fc.Object]; reduced && nested(fc) {
+		_, keep := kept[fc.Field.Name]
+		return !keep
+	}
+	resource, ok := e.resourceOf(fc)
+	if !ok {
+		return false
+	}
+
+	return !fieldsensitivity.VisibleAt(
+		e.registry.GetFieldSensitivity(resource.String(), fc.Field.Name),
+		ceiling.For(ctx, resource),
+	)
+}
+
+func (e *FieldGuardExtension) resourceOf(fc *graphql.FieldContext) (permission.Resource, bool) {
+	for f := fc; f != nil; f = f.Parent {
+		if resource, ok := e.resources[f.Object]; ok {
+			return resource, true
+		}
+	}
+
+	return "", false
+}
+
+func nested(fc *graphql.FieldContext) bool {
+	for f := fc.Parent; f != nil; f = f.Parent {
+		if f.Object != "" && f.Object != rootQuery && f.Object != rootMutation {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (e *FieldGuardExtension) visible(ctx context.Context) permission.FieldGroupSet {

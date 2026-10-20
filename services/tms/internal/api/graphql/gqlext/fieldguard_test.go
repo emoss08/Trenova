@@ -1,4 +1,4 @@
-package graphql
+package gqlext
 
 import (
 	"context"
@@ -55,7 +55,7 @@ func protectedEntities() map[string]func() permission.FieldWithholder {
 func loadProtectedFields(t *testing.T) ProtectedFieldMap {
 	t.Helper()
 
-	schema, err := schemadiff.LoadDir("schema")
+	schema, err := schemadiff.LoadDir("../schema")
 	require.NoError(t, err)
 	fields, err := ProtectedFields(schema)
 	require.NoError(t, err)
@@ -373,4 +373,207 @@ func TestFieldGuardWithholdsWhenTheCheckFails(t *testing.T) {
 
 	assert.Nil(t, result)
 	assert.False(t, resolved)
+}
+
+type fixedCeilings permission.FieldSensitivity
+
+func (c fixedCeilings) For(context.Context, permission.Resource) permission.FieldSensitivity {
+	return permission.FieldSensitivity(c)
+}
+
+func newCeilingGuard(t *testing.T) *FieldGuardExtension {
+	t.Helper()
+
+	guard := newFieldGuard(t, &mocks.DenyResourcesPermissionEngine{})
+	schema, err := schemadiff.LoadDir("../schema")
+	require.NoError(t, err)
+	guard.resources = ResourceTypes(schema, guard.registry)
+	return guard
+}
+
+func agentRead(
+	t *testing.T,
+	guard *FieldGuardExtension,
+	level permission.FieldSensitivity,
+) (context.Context, *gqlctx.FieldCeiling) {
+	t.Helper()
+
+	ceiling := gqlctx.NewFieldCeiling(fixedCeilings(level))
+	return gqlctx.WithFieldCeiling(operationContext(t, guard), ceiling), ceiling
+}
+
+type fieldStep struct {
+	object, field string
+	nonNull       bool
+}
+
+func nestedFieldContext(ctx context.Context, steps ...fieldStep) context.Context {
+	for _, step := range steps {
+		ctx = gqlgen.WithFieldContext(ctx, &gqlgen.FieldContext{
+			Object: step.object,
+			Field: gqlgen.CollectedField{Field: &ast.Field{
+				Name:       step.field,
+				Alias:      step.field,
+				Definition: &ast.FieldDefinition{Type: &ast.Type{NamedType: "String", NonNull: step.nonNull}},
+			}},
+		})
+	}
+	return ctx
+}
+
+func resolveNested(
+	t *testing.T,
+	guard *FieldGuardExtension,
+	ctx context.Context,
+	steps ...fieldStep,
+) (any, bool) {
+	t.Helper()
+
+	resolved := false
+	result, err := guard.InterceptField(nestedFieldContext(ctx, steps...),
+		func(context.Context) (any, error) {
+			resolved = true
+			return "stored value", nil
+		})
+	require.NoError(t, err)
+	return result, resolved
+}
+
+func TestFieldGuardMapsTypesToTheirResources(t *testing.T) {
+	t.Parallel()
+
+	guard := newCeilingGuard(t)
+
+	assert.Equal(t, permission.ResourceWorker, guard.resources["Worker"])
+	assert.Equal(t, permission.ResourceCustomer, guard.resources["Customer"])
+	assert.NotContains(t, guard.resources, "WorkerProfile",
+		"a profile has no resource of its own; it belongs to its worker")
+	assert.NotContains(t, guard.resources, "CustomerConnection")
+}
+
+func TestFieldGuardLeavesAScreenReadWithNoCeilingAlone(t *testing.T) {
+	t.Parallel()
+
+	guard := newCeilingGuard(t)
+	ctx := operationContext(t, guard)
+
+	result, resolved := resolveNested(t, guard, ctx,
+		fieldStep{object: "Query", field: "worker"},
+		fieldStep{object: "Worker", field: "email"},
+	)
+
+	assert.Equal(t, "stored value", result)
+	assert.True(t, resolved)
+}
+
+func TestFieldGuardWithholdsAFieldAboveTheAgentCeiling(t *testing.T) {
+	t.Parallel()
+
+	guard := newCeilingGuard(t)
+	ctx, ceiling := agentRead(t, guard, permission.SensitivityInternal)
+
+	result, resolved := resolveNested(t, guard, ctx,
+		fieldStep{object: "Query", field: "worker"},
+		fieldStep{object: "Worker", field: "email"},
+	)
+
+	assert.Nil(t, result)
+	assert.False(t, resolved, "a withheld nullable field is never resolved")
+	assert.Equal(t, []string{"worker.email"}, ceiling.Withheld())
+	assert.Empty(t, ceiling.Stripped())
+}
+
+func TestFieldGuardShowsAFieldWithinTheAgentCeiling(t *testing.T) {
+	t.Parallel()
+
+	guard := newCeilingGuard(t)
+	ctx, ceiling := agentRead(t, guard, permission.SensitivityRestricted)
+
+	result, resolved := resolveNested(t, guard, ctx,
+		fieldStep{object: "Query", field: "worker"},
+		fieldStep{object: "Worker", field: "email"},
+	)
+
+	assert.Equal(t, "stored value", result)
+	assert.True(t, resolved)
+	assert.Empty(t, ceiling.Withheld())
+}
+
+func TestFieldGuardGatesAProfileFieldAsItsWorkers(t *testing.T) {
+	t.Parallel()
+
+	guard := newCeilingGuard(t)
+	ctx, ceiling := agentRead(t, guard, permission.SensitivityRestricted)
+
+	result, resolved := resolveNested(t, guard, ctx,
+		fieldStep{object: "Query", field: "workers"},
+		fieldStep{object: "WorkerConnection", field: "edges"},
+		fieldStep{object: "WorkerEdge", field: "node"},
+		fieldStep{object: "Worker", field: "profile"},
+		fieldStep{object: "WorkerProfile", field: "medicalExaminerNpi"},
+	)
+
+	assert.Nil(t, result)
+	assert.False(t, resolved, "confidential is never shown, whatever the ceiling")
+	assert.Equal(t, []string{"workers.edges.node.profile.medicalExaminerNpi"}, ceiling.Withheld())
+}
+
+func TestFieldGuardResolvesAWithheldNonNullFieldAndMarksItForStripping(t *testing.T) {
+	t.Parallel()
+
+	guard := newCeilingGuard(t)
+	ctx, ceiling := agentRead(t, guard, permission.SensitivityInternal)
+
+	result, resolved := resolveNested(t, guard, ctx,
+		fieldStep{object: "Query", field: "worker"},
+		fieldStep{object: "Worker", field: "email", nonNull: true},
+	)
+
+	assert.Equal(t, "stored value", result, "nulling a non-null field would null its parent")
+	assert.True(t, resolved)
+	require.Len(t, ceiling.Stripped(), 1)
+	assert.Equal(t, "worker.email", ceiling.Stripped()[0].String())
+}
+
+func TestFieldGuardReducesANestedUserToItsName(t *testing.T) {
+	t.Parallel()
+
+	guard := newCeilingGuard(t)
+	ctx, ceiling := agentRead(t, guard, permission.SensitivityRestricted)
+
+	result, resolved := resolveNested(t, guard, ctx,
+		fieldStep{object: "Query", field: "customer"},
+		fieldStep{object: "Customer", field: "createdBy"},
+		fieldStep{object: "User", field: "emailAddress"},
+	)
+	assert.Nil(t, result)
+	assert.False(t, resolved)
+
+	result, resolved = resolveNested(t, guard, ctx,
+		fieldStep{object: "Query", field: "customer"},
+		fieldStep{object: "Customer", field: "createdBy"},
+		fieldStep{object: "User", field: "name"},
+	)
+	assert.Equal(t, "stored value", result)
+	assert.True(t, resolved)
+	assert.Equal(t, []string{"customer.createdBy.emailAddress"}, ceiling.Withheld())
+}
+
+func TestFieldGuardWithholdsAProtectedFieldFromAnAgentReadAndSaysSo(t *testing.T) {
+	t.Parallel()
+
+	guard := newCeilingGuard(t)
+	guard.engine = &mocks.DenyResourcesPermissionEngine{
+		Denied: []string{permission.ResourceProtectedMargins.String()},
+	}
+	ctx, ceiling := agentRead(t, guard, permission.SensitivityRestricted)
+
+	result, resolved := resolveNested(t, guard, ctx,
+		fieldStep{object: "Query", field: "rateAgreement"},
+		fieldStep{object: "RateAgreement", field: "marginFloorPercent"},
+	)
+
+	assert.Nil(t, result)
+	assert.False(t, resolved)
+	assert.Equal(t, []string{"rateAgreement.marginFloorPercent"}, ceiling.Withheld())
 }

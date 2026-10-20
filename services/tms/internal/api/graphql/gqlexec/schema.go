@@ -15,6 +15,10 @@ type SchemaConfig struct {
 	Override    *ast.Schema
 	Resolvers   map[string]func() any
 	WorkerLimit int64
+	// Operations, when set, are the only operations this executor runs. Its
+	// registry then holds only the shards they reach, and is validated
+	// against them rather than against the whole schema.
+	Operations *ast.QueryDocument
 }
 
 type Schema struct {
@@ -39,7 +43,13 @@ func NewSchema(cfg SchemaConfig) *Schema {
 	}
 
 	schema := s.Schema()
-	if err := s.reg.validate(schema, s.resolvers); err != nil {
+	validate := func() error { return s.reg.validate(schema, s.resolvers) }
+	if cfg.Operations != nil {
+		validate = func() error {
+			return s.reg.validateOperations(schema, cfg.Operations, s.resolvers)
+		}
+	}
+	if err := validate(); err != nil {
 		panic(err)
 	}
 	if schema.Query != nil {
