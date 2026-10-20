@@ -427,6 +427,16 @@ same function: `fieldsensitivity.Visible` against `fieldsensitivity.AgentCeiling
 resource. Every `@protected` field is classified confidential (`fieldguard_test.go` holds that),
 so the ceiling refuses it too.
 
+**A record the reader cannot read shows only its id.** A record of one kind carried by another
+(a tractor's drivers are workers) is gated by its own kind's read permission as well as its
+sensitivities: where the reader may not read that kind at all, every field but its `id` is
+withheld, and named in `withheldByAccess`. The screen shows a tractor's drivers to anyone who can
+read tractors; the repository-backed tractor list named them only to a reader who could read
+workers, and a converted tool withholds at least what its old path did. The check is the
+engine's, once per kind per read (`AgentCeilings.Reads`), as the person or as the agent, and a
+failed check reads as no. `TestConvertedLists_ATractorsDriversFollowWorkerRead` holds both paths
+to it.
+
 **A record's id is never withheld.** Row-level security has already decided the row may be read,
 and the id carries none of the row's content. A tool needs it to name the row in the next call.
 
@@ -464,8 +474,10 @@ Each module's PR:
 | Parties | `customer_list` | none | every field the table selects is Internal |
 | Parties | `location_list` | none | every field the table selects is Internal |
 | Parties | `carrier_list` | none | every field the table selects is Internal |
+| Equipment | `equipment_list_tractors` | none | a driver (`primaryWorker`, `secondaryWorker`) shows only its id to a reader who cannot read workers, as the repository tool left `assignedTo` out |
+| Equipment | `equipment_list_trailers` | none | every field the table selects is Internal |
 
-None of the repository-backed reference or party lists was gated, so at a person's role ceiling below
+None of the repository-backed reference, party or equipment lists was gated, so at a person's role ceiling below
 Internal each now withholds every field but `id`, where it used to return them all. No description
 names a field that is newly withheld at Internal, so none changed.
 
@@ -684,9 +696,11 @@ reasoning for each is above.
 3. **An `agent` principal in `AuthContext`**, made only by the reader.
 4. **The ceiling is enforced in the executor**, by the guard that already enforces `@protected`.
    The tool-side gates are deleted as tools convert, and the ceiling is computed in one function.
-5. **Nested records are gated by their own kind's sensitivities**, and users, organizations and
-   business units reduce to `id` and `name`, as the tools do today. No extra read check is added
-   that the screen does not make.
+5. **Nested records are gated by their own kind's sensitivities and read permission**, and users,
+   organizations and business units reduce to `id` and `name`, as the tools do today. This
+   decision first added no read check the screen does not make; the tractor list showed that the
+   repository tools did make one (a driver's name needed worker read), so an agent read now
+   checks a nested kind's read permission and shows only the id where it is refused.
 6. **The `Desk*` operation is preferred.** A list with none reads its table's operation, unless
    its module's PR adds a `Desk<Plural>` operation, backed by the result-size figures it records.
 7. **Bindings the rule cannot find are named in `reads.yml` and proven** by shape and by the

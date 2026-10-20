@@ -381,6 +381,18 @@ func (c fixedCeilings) For(context.Context, permission.Resource) permission.Fiel
 	return permission.FieldSensitivity(c)
 }
 
+func (fixedCeilings) Reads(context.Context, permission.Resource) bool { return true }
+
+// unreadable is a reader at Restricted who cannot read one resource at all.
+type unreadable struct {
+	fixedCeilings
+	denied permission.Resource
+}
+
+func (c unreadable) Reads(_ context.Context, resource permission.Resource) bool {
+	return resource != c.denied
+}
+
 func newCeilingGuard(t *testing.T) *FieldGuardExtension {
 	t.Helper()
 
@@ -592,4 +604,42 @@ func TestFieldGuardNeverWithholdsARecordsID(t *testing.T) {
 	assert.Equal(t, "stored value", result)
 	assert.True(t, resolved)
 	assert.Empty(t, ceiling.Withheld())
+}
+
+// A tractor's driver is a worker: a reader who may read tractors but not
+// workers sees the driver's id and nothing else, as the repository-backed
+// tractor list only named a driver to a reader who could read workers.
+func TestFieldGuardShowsOnlyTheIDOfARecordTheReaderCannotRead(t *testing.T) {
+	t.Parallel()
+
+	guard := newCeilingGuard(t)
+	ceiling := gqlctx.NewFieldCeiling(unreadable{
+		fixedCeilings: fixedCeilings(permission.SensitivityRestricted),
+		denied:        permission.ResourceWorker,
+	})
+	ctx := gqlctx.WithFieldCeiling(operationContext(t, guard), ceiling)
+
+	result, resolved := resolveNested(t, guard, ctx,
+		fieldStep{object: "Query", field: "tractors"},
+		fieldStep{object: "Tractor", field: "primaryWorker"},
+		fieldStep{object: "Worker", field: "wholeName"},
+	)
+	assert.Nil(t, result)
+	assert.False(t, resolved)
+
+	result, resolved = resolveNested(t, guard, ctx,
+		fieldStep{object: "Query", field: "tractors"},
+		fieldStep{object: "Tractor", field: "primaryWorker"},
+		fieldStep{object: "Worker", field: "id", nonNull: true},
+	)
+	assert.Equal(t, "stored value", result)
+	assert.True(t, resolved)
+
+	result, resolved = resolveNested(t, guard, ctx,
+		fieldStep{object: "Query", field: "tractors"},
+		fieldStep{object: "Tractor", field: "code"},
+	)
+	assert.Equal(t, "stored value", result)
+	assert.True(t, resolved)
+	assert.Equal(t, []string{"tractors.primaryWorker.wholeName"}, ceiling.Withheld())
 }

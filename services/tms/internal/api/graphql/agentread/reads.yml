@@ -9,6 +9,8 @@ reads:
   - tool: location_list
   - tool: document_list_types
   - tool: equipment_list_manufacturers
+  - tool: equipment_list_tractors
+  - tool: equipment_list_trailers
   - tool: equipment_list_types
   - tool: location_list_categories
   - tool: masterdata_list_accessorial_charges

@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 )
@@ -75,4 +76,43 @@ func TestAgentCeilings_AsksOncePerResource(t *testing.T) {
 			ceilings.For(t.Context(), permission.ResourceWorker))
 	}
 	assert.Equal(t, int32(1), engine.calls.Load())
+}
+
+func TestAgentCeilingsReads(t *testing.T) {
+	t.Parallel()
+
+	person := &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
+		PrincipalID:    pulid.MustNew("usr_"),
+		UserID:         pulid.MustNew("usr_"),
+		OrganizationID: pulid.MustNew("org_"),
+		BusinessUnitID: pulid.MustNew("bu_"),
+	}
+	agent := &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeAgent,
+		PrincipalID:    pulid.MustNew("agd_"),
+		UserID:         pulid.MustNew("usr_"),
+		OrganizationID: person.OrganizationID,
+		BusinessUnitID: person.BusinessUnitID,
+	}
+	engine := &mocks.DenyResourcesPermissionEngine{
+		Denied: []string{permission.ResourceWorker.String()},
+	}
+
+	for name, actor := range map[string]*permissionports.RequestActor{
+		"a person": person, "an unattended agent": agent,
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			ceilings := NewAgentCeilings(engine, actor, "")
+			assert.True(t, ceilings.Reads(t.Context(), permission.ResourceTractor))
+			assert.False(t, ceilings.Reads(t.Context(), permission.ResourceWorker))
+			assert.False(t, ceilings.Reads(t.Context(), permission.ResourceWorker),
+				"a remembered answer is the same answer")
+		})
+	}
+
+	assert.False(t, NewAgentCeilings(nil, person, "").Reads(t.Context(), permission.ResourceTractor),
+		"no engine reads as no")
 }

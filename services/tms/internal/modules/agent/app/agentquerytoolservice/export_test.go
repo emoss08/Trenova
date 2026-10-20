@@ -35,6 +35,8 @@ var (
 	NewListCustomersTool          = newListCustomersTool
 	NewListLocationsTool          = newListLocationsTool
 	NewListCarriersTool           = newListCarriersTool
+	NewListTractorsTool           = newListTractorsTool
+	NewListTrailersTool           = newListTrailersTool
 )
 
 // ConvertedListNames are the list tools read through GraphQL by a spec.

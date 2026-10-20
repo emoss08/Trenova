@@ -22,8 +22,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/sharedexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/shipmenttypeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/tenantexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/tractorexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/trailerexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/usstateexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/workerexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	accessorialchargeresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/accessorialchargeresolver"
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
@@ -43,12 +45,15 @@ import (
 	servicetyperesolver "github.com/emoss08/trenova/internal/api/graphql/resolver/servicetyperesolver"
 	shipmenttyperesolver "github.com/emoss08/trenova/internal/api/graphql/resolver/shipmenttyperesolver"
 	tenantresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/tenantresolver"
+	tractorresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/tractorresolver"
 	trailerresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/trailerresolver"
+	workerresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/workerresolver"
 	config "github.com/emoss08/trenova/internal/infrastructure/config"
 	agentports "github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	equipmentmanufacturerservice "github.com/emoss08/trenova/internal/modules/equipment/app/equipmentmanufacturerservice"
 	equipmenttypeservice "github.com/emoss08/trenova/internal/modules/equipment/app/equipmenttypeservice"
 	fleetcodeservice "github.com/emoss08/trenova/internal/modules/equipment/app/fleetcodeservice"
+	tractorservice "github.com/emoss08/trenova/internal/modules/equipment/app/tractorservice"
 	trailerservice "github.com/emoss08/trenova/internal/modules/equipment/app/trailerservice"
 	orgstructureservice "github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice"
 	permissionports "github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -67,6 +72,7 @@ import (
 	holdreasonservice "github.com/emoss08/trenova/internal/modules/reference/app/holdreasonservice"
 	servicetypeservice "github.com/emoss08/trenova/internal/modules/reference/app/servicetypeservice"
 	shipmenttypeservice "github.com/emoss08/trenova/internal/modules/reference/app/shipmenttypeservice"
+	workerservice "github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
 	workerports "github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"go.uber.org/fx"
 	zap "go.uber.org/zap"
@@ -102,8 +108,10 @@ type ResolverParams struct {
 	PermissionEngine             permissionports.PermissionEngine
 	ServiceTypeService           *servicetypeservice.Service
 	ShipmentTypeService          *shipmenttypeservice.Service
+	TractorService               *tractorservice.Service
 	TrailerService               *trailerservice.Service
 	WorkerPTOService             workerports.WorkerPTOService
+	WorkerService                *workerservice.Service
 }
 
 var shards = []*gqlexec.Shard{
@@ -126,8 +134,10 @@ var shards = []*gqlexec.Shard{
 	sharedexec.Shard,
 	shipmenttypeexec.Shard,
 	tenantexec.Shard,
+	tractorexec.Shard,
 	trailerexec.Shard,
 	usstateexec.Shard,
+	workerexec.Shard,
 }
 
 // operations are the persisted operations agent tools read through, each
@@ -152,6 +162,16 @@ var operations = []Operation{
 		Name:     "EquipmentManufacturerTable",
 		Hash:     "sha256:1ad59b9754cf4b8c511c8cf3af0762a6da6adf252d5bb3fd05b50b349bcdaec7",
 		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment EquipmentManufacturerTableRowFields on EquipmentManufacturer { businessUnitId createdAt description id name organizationId status updatedAt version } query EquipmentManufacturerTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { equipmentManufacturers(input: $input) { edges { node { ...EquipmentManufacturerTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "TractorTable",
+		Hash:     "sha256:19329f9543d8714fd002b65bb9f04fcacc89b404bbb21d62cd6f42b21b4553e5",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment EquipmentManufacturerTableFields on EquipmentManufacturer { id name } fragment EquipmentTypeTableFields on EquipmentType { code color id } fragment FleetCodeTableFields on FleetCode { code color id } fragment TractorTableRowFields on Tractor { businessUnitId code createdAt customFields equipmentManufacturer { ...EquipmentManufacturerTableFields } equipmentManufacturerId equipmentType { ...EquipmentTypeTableFields } equipmentTypeId externalId fleetCode { ...FleetCodeTableFields } fleetCodeId fuelType id iftaQualified lastKnownLocationId lastKnownLocationName licensePlateNumber make model organizationId primaryWorker { ...WorkerTableReferenceFields } primaryWorkerId registrationExpiry registrationNumber secondaryWorker { ...WorkerTableReferenceFields } secondaryWorkerId state { ...UsStateTableFields } stateId status updatedAt version vin year } fragment UsStateTableFields on UsState { abbreviation id name } fragment WorkerTableReferenceFields on Worker { firstName id lastName wholeName } query TractorTable($includeEquipmentDetails: Boolean = true, $includeFleetDetails: Boolean = true, $includeTotalCount: Boolean = true, $includeWorkerDetails: Boolean = true, $input: DataTableConnectionInput!) { tractors( input: $input includeEquipmentDetails: $includeEquipmentDetails includeFleetDetails: $includeFleetDetails includeWorkerDetails: $includeWorkerDetails ) { edges { node { ...TractorTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "TrailerTable",
+		Hash:     "sha256:f5ca58d5c5853b2e6ac5dab10cf884d1c5ccce29cda55b95957215797da21f42",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment EquipmentManufacturerTableFields on EquipmentManufacturer { id name } fragment EquipmentTypeTableFields on EquipmentType { code color id } fragment FleetCodeTableFields on FleetCode { code color id } fragment TrailerTableRowFields on Trailer { businessUnitId code createdAt customFields equipmentManufacturer { ...EquipmentManufacturerTableFields } equipmentManufacturerId equipmentType { ...EquipmentTypeTableFields } equipmentTypeId externalId fleetCode { ...FleetCodeTableFields } fleetCodeId id lastInspectionDate lastKnownLocationId lastKnownLocationName licensePlateNumber make maxLoadWeight model organizationId registrationExpiry registrationNumber registrationState { ...UsStateTableFields } registrationStateId status updatedAt version vin year } fragment UsStateTableFields on UsState { abbreviation id name } query TrailerTable($includeEquipmentDetails: Boolean = true, $includeFleetDetails: Boolean = true, $includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { trailers( input: $input includeEquipmentDetails: $includeEquipmentDetails includeFleetDetails: $includeFleetDetails ) { edges { node { ...TrailerTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "EquipmentTypeTable",
@@ -284,9 +304,17 @@ func NewSchema(p ResolverParams) Schema {
 		Core:                core,
 		OrganizationService: p.OrganizationService,
 	}
+	tractorDeps := &tractorresolver.Deps{
+		Core:           core,
+		TractorService: p.TractorService,
+	}
 	trailerDeps := &trailerresolver.Deps{
 		Core:           core,
 		TrailerService: p.TrailerService,
+	}
+	workerDeps := &workerresolver.Deps{
+		Core:          core,
+		WorkerService: p.WorkerService,
 	}
 	customerBillingProfile := &customerBillingProfileResolver{
 		customerCustomerBillingProfile: &customerCustomerBillingProfile{Deps: customerDeps},
@@ -297,7 +325,9 @@ func NewSchema(p ResolverParams) Schema {
 		equipmentmanufacturerMutation: &equipmentmanufacturerMutation{Deps: equipmentmanufacturerDeps},
 		equipmenttypeMutation:         &equipmenttypeMutation{Deps: equipmenttypeDeps},
 		tenantMutation:                &tenantMutation{Deps: tenantDeps},
+		tractorMutation:               &tractorMutation{Deps: tractorDeps},
 		trailerMutation:               &trailerMutation{Deps: trailerDeps},
+		workerMutation:                &workerMutation{Deps: workerDeps},
 	}
 	query := &queryResolver{
 		accessorialchargeQuery:     &accessorialchargeQuery{Deps: accessorialchargeDeps},
@@ -317,7 +347,9 @@ func NewSchema(p ResolverParams) Schema {
 		servicetypeQuery:           &servicetypeQuery{Deps: servicetypeDeps},
 		shipmenttypeQuery:          &shipmenttypeQuery{Deps: shipmenttypeDeps},
 		tenantQuery:                &tenantQuery{Deps: tenantDeps},
+		tractorQuery:               &tractorQuery{Deps: tractorDeps},
 		trailerQuery:               &trailerQuery{Deps: trailerDeps},
+		workerQuery:                &workerQuery{Deps: workerDeps},
 	}
 
 	return newSchema(shards, map[string]func() any{
@@ -372,11 +404,16 @@ func NewSchema(p ResolverParams) Schema {
 		"CarrierSourcingResult": func() any {
 			return &carrierintelligenceresolver.CarrierSourcingResultResolver{Deps: carrierintelligenceDeps}
 		},
-		"Commodity":        func() any { return &commodityresolver.CommodityResolver{Deps: commodityDeps} },
-		"Customer":         func() any { return &carrierintelligenceresolver.CustomerResolver{Deps: carrierintelligenceDeps} },
-		"LocationCategory": func() any { return &locationcategoryresolver.LocationCategoryResolver{Deps: locationcategoryDeps} },
-		"Trailer":          func() any { return &trailerresolver.TrailerResolver{Deps: trailerDeps} },
-		"User":             func() any { return &tenantresolver.UserResolver{Deps: tenantDeps} },
+		"Commodity":         func() any { return &commodityresolver.CommodityResolver{Deps: commodityDeps} },
+		"Customer":          func() any { return &carrierintelligenceresolver.CustomerResolver{Deps: carrierintelligenceDeps} },
+		"LocationCategory":  func() any { return &locationcategoryresolver.LocationCategoryResolver{Deps: locationcategoryDeps} },
+		"PTOChartDataPoint": func() any { return &workerresolver.PTOChartDataPointResolver{Deps: workerDeps} },
+		"Tractor":           func() any { return &tractorresolver.TractorResolver{Deps: tractorDeps} },
+		"Trailer":           func() any { return &trailerresolver.TrailerResolver{Deps: trailerDeps} },
+		"User":              func() any { return &tenantresolver.UserResolver{Deps: tenantDeps} },
+		"Worker":            func() any { return &workerresolver.WorkerResolver{Deps: workerDeps} },
+		"WorkerPTO":         func() any { return &workerresolver.WorkerPTOResolver{Deps: workerDeps} },
+		"WorkerProfile":     func() any { return &workerresolver.WorkerProfileResolver{Deps: workerDeps} },
 	}, operations)
 }
 
@@ -394,7 +431,9 @@ type mutationResolver struct {
 	*equipmentmanufacturerMutation
 	*equipmenttypeMutation
 	*tenantMutation
+	*tractorMutation
 	*trailerMutation
+	*workerMutation
 }
 
 type queryResolver struct {
@@ -415,7 +454,9 @@ type queryResolver struct {
 	*servicetypeQuery
 	*shipmenttypeQuery
 	*tenantQuery
+	*tractorQuery
 	*trailerQuery
+	*workerQuery
 }
 
 type (
@@ -425,7 +466,9 @@ type (
 	equipmentmanufacturerMutation  = equipmentmanufacturerresolver.MutationResolver
 	equipmenttypeMutation          = equipmenttyperesolver.MutationResolver
 	tenantMutation                 = tenantresolver.MutationResolver
+	tractorMutation                = tractorresolver.MutationResolver
 	trailerMutation                = trailerresolver.MutationResolver
+	workerMutation                 = workerresolver.MutationResolver
 	accessorialchargeQuery         = accessorialchargeresolver.QueryResolver
 	carrierQuery                   = carrierresolver.QueryResolver
 	carrierintelligenceQuery       = carrierintelligenceresolver.QueryResolver
@@ -443,5 +486,7 @@ type (
 	servicetypeQuery               = servicetyperesolver.QueryResolver
 	shipmenttypeQuery              = shipmenttyperesolver.QueryResolver
 	tenantQuery                    = tenantresolver.QueryResolver
+	tractorQuery                   = tractorresolver.QueryResolver
 	trailerQuery                   = trailerresolver.QueryResolver
+	workerQuery                    = workerresolver.QueryResolver
 )

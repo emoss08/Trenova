@@ -106,8 +106,6 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 | `equipment_get_tractor` | op | tractor | DeskTractorCard | n/a | id | Same TractorRepository.GetByID. |
 | `equipment_get_trailer` | op | trailer | DeskTrailerCard | n/a | id | Same TrailerRepository.GetByID. |
 | `equipment_list_positions` | partial | vehiclePositions (+ vehiclePosition) | VehiclePositions (+ DeskTractorPosition per tractor) | unpaged list | maxAgeSeconds only | Same TelematicsService.ListVehiclePositions (telematics live read). maxAgeMinutes -> maxAgeSeconds; tractorIds filter missing (vehiclePosition(tractorId) is one at a time). |
-| `equipment_list_tractors` | op | tractors | TractorTable | cursor | DataTable + typed status, include* flags | Same repository list. |
-| `equipment_list_trailers` | op | trailers | TrailerTable | cursor | DataTable + typed status | Same repository list. |
 
 ## exception
 
@@ -332,8 +330,8 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 
 | class | tools |
 |---|---|
-| op, not yet converted | 105 |
-| op, converted (rows removed) | 14 |
+| op, not yet converted | 103 |
+| op, converted (rows removed) | 16 |
 | field-no-op | 6 |
 | partial | 30 |
 | none | 21 |
