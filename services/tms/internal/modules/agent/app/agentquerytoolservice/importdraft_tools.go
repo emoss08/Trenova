@@ -24,6 +24,14 @@ import (
 )
 
 const (
+	toolCustomerList               = "customer_list"
+	toolLocationList               = "location_list"
+	toolMasterdataListServiceTypes = "masterdata_list_service_types"
+	toolReportGet                  = "report_get"
+	toolReportList                 = "report_list"
+)
+
+const (
 	draftAppliedNote = "The page applies this change now and shows it in the page draft on your " +
 		"next turn. Nothing is saved until the person creates the shipment."
 	draftRationale = "Hands a change to the shipment the person is building on their own page; " +
@@ -329,9 +337,9 @@ func codedLabel(code, name string) string {
 func requiredFieldSource(field pagedraft.RequiredField) string {
 	switch field {
 	case pagedraft.RequiredCustomer:
-		return "customer_list"
+		return toolCustomerList
 	case pagedraft.RequiredServiceType:
-		return "masterdata_list_service_types"
+		return toolMasterdataListServiceTypes
 	case pagedraft.RequiredShipmentType:
 		return "masterdata_list_shipment_types"
 	case pagedraft.RequiredFormulaTemplate:
@@ -468,7 +476,7 @@ func provideSetStopLocationTool(
 func (t *setStopLocationTool) Name() string { return string(pagedraft.ActionSetStopLocation) }
 
 func (t *setStopLocationTool) Recipe() []string {
-	return []string{"location_list", string(pagedraft.ActionSetStopLocation)}
+	return []string{toolLocationList, string(pagedraft.ActionSetStopLocation)}
 }
 
 func (t *setStopLocationTool) Description() string {

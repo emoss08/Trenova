@@ -24,6 +24,14 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
+const (
+	toolReportGet                           = "report_get"
+	toolReportList                          = "report_list"
+	toolDetentionGetOccurrence              = "detention_get_occurrence"
+	toolCarrierResolveIntelligenceEvent     = "carrier_resolve_intelligence_event"
+	toolCarrierAcknowledgeIntelligenceEvent = "carrier_acknowledge_intelligence_event"
+)
+
 // A tender block is an override with a life: carrier records are
 // corrected, and a block nobody revisits outlives the problem.
 const tenderBlockDays = 30
@@ -66,7 +74,7 @@ func NewEscalateDetentionTool(escalator detentionEscalator) agentports.AgentTool
 func (t *EscalateDetentionTool) Name() string { return "detention_escalate" }
 
 func (t *EscalateDetentionTool) Recipe() []string {
-	return []string{"detention_get_occurrence", "detention_escalate"}
+	return []string{toolDetentionGetOccurrence, "detention_escalate"}
 }
 
 func (t *EscalateDetentionTool) Description() string {
@@ -218,11 +226,11 @@ func NewApproveDetentionTool(approver detentionApprover) agentports.AgentTool {
 func (t *ApproveDetentionTool) Name() string { return "detention_approve" }
 
 func (t *ApproveDetentionTool) Prerequisites() []string {
-	return []string{"detention_list_occurrences", "detention_get_occurrence"}
+	return []string{"detention_list_occurrences", toolDetentionGetOccurrence}
 }
 
 func (t *ApproveDetentionTool) Recipe() []string {
-	return []string{"detention_list_occurrences", "detention_get_occurrence", "detention_approve"}
+	return []string{"detention_list_occurrences", toolDetentionGetOccurrence, "detention_approve"}
 }
 
 func (t *ApproveDetentionTool) Description() string {
@@ -402,7 +410,11 @@ func NewRequestCredentialRenewalTool(credentials credentialActor) agentports.Age
 func (t *RequestCredentialRenewalTool) Name() string { return "worker_request_credential_renewal" }
 
 func (t *RequestCredentialRenewalTool) Recipe() []string {
-	return []string{"worker_list_expiring_credentials", "worker_get", "worker_request_credential_renewal"}
+	return []string{
+		"worker_list_expiring_credentials",
+		"worker_get",
+		"worker_request_credential_renewal",
+	}
 }
 
 func (t *RequestCredentialRenewalTool) Description() string {
@@ -717,24 +729,28 @@ func NewResolveCarrierIntelEventTool(intel carrierIntelActor) agentports.AgentTo
 
 func (t *carrierIntelEventTool) Name() string {
 	if t.resolves {
-		return "carrier_resolve_intelligence_event"
+		return toolCarrierResolveIntelligenceEvent
 	}
 
-	return "carrier_acknowledge_intelligence_event"
+	return toolCarrierAcknowledgeIntelligenceEvent
 }
 
 func (t *AcknowledgeCarrierIntelEventTool) Name() string {
-	return "carrier_acknowledge_intelligence_event"
+	return toolCarrierAcknowledgeIntelligenceEvent
 }
 
 func (t *AcknowledgeCarrierIntelEventTool) Recipe() []string {
-	return []string{"carrier_get_intelligence_event", "carrier_acknowledge_intelligence_event"}
+	return []string{"carrier_get_intelligence_event", toolCarrierAcknowledgeIntelligenceEvent}
 }
 
-func (t *ResolveCarrierIntelEventTool) Name() string { return "carrier_resolve_intelligence_event" }
+func (t *ResolveCarrierIntelEventTool) Name() string { return toolCarrierResolveIntelligenceEvent }
 
 func (t *ResolveCarrierIntelEventTool) Recipe() []string {
-	return []string{"carrier_get_intelligence_event", "carrier_get", "carrier_resolve_intelligence_event"}
+	return []string{
+		"carrier_get_intelligence_event",
+		"carrier_get",
+		toolCarrierResolveIntelligenceEvent,
+	}
 }
 
 func (t *ResolveCarrierIntelEventTool) SearchTerms() []string {

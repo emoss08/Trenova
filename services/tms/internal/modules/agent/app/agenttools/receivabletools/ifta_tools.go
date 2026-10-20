@@ -537,8 +537,10 @@ func iftaMileageProperties(forCorrection bool) map[string]any {
 		common.ParamShipmentMoveID: agenttoolschema.RecordIDText(permission.ResourceShipmentMove,
 			"The move these miles correct, from shipment_get; the entry then replaces the "+
 				"move's routed miles on the return."+keep),
-		common.ParamNote: common.StringProperty("Where the miles came from, such as a trip sheet."+keep,
-			maxMileageNotes),
+		common.ParamNote: common.StringProperty(
+			"Where the miles came from, such as a trip sheet."+keep,
+			maxMileageNotes,
+		),
 	}
 	if forCorrection {
 		properties[paramIFTAMileageEntryID] = agenttoolschema.KindID(iftaMileageSupplier,
@@ -981,7 +983,8 @@ func moveJurisdictionRequest(
 
 func NewRecalculateMoveJurisdictionMilesTool(router JurisdictionMileRouter) agentports.AgentTool {
 	return common.NewReceivableTool(iftaInternalSpec(&common.ReceivableSpec{
-		Name: "fuel_recalculate_jurisdiction_miles",
+		Name:        "fuel_recalculate_jurisdiction_miles",
+		SearchTerms: []string{"move jurisdiction miles"},
 		Description: "Ask the routing provider again for one move's state-by-state miles and " +
 			"replace its jurisdiction rows. Use it when the move's stops changed or the IFTA " +
 			"return shows it unattributed. The move's distance is left as it was. Each run is one " +

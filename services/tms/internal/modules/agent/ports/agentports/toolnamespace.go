@@ -142,7 +142,15 @@ var toolNamespaces = []ToolNamespace{
 		Name:    "masterdata",
 		Title:   "Reference data",
 		Summary: "Commodities, hazardous materials, hold reasons and the other lookup lists.",
-		Records: []string{"accessorial_charge", "commodity", "fleet_code", "hazardous_material", "hold_reason", "service_type", "shipment_type"},
+		Records: []string{
+			"accessorial_charge",
+			"commodity",
+			"fleet_code",
+			"hazardous_material",
+			"hold_reason",
+			"service_type",
+			"shipment_type",
+		},
 	},
 	{
 		Name:    "order",

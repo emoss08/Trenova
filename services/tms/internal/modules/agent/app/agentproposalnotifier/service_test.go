@@ -227,7 +227,7 @@ func TestNotifyPending_TellsEveryDeciderOnce(t *testing.T) {
 	assert.Equal(t, "Dispatch coverage has 2 changes waiting for a decision", first.Title)
 	assert.Equal(
 		t,
-		"It proposed assign move and add shipment comment. Nothing runs until someone decides.",
+		"It proposed assign dispatch move and add shipment comment. Nothing runs until someone decides.",
 		first.Message,
 	)
 	assert.Equal(t, 2, first.Data["count"], "the executed proposal is not waiting on anyone")
@@ -343,10 +343,10 @@ func TestDescribeTools(t *testing.T) {
 		return out
 	}
 
-	assert.Equal(t, "assign move", describeTools(mk("dispatch_assign_move")))
+	assert.Equal(t, "assign dispatch move", describeTools(mk("dispatch_assign_move")))
 	assert.Equal(
 		t,
-		"assign move and notify driver",
+		"assign dispatch move and send worker message",
 		describeTools(mk("dispatch_assign_move", "worker_send_message", "dispatch_assign_move")),
 	)
 	assert.Equal(t, "a, b, c and 2 more", describeTools(mk("a", "b", "c", "d", "e")))

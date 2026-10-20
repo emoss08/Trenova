@@ -49,6 +49,9 @@ const (
 	toolGetShipmentDraft = "intake_get_draft"
 	toolRankCandidates   = "dispatch_rank_candidates"
 
+	paramBody    = "body"
+	paramSubject = "subject"
+
 	minPreviewRows = 1
 
 	payloadProposalID  = "proposalId"
@@ -78,15 +81,19 @@ type draftSpec struct {
 // draftSpecs are the tools whose proposal is a message waiting to go. The
 // draft is a view over the proposal: approving it is what sends.
 var draftSpecs = map[string]draftSpec{
-	"customer_send_email":   {title: "Customer update", subjectKey: "subject", bodyKey: "body"},
+	"customer_send_email": {
+		title:      "Customer update",
+		subjectKey: paramSubject,
+		bodyKey:    paramBody,
+	},
 	"detention_send_notice": {title: "Detention notice"},
 	// The reply's subject and recipient come from the message it answers,
 	// not from the proposal, so the draft carries the body alone.
-	"inbox_send_reply": {title: "Inbox reply", bodyKey: "body"},
+	"inbox_send_reply": {title: "Inbox reply", bodyKey: paramBody},
 	"shipment_request_documents": {
 		title:      "Document request",
-		subjectKey: "subject",
-		bodyKey:    "body",
+		subjectKey: paramSubject,
+		bodyKey:    paramBody,
 		toKey:      "to",
 	},
 }

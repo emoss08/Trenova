@@ -155,6 +155,10 @@ func NewTenderToCarriersTool(tenders tenderStarter) agentports.AgentTool {
 
 func (t *TenderToCarriersTool) Name() string { return "dispatch_create_tender" }
 
+func (t *TenderToCarriersTool) SearchTerms() []string {
+	return []string{"tender to carriers"}
+}
+
 func (t *TenderToCarriersTool) Description() string {
 	return "Offer an uncovered move to specific carriers at specific rates: broadcast " +
 		"to all of them at once, or sequentially in the order given. Each line names " +

@@ -259,7 +259,7 @@ func TestRestoreTurn_BatchesOnlyTheReadsTheTurnOpenedWith(t *testing.T) {
 		Input:      "Who is free?",
 	}
 	state := rt.OpenTurn(t.Context(), request).State()
-	assert.Equal(t, []string{"worker_list", "search_customer"}, state.Reads,
+	assert.Equal(t, []string{"search_customer", "worker_list"}, state.Reads,
 		"a write is never a read, whatever it is held with")
 
 	encoded, err := sonic.Marshal(state)

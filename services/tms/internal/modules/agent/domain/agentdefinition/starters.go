@@ -105,7 +105,7 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Whose credentials expire soon?",
 			"Which drivers have a credential expiring in the next 30 days?",
-			"worker_list_expiring_credentials",
+			toolListExpiringQualifications,
 		),
 		ask(
 			"Who is off this week?",
@@ -142,7 +142,7 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Look up a customer",
 			"Find a customer and summarize their account for me.",
-			"customer_list",
+			toolListCustomers,
 		),
 	},
 	TemplateGeneralAssistant: howToStarters,
@@ -194,7 +194,7 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Which rating method should I use?",
 			"Which rating methods can this shipment be priced with?",
-			"formula_list_templates",
+			toolListFormulaTemplates,
 		),
 	},
 	TemplateLoadMonitor: {
@@ -206,7 +206,7 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Who is low on hours?",
 			"Which drivers are running low on hours of service today?",
-			"worker_get_hos",
+			toolGetWorkerHOS,
 		),
 		ask(
 			"Is weather affecting any loads?",
@@ -228,7 +228,7 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Quote a shipment",
 			"Quote a shipment for me before I enter it.",
-			"rate_quote",
+			toolRateQuote,
 		),
 		ask(
 			"Which equipment types can I use?",
@@ -279,24 +279,24 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Whose credentials expire soon?",
 			"Which drivers have a credential expiring in the next 30 days?",
-			"worker_list_expiring_credentials",
+			toolListExpiringQualifications,
 		),
 		ask(
 			"Who needs a renewal request?",
 			"Which drivers still need a renewal request for papers that are coming due?",
-			"worker_list_expiring_credentials", "worker_request_credential_renewal",
+			toolListExpiringQualifications, "worker_request_credential_renewal",
 		),
 		ask(
 			"Look up a driver's papers",
 			"Find a driver and tell me which of their credentials are current.",
-			"worker_get_credential", "worker_list",
+			"worker_get_credential", toolListWorkers,
 		),
 	},
 	TemplateCustomerUpdateDesk: {
 		ask(
 			"Draft a shipment update",
 			"Draft an update to a customer about where their shipment is.",
-			"customer_send_email",
+			toolSendCustomerEmail,
 		),
 		ask(
 			"Look up a shipment's progress",
@@ -312,12 +312,12 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Which carriers should I watch?",
 			"Which carriers have a recent change to their authority, insurance or safety record?",
-			toolListCarrierIntelEvents, "carrier_get_intelligence_event", "carrier_list",
+			toolListCarrierIntelEvents, "carrier_get_intelligence_event", toolListCarriers,
 		),
 		ask(
 			"Look up a carrier",
 			"Find a carrier and tell me whether they can still be given freight.",
-			"carrier_get", "carrier_list",
+			"carrier_get", toolListCarriers,
 		),
 		ask(
 			"How is carrier risk monitored?",
@@ -351,7 +351,7 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Does the rate fit the lane?",
 			"Compare this shipment's rate with a fresh quote for the same customer and stops.",
-			"rate_explain", "rate_quote",
+			toolExplainRate, toolRateQuote,
 		),
 		ask(
 			"Which hold reasons can I use?",
@@ -380,12 +380,12 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"What stands out today?",
 			"Which open insights need my attention today?",
-			"insight_list",
+			toolListInsights,
 		),
 		ask(
 			"Does this finding hold up?",
 			"Check this insight against the records behind it and tell me whether it holds up.",
-			"insight_get",
+			toolGetInsight,
 		),
 		ask(
 			"Which reports can I run?",
@@ -530,7 +530,7 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Is this carrier already on file?",
 			"Is this carrier already on file under its DOT or MC number, and is it active?",
-			"carrier_list",
+			toolListCarriers,
 		),
 		ask(
 			"What paperwork needs filing?",
@@ -635,7 +635,7 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"How was this rate worked out?",
 			"Explain how this shipment's rate was worked out, charge by charge.",
-			"rate_explain",
+			toolExplainRate,
 		),
 		ask(
 			"Draft a rate agreement",
@@ -748,19 +748,19 @@ var toolFamilies = [][]starterQuestion{
 		ask(
 			"Look up a carrier",
 			"Find a carrier and tell me whether they can still be given freight.",
-			"carrier_list", "carrier_get",
+			toolListCarriers, "carrier_get",
 		),
 	},
 	{
 		ask(
 			"Whose credentials expire soon?",
 			"Which drivers have a credential expiring in the next 30 days?",
-			"worker_list_expiring_credentials",
+			toolListExpiringQualifications,
 		),
 		ask(
 			"Who is low on hours?",
 			"Which drivers are running low on hours of service today?",
-			"worker_get_hos",
+			toolGetWorkerHOS,
 		),
 		ask(
 			"Who is off this week?",
@@ -770,7 +770,7 @@ var toolFamilies = [][]starterQuestion{
 		ask(
 			"Look up a driver",
 			"Find a driver and summarize where they are and what they are qualified for.",
-			"worker_search", "worker_list", "worker_get",
+			toolSearchWorker, toolListWorkers, toolGetWorker,
 		),
 	},
 	{
@@ -856,21 +856,21 @@ var toolFamilies = [][]starterQuestion{
 		ask(
 			"Quote a shipment",
 			"Quote a shipment for me before I enter it.",
-			"rate_quote",
+			toolRateQuote,
 		),
 	},
 	{
 		ask(
 			"Look up a customer",
 			"Find a customer and summarize their account for me.",
-			"customer_list", "customer_get",
+			toolListCustomers, toolGetCustomer,
 		),
 	},
 	{
 		ask(
 			"What stands out today?",
 			"Which open insights need my attention today?",
-			"insight_list",
+			toolListInsights,
 		),
 		ask(
 			"Alert me to a change",

@@ -266,15 +266,20 @@ func newQuoteShipmentTool(
 func (t *quoteShipmentTool) Name() string { return "rate_quote" }
 
 func (t *quoteShipmentTool) SearchTerms() []string {
-	return []string{"rate quote", "price a lane", "quote a lane"}
+	return []string{"rate quote", "price a lane", "quote a lane", "quote shipment"}
 }
 
 func (t *quoteShipmentTool) Prerequisites() []string {
-	return []string{"customer_list", "masterdata_list_service_types", "location_list"}
+	return []string{toolCustomerList, toolMasterdataListServiceTypes, toolLocationList}
 }
 
 func (t *quoteShipmentTool) Recipe() []string {
-	return []string{"customer_list", "masterdata_list_service_types", "location_list", "rate_quote"}
+	return []string{
+		toolCustomerList,
+		toolMasterdataListServiceTypes,
+		toolLocationList,
+		"rate_quote",
+	}
 }
 
 func (t *quoteShipmentTool) Description() string {

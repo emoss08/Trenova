@@ -215,7 +215,7 @@ func registerLoopStandIns(
 	w.RegisterActivityWithOptions(
 		func(_ context.Context, in *agentflow.ToolInput) (*agentflow.ToolResult, error) {
 			return &agentflow.ToolResult{Outcome: agentruntime.ToolOutcome{
-				Content: "Recorded a proposal to run \"dispatch_assign_move\". It is awaiting a " +
+				Content: "Recorded a proposal to run \"assign_move\". It is awaiting a " +
 					"person's review at the Propose tier and has not run.",
 				Action: &agentports.PendingAction{
 					ToolName:   in.Call.Call.Name,

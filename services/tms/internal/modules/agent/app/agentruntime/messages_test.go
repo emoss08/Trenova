@@ -84,7 +84,7 @@ func TestProposalRationale_FallsBackToWhatThePersonAsked(t *testing.T) {
 
 	assert.Equal(
 		t,
-		"Asked to raise exception in reply to: “Flag SEED-DET-011 for review”",
+		"Asked to raise agent exception in reply to: “Flag SEED-DET-011 for review”",
 		rationale,
 	)
 }

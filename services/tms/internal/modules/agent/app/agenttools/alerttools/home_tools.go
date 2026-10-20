@@ -23,6 +23,11 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
+const (
+	toolReportList    = "report_list"
+	toolHomeGetLayout = "home_get_layout"
+)
+
 type homeLayoutWriter interface {
 	GetEffective(
 		ctx context.Context,
@@ -183,8 +188,8 @@ func (homeToolBase) SearchTerms() []string { return homelayout.SpokenNames() }
 
 func versionProperty() map[string]any {
 	return map[string]any{
-		"type":        "integer",
-		"description": "The version home_get_layout returned, so a newer edit is not overwritten.",
+		toolschema.KeyType:        toolschema.TypeInteger,
+		toolschema.KeyDescription: "The version home_get_layout returned, so a newer edit is not overwritten.",
 	}
 }
 
@@ -228,7 +233,12 @@ func (t *AddHomeWidgetTool) Description() string {
 }
 
 func (t *AddHomeWidgetTool) Prerequisites() []string {
-	return []string{"home_get_layout", "home_list_widgets", "report_list", "report_list_dashboards"}
+	return []string{
+		toolHomeGetLayout,
+		"home_list_widgets",
+		toolReportList,
+		"report_list_dashboards",
+	}
 }
 
 func (t *AddHomeWidgetTool) ParamSchema() map[string]any {
@@ -238,8 +248,8 @@ func (t *AddHomeWidgetTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"version": versionProperty(),
 			"key": map[string]any{
-				"type":        "string",
-				"description": "The widget, by the key home_list_widgets gives.",
+				toolschema.KeyType:        toolschema.TypeString,
+				toolschema.KeyDescription: "The widget, by the key home_list_widgets gives.",
 			},
 			"title": map[string]any{
 				"type":        "string",
@@ -568,7 +578,7 @@ func (t *RemoveHomeWidgetTool) Description() string {
 }
 
 func (t *RemoveHomeWidgetTool) Prerequisites() []string {
-	return []string{"home_get_layout"}
+	return []string{toolHomeGetLayout}
 }
 
 func (t *RemoveHomeWidgetTool) ParamSchema() map[string]any {
@@ -664,7 +674,7 @@ func (t *ArrangeHomeLayoutTool) Description() string {
 }
 
 func (t *ArrangeHomeLayoutTool) Prerequisites() []string {
-	return []string{"home_get_layout"}
+	return []string{toolHomeGetLayout}
 }
 
 func (t *ArrangeHomeLayoutTool) ParamSchema() map[string]any {

@@ -10,6 +10,18 @@ const (
 	toolListCarrierIntelEvents = "carrier_list_intelligence_events"
 
 	toolInvoiceGet = "invoice_get"
+
+	toolListExpiringQualifications = "worker_list_expiring_credentials"
+	toolListInsights               = "insight_list"
+	toolGetInsight                 = "insight_get"
+	toolGetWorkerHOS               = "worker_get_hos"
+	toolListEmailProfiles          = "inbox_list_email_profiles"
+	toolListAccessorialCharges     = "masterdata_list_accessorial_charges"
+	toolExplainRate                = "rate_explain"
+	toolSendDetentionNotice        = "detention_send_notice"
+	toolSendCustomerEmail          = "customer_send_email"
+	toolRateQuote                  = "rate_quote"
+	toolListFormulaTemplates       = "formula_list_templates"
 )
 
 func (t Template) StarterTools() []string {
@@ -17,12 +29,12 @@ func (t Template) StarterTools() []string {
 	case TemplateDispatchAssistant:
 		return []string{
 			toolShipmentList,
-			"worker_get",
-			"worker_search",
-			"worker_list",
+			toolGetWorker,
+			toolSearchWorker,
+			toolListWorkers,
 			"equipment_list_tractors",
 			"equipment_list_trailers",
-			"worker_list_expiring_credentials",
+			toolListExpiringQualifications,
 			"worker_list_time_off",
 			"masterdata_list_hold_reasons",
 			"carrier_shop",
@@ -32,8 +44,8 @@ func (t Template) StarterTools() []string {
 			"shipment_release_hold",
 			"equipment_set_tractor_status",
 			"equipment_set_trailer_status",
-			"insight_list",
-			"insight_get",
+			toolListInsights,
+			toolGetInsight,
 			"dispatch_unassign_move",
 			"dispatch_set_move_status",
 			"dispatch_create_carrier_assignment",
@@ -69,7 +81,7 @@ func (t Template) StarterTools() []string {
 			"shipment_generate_recurring",
 			"shipment_update",
 			toolShipmentGetTracking,
-			"worker_get_hos",
+			toolGetWorkerHOS,
 			"dispatch_record_stop_actual",
 			"shipment_reschedule_stop",
 		}
@@ -92,10 +104,10 @@ func (t Template) StarterTools() []string {
 			toolInvoiceGet,
 			"invoice_post",
 			"invoice_send",
-			"report_run",
-			"inbox_list_email_profiles",
+			toolRunReport,
+			toolListEmailProfiles,
 			"shipment_request_documents",
-			"masterdata_list_accessorial_charges",
+			toolListAccessorialCharges,
 			toolShipmentAddComment,
 			"invoice_create",
 			"invoice_update_draft",
@@ -121,24 +133,24 @@ func (t Template) StarterTools() []string {
 			"invoice_share",
 			"billing_reassign_charge",
 			"billing_manage_transfer_run",
-			"rate_explain",
+			toolExplainRate,
 			"shipment_add_charge",
 			"detention_approve",
-			"detention_send_notice",
+			toolSendDetentionNotice,
 		}
 	case TemplateComplianceAssistant:
 		return []string{
-			"worker_get",
-			"worker_search",
-			"worker_list",
-			"worker_list_expiring_credentials",
+			toolGetWorker,
+			toolSearchWorker,
+			toolListWorkers,
+			toolListExpiringQualifications,
 			"worker_list_time_off",
 			"equipment_list_tractors",
 			"equipment_list_trailers",
-			"report_run",
+			toolRunReport,
 			"report_get_run",
-			"insight_list",
-			"insight_get",
+			toolListInsights,
+			toolGetInsight,
 			"worker_get_schedule",
 			"worker_list_shift_templates",
 			"worker_assign_shift",
@@ -181,7 +193,7 @@ func (t Template) StarterTools() []string {
 			"worker_schedule_dot_test",
 			"worker_update_dot_random_selection",
 			"worker_list_leave_cases",
-			"worker_get_hos",
+			toolGetWorkerHOS,
 			"worker_request_credential_renewal",
 			"worker_place_dispatch_hold",
 		}
@@ -191,9 +203,9 @@ func (t Template) StarterTools() []string {
 			toolShipmentList,
 			"invoice_list",
 			toolShipmentAddComment,
-			"insight_list",
-			"insight_get",
-			"edi_list_partners", //nolint:goconst // a template names each tool by its wire name
+			toolListInsights,
+			toolGetInsight,
+			"edi_list_partners",
 			"edi_list_transfers",
 			"edi_get_transfer",
 			"edi_accept_tender",
@@ -238,9 +250,9 @@ func (t Template) StarterTools() []string {
 			"masterdata_create_commodity",
 			"masterdata_update_commodity",
 			toolShipmentGetTracking,
-			"inbox_list_email_profiles",
-			"customer_send_email",
-			"rate_quote",
+			toolListEmailProfiles,
+			toolSendCustomerEmail,
+			toolRateQuote,
 			"shipment_share_tracking_link",
 		}
 	case TemplateLoadMonitor:
@@ -249,7 +261,7 @@ func (t Template) StarterTools() []string {
 			toolShipmentGetTracking,
 			toolShipmentGet,
 			"equipment_list_positions",
-			"worker_get_hos",
+			toolGetWorkerHOS,
 			"exception_list_service_failures",
 			"exception_list_service_failure_reason_codes",
 			"detention_list_occurrences",
@@ -258,9 +270,9 @@ func (t Template) StarterTools() []string {
 			"exception_resolve_service_failure",
 			toolShipmentAddComment,
 			"worker_send_message",
-			"inbox_list_email_profiles",
-			"customer_send_email",
-			"detention_send_notice",
+			toolListEmailProfiles,
+			toolSendCustomerEmail,
+			toolSendDetentionNotice,
 			"dispatch_record_stop_actual",
 			"dispatch_record_check_call",
 			"dispatch_share_tracking_link",
@@ -282,9 +294,9 @@ func (t Template) StarterTools() []string {
 			"detention_list_occurrences",
 			toolShipmentGet,
 			toolShipmentGetTracking,
-			"customer_get",
-			"inbox_list_email_profiles",
-			"detention_send_notice",
+			toolGetCustomer,
+			toolListEmailProfiles,
+			toolSendDetentionNotice,
 			"detention_escalate",
 			"detention_approve",
 			"detention_waive",
@@ -296,10 +308,10 @@ func (t Template) StarterTools() []string {
 		}
 	case TemplateCredentialDesk:
 		return []string{
-			"worker_get",
+			toolGetWorker,
 			"worker_get_credential",
-			"worker_list_expiring_credentials",
-			"worker_list",
+			toolListExpiringQualifications,
+			toolListWorkers,
 			"worker_request_credential_renewal",
 			"worker_place_dispatch_hold",
 			"worker_send_message",
@@ -308,10 +320,10 @@ func (t Template) StarterTools() []string {
 		return []string{
 			toolShipmentGet,
 			toolShipmentGetTracking,
-			"customer_get",
+			toolGetCustomer,
 			"customer_get_update_preferences",
-			"inbox_list_email_profiles",
-			"customer_send_email",
+			toolListEmailProfiles,
+			toolSendCustomerEmail,
 			toolShipmentAddComment,
 		}
 	case TemplateCarrierRiskDesk:
@@ -319,7 +331,7 @@ func (t Template) StarterTools() []string {
 			toolListCarrierIntelEvents,
 			"carrier_get_intelligence_event",
 			"carrier_get",
-			"carrier_list",
+			toolListCarriers,
 			"carrier_acknowledge_intelligence_event",
 			"carrier_resolve_intelligence_event",
 			"carrier_vet",
@@ -334,14 +346,14 @@ func (t Template) StarterTools() []string {
 			toolShipmentGet,
 			toolShipmentList,
 			toolShipmentGetTracking,
-			"customer_get",
+			toolGetCustomer,
 			"carrier_get",
 			"document_get_summary",
 			toolSearchDocuments,
 			toolIntakeGetDraft,
-			"customer_list",
-			"carrier_list",
-			"inbox_list_email_profiles",
+			toolListCustomers,
+			toolListCarriers,
+			toolListEmailProfiles,
 			"inbox_list_triage_assignees",
 			"document_list_types",
 			"inbox_link_inbound_message",
@@ -371,7 +383,7 @@ func (t Template) StarterTools() []string {
 			"edi_get_inbound_file",
 			"edi_list_transfers",
 			"edi_get_transfer",
-			"rate_quote", //nolint:goconst // a template names each tool by its wire name
+			toolRateQuote,
 			"edi_accept_tender",
 			"edi_decline_tender",
 		}
@@ -380,8 +392,8 @@ func (t Template) StarterTools() []string {
 			"receivable_get_bank_receipt",
 			"receivable_list_bank_receipt_exceptions",
 			"receivable_list_customer_payments",
-			"customer_list",
-			"customer_get",
+			toolListCustomers,
+			toolGetCustomer,
 			"invoice_list",
 			toolInvoiceGet,
 			"receivable_match_bank_receipt",
@@ -413,12 +425,12 @@ func (t Template) StarterTools() []string {
 		return []string{
 			toolShipmentGet,
 			toolShipmentList,
-			"worker_get",
-			"worker_search",
+			toolGetWorker,
+			toolSearchWorker,
 			"dispatch_get_board",
 			"dispatch_rank_candidates",
 			"dispatch_plan",
-			"carrier_list",
+			toolListCarriers,
 			"carrier_shop",
 			"dispatch_assign_move",
 			"dispatch_create_tender_from_routing_guide",
@@ -435,11 +447,11 @@ func (t Template) StarterTools() []string {
 	case TemplateImportAssistant:
 		return []string{
 			toolIntakeGetDraft,
-			"customer_list",
-			"customer_get",
+			toolListCustomers,
+			toolGetCustomer,
 			"masterdata_list_service_types",
 			"masterdata_list_shipment_types",
-			"formula_list_templates",
+			toolListFormulaTemplates,
 			toolGetFormulaTemplate,
 			toolListLocations,
 			"location_list_categories",
@@ -455,26 +467,26 @@ func (t Template) StarterTools() []string {
 	case TemplateShipmentIntake:
 		return []string{
 			toolIntakeGetDraft,
-			"customer_list",
+			toolListCustomers,
 			toolListLocations,
 			"masterdata_list_service_types",
 			"masterdata_list_shipment_types",
 			"equipment_list_types",
-			"formula_list_templates",
+			toolListFormulaTemplates,
 			toolGetFormulaTemplate,
 			"masterdata_list_commodities",
-			"masterdata_list_accessorial_charges",
+			toolListAccessorialCharges,
 			toolShipmentList,
-			"rate_quote",
+			toolRateQuote,
 			"shipment_create",
 		}
 	case TemplateLoadEntryCheck:
 		return []string{
 			toolShipmentGet,
 			toolShipmentList,
-			"customer_get",
-			"rate_explain",
-			"rate_quote",
+			toolGetCustomer,
+			toolExplainRate,
+			toolRateQuote,
 			"masterdata_list_hold_reasons",
 			toolShipmentAddComment,
 			"shipment_place_hold",
@@ -487,21 +499,21 @@ func (t Template) StarterTools() []string {
 			toolShipmentGet,
 			toolShipmentGetTracking,
 			"customer_get_update_preferences",
-			"inbox_list_email_profiles",
+			toolListEmailProfiles,
 			"exception_resolve_service_failure",
-			"customer_send_email",
+			toolSendCustomerEmail,
 			toolShipmentAddComment,
 			"exception_update_service_failure",
 			"exception_void_service_failure",
 		}
 	case TemplateInsightAnalyst:
 		return []string{
-			"insight_get",
-			"insight_list",
+			toolGetInsight,
+			toolListInsights,
 			"report_list",
 			"report_get",
 			"report_preview",
-			"report_run",
+			toolRunReport,
 			"report_get_run",
 			toolShipmentList,
 			"invoice_list",
@@ -585,15 +597,15 @@ func (t Template) StarterTools() []string {
 			"formula_describe_schema",
 			"formula_test_expression",
 			"propose_formula",
-			"formula_list_templates",
+			toolListFormulaTemplates,
 			toolGetFormulaTemplate,
 			"rate_list_agreements",
 			"rate_get_agreement",
 			"rate_get_matrix",
 			"rate_list_fuel_surcharge_programs",
-			"masterdata_list_accessorial_charges",
-			"rate_explain",
-			"customer_list",
+			toolListAccessorialCharges,
+			toolExplainRate,
+			toolListCustomers,
 			toolListCarriers,
 			toolListLocations,
 			"rate_list_imports",
@@ -632,8 +644,8 @@ func (t Template) StarterTools() []string {
 
 func settlementsClerkTools() []string {
 	return []string{
-		"worker_search",
-		"carrier_list",
+		toolSearchWorker,
+		toolListCarriers,
 		toolShipmentList,
 		toolShipmentGet,
 		"settlement_list_driver",
@@ -693,8 +705,8 @@ func settlementsClerkTools() []string {
 
 func receivablesTools() []string {
 	return []string{
-		"customer_list",
-		"customer_get",
+		toolListCustomers,
+		toolGetCustomer,
 		"invoice_list",
 		toolInvoiceGet,
 		toolShipmentGet,

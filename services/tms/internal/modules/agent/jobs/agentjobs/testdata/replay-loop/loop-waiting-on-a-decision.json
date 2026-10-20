@@ -782,7 +782,7 @@
       "activityTaskScheduledEventAttributes": {
         "activityId": "36",
         "activityType": {
-          "name": "dispatch_assign_move"
+          "name": "assign_move"
         },
         "taskQueue": {
           "name": "replay-record-loop-waiting-on-a-decision",

@@ -139,7 +139,7 @@ func newListServiceTypesTool(
 	repo servicetypeports.ServiceTypeRepository,
 ) agentports.AgentQueryTool {
 	return newListTool(listSpec{
-		name:         "masterdata_list_service_types",
+		name:         toolMasterdataListServiceTypes,
 		entityPlural: "service types",
 		summary: "List service types — the levels of service a shipment can be booked " +
 			"at. Use it to turn a service a person named into the id a shipment needs.",

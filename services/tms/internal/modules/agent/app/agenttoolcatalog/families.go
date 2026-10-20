@@ -39,7 +39,12 @@ var families = [...][]string{
 		"accounting_set_mapping",
 		"accounting_create_reference_record",
 	},
-	{"exception_list_watchtower_items", "insight_get_daily_briefing", "agent_list_runs", "agent_get_run"},
+	{
+		"exception_list_watchtower_items",
+		"insight_get_daily_briefing",
+		"agent_list_runs",
+		"agent_get_run",
+	},
 	{"settlement_list_driver", "settlement_get_driver", "settlement_list_pay_events"},
 	{"receivable_get_aging", "receivable_list_open_items", "receivable_get_statement"},
 	{
@@ -98,7 +103,12 @@ var families = [...][]string{
 	},
 	{"billing_approve_queue_item", "invoice_post", "invoice_send", "invoice_get"},
 	{"rate_quote", "shipment_create", "shipment_duplicate"},
-	{"dispatch_get_board", "dispatch_rank_candidates", "dispatch_assign_move", "dispatch_create_carrier_assignment"},
+	{
+		"dispatch_get_board",
+		"dispatch_rank_candidates",
+		"dispatch_assign_move",
+		"dispatch_create_carrier_assignment",
+	},
 	{"invoice_list_runs", "invoice_get_run", "invoice_commit_run", "invoice_cancel_run"},
 	{
 		"carrier_list_intelligence_events",

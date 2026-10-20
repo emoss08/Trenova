@@ -191,7 +191,7 @@ func TestArtifactFromObservation_PreviewBecomesATable(t *testing.T) {
 	assert.Equal(t, assistantartifact.KindReportPreview, artifact.Kind)
 	assert.Equal(t, assistantartifact.StatusReady, artifact.Status)
 	assert.Equal(t, "Revenue by customer", artifact.Title)
-	assert.Equal(t, "call_preview_report", artifact.SourceToolCallID)
+	assert.Equal(t, "call_report_preview", artifact.SourceToolCallID)
 	assert.Len(t, artifact.Payload["rows"], 2)
 	assert.Equal(t, false, artifact.Payload["truncated"])
 }
@@ -388,10 +388,10 @@ func TestArtifactRecorder_KeepsAndAnnouncesWhatATurnProduced(t *testing.T) {
 	announced, ok := events[0].Data.(agentports.AssistantArtifactEvent)
 	require.True(t, ok)
 	assert.Equal(t, assistantartifact.KindEntityCard, announced.Kind)
-	assert.Equal(t, "call_get_customer", announced.SourceToolCallID)
+	assert.Equal(t, "call_customer_get", announced.SourceToolCallID)
 
 	messageID := pulid.MustNew("msg_")
-	recorder.attachMessages(map[string]pulid.ID{"call_get_customer": messageID})
+	recorder.attachMessages(map[string]pulid.ID{"call_customer_get": messageID})
 	require.Len(t, repo.upserts, 2)
 	assert.Equal(t, messageID, repo.upserts[1].MessageID)
 

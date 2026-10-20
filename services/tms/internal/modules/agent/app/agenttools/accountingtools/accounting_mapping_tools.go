@@ -18,6 +18,10 @@ import (
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
+const (
+	toolAccountingListMappingGaps = "accounting_list_mapping_gaps"
+)
+
 const maxMappingReasonRunes = 500
 
 const ParamAccountingSystem = "system"
@@ -217,7 +221,7 @@ func (t *SetAccountingMappingTool) Name() string { return "accounting_set_mappin
 
 func (t *SetAccountingMappingTool) Recipe() []string {
 	return []string{
-		"accounting_list_mapping_gaps",
+		toolAccountingListMappingGaps,
 		"accounting_get_mapping",
 		"accounting_set_mapping",
 	}
@@ -236,7 +240,7 @@ func (t *SetAccountingMappingTool) SearchTerms() []string {
 }
 
 func (t *SetAccountingMappingTool) Prerequisites() []string {
-	return []string{"accounting_list_mapping_gaps", toolGetAccountingMapping}
+	return []string{toolAccountingListMappingGaps, toolGetAccountingMapping}
 }
 
 func (t *SetAccountingMappingTool) ParamSchema() map[string]any {
@@ -529,7 +533,7 @@ func (t *RefreshAccountingReferenceDataTool) Name() string {
 }
 
 func (t *RefreshAccountingReferenceDataTool) Recipe() []string {
-	return []string{"accounting_refresh_reference_data", "accounting_list_mapping_gaps"}
+	return []string{"accounting_refresh_reference_data", toolAccountingListMappingGaps}
 }
 
 func (t *RefreshAccountingReferenceDataTool) Description() string {

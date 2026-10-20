@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
@@ -88,8 +89,8 @@ func (t *listTimeOffTool) ParamSchema() map[string]any {
 				agenttoolschema.PTOTypes,
 			),
 			"workerId": agenttoolschema.OfResource(map[string]any{
-				"type": "string",
-				"description": "Narrow to one worker, by id from worker_list or " +
+				toolschema.KeyType: toolschema.TypeString,
+				toolschema.KeyDescription: "Narrow to one worker, by id from worker_list or " +
 					"worker_search. A name is not an id.",
 			}, permission.ResourceWorker),
 			"withinDays": map[string]any{

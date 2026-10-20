@@ -203,7 +203,7 @@ func TestListToolPoliciesFiltersByClassResourceKindAndSearch(t *testing.T) {
 	}
 
 	assert.Equal(t,
-		[]string{"home_add_widget", "dispatch_assign_move", "customer_send_email", "shipment_get"},
+		[]string{"customer_send_email", "dispatch_assign_move", "home_add_widget", "shipment_get"},
 		list(memtable.Request{}),
 	)
 	assert.Equal(t, []string{"customer_send_email"}, list(memtable.Request{
@@ -219,7 +219,7 @@ func TestListToolPoliciesFiltersByClassResourceKindAndSearch(t *testing.T) {
 		FieldFilters: []domaintypes.FieldFilter{eq("resource", GeneralResource)},
 	}))
 	assert.Equal(t,
-		[]string{"dispatch_assign_move", "customer_send_email", "shipment_get"},
+		[]string{"customer_send_email", "dispatch_assign_move", "shipment_get"},
 		list(memtable.Request{
 			FieldFilters: []domaintypes.FieldFilter{
 				eq("resource", permission.ResourceShipment.String()),
@@ -227,7 +227,7 @@ func TestListToolPoliciesFiltersByClassResourceKindAndSearch(t *testing.T) {
 		}),
 	)
 	assert.Equal(t, []string{"customer_send_email"}, list(memtable.Request{
-		Query: "  Email Cust ",
+		Query: "  Customer Em ",
 	}))
 	assert.Empty(t, list(memtable.Request{
 		Query:        "email",
@@ -258,7 +258,7 @@ func TestListToolPoliciesOrsWithinAGroupAndAndsAcrossThem(t *testing.T) {
 			eq("egress", "ExternalRecipient"),
 		}}},
 	})
-	assert.Equal(t, []string{"home_add_widget", "customer_send_email"}, pageNames(page))
+	assert.Equal(t, []string{"customer_send_email", "home_add_widget"}, pageNames(page))
 }
 
 func TestListToolPoliciesSortsByClassAndTierThenName(t *testing.T) {
@@ -308,7 +308,7 @@ func TestListToolPoliciesFiltersByWhatRunsWithoutAPerson(t *testing.T) {
 		FieldFilters: []domaintypes.FieldFilter{eq(FieldRunsWithoutPerson, "false")},
 	})
 	assert.Equal(t,
-		[]string{"home_add_widget", "customer_send_email", "shipment_get"},
+		[]string{"customer_send_email", "home_add_widget", "shipment_get"},
 		pageNames(page),
 	)
 
@@ -515,7 +515,7 @@ func TestToolPolicyLooksUpOneRuleByName(t *testing.T) {
 
 	view, ok := svc.ToolPolicy("customer_send_email")
 	require.True(t, ok)
-	assert.Equal(t, "Email customer", view.Title)
+	assert.Equal(t, "Send customer email", view.Title)
 
 	_, ok = svc.ToolPolicy("unregistered_tool")
 	assert.False(t, ok)

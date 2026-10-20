@@ -56,7 +56,7 @@ func NewScheduleReportTool(schedules *reporting.Service) agentports.AgentTool {
 func (t *ScheduleReportTool) Name() string { return "report_create_schedule" }
 
 func (t *ScheduleReportTool) Recipe() []string {
-	return []string{"report_list", "report_create_schedule"}
+	return []string{toolReportList, "report_create_schedule"}
 }
 
 func (t *ScheduleReportTool) Description() string {
@@ -67,7 +67,7 @@ func (t *ScheduleReportTool) Description() string {
 }
 
 func (t *ScheduleReportTool) Prerequisites() []string {
-	return []string{"report_list"}
+	return []string{toolReportList}
 }
 
 func (t *ScheduleReportTool) ParamSchema() map[string]any {

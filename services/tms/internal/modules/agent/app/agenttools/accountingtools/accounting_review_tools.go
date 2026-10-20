@@ -186,7 +186,7 @@ func NewConfirmAccountingMappingProposalsTool(
 ) agentports.AgentTool {
 	return common.NewReceivableTool(mappingReviewSpec(&common.ReceivableSpec{
 		Name:   "accounting_confirm_mapping",
-		Recipe: []string{"accounting_list_mapping_gaps", "accounting_confirm_mapping"},
+		Recipe: []string{toolAccountingListMappingGaps, "accounting_confirm_mapping"},
 		Description: "Confirm Trenova's proposed accounting system matches exactly as " +
 			"accounting_list_mapping_gaps shows them, several at once, so sync can use them. " +
 			"A proposal that changed since it was read is refused; to choose a different " +

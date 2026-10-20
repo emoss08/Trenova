@@ -500,7 +500,8 @@ func newDraftManualJournalTool(
 	accounts common.LedgerAccounts,
 ) agentports.AgentTool {
 	return common.NewReportingReceivableTool(journalDraftSpec(&common.ReceivableSpec{
-		Name: "ledger_create_manual_journal",
+		Name:        "ledger_create_manual_journal",
+		SearchTerms: []string{"draft manual journal"},
 		Description: "Draft a manual journal entry for the general ledger: its lines, the " +
 			"accounts they post to and the day it is booked. It is saved as a draft and books " +
 			"nothing; ledger_submit_manual_journal sends it for approval. Take accounts from " +

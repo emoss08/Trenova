@@ -482,7 +482,7 @@ type customerRow struct {
 
 func newListCustomersTool(repo customerports.CustomerRepository) agentports.AgentQueryTool {
 	return newListTool(listSpec{
-		name:         "customer_list",
+		name:         toolCustomerList,
 		entityPlural: "customers",
 		summary: "List customers narrowed by status, code, name or city, with their ids. " +
 			"Use it to turn a customer's name into an id: shipment_list filters on " +
@@ -530,7 +530,7 @@ type locationRow struct {
 
 func newListLocationsTool(repo locationports.LocationRepository) agentports.AgentQueryTool {
 	return newListTool(listSpec{
-		name:         "location_list",
+		name:         toolLocationList,
 		entityPlural: "locations",
 		summary: "List locations (facilities, terminals, yards) narrowed by status, " +
 			"code, name or city.",

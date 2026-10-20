@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/reportdiff"
 	"github.com/emoss08/trenova/pkg/reportrows"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -47,8 +48,8 @@ func (t *listReportRunsTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"definitionId": agenttoolschema.OfResource(map[string]any{
-				"type": "string",
-				"description": "The saved report to list runs of, from report_list. " +
+				toolschema.KeyType: toolschema.TypeString,
+				toolschema.KeyDescription: "The saved report to list runs of, from report_list. " +
 					"Omit to list the person's recent runs across every report.",
 			}, permission.ResourceReport),
 			paramLimit: limitSchema(maxListedRuns, maxListedRuns),
@@ -203,12 +204,12 @@ func (t *compareReportRunsTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"runIdA": map[string]any{
-				"type":        "string",
-				"description": "The earlier run, from report_list_runs.",
+				toolschema.KeyType:        toolschema.TypeString,
+				toolschema.KeyDescription: "The earlier run, from report_list_runs.",
 			},
 			"runIdB": map[string]any{
-				"type":        "string",
-				"description": "The later run, from report_list_runs.",
+				toolschema.KeyType:        toolschema.TypeString,
+				toolschema.KeyDescription: "The later run, from report_list_runs.",
 			},
 			"keys": map[string]any{
 				"type":  "array",

@@ -194,8 +194,12 @@ func (f *captureFiling) versioned(
 
 func NewFileCaptureItemsTool(captures CaptureKeeper) agentports.AgentTool {
 	return common.NewReceivableTool(&common.ReceivableSpec{
-		Name:   "inbox_file_capture_item",
-		Recipe: []string{"inbox_list_capture_batches", "document_list_types", "inbox_file_capture_item"},
+		Name: "inbox_file_capture_item",
+		Recipe: []string{
+			"inbox_list_capture_batches",
+			"document_list_types",
+			"inbox_file_capture_item",
+		},
 		Description: "File scanned documents from capture intake onto the shipment, worker, " +
 			"tractor, trailer, customer or carrier they belong to, as the document type they " +
 			"are. Take the documents and their suggested records from inbox_list_capture_batches.",

@@ -167,7 +167,7 @@ func TestPolicyViewsSayWhatEachToolNeeds(t *testing.T) {
 
 	email, ok := svc.ToolPolicy("customer_send_email")
 	require.True(t, ok)
-	assert.Equal(t, "Email customer", email.Title)
+	assert.Equal(t, "Send customer email", email.Title)
 	assert.True(t, email.Leaves)
 	assert.Equal(t, agent.TierActWithApproval, email.Promotable)
 	require.NotNil(t, email.Needs)

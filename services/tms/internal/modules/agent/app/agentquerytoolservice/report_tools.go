@@ -100,7 +100,7 @@ func newListReportsTool(reports reportRunner) agentports.AgentQueryTool {
 	return &listReportsTool{reports: reports}
 }
 
-func (t *listReportsTool) Name() string { return "report_list" }
+func (t *listReportsTool) Name() string { return toolReportList }
 
 func (t *listReportsTool) Description() string {
 	return "List the reports this organization can run and what each takes: built-in " +
@@ -405,11 +405,11 @@ func newRunReportTool(
 func (t *runReportTool) Name() string { return toolRunReport }
 
 func (t *runReportTool) Prerequisites() []string {
-	return []string{"report_list", "report_get"}
+	return []string{toolReportList, toolReportGet}
 }
 
 func (t *runReportTool) Recipe() []string {
-	return []string{"report_list", "report_get", toolRunReport}
+	return []string{toolReportList, toolReportGet, toolRunReport}
 }
 
 func (t *runReportTool) Description() string {

@@ -27,10 +27,15 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/maputils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
 	"go.uber.org/fx"
+)
+
+const (
+	toolDetentionGetOccurrence = "detention_get_occurrence"
 )
 
 var driverMessagePriorities = agenttoolschema.Source(
@@ -110,7 +115,11 @@ func NewEvaluateServiceFailuresTool(failures ServiceFailureDecider) agentports.A
 func (t *EvaluateServiceFailuresTool) Name() string { return "exception_evaluate_service_failures" }
 
 func (t *EvaluateServiceFailuresTool) Recipe() []string {
-	return []string{toolShipmentGetTracking, "exception_list_service_failures", "exception_evaluate_service_failures"}
+	return []string{
+		toolShipmentGetTracking,
+		"exception_list_service_failures",
+		"exception_evaluate_service_failures",
+	}
 }
 
 func (t *EvaluateServiceFailuresTool) Description() string {
@@ -374,7 +383,7 @@ func (t *ResolveServiceFailureTool) ParamSchema() map[string]any {
 				"description": "What was found and done. Required.",
 			},
 		},
-		"required":             []string{"serviceFailureId", common.ParamNote},
+		toolschema.KeyRequired: []string{"serviceFailureId", common.ParamNote},
 		"additionalProperties": false,
 	}
 }
@@ -821,11 +830,11 @@ func NewSendDetentionNoticeTool(detentions detentionActor) agentports.AgentTool 
 func (t *SendDetentionNoticeTool) Name() string { return "detention_send_notice" }
 
 func (t *SendDetentionNoticeTool) Prerequisites() []string {
-	return []string{"detention_list_occurrences", "detention_get_occurrence"}
+	return []string{"detention_list_occurrences", toolDetentionGetOccurrence}
 }
 
 func (t *SendDetentionNoticeTool) Recipe() []string {
-	return []string{"detention_get_occurrence", "detention_send_notice"}
+	return []string{toolDetentionGetOccurrence, "detention_send_notice"}
 }
 
 func (t *SendDetentionNoticeTool) Description() string {
@@ -911,7 +920,7 @@ func NewWaiveDetentionTool(detentions detentionActor) agentports.AgentTool {
 func (t *WaiveDetentionTool) Name() string { return "detention_waive" }
 
 func (t *WaiveDetentionTool) Recipe() []string {
-	return []string{"detention_list_occurrences", "detention_get_occurrence", "detention_waive"}
+	return []string{"detention_list_occurrences", toolDetentionGetOccurrence, "detention_waive"}
 }
 
 func (t *WaiveDetentionTool) Description() string {

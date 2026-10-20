@@ -410,9 +410,11 @@ func (t *listVehiclePositionsTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"tractorIds": agenttoolschema.OfResource(map[string]any{
-				"type":        "array",
-				"items":       map[string]any{"type": "string"},
-				"description": "Optional: only these tractors, by id from equipment_list_tractors.",
+				toolschema.KeyType: toolschema.TypeArray,
+				toolschema.KeyItems: map[string]any{
+					toolschema.KeyType: toolschema.TypeString,
+				},
+				toolschema.KeyDescription: "Optional: only these tractors, by id from equipment_list_tractors.",
 			}, permission.ResourceTractor),
 			"maxAgeMinutes": map[string]any{
 				"type": "integer",

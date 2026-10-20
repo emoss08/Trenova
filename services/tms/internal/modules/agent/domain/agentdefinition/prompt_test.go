@@ -182,8 +182,8 @@ func TestBuildSystemPrompt_ListsPersonalToolsAsRunningAtOnceForThePerson(t *test
 	prompt := definitionWithInstructions("Help.").BuildSystemPrompt(rc)
 
 	assert.Contains(t, prompt, "- Changes that run at once when they touch only the person's own "+
-		"records, and otherwise record a proposal: remember")
-	assert.NotContains(t, prompt, "records a proposal: remember")
+		"records, and otherwise record a proposal: agent_create_memory")
+	assert.NotContains(t, prompt, "records a proposal: agent_create_memory")
 }
 
 func TestBuildSystemPrompt_ListsEscalationsAsRunningAtOnce(t *testing.T) {
@@ -737,7 +737,7 @@ func TestBuildSystemPrompt_TellsAConversationAgentToSaveStatedPreferences(t *tes
 
 	prompt := validDefinition().BuildSystemPrompt(agentdefinition.RuntimeContext{})
 	assert.Contains(t, prompt, "## Remembering")
-	assert.Contains(t, prompt, "save it with remember in the same turn")
+	assert.Contains(t, prompt, "save it with agent_create_memory in the same turn")
 	assert.Contains(t, prompt, "never by an internal id")
 
 	delegated := validDefinition().BuildSystemPrompt(agentdefinition.RuntimeContext{DelegatedBy: "Dispatch desk"})

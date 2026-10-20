@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/emoss08/trenova/shared/timeutils"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
@@ -20,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
 )
 
@@ -224,8 +224,10 @@ func fuelPurchaseProperties(forCorrection bool) map[string]any {
 			maxFuelReferenceText),
 		paramTaxPaid: common.BooleanProperty("Whether fuel tax was paid at the pump. Defaults to " +
 			"true; bulk or untaxed fuel earns no tax-paid credit." + keep),
-		common.ParamNote: common.StringProperty("Anything the person reconciling it should know."+keep,
-			maxFuelNotes),
+		common.ParamNote: common.StringProperty(
+			"Anything the person reconciling it should know."+keep,
+			maxFuelNotes,
+		),
 	}
 	if forCorrection {
 		properties[paramFuelPurchaseID] = agenttoolschema.RecordIDText(

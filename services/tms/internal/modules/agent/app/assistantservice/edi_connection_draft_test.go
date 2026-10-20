@@ -59,7 +59,7 @@ func TestArtifactFromObservation_AConnectionDraftBecomesItsReview(t *testing.T) 
 	assert.Equal(t, assistantartifact.KindEDIConnectionDraft, artifact.Kind)
 	assert.Equal(t, assistantartifact.StatusReady, artifact.Status)
 	assert.Equal(t, "EDI connection for Acme Retail Group", artifact.Title)
-	assert.Equal(t, "call_draft_edi_connection", artifact.SourceToolCallID)
+	assert.Equal(t, "call_edi_draft_connection", artifact.SourceToolCallID)
 
 	payload := artifact.Payload
 	assert.Equal(t, "sha256:5f1c", payload["documentDigest"])

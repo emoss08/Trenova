@@ -311,15 +311,15 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Tool | Resource | Operation |
 | --- | --- | --- |
-| `web_use_portal` | portal_automation | update |
-| `detention_escalate` | detention | update |
-| `agent_request_review` | agent_exception | create |
-| `worker_send_message` | driver_message | create |
-| `worker_place_dispatch_hold` | worker_dispatch_hold | create |
 | `agent_raise_exception` | agent_exception | create |
-| `worker_request_credential_renewal` | worker_credential | update |
+| `agent_request_review` | agent_exception | create |
+| `detention_escalate` | detention | update |
 | `shipment_request_documents` | customer_communication | create |
+| `web_use_portal` | portal_automation | update |
 | `web_watch` | web_research | read |
+| `worker_place_dispatch_hold` | worker_dispatch_hold | create |
+| `worker_request_credential_renewal` | worker_credential | update |
+| `worker_send_message` | driver_message | create |
 
 ## Every write
 

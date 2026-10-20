@@ -79,7 +79,7 @@ func (t *SendEDILoadTenderTool) Recipe() []string {
 		toolShipmentList,
 		"edi_list_partners",
 		"edi_send_tender",
-		"edi_list_transfers",
+		toolEDIListTransfers,
 	}
 }
 
@@ -194,9 +194,11 @@ func (t *SendEDIStatusUpdateTool) ParamSchema() map[string]any {
 		common.FieldShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
 			"Report this shipment's current status. The shipment, from shipment_list or "+
 				"shipment_get."),
-		ParamServiceFailureID: agenttoolschema.RecordIDText(permission.ResourceServiceFailure,
+		ParamServiceFailureID: agenttoolschema.RecordIDText(
+			permission.ResourceServiceFailure,
 			"Report a late or missed stop with its reason, from exception_list_service_failures or "+
-				"exception_get_service_failure."),
+				"exception_get_service_failure.",
+		),
 	}, paramEDIPartnerID)
 }
 

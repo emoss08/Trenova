@@ -48,7 +48,7 @@ func NewRememberTool(memories agentports.AgentMemoryService) agentports.AgentToo
 func (t *RememberTool) Name() string { return "agent_create_memory" }
 
 func (t *RememberTool) SearchTerms() []string {
-	return []string{"memory", "keep in mind", "standing instruction", "save a fact"}
+	return []string{"remember", "memory", "keep in mind", "standing instruction", "save a fact"}
 }
 
 func (t *RememberTool) Description() string {
@@ -317,6 +317,10 @@ func NewForgetMemoryTool(memories agentports.AgentMemoryService) agentports.Agen
 }
 
 func (t *ForgetMemoryTool) Name() string { return "agent_retire_memory" }
+
+func (t *ForgetMemoryTool) SearchTerms() []string {
+	return []string{"forget memory"}
+}
 
 func (t *ForgetMemoryTool) Description() string {
 	return "Retire a recorded memory that no longer holds, by its id from agent_list_memories: " +

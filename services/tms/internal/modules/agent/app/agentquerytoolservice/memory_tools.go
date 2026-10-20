@@ -50,7 +50,7 @@ func (t *recallMemoryTool) Description() string {
 		"earlier proposals. Search by text, or narrow to one customer, location, " +
 		"driver or carrier with subjectType and subjectId, or to one tool. Call this " +
 		"before acting on a customer or a driver you have not been told about in this " +
-		"conversation. To save something, call remember directly; it handles a repeat."
+		"conversation. To save something, call agent_create_memory directly; it handles a repeat."
 }
 
 func (t *recallMemoryTool) ParamSchema() map[string]any {

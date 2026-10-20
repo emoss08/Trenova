@@ -27,7 +27,11 @@ func (t *AssignMoveTool) Name() string { return "dispatch_assign_move" }
 
 func (t *AssignMoveTool) Prerequisites() []string {
 	return []string{
-		"shipment_get", "dispatch_rank_candidates", "worker_search", "equipment_list_tractors", "equipment_list_trailers",
+		"shipment_get",
+		"dispatch_rank_candidates",
+		"worker_search",
+		"equipment_list_tractors",
+		"equipment_list_trailers",
 	}
 }
 

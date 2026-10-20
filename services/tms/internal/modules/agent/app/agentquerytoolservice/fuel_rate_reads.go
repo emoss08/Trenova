@@ -615,7 +615,11 @@ func newListIFTAMileageEntriesTool(repo iftaports.IFTARepository) agentports.Age
 			{Name: fieldQuarter, Kind: filterNumber, Sortable: true},
 			{Name: "traveledAt", Kind: filterDate, Sortable: true},
 			{Name: fieldTractorID, Kind: filterText, Note: tractorIDSource},
-			{Name: fieldJurisdictionID, Kind: filterText, Note: "from fuel_list_ifta_jurisdictions"},
+			{
+				Name: fieldJurisdictionID,
+				Kind: filterText,
+				Note: "from fuel_list_ifta_jurisdictions",
+			},
 			{Name: "loaded", Kind: filterBool},
 		},
 		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {

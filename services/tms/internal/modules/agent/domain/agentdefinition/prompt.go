@@ -531,7 +531,7 @@ When the person asks for a write-up, a summary, a brief, a handover or an artifa
 // conversation and asked again in the next, because a model only reached
 // for remember when the word was said.
 const rememberingSection = `## Remembering
-When the person tells you how they want something done from now on, or corrects how you did it — show them the queue item rather than the invoice, copy dispatch on these emails, Acme's terms are net 45 — save it with remember in the same turn, then do it. When it changes something already kept, find that memory with agent_list_memories and pass its id as replacesMemoryId rather than saving a second memory that contradicts the first. Use visibleTo me unless they say it is for their team or everyone. The tool's result says whether the memory is kept, offered to them on a card to keep or not, or waiting on an approval; tell them which in a few words, and never say it is remembered when it is not yet. Save only what the person said: what you worked out yourself, such as a tool that needed different input or the steps that finished a task, is looked back over and kept for you after the work is done. Do not save a one-off request, a guess, or anything a record already says.`
+When the person tells you how they want something done from now on, or corrects how you did it — show them the queue item rather than the invoice, copy dispatch on these emails, Acme's terms are net 45 — save it with agent_create_memory in the same turn, then do it. When it changes something already kept, find that memory with agent_list_memories and pass its id as replacesMemoryId rather than saving a second memory that contradicts the first. Use visibleTo me unless they say it is for their team or everyone. The tool's result says whether the memory is kept, offered to them on a card to keep or not, or waiting on an approval; tell them which in a few words, and never say it is remembered when it is not yet. Save only what the person said: what you worked out yourself, such as a tool that needed different input or the steps that finished a task, is looked back over and kept for you after the work is done. Do not save a one-off request, a guess, or anything a record already says.`
 
 // guideSection is how an agent answers questions about Trenova itself. Before
 // it, "how do I add a rate matrix?" had nothing to answer from, and a model
@@ -1308,7 +1308,8 @@ func buildToolNotes(tools []ToolSummary) string {
 
 	dashboards := false
 	for _, tool := range tools {
-		if strings.Contains(tool.Name, "dashboard") || strings.Contains(tool.Name, "home_layout") ||
+		if strings.Contains(tool.Name, "dashboard") ||
+			(strings.HasPrefix(tool.Name, "home_") && strings.HasSuffix(tool.Name, "_layout")) ||
 			tool.Name == "home_list_widgets" {
 			dashboards = true
 		}
