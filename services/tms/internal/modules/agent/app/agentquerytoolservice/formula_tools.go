@@ -104,16 +104,16 @@ func newListFormulaTemplatesTool(
 			},
 			{Name: "createdAt", Kind: filterDate, Sortable: true},
 		},
-		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
+		fetch: func(ctx context.Context, opts *pagination.QueryOptions, _ pagination.CursorInfo) (listPage, error) {
 			result, err := repo.List(
 				ctx,
 				&formulatemplateports.ListFormulaTemplatesRequest{Filter: opts},
 			)
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
 
-			return listRows(result.Items, func(item *formulatemplate.FormulaTemplate) any {
+			return offsetListPage(result.Items, func(item *formulatemplate.FormulaTemplate) any {
 				return formulaTemplateRow{
 					ID:          item.ID.String(),
 					Name:        item.Name,

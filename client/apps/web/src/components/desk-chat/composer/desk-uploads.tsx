@@ -1,6 +1,7 @@
 import { translate } from "@trenova/shared/i18n/runtime";
 import type { AssistantMessageAttachment } from "@/types/assistant";
 import { Button } from "@trenova/shared/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useObjectUrl } from "@trenova/shared/hooks/use-object-url";
 import { cn } from "@trenova/shared/lib/utils";
@@ -14,6 +15,7 @@ import {
 } from "react";
 import { useArtifactOpener, useAttachmentCard } from "@/components/assistant/artifact-opener";
 import { DeskIcon } from "../desk-icons";
+import { deskPopoverClass, useComposerPopover } from "../desk-popover";
 import {
   extensionOf,
   MAX_ATTACHMENT_MB,
@@ -233,24 +235,31 @@ export function DeskAttachRow({
         {lead}
         {items.slice(0, SHOWN).map(chip)}
         {rest.length > 0 && (
-          <span className="dk-fp-more-w">
-            <Button
-              variant="bare"
-              size="bare"
-              className={cn(
-                "relative h-7 flex-none animate-[dk-fcin_300ms_var(--dk-spring)_both] gap-1.5 rounded-lg bg-dsk-sunken px-2.25 text-sm text-dsk-muted ring-1 ring-dsk-b-sub ring-inset",
-                rest.some((item) => item.status === "error") && "text-dsk-error",
-              )}
-              onClick={() => setMore((value) => !value)}
+          <Popover open={more} onOpenChange={setMore}>
+            <PopoverTrigger
+              render={
+                <Button
+                  variant="bare"
+                  size="bare"
+                  className={cn(
+                    "relative h-7 flex-none animate-[dk-fcin_300ms_var(--dk-spring)_both] gap-1.5 rounded-lg bg-dsk-sunken px-2.25 text-sm text-dsk-muted ring-1 ring-dsk-b-sub ring-inset",
+                    rest.some((item) => item.status === "error") && "text-dsk-error",
+                  )}
+                />
+              }
             >
               {t("+{0} more", rest.length)}
-            </Button>
-            {more && (
-              <div className="dk-fp-pop" onMouseLeave={() => setMore(false)}>
-                {rest.map(chip)}
-              </div>
-            )}
-          </span>
+            </PopoverTrigger>
+            <PopoverContent
+              side="top"
+              align="end"
+              sideOffset={6}
+              className={cn(deskPopoverClass, "dk-fp-pop gap-1 p-1.5")}
+              onMouseLeave={() => setMore(false)}
+            >
+              {rest.map(chip)}
+            </PopoverContent>
+          </Popover>
         )}
         {(note || failed > 0) && (
           <span className="dk-ar-note">
@@ -301,59 +310,69 @@ export function DeskDropGhosts({ count, taken }: { count: number; taken: number 
   );
 }
 
-/** What the attach button opens: a file from this computer, or a scan from Capture. */
+/**
+ * What the attach button opens, inside its `Popover`: a file from this
+ * computer, or a scan from Capture.
+ */
 export function DeskAttachMenu({
-  onPickFiles,
+  onUpload,
   onScan,
   scanDevice,
-  onClose,
   children,
 }: {
-  onPickFiles: (files: FileList) => void;
+  /** Opens the file picker; the menu closes as it does. */
+  onUpload: () => void;
   onScan?: () => void;
   scanDevice?: string | null;
-  onClose: () => void;
   /** The Capture panel, when it is open in place of the menu. */
   children?: ReactNode;
 }) {
+  const { anchor, wide } = useComposerPopover();
+  const capture = children !== undefined && children !== null;
+
+  return (
+    <PopoverContent
+      side="top"
+      align="start"
+      alignOffset={wide ? 0 : -4}
+      sideOffset={8}
+      anchor={anchor}
+      initialFocus={false}
+      className={cn(
+        deskPopoverClass,
+        "dk-am",
+        capture ? "w-95" : "p-1.5 w-82.5",
+        wide && "w-(--anchor-width)",
+      )}
+    >
+      {capture ? (
+        children
+      ) : (
+        <AttachMenuItems onUpload={onUpload} onScan={onScan} scanDevice={scanDevice} />
+      )}
+    </PopoverContent>
+  );
+}
+
+/**
+ * The attach menu's choices. They open on the first, so the arrow keys work
+ * at once, and again on coming back from Capture.
+ */
+function AttachMenuItems({
+  onUpload,
+  onScan,
+  scanDevice,
+}: {
+  onUpload: () => void;
+  onScan?: () => void;
+  scanDevice?: string | null;
+}) {
   const t = useT();
-  const inputRef = useRef<HTMLInputElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") {
-        return;
-      }
-      // Focus inside the menu goes back to the button that opened it, rather
-      // than to the page when the menu goes.
-      if (rootRef.current?.contains(document.activeElement)) {
-        rootRef.current.parentElement?.querySelector<HTMLElement>("[data-attach-toggle]")?.focus();
-      }
-      onClose();
-    };
-    const onPointer = (event: PointerEvent) => {
-      const target = event.target as Element | null;
-      if (rootRef.current?.contains(target) || target?.closest?.("[data-attach-toggle]")) {
-        return;
-      }
-      onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    document.addEventListener("pointerdown", onPointer);
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      document.removeEventListener("pointerdown", onPointer);
-    };
-  }, [onClose]);
-
-  // The menu opens on its first item, so the arrow keys work at once.
-  const hasChildren = children !== undefined && children !== null;
-  useEffect(() => {
-    if (!hasChildren) {
-      rootRef.current?.querySelector<HTMLElement>("[role='menuitem']")?.focus();
-    }
-  }, [hasChildren]);
+    rootRef.current?.querySelector<HTMLElement>("[role='menuitem']")?.focus();
+  }, []);
   const onMenuKey = (event: ReactKeyboardEvent<HTMLDivElement>) => {
     const items = [...(rootRef.current?.querySelectorAll<HTMLElement>("[role='menuitem']") ?? [])];
     const at = items.indexOf(document.activeElement as HTMLElement);
@@ -364,35 +383,14 @@ export function DeskAttachMenu({
     }
   };
 
-  if (children) {
-    return (
-      <div className="dk-am dk-cap-w" ref={rootRef}>
-        {children}
-      </div>
-    );
-  }
-
   return (
-    <div className="dk-am" ref={rootRef} role="menu" onKeyDown={onMenuKey}>
-      <input
-        ref={inputRef}
-        type="file"
-        multiple
-        hidden
-        onChange={(event) => {
-          if (event.target.files) {
-            onPickFiles(event.target.files);
-          }
-          event.target.value = "";
-          onClose();
-        }}
-      />
+    <div ref={rootRef} role="menu" onKeyDown={onMenuKey}>
       <Button
         variant="bare"
         size="bare"
         role="menuitem"
         className={menuItemClass}
-        onClick={() => inputRef.current?.click()}
+        onClick={onUpload}
       >
         <DeskIcon name="plus" size={14} />
         <span>

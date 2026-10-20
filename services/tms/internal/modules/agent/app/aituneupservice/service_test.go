@@ -139,11 +139,15 @@ func (d *definitionRepo) List(
 	_ context.Context,
 	req *agentdefinitionports.ListAgentDefinitionRequest,
 ) (*pagination.ListResult[*agentdefinition.Definition], error) {
-	offset := req.Filter.Pagination.Offset
+	offset := req.Filter.Pagination.SafeOffset()
 	if offset >= len(d.agents) {
 		return &pagination.ListResult[*agentdefinition.Definition]{}, nil
 	}
-	return &pagination.ListResult[*agentdefinition.Definition]{Items: d.agents[offset:], Total: len(d.agents)}, nil
+	end := min(len(d.agents), offset+req.Filter.Pagination.SafeLimit())
+	return &pagination.ListResult[*agentdefinition.Definition]{
+		Items: d.agents[offset:end],
+		Total: len(d.agents),
+	}, nil
 }
 
 func (d *definitionRepo) ListByIDs(
@@ -656,4 +660,25 @@ func TestMoveAhead(t *testing.T) {
 
 	_, ok = MoveAhead(order, "z", "a")
 	assert.False(t, ok)
+}
+
+func TestAllAgents_ReadsEveryPageThroughTheRepositoryLimit(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture(t)
+	count := pagination.MaxLimit*2 + 7
+	for range count {
+		f.agents.agents = append(f.agents.agents, &agentdefinition.Definition{
+			ID: pulid.MustNew("agt_"),
+		})
+	}
+
+	agents, err := f.svc.allAgents(t.Context(), pagination.TenantInfo{})
+	require.NoError(t, err)
+	require.Len(t, agents, count)
+	seen := make(map[pulid.ID]struct{}, count)
+	for _, agent := range agents {
+		seen[agent.ID] = struct{}{}
+	}
+	assert.Len(t, seen, count, "no agent is read twice")
 }

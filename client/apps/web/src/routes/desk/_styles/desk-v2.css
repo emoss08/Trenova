@@ -801,7 +801,8 @@
   scrollbar-color: var(--dsk-b) transparent;
   animation: dk-nl 300ms var(--dk-settle) both;
 }
-.dk-ax-body code {
+/* inline code only: a block's code is laid out and coloured by HighlightedCode */
+.dk-ax-body code:where(:not(pre *)) {
   font: 11px var(--dk-plex);
   color: var(--dsk-fg2);
   padding: 1px 5px;
@@ -1597,24 +1598,6 @@
 }
 .dk-ax-vers {
   display: none;
-}
-.dk-axv-pop {
-  position: absolute;
-  left: 0;
-  top: calc(100% + 6px);
-  z-index: 12;
-  width: 270px;
-  padding: 4px;
-  border-radius: 12px;
-  background: var(--dsk-raised);
-  box-shadow:
-    var(--dsk-lift-hi),
-    0 0 0 1px var(--dsk-b-sub);
-  animation: dk-pop 200ms var(--dk-settle) both;
-}
-.dk-axv-pop {
-  left: auto;
-  right: 0;
 }
 .dk-ec-head {
   max-width: 760px;
@@ -3804,25 +3787,6 @@
   border-radius: 9px;
   background: var(--dsk-sunken);
 }
-.dk-dx-m {
-  position: relative;
-}
-.dk-dx-mp {
-  position: absolute;
-  top: calc(100% + 6px);
-  z-index: 12;
-  width: 210px;
-  padding: 4px;
-  border-radius: 12px;
-  background: var(--dsk-raised);
-  box-shadow:
-    var(--dsk-lift-hi),
-    0 0 0 1px var(--dsk-b-sub);
-  animation: dk-pop 200ms var(--dk-spring) both;
-}
-.dk-dx-mp.dk-right {
-  right: 0;
-}
 .dk-dx-fx {
   width: 26px;
   flex: none;
@@ -4723,22 +4687,6 @@ button.dk-dx-c:hover {
   font-size: 11.5px;
   color: var(--dsk-subtle);
   text-align: right;
-}
-.dk-bi-m {
-  position: relative;
-}
-.dk-bi-mp {
-  position: absolute;
-  bottom: calc(100% + 6px);
-  left: 0;
-  width: 200px;
-  padding: 4px;
-  border-radius: 12px;
-  background: var(--dsk-raised);
-  box-shadow:
-    var(--dsk-lift-hi),
-    0 0 0 1px var(--dsk-b-sub);
-  animation: dk-pop 200ms var(--dk-spring) both;
 }
 .dk-bi-done {
   flex: 1;

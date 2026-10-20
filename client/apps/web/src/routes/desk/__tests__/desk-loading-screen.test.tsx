@@ -89,7 +89,8 @@ describe("Desk loading screen", () => {
     const frame = await openAt("/desk");
     const rail = frame.querySelector(".dk-sb") as HTMLElement;
 
-    expect(rail.querySelectorAll(".dk-sb-top .dk-sk-ic")).toHaveLength(2);
+    expect(rail.querySelectorAll(".dk-sb-top .dk-sk-ic")).toHaveLength(3);
+    expect(rail.querySelector(".dk-sb-top")?.firstElementChild).toHaveClass("dk-sk-ic");
     expect(rail.querySelectorAll(".dk-skr .dk-sk-glyph")).toHaveLength(5);
     expect(rail.querySelectorAll(".dk-skr-gh")).toHaveLength(6);
     expect(rail.querySelectorAll(".dk-skr .dk-sk-dot")).toHaveLength(34);

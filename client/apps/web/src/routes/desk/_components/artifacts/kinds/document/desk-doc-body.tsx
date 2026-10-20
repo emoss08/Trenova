@@ -1,4 +1,5 @@
 import { Button } from "@trenova/shared/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { scrollParent } from "@/lib/dom";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useNowSeconds } from "@/hooks/use-now-seconds";
@@ -9,8 +10,8 @@ import type { AssistantArtifact } from "@/types/assistant";
 import { useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn, downloadFromUrl } from "@trenova/shared/lib/utils";
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { useOutsideDismiss } from "@/components/desk-chat/use-outside-dismiss";
+import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { deskPopoverClass } from "@/components/desk-chat/desk-popover";
 import { VERSION_OPTION_CLASS, versionTriggerClass } from "../../desk-version-classes";
 import { documentFrom, type DocumentSource } from "../../artifact-payloads";
 import { ArtIcon } from "../../desk-art-kinds";
@@ -144,7 +145,7 @@ function Rich({
   );
 }
 
-/** A menu under a toolbar button, closed by a click outside it. */
+/** A menu under a toolbar button, closed by a choice or a click outside it. */
 function DocMenu({
   label,
   icon,
@@ -155,30 +156,27 @@ function DocMenu({
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLSpanElement>(null);
-  const close = useCallback(() => setOpen(false), []);
-  useOutsideDismiss(rootRef, open, close);
 
   return (
-    <span className="dk-dx-m" ref={rootRef}>
-      <Button
-        variant="bare"
-        size="bare"
-        className="h-7.5 gap-1.5 rounded-lg px-2.25 text-sm font-medium text-dsk-fg2 ring-1 ring-dsk-b-sub ring-inset hover:bg-dsk-hover aria-expanded:bg-dsk-hover [&>svg:last-child]:text-dsk-subtle"
-        aria-expanded={open}
-        onClick={() => setOpen((value) => !value)}
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger
+        render={
+          <Button
+            variant="bare"
+            size="bare"
+            className="h-7.5 gap-1.5 rounded-lg px-2.25 text-sm font-medium text-dsk-fg2 ring-1 ring-dsk-b-sub ring-inset hover:bg-dsk-hover aria-expanded:bg-dsk-hover [&>svg:last-child]:text-dsk-subtle"
+          />
+        }
       >
         {icon}
         {label}
         <ArtIcon name="down" size={10} stroke={2.4} />
-      </Button>
-      {open && (
-        // oxlint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- the menu's own buttons carry the keys; the wrapper only folds it after a choice
-        <div className="dk-dx-mp dk-right" onClick={close}>
-          {children}
-        </div>
-      )}
-    </span>
+      </PopoverTrigger>
+      <PopoverContent align="end" sideOffset={6} className={cn(deskPopoverClass, "w-52.5 p-1")}>
+        {/* oxlint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- the menu's own buttons carry the keys; the wrapper only folds it after a choice */}
+        <div onClick={() => setOpen(false)}>{children}</div>
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -227,9 +225,6 @@ export function DeskDocBody({
   const [versionsOpen, setVersionsOpen] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const paperRef = useRef<HTMLElement>(null);
-  const versionsRef = useRef<HTMLSpanElement>(null);
-  const closeVersions = useCallback(() => setVersionsOpen(false), []);
-  useOutsideDismiss(versionsRef, versionsOpen, closeVersions);
 
   useEffect(() => {
     if (notice === null) return;
@@ -563,52 +558,61 @@ export function DeskDocBody({
             {t("Edit")}
           </Button>
         </div>
-        <span className="dk-axv" ref={versionsRef}>
-          <Button
-            variant="bare"
-            size="bare"
-            className={versionTriggerClass(old)}
-            title={t("Versions")}
-            aria-expanded={versionsOpen}
-            onClick={() => setVersionsOpen((value) => !value)}
-          >
-            v{current.lineageSeq}
-            <ArtIcon name="down" size={9} stroke={2.6} />
-          </Button>
-          {versionsOpen && (
-            <div className="dk-axv-pop" role="listbox">
-              {[...versions].reverse().map((version) => {
-                const at = versions.indexOf(version);
-                const versionDoc = documentFrom(version);
-                return (
-                  <Button
-                    key={version.id}
-                    variant="bare"
-                    size="bare"
-                    role="option"
-                    aria-selected={at === index}
-                    className={VERSION_OPTION_CLASS}
-                    onClick={() => {
-                      setView(at === latestIndex ? null : at);
-                      setVersionsOpen(false);
-                      setMode("read");
-                      setSuggestion(null);
-                    }}
-                  >
-                    <b>v{version.lineageSeq}</b>
-                    <span>
-                      <em>{versionDoc.versionNote || t("First draft")}</em>
-                      <i>
-                        {versionAuthor(version)} · {shortTime(version.createdAt)}
-                        {at === latestIndex ? ` · ${t("Latest")}` : ""}
-                      </i>
-                    </span>
-                    {at === index && <ArtIcon name="check" size={12} stroke={2.4} />}
-                  </Button>
-                );
-              })}
-            </div>
-          )}
+        <span className="dk-axv">
+          <Popover open={versionsOpen} onOpenChange={setVersionsOpen}>
+            <PopoverTrigger
+              render={
+                <Button
+                  variant="bare"
+                  size="bare"
+                  className={versionTriggerClass(old)}
+                  title={t("Versions")}
+                  aria-haspopup="listbox"
+                />
+              }
+            >
+              v{current.lineageSeq}
+              <ArtIcon name="down" size={9} stroke={2.6} />
+            </PopoverTrigger>
+            <PopoverContent
+              align="end"
+              sideOffset={6}
+              className={cn(deskPopoverClass, "w-67.5 p-1")}
+            >
+              <div role="listbox" aria-label={t("Versions")}>
+                {[...versions].reverse().map((version) => {
+                  const at = versions.indexOf(version);
+                  const versionDoc = documentFrom(version);
+                  return (
+                    <Button
+                      key={version.id}
+                      variant="bare"
+                      size="bare"
+                      role="option"
+                      aria-selected={at === index}
+                      className={VERSION_OPTION_CLASS}
+                      onClick={() => {
+                        setView(at === latestIndex ? null : at);
+                        setVersionsOpen(false);
+                        setMode("read");
+                        setSuggestion(null);
+                      }}
+                    >
+                      <b>v{version.lineageSeq}</b>
+                      <span>
+                        <em>{versionDoc.versionNote || t("First draft")}</em>
+                        <i>
+                          {versionAuthor(version)} · {shortTime(version.createdAt)}
+                          {at === latestIndex ? ` · ${t("Latest")}` : ""}
+                        </i>
+                      </span>
+                      {at === index && <ArtIcon name="check" size={12} stroke={2.4} />}
+                    </Button>
+                  );
+                })}
+              </div>
+            </PopoverContent>
+          </Popover>
         </span>
         <span className="flex-1" />
         <DocMenu label={t("Export")} icon={<ArtIcon name="dl" size={13} />}>

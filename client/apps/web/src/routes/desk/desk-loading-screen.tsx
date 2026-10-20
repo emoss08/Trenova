@@ -54,6 +54,7 @@ export function DeskLoadingScreen() {
       </span>
       <aside className="dk-sb" aria-hidden>
         <div className="dk-sb-top">
+          <i className="dk-sk dk-sk-ic" />
           <i className="dk-sk dk-sk-logo" />
           <span className="dk-sk-sp" />
           <i className="dk-sk dk-sk-ic" />

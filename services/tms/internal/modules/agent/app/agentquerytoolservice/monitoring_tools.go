@@ -116,17 +116,18 @@ func newListServiceFailuresTool(failures serviceFailureLister) agentports.AgentQ
 	spec.fetchIn = func(
 		ctx context.Context,
 		opts *pagination.QueryOptions,
+		_ pagination.CursorInfo,
 		clk clock,
-	) ([]any, error) {
+	) (listPage, error) {
 		result, err := failures.List(
 			ctx,
 			&servicefailureports.ListServiceFailuresRequest{Filter: opts},
 		)
 		if err != nil {
-			return nil, err
+			return listPage{}, err
 		}
 
-		return listRows(result.Items, func(item *servicefailure.ServiceFailure) any {
+		return offsetListPage(result.Items, func(item *servicefailure.ServiceFailure) any {
 			return toServiceFailureRow(item, clk.Timezone)
 		}), nil
 	}

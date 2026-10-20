@@ -1,4 +1,5 @@
 import { Button } from "@trenova/shared/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { recordPath } from "@/config/record-links";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
@@ -21,8 +22,8 @@ import type {
 } from "@trenova/shared/types/billing-queue";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import type { Shipment } from "@trenova/shared/types/shipment";
-import { useCallback, useRef, useState, type ReactNode } from "react";
-import { useOutsideDismiss } from "@/components/desk-chat/use-outside-dismiss";
+import { useCallback, useState, type ReactNode } from "react";
+import { deskPopoverClass } from "@/components/desk-chat/desk-popover";
 import {
   HOLD_REASONS,
   barReason,
@@ -339,25 +340,29 @@ function HoldMenu({
 }) {
   const t = useT();
   const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
-  const close = useCallback(() => setOpen(false), []);
-  useOutsideDismiss(rootRef, open, close);
 
   return (
-    <div className="dk-bi-m" ref={rootRef}>
-      <Button
-        variant="quiet"
-        className={cn("disabled:opacity-35", open && "bg-dsk-hover text-dsk-fg")}
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger
         disabled={busy}
-        aria-expanded={open}
-        onClick={() => setOpen((value) => !value)}
+        render={
+          <Button
+            variant="quiet"
+            className={cn("disabled:opacity-35", open && "bg-dsk-hover text-dsk-fg")}
+          />
+        }
       >
         <CardIcon name="pause" size={12} stroke={2.4} />
         {t("Hold")}
         <CardIcon name="down" size={10} stroke={2.4} />
-      </Button>
-      {open && (
-        <div className="dk-bi-mp" role="menu">
+      </PopoverTrigger>
+      <PopoverContent
+        side="top"
+        align="start"
+        sideOffset={6}
+        className={cn(deskPopoverClass, "w-50 p-1")}
+      >
+        <div role="menu">
           {HOLD_REASONS.map((reason) => (
             <Button
               key={reason}
@@ -366,7 +371,7 @@ function HoldMenu({
               className="block w-full rounded-lg px-2.25 py-1.75 text-left text-sm text-dsk-fg2 hover:bg-dsk-hover hover:text-dsk-fg"
               role="menuitem"
               onClick={() => {
-                close();
+                setOpen(false);
                 onHold(reason);
               }}
             >
@@ -374,8 +379,8 @@ function HoldMenu({
             </Button>
           ))}
         </div>
-      )}
-    </div>
+      </PopoverContent>
+    </Popover>
   );
 }
 
