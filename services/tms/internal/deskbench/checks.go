@@ -989,7 +989,8 @@ func readConfinement(ctx context.Context, db bun.IDB) (confinement, error) {
 func (c confinement) err() error {
 	switch {
 	case c.Bypass:
-		return fmt.Errorf("%w: it is a superuser or bypasses row-level security", ErrSetupUnconfined)
+		return fmt.Errorf("%w: it is a superuser or bypasses row-level security",
+			ErrSetupUnconfined)
 	case c.Security != "on":
 		return fmt.Errorf("%w: row_security is %q", ErrSetupUnconfined, c.Security)
 	default:
