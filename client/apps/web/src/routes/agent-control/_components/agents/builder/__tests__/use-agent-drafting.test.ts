@@ -41,10 +41,10 @@ describe("draftedValues", () => {
   });
 
   it("keeps what the draft chose for the agent itself", () => {
-    const values = draftedValues(draft({ toolTiers: { agent_request_review: "Propose" } }));
+    const values = draftedValues(draft({ toolTiers: { agent_raise_exception: "Propose" } }));
     expect(values.name).toBe("Detention chaser");
     expect(values.triggerMode).toBe("Event");
     expect(values.eventKinds).toEqual(["shipment.stop.arrived"]);
-    expect(values.toolTiers).toEqual({ agent_request_review: "Propose" });
+    expect(values.toolTiers).toEqual({ agent_raise_exception: "Propose" });
   });
 });

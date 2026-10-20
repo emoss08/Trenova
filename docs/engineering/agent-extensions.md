@@ -137,7 +137,7 @@ each attached file it analyzed and caps nothing, because a report run is the org
 own data. Once a turn has a
 successful result from such a tool, every write it asks for afterwards is capped at `Propose`, whatever the tier,
 the ceiling or the private-write rule would allow, and the model is told why. An escalation
-(`agent_raise_exception`, `agent_request_review`, whose policy sets `Escalates`) is the exception: it only
+(`agent_raise_exception`, whose policy sets `Escalates`) is the exception: it only
 records the run for a person in the organization, which is what a run that read something suspect
 should be able to do on its own. The business-hours hold passes it by for the same reason.
 

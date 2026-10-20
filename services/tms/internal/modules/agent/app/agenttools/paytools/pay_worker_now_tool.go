@@ -51,7 +51,7 @@ func (t *PayWorkerNowTool) Description() string {
 func (t *PayWorkerNowTool) ParamSchema() map[string]any {
 	properties := common.SettlementPaymentProperties(common.DriverPaymentMethods)
 	properties[common.ParamWorkerID] = agenttoolschema.RecordIDText(permission.ResourceWorker,
-		"The driver, from worker_search or settlement_list_pay_events.")
+		"The driver, from worker_list or settlement_list_pay_events.")
 	properties[ParamPayEventIDs] = toolschema.KeepEmpty(agenttoolschema.OfKinds(map[string]any{
 		toolschema.KeyType:     toolschema.TypeArray,
 		toolschema.KeyMaxItems: maxPayEventsPerAttach,

@@ -260,10 +260,10 @@ func tractorFields() []masterField[tractor.Tractor] {
 	return append(
 		fields,
 		masterID(paramPrimaryWorkerID, permission.ResourceWorker,
-			"The driver who runs it, from worker_search or worker_list.",
+			"The driver who runs it, from worker_list.",
 			func(t *tractor.Tractor) *pulid.ID { return &t.PrimaryWorkerID }),
 		masterOptionalID(paramSecondaryWorkerID, permission.ResourceWorker,
-			"A team driver, from worker_search or worker_list.",
+			"A team driver, from worker_list.",
 			func(t *tractor.Tractor) *pulid.ID { return &t.SecondaryWorkerID }),
 		masterState(mdState, "The state it is registered in.", false,
 			func(t *tractor.Tractor) *pulid.ID { return &t.StateID }),

@@ -238,8 +238,7 @@ func newAssignWorkerTrainingTool(training TrainingKeeper) agentports.AgentTool {
 	), map[string]any{
 		paramTrainingWorkers: agenttoolschema.RecordIDs(
 			permission.ResourceWorker,
-			"The workers, from worker_search or "+
-				"worker_list.",
+			"The workers, from worker_list.",
 			maxTrainingWorkers,
 		),
 		paramCourseIDs: agenttoolschema.RecordIDs(permission.ResourceTrainingCourse,

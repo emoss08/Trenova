@@ -274,7 +274,7 @@ func TestTemplates_TheNewDesksHoldWhatTheirWorkNeedsAndNothingThatLeaves(t *test
 			template: agentdefinition.TemplateComplianceAssistant,
 			needs: []string{
 				"carrier_list_intelligence_events", "carrier_list", "carrier_get",
-				"carrier_record_intelligence_review", "worker_list_expiring_credentials",
+				"carrier_record_intelligence_review", "worker_list_credentials",
 			},
 		},
 		{
@@ -285,7 +285,7 @@ func TestTemplates_TheNewDesksHoldWhatTheirWorkNeedsAndNothingThatLeaves(t *test
 		{
 			template: agentdefinition.TemplateDetentionDesk,
 			needs: []string{
-				"detention_get_occurrence", "inbox_get_inbound_message", "inbox_search_inbound_messages",
+				"detention_get_occurrence", "inbox_get_inbound_message", "inbox_list_inbound_messages",
 				"detention_resolve_dispute",
 			},
 			never: []string{

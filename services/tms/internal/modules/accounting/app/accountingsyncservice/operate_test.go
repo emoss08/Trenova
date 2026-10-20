@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -780,8 +780,8 @@ func TestObjectStatesPicksTheMostRelevantRecord(t *testing.T) {
 	put(h.conn, supersededObject, accountingsync.SyncOperationUpdate, 2, accountingsync.SyncStatusSuperseded)
 	put(idle, idleObject, accountingsync.SyncOperationCreate, 1, accountingsync.SyncStatusBlocked)
 
-	states, err := h.svc.ObjectStates(t.Context(), h.tenant,
-		[]pulid.ID{blockedObject, syncedObject, supersededObject, idleObject})
+	states, err := h.svc.ObjectStates(t.Context(), h.objectStates(
+		blockedObject, syncedObject, supersededObject, idleObject))
 	require.NoError(t, err)
 
 	require.Len(t, states, 2)
@@ -790,6 +790,55 @@ func TestObjectStatesPicksTheMostRelevantRecord(t *testing.T) {
 	assert.Equal(t, synced.ID, states[syncedObject].Record.ID, "synced outranks skipped")
 	assert.NotContains(t, states, supersededObject, "a superseded record is never the state")
 	assert.NotContains(t, states, idleObject, "a connection that is not syncing shows nothing")
+}
+
+func (h *harness) objectStates(
+	ids ...pulid.ID,
+) *accountingsyncports.AccountingSyncObjectStatesRequest {
+	return &accountingsyncports.AccountingSyncObjectStatesRequest{
+		TenantInfo: h.tenant,
+		ObjectIDs:  ids,
+	}
+}
+
+func TestObjectStatesNarrowsToOneSystemWhenAsked(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t)
+	xero := h.addConnection(func(conn *accountingsync.AccountingConnection) {
+		syncingConnection(conn)
+		conn.IntegrationType = integration.TypeXero
+	})
+	invoiceID := pulid.MustNew("inv_")
+	put := func(conn *accountingsync.AccountingConnection, status accountingsync.SyncStatus,
+	) *accountingsync.AccountingSyncRecord {
+		record := NewRecordFor(conn, &accountingsyncports.AccountingSyncEnqueueRequest{
+			TenantInfo:  h.tenant,
+			ObjectType:  accountingsync.SyncObjectInvoice,
+			ObjectID:    invoiceID,
+			Operation:   accountingsync.SyncOperationCreate,
+			Revision:    1,
+			SourceEvent: accountingsync.SyncSourceInvoicePosted,
+		}, time.Now().Unix())
+		record.Status = status
+		h.records.put(record)
+		return record
+	}
+	synced := put(h.conn, accountingsync.SyncStatusSynced)
+	blocked := put(xero, accountingsync.SyncStatusBlocked)
+
+	states, err := h.svc.ObjectStates(t.Context(), h.objectStates(invoiceID))
+	require.NoError(t, err)
+	assert.Equal(t, blocked.ID, states[invoiceID].Record.ID,
+		"across systems, the one that needs attention is the state")
+	assert.Equal(t, "Xero", states[invoiceID].ProviderName)
+
+	narrowed := h.objectStates(invoiceID)
+	narrowed.IntegrationType = integration.TypeQuickBooksOnline
+	states, err = h.svc.ObjectStates(t.Context(), narrowed)
+	require.NoError(t, err)
+	assert.Equal(t, synced.ID, states[invoiceID].Record.ID, "one system reads only its records")
+	assert.Equal(t, "QuickBooks Online", states[invoiceID].ProviderName)
 }
 
 func TestObjectStatesShowsTheLatestStepOfASettlement(t *testing.T) {
@@ -814,7 +863,7 @@ func TestObjectStatesShowsTheLatestStepOfASettlement(t *testing.T) {
 	payment := put(accountingsync.SyncObjectCarrierBillPay, now+60)
 	put(accountingsync.SyncObjectCarrierBill, now)
 
-	states, err := h.svc.ObjectStates(t.Context(), h.tenant, []pulid.ID{settlementID})
+	states, err := h.svc.ObjectStates(t.Context(), h.objectStates(settlementID))
 	require.NoError(t, err)
 
 	assert.Equal(t, payment.ID, states[settlementID].Record.ID,
@@ -830,7 +879,7 @@ func TestObjectStatesIsBounded(t *testing.T) {
 		ids[idx] = pulid.MustNew("inv_")
 	}
 
-	_, err := h.svc.ObjectStates(t.Context(), h.tenant, ids)
+	_, err := h.svc.ObjectStates(t.Context(), h.objectStates(ids...))
 	require.NoError(t, err)
 
 	require.Len(t, h.records.byObjectsCalls, 1)
@@ -844,12 +893,12 @@ func TestObjectStatesWithNothingSyncingReadsNothing(t *testing.T) {
 	h := newHarness(t)
 	h.atStartDateStep()
 
-	states, err := h.svc.ObjectStates(t.Context(), h.tenant, []pulid.ID{pulid.MustNew("inv_")})
+	states, err := h.svc.ObjectStates(t.Context(), h.objectStates(pulid.MustNew("inv_")))
 	require.NoError(t, err)
 	assert.Empty(t, states)
 	assert.Empty(t, h.records.byObjectsCalls)
 
-	states, err = h.svc.ObjectStates(t.Context(), h.tenant, nil)
+	states, err = h.svc.ObjectStates(t.Context(), h.objectStates())
 	require.NoError(t, err)
 	assert.Empty(t, states)
 }

@@ -58,7 +58,7 @@ scenarios:
     steps:
       - say: "anyone on an expired med card? if so keep them off loads and ask them to renew"
         expect:
-          calls: ["worker_list_expiring_credentials"]
+          calls: ["worker_list_credentials"]
           proposals: [{ tool: "worker_place_dispatch_hold|worker_request_credential_renewal" }]
           maxFailedCalls: 1
           rubric: >
@@ -145,7 +145,7 @@ scenarios:
     steps:
       - say: "tell sarah the receiver in phoenix moved her appointment to 2pm tomorrow"
         expect:
-          calls: ["worker_search|shipment_list|worker_get"]
+          calls: ["worker_list|shipment_list|worker_get"]
           proposals: [{ tool: worker_send_message }]
           maxFailedCalls: 1
           rubric: >

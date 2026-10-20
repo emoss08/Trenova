@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -64,11 +65,39 @@ func NewRaiseExceptionTool(
 func (t *RaiseExceptionTool) Name() string { return "agent_raise_exception" }
 
 func (t *RaiseExceptionTool) Description() string {
-	return "Hand a case to a person when you cannot resolve it: say what you tried, how " +
-		"severe it is and which record it concerns. Use this instead of guessing. It is for " +
+	return "Flag a case for a person to review when you cannot resolve it: say what you tried, how " +
+		"severe it is and which record it concerns. Name the records that show the " +
+		"problem as evidence. Use this instead of guessing. It is for " +
 		"a problem with a record or a run that a person must resolve, not for requesting a " +
 		"product feature or reporting that a tool cannot do something; for that, tell the " +
 		"person plainly what cannot be done. It only works inside an agent run."
+}
+
+func evidenceItemsProperty(description string) map[string]any {
+	return map[string]any{
+		toolschema.KeyType:        toolschema.TypeArray,
+		toolschema.KeyDescription: description,
+		toolschema.KeyItems: map[string]any{
+			toolschema.KeyType: toolschema.TypeObject,
+			toolschema.KeyProperties: map[string]any{
+				common.FieldType: common.StringProperty(
+					"What kind of record it is: document, charge, rate, shipment.", 0,
+				),
+				evidenceID:       common.StringProperty("The record's id.", 0),
+				common.FieldNote: common.StringProperty("What the record shows, in a sentence.", 0),
+			},
+			toolschema.KeyRequired:             []string{common.FieldType, evidenceID},
+			toolschema.KeyAdditionalProperties: false,
+		},
+	}
+}
+
+const evidenceID = "id"
+
+const schemaType = "type"
+
+func (t *RaiseExceptionTool) SearchTerms() []string {
+	return []string{"flag for review", "manual review", "escalate", "hand off", "human"}
 }
 
 func (t *RaiseExceptionTool) ParamSchema() map[string]any {
@@ -76,7 +105,7 @@ func (t *RaiseExceptionTool) ParamSchema() map[string]any {
 		schemaType: "object",
 		"properties": map[string]any{
 			common.FieldSubjectType: agenttoolschema.Enum(
-				"The kind of record the case is about.",
+				"The kind of record the case is about; BillingQueueItem on a billing run.",
 				agenttoolschema.SubjectTypes,
 			),
 			common.FieldSubjectID: subjectIDProperty(
@@ -86,7 +115,9 @@ func (t *RaiseExceptionTool) ParamSchema() map[string]any {
 					"insight's inst_.",
 			),
 			common.FieldCategory: agenttoolschema.Enum(
-				"What kind of problem it is.",
+				"What kind of problem it is. On a billing queue item that is usually "+
+					"MissingDocumentation, IncorrectRates, WeightDiscrepancy, "+
+					"AccessorialDispute, DuplicateCharge or RateNotOnFile.",
 				agenttoolschema.ExceptionCategories,
 			),
 			common.FieldSeverity: agenttoolschema.Enum(
@@ -101,6 +132,11 @@ func (t *RaiseExceptionTool) ParamSchema() map[string]any {
 				schemaType:    "integer",
 				"description": "How many records are affected.",
 			},
+			common.FieldEvidence: evidenceItemsProperty(
+				"Optional: the records that show the problem, each as {type, id, note}: a " +
+					"document, a charge, a rate, the shipment. The run itself is always kept " +
+					"as evidence.",
+			),
 		},
 		"required": []string{
 			"subjectType",
@@ -184,6 +220,17 @@ func (t *RaiseExceptionTool) request(
 	if !given {
 		severity = agent.SeverityMedium
 	}
+	named, err := givenEvidence(params.Params)
+	if err != nil {
+		return nil, err
+	}
+	evidence := make([]agent.EvidenceRef, 0, len(named)+1)
+	evidence = append(evidence, agent.EvidenceRef{
+		Type: "agent_run",
+		ID:   params.RunID.String(),
+		Note: "raised by the agent",
+	})
+	evidence = append(evidence, named...)
 
 	return &agentports.FlagAgentExceptionRequest{
 		RunID:          params.RunID,
@@ -192,12 +239,8 @@ func (t *RaiseExceptionTool) request(
 		SubjectType:    subjectType,
 		SubjectID:      subjectID,
 		AttemptSummary: summary,
-		Evidence: []agent.EvidenceRef{{
-			Type: "agent_run",
-			ID:   params.RunID.String(),
-			Note: "raised by the agent",
-		}},
-		BlastRadius: int(common.OptionalInt64(params.Params, "blastRadius")),
+		Evidence:       evidence,
+		BlastRadius:    int(common.OptionalInt64(params.Params, "blastRadius")),
 		TenantInfo: pagination.TenantInfo{
 			OrgID: params.OrganizationID,
 			BuID:  params.BusinessUnitID,
@@ -213,9 +256,37 @@ func (t *RaiseExceptionTool) Validate(
 		return err
 	}
 
+	if _, err := givenEvidence(params.Params); err != nil {
+		return err
+	}
 	_, _, err := t.subject(ctx, params)
 
 	return err
+}
+
+func givenEvidence(params map[string]any) ([]agent.EvidenceRef, error) {
+	if raw, ok := params[common.FieldEvidence]; !ok || raw == nil {
+		return nil, nil
+	}
+
+	var evidence []agent.EvidenceRef
+	if err := common.DecodeParam(params, common.FieldEvidence, &evidence); err != nil {
+		return nil, err
+	}
+	for idx := range evidence {
+		ref := &evidence[idx]
+		ref.Type = strings.TrimSpace(ref.Type)
+		ref.ID = strings.TrimSpace(ref.ID)
+		ref.Note = strings.TrimSpace(ref.Note)
+		if ref.Type == "" || ref.ID == "" {
+			return nil, fmt.Errorf(
+				"parameter %q item %d needs both a type and an id",
+				common.FieldEvidence, idx,
+			)
+		}
+	}
+
+	return evidence, nil
 }
 
 // subject reads the record a case is about and checks that it is one: the

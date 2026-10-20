@@ -123,7 +123,7 @@ func newResolveInboundConflictTool(conflicts triageConflicts) agentports.AgentTo
 				"duplicate, which later filing and booking follow, so a person approves it.",
 			Properties: map[string]any{
 				paramMessageID: messageIDProperty(
-					"The message, from inbox_list_inbound_messages or inbox_search_inbound_messages.",
+					"The message, from inbox_list_inbound_messages, newest first or by query.",
 				),
 				paramConflictID: agenttoolschema.IDText(
 					"The conflict, from the conflicts inbox_get_inbound_message lists for the message.",
@@ -232,7 +232,7 @@ func newReopenInboundConflictTool(
 				"filed or booked changes.",
 			Properties: map[string]any{
 				paramMessageID: messageIDProperty(
-					"The message, from inbox_list_inbound_messages or inbox_search_inbound_messages.",
+					"The message, from inbox_list_inbound_messages, newest first or by query.",
 				),
 				paramConflictID: agenttoolschema.IDText(
 					"The settled conflict, from the conflicts inbox_get_inbound_message lists for " +

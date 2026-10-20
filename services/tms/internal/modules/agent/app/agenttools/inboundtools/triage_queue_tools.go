@@ -70,7 +70,7 @@ func newAssignInboundMessagesTool(queue triageQueue) agentports.AgentTool {
 				"is sent and the messages themselves are unchanged.",
 			Properties: map[string]any{
 				paramMessageIDs: messageIDsProperty(
-					"The messages, from inbox_list_inbound_messages or inbox_search_inbound_messages.",
+					"The messages, from inbox_list_inbound_messages, newest first or by query.",
 				),
 				paramOwnerID: agenttoolschema.RecordIDText(permission.ResourceUser,
 					"The person to give them to, from inbox_list_triage_assignees. Leave it out to "+
@@ -169,8 +169,8 @@ func newReopenInboundMessagesTool(queue triageQueue) agentports.AgentTool {
 				"sent.",
 			Properties: map[string]any{
 				paramMessageIDs: messageIDsProperty(
-					"The settled messages, from inbox_list_inbound_messages or " +
-						"inbox_search_inbound_messages.",
+					"The settled messages, from inbox_list_inbound_messages, " +
+						"newest first or by query.",
 				),
 			},
 			Required:    []string{paramMessageIDs},
@@ -254,8 +254,8 @@ func newSnoozeInboundMessagesTool(queue triageQueue) agentports.AgentTool {
 				"return on their own and nothing is sent.",
 			Properties: map[string]any{
 				paramMessageIDs: messageIDsProperty(
-					"The messages waiting on a person, from inbox_list_inbound_messages or " +
-						"inbox_search_inbound_messages.",
+					"The messages waiting on a person, from inbox_list_inbound_messages, " +
+						"newest first or by query.",
 				),
 				paramSnoozeUntil: agenttoolschema.LocalDateTime(
 					"When they return, at most 90 days out. Leave it out when waiting on " +
@@ -385,7 +385,7 @@ func newWakeInboundMessageTool(queue triageQueue) agentports.AgentTool {
 				"nothing is sent.",
 			Properties: map[string]any{
 				paramMessageID: messageIDProperty(
-					"The parked message, from inbox_list_inbound_messages or inbox_search_inbound_messages.",
+					"The parked message, from inbox_list_inbound_messages, newest first or by query.",
 				),
 			},
 			Required:    []string{paramMessageID},
@@ -502,8 +502,8 @@ func newWaitForInboundReplyTool(queue triageQueue) agentports.AgentTool {
 				"time comes; nothing is sent.",
 			Properties: map[string]any{
 				paramMessageID: messageIDProperty(
-					"The message waiting on a person, from inbox_list_inbound_messages or " +
-						"inbox_search_inbound_messages.",
+					"The message waiting on a person, from inbox_list_inbound_messages, " +
+						"newest first or by query.",
 				),
 				paramSnoozeUntil: agenttoolschema.LocalDateTime(
 					"When it returns if the sender has not replied, at most 30 days out.",
@@ -597,7 +597,7 @@ func newUnlinkInboundMessageTool(queue triageQueue) agentports.AgentTool {
 				"decides how far it may run.",
 			Properties: map[string]any{
 				paramMessageID: messageIDProperty(
-					"The message, from inbox_list_inbound_messages or inbox_search_inbound_messages.",
+					"The message, from inbox_list_inbound_messages, newest first or by query.",
 				),
 				paramLinkedRecord: agenttoolschema.Enum(
 					"Which link to remove.",

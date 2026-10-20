@@ -24,7 +24,7 @@ func deferredCoreRuntime(t *testing.T) (*Service, []string) {
 		),
 		describedTool(agentdefinition.CoreToolWaitUntil,
 			"Wait until something happens: a truck arriving, a reply, a time."),
-		describedTool(agentdefinition.CoreToolFlagForReview, "Flag a record for manual review."),
+		describedTool(agentdefinition.CoreToolCancelWait, "Stop waiting on something you were waiting for."),
 	}
 	query := service.queryTools.(*stubQueryRegistry)
 	query.Tools = append(query.Tools, core...)
@@ -34,7 +34,7 @@ func deferredCoreRuntime(t *testing.T) (*Service, []string) {
 	})
 
 	return service, append(names, agentdefinition.CoreToolRecallMemory,
-		agentdefinition.CoreToolWaitUntil, agentdefinition.CoreToolFlagForReview)
+		agentdefinition.CoreToolWaitUntil, agentdefinition.CoreToolCancelWait)
 }
 
 func TestNewToolSet_ATurnThatCanSearchDefersTheCoreToolsFewTurnsCall(t *testing.T) {
@@ -50,7 +50,7 @@ func TestNewToolSet_ATurnThatCanSearchDefersTheCoreToolsFewTurnsCall(t *testing.
 	require.True(t, set.disclosed)
 	assert.True(t, set.offers(agentdefinition.CoreToolRecallMemory), "memory stays loaded")
 	assert.False(t, set.offers(agentdefinition.CoreToolWaitUntil))
-	assert.False(t, set.offers(agentdefinition.CoreToolFlagForReview))
+	assert.False(t, set.offers(agentdefinition.CoreToolCancelWait))
 	assert.Contains(t, set.deferred, agentdefinition.CoreToolWaitUntil,
 		"a core tool not loaded is still declared, so find_tools can load it")
 

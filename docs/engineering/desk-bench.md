@@ -460,7 +460,7 @@ it was stopped.
           event: billing_queue.item_exception
           subject: select id from billing_queue_items where number = 'BQ-BENCH-0001'
           ceiling: Propose
-          toolTiers: { agent_request_review: Propose }
+          toolTiers: { agent_raise_exception: Propose }
           stopWhileWaiting: true
         expect:
           run: Failed

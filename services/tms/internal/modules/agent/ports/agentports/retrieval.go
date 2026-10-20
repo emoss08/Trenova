@@ -2,6 +2,7 @@ package agentports
 
 import (
 	"context"
+	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -158,6 +159,27 @@ type RetrievalSearchRequest struct {
 	Limit       int
 	Access      RetrievalAccess
 	Attribution aiusageports.AIUsageAttribution
+	Messages    InboundMessageFilter
+}
+
+type InboundMessageFilter struct {
+	Statuses       []inboundmessage.Status
+	Classification inboundmessage.Classification
+	MailboxID      pulid.ID
+}
+
+func (f *InboundMessageFilter) Admits(message *inboundmessage.InboundMessage) bool {
+	if message == nil {
+		return false
+	}
+	if len(f.Statuses) > 0 && !slices.Contains(f.Statuses, message.Status) {
+		return false
+	}
+	if f.Classification != "" && message.Classification != f.Classification {
+		return false
+	}
+
+	return f.MailboxID.IsNil() || message.MailboxID == f.MailboxID
 }
 
 type RetrievalSemantics struct {

@@ -319,7 +319,7 @@ func TestRetrievalAgainstFloors(t *testing.T) {
 	legs := []leg{
 		{label: "document_list", suite: suites.documents, floors: retrievaltest.DocumentFloors,
 			keyword: keyword.documents},
-		{label: "inbox_search_inbound_messages", suite: suites.inbox, floors: retrievaltest.InboxFloors,
+		{label: "inbox_list_inbound_messages", suite: suites.inbox, floors: retrievaltest.InboxFloors,
 			keyword: keyword.inbox},
 		{label: "agent_list_memories", suite: suites.memories, floors: retrievaltest.MemoryFloors,
 			keyword: keyword.memories},

@@ -8,7 +8,7 @@ scenarios:
     steps:
       - say: "anybody driving on an expired med card?"
         expect:
-          calls: ["worker_list_expiring_credentials|worker_list_credentials"]
+          calls: ["worker_list_credentials"]
           maxFailedCalls: 0
           noProposals: true
           facts:
@@ -27,7 +27,7 @@ scenarios:
     steps:
       - say: "what creds are coming due in the next 30 days"
         expect:
-          calls: ["worker_list_expiring_credentials|worker_list_credentials"]
+          calls: ["worker_list_credentials"]
           maxFailedCalls: 0
           noProposals: true
           facts:

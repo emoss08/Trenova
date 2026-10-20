@@ -99,13 +99,13 @@ describe("reduceTurn", () => {
       },
       {
         event: "tool_started",
-        data: { callId: "c2", name: "agent_request_review", arguments: {} },
+        data: { callId: "c2", name: "agent_raise_exception", arguments: {} },
       },
       {
         event: "tool_finished",
         data: {
           callId: "c2",
-          name: "agent_request_review",
+          name: "agent_raise_exception",
           failed: false,
           proposed: true,
           content: "",

@@ -186,7 +186,7 @@ func (t *getWorkerScheduleTool) ParamSchema() map[string]any {
 		"workerId",
 		agenttoolschema.RecordIDText(
 			permission.ResourceWorker,
-			"The worker, from worker_search or worker_list.",
+			"The worker, from worker_list.",
 		),
 	)
 }

@@ -178,9 +178,9 @@ func outranks(record, current *accountingsync.AccountingSyncRecord) bool {
 
 func (s *Service) ObjectStates(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	objectIDs []pulid.ID,
+	req *accountingsyncports.AccountingSyncObjectStatesRequest,
 ) (map[pulid.ID]*accountingsyncports.AccountingSyncObjectState, error) {
+	objectIDs := req.ObjectIDs
 	states := make(map[pulid.ID]*accountingsyncports.AccountingSyncObjectState, len(objectIDs))
 	if len(objectIDs) == 0 {
 		return states, nil
@@ -189,15 +189,17 @@ func (s *Service) ObjectStates(
 		objectIDs = objectIDs[:maxStateObjects]
 	}
 
-	conns, err := s.connections.ListByTenant(ctx, tenantInfo)
+	conns, err := s.connections.ListByTenant(ctx, req.TenantInfo)
 	if err != nil {
 		return nil, err
 	}
 	providers := make(map[pulid.ID]string, len(conns))
 	for _, conn := range conns {
-		if conn.IsSyncing() {
-			providers[conn.ID] = accountingsync.ProviderName(conn.IntegrationType)
+		if !conn.IsSyncing() ||
+			(req.IntegrationType != "" && conn.IntegrationType != req.IntegrationType) {
+			continue
 		}
+		providers[conn.ID] = accountingsync.ProviderName(conn.IntegrationType)
 	}
 	if len(providers) == 0 {
 		return states, nil
@@ -206,7 +208,7 @@ func (s *Service) ObjectStates(
 	records, err := s.records.ListByObjects(
 		ctx,
 		&accountingsyncports.ListAccountingSyncRecordsByObjectsRequest{
-			TenantInfo: tenantInfo,
+			TenantInfo: req.TenantInfo,
 			ObjectIDs:  objectIDs,
 		},
 	)

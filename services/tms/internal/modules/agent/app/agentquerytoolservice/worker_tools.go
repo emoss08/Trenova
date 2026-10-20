@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
-	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
 )
@@ -31,7 +30,7 @@ func (t *getWorkerTool) Name() string { return "worker_get" }
 
 func (t *getWorkerTool) Description() string {
 	return "Retrieve one worker (driver) by id, including their profile and current state. " +
-		"Use worker_search first when you only have a name."
+		"Use worker_list with a query first when you only have a name."
 }
 
 func (t *getWorkerTool) ParamSchema() map[string]any {
@@ -40,7 +39,7 @@ func (t *getWorkerTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"workerId": agenttoolschema.OfResource(map[string]any{
 				toolschema.KeyType: toolschema.TypeString,
-				toolschema.KeyDescription: "The worker's id, from worker_search or worker_list, " +
+				toolschema.KeyDescription: "The worker's id, from worker_list, " +
 					"the page you are on, or this run's subject.",
 			}, permission.ResourceWorker),
 		},
@@ -192,104 +191,6 @@ func workerDetailFrom(
 	row.ShortHaul = profile.ShortHaulExempt
 
 	return row
-}
-
-type searchWorkerTool struct {
-	repo   workerports.WorkerRepository
-	access fieldAccess
-}
-
-func newSearchWorkerTool(
-	repo workerports.WorkerRepository,
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return &searchWorkerTool{repo: repo, access: newFieldAccess(permissions)}
-}
-
-func (t *searchWorkerTool) Name() string { return "worker_search" }
-
-func (t *searchWorkerTool) SearchTerms() []string {
-	return []string{
-		"look up a driver by name", "find a driver", "driver's worker id", "who is this driver",
-		"driver roster", "worker directory", "employee by name",
-	}
-}
-
-func (t *searchWorkerTool) Description() string {
-	return "Find a driver or other worker by name or code, or list the roster. " +
-		"Call it with no query to see who is on the roster; pass a query only when " +
-		"you already have a name. Returns matches with their ids, which worker_get " +
-		"can then expand. To find drivers by a licence or medical card date, use " +
-		"worker_list_expiring_credentials instead — this tool does not filter on dates."
-}
-
-func (t *searchWorkerTool) ParamSchema() map[string]any {
-	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
-			"query": map[string]any{
-				"type":        "string",
-				"description": "Optional name or code to match. Omit to list workers unfiltered.",
-			},
-			paramLimit: limitSchema(defaultSearchLimit, maxSearchLimit),
-		},
-		"additionalProperties": false,
-	}
-}
-
-func (t *searchWorkerTool) Policy() agentports.ToolPolicy {
-	return readPolicy(t.Name(), readSpec{
-		resource: permission.ResourceWorker,
-	})
-}
-
-func (t *searchWorkerTool) Query(
-	ctx context.Context,
-	params *agentports.QueryToolParams,
-) (any, error) {
-	if err := guardQuery(params); err != nil {
-		return nil, err
-	}
-
-	// The term is optional because the repository never needed it:
-	// ApplyCursorFilters only applies a text search when Query is non-empty, so
-	// an empty one already means "the most recent N". Requiring it here made
-	// the tool reject a call the layer beneath it would have served.
-	query := optionalString(params.Params, "query")
-
-	limit := readLimit(params.Params, defaultSearchLimit, maxSearchLimit)
-
-	criteria := filtercatalog.NewCriteria("workers").At(clockFor(params))
-	criteria.Text(query)
-
-	result, err := t.repo.List(ctx, &workerports.ListWorkersRequest{
-		Filter: &pagination.QueryOptions{
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  params.OrganizationID,
-				BuID:   params.BusinessUnitID,
-				UserID: params.Actor.UserID,
-			},
-			Pagination: pagination.Info{Limit: limit},
-			Query:      query,
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	// The same projection the list tools use, rather than the stored entity.
-	// Returning the entity cost six times the bytes for the same answer and
-	// reported an unrecorded credential as a bare null.
-	gate := t.access.gate(ctx, params, permission.ResourceWorker)
-	showCity := gate.show(workerCityField, workerCityField)
-	rows := make([]workerRow, 0, len(result.Items))
-	for _, item := range result.Items {
-		rows = append(rows, toGatedWorkerRow(item, showCity))
-	}
-
-	outcome := searchResult(criteria, rows, len(rows))
-
-	return gatedResult(&outcome, gate), nil
 }
 
 // workerName is how a person names a driver. Every tool that returns a worker

@@ -6,10 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -120,54 +119,14 @@ func TestSearchDocumentsSaysWhenMeaningWasNotSearched(t *testing.T) {
 	assert.Equal(t, documentSearchDefaultLimit, searcher.requests[0].Limit)
 }
 
-func TestSearchToolsNeedAQuery(t *testing.T) {
+func TestSearchDocumentsNeedsAQuery(t *testing.T) {
 	t.Parallel()
 
 	searcher := &fakeRetrievalSearcher{}
-	for _, tool := range []agentports.AgentQueryTool{
-		newSearchDocumentsTool(searcher, &fakePermissions{allowed: true}, nil),
-		newSearchInboundMessagesTool(searcher, &fakePermissions{allowed: true}),
-	} {
-		_, err := tool.Query(t.Context(), testParams(map[string]any{"query": "  "}))
-		require.ErrorIs(t, err, errSearchQueryRequired, tool.Name())
-	}
+	tool := newSearchDocumentsTool(searcher, &fakePermissions{allowed: true}, nil)
+	_, err := tool.Query(t.Context(), testParams(map[string]any{"query": "  "}))
+	require.ErrorIs(t, err, errSearchQueryRequired)
 	assert.Empty(t, searcher.requests)
-}
-
-func TestSearchInboundMessagesMarksEveryMessage(t *testing.T) {
-	t.Parallel()
-
-	message := &inboundmessage.InboundMessage{
-		ID:             pulid.MustNew("imsg_"),
-		Status:         inboundmessage.StatusInReview,
-		Classification: inboundmessage.ClassificationDetentionDispute,
-		ReceivedAt:     1_790_000_000,
-	}
-	searcher := &fakeRetrievalSearcher{messages: &agentports.InboundMessageSearchResult{
-		Hits: []agentports.InboundMessageSearchHit{{
-			Message: message,
-			Subject: "Detention charges on invoice 7781",
-			From:    "ap@globex.test",
-			Snippet: "We dispute the detention.",
-			Match:   agentports.RetrievalMatchWords,
-		}},
-	}}
-	tool := newSearchInboundMessagesTool(searcher, &fakePermissions{allowed: true})
-
-	result, err := tool.Query(t.Context(), testParams(map[string]any{"query": "detention dispute"}))
-	require.NoError(t, err)
-
-	outcome := result.(*retrievalOutcome)
-	rows := outcome.Items.([]inboundSearchRow)
-	require.Len(t, rows, 1)
-	assert.Equal(t, message.ID.String(), rows[0].ID)
-	assert.Equal(t, "Detention charges on invoice 7781", rows[0].Subject)
-	assert.True(t, rows[0].NeedsReview)
-	assert.Equal(t, "DetentionDispute", rows[0].Classification)
-	assert.Equal(t, "words", rows[0].Match)
-	assert.Equal(t, []agent.RecordRef{
-		{EntityType: agent.TaintEntityInboundMessage, ID: message.ID.String()},
-	}, outcome.TaintedRecords())
 }
 
 func TestSearchToolPoliciesReadOutsideTextAlways(t *testing.T) {
@@ -178,7 +137,7 @@ func TestSearchToolPoliciesReadOutsideTextAlways(t *testing.T) {
 	assert.Equal(t, agent.ExternalReadAlways, documents.ReadsExternal)
 	assert.Equal(t, agent.TaintSourceDocument, documents.Source)
 
-	messages := newSearchInboundMessagesTool(nil, nil).Policy()
+	messages := newListInboundMessagesTool(nil, nil, nil).Policy()
 	assert.Equal(t, permission.ResourceInboundMessage, messages.Resource)
 	assert.Equal(t, agent.ExternalReadAlways, messages.ReadsExternal)
 	assert.Equal(t, agent.TaintSourceInboundMessage, messages.Source)

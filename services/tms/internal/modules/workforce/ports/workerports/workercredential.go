@@ -89,6 +89,9 @@ type ListExpiringWorkerCredentialsRequest struct {
 	// expiring credential and keeping the medical cards among them reports two
 	// when there are forty, and nothing in the result says so.
 	CredentialTypeCodes []string `json:"credentialTypeCodes"`
+	WorkerID            pulid.ID `json:"workerId"`
+	SoonestFirst        bool     `json:"soonestFirst"`
+	Offset              int      `json:"offset"`
 }
 
 type PatchProfileCredentialFieldRequest struct {

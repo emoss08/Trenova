@@ -68,14 +68,14 @@ func TestFindHybrid_BreaksAFusedTieOnCatalogPosition(t *testing.T) {
 
 	catalog := testCatalog()
 	keyword := names(catalog.Find(nil, "medical cards", 6))
-	require.Equal(t, []string{"worker_list_expiring_credentials"}, keyword)
+	require.Equal(t, []string{"worker_list_credentials"}, keyword)
 
 	found := catalog.FindHybrid(Query{
 		Text:     "medical cards",
 		Limit:    6,
 		Semantic: NewSemantic(map[string]float64{"worker_list_time_off": 0.91}),
 	})
-	assert.Equal(t, []string{"worker_list_expiring_credentials", "worker_list_time_off"}, names(found),
+	assert.Equal(t, []string{"worker_list_credentials", "worker_list_time_off"}, names(found),
 		"each leads one list, so the one earlier in the catalog goes first")
 
 	found = catalog.FindHybrid(Query{
@@ -83,7 +83,7 @@ func TestFindHybrid_BreaksAFusedTieOnCatalogPosition(t *testing.T) {
 		Limit:    6,
 		Semantic: NewSemantic(map[string]float64{"dispatch_assign_move": 0.91}),
 	})
-	assert.Equal(t, []string{"dispatch_assign_move", "worker_list_expiring_credentials"}, names(found))
+	assert.Equal(t, []string{"dispatch_assign_move", "worker_list_credentials"}, names(found))
 }
 
 func TestFindHybrid_RanksWhatBothListsFoundAboveEitherAlone(t *testing.T) {
@@ -94,14 +94,14 @@ func TestFindHybrid_RanksWhatBothListsFoundAboveEitherAlone(t *testing.T) {
 		Text:  "medical cards",
 		Limit: 6,
 		Semantic: NewSemantic(map[string]float64{
-			"worker_list_time_off":             0.92,
-			"worker_list_expiring_credentials": 0.9,
-			"worker_list":                      0.7,
+			"worker_list_time_off":    0.92,
+			"worker_list_credentials": 0.9,
+			"worker_list":             0.7,
 		}),
 	})
 
 	assert.Equal(t,
-		[]string{"worker_list_expiring_credentials", "worker_list_time_off", "worker_list"},
+		[]string{"worker_list_credentials", "worker_list_time_off", "worker_list"},
 		names(found),
 	)
 }
@@ -164,10 +164,10 @@ func TestFindHybrid_KeepsAKeywordHitWhateverItsSimilarity(t *testing.T) {
 	found := catalog.FindHybrid(Query{
 		Text:     "medical cards",
 		Limit:    6,
-		Semantic: NewSemantic(map[string]float64{"worker_list_expiring_credentials": 0.01}),
+		Semantic: NewSemantic(map[string]float64{"worker_list_credentials": 0.01}),
 	})
 
-	assert.Equal(t, []string{"worker_list_expiring_credentials"}, names(found))
+	assert.Equal(t, []string{"worker_list_credentials"}, names(found))
 }
 
 func TestFindHybrid_SkipsWhatTheTurnAlreadyCarriesOnTheVectorSide(t *testing.T) {

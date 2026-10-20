@@ -358,6 +358,12 @@ type AccountingSyncSummary struct {
 	ActiveBackfill  *accountingsync.AccountingBackfill
 }
 
+type AccountingSyncObjectStatesRequest struct {
+	TenantInfo      pagination.TenantInfo
+	ObjectIDs       []pulid.ID
+	IntegrationType integration.Type
+}
+
 type AccountingSyncObjectState struct {
 	ObjectType   accountingsync.SyncObjectType
 	ObjectID     pulid.ID
@@ -387,8 +393,7 @@ type AccountingSyncService interface {
 	) ([]*accountingsync.AccountingSyncAttempt, error)
 	ObjectStates(
 		ctx context.Context,
-		tenantInfo pagination.TenantInfo,
-		objectIDs []pulid.ID,
+		req *AccountingSyncObjectStatesRequest,
 	) (map[pulid.ID]*AccountingSyncObjectState, error)
 	ListBackfills(
 		ctx context.Context,

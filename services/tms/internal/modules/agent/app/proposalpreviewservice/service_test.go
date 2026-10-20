@@ -287,7 +287,7 @@ func TestForProposal_FallsBackToTheParametersWhenAToolCannotSay(t *testing.T) {
 	t.Parallel()
 
 	plain := &validatingTool{baseTool: baseTool{
-		name:     "agent_request_review",
+		name:     "agent_raise_exception",
 		resource: permission.ResourceShipment,
 	}}
 	f := newFixture(plain)
@@ -301,7 +301,7 @@ func TestForProposal_FallsBackToTheParametersWhenAToolCannotSay(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, agent.PreviewCoverageUnavailable, preview.Coverage)
-	assert.Contains(t, preview.Summary, "Would run agent_request_review")
+	assert.Contains(t, preview.Summary, "Would run agent_raise_exception")
 	change := changeOf(t, preview)
 	assert.Equal(t, agent.PreviewOperationRun, change.Operation)
 	assert.Equal(t, "x", fieldOf(t, change, "status").After)

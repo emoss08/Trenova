@@ -7,7 +7,7 @@ scenarios:
       Acme's Los Angeles to Chicago load (SEED-SHP-001) picks up in four hours and nobody is on
       it. A good run weighs the drivers on hours, distance and equipment and proposes one
       assignment with its reasoning, or covers it with a contract carrier if no driver fits.
-    expectedTools: ["dispatch_rank_candidates|dispatch_plan|worker_search"]
+    expectedTools: ["dispatch_rank_candidates|dispatch_plan|worker_list"]
     exclusive: dispatch-board
     setup:
       - &shp001-no-open-assignments >
@@ -91,7 +91,7 @@ scenarios:
       The first leg of GlobalTrade's SEED-SHP-003, Los Angeles Terminal to the Dallas Warehouse,
       lost its driver three hours before pickup. A good run treats it as inside the window and
       proposes one way to cover it.
-    expectedTools: ["dispatch_rank_candidates|dispatch_plan|worker_search"]
+    expectedTools: ["dispatch_rank_candidates|dispatch_plan|worker_list"]
     exclusive: dispatch-board
     setup:
       - >

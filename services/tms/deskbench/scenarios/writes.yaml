@@ -185,7 +185,7 @@ scenarios:
     steps:
       - say: "put david on the peak ltl load to chicago, trc-002 and a dry van"
         expect:
-          calls: ["shipment_list|shipment_get|worker_search|worker_list"]
+          calls: ["shipment_list|shipment_get|worker_list"]
           proposals: [{ tool: dispatch_assign_move }]
           maxFailedCalls: 1
           rubric: >

@@ -273,7 +273,6 @@ func (s *Service) openToolSet(ctx context.Context, req *toolSetRequest) *toolSet
 
 var deferredCoreTools = []string{
 	agentdefinition.CoreToolCancelWait,
-	agentdefinition.CoreToolFlagForReview,
 	agentdefinition.CoreToolGuideProfile,
 	agentdefinition.CoreToolRaiseException,
 	agentdefinition.CoreToolWaitUntil,
@@ -642,7 +641,7 @@ func (s *Service) strongestMatch(
 }
 
 // withNamedTools puts first the tools a need names outright. The prompt lists
-// what find_tools can load by name, and a model that asked for "worker_search"
+// what find_tools can load by name, and a model that asked for "worker_list"
 // by name was handed six other tools ranked above it and searched again.
 func (s *Service) withNamedTools(
 	allowed []string,

@@ -8,7 +8,7 @@ scenarios:
       him for the renewal once, covering both papers, and proposes a dispatch hold that names the
       medical card and the date it lapsed.
     tags: [unattended, credentials]
-    expectedTools: ["worker_get|worker_get_credential|worker_list_expiring_credentials"]
+    expectedTools: ["worker_get|worker_get_credential|worker_list_credentials"]
     exclusive: credential-seed
     setup:
       - >
@@ -45,7 +45,7 @@ scenarios:
       else he holds is current. A good run asks for the renewal and stops: nothing has lapsed, so
       there is no hold.
     tags: [unattended, credentials]
-    expectedTools: ["worker_get|worker_get_credential|worker_list_expiring_credentials"]
+    expectedTools: ["worker_get|worker_get_credential|worker_list_credentials"]
     forbiddenTools: [worker_place_dispatch_hold]
     exclusive: credential-seed
     setup:

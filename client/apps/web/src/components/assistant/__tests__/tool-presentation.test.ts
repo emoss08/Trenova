@@ -27,8 +27,8 @@ describe("describeToolCall", () => {
   });
 
   it("uses the search text for a search", () => {
-    expect(describeToolCall("worker_search", { query: "Ortiz", limit: 10 })).toEqual({
-      title: "Search drivers",
+    expect(describeToolCall("worker_list", { query: "Ortiz", limit: 10 })).toEqual({
+      title: "Find drivers",
       subject: "“Ortiz”",
     });
   });
@@ -273,7 +273,7 @@ describe("parseToolResult", () => {
 
   it("treats a proposal receipt as plain text", () => {
     const content =
-      'Recorded a proposal to run "agent_request_review". It is awaiting review at the Propose tier and has not run.';
+      'Recorded a proposal to run "agent_raise_exception". It is awaiting review at the Propose tier and has not run.';
 
     expect(parseToolResult(content)).toEqual({ kind: "text", text: content, truncated: false });
   });

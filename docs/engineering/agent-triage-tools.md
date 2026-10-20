@@ -110,7 +110,8 @@ disputed occurrence's stop times.
 ## Who holds them
 
 The Intake desk holds every tool above but `detention_resolve_dispute`, which the detention
-desk holds with `inbox_get_inbound_message` and `inbox_search_inbound_messages` to read the dispute.
+desk holds with `inbox_get_inbound_message` and `inbox_list_inbound_messages` (searched by `query`) to read
+the dispute.
 `inbox_get_inbound_message` shows what the ids come from: the owner, why a message is parked, the
 reply and load drafted on it, each conflict with its id, and where each attachment is filed.
 

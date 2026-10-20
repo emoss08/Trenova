@@ -21,7 +21,7 @@ func validDefinition() *agentdefinition.Definition {
 		Name:            "Night dispatch helper",
 		Instructions:    "You help the night dispatch desk. Check hours of service first.",
 		AutonomyCeiling: agent.TierPropose,
-		ToolNames:       []string{"shipment_get", "agent_request_review"},
+		ToolNames:       []string{"shipment_get", "agent_raise_exception"},
 		TriggerMode:     agentdefinition.TriggerChat,
 		Enabled:         true,
 	}
@@ -310,10 +310,10 @@ func TestEffectiveTier_HonoursOverridesUnderTheCeiling(t *testing.T) {
 			d := validDefinition()
 			d.AutonomyCeiling = tc.ceiling
 			if tc.override != "" {
-				d.ToolTiers = map[string]agent.AutonomyTier{"agent_request_review": tc.override}
+				d.ToolTiers = map[string]agent.AutonomyTier{"agent_raise_exception": tc.override}
 			}
 
-			assert.Equal(t, tc.want, d.EffectiveTier("agent_request_review", tc.toolTier))
+			assert.Equal(t, tc.want, d.EffectiveTier("agent_raise_exception", tc.toolTier))
 		})
 	}
 }
@@ -322,7 +322,7 @@ func TestAllowsTool(t *testing.T) {
 	t.Parallel()
 
 	d := validDefinition()
-	assert.True(t, d.AllowsTool("agent_request_review"))
+	assert.True(t, d.AllowsTool("agent_raise_exception"))
 	assert.True(
 		t,
 		d.AllowsTool("shipment_get"),
@@ -429,11 +429,11 @@ exists for.
 
 The seeded "Compliance desk" — described as answering "what is expiring", with
 instructions saying medical cards are the thing most often missed — shipped
-holding worker_get and worker_search and nothing else. Asked which drivers had
-a medical card expiring within thirty days, it correctly reported that it could
-not filter on dates, said out loud "I don't see worker_list_expiring_credentials in my
-available tools", and then answered anyway from arithmetic it cannot do. It got
-the answer backwards.
+holding worker_get and the worker name search and nothing else. Asked which
+drivers had a medical card expiring within thirty days, it correctly reported
+that it could not filter on dates, said out loud that it did not see the
+expiring-credentials list in its available tools, and then answered anyway from
+arithmetic it cannot do. It got the answer backwards.
 
 The seeds now derive from these lists rather than carrying their own copy, so
 this test is what keeps the lists honest as the catalog grows.
@@ -442,11 +442,11 @@ func TestTemplates_CarryTheToolsTheirPurposeRequires(t *testing.T) {
 	t.Parallel()
 
 	assert.Contains(t, agentdefinition.TemplateComplianceAssistant.StarterTools(),
-		"worker_list_expiring_credentials",
+		"worker_list_credentials",
 		"a compliance agent that cannot filter credentials by date cannot do its job")
 
 	assert.Contains(t, agentdefinition.TemplateDispatchAssistant.StarterTools(),
-		"worker_list_expiring_credentials",
+		"worker_list_credentials",
 		"dispatch decides who is legal to send")
 	assert.Contains(t, agentdefinition.TemplateDispatchAssistant.StarterTools(),
 		"worker_list_time_off",

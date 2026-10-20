@@ -5355,7 +5355,7 @@
   "Length Per Unit": "單位長度",
   "Lessor Name": "出租人名稱",
   "Lessor name is required for leased equipment": "租賃設備必須填寫出租人名稱",
-  "Let a blocked sender's mail reach the Triage queue again on the source it arrives on. Name the sender by one of their messages: their mail since the block sits under Ignored, which inbox_search_inbound_messages and inbox_list_inbound_messages find. Messages already ignored stay settled; inbox_reopen_inbound_message returns any that still matter to the queue.": "讓已封鎖寄件者的郵件在其送達的來源上重新進入分揀佇列。以寄件者的某則訊息指定寄件者：封鎖後收到的郵件位於 Ignored 之下，可用 inbox_search_inbound_messages 和 inbox_list_inbound_messages 找到。已忽略的訊息維持了結狀態；inbox_reopen_inbound_message 可將仍有需要的訊息送回佇列。",
+  "Let a blocked sender's mail reach the Triage queue again on the source it arrives on. Name the sender by one of their messages: their mail since the block sits under Ignored, which inbox_list_inbound_messages finds with status Ignored or a query naming the sender. Messages already ignored stay settled; inbox_reopen_inbound_message returns any that still matter to the queue.": "讓已封鎖寄件者的郵件在其送達的來源上重新進入分揀佇列。以寄件者的某則訊息指定寄件者：封鎖後收到的郵件位於 Ignored 之下，可用 inbox_list_inbound_messages 以狀態 Ignored 或指名寄件者的查詢找到。已忽略的訊息維持了結狀態；inbox_reopen_inbound_message 可將仍有需要的訊息送回佇列。",
   "Let agents analyze this person's report results and attached files": "允許代理分析此人員的報表結果與附加檔案",
   "Let agents look things up on portals for this person": "允許代理為此人員在入口網站上查詢資料",
   "Let agents propose booking, uploading or accepting on portals for this person": "允許代理為此人員提議在入口網站上預約、上傳或接受",

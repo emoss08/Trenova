@@ -1,8 +1,10 @@
 package agentquerytoolservice
 
 import (
+	"cmp"
 	"context"
 	"errors"
+	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -24,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/typeutils"
 )
 
@@ -104,9 +107,16 @@ func newListWorkersTool(
 	return newListTool(listSpec{
 		name:         "worker_list",
 		entityPlural: "workers",
-		summary: "List workers (drivers) by employment or qualification. worker_search " +
-			"finds a name; worker_list_expiring_credentials, credentials. \"none on file\" " +
-			"was never recorded: worse than expiring soon.",
+		summary: "Find workers (drivers) by name, closest first, or the roster by employment " +
+			"or qualification. Credentials due: worker_list_credentials. " +
+			"\"none on file\" was never recorded: worse than expiring soon.",
+		searchTerms: []string{
+			"look up a driver by name", "find a driver", "driver roster", "worker directory",
+			"employee by name",
+		},
+		queryNote: "A worker's name, first, last or both; each word matches the start of a " +
+			"name and the closest names come first. Omit it to list the roster or to filter " +
+			"on a field.",
 		resource: permission.ResourceWorker,
 		config:   querybuilder.GetFieldConfiguration((*worker.Worker)(nil)),
 		fields: []listField{
@@ -160,6 +170,9 @@ func newListWorkersTool(
 			if err != nil {
 				return nil, err
 			}
+			if len(opts.Sort) == 0 {
+				rankWorkersByName(opts.Query, result.Items)
+			}
 
 			showCity := gate.show(workerCityField, workerCityField)
 
@@ -168,6 +181,34 @@ func newListWorkersTool(
 			}), nil
 		},
 	})
+}
+
+func rankWorkersByName(query string, items []*worker.Worker) {
+	if strings.TrimSpace(query) == "" || len(items) < 2 {
+		return
+	}
+
+	type scored struct {
+		item  *worker.Worker
+		score float64
+	}
+	ranked := make([]scored, 0, len(items))
+	for _, item := range items {
+		ranked = append(ranked, scored{item: item, score: workerNameScore(query, item)})
+	}
+	slices.SortStableFunc(ranked, func(a, b scored) int {
+		return cmp.Compare(b.score, a.score)
+	})
+	for idx := range ranked {
+		items[idx] = ranked[idx].item
+	}
+}
+
+func workerNameScore(query string, item *worker.Worker) float64 {
+	return max(
+		stringutils.NameSimilarity(query, workerName(item)),
+		stringutils.NameSimilarity(query, item.LastName+" "+item.FirstName),
+	)
 }
 
 func workerGatedField(field string) string {
@@ -607,11 +648,11 @@ func specOf(tool agentports.AgentQueryTool) listSpec {
 // applyProfile copies the qualification roll-up onto the row. A worker without a
 // profile is a record mid-onboarding, not an error: the fields stay empty rather
 // than reporting a lapsed licence nobody has yet entered.
-// toWorkerRow is the one worker projection. worker_search used to return the
-// stored entity instead, which cost six times the bytes for the same answer —
-// eight drivers overran the tool-result cap and were truncated mid-record — and
-// reported an unrecorded credential as a bare null, which is the reading that
-// caused the incident these rows exist to prevent.
+// toWorkerRow is the one worker projection. The worker name search used to
+// return the stored entity instead, which cost six times the bytes for the
+// same answer — eight drivers overran the tool-result cap and were truncated
+// mid-record — and reported an unrecorded credential as a bare null, which is
+// the reading that caused the incident these rows exist to prevent.
 func toWorkerRow(item *worker.Worker) workerRow {
 	row := workerRow{
 		ID:                item.ID.String(),

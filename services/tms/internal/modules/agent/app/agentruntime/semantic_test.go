@@ -195,7 +195,7 @@ func TestRun_RecordsWhatFindToolsFoundOnItsResult(t *testing.T) {
 
 	require.Len(t, result.Messages, 4)
 	assert.Equal(t, findToolsName, result.Messages[2].ToolName)
-	assert.Contains(t, result.Messages[2].FoundTools, "worker_list_expiring_credentials")
+	assert.Contains(t, result.Messages[2].FoundTools, "worker_list_credentials")
 }
 
 func TestNewToolSet_KeywordRankingIsUnchangedWithoutAVector(t *testing.T) {
@@ -231,9 +231,9 @@ func TestNewToolSet_PreselectsByMeaningWhenAVectorIsAvailable(t *testing.T) {
 
 	query := usableQuery()
 	service, names, vectorizer, similarities := semanticRuntime(t, query, map[string]float64{
-		"worker_list_expiring_credentials": 0.83,
-		"worker_list":                      0.61,
-		"carrier_list":                     0.12,
+		"worker_list_credentials": 0.83,
+		"worker_list":             0.61,
+		"carrier_list":            0.12,
 	})
 
 	set := service.newToolSet(t.Context(), toolSetRequest{
@@ -251,7 +251,7 @@ func TestNewToolSet_PreselectsByMeaningWhenAVectorIsAvailable(t *testing.T) {
 	require.Len(t, similarities.requests, 1)
 	assert.Equal(t, airetrieval.CatalogCorpusTools, similarities.requests[0].Corpus)
 	require.NotEmpty(t, set.preselected)
-	assert.Equal(t, "worker_list_expiring_credentials", set.preselected[0],
+	assert.Equal(t, "worker_list_credentials", set.preselected[0],
 		"the closest tool by meaning leads when no word matches")
 	assert.NotContains(t, set.preselected[:3], "carrier_list",
 		"a tool below the similarity floor gains nothing from the vector")

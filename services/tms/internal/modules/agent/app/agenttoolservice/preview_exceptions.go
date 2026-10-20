@@ -6,5 +6,3 @@ import (
 )
 
 var _ agentports.ToolPreviewer = (*receivabletools.RaiseExceptionTool)(nil)
-
-var _ agentports.ToolPreviewer = (*receivabletools.FlagManualReviewTool)(nil)

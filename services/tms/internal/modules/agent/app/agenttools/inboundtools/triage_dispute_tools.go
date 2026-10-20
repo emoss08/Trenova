@@ -133,7 +133,7 @@ func newLogInboundExceptionTool(
 				"and a person can release it.",
 			Properties: map[string]any{
 				paramMessageID: messageIDProperty(
-					"The delivery email, from inbox_list_inbound_messages or inbox_search_inbound_messages.",
+					"The delivery email, from inbox_list_inbound_messages, newest first or by query.",
 				),
 				paramExceptionKind: agenttoolschema.Enum(
 					"What the delivery reported.",
@@ -296,8 +296,8 @@ func newSettleDetentionDisputeTool(
 				"credit an invoice; only a person approves it.",
 			Properties: map[string]any{
 				paramMessageID: messageIDProperty(
-					"The detention dispute, from inbox_list_inbound_messages or " +
-						"inbox_search_inbound_messages.",
+					"The detention dispute, from inbox_list_inbound_messages, " +
+						"newest first or by query.",
 				),
 				paramStopsDecision: agenttoolschema.Enum(
 					"Waive gives the charge up; StandBy keeps it.",

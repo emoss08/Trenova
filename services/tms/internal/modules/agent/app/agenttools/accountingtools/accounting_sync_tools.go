@@ -253,7 +253,7 @@ func (t *RetryAccountingSyncTool) SearchTerms() []string {
 }
 
 func (t *RetryAccountingSyncTool) Prerequisites() []string {
-	return []string{toolListSyncRecords, toolGetSyncRecord, "accounting_get_sync_state"}
+	return []string{toolListSyncRecords, toolGetSyncRecord}
 }
 
 func (t *RetryAccountingSyncTool) ParamSchema() map[string]any {
@@ -263,8 +263,7 @@ func (t *RetryAccountingSyncTool) ParamSchema() map[string]any {
 			permission.ResourceAccountingSync.String(),
 			agenttoolschema.OfKinds(jsonschemautils.DescribedArray(
 				fmt.Sprintf(
-					"Up to %d sync record ids, from accounting_list_sync_records or "+
-						"accounting_get_sync_state.",
+					"Up to %d sync record ids, from accounting_list_sync_records.",
 					maxSyncRetryIDs,
 				),
 				jsonschemautils.String(0),

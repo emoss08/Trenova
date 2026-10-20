@@ -75,7 +75,6 @@ func TestFire_Validation(t *testing.T) {
 		Ceiling: agent.TierPropose,
 		ToolTiers: map[string]agent.AutonomyTier{
 			agentdefinition.CoreToolRaiseException: agent.TierPropose,
-			agentdefinition.CoreToolFlagForReview:  agent.TierPropose,
 		},
 		StopWhileWaiting: true,
 	}

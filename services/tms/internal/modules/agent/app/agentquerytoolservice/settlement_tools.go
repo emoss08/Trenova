@@ -288,8 +288,7 @@ func (t *listDriverSettlementsTool) ParamSchema() map[string]any {
 		paramQuery: stringParam("Words to look for in the settlement number, pay profile " +
 			"or the driver's name."),
 		paramWorkerID: agenttoolschema.RecordIDText(permission.ResourceWorker,
-			"Only this driver's settlements, by id from worker_list "+
-				"or worker_search."),
+			"Only this driver's settlements, by id from worker_list."),
 		paramStatus: enumParam("Only settlements in this status. Leave it out with "+
 			"open: true.", settlementStatuses),
 		paramOpenSettlements: boolParam("true for only settlements still open to change: " +
@@ -716,8 +715,7 @@ func (t *listDriverPayEventsTool) Description() string {
 func (t *listDriverPayEventsTool) ParamSchema() map[string]any {
 	return objectSchema(withPaging(map[string]any{
 		paramWorkerID: agenttoolschema.RecordIDText(permission.ResourceWorker,
-			"Only this driver's pay, by id from worker_list or "+
-				"worker_search."),
+			"Only this driver's pay, by id from worker_list."),
 		"shipmentId": agenttoolschema.RecordIDText(permission.ResourceShipment,
 			"Only pay for this shipment, by id from shipment_list "+
 				"or shipment_get."),
@@ -849,7 +847,7 @@ func (t *getWorkerEarningsSummaryTool) Name() string { return "settlement_get_dr
 func (t *getWorkerEarningsSummaryTool) Description() string {
 	return "Summarize what a worker has earned but not yet been paid on a settlement. " +
 		"It gives the accrued pay events and their gross, outstanding advances and the " +
-		"escrow balance. Take the worker's id from worker_list or worker_search."
+		"escrow balance. Take the worker's id from worker_list."
 }
 
 func (t *getWorkerEarningsSummaryTool) ParamSchema() map[string]any {
@@ -857,7 +855,7 @@ func (t *getWorkerEarningsSummaryTool) ParamSchema() map[string]any {
 		paramWorkerID,
 		agenttoolschema.RecordIDText(
 			permission.ResourceWorker,
-			"The driver's id, from worker_list, worker_search or the "+
+			"The driver's id, from worker_list or the "+
 				"page you are on.",
 		),
 	)

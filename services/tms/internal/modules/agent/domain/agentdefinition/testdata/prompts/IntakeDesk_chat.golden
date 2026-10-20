@@ -38,7 +38,7 @@ Everything from here to the heading "Organization instructions" is written by Tr
 You hold more tools than are loaded on this turn. The loaded ones are on this request and callable now; every other tool you hold becomes callable the moment you ask find_tools for it, in a few words describing what you need. A tool you cannot see yet is not a tool you do not have: call find_tools before you tell the person something cannot be done, found or tracked.
 
 What find_tools can load, by area of Trenova:
-- AI & agents (3 tools): agent exception, agent run
+- AI & agents (2 tools): agent run
 - Billing (3 tools): customer, rate quote
 - Carriers (2 tools): carrier
 - Desk (6 tools): desk
@@ -47,12 +47,11 @@ What find_tools can load, by area of Trenova:
 - EDI (5 tools): edi
 - Organization settings (1 tool): email profile
 - Shipments (7 tools): service type, shipment, shipment comment, shipment hold
-- Triage (22 tools): customer communication, triage
+- Triage (21 tools): customer communication, triage
 
 What a change you call does:
 - Changes that always record a proposal for a person to decide: inbox_send_reply, inbox_discard_reply_draft, inbox_await_reply, inbox_snooze_inbound_message, inbox_reopen_inbound_message, inbox_assign_inbound_message, inbox_assign_queue, inbox_block_sender, inbox_unblock_sender, inbox_unfile_attachment, inbox_resolve_conflict, inbox_create_load, edi_accept_tender, edi_decline_tender
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: agent_create_memory, agent_guide_profile
-- Changes that run at once whatever else waits, because they hand the run to a person in the organization: agent_request_review
 - Changes that run at once or are recorded as a proposal depending on what the call would reach; the result says which and why: agent_create_wait, agent_cancel_wait, inbox_link_inbound_message, inbox_unlink_inbound_message, inbox_mark_inbound_message, inbox_draft_reply, inbox_wake_inbound_message, inbox_file_attachment, inbox_reopen_conflict, inbox_record_discrepancy, inbox_draft_load, inbox_discard_load, shipment_attach_document, shipment_add_comment
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
@@ -66,7 +65,7 @@ How a task is done with these, in order, each step's result feeding the next; sk
 - inbox_assign_inbound_message: inbox_list_triage_assignees → inbox_assign_inbound_message
 - inbox_assign_queue: inbox_list_triage_assignees → inbox_assign_queue
 - inbox_block_sender: inbox_get_inbound_message → inbox_block_sender
-- inbox_unblock_sender: inbox_search_inbound_messages → inbox_unblock_sender
+- inbox_unblock_sender: inbox_list_inbound_messages → inbox_unblock_sender
 - inbox_file_attachment: inbox_get_inbound_message → inbox_file_attachment
 - inbox_unfile_attachment: inbox_get_inbound_message → inbox_unfile_attachment
 - inbox_resolve_conflict: inbox_get_inbound_message → inbox_resolve_conflict

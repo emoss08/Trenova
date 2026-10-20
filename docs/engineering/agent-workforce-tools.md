@@ -173,9 +173,9 @@ record and are attestation; bulk PTO decisions duplicate the single-request tool
 | Compliance assistant (chat, Ask first) | `worker_list_credentials`, `worker_record_credential`, `worker_update_credential`, `worker_attach_credential_document`, `worker_list_training`, `worker_list_training_courses`, `worker_assign_training`, `worker_assign_required_training`, `worker_record_training_completion`, `worker_list_employment_verifications`, `worker_record_employment_verification`, `worker_update_employment_verification`, `worker_record_employment_verification_request`, `worker_list_checklists`, `worker_update_checklist_item`, `worker_list_safety_events`, `worker_open_safety_event`, `worker_record_safety_violation`, `worker_set_safety_event_status`, `worker_list_dot_tests`, `worker_get_dot_random_draw`, `worker_schedule_dot_test`, `worker_update_dot_random_selection`, `worker_list_leave_cases`, `worker_get_hos`, `worker_request_credential_renewal`, `worker_place_dispatch_hold` |
 | Settlements clerk (chat, Ask first) | `settlement_start_dispute_review`, `settlement_resolve_dispute`, `settlement_approve_driver`, `settlement_post_driver`, `settlement_approve_carrier`, `settlement_post_carrier` |
 
-The workforce coordinator is the HR and safety desk the shipped templates lacked. It holds 55
-of its 56 tools: every workforce write the compliance assistant does not, with `worker_search`,
-`worker_list`, `worker_get` and `shipment_list` to find the worker or load. It runs at a
+The workforce coordinator is the HR and safety desk the shipped templates lacked. It holds 54
+of its 55 tools: every workforce write the compliance assistant does not, with `worker_list`,
+`worker_get` and `shipment_list` to find the worker or load. It runs at a
 Propose ceiling, so every write waits for a person; `worker_adjust_pto_balance`,
 `worker_finalize_dot_random_draw` and `worker_close_leave_case` still run only from that person's approval.
 Its data access is Restricted, so it reads the Restricted detail on injury, leave and time-off

@@ -1,4 +1,4 @@
-# Synthetic inbound mail and the searches inbox_search_inbound_messages should
+# Synthetic inbound mail and the searches inbox_list_inbound_messages should
 # answer with it. Quoted history and signatures are stripped before either
 # leg reads a body. Metrics are recall@5, MRR and nDCG@10 per retrieval leg;
 # the floors live in inboxretrieval.floors.json and are set with -update.
