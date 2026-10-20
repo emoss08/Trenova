@@ -597,7 +597,7 @@ func (r *repository) ListByPlans(
 			Column(cols.ID.Name, cols.PlanID.Name, cols.RunID.Name).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return agentcol.AgentProposalScopeTenant(sq, req.TenantInfo).
-					Where(cols.PlanID.In(), bun.In(req.PlanIDs))
+					Where(cols.PlanID.In(), bun.List(req.PlanIDs))
 			}).
 			Scan(ctx)
 		if err != nil {

@@ -566,7 +566,8 @@ func (s *Service) PlanHolds(
 		if plan == nil || plan.Status != agent.PlanStatusPending {
 			continue
 		}
-		if hold := agentshadow.PlanVerdict(verdicts, plan.RunID, stepRuns[plan.ID]).Hold(); hold != nil {
+		hold := agentshadow.PlanVerdict(verdicts, plan.RunID, stepRuns[plan.ID]).Hold()
+		if hold != nil {
 			holds[plan.ID] = hold
 		}
 	}
