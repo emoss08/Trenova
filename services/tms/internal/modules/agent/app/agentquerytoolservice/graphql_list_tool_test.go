@@ -486,3 +486,31 @@ func TestGraphQLListTool_AWithheldFieldStaysWithheld(t *testing.T) {
 	require.Error(t, err, "filtering on a hidden field would leak it a row at a time")
 	assert.Contains(t, err.Error(), "name")
 }
+
+// A composed view is held to the same rule as a call: a filter or an order
+// on a field the reader may not see is refused before anything is read.
+func TestGraphQLListTool_AViewCannotFilterOnAWithheldField(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t, &publicRole{})
+	person := agentreadtest.Person()
+	params := &agentports.QueryToolParams{
+		OrganizationID: person.OrganizationID,
+		BusinessUnitID: person.BusinessUnitID,
+		Actor:          person,
+		Timezone:       "America/Chicago",
+		RunID:          pulid.MustNew("ar_"),
+	}
+	ctx := readscope.With(t.Context(), nil)
+
+	err := agentquerytoolservice.RunView(ctx, h.tool, params, []domaintypes.FieldFilter{{
+		Field: "name", Operator: dbtype.OpContains, Value: "Ken",
+	}}, nil)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "name")
+
+	err = agentquerytoolservice.RunView(ctx, h.tool, params, nil,
+		[]domaintypes.SortField{{Field: "name", Direction: dbtype.SortDirectionAsc}})
+	require.Error(t, err, "ordering by a hidden field leaks it too")
+	assert.Empty(t, h.repo.connections, "nothing is read for a refused view")
+}

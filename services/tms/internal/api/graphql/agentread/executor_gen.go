@@ -4,7 +4,11 @@ package agentread
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/accessorialchargeexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carrierexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carrierintelligenceexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/commodityexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/customerexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/dispatchconsoleexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/documenttypeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/equipmentmanufacturerexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/equipmenttypeexec"
@@ -12,16 +16,22 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/hazardousmaterialexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/holdreasonexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/locationcategoryexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/locationexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/preludeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/servicetypeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/sharedexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/shipmenttypeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/tenantexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/trailerexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/usstateexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	accessorialchargeresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/accessorialchargeresolver"
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	carrierintelligenceresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/carrierintelligenceresolver"
+	carrierresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/carrierresolver"
 	commodityresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/commodityresolver"
+	customerresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/customerresolver"
+	dispatchconsoleresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/dispatchconsoleresolver"
 	documenttyperesolver "github.com/emoss08/trenova/internal/api/graphql/resolver/documenttyperesolver"
 	equipmentmanufacturerresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/equipmentmanufacturerresolver"
 	equipmenttyperesolver "github.com/emoss08/trenova/internal/api/graphql/resolver/equipmenttyperesolver"
@@ -29,11 +39,13 @@ import (
 	hazardousmaterialresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/hazardousmaterialresolver"
 	holdreasonresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/holdreasonresolver"
 	locationcategoryresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/locationcategoryresolver"
+	locationresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/locationresolver"
 	servicetyperesolver "github.com/emoss08/trenova/internal/api/graphql/resolver/servicetyperesolver"
 	shipmenttyperesolver "github.com/emoss08/trenova/internal/api/graphql/resolver/shipmenttyperesolver"
 	tenantresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/tenantresolver"
 	trailerresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/trailerresolver"
 	config "github.com/emoss08/trenova/internal/infrastructure/config"
+	agentports "github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	equipmentmanufacturerservice "github.com/emoss08/trenova/internal/modules/equipment/app/equipmentmanufacturerservice"
 	equipmenttypeservice "github.com/emoss08/trenova/internal/modules/equipment/app/equipmenttypeservice"
 	fleetcodeservice "github.com/emoss08/trenova/internal/modules/equipment/app/fleetcodeservice"
@@ -41,7 +53,13 @@ import (
 	orgstructureservice "github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice"
 	permissionports "github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	tenantports "github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	shipmentports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	carrierintelservice "github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
+	carrierservice "github.com/emoss08/trenova/internal/modules/parties/app/carrierservice"
+	customerservice "github.com/emoss08/trenova/internal/modules/parties/app/customerservice"
 	locationcategoryservice "github.com/emoss08/trenova/internal/modules/places/app/locationcategoryservice"
+	locationservice "github.com/emoss08/trenova/internal/modules/places/app/locationservice"
+	carrierassignmentservice "github.com/emoss08/trenova/internal/modules/rating/app/carrierassignmentservice"
 	accessorialchargeservice "github.com/emoss08/trenova/internal/modules/reference/app/accessorialchargeservice"
 	commodityservice "github.com/emoss08/trenova/internal/modules/reference/app/commodityservice"
 	documenttypeservice "github.com/emoss08/trenova/internal/modules/reference/app/documenttypeservice"
@@ -61,8 +79,15 @@ type ResolverParams struct {
 	fx.In
 
 	AccessorialChargeService     *accessorialchargeservice.Service
+	AssignmentService            shipmentports.AssignmentService
+	CarrierAssignmentService     *carrierassignmentservice.Service
+	CarrierIntelService          *carrierintelservice.Service
+	CarrierService               *carrierservice.Service
 	CommodityService             *commodityservice.Service
 	Config                       *config.Config `optional:"true"`
+	CustomerService              *customerservice.Service
+	DispatchAutoAssignService    agentports.DispatchAutoAssignService
+	DispatchConsoleService       agentports.DispatchConsoleService
 	DocumentTypeService          *documenttypeservice.Service
 	EquipmentManufacturerService *equipmentmanufacturerservice.Service
 	EquipmentTypeService         *equipmenttypeservice.Service
@@ -70,6 +95,7 @@ type ResolverParams struct {
 	HazardousMaterialService     *hazardousmaterialservice.Service
 	HoldReasonService            *holdreasonservice.Service
 	LocationCategoryService      *locationcategoryservice.Service
+	LocationService              *locationservice.Service
 	Logger                       *zap.Logger
 	OrgStructureService          *orgstructureservice.Service
 	OrganizationService          tenantports.OrganizationService
@@ -82,13 +108,18 @@ type ResolverParams struct {
 
 var shards = []*gqlexec.Shard{
 	accessorialchargeexec.Shard,
+	carrierexec.Shard,
+	carrierintelligenceexec.Shard,
 	commodityexec.Shard,
+	customerexec.Shard,
+	dispatchconsoleexec.Shard,
 	documenttypeexec.Shard,
 	equipmentmanufacturerexec.Shard,
 	equipmenttypeexec.Shard,
 	fleetcodeexec.Shard,
 	hazardousmaterialexec.Shard,
 	holdreasonexec.Shard,
+	locationexec.Shard,
 	locationcategoryexec.Shard,
 	preludeexec.Shard,
 	servicetypeexec.Shard,
@@ -96,11 +127,22 @@ var shards = []*gqlexec.Shard{
 	shipmenttypeexec.Shard,
 	tenantexec.Shard,
 	trailerexec.Shard,
+	usstateexec.Shard,
 }
 
 // operations are the persisted operations agent tools read through, each
 // byte for byte as the client sends it.
 var operations = []Operation{
+	{
+		Name:     "CarrierTable",
+		Hash:     "sha256:24890c58a1d854d5479367fa1e4b5e19d0421b6863081f334b23aef9c9ab6f78",
+		Document: "fragment CarrierContactFields on CarrierContact { businessUnitId carrierId createdAt email id isPrimary name organizationId phone receivesRateConfirmations title updatedAt version } fragment CarrierInsurancePolicyFields on CarrierInsurancePolicy { businessUnitId carrierId coverageAmount createdAt effectiveDate expirationDate id isVerified organizationId policyNumber policyType providerName updatedAt version } fragment CarrierTableRowFields on Carrier { addressLine1 addressLine2 businessUnitId carrierType city code complianceStatus contacts { ...CarrierContactFields } createdAt dbaName disqualifiedReason dotNumber email externalId id insurancePolicies { ...CarrierInsurancePolicyFields } intelBlockingCount intelReviewRequired intelRiskLevel is1099Eligible mcNumber name notes organizationId paymentMethod paymentTermDays phone postalCode qualifiedAt remitAddressLine1 remitAddressLine2 remitCity remitPostalCode remitStateId remitToName safetyRating scac stateId status taxId taxIdType updatedAt version w9OnFile } fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query CarrierTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { carriers(input: $input) { edges { node { ...CarrierTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "CustomerTable",
+		Hash:     "sha256:b03bdf83cbfd113e6933f80dbe8d2689721f4abd1057e18d8b5b0510ff57f510",
+		Document: "fragment CustomerBillingProfileFields on CustomerBillingProfile { applyLateCharges arAccountId autoApplyAccessorials autoApprove autoBill autoCreditHold autoMarkReadyToBill autoSendInvoiceOnGeneration autoTransfer billingCurrency billingCycle billingCycleAnchorDay billingCycleTimezone billingNotes businessUnitId countLateOnlyOnAppointmentStops createdAt creditBalance creditHoldAutomatic creditHoldReason creditLimit creditReviewedAt creditStatus customerId customerInvoicePrefix defaultBillerId documentTypes { code color documentCategory documentClassification id name } ediInvoiceEnabled emailInvoiceEnabled enforceCreditLimit enforceCustomerBillingReq factoringCompanyId fuelSurchargeMode fuelSurchargeProgramId gracePeriodDays hasBillingControlOverrides id invoiceCopies invoiceDelivery invoiceDetail invoiceNumberFormat lastBilledPeriodEnd lateChargeRate maxShipmentsPerInvoice minConsolidatedAmount organizationId paymentTerm requireBOLNumber requireDeliveryNumber requirePONumber revenueAccountId sectionBy sendPaymentReminders sendStatements splitBy taxExempt taxExemptNumber updatedAt validateCustomerRates version } fragment CustomerEmailProfileFields on CustomerEmailProfile { attachmentName bccRecipients businessUnitId ccRecipients comment createdAt customerId id includeShipmentDetail organizationId readReceipt subject toRecipients updatedAt version } fragment CustomerTableRowFields on Customer { addressLine1 addressLine2 allowConsolidation billingProfile { ...CustomerBillingProfileFields } businessUnitId city code consolidationPriority createdAt emailProfile { ...CustomerEmailProfileFields } exclusiveConsolidation externalId id isGeocoded latitude longitude name organizationId placeId postalCode stateId status updatedAt version } fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query CustomerTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { customers(input: $input) { edges { node { ...CustomerTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+	},
 	{
 		Name:     "DocumentTypeTable",
 		Hash:     "sha256:407941510e99bf8b3133b28178542bd908f312b90789fa0c2de2b976f57aa482",
@@ -115,6 +157,11 @@ var operations = []Operation{
 		Name:     "EquipmentTypeTable",
 		Hash:     "sha256:434594d9f9c59a4377be5e555d4baa8f80e86e8a0eea9ec679c7cb7ba3b95f05",
 		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment EquipmentTypeConfigurationRowFields on EquipmentType { businessUnitId class code color createdAt description id interiorLength organizationId status updatedAt version } query EquipmentTypeTable($classes: [EquipmentClass!], $includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { equipmentTypes(input: $input, classes: $classes) { edges { node { ...EquipmentTypeConfigurationRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "LocationTable",
+		Hash:     "sha256:db0953dee7cb9ece4aa05feb18d26f2986a6636cc3ad0b168e41c7ece0e7bd43",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment LocationTableRowFields on Location { addressLine1 addressLine2 businessUnitId city code createdAt description id isGeocoded latitude locationCategory { color id name } locationCategoryId longitude name organizationId placeId postalCode state { abbreviation id name } stateId status updatedAt version } query LocationTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { locations(input: $input) { edges { node { ...LocationTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "LocationCategoryTable",
@@ -170,9 +217,28 @@ func NewSchema(p ResolverParams) Schema {
 		Core:                     core,
 		AccessorialChargeService: p.AccessorialChargeService,
 	}
+	carrierDeps := &carrierresolver.Deps{
+		Core:           core,
+		CarrierService: p.CarrierService,
+	}
+	carrierintelligenceDeps := &carrierintelligenceresolver.Deps{
+		Core:                core,
+		CarrierIntelService: p.CarrierIntelService,
+	}
 	commodityDeps := &commodityresolver.Deps{
 		Core:             core,
 		CommodityService: p.CommodityService,
+	}
+	customerDeps := &customerresolver.Deps{
+		Core:            core,
+		CustomerService: p.CustomerService,
+	}
+	dispatchconsoleDeps := &dispatchconsoleresolver.Deps{
+		Core:                      core,
+		CarrierAssignmentService:  p.CarrierAssignmentService,
+		DispatchConsoleService:    p.DispatchConsoleService,
+		DispatchAutoAssignService: p.DispatchAutoAssignService,
+		AssignmentService:         p.AssignmentService,
 	}
 	documenttypeDeps := &documenttyperesolver.Deps{
 		Core:                core,
@@ -198,6 +264,10 @@ func NewSchema(p ResolverParams) Schema {
 		Core:              core,
 		HoldReasonService: p.HoldReasonService,
 	}
+	locationDeps := &locationresolver.Deps{
+		Core:            core,
+		LocationService: p.LocationService,
+	}
 	locationcategoryDeps := &locationcategoryresolver.Deps{
 		Core:                    core,
 		LocationCategoryService: p.LocationCategoryService,
@@ -218,7 +288,12 @@ func NewSchema(p ResolverParams) Schema {
 		Core:           core,
 		TrailerService: p.TrailerService,
 	}
+	customerBillingProfile := &customerBillingProfileResolver{
+		customerCustomerBillingProfile: &customerCustomerBillingProfile{Deps: customerDeps},
+	}
 	mutation := &mutationResolver{
+		carrierintelligenceMutation:   &carrierintelligenceMutation{Deps: carrierintelligenceDeps},
+		dispatchconsoleMutation:       &dispatchconsoleMutation{Deps: dispatchconsoleDeps},
 		equipmentmanufacturerMutation: &equipmentmanufacturerMutation{Deps: equipmentmanufacturerDeps},
 		equipmenttypeMutation:         &equipmenttypeMutation{Deps: equipmenttypeDeps},
 		tenantMutation:                &tenantMutation{Deps: tenantDeps},
@@ -226,13 +301,18 @@ func NewSchema(p ResolverParams) Schema {
 	}
 	query := &queryResolver{
 		accessorialchargeQuery:     &accessorialchargeQuery{Deps: accessorialchargeDeps},
+		carrierQuery:               &carrierQuery{Deps: carrierDeps},
+		carrierintelligenceQuery:   &carrierintelligenceQuery{Deps: carrierintelligenceDeps},
 		commodityQuery:             &commodityQuery{Deps: commodityDeps},
+		customerQuery:              &customerQuery{Deps: customerDeps},
+		dispatchconsoleQuery:       &dispatchconsoleQuery{Deps: dispatchconsoleDeps},
 		documenttypeQuery:          &documenttypeQuery{Deps: documenttypeDeps},
 		equipmentmanufacturerQuery: &equipmentmanufacturerQuery{Deps: equipmentmanufacturerDeps},
 		equipmenttypeQuery:         &equipmenttypeQuery{Deps: equipmenttypeDeps},
 		fleetcodeQuery:             &fleetcodeQuery{Deps: fleetcodeDeps},
 		hazardousmaterialQuery:     &hazardousmaterialQuery{Deps: hazardousmaterialDeps},
 		holdreasonQuery:            &holdreasonQuery{Deps: holdreasonDeps},
+		locationQuery:              &locationQuery{Deps: locationDeps},
 		locationcategoryQuery:      &locationcategoryQuery{Deps: locationcategoryDeps},
 		servicetypeQuery:           &servicetypeQuery{Deps: servicetypeDeps},
 		shipmenttypeQuery:          &shipmenttypeQuery{Deps: shipmenttypeDeps},
@@ -241,13 +321,62 @@ func NewSchema(p ResolverParams) Schema {
 	}
 
 	return newSchema(shards, map[string]func() any{
-		"Mutation":          func() any { return mutation },
-		"Query":             func() any { return query },
-		"AccessorialCharge": func() any { return &accessorialchargeresolver.AccessorialChargeResolver{Deps: accessorialchargeDeps} },
-		"Commodity":         func() any { return &commodityresolver.CommodityResolver{Deps: commodityDeps} },
-		"LocationCategory":  func() any { return &locationcategoryresolver.LocationCategoryResolver{Deps: locationcategoryDeps} },
-		"Trailer":           func() any { return &trailerresolver.TrailerResolver{Deps: trailerDeps} },
-		"User":              func() any { return &tenantresolver.UserResolver{Deps: tenantDeps} },
+		"CustomerBillingProfile": func() any { return customerBillingProfile },
+		"Mutation":               func() any { return mutation },
+		"Query":                  func() any { return query },
+		"AccessorialCharge":      func() any { return &accessorialchargeresolver.AccessorialChargeResolver{Deps: accessorialchargeDeps} },
+		"Carrier":                func() any { return &carrierintelligenceresolver.CarrierResolver{Deps: carrierintelligenceDeps} },
+		"CarrierEquipmentVerification": func() any {
+			return &carrierintelligenceresolver.CarrierEquipmentVerificationResolver{Deps: carrierintelligenceDeps}
+		},
+		"CarrierInsurancePolicy": func() any { return &carrierresolver.CarrierInsurancePolicyResolver{Deps: carrierDeps} },
+		"CarrierIntelControl": func() any {
+			return &carrierintelligenceresolver.CarrierIntelControlResolver{Deps: carrierintelligenceDeps}
+		},
+		"CarrierIntelEquipment": func() any {
+			return &carrierintelligenceresolver.CarrierIntelEquipmentResolver{Deps: carrierintelligenceDeps}
+		},
+		"CarrierIntelEvent": func() any {
+			return &carrierintelligenceresolver.CarrierIntelEventResolver{Deps: carrierintelligenceDeps}
+		},
+		"CarrierIntelFeedState": func() any {
+			return &carrierintelligenceresolver.CarrierIntelFeedStateResolver{Deps: carrierintelligenceDeps}
+		},
+		"CarrierIntelFinding": func() any {
+			return &carrierintelligenceresolver.CarrierIntelFindingResolver{Deps: carrierintelligenceDeps}
+		},
+		"CarrierIntelInsurance": func() any {
+			return &carrierintelligenceresolver.CarrierIntelInsuranceResolver{Deps: carrierintelligenceDeps}
+		},
+		"CarrierIntelInsuranceChange": func() any {
+			return &carrierintelligenceresolver.CarrierIntelInsuranceChangeResolver{Deps: carrierintelligenceDeps}
+		},
+		"CarrierIntelInsuranceFiling": func() any {
+			return &carrierintelligenceresolver.CarrierIntelInsuranceFilingResolver{Deps: carrierintelligenceDeps}
+		},
+		"CarrierIntelOverride": func() any {
+			return &carrierintelligenceresolver.CarrierIntelOverrideResolver{Deps: carrierintelligenceDeps}
+		},
+		"CarrierIntelRuleDefinition": func() any {
+			return &carrierintelligenceresolver.CarrierIntelRuleDefinitionResolver{Deps: carrierintelligenceDeps}
+		},
+		"CarrierIntelSafety": func() any {
+			return &carrierintelligenceresolver.CarrierIntelSafetyResolver{Deps: carrierintelligenceDeps}
+		},
+		"CarrierIntelSnapshot": func() any {
+			return &carrierintelligenceresolver.CarrierIntelSnapshotResolver{Deps: carrierintelligenceDeps}
+		},
+		"CarrierMonitoringEnrollment": func() any {
+			return &carrierintelligenceresolver.CarrierMonitoringEnrollmentResolver{Deps: carrierintelligenceDeps}
+		},
+		"CarrierSourcingResult": func() any {
+			return &carrierintelligenceresolver.CarrierSourcingResultResolver{Deps: carrierintelligenceDeps}
+		},
+		"Commodity":        func() any { return &commodityresolver.CommodityResolver{Deps: commodityDeps} },
+		"Customer":         func() any { return &carrierintelligenceresolver.CustomerResolver{Deps: carrierintelligenceDeps} },
+		"LocationCategory": func() any { return &locationcategoryresolver.LocationCategoryResolver{Deps: locationcategoryDeps} },
+		"Trailer":          func() any { return &trailerresolver.TrailerResolver{Deps: trailerDeps} },
+		"User":             func() any { return &tenantresolver.UserResolver{Deps: tenantDeps} },
 	}, operations)
 }
 
@@ -255,7 +384,13 @@ func Operations() []Operation {
 	return operations
 }
 
+type customerBillingProfileResolver struct {
+	*customerCustomerBillingProfile
+}
+
 type mutationResolver struct {
+	*carrierintelligenceMutation
+	*dispatchconsoleMutation
 	*equipmentmanufacturerMutation
 	*equipmenttypeMutation
 	*tenantMutation
@@ -264,13 +399,18 @@ type mutationResolver struct {
 
 type queryResolver struct {
 	*accessorialchargeQuery
+	*carrierQuery
+	*carrierintelligenceQuery
 	*commodityQuery
+	*customerQuery
+	*dispatchconsoleQuery
 	*documenttypeQuery
 	*equipmentmanufacturerQuery
 	*equipmenttypeQuery
 	*fleetcodeQuery
 	*hazardousmaterialQuery
 	*holdreasonQuery
+	*locationQuery
 	*locationcategoryQuery
 	*servicetypeQuery
 	*shipmenttypeQuery
@@ -279,21 +419,29 @@ type queryResolver struct {
 }
 
 type (
-	equipmentmanufacturerMutation = equipmentmanufacturerresolver.MutationResolver
-	equipmenttypeMutation         = equipmenttyperesolver.MutationResolver
-	tenantMutation                = tenantresolver.MutationResolver
-	trailerMutation               = trailerresolver.MutationResolver
-	accessorialchargeQuery        = accessorialchargeresolver.QueryResolver
-	commodityQuery                = commodityresolver.QueryResolver
-	documenttypeQuery             = documenttyperesolver.QueryResolver
-	equipmentmanufacturerQuery    = equipmentmanufacturerresolver.QueryResolver
-	equipmenttypeQuery            = equipmenttyperesolver.QueryResolver
-	fleetcodeQuery                = fleetcoderesolver.QueryResolver
-	hazardousmaterialQuery        = hazardousmaterialresolver.QueryResolver
-	holdreasonQuery               = holdreasonresolver.QueryResolver
-	locationcategoryQuery         = locationcategoryresolver.QueryResolver
-	servicetypeQuery              = servicetyperesolver.QueryResolver
-	shipmenttypeQuery             = shipmenttyperesolver.QueryResolver
-	tenantQuery                   = tenantresolver.QueryResolver
-	trailerQuery                  = trailerresolver.QueryResolver
+	customerCustomerBillingProfile = customerresolver.CustomerBillingProfileResolver
+	carrierintelligenceMutation    = carrierintelligenceresolver.MutationResolver
+	dispatchconsoleMutation        = dispatchconsoleresolver.MutationResolver
+	equipmentmanufacturerMutation  = equipmentmanufacturerresolver.MutationResolver
+	equipmenttypeMutation          = equipmenttyperesolver.MutationResolver
+	tenantMutation                 = tenantresolver.MutationResolver
+	trailerMutation                = trailerresolver.MutationResolver
+	accessorialchargeQuery         = accessorialchargeresolver.QueryResolver
+	carrierQuery                   = carrierresolver.QueryResolver
+	carrierintelligenceQuery       = carrierintelligenceresolver.QueryResolver
+	commodityQuery                 = commodityresolver.QueryResolver
+	customerQuery                  = customerresolver.QueryResolver
+	dispatchconsoleQuery           = dispatchconsoleresolver.QueryResolver
+	documenttypeQuery              = documenttyperesolver.QueryResolver
+	equipmentmanufacturerQuery     = equipmentmanufacturerresolver.QueryResolver
+	equipmenttypeQuery             = equipmenttyperesolver.QueryResolver
+	fleetcodeQuery                 = fleetcoderesolver.QueryResolver
+	hazardousmaterialQuery         = hazardousmaterialresolver.QueryResolver
+	holdreasonQuery                = holdreasonresolver.QueryResolver
+	locationQuery                  = locationresolver.QueryResolver
+	locationcategoryQuery          = locationcategoryresolver.QueryResolver
+	servicetypeQuery               = servicetyperesolver.QueryResolver
+	shipmenttypeQuery              = shipmenttyperesolver.QueryResolver
+	tenantQuery                    = tenantresolver.QueryResolver
+	trailerQuery                   = trailerresolver.QueryResolver
 )

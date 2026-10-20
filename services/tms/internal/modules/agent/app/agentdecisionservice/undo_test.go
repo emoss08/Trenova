@@ -15,7 +15,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/decisioncommitjobs/decisioncommitcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -287,7 +289,32 @@ func (a *windowActivity) ProposalChanged(
 	a.actions = append(a.actions, action)
 }
 
+// windowControls is the organization's pause, switched mid-window by a test.
+type windowControls struct {
+	tenantports.AgentControlRepository
+
+	mu     sync.Mutex
+	paused bool
+}
+
+func (c *windowControls) GetOrCreate(
+	context.Context,
+	pagination.TenantInfo,
+) (*tenant.AgentControl, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	return &tenant.AgentControl{ShadowMode: c.paused}, nil
+}
+
+func (c *windowControls) pause() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.paused = true
+}
+
 type windowHarness struct {
+	controls  *windowControls
 	service   *Service
 	proposals *windowProposals
 	decisions *windowDecisionRows
@@ -337,6 +364,7 @@ func newWindowHarness(t *testing.T, count int) *windowHarness {
 	workflows := &windowWorkflows{}
 	activity := &windowActivity{}
 	runs := windowRuns{threadID: pulid.MustNew("athr_")}
+	controls := &windowControls{}
 	executor := proposalexecutor.New(proposalexecutor.Params{
 		Logger: zap.NewNop(),
 		Tools: &agenttest.StubActionRegistry{Tools: []agentports.AgentTool{
@@ -354,12 +382,13 @@ func newWindowHarness(t *testing.T, count int) *windowHarness {
 			proposalRepo: proposals,
 			runRepo:      runs,
 			threads:      windowThreads{},
-			shadow:       agentshadow.New(agentshadow.Params{Control: traceControls{}, Runs: runs}),
+			shadow:       agentshadow.New(agentshadow.Params{Control: controls, Runs: runs}),
 			workflows:    workflows,
 			executor:     executor,
 			audit:        traceAudit{},
 			activity:     activity,
 		},
+		controls:  controls,
 		proposals: proposals,
 		decisions: decisions,
 		workflows: workflows,
@@ -564,4 +593,122 @@ func TestApproval_ApprovingIsNotDecidableAndDoesNotExpire(t *testing.T) {
 	assert.True(t, agent.ProposalStatusPending.Expirable())
 	assert.False(t, agent.PlanStatusApproving.Expirable())
 	assert.False(t, agent.PlanStatusApproving.Decidable())
+}
+
+func (h *windowHarness) decisionOf(t *testing.T, id pulid.ID) *agent.AgentDecision {
+	t.Helper()
+
+	h.decisions.mu.Lock()
+	defer h.decisions.mu.Unlock()
+	for i := len(h.decisions.rows) - 1; i >= 0; i-- {
+		row := h.decisions.rows[i]
+		if row.ProposalID != nil && *row.ProposalID == id {
+			clone := *row
+			return &clone
+		}
+	}
+	require.FailNow(t, "no decision for the proposal")
+
+	return nil
+}
+
+/*
+Nothing runs while a switch holds it. An approval made while agents were
+live waits out its undo window; if a person pauses every agent, or turns the
+agent's shadow switch on, before the window closes, the commit must not run
+the write. The approval is taken back by the system and the proposal waits
+on the person again, as it would after an undo.
+*/
+func TestApproval_CommittedAfterAPauseGoesBackToWaitingAndNeverRuns(t *testing.T) {
+	t.Parallel()
+
+	h := newWindowHarness(t, 1)
+	h.approve(t)
+	id := h.ids[0]
+	h.controls.pause()
+
+	h.closeWindow(t)
+
+	assert.Empty(t, h.proposals.executed, "a held approval never runs")
+	assert.Equal(t, agent.ProposalStatusPending, h.proposals.status(id))
+	decision := h.decisionOf(t, id)
+	require.NotNil(t, decision.UndoneAt, "the approval is taken back")
+	assert.Nil(t, decision.CommittedAt)
+	assert.Contains(t, h.activity.actions, agentports.ActivityUndone)
+
+	h.closeWindow(t)
+	assert.Empty(t, h.proposals.executed, "a retried commit still runs nothing")
+}
+
+func TestApproval_CommittedNowAfterAPauseNeverRuns(t *testing.T) {
+	t.Parallel()
+
+	h := newWindowHarness(t, 1)
+	h.approve(t)
+	h.workflows.signalErr = errors.New("workflow not found")
+	h.controls.pause()
+
+	require.NoError(t, h.service.CommitOwnApprovalNow(t.Context(), h.settle(h.ids[0]), h.actor))
+
+	assert.Empty(t, h.proposals.executed)
+	assert.Equal(t, agent.ProposalStatusPending, h.proposals.status(h.ids[0]))
+}
+
+// A commit that claimed its decision and stopped before running it is
+// finished by the next attempt; a pause between the two still stops it.
+func TestApproval_FinishedAfterAPauseByALaterAttemptNeverRuns(t *testing.T) {
+	t.Parallel()
+
+	h := newWindowHarness(t, 1)
+	h.approve(t)
+	id := h.ids[0]
+	decision := h.decisionOf(t, id)
+	_, err := h.decisions.MarkCommitted(t.Context(), agentports.SettleAgentDecisionsRequest{
+		IDs:        []pulid.ID{decision.ID},
+		TenantInfo: h.tenant,
+		At:         timeutils.NowUnix(),
+	})
+	require.NoError(t, err)
+	h.controls.pause()
+
+	h.closeWindow(t)
+
+	assert.Empty(t, h.proposals.executed)
+	assert.Equal(t, agent.ProposalStatusPending, h.proposals.status(id))
+}
+
+// A decision on a proposal a switch holds is refused by the service, before
+// anything is recorded or scheduled, and the refusal names the switch.
+func TestDecision_OnAHeldProposalIsRefusedAndRecordsNothing(t *testing.T) {
+	t.Parallel()
+
+	h := newWindowHarness(t, 1)
+	h.controls.pause()
+
+	approved, err := h.service.ApproveDeferred(t.Context(), []*agentports.DecideAgentProposalRequest{{
+		ProposalID: h.ids[0],
+		Decision:   agent.DecisionAccepted,
+		TenantInfo: h.tenant,
+	}}, h.actor)
+	if err == nil {
+		require.Len(t, approved, 1)
+		err = approved[0].Err
+	}
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "while all agents are paused")
+	assert.Equal(t, agent.ProposalStatusPending, h.proposals.status(h.ids[0]))
+	assert.Empty(t, h.workflows.started, "nothing is scheduled")
+	assert.Empty(t, h.decisions.rows, "nothing is recorded")
+	assert.Empty(t, h.proposals.executed)
+
+	_, err = h.service.DecideWithOutcome(t.Context(), &agentports.DecideAgentProposalRequest{
+		ProposalID: h.ids[0],
+		Decision:   agent.DecisionRejected,
+		ReasonCode: "not now",
+		TenantInfo: h.tenant,
+	}, h.actor)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "while all agents are paused")
+	assert.Empty(t, h.decisions.rows)
 }

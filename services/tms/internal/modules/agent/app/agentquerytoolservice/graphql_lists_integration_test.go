@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/m2msync"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/equipmenttyperepository"
@@ -20,8 +21,18 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/parties/adapters/postgres/carrierrepository"
+	"github.com/emoss08/trenova/internal/modules/parties/adapters/postgres/customerrepository"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/customerservice"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/places/adapters/postgres/locationcategoryrepository"
+	"github.com/emoss08/trenova/internal/modules/places/adapters/postgres/locationrepository"
 	"github.com/emoss08/trenova/internal/modules/places/app/locationcategoryservice"
+	"github.com/emoss08/trenova/internal/modules/places/app/locationservice"
+	"github.com/emoss08/trenova/internal/modules/places/domain/geofence"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
 	"github.com/emoss08/trenova/internal/modules/reference/adapters/postgres/accessorialchargerepository"
 	"github.com/emoss08/trenova/internal/modules/reference/adapters/postgres/commodityrepository"
@@ -95,11 +106,11 @@ func boolFilter(field string, value bool) (typed, old map[string]any) {
 	}}}
 }
 
-// referenceCases builds every converted reference list over one RLS
+// convertedListCases builds every list converted by a spec over one RLS
 // connection, and the resolver services the read executor reaches.
 //
 //nolint:funlen // one entry per converted list
-func referenceCases(conn *postgres.Connection) ([]referenceCase, agentread.ResolverParams) {
+func convertedListCases(conn *postgres.Connection) ([]referenceCase, agentread.ResolverParams) {
 	logger := zap.NewNop()
 	equipmentTypes := equipmenttyperepository.New(equipmenttyperepository.Params{DB: conn, Logger: logger})
 	fleetCodes := fleetcoderepository.New(fleetcoderepository.Params{DB: conn, Logger: logger})
@@ -111,6 +122,11 @@ func referenceCases(conn *postgres.Connection) ([]referenceCase, agentread.Resol
 	documentTypes := documenttyperepository.New(documenttyperepository.Params{DB: conn, Logger: logger})
 	categories := locationcategoryrepository.New(locationcategoryrepository.Params{DB: conn, Logger: logger})
 	holdReasons := holdreasonrepository.New(holdreasonrepository.Params{DB: conn, Logger: logger})
+	customers := customerrepository.New(customerrepository.Params{
+		DB: conn, Logger: logger, M2MSync: m2msync.NewSyncer(m2msync.SyncerParams{Logger: logger}),
+	})
+	locations := locationrepository.New(locationrepository.Params{DB: conn, Logger: logger})
+	carriers := carrierrepository.New(carrierrepository.Params{DB: conn, Logger: logger})
 
 	services := agentread.ResolverParams{
 		EquipmentTypeService: equipmenttypeservice.New(
@@ -130,6 +146,9 @@ func referenceCases(conn *postgres.Connection) ([]referenceCase, agentread.Resol
 		LocationCategoryService: locationcategoryservice.New(
 			locationcategoryservice.Params{Logger: logger, Repo: categories}),
 		HoldReasonService: holdreasonservice.New(holdreasonservice.Params{Logger: logger, Repo: holdReasons}),
+		CustomerService:   customerservice.New(customerservice.Params{Logger: logger, Repo: customers}),
+		LocationService:   locationservice.New(locationservice.Params{Logger: logger, Repo: locations}),
+		CarrierService:    carrierservice.New(carrierservice.Params{Logger: logger, Repo: carriers}),
 	}
 
 	systemTyped, systemOld := boolFilter("isSystem", true)
@@ -265,6 +284,54 @@ func referenceCases(conn *postgres.Connection) ([]referenceCase, agentread.Resol
 				return created(row, err)
 			},
 		},
+		{
+			tool: "customer_list", marked: inactive, oldMarked: oldInactive,
+			old: agentquerytoolservice.NewListCustomersTool(customers),
+			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
+				bu, org := tenantOf(tenant)
+				row, err := customers.Create(ctx, &customer.Customer{
+					BusinessUnitID: bu, OrganizationID: org, Status: statusOf(marked), Code: label,
+					Name: label, StateID: tenant.StateID, AddressLine1: "1 Main", City: "Dallas",
+					PostalCode: "75001",
+				})
+				return created(row, err)
+			},
+		},
+		{
+			tool: "location_list", marked: inactive, oldMarked: oldInactive,
+			old: agentquerytoolservice.NewListLocationsTool(locations),
+			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
+				bu, org := tenantOf(tenant)
+				category, err := categories.Create(ctx, &locationcategory.LocationCategory{
+					BusinessUnitID: bu, OrganizationID: org, Name: "Yard " + label,
+					Type:         locationcategory.CategoryTerminal,
+					FacilityType: locationcategory.FacilityTypeCrossDock,
+				})
+				if err != nil {
+					return pulid.Nil, err
+				}
+				row, err := locations.Create(ctx, &location.Location{
+					BusinessUnitID: bu, OrganizationID: org, Status: statusOf(marked), Code: label,
+					Name: label, LocationCategoryID: category.ID, StateID: tenant.StateID,
+					AddressLine1: "1 Main", City: "Dallas", PostalCode: "75001",
+					GeofenceType: geofence.TypeAuto,
+				})
+				return created(row, err)
+			},
+		},
+		{
+			tool: "carrier_list", marked: inactive, oldMarked: oldInactive,
+			old: agentquerytoolservice.NewListCarriersTool(carriers),
+			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
+				bu, org := tenantOf(tenant)
+				row, err := carriers.Create(ctx, &carrier.Carrier{
+					BusinessUnitID: bu, OrganizationID: org,
+					Status: carrier.Status(statusOf(marked)), Code: label,
+					Name: label,
+				})
+				return created(row, err)
+			},
+		},
 	}
 
 	return cases, services
@@ -365,12 +432,12 @@ func walk(
 	return ids, pages
 }
 
-func TestReferenceReads_ReadWhatTheRepositoryToolsReadUnderRowLevelSecurity(t *testing.T) {
+func TestConvertedLists_ReadWhatTheRepositoryToolsReadUnderRowLevelSecurity(t *testing.T) {
 	_, admin, dsn, cleanup := seedtest.SetupTestDBWithDSN(t)
 	t.Cleanup(cleanup)
 
 	conn := dbtest.NewRLSConnection(t, admin, dsn)
-	cases, services := referenceCases(conn)
+	cases, services := convertedListCases(conn)
 	engine := &mocks.DenyResourcesPermissionEngine{}
 	reader := agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine, Resolvers: services})
 	public := agentreadtest.NewReader(t, agentreadtest.Options{Engine: &publicRole{}, Resolvers: services})
@@ -381,7 +448,7 @@ func TestReferenceReads_ReadWhatTheRepositoryToolsReadUnderRowLevelSecurity(t *t
 	for idx := range cases {
 		c := &cases[idx]
 		t.Run(c.tool, func(t *testing.T) {
-			converted, err := agentquerytoolservice.ReferenceReadTool(c.tool, reader, engine)
+			converted, err := agentquerytoolservice.ConvertedListTool(c.tool, reader, engine)
 			require.NoError(t, err)
 			ours := writeReferenceRows(t, c, mine, "A")
 			other := writeReferenceRows(t, c, theirs, "B")
@@ -410,7 +477,7 @@ func TestReferenceReads_ReadWhatTheRepositoryToolsReadUnderRowLevelSecurity(t *t
 			})
 
 			t.Run("a field the role cannot see stays withheld", func(t *testing.T) {
-				hidden, err := agentquerytoolservice.ReferenceReadTool(c.tool, public, &publicRole{})
+				hidden, err := agentquerytoolservice.ConvertedListTool(c.tool, public, &publicRole{})
 				require.NoError(t, err)
 				page := callTool(t, ours.ctx, hidden, actor, map[string]any{"limit": 50})
 				withheld, _ := page["withheldByAccess"].([]any)

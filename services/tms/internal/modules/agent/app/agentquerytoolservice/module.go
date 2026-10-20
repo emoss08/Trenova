@@ -51,7 +51,7 @@ func ToolProviders() []any {
 		fuelRateReadProviders(),
 		workforceQueryToolProviders(),
 		masterDataReadProviders(),
-		referenceReadProviders(),
+		graphQLListProviders(),
 	}
 
 	size := 0
@@ -86,10 +86,7 @@ func coreToolProviders() []any {
 		newListWorkersTool,
 		newListTractorsTool,
 		newListTrailersTool,
-		newListCustomersTool,
-		newListLocationsTool,
 		newListInvoicesTool,
-		newListCarriersTool,
 		newListCarrierCapacityPostingsTool,
 		newGetCustomerTool,
 		newGetCarrierTool,

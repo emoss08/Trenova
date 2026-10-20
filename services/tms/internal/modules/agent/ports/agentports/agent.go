@@ -195,6 +195,11 @@ type AgentPlanService interface {
 		ctx context.Context,
 		req *ListAgentPlanConnectionRequest,
 	) (*pagination.CursorListResult[*agent.AgentPlan], error)
+	PlanHolds(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+		plans []*agent.AgentPlan,
+	) (map[pulid.ID]*ProposalHold, error)
 	// AssertOwnPlan refuses a plan not raised in one of the actor's own
 	// conversations, or by an agent they may no longer use, as not found.
 	AssertOwnPlan(

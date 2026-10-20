@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -59,18 +60,14 @@ func loadHold(
 	if err != nil {
 		return nil, err
 	}
-	if paused {
-		return &gqlmodel.PendingDecisionHold{
-			Reason: gqlmodel.PendingDecisionHoldReasonOrganizationPaused,
-		}, nil
+	definition := (*agentdefinition.Definition)(nil)
+	if !paused {
+		if definition, err = loadRunDefinition(ctx, runID); err != nil {
+			return nil, err
+		}
 	}
 
-	definition, err := loadRunDefinition(ctx, runID)
-	if err != nil {
-		return nil, err
-	}
-
-	return shadowHold(definition), nil
+	return pendingDecisionHold(agentshadow.VerdictFor(paused, definition).Hold()), nil
 }
 
 func loadRunDefinition(ctx context.Context, runID pulid.ID) (*agentdefinition.Definition, error) {
@@ -87,13 +84,57 @@ func loadRunDefinition(ctx context.Context, runID pulid.ID) (*agentdefinition.De
 	return definition, err
 }
 
-func shadowHold(definition *agentdefinition.Definition) *gqlmodel.PendingDecisionHold {
-	if definition == nil || !definition.EffectiveShadow(false) {
-		return nil
+func proposalHold(
+	ctx context.Context,
+	proposal *agent.AgentProposal,
+) (*gqlmodel.PendingDecisionHold, error) {
+	if proposal.Status != agent.ProposalStatusPending {
+		return nil, nil //nolint:nilnil // a decided proposal is held by nothing
 	}
 
-	return &gqlmodel.PendingDecisionHold{
-		Reason:    gqlmodel.PendingDecisionHoldReasonAgentShadow,
-		AgentName: definition.Name,
+	return loadHold(ctx, proposal.OrganizationID, proposal.RunID)
+}
+
+func planHold(ctx context.Context, plan *agent.AgentPlan) (*gqlmodel.PendingDecisionHold, error) {
+	if plan.Status != agent.PlanStatusPending || !loaders.Available(ctx) {
+		return nil, nil //nolint:nilnil // a decided plan is held by nothing
 	}
+
+	hold, err := loaders.AgentPlanHold(ctx, plan.ID.String())
+	if err != nil {
+		return nil, err
+	}
+
+	return pendingDecisionHold(hold), nil
+}
+
+func pendingDecisionSummary(
+	summary *agentports.PendingDecisionSummary,
+	actionable int,
+) *gqlmodel.PendingDecisionSummary {
+	out := &gqlmodel.PendingDecisionSummary{
+		Total:   summary.Total,
+		Held:    max(summary.Total-actionable, 0),
+		ByAgent: make([]*gqlmodel.PendingDecisionAgentCount, 0, len(summary.ByAgent)),
+		ByTool:  make([]*gqlmodel.PendingDecisionToolCount, 0, len(summary.ByTool)),
+	}
+	for _, row := range summary.ByAgent {
+		out.ByAgent = append(out.ByAgent, &gqlmodel.PendingDecisionAgentCount{
+			AgentDefinitionID: row.AgentDefinitionID.String(),
+			AgentName:         row.AgentName,
+			Count:             row.Count,
+		})
+	}
+	for _, row := range summary.ByTool {
+		out.ByTool = append(out.ByTool, &gqlmodel.PendingDecisionToolCount{
+			ToolName: row.ToolName,
+			Count:    row.Count,
+		})
+	}
+	if summary.OldestAt != nil {
+		oldest := int(*summary.OldestAt)
+		out.OldestAt = &oldest
+	}
+
+	return out
 }

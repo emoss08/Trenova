@@ -68,20 +68,24 @@ const (
 	prefixHas  = "has"
 )
 
-// unfilteredFields are selected by every operation but are never what a
-// person narrows a list by: the tenant, the row's version, and its id, which
-// a get reads.
+// unfilteredFields are selected by operations but are never what a person
+// narrows a list by: the tenant, the row's version, its id, which a get reads,
+// and the Google Places id an address was geocoded to, which nothing a model
+// reads supplies.
 var unfilteredFields = map[string]struct{}{
 	recordIDField:        {},
 	tenantOrganizationID: {},
 	tenantBusinessUnitID: {},
 	rowVersion:           {},
+	geocodedPlaceID:      {},
 }
 
 const (
 	tenantOrganizationID = "organizationId"
 	tenantBusinessUnitID = "businessUnitId"
 	rowVersion           = "version"
+	geocodedPlaceID      = "placeId"
+	fieldNotes           = "notes"
 	recordIDField        = "id"
 	// graphQLEnumSource names an enum parameter's values by the schema's own
 	// enum type, which is where they are declared.
@@ -155,7 +159,28 @@ func (r *graphQLRead) sortable() []string {
 	return out
 }
 
+// conventionNames are the names agent-tool-conventions.md gives a free-text
+// field, which a parameter derived from it takes; its filter still names the
+// field.
+var conventionNames = map[string]string{
+	fieldNotes: "note",
+}
+
+// paramsFor derives a field's parameters, named by the conventions.
 func paramsFor(field *graphQLField) []graphQLParam {
+	params := fieldParams(field)
+	if name, renamed := conventionNames[field.Name]; renamed {
+		for idx := range params {
+			if params[idx].Name == field.Name {
+				params[idx].Name = name
+			}
+		}
+	}
+
+	return params
+}
+
+func fieldParams(field *graphQLField) []graphQLParam {
 	words := stringutils.HumanizeSnakeCase(stringutils.ConvertCamelToSnake(field.Name))
 	describe := func(fallback string) string {
 		if field.Description != "" {
@@ -214,7 +239,8 @@ func scalarParams(
 			Schema: map[string]any{
 				toolschema.KeyType: toolschema.TypeBoolean,
 				toolschema.KeyDescription: describe(
-					"Only records that are, or are not, " + words + ".",
+					"true for only the records whose " + field.Name + " is true, false for " +
+						"only those whose " + field.Name + " is false.",
 				),
 			},
 		}}

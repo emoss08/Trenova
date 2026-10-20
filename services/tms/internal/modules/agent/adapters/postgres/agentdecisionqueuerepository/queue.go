@@ -186,7 +186,7 @@ func (r *repository) ListPending(
 
 			inner := pendingUnion(req)
 			q := &unionQuery{}
-			q.write("SELECT kind, id, created_at, shadow, agent_name FROM (")
+			q.write("SELECT kind, id, created_at FROM (")
 			q.write(inner.sql.String(), inner.args...)
 			q.write(") AS q")
 			if req.After != nil {
@@ -225,6 +225,9 @@ func (r *repository) CountPending(
 		q.write("SELECT COUNT(*) FROM (")
 		q.write(inner.sql.String(), inner.args...)
 		q.write(") AS q")
+		if req.ActionableOnly {
+			q.write(" WHERE NOT shadow")
+		}
 
 		var count int
 		if err := r.db.DBForContext(ctx).
@@ -256,13 +259,11 @@ func (r *repository) Summary(
 
 			var totals struct {
 				Total    int    `bun:"total"`
-				Held     int    `bun:"held"`
 				OldestAt *int64 `bun:"oldest_at"`
 			}
 			inner := pendingUnion(listReq)
 			q := &unionQuery{}
-			q.write("SELECT COUNT(*) AS total, COUNT(*) FILTER (WHERE shadow) AS held, " +
-				"MIN(created_at) AS oldest_at FROM (")
+			q.write("SELECT COUNT(*) AS total, MIN(created_at) AS oldest_at FROM (")
 			q.write(inner.sql.String(), inner.args...)
 			q.write(") AS q")
 			if err := db.NewRaw(q.sql.String(), q.args...).Scan(ctx, &totals); err != nil {
@@ -273,7 +274,6 @@ func (r *repository) Summary(
 
 			summary := &agentports.PendingDecisionSummary{
 				Total:   totals.Total,
-				Held:    totals.Held,
 				ByAgent: []agentports.PendingDecisionAgentCount{},
 				ByTool:  []agentports.PendingDecisionToolCount{},
 			}
