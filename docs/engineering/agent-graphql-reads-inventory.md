@@ -311,7 +311,6 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 | `worker_get_dot_random_draw` | op | dotRandomDraw | DotRandomDraw | n/a | id | Same GetDraw; entries are selected by DotRandomDraw. |
 | `worker_get_hos` | op | workerHosState | DeskWorkerHos (alt WorkerHosState) | n/a | workerId | Same TelematicsService.GetWorkerHOSState (telematics read). |
 | `worker_get_schedule` | op | workerShiftAssignments (+ workerAvailabilityPreferences, shiftSwapRequests) | WorkerShiftAssignments (+ WorkerAvailabilityPreferences, ShiftSwapRequests) | unpaged lists | workerId | Same SchedulingService ListAssignments/ListPreferences/ListSwaps; tool's team-scope guard is server-side. |
-| `worker_list` | op | workers | WorkerTable | cursor | DataTable fieldFilters only | repo.List vs WorkerService.List; name ranking the tool applies is not in GraphQL. |
 | `worker_list_checklists` | op | workerChecklists (+ workerChecklistTemplates) | WorkerChecklists (+ WorkerChecklistTemplateTable) | unpaged list | workerId, includeClosed | Same ListForWorker / ListTemplates. |
 | `worker_list_credentials` | partial | workerCredentials (+ credentialExpiryForecast) | WorkerCredentials (+ CredentialExpiryForecast) | unpaged / limit | workerId, includeArchived / days, limit | Tool uses WorkerCredentialService.ListExpiring with credentialTypeCode, requiredOnly, includeExpired grace, offset; neither root takes those. Per-worker list and org-wide forecast cover the records. |
 | `worker_list_dot_random_draws` | op | dotRandomDraws (+ dotRandomPools) | DotRandomDraws (+ DotRandomPools) | unpaged / cursor | poolId / DOTRandomPoolsInput | Same ListDraws/ListPools. |
@@ -330,8 +329,8 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 
 | class | tools |
 |---|---|
-| op, not yet converted | 103 |
-| op, converted (rows removed) | 16 |
+| op, not yet converted | 102 |
+| op, converted (rows removed) | 17 |
 | field-no-op | 6 |
 | partial | 30 |
 | none | 21 |

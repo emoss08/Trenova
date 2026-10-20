@@ -13,46 +13,39 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/m2msync"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/equipmenttyperepository"
 	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/equipmentmanufacturerrepository"
+	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/equipmenttyperepository"
+	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/fleetcoderepository"
 	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/tractorrepository"
 	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/trailerrepository"
+	"github.com/emoss08/trenova/internal/modules/equipment/app/equipmenttypeservice"
+	"github.com/emoss08/trenova/internal/modules/equipment/app/fleetcodeservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/tractorservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/trailerservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentmanufacturerports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmenttypeports"
-	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workerrepository"
-	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/customfieldrepository"
-	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/customfieldvaluerepository"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/customfieldservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/fleetcoderepository"
-	"github.com/emoss08/trenova/internal/modules/equipment/app/equipmenttypeservice"
-	"github.com/emoss08/trenova/internal/modules/equipment/app/fleetcodeservice"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/m2msync"
 	"github.com/emoss08/trenova/internal/modules/parties/adapters/postgres/carrierrepository"
 	"github.com/emoss08/trenova/internal/modules/parties/adapters/postgres/customerrepository"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierservice"
 	"github.com/emoss08/trenova/internal/modules/parties/app/customerservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/places/adapters/postgres/locationcategoryrepository"
 	"github.com/emoss08/trenova/internal/modules/places/adapters/postgres/locationrepository"
+	"github.com/emoss08/trenova/internal/modules/places/app/locationcategoryservice"
 	"github.com/emoss08/trenova/internal/modules/places/app/locationservice"
 	"github.com/emoss08/trenova/internal/modules/places/domain/geofence"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
-	"github.com/emoss08/trenova/internal/modules/places/adapters/postgres/locationcategoryrepository"
-	"github.com/emoss08/trenova/internal/modules/places/app/locationcategoryservice"
 	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
 	"github.com/emoss08/trenova/internal/modules/reference/adapters/postgres/accessorialchargerepository"
 	"github.com/emoss08/trenova/internal/modules/reference/adapters/postgres/commodityrepository"
@@ -75,6 +68,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
+	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workerrepository"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/customfieldrepository"
+	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/customfieldvaluerepository"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/customfieldservice"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -82,6 +82,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/readscope"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -186,6 +187,9 @@ func convertedListCases(conn *postgres.Connection) ([]referenceCase, agentread.R
 		CarrierService:    carrierservice.New(carrierservice.Params{Logger: logger, Repo: carriers}),
 		TractorService: tractorservice.New(tractorservice.Params{
 			Logger: logger, Repo: tractors, CustomFieldsValuesService: customFields,
+		}),
+		WorkerService: workerservice.New(workerservice.Params{
+			Logger: logger, Repo: workers, CustomFieldsValuesService: customFields,
 		}),
 		TrailerService: trailerservice.New(trailerservice.Params{
 			Logger: logger, Repo: trailers, CustomFieldsValuesService: customFields,
@@ -374,6 +378,14 @@ func convertedListCases(conn *postgres.Connection) ([]referenceCase, agentread.R
 			},
 		},
 		{
+			tool: "worker_list", marked: inactive, oldMarked: oldInactive,
+			old: agentquerytoolservice.NewListWorkersTool(workers, &mocks.DenyResourcesPermissionEngine{}),
+			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
+				row, err := workers.Create(ctx, testWorker(tenant, "W"+label, marked, pulid.Nil))
+				return created(row, err)
+			},
+		},
+		{
 			tool: "equipment_list_tractors", marked: outOfService, oldMarked: oldOutOfService,
 			old: agentquerytoolservice.NewListTractorsTool(tractors, &mocks.DenyResourcesPermissionEngine{}),
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
@@ -455,20 +467,7 @@ func (p *equipmentParts) write(
 	if err != nil {
 		return pulid.Nil, pulid.Nil, pulid.Nil, err
 	}
-	now := timeutils.NowUnix()
-	driver, err := p.workers.Create(ctx, &worker.Worker{
-		BusinessUnitID: bu, OrganizationID: org, StateID: tenant.StateID,
-		Status: domaintypes.StatusActive, Type: worker.WorkerTypeEmployee,
-		DriverType: worker.DriverTypeOTR, FirstName: "Driver", LastName: label,
-		AddressLine1: "1 Main", City: "Dallas", PostalCode: "75001",
-		Gender: worker.GenderMale,
-		Profile: &worker.WorkerProfile{
-			DOB:           now - 86400*365*30,
-			LicenseNumber: "DL" + label + tenant.Actor.OrganizationID.String()[4:10],
-			LicenseExpiry: now + 86400*365,
-			HireDate:      now - 86400*365,
-		},
-	})
+	driver, err := p.workers.Create(ctx, testWorker(tenant, label, false, pulid.Nil))
 	if err != nil {
 		return pulid.Nil, pulid.Nil, pulid.Nil, err
 	}
@@ -674,4 +673,84 @@ func TestConvertedLists_ATractorsDriversFollowWorkerRead(t *testing.T) {
 		assert.Equal(t, []string{"id"}, slices.Collect(maps.Keys(driver)))
 	}
 	assert.Contains(t, page["withheldByAccess"], "primaryWorker.wholeName")
+}
+
+// testWorker is a driver of the tenant's, inactive when marked, managed by
+// manager when one is named.
+func testWorker(
+	tenant *agentreadtest.Tenant,
+	label string,
+	marked bool,
+	manager pulid.ID,
+) *worker.Worker {
+	now := timeutils.NowUnix()
+
+	return &worker.Worker{
+		BusinessUnitID: tenant.Actor.BusinessUnitID,
+		OrganizationID: tenant.Actor.OrganizationID,
+		StateID:        tenant.StateID,
+		ManagerID:      manager,
+		Status:         statusOf(marked),
+		Type:           worker.WorkerTypeEmployee,
+		DriverType:     worker.DriverTypeOTR,
+		FirstName:      "Driver",
+		LastName:       label,
+		AddressLine1:   "1 Main",
+		City:           "Dallas",
+		PostalCode:     "75001",
+		Gender:         worker.GenderMale,
+		Profile: &worker.WorkerProfile{
+			DOB:           now - 86400*365*30,
+			LicenseNumber: "DL" + label + tenant.Actor.OrganizationID.String()[4:10],
+			LicenseExpiry: now + 86400*365,
+			HireDate:      now - 86400*365,
+		},
+	}
+}
+
+// A person whose worker grant reaches only their team reads, through the
+// GraphQL list, exactly the workers the repository list showed them: the
+// read_scope policy narrows the screen's statement as it narrowed the tool's.
+func TestConvertedLists_WorkerListIsNarrowedToTheTeamOnBothPaths(t *testing.T) {
+	_, admin, dsn, cleanup := seedtest.SetupTestDBWithDSN(t)
+	t.Cleanup(cleanup)
+
+	conn := dbtest.NewRLSConnection(t, admin, dsn)
+	_, services := convertedListCases(conn)
+	workers := workerrepository.New(workerrepository.Params{DB: conn, Logger: zap.NewNop()})
+	tenant := agentreadtest.SeedTenant(t, admin, "A")
+	tenantCtx := dbscope.WithTenant(t.Context(), tenant.Scope())
+
+	team := make([]string, 0, 2)
+	for idx := range 5 {
+		manager := pulid.Nil
+		if idx < 2 {
+			manager = tenant.Actor.UserID
+		}
+		saved, err := workers.Create(readscope.With(tenantCtx, nil),
+			testWorker(tenant, fmt.Sprintf("T%d", idx), false, manager))
+		require.NoError(t, err)
+		if idx < 2 {
+			team = append(team, saved.ID.String())
+		}
+	}
+
+	scoped := readscope.With(tenantCtx, func(context.Context) (readscope.Grants, error) {
+		return readscope.Grants{"worker": {
+			Scope: readscope.ScopeTeam, Team: []pulid.ID{tenant.Actor.UserID},
+		}}, nil
+	})
+	engine := &mocks.DenyResourcesPermissionEngine{}
+	reader := agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine, Resolvers: services})
+	converted, err := agentquerytoolservice.ConvertedListTool("worker_list", reader, engine)
+	require.NoError(t, err)
+	old := agentquerytoolservice.NewListWorkersTool(workers, engine)
+
+	before, _ := walk(t, scoped, old, tenant.Actor, nil)
+	after, _ := walk(t, scoped, converted, tenant.Actor, nil)
+	assert.ElementsMatch(t, team, before, "the repository list reads only the team")
+	assert.ElementsMatch(t, before, after, "the GraphQL list reads what the repository list read")
+
+	everyone, _ := walk(t, readscope.With(tenantCtx, nil), converted, tenant.Actor, nil)
+	assert.Len(t, everyone, 5, "without a narrow grant every worker is read")
 }

@@ -2,6 +2,7 @@ package agentquerytoolservice
 
 import (
 	"fmt"
+	"maps"
 	"slices"
 	"strings"
 
@@ -44,6 +45,8 @@ type graphQLField struct {
 	Selected    bool
 	Enum        []string
 	Description string
+	// Fields are a selected record's own fields, one level down.
+	Fields []graphQLField
 }
 
 const (
@@ -117,6 +120,9 @@ type graphQLParam struct {
 	Field  string
 	Kind   paramKind
 	Schema map[string]any
+	// Holder is the GraphQL type of a nested record a dotted Field belongs
+	// to (WorkerProfile for profile.cdlClass); empty for the record's own.
+	Holder string
 }
 
 // typedParams derives a list tool's parameters from its record type: every
@@ -137,9 +143,59 @@ func (r *graphQLRead) typedParams() []graphQLParam {
 		}
 		params = append(params, paramsFor(field)...)
 	}
+	params = append(params, r.nestedParams(config.FilterableFields)...)
 	slices.SortFunc(params, func(a, b graphQLParam) int { return strings.Compare(a.Name, b.Name) })
 
 	return params
+}
+
+// nestedParams are the parameters of the filters the configuration allows
+// one record down (profile.endorsement), typed by the nested record's field
+// and named for the path (profileEndorsement).
+func (r *graphQLRead) nestedParams(filterable map[string]bool) []graphQLParam {
+	var out []graphQLParam
+	for _, key := range slices.Sorted(maps.Keys(filterable)) {
+		parent, child, ok := r.nestedField(key)
+		if !ok || !filterable[key] {
+			continue
+		}
+		for _, param := range paramsFor(child) {
+			param.Name = parent.Name + stringutils.CapitalizeFirst(param.Name)
+			param.Field = parent.Name + "." + param.Field
+			param.Holder = parent.Type
+			out = append(out, param)
+		}
+	}
+
+	return out
+}
+
+// nestedField is the record field and its own field a dotted path names,
+// when the operation reads that record and it is a part of the list's own
+// record, named for it (a Worker's WorkerProfile): a linked record (a state,
+// an equipment type) is filtered by its id, not by its fields.
+func (r *graphQLRead) nestedField(path string) (parent, child *graphQLField, ok bool) {
+	head, tail, dotted := strings.Cut(path, ".")
+	if !dotted || strings.Contains(tail, ".") {
+		return nil, nil, false
+	}
+	idx := slices.IndexFunc(r.Fields, func(f graphQLField) bool { return f.Name == head })
+	if idx < 0 || len(r.Fields[idx].Fields) == 0 {
+		return nil, nil, false
+	}
+	parent = &r.Fields[idx]
+	if !strings.HasPrefix(parent.Type, r.Node) || parent.Type == r.Node {
+		return nil, nil, false
+	}
+	at := slices.IndexFunc(parent.Fields, func(f graphQLField) bool { return f.Name == tail })
+	if at < 0 || parent.Fields[at].List {
+		return nil, nil, false
+	}
+	if _, skip := unfilteredFields[tail]; skip {
+		return nil, nil, false
+	}
+
+	return parent, &parent.Fields[at], true
 }
 
 // sortable is every field of the record the server can order the list by.
@@ -152,6 +208,11 @@ func (r *graphQLRead) sortable() []string {
 		}
 		if config.SortableFields[field.Name] {
 			out = append(out, field.Name)
+		}
+	}
+	for _, key := range slices.Sorted(maps.Keys(config.SortableFields)) {
+		if _, _, ok := r.nestedField(key); ok && config.SortableFields[key] {
+			out = append(out, key)
 		}
 	}
 	slices.Sort(out)

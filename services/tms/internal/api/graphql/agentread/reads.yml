@@ -20,3 +20,4 @@ reads:
   - tool: masterdata_list_hold_reasons
   - tool: masterdata_list_service_types
   - tool: masterdata_list_shipment_types
+  - tool: worker_list

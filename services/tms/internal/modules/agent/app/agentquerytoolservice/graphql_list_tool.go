@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/toolschema"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 const (
@@ -63,7 +64,13 @@ type graphQLListSpec struct {
 	// as its has<Thing> parameter: a model has no honest way to get an id no
 	// tool lists.
 	references map[string]idReference
-	resource   permission.Resource
+	// rank orders a page that matched a free-text query when the call chose
+	// no order, as the screen's search cannot (closest name first).
+	rank func(query string, rows []map[string]any) []map[string]any
+	// shape applies to each row what the screen's resolver does not, given
+	// the fields withheld from it.
+	shape    func(row map[string]any, withheld map[string]struct{})
+	resource permission.Resource
 	// reads is what the tool's records carry from outside the organization,
 	// declared as every read tool declares it (readSpec).
 	reads readSpec
@@ -196,7 +203,9 @@ func annotate(
 // graphQLListSpecs are every list tool, module by module, that reads
 // through GraphQL by a spec alone.
 func graphQLListSpecs() []graphQLListSpec {
-	return slices.Concat(referenceReadSpecs(), partyReadSpecs(), equipmentReadSpecs())
+	return slices.Concat(
+		referenceReadSpecs(), partyReadSpecs(), equipmentReadSpecs(), workerReadSpecs(),
+	)
 }
 
 // graphQLListProviders registers each spec as its own list tool.
@@ -218,27 +227,74 @@ func graphQLListProviders() []any {
 
 func (t *graphQLListTool) Name() string { return t.spec.name }
 
-// Description is the summary and every typed parameter by name, so a model
-// choosing a tool sees what it can narrow the list by. A range is named once,
-// by its lower end: createdAtFrom/To, amountMin/Max.
+// Description is the summary and every typed parameter an agent at the
+// default data access may use, by name, so a model choosing a tool sees what
+// it can narrow the list by. A range is named once,
+// by its lower end (createdAtFrom/To, amountMin/Max), and a nested record's
+// parameters are named once under it.
 func (t *graphQLListTool) Description() string {
-	names := make([]string, 0, len(t.params))
+	own := make([]string, 0, len(t.params))
+	nested := make(map[string][]string)
+	var holders []string
 	for _, param := range t.params {
-		switch param.Kind {
-		case paramDayTo, paramAtMost:
-		case paramDayFrom:
-			names = append(names, param.Name+"/"+suffixTo)
-		case paramAtLeast:
-			names = append(names, param.Name+"/"+suffixMax)
-		case paramIn, paramEquals, paramContains, paramPresent, paramReference:
-			names = append(names, param.Name)
+		name, ok := describedName(param)
+		if !ok || !t.describable(param) {
+			continue
 		}
+		parent, _, isNested := strings.Cut(param.Field, ".")
+		if !isNested {
+			own = append(own, name)
+			continue
+		}
+		if _, seen := nested[parent]; !seen {
+			holders = append(holders, parent)
+		}
+		nested[parent] = append(nested[parent],
+			stringutils.LowerFirst(strings.TrimPrefix(name, parent)))
 	}
-	if len(names) == 0 {
+	if len(own) == 0 && len(holders) == 0 {
 		return t.spec.summary
 	}
 
-	return t.spec.summary + " Filters: " + strings.Join(names, ", ") + "."
+	var b strings.Builder
+	b.WriteString(t.spec.summary)
+	b.WriteString(" Filters: ")
+	b.WriteString(strings.Join(own, ", "))
+	for _, parent := range holders {
+		fmt.Fprintf(&b, "; %s fields, each named %s and the field (%s%s): %s",
+			parent, parent, parent, stringutils.CapitalizeFirst(nested[parent][0]),
+			strings.Join(nested[parent], ", "))
+	}
+	b.WriteString(".")
+
+	return b.String()
+}
+
+// describable reports whether a parameter's field can be filtered at the
+// default agent data access. A description names only those: the schema
+// still offers every parameter, and a reader above the default may use one
+// the description leaves out.
+func (t *graphQLListTool) describable(param graphQLParam) bool {
+	resource, name := t.fieldOwner(param.Field)
+
+	return fieldsensitivity.Visible(t.registry, resource, name, permission.SensitivityInternal)
+}
+
+// describedName is how a description names a parameter: a range once, by
+// its lower end.
+func describedName(param graphQLParam) (string, bool) {
+	switch param.Kind {
+	case paramDayTo, paramAtMost:
+		return "", false
+	case paramDayFrom:
+		return param.Name + "/" + suffixTo, true
+	case paramAtLeast:
+		return param.Name + "/" + suffixMax, true
+	case paramIn, paramEquals, paramContains, paramPresent, paramReference:
+		return param.Name, true
+	}
+
+	return param.Name, true
 }
 
 func (t *graphQLListTool) SearchTerms() []string { return t.spec.searchTerms }
@@ -336,6 +392,10 @@ func (t *graphQLListTool) Query(
 		return nil, err
 	}
 
+	if t.spec.rank != nil && query != "" && optionalString(params.Params, paramSortBy) == "" {
+		page.items = t.spec.rank(query, page.items)
+	}
+
 	outcome := graphQLListOutcome{
 		Count:            len(page.items),
 		SearchedFor:      criteria.Describe(),
@@ -417,6 +477,15 @@ func (t *graphQLListTool) page(
 		object, _ := edge.(map[string]any)
 		if node, ok := object[connectionNode].(map[string]any); ok {
 			page.items = append(page.items, compact(node))
+		}
+	}
+	if t.spec.shape != nil {
+		withheld := make(map[string]struct{}, len(page.withheld))
+		for _, path := range page.withheld {
+			withheld[path] = struct{}{}
+		}
+		for _, item := range page.items {
+			t.spec.shape(item, withheld)
 		}
 	}
 	if info, ok := connection[connectionPageInfo].(map[string]any); ok {
@@ -549,11 +618,14 @@ func (t *graphQLListTool) refuseWithheld(
 		return nil
 	}
 
-	ceiling := fieldsensitivity.AgentCeiling(
-		ctx, t.permissions, params.Actor, params.DataAccessCeiling, t.spec.resource,
+	ceilings := fieldsensitivity.NewAgentCeilings(
+		t.permissions, params.Actor, params.DataAccessCeiling,
 	)
 	for _, field := range fields {
-		if !fieldsensitivity.Visible(t.registry, t.spec.resource, field, ceiling) {
+		resource, name := t.fieldOwner(field)
+		hidden := resource != t.spec.resource && !ceilings.Reads(ctx, resource)
+		if hidden || !fieldsensitivity.Visible(t.registry, resource, name,
+			ceilings.For(ctx, resource)) {
 			return fmt.Errorf(
 				"%s cannot be filtered or ordered by %s: its values are hidden at your access",
 				t.spec.name, field)
@@ -561,6 +633,23 @@ func (t *graphQLListTool) refuseWithheld(
 	}
 
 	return nil
+}
+
+// fieldOwner is the resource whose sensitivities a filtered field is judged
+// by, and the field's name there, as the field guard judges it: a nested
+// record of a registered kind (a worker's profile) by its own kind, any
+// other by the list's.
+func (t *graphQLListTool) fieldOwner(field string) (resource permission.Resource, name string) {
+	parent, child, ok := t.read.nestedField(field)
+	if !ok {
+		return t.spec.resource, field
+	}
+	kind := stringutils.ConvertCamelToSnake(parent.Type)
+	if t.registry.HasResource(kind) {
+		return permission.Resource(kind), child.Name
+	}
+
+	return t.spec.resource, child.Name
 }
 
 // nearMiss reads again with one condition dropped at a time, and says which

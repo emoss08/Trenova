@@ -297,6 +297,13 @@ becomes a parameter. Its type comes from the field's GraphQL type:
 - **Names follow the conventions.** A parameter takes the name
   [agent-tool-conventions.md](agent-tool-conventions.md) gives free text (`notes` becomes `note`),
   and its filter still names the field.
+- **A record's own parts are filtered through.** Where the filter configuration allows a path one
+  record down (`profile.endorsement`) and the operation selects that part, the part's field
+  becomes a parameter named for the path (`profileEndorsement`), typed by the part's own GraphQL
+  field and filtered on the path. A part is a type named for the record (`WorkerProfile` of
+  `Worker`); a linked record (a state, an equipment type) is filtered by its id instead. A
+  filter on a part's field is judged by the part's own kind where it has one, as the field
+  guard judges it.
 - **Not every field is something a person says.** The tenant, the row's version, its id and the
   Google Places id an address was geocoded to (`placeId`) are never parameters.
 - **Free text and sorting.** `query` maps to the input's `query`. `sortBy` is an enum of
@@ -339,10 +346,20 @@ A note for a parameter the tool does not take fails construction. Notes stay wit
 than in the schema because they are written for a model choosing a call ("only an active reason
 can be used on a new hold"), and a schema description edit is a schema change for every client.
 
-The tool's description is its summary followed by every typed parameter by name
-("Filters: active, code, createdAtFrom/To, …"), as the repository lists' were, so a model choosing
-among tools, and the ranking that embeds descriptions, sees what each list narrows by.
-`TestReferenceReads_DescribeEveryParameter` holds each converted tool to it.
+The tool's description is its summary followed by every typed parameter an agent at the
+default data access (Internal) can use, by name ("Filters: active, code, createdAtFrom/To, …"),
+as the repository lists' were, so a model choosing among tools, and the ranking that embeds
+descriptions, sees what each list narrows by. A part's parameters are named once under it
+("profile fields, each named profile and the field (profileCdlClass): cdlClass, …"). A parameter
+above Internal stays in the schema, with its own description, for a reader whose access reaches
+it. `TestConvertedLists_DescribeEveryParameter` holds each converted tool to it.
+
+Two hooks carry what a repository row did that the screen's resolver does not, and each is
+named in the spec rather than hidden in a fetch: `rank` orders a page that matched a free-text
+query when the call chose no order (`worker_list` puts the closest name first), and `shape`
+applies a domain rule to each row given what was withheld (`worker_list` folds a NonCompliant
+credential into `canBeAssigned`, as `worker.Standing` does, and keeps the credential dates
+present and null when nothing is on file).
 
 The parameters are derived when the tool is built, not when the code is generated, because the
 filter configuration is computed from the entity at runtime (`querybuilder.GetFieldConfiguration`).
@@ -475,6 +492,7 @@ Each module's PR:
 | Parties | `carrier_list` | none | every field the table selects is Internal |
 | Equipment | `equipment_list_tractors` | none | a driver (`primaryWorker`, `secondaryWorker`) shows only its id to a reader who cannot read workers, as the repository tool left `assignedTo` out |
 | Equipment | `equipment_list_trailers` | none | every field the table selects is Internal |
+| Workforce | `worker_list` | none | the repository row already left out every field above Internal, and gated city; through `WorkerTable` the same fields (address, contact, date of birth, licence and TWIC numbers, drug and alcohol status and the rest of the profile's Restricted and Confidential fields) are withheld and named in `withheldByAccess` |
 
 None of the repository-backed reference, party or equipment lists was gated, so at a person's role ceiling below
 Internal each now withholds every field but `id`, where it used to return them all. No description
@@ -607,7 +625,8 @@ tenants written by `agentreadtest.SeedTenant`. For every converted tool it:
 
 For kinds that declare an "own" or "team" scope (shipments, orders, invoices, workers), the
 module's test also reads as a person narrowed by `readscope` and asserts the GraphQL path returns
-the rows the repository path returned for that person.
+the rows the repository path returned for that person
+(`TestConvertedLists_WorkerListIsNarrowedToTheTeamOnBothPaths` for workers).
 
 Every list converted by a spec is listed once, in `graphQLListSpecs`, which registers them and
 which the tests range over: `TestConvertedLists_ReadWhatTheRepositoryToolsReadUnderRowLevelSecurity`
@@ -702,6 +721,9 @@ reasoning for each is above.
    checks a nested kind's read permission and shows only the id where it is refused.
 6. **The `Desk*` operation is preferred.** A list with none reads its table's operation, unless
    its module's PR adds a `Desk<Plural>` operation, backed by the result-size figures it records.
+   `worker_list` reads `WorkerTable`, which selects about thirty fields an agent at Internal never
+   sees, so every result names them in `withheldByAccess`; a `DeskWorkers` operation selecting
+   what the Desk reads is the follow-up, with the client's codegen.
 7. **Bindings the rule cannot find are named in `reads.yml` and proven** by shape and by the
    resource their resolver checks, never trusted. No resource-only rule was possible: most
    resources are checked by several root fields (`edi` by thirteen).

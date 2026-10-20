@@ -1,9 +1,12 @@
 package agentquerytoolservice
 
 import (
+	"strings"
+
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 // The external tests read through the real GraphQL reader, which this
@@ -34,6 +37,7 @@ var (
 	NewListCarriersTool           = newListCarriersTool
 	NewListTractorsTool           = newListTractorsTool
 	NewListTrailersTool           = newListTrailersTool
+	NewListWorkersTool            = newListWorkersTool
 )
 
 // ConvertedListNames are the list tools read through GraphQL by a spec.
@@ -73,4 +77,30 @@ func ConvertedListTool(
 	}
 
 	return nil, errGraphQLReadUnbound
+}
+
+// ExpectedMention is how a converted list's description must name one of its
+// parameters, and whether it must name it at all: a parameter whose field is
+// hidden at the default data access, or a range's upper end, it need not.
+func ExpectedMention(tool agentports.AgentQueryTool, name string) (string, bool) {
+	list, ok := tool.(*graphQLListTool)
+	if !ok {
+		return "", false
+	}
+	for _, param := range list.params {
+		if param.Name != name {
+			continue
+		}
+		mention, described := describedName(param)
+		if !described || !list.describable(param) {
+			return "", false
+		}
+		if parent, _, nested := strings.Cut(param.Field, "."); nested {
+			mention = stringutils.LowerFirst(strings.TrimPrefix(mention, parent))
+		}
+
+		return mention, true
+	}
+
+	return "", false
 }

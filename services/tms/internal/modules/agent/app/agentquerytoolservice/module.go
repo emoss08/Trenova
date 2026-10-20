@@ -83,7 +83,6 @@ func coreToolProviders() []any {
 		newComposeTableViewTool,
 		newExplainRateTool,
 		newListDashboardsTool,
-		newListWorkersTool,
 		newListInvoicesTool,
 		newListCarrierCapacityPostingsTool,
 		newGetCustomerTool,

@@ -42633,87 +42633,138 @@
     },
     {
       "name": "worker_list",
-      "description": "Find workers (drivers) by name, closest first, or the roster by employment or qualification. Credentials due: worker_list_credentials. \"none on file\" was never recorded: worse than expiring soon. Filters: status (Active|Inactive): not availability; see canBeAssigned, worker_list_time_off; type (Employee|Contractor); driverType (Local|Regional|OTR|Team); canBeAssigned (boolean): false = dispatch blocked; profile.endorsement (O|N|H|X|P|T): O none, N tanker, H hazmat, X tanker+hazmat, P passenger, T doubles/triples; hazmat is H or X; profile.cdlClass (A|B|C); profile.complianceStatus (Compliant|NonCompliant|Pending); profile.isQualified (boolean): false = lapsed or missing; text: city, lastName, firstName; date: createdAt, profile.hazmatExpiry, profile.licenseExpiry, profile.medicalCardExpiry, profile.twicExpiry. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "description": "Find workers (drivers) by name, closest first, or the roster by employment or qualification. Credentials due: worker_list_credentials. \"none on file\" was never recorded: worse than expiring soon. Filters: assignmentBlocked, availableForDispatch, canBeAssigned, createdAtFrom/To, driverType, externalId, firstName, fleetCodeId, hasFleetCode, hasPosition, lastName, profilePicUrl, status, type, updatedAtFrom/To, wholeName; profile fields, each named profile and the field (profileCdlClass): cdlClass, cdlRestrictions, complianceStatus, createdAtFrom/To, eldExempt, endorsement, hazmatExpiryFrom/To, isQualified, lastComplianceCheckFrom/To, lastMvrCheckFrom/To, licenseExpiryFrom/To, medicalCardExpiryFrom/To, mvrDueDateFrom/To, physicalDueDateFrom/To, shortHaulExempt, twicExpiryFrom/To, updatedAtFrom/To.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
+          "addressLine1": {
+            "description": "Only records whose address line1 contains this text.",
+            "type": "string"
+          },
+          "addressLine2": {
+            "description": "Only records whose address line2 contains this text.",
+            "type": "string"
+          },
           "after": {
             "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
             "type": "string"
           },
-          "filters": {
-            "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
+          "assignmentBlocked": {
+            "description": "Only records whose assignment blocked contains this text.",
+            "type": "string"
+          },
+          "availableForDispatch": {
+            "description": "true for only the records whose availableForDispatch is true, false for only those whose availableForDispatch is false.",
+            "type": "boolean"
+          },
+          "canBeAssigned": {
+            "description": "true for only the records whose canBeAssigned is true, false for only those whose canBeAssigned is false. false means dispatch is blocked.",
+            "type": "boolean"
+          },
+          "city": {
+            "description": "Only records whose city contains this text.",
+            "type": "string"
+          },
+          "createdAtFrom": {
+            "description": "Only records whose created at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "createdAtTo": {
+            "description": "Only records whose created at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "driverType": {
+            "description": "Only records whose driver type is one of these.",
             "items": {
-              "additionalProperties": false,
-              "properties": {
-                "days": {
-                  "maximum": 3650,
-                  "minimum": 1,
-                  "type": "integer"
-                },
-                "field": {
-                  "enum": [
-                    "status",
-                    "type",
-                    "driverType",
-                    "city",
-                    "lastName",
-                    "firstName",
-                    "canBeAssigned",
-                    "createdAt",
-                    "profile.endorsement",
-                    "profile.cdlClass",
-                    "profile.complianceStatus",
-                    "profile.isQualified",
-                    "profile.hazmatExpiry",
-                    "profile.licenseExpiry",
-                    "profile.medicalCardExpiry",
-                    "profile.twicExpiry"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "worker_list.field"
-                },
-                "operator": {
-                  "enum": [
-                    "eq",
-                    "ne",
-                    "in",
-                    "notin",
-                    "isnull",
-                    "isnotnull",
-                    "contains",
-                    "startswith",
-                    "endswith",
-                    "gt",
-                    "gte",
-                    "lt",
-                    "lte",
-                    "lastndays",
-                    "nextndays",
-                    "today",
-                    "yesterday",
-                    "tomorrow"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "worker_list.operator"
-                },
-                "value": {
-                  "type": "string"
-                },
-                "values": {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                }
-              },
-              "required": [
-                "field",
-                "operator"
+              "enum": [
+                "Local",
+                "Regional",
+                "OTR",
+                "Team"
               ],
-              "type": "object"
+              "type": "string",
+              "x-enumOf": "graphql.DriverType"
             },
-            "maxItems": 6,
+            "minItems": 1,
+            "type": "array"
+          },
+          "email": {
+            "description": "Only records whose email contains this text.",
+            "type": "string"
+          },
+          "emergencyContactName": {
+            "description": "Only records whose emergency contact name contains this text.",
+            "type": "string"
+          },
+          "emergencyContactPhone": {
+            "description": "Only records whose emergency contact phone contains this text.",
+            "type": "string"
+          },
+          "externalId": {
+            "description": "Only records whose external id contains this text.",
+            "type": "string"
+          },
+          "firstName": {
+            "description": "Only records whose first name contains this text.",
+            "type": "string"
+          },
+          "fleetCodeId": {
+            "description": "The fleet code, from masterdata_list_fleet_codes. Never guess one.",
+            "type": "string",
+            "x-recordOf": "fleet_code"
+          },
+          "gender": {
+            "description": "Only records whose gender is one of these.",
+            "items": {
+              "enum": [
+                "Male",
+                "Female"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.WorkerGender"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "hasFleetCode": {
+            "description": "true for only records that have a fleet code, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasManager": {
+            "description": "true for only records that have a manager, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasPosition": {
+            "description": "The driving title the worker holds; front-office titles are held by users. true for only records that have a position, false for only those that have none.",
+            "type": "boolean"
+          },
+          "lastName": {
+            "description": "Only records whose last name contains this text.",
+            "type": "string"
+          },
+          "leaveType": {
+            "description": "Set while a leave of absence is open on the timeline. Only records whose leave type is one of these.",
+            "items": {
+              "enum": [
+                "FMLA",
+                "Medical",
+                "Military",
+                "Parental",
+                "Personal",
+                "Other"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.WorkerLeaveType"
+            },
+            "minItems": 1,
             "type": "array"
           },
           "limit": {
@@ -42723,6 +42774,416 @@
             "type": "integer",
             "x-clamp": true
           },
+          "phoneNumber": {
+            "description": "Only records whose phone number contains this text.",
+            "type": "string"
+          },
+          "postalCode": {
+            "description": "Only records whose postal code contains this text.",
+            "type": "string"
+          },
+          "profileCdlClass": {
+            "description": "Only records whose cdl class is one of these.",
+            "items": {
+              "enum": [
+                "A",
+                "B",
+                "C"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.CDLClass"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "profileCdlRestrictions": {
+            "description": "Only records whose cdl restrictions contains this text.",
+            "type": "string"
+          },
+          "profileComplianceStatus": {
+            "description": "Only records whose compliance status is one of these.",
+            "items": {
+              "enum": [
+                "Compliant",
+                "NonCompliant",
+                "Pending"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.ComplianceStatus"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "profileCreatedAtFrom": {
+            "description": "Only records whose created at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "profileCreatedAtTo": {
+            "description": "Only records whose created at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "profileDisqualificationReason": {
+            "description": "Only records whose disqualification reason contains this text.",
+            "type": "string"
+          },
+          "profileDobFrom": {
+            "description": "Only records whose dob is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "profileDobTo": {
+            "description": "Only records whose dob is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "profileDrugAlcoholStatus": {
+            "description": "The worker's drug and alcohol testing standing, denormalised from the testing\nledgers so the roster can filter and sort on it. Only Prohibited blocks\ndispatch; Unknown and Pending warn. Only records whose drug alcohol status is one of these.",
+            "items": {
+              "enum": [
+                "Unknown",
+                "Clear",
+                "Pending",
+                "Prohibited"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.DrugAlcoholStatus"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "profileEldExempt": {
+            "description": "true for only the records whose eldExempt is true, false for only those whose eldExempt is false.",
+            "type": "boolean"
+          },
+          "profileEndorsement": {
+            "description": "Only records whose endorsement is one of these. O none, N tanker, H hazmat, X tanker+hazmat, P passenger, T doubles/triples; hazmat is H or X.",
+            "items": {
+              "enum": [
+                "O",
+                "N",
+                "H",
+                "X",
+                "P",
+                "T"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.EndorsementType"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "profileHasLicenseState": {
+            "description": "true for only records that have a license state, false for only those that have none.",
+            "type": "boolean"
+          },
+          "profileHazmatExpiryFrom": {
+            "description": "Only records whose hazmat expiry is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "profileHazmatExpiryTo": {
+            "description": "Only records whose hazmat expiry is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "profileHireDateFrom": {
+            "description": "Only records whose hire date is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "profileHireDateTo": {
+            "description": "Only records whose hire date is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "profileIsQualified": {
+            "description": "true for only the records whose isQualified is true, false for only those whose isQualified is false. false means a credential lapsed or is missing.",
+            "type": "boolean"
+          },
+          "profileLastComplianceCheckFrom": {
+            "description": "Only records whose last compliance check is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "profileLastComplianceCheckTo": {
+            "description": "Only records whose last compliance check is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "profileLastDrugTestFrom": {
+            "description": "Only records whose last drug test is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "profileLastDrugTestTo": {
+            "description": "Only records whose last drug test is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "profileLastMvrCheckFrom": {
+            "description": "Only records whose last mvr check is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "profileLastMvrCheckTo": {
+            "description": "Only records whose last mvr check is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "profileLicenseExpiryFrom": {
+            "description": "Only records whose license expiry is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "profileLicenseExpiryTo": {
+            "description": "Only records whose license expiry is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "profileLicenseNumber": {
+            "description": "Only records whose license number contains this text.",
+            "type": "string"
+          },
+          "profileMedicalCardExpiryFrom": {
+            "description": "Only records whose medical card expiry is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "profileMedicalCardExpiryTo": {
+            "description": "Only records whose medical card expiry is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "profileMedicalExaminerName": {
+            "description": "Only records whose medical examiner name contains this text.",
+            "type": "string"
+          },
+          "profileMedicalExaminerNpi": {
+            "description": "Only records whose medical examiner npi contains this text.",
+            "type": "string"
+          },
+          "profileMvrDueDateFrom": {
+            "description": "Only records whose mvr due date is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "profileMvrDueDateTo": {
+            "description": "Only records whose mvr due date is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "profileNextCredentialExpiryFrom": {
+            "description": "When the worker's soonest required credential expires, and when their soonest\nrequired course falls due. Null when nothing does. Only records whose next credential expiry is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "profileNextCredentialExpiryTo": {
+            "description": "When the worker's soonest required credential expires, and when their soonest\nrequired course falls due. Null when nothing does. Only records whose next credential expiry is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "profileNextTrainingDueFrom": {
+            "description": "Only records whose next training due is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "profileNextTrainingDueTo": {
+            "description": "Only records whose next training due is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "profilePhysicalDueDateFrom": {
+            "description": "Only records whose physical due date is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "profilePhysicalDueDateTo": {
+            "description": "Only records whose physical due date is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "profilePicUrl": {
+            "description": "Only records whose profile pic url contains this text.",
+            "type": "string"
+          },
+          "profileSafetyRating": {
+            "description": "Only records whose safety rating is one of these.",
+            "items": {
+              "enum": [
+                "Excellent",
+                "Good",
+                "Watch",
+                "AtRisk"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.SafetyRating"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "profileSafetyScoreMax": {
+            "description": "Only records whose safety score is at most this.",
+            "type": "integer"
+          },
+          "profileSafetyScoreMin": {
+            "description": "Only records whose safety score is at least this.",
+            "type": "integer"
+          },
+          "profileShortHaulExempt": {
+            "description": "true for only the records whose shortHaulExempt is true, false for only those whose shortHaulExempt is false.",
+            "type": "boolean"
+          },
+          "profileTerminationDateFrom": {
+            "description": "Only records whose termination date is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "profileTerminationDateTo": {
+            "description": "Only records whose termination date is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "profileTrainingHealth": {
+            "description": "Roster roll-ups: the worker's training and safety standing denormalised onto\nthe profile so the workers list can filter and sort on them. They are a cache\nof the training records and safety events, refreshed when those change and\nre-checked by the nightly compliance sweep. Read the worker overview or the\nper-area summaries for the live answer. Only records whose training health is one of these.",
+            "items": {
+              "enum": [
+                "Current",
+                "Scheduled",
+                "DueSoon",
+                "Overdue",
+                "ExpiringSoon",
+                "Expired",
+                "Failed",
+                "Missing"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.WorkerTrainingHealth"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "profileTwicCardNumber": {
+            "description": "Only records whose twic card number contains this text.",
+            "type": "string"
+          },
+          "profileTwicExpiryFrom": {
+            "description": "Only records whose twic expiry is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "profileTwicExpiryTo": {
+            "description": "Only records whose twic expiry is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "profileUpdatedAtFrom": {
+            "description": "Only records whose updated at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "profileUpdatedAtTo": {
+            "description": "Only records whose updated at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
           "query": {
             "description": "A worker's name, first, last or both; each word matches the start of a name and the closest names come first. Omit it to list the roster or to filter on a field.",
             "type": "string"
@@ -42730,16 +43191,70 @@
           "sortBy": {
             "description": "Field to order by. Defaults to most recently created.",
             "enum": [
+              "addressLine1",
+              "addressLine2",
+              "assignmentBlocked",
+              "availableForDispatch",
+              "canBeAssigned",
               "city",
-              "lastName",
               "createdAt",
+              "driverType",
+              "email",
+              "emergencyContactName",
+              "emergencyContactPhone",
+              "externalId",
+              "firstName",
+              "fleetCodeId",
+              "gender",
+              "lastName",
+              "leaveType",
+              "managerId",
+              "phoneNumber",
+              "positionId",
+              "postalCode",
+              "profile.cdlClass",
+              "profile.cdlRestrictions",
+              "profile.complianceStatus",
+              "profile.createdAt",
+              "profile.disqualificationReason",
+              "profile.dob",
+              "profile.drugAlcoholStatus",
+              "profile.eldExempt",
+              "profile.endorsement",
               "profile.hazmatExpiry",
+              "profile.hireDate",
+              "profile.isQualified",
+              "profile.lastComplianceCheck",
+              "profile.lastDrugTest",
+              "profile.lastMvrCheck",
               "profile.licenseExpiry",
+              "profile.licenseNumber",
+              "profile.licenseStateId",
               "profile.medicalCardExpiry",
-              "profile.twicExpiry"
+              "profile.medicalExaminerName",
+              "profile.medicalExaminerNpi",
+              "profile.mvrDueDate",
+              "profile.nextCredentialExpiry",
+              "profile.nextTrainingDue",
+              "profile.physicalDueDate",
+              "profile.safetyRating",
+              "profile.safetyScore",
+              "profile.shortHaulExempt",
+              "profile.terminationDate",
+              "profile.trainingHealth",
+              "profile.twicCardNumber",
+              "profile.twicExpiry",
+              "profile.updatedAt",
+              "profile.workerId",
+              "profilePicUrl",
+              "stateId",
+              "status",
+              "type",
+              "updatedAt",
+              "wholeName"
             ],
             "type": "string",
-            "x-enumOf": "worker_list.sortBy"
+            "x-enumOf": "worker_list.graphqlSortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -42749,6 +43264,52 @@
             ],
             "type": "string",
             "x-enumOf": "list.sortDirection"
+          },
+          "status": {
+            "description": "Only records whose status is one of these. Not availability; see canBeAssigned and worker_list_time_off.",
+            "items": {
+              "enum": [
+                "Active",
+                "Inactive"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.EntityStatus"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "type": {
+            "description": "Only records whose type is one of these.",
+            "items": {
+              "enum": [
+                "Employee",
+                "Contractor"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.WorkerType"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "updatedAtFrom": {
+            "description": "Only records whose updated at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "updatedAtTo": {
+            "description": "Only records whose updated at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "wholeName": {
+            "description": "Only records whose whole name contains this text.",
+            "type": "string"
           }
         },
         "type": "object"

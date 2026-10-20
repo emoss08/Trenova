@@ -1466,6 +1466,7 @@ held-out`) when one is made for a PR.
 | Typed reads through GraphQL: reference data | `equipment_list_manufacturers`, `equipment_list_types`, `document_list_types`, `location_list_categories` and seven `masterdata` lists read their screen's persisted operation | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
 | Typed reads through GraphQL: parties | `customer_list`, `location_list`, `carrier_list` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
 | Typed reads through GraphQL: equipment | `equipment_list_tractors`, `equipment_list_trailers` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
+| Typed reads through GraphQL: workers | `worker_list` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
 
 The shipment row is measured on the held-out set the split PR recorded (161 cases), so both
 figures read the same cases; the module's merges moved three cases between splits, which the
@@ -1559,6 +1560,13 @@ The equipment row converts the tractor and trailer lists. Converting the tractor
 the repository tools made a check the screen does not: a tractor's driver was named only to a
 reader who could read workers. An agent read now gates a nested record by its own kind's read
 permission and shows only its id where that is refused. Held-out ranking is unchanged.
+
+The workers row converts `worker_list`, whose kind is narrowed by a team scope. A Postgres test
+reads both paths as a person whose worker grant reaches only their team and gets the same two
+workers from each. The list keeps the repository row's rules as named hooks: the closest name
+first for a name search, and a NonCompliant credential folded into `canBeAssigned`. Its profile
+filters (endorsement, CDL class, compliance, credential dates) are derived from the profile's own
+fields. Held-out ranking is unchanged.
 
 **Phase 4: a single front door and job profiles (3–4 weeks).**
 
