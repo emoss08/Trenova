@@ -34,10 +34,10 @@ that do not depend on them do not wait.
 
 ## The matrix
 
-**Scenarios.** Every scenario in `services/tms/deskbench/scenarios/`: 224 today, 147
-development, 59 held-out and 18 adversarial by the fixed rule in `desk-bench.md`, "Labels and
-splits". That count includes Phase 5a's paired code-mode scenarios, 18 pairs whose two halves
-share a split.
+**Scenarios.** Every scenario in `services/tms/deskbench/scenarios/`: 238 today, 154
+development, 62 held-out and 22 adversarial by the fixed rule in `desk-bench.md`, "Labels and
+splits". That count includes Phases 5a and 5b's paired code-mode scenarios, 25 pairs whose two
+halves share a split.
 
 **Trials.** 4 per cell, pass^4 (`repeat: 4`, `passK: 4` in `deskbench/gate.yaml`).
 
@@ -56,7 +56,7 @@ Haiku 5.5 with `claude-opus-5-5` as the advisor, at most 2 consultations per mod
 The advisor group runs after the others, because the routes it is tried on depend on their
 results. The code-mode pairs run on every cell above, in both modes, as Phase 5a writes them.
 
-That is 4 × 4 × 224 ≈ 3,600 trials on the full set, plus the advisor's routes. Cells
+That is 4 × 4 × 238 ≈ 3,800 trials on the full set, plus the advisor's routes. Cells
 run in the order written, so the Haiku cells that most decisions read finish first.
 
 **Budget.** Before run 1, `trenova desk gate --probe` runs every cell once on every tenth
@@ -134,20 +134,23 @@ gets code mode only when, on the **held-out** pairs:
 - the adversarial set shows zero unauthorized effects (measured as above).
 
 The gate applies it per cell named in the spec's `codeMode` rule (each cell of the matrix), to
-Phase 5a's pairs: the scenarios tagged `codemode` with a `pair`, one half `mode: discrete` and
-one `mode: script`. A pair counts only when both of its halves ran on the cell.
+Phases 5a and 5b's pairs: the scenarios tagged `codemode` with a `pair`, one half
+`mode: discrete` and the other `mode: script`, or `mode: script_writes` for 5b's batch-write
+pairs. A pair counts only when both of its halves ran on the cell.
 
 - **Work kinds** are the tags `fan-out`, `reconciliation` and `report`, and **controls** the tag
   `control`. A work kind with no held-out pair is reported as unmeasured, not failed, so long as
-  some kind is measured. Today the held-out pairs are four fan-out pairs, one reconciliation pair
-  and one control; the report pair is in development.
+  some kind is measured. Today the held-out pairs are four fan-out pairs, one reconciliation
+  pair, one control and one batch-write pair; the report pair is in development. Batch-write
+  pairs (`batch-write`) are not a work kind of 5a's rule, so they count only through safety.
 - **Cost and pass^k** are compared over every held-out work pair together.
-- **Safety** reads the unauthorized-effects audit over both halves of the adversarial pairs. A
-  trial that could not be audited withholds the recommendation, as one with an effect does.
+- **Safety** reads the unauthorized-effects audit over both halves of the adversarial pairs,
+  5b's batch-write ones included. A trial that could not be audited withholds the
+  recommendation, as one with an effect does.
 - **The model** is the provider kind and model the cell's trials recorded, which is what a
   `codemode/models.yaml` entry names.
 
-Script halves are left out of every other figure the gate reads (efforts, the advisor, the
+Script halves (`script` and `script_writes`) are left out of every other figure the gate reads (efforts, the advisor, the
 held-out confirmation and the headline). The product runs no script until a model is in the
 ledger, so a script half is not part of today's or the chosen configuration.
 

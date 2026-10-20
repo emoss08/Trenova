@@ -253,3 +253,19 @@ func TestGateSpec_RefusesACodeModeRuleItCannotApply(t *testing.T) {
 	spec.CodeMode.Controls = nil
 	require.ErrorIs(t, spec.validate(), ErrGateSpec)
 }
+
+func TestEvaluateGate_AScriptWritesHalfPairsAndStaysOutOfTheProductFigures(t *testing.T) {
+	t.Parallel()
+
+	discrete := half("hold", "hold", ModeDiscrete, evalsplit.HeldOut, "fan-out")
+	writes := half("hold", "hold", ModeScriptWrites, evalsplit.HeldOut, "fan-out")
+	result := EvaluateGate(codeModeSpec(), gateCases(development(low), development(medium),
+		trials(trialPlan{discrete, low, 4, "0.40"}, trialPlan{writes, low, 0, "0.10"},
+			trialPlan{discrete, medium, 4, "0.40"}, trialPlan{writes, medium, 0, "0.10"})))
+
+	decision := decisionFor(t, result, low)
+	assert.Equal(t, 1, decision.AllWork.Pairs, "script_writes is a pair's code-mode half")
+	require.NotNil(t, result.HeldOut.Before.PassK)
+	assert.InDelta(t, 1.0, *result.HeldOut.Before.PassK, 1e-9)
+	assert.Equal(t, 1, result.HeldOut.Before.Scenarios, "only the discrete half counts")
+}

@@ -42,7 +42,7 @@ func (r *CodeModeRule) validate(cells []string) error {
 }
 
 func scriptHalf(s *Scenario) bool {
-	return s.Mode == ModeScript
+	return s.Pair != "" && s.Mode != ModeDiscrete
 }
 
 type CellModel struct {
@@ -80,37 +80,36 @@ func (p *PairFigures) passDiff() (float64, bool) {
 }
 
 func (t *scoreTable) pairs(cell string, keep func(*Scenario) bool) PairFigures {
-	halves := map[string]map[ScriptMode]string{}
+	halves := map[string]*[2]string{}
 	for _, result := range t.byCell[cell] {
 		scenario := result.Scenario
 		if scenario.Pair == "" || !keep(scenario) {
 			continue
 		}
-		if halves[scenario.Pair] == nil {
-			halves[scenario.Pair] = map[ScriptMode]string{}
+		pair, ok := halves[scenario.Pair]
+		if !ok {
+			pair = &[2]string{}
+			halves[scenario.Pair] = pair
 		}
-		halves[scenario.Pair][scenario.Mode] = scenario.Name
+		if scriptHalf(scenario) {
+			pair[1] = scenario.Name
+		} else {
+			pair[0] = scenario.Name
+		}
 	}
-	names := map[ScriptMode]map[string]bool{ModeDiscrete: {}, ModeScript: {}}
+	discrete := make(map[string]bool, len(halves))
+	script := make(map[string]bool, len(halves))
 	figures := PairFigures{}
-	for _, modes := range halves {
-		discrete, script := modes[ModeDiscrete], modes[ModeScript]
-		if discrete == "" || script == "" {
+	for _, pair := range halves {
+		if pair[0] == "" || pair[1] == "" {
 			continue
 		}
 		figures.Pairs++
-		names[ModeDiscrete][discrete] = true
-		names[ModeScript][script] = true
+		discrete[pair[0]] = true
+		script[pair[1]] = true
 	}
-	for _, mode := range []ScriptMode{ModeDiscrete, ModeScript} {
-		named := names[mode]
-		figure := t.figure(cell, func(s *Scenario) bool { return named[s.Name] && keep(s) })
-		if mode == ModeDiscrete {
-			figures.Discrete = figure
-		} else {
-			figures.Script = figure
-		}
-	}
+	figures.Discrete = t.figure(cell, func(s *Scenario) bool { return discrete[s.Name] && keep(s) })
+	figures.Script = t.figure(cell, func(s *Scenario) bool { return script[s.Name] && keep(s) })
 
 	return figures
 }
