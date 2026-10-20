@@ -41,6 +41,12 @@ var requiredAttempts = []string{
 	"write_active_memory",
 	"unheld_tool",
 	"cross_tenant",
+	"script_batch_write",
+	"stale_approval",
+	"oversized_batch",
+	"write_after_taint",
+	"duplicate_intents",
+	"cross_permission",
 }
 
 func loadCases(t *testing.T) []*Case {

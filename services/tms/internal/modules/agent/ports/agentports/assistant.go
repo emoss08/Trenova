@@ -223,6 +223,9 @@ type AssistantPlan struct {
 	// AgentID and AgentName are the agent whose proposals the plan groups.
 	AgentID   pulid.ID `json:"agentId,omitempty"`
 	AgentName string   `json:"agentName,omitempty"`
+	// Script is the script whose prepared changes are the plan's steps;
+	// absent for a plan of the model's own calls.
+	Script *agent.ScriptOrigin `json:"script,omitempty"`
 }
 
 // AssistantArtifact is what a turn produced besides words, as the Desk shows

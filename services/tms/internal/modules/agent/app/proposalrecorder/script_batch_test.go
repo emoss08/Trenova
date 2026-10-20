@@ -1,10 +1,14 @@
 package proposalrecorder
 
 import (
+	"context"
+	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -101,4 +105,82 @@ func TestRecord_LeavesAScriptsSingleIntentAProposal(t *testing.T) {
 	assert.Equal(t, scriptStep, result.Proposals[1].ScriptStepKey)
 	assert.True(t, result.Proposals[1].ApprovalNeedsReview(), "an internal intent still needs its preview")
 	assert.False(t, result.Proposals[0].ApprovalNeedsReview(), "the same write called by the model does not")
+}
+
+type scriptLedger struct {
+	asked []agentports.GetAgentRunStepRequest
+	step  *agent.AgentRunStep
+}
+
+func (l *scriptLedger) Get(
+	_ context.Context,
+	req *agentports.GetAgentRunStepRequest,
+) (*agent.AgentRunStep, error) {
+	l.asked = append(l.asked, *req)
+	if l.step == nil {
+		return nil, errors.New("not found")
+	}
+
+	return l.step, nil
+}
+
+func TestRecord_KeepsTheScriptABatchCameFromOnItsPlan(t *testing.T) {
+	t.Parallel()
+
+	orgID, buID := pulid.MustNew("org_"), pulid.MustNew("bu_")
+	runID := pulid.MustNew("arun_")
+	ledger := &scriptLedger{step: &agent.AgentRunStep{
+		StepKey: scriptStep,
+		Arguments: map[string]any{
+			"title":   "Hold Range's uncovered loads",
+			"purpose": "Hold every Range load out of Denver with nobody on it.",
+			"code":    "for load in loads: trenova.shipment.place_hold(shipmentId=load)",
+		},
+	}}
+	plans := &capturingPlans{}
+	result, err := NewWithStores(nil, nil, &capturingStore{}).
+		WithPlans(plans).
+		WithScriptSteps(ledger).
+		Record(t.Context(), &RecordRequest{
+			Actor: &permissionports.RequestActor{OrganizationID: orgID, BusinessUnitID: buID},
+			Run:   &agent.AgentRun{ID: runID, OrganizationID: orgID, BusinessUnitID: buID},
+			Actions: []agentports.PendingAction{
+				scriptIntent("shipment_place_hold", scriptStep),
+				scriptIntent("shipment_place_hold", scriptStep),
+			},
+			Evidence: messageEvidence,
+		})
+	require.NoError(t, err)
+
+	require.Len(t, result.Batches, 1)
+	require.NotNil(t, result.Batches[0].Script)
+	assert.Equal(t, "Hold Range's uncovered loads", result.Batches[0].Script.Title)
+	assert.Contains(t, result.Batches[0].Script.Code, "place_hold")
+	require.Len(t, ledger.asked, 1)
+	assert.Equal(t, runID, ledger.asked[0].OwnerID, "a run's script is read from the run's ledger")
+	assert.Equal(t, scriptStep, ledger.asked[0].StepKey)
+}
+
+func TestRecord_FilesABatchWhoseScriptCannotBeRead(t *testing.T) {
+	t.Parallel()
+
+	plans := &capturingPlans{}
+	orgID, buID := pulid.MustNew("org_"), pulid.MustNew("bu_")
+	result, err := NewWithStores(nil, nil, &capturingStore{}).
+		WithPlans(plans).
+		WithScriptSteps(&scriptLedger{}).
+		Record(t.Context(), &RecordRequest{
+			Actor: &permissionports.RequestActor{OrganizationID: orgID, BusinessUnitID: buID},
+			Run:   &agent.AgentRun{ID: pulid.MustNew("arun_"), OrganizationID: orgID, BusinessUnitID: buID},
+			Actions: []agentports.PendingAction{
+				scriptIntent("shipment_place_hold", scriptStep),
+				scriptIntent("shipment_place_hold", scriptStep),
+			},
+			Evidence: messageEvidence,
+		})
+	require.NoError(t, err)
+
+	require.Len(t, result.Batches, 1, "the script is the batch's record, not its authority")
+	assert.Nil(t, result.Batches[0].Script)
+	assert.Equal(t, scriptStep, result.Batches[0].ScriptStepKey)
 }

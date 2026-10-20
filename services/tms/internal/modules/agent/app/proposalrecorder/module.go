@@ -8,8 +8,13 @@ import (
 var Module = fx.Module("proposalrecorder",
 	fx.Provide(New),
 	fx.Provide(NewPlanStore),
+	fx.Provide(NewScriptSteps),
 )
 
 func NewPlanStore(plans agentports.AgentPlanRepository) PlanStore {
 	return plans
+}
+
+func NewScriptSteps(steps agentports.AgentRunStepRepository) ScriptStepReader {
+	return steps
 }

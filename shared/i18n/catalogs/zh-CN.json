@@ -11520,6 +11520,7 @@
   "suspension": "停职",
   "template": "模板",
   "termination": "解雇",
+  "the prepared change could not be described": "无法描述已准备的更改",
   "the read's answer could not be encoded": "无法对读取结果进行编码",
   "the script was stopped": "脚本已停止",
   "the stored credential is not a usable Google service account key": "保存的凭据不是可用的 Google 服务账号密钥",
