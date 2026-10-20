@@ -1,0 +1,23 @@
+-- Receivables, collections, customer payment, credit memo, late charge and bank receipt tools now carry the receivable namespace; a customer payment or bank receipt keeps its own name in reading order (receivable_get_bank_receipt reads get_bank_receipt).
+SELECT "agent_rename_tool"('apply_credit_memo', 'receivable_apply_credit_memo');
+SELECT "agent_rename_tool"('apply_customer_payment', 'receivable_apply_customer_payment');
+SELECT "agent_rename_tool"('assess_late_charges', 'receivable_assess_late_charges');
+SELECT "agent_rename_tool"('assign_collector', 'receivable_assign_collector');
+SELECT "agent_rename_tool"('get_ar_aging', 'receivable_get_aging');
+SELECT "agent_rename_tool"('get_bank_receipt', 'receivable_get_bank_receipt');
+SELECT "agent_rename_tool"('get_customer_statement', 'receivable_get_statement');
+SELECT "agent_rename_tool"('list_ar_open_items', 'receivable_list_open_items');
+SELECT "agent_rename_tool"('list_bank_receipt_exceptions', 'receivable_list_bank_receipt_exceptions');
+SELECT "agent_rename_tool"('list_collections_worklist', 'receivable_list_collection_worklist');
+SELECT "agent_rename_tool"('list_credit_memo_applications', 'receivable_list_credit_memo_applications');
+SELECT "agent_rename_tool"('list_customer_payments', 'receivable_list_customer_payments');
+SELECT "agent_rename_tool"('log_collection_activity', 'receivable_record_collection_activity');
+SELECT "agent_rename_tool"('match_bank_receipt', 'receivable_match_bank_receipt');
+SELECT "agent_rename_tool"('post_customer_payment', 'receivable_post_customer_payment');
+SELECT "agent_rename_tool"('resolve_bank_receipt_work_item', 'receivable_resolve_bank_receipt_work_item');
+SELECT "agent_rename_tool"('reverse_customer_payment', 'receivable_reverse_customer_payment');
+SELECT "agent_rename_tool"('schedule_collection_follow_up', 'receivable_schedule_follow_up');
+SELECT "agent_rename_tool"('send_customer_statement', 'receivable_send_statement');
+SELECT "agent_rename_tool"('send_payment_reminder', 'receivable_send_payment_reminder');
+SELECT "agent_rename_tool"('triage_bank_receipt_work_item', 'receivable_triage_bank_receipt_work_item');
+SELECT "agent_rename_tool"('unapply_credit_memo', 'receivable_unapply_credit_memo');

@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/journalpostingrepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glbalance"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/billingqueuerepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicerepository"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -244,6 +245,19 @@ func TestPostCreatesInvoiceJournalSourceAndBalances(t *testing.T) {
 		sequenceGenerator: generator,
 	}
 
+	balanceOf := func(accountID pulid.ID) glbalance.GLAccountPeriodBalance {
+		t.Helper()
+		return fiscaltest.PeriodBalance(t, ctx, fiscaltest.PeriodBalanceParams{
+			DB:             db,
+			OrganizationID: org.ID,
+			BusinessUnitID: org.BusinessUnitID,
+			GLAccountID:    accountID,
+			FiscalPeriodID: period.ID,
+		})
+	}
+	arBefore := balanceOf(control.DefaultARAccountID)
+	revenueBefore := balanceOf(control.DefaultRevenueAccountID)
+
 	posted, err := svc.Post(
 		ctx,
 		&invoiceports.PostInvoiceRequest{
@@ -296,35 +310,15 @@ func TestPostCreatesInvoiceJournalSourceAndBalances(t *testing.T) {
 	assert.Equal(t, tenant.JournalSourceEventInvoicePosted.String(), source.SourceEventType)
 	assert.Equal(t, "Posted", source.Status)
 
-	var arBalance struct {
-		PeriodDebitMinor int64 `bun:"period_debit_minor"`
-	}
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("gl_account_balances_by_period").
-			Column("period_debit_minor").
-			Where("gl_account_id = ?", control.DefaultARAccountID).
-			Where("fiscal_period_id = ?", period.ID).
-			Limit(1).
-			Scan(ctx, &arBalance),
-	)
-	assert.Equal(t, int64(10000), arBalance.PeriodDebitMinor)
+	arAfter := balanceOf(control.DefaultARAccountID)
+	assert.Equal(t, int64(10000), arAfter.PeriodDebitMinor-arBefore.PeriodDebitMinor)
 
-	var revenueBalance struct {
-		PeriodCreditMinor int64 `bun:"period_credit_minor"`
-	}
-	require.NoError(
+	revenueAfter := balanceOf(control.DefaultRevenueAccountID)
+	assert.Equal(
 		t,
-		db.NewSelect().
-			Table("gl_account_balances_by_period").
-			Column("period_credit_minor").
-			Where("gl_account_id = ?", control.DefaultRevenueAccountID).
-			Where("fiscal_period_id = ?", period.ID).
-			Limit(1).
-			Scan(ctx, &revenueBalance),
+		int64(10000),
+		revenueAfter.PeriodCreditMinor-revenueBefore.PeriodCreditMinor,
 	)
-	assert.Equal(t, int64(10000), revenueBalance.PeriodCreditMinor)
 }
 
 func TestPostSkipsInvoiceLedgerWhenRevenueRecognitionIsCashReceipt(t *testing.T) {

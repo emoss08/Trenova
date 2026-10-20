@@ -139,11 +139,11 @@ func (r *workItemRoute) run(ctx context.Context, items WorkItemRouter) error {
 
 func newTriageBankReceiptWorkItemTool(items WorkItemRouter) agentports.AgentTool {
 	return common.NewReceivableTool(&common.ReceivableSpec{
-		Name:   "triage_bank_receipt_work_item",
-		Recipe: []string{"get_bank_receipt", "triage_bank_receipt_work_item"},
+		Name:   "receivable_triage_bank_receipt_work_item",
+		Recipe: []string{"receivable_get_bank_receipt", "receivable_triage_bank_receipt_work_item"},
 		Description: "Assign a bank receipt's reconciliation work item to a person who will " +
 			"work it, or mark it under review while it is being looked into. Nothing is " +
-			"matched or closed; match_bank_receipt and resolve_bank_receipt_work_item do that.",
+			"matched or closed; receivable_match_bank_receipt and receivable_resolve_bank_receipt_work_item do that.",
 		Resource:    permission.ResourceBankReceiptWorkItem,
 		Operation:   permission.OpUpdate,
 		Egress:      agent.EgressInternal,
@@ -155,7 +155,7 @@ func newTriageBankReceiptWorkItemTool(items WorkItemRouter) agentports.AgentTool
 		Properties: map[string]any{
 			paramWorkItemID: agenttoolschema.RecordIDText(
 				permission.ResourceBankReceiptWorkItem,
-				"The work item's id, from get_bank_receipt or "+
+				"The work item's id, from receivable_get_bank_receipt or "+
 					"this run's subject. Never guess one.",
 			),
 			paramWorkItemMove: agenttoolschema.Enum("Assign hands it to a person; "+
@@ -163,7 +163,7 @@ func newTriageBankReceiptWorkItemTool(items WorkItemRouter) agentports.AgentTool
 			paramAssigneeID: agenttoolschema.RecordIDText(
 				permission.ResourceUser,
 				"For Assign: the person's user id, the "+
-					"assignedToUserId get_bank_receipt shows on a work item, or the person who "+
+					"assignedToUserId receivable_get_bank_receipt shows on a work item, or the person who "+
 					"asked. Never guess one.",
 			),
 		},

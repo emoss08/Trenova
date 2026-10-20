@@ -10,8 +10,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glbalance"
 	"github.com/emoss08/trenova/pkg/buncolgen/fiscalperiodcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/fiscalyearcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/glbalancecol"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
@@ -129,4 +131,36 @@ func createCalendarYear(
 	require.NoError(t, err)
 
 	return fy
+}
+
+type PeriodBalanceParams struct {
+	DB             bun.IDB
+	OrganizationID pulid.ID
+	BusinessUnitID pulid.ID
+	GLAccountID    pulid.ID
+	FiscalPeriodID pulid.ID
+}
+
+func PeriodBalance(
+	t testing.TB,
+	ctx context.Context,
+	p PeriodBalanceParams,
+) glbalance.GLAccountPeriodBalance {
+	t.Helper()
+
+	cols := glbalancecol.GLAccountPeriodBalanceColumns
+	var balance glbalance.GLAccountPeriodBalance
+	err := p.DB.NewSelect().
+		Model(&balance).
+		Where(cols.OrganizationID.Eq(), p.OrganizationID).
+		Where(cols.BusinessUnitID.Eq(), p.BusinessUnitID).
+		Where(cols.GLAccountID.Eq(), p.GLAccountID).
+		Where(cols.FiscalPeriodID.Eq(), p.FiscalPeriodID).
+		Scan(ctx)
+	if errors.Is(err, sql.ErrNoRows) {
+		return glbalance.GLAccountPeriodBalance{}
+	}
+	require.NoError(t, err)
+
+	return balance
 }

@@ -67,7 +67,7 @@ function proposal(overrides: Partial<AssistantProposal>): AssistantProposal {
   return {
     id: "aprop_1",
     runId: "arun_1",
-    toolName: "post_customer_payment",
+    toolName: "receivable_post_customer_payment",
     arguments: {},
     rationale: "",
     autonomyTier: "ActWithApproval",

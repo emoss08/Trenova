@@ -68,7 +68,7 @@ func (t *getInvoiceTool) ParamSchema() map[string]any {
 			paramInvoiceIDs: agenttoolschema.RecordIDs(
 				permission.ResourceInvoice,
 				"The invoices' ids, from invoice_list, "+
-					"list_ar_open_items or the page you are on.",
+					"receivable_list_open_items or the page you are on.",
 				maxBatchInvoices,
 			),
 		},

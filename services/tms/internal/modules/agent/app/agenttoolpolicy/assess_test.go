@@ -67,7 +67,7 @@ has read an email: money is not held by its class, only by what the run read.
 func TestAssess_BoundedMoneyRunsOnItsOwnWithinBoundsUntilTheRunIsTainted(t *testing.T) {
 	t.Parallel()
 
-	policy := actionPolicy("post_customer_payment", agent.EgressMoney)
+	policy := actionPolicy("receivable_post_customer_payment", agent.EgressMoney)
 	policy.Condition = &agentports.TierCondition{
 		Description: "Runs on its own only within bounds.",
 		Bounds: func(context.Context, agentports.ToolExecuteParams) agentports.MoneyBound {
@@ -92,7 +92,7 @@ func TestAssess_UnboundedMoneyAsksFirst(t *testing.T) {
 	t.Parallel()
 
 	clean, tainted := assessBoth(t, agenttoolpolicy.AssessInput{
-		Policy:     actionPolicy("post_customer_payment", agent.EgressMoney),
+		Policy:     actionPolicy("receivable_post_customer_payment", agent.EgressMoney),
 		Definition: chatAgent(agent.TierAutoExecute, nil),
 	})
 

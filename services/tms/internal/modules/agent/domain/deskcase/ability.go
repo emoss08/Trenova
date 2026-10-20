@@ -25,7 +25,7 @@ var stepTools = map[StepKey][]string{
 	StepSendInvoice:         {"invoice_send"},
 	StepPostInvoice:         {"invoice_post"},
 	StepWorkDispute:         {"invoice_resolve_dispute", "invoice_list_disputes"},
-	StepFollowUpPayment:     {"send_payment_reminder", "email_customer"},
+	StepFollowUpPayment:     {"receivable_send_payment_reminder", "email_customer"},
 }
 
 // StepTools are the tools that can take a step, nil for a step the

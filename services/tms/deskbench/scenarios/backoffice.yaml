@@ -89,7 +89,7 @@ scenarios:
     steps:
       - say: "peak sent a check for 3,200 but their invoice was 3,700. what do we do with it"
         expect:
-          calls: ["list_ar_open_items|invoice_list|list_customer_payments"]
+          calls: ["receivable_list_open_items|invoice_list|receivable_list_customer_payments"]
           rubric: >
             Looks for Peak's open invoice and a recorded payment, explains the choices (apply the
             3,200 and leave 500 open, or open a dispute for the 500), and says what it found,

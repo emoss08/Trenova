@@ -462,7 +462,7 @@ passes the taint the turn had when it made the call.
 func TestDecide_TaintHoldsWhatLeaves(t *testing.T) {
 	t.Parallel()
 
-	money := registeredPolicy(t, "post_customer_payment")
+	money := registeredPolicy(t, "receivable_post_customer_payment")
 	internal := registeredPolicy(t, "assign_move")
 	actsAlone := func(name string) *agentdefinition.Definition {
 		return definition(agent.TierAutoExecute, map[string]agent.AutonomyTier{
@@ -476,7 +476,7 @@ func TestDecide_TaintHoldsWhatLeaves(t *testing.T) {
 			in: agenttoolpolicy.DecideInput{
 				Policy:         provenWithin(money),
 				Params:         call(agentPrincipal(), nil),
-				Definition:     actsAlone("post_customer_payment"),
+				Definition:     actsAlone("receivable_post_customer_payment"),
 				Taint:          clean(),
 				MoneyAllowance: allowance(agent.MoneyUse{}, agent.MoneyUse{}),
 			},
@@ -487,7 +487,7 @@ func TestDecide_TaintHoldsWhatLeaves(t *testing.T) {
 			in: agenttoolpolicy.DecideInput{
 				Policy:         money,
 				Params:         call(agentPrincipal(), nil),
-				Definition:     actsAlone("post_customer_payment"),
+				Definition:     actsAlone("receivable_post_customer_payment"),
 				Taint:          clean(),
 				MoneyAllowance: allowance(agent.MoneyUse{}, agent.MoneyUse{}),
 			},
@@ -499,7 +499,7 @@ func TestDecide_TaintHoldsWhatLeaves(t *testing.T) {
 			in: agenttoolpolicy.DecideInput{
 				Policy:     money,
 				Params:     call(agentPrincipal(), nil),
-				Definition: actsAlone("post_customer_payment"),
+				Definition: actsAlone("receivable_post_customer_payment"),
 				Taint:      tainted(),
 			},
 			tier:   agent.TierActWithApproval,
@@ -510,7 +510,7 @@ func TestDecide_TaintHoldsWhatLeaves(t *testing.T) {
 			in: agenttoolpolicy.DecideInput{
 				Policy:     money,
 				Params:     call(agentPrincipal(), nil),
-				Definition: actsAlone("post_customer_payment"),
+				Definition: actsAlone("receivable_post_customer_payment"),
 			},
 			tier:   agent.TierActWithApproval,
 			heldBy: []string{agenttoolpolicy.HeldByTainted},
@@ -568,15 +568,15 @@ func TestPromotable(t *testing.T) {
 	t.Parallel()
 
 	cases := map[string]agent.AutonomyTier{
-		"assign_move":              agent.TierAutoExecute,
-		"create_report":            agent.TierAutoExecute,
-		"shipment_add_comment":     agent.TierAutoExecute,
-		"post_customer_payment":    agent.TierAutoExecute,
-		"email_customer":           agent.TierActWithApproval,
-		"reply_to_inbound_message": agent.TierActWithApproval,
-		"shipment_create":          agent.TierActWithApproval,
-		"schedule_report":          agent.TierActWithApproval,
-		"shipment_cancel":          agent.TierActWithApproval,
+		"assign_move":                      agent.TierAutoExecute,
+		"create_report":                    agent.TierAutoExecute,
+		"shipment_add_comment":             agent.TierAutoExecute,
+		"receivable_post_customer_payment": agent.TierAutoExecute,
+		"email_customer":                   agent.TierActWithApproval,
+		"reply_to_inbound_message":         agent.TierActWithApproval,
+		"shipment_create":                  agent.TierActWithApproval,
+		"schedule_report":                  agent.TierActWithApproval,
+		"shipment_cancel":                  agent.TierActWithApproval,
 	}
 	for name, want := range cases {
 		assert.Equal(t, want, agenttoolpolicy.Promotable(registeredPolicy(t, name)), name)

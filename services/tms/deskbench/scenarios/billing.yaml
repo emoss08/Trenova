@@ -48,7 +48,7 @@ scenarios:
     steps:
       - say: "how much does acme owe us right now, anything past 30?"
         expect:
-          calls: ["get_ar_aging|list_ar_open_items|invoice_list|get_customer_statement"]
+          calls: ["receivable_get_aging|receivable_list_open_items|invoice_list|receivable_get_statement"]
           maxFailedCalls: 1
           noProposals: true
           replyExcludes: ["$2,950", "$3,200"]

@@ -621,7 +621,7 @@ func NewCreateInvoiceMemoTool(invoices invoiceMemoRaiser) agentports.AgentTool {
 		Name: "invoice_create_memo",
 		Description: "Propose a draft credit or debit memo to a customer with no shipment " +
 			"behind it, such as a goodwill credit or a returned-check fee. It stays a draft " +
-			"until invoice_post posts it; apply a posted credit with apply_credit_memo. A " +
+			"until invoice_post posts it; apply a posted credit with receivable_apply_credit_memo. A " +
 			"person always decides.",
 		Resource:    permission.ResourceInvoice,
 		Operation:   permission.OpCreate,

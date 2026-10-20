@@ -178,13 +178,13 @@ func newGetARAgingTool(
 	return &getARAgingTool{receivables: receivables, access: newFieldAccess(permissions)}
 }
 
-func (t *getARAgingTool) Name() string { return "get_ar_aging" }
+func (t *getARAgingTool) Name() string { return "receivable_get_aging" }
 
 func (t *getARAgingTool) Description() string {
 	return "Summarize accounts receivable aging: which customers owe money and how overdue " +
 		"it is, in current, 1-30, 31-60, 61-90 and over-90-day buckets. Each row names the " +
-		"oldest bucket holding a balance. Use list_ar_open_items for the invoices behind a " +
-		"customer's balance and get_customer_statement for their history. Amounts are " +
+		"oldest bucket holding a balance. Use receivable_list_open_items for the invoices behind a " +
+		"customer's balance and receivable_get_statement for their history. Amounts are " +
 		"named in withheldByAccess when your data access does not reach them."
 }
 
@@ -353,7 +353,7 @@ func newListAROpenItemsTool(
 	return &listAROpenItemsTool{receivables: receivables, access: newFieldAccess(permissions)}
 }
 
-func (t *listAROpenItemsTool) Name() string { return "list_ar_open_items" }
+func (t *listAROpenItemsTool) Name() string { return "receivable_list_open_items" }
 
 func (t *listAROpenItemsTool) Description() string {
 	return "List the open receivables, the unpaid or partly paid invoices customers still " +
@@ -365,7 +365,7 @@ func (t *listAROpenItemsTool) Description() string {
 func (t *listAROpenItemsTool) ParamSchema() map[string]any {
 	return objectSchema(withPaging(map[string]any{
 		paramCustomerID: agenttoolschema.RecordIDText(permission.ResourceCustomer,
-			"Only this customer's invoices, by id from list_customers or get_ar_aging."),
+			"Only this customer's invoices, by id from list_customers or receivable_get_aging."),
 		"minDaysPastDue": intParam("Only invoices at least this many days past due."),
 		"disputedOnly":   boolParam("Only invoices the customer disputes."),
 		paramAsOf:        agenttoolschema.Date("The day to age as of. Defaults to today."),
@@ -501,19 +501,19 @@ func newGetCustomerStatementTool(
 	return &getCustomerStatementTool{receivables: receivables, access: newFieldAccess(permissions)}
 }
 
-func (t *getCustomerStatementTool) Name() string { return "get_customer_statement" }
+func (t *getCustomerStatementTool) Name() string { return "receivable_get_statement" }
 
 func (t *getCustomerStatementTool) Description() string {
 	return "Build one customer's account statement: invoices, payments and credits over a " +
 		"period with the running balance, what is still open, and their aging. It answers " +
 		"what a customer was billed and paid and what they owe now. Take the customer's " +
-		"id from list_customers or get_ar_aging."
+		"id from list_customers or receivable_get_aging."
 }
 
 func (t *getCustomerStatementTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
 		paramCustomerID: agenttoolschema.RecordIDText(permission.ResourceCustomer,
-			"The customer's id, from list_customers, get_ar_aging or "+onThePage),
+			"The customer's id, from list_customers, receivable_get_aging or "+onThePage),
 		paramStartDate: agenttoolschema.Date(
 			"The first day of the statement period. Omit for the " +
 				"customer's whole history.",
@@ -686,21 +686,24 @@ func newListCollectionsWorklistTool(
 	}
 }
 
-func (t *listCollectionsWorklistTool) Name() string { return "list_collections_worklist" }
+func (t *listCollectionsWorklistTool) Name() string { return "receivable_list_collection_worklist" }
 
 func (t *listCollectionsWorklistTool) Description() string {
 	return "List the collections worklist: overdue and disputed invoices ranked for a " +
 		"collector to chase, each marked Critical, Warning or Watch. Rows carry the " +
 		"customer, days past due, the open dispute's reason and the open amount. Use " +
-		"get_customer_statement before calling a customer about their balance."
+		"receivable_get_statement before calling a customer about their balance."
+}
+
+func (t *listCollectionsWorklistTool) SearchTerms() []string {
+	return []string{"collections worklist"}
 }
 
 func (t *listCollectionsWorklistTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
 		paramAsOf:     agenttoolschema.Date("The day to rank as of. Defaults to today."),
 		paramSeverity: enumParam("Only rows of this severity.", accountingDriftSeverities),
-		paramLimit: intParam(fmt.Sprintf("How many rows to return: %d unless you ask, at most %d.",
-			defaultAccountingRows, maxAccountingRows)),
+		paramLimit:    limitSchema(defaultAccountingRows, maxAccountingRows),
 	})
 }
 

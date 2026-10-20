@@ -71,7 +71,7 @@ describe("DecisionFlow approving changes together", () => {
     fetchProposalPreview.mockImplementation(async (request) =>
       preview({
         proposalId: request.id,
-        tool: "post_customer_payment",
+        tool: "receivable_post_customer_payment",
         digest: `sha256:${request.id}`,
       }),
     );
@@ -120,7 +120,7 @@ describe("DecisionFlow approving changes together", () => {
     fetchProposalPreview.mockImplementation(async (request) =>
       preview({
         proposalId: request.id,
-        tool: "post_customer_payment",
+        tool: "receivable_post_customer_payment",
         digest: `sha256:${request.id}`,
         stale: request.id === "aprop_2",
       }),
@@ -149,7 +149,7 @@ describe("DecisionFlow approving changes together", () => {
     fetchProposalPreview.mockImplementation(async (request) =>
       preview({
         proposalId: request.id,
-        tool: "post_customer_payment",
+        tool: "receivable_post_customer_payment",
         digest: `sha256:${request.id}`,
       }),
     );

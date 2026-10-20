@@ -277,3 +277,19 @@ func SeedAdditionalTenant(
 		State:        state,
 	}
 }
+
+func ShipmentsWithoutReceivables(q *bun.SelectQuery) *bun.SelectQuery {
+	return q.
+		Where(`NOT EXISTS (
+			SELECT 1 FROM invoices AS inv
+			WHERE inv.organization_id = shipments.organization_id
+				AND inv.business_unit_id = shipments.business_unit_id
+				AND inv.customer_id = shipments.customer_id
+		)`).
+		Where(`NOT EXISTS (
+			SELECT 1 FROM customer_ledger_entries AS cle
+			WHERE cle.organization_id = shipments.organization_id
+				AND cle.business_unit_id = shipments.business_unit_id
+				AND cle.customer_id = shipments.customer_id
+		)`)
+}

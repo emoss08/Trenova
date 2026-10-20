@@ -86,8 +86,8 @@ func TestSyncRecordRepository_ListCandidatesFindsPostedDocumentsWithoutARecord(t
 	require.NoError(t, err)
 
 	const (
-		start   = int64(1_780_000_000)
-		enabled = int64(1_790_000_000)
+		start   = int64(2_080_000_000)
+		enabled = int64(2_090_000_000)
 	)
 
 	createInvoice := func(idx int, number string, status invoice.Status, dated int64, posted *int64) *invoice.Invoice {

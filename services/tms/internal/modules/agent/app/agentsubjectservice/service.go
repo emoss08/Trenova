@@ -529,7 +529,7 @@ func (s *Service) insight(
 // money, the bank's reference and memo, why it was not matched, the scored
 // candidate payments and the queue entry. A run woken by
 // bank_receipt.exception starts with all of that in front of it, and
-// get_bank_receipt is there for a second look once a tool call has moved
+// receivable_get_bank_receipt is there for a second look once a tool call has moved
 // the conversation on.
 func (s *Service) bankReceipt(
 	ctx context.Context,

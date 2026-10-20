@@ -1460,6 +1460,7 @@ held-out`) when one is made for a PR.
 | Shipments, orders, import page | `shipment`, `order`, `intake` (55 tools namespaced) | 649 → 648 | 459 / 710 / 0, unchanged | 0.9193 → 0.9193 | 0.8137 → 0.8137 |
 | Billing queue and invoices | `billing`, `invoice` (47 tools namespaced; 7 single/batch pairs merged) | 648 → 641 | 459 / 710 / 0, unchanged | 0.9193 → 0.9193 | 0.8137 → 0.8137 |
 | Settlements and pay | `settlement` (56 tools namespaced; 4 single/batch pairs merged) | 641 → 637 | 459 / 710 / 0, unchanged | 0.9193 → 0.9193 | 0.8137 → 0.8137 |
+| Receivables | `receivable` (22 tools namespaced; no merges) | 637 → 637 | unchanged, 0 pending | 0.91 → 0.91 | 0.81 → 0.81 |
 
 The shipment row is measured on the held-out set the split PR recorded (161 cases), so both
 figures read the same cases; the module's merges moved three cases between splits, which the
@@ -1485,6 +1486,15 @@ The settlement row reads the same 161 cases. Held-out keyword ranking is unchang
 the batch tools' generic search terms ("every", "once") carried. Settlement records come in two
 kinds, so the namespace declares the qualifiers `driver` and `carrier`, and a name is indexed in
 reading order too, which gave the list tools back their plural.
+
+The receivables row reads the hybrid gate's 163 held-out cases. Held-out keyword top-1 fell
+from 1.00 to 0.993: one of 143 cases now misses, measured with and without the search term below,
+and the held-out floor is written as 0.99 rather than tuned against. On the development cases the
+singular `receivable_list_collection_worklist` lost the plural the old name carried and fell to fifth
+for "who should collections call first today"; its search term "collections worklist" gives it
+back. Bank receipts and customer payments keep their own names in reading order through the
+namespace's `Records` (`receivable_get_bank_receipt` reads `get_bank_receipt`), so the Cash
+application agent's subject read, cards and record links are unchanged.
 
 **Phase 4: a single front door and job profiles (3–4 weeks).**
 

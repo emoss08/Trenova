@@ -5,10 +5,10 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -20,7 +20,7 @@ func paymentTool() *agenttest.StubActionTool {
 	amount := int64(12_500)
 
 	return &agenttest.StubActionTool{
-		ToolName:   "post_customer_payment",
+		ToolName:   "receivable_post_customer_payment",
 		Tier:       agent.TierAutoExecute,
 		Egress:     agent.EgressMoney,
 		MoneyMinor: &amount,
@@ -29,7 +29,7 @@ func paymentTool() *agenttest.StubActionTool {
 
 func receiptTool(reads agent.ExternalRead) *agenttest.StubQueryTool {
 	return &agenttest.StubQueryTool{
-		ToolName: "get_bank_receipt",
+		ToolName: "receivable_get_bank_receipt",
 		Result:   map[string]any{"memo": "Apply to invoice 88."},
 		Reads:    reads,
 		Source:   agent.TaintSourceBankReceipt,
@@ -70,11 +70,11 @@ func TestRun_ATurnOpenedBeforeTaintWasKeptCountsAsTainted(t *testing.T) {
 	move := &agenttest.StubActionTool{ToolName: "assign_move", Tier: agent.TierAutoExecute}
 	h := newHarness(t, harnessParams{action: []agentports.AgentTool{pay, move}})
 	h.replies(
-		toolReply("post_customer_payment", map[string]any{"invoiceId": "inv_88"}),
+		toolReply("receivable_post_customer_payment", map[string]any{"invoiceId": "inv_88"}),
 		toolReply("assign_move", map[string]any{"moveId": "smv_1"}),
 		textReply("The payment waits for approval; the move is assigned."),
 	)
-	rc := runContext("post_customer_payment", "assign_move")
+	rc := runContext("receivable_post_customer_payment", "assign_move")
 	rc.Unattended = true
 	state := h.runtime.OpenTurn(t.Context(), rc.request()).State()
 	state.Result.Taint = nil
@@ -112,8 +112,8 @@ func TestRun_TaintChangesNoCommand(t *testing.T) {
 			budgets: &agenttest.StubMoneyBudgets{Limits: agenttest.RoomyMoneyLimits()},
 		})
 		h.replies(
-			toolReply("get_bank_receipt", map[string]any{"receiptId": "brc_1"}),
-			toolReply("post_customer_payment", map[string]any{"invoiceId": "inv_88"}),
+			toolReply("receivable_get_bank_receipt", map[string]any{"receiptId": "brc_1"}),
+			toolReply("receivable_post_customer_payment", map[string]any{"invoiceId": "inv_88"}),
 			textReply("Done."),
 		)
 		var started []string
@@ -123,7 +123,7 @@ func TestRun_TaintChangesNoCommand(t *testing.T) {
 			},
 		)
 
-		result := h.run(t, runContext("get_bank_receipt", "post_customer_payment"))
+		result := h.run(t, runContext("receivable_get_bank_receipt", "receivable_post_customer_payment"))
 
 		return started, result, pay
 	}
@@ -135,7 +135,7 @@ func TestRun_TaintChangesNoCommand(t *testing.T) {
 	tools := slices.DeleteFunc(slices.Clone(cleanStarted), func(name string) bool {
 		return name == "ModelCallActivity"
 	})
-	assert.Equal(t, []string{"get_bank_receipt", "post_customer_payment"}, tools,
+	assert.Equal(t, []string{"receivable_get_bank_receipt", "receivable_post_customer_payment"}, tools,
 		"the payment is one activity whether it runs or waits")
 
 	assert.Equal(t, 1, cleanPay.Calls)

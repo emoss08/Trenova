@@ -34,6 +34,14 @@ func TestReadingOrder_PutsTheVerbFirst(t *testing.T) {
 		"settlement_add_driver_adjustment":  "add_driver_settlement_adjustment",
 		"settlement_list_pay_events":        "list_settlement_pay_events",
 		"settlement_generate_carrier_batch": "generate_carrier_settlement_batch",
+
+		"receivable_get_aging":                      "get_receivable_aging",
+		"receivable_get_bank_receipt":               "get_bank_receipt",
+		"receivable_list_bank_receipt_exceptions":   "list_bank_receipt_exceptions",
+		"receivable_resolve_bank_receipt_work_item": "resolve_bank_receipt_work_item",
+		"receivable_list_customer_payments":         "list_customer_payments",
+		"receivable_apply_customer_payment":         "apply_customer_payment",
+		"receivable_apply_credit_memo":              "apply_receivable_credit_memo",
 	} {
 		assert.Equalf(t, want, agentports.ReadingOrder(name), "%s", name)
 	}
@@ -54,9 +62,16 @@ func TestToolNameFor_UndoesReadingOrder(t *testing.T) {
 		"settlement_list_carrier",
 		"settlement_add_driver_adjustment",
 		"settlement_list_pay_events",
+		"receivable_get_aging",
+		"receivable_get_bank_receipt",
+		"receivable_list_bank_receipt_exceptions",
+		"receivable_list_customer_payments",
+		"receivable_apply_credit_memo",
 	} {
 		assert.Equalf(t, name, agentports.ToolNameFor(agentports.ReadingOrder(name)), "%s", name)
 	}
+	assert.Equal(t, "receivable_get_bank_receipt", agentports.ToolNameFor("get_bank_receipt"),
+		"a record kind finds the tool that reads it")
 	assert.Equal(t, "find_tools", agentports.ToolNameFor("find_tools"),
 		"a name no namespace reads is its own")
 }

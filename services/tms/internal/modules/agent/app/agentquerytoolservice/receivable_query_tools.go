@@ -20,7 +20,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -131,15 +130,7 @@ func (a amounts) minor(value int64) string {
 }
 
 func limitProperty() map[string]any {
-	return toolschema.Clamped(map[string]any{
-		toolschema.KeyType:    toolschema.TypeInteger,
-		toolschema.KeyMinimum: 1,
-		toolschema.KeyMaximum: maxReceivableRows,
-		toolschema.KeyDescription: fmt.Sprintf(
-			"How many to return: %d unless you ask, at most %d.",
-			defaultReceivableRows, maxReceivableRows,
-		),
-	})
+	return limitSchema(defaultReceivableRows, maxReceivableRows)
 }
 
 func receivableLimit(params map[string]any) int {
@@ -588,13 +579,13 @@ func newListCreditMemoApplicationsTool(
 }
 
 func (t *listCreditMemoApplicationsTool) Name() string {
-	return "list_credit_memo_applications"
+	return "receivable_list_credit_memo_applications"
 }
 
 func (t *listCreditMemoApplicationsTool) Description() string {
 	return "List where credit memos were applied to the invoices or credit memos you name. " +
 		"Each application shows the amount and whether it still stands or was taken back; " +
-		"unapply_credit_memo takes one back."
+		"receivable_unapply_credit_memo takes one back."
 }
 
 func (t *listCreditMemoApplicationsTool) ParamSchema() map[string]any {

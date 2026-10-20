@@ -1682,7 +1682,7 @@ value clears (the master data kit's `clearable`, order amounts,
 `invoice_update_draft`, `update_service_failure`, a recurring series'
 blackout days), and a write's list whose absence means every record, where
 an empty list read as not sent would widen the call (the pay events
-`pay_worker_now` pays, the customers `assess_late_charges` charges, the sync
+`pay_worker_now` pays, the customers `receivable_assess_late_charges` charges, the sync
 records `retry_accounting_sync` retries, the suggestions
 `apply_carrier_intel_suggestions` applies).
 `TestEveryWriteWhoseOmissionWidensKeepsAnEmptyList` in the catalog contract
@@ -1783,8 +1783,8 @@ A tainted turn never moves money on its own, with one exception a tool declares 
 validator checks: a bound that reads a record again from the organization's own records, and
 takes the amount, the customer and the references from it rather than from the call, may
 vouch for having read that record (`TierCondition.Vouches`, `MoneyBound.Reread`). Only a bank
-receipt can be vouched for (`TaintSource.Rereadable`); `post_customer_payment` and
-`match_bank_receipt` vouch for it, so a run that read only bank receipts may post or match
+receipt can be vouched for (`TaintSource.Rereadable`); `receivable_post_customer_payment` and
+`receivable_match_bank_receipt` vouch for it, so a run that read only bank receipts may post or match
 within the limits. The hold lifts only when the turn's taint is known and complete, every
 source it holds is one the tool declares, every mark names its record (the receipt read tools
 name each receipt they return) and was read by this turn, and each record the bound re-read

@@ -31304,7 +31304,7 @@
       "go/other"
     ]
   },
-  "Assign a bank receipt's reconciliation work item to a person who will work it, or mark it under review while it is being looked into. Nothing is matched or closed; match_bank_receipt and resolve_bank_receipt_work_item do that.": {
+  "Assign a bank receipt's reconciliation work item to a person who will work it, or mark it under review while it is being looked into. Nothing is matched or closed; receivable_match_bank_receipt and receivable_resolve_bank_receipt_work_item do that.": {
     "sites": 1,
     "scope": [
       "go"
@@ -88285,7 +88285,7 @@
       "go/other"
     ]
   },
-  "Email a customer its statement of account as a PDF, to the invoice recipients on its email profile, with an optional note. The statement runs from startDate (or the account's first transaction) to asOfDate (or today). Read it with get_customer_statement first so you know what it says. The email is entered in the customer's collections history.": {
+  "Email a customer its statement of account as a PDF, to the invoice recipients on its email profile, with an optional note. The statement runs from startDate (or the account's first transaction) to asOfDate (or today). Read it with receivable_get_statement first so you know what it says. The email is entered in the customer's collections history.": {
     "sites": 1,
     "scope": [
       "go"
@@ -112260,7 +112260,7 @@
       "go/other"
     ]
   },
-  "Give a customer's overdue receivables to a collector, or take them off whoever has them. The collector must be a member of the organization and is told the account is theirs. Use a collectorId list_collections_worklist shows or the person who asked; leave it out only to leave the account with nobody.": {
+  "Give a customer's overdue receivables to a collector, or take them off whoever has them. The collector must be a member of the organization and is told the account is theirs. Use a collectorId receivable_list_collection_worklist shows or the person who asked; leave it out only to leave the account with nobody.": {
     "sites": 1,
     "scope": [
       "go"
@@ -194774,7 +194774,7 @@
       "routes/tender-offer-public"
     ]
   },
-  "Propose a draft credit or debit memo to a customer with no shipment behind it, such as a goodwill credit or a returned-check fee. It stays a draft until invoice_post posts it; apply a posted credit with apply_credit_memo. A person always decides.": {
+  "Propose a draft credit or debit memo to a customer with no shipment behind it, such as a goodwill credit or a returned-check fee. It stays a draft until invoice_post posts it; apply a posted credit with receivable_apply_credit_memo. A person always decides.": {
     "sites": 1,
     "scope": [
       "go"
@@ -194810,7 +194810,7 @@
       "go/other"
     ]
   },
-  "Propose applying a posted payment's unapplied cash to that customer's open invoices. Name each invoice and the amount it takes, and any short pay to write off; together they cannot exceed what is unapplied. It books a ledger entry, so a person always decides. Find the payment with list_customer_payments and the invoices with list_ar_open_items.": {
+  "Propose applying a posted payment's unapplied cash to that customer's open invoices. Name each invoice and the amount it takes, and any short pay to write off; together they cannot exceed what is unapplied. It books a ledger entry, so a person always decides. Find the payment with receivable_list_customer_payments and the invoices with receivable_list_open_items.": {
     "sites": 1,
     "scope": [
       "go"

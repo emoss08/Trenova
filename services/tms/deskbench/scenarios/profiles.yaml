@@ -9,11 +9,11 @@ scenarios:
       a good turn finds the aging and answers instead of sending the person to another agent.
     agent: Dispatch desk
     tags: [receivables]
-    expectedTools: [find_tools, "get_ar_aging|list_ar_open_items"]
+    expectedTools: [find_tools, "receivable_get_aging|receivable_list_open_items"]
     steps:
       - say: "whats the ar aging look like for acme rn, they want another load and im not sure we should"
         expect:
-          calls: [find_tools, "get_ar_aging|list_ar_open_items|get_customer_statement"]
+          calls: [find_tools, "receivable_get_aging|receivable_list_open_items|receivable_get_statement"]
           noProposals: true
           maxFailedCalls: 1
           replyExcludes:

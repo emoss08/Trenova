@@ -325,7 +325,7 @@ func TestEntityCardArtifact_KeepsTheRecordsReadableFields(t *testing.T) {
 func TestEntityCardArtifact_NeverTitlesARecordByItsID(t *testing.T) {
 	t.Parallel()
 
-	artifact := artifactFromObservation(observation("get_bank_receipt", map[string]any{
+	artifact := artifactFromObservation(observation("receivable_get_bank_receipt", map[string]any{
 		"id":     "brc_01M37R101VKZTB7TSKR30FJ0AT",
 		"amount": "120.00",
 	}))

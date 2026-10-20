@@ -4,6 +4,7 @@ package accountsreceivablerepository
 
 import (
 	"context"
+	"slices"
 	"testing"
 	"time"
 
@@ -120,6 +121,7 @@ func TestAccountsReceivableRepositoryReturnsLedgerAndAging(t *testing.T) {
 			Column("id", "customer_id", "pro_number", "bol").
 			Where("organization_id = ?", org.ID).
 			Where("business_unit_id = ?", org.BusinessUnitID).
+			Apply(seedtest.ShipmentsWithoutReceivables).
 			Limit(1).
 			Scan(ctx, &shp),
 	)
@@ -284,7 +286,12 @@ func TestAccountsReceivableRepositoryReturnsLedgerAndAging(t *testing.T) {
 		},
 	)
 	require.NoError(t, err)
-	require.Len(t, aging, 0)
+	assert.False(
+		t,
+		slices.ContainsFunc(aging, func(row *customerledgerports.ARCustomerAgingRow) bool {
+			return row.CustomerID == shp.CustomerID
+		}),
+	)
 }
 
 func TestAccountsReceivableRepositoryReturnsOpenItems(t *testing.T) {
@@ -350,6 +357,7 @@ func TestAccountsReceivableRepositoryReturnsOpenItems(t *testing.T) {
 			Column("id", "customer_id", "pro_number", "bol").
 			Where("organization_id = ?", org.ID).
 			Where("business_unit_id = ?", org.BusinessUnitID).
+			Apply(seedtest.ShipmentsWithoutReceivables).
 			Limit(1).
 			Scan(ctx, &shp),
 	)
@@ -549,6 +557,7 @@ func TestAccountsReceivableRepositoryReturnsCustomerNameAndAging(t *testing.T) {
 			Column("id", "customer_id", "pro_number", "bol").
 			Where("organization_id = ?", org.ID).
 			Where("business_unit_id = ?", org.BusinessUnitID).
+			Apply(seedtest.ShipmentsWithoutReceivables).
 			Limit(1).
 			Scan(ctx, &shp),
 	)

@@ -20,11 +20,11 @@ import (
 )
 
 const (
-	toolLogCollectionActivity      = "log_collection_activity"
-	toolAssignCollector            = "assign_collector"
-	toolScheduleCollectionFollowUp = "schedule_collection_follow_up"
-	toolListCollectionsWorklist    = "list_collections_worklist"
-	toolGetCustomerStatement       = "get_customer_statement"
+	toolLogCollectionActivity      = "receivable_record_collection_activity"
+	toolAssignCollector            = "receivable_assign_collector"
+	toolScheduleCollectionFollowUp = "receivable_schedule_follow_up"
+	toolListCollectionsWorklist    = "receivable_list_collection_worklist"
+	toolGetCustomerStatement       = "receivable_get_statement"
 	paramCollectionKind            = "kind"
 	paramCollectionSummary         = "summary"
 	paramCollectionContact         = "contactName"
@@ -132,8 +132,8 @@ func accountStateChanged(before, after *collectionports.AccountState) bool {
 
 func collectionCustomerProperty() map[string]any {
 	return agenttoolschema.RecordIDText(permission.ResourceCustomer,
-		"The customer whose receivables these are, from list_collections_worklist, "+
-			"get_ar_aging or list_customers. Never guess one.")
+		"The customer whose receivables these are, from receivable_list_collection_worklist, "+
+			"receivable_get_aging or list_customers. Never guess one.")
 }
 
 func collectionTarget(params map[string]any) (agentports.ToolTarget, bool) {
@@ -265,9 +265,11 @@ func NewLogCollectionActivityTool(collections collectionports.Service) agentport
 					"Who you or the customer spoke to, if you know.",
 					maxCollectionContactChars,
 				),
-				common.ParamInvoiceID: agenttoolschema.RecordIDText(permission.ResourceInvoice,
-					"The invoice it is about, when it is about one, from list_ar_open_items or "+
-						"get_customer_statement."),
+				common.ParamInvoiceID: agenttoolschema.RecordIDText(
+					permission.ResourceInvoice,
+					"The invoice it is about, when it is about one, from receivable_list_open_items or "+
+						"receivable_get_statement.",
+				),
 				paramPromisedAmount: common.AmountProperty(
 					"For a promise to pay: the amount promised as a decimal, such as 1250.00.",
 				),
@@ -412,7 +414,7 @@ func NewAssignCollectorTool(collections collectionports.Service) agentports.Agen
 			Recipe: []string{toolListCollectionsWorklist, toolAssignCollector},
 			Description: "Give a customer's overdue receivables to a collector, or take them " +
 				"off whoever has them. The collector must be a member of the organization and " +
-				"is told the account is theirs. Use a collectorId list_collections_worklist " +
+				"is told the account is theirs. Use a collectorId receivable_list_collection_worklist " +
 				"shows or the person who asked; leave it out only to leave the account with " +
 				"nobody.",
 			Resource:    permission.ResourceAccountsReceivable,
@@ -428,10 +430,12 @@ func NewAssignCollectorTool(collections collectionports.Service) agentports.Agen
 			Artifact: common.CustomerRecordEntity,
 			Properties: map[string]any{
 				common.ParamCustomerID: collectionCustomerProperty(),
-				paramCollectorID: agenttoolschema.RecordIDText(permission.ResourceUser,
-					"The collector's user id: a collectorId list_collections_worklist shows, or "+
+				paramCollectorID: agenttoolschema.RecordIDText(
+					permission.ResourceUser,
+					"The collector's user id: a collectorId receivable_list_collection_worklist shows, or "+
 						"the person who asked. Leave it out to take the account off whoever has "+
-						"it. Never guess one."),
+						"it. Never guess one.",
+				),
 			},
 			Required:    []string{common.ParamCustomerID},
 			SearchTerms: []string{"collector", "assign collections", "who chases"},

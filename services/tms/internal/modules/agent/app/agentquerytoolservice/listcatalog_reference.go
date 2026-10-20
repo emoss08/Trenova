@@ -487,7 +487,7 @@ func newListInvoicesTool(
 				Name:   "billType",
 				Kind:   filterEnum,
 				Values: []string{"Invoice", "CreditMemo", "DebitMemo"},
-				Note:   "CreditMemo and DebitMemo are memos; apply a posted CreditMemo with apply_credit_memo",
+				Note:   "CreditMemo and DebitMemo are memos; apply a posted CreditMemo with receivable_apply_credit_memo",
 			},
 			{
 				Name: "id",

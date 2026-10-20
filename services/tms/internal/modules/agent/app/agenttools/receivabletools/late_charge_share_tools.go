@@ -74,7 +74,7 @@ type invoiceSharer interface {
 
 func NewAssessLateChargesTool(charges lateChargeAssessor) agentports.AgentTool {
 	return common.NewReceivableTool(&common.ReceivableSpec{
-		Name:        "assess_late_charges",
+		Name:        "receivable_assess_late_charges",
 		SearchTerms: []string{"late fees", "finance charge"},
 		Description: "Propose assessing late charges on overdue invoices as of a date, as one " +
 			"debit memo per customer. Each has a line per invoice and overdue period at the " +
@@ -95,7 +95,7 @@ func NewAssessLateChargesTool(charges lateChargeAssessor) agentports.AgentTool {
 			common.ParamCustomerIDs: toolschema.KeepEmpty(agenttoolschema.RecordIDs(
 				permission.ResourceCustomer,
 				"Only these customers, from list_customers or "+
-					"list_ar_open_items.",
+					"receivable_list_open_items.",
 				maxLateCustomers,
 			)),
 		},

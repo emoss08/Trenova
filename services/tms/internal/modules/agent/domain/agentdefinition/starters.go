@@ -240,7 +240,7 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Which receipts still need matching?",
 			"Which bank receipts still need to be matched to a payment?",
-			"list_bank_receipt_exceptions",
+			"receivable_list_bank_receipt_exceptions",
 		),
 		ask(
 			"Which invoices are past due?",
@@ -250,7 +250,7 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Which payments came in this week?",
 			"Which customer payments were recorded this week?",
-			"list_customer_payments",
+			"receivable_list_customer_payments",
 		),
 	},
 	TemplateDetentionDesk: {
@@ -508,12 +508,12 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Who owes us the most?",
 			"Which customers owe us the most, and how late is it?",
-			"get_ar_aging",
+			"receivable_get_aging",
 		),
 		ask(
 			"Who should I chase today?",
 			"Which overdue invoices should I chase today, most urgent first?",
-			"list_collections_worklist",
+			"receivable_list_collection_worklist",
 		),
 		ask(
 			"Which invoices are disputed?",
@@ -523,7 +523,7 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Which payments are unapplied?",
 			"Which customer payments still have cash that is not applied to an invoice?",
-			"list_customer_payments",
+			"receivable_list_customer_payments",
 		),
 	},
 	TemplateMasterDataSteward: {
@@ -801,17 +801,17 @@ var toolFamilies = [][]starterQuestion{
 		ask(
 			"Which receipts still need matching?",
 			"Which bank receipts still need to be matched to a payment?",
-			"list_bank_receipt_exceptions",
+			"receivable_list_bank_receipt_exceptions",
 		),
 		ask(
 			"Which payments came in this week?",
 			"Which customer payments were recorded this week?",
-			"list_customer_payments",
+			"receivable_list_customer_payments",
 		),
 		ask(
 			"Who should I chase today?",
 			"Which overdue invoices should I chase today, most urgent first?",
-			"list_collections_worklist",
+			"receivable_list_collection_worklist",
 		),
 	},
 	{

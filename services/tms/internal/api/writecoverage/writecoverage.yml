@@ -517,7 +517,7 @@ writes:
     exempt: infrastructure
     reason: "Records a line as the bank reported it, from its file or feed; a receipt is the bank's own record of cash that arrived, which an agent only ever matches and never writes."
   "POST /api/v1/accounting/bank-receipts/:receiptID/match/":
-    tools: [match_bank_receipt]
+    tools: [receivable_match_bank_receipt]
 
   # bankreceiptbatch
   "POST /api/v1/accounting/bank-receipt-batches/":
@@ -526,13 +526,13 @@ writes:
 
   # bankreceiptworkitem
   "POST /api/v1/accounting/bank-receipt-work-items/:workItemID/assign/":
-    tools: [triage_bank_receipt_work_item]
+    tools: [receivable_triage_bank_receipt_work_item]
   "POST /api/v1/accounting/bank-receipt-work-items/:workItemID/dismiss/":
-    tools: [resolve_bank_receipt_work_item]
+    tools: [receivable_resolve_bank_receipt_work_item]
   "POST /api/v1/accounting/bank-receipt-work-items/:workItemID/resolve/":
-    tools: [resolve_bank_receipt_work_item]
+    tools: [receivable_resolve_bank_receipt_work_item]
   "POST /api/v1/accounting/bank-receipt-work-items/:workItemID/start-review/":
-    tools: [triage_bank_receipt_work_item]
+    tools: [receivable_triage_bank_receipt_work_item]
 
   # benefits
   "mutation createBenefitPlan":
@@ -802,15 +802,15 @@ writes:
 
   # collection
   "POST /api/v1/accounting/collections/customers/:customerID/activities/":
-    tools: [log_collection_activity]
+    tools: [receivable_record_collection_activity]
   "PUT /api/v1/accounting/collections/customers/:customerID/collector/":
-    tools: [assign_collector]
+    tools: [receivable_assign_collector]
   "POST /api/v1/accounting/collections/customers/:customerID/reminder/":
-    tools: [send_payment_reminder]
+    tools: [receivable_send_payment_reminder]
   "PUT /api/v1/accounting/collections/customers/:customerID/follow-up/":
-    tools: [schedule_collection_follow_up]
+    tools: [receivable_schedule_follow_up]
   "POST /api/v1/accounting/accounts-receivable/customers/:customerID/statement/send/":
-    tools: [send_customer_statement]
+    tools: [receivable_send_statement]
 
   # commodity
   "PATCH /api/v1/commodities/:commodityID/":
@@ -842,15 +842,15 @@ writes:
 
   # customerpayment
   "mutation applyCreditMemo":
-    tools: [apply_credit_memo]
+    tools: [receivable_apply_credit_memo]
   "mutation applyUnappliedCustomerPayment":
-    tools: [apply_customer_payment]
+    tools: [receivable_apply_customer_payment]
   "mutation postAndApplyCustomerPayment":
-    tools: [post_customer_payment]
+    tools: [receivable_post_customer_payment]
   "mutation reverseCustomerPayment":
-    tools: [reverse_customer_payment]
+    tools: [receivable_reverse_customer_payment]
   "mutation unapplyCreditMemoApplication":
-    tools: [unapply_credit_memo]
+    tools: [receivable_unapply_credit_memo]
 
   # customfield
   "DELETE /api/v1/custom-fields/definitions/:definitionID/":
@@ -2246,7 +2246,7 @@ writes:
 
   # latecharge
   "mutation assessLateCharges":
-    tools: [assess_late_charges]
+    tools: [receivable_assess_late_charges]
 
   # location
   "PATCH /api/v1/locations/:locationID/":

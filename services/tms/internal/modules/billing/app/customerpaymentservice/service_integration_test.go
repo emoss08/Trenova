@@ -4,6 +4,7 @@ package customerpaymentservice
 
 import (
 	"context"
+	"slices"
 	"testing"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/journalpostingrepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glbalance"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/customerpaymentrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicerepository"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -1004,6 +1006,19 @@ func TestReversePaymentRestoresInvoiceAndBalances(t *testing.T) {
 			AuditService: &mocks.NoopAuditService{},
 		},
 	)
+	balanceOf := func(accountID pulid.ID) glbalance.GLAccountPeriodBalance {
+		t.Helper()
+		return fiscaltest.PeriodBalance(t, ctx, fiscaltest.PeriodBalanceParams{
+			DB:             db,
+			OrganizationID: org.ID,
+			BusinessUnitID: org.BusinessUnitID,
+			GLAccountID:    accountID,
+			FiscalPeriodID: period.ID,
+		})
+	}
+	arBefore := balanceOf(control.DefaultARAccountID)
+	cashBefore := balanceOf(control.DefaultCashAccountID)
+
 	payment, err := svc.PostAndApply(
 		ctx,
 		&customerpaymentports.PostCustomerPaymentRequest{
@@ -1063,35 +1078,16 @@ func TestReversePaymentRestoresInvoiceAndBalances(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 1, reversalEntryCount)
 
-	var arBalance struct {
-		NetChangeMinor int64 `bun:"net_change_minor"`
-	}
-	require.NoError(
+	assert.Equal(
 		t,
-		db.NewSelect().
-			Table("gl_account_balances_by_period").
-			Column("net_change_minor").
-			Where("gl_account_id = ?", control.DefaultARAccountID).
-			Where("fiscal_period_id = ?", period.ID).
-			Limit(1).
-			Scan(ctx, &arBalance),
+		arBefore.NetChangeMinor,
+		balanceOf(control.DefaultARAccountID).NetChangeMinor,
 	)
-	assert.Equal(t, int64(0), arBalance.NetChangeMinor)
-
-	var cashBalance struct {
-		NetChangeMinor int64 `bun:"net_change_minor"`
-	}
-	require.NoError(
+	assert.Equal(
 		t,
-		db.NewSelect().
-			Table("gl_account_balances_by_period").
-			Column("net_change_minor").
-			Where("gl_account_id = ?", control.DefaultCashAccountID).
-			Where("fiscal_period_id = ?", period.ID).
-			Limit(1).
-			Scan(ctx, &cashBalance),
+		cashBefore.NetChangeMinor,
+		balanceOf(control.DefaultCashAccountID).NetChangeMinor,
 	)
-	assert.Equal(t, int64(0), cashBalance.NetChangeMinor)
 }
 
 func TestPostAndApplyRecognizesShortPayAndSettlesInvoice(t *testing.T) {
@@ -1537,8 +1533,8 @@ func TestListAndGetCustomerPayments(t *testing.T) {
 	)
 	require.NoError(t, err)
 	require.NotNil(t, listResult)
-	require.NotEmpty(t, listResult.Items)
-	assert.Equal(t, payment.ID, listResult.Items[0].ID)
+	isPayment := func(item *customerpayment.Payment) bool { return item.ID == payment.ID }
+	assert.True(t, slices.ContainsFunc(listResult.Items, isPayment))
 
 	connResult, err := paymentRepo.ListConnection(
 		ctx,
@@ -1555,8 +1551,9 @@ func TestListAndGetCustomerPayments(t *testing.T) {
 		},
 	)
 	require.NoError(t, err)
-	require.NotEmpty(t, connResult.Items)
-	connPayment := connResult.Items[0]
+	connIdx := slices.IndexFunc(connResult.Items, isPayment)
+	require.NotEqual(t, -1, connIdx)
+	connPayment := connResult.Items[connIdx]
 	assert.Equal(t, payment.ID, connPayment.ID)
 	assert.Equal(t, shp.CustomerID, connPayment.CustomerID)
 	assert.EqualValues(t, 10000, connPayment.AmountMinor)

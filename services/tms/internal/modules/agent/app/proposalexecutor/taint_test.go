@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -48,7 +48,7 @@ func taintedProposal(tool string, orgID, buID pulid.ID) *agent.AgentProposal {
 	taint := &agent.RunTaint{}
 	taint.Add(agent.TaintMark{
 		Source:   agent.TaintSourceBankReceipt,
-		ToolName: "get_bank_receipt",
+		ToolName: "receivable_get_bank_receipt",
 		CallID:   "call_1",
 	})
 
@@ -94,7 +94,7 @@ func TestExecute_ATaintedWriteThatLeavesRunsOnlyOnAPersonsDecision(t *testing.T)
 			actor: principal(permissionports.PrincipalTypeAPIKey, orgID, buID),
 		},
 	} {
-		tool := newEgressTool("post_customer_payment", agent.EgressMoney)
+		tool := newEgressTool("receivable_post_customer_payment", agent.EgressMoney)
 		repo := &fakeProposalRepo{}
 		executor := newExecutor(tool, repo, &fakePermissions{allowed: true})
 
@@ -155,7 +155,7 @@ func TestExecute_ACleanWriteThatLeavesMayRunUnattended(t *testing.T) {
 	t.Parallel()
 
 	orgID, buID := pulid.MustNew("org_"), pulid.MustNew("bu_")
-	tool := newEgressTool("post_customer_payment", agent.EgressMoney)
+	tool := newEgressTool("receivable_post_customer_payment", agent.EgressMoney)
 	repo := &fakeProposalRepo{}
 	executor := newExecutor(tool, repo, &fakePermissions{allowed: true})
 	proposal := taintedProposal(tool.name, orgID, buID)

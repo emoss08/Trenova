@@ -56,13 +56,7 @@ func slicePage[T any](p page, rows []T) ([]T, bool) {
 // pageSchema is the limit and offset parameters every paged tool takes.
 func pageSchema(fallback, most int) map[string]any {
 	return map[string]any{
-		paramLimit: toolschema.Clamped(map[string]any{
-			toolschema.KeyType:    toolschema.TypeInteger,
-			toolschema.KeyMinimum: 1,
-			toolschema.KeyMaximum: most,
-			toolschema.KeyDescription: fmt.Sprintf(
-				"How many rows to return: %d unless you ask, at most %d.", fallback, most),
-		}),
+		paramLimit: limitSchema(fallback, most),
 		paramOffset: map[string]any{
 			toolschema.KeyType:    toolschema.TypeInteger,
 			toolschema.KeyMinimum: 0,
@@ -70,6 +64,17 @@ func pageSchema(fallback, most int) map[string]any {
 				"call again with its nextOffset for the next page.",
 		},
 	}
+}
+
+// limitSchema is a limit of one to most rows, read as the bound past it.
+func limitSchema(fallback, most int) map[string]any {
+	return toolschema.Clamped(map[string]any{
+		toolschema.KeyType:    toolschema.TypeInteger,
+		toolschema.KeyMinimum: 1,
+		toolschema.KeyMaximum: most,
+		toolschema.KeyDescription: fmt.Sprintf(
+			"How many rows to return: %d unless you ask, at most %d.", fallback, most),
+	})
 }
 
 // withPaging adds the paging parameters to a schema's properties.
