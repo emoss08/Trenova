@@ -10,6 +10,7 @@ import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { Shipment, ShipmentStage } from "@trenova/shared/types/shipment";
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
+import { CardDocuments } from "../../record-card/card-documents";
 import {
   CardBar,
   CardBarHint,
@@ -22,11 +23,10 @@ import {
   CardSection,
   CardStatus,
   CardStepper,
-  CardUnreadable,
   CardTimeline,
+  CardUnreadable,
   RecordCard,
 } from "../../record-card/record-card";
-import { CardDocuments } from "../../record-card/card-documents";
 import { cardDay, cardMoment, money, neighborsIn } from "../../record-card/record-card-values";
 import type { RecordArtifactProps } from "../registry";
 import {
@@ -44,11 +44,11 @@ import {
   readinessChecks,
   shipmentStage,
   stageLabel,
-  totalMiles,
-  type ReadinessCheck,
   stopOffsets,
   tenderStatusLabel,
+  totalMiles,
   truckOffset,
+  type ReadinessCheck,
 } from "./shipment-card";
 import {
   ChargesBlock,
@@ -167,7 +167,9 @@ function ShipmentCard({
   const margin = marginOf(shipment);
   const miles = totalMiles(moves);
   const billing = billingPhase(shipment);
-  const shipmentPath = recordPath("shipment", recordId);
+  const shipmentPath = recordPath("shipment", recordId, {
+    tab: "documents",
+  });
   const neighbors = neighborsIn(order, recordId);
 
   const { data: readiness } = useQuery({
