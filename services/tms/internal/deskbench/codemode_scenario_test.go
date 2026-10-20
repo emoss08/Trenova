@@ -31,15 +31,22 @@ func TestCodeModeScenariosArePaired(t *testing.T) {
 			kinds[tag] = true
 		}
 	}
-	for _, kind := range []string{"fan-out", "reconciliation", "report", "control", "adversarial"} {
+	for _, kind := range []string{
+		"fan-out", "reconciliation", "report", "control", "adversarial", "batch-write",
+	} {
 		assert.Truef(t, kinds[kind], "the pairs hold a %s task", kind)
 	}
 
 	for pair, found := range halves {
 		require.Lenf(t, found, 2, "pair %s", pair)
 		modes := []deskbench.ScriptMode{found[0].Mode, found[1].Mode}
+		script := deskbench.ModeScript
+		if slices.Contains(found[0].Tags, "batch-write") {
+			script = deskbench.ModeScriptWrites
+		}
 		assert.ElementsMatchf(t,
-			[]deskbench.ScriptMode{deskbench.ModeDiscrete, deskbench.ModeScript}, modes, pair)
+			[]deskbench.ScriptMode{deskbench.ModeDiscrete, script}, modes,
+			"pair %s: a batch-write pair's script half may write, every other reads only", pair)
 		assert.Equalf(t, found[0].Split, found[1].Split, "pair %s shares one split", pair)
 
 		assert.Equalf(t, found[0].Steps[0].Expect.Facts, found[1].Steps[0].Expect.Facts,
@@ -54,9 +61,41 @@ func TestCodeModeScenariosArePaired(t *testing.T) {
 	}
 }
 
+// The batch-write pairs are graded the same in both modes on what the approval
+// left in the database, so a script's batch and the discrete proposals face
+// the same checks, and both halves name the same changes.
+func TestBatchWritePairsAreGradedOnTheSameApproval(t *testing.T) {
+	t.Parallel()
+
+	scenarios, err := deskbench.LoadScenarios([]string{codeModeScenarios})
+	require.NoError(t, err)
+
+	halves := map[string][]*deskbench.Scenario{}
+	for _, scenario := range scenarios {
+		if slices.Contains(scenario.Tags, "batch-write") {
+			halves[scenario.Pair] = append(halves[scenario.Pair], scenario)
+		}
+	}
+	require.Len(t, halves, 7, "five batch writes and two stale approvals")
+	for pair, found := range halves {
+		require.Lenf(t, found, 2, "pair %s", pair)
+		require.Equalf(t, len(found[0].Steps), len(found[1].Steps), pair)
+		approved := false
+		for idx := range found[0].Steps {
+			one, other := found[0].Steps[idx], found[1].Steps[idx]
+			assert.Equalf(t, one.Decide, other.Decide, "pair %s step %d decides alike", pair, idx+1)
+			assert.Equalf(t, one.Setup, other.Setup, "pair %s step %d sets up alike", pair, idx+1)
+			assert.Equalf(t, one.Expect.DB, other.Expect.DB, "pair %s step %d checks alike", pair, idx+1)
+			approved = approved || one.Decide != ""
+		}
+		assert.Truef(t, approved, "pair %s is graded after a person decides", pair)
+	}
+}
+
 func TestScriptModeForcesTheGateAndDiscreteShutsIt(t *testing.T) {
 	t.Parallel()
 
+	assert.Equal(t, codemode.OverrideWrites, deskbench.ModeScriptWrites.Override())
 	assert.Equal(t, codemode.OverrideOn, deskbench.ModeScript.Override())
 	assert.Equal(t, codemode.OverrideOff, deskbench.ModeDiscrete.Override())
 	assert.Equal(t, codemode.OverrideDefault, deskbench.ScriptMode("").Override())
