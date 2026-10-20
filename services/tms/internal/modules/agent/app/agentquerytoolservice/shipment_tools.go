@@ -500,7 +500,7 @@ func (t *shipmentListTool) wordOutcome(
 				"not here, search again with a status, a date or a pro number rather than "+
 				"asking the person to choose from this page.", search.window.limit)
 	case found.hasMore:
-		outcome = outcome.cursorPaged(search.window, true, found.nextCursor)
+		outcome.cursorPaged(&search.window, true, found.nextCursor)
 		if total, err := countShipments(ctx, t.repo, &pagination.QueryOptions{
 			TenantInfo:   tenantOf(search.params),
 			Query:        search.query,

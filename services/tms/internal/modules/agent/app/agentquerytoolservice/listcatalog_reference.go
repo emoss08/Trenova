@@ -291,19 +291,22 @@ func newListHazardousMaterialsTool(
 				return listPage{}, err
 			}
 
-			return offsetListPage(result.Items, func(item *hazardousmaterial.HazardousMaterial) any {
-				return hazmatRow{
-					ID:               item.ID.String(),
-					Code:             item.Code,
-					Name:             item.Name,
-					Class:            string(item.Class),
-					UNNumber:         item.UNNumber,
-					PackingGroup:     string(item.PackingGroup),
-					PlacardRequired:  item.PlacardRequired,
-					MarinePollutant:  item.MarinePollutant,
-					InhalationHazard: item.InhalationHazard,
-				}
-			}), nil
+			return offsetListPage(
+				result.Items,
+				func(item *hazardousmaterial.HazardousMaterial) any {
+					return hazmatRow{
+						ID:               item.ID.String(),
+						Code:             item.Code,
+						Name:             item.Name,
+						Class:            string(item.Class),
+						UNNumber:         item.UNNumber,
+						PackingGroup:     string(item.PackingGroup),
+						PlacardRequired:  item.PlacardRequired,
+						MarinePollutant:  item.MarinePollutant,
+						InhalationHazard: item.InhalationHazard,
+					}
+				},
+			), nil
 		},
 	})
 }
@@ -343,16 +346,19 @@ func newListAccessorialChargesTool(
 				return listPage{}, err
 			}
 
-			return offsetListPage(result.Items, func(item *accessorialcharge.AccessorialCharge) any {
-				return accessorialRow{
-					ID:          item.ID.String(),
-					Code:        item.Code,
-					Description: item.Description,
-					Status:      string(item.Status),
-					Method:      string(item.Method),
-					Amount:      item.Amount.String(),
-				}
-			}), nil
+			return offsetListPage(
+				result.Items,
+				func(item *accessorialcharge.AccessorialCharge) any {
+					return accessorialRow{
+						ID:          item.ID.String(),
+						Code:        item.Code,
+						Description: item.Description,
+						Status:      string(item.Status),
+						Method:      string(item.Method),
+						Amount:      item.Amount.String(),
+					}
+				},
+			), nil
 		},
 	})
 }

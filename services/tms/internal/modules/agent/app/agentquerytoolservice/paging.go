@@ -13,10 +13,15 @@ import (
 
 const cursorScopeLength = 16
 
+var errOffsetOnCursorList = errors.New(
+	"this list pages with after, the nextCursor of the previous page, not offset. Call " +
+		"it again without offset, passing that nextCursor as after for the next page",
+)
+
 var errStaleCursor = errors.New(
 	"after is not a nextCursor this tool returned for these same arguments: the query, " +
 		"filters, status or sort changed since that page, or the cursor was altered. Call " +
-		"it again without after to start from the first page.",
+		"it again without after to start from the first page",
 )
 
 // page is one window of a list: how many rows, from where.
@@ -115,6 +120,9 @@ func readCursorWindow(
 	params map[string]any,
 	fallback, most int,
 ) (cursorWindow, error) {
+	if optionalInt(params, paramOffset, 0) != 0 {
+		return cursorWindow{}, errOffsetOnCursorList
+	}
 	scope, err := cursorScope(tool, params)
 	if err != nil {
 		return cursorWindow{}, err
@@ -146,7 +154,7 @@ func firstCursorWindow(limit int) cursorWindow {
 func cursorScope(tool string, params map[string]any) (string, error) {
 	shape := make(map[string]any, len(params))
 	for key, value := range params {
-		if key == paramLimit || key == paramAfter {
+		if key == paramLimit || key == paramAfter || key == paramOffset {
 			continue
 		}
 		shape[key] = value
@@ -160,11 +168,11 @@ func cursorScope(tool string, params map[string]any) (string, error) {
 	return hashutils.SHA256Hex(tool + ":" + string(encoded))[:cursorScopeLength], nil
 }
 
-func (w cursorWindow) first() bool {
+func (w *cursorWindow) first() bool {
 	return w.after == ""
 }
 
-func (w cursorWindow) next(cursor string) string {
+func (w *cursorWindow) next(cursor string) string {
 	if cursor == "" {
 		return ""
 	}
@@ -190,12 +198,4 @@ func cursorPageSchema(fallback, most int) map[string]any {
 				"argument unchanged; omit for the first page.",
 		},
 	}
-}
-
-func withCursorPaging(properties map[string]any, fallback, most int) map[string]any {
-	for name, property := range cursorPageSchema(fallback, most) {
-		properties[name] = property
-	}
-
-	return properties
 }

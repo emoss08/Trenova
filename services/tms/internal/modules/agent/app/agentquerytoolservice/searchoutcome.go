@@ -57,11 +57,9 @@ func (o searchOutcome) paged(p page, hasMore bool) searchOutcome {
 	return o
 }
 
-func (o searchOutcome) cursorPaged(window cursorWindow, hasMore bool, next string) searchOutcome {
+func (o *searchOutcome) cursorPaged(window *cursorWindow, hasMore bool, next string) {
 	o.HasMore = hasMore
 	o.NextCursor = window.next(next)
-
-	return o
 }
 
 // searchResult wraps what a repository returned. count is taken from the

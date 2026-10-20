@@ -168,7 +168,10 @@ func newListWorkersTool(
 			cursor pagination.CursorInfo,
 			gate *fieldGate,
 		) (listPage, error) {
-			result, err := repo.List(ctx, &workerports.ListWorkersRequest{Filter: opts, Cursor: cursor})
+			result, err := repo.List(
+				ctx,
+				&workerports.ListWorkersRequest{Filter: opts, Cursor: cursor},
+			)
 			if err != nil {
 				return listPage{}, err
 			}

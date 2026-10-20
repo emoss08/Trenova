@@ -432,7 +432,7 @@ func (t *listTool) firstWindow(limit int) listWindow {
 	return listWindow{offset: page{limit: limit}}
 }
 
-func (w listWindow) pagination() pagination.Info {
+func (w *listWindow) pagination() pagination.Info {
 	if w.byCursor {
 		return pagination.Info{Limit: w.cursor.limit}
 	}
@@ -440,11 +440,11 @@ func (w listWindow) pagination() pagination.Info {
 	return pagination.Info{Limit: w.offset.fetch(), Offset: w.offset.offset}
 }
 
-func (w listWindow) first() bool {
+func (w *listWindow) first() bool {
 	return w.offset.offset == 0 && w.cursor.first()
 }
 
-func (w listWindow) rows(fetched listPage) ([]any, bool) {
+func (w *listWindow) rows(fetched listPage) ([]any, bool) {
 	if w.byCursor {
 		return fetched.rows, fetched.hasMore
 	}
@@ -452,14 +452,16 @@ func (w listWindow) rows(fetched listPage) ([]any, bool) {
 	return trim(w.offset, fetched.rows)
 }
 
-func (w listWindow) outcome(
+func (w *listWindow) outcome(
 	criteria *filtercatalog.Criteria,
 	fetched listPage,
 ) (searchOutcome, bool) {
 	rows, more := w.rows(fetched)
 	outcome := searchResult(criteria, rows, len(rows))
 	if w.byCursor {
-		return outcome.cursorPaged(w.cursor, more, fetched.nextCursor), more
+		outcome.cursorPaged(&w.cursor, more, fetched.nextCursor)
+
+		return outcome, more
 	}
 
 	return outcome.paged(w.offset, more), more
@@ -497,9 +499,14 @@ func (t *listTool) fetchPage(ctx context.Context, req *listFetch) (listPage, err
 	case req.gate != nil:
 		return t.spec.fetchGated(ctx, req.opts, req.cursor, req.gate)
 	case t.spec.fetchJoined != nil:
-		return t.spec.fetchJoined(ctx, req.opts, req.cursor, func(resource permission.Resource) bool {
-			return t.spec.access.mayRead(ctx, req.params, resource)
-		})
+		return t.spec.fetchJoined(
+			ctx,
+			req.opts,
+			req.cursor,
+			func(resource permission.Resource) bool {
+				return t.spec.access.mayRead(ctx, req.params, resource)
+			},
+		)
 	case t.spec.fetchIn != nil:
 		return t.spec.fetchIn(ctx, req.opts, req.cursor, req.criteria.Clock)
 	default:

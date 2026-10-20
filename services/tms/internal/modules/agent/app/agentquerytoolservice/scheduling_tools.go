@@ -121,9 +121,12 @@ func newListRecurringShipmentsTool(
 				return listPage{}, err
 			}
 
-			return offsetListPage(result.Items, func(item *recurringshipment.RecurringShipment) any {
-				return recurringShipmentRowFrom(item)
-			}), nil
+			return offsetListPage(
+				result.Items,
+				func(item *recurringshipment.RecurringShipment) any {
+					return recurringShipmentRowFrom(item)
+				},
+			), nil
 		},
 	})
 }
