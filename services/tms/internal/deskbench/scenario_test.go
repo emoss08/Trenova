@@ -160,3 +160,36 @@ func TestShippedScenarios_LoadWithLabelsAndASplit(t *testing.T) {
 		assert.NotNil(t, scenario.ForbiddenTools, scenario.Name)
 	}
 }
+
+func TestValidate_AStepSetupChangesRowsBeforeItsStepAndNeverBeforeAFire(t *testing.T) {
+	t.Parallel()
+
+	staled := &deskbench.Scenario{
+		Name: "stale-approval",
+		Steps: []deskbench.Step{
+			{Say: "hold the acme load"},
+			{
+				Decide: deskbench.DecisionApprove,
+				Setup:  []string{"UPDATE shipments SET version = version + 1 WHERE pro_number = 'X'"},
+			},
+		},
+	}
+	require.NoError(t, staled.Validate())
+
+	schema := &deskbench.Scenario{
+		Name: "schema",
+		Steps: []deskbench.Step{
+			{Say: "hi", Setup: []string{"DELETE FROM shipments; DROP TABLE shipments"}},
+		},
+	}
+	require.ErrorContains(t, schema.Validate(), "step 1 setup 1")
+
+	fired := &deskbench.Scenario{
+		Name: "fired",
+		Steps: []deskbench.Step{{
+			Fire:  &deskbench.Fire{Agent: "LoadMonitor", Schedule: true},
+			Setup: []string{"UPDATE shipments SET status = 'New' WHERE id = 'x'"},
+		}},
+	}
+	require.ErrorContains(t, fired.Validate(), "a fire step's setup is the scenario's setup")
+}
