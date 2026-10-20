@@ -429,7 +429,12 @@ func TestCatalogListsExaTurnedOffUntilSetUp(t *testing.T) {
 	assert.Equal(t, agentextension.CapabilityDataAnalysis, analysis.Capability)
 	assert.Equal(t, "Data analysis", analysis.CapabilityLabel)
 	assert.Equal(t, agentextension.DefaultDailyAnalyses, analysis.DailyRequestLimit)
-	assert.Len(t, analysis.Tools, 1)
+	analysisTools := make([]string, 0, len(analysis.Tools))
+	for _, tool := range analysis.Tools {
+		analysisTools = append(analysisTools, tool.Name)
+	}
+	assert.Equal(t, []string{agentextension.ToolAnalyzeData, agentextension.ToolRunScript},
+		analysisTools, "the E2B account also serves read-only scripts, once they are switched on")
 }
 
 func TestEnablingEncryptsTheKeyAndNeverReturnsIt(t *testing.T) {

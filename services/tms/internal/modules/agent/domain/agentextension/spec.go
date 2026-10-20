@@ -35,6 +35,55 @@ type Spec struct {
 	// Unsupported are tools of the capability this vendor cannot serve; they
 	// are never offered while it serves the capability.
 	Unsupported []string
+
+	// Switched are further capabilities the same account serves once the
+	// organization turns on the boolean setting named for each.
+	Switched []SwitchedCapability
+}
+
+type SwitchedCapability struct {
+	Capability Capability
+	Setting    string
+}
+
+// ServedBy are the capabilities an extension with this configuration serves:
+// its own, and each switched one whose setting is on.
+func (s *Spec) ServedBy(configuration map[string]any) []Capability {
+	served := make([]Capability, 0, 1+len(s.Switched))
+	served = append(served, s.Capability)
+	for _, switched := range s.Switched {
+		if configspec.ReadString(configuration, switched.Setting) == "true" {
+			served = append(served, switched.Capability)
+		}
+	}
+
+	return served
+}
+
+func (s *Spec) Serves(c Capability) bool {
+	if c == s.Capability {
+		return true
+	}
+
+	return slices.ContainsFunc(s.Switched, func(switched SwitchedCapability) bool {
+		return switched.Capability == c
+	})
+}
+
+// ToolsOf are the tools of one capability this vendor serves.
+func (s *Spec) ToolsOf(c Capability) []string {
+	if !s.Serves(c) {
+		return nil
+	}
+	all := capabilities[c].Tools
+	served := make([]string, 0, len(all))
+	for _, name := range all {
+		if !s.Omits(name) {
+			served = append(served, name)
+		}
+	}
+
+	return served
 }
 
 func (s Spec) DailyLimit(values map[string]string, multiErr *errortypes.MultiError) int {
@@ -71,7 +120,13 @@ func (s Spec) Tools() []string {
 }
 
 func (s Spec) HasTool(name string) bool {
-	return capabilities[s.Capability].HasTool(name) && !s.Omits(name)
+	for _, c := range AllCapabilities() {
+		if s.Serves(c) && capabilities[c].HasTool(name) && !s.Omits(name) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (s Spec) Omits(name string) bool {
@@ -93,7 +148,8 @@ func SpecFor(t Type) (Spec, bool) {
 func TypesFor(c Capability) []Type {
 	types := make([]Type, 0, 1)
 	for _, typ := range AllTypes() {
-		if specs[typ].Capability == c {
+		spec := specs[typ]
+		if spec.Serves(c) {
 			types = append(types, typ)
 		}
 	}

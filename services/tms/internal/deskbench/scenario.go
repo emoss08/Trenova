@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/evalsplit"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -30,6 +31,8 @@ type Scenario struct {
 	Setup       []string     `yaml:"setup"       json:"setup,omitempty"`
 	Steps       []Step       `yaml:"steps"       json:"steps"`
 	Source      string       `yaml:"-"           json:"source,omitempty"`
+	Mode        ScriptMode   `yaml:"mode"        json:"mode,omitempty"`
+	Pair        string       `yaml:"pair"        json:"pair,omitempty"`
 
 	Split          evalsplit.Split `yaml:"split"          json:"split,omitempty"`
 	ExpectedTools  []string        `yaml:"expectedTools"  json:"expectedTools,omitempty"`
@@ -38,6 +41,32 @@ type Scenario struct {
 }
 
 const generalAssistantDesk = "General assistant"
+
+type ScriptMode string
+
+const (
+	ModeDiscrete = ScriptMode("discrete")
+	ModeScript   = ScriptMode("script")
+)
+
+func (m ScriptMode) Override() codemode.Override {
+	switch m {
+	case ModeDiscrete:
+		return codemode.OverrideOff
+	case ModeScript:
+		return codemode.OverrideOn
+	default:
+		return codemode.OverrideDefault
+	}
+}
+
+func (s *Scenario) SplitKey() string {
+	if s.Pair != "" {
+		return "pair:" + s.Pair
+	}
+
+	return s.Name
+}
 
 func (s *Scenario) Stratum() evalsplit.Stratum {
 	if s.Unattended() {
@@ -295,16 +324,22 @@ func assignSplits(scenarios []*Scenario) error {
 	}
 
 	items := make([]evalsplit.Item, 0, len(population))
+	keyed := make(map[string]struct{}, len(population))
 	for _, scenario := range population {
-		items = append(items, scenario.splitItem())
+		item := scenario.splitItem()
+		if _, taken := keyed[item.Key]; taken {
+			continue
+		}
+		keyed[item.Key] = struct{}{}
+		items = append(items, item)
 	}
 	splits := evalsplit.Assign(items)
-	assigned := make(map[string]evalsplit.Split, len(population))
+	assigned := make(map[string]evalsplit.Split, len(items))
 	for idx := range items {
 		assigned[items[idx].Key] = splits[idx]
 	}
 	for _, scenario := range scenarios {
-		scenario.Split = assigned[scenario.Name]
+		scenario.Split = assigned[scenario.SplitKey()]
 	}
 
 	return nil
@@ -312,7 +347,7 @@ func assignSplits(scenarios []*Scenario) error {
 
 func (s *Scenario) splitItem() evalsplit.Item {
 	return evalsplit.Item{
-		Key:         s.Name,
+		Key:         s.SplitKey(),
 		Stratum:     s.Stratum(),
 		Adversarial: s.Split == evalsplit.Adversarial,
 	}
@@ -362,8 +397,14 @@ func splitPopulation(scenarios []*Scenario) ([]*Scenario, error) {
 func SplitLedger(scenarios []*Scenario) evalsplit.Ledger {
 	items := make([]evalsplit.Item, 0, len(scenarios))
 	splits := make([]evalsplit.Split, 0, len(scenarios))
+	keyed := make(map[string]struct{}, len(scenarios))
 	for _, scenario := range scenarios {
-		items = append(items, scenario.splitItem())
+		item := scenario.splitItem()
+		if _, taken := keyed[item.Key]; taken {
+			continue
+		}
+		keyed[item.Key] = struct{}{}
+		items = append(items, item)
 		splits = append(splits, scenario.Split)
 	}
 
@@ -410,6 +451,7 @@ func loadScenarioFile(file string) ([]*Scenario, error) {
 	var doc struct {
 		Defaults  Scenario    `yaml:"defaults"`
 		Scenarios []*Scenario `yaml:"scenarios"`
+		Shared    yaml.Node   `yaml:"shared"`
 	}
 	decoder := yaml.NewDecoder(bytes.NewReader(raw))
 	decoder.KnownFields(true)
@@ -434,8 +476,43 @@ func loadScenarioFile(file string) ([]*Scenario, error) {
 			return nil, fmt.Errorf("%s: %w", file, err)
 		}
 	}
+	if err = validatePairs(doc.Scenarios); err != nil {
+		return nil, fmt.Errorf("%s: %w", file, err)
+	}
 
 	return doc.Scenarios, nil
+}
+
+// validatePairs holds every paired scenario to its other half: the same task,
+// once in discrete mode and once in script mode, in the same file.
+func validatePairs(scenarios []*Scenario) error {
+	halves := make(map[string][]*Scenario, len(scenarios))
+	order := make([]string, 0, len(scenarios))
+	for _, scenario := range scenarios {
+		if scenario.Pair == "" {
+			continue
+		}
+		if _, seen := halves[scenario.Pair]; !seen {
+			order = append(order, scenario.Pair)
+		}
+		halves[scenario.Pair] = append(halves[scenario.Pair], scenario)
+	}
+	for _, pair := range order {
+		found := halves[pair]
+		if len(found) != 2 || found[0].Mode == found[1].Mode {
+			return fmt.Errorf("pair %q needs one discrete and one script scenario", pair)
+		}
+		if found[0].Agent != found[1].Agent || len(found[0].Steps) != len(found[1].Steps) {
+			return fmt.Errorf("pair %q: both halves ask the same agent the same steps", pair)
+		}
+		for idx := range found[0].Steps {
+			if found[0].Steps[idx].Say != found[1].Steps[idx].Say {
+				return fmt.Errorf("pair %q step %d: both halves say the same thing", pair, idx+1)
+			}
+		}
+	}
+
+	return nil
 }
 
 func (s *Scenario) resolveAttachments(dir string) {
@@ -482,6 +559,9 @@ func (s *Scenario) Validate() error {
 		}
 	}
 	if err := s.validatePalette(); err != nil {
+		return err
+	}
+	if err := s.validateMode(); err != nil {
 		return err
 	}
 	if err := s.validateFire(); err != nil {
@@ -606,6 +686,21 @@ func (s *Scenario) validateFire() error {
 	}
 
 	return step.Fire.validate(where)
+}
+
+func (s *Scenario) validateMode() error {
+	switch {
+	case s.Mode == "" && s.Pair == "":
+		return nil
+	case s.Mode != ModeDiscrete && s.Mode != ModeScript:
+		return fmt.Errorf("%s: mode is discrete or script, not %q", s.Name, s.Mode)
+	case s.Pair == "":
+		return fmt.Errorf("%s: a scenario with a mode names the pair it belongs to", s.Name)
+	case s.Unattended() || s.Palette || s.Formula != nil:
+		return fmt.Errorf("%s: a paired scenario is a Desk conversation", s.Name)
+	}
+
+	return nil
 }
 
 func (s *Scenario) validatePalette() error {

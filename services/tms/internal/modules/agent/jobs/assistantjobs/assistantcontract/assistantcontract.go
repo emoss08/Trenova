@@ -5,6 +5,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
+
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -270,6 +272,7 @@ func (p *AssistantTurnPayload) SendRequest() *agentports.SendMessageRequest {
 		FollowUpPlanID:        p.Request.FollowUpPlanID,
 		ResumeWaitID:          p.Request.ResumeWaitID,
 		DirectedAgentID:       p.Request.DirectedAgentID,
+		CodeMode:              p.Request.CodeMode,
 	}
 }
 
@@ -293,6 +296,9 @@ type AssistantTurnRequest struct {
 	// rather than reading its stream. That caller has the reply as soon as
 	// the turn ends, so nobody is told later that it is ready.
 	Awaited bool `json:"awaited,omitempty"`
+	// CodeMode forces the code-mode gate for the turn; the desk bench sets it,
+	// and only a development or test deployment honours "on".
+	CodeMode codemode.Override `json:"codeMode,omitempty"`
 }
 
 // ReportsDecision says the turn was started to report a decision rather than
