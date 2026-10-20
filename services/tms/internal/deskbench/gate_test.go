@@ -1,6 +1,9 @@
 package deskbench
 
 import (
+	"io/fs"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
@@ -266,4 +269,89 @@ func TestProject_ScalesTheProbeToThePlannedTrials(t *testing.T) {
 	assert.False(t, projection.Within, "$16 is over the $10 budget")
 	assert.InDelta(t, projection.Cost*1.25, projection.Cap, 1e-9)
 	assert.True(t, strings.Contains(projection.Render(), "Within budget: no"))
+}
+
+func TestWriteGateRun_HandsOverNoHeldOutDetail(t *testing.T) {
+	t.Parallel()
+
+	dev := chat("dev-visible-scenario", evalsplit.Development)
+	held := chat("heldout-secret-scenario", evalsplit.HeldOut)
+	adversarial := chat("adversarial-secret-scenario", evalsplit.Adversarial)
+	cases := trials(
+		trialPlan{dev, low, 3, "0.01"}, trialPlan{dev, medium, 4, "0.02"},
+		trialPlan{held, low, 2, "0.01"}, trialPlan{held, medium, 3, "0.02"},
+		trialPlan{adversarial, low, 4, "0.01"}, trialPlan{adversarial, medium, 4, "0.02"},
+	)
+	for _, result := range cases {
+		label := "dev-check-label"
+		if result.Scenario.Split != evalsplit.Development {
+			label = "secret-check-label " + result.Scenario.Name
+		}
+		result.Steps = []*StepResult{{
+			Index: 1, Kind: "say", Label: label,
+			Checks: []CheckResult{{Name: label, Detail: label}},
+			Turns:  []*TurnRecord{{Reply: "reply for " + result.Scenario.Name}},
+		}}
+	}
+
+	root := t.TempDir()
+	meta := ReportMeta{PassK: 4, StartedAt: time.Unix(1_700_000_000, 0)}
+	require.NoError(t, WriteGateRun(root, &meta, cases))
+	gate := EvaluateGate(gateSpec(), cases)
+	gate.Run = root
+	require.NoError(t, gate.Write(root))
+
+	secrets := []string{"heldout-secret", "adversarial-secret", "secret-check-label"}
+	checked := 0
+	read := func(path string) {
+		raw, err := os.ReadFile(path)
+		require.NoError(t, err)
+		checked++
+		for _, secret := range secrets {
+			assert.NotContains(t, string(raw), secret, path)
+		}
+	}
+	for _, path := range append(HandoverPaths(root), filepath.Join(root, "summary.md")) {
+		info, err := os.Stat(path)
+		require.NoError(t, err, path)
+		if !info.IsDir() {
+			read(path)
+			continue
+		}
+		require.NoError(t, filepath.WalkDir(path, func(file string, entry fs.DirEntry, err error) error {
+			if err == nil && !entry.IsDir() {
+				read(file)
+			}
+			return err
+		}))
+	}
+	assert.Greater(t, checked, 3, "the handover holds the gate and the development run")
+
+	sealed, err := LoadGateRunReport(root)
+	require.NoError(t, err)
+	assert.Len(t, sealed.Cases, len(cases), "the full report is kept, sealed")
+	raw, err := os.ReadFile(filepath.Join(root, "development", "transcript.md"))
+	require.NoError(t, err)
+	assert.Contains(t, string(raw), "dev-visible-scenario")
+}
+
+func TestConfirmGate_ComparesDescriptionsOnlyOnScenariosBothRunsHold(t *testing.T) {
+	t.Parallel()
+
+	da, db := chat("da", evalsplit.Development), chat("db", evalsplit.Development)
+	ha, hb := chat("ha", evalsplit.HeldOut), chat("hb", evalsplit.HeldOut)
+	run1 := trials(
+		trialPlan{da, low, 4, "0.01"}, trialPlan{db, low, 4, "0.01"},
+		trialPlan{da, medium, 4, "0.02"}, trialPlan{db, medium, 4, "0.02"},
+		trialPlan{ha, low, 4, "0.01"}, trialPlan{hb, low, 0, "0.01"},
+		trialPlan{ha, medium, 4, "0.02"}, trialPlan{hb, medium, 4, "0.02"},
+	)
+	gate := EvaluateGate(gateSpec(), run1)
+	require.Equal(t, low, gate.Configuration[RouteChat])
+
+	run2 := trials(trialPlan{ha, low, 4, "0.01"}, trialPlan{ha, medium, 4, "0.02"})
+	confirmed := ConfirmGate(gate, run1, run2)
+	assert.True(t, confirmed.Descriptions.Passed,
+		"hb ran only in run 1, so it is left out of both sides: %s", confirmed.Descriptions.Detail)
+	assert.Contains(t, confirmed.Descriptions.Detail, "1.000 → 1.000")
 }

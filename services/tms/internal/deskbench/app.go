@@ -65,7 +65,7 @@ type deps struct {
 	Runs             agentports.AgentRunService
 	RunRecords       agentports.AgentRunRepository
 	PriceReference   agentports.ModelPriceReference `optional:"true"`
-	ActionTools      agentports.AgentToolRegistry   `optional:"true"`
+	ActionTools      agentports.AgentToolRegistry
 }
 
 type Bench struct {

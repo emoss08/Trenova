@@ -3,6 +3,7 @@ package deskbench
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"math"
 	"regexp"
@@ -21,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/shared/recordids"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/shopspring/decimal"
+	"github.com/uptrace/bun"
 )
 
 const (
@@ -905,6 +907,13 @@ func (b *Bench) runStatements(ctx context.Context, session *Session, statements 
 		); err != nil {
 			return fmt.Errorf("bound the setup: %w", err)
 		}
+		confined, err := readConfinement(ctx, db)
+		if err != nil {
+			return err
+		}
+		if err = confined.err(); err != nil {
+			return err
+		}
 		for idx, statement := range statements {
 			if _, err := db.ExecContext(ctx, statement); err != nil {
 				return fmt.Errorf("setup %d: %w", idx+1, err)
@@ -956,4 +965,34 @@ func cellText(cell any) string {
 
 func firstLine(text string) string {
 	return stringutils.Ellipsize(stringutils.CollapseWhitespace(text), lineLimit)
+}
+
+var ErrSetupUnconfined = errors.New("setup refused: the bench's database role is not confined to " +
+	"the bench user's organization")
+
+type confinement struct {
+	Bypass   bool   `bun:"bypass"`
+	Security string `bun:"security"`
+}
+
+func readConfinement(ctx context.Context, db bun.IDB) (confinement, error) {
+	var row confinement
+	if err := db.NewRaw(`SELECT r.rolsuper OR r.rolbypassrls AS bypass,
+		current_setting('row_security') AS security
+		FROM pg_roles r WHERE r.rolname = current_user`).Scan(ctx, &row); err != nil {
+		return row, fmt.Errorf("read the role's row-level security: %w", err)
+	}
+
+	return row, nil
+}
+
+func (c confinement) err() error {
+	switch {
+	case c.Bypass:
+		return fmt.Errorf("%w: it is a superuser or bypasses row-level security", ErrSetupUnconfined)
+	case c.Security != "on":
+		return fmt.Errorf("%w: row_security is %q", ErrSetupUnconfined, c.Security)
+	default:
+		return nil
+	}
 }

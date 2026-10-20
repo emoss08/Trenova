@@ -30,12 +30,18 @@ var gateFlags struct {
 
 var gateCmd = &cobra.Command{
 	Use:   "gate [scenario file or directory ...]",
-	Short: "Run the gate that decides code mode, effort per route and the advisor",
+	Short: "Run the gate that decides effort per route and the advisor",
 	Long: `Runs the matrix in deskbench/gate.yaml (docs/engineering/desk-bench-gate.md) as one run:
 each group's cells on the group's scenarios, 4 trials each, then evaluates the rules written in
-the spec before the run and writes gate.md and gate.json beside the run's report.json and
-summary.md. Transcripts and call files are written by split (development/, held-out/,
-adversarial/), so development traces can be handed over without the held-out ones.
+the spec before the run. The run directory holds:
+
+  gate.md, gate.json   the decisions and the figures each read
+  summary.md           cell figures by split, with no scenario detail
+  development/         the development split's report, transcripts and call files
+  sealed/              everything else: the full report, the held-out and adversarial
+                       splits, and the logs; never handed over
+
+Only development/ and gate.md are handed over.
 
 Three steps, in order:
   trenova desk gate --probe                       # project cost and time; refuses over budget
@@ -143,8 +149,7 @@ func runGroups(
 	cases := make([]*deskbench.CaseResult, 0, 256)
 	var runErrs []error
 	for _, run := range runs {
-		dir := filepath.Join(root, "groups",
-			stringutils.SlugifyASCII(run.group.Name, groupSlugLength))
+		dir := deskbench.GroupDir(root, stringutils.SlugifyASCII(run.group.Name, groupSlugLength))
 		if err := os.MkdirAll(dir, dirMode); err != nil {
 			return cases, fmt.Errorf("create %s: %w", dir, err)
 		}
@@ -185,16 +190,7 @@ func runGroups(
 }
 
 func writeGateRun(root string, meta deskbench.ReportMeta, cases []*deskbench.CaseResult) error {
-	if err := deskbench.BuildReport(meta, cases).WriteIndex(root); err != nil {
-		return err
-	}
-	for split, report := range deskbench.SplitReports(&meta, cases) {
-		if err := report.Write(filepath.Join(root, string(split))); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return deskbench.WriteGateRun(root, &meta, cases)
 }
 
 func gateMeta(label string, passK int, started time.Time) deskbench.ReportMeta {
@@ -301,8 +297,8 @@ func runGateMatrix(
 	}
 	fmt.Println()
 	fmt.Print(result.Render())
-	fmt.Fprintf(os.Stderr, "\ngate written to %s (gate.md, gate.json, summary.md, "+
-		"development/, held-out/, adversarial/)\n", root)
+	fmt.Fprintf(os.Stderr, "\ngate written to %s; hand over only development/ and gate.md, "+
+		"never sealed/\n", root)
 	fmt.Fprintf(os.Stderr, "confirm it with: trenova desk gate --confirm %s\n", root)
 
 	return runErr
@@ -351,7 +347,7 @@ func runGateConfirm(parent context.Context, scenarios []*deskbench.Scenario) err
 	if err != nil {
 		return err
 	}
-	first, err := deskbench.LoadReport(gate.Run)
+	first, err := deskbench.LoadGateRunReport(gate.Run)
 	if err != nil {
 		return fmt.Errorf("read run 1's report: %w", err)
 	}

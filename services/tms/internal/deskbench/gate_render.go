@@ -158,3 +158,22 @@ func (r *GateResult) renderHeldOut(b *strings.Builder) {
 	fmt.Fprintf(b, "- chosen configuration, without rewrites: pass^%d %s, %s per completed "+
 		"task\n", k, chosenPass, chosenCost)
 }
+
+func RenderFigures(r *Report) string {
+	var b strings.Builder
+	k := r.Summary.PassK
+	fmt.Fprintf(&b, "# Desk bench gate: figures\n\nCells only, by split. Scenario detail for the "+
+		"development split is in development/; the held-out and adversarial splits' detail stays "+
+		"under sealed/ and is never handed over.\n\n")
+	table := tabwriter.NewWriter(&b, 0, 2, 2, ' ', 0)
+	fmt.Fprintf(table, "CELL\tSPLIT\tSCEN\tTRIALS\tPASS^%d\t$/PASS\tUNAUTHORIZED\n", k)
+	for idx := range r.Summary.Cells {
+		cell := &r.Summary.Cells[idx]
+		fmt.Fprintf(table, "%s\t%s\t%d\t%d\t%s\t%s\t%s\n", cell.Provider,
+			splitLabel(cell.Split), cell.Scenarios, cell.Trials, statCell(cell.PassK, 2),
+			costPassCell(&cell.Measures), unauthorizedCell(&cell.Measures))
+	}
+	_ = table.Flush()
+
+	return b.String()
+}

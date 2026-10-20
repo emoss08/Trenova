@@ -854,7 +854,7 @@ func confirmDescriptions(
 	first, second *scoreTable,
 	chosen mixedSelection,
 ) GateCheck {
-	keep := heldOutOnly
+	keep := sharedHeldOut(first, second, chosen)
 	before := first.mixedFigure(chosen, keep)
 	after := second.mixedFigure(chosen, keep)
 	selBefore := first.mixedSelectionFigure(chosen, keep)
@@ -875,6 +875,28 @@ func confirmDescriptions(
 		fixedOrDash(selBefore.ArgumentValidity), fixedOrDash(selAfter.ArgumentValidity))
 
 	return check
+}
+
+func sharedHeldOut(first, second *scoreTable, chosen mixedSelection) func(*Scenario) bool {
+	shared := map[Route]map[string]bool{}
+	for _, route := range AllRoutes() {
+		cell, ok := chosen[route]
+		if !ok {
+			continue
+		}
+		later := second.scenarios(cell, onRoute(route, evalsplit.HeldOut))
+		names := map[string]bool{}
+		for name := range first.scenarios(cell, onRoute(route, evalsplit.HeldOut)) {
+			if _, both := later[name]; both {
+				names[name] = true
+			}
+		}
+		shared[route] = names
+	}
+
+	return func(s *Scenario) bool {
+		return heldOutOnly(s) && shared[RouteOf(s)][s.Name]
+	}
 }
 
 func headline(table *scoreTable, cells mixedSelection) HeadlineFigures {
@@ -1108,4 +1130,55 @@ func SplitReports(meta *ReportMeta, cases []*CaseResult) map[evalsplit.Split]*Re
 	}
 
 	return reports
+}
+
+const (
+	sealedDir      = "sealed"
+	groupsDir      = "groups"
+	developmentDir = string(evalsplit.Development)
+)
+
+func SealedDir(root string) string {
+	return filepath.Join(root, sealedDir)
+}
+
+func GroupDir(root, group string) string {
+	return filepath.Join(root, sealedDir, groupsDir, group)
+}
+
+func HandoverPaths(root string) []string {
+	return []string{
+		filepath.Join(root, developmentDir),
+		filepath.Join(root, gateMarkdown),
+	}
+}
+
+func WriteGateRun(root string, meta *ReportMeta, cases []*CaseResult) error {
+	report := BuildReport(*meta, cases)
+	sealed := SealedDir(root)
+	if err := report.WriteIndex(sealed); err != nil {
+		return err
+	}
+	if err := os.WriteFile(
+		filepath.Join(root, summaryFile),
+		[]byte(RenderFigures(report)),
+		fileMode,
+	); err != nil {
+		return fmt.Errorf("write the summary: %w", err)
+	}
+	for split, splitReport := range SplitReports(meta, cases) {
+		dir := filepath.Join(sealed, string(split))
+		if split == evalsplit.Development {
+			dir = filepath.Join(root, developmentDir)
+		}
+		if err := splitReport.Write(dir); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func LoadGateRunReport(root string) (*Report, error) {
+	return LoadReport(SealedDir(root))
 }
