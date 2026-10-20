@@ -4,6 +4,7 @@ import type { CaseSubjectType, MentionCandidateRecord, MentionPageKind } from "@
 import { SearchLgIcon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
@@ -198,61 +199,62 @@ export function CaseRecordPicker({
             : t("Nothing matches “{0}”.", found.settledSearch)}
         </p>
       ) : (
-        <div
-          ref={scrollRef}
-          id={listId}
-          role="listbox"
-          aria-label={t("Records")}
-          className={cn(
-            "scrollbar-overlay max-h-80 overflow-y-auto overscroll-contain p-1 transition-opacity",
-            found.refreshing && "opacity-70",
-          )}
+        <ScrollArea
+          viewportRef={scrollRef}
+          viewportClassName="max-h-80 overscroll-contain"
+          maskVariant="popover"
+          className={cn("transition-opacity", found.refreshing && "opacity-70")}
         >
-          <div className="relative w-full" style={{ height: virtualizer.getTotalSize() }}>
-            {virtualItems.map((item) => {
-              const record = records[item.index];
+          <div id={listId} role="listbox" aria-label={t("Records")} className="p-1">
+            <div className="relative w-full" style={{ height: virtualizer.getTotalSize() }}>
+              {virtualItems.map((item) => {
+                const record = records[item.index];
 
-              return (
-                <div
-                  key={item.key}
-                  data-index={item.index}
-                  ref={virtualizer.measureElement}
-                  className="absolute inset-x-0 top-0"
-                  style={{ transform: `translateY(${item.start}px)` }}
-                >
-                  {record ? (
-                    <div
-                      id={optionId(item.index)}
-                      role="option"
-                      aria-selected={item.index === activeIndex}
-                      onMouseMove={() => setActive(item.index)}
-                      onMouseDown={(event) => event.preventDefault()}
-                      onClick={() => pick(record)}
-                      className={cn(
-                        "flex h-11 cursor-pointer items-center gap-2.5 rounded-md px-2 transition-colors",
-                        item.index === activeIndex && "bg-surface-hover",
-                      )}
-                    >
-                      <DeskIcon name={kind.subject === "Shipment" ? "truck" : "receipt"} size={13} />
-                      <span className="flex min-w-0 flex-col">
-                        <span className="truncate text-sm font-medium">{record.label}</span>
-                        {record.subtitle && (
-                          <span className="text-muted-foreground truncate text-xs">
-                            {record.subtitle}
-                          </span>
+                return (
+                  <div
+                    key={item.key}
+                    data-index={item.index}
+                    ref={virtualizer.measureElement}
+                    className="absolute inset-x-0 top-0"
+                    style={{ transform: `translateY(${item.start}px)` }}
+                  >
+                    {record ? (
+                      <div
+                        id={optionId(item.index)}
+                        role="option"
+                        aria-selected={item.index === activeIndex}
+                        onMouseMove={() => setActive(item.index)}
+                        onMouseDown={(event) => event.preventDefault()}
+                        onClick={() => pick(record)}
+                        className={cn(
+                          "flex h-11 cursor-pointer items-center gap-2.5 rounded-md px-2 transition-colors",
+                          item.index === activeIndex && "bg-surface-hover",
                         )}
-                      </span>
-                    </div>
-                  ) : (
-                    <div role="presentation" className="flex h-10 items-center justify-center">
-                      <Spinner className="text-muted-foreground size-3.5" />
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+                      >
+                        <DeskIcon
+                          name={kind.subject === "Shipment" ? "truck" : "receipt"}
+                          size={13}
+                        />
+                        <span className="flex min-w-0 flex-col">
+                          <span className="truncate text-sm font-medium">{record.label}</span>
+                          {record.subtitle && (
+                            <span className="text-muted-foreground truncate text-xs">
+                              {record.subtitle}
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                    ) : (
+                      <div role="presentation" className="flex h-10 items-center justify-center">
+                        <Spinner className="text-muted-foreground size-3.5" />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        </ScrollArea>
       )}
     </div>
   );

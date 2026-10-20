@@ -117,6 +117,8 @@ function renderRail(props: Partial<DeskRailThreadsProps> = {}) {
           onSettings={vi.fn()}
           onSetPinned={vi.fn()}
           onDelete={vi.fn()}
+          folded={false}
+          onFold={vi.fn()}
           {...props}
         />
       </MemoryRouter>

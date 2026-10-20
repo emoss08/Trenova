@@ -1235,18 +1235,19 @@ func newListGLAccountsTool(
 		fetchGated: func(
 			ctx context.Context,
 			opts *pagination.QueryOptions,
+			_ pagination.CursorInfo,
 			gate *fieldGate,
-		) ([]any, error) {
+		) (listPage, error) {
 			result, err := repo.List(ctx, &glaccountports.ListGLAccountsRequest{Filter: opts})
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
 
 			showCurrent := gate.show("currentBalance", "currentBalance")
 			showDebit := gate.show("debitBalance", "debitBalance")
 			showCredit := gate.show("creditBalance", "creditBalance")
 
-			return listRows(result.Items, func(item *glaccount.GLAccount) any {
+			return offsetListPage(result.Items, func(item *glaccount.GLAccount) any {
 				row := glAccountRow{
 					ID:            item.ID.String(),
 					AccountCode:   item.AccountCode,
@@ -1341,14 +1342,15 @@ func newListFiscalPeriodsTool(
 		fetchGated: func(
 			ctx context.Context,
 			opts *pagination.QueryOptions,
+			_ pagination.CursorInfo,
 			gate *fieldGate,
-		) ([]any, error) {
+		) (listPage, error) {
 			result, err := repo.List(ctx, &fiscalperiodports.ListFiscalPeriodsRequest{Filter: opts})
 			if err != nil {
-				return nil, err
+				return listPage{}, err
 			}
 
-			return listRows(result.Items, func(item *fiscalperiod.FiscalPeriod) any {
+			return offsetListPage(result.Items, func(item *fiscalperiod.FiscalPeriod) any {
 				row := fiscalPeriodRow{
 					ID:           item.ID.String(),
 					FiscalYearID: item.FiscalYearID.String(),

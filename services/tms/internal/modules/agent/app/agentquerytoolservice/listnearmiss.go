@@ -34,12 +34,18 @@ func (t *listTool) nearMiss(ctx context.Context, req *nearMissRequest) string {
 		probe.FieldFilters = filters
 		probe.Sort = nil
 		probe.Pagination = pagination.Info{Limit: 1}
-		rows, err := t.fetchRows(ctx, req.params, &probe, req.gate, req.criteria)
+		fetched, err := t.fetchRows(ctx, &listFetch{
+			params:   req.params,
+			opts:     &probe,
+			cursor:   pagination.CursorInfo{Limit: 1},
+			gate:     req.gate,
+			criteria: req.criteria,
+		})
 		if err != nil {
 			return false, false
 		}
 
-		return len(rows) > 0, true
+		return len(fetched.rows) > 0, true
 	}
 
 	entity := t.spec.entityPlural

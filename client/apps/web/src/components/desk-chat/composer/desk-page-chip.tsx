@@ -6,12 +6,13 @@ import { useRecentPages } from "@/stores/recent-pages-store";
 import type { AssistantPageContext } from "@/types/assistant";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { Button } from "@trenova/shared/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useLocation } from "react-router";
 import { DeskIcon, type DeskIconName } from "../desk-icons";
-import { useOutsideDismiss } from "../use-outside-dismiss";
+import { deskPopoverClass, useComposerPopover } from "../desk-popover";
 
 /** The page a person came to the Desk from. */
 export type DeskPage = { path: string; title: string };
@@ -112,39 +113,45 @@ export function DeskPageChip({
 }) {
   const t = useT();
   const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLSpanElement>(null);
-  const close = useCallback(() => setOpen(false), []);
-  useOutsideDismiss(rootRef, open, close);
+  const { anchor, wide } = useComposerPopover();
   const shown = share ? page : null;
 
   return (
-    <span className="dk-pc" ref={rootRef}>
-      <Button
-        variant="bare"
-        size="bare"
-        className={cn(
-          "dk-pc-b relative size-7 justify-center rounded-full text-sm text-dsk-muted transition-colors duration-150 hover:bg-dsk-hover hover:text-dsk-fg",
-          !shown && "dk-off pr-1.5",
-          open && "dk-open bg-dsk-hover text-dsk-fg",
-        )}
-        title={
-          shown
-            ? onScreen
-              ? t("The assistant can see {0}", shown.title)
-              : t("Desk can see {0}", shown.title)
-            : t("Not sharing a page")
-        }
-        aria-label={shown ? t("Sharing {0}", shown.title) : t("Not sharing a page")}
-        aria-expanded={open}
-        onClick={() => setOpen((value) => !value)}
-      >
-        <span className="dk-pc-ic">
-          <DeskIcon name={shown ? pageIcon(shown.path) : "eye"} size={12} stroke={2} />
-        </span>
-        <span className="dk-pc-t">{shown ? shown.title : t("No page")}</span>
-      </Button>
-      {open && (
-        <div className="dk-pc-pop dk-p1">
+    <span className="dk-pc">
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger
+          render={
+            <Button
+              variant="bare"
+              size="bare"
+              className={cn(
+                "dk-pc-b relative size-7 justify-center rounded-full text-sm text-dsk-muted transition-colors duration-150 hover:bg-dsk-hover hover:text-dsk-fg",
+                !shown && "dk-off pr-1.5",
+                open && "dk-open bg-dsk-hover text-dsk-fg",
+              )}
+              title={
+                shown
+                  ? onScreen
+                    ? t("The assistant can see {0}", shown.title)
+                    : t("Desk can see {0}", shown.title)
+                  : t("Not sharing a page")
+              }
+              aria-label={shown ? t("Sharing {0}", shown.title) : t("Not sharing a page")}
+            />
+          }
+        >
+          <span className="dk-pc-ic">
+            <DeskIcon name={shown ? pageIcon(shown.path) : "eye"} size={12} stroke={2} />
+          </span>
+          <span className="dk-pc-t">{shown ? shown.title : t("No page")}</span>
+        </PopoverTrigger>
+        <PopoverContent
+          side="top"
+          align="start"
+          sideOffset={8}
+          anchor={anchor}
+          className={cn(deskPopoverClass, "dk-pc-pop p-1.5", wide ? "w-(--anchor-width)" : "w-80")}
+        >
           <div className="dk-pc-h1">
             <span className="dk-pc-hic">
               <DeskIcon name={page ? pageIcon(page.path) : "eye"} size={16} stroke={2} />
@@ -222,8 +229,8 @@ export function DeskPageChip({
               <span className="dk-kbd ml-auto">/explain</span>
             </Button>
           )}
-        </div>
-      )}
+        </PopoverContent>
+      </Popover>
     </span>
   );
 }
