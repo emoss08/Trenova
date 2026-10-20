@@ -267,7 +267,7 @@ scenarios:
       - say: "anything running late rn? need to know before my 9am"
         page: { path: /shipments, title: Shipments }
         expect:
-          calls: ["shipment_list|get_dispatch_board"]
+          calls: ["shipment_list|dispatch_get_board"]
           noCalls: [invoice_build_run]
           maxCalls: 6
           maxFailedCalls: 0
@@ -320,7 +320,7 @@ A scenario with a `formula:` block talks to the Formula Studio's own assistant i
 agent: the bench opens the studio's page thread (`OpenPageThread`, origin `Formula`), on the
 template named by `template` (looked up by name; leave it out for a new formula, and `type`
 sets the template type, `FreightCharge` by default), and sends the studio's draft with every
-message, as the page does. Each `propose_formula` edit the agent makes is applied to that draft
+message, as the page does. Each `formula_propose` edit the agent makes is applied to that draft
 before the next message, the way the studio applies it, so a follow-up edits what the agent
 wrote, and the transcript shows the draft after every step.
 
@@ -330,7 +330,7 @@ wrote, and the transcript shows the draft after every step.
     steps:
       - say: "change this so every stop after the second one adds 75"
         expect:
-          calls: ["propose_formula"]
+          calls: ["formula_propose"]
           formula: ["totalDistance", "totalStops"]
 ```
 
@@ -438,7 +438,7 @@ steps:
       run: AwaitingDecision           # the run's final status
       flagged: true                   # it raised an exception or flagged for review
       proposals:
-        - tool: send_detention_notice
+        - tool: detention_send_notice
       db:
         - sql: SELECT count(*) FROM agent_exceptions WHERE run_id = '{{run}}'
           equals: "1"
@@ -446,7 +446,7 @@ steps:
 
 A fire step may also shape the agent for that one run, the way a person would in AI Control:
 `ceiling` sets its autonomy ceiling (`Propose`, `ActWithApproval`, `AutoExecute`) and
-`toolTiers` sets a tier on named tools as a person's setting (`raise_exception: Propose`), on
+`toolTiers` sets a tier on named tools as a person's setting (`agent_raise_exception: Propose`), on
 tools the template holds or the core tools. Both apply while the case holds the agent and are
 put back to the template's own ceiling and no tool tiers when it ends; the next sync clears any
 a crashed case left. `stopWhileWaiting: true` cancels the run's workflow once it is
@@ -460,7 +460,7 @@ it was stopped.
           event: billing_queue.item_exception
           subject: select id from billing_queue_items where number = 'BQ-BENCH-0001'
           ceiling: Propose
-          toolTiers: { flag_for_manual_review: Propose }
+          toolTiers: { agent_request_review: Propose }
           stopWhileWaiting: true
         expect:
           run: Failed

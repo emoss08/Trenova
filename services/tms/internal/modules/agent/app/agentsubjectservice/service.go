@@ -478,7 +478,7 @@ func (s *Service) document(
 
 // insight describes a finding by what the detector measured and what it
 // suggests, so a run woken by insight.detected starts with the numbers, the
-// records behind them and the recommendation, and get_insight is there for
+// records behind them and the recommendation, and insight_get is there for
 // the trend when the run wants it.
 func (s *Service) insight(
 	ctx context.Context,
@@ -878,7 +878,7 @@ func (s *Service) ediInboundFile(
 	}
 	if file.Status != edi.InboundFileStatusQuarantined {
 		notes["warning"] = "This file is not held back in quarantine; do not act as if it " +
-			"were. Any load tenders it carried are listed by list_edi_transfers for this file."
+			"were. Any load tenders it carried are listed by edi_list_transfers for this file."
 	}
 	subject.Notes = marshalNotes(notes)
 

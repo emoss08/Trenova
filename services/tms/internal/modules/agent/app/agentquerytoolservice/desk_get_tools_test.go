@@ -4,14 +4,14 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -129,8 +129,8 @@ func TestGetWorkerCredential_IsGatedOnTheCredentialResource(t *testing.T) {
 
 	tool := newGetWorkerCredentialTool(&stubWorkerCredentials{}, &fakePermissions{})
 	assert.Equal(t, permission.ResourceWorkerCredential, tool.Policy().Resource)
-	assert.Equal(t, "get_worker_credential", tool.Name())
-	assert.Contains(t, tool.Description(), "list_expiring_credentials")
+	assert.Equal(t, "worker_get_credential", tool.Name())
+	assert.Contains(t, tool.Description(), "worker_list_expiring_credentials")
 }
 
 func TestDeskGetTools_AreGatedOnTheirRecordsResource(t *testing.T) {

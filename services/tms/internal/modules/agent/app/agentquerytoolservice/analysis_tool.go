@@ -53,7 +53,7 @@ const (
 
 var (
 	errAnalysisNeedsAPerson = errors.New(
-		"analyze_data reads report runs and files a person gave you, and this run has no person",
+		"report_analyze_data reads report runs and files a person gave you, and this run has no person",
 	)
 	errAnalysisReportRead = errors.New(
 		"you do not have permission to read reports, so their results cannot be analyzed",
@@ -87,13 +87,13 @@ func (t *analyzeDataTool) Description() string {
 	return "Run Python over every row of report results and attached files, to calculate " +
 		"what the rows do not state and to analyze, explore or chart data. Each dataset is " +
 		"a pandas DataFrame named after it: a report run's columns are headed by their " +
-		"labels, as run_report showed them, with numbers as numbers and times as dates in the " +
+		"labels, as report_run showed them, with numbers as numbers and times as dates in the " +
 		"organization's timezone. pd, np and plt are imported, and the code cannot reach the " +
 		"internet. Show results instead of printing them: show_figure(label, value, kind) for " +
 		"a headline number, show_table(df, title) for a table and plt.show() for each chart, " +
 		"one point per chart with a title. Kinds are money, count, percent (a fraction) and " +
 		"number. Asked to explore, answer three or four questions the data supports. Run the " +
-		"report with run_report first and use its runId; each call starts afresh."
+		"report with report_run first and use its runId; each call starts afresh."
 }
 
 func (t *analyzeDataTool) ParamSchema() map[string]any {
@@ -138,12 +138,12 @@ func (t *analyzeDataTool) ParamSchema() map[string]any {
 						paramDatasetRun: agenttoolschema.OfKinds(map[string]any{
 							toolschema.KeyType: "string",
 							toolschema.KeyDescription: "A finished report run you ran for this " +
-								"person, from run_report. Its rows are written as CSV.",
+								"person, from report_run. Its rows are written as CSV.",
 						}, permission.KindReportRun),
 						paramDatasetDocument: agenttoolschema.RecordIDText(
 							permission.ResourceDocument,
 							"A CSV, XLSX or text file the person attached to this "+
-								"conversation, from read_attachment.",
+								"conversation, from agent_read_attachment.",
 						),
 					},
 					toolschema.KeyRequired:             []string{paramDatasetName},
@@ -416,7 +416,7 @@ func (t *analyzeDataTool) reportDataset(
 		RunID:   request.reportRun,
 	}
 	notYours := fmt.Errorf(
-		"report run %s is not one you ran for this person; run the report with run_report and use its runId",
+		"report run %s is not one you ran for this person; run the report with report_run and use its runId",
 		request.reportRun,
 	)
 

@@ -53,7 +53,7 @@ export function capabilityServer(
 }
 
 /** The tool a vendor offers when it can keep watching the web on a schedule. */
-export const WATCH_WEB_TOOL = "watch_web";
+export const WATCH_WEB_TOOL = "web_watch";
 
 /** Whether an extension's vendor can keep watching the web for agents. */
 export function offersWebWatches(item: AgentExtensionCatalogItem): boolean {

@@ -66,11 +66,11 @@ func TestRun_AToolThatSaysItWouldFailIsRefusedAtEveryTier(t *testing.T) {
 			t.Parallel()
 
 			tool := &validatingActionTool{
-				stubActionToolAlias: actionTool("update_report", tc.tier, nil),
+				stubActionToolAlias: actionTool("report_update", tc.tier, nil),
 				invalid:             errors.New("the report no longer has a column named lateness"),
 			}
 			completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-				toolTurn("update_report", map[string]any{"definitionId": "rd_1"}),
+				toolTurn("report_update", map[string]any{"definitionId": "rd_1"}),
 				textTurn("I will fix the column."),
 			}}
 			rt := newRuntime(completion, &stubQueryRegistry{},
@@ -78,7 +78,7 @@ func TestRun_AToolThatSaysItWouldFailIsRefusedAtEveryTier(t *testing.T) {
 			actor := testActor()
 
 			result, err := rt.Run(t.Context(), &agentports.RunRequest{
-				Definition: tc.definition("update_report"),
+				Definition: tc.definition("report_update"),
 				Actor:      actor,
 				Input:      "update",
 			})
@@ -112,17 +112,17 @@ func TestRun_AToolThatValidatesRunsWhenItsCheckPasses(t *testing.T) {
 	t.Parallel()
 
 	tool := &validatingActionTool{
-		stubActionToolAlias: actionTool("update_report", agent.TierAutoExecute, nil),
+		stubActionToolAlias: actionTool("report_update", agent.TierAutoExecute, nil),
 	}
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("update_report", map[string]any{"definitionId": "rd_1"}),
+		toolTurn("report_update", map[string]any{"definitionId": "rd_1"}),
 		textTurn("Done."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
 		&stubActionRegistry{Tools: []agentports.AgentTool{tool}}, nil)
 
 	result, err := rt.Run(t.Context(), &agentports.RunRequest{
-		Definition: autoDefinition("update_report"),
+		Definition: autoDefinition("report_update"),
 		Actor:      testActor(),
 		Input:      "update",
 	})

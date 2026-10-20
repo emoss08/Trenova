@@ -133,7 +133,7 @@ func (f *locationFixture) params(overrides map[string]any) agentports.ToolExecut
 	}
 
 	params := agenttoolstest.ExecuteParams(values)
-	params.IdempotencyKey = "turn-1:create_location"
+	params.IdempotencyKey = "turn-1:location_create"
 
 	return params
 }

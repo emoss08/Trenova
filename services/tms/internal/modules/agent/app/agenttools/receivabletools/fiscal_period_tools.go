@@ -20,7 +20,7 @@ const paramFiscalPeriodID = "fiscalPeriodId"
 
 const maxFiscalReopenReason = 1000
 
-const fiscalPeriodSupplier = "The fiscal period, from list_fiscal_periods. Never guess one."
+const fiscalPeriodSupplier = "The fiscal period, from ledger_list_fiscal_periods. Never guess one."
 
 const fiscalPeriodRecordKind = "fiscal period"
 
@@ -64,15 +64,15 @@ type fiscalPeriodMove struct {
 
 func closeFiscalPeriodMove() *fiscalPeriodMove {
 	return &fiscalPeriodMove{
-		name: "close_fiscal_period",
+		name: "ledger_close_fiscal_period",
 		recipe: []string{
-			"list_fiscal_periods",
-			"get_fiscal_close_blockers",
-			"close_fiscal_period",
+			"ledger_list_fiscal_periods",
+			"ledger_get_fiscal_close_blockers",
+			"ledger_close_fiscal_period",
 		},
 		transition: fiscalperiodservice.TransitionClose,
 		operation:  permission.OpClose,
-		description: "Propose closing a fiscal period once get_fiscal_close_blockers shows " +
+		description: "Propose closing a fiscal period once ledger_get_fiscal_close_blockers shows " +
 			"nothing in the way, so nothing more posts in it. Earlier periods must be " +
 			"closed first. A person always decides, and reopening it takes a reason.",
 		rationale: "Ends posting to a period of the books a person signs off; only a " +
@@ -83,17 +83,17 @@ func closeFiscalPeriodMove() *fiscalPeriodMove {
 
 func lockFiscalPeriodMove() *fiscalPeriodMove {
 	return &fiscalPeriodMove{
-		name: "lock_fiscal_period",
+		name: "ledger_lock_fiscal_period",
 		recipe: []string{
-			"list_fiscal_periods",
-			"get_fiscal_close_blockers",
-			"lock_fiscal_period",
+			"ledger_list_fiscal_periods",
+			"ledger_get_fiscal_close_blockers",
+			"ledger_lock_fiscal_period",
 		},
 		transition: fiscalperiodservice.TransitionLock,
 		operation:  permission.OpLock,
 		description: "Propose locking an open fiscal period while its books are " +
-			"reviewed for close, the step before close_fiscal_period. " +
-			"unlock_fiscal_period undoes it. A person always decides.",
+			"reviewed for close, the step before ledger_close_fiscal_period. " +
+			"ledger_unlock_fiscal_period undoes it. A person always decides.",
 		rationale: "Changes which dates the ledger takes postings for; only a person " +
 			"locks a period.",
 		outcome: "it is locked for review ahead of its close",
@@ -102,7 +102,7 @@ func lockFiscalPeriodMove() *fiscalPeriodMove {
 
 func unlockFiscalPeriodMove() *fiscalPeriodMove {
 	return &fiscalPeriodMove{
-		name:       "unlock_fiscal_period",
+		name:       "ledger_unlock_fiscal_period",
 		transition: fiscalperiodservice.TransitionUnlock,
 		operation:  permission.OpUnlock,
 		description: "Propose unlocking a locked fiscal period so it is open again, when " +
@@ -115,7 +115,7 @@ func unlockFiscalPeriodMove() *fiscalPeriodMove {
 
 func reopenFiscalPeriodMove() *fiscalPeriodMove {
 	return &fiscalPeriodMove{
-		name:       "reopen_fiscal_period",
+		name:       "ledger_reopen_fiscal_period",
 		transition: fiscalperiodservice.TransitionReopen,
 		operation:  permission.OpReopen,
 		description: "Propose reopening a closed fiscal period, with the reason, so a " +
@@ -130,7 +130,7 @@ func reopenFiscalPeriodMove() *fiscalPeriodMove {
 
 func openFiscalPeriodMove() *fiscalPeriodMove {
 	return &fiscalPeriodMove{
-		name:       "open_fiscal_period",
+		name:       "ledger_open_fiscal_period",
 		transition: fiscalperiodservice.TransitionActivate,
 		operation:  permission.OpActivate,
 		description: "Propose opening an inactive fiscal period so postings dated in it " +

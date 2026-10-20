@@ -116,7 +116,7 @@ func NewBuildInvoiceRunTool(runs invoiceRunKeeper) agentports.AgentTool {
 		Properties: map[string]any{
 			common.ParamCustomerIDs: agenttoolschema.RecordIDs(
 				permission.ResourceCustomer,
-				"The customers to bill, from list_customers or "+
+				"The customers to bill, from customer_list or "+
 					"invoice_list_open_statements.",
 				maxRunCustomers,
 			),
@@ -132,7 +132,7 @@ func NewBuildInvoiceRunTool(runs invoiceRunKeeper) agentports.AgentTool {
 			common.ParamPeriodEnd,
 		},
 		SearchTerms:   []string{"statement billing", "consolidated billing", "bill the period"},
-		Prerequisites: []string{"invoice_list_open_statements", "list_customers"},
+		Prerequisites: []string{"invoice_list_open_statements", "customer_list"},
 		Recipe: []string{
 			"invoice_list_open_statements",
 			"invoice_build_run",

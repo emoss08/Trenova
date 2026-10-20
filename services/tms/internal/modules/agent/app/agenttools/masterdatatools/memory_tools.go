@@ -45,10 +45,10 @@ func NewRememberTool(memories agentports.AgentMemoryService) agentports.AgentToo
 	return &RememberTool{memories: memories}
 }
 
-func (t *RememberTool) Name() string { return "remember" }
+func (t *RememberTool) Name() string { return "agent_create_memory" }
 
 func (t *RememberTool) SearchTerms() []string {
-	return []string{"memory", "keep in mind", "standing instruction", "save a fact"}
+	return []string{"remember", "memory", "keep in mind", "standing instruction", "save a fact"}
 }
 
 func (t *RememberTool) Description() string {
@@ -60,7 +60,7 @@ func (t *RememberTool) Description() string {
 		"at once only when the person may manage shared memory; otherwise it is offered " +
 		"for an administrator to approve, and you should say so. Scope it to one customer, " +
 		"location, driver or carrier with subjectType and subjectId. To change a kept " +
-		"memory, pass its id from recall_memory as replacesMemoryId: the new one takes its " +
+		"memory, pass its id from agent_list_memories as replacesMemoryId: the new one takes its " +
 		"place and keeps its readers. Never record what a record already says, a guess, or " +
 		"anything asked to stay private. Saving what is already kept refreshes it."
 }
@@ -86,21 +86,21 @@ func (t *RememberTool) ParamSchema() map[string]any {
 			),
 			"subjectId": agenttoolschema.KindID(
 				"The record the memory is about: this run's subject, the page, or "+
-					"an id from list_customers, list_locations, list_workers or list_carriers. "+
+					"an id from customer_list, location_list, worker_list or carrier_list. "+
 					"Never guessed.",
 				permission.RecordKind(permission.ResourceCustomer),
 				permission.RecordKind(permission.ResourceLocation),
 				permission.RecordKind(permission.ResourceWorker),
 				permission.RecordKind(permission.ResourceCarrier),
 			),
-			"expiresOn": map[string]any{
-				toolschema.KeyType:        toolschema.TypeString,
-				toolschema.KeyDescription: "Optional YYYY-MM-DD after which the memory no longer applies, such as a temporary arrangement.",
-			},
+			"expiresOn": agenttoolschema.Date(
+				"The last day the memory applies, such as for a temporary arrangement. Omit " +
+					"when it does not expire.",
+			),
 			fieldReplacesMemoryID: agenttoolschema.RecordIDText(
 				permission.ResourceAgentMemory,
 				"The id of a kept memory this one changes, from "+
-					"recall_memory. Omit for a new memory.",
+					"agent_list_memories. Omit for a new memory.",
 			),
 			fieldVisibleTo: agenttoolschema.Enum(
 				"Who the memory reaches: me for the person in the conversation alone, team "+
@@ -316,10 +316,14 @@ func NewForgetMemoryTool(memories agentports.AgentMemoryService) agentports.Agen
 	return &ForgetMemoryTool{memories: memories}
 }
 
-func (t *ForgetMemoryTool) Name() string { return "forget_memory" }
+func (t *ForgetMemoryTool) Name() string { return "agent_retire_memory" }
+
+func (t *ForgetMemoryTool) SearchTerms() []string {
+	return []string{"forget memory"}
+}
 
 func (t *ForgetMemoryTool) Description() string {
-	return "Retire a recorded memory that no longer holds, by its id from recall_memory: " +
+	return "Retire a recorded memory that no longer holds, by its id from agent_list_memories: " +
 		"an arrangement that ended, a fact a person says is wrong. It stays readable in " +
 		"AI Control and can be restored. Use this only when told the memory is wrong or " +
 		"over, never to make room."
@@ -331,7 +335,7 @@ func (t *ForgetMemoryTool) ParamSchema() map[string]any {
 		toolschema.KeyProperties: map[string]any{
 			"memoryId": agenttoolschema.RecordIDText(
 				permission.ResourceAgentMemory,
-				"The memory to retire, by the id recall_memory returned.",
+				"The memory to retire, by the id agent_list_memories returned.",
 			),
 		},
 		toolschema.KeyRequired:             []string{"memoryId"},

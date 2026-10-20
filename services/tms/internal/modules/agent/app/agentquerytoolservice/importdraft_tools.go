@@ -24,6 +24,14 @@ import (
 )
 
 const (
+	toolCustomerList               = "customer_list"
+	toolLocationList               = "location_list"
+	toolMasterdataListServiceTypes = "masterdata_list_service_types"
+	toolReportGet                  = "report_get"
+	toolReportList                 = "report_list"
+)
+
+const (
 	draftAppliedNote = "The page applies this change now and shows it in the page draft on your " +
 		"next turn. Nothing is saved until the person creates the shipment."
 	draftRationale = "Hands a change to the shipment the person is building on their own page; " +
@@ -329,13 +337,13 @@ func codedLabel(code, name string) string {
 func requiredFieldSource(field pagedraft.RequiredField) string {
 	switch field {
 	case pagedraft.RequiredCustomer:
-		return "list_customers"
+		return toolCustomerList
 	case pagedraft.RequiredServiceType:
-		return "list_service_types"
+		return toolMasterdataListServiceTypes
 	case pagedraft.RequiredShipmentType:
-		return "list_shipment_types"
+		return "masterdata_list_shipment_types"
 	case pagedraft.RequiredFormulaTemplate:
-		return "list_formula_templates"
+		return "formula_list_templates"
 	default:
 		return "the matching list tool"
 	}
@@ -368,8 +376,8 @@ func (t *setRequiredFieldTool) Name() string { return string(pagedraft.ActionSet
 
 func (t *setRequiredFieldTool) Description() string {
 	return "Set the customer, service type, shipment type or rating method on the import " +
-		"page, by record id. Find the record first with list_customers, list_service_types, " +
-		"list_shipment_types or list_formula_templates, and set it once the person agrees; " +
+		"page, by record id. Find the record first with customer_list, masterdata_list_service_types, " +
+		"masterdata_list_shipment_types or formula_list_templates, and set it once the person agrees; " +
 		"the page shows the record's own name."
 }
 
@@ -381,8 +389,8 @@ func (t *setRequiredFieldTool) ParamSchema() map[string]any {
 				"Which of the four the record is for.", importRequiredFields,
 			),
 			"recordId": agenttoolschema.KindID(
-				"The record's id, from list_customers, list_service_types, "+
-					"list_shipment_types or list_formula_templates to match the field.",
+				"The record's id, from customer_list, masterdata_list_service_types, "+
+					"masterdata_list_shipment_types or formula_list_templates to match the field.",
 				permission.RecordKind(permission.ResourceCustomer),
 				permission.RecordKind(permission.ResourceServiceType),
 				permission.RecordKind(permission.ResourceShipmentType),
@@ -468,12 +476,12 @@ func provideSetStopLocationTool(
 func (t *setStopLocationTool) Name() string { return string(pagedraft.ActionSetStopLocation) }
 
 func (t *setStopLocationTool) Recipe() []string {
-	return []string{"list_locations", string(pagedraft.ActionSetStopLocation)}
+	return []string{toolLocationList, string(pagedraft.ActionSetStopLocation)}
 }
 
 func (t *setStopLocationTool) Description() string {
 	return "Match a stop on the import page to a location record. Find the location with " +
-		"list_locations by name, city or address; when none matches, create_location " +
+		"location_list by name, city or address; when none matches, location_create " +
 		"proposes a new one for the person to approve, and you set it once it exists."
 }
 
@@ -483,7 +491,7 @@ func (t *setStopLocationTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"stopIndex": map[string]any{"type": "integer", "description": stopIndexDescription},
 			"locationId": agenttoolschema.RecordIDText(permission.ResourceLocation,
-				"The location's id, from list_locations or create_location."),
+				"The location's id, from location_list or location_create."),
 		},
 		"required":             []string{"stopIndex", "locationId"},
 		"additionalProperties": false,
@@ -529,7 +537,7 @@ func (t *setStopLocationTool) Query(
 	})
 	if err != nil {
 		return nil, fmt.Errorf(
-			"%s is not a location; find one with list_locations: %w", locationID, err,
+			"%s is not a location; find one with location_list: %w", locationID, err,
 		)
 	}
 

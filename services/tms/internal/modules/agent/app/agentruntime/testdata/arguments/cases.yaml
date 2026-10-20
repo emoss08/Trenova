@@ -294,7 +294,7 @@ pipeline:
     schema:
       type: object
       properties:
-        customerId: {type: string, description: "The customer, from list_customers."}
+        customerId: {type: string, description: "The customer, from customer_list."}
       required: [customerId]
       additionalProperties: false
     args: {customerId: Acme Foods}

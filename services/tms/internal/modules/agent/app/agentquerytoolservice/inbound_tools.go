@@ -289,7 +289,7 @@ func newGetInboundMessageTool(
 	return &getInboundMessageTool{messages: messages, drafts: drafts}
 }
 
-func (t *getInboundMessageTool) Name() string { return "get_inbound_message" }
+func (t *getInboundMessageTool) Name() string { return "inbox_get_inbound_message" }
 
 func (t *getInboundMessageTool) Description() string {
 	return "Read one message that arrived on a monitored address: sender, subject, body, " +
@@ -309,7 +309,7 @@ func (t *getInboundMessageTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"messageId": agenttoolschema.RecordIDText(permission.ResourceInboundMessage,
-				"The message's id, from the run's subject or list_inbound_messages."),
+				"The message's id, from the run's subject or inbox_list_inbound_messages."),
 		},
 		"required":             []string{"messageId"},
 		"additionalProperties": false,
@@ -391,12 +391,12 @@ func newListInboundMessagesTool(messages inboundMessageReader) agentports.AgentQ
 	return &listInboundMessagesTool{messages: messages}
 }
 
-func (t *listInboundMessagesTool) Name() string { return "list_inbound_messages" }
+func (t *listInboundMessagesTool) Name() string { return "inbox_list_inbound_messages" }
 
 func (t *listInboundMessagesTool) Description() string {
 	return "List the inbox, newest first: mail that arrived on a monitored address, with " +
 		"sender, subject, what it was read as and whether it waits on a person. Filter by status (waiting means in review or held back), kind, mailbox " +
-		"or words from the sender or subject. Use get_inbound_message for one message's body."
+		"or words from the sender or subject. Use inbox_get_inbound_message for one message's body."
 }
 
 func (t *listInboundMessagesTool) SearchTerms() []string {
@@ -416,7 +416,7 @@ func (t *listInboundMessagesTool) ParamSchema() map[string]any {
 			),
 			"mailboxId": agenttoolschema.RecordIDText(permission.ResourceInboundMailbox,
 				"Optional: only messages to this mailbox, by the mailboxId a row of "+
-					"this tool or get_inbound_message shows, or by id from the page you are on."),
+					"this tool or inbox_get_inbound_message shows, or by id from the page you are on."),
 			"query": map[string]any{
 				"type":        "string",
 				"description": "Optional: words from the sender's name or address, or the subject.",

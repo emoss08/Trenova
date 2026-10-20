@@ -64,15 +64,15 @@ type reportParameterRow struct {
 	AllowedValues []string `json:"allowedValues,omitempty"`
 }
 
-// reportCatalogRow names the key the way run_report takes it. The catalog
-// used to call it "key" while run_report asked for "reportKey", and a model
+// reportCatalogRow names the key the way report_run takes it. The catalog
+// used to call it "key" while report_run asked for "reportKey", and a model
 // that read the one and wrote the other was refused for a parameter it had
 // supplied.
 type reportCatalogRow struct {
 	Key string `json:"reportKey,omitempty"`
 	// DefinitionID names a report someone in this organization saved, from
-	// the builder or from create_report. It is what run_report, describe_report
-	// and update_report take for a saved report, where a canned one has a key.
+	// the builder or from report_create. It is what report_run, report_get
+	// and report_update take for a saved report, where a canned one has a key.
 	DefinitionID string `json:"definitionId,omitempty"`
 	Name         string `json:"name"`
 	Description  string `json:"description,omitempty"`
@@ -83,7 +83,7 @@ type reportCatalogRow struct {
 	Editable     bool   `json:"editable,omitempty"`
 	Format       string `json:"defaultFormat,omitempty"`
 	// Takes names the parameters this report needs, and nothing more. A
-	// listing is for choosing a report; describe_report is for filling one
+	// listing is for choosing a report; report_get is for filling one
 	// in, and it already returns each parameter's shape and allowed values.
 	// Carrying all of that here cost the catalog four times its size and
 	// pushed the result past the point where it was cut off mid-record —
@@ -100,17 +100,17 @@ func newListReportsTool(reports reportRunner) agentports.AgentQueryTool {
 	return &listReportsTool{reports: reports}
 }
 
-func (t *listReportsTool) Name() string { return "list_reports" }
+func (t *listReportsTool) Name() string { return toolReportList }
 
 func (t *listReportsTool) Description() string {
 	return "List the reports this organization can run and what each takes: built-in " +
 		"ones with a reportKey, and ones saved in the report builder with a definitionId. " +
 		"Call this " +
-		"before run_report so you name a real report rather than guessing, then " +
-		"describe_report for the one you picked to see each parameter's shape and " +
+		"before report_run so you name a real report rather than guessing, then " +
+		"report_get for the one you picked to see each parameter's shape and " +
 		"allowed values. Narrow with category when the question is clearly about one " +
 		"area, such as Accounting or Fleet. A saved report marked editable is one you " +
-		"may adjust with update_report."
+		"may adjust with report_update."
 }
 
 func (t *listReportsTool) ParamSchema() map[string]any {
@@ -285,7 +285,7 @@ func toCatalogRow(entry *canned.Entry) reportCatalogRow {
 }
 
 // parameterNames is what a listing says about parameters: that they exist
-// and what they are called. describe_report carries the rest.
+// and what they are called. report_get carries the rest.
 func parameterNames(definition *report.Definition) []string {
 	rows := parameterRows(definition)
 	names := make([]string, 0, len(rows))
@@ -330,7 +330,7 @@ func parameterRows(definition *report.Definition) []reportParameterRow {
 	return rows
 }
 
-// reportRunStatus is what both run_report and get_report_run answer with, so a
+// reportRunStatus is what both report_run and report_get_run answer with, so a
 // model that started a run and a model that checked on one read the same shape.
 type reportRunStatus struct {
 	RunID        string `json:"runId"`
@@ -346,9 +346,9 @@ type reportRunStatus struct {
 	RowCount  int64  `json:"rowCount,omitempty"`
 	Truncated bool   `json:"truncated,omitempty"`
 	// Columns and Rows are a sample from the top of a finished run, in the
-	// shape preview_report hands back. Without them a person asking to see
+	// shape report_preview hands back. Without them a person asking to see
 	// a few rows of the report that had just finished watched the model run
-	// preview_report on the same definition again.
+	// report_preview on the same definition again.
 	Columns []previewColumnRow `json:"columns,omitempty"`
 	Rows    []map[string]any   `json:"rows,omitempty"`
 	Note    string             `json:"note"`
@@ -405,19 +405,19 @@ func newRunReportTool(
 func (t *runReportTool) Name() string { return toolRunReport }
 
 func (t *runReportTool) Prerequisites() []string {
-	return []string{"list_reports", "describe_report"}
+	return []string{toolReportList, toolReportGet}
 }
 
 func (t *runReportTool) Recipe() []string {
-	return []string{"list_reports", "describe_report", toolRunReport}
+	return []string{toolReportList, toolReportGet, toolRunReport}
 }
 
 func (t *runReportTool) Description() string {
-	return "Start one of the reports from list_reports: a built-in one by reportKey or " +
+	return "Start one of the reports from report_list: a built-in one by reportKey or " +
 		"a saved one by definitionId, whichever dataset it reads. Take every parameter " +
 		"you can from what the person already said — a request naming a window, a date range " +
 		"or a customer has supplied it — and ask_user for the rest, offering the " +
-		"allowed values describe_report gave rather than choices you made up. Reports " +
+		"allowed values report_get gave rather than choices you made up. Reports " +
 		"run in the background: a run that finishes within a few seconds comes " +
 		"back with its outcome and a sample of its first rows; otherwise this " +
 		"returns a run id, and you say that it has started and stop there. The " +
@@ -432,20 +432,20 @@ func (t *runReportTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"reportKey": map[string]any{
 				"type":        "string",
-				"description": "The reportKey of a built-in report from list_reports.",
+				"description": "The reportKey of a built-in report from report_list.",
 			},
 			"key": map[string]any{
 				"type": "string",
-				"description": "Accepted as an alias of reportKey, from list_reports; " +
+				"description": "Accepted as an alias of reportKey, from report_list; " +
 					"prefer reportKey.",
 			},
 			"definitionId": agenttoolschema.OfResource(map[string]any{
 				"type":        "string",
-				"description": "The definitionId of a saved report from list_reports.",
+				"description": "The definitionId of a saved report from report_list.",
 			}, permission.ResourceReport),
 			"parameters": map[string]any{
 				"type": "object",
-				"description": "The report's parameters, keyed by the names list_reports " +
+				"description": "The report's parameters, keyed by the names report_list " +
 					"gave, each in the shape it named. A list parameter takes a plain " +
 					"JSON array and nothing else — [\"A\",\"B\"], never " +
 					"{\"item\":[\"A\"]} and never a comma-separated string. Supply " +
@@ -523,7 +523,7 @@ func (t *runReportTool) Query(
 		status.Note = fmt.Sprintf(
 			"%q has been queued and is not finished. Tell the person it is running and "+
 				"that the result will appear here with a download button when it is done. "+
-				"Do not call get_report_run to poll it and do not send them to the Reports "+
+				"Do not call report_get_run to poll it and do not send them to the Reports "+
 				"page; the conversation is already showing run %s.",
 			source.Name, run.ID.String(),
 		)
@@ -669,8 +669,8 @@ func describeMissingParameter(parameter report.ParameterDef) string {
 }
 
 const (
-	toolRunReport    = "run_report"
-	toolGetReportRun = "get_report_run"
+	toolRunReport    = "report_run"
+	toolGetReportRun = "report_get_run"
 )
 
 type getReportRunTool struct {
@@ -684,7 +684,7 @@ func newGetReportRunTool(reports reportRunner) agentports.AgentQueryTool {
 func (t *getReportRunTool) Name() string { return toolGetReportRun }
 
 func (t *getReportRunTool) Description() string {
-	return "Check on a report started by run_report, when the person asks a question " +
+	return "Check on a report started by report_run, when the person asks a question " +
 		"about the run that its own progress display does not answer. Returns whether " +
 		"it has finished, how many rows it produced with a sample of the first, and " +
 		"why it failed if it did. The " +
@@ -699,7 +699,7 @@ func (t *getReportRunTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"runId": agenttoolschema.OfKinds(map[string]any{
 				"type":        "string",
-				"description": "The run id returned by run_report.",
+				"description": "The run id returned by report_run.",
 			}, permission.KindReportRun),
 		},
 		"required":             []string{"runId"},
@@ -741,7 +741,7 @@ func (t *getReportRunTool) Query(
 }
 
 // maxRunSampleRows bounds the rows a finished run hands the model, for the
-// same reason preview_report is bounded: a sample shows what the report
+// same reason report_preview is bounded: a sample shows what the report
 // holds, and the whole result is the download.
 const maxRunSampleRows = maxPreviewRows
 

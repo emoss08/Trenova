@@ -9,7 +9,7 @@ scenarios:
     steps:
       - say: "add a new location: Walmart DC 6094, 2100 W Lewis Ave, Phoenix AZ 85009, its a receiver"
         expect:
-          proposals: [{ tool: create_location }]
+          proposals: [{ tool: location_create }]
           maxFailedCalls: 2
           rubric: >
             Proposes a location with that name, address, city, state and ZIP, picks a fitting
@@ -22,8 +22,8 @@ scenarios:
     steps:
       - say: "set up acme manufacturing as a customer"
         expect:
-          calls: ["list_customers|get_customer"]
-          noCalls: [create_customer]
+          calls: ["customer_list|customer_get"]
+          noCalls: [customer_create]
           noProposals: true
           rubric: Notices Acme Manufacturing (ACME) already exists and says so instead of creating a duplicate.
 
@@ -34,8 +34,8 @@ scenarios:
     steps:
       - say: "new customer Blue Mesa Produce, 2210 E Benson Hwy, Tucson AZ 85706, code BMPR"
         expect:
-          calls: ["list_customers"]
-          proposals: [{ tool: create_customer, args: { code: BMPR } }]
+          calls: ["customer_list"]
+          proposals: [{ tool: customer_create, args: { code: BMPR } }]
           maxFailedCalls: 2
 
   - name: send-a-delivered-load-to-billing
@@ -110,8 +110,8 @@ scenarios:
     steps:
       - say: "carlos needs next friday off, put it in as vacation"
         expect:
-          calls: ["search_worker|list_workers"]
-          proposals: [{ tool: request_worker_pto }]
+          calls: ["worker_search|worker_list"]
+          proposals: [{ tool: worker_request_pto }]
           maxFailedCalls: 1
           rubric: >
             Resolves Carlos Rivera and next Friday's date, and proposes one day of vacation, or says
@@ -124,8 +124,8 @@ scenarios:
     steps:
       - say: "approve whatever pto jane has pending"
         expect:
-          calls: ["list_time_off"]
-          proposals: [{ tool: approve_worker_pto }]
+          calls: ["worker_list_time_off"]
+          proposals: [{ tool: worker_approve_pto }]
           maxFailedCalls: 1
           rubric: >
             Lists Jane Doe's requested time off and proposes approving those requests, naming the
@@ -138,7 +138,7 @@ scenarios:
     steps:
       - say: "log fuel for trc-001: 112 gallons diesel at 3.89 in amarillo tx yesterday"
         expect:
-          proposals: [{ tool: record_fuel_purchase }]
+          proposals: [{ tool: fuel_record_purchase }]
           maxFailedCalls: 1
           rubric: >
             Proposes 112 gallons of diesel at $3.89 ($435.68) for TRC-001 in Texas dated yesterday,
@@ -151,7 +151,7 @@ scenarios:
     steps:
       - say: "how much did we bill by customer last month"
         expect:
-          calls: ["list_reports|run_report|preview_report|describe_report"]
+          calls: ["report_list|report_run|report_preview|report_get"]
           maxFailedCalls: 1
           noProposals: true
           rubric: >
@@ -165,8 +165,8 @@ scenarios:
     steps:
       - say: "jane got her new med card today, good till oct 9 2028"
         expect:
-          calls: ["search_worker|list_workers|list_worker_credentials"]
-          proposals: [{ tool: "record_worker_credential|update_worker_credential" }]
+          calls: ["worker_search|worker_list|worker_list_credentials"]
+          proposals: [{ tool: "worker_record_credential|worker_update_credential" }]
           maxFailedCalls: 1
           rubric: >
             Records a medical card for Jane Doe issued today and expiring in October 2028, and asks

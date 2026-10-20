@@ -77,7 +77,7 @@ describe("tierSplit", () => {
   const catalog = [
     tool("shipment_list", "query"),
     tool("shipment_get", "query"),
-    tool("recall_memory", "query", true),
+    tool("agent_list_memories", "query", true),
     tool("assign_driver", "action"),
     tool("tender_to_carrier", "action"),
     tool("release_hold", "action"),
@@ -89,7 +89,7 @@ describe("tierSplit", () => {
         toolNames: [
           "shipment_list",
           "shipment_get",
-          "recall_memory",
+          "agent_list_memories",
           "assign_driver",
           "tender_to_carrier",
           "release_hold",

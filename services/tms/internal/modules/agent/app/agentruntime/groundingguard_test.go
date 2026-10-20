@@ -255,7 +255,7 @@ func readGroundedWith(
 ) groundingRun {
 	t.Helper()
 
-	turns := []*agentports.ChatCompletionResult{toolTurn("get_report_run", map[string]any{})}
+	turns := []*agentports.ChatCompletionResult{toolTurn("report_get_run", map[string]any{})}
 	for _, reply := range replies {
 		turns = append(turns, textTurn(reply))
 	}
@@ -289,7 +289,7 @@ func readGroundedWith(
 func TestGroundingGuard_RewritesAShareNothingRead(t *testing.T) {
 	t.Parallel()
 
-	run := readGrounded(t, []string{"get_report_run", "analyze_data"},
+	run := readGrounded(t, []string{"report_get_run", "report_analyze_data"},
 		"About 52.3% of the $87,310.40 billed is still open.",
 		"Of the $87,310.40 billed, $45,662.16 is still open.",
 	)
@@ -298,7 +298,7 @@ func TestGroundingGuard_RewritesAShareNothingRead(t *testing.T) {
 	correction := lastUserMessage(run.completion.Requests[2])
 	assert.True(t, strings.HasPrefix(correction, amountsCorrectionLead))
 	assert.Contains(t, correction, "52.3")
-	assert.Contains(t, correction, "analyze_data")
+	assert.Contains(t, correction, "report_analyze_data")
 	assert.Equal(t, "Of the $87,310.40 billed, $45,662.16 is still open.", run.result.Reply)
 	assert.True(t, strings.HasSuffix(correction, unseenCorrection),
 		"a rewrite answers the person, not the correction")
@@ -312,21 +312,21 @@ func TestGroundingGuard_RewritesAShareNothingRead(t *testing.T) {
 func TestGroundingGuard_WithoutAnalysisAShareIsLeftOut(t *testing.T) {
 	t.Parallel()
 
-	run := readGrounded(t, []string{"get_report_run"},
+	run := readGrounded(t, []string{"report_get_run"},
 		"About 52.3% is still open.",
 		"Of the $87,310.40 billed, $45,662.16 is still open.",
 	)
 
 	require.Equal(t, 3, run.completion.CallCount)
 	correction := lastUserMessage(run.completion.Requests[2])
-	assert.NotContains(t, correction, "analyze_data")
+	assert.NotContains(t, correction, "report_analyze_data")
 	assert.Contains(t, correction, "leave it out")
 }
 
 func TestGroundingGuard_NamesTheFiguresWhenTheRewriteStillStatesThem(t *testing.T) {
 	t.Parallel()
 
-	run := readGrounded(t, []string{"get_report_run"},
+	run := readGrounded(t, []string{"report_get_run"},
 		"About 52.3% is still open.",
 		"Roughly 52.3% is still open.",
 	)
@@ -344,7 +344,7 @@ func TestGroundingGuard_NamesTheFiguresWhenTheRewriteStillStatesThem(t *testing.
 func TestGroundingGuard_AcceptsWhatTheConversationRead(t *testing.T) {
 	t.Parallel()
 
-	run := readGrounded(t, []string{"get_report_run"},
+	run := readGrounded(t, []string{"report_get_run"},
 		"Of about $87.3k billed, $45,662.16 is still open, and 91.4% delivered on time "+
 			"across 31 days.",
 	)
@@ -406,7 +406,7 @@ func TestGroundingFinding_DropsOnlyWordsNoTopLevelLabelClaims(t *testing.T) {
 	finding := groundingFinding{
 		fields: []string{"codes", "commodities"},
 		tools: map[string][]string{
-			"codes":       {"apply_edi_connection_draft"},
+			"codes":       {"edi_apply_connection_draft"},
 			"commodities": {"shipment_create"},
 		},
 		nested: []string{"codes"},
@@ -434,18 +434,18 @@ func TestGroundingGuard_AFileOnlyTheModelReadsIsNotHeldAgainstIt(t *testing.T) {
 	t.Parallel()
 
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("get_report_run", map[string]any{}),
+		toolTurn("report_get_run", map[string]any{}),
 		textTurn("The confirmation totals $3,610.00: $3,200.00 line haul and $410.00 fuel."),
 	}}
 	registry := &stubQueryRegistry{Tools: []agentports.AgentQueryTool{
-		&agenttest.StubQueryTool{ToolName: "get_report_run", Result: map[string]any{}},
+		&agenttest.StubQueryTool{ToolName: "report_get_run", Result: map[string]any{}},
 	}}
 	rt := newRuntime(completion, registry, &stubActionRegistry{}, nil)
 	fx := &groundingEffects{}
 	fx.localEffects = &localEffects{s: rt, ctx: t.Context(), emit: func(kernelports.StreamEvent) {}}
 
 	turn := rt.OpenTurn(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition("get_report_run"),
+		Definition: testDefinition("report_get_run"),
 		Actor:      testActor(),
 		Input:      "what's the total rate on it?",
 	})
@@ -582,11 +582,11 @@ func TestGroundingGuard_AnOfferBesideAClaimStillChecksTheClaim(t *testing.T) {
 }
 
 // A share whose two sides the reply gives is shown working: the guard checks
-// the division instead of sending the agent to analyze_data for it.
+// the division instead of sending the agent to report_analyze_data for it.
 func TestGroundingGuard_AcceptsArithmeticOnFiguresTheReplyGives(t *testing.T) {
 	t.Parallel()
 
-	run := readGrounded(t, []string{"get_report_run"},
+	run := readGrounded(t, []string{"report_get_run"},
 		"Of the $87,310.40 billed, $45,662.16 is still open: 52.3%, leaving $41,648.24 paid.",
 	)
 
@@ -597,7 +597,7 @@ func TestGroundingGuard_AcceptsArithmeticOnFiguresTheReplyGives(t *testing.T) {
 func TestGroundingGuard_WrongArithmeticOnGivenFiguresIsStillRewritten(t *testing.T) {
 	t.Parallel()
 
-	run := readGrounded(t, []string{"get_report_run"},
+	run := readGrounded(t, []string{"report_get_run"},
 		"Of the $87,310.40 billed, $45,662.16 is still open: 61.4%.",
 		"Of the $87,310.40 billed, $45,662.16 is still open.",
 	)
@@ -612,18 +612,18 @@ func TestGroundingGuard_AProductOfThePersonsFiguresIsStated(t *testing.T) {
 	t.Parallel()
 
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("find_in_trenova", map[string]any{}),
+		toolTurn("agent_find_page", map[string]any{}),
 		textTurn("Key it in at Fuel purchases; the total paid should be about $435.68."),
 	}}
 	registry := &stubQueryRegistry{Tools: []agentports.AgentQueryTool{
-		&agenttest.StubQueryTool{ToolName: "find_in_trenova", Result: map[string]any{}},
+		&agenttest.StubQueryTool{ToolName: "agent_find_page", Result: map[string]any{}},
 	}}
 	rt := newRuntime(completion, registry, &stubActionRegistry{}, nil)
 	fx := &groundingEffects{}
 	fx.localEffects = &localEffects{s: rt, ctx: t.Context(), emit: func(kernelports.StreamEvent) {}}
 
 	_, err := rt.Drive(rt.OpenTurn(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition("find_in_trenova"),
+		Definition: testDefinition("agent_find_page"),
 		Actor:      testActor(),
 		Input:      "log 112 gallons of diesel for TRC-001 bought in Texas yesterday at $3.89",
 	}), fx)

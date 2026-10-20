@@ -132,7 +132,7 @@ func InjuryToolProviders() []any {
 
 func injuryIDProperty() map[string]any {
 	return agenttoolschema.RecordID(permission.ResourceWorkerInjury, "The injury case",
-		"list_worker_injuries")
+		"worker_list_injuries")
 }
 
 func injuryRecord(injury *worker.WorkerInjury) toolpreview.Record {
@@ -178,10 +178,10 @@ func injuryDetailProperties() map[string]any {
 		paramClaimCarrier: common.StringProperty("The workers' comp carrier.", maxClaimField),
 		paramClaimFiledAt: agenttoolschema.Date("When the claim was filed."),
 		paramSafetyEventID: agenttoolschema.RecordIDText(permission.ResourceWorkerSafetyEvent,
-			"The accident it came from, from list_worker_safety_events.",
+			"The accident it came from, from worker_list_safety_events.",
 		),
-		wfParamDocument:   wfDocumentProperty(),
-		common.FieldNotes: wfNoteProperty("Anything the case should say."),
+		wfParamDocument:  wfDocumentProperty(),
+		common.ParamNote: wfNoteProperty("Anything the case should say."),
 	}
 }
 
@@ -255,7 +255,7 @@ func injuryTextFrom(params map[string]any, req *workerinjuryservice.UpdateInjury
 		{paramHarmfulAgent, &req.HarmfulAgent, wfShortChars},
 		{paramClaimNumber, &req.ClaimNumber, maxCredentialField},
 		{paramClaimCarrier, &req.ClaimCarrier, maxClaimField},
-		{common.FieldNotes, &req.Notes, wfNoteChars},
+		{common.ParamNote, &req.Notes, wfNoteChars},
 	} {
 		text, err := common.OptionalBoundedText(params, field.key, field.limit)
 		if err != nil {
@@ -307,13 +307,13 @@ func newRecordWorkerInjuryTool(injuries InjuryKeeper) agentports.AgentTool {
 	properties[common.FieldDescription] = common.StringProperty("What happened and the injury, as "+
 		"reported.", wfNoteChars)
 	spec := withSchema(wfSpec(
-		"record_worker_injury",
+		"worker_record_injury",
 		"Enter a work-related injury or illness on the OSHA injury log as a new case. It "+
 			"takes the next case number for its year and records when and how it happened, "+
 			"the treatment, the days away or restricted, and the workers' comp claim. Medical detail stays with "+
 			"people who hold the injury permission.",
 		"Adds a case to the organization's OSHA log inside Trenova; nothing is sent, and it "+
-			"is corrected with update_worker_injury.",
+			"is corrected with worker_update_injury.",
 		permission.ResourceWorkerInjury,
 		permission.OpCreate,
 	), properties, common.ParamWorkerID, wfParamOccurred, common.FieldDescription)
@@ -396,7 +396,7 @@ func newUpdateWorkerInjuryTool(injuries InjuryKeeper) agentports.AgentTool {
 		wfNoteChars,
 	)
 	spec := targeting(withSchema(wfSpec(
-		"update_worker_injury",
+		"worker_update_injury",
 		"Correct or bring up to date an injury case: its classification, treatment, days "+
 			"away or restricted, return to work, the claim, or close it. Give only what "+
 			"changes. The log must stay accurate for five years after its year, so a closed "+
@@ -469,7 +469,7 @@ func newUpdateWorkerInjuryTool(injuries InjuryKeeper) agentports.AgentTool {
 
 func newDeleteWorkerInjuryTool(injuries InjuryKeeper) agentports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
-		"delete_worker_injury",
+		"worker_delete_injury",
 		"Delete an injury case entered on the log in error, such as a duplicate. Its case "+
 			"number is not reused. A real case is corrected, never deleted.",
 		"Removes a case from the OSHA log; the audit trail keeps what was removed, and the "+

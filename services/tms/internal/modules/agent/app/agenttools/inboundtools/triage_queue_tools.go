@@ -53,11 +53,11 @@ func NewAssignInboundMessagesTool(p triageToolParams) agentports.AgentTool {
 func newAssignInboundMessagesTool(queue triageQueue) agentports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
-			Name:     "assign_inbound_messages",
+			Name:     "inbox_assign_inbound_message",
 			Artifact: inboundMessageEntity,
 			Description: "Give messages waiting in the Triage queue to a person on the Triage " +
 				"team, or take them off whoever has them. Choose the owner from " +
-				"list_triage_assignees, which shows who can take Triage messages and how " +
+				"inbox_list_triage_assignees, which shows who can take Triage messages and how " +
 				"many each already holds. Settled messages and ones the person already " +
 				"owns are left alone. The new owner sees them in their own lane.",
 			Resource:    permission.ResourceInboundMessage,
@@ -70,15 +70,15 @@ func newAssignInboundMessagesTool(queue triageQueue) agentports.AgentTool {
 				"is sent and the messages themselves are unchanged.",
 			Properties: map[string]any{
 				paramMessageIDs: messageIDsProperty(
-					"The messages, from list_inbound_messages or search_inbound_messages.",
+					"The messages, from inbox_list_inbound_messages or inbox_search_inbound_messages.",
 				),
 				paramOwnerID: agenttoolschema.RecordIDText(permission.ResourceUser,
-					"The person to give them to, from list_triage_assignees. Leave it out to "+
+					"The person to give them to, from inbox_list_triage_assignees. Leave it out to "+
 						"take them off whoever has them."),
 			},
 			Required:    []string{paramMessageIDs},
 			SearchTerms: []string{"give to", "triage owner", "unassign", "take it"},
-			Recipe:      []string{toolListAssignees, "assign_inbound_messages"},
+			Recipe:      []string{toolListAssignees, "inbox_assign_inbound_message"},
 		},
 		common.ReceivablePlan[
 			*inboundmessageservice.AssignRequest,
@@ -153,7 +153,7 @@ func NewReopenInboundMessagesTool(p triageToolParams) agentports.AgentTool {
 func newReopenInboundMessagesTool(queue triageQueue) agentports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
-			Name:     "reopen_inbound_messages",
+			Name:     "inbox_reopen_inbound_message",
 			Artifact: inboundMessageEntity,
 			Description: "Return messages that were settled as Actioned or Ignored to the " +
 				"Triage queue, waiting on a person again with a fresh due time. Use it when a " +
@@ -169,8 +169,8 @@ func newReopenInboundMessagesTool(queue triageQueue) agentports.AgentTool {
 				"sent.",
 			Properties: map[string]any{
 				paramMessageIDs: messageIDsProperty(
-					"The settled messages, from list_inbound_messages or " +
-						"search_inbound_messages.",
+					"The settled messages, from inbox_list_inbound_messages or " +
+						"inbox_search_inbound_messages.",
 				),
 			},
 			Required:    []string{paramMessageIDs},
@@ -236,14 +236,14 @@ func NewSnoozeInboundMessagesTool(p triageToolParams) agentports.AgentTool {
 func newSnoozeInboundMessagesTool(queue triageQueue) agentports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
-			Name:     "snooze_inbound_messages",
+			Name:     "inbox_snooze_inbound_message",
 			Artifact: inboundMessageEntity,
 			Description: "Take messages waiting on a person out of the Triage queue until a " +
 				"time, or until an event on their linked shipment. They return on their own " +
 				"when it delivers, gets a document of a given type, or has its invoice paid. " +
 				"Give until or event, not both. Waiting on an event takes every message " +
-				"being linked to a shipment (link_inbound_message). To wait for the sender " +
-				"to answer, use wait_for_inbound_reply.",
+				"being linked to a shipment (inbox_link_inbound_message). To wait for the sender " +
+				"to answer, use inbox_await_reply.",
 			Resource:    permission.ResourceInboundMessage,
 			Operation:   permission.OpUpdate,
 			Egress:      agent.EgressInternal,
@@ -254,8 +254,8 @@ func newSnoozeInboundMessagesTool(queue triageQueue) agentports.AgentTool {
 				"return on their own and nothing is sent.",
 			Properties: map[string]any{
 				paramMessageIDs: messageIDsProperty(
-					"The messages waiting on a person, from list_inbound_messages or " +
-						"search_inbound_messages.",
+					"The messages waiting on a person, from inbox_list_inbound_messages or " +
+						"inbox_search_inbound_messages.",
 				),
 				paramSnoozeUntil: agenttoolschema.LocalDateTime(
 					"When they return, at most 90 days out. Leave it out when waiting on " +
@@ -270,12 +270,12 @@ func newSnoozeInboundMessagesTool(queue triageQueue) agentports.AgentTool {
 				paramDocumentTypeID: agenttoolschema.RecordIDText(
 					permission.ResourceDocumentType,
 					"With DocumentAttached only: the document type to wait for, from "+
-						"list_document_types.",
+						"document_list_types.",
 				),
 			},
 			Required:    []string{paramMessageIDs},
 			SearchTerms: []string{"snooze", "until delivered", "until the POD"},
-			Recipe:      []string{toolListInboundMessage, "snooze_inbound_messages"},
+			Recipe:      []string{toolListInboundMessage, "inbox_snooze_inbound_message"},
 		},
 		common.ReceivablePlan[
 			*inboundmessageservice.SnoozeRequest,
@@ -369,7 +369,7 @@ func NewWakeInboundMessageTool(p triageToolParams) agentports.AgentTool {
 func newWakeInboundMessageTool(queue triageQueue) agentports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
-			Name:     "wake_inbound_message",
+			Name:     "inbox_wake_inbound_message",
 			Artifact: inboundMessageEntity,
 			Description: "Return a message to the Triage queue now: one that was snoozed, " +
 				"or one parked waiting on the sender's reply. Use it when what it was waiting " +
@@ -385,7 +385,7 @@ func newWakeInboundMessageTool(queue triageQueue) agentports.AgentTool {
 				"nothing is sent.",
 			Properties: map[string]any{
 				paramMessageID: messageIDProperty(
-					"The parked message, from list_inbound_messages or search_inbound_messages.",
+					"The parked message, from inbox_list_inbound_messages or inbox_search_inbound_messages.",
 				),
 			},
 			Required:    []string{paramMessageID},
@@ -484,14 +484,14 @@ func NewWaitForInboundReplyTool(p triageToolParams) agentports.AgentTool {
 func newWaitForInboundReplyTool(queue triageQueue) agentports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
-			Name:     "wait_for_inbound_reply",
+			Name:     "inbox_await_reply",
 			Artifact: inboundMessageEntity,
 			Description: "Park a message in Triage until its sender answers on the same " +
 				"thread, or until a time if nobody does, at most 30 days out; it returns to " +
 				"the queue either way. Use it after asking the sender something with " +
-				"reply_to_inbound_message. It parks the message for the people working the " +
+				"inbox_send_reply. It parks the message for the people working the " +
 				"queue, not what you are doing: to be woken yourself when they answer, call " +
-				"wait_until with a Reply wait on the record.",
+				"agent_create_wait with a Reply wait on the record.",
 			Resource:    permission.ResourceInboundMessage,
 			Operation:   permission.OpUpdate,
 			Egress:      agent.EgressInternal,
@@ -502,8 +502,8 @@ func newWaitForInboundReplyTool(queue triageQueue) agentports.AgentTool {
 				"time comes; nothing is sent.",
 			Properties: map[string]any{
 				paramMessageID: messageIDProperty(
-					"The message waiting on a person, from list_inbound_messages or " +
-						"search_inbound_messages.",
+					"The message waiting on a person, from inbox_list_inbound_messages or " +
+						"inbox_search_inbound_messages.",
 				),
 				paramSnoozeUntil: agenttoolschema.LocalDateTime(
 					"When it returns if the sender has not replied, at most 30 days out.",
@@ -580,12 +580,12 @@ func NewUnlinkInboundMessageTool(p triageToolParams) agentports.AgentTool {
 func newUnlinkInboundMessageTool(queue triageQueue) agentports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
-			Name:     "unlink_inbound_message",
+			Name:     "inbox_unlink_inbound_message",
 			Artifact: inboundMessageEntity,
 			Description: "Remove the shipment, customer or carrier a message is linked to, " +
 				"when the link is wrong and the right record is not known. When the right " +
-				"one is known, link_inbound_message replaces the link in one step. " +
-				"get_inbound_message shows what the message is linked to.",
+				"one is known, inbox_link_inbound_message replaces the link in one step. " +
+				"inbox_get_inbound_message shows what the message is linked to.",
 			Resource:    permission.ResourceInboundMessage,
 			Operation:   permission.OpUpdate,
 			Egress:      agent.EgressInternal,
@@ -597,7 +597,7 @@ func newUnlinkInboundMessageTool(queue triageQueue) agentports.AgentTool {
 				"decides how far it may run.",
 			Properties: map[string]any{
 				paramMessageID: messageIDProperty(
-					"The message, from list_inbound_messages or search_inbound_messages.",
+					"The message, from inbox_list_inbound_messages or inbox_search_inbound_messages.",
 				),
 				paramLinkedRecord: agenttoolschema.Enum(
 					"Which link to remove.",
@@ -606,7 +606,7 @@ func newUnlinkInboundMessageTool(queue triageQueue) agentports.AgentTool {
 			},
 			Required:    []string{paramMessageID, paramLinkedRecord},
 			SearchTerms: []string{"unlink", "remove link"},
-			Recipe:      []string{toolGetInboundMessage, "unlink_inbound_message"},
+			Recipe:      []string{toolGetInboundMessage, "inbox_unlink_inbound_message"},
 			Target:      targetMessage,
 		},
 		common.ReceivablePlan[
@@ -675,13 +675,13 @@ func NewHandOffTriageTool(p triageToolParams) agentports.AgentTool {
 func newHandOffTriageTool(queue triageQueue) agentports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
-			Name:     "hand_off_triage",
+			Name:     "inbox_assign_queue",
 			Artifact: inboundMessageEntity,
 			Description: "Hand every message still waiting in the Triage queue to one person, " +
 				"usually the on-call person at the end of the working day. " +
-				"list_triage_assignees names the on-call person and who else can take it. " +
+				"inbox_list_triage_assignees names the on-call person and who else can take it. " +
 				"Snoozed, parked and settled messages are left alone; to move only some " +
-				"messages, use assign_inbound_messages.",
+				"messages, use inbox_assign_inbound_message.",
 			Resource:    permission.ResourceInboundMessage,
 			Operation:   permission.OpAssign,
 			Egress:      agent.EgressInternal,
@@ -692,11 +692,11 @@ func newHandOffTriageTool(queue triageQueue) agentports.AgentTool {
 				"message can be reassigned, and nothing is sent.",
 			Properties: map[string]any{
 				paramToUserID: agenttoolschema.RecordIDText(permission.ResourceUser,
-					"The person taking the queue, from list_triage_assignees."),
+					"The person taking the queue, from inbox_list_triage_assignees."),
 			},
 			Required:    []string{paramToUserID},
 			SearchTerms: []string{"end of day", "on call", "hand off the inbox", "night shift"},
-			Recipe:      []string{toolListAssignees, "hand_off_triage"},
+			Recipe:      []string{toolListAssignees, "inbox_assign_queue"},
 		},
 		common.ReceivablePlan[
 			*inboundmessageservice.HandOffRequest,

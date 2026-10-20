@@ -154,7 +154,7 @@ func newListWorkerLeaveCasesTool(
 	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
 	return &workforceRead{
-		name: "list_worker_leave_cases",
+		name: "worker_list_leave_cases",
 		description: "List FMLA, medical, military, parental and personal leave cases. " +
 			"Cases for one worker or the whole organization come with their status, " +
 			"certification and each day taken against them. It yields the leaveCaseId and leaveDayId the " +
@@ -247,7 +247,7 @@ func newListWorkerTrainingTool(
 	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
 	return &workforceRead{
-		name: "list_worker_training",
+		name: "worker_list_training",
 		description: "List one worker's training assignments with each course, its " +
 			"status, due date, completion, score and when it expires. It yields the " +
 			"trainingRecordId the training tools take.",
@@ -319,7 +319,7 @@ func newListTrainingCoursesTool(
 	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
 	return &workforceRead{
-		name: "list_training_courses",
+		name: "worker_list_training_courses",
 		description: "List the organization's active training courses with their category, " +
 			"delivery, passing score, how long a pass lasts and whether they are required. " +
 			"It yields the courseId the training tools take.",
@@ -399,7 +399,7 @@ func newListWorkerChecklistsTool(
 ) agentports.AgentQueryTool {
 	access := newFieldAccess(permissions)
 	return &workforceRead{
-		name: "list_worker_checklists",
+		name: "worker_list_checklists",
 		description: "List one worker's onboarding, offboarding and other checklists " +
 			"with every item and where it stands, and the templates a person can start by " +
 			"hand. It yields the checklistId, checklistItemId and templateId the checklist " +
@@ -522,11 +522,11 @@ func newListPerformanceReviewsTool(
 ) agentports.AgentQueryTool {
 	access := newFieldAccess(permissions)
 	return &workforceRead{
-		name: "list_performance_reviews",
+		name: "worker_list_performance_reviews",
 		description: "List one worker's performance reviews with each item's key, score " +
 			"and comment, the summary and goals, and the review templates in use. It " +
 			"yields the reviewId and templateId the review tools take, and the rating " +
-			"keys draft_performance_review scores.",
+			"keys worker_update_performance_review scores.",
 		resource: permission.ResourcePerformanceReview,
 		properties: map[string]any{
 			paramWorkerID: wfWorkerProperty("The worker"),
@@ -625,7 +625,7 @@ func newListEmploymentVerificationsTool(
 	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
 	return &workforceRead{
-		name: "list_employment_verifications",
+		name: "worker_list_employment_verifications",
 		description: "List the previous employers on drivers' qualification files. Each " +
 			"shows where its safety performance history request stands: asked when, " +
 			"followed up how often, and what came back. It yields the verificationId the " +
@@ -723,7 +723,7 @@ func newListWorkerCredentialsTool(
 ) agentports.AgentQueryTool {
 	access := newFieldAccess(permissions)
 	return &workforceRead{
-		name: "list_worker_credentials",
+		name: "worker_list_credentials",
 		description: "List one worker's licences, medical cards, endorsements and other " +
 			"credentials. Each has its dates and whether it is verified; the credential " +
 			"types the organization tracks come with them. It yields the credentialId and " +
@@ -824,7 +824,7 @@ func newListWorkerInjuriesTool(
 	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
 	return &workforceRead{
-		name: "list_worker_injuries",
+		name: "worker_list_injuries",
 		description: "List injury and illness cases on the OSHA log, for one worker or a " +
 			"year, with the classification, days away or restricted and the workers' comp " +
 			"claim. Medical detail follows the injury permission. It yields the injuryId " +

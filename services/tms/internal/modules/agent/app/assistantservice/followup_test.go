@@ -43,7 +43,7 @@ func TestSendMessageStream_AnswersADecision(t *testing.T) {
 
 	proposal := &agent.AgentProposal{
 		ID:       pulid.MustNew("ap_"),
-		ToolName: "create_dashboard",
+		ToolName: "report_create_dashboard",
 		Status:   agent.ProposalStatusExecuted,
 	}
 	svc, conversations, completion := followUpService(t, proposal)
@@ -60,7 +60,7 @@ func TestSendMessageStream_AnswersADecision(t *testing.T) {
 	note := conversations.appended[0]
 	assert.Equal(t, conversation.MessageKindDecisionNote, note.Kind,
 		"the thread shows a note, not words the person typed")
-	assert.Contains(t, note.Content, "Approved create_dashboard, and it ran.")
+	assert.Contains(t, note.Content, "Approved report_create_dashboard, and it ran.")
 	assert.Contains(t, note.Content, proposal.ID.String())
 
 	last := completion.LastReq.Messages[len(completion.LastReq.Messages)-1]
@@ -149,12 +149,12 @@ func TestSendMessageStream_RefusesAFollowUpThatCannotBeAnswered(t *testing.T) {
 
 	decided := &agent.AgentProposal{
 		ID:       pulid.MustNew("ap_"),
-		ToolName: "create_dashboard",
+		ToolName: "report_create_dashboard",
 		Status:   agent.ProposalStatusRejected,
 	}
 	pending := &agent.AgentProposal{
 		ID:       pulid.MustNew("ap_"),
-		ToolName: "create_dashboard",
+		ToolName: "report_create_dashboard",
 		Status:   agent.ProposalStatusPending,
 	}
 	actor := testActor()
@@ -182,7 +182,7 @@ func TestSendMessageStream_RefusesAFollowUpThatCannotBeAnswered(t *testing.T) {
 	svc, conversations, completion := followUpService(t, decided, conversation.Message{
 		Role:    conversation.RoleUser,
 		Kind:    conversation.MessageKindDecisionNote,
-		Content: "Rejected create_dashboard.\nDecision on proposal " + decided.ID.String(),
+		Content: "Rejected report_create_dashboard.\nDecision on proposal " + decided.ID.String(),
 	})
 	require.ErrorAs(t, send(svc, conversations.thread.ID, decided.ID, ""), &multiErr,
 		"a decision is answered once, however many times the client asks")

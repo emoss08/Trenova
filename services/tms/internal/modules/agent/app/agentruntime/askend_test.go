@@ -60,7 +60,7 @@ func TestRun_EndsTheTurnAfterEveryCallOfTheReplyThatAsked(t *testing.T) {
 
 	turn := askTurn("Which dashboard?")
 	turn.ToolCalls = append(turn.ToolCalls, agentports.ToolCall{
-		ID: "call_2", Name: "list_dashboards", Arguments: map[string]any{},
+		ID: "call_2", Name: "report_list_dashboards", Arguments: map[string]any{},
 	})
 
 	run := runAskEnd(t, turn)

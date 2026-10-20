@@ -75,20 +75,20 @@ func NewAssignMoveToCarrierTool(carriers carrierCoverage) agentports.AgentTool {
 	return &AssignMoveToCarrierTool{carriers: carriers}
 }
 
-func (t *AssignMoveToCarrierTool) Name() string { return "assign_move_to_carrier" }
+func (t *AssignMoveToCarrierTool) Name() string { return "dispatch_create_carrier_assignment" }
 
 func (t *AssignMoveToCarrierTool) Recipe() []string {
-	return []string{"shipment_get", "shop_carriers", "assign_move_to_carrier"}
+	return []string{"shipment_get", "carrier_shop", "dispatch_create_carrier_assignment"}
 }
 
 func (t *AssignMoveToCarrierTool) Description() string {
 	return "Cover a move with an outside carrier at a rate the carrier already agreed to. " +
 		"Use it outside a tender: a contract carrier on its contract rate, or a carrier who " +
-		"accepted a load by phone or email. Read shop_carriers first so the rate comes from " +
+		"accepted a load by phone or email. Read carrier_shop first so the rate comes from " +
 		"a contract or a quote; a rate you cannot source is a reason to ask, never to guess. " +
 		"The move must have no driver. Nothing is sent to the carrier: generate the rate " +
-		"confirmation with generate_rate_confirmation and send it with " +
-		"send_rate_confirmation next. To offer a load and wait for an answer, tender it " +
+		"confirmation with rate_generate_confirmation and send it with " +
+		"rate_send_confirmation next. To offer a load and wait for an answer, tender it " +
 		"instead."
 }
 
@@ -96,11 +96,11 @@ func (t *AssignMoveToCarrierTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		common.PreviewFieldShipmentMoveID: agenttoolschema.RecordIDText(
 			permission.ResourceShipmentMove,
-			"The move to cover, from get_dispatch_board (moveId) or shipment_get (its moves).",
+			"The move to cover, from dispatch_get_board (moveId) or shipment_get (its moves).",
 		),
 		common.FieldCarrierID: agenttoolschema.RecordIDText(
 			permission.ResourceCarrier,
-			"The carrier, from shop_carriers or list_carriers.",
+			"The carrier, from carrier_shop or carrier_list.",
 		),
 		fieldRateMethod: agenttoolschema.Enum(
 			"Flat pays baseRate for the move; PerMile pays baseRate for each mile of the "+
@@ -122,7 +122,7 @@ func (t *AssignMoveToCarrierTool) ParamSchema() map[string]any {
 				fieldAmount: jsonschemautils.Text("The amount as a decimal string."),
 				fieldAccessorialChargeID: agenttoolschema.RecordIDText(
 					permission.ResourceAccessorialCharge,
-					"The accessorial charge it is, from list_accessorial_charges.",
+					"The accessorial charge it is, from masterdata_list_accessorial_charges.",
 				),
 			}, common.FieldDescription, fieldAmount),
 			maxCarrierAccessorials,
@@ -312,7 +312,7 @@ func NewCancelCarrierAssignmentTool(carriers carrierCoverage) agentports.AgentTo
 	return &CancelCarrierAssignmentTool{carriers: carriers}
 }
 
-func (t *CancelCarrierAssignmentTool) Name() string { return "cancel_carrier_assignment" }
+func (t *CancelCarrierAssignmentTool) Name() string { return "dispatch_cancel_carrier_assignment" }
 
 func (t *CancelCarrierAssignmentTool) SearchTerms() []string {
 	return []string{"drop carrier", "uncover move", "remove outside carrier"}
@@ -329,7 +329,7 @@ func (t *CancelCarrierAssignmentTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		common.PreviewFieldShipmentMoveID: agenttoolschema.RecordIDText(
 			permission.ResourceShipmentMove,
-			"The move whose carrier comes off, from get_dispatch_board (moveId) or "+
+			"The move whose carrier comes off, from dispatch_get_board (moveId) or "+
 				"shipment_get (its moves).",
 		),
 		common.FieldReason: jsonschemautils.Text(

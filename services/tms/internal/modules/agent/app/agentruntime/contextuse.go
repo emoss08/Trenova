@@ -18,7 +18,7 @@ const CompactionKeepTurns = 2
 // fileTools are the tools whose results are the text of a document the person
 // attached, which the context meter counts as files rather than tool results.
 var fileTools = map[string]struct{}{
-	"get_document_summary":                 {},
+	"document_get_summary":                 {},
 	"get_document":                         {},
 	agentdefinition.CoreToolReadAttachment: {},
 }

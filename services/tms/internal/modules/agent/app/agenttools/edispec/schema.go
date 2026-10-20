@@ -92,7 +92,7 @@ func integer(minimum, maximum int, description string) map[string]any {
 func citationSchema() map[string]any {
 	return described(jsonschemautils.Object(map[string]any{
 		"page": integer(1, maxPage,
-			"The page the quote is on, counting from 1 as read_attachment numbers them."),
+			"The page the quote is on, counting from 1 as agent_read_attachment numbers them."),
 		"quote": described(jsonschemautils.String(maxQuoteRunes),
 			"The exact words on that page that state the value. Copy them; never paraphrase."),
 		"section": described(jsonschemautils.String(maxSectionRunes),
@@ -110,12 +110,12 @@ func ParamSchema(withDigest bool) map[string]any {
 	properties := map[string]any{
 		ParamDocumentID: agenttoolschema.RecordIDText(permission.ResourceDocument,
 			"The partner's implementation guide the person attached to this conversation, from "+
-				"read_attachment."),
+				"agent_read_attachment."),
 		ParamPartnerID: agenttoolschema.KindID("The partner to update when the person names one, "+
-			"from list_edi_partners. Leave it out and the draft matches one by code, ISA ID or "+
+			"from edi_list_partners. Leave it out and the draft matches one by code, ISA ID or "+
 			"AS2 ID, or plans a new partner.", permission.KindEDIPartner),
 		ParamCustomerID: agenttoolschema.RecordIDText(permission.ResourceCustomer,
-			"The customer this partner's documents are for, by id from list_customers, only when "+
+			"The customer this partner's documents are for, by id from customer_list, only when "+
 				"the person names which customer. Leave it out otherwise, and never pass a name "+
 				"or guess one from the partner's."),
 		ParamValues: jsonschemautils.DescribedArray(
@@ -162,10 +162,10 @@ func ParamSchema(withDigest bool) map[string]any {
 				"sourceLabel": described(jsonschemautils.String(maxSectionRunes),
 					"The guide's meaning for the code."),
 				"targetId": agenttoolschema.IDText(
-					"The Trenova record it maps to, of the entityType's kind: from list_customers, " +
-						"list_service_types, list_shipment_types, list_formula_templates, " +
-						"list_locations, list_commodities, list_accessorial_charges or " +
-						"list_service_failure_reason_codes. Never guess one.",
+					"The Trenova record it maps to, of the entityType's kind: from customer_list, " +
+						"masterdata_list_service_types, masterdata_list_shipment_types, formula_list_templates, " +
+						"location_list, masterdata_list_commodities, masterdata_list_accessorial_charges or " +
+						"exception_list_service_failure_reason_codes. Never guess one.",
 				),
 				keyConfidence: confidenceSchema(),
 				keyCitation:   citationSchema(),
@@ -200,7 +200,7 @@ func ParamSchema(withDigest bool) map[string]any {
 	required := []string{ParamDocumentID, ParamValues}
 	if withDigest {
 		properties[ParamDocumentDigest] = described(jsonschemautils.String(maxDigestRunes),
-			"The documentDigest draft_edi_connection returned for this guide.")
+			"The documentDigest edi_draft_connection returned for this guide.")
 		required = append(required, ParamDocumentDigest)
 	}
 	return jsonschemautils.Object(properties, required...)

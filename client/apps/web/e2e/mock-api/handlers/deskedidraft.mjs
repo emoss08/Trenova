@@ -96,7 +96,7 @@ const ARTIFACTS = {
 function draftCalls(guide, callId, extra = {}) {
   return {
     id: callId,
-    name: "draft_edi_connection",
+    name: "edi_draft_connection",
     effect: "lookup",
     args: { documentId: guide.documentId, ...extra },
   };
@@ -110,21 +110,21 @@ function firstTurn(anchor) {
     ...toolTurn("amsg_edi_t1", 2, at + 20, [
       {
         id: "call_edi_read",
-        name: "read_attachment",
+        name: "agent_read_attachment",
         effect: "lookup",
         args: { documentId: guide.documentId },
         summary: `Read 7 pages of ${guide.fileName}`,
       },
       {
         id: "call_edi_svct",
-        name: "list_service_types",
+        name: "masterdata_list_service_types",
         effect: "lookup",
         args: { query: "standard expedited" },
         summary: "Standard and Expedited",
       },
       {
         id: "call_edi_cust",
-        name: "list_customers",
+        name: "customer_list",
         effect: "lookup",
         args: { query: "Acme Retail" },
         summary: "Acme Retail Group",
@@ -183,7 +183,7 @@ function thirdTurn(anchor) {
     ...toolTurn("amsg_edi_t3", 13, at + 5, [
       {
         id: "call_edi_apply",
-        name: "apply_edi_connection_draft",
+        name: "edi_apply_connection_draft",
         effect: "change",
         verdict: "proposed",
         args: {
@@ -211,7 +211,7 @@ function revisedTurn(anchor) {
     ...toolTurn("amsg_edi_vt", 2, at + 15, [
       {
         id: "call_edi_vread",
-        name: "read_attachment",
+        name: "agent_read_attachment",
         effect: "lookup",
         args: { documentId: guide.documentId },
         summary: `Read 7 pages of ${guide.fileName}`,
@@ -322,7 +322,7 @@ function proposals(state) {
     {
       id: EDI_DRAFT_PROPOSAL_ID,
       runId: "arun_edi_acme",
-      toolName: "apply_edi_connection_draft",
+      toolName: "edi_apply_connection_draft",
       arguments: {
         documentId: EDI_GUIDES.original.documentId,
         customerId: "cus_acme_retail",
@@ -395,7 +395,7 @@ function preview(state) {
     ]);
   return {
     proposalId: EDI_DRAFT_PROPOSAL_ID,
-    tool: "apply_edi_connection_draft",
+    tool: "edi_apply_connection_draft",
     summary:
       "Would set up Acme Retail Group from its guide: 7 records, all inactive until you enter the credentials and turn them on.",
     coverage: "Full",

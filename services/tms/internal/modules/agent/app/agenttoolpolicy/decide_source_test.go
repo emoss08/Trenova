@@ -3,17 +3,17 @@ package agenttoolpolicy_test
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 )
 
 func writePolicy(egress agent.EgressClass) agentports.ToolPolicy {
 	return agentports.ToolPolicy{
-		Name:          "assign_move",
+		Name:          "dispatch_assign_move",
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceShipmentMove,
 		Operation:     permission.OpUpdate,
@@ -32,7 +32,7 @@ func TestDecide_SaysWhatSetTheTier(t *testing.T) {
 
 	internal := writePolicy(agent.EgressInternal)
 	money := writePolicy(agent.EgressMoney)
-	createReport := registeredPolicy(t, "create_report")
+	createReport := registeredPolicy(t, "report_create")
 	private := map[string]any{"name": "Late loads", "visibility": string(report.VisibilityPrivate)}
 
 	cases := []struct {
@@ -58,7 +58,7 @@ func TestDecide_SaysWhatSetTheTier(t *testing.T) {
 				Policy: internal,
 				Params: call(person(), nil),
 				Definition: definition(agent.TierAutoExecute, map[string]agent.AutonomyTier{
-					"assign_move": agent.TierAutoExecute,
+					"dispatch_assign_move": agent.TierAutoExecute,
 				}),
 				TierSetByPerson: true,
 				Taint:           clean(),
@@ -72,7 +72,7 @@ func TestDecide_SaysWhatSetTheTier(t *testing.T) {
 				Policy: internal,
 				Params: call(person(), nil),
 				Definition: definition(agent.TierAutoExecute, map[string]agent.AutonomyTier{
-					"assign_move": agent.TierAutoExecute,
+					"dispatch_assign_move": agent.TierAutoExecute,
 				}),
 				TierSetByPerson: false,
 				Taint:           clean(),
@@ -86,7 +86,7 @@ func TestDecide_SaysWhatSetTheTier(t *testing.T) {
 				Policy: internal,
 				Params: call(person(), nil),
 				Definition: definition(agent.TierPropose, map[string]agent.AutonomyTier{
-					"assign_move": agent.TierAutoExecute,
+					"dispatch_assign_move": agent.TierAutoExecute,
 				}),
 				TierSetByPerson: true,
 				Taint:           clean(),
@@ -111,7 +111,7 @@ func TestDecide_SaysWhatSetTheTier(t *testing.T) {
 				Policy: money,
 				Params: call(person(), nil),
 				Definition: definition(agent.TierAutoExecute, map[string]agent.AutonomyTier{
-					"assign_move": agent.TierAutoExecute,
+					"dispatch_assign_move": agent.TierAutoExecute,
 				}),
 				Taint: tainted(),
 			},

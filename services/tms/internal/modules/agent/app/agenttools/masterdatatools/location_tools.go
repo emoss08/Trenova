@@ -79,7 +79,7 @@ func (t *CreateLocationTool) Name() string { return agentdefinition.ToolCreateLo
 
 func (t *CreateLocationTool) Description() string {
 	return "Create a location record for a pickup or delivery address that has none, such " +
-		"as a facility read from a document. Look for it with list_locations first; a " +
+		"as a facility read from a document. Look for it with location_list first; a " +
 		"person approves the new location before it is saved, and the code is assigned."
 }
 
@@ -103,7 +103,7 @@ func (t *CreateLocationTool) ParamSchema() map[string]any {
 			},
 			"postalCode": map[string]any{"type": "string", "description": "The ZIP code."},
 			"locationCategoryId": agenttoolschema.RecordIDText(permission.ResourceLocationCategory,
-				"What kind of place it is, from list_location_categories: a warehouse, a "+
+				"What kind of place it is, from location_list_categories: a warehouse, a "+
 					"customer site, a terminal."),
 		},
 		"required": []string{
@@ -139,7 +139,7 @@ func (t *CreateLocationTool) SearchTerms() []string {
 }
 
 func (t *CreateLocationTool) Prerequisites() []string {
-	return []string{"list_locations", "list_location_categories"}
+	return []string{"location_list", "location_list_categories"}
 }
 
 type locationDraft struct {
@@ -181,7 +181,7 @@ func readLocationDraft(params map[string]any) (*locationDraft, error) {
 	categoryID, err := common.RequirePulid(params, "locationCategoryId")
 	if err != nil {
 		multiErr.Add("locationCategoryId", errortypes.ErrInvalid,
-			"Name a location category from list_location_categories")
+			"Name a location category from location_list_categories")
 	}
 	draft.categoryID = categoryID
 
@@ -270,7 +270,7 @@ func (t *CreateLocationTool) Build(
 		return nil, errortypes.NewValidationError(
 			"locationCategoryId", errortypes.ErrInvalid,
 			"That is not one of this organization's location categories; use "+
-				"list_location_categories",
+				"location_list_categories",
 		)
 	}
 

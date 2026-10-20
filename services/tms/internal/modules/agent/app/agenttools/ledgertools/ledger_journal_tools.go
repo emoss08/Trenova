@@ -67,9 +67,9 @@ const journalReversalRecordEntity = "journal_reversal"
 
 const journalReversalKind = "journal reversal"
 
-const manualJournalSupplier = "The manual journal, from list_manual_journals or get_manual_journal. Never guess one."
+const manualJournalSupplier = "The manual journal, from ledger_list_manual_journals or ledger_get_manual_journal. Never guess one."
 
-const journalReversalSupplier = "The journal reversal, from list_journal_reversals or the result of request_journal_reversal. Never guess one."
+const journalReversalSupplier = "The journal reversal, from ledger_list_journal_reversals or the result of ledger_create_journal_reversal. Never guess one."
 
 const manualJournalCurrencyPattern = 3
 
@@ -226,7 +226,7 @@ func journalLinesProperty() map[string]any {
 			toolschema.KeyProperties: map[string]any{
 				common.ParamGLAccountID: agenttoolschema.RecordIDText(
 					permission.ResourceGeneralLedgerAccount,
-					"The account the line posts to, from list_gl_accounts; it must be active "+
+					"The account the line posts to, from ledger_list_accounts; it must be active "+
 						"and allow manual journals.",
 				),
 				paramJournalDescription: common.StringProperty("What the line is for.",
@@ -236,11 +236,11 @@ func journalLinesProperty() map[string]any {
 				paramJournalLineCredit: common.StringProperty("The credit as a decimal such as "+
 					"125.00. Give a debit or a credit, never both.", 0),
 				common.ParamCustomerID: agenttoolschema.RecordIDText(permission.ResourceCustomer,
-					"The customer the line is for, from list_customers or get_customer, when "+
+					"The customer the line is for, from customer_list or customer_get, when "+
 						"it concerns one."),
 				paramJournalLineLocationID: agenttoolschema.RecordIDText(
 					permission.ResourceLocation,
-					"The location the line is for, from list_locations, when it concerns one.",
+					"The location the line is for, from location_list, when it concerns one.",
 				),
 			},
 			toolschema.KeyRequired: []string{
@@ -500,11 +500,12 @@ func newDraftManualJournalTool(
 	accounts common.LedgerAccounts,
 ) agentports.AgentTool {
 	return common.NewReportingReceivableTool(journalDraftSpec(&common.ReceivableSpec{
-		Name: "draft_manual_journal",
+		Name:        "ledger_create_manual_journal",
+		SearchTerms: []string{"draft manual journal"},
 		Description: "Draft a manual journal entry for the general ledger: its lines, the " +
 			"accounts they post to and the day it is booked. It is saved as a draft and books " +
-			"nothing; submit_manual_journal sends it for approval. Take accounts from " +
-			"list_gl_accounts and make the debits equal the credits.",
+			"nothing; ledger_submit_manual_journal sends it for approval. Take accounts from " +
+			"ledger_list_accounts and make the debits equal the credits.",
 		Operation: permission.OpCreate,
 		TaintHold: "A journal drafted from what someone outside wrote is proposed, since its " +
 			"lines are what an approver books.",
@@ -555,12 +556,12 @@ func newReviseManualJournalDraftTool(
 	accounts common.LedgerAccounts,
 ) agentports.AgentTool {
 	return common.NewReportingReceivableTool(journalDraftSpec(&common.ReceivableSpec{
-		Name:        "revise_manual_journal_draft",
+		Name:        "ledger_update_manual_journal",
 		SearchTerms: []string{"change journal lines", "edit draft journal", "fix draft journal"},
 		Description: "Rewrite a draft manual journal before it is submitted: its " +
 			"description, reason, day, currency or lines. Fields left out keep their value; " +
 			"lines, when given, replace every line. Only a draft can be revised; a journal " +
-			"sent back by its approver is drafted again with draft_manual_journal.",
+			"sent back by its approver is drafted again with ledger_create_manual_journal.",
 		Operation: permission.OpUpdate,
 		TaintHold: "A journal rewritten from what someone outside wrote is proposed, since its " +
 			"lines are what an approver books.",
@@ -629,11 +630,11 @@ func newSubmitManualJournalTool(
 	accounts common.LedgerAccounts,
 ) agentports.AgentTool {
 	return common.NewReceivableTool(journalDraftSpec(&common.ReceivableSpec{
-		Name: "submit_manual_journal",
+		Name: "ledger_submit_manual_journal",
 		Description: "Submit a balanced draft manual journal for approval. It waits for an " +
 			"approver; where the organization has manual journal approval turned off, " +
 			"submitting approves it, so only a person does that. Read it with " +
-			"get_manual_journal first.",
+			"ledger_get_manual_journal first.",
 		Operation: permission.OpSubmit,
 		Rationale: "Moves a draft journal into the approval queue inside Trenova; an approver " +
 			"decides and it books nothing until a person posts it.",
@@ -701,10 +702,10 @@ func newCancelManualJournalTool(
 	accounts common.LedgerAccounts,
 ) agentports.AgentTool {
 	return common.NewReceivableTool(journalDraftSpec(&common.ReceivableSpec{
-		Name: "cancel_manual_journal",
+		Name: "ledger_cancel_manual_journal",
 		Description: "Cancel a manual journal that is a draft, waiting for approval or " +
 			"approved but not posted, with the reason. It is kept, cancelled, and never " +
-			"posted. A posted journal is undone with request_journal_reversal instead.",
+			"posted. A posted journal is undone with ledger_create_journal_reversal instead.",
 		Operation: permission.OpCancel,
 		TaintHold: "The reason is what the journal's author reads next, so a run that has read " +
 			"outside text proposes it.",
@@ -753,7 +754,7 @@ func newPostManualJournalTool(
 	accounts common.LedgerAccounts,
 ) agentports.AgentTool {
 	return common.NewReceivableTool(common.LedgerMoneySpec(&common.ReceivableSpec{
-		Name: "post_manual_journal",
+		Name: "ledger_post_manual_journal",
 		Description: "Propose posting an approved manual journal to the general ledger, in " +
 			"its fiscal period or the next open one the closed period policy allows. It " +
 			"changes account balances and is undone only by a reversal, so a person always " +
@@ -838,11 +839,11 @@ func newRequestJournalReversalTool(
 	accounts common.LedgerAccounts,
 ) agentports.AgentTool {
 	return common.NewReportingReceivableTool(common.LedgerMoneySpec(&common.ReceivableSpec{
-		Name: "request_journal_reversal",
+		Name: "ledger_create_journal_reversal",
 		Description: "Propose reversing a posted journal entry that was booked in error, with " +
 			"every debit and credit swapped. It is dated the day you name, or the next open " +
 			"period's first day, waits for approval where the organization requires it, and " +
-			"post_journal_reversal books it.",
+			"ledger_post_journal_reversal books it.",
 		Resource:  permission.ResourceJournalReversal,
 		Artifact:  journalReversalRecordEntity,
 		Operation: permission.OpCreate,
@@ -850,8 +851,8 @@ func newRequestJournalReversalTool(
 			"ledger, approved at once where approval is off; only a person requests a reversal.",
 		Properties: map[string]any{
 			paramJournalEntryID: agenttoolschema.RecordIDText(permission.ResourceJournalEntry,
-				"The posted journal entry to reverse, from list_journal_entries or "+
-					"get_journal_entry. Never guess one."),
+				"The posted journal entry to reverse, from ledger_list_journal_entries or "+
+					"ledger_get_journal_entry. Never guess one."),
 			common.ParamAccountingDate: agenttoolschema.Date(
 				"The day the reversal is booked; a day in a " +
 					"closed period moves to the next open one where policy allows.",
@@ -935,7 +936,7 @@ func newCancelJournalReversalTool(
 	accounts common.LedgerAccounts,
 ) agentports.AgentTool {
 	return common.NewReceivableTool(&common.ReceivableSpec{
-		Name: "cancel_journal_reversal",
+		Name: "ledger_cancel_journal_reversal",
 		Description: "Cancel a journal reversal that has not been posted, with the reason, " +
 			"when the entry should stand after all. The original entry is left as it is.",
 		Resource:    permission.ResourceJournalReversal,
@@ -993,7 +994,7 @@ func newPostJournalReversalTool(
 	accounts common.LedgerAccounts,
 ) agentports.AgentTool {
 	return common.NewReceivableTool(common.LedgerMoneySpec(&common.ReceivableSpec{
-		Name: "post_journal_reversal",
+		Name: "ledger_post_journal_reversal",
 		Description: "Propose posting an approved journal reversal: it books the original " +
 			"entry's lines with debits and credits swapped and marks the original reversed. " +
 			"It changes account balances for good, so a person always decides.",

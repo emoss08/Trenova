@@ -15,8 +15,8 @@ import (
 
 func escalationPolicies() map[string]agentports.ToolPolicy {
 	return map[string]agentports.ToolPolicy{
-		"raise_exception":        (&receivabletools.RaiseExceptionTool{}).Policy(),
-		"flag_for_manual_review": (&receivabletools.FlagManualReviewTool{}).Policy(),
+		"agent_raise_exception": (&receivabletools.RaiseExceptionTool{}).Policy(),
+		"agent_request_review":  (&receivabletools.FlagManualReviewTool{}).Policy(),
 	}
 }
 
@@ -36,7 +36,7 @@ func TestEscalation_RunsWhateverTheAgentsCeiling(t *testing.T) {
 	tainted := &agent.RunTaint{}
 	tainted.Add(agent.TaintMark{
 		Source:   agent.TaintSourceInboundMessage,
-		ToolName: "get_inbound_message",
+		ToolName: "inbox_get_inbound_message",
 		CallID:   "call_1",
 		Ref:      &agent.RecordRef{EntityType: "inbound_message", ID: "imsg_1"},
 	})

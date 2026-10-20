@@ -29,7 +29,7 @@ func readTaint() *agent.RunTaint {
 	taint := &agent.RunTaint{}
 	taint.Add(agent.TaintMark{
 		Source:   agent.TaintSourceEDI,
-		ToolName: "get_edi_inbound_file",
+		ToolName: "edi_get_inbound_file",
 		CallID:   "call_1",
 	})
 
@@ -122,7 +122,7 @@ func TestRecord_ACleanRunIsNotMarked(t *testing.T) {
 			InputContextHash: "hash",
 		},
 		Taint:   &agent.RunTaint{},
-		Actions: []agentports.PendingAction{pendingAction("assign_move")},
+		Actions: []agentports.PendingAction{pendingAction("dispatch_assign_move")},
 	})
 	require.NoError(t, err)
 

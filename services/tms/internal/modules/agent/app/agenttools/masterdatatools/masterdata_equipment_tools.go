@@ -47,11 +47,11 @@ const paramLastInspection = "lastInspectionDate"
 
 const mdMaxLoadWeight = 200_000
 
-const equipmentSupplierNote = "from list_equipment_types"
+const equipmentSupplierNote = "from equipment_list_types"
 
-const manufacturerSupplier = "from list_equipment_manufacturers"
+const manufacturerSupplier = "from equipment_list_manufacturers"
 
-const fleetCodeSupplier = "from list_fleet_codes"
+const fleetCodeSupplier = "from masterdata_list_fleet_codes"
 
 var equipmentDates = toolpreview.Types(map[string]assistantartifact.DisplayType{
 	mdRegistrationExpiry: assistantartifact.DisplayDate,
@@ -179,7 +179,7 @@ var tractorRecord = &masterRecord[tractor.Tractor]{
 	resource: permission.ResourceTractor,
 	entity:   tractorRecordEntity,
 	idParam:  common.ParamTractorID,
-	lister:   "list_tractors",
+	lister:   "equipment_list_tractors",
 	label:    func(entity *tractor.Tractor) string { return entity.Code },
 	id:       func(entity *tractor.Tractor) pulid.ID { return entity.ID },
 	version:  func(entity *tractor.Tractor) int64 { return entity.Version },
@@ -260,10 +260,10 @@ func tractorFields() []masterField[tractor.Tractor] {
 	return append(
 		fields,
 		masterID(paramPrimaryWorkerID, permission.ResourceWorker,
-			"The driver who runs it, from search_worker or list_workers.",
+			"The driver who runs it, from worker_search or worker_list.",
 			func(t *tractor.Tractor) *pulid.ID { return &t.PrimaryWorkerID }),
 		masterOptionalID(paramSecondaryWorkerID, permission.ResourceWorker,
-			"A team driver, from search_worker or list_workers.",
+			"A team driver, from worker_search or worker_list.",
 			func(t *tractor.Tractor) *pulid.ID { return &t.SecondaryWorkerID }),
 		masterState(mdState, "The state it is registered in.", false,
 			func(t *tractor.Tractor) *pulid.ID { return &t.StateID }),
@@ -282,9 +282,9 @@ func tractorFields() []masterField[tractor.Tractor] {
 func NewCreateTractorTool(tractors TractorKeeper, states StateLookup) agentports.AgentTool {
 	return newMasterCreateTool(&masterCreateSpec[tractor.Tractor]{
 		record: tractorRecord,
-		name:   "create_tractor",
+		name:   "equipment_create_tractor",
 		description: "Add a tractor to the fleet: its unit number, driver, equipment type, " +
-			"manufacturer, make, model, VIN, registration and fuel. Check list_tractors " +
+			"manufacturer, make, model, VIN, registration and fuel. Check equipment_list_tractors " +
 			"first; it is Available unless another status is given.",
 		rationale: "Adds a tractor inside Trenova that dispatch can then assign; nothing is " +
 			"sent and it can be marked Sold or out of service.",
@@ -313,10 +313,10 @@ func NewCreateTractorTool(tractors TractorKeeper, states StateLookup) agentports
 func NewUpdateTractorTool(tractors TractorKeeper, states StateLookup) agentports.AgentTool {
 	return newMasterUpdateTool(&masterUpdateSpec[tractor.Tractor]{
 		record: tractorRecord,
-		name:   "update_tractor",
+		name:   "equipment_update_tractor",
 		description: "Change a tractor: its driver, team driver, equipment type, fleet, " +
 			"make, model, VIN, plate, registration or fuel. Fields left out keep their " +
-			"value. Use update_tractor_status for many units and locate_tractor to move one.",
+			"value. Use equipment_set_tractor_status for many units and equipment_set_tractor_location to move one.",
 		rationale:   "Changes a tractor inside Trenova; nothing is sent, and a later change puts it back.",
 		fields:      tractorFields(),
 		searchTerms: []string{"edit tractor", "reassign truck driver", "registration renewal"},
@@ -382,7 +382,7 @@ var trailerRecord = &masterRecord[trailer.Trailer]{
 	resource: permission.ResourceTrailer,
 	entity:   trailerRecordEntity,
 	idParam:  paramTrailerID,
-	lister:   "list_trailers",
+	lister:   "equipment_list_trailers",
 	label:    func(entity *trailer.Trailer) string { return entity.Code },
 	id:       func(entity *trailer.Trailer) pulid.ID { return entity.ID },
 	version:  func(entity *trailer.Trailer) int64 { return entity.Version },
@@ -431,10 +431,10 @@ func trailerFields() []masterField[trailer.Trailer] {
 func NewCreateTrailerTool(trailers TrailerKeeper, states StateLookup) agentports.AgentTool {
 	return newMasterCreateTool(&masterCreateSpec[trailer.Trailer]{
 		record: trailerRecord,
-		name:   "create_trailer",
+		name:   "equipment_create_trailer",
 		description: "Add a trailer to the fleet: its unit number, equipment type, " +
 			"manufacturer, make, model, VIN, registration, load limit and last inspection. " +
-			"Check list_trailers first; it is Available unless another status is given.",
+			"Check equipment_list_trailers first; it is Available unless another status is given.",
 		rationale: "Adds a trailer inside Trenova that dispatch can then assign; nothing is " +
 			"sent and it can be marked Sold or out of service.",
 		fields:      trailerFields(),
@@ -458,10 +458,10 @@ func NewCreateTrailerTool(trailers TrailerKeeper, states StateLookup) agentports
 func NewUpdateTrailerTool(trailers TrailerKeeper, states StateLookup) agentports.AgentTool {
 	return newMasterUpdateTool(&masterUpdateSpec[trailer.Trailer]{
 		record: trailerRecord,
-		name:   "update_trailer",
+		name:   "equipment_update_trailer",
 		description: "Change a trailer: its equipment type, fleet, make, model, VIN, plate, " +
 			"registration, load limit or last inspection. Fields left out keep their value. " +
-			"Use update_trailer_status for many units and locate_trailer to move one.",
+			"Use equipment_set_trailer_status for many units and equipment_set_trailer_location to move one.",
 		rationale:   "Changes a trailer inside Trenova; nothing is sent, and a later change puts it back.",
 		fields:      trailerFields(),
 		searchTerms: []string{"edit trailer", "trailer inspection", "registration renewal"},
@@ -535,7 +535,7 @@ func locateProperties(
 		unitKey: agenttoolschema.RecordIDText(resource,
 			fmt.Sprintf("The %s, from %s. Never guess one.", unit, lister)),
 		paramNewLocationID: agenttoolschema.RecordIDText(permission.ResourceLocation,
-			"Where it is now, from list_locations. Never guess one."),
+			"Where it is now, from location_list. Never guess one."),
 	}
 }
 
@@ -549,7 +549,7 @@ func NewLocateTractorTool(tractors TractorKeeper) agentports.AgentTool {
 	}
 
 	return common.NewReportingReceivableTool(&common.ReceivableSpec{
-		Name: "locate_tractor",
+		Name: "equipment_set_tractor_location",
 		Description: "Record where a tractor actually is when it was moved outside a " +
 			"shipment, so dispatch plans from the right place. A tractor on a move in " +
 			"progress cannot be located.",
@@ -626,7 +626,7 @@ func NewLocateTrailerTool(trailers TrailerKeeper) agentports.AgentTool {
 	}
 
 	return common.NewReportingReceivableTool(&common.ReceivableSpec{
-		Name: "locate_trailer",
+		Name: "equipment_set_trailer_location",
 		Description: "Record where a trailer actually is when it was moved outside a " +
 			"shipment. It adds a completed empty move to the shipment that last used it and " +
 			"re-rates that shipment, so a person always approves it.",

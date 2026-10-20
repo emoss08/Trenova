@@ -32,7 +32,7 @@ const (
 	fieldCap          = "totalCapMinor"
 	fieldDeducted     = "deductedToDateMinor"
 	fieldPaidToDate   = "paidToDateMinor"
-	workerIDFromList  = "Only this driver's, by id from search_worker or list_workers."
+	workerIDFromList  = "Only this driver's, by id from worker_search or worker_list."
 	driverNameMatches = 5
 )
 
@@ -289,7 +289,7 @@ func (t *driverPayTool) driverNamed(
 
 	switch len(found.Items) {
 	case 0:
-		return pulid.Nil, fmt.Errorf("no driver is named %q; look them up with search_worker", name)
+		return pulid.Nil, fmt.Errorf("no driver is named %q; look them up with worker_search", name)
 	case 1:
 		return found.Items[0].ID, nil
 	default:
@@ -477,7 +477,7 @@ func (t *listWorkerPayAssignmentsTool) ParamSchema() map[string]any {
 		paramWorkerID,
 		agenttoolschema.RecordIDText(
 			permission.ResourceWorker,
-			"The driver, by id from search_worker or list_workers.",
+			"The driver, by id from worker_search or worker_list.",
 		),
 	)
 }

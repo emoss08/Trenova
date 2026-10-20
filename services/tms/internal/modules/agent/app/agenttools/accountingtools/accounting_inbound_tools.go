@@ -21,13 +21,13 @@ const paramInboundChangeID = "inboundChangeId"
 
 const paramInboundNote = "note"
 
-const toolListInbound = "list_accounting_inbound_changes"
+const toolListInbound = "accounting_list_inbound_changes"
 
 const fieldInboundStatus = "status"
 
 const maxInboundNoteRunes = 500
 
-const inboundChangeParamHelp = "The payment's id, from list_accounting_inbound_changes."
+const inboundChangeParamHelp = "The payment's id, from accounting_list_inbound_changes."
 
 type accountingInboundOperator interface {
 	Get(
@@ -93,16 +93,16 @@ func ProvideApplyAccountingInboundChangeTool(
 }
 
 func (t *ApplyAccountingInboundChangeTool) Name() string {
-	return "apply_accounting_inbound_change"
+	return "accounting_apply_inbound_change"
 }
 
 func (t *ApplyAccountingInboundChangeTool) Recipe() []string {
-	return []string{"list_accounting_inbound_changes", "apply_accounting_inbound_change"}
+	return []string{"accounting_list_inbound_changes", "accounting_apply_inbound_change"}
 }
 
 func (t *ApplyAccountingInboundChangeTool) Description() string {
 	return "Accept an inbound change: one payment the accounting system recorded against " +
-		"documents Trenova sent, shown as Proposed by list_accounting_inbound_changes. " +
+		"documents Trenova sent, shown as Proposed by accounting_list_inbound_changes. " +
 		"Accepting brings it into Trenova on the day it was made, with any credits it used, " +
 		"or marks the settlement it pays as paid, and only while it still matches what is " +
 		"open. The preview shows exactly what would post."
@@ -218,7 +218,7 @@ func ProvideIgnoreAccountingInboundChangeTool(
 }
 
 func (t *IgnoreAccountingInboundChangeTool) Name() string {
-	return "ignore_accounting_inbound_change"
+	return "accounting_ignore_inbound_change"
 }
 
 func (t *IgnoreAccountingInboundChangeTool) Description() string {

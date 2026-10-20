@@ -44,7 +44,7 @@ func expiringCredential(name string, expiresAt int64) *worker.WorkerCredential {
 /*
 The question the assistant could not answer: "which drivers have a medical card
 expiring in the next 30 days?" It is a filtered list over a date, which neither
-get_worker nor search_worker can express, so the model had nowhere to go.
+worker_get nor worker_search can express, so the model had nowhere to go.
 
 WorkerCredentialRepository.ListExpiring already answers it — the sweep that
 mails compliance digests uses the same call — so this tool is a schema over an
@@ -124,7 +124,7 @@ func TestListExpiringCredentials_ReturnsReadableRows(t *testing.T) {
 	assert.Equal(t, "Medical Card", rows[0].CredentialType)
 	assert.NotEmpty(t, rows[0].WorkerID)
 	assert.Equal(t, repo.items[0].ID.String(), rows[0].ID,
-		"get_worker_credential takes the credential's id, so the row has to carry it")
+		"worker_get_credential takes the credential's id, so the row has to carry it")
 }
 
 func TestListExpiringCredentials_EmptyResultSaysWhatItLookedFor(t *testing.T) {

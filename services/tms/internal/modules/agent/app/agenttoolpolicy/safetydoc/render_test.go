@@ -5,9 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy/registered"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy/safetydoc"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -62,9 +62,9 @@ func TestEveryToolIsListedOnceUnderItsHighestClass(t *testing.T) {
 	}
 
 	sendSection := doc[strings.Index(doc, "## Sent outside the organization"):]
-	assert.Contains(t, sendSection, "(`email_customer`)")
+	assert.Contains(t, sendSection, "(`customer_send_email`)")
 	assert.NotContains(t, doc[:strings.Index(doc, "## Sent outside the organization")],
-		"(`email_customer`)")
+		"(`customer_send_email`)")
 }
 
 func TestRenderEscapesTableCells(t *testing.T) {

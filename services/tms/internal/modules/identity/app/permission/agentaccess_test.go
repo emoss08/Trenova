@@ -355,7 +355,7 @@ func TestRoleCoverage_FullPartialAndNone(t *testing.T) {
 				Resource:  permission.ResourceShipment,
 				Operation: permission.OpUpdate,
 			},
-			{Tool: "get_worker", Resource: permission.ResourceWorker, Operation: permission.OpRead},
+			{Tool: "worker_get", Resource: permission.ResourceWorker, Operation: permission.OpRead},
 		},
 	})
 	require.NoError(t, err)

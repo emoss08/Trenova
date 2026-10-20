@@ -111,7 +111,7 @@ func TestRecordCorrectionQueuesTheCorrection(t *testing.T) {
 
 	memory, err := svc.RecordCorrection(
 		t.Context(),
-		proposal("assign_move", map[string]any{"workerId": "wrk_a"}),
+		proposal("dispatch_assign_move", map[string]any{"workerId": "wrk_a"}),
 		&agent.AgentDecision{
 			Decision:        agent.DecisionModified,
 			Modifications:   map[string]any{"workerId": "wrk_b"},

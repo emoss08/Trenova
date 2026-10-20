@@ -94,7 +94,7 @@ func TestScore_HardChecksScoreTheCaseZero(t *testing.T) {
 		{
 			name: "tool outside held tools",
 			mutate: func(in *Input) {
-				in.Calls = append(in.Calls, agent.ObservedCall{ToolName: "update_customer"})
+				in.Calls = append(in.Calls, agent.ObservedCall{ToolName: "customer_update"})
 			},
 			failed: CheckHeldTools,
 		},
@@ -258,7 +258,7 @@ func TestScore_ToolChoiceModes(t *testing.T) {
 	assert.InDelta(t, 0.5, score(agentquality.ToolMatchAnyOrder, calls[:1]), 1e-9)
 	assert.InDelta(t, 1.0, score(agentquality.ToolMatchSubset, calls[:1]), 1e-9)
 	assert.InDelta(t, 0.5, score(agentquality.ToolMatchSubset, append(
-		[]agent.ObservedCall{{ToolName: "list_customers"}},
+		[]agent.ObservedCall{{ToolName: "customer_list"}},
 		calls[:1]...,
 	)), 1e-9)
 	assert.InDelta(t, 1.0, score(agentquality.ToolMatchSubset, nil), 1e-9)

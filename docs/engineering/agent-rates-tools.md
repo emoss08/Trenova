@@ -49,22 +49,22 @@ its domain type (`ifta.fuelType`, `fuelPurchase.quantityUnit`, `rateAgreement.pa
 ## Fuel purchases and fuel cards
 
 ```
-list_fuel_cards ──► assign_fuel_card ──► resolve_fuel_purchase_import_rows
-list_fuel_purchase_imports ──► commit_fuel_purchase_import | discard_fuel_purchase_import
-list_ifta_jurisdictions ──► record_fuel_purchase
-list_fuel_purchases ──► correct_fuel_purchase | delete_fuel_purchase
+fuel_list_cards ──► fuel_assign_card ──► fuel_resolve_purchase_import_rows
+fuel_list_purchase_imports ──► fuel_commit_purchase_import | fuel_discard_purchase_import
+fuel_list_ifta_jurisdictions ──► fuel_record_purchase
+fuel_list_purchases ──► fuel_correct_purchase | fuel_delete_purchase
 ```
 
 | Tool | Resource / operation | Class | Default → most | Runs only from a person's approval |
 | --- | --- | --- | --- | --- |
-| `list_fuel_purchases`, `list_fuel_cards`, `list_fuel_purchase_imports`, `list_ifta_jurisdictions` | fuel purchase, fuel card, fuel purchase import / read | reads only | automatic | — |
-| `record_fuel_purchase` | fuel purchase / create | inside | Propose → Ask first (from outside content: Propose) | no |
-| `correct_fuel_purchase` | fuel purchase / update | inside | Propose → Ask first (from outside content: Propose) | no |
-| `delete_fuel_purchase` | fuel purchase / delete | inside | Propose → Propose | no |
-| `assign_fuel_card` | fuel card / update | inside | Propose → Ask first | no |
-| `commit_fuel_purchase_import` | fuel purchase / import | inside | Propose → Ask first | no |
-| `resolve_fuel_purchase_import_rows` | fuel purchase import / import | inside | Propose → Ask first | no |
-| `discard_fuel_purchase_import` | fuel purchase / cancel | inside | Propose → Ask first | no |
+| `fuel_list_purchases`, `fuel_list_cards`, `fuel_list_purchase_imports`, `fuel_list_ifta_jurisdictions` | fuel purchase, fuel card, fuel purchase import / read | reads only | automatic | — |
+| `fuel_record_purchase` | fuel purchase / create | inside | Propose → Ask first (from outside content: Propose) | no |
+| `fuel_correct_purchase` | fuel purchase / update | inside | Propose → Ask first (from outside content: Propose) | no |
+| `fuel_delete_purchase` | fuel purchase / delete | inside | Propose → Propose | no |
+| `fuel_assign_card` | fuel card / update | inside | Propose → Ask first | no |
+| `fuel_commit_purchase_import` | fuel purchase / import | inside | Propose → Ask first | no |
+| `fuel_resolve_purchase_import_rows` | fuel purchase import / import | inside | Propose → Ask first | no |
+| `fuel_discard_purchase_import` | fuel purchase / cancel | inside | Propose → Ask first | no |
 
 A purchase is a tax record the quarter's IFTA return is computed from, so one read from a
 receipt or statement someone outside sent is proposed. The preview shows the gallons the
@@ -79,16 +79,16 @@ bytes and is infrastructure, as is the feed sync, which runs on its schedule.
 
 | Tool | Resource / operation | Class | Default → most | Runs only from a person's approval |
 | --- | --- | --- | --- | --- |
-| `list_ifta_returns`, `list_ifta_mileage_entries` | IFTA return, jurisdiction mileage / read | reads only | automatic | — |
-| `generate_ifta_return` | IFTA return / create | inside | Propose → Ask first | no |
-| `recompute_ifta_return` | IFTA return / update | inside | Ask first → Automatic | no |
-| `amend_ifta_return` | IFTA return / create | inside | Propose → Propose | no |
-| `delete_ifta_return` | IFTA return / delete | inside | Propose → Ask first | no |
-| `record_ifta_mileage_entry` | jurisdiction mileage / create | inside | Propose → Ask first (from outside content: Propose) | no |
-| `correct_ifta_mileage_entry` | jurisdiction mileage / update | inside | Propose → Ask first (from outside content: Propose) | no |
-| `delete_ifta_mileage_entry` | jurisdiction mileage / delete | inside | Propose → Propose | no |
-| `recalculate_move_jurisdiction_miles` | shipment move / update | inside | Propose → Ask first | no |
-| `backfill_jurisdiction_miles` | IFTA return / manage | inside | Propose → Ask first | no |
+| `fuel_list_ifta_returns`, `fuel_list_ifta_mileage_entries` | IFTA return, jurisdiction mileage / read | reads only | automatic | — |
+| `fuel_generate_ifta_return` | IFTA return / create | inside | Propose → Ask first | no |
+| `fuel_recalculate_ifta_return` | IFTA return / update | inside | Ask first → Automatic | no |
+| `fuel_amend_ifta_return` | IFTA return / create | inside | Propose → Propose | no |
+| `fuel_delete_ifta_return` | IFTA return / delete | inside | Propose → Ask first | no |
+| `fuel_record_ifta_mileage_entry` | jurisdiction mileage / create | inside | Propose → Ask first (from outside content: Propose) | no |
+| `fuel_correct_ifta_mileage_entry` | jurisdiction mileage / update | inside | Propose → Ask first (from outside content: Propose) | no |
+| `fuel_delete_ifta_mileage_entry` | jurisdiction mileage / delete | inside | Propose → Propose | no |
+| `fuel_recalculate_jurisdiction_miles` | shipment move / update | inside | Propose → Ask first | no |
+| `fuel_backfill_jurisdiction_miles` | IFTA return / manage | inside | Propose → Ask first | no |
 
 Generating and recomputing compute a draft from what is on file and file nothing; the
 preview gives the miles, gallons, net due and how many problems block finalizing. Recompute
@@ -96,48 +96,48 @@ only ever re-derives a draft, and running it twice gives the same figures, so it
 its own. Amending opens a new draft for a filed quarter with the auditor's reason and is
 always a person's call. Finalizing, marking filed and reopening a return are the filer's
 sign-off and are attestation; the jurisdictions' tax rates are configuration.
-`backfill_jurisdiction_miles` takes the IFTA quarter, previews with the service's dry run
+`fuel_backfill_jurisdiction_miles` takes the IFTA quarter, previews with the service's dry run
 (how many completed moves have no jurisdiction miles and how many miles they carry) and
 starts the background job only on execute; each move is a billable distance request.
 
 ## Rate agreements
 
 ```
-list_customers / list_carriers / list_locations
+customer_list / carrier_list / location_list
         │
         ▼
-draft_rate_agreement ─┐
-duplicate_rate_agreement ─┴─► revise_rate_agreement_draft ─► run_rate_simulation
-        ─► submit_rate_agreement ─► (reviewer) approve_rate_agreement | reject_rate_agreement
-active ─► amend_rate_agreement_rules | apply_rate_increase
-       ─► suspend_rate_agreement ─► resume_rate_agreement
-       ─► archive_rate_agreement
-list_rate_imports ─► commit_rate_import | discard_rate_import
+rate_create_agreement ─┐
+rate_duplicate_agreement ─┴─► rate_update_agreement_draft ─► rate_run_simulation
+        ─► rate_submit_agreement ─► (reviewer) rate_approve_agreement | rate_reject_agreement
+active ─► rate_amend_agreement_rules | rate_apply_increase
+       ─► rate_suspend_agreement ─► rate_resume_agreement
+       ─► rate_archive_agreement
+rate_list_imports ─► rate_commit_import | rate_discard_import
 ```
 
 | Tool | Resource / operation | Class | Default → most | Runs only from a person's approval |
 | --- | --- | --- | --- | --- |
-| `list_rate_imports` | rate agreement / read | reads only | automatic | — |
-| `draft_rate_agreement` | rate agreement / create | inside | Propose → Ask first (from outside content: Propose) | no |
-| `revise_rate_agreement_draft` | rate agreement / update | inside | Propose → Ask first (from outside content: Propose) | no |
-| `duplicate_rate_agreement` | rate agreement / duplicate | inside | Propose → Ask first (from outside content: Propose) | no |
-| `submit_rate_agreement` | rate agreement / submit | inside | Propose → Propose | no |
-| `reject_rate_agreement` | rate agreement / reject | inside | Propose → Propose | no |
-| `approve_rate_agreement` | rate agreement / approve | money | Propose → Propose | yes; refused to an agent principal |
-| `suspend_rate_agreement`, `resume_rate_agreement` | rate agreement / update | money | Propose → Propose | yes |
-| `archive_rate_agreement` | rate agreement / archive | money | Propose → Propose | yes |
-| `amend_rate_agreement_rules` | rate agreement / update | money | Propose → Propose | yes |
-| `apply_rate_increase` | rate agreement / update | money | Propose → Propose | yes |
-| `commit_rate_import` | rate agreement / update | money | Propose → Propose | yes |
-| `discard_rate_import` | rate agreement / update | inside | Propose → Ask first | no |
-| `run_rate_simulation` | rate simulation / create | inside | Ask first → Automatic | no |
+| `rate_list_imports` | rate agreement / read | reads only | automatic | — |
+| `rate_create_agreement` | rate agreement / create | inside | Propose → Ask first (from outside content: Propose) | no |
+| `rate_update_agreement_draft` | rate agreement / update | inside | Propose → Ask first (from outside content: Propose) | no |
+| `rate_duplicate_agreement` | rate agreement / duplicate | inside | Propose → Ask first (from outside content: Propose) | no |
+| `rate_submit_agreement` | rate agreement / submit | inside | Propose → Propose | no |
+| `rate_reject_agreement` | rate agreement / reject | inside | Propose → Propose | no |
+| `rate_approve_agreement` | rate agreement / approve | money | Propose → Propose | yes; refused to an agent principal |
+| `rate_suspend_agreement`, `rate_resume_agreement` | rate agreement / update | money | Propose → Propose | yes |
+| `rate_archive_agreement` | rate agreement / archive | money | Propose → Propose | yes |
+| `rate_amend_agreement_rules` | rate agreement / update | money | Propose → Propose | yes |
+| `rate_apply_increase` | rate agreement / update | money | Propose → Propose | yes |
+| `rate_commit_import` | rate agreement / update | money | Propose → Propose | yes |
+| `rate_discard_import` | rate agreement / update | inside | Propose → Ask first | no |
+| `rate_run_simulation` | rate simulation / create | inside | Ask first → Automatic | no |
 
 A draft prices nothing until it is approved, so drafting, revising and copying are inside
 the organization; one drafted from a rate sheet or a message someone outside sent is still
 proposed. Lanes are a closed schema: an origin and a destination by scope type (Any, Country,
 State, CityState, Zip3, Zip5, Zone, Location — Radius needs coordinates an agent does not
 have), a two-letter state code the tool resolves to the state on file, a direction, a formula
-template or a rate matrix, and decimal rate, minimum and maximum. `revise_rate_agreement_draft`
+template or a rate matrix, and decimal rate, minimum and maximum. `rate_update_agreement_draft`
 revises only a draft and keeps each lane it names by `ruleId`, changing only what it gives.
 
 A negotiated rate is confidential: the rate agreement resource's default sensitivity is
@@ -146,7 +146,7 @@ show which lanes close out and which are added, by label, and the rate increase 
 percent or flat change it applies; the person approving reads the rates on the agreement.
 
 Approving is the one move `guardPreview` refuses an agent principal outright, and neither
-approve nor reject is on any template: the reviewer decides. `run_rate_simulation` replays
+approve nor reject is on any template: the reviewer decides. `rate_run_simulation` replays
 past shipments against an agreement in the background and changes no shipment, rate or
 invoice; its last day is inclusive. Uploading a rate sheet moves file bytes and is
 infrastructure. Rate matrices, rate zones and distance overrides are pricing structure an
@@ -156,9 +156,9 @@ administrator builds and are configuration.
 
 | Tool | Resource / operation | Class | Default → most | Runs only from a person's approval |
 | --- | --- | --- | --- | --- |
-| `list_fuel_index_prices` | fuel surcharge program / read | reads only | automatic | — |
-| `record_fuel_index_price` | fuel surcharge program / update | money | Propose → Propose | yes |
-| `correct_fuel_index_price` | fuel surcharge program / update | money | Propose → Propose | yes |
+| `rate_list_fuel_index_prices` | fuel surcharge program / read | reads only | automatic | — |
+| `rate_record_fuel_index_price` | fuel surcharge program / update | money | Propose → Propose | yes |
+| `rate_correct_fuel_index_price` | fuel surcharge program / update | money | Propose → Propose | yes |
 
 A manual price on a custom index is what every surcharge following that index prices from,
 so it is money-class. EIA prices are fetched on their own and take no manual price. Deleting a
@@ -169,47 +169,47 @@ configuration.
 
 | Tool | Resource / operation | Class | Default → most | Runs only from a person's approval |
 | --- | --- | --- | --- | --- |
-| `list_report_schedules` | report / read | reads only | automatic | — |
-| `cancel_report_run` | report / read | inside | Ask first → Automatic | no |
-| `delete_report` | report / delete | inside | Propose → Propose | no |
-| `reset_report_fork` | report / update | inside | Propose → Ask first | no |
-| `delete_dashboard` | dashboard / delete | inside | Propose → Propose | no |
-| `update_report_schedule` | report / export | sent outside | Propose → Ask first | no |
-| `delete_report_schedule` | report / export | inside | Propose → Propose | no |
+| `report_list_schedules` | report / read | reads only | automatic | — |
+| `report_cancel_run` | report / read | inside | Ask first → Automatic | no |
+| `report_delete` | report / delete | inside | Propose → Propose | no |
+| `report_reset_fork` | report / update | inside | Propose → Ask first | no |
+| `report_delete_dashboard` | dashboard / delete | inside | Propose → Propose | no |
+| `report_update_schedule` | report / export | sent outside | Propose → Ask first | no |
+| `report_delete_schedule` | report / export | inside | Propose → Propose | no |
 
 Cancelling a run is gated on read, as the page gates it: the service lets only the person who
 started a run cancel it. Only a schedule's owner can change or remove it, and a changed
 schedule may email addresses outside the organization, so it is sent-outside and held once
 the run read outside content. Deleting a report, a dashboard or a schedule stops at Propose
 because nothing brings them back. Saved report views are one person's preference.
-`run_report`, `create_report`, `update_report`, `fork_report`, `create_dashboard`,
-`add_dashboard_tile` and `schedule_report` already covered the rest.
+`report_run`, `report_create`, `report_update`, `report_fork`, `report_create_dashboard`,
+`report_add_dashboard_tile` and `report_create_schedule` already covered the rest.
 
 ## Who holds them
 
 | Template | Runs | Holds |
 | --- | --- | --- |
-| Fuel and IFTA clerk | chat, at a Propose ceiling, Internal data access | `list_fuel_purchases`, `record_fuel_purchase`, `correct_fuel_purchase`, `delete_fuel_purchase`, `list_fuel_cards`, `assign_fuel_card`, `list_fuel_purchase_imports`, `resolve_fuel_purchase_import_rows`, `commit_fuel_purchase_import`, `discard_fuel_purchase_import`, `list_ifta_jurisdictions`, `list_ifta_mileage_entries`, `record_ifta_mileage_entry`, `correct_ifta_mileage_entry`, `delete_ifta_mileage_entry`, `recalculate_move_jurisdiction_miles`, `backfill_jurisdiction_miles`, `list_ifta_returns`, `generate_ifta_return`, `recompute_ifta_return`, `delete_ifta_return`, `amend_ifta_return`, `list_fuel_index_prices`, `record_fuel_index_price`, `correct_fuel_index_price` |
-| Report analyst | chat, at a Propose ceiling, Internal data access | `list_reports`, `describe_report`, `preview_report`, `run_report`, `get_report_run`, `list_report_runs`, `compare_report_runs`, `cancel_report_run`, `list_report_datasets`, `describe_report_dataset`, `create_report`, `update_report`, `fork_report`, `reset_report_fork`, `delete_report`, `list_report_schedules`, `schedule_report`, `update_report_schedule`, `delete_report_schedule`, `list_dashboards`, `create_dashboard`, `add_dashboard_tile`, `delete_dashboard` |
-| Formula assistant | chat, at a Propose ceiling | `list_customers`, `list_carriers`, `list_locations`, `list_rate_imports`, `list_fuel_index_prices`, `draft_rate_agreement`, `revise_rate_agreement_draft`, `duplicate_rate_agreement`, `submit_rate_agreement`, `run_rate_simulation`, `amend_rate_agreement_rules`, `apply_rate_increase`, `suspend_rate_agreement`, `resume_rate_agreement`, `archive_rate_agreement`, `commit_rate_import`, `discard_rate_import`, `record_fuel_index_price`, `correct_fuel_index_price` |
+| Fuel and IFTA clerk | chat, at a Propose ceiling, Internal data access | `fuel_list_purchases`, `fuel_record_purchase`, `fuel_correct_purchase`, `fuel_delete_purchase`, `fuel_list_cards`, `fuel_assign_card`, `fuel_list_purchase_imports`, `fuel_resolve_purchase_import_rows`, `fuel_commit_purchase_import`, `fuel_discard_purchase_import`, `fuel_list_ifta_jurisdictions`, `fuel_list_ifta_mileage_entries`, `fuel_record_ifta_mileage_entry`, `fuel_correct_ifta_mileage_entry`, `fuel_delete_ifta_mileage_entry`, `fuel_recalculate_jurisdiction_miles`, `fuel_backfill_jurisdiction_miles`, `fuel_list_ifta_returns`, `fuel_generate_ifta_return`, `fuel_recalculate_ifta_return`, `fuel_delete_ifta_return`, `fuel_amend_ifta_return`, `rate_list_fuel_index_prices`, `rate_record_fuel_index_price`, `rate_correct_fuel_index_price` |
+| Report analyst | chat, at a Propose ceiling, Internal data access | `report_list`, `report_get`, `report_preview`, `report_run`, `report_get_run`, `report_list_runs`, `report_compare_runs`, `report_cancel_run`, `report_list_datasets`, `report_get_dataset`, `report_create`, `report_update`, `report_fork`, `report_reset_fork`, `report_delete`, `report_list_schedules`, `report_create_schedule`, `report_update_schedule`, `report_delete_schedule`, `report_list_dashboards`, `report_create_dashboard`, `report_add_dashboard_tile`, `report_delete_dashboard` |
+| Formula assistant | chat, at a Propose ceiling | `customer_list`, `carrier_list`, `location_list`, `rate_list_imports`, `rate_list_fuel_index_prices`, `rate_create_agreement`, `rate_update_agreement_draft`, `rate_duplicate_agreement`, `rate_submit_agreement`, `rate_run_simulation`, `rate_amend_agreement_rules`, `rate_apply_increase`, `rate_suspend_agreement`, `rate_resume_agreement`, `rate_archive_agreement`, `rate_commit_import`, `rate_discard_import`, `rate_record_fuel_index_price`, `rate_correct_fuel_index_price` |
 
 The fuel and IFTA clerk keeps the fuel tax record and holds 33 of its 56 tools: every fuel
 purchase, fuel card, fuel import, jurisdiction mileage and IFTA tool on this page, the fuel
-index prices it shares with the formula assistant, `get_fuel_surcharge_rates`, and the tractor,
+index prices it shares with the formula assistant, `rate_list_fuel_surcharge_programs`, and the tractor,
 driver, shipment and document reads that find what a purchase or a mile belongs to. Fuel
 purchases and returns default to Internal sensitivity, so its data access is Internal. The
 formula assistant is the organization's pricing agent and holds 30.
 
-`get_formula_template` reads one formula template whole: its formula, its own variables with
+`formula_get_template` reads one formula template whole: its formula, its own variables with
 their defaults, its breakdown lines, its minimum, maximum and rounding, and its status and
 version, so a formula is read before it is explained or changed. The formula assistant, the
-shipment intake desk and the import assistant hold it beside `list_formula_templates`, which
+shipment intake desk and the import assistant hold it beside `formula_list_templates`, which
 yields its id. A person sees the template as its own card on the Desk.
 
 The report analyst holds every report administration tool on this page and the report and
 dashboard builders they sit beside, 23 tools in all. It is a chat agent acting as the person, so
 the service still lets only a run's starter cancel it and only a schedule's owner change it, and
-`schedule_report` and `update_report_schedule` stay sent-outside: held once the turn read
+`report_create_schedule` and `report_update_schedule` stay sent-outside: held once the turn read
 outside content and never past Ask first. Its data access is Internal, so a report column above
 it is left out and named. The insight analyst, an unattended desk, keeps its report reads and
 holds none of the report writes.
@@ -218,7 +218,7 @@ All three run at a Propose ceiling, so every write they make waits for a person,
 a new agent permission ceiling entry, since that ceiling binds only unattended desks; a fuel
 index price still runs only from that person's approval.
 
-`approve_rate_agreement` and `reject_rate_agreement` stay off every template so the agent that
+`rate_approve_agreement` and `rate_reject_agreement` stay off every template so the agent that
 drafts an agreement is never the one that reviews it. An organization adds them to an agent it
 builds in AI control.
 
@@ -228,6 +228,6 @@ builds in AI control.
   tools it was saved with; an administrator adds them in AI control. An organization that
   wants the fuel and IFTA clerk or the report analyst creates it from its starter.
 - A lane scoped by Radius cannot be drafted by an agent; a person draws it on the page.
-- `apply_rate_increase` takes at most 50 agreements by id, and a rate matrix's cells are not
+- `rate_apply_increase` takes at most 50 agreements by id, and a rate matrix's cells are not
   moved by it; the preview counts the matrix-priced lanes it leaves alone.
-- `backfill_jurisdiction_miles` routes at most 5,000 moves in one run.
+- `fuel_backfill_jurisdiction_miles` routes at most 5,000 moves in one run.

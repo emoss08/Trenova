@@ -324,7 +324,7 @@ func TestRunTellsTheModelWhenAToolCouldNotBeRun(t *testing.T) {
 func TestUnsettledToolOutcome_NeverSaysAStoppedWriteDidNotHappen(t *testing.T) {
 	t.Parallel()
 
-	stopped := unsettledToolOutcome("assign_move", temporal.NewCanceledError())
+	stopped := unsettledToolOutcome("dispatch_assign_move", temporal.NewCanceledError())
 	assert.True(t, stopped.Failed)
 	assert.Contains(t, stopped.Content, "stopped before it reported back")
 	assert.Contains(t, stopped.Content, "unconfirmed")
@@ -354,14 +354,14 @@ func TestRunReturnsWhatTheTurnDidWhenTheModelFails(t *testing.T) {
 func TestRunCarriesAProposalBackAcrossTheActivity(t *testing.T) {
 	t.Parallel()
 
-	move := &agenttest.StubActionTool{ToolName: "assign_move", Tier: agent.TierPropose}
+	move := &agenttest.StubActionTool{ToolName: "dispatch_assign_move", Tier: agent.TierPropose}
 	h := newHarness(t, harnessParams{action: []agentports.AgentTool{move}})
 	h.replies(
-		toolReply("assign_move", map[string]any{"moveId": "mv_1"}),
+		toolReply("dispatch_assign_move", map[string]any{"moveId": "mv_1"}),
 		textReply("I have proposed the assignment."),
 	)
 
-	result := h.run(t, runContext("assign_move"))
+	result := h.run(t, runContext("dispatch_assign_move"))
 
 	require.Empty(t, result.Err)
 	assert.Zero(t, move.Calls, "a proposal is not run inside the turn")
@@ -424,7 +424,7 @@ func (*memoryLedger) Loaded(
 func TestRunNeverWritesTwiceWhenAToolIsRetried(t *testing.T) {
 	t.Parallel()
 
-	move := &agenttest.StubActionTool{ToolName: "assign_move", Tier: agent.TierAutoExecute}
+	move := &agenttest.StubActionTool{ToolName: "dispatch_assign_move", Tier: agent.TierAutoExecute}
 	ledger := &memoryLedger{settled: map[string]agentports.RunStepOutcome{}}
 	h := newHarness(t, harnessParams{
 		action: []agentports.AgentTool{move},
@@ -443,11 +443,11 @@ func TestRunNeverWritesTwiceWhenAToolIsRetried(t *testing.T) {
 		},
 	})
 	h.replies(
-		toolReply("assign_move", map[string]any{"moveId": "mv_1"}),
+		toolReply("dispatch_assign_move", map[string]any{"moveId": "mv_1"}),
 		textReply("Assigned."),
 	)
 
-	rc := runContext("assign_move")
+	rc := runContext("dispatch_assign_move")
 	rc.RunID = pulid.MustNew("arun_")
 	rc.StepOwner = agentports.RunStepOwner{Kind: agentports.RunStepOwnerAgentRun, ID: rc.RunID}
 
@@ -475,7 +475,7 @@ func TestToolActivityRefusesWhatIsNotATool(t *testing.T) {
 			call:     "SomeMisspelledActivity",
 			errType:  ErrTypeUnknownTool,
 		},
-		{name: "a call to a different tool", activity: "assign_move", call: "shipment_get",
+		{name: "a call to a different tool", activity: "dispatch_assign_move", call: "shipment_get",
 			errType: ErrTypeBadToolInput},
 	}
 
@@ -483,7 +483,7 @@ func TestToolActivityRefusesWhatIsNotATool(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			move := &agenttest.StubActionTool{ToolName: "assign_move"}
+			move := &agenttest.StubActionTool{ToolName: "dispatch_assign_move"}
 			h := newHarness(t, harnessParams{action: []agentports.AgentTool{move}})
 			h.env.RegisterWorkflowWithOptions(
 				func(ctx workflow.Context, name string, in *ToolInput) error {
@@ -498,7 +498,7 @@ func TestToolActivityRefusesWhatIsNotATool(t *testing.T) {
 			)
 
 			h.env.ExecuteWorkflow("agentflow-test-call", tt.activity, &ToolInput{
-				Run: runContext("assign_move"),
+				Run: runContext("dispatch_assign_move"),
 				Call: agentruntime.DispatchCall{
 					Call: agentports.ToolCall{ID: "call_1", Name: tt.call},
 				},

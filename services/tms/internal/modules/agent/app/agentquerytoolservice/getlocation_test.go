@@ -65,5 +65,5 @@ func TestGetLocation_IsGatedOnTheLocationResource(t *testing.T) {
 	tool := newGetLocationTool(nil, nil).(*getTool)
 	assert.Equal(t, permission.ResourceLocation, tool.spec.resource)
 	assert.Equal(t, "location", tool.spec.entity)
-	assert.Contains(t, tool.spec.summary, "list_locations")
+	assert.Contains(t, tool.spec.summary, "location_list")
 }

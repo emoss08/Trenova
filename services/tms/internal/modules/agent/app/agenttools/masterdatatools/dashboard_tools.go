@@ -55,24 +55,24 @@ func NewCreateDashboardTool(dashboards *reporting.Service) agentports.AgentTool 
 	return &CreateDashboardTool{dashboards: dashboards}
 }
 
-func (t *CreateDashboardTool) Name() string { return "create_dashboard" }
+func (t *CreateDashboardTool) Name() string { return "report_create_dashboard" }
 
 func (t *CreateDashboardTool) Description() string {
 	return "Create a report dashboard: a page of saved or built-in reports under Reports. " +
 		"Use it when a person describes a screen of reports they want, such as \"this " +
 		"week's revenue, on-time percentage and the unbilled backlog\". Find each tile's " +
-		"report with list_reports first; never invent an id. Tiles are laid out for you. " +
+		"report with report_list first; never invent an id. Tiles are laid out for you. " +
 		"For a dashboard about a measure, lead with its headline figures as kpi tiles when " +
 		"the report has a column for them, then the detail table. " +
-		"Not for the person's home page — get_my_home_layout and add_home_widget are for that."
+		"Not for the person's home page — home_get_layout and home_add_widget are for that."
 }
 
 func (t *CreateDashboardTool) Prerequisites() []string {
-	return []string{"list_reports", "describe_report"}
+	return []string{toolReportList, toolReportGet}
 }
 
 func (t *CreateDashboardTool) Recipe() []string {
-	return []string{"list_reports", "describe_report", "create_dashboard"}
+	return []string{toolReportList, toolReportGet, "report_create_dashboard"}
 }
 
 func (t *CreateDashboardTool) SearchTerms() []string {
@@ -124,19 +124,19 @@ func tileSchema() map[string]any {
 			},
 			"definitionId": agenttoolschema.RecordIDText(
 				permission.ResourceReport,
-				"A saved report's id, from list_reports. Give this or cannedKey, not both.",
+				"A saved report's id, from report_list. Give this or cannedKey, not both.",
 			),
 			"cannedKey": map[string]any{
 				"type":        "string",
-				"description": "A built-in report's key, from list_reports. Give this or definitionId, not both.",
+				"description": "A built-in report's key, from report_list. Give this or definitionId, not both.",
 			},
 			"chartId": map[string]any{
 				"type":        "string",
-				"description": "Which of the report's charts, for a chart tile; describe_report lists them.",
+				"description": "Which of the report's charts, for a chart tile; report_get lists them.",
 			},
 			"columnId": map[string]any{
 				"type":        "string",
-				"description": "The output column a KPI tile reads; describe_report lists them.",
+				"description": "The output column a KPI tile reads; report_get lists them.",
 			},
 			"text": map[string]any{
 				"type":        "string",
@@ -243,7 +243,7 @@ func validateTiles(tiles []map[string]any, multiErr *errortypes.MultiError) {
 			case definitionID == "" && cannedKey == "":
 				multiErr.Add(field+".definitionId", errortypes.ErrRequired,
 					"A "+string(kind)+" tile needs a report to draw: a definitionId or "+
-						"cannedKey from list_reports")
+						"cannedKey from report_list")
 			case definitionID != "" && cannedKey != "":
 				multiErr.Add(field, errortypes.ErrInvalid,
 					"Give a tile a definitionId or a cannedKey, not both")
@@ -308,21 +308,26 @@ func NewAddDashboardTileTool(dashboards *reporting.Service) agentports.AgentTool
 	return &AddDashboardTileTool{dashboards: dashboards}
 }
 
-func (t *AddDashboardTileTool) Name() string { return "add_dashboard_tile" }
+func (t *AddDashboardTileTool) Name() string { return "report_add_dashboard_tile" }
 
 func (t *AddDashboardTileTool) Recipe() []string {
-	return []string{"list_dashboards", "list_reports", "describe_report", "add_dashboard_tile"}
+	return []string{
+		"report_list_dashboards",
+		toolReportList,
+		toolReportGet,
+		"report_add_dashboard_tile",
+	}
 }
 
 func (t *AddDashboardTileTool) Description() string {
 	return "Add one tile to a report dashboard that already exists, placed after the ones " +
 		"there. Use it when somebody wants one more report on a dashboard they have; " +
-		"list_dashboards gives the dashboard id and list_reports the report. Not for the " +
-		"person's home page — add_home_widget is for that."
+		"report_list_dashboards gives the dashboard id and report_list the report. Not for the " +
+		"person's home page — home_add_widget is for that."
 }
 
 func (t *AddDashboardTileTool) Prerequisites() []string {
-	return []string{"list_dashboards", "list_reports", "describe_report"}
+	return []string{"report_list_dashboards", toolReportList, toolReportGet}
 }
 
 func (t *AddDashboardTileTool) SearchTerms() []string {
@@ -339,7 +344,7 @@ func (t *AddDashboardTileTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"dashboardId": agenttoolschema.RecordIDText(
 				permission.ResourceDashboard,
-				"The dashboard to add to, from list_dashboards.",
+				"The dashboard to add to, from report_list_dashboards.",
 			),
 			paramTile: tile,
 		},
@@ -383,7 +388,7 @@ func (t *AddDashboardTileTool) Validate(
 	if err != nil {
 		multiErr := errortypes.NewMultiError()
 		multiErr.Add("dashboardId", errortypes.ErrInvalid, fmt.Sprintf(
-			"%q is not a dashboard you can open; find it with list_dashboards",
+			"%q is not a dashboard you can open; find it with report_list_dashboards",
 			common.OptionalString(params.Params, "dashboardId"),
 		))
 		return multiErr
@@ -603,7 +608,7 @@ func checkTileTargets(
 		built, err := buildTiles([]map[string]any{tile}, 0)
 		if err != nil {
 			multiErr.Add(path+".definitionId", errortypes.ErrInvalid, fmt.Sprintf(
-				"%q is not a report id. Find the report with list_reports and use its "+
+				"%q is not a report id. Find the report with report_list and use its "+
 					"definitionId, or a built-in report's cannedKey",
 				common.OptionalString(tile, "definitionId"),
 			))
@@ -617,13 +622,13 @@ func checkTileTargets(
 		path := tilePath(field, positions[missing.Index], len(tiles))
 		if missing.Canned {
 			multiErr.Add(path+".cannedKey", errortypes.ErrInvalid, fmt.Sprintf(
-				"%q is not a built-in report; list_reports names the ones that exist",
+				"%q is not a built-in report; report_list names the ones that exist",
 				parsed[missing.Index].CannedKey,
 			))
 			continue
 		}
 		multiErr.Add(path+".definitionId", errortypes.ErrInvalid, fmt.Sprintf(
-			"There is no report %s that you can open; find the one you mean with list_reports",
+			"There is no report %s that you can open; find the one you mean with report_list",
 			parsed[missing.Index].DefinitionID,
 		))
 	}

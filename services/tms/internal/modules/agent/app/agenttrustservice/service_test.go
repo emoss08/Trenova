@@ -167,7 +167,7 @@ func trustPolicy(
 	egress agent.EgressClass,
 ) agentports.ToolPolicy {
 	return agentports.ToolPolicy{
-		Name:          "assign_move",
+		Name:          "dispatch_assign_move",
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceShipmentMove,
 		Operation:     permission.OpUpdate,
@@ -272,7 +272,7 @@ func newHarness(t *testing.T, opts harnessOptions) *harness {
 			OrganizationID:  orgID,
 			BusinessUnitID:  buID,
 			Name:            "Dispatch coverage",
-			ToolNames:       []string{"assign_move"},
+			ToolNames:       []string{"dispatch_assign_move"},
 			ToolTiers:       opts.toolTiers,
 			AutonomyCeiling: opts.ceiling,
 		}},
@@ -283,7 +283,7 @@ func newHarness(t *testing.T, opts harnessOptions) *harness {
 			OrganizationID: orgID,
 			BusinessUnitID: buID,
 			RunID:          runID,
-			ToolName:       "assign_move",
+			ToolName:       "dispatch_assign_move",
 		},
 	}
 	h.svc = &Service{
@@ -297,7 +297,7 @@ func newHarness(t *testing.T, opts harnessOptions) *harness {
 		}},
 		runs: fakeRuns{run: &agent.AgentRun{ID: runID, AgentDefinitionID: definitionID}},
 		tools: fakeRegistry{
-			tools: map[string]agent.AutonomyTier{"assign_move": agent.TierActWithApproval},
+			tools: map[string]agent.AutonomyTier{"dispatch_assign_move": agent.TierActWithApproval},
 		},
 		audit:         h.audit,
 		notifications: h.notifier,
@@ -327,7 +327,7 @@ func TestRecordDecision_PromotesAtThreshold(t *testing.T) {
 	require.NoError(t, h.svc.RecordDecision(t.Context(), h.proposal, accepted(nil)))
 
 	require.Len(t, h.definitions.tiers, 1)
-	assert.Equal(t, "assign_move", h.definitions.tiers[0].ToolName)
+	assert.Equal(t, "dispatch_assign_move", h.definitions.tiers[0].ToolName)
 	assert.Equal(t, agent.TierAutoExecute, h.definitions.tiers[0].Tier,
 		"the tool's default was ask-first, so the next tier up is automatic")
 
@@ -378,7 +378,7 @@ func TestRecordDecision_ModificationResetsWithoutDemoting(t *testing.T) {
 	h := newHarness(t, harnessOptions{
 		earned:    true,
 		threshold: 5,
-		toolTiers: map[string]agent.AutonomyTier{"assign_move": agent.TierAutoExecute},
+		toolTiers: map[string]agent.AutonomyTier{"dispatch_assign_move": agent.TierAutoExecute},
 		row:       &agent.ToolTrust{Streak: 4, EarnedTier: agent.TierAutoExecute},
 	})
 
@@ -403,7 +403,7 @@ func TestRecordDecision_RejectionTakesBackAnEarnedTier(t *testing.T) {
 		// The organization has since switched earned autonomy off; a tier
 		// the ledger granted is still the ledger's to take back.
 		earned:    false,
-		toolTiers: map[string]agent.AutonomyTier{"assign_move": agent.TierAutoExecute},
+		toolTiers: map[string]agent.AutonomyTier{"dispatch_assign_move": agent.TierAutoExecute},
 		row:       &agent.ToolTrust{EarnedTier: agent.TierAutoExecute},
 	})
 
@@ -426,7 +426,7 @@ func TestRecordDecision_RejectionLeavesAChosenTierAlone(t *testing.T) {
 
 	h := newHarness(t, harnessOptions{
 		earned:    true,
-		toolTiers: map[string]agent.AutonomyTier{"assign_move": agent.TierAutoExecute},
+		toolTiers: map[string]agent.AutonomyTier{"dispatch_assign_move": agent.TierAutoExecute},
 		// Nothing was earned: a person set automatic by hand.
 		row: &agent.ToolTrust{},
 	})
@@ -445,7 +445,7 @@ func TestRecordExecutionFailure_DemotesWithoutAPerson(t *testing.T) {
 
 	h := newHarness(t, harnessOptions{
 		earned:    true,
-		toolTiers: map[string]agent.AutonomyTier{"assign_move": agent.TierAutoExecute},
+		toolTiers: map[string]agent.AutonomyTier{"dispatch_assign_move": agent.TierAutoExecute},
 		row:       &agent.ToolTrust{EarnedTier: agent.TierAutoExecute},
 	})
 
@@ -532,7 +532,7 @@ func TestRecordDecision_ConcurrentApprovalsPromoteOnce(t *testing.T) {
 	h := newHarness(t, harnessOptions{
 		earned:    true,
 		threshold: 3,
-		toolTiers: map[string]agent.AutonomyTier{"assign_move": agent.TierPropose},
+		toolTiers: map[string]agent.AutonomyTier{"dispatch_assign_move": agent.TierPropose},
 		row:       &agent.ToolTrust{Streak: 2},
 	})
 	h.trust.beforeMark = func() {
@@ -557,7 +557,7 @@ func TestRecordDecision_ARejectionInBetweenStopsThePromotion(t *testing.T) {
 	h := newHarness(t, harnessOptions{
 		earned:    true,
 		threshold: 3,
-		toolTiers: map[string]agent.AutonomyTier{"assign_move": agent.TierPropose},
+		toolTiers: map[string]agent.AutonomyTier{"dispatch_assign_move": agent.TierPropose},
 		row:       &agent.ToolTrust{Streak: 2},
 	})
 	h.trust.beforeMark = func() {
@@ -648,7 +648,7 @@ func TestRecordDecision_PromotesNoFurtherThanThePolicyAllows(t *testing.T) {
 				earned:    true,
 				threshold: 1,
 				toolTiers: map[string]agent.AutonomyTier{
-					"assign_move": agent.TierActWithApproval,
+					"dispatch_assign_move": agent.TierActWithApproval,
 				},
 			})
 			h.svc.tools = policyRegistry{tool: policyTool{policy: tc.policy}}

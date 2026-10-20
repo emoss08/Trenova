@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -39,7 +39,7 @@ func TestAssertActorMayRun_ASelfScopedToolNeedsAPersonNotAGrant(t *testing.T) {
 	t.Parallel()
 
 	tool := selfScopedTool{&recordingTool{
-		name:      "add_home_widget",
+		name:      "home_add_widget",
 		resource:  permission.ResourceHomeLayoutPreset,
 		operation: permission.OpUpdate,
 	}}

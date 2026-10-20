@@ -28,56 +28,56 @@ stops at Propose, and runs only from a person's approval
 ## Manual journals and reversals
 
 ```
-list_gl_accounts ──► draft_manual_journal ──► revise_manual_journal_draft
+ledger_list_accounts ──► ledger_create_manual_journal ──► ledger_update_manual_journal
                            │
                            ▼
-                  submit_manual_journal ──► (a person approves) ──► post_manual_journal
+                  ledger_submit_manual_journal ──► (a person approves) ──► ledger_post_manual_journal
                            │
-                           └─► cancel_manual_journal (before it posts)
+                           └─► ledger_cancel_manual_journal (before it posts)
 
-list_journal_entries / get_journal_entry ──► request_journal_reversal
-                           ──► (a person approves) ──► post_journal_reversal
-                           └─► cancel_journal_reversal (before it posts)
+ledger_list_journal_entries / ledger_get_journal_entry ──► ledger_create_journal_reversal
+                           ──► (a person approves) ──► ledger_post_journal_reversal
+                           └─► ledger_cancel_journal_reversal (before it posts)
 ```
 
 | Tool | Resource / operation | Class | Default → most | Runs only from a person's approval |
 | --- | --- | --- | --- | --- |
-| `list_manual_journals`, `get_manual_journal`, `list_journal_reversals` | manual journal, journal reversal / read | reads only | automatic | — |
-| `draft_manual_journal` | manual journal / create | inside | Propose → Ask first (from outside content: Propose) | no |
-| `revise_manual_journal_draft` | manual journal / update | inside | Propose → Ask first (from outside content: Propose) | no |
-| `submit_manual_journal` | manual journal / submit | inside | Propose → Ask first | no |
-| `cancel_manual_journal` | manual journal / cancel | inside | Propose → Ask first (from outside content: Propose) | no |
-| `post_manual_journal` | manual journal / approve | money | Propose → Propose | yes |
-| `request_journal_reversal` | journal reversal / create | money | Propose → Propose | yes |
-| `cancel_journal_reversal` | journal reversal / cancel | inside | Propose → Ask first (from outside content: Propose) | no |
-| `post_journal_reversal` | journal reversal / approve | money | Propose → Propose | yes |
+| `ledger_list_manual_journals`, `ledger_get_manual_journal`, `ledger_list_journal_reversals` | manual journal, journal reversal / read | reads only | automatic | — |
+| `ledger_create_manual_journal` | manual journal / create | inside | Propose → Ask first (from outside content: Propose) | no |
+| `ledger_update_manual_journal` | manual journal / update | inside | Propose → Ask first (from outside content: Propose) | no |
+| `ledger_submit_manual_journal` | manual journal / submit | inside | Propose → Ask first | no |
+| `ledger_cancel_manual_journal` | manual journal / cancel | inside | Propose → Ask first (from outside content: Propose) | no |
+| `ledger_post_manual_journal` | manual journal / approve | money | Propose → Propose | yes |
+| `ledger_create_journal_reversal` | journal reversal / create | money | Propose → Propose | yes |
+| `ledger_cancel_journal_reversal` | journal reversal / cancel | inside | Propose → Ask first (from outside content: Propose) | no |
+| `ledger_post_journal_reversal` | journal reversal / approve | money | Propose → Propose | yes |
 
 A draft books nothing, and the preview shows its lines by account, the debit and credit
 totals and whether it balances. Submitting an agent's journal where the organization has
 manual journal approval turned off would approve it on submission, so the tool refuses an
 agent actor that plan: a person submits it. Approving and rejecting a journal or a reversal
 is the second person's sign-off and is exempt as attestation; an agent prepares and never
-stands in as the approver. `request_journal_reversal` is money-class because, where approval
+stands in as the approver. `ledger_create_journal_reversal` is money-class because, where approval
 is off, the request is approved at once; its preview shows the original entry's lines with
 debits and credits swapped, in the functional currency, and the period it will book in.
 
 Dates are `YYYY-MM-DD`. Amounts are decimal strings. Journal lines are a closed schema: a GL
-account from `list_gl_accounts`, a description, exactly one of debit or credit, and an
+account from `ledger_list_accounts`, a description, exactly one of debit or credit, and an
 optional customer or location.
 
 ## Fiscal periods
 
 | Tool | Operation | Class | Most it may do | Runs only from a person's approval |
 | --- | --- | --- | --- | --- |
-| `open_fiscal_period` | activate | money | Propose | yes |
-| `lock_fiscal_period` | lock | money | Propose | yes |
-| `unlock_fiscal_period` | unlock | money | Propose | yes |
-| `close_fiscal_period` | close | money | Propose | yes |
-| `reopen_fiscal_period` | reopen (with a reason) | money | Propose | yes |
+| `ledger_open_fiscal_period` | activate | money | Propose | yes |
+| `ledger_lock_fiscal_period` | lock | money | Propose | yes |
+| `ledger_unlock_fiscal_period` | unlock | money | Propose | yes |
+| `ledger_close_fiscal_period` | close | money | Propose | yes |
+| `ledger_reopen_fiscal_period` | reopen (with a reason) | money | Propose | yes |
 
 Each is one move through `fiscalperiodservice.Transition`; `PlanTransition` refuses what the
 move refuses (periods open and close in order, a period in a closed year never reopens, a
-close with blockers is refused). `list_fiscal_periods` and `get_fiscal_close_blockers` pick the
+close with blockers is refused). `ledger_list_fiscal_periods` and `ledger_get_fiscal_close_blockers` pick the
 period and say whether it can close. Creating, editing and deleting periods, and every fiscal
 year write, lay out the calendar and are configuration; closing and reopening a fiscal year
 book and withdraw the year-end closing entries and are attestation.
@@ -86,12 +86,12 @@ book and withdraw the year-end closing entries and are attestation.
 
 | Tool | Resource / operation | Class | Default → most | Runs only from a person's approval |
 | --- | --- | --- | --- | --- |
-| `confirm_accounting_mapping_proposals` | accounting integration / update | inside | Propose → Ask first | no |
-| `reject_accounting_mapping_proposal` | accounting integration / update | inside | Propose → Ask first | no |
-| `release_accounting_sync` | accounting sync / update | money | Propose → Propose | yes |
-| `change_accounting_backfill` | accounting integration / manage | inside | Ask first → Ask first | no |
+| `accounting_confirm_mapping` | accounting integration / update | inside | Propose → Ask first | no |
+| `accounting_reject_mapping` | accounting integration / update | inside | Propose → Ask first | no |
+| `accounting_release_sync_record` | accounting sync / update | money | Propose → Propose | yes |
+| `accounting_update_backfill` | accounting integration / manage | inside | Ask first → Ask first | no |
 
-Confirming takes each proposal as `list_accounting_mapping_gaps` showed it, mapping and
+Confirming takes each proposal as `accounting_list_mapping_gaps` showed it, mapping and
 external id together, and a proposal that changed since it was read is refused. Releasing sends
 records a review policy held as `AwaitingApproval`; the record subset lets the person approving
 untick some. Changing a backfill pauses, resumes or cancels the one in progress and refuses a
@@ -117,11 +117,11 @@ preview that plan and validate with it.
 
 | Tool | Resource / operation | Class | Default → most | Runs only from a person's approval |
 | --- | --- | --- | --- | --- |
-| `get_factoring_reserve_balance` | factoring reserve / read | reads only | automatic | — |
-| `record_factoring_funding` | factoring reserve / create | money | Propose → Propose | yes |
-| `release_factoring_reserve` | factoring reserve / create | money | Propose → Propose | yes |
-| `record_factoring_chargeback` | factoring reserve / create | money | Propose → Propose | yes |
-| `reverse_factoring_chargeback` | factoring reserve / create | money | Propose → Propose | yes |
+| `factoring_get_reserve_balance` | factoring reserve / read | reads only | automatic | — |
+| `factoring_record_funding` | factoring reserve / create | money | Propose → Propose | yes |
+| `factoring_release_reserve` | factoring reserve / create | money | Propose → Propose | yes |
+| `factoring_record_chargeback` | factoring reserve / create | money | Propose → Propose | yes |
+| `factoring_reverse_chargeback` | factoring reserve / create | money | Propose → Propose | yes |
 
 Amounts are decimal strings and dates `YYYY-MM-DD`. A funding item takes the advance and fee
 the factor actually paid, defaulting to the expected ones; the fee is the figure that
@@ -141,12 +141,12 @@ the apply tool's preview is the journal.
 
 | Tool | Resource / operation | Class | Default → most | Runs only from a person's approval |
 | --- | --- | --- | --- | --- |
-| `list_factoring_remittances` | factoring remittance / read | reads only | automatic | — |
-| `get_factoring_remittance` | factoring remittance / read | reads only | automatic | — |
-| `resolve_factoring_remittance_line` | factoring remittance / update | internal | Propose → ActWithApproval | no |
-| `rematch_factoring_remittance` | factoring remittance / update | internal | Propose → ActWithApproval | no |
-| `apply_factoring_remittance` | factoring remittance / import (Apply) | money | Propose → Propose | yes |
-| `discard_factoring_remittance` | factoring remittance / cancel | internal | Propose → ActWithApproval | no |
+| `factoring_list_remittances` | factoring remittance / read | reads only | automatic | — |
+| `factoring_get_remittance` | factoring remittance / read | reads only | automatic | — |
+| `factoring_resolve_remittance_line` | factoring remittance / update | internal | Propose → ActWithApproval | no |
+| `factoring_rematch_remittance` | factoring remittance / update | internal | Propose → ActWithApproval | no |
+| `factoring_apply_remittance` | factoring remittance / import (Apply) | money | Propose → Propose | yes |
+| `factoring_discard_remittance` | factoring remittance / cancel | internal | Propose → ActWithApproval | no |
 
 Resolving a line books nothing: it matches the line to a schedule item, unmatches it, ignores
 it with a reason, restores it, or changes what it records. The clerk resolves only lines whose
@@ -184,10 +184,10 @@ outrun the preview's time budget, and a statement dated today is digested by day
 
 | Template | Runs | Holds |
 | --- | --- | --- |
-| Books keeper | unattended, on accounting sync events and the weekly reconciliation, starting in shadow | `confirm_accounting_mapping_proposals`, `reject_accounting_mapping_proposal`, `release_accounting_sync`, `pause_accounting_sync`, `resume_accounting_sync`, `create_accounting_reference_record`, `refresh_accounting_reference_data`, and for period end `list_fiscal_periods`, `get_fiscal_close_blockers`, `lock_fiscal_period`, `close_fiscal_period` |
+| Books keeper | unattended, on accounting sync events and the weekly reconciliation, starting in shadow | `accounting_confirm_mapping`, `accounting_reject_mapping`, `accounting_release_sync_record`, `accounting_pause_sync`, `accounting_resume_sync`, `accounting_create_reference_record`, `accounting_refresh_reference_data`, and for period end `ledger_list_fiscal_periods`, `ledger_get_fiscal_close_blockers`, `ledger_lock_fiscal_period`, `ledger_close_fiscal_period` |
 | Cash application agent | unattended, on bank receipt exceptions | `receivable_triage_bank_receipt_work_item`, to put an item it leaves for a person under review |
 | Receivables assistant | in chat, for the person working receivables | `receivable_record_collection_activity`, `receivable_assign_collector`, `receivable_schedule_follow_up`, `receivable_send_payment_reminder`, `receivable_send_statement`, beside the worklist and statement reads |
-| Factoring clerk | unattended, on factoring readiness, schedule, remittance and chargeback-window events | `get_factoring_reserve_balance`, `record_factoring_funding`, `release_factoring_reserve`, `list_factoring_remittances`, `get_factoring_remittance`, `resolve_factoring_remittance_line`, `rematch_factoring_remittance`, `apply_factoring_remittance` |
+| Factoring clerk | unattended, on factoring readiness, schedule, remittance and chargeback-window events | `factoring_get_reserve_balance`, `factoring_record_funding`, `factoring_release_reserve`, `factoring_list_remittances`, `factoring_get_remittance`, `factoring_resolve_remittance_line`, `factoring_rematch_remittance`, `factoring_apply_remittance` |
 
 The agent permission ceiling (`permission/agent.go`) gains lock and close on fiscal periods
 for the books keeper; both tools stop at a proposal and run as the approver. Mapping review and
@@ -198,18 +198,18 @@ Ask first ceiling holds each to a proposal a person approves, whatever its own p
 
 | Tool | Default → most | Why the books keeper holds it |
 | --- | --- | --- |
-| `pause_accounting_sync` | Automatic → Automatic | It wakes when the connection degrades; pausing holds what waits, loses nothing, and its prompt proposes it only while the connection is failing, with the reason. |
-| `resume_accounting_sync` | Ask first → Ask first | Everything held goes out at once, so it proposes resuming only once `get_accounting_sync_status` shows the connection answering and the reason for the pause is over. |
-| `create_accounting_reference_record` | Propose → Ask first | A missing item, customer or vendor is the commonest mapping gap; it proposes creating one only when `get_accounting_mapping`'s search finds no match. Accounts, terms and payment methods stay the bookkeeper's. |
-| `refresh_accounting_reference_data` | Automatic → Automatic | It rereads the books after a person says they added or renamed something there, and writes nothing to them. |
+| `accounting_pause_sync` | Automatic → Automatic | It wakes when the connection degrades; pausing holds what waits, loses nothing, and its prompt proposes it only while the connection is failing, with the reason. |
+| `accounting_resume_sync` | Ask first → Ask first | Everything held goes out at once, so it proposes resuming only once `accounting_get_connection` shows the connection answering and the reason for the pause is over. |
+| `accounting_create_reference_record` | Propose → Ask first | A missing item, customer or vendor is the commonest mapping gap; it proposes creating one only when `accounting_get_mapping` finds no match. Accounts, terms and payment methods stay the bookkeeper's. |
+| `accounting_refresh_reference_data` | Automatic → Automatic | It rereads the books after a person says they added or renamed something there, and writes nothing to them. |
 
 Pause and resume act on the whole connection, not one document, which is why neither runs on
 the books keeper's own say: an organization that raises its ceiling past Ask first lets an
 outage pause sending unattended, and resuming still waits for a person.
 
-The manual journal and reversal tools, `open_fiscal_period`, `unlock_fiscal_period`,
-`reopen_fiscal_period`, `change_accounting_backfill`, `request_accounting_backfill`,
-`clear_accounting_mapping` and `redate_accounting_sync` are deliberately on no template, and a
+The manual journal and reversal tools, `ledger_open_fiscal_period`, `ledger_unlock_fiscal_period`,
+`ledger_reopen_fiscal_period`, `accounting_update_backfill`, `accounting_request_backfill`,
+`accounting_clear_mapping` and `accounting_redate_sync_record` are deliberately on no template, and a
 template test keeps them off every one. Each is privileged: it starts from a person's request,
 and none belongs to an unattended desk, since posting and approving are refused to an agent
 principal outright and drafting a journal on its own judgement is not the books keeper's job.
@@ -225,5 +225,5 @@ to an agent it builds in AI control.
   keeps the tools it was saved with; an administrator adds them in AI control.
 - A manual journal preview labels at most the accounts its lines name; a line whose account
   was deleted since shows its id.
-- `release_accounting_sync` takes at most 50 records per proposal and
-  `confirm_accounting_mapping_proposals` at most 50 proposals.
+- `accounting_release_sync_record` takes at most 50 records per proposal and
+  `accounting_confirm_mapping` at most 50 proposals.

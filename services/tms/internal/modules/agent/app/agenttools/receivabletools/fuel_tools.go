@@ -16,11 +16,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/app/fuelpurchaseservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
-	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
 )
 
@@ -33,8 +32,6 @@ const paramFuelImportID = "fuelPurchaseImportId"
 const paramJurisdictionID = "jurisdictionId"
 
 const paramPurchasedAt = "purchasedAt"
-
-const noonOffsetSeconds = 12 * 3600
 
 const paramVendor = "vendor"
 
@@ -55,8 +52,6 @@ const paramCardLastFour = "cardLastFour"
 const paramTransactionReference = "transactionReference"
 
 const paramTaxPaid = "taxPaid"
-
-const paramNotes = "notes"
 
 const paramAssignedTractorID = "assignedTractorId"
 
@@ -80,11 +75,11 @@ const fuelCardLastFourDigits = 4
 
 const fuelDiscardReason = 500
 
-const fuelPurchaseSupplier = "The fuel purchase, from list_fuel_purchases. Never guess one."
+const fuelPurchaseSupplier = "The fuel purchase, from fuel_list_purchases. Never guess one."
 
-const fuelCardSupplier = "The fuel card, from list_fuel_cards. Never guess one."
+const fuelCardSupplier = "The fuel card, from fuel_list_cards. Never guess one."
 
-const fuelImportSupplier = "The fuel purchase import, from list_fuel_purchase_imports. Never " +
+const fuelImportSupplier = "The fuel purchase import, from fuel_list_purchase_imports. Never " +
 	"guess one."
 
 const fuelTaintHold = "A purchase read from a receipt or statement someone outside sent is " +
@@ -193,20 +188,16 @@ func fuelPurchaseProperties(forCorrection bool) map[string]any {
 
 	properties := map[string]any{
 		common.ParamTractorID: agenttoolschema.RecordIDText(permission.ResourceTractor,
-			"The tractor the fuel went into, from list_tractors."+keep),
+			"The tractor the fuel went into, from equipment_list_tractors."+keep),
 		common.ParamWorkerID: agenttoolschema.RecordIDText(permission.ResourceWorker,
-			"The driver who bought it, from search_worker or list_workers. Leave it out to "+
+			"The driver who bought it, from worker_search or worker_list. Leave it out to "+
 				"take the card's driver."+keep),
 		paramJurisdictionID: agenttoolschema.KindID("The state or province the fuel was "+
-			"bought in, from list_ifta_jurisdictions; it decides which line of the return the "+
+			"bought in, from fuel_list_ifta_jurisdictions; it decides which line of the return the "+
 			"tax-paid gallons credit."+keep, permission.KindIFTAJurisdiction),
-		paramPurchasedAt: map[string]any{
-			toolschema.KeyType: toolschema.TypeString,
-			toolschema.KeyDescription: "When it was bought: the receipt's date and time with its " +
-				"offset, such as 2026-10-08T14:30:00-05:00, or the day alone (2026-10-08, " +
-				"yesterday) when nobody gave a time; a day is recorded at noon in the " +
-				"organization's time zone, which is what the IFTA quarter needs." + keep,
-		},
+		paramPurchasedAt: agenttoolschema.LocalDateTime("When it was bought, in the " +
+			"organization's time zone: the receipt's date and time, or noon that day when " +
+			"nobody gave a time, which is what the IFTA quarter needs." + keep),
 		paramVendor:     common.StringProperty("The truck stop or vendor."+keep, maxFuelVendorText),
 		paramVendorCity: common.StringProperty("The vendor's city."+keep, maxFuelVendorText),
 		common.ParamFuelType: agenttoolschema.Enum("The fuel as IFTA classifies it; DEF, Reefer "+
@@ -225,7 +216,7 @@ func fuelPurchaseProperties(forCorrection bool) map[string]any {
 		paramOdometer: common.IntegerProperty("The odometer reading at the pump."+keep, 0,
 			maxOdometer),
 		paramFuelCardID: agenttoolschema.RecordIDText(permission.ResourceFuelCard,
-			"The fuel card it was paid with, from list_fuel_cards."+keep),
+			"The fuel card it was paid with, from fuel_list_cards."+keep),
 		paramCardLastFour: common.StringProperty("The card's last four digits when the card is "+
 			"not on file."+keep, fuelCardLastFourDigits),
 		paramTransactionReference: common.StringProperty("The receipt or transaction number; a "+
@@ -233,8 +224,10 @@ func fuelPurchaseProperties(forCorrection bool) map[string]any {
 			maxFuelReferenceText),
 		paramTaxPaid: common.BooleanProperty("Whether fuel tax was paid at the pump. Defaults to " +
 			"true; bulk or untaxed fuel earns no tax-paid credit." + keep),
-		paramNotes: common.StringProperty("Anything the person reconciling it should know."+keep,
-			maxFuelNotes),
+		common.ParamNote: common.StringProperty(
+			"Anything the person reconciling it should know."+keep,
+			maxFuelNotes,
+		),
 	}
 	if forCorrection {
 		properties[paramFuelPurchaseID] = agenttoolschema.RecordIDText(
@@ -285,7 +278,7 @@ func (in fuelPurchaseInput) applyTexts(purchase *fuelpurchase.FuelPurchase) erro
 		paramVendorCity:           {&purchase.VendorCity, maxFuelVendorText},
 		paramCardLastFour:         {&purchase.CardLastFour, fuelCardLastFourDigits},
 		paramTransactionReference: {&purchase.TransactionReference, maxFuelReferenceText},
-		paramNotes:                {&purchase.Notes, maxFuelNotes},
+		common.ParamNote:          {&purchase.Notes, maxFuelNotes},
 	} {
 		text, err := common.OptionalBoundedText(in.values, key, field.limit)
 		if err != nil {
@@ -340,24 +333,7 @@ func (in fuelPurchaseInput) applyAmounts(purchase *fuelpurchase.FuelPurchase) er
 }
 
 func (in fuelPurchaseInput) purchasedAt() (int64, error) {
-	raw, err := common.RequireString(in.values, paramPurchasedAt)
-	if err != nil {
-		return 0, err
-	}
-	if instant, parseErr := common.ParseDateTime(paramPurchasedAt, raw); parseErr == nil {
-		return instant, nil
-	}
-
-	if strings.Contains(raw, ":") {
-		return 0, common.DateRefusal(paramPurchasedAt, raw, toolschema.FormatDateTime)
-	}
-	clk := filtercatalog.NewClock(in.timezone)
-	day, err := filtercatalog.CoerceDate(paramPurchasedAt, raw, clk)
-	if err != nil {
-		return 0, common.DateRefusal(paramPurchasedAt, raw, toolschema.FormatDateTime)
-	}
-
-	return clk.DayStart(day) + noonOffsetSeconds, nil
+	return common.RequireLocalTime(in.values, paramPurchasedAt, timeutils.LoadLocation(in.timezone))
 }
 
 func (in fuelPurchaseInput) applyChoices(purchase *fuelpurchase.FuelPurchase) error {
@@ -566,19 +542,19 @@ func NewRecordFuelPurchaseTool(
 	jurisdictions jurisdictionLabeler,
 ) agentports.AgentTool {
 	return common.NewReportingReceivableTool(common.FuelInternalSpec(&common.ReceivableSpec{
-		Name:   "record_fuel_purchase",
-		Recipe: []string{"list_fuel_purchases", "record_fuel_purchase"},
+		Name:   "fuel_record_purchase",
+		Recipe: []string{"fuel_list_purchases", "fuel_record_purchase"},
 		Description: "Record fuel bought for a tractor from a receipt or a statement line: " +
 			"where it was bought for IFTA, when, what fuel, how much and what it cost. It is " +
 			"a tax record the quarter's IFTA return is computed from. Check " +
-			"list_fuel_purchases first, since a reference already on file is refused.",
+			"fuel_list_purchases first, since a reference already on file is refused.",
 		Resource:   permission.ResourceFuelPurchase,
 		Operation:  permission.OpCreate,
 		Artifact:   fuelPurchaseRecordEntity,
 		Reversible: true,
 		TaintHold:  fuelTaintHold,
 		Rationale: "Adds a fuel purchase inside Trenova that the next IFTA return counts; " +
-			"nothing is sent, and delete_fuel_purchase removes it.",
+			"nothing is sent, and fuel_delete_purchase removes it.",
 		Properties: fuelPurchaseProperties(false),
 		Required: []string{
 			common.ParamTractorID,
@@ -716,7 +692,7 @@ func NewCorrectFuelPurchaseTool(
 	jurisdictions jurisdictionLabeler,
 ) agentports.AgentTool {
 	return common.NewReportingReceivableTool(common.FuelInternalSpec(&common.ReceivableSpec{
-		Name:        "correct_fuel_purchase",
+		Name:        "fuel_correct_purchase",
 		SearchTerms: []string{"fix fuel purchase", "keyed wrong", "wrong gallons"},
 		Description: "Correct a recorded fuel purchase: the tractor, jurisdiction, day, " +
 			"fuel type, quantity, amount or any other field that was keyed wrong. Fields left " +
@@ -823,11 +799,11 @@ func NewDeleteFuelPurchaseTool(
 	jurisdictions jurisdictionLabeler,
 ) agentports.AgentTool {
 	return common.NewReceivableTool(common.FuelInternalSpec(&common.ReceivableSpec{
-		Name: "delete_fuel_purchase",
+		Name: "fuel_delete_purchase",
 		Description: "Propose deleting a fuel purchase recorded in error, such as a " +
 			"receipt entered twice. It is removed outright; a return already generated for " +
 			"its quarter keeps its figures until it is recomputed. To fix a wrong field use " +
-			"correct_fuel_purchase instead.",
+			"fuel_correct_purchase instead.",
 		Resource:  permission.ResourceFuelPurchase,
 		Operation: permission.OpDelete,
 		MaxTier:   agent.TierPropose,
@@ -965,11 +941,11 @@ func fuelCardViewOf(card *fuelpurchase.FuelCard) *fuelCardView {
 
 func NewAssignFuelCardTool(cards FuelCardKeeper) agentports.AgentTool {
 	return common.NewReceivableTool(common.FuelInternalSpec(&common.ReceivableSpec{
-		Name:        "assign_fuel_card",
+		Name:        "fuel_assign_card",
 		SearchTerms: []string{"issue new fuel card", "fuel card to tractor", "hand out fuel card"},
 		Description: "Assign a fuel card to the tractor or driver that carries it, most " +
 			"often a card a feed discovered. Assigning a suspended card also activates it, " +
-			"and once assigned, resolve_fuel_purchase_import_rows posts the purchases that " +
+			"and once assigned, fuel_resolve_purchase_import_rows posts the purchases that " +
 			"waited for it.",
 		Resource:   permission.ResourceFuelCard,
 		Operation:  permission.OpUpdate,
@@ -980,9 +956,9 @@ func NewAssignFuelCardTool(cards FuelCardKeeper) agentports.AgentTool {
 			paramFuelCardID: agenttoolschema.RecordIDText(permission.ResourceFuelCard,
 				fuelCardSupplier),
 			paramAssignedTractorID: agenttoolschema.RecordIDText(permission.ResourceTractor,
-				"The tractor that carries the card, from list_tractors."),
+				"The tractor that carries the card, from equipment_list_tractors."),
 			paramAssignedWorkerID: agenttoolschema.RecordIDText(permission.ResourceWorker,
-				"The driver who carries the card, from search_worker or list_workers."),
+				"The driver who carries the card, from worker_search or worker_list."),
 		},
 		Required: []string{paramFuelCardID},
 		Target: func(params map[string]any) (agentports.ToolTarget, bool) {
@@ -1116,11 +1092,11 @@ func fuelImportIDFrom(params *agentports.ToolExecuteParams) (pulid.ID, error) {
 
 func NewCommitFuelPurchaseImportTool(imports FuelImportKeeper) agentports.AgentTool {
 	return common.NewReceivableTool(common.FuelInternalSpec(&common.ReceivableSpec{
-		Name:   "commit_fuel_purchase_import",
-		Recipe: []string{"list_fuel_purchase_imports", "commit_fuel_purchase_import"},
+		Name:   "fuel_commit_purchase_import",
+		Recipe: []string{"fuel_list_purchase_imports", "fuel_commit_purchase_import"},
 		Description: "Commit a staged fuel card statement: every row ready to commit becomes " +
 			"a fuel purchase in one step, and rows whose reference is already on file are " +
-			"skipped. Read it with list_fuel_purchase_imports first; rows in error stay " +
+			"skipped. Read it with fuel_list_purchase_imports first; rows in error stay " +
 			"behind.",
 		Resource:  permission.ResourceFuelPurchase,
 		Operation: permission.OpImport,
@@ -1205,12 +1181,12 @@ func NewCommitFuelPurchaseImportTool(imports FuelImportKeeper) agentports.AgentT
 
 func NewResolveFuelPurchaseImportRowsTool(imports FuelImportKeeper) agentports.AgentTool {
 	return common.NewReceivableTool(common.FuelInternalSpec(&common.ReceivableSpec{
-		Name: "resolve_fuel_purchase_import_rows",
+		Name: "fuel_resolve_purchase_import_rows",
 		Description: "Work out again the rows a fuel import is still holding, against the " +
 			"cards, tractors and jurisdictions on file now, without fetching the statement " +
-			"again. Run it after assign_fuel_card or once a missing tractor exists. A feed " +
+			"again. Run it after fuel_assign_card or once a missing tractor exists. A feed " +
 			"posts the rows that now resolve; an upload waits for " +
-			"commit_fuel_purchase_import.",
+			"fuel_commit_purchase_import.",
 		Resource:  permission.ResourceFuelPurchaseImport,
 		Operation: permission.OpImport,
 		Rationale: "Re-matches held statement rows inside Trenova and, for a feed, posts the " +
@@ -1247,7 +1223,7 @@ func NewResolveFuelPurchaseImportRowsTool(imports FuelImportKeeper) agentports.A
 			_ pulid.ID,
 			plan *fuelpurchaseservice.ResolveRowsPlan,
 		) (*agent.ToolPreview, error) {
-			outcome := "they wait for commit_fuel_purchase_import"
+			outcome := "they wait for fuel_commit_purchase_import"
 			if plan.Batch.IsFeed() {
 				outcome = "the feed posts them as purchases"
 			}
@@ -1308,7 +1284,7 @@ func NewDiscardFuelPurchaseImportTool(imports FuelImportKeeper) agentports.Agent
 	}
 
 	return common.NewReceivableTool(common.FuelInternalSpec(&common.ReceivableSpec{
-		Name: "discard_fuel_purchase_import",
+		Name: "fuel_discard_purchase_import",
 		Description: "Discard a fuel card statement that was staged but should not be " +
 			"committed, such as the wrong month or a file loaded twice. Nothing it holds " +
 			"becomes a purchase, and it can be staged again later.",

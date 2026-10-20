@@ -116,7 +116,7 @@ func TestObserve_ShowsARecordWithNoReaderByWhatTheWriteSaid(t *testing.T) {
 	recorder, repo := writtenRecorder(t)
 	locationID := pulid.MustNew("loc_").String()
 
-	shown, err := recorder.observe(executedWrite("create_location", &agent.ToolExecutionResult{
+	shown, err := recorder.observe(executedWrite("location_create", &agent.ToolExecutionResult{
 		Action: "created", Kind: "location", Name: "Harbor Line Cold Storage",
 		Record: &agent.RecordRef{EntityType: "location", ID: locationID},
 	}))

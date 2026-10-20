@@ -43,7 +43,7 @@ func TestRun_ReadsInOneReplyRunAtOnceAndSettleInOrder(t *testing.T) {
 	}()
 
 	workers := &agenttest.StubQueryTool{
-		ToolName: "list_workers",
+		ToolName: "worker_list",
 		Result:   map[string]any{"results": []any{"Maria"}},
 	}
 	customers := &agenttest.StubQueryTool{
@@ -63,7 +63,7 @@ func TestRun_ReadsInOneReplyRunAtOnceAndSettleInOrder(t *testing.T) {
 				case <-time.After(rendezvousWait):
 					return nil, errors.New(name + " ran without the other read")
 				}
-				if name == "list_workers" {
+				if name == "worker_list" {
 					<-secondDone
 				}
 				result, err := run(ctx, input)
@@ -81,7 +81,7 @@ func TestRun_ReadsInOneReplyRunAtOnceAndSettleInOrder(t *testing.T) {
 	h.replies(
 		&agentports.ChatCompletionResult{
 			ToolCalls: []agentports.ToolCall{
-				{ID: "call_1", Name: "list_workers", Arguments: map[string]any{"status": "Active"}},
+				{ID: "call_1", Name: "worker_list", Arguments: map[string]any{"status": "Active"}},
 				{ID: "call_2", Name: "search_customer", Arguments: map[string]any{"query": "Acme"}},
 			},
 			ModelIdentifier: "test-model",
@@ -89,10 +89,10 @@ func TestRun_ReadsInOneReplyRunAtOnceAndSettleInOrder(t *testing.T) {
 		textReply("Maria is free, and Acme is a customer."),
 	)
 
-	result := h.run(t, runContext("list_workers", "search_customer"))
+	result := h.run(t, runContext("worker_list", "search_customer"))
 
 	require.Empty(t, result.Err)
-	assert.Equal(t, []string{"search_customer", "list_workers"}, finishOrder,
+	assert.Equal(t, []string{"search_customer", "worker_list"}, finishOrder,
 		"the second read finished first")
 	assert.Equal(t, 1, workers.Calls)
 	assert.Equal(t, 1, customers.Calls)

@@ -9,12 +9,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -108,7 +108,7 @@ from.
 The transcripts behind this test failed on selection, not reasoning: a small
 model built an aggregate report where a row list was wanted, used a dataset
 search as a record search, and invented a report id for a dashboard tile
-because nothing on create_dashboard said list_reports hands one out. A
+because nothing on report_create_dashboard said report_list hands one out. A
 description a model has to guess around is a bug in the description.
 */
 func TestEveryToolDescribesItselfWellEnoughToBeChosen(t *testing.T) {

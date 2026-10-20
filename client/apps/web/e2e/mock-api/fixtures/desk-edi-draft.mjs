@@ -1,7 +1,7 @@
 // An EDI connection drafted on the Desk from a trading partner's implementation
 // guide: Acme Retail Group's guide (deskbench/fixtures/attachments/edi-guide.html,
 // version 3.2 and the revised 4.0), read by the EDI desk and drafted with
-// draft_edi_connection. Each draft is the review the artifact carries, shaped
+// edi_draft_connection. Each draft is the review the artifact carries, shaped
 // as assistantservice.connectionDraftArtifact stores it. Every time is relative
 // to the scenario's anchor.
 

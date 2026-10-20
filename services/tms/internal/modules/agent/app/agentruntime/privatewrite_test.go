@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -53,14 +53,14 @@ func runPrivateWithTrust(
 	t.Helper()
 
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("create_report", map[string]any{"name": "Late loads"}),
+		toolTurn("report_create", map[string]any{"name": "Late loads"}),
 		textTurn("Saved."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
 		&stubActionRegistry{Tools: []agentports.AgentTool{tool}}, nil)
 	rt.trust = trust
 	req := &agentports.RunRequest{
-		Definition: testDefinition("create_report"),
+		Definition: testDefinition("report_create"),
 		Actor:      testActor(),
 		Input:      "Save a report of late loads",
 	}
@@ -82,7 +82,7 @@ func TestRun_APrivateWriteRunsWhateverTheAgentsCeiling(t *testing.T) {
 	t.Parallel()
 
 	tool := &privateActionTool{
-		StubActionTool: actionTool("create_report", agent.TierAutoExecute, nil),
+		StubActionTool: actionTool("report_create", agent.TierAutoExecute, nil),
 		private:        true,
 	}
 
@@ -96,7 +96,7 @@ func TestRun_AWriteOthersSeeStillWaitsAtTheCeiling(t *testing.T) {
 	t.Parallel()
 
 	tool := &privateActionTool{
-		StubActionTool: actionTool("create_report", agent.TierAutoExecute, nil),
+		StubActionTool: actionTool("report_create", agent.TierAutoExecute, nil),
 		private:        false,
 	}
 
@@ -113,13 +113,13 @@ func TestRun_APrivateWriteKeepsAnAgentsOwnSettingAndNeedsAPerson(t *testing.T) {
 
 	newTool := func() *privateActionTool {
 		return &privateActionTool{
-			StubActionTool: actionTool("create_report", agent.TierAutoExecute, nil),
+			StubActionTool: actionTool("report_create", agent.TierAutoExecute, nil),
 			private:        true,
 		}
 	}
 
 	set := runPrivate(t, newTool(), func(req *agentports.RunRequest) {
-		req.Definition.ToolTiers = map[string]agent.AutonomyTier{"create_report": agent.TierPropose}
+		req.Definition.ToolTiers = map[string]agent.AutonomyTier{"report_create": agent.TierPropose}
 	})
 	assert.Equal(t, agent.TierPropose, set.Actions[0].Tier)
 
@@ -151,7 +151,7 @@ func onRecordedAgent(tier agent.AutonomyTier) func(*agentports.RunRequest) {
 		req.Definition.ID = pulid.MustNew("agdef_")
 		req.Definition.OrganizationID = pulid.MustNew("org_")
 		req.Definition.BusinessUnitID = pulid.MustNew("bu_")
-		req.Definition.ToolTiers = map[string]agent.AutonomyTier{"create_report": tier}
+		req.Definition.ToolTiers = map[string]agent.AutonomyTier{"report_create": tier}
 	}
 }
 
@@ -165,12 +165,12 @@ func TestRun_APrivateWriteKeepsItsExemptionThroughATierTrustEarned(t *testing.T)
 	t.Parallel()
 
 	tool := &privateActionTool{
-		StubActionTool: actionTool("create_report", agent.TierAutoExecute, nil),
+		StubActionTool: actionTool("report_create", agent.TierAutoExecute, nil),
 		private:        true,
 	}
 	ledger := &ledgerTrust{rows: []*agent.ToolTrust{
-		{ToolName: "assign_move", EarnedTier: agent.TierPropose},
-		{ToolName: "create_report", EarnedTier: agent.TierActWithApproval},
+		{ToolName: "dispatch_assign_move", EarnedTier: agent.TierPropose},
+		{ToolName: "report_create", EarnedTier: agent.TierActWithApproval},
 	}}
 
 	result := runPrivateWithTrust(t, tool, ledger, onRecordedAgent(agent.TierActWithApproval))
@@ -185,9 +185,9 @@ func TestRun_APrivateWriteKeepsATierAPersonMovedAfterTrust(t *testing.T) {
 
 	for name, ledger := range map[string]*ledgerTrust{
 		"a person moved it since": {rows: []*agent.ToolTrust{
-			{ToolName: "create_report", EarnedTier: agent.TierAutoExecute},
+			{ToolName: "report_create", EarnedTier: agent.TierAutoExecute},
 		}},
-		"trust never earned a tier": {rows: []*agent.ToolTrust{{ToolName: "create_report"}}},
+		"trust never earned a tier": {rows: []*agent.ToolTrust{{ToolName: "report_create"}}},
 		"the ledger has no row":     {},
 		"the ledger cannot be read": {err: errors.New("connection refused")},
 	} {
@@ -195,7 +195,7 @@ func TestRun_APrivateWriteKeepsATierAPersonMovedAfterTrust(t *testing.T) {
 			t.Parallel()
 
 			tool := &privateActionTool{
-				StubActionTool: actionTool("create_report", agent.TierAutoExecute, nil),
+				StubActionTool: actionTool("report_create", agent.TierAutoExecute, nil),
 				private:        true,
 			}
 
@@ -218,7 +218,7 @@ func TestRun_OnlyATierTheAgentNamesReadsTheLedger(t *testing.T) {
 
 	named := &ledgerTrust{}
 	shared := &privateActionTool{
-		StubActionTool: actionTool("create_report", agent.TierAutoExecute, nil),
+		StubActionTool: actionTool("report_create", agent.TierAutoExecute, nil),
 		private:        false,
 	}
 	result := runPrivateWithTrust(t, shared, named, onRecordedAgent(agent.TierActWithApproval))
@@ -227,7 +227,7 @@ func TestRun_OnlyATierTheAgentNamesReadsTheLedger(t *testing.T) {
 
 	unnamed := &ledgerTrust{}
 	unset := &privateActionTool{
-		StubActionTool: actionTool("create_report", agent.TierAutoExecute, nil),
+		StubActionTool: actionTool("report_create", agent.TierAutoExecute, nil),
 		private:        true,
 	}
 	result = runPrivateWithTrust(t, unset, unnamed, nil)

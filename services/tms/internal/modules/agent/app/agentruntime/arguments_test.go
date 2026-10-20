@@ -167,12 +167,12 @@ func TestArgumentOutcome_ReportsAnUncheckableSchemaAsAFailure(t *testing.T) {
 func TestRun_StripsTheOwnerTheModelSentAndStampsThePerson(t *testing.T) {
 	t.Parallel()
 
-	stub := actionTool("add_home_widget", agent.TierPropose, nil)
+	stub := actionTool("home_add_widget", agent.TierPropose, nil)
 	stub.Resource = permission.ResourceHomeLayoutPreset
 	stub.Schema = closedSchema("key")
 	tool := selfScopedAction{stub}
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("add_home_widget", map[string]any{
+		toolTurn("home_add_widget", map[string]any{
 			"key":                          "kpi",
 			agentports.SelfScopeOwnerParam: pulid.MustNew("usr_").String(),
 		}),
@@ -183,7 +183,7 @@ func TestRun_StripsTheOwnerTheModelSentAndStampsThePerson(t *testing.T) {
 	actor := testActor()
 
 	result, err := rt.Run(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition("add_home_widget"),
+		Definition: testDefinition("home_add_widget"),
 		Actor:      actor,
 		Input:      "put on-time on my dashboard",
 	})

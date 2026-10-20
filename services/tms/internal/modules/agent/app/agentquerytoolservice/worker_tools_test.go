@@ -6,10 +6,10 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -137,7 +137,7 @@ func TestSearchWorker_IsNamedForOneWorker(t *testing.T) {
 
 	assert.Equal(
 		t,
-		"search_worker",
+		"worker_search",
 		newSearchWorkerTool(&fakeWorkerRepo{}, &fakePermissions{}).Name(),
 	)
 }
@@ -160,7 +160,7 @@ func TestRegistry_ResolvesTheLegacyWorkerSearchName(t *testing.T) {
 
 	tool, ok := reg.Get("search_workers")
 	require.True(t, ok, "an agent saved before the rename still has its tool")
-	assert.Equal(t, "search_worker", tool.Name())
+	assert.Equal(t, "worker_search", tool.Name())
 }
 
 func TestRegistry_DoesNotAdvertiseTheLegacyName(t *testing.T) {
@@ -360,7 +360,7 @@ func sensitiveWorker() *worker.Worker {
 
 /*
 Contract: internal/modules/identity/domain/permission/registry.go, ResourceWorker.
-get_worker used to hand the model the stored entity whole — date of birth,
+worker_get used to hand the model the stored entity whole — date of birth,
 licence and TWIC numbers, drug and alcohol status, home address, emergency
 contacts — under a plain worker:read grant. Confidential fields never reach
 a model, whatever the role; Restricted ones follow the person's ceiling and

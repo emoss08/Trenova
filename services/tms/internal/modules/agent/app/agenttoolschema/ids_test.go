@@ -13,10 +13,10 @@ func TestRecordID_MarksTheResourceAndNamesTheSource(t *testing.T) {
 	t.Parallel()
 
 	property := agenttoolschema.RecordID(permission.ResourceCustomer, "The customer",
-		"list_customers")
+		"customer_list")
 
 	assert.Equal(t, toolschema.TypeString, property[toolschema.KeyType])
-	assert.Equal(t, "The customer, from list_customers. Never guess one.",
+	assert.Equal(t, "The customer, from customer_list. Never guess one.",
 		property[toolschema.KeyDescription])
 	assert.Equal(t, "customer", toolschema.RecordOf(property))
 	assert.NotContains(t, toolschema.ForModel(property), toolschema.KeyRecordOf)
@@ -25,10 +25,10 @@ func TestRecordID_MarksTheResourceAndNamesTheSource(t *testing.T) {
 func TestID_CarriesNoResource(t *testing.T) {
 	t.Parallel()
 
-	property := agenttoolschema.ID("The day of leave", "list_worker_leave_cases")
+	property := agenttoolschema.ID("The day of leave", "worker_list_leave_cases")
 
 	assert.Empty(t, toolschema.RecordOf(property))
-	assert.Equal(t, "The day of leave, from list_worker_leave_cases. Never guess one.",
+	assert.Equal(t, "The day of leave, from worker_list_leave_cases. Never guess one.",
 		property[toolschema.KeyDescription])
 }
 
@@ -48,12 +48,12 @@ func TestNoted_AddsASentence(t *testing.T) {
 	t.Parallel()
 
 	property := agenttoolschema.Noted(
-		agenttoolschema.RecordID(permission.ResourceReport, "The saved report", "list_reports"),
+		agenttoolschema.RecordID(permission.ResourceReport, "The saved report", "report_list"),
 		"Leave it out to keep it.",
 	)
 
 	assert.Equal(t,
-		"The saved report, from list_reports. Never guess one. Leave it out to keep it.",
+		"The saved report, from report_list. Never guess one. Leave it out to keep it.",
 		property[toolschema.KeyDescription])
 }
 
@@ -76,7 +76,7 @@ func TestKindID_MarksEveryKindAndIsStrippedForTheModel(t *testing.T) {
 func TestKindIDs_MarksEachItem(t *testing.T) {
 	t.Parallel()
 
-	property := agenttoolschema.KindIDs("The rounds, from list_dot_random_draws.", 5,
+	property := agenttoolschema.KindIDs("The rounds, from worker_list_dot_random_draws.", 5,
 		permission.KindDOTRandomDraw)
 
 	items := property[toolschema.KeyItems].(map[string]any)
@@ -98,7 +98,7 @@ func TestOfResource_MarksAPropertyBuiltElsewhereWithoutChangingIt(t *testing.T) 
 
 	list := agenttoolschema.OfKinds(map[string]any{
 		toolschema.KeyType:        toolschema.TypeArray,
-		toolschema.KeyDescription: "The rounds, from list_dot_random_draws.",
+		toolschema.KeyDescription: "The rounds, from worker_list_dot_random_draws.",
 		toolschema.KeyItems:       map[string]any{toolschema.KeyType: toolschema.TypeString},
 	}, permission.KindDOTRandomDraw)
 	items := list[toolschema.KeyItems].(map[string]any)

@@ -10,7 +10,7 @@ stop actual.
 
 ```
 Dispatcher (REST record-actual) ─┐
-Agent (record_stop_actual)  ─────┤ RecordReported ── RecordStopActual (strict) ─┐
+Agent (dispatch_record_stop_actual)  ─────┤ RecordReported ── RecordStopActual (strict) ─┐
 Driver (Dash recordMyStopAction) ┘   (one transaction)                          │
                                                                                 ▼
 Carrier (tracking link)  ─────────────┐                        tracking_events (one row per report,

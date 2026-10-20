@@ -101,7 +101,7 @@ func schemaView(reference *formulaassistantservice.Reference, query string) *for
 			"%d of %d variables and %d of %d functions match %q. A name not listed here or "+
 				"in the full list is not a shipment field: a quantity no listed field holds, "+
 				"such as hours at a stop, is a template variable with a default that you "+
-				"declare in propose_formula, not something to keep searching for.",
+				"declare in formula_propose, not something to keep searching for.",
 			len(view.Variables), len(reference.Variables),
 			len(view.Functions), len(reference.Functions), query,
 		)

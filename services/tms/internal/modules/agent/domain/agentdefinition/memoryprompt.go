@@ -66,7 +66,7 @@ func (rc *RuntimeContext) MemoryRecords() []agent.EntityRef {
 // memory about a record in play is carried whatever was asked, but is used
 // only when it bears on it. ByTool holds the carried memories about a tool that
 // was only on hand, which become used when the turn calls it. HeldBack
-// counts the candidates left out, each still a recall_memory call away.
+// counts the candidates left out, each still a agent_list_memories call away.
 type MemoryFit struct {
 	Carried  []*agent.Memory
 	Used     []pulid.ID
@@ -314,7 +314,7 @@ func memoryPromptContent(memory *agent.Memory) string {
 	}
 
 	return stringutils.Ellipsize(content, agent.MemoryPromptExcerptChars) +
-		" (cut short: call recall_memory with id " + memory.ID.String() +
+		" (cut short: call agent_list_memories with id " + memory.ID.String() +
 		" to read all of it)"
 }
 

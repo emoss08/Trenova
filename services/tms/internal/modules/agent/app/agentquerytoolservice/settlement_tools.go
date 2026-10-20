@@ -288,8 +288,8 @@ func (t *listDriverSettlementsTool) ParamSchema() map[string]any {
 		paramQuery: stringParam("Words to look for in the settlement number, pay profile " +
 			"or the driver's name."),
 		paramWorkerID: agenttoolschema.RecordIDText(permission.ResourceWorker,
-			"Only this driver's settlements, by id from list_workers "+
-				"or search_worker."),
+			"Only this driver's settlements, by id from worker_list "+
+				"or worker_search."),
 		paramStatus: enumParam("Only settlements in this status. Leave it out with "+
 			"open: true.", settlementStatuses),
 		paramOpenSettlements: boolParam("true for only settlements still open to change: " +
@@ -716,8 +716,8 @@ func (t *listDriverPayEventsTool) Description() string {
 func (t *listDriverPayEventsTool) ParamSchema() map[string]any {
 	return objectSchema(withPaging(map[string]any{
 		paramWorkerID: agenttoolschema.RecordIDText(permission.ResourceWorker,
-			"Only this driver's pay, by id from list_workers or "+
-				"search_worker."),
+			"Only this driver's pay, by id from worker_list or "+
+				"worker_search."),
 		"shipmentId": agenttoolschema.RecordIDText(permission.ResourceShipment,
 			"Only pay for this shipment, by id from shipment_list "+
 				"or shipment_get."),
@@ -844,12 +844,12 @@ func newGetWorkerEarningsSummaryTool(
 	}
 }
 
-func (t *getWorkerEarningsSummaryTool) Name() string { return "get_worker_earnings_summary" }
+func (t *getWorkerEarningsSummaryTool) Name() string { return "settlement_get_driver_earnings" }
 
 func (t *getWorkerEarningsSummaryTool) Description() string {
 	return "Summarize what a worker has earned but not yet been paid on a settlement. " +
 		"It gives the accrued pay events and their gross, outstanding advances and the " +
-		"escrow balance. Take the worker's id from list_workers or search_worker."
+		"escrow balance. Take the worker's id from worker_list or worker_search."
 }
 
 func (t *getWorkerEarningsSummaryTool) ParamSchema() map[string]any {
@@ -857,7 +857,7 @@ func (t *getWorkerEarningsSummaryTool) ParamSchema() map[string]any {
 		paramWorkerID,
 		agenttoolschema.RecordIDText(
 			permission.ResourceWorker,
-			"The driver's id, from list_workers, search_worker or the "+
+			"The driver's id, from worker_list, worker_search or the "+
 				"page you are on.",
 		),
 	)
@@ -1125,7 +1125,7 @@ func (t *listCarrierSettlementsTool) ParamSchema() map[string]any {
 		paramQuery: stringParam("Words to look for in the settlement number."),
 		paramCarrierID: agenttoolschema.RecordIDText(permission.ResourceCarrier,
 			"Only this carrier's settlements, by id from "+
-				"list_carriers."),
+				"carrier_list."),
 		paramStatus: enumParam("Only settlements in this status.", carrierSettlementStatuses),
 	}, defaultListLimit, maxListLimit))
 }
@@ -1340,7 +1340,7 @@ func newListCarrierInvoiceMatchesTool(
 	}
 }
 
-func (t *listCarrierInvoiceMatchesTool) Name() string { return "list_carrier_invoice_matches" }
+func (t *listCarrierInvoiceMatchesTool) Name() string { return "carrier_list_invoice_matches" }
 
 func (t *listCarrierInvoiceMatchesTool) Description() string {
 	return "List carrier freight invoices matched against what each load was expected " +
@@ -1352,7 +1352,7 @@ func (t *listCarrierInvoiceMatchesTool) Description() string {
 func (t *listCarrierInvoiceMatchesTool) ParamSchema() map[string]any {
 	return objectSchema(withPaging(map[string]any{
 		paramCarrierID: agenttoolschema.RecordIDText(permission.ResourceCarrier,
-			"Only this carrier's invoices, by id from list_carriers."),
+			"Only this carrier's invoices, by id from carrier_list."),
 		paramStatus: enumParam("Only matches in this status.", invoiceMatchStatuses),
 	}, defaultListLimit, maxListLimit))
 }
@@ -1515,7 +1515,7 @@ func newListEDICarrierInvoicesTool(
 	}
 }
 
-func (t *listEDICarrierInvoicesTool) Name() string { return "list_edi_carrier_invoices" }
+func (t *listEDICarrierInvoicesTool) Name() string { return "edi_list_carrier_invoices" }
 
 func (t *listEDICarrierInvoicesTool) Description() string {
 	return "List freight invoices carriers sent over EDI, newest first, with how each " +

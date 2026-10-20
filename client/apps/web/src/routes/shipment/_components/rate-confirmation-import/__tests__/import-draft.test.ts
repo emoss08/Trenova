@@ -258,7 +258,7 @@ describe("applyImportDraftEdit", () => {
       ),
     ).toBe(false);
     expect(
-      applyImportDraftEdit(importEdit({ surface: "formula", action: "propose_formula" }), page, 1),
+      applyImportDraftEdit(importEdit({ surface: "formula", action: "formula_propose" }), page, 1),
     ).toBe(false);
 
     for (const handler of Object.values(page)) {

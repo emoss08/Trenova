@@ -68,7 +68,7 @@ func NewGuideProfileTool(profiles agentprofileports.Service) agentports.AgentToo
 	return &GuideProfileTool{profiles: profiles}
 }
 
-func (t *GuideProfileTool) Name() string { return "guide_profile" }
+func (t *GuideProfileTool) Name() string { return "agent_guide_profile" }
 
 func (t *GuideProfileTool) SearchTerms() []string {
 	return []string{"profile", "about our business", "about my work", "what we do", "my role"}
@@ -85,7 +85,7 @@ func (t *GuideProfileTool) Description() string {
 		"organization is kept at once only when the person may manage agent memory; " +
 		"otherwise it is offered for an administrator to approve, and you should say so. " +
 		"Not for a rule about one customer, record or task, or how to do something: use " +
-		"remember for those."
+		"agent_create_memory for those."
 }
 
 func (t *GuideProfileTool) ParamSchema() map[string]any {

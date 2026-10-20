@@ -45,7 +45,7 @@ func fullContext() agentdefinition.RuntimeContext {
 		Tools: []agentdefinition.ToolSummary{
 			{Name: "shipment_get", Description: "Looks up a shipment", Query: true},
 			{
-				Name:        "assign_move",
+				Name:        "dispatch_assign_move",
 				Description: "Assigns a driver",
 				Tier:        agent.TierActWithApproval,
 			},
@@ -142,7 +142,7 @@ func TestBuildSystemPrompt_ListsToolsByWhatACallDoesWithoutRepeatingDescriptions
 	rc := fullContext()
 	rc.Tools = append(rc.Tools,
 		agentdefinition.ToolSummary{
-			Name:        "update_tractor_status",
+			Name:        "equipment_set_tractor_status",
 			Description: "Changes a tractor's status",
 			Tier:        agent.TierAutoExecute,
 		},
@@ -160,7 +160,7 @@ func TestBuildSystemPrompt_ListsToolsByWhatACallDoesWithoutRepeatingDescriptions
 		"- Changes that always record a proposal for a person to decide: invoice_post")
 	assert.Contains(t, prompt,
 		"- Changes that run at once or are recorded as a proposal depending on what the "+
-			"call would reach; the result says which and why: assign_move, update_tractor_status")
+			"call would reach; the result says which and why: dispatch_assign_move, equipment_set_tractor_status")
 	assert.NotContains(t, prompt, "Changes that run as soon as you call them",
 		"no change is promised to run before the call says so")
 	assert.NotContains(t, prompt, "Looks up a shipment",
@@ -176,14 +176,14 @@ func TestBuildSystemPrompt_ListsPersonalToolsAsRunningAtOnceForThePerson(t *test
 
 	rc := fullContext()
 	rc.Tools = append(rc.Tools, agentdefinition.ToolSummary{
-		Name: "remember", Tier: agent.TierActWithApproval, PersonalRunsUnasked: true,
+		Name: "agent_create_memory", Tier: agent.TierActWithApproval, PersonalRunsUnasked: true,
 	})
 
 	prompt := definitionWithInstructions("Help.").BuildSystemPrompt(rc)
 
 	assert.Contains(t, prompt, "- Changes that run at once when they touch only the person's own "+
-		"records, and otherwise record a proposal: remember")
-	assert.NotContains(t, prompt, "records a proposal: remember")
+		"records, and otherwise record a proposal: agent_create_memory")
+	assert.NotContains(t, prompt, "records a proposal: agent_create_memory")
 }
 
 func TestBuildSystemPrompt_ListsEscalationsAsRunningAtOnce(t *testing.T) {
@@ -191,15 +191,15 @@ func TestBuildSystemPrompt_ListsEscalationsAsRunningAtOnce(t *testing.T) {
 
 	rc := fullContext()
 	rc.Tools = append(rc.Tools, agentdefinition.ToolSummary{
-		Name: "raise_exception", Tier: agent.TierAutoExecute, Escalates: true,
+		Name: "agent_raise_exception", Tier: agent.TierAutoExecute, Escalates: true,
 	})
 
 	prompt := definitionWithInstructions("Help.").BuildSystemPrompt(rc)
 
 	assert.Contains(t, prompt, "- Changes that run at once whatever else waits, because they "+
-		"hand the run to a person in the organization: raise_exception")
-	assert.NotContains(t, prompt, "the result says which and why: raise_exception")
-	assert.NotContains(t, prompt, "for a person to decide: raise_exception")
+		"hand the run to a person in the organization: agent_raise_exception")
+	assert.NotContains(t, prompt, "the result says which and why: agent_raise_exception")
+	assert.NotContains(t, prompt, "for a person to decide: agent_raise_exception")
 }
 
 // A tool done as a sequence names the order in the prompt, once per agent,
@@ -211,14 +211,14 @@ func TestBuildSystemPrompt_NamesTheOrderAToolIsUsedIn(t *testing.T) {
 	rc.Tools = append(rc.Tools, agentdefinition.ToolSummary{
 		Name:   "shipment_create",
 		Tier:   agent.TierPropose,
-		Recipe: []string{"list_customers", "list_locations", "quote_shipment", "shipment_create"},
+		Recipe: []string{"customer_list", "location_list", "rate_quote", "shipment_create"},
 	})
 
 	prompt := definitionWithInstructions("Help.").BuildSystemPrompt(rc)
 
 	assert.Contains(t, prompt, "How a task is done with these, in order")
 	assert.Contains(t, prompt,
-		"- shipment_create: list_customers → list_locations → quote_shipment → shipment_create")
+		"- shipment_create: customer_list → location_list → rate_quote → shipment_create")
 }
 
 // "Dashboard" is ambiguous only for an agent that can touch one.
@@ -228,7 +228,7 @@ func TestBuildSystemPrompt_ExplainsDashboardOnlyToAnAgentHoldingDashboardTools(t
 	rc := fullContext()
 	rc.Tools = append(
 		rc.Tools,
-		agentdefinition.ToolSummary{Name: "get_my_home_layout", Query: true},
+		agentdefinition.ToolSummary{Name: "home_get_layout", Query: true},
 	)
 
 	prompt := definitionWithInstructions("Help.").BuildSystemPrompt(rc)
@@ -292,7 +292,7 @@ func TestBuildSystemPrompt_RendersRuntimeContext(t *testing.T) {
 	assert.Contains(t, prompt, "Shipment S-1001")
 	assert.Contains(t, prompt, "## Tools")
 	assert.Contains(t, prompt, "shipment_get")
-	assert.Contains(t, prompt, "assign_move")
+	assert.Contains(t, prompt, "dispatch_assign_move")
 	assert.Contains(t, prompt, "needs a person's approval")
 }
 
@@ -429,8 +429,8 @@ func TestSystemPrompt_SaysHowToAnswerAboutTrenovaWhenAPersonIsThere(t *testing.T
 
 	with := definition.BuildSystemPrompt(agentdefinition.RuntimeContext{Guide: true})
 	assert.Contains(t, with, "## Trenova itself")
-	assert.Contains(t, with, "find_in_trenova")
-	assert.Contains(t, with, "open_page")
+	assert.Contains(t, with, "agent_find_page")
+	assert.Contains(t, with, "agent_open_page")
 
 	without := definition.BuildSystemPrompt(agentdefinition.RuntimeContext{})
 	assert.NotContains(t, without, "## Trenova itself",
@@ -612,14 +612,14 @@ func TestBuildSystemPrompt_NamesTheProposalsStillWaitingOnThePerson(t *testing.T
 	prompt := d.BuildSystemPrompt(agentdefinition.RuntimeContext{
 		PendingProposals: []agentdefinition.PendingProposal{
 			{
-				ToolName:  "update_report",
+				ToolName:  "report_update",
 				Rationale: "Asked to update report in reply to: “Approved”",
 			},
 		},
 	})
 
 	assert.Contains(t, prompt, "## Proposals awaiting a decision")
-	assert.Contains(t, prompt, "- update_report — Asked to update report")
+	assert.Contains(t, prompt, "- report_update — Asked to update report")
 	assert.Contains(t, prompt, "not by typing")
 	assert.Contains(t, prompt, "Do not propose any of them again")
 
@@ -701,7 +701,7 @@ func TestBuildSystemPrompt_DisclosedSectionNamesWhatFindToolsCanLoad(t *testing.
 				Loaded:      true,
 			},
 			{
-				Name:        "list_reports",
+				Name:        "report_list",
 				Description: "Browse the reports a person can run.",
 				Query:       true,
 			},
@@ -731,13 +731,13 @@ func TestBuildSystemPrompt_DisclosedSectionNamesWhatFindToolsCanLoad(t *testing.
 }
 
 // A preference the person states is saved without their having to say
-// "remember", so it holds in the next conversation.
+// "agent_create_memory", so it holds in the next conversation.
 func TestBuildSystemPrompt_TellsAConversationAgentToSaveStatedPreferences(t *testing.T) {
 	t.Parallel()
 
 	prompt := validDefinition().BuildSystemPrompt(agentdefinition.RuntimeContext{})
 	assert.Contains(t, prompt, "## Remembering")
-	assert.Contains(t, prompt, "save it with remember in the same turn")
+	assert.Contains(t, prompt, "save it with agent_create_memory in the same turn")
 	assert.Contains(t, prompt, "never by an internal id")
 
 	delegated := validDefinition().BuildSystemPrompt(agentdefinition.RuntimeContext{DelegatedBy: "Dispatch desk"})

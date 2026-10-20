@@ -30,7 +30,7 @@ type ToolExecuteParams struct {
 	// DefinitionID, ThreadID and Delegated say whose work the call is: the
 	// agent, the conversation it is answering, and whether it is a task
 	// another agent handed it. A tool that parks the work, such as
-	// wait_until, reads them from here rather than trusting the model.
+	// agent_create_wait, reads them from here rather than trusting the model.
 	DefinitionID pulid.ID
 	ThreadID     pulid.ID
 	Delegated    bool
@@ -141,14 +141,14 @@ type AgentToolDescriptor struct {
 
 // SearchableTool is a tool with words a person uses for it that its name and
 // description do not carry. "My dashboard" is how people name their home page;
-// neither word is in get_my_home_layout's name.
+// neither word is in home_get_layout's name.
 type SearchableTool interface {
 	SearchTerms() []string
 }
 
 // PrerequisiteTool is a tool whose arguments come from other tools. A
-// dashboard tile needs a report id, and only list_reports hands one out; an
-// agent given create_dashboard without it invents the id. Prerequisites are
+// dashboard tile needs a report id, and only report_list hands one out; an
+// agent given report_create_dashboard without it invents the id. Prerequisites are
 // loaded alongside the tool, and a prerequisite read is held by any agent
 // holding the tool.
 type PrerequisiteTool interface {
@@ -160,7 +160,7 @@ type CompanionTool interface {
 }
 
 // FollowerTool is a tool that works on what other tools return. A turn handed
-// run_report without analyze_data read the report's twenty sample rows and
+// report_run without report_analyze_data read the report's twenty sample rows and
 // answered "analyze it" from them; loading the analysis whenever the report
 // is loaded puts the tool that reads every row beside the one that samples.
 type FollowerTool interface {

@@ -64,16 +64,16 @@ func comparisonTools(t *testing.T) comparisonFixture {
 }
 
 /*
-Nothing hands out run ids. compare_report_runs needs two of them, and a tool
+Nothing hands out run ids. report_compare_runs needs two of them, and a tool
 nobody can supply arguments for is a tool that does not exist — the same
-reachability gap list_dashboards closed for tiles.
+reachability gap report_list_dashboards closed for tiles.
 */
 func TestListReportRuns_NamesTheRunsAndHowToCompareThem(t *testing.T) {
 	t.Parallel()
 
 	fixture := comparisonTools(t)
 
-	result, err := fixture.tools["list_report_runs"].Query(
+	result, err := fixture.tools["report_list_runs"].Query(
 		t.Context(), testParams(map[string]any{}),
 	)
 	require.NoError(t, err)
@@ -99,7 +99,7 @@ func TestListReportRuns_SaysWhichRunsCannotBeCompared(t *testing.T) {
 	fixture.service.runs[1].RowsKey = ""
 	fixture.service.runs[0].Status = report.RunStatusFailed
 
-	result, err := fixture.tools["list_report_runs"].Query(
+	result, err := fixture.tools["report_list_runs"].Query(
 		t.Context(), testParams(map[string]any{}),
 	)
 	require.NoError(t, err)
@@ -121,7 +121,7 @@ func TestListReportRuns_CapsTheListAndPassesTheFilters(t *testing.T) {
 	fixture := comparisonTools(t)
 	definitionID := pulid.MustNew("rdef_")
 
-	_, err := fixture.tools["list_report_runs"].Query(t.Context(), testParams(map[string]any{
+	_, err := fixture.tools["report_list_runs"].Query(t.Context(), testParams(map[string]any{
 		"definitionId": definitionID.String(),
 		"limit":        500,
 	}))
@@ -139,7 +139,7 @@ func TestCompareReportRuns_ReportsWhatMoved(t *testing.T) {
 
 	fixture := comparisonTools(t)
 
-	result, err := fixture.tools["compare_report_runs"].Query(
+	result, err := fixture.tools["report_compare_runs"].Query(
 		t.Context(),
 		testParams(map[string]any{
 			"runIdA": fixture.earlier.String(),
@@ -175,7 +175,7 @@ func TestCompareReportRuns_RefusesARunAgainstItself(t *testing.T) {
 
 	fixture := comparisonTools(t)
 
-	_, err := fixture.tools["compare_report_runs"].Query(
+	_, err := fixture.tools["report_compare_runs"].Query(
 		t.Context(),
 		testParams(map[string]any{
 			"runIdA": fixture.earlier.String(),
@@ -194,7 +194,7 @@ func TestCompareReportRuns_NamesWhichRunCannotBeRead(t *testing.T) {
 	fixture := comparisonTools(t)
 	delete(fixture.service.rows, fixture.earlier)
 
-	_, err := fixture.tools["compare_report_runs"].Query(
+	_, err := fixture.tools["report_compare_runs"].Query(
 		t.Context(),
 		testParams(map[string]any{
 			"runIdA": fixture.earlier.String(),
@@ -221,7 +221,7 @@ func TestCompareReportRuns_RefusesRunsOfDifferentShapes(t *testing.T) {
 	})
 	fixture.service.rows[fixture.later] = widened
 
-	_, err := fixture.tools["compare_report_runs"].Query(
+	_, err := fixture.tools["report_compare_runs"].Query(
 		t.Context(),
 		testParams(map[string]any{
 			"runIdA": fixture.earlier.String(),
@@ -240,7 +240,7 @@ func TestCompareReportRuns_NamesAnUnknownColumn(t *testing.T) {
 
 	fixture := comparisonTools(t)
 
-	_, err := fixture.tools["compare_report_runs"].Query(
+	_, err := fixture.tools["report_compare_runs"].Query(
 		t.Context(),
 		testParams(map[string]any{
 			"runIdA": fixture.earlier.String(),
@@ -259,7 +259,7 @@ func TestCompareReportRuns_AcceptsASingleColumnAsAString(t *testing.T) {
 
 	fixture := comparisonTools(t)
 
-	result, err := fixture.tools["compare_report_runs"].Query(
+	result, err := fixture.tools["report_compare_runs"].Query(
 		t.Context(),
 		testParams(map[string]any{
 			"runIdA":   fixture.earlier.String(),
@@ -281,7 +281,7 @@ func TestCompareReportRuns_CarriesTruncationIntoTheAnswer(t *testing.T) {
 	fixture := comparisonTools(t)
 	fixture.service.rows[fixture.earlier].Summary.Truncated = true
 
-	result, err := fixture.tools["compare_report_runs"].Query(
+	result, err := fixture.tools["report_compare_runs"].Query(
 		t.Context(),
 		testParams(map[string]any{
 			"runIdA": fixture.earlier.String(),

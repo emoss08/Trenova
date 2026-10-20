@@ -24,6 +24,14 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
+const (
+	toolReportGet                           = "report_get"
+	toolReportList                          = "report_list"
+	toolDetentionGetOccurrence              = "detention_get_occurrence"
+	toolCarrierResolveIntelligenceEvent     = "carrier_resolve_intelligence_event"
+	toolCarrierAcknowledgeIntelligenceEvent = "carrier_acknowledge_intelligence_event"
+)
+
 // A tender block is an override with a life: carrier records are
 // corrected, and a block nobody revisits outlives the problem.
 const tenderBlockDays = 30
@@ -63,10 +71,10 @@ func NewEscalateDetentionTool(escalator detentionEscalator) agentports.AgentTool
 	return &EscalateDetentionTool{detention: escalator}
 }
 
-func (t *EscalateDetentionTool) Name() string { return "escalate_detention" }
+func (t *EscalateDetentionTool) Name() string { return "detention_escalate" }
 
 func (t *EscalateDetentionTool) Recipe() []string {
-	return []string{"get_detention_occurrence", "escalate_detention"}
+	return []string{toolDetentionGetOccurrence, "detention_escalate"}
 }
 
 func (t *EscalateDetentionTool) Description() string {
@@ -82,8 +90,8 @@ func (t *EscalateDetentionTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"occurrenceId": agenttoolschema.KindID(
-				"The occurrence id, from list_detention_desk or "+
-					"get_detention_occurrence.",
+				"The occurrence id, from detention_list_occurrences or "+
+					"detention_get_occurrence.",
 				permission.KindDetentionOccurrence,
 			),
 			common.ParamReason: map[string]any{
@@ -215,25 +223,25 @@ func NewApproveDetentionTool(approver detentionApprover) agentports.AgentTool {
 	return &ApproveDetentionTool{detention: approver}
 }
 
-func (t *ApproveDetentionTool) Name() string { return "approve_detention" }
+func (t *ApproveDetentionTool) Name() string { return "detention_approve" }
 
 func (t *ApproveDetentionTool) Prerequisites() []string {
-	return []string{"list_detention_desk", "get_detention_occurrence"}
+	return []string{"detention_list_occurrences", toolDetentionGetOccurrence}
 }
 
 func (t *ApproveDetentionTool) Recipe() []string {
-	return []string{"list_detention_desk", "get_detention_occurrence", "approve_detention"}
+	return []string{"detention_list_occurrences", toolDetentionGetOccurrence, "detention_approve"}
 }
 
 func (t *ApproveDetentionTool) Description() string {
 	return "Propose approving a detention charge that is waiting on approval, so it can " +
-		"be invoiced. list_detention_desk shows these as AwaitingApproval, and while one " +
+		"be invoiced. detention_list_occurrences shows these as AwaitingApproval, and while one " +
 		"waits its shipment cannot be billed. The charge is approved exactly as calculated. " +
 		"Propose it only when the evidence holds up: arrival and departure on record, the " +
 		"notice sent inside the policy's window or none required, and nothing on file that " +
 		"contradicts the time. Say what shows that in evidence. Only a pending charge can be " +
 		"approved, and a person always decides; when the evidence does not hold up, propose " +
-		"waive_detention instead or leave it for a person."
+		"detention_waive instead or leave it for a person."
 }
 
 func (t *ApproveDetentionTool) ParamSchema() map[string]any {
@@ -241,8 +249,8 @@ func (t *ApproveDetentionTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"occurrenceId": agenttoolschema.KindID(
-				"The occurrence id, from list_detention_desk or "+
-					"get_detention_occurrence.",
+				"The occurrence id, from detention_list_occurrences or "+
+					"detention_get_occurrence.",
 				permission.KindDetentionOccurrence,
 			),
 			"evidence": map[string]any{
@@ -399,10 +407,14 @@ func NewRequestCredentialRenewalTool(credentials credentialActor) agentports.Age
 	return &RequestCredentialRenewalTool{credentials: credentials}
 }
 
-func (t *RequestCredentialRenewalTool) Name() string { return "request_credential_renewal" }
+func (t *RequestCredentialRenewalTool) Name() string { return "worker_request_credential_renewal" }
 
 func (t *RequestCredentialRenewalTool) Recipe() []string {
-	return []string{"list_expiring_credentials", "get_worker", "request_credential_renewal"}
+	return []string{
+		"worker_list_expiring_credentials",
+		"worker_get",
+		"worker_request_credential_renewal",
+	}
 }
 
 func (t *RequestCredentialRenewalTool) Description() string {
@@ -421,12 +433,12 @@ func (t *RequestCredentialRenewalTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			common.ParamWorkerID: agenttoolschema.RecordIDText(
 				permission.ResourceWorker,
-				"The driver whose papers are due, from get_worker.",
+				"The driver whose papers are due, from worker_get.",
 			),
 			"credentialIds": agenttoolschema.OfResource(map[string]any{
 				"type": "array",
 				"description": "Every credential this ask covers, by the id " +
-					"list_expiring_credentials or get_worker_credential returns, or the one " +
+					"worker_list_expiring_credentials or worker_get_credential returns, or the one " +
 					"the event that started this run names. Never invent one.",
 				schemaItems: map[string]any{"type": "string"},
 				"minItems":  1,
@@ -552,10 +564,10 @@ func NewPlaceWorkerDispatchHoldTool(workers workerHolder) agentports.AgentTool {
 	return &PlaceWorkerDispatchHoldTool{workers: workers}
 }
 
-func (t *PlaceWorkerDispatchHoldTool) Name() string { return "place_worker_dispatch_hold" }
+func (t *PlaceWorkerDispatchHoldTool) Name() string { return "worker_place_dispatch_hold" }
 
 func (t *PlaceWorkerDispatchHoldTool) Recipe() []string {
-	return []string{"list_expiring_credentials", "get_worker", "place_worker_dispatch_hold"}
+	return []string{"worker_list_expiring_credentials", "worker_get", "worker_place_dispatch_hold"}
 }
 
 func (t *PlaceWorkerDispatchHoldTool) SearchTerms() []string {
@@ -575,7 +587,7 @@ func (t *PlaceWorkerDispatchHoldTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			common.ParamWorkerID: agenttoolschema.RecordIDText(
 				permission.ResourceWorker,
-				"The driver to hold, from get_worker.",
+				"The driver to hold, from worker_get.",
 			),
 			common.ParamReason: map[string]any{
 				"type": "string",
@@ -717,24 +729,28 @@ func NewResolveCarrierIntelEventTool(intel carrierIntelActor) agentports.AgentTo
 
 func (t *carrierIntelEventTool) Name() string {
 	if t.resolves {
-		return "resolve_carrier_intel_event"
+		return toolCarrierResolveIntelligenceEvent
 	}
 
-	return "acknowledge_carrier_intel_event"
+	return toolCarrierAcknowledgeIntelligenceEvent
 }
 
 func (t *AcknowledgeCarrierIntelEventTool) Name() string {
-	return "acknowledge_carrier_intel_event"
+	return toolCarrierAcknowledgeIntelligenceEvent
 }
 
 func (t *AcknowledgeCarrierIntelEventTool) Recipe() []string {
-	return []string{"get_carrier_intel_event", "acknowledge_carrier_intel_event"}
+	return []string{"carrier_get_intelligence_event", toolCarrierAcknowledgeIntelligenceEvent}
 }
 
-func (t *ResolveCarrierIntelEventTool) Name() string { return "resolve_carrier_intel_event" }
+func (t *ResolveCarrierIntelEventTool) Name() string { return toolCarrierResolveIntelligenceEvent }
 
 func (t *ResolveCarrierIntelEventTool) Recipe() []string {
-	return []string{"get_carrier_intel_event", "get_carrier", "resolve_carrier_intel_event"}
+	return []string{
+		"carrier_get_intelligence_event",
+		"carrier_get",
+		toolCarrierResolveIntelligenceEvent,
+	}
 }
 
 func (t *ResolveCarrierIntelEventTool) SearchTerms() []string {
@@ -775,7 +791,7 @@ func (t *carrierIntelEventTool) Description() string {
 	return "Mark a carrier finding as seen when it does not bear on whether the carrier " +
 		"can be given freight. Use it for a new address, a changed contact, a score " +
 		"that moved within its band. A finding that does bear on eligibility is not " +
-		"acknowledged: it is acted on, then closed with resolve_carrier_intel_event."
+		"acknowledged: it is acted on, then closed with carrier_resolve_intelligence_event."
 }
 
 func (t *carrierIntelEventTool) ParamSchema() map[string]any {
@@ -788,7 +804,7 @@ func (t *carrierIntelEventTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"eventId": agenttoolschema.KindID(
-				"The finding id, from list_carrier_intel_events, get_carrier_intel_event "+
+				"The finding id, from carrier_list_intelligence_events, carrier_get_intelligence_event "+
 					"or this run's subject. Never guess one.",
 				permission.KindCarrierIntelligenceEvent,
 			),

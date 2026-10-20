@@ -83,7 +83,7 @@ describe("ToolCallsPanel", () => {
   it("says every call went through when a tool's calls all did", async () => {
     const user = userEvent.setup();
     render(
-      <ToolCallsPanel loading={false} failed={false} verdicts={[row("get_customer", "ran", 5)]} />,
+      <ToolCallsPanel loading={false} failed={false} verdicts={[row("customer_get", "ran", 5)]} />,
     );
 
     expect(screen.getByText("Every call went through")).toBeInTheDocument();

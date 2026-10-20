@@ -46,7 +46,7 @@ func (s *Service) announce(ctx context.Context, message *inboundmessage.InboundM
 		},
 		Related: related,
 		Detail: "A message arrived from " + message.FromAddress + " (inbound message " +
-			message.ID.String() + "). Read it with get_inbound_message before acting on it.",
+			message.ID.String() + "). Read it with inbox_get_inbound_message before acting on it.",
 	})
 }
 

@@ -24,7 +24,7 @@ func AllocationsProperty(description string) map[string]any {
 				ParamBillToCustomer: agenttoolschema.RecordIDText(
 					permission.ResourceCustomer,
 					"The customer who pays this share, from "+
-						"list_customers. Never guess one.",
+						"customer_list. Never guess one.",
 				),
 				ParamAllocMethod: agenttoolschema.Enum("Whether the share is a percent of "+
 					"the charge or a fixed amount.", allocationMethods),

@@ -128,7 +128,7 @@ func (t *GenerateDriverSettlementTool) Description() string {
 func (t *GenerateDriverSettlementTool) ParamSchema() map[string]any {
 	properties := periodProperties("the settlement")
 	properties[common.ParamWorkerID] = agenttoolschema.RecordIDText(permission.ResourceWorker,
-		"The driver, from search_worker, list_workers or settlement_list_pay_events.")
+		"The driver, from worker_search, worker_list or settlement_list_pay_events.")
 	properties[paramPayDate] = agenttoolschema.Date("The day it is paid. Leave it out for " +
 		"the pay period's own pay date.")
 

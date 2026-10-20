@@ -293,7 +293,7 @@ func TestListReports_NamesTheCatalogAndItsParameters(t *testing.T) {
 
 	_, _, tools := reportingTools(t)
 
-	result, err := tools["list_reports"].Query(t.Context(), testParams(map[string]any{}))
+	result, err := tools["report_list"].Query(t.Context(), testParams(map[string]any{}))
 	require.NoError(t, err)
 
 	outcome, ok := result.(searchOutcome)
@@ -304,10 +304,10 @@ func TestListReports_NamesTheCatalogAndItsParameters(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, "ar_aging_by_customer", rows[0].Key)
 	assert.Equal(t, "Accounting", rows[0].Category)
-	require.Len(t, rows[0].Takes, 2, "the listing names them; describe_report shapes them")
+	require.Len(t, rows[0].Takes, 2, "the listing names them; report_get shapes them")
 }
 
-// The catalog named the report's key "key" and run_report took it as
+// The catalog named the report's key "key" and report_run took it as
 // "reportKey". A model that read the one and called the other with what it
 // saw was refused for a missing parameter it had, in fact, supplied.
 func TestListReports_NamesTheKeyTheWayRunReportTakesIt(t *testing.T) {
@@ -315,7 +315,7 @@ func TestListReports_NamesTheKeyTheWayRunReportTakesIt(t *testing.T) {
 
 	_, _, tools := reportingTools(t)
 
-	result, err := tools["list_reports"].Query(t.Context(), testParams(map[string]any{}))
+	result, err := tools["report_list"].Query(t.Context(), testParams(map[string]any{}))
 	require.NoError(t, err)
 
 	encoded, err := sonic.Marshal(result)
@@ -339,7 +339,7 @@ func TestListReports_PagesALongCatalog(t *testing.T) {
 		service.entries = append(service.entries, entry)
 	}
 
-	result, err := tools["list_reports"].Query(t.Context(), testParams(map[string]any{}))
+	result, err := tools["report_list"].Query(t.Context(), testParams(map[string]any{}))
 	require.NoError(t, err)
 	first, ok := result.(searchOutcome)
 	require.True(t, ok)
@@ -349,7 +349,7 @@ func TestListReports_PagesALongCatalog(t *testing.T) {
 	assert.Equal(t, 25, *first.NextOffset)
 	assert.Contains(t, first.Note, "offset 25")
 
-	result, err = tools["list_reports"].Query(
+	result, err = tools["report_list"].Query(
 		t.Context(),
 		testParams(map[string]any{"offset": *first.NextOffset}),
 	)
@@ -377,7 +377,7 @@ func TestListReports_MatchesQueryWords(t *testing.T) {
 	service.entries = append(service.entries, dwell)
 
 	for _, query := range []string{"detention dwell", "arrival", "stop-dwell"} {
-		result, err := tools["list_reports"].Query(
+		result, err := tools["report_list"].Query(
 			t.Context(),
 			testParams(map[string]any{"query": query}),
 		)
@@ -396,7 +396,7 @@ func TestRunReport_AcceptsKeyAsTheReportKey(t *testing.T) {
 
 	service, _, tools := reportingTools(t)
 
-	_, err := tools["run_report"].Query(t.Context(), testParams(map[string]any{
+	_, err := tools["report_run"].Query(t.Context(), testParams(map[string]any{
 		"key":        "ar_aging_by_customer",
 		"parameters": map[string]any{"asOf": "2026-03-01"},
 	}))
@@ -411,7 +411,7 @@ func TestListReports_NarrowsByCategory(t *testing.T) {
 
 	_, _, tools := reportingTools(t)
 
-	result, err := tools["list_reports"].Query(
+	result, err := tools["report_list"].Query(
 		t.Context(),
 		testParams(map[string]any{"category": "fleet"}),
 	)
@@ -435,7 +435,7 @@ func TestRunReport_RequiresTheExportPermission(t *testing.T) {
 	service, permissions, tools := reportingTools(t)
 	permissions.allowed = false
 
-	_, err := tools["run_report"].Query(t.Context(), testParams(map[string]any{
+	_, err := tools["report_run"].Query(t.Context(), testParams(map[string]any{
 		"reportKey":  "ar_aging_by_customer",
 		"parameters": map[string]any{"asOf": "2026-03-01"},
 	}))
@@ -456,7 +456,7 @@ func TestRunReport_SubmitsWithTheActorTenant(t *testing.T) {
 		"reportKey":  "ar_aging_by_customer",
 		"parameters": map[string]any{"asOf": "2026-03-01"},
 	})
-	_, err := tools["run_report"].Query(t.Context(), params)
+	_, err := tools["report_run"].Query(t.Context(), params)
 	require.NoError(t, err)
 
 	require.NotNil(t, service.submitted)
@@ -471,7 +471,7 @@ func TestRunReport_DefaultsToTheReportsOwnFormat(t *testing.T) {
 
 	service, _, tools := reportingTools(t)
 
-	_, err := tools["run_report"].Query(t.Context(), testParams(map[string]any{
+	_, err := tools["report_run"].Query(t.Context(), testParams(map[string]any{
 		"reportKey":  "ar_aging_by_customer",
 		"parameters": map[string]any{"asOf": "2026-03-01"},
 	}))
@@ -487,7 +487,7 @@ func TestRunReport_NamesAMissingRequiredParameter(t *testing.T) {
 
 	service, _, tools := reportingTools(t)
 
-	_, err := tools["run_report"].Query(t.Context(), testParams(map[string]any{
+	_, err := tools["report_run"].Query(t.Context(), testParams(map[string]any{
 		"reportKey": "ar_aging_by_customer",
 	}))
 	require.Error(t, err)
@@ -500,11 +500,11 @@ func TestRunReport_RefusesAnUnknownReport(t *testing.T) {
 
 	service, _, tools := reportingTools(t)
 
-	_, err := tools["run_report"].Query(t.Context(), testParams(map[string]any{
+	_, err := tools["report_run"].Query(t.Context(), testParams(map[string]any{
 		"reportKey": "made_up_report",
 	}))
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "list_reports", "the error says how to find a real key")
+	assert.Contains(t, err.Error(), "report_list", "the error says how to find a real key")
 	assert.Nil(t, service.submitted)
 }
 
@@ -519,7 +519,7 @@ func TestRunReport_AnswersWithAHandleAndSaysItIsNotDone(t *testing.T) {
 
 	_, _, tools := reportingTools(t)
 
-	result, err := tools["run_report"].Query(t.Context(), testParams(map[string]any{
+	result, err := tools["report_run"].Query(t.Context(), testParams(map[string]any{
 		"reportKey":  "ar_aging_by_customer",
 		"parameters": map[string]any{"asOf": "2026-03-01"},
 	}))
@@ -530,7 +530,7 @@ func TestRunReport_AnswersWithAHandleAndSaysItIsNotDone(t *testing.T) {
 	assert.NotEmpty(t, started.RunID)
 	assert.Equal(t, string(report.RunStatusQueued), started.Status)
 	assert.False(t, started.Finished)
-	assert.Contains(t, strings.ToLower(started.Note), "get_report_run")
+	assert.Contains(t, strings.ToLower(started.Note), "report_get_run")
 }
 
 func TestGetReportRun_ReportsAFailureReason(t *testing.T) {
@@ -543,7 +543,7 @@ func TestGetReportRun_ReportsAFailureReason(t *testing.T) {
 		Error:  &report.RunError{Code: "QUERY_FAILED", Message: "The report timed out"},
 	}
 
-	result, err := tools["get_report_run"].Query(t.Context(), testParams(map[string]any{
+	result, err := tools["report_get_run"].Query(t.Context(), testParams(map[string]any{
 		"runId": service.run.ID.String(),
 	}))
 	require.NoError(t, err)
@@ -565,7 +565,7 @@ func TestGetReportRun_ReportsRowCountWhenItSucceeded(t *testing.T) {
 		Format:   report.FormatXLSX,
 	}
 
-	result, err := tools["get_report_run"].Query(t.Context(), testParams(map[string]any{
+	result, err := tools["report_get_run"].Query(t.Context(), testParams(map[string]any{
 		"runId": service.run.ID.String(),
 	}))
 	require.NoError(t, err)
@@ -582,7 +582,7 @@ func TestGetReportRun_ScopesTheLookupToTheActorTenant(t *testing.T) {
 	service, _, tools := reportingTools(t)
 
 	params := testParams(map[string]any{"runId": service.run.ID.String()})
-	_, err := tools["get_report_run"].Query(t.Context(), params)
+	_, err := tools["report_get_run"].Query(t.Context(), params)
 	require.NoError(t, err)
 
 	require.NotNil(t, service.fetched)
@@ -677,12 +677,12 @@ func TestRunReport_DeclaresTheKeyAliasInItsSchema(t *testing.T) {
 
 	_, _, tools := reportingTools(t)
 
-	properties, ok := tools["run_report"].ParamSchema()["properties"].(map[string]any)
+	properties, ok := tools["report_run"].ParamSchema()["properties"].(map[string]any)
 	require.True(t, ok)
 	assert.Contains(t, properties, "reportKey")
 	assert.Contains(t, properties, "key")
 	assert.Contains(t, properties, "definitionId")
-	assert.NotContains(t, tools["run_report"].ParamSchema(), "required",
+	assert.NotContains(t, tools["report_run"].ParamSchema(), "required",
 		"a saved report has no key and a built-in one has no definition id")
 }
 
@@ -703,7 +703,7 @@ func TestRunReport_AnswersWithTheOutcomeWhenTheRunFinishesAtOnce(t *testing.T) {
 		RowCount:  9,
 	}
 
-	result, err := tools["run_report"].Query(t.Context(), testParams(map[string]any{
+	result, err := tools["report_run"].Query(t.Context(), testParams(map[string]any{
 		"reportKey":  "ar_aging_by_customer",
 		"parameters": map[string]any{"asOf": "2026-03-01"},
 	}))
@@ -725,7 +725,7 @@ func TestRunReport_StillSaysStartedWhenTheRunOutlastsTheWait(t *testing.T) {
 
 	service, _, tools := reportingTools(t)
 
-	result, err := tools["run_report"].Query(t.Context(), testParams(map[string]any{
+	result, err := tools["report_run"].Query(t.Context(), testParams(map[string]any{
 		"reportKey":  "ar_aging_by_customer",
 		"parameters": map[string]any{"asOf": "2026-03-01"},
 	}))
@@ -748,7 +748,7 @@ func TestRunReport_ReportsAFailureItSawWhileWaiting(t *testing.T) {
 		Error:  &report.RunError{Message: "the dataset timed out"},
 	}
 
-	result, err := tools["run_report"].Query(t.Context(), testParams(map[string]any{
+	result, err := tools["report_run"].Query(t.Context(), testParams(map[string]any{
 		"reportKey":  "ar_aging_by_customer",
 		"parameters": map[string]any{"asOf": "2026-03-01"},
 	}))
@@ -790,9 +790,9 @@ func finishedRun(service *fakeReporting, rowCount int64) *report.ReportRun {
 
 /*
 Asked to show a few rows of a report that had just finished, the agent ran
-preview_report on the same definition again, because run_report had handed back
+report_preview on the same definition again, because report_run had handed back
 a row count and nothing to read. A finished run now carries the first rows it
-stored, in preview_report's shape, and says they are a sample.
+stored, in report_preview's shape, and says they are a sample.
 */
 func TestRunReport_HandsBackASampleOfAFinishedRunsRows(t *testing.T) {
 	t.Parallel()
@@ -807,7 +807,7 @@ func TestRunReport_HandsBackASampleOfAFinishedRunsRows(t *testing.T) {
 	})
 	params.Timezone = "America/Chicago"
 
-	result, err := tools["run_report"].Query(t.Context(), params)
+	result, err := tools["report_run"].Query(t.Context(), params)
 	require.NoError(t, err)
 
 	status, ok := result.(reportRunStatus)
@@ -817,7 +817,7 @@ func TestRunReport_HandsBackASampleOfAFinishedRunsRows(t *testing.T) {
 	assert.Equal(t, "Customer", status.Columns[0].Label)
 	assert.Equal(t, "Customer A", status.Rows[0]["Customer"])
 	assert.Equal(t, "2026-09-21 08:16 CDT", status.Rows[0]["Delivered"],
-		"dates read the way preview_report writes them")
+		"dates read the way report_preview writes them")
 	assert.Contains(t, status.Note, "finished with 25 rows")
 	assert.Contains(t, status.Note, "already shown in this conversation")
 	assert.Contains(t, status.Note, "first 20 of its 25 rows, keyed by column label: a sample")
@@ -833,7 +833,7 @@ func TestRunReport_SaysARunsRowsAreNotShownWhenTheyCannotBeRead(t *testing.T) {
 	service, _, tools := reportingTools(t)
 	service.settled = finishedRun(service, 9)
 
-	result, err := tools["run_report"].Query(t.Context(), testParams(map[string]any{
+	result, err := tools["report_run"].Query(t.Context(), testParams(map[string]any{
 		"reportKey":  "ar_aging_by_customer",
 		"parameters": map[string]any{"asOf": "2026-03-01"},
 	}))
@@ -854,7 +854,7 @@ func TestRunReport_ReadsNoRowsForARunStillGoing(t *testing.T) {
 		service.run.ID: errortypes.NewBusinessError("rows were read for an unfinished run"),
 	}
 
-	result, err := tools["run_report"].Query(t.Context(), testParams(map[string]any{
+	result, err := tools["report_run"].Query(t.Context(), testParams(map[string]any{
 		"reportKey":  "ar_aging_by_customer",
 		"parameters": map[string]any{"asOf": "2026-03-01"},
 	}))
@@ -873,7 +873,7 @@ func TestGetReportRun_HandsBackASampleOfAFinishedRunsRows(t *testing.T) {
 	service.run = finishedRun(service, 3)
 	service.rows = map[pulid.ID]*reportrows.Envelope{service.run.ID: storedRows(3)}
 
-	result, err := tools["get_report_run"].Query(t.Context(), testParams(map[string]any{
+	result, err := tools["report_get_run"].Query(t.Context(), testParams(map[string]any{
 		"runId": service.run.ID.String(),
 	}))
 	require.NoError(t, err)
@@ -890,7 +890,7 @@ func TestListReports_NamesEveryReportWhenNothingMatches(t *testing.T) {
 
 	_, _, tools := reportingTools(t)
 
-	result, err := tools["list_reports"].Query(t.Context(), testParams(map[string]any{
+	result, err := tools["report_list"].Query(t.Context(), testParams(map[string]any{
 		"query": "on-time delivery",
 	}))
 	require.NoError(t, err)

@@ -79,7 +79,7 @@ Reports land in `e2e/.report`, traces of failures in `e2e/.results`
   move In Transit for good). Reseed, or point the `e2e-approval` rule at a move
   that is still New.
 - **The email draft is refused.** The draft needs an email profile: the rule
-  calls `list_email_profiles` and passes the first `emlprof_` id it returns
+  calls `inbox_list_email_profiles` and passes the first `emlprof_` id it returns
   (`"{{id:emlprof_}}"`). With no profile, or a sender that cannot send, the
   preview refuses the draft.
 - **A tool step never happens.** The runtime offers an agent only some of its

@@ -104,7 +104,7 @@ func newGetDispatchBoardTool(board boardReader) agentports.AgentQueryTool {
 	return &getDispatchBoardTool{board: board}
 }
 
-func (t *getDispatchBoardTool) Name() string { return "get_dispatch_board" }
+func (t *getDispatchBoardTool) Name() string { return "dispatch_get_board" }
 
 func (t *getDispatchBoardTool) Description() string {
 	return "The dispatch board: every move in the window with its urgency and coverage, " +
@@ -139,12 +139,7 @@ func (t *getDispatchBoardTool) ParamSchema() map[string]any {
 				"type":        "string",
 				"description": "Optional text matched against PRO numbers, customers and places.",
 			},
-			"limit": map[string]any{
-				"type": "integer",
-				"description": fmt.Sprintf(
-					"Moves to return. Default %d, at most %d.", defaultBoardLimit, maxBoardLimit,
-				),
-			},
+			paramLimit: limitSchema(defaultBoardLimit, maxBoardLimit),
 		},
 		"additionalProperties": false,
 	}
@@ -168,10 +163,7 @@ func (t *getDispatchBoardTool) Query(
 	if hours <= 0 || hours > maxBoardHours {
 		hours = defaultBoardHours
 	}
-	limit := optionalInt(params.Params, "limit", defaultBoardLimit)
-	if limit <= 0 || limit > maxBoardLimit {
-		limit = defaultBoardLimit
-	}
+	limit := readLimit(params.Params, defaultBoardLimit, maxBoardLimit)
 
 	now := clockFor(params).Now
 	board, err := t.board.GetBoard(ctx, &dispatchconsoleservice.GetBoardRequest{

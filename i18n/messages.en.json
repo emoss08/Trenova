@@ -31385,7 +31385,7 @@
       "routes/desk"
     ]
   },
-  "Assign a fuel card to the tractor or driver that carries it, most often a card a feed discovered. Assigning a suspended card also activates it, and once assigned, resolve_fuel_purchase_import_rows posts the purchases that waited for it.": {
+  "Assign a fuel card to the tractor or driver that carries it, most often a card a feed discovered. Assigning a suspended card also activates it, and once assigned, fuel_resolve_purchase_import_rows posts the purchases that waited for it.": {
     "sites": 1,
     "scope": [
       "go"
@@ -41034,7 +41034,7 @@
       "template/notification.dash.credential_expiring"
     ]
   },
-  "Bring a snoozed exception back to the open queue now, before the time snooze_exception set, when whatever it was waiting for has happened early. Only a snoozed exception can be woken; list_watchtower_items shows which are snoozed and until when.": {
+  "Bring a snoozed exception back to the open queue now, before the time exception_snooze set, when whatever it was waiting for has happened early. Only a snoozed exception can be woken; exception_list_watchtower_items shows which are snoozed and until when.": {
     "sites": 1,
     "scope": [
       "go"
@@ -43114,7 +43114,7 @@
       "go/other"
     ]
   },
-  "Cancel a manual journal that is a draft, waiting for approval or approved but not posted, with the reason. It is kept, cancelled, and never posted. A posted journal is undone with request_journal_reversal instead.": {
+  "Cancel a manual journal that is a draft, waiting for approval or approved but not posted, with the reason. It is kept, cancelled, and never posted. A posted journal is undone with ledger_create_journal_reversal instead.": {
     "sites": 1,
     "scope": [
       "go"
@@ -47545,7 +47545,7 @@
       "apps/web/components"
     ]
   },
-  "Change a report schedule the person set up: when it runs, its zone, the formats, who it is emailed to, or switch it on or off. Fields left out keep their value. The report must exist; list_reports finds its id.": {
+  "Change a report schedule the person set up: when it runs, its zone, the formats, who it is emailed to, or switch it on or off. Fields left out keep their value. The report must exist; report_list finds its id.": {
     "sites": 1,
     "scope": [
       "go"
@@ -47925,7 +47925,7 @@
       "routes/desk"
     ]
   },
-  "Change the reason code, notes or EDI 214 code overrides on an open or reviewed service failure. Send only what changes; an empty string clears a note or override. It does not move the failure through its lifecycle: use review_service_failure, resolve_service_failure or void_service_failure for that.": {
+  "Change the reason code, notes or EDI 214 code overrides on an open or reviewed service failure. Send only what changes; an empty string clears a note or override. It does not move the failure through its lifecycle: use exception_review_service_failure, exception_resolve_service_failure or exception_void_service_failure for that.": {
     "sites": 1,
     "scope": [
       "go"
@@ -56245,7 +56245,7 @@
       "go/other"
     ]
   },
-  "Commit a staged fuel card statement: every row ready to commit becomes a fuel purchase in one step, and rows whose reference is already on file are skipped. Read it with list_fuel_purchase_imports first; rows in error stay behind.": {
+  "Commit a staged fuel card statement: every row ready to commit becomes a fuel purchase in one step, and rows whose reference is already on file are skipped. Read it with fuel_list_purchase_imports first; rows in error stay behind.": {
     "sites": 1,
     "scope": [
       "go"
@@ -58500,7 +58500,7 @@
       "routes/worker"
     ]
   },
-  "Confirm Trenova's proposed accounting system matches exactly as list_accounting_mapping_gaps shows them, several at once, so sync can use them. A proposal that changed since it was read is refused; to choose a different record, use set_accounting_mapping.": {
+  "Confirm Trenova's proposed accounting system matches exactly as accounting_list_mapping_gaps shows them, several at once, so sync can use them. A proposal that changed since it was read is refused; to choose a different record, use accounting_set_mapping.": {
     "sites": 1,
     "scope": [
       "go"
@@ -61658,7 +61658,7 @@
       "go/other"
     ]
   },
-  "Copy a rate agreement with its lanes, weight breaks, accessorials and fuel terms into a new draft, to start a renewal. The copy has none of the original's history or approvals; revise_rate_agreement_draft then changes it.": {
+  "Copy a rate agreement with its lanes, weight breaks, accessorials and fuel terms into a new draft, to start a renewal. The copy has none of the original's history or approvals; rate_update_agreement_draft then changes it.": {
     "sites": 1,
     "scope": [
       "go"
@@ -65755,7 +65755,7 @@
       "routes/edi"
     ]
   },
-  "Create the shipment a tender in Triage describes, from the fields you checked. Start from the draft draft_inbound_load wrote, which get_inbound_message shows, and send every field the load should carry: one left out is not on it. It is billed to the customer the message is linked to, so link that first with link_inbound_message. A message that already made its load is refused.": {
+  "Create the shipment a tender in Triage describes, from the fields you checked. Start from the draft inbox_draft_load wrote, which inbox_get_inbound_message shows, and send every field the load should carry: one left out is not on it. It is billed to the customer the message is linked to, so link that first with inbox_link_inbound_message. A message that already made its load is refused.": {
     "sites": 1,
     "scope": [
       "go"
@@ -73868,7 +73868,7 @@
       "go/other"
     ]
   },
-  "Delete a draft IFTA return, such as one generated for the wrong quarter. Only a draft can be deleted; generate_ifta_return makes it again.": {
+  "Delete a draft IFTA return, such as one generated for the wrong quarter. Only a draft can be deleted; fuel_generate_ifta_return makes it again.": {
     "sites": 1,
     "scope": [
       "go"
@@ -81965,7 +81965,7 @@
       "routes/settlement-workspace"
     ]
   },
-  "Draft a manual journal entry for the general ledger: its lines, the accounts they post to and the day it is booked. It is saved as a draft and books nothing; submit_manual_journal sends it for approval. Take accounts from list_gl_accounts and make the debits equal the credits.": {
+  "Draft a manual journal entry for the general ledger: its lines, the accounts they post to and the day it is booked. It is saved as a draft and books nothing; ledger_submit_manual_journal sends it for approval. Take accounts from ledger_list_accounts and make the debits equal the credits.": {
     "sites": 1,
     "scope": [
       "go"
@@ -81983,7 +81983,7 @@
       "apps/web/components"
     ]
   },
-  "Draft a rate agreement with a customer or a carrier from a rate sheet or a quote the person agreed: its code, name, dates, currency and lanes. It is saved as a draft and prices nothing until submit_rate_agreement sends it for review and a person approves it.": {
+  "Draft a rate agreement with a customer or a carrier from a rate sheet or a quote the person agreed: its code, name, dates, currency and lanes. It is saved as a draft and prices nothing until rate_submit_agreement sends it for review and a person approves it.": {
     "sites": 1,
     "scope": [
       "go"
@@ -88761,7 +88761,7 @@
       "go/other"
     ]
   },
-  "Email the carrier covering a brokered move a tracking link, so their dispatcher or driver can post check calls, arrivals and departures without signing in. Issuing replaces any live link on the move, which stops working. Send it to the address the carrier gave you or the email get_carrier shows for the carrier or its dispatch contact; never invent one. The link itself is never shown to you, so it cannot be pasted anywhere else.": {
+  "Email the carrier covering a brokered move a tracking link, so their dispatcher or driver can post check calls, arrivals and departures without signing in. Issuing replaces any live link on the move, which stops working. Send it to the address the carrier gave you or the email carrier_get shows for the carrier or its dispatch contact; never invent one. The link itself is never shown to you, so it cannot be pasted anywhere else.": {
     "sites": 1,
     "scope": [
       "go"
@@ -104105,7 +104105,7 @@
       "routes/inbox"
     ]
   },
-  "File an email attachment on a shipment as a typed document, whole or split into page ranges that each become their own document. Whole, it is filed as the type you name, or as the kind it was read as when you name none. Only a PDF splits. A file that was not read, or is already filed, is refused; unfile_inbound_attachment undoes a filing.": {
+  "File an email attachment on a shipment as a typed document, whole or split into page ranges that each become their own document. Whole, it is filed as the type you name, or as the kind it was read as when you name none. Only a PDF splits. A file that was not read, or is already filed, is refused; inbox_unfile_attachment undoes a filing.": {
     "sites": 1,
     "scope": [
       "go"
@@ -104322,7 +104322,7 @@
       "go/other"
     ]
   },
-  "File scanned documents from capture intake onto the shipment, worker, tractor, trailer, customer or carrier they belong to, as the document type they are. Take the documents and their suggested records from list_capture_batches.": {
+  "File scanned documents from capture intake onto the shipment, worker, tractor, trailer, customer or carrier they belong to, as the document type they are. Take the documents and their suggested records from inbox_list_capture_batches.": {
     "sites": 1,
     "scope": [
       "go"
@@ -111571,7 +111571,7 @@
       "routes/admin"
     ]
   },
-  "Generate a quarter's IFTA fuel tax return as a draft, computed from the jurisdiction miles and fuel purchases on file. It files nothing: a person finalizes and files it. Refused while a draft or finalized return exists for the quarter, and once one is filed; use recompute_ifta_return or amend_ifta_return.": {
+  "Generate a quarter's IFTA fuel tax return as a draft, computed from the jurisdiction miles and fuel purchases on file. It files nothing: a person finalizes and files it. Refused while a draft or finalized return exists for the quarter, and once one is filed; use fuel_recalculate_ifta_return or fuel_amend_ifta_return.": {
     "sites": 1,
     "scope": [
       "go"
@@ -112332,7 +112332,7 @@
       "routes/agent-control"
     ]
   },
-  "Give messages waiting in the Triage queue to a person on the Triage team, or take them off whoever has them. Choose the owner from list_triage_assignees, which shows who can take Triage messages and how many each already holds. Settled messages and ones the person already owns are left alone. The new owner sees them in their own lane.": {
+  "Give messages waiting in the Triage queue to a person on the Triage team, or take them off whoever has them. Choose the owner from inbox_list_triage_assignees, which shows who can take Triage messages and how many each already holds. Settled messages and ones the person already owns are left alone. The new owner sees them in their own lane.": {
     "sites": 1,
     "scope": [
       "go"
@@ -113899,7 +113899,7 @@
       "go/other"
     ]
   },
-  "Hand every message still waiting in the Triage queue to one person, usually the on-call person at the end of the working day. list_triage_assignees names the on-call person and who else can take it. Snoozed, parked and settled messages are left alone; to move only some messages, use assign_inbound_messages.": {
+  "Hand every message still waiting in the Triage queue to one person, usually the on-call person at the end of the working day. inbox_list_triage_assignees names the on-call person and who else can take it. Snoozed, parked and settled messages are left alone; to move only some messages, use inbox_assign_inbound_message.": {
     "sites": 1,
     "scope": [
       "go"
@@ -134055,7 +134055,7 @@
       "routes/admin"
     ]
   },
-  "Let a blocked sender's mail reach the Triage queue again on the source it arrives on. Name the sender by one of their messages: their mail since the block sits under Ignored, which search_inbound_messages and list_inbound_messages find. Messages already ignored stay settled; reopen_inbound_messages returns any that still matter to the queue.": {
+  "Let a blocked sender's mail reach the Triage queue again on the source it arrives on. Name the sender by one of their messages: their mail since the block sits under Ignored, which inbox_search_inbound_messages and inbox_list_inbound_messages find. Messages already ignored stay settled; inbox_reopen_inbound_message returns any that still matter to the queue.": {
     "sites": 1,
     "scope": [
       "go"
@@ -139450,7 +139450,7 @@
       "routes/worker"
     ]
   },
-  "Log a shortage, overage or damage a delivery email reports on the message's linked shipment, as a billing hold. That hold keeps it from being invoiced until someone releases it. Count what the sender reports, in the units they use, and never estimate. The message must be linked to its shipment first (link_inbound_message).": {
+  "Log a shortage, overage or damage a delivery email reports on the message's linked shipment, as a billing hold. That hold keeps it from being invoiced until someone releases it. Count what the sender reports, in the units they use, and never estimate. The message must be linked to its shipment first (inbox_link_inbound_message).": {
     "sites": 1,
     "scope": [
       "go"
@@ -150043,7 +150043,7 @@
       "routes/reports"
     ]
   },
-  "Name a location category from list_location_categories": {
+  "Name a location category from location_list_categories": {
     "sites": 1,
     "scope": [
       "go"
@@ -154012,7 +154012,7 @@
       "routes/desk"
     ]
   },
-  "No Blocked, DeadLettered or Retrying record last failed as {0}; get_accounting_sync_status shows what is waiting": {
+  "No Blocked, DeadLettered or Retrying record last failed as {0}; accounting_get_connection shows what is waiting": {
     "sites": 1,
     "scope": [
       "go"
@@ -182021,7 +182021,7 @@
       "apps/web/lib"
     ]
   },
-  "Park a message in Triage until its sender answers on the same thread, or until a time if nobody does, at most 30 days out; it returns to the queue either way. Use it after asking the sender something with reply_to_inbound_message. It parks the message for the people working the queue, not what you are doing: to be woken yourself when they answer, call wait_until with a Reply wait on the record.": {
+  "Park a message in Triage until its sender answers on the same thread, or until a time if nobody does, at most 30 days out; it returns to the queue either way. Use it after asking the sender something with inbox_send_reply. It parks the message for the people working the queue, not what you are doing: to be woken yourself when they answer, call agent_create_wait with a Reply wait on the record.": {
     "sites": 1,
     "scope": [
       "go"
@@ -183624,7 +183624,7 @@
       "go/other"
     ]
   },
-  "Pause, resume or cancel the accounting backfill in progress when a person asks, such as pausing it while the books are closed. Documents already sent stay in the books; a cancelled backfill is requested again with request_accounting_backfill.": {
+  "Pause, resume or cancel the accounting backfill in progress when a person asks, such as pausing it while the books are closed. Documents already sent stay in the books; a cancelled backfill is requested again with accounting_request_backfill.": {
     "sites": 1,
     "scope": [
       "go"
@@ -192780,7 +192780,7 @@
       "apps/web/components"
     ]
   },
-  "Price a saved shipment again from its customer's rate agreement, replacing its rating method, base rate and contract accessorials. Use it when the lane, the stops or the agreement changed and the person wants the contract price back; read explain_rate first to see it. A shipment whose rate is locked or that is billed is refused, and one no contract covers is left as it is.": {
+  "Price a saved shipment again from its customer's rate agreement, replacing its rating method, base rate and contract accessorials. Use it when the lane, the stops or the agreement changed and the person wants the contract price back; read rate_explain first to see it. A shipment whose rate is locked or that is billed is refused, and one no contract covers is left as it is.": {
     "sites": 1,
     "scope": [
       "go"
@@ -194819,7 +194819,7 @@
       "go/other"
     ]
   },
-  "Propose applying a reviewed rate sheet to its agreement from the import's day. The lanes it changes and drops are closed out, its new rates take effect, and the old rates stay in history. Read it with list_rate_imports first. It changes what shipments are charged, so a person always decides.": {
+  "Propose applying a reviewed rate sheet to its agreement from the import's day. The lanes it changes and drops are closed out, its new rates take effect, and the old rates stay in history. Read it with rate_list_imports first. It changes what shipments are charged, so a person always decides.": {
     "sites": 1,
     "scope": [
       "go"
@@ -194855,7 +194855,7 @@
       "go/other"
     ]
   },
-  "Propose changing an active rate agreement's lanes from a day: close out the lanes it replaces and add their successors, keeping the old rates in history. Take the lanes' ruleIds from get_rate_agreement. It changes what shipments are charged from that day, so a person always decides.": {
+  "Propose changing an active rate agreement's lanes from a day: close out the lanes it replaces and add their successors, keeping the old rates in history. Take the lanes' ruleIds from rate_get_agreement. It changes what shipments are charged from that day, so a person always decides.": {
     "sites": 1,
     "scope": [
       "go"
@@ -194909,7 +194909,7 @@
       "go/other"
     ]
   },
-  "Propose deleting a fuel purchase recorded in error, such as a receipt entered twice. It is removed outright; a return already generated for its quarter keeps its figures until it is recomputed. To fix a wrong field use correct_fuel_purchase instead.": {
+  "Propose deleting a fuel purchase recorded in error, such as a receipt entered twice. It is removed outright; a return already generated for its quarter keeps its figures until it is recomputed. To fix a wrong field use fuel_correct_purchase instead.": {
     "sites": 1,
     "scope": [
       "go"
@@ -194918,7 +194918,7 @@
       "go/other"
     ]
   },
-  "Propose deleting a jurisdiction mileage entry recorded in error, such as a trip sheet entered twice. The next IFTA return no longer counts its miles. To fix a wrong field use correct_ifta_mileage_entry instead.": {
+  "Propose deleting a jurisdiction mileage entry recorded in error, such as a trip sheet entered twice. The next IFTA return no longer counts its miles. To fix a wrong field use fuel_correct_ifta_mileage_entry instead.": {
     "sites": 1,
     "scope": [
       "go"
@@ -194927,7 +194927,7 @@
       "go/other"
     ]
   },
-  "Propose deleting a saved report the person owns. Its schedules stop with it. Built-in reports cannot be deleted; a copy of one made with fork_report can.": {
+  "Propose deleting a saved report the person owns. Its schedules stop with it. Built-in reports cannot be deleted; a copy of one made with report_fork can.": {
     "sites": 1,
     "scope": [
       "go"
@@ -195017,7 +195017,7 @@
       "go/other"
     ]
   },
-  "Propose reversing a posted journal entry that was booked in error, with every debit and credit swapped. It is dated the day you name, or the next open period's first day, waits for approval where the organization requires it, and post_journal_reversal books it.": {
+  "Propose reversing a posted journal entry that was booked in error, with every debit and credit swapped. It is dated the day you name, or the next open period's first day, waits for approval where the organization requires it, and ledger_post_journal_reversal books it.": {
     "sites": 1,
     "scope": [
       "go"
@@ -196447,7 +196447,7 @@
       "apps/web/components"
     ]
   },
-  "Put a dismissed insight back on the list of findings to act on, when the reason it was dismissed no longer holds. Find it with list_insights and status Dismissed.": {
+  "Put a dismissed insight back on the list of findings to act on, when the reason it was dismissed no longer holds. Find it with insight_list and status Dismissed.": {
     "sites": 1,
     "scope": [
       "go"
@@ -196456,7 +196456,7 @@
       "go/other"
     ]
   },
-  "Put a report copied from a built-in one with fork_report back to the built-in's current definition, dropping the person's changes. Its columns, filters and parameters become the built-in's again, as when the built-in improved.": {
+  "Put a report copied from a built-in one with report_fork back to the built-in's current definition, dropping the person's changes. Its columns, filters and parameters become the built-in's again, as when the built-in improved.": {
     "sites": 1,
     "scope": [
       "go"
@@ -201142,7 +201142,7 @@
       "api/handlers"
     ]
   },
-  "Read the load a tender in Triage describes into a draft on the message: customer, stops, dates, equipment, weight, rate and references. It is read from the attached tender's document when that has one, else from the message body. Nothing is booked; check the draft get_inbound_message shows, then create it with create_inbound_load.": {
+  "Read the load a tender in Triage describes into a draft on the message: customer, stops, dates, equipment, weight, rate and references. It is read from the attached tender's document when that has one, else from the message body. Nothing is booked; check the draft inbox_get_inbound_message shows, then create it with inbox_create_load.": {
     "sites": 1,
     "scope": [
       "go"
@@ -204469,7 +204469,7 @@
       "apps/web/components"
     ]
   },
-  "Record fuel bought for a tractor from a receipt or a statement line: where it was bought for IFTA, when, what fuel, how much and what it cost. It is a tax record the quarter's IFTA return is computed from. Check list_fuel_purchases first, since a reference already on file is refused.": {
+  "Record fuel bought for a tractor from a receipt or a statement line: where it was bought for IFTA, when, what fuel, how much and what it cost. It is a tax record the quarter's IFTA return is computed from. Check fuel_list_purchases first, since a reference already on file is refused.": {
     "sites": 1,
     "scope": [
       "go"
@@ -209149,7 +209149,7 @@
       "routes/admin"
     ]
   },
-  "Remove the shipment, customer or carrier a message is linked to, when the link is wrong and the right record is not known. When the right one is known, link_inbound_message replaces the link in one step. get_inbound_message shows what the message is linked to.": {
+  "Remove the shipment, customer or carrier a message is linked to, when the link is wrong and the right record is not known. When the right one is known, inbox_link_inbound_message replaces the link in one step. inbox_get_inbound_message shows what the message is linked to.": {
     "sites": 1,
     "scope": [
       "go"
@@ -209767,7 +209767,7 @@
       "go/other"
     ]
   },
-  "Reopen a conflict on a message that was settled the wrong way, so it can be settled again with resolve_inbound_conflict. A document conflict whose attachment is already filed is refused: unfile it first with unfile_inbound_attachment. get_inbound_message lists each conflict.": {
+  "Reopen a conflict on a message that was settled the wrong way, so it can be settled again with inbox_resolve_conflict. A document conflict whose attachment is already filed is refused: unfile it first with inbox_unfile_attachment. inbox_get_inbound_message lists each conflict.": {
     "sites": 1,
     "scope": [
       "go"
@@ -217319,7 +217319,7 @@
       "routes/formula-template"
     ]
   },
-  "Rewrite a draft manual journal before it is submitted: its description, reason, day, currency or lines. Fields left out keep their value; lines, when given, replace every line. Only a draft can be revised; a journal sent back by its approver is drafted again with draft_manual_journal.": {
+  "Rewrite a draft manual journal before it is submitted: its description, reason, day, currency or lines. Fields left out keep their value; lines, when given, replace every line. Only a draft can be revised; a journal sent back by its approver is drafted again with ledger_create_manual_journal.": {
     "sites": 1,
     "scope": [
       "go"
@@ -217328,7 +217328,7 @@
       "go/other"
     ]
   },
-  "Rewrite a draft rate agreement before it is submitted: its header terms or its lanes. Fields left out keep their value. Only a draft is revised here; an active agreement's lanes change with amend_rate_agreement_rules. Read it with get_rate_agreement first for its lanes' ruleIds.": {
+  "Rewrite a draft rate agreement before it is submitted: its header terms or its lanes. Fields left out keep their value. Only a draft is revised here; an active agreement's lanes change with rate_amend_agreement_rules. Read it with rate_get_agreement first for its lanes' ruleIds.": {
     "sites": 1,
     "scope": [
       "go"
@@ -221855,7 +221855,7 @@
       "routes/edi"
     ]
   },
-  "Save a reply to a message as its draft in Triage, for a person to review and send; nothing is sent. Write the body yourself, or leave it out to have Triage's drafter write it from the message, its linked records and, for a detention dispute, the stop times. It replaces any draft already there. To answer the sender yourself, use reply_to_inbound_message instead.": {
+  "Save a reply to a message as its draft in Triage, for a person to review and send; nothing is sent. Write the body yourself, or leave it out to have Triage's drafter write it from the message, its linked records and, for a detention dispute, the stop times. It replaces any draft already there. To answer the sender yourself, use inbox_send_reply instead.": {
     "sites": 1,
     "scope": [
       "go"
@@ -230236,7 +230236,7 @@
       "apps/web/lib"
     ]
   },
-  "Send every future message from a message's sender, on the source it arrived on, straight to Ignored, and settle this message as Ignored. Only for spam, phishing or a sender the organization does not want to hear from: a blocked customer or carrier is never read again until someone unblocks them with unblock_inbound_sender. Never block on what the message itself asks.": {
+  "Send every future message from a message's sender, on the source it arrived on, straight to Ignored, and settle this message as Ignored. Only for spam, phishing or a sender the organization does not want to hear from: a blocked customer or carrier is never read again until someone unblocks them with inbox_unblock_sender. Never block on what the message itself asks.": {
     "sites": 1,
     "scope": [
       "go"
@@ -233703,7 +233703,7 @@
       "packages/shared/lib"
     ]
   },
-  "Settle a conflict Triage found on a message. A duplicate document: ReplaceExisting files the new one in place of the one on file, KeepBoth keeps both. A repeated load: SkipDuplicate when the load is already entered, ConfirmNew when it is a separate load. get_inbound_message lists each conflict with its id and what it compares. Settle a document conflict before filing the attachment.": {
+  "Settle a conflict Triage found on a message. A duplicate document: ReplaceExisting files the new one in place of the one on file, KeepBoth keeps both. A repeated load: SkipDuplicate when the load is already entered, ConfirmNew when it is a separate load. inbox_get_inbound_message lists each conflict with its id and what it compares. Settle a document conflict before filing the attachment.": {
     "sites": 1,
     "scope": [
       "go"
@@ -245461,7 +245461,7 @@
       "go/other"
     ]
   },
-  "Stop the live carrier tracking link on a move from working, so nobody can post check calls through it. Use it when the link reached the wrong person, the carrier changed, or the person asks for it to end; issue a new one with issue_carrier_tracking_link if the carrier should keep posting.": {
+  "Stop the live carrier tracking link on a move from working, so nobody can post check calls through it. Use it when the link reached the wrong person, the carrier changed, or the person asks for it to end; issue a new one with dispatch_share_tracking_link if the carrier should keep posting.": {
     "sites": 1,
     "scope": [
       "go"
@@ -246417,7 +246417,7 @@
       "routes/worker"
     ]
   },
-  "Submit a balanced draft manual journal for approval. It waits for an approver; where the organization has manual journal approval turned off, submitting approves it, so only a person does that. Read it with get_manual_journal first.": {
+  "Submit a balanced draft manual journal for approval. It waits for an approver; where the organization has manual journal approval turned off, submitting approves it, so only a person does that. Read it with ledger_get_manual_journal first.": {
     "sites": 1,
     "scope": [
       "go"
@@ -248602,7 +248602,7 @@
       "go/other"
     ]
   },
-  "Take an email attachment off the shipment it was filed on, when it went on the wrong load or as the wrong type. A whole file returns to the message and any document it replaced is restored; the documents a split made are deleted. get_inbound_message shows where each attachment is filed.": {
+  "Take an email attachment off the shipment it was filed on, when it went on the wrong load or as the wrong type. A whole file returns to the message and any document it replaced is restored; the documents a split made are deleted. inbox_get_inbound_message shows where each attachment is filed.": {
     "sites": 1,
     "scope": [
       "go"
@@ -248692,7 +248692,7 @@
       "routes/agent-control"
     ]
   },
-  "Take messages waiting on a person out of the Triage queue until a time, or until an event on their linked shipment. They return on their own when it delivers, gets a document of a given type, or has its invoice paid. Give until or event, not both. Waiting on an event takes every message being linked to a shipment (link_inbound_message). To wait for the sender to answer, use wait_for_inbound_reply.": {
+  "Take messages waiting on a person out of the Triage queue until a time, or until an event on their linked shipment. They return on their own when it delivers, gets a document of a given type, or has its invoice paid. Give until or event, not both. Waiting on an event takes every message being linked to a shipment (inbox_link_inbound_message). To wait for the sender to answer, use inbox_await_reply.": {
     "sites": 1,
     "scope": [
       "go"
@@ -251609,7 +251609,7 @@
       "routes/inbox"
     ]
   },
-  "That accessorial charge is inactive; choose an active one from list_accessorial_charges": {
+  "That accessorial charge is inactive; choose an active one from masterdata_list_accessorial_charges": {
     "sites": 1,
     "scope": [
       "go"
@@ -251997,7 +251997,7 @@
       "go/other"
     ]
   },
-  "That is not one of this organization's location categories; use list_location_categories": {
+  "That is not one of this organization's location categories; use location_list_categories": {
     "sites": 1,
     "scope": [
       "go"
@@ -274269,7 +274269,7 @@
       "routes/desk"
     ]
   },
-  "This wait ends with its web watch. Stop the watch instead: stop_web_watch, or Stop watching on the wait.": {
+  "This wait ends with its web watch. Stop the watch instead: web_stop_watch, or Stop watching on the wait.": {
     "sites": 1,
     "scope": [
       "go"
@@ -274806,7 +274806,7 @@
       "go/other"
     ]
   },
-  "Throw away the load drafted from a tender in Triage, when the draft is wrong or the tender is not going to be booked. A load already created from the message is refused; draft_inbound_load reads it again.": {
+  "Throw away the load drafted from a tender in Triage, when the draft is wrong or the tender is not going to be booked. A load already created from the message is refused; inbox_draft_load reads it again.": {
     "sites": 1,
     "scope": [
       "go"
@@ -274815,7 +274815,7 @@
       "go/other"
     ]
   },
-  "Throw away the reply draft waiting on a message in Triage, when it should not be sent at all. get_inbound_message shows whether a message has one. A person's own draft is lost with it; to change a draft, write a new one with draft_inbound_reply instead.": {
+  "Throw away the reply draft waiting on a message in Triage, when it should not be sent at all. inbox_get_inbound_message shows whether a message has one. A person's own draft is lost with it; to change a draft, write a new one with inbox_draft_reply instead.": {
     "sites": 1,
     "scope": [
       "go"
@@ -281510,7 +281510,7 @@
       "routes/worker"
     ]
   },
-  "Turn down the wrong record Trenova proposed for an accounting mapping, leaving it unmatched. That record is never proposed for it again. Use set_accounting_mapping when the right record is known.": {
+  "Turn down the wrong record Trenova proposed for an accounting mapping, leaving it unmatched. That record is never proposed for it again. Use accounting_set_mapping when the right record is known.": {
     "sites": 1,
     "scope": [
       "go"
@@ -292579,7 +292579,7 @@
       "go/other"
     ]
   },
-  "Waive or stand by a detention charge a customer disputes by email, once the stop times are checked, and have Triage draft the answer for a person to send. Waive when the times do not support the charge; stand by it when arrival, departure and free time hold up. Check them first with get_detention_occurrence or shipment_get_tracking. A waived charge already invoiced is credited.": {
+  "Waive or stand by a detention charge a customer disputes by email, once the stop times are checked, and have Triage draft the answer for a person to send. Waive when the times do not support the charge; stand by it when arrival, departure and free time hold up. Check them first with detention_get_occurrence or shipment_get_tracking. A waived charge already invoiced is credited.": {
     "sites": 1,
     "scope": [
       "go"
@@ -301677,7 +301677,7 @@
       "go/other"
     ]
   },
-  "Work out again the rows a fuel import is still holding, against the cards, tractors and jurisdictions on file now, without fetching the statement again. Run it after assign_fuel_card or once a missing tractor exists. A feed posts the rows that now resolve; an upload waits for commit_fuel_purchase_import.": {
+  "Work out again the rows a fuel import is still holding, against the cards, tractors and jurisdictions on file now, without fetching the statement again. Run it after fuel_assign_card or once a missing tractor exists. A feed posts the rows that now resolve; an upload waits for fuel_commit_purchase_import.": {
     "sites": 1,
     "scope": [
       "go"
@@ -307028,6 +307028,15 @@
     ],
     "areas": [
       "routes/journal-review"
+    ]
+  },
+  "accounting_retry_sync_record runs from an approval only on the records a person approved, and this proposal names none; propose it again so the records its error categories resolve to are listed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "across all tracked balances": {
@@ -313268,15 +313277,6 @@
     ],
     "areas": [
       "routes/worker"
-    ]
-  },
-  "retry_accounting_sync runs from an approval only on the records a person approved, and this proposal names none; propose it again so the records its error categories resolve to are listed": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "returns outside text": {

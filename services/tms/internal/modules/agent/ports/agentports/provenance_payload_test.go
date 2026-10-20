@@ -14,7 +14,7 @@ import (
 func TestProvenanceFields_AreOmittedUntilTheyAreKnown(t *testing.T) {
 	t.Parallel()
 
-	action, err := sonic.MarshalString(PendingAction{ToolName: "assign_move"})
+	action, err := sonic.MarshalString(PendingAction{ToolName: "dispatch_assign_move"})
 	require.NoError(t, err)
 	for _, key := range []string{"proposalId", "traceId", "spanId", "tierSource", "executedVersion"} {
 		assert.NotContains(t, action, `"`+key+`"`)
@@ -37,7 +37,7 @@ func TestProvenanceFields_RoundTrip(t *testing.T) {
 	version := int64(0)
 	executed := int64(7)
 	action := PendingAction{
-		ToolName:        "assign_move",
+		ToolName:        "dispatch_assign_move",
 		ProposalID:      pulid.ID("ap_1"),
 		TraceID:         "4bf92f3577b34da6a3ce929d0e0e4736",
 		SpanID:          "00f067aa0ba902b7",
@@ -72,7 +72,7 @@ func TestProvenanceFields_DecodeFromARecordedPayload(t *testing.T) {
 
 	var action PendingAction
 	require.NoError(t, sonic.UnmarshalString(
-		`{"toolName":"assign_move","arguments":{},"tier":"Propose","executed":false}`,
+		`{"toolName":"dispatch_assign_move","arguments":{},"tier":"Propose","executed":false}`,
 		&action,
 	))
 	assert.True(t, action.ProposalID.IsNil())

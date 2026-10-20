@@ -44,7 +44,7 @@ func messages(entity *report.ReportDefinition) []string {
 The revision is the repository's to assign: it sets 1 on insert, increments on
 update, and writes the matching revision row. A caller has nothing to put
 there, so a validator demanding one refused every create — which is what
-create_report hit on approval, failing with "Revision must be at least one"
+report_create hit on approval, failing with "Revision must be at least one"
 after the proposal had already been accepted.
 */
 func TestValidate_UnsavedDefinitionOwesNoRevision(t *testing.T) {

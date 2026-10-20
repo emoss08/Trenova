@@ -94,7 +94,7 @@ func NewAssessLateChargesTool(charges lateChargeAssessor) agentports.AgentTool {
 			),
 			common.ParamCustomerIDs: toolschema.KeepEmpty(agenttoolschema.RecordIDs(
 				permission.ResourceCustomer,
-				"Only these customers, from list_customers or "+
+				"Only these customers, from customer_list or "+
 					"receivable_list_open_items.",
 				maxLateCustomers,
 			)),

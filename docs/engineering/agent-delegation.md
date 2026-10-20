@@ -147,7 +147,7 @@ names what it is about instead:
 
 - **`records`** are `{entityType, id}` pairs. `entityType` is a key of the
   record-link registry (`agenttoolschema.RecordEntities`, the same source
-  `open_page` spends, `x-enumOf: guide.entity`); an id is letters, digits, `_`
+  `agent_open_page` spends, `x-enumOf: guide.entity`); an id is letters, digits, `_`
   and `-`, at most 100. Duplicates are dropped.
 - **`shareResults`** are ids of tool calls this turn made. Each is read from the
   turn's own messages by `ToolCallID` (never a delegate's step), unfenced, and
@@ -264,7 +264,7 @@ note on how to read it. It is the same object the reader receives as
   "status": "completed",
   "reply": "I saved the report \"On-time this month\".",
   "reason": "",
-  "made": [{"toolName": "create_report", "callId": "call_…", "tier": "AutoExecute",
+  "made": [{"toolName": "report_create", "callId": "call_…", "tier": "AutoExecute",
             "summary": "On-time this month",
             "result": {"action": "created", "kind": "report", "name": "On-time this month",
                        "ids": {"definitionId": "rd_…"},
@@ -315,8 +315,8 @@ takes it as. `record` is for a reader: the **one** record the write made or
 changed, as `entityType` — a key of the record-link registry
 (`client/apps/web/src/config/record-links.ts`, `productguide.Default.Record` on
 the server) — and its `id`. A tool that creates or changes one identifiable
-record sets it from `ExecuteWithResult`; today that is `create_report` and
-`fork_report`, whose saved report definition is the registry's `report`
+record sets it from `ExecuteWithResult`; today that is `report_create` and
+`report_fork`, whose saved report definition is the registry's `report`
 (`/reports/explore/{id}`). A tool that touches several records, or none a page
 opens, leaves it out. `Bounded()` keeps it only when the entity is a registry
 key (lower-case letters, digits and underscores) and the id is non-empty, cut to

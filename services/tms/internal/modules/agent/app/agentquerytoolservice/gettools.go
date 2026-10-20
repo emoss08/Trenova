@@ -130,14 +130,14 @@ func newGetCustomerTool(
 	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
 	return newGetTool(&getSpec{
-		name:        "get_customer",
+		name:        "customer_get",
 		entity:      labelCustomer,
 		searchTerms: []string{"customer details", "customer profile"},
 		resource:    permission.ResourceCustomer,
 		summary: "Retrieve one customer by id, with their billing and email profiles. " +
-			"Use list_customers first when you have a name or a code rather than an id.",
+			"Use customer_list first when you have a name or a code rather than an id.",
 		paramName: "customerId",
-		idSource:  "from list_customers",
+		idSource:  "from customer_list",
 		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
 			return repo.GetByID(ctx, customerports.GetCustomerByIDRequest{
 				ID:         id,
@@ -156,13 +156,13 @@ func newGetCarrierTool(
 	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
 	return newGetTool(&getSpec{
-		name:     "get_carrier",
+		name:     "carrier_get",
 		entity:   "carrier",
 		resource: permission.ResourceCarrier,
 		summary: "Retrieve one carrier by id, including its authority, insurance and " +
-			"compliance state. Use list_carriers first when you have a name or a code.",
+			"compliance state. Use carrier_list first when you have a name or a code.",
 		paramName: "carrierId",
-		idSource:  "from list_carriers",
+		idSource:  "from carrier_list",
 		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
 			return repo.GetByID(ctx, carrierports.GetCarrierByIDRequest{
 				ID:         id,
@@ -182,13 +182,13 @@ func newGetTractorTool(
 	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
 	return newGetTool(&getSpec{
-		name:     "get_tractor",
+		name:     "equipment_get_tractor",
 		entity:   "tractor",
 		resource: permission.ResourceTractor,
 		summary: "Retrieve one tractor by id, with its equipment details, fleet and " +
-			"assigned workers. Use list_tractors first when you have a unit code.",
+			"assigned workers. Use equipment_list_tractors first when you have a unit code.",
 		paramName: "tractorId",
-		idSource:  "from list_tractors",
+		idSource:  "from equipment_list_tractors",
 		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
 			return repo.GetByID(ctx, tractorports.GetTractorByIDRequest{
 				ID:                      id,
@@ -204,13 +204,13 @@ func newGetTrailerTool(
 	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
 	return newGetTool(&getSpec{
-		name:     "get_trailer",
+		name:     "equipment_get_trailer",
 		entity:   "trailer",
 		resource: permission.ResourceTrailer,
 		summary: "Retrieve one trailer by id, with its equipment details and fleet. " +
-			"Use list_trailers first when you have a unit code.",
+			"Use equipment_list_trailers first when you have a unit code.",
 		paramName: "trailerId",
-		idSource:  "from list_trailers",
+		idSource:  "from equipment_list_trailers",
 		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
 			return repo.GetByID(ctx, trailerports.GetTrailerByIDRequest{
 				ID:         id,
@@ -230,14 +230,14 @@ func newGetLocationTool(
 	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
 	return newGetTool(&getSpec{
-		name:     "get_location",
+		name:     "location_get",
 		entity:   locationEntity,
 		resource: permission.ResourceLocation,
 		summary: "Retrieve one location by id, with its address, coordinates, geofence, " +
-			"timezone and category (appointments, parking, overnight). Use list_locations " +
+			"timezone and category (appointments, parking, overnight). Use location_list " +
 			"first when you have a name, a code or a city.",
 		paramName: locationIDParam,
-		idSource:  "from list_locations",
+		idSource:  "from location_list",
 		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
 			return repo.GetByID(ctx, locationports.GetLocationByIDRequest{
 				ID:         id,

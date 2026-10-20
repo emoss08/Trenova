@@ -338,13 +338,13 @@ func TestForContext_ReadsCandidatesWithoutCountingThemUsed(t *testing.T) {
 
 	got, err := svc.ForContext(t.Context(), agentports.MemoryContextRequest{
 		TenantInfo: tenant(),
-		ToolNames:  []string{"assign_move"},
+		ToolNames:  []string{"dispatch_assign_move"},
 	})
 	require.NoError(t, err)
 
 	assert.Equal(t, []*agent.Memory{one}, got.Memories)
 	assert.True(t, repo.listed.OrganizationWide)
-	assert.Equal(t, []string{"assign_move"}, repo.listed.ToolNames)
+	assert.Equal(t, []string{"dispatch_assign_move"}, repo.listed.ToolNames)
 	assert.Equal(t, agent.MaxMemoryCandidates, repo.listed.Limit)
 	assert.Empty(t, repo.used, "a candidate is counted only once a prompt carries it")
 }
@@ -435,7 +435,7 @@ func TestRecordCorrection_KeepsWhatAPersonChanged(t *testing.T) {
 
 	repo := &fakeMemoryRepo{}
 	svc := newService(repo, &fakeRuns{}, &fakeLabeler{})
-	p := proposal("assign_move", map[string]any{"workerId": "wrk_a", "trailerId": "trl_1"})
+	p := proposal("dispatch_assign_move", map[string]any{"workerId": "wrk_a", "trailerId": "trl_1"})
 
 	memory, err := svc.RecordCorrection(t.Context(), p, &agent.AgentDecision{
 		Decision: agent.DecisionModified,
@@ -452,10 +452,10 @@ func TestRecordCorrection_KeepsWhatAPersonChanged(t *testing.T) {
 
 	assert.Equal(t, agent.MemoryKindCorrection, memory.Kind)
 	assert.Equal(t, agent.MemorySourceDecision, memory.Source)
-	assert.Equal(t, "assign_move", memory.ToolName)
+	assert.Equal(t, "dispatch_assign_move", memory.ToolName)
 	assert.Equal(
 		t,
-		"When assign_move was proposed, a person changed note to call first and workerId from wrk_a to wrk_b.",
+		"When dispatch_assign_move was proposed, a person changed note to call first and workerId from wrk_a to wrk_b.",
 		memory.Content,
 	)
 	assert.Equal(t, p.ID, *memory.SourceProposalID)
@@ -490,7 +490,7 @@ func TestRecordCorrection_SkipsACleanApprovalAndAChangeThatChangedNothing(t *tes
 	t.Parallel()
 
 	svc := newService(&fakeMemoryRepo{}, &fakeRuns{}, &fakeLabeler{})
-	p := proposal("assign_move", map[string]any{"workerId": "wrk_a"})
+	p := proposal("dispatch_assign_move", map[string]any{"workerId": "wrk_a"})
 
 	approved, err := svc.RecordCorrection(
 		t.Context(),

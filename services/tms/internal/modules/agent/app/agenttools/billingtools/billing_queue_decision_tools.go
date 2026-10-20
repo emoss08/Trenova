@@ -22,7 +22,6 @@ import (
 
 const paramExceptionReasonCode = "exceptionReasonCode"
 
-
 const paramBillerID = "billerId"
 
 const maxCancelReasonChars = 100

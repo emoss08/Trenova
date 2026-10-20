@@ -46,7 +46,7 @@ func readyHarness(t *testing.T, streak int, ceiling agent.AutonomyTier) *harness
 		ceiling: ceiling,
 		row:     &agent.ToolTrust{Streak: streak, Version: 4},
 	})
-	h.trust.row.ToolName = "assign_move"
+	h.trust.row.ToolName = "dispatch_assign_move"
 	h.trust.row.AgentDefinitionID = h.definitions.definition.ID
 	h.svc.trust = readyTrustRepo{h.trust}
 	h.svc.definitions = listingDefinitions{h.definitions}
@@ -124,7 +124,7 @@ func TestPromoteToolMovesOnlyTheToolNamed(t *testing.T) {
 	promoted, err := h.svc.PromoteTool(t.Context(), &agentports.PromoteToolRequest{
 		PromoteReadyRequest: *readyRequest(h, 10),
 		AgentDefinitionID:   h.definitions.definition.ID,
-		ToolName:            "assign_move",
+		ToolName:            "dispatch_assign_move",
 	})
 
 	require.NoError(t, err)
@@ -150,7 +150,7 @@ func TestPromoteToolRefusesAToolThatIsNotReady(t *testing.T) {
 	_, err = short.svc.PromoteTool(t.Context(), &agentports.PromoteToolRequest{
 		PromoteReadyRequest: *readyRequest(short, 10),
 		AgentDefinitionID:   short.definitions.definition.ID,
-		ToolName:            "assign_move",
+		ToolName:            "dispatch_assign_move",
 	})
 	require.Error(t, err)
 	assert.Empty(t, h.trust.marks)

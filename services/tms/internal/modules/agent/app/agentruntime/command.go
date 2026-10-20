@@ -25,14 +25,14 @@ var commandHolds = map[agentextension.Command]commandHold{
 	agentextension.CommandBrowser: {
 		directive: "The person used /browser: they want this done in the browser, on the " +
 			"organization's portal sites. Work it with the portal tools you have: " +
-			"list_portal_sites to find the site that fits, read_portal to look something up " +
-			"on it, and act_on_portal to change something on it, which a person approves " +
+			"web_list_portal_sites to find the site that fits, web_read_portal to look something up " +
+			"on it, and web_use_portal to change something on it, which a person approves " +
 			"before it runs. Do not answer from Trenova's own records or from memory in place " +
 			"of the browser. When no site fits, say so and name the sites there are.\n\n" +
 			"What to do in the browser: ",
 		correction: "You answered without the browser, but the person used /browser to have " +
-			"this done there. Call list_portal_sites to find the site that fits, then " +
-			"read_portal or act_on_portal on it, and answer from what the portal says. When " +
+			"this done there. Call web_list_portal_sites to find the site that fits, then " +
+			"web_read_portal or web_use_portal on it, and answer from what the portal says. When " +
 			"no site fits, say so and name the sites there are.",
 		retryReason: "The reply did not use the browser the person asked for, so it is being " +
 			"worked again in the browser.",
@@ -53,17 +53,17 @@ var commandHolds = map[agentextension.Command]commandHold{
 	},
 	agentextension.CommandWatch: {
 		directive: "The person used /watch: they want to be told when something new about " +
-			"this appears on the web. Set a web watch with watch_web: the purpose in their " +
+			"this appears on the web. Set a web watch with web_watch: the purpose in their " +
 			"words, and a search written as a description of the pages wanted. Set how often " +
 			"and for how long only when they said; otherwise leave the defaults. Use " +
 			"web_search first only when you need it to write a good search. To change or end " +
-			"a watch already running, find it with list_web_watches and stop it with " +
-			"stop_web_watch. Do not answer from memory in place of a watch. The search leaves " +
+			"a watch already running, find it with web_list_watches and stop it with " +
+			"web_stop_watch. Do not answer from memory in place of a watch. The search leaves " +
 			"Trenova, so keep record IDs and private details about a customer, carrier or " +
 			"driver out of it.\n\nWhat to keep watching the web for: ",
 		correction: "You answered without setting a web watch, but the person used /watch to " +
-			"be told when something new appears. Call watch_web with what they want to hear " +
-			"about and a search for it, or list_web_watches and stop_web_watch when they asked " +
+			"be told when something new appears. Call web_watch with what they want to hear " +
+			"about and a search for it, or web_list_watches and web_stop_watch when they asked " +
 			"about a watch already running.",
 		retryReason: "The reply did not set the web watch the person asked for, so it is being " +
 			"worked again with one.",

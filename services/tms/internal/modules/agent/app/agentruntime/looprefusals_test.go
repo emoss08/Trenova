@@ -21,9 +21,9 @@ The loop now keeps those refusals on the result, with their verdicts.
 func TestRun_KeepsTheCallsTheLoopRefusedWithoutDispatching(t *testing.T) {
 	t.Parallel()
 
-	tool := queryTool("search_worker", map[string]any{}, nil)
+	tool := queryTool("worker_search", map[string]any{}, nil)
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("search_worker", map[string]any{"query": "Maria"}),
+		toolTurn("worker_search", map[string]any{"query": "Maria"}),
 		toolTurn("shipment_get", map[string]any{"shipmentId": "shp_1"}),
 		textTurn("I cannot look that up."),
 	}}
@@ -40,7 +40,7 @@ func TestRun_KeepsTheCallsTheLoopRefusedWithoutDispatching(t *testing.T) {
 
 	require.Len(t, result.LoopRefusals, 1, "a dispatched call writes its own step")
 	refusal := result.LoopRefusals[0]
-	assert.Equal(t, "search_worker", refusal.ToolName)
+	assert.Equal(t, "worker_search", refusal.ToolName)
 	assert.Equal(t, aitrace.OutcomeDenied, refusal.Verdict)
 	assert.NotEmpty(t, refusal.CallID)
 	assert.Contains(t, refusal.Content, "not enabled for this agent")
@@ -63,10 +63,10 @@ func TestRecordLoopRefusals_WritesEachOnceAsAFailedToolStep(t *testing.T) {
 		Refusals: []agentports.LoopRefusal{
 			{
 				CallID:   "call_1",
-				ToolName: "search_worker",
+				ToolName: "worker_search",
 				Verdict:  aitrace.OutcomeDenied,
 				Reason:   "the agent does not hold the tool",
-				Content:  `"search_worker" is not enabled for this agent`,
+				Content:  `"worker_search" is not enabled for this agent`,
 			},
 			{CallID: "", ToolName: "nameless", Verdict: aitrace.OutcomeInvalid},
 		},

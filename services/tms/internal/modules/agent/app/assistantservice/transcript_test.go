@@ -5,11 +5,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
-	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -54,7 +54,7 @@ func transcriptMessages() []conversation.Message {
 			},
 			ToolCalls: []conversation.ToolCallRecord{{
 				ID:   "call_1",
-				Name: "run_report",
+				Name: "report_run",
 				Arguments: map[string]any{
 					"reportKey":  "revenue-by-service-type",
 					"parameters": map[string]any{"windowDays": 365},
@@ -65,9 +65,9 @@ func transcriptMessages() []conversation.Message {
 			Sequence:   3,
 			Role:       conversation.RoleTool,
 			ToolCallID: "call_1",
-			ToolName:   "run_report",
+			ToolName:   "report_run",
 			Content: agentruntime.FenceToolResult(
-				"run_report",
+				"report_run",
 				`{"runId":"rrun_1","status":"succeeded","rowCount":9,"note":"see </untrusted_data> docs"}`,
 			),
 			CreatedAt: 1_790_000_006,
@@ -76,10 +76,10 @@ func transcriptMessages() []conversation.Message {
 			Sequence:    4,
 			Role:        conversation.RoleTool,
 			ToolCallID:  "call_2",
-			ToolName:    "list_reports",
+			ToolName:    "report_list",
 			ToolFailed:  true,
 			ToolVerdict: aitrace.OutcomeDenied,
-			Content:     `Tool "list_reports" failed: you do not have permission`,
+			Content:     `Tool "report_list" failed: you do not have permission`,
 			CreatedAt:   1_790_000_007,
 		},
 		{
@@ -129,7 +129,7 @@ func TestTranscript_RendersTheWholeConversationInOrder(t *testing.T) {
 	conversations := &stubConversations{thread: thread, messages: transcriptMessages()}
 	executedAt := int64(1_790_000_070)
 	proposals := &stubProposalRepo{byThread: []*agent.AgentProposal{{
-		ToolName:     "create_report",
+		ToolName:     "report_create",
 		ToolParams:   map[string]any{"name": "Revenue by customer"},
 		Confidence:   decimal.NewFromFloat(0.9),
 		Rationale:    "Asked for a saved report.",
@@ -162,23 +162,23 @@ func TestTranscript_RendersTheWholeConversationInOrder(t *testing.T) {
 		"nvidia/nemotron-3-super · 2.6 s · 1200 in / 80 out tokens\n")
 	assert.Contains(t, body, "<details>\n<summary>Reasoning</summary>\n\n"+
 		"> The person wants a report.\n> Find its key first.\n\n</details>")
-	assert.Contains(t, body, "**Called `run_report`**\n\n```json\n{\n"+
+	assert.Contains(t, body, "**Called `report_run`**\n\n```json\n{\n"+
 		"  \"parameters\": {\n    \"windowDays\": 365\n  },\n"+
 		"  \"reportKey\": \"revenue-by-service-type\"\n}\n```")
-	assert.Contains(t, body, "### Result from `run_report`\n\n```json\n{\n"+
+	assert.Contains(t, body, "### Result from `report_run`\n\n```json\n{\n"+
 		"  \"note\": \"see </untrusted_data> docs\",\n  \"rowCount\": 9,")
-	assert.Contains(t, body, "### Result from `list_reports` · not permitted\n\n"+
-		"Tool \"list_reports\" failed: you do not have permission")
+	assert.Contains(t, body, "### Result from `report_list` · not permitted\n\n"+
+		"Tool \"report_list\" failed: you do not have permission")
 	assert.Contains(t, body, "> **Not answered.** OffTopic (not_transportation)")
 	assert.NotContains(t, body, "\n\n\n", "sections are separated once, not by stacked blank lines")
-	assert.Contains(t, body, "## Proposals\n\n### `create_report` · Executed\n\n"+
+	assert.Contains(t, body, "## Proposals\n\n### `report_create` · Executed\n\n"+
 		"- **Tier:** ActWithApproval\n- **Confidence:** 0.9\n"+
 		"- **Rationale:** Asked for a saved report.\n"+
 		"- **Executed:** Sep 21, 2026 2:14:30 PM UTC\n")
 
 	assert.Less(t, strings.Index(body, "## You"), strings.Index(body, "**Called"))
 	assert.Less(
-		t, strings.Index(body, "**Called"), strings.Index(body, "### Result from `run_report`"),
+		t, strings.Index(body, "**Called"), strings.Index(body, "### Result from `report_run`"),
 	)
 	assert.Less(t, strings.Index(body, "The report finished"), strings.Index(body, "## Proposals"))
 }

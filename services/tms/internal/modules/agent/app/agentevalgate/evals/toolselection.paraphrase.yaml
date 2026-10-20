@@ -7,69 +7,69 @@ cases:
   - request: chase the shipper for paperwork
     expect: [shipment_request_documents]
   - request: who's out on leave this week
-    expect: [list_time_off]
+    expect: [worker_list_time_off]
   - request: is anyone's medical certificate about to lapse
-    expect: [list_expiring_credentials, get_worker_credential]
+    expect: [worker_list_expiring_credentials, worker_get_credential]
   - request: ping the trucker that pickup slipped to three
-    expect: [notify_driver]
+    expect: [worker_send_message]
   - request: let the buyer know we are running late
-    expect: [email_customer]
+    expect: [customer_send_email]
   - request: freeze that load until we sort things out
     expect: [shipment_place_hold]
   - request: unfreeze that load, we are good to go
     expect: [shipment_release_hold]
   - request: how long can this operator legally keep rolling today
-    expect: [get_worker_hos]
+    expect: [worker_get_hos]
   - request: which power units are sidelined right now
-    expect: [list_tractors]
+    expect: [equipment_list_tractors]
   - request: who is the best person to haul this leg
-    expect: [rank_move_candidates]
+    expect: [dispatch_rank_candidates]
   - request: offer this freight to outside haulers
-    expect: [tender_move_to_carriers, tender_move_to_routing_guide, shop_carriers]
+    expect: [dispatch_create_tender, dispatch_create_tender_from_routing_guide, carrier_shop]
   - request: what is the going price to haul freight from Denver to Phoenix
-    expect: [quote_shipment, shop_carriers]
+    expect: [rate_quote, carrier_shop]
   - request: who still owes us money past thirty days
     expect: [invoice_list]
   - request: the client wired us funds, apply them to their bills
     expect: [receivable_post_customer_payment]
   - request: pull up what the broker wrote to our shared mailbox
-    expect: [list_inbound_messages, get_inbound_message]
+    expect: [inbox_list_inbound_messages, inbox_get_inbound_message]
   - request: write back to that broker's note
-    expect: [reply_to_inbound_message]
+    expect: [inbox_send_reply]
   - request: where are our rigs at the moment
-    expect: [list_vehicle_positions, shipment_get_tracking]
+    expect: [equipment_list_positions, shipment_get_tracking]
   - request: which loads are rolling out of the dock today
     expect: [shipment_list]
   - request: note down that Acme's dock shuts at four on Fridays
-    expect: [remember]
+    expect: [agent_create_memory]
   - request: what have we jotted down about Acme before
-    expect: [recall_memory]
+    expect: [agent_list_memories]
   - request: storms threatening our lanes
-    expect: [list_weather_alerts]
+    expect: [insight_list_weather_alerts]
   - request: sign off on Maria's vacation
-    expect: [approve_worker_pto]
+    expect: [worker_approve_pto]
   - request: turn down the holiday she asked for
-    expect: [reject_worker_pto]
+    expect: [worker_reject_pto]
   - request: forgive the waiting fee
-    expect: [waive_detention]
+    expect: [detention_waive]
   - request: log when the trucker pulled into the receiver
-    expect: [record_stop_actual]
+    expect: [dispatch_record_stop_actual]
   - request: how do I configure lane pricing grids
-    expect: [find_in_trenova]
+    expect: [agent_find_page]
   - request: chart revenue per client each month
-    expect: [create_dashboard, run_report]
+    expect: [report_create_dashboard, report_run]
   - request: have a human look at this
-    expect: [flag_for_manual_review, raise_exception]
+    expect: [agent_request_review, agent_raise_exception]
   - request: what's happening with safety scores on haulers we use
-    expect: [list_carrier_intel_events, get_carrier_intel_event, acknowledge_carrier_intel_event, get_carrier]
+    expect: [carrier_list_intelligence_events, carrier_get_intelligence_event, carrier_acknowledge_intelligence_event, carrier_get]
   - request: which haulers lost their cover or operating permission lately
-    expect: [list_carrier_intel_events, get_carrier_intel_event]
+    expect: [carrier_list_intelligence_events, carrier_get_intelligence_event]
   - request: late deliveries last week and why
-    expect: [list_service_failures, evaluate_service_failures]
+    expect: [exception_list_service_failures, exception_evaluate_service_failures]
   - request: book a new load for Acme out of Dallas
     expect: [shipment_create]
   - request: put Juan on the Houston leg with truck 42
-    expect: [assign_move]
+    expect: [dispatch_assign_move]
   - request: who is dragging their feet paying us
     expect: [receivable_get_aging, receivable_list_collection_worklist, receivable_list_open_items]
   - request: which bills is this client still sitting on
@@ -79,15 +79,15 @@ cases:
   - request: who do I phone about late money first
     expect: [receivable_list_collection_worklist]
   - request: what hit the books yesterday
-    expect: [list_journal_entries]
+    expect: [ledger_list_journal_entries]
   - request: break down that posting line by line
-    expect: [get_journal_entry]
+    expect: [ledger_get_journal_entry]
   - request: what bucket does diesel spend land in
-    expect: [list_gl_accounts]
+    expect: [ledger_list_accounts]
   - request: which months are still open for posting
-    expect: [list_fiscal_periods]
+    expect: [ledger_list_fiscal_periods]
   - request: what is stopping us from finishing month end
-    expect: [get_fiscal_close_blockers]
+    expect: [ledger_get_fiscal_close_blockers]
   - request: whose paychecks are ready to go out
     expect: [settlement_list_driver]
   - request: walk me through Juan's pay stub
@@ -95,7 +95,7 @@ cases:
   - request: which trips has she been credited for
     expect: [settlement_list_pay_events]
   - request: what does he have coming that hasn't been paid out
-    expect: [get_worker_earnings_summary]
+    expect: [settlement_get_driver_earnings]
   - request: what's the trucker complaining about on his check
     expect: [settlement_get_dispute]
   - request: what do we owe the outside haulers this week
@@ -103,33 +103,33 @@ cases:
   - request: itemize what we're paying that hauler
     expect: [settlement_get_carrier]
   - request: which hauler bills don't agree with what we expected
-    expect: [list_carrier_invoice_matches]
+    expect: [carrier_list_invoice_matches]
   - request: what pricing deals do we have with Acme
-    expect: [list_rate_agreements]
+    expect: [rate_list_agreements]
   - request: what did we negotiate for the Chicago lane
-    expect: [get_rate_agreement]
+    expect: [rate_get_agreement]
   - request: pull up the pricing grid behind that lane
-    expect: [get_rate_matrix]
+    expect: [rate_get_matrix]
   - request: what are we adding for diesel right now
-    expect: [get_fuel_surcharge_rates]
+    expect: [rate_list_fuel_surcharge_programs]
   - request: which customer POs are still in progress
     expect: [order_list]
   - request: what legs and charges sit under that PO
     expect: [order_get]
   - request: which partner transmissions got stuck
-    expect: [list_edi_inbound_files]
+    expect: [edi_list_inbound_files]
   - request: show me exactly what the partner transmitted
-    expect: [get_edi_inbound_file]
+    expect: [edi_get_inbound_file]
   - request: which electronic tenders are waiting on us
-    expect: [list_edi_transfers]
+    expect: [edi_list_transfers]
   - request: is our electronic hookup with that shipper finished
-    expect: [get_edi_partner]
+    expect: [edi_get_partner]
   - request: what needs my attention right now
-    expect: [list_watchtower_items]
+    expect: [exception_list_watchtower_items]
   - request: catch me up on this morning's summary
-    expect: [get_daily_briefing]
+    expect: [insight_get_daily_briefing]
   - request: what have the automations been doing lately
-    expect: [list_agent_runs, get_agent_run]
+    expect: [agent_list_runs, agent_get_run]
   - request: the rate the paperwork shows is right, keep it
     expect: [intake_accept_field]
   - request: take every reading the scan is sure about
@@ -143,15 +143,15 @@ cases:
   - request: the delivery happens Tuesday at eight in the morning
     expect: [intake_set_stop_schedule]
   - request: add the consignee's warehouse as a new facility
-    expect: [create_location]
+    expect: [location_create]
   - request: which rating methods do we have
-    expect: [list_formula_templates]
+    expect: [formula_list_templates]
   - request: what shipment values can a rate expression reference
-    expect: [describe_formula_schema]
+    expect: [formula_describe_schema]
   - request: what would this pricing rule charge a 500 mile load
-    expect: [test_formula_expression]
+    expect: [formula_test_expression]
   - request: write me a per mile rate with a floor of 350
-    expect: [propose_formula]
+    expect: [formula_propose]
 nothing:
   - xyzzy plugh
   - quantum chromodynamics lattice

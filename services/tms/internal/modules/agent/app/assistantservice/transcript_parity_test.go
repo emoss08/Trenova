@@ -5,10 +5,10 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
-	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -74,7 +74,7 @@ func parityMessages() []conversation.Message {
 			Sequence:  11,
 			Role:      conversation.RoleUser,
 			Kind:      conversation.MessageKindDecisionNote,
-			Content:   "Approved create_report, and it ran.\nDecision on proposal ap_01.",
+			Content:   "Approved report_create, and it ran.\nDecision on proposal ap_01.",
 			CreatedAt: 1_790_000_055,
 		},
 		conversation.Message{
@@ -117,7 +117,7 @@ func parityInput() *transcriptInput {
 		ExportedAt: 1_790_000_100,
 		Proposals: []*agent.AgentProposal{
 			{
-				ToolName:     "create_report",
+				ToolName:     "report_create",
 				ToolParams:   map[string]any{"name": "Revenue by customer"},
 				Confidence:   decimal.NewFromFloat(0.9),
 				Rationale:    "Asked for a saved report.",
@@ -132,7 +132,7 @@ func parityInput() *transcriptInput {
 				},
 			},
 			{
-				ToolName:       "assign_move",
+				ToolName:       "dispatch_assign_move",
 				ToolParams:     map[string]any{"moveId": "smv_1"},
 				AutonomyTier:   agent.TierActWithApproval,
 				Status:         agent.ProposalStatusExecutionFailed,

@@ -4,7 +4,7 @@ import { z } from "zod";
 import type { CardCheckState } from "../../record-card/record-card";
 
 /*
- * The draft draft_edi_connection published, as the recorder stored it. Every
+ * The draft edi_draft_connection published, as the recorder stored it. Every
  * reader here refuses to guess: a value that is not what the draft promises
  * reads as absent, never as a crash in the pane.
  */

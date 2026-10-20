@@ -15,7 +15,7 @@ function artifactOf(payload: Record<string, unknown>): AssistantArtifact {
 }
 
 describe("portalTaskFrom", () => {
-  it("reads what read_portal published", () => {
+  it("reads what web_read_portal published", () => {
     expect(
       portalTaskFrom(
         artifactOf({

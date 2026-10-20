@@ -286,7 +286,7 @@ func TestGetInboundMessage_NamesTheMailboxIDTheListFiltersBy(t *testing.T) {
 	properties, _ := schema["properties"].(map[string]any)
 	mailbox, _ := properties["mailboxId"].(map[string]any)
 	description, _ := mailbox["description"].(string)
-	assert.Contains(t, description, "get_inbound_message")
+	assert.Contains(t, description, "inbox_get_inbound_message")
 	assert.NotContains(t, description, "No tool lists")
 }
 

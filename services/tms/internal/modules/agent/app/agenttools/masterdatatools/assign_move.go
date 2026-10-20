@@ -23,21 +23,25 @@ func NewAssignMoveTool(
 	return &AssignMoveTool{assignments: assignments, console: console}
 }
 
-func (t *AssignMoveTool) Name() string { return "assign_move" }
+func (t *AssignMoveTool) Name() string { return "dispatch_assign_move" }
 
 func (t *AssignMoveTool) Prerequisites() []string {
 	return []string{
-		"shipment_get", "rank_move_candidates", "search_worker", "list_tractors", "list_trailers",
+		"shipment_get",
+		"dispatch_rank_candidates",
+		"worker_search",
+		"equipment_list_tractors",
+		"equipment_list_trailers",
 	}
 }
 
 func (t *AssignMoveTool) Recipe() []string {
-	return []string{"shipment_get", "rank_move_candidates", "assign_move"}
+	return []string{"shipment_get", "dispatch_rank_candidates", "dispatch_assign_move"}
 }
 
 func (t *AssignMoveTool) Description() string {
 	return "Assign a driver and equipment to a shipment move that has no driver yet. " +
-		"Use it once a driver is chosen, usually from rank_move_candidates or plan_dispatch, " +
+		"Use it once a driver is chosen, usually from dispatch_rank_candidates or dispatch_plan, " +
 		"which hand back the move, driver, tractor and trailer ids together. The move " +
 		"must be unassigned; use reassignment for a move that already has a driver."
 }
@@ -48,28 +52,28 @@ func (t *AssignMoveTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"shipmentMoveId": agenttoolschema.RecordIDText(
 				permission.ResourceShipmentMove,
-				"The move to cover, from get_dispatch_board (moveId), "+
-					"shipment_get (its moves) or plan_dispatch.",
+				"The move to cover, from dispatch_get_board (moveId), "+
+					"shipment_get (its moves) or dispatch_plan.",
 			),
 			"primaryWorkerId": agenttoolschema.RecordIDText(
 				permission.ResourceWorker,
-				"The driver to put on the move, from rank_move_candidates, "+
-					"plan_dispatch, search_worker or list_workers.",
+				"The driver to put on the move, from dispatch_rank_candidates, "+
+					"dispatch_plan, worker_search or worker_list.",
 			),
 			"tractorId": agenttoolschema.RecordIDText(
 				permission.ResourceTractor,
-				"The tractor the driver will use, from rank_move_candidates or "+
-					"list_tractors.",
+				"The tractor the driver will use, from dispatch_rank_candidates or "+
+					"equipment_list_tractors.",
 			),
 			"trailerId": agenttoolschema.RecordIDText(
 				permission.ResourceTrailer,
-				"The trailer, when the move needs one, from rank_move_candidates "+
-					"or list_trailers.",
+				"The trailer, when the move needs one, from dispatch_rank_candidates "+
+					"or equipment_list_trailers.",
 			),
 			"secondaryWorkerId": agenttoolschema.RecordIDText(
 				permission.ResourceWorker,
-				"A second driver for a team move, from list_workers or "+
-					"search_worker.",
+				"A second driver for a team move, from worker_list or "+
+					"worker_search.",
 			),
 		},
 		"required":             []string{"shipmentMoveId", "primaryWorkerId", "tractorId"},

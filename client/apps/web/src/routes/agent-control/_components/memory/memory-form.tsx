@@ -97,7 +97,7 @@ export function MemoryAbout() {
         description={t(
           "Optional. Only agents holding this tool read it, such as a correction to how it is used.",
         )}
-        placeholder="assign_move"
+        placeholder="dispatch_assign_move"
         inputClassProps={aicFieldTrigger}
       />
     </>

@@ -413,7 +413,7 @@ func TestAgreementReviewTools_OnlyAPersonTurnsPricingOnOrOff(t *testing.T) {
 	}
 	params := agenttoolstest.ExecuteParams(map[string]any{paramRateAgreementID: agreements.stored.ID.String()})
 
-	approve := reviewTool(t, agreements, "approve_rate_agreement")
+	approve := reviewTool(t, agreements, "rate_approve_agreement")
 	preview := agenttoolstest.PreviewWithoutWrites(t, agreements.guard, func() (*agent.ToolPreview, error) {
 		return approve.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
@@ -435,28 +435,28 @@ func TestAgreementReviewTools_OnlyAPersonTurnsPricingOnOrOff(t *testing.T) {
 		agreements.reviewed)
 
 	for _, name := range []string{
-		"approve_rate_agreement",
-		"suspend_rate_agreement",
-		"resume_rate_agreement",
-		"archive_rate_agreement",
+		"rate_approve_agreement",
+		"rate_suspend_agreement",
+		"rate_resume_agreement",
+		"rate_archive_agreement",
 	} {
 		policy := reviewTool(t, agreements, name).Policy()
 		assert.Equal(t, []agent.EgressClass{agent.EgressMoney}, policy.Egress, name)
 		assert.Equal(t, agent.TierPropose, policy.MaxTier, name)
 	}
-	for _, name := range []string{"submit_rate_agreement", "reject_rate_agreement"} {
+	for _, name := range []string{"rate_submit_agreement", "rate_reject_agreement"} {
 		policy := reviewTool(t, agreements, name).Policy()
 		assert.Equal(t, []agent.EgressClass{agent.EgressInternal}, policy.Egress, name)
 		assert.Equal(t, agent.TierPropose, policy.MaxTier, name)
 	}
 
-	for _, name := range []string{"reject_rate_agreement", "suspend_rate_agreement"} {
+	for _, name := range []string{"rate_reject_agreement", "rate_suspend_agreement"} {
 		require.Error(t, reviewTool(t, agreements, name).(agentports.ToolValidator).Validate(
 			t.Context(), params,
 		), name)
 	}
 
-	submit := reviewTool(t, agreements, "submit_rate_agreement")
+	submit := reviewTool(t, agreements, "rate_submit_agreement")
 	require.NoError(t, submit.Execute(t.Context(), params))
 	assert.Equal(t, rateagreementservice.ReviewSubmit, agreements.reviewed[1])
 }

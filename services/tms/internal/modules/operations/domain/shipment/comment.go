@@ -41,7 +41,7 @@ const (
 // update written by one of CustomerEmailTools was emailed to the customer.
 const (
 	CommentMetadataTool      = "tool"
-	CommentToolEmailCustomer = "email_customer"
+	CommentToolEmailCustomer = "customer_send_email"
 	CommentToolDelayNotice   = "notify_shipment_delay"
 )
 

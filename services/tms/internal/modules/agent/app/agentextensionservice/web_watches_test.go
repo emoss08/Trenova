@@ -489,7 +489,7 @@ func TestAWatchIsRefusedPastTheOrganizationsLimit(t *testing.T) {
 
 	_, err := w.svc.WatchWeb(t.Context(), w.request())
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "stop_web_watch")
+	assert.Contains(t, err.Error(), "web_stop_watch")
 	assert.Len(t, w.watcher.created, 1)
 }
 

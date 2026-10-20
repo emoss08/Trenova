@@ -83,7 +83,7 @@ cases:
     expect: none
     note: >
       Was IntakeDesk, which the Desk can never suggest: the template is triggered by inbound
-      messages, not chat, and reply_to_inbound_message, the best tool for it, is on no chat
+      messages, not chat, and inbox_send_reply, the best tool for it, is on no chat
       template's tools, so no agent the person may use can reply.
   - name: customer-eta-email-from-billing
     from: BillingAssistant
@@ -133,7 +133,7 @@ cases:
     expect: FuelTaxClerk|none
     note: >
       Was outside-every-agent, expecting none|nothing. The weekly diesel price is the fuel index
-      Trenova records (list_fuel_index_prices, get_fuel_surcharge_rates), so the Fuel and IFTA
+      Trenova records (rate_list_fuel_index_prices, rate_list_fuel_surcharge_programs), so the Fuel and IFTA
       clerk answers it; with web search turned on for no agent, none is the other fair answer.
   - name: outside-every-agent
     from: DispatchAssistant

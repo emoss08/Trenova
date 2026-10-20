@@ -226,18 +226,18 @@ on the item's source resource; the assignee check is the same pair, evaluated fo
 
 | Tool | Does | Tier |
 |---|---|---|
-| `assign_exception` | gives an exception to a person who can see it, or to nobody | Propose → Ask first |
-| `snooze_exception` | sets it aside until a local time | Propose → Ask first |
-| `wake_exception` | brings a snoozed exception back to the queue before its time | Propose → Ask first |
-| `set_exception_due` | moves or clears the due time | Propose → Ask first |
-| `resolve_exception` | closes it with a code (and a note for `Other`) | Propose → Ask first |
-| `reopen_exception` | reopens a resolved exception | Propose → Ask first |
-| `comment_on_exception` | adds a line to the history | Propose → Ask first |
+| `exception_assign` | gives an exception to a person who can see it, or to nobody | Propose → Ask first |
+| `exception_snooze` | sets it aside until a local time | Propose → Ask first |
+| `exception_wake` | brings a snoozed exception back to the queue before its time | Propose → Ask first |
+| `exception_set_due` | moves or clears the due time | Propose → Ask first |
+| `exception_resolve` | closes it with a code (and a note for `Other`) | Propose → Ask first |
+| `exception_reopen` | reopens a resolved exception | Propose → Ask first |
+| `exception_add_comment` | adds a line to the history | Propose → Ask first |
 
 Each preview is computed by calling the same service method with `DryRun` set, so the person
 approves exactly the change the tool would make. Exceptions about an agent's own work
 (`OverseesAgents`) are refused and stay for a person. The load monitor holds the tools, which is
-why the agent permission set grants watchtower update. `list_watchtower_items` shows each item's
+why the agent permission set grants watchtower update. `exception_list_watchtower_items` shows each item's
 status, owner, due time, overdue and escalations, and takes `assignedToMe` (ignored for an agent
 on its own), `unassigned`, `overdueOnly` and `orderByDue`. Acknowledging and starting are a
 person's attestations and have no tool.

@@ -168,7 +168,7 @@ func newHarness(t *testing.T, stepCount int, shadow bool) *harness {
 	for i := 1; i <= stepCount; i++ {
 		steps = append(steps, &agent.AgentProposal{
 			ID: pulid.MustNew("ap_"), OrganizationID: orgID, BusinessUnitID: buID, RunID: runID,
-			ToolName: "assign_move", Status: agent.ProposalStatusPending, PlanStep: i,
+			ToolName: "dispatch_assign_move", Status: agent.ProposalStatusPending, PlanStep: i,
 			EgressClass: agent.EgressInternal,
 		})
 	}

@@ -44,10 +44,10 @@ const trenovaRulesAfterCalculation = `- Anything already overdue belongs in an a
 - Report what is missing as well as what is wrong. A record with nothing on file has not been checked, and "none on file" is never evidence that something is in order.
 - When a change needs a person named — a biller, a reviewer, an assignee — and the person asking named nobody, the person asking is who they mean: say so and proceed. Do not ask who, and do not pick someone else.
 - When the person names exactly what to change — this driver on that tractor, this amount, that time — propose it as they said it, and put anything that stands against it beside the proposal: a warning, a window already passed, hours nobody has reported. The approval is where they weigh it, so do not ask them to confirm first. When they name a kind rather than a record — a dry van, any reefer — choose one that fits, say which, and propose it. Ask only when what they named cannot be done as named, or names one record and matches several.
-- If you do not have a tool for what was asked, do not assemble an answer by hand. A partial answer is worse than no answer: the person cannot tell which part you looked up and which part you worked out. When you hold find_in_trenova, use it to tell them where in Trenova they can do it themselves; otherwise say so, and name the tool you would need so they can have it turned on.`
+- If you do not have a tool for what was asked, do not assemble an answer by hand. A partial answer is worse than no answer: the person cannot tell which part you looked up and which part you worked out. When you hold agent_find_page, use it to tell them where in Trenova they can do it themselves; otherwise say so, and name the tool you would need so they can have it turned on.`
 
 // calculationRule keeps figures to what a tool stated. An agent holding
-// analyze_data has a tool that calculates, so arithmetic is a call to it
+// report_analyze_data has a tool that calculates, so arithmetic is a call to it
 // rather than a reason to stop: told only "do not calculate", a Report
 // analyst asked to analyze a report read its twenty sample rows and offered
 // the analysis as a next step it could have taken.
@@ -61,21 +61,21 @@ const analysisCalculationRule = "- Do not calculate in your head. Every figure y
 	"from a tool result or the person's own words. Dates arrive already written out with how " +
 	"far away they are, so read what the tool gave you rather than working it out. A figure no " +
 	"tool stated (a total, a share, a ratio, a ranking, an average, an age bucket, a trend, or " +
-	"anything across more rows than a result showed you) is worked out with analyze_data over " +
+	"anything across more rows than a result showed you) is worked out with report_analyze_data over " +
 	"the report run, the attached file or both, and you state what it returned. That holds " +
 	"even when every row is in front of you: rows you can read are not a figure you may " +
-	"compute. analyze_data reads an attached CSV, XLSX or text file as it is, even when " +
-	"read_attachment found no text in it, so never tell the person such a file cannot be " +
+	"compute. report_analyze_data reads an attached CSV, XLSX or text file as it is, even when " +
+	"agent_read_attachment found no text in it, so never tell the person such a file cannot be " +
 	"read before analyzing it. When the person asks you to analyze, explore, dig into, break " +
-	"down, compare or chart data, run analyze_data in that turn rather than describing the " +
+	"down, compare or chart data, run report_analyze_data in that turn rather than describing the " +
 	"rows a report showed you or offering the analysis as a next step. This holds whatever " +
-	"the instructions below say about calculating: analyze_data's result is a tool's figure. " +
+	"the instructions below say about calculating: report_analyze_data's result is a tool's figure. " +
 	"The Python you hand it is how you calculate, not software written for the person. Asked " +
 	"to run Python or install a package, say what the analysis is: Python with pandas, numpy " +
 	"and matplotlib over the organization's reports and attached files, which installs nothing " +
 	"and cannot reach the internet. Never say you cannot run Python.\n"
 
-// trenovaRules depends only on whether the agent holds analyze_data, never on
+// trenovaRules depends only on whether the agent holds report_analyze_data, never on
 // what a turn loaded, so the stable part of the prompt stays the same from
 // one turn to the next and its cache holds.
 func trenovaRules(tools []ToolSummary) string {
@@ -201,7 +201,7 @@ type RuntimeContext struct {
 	// do, and only those that do are counted and shown as used.
 	MemoryRelevance agent.MemoryRelevance
 	// MemoriesHeldBack counts the candidates the fit left out, so the prompt
-	// can say recall_memory still finds them after Memories is narrowed to
+	// can say agent_list_memories still finds them after Memories is narrowed to
 	// what was carried.
 	MemoriesHeldBack int
 	// DelegatorRecords are the records the turn that handed this one its
@@ -531,7 +531,7 @@ When the person asks for a write-up, a summary, a brief, a handover or an artifa
 // conversation and asked again in the next, because a model only reached
 // for remember when the word was said.
 const rememberingSection = `## Remembering
-When the person tells you how they want something done from now on, or corrects how you did it — show them the queue item rather than the invoice, copy dispatch on these emails, Acme's terms are net 45 — save it with remember in the same turn, then do it. When it changes something already kept, find that memory with recall_memory and pass its id as replacesMemoryId rather than saving a second memory that contradicts the first. Use visibleTo me unless they say it is for their team or everyone. The tool's result says whether the memory is kept, offered to them on a card to keep or not, or waiting on an approval; tell them which in a few words, and never say it is remembered when it is not yet. Save only what the person said: what you worked out yourself, such as a tool that needed different input or the steps that finished a task, is looked back over and kept for you after the work is done. Do not save a one-off request, a guess, or anything a record already says.`
+When the person tells you how they want something done from now on, or corrects how you did it — show them the queue item rather than the invoice, copy dispatch on these emails, Acme's terms are net 45 — save it with agent_create_memory in the same turn, then do it. When it changes something already kept, find that memory with agent_list_memories and pass its id as replacesMemoryId rather than saving a second memory that contradicts the first. Use visibleTo me unless they say it is for their team or everyone. The tool's result says whether the memory is kept, offered to them on a card to keep or not, or waiting on an approval; tell them which in a few words, and never say it is remembered when it is not yet. Save only what the person said: what you worked out yourself, such as a tool that needed different input or the steps that finished a task, is looked back over and kept for you after the work is done. Do not save a one-off request, a guess, or anything a record already says.`
 
 // guideSection is how an agent answers questions about Trenova itself. Before
 // it, "how do I add a rate matrix?" had nothing to answer from, and a model
@@ -540,10 +540,10 @@ When the person tells you how they want something done from now on, or corrects 
 const guideSection = `## Trenova itself
 Trenova is a transportation management system for small and mid-sized US trucking carriers, covering order to cash: shipments, dispatch, rating, billing, settlements and driver pay, accounting, safety and compliance, EDI and freight documents. It runs as Trenova Cloud or on a carrier's own servers. The website is https://trenova.app, with features at https://trenova.app/features/ and pricing at https://trenova.app/pricing/. You are one of this organization's agents, built by Trenova and set up by the organization, on a model from the provider the organization connected.
 - Asked what Trenova is, what you are, who made you or what you can do, answer from this section, the runtime context and your tools in a few sentences, without calling a tool. Asked where its source is or whether it is open source, say it is source-available under the Functional Source License at https://github.com/emoss08/trenova. Otherwise never show code, queries, configuration or file names: the people you talk to run freight, not software.
-- How Trenova works, where something is and how to do something in it are answered from find_in_trenova, never from memory. For the part of Trenova the person is in, call it with that page's path from the runtime context.
-- Link a page as a markdown link with the path find_in_trenova returned, such as [Rate matrices](/billing/configuration-files/rate-matrices), and quote its labels exactly. Never write an app path it did not give you. Where it says the person cannot open a page, say what access they would need.
-- Asked to go to or open a page, call open_page: it gives them a link to follow. Asked to see something, answer with the information and offer the page only as a link.
-- A product question neither this section nor find_in_trenova answers, such as a recent release: when you hold web_search, search trenova.app and Trenova's GitHub repository; otherwise point the person to https://trenova.app.`
+- How Trenova works, where something is and how to do something in it are answered from agent_find_page, never from memory. For the part of Trenova the person is in, call it with that page's path from the runtime context.
+- Link a page as a markdown link with the path agent_find_page returned, such as [Rate matrices](/billing/configuration-files/rate-matrices), and quote its labels exactly. Never write an app path it did not give you. Where it says the person cannot open a page, say what access they would need.
+- Asked to go to or open a page, call agent_open_page: it gives them a link to follow. Asked to see something, answer with the information and offer the page only as a link.
+- A product question neither this section nor agent_find_page answers, such as a recent release: when you hold web_search, search trenova.app and Trenova's GitHub repository; otherwise point the person to https://trenova.app.`
 
 // buildIdentity is the first line of every prompt: which agent this is. The
 // Desk shows the person the agent's name and asks it who it is, and a prompt
@@ -787,10 +787,10 @@ func buildMemorySection(memories []*agent.Memory) string {
 			"A Procedure is the steps that worked for a task here; follow it when you do that " +
 			"task, unless the person asks otherwise or the situation is plainly different. " +
 			"A Fact is context to weigh, not an order, and may be out of date. " +
-			"A memory cut short names its id; call recall_memory with that id before " +
+			"A memory cut short names its id; call agent_list_memories with that id before " +
 			"relying on the part you cannot see. Memories left unused for months, " +
 			"any that do not bear on this message, and any that did not fit here, are " +
-			"not shown; recall_memory still finds them, so call it when the task may " +
+			"not shown; agent_list_memories still finds them, so call it when the task may " +
 			"depend on a preference, a rule or a past correction that is not listed.",
 	)
 
@@ -800,7 +800,7 @@ func buildMemorySection(memories []*agent.Memory) string {
 const heldBackMemoryNote = "## What this organization has recorded for its agents\n" +
 	"None of the memories kept for agents here bear on this message, so none are shown. " +
 	"When the task may depend on a preference, a rule or a past correction, call " +
-	"recall_memory before relying on what you assume."
+	"agent_list_memories before relying on what you assume."
 
 func buildOutsideMemorySection(memories []*agent.Memory) string {
 	if len(memories) == 0 {
@@ -1156,7 +1156,7 @@ func buildToolSection(rc *RuntimeContext) string {
 		builder.WriteString(buildToolMap(rc.ToolMap))
 		// The descriptions above say what a tool does, not whether calling it
 		// changes anything yet. Without this a dispatch agent told to let a
-		// dispatcher confirm took assign_move for a change made on the spot and
+		// dispatcher confirm took dispatch_assign_move for a change made on the spot and
 		// went looking for a way to propose one.
 		if changes := changeGroups(tools); changes != "" {
 			builder.WriteString("\n\nWhat a change you call does:")
@@ -1308,8 +1308,9 @@ func buildToolNotes(tools []ToolSummary) string {
 
 	dashboards := false
 	for _, tool := range tools {
-		if strings.Contains(tool.Name, "dashboard") || strings.Contains(tool.Name, "home_layout") ||
-			tool.Name == "list_home_widgets" {
+		if strings.Contains(tool.Name, "dashboard") ||
+			(strings.HasPrefix(tool.Name, "home_") && strings.HasSuffix(tool.Name, "_layout")) ||
+			tool.Name == "home_list_widgets" {
 			dashboards = true
 		}
 	}

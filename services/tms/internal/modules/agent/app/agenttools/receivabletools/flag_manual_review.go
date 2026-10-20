@@ -20,13 +20,13 @@ func NewFlagManualReviewTool(exceptions agentports.AgentExceptionService) agentp
 	return &FlagManualReviewTool{exceptions: exceptions}
 }
 
-func (t *FlagManualReviewTool) Name() string { return "flag_for_manual_review" }
+func (t *FlagManualReviewTool) Name() string { return "agent_request_review" }
 
 func (t *FlagManualReviewTool) Description() string {
 	return "Flag a billing queue item for manual review by raising an agent exception " +
 		"with a category and evidence. Use it on a billing run when the item cannot be " +
 		"cleared without a person: missing paperwork, a rate that does not match, a " +
-		"charge in dispute. Not for any other kind of record (use raise_exception)."
+		"charge in dispute. Not for any other kind of record (use agent_raise_exception)."
 }
 
 // evidenceItemsProperty is a list of the records that show a problem, in

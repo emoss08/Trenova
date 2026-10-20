@@ -172,7 +172,7 @@ describe("a looked-up record with a card of its own", () => {
   });
 
   it("draws a customer the agent looked up as the customer card, with its own mark", async () => {
-    const artifact = card("customer", { recordId: "cus_1", tool: "get_customer" });
+    const artifact = card("customer", { recordId: "cus_1", tool: "customer_get" });
 
     draw(artifact);
 
@@ -182,7 +182,7 @@ describe("a looked-up record with a card of its own", () => {
   });
 
   it("draws a rate agreement the agent looked up as the agreement card, with its own mark", async () => {
-    const artifact = card("rate_agreement", { recordId: "ra_1", tool: "get_rate_agreement" });
+    const artifact = card("rate_agreement", { recordId: "ra_1", tool: "rate_get_agreement" });
 
     draw(artifact);
 
@@ -192,7 +192,7 @@ describe("a looked-up record with a card of its own", () => {
   });
 
   it("draws an EDI message the agent looked up as the EDI message card, with its own mark", async () => {
-    const artifact = card("edi_message", { recordId: "edimsg_1", tool: "list_edi_messages" });
+    const artifact = card("edi_message", { recordId: "edimsg_1", tool: "edi_list_messages" });
 
     draw(artifact);
 
@@ -204,7 +204,7 @@ describe("a looked-up record with a card of its own", () => {
   it("draws an EDI inbound file the agent looked up as the inbound file card, with its own mark", async () => {
     const artifact = card("edi_inbound_file", {
       recordId: "ediinf_1",
-      tool: "get_edi_inbound_file",
+      tool: "edi_get_inbound_file",
     });
 
     draw(artifact);
@@ -215,7 +215,7 @@ describe("a looked-up record with a card of its own", () => {
   });
 
   it("draws an EDI transfer the agent looked up as the tender card, with its own mark", async () => {
-    const artifact = card("edi_transfer", { recordId: "edilt_1", tool: "get_edi_transfer" });
+    const artifact = card("edi_transfer", { recordId: "edilt_1", tool: "edi_get_transfer" });
 
     draw(artifact);
 
@@ -225,7 +225,7 @@ describe("a looked-up record with a card of its own", () => {
   });
 
   it("draws a tractor the agent looked up as the tractor card, with its own mark", async () => {
-    const artifact = card("tractor", { recordId: "tr_1", tool: "get_tractor" });
+    const artifact = card("tractor", { recordId: "tr_1", tool: "equipment_get_tractor" });
 
     draw(artifact);
 
@@ -235,7 +235,7 @@ describe("a looked-up record with a card of its own", () => {
   });
 
   it("draws a trailer the agent looked up as the trailer card, with its own mark", async () => {
-    const artifact = card("trailer", { recordId: "trl_1", tool: "get_trailer" });
+    const artifact = card("trailer", { recordId: "trl_1", tool: "equipment_get_trailer" });
 
     draw(artifact);
 
@@ -245,7 +245,7 @@ describe("a looked-up record with a card of its own", () => {
   });
 
   it("draws a worker the agent looked up as the worker card, with its own mark", async () => {
-    const artifact = card("worker", { recordId: "wrk_1", tool: "get_worker" });
+    const artifact = card("worker", { recordId: "wrk_1", tool: "worker_get" });
 
     draw(artifact);
 
@@ -255,7 +255,7 @@ describe("a looked-up record with a card of its own", () => {
   });
 
   it("draws a location the agent looked up as the location card, with its own mark", async () => {
-    const artifact = card("location", { recordId: "loc_1", tool: "get_location" });
+    const artifact = card("location", { recordId: "loc_1", tool: "location_get" });
 
     draw(artifact);
 
@@ -265,7 +265,7 @@ describe("a looked-up record with a card of its own", () => {
   });
 
   it("draws a carrier the agent looked up as the carrier card, with its own mark", async () => {
-    const artifact = card("carrier", { recordId: "car_1", tool: "get_carrier" });
+    const artifact = card("carrier", { recordId: "car_1", tool: "carrier_get" });
 
     draw(artifact);
 

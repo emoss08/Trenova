@@ -7,7 +7,7 @@ scenarios:
       Acme's Los Angeles to Chicago load (SEED-SHP-001) picks up in four hours and nobody is on
       it. A good run weighs the drivers on hours, distance and equipment and proposes one
       assignment with its reasoning, or covers it with a contract carrier if no driver fits.
-    expectedTools: ["rank_move_candidates|plan_dispatch|search_worker"]
+    expectedTools: ["dispatch_rank_candidates|dispatch_plan|worker_search"]
     exclusive: dispatch-board
     setup:
       - &shp001-no-open-assignments >
@@ -36,7 +36,7 @@ scenarios:
         expect:
           run: AwaitingDecision
           proposals:
-            - tool: "assign_move|assign_move_to_carrier|tender_move_to_routing_guide|tender_move_to_carriers"
+            - tool: "dispatch_assign_move|dispatch_create_carrier_assignment|dispatch_create_tender_from_routing_guide|dispatch_create_tender"
           rubric: >
             Proposes exactly one way to cover the move: a named driver and tractor with hours
             available, distance to Los Angeles and equipment fit, or a contract carrier at its
@@ -47,12 +47,12 @@ scenarios:
       FreshHaul's reefer load SEED-SHP-004 lost its driver, but it does not pick up for four days,
       well outside the twelve-hour coverage window. A good run reports that it is uncovered and
       when it starts, and stops there, because the coverage sweep raises it again in time.
-    expectedTools: ["shipment_get|get_dispatch_board"]
+    expectedTools: ["shipment_get|dispatch_get_board"]
     forbiddenTools:
-      - assign_move
-      - assign_move_to_carrier
-      - tender_move_to_routing_guide
-      - tender_move_to_carriers
+      - dispatch_assign_move
+      - dispatch_create_carrier_assignment
+      - dispatch_create_tender_from_routing_guide
+      - dispatch_create_tender
     exclusive: dispatch-board
     setup:
       - >
@@ -91,7 +91,7 @@ scenarios:
       The first leg of GlobalTrade's SEED-SHP-003, Los Angeles Terminal to the Dallas Warehouse,
       lost its driver three hours before pickup. A good run treats it as inside the window and
       proposes one way to cover it.
-    expectedTools: ["rank_move_candidates|plan_dispatch|search_worker"]
+    expectedTools: ["dispatch_rank_candidates|dispatch_plan|worker_search"]
     exclusive: dispatch-board
     setup:
       - >
@@ -120,7 +120,7 @@ scenarios:
         expect:
           run: AwaitingDecision
           proposals:
-            - tool: "assign_move|assign_move_to_carrier|tender_move_to_routing_guide|tender_move_to_carriers"
+            - tool: "dispatch_assign_move|dispatch_create_carrier_assignment|dispatch_create_tender_from_routing_guide|dispatch_create_tender"
           rubric: >
             Covers the Los Angeles to Dallas leg only, with one proposal and its reasoning. If a
             carrier is chosen and no rate confirmation is standing, it makes one and proposes
@@ -133,7 +133,7 @@ scenarios:
       prices the lane, records the gap once as an internal comment and proposes a hold until
       someone fixes the rate.
     tags: [unattended, entry-check]
-    expectedTools: ["quote_shipment|explain_rate"]
+    expectedTools: ["rate_quote|rate_explain"]
     exclusive: entry-check-seed
     setup:
       - >

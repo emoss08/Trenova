@@ -29,10 +29,10 @@ function proposal(overrides: Partial<AssistantProposal>): AssistantProposal {
  * sentence does not need goes to `details`, which is still complete.
  */
 describe("presentProposal", () => {
-  it("explains a new location by its name and address, from create_location's schema", () => {
+  it("explains a new location by its name and address, from location_create's schema", () => {
     const view = presentProposal(
       proposal({
-        toolName: "create_location",
+        toolName: "location_create",
         arguments: {
           name: "Acme DC",
           addressLine1: "1 Main St",
@@ -127,7 +127,7 @@ describe("presentProposal", () => {
   it("describes a move assignment without repeating the move's own id", () => {
     const view = presentProposal(
       proposal({
-        toolName: "assign_move",
+        toolName: "dispatch_assign_move",
         arguments: {
           shipmentMoveId: "smv_1",
           primaryWorkerId: "wrk_1",
@@ -155,7 +155,7 @@ describe("presentProposal", () => {
   it("shortens an opaque id in the sentence", () => {
     const view = presentProposal(
       proposal({
-        toolName: "assign_move",
+        toolName: "dispatch_assign_move",
         arguments: {
           shipmentMoveId: "smv_01M2PRNXAMQNKK9HK9V5B817QE",
           primaryWorkerId: "wrk_01M2PRNXAMQNKK9HK9V5B817QE",
@@ -175,7 +175,7 @@ describe("presentProposal", () => {
   it("reads a flag as a sentence and carries severity separately", () => {
     const view = presentProposal(
       proposal({
-        toolName: "flag_for_manual_review",
+        toolName: "agent_request_review",
         arguments: {
           subjectId: "shp_01M2PRNXAMQNKK9HK9V5B817QE",
           category: "MissingBOL",
@@ -202,7 +202,7 @@ describe("presentProposal", () => {
   it("keeps a flag's bookkeeping off the card", () => {
     const view = presentProposal(
       proposal({
-        toolName: "flag_for_manual_review",
+        toolName: "agent_request_review",
         arguments: {
           runId: "ar_01M2PRQ1C0QN91R9TNRXSSSFZ5",
           subjectId: "shp_01M2PRNXAMQNKK9HK9V5B817QE",
@@ -224,7 +224,7 @@ describe("presentProposal", () => {
   it("omits a blast radius of one rather than stating the obvious", () => {
     const wide = presentProposal(
       proposal({
-        toolName: "flag_for_manual_review",
+        toolName: "agent_request_review",
         arguments: { category: "RateMismatch", severity: "High", blastRadius: 7 },
       }),
     );
@@ -242,7 +242,7 @@ describe("presentProposal", () => {
     });
     const view = presentProposal(
       proposal({
-        toolName: "apply_edi_connection_draft",
+        toolName: "edi_apply_connection_draft",
         arguments: {
           documentId: "doc_01J9Z8Y7X6W5V4T3S2R1Q0P9N8",
           documentDigest: "sha256:5f1c9a0b7e3d2c1f00aa11bb22cc33dd44ee55ff66778899aabbccddeeff0011",
@@ -272,7 +272,7 @@ describe("presentProposal", () => {
   it("says a revised guide changes only what it changed for a partner that exists", () => {
     const view = presentProposal(
       proposal({
-        toolName: "apply_edi_connection_draft",
+        toolName: "edi_apply_connection_draft",
         arguments: {
           documentId: "doc_01J9Z8Y7X6W5V4T3S2R1Q0P9N8",
           ediPartnerId: "edip_01J9Z8Y7X6W5V4T3S2R1Q0P9N8",
@@ -314,7 +314,7 @@ describe("presentProposal", () => {
   it("never loses an argument the presenter did not expect", () => {
     const view = presentProposal(
       proposal({
-        toolName: "assign_move",
+        toolName: "dispatch_assign_move",
         arguments: { shipmentMoveId: "smv_1", primaryWorkerId: "wrk_1", surprise: "yes" },
       }),
     );
@@ -345,7 +345,7 @@ describe("presentProposal for report tools", () => {
   it("describes a new report by name, dataset and shape", () => {
     const view = presentProposal(
       proposal({
-        toolName: "create_report",
+        toolName: "report_create",
         arguments: {
           name: "Revenue by customer",
           description: "Completed revenue per customer.",
@@ -373,7 +373,7 @@ describe("presentProposal for report tools", () => {
   it("describes a change to a saved report by what it touches", () => {
     const view = presentProposal(
       proposal({
-        toolName: "update_report",
+        toolName: "report_update",
         arguments: {
           definitionId: "rdef_01M3034Q2N7JD99RA1D8DGH1ZF",
           name: "Revenue by customer, completed",
@@ -396,7 +396,7 @@ describe("presentProposal for report tools", () => {
   it("describes a metadata-only change without inventing a definition", () => {
     const view = presentProposal(
       proposal({
-        toolName: "update_report",
+        toolName: "report_update",
         arguments: {
           definitionId: "rdef_01M3034Q2N7JD99RA1D8DGH1ZF",
           visibility: "shared",
@@ -415,7 +415,7 @@ describe("presentProposal for report tools", () => {
   it("describes a fork as a copy of the built-in report", () => {
     const view = presentProposal(
       proposal({
-        toolName: "fork_report",
+        toolName: "report_fork",
         arguments: { reportKey: "ar_aging_by_customer", name: "AR aging, 60-day buckets" },
       }),
     );
@@ -438,7 +438,7 @@ describe("presentProposal for monitoring tools", () => {
   it("describes a driver message with its urgency", () => {
     const view = presentProposal(
       proposal({
-        toolName: "notify_driver",
+        toolName: "worker_send_message",
         arguments: {
           workerId: "wrk_01M3034Q2N7JD99RA1D8DGH1ZF",
           title: "Delivery moved to 3 PM",
@@ -460,7 +460,7 @@ describe("presentProposal for monitoring tools", () => {
   it("describes a customer email by its subject and body", () => {
     const view = presentProposal(
       proposal({
-        toolName: "email_customer",
+        toolName: "customer_send_email",
         arguments: {
           shipmentId: "shp_01M3034Q2N7JD99RA1D8DGH1ZF",
           profileId: "emp_01M3034Q2N7JD99RA1D8DGH1ZF",
@@ -485,7 +485,7 @@ describe("presentProposal for monitoring tools", () => {
   it("describes a waiver by its coded reason", () => {
     const view = presentProposal(
       proposal({
-        toolName: "waive_detention",
+        toolName: "detention_waive",
         arguments: {
           occurrenceId: "dto_01M3034Q2N7JD99RA1D8DGH1ZF",
           reason: "CarrierFault",
@@ -504,7 +504,7 @@ describe("presentProposal for monitoring tools", () => {
   it("puts the evidence in front of the person approving a held detention charge", () => {
     const view = presentProposal(
       proposal({
-        toolName: "approve_detention",
+        toolName: "detention_approve",
         arguments: {
           occurrenceId: "dto_01M3034Q2N7JD99RA1D8DGH1ZF",
           evidence: "Arrival and departure on the ELD; notice sent inside the window.",
@@ -528,11 +528,11 @@ describe("presentProposal for monitoring tools", () => {
   it("describes a failure resolution and a failure check", () => {
     const resolve = presentProposal(
       proposal({
-        toolName: "resolve_service_failure",
+        toolName: "exception_resolve_service_failure",
         arguments: {
           serviceFailureId: "sf_01M3034Q2N7JD99RA1D8DGH1ZF",
           reasonCodeId: "sfrc_01M3034Q2N7JD99RA1D8DGH1ZF",
-          notes: "Shipper closed early; driver waited until opening.",
+          note: "Shipper closed early; driver waited until opening.",
         },
       }),
     );
@@ -544,7 +544,7 @@ describe("presentProposal for monitoring tools", () => {
 
     const check = presentProposal(
       proposal({
-        toolName: "evaluate_service_failures",
+        toolName: "exception_evaluate_service_failures",
         arguments: { shipmentId: "shp_01M3034Q2N7JD99RA1D8DGH1ZF", force: true },
       }),
     );
@@ -640,7 +640,7 @@ describe("presentProposal — intake and tendering", () => {
   it("lists each carrier line of a spot tender with its rate", () => {
     const view = presentProposal(
       proposal({
-        toolName: "tender_move_to_carriers",
+        toolName: "dispatch_create_tender",
         arguments: {
           shipmentMoveId: "smv_0123456789ABCDEFGHJKMNPQRD",
           mode: "SpotSequential",
@@ -664,7 +664,7 @@ describe("presentProposal — intake and tendering", () => {
   it("says which routing guide a waterfall follows", () => {
     const view = presentProposal(
       proposal({
-        toolName: "tender_move_to_routing_guide",
+        toolName: "dispatch_create_tender_from_routing_guide",
         arguments: { shipmentMoveId: "smv_0123456789ABCDEFGHJKMNPQRD" },
       }),
     );

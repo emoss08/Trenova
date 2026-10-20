@@ -15,7 +15,7 @@ const (
 	ActionSetRequiredField   = Action("intake_set_required_field")
 	ActionSetStopLocation    = Action("intake_set_stop_location")
 	ActionSetStopSchedule    = Action("intake_set_stop_schedule")
-	ActionProposeFormula     = Action("propose_formula")
+	ActionProposeFormula     = Action("formula_propose")
 )
 
 func (a Action) IsValid() bool {

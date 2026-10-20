@@ -108,7 +108,7 @@ export const pageDraftActionSchema = z.enum([
   "intake_set_required_field",
   "intake_set_stop_location",
   "intake_set_stop_schedule",
-  "propose_formula",
+  "formula_propose",
 ]);
 
 export const formulaCheckSchema = z.object({

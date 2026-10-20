@@ -144,7 +144,7 @@ describe("sourcesOfStep", () => {
       ),
     ).toEqual([]);
     expect(
-      sourcesOfStep(step({ name: "list_customers", content: fenced({ results: [fmcsaHit] }) })),
+      sourcesOfStep(step({ name: "customer_list", content: fenced({ results: [fmcsaHit] }) })),
     ).toEqual([]);
   });
 

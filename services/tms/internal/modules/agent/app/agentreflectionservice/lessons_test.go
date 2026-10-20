@@ -125,9 +125,9 @@ func threadPlan() *agentports.ReflectionPlan {
 		PersonUserID:      pulid.MustNew("usr_"),
 		Taint:             &agent.RunTaint{},
 		Signals: agent.ReflectionSignals{
-			{Kind: agent.ReflectionSignalToolRecovered, Count: 1, Detail: "assign_move"},
+			{Kind: agent.ReflectionSignalToolRecovered, Count: 1, Detail: "dispatch_assign_move"},
 		},
-		ToolNames: []string{"assign_move"},
+		ToolNames: []string{"dispatch_assign_move"},
 	}
 }
 
@@ -144,10 +144,10 @@ func runPlan() *agentports.ReflectionPlan {
 func procedure(audience string) *lesson {
 	return &lesson{
 		Kind:     string(agent.MemoryKindProcedure),
-		Content:  "1. Read the move with shipment_get. 2. Pass its move id to assign_move.",
+		Content:  "1. Read the move with shipment_get. 2. Pass its move id to dispatch_assign_move.",
 		Audience: audience,
-		ToolName: "assign_move",
-		Evidence: "assign_move failed with a shipment id",
+		ToolName: "dispatch_assign_move",
+		Evidence: "dispatch_assign_move failed with a shipment id",
 		Why:      "Saves a failed call next time.",
 	}
 }
@@ -379,7 +379,7 @@ func TestFinish_KeepsLessonsRecordsThemAndShowsThemOnTheReply(t *testing.T) {
 
 	outcome, err := svc.Finish(t.Context(), plan, &agentports.StructuredCompletionResult{
 		Text: `{"lessons":[` +
-			`{"kind":"Procedure","content":"Pass the move id to assign_move.","audience":"me","subjectType":"","subjectId":"","toolName":"assign_move","replaces":"","evidence":"failed twice","why":"Avoids the failure."},` +
+			`{"kind":"Procedure","content":"Pass the move id to dispatch_assign_move.","audience":"me","subjectType":"","subjectId":"","toolName":"dispatch_assign_move","replaces":"","evidence":"failed twice","why":"Avoids the failure."},` +
 			`{"kind":"Correction","content":"Nope","audience":"me","subjectType":"","subjectId":"","toolName":"","replaces":"","evidence":"","why":""}` +
 			`],"notes":"One procedure kept."}`,
 		ModelIdentifier: "test-model",

@@ -328,7 +328,7 @@ func (s *Service) Cancel(
 	}
 	if wait.Kind == agentwait.KindWebWatch {
 		return nil, errortypes.NewBusinessError(
-			"This wait ends with its web watch. Stop the watch instead: stop_web_watch, or " +
+			"This wait ends with its web watch. Stop the watch instead: web_stop_watch, or " +
 				"Stop watching on the wait.",
 		)
 	}

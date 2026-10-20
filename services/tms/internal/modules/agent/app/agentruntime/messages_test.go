@@ -39,14 +39,14 @@ func TestProposalRationale_SaysSoWhenTheModelExplainedNothing(t *testing.T) {
 }
 
 // A model that calls a tool without narrating usually put its reasoning in
-// the call: raise_exception carries an attemptSummary, and most writes carry
+// the call: agent_raise_exception carries an attemptSummary, and most writes carry
 // a reason or a note. The card said "without explaining why" above an
 // argument that explained exactly why.
 func TestProposalRationale_FallsBackToTheSummaryInTheArguments(t *testing.T) {
 	t.Parallel()
 
 	rationale := proposalRationale(rationaleInput{
-		ToolName: "raise_exception",
+		ToolName: "agent_raise_exception",
 		Arguments: map[string]any{
 			"subjectId":      "shp_1",
 			"attemptSummary": "  The shipment completed without a signed BOL.  ",
@@ -77,14 +77,14 @@ func TestProposalRationale_FallsBackToWhatThePersonAsked(t *testing.T) {
 	t.Parallel()
 
 	rationale := proposalRationale(rationaleInput{
-		ToolName:  "raise_exception",
+		ToolName:  "agent_raise_exception",
 		Arguments: map[string]any{"subjectId": "shp_1", "reason": "", "note": 12},
 		Input:     "  Flag SEED-DET-011 for review  ",
 	})
 
 	assert.Equal(
 		t,
-		"Asked to raise exception in reply to: “Flag SEED-DET-011 for review”",
+		"Asked to raise agent exception in reply to: “Flag SEED-DET-011 for review”",
 		rationale,
 	)
 }
@@ -336,7 +336,7 @@ func TestToAdapterMessages_DropsCallsNothingAnswered(t *testing.T) {
 			Content: "Looking.",
 			ToolCalls: []conversation.ToolCallRecord{
 				{ID: "c1", Name: "shipment_get"},
-				{ID: "c2", Name: "get_worker"},
+				{ID: "c2", Name: "worker_get"},
 			},
 		},
 		{Role: conversation.RoleTool, ToolCallID: "c1", ToolName: "shipment_get", Content: "{}"},

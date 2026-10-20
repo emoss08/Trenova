@@ -30,14 +30,14 @@ func TestTouchedRecords_CollectsWhatTheTurnWasAbout(t *testing.T) {
 		{Role: conversation.RoleUser, Content: "where is it"},
 		{Role: conversation.RoleAssistant, ToolCalls: []conversation.ToolCallRecord{
 			{ID: "c1", Name: "invoice_get", Arguments: map[string]any{"invoiceId": read.String()}},
-			{ID: "c2", Name: "get_tractor", Arguments: map[string]any{"tractorId": failed.String()}},
+			{ID: "c2", Name: "equipment_get_tractor", Arguments: map[string]any{"tractorId": failed.String()}},
 			{ID: "c3", Name: "shipment_list", Arguments: map[string]any{"customerId": wrote.String()}},
 		}},
 		{Role: conversation.RoleTool, ToolCallID: "c1", ToolSummary: "INV-7"},
 		{Role: conversation.RoleTool, ToolCallID: "c2", ToolFailed: true},
 		{Role: conversation.RoleTool, ToolCallID: "c3"},
 		{Role: conversation.RoleAssistant, Kind: conversation.MessageKindDelegated, ToolCalls: []conversation.ToolCallRecord{
-			{ID: "d1", Name: "get_trailer", Arguments: map[string]any{"trailerId": delegated.String()}},
+			{ID: "d1", Name: "equipment_get_trailer", Arguments: map[string]any{"trailerId": delegated.String()}},
 		}},
 	}
 	actions := []agentports.PendingAction{

@@ -65,17 +65,17 @@ describe("agentFormSchema", () => {
   // from, so the form does not refuse it; the save drops it, with any zero.
   it("keeps daily tool limits to the agent's own tools and drops empty ones", () => {
     expect(
-      issuesOf(values({ toolNames: ["assign_move"], toolDailyLimits: { shipment_cancel: 3 } })),
+      issuesOf(values({ toolNames: ["dispatch_assign_move"], toolDailyLimits: { shipment_cancel: 3 } })),
     ).toEqual({});
 
     const sent = toSaveRequest({
       ...agentFormDefaults,
       name: "Night desk",
-      toolNames: ["assign_move"],
-      toolDailyLimits: { assign_move: 4, shipment_cancel: 2, remember: 0 },
+      toolNames: ["dispatch_assign_move"],
+      toolDailyLimits: { dispatch_assign_move: 4, shipment_cancel: 2, remember: 0 },
       monthlyBudgetUsd: 25,
     });
-    expect(sent.toolDailyLimits).toEqual({ assign_move: 4 });
+    expect(sent.toolDailyLimits).toEqual({ dispatch_assign_move: 4 });
     expect(sent.monthlyBudgetUsd).toBe(25);
   });
 
@@ -85,8 +85,8 @@ describe("agentFormSchema", () => {
     expect(
       issuesOf(
         values({
-          toolNames: ["assign_move"],
-          toolDailyLimits: { assign_move: undefined, get_insight: null },
+          toolNames: ["dispatch_assign_move"],
+          toolDailyLimits: { dispatch_assign_move: undefined, insight_get: null },
         }),
       ),
     ).toEqual({});
@@ -94,8 +94,8 @@ describe("agentFormSchema", () => {
     const sent = toSaveRequest({
       ...agentFormDefaults,
       name: "Home builder",
-      toolNames: ["assign_move", "get_insight"],
-      toolDailyLimits: { assign_move: undefined, get_insight: null },
+      toolNames: ["dispatch_assign_move", "insight_get"],
+      toolDailyLimits: { dispatch_assign_move: undefined, insight_get: null },
     });
     expect(sent.toolDailyLimits).toEqual({});
   });
@@ -127,8 +127,8 @@ describe("agentFormSchema", () => {
       issuesOf(
         values({
           autonomyCeiling: "Propose",
-          toolNames: ["assign_move"],
-          toolTiers: { assign_move: "AutoExecute" },
+          toolNames: ["dispatch_assign_move"],
+          toolTiers: { dispatch_assign_move: "AutoExecute" },
         }),
       ),
     ).toEqual({});
@@ -137,7 +137,7 @@ describe("agentFormSchema", () => {
         values({
           autonomyCeiling: "Propose",
           toolNames: ["shipment_get"],
-          toolTiers: { assign_move: "AutoExecute" },
+          toolTiers: { dispatch_assign_move: "AutoExecute" },
         }),
       ),
     ).toEqual({});
@@ -167,7 +167,7 @@ describe("toSaveRequest", () => {
     const request = toSaveRequest(
       values({
         toolNames: ["shipment_get"],
-        toolTiers: { shipment_get: "Propose", assign_move: "ActWithApproval" },
+        toolTiers: { shipment_get: "Propose", dispatch_assign_move: "ActWithApproval" },
       }),
     );
 

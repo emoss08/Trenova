@@ -1,7 +1,7 @@
 // Nova, the formula assistant, on the Formula Studio: the one-shot calls (explain the formula,
 // describe its inputs, suggest scenarios, explain why a scenario broke, draft the reviewer's
 // note) and the studio's page conversation, whose turns stream the way a real turn does and
-// answer with a `propose_formula` draft edit. The words are the handoff's offline answers
+// answer with a `formula_propose` draft edit. The words are the handoff's offline answers
 // (design_handoff_formula_studio/design/ai.jsx); every amount in them is the mock engine's, and
 // each one-shot answers after about 700ms so its loading state can be shot. With the `aiProviders`
 // scenario at `none`, the one-shots refuse as the server does with no provider configured, and
@@ -51,11 +51,11 @@ const AGENT = {
   accent: "violet",
   systemKey: "formula_assistant",
   toolNames: [
-    "describe_formula_schema",
-    "test_formula_expression",
-    "propose_formula",
-    "list_formula_templates",
-    "get_formula_template",
+    "formula_describe_schema",
+    "formula_test_expression",
+    "formula_propose",
+    "formula_list_templates",
+    "formula_get_template",
   ],
   starters: [
     { label: "Explain this formula", prompt: "Explain this formula, term by term" },
@@ -868,13 +868,13 @@ function planTurn(state, entry, body) {
     ? `Reading the editor: ${lines} lines, ${editor.variables.length} inputs.`
     : "Reading the editor: it is empty.";
   const schemaStep = tool(
-    "describe_formula_schema",
+    "formula_describe_schema",
     "lookup",
     { schemaId: editor.schemaId },
     `${VARIABLES.length} shipment variables, ${FUNCTIONS.length} functions`,
   );
   const priceStep = (n) =>
-    tool("test_formula_expression", "lookup", { scenarios: n }, `Priced ${n} loads`);
+    tool("formula_test_expression", "lookup", { scenarios: n }, `Priced ${n} loads`);
   const propose = (next, explanation, reply, extra = {}) => {
     const formula = proposal(editor, next, explanation, extra);
     const sample = formula.check.valid
@@ -1198,7 +1198,7 @@ function planTurn(state, entry, body) {
     const clampWord = short.clamp ? (short.clamp.bound === "min" ? "minimum" : "maximum") : null;
     return {
       reasoning: reading,
-      tools: [tool("test_formula_expression", "lookup", { totalDistance: 60 }, "Priced 1 load")],
+      tools: [tool("formula_test_expression", "lookup", { totalDistance: 60 }, "Priced 1 load")],
       reply: short.clamp
         ? `On a 60-mile load the formula produces ${money(short.raw)}, under the ${money(short.clamp.limit)} ${clampWord} in Charge policy, so the charge is raised to it. Breakdown lines still add up to the raw amount.`
         : `On a 60-mile load the formula produces ${money(short.raw)}, inside the charge policy, so it bills ${money(short.amount)}. The sample load bills ${sample.error ? "nothing" : money(sample.amount)}.`,
@@ -1288,7 +1288,7 @@ function settle(state, turn) {
   if (turn.plan.proposal) {
     proposeCall = {
       id: `call_${turn.id.slice(6)}_${calls.length + 1}`,
-      name: "propose_formula",
+      name: "formula_propose",
       effect: "present",
       args: {
         expression: turn.plan.proposal.expression,
@@ -1296,7 +1296,7 @@ function settle(state, turn) {
       },
       summary: "Proposed formula",
     };
-    const edit = { surface: "formula", action: "propose_formula", formula: turn.plan.proposal };
+    const edit = { surface: "formula", action: "formula_propose", formula: turn.plan.proposal };
     proposeCall.content = JSON.stringify({
       draft: edit,
       note: "The formula is in front of the person with its sample loads.",

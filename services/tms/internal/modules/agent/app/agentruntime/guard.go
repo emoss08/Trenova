@@ -301,8 +301,8 @@ func unknownOutcome(toolName string) toolOutcome {
 // re-learn a refusal. Only the refusals are put back.
 //
 // The ordinals are not. An attempt that starts over asks the model afresh,
-// and the model asks for the same writes again: the first assign_move of the
-// retry is the first assign_move of the run, and has to mint the same step
+// and the model asks for the same writes again: the first dispatch_assign_move of the
+// retry is the first dispatch_assign_move of the run, and has to mint the same step
 // key so the ledger answers with what already happened. Numbering it after the
 // earlier attempt's calls minted a new key, and the write ran a second time.
 func (s *Service) seedFromLedger(

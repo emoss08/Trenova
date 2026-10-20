@@ -116,7 +116,7 @@ func TestExecute_RefusesAWritePastTheToolsDailyCap(t *testing.T) {
 	t.Parallel()
 
 	tool := &recordingTool{
-		name:      "assign_move",
+		name:      "dispatch_assign_move",
 		resource:  permission.ResourceShipmentMove,
 		operation: permission.OpUpdate,
 	}
@@ -124,16 +124,16 @@ func TestExecute_RefusesAWritePastTheToolsDailyCap(t *testing.T) {
 	svc := newExecutor(tool, repo, &fakePermissions{allowed: true})
 	svc.definitions = fixedDefinition{definition: &agentdefinition.Definition{Name: "Night desk"}}
 	budgets := &fakeBudgets{refusal: agentports.BudgetRefusal{
-		Cap: agentports.BudgetCapTool, Tool: "assign_move", Spent: "5", Limit: "5",
+		Cap: agentports.BudgetCapTool, Tool: "dispatch_assign_move", Spent: "5", Limit: "5",
 	}}
 	svc.budgets = budgets
 
-	proposal := testProposal("assign_move", map[string]any{})
+	proposal := testProposal("dispatch_assign_move", map[string]any{})
 	err := svc.Execute(t.Context(), proposal, nil, approver(proposal))
 
 	require.ErrorIs(t, err, ErrBudgetSpent)
 	assert.Contains(t, err.Error(), "daily limit of 5")
-	assert.Equal(t, "assign_move", budgets.asked)
+	assert.Equal(t, "dispatch_assign_move", budgets.asked)
 	assert.Zero(t, tool.calls)
 	require.Len(t, repo.recorded, 1)
 	assert.Equal(t, agent.ProposalStatusExecutionFailed, repo.recorded[0].status)
@@ -143,7 +143,7 @@ func TestExecute_RunsWhenThereIsNoCapAndNoSimulation(t *testing.T) {
 	t.Parallel()
 
 	tool := &recordingTool{
-		name:      "assign_move",
+		name:      "dispatch_assign_move",
 		resource:  permission.ResourceShipmentMove,
 		operation: permission.OpUpdate,
 	}
@@ -152,7 +152,7 @@ func TestExecute_RunsWhenThereIsNoCapAndNoSimulation(t *testing.T) {
 	svc.definitions = fixedDefinition{definition: &agentdefinition.Definition{Name: "Night desk"}}
 	svc.budgets = &fakeBudgets{}
 
-	proposal := testProposal("assign_move", map[string]any{})
+	proposal := testProposal("dispatch_assign_move", map[string]any{})
 	require.NoError(t, svc.Execute(t.Context(), proposal, nil, approver(proposal)))
 
 	assert.Equal(t, 1, tool.calls)

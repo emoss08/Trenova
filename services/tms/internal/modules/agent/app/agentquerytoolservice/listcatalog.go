@@ -102,11 +102,11 @@ func newListWorkersTool(
 	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
 	return newListTool(listSpec{
-		name:         "list_workers",
+		name:         "worker_list",
 		entityPlural: "workers",
-		summary: "List workers (drivers) by employment or qualification. search_worker " +
-			"finds a name; list_expiring_credentials, credentials. \"none on file\" was " +
-			"never recorded: report it as worse than expiring soon.",
+		summary: "List workers (drivers) by employment or qualification. worker_search " +
+			"finds a name; worker_list_expiring_credentials, credentials. \"none on file\" " +
+			"was never recorded: worse than expiring soon.",
 		resource: permission.ResourceWorker,
 		config:   querybuilder.GetFieldConfiguration((*worker.Worker)(nil)),
 		fields: []listField{
@@ -114,7 +114,7 @@ func newListWorkersTool(
 				Name:   "status",
 				Kind:   filterEnum,
 				Values: statusValues,
-				Note:   "not availability; see canBeAssigned, list_time_off",
+				Note:   "not availability; see canBeAssigned, worker_list_time_off",
 			},
 			{Name: "type", Kind: filterEnum, Values: workerTypes},
 			{Name: "driverType", Kind: filterEnum, Values: driverTypes},
@@ -215,7 +215,7 @@ func shipmentListSpec(repo shipmentports.ShipmentRepository) listSpec {
 			{
 				Name: "customerId",
 				Kind: filterText,
-				Note: "from list_customers, never guessed",
+				Note: "from customer_list, never guessed",
 			},
 			{Name: "proNumber", Kind: filterText, Sortable: true},
 			{Name: "bol", Kind: filterText},
@@ -360,7 +360,7 @@ func newListTractorsTool(
 	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
 	return newListTool(listSpec{
-		name:         "list_tractors",
+		name:         "equipment_list_tractors",
 		entityPlural: "tractors",
 		summary: "List tractors (power units) narrowed by status, ownership, or a " +
 			"registration or lease date. Use it for questions about which units are out " +
@@ -424,7 +424,7 @@ func newListTrailersTool(repo trailerports.TrailerRepository) agentports.AgentQu
 	})
 
 	return newListTool(listSpec{
-		name:         "list_trailers",
+		name:         "equipment_list_trailers",
 		entityPlural: "trailers",
 		summary: "List trailers narrowed by status, ownership, or a registration, " +
 			"lease or inspection date, each with its equipment type (dry van, reefer, " +
@@ -482,7 +482,7 @@ type customerRow struct {
 
 func newListCustomersTool(repo customerports.CustomerRepository) agentports.AgentQueryTool {
 	return newListTool(listSpec{
-		name:         "list_customers",
+		name:         toolCustomerList,
 		entityPlural: "customers",
 		summary: "List customers narrowed by status, code, name or city, with their ids. " +
 			"Use it to turn a customer's name into an id: shipment_list filters on " +
@@ -530,7 +530,7 @@ type locationRow struct {
 
 func newListLocationsTool(repo locationports.LocationRepository) agentports.AgentQueryTool {
 	return newListTool(listSpec{
-		name:         "list_locations",
+		name:         toolLocationList,
 		entityPlural: "locations",
 		summary: "List locations (facilities, terminals, yards) narrowed by status, " +
 			"code, name or city.",
@@ -607,7 +607,7 @@ func specOf(tool agentports.AgentQueryTool) listSpec {
 // applyProfile copies the qualification roll-up onto the row. A worker without a
 // profile is a record mid-onboarding, not an error: the fields stay empty rather
 // than reporting a lapsed licence nobody has yet entered.
-// toWorkerRow is the one worker projection. search_worker used to return the
+// toWorkerRow is the one worker projection. worker_search used to return the
 // stored entity instead, which cost six times the bytes for the same answer —
 // eight drivers overran the tool-result cap and were truncated mid-record — and
 // reported an unrecorded credential as a bare null, which is the reading that

@@ -400,10 +400,10 @@ func RenderReversalRequest(
 		plan.Change.Journal.Lines,
 	))
 
-	next := "It waits for an approver, and post_journal_reversal books it once approved."
+	next := "It waits for an approver, and ledger_post_journal_reversal books it once approved."
 	if after.Status == journalreversal.StatusApproved {
 		next = "Journal approval is turned off, so it is approved at once as the person who " +
-			"requests it, and post_journal_reversal books it."
+			"requests it, and ledger_post_journal_reversal books it."
 	}
 
 	return toolpreview.Build(fmt.Sprintf(

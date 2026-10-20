@@ -65,7 +65,7 @@ describe("a saved step's reasoning", () => {
       message({
         role: "Assistant",
         reasoning: { text: "" },
-        toolCalls: [{ id: "c4", name: "get_worker", arguments: {} }],
+        toolCalls: [{ id: "c4", name: "worker_get", arguments: {} }],
       }),
     ]);
 
@@ -119,9 +119,9 @@ describe("a streaming step's reasoning", () => {
       { event: "tool_finished", data: { callId: "c2", name: "get_stops", content: "{}" } },
       {
         event: "message",
-        data: { content: "", model: "m", toolCalls: [{ id: "c3", name: "get_worker" }] },
+        data: { content: "", model: "m", toolCalls: [{ id: "c3", name: "worker_get" }] },
       },
-      { event: "tool_started", data: { callId: "c3", name: "get_worker" } },
+      { event: "tool_started", data: { callId: "c3", name: "worker_get" } },
     ] as AssistantStreamEvent[]);
 
     expect(steps.map((step) => [step.id, step.reasoning])).toEqual([

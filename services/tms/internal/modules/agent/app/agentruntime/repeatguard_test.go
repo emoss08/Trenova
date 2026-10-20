@@ -18,10 +18,10 @@ func TestRun_WillNotRepeatACallThatAlreadyFailedUnchanged(t *testing.T) {
 	t.Parallel()
 
 	args := map[string]any{"statuses": map[string]any{"item": []any{"Completed"}}}
-	tool := queryTool("run_report", nil, errors.New("expected a list, got map"))
+	tool := queryTool("report_run", nil, errors.New("expected a list, got map"))
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("run_report", args),
-		toolTurn("run_report", args),
+		toolTurn("report_run", args),
+		toolTurn("report_run", args),
 		textTurn("I could not start it."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{
@@ -29,7 +29,7 @@ func TestRun_WillNotRepeatACallThatAlreadyFailedUnchanged(t *testing.T) {
 	}, &stubActionRegistry{}, nil)
 
 	result, err := rt.Run(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition("run_report"),
+		Definition: testDefinition("report_run"),
 		Actor:      testActor(),
 		Input:      "run the unbilled report",
 	})
@@ -59,20 +59,20 @@ func TestRun_StopsCallingToolsAfterRepeatedFailedCalls(t *testing.T) {
 	t.Parallel()
 
 	args := map[string]any{"statuses": map[string]any{"item": []any{"Completed"}}}
-	tool := queryTool("run_report", nil, errors.New("expected a list, got map"))
+	tool := queryTool("report_run", nil, errors.New("expected a list, got map"))
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("run_report", args),
-		toolTurn("run_report", args),
-		toolTurn("run_report", args),
+		toolTurn("report_run", args),
+		toolTurn("report_run", args),
+		toolTurn("report_run", args),
 		textTurn("The report refused the status filter, so it did not run."),
-		toolTurn("run_report", args),
+		toolTurn("report_run", args),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{
 		Tools: []agentports.AgentQueryTool{tool},
 	}, &stubActionRegistry{}, nil)
 
 	result, err := rt.Run(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition("run_report"),
+		Definition: testDefinition("report_run"),
 		Actor:      testActor(),
 		Input:      "run the unbilled report",
 	})
@@ -97,10 +97,10 @@ func TestRun_StopsCallingToolsAfterRepeatedFailedCalls(t *testing.T) {
 func TestRun_AllowsARetryWithDifferentArguments(t *testing.T) {
 	t.Parallel()
 
-	tool := queryTool("run_report", nil, errors.New("expected a list, got map"))
+	tool := queryTool("report_run", nil, errors.New("expected a list, got map"))
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("run_report", map[string]any{"statuses": map[string]any{"item": []any{"A"}}}),
-		toolTurn("run_report", map[string]any{"statuses": []any{"A"}}),
+		toolTurn("report_run", map[string]any{"statuses": map[string]any{"item": []any{"A"}}}),
+		toolTurn("report_run", map[string]any{"statuses": []any{"A"}}),
 		textTurn("done"),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{
@@ -108,7 +108,7 @@ func TestRun_AllowsARetryWithDifferentArguments(t *testing.T) {
 	}, &stubActionRegistry{}, nil)
 
 	_, err := rt.Run(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition("run_report"),
+		Definition: testDefinition("report_run"),
 		Actor:      testActor(),
 		Input:      "run the unbilled report",
 	})
@@ -153,12 +153,12 @@ func TestCallKey_IgnoresArgumentOrder(t *testing.T) {
 	t.Parallel()
 
 	first, ok := callKey(agentports.ToolCall{
-		Name:      "run_report",
+		Name:      "report_run",
 		Arguments: map[string]any{"a": 1, "b": 2},
 	})
 	require.True(t, ok)
 	second, ok := callKey(agentports.ToolCall{
-		Name:      "run_report",
+		Name:      "report_run",
 		Arguments: map[string]any{"b": 2, "a": 1},
 	})
 	require.True(t, ok)

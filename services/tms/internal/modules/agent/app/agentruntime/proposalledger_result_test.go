@@ -12,14 +12,14 @@ import (
 /*
 A later turn reads what an approved write made, not only that it ran.
 
-After an approved create_report the model knew a report had been saved and
-not which one, and passed the proposal's id to describe_report. Every later
+After an approved report_create the model knew a report had been saved and
+not which one, and passed the proposal's id to report_get. Every later
 turn now reads the report's name and the id to use.
 */
 func TestProposalOutcomeText_NamesWhatAnExecutedWriteMade(t *testing.T) {
 	t.Parallel()
 
-	text := proposalOutcomeText("create_report", agentports.ProposalOutcome{
+	text := proposalOutcomeText("report_create", agentports.ProposalOutcome{
 		Status: agent.ProposalStatusExecuted,
 		ExecutionResult: &agent.ToolExecutionResult{
 			Action: "created",
@@ -30,7 +30,7 @@ func TestProposalOutcomeText_NamesWhatAnExecutedWriteMade(t *testing.T) {
 	})
 
 	assert.Equal(t,
-		`The person approved the proposal to run "create_report" and it ran successfully. `+
+		`The person approved the proposal to run "report_create" and it ran successfully. `+
 			`It created the report "Shipments for Peak Distributing". It produced definitionId `+
 			`rd_01JPEAK; use that id, not the proposal's, when you refer to what it made. `+
 			`The change has been made; do not propose it again.`,
@@ -41,12 +41,12 @@ func TestProposalOutcomeText_NamesWhatAnExecutedWriteMade(t *testing.T) {
 func TestProposalOutcomeText_ReadsAsBeforeWithoutAResult(t *testing.T) {
 	t.Parallel()
 
-	text := proposalOutcomeText("create_dashboard", agentports.ProposalOutcome{
+	text := proposalOutcomeText("report_create_dashboard", agentports.ProposalOutcome{
 		Status: agent.ProposalStatusExecuted,
 	})
 
 	assert.Equal(t,
-		`The person approved the proposal to run "create_dashboard" and it ran successfully. `+
+		`The person approved the proposal to run "report_create_dashboard" and it ran successfully. `+
 			`The change has been made; do not propose it again.`,
 		text,
 	)
@@ -58,7 +58,7 @@ func TestProposalOutcomeText_ReadsAsBeforeWithoutAResult(t *testing.T) {
 func TestProposalOutcomeText_DoesNotCallAnAutomaticWriteApproved(t *testing.T) {
 	t.Parallel()
 
-	text := proposalOutcomeText("create_report", agentports.ProposalOutcome{
+	text := proposalOutcomeText("report_create", agentports.ProposalOutcome{
 		Status:       agent.ProposalStatusExecuted,
 		AutonomyTier: agent.TierAutoExecute,
 		ExecutionResult: &agent.ToolExecutionResult{
@@ -70,19 +70,19 @@ func TestProposalOutcomeText_DoesNotCallAnAutomaticWriteApproved(t *testing.T) {
 	})
 
 	assert.Equal(t,
-		`The call to "create_report" ran on its own, without needing approval, and succeeded. `+
+		`The call to "report_create" ran on its own, without needing approval, and succeeded. `+
 			`It created the report "Lanes". It produced definitionId rd_01; use that id, not `+
 			`the proposal's, when you refer to what it made. The change has been made; do not `+
 			`make it again.`,
 		text,
 	)
 
-	failed := proposalOutcomeText("create_report", agentports.ProposalOutcome{
+	failed := proposalOutcomeText("report_create", agentports.ProposalOutcome{
 		Status:         agent.ProposalStatusExecutionFailed,
 		AutonomyTier:   agent.TierAutoExecute,
 		ExecutionError: "name taken",
 	})
 	assert.True(t, strings.HasPrefix(failed,
-		`The call to "create_report" ran on its own but it FAILED when it ran: name taken`))
+		`The call to "report_create" ran on its own but it FAILED when it ran: name taken`))
 	assert.NotContains(t, failed, "approved")
 }

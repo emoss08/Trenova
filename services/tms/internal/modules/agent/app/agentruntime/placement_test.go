@@ -26,16 +26,16 @@ func placementRun(
 ) (*agentports.RunResult, *[]kernelports.StreamEvent, *scriptedCompletion) {
 	t.Helper()
 
-	turns := []*agentports.ChatCompletionResult{toolTurn("get_formula_template", map[string]any{})}
+	turns := []*agentports.ChatCompletionResult{toolTurn("formula_get_template", map[string]any{})}
 	for _, reply := range replies {
 		turns = append(turns, textTurn(reply))
 	}
 	completion := &scriptedCompletion{Turns: turns}
 	rt := newRuntime(completion, &stubQueryRegistry{Tools: []agentports.AgentQueryTool{
-		queryTool("get_formula_template", map[string]any{"id": "ft_1"}, nil),
+		queryTool("formula_get_template", map[string]any{"id": "ft_1"}, nil),
 	}}, &stubActionRegistry{}, nil)
 	req := &agentports.RunRequest{
-		Definition: testDefinition("get_formula_template"),
+		Definition: testDefinition("formula_get_template"),
 		Actor:      testActor(),
 		Input:      "Show me formula template Per CWT (Hundredweight)",
 		Delegation: delegation,
@@ -281,20 +281,20 @@ func redraftRun(
 	t.Helper()
 
 	turns := []*agentports.ChatCompletionResult{
-		toolTurn("draft_edi_connection", map[string]any{}),
-		toolTurn("draft_edi_connection", map[string]any{"values": []any{"again"}}),
+		toolTurn("edi_draft_connection", map[string]any{}),
+		toolTurn("edi_draft_connection", map[string]any{"values": []any{"again"}}),
 	}
 	for _, reply := range replies {
 		turns = append(turns, textTurn(reply))
 	}
 	rt := newRuntime(&scriptedCompletion{Turns: turns}, &stubQueryRegistry{
 		Tools: []agentports.AgentQueryTool{
-			queryTool("draft_edi_connection", map[string]any{"ready": true}, nil),
+			queryTool("edi_draft_connection", map[string]any{"ready": true}, nil),
 		},
 	}, &stubActionRegistry{}, nil)
 	shown := []*agentports.ShownArtifact{first, second}
 	req := &agentports.RunRequest{
-		Definition: testDefinition("draft_edi_connection"),
+		Definition: testDefinition("edi_draft_connection"),
 		Actor:      testActor(),
 		Input:      "acme retail sent over their edi guide, can you get them set up?",
 		ToolObserver: func(agentports.ToolObservation) (*agentports.ShownArtifact, error) {

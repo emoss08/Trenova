@@ -5,13 +5,13 @@ import "slices"
 const (
 	ToolWebSearch       = "web_search"
 	ToolWebRead         = "web_read"
-	ToolListPortalSites = "list_portal_sites"
-	ToolReadPortal      = "read_portal"
-	ToolActOnPortal     = "act_on_portal"
-	ToolAnalyzeData     = "analyze_data"
-	ToolWatchWeb        = "watch_web"
-	ToolListWebWatches  = "list_web_watches"
-	ToolStopWebWatch    = "stop_web_watch"
+	ToolListPortalSites = "web_list_portal_sites"
+	ToolReadPortal      = "web_read_portal"
+	ToolActOnPortal     = "web_use_portal"
+	ToolAnalyzeData     = "report_analyze_data"
+	ToolWatchWeb        = "web_watch"
+	ToolListWebWatches  = "web_list_watches"
+	ToolStopWebWatch    = "web_stop_watch"
 )
 
 // WebWatchTools are the web research tools that watch the web over time,

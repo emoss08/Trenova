@@ -42,7 +42,7 @@ func (t *conversationTool) Validate(_ context.Context, params agentports.ToolExe
 
 func newConversationTool() *conversationTool {
 	return &conversationTool{recordingTool: recordingTool{
-		name:      "apply_edi_connection_draft",
+		name:      "edi_apply_connection_draft",
 		resource:  permission.ResourceEDI,
 		operation: permission.OpUpdate,
 	}}

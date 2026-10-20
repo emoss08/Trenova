@@ -151,12 +151,12 @@ func LeaveToolProviders() []any {
 
 func leaveCaseIDProperty() map[string]any {
 	return agenttoolschema.RecordID(permission.ResourceWorkerLeave, "The leave case",
-		"list_worker_leave_cases")
+		"worker_list_leave_cases")
 }
 
 func leaveDayIDProperty() map[string]any {
 	return agenttoolschema.KindID(
-		agenttoolschema.IDDescription("The day of leave", "list_worker_leave_cases"),
+		agenttoolschema.IDDescription("The day of leave", "worker_list_leave_cases"),
 		permission.KindLeaveDay,
 	)
 }
@@ -188,8 +188,8 @@ func leaveCaseProperties() map[string]any {
 		paramEndsAt: agenttoolschema.Date("The last day of leave, when it is known."),
 		paramEligibilityHours: common.IntegerProperty("Hours worked in the twelve months before, "+
 			"for eligibility.", 0, maxEligibilityHours),
-		wfParamDocument:   wfDocumentProperty(),
-		common.FieldNotes: wfNoteProperty("Anything the case should say."),
+		wfParamDocument:  wfDocumentProperty(),
+		common.ParamNote: wfNoteProperty("Anything the case should say."),
 	}
 }
 
@@ -224,7 +224,7 @@ func applyLeaveCaseOpen(entity *worker.WorkerLeaveCase, params map[string]any) e
 	if entity.DocumentID, err = common.OptionalID(params, wfParamDocument); err != nil {
 		return err
 	}
-	if entity.Notes, err = common.BoundedText(params, common.FieldNotes, wfNoteChars); err != nil {
+	if entity.Notes, err = common.BoundedText(params, common.ParamNote, wfNoteChars); err != nil {
 		return err
 	}
 	hours, err := common.OptionalIntInRange(params, paramEligibilityHours, 0, maxEligibilityHours)
@@ -246,12 +246,12 @@ func newOpenLeaveCaseTool(cases LeaveKeeper) agentports.AgentTool {
 		"The day the worker asked. Defaults to today.",
 	)
 	spec := withSchema(wfSpec(
-		"open_leave_case",
+		"worker_open_leave_case",
 		"Open a leave case for a worker who asked for FMLA, medical, military, parental or "+
 			"personal leave, from the day it starts. The case waits for a decision a person "+
-			"makes; the days taken are recorded against it with record_leave_day.",
+			"makes; the days taken are recorded against it with worker_record_leave_day.",
 		"Files a pending leave request inside Trenova; nothing is decided or sent, and the "+
-			"case is corrected with update_leave_case.",
+			"case is corrected with worker_update_leave_case.",
 		permission.ResourceWorkerLeave,
 		permission.OpCreate,
 	), properties, common.ParamWorkerID, paramStartsAt)
@@ -354,7 +354,7 @@ func leaveCaseUpdateFrom(
 	}
 	if req.Notes, err = common.OptionalBoundedText(
 		params.Params,
-		common.FieldNotes,
+		common.ParamNote,
 		wfNoteChars,
 	); err != nil {
 		return nil, err
@@ -409,7 +409,7 @@ func newUpdateLeaveCaseTool(cases LeaveKeeper) agentports.AgentTool {
 	properties[paramLeaveCaseID] = leaveCaseIDProperty()
 	properties[paramStartsAt] = agenttoolschema.Date("The first day of leave.")
 	spec := targeting(withSchema(wfSpec(
-		"update_leave_case",
+		"worker_update_leave_case",
 		"Correct or fill in a leave case as it goes: the kind, how it is taken, the dates, "+
 			"hours worked for eligibility, a document, notes. Give only what changes. It never "+
 			"decides the case.",
@@ -458,7 +458,7 @@ func newUpdateLeaveCaseTool(cases LeaveKeeper) agentports.AgentTool {
 
 func newCloseLeaveCaseTool(cases LeaveKeeper) agentports.AgentTool {
 	spec := personOnly(targeting(withSchema(wfSpec(
-		"close_leave_case",
+		"worker_close_leave_case",
 		"Close a decided leave case once the leave is over. The days recorded against it "+
 			"stay counted. A case still waiting for a decision is refused. Only a person's "+
 			"approval runs it.",
@@ -469,7 +469,7 @@ func newCloseLeaveCaseTool(cases LeaveKeeper) agentports.AgentTool {
 	), map[string]any{paramLeaveCaseID: leaveCaseIDProperty()}, paramLeaveCaseID),
 		paramLeaveCaseID, permission.ResourceWorkerLeave))
 	spec.SearchTerms = []string{"returned from leave", "leave ended", "close fmla"}
-	spec.Recipe = []string{"list_worker_leave_cases", "close_leave_case"}
+	spec.Recipe = []string{"worker_list_leave_cases", "worker_close_leave_case"}
 	render := renderLeaveCaseChange("Would close the leave case.",
 		[]string{wfFieldClosedAt}, common.FieldStatus, wfFieldClosedAt, "endsAt")
 
@@ -506,7 +506,7 @@ func newCloseLeaveCaseTool(cases LeaveKeeper) agentports.AgentTool {
 
 func newRequestLeaveCertificationTool(cases LeaveKeeper) agentports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
-		"request_leave_certification",
+		"worker_request_leave_certification",
 		"Record that medical certification was asked for on a leave case and start its "+
 			"clock. It is due in the organization's certification window, fifteen days by "+
 			"default, or on the day given. Asking the worker is done by the person; this keeps the date.",
@@ -596,12 +596,12 @@ func leaveDayOptions() []toolpreview.Option {
 
 func newRecordLeaveDayTool(cases LeaveKeeper) agentports.AgentTool {
 	spec := withSchema(wfSpec(
-		"record_leave_day",
+		"worker_record_leave_day",
 		"Record a day of leave taken against an open or approved leave case, with the "+
 			"hours. Whether it counts against the FMLA entitlement follows the case as it "+
 			"stands today.",
 		"Records a day taken against a leave case inside Trenova; nothing is sent, and "+
-			"update_leave_day or delete_leave_day corrects it.",
+			"worker_update_leave_day or worker_delete_leave_day corrects it.",
 		permission.ResourceWorkerLeave,
 		permission.OpCreate,
 	), map[string]any{
@@ -609,9 +609,9 @@ func newRecordLeaveDayTool(cases LeaveKeeper) agentports.AgentTool {
 		paramUsedOn:      agenttoolschema.Date("The day the leave was taken."),
 		paramLeaveHours:  common.AmountProperty("Hours taken that day, such as 8 or 4.5."),
 		paramPTOLink: agenttoolschema.RecordIDText(permission.ResourceWorkerPTO,
-			"Paid time off booked for the same day, from list_time_off, when the leave "+
+			"Paid time off booked for the same day, from worker_list_time_off, when the leave "+
 				"runs concurrently."),
-		common.FieldNotes: wfNoteProperty("Anything the day should say."),
+		common.ParamNote: wfNoteProperty("Anything the day should say."),
 	}, paramLeaveCaseID, paramUsedOn, paramLeaveHours)
 
 	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[
@@ -636,7 +636,7 @@ func newRecordLeaveDayTool(cases LeaveKeeper) agentports.AgentTool {
 			if err != nil {
 				return nil, err
 			}
-			notes, err := common.BoundedText(params.Params, common.FieldNotes, wfNoteChars)
+			notes, err := common.BoundedText(params.Params, common.ParamNote, wfNoteChars)
 			if err != nil {
 				return nil, err
 			}
@@ -696,7 +696,7 @@ func newRecordLeaveDayTool(cases LeaveKeeper) agentports.AgentTool {
 
 func newUpdateLeaveDayTool(cases LeaveKeeper) agentports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
-		"update_leave_day",
+		"worker_update_leave_day",
 		"Correct a day of leave already recorded: the hours, whether it counts against the "+
 			"entitlement, the time off it runs with, or its note. Give only what changes.",
 		"Corrects a recorded day of leave inside Trenova; nothing is sent, and it is corrected "+
@@ -710,9 +710,9 @@ func newUpdateLeaveDayTool(cases LeaveKeeper) agentports.AgentTool {
 			"entitlement."),
 		paramPTOLink: agenttoolschema.RecordIDText(
 			permission.ResourceWorkerPTO,
-			"Paid time off booked for the same day, from list_time_off.",
+			"Paid time off booked for the same day, from worker_list_time_off.",
 		),
-		common.FieldNotes: wfNoteProperty("The day's note."),
+		common.ParamNote: wfNoteProperty("The day's note."),
 	}, paramLeaveEntryID), paramLeaveEntryID, permission.ResourceWorkerLeave)
 
 	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[
@@ -746,7 +746,7 @@ func newUpdateLeaveDayTool(cases LeaveKeeper) agentports.AgentTool {
 			if req.PTOID, err = common.OptionalID(params.Params, paramPTOLink); err != nil {
 				return nil, err
 			}
-			if req.Notes, err = common.OptionalBoundedText(params.Params, common.FieldNotes,
+			if req.Notes, err = common.OptionalBoundedText(params.Params, common.ParamNote,
 				wfNoteChars); err != nil {
 				return nil, err
 			}
@@ -790,11 +790,11 @@ func newUpdateLeaveDayTool(cases LeaveKeeper) agentports.AgentTool {
 
 func newDeleteLeaveDayTool(cases LeaveKeeper) agentports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
-		"delete_leave_day",
+		"worker_delete_leave_day",
 		"Remove a day of leave recorded in error, which gives its hours back to the "+
 			"worker's entitlement.",
 		"Removes a recorded day of leave; the audit trail keeps what was removed, and "+
-			"record_leave_day records it again.",
+			"worker_record_leave_day records it again.",
 		permission.ResourceWorkerLeave,
 		permission.OpUpdate,
 	), map[string]any{paramLeaveEntryID: leaveDayIDProperty()}, paramLeaveEntryID),

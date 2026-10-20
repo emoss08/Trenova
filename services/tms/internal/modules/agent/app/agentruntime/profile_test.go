@@ -34,7 +34,7 @@ func profileRuntime(t *testing.T, agents ...*agentdefinition.Definition) *Servic
 	}}
 	action := &stubActionRegistry{Tools: []agentports.AgentTool{
 		&agenttest.StubActionTool{ToolName: "invoice_post", Tier: agent.TierAutoExecute},
-		&agenttest.StubActionTool{ToolName: "assign_move", Tier: agent.TierAutoExecute},
+		&agenttest.StubActionTool{ToolName: "dispatch_assign_move", Tier: agent.TierAutoExecute},
 	}}
 	byID := make(map[pulid.ID]*agentdefinition.Definition, len(agents))
 	for _, definition := range agents {
@@ -66,7 +66,7 @@ func conversationRequest(definition *agentdefinition.Definition) *agentports.Run
 func TestProfile_AConversationReachesTheToolsThePersonsOtherAgentsHold(t *testing.T) {
 	t.Parallel()
 
-	dispatch := agentHolding("Dispatch helper", "shipment_list", "assign_move")
+	dispatch := agentHolding("Dispatch helper", "shipment_list", "dispatch_assign_move")
 	billing := agentHolding("Billing helper", "invoice_list", "invoice_post")
 	billing.AutonomyCeiling = agent.TierActWithApproval
 	service := profileRuntime(t, dispatch, billing)
@@ -78,7 +78,7 @@ func TestProfile_AConversationReachesTheToolsThePersonsOtherAgentsHold(t *testin
 	assert.Equal(t, agent.TierActWithApproval, profile.beyond["invoice_post"],
 		"a reached write runs no higher than the agent holding it would run it")
 	assert.NotContains(t, profile.beyond, "shipment_list", "its own tools are held, not reached")
-	assert.NotContains(t, profile.beyond, "assign_move")
+	assert.NotContains(t, profile.beyond, "dispatch_assign_move")
 }
 
 func TestProfile_ReachTakesTheMostPermissiveHolder(t *testing.T) {

@@ -1,8 +1,8 @@
 # The product guide
 
 Agents answer "where is…" and "how do I…" from the product guide. Every agent
-holds two core tools that read it: `find_in_trenova` (pages and step-by-step
-tasks, filtered to what the person can open) and `open_page` (moves the app to
+holds two core tools that read it: `agent_find_page` (pages and step-by-step
+tasks, filtered to what the person can open) and `agent_open_page` (moves the app to
 a page or record). The prompt also names the page a person is on from it.
 
 A chat turn also says where the conversation is being had: the client sends

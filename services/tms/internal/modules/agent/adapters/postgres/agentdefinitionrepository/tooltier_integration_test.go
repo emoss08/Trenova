@@ -5,12 +5,12 @@ package agentdefinitionrepository
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -50,7 +50,7 @@ func TestSetToolTier_PromotesACoreToolTheAgentDoesNotList(t *testing.T) {
 	require.NoError(t, db.NewSelect().
 		Table("agent_definitions").
 		Column("id", "organization_id", "business_unit_id").
-		Where("NOT ('remember' = ANY(tool_names))").
+		Where("NOT ('agent_create_memory' = ANY(tool_names))").
 		Limit(1).
 		Scan(ctx, &row))
 
@@ -60,7 +60,7 @@ func TestSetToolTier_PromotesACoreToolTheAgentDoesNotList(t *testing.T) {
 	require.NoError(t, repo.SetToolTier(ctx, agentdefinitionports.SetAgentDefinitionToolTierRequest{
 		ID:         row.ID,
 		TenantInfo: tenant,
-		ToolName:   "remember",
+		ToolName:   "agent_create_memory",
 		Tier:       agent.TierAutoExecute,
 	}))
 
@@ -69,12 +69,12 @@ func TestSetToolTier_PromotesACoreToolTheAgentDoesNotList(t *testing.T) {
 		TenantInfo: tenant,
 	})
 	require.NoError(t, err)
-	require.Equal(t, agent.TierAutoExecute, definition.ToolTiers["remember"])
+	require.Equal(t, agent.TierAutoExecute, definition.ToolTiers["agent_create_memory"])
 
 	err = repo.SetToolTier(ctx, agentdefinitionports.SetAgentDefinitionToolTierRequest{
 		ID:         row.ID,
 		TenantInfo: tenant,
-		ToolName:   "create_dashboard",
+		ToolName:   "report_create_dashboard",
 		Tier:       agent.TierAutoExecute,
 	})
 	require.Error(t, err, "a selectable tool the agent does not hold still cannot be promoted")
@@ -114,7 +114,7 @@ func TestSetToolTier_MergesIntoAnAgentSavedWithNoTiers(t *testing.T) {
 	require.NoError(t, repo.SetToolTier(ctx, agentdefinitionports.SetAgentDefinitionToolTierRequest{
 		ID:         row.ID,
 		TenantInfo: tenant,
-		ToolName:   "remember",
+		ToolName:   "agent_create_memory",
 		Tier:       agent.TierActWithApproval,
 	}))
 
@@ -123,6 +123,6 @@ func TestSetToolTier_MergesIntoAnAgentSavedWithNoTiers(t *testing.T) {
 		TenantInfo: tenant,
 	})
 	require.NoError(t, err)
-	require.Equal(t, map[string]agent.AutonomyTier{"remember": agent.TierActWithApproval},
+	require.Equal(t, map[string]agent.AutonomyTier{"agent_create_memory": agent.TierActWithApproval},
 		definition.ToolTiers)
 }

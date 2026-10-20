@@ -101,7 +101,7 @@ func TestCompactToolResult_KeepsTheRecordIDsItLeavesOut(t *testing.T) {
 func TestCompactToolResult_NamesNoIDsWhenTheCutHoldsNone(t *testing.T) {
 	t.Parallel()
 
-	compacted := compactToolResult(FenceToolResult("read_attachment", strings.Repeat("text ", 200)))
+	compacted := compactToolResult(FenceToolResult("agent_read_attachment", strings.Repeat("text ", 200)))
 
 	assert.Contains(t, compacted, "was shortened")
 	assert.NotContains(t, compacted, "record ids")

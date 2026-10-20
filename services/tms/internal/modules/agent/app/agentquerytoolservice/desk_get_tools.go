@@ -65,7 +65,7 @@ func newGetDetentionOccurrenceTool(
 	pricer openClockPricer,
 ) agentports.AgentQueryTool {
 	return newGetTool(&getSpec{
-		name:     "get_detention_occurrence",
+		name:     "detention_get_occurrence",
 		entity:   "detention occurrence",
 		resource: permission.ResourceDetention,
 		kinds:    []permission.RecordKind{permission.KindDetentionOccurrence},
@@ -73,9 +73,9 @@ func newGetDetentionOccurrenceTool(
 			"billable minutes, amounts, notice status, and the evidence and notices on file. " +
 			"A clock still running also carries currentlyBillable, priced as of now; quote " +
 			"that rather than the stored amounts, which date from the last recalculation. " +
-			"Use list_detention_desk first when you do not have an id.",
+			"Use detention_list_occurrences first when you do not have an id.",
 		paramName: "occurrenceId",
-		idSource:  "from list_detention_desk, the page you are on, or this run's subject",
+		idSource:  "from detention_list_occurrences, the page you are on, or this run's subject",
 		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
 			occurrence, err := repo.GetByID(ctx, &detentionports.GetDetentionOccurrenceByIDRequest{
 				OccurrenceID:    id,
@@ -112,7 +112,7 @@ func newGetCarrierIntelEventTool(
 	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
 	return newGetTool(&getSpec{
-		name:   "get_carrier_intel_event",
+		name:   "carrier_get_intelligence_event",
 		entity: "carrier intelligence event",
 		searchTerms: []string{
 			"carrier risk alert", "authority change", "insurance lapse", "safety rating change",
@@ -122,10 +122,10 @@ func newGetCarrierIntelEventTool(
 		summary: "Retrieve one carrier intelligence event by id: what changed on the " +
 			"carrier's authority, insurance or safety record, and its severity. It also " +
 			"gives the prior and current values and whether anyone has acknowledged or " +
-			"resolved it. Use list_carrier_intel_events first when you do not have an id, " +
-			"and get_carrier for the carrier itself.",
+			"resolved it. Use carrier_list_intelligence_events first when you do not have an id, " +
+			"and carrier_get for the carrier itself.",
 		paramName: "eventId",
-		idSource: "from list_carrier_intel_events, the page you are on, this run's subject " +
+		idSource: "from carrier_list_intelligence_events, the page you are on, this run's subject " +
 			"or a mentioned record",
 		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
 			events, err := repo.GetByIDs(ctx, tenant, []pulid.ID{id})
@@ -146,14 +146,14 @@ func newGetServiceFailureTool(
 	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
 	return newGetTool(&getSpec{
-		name:     "get_service_failure",
+		name:     "exception_get_service_failure",
 		entity:   "service failure",
 		resource: permission.ResourceServiceFailure,
 		summary: "Retrieve one service failure by id: the late or missed stop, how late, " +
 			"the reason code, the notes, and who reviewed, resolved or voided it. Use " +
-			"list_service_failures first when you do not have an id.",
+			"exception_list_service_failures first when you do not have an id.",
 		paramName: "serviceFailureId",
-		idSource:  "from list_service_failures or the page you are on",
+		idSource:  "from exception_list_service_failures or the page you are on",
 		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
 			return repo.GetByID(ctx, &servicefailureports.GetServiceFailureByIDRequest{
 				ID:         id,
@@ -179,12 +179,12 @@ func newGetWorkerCredentialTool(
 	return &getWorkerCredentialTool{repo: repo, access: newFieldAccess(permissions)}
 }
 
-func (t *getWorkerCredentialTool) Name() string { return "get_worker_credential" }
+func (t *getWorkerCredentialTool) Name() string { return "worker_get_credential" }
 
 func (t *getWorkerCredentialTool) Description() string {
 	return "Retrieve one worker credential by id: its type, the worker who holds it, its " +
 		"status, and when it was issued and expires. It also says whether it was verified " +
-		"and whether a document is on file. Use list_expiring_credentials first when you " +
+		"and whether a document is on file. Use worker_list_expiring_credentials first when you " +
 		"do not have an id."
 }
 
@@ -194,7 +194,7 @@ func (t *getWorkerCredentialTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"credentialId": agenttoolschema.RecordIDText(
 				permission.ResourceWorkerCredential,
-				"The worker credential's id, from list_expiring_credentials "+
+				"The worker credential's id, from worker_list_expiring_credentials "+
 					"or the page you are on.",
 			),
 		},
@@ -326,7 +326,7 @@ func updatePreferenceWarning(preference customer.StatusUpdatePreference) string 
 // update desk has to ask before it writes anything: does this customer want
 // to be told, and who is on the list.
 //
-// It is deliberately narrow. get_customer returns the whole record, and a
+// It is deliberately narrow. customer_get returns the whole record, and a
 // model reading a whole customer to find one field reads thirty others it
 // does not need — including the billing addresses, which are not who asked
 // for status updates.
@@ -335,7 +335,7 @@ func newGetCustomerUpdatePreferencesTool(
 	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
 	return newGetTool(&getSpec{
-		name:     "get_customer_update_preferences",
+		name:     "customer_get_update_preferences",
 		entity:   "customer",
 		resource: permission.ResourceCustomer,
 		summary: "Retrieve what a customer asked to be told as their freight moves: " +
@@ -347,7 +347,7 @@ func newGetCustomerUpdatePreferencesTool(
 			"recipient list is empty the notice profile's own recipients are the fallback. " +
 			"Call this before writing any status update.",
 		paramName: "customerId",
-		idSource:  "from list_customers or the customerId on shipment_get",
+		idSource:  "from customer_list or the customerId on shipment_get",
 		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
 			entity, err := repo.GetByID(ctx, customerports.GetCustomerByIDRequest{
 				ID:         id,

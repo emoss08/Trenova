@@ -62,7 +62,7 @@ func Properties() map[string]any {
 			Statuses,
 		),
 		ParamCustomerID: agenttoolschema.RecordIDText(permission.ResourceCustomer,
-			"Only this customer's shipments, by id from list_customers."),
+			"Only this customer's shipments, by id from customer_list."),
 		ParamDeliveredFrom: stringProperty("Only shipments delivered on or after this day. " +
 			"A date as YYYY-MM-DD, or today."),
 		ParamDeliveredTo: stringProperty("Only shipments delivered on or before this day. " +

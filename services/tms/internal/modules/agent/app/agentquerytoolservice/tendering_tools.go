@@ -47,7 +47,7 @@ type rateConfirmationLister interface {
 
 // listShipmentTendersTool is the tenders panel of a shipment: every tender
 // with the offer each carrier holds. It is what hands out the tender and
-// offer ids cancel_tender and record_tender_response take.
+// offer ids dispatch_cancel_tender and dispatch_record_tender_response take.
 type listShipmentTendersTool struct {
 	tenders tenderLister
 	access  fieldAccess
@@ -60,15 +60,15 @@ func newListShipmentTendersTool(
 	return &listShipmentTendersTool{tenders: tenders, access: newFieldAccess(permissions)}
 }
 
-func (t *listShipmentTendersTool) Name() string { return "list_shipment_tenders" }
+func (t *listShipmentTendersTool) Name() string { return "dispatch_list_tenders" }
 
 func (t *listShipmentTendersTool) Description() string {
 	return "List a shipment's tenders, newest first, with every offer in rank order. Each " +
 		"tender shows its mode and status; each offer the carrier, the rate, how it was sent, " +
 		"its status, any counter the carrier made and when it lapses or was answered. Use " +
 		"it to see who holds an offer before recording a carrier's answer, a decision on its " +
-		"counter or the carrier backing out with record_tender_response, or to find a live " +
-		"tender to withdraw with cancel_tender. Narrow to one move with shipmentMoveId."
+		"counter or the carrier backing out with dispatch_record_tender_response, or to find a live " +
+		"tender to withdraw with dispatch_cancel_tender. Narrow to one move with shipmentMoveId."
 }
 
 func (t *listShipmentTendersTool) ParamSchema() map[string]any {
@@ -78,7 +78,7 @@ func (t *listShipmentTendersTool) ParamSchema() map[string]any {
 				"the page you are on."),
 		paramShipmentMoveID: agenttoolschema.RecordIDText(permission.ResourceShipmentMove,
 			"Only this move's tenders, by id from shipment_get "+
-				"(its moves) or get_dispatch_board."),
+				"(its moves) or dispatch_get_board."),
 	}, paramShipmentID)
 }
 
@@ -104,7 +104,7 @@ type tenderOfferRow struct {
 	ExpiresAt      *int64 `json:"expiresAt,omitempty"`
 	RespondedAt    *int64 `json:"respondedAt,omitempty"`
 	ResponseSource string `json:"responseSource,omitempty"`
-	// Answerable is whether record_tender_response can still record an
+	// Answerable is whether dispatch_record_tender_response can still record an
 	// answer on this offer: the carrier's own, or a decision on its counter.
 	Answerable bool `json:"answerable"`
 	// CounterRate is the rate the carrier countered with, when it made one.
@@ -112,7 +112,7 @@ type tenderOfferRow struct {
 	// CounterNeedsApproval is whether taking the counter needs the tender
 	// approve permission, because it is below the margin floor.
 	CounterNeedsApproval bool `json:"counterNeedsApproval,omitempty"`
-	// BackOutAllowed is whether record_tender_response can record the
+	// BackOutAllowed is whether dispatch_record_tender_response can record the
 	// carrier backing out of this offer, which it accepted.
 	BackOutAllowed bool `json:"backOutAllowed,omitempty"`
 }
@@ -238,21 +238,21 @@ func newListRateConfirmationsTool(
 	return &listRateConfirmationsTool{rateCons: rateCons}
 }
 
-func (t *listRateConfirmationsTool) Name() string { return "list_rate_confirmations" }
+func (t *listRateConfirmationsTool) Name() string { return "rate_list_confirmations" }
 
 func (t *listRateConfirmationsTool) Description() string {
 	return "List a move's rate confirmations, newest revision first. Each shows the carrier, " +
 		"the revision, its status (Generated, Sent, Confirmed or Voided), who it was sent to " +
 		"and when, and whether and how the carrier confirmed it. At most one revision " +
 		"stands at a time; a new one voids the last. Use it before sending, voiding or " +
-		"recording a confirmation, and to find the revision generate_rate_confirmation made."
+		"recording a confirmation, and to find the revision rate_generate_confirmation made."
 }
 
 func (t *listRateConfirmationsTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
 		paramShipmentMoveID: agenttoolschema.RecordIDText(permission.ResourceShipmentMove,
 			"The move, from shipment_get (its moves) or "+
-				"get_dispatch_board."),
+				"dispatch_get_board."),
 	}, paramShipmentMoveID)
 }
 

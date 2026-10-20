@@ -24,7 +24,7 @@ import (
 
 const ParamAlertID = "tableChangeAlertId"
 
-const alertSupplier = "The alert, from list_table_change_alerts. Never guess one."
+const alertSupplier = "The alert, from report_list_table_change_alerts. Never guess one."
 
 var alertStatuses = agenttoolschema.Source(
 	"tableChangeAlert.status",
@@ -183,7 +183,7 @@ func NewUpdateTableChangeAlertTool(alerts AlertKeeper) agentports.AgentTool {
 	)
 
 	return common.NewReceivableTool(&common.ReceivableSpec{
-		Name: "update_table_change_alert",
+		Name: "report_update_table_change_alert",
 		Description: "Change one of the person's change alerts: what it watches, which " +
 			"changes, the conditions or its message. Parts left out keep their value.",
 		Resource:    permission.ResourceTableChangeAlert,
@@ -262,7 +262,7 @@ type alertStatusChange struct {
 
 func NewSetTableChangeAlertStatusTool(alerts AlertKeeper) agentports.AgentTool {
 	return common.NewReceivableTool(&common.ReceivableSpec{
-		Name: "set_table_change_alert_status",
+		Name: "report_set_table_change_alert_status",
 		Description: "Pause one of the person's change alerts so it stops notifying them, or " +
 			"resume a paused one.",
 		Resource:    permission.ResourceTableChangeAlert,
@@ -353,7 +353,7 @@ func NewSetTableChangeAlertStatusTool(alerts AlertKeeper) agentports.AgentTool {
 
 func NewDeleteTableChangeAlertTool(alerts AlertKeeper) agentports.AgentTool {
 	return common.NewReceivableTool(&common.ReceivableSpec{
-		Name:        "delete_table_change_alert",
+		Name:        "report_delete_table_change_alert",
 		Description: "Delete one of the person's change alerts they no longer want.",
 		Resource:    permission.ResourceTableChangeAlert,
 		Operation:   permission.OpDelete,
@@ -361,7 +361,7 @@ func NewDeleteTableChangeAlertTool(alerts AlertKeeper) agentports.AgentTool {
 		DefaultTier: agent.TierPropose,
 		MaxTier:     agent.TierActWithApproval,
 		Rationale: "Removes an alert whose notices went to the person who owns it; " +
-			"create_table_change_alert sets it up again.",
+			"report_create_table_change_alert sets it up again.",
 		Properties: map[string]any{ParamAlertID: agenttoolschema.RecordIDText(
 			permission.ResourceTableChangeAlert, alertSupplier,
 		)},

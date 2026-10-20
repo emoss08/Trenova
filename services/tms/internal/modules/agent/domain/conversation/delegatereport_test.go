@@ -17,7 +17,7 @@ func TestDelegateReport_BoundedKeepsTheRowSmall(t *testing.T) {
 	made := make([]DelegateWrite, 0, maxReportWrites+5)
 	for range maxReportWrites + 5 {
 		made = append(made, DelegateWrite{
-			ToolName: "create_report",
+			ToolName: "report_create",
 			CallID:   "call_1",
 			Tier:     agent.TierAutoExecute,
 			Summary:  "On-time\nthis month " + strings.Repeat("s", 1000),

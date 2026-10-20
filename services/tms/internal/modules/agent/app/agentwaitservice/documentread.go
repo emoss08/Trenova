@@ -27,7 +27,7 @@ const (
 	// finished in half an hour; the work is picked up told so.
 	documentReadLifetimeSeconds int64 = 30 * 60
 	documentReadSuffix                = " to finish being read"
-	documentReadThen                  = "Read the file with read_attachment and carry on with " +
+	documentReadThen                  = "Read the file with agent_read_attachment and carry on with " +
 		"what the person asked of it, without asking them to send their message again."
 	// maxWaitedFileNameRunes keeps the description within its limit however
 	// long the file's name is.
@@ -128,7 +128,7 @@ type fileReading struct {
 	content *documentcontent.Content
 }
 
-// stillBeingRead is read_attachment's own test: the text is not in, or a
+// stillBeingRead is agent_read_attachment's own test: the text is not in, or a
 // model's reading of it is under way.
 func (r *fileReading) stillBeingRead(now int64) bool {
 	if r.content != nil {

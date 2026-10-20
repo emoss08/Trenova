@@ -23,7 +23,7 @@ func testCatalog() []agentdefinitionports.ToolCatalogEntry {
 			Operation: permission.OpRead,
 		},
 		{
-			Name:            "update_customer",
+			Name:            "customer_update",
 			Kind:            agentdefinitionports.ToolCatalogKindAction,
 			Resource:        permission.ResourceCustomer,
 			Operation:       permission.OpUpdate,
@@ -37,7 +37,7 @@ func testCatalog() []agentdefinitionports.ToolCatalogEntry {
 			MaxAutonomyTier: agent.TierActWithApproval,
 		},
 		{
-			Name:      "remember",
+			Name:      "agent_create_memory",
 			Kind:      agentdefinitionports.ToolCatalogKindAction,
 			Core:      true,
 			Resource:  permission.ResourceAgentDefinition,
@@ -114,13 +114,13 @@ func TestSanitizeDraftDropsToolsTheRegistryDoesNotOffer(t *testing.T) {
 		{Name: "shipment_get"},
 		{Name: "exec_shell"},
 		{Name: "shipment_get"},
-		{Name: "remember"},
-		{Name: "  update_customer  "},
+		{Name: "agent_create_memory"},
+		{Name: "  customer_update  "},
 	}
 
 	req, notes := sanitize(t, reply)
 
-	assert.Equal(t, []string{"shipment_get", "update_customer"}, req.ToolNames)
+	assert.Equal(t, []string{"shipment_get", "customer_update"}, req.ToolNames)
 	require.Len(t, notes, 1)
 	assert.Equal(t, "toolNames", notes[0].Field)
 	assert.Equal(t, "exec_shell", notes[0].Value)
@@ -132,14 +132,14 @@ func TestSanitizeDraftCapsTiersAtTheToolAndTheCeiling(t *testing.T) {
 	reply := chatReply()
 	reply.AutonomyCeiling = string(agent.TierAutoExecute)
 	reply.Tools = []draftTool{
-		{Name: "update_customer", Tier: string(agent.TierAutoExecute)},
+		{Name: "customer_update", Tier: string(agent.TierAutoExecute)},
 		{Name: "send_customer_email", Tier: string(agent.TierAutoExecute)},
 		{Name: "shipment_get", Tier: string(agent.TierAutoExecute)},
 	}
 
 	req, notes := sanitize(t, reply)
 
-	assert.Equal(t, agent.TierAutoExecute, req.ToolTiers["update_customer"])
+	assert.Equal(t, agent.TierAutoExecute, req.ToolTiers["customer_update"])
 	assert.Equal(t, agent.TierActWithApproval, req.ToolTiers["send_customer_email"])
 	assert.NotContains(t, req.ToolTiers, "shipment_get")
 	assert.Equal(t, []string{"toolTiers.send_customer_email"}, noteFields(notes))
@@ -147,11 +147,11 @@ func TestSanitizeDraftCapsTiersAtTheToolAndTheCeiling(t *testing.T) {
 	reply.AutonomyCeiling = string(agent.TierPropose)
 	req, notes = sanitize(t, reply)
 
-	assert.Equal(t, agent.TierPropose, req.ToolTiers["update_customer"])
+	assert.Equal(t, agent.TierPropose, req.ToolTiers["customer_update"])
 	assert.Equal(t, agent.TierPropose, req.ToolTiers["send_customer_email"])
 	assert.ElementsMatch(
 		t,
-		[]string{"toolTiers.update_customer", "toolTiers.send_customer_email"},
+		[]string{"toolTiers.customer_update", "toolTiers.send_customer_email"},
 		noteFields(notes),
 	)
 }
@@ -161,7 +161,7 @@ func TestSanitizeDraftDropsAnUnknownTierAndAnUnknownCeiling(t *testing.T) {
 
 	reply := chatReply()
 	reply.AutonomyCeiling = "Unlimited"
-	reply.Tools = []draftTool{{Name: "update_customer", Tier: "Whenever"}}
+	reply.Tools = []draftTool{{Name: "customer_update", Tier: "Whenever"}}
 
 	req, notes := sanitize(t, reply)
 
@@ -169,7 +169,7 @@ func TestSanitizeDraftDropsAnUnknownTierAndAnUnknownCeiling(t *testing.T) {
 	assert.Empty(t, req.ToolTiers)
 	assert.ElementsMatch(
 		t,
-		[]string{"autonomyCeiling", "toolTiers.update_customer"},
+		[]string{"autonomyCeiling", "toolTiers.customer_update"},
 		noteFields(notes),
 	)
 }

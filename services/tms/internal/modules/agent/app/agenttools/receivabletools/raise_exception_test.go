@@ -62,7 +62,7 @@ func TestRaiseException_RefusesAnIDOfAnotherKind(t *testing.T) {
 	params := raiseExceptionParams("Insight", reportID)
 
 	validator, ok := tool.(agentports.ToolValidator)
-	require.True(t, ok, "raise_exception checks its subject before a proposal is raised")
+	require.True(t, ok, "agent_raise_exception checks its subject before a proposal is raised")
 
 	for name, run := range map[string]func() error{
 		"validate": func() error { return validator.Validate(t.Context(), params) },

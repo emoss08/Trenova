@@ -163,7 +163,7 @@ func ptoDecisionPreview(
 
 // ptoLabel names a request by its days in the organization's zone, the one
 // they are booked in. In UTC a request stored in the evening read a day later
-// than list_time_off showed it, and an agent withdrew six correct approvals
+// than worker_list_time_off showed it, and an agent withdrew six correct approvals
 // as mismatched. The zone is the organization's, not the viewer's, so the
 // preview's digest is the same whoever computes it.
 func PtoLabel(pto *worker.WorkerPTO, loc *time.Location) string {

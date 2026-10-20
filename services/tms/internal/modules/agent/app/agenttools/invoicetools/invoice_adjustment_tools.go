@@ -201,7 +201,7 @@ func adjustmentLinesProperty() map[string]any {
 
 func supportingDocumentsProperty() map[string]any {
 	return agenttoolschema.RecordIDs(permission.ResourceDocument,
-		"Documents on the invoice's shipments that support it, from search_documents or "+
+		"Documents on the invoice's shipments that support it, from document_list or "+
 			"shipment_get.", maxAdjustmentDocuments)
 }
 

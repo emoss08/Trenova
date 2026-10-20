@@ -100,7 +100,7 @@ func TestHoldBillingQueueItem_AnAgentHoldsAnItemWithItsNote(t *testing.T) {
 	tool := NewHoldBillingQueueItemTool(queue).(*BillingQueueDecisionTool)
 	params := agenttoolstest.AgentParamsFor(map[string]any{
 		common.ParamBillingQueueItemID: queue.item.ID.String(),
-		common.ParamNote:             "Waiting on the lumper receipt from the consignee",
+		common.ParamNote:               "Waiting on the lumper receipt from the consignee",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(t, queue.guard, func() (*agent.ToolPreview, error) {
@@ -125,7 +125,7 @@ func TestSendBackToOps_PreviewsTheNoteOperationsWillSee(t *testing.T) {
 	params := agenttoolstest.AgentParamsFor(map[string]any{
 		common.ParamBillingQueueItemID: queue.item.ID.String(),
 		paramExceptionReasonCode:       "WeightDiscrepancy",
-		common.ParamNote:             "The BOL says 42,000 lb; the shipment says 24,000",
+		common.ParamNote:               "The BOL says 42,000 lb; the shipment says 24,000",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(t, queue.guard, func() (*agent.ToolPreview, error) {
@@ -174,7 +174,7 @@ func TestBillingDecisions_RefuseWhatTheQueueWouldRefuse(t *testing.T) {
 			status: billingqueue.StatusReadyForReview,
 			params: map[string]any{
 				paramExceptionReasonCode: "IncorrectRates",
-				common.ParamNote:       "Linehaul is 200 under the agreement",
+				common.ParamNote:         "Linehaul is 200 under the agreement",
 			},
 		},
 		"a hold without saying what it waits on": {
@@ -342,7 +342,7 @@ func TestCancelBillingQueueItem_IsProposedAndRunsAsTheApprover(t *testing.T) {
 	tool := NewCancelBillingQueueItemTool(queue).(*BillingQueueDecisionTool)
 	proposed := agenttoolstest.AgentParamsFor(map[string]any{
 		common.ParamBillingQueueItemID: queue.item.ID.String(),
-		common.ParamReason:       "Duplicate of INV-4990",
+		common.ParamReason:             "Duplicate of INV-4990",
 	})
 
 	require.NoError(t, tool.Validate(t.Context(), proposed),

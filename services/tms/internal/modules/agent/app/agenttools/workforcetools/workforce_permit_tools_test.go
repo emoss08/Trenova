@@ -124,7 +124,7 @@ func TestRecordShipmentPermit_ChecksWhatTheStateIssued(t *testing.T) {
 		paramPermitIssued:      "2026-09-29T00:00:00-04:00",
 		paramPermitExpiry:      "2026-10-04T23:59:00-04:00",
 		paramPermitCost:        "85.00",
-		common.FieldNotes:      "Daylight travel only",
+		common.ParamNote:       "Daylight travel only",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(t, permits.guard, func() (*agent.ToolPreview, error) {

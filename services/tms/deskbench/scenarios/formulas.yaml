@@ -10,7 +10,7 @@ scenarios:
     steps:
       - say: "need a rate thats 2.85 a mile but never less than 400 on a load"
         expect:
-          calls: ["propose_formula"]
+          calls: ["formula_propose"]
           maxFailedCalls: 1
           noProposals: true
           formula: ["totalDistance", "/max\\s*\\(/", "/^[^0-9]*$/"]
@@ -26,11 +26,11 @@ scenarios:
     steps:
       - say: "flat 1250 for the load"
         expect:
-          calls: ["propose_formula"]
+          calls: ["formula_propose"]
           formula: ["1250|flatRate|baseRate|flat"]
       - say: "actually add 18% fuel on top of that"
         expect:
-          calls: ["propose_formula"]
+          calls: ["formula_propose"]
           formula: ["/1\\.18|0\\.18|18|fuel/"]
           rubric: >
             Keeps the flat 1250 and adds an 18% fuel surcharge to it, rather than starting a new
@@ -42,7 +42,7 @@ scenarios:
     steps:
       - say: "change this so every stop after the second one adds 75"
         expect:
-          calls: ["propose_formula"]
+          calls: ["formula_propose"]
           maxFailedCalls: 1
           formula: ["totalDistance", '/totalStops|len\(stops\)|count\(stops/']
           rubric: >
@@ -55,7 +55,7 @@ scenarios:
     steps:
       - say: "what does this one actually do, when does it kick in"
         expect:
-          noCalls: [propose_formula]
+          noCalls: [formula_propose]
           noProposals: true
           replyIncludes: ["hazmat|hazardous"]
           rubric: >
@@ -68,7 +68,7 @@ scenarios:
     steps:
       - say: "what would this come out to on a 90 mile run at 3 bucks a mile"
         expect:
-          calls: ["test_formula_expression"]
+          calls: ["formula_test_expression"]
           noProposals: true
           replyIncludes: ["270|250"]
           rubric: >

@@ -26,7 +26,7 @@ function proposal(overrides: Partial<AssistantProposal> = {}): AssistantProposal
   return {
     id: "aprop_1",
     runId: "arun_1",
-    toolName: "assign_move",
+    toolName: "dispatch_assign_move",
     arguments: {},
     rationale: "",
     autonomyTier: "ActWithApproval",

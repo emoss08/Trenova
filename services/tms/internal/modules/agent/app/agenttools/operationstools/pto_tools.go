@@ -21,16 +21,16 @@ func NewApproveWorkerPTOTool(pto common.PtoApprover) agentports.AgentTool {
 	return &ApproveWorkerPTOTool{pto: pto}
 }
 
-func (t *ApproveWorkerPTOTool) Name() string { return "approve_worker_pto" }
+func (t *ApproveWorkerPTOTool) Name() string { return "worker_approve_pto" }
 
 func (t *ApproveWorkerPTOTool) Recipe() []string {
-	return []string{"list_time_off", "approve_worker_pto"}
+	return []string{"worker_list_time_off", "worker_approve_pto"}
 }
 
 func (t *ApproveWorkerPTOTool) Description() string {
 	return "Approve a worker's time-off request. Approving books the days against " +
 		"their balance and takes them off the board for those dates. When you hold " +
-		"get_worker_schedule, say what they are covering on those days beside the " +
+		"worker_get_schedule, say what they are covering on those days beside the " +
 		"proposal; when you do not, propose it anyway and say coverage was not checked, " +
 		"since the person approving weighs it. Only a request still awaiting a decision " +
 		"can be approved; for several, propose each."
@@ -103,7 +103,7 @@ func NewRejectWorkerPTOTool(pto ptoRejecter) agentports.AgentTool {
 	return &RejectWorkerPTOTool{pto: pto}
 }
 
-func (t *RejectWorkerPTOTool) Name() string { return "reject_worker_pto" }
+func (t *RejectWorkerPTOTool) Name() string { return "worker_reject_pto" }
 
 func (t *RejectWorkerPTOTool) Description() string {
 	return "Decline a worker's time-off request. A rejection is final — the request " +
@@ -178,7 +178,7 @@ func NewCancelWorkerPTOTool(pto ptoRejecter) agentports.AgentTool {
 	return &CancelWorkerPTOTool{pto: pto}
 }
 
-func (t *CancelWorkerPTOTool) Name() string { return "cancel_worker_pto" }
+func (t *CancelWorkerPTOTool) Name() string { return "worker_cancel_pto" }
 
 func (t *CancelWorkerPTOTool) SearchTerms() []string {
 	return []string{"cancel vacation", "cancel time off", "cancel approved vacation"}

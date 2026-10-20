@@ -63,13 +63,13 @@ describe("groupThread", () => {
 
   it("still shows a tool result whose call is missing rather than dropping it", () => {
     const entries = groupThread([
-      message({ role: "Tool", toolCallId: "orphan", toolName: "search_worker", content: "x" }),
+      message({ role: "Tool", toolCallId: "orphan", toolName: "worker_search", content: "x" }),
       message({ role: "Assistant", content: "Done." }),
     ]);
 
     expect(entries[0].kind).toBe("assistant");
     if (entries[0].kind !== "assistant") throw new Error("expected an assistant entry");
-    expect(entries[0].tools[0]?.call.name).toBe("search_worker");
+    expect(entries[0].tools[0]?.call.name).toBe("worker_search");
     expect(entries[0].tools[0]?.result?.content).toBe("x");
   });
 
@@ -87,9 +87,9 @@ describe("groupThread", () => {
       message({
         role: "Assistant",
         content: "",
-        toolCalls: [{ id: "c1", name: "get_worker", arguments: {} }],
+        toolCalls: [{ id: "c1", name: "worker_get", arguments: {} }],
       }),
-      message({ role: "Tool", toolCallId: "c1", toolName: "get_worker", content: "w" }),
+      message({ role: "Tool", toolCallId: "c1", toolName: "worker_get", content: "w" }),
     ]);
 
     expect(entries).toHaveLength(1);
@@ -101,7 +101,7 @@ describe("groupThread", () => {
 /**
  * The input of the turn after a decision is the application's note, not the
  * person's words. Drawn as a bubble it read as though they had typed
- * "Approved create_dashboard, and it ran." themselves.
+ * "Approved report_create_dashboard, and it ran." themselves.
  */
 describe("groupThread decision notes", () => {
   it("shows a decision note as a note, not as the person's message", () => {
@@ -112,7 +112,7 @@ describe("groupThread decision notes", () => {
         role: "User",
         kind: "DecisionNote",
         content:
-          "Approved create_dashboard, and it ran.\nDecision on proposal ap_1 (create_dashboard).",
+          "Approved report_create_dashboard, and it ran.\nDecision on proposal ap_1 (report_create_dashboard).",
       }),
       message({ role: "Assistant", content: "It is under Reports." }),
     ]);
@@ -133,7 +133,7 @@ describe("groupThread decision notes", () => {
         role: "User",
         kind: "DecisionNote",
         refused: true,
-        content: "Rejected create_report.\nTell the person nothing was changed.",
+        content: "Rejected report_create.\nTell the person nothing was changed.",
       }),
       message({ role: "Assistant", refused: true, content: "I can't help with that." }),
     ]);
@@ -196,7 +196,7 @@ describe("turnPlacements", () => {
       message({
         role: "User",
         kind: "DecisionNote",
-        content: "Approved create_report.\nSay what was made.",
+        content: "Approved report_create.\nSay what was made.",
         createdAt: 1_700_000_400,
       }),
       message({ role: "Assistant", content: "Saved.", createdAt: 1_700_000_404 }),
@@ -225,7 +225,7 @@ describe("decisionHeadline", () => {
   it("keeps the decision and drops the instructions to the agent", () => {
     expect(
       decisionHeadline(
-        'Approved create_report, and it ran. It created the report "Late loads".\nDecision on proposal ap_1 (create_report). Tell the person where to find it.',
+        'Approved report_create, and it ran. It created the report "Late loads".\nDecision on proposal ap_1 (report_create). Tell the person where to find it.',
       ),
     ).toBe('Approved create report, and it ran. It created the report "Late loads".');
   });

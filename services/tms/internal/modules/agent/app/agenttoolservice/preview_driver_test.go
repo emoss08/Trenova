@@ -226,7 +226,7 @@ func TestRequestCredentialRenewalPreview_ShowsTheAskAndWhoCannotReadIt(t *testin
 /*
 A request stored at 01:17 UTC is the evening before in Chicago, the zone its
 days are booked in. Labelled in UTC, every request read a day later than
-list_time_off showed it, and gpt-6-luna withdrew six correct approvals as
+worker_list_time_off showed it, and gpt-6-luna withdrew six correct approvals as
 mismatched.
 */
 func TestPTOLabel_NamesTheDaysInTheOrganizationsZone(t *testing.T) {

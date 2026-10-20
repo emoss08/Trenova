@@ -26,7 +26,7 @@ const mdPhone = "phone"
 
 const mdEmail = "email"
 
-const mdNotes = "notes"
+const mdNote = "note"
 
 const mdDOTNumber = "dotNumber"
 

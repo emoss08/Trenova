@@ -28,24 +28,24 @@ func wideRuntime(t *testing.T) (*Service, []string) {
 	t.Helper()
 
 	tools := []*agenttest.StubQueryTool{
-		describedTool("list_workers", "List workers (drivers) by status or employment type."),
+		describedTool("worker_list", "List workers (drivers) by status or employment type."),
 		describedTool("shipment_list", "List shipments by status, billing state or dates."),
-		describedTool("list_tractors", "List tractors (power units) by status."),
-		describedTool("list_trailers", "List trailers by status or inspection date."),
-		describedTool("list_customers", "List customers by status, code or city."),
-		describedTool("list_locations", "List locations by status or city."),
+		describedTool("equipment_list_tractors", "List tractors (power units) by status."),
+		describedTool("equipment_list_trailers", "List trailers by status or inspection date."),
+		describedTool("customer_list", "List customers by status, code or city."),
+		describedTool("location_list", "List locations by status or city."),
 		describedTool("invoice_list", "List invoices by status or due date."),
-		describedTool("list_carriers", "List carriers by status or authority."),
+		describedTool("carrier_list", "List carriers by status or authority."),
 		describedTool(
-			"list_expiring_credentials",
+			"worker_list_expiring_credentials",
 			"Worker credentials falling due: medical cards, licences, hazmat.",
 		),
 		describedTool("shipment_get", "Retrieve one shipment by id."),
-		describedTool("get_worker", "Retrieve one worker by id."),
-		describedTool("search_worker", "Search workers by name."),
+		describedTool("worker_get", "Retrieve one worker by id."),
+		describedTool("worker_search", "Search workers by name."),
 		describedTool("shipment_get_tracking", "Track a shipment by pro number."),
-		describedTool("list_reports", "List the reports this organization can run."),
-		describedTool("run_report", "Start a report run."),
+		describedTool("report_list", "List the reports this organization can run."),
+		describedTool("report_run", "Start a report run."),
 	}
 
 	registryTools := make([]agentports.AgentQueryTool, 0, len(tools))
@@ -155,7 +155,7 @@ func TestNewToolSet_PreselectsOnTheOperatorsWords(t *testing.T) {
 			},
 		).specs,
 	)
-	assert.Contains(t, drivers, "list_workers")
+	assert.Contains(t, drivers, "worker_list")
 
 	trucks := specNames(
 		service.newToolSet(
@@ -168,7 +168,7 @@ func TestNewToolSet_PreselectsOnTheOperatorsWords(t *testing.T) {
 			},
 		).specs,
 	)
-	assert.Contains(t, trucks, "list_tractors")
+	assert.Contains(t, trucks, "equipment_list_tractors")
 
 	billing := specNames(
 		service.newToolSet(
@@ -201,15 +201,15 @@ func TestResolveFind_MakesTheMissingToolCallable(t *testing.T) {
 			unattended: false,
 		},
 	)
-	require.NotContains(t, specNames(set.specs), "list_trailers",
+	require.NotContains(t, specNames(set.specs), "equipment_list_trailers",
 		"the fixture depends on this one not being preselected")
 
 	answer := findContent(t, service, set, map[string]any{
 		"need": "trailer inspection date",
 	})
 
-	assert.True(t, set.offers("list_trailers"))
-	assert.Contains(t, answer, "list_trailers")
+	assert.True(t, set.offers("equipment_list_trailers"))
+	assert.Contains(t, answer, "equipment_list_trailers")
 }
 
 /*
@@ -221,7 +221,7 @@ func TestResolveFind_CannotReachPastTheAgentsConfiguration(t *testing.T) {
 	t.Parallel()
 
 	service, _ := wideRuntime(t)
-	definition := testDefinition("list_customers", "list_locations")
+	definition := testDefinition("customer_list", "location_list")
 
 	set := service.newToolSet(
 		t.Context(),
@@ -236,13 +236,13 @@ func TestResolveFind_CannotReachPastTheAgentsConfiguration(t *testing.T) {
 
 	findContent(t, service, set, map[string]any{"need": "driver medical card expiry"})
 
-	assert.False(t, set.offers("list_expiring_credentials"))
+	assert.False(t, set.offers("worker_list_expiring_credentials"))
 	for _, name := range specNames(set.specs) {
 		// The two the agent holds, plus the two the runtime answers itself.
 		// Neither built-in reads anything, so neither widens the agent.
 		assert.Contains(
 			t,
-			[]string{"list_customers", "list_locations", findToolsName, askUserName},
+			[]string{"customer_list", "location_list", findToolsName, askUserName},
 			name,
 		)
 	}
@@ -314,10 +314,10 @@ func TestSystemPrompt_SaysTheToolListIsPartialWhenDisclosed(t *testing.T) {
 func TestSystemPrompt_DisclosedSectionNamesAreasNotTools(t *testing.T) {
 	t.Parallel()
 
-	definition := testDefinition("list_reports", "shipment_get")
+	definition := testDefinition("report_list", "shipment_get")
 	summaries := []agentdefinition.ToolSummary{
 		{
-			Name:        "list_reports",
+			Name:        "report_list",
 			Description: "List saved reports by name. Filter by owner, schedule or last run.",
 			Query:       true,
 		},
@@ -338,7 +338,7 @@ func TestSystemPrompt_DisclosedSectionNamesAreasNotTools(t *testing.T) {
 
 	assert.Contains(t, parts.Stable, "What find_tools can load, by area of Trenova:")
 	assert.Contains(t, parts.Stable, "- Reports (1 tool): report")
-	assert.NotContains(t, parts.Stable, "list_reports — List saved reports by name.")
+	assert.NotContains(t, parts.Stable, "report_list — List saved reports by name.")
 	assert.NotContains(t, parts.Stable+parts.Volatile, "Loaded now:")
 	assert.NotContains(t, parts.Volatile, "find_tools")
 }
@@ -351,14 +351,14 @@ func runtimeContextWith(
 }
 
 // Asked four times whether a reports tool existed, the assistant said no four
-// times and grew more certain, while list_reports sat in the catalog unassigned
+// times and grew more certain, while report_list sat in the catalog unassigned
 // to that agent. The search is still correctly confined to the agent's own
 // tools; the answer is what was wrong.
 func TestResolveFind_SaysAToolExistsButIsNotEnabled(t *testing.T) {
 	t.Parallel()
 
 	service, names := wideRuntime(t)
-	definition := testDefinition("list_customers", "list_locations")
+	definition := testDefinition("customer_list", "location_list")
 
 	set := service.newToolSet(
 		t.Context(),
@@ -373,12 +373,12 @@ func TestResolveFind_SaysAToolExistsButIsNotEnabled(t *testing.T) {
 
 	answer := findContent(t, service, set, map[string]any{"need": "driver medical card expiry"})
 
-	require.Contains(t, names, "list_expiring_credentials")
+	require.Contains(t, names, "worker_list_expiring_credentials")
 	assert.Contains(t, answer, "not enabled for this agent")
-	assert.Contains(t, answer, "list_expiring_credentials")
+	assert.Contains(t, answer, "worker_list_expiring_credentials")
 	assert.Contains(t, answer, "AI Control")
 	assert.Contains(t, answer, "Do not say the system has no such capability")
-	assert.NotContains(t, specNames(set.specs), "list_expiring_credentials",
+	assert.NotContains(t, specNames(set.specs), "worker_list_expiring_credentials",
 		"naming a tool must not load it")
 }
 
@@ -393,11 +393,11 @@ func TestResolveFind_NamesThePersonsOtherAgentThatHoldsTheTool(t *testing.T) {
 	t.Parallel()
 
 	service, _ := wideRuntime(t)
-	definition := testDefinition("list_customers", "list_locations")
+	definition := testDefinition("customer_list", "location_list")
 	compliance := chatAgent("Compliance assistant")
-	compliance.ToolNames = []string{"list_expiring_credentials"}
+	compliance.ToolNames = []string{"worker_list_expiring_credentials"}
 	unrelated := chatAgent("Report builder")
-	unrelated.ToolNames = []string{"list_reports"}
+	unrelated.ToolNames = []string{"report_list"}
 	service.permissions = &agenttest.StubPermissions{}
 	service.definitions = &listedDefinitions{byID: map[pulid.ID]*agentdefinition.Definition{
 		compliance.ID: compliance,
@@ -414,7 +414,7 @@ func TestResolveFind_NamesThePersonsOtherAgentThatHoldsTheTool(t *testing.T) {
 
 	answer := findContent(t, service, set, map[string]any{"need": "driver medical card expiry"})
 
-	assert.Contains(t, answer, "- Compliance assistant: list_expiring_credentials")
+	assert.Contains(t, answer, "- Compliance assistant: worker_list_expiring_credentials")
 	assert.NotContains(t, answer, "Report builder")
 	assert.Contains(t, answer, "Hand off to another agent")
 	assert.NotContains(t, answer, "AI Control",
@@ -428,11 +428,11 @@ func TestResolveFind_RecordsTheAgentsItNamesForTheHandOffMenu(t *testing.T) {
 	t.Parallel()
 
 	service, _ := wideRuntime(t)
-	definition := testDefinition("list_customers", "list_locations")
+	definition := testDefinition("customer_list", "location_list")
 	compliance := chatAgent("Compliance assistant")
-	compliance.ToolNames = []string{"list_expiring_credentials"}
+	compliance.ToolNames = []string{"worker_list_expiring_credentials"}
 	unrelated := chatAgent("Report builder")
-	unrelated.ToolNames = []string{"list_reports"}
+	unrelated.ToolNames = []string{"report_list"}
 	service.permissions = &agenttest.StubPermissions{}
 	service.definitions = &listedDefinitions{byID: map[pulid.ID]*agentdefinition.Definition{
 		compliance.ID: compliance,
@@ -467,9 +467,9 @@ func TestRun_SavesTheAgentsFindToolsNamedOnItsResult(t *testing.T) {
 		toolTurn(findToolsName, map[string]any{"need": "driver medical card expiry"}),
 		textTurn("The compliance assistant can check that."),
 	)
-	definition := testDefinition("list_customers", "list_locations")
+	definition := testDefinition("customer_list", "location_list")
 	compliance := chatAgent("Compliance assistant")
-	compliance.ToolNames = []string{"list_expiring_credentials"}
+	compliance.ToolNames = []string{"worker_list_expiring_credentials"}
 	service.permissions = &agenttest.StubPermissions{}
 	service.definitions = &listedDefinitions{byID: map[pulid.ID]*agentdefinition.Definition{
 		compliance.ID: compliance,
@@ -508,7 +508,7 @@ func TestResolveFind_SuggestsNobodyWhenNoOtherAgentHoldsTheTool(t *testing.T) {
 
 	service, _ := wideRuntime(t)
 	set := service.newToolSet(t.Context(), toolSetRequest{
-		definition: testDefinition("list_customers", "list_locations"),
+		definition: testDefinition("customer_list", "location_list"),
 		actor:      testActor(),
 		input:      "anything",
 	})
@@ -534,7 +534,7 @@ func TestResolveFind_DoesNotClaimTheSystemLacksSomethingItDidNotSearchFor(t *tes
 	set := service.newToolSet(
 		t.Context(),
 		toolSetRequest{
-			definition: testDefinition("list_customers"),
+			definition: testDefinition("customer_list"),
 			actor:      testActor(),
 			input:      "anything",
 			unattended: false,
@@ -637,7 +637,7 @@ func TestNewToolSet_OffersOnlyWhatThePersonMayUse(t *testing.T) {
 	assert.NotContains(t, offered, "shipment_list")
 	assert.NotContains(t, offered, "shipment_get")
 	assert.NotContains(t, set.allowed, "shipment_list")
-	assert.Contains(t, set.allowed, "list_workers")
+	assert.Contains(t, set.allowed, "worker_list")
 
 	answer := findContent(t, service, set, map[string]any{"need": "search shipments by pro number"})
 	assert.NotContains(
@@ -679,8 +679,8 @@ func coreRuntime(t *testing.T) (*Service, []string) {
 	service, names := wideRuntime(t)
 	query := service.queryTools.(*stubQueryRegistry)
 	query.Tools = append(query.Tools,
-		describedTool("recall_memory", "Recall what the organization has taught its agents."),
-		describedTool("remember", "Save a correction for next time."),
+		describedTool("agent_list_memories", "Recall what the organization has taught its agents."),
+		describedTool("agent_create_memory", "Save a correction for next time."),
 	)
 	service.catalog = agenttoolcatalog.NewFromRegistries(agenttoolcatalog.Params{
 		QueryTools:  query,
@@ -693,7 +693,7 @@ func coreRuntime(t *testing.T) (*Service, []string) {
 /*
 An agent configured with nothing but its task tools still carries memory.
 
-The organization-built agents in the field were saved without recall_memory or
+The organization-built agents in the field were saved without agent_list_memories or
 remember, and so worked every conversation from nothing. The core tools come
 from the definition, not the selection.
 */
@@ -714,8 +714,8 @@ func TestNewToolSet_CarriesTheCoreToolsForAnAgentThatSelectedNone(t *testing.T) 
 	)
 
 	sent := specNames(set.specs)
-	assert.Contains(t, sent, "recall_memory")
-	assert.Contains(t, sent, "remember")
+	assert.Contains(t, sent, "agent_list_memories")
+	assert.Contains(t, sent, "agent_create_memory")
 	assert.Len(t, set.specs, 4+2+1, "four selected, two core, ask_user")
 }
 
@@ -752,8 +752,8 @@ func TestNewToolSet_CoreToolsDoNotCountTowardNarrowing(t *testing.T) {
 	)
 	require.True(t, large.disclosed)
 	sent := specNames(large.specs)
-	assert.Contains(t, sent, "recall_memory")
-	assert.Contains(t, sent, "remember")
+	assert.Contains(t, sent, "agent_list_memories")
+	assert.Contains(t, sent, "agent_create_memory")
 	assert.Len(t, large.specs, preselectedTools+2+2,
 		"the preselected tools, the two core tools, find_tools and ask_user")
 }
@@ -764,8 +764,8 @@ func TestNewToolSet_AnUnattendedRunHoldsItsEscalationFromTheStart(t *testing.T) 
 	service, names := coreRuntime(t)
 	query := service.queryTools.(*stubQueryRegistry)
 	query.Tools = append(query.Tools,
-		describedTool("raise_exception", "Hand a case to a person when you cannot resolve it."),
-		describedTool("wait_until", "Park this work until something happens."),
+		describedTool("agent_raise_exception", "Hand a case to a person when you cannot resolve it."),
+		describedTool("agent_create_wait", "Park this work until something happens."),
 	)
 	service.catalog = agenttoolcatalog.NewFromRegistries(agenttoolcatalog.Params{
 		QueryTools:  query,
@@ -783,9 +783,9 @@ func TestNewToolSet_AnUnattendedRunHoldsItsEscalationFromTheStart(t *testing.T) 
 			},
 		)
 		require.True(t, set.disclosed)
-		assert.Equal(t, unattended, set.offers("raise_exception"),
+		assert.Equal(t, unattended, set.offers("agent_raise_exception"),
 			"only a run has nobody to ask, and its escalation must not wait on a search")
-		assert.False(t, set.offers("wait_until"))
+		assert.False(t, set.offers("agent_create_wait"))
 	}
 }
 
@@ -794,20 +794,20 @@ func TestResolveFind_ListsTheCallableMatchesFirst(t *testing.T) {
 
 	service, names := wideRuntime(t)
 	set := &toolSet{loaded: map[string]struct{}{}, allowed: names, disclosed: true}
-	require.True(t, service.load(set, "list_workers"))
+	require.True(t, service.load(set, "worker_list"))
 
 	answer := findContent(t, service, set, map[string]any{
 		"need": "workers and their credentials",
 	})
 
-	callable := strings.Index(answer, "- list_workers")
-	loaded := strings.Index(answer, "- list_expiring_credentials")
+	callable := strings.Index(answer, "- worker_list")
+	loaded := strings.Index(answer, "- worker_list_expiring_credentials")
 	require.GreaterOrEqual(t, callable, 0, answer)
 	require.GreaterOrEqual(t, loaded, 0, answer)
 	assert.Less(t, callable, loaded, "what the model can already call is named first")
 	assert.Contains(t, answer, "already loaded")
 	assert.Contains(t, answer, "now callable")
-	assert.True(t, set.offers("list_expiring_credentials"))
+	assert.True(t, set.offers("worker_list_expiring_credentials"))
 }
 
 func weakMatchRuntime(t *testing.T, extra ...agentports.AgentQueryTool) *Service {
@@ -1024,9 +1024,9 @@ func TestSearchesLeft_SpeaksUpOnlyNearTheCap(t *testing.T) {
 }
 
 /*
-gpt-6-luna asked find_tools for "search_worker, settlement_list_driver and
+gpt-6-luna asked find_tools for "worker_search, settlement_list_driver and
 settlement_list_advances" by name, was handed six other tools ranked above
-search_worker, and searched a fourth time for it. A tool the need names
+worker_search, and searched a fourth time for it. A tool the need names
 outright, and the agent holds, comes first.
 */
 func TestResolveFind_LoadsTheToolsANeedNamesOutright(t *testing.T) {
@@ -1042,13 +1042,13 @@ func TestResolveFind_LoadsTheToolsANeedNamesOutright(t *testing.T) {
 			unattended: false,
 		},
 	)
-	require.NotContains(t, specNames(set.specs), "list_trailers",
+	require.NotContains(t, specNames(set.specs), "equipment_list_trailers",
 		"the fixture depends on this one not being preselected")
 
 	answer := findContent(t, service, set, map[string]any{
-		"need": "Use list_trailers (and list_nothing) to see invoices by due date",
+		"need": "Use equipment_list_trailers (and list_nothing) to see invoices by due date",
 	})
 
-	assert.True(t, set.offers("list_trailers"))
-	assert.Contains(t, answer, "- list_trailers:")
+	assert.True(t, set.offers("equipment_list_trailers"))
+	assert.Contains(t, answer, "- equipment_list_trailers:")
 }

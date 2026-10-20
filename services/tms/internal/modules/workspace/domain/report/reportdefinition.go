@@ -107,7 +107,7 @@ func (rd *ReportDefinition) Validate(multiErr *errortypes.MultiError) {
 		// 1 on insert, incremented on update, with the matching revision row
 		// written in the same transaction — so an unsaved definition has
 		// nothing to put here and a caller has no way to supply it. Demanding
-		// one refused every create, which create_report hit as a failed
+		// one refused every create, which report_create hit as a failed
 		// execution after its proposal had already been approved.
 		validation.Field(&rd.CurrentRevision,
 			validation.When(rd.ID.IsNotNil(),

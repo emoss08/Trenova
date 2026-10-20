@@ -33,7 +33,7 @@ func testRegistries() (*agenttest.StubActionRegistry, *agenttest.StubQueryRegist
 			Tier:     agent.TierPropose,
 		},
 		&agenttest.StubActionTool{
-			ToolName: "update_customer",
+			ToolName: "customer_update",
 			Resource: permission.ResourceCustomer,
 			Tier:     agent.TierActWithApproval,
 		},
@@ -91,7 +91,7 @@ func TestValidateToolSelection_AcceptsAnyRegisteredToolOnAnyTemplate(t *testing.
 			definition(agentdefinition.TemplateGeneralAssistant, "reassign_move", "shipment_get"),
 		),
 	)
-	assert.Empty(t, validate(t, definition("", "update_customer")))
+	assert.Empty(t, validate(t, definition("", "customer_update")))
 }
 
 func TestValidateToolSelection_RefusesUnknownTools(t *testing.T) {
@@ -132,9 +132,9 @@ func TestBuildToolCatalog_ListsEveryRegisteredToolWithItsKind(t *testing.T) {
 
 	assert.Equal(t, agentdefinitionports.ToolCatalogKindQuery, byName["shipment_get"].Kind)
 	assert.Equal(t, permission.OpRead, byName["shipment_get"].Operation)
-	assert.Equal(t, agentdefinitionports.ToolCatalogKindAction, byName["update_customer"].Kind)
-	assert.Equal(t, agent.TierActWithApproval, byName["update_customer"].DefaultAutonomyTier)
-	assert.Equal(t, permission.ResourceCustomer, byName["update_customer"].Resource)
+	assert.Equal(t, agentdefinitionports.ToolCatalogKindAction, byName["customer_update"].Kind)
+	assert.Equal(t, agent.TierActWithApproval, byName["customer_update"].DefaultAutonomyTier)
+	assert.Equal(t, permission.ResourceCustomer, byName["customer_update"].Resource)
 }
 
 func TestBuildToolCatalog_SaysWhatEachToolDoes(t *testing.T) {
@@ -149,7 +149,7 @@ func TestBuildToolCatalog_SaysWhatEachToolDoes(t *testing.T) {
 	}
 
 	assert.Equal(t, agent.ToolEffectLookup, byName["shipment_get"].Effect)
-	assert.Equal(t, agent.ToolEffectChange, byName["update_customer"].Effect)
+	assert.Equal(t, agent.ToolEffectChange, byName["customer_update"].Effect)
 	assert.Equal(t, agent.ToolEffectChange, byName["reassign_move"].Effect)
 }
 
@@ -247,10 +247,10 @@ func TestApply_StoresNoCoreTool(t *testing.T) {
 	d := &agentdefinition.Definition{}
 	apply(d, &agentdefinitionports.SaveAgentDefinitionRequest{
 		Name:      "Report builder",
-		ToolNames: []string{"recall_memory", " list_reports ", "remember", "create_report"},
+		ToolNames: []string{"agent_list_memories", " report_list ", "agent_create_memory", "report_create"},
 	})
 
-	assert.Equal(t, []string{"list_reports", "create_report"}, d.ToolNames)
+	assert.Equal(t, []string{"report_list", "report_create"}, d.ToolNames)
 }
 
 func TestBuildToolCatalog_MarksTheCoreTools(t *testing.T) {
@@ -260,7 +260,7 @@ func TestBuildToolCatalog_MarksTheCoreTools(t *testing.T) {
 	queries.Tools = append(
 		queries.Tools,
 		&agenttest.StubQueryTool{
-			ToolName: "recall_memory",
+			ToolName: "agent_list_memories",
 			Resource: permission.ResourceAgentMemory,
 		},
 	)
@@ -270,7 +270,7 @@ func TestBuildToolCatalog_MarksTheCoreTools(t *testing.T) {
 		byName[entry.Name] = entry
 	}
 
-	assert.True(t, byName["recall_memory"].Core)
+	assert.True(t, byName["agent_list_memories"].Core)
 	assert.False(t, byName["shipment_get"].Core)
 }
 
@@ -293,7 +293,7 @@ func TestValidateToolSelection_RefusesATierAboveAToolsCeiling(t *testing.T) {
 
 	actions := &agenttest.StubActionRegistry{Tools: []agentports.AgentTool{
 		cappedStubTool{&agenttest.StubActionTool{
-			ToolName: "email_customer",
+			ToolName: "customer_send_email",
 			Resource: permission.ResourceCustomer,
 			Tier:     agent.TierActWithApproval,
 		}},
@@ -305,8 +305,8 @@ func TestValidateToolSelection_RefusesATierAboveAToolsCeiling(t *testing.T) {
 		agent.TierActWithApproval: false,
 		agent.TierAutoExecute:     true,
 	} {
-		d := definition("", "email_customer")
-		d.ToolTiers = map[string]agent.AutonomyTier{"email_customer": tier}
+		d := definition("", "customer_send_email")
+		d.ToolTiers = map[string]agent.AutonomyTier{"customer_send_email": tier}
 		multiErr := errortypes.NewMultiError()
 		validateToolSelection(toolSelection{definition: d, actions: actions, queries: queries}, multiErr)
 
@@ -314,7 +314,7 @@ func TestValidateToolSelection_RefusesATierAboveAToolsCeiling(t *testing.T) {
 		for _, e := range multiErr.Errors {
 			fields[e.Field] = true
 		}
-		assert.Equal(t, refused, fields["toolTiers.email_customer"], tier)
+		assert.Equal(t, refused, fields["toolTiers.customer_send_email"], tier)
 	}
 }
 
@@ -368,7 +368,7 @@ func TestValidateToolSelection_ExplainsTheCapWithTheToolsRationale(t *testing.T)
 	booking.policy.Rationale = "A new load commits a customer's freight."
 
 	mail := policyStubTool{StubActionTool: &agenttest.StubActionTool{
-		ToolName: "email_customer",
+		ToolName: "customer_send_email",
 	}}
 	mail.policy = mail.StubActionTool.Policy()
 	mail.policy.Egress = []agent.EgressClass{agent.EgressExternalRecipient}
@@ -379,7 +379,7 @@ func TestValidateToolSelection_ExplainsTheCapWithTheToolsRationale(t *testing.T)
 	assert.Contains(t, booked, string(agent.TierActWithApproval))
 	assert.NotContains(t, booked, "outside the organization")
 
-	mailed := tierMessages(t, mail, agent.TierAutoExecute)["toolTiers.email_customer"]
+	mailed := tierMessages(t, mail, agent.TierAutoExecute)["toolTiers.customer_send_email"]
 	assert.Contains(t, mailed, "Emails the customer's contacts a message the model wrote.")
 	assert.Contains(t, mailed, string(agent.TierActWithApproval))
 
@@ -405,7 +405,7 @@ func TestBuildToolCatalog_NamesTheMostEachChangeMayBeGiven(t *testing.T) {
 	t.Parallel()
 
 	actions := &agenttest.StubActionRegistry{Tools: []agentports.AgentTool{
-		&agenttest.StubActionTool{ToolName: "update_customer"},
+		&agenttest.StubActionTool{ToolName: "customer_update"},
 		&agenttest.StubActionTool{ToolName: "pay_carrier", Egress: agent.EgressMoney},
 	}}
 	queries := &agenttest.StubQueryRegistry{Tools: []agentports.AgentQueryTool{
@@ -417,7 +417,7 @@ func TestBuildToolCatalog_NamesTheMostEachChangeMayBeGiven(t *testing.T) {
 		byName[entry.Name] = entry
 	}
 
-	assert.Equal(t, agent.TierAutoExecute, byName["update_customer"].MaxAutonomyTier)
+	assert.Equal(t, agent.TierAutoExecute, byName["customer_update"].MaxAutonomyTier)
 	assert.Equal(t, agent.EgressMoney.Ceiling(), byName["pay_carrier"].MaxAutonomyTier)
 	assert.Empty(t, byName["shipment_get"].MaxAutonomyTier)
 }

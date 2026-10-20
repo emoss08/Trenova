@@ -19,7 +19,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
+)
+
+const (
+	toolReportList    = "report_list"
+	toolHomeGetLayout = "home_get_layout"
 )
 
 type homeLayoutWriter interface {
@@ -109,7 +115,7 @@ func (e homeEditor) plan(
 	}
 	if version := common.OptionalInt64(params.Params, "version"); version != effective.Version {
 		multiErr.Add("version", errortypes.ErrVersionMismatch, fmt.Sprintf(
-			"The home page has changed since version %d was read; call get_my_home_layout "+
+			"The home page has changed since version %d was read; call home_get_layout "+
 				"for the current one", version,
 		))
 		return nil, multiErr
@@ -182,8 +188,8 @@ func (homeToolBase) SearchTerms() []string { return homelayout.SpokenNames() }
 
 func versionProperty() map[string]any {
 	return map[string]any{
-		"type":        "integer",
-		"description": "The version get_my_home_layout returned, so a newer edit is not overwritten.",
+		toolschema.KeyType:        toolschema.TypeInteger,
+		toolschema.KeyDescription: "The version home_get_layout returned, so a newer edit is not overwritten.",
 	}
 }
 
@@ -198,7 +204,7 @@ func NewAddHomeWidgetTool(
 	return &AddHomeWidgetTool{homeToolBase{editor: homeEditor{layouts: layouts, targets: reports}}}
 }
 
-func (t *AddHomeWidgetTool) Name() string { return "add_home_widget" }
+func (t *AddHomeWidgetTool) Name() string { return "home_add_widget" }
 
 func (t *AddHomeWidgetTool) Policy() agentports.ToolPolicy {
 	return agentports.ToolPolicy{
@@ -220,14 +226,19 @@ func (t *AddHomeWidgetTool) Policy() agentports.ToolPolicy {
 func (t *AddHomeWidgetTool) Description() string {
 	return "Add a widget, a tile on the person's own home page. Use it when they want " +
 		"something on \"my dashboard\" or home page; pick the key and metric from " +
-		"list_home_widgets and pass the version from get_my_home_layout. A report widget " +
-		"takes a definitionId or cannedKey from list_reports, a dashboard widget a " +
-		"dashboardId from list_dashboards. Not for report dashboards under Reports; " +
-		"create_dashboard builds those."
+		"home_list_widgets and pass the version from home_get_layout. A report widget " +
+		"takes a definitionId or cannedKey from report_list, a dashboard widget a " +
+		"dashboardId from report_list_dashboards. Not for report dashboards under Reports; " +
+		"report_create_dashboard builds those."
 }
 
 func (t *AddHomeWidgetTool) Prerequisites() []string {
-	return []string{"get_my_home_layout", "list_home_widgets", "list_reports", "list_dashboards"}
+	return []string{
+		toolHomeGetLayout,
+		"home_list_widgets",
+		toolReportList,
+		"report_list_dashboards",
+	}
 }
 
 func (t *AddHomeWidgetTool) ParamSchema() map[string]any {
@@ -237,8 +248,8 @@ func (t *AddHomeWidgetTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"version": versionProperty(),
 			"key": map[string]any{
-				"type":        "string",
-				"description": "The widget, by the key list_home_widgets gives.",
+				toolschema.KeyType:        toolschema.TypeString,
+				toolschema.KeyDescription: "The widget, by the key home_list_widgets gives.",
 			},
 			"title": map[string]any{
 				"type":        "string",
@@ -263,42 +274,44 @@ func (t *AddHomeWidgetTool) ParamSchema() map[string]any {
 			},
 			"config": map[string]any{
 				"type": "object",
-				"description": "What the widget needs, by its needs in list_home_widgets: metric, " +
+				"description": "What the widget needs, by its needs in home_list_widgets: metric, " +
 					"metrics, windowDays, limit, text, a report or a dashboard.",
 				"properties": map[string]any{
 					"metric": map[string]any{
 						"type":        "string",
-						"description": "A metric key from list_home_widgets, for a kpi widget.",
+						"description": "A metric key from home_list_widgets, for a kpi widget.",
 					},
 					"metrics": map[string]any{
 						"type":        "array",
 						schemaItems:   map[string]any{"type": "string"},
-						"description": "Metric keys from list_home_widgets, for a kpi row.",
+						"description": "Metric keys from home_list_widgets, for a kpi row.",
 					},
 					"definitionId": agenttoolschema.RecordIDText(permission.ResourceReport,
-						"A saved report's id, from list_reports."),
+						"A saved report's id, from report_list."),
 					"cannedKey": map[string]any{
 						"type":        "string",
-						"description": "A built-in report's key, from list_reports.",
+						"description": "A built-in report's key, from report_list.",
 					},
 					"chartId": map[string]any{
 						"type":        "string",
-						"description": "Which of the report's charts; describe_report lists them.",
+						"description": "Which of the report's charts; report_get lists them.",
 					},
 					"columnId": map[string]any{
 						"type":        "string",
-						"description": "Which of the report's columns; describe_report lists them.",
+						"description": "Which of the report's columns; report_get lists them.",
 					},
 					"dashboardId": agenttoolschema.RecordIDText(permission.ResourceDashboard,
-						"A report dashboard's id, from list_dashboards."),
+						"A report dashboard's id, from report_list_dashboards."),
 					"text": map[string]any{
 						"type":        "string",
 						"description": "What an announcement widget says.",
 					},
-					"limit": map[string]any{
+					"limit": toolschema.Clamped(map[string]any{
 						"type":        "integer",
+						"minimum":     1,
+						"maximum":     homelayout.MaxWidgetLimit,
 						"description": "How many rows a queue widget shows.",
-					},
+					}),
 					"windowDays": map[string]any{
 						"type":        "integer",
 						"description": "How many days a trend widget covers.",
@@ -322,7 +335,7 @@ func (t *AddHomeWidgetTool) edit(params agentports.ToolExecuteParams) homeEdit {
 		definition, offered := offeredWidget(catalog, key)
 		if !offered {
 			multiErr.Add("key", errortypes.ErrInvalid, fmt.Sprintf(
-				"%q is not a widget this person can add; list_home_widgets names them", key,
+				"%q is not a widget this person can add; home_list_widgets names them", key,
 			))
 			return
 		}
@@ -442,10 +455,10 @@ func widgetConfigFrom(
 
 func idSourceFor(field string) string {
 	if field == "dashboardId" {
-		return "list_dashboards gives a dashboard's id"
+		return "report_list_dashboards gives a dashboard's id"
 	}
 
-	return "list_reports gives a report's id"
+	return "report_list gives a report's id"
 }
 
 // checkWidgetMetrics refuses a metric the person cannot see, which the
@@ -469,7 +482,7 @@ func checkWidgetMetrics(
 	case homelayout.ConfigKindMetric:
 		if config.Metric != "" && !offered(config.Metric) {
 			multiErr.Add("config.metric", errortypes.ErrInvalid, fmt.Sprintf(
-				"%q is not a metric this person can show; list_home_widgets names them",
+				"%q is not a metric this person can show; home_list_widgets names them",
 				config.Metric,
 			))
 		}
@@ -477,7 +490,7 @@ func checkWidgetMetrics(
 		for idx, metric := range config.Metrics {
 			if !offered(metric) {
 				multiErr.Add(fmt.Sprintf("config.metrics[%d]", idx), errortypes.ErrInvalid,
-					fmt.Sprintf("%q is not a metric this person can show; list_home_widgets "+
+					fmt.Sprintf("%q is not a metric this person can show; home_list_widgets "+
 						"names them", metric))
 			}
 		}
@@ -506,13 +519,13 @@ func (e homeEditor) checkWidgetTargets(
 		for _, missing := range e.targets.UnavailableTileTargets(ctx, tenant, []report.DashboardTile{tile}) {
 			if missing.Canned {
 				multiErr.Add("config.cannedKey", errortypes.ErrInvalid, fmt.Sprintf(
-					"%q is not a built-in report; list_reports names the ones that exist",
+					"%q is not a built-in report; report_list names the ones that exist",
 					config.CannedKey,
 				))
 				continue
 			}
 			multiErr.Add("config.definitionId", errortypes.ErrInvalid, fmt.Sprintf(
-				"There is no report %s that this person can open; find it with list_reports",
+				"There is no report %s that this person can open; find it with report_list",
 				config.DefinitionID,
 			))
 		}
@@ -525,7 +538,7 @@ func (e homeEditor) checkWidgetTargets(
 			DashboardID: config.DashboardID,
 		}); err != nil {
 			multiErr.Add("config.dashboardId", errortypes.ErrInvalid, fmt.Sprintf(
-				"There is no dashboard %s that this person can open; find it with list_dashboards",
+				"There is no dashboard %s that this person can open; find it with report_list_dashboards",
 				config.DashboardID,
 			))
 		}
@@ -540,7 +553,7 @@ func NewRemoveHomeWidgetTool(layouts *homelayoutservice.Service) agentports.Agen
 	return &RemoveHomeWidgetTool{homeToolBase{editor: homeEditor{layouts: layouts}}}
 }
 
-func (t *RemoveHomeWidgetTool) Name() string { return "remove_home_widget" }
+func (t *RemoveHomeWidgetTool) Name() string { return "home_remove_widget" }
 
 func (t *RemoveHomeWidgetTool) Policy() agentports.ToolPolicy {
 	return agentports.ToolPolicy{
@@ -561,11 +574,11 @@ func (t *RemoveHomeWidgetTool) Policy() agentports.ToolPolicy {
 
 func (t *RemoveHomeWidgetTool) Description() string {
 	return "Take one widget off the person's own home page. Use it when they want something " +
-		"off \"my dashboard\"; the widget id and version come from get_my_home_layout."
+		"off \"my dashboard\"; the widget id and version come from home_get_layout."
 }
 
 func (t *RemoveHomeWidgetTool) Prerequisites() []string {
-	return []string{"get_my_home_layout"}
+	return []string{toolHomeGetLayout}
 }
 
 func (t *RemoveHomeWidgetTool) ParamSchema() map[string]any {
@@ -576,7 +589,7 @@ func (t *RemoveHomeWidgetTool) ParamSchema() map[string]any {
 			"version": versionProperty(),
 			"widgetId": map[string]any{
 				"type":        "string",
-				"description": "The widget's id, from get_my_home_layout.",
+				"description": "The widget's id, from home_get_layout.",
 			},
 		},
 		"additionalProperties": false,
@@ -596,7 +609,7 @@ func (t *RemoveHomeWidgetTool) edit(params agentports.ToolExecuteParams) homeEdi
 		})
 		if index < 0 {
 			multiErr.Add("widgetId", errortypes.ErrInvalid, fmt.Sprintf(
-				"There is no widget %q on this home page; get_my_home_layout lists them", id,
+				"There is no widget %q on this home page; home_get_layout lists them", id,
 			))
 			return
 		}
@@ -631,7 +644,7 @@ func NewArrangeHomeLayoutTool(layouts *homelayoutservice.Service) agentports.Age
 	return &ArrangeHomeLayoutTool{homeToolBase{editor: homeEditor{layouts: layouts}}}
 }
 
-func (t *ArrangeHomeLayoutTool) Name() string { return "arrange_home_layout" }
+func (t *ArrangeHomeLayoutTool) Name() string { return "home_arrange_layout" }
 
 func (t *ArrangeHomeLayoutTool) SearchTerms() []string {
 	return append(homelayout.SpokenNames(), "reorder", "rearrange")
@@ -657,11 +670,11 @@ func (t *ArrangeHomeLayoutTool) Policy() agentports.ToolPolicy {
 func (t *ArrangeHomeLayoutTool) Description() string {
 	return "Put the widgets on the person's own home page in a new order. Use it when they " +
 		"want something moved up or down \"my dashboard\"; list every widget id from " +
-		"get_my_home_layout, in the order wanted, with its version."
+		"home_get_layout, in the order wanted, with its version."
 }
 
 func (t *ArrangeHomeLayoutTool) Prerequisites() []string {
-	return []string{"get_my_home_layout"}
+	return []string{toolHomeGetLayout}
 }
 
 func (t *ArrangeHomeLayoutTool) ParamSchema() map[string]any {
@@ -673,7 +686,7 @@ func (t *ArrangeHomeLayoutTool) ParamSchema() map[string]any {
 			"widgetIds": map[string]any{
 				"type":        "array",
 				schemaItems:   map[string]any{"type": "string"},
-				"description": "Every widget id from get_my_home_layout, first to last.",
+				"description": "Every widget id from home_get_layout, first to last.",
 			},
 		},
 		"additionalProperties": false,
@@ -699,7 +712,7 @@ func (t *ArrangeHomeLayoutTool) edit(params agentports.ToolExecuteParams) homeEd
 			widget, ok := byID[id]
 			if !ok {
 				multiErr.Add(fmt.Sprintf("widgetIds[%d]", idx), errortypes.ErrInvalid, fmt.Sprintf(
-					"There is no widget %q on this home page; get_my_home_layout lists them", id,
+					"There is no widget %q on this home page; home_get_layout lists them", id,
 				))
 				continue
 			}
@@ -714,7 +727,7 @@ func (t *ArrangeHomeLayoutTool) edit(params agentports.ToolExecuteParams) homeEd
 		for _, widget := range layout.Widgets {
 			if _, listed := seen[widget.ID]; !listed {
 				multiErr.Add("widgetIds", errortypes.ErrInvalid, fmt.Sprintf(
-					"%q is missing; list every widget, or use remove_home_widget to take one off",
+					"%q is missing; list every widget, or use home_remove_widget to take one off",
 					widget.ID,
 				))
 			}

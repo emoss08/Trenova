@@ -1,4 +1,4 @@
-# Synthetic memories and the searches recall_memory should answer with them,
+# Synthetic memories and the searches agent_list_memories should answer with them,
 # and the order a prompt should carry them in for a turn about the query.
 # Every memory is organization-wide and active; the leak test adds memories
 # kept for another agent, retired or expired, and from another organization,
@@ -20,7 +20,7 @@ corpus:
     content: Globex Foods allows two hours of free time before detention starts.
   - key: assign-team-drivers
     kind: Correction
-    tool: assign_move
+    tool: dispatch_assign_move
     content: Loads over 900 miles need a team, not a solo driver.
   - key: email-tone
     kind: Instruction
@@ -42,7 +42,7 @@ corpus:
     content: Send Globex invoices to ap@globexfoods.com, not to the operations inbox.
   - key: waive-detention-rule
     kind: Correction
-    tool: waive_detention
+    tool: detention_waive
     content: Do not waive detention for Globex without a manager's approval.
   - key: chicago-traffic
     kind: Fact

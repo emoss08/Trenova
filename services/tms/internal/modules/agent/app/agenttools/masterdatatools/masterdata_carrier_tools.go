@@ -162,7 +162,7 @@ var carrierRecord = &masterRecord[carrier.Carrier]{
 	entity:   common.CarrierRecordEntity,
 	idParam:  common.ParamCarrierID,
 	idsParam: "carrierIds",
-	lister:   "list_carriers",
+	lister:   "carrier_list",
 	label:    func(entity *carrier.Carrier) string { return entity.Name },
 	id:       func(entity *carrier.Carrier) pulid.ID { return entity.ID },
 	version:  func(entity *carrier.Carrier) int64 { return entity.Version },
@@ -215,7 +215,7 @@ func carrierFields() []masterField[carrier.Carrier] {
 			func(c *carrier.Carrier) *string { return &c.Phone }),
 		masterText(mdEmail, "The dispatch email address.", mdMaxName, false,
 			func(c *carrier.Carrier) *string { return &c.Email }),
-		masterText(mdNotes, "Anything colleagues booking this carrier should know.",
+		masterText(mdNote, "Anything colleagues booking this carrier should know.",
 			mdMaxNotes, false, func(c *carrier.Carrier) *string { return &c.Notes }),
 		masterEnum(carrierPaymentMethod, "How the carrier is paid. Defaults to Check. "+
 			"Payment details are only ever proposed and change on a person's approval.",
@@ -280,10 +280,10 @@ func carrierGetter(carriers CarrierKeeper) func(
 func NewCreateCarrierTool(carriers CarrierKeeper, states StateLookup) agentports.AgentTool {
 	return newMasterCreateTool(&masterCreateSpec[carrier.Carrier]{
 		record: carrierRecord,
-		name:   "create_carrier",
+		name:   "carrier_create",
 		description: "Add a carrier the organization can tender freight to: its code, name, " +
-			"USDOT and MC numbers, SCAC, address and dispatch contact. Check list_carriers " +
-			"first. Vetting and compliance are vet_carrier's; payment and remit-to details " +
+			"USDOT and MC numbers, SCAC, address and dispatch contact. Check carrier_list " +
+			"first. Vetting and compliance are carrier_vet's; payment and remit-to details " +
 			"are only proposed.",
 		rationale: "Adds a carrier inside Trenova that colleagues can then book; nothing is " +
 			"sent. Payment and remit-to details decide where money goes, so a call that " +
@@ -313,10 +313,10 @@ func NewCreateCarrierTool(carriers CarrierKeeper, states StateLookup) agentports
 func NewUpdateCarrierTool(carriers CarrierKeeper, states StateLookup) agentports.AgentTool {
 	return newMasterUpdateTool(&masterUpdateSpec[carrier.Carrier]{
 		record: carrierRecord,
-		name:   "update_carrier",
+		name:   "carrier_update",
 		description: "Change a carrier's details: name, numbers, SCAC, address, dispatch " +
 			"contact, notes, or payment and remit-to details. Fields left out keep their " +
-			"value. Use update_carrier_status to activate or retire it and vet_carrier for " +
+			"value. Use carrier_set_status to activate or retire it and carrier_vet for " +
 			"compliance.",
 		rationale: "Changes a carrier inside Trenova and keeps its contacts, insurance and EDI " +
 			"channels; nothing is sent. A call that changes payment or remit-to details is " +
@@ -337,9 +337,9 @@ func NewUpdateCarrierStatusTool(
 ) agentports.AgentTool {
 	return newMasterStatusTool(&masterStatusSpec[carrier.Carrier, carrier.Status]{
 		record: carrierRecord,
-		name:   "update_carrier_status",
+		name:   "carrier_set_status",
 		description: "Set one or more carriers Active, Inactive or DoNotUse, which decides " +
-			"whether they can be tendered freight. Get the ids from list_carriers.",
+			"whether they can be tendered freight. Get the ids from carrier_list.",
 		rationale:   "Changes whether carriers are offered for booking inside Trenova; nothing is sent.",
 		searchTerms: []string{"deactivate carrier", "do not use", "reactivate carrier"},
 		statuses:    carrierStatuses,

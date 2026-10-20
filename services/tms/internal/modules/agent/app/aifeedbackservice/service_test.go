@@ -510,16 +510,16 @@ func TestSetMine_RedactsRestrictedToolValuesFromTheSnapshot(t *testing.T) {
 	actor := person(tenant)
 	fixture := newConversation(actor.UserID)
 	fixture.question.Content = "What is Dana Reyes's license number?"
-	fixture.tool.ToolName = "get_worker"
+	fixture.tool.ToolName = "worker_get"
 	fixture.tool.ToolSummary = "Dana Reyes"
-	fixture.tool.Content = "Result from get_worker:\n<untrusted_data>\n" +
+	fixture.tool.Content = "Result from worker_get:\n<untrusted_data>\n" +
 		`{"name":"Dana Reyes","licenseNumber":"D1234567","payRate":0.62,` +
 		`"status":"Active","nested":{"ssn":"000-11-2222"}}` +
 		"\n</untrusted_data>"
 	fixture.answer.Content = "Dana Reyes holds license D1234567, paid 0.62 a mile, SSN 000-11-2222."
 	h.messages.context = fixture.source()
 	h.svc.redactor = &redactor{
-		tools: fakeToolResources{"get_worker": permission.ResourceWorker},
+		tools: fakeToolResources{"worker_get": permission.ResourceWorker},
 		registry: fakeSensitivity{
 			"licenseNumber": permission.SensitivityConfidential,
 			"payRate":       permission.SensitivityRestricted,
@@ -550,13 +550,13 @@ func TestRedactor_ReadsAResultThatWasCutOff(t *testing.T) {
 	t.Parallel()
 
 	r := &redactor{
-		tools:    fakeToolResources{"list_workers": permission.ResourceWorker},
+		tools:    fakeToolResources{"worker_list": permission.ResourceWorker},
 		registry: fakeSensitivity{"licenseNumber": permission.SensitivityRestricted},
 	}
 	cut := `[{"name":"A","licenseNumber":"L-998877"},{"name":"B","licenseNumber":"L-5544` +
 		"\n\n[This result was cut off here]"
 
-	values := r.restrictedValues([]toolResult{{name: "list_workers", content: cut}})
+	values := r.restrictedValues([]toolResult{{name: "worker_list", content: cut}})
 
 	assert.Contains(t, values, "L-998877")
 	for _, value := range values {

@@ -76,7 +76,7 @@ func TestRecord_LeavesAnUnpinnedActionUnpinned(t *testing.T) {
 	t.Parallel()
 
 	proposal := recordOne(t, agentports.PendingAction{
-		ToolName:  "raise_exception",
+		ToolName:  "agent_raise_exception",
 		Arguments: map[string]any{},
 		Rationale: "something is off",
 		Tier:      agent.TierPropose,

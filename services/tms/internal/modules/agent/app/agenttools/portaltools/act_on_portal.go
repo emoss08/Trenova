@@ -70,7 +70,7 @@ func (t *ActOnPortalTool) Description() string {
 func (t *ActOnPortalTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramSiteID: agenttoolschema.KindID(
-			"The portal site to act on, from list_portal_sites. It must allow actions.",
+			"The portal site to act on, from web_list_portal_sites. It must allow actions.",
 			permission.KindPortalSite,
 		),
 		paramInstruction: map[string]any{

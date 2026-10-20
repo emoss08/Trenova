@@ -260,7 +260,7 @@ func purchaseParams() map[string]any {
 	return map[string]any{
 		common.ParamTractorID: pulid.MustNew("trac_").String(),
 		paramJurisdictionID:   texasID.String(),
-		paramPurchasedAt:      "2026-09-14T08:30:00-05:00",
+		paramPurchasedAt:      "2026-09-14T08:30",
 		common.ParamFuelType:  "Diesel",
 		paramQuantity:         "100.5",
 		paramTotalAmount:      "391.85",
@@ -303,11 +303,11 @@ func TestRecordFuelPurchase_RefusesWhatItCannotRecord(t *testing.T) {
 
 	tool := NewRecordFuelPurchaseTool(&fakeFuel{}, fakeJurisdictions{})
 	for name, change := range map[string]func(map[string]any){
-		"a local time without an offset": func(p map[string]any) { p[paramPurchasedAt] = "2026-09-14 08:30" },
-		"a fuel IFTA does not know":      func(p map[string]any) { p[common.ParamFuelType] = "Kerosene" },
-		"a zero quantity":                func(p map[string]any) { p[paramQuantity] = "0" },
-		"an amount that is not money":    func(p map[string]any) { p[paramTotalAmount] = "a lot" },
-		"a bad currency":                 func(p map[string]any) { p[paramCurrencyCode] = "DOLLARS" },
+		"a time with an offset":       func(p map[string]any) { p[paramPurchasedAt] = "2026-09-14T08:30:00-05:00" },
+		"a fuel IFTA does not know":   func(p map[string]any) { p[common.ParamFuelType] = "Kerosene" },
+		"a zero quantity":             func(p map[string]any) { p[paramQuantity] = "0" },
+		"an amount that is not money": func(p map[string]any) { p[paramTotalAmount] = "a lot" },
+		"a bad currency":              func(p map[string]any) { p[paramCurrencyCode] = "DOLLARS" },
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
@@ -598,13 +598,13 @@ func TestRecordFuelPurchase_WorksOutTheTotalFromTheUnitPrice(t *testing.T) {
 	assert.Contains(t, err.Error(), paramTotalAmount)
 }
 
-func TestRecordFuelPurchase_RecordsADayAloneAtNoonInTheOrganizationsZone(t *testing.T) {
+func TestRecordFuelPurchase_ReadsTheTimeInTheOrganizationsZone(t *testing.T) {
 	t.Parallel()
 
 	fuel := &fakeFuel{guard: &agenttoolstest.WriteGuard{}}
 	tool := NewRecordFuelPurchaseTool(fuel, fakeJurisdictions{})
 	params := purchaseParams()
-	params[paramPurchasedAt] = "2026-10-08"
+	params[paramPurchasedAt] = "2026-10-08T12:00"
 	execute := agenttoolstest.ExecuteParams(params)
 	execute.Timezone = "America/Chicago"
 

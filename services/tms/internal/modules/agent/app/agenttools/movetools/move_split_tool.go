@@ -41,7 +41,7 @@ type moveSplitter interface {
 
 func NewSplitMoveTool(moves moveSplitter) agentports.AgentTool {
 	return common.NewReportingReceivableTool(&common.ReceivableSpec{
-		Name:     "split_move_at_relay",
+		Name:     "dispatch_split_move",
 		Artifact: common.ShipmentRecordEntity,
 		Description: "Split a two-stop move at its delivery stop so the freight is dropped " +
 			"there as a relay and a new move carries it on to a new delivery location. The " +
@@ -59,12 +59,12 @@ func NewSplitMoveTool(moves moveSplitter) agentports.AgentTool {
 			ParamMoveID: agenttoolschema.RecordIDText(
 				permission.ResourceShipmentMove,
 				"The two-stop move to split, from shipment_get (its moves) "+
-					"or get_dispatch_board. Never guess one.",
+					"or dispatch_get_board. Never guess one.",
 			),
 			ParamNewDeliveryLocationID: agenttoolschema.RecordIDText(
 				permission.ResourceLocation,
 				"Where the freight finally goes, from "+
-					"list_locations. It must differ from the current delivery location.",
+					"location_list. It must differ from the current delivery location.",
 			),
 			ParamRelayPickupStart: agenttoolschema.DateTime(
 				"When the new move's pickup at the relay " +

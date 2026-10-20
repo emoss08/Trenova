@@ -26,7 +26,7 @@ const START_ICON: Record<BuilderStart, AgentIconName> = {
 const START_TOOLS: Record<BuilderStart, { name: string; tier: AutonomyTier }[]> = {
   chat: [],
   scheduled: [{ name: "schedule_report_email", tier: "Propose" }],
-  event: [{ name: "flag_for_manual_review", tier: "AutoExecute" }],
+  event: [{ name: "agent_request_review", tier: "AutoExecute" }],
   blank: [],
 };
 

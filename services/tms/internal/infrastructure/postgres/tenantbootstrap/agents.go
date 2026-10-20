@@ -107,7 +107,7 @@ func SystemAgentDefinitions(orgID, buID pulid.ID) []*agentdefinition.Definition 
 			Accent:          agentdefinition.AccentIndigo,
 			Instructions:    dispatch.StarterInstructions(),
 			ToolNames:       dispatch.StarterTools(),
-			ToolTiers:       map[string]agent.AutonomyTier{"assign_move": agent.TierPropose},
+			ToolTiers:       map[string]agent.AutonomyTier{"dispatch_assign_move": agent.TierPropose},
 			AutonomyCeiling: dispatch.StarterCeiling(),
 			TriggerMode:     dispatch.StarterTrigger(),
 			EventKinds:      dispatch.StarterEvents(),

@@ -17,8 +17,8 @@ import (
 func TestSummaryCountsChangesByAudienceAndNamesWhatRunsAndWhoIsOpen(t *testing.T) {
 	t.Parallel()
 
-	open := agentWith("Customer desk", "email_customer", "assign_move")
-	restricted := agentWith("Billing desk", "email_customer")
+	open := agentWith("Customer desk", "customer_send_email", "dispatch_assign_move")
+	restricted := agentWith("Billing desk", "customer_send_email")
 	restricted.AccessMode = agentdefinition.AccessRoles
 	svc := testService(&fakeDefinitions{all: []*agentdefinition.Definition{open, restricted}}, &tenant.AgentControl{})
 
@@ -37,7 +37,7 @@ func TestSummaryCountsChangesByAudienceAndNamesWhatRunsAndWhoIsOpen(t *testing.T
 	assert.Equal(t, []pulid.ID{open.ID}, summary.OpenSensitiveAgentIDs)
 	assert.Equal(t, summary.OpenWithSensitive, len(summary.OpenSensitiveAgentIDs))
 	assert.Len(t, summary.UnattendedTools, summary.RunWithoutPerson)
-	assign, ok := svc.ToolPolicy("assign_move")
+	assign, ok := svc.ToolPolicy("dispatch_assign_move")
 	require.True(t, ok)
 	assert.Contains(t, summary.UnattendedTools, assign.Title)
 }
@@ -45,8 +45,8 @@ func TestSummaryCountsChangesByAudienceAndNamesWhatRunsAndWhoIsOpen(t *testing.T
 func TestToolHoldersListsEachAgentOnceUnderEveryToolItHolds(t *testing.T) {
 	t.Parallel()
 
-	first := agentWith("Customer desk", "email_customer", "assign_move")
-	second := agentWith("Billing desk", "email_customer")
+	first := agentWith("Customer desk", "customer_send_email", "dispatch_assign_move")
+	second := agentWith("Billing desk", "customer_send_email")
 	svc := testService(&fakeDefinitions{all: []*agentdefinition.Definition{first, second}}, &tenant.AgentControl{})
 
 	holders, err := svc.ToolHolders(t.Context(), pagination.TenantInfo{
@@ -59,8 +59,8 @@ func TestToolHoldersListsEachAgentOnceUnderEveryToolItHolds(t *testing.T) {
 	for _, entry := range holders {
 		byTool[entry.PolicyName] = entry.AgentIDs
 	}
-	assert.Equal(t, []pulid.ID{first.ID, second.ID}, byTool["email_customer"])
-	assert.Equal(t, []pulid.ID{first.ID}, byTool["assign_move"])
+	assert.Equal(t, []pulid.ID{first.ID, second.ID}, byTool["customer_send_email"])
+	assert.Equal(t, []pulid.ID{first.ID}, byTool["dispatch_assign_move"])
 	assert.NotContains(t, byTool, "unregistered_tool")
 	assert.NotContains(t, byTool, "shipment_get")
 }
@@ -76,17 +76,17 @@ func (f *fakeRules) For(context.Context, pagination.TenantInfo) (map[string]*age
 func TestTheOrganizationsToolRulesShapeEverySafetyRead(t *testing.T) {
 	t.Parallel()
 
-	held := &agent.ToolRuleOverride{ToolName: "assign_move", MaxTier: agent.TierPropose, Reason: "hold", Version: 3}
-	reset := &agent.ToolRuleOverride{ToolName: "email_customer", Reason: "released", Version: 2}
-	desk := agentWith("Dispatch desk", "assign_move", "email_customer")
+	held := &agent.ToolRuleOverride{ToolName: "dispatch_assign_move", MaxTier: agent.TierPropose, Reason: "hold", Version: 3}
+	reset := &agent.ToolRuleOverride{ToolName: "customer_send_email", Reason: "released", Version: 2}
+	desk := agentWith("Dispatch desk", "dispatch_assign_move", "customer_send_email")
 	svc := testService(&fakeDefinitions{all: []*agentdefinition.Definition{desk}}, &tenant.AgentControl{})
-	svc.rules = &fakeRules{rules: map[string]*agent.ToolRuleOverride{"assign_move": held, "email_customer": reset}}
+	svc.rules = &fakeRules{rules: map[string]*agent.ToolRuleOverride{"dispatch_assign_move": held, "customer_send_email": reset}}
 	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	desk.OrganizationID, desk.BusinessUnitID = tenantInfo.OrgID, tenantInfo.BuID
 
 	summary, err := svc.Summary(t.Context(), tenantInfo)
 	require.NoError(t, err)
-	assign, ok := svc.ToolPolicy("assign_move")
+	assign, ok := svc.ToolPolicy("dispatch_assign_move")
 	require.True(t, ok)
 	assert.NotContains(t, summary.UnattendedTools, assign.Title, "a tool held to proposals never runs alone")
 
@@ -96,19 +96,19 @@ func TestTheOrganizationsToolRulesShapeEverySafetyRead(t *testing.T) {
 	for _, edge := range page.Edges {
 		views[edge.View.Policy.Name] = edge.View
 	}
-	assert.Equal(t, agent.TierPropose, views["assign_move"].Policy.MaxTier)
-	require.NotNil(t, views["assign_move"].Declared)
-	assert.Equal(t, agent.TierAutoExecute, views["assign_move"].Declared.MaxTier)
-	assert.Same(t, held, views["assign_move"].Override)
-	assert.Same(t, reset, views["email_customer"].Override, "a reset rule keeps its version for the next edit")
-	assert.Equal(t, agent.TierAutoExecute, views["email_customer"].Policy.MaxTier)
+	assert.Equal(t, agent.TierPropose, views["dispatch_assign_move"].Policy.MaxTier)
+	require.NotNil(t, views["dispatch_assign_move"].Declared)
+	assert.Equal(t, agent.TierAutoExecute, views["dispatch_assign_move"].Declared.MaxTier)
+	assert.Same(t, held, views["dispatch_assign_move"].Override)
+	assert.Same(t, reset, views["customer_send_email"].Override, "a reset rule keeps its version for the next edit")
+	assert.Equal(t, agent.TierAutoExecute, views["customer_send_email"].Policy.MaxTier)
 	assert.Nil(t, views["shipment_get"].Override)
 
 	assessed := svc.Assess(t.Context(), &agentports.AssessAgentSafetyRequest{
 		Subject: &agentports.AgentSafetySubject{Agent: desk, Control: &tenant.AgentControl{}},
 	})
 	for _, tool := range assessed {
-		if tool.PolicyName == "assign_move" {
+		if tool.PolicyName == "dispatch_assign_move" {
 			assert.Equal(t, agent.AutonomyProposeOnly, tool.Clean.Answer)
 			require.NotNil(t, tool.Policy)
 			assert.Same(t, held, tool.Policy.Override)
@@ -117,10 +117,10 @@ func TestTheOrganizationsToolRulesShapeEverySafetyRead(t *testing.T) {
 
 	impacts, err := svc.RuleImpact(t.Context(), &agentports.RuleImpactRequest{
 		TenantInfo: tenantInfo,
-		ToolName:   "email_customer",
-		Before:     policy("email_customer", agent.ToolKindAction, agent.EgressExternalRecipient),
+		ToolName:   "customer_send_email",
+		Before:     policy("customer_send_email", agent.ToolKindAction, agent.EgressExternalRecipient),
 		After: func() agentports.ToolPolicy {
-			p := policy("email_customer", agent.ToolKindAction, agent.EgressExternalRecipient)
+			p := policy("customer_send_email", agent.ToolKindAction, agent.EgressExternalRecipient)
 			p.MaxTier, p.DefaultTier = agent.TierPropose, agent.TierPropose
 			return p
 		}(),

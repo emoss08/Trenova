@@ -934,7 +934,7 @@ func (t *listOpenStatementsTool) Description() string {
 func (t *listOpenStatementsTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
 		paramCustomerID: agenttoolschema.RecordIDText(permission.ResourceCustomer,
-			"Optional: one customer, from list_customers, with the "+
+			"Optional: one customer, from customer_list, with the "+
 				"shipments on their statement."),
 	})
 }

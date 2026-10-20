@@ -230,12 +230,12 @@ line, the tool steps and the reply as deskcase does, and is written to the conve
 What it says follows the question and the editor in the turn's page draft:
 
 - "edge", "scenario": the four edge loads priced in the reply, no artifact.
-- "fix", "error": a `propose_formula` draft edit guarding every unguarded optional field with
+- "fix", "error": a `formula_propose` draft edit guarding every unguarded optional field with
   `?? 0` and correcting misspelt names.
 - A fee by name ("weekend", "reefer", "hazmat", "liftgate", "fuel", "stop") with "add", "write",
-  "draft", "create" or "include": `describe_formula_schema`, `test_formula_expression` and
-  `propose_formula` steps, a short reply and a `draft_edit` artifact
-  (`{surface: "formula", action: "propose_formula", formula}`) adding the fee's input and term
+  "draft", "create" or "include": `formula_describe_schema`, `formula_test_expression` and
+  `formula_propose` steps, a short reply and a `draft_edit` artifact
+  (`{surface: "formula", action: "formula_propose", formula}`) adding the fee's input and term
   to the result, with a breakdown line when the template itemizes (or a name, description and
   lines when the editor is empty), checked and priced on the sample load and three shipments.
   "per mile" and "cwt" draft a method from scratch.

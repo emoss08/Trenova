@@ -74,7 +74,7 @@ func (c *Catalog) Items() []agentports.EmbeddingCatalogItem {
 func DescriptorText(descriptor *agentports.AgentToolDescriptor) string {
 	var b strings.Builder
 	b.Grow(len(descriptor.Name) + len(descriptor.Description) + 64)
-	b.WriteString(strings.ReplaceAll(descriptor.Name, "_", " "))
+	b.WriteString(strings.ReplaceAll(agentports.ReadingOrder(descriptor.Name), "_", " "))
 	b.WriteString(": ")
 	b.WriteString(strings.TrimSpace(descriptor.Description))
 	if len(descriptor.SearchTerms) > 0 {

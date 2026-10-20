@@ -388,6 +388,8 @@ const (
 	MaxChartCategory = 200
 )
 
+const MaxDefinitionLimit = 100_000
+
 // ChartGoal draws a reference line (or a KPI target) from either a constant or
 // another column in the same row, which is how fleet goals land on the chart.
 type ChartGoal struct {

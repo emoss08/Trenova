@@ -61,6 +61,7 @@ var toolNamespaces = []ToolNamespace{
 		Name:    "dispatch",
 		Title:   "Dispatch",
 		Summary: "Covering moves: the board, assignments, tenders, check calls and stop actuals.",
+		Records: []string{"carrier_assignment", "tender"},
 	},
 	{
 		Name:    "document",
@@ -76,11 +77,13 @@ var toolNamespaces = []ToolNamespace{
 		Name:    "equipment",
 		Title:   "Equipment",
 		Summary: "Tractors, trailers, equipment types and where each truck is.",
+		Records: []string{"tractor", "trailer"},
 	},
 	{
 		Name:    "exception",
 		Title:   "Exceptions",
 		Summary: "The exception queue: watchtower items, service failures and their owners and status.",
+		Records: []string{"service_failure", "watchtower_item"},
 	},
 	{
 		Name:    "factoring",
@@ -96,6 +99,7 @@ var toolNamespaces = []ToolNamespace{
 		Name:    "fuel",
 		Title:   "Fuel and IFTA",
 		Summary: "Fuel purchases, fuel cards, IFTA mileage and returns.",
+		Records: []string{"ifta_jurisdiction", "ifta_mileage_entry", "ifta_return"},
 	},
 	{
 		Name:    "home",
@@ -106,6 +110,7 @@ var toolNamespaces = []ToolNamespace{
 		Name:    "inbox",
 		Title:   "Inbox",
 		Summary: "Inbound messages and captures: triage, replies, filing, senders and drafted loads.",
+		Records: []string{"capture_batch", "email_profile", "inbound_message"},
 	},
 	{
 		Name:    "insight",
@@ -126,6 +131,7 @@ var toolNamespaces = []ToolNamespace{
 		Name:    "ledger",
 		Title:   "General ledger",
 		Summary: "Journal entries, manual journals, reversals, GL accounts and fiscal periods.",
+		Records: []string{"fiscal_period", "journal_entry", "journal_reversal", "manual_journal"},
 	},
 	{
 		Name:    "location",
@@ -136,6 +142,15 @@ var toolNamespaces = []ToolNamespace{
 		Name:    "masterdata",
 		Title:   "Reference data",
 		Summary: "Commodities, hazardous materials, hold reasons and the other lookup lists.",
+		Records: []string{
+			"accessorial_charge",
+			"commodity",
+			"fleet_code",
+			"hazardous_material",
+			"hold_reason",
+			"service_type",
+			"shipment_type",
+		},
 	},
 	{
 		Name:    "order",
@@ -146,6 +161,7 @@ var toolNamespaces = []ToolNamespace{
 		Name:    "rate",
 		Title:   "Rates",
 		Summary: "Rate agreements, quotes, rating, rate imports and fuel index prices.",
+		Records: []string{"fuel_index", "fuel_surcharge_program"},
 	},
 	{
 		Name:    "receivable",
@@ -157,12 +173,14 @@ var toolNamespaces = []ToolNamespace{
 		Name:    "report",
 		Title:   "Reports",
 		Summary: "Reports, their runs and schedules, dashboards, table views and change alerts.",
+		Records: []string{"dashboard", "table_change_alert"},
 	},
 	{
 		Name:       "settlement",
 		Title:      "Settlements and pay",
 		Summary:    "Driver and carrier settlements, pay events, advances, escrow, deductions and payroll.",
 		Qualifiers: []string{"driver", "carrier"},
+		Records:    []string{"driver_expense"},
 	},
 	{
 		Name:    "shipment",
@@ -173,11 +191,13 @@ var toolNamespaces = []ToolNamespace{
 		Name:    "web",
 		Title:   "Web and portals",
 		Summary: "The public web and the carrier and customer portals an organization set up.",
+		Records: []string{"portal_site"},
 	},
 	{
 		Name:    "worker",
 		Title:   "Workers",
 		Summary: "Drivers and staff: records, hours, credentials, time off, training, safety and reviews.",
+		Records: []string{"performance_review", "shift_swap", "shift_template", "training_course"},
 	},
 }
 

@@ -94,7 +94,7 @@ button, which stretched every warn pill to the button's width.
 
 ## The analysis
 
-`analysis` is what `analyze_data` ran (see [agent-data-analysis.md](agent-data-analysis.md)):
+`analysis` is what `report_analyze_data` ran (see [agent-data-analysis.md](agent-data-analysis.md)):
 the purpose as its title, then the charts, the figures it returned, the error it raised,
 what it printed and the code, folded. `kinds/analysis/` only reads the payload
 (`analysisFrom`); the drawing is `AnalysisResult` in `components/assistant/`, which AI
@@ -105,8 +105,8 @@ is not a lookup: it is kept whether or not the reply names it, and the reply mus
 ## The portal task
 
 `portal_task` is a portal task an agent ran in a cloud browser (see
-[agent-portal-automation.md](agent-portal-automation.md)): a `read_portal` call,
-titled by its question, or an approved `act_on_portal`, titled "Portal action on"
+[agent-portal-automation.md](agent-portal-automation.md)): a `web_read_portal` call,
+titled by its question, or an approved `web_use_portal`, titled "Portal action on"
 its site (`assistantservice/portal_task_artifact.go`). The payload is only what the
 agent was told; `kinds/portal/` reads the run itself (`agentExtension.portalRun`)
 and reads it again every few seconds while its browser is open, so the card is
@@ -123,7 +123,7 @@ code finds where to enter it.
 
 ## The EDI connection draft
 
-`edi_connection_draft` is what `draft_edi_connection` drafted from a trading partner's
+`edi_connection_draft` is what `edi_draft_connection` drafted from a trading partner's
 implementation guide (see [edi-spec-onboarding.md](edi-spec-onboarding.md)), drawn by
 `kinds/edi-connection-draft/` on the record card's frame with its own skeleton
 (`ConnectionDraftSkeleton`, which `ArtifactBodySkeleton` draws while its contents are read).
@@ -131,7 +131,7 @@ Every value carries a page tab, `SourceTab`, that opens the guide's quoted words
 card; a held value lists each reading with its page, and picking one has the agent draft
 again with it (`resolutionQuestion`), never a value chosen in the browser. The credentials
 are listed for the person to enter and never shown with a value. Saving is the
-`apply_edi_connection_draft` proposal, matched to the card by the document digest the person
+`edi_apply_connection_draft` proposal, matched to the card by the document digest the person
 reviewed; the card asks for it (`proposeQuestion`) only once the draft is ready. The recorder
 drops the note meant for the model, cuts each sample's parse to its version and counts, and
 trims mappings, samples and gaps to the payload limit with the full mapping count kept
@@ -495,7 +495,7 @@ has none of its own, and bills from the ones filed on its shipment.
 A list or search that found exactly one record of a kind with a card is drawn as
 that card, not as a table of one row (`soleRecordCard` in
 `assistantservice/artifacts.go`). Asked to show a template by name, the agent finds
-it with `list_formula_templates`, and the person sees the template rather than a row
+it with `formula_list_templates`, and the person sees the template rather than a row
 to open; a search that found one shipment is the shipment's card the same way. A page of one with more behind it (`hasMore`, or a larger `count`) stays a
 table.
 

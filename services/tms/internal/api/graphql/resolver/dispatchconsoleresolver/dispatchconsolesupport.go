@@ -84,7 +84,7 @@ func (r *MutationResolver) assignOneMove(
 		assignment, err = r.assignThroughService(ctx, args)
 	}
 	if err != nil {
-		r.logDispatchError("assign_move", item.MoveID, err)
+		r.logDispatchError("dispatch_assign_move", item.MoveID, err)
 		result.Error = errorMessage(err)
 		result.Findings = findingsFromError(err)
 		return result

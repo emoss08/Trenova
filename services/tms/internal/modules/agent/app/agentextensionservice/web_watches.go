@@ -221,7 +221,7 @@ func (s *Service) planWith(
 	if active >= call.allowed {
 		return nil, &ToolError{Message: "This organization already has " +
 			strconv.Itoa(active) + " web watches running, the most " + call.def.Vendor +
-			" is set to allow. Stop one the person no longer needs with stop_web_watch, or an " +
+			" is set to allow. Stop one the person no longer needs with web_stop_watch, or an " +
 			"administrator can raise the limit under AI Control, Extensions."}
 	}
 

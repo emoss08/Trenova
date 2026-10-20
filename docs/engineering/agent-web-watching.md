@@ -11,12 +11,12 @@ without it.
 
 | Tool | Kind | What it does |
 |---|---|---|
-| `watch_web` | action, `AutoExecute`, `web_research:read` | Sets a watch: `purpose` (what the person wants to hear about), `query` (the search run each time), optional `sites` (hostnames, at most 20), `cadence` (`SixHours`, `Daily`, `Weekly`; daily by default) and `days` (1 to 90; 30 by default) |
-| `list_web_watches` | query | The watches set for the person (or, from a background run, by its agent), active ones unless asked for all, each marked when it came from this conversation |
-| `stop_web_watch` | action, `AutoExecute`, `web_research:read` | Stops a watch the person no longer needs |
+| `web_watch` | action, `AutoExecute`, `web_research:read` | Sets a watch: `purpose` (what the person wants to hear about), `query` (the search run each time), optional `sites` (hostnames, at most 20), `cadence` (`SixHours`, `Daily`, `Weekly`; daily by default) and `days` (1 to 90; 30 by default) |
+| `web_list_watches` | query | The watches set for the person (or, from a background run, by its agent), active ones unless asked for all, each marked when it came from this conversation |
+| `web_stop_watch` | action, `AutoExecute`, `web_research:read` | Stops a watch the person no longer needs |
 
 A person can also start a Desk message with `/watch` and what to keep an eye on, which holds
-the turn to setting a watch: the extension command registry lists it only where `watch_web` can
+the turn to setting a watch: the extension command registry lists it only where `web_watch` can
 be used, and a reply that ends without a watch tool (a search alone does not count) is sent
 back once (see "Extension commands" in [agent-extensions.md](agent-extensions.md)).
 
@@ -52,7 +52,7 @@ webhook's signing secret, which is stored encrypted on the watch (`secretconfig`
 watch). A watch the vendor refused ends `Failed` at once; one the vendor took but Trenova could
 not keep track of has its monitor removed and ends `Failed`.
 
-`watch_web` then parks the work on it: `RegisterWebWatchWait` sets a `WebWatch` wait (see
+`web_watch` then parks the work on it: `RegisterWebWatchWait` sets a `WebWatch` wait (see
 [agent-waits.md](agent-waits.md)) on the conversation or background run, lasting as long as
 the watch plus an hour for its last check (`agentwait.MaxWebWatchLifetimeSeconds`, up to 90
 days). A watch whose work could not be parked is stopped at once: what it found would reach no
@@ -98,14 +98,14 @@ is 401 and an unknown watch 404.
 
 ## Stopping and ending
 
-`stop_web_watch`, **Stop watching** on the Desk's wait, and **Stop watching** under the
+`web_stop_watch`, **Stop watching** on the Desk's wait, and **Stop watching** under the
 extension in AI control (`POST /agent-web-watches/:watchID/stop/`) remove the monitor, record
 the watch `Stopped` with who stopped it, close its waits quietly (`EndWebWatchWaits`) and
 signal the workflow, which then ends. Only the person a watch was set for, the agent whose
 background work set one for no person, or someone who can update agent extensions may stop it;
 anyone else is told it does not exist. A monitor Exa will not remove leaves the watch running
 rather than recorded as stopped. A `WebWatch` wait cannot be cancelled on its own
-(`cancel_wait` and the wait's cancel refuse it): it ends with its watch.
+(`agent_cancel_wait` and the wait's cancel refuse it): it ends with its watch.
 
 A watch that fails meets its waits with the reason, so the person hears. One whose time ran out
 lets its wait run out an hour later, and the work hears the watch ended.
@@ -130,7 +130,7 @@ lets its wait run out an hour later, and the work hears the watch ended.
 | Repositories | `adapters/postgres/agentextensionrepository/webwatch.go` |
 | Workflow and activity | `jobs/webwatchjobs/`, `webwatchcontract` |
 | Waits | `agentwait.KindWebWatch`, `app/agentwaitservice/webwatch.go` |
-| Tools | `app/agenttools/webwatchtools/` (`watch_web`, `stop_web_watch`), `app/agentquerytoolservice/web_watch_tools.go` (`list_web_watches`) |
+| Tools | `app/agenttools/webwatchtools/` (`web_watch`, `web_stop_watch`), `app/agentquerytoolservice/web_watch_tools.go` (`web_list_watches`) |
 | Vendor | `shared/exa/monitors.go`, `internal/infrastructure/agentextension/exaconnector/monitors.go` |
 | REST | `GET /agent-web-watches/`, `GET /agent-web-watches/:watchID/findings/`, `POST /agent-web-watches/:watchID/stop/`, the public webhook |
 | Client | `routes/agent-control/_components/extensions/web-watches.tsx`, `components/desk-chat/composer/desk-waits.tsx`, `lib/web-watch.ts` |

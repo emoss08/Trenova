@@ -19,7 +19,6 @@ const (
 	paramDriftStatus     = "status"
 	paramDriftKind       = "kind"
 	paramDriftObjectType = "objectType"
-	paramDriftSearch     = "search"
 
 	driftDefaultLimit = 25
 	driftMaxLimit     = 50
@@ -148,7 +147,7 @@ func provideListAccountingDriftFindingsTool(
 }
 
 func (t *listAccountingDriftFindingsTool) Name() string {
-	return "list_accounting_drift_findings"
+	return "accounting_list_drift_findings"
 }
 
 func (t *listAccountingDriftFindingsTool) Description() string {
@@ -156,7 +155,7 @@ func (t *listAccountingDriftFindingsTool) Description() string {
 		"now, newest first. Each row shows both values, who changed it there and when, " +
 		"whether the difference is within the reconciliation tolerance, and the fixes it " +
 		"offers. Filter by status, such as Open, by kind, or by document type. Pass an Open " +
-		"row's id to resolve_accounting_drift or dismiss_accounting_drift."
+		"row's id to accounting_resolve_drift_finding or accounting_dismiss_drift_finding."
 }
 
 func (t *listAccountingDriftFindingsTool) SearchTerms() []string {
@@ -186,13 +185,10 @@ func (t *listAccountingDriftFindingsTool) ParamSchema() map[string]any {
 			agenttoolschema.Enum("A document type.", agenttoolschema.DriftObjectTypes),
 			len(agenttoolschema.DriftObjectTypes.Values),
 		),
-		paramDriftSearch: jsonschemautils.Text(
+		paramQuery: jsonschemautils.Text(
 			"Words to find in the document number, the party name or who changed it.",
 		),
-		paramLimit: jsonschemautils.Integer(fmt.Sprintf(
-			"How many findings to return, at most %d. Defaults to %d.",
-			driftMaxLimit, driftDefaultLimit,
-		)),
+		paramLimit: limitSchema(driftDefaultLimit, driftMaxLimit),
 		paramAfter: jsonschemautils.Text(
 			"The nextCursor from a previous call of this tool, for the next page.",
 		),
@@ -247,7 +243,7 @@ func (t *listAccountingDriftFindingsTool) request(
 		Statuses:        statuses,
 		Kinds:           kinds,
 		ObjectTypes:     objectTypes,
-		Search:          optionalString(params.Params, paramDriftSearch),
+		Search:          optionalString(params.Params, paramQuery),
 		Cursor:          cursor,
 	}, nil
 }

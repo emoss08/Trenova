@@ -64,7 +64,7 @@ func newExplainRateTool(
 	return &explainRateTool{quotes: quotes, shipments: shipments}
 }
 
-func (t *explainRateTool) Name() string { return "explain_rate" }
+func (t *explainRateTool) Name() string { return "rate_explain" }
 
 func (t *explainRateTool) Description() string {
 	return "Explain how a saved shipment's rate was arrived at: the agreement and rule that " +

@@ -192,7 +192,7 @@ func (t *getARAgingTool) ParamSchema() map[string]any {
 	return objectSchema(withPaging(map[string]any{
 		paramAsOf: agenttoolschema.Date("The day to age as of. Defaults to today."),
 		paramCustomerID: agenttoolschema.RecordIDText(permission.ResourceCustomer,
-			"Only this customer, by id from list_customers or a row of this tool."),
+			"Only this customer, by id from customer_list or a row of this tool."),
 		"overdueOnly": boolParam("Only customers with a balance past due."),
 	}, defaultAccountingRows, maxAccountingRows))
 }
@@ -365,7 +365,7 @@ func (t *listAROpenItemsTool) Description() string {
 func (t *listAROpenItemsTool) ParamSchema() map[string]any {
 	return objectSchema(withPaging(map[string]any{
 		paramCustomerID: agenttoolschema.RecordIDText(permission.ResourceCustomer,
-			"Only this customer's invoices, by id from list_customers or receivable_get_aging."),
+			"Only this customer's invoices, by id from customer_list or receivable_get_aging."),
 		"minDaysPastDue": intParam("Only invoices at least this many days past due."),
 		"disputedOnly":   boolParam("Only invoices the customer disputes."),
 		paramAsOf:        agenttoolschema.Date("The day to age as of. Defaults to today."),
@@ -507,13 +507,13 @@ func (t *getCustomerStatementTool) Description() string {
 	return "Build one customer's account statement: invoices, payments and credits over a " +
 		"period with the running balance, what is still open, and their aging. It answers " +
 		"what a customer was billed and paid and what they owe now. Take the customer's " +
-		"id from list_customers or receivable_get_aging."
+		"id from customer_list or receivable_get_aging."
 }
 
 func (t *getCustomerStatementTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
 		paramCustomerID: agenttoolschema.RecordIDText(permission.ResourceCustomer,
-			"The customer's id, from list_customers, receivable_get_aging or "+onThePage),
+			"The customer's id, from customer_list, receivable_get_aging or "+onThePage),
 		paramStartDate: agenttoolschema.Date(
 			"The first day of the statement period. Omit for the " +
 				"customer's whole history.",
@@ -839,13 +839,13 @@ func newListJournalEntriesTool(
 	return &listJournalEntriesTool{entries: entries, access: newFieldAccess(permissions)}
 }
 
-func (t *listJournalEntriesTool) Name() string { return "list_journal_entries" }
+func (t *listJournalEntriesTool) Name() string { return "ledger_list_journal_entries" }
 
 func (t *listJournalEntriesTool) Description() string {
 	return "List general ledger journal entries, newest accounting date first, with their " +
 		"number, type, status, source reference and debit and credit totals. Narrow by " +
 		"status, source, fiscal period, an accounting date range or text in the number or " +
-		"description. get_journal_entry opens one with its lines."
+		"description. ledger_get_journal_entry opens one with its lines."
 }
 
 func (t *listJournalEntriesTool) ParamSchema() map[string]any {
@@ -856,7 +856,7 @@ func (t *listJournalEntriesTool) ParamSchema() map[string]any {
 		"referenceType": stringParam("Only entries from this source, such as Invoice, " +
 			"CustomerPayment or DriverSettlement."),
 		paramFiscalPeriodID: agenttoolschema.RecordIDText(permission.ResourceFiscalPeriod,
-			"Only entries in this fiscal period, by id from list_fiscal_periods."),
+			"Only entries in this fiscal period, by id from ledger_list_fiscal_periods."),
 		paramFromDate: agenttoolschema.Date("The earliest accounting date."),
 		paramToDate:   agenttoolschema.Date("The latest accounting date."),
 	}, defaultListLimit, maxListLimit))
@@ -1007,12 +1007,12 @@ func newGetJournalEntryTool(
 	}
 }
 
-func (t *getJournalEntryTool) Name() string { return "get_journal_entry" }
+func (t *getJournalEntryTool) Name() string { return "ledger_get_journal_entry" }
 
 func (t *getJournalEntryTool) Description() string {
 	return "Retrieve one journal entry by id with its lines: the GL account each line " +
 		"posts to, its debit or credit, and the entry's source, approval and reversal " +
-		"history. Use list_journal_entries first when you have a number or a date."
+		"history. Use ledger_list_journal_entries first when you have a number or a date."
 }
 
 func (t *getJournalEntryTool) SearchTerms() []string {
@@ -1025,7 +1025,7 @@ func (t *getJournalEntryTool) ParamSchema() map[string]any {
 	return idSchema(
 		"journalEntryId",
 		agenttoolschema.RecordIDText(permission.ResourceJournalEntry,
-			"The journal entry's id, from list_journal_entries or "+onThePage),
+			"The journal entry's id, from ledger_list_journal_entries or "+onThePage),
 	)
 }
 
@@ -1216,7 +1216,7 @@ func newListGLAccountsTool(
 	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
 	return newListTool(listSpec{
-		name:         "list_gl_accounts",
+		name:         "ledger_list_accounts",
 		entityPlural: "general ledger accounts",
 		summary: "List the chart of accounts: each general ledger account's code, name, " +
 			"type and status, with its balances when your data access reaches them. Use " +
@@ -1298,14 +1298,14 @@ func newListFiscalPeriodsTool(
 	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
 	return newListTool(listSpec{
-		name:         "list_fiscal_periods",
+		name:         "ledger_list_fiscal_periods",
 		entityPlural: "fiscal periods",
 		searchTerms: []string{
 			"open periods", "period end dates", "current period", "fiscal calendar",
 		},
 		summary: "List fiscal periods, the months, quarters or adjusting periods the books " +
 			"close by, with their dates and whether each is open, locked or closed. " +
-			"get_fiscal_close_blockers says what stops one from closing.",
+			"ledger_get_fiscal_close_blockers says what stops one from closing.",
 		resource: permission.ResourceFiscalPeriod,
 		config:   querybuilder.GetFieldConfiguration((*fiscalperiod.FiscalPeriod)(nil)),
 		fields: []listField{
@@ -1395,7 +1395,7 @@ func newGetFiscalCloseBlockersTool(periods closeBlockerReader) agentports.AgentQ
 	return &getFiscalCloseBlockersTool{periods: periods}
 }
 
-func (t *getFiscalCloseBlockersTool) Name() string { return "get_fiscal_close_blockers" }
+func (t *getFiscalCloseBlockersTool) Name() string { return "ledger_get_fiscal_close_blockers" }
 
 func (t *getFiscalCloseBlockersTool) SearchTerms() []string {
 	return []string{
@@ -1407,14 +1407,14 @@ func (t *getFiscalCloseBlockersTool) Description() string {
 	return "Say whether a fiscal period can be closed and list every blocker in the way. " +
 		"Blockers include unposted entries, earlier periods still open, subledger " +
 		"differences and accounting controls; nothing changes. Take the period's id from " +
-		"list_fiscal_periods."
+		"ledger_list_fiscal_periods."
 }
 
 func (t *getFiscalCloseBlockersTool) ParamSchema() map[string]any {
 	return idSchema(
 		paramFiscalPeriodID,
 		agenttoolschema.RecordIDText(permission.ResourceFiscalPeriod,
-			"The fiscal period's id, from list_fiscal_periods or "+onThePage),
+			"The fiscal period's id, from ledger_list_fiscal_periods or "+onThePage),
 	)
 }
 

@@ -179,7 +179,7 @@ func observation(name string, data any) agentports.ToolObservation {
 func TestArtifactFromObservation_PreviewBecomesATable(t *testing.T) {
 	t.Parallel()
 
-	artifact := artifactFromObservation(observation("preview_report", map[string]any{
+	artifact := artifactFromObservation(observation("report_preview", map[string]any{
 		"name":     "Revenue by customer",
 		"dataset":  "shipments",
 		"columns":  []any{map[string]any{"id": "customer", "label": "Customer", "type": "string"}},
@@ -191,7 +191,7 @@ func TestArtifactFromObservation_PreviewBecomesATable(t *testing.T) {
 	assert.Equal(t, assistantartifact.KindReportPreview, artifact.Kind)
 	assert.Equal(t, assistantartifact.StatusReady, artifact.Status)
 	assert.Equal(t, "Revenue by customer", artifact.Title)
-	assert.Equal(t, "call_preview_report", artifact.SourceToolCallID)
+	assert.Equal(t, "call_report_preview", artifact.SourceToolCallID)
 	assert.Len(t, artifact.Payload["rows"], 2)
 	assert.Equal(t, false, artifact.Payload["truncated"])
 }
@@ -206,7 +206,7 @@ func TestArtifactFromObservation_PreviewIsBoundedByThePayloadLimit(t *testing.T)
 	for range 200 {
 		rows = append(rows, map[string]any{"Notes": cell})
 	}
-	artifact := artifactFromObservation(observation("preview_report", map[string]any{
+	artifact := artifactFromObservation(observation("report_preview", map[string]any{
 		"dataset": "shipments",
 		"rows":    rows,
 	}))
@@ -222,7 +222,7 @@ func TestArtifactFromObservation_PreviewIsBoundedByThePayloadLimit(t *testing.T)
 func TestArtifactFromObservation_RunStatusFollowsTheRun(t *testing.T) {
 	t.Parallel()
 
-	started := artifactFromObservation(observation("run_report", map[string]any{
+	started := artifactFromObservation(observation("report_run", map[string]any{
 		"runId": "rrun_1", "reportKey": "revenue-by-customer", "status": "queued", "finished": false,
 	}))
 	require.NotNil(t, started)
@@ -230,13 +230,13 @@ func TestArtifactFromObservation_RunStatusFollowsTheRun(t *testing.T) {
 	assert.Equal(t, assistantartifact.StatusPending, started.Status)
 	assert.Equal(t, "Revenue by customer", started.Title)
 
-	failed := artifactFromObservation(observation("get_report_run", map[string]any{
+	failed := artifactFromObservation(observation("report_get_run", map[string]any{
 		"runId": "rrun_1", "reportName": "Revenue", "status": "failed", "finished": true,
 	}))
 	require.NotNil(t, failed)
 	assert.Equal(t, assistantartifact.StatusFailed, failed.Status)
 
-	done := artifactFromObservation(observation("get_report_run", map[string]any{
+	done := artifactFromObservation(observation("report_get_run", map[string]any{
 		"runId": "rrun_1", "reportName": "Revenue", "status": "succeeded", "finished": true,
 	}))
 	require.NotNil(t, done)
@@ -262,13 +262,13 @@ func TestArtifactFromObservation_RecordsBecomeCardsAndViewsDoNot(t *testing.T) {
 		"a card opens the record where the app's own links open it",
 	)
 
-	person := artifactFromObservation(observation("get_worker", map[string]any{
+	person := artifactFromObservation(observation("worker_get", map[string]any{
 		"id": "wrk_1", "firstName": "Ada", "lastName": "Lovelace",
 	}))
 	require.NotNil(t, person)
 	assert.Equal(t, "Worker Ada Lovelace", person.Title)
 
-	assert.Nil(t, artifactFromObservation(observation("get_dispatch_board", map[string]any{
+	assert.Nil(t, artifactFromObservation(observation("dispatch_get_board", map[string]any{
 		"moves": []any{},
 	})), "a board is not a record")
 	assert.Nil(t, artifactFromObservation(observation("shipment_list", map[string]any{"id": "x"})))
@@ -289,7 +289,7 @@ func TestDraftArtifact_ViewsAnOutboundMessageOverItsProposal(t *testing.T) {
 		ID:              pulid.MustNew("ap_"),
 		RunID:           pulid.MustNew("ar_"),
 		SourceMessageID: pulid.MustNew("msg_"),
-		ToolName:        "email_customer",
+		ToolName:        "customer_send_email",
 		ToolParams: map[string]any{
 			"shipmentId": "shp_1",
 			"subject":    "Your delivery is running late",
@@ -310,7 +310,7 @@ func TestDraftArtifact_ViewsAnOutboundMessageOverItsProposal(t *testing.T) {
 
 	notice := draftArtifact(&agent.AgentProposal{
 		ID:         pulid.MustNew("ap_"),
-		ToolName:   "send_detention_notice",
+		ToolName:   "detention_send_notice",
 		ToolParams: map[string]any{"occurrenceId": "dto_1"},
 	})
 	require.NotNil(t, notice)
@@ -318,14 +318,14 @@ func TestDraftArtifact_ViewsAnOutboundMessageOverItsProposal(t *testing.T) {
 
 	reply := draftArtifact(&agent.AgentProposal{
 		ID:         pulid.MustNew("ap_"),
-		ToolName:   "reply_to_inbound_message",
+		ToolName:   "inbox_send_reply",
 		ToolParams: map[string]any{"messageId": "imsg_1", "body": "It delivers tomorrow."},
 	})
 	require.NotNil(t, reply, "an inbox reply is a message waiting to go")
 	assert.Equal(t, "Inbox reply", reply.Title)
 	assert.Equal(t, "It delivers tomorrow.", reply.Payload["body"])
 
-	assert.Nil(t, draftArtifact(&agent.AgentProposal{ToolName: "assign_move"}))
+	assert.Nil(t, draftArtifact(&agent.AgentProposal{ToolName: "dispatch_assign_move"}))
 }
 
 func TestPlanArtifact_ListsItsStepsInOrder(t *testing.T) {
@@ -340,8 +340,8 @@ func TestPlanArtifact_ListsItsStepsInOrder(t *testing.T) {
 		StepCount: 2,
 	}
 	steps := []*agent.AgentProposal{
-		{ID: pulid.MustNew("ap_"), PlanID: &planID, PlanStep: 1, ToolName: "assign_move"},
-		{ID: pulid.MustNew("ap_"), PlanID: &other, PlanStep: 1, ToolName: "email_customer"},
+		{ID: pulid.MustNew("ap_"), PlanID: &planID, PlanStep: 1, ToolName: "dispatch_assign_move"},
+		{ID: pulid.MustNew("ap_"), PlanID: &other, PlanStep: 1, ToolName: "customer_send_email"},
 		{ID: pulid.MustNew("ap_"), PlanID: &planID, PlanStep: 2, ToolName: "shipment_add_comment"},
 	}
 
@@ -352,7 +352,7 @@ func TestPlanArtifact_ListsItsStepsInOrder(t *testing.T) {
 	listed, ok := artifact.Payload["steps"].([]map[string]any)
 	require.True(t, ok)
 	require.Len(t, listed, 2)
-	assert.Equal(t, "assign_move", listed[0]["toolName"])
+	assert.Equal(t, "dispatch_assign_move", listed[0]["toolName"])
 	assert.Equal(t, "shipment_add_comment", listed[1]["toolName"])
 }
 
@@ -377,8 +377,8 @@ func TestArtifactRecorder_KeepsAndAnnouncesWhatATurnProduced(t *testing.T) {
 		},
 	)
 
-	recorder.observe(observation("get_customer", map[string]any{"id": "cus_1", "name": "Acme"}))
-	recorder.observe(observation("list_customers", map[string]any{"rows": []any{}}))
+	recorder.observe(observation("customer_get", map[string]any{"id": "cus_1", "name": "Acme"}))
+	recorder.observe(observation("customer_list", map[string]any{"rows": []any{}}))
 
 	require.Len(t, repo.upserts, 1)
 	assert.Equal(t, thread.ID, repo.upserts[0].ThreadID)
@@ -388,10 +388,10 @@ func TestArtifactRecorder_KeepsAndAnnouncesWhatATurnProduced(t *testing.T) {
 	announced, ok := events[0].Data.(agentports.AssistantArtifactEvent)
 	require.True(t, ok)
 	assert.Equal(t, assistantartifact.KindEntityCard, announced.Kind)
-	assert.Equal(t, "call_get_customer", announced.SourceToolCallID)
+	assert.Equal(t, "call_customer_get", announced.SourceToolCallID)
 
 	messageID := pulid.MustNew("msg_")
-	recorder.attachMessages(map[string]pulid.ID{"call_get_customer": messageID})
+	recorder.attachMessages(map[string]pulid.ID{"call_customer_get": messageID})
 	require.Len(t, repo.upserts, 2)
 	assert.Equal(t, messageID, repo.upserts[1].MessageID)
 
@@ -415,7 +415,7 @@ func TestArtifactRecorder_AnnouncesWhereANavigationGoes(t *testing.T) {
 		events = append(events, event)
 	})
 
-	recorder.observe(observation("open_page", map[string]any{
+	recorder.observe(observation("agent_open_page", map[string]any{
 		"path": "/billing/invoices",
 		"name": "Invoices",
 	}))
@@ -563,7 +563,7 @@ a list of three templates answered in the reply leaves nothing to open.
 func TestArtifactFromObservation_FormulaTemplateRowsOpenTheTemplate(t *testing.T) {
 	t.Parallel()
 
-	artifact := artifactFromObservation(observation("list_formula_templates", map[string]any{
+	artifact := artifactFromObservation(observation("formula_list_templates", map[string]any{
 		"count":   float64(2),
 		"columns": []any{"id", "name", "description", "type", "status", "schemaId"},
 		"items": []any{
@@ -601,7 +601,7 @@ Studio.
 func TestArtifactFromObservation_AFormulaTemplateBecomesItsCard(t *testing.T) {
 	t.Parallel()
 
-	card := artifactFromObservation(observation("get_formula_template", map[string]any{
+	card := artifactFromObservation(observation("formula_get_template", map[string]any{
 		"id":          "ft_01JREEFER000000000000000",
 		"name":        "Reefer per mile",
 		"description": "Linehaul for reefer loads",
@@ -634,14 +634,14 @@ func TestArtifactFromObservation_AFormulaTemplateBecomesItsCard(t *testing.T) {
 
 /*
 Asked to show one formula template by name, the Desk finds it with
-list_formula_templates. A list that found that one template is drawn as the
-template's own card, as if it had been read with get_formula_template, rather
+formula_list_templates. A list that found that one template is drawn as the
+template's own card, as if it had been read with formula_get_template, rather
 than a table of one row the person has to open to see what they asked for.
 */
 func TestArtifactFromObservation_AFormulaTemplateFoundByNameIsItsCard(t *testing.T) {
 	t.Parallel()
 
-	card := artifactFromObservation(observation("list_formula_templates", map[string]any{
+	card := artifactFromObservation(observation("formula_list_templates", map[string]any{
 		"count":       float64(1),
 		"hasMore":     false,
 		"columns":     []any{"id", "name", "description", "type", "status", "schemaId"},
@@ -663,7 +663,7 @@ func TestArtifactFromObservation_AFormulaTemplateFoundByNameIsItsCard(t *testing
 	assert.Equal(t, "Formula template Per CWT (Hundredweight)", card.Title)
 	assert.Equal(t, "formula_template", card.Payload["entity"])
 	assert.Equal(t, "ft_01JCWT00000000000000000000", card.Payload["recordId"])
-	assert.Equal(t, "list_formula_templates", card.Payload["tool"])
+	assert.Equal(t, "formula_list_templates", card.Payload["tool"])
 	assert.Equal(
 		t,
 		"/billing/configuration-files/formula-templates/ft_01JCWT00000000000000000000/edit",
@@ -696,21 +696,21 @@ func TestArtifactFromObservation_OnlyTheSoleRecordOfACardedKindIsItsCard(t *test
 		result map[string]any
 	}{
 		"a first page of one with more behind it": {
-			tool: "list_formula_templates",
+			tool: "formula_list_templates",
 			result: map[string]any{
 				"count": float64(1), "hasMore": true, "columns": columns,
 				"items": []any{template("ft_01JPERMILE00000000000000")},
 			},
 		},
 		"one row of a larger count": {
-			tool: "list_formula_templates",
+			tool: "formula_list_templates",
 			result: map[string]any{
 				"count": float64(16), "columns": columns,
 				"items": []any{template("ft_01JPERMILE00000000000000")},
 			},
 		},
 		"two templates": {
-			tool: "list_formula_templates",
+			tool: "formula_list_templates",
 			result: map[string]any{
 				"count": float64(2), "columns": columns,
 				"items": []any{
@@ -720,7 +720,7 @@ func TestArtifactFromObservation_OnlyTheSoleRecordOfACardedKindIsItsCard(t *test
 			},
 		},
 		"one record of a kind the Desk has no card for": {
-			tool: "list_commodities",
+			tool: "masterdata_list_commodities",
 			result: map[string]any{
 				"count": float64(1), "columns": columns,
 				"items": []any{map[string]any{"id": "com_01JPAPER000000000000000", "name": "Paper"}},
@@ -795,7 +795,7 @@ func TestArtifactFromObservation_CustomersOpenAsTheCustomerCard(t *testing.T) {
 		}
 	}
 
-	table := artifactFromObservation(observation("list_customers", customers(
+	table := artifactFromObservation(observation("customer_list", customers(
 		"cus_01JACME0000000000000000001", "cus_01JBETA0000000000000000002",
 	)))
 	require.NotNil(t, table)
@@ -804,7 +804,7 @@ func TestArtifactFromObservation_CustomersOpenAsTheCustomerCard(t *testing.T) {
 	assert.True(t, shownArtifact(table).OpensRecords)
 	assert.True(t, mustBePointedTo(table), "a short table of customers is still kept to open")
 
-	card := artifactFromObservation(observation("list_customers", customers(
+	card := artifactFromObservation(observation("customer_list", customers(
 		"cus_01JACME0000000000000000001",
 	)))
 	require.NotNil(t, card)
@@ -831,7 +831,7 @@ func TestArtifactFromObservation_RateAgreementsOpenAsTheAgreementCard(t *testing
 		}
 	}
 
-	table := artifactFromObservation(observation("list_rate_agreements", agreements(
+	table := artifactFromObservation(observation("rate_list_agreements", agreements(
 		"ra_01JACME0000000000000000001", "ra_01JBETA0000000000000000002",
 	)))
 	require.NotNil(t, table)
@@ -839,7 +839,7 @@ func TestArtifactFromObservation_RateAgreementsOpenAsTheAgreementCard(t *testing
 	assert.Equal(t, "rate_agreement", table.Payload["recordEntity"])
 	assert.True(t, shownArtifact(table).OpensRecords)
 
-	card := artifactFromObservation(observation("list_rate_agreements", agreements(
+	card := artifactFromObservation(observation("rate_list_agreements", agreements(
 		"ra_01JACME0000000000000000001",
 	)))
 	require.NotNil(t, card)
@@ -869,7 +869,7 @@ func TestArtifactFromObservation_AListWithoutRowsOrColumnsIsNotATable(t *testing
 
 	noColumns := listResult(1, map[string]any{"proNumber": "P1"})
 	delete(noColumns, "columns")
-	assert.Nil(t, artifactFromObservation(observation("list_reports", noColumns)))
+	assert.Nil(t, artifactFromObservation(observation("report_list", noColumns)))
 
 	assert.Nil(t, artifactFromObservation(observation("shipment_list", listResult(0))))
 	assert.Nil(t, artifactFromObservation(observation("shipment_list", map[string]any{
@@ -935,7 +935,7 @@ func TestArtifactFromObservation_ADescribedViewIsAViewToOpen(t *testing.T) {
 	// narrowed to, how many rows it holds, the first few, and what was left
 	// out, so the reply can point to it rather than reprint it.
 	unresolved := []any{map[string]any{"phrase": "near Dallas", "reason": "no location filter"}}
-	artifact := artifactFromObservation(observation("compose_table_view", map[string]any{
+	artifact := artifactFromObservation(observation("report_compose_table_view", map[string]any{
 		"entity":      "shipments",
 		"path":        "/shipments?fieldFilters=%5B%5D",
 		"explanation": "shipments where status equals InTransit",
@@ -976,7 +976,7 @@ func TestArtifactFromObservation_ADescribedViewIsAViewToOpen(t *testing.T) {
 func TestArtifactFromObservation_AnUncountedViewStillOpens(t *testing.T) {
 	t.Parallel()
 
-	artifact := artifactFromObservation(observation("compose_table_view", map[string]any{
+	artifact := artifactFromObservation(observation("report_compose_table_view", map[string]any{
 		"entity":      "shipments",
 		"path":        "/shipments?fieldFilters=%5B%5D",
 		"explanation": "shipments where status equals InTransit",
@@ -993,7 +993,7 @@ func TestArtifactFromObservation_AnUncountedViewStillOpens(t *testing.T) {
 func TestArtifactFromObservation_ADescribedViewWithNoLinkIsNotOne(t *testing.T) {
 	t.Parallel()
 
-	assert.Nil(t, artifactFromObservation(observation("compose_table_view", map[string]any{
+	assert.Nil(t, artifactFromObservation(observation("report_compose_table_view", map[string]any{
 		"entity":      "shipments",
 		"explanation": "shipments where status equals InTransit",
 	})))
@@ -1012,7 +1012,7 @@ it is.
 func TestArtifactFromObservation_ARankingBecomesARankedTable(t *testing.T) {
 	t.Parallel()
 
-	artifact := artifactFromObservation(observation("rank_move_candidates", map[string]any{
+	artifact := artifactFromObservation(observation("dispatch_rank_candidates", map[string]any{
 		"moveId": "smv_1",
 		"count":  float64(2),
 		"candidates": []any{
@@ -1049,7 +1049,7 @@ func TestArtifactFromObservation_ARankingBecomesARankedTable(t *testing.T) {
 	require.NotNil(t, artifact)
 	assert.Equal(t, assistantartifact.KindTableView, artifact.Kind)
 	assert.Equal(t, "Drivers ranked for the move", artifact.Title)
-	assert.Equal(t, "rank_move_candidates", artifact.Payload["tool"])
+	assert.Equal(t, "dispatch_rank_candidates", artifact.Payload["tool"])
 	assert.Equal(t, "worker", artifact.Payload["recordEntity"])
 	assert.Equal(t, true, artifact.Payload[payloadRanked])
 
@@ -1060,7 +1060,7 @@ func TestArtifactFromObservation_ARankingBecomesARankedTable(t *testing.T) {
 		keys = append(keys, column.Key)
 	}
 	// The rank leads, because the order is the answer; the tractor is an id a
-	// person cannot read, and stays in the model's copy for assign_move.
+	// person cannot read, and stays in the model's copy for dispatch_assign_move.
 	assert.Equal(t, "rank", keys[0])
 	assert.Equal(t, "driver", keys[1])
 	assert.NotContains(t, keys, "tractorId")
@@ -1090,7 +1090,7 @@ func TestArtifactFromObservation_ARankingBecomesARankedTable(t *testing.T) {
 func TestArtifactFromObservation_NoCandidatesLeavesThePaneAlone(t *testing.T) {
 	t.Parallel()
 
-	assert.Nil(t, artifactFromObservation(observation("rank_move_candidates", map[string]any{
+	assert.Nil(t, artifactFromObservation(observation("dispatch_rank_candidates", map[string]any{
 		"moveId":     "smv_1",
 		"count":      float64(0),
 		"candidates": []any{},
@@ -1101,7 +1101,7 @@ func TestArtifactFromObservation_NoCandidatesLeavesThePaneAlone(t *testing.T) {
 func TestArtifactFromObservation_ARateBecomesALedger(t *testing.T) {
 	t.Parallel()
 
-	artifact := artifactFromObservation(observation("explain_rate", map[string]any{
+	artifact := artifactFromObservation(observation("rate_explain", map[string]any{
 		"shipmentId": "shp_1",
 		"side":       "Customer",
 		"components": []any{
@@ -1123,13 +1123,13 @@ func TestArtifactFromObservation_ARateBecomesALedger(t *testing.T) {
 func TestArtifactFromObservation_AnUnratedShipmentGetsNoLedger(t *testing.T) {
 	t.Parallel()
 
-	assert.Nil(t, artifactFromObservation(observation("explain_rate", map[string]any{
+	assert.Nil(t, artifactFromObservation(observation("rate_explain", map[string]any{
 		"shipmentId": "shp_1",
 		"note":       "This shipment has no rating on record for that side.",
 		"totals":     map[string]any{"total": "0"},
 	})))
 
-	assert.Nil(t, artifactFromObservation(observation("explain_rate", map[string]any{
+	assert.Nil(t, artifactFromObservation(observation("rate_explain", map[string]any{
 		"shipmentId": "shp_1",
 		"components": []any{},
 	})))
@@ -1140,7 +1140,7 @@ func TestArtifactFromObservation_AnUnratedShipmentGetsNoLedger(t *testing.T) {
 func TestArtifactFromObservation_OpeningAPageLeavesWhereItWent(t *testing.T) {
 	t.Parallel()
 
-	artifact := artifactFromObservation(observation("open_page", map[string]any{
+	artifact := artifactFromObservation(observation("agent_open_page", map[string]any{
 		"path":     "/billing/configuration-files/rate-matrices?panelType=create",
 		"name":     "Rate matrices",
 		"location": "Billing › Configuration files › Rate matrices",
@@ -1164,7 +1164,7 @@ func TestArtifactFromObservation_NavigationStaysInsideTheApp(t *testing.T) {
 	t.Parallel()
 
 	for _, path := range []string{"", "https://example.com", "//example.com/x", "javascript:alert(1)"} {
-		assert.Nil(t, artifactFromObservation(observation("open_page", map[string]any{
+		assert.Nil(t, artifactFromObservation(observation("agent_open_page", map[string]any{
 			"path": path,
 			"name": "Somewhere",
 		})), path)

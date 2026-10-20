@@ -80,7 +80,7 @@ func (t *rescheduleStopTool) ParamSchema() map[string]any {
 				"The stop to reschedule, from the moves' stops in shipment_get."),
 			paramWindowStart: agenttoolschema.LocalDateTime(
 				"When the stop's window now opens, in the stop location's local time. This is " +
-					"the plan; an actual arrival or departure goes to record_stop_actual."),
+					"the plan; an actual arrival or departure goes to dispatch_record_stop_actual."),
 			paramWindowEnd: agenttoolschema.LocalDateTime(
 				"When it now closes, in the same local time. Leave it out to keep the " +
 					"window's length."),
@@ -309,17 +309,17 @@ func (t *addShipmentChargeTool) SearchTerms() []string {
 }
 
 func (t *addShipmentChargeTool) Prerequisites() []string {
-	return []string{toolShipmentList, "list_accessorial_charges"}
+	return []string{toolShipmentList, "masterdata_list_accessorial_charges"}
 }
 
 func (t *addShipmentChargeTool) Recipe() []string {
-	return []string{toolShipmentList, "list_accessorial_charges", "shipment_add_charge"}
+	return []string{toolShipmentList, "masterdata_list_accessorial_charges", "shipment_add_charge"}
 }
 
 func (t *addShipmentChargeTool) Description() string {
 	return "Add an accessorial charge to a saved shipment not yet invoiced, at the charge's " +
 		"own rate unless you give an amount. It takes a lumper, layover, tarp, extra stop or " +
-		"any charge from list_accessorial_charges. An invoiced shipment is corrected with a " +
+		"any charge from masterdata_list_accessorial_charges. An invoiced shipment is corrected with a " +
 		"credit memo."
 }
 
@@ -331,8 +331,8 @@ func (t *addShipmentChargeTool) ParamSchema() map[string]any {
 				"The shipment to charge, from shipment_list."),
 			"accessorialChargeId": agenttoolschema.RecordIDText(
 				permission.ResourceAccessorialCharge,
-				"The charge, from list_accessorial_charges. Not detention: a detention "+
-					"charge is approved with approve_detention."),
+				"The charge, from masterdata_list_accessorial_charges. Not detention: a detention "+
+					"charge is approved with detention_approve."),
 			paramUnits: map[string]any{
 				"type": "integer",
 				"description": "How many units: hours, stops, days or pieces for a per-unit " +
@@ -438,7 +438,7 @@ func (t *addShipmentChargeTool) plan(
 		return nil, errortypes.NewValidationError(
 			"accessorialChargeId",
 			errortypes.ErrInvalid,
-			"That accessorial charge is inactive; choose an active one from list_accessorial_charges",
+			"That accessorial charge is inactive; choose an active one from masterdata_list_accessorial_charges",
 		)
 	}
 

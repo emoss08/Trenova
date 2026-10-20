@@ -34,7 +34,7 @@ func previewOf(
 }
 
 /*
-draft_inbound_reply drafts and nothing more. With a body it saves the agent's
+inbox_draft_reply drafts and nothing more. With a body it saves the agent's
 own words as the draft; without one it asks Triage's drafter, whose words are
 not known until it runs, so that preview says it is partial. Neither sends.
 */

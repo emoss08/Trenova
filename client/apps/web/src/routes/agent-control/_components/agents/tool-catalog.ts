@@ -50,8 +50,8 @@ export type ImpliedRead = {
 
 /**
  * The reads an agent holds because a chosen tool depends on them. The server
- * grants a read a held tool takes its arguments from — create_dashboard needs
- * report ids, which only list_reports hands out — so the form shows it rather
+ * grants a read a held tool takes its arguments from — report_create_dashboard needs
+ * report ids, which only report_list hands out — so the form shows it rather
  * than leaving an agent that looks unable to find one. Writes are never
  * granted this way, and a read chosen outright is not repeated.
  */

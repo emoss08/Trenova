@@ -287,7 +287,7 @@ func TestForProposal_FallsBackToTheParametersWhenAToolCannotSay(t *testing.T) {
 	t.Parallel()
 
 	plain := &validatingTool{baseTool: baseTool{
-		name:     "flag_for_manual_review",
+		name:     "agent_request_review",
 		resource: permission.ResourceShipment,
 	}}
 	f := newFixture(plain)
@@ -301,7 +301,7 @@ func TestForProposal_FallsBackToTheParametersWhenAToolCannotSay(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, agent.PreviewCoverageUnavailable, preview.Coverage)
-	assert.Contains(t, preview.Summary, "Would run flag_for_manual_review")
+	assert.Contains(t, preview.Summary, "Would run agent_request_review")
 	change := changeOf(t, preview)
 	assert.Equal(t, agent.PreviewOperationRun, change.Operation)
 	assert.Equal(t, "x", fieldOf(t, change, "status").After)
@@ -370,7 +370,7 @@ func TestForProposal_ASelfScopedPreviewIsTheOwnersAlone(t *testing.T) {
 	t.Parallel()
 
 	personal := &previewingTool{baseTool: baseTool{
-		name:     "add_home_widget",
+		name:     "home_add_widget",
 		resource: permission.ResourceShipment,
 		scope:    agent.ToolScopeSelf,
 	}}

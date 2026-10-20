@@ -420,7 +420,7 @@ type rationaleInput struct {
 }
 
 // rationaleArguments are the argument names a tool's own explanation lives
-// under, most specific first. raise_exception carries attemptSummary; the
+// under, most specific first. agent_raise_exception carries attemptSummary; the
 // writes carry a reason or a note.
 var rationaleArguments = [...]string{
 	"attemptSummary",

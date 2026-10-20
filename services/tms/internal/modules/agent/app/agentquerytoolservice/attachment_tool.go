@@ -24,7 +24,7 @@ const (
 	maxListedAttachments   = 25
 	attachmentReadingWait  = 20 * time.Second
 	attachmentReadingPoll  = time.Second
-	attachmentListNote     = "Read one with read_attachment and its documentId."
+	attachmentListNote     = "Read one with agent_read_attachment and its documentId."
 	attachmentNoneNote     = "No file has been attached to this conversation."
 	attachmentStillReading = "The file is still being read. This conversation now waits for it: " +
 		"when the reading finishes it picks up again on its own, and you carry on then with the " +
@@ -35,7 +35,7 @@ const (
 )
 
 var errNoConversation = errors.New(
-	"read_attachment reads the files a person attached to a conversation, and this run has none",
+	"agent_read_attachment reads the files a person attached to a conversation, and this run has none",
 )
 
 type readAttachmentTool struct {
@@ -80,7 +80,7 @@ func (t *readAttachmentTool) ParamSchema() map[string]any {
 		toolschema.KeyType: toolschema.TypeObject,
 		toolschema.KeyProperties: withTextWindow(map[string]any{
 			paramDocumentID: agenttoolschema.RecordIDText(permission.ResourceDocument,
-				"The file's id, from the attachments on a message or from read_attachment "+
+				"The file's id, from the attachments on a message or from agent_read_attachment "+
 					"called without it, which lists the files attached to this conversation."),
 		}),
 		toolschema.KeyAdditionalProperties: false,

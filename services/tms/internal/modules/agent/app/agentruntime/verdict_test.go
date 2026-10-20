@@ -53,12 +53,12 @@ func systemUserActor() *permissionports.RequestActor {
 func TestRun_TheLoopsOwnRefusalsCarryAVerdict(t *testing.T) {
 	t.Parallel()
 
-	registered := queryTool("search_worker", map[string]any{}, nil)
+	registered := queryTool("worker_search", map[string]any{}, nil)
 	broken := queryTool("shipment_get", nil, errors.New("connection reset"))
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		callsTurn(
 			agentports.ToolCall{ID: "unknown", Name: "delete_everything"},
-			agentports.ToolCall{ID: "unheld", Name: "search_worker"},
+			agentports.ToolCall{ID: "unheld", Name: "worker_search"},
 			agentports.ToolCall{
 				ID:             "cut_off",
 				Name:           "shipment_get",
@@ -209,7 +209,7 @@ func TestRun_EachToolMessageKeepsTheVerdictTheStreamCarried(t *testing.T) {
 	tool := queryTool("shipment_get", map[string]any{"id": "shp_1"}, nil)
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		callsTurn(
-			agentports.ToolCall{ID: "unheld", Name: "search_worker"},
+			agentports.ToolCall{ID: "unheld", Name: "worker_search"},
 			agentports.ToolCall{
 				ID:        "read",
 				Name:      "shipment_get",
@@ -219,7 +219,7 @@ func TestRun_EachToolMessageKeepsTheVerdictTheStreamCarried(t *testing.T) {
 		textTurn("Found it."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{
-		Tools: []agentports.AgentQueryTool{tool, queryTool("search_worker", nil, nil)},
+		Tools: []agentports.AgentQueryTool{tool, queryTool("worker_search", nil, nil)},
 	}, &stubActionRegistry{}, nil)
 	req := &agentports.RunRequest{
 		Definition: testDefinition("shipment_get"),

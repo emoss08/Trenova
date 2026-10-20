@@ -58,7 +58,7 @@ func TestRunTaint_AddDedupesAndBounds(t *testing.T) {
 	taint := &RunTaint{}
 	mark := TaintMark{
 		Source:   TaintSourceInboundMessage,
-		ToolName: "get_inbound_message",
+		ToolName: "inbox_get_inbound_message",
 		CallID:   "call_1",
 		Ref:      &RecordRef{EntityType: "inbound_message", ID: "imsg_1"},
 	}
@@ -73,7 +73,7 @@ func TestRunTaint_AddDedupesAndBounds(t *testing.T) {
 	for idx := range MaxTaintMarks + 4 {
 		taint.Add(TaintMark{
 			Source:   TaintSourceDocument,
-			ToolName: "get_document_summary",
+			ToolName: "document_get_summary",
 			CallID:   fmt.Sprintf("call_%d", idx+10),
 		})
 	}
@@ -85,10 +85,10 @@ func TestRunTaint_Merge(t *testing.T) {
 	t.Parallel()
 
 	first := &RunTaint{}
-	first.Add(TaintMark{Source: TaintSourceWeather, ToolName: "list_weather_alerts", CallID: "a"})
+	first.Add(TaintMark{Source: TaintSourceWeather, ToolName: "insight_list_weather_alerts", CallID: "a"})
 	second := &RunTaint{}
-	second.Add(TaintMark{Source: TaintSourceWeather, ToolName: "list_weather_alerts", CallID: "a"})
-	second.Add(TaintMark{Source: TaintSourceMemory, ToolName: "recall_memory", CallID: "b"})
+	second.Add(TaintMark{Source: TaintSourceWeather, ToolName: "insight_list_weather_alerts", CallID: "a"})
+	second.Add(TaintMark{Source: TaintSourceMemory, ToolName: "agent_list_memories", CallID: "b"})
 
 	first.Merge(second)
 	first.Merge(nil)

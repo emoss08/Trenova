@@ -119,7 +119,7 @@ func TestExecute_ATaintedInternalWriteIsNotHeld(t *testing.T) {
 	t.Parallel()
 
 	orgID, buID := pulid.MustNew("org_"), pulid.MustNew("bu_")
-	tool := newEgressTool("assign_move", agent.EgressInternal)
+	tool := newEgressTool("dispatch_assign_move", agent.EgressInternal)
 	repo := &fakeProposalRepo{}
 	executor := newExecutor(tool, repo, &fakePermissions{allowed: true})
 	proposal := taintedProposal(tool.name, orgID, buID)
@@ -138,7 +138,7 @@ func TestExecute_AnApproversChangeCannotTalkTheGuardOutOfTheProposedClass(t *tes
 	t.Parallel()
 
 	orgID, buID := pulid.MustNew("org_"), pulid.MustNew("bu_")
-	tool := newEgressTool("email_customer", agent.EgressInternal)
+	tool := newEgressTool("customer_send_email", agent.EgressInternal)
 	repo := &fakeProposalRepo{}
 	executor := newExecutor(tool, repo, &fakePermissions{allowed: true})
 	proposal := taintedProposal(tool.name, orgID, buID)
@@ -173,7 +173,7 @@ func TestExecute_AToolThatCarriesTaintIsHandedTheProposalsTaint(t *testing.T) {
 	t.Parallel()
 
 	orgID, buID := pulid.MustNew("org_"), pulid.MustNew("bu_")
-	remember := newEgressTool("remember", agent.EgressInternal)
+	remember := newEgressTool("agent_create_memory", agent.EgressInternal)
 	remember.carriesTaint = true
 	executor := newExecutor(remember, &fakeProposalRepo{}, &fakePermissions{allowed: true})
 
@@ -196,7 +196,7 @@ func TestExecute_ToolsThatDoNotCarryTaintAreNotHandedIt(t *testing.T) {
 	t.Parallel()
 
 	orgID, buID := pulid.MustNew("org_"), pulid.MustNew("bu_")
-	tool := newEgressTool("assign_move", agent.EgressInternal)
+	tool := newEgressTool("dispatch_assign_move", agent.EgressInternal)
 	executor := newExecutor(tool, &fakeProposalRepo{}, &fakePermissions{allowed: true})
 	proposal := taintedProposal(tool.name, orgID, buID)
 	proposal.EgressClass = agent.EgressInternal
@@ -210,7 +210,7 @@ func TestExecute_AnUnattendedExecutionIsRecordedAgainstTheSystemUser(t *testing.
 	t.Parallel()
 
 	orgID, buID := pulid.MustNew("org_"), pulid.MustNew("bu_")
-	tool := newEgressTool("assign_move", agent.EgressInternal)
+	tool := newEgressTool("dispatch_assign_move", agent.EgressInternal)
 	repo := &fakeProposalRepo{}
 	executor := newExecutor(tool, repo, &fakePermissions{allowed: true})
 	proposal := taintedProposal(tool.name, orgID, buID)
@@ -229,7 +229,7 @@ func TestExecute_AnUnattendedExecutionIsRecordedAgainstTheSystemUser(t *testing.
 		"the system account the run carries is the executor")
 
 	bare := &fakeProposalRepo{}
-	tool = newEgressTool("assign_move", agent.EgressInternal)
+	tool = newEgressTool("dispatch_assign_move", agent.EgressInternal)
 	require.NoError(t, newExecutor(tool, bare, &fakePermissions{allowed: true}).
 		Execute(t.Context(), proposal, nil, principal(permissionports.PrincipalTypeAgent, orgID, buID)))
 	require.Len(t, bare.recorded, 1)

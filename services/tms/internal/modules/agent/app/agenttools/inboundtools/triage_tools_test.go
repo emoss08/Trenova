@@ -78,7 +78,7 @@ var triageToolCases = []triageToolCase{
 		build: func(f *fakeTriage) agentports.AgentTool {
 			return newAssignInboundMessagesTool(f)
 		},
-		name:     "assign_inbound_messages",
+		name:     "inbox_assign_inbound_message",
 		required: []string{"messageIds"}, resource: permission.ResourceInboundMessage,
 		operation: permission.OpAssign, egress: agent.EgressInternal,
 		maxTier: agent.TierActWithApproval,
@@ -87,7 +87,7 @@ var triageToolCases = []triageToolCase{
 		build: func(f *fakeTriage) agentports.AgentTool {
 			return newReopenInboundMessagesTool(f)
 		},
-		name:     "reopen_inbound_messages",
+		name:     "inbox_reopen_inbound_message",
 		required: []string{"messageIds"}, resource: permission.ResourceInboundMessage,
 		operation: permission.OpUpdate, egress: agent.EgressInternal,
 		maxTier: agent.TierActWithApproval,
@@ -96,7 +96,7 @@ var triageToolCases = []triageToolCase{
 		build: func(f *fakeTriage) agentports.AgentTool {
 			return newSnoozeInboundMessagesTool(f)
 		},
-		name:     "snooze_inbound_messages",
+		name:     "inbox_snooze_inbound_message",
 		required: []string{"messageIds"}, resource: permission.ResourceInboundMessage,
 		operation: permission.OpUpdate, egress: agent.EgressInternal,
 		maxTier: agent.TierActWithApproval,
@@ -105,7 +105,7 @@ var triageToolCases = []triageToolCase{
 		build: func(f *fakeTriage) agentports.AgentTool {
 			return newWakeInboundMessageTool(f)
 		},
-		name:     "wake_inbound_message",
+		name:     "inbox_wake_inbound_message",
 		required: []string{"messageId"}, resource: permission.ResourceInboundMessage,
 		operation: permission.OpUpdate, egress: agent.EgressInternal,
 		maxTier: agent.TierAutoExecute,
@@ -114,7 +114,7 @@ var triageToolCases = []triageToolCase{
 		build: func(f *fakeTriage) agentports.AgentTool {
 			return newWaitForInboundReplyTool(f)
 		},
-		name:     "wait_for_inbound_reply",
+		name:     "inbox_await_reply",
 		required: []string{"messageId", "until"}, resource: permission.ResourceInboundMessage,
 		operation: permission.OpUpdate, egress: agent.EgressInternal,
 		maxTier: agent.TierActWithApproval,
@@ -123,7 +123,7 @@ var triageToolCases = []triageToolCase{
 		build: func(f *fakeTriage) agentports.AgentTool {
 			return newUnlinkInboundMessageTool(f)
 		},
-		name:     "unlink_inbound_message",
+		name:     "inbox_unlink_inbound_message",
 		required: []string{"messageId", "record"}, resource: permission.ResourceInboundMessage,
 		operation: permission.OpUpdate, egress: agent.EgressInternal,
 		maxTier: agent.TierAutoExecute, condition: true,
@@ -132,7 +132,7 @@ var triageToolCases = []triageToolCase{
 		build: func(f *fakeTriage) agentports.AgentTool {
 			return newHandOffTriageTool(f)
 		},
-		name:     "hand_off_triage",
+		name:     "inbox_assign_queue",
 		required: []string{"toUserId"}, resource: permission.ResourceInboundMessage,
 		operation: permission.OpAssign, egress: agent.EgressInternal,
 		maxTier: agent.TierActWithApproval,
@@ -141,7 +141,7 @@ var triageToolCases = []triageToolCase{
 		build: func(f *fakeTriage) agentports.AgentTool {
 			return newBlockInboundSenderTool(f)
 		},
-		name:     "block_inbound_sender",
+		name:     "inbox_block_sender",
 		required: []string{"messageId"}, resource: permission.ResourceInboundMessage,
 		operation: permission.OpUpdate, egress: agent.EgressInternal,
 		maxTier: agent.TierActWithApproval,
@@ -150,7 +150,7 @@ var triageToolCases = []triageToolCase{
 		build: func(f *fakeTriage) agentports.AgentTool {
 			return newUnblockInboundSenderTool(f, f)
 		},
-		name:     "unblock_inbound_sender",
+		name:     "inbox_unblock_sender",
 		required: []string{"messageId"}, resource: permission.ResourceInboundMessage,
 		operation: permission.OpUpdate, egress: agent.EgressInternal,
 		maxTier: agent.TierActWithApproval,
@@ -159,7 +159,7 @@ var triageToolCases = []triageToolCase{
 		build: func(f *fakeTriage) agentports.AgentTool {
 			return newDraftInboundReplyTool(f, f)
 		},
-		name:     "draft_inbound_reply",
+		name:     "inbox_draft_reply",
 		required: []string{"messageId"}, resource: permission.ResourceInboundMessage,
 		operation: permission.OpUpdate, egress: agent.EgressInternal,
 		maxTier: agent.TierAutoExecute, condition: true,
@@ -168,7 +168,7 @@ var triageToolCases = []triageToolCase{
 		build: func(f *fakeTriage) agentports.AgentTool {
 			return newDiscardInboundReplyDraftTool(f)
 		},
-		name:     "discard_inbound_reply_draft",
+		name:     "inbox_discard_reply_draft",
 		required: []string{"messageId"}, resource: permission.ResourceInboundMessage,
 		operation: permission.OpUpdate, egress: agent.EgressInternal,
 		maxTier: agent.TierActWithApproval,
@@ -177,7 +177,7 @@ var triageToolCases = []triageToolCase{
 		build: func(f *fakeTriage) agentports.AgentTool {
 			return newDraftInboundLoadTool(f, f)
 		},
-		name:     "draft_inbound_load",
+		name:     "inbox_draft_load",
 		required: []string{"messageId"}, resource: permission.ResourceInboundMessage,
 		operation: permission.OpUpdate, egress: agent.EgressInternal,
 		maxTier: agent.TierAutoExecute, condition: true,
@@ -186,7 +186,7 @@ var triageToolCases = []triageToolCase{
 		build: func(f *fakeTriage) agentports.AgentTool {
 			return newCreateInboundLoadTool(f)
 		},
-		name:     "create_inbound_load",
+		name:     "inbox_create_load",
 		required: []string{"messageId", "fields"}, resource: permission.ResourceShipment,
 		operation: permission.OpCreate, egress: agent.EgressInternal,
 		maxTier: agent.TierActWithApproval,
@@ -195,7 +195,7 @@ var triageToolCases = []triageToolCase{
 		build: func(f *fakeTriage) agentports.AgentTool {
 			return newDiscardInboundLoadTool(f, f)
 		},
-		name:     "discard_inbound_load",
+		name:     "inbox_discard_load",
 		required: []string{"messageId"}, resource: permission.ResourceInboundMessage,
 		operation: permission.OpUpdate, egress: agent.EgressInternal,
 		maxTier: agent.TierAutoExecute, condition: true,
@@ -204,7 +204,7 @@ var triageToolCases = []triageToolCase{
 		build: func(f *fakeTriage) agentports.AgentTool {
 			return newFileInboundAttachmentTool(f, f)
 		},
-		name:     "file_inbound_attachment",
+		name:     "inbox_file_attachment",
 		required: []string{"messageId", "attachmentId", "shipmentId"},
 		resource: permission.ResourceDocument, operation: permission.OpUpdate,
 		egress: agent.EgressInternal, maxTier: agent.TierAutoExecute, condition: true,
@@ -213,7 +213,7 @@ var triageToolCases = []triageToolCase{
 		build: func(f *fakeTriage) agentports.AgentTool {
 			return newUnfileInboundAttachmentTool(f, f)
 		},
-		name:     "unfile_inbound_attachment",
+		name:     "inbox_unfile_attachment",
 		required: []string{"messageId", "attachmentId"}, resource: permission.ResourceDocument,
 		operation: permission.OpUpdate, egress: agent.EgressInternal,
 		maxTier: agent.TierActWithApproval,
@@ -222,7 +222,7 @@ var triageToolCases = []triageToolCase{
 		build: func(f *fakeTriage) agentports.AgentTool {
 			return newLogInboundExceptionTool(f, f)
 		},
-		name:     "log_inbound_exception",
+		name:     "inbox_record_discrepancy",
 		required: []string{"messageId", "kind", "quantity", "unit"},
 		resource: permission.ResourceShipmentHold, operation: permission.OpCreate,
 		egress: agent.EgressInternal, maxTier: agent.TierAutoExecute, condition: true,
@@ -231,7 +231,7 @@ var triageToolCases = []triageToolCase{
 		build: func(f *fakeTriage) agentports.AgentTool {
 			return newSettleDetentionDisputeTool(f, f)
 		},
-		name:     "settle_detention_dispute",
+		name:     "detention_resolve_dispute",
 		required: []string{"messageId", "decision"}, resource: permission.ResourceDetention,
 		operation: permission.OpUpdate, egress: agent.EgressMoney,
 		maxTier: agent.TierPropose,
@@ -240,7 +240,7 @@ var triageToolCases = []triageToolCase{
 		build: func(f *fakeTriage) agentports.AgentTool {
 			return newResolveInboundConflictTool(fakeConflictDesk{f})
 		},
-		name:     "resolve_inbound_conflict",
+		name:     "inbox_resolve_conflict",
 		required: []string{"messageId", "conflictId", "resolution"},
 		resource: permission.ResourceInboundMessage, operation: permission.OpUpdate,
 		egress: agent.EgressInternal, maxTier: agent.TierActWithApproval,
@@ -249,7 +249,7 @@ var triageToolCases = []triageToolCase{
 		build: func(f *fakeTriage) agentports.AgentTool {
 			return newReopenInboundConflictTool(f, fakeConflictDesk{f})
 		},
-		name:     "reopen_inbound_conflict",
+		name:     "inbox_reopen_conflict",
 		required: []string{"messageId", "conflictId"}, resource: permission.ResourceInboundMessage,
 		operation: permission.OpUpdate, egress: agent.EgressInternal,
 		maxTier: agent.TierAutoExecute, condition: true,
@@ -315,19 +315,19 @@ func TestTriageTools_KeepTheirCaps(t *testing.T) {
 			"%s must not send anything outside the organization", name)
 	}
 
-	block := policies["block_inbound_sender"]
+	block := policies["inbox_block_sender"]
 	assert.Equal(t, agent.TierActWithApproval, agenttoolpolicy.Promotable(block),
 		"blocking a sender is always asked first")
 
-	settle := policies["settle_detention_dispute"]
+	settle := policies["detention_resolve_dispute"]
 	assert.Equal(t, agent.TierPropose, agenttoolpolicy.Promotable(settle))
 	assert.True(t, settle.HeldWhenTainted(), "a decision that moves money waits once tainted")
 
-	draft := policies["draft_inbound_reply"]
+	draft := policies["inbox_draft_reply"]
 	assert.Equal(t, []agent.EgressClass{agent.EgressInternal}, draft.Egress,
 		"a draft is only seen inside the organization")
 
-	create := policies["create_inbound_load"]
+	create := policies["inbox_create_load"]
 	assert.Equal(t, agent.TierActWithApproval, agenttoolpolicy.Promotable(create),
 		"a load is never created unattended")
 	assert.True(t, create.Idempotent)

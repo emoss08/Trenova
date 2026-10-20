@@ -31,7 +31,7 @@ func TestCompareReplay_JudgesByHowAPersonDecided(t *testing.T) {
 
 	originals := []OriginalProposal{
 		original(
-			"assign_move",
+			"dispatch_assign_move",
 			map[string]any{"shipmentMoveId": "smv_1", "primaryWorkerId": "wrk_a"},
 			ProposalStatusExecuted,
 			DecisionAccepted,
@@ -57,10 +57,10 @@ func TestCompareReplay_JudgesByHowAPersonDecided(t *testing.T) {
 	}
 	replay := []ReplayAction{
 		{
-			ToolName:  "assign_move",
+			ToolName:  "dispatch_assign_move",
 			Arguments: map[string]any{"primaryWorkerId": "wrk_a", "shipmentMoveId": "smv_1"},
 		},
-		{ToolName: "notify_driver", Arguments: map[string]any{"workerId": "wrk_a"}},
+		{ToolName: "worker_send_message", Arguments: map[string]any{"workerId": "wrk_a"}},
 	}
 
 	comparison := CompareReplay(originals, replay)
@@ -69,11 +69,11 @@ func TestCompareReplay_JudgesByHowAPersonDecided(t *testing.T) {
 	for _, match := range comparison.Matches {
 		verdicts[match.ToolName] = match.Verdict
 	}
-	assert.Equal(t, VerdictAgreed, verdicts["assign_move"])
+	assert.Equal(t, VerdictAgreed, verdicts["dispatch_assign_move"])
 	assert.Equal(t, VerdictImproved, verdicts["shipment_cancel"])
 	assert.Equal(t, VerdictRegressed, verdicts["shipment_place_hold"])
 	assert.Equal(t, VerdictUndecided, verdicts["shipment_add_comment"])
-	assert.Equal(t, VerdictAdded, verdicts["notify_driver"])
+	assert.Equal(t, VerdictAdded, verdicts["worker_send_message"])
 
 	assert.Equal(t, 1, comparison.Agreed)
 	assert.Equal(t, 1, comparison.Improved)
@@ -92,7 +92,7 @@ func TestCompareReplay_ShowsWhatChangedOnTheSameTool(t *testing.T) {
 
 	originals := []OriginalProposal{
 		original(
-			"assign_move",
+			"dispatch_assign_move",
 			map[string]any{
 				"shipmentMoveId":  "smv_1",
 				"primaryWorkerId": "wrk_a",
@@ -104,7 +104,7 @@ func TestCompareReplay_ShowsWhatChangedOnTheSameTool(t *testing.T) {
 	}
 	replay := []ReplayAction{
 		{
-			ToolName: "assign_move",
+			ToolName: "dispatch_assign_move",
 			Arguments: map[string]any{
 				"shipmentMoveId":  "smv_1",
 				"primaryWorkerId": "wrk_b",
@@ -133,7 +133,7 @@ func TestCompareReplay_ReadsNumbersAndOrderAsTheSame(t *testing.T) {
 
 	originals := []OriginalProposal{
 		original(
-			"update_tractor_status",
+			"equipment_set_tractor_status",
 			map[string]any{"tractorIds": []any{"trc_1"}, "status": "Available", "note": ""},
 			ProposalStatusExecuted,
 			DecisionAccepted,
@@ -148,7 +148,7 @@ func TestCompareReplay_ReadsNumbersAndOrderAsTheSame(t *testing.T) {
 	replay := []ReplayAction{
 		{ToolName: "shipment_request_documents", Arguments: map[string]any{"count": 2}},
 		{
-			ToolName:  "update_tractor_status",
+			ToolName:  "equipment_set_tractor_status",
 			Arguments: map[string]any{"status": "Available", "tractorIds": []string{"trc_1"}},
 		},
 	}

@@ -100,11 +100,11 @@ func TestListCarrierIntelEvents_SchemaOffersTheFiltersTheEventListSupports(t *te
 
 	carrier, _ := properties["carrierId"].(map[string]any)
 	assert.Equal(t, permission.ResourceCarrier.String(), carrier[toolschema.KeyRecordOf])
-	assert.Contains(t, carrier[toolschema.KeyDescription], "list_carriers")
+	assert.Contains(t, carrier[toolschema.KeyDescription], "carrier_list")
 
 	description := tool.Description()
 	for _, next := range []string{
-		"get_carrier_intel_event", "acknowledge_carrier_intel_event", "resolve_carrier_intel_event",
+		"carrier_get_intelligence_event", "carrier_acknowledge_intelligence_event", "carrier_resolve_intelligence_event",
 	} {
 		assert.Containsf(t, description, next, "a row's id is handed on to %s", next)
 	}
@@ -116,8 +116,8 @@ func TestListCarrierIntelEvents_IsAReadUnderCarrierIntelligence(t *testing.T) {
 	tool := newListCarrierIntelEventsTool(nil)
 	policy := tool.Policy()
 
-	assert.Equal(t, "list_carrier_intel_events", tool.Name())
-	assert.Equal(t, "list_carrier_intel_events", policy.Name)
+	assert.Equal(t, "carrier_list_intelligence_events", tool.Name())
+	assert.Equal(t, "carrier_list_intelligence_events", policy.Name)
 	assert.Equal(t, agent.ToolKindQuery, policy.Kind)
 	assert.Equal(t, permission.ResourceCarrierIntelligence, policy.Resource,
 		"the same resource the carrierIntelEvents query requires")
@@ -238,7 +238,7 @@ func TestListCarrierIntelEvents_RowsCarryWhatAPersonActsOnAndNothingElse(t *test
 		"acknowledgedById", "snapshotId", "provider",
 	} {
 		assert.NotContainsf(t, encodedRow, withheld,
-			"%s is not part of the row; get_carrier_intel_event reads the whole event", withheld)
+			"%s is not part of the row; carrier_get_intelligence_event reads the whole event", withheld)
 	}
 	assert.Equal(t, []string{
 		"id", "carrierId", "carrier", "dotNumber", "subjectType", "category", "severity",
@@ -286,10 +286,10 @@ func TestGetCarrierIntelEvent_NamesTheListThatHandsOutItsID(t *testing.T) {
 	t.Parallel()
 
 	tool := newGetCarrierIntelEventTool(nil, nil)
-	assert.Contains(t, tool.Description(), "list_carrier_intel_events")
+	assert.Contains(t, tool.Description(), "carrier_list_intelligence_events")
 	assert.NotContains(t, tool.Description(), "No tool lists")
 
 	properties, _ := tool.ParamSchema()[toolschema.KeyProperties].(map[string]any)
 	eventID, _ := properties["eventId"].(map[string]any)
-	assert.Contains(t, eventID[toolschema.KeyDescription], "list_carrier_intel_events")
+	assert.Contains(t, eventID[toolschema.KeyDescription], "carrier_list_intelligence_events")
 }

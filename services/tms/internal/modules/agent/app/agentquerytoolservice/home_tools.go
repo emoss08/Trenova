@@ -60,14 +60,14 @@ func newGetMyHomeLayoutTool(layouts *homelayoutservice.Service) agentports.Agent
 	return &getMyHomeLayoutTool{layouts: layouts}
 }
 
-func (t *getMyHomeLayoutTool) Name() string { return "get_my_home_layout" }
+func (t *getMyHomeLayoutTool) Name() string { return "home_get_layout" }
 
 func (t *getMyHomeLayoutTool) Description() string {
 	return "Read what is on the person's own home page: each widget, its size and settings, " +
 		"and whether they may change it. Use it for \"my dashboard\", \"my home page\" or " +
-		"\"what am I looking at\", and before add_home_widget, remove_home_widget or " +
-		"arrange_home_layout, which need its version. Report dashboards under Reports are " +
-		"separate; list_dashboards reads those."
+		"\"what am I looking at\", and before home_add_widget, home_remove_widget or " +
+		"home_arrange_layout, which need its version. Report dashboards under Reports are " +
+		"separate; report_list_dashboards reads those."
 }
 
 func (t *getMyHomeLayoutTool) ParamSchema() map[string]any {
@@ -138,8 +138,8 @@ func (t *getMyHomeLayoutTool) Query(
 		view.Note = "The person's administrator manages this home page, so it cannot be " +
 			"changed from here. Say so rather than proposing a change."
 	default:
-		view.Note = "Pass version to add_home_widget, remove_home_widget or " +
-			"arrange_home_layout. Widget ids are the id field."
+		view.Note = "Pass version to home_add_widget, home_remove_widget or " +
+			"home_arrange_layout. Widget ids are the id field."
 	}
 
 	return view, nil
@@ -182,11 +182,11 @@ func newListHomeWidgetsTool(layouts *homelayoutservice.Service) agentports.Agent
 	return &listHomeWidgetsTool{layouts: layouts}
 }
 
-func (t *listHomeWidgetsTool) Name() string { return "list_home_widgets" }
+func (t *listHomeWidgetsTool) Name() string { return "home_list_widgets" }
 
 func (t *listHomeWidgetsTool) Description() string {
 	return "List the widgets the person may put on their home page, with what each needs set, " +
-		"and the metrics a KPI widget can show. Use it before add_home_widget to pick a real " +
+		"and the metrics a KPI widget can show. Use it before home_add_widget to pick a real " +
 		"widget key and metric; never invent one."
 }
 

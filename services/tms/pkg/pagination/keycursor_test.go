@@ -10,10 +10,10 @@ import (
 func TestKeyCursorRoundTripsWithinItsScope(t *testing.T) {
 	t.Parallel()
 
-	encoded := EncodeKeyCursor("agent_tool_policy", "email_customer")
+	encoded := EncodeKeyCursor("agent_tool_policy", "customer_send_email")
 	key, err := DecodeKeyCursor("agent_tool_policy", encoded)
 	require.NoError(t, err)
-	assert.Equal(t, "email_customer", key)
+	assert.Equal(t, "customer_send_email", key)
 
 	_, err = DecodeKeyCursor("shipment", encoded)
 	require.ErrorIs(t, err, ErrKeyCursorInvalid)

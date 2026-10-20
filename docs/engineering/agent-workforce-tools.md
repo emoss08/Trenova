@@ -51,15 +51,15 @@ the agent's data access, may see. An agent at Internal sees the case, never the 
 
 | Tool | Resource / operation | Class | Default → most | Person's approval |
 | --- | --- | --- | --- | --- |
-| `list_worker_safety_events` | worker safety event / read | reads only | automatic | — |
-| `open_worker_safety_event` | worker safety event / create | inside | Propose → Ask first | no |
-| `update_worker_safety_event` | worker safety event / update | inside | Propose → Ask first | no |
-| `change_worker_safety_event_status` | worker safety event / close | inside | Propose → Ask first | no |
-| `delete_worker_safety_event` | worker safety event / delete | inside | Propose → Propose | no |
-| `record_safety_violation`, `update_safety_violation` | worker safety event / create, update | inside | Propose → Ask first | no |
-| `delete_safety_violation` | worker safety event / delete | inside | Propose → Propose | no |
-| `give_worker_recognition` | worker recognition / create | driver | Propose → Ask first | no |
-| `delete_worker_recognition` | worker recognition / delete | inside | Propose → Propose | no |
+| `worker_list_safety_events` | worker safety event / read | reads only | automatic | — |
+| `worker_open_safety_event` | worker safety event / create | inside | Propose → Ask first | no |
+| `worker_update_safety_event` | worker safety event / update | inside | Propose → Ask first | no |
+| `worker_set_safety_event_status` | worker safety event / close | inside | Propose → Ask first | no |
+| `worker_delete_safety_event` | worker safety event / delete | inside | Propose → Propose | no |
+| `worker_record_safety_violation`, `worker_update_safety_violation` | worker safety event / create, update | inside | Propose → Ask first | no |
+| `worker_delete_safety_violation` | worker safety event / delete | inside | Propose → Propose | no |
+| `worker_record_recognition` | worker recognition / create | driver | Propose → Ask first | no |
+| `worker_delete_recognition` | worker recognition / delete | inside | Propose → Propose | no |
 
 An event's points default from the house scale for its kind, severity, preventability and
 inspection result; closing needs a resolution. Issuing and rescinding discipline are
@@ -69,16 +69,16 @@ attestation: the manager decides and the driver acknowledges it in the portal.
 
 | Tool | Resource / operation | Class | Default → most | Person's approval |
 | --- | --- | --- | --- | --- |
-| `list_dot_tests`, `list_dot_random_draws`, `get_dot_random_draw` | DOT test, random pool / read | reads only | automatic | — |
-| `schedule_dot_test` | worker DOT test / create | inside | Propose → Ask first | no |
-| `cancel_dot_test` | worker DOT test / cancel | inside | Propose → Propose | no |
-| `run_dot_random_draw` | DOT random pool / manage | inside | Propose → Ask first | no |
-| `update_dot_random_selection` | DOT random pool / manage | inside | Propose → Ask first | no |
-| `cancel_dot_random_draw` | DOT random pool / manage | inside | Propose → Propose | no |
-| `finalize_dot_random_draw` | DOT random pool / manage | inside | Propose → Propose | yes |
+| `worker_list_dot_tests`, `worker_list_dot_random_draws`, `worker_get_dot_random_draw` | DOT test, random pool / read | reads only | automatic | — |
+| `worker_schedule_dot_test` | worker DOT test / create | inside | Propose → Ask first | no |
+| `worker_cancel_dot_test` | worker DOT test / cancel | inside | Propose → Propose | no |
+| `worker_run_dot_random_draw` | DOT random pool / manage | inside | Propose → Ask first | no |
+| `worker_update_dot_random_selection` | DOT random pool / manage | inside | Propose → Ask first | no |
+| `worker_cancel_dot_random_draw` | DOT random pool / manage | inside | Propose → Propose | no |
+| `worker_finalize_dot_random_draw` | DOT random pool / manage | inside | Propose → Propose | yes |
 
-`schedule_dot_test` records an order and is forced to `Scheduled` with a pending result.
-`run_dot_random_draw` previews the pool size and each substance's target and names nobody: the
+`worker_schedule_dot_test` records an order and is forced to `Scheduled` with a pending result.
+`worker_run_dot_random_draw` previews the pool size and each substance's target and names nobody: the
 names are chosen only when the round is drawn, under a seed nobody sees first, so a proposal
 cannot be used to shop for a different selection. A draft round stands only once a person
 finalizes it. Results, violations, Clearinghouse queries and return-to-duty steps reach FMCSA
@@ -88,12 +88,12 @@ and are attestation; pools are configuration.
 
 | Tool | Resource / operation | Class | Default → most | Person's approval |
 | --- | --- | --- | --- | --- |
-| `list_worker_leave_cases` | worker leave / read | reads only | automatic | — |
-| `open_leave_case`, `update_leave_case` | worker leave / create, update | inside | Propose → Ask first | no |
-| `request_leave_certification` | worker leave / update | inside | Propose → Ask first | no |
-| `record_leave_day`, `update_leave_day` | worker leave / create, update | inside | Propose → Ask first | no |
-| `delete_leave_day` | worker leave / update | inside | Propose → Propose | no |
-| `close_leave_case` | worker leave / approve | inside | Propose → Propose | yes |
+| `worker_list_leave_cases` | worker leave / read | reads only | automatic | — |
+| `worker_open_leave_case`, `worker_update_leave_case` | worker leave / create, update | inside | Propose → Ask first | no |
+| `worker_request_leave_certification` | worker leave / update | inside | Propose → Ask first | no |
+| `worker_record_leave_day`, `worker_update_leave_day` | worker leave / create, update | inside | Propose → Ask first | no |
+| `worker_delete_leave_day` | worker leave / update | inside | Propose → Propose | no |
+| `worker_close_leave_case` | worker leave / approve | inside | Propose → Propose | yes |
 
 Deciding a case, and designating it FMLA, is the employer's notice under 29 CFR 825.300, and
 recording the provider's certification is the person who received it: both attestation.
@@ -102,22 +102,22 @@ recording the provider's certification is the person who received it: both attes
 
 | Tool | Resource / operation | Class | Default → most | Person's approval |
 | --- | --- | --- | --- | --- |
-| `list_worker_training`, `list_training_courses` | worker training, training course / read | reads only | automatic | — |
-| `assign_worker_training` | worker training / assign | driver | Propose → Ask first | no |
-| `assign_required_worker_training` | worker training / assign | driver | Propose → Ask first | no |
-| `record_training_completion`, `attach_worker_training_document` | worker training / update | inside | Propose → Ask first | no |
-| `close_worker_training` | worker training / cancel | inside | Propose → Propose | no |
-| `list_worker_checklists` | worker checklist / read | reads only | automatic | — |
-| `start_worker_checklist`, `update_worker_checklist_item` | worker checklist / create, update | inside | Propose → Ask first | no |
-| `cancel_worker_checklist` | worker checklist / cancel | inside | Propose → Propose | no |
-| `list_performance_reviews` | performance review / read | reads only | automatic | — |
-| `start_performance_review`, `draft_performance_review` | performance review / create, update | inside | Propose → Ask first | no |
-| `delete_performance_review` | performance review / delete | inside | Propose → Propose | no |
+| `worker_list_training`, `worker_list_training_courses` | worker training, training course / read | reads only | automatic | — |
+| `worker_assign_training` | worker training / assign | driver | Propose → Ask first | no |
+| `worker_assign_required_training` | worker training / assign | driver | Propose → Ask first | no |
+| `worker_record_training_completion`, `worker_attach_training_document` | worker training / update | inside | Propose → Ask first | no |
+| `worker_close_training` | worker training / cancel | inside | Propose → Propose | no |
+| `worker_list_checklists` | worker checklist / read | reads only | automatic | — |
+| `worker_start_checklist`, `worker_update_checklist_item` | worker checklist / create, update | inside | Propose → Ask first | no |
+| `worker_cancel_checklist` | worker checklist / cancel | inside | Propose → Propose | no |
+| `worker_list_performance_reviews` | performance review / read | reads only | automatic | — |
+| `worker_start_performance_review`, `worker_update_performance_review` | performance review / create, update | inside | Propose → Ask first | no |
+| `worker_delete_performance_review` | performance review / delete | inside | Propose → Propose | no |
 
-`assign_worker_training` takes up to 50 workers and 10 courses; one pair goes through
+`worker_assign_training` takes up to 50 workers and 10 courses; one pair goes through
 `Assign`, more through `BulkAssign`, and a run that would assign nothing is refused.
-`update_worker_checklist_item` completes, skips, marks not applicable or reopens one item.
-`draft_performance_review` merges scores by rating key, refuses a key the review does not
+`worker_update_checklist_item` completes, skips, marks not applicable or reopens one item.
+`worker_update_performance_review` merges scores by rating key, refuses a key the review does not
 have, and replaces the goals only when it is given them; submitting, reopening and closing a
 review are the reviewer's sign-off.
 
@@ -125,17 +125,17 @@ review are the reviewer's sign-off.
 
 | Tool | Resource / operation | Class | Default → most | Person's approval |
 | --- | --- | --- | --- | --- |
-| `list_employment_verifications` | qualification / read | reads only | automatic | — |
-| `record_employment_verification`, `update_employment_verification` | qualification / create, update | inside | Propose → Ask first | no |
-| `log_employment_verification_request` | qualification / update | inside | Propose → Ask first | no |
-| `delete_employment_verification` | qualification / delete | inside | Propose → Propose | no |
-| `list_worker_credentials` | worker credential / read | reads only | automatic | — |
-| `record_worker_credential`, `update_worker_credential` | worker credential / create, update | inside | Propose → Ask first | no |
-| `attach_worker_credential_document` | worker credential / update | inside | Propose → Ask first | no |
-| `archive_worker_credential` | worker credential / archive | inside | Propose → Propose | no |
-| `list_worker_injuries` | worker injury / read | reads only | automatic | — |
-| `record_worker_injury`, `update_worker_injury` | worker injury / create, update | inside | Propose → Ask first | no |
-| `delete_worker_injury` | worker injury / delete | inside | Propose → Propose | no |
+| `worker_list_employment_verifications` | qualification / read | reads only | automatic | — |
+| `worker_record_employment_verification`, `worker_update_employment_verification` | qualification / create, update | inside | Propose → Ask first | no |
+| `worker_record_employment_verification_request` | qualification / update | inside | Propose → Ask first | no |
+| `worker_delete_employment_verification` | qualification / delete | inside | Propose → Propose | no |
+| `worker_list_credentials` | worker credential / read | reads only | automatic | — |
+| `worker_record_credential`, `worker_update_credential` | worker credential / create, update | inside | Propose → Ask first | no |
+| `worker_attach_credential_document` | worker credential / update | inside | Propose → Ask first | no |
+| `worker_archive_credential` | worker credential / archive | inside | Propose → Propose | no |
+| `worker_list_injuries` | worker injury / read | reads only | automatic | — |
+| `worker_record_injury`, `worker_update_injury` | worker injury / create, update | inside | Propose → Ask first | no |
+| `worker_delete_injury` | worker injury / delete | inside | Propose → Propose | no |
 
 A second active credential of a type is refused unless the call renews it, and the preview
 shows the one a renewal archives. Changing a fact a person verified clears the verification,
@@ -146,21 +146,21 @@ classification follows the treatment unless a person gave one.
 
 | Tool | Resource / operation | Class | Default → most | Person's approval |
 | --- | --- | --- | --- | --- |
-| `request_worker_pto`, `update_worker_pto` | worker PTO / create, update | driver | Propose → Ask first | no |
-| `adjust_worker_pto_balance` | worker PTO / manage | money | Propose → Propose | yes |
+| `worker_request_pto`, `worker_update_pto` | worker PTO / create, update | driver | Propose → Ask first | no |
+| `worker_adjust_pto_balance` | worker PTO / manage | money | Propose → Propose | yes |
 | `shipment_list_permits` | permit / read | reads only | automatic | — |
 | `shipment_record_permit`, `shipment_update_permit` | permit / create, update | inside | Propose → Ask first | no |
 | `settlement_start_dispute_review` | settlement dispute / update | driver | Propose → Ask first | no |
 | `settlement_resolve_dispute` | settlement dispute / approve | driver or money, per call | Propose → Propose | yes |
-| `list_driver_expenses` | driver expense / read | reads only, marked | automatic | — |
-| `review_driver_expense` | driver expense / approve | driver or money, per call | Propose → Propose | yes |
+| `settlement_list_driver_expenses` | driver expense / read | reads only, marked | automatic | — |
+| `settlement_review_driver_expense` | driver expense / approve | driver or money, per call | Propose → Propose | yes |
 | `settlement_list_payroll_exports` | timesheet / read | reads only | automatic | — |
 | `settlement_generate_payroll_export`, `settlement_void_payroll_export` | timesheet / export | money | Propose → Propose | yes |
 
 A time-off request under a policy that needs no approval is booked and the driver told at
 once, which is why it is driver-visible; the preview says when that will happen. A dispute
 decision with an adjustment, and an approved expense, classify as money; a denial or a
-rejection is driver-visible. `list_driver_expenses` marks a row whose description the driver
+rejection is driver-visible. `settlement_list_driver_expenses` marks a row whose description the driver
 wrote, so a turn that read it proposes every later write. Waiving a permit requirement is a
 named person accepting the compliance risk and is attestation. Time clock entries are the wage
 record and are attestation; bulk PTO decisions duplicate the single-request tools.
@@ -169,15 +169,15 @@ record and are attestation; bulk PTO decisions duplicate the single-request tool
 
 | Template | Holds |
 | --- | --- |
-| Workforce coordinator (chat, Propose, Restricted data access) | `list_time_off`, `request_worker_pto`, `update_worker_pto`, `approve_worker_pto`, `reject_worker_pto`, `cancel_worker_pto`, `adjust_worker_pto_balance`, `list_worker_leave_cases`, `open_leave_case`, `update_leave_case`, `request_leave_certification`, `record_leave_day`, `update_leave_day`, `delete_leave_day`, `close_leave_case`, `list_worker_injuries`, `record_worker_injury`, `update_worker_injury`, `delete_worker_injury`, `list_performance_reviews`, `start_performance_review`, `draft_performance_review`, `delete_performance_review`, `give_worker_recognition`, `delete_worker_recognition`, `list_worker_safety_events`, `update_worker_safety_event`, `delete_worker_safety_event`, `update_safety_violation`, `delete_safety_violation`, `list_dot_tests`, `cancel_dot_test`, `list_dot_random_draws`, `get_dot_random_draw`, `run_dot_random_draw`, `finalize_dot_random_draw`, `cancel_dot_random_draw`, `list_worker_checklists`, `start_worker_checklist`, `update_worker_checklist_item`, `cancel_worker_checklist`, `list_worker_training`, `attach_worker_training_document`, `close_worker_training`, `list_worker_credentials`, `archive_worker_credential`, `list_employment_verifications`, `delete_employment_verification`, `shipment_list_permits`, `shipment_record_permit`, `shipment_update_permit` |
-| Compliance assistant (chat, Ask first) | `list_worker_credentials`, `record_worker_credential`, `update_worker_credential`, `attach_worker_credential_document`, `list_worker_training`, `list_training_courses`, `assign_worker_training`, `assign_required_worker_training`, `record_training_completion`, `list_employment_verifications`, `record_employment_verification`, `update_employment_verification`, `log_employment_verification_request`, `list_worker_checklists`, `update_worker_checklist_item`, `list_worker_safety_events`, `open_worker_safety_event`, `record_safety_violation`, `change_worker_safety_event_status`, `list_dot_tests`, `get_dot_random_draw`, `schedule_dot_test`, `update_dot_random_selection`, `list_worker_leave_cases`, `get_worker_hos`, `request_credential_renewal`, `place_worker_dispatch_hold` |
+| Workforce coordinator (chat, Propose, Restricted data access) | `worker_list_time_off`, `worker_request_pto`, `worker_update_pto`, `worker_approve_pto`, `worker_reject_pto`, `worker_cancel_pto`, `worker_adjust_pto_balance`, `worker_list_leave_cases`, `worker_open_leave_case`, `worker_update_leave_case`, `worker_request_leave_certification`, `worker_record_leave_day`, `worker_update_leave_day`, `worker_delete_leave_day`, `worker_close_leave_case`, `worker_list_injuries`, `worker_record_injury`, `worker_update_injury`, `worker_delete_injury`, `worker_list_performance_reviews`, `worker_start_performance_review`, `worker_update_performance_review`, `worker_delete_performance_review`, `worker_record_recognition`, `worker_delete_recognition`, `worker_list_safety_events`, `worker_update_safety_event`, `worker_delete_safety_event`, `worker_update_safety_violation`, `worker_delete_safety_violation`, `worker_list_dot_tests`, `worker_cancel_dot_test`, `worker_list_dot_random_draws`, `worker_get_dot_random_draw`, `worker_run_dot_random_draw`, `worker_finalize_dot_random_draw`, `worker_cancel_dot_random_draw`, `worker_list_checklists`, `worker_start_checklist`, `worker_update_checklist_item`, `worker_cancel_checklist`, `worker_list_training`, `worker_attach_training_document`, `worker_close_training`, `worker_list_credentials`, `worker_archive_credential`, `worker_list_employment_verifications`, `worker_delete_employment_verification`, `shipment_list_permits`, `shipment_record_permit`, `shipment_update_permit` |
+| Compliance assistant (chat, Ask first) | `worker_list_credentials`, `worker_record_credential`, `worker_update_credential`, `worker_attach_credential_document`, `worker_list_training`, `worker_list_training_courses`, `worker_assign_training`, `worker_assign_required_training`, `worker_record_training_completion`, `worker_list_employment_verifications`, `worker_record_employment_verification`, `worker_update_employment_verification`, `worker_record_employment_verification_request`, `worker_list_checklists`, `worker_update_checklist_item`, `worker_list_safety_events`, `worker_open_safety_event`, `worker_record_safety_violation`, `worker_set_safety_event_status`, `worker_list_dot_tests`, `worker_get_dot_random_draw`, `worker_schedule_dot_test`, `worker_update_dot_random_selection`, `worker_list_leave_cases`, `worker_get_hos`, `worker_request_credential_renewal`, `worker_place_dispatch_hold` |
 | Settlements clerk (chat, Ask first) | `settlement_start_dispute_review`, `settlement_resolve_dispute`, `settlement_approve_driver`, `settlement_post_driver`, `settlement_approve_carrier`, `settlement_post_carrier` |
 
 The workforce coordinator is the HR and safety desk the shipped templates lacked. It holds 55
-of its 56 tools: every workforce write the compliance assistant does not, with `search_worker`,
-`list_workers`, `get_worker` and `shipment_list` to find the worker or load. It runs at a
-Propose ceiling, so every write waits for a person; `adjust_worker_pto_balance`,
-`finalize_dot_random_draw` and `close_leave_case` still run only from that person's approval.
+of its 56 tools: every workforce write the compliance assistant does not, with `worker_search`,
+`worker_list`, `worker_get` and `shipment_list` to find the worker or load. It runs at a
+Propose ceiling, so every write waits for a person; `worker_adjust_pto_balance`,
+`worker_finalize_dot_random_draw` and `worker_close_leave_case` still run only from that person's approval.
 Its data access is Restricted, so it reads the Restricted detail on injury, leave and time-off
 records, never past the role of the person talking to it, and Confidential fields never reach
 it. Its prompt names the compliance assistant as
@@ -203,7 +203,7 @@ processes pay is not the one who sets it: the settlements clerk reads a driver's
 recurring pay and escrow accounts and changes none of them, and the workforce coordinator never
 touches pay.
 
-`settlement_generate_payroll_export`, `settlement_void_payroll_export` and `review_driver_expense` stay on no
+`settlement_generate_payroll_export`, `settlement_void_payroll_export` and `settlement_review_driver_expense` stay on no
 template. Each moves pay, which the workforce coordinator never touches, and the settlements
 clerk, where they would belong, holds all 56 of its tools. An organization adds them to an
 agent it builds in AI control, as it adds the pay setup tools. A template test
@@ -215,8 +215,8 @@ so the agent permission ceiling (`permission/agent.go`) is unchanged.
 - An agent made from the Compliance assistant or settlements clerk template before these tools
   existed keeps the tools it was saved with; an administrator adds them in AI control. An
   organization that wants the workforce coordinator creates it from its starter.
-- `list_dot_random_draws` returns the 24 newest rounds and the active pools;
+- `worker_list_dot_random_draws` returns the 24 newest rounds and the active pools;
   `settlement_list_payroll_exports` the 26 newest runs.
-- `assign_worker_training` takes at most 50 workers and 10 courses per proposal.
+- `worker_assign_training` takes at most 50 workers and 10 courses per proposal.
 - `shipment_list_permits` shows a state's id and abbreviation; there is no separate state
   lookup, so a permit is recorded against a state its shipment's requirements name.

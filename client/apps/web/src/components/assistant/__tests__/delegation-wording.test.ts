@@ -24,7 +24,7 @@ const t = translate;
 
 /** A write as delegate_finished carries it (ports/services DelegateWrite). */
 function write(fields: Record<string, unknown>): DelegateWrite {
-  return delegateWriteSchema.parse({ toolName: "create_report", callId: "c1", ...fields });
+  return delegateWriteSchema.parse({ toolName: "report_create", callId: "c1", ...fields });
 }
 
 function liveStep(overrides: Partial<ToolStep> = {}): ToolStep {
@@ -176,7 +176,7 @@ describe("madeLine", () => {
   });
 
   it("words a write whose tool says nothing from the tool, unlinked", () => {
-    const line = madeLine(write({ toolName: "update_customer", summary: "Peak Distributing" }), t);
+    const line = madeLine(write({ toolName: "customer_update", summary: "Peak Distributing" }), t);
 
     expect(line).toMatchObject({ text: "Updated Peak Distributing", path: null, state: "made" });
     expect(splitOnSubject(line)).toBeNull();

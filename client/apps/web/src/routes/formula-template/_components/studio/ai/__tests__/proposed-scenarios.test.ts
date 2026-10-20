@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { acceptableScenarios, scenarioToTestCaseInput } from "../proposed-scenarios";
 
 /*
- * Scenarios arrive on a propose_formula draft edit, priced by the formula
+ * Scenarios arrive on a formula_propose draft edit, priced by the formula
  * engine on the server (pagedraft.PricedScenario). The amount is the engine's
  * decimal string, empty when the engine could not price it.
  */

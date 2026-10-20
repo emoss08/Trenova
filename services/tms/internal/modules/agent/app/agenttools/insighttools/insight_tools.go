@@ -36,10 +36,10 @@ func NewDismissInsightTool(insights insightDismisser) agentports.AgentTool {
 	return &DismissInsightTool{insights: insights}
 }
 
-func (t *DismissInsightTool) Name() string { return "dismiss_insight" }
+func (t *DismissInsightTool) Name() string { return "insight_dismiss" }
 
 func (t *DismissInsightTool) Recipe() []string {
-	return []string{"list_insights", "get_insight", "dismiss_insight"}
+	return []string{"insight_list", "insight_get", "insight_dismiss"}
 }
 
 func (t *DismissInsightTool) Description() string {
@@ -56,7 +56,7 @@ func (t *DismissInsightTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"insightId": agenttoolschema.RecordIDText(permission.ResourceInsight,
-				"The insight's id, from list_insights or the run's subject."),
+				"The insight's id, from insight_list or the run's subject."),
 			"reason": map[string]any{
 				"type": "string",
 				"description": fmt.Sprintf(

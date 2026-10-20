@@ -69,7 +69,7 @@ func AllKinds() []Kind {
 	}
 }
 
-// AgentKinds are the kinds an agent asks for with wait_until. A portal run's
+// AgentKinds are the kinds an agent asks for with agent_create_wait. A portal run's
 // wait is set by the system when a person approves acting on a portal or a
 // portal read stops for a sign-in code, a file's when the agent finds a file
 // the person attached still being read, and a web watch's when the agent sets

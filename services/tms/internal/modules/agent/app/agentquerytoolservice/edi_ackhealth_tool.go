@@ -24,7 +24,7 @@ const (
 	maxOverdueAfterSeconds      = int64(30 * 24 * 60 * 60)
 	ackHealthOverdueRows        = 25
 
-	ackHealthFollowUp = "Open one with get_edi_message to read why; retry_edi_message_delivery " +
+	ackHealthFollowUp = "Open one with edi_get_message to read why; edi_retry_message " +
 		"sends a dead-lettered or failed one again."
 )
 
@@ -65,7 +65,7 @@ func newGetEDIAckHealthTool(health ediAckHealthReader) agentports.AgentQueryTool
 	return &getEDIAckHealthTool{health: health}
 }
 
-func (t *getEDIAckHealthTool) Name() string { return "get_edi_ack_health" }
+func (t *getEDIAckHealthTool) Name() string { return "edi_get_ack_health" }
 
 func (t *getEDIAckHealthTool) SearchTerms() []string {
 	return []string{
@@ -83,8 +83,8 @@ func (t *getEDIAckHealthTool) Description() string {
 			"both since countsSince. A message is overdue "+
 			"once its 997 or 999 has been pending %s unless you ask, the age the EDI overview "+
 			"uses. Use it for \"what hasn't been acked\" or \"is a partner keeping up\"; "+
-			"list_edi_messages lists messages by filter. Each message has its id for "+
-			"get_edi_message or retry_edi_message_delivery.",
+			"edi_list_messages lists messages by filter. Each message has its id for "+
+			"edi_get_message or edi_retry_message.",
 		timeutils.FormatLongDurationMs(ediservice.DefaultOverdueAckAgeSeconds*1000),
 	)
 }
@@ -92,7 +92,7 @@ func (t *getEDIAckHealthTool) Description() string {
 func (t *getEDIAckHealthTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
 		paramPartnerID: agenttoolschema.KindID("Only this partner, by id from "+
-			"list_edi_partners or a row of this tool.", permission.KindEDIPartner),
+			"edi_list_partners or a row of this tool.", permission.KindEDIPartner),
 		paramTransactionSet: enumParam("Only messages of this transaction set that were "+
 			"sent, such as 214 for \"has acme acked our 214s\". 997 or 999 asks about the "+
 			"acknowledgments themselves, so it counts every set they answer.",

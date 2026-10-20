@@ -31,28 +31,28 @@ var ownKeys = map[string]struct{}{
 // values that are not PULIDs at all, and an id whose kind is chosen by another
 // parameter from a list the registry does not follow. Each says why.
 var untypedIDs = map[string]string{
-	"describe_formula_schema.schemaId": "the name of a formula schema, such as shipment",
-	"test_formula_expression.schemaId": "the name of a formula schema, such as shipment",
-	"propose_formula.schemaId":         "the name of a formula schema, such as shipment",
-	"arrange_home_layout.widgetIds": "home layout widget ids are names NextWidgetID " +
+	"formula_describe_schema.schemaId": "the name of a formula schema, such as shipment",
+	"formula_test_expression.schemaId": "the name of a formula schema, such as shipment",
+	"formula_propose.schemaId":         "the name of a formula schema, such as shipment",
+	"home_arrange_layout.widgetIds": "home layout widget ids are names NextWidgetID " +
 		"gives a widget, not PULIDs",
-	"open_page.recordId": "its kind follows the entity parameter, drawn from the " +
+	"agent_open_page.recordId": "its kind follows the entity parameter, drawn from the " +
 		"generated product-guide catalog; the id only builds a link and is never read",
-	"draft_edi_connection.mappings[].targetId": "its kind follows the mapping's entityType, " +
+	"edi_draft_connection.mappings[].targetId": "its kind follows the mapping's entityType, " +
 		"and the planner resolves it against that entity's table before drafting",
-	"apply_edi_connection_draft.mappings[].targetId": "its kind follows the mapping's entityType, " +
+	"edi_apply_connection_draft.mappings[].targetId": "its kind follows the mapping's entityType, " +
 		"and the planner resolves it against that entity's table before writing",
 	"billing_resolve_issue.issueId": "a billing queue check is part of its item and has " +
 		"no record kind; the service reads it scoped to the item id",
 	"billing_undo_issue.issueId": "a billing queue check is part of its item and has " +
 		"no record kind; the service reads it scoped to the item id",
-	"file_inbound_attachment.attachmentId": "an email attachment is part of its message and " +
+	"inbox_file_attachment.attachmentId": "an email attachment is part of its message and " +
 		"has no record kind; the tool checks it is one of the named message's attachments",
-	"unfile_inbound_attachment.attachmentId": "an email attachment is part of its message and " +
+	"inbox_unfile_attachment.attachmentId": "an email attachment is part of its message and " +
 		"has no record kind; the tool checks it is one of the named message's attachments",
-	"resolve_inbound_conflict.conflictId": "a triage conflict is a key inside its message, " +
+	"inbox_resolve_conflict.conflictId": "a triage conflict is a key inside its message, " +
 		"not a PULID; the service reads it scoped to the message id",
-	"reopen_inbound_conflict.conflictId": "a triage conflict is a key inside its message, " +
+	"inbox_reopen_conflict.conflictId": "a triage conflict is a key inside its message, " +
 		"not a PULID; the service reads it scoped to the message id",
 }
 

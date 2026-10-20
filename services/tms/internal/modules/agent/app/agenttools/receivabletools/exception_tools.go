@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	toolListWatchtowerItems = "list_watchtower_items"
+	toolListWatchtowerItems = "exception_list_watchtower_items"
 	paramExceptionAssignee  = "assigneeId"
 	paramExceptionNote      = "note"
 	paramSnoozeUntil        = "until"
@@ -63,7 +63,7 @@ func exceptionViewOf(item *watchtower.Item) *exceptionView {
 
 func exceptionItemProperty() map[string]any {
 	return agenttoolschema.OfKinds(common.StringProperty("The exception, from "+
-		"list_watchtower_items. Never guess one.", 0), permission.KindWatchtowerItem)
+		"exception_list_watchtower_items. Never guess one.", 0), permission.KindWatchtowerItem)
 }
 
 func exceptionNoteProperty(what string) map[string]any {
@@ -181,8 +181,8 @@ func NewAssignExceptionTool(exceptions watchtowerports.ExceptionService) agentpo
 		exceptions,
 		&exceptionChangeSpec[*watchtowerports.AssignExceptionRequest]{
 			spec: &common.ReceivableSpec{
-				Name:   "assign_exception",
-				Recipe: []string{toolListWatchtowerItems, "assign_exception"},
+				Name:   "exception_assign",
+				Recipe: []string{toolListWatchtowerItems, "exception_assign"},
 				Description: "Give an exception on the watchtower to a person, or to nobody, so " +
 					"someone owns getting it dealt with. The new owner must be able to see the record " +
 					"behind it; they are told it is theirs.",
@@ -195,7 +195,7 @@ func NewAssignExceptionTool(exceptions watchtowerports.ExceptionService) agentpo
 					paramWatchtowerItemID: exceptionItemProperty(),
 					paramExceptionAssignee: agenttoolschema.RecordIDText(permission.ResourceUser,
 						"The person who should own it: the person who asked, or an assigneeId "+
-							"list_watchtower_items shows. Omit to leave it with nobody. Never guess one."),
+							"exception_list_watchtower_items shows. Omit to leave it with nobody. Never guess one."),
 					paramExceptionNote: exceptionNoteProperty(
 						"Why it goes to them, kept in its history.",
 					),
@@ -250,8 +250,8 @@ func NewSnoozeExceptionTool(exceptions watchtowerports.ExceptionService) agentpo
 		exceptions,
 		&exceptionChangeSpec[*watchtowerports.SnoozeExceptionRequest]{
 			spec: &common.ReceivableSpec{
-				Name:   "snooze_exception",
-				Recipe: []string{toolListWatchtowerItems, "snooze_exception"},
+				Name:   "exception_snooze",
+				Recipe: []string{toolListWatchtowerItems, "exception_snooze"},
 				Description: "Put an exception aside until a time when nothing can be done before " +
 					"then, such as a receiver that opens at 7. It wakes on its own and its owner is told.",
 				DefaultTier: agent.TierPropose,
@@ -308,11 +308,11 @@ func NewWakeExceptionTool(exceptions watchtowerports.ExceptionService) agentport
 		exceptions,
 		&exceptionChangeSpec[*watchtowerports.UnsnoozeExceptionRequest]{
 			spec: &common.ReceivableSpec{
-				Name:   "wake_exception",
-				Recipe: []string{toolListWatchtowerItems, "wake_exception"},
+				Name:   "exception_wake",
+				Recipe: []string{toolListWatchtowerItems, "exception_wake"},
 				Description: "Bring a snoozed exception back to the open queue now, before the " +
-					"time snooze_exception set, when whatever it was waiting for has happened " +
-					"early. Only a snoozed exception can be woken; list_watchtower_items shows " +
+					"time exception_snooze set, when whatever it was waiting for has happened " +
+					"early. Only a snoozed exception can be woken; exception_list_watchtower_items shows " +
 					"which are snoozed and until when.",
 				DefaultTier: agent.TierPropose,
 				MaxTier:     agent.TierActWithApproval,
@@ -359,8 +359,8 @@ func NewSetExceptionDueTool(exceptions watchtowerports.ExceptionService) agentpo
 		exceptions,
 		&exceptionChangeSpec[*watchtowerports.SetExceptionDueRequest]{
 			spec: &common.ReceivableSpec{
-				Name:   "set_exception_due",
-				Recipe: []string{toolListWatchtowerItems, "set_exception_due"},
+				Name:   "exception_set_due",
+				Recipe: []string{toolListWatchtowerItems, "exception_set_due"},
 				Description: "Move when an exception must be dealt with, or clear its due time. An " +
 					"exception past its due time escalates to its owner and the escalation contact.",
 				DefaultTier: agent.TierPropose,
@@ -418,8 +418,8 @@ func NewResolveExceptionTool(exceptions watchtowerports.ExceptionService) agentp
 		exceptions,
 		&exceptionChangeSpec[*watchtowerports.ResolveExceptionRequest]{
 			spec: &common.ReceivableSpec{
-				Name:   "resolve_exception",
-				Recipe: []string{toolListWatchtowerItems, "resolve_exception"},
+				Name:   "exception_resolve",
+				Recipe: []string{toolListWatchtowerItems, "exception_resolve"},
 				Description: "Close an exception with the reason it is closed. The resolution holds " +
 					"while the record behind it still shows the problem; it reopens only after the " +
 					"problem clears and comes back. Other needs a note.",
@@ -490,8 +490,8 @@ func NewReopenExceptionTool(exceptions watchtowerports.ExceptionService) agentpo
 		exceptions,
 		&exceptionChangeSpec[*watchtowerports.ReopenExceptionRequest]{
 			spec: &common.ReceivableSpec{
-				Name:   "reopen_exception",
-				Recipe: []string{toolListWatchtowerItems, "reopen_exception"},
+				Name:   "exception_reopen",
+				Recipe: []string{toolListWatchtowerItems, "exception_reopen"},
 				Description: "Open a resolved exception again when it was closed too soon. It gets a " +
 					"fresh due time and keeps its owner.",
 				DefaultTier: agent.TierPropose,
@@ -537,8 +537,8 @@ func NewReopenExceptionTool(exceptions watchtowerports.ExceptionService) agentpo
 
 func NewCommentOnExceptionTool(exceptions watchtowerports.ExceptionService) agentports.AgentTool {
 	return common.NewReceivableTool(&common.ReceivableSpec{
-		Name:   "comment_on_exception",
-		Recipe: []string{toolListWatchtowerItems, "comment_on_exception"},
+		Name:   "exception_add_comment",
+		Recipe: []string{toolListWatchtowerItems, "exception_add_comment"},
 		Description: "Add a note to an exception's history, such as what the carrier said. " +
 			"Its owner is told. The history is never edited.",
 		Resource:    permission.ResourceWatchtower,

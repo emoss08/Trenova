@@ -19,8 +19,8 @@ func TestLineageKeyFor(t *testing.T) {
 	assert.Equal(t, first, again)
 	assert.Equal(t, first, refiltered)
 	assert.Equal(t,
-		LineageKeyFor(KindTableView, "compose_table_view", map[string]any{"entity": "shipment", "description": "late"}),
-		LineageKeyFor(KindTableView, "compose_table_view", map[string]any{"entity": "shipment", "description": "in Iowa"}),
+		LineageKeyFor(KindTableView, "report_compose_table_view", map[string]any{"entity": "shipment", "description": "late"}),
+		LineageKeyFor(KindTableView, "report_compose_table_view", map[string]any{"entity": "shipment", "description": "in Iowa"}),
 	)
 	assert.NotEqual(t,
 		LineageKeyFor(KindEntityCard, "shipment_get", map[string]any{"shipmentId": "shp_a", "detail": "full"}),
@@ -32,29 +32,29 @@ func TestLineageKeyFor(t *testing.T) {
 	)
 	assert.NotEqual(t, first, LineageKeyFor(KindTableView, "shipment_list", map[string]any{"status": "Ready", "limit": 50}))
 	assert.Equal(t,
-		LineageKeyFor(KindEDIConnectionDraft, "draft_edi_connection",
+		LineageKeyFor(KindEDIConnectionDraft, "edi_draft_connection",
 			map[string]any{"documentId": "doc_v4"}),
-		LineageKeyFor(KindEDIConnectionDraft, "draft_edi_connection",
+		LineageKeyFor(KindEDIConnectionDraft, "edi_draft_connection",
 			map[string]any{"documentId": "doc_v4", "ediPartnerId": "edip_a", "customerId": "cus_a"}),
 		"a second draft of the same guide is its next version, however the partner was named",
 	)
 	assert.NotEqual(t,
-		LineageKeyFor(KindEDIConnectionDraft, "draft_edi_connection",
+		LineageKeyFor(KindEDIConnectionDraft, "edi_draft_connection",
 			map[string]any{"documentId": "doc_v3"}),
-		LineageKeyFor(KindEDIConnectionDraft, "draft_edi_connection",
+		LineageKeyFor(KindEDIConnectionDraft, "edi_draft_connection",
 			map[string]any{"documentId": "doc_v4"}),
 		"two guides are two drafts",
 	)
 	assert.Equal(t,
-		LineageKeyFor(KindAnalysis, "analyze_data",
+		LineageKeyFor(KindAnalysis, "report_analyze_data",
 			map[string]any{"title": "Open AR by customer", "code": "print(1)"}),
-		LineageKeyFor(KindAnalysis, "analyze_data",
+		LineageKeyFor(KindAnalysis, "report_analyze_data",
 			map[string]any{"title": " open  AR by Customer", "code": "print(2)"}),
 		"an analysis run again under its title is its next version, whatever the code",
 	)
 	assert.NotEqual(t,
-		LineageKeyFor(KindAnalysis, "analyze_data", map[string]any{"title": "Open AR by customer"}),
-		LineageKeyFor(KindAnalysis, "analyze_data", map[string]any{"title": "Lane margin"}),
+		LineageKeyFor(KindAnalysis, "report_analyze_data", map[string]any{"title": "Open AR by customer"}),
+		LineageKeyFor(KindAnalysis, "report_analyze_data", map[string]any{"title": "Lane margin"}),
 	)
 	assert.False(t, IsLookup(KindAnalysis),
 		"an analysis is made on purpose, so it is kept whether or not the reply points to it")

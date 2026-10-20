@@ -106,7 +106,7 @@ function artifact(payload: Record<string, unknown>): AssistantArtifact {
 function templates(): AssistantArtifact {
   return artifact({
     display: 1,
-    tool: "list_formula_templates",
+    tool: "formula_list_templates",
     entity: "formula_templates",
     recordEntity: "formula_template",
     columns: [
@@ -209,7 +209,7 @@ describe("DeskTableBody with formula templates", () => {
     renderTable(
       artifact({
         display: 1,
-        tool: "list_commodities",
+        tool: "masterdata_list_commodities",
         entity: "commodities",
         recordEntity: "commodity",
         columns: [{ key: "name", label: "Name", type: "text" }],

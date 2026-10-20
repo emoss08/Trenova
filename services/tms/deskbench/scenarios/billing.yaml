@@ -28,7 +28,7 @@ scenarios:
     steps:
       - say: "peak is asking why the denver to phoenix load is 3700. whats in that"
         expect:
-          calls: ["shipment_list|shipment_get|explain_rate"]
+          calls: ["shipment_list|shipment_get|rate_explain"]
           maxFailedCalls: 1
           noProposals: true
           replyIncludes: ["SEED-SHP-009"]

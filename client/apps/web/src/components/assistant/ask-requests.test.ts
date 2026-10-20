@@ -112,7 +112,7 @@ describe("askRequestsFrom", () => {
   });
 
   it("ignores every other tool", () => {
-    expect(askRequestsFrom([exchange("list_reports", fenced({ results: [] }))])).toEqual([]);
+    expect(askRequestsFrom([exchange("report_list", fenced({ results: [] }))])).toEqual([]);
   });
 });
 

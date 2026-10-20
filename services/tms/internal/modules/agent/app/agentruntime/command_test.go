@@ -460,13 +460,13 @@ func TestAvailableCommands_AreTheOnesTheAgentAndThePersonCanUse(t *testing.T) {
 		{
 			name:       "the agent was not chosen for the tools",
 			gate:       everyCapabilityGate(agentextension.AvailabilitySelectedAgents),
-			definition: []string{"list_workers"},
+			definition: []string{"worker_list"},
 			want:       []agentextension.Command{},
 		},
 		{
 			name:       "every agent is given the tools",
 			gate:       everyCapabilityGate(agentextension.AvailabilityAllAgents),
-			definition: []string{"list_workers"},
+			definition: []string{"worker_list"},
 			want:       every,
 		},
 		{

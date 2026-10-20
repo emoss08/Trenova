@@ -53,8 +53,8 @@ func watchtowerItemViewOf(item *watchtower.Item) *watchtowerItemView {
 
 func NewDismissWatchtowerItemTool(items WatchtowerDismisser) agentports.AgentTool {
 	return common.NewReceivableTool(&common.ReceivableSpec{
-		Name:   "dismiss_watchtower_item",
-		Recipe: []string{toolListWatchtowerItems, "dismiss_watchtower_item"},
+		Name:   "exception_dismiss_watchtower_item",
+		Recipe: []string{toolListWatchtowerItems, "exception_dismiss_watchtower_item"},
 		Description: "Take an item off the watchtower feed once it has been dealt with; the " +
 			"record behind it is left alone. Use it for a weather alert that has passed or a " +
 			"message already answered. Items about agents' own runs, proposals and " +
@@ -68,7 +68,7 @@ func NewDismissWatchtowerItemTool(items WatchtowerDismisser) agentports.AgentToo
 			"sent and the record behind it is unchanged.",
 		Properties: map[string]any{
 			paramWatchtowerItemID: agenttoolschema.OfKinds(common.StringProperty("The item, from "+
-				"list_watchtower_items. Never guess one.", 0), permission.KindWatchtowerItem),
+				"exception_list_watchtower_items. Never guess one.", 0), permission.KindWatchtowerItem),
 		},
 		Required:    []string{paramWatchtowerItemID},
 		SearchTerms: []string{"dismiss watchtower", "clear feed item", "mark handled"},

@@ -169,9 +169,9 @@ func TestRun_AnswersAndRecordsTheTurn(t *testing.T) {
 func TestRun_RefusesAToolNotEnabledEvenWhenRegistered(t *testing.T) {
 	t.Parallel()
 
-	tool := queryTool("search_worker", map[string]any{}, nil)
+	tool := queryTool("worker_search", map[string]any{}, nil)
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("search_worker", map[string]any{"query": "Maria"}),
+		toolTurn("worker_search", map[string]any{"query": "Maria"}),
 		textTurn("I cannot look that up."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{Tools: []agentports.AgentQueryTool{tool}},
@@ -338,16 +338,16 @@ func TestRun_StopsAtTheToolCallBudget(t *testing.T) {
 func TestRun_TurnsAWriteIntoAProposalAtTheEffectiveTier(t *testing.T) {
 	t.Parallel()
 
-	action := actionTool("assign_move", agent.TierAutoExecute, nil)
+	action := actionTool("dispatch_assign_move", agent.TierAutoExecute, nil)
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("assign_move", map[string]any{"moveId": "mv_1"}),
+		toolTurn("dispatch_assign_move", map[string]any{"moveId": "mv_1"}),
 		textTurn("I have proposed the assignment."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
 		&stubActionRegistry{Tools: []agentports.AgentTool{action}}, nil)
-	definition := testDefinition("assign_move")
+	definition := testDefinition("dispatch_assign_move")
 	definition.AutonomyCeiling = agent.TierAutoExecute
-	definition.ToolTiers = map[string]agent.AutonomyTier{"assign_move": agent.TierActWithApproval}
+	definition.ToolTiers = map[string]agent.AutonomyTier{"dispatch_assign_move": agent.TierActWithApproval}
 
 	result, err := rt.Run(t.Context(), &agentports.RunRequest{
 		Definition: definition,
@@ -371,7 +371,7 @@ func TestRun_TurnsAWriteIntoAProposalAtTheEffectiveTier(t *testing.T) {
 func TestRun_RefusesAnArgumentTheToolDoesNotDeclare(t *testing.T) {
 	t.Parallel()
 
-	action := actionTool("raise_exception", agent.TierPropose, nil)
+	action := actionTool("agent_raise_exception", agent.TierPropose, nil)
 	action.Schema = map[string]any{
 		"type": "object",
 		"properties": map[string]any{
@@ -381,14 +381,14 @@ func TestRun_RefusesAnArgumentTheToolDoesNotDeclare(t *testing.T) {
 		"additionalProperties": false,
 	}
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("raise_exception", map[string]any{"subjectId": "shp_1", "runId": "ar_made_up"}),
+		toolTurn("agent_raise_exception", map[string]any{"subjectId": "shp_1", "runId": "ar_made_up"}),
 		textTurn("Flagged it."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
 		&stubActionRegistry{Tools: []agentports.AgentTool{action}}, nil)
 
 	result, err := rt.Run(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition("raise_exception"),
+		Definition: testDefinition("agent_raise_exception"),
 		Actor:      testActor(),
 		Input:      "Flag shp_1",
 		RunID:      pulid.MustNew("ar_"),
@@ -408,17 +408,17 @@ func TestRun_RefusesAnArgumentTheToolDoesNotDeclare(t *testing.T) {
 func TestRun_AutoExecuteToolsRunImmediatelyAndAreRecorded(t *testing.T) {
 	t.Parallel()
 
-	action := actionTool("assign_move", agent.TierActWithApproval, nil)
+	action := actionTool("dispatch_assign_move", agent.TierActWithApproval, nil)
 	permissions := &stubPermissions{}
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("assign_move", map[string]any{"moveId": "mv_1"}),
+		toolTurn("dispatch_assign_move", map[string]any{"moveId": "mv_1"}),
 		textTurn("Assigned."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
 		&stubActionRegistry{Tools: []agentports.AgentTool{action}}, permissions)
-	definition := testDefinition("assign_move")
+	definition := testDefinition("dispatch_assign_move")
 	definition.AutonomyCeiling = agent.TierAutoExecute
-	definition.ToolTiers = map[string]agent.AutonomyTier{"assign_move": agent.TierAutoExecute}
+	definition.ToolTiers = map[string]agent.AutonomyTier{"dispatch_assign_move": agent.TierAutoExecute}
 	actor := testActor()
 
 	result, err := rt.Run(t.Context(), &agentports.RunRequest{
@@ -447,16 +447,16 @@ func TestRun_AutoExecuteToolsRunImmediatelyAndAreRecorded(t *testing.T) {
 func TestRun_ReportsAFailedAutoExecuteAndKeepsTheRecord(t *testing.T) {
 	t.Parallel()
 
-	action := actionTool("assign_move", "", errors.New("driver is out of hours"))
+	action := actionTool("dispatch_assign_move", "", errors.New("driver is out of hours"))
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("assign_move", map[string]any{"moveId": "mv_1"}),
+		toolTurn("dispatch_assign_move", map[string]any{"moveId": "mv_1"}),
 		textTurn("That did not work."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
 		&stubActionRegistry{Tools: []agentports.AgentTool{action}}, nil)
-	definition := testDefinition("assign_move")
+	definition := testDefinition("dispatch_assign_move")
 	definition.AutonomyCeiling = agent.TierAutoExecute
-	definition.ToolTiers = map[string]agent.AutonomyTier{"assign_move": agent.TierAutoExecute}
+	definition.ToolTiers = map[string]agent.AutonomyTier{"dispatch_assign_move": agent.TierAutoExecute}
 
 	result, err := rt.Run(t.Context(), &agentports.RunRequest{
 		Definition: definition,
@@ -596,13 +596,13 @@ func TestToolSummaries_DescribeOnlyEnabledRegisteredTools(t *testing.T) {
 
 	query := &stubQueryRegistry{Tools: []agentports.AgentQueryTool{
 		queryTool("shipment_get", nil, nil),
-		queryTool("search_worker", nil, nil),
+		queryTool("worker_search", nil, nil),
 	}}
 	action := &stubActionRegistry{Tools: []agentports.AgentTool{
-		actionTool("assign_move", agent.TierActWithApproval, nil),
+		actionTool("dispatch_assign_move", agent.TierActWithApproval, nil),
 	}}
 	rt := newRuntime(&scriptedCompletion{}, query, action, nil)
-	definition := testDefinition("shipment_get", "assign_move", "gone_away")
+	definition := testDefinition("shipment_get", "dispatch_assign_move", "gone_away")
 	definition.AutonomyCeiling = agent.TierAutoExecute
 
 	summaries := rt.ToolSummaries(definition)
@@ -610,7 +610,7 @@ func TestToolSummaries_DescribeOnlyEnabledRegisteredTools(t *testing.T) {
 	require.Len(t, summaries, 2)
 	assert.Equal(t, "shipment_get", summaries[0].Name)
 	assert.True(t, summaries[0].Query)
-	assert.Equal(t, "assign_move", summaries[1].Name)
+	assert.Equal(t, "dispatch_assign_move", summaries[1].Name)
 	assert.Equal(t, agent.TierActWithApproval, summaries[1].Tier)
 }
 
@@ -687,13 +687,13 @@ func TestRun_RefusesACallWhoseArgumentsWereCutOff(t *testing.T) {
 func TestRun_HoldsTheToolBudgetWithinABatch(t *testing.T) {
 	t.Parallel()
 
-	tool := queryTool("get_worker", map[string]any{"name": "x"}, nil)
+	tool := queryTool("worker_get", map[string]any{"name": "x"}, nil)
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		{
 			ToolCalls: []agentports.ToolCall{
-				{ID: "c1", Name: "get_worker", Arguments: map[string]any{"id": "w1"}},
-				{ID: "c2", Name: "get_worker", Arguments: map[string]any{"id": "w2"}},
-				{ID: "c3", Name: "get_worker", Arguments: map[string]any{"id": "w3"}},
+				{ID: "c1", Name: "worker_get", Arguments: map[string]any{"id": "w1"}},
+				{ID: "c2", Name: "worker_get", Arguments: map[string]any{"id": "w2"}},
+				{ID: "c3", Name: "worker_get", Arguments: map[string]any{"id": "w3"}},
 			},
 			ModelIdentifier: "test-model",
 		},
@@ -702,7 +702,7 @@ func TestRun_HoldsTheToolBudgetWithinABatch(t *testing.T) {
 	rt := newRuntime(completion, &stubQueryRegistry{
 		Tools: []agentports.AgentQueryTool{tool},
 	}, &stubActionRegistry{}, nil)
-	definition := testDefinition("get_worker")
+	definition := testDefinition("worker_get")
 	definition.MaxToolCalls = 2
 
 	result, err := rt.Run(t.Context(), &agentports.RunRequest{
@@ -1162,19 +1162,19 @@ func TestRun_AToolsOwnLimitHoldsAnEarnedTierDown(t *testing.T) {
 			t.Parallel()
 
 			action := &limitedActionTool{
-				StubActionTool: actionTool("reply_to_inbound_message", agent.TierPropose, nil),
+				StubActionTool: actionTool("inbox_send_reply", agent.TierPropose, nil),
 				limit:          tc.limit,
 			}
 			completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-				toolTurn("reply_to_inbound_message", map[string]any{"messageId": "imsg_1"}),
+				toolTurn("inbox_send_reply", map[string]any{"messageId": "imsg_1"}),
 				textTurn("Done."),
 			}}
 			rt := newRuntime(completion, &stubQueryRegistry{},
 				&stubActionRegistry{Tools: []agentports.AgentTool{action}}, nil)
-			definition := testDefinition("reply_to_inbound_message")
+			definition := testDefinition("inbox_send_reply")
 			definition.AutonomyCeiling = agent.TierAutoExecute
 			definition.ToolTiers = map[string]agent.AutonomyTier{
-				"reply_to_inbound_message": agent.TierAutoExecute,
+				"inbox_send_reply": agent.TierAutoExecute,
 			}
 
 			result, err := rt.Run(t.Context(), &agentports.RunRequest{
@@ -1216,18 +1216,18 @@ func TestRun_AToolsCeilingHoldsEvenAnAgentSetToActAlone(t *testing.T) {
 	t.Parallel()
 
 	action := &cappedActionTool{
-		StubActionTool: actionTool("email_customer", agent.TierPropose, nil),
+		StubActionTool: actionTool("customer_send_email", agent.TierPropose, nil),
 		ceiling:        agent.TierActWithApproval,
 	}
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("email_customer", map[string]any{"customerId": "cus_1"}),
+		toolTurn("customer_send_email", map[string]any{"customerId": "cus_1"}),
 		textTurn("Drafted."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
 		&stubActionRegistry{Tools: []agentports.AgentTool{action}}, nil)
-	definition := testDefinition("email_customer")
+	definition := testDefinition("customer_send_email")
 	definition.AutonomyCeiling = agent.TierAutoExecute
-	definition.ToolTiers = map[string]agent.AutonomyTier{"email_customer": agent.TierAutoExecute}
+	definition.ToolTiers = map[string]agent.AutonomyTier{"customer_send_email": agent.TierAutoExecute}
 
 	result, err := rt.Run(t.Context(), &agentports.RunRequest{
 		Definition: definition,
@@ -1371,10 +1371,10 @@ was then.
 func TestRestoreTurn_DecidesFromTheToolsHeldWhenTheTurnOpened(t *testing.T) {
 	t.Parallel()
 
-	tool := queryTool("search_worker", map[string]any{"results": []any{}}, nil)
+	tool := queryTool("worker_search", map[string]any{"results": []any{}}, nil)
 	script := func() *scriptedCompletion {
 		return &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-			toolTurn("search_worker", map[string]any{"query": "Maria"}),
+			toolTurn("worker_search", map[string]any{"query": "Maria"}),
 			textTurn("Nobody by that name."),
 		}}
 	}
@@ -1382,12 +1382,12 @@ func TestRestoreTurn_DecidesFromTheToolsHeldWhenTheTurnOpened(t *testing.T) {
 		&stubActionRegistry{}, nil)
 
 	opened := &agentports.RunRequest{
-		Definition: testDefinition("search_worker"),
+		Definition: testDefinition("worker_search"),
 		Actor:      testActor(),
 		Input:      "Who is Maria?",
 	}
 	state := rt.OpenTurn(t.Context(), opened).State()
-	require.Contains(t, state.Held, "search_worker")
+	require.Contains(t, state.Held, "worker_search")
 
 	encoded, err := sonic.Marshal(state)
 	require.NoError(t, err)
@@ -1412,17 +1412,17 @@ func TestRestoreTurn_DecidesFromTheToolsHeldWhenTheTurnOpened(t *testing.T) {
 		return fx.dispatched
 	}
 
-	assert.Equal(t, []string{"search_worker"}, drive(carried),
+	assert.Equal(t, []string{"worker_search"}, drive(carried),
 		"the call is dispatched as it was when the turn opened")
 }
 
-// raise_exception needs a run, and a conversation's turn has none, so in the
+// agent_raise_exception needs a run, and a conversation's turn has none, so in the
 // Desk it could only be refused; a model that reached for it spent a call and
 // told the person nothing. A background run keeps it.
 func TestRun_OffersRaiseExceptionOnlyWithARun(t *testing.T) {
 	t.Parallel()
 
-	action := actionTool("raise_exception", agent.TierPropose, nil)
+	action := actionTool("agent_raise_exception", agent.TierPropose, nil)
 	for _, tc := range []struct {
 		name  string
 		runID pulid.ID
@@ -1441,7 +1441,7 @@ func TestRun_OffersRaiseExceptionOnlyWithARun(t *testing.T) {
 				&stubActionRegistry{Tools: []agentports.AgentTool{action}}, nil)
 
 			_, err := rt.Run(t.Context(), &agentports.RunRequest{
-				Definition: testDefinition("raise_exception"),
+				Definition: testDefinition("agent_raise_exception"),
 				Actor:      testActor(),
 				Input:      "Anything wrong with shp_1?",
 				RunID:      tc.runID,
@@ -1451,9 +1451,9 @@ func TestRun_OffersRaiseExceptionOnlyWithARun(t *testing.T) {
 			require.NotEmpty(t, completion.Requests)
 			offered := offeredTools(completion.Requests[0])
 			if tc.held {
-				assert.Contains(t, offered, "raise_exception")
+				assert.Contains(t, offered, "agent_raise_exception")
 			} else {
-				assert.NotContains(t, offered, "raise_exception")
+				assert.NotContains(t, offered, "agent_raise_exception")
 			}
 		})
 	}
@@ -1463,21 +1463,21 @@ func TestEscalatesPastBudget_KeepsARunsHandOffWhenItsBudgetIsSpent(t *testing.T)
 	t.Parallel()
 
 	rt := newRuntime(nil, nil, &stubActionRegistry{Tools: []agentports.AgentTool{
-		&agenttest.StubActionTool{ToolName: "raise_exception", Tier: agent.TierAutoExecute, Escalates: true},
+		&agenttest.StubActionTool{ToolName: "agent_raise_exception", Tier: agent.TierAutoExecute, Escalates: true},
 		actionTool("record_case", agent.TierAutoExecute, nil),
 	}}, nil)
 	turn := &Turn{req: &agentports.RunRequest{Definition: testDefinition("record_case")}}
 
-	assert.True(t, rt.escalatesPastBudget(turn, "raise_exception", 0))
-	assert.True(t, rt.escalatesPastBudget(turn, "raise_exception", escalationReserve-1))
-	assert.False(t, rt.escalatesPastBudget(turn, "raise_exception", escalationReserve),
+	assert.True(t, rt.escalatesPastBudget(turn, "agent_raise_exception", 0))
+	assert.True(t, rt.escalatesPastBudget(turn, "agent_raise_exception", escalationReserve-1))
+	assert.False(t, rt.escalatesPastBudget(turn, "agent_raise_exception", escalationReserve),
 		"the reserve is spent too, so a run that only escalates still stops")
 	assert.False(t, rt.escalatesPastBudget(turn, "record_case", 0))
-	assert.False(t, rt.escalatesPastBudget(turn, "list_workers", 0))
+	assert.False(t, rt.escalatesPastBudget(turn, "worker_list", 0))
 
 	tiered := testDefinition("record_case")
-	tiered.ToolTiers = map[string]agent.AutonomyTier{"raise_exception": agent.TierPropose}
+	tiered.ToolTiers = map[string]agent.AutonomyTier{"agent_raise_exception": agent.TierPropose}
 	assert.False(t, rt.escalatesPastBudget(
-		&Turn{req: &agentports.RunRequest{Definition: tiered}}, "raise_exception", 0),
+		&Turn{req: &agentports.RunRequest{Definition: tiered}}, "agent_raise_exception", 0),
 		"a tier a person set makes it an ordinary write")
 }

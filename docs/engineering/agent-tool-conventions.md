@@ -2,10 +2,11 @@
 
 Every agent tool is named and shaped the same way, so a model that has learned one area of
 Trenova reads the next one without relearning it, and the runtime can build its namespace map
-from the tools themselves. Tools move into these conventions one module at a time (Phase 3 of
-[desk-harness-review.md](../desk-harness-review.md)); `TestToolsMoveIntoNamespacesAndNeverOut`
-in `agenttoolcatalog` counts the tools still outside a namespace and only lets that number fall,
-and `TestNamespacedToolsFollowTheConventions` holds every namespaced tool to the rules below.
+from the tools themselves. Every tool moved into these conventions in Phase 3 of
+[desk-harness-review.md](../desk-harness-review.md); `TestToolsMoveIntoNamespacesAndNeverOut`
+in `agenttoolcatalog` now holds the count of tools outside a namespace at zero, so a new tool
+without one fails it, and `TestNamespacedToolsFollowTheConventions` holds every tool to the
+rules below.
 
 Trenova is not in production, so a rename carries no alias. A renamed or merged tool is renamed
 everywhere at once (see "Renaming a tool" below).
@@ -115,5 +116,5 @@ a parameter the input names differently says why in the binding.
 3. Regenerate everything the names reach (`docs/engineering/generated-artifacts.md`): prompt
    snapshots, the catalog snapshot, the safety doc, write coverage, the product guide catalog,
    `task i18n`, and the embedding fixture with the floors and split ledgers after it.
-4. Lower `maxToolsOutsideANamespace` to the count the test names, and record the module's tool
-   count and held-out selection figures in the Phase 3 table of the harness review.
+4. Record the tool count and the held-out selection figures before and after the rename in the
+   pull request, so a drop is seen and never tuned away.

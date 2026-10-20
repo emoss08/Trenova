@@ -316,7 +316,7 @@ func (s *Service) Destination(
 			return nil, errortypes.NewValidationError(
 				"page", errortypes.ErrInvalid,
 				fmt.Sprintf(
-					"%q is not a page in Trenova. Find the page with find_in_trenova and pass its path.",
+					"%q is not a page in Trenova. Find the page with agent_find_page and pass its path.",
 					pagePath,
 				),
 			)

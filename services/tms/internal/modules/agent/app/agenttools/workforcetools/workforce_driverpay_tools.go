@@ -415,7 +415,7 @@ func reviewExpenseFrom(
 
 func newReviewDriverExpenseTool(reviewer DriverPayReviewer) agentports.AgentTool {
 	spec := targeting(personOnly(withSchema(wfSpec(
-		"review_driver_expense",
+		"settlement_review_driver_expense",
 		"Draft the decision on a driver's expense claim for a person to approve. Approve "+
 			"it to reimburse it on the driver's open draft settlement, or a new off-cycle one, "+
 			"or reject it with a note saying why. An "+
@@ -427,7 +427,7 @@ func newReviewDriverExpenseTool(reviewer DriverPayReviewer) agentports.AgentTool
 	), map[string]any{
 		paramExpenseID: agenttoolschema.RecordIDText(
 			permission.ResourceDriverExpense,
-			"The expense, from list_driver_expenses or the page you "+
+			"The expense, from settlement_list_driver_expenses or the page you "+
 				"are on. Never guess one.",
 		),
 		paramDecision: agenttoolschema.Enum("Approve to reimburse it, Reject to turn it down.",

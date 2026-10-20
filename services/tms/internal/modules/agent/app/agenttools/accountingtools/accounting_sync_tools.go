@@ -44,11 +44,11 @@ const maxSyncRetryIDs = 50
 
 const maxSyncReasonRunes = 500
 
-const toolGetSyncRecord = "get_accounting_sync_record"
+const toolGetSyncRecord = "accounting_get_sync_record"
 
-const toolListSyncRecords = "list_accounting_sync_records"
+const toolListSyncRecords = "accounting_list_sync_records"
 
-const toolGetSyncStatus = "get_accounting_sync_status"
+const toolGetSyncStatus = "accounting_get_connection"
 
 const secondsInOneDay = int64(24 * time.Hour / time.Second)
 
@@ -205,7 +205,7 @@ func syncEnums[T ~string](
 }
 
 var errUnpinnedRetry = errortypes.NewBusinessError(
-	"retry_accounting_sync runs from an approval only on the records a person approved, and " +
+	"accounting_retry_sync_record runs from an approval only on the records a person approved, and " +
 		"this proposal names none; propose it again so the records its error categories " +
 		"resolve to are listed",
 )
@@ -224,14 +224,14 @@ func ProvideRetryAccountingSyncTool(
 	return newRetryAccountingSyncTool(sync)
 }
 
-func (t *RetryAccountingSyncTool) Name() string { return "retry_accounting_sync" }
+func (t *RetryAccountingSyncTool) Name() string { return "accounting_retry_sync_record" }
 
 func (t *RetryAccountingSyncTool) Recipe() []string {
 	return []string{
 		toolGetSyncStatus,
 		toolListSyncRecords,
 		toolGetSyncRecord,
-		"retry_accounting_sync",
+		"accounting_retry_sync_record",
 	}
 }
 
@@ -253,7 +253,7 @@ func (t *RetryAccountingSyncTool) SearchTerms() []string {
 }
 
 func (t *RetryAccountingSyncTool) Prerequisites() []string {
-	return []string{toolListSyncRecords, toolGetSyncRecord, "get_record_accounting_sync_state"}
+	return []string{toolListSyncRecords, toolGetSyncRecord, "accounting_get_sync_state"}
 }
 
 func (t *RetryAccountingSyncTool) ParamSchema() map[string]any {
@@ -263,8 +263,8 @@ func (t *RetryAccountingSyncTool) ParamSchema() map[string]any {
 			permission.ResourceAccountingSync.String(),
 			agenttoolschema.OfKinds(jsonschemautils.DescribedArray(
 				fmt.Sprintf(
-					"Up to %d sync record ids, from list_accounting_sync_records or "+
-						"get_record_accounting_sync_state.",
+					"Up to %d sync record ids, from accounting_list_sync_records or "+
+						"accounting_get_sync_state.",
 					maxSyncRetryIDs,
 				),
 				jsonschemautils.String(0),
@@ -425,7 +425,7 @@ func (t *RetryAccountingSyncTool) ResolveProposalSelection(
 	if len(ids) == 0 {
 		return nil, errortypes.NewBusinessError(
 			"No Blocked, DeadLettered or Retrying record last failed as {0}; "+
-				"get_accounting_sync_status shows what is waiting",
+				"accounting_get_connection shows what is waiting",
 			joinCategories(categories),
 		)
 	}
@@ -501,7 +501,7 @@ func ProvideSkipAccountingSyncTool(
 	return newSkipAccountingSyncTool(sync)
 }
 
-func (t *SkipAccountingSyncTool) Name() string { return "skip_accounting_sync" }
+func (t *SkipAccountingSyncTool) Name() string { return "accounting_skip_sync_record" }
 
 func (t *SkipAccountingSyncTool) Description() string {
 	return "Mark one document as intentionally not sent to the accounting system, with the " +
@@ -522,8 +522,8 @@ func (t *SkipAccountingSyncTool) Prerequisites() []string {
 func (t *SkipAccountingSyncTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramSyncRecordID: agenttoolschema.KindID(
-			"The sync record's id, from list_accounting_sync_records or "+
-				"get_accounting_sync_record.",
+			"The sync record's id, from accounting_list_sync_records or "+
+				"accounting_get_sync_record.",
 			permission.KindAccountingSyncRecord,
 		),
 		paramSyncReason: jsonschemautils.Text(
@@ -620,7 +620,7 @@ func ProvideRedateAccountingSyncTool(
 	return newRedateAccountingSyncTool(sync)
 }
 
-func (t *redateAccountingSyncTool) Name() string { return "redate_accounting_sync" }
+func (t *redateAccountingSyncTool) Name() string { return "accounting_redate_sync_record" }
 
 func (t *redateAccountingSyncTool) Description() string {
 	return "Send a document the accounting system refused because its date falls in closed " +
@@ -642,8 +642,8 @@ func (t *redateAccountingSyncTool) Prerequisites() []string {
 func (t *redateAccountingSyncTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramSyncRecordID: agenttoolschema.KindID(
-			"The sync record's id, from list_accounting_sync_records or "+
-				"get_accounting_sync_record. It must be held for a closed period.",
+			"The sync record's id, from accounting_list_sync_records or "+
+				"accounting_get_sync_record. It must be held for a closed period.",
 			permission.KindAccountingSyncRecord,
 		),
 	}, paramSyncRecordID)
@@ -720,13 +720,13 @@ func ProvidePauseAccountingSyncTool(
 	return newPauseAccountingSyncTool(sync)
 }
 
-func (t *PauseAccountingSyncTool) Name() string { return "pause_accounting_sync" }
+func (t *PauseAccountingSyncTool) Name() string { return "accounting_pause_sync" }
 
 func (t *PauseAccountingSyncTool) Description() string {
 	return "Stop sending documents to the accounting system until someone resumes it. " +
 		"Use it during an accounting system outage, or when a person asks to hold sending, " +
 		"such as while the books are being closed. Nothing is lost: documents keep queueing " +
-		"and go out when resume_accounting_sync runs. Give the reason so others know when " +
+		"and go out when accounting_resume_sync runs. Give the reason so others know when " +
 		"to resume."
 }
 
@@ -832,17 +832,17 @@ func ProvideResumeAccountingSyncTool(
 	return newResumeAccountingSyncTool(sync)
 }
 
-func (t *ResumeAccountingSyncTool) Name() string { return "resume_accounting_sync" }
+func (t *ResumeAccountingSyncTool) Name() string { return "accounting_resume_sync" }
 
 func (t *ResumeAccountingSyncTool) Recipe() []string {
-	return []string{"get_accounting_sync_status", "resume_accounting_sync"}
+	return []string{"accounting_get_connection", "accounting_resume_sync"}
 }
 
 func (t *ResumeAccountingSyncTool) Description() string {
 	return "Start sending documents to the accounting system again after it was paused. " +
 		"Everything queued while paused goes out at once, so resume only when a person says " +
 		"the reason for the pause is over, or the outage it was paused for has passed and " +
-		"get_accounting_sync_status shows the connection answering."
+		"accounting_get_connection shows the connection answering."
 }
 
 func (t *ResumeAccountingSyncTool) SearchTerms() []string {
@@ -936,7 +936,7 @@ func ProvideRequestAccountingBackfillTool(
 	return newRequestAccountingBackfillTool(sync)
 }
 
-func (t *RequestAccountingBackfillTool) Name() string { return "request_accounting_backfill" }
+func (t *RequestAccountingBackfillTool) Name() string { return "accounting_request_backfill" }
 
 func (t *RequestAccountingBackfillTool) Description() string {
 	return "Backfill the accounting system with older invoices, memos, payments and " +
@@ -958,11 +958,11 @@ func (t *RequestAccountingBackfillTool) Prerequisites() []string {
 func (t *RequestAccountingBackfillTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		ParamAccountingSystem: accountingSystemSchema(),
-		paramBackfillFrom: jsonschemautils.Text(
-			"The first document date to send, as YYYY-MM-DD. Defaults to the start date.",
+		paramBackfillFrom: agenttoolschema.Date(
+			"The first document date to send. Defaults to the start date.",
 		),
-		paramBackfillTo: jsonschemautils.Text(
-			"The last document date to send, as YYYY-MM-DD. Defaults to the day sending began.",
+		paramBackfillTo: agenttoolschema.Date(
+			"The last document date to send. Defaults to the day sending began.",
 		),
 		paramBackfillTypes: jsonschemautils.DescribedArray(
 			"Only these kinds of document. Defaults to all of them.",

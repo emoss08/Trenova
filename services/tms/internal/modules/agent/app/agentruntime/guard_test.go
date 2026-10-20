@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -73,17 +73,17 @@ func guardedRun(
 ) (*agentports.RunResult, *agenttest.StubActionTool) {
 	t.Helper()
 
-	action := actionTool("assign_move", agent.TierAutoExecute, toolErr)
+	action := actionTool("dispatch_assign_move", agent.TierAutoExecute, toolErr)
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("assign_move", map[string]any{"moveId": "mv_1"}),
+		toolTurn("dispatch_assign_move", map[string]any{"moveId": "mv_1"}),
 		textTurn("Done."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
 		&stubActionRegistry{Tools: []agentports.AgentTool{action}}, nil)
 
-	definition := testDefinition("assign_move")
+	definition := testDefinition("dispatch_assign_move")
 	definition.AutonomyCeiling = agent.TierAutoExecute
-	definition.ToolTiers = map[string]agent.AutonomyTier{"assign_move": agent.TierAutoExecute}
+	definition.ToolTiers = map[string]agent.AutonomyTier{"dispatch_assign_move": agent.TierAutoExecute}
 
 	runID := pulid.MustNew("ar_")
 	result, err := rt.Run(t.Context(), &agentports.RunRequest{
@@ -132,7 +132,7 @@ func TestGuardedDispatch_DoesNotRunAWriteAnEarlierAttemptAlreadyMade(t *testing.
 	// re-ran every write the first attempt had made, and the declared
 	// idempotency key did not help because nothing looks it up.
 	pinned := &agentports.PendingAction{
-		ToolName:  "assign_move",
+		ToolName:  "dispatch_assign_move",
 		Arguments: map[string]any{"moveId": "mv_1"},
 		Executed:  true,
 		Target: &agentports.ProposalTarget{
@@ -143,7 +143,7 @@ func TestGuardedDispatch_DoesNotRunAWriteAnEarlierAttemptAlreadyMade(t *testing.
 	ledger := &stubLedger{Verdict: agentports.StepVerdict{
 		State: agentports.StepCompleted,
 		Outcome: agentports.RunStepOutcome{
-			Content: `Tool "assign_move" ran successfully.`,
+			Content: `Tool "dispatch_assign_move" ran successfully.`,
 			Action:  pinned,
 		},
 	}}
@@ -154,7 +154,7 @@ func TestGuardedDispatch_DoesNotRunAWriteAnEarlierAttemptAlreadyMade(t *testing.
 	assert.Empty(t, ledger.Settled, "a replayed step is not settled again")
 
 	require.Len(t, result.Actions, 1)
-	assert.Equal(t, `Tool "assign_move" ran successfully.`, result.Messages[2].Content)
+	assert.Equal(t, `Tool "dispatch_assign_move" ran successfully.`, result.Messages[2].Content)
 
 	// The pinned version comes back as it was taken. Re-pinning it here would
 	// record the record as it stands now and quietly defeat the staleness
@@ -212,7 +212,7 @@ func TestSeedFromLedger_RefusesACallAnEarlierAttemptAlreadyFailedOn(t *testing.T
 		Loads: []agentports.RunStep{{
 			Kind:     agentports.RunStepTool,
 			Status:   agentports.RunStepFailed,
-			ToolName: "assign_move",
+			ToolName: "dispatch_assign_move",
 			Args:     args,
 			Outcome: agentports.RunStepOutcome{
 				Content: "driver is out of hours",
@@ -221,16 +221,16 @@ func TestSeedFromLedger_RefusesACallAnEarlierAttemptAlreadyFailedOn(t *testing.T
 		}},
 	}
 
-	action := actionTool("assign_move", agent.TierAutoExecute, nil)
+	action := actionTool("dispatch_assign_move", agent.TierAutoExecute, nil)
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("assign_move", args),
+		toolTurn("dispatch_assign_move", args),
 		textTurn("I could not assign it."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
 		&stubActionRegistry{Tools: []agentports.AgentTool{action}}, nil)
-	definition := testDefinition("assign_move")
+	definition := testDefinition("dispatch_assign_move")
 	definition.AutonomyCeiling = agent.TierAutoExecute
-	definition.ToolTiers = map[string]agent.AutonomyTier{"assign_move": agent.TierAutoExecute}
+	definition.ToolTiers = map[string]agent.AutonomyTier{"dispatch_assign_move": agent.TierAutoExecute}
 
 	runID := pulid.MustNew("ar_")
 	result, err := rt.Run(t.Context(), &agentports.RunRequest{
@@ -253,16 +253,16 @@ func TestRun_LeavesAnUnguardedRunOnTheProvidersCallID(t *testing.T) {
 	t.Parallel()
 
 	// A run with no ledger behaves exactly as it did before this existed.
-	action := actionTool("assign_move", agent.TierAutoExecute, nil)
+	action := actionTool("dispatch_assign_move", agent.TierAutoExecute, nil)
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("assign_move", map[string]any{"moveId": "mv_1"}),
+		toolTurn("dispatch_assign_move", map[string]any{"moveId": "mv_1"}),
 		textTurn("Done."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
 		&stubActionRegistry{Tools: []agentports.AgentTool{action}}, nil)
-	definition := testDefinition("assign_move")
+	definition := testDefinition("dispatch_assign_move")
 	definition.AutonomyCeiling = agent.TierAutoExecute
-	definition.ToolTiers = map[string]agent.AutonomyTier{"assign_move": agent.TierAutoExecute}
+	definition.ToolTiers = map[string]agent.AutonomyTier{"dispatch_assign_move": agent.TierAutoExecute}
 
 	_, err := rt.Run(t.Context(), &agentports.RunRequest{
 		Definition: definition,
@@ -345,15 +345,15 @@ func TestRun_ARetriedAttemptDoesNotMakeTheSameWriteTwice(t *testing.T) {
 	t.Parallel()
 
 	ledger := newKeyedLedger()
-	action := actionTool("assign_move", agent.TierAutoExecute, nil)
+	action := actionTool("dispatch_assign_move", agent.TierAutoExecute, nil)
 	runID := pulid.MustNew("ar_")
-	definition := testDefinition("assign_move")
+	definition := testDefinition("dispatch_assign_move")
 	definition.AutonomyCeiling = agent.TierAutoExecute
-	definition.ToolTiers = map[string]agent.AutonomyTier{"assign_move": agent.TierAutoExecute}
+	definition.ToolTiers = map[string]agent.AutonomyTier{"dispatch_assign_move": agent.TierAutoExecute}
 
 	for attempt := 1; attempt <= 2; attempt++ {
 		completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-			toolTurn("assign_move", map[string]any{"moveId": "mv_1"}),
+			toolTurn("dispatch_assign_move", map[string]any{"moveId": "mv_1"}),
 			textTurn("Assigned."),
 		}}
 		rt := newRuntime(completion, &stubQueryRegistry{},
@@ -385,7 +385,7 @@ func TestRun_AReplayedStepShowsWhatTheOriginalCallShowed(t *testing.T) {
 	t.Parallel()
 
 	ledger := newKeyedLedger()
-	search := queryTool("search_worker", map[string]any{
+	search := queryTool("worker_search", map[string]any{
 		"results": []any{map[string]any{"name": "Maria Ortiz"}},
 	}, nil)
 	runID := pulid.MustNew("ar_")
@@ -394,7 +394,7 @@ func TestRun_AReplayedStepShowsWhatTheOriginalCallShowed(t *testing.T) {
 	shown := make([]any, 0, 2)
 	for attempt := 1; attempt <= 2; attempt++ {
 		completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-			toolTurn("search_worker", map[string]any{"query": "Maria"}),
+			toolTurn("worker_search", map[string]any{"query": "Maria"}),
 			textTurn("Maria Ortiz."),
 		}}
 		rt := newRuntime(completion,
@@ -402,7 +402,7 @@ func TestRun_AReplayedStepShowsWhatTheOriginalCallShowed(t *testing.T) {
 			&stubActionRegistry{}, nil)
 
 		_, err := rt.Run(t.Context(), &agentports.RunRequest{
-			Definition: testDefinition("search_worker"),
+			Definition: testDefinition("worker_search"),
 			Actor:      testActor(),
 			Input:      "Who is Maria?",
 			RunID:      runID,

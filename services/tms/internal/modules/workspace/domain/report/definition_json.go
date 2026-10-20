@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/pkg/toolschema"
 )
 
 // DecodeDefinition reads a definition out of a decoded JSON value, such as a
@@ -42,7 +43,7 @@ func DecodeDefinition(value any) (*Definition, error) {
 		return nil, fmt.Errorf(
 			"column %q (columns[%d]) names no field: give it {\"ref\": {\"field\": \"<key>\"}}, "+
 				"or {\"ref\": {\"path\": [\"<edge>\"], \"field\": \"<key>\"}} for a field on a "+
-				"related dataset, using the keys describe_report_dataset lists",
+				"related dataset, using the keys report_get_dataset lists",
 			column.ID, idx,
 		)
 	}
@@ -51,7 +52,7 @@ func DecodeDefinition(value any) (*Definition, error) {
 }
 
 // normalizeDefinitionShape accepts the ways a field reference is written
-// besides the canonical one, so a definition copied from describe_report's
+// besides the canonical one, so a definition copied from report_get's
 // column summary — where a field reads "assignment.primaryWorker.firstName" —
 // decodes to the same thing the builder saves.
 //
@@ -237,7 +238,7 @@ func DefinitionJSONSchema() map[string]any {
 		"description": "A field on the dataset, or on a related dataset reached along " +
 			"edges: {\"field\": \"name\"} for the dataset's own field, " +
 			"{\"path\": [\"customer\"], \"field\": \"name\"} for a field one edge away. " +
-			"Edge names and field keys come from describe_report_dataset.",
+			"Edge names and field keys come from report_get_dataset.",
 		"properties": map[string]any{
 			"path":  map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
 			"field": map[string]any{"type": "string"},
@@ -306,7 +307,7 @@ func DefinitionJSONSchema() map[string]any {
 		"properties": map[string]any{
 			"entity": map[string]any{
 				"type":        "string",
-				"description": "The dataset key from list_report_datasets, such as shipment.",
+				"description": "The dataset key from report_list_datasets, such as shipment.",
 			},
 			"columns": map[string]any{
 				"type": "array",
@@ -364,7 +365,7 @@ func DefinitionJSONSchema() map[string]any {
 						"columnId": map[string]any{
 							"type": "string",
 							"description": "The id of one of this definition's columns, " +
-								"or of a column describe_report lists.",
+								"or of a column report_get lists.",
 						},
 						"direction": map[string]any{
 							"type": "string",
@@ -375,7 +376,13 @@ func DefinitionJSONSchema() map[string]any {
 					"additionalProperties": false,
 				},
 			},
-			"limit": map[string]any{"type": "integer"},
+			"limit": toolschema.Clamped(map[string]any{
+				"type":    "integer",
+				"minimum": 0,
+				"maximum": MaxDefinitionLimit,
+				"description": "The most rows a run returns; 0 or left out returns as many " +
+					"as a report may.",
+			}),
 			"parameters": map[string]any{
 				"type":        "array",
 				"description": "Values asked for at run time and bound to filters by param.",

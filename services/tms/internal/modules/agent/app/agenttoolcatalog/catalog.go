@@ -129,8 +129,8 @@ func (c *Catalog) Feeds(name string) []string {
 	return c.feeds[name]
 }
 
-// Followers names the tools that follow a tool: analyze_data follows
-// run_report.
+// Followers names the tools that follow a tool: report_analyze_data follows
+// report_run.
 func (c *Catalog) Followers(name string) []string {
 	return c.followers[name]
 }
@@ -257,8 +257,8 @@ func (c *Catalog) keywordRanked(
 // the model it found what it was looking for.
 //
 // What it found brings its family along, after the matches and past the
-// limit, so one search that reaches run_report also makes list_reports and
-// describe_report callable.
+// limit, so one search that reaches report_run also makes report_list and
+// report_get callable.
 func (c *Catalog) Find(
 	allowed []string,
 	query string,

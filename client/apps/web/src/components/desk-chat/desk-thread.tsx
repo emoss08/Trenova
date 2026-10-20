@@ -259,7 +259,7 @@ function replyShows(entry: {
 }): boolean {
   return (
     entry.message.content !== "" ||
-    entry.tools.some((tool) => tool.call.name === "ask_user" || tool.call.name === "run_report")
+    entry.tools.some((tool) => tool.call.name === "ask_user" || tool.call.name === "report_run")
   );
 }
 

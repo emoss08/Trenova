@@ -35,8 +35,8 @@ const (
 	paramOccurred  = "occurredOn"
 	maxMemoLength  = factoring.MaxReserveMemoLength
 	maxReasonText  = factoring.MaxFundingReasonLength
-	toolGetSubmit  = "get_factoring_submission"
-	toolGetBalance = "get_factoring_reserve_balance"
+	toolGetSubmit  = "factoring_get_submission"
+	toolGetBalance = "factoring_get_reserve_balance"
 )
 
 type ledgerTool struct {
@@ -58,10 +58,6 @@ func ledgerPolicy(name, rationale string) agentports.ToolPolicy {
 
 func itemIDParam(description string) map[string]any {
 	return agenttoolschema.RecordIDText(permission.ResourceFactoringSubmission, description)
-}
-
-func dayParam(description string) map[string]any {
-	return common.StringProperty(description+" As YYYY-MM-DD.", 0)
 }
 
 func amountParam(description string) map[string]any {
@@ -193,12 +189,12 @@ func NewRecordFactoringFundingTool(
 	return &RecordFactoringFundingTool{ledgerTool{ledger: ledger, accounts: accounts}}
 }
 
-func (t *RecordFactoringFundingTool) Name() string { return "record_factoring_funding" }
+func (t *RecordFactoringFundingTool) Name() string { return "factoring_record_funding" }
 
 func (t *RecordFactoringFundingTool) Description() string {
 	return "Record what the factor funded or rejected on a sent schedule, from its funding " +
 		"report or remittance. For each invoice, Funded with the advance and fee it paid " +
-		"(default: the expected ones from get_factoring_submission) or Rejected with why. " +
+		"(default: the expected ones from factoring_get_submission) or Rejected with why. " +
 		"Each funded invoice " +
 		"is booked to the ledger: cash in, the fee expensed, and, under a sale, the reserve the " +
 		"factor holds with the invoice settled; under secured borrowing, a liability to the " +
@@ -213,9 +209,9 @@ func (t *RecordFactoringFundingTool) Prerequisites() []string { return []string{
 
 func (t *RecordFactoringFundingTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		paramSubmissionID: submissionIDParam("The sent schedule, from list_factoring_submissions."),
+		paramSubmissionID: submissionIDParam("The sent schedule, from factoring_list_submissions."),
 		paramVersion:      submissionVersionParam(),
-		paramFundedOn:     dayParam("The day the factor funded."),
+		paramFundedOn:     agenttoolschema.Date("The day the factor funded."),
 		paramItems: map[string]any{
 			toolschema.KeyType: toolschema.TypeArray,
 			toolschema.KeyDescription: "What the factor did with each invoice it decided; " +
@@ -227,7 +223,7 @@ func (t *RecordFactoringFundingTool) ParamSchema() map[string]any {
 				toolschema.KeyProperties: map[string]any{
 					paramItemID: itemIDParam(
 						"The invoice's line on the schedule (its item id) from " +
-							"get_factoring_submission.",
+							"factoring_get_submission.",
 					),
 					paramOutcome: agenttoolschema.Enum(
 						"Whether the factor funded or rejected it.",
@@ -465,12 +461,12 @@ func (t *ReserveMovementTool) Prerequisites() []string { return []string{toolGet
 
 func (t *ReserveMovementTool) ParamSchema() map[string]any {
 	properties := map[string]any{
-		paramSubmissionID: submissionIDParam("The schedule, from list_factoring_submissions."),
+		paramSubmissionID: submissionIDParam("The schedule, from factoring_list_submissions."),
 		paramItemID: itemIDParam(
-			"The invoice's line on the schedule (its item id) from get_factoring_submission.",
+			"The invoice's line on the schedule (its item id) from factoring_get_submission.",
 		),
 		paramVersion:  submissionVersionParam(),
-		paramOccurred: dayParam(t.spec.dateHelp),
+		paramOccurred: agenttoolschema.Date(t.spec.dateHelp),
 		paramReason:   common.StringProperty(t.spec.reasonHelp, maxReasonText),
 	}
 	required := []string{paramSubmissionID, paramItemID, paramVersion, paramOccurred}
@@ -653,7 +649,7 @@ func NewReleaseFactoringReserveTool(
 	return &ReserveMovementTool{
 		ledgerTool: ledgerTool{ledger: ledger, accounts: accounts},
 		spec: movementSpec{
-			name: "release_factoring_reserve",
+			name: "factoring_release_reserve",
 			description: "Book the factor's release of a funded invoice's reserve, once the " +
 				"customer paid the factor and the factor remitted what it held back. The " +
 				"cash defaults to the reserve held; anything the factor kept beyond that is " +
@@ -690,7 +686,7 @@ func NewRecordFactoringChargebackTool(
 	return &ReserveMovementTool{
 		ledgerTool: ledgerTool{ledger: ledger, accounts: accounts},
 		spec: movementSpec{
-			name: "record_factoring_chargeback",
+			name: "factoring_record_chargeback",
 			description: "Book a recourse factor's chargeback of a funded invoice the customer " +
 				"did not pay. The organization repays the factor (by default the advance and " +
 				"fee) and the factor gives up the reserve. Under a sale the invoice goes back on " +
@@ -726,7 +722,7 @@ func NewReverseFactoringChargebackTool(
 	return &ReserveMovementTool{
 		ledgerTool: ledgerTool{ledger: ledger, accounts: accounts},
 		spec: movementSpec{
-			name: "reverse_factoring_chargeback",
+			name: "factoring_reverse_chargeback",
 			description: "Undo an invoice's last chargeback with the opposite entry, when the " +
 				"factor withdrew it or it was recorded by mistake. The invoice goes back to " +
 				"funded with the factor. Say why. A person approves every booking.",

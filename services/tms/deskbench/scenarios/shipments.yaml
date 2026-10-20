@@ -164,14 +164,14 @@ scenarios:
 
   - name: mark-a-move-delivered
     description: >
-      A status change reported from the road. The Dispatch desk does not hold record_stop_actual
+      A status change reported from the road. The Dispatch desk does not hold dispatch_record_stop_actual
       (DB-019), so this runs on the bench's Operations agent.
     agent: Bench · Operations
     setup: *seed-shp-008-in-transit
     steps:
       - say: "driver on SEED-SHP-008 just delivered in chicago, mark it done"
         expect:
-          proposals: [{ tool: "update_move_status|record_stop_actual" }]
+          proposals: [{ tool: "dispatch_set_move_status|dispatch_record_stop_actual" }]
           maxFailedCalls: 1
           rubric: >
             Proposes completing the move that delivers in Chicago (the second one), not the move
@@ -179,7 +179,7 @@ scenarios:
 
   - name: quote-with-no-quote-tool
     description: >
-      No agent here holds quote_shipment, so the honest answer is that it cannot quote and who or
+      No agent here holds rate_quote, so the honest answer is that it cannot quote and who or
       what can; it must not invent a price.
     agent: Dispatch desk
     tags: [rating, read]

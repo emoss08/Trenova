@@ -49,7 +49,7 @@ func newFindInTrenovaTool(guide agentports.ProductGuide) agentports.AgentQueryTo
 	return &findInTrenovaTool{guide: guide}
 }
 
-func (t *findInTrenovaTool) Name() string { return "find_in_trenova" }
+func (t *findInTrenovaTool) Name() string { return "agent_find_page" }
 
 func (t *findInTrenovaTool) Description() string {
 	return "Find where something is in Trenova and how to do it there. It returns the page, " +
@@ -116,7 +116,7 @@ type guideAnswer struct {
 
 const guideNote = "Link a page as [name](path) with the path given. Quote step labels " +
 	"exactly. Where canOpen is false, say what access is missing instead of sending them " +
-	"there. Call open_page only if the person asks to be taken there."
+	"there. Call agent_open_page only if the person asks to be taken there."
 
 type guideSearchResult struct {
 	Answers []guideAnswer `json:"answers"`
@@ -226,14 +226,14 @@ func newOpenPageTool(guide agentports.ProductGuide) agentports.AgentQueryTool {
 	return &openPageTool{guide: guide}
 }
 
-func (t *openPageTool) Name() string { return "open_page" }
+func (t *openPageTool) Name() string { return "agent_open_page" }
 
 func (t *openPageTool) Description() string {
 	return "Give the person a link to a page or a record in Trenova, such as the shipments " +
 		"page or one customer, to open if they choose; the app does not move on " +
 		"its own. Use it only when they ask to go to or open a page; to show them a record, " +
 		"fetch it with its get tool instead. Pass a page's path from " +
-		"find_in_trenova, or a record's entity and id from the tool that found it; action " +
+		"agent_find_page, or a record's entity and id from the tool that found it; action " +
 		"create opens the page's create form. It refuses a page they may not open."
 }
 
@@ -243,7 +243,7 @@ func (t *openPageTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"page": map[string]any{
 				"type":        "string",
-				"description": "A page's path, exactly as find_in_trenova returned it.",
+				"description": "A page's path, exactly as agent_find_page returned it.",
 			},
 			paramEntity: agenttoolschema.Enum(
 				"The kind of record to open, with recordId, instead of a page.",
@@ -275,7 +275,7 @@ func (t *openPageTool) SearchTerms() []string {
 	return []string{"take me", "go to", "open", "navigate", "show me the page", "bring up"}
 }
 
-// NavigationResult is what open_page returns, and what the navigation
+// NavigationResult is what agent_open_page returns, and what the navigation
 // artifact is built from.
 type NavigationResult struct {
 	Path     string `json:"path"`

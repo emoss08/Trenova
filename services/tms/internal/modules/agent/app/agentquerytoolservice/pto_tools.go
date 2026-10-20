@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
@@ -61,7 +62,7 @@ func newListTimeOffTool(pto ptoLister) agentports.AgentQueryTool {
 	return &listTimeOffTool{pto: pto}
 }
 
-func (t *listTimeOffTool) Name() string { return "list_time_off" }
+func (t *listTimeOffTool) Name() string { return "worker_list_time_off" }
 
 func (t *listTimeOffTool) Description() string {
 	return "List worker (driver) time-off requests — who is out, who is asking to " +
@@ -88,9 +89,9 @@ func (t *listTimeOffTool) ParamSchema() map[string]any {
 				agenttoolschema.PTOTypes,
 			),
 			"workerId": agenttoolschema.OfResource(map[string]any{
-				"type": "string",
-				"description": "Narrow to one worker, by id from list_workers or " +
-					"search_worker. A name is not an id.",
+				toolschema.KeyType: toolschema.TypeString,
+				toolschema.KeyDescription: "Narrow to one worker, by id from worker_list or " +
+					"worker_search. A name is not an id.",
 			}, permission.ResourceWorker),
 			"withinDays": map[string]any{
 				"type": "integer",
@@ -110,10 +111,7 @@ func (t *listTimeOffTool) ParamSchema() map[string]any {
 				"type":        "integer",
 				"description": "Only leave starting on or before this Unix second.",
 			},
-			"limit": map[string]any{
-				"type":        "integer",
-				"description": fmt.Sprintf("How many to return, at most %d.", maxTimeOffLimit),
-			},
+			paramLimit: limitSchema(defaultTimeOffLimit, maxTimeOffLimit),
 		},
 		"additionalProperties": false,
 	}
@@ -133,10 +131,7 @@ func (t *listTimeOffTool) Query(
 		return nil, err
 	}
 
-	limit := optionalInt(params.Params, "limit", defaultTimeOffLimit)
-	if limit <= 0 || limit > maxTimeOffLimit {
-		limit = defaultTimeOffLimit
-	}
+	limit := readLimit(params.Params, defaultTimeOffLimit, maxTimeOffLimit)
 
 	request := &workerports.ListPTORequest{
 		Filter: &pagination.QueryOptions{

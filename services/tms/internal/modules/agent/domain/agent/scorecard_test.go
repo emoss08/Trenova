@@ -27,7 +27,7 @@ func TestScorecard_TimeSavedCountsWhatWentThrough(t *testing.T) {
 	t.Parallel()
 
 	approvedButNeverRan := card(agent.ToolOutcomeCount{
-		ToolName: "assign_move",
+		ToolName: "dispatch_assign_move",
 		Approved: 20,
 		Executed: 0,
 		Failed:   20,
@@ -35,8 +35,8 @@ func TestScorecard_TimeSavedCountsWhatWentThrough(t *testing.T) {
 
 	assert.Zero(t, approvedButNeverRan.EstimatedMinutesSaved)
 
-	ran := card(agent.ToolOutcomeCount{ToolName: "assign_move", Approved: 20, Executed: 20})
-	assert.Equal(t, 20*agent.MinutesSavedFor("assign_move"), ran.EstimatedMinutesSaved)
+	ran := card(agent.ToolOutcomeCount{ToolName: "dispatch_assign_move", Approved: 20, Executed: 20})
+	assert.Equal(t, 20*agent.MinutesSavedFor("dispatch_assign_move"), ran.EstimatedMinutesSaved)
 }
 
 // A read tool is worth nothing: looking something up is what the person
@@ -45,8 +45,8 @@ func TestScorecard_TimeSavedCountsWhatWentThrough(t *testing.T) {
 func TestMinutesSavedFor_ReadsAreWorthNothing(t *testing.T) {
 	t.Parallel()
 
-	assert.Zero(t, agent.MinutesSavedFor("raise_exception"))
-	assert.Positive(t, agent.MinutesSavedFor("assign_move"))
+	assert.Zero(t, agent.MinutesSavedFor("agent_raise_exception"))
+	assert.Positive(t, agent.MinutesSavedFor("dispatch_assign_move"))
 }
 
 // An unpriced write is worth the default, not zero. Silence in the table is
@@ -65,10 +65,10 @@ verdict nobody reached.
 func TestScorecard_ApprovalRateIsUnknownUntilSomebodyDecides(t *testing.T) {
 	t.Parallel()
 
-	assert.Nil(t, card(agent.ToolOutcomeCount{ToolName: "assign_move", Pending: 3}).ApprovalRate())
+	assert.Nil(t, card(agent.ToolOutcomeCount{ToolName: "dispatch_assign_move", Pending: 3}).ApprovalRate())
 
 	rate := card(agent.ToolOutcomeCount{
-		ToolName: "assign_move",
+		ToolName: "dispatch_assign_move",
 		Approved: 3,
 		Rejected: 1,
 		Pending:  5,
@@ -82,7 +82,7 @@ func TestScorecard_ApprovalRateIsUnknownUntilSomebodyDecides(t *testing.T) {
 func TestScorecard_ModificationIsNotApproval(t *testing.T) {
 	t.Parallel()
 
-	rate := card(agent.ToolOutcomeCount{ToolName: "assign_move", Approved: 1, Modified: 1}).
+	rate := card(agent.ToolOutcomeCount{ToolName: "dispatch_assign_move", Approved: 1, Modified: 1}).
 		ApprovalRate()
 	require.NotNil(t, rate)
 	assert.InDelta(t, 0.5, *rate, 0.0001)
@@ -92,8 +92,8 @@ func TestScorecard_SumsAcrossTools(t *testing.T) {
 	t.Parallel()
 
 	summed := card(
-		agent.ToolOutcomeCount{ToolName: "assign_move", Approved: 2, Executed: 2},
-		agent.ToolOutcomeCount{ToolName: "email_customer", Approved: 1, Rejected: 1, Executed: 1},
+		agent.ToolOutcomeCount{ToolName: "dispatch_assign_move", Approved: 2, Executed: 2},
+		agent.ToolOutcomeCount{ToolName: "customer_send_email", Approved: 1, Rejected: 1, Executed: 1},
 	)
 
 	assert.Equal(t, 3, summed.Approved)
@@ -101,7 +101,7 @@ func TestScorecard_SumsAcrossTools(t *testing.T) {
 	assert.Equal(t, 4, summed.Proposals)
 	assert.Equal(
 		t,
-		2*agent.MinutesSavedFor("assign_move")+agent.MinutesSavedFor("email_customer"),
+		2*agent.MinutesSavedFor("dispatch_assign_move")+agent.MinutesSavedFor("customer_send_email"),
 		summed.EstimatedMinutesSaved,
 	)
 }

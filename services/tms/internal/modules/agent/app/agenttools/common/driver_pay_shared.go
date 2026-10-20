@@ -17,7 +17,6 @@ import (
 
 const ParamDriverPayAmount = "amount"
 
-
 const MaxDriverPayNotes = 1000
 
 const MaxPayReferenceChars = 100
@@ -99,7 +98,7 @@ func ErrUnknownValue(key, raw string, names []string) error {
 func WorkerProperty() map[string]any {
 	return agenttoolschema.RecordIDText(
 		permission.ResourceWorker,
-		"The driver, from search_worker or list_workers. Never guess one.",
+		"The driver, from worker_search or worker_list. Never guess one.",
 	)
 }
 

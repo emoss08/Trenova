@@ -13,7 +13,7 @@ const BILLING: AgentLike = {
   name: "Billing",
   description: "Invoices, detention, pay",
   template: "BillingAssistant",
-  toolNames: ["file_document", "waive_detention"],
+  toolNames: ["file_document", "detention_waive"],
 };
 const SERVICE: AgentLike = {
   id: "a_cs",

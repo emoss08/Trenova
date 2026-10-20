@@ -86,7 +86,7 @@ func TestListTriageAssignees_NamesWhoCanWorkTheQueueAndWhoIsOnCall(t *testing.T)
 }
 
 /*
-get_inbound_message is where the Triage tools' ids come from, so it shows a
+inbox_get_inbound_message is where the Triage tools' ids come from, so it shows a
 message's place in the queue: its owner, why it is parked, the drafts on it,
 each conflict with its id, and where each attachment is filed.
 */

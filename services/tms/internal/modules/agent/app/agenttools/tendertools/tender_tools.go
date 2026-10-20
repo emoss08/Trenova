@@ -54,14 +54,14 @@ func NewTenderToRoutingGuideTool(tenders tenderStarter) agentports.AgentTool {
 	return &TenderToRoutingGuideTool{tenders: tenders}
 }
 
-func (t *TenderToRoutingGuideTool) Name() string { return "tender_move_to_routing_guide" }
+func (t *TenderToRoutingGuideTool) Name() string { return "dispatch_create_tender_from_routing_guide" }
 
 func (t *TenderToRoutingGuideTool) Description() string {
 	return "Offer an uncovered move to carriers down its routing guide, in the guide's " +
 		"order at the guide's rates. Each carrier gets the guide's time to accept " +
 		"before the next is asked. The guide is matched from the move's lane unless " +
 		"one is named. The move must have no driver and no live tender. Use " +
-		"shop_carriers first when the choice of carrier matters."
+		"carrier_shop first when the choice of carrier matters."
 }
 
 func (t *TenderToRoutingGuideTool) ParamSchema() map[string]any {
@@ -69,11 +69,11 @@ func (t *TenderToRoutingGuideTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"shipmentMoveId": agenttoolschema.RecordIDText(permission.ResourceShipmentMove,
-				"The move to tender, from get_dispatch_board (moveId) or "+
+				"The move to tender, from dispatch_get_board (moveId) or "+
 					"shipment_get (its moves)."),
 			"routingGuideId": agenttoolschema.RecordIDText(permission.ResourceRoutingGuide,
 				"A specific routing guide to use instead of the one matched from "+
-					"the lane: the routingGuideId shop_carriers returns. Omit to match from the "+
+					"the lane: the routingGuideId carrier_shop returns. Omit to match from the "+
 					"lane."),
 		},
 		"required":             []string{"shipmentMoveId"},
@@ -153,13 +153,17 @@ func NewTenderToCarriersTool(tenders tenderStarter) agentports.AgentTool {
 	return &TenderToCarriersTool{tenders: tenders}
 }
 
-func (t *TenderToCarriersTool) Name() string { return "tender_move_to_carriers" }
+func (t *TenderToCarriersTool) Name() string { return "dispatch_create_tender" }
+
+func (t *TenderToCarriersTool) SearchTerms() []string {
+	return []string{"tender to carriers"}
+}
 
 func (t *TenderToCarriersTool) Description() string {
 	return "Offer an uncovered move to specific carriers at specific rates: broadcast " +
 		"to all of them at once, or sequentially in the order given. Each line names " +
 		"the carrier, the rate and how it is measured (flat or per mile), how long the " +
-		"carrier has to accept, and how the offer is sent. Read shop_carriers first so " +
+		"carrier has to accept, and how the offer is sent. Read carrier_shop first so " +
 		"the rates come from contracts rather than guesses; a rate you cannot source is " +
 		"a reason to raise an exception, not to invent one."
 }
@@ -169,7 +173,7 @@ func (t *TenderToCarriersTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"shipmentMoveId": agenttoolschema.RecordIDText(permission.ResourceShipmentMove,
-				"The move to tender, from get_dispatch_board (moveId) or "+
+				"The move to tender, from dispatch_get_board (moveId) or "+
 					"shipment_get (its moves)."),
 			"mode": agenttoolschema.Enum(
 				"Broadcast asks every carrier at once; Sequential asks them in order.",
@@ -183,7 +187,7 @@ func (t *TenderToCarriersTool) ParamSchema() map[string]any {
 					"properties": map[string]any{
 						"carrierId": agenttoolschema.RecordIDText(
 							permission.ResourceCarrier,
-							"The carrier, from shop_carriers or list_carriers.",
+							"The carrier, from carrier_shop or carrier_list.",
 						),
 						"rate": map[string]any{
 							"type":        "string",

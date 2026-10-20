@@ -26,7 +26,7 @@ scenarios:
     steps:
       - say: "driver on SEED-DET-001 has been sitting at the receiver forever. what do we bill them"
         expect:
-          calls: ["list_detention_desk|get_detention_occurrence|shipment_get_tracking"]
+          calls: ["detention_list_occurrences|detention_get_occurrence|shipment_get_tracking"]
           maxFailedCalls: 1
           rubric: >
             Reads the detention clock for the stop (arrival, free time, minutes over) and the
@@ -47,7 +47,7 @@ scenarios:
     steps:
       - say: "can jane make it to chicago by tomorrow morning on her hours?"
         expect:
-          calls: ["get_worker_hos"]
+          calls: ["worker_get_hos"]
           noProposals: true
           rubric: >
             Gives Jane Doe's remaining drive and on-duty time from her logs and the distance or
@@ -58,8 +58,8 @@ scenarios:
     steps:
       - say: "anyone on an expired med card? if so keep them off loads and ask them to renew"
         expect:
-          calls: ["list_expiring_credentials"]
-          proposals: [{ tool: "place_worker_dispatch_hold|request_credential_renewal" }]
+          calls: ["worker_list_expiring_credentials"]
+          proposals: [{ tool: "worker_place_dispatch_hold|worker_request_credential_renewal" }]
           maxFailedCalls: 1
           rubric: >
             Finds the driver whose card has expired, proposes a dispatch hold citing the expired
@@ -91,7 +91,7 @@ scenarios:
     steps:
       - say: "trc-003 just broke down outside amarillo. take it out of service and tell me what loads it had"
         expect:
-          proposals: [{ tool: update_tractor_status }]
+          proposals: [{ tool: equipment_set_tractor_status }]
           maxFailedCalls: 1
           rubric: >
             Proposes taking TRC-003 out of service with the breakdown as the reason, and lists the
@@ -103,7 +103,7 @@ scenarios:
     steps:
       - say: "what late deliveries did we have this week and whose fault were they"
         expect:
-          calls: ["list_service_failures"]
+          calls: ["exception_list_service_failures"]
           noProposals: true
           rubric: >
             Lists each late or missed stop with how late, the customer and the recorded reason,
@@ -117,7 +117,7 @@ scenarios:
       - say: "email freshhaul that the reefer to LA is running behind, new eta is tomorrow at 10am"
         expect:
           calls: ["shipment_get_tracking|shipment_get|shipment_list"]
-          proposals: [{ tool: email_customer }]
+          proposals: [{ tool: customer_send_email }]
           maxFailedCalls: 1
           rubric: >
             Finds the delayed FreshHaul reefer to Los Angeles (SEED-SHP-010), writes a short, plain
@@ -131,8 +131,8 @@ scenarios:
     steps:
       - say: "send the arrival notice to the customer on SEED-SHP-010 when it gets in"
         expect:
-          calls: ["get_customer_update_preferences"]
-          proposals: [{ tool: wait_until }]
+          calls: ["customer_get_update_preferences"]
+          proposals: [{ tool: agent_create_wait }]
           rubric: >
             Reads FreshHaul's preference and says FreshHaul takes no routine arrival notices, so
             this one goes out only because the person asked, and only on their approval. Parks the
@@ -145,8 +145,8 @@ scenarios:
     steps:
       - say: "tell sarah the receiver in phoenix moved her appointment to 2pm tomorrow"
         expect:
-          calls: ["search_worker|shipment_list|get_worker"]
-          proposals: [{ tool: notify_driver }]
+          calls: ["worker_search|shipment_list|worker_get"]
+          proposals: [{ tool: worker_send_message }]
           maxFailedCalls: 1
           rubric: >
             Finds Sarah Williams on SEED-DET-002 delivering in Phoenix and proposes one short

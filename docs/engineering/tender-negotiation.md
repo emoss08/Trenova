@@ -39,7 +39,7 @@ Every rank passed ─▶ MarkExhausted ─▶ escalateExhausted (dispatch contro
 | Workflow | `operations/jobs/tenderjobs/workflow.go`, `RecordCounterActivity` |
 | Migration | `20261231009525_tender_bounce_counter` |
 | REST | `POST /tenders/:tenderID/bounce/`, the respond route's `Counter` action, public `POST /tender-offers/:token/counter/` |
-| Agent tool | `record_tender_response` (`Accept`, `Decline`, `Counter`, `BackedOut`) |
+| Agent tool | `dispatch_record_tender_response` (`Accept`, `Decline`, `Counter`, `BackedOut`) |
 | Web | dispatch console live tender panel and tender history, `/tender-offer/:token`, "Carrier tenders" on dispatch controls |
 
 ## Rounds and workflow IDs
@@ -154,7 +154,7 @@ the server's.
 
 ## The agent
 
-`DispatchAssistant` is at the template tool cap, so there is no new tool. `record_tender_response`
+`DispatchAssistant` is at the template tool cap, so there is no new tool. `dispatch_record_tender_response`
 gained `Counter` (with `counterRate` and `counterNote`) and `BackedOut` (which bounces, using
 `offerId` and `declineReason` as the reason). Recording an acceptance, a counter or a backout moves
 money or takes the carrier off the move, so those are proposals a person decides. A decline runs

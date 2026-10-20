@@ -3,8 +3,8 @@ package agentruntime
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/stretchr/testify/assert"
@@ -20,7 +20,7 @@ func kindedIDSchema() map[string]any {
 				permission.KindEmploymentVerification, permission.KindClearinghouseQuery,
 			),
 			"drawIds": agenttoolschema.KindIDs(
-				"The rounds, from list_dot_random_draws.", 5, permission.KindDOTRandomDraw,
+				"The rounds, from worker_list_dot_random_draws.", 5, permission.KindDOTRandomDraw,
 			),
 		},
 	}
@@ -65,7 +65,7 @@ func TestContractCall_RefusesAnIDOfNoMarkedKind(t *testing.T) {
 	require.Len(t, problems, 2)
 	assert.Contains(t, problems[0], `drawIds[1]: "drpool_01J9Z3QK8M5T7V2X4Y6W0R1N8P" is a `+
 		`DOT random pool id; this parameter takes a DOT random draw id, from `+
-		`list_dot_random_draws.`)
+		`worker_list_dot_random_draws.`)
 	assert.Contains(t, problems[1], `recordId: "wcred_01J9Z3QK8M5T7V2X4Y6W0R1N8P" is a `+
 		`worker credential id; this parameter takes an employment verification or a `+
 		`clearinghouse query id, from list_worker_qualifications.`)

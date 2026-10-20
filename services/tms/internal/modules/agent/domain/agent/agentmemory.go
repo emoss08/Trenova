@@ -25,7 +25,7 @@ var (
 
 // MaxMemoryContentChars bounds one memory. A prompt shows at most
 // MemoryPromptExcerptChars of it and names its id, so the rest is read through
-// recall_memory rather than paid for by every run.
+// agent_list_memories rather than paid for by every run.
 const MaxMemoryContentChars = 4000
 
 const (
@@ -40,7 +40,7 @@ const (
 // MemoryStaleAfterSeconds is how long a memory that belongs in every prompt
 // may go untouched, while the memories kept for the same readers are being
 // used, before the prompt stops carrying it. A stale memory is not retired:
-// recall_memory still finds it and the Memory page still lists it, and the
+// agent_list_memories still finds it and the Memory page still lists it, and the
 // first time it is recalled, restated or edited it is fresh again.
 const MemoryStaleAfterSeconds = 90 * 24 * 60 * 60
 

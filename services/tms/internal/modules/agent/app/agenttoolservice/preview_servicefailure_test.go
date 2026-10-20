@@ -22,7 +22,7 @@ func TestResolveServiceFailurePreview_ShowsTheResolutionAndTheCustomer214(t *tes
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		"serviceFailureId": existing.ID.String(),
 		"reasonCodeId":     pulid.MustNew("sfrc_").String(),
-		"notes":            "Shipper closed early; driver waited until opening.",
+		"note":             "Shipper closed early; driver waited until opening.",
 	})
 
 	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)

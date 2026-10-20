@@ -36,7 +36,7 @@ scenarios:
     steps:
       - say: "hold SEED-SHP-007, the hazmat paperwork isnt in yet"
         expect:
-          calls: ["shipment_list|shipment_get|list_hold_reasons"]
+          calls: ["shipment_list|shipment_get|masterdata_list_hold_reasons"]
           proposals: [{ tool: shipment_place_hold }]
           maxFailedCalls: 1
       - decide: reject
@@ -121,7 +121,7 @@ scenarios:
         expect:
           calls: ["shipment_list|shipment_get"]
           proposals: [{ tool: "shipment_reschedule_stop|update_stop_schedule|shipment_update" }]
-          noCalls: [intake_set_stop_schedule, split_move_at_relay]
+          noCalls: [intake_set_stop_schedule, dispatch_split_move]
           maxFailedCalls: 1
           rubric: >
             Finds SEED-SHP-001 (Acme, LA to Chicago, New), moves only the delivery stop's window
@@ -185,8 +185,8 @@ scenarios:
     steps:
       - say: "put david on the peak ltl load to chicago, trc-002 and a dry van"
         expect:
-          calls: ["shipment_list|shipment_get|search_worker|list_workers"]
-          proposals: [{ tool: assign_move }]
+          calls: ["shipment_list|shipment_get|worker_search|worker_list"]
+          proposals: [{ tool: dispatch_assign_move }]
           maxFailedCalls: 1
           rubric: >
             Resolves David Park, TRC-002 and a dry van (TRL-001 or TRL-002) and proposes the
@@ -202,7 +202,7 @@ scenarios:
     steps:
       - say: "no drivers for the peak ltl going to chicago, can you shop it to carriers"
         expect:
-          calls: ["shop_carriers"]
+          calls: ["carrier_shop"]
           maxFailedCalls: 1
           rubric: >
             Shops SEED-SHP-002 and lists the carriers it found with what each would cost or why

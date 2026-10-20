@@ -13,9 +13,9 @@ import (
 
 func validAction() Spec {
 	return Spec{
-		ToolName: "assign_move",
+		ToolName: "dispatch_assign_move",
 		Policy: agentports.ToolPolicy{
-			Name:          "assign_move",
+			Name:          "dispatch_assign_move",
 			Kind:          agent.ToolKindAction,
 			Resource:      permission.ResourceShipmentMove,
 			Operation:     permission.OpUpdate,

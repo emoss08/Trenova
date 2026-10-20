@@ -29,7 +29,7 @@ const (
 	evidenceTypeHOS      = "worker_hos_state"
 	evidenceTypeDeadhead = "vehicle_position"
 
-	toolNameAssignMove = "assign_move"
+	toolNameAssignMove = "dispatch_assign_move"
 
 	promptVersion = "dispatch-auto-assign-v1"
 

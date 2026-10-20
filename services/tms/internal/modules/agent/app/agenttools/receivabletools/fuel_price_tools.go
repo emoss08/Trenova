@@ -25,9 +25,9 @@ const paramPriceDate = "priceDate"
 
 const paramPrice = "price"
 
-const fuelIndexSupplier = "The custom fuel index, from get_fuel_surcharge_rates. Never guess one."
+const fuelIndexSupplier = "The custom fuel index, from rate_list_fuel_surcharge_programs. Never guess one."
 
-const fuelPriceSupplier = "The manual price, from list_fuel_index_prices. Never guess one."
+const fuelPriceSupplier = "The manual price, from rate_list_fuel_index_prices. Never guess one."
 
 const fuelPriceRationale = "Moves the price every fuel surcharge on this index is computed " +
 	"from, which changes what customers are charged; only a person sets it."
@@ -141,7 +141,7 @@ func fuelPriceProperties(
 
 func NewRecordFuelIndexPriceTool(prices FuelIndexPriceKeeper) agentports.AgentTool {
 	return common.NewReceivableTool(fuelPriceMoneySpec(&common.ReceivableSpec{
-		Name: "record_fuel_index_price",
+		Name: "rate_record_fuel_index_price",
 		Description: "Propose recording a published price on a custom fuel index, such as " +
 			"a customer's own index or a rack price the organization tracks. Every fuel " +
 			"surcharge that follows the index prices from it, so a person always decides. " +
@@ -198,8 +198,8 @@ func NewRecordFuelIndexPriceTool(prices FuelIndexPriceKeeper) agentports.AgentTo
 
 func NewCorrectFuelIndexPriceTool(prices FuelIndexPriceKeeper) agentports.AgentTool {
 	return common.NewReceivableTool(fuelPriceMoneySpec(&common.ReceivableSpec{
-		Name:   "correct_fuel_index_price",
-		Recipe: []string{"list_fuel_index_prices", "correct_fuel_index_price"},
+		Name:   "rate_correct_fuel_index_price",
+		Recipe: []string{"rate_list_fuel_index_prices", "rate_correct_fuel_index_price"},
 		Description: "Propose correcting a manual price on a custom fuel index that was " +
 			"entered wrong: its day or its price. A price fetched from EIA cannot be " +
 			"corrected. Every surcharge that follows the index prices from it, so a person " +

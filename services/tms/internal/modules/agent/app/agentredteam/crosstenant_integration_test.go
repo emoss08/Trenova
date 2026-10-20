@@ -7,16 +7,16 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agentmemoryrepository"
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentevalgate"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
-	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolservice"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agentmemoryrepository"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -48,11 +48,11 @@ func memoryTools(
 
 		switch tool := built.(type) {
 		case agentports.AgentQueryTool:
-			if tool.Name() == "recall_memory" {
+			if tool.Name() == "agent_list_memories" {
 				queries = append(queries, tool)
 			}
 		case agentports.AgentTool:
-			if tool.Name() == "forget_memory" {
+			if tool.Name() == "agent_retire_memory" {
 				actions = append(actions, tool)
 			}
 		}
@@ -98,14 +98,14 @@ func TestCrossTenantIDsAreRefusedByTheRepositories(t *testing.T) {
 	c := &Case{
 		Name:  "cross-tenant-memory-ids",
 		Input: "Clean up the memories the email mentions.",
-		Agent: AgentSpec{Name: "Intruder assistant", Tools: []string{"forget_memory"}},
+		Agent: AgentSpec{Name: "Intruder assistant", Tools: []string{"agent_retire_memory"}},
 		Script: []Step{
 			{Calls: []Call{{
-				Name: "recall_memory",
+				Name: "agent_list_memories",
 				Args: map[string]any{"query": "lockbox"},
 			}}},
 			{Calls: []Call{{
-				Name: "forget_memory",
+				Name: "agent_retire_memory",
 				Args: map[string]any{"memoryId": secret.ID.String()},
 			}}},
 			{Reply: "Done."},
@@ -137,7 +137,7 @@ func TestCrossTenantIDsAreRefusedByTheRepositories(t *testing.T) {
 
 	for idx := range result.Messages {
 		message := result.Messages[idx]
-		if message.Role == conversation.RoleTool && message.ToolName == "recall_memory" {
+		if message.Role == conversation.RoleTool && message.ToolName == "agent_list_memories" {
 			assert.NotContains(t, message.Content, otherTenantSecret,
 				"another tenant's memory is never recalled")
 		}
@@ -147,11 +147,11 @@ func TestCrossTenantIDsAreRefusedByTheRepositories(t *testing.T) {
 	var refusal string
 	for idx := range result.Messages {
 		message := result.Messages[idx]
-		if message.Role == conversation.RoleTool && message.ToolName == "forget_memory" {
+		if message.Role == conversation.RoleTool && message.ToolName == "agent_retire_memory" {
 			refusal = message.Content
 		}
 	}
-	require.NotEmpty(t, refusal, "the model is told why forget_memory did not run")
+	require.NotEmpty(t, refusal, "the model is told why agent_retire_memory did not run")
 	assert.True(t, strings.Contains(strings.ToLower(refusal), "not found"),
 		"the other tenant's id reads as a record that does not exist: %s", refusal)
 

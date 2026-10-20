@@ -26,11 +26,11 @@ import (
 )
 
 const (
-	fieldAllocatedTotal     = "allocatedTotalAmount"
-	maxBillingQueueLines    = 50
-	secondsPerDayInQueue    = 86400
-	fieldNumber             = "number"
-	fieldCreatedAt          = "createdAt"
+	fieldAllocatedTotal  = "allocatedTotalAmount"
+	maxBillingQueueLines = 50
+	secondsPerDayInQueue = 86400
+	fieldNumber          = "number"
+	fieldCreatedAt       = "createdAt"
 )
 
 var (
@@ -115,7 +115,7 @@ func buildBillingQueueList(
 				Kind: filterText,
 				Note: "a user id; isnull for unassigned",
 			},
-			{Name: "billToCustomerId", Kind: filterText, Note: "the payer, from list_customers"},
+			{Name: "billToCustomerId", Kind: filterText, Note: "the payer, from customer_list"},
 			{
 				Name: "id",
 				Kind: filterText,

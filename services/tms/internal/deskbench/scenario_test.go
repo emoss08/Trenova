@@ -77,10 +77,10 @@ func TestLoadScenarios_TheEDIScenariosAskTheBenchEDIDeskAndCheckTheToolsTheyExis
 			}
 		}
 	}
-	assert.True(t, proposed["apply_edi_connection_draft"], "no EDI scenario saves a drafted connection")
+	assert.True(t, proposed["edi_apply_connection_draft"], "no EDI scenario saves a drafted connection")
 	for _, tool := range []string{
-		"get_edi_ack_health", "list_edi_messages", "inspect_x12", "preview_edi_document",
-		"draft_edi_connection",
+		"edi_get_ack_health", "edi_list_messages", "edi_inspect_x12", "edi_preview_x12",
+		"edi_draft_connection",
 	} {
 		assert.Truef(t, called[tool], "no EDI scenario expects %s", tool)
 	}
@@ -92,8 +92,8 @@ func TestLoadScenarios_TheEDIScenariosAskTheBenchEDIDeskAndCheckTheToolsTheyExis
 		if spec.Name == deskbench.BenchAgentPrefix+"EDI desk" {
 			found = true
 			assert.Subset(t, spec.Tools, []string{
-				"get_edi_ack_health", "list_edi_messages", "inspect_x12", "preview_edi_document",
-				"draft_edi_connection", "apply_edi_connection_draft",
+				"edi_get_ack_health", "edi_list_messages", "edi_inspect_x12", "edi_preview_x12",
+				"edi_draft_connection", "edi_apply_connection_draft",
 			})
 		}
 	}

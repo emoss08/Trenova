@@ -174,10 +174,10 @@ It holds nothing that creates a load or money on its own. A tender's attachment
 already wakes shipment intake through the document it became; a second desk
 holding shipment_create would put two proposals for the same load in front of a
 person. A tender written only in an email's body reaches no other agent, so the
-desk drafts it and proposes create_inbound_load, which never runs unattended. A
+desk drafts it and proposes inbox_create_load, which never runs unattended. A
 tender that arrives over EDI never becomes a document, so the desk answers it,
 and accepting one is always a proposal a person decides. A detention dispute's
-money is the detention desk's, so settle_detention_dispute is not the intake desk's.
+money is the detention desk's, so detention_resolve_dispute is not the intake desk's.
 */
 func TestTemplates_TheIntakeDeskMayEarnAutonomyTheMailboxGrants(t *testing.T) {
 	t.Parallel()
@@ -188,32 +188,32 @@ func TestTemplates_TheIntakeDeskMayEarnAutonomyTheMailboxGrants(t *testing.T) {
 
 	tools := desk.StarterTools()
 	for _, tool := range []string{
-		"get_inbound_message",
-		"link_inbound_message",
-		"mark_inbound_message",
-		"reply_to_inbound_message",
+		"inbox_get_inbound_message",
+		"inbox_link_inbound_message",
+		"inbox_mark_inbound_message",
+		"inbox_send_reply",
 		"shipment_attach_document",
-		"get_edi_transfer",
-		"accept_edi_tender",
-		"decline_edi_tender",
-		"list_triage_assignees",
-		"unlink_inbound_message",
-		"draft_inbound_reply",
-		"wait_for_inbound_reply",
-		"snooze_inbound_messages",
-		"wake_inbound_message",
-		"file_inbound_attachment",
-		"resolve_inbound_conflict",
-		"log_inbound_exception",
-		"draft_inbound_load",
-		"create_inbound_load",
-		"block_inbound_sender",
+		"edi_get_transfer",
+		"edi_accept_tender",
+		"edi_decline_tender",
+		"inbox_list_triage_assignees",
+		"inbox_unlink_inbound_message",
+		"inbox_draft_reply",
+		"inbox_await_reply",
+		"inbox_snooze_inbound_message",
+		"inbox_wake_inbound_message",
+		"inbox_file_attachment",
+		"inbox_resolve_conflict",
+		"inbox_record_discrepancy",
+		"inbox_draft_load",
+		"inbox_create_load",
+		"inbox_block_sender",
 	} {
 		require.Containsf(t, tools, tool, "the intake desk needs %s", tool)
 	}
 	for _, tool := range []string{
-		"shipment_create", "receivable_post_customer_payment", "tender_move_to_carriers",
-		"send_edi_tender", "replay_edi_message", "settle_detention_dispute",
+		"shipment_create", "receivable_post_customer_payment", "dispatch_create_tender",
+		"edi_send_tender", "edi_replay_message", "detention_resolve_dispute",
 	} {
 		require.NotContainsf(t, tools, tool, "the intake desk must not hold %s", tool)
 	}
@@ -248,60 +248,60 @@ func TestTemplates_TheNewDesksHoldWhatTheirWorkNeedsAndNothingThatLeaves(t *test
 		{
 			template: agentdefinition.TemplateLoadEntryCheck,
 			needs: []string{
-				"shipment_get", "shipment_list", "explain_rate", "quote_shipment",
-				"list_hold_reasons", "shipment_add_comment", "shipment_place_hold",
+				"shipment_get", "shipment_list", "rate_explain", "rate_quote",
+				"masterdata_list_hold_reasons", "shipment_add_comment", "shipment_place_hold",
 			},
-			never: []string{"email_customer", "shipment_update", "shipment_cancel"},
+			never: []string{"customer_send_email", "shipment_update", "shipment_cancel"},
 		},
 		{
 			template: agentdefinition.TemplateServiceFailureDesk,
 			needs: []string{
-				"list_service_failures", "get_service_failure",
-				"list_service_failure_reason_codes", "resolve_service_failure",
-				"get_customer_update_preferences", "email_customer",
+				"exception_list_service_failures", "exception_get_service_failure",
+				"exception_list_service_failure_reason_codes", "exception_resolve_service_failure",
+				"customer_get_update_preferences", "customer_send_email",
 			},
-			never: []string{"receivable_post_customer_payment", "notify_driver"},
+			never: []string{"receivable_post_customer_payment", "worker_send_message"},
 		},
 		{
 			template: agentdefinition.TemplateCarrierRiskDesk,
 			needs: []string{
-				"list_carrier_intel_events", "get_carrier_intel_event",
-				"acknowledge_carrier_intel_event", "resolve_carrier_intel_event", "get_carrier",
+				"carrier_list_intelligence_events", "carrier_get_intelligence_event",
+				"carrier_acknowledge_intelligence_event", "carrier_resolve_intelligence_event", "carrier_get",
 			},
-			never: []string{"update_carrier_status", "email_customer"},
+			never: []string{"carrier_set_status", "customer_send_email"},
 		},
 		{
 			template: agentdefinition.TemplateComplianceAssistant,
 			needs: []string{
-				"list_carrier_intel_events", "list_carriers", "get_carrier",
-				"mark_carrier_intel_reviewed", "list_expiring_credentials",
+				"carrier_list_intelligence_events", "carrier_list", "carrier_get",
+				"carrier_record_intelligence_review", "worker_list_expiring_credentials",
 			},
 		},
 		{
 			template: agentdefinition.TemplateInsightAnalyst,
-			needs:    []string{"get_insight", "list_insights", "preview_report", "dismiss_insight"},
-			never:    []string{"email_customer", "create_report", "update_report"},
+			needs:    []string{"insight_get", "insight_list", "report_preview", "insight_dismiss"},
+			never:    []string{"customer_send_email", "report_create", "report_update"},
 		},
 		{
 			template: agentdefinition.TemplateDetentionDesk,
 			needs: []string{
-				"get_detention_occurrence", "get_inbound_message", "search_inbound_messages",
-				"settle_detention_dispute",
+				"detention_get_occurrence", "inbox_get_inbound_message", "inbox_search_inbound_messages",
+				"detention_resolve_dispute",
 			},
 			never: []string{
-				"reply_to_inbound_message", "block_inbound_sender", "create_inbound_load",
+				"inbox_send_reply", "inbox_block_sender", "inbox_create_load",
 			},
 		},
 		{
 			template: agentdefinition.TemplateEDIDesk,
 			needs: []string{
-				"list_edi_inbound_files", "get_edi_inbound_file", "list_edi_transfers",
-				"get_edi_partner", "reprocess_edi_inbound_files", "list_edi_messages",
-				"get_edi_ack_health", "inspect_x12", "preview_edi_document",
+				"edi_list_inbound_files", "edi_get_inbound_file", "edi_list_transfers",
+				"edi_get_partner", "edi_reprocess_inbound_file", "edi_list_messages",
+				"edi_get_ack_health", "edi_inspect_x12", "edi_preview_x12",
 			},
 			never: []string{
-				"shipment_create", "email_customer", "reply_to_inbound_message",
-				"accept_edi_tender", "retry_edi_message_delivery", "replay_edi_message",
+				"shipment_create", "customer_send_email", "inbox_send_reply",
+				"edi_accept_tender", "edi_retry_message", "edi_replay_message",
 			},
 		},
 	}
@@ -320,7 +320,7 @@ func TestTemplates_TheNewDesksHoldWhatTheirWorkNeedsAndNothingThatLeaves(t *test
 func TestTemplates_TheLoadMonitorReadsWhetherPartnersAcknowledgeWhatWasSent(t *testing.T) {
 	t.Parallel()
 
-	require.Contains(t, agentdefinition.TemplateLoadMonitor.StarterTools(), "get_edi_ack_health")
+	require.Contains(t, agentdefinition.TemplateLoadMonitor.StarterTools(), "edi_get_ack_health")
 }
 
 func TestTemplates_TheInsightAnalystIsCappedAtTwentyRunsADay(t *testing.T) {

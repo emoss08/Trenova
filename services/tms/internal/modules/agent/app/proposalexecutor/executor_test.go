@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -269,12 +269,12 @@ func TestExecute_ChecksTheToolsOwnPermission(t *testing.T) {
 	t.Parallel()
 
 	tool := &recordingTool{
-		name:      "update_customer",
+		name:      "customer_update",
 		resource:  permission.ResourceCustomer,
 		operation: permission.OpUpdate,
 	}
 	perms := &fakePermissions{allowed: true}
-	proposal := testProposal("update_customer", map[string]any{})
+	proposal := testProposal("customer_update", map[string]any{})
 
 	require.NoError(t, newExecutor(tool, &fakeProposalRepo{}, perms).
 		Execute(t.Context(), proposal, nil, testActor(proposal.OrganizationID, proposal.BusinessUnitID)),

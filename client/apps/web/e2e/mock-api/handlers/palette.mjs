@@ -298,7 +298,7 @@ function answerFor(state, content, mentions) {
     return {
       tools: [
         {
-          name: "get_worker_hos",
+          name: "worker_get_hos",
           summary: workerName(w),
           records: [record("worker", w.id, workerName(w)), ...(load ? [shipmentRecord(load)] : [])],
         },
@@ -319,12 +319,12 @@ function answerFor(state, content, mentions) {
           records: [shipmentRecord(late), shipmentRecord(risk)],
         },
         {
-          name: "get_worker_hos",
+          name: "worker_get_hos",
           summary: workerName(leon),
           records: [record("worker", leon.id, workerName(leon))],
         },
         {
-          name: "get_customer",
+          name: "customer_get",
           summary: halv.name,
           records: [record("customer", halv.id, halv.name)],
         },

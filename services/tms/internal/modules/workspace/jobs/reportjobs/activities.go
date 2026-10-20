@@ -596,7 +596,7 @@ func (a *Activities) renderToStorage(
 //
 // A sidecar failure never fails the run. The artifact is what the person asked
 // for; the sidecar is only what makes a later comparison possible, and a run
-// without one is already a state compare_report_runs understands and reports.
+// without one is already a state report_compare_runs understands and reports.
 func (a *Activities) closeRowsSidecar(
 	ctx context.Context,
 	sidecar *render.RowsSidecar,

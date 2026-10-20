@@ -595,7 +595,7 @@ function egressOf(tool) {
   const name = tool.name;
   if (/payment|settlement|write_off|refund|payout|charge_card/.test(name)) return ["Money"];
   if (/customer_reply|send_customer|notify_customer|customer_update/.test(name)) return ["CustomerVisible"];
-  if (/driver_message|send_driver|notify_driver/.test(name)) return ["DriverVisible"];
+  if (/driver_message|send_driver|worker_send_message/.test(name)) return ["DriverVisible"];
   if (/email|tender_to_carrier|send_|edi_/.test(name)) return ["ExternalRecipient"];
   return ["Internal"];
 }

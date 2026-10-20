@@ -57,7 +57,7 @@ func TestLintReportsReadsNoToolCanDo(t *testing.T) {
 	t.Parallel()
 
 	tools := []Tool{
-		{Name: "create_customer", Resource: permission.ResourceCustomer, ResourceLabel: "Customer", Operation: permission.OpCreate, Held: true},
+		{Name: "customer_create", Resource: permission.ResourceCustomer, ResourceLabel: "Customer", Operation: permission.OpCreate, Held: true},
 	}
 
 	findings := Lint("Look up the customer before you answer.", tools)

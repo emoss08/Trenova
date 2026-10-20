@@ -46,7 +46,7 @@ func NewSaveTableViewTool(
 	return &SaveTableViewTool{configs: configs, composer: composer, catalog: catalog}
 }
 
-func (t *SaveTableViewTool) Name() string { return "save_table_view" }
+func (t *SaveTableViewTool) Name() string { return "report_save_table_view" }
 
 func (t *SaveTableViewTool) SearchTerms() []string {
 	return []string{"save view", "saved view", "pick again later"}
@@ -56,7 +56,7 @@ func (t *SaveTableViewTool) Description() string {
 	return "Save a described view of a table so it appears in that table's view picker and " +
 		"can be opened again without describing it. Use it when somebody says they want to " +
 		"see something regularly — \"keep me a view of loads sitting unbilled over a week\" " +
-		"— rather than for a one-off question, which compose_table_view already answers."
+		"— rather than for a one-off question, which report_compose_table_view already answers."
 }
 
 func (t *SaveTableViewTool) ParamSchema() map[string]any {

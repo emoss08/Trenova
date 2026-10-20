@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -153,14 +153,14 @@ func runPinning(t *testing.T, tool *pinningTool, auto bool) *agentports.RunResul
 	t.Helper()
 
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("retry_accounting_sync", map[string]any{"errorCategories": []any{"Transient"}}),
+		toolTurn("accounting_retry_sync_record", map[string]any{"errorCategories": []any{"Transient"}}),
 		textTurn("Done."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
 		&stubActionRegistry{Tools: []agentports.AgentTool{tool}}, nil)
-	definition := testDefinition("retry_accounting_sync")
+	definition := testDefinition("accounting_retry_sync_record")
 	if auto {
-		definition = autoDefinition("retry_accounting_sync")
+		definition = autoDefinition("accounting_retry_sync_record")
 	}
 
 	result, err := rt.Run(t.Context(), &agentports.RunRequest{
@@ -178,7 +178,7 @@ func TestDispatch_PinsAProposedSelectionToTheRecordsItResolvesTo(t *testing.T) {
 
 	tool := &pinningTool{
 		StubActionTool: &agenttest.StubActionTool{
-			ToolName: "retry_accounting_sync",
+			ToolName: "accounting_retry_sync_record",
 			Tier:     agent.TierPropose,
 		},
 		pinned: map[string]any{
@@ -202,7 +202,7 @@ func TestDispatch_LeavesAnAutomaticWriteToEvaluateItsCriteriaWhenItRuns(t *testi
 
 	tool := &pinningTool{
 		StubActionTool: &agenttest.StubActionTool{
-			ToolName: "retry_accounting_sync",
+			ToolName: "accounting_retry_sync_record",
 			Tier:     agent.TierAutoExecute,
 		},
 		pinned: map[string]any{"syncRecordIds": []any{"acctsr_1"}},
@@ -223,7 +223,7 @@ func TestDispatch_RefusesAProposalWhoseSelectionCannotBePinned(t *testing.T) {
 
 	tool := &pinningTool{
 		StubActionTool: &agenttest.StubActionTool{
-			ToolName: "retry_accounting_sync",
+			ToolName: "accounting_retry_sync_record",
 			Tier:     agent.TierPropose,
 		},
 		err: errors.New("no record waiting to be retried last failed as Transient"),

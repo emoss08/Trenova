@@ -27,7 +27,7 @@ func analysisResult() map[string]any {
 }
 
 func analysisObservation(result map[string]any, code string) agentports.ToolObservation {
-	call := observation("analyze_data", result)
+	call := observation("report_analyze_data", result)
 	call.Call.Arguments = map[string]any{"code": code, "purpose": "Margin by lane for Q3"}
 
 	return call

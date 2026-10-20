@@ -207,7 +207,7 @@ function renderBody(payload: Record<string, unknown>, proposals: unknown[] = [])
 function applyProposal(digest: string, status: string) {
   return {
     id: "apr_1",
-    toolName: "apply_edi_connection_draft",
+    toolName: "edi_apply_connection_draft",
     arguments: { documentDigest: digest },
     autonomyTier: "Propose",
     status,

@@ -105,13 +105,13 @@ func newDraftInboundReplyTool(
 ) agentports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
-			Name:     "draft_inbound_reply",
+			Name:     "inbox_draft_reply",
 			Artifact: inboundMessageEntity,
 			Description: "Save a reply to a message as its draft in Triage, for a person to " +
 				"review and send; nothing is sent. Write the body yourself, or leave it out to " +
 				"have Triage's drafter write it from the message, its linked records and, for " +
 				"a detention dispute, the stop times. It replaces any draft already there. " +
-				"To answer the sender yourself, use reply_to_inbound_message instead.",
+				"To answer the sender yourself, use inbox_send_reply instead.",
 			Resource:    permission.ResourceInboundMessage,
 			Operation:   permission.OpUpdate,
 			Egress:      agent.EgressInternal,
@@ -123,7 +123,7 @@ func newDraftInboundReplyTool(
 				"stays with a person.",
 			Properties: map[string]any{
 				paramMessageID: messageIDProperty(
-					"The message to answer, from list_inbound_messages or search_inbound_messages.",
+					"The message to answer, from inbox_list_inbound_messages or inbox_search_inbound_messages.",
 				),
 				paramReplyBody: common.StringProperty(
 					"The reply in plain prose, as the person should send it. Leave it out to "+
@@ -138,7 +138,7 @@ func newDraftInboundReplyTool(
 			},
 			Required:    []string{paramMessageID},
 			SearchTerms: []string{"draft a reply", "prepare an answer", "write a response"},
-			Recipe:      []string{toolGetInboundMessage, "draft_inbound_reply"},
+			Recipe:      []string{toolGetInboundMessage, "inbox_draft_reply"},
 			Target:      targetMessage,
 		},
 		common.ReceivablePlan[*draftReplyCall, *inboundreplyservice.DraftPlan]{
@@ -267,12 +267,12 @@ func NewDiscardInboundReplyDraftTool(p triageToolParams) agentports.AgentTool {
 func newDiscardInboundReplyDraftTool(replies triageReplies) agentports.AgentTool {
 	return common.NewReportingReceivableTool(
 		&common.ReceivableSpec{
-			Name:     "discard_inbound_reply_draft",
+			Name:     "inbox_discard_reply_draft",
 			Artifact: inboundMessageEntity,
 			Description: "Throw away the reply draft waiting on a message in Triage, when it " +
-				"should not be sent at all. get_inbound_message shows whether a message has " +
+				"should not be sent at all. inbox_get_inbound_message shows whether a message has " +
 				"one. A person's own draft is lost with it; to change a draft, write a new " +
-				"one with draft_inbound_reply instead.",
+				"one with inbox_draft_reply instead.",
 			Resource:    permission.ResourceInboundMessage,
 			Operation:   permission.OpUpdate,
 			Egress:      agent.EgressInternal,
@@ -282,12 +282,12 @@ func newDiscardInboundReplyDraftTool(replies triageReplies) agentports.AgentTool
 				"to bring it back.",
 			Properties: map[string]any{
 				paramMessageID: messageIDProperty(
-					"The message, from list_inbound_messages or search_inbound_messages.",
+					"The message, from inbox_list_inbound_messages or inbox_search_inbound_messages.",
 				),
 			},
 			Required:    []string{paramMessageID},
 			SearchTerms: []string{"discard draft", "delete reply draft", "throw away reply"},
-			Recipe:      []string{toolGetInboundMessage, "discard_inbound_reply_draft"},
+			Recipe:      []string{toolGetInboundMessage, "inbox_discard_reply_draft"},
 			Target:      targetMessage,
 		},
 		common.ReceivablePlan[

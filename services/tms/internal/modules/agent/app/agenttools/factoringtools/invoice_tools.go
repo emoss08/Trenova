@@ -22,7 +22,7 @@ const (
 	paramDocumentTypeIDs = "documentTypeIds"
 	paramMessage         = "message"
 
-	toolGetReadiness       = "get_factoring_readiness"
+	toolGetReadiness       = "factoring_get_readiness"
 	maxRequestedDocuments  = 20
 	fieldFactoringOverride = "factoringOverride"
 	fieldOverrideReason    = "factoringOverrideReason"
@@ -49,7 +49,7 @@ func NewSetInvoiceFactoringOverrideTool(
 	return &SetInvoiceFactoringOverrideTool{readiness: readiness}
 }
 
-func (t *SetInvoiceFactoringOverrideTool) Name() string { return "set_invoice_factoring_override" }
+func (t *SetInvoiceFactoringOverrideTool) Name() string { return "factoring_set_override" }
 
 func (t *SetInvoiceFactoringOverrideTool) Description() string {
 	return "Keep one invoice of a factored customer out of factoring, or put it back. " +
@@ -72,7 +72,7 @@ func (t *SetInvoiceFactoringOverrideTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramInvoiceID: agenttoolschema.RecordIDText(
 			permission.ResourceInvoice,
-			"The invoice, from invoice_list or list_factoring_ready_invoices.",
+			"The invoice, from invoice_list or factoring_list_readiness.",
 		),
 		paramOverride: agenttoolschema.Enum(
 			"Exclude keeps it out of factoring; Default follows the customer's factoring.",
@@ -214,14 +214,14 @@ func NewRequestMissingFactoringDocumentTool(
 }
 
 func (t *RequestMissingFactoringDocumentTool) Name() string {
-	return "request_missing_factoring_document"
+	return "factoring_request_document"
 }
 
 func (t *RequestMissingFactoringDocumentTool) Description() string {
 	return "Email a request for the documents an invoice needs before it can be sold to the " +
 		"factor. It goes to the driver, then the carrier, then the customer's invoice email " +
 		"recipients, unless recipient names someone. It asks for every missing " +
-		"document get_factoring_readiness lists, or only documentTypeIds. The same request " +
+		"document factoring_get_readiness lists, or only documentTypeIds. The same request " +
 		"to the same people goes out at most once a day."
 }
 
@@ -237,11 +237,11 @@ func (t *RequestMissingFactoringDocumentTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramInvoiceID: agenttoolschema.RecordIDText(
 			permission.ResourceInvoice,
-			"The invoice, from get_factoring_readiness or list_factoring_ready_invoices.",
+			"The invoice, from factoring_get_readiness or factoring_list_readiness.",
 		),
 		paramDocumentTypeIDs: agenttoolschema.RecordIDs(
 			permission.ResourceDocumentType,
-			"Ask only for these document types, from get_factoring_readiness.",
+			"Ask only for these document types, from factoring_get_readiness.",
 			maxRequestedDocuments,
 		),
 		paramRecipient: jsonschemautils.Text(

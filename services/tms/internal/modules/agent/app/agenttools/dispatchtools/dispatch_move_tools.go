@@ -61,7 +61,7 @@ func NewUnassignMovesTool(assignments shipmentports.AssignmentService) agentport
 	return &UnassignMovesTool{assignments: assignments}
 }
 
-func (t *UnassignMovesTool) Name() string { return "unassign_moves" }
+func (t *UnassignMovesTool) Name() string { return "dispatch_unassign_move" }
 
 func (t *UnassignMovesTool) Description() string {
 	return "Take the driver and equipment off one or more moves that have not started, " +
@@ -69,13 +69,13 @@ func (t *UnassignMovesTool) Description() string {
 		"a load: the driver called off, broke down or ran out of hours before pickup. A " +
 		"move can be unassigned only while its assignment is fresh — assigned, not yet in " +
 		"transit; a move under way is not taken off its driver. The drivers are told the " +
-		"load was taken off them. Cover the move again with assign_move or a tender."
+		"load was taken off them. Cover the move again with dispatch_assign_move or a tender."
 }
 
 func (t *UnassignMovesTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		fieldMoveIDs: agenttoolschema.OfResource(jsonschemautils.DescribedArray(
-			"The moves to take the driver off, by id from get_dispatch_board (moveId) or "+
+			"The moves to take the driver off, by id from dispatch_get_board (moveId) or "+
 				"shipment_get (its moves). One move is the normal case.",
 			jsonschemautils.String(0),
 			maxMovesPerDispatchChange,
@@ -208,7 +208,7 @@ func NewUpdateMoveStatusTool(moves shipmentports.ShipmentMoveService) agentports
 	return &UpdateMoveStatusTool{moves: moves}
 }
 
-func (t *UpdateMoveStatusTool) Name() string { return "update_move_status" }
+func (t *UpdateMoveStatusTool) Name() string { return "dispatch_set_move_status" }
 
 func (t *UpdateMoveStatusTool) SearchTerms() []string {
 	return []string{"in transit", "mark delivered", "departed"}
@@ -217,18 +217,18 @@ func (t *UpdateMoveStatusTool) SearchTerms() []string {
 func (t *UpdateMoveStatusTool) Description() string {
 	return "Set the status of one or more moves directly: InTransit when a load is rolling, " +
 		"Completed when it has been delivered, Canceled when the move will not run. Prefer " +
-		"record_stop_actual whenever you know a driver arrived or departed, because that " +
+		"dispatch_record_stop_actual whenever you know a driver arrived or departed, because that " +
 		"records the stop times and moves the status with them; use this only when the " +
 		"status itself is what you were told. A move only moves forward: New or Assigned " +
 		"to InTransit, Completed or Canceled, and InTransit to Completed or Canceled. " +
-		"Assigning and unassigning are assign_move and unassign_moves, not a status. Several " +
+		"Assigning and unassigning are dispatch_assign_move and dispatch_unassign_move, not a status. Several " +
 		"moves change together or not at all."
 }
 
 func (t *UpdateMoveStatusTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		fieldMoveIDs: agenttoolschema.OfResource(jsonschemautils.DescribedArray(
-			"The moves to change, by id from get_dispatch_board (moveId) or shipment_get "+
+			"The moves to change, by id from dispatch_get_board (moveId) or shipment_get "+
 				"(its moves). One move is the normal case.",
 			jsonschemautils.String(0),
 			maxMovesPerDispatchChange,

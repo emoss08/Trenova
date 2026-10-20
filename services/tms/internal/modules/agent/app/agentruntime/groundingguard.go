@@ -70,7 +70,7 @@ type groundingFinding struct {
 	offered []string
 	// read is a finding on a reply that filed nothing, held only to the
 	// amounts the conversation read; analyze is whether the agent can work a
-	// missing one out with analyze_data.
+	// missing one out with report_analyze_data.
 	read    bool
 	analyze bool
 }
@@ -210,7 +210,7 @@ const maxStatedFigures = 12
 
 // statedArithmetic is the sums and differences of the figures in the person's
 // own question. Told a check was 3,200 against a 3,700 invoice, "$500 short"
-// restates what they said; it is not a figure the agent needs analyze_data for.
+// restates what they said; it is not a figure the agent needs report_analyze_data for.
 func (t *Turn) statedArithmetic() []decimal.Decimal {
 	stated := t.statedFigures(numberguard.ReadSeparated)
 	pairs := make([]decimal.Decimal, 0, len(stated)*(len(stated)-1))
@@ -363,7 +363,7 @@ func (f groundingFinding) amountsCorrection() string {
 	b.WriteString(". A total, share, average or difference no tool returned is one you " +
 		"worked out yourself, and a reply never states one as if a record held it.")
 	if f.analyze {
-		b.WriteString(" Work each one out with analyze_data over the rows it comes from, " +
+		b.WriteString(" Work each one out with report_analyze_data over the rows it comes from, " +
 			"then write the reply from its result.")
 	} else {
 		b.WriteString(" Write the reply again from what the tools returned. Where they do " +

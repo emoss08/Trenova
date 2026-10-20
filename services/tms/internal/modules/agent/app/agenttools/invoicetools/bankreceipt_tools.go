@@ -267,7 +267,7 @@ func (t *PostCustomerPaymentTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"customerId": agenttoolschema.RecordIDText(
 				permission.ResourceCustomer,
-				"The paying customer, from list_customers or receivable_get_bank_receipt's "+
+				"The paying customer, from customer_list or receivable_get_bank_receipt's "+
 					"suggestions.",
 			),
 			common.ParamAmount: map[string]any{

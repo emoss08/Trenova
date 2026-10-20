@@ -59,13 +59,13 @@ export type DelegateSource =
  * lookup is the mistake this whole classification exists to stop.
  */
 const NAMED_EFFECTS: Readonly<Record<string, ToolEffect>> = {
-  open_page: "navigate",
+  agent_open_page: "navigate",
   find_tools: "discover",
-  find_in_trenova: "discover",
-  run_report: "present",
+  agent_find_page: "discover",
+  report_run: "present",
   publish_artifact: "present",
-  compare_report_runs: "present",
-  compose_table_view: "present",
+  report_compare_runs: "present",
+  report_compose_table_view: "present",
   ask_user: "ask",
   [REQUEST_DECISION_TOOL]: "ask",
   [WITHDRAW_PROPOSAL_TOOL]: "ask",
@@ -479,7 +479,7 @@ function lookupLine(group: ActivityGroup, t: TranslateFn): ActivityLine {
 
 function discoverLine(group: ActivityGroup, t: TranslateFn): ActivityLine {
   const step = group.steps.at(-1)!;
-  const guide = step.name === "find_in_trenova";
+  const guide = step.name === "agent_find_page";
 
   if (step.status === "running") {
     return {
@@ -541,7 +541,7 @@ function presentLine(step: ToolStep, t: TranslateFn): ActivityLine {
   }
 
   switch (step.name) {
-    case "run_report": {
+    case "report_run": {
       const report = reportSummary(named);
       if (step.status === "running") {
         const subject = describeToolCall(step.name, step.arguments).subject;
@@ -574,11 +574,11 @@ function presentLine(step: ToolStep, t: TranslateFn): ActivityLine {
             failure: "",
             state: "done",
           };
-    case "compose_table_view":
+    case "report_compose_table_view":
       return step.status === "running"
         ? { phrase: t("Building a table…"), detail: "", failure: "", state: "running" }
         : { phrase: t("Built a table"), detail: named, failure: "", state: "done" };
-    case "compare_report_runs":
+    case "report_compare_runs":
       return step.status === "running"
         ? { phrase: t("Comparing report runs…"), detail: "", failure: "", state: "running" }
         : { phrase: t("Compared report runs"), detail: named, failure: "", state: "done" };
@@ -603,12 +603,13 @@ export function madeChange(name: string, subject: string, t: TranslateFn): strin
   if (subject === "") {
     return t("Made a change");
   }
-  const verb = name.split("_", 1)[0];
+  const reading = toolNameInReadingOrder(name);
+  const verb = reading.split("_", 1)[0];
   switch (verb) {
     case "create":
-      return name.endsWith("_report") ? t("Saved {0}", subject) : t("Created {0}", subject);
+      return reading.endsWith("_report") ? t("Saved {0}", subject) : t("Created {0}", subject);
     case "update":
-      return name.endsWith("_report") ? t("Saved {0}", subject) : t("Updated {0}", subject);
+      return reading.endsWith("_report") ? t("Saved {0}", subject) : t("Updated {0}", subject);
     case "fork":
       return t("Copied {0}", subject);
     case "add":

@@ -29,13 +29,13 @@ writes:
 
   # accountingsync
   "mutation applyAccountingInboundChange":
-    tools: [apply_accounting_inbound_change]
+    tools: [accounting_apply_inbound_change]
   "mutation changeAccountingBackfill":
-    tools: [change_accounting_backfill]
+    tools: [accounting_update_backfill]
   "mutation checkAccountingConnection":
-    tools: [check_accounting_connection]
+    tools: [accounting_check_connection]
   "mutation checkAccountingDrift":
-    tools: [check_accounting_drift]
+    tools: [accounting_check_drift]
   "mutation chooseAccountingCompany":
     exempt: security
     reason: "Finishes the OAuth sign-in by choosing the company the authorization is for; a person holds the grant, never an agent."
@@ -43,14 +43,14 @@ writes:
     exempt: configuration
     reason: "Chooses what the organization's accounting connection sends during setup; an administrator owns the connection and it is fixed once sync is enabled."
   "mutation clearAccountingMapping":
-    tools: [clear_accounting_mapping]
+    tools: [accounting_clear_mapping]
   "mutation completeAccountingSetup":
     exempt: configuration
     reason: "Connects the organization to an outside system; an administrator owns the connection and its credentials."
   "mutation confirmAccountingMappings":
-    tools: [confirm_accounting_mapping_proposals]
+    tools: [accounting_confirm_mapping]
   "mutation createAccountingReferenceRecord":
-    tools: [create_accounting_reference_record]
+    tools: [accounting_create_reference_record]
   "mutation connectAccountingWithCertificate":
     exempt: security
     reason: "Connects with a certificate an administrator uploaded in the accounting system's console; a person sets up the credential, never an agent."
@@ -58,7 +58,7 @@ writes:
     exempt: configuration
     reason: "Connects the organization to an outside system; an administrator owns the connection and its credentials."
   "mutation dismissAccountingDrift":
-    tools: [dismiss_accounting_drift]
+    tools: [accounting_dismiss_drift_finding]
   "mutation enableAccountingSync":
     exempt: configuration
     reason: "Connects the organization to an outside system; an administrator owns the connection and its credentials."
@@ -66,20 +66,20 @@ writes:
     exempt: security
     reason: "Handles the OAuth app and its credentials that let Trenova act in the accounting system."
   "mutation ignoreAccountingInboundChange":
-    tools: [ignore_accounting_inbound_change]
+    tools: [accounting_ignore_inbound_change]
   "mutation pauseAccountingSync":
-    tools: [pause_accounting_sync]
+    tools: [accounting_pause_sync]
   "mutation prepareAccountingCertificate":
     exempt: security
     reason: "Generates the key pair and certificate a person uploads in the accounting system's console to let Trenova act there."
   "mutation redateAccountingSync":
-    tools: [redate_accounting_sync]
+    tools: [accounting_redate_sync_record]
   "mutation refreshAccountingReferenceData":
-    tools: [refresh_accounting_reference_data]
+    tools: [accounting_refresh_reference_data]
   "mutation rejectAccountingMapping":
-    tools: [reject_accounting_mapping_proposal]
+    tools: [accounting_reject_mapping]
   "mutation releaseAccountingSync":
-    tools: [release_accounting_sync]
+    tools: [accounting_release_sync_record]
   "mutation removeAccountingApp":
     exempt: security
     reason: "Handles the OAuth app and its credentials that let Trenova act in the accounting system."
@@ -87,20 +87,20 @@ writes:
     exempt: security
     reason: "Swaps in a certificate a person uploaded in the accounting system's console; the credential is a person's act, never an agent's."
   "mutation requestAccountingBackfill":
-    tools: [request_accounting_backfill]
+    tools: [accounting_request_backfill]
   "mutation resolveAccountingDrift":
-    tools: [resolve_accounting_drift]
+    tools: [accounting_resolve_drift_finding]
   "mutation resumeAccountingSync":
-    tools: [resume_accounting_sync]
+    tools: [accounting_resume_sync]
   "mutation retryAccountingSync":
-    tools: [retry_accounting_sync]
+    tools: [accounting_retry_sync_record]
   "mutation saveAccountingApp":
     exempt: security
     reason: "Handles the OAuth app and its credentials that let Trenova act in the accounting system."
   "mutation setAccountingMapping":
-    tools: [set_accounting_mapping]
+    tools: [accounting_set_mapping]
   "mutation skipAccountingSync":
-    tools: [skip_accounting_sync]
+    tools: [accounting_skip_sync_record]
   "mutation startAccountingAuthorization":
     exempt: security
     reason: "Handles the OAuth app and its credentials that let Trenova act in the accounting system."
@@ -130,12 +130,12 @@ writes:
   # agent
   "mutation approveAgentMemorySuggestion":
     exempt: agent-administration
-    reason: "A person curating what agents remember; an agent writes memory through remember and forget_memory."
+    reason: "A person curating what agents remember; an agent writes memory through remember and agent_retire_memory."
   "mutation commitMyDecisionNow":
     exempt: agent-administration
     reason: "Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work."
   "mutation createAgentMemory":
-    tools: [remember]
+    tools: [agent_create_memory]
   "mutation decideAgentPlan":
     exempt: agent-administration
     reason: "Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work."
@@ -153,7 +153,7 @@ writes:
     reason: "Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work."
   "mutation dismissAgentMemorySuggestion":
     exempt: agent-administration
-    reason: "A person curating what agents remember; an agent writes memory through remember and forget_memory."
+    reason: "A person curating what agents remember; an agent writes memory through remember and agent_retire_memory."
   "mutation replayAgentRun":
     exempt: agent-administration
     reason: "Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work."
@@ -164,7 +164,7 @@ writes:
     exempt: agent-administration
     reason: "A person vouching for what an agent wrote after reading outside content; an agent clearing the taint on what it will read would undo the hold."
   "mutation setAgentMemoryStatus":
-    tools: [forget_memory]
+    tools: [agent_retire_memory]
   "mutation undoMyDecision":
     exempt: agent-administration
     reason: "Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work."
@@ -173,19 +173,19 @@ writes:
     reason: "The organization-wide switches and ceilings every agent runs under."
   "mutation updateAgentMemory":
     exempt: agent-administration
-    reason: "A person curating what agents remember; an agent writes memory through remember and forget_memory."
+    reason: "A person curating what agents remember; an agent writes memory through remember and agent_retire_memory."
 
   # agent_profile
   "mutation addAgentOrganizationProfileGuidance":
-    tools: [guide_profile]
+    tools: [agent_guide_profile]
   "mutation addMyAgentProfileGuidance":
-    tools: [guide_profile]
+    tools: [agent_guide_profile]
   "mutation approveAgentOrganizationProfileGuidance":
     exempt: agent-administration
-    reason: "An administrator keeping a line someone offered about the organization; an agent offers guidance through guide_profile and never approves its own."
+    reason: "An administrator keeping a line someone offered about the organization; an agent offers guidance through agent_guide_profile and never approves its own."
   "mutation dismissAgentOrganizationProfileGuidance":
     exempt: agent-administration
-    reason: "An administrator turning down a line someone offered about the organization; an agent offers guidance through guide_profile and never decides on it."
+    reason: "An administrator turning down a line someone offered about the organization; an agent offers guidance through agent_guide_profile and never decides on it."
   "mutation regenerateAgentOrganizationProfile":
     exempt: agent-administration
     reason: "Asks for the organization's agent profile to be written again; agents read the profile, they do not decide when it is rewritten."
@@ -194,10 +194,10 @@ writes:
     reason: "Asks for a person's own agent profile to be written again; agents read the profile, they do not decide when it is rewritten."
   "mutation retireAgentOrganizationProfileGuidance":
     exempt: agent-administration
-    reason: "A person curating what agents are told about the organization; an agent records guidance through guide_profile and never retires what a person gave."
+    reason: "A person curating what agents are told about the organization; an agent records guidance through agent_guide_profile and never retires what a person gave."
   "mutation retireMyAgentProfileGuidance":
     exempt: agent-administration
-    reason: "A person curating what agents are told about their own work; an agent records guidance through guide_profile and never retires what a person gave."
+    reason: "A person curating what agents are told about their own work; an agent records guidance through agent_guide_profile and never retires what a person gave."
 
   # agentdefinition
   "DELETE /api/v1/agent-definitions/:agentID/":
@@ -275,7 +275,7 @@ writes:
     exempt: security
     reason: "Relays a sign-in code a portal sent the person to the browser signing in for them; a second factor is given only by the person who received it, and never passes through an agent."
   "POST /api/v1/agent-web-watches/:watchID/stop/":
-    tools: [stop_web_watch]
+    tools: [web_stop_watch]
   "POST /api/v1/webhooks/agent-extensions/web-watches/:orgID/:buID/:watchID/":
     exempt: infrastructure
     reason: "A research vendor reporting a web watch's run, signed with the watch's secret; it only asks the watch to be checked now, and is not a person's decision."
@@ -434,7 +434,7 @@ writes:
     exempt: agent-administration
     reason: "A person keeping or restoring their own version of a document an agent drafted in their conversation; the agent drafts through the conversation itself."
   "POST /api/v1/assistant/threads/:threadID/case/await-reply/":
-    tools: [wait_until]
+    tools: [agent_create_wait]
   "POST /api/v1/assistant/threads/:threadID/case/snooze/":
     exempt: agent-administration
     reason: "A case is the person's own conversation: choosing which record it is about, or putting it out of sight until later, arranges their Desk and changes no record an agent acts on."
@@ -472,7 +472,7 @@ writes:
     exempt: agent-administration
     reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
   "POST /api/v1/assistant/threads/:threadID/waits/:waitID/cancel/":
-    tools: [cancel_wait]
+    tools: [agent_cancel_wait]
   "POST /api/v1/assistant/turns/:turnID/stop/":
     exempt: agent-administration
     reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
@@ -645,7 +645,7 @@ writes:
     reason: "Withdraws an instruction the caller gave one of their own paired computers; those instructions are the person's, given under the access they granted the machine, and an agent never acts through a device pairing."
   "mutation createCaptureCoverSheets":
     exempt: infrastructure
-    reason: "Issues printable routing codes that exist only to be printed and laid on paper at a scanner, returned once to the person who prints them; an agent has no printer, and file_capture_items files what the sheets route."
+    reason: "Issues printable routing codes that exist only to be printed and laid on paper at a scanner, returned once to the person who prints them; an agent has no printer, and inbox_file_capture_item files what the sheets route."
   "mutation createCaptureProfile":
     exempt: configuration
     reason: "Scan profiles are presets an administrator maintains for the organization's scanners."
@@ -659,16 +659,16 @@ writes:
     exempt: security
     reason: "Denying a pairing is the person's answer to a request for their access."
   "mutation discardCaptureBatch":
-    tools: [discard_capture_batch]
+    tools: [inbox_discard_capture_batch]
   "mutation discardCaptureItem":
-    tools: [discard_capture_item]
+    tools: [inbox_discard_capture_item]
   "mutation editCaptureItems":
     exempt: user-preference
-    reason: "The person arranging a scanned stack in the intake editor, looking at the page images, replaces the whole layout of the version they were looking at; pages carry no text an agent can read, so an agent would split documents blind. Filing and discarding what the split proposes are file_capture_items and discard_capture_item."
+    reason: "The person arranging a scanned stack in the intake editor, looking at the page images, replaces the whole layout of the version they were looking at; pages carry no text an agent can read, so an agent would split documents blind. Filing and discarding what the split proposes are inbox_file_capture_item and inbox_discard_capture_item."
   "mutation fileCaptureItem":
-    tools: [file_capture_items]
+    tools: [inbox_file_capture_item]
   "mutation fileCaptureItems":
-    tools: [file_capture_items]
+    tools: [inbox_file_capture_item]
   "mutation revokeCaptureDevice":
     exempt: security
     reason: "Revoking a paired computer removes a person's access."
@@ -681,39 +681,39 @@ writes:
 
   # carrier
   "PATCH /api/v1/carriers/:carrierID/":
-    tools: [update_carrier]
+    tools: [carrier_update]
   "POST /api/v1/carriers/":
-    tools: [create_carrier]
+    tools: [carrier_create]
   "POST /api/v1/carriers/bulk-update-status/":
-    tools: [update_carrier_status]
+    tools: [carrier_set_status]
   "PUT /api/v1/carriers/:carrierID/":
-    tools: [update_carrier]
+    tools: [carrier_update]
 
   # carriercapacity
   "mutation createCarrierCapacityPosting":
-    tools: [create_carrier_capacity_posting]
+    tools: [carrier_create_capacity_posting]
   "mutation deleteCarrierCapacityPosting":
-    tools: [delete_carrier_capacity_posting]
+    tools: [carrier_delete_capacity_posting]
   "mutation updateCarrierCapacityPosting":
-    tools: [update_carrier_capacity_posting]
+    tools: [carrier_update_capacity_posting]
 
   # carrierintelligence
   "mutation acknowledgeCarrierIntelEvents":
-    tools: [acknowledge_carrier_intel_event]
+    tools: [carrier_acknowledge_intelligence_event]
   "mutation applyCarrierIntelSuggestions":
-    tools: [apply_carrier_intel_suggestions]
+    tools: [carrier_apply_intelligence_suggestions]
   "mutation grantCarrierIntelOverride":
     exempt: attestation
     reason: "A person accepts accountability for using a carrier or equipment that failed vetting."
   "mutation importSourcedCarrier":
-    tools: [import_sourced_carrier]
+    tools: [carrier_import]
   "mutation markCarrierIntelReviewed":
-    tools: [mark_carrier_intel_reviewed]
+    tools: [carrier_record_intelligence_review]
   "mutation overrideCarrierEquipmentVerification":
     exempt: attestation
     reason: "A person accepts accountability for using a carrier or equipment that failed vetting."
   "mutation resolveCarrierIntelEvent":
-    tools: [resolve_carrier_intel_event]
+    tools: [carrier_resolve_intelligence_event]
   "mutation resumeCarrierIntelMonitoring":
     exempt: configuration
     reason: "Turns the organization-wide carrier intelligence feed back on after it was paused; an administrator sets it once and every later lookup depends on it."
@@ -721,7 +721,7 @@ writes:
     exempt: attestation
     reason: "A person accepts accountability for using a carrier or equipment that failed vetting."
   "mutation setCarrierMonitoring":
-    tools: [set_carrier_monitoring]
+    tools: [carrier_set_monitoring]
   "mutation switchCarrierIntelProvider":
     exempt: configuration
     reason: "Connects the organization to an outside system; an administrator owns the connection and its credentials."
@@ -729,27 +729,27 @@ writes:
     exempt: configuration
     reason: "Connects the organization to an outside system; an administrator owns the connection and its credentials."
   "mutation verifyCarrierEquipment":
-    tools: [verify_carrier_equipment]
+    tools: [carrier_verify_equipment]
   "mutation vetCarrier":
-    tools: [vet_carrier]
+    tools: [carrier_vet]
   "mutation vetCustomerBroker":
-    tools: [vet_customer_broker]
+    tools: [customer_vet_broker]
 
   # carriersettlement
   "mutation acceptCarrierInvoiceMatch":
-    tools: [accept_carrier_invoice_match]
+    tools: [carrier_accept_invoice_match]
   "mutation acceptCarrierInvoiceMatchWithVariance":
-    tools: [accept_carrier_invoice_match_with_variance]
+    tools: [carrier_accept_invoice_match_with_variance]
   "mutation addCarrierSettlementAdjustment":
     tools: [settlement_add_carrier_adjustment]
   "mutation approveCarrierSettlement":
     tools: [settlement_approve_carrier]
   "mutation createCarrierInvoiceMatch":
-    tools: [create_carrier_invoice_match]
+    tools: [carrier_create_invoice_match]
   "mutation generateCarrierSettlementBatch":
     tools: [settlement_generate_carrier_batch]
   "mutation linkEdiCarrierInvoiceToCarrier":
-    tools: [link_edi_carrier_invoice_to_carrier]
+    tools: [edi_link_carrier_invoice]
   "mutation markCarrierSettlementPaid":
     tools: [settlement_record_carrier_payment]
   "mutation postCarrierSettlement":
@@ -757,7 +757,7 @@ writes:
   "mutation recalculateCarrierSettlement":
     tools: [settlement_recalculate_carrier]
   "mutation rejectCarrierInvoiceMatch":
-    tools: [reject_carrier_invoice_match]
+    tools: [carrier_reject_invoice_match]
   "mutation rejectCarrierSettlement":
     tools: [settlement_reject_carrier]
   "mutation removeCarrierSettlementAdjustment":
@@ -785,11 +785,11 @@ writes:
 
   # checkcall
   "mutation issueCarrierTrackingLink":
-    tools: [issue_carrier_tracking_link]
+    tools: [dispatch_share_tracking_link]
   "mutation logCheckCall":
-    tools: [log_check_call]
+    tools: [dispatch_record_check_call]
   "mutation revokeCarrierTrackingLink":
-    tools: [revoke_carrier_tracking_link]
+    tools: [dispatch_revoke_tracking_link]
 
   # customertracking
   "mutation issueCustomerTrackingLink":
@@ -814,13 +814,13 @@ writes:
 
   # commodity
   "PATCH /api/v1/commodities/:commodityID/":
-    tools: [update_commodity]
+    tools: [masterdata_update_commodity]
   "POST /api/v1/commodities/":
-    tools: [create_commodity]
+    tools: [masterdata_create_commodity]
   "POST /api/v1/commodities/bulk-update-status/":
-    tools: [update_commodity_status]
+    tools: [masterdata_set_commodity_status]
   "PUT /api/v1/commodities/:commodityID/":
-    tools: [update_commodity]
+    tools: [masterdata_update_commodity]
 
   # costing
   "mutation updateCostCategory":
@@ -832,13 +832,13 @@ writes:
 
   # customer
   "PATCH /api/v1/customers/:customerID/":
-    tools: [update_customer]
+    tools: [customer_update]
   "POST /api/v1/customers/":
-    tools: [create_customer]
+    tools: [customer_create]
   "POST /api/v1/customers/bulk-update-status/":
-    tools: [update_customer_status]
+    tools: [customer_set_status]
   "PUT /api/v1/customers/:customerID/":
-    tools: [update_customer]
+    tools: [customer_update]
 
   # customerpayment
   "mutation applyCreditMemo":
@@ -884,24 +884,24 @@ writes:
   # deskmemory
   "mutation confirmDeskMemory":
     exempt: agent-administration
-    reason: "A person curating what agents remember; an agent writes memory through remember and forget_memory."
+    reason: "A person curating what agents remember; an agent writes memory through remember and agent_retire_memory."
   "mutation createDeskMemory":
-    tools: [remember]
+    tools: [agent_create_memory]
   "mutation dismissDeskMemory":
     exempt: agent-administration
-    reason: "A person curating what agents remember; an agent writes memory through remember and forget_memory."
+    reason: "A person curating what agents remember; an agent writes memory through remember and agent_retire_memory."
   "mutation reviseDeskMemory":
     exempt: agent-administration
-    reason: "A person curating what agents remember; an agent writes memory through remember and forget_memory."
+    reason: "A person curating what agents remember; an agent writes memory through remember and agent_retire_memory."
   "mutation setDeskMemoryStatus":
-    tools: [forget_memory]
+    tools: [agent_retire_memory]
   "mutation setMemorySavingMode":
     exempt: agent-administration
     reason: "Whether agents keep what they learn in the person's conversations straight away or ask first; an agent that could change it could stop asking."
 
   # detention
   "mutation approveDetentionOccurrence":
-    tools: [approve_detention]
+    tools: [detention_approve]
   "mutation createDetentionPolicy":
     exempt: configuration
     reason: "Detention policies are the commercial terms each customer agreed to; an administrator maintains them."
@@ -912,14 +912,14 @@ writes:
     exempt: read-only
     reason: "Replays a detention policy against past stops and saves nothing."
   "mutation disputeDetentionOccurrence":
-    tools: [dispute_detention]
+    tools: [detention_open_dispute]
   "mutation sendDetentionNotice":
-    tools: [send_detention_notice]
+    tools: [detention_send_notice]
   "mutation updateDetentionPolicy":
     exempt: configuration
     reason: "Detention policies are the commercial terms each customer agreed to; an administrator maintains them."
   "mutation waiveDetentionOccurrence":
-    tools: [waive_detention]
+    tools: [detention_waive]
 
   # detentionpolicy
   "POST /api/v1/detention-policies/preview/":
@@ -928,16 +928,16 @@ writes:
 
   # dispatchconsole
   "mutation dispatchAssignMoveToCarrier":
-    tools: [assign_move_to_carrier]
+    tools: [dispatch_create_carrier_assignment]
   "mutation dispatchAssignMoves":
-    tools: [assign_move]
+    tools: [dispatch_assign_move]
   "mutation dispatchCancelCarrierAssignment":
-    tools: [cancel_carrier_assignment]
+    tools: [dispatch_cancel_carrier_assignment]
   "mutation dispatchPlanAutoAssign":
     exempt: read-only
     reason: "Plans automatic assignments for review and saves nothing."
   "mutation dispatchUnassignMoves":
-    tools: [unassign_moves]
+    tools: [dispatch_unassign_move]
 
   # dispatchcontrol
   "PUT /api/v1/dispatch-controls/":
@@ -985,7 +985,7 @@ writes:
 
   # document
   "DELETE /api/v1/documents/:documentID/":
-    tools: [delete_documents]
+    tools: [document_delete]
   "POST /api/v1/documents/:documentID/approve/":
     exempt: attestation
     reason: "Accepting a document as proof, such as a proof of delivery that lets a shipment bill, is the reviewer's sign-off on the evidence; agents may never approve."
@@ -998,7 +998,7 @@ writes:
     exempt: attestation
     reason: "Refusing a document as proof takes it out of the shipment's billing requirements and is the reviewer's judgement of the evidence, recorded with their reason; an agent can point out a doubtful document but does not decide it."
   "POST /api/v1/documents/:documentID/restore/":
-    tools: [restore_document_version]
+    tools: [document_restore_version]
   "POST /api/v1/documents/:documentID/shipment-draft/reextract/":
     exempt: infrastructure
     reason: "A repair a person asks for when the page's machine reading of a document went wrong: it runs extraction again, replaces the draft they are reviewing and archives their import assistant conversation. The extraction pipeline, not a decision, produces what replaces it."
@@ -1006,7 +1006,7 @@ writes:
     exempt: attestation
     reason: "Saying a proof of delivery is signed or unsigned is the reviewer's reading of the evidence that lets a shipment bill, and it overrides what extraction read; an agent can point out a doubtful signature but does not attest to one."
   "POST /api/v1/documents/bulk-delete/":
-    tools: [delete_documents]
+    tools: [document_delete]
   "POST /api/v1/documents/upload-bulk/":
     exempt: infrastructure
     reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document)."
@@ -1201,7 +1201,7 @@ writes:
     exempt: counterparty
     reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
   "mutation reviewDriverExpense":
-    tools: [review_driver_expense]
+    tools: [settlement_review_driver_expense]
   "mutation revokeWorkerPortalAccess":
     exempt: security
     reason: "Removes a driver's sign-in to the driver portal."
@@ -1318,7 +1318,7 @@ writes:
     exempt: read-only
     reason: "Validates, inspects, previews or tests EDI setup and saves nothing."
   "POST /api/v1/edi/communication-profiles/":
-    tools: [apply_edi_connection_draft]
+    tools: [edi_apply_connection_draft]
   "POST /api/v1/edi/communication-profiles/:profileID/poll/":
     exempt: infrastructure
     reason: "Polls a partner mailbox now; the scheduler polls on its own."
@@ -1347,26 +1347,26 @@ writes:
     exempt: configuration
     reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
   "POST /api/v1/edi/document-profiles/":
-    tools: [apply_edi_connection_draft]
+    tools: [edi_apply_connection_draft]
   "POST /api/v1/edi/documents/generate/":
-    tools: [send_edi_status_update]
+    tools: [edi_send_status_update]
   "POST /api/v1/edi/documents/preview/":
     exempt: read-only
     reason: "Validates, inspects, previews or tests EDI setup and saves nothing."
   "POST /api/v1/edi/inbound-files/:fileID/reprocess/":
-    tools: [reprocess_edi_inbound_files]
+    tools: [edi_reprocess_inbound_file]
   "POST /api/v1/edi/inbound-files/bulk-reprocess/":
-    tools: [reprocess_edi_inbound_files]
+    tools: [edi_reprocess_inbound_file]
   "POST /api/v1/edi/load-tenders/":
-    tools: [send_edi_tender]
+    tools: [edi_send_tender]
   "POST /api/v1/edi/messages/:messageID/replay/":
-    tools: [replay_edi_message]
+    tools: [edi_replay_message]
   "POST /api/v1/edi/messages/:messageID/retry-delivery/":
-    tools: [retry_edi_message_delivery]
+    tools: [edi_retry_message]
   "POST /api/v1/edi/messages/bulk-retry-delivery/":
-    tools: [retry_edi_message_delivery]
+    tools: [edi_retry_message]
   "POST /api/v1/edi/partners/":
-    tools: [apply_edi_connection_draft]
+    tools: [edi_apply_connection_draft]
   "POST /api/v1/edi/partners/internal-pairs/":
     exempt: configuration
     reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
@@ -1392,9 +1392,9 @@ writes:
     exempt: read-only
     reason: "Validates, inspects, previews or tests EDI setup and saves nothing."
   "POST /api/v1/edi/tender-changes/:changeID/apply/":
-    tools: [review_edi_tender_change]
+    tools: [edi_review_tender_change]
   "POST /api/v1/edi/tender-changes/:changeID/reject/":
-    tools: [review_edi_tender_change]
+    tools: [edi_review_tender_change]
   "POST /api/v1/edi/test-cases/":
     exempt: configuration
     reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
@@ -1402,37 +1402,37 @@ writes:
     exempt: read-only
     reason: "Validates, inspects, previews or tests EDI setup and saves nothing."
   "POST /api/v1/edi/transfer-changes/:changeID/apply/":
-    tools: [review_edi_transfer_change]
+    tools: [edi_review_transfer_change]
   "POST /api/v1/edi/transfer-changes/:changeID/reject/":
-    tools: [review_edi_transfer_change]
+    tools: [edi_review_transfer_change]
   "POST /api/v1/edi/transfers/:transferID/approve/":
-    tools: [accept_edi_tender]
+    tools: [edi_accept_tender]
   "POST /api/v1/edi/transfers/:transferID/cancel/":
-    tools: [cancel_edi_tender]
+    tools: [edi_cancel_tender]
   "POST /api/v1/edi/transfers/:transferID/expire/":
-    tools: [expire_edi_tender]
+    tools: [edi_expire_tender]
   "POST /api/v1/edi/transfers/:transferID/reject/":
-    tools: [decline_edi_tender]
+    tools: [edi_decline_tender]
   "POST /api/v1/edi/transfers/bulk-approve/":
     exempt: duplicate
-    reason: "Runs POST /api/v1/edi/transfers/:transferID/approve/ once per selected tender; accept_edi_tender answers one tender per proposal so each is previewed and pinned to its own version."
+    reason: "Runs POST /api/v1/edi/transfers/:transferID/approve/ once per selected tender; edi_accept_tender answers one tender per proposal so each is previewed and pinned to its own version."
   "POST /api/v1/edi/transfers/bulk-reject/":
     exempt: duplicate
-    reason: "Runs POST /api/v1/edi/transfers/:transferID/reject/ once per selected tender; decline_edi_tender answers one tender per proposal so each is previewed and pinned to its own version."
+    reason: "Runs POST /api/v1/edi/transfers/:transferID/reject/ once per selected tender; edi_decline_tender answers one tender per proposal so each is previewed and pinned to its own version."
   "POST /api/v1/edi/x12/inspect/":
     exempt: read-only
     reason: "Validates, inspects, previews or tests EDI setup and saves nothing."
   "PUT /api/v1/edi/communication-profiles/:profileID/":
-    tools: [apply_edi_connection_draft]
+    tools: [edi_apply_connection_draft]
   "PUT /api/v1/edi/document-profiles/:profileID/":
-    tools: [apply_edi_connection_draft]
+    tools: [edi_apply_connection_draft]
   "PUT /api/v1/edi/mapping-profiles/:profileID/items/":
     exempt: configuration
     reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
   "PUT /api/v1/edi/partners/:partnerID/":
-    tools: [apply_edi_connection_draft]
+    tools: [edi_apply_connection_draft]
   "PUT /api/v1/edi/partners/:partnerID/mapping-profile/":
-    tools: [apply_edi_connection_draft]
+    tools: [edi_apply_connection_draft]
   "PUT /api/v1/edi/templates/:templateID/":
     exempt: configuration
     reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
@@ -1554,15 +1554,15 @@ writes:
     exempt: configuration
     reason: "The fiscal calendar every posting resolves its period from; an accounting administrator lays its periods out with the fiscal year, and they change with the calendar, not with the work."
   "PUT /api/v1/fiscal-periods/:fiscalPeriodID/activate/":
-    tools: [open_fiscal_period]
+    tools: [ledger_open_fiscal_period]
   "PUT /api/v1/fiscal-periods/:fiscalPeriodID/close/":
-    tools: [close_fiscal_period]
+    tools: [ledger_close_fiscal_period]
   "PUT /api/v1/fiscal-periods/:fiscalPeriodID/lock/":
-    tools: [lock_fiscal_period]
+    tools: [ledger_lock_fiscal_period]
   "PUT /api/v1/fiscal-periods/:fiscalPeriodID/reopen/":
-    tools: [reopen_fiscal_period]
+    tools: [ledger_reopen_fiscal_period]
   "PUT /api/v1/fiscal-periods/:fiscalPeriodID/unlock/":
-    tools: [unlock_fiscal_period]
+    tools: [ledger_unlock_fiscal_period]
 
   # fiscalyear
   "DELETE /api/v1/fiscal-years/:fiscalYearID/":
@@ -1600,11 +1600,11 @@ writes:
 
   # fleetsafety
   "mutation deleteSafetyViolation":
-    tools: [delete_safety_violation]
+    tools: [worker_delete_safety_violation]
   "mutation recordSafetyViolation":
-    tools: [record_safety_violation]
+    tools: [worker_record_safety_violation]
   "mutation updateSafetyViolation":
-    tools: [update_safety_violation]
+    tools: [worker_update_safety_violation]
 
   # formulatemplate
   "DELETE /api/v1/formula-templates/:templateID/test-cases/:testCaseID":
@@ -1697,41 +1697,41 @@ writes:
 
   # fuelpurchase
   "mutation assignFuelCard":
-    tools: [assign_fuel_card]
+    tools: [fuel_assign_card]
   "mutation cancelFuelCard":
     exempt: configuration
-    reason: "Fuel cards are payment instruments an administrator issues, edits and cancels with the card provider; an agent assigns a card already on file (assign_fuel_card)."
+    reason: "Fuel cards are payment instruments an administrator issues, edits and cancels with the card provider; an agent assigns a card already on file (fuel_assign_card)."
   "mutation commitFuelPurchaseImport":
-    tools: [commit_fuel_purchase_import]
+    tools: [fuel_commit_purchase_import]
   "mutation createFuelCard":
     exempt: configuration
-    reason: "Fuel cards are payment instruments an administrator issues, edits and cancels with the card provider; an agent assigns a card already on file (assign_fuel_card)."
+    reason: "Fuel cards are payment instruments an administrator issues, edits and cancels with the card provider; an agent assigns a card already on file (fuel_assign_card)."
   "mutation createFuelPurchase":
-    tools: [record_fuel_purchase]
+    tools: [fuel_record_purchase]
   "mutation createFuelPurchaseImport":
     exempt: infrastructure
-    reason: "Part of uploading a statement file from a browser: the batch holds the upload and staging parses it; an agent works a staged batch with commit_fuel_purchase_import or discard_fuel_purchase_import."
+    reason: "Part of uploading a statement file from a browser: the batch holds the upload and staging parses it; an agent works a staged batch with fuel_commit_purchase_import or fuel_discard_purchase_import."
   "mutation deleteFuelPurchase":
-    tools: [delete_fuel_purchase]
+    tools: [fuel_delete_purchase]
   "mutation discardFuelPurchaseImport":
-    tools: [discard_fuel_purchase_import]
+    tools: [fuel_discard_purchase_import]
   "mutation resolveFuelPurchaseImportRows":
-    tools: [resolve_fuel_purchase_import_rows]
+    tools: [fuel_resolve_purchase_import_rows]
   "mutation stageFuelPurchaseImport":
     exempt: infrastructure
-    reason: "Part of uploading a statement file from a browser: the batch holds the upload and staging parses it; an agent works a staged batch with commit_fuel_purchase_import or discard_fuel_purchase_import."
+    reason: "Part of uploading a statement file from a browser: the batch holds the upload and staging parses it; an agent works a staged batch with fuel_commit_purchase_import or fuel_discard_purchase_import."
   "mutation syncFuelCardFeed":
     exempt: infrastructure
-    reason: "Reads the card provider's feed on the connection an administrator set up, which runs on its own schedule; resolve_fuel_purchase_import_rows works the rows a run held back."
+    reason: "Reads the card provider's feed on the connection an administrator set up, which runs on its own schedule; fuel_resolve_purchase_import_rows works the rows a run held back."
   "mutation updateFuelCard":
     exempt: configuration
-    reason: "Fuel cards are payment instruments an administrator issues, edits and cancels with the card provider; an agent assigns a card already on file (assign_fuel_card)."
+    reason: "Fuel cards are payment instruments an administrator issues, edits and cancels with the card provider; an agent assigns a card already on file (fuel_assign_card)."
   "mutation updateFuelPurchase":
-    tools: [correct_fuel_purchase]
+    tools: [fuel_correct_purchase]
 
   # fuelsurcharge
   "mutation addFuelIndexPrice":
-    tools: [record_fuel_index_price]
+    tools: [rate_record_fuel_index_price]
   "mutation createFuelIndex":
     exempt: configuration
     reason: "Fuel surcharge programs and the indexes they follow are commercial terms an administrator sets up."
@@ -1743,7 +1743,7 @@ writes:
     reason: "Fuel surcharge programs and the indexes they follow are commercial terms an administrator sets up."
   "mutation deleteFuelIndexPrice":
     exempt: configuration
-    reason: "Pruning an index's price history is curation an administrator does; a manual price entered wrong is fixed with correct_fuel_index_price."
+    reason: "Pruning an index's price history is curation an administrator does; a manual price entered wrong is fixed with rate_correct_fuel_index_price."
   "mutation deleteFuelSurchargeProgram":
     exempt: configuration
     reason: "Fuel surcharge programs and the indexes they follow are commercial terms an administrator sets up."
@@ -1751,7 +1751,7 @@ writes:
     exempt: configuration
     reason: "Fuel surcharge programs and the indexes they follow are commercial terms an administrator sets up."
   "mutation updateFuelIndexPrice":
-    tools: [correct_fuel_index_price]
+    tools: [rate_correct_fuel_index_price]
   "mutation updateFuelSurchargeProgram":
     exempt: configuration
     reason: "Fuel surcharge programs and the indexes they follow are commercial terms an administrator sets up."
@@ -1785,13 +1785,13 @@ writes:
 
   # hazardousmaterial
   "PATCH /api/v1/hazardous-materials/:hazardousMaterialID/":
-    tools: [update_hazardous_material]
+    tools: [masterdata_update_hazardous_material]
   "POST /api/v1/hazardous-materials/":
-    tools: [create_hazardous_material]
+    tools: [masterdata_create_hazardous_material]
   "POST /api/v1/hazardous-materials/bulk-update-status/":
-    tools: [update_hazardous_material_status]
+    tools: [masterdata_set_hazardous_material_status]
   "PUT /api/v1/hazardous-materials/:hazardousMaterialID/":
-    tools: [update_hazardous_material]
+    tools: [masterdata_update_hazardous_material]
 
   # hazmatsegregationrule
   "PATCH /api/v1/hazmat-segregation-rules/:hazmatSegregationRuleID/":
@@ -1806,7 +1806,7 @@ writes:
 
   # factoring
   "mutation acknowledgeFactoringNoa":
-    tools: [record_factoring_noa_acknowledgement]
+    tools: [factoring_record_noa_acknowledgement]
   "mutation activateFactoringAgreement":
     exempt: configuration
     reason: "Factoring agreement terms (advance, reserve, fee tiers, recourse, accounting treatment) are copied from the signed contract with the factor by an administrator."
@@ -1814,49 +1814,49 @@ writes:
     exempt: configuration
     reason: "Factoring agreement terms (advance, reserve, fee tiers, recourse, accounting treatment) are copied from the signed contract with the factor by an administrator."
   "mutation cancelFactoringSubmission":
-    tools: [cancel_factoring_submission]
+    tools: [factoring_cancel_submission]
   "mutation draftFactoringNoa":
-    tools: [draft_factoring_noa]
+    tools: [factoring_create_noa]
   "mutation endFactoringAgreement":
     exempt: configuration
     reason: "Factoring agreement terms (advance, reserve, fee tiers, recourse, accounting treatment) are copied from the signed contract with the factor by an administrator."
   "mutation releaseFactoringNoa":
-    tools: [release_factoring_noa]
+    tools: [factoring_release_noa]
   "mutation applyFactoringRemittance":
-    tools: [apply_factoring_remittance]
+    tools: [factoring_apply_remittance]
   "mutation createFactoringRemittance":
     exempt: infrastructure
-    reason: "Part of uploading a factor's remittance file from a browser: the remittance holds the upload and staging reads it; remittances that arrive by email are opened by the inbound pipeline, and an agent works a read remittance with resolve_factoring_remittance_line, apply_factoring_remittance or discard_factoring_remittance."
+    reason: "Part of uploading a factor's remittance file from a browser: the remittance holds the upload and staging reads it; remittances that arrive by email are opened by the inbound pipeline, and an agent works a read remittance with factoring_resolve_remittance_line, factoring_apply_remittance or factoring_discard_remittance."
   "mutation discardFactoringRemittance":
-    tools: [discard_factoring_remittance]
+    tools: [factoring_discard_remittance]
   "mutation rematchFactoringRemittance":
-    tools: [rematch_factoring_remittance]
+    tools: [factoring_rematch_remittance]
   "mutation stageFactoringRemittance":
     exempt: infrastructure
-    reason: "Part of uploading a factor's remittance file from a browser: the remittance holds the upload and staging reads it; remittances that arrive by email are opened by the inbound pipeline, and an agent works a read remittance with resolve_factoring_remittance_line, apply_factoring_remittance or discard_factoring_remittance."
+    reason: "Part of uploading a factor's remittance file from a browser: the remittance holds the upload and staging reads it; remittances that arrive by email are opened by the inbound pipeline, and an agent works a read remittance with factoring_resolve_remittance_line, factoring_apply_remittance or factoring_discard_remittance."
   "mutation updateFactoringRemittanceLine":
-    tools: [resolve_factoring_remittance_line]
+    tools: [factoring_resolve_remittance_line]
   "mutation recordFactoringChargeback":
-    tools: [record_factoring_chargeback]
+    tools: [factoring_record_chargeback]
   "mutation recordFactoringFunding":
-    tools: [record_factoring_funding]
+    tools: [factoring_record_funding]
   "mutation releaseFactoringReserve":
-    tools: [release_factoring_reserve]
+    tools: [factoring_release_reserve]
   "mutation requestMissingFactoringDocuments":
-    tools: [request_missing_factoring_document]
+    tools: [factoring_request_document]
   "mutation retryFactoringSubmission":
-    tools: [retry_factoring_submission]
+    tools: [factoring_retry_submission]
   "mutation reverseFactoringChargeback":
-    tools: [reverse_factoring_chargeback]
+    tools: [factoring_reverse_chargeback]
   "mutation saveFactoringTransport":
     exempt: configuration
     reason: "How schedules reach a factor (its schedule inbox, or its SFTP host, account, password or key and host key) is set up by an administrator from the factor's onboarding instructions, and holds a credential no agent may read or write."
   "mutation sendFactoringNoa":
-    tools: [send_factoring_noa]
+    tools: [factoring_send_noa]
   "mutation setInvoiceFactoringOverride":
-    tools: [set_invoice_factoring_override]
+    tools: [factoring_set_override]
   "mutation submitInvoicesToFactor":
-    tools: [submit_invoices_to_factor]
+    tools: [factoring_create_submission]
   "mutation testFactoringTransport":
     exempt: configuration
     reason: "Testing a factor's delivery settings connects with the administrator's stored credential and changes nothing but the recorded test result."
@@ -1894,7 +1894,7 @@ writes:
     exempt: user-preference
     reason: "A person's own interface state; it changes nothing anyone else sees."
   "mutation updateHomeLayout":
-    tools: [add_home_widget, remove_home_widget, arrange_home_layout]
+    tools: [home_add_widget, home_remove_widget, home_arrange_layout]
   "mutation updateHomeLayoutPreset":
     exempt: user-preference
     reason: "A person's own interface state; it changes nothing anyone else sees."
@@ -1948,15 +1948,15 @@ writes:
 
   # ifta
   "mutation amendIftaReturn":
-    tools: [amend_ifta_return]
+    tools: [fuel_amend_ifta_return]
   "mutation backfillJurisdictionMiles":
-    tools: [backfill_jurisdiction_miles]
+    tools: [fuel_backfill_jurisdiction_miles]
   "mutation createIftaMileageEntry":
-    tools: [record_ifta_mileage_entry]
+    tools: [fuel_record_ifta_mileage_entry]
   "mutation deleteIftaMileageEntry":
-    tools: [delete_ifta_mileage_entry]
+    tools: [fuel_delete_ifta_mileage_entry]
   "mutation deleteIftaReturn":
-    tools: [delete_ifta_return]
+    tools: [fuel_delete_ifta_return]
   "mutation deleteIftaTaxRate":
     exempt: configuration
     reason: "IFTA tax rates are the jurisdictions' published rates an administrator loads each quarter; every return is computed from them."
@@ -1964,19 +1964,19 @@ writes:
     exempt: attestation
     reason: "A fuel tax return is signed off by the person accountable for filing it."
   "mutation generateIftaReturn":
-    tools: [generate_ifta_return]
+    tools: [fuel_generate_ifta_return]
   "mutation markIftaReturnFiled":
     exempt: attestation
     reason: "Records that a person filed the return with the jurisdiction."
   "mutation recalculateMoveJurisdictionMiles":
-    tools: [recalculate_move_jurisdiction_miles]
+    tools: [fuel_recalculate_jurisdiction_miles]
   "mutation recomputeIftaReturn":
-    tools: [recompute_ifta_return]
+    tools: [fuel_recalculate_ifta_return]
   "mutation reopenIftaReturn":
     exempt: attestation
     reason: "Reopening undoes the sign-off of the person accountable for filing the return, so that person decides."
   "mutation updateIftaMileageEntry":
-    tools: [correct_ifta_mileage_entry]
+    tools: [fuel_correct_ifta_mileage_entry]
   "mutation upsertIftaTaxRates":
     exempt: configuration
     reason: "IFTA tax rates are the jurisdictions' published rates an administrator loads each quarter; every return is computed from them."
@@ -1988,7 +1988,7 @@ writes:
 
   # inboundmessage
   "mutation assignInboundMessages":
-    tools: [assign_inbound_messages]
+    tools: [inbox_assign_inbound_message]
   "mutation createInboundMailbox":
     exempt: configuration
     reason: "Connects the organization to an outside system; an administrator owns the connection and its credentials."
@@ -1999,9 +1999,9 @@ writes:
     exempt: user-preference
     reason: "A saved search in one person's own Triage sidebar."
   "mutation handOffTriage":
-    tools: [hand_off_triage]
+    tools: [inbox_assign_queue]
   "mutation linkInboundMessage":
-    tools: [link_inbound_message]
+    tools: [inbox_link_inbound_message]
   "mutation readUnreadInboundMessages":
     exempt: agent-administration
     reason: "Sets Nova reading the backlog it never read; it switches an agent on rather than doing an agent's work."
@@ -2009,12 +2009,12 @@ writes:
     exempt: user-preference
     reason: "A saved search in one person's own Triage sidebar."
   "mutation reopenInboundMessages":
-    tools: [reopen_inbound_messages]
+    tools: [inbox_reopen_inbound_message]
   "mutation reviewInboundMessage":
-    tools: [mark_inbound_message]
+    tools: [inbox_mark_inbound_message]
   "mutation reviewInboundMessages":
     exempt: duplicate
-    reason: "The bulk form of reviewInboundMessage; mark_inbound_message settles each message."
+    reason: "The bulk form of reviewInboundMessage; inbox_mark_inbound_message settles each message."
   "mutation rotateInboundMailboxToken":
     exempt: security
     reason: "Replaces the secret that authenticates mail forwarded into the mailbox."
@@ -2028,11 +2028,11 @@ writes:
     exempt: security
     reason: "Sets the secret that authenticates mail forwarded into the mailbox."
   "mutation snoozeInboundMessages":
-    tools: [snooze_inbound_messages]
+    tools: [inbox_snooze_inbound_message]
   "mutation stopWaitingForInboundReply":
-    tools: [wake_inbound_message]
+    tools: [inbox_wake_inbound_message]
   "mutation unlinkInboundMessage":
-    tools: [unlink_inbound_message]
+    tools: [inbox_unlink_inbound_message]
   "mutation updateInboundMailbox":
     exempt: configuration
     reason: "Connects the organization to an outside system; an administrator owns the connection and its credentials."
@@ -2043,49 +2043,49 @@ writes:
     exempt: configuration
     reason: "The on-call person and the end of the working day are organization-wide settings an administrator owns."
   "mutation waitForInboundReply":
-    tools: [wait_for_inbound_reply]
+    tools: [inbox_await_reply]
   "mutation wakeInboundMessage":
-    tools: [wake_inbound_message]
+    tools: [inbox_wake_inbound_message]
 
   # inboundreply
   "mutation blockInboundSender":
-    tools: [block_inbound_sender]
+    tools: [inbox_block_sender]
   "mutation createInboundLoad":
-    tools: [create_inbound_load]
+    tools: [inbox_create_load]
   "mutation createTriageReplyTemplate":
     exempt: configuration
     reason: "Reply templates are organization-wide wording an administrator maintains; replies use them."
   "mutation decideInboundStops":
-    tools: [settle_detention_dispute]
+    tools: [detention_resolve_dispute]
   "mutation deleteTriageReplyTemplate":
     exempt: configuration
     reason: "Reply templates are organization-wide wording an administrator maintains; replies use them."
   "mutation discardInboundLoad":
-    tools: [discard_inbound_load]
+    tools: [inbox_discard_load]
   "mutation discardInboundReplyDraft":
-    tools: [discard_inbound_reply_draft]
+    tools: [inbox_discard_reply_draft]
   "mutation draftInboundLoad":
-    tools: [draft_inbound_load]
+    tools: [inbox_draft_load]
   "mutation draftInboundMany":
     exempt: duplicate
-    reason: "The bulk, background form of draftInboundReply and draftInboundLoad; draft_inbound_reply and draft_inbound_load draft each message."
+    reason: "The bulk, background form of draftInboundReply and draftInboundLoad; inbox_draft_reply and inbox_draft_load draft each message."
   "mutation draftInboundReply":
-    tools: [draft_inbound_reply]
+    tools: [inbox_draft_reply]
   "mutation fileInboundAttachment":
-    tools: [file_inbound_attachment]
+    tools: [inbox_file_attachment]
   "mutation fileInboundMany":
     exempt: duplicate
-    reason: "The bulk form of fileInboundAttachment, filing each readable attachment by the kind it was read as; file_inbound_attachment files each one, taking that kind when no type is named."
+    reason: "The bulk form of fileInboundAttachment, filing each readable attachment by the kind it was read as; inbox_file_attachment files each one, taking that kind when no type is named."
   "mutation logInboundException":
-    tools: [log_inbound_exception]
+    tools: [inbox_record_discrepancy]
   "mutation saveInboundReplyDraft":
-    tools: [draft_inbound_reply]
+    tools: [inbox_draft_reply]
   "mutation sendInboundReply":
-    tools: [reply_to_inbound_message]
+    tools: [inbox_send_reply]
   "mutation unblockInboundSender":
-    tools: [unblock_inbound_sender]
+    tools: [inbox_unblock_sender]
   "mutation unfileInboundAttachment":
-    tools: [unfile_inbound_attachment]
+    tools: [inbox_unfile_attachment]
   "mutation updateTriageReplyTemplate":
     exempt: configuration
     reason: "Reply templates are organization-wide wording an administrator maintains; replies use them."
@@ -2100,9 +2100,9 @@ writes:
 
   # insight
   "POST /api/v1/insights/:insightID/dismiss/":
-    tools: [dismiss_insight]
+    tools: [insight_dismiss]
   "POST /api/v1/insights/:insightID/restore/":
-    tools: [restore_insight]
+    tools: [insight_restore]
 
   # integration
   "POST /api/v1/integrations/:type/test-connection/":
@@ -2212,14 +2212,14 @@ writes:
 
   # journalreversal
   "POST /api/v1/accounting/journal-reversals/":
-    tools: [request_journal_reversal]
+    tools: [ledger_create_journal_reversal]
   "POST /api/v1/accounting/journal-reversals/:reversalID/approve/":
     exempt: attestation
     reason: "Approving a reversal is the second person's sign-off on taking a posted entry back out of the ledger; an agent requests reversals and never stands in as their approver."
   "POST /api/v1/accounting/journal-reversals/:reversalID/cancel/":
-    tools: [cancel_journal_reversal]
+    tools: [ledger_cancel_journal_reversal]
   "POST /api/v1/accounting/journal-reversals/:reversalID/post/":
-    tools: [post_journal_reversal]
+    tools: [ledger_post_journal_reversal]
   "POST /api/v1/accounting/journal-reversals/:reversalID/reject/":
     exempt: attestation
     reason: "Turning a reversal down is the approver's half of the same sign-off, made by the accountable person reviewing it."
@@ -2250,13 +2250,13 @@ writes:
 
   # location
   "PATCH /api/v1/locations/:locationID/":
-    tools: [update_location]
+    tools: [location_update]
   "POST /api/v1/locations/":
-    tools: [create_location]
+    tools: [location_create]
   "POST /api/v1/locations/bulk-update-status/":
-    tools: [update_location_status]
+    tools: [location_set_status]
   "PUT /api/v1/locations/:locationID/":
-    tools: [update_location]
+    tools: [location_update]
 
   # locationcategory
   "PATCH /api/v1/location-categories/:locationCategoryID/":
@@ -2274,18 +2274,18 @@ writes:
     exempt: attestation
     reason: "Approving a manual journal is the second person's sign-off on an entry someone else prepared; an agent prepares journals and never stands in as their approver."
   "POST /api/v1/accounting/manual-journals/:requestID/cancel/":
-    tools: [cancel_manual_journal]
+    tools: [ledger_cancel_manual_journal]
   "POST /api/v1/accounting/manual-journals/:requestID/post/":
-    tools: [post_manual_journal]
+    tools: [ledger_post_manual_journal]
   "POST /api/v1/accounting/manual-journals/:requestID/reject/":
     exempt: attestation
     reason: "Sending a manual journal back is the approver's half of the same sign-off, made by the accountable person reviewing it."
   "POST /api/v1/accounting/manual-journals/:requestID/submit/":
-    tools: [submit_manual_journal]
+    tools: [ledger_submit_manual_journal]
   "POST /api/v1/accounting/manual-journals/drafts/":
-    tools: [draft_manual_journal]
+    tools: [ledger_create_manual_journal]
   "PUT /api/v1/accounting/manual-journals/drafts/:requestID/":
-    tools: [revise_manual_journal_draft]
+    tools: [ledger_update_manual_journal]
 
   # notification
   "mutation dismissNotifications":
@@ -2392,12 +2392,12 @@ writes:
     exempt: attestation
     reason: "Closing a review is the reviewer's sign-off on a record the worker has acknowledged; an agent drafts, it does not sign."
   "mutation createPerformanceReview":
-    tools: [start_performance_review]
+    tools: [worker_start_performance_review]
   "mutation createPerformanceReviewTemplate":
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
   "mutation deletePerformanceReview":
-    tools: [delete_performance_review]
+    tools: [worker_delete_performance_review]
   "mutation reopenPerformanceReview":
     exempt: attestation
     reason: "Reopening a submitted review withdraws the reviewer's signed assessment from the worker; only the reviewer does that."
@@ -2408,7 +2408,7 @@ writes:
     exempt: attestation
     reason: "Submitting is the reviewer signing the assessment and sending it to the worker to acknowledge; an agent drafts, it does not sign."
   "mutation updatePerformanceReview":
-    tools: [draft_performance_review]
+    tools: [worker_update_performance_review]
   "mutation updatePerformanceReviewTemplate":
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
@@ -2429,7 +2429,7 @@ writes:
 
   # ptopolicy
   "mutation adjustWorkerPtoBalance":
-    tools: [adjust_worker_pto_balance]
+    tools: [worker_adjust_pto_balance]
   "mutation archivePtoPolicy":
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
@@ -2462,40 +2462,40 @@ writes:
 
   # rateagreement
   "POST /api/v1/rate-agreements/":
-    tools: [draft_rate_agreement]
+    tools: [rate_create_agreement]
   "POST /api/v1/rate-agreements/:rateAgreementID/approve/":
-    tools: [approve_rate_agreement]
+    tools: [rate_approve_agreement]
   "POST /api/v1/rate-agreements/:rateAgreementID/archive/":
-    tools: [archive_rate_agreement]
+    tools: [rate_archive_agreement]
   "POST /api/v1/rate-agreements/:rateAgreementID/duplicate/":
-    tools: [duplicate_rate_agreement]
+    tools: [rate_duplicate_agreement]
   "POST /api/v1/rate-agreements/:rateAgreementID/reject/":
-    tools: [reject_rate_agreement]
+    tools: [rate_reject_agreement]
   "POST /api/v1/rate-agreements/:rateAgreementID/resume/":
-    tools: [resume_rate_agreement]
+    tools: [rate_resume_agreement]
   "POST /api/v1/rate-agreements/:rateAgreementID/rules/amend/":
-    tools: [amend_rate_agreement_rules]
+    tools: [rate_amend_agreement_rules]
   "POST /api/v1/rate-agreements/:rateAgreementID/submit/":
-    tools: [submit_rate_agreement]
+    tools: [rate_submit_agreement]
   "POST /api/v1/rate-agreements/:rateAgreementID/suspend/":
-    tools: [suspend_rate_agreement]
+    tools: [rate_suspend_agreement]
   "POST /api/v1/rate-agreements/rate-increase/apply/":
-    tools: [apply_rate_increase]
+    tools: [rate_apply_increase]
   "POST /api/v1/rate-agreements/rate-increase/preview/":
     exempt: read-only
     reason: "Plans a general rate increase for review and saves nothing."
   "PUT /api/v1/rate-agreements/:rateAgreementID/":
-    tools: [revise_rate_agreement_draft]
+    tools: [rate_update_agreement_draft]
 
   # rateconfirmation
   "POST /api/v1/rate-confirmations/:rateConfirmationID/confirm/":
-    tools: [record_rate_confirmation_confirmed]
+    tools: [rate_record_confirmation]
   "POST /api/v1/rate-confirmations/:rateConfirmationID/send/":
-    tools: [send_rate_confirmation]
+    tools: [rate_send_confirmation]
   "POST /api/v1/rate-confirmations/:rateConfirmationID/void/":
-    tools: [void_rate_confirmation]
+    tools: [rate_void_confirmation]
   "POST /api/v1/shipment-moves/:moveID/rate-confirmations/":
-    tools: [generate_rate_confirmation]
+    tools: [rate_generate_confirmation]
 
   # rateconfirmationpublic
   "POST /api/v1/rate-confirmation-links/:token/confirm/":
@@ -2507,9 +2507,9 @@ writes:
     exempt: infrastructure
     reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document)."
   "POST /api/v1/rate-imports/:rateImportID/commit/":
-    tools: [commit_rate_import]
+    tools: [rate_commit_import]
   "POST /api/v1/rate-imports/:rateImportID/discard/":
-    tools: [discard_rate_import]
+    tools: [rate_discard_import]
 
   # ratematrix
   "DELETE /api/v1/rate-matrices/:rateMatrixID/":
@@ -2538,7 +2538,7 @@ writes:
 
   # ratesimulation
   "POST /api/v1/rate-simulations/":
-    tools: [run_rate_simulation]
+    tools: [rate_run_simulation]
 
   # ratezone
   "DELETE /api/v1/rate-zones/:rateZoneID/":
@@ -2592,37 +2592,37 @@ writes:
     exempt: read-only
     reason: "Renders a dashboard to a file for download."
   "mutation cancelReportRun":
-    tools: [cancel_report_run]
+    tools: [report_cancel_run]
   "mutation createReportDashboard":
-    tools: [create_dashboard]
+    tools: [report_create_dashboard]
   "mutation createReportDefinition":
-    tools: [create_report]
+    tools: [report_create]
   "mutation createReportSchedule":
-    tools: [schedule_report]
+    tools: [report_create_schedule]
   "mutation createReportView":
     exempt: user-preference
     reason: "A saved view is one person's own columns and filters on a report page."
   "mutation deleteReportDashboard":
-    tools: [delete_dashboard]
+    tools: [report_delete_dashboard]
   "mutation deleteReportDefinition":
-    tools: [delete_report]
+    tools: [report_delete]
   "mutation deleteReportSchedule":
-    tools: [delete_report_schedule]
+    tools: [report_delete_schedule]
   "mutation deleteReportView":
     exempt: user-preference
     reason: "A saved view is one person's own columns and filters on a report page."
   "mutation forkCannedReport":
-    tools: [fork_report]
+    tools: [report_fork]
   "mutation resetCannedFork":
-    tools: [reset_report_fork]
+    tools: [report_reset_fork]
   "mutation runReport":
-    tools: [run_report]
+    tools: [report_run]
   "mutation updateReportDashboard":
-    tools: [add_dashboard_tile]
+    tools: [report_add_dashboard_tile]
   "mutation updateReportDefinition":
-    tools: [update_report]
+    tools: [report_update]
   "mutation updateReportSchedule":
-    tools: [update_report_schedule]
+    tools: [report_update_schedule]
   "mutation updateReportView":
     exempt: user-preference
     reason: "A saved view is one person's own columns and filters on a report page."
@@ -2668,28 +2668,28 @@ writes:
   # routingguide
   "DELETE /api/v1/routing-guides/:guideID/":
     exempt: configuration
-    reason: "A routing guide is the lane-by-lane carrier waterfall an administrator maintains; tender_move_to_routing_guide uses it."
+    reason: "A routing guide is the lane-by-lane carrier waterfall an administrator maintains; dispatch_create_tender_from_routing_guide uses it."
   "POST /api/v1/routing-guides/":
     exempt: configuration
-    reason: "A routing guide is the lane-by-lane carrier waterfall an administrator maintains; tender_move_to_routing_guide uses it."
+    reason: "A routing guide is the lane-by-lane carrier waterfall an administrator maintains; dispatch_create_tender_from_routing_guide uses it."
   "PUT /api/v1/routing-guides/:guideID/":
     exempt: configuration
-    reason: "A routing guide is the lane-by-lane carrier waterfall an administrator maintains; tender_move_to_routing_guide uses it."
+    reason: "A routing guide is the lane-by-lane carrier waterfall an administrator maintains; dispatch_create_tender_from_routing_guide uses it."
 
   # scheduling
   "mutation assignWorkerShift":
-    tools: [assign_worker_shift]
+    tools: [worker_assign_shift]
   "mutation createShiftTemplate":
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
   "mutation endWorkerShiftAssignment":
-    tools: [end_worker_shift_assignment]
+    tools: [worker_end_shift_assignment]
   "mutation proposeShiftSwap":
-    tools: [propose_shift_swap]
+    tools: [worker_request_shift_swap]
   "mutation setWorkerAvailabilityPreference":
-    tools: [set_worker_availability_preference]
+    tools: [worker_set_availability_preference]
   "mutation transitionShiftSwap":
-    tools: [approve_shift_swap, reject_shift_swap, withdraw_shift_swap]
+    tools: [worker_approve_shift_swap, worker_reject_shift_swap, worker_withdraw_shift_swap]
   "mutation updateShiftTemplate":
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
@@ -2712,25 +2712,25 @@ writes:
 
   # servicefailure
   "PATCH /api/v1/service-failures/:serviceFailureID/":
-    tools: [update_service_failure]
+    tools: [exception_update_service_failure]
   "POST /api/v1/service-failures/":
     exempt: read-only
-    reason: "The service refuses every manual service failure: failures are opened only by evaluation against stop actuals, which evaluate_service_failures runs, so the route changes nothing."
+    reason: "The service refuses every manual service failure: failures are opened only by evaluation against stop actuals, which exception_evaluate_service_failures runs, so the route changes nothing."
   "POST /api/v1/service-failures/:serviceFailureID/edi-214-payload/":
     exempt: read-only
     reason: "Builds the EDI 214 a service failure would send and returns it."
   "POST /api/v1/service-failures/:serviceFailureID/resolve/":
-    tools: [resolve_service_failure]
+    tools: [exception_resolve_service_failure]
   "POST /api/v1/service-failures/:serviceFailureID/review/":
-    tools: [review_service_failure]
+    tools: [exception_review_service_failure]
   "POST /api/v1/service-failures/:serviceFailureID/void/":
-    tools: [void_service_failure]
+    tools: [exception_void_service_failure]
   "POST /api/v1/service-failures/bulk-evaluate/":
-    tools: [evaluate_service_failures]
+    tools: [exception_evaluate_service_failures]
   "POST /api/v1/service-failures/evaluate-shipment/:shipmentID/":
-    tools: [evaluate_service_failures]
+    tools: [exception_evaluate_service_failures]
   "POST /api/v1/service-failures/evaluate-stop/:shipmentID/:stopID/":
-    tools: [evaluate_service_failures]
+    tools: [exception_evaluate_service_failures]
 
   # servicefailurereasoncode
   "PATCH /api/v1/service-failure-reason-codes/:reasonCodeID/":
@@ -2784,7 +2784,7 @@ writes:
     reason: "Computes a figure or a check for the shipment form and saves nothing."
   "POST /api/v1/shipments/delay/":
     exempt: infrastructure
-    reason: "The sweep the Temporal schedule runs to mark late shipments delayed from their stop windows; evaluate_service_failures records a late stop for one shipment."
+    reason: "The sweep the Temporal schedule runs to mark late shipments delayed from their stop windows; exception_evaluate_service_failures records a late stop for one shipment."
   "POST /api/v1/shipments/previous-rates/":
     exempt: read-only
     reason: "Computes a figure or a check for the shipment form and saves nothing."
@@ -2851,11 +2851,11 @@ writes:
     exempt: user-preference
     reason: "A person marking an item in their own suggestion queue done or for later; it changes no record, only what that person's queue shows."
   "mutation notifyShipmentDelay":
-    tools: [email_customer]
+    tools: [customer_send_email]
   "mutation tenderShipments":
-    tools: [tender_move_to_routing_guide, tender_move_to_carriers]
+    tools: [dispatch_create_tender_from_routing_guide, dispatch_create_tender]
   "mutation undoShipmentSuggestionDecision":
-    tools: [unassign_moves, cancel_tender]
+    tools: [dispatch_unassign_move, dispatch_cancel_tender]
 
   # shipmentcontrol
   "PUT /api/v1/shipment-controls/":
@@ -2864,13 +2864,13 @@ writes:
 
   # shipmentmove
   "POST /api/v1/shipment-moves/:moveID/split/":
-    tools: [split_move_at_relay]
+    tools: [dispatch_split_move]
   "POST /api/v1/shipment-moves/:moveID/stops/:stopID/record-actual/":
-    tools: [record_stop_actual]
+    tools: [dispatch_record_stop_actual]
   "POST /api/v1/shipment-moves/:moveID/update-status/":
-    tools: [update_move_status]
+    tools: [dispatch_set_move_status]
   "POST /api/v1/shipment-moves/bulk-update-status/":
-    tools: [update_move_status]
+    tools: [dispatch_set_move_status]
 
   # shipmenttype
   "PATCH /api/v1/shipment-types/:shipmentTypeID/":
@@ -2898,19 +2898,19 @@ writes:
 
   # tablechangealert
   "DELETE /api/v1/tca/subscriptions/:id":
-    tools: [delete_table_change_alert]
+    tools: [report_delete_table_change_alert]
   "PATCH /api/v1/tca/subscriptions/:id/pause":
-    tools: [set_table_change_alert_status]
+    tools: [report_set_table_change_alert_status]
   "PATCH /api/v1/tca/subscriptions/:id/resume":
-    tools: [set_table_change_alert_status]
+    tools: [report_set_table_change_alert_status]
   "POST /api/v1/tca/subscriptions/":
-    tools: [create_table_change_alert]
+    tools: [report_create_table_change_alert]
   "PUT /api/v1/tca/subscriptions/:id":
-    tools: [update_table_change_alert]
+    tools: [report_update_table_change_alert]
 
   # tableconfiguration
   "mutation createTableConfiguration":
-    tools: [save_table_view]
+    tools: [report_save_table_view]
   "mutation deleteTableConfiguration":
     exempt: user-preference
     reason: "A person's own interface state; it changes nothing anyone else sees."
@@ -2954,7 +2954,7 @@ writes:
   # tablequery
   "POST /api/v1/tables/:resource/compose/":
     exempt: read-only
-    reason: "Composes a table view from a request and returns it; save_table_view saves one."
+    reason: "Composes a table view from a request and returns it; report_save_table_view saves one."
 
   # telematics
   "POST /api/v1/webhooks/samsara/:webhookToken/":
@@ -2977,15 +2977,15 @@ writes:
 
   # tender
   "POST /api/v1/tenders/:tenderID/bounce/":
-    tools: [record_tender_response]
+    tools: [dispatch_record_tender_response]
   "POST /api/v1/tenders/:tenderID/cancel/":
-    tools: [cancel_tender]
+    tools: [dispatch_cancel_tender]
   "POST /api/v1/tenders/offers/:offerID/respond/":
-    tools: [record_tender_response]
+    tools: [dispatch_record_tender_response]
   "POST /api/v1/tenders/spot/":
-    tools: [tender_move_to_carriers]
+    tools: [dispatch_create_tender]
   "POST /api/v1/tenders/waterfall/":
-    tools: [tender_move_to_routing_guide]
+    tools: [dispatch_create_tender_from_routing_guide]
 
   # tenderpublic
   "POST /api/v1/tender-offers/:token/accept/":
@@ -3021,27 +3021,27 @@ writes:
 
   # tractor
   "mutation bulkUpdateTractorStatus":
-    tools: [update_tractor_status]
+    tools: [equipment_set_tractor_status]
   "mutation createTractor":
-    tools: [create_tractor]
+    tools: [equipment_create_tractor]
   "mutation locateTractor":
-    tools: [locate_tractor]
+    tools: [equipment_set_tractor_location]
   "mutation patchTractor":
-    tools: [update_tractor]
+    tools: [equipment_update_tractor]
   "mutation updateTractor":
-    tools: [update_tractor]
+    tools: [equipment_update_tractor]
 
   # trailer
   "mutation bulkUpdateTrailerStatus":
-    tools: [update_trailer_status]
+    tools: [equipment_set_trailer_status]
   "mutation createTrailer":
-    tools: [create_trailer]
+    tools: [equipment_create_trailer]
   "mutation locateTrailer":
-    tools: [locate_trailer]
+    tools: [equipment_set_trailer_location]
   "mutation patchTrailer":
-    tools: [update_trailer]
+    tools: [equipment_update_trailer]
   "mutation updateTrailer":
-    tools: [update_trailer]
+    tools: [equipment_update_trailer]
 
   # triage
   "mutation correctInboundClassification":
@@ -3057,9 +3057,9 @@ writes:
     exempt: attestation
     reason: "A person's verdict on what Nova read; it trains Nova, so an agent flagging it would grade its own reading."
   "mutation reopenInboundConflict":
-    tools: [reopen_inbound_conflict]
+    tools: [inbox_reopen_conflict]
   "mutation resolveInboundConflict":
-    tools: [resolve_inbound_conflict]
+    tools: [inbox_resolve_conflict]
   "mutation setTriageRuleEnabled":
     exempt: agent-administration
     reason: "Rules decide what Nova may do with mail on its own; a person who manages the queue sets them, never an agent."
@@ -3145,19 +3145,19 @@ writes:
     exempt: attestation
     reason: "A person saying they have seen an exception, and taking it if nobody owns it; an agent cannot see on someone's behalf."
   "mutation assignWatchtowerItem":
-    tools: [assign_exception]
+    tools: [exception_assign]
   "mutation commentOnWatchtowerItem":
-    tools: [comment_on_exception]
+    tools: [exception_add_comment]
   "mutation dismissWatchtowerItem":
-    tools: [dismiss_watchtower_item]
+    tools: [exception_dismiss_watchtower_item]
   "mutation reopenWatchtowerItem":
-    tools: [reopen_exception]
+    tools: [exception_reopen]
   "mutation resolveWatchtowerItem":
-    tools: [resolve_exception]
+    tools: [exception_resolve]
   "mutation setWatchtowerItemDue":
-    tools: [set_exception_due]
+    tools: [exception_set_due]
   "mutation snoozeWatchtowerItem":
-    tools: [snooze_exception]
+    tools: [exception_snooze]
   "mutation startWatchtowerItem":
     exempt: attestation
     reason: "A person saying they are working an exception now, and taking it if nobody owns it; an agent cannot start work for them."
@@ -3171,65 +3171,65 @@ writes:
     exempt: user-preference
     reason: "Records that a person opened an item so it stops showing as new to them; it changes nothing anyone else sees."
   "mutation wakeWatchtowerItem":
-    tools: [wake_exception]
+    tools: [exception_wake]
 
   # worker
   "POST /api/v1/workers/":
     exempt: attestation
     reason: "Hiring a worker is an employment decision with its eligibility and qualification checks; a person makes it."
   "mutation approveWorkerPTO":
-    tools: [approve_worker_pto]
+    tools: [worker_approve_pto]
   "mutation bulkWorkerPTOAction":
     exempt: duplicate
-    reason: "Approves, rejects or cancels several requests at once; approve_worker_pto, reject_worker_pto and cancel_worker_pto each do one."
+    reason: "Approves, rejects or cancels several requests at once; worker_approve_pto, worker_reject_pto and worker_cancel_pto each do one."
   "mutation cancelWorkerPTO":
-    tools: [cancel_worker_pto]
+    tools: [worker_cancel_pto]
   "mutation createWorkerPTO":
-    tools: [request_worker_pto]
+    tools: [worker_request_pto]
   "mutation patchWorker":
     exempt: attestation
     reason: "Changes a worker's employment status, classification or personal record, which are HR decisions a person makes and signs."
   "mutation rejectWorkerPTO":
-    tools: [reject_worker_pto]
+    tools: [worker_reject_pto]
   "mutation updateWorkerPTO":
-    tools: [update_worker_pto]
+    tools: [worker_update_pto]
 
   # workerchecklist
   "mutation archiveWorkerChecklistTemplate":
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
   "mutation cancelWorkerChecklist":
-    tools: [cancel_worker_checklist]
+    tools: [worker_cancel_checklist]
   "mutation completeWorkerChecklistItem":
-    tools: [update_worker_checklist_item]
+    tools: [worker_update_checklist_item]
   "mutation createWorkerChecklistTemplate":
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
   "mutation markWorkerChecklistItemNotApplicable":
-    tools: [update_worker_checklist_item]
+    tools: [worker_update_checklist_item]
   "mutation reopenWorkerChecklistItem":
-    tools: [update_worker_checklist_item]
+    tools: [worker_update_checklist_item]
   "mutation restoreWorkerChecklistTemplate":
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
   "mutation skipWorkerChecklistItem":
-    tools: [update_worker_checklist_item]
+    tools: [worker_update_checklist_item]
   "mutation startWorkerChecklist":
-    tools: [start_worker_checklist]
+    tools: [worker_start_checklist]
   "mutation updateWorkerChecklistTemplate":
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
 
   # workercredential
   "mutation archiveWorkerCredential":
-    tools: [archive_worker_credential]
+    tools: [worker_archive_credential]
   "mutation archiveWorkerCredentialType":
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
   "mutation attachWorkerCredentialDocument":
-    tools: [attach_worker_credential_document]
+    tools: [worker_attach_credential_document]
   "mutation createWorkerCredential":
-    tools: [record_worker_credential]
+    tools: [worker_record_credential]
   "mutation createWorkerCredentialType":
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
@@ -3237,7 +3237,7 @@ writes:
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
   "mutation updateWorkerCredential":
-    tools: [update_worker_credential]
+    tools: [worker_update_credential]
   "mutation updateWorkerCredentialType":
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
@@ -3247,21 +3247,21 @@ writes:
 
   # workerdqf
   "mutation deleteEmploymentVerification":
-    tools: [delete_employment_verification]
+    tools: [worker_delete_employment_verification]
   "mutation markEmploymentVerificationRequested":
-    tools: [log_employment_verification_request]
+    tools: [worker_record_employment_verification_request]
   "mutation recordEmploymentVerification":
-    tools: [record_employment_verification]
+    tools: [worker_record_employment_verification]
   "mutation recordEmploymentVerificationFollowUp":
-    tools: [log_employment_verification_request]
+    tools: [worker_record_employment_verification_request]
   "mutation updateEmploymentVerification":
-    tools: [update_employment_verification]
+    tools: [worker_update_employment_verification]
 
   # workerdrugalcohol
   "mutation cancelDotRandomDraw":
-    tools: [cancel_dot_random_draw]
+    tools: [worker_cancel_dot_random_draw]
   "mutation cancelDotTest":
-    tools: [cancel_dot_test]
+    tools: [worker_cancel_dot_test]
   "mutation completeClearinghouseQuery":
     exempt: attestation
     reason: "A Clearinghouse query's outcome is what FMCSA returned to the person who ran it under the carrier's account; only they record it."
@@ -3269,12 +3269,12 @@ writes:
     exempt: configuration
     reason: "A random testing pool sets who is tested and at what annual rate under 49 CFR 382.305; the designated employer representative maintains it."
   "mutation finalizeDotRandomDraw":
-    tools: [finalize_dot_random_draw]
+    tools: [worker_finalize_dot_random_draw]
   "mutation recordClearinghouseQuery":
     exempt: attestation
     reason: "A Clearinghouse query is made under the carrier's FMCSA account with the driver's consent; the person who ran it records it."
   "mutation recordDotTest":
-    tools: [schedule_dot_test]
+    tools: [worker_schedule_dot_test]
   "mutation recordDotTestResult":
     exempt: attestation
     reason: "A test result is what the lab and medical review officer reported; the person who received it records it, and a positive result reaches the Clearinghouse."
@@ -3282,9 +3282,9 @@ writes:
     exempt: attestation
     reason: "A drug or alcohol violation is reported to the FMCSA Clearinghouse and removes the driver from safety-sensitive work; a person records it."
   "mutation runDotRandomDraw":
-    tools: [run_dot_random_draw]
+    tools: [worker_run_dot_random_draw]
   "mutation updateDotRandomDrawEntry":
-    tools: [update_dot_random_selection]
+    tools: [worker_update_dot_random_selection]
   "mutation updateDotRandomPool":
     exempt: configuration
     reason: "A random testing pool sets who is tested and at what annual rate under 49 CFR 382.305; the designated employer representative maintains it."
@@ -3305,9 +3305,9 @@ writes:
     exempt: attestation
     reason: "OSHA requires a company executive to certify the annual injury summary."
   "mutation deleteWorkerInjury":
-    tools: [delete_worker_injury]
+    tools: [worker_delete_injury]
   "mutation recordWorkerInjury":
-    tools: [record_worker_injury]
+    tools: [worker_record_injury]
   "mutation saveOshaSummary":
     exempt: attestation
     reason: "The OSHA 300A summary is certified by a company executive and posted for employees; the figures are theirs to sign."
@@ -3315,59 +3315,59 @@ writes:
     exempt: attestation
     reason: "Withdraws the executive certification of the annual injury summary."
   "mutation updateWorkerInjury":
-    tools: [update_worker_injury]
+    tools: [worker_update_injury]
 
   # workerleave
   "mutation closeLeaveCase":
-    tools: [close_leave_case]
+    tools: [worker_close_leave_case]
   "mutation decideLeaveCase":
     exempt: attestation
     reason: "Approving or denying leave, and designating it FMLA, is the employer's notice to the employee under 29 CFR 825.300; a person decides it."
   "mutation deleteLeaveDay":
-    tools: [delete_leave_day]
+    tools: [worker_delete_leave_day]
   "mutation openLeaveCase":
-    tools: [open_leave_case]
+    tools: [worker_open_leave_case]
   "mutation recordLeaveCertification":
     exempt: attestation
     reason: "The certification is the health care provider's statement received from the employee; the person who received it records it."
   "mutation recordLeaveDay":
-    tools: [record_leave_day]
+    tools: [worker_record_leave_day]
   "mutation requestLeaveCertification":
-    tools: [request_leave_certification]
+    tools: [worker_request_leave_certification]
   "mutation updateLeaveCase":
-    tools: [update_leave_case]
+    tools: [worker_update_leave_case]
   "mutation updateLeaveControl":
     exempt: configuration
     reason: "An organization-wide control an administrator sets once; every later write depends on it."
   "mutation updateLeaveDay":
-    tools: [update_leave_day]
+    tools: [worker_update_leave_day]
 
   # workersafety
   "mutation acknowledgeMyDisciplinaryAction":
     exempt: counterparty
     reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
   "mutation closeWorkerSafetyEvent":
-    tools: [change_worker_safety_event_status]
+    tools: [worker_set_safety_event_status]
   "mutation createWorkerSafetyEvent":
-    tools: [open_worker_safety_event]
+    tools: [worker_open_safety_event]
   "mutation deleteWorkerRecognition":
-    tools: [delete_worker_recognition]
+    tools: [worker_delete_recognition]
   "mutation deleteWorkerSafetyEvent":
-    tools: [delete_worker_safety_event]
+    tools: [worker_delete_safety_event]
   "mutation giveWorkerRecognition":
-    tools: [give_worker_recognition]
+    tools: [worker_record_recognition]
   "mutation issueDisciplinaryAction":
     exempt: attestation
     reason: "Discipline is a manager's decision on an employee's record, which the driver acknowledges in the portal; a person issues it."
   "mutation reopenWorkerSafetyEvent":
-    tools: [change_worker_safety_event_status]
+    tools: [worker_set_safety_event_status]
   "mutation rescindDisciplinaryAction":
     exempt: attestation
     reason: "Rescinding discipline reverses a manager's decision on an employee's record; the person who owns that decision makes it."
   "mutation reviewWorkerSafetyEvent":
-    tools: [change_worker_safety_event_status]
+    tools: [worker_set_safety_event_status]
   "mutation updateWorkerSafetyEvent":
-    tools: [update_worker_safety_event]
+    tools: [worker_update_safety_event]
 
   # workertraining
   "mutation acknowledgeMyTraining":
@@ -3377,17 +3377,17 @@ writes:
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
   "mutation assignRequiredWorkerTraining":
-    tools: [assign_required_worker_training]
+    tools: [worker_assign_required_training]
   "mutation assignWorkerTraining":
-    tools: [assign_worker_training]
+    tools: [worker_assign_training]
   "mutation attachWorkerTrainingDocument":
-    tools: [attach_worker_training_document]
+    tools: [worker_attach_training_document]
   "mutation bulkAssignTraining":
-    tools: [assign_worker_training]
+    tools: [worker_assign_training]
   "mutation cancelWorkerTraining":
-    tools: [close_worker_training]
+    tools: [worker_close_training]
   "mutation completeWorkerTraining":
-    tools: [record_training_completion]
+    tools: [worker_record_training_completion]
   "mutation createTrainingCourse":
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
@@ -3401,4 +3401,4 @@ writes:
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
   "mutation waiveWorkerTraining":
-    tools: [close_worker_training]
+    tools: [worker_close_training]

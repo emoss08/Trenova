@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/homelayout"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/homelayoutservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/homelayout"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -72,7 +72,7 @@ func TestGetMyHomeLayout_ReadsThePersonsOwnHomePage(t *testing.T) {
 	assert.Equal(t, kpi.Label, view.Widgets[0].Label)
 	require.NotNil(t, view.Widgets[0].Config)
 	assert.Equal(t, "onTimePercent", view.Widgets[0].Config.Metric)
-	assert.Contains(t, view.Note, "add_home_widget")
+	assert.Contains(t, view.Note, "home_add_widget")
 }
 
 func TestGetMyHomeLayout_SaysWhenThePageCannotBeChanged(t *testing.T) {

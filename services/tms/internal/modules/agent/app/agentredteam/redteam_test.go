@@ -100,7 +100,7 @@ func TestDecideNamesTaintForEveryWriteThatLeaves(t *testing.T) {
 	taint := &agent.RunTaint{}
 	taint.Add(agent.TaintMark{
 		Source:   agent.TaintSourceInboundMessage,
-		ToolName: "get_inbound_message",
+		ToolName: "inbox_get_inbound_message",
 		CallID:   "call_source",
 	})
 

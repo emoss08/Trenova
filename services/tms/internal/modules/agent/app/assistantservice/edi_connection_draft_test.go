@@ -53,13 +53,13 @@ func connectionDraftResult() map[string]any {
 func TestArtifactFromObservation_AConnectionDraftBecomesItsReview(t *testing.T) {
 	t.Parallel()
 
-	artifact := artifactFromObservation(observation("draft_edi_connection", connectionDraftResult()))
+	artifact := artifactFromObservation(observation("edi_draft_connection", connectionDraftResult()))
 
 	require.NotNil(t, artifact)
 	assert.Equal(t, assistantartifact.KindEDIConnectionDraft, artifact.Kind)
 	assert.Equal(t, assistantartifact.StatusReady, artifact.Status)
 	assert.Equal(t, "EDI connection for Acme Retail Group", artifact.Title)
-	assert.Equal(t, "call_draft_edi_connection", artifact.SourceToolCallID)
+	assert.Equal(t, "call_edi_draft_connection", artifact.SourceToolCallID)
 
 	payload := artifact.Payload
 	assert.Equal(t, "sha256:5f1c", payload["documentDigest"])
@@ -74,7 +74,7 @@ func TestArtifactFromObservation_AConnectionDraftBecomesItsReview(t *testing.T) 
 	overview := samples[0].(map[string]any)["overview"].(map[string]any)
 	assert.Equal(t, "004010", overview["x12Version"])
 	assert.Contains(t, overview, "summary")
-	assert.NotContains(t, overview, "transactions", "the parsed tree stays with inspect_x12")
+	assert.NotContains(t, overview, "transactions", "the parsed tree stays with edi_inspect_x12")
 	assert.Equal(t, false, payload["truncated"])
 }
 
@@ -92,7 +92,7 @@ func TestArtifactFromObservation_AConnectionDraftIsBoundedByThePayloadLimit(t *t
 	}
 	result["mappings"] = mappings
 
-	artifact := artifactFromObservation(observation("draft_edi_connection", result))
+	artifact := artifactFromObservation(observation("edi_draft_connection", result))
 
 	require.NotNil(t, artifact)
 	assert.Less(t, payloadSize(artifact.Payload), assistantartifact.MaxPayloadBytes)
@@ -104,7 +104,7 @@ func TestArtifactFromObservation_AConnectionDraftIsBoundedByThePayloadLimit(t *t
 func TestArtifactFromObservation_ADraftWithoutAGuideIsNoReview(t *testing.T) {
 	t.Parallel()
 
-	assert.Nil(t, artifactFromObservation(observation("draft_edi_connection", map[string]any{
+	assert.Nil(t, artifactFromObservation(observation("edi_draft_connection", map[string]any{
 		"title": "EDI connection",
 	})))
 }
@@ -115,7 +115,7 @@ func TestFamilyOf_AConnectionDraftIsReadFromADocument(t *testing.T) {
 	assert.Equal(t, assistantartifact.FamilyExtract,
 		assistantartifact.FamilyOf(assistantartifact.KindEDIConnectionDraft, nil))
 	assert.NotEmpty(t, assistantartifact.LineageKeyFor(
-		assistantartifact.KindEDIConnectionDraft, "draft_edi_connection",
+		assistantartifact.KindEDIConnectionDraft, "edi_draft_connection",
 		map[string]any{"documentId": "doc_01"},
 	), "drafting the same guide again is a new version of the review")
 }
@@ -123,7 +123,7 @@ func TestFamilyOf_AConnectionDraftIsReadFromADocument(t *testing.T) {
 func TestShownArtifact_AConnectionDraftIsAlwaysPointedTo(t *testing.T) {
 	t.Parallel()
 
-	artifact := artifactFromObservation(observation("draft_edi_connection", connectionDraftResult()))
+	artifact := artifactFromObservation(observation("edi_draft_connection", connectionDraftResult()))
 	require.NotNil(t, artifact)
 	assert.True(t, mustBePointedTo(artifact),
 		"the person reviews the draft beside the conversation before approving it")

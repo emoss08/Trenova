@@ -18,7 +18,7 @@ scenarios:
             find: select id from shipments where pro_number = 'SEED-PAY-002'
         expect:
           calls: ["shipment_get|shipment_list|shipment_get_tracking"]
-          noCalls: [list_agent_runs, get_agent_run]
+          noCalls: [agent_list_runs, agent_get_run]
           noProposals: true
           noRecordIds: true
           replyIncludes: ["SEED-PAY-002"]
@@ -46,8 +46,8 @@ scenarios:
             label: Peak Distributing
             find: select id from customers where code = 'PEAK'
         expect:
-          calls: ["get_customer|list_customers|search_customers|shipment_list"]
-          noCalls: [list_agent_runs, get_agent_run]
+          calls: ["customer_get|customer_list|search_customers|shipment_list"]
+          noCalls: [agent_list_runs, agent_get_run]
           noProposals: true
           noRecordIds: true
           replyIncludes: ["Peak"]
@@ -67,7 +67,7 @@ scenarios:
       - say: "what shipment types do we have?"
         page: { path: /, title: Home }
         expect:
-          calls: ["list_shipment_types"]
+          calls: ["masterdata_list_shipment_types"]
           noCalls: [publish_artifact]
           noProposals: true
           noRecordIds: true

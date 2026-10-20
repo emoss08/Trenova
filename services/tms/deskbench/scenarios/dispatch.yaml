@@ -8,7 +8,7 @@ scenarios:
     steps:
       - say: "how many loads we got rolling rn"
         expect:
-          calls: ["shipment_list|get_dispatch_board|run_report"]
+          calls: ["shipment_list|dispatch_get_board|report_run"]
           maxCalls: 5
           maxFailedCalls: 0
           noProposals: true
@@ -25,7 +25,7 @@ scenarios:
       - say: "anything running late? need to know before my 9am call"
         page: { path: /shipments, title: Shipments }
         expect:
-          calls: ["shipment_list|get_dispatch_board|list_service_failures"]
+          calls: ["shipment_list|dispatch_get_board|exception_list_service_failures"]
           maxFailedCalls: 0
           noProposals: true
           noRecordIds: true
@@ -58,7 +58,7 @@ scenarios:
     steps:
       - say: "which loads still need a driver"
         expect:
-          calls: ["shipment_list|get_dispatch_board"]
+          calls: ["shipment_list|dispatch_get_board"]
           maxFailedCalls: 0
           noProposals: true
           rubric: >
@@ -94,7 +94,7 @@ scenarios:
     steps:
       - say: "is trc-004 back from the shop yet"
         expect:
-          calls: ["get_tractor|list_tractors|locate_tractor"]
+          calls: ["equipment_get_tractor|equipment_list_tractors|equipment_set_tractor_location"]
           maxFailedCalls: 1
           noProposals: true
           replyIncludes: ["maintenance|shop|not yet|still"]
@@ -109,7 +109,7 @@ scenarios:
     steps:
       - say: "who's free to run tomorrow? anyone on pto?"
         expect:
-          calls: ["list_workers|search_worker|get_worker_schedule|list_time_off|get_dispatch_board"]
+          calls: ["worker_list|worker_search|worker_get_schedule|worker_list_time_off|dispatch_get_board"]
           maxFailedCalls: 0
           noProposals: true
           rubric: >

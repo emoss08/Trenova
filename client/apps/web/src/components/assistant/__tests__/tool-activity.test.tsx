@@ -61,7 +61,7 @@ describe("ToolActivity refusals", () => {
   ] as const)("draws a %s call as %s", (verdict, phrase, tone) => {
     render(
       <ToolActivity
-        steps={[step({ id: "c1", name: "assign_move", status: "failed", verdict, content: "no" })]}
+        steps={[step({ id: "c1", name: "dispatch_assign_move", status: "failed", verdict, content: "no" })]}
       />,
     );
 
@@ -75,7 +75,7 @@ describe("ToolActivity refusals", () => {
         steps={[
           step({
             id: "c1",
-            name: "get_worker",
+            name: "worker_get",
             status: "failed",
             verdict: "denied",
             content: "no",
@@ -105,11 +105,11 @@ describe("ToolActivity folded", () => {
         steps={[
           step({
             id: "c1",
-            name: "get_customer",
+            name: "customer_get",
             summary: "Peak Distributing",
             durationSeconds: 2,
           }),
-          step({ id: "c2", name: "open_page", summary: "Report library", durationSeconds: 1 }),
+          step({ id: "c2", name: "agent_open_page", summary: "Report library", durationSeconds: 1 }),
         ]}
       />,
     );
@@ -130,7 +130,7 @@ describe("ToolActivity folded", () => {
       <ToolActivity
         folded
         live
-        steps={[step({ id: "c1", name: "get_customer", summary: "Peak Distributing" })]}
+        steps={[step({ id: "c1", name: "customer_get", summary: "Peak Distributing" })]}
       />,
     );
 

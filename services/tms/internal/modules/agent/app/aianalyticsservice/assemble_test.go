@@ -169,16 +169,16 @@ func fixture() *readings {
 				Cause:         aianalytics.CauseToolError,
 				Calls:         2,
 			},
-			{DeploymentKey: at(qwenKey, localID), ToolName: "run_report", Calls: 364},
+			{DeploymentKey: at(qwenKey, localID), ToolName: "report_run", Calls: 364},
 			{
 				DeploymentKey: at(qwenKey, localID),
-				ToolName:      "run_report",
+				ToolName:      "report_run",
 				Cause:         aianalytics.CauseWrongArguments,
 				Calls:         30,
 			},
 			{
 				DeploymentKey: at(qwenKey, localID),
-				ToolName:      "run_report",
+				ToolName:      "report_run",
 				Cause:         aianalytics.CauseRepeatedCall,
 				Calls:         6,
 			},
@@ -609,7 +609,7 @@ func TestToolsAreTheMostFailingFirstWithACellPerSeries(t *testing.T) {
 	got := analyticsFor(fixture(), aianalytics.CompareByModel)
 
 	require.Len(t, got.Tools, 2)
-	assert.Equal(t, "run_report", got.Tools[0].Name)
+	assert.Equal(t, "report_run", got.Tools[0].Name)
 	assert.Equal(t, 36, got.Tools[0].Failed)
 	assign := got.Tools[1]
 	require.Len(t, assign.Cells, 2)

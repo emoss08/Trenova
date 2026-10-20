@@ -3,13 +3,13 @@ package agentruntime
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
-	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -35,7 +35,7 @@ func TestRun_AnUnattendedSystemUserCannotReachASelfScopedTool(t *testing.T) {
 			completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 				callsTurn(agentports.ToolCall{
 					ID:        "home",
-					Name:      "add_home_widget",
+					Name:      "home_add_widget",
 					Arguments: map[string]any{"key": "kpi"},
 				}),
 				textTurn("done"),
@@ -43,7 +43,7 @@ func TestRun_AnUnattendedSystemUserCannotReachASelfScopedTool(t *testing.T) {
 			service, permissions := selfScopedRuntime(completion)
 			actor := systemUserActor()
 			req := &agentports.RunRequest{
-				Definition: testDefinition("add_home_widget"),
+				Definition: testDefinition("home_add_widget"),
 				Actor:      actor,
 				Input:      "tidy the home page",
 				Unattended: tt.unattended,

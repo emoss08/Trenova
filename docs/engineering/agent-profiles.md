@@ -28,7 +28,7 @@ A profile is made in three layers, and only one of them is written by a model.
 2. **Guidance** is what people say about how to read the facts (`agent_profile_guidance`):
    "the Laredo lane is seasonal", "I only handle the Midwest accounts". A person types it in
    AI Control or on the Desk Memory page, or tells an agent, which writes it down with the core
-   tool `guide_profile`. A line about the organization shapes what every agent is told, so it
+   tool `agent_guide_profile`. A line about the organization shapes what every agent is told, so it
    is kept at once only by a person holding `agent_memory:manage` (an administrator, unless a
    role is given it on purpose); from anyone else, or written down by an agent, it is **offered**
    — status `Suggested`, read into no version — until an administrator approves or dismisses it
@@ -73,10 +73,10 @@ person is told why rather than left waiting.
 - **Gating.** No profile is written for an organization whose plan lacks
   `CapabilityAgentAutomation`, whose agent control has `LearningOff`, or that is in shadow
   mode. A person whose records show no work (`HasActivity`) gets no profile.
-- **Who keeps it.** `guide_profile` is used under the assistant, like `remember`; the service
+- **Who keeps it.** `agent_guide_profile` is used under the assistant, like `agent_create_memory`; the service
   decides from the person's `agent_memory:manage` whether a line about the organization is kept
   or offered, so an agent never puts words in every prompt on its own.
-- **Taint.** `guide_profile` carries taint with a `TaintHold` that always applies: guidance
+- **Taint.** `agent_guide_profile` carries taint with a `TaintHold` that always applies: guidance
   written after a run read outside content waits for a person's approval, because every later
   prompt is written from it. It is held only on turns a person is in: unattended runs and
   delegated tasks do not hold it (`agentruntime/turn.go`).

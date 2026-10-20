@@ -84,13 +84,13 @@ func newListFormulaTemplatesTool(
 	repo formulatemplateports.FormulaTemplateRepository,
 ) agentports.AgentQueryTool {
 	return newListTool(listSpec{
-		name:         "list_formula_templates",
+		name:         "formula_list_templates",
 		entityPlural: "formula templates",
 		summary: "List formula templates — the rating methods a shipment is priced with. " +
 			"Use it to turn a rating method a person named into the id a shipment needs, or " +
 			"to find a formula to read. A row carries only a template's name, description, " +
 			"type and status: to show, explain or price one template, read it whole with " +
-			"get_formula_template using the row's id.",
+			"formula_get_template using the row's id.",
 		resource: permission.ResourceFormulaTemplate,
 		config:   querybuilder.GetFieldConfiguration((*formulatemplate.FormulaTemplate)(nil)),
 		fields: []listField{
@@ -132,7 +132,7 @@ func newGetFormulaTemplateTool(
 	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
 	return newGetTool(&getSpec{
-		name:   "get_formula_template",
+		name:   "formula_get_template",
 		entity: "formula template",
 		searchTerms: []string{
 			"formula template details", "read a formula", "formula variables",
@@ -141,10 +141,10 @@ func newGetFormulaTemplateTool(
 		resource: permission.ResourceFormulaTemplate,
 		summary: "Retrieve one formula template by id, whole: its formula, variables and " +
 			"their defaults, breakdown lines, minimum, maximum, rounding, status and version. " +
-			"Read it before explaining or changing a formula. Use list_formula_templates first " +
+			"Read it before explaining or changing a formula. Use formula_list_templates first " +
 			"when you have a name rather than an id.",
 		paramName: "formulaTemplateId",
-		idSource:  "from list_formula_templates",
+		idSource:  "from formula_list_templates",
 		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
 			return repo.GetByID(ctx, formulatemplateports.GetFormulaTemplateByIDRequest{
 				TemplateID: id,
@@ -168,7 +168,7 @@ func newDescribeFormulaSchemaTool(workbench formulaWorkbench) agentports.AgentQu
 	return &describeFormulaSchemaTool{workbench: workbench}
 }
 
-func (t *describeFormulaSchemaTool) Name() string { return "describe_formula_schema" }
+func (t *describeFormulaSchemaTool) Name() string { return "formula_describe_schema" }
 
 func (t *describeFormulaSchemaTool) Description() string {
 	return "Describe what a rating formula may use: every shipment variable (one line each), " +
@@ -355,12 +355,12 @@ func newTestFormulaExpressionTool(
 	return &testFormulaExpressionTool{workbench: workbench, access: newFieldAccess(permissions)}
 }
 
-func (t *testFormulaExpressionTool) Name() string { return "test_formula_expression" }
+func (t *testFormulaExpressionTool) Name() string { return "formula_test_expression" }
 
 func (t *testFormulaExpressionTool) Description() string {
 	return "Price a formula expression with Trenova's formula engine, for sample loads or " +
 		"against a saved shipment. Use it to check a formula runs and to learn what it " +
-		"charges; say an amount only when this or propose_formula gave it."
+		"charges; say an amount only when this or formula_propose gave it."
 }
 
 func (t *testFormulaExpressionTool) ParamSchema() map[string]any {
@@ -488,8 +488,8 @@ func (t *proposeFormulaTool) Name() string { return string(pagedraft.ActionPropo
 
 func (t *proposeFormulaTool) Recipe() []string {
 	return []string{
-		"describe_formula_schema",
-		"test_formula_expression",
+		"formula_describe_schema",
+		"formula_test_expression",
 		string(pagedraft.ActionProposeFormula),
 	}
 }
@@ -511,7 +511,7 @@ func (t *proposeFormulaTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"expression": map[string]any{
 				"type": "string",
-				"description": "The expression, built only from describe_formula_schema's names " +
+				"description": "The expression, built only from formula_describe_schema's names " +
 					"and this formula's variables. Write every rate, fee, minimum, percentage " +
 					"and weight or mileage break as a variable, never as a number in the " +
 					"expression: one template prices every customer, and a figure written into " +

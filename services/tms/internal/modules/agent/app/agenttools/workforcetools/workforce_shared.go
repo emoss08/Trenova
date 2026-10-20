@@ -103,7 +103,7 @@ func targeting(
 func wfDocumentProperty() map[string]any {
 	return agenttoolschema.RecordIDText(
 		permission.ResourceDocument,
-		"A document already filed on the worker, from search_documents. "+
+		"A document already filed on the worker, from document_list. "+
 			"Never guess one.",
 	)
 }

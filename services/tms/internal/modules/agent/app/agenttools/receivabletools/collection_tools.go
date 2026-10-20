@@ -133,7 +133,7 @@ func accountStateChanged(before, after *collectionports.AccountState) bool {
 func collectionCustomerProperty() map[string]any {
 	return agenttoolschema.RecordIDText(permission.ResourceCustomer,
 		"The customer whose receivables these are, from receivable_list_collection_worklist, "+
-			"receivable_get_aging or list_customers. Never guess one.")
+			"receivable_get_aging or customer_list. Never guess one.")
 }
 
 func collectionTarget(params map[string]any) (agentports.ToolTarget, bool) {

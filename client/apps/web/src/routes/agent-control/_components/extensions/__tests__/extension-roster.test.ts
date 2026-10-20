@@ -212,7 +212,7 @@ describe("capabilityServer", () => {
 describe("webWatchServer", () => {
   const watching = [
     { name: "web_search", label: "Search the web", description: "" },
-    { name: "watch_web", label: "Watch the web", description: "" },
+    { name: "web_watch", label: "Watch the web", description: "" },
   ];
   const exa = extension({ type: "Exa", capability: "WebResearch", tools: watching });
   const parallel = extension({ type: "Parallel", capability: "WebResearch", enabled: true });

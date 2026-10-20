@@ -6,12 +6,12 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -307,7 +307,7 @@ func TestListAccountingSyncRecords_FiltersAndPagesTheLedger(t *testing.T) {
 	params.Params["documentType"] = "Invoice"
 	params.Params["errorCategory"] = []any{"Mapping"}
 	params.Params["documentId"] = documentID.String()
-	params.Params["search"] = " INV-1042 "
+	params.Params["query"] = " INV-1042 "
 	params.Params["limit"] = 500.0
 
 	out, err := newListAccountingSyncRecordsTool(ledger).Query(t.Context(), params)

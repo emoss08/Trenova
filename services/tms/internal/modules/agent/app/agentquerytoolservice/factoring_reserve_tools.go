@@ -37,14 +37,14 @@ func provideGetFactoringReserveBalanceTool(
 	return &getFactoringReserveBalanceTool{ledger: ledger, access: newFieldAccess(permissions)}
 }
 
-func (t *getFactoringReserveBalanceTool) Name() string { return "get_factoring_reserve_balance" }
+func (t *getFactoringReserveBalanceTool) Name() string { return "factoring_get_reserve_balance" }
 
 func (t *getFactoringReserveBalanceTool) Description() string {
 	return "Read what a factor holds and has paid, from the factoring entries booked to the " +
 		"ledger. It shows the reserve it still holds, what is owed it under secured borrowing, the " +
 		"advances it paid, the reserves it released, what was paid back for chargebacks net " +
 		"of reversals, the fees booked, and the day of the last movement. Use it before " +
-		"release_factoring_reserve to see what the factor should remit."
+		"factoring_release_reserve to see what the factor should remit."
 }
 
 func (t *getFactoringReserveBalanceTool) SearchTerms() []string {
@@ -55,7 +55,7 @@ func (t *getFactoringReserveBalanceTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramFactoringFactor: agenttoolschema.RecordIDText(
 			permission.ResourceFactoringCompany,
-			"The factor, from list_factoring_submissions or get_factoring_agreement.",
+			"The factor, from factoring_list_submissions or factoring_get_agreement.",
 		),
 	}, paramFactoringFactor)
 }

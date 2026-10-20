@@ -91,7 +91,7 @@ func TestStartTool_ReparentsADelegateCallAndMarksFailure(t *testing.T) {
 
 	_, span := StartTool(activityCtx, &ToolSpec{
 		Anchor:   delegate,
-		ToolName: "assign_move",
+		ToolName: "dispatch_assign_move",
 		CallID:   "call_x",
 		Effect:   "change",
 		Kind:     "action",
@@ -102,13 +102,13 @@ func TestStartTool_ReparentsADelegateCallAndMarksFailure(t *testing.T) {
 	span.End()
 	activity.End()
 
-	tool := spanNamed(t, delegate.TraceID, "execute_tool assign_move")
+	tool := spanNamed(t, delegate.TraceID, "execute_tool dispatch_assign_move")
 	assert.Equal(t, delegate.RootSpanID, tool.Parent.SpanID())
 	require.Len(t, tool.Links, 1)
 	assert.Equal(t, activity.SpanContext(), tool.Links[0].SpanContext)
 	for _, want := range []attribute.KeyValue{
 		GenAIOperationName.String(OperationExecuteTool),
-		GenAIToolName.String("assign_move"),
+		GenAIToolName.String("dispatch_assign_move"),
 		GenAIToolCallID.String("call_x"),
 		GenAIToolType.String(ToolTypeFunction),
 		AIToolEffect.String("change"),
@@ -159,7 +159,7 @@ func TestStartDecide_LinksBackToTheProposingSpan(t *testing.T) {
 		BusinessUnitID:    pulid.ID("bu_1"),
 		ProposalID:        pulid.ID("ap_1"),
 		RunID:             pulid.ID("ar_decide_origin"),
-		ToolName:          "assign_move",
+		ToolName:          "dispatch_assign_move",
 		Decision:          "Modified",
 		UserID:            pulid.ID("usr_1"),
 		ReasonCode:        "wrong_driver",
@@ -180,7 +180,7 @@ func TestStartDecide_LinksBackToTheProposingSpan(t *testing.T) {
 		TenantBusinessUnitID.String("bu_1"),
 		AIProposalID.String("ap_1"),
 		AIRunID.String("ar_decide_origin"),
-		GenAIToolName.String("assign_move"),
+		GenAIToolName.String("dispatch_assign_move"),
 		AIDecision.String("Modified"),
 		UserID.String("usr_1"),
 		AIReasonCode.String("wrong_driver"),

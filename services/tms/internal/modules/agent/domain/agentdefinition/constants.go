@@ -7,4 +7,4 @@ const insightAnalystDailyRuns = 20
 
 // toolSearchDocuments is the one tool the insight analyst always starts with:
 // it needs to read the record before it can say anything about it.
-const toolSearchDocuments = "search_documents"
+const toolSearchDocuments = "document_list"

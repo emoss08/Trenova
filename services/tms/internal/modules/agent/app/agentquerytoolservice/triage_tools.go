@@ -43,13 +43,13 @@ func newListTriageAssigneesTool(reader triageAssigneeReader) agentports.AgentQue
 	return &listTriageAssigneesTool{triage: reader}
 }
 
-func (t *listTriageAssigneesTool) Name() string { return "list_triage_assignees" }
+func (t *listTriageAssigneesTool) Name() string { return "inbox_list_triage_assignees" }
 
 func (t *listTriageAssigneesTool) Description() string {
 	return "List the people who can take messages in the Triage queue, with how many " +
 		"waiting messages each already holds, and the on-call person. The on-call person " +
 		"takes the queue at the end of the working day. Each person's userId is the owner " +
-		"assign_inbound_messages and hand_off_triage take."
+		"inbox_assign_inbound_message and inbox_assign_queue take."
 }
 
 func (t *listTriageAssigneesTool) SearchTerms() []string {

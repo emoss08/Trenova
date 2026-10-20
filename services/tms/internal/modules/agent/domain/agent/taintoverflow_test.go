@@ -21,7 +21,7 @@ func TestRunTaint_KeepsEverySourcePastTheMarkCap(t *testing.T) {
 	}
 	assert.False(t, taint.Overflowed)
 
-	added := taint.Add(TaintMark{Source: TaintSourceInboundMessage, ToolName: "get_inbound_message", CallID: "call_email"})
+	added := taint.Add(TaintMark{Source: TaintSourceInboundMessage, ToolName: "inbox_get_inbound_message", CallID: "call_email"})
 
 	assert.False(t, added, "the marks are full")
 	assert.Len(t, taint.Marks, MaxTaintMarks)

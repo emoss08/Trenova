@@ -95,9 +95,9 @@ describe("emailDraftFrom", () => {
 
   it("reads a single recipient and a missing one", () => {
     expect(
-      emailDraftFrom(artifact("email_draft", { tool: "email_customer", to: "a@b.c" })).to,
+      emailDraftFrom(artifact("email_draft", { tool: "customer_send_email", to: "a@b.c" })).to,
     ).toEqual(["a@b.c"]);
-    expect(emailDraftFrom(artifact("email_draft", { tool: "send_detention_notice" })).to).toEqual(
+    expect(emailDraftFrom(artifact("email_draft", { tool: "detention_send_notice" })).to).toEqual(
       [],
     );
   });
@@ -164,8 +164,8 @@ describe("planFrom", () => {
         summary: "Assign then tell the customer.",
         stepCount: 2,
         steps: [
-          { step: 2, proposalId: "ap_2", toolName: "email_customer", rationale: "" },
-          { step: 1, proposalId: "ap_1", toolName: "assign_move", rationale: "Closest driver" },
+          { step: 2, proposalId: "ap_2", toolName: "customer_send_email", rationale: "" },
+          { step: 1, proposalId: "ap_1", toolName: "dispatch_assign_move", rationale: "Closest driver" },
         ],
       }),
     );

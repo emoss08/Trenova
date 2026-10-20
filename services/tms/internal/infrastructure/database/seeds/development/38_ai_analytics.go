@@ -102,8 +102,8 @@ var analyticsSeedTools = map[aiprovider.Task][]string{
 	aiprovider.TaskDocumentExtraction:     {"extract_document_fields"},
 	aiprovider.TaskDocumentClassification: {"extract_document_fields"},
 	aiprovider.TaskScopeClassification:    {"search_drivers"},
-	aiprovider.TaskOperationalInsights:    {"run_report"},
-	aiprovider.TaskDailyBriefing:          {"run_report"},
+	aiprovider.TaskOperationalInsights:    {"report_run"},
+	aiprovider.TaskDailyBriefing:          {"report_run"},
 	aiprovider.TaskFormulaAssistant:       {"lookup_rate"},
 }
 

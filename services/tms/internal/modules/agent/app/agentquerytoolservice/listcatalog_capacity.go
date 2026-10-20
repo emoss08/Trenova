@@ -68,7 +68,7 @@ func newListCarrierCapacityPostingsTool(
 	repo carriercapacityports.CarrierCapacityPostingRepository,
 ) agentports.AgentQueryTool {
 	return newListTool(listSpec{
-		name:         "list_carrier_capacity_postings",
+		name:         "carrier_list_capacity_postings",
 		entityPlural: "carrier capacity postings",
 		summary: "List trucks carriers have said they have available: carrier, origin, " +
 			"destination, equipment, the window and the rate asked. Filter availableTo on or " +

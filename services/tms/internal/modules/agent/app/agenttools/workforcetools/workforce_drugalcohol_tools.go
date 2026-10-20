@@ -195,7 +195,7 @@ func scheduledTestFrom(params *agentports.ToolExecuteParams) (*worker.WorkerDOTT
 	if err != nil {
 		return nil, err
 	}
-	notes, err := common.BoundedText(params.Params, common.FieldNotes, wfNoteChars)
+	notes, err := common.BoundedText(params.Params, common.ParamNote, wfNoteChars)
 	if err != nil {
 		return nil, err
 	}
@@ -228,14 +228,14 @@ func scheduledTestFrom(params *agentports.ToolExecuteParams) (*worker.WorkerDOTT
 
 func newScheduleDOTTestTool(tests DrugAlcoholKeeper) agentports.AgentTool {
 	spec := withSchema(wfSpec(
-		"schedule_dot_test",
+		"worker_schedule_dot_test",
 		"Schedule a drug or alcohol test for a driver. It covers a random selection's "+
 			"collection, a post-accident or reasonable-suspicion test, pre-employment, "+
 			"return-to-duty or follow-up. A collection covering both substances is two calls. It records the "+
 			"order only; results are entered by the person who receives them from the lab or "+
 			"the medical review officer.",
 		"Files a scheduled collection inside Trenova. The driver is sent nothing, no result is "+
-			"recorded, and cancel_dot_test withdraws it.",
+			"recorded, and worker_cancel_dot_test withdraws it.",
 		permission.ResourceWorkerDOTTest,
 		permission.OpCreate,
 	), map[string]any{
@@ -249,18 +249,18 @@ func newScheduleDOTTestTool(tests DrugAlcoholKeeper) agentports.AgentTool {
 		paramSafetyEventID: agenttoolschema.RecordIDText(
 			permission.ResourceWorkerSafetyEvent,
 			"For a post-accident test: the accident, from "+
-				"list_worker_safety_events.",
+				"worker_list_safety_events.",
 		),
 		paramDrawEntryID: agenttoolschema.KindID(
 			"For a random test: the selection it answers, from "+
-				"get_dot_random_draw.",
+				"worker_get_dot_random_draw.",
 			permission.KindDOTRandomSelection,
 		),
 		paramIsDOT: common.BooleanProperty(
 			"Whether it is a DOT-regulated test. Defaults to true; " +
 				"a company-policy test is false.",
 		),
-		common.FieldNotes: wfNoteProperty("Anything the collector should know."),
+		common.ParamNote: wfNoteProperty("Anything the collector should know."),
 	}, common.ParamWorkerID, paramDOTTestType, paramSubstance)
 	spec.SearchTerms = []string{"drug test", "alcohol test", "random test", "collection"}
 
@@ -338,7 +338,7 @@ func reasonedRecordFrom(
 
 func newCancelDOTTestTool(tests DrugAlcoholKeeper) agentports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
-		"cancel_dot_test",
+		"worker_cancel_dot_test",
 		"Cancel a drug or alcohol test that did not happen, with the reason kept on the "+
 			"record. A test with a result cannot be cancelled; a correction is a new test.",
 		"Voids a scheduled collection; the row and its reason stay on the record an auditor "+
@@ -347,7 +347,7 @@ func newCancelDOTTestTool(tests DrugAlcoholKeeper) agentports.AgentTool {
 		permission.OpCancel,
 	), map[string]any{
 		paramDOTTestID: agenttoolschema.RecordIDText(permission.ResourceWorkerDOTTest,
-			"The test, from list_dot_tests. Never guess one."),
+			"The test, from worker_list_dot_tests. Never guess one."),
 		common.FieldReason: wfNoteProperty("Why the collection did not happen."),
 	}, paramDOTTestID, common.FieldReason), paramDOTTestID, permission.ResourceWorkerDOTTest)
 	spec.MaxTier = agent.TierPropose
@@ -402,7 +402,7 @@ func drawRequestFrom(
 	if err != nil {
 		return nil, err
 	}
-	notes, err := common.BoundedText(params.Params, common.FieldNotes, wfNoteChars)
+	notes, err := common.BoundedText(params.Params, common.ParamNote, wfNoteChars)
 	if err != nil {
 		return nil, err
 	}
@@ -420,19 +420,19 @@ func drawRequestFrom(
 
 func newRunDOTRandomDrawTool(draws DrugAlcoholKeeper) agentports.AgentTool {
 	spec := withSchema(wfSpec(
-		"run_dot_random_draw",
+		"worker_run_dot_random_draw",
 		"Draw a random testing round from a pool for the period a day falls in, today by "+
 			"default. The pool's rates set how many drivers each substance needs; the names "+
 			"are chosen only when the round is drawn, under a seed nobody sees first, so the "+
 			"preview names no one. The round starts as a draft a person reviews and finalizes "+
-			"with finalize_dot_random_draw, or cancels.",
+			"with worker_finalize_dot_random_draw, or cancels.",
 		"Draws a draft round inside Trenova; nobody is told and nothing is final until a "+
-			"person finalizes it, and cancel_dot_random_draw withdraws it.",
+			"person finalizes it, and worker_cancel_dot_random_draw withdraws it.",
 		permission.ResourceDOTRandomPool,
 		permission.OpManage,
 	), map[string]any{
 		paramPoolID: agenttoolschema.KindID(
-			"The pool, from list_dot_random_draws. Leave it out to draw "+
+			"The pool, from worker_list_dot_random_draws. Leave it out to draw "+
 				"from the organization's default pool.",
 			permission.KindDOTRandomPool,
 		),
@@ -440,7 +440,7 @@ func newRunDOTRandomDrawTool(draws DrugAlcoholKeeper) agentports.AgentTool {
 			"A day inside the period to draw for, for a period that was " +
 				"missed. Defaults to today.",
 		),
-		common.FieldNotes: wfNoteProperty("Anything the round's record should say."),
+		common.ParamNote: wfNoteProperty("Anything the round's record should say."),
 	})
 	spec.Artifact = ""
 	spec.SearchTerms = []string{"random drug test", "random selection", "testing pool"}
@@ -499,7 +499,7 @@ type drawDecision struct {
 
 func drawIDProperty() map[string]any {
 	return agenttoolschema.KindID(
-		agenttoolschema.IDDescription("The round", "list_dot_random_draws"),
+		agenttoolschema.IDDescription("The round", "worker_list_dot_random_draws"),
 		permission.KindDOTRandomDraw,
 	)
 }
@@ -520,7 +520,7 @@ func renderDrawChange(summary string) func(
 
 func newFinalizeDOTRandomDrawTool(draws DrugAlcoholKeeper) agentports.AgentTool {
 	spec := personOnly(targeting(withSchema(wfSpec(
-		"finalize_dot_random_draw",
+		"worker_finalize_dot_random_draw",
 		"Finalize a draft random testing round so its selections stand as the evidence of "+
 			"the period. A final round is never re-drawn; a mistake is corrected by cancelling "+
 			"it. Only a person's approval runs it.",
@@ -533,9 +533,9 @@ func newFinalizeDOTRandomDrawTool(draws DrugAlcoholKeeper) agentports.AgentTool 
 	spec.Reversible = false
 	spec.Artifact = ""
 	spec.Recipe = []string{
-		"list_dot_random_draws",
-		"get_dot_random_draw",
-		"finalize_dot_random_draw",
+		"worker_list_dot_random_draws",
+		"worker_get_dot_random_draw",
+		"worker_finalize_dot_random_draw",
 	}
 	render := renderDrawChange("Would finalize round %s; its selections become the record.")
 
@@ -578,7 +578,7 @@ func newFinalizeDOTRandomDrawTool(draws DrugAlcoholKeeper) agentports.AgentTool 
 
 func newCancelDOTRandomDrawTool(draws DrugAlcoholKeeper) agentports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
-		"cancel_dot_random_draw",
+		"worker_cancel_dot_random_draw",
 		"Cancel a random testing round, draft or final, so the period can be drawn again. "+
 			"The round and the reason stay on the record.",
 		"Voids a round so the period is drawn again; the cancelled round and its reason stay "+
@@ -626,7 +626,7 @@ func newCancelDOTRandomDrawTool(draws DrugAlcoholKeeper) agentports.AgentTool {
 
 func newUpdateDOTRandomSelectionTool(draws DrugAlcoholKeeper) agentports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
-		"update_dot_random_selection",
+		"worker_update_dot_random_selection",
 		"Record where one random testing selection stands. Notified once the driver has "+
 			"been told to report, Excused with the reason when they cannot be tested this "+
 			"period, or Missed. "+
@@ -637,7 +637,7 @@ func newUpdateDOTRandomSelectionTool(draws DrugAlcoholKeeper) agentports.AgentTo
 		permission.OpManage,
 	), map[string]any{
 		paramDrawEntryID: agenttoolschema.KindID(
-			"The selection, from get_dot_random_draw. Never guess one.",
+			"The selection, from worker_get_dot_random_draw. Never guess one.",
 			permission.KindDOTRandomSelection,
 		),
 		paramSelectionMove: agenttoolschema.Enum("Notified, Excused or Missed.",

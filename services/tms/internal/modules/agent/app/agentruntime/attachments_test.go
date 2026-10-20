@@ -104,7 +104,7 @@ func TestReplayHistory_NamesTheFilesAnEarlierMessageCarried(t *testing.T) {
 	first := messages[0].Content
 	assert.Contains(t, first, "- id: "+documentID.String())
 	assert.Contains(t, first, "file: 405515639Rate Confirmation.pdf (application/pdf)")
-	assert.Contains(t, first, "read a file with read_attachment")
+	assert.Contains(t, first, "read a file with agent_read_attachment")
 	assert.True(t, strings.HasSuffix(first,
 		"</attachments>\n\nCan you build a shipment based on this rate confirmation?"))
 	assert.Equal(t, "Acme", messages[2].Content)
@@ -114,9 +114,9 @@ func TestOpenTurn_CountsEarlierFilesAsWhatTheTurnMayCite(t *testing.T) {
 	t.Parallel()
 
 	turn := attachmentRuntime().OpenTurn(t.Context(), &agentports.RunRequest{
-		Definition:   testDefinition(),
-		Actor:        testActor(),
-		Input:        "Approved. Continue.",
+		Definition: testDefinition(),
+		Actor:      testActor(),
+		Input:      "Approved. Continue.",
 		FileTexts: map[string]string{
 			"doc_1": "Line Haul - FLAT RATE   1   $2,150.00   $2,150.00\nTotal:   $2,410.00",
 		},

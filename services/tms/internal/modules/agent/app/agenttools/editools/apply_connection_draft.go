@@ -15,13 +15,13 @@ import (
 )
 
 const (
-	ApplyConnectionDraftToolName = "apply_edi_connection_draft"
+	ApplyConnectionDraftToolName = "edi_apply_connection_draft"
 	ediPartnerRecordEntity       = "edi_partner"
 )
 
 var (
 	errDraftDigest = errors.New(
-		"the guide reads differently from the draft the person saw; run draft_edi_connection " +
+		"the guide reads differently from the draft the person saw; run edi_draft_connection " +
 			"again and propose its documentDigest",
 	)
 	errDraftNotReady = errors.New("the draft is not ready")
@@ -64,19 +64,19 @@ func (t *ApplyConnectionDraftTool) SearchTerms() []string {
 }
 
 func (t *ApplyConnectionDraftTool) Prerequisites() []string {
-	return []string{"draft_edi_connection"}
+	return []string{"edi_draft_connection"}
 }
 
 func (t *ApplyConnectionDraftTool) Recipe() []string {
 	return []string{
-		"read_attachment",
-		"draft_edi_connection",
+		"agent_read_attachment",
+		"edi_draft_connection",
 		ApplyConnectionDraftToolName,
 	}
 }
 
 func (t *ApplyConnectionDraftTool) Description() string {
-	return "Propose saving the EDI connection draft_edi_connection drafted from a partner's guide. " +
+	return "Propose saving the EDI connection edi_draft_connection drafted from a partner's guide. " +
 		"It writes the partner, its communication profile, a document profile per document " +
 		"type, control number starts and code mappings, all inactive until a person enters the " +
 		"credentials and turns them on. For a partner that exists it changes only what the " +

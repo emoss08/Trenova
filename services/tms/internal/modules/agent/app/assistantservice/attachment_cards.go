@@ -187,7 +187,7 @@ type UnreadFileRun struct {
 	Delegated bool
 }
 
-// WaitOnUnreadFile parks the conversation on a file read_attachment found
+// WaitOnUnreadFile parks the conversation on a file agent_read_attachment found
 // still being read. The conversation picks up again on its own when the
 // reading finishes, with the file read, so the person never has to ask how
 // it is going; until then the composer shows what it is waiting on. A file

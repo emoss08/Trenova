@@ -142,7 +142,7 @@ func TestRecordProposals_AnAutomaticWriteIsExecutedByTheSystemUser(t *testing.T)
 		Run:        &agent.AgentRun{ID: pulid.MustNew("ar_")},
 		TenantInfo: scope,
 		Actions: []agentports.PendingAction{{
-			ToolName:  "assign_move",
+			ToolName:  "dispatch_assign_move",
 			Arguments: map[string]any{},
 			Rationale: "cover the move",
 			Tier:      agent.TierAutoExecute,

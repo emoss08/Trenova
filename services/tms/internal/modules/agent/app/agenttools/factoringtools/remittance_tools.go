@@ -24,8 +24,8 @@ const (
 	paramLineID         = "lineId"
 	paramLineAction     = "action"
 	paramLineKind       = "kind"
-	toolGetRemittance   = "get_factoring_remittance"
-	toolListRemittances = "list_factoring_remittances"
+	toolGetRemittance   = "factoring_get_remittance"
+	toolListRemittances = "factoring_list_remittances"
 	maxRemittanceReason = factoring.MaxRemittanceReasonLength
 )
 
@@ -86,12 +86,12 @@ func remittanceLinePreviewOptions() []toolpreview.Option {
 func remittanceIDParam() map[string]any {
 	return agenttoolschema.RecordIDText(
 		permission.ResourceFactoringRemittance,
-		"The remittance, from list_factoring_remittances.",
+		"The remittance, from factoring_list_remittances.",
 	)
 }
 
 func remittanceVersionParam() map[string]any {
-	return jsonschemautils.Integer("The remittance's version, from get_factoring_remittance.")
+	return jsonschemautils.Integer("The remittance's version, from factoring_get_remittance.")
 }
 
 func remittanceVersionRequest(
@@ -124,12 +124,12 @@ func NewResolveFactoringRemittanceLineTool(
 }
 
 func (t *ResolveFactoringRemittanceLineTool) Name() string {
-	return "resolve_factoring_remittance_line"
+	return "factoring_resolve_remittance_line"
 }
 
 func (t *ResolveFactoringRemittanceLineTool) Description() string {
 	return "Resolve one line of a factor remittance so it can be applied, or set it aside. " +
-		"Match it to a schedule item (a suggestion's itemId from get_factoring_remittance), " +
+		"Match it to a schedule item (a suggestion's itemId from factoring_get_remittance), " +
 		"Unmatch it, Ignore it with why (a fee or adjustment booked by hand), Restore an " +
 		"ignored line, or SetKind when the factor's report says what the line records " +
 		"differently. Nothing is booked until the remittance is applied."
@@ -148,7 +148,7 @@ func (t *ResolveFactoringRemittanceLineTool) ParamSchema() map[string]any {
 		paramRemittanceID: remittanceIDParam(),
 		paramVersion:      remittanceVersionParam(),
 		paramLineID: jsonschemautils.Text(
-			"The line's lineId, from get_factoring_remittance.",
+			"The line's lineId, from factoring_get_remittance.",
 		),
 		paramLineAction: agenttoolschema.Enum(
 			"What to do with the line.",
@@ -156,7 +156,7 @@ func (t *ResolveFactoringRemittanceLineTool) ParamSchema() map[string]any {
 		),
 		paramItemID: itemIDParam(
 			"The schedule item the line pays, for Match: a suggestion's itemId from " +
-				"get_factoring_remittance, or an item from get_factoring_submission.",
+				"factoring_get_remittance, or an item from factoring_get_submission.",
 		),
 		paramLineKind: agenttoolschema.Enum(
 			"What the line records, for SetKind.",
@@ -307,7 +307,7 @@ func NewRematchFactoringRemittanceTool(
 	return &RematchFactoringRemittanceTool{remittances: remittances}
 }
 
-func (t *RematchFactoringRemittanceTool) Name() string { return "rematch_factoring_remittance" }
+func (t *RematchFactoringRemittanceTool) Name() string { return "factoring_rematch_remittance" }
 
 func (t *RematchFactoringRemittanceTool) Description() string {
 	return "Match a remittance's open lines again against the factor's schedules as they are " +
@@ -415,7 +415,7 @@ func NewApplyFactoringRemittanceTool(
 	}
 }
 
-func (t *ApplyFactoringRemittanceTool) Name() string { return "apply_factoring_remittance" }
+func (t *ApplyFactoringRemittanceTool) Name() string { return "factoring_apply_remittance" }
 
 func (t *ApplyFactoringRemittanceTool) Description() string {
 	return "Book every matched line of a factor remittance to the ledger in one go. Funded " +
@@ -550,7 +550,7 @@ func NewDiscardFactoringRemittanceTool(
 	return &DiscardFactoringRemittanceTool{remittances: remittances}
 }
 
-func (t *DiscardFactoringRemittanceTool) Name() string { return "discard_factoring_remittance" }
+func (t *DiscardFactoringRemittanceTool) Name() string { return "factoring_discard_remittance" }
 
 func (t *DiscardFactoringRemittanceTool) Description() string {
 	return "Discard a factor remittance that will not be booked, such as a duplicate of one " +

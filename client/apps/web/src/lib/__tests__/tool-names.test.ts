@@ -27,6 +27,15 @@ describe("toolNameInReadingOrder", () => {
     expect(toolNameInReadingOrder("receivable_apply_credit_memo")).toBe(
       "apply_receivable_credit_memo",
     );
+    expect(toolNameInReadingOrder("dispatch_list_tenders")).toBe("list_tenders");
+    expect(toolNameInReadingOrder("fuel_list_ifta_mileage_entries")).toBe(
+      "list_ifta_mileage_entries",
+    );
+  });
+
+  it("knows a record by the plural the server forms for it", () => {
+    expect(toolNameInReadingOrder("inbox_list_capture_batches")).toBe("list_capture_batches");
+    expect(toolNameInReadingOrder("inbox_discard_capture_batch")).toBe("discard_capture_batch");
   });
 
   it("leaves a name outside a namespace as it is", () => {

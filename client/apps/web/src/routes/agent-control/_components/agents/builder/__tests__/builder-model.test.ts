@@ -34,7 +34,7 @@ function tool(name: string, kind: "query" | "action", core = false): ToolCatalog
 }
 
 const catalog = [
-  tool("recall_memory", "query", true),
+  tool("agent_list_memories", "query", true),
   tool("shipment_list", "query"),
   tool("schedule_report_email", "action"),
   tool("send_customer_reply", "action"),
@@ -153,7 +153,7 @@ describe("changeTiers", () => {
     expect(
       changeTiers(
         values({
-          toolNames: ["recall_memory", "shipment_list", "assign_driver", "send_customer_reply"],
+          toolNames: ["agent_list_memories", "shipment_list", "assign_driver", "send_customer_reply"],
           toolTiers: { assign_driver: "AutoExecute", send_customer_reply: "Propose" },
           autonomyCeiling: "ActWithApproval",
         }),
@@ -210,10 +210,10 @@ describe("endOfDay and dateIn", () => {
  */
 describe("tools set above the ceiling", () => {
   const catalog = [
-    { name: "create_customer", kind: "action" },
-    { name: "update_customer", kind: "action" },
-    { name: "assign_move", kind: "action" },
-    { name: "get_customer", kind: "query" },
+    { name: "customer_create", kind: "action" },
+    { name: "customer_update", kind: "action" },
+    { name: "dispatch_assign_move", kind: "action" },
+    { name: "customer_get", kind: "query" },
   ] as ToolCatalogEntry[];
 
   it("names every held action tool above the ceiling and the highest tier they ask for", () => {
@@ -221,17 +221,17 @@ describe("tools set above the ceiling", () => {
       aboveCeiling(
         {
           autonomyCeiling: "Propose",
-          toolNames: ["create_customer", "update_customer", "assign_move", "get_customer"],
+          toolNames: ["customer_create", "customer_update", "dispatch_assign_move", "customer_get"],
           toolTiers: {
-            create_customer: "AutoExecute",
-            update_customer: "ActWithApproval",
-            assign_move: "Propose",
-            get_customer: "AutoExecute",
+            customer_create: "AutoExecute",
+            customer_update: "ActWithApproval",
+            dispatch_assign_move: "Propose",
+            customer_get: "AutoExecute",
           },
         },
         catalog,
       ),
-    ).toEqual({ tools: ["create_customer", "update_customer"], highest: "AutoExecute" });
+    ).toEqual({ tools: ["customer_create", "customer_update"], highest: "AutoExecute" });
   });
 
   it("ignores a tier left by a tool the agent no longer holds", () => {
@@ -239,8 +239,8 @@ describe("tools set above the ceiling", () => {
       aboveCeiling(
         {
           autonomyCeiling: "Propose",
-          toolNames: ["assign_move"],
-          toolTiers: { create_customer: "AutoExecute" },
+          toolNames: ["dispatch_assign_move"],
+          toolTiers: { customer_create: "AutoExecute" },
         },
         catalog,
       ),
@@ -251,16 +251,16 @@ describe("tools set above the ceiling", () => {
     expect(
       capToCeiling(
         {
-          create_customer: "AutoExecute",
-          update_customer: "ActWithApproval",
-          assign_move: "Propose",
+          customer_create: "AutoExecute",
+          customer_update: "ActWithApproval",
+          dispatch_assign_move: "Propose",
         },
         "ActWithApproval",
       ),
     ).toEqual({
-      create_customer: "ActWithApproval",
-      update_customer: "ActWithApproval",
-      assign_move: "Propose",
+      customer_create: "ActWithApproval",
+      customer_update: "ActWithApproval",
+      dispatch_assign_move: "Propose",
     });
   });
 

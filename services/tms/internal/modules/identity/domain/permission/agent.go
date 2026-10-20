@@ -65,8 +65,8 @@ var agentAllowedPermissions = map[Resource]map[Operation]struct{}{
 		OpRead:   {},
 		OpUpdate: {},
 		// The coverage desk may put a contract carrier on a move no driver
-		// fits. Unassigning stays a person's: no desk runs unassign_moves or
-		// cancel_carrier_assignment.
+		// fits. Unassigning stays a person's: no desk runs dispatch_unassign_move or
+		// dispatch_cancel_carrier_assignment.
 		OpAssign: {},
 	},
 	ResourceWorker: {
@@ -95,7 +95,7 @@ var agentAllowedPermissions = map[Resource]map[Operation]struct{}{
 		OpCreate: {},
 		OpUpdate: {},
 		// The service failure desk may propose voiding a failure it finds was
-		// opened in error; void_service_failure never runs until a person
+		// opened in error; exception_void_service_failure never runs until a person
 		// approves the proposal.
 		OpArchive: {},
 	},
@@ -109,7 +109,7 @@ var agentAllowedPermissions = map[Resource]map[Operation]struct{}{
 		OpCreate: {},
 	},
 	ResourceDashboard: {
-		// list_dashboards claims the read: add_dashboard_tile needs an id and
+		// report_list_dashboards claims the read: report_add_dashboard_tile needs an id and
 		// nothing else hands one out.
 		OpRead:   {},
 		OpCreate: {},
@@ -175,13 +175,13 @@ var agentAllowedPermissions = map[Resource]map[Operation]struct{}{
 		OpRead: {},
 	},
 	ResourceTender: {
-		// list_shipment_tenders, so the coverage desk sees a live tender
+		// dispatch_list_tenders, so the coverage desk sees a live tender
 		// before it covers a move another way.
 		OpRead:   {},
 		OpCreate: {},
 	},
 	// The coverage desk generates the rate confirmation for a carrier it
-	// covered a move with and proposes sending it; send_rate_confirmation
+	// covered a move with and proposes sending it; rate_send_confirmation
 	// never runs without a person, whatever the desk's tier. Voiding and
 	// recording a carrier's confirmation share the update grant, and neither
 	// runs before a person approves it either.

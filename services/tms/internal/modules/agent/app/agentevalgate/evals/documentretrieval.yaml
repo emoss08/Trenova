@@ -1,4 +1,4 @@
-# Synthetic documents and the searches search_documents should answer with
+# Synthetic documents and the searches document_list should answer with
 # them. The corpus is seeded for one organization, attached to shipments; the
 # leak test seeds the same text for a second organization and on records the
 # caller may not read, and none of that may ever be returned. Metrics are

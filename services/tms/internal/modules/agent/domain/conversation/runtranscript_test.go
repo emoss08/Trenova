@@ -90,7 +90,7 @@ func TestRunTranscriptOf_AMessageOverTheBoundKeepsOnlyItsShape(t *testing.T) {
 	transcript := conversation.RunTranscriptOf([]conversation.Message{{
 		Role:      conversation.RoleAssistant,
 		Content:   strings.Repeat("a", agent.TranscriptMessageBytes),
-		ToolCalls: []conversation.ToolCallRecord{{ID: "c1", Name: "run_report", Arguments: map[string]any{"q": "x"}}},
+		ToolCalls: []conversation.ToolCallRecord{{ID: "c1", Name: "report_run", Arguments: map[string]any{"q": "x"}}},
 		CreatedAt: 9,
 	}})
 
@@ -99,7 +99,7 @@ func TestRunTranscriptOf_AMessageOverTheBoundKeepsOnlyItsShape(t *testing.T) {
 	kept := transcript.Messages[0]
 	assert.True(t, kept.Omitted)
 	assert.Empty(t, kept.Content)
-	assert.Equal(t, []agent.TranscriptToolCall{{ID: "c1", Name: "run_report"}}, kept.ToolCalls)
+	assert.Equal(t, []agent.TranscriptToolCall{{ID: "c1", Name: "report_run"}}, kept.ToolCalls)
 	assert.Equal(t, int64(9), kept.CreatedAt)
 }
 

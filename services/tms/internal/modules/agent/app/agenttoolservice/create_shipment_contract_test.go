@@ -85,7 +85,7 @@ func (f *fakeContractRates) PreviewContractRate(
 }
 
 /*
-An agent that held shipment_create but not quote_shipment asked the person for
+An agent that held shipment_create but not rate_quote asked the person for
 a rating method and base rate for Peak Distributing, whose agreement already
 prices the lane. Saving the shipment consults the contract either way; leaving
 the rating out now seats the contract's.
@@ -135,7 +135,7 @@ func TestCreateShipment_AsksForARatingWhenNoAgreementPricesTheLane(t *testing.T)
 	var refusal *errortypes.Error
 	require.ErrorAs(t, err, &refusal)
 	assert.Equal(t, "formulaTemplateId", refusal.Field)
-	assert.Contains(t, err.Error(), "list_formula_templates")
+	assert.Contains(t, err.Error(), "formula_list_templates")
 }
 
 func TestCreateShipment_TheSchemaRefusesWhatOnlyTheRaterOrTheSystemSets(t *testing.T) {

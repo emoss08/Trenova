@@ -16,7 +16,7 @@ function artifactOf(payload: Record<string, unknown>): AssistantArtifact {
 }
 
 describe("analysisFrom", () => {
-  it("reads what the analyze_data tool published", () => {
+  it("reads what the report_analyze_data tool published", () => {
     expect(
       analysisFrom(
         artifactOf({

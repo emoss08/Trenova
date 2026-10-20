@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/toolschema"
 )
 
 type getWorkerTool struct {
@@ -26,11 +27,11 @@ func newGetWorkerTool(
 	return &getWorkerTool{repo: repo, access: newFieldAccess(permissions)}
 }
 
-func (t *getWorkerTool) Name() string { return "get_worker" }
+func (t *getWorkerTool) Name() string { return "worker_get" }
 
 func (t *getWorkerTool) Description() string {
 	return "Retrieve one worker (driver) by id, including their profile and current state. " +
-		"Use search_worker first when you only have a name."
+		"Use worker_search first when you only have a name."
 }
 
 func (t *getWorkerTool) ParamSchema() map[string]any {
@@ -38,8 +39,8 @@ func (t *getWorkerTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"workerId": agenttoolschema.OfResource(map[string]any{
-				"type": "string",
-				"description": "The worker's id, from search_worker or list_workers, " +
+				toolschema.KeyType: toolschema.TypeString,
+				toolschema.KeyDescription: "The worker's id, from worker_search or worker_list, " +
 					"the page you are on, or this run's subject.",
 			}, permission.ResourceWorker),
 		},
@@ -205,7 +206,7 @@ func newSearchWorkerTool(
 	return &searchWorkerTool{repo: repo, access: newFieldAccess(permissions)}
 }
 
-func (t *searchWorkerTool) Name() string { return "search_worker" }
+func (t *searchWorkerTool) Name() string { return "worker_search" }
 
 func (t *searchWorkerTool) SearchTerms() []string {
 	return []string{
@@ -217,9 +218,9 @@ func (t *searchWorkerTool) SearchTerms() []string {
 func (t *searchWorkerTool) Description() string {
 	return "Find a driver or other worker by name or code, or list the roster. " +
 		"Call it with no query to see who is on the roster; pass a query only when " +
-		"you already have a name. Returns matches with their ids, which get_worker " +
+		"you already have a name. Returns matches with their ids, which worker_get " +
 		"can then expand. To find drivers by a licence or medical card date, use " +
-		"list_expiring_credentials instead — this tool does not filter on dates."
+		"worker_list_expiring_credentials instead — this tool does not filter on dates."
 }
 
 func (t *searchWorkerTool) ParamSchema() map[string]any {
@@ -230,10 +231,7 @@ func (t *searchWorkerTool) ParamSchema() map[string]any {
 				"type":        "string",
 				"description": "Optional name or code to match. Omit to list workers unfiltered.",
 			},
-			"limit": map[string]any{
-				"type":        "integer",
-				"description": "How many results to return, at most 25",
-			},
+			paramLimit: limitSchema(defaultSearchLimit, maxSearchLimit),
 		},
 		"additionalProperties": false,
 	}
@@ -259,10 +257,7 @@ func (t *searchWorkerTool) Query(
 	// the tool reject a call the layer beneath it would have served.
 	query := optionalString(params.Params, "query")
 
-	limit := optionalInt(params.Params, "limit", defaultSearchLimit)
-	if limit <= 0 || limit > maxSearchLimit {
-		limit = defaultSearchLimit
-	}
+	limit := readLimit(params.Params, defaultSearchLimit, maxSearchLimit)
 
 	criteria := filtercatalog.NewCriteria("workers").At(clockFor(params))
 	criteria.Text(query)

@@ -174,7 +174,7 @@ func requireCarrierGrant(
 
 func carrierIDProperty(what string) map[string]any {
 	return agenttoolschema.RecordID(permission.ResourceCarrier, what,
-		"list_carriers or get_carrier")
+		"carrier_list or carrier_get")
 }
 
 func targetCarrier(params map[string]any) (agentports.ToolTarget, bool) {
@@ -226,7 +226,7 @@ func vetPreview(
 
 func NewVetCarrierTool(intel carrierIntelOperator) agentports.AgentTool {
 	return common.NewReportingReceivableTool(&common.ReceivableSpec{
-		Name:     "vet_carrier",
+		Name:     "carrier_vet",
 		Artifact: common.CarrierRecordEntity,
 		Description: "Look a carrier up with the organization's carrier intelligence provider " +
 			"now: authority, insurance, safety and the organization's rules, recorded on the " +
@@ -333,7 +333,7 @@ type brokerVet struct {
 
 func NewVetCustomerBrokerTool(intel carrierIntelOperator) agentports.AgentTool {
 	return common.NewReportingReceivableTool(&common.ReceivableSpec{
-		Name:     "vet_customer_broker",
+		Name:     "customer_vet_broker",
 		Artifact: common.CustomerRecordEntity,
 		Description: "Check a customer that is a freight broker against the public FMCSA " +
 			"record by its DOT number: broker authority and bond. Use it before taking " +
@@ -349,7 +349,7 @@ func NewVetCustomerBrokerTool(intel carrierIntelOperator) agentports.AgentTool {
 		Properties: map[string]any{
 			common.FieldCustomerID: agenttoolschema.RecordIDText(
 				permission.ResourceCustomer,
-				"The broker customer, from list_customers. Never "+
+				"The broker customer, from customer_list. Never "+
 					"guess one.",
 			),
 			common.ParamForceResend: common.BooleanProperty(
@@ -413,7 +413,7 @@ type monitoringView struct {
 
 func NewSetCarrierMonitoringTool(intel carrierIntelOperator) agentports.AgentTool {
 	return common.NewReportingReceivableTool(&common.ReceivableSpec{
-		Name:     "set_carrier_monitoring",
+		Name:     "carrier_set_monitoring",
 		Artifact: common.CarrierRecordEntity,
 		Description: "Turn continuous monitoring on or off for carriers, so the provider " +
 			"reports authority, insurance and safety changes as they happen. Carriers " +
@@ -430,7 +430,7 @@ func NewSetCarrierMonitoringTool(intel carrierIntelOperator) agentports.AgentToo
 			paramCarrierIDs: toolschema.RecordSubset(permission.ResourceCarrier.String(),
 				agenttoolschema.RecordIDs(
 					permission.ResourceCarrier,
-					"The carriers, from list_carriers.",
+					"The carriers, from carrier_list.",
 					maxMonitoredCarriers,
 				)),
 			ParamEnabled: common.BooleanProperty("True to monitor them, false to stop."),
@@ -536,7 +536,7 @@ func renderMonitoring(
 
 func NewMarkCarrierIntelReviewedTool(intel carrierIntelOperator) agentports.AgentTool {
 	return common.NewReportingReceivableTool(&common.ReceivableSpec{
-		Name:     "mark_carrier_intel_reviewed",
+		Name:     "carrier_record_intelligence_review",
 		Artifact: common.CarrierRecordEntity,
 		Description: "Record that a person reviewed a carrier's current intelligence " +
 			"result, with what they checked. It is their sign-off, so it only runs once " +
@@ -664,7 +664,7 @@ func NewApplyCarrierIntelSuggestionsTool(
 	permissions permissionChecker,
 ) agentports.AgentTool {
 	return common.NewReportingReceivableTool(&common.ReceivableSpec{
-		Name:        "apply_carrier_intel_suggestions",
+		Name:        "carrier_apply_intelligence_suggestions",
 		SearchTerms: []string{"carrier intelligence fix", "intelligence corrections"},
 		Artifact:    common.CarrierRecordEntity,
 		Description: "Correct a carrier's profile where its intelligence result disagrees: " +
@@ -831,7 +831,7 @@ func NewImportSourcedCarrierTool(
 	permissions permissionChecker,
 ) agentports.AgentTool {
 	return common.NewReportingReceivableTool(&common.ReceivableSpec{
-		Name:     "import_sourced_carrier",
+		Name:     "carrier_import",
 		Artifact: common.CarrierRecordEntity,
 		Description: "Add a carrier found through carrier sourcing to the organization's " +
 			"carriers by its DOT number, filled from the provider's profile. A DOT number " +
@@ -943,7 +943,7 @@ type importView struct {
 
 func NewVerifyCarrierEquipmentTool(intel carrierIntelOperator) agentports.AgentTool {
 	return common.NewReportingReceivableTool(&common.ReceivableSpec{
-		Name:     "verify_carrier_equipment",
+		Name:     "carrier_verify_equipment",
 		Artifact: common.CarrierRecordEntity,
 		Description: "Check that the truck or trailer a carrier sent for a load is registered " +
 			"to that carrier, by VIN or plate, and record the answer on the assignment. Take " +
@@ -958,7 +958,7 @@ func NewVerifyCarrierEquipmentTool(intel carrierIntelOperator) agentports.AgentT
 			"nothing is sent to the carrier.",
 		Properties: map[string]any{
 			paramCarrierAssignmentID: agenttoolschema.KindID("The carrier assignment, from "+
-				"list_rate_confirmations or shipment_get. Never guess one.",
+				"rate_list_confirmations or shipment_get. Never guess one.",
 				permission.KindCarrierAssignment),
 			paramUnitType: agenttoolschema.Enum("What was checked.", unitTypes),
 			paramVIN:      common.StringProperty("The vehicle identification number.", maxVINChars),

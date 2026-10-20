@@ -114,7 +114,7 @@ func TestAssistant_CountsToolOutcomesByToolVerdictModelAndProvider(t *testing.T)
 	assistant.RecordToolOutcome(haiku("shipment_list", "ran"))
 	assistant.RecordToolOutcome(haiku("shipment_list", "invalid"))
 	assistant.RecordToolOutcome(haiku("shipment_list", "invalid"))
-	assistant.RecordToolOutcome(haiku("assign_move", "proposed"))
+	assistant.RecordToolOutcome(haiku("dispatch_assign_move", "proposed"))
 	assistant.RecordToolOutcome(ToolOutcomeLabels{
 		Tool:     "shipment_list",
 		Verdict:  "invalid",
@@ -127,7 +127,7 @@ func TestAssistant_CountsToolOutcomesByToolVerdictModelAndProvider(t *testing.T)
 	claude := []string{"claude-haiku-5.5", "AnthropicMessages"}
 	assert.Equal(t, 1, countOf(t, registry, name, append([]string{"shipment_list", "ran"}, claude...)...))
 	assert.Equal(t, 2, countOf(t, registry, name, append([]string{"shipment_list", "invalid"}, claude...)...))
-	assert.Equal(t, 1, countOf(t, registry, name, append([]string{"assign_move", "proposed"}, claude...)...))
+	assert.Equal(t, 1, countOf(t, registry, name, append([]string{"dispatch_assign_move", "proposed"}, claude...)...))
 	assert.Equal(t, 1, countOf(t, registry, name,
 		"shipment_list", "invalid", "gpt-6-luna", "OpenAIResponses"))
 	assert.Equal(t, 1, countOf(t, registry, name, "shipment_list", "ran", "unknown", "unknown"))

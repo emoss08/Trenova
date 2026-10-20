@@ -377,7 +377,7 @@ func TestGuideSelectionAgainstFloors(t *testing.T) {
 	}
 
 	floors := readFloors(t, guideFloors)
-	enforce(t, gate{label: "find_in_trenova by keyword", report: keyword, floors: &floors.Keyword})
+	enforce(t, gate{label: "agent_find_page by keyword", report: keyword, floors: &floors.Keyword})
 }
 
 func TestGuideSelectionAgainstFloorsHybrid(t *testing.T) {
@@ -394,7 +394,7 @@ func TestGuideSelectionAgainstFloorsHybrid(t *testing.T) {
 
 	report := evaluate(t, suites.guide, agentevalgate.GuideHybridFinder(guide, fixture))
 	enforce(t, gate{
-		label:  "find_in_trenova by keyword and meaning",
+		label:  "agent_find_page by keyword and meaning",
 		report: report,
 		floors: readFloors(t, guideFloors).Hybrid,
 	})

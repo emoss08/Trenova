@@ -283,7 +283,7 @@ func TestDraftFactoringNoa_DraftsForTheNamedCustomerAndFactor(t *testing.T) {
 	params := toolParams(map[string]any{
 		paramCustomerID: customerID.String(),
 		paramFactorID:   factorID.String(),
-		paramNotes:      "Open invoices are included.",
+		paramNote:       "Open invoices are included.",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(t, &noas.guard, func() (*agent.ToolPreview, error) {

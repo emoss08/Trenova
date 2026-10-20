@@ -1,4 +1,5 @@
 import type { AssistantMessage } from "@/types/assistant";
+import { toolNameInReadingOrder } from "@/lib/tool-names";
 import { classifyMessage } from "./classify-message";
 
 export type ToolCallRecord = NonNullable<AssistantMessage["toolCalls"]>[number];
@@ -202,5 +203,7 @@ const TOOL_IDENTIFIER = /\b[a-z][a-z0-9]*(?:_[a-z0-9]+)+\b/gu;
 export function decisionHeadline(content: string): string {
   const first = content.split("\n", 1)[0]?.trim() ?? "";
 
-  return first.replace(TOOL_IDENTIFIER, (name) => name.replaceAll("_", " "));
+  return first.replace(TOOL_IDENTIFIER, (name) =>
+    toolNameInReadingOrder(name).replaceAll("_", " "),
+  );
 }

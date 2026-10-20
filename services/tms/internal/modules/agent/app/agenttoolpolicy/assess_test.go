@@ -107,7 +107,7 @@ func TestAssess_UnboundedMoneyAsksFirst(t *testing.T) {
 func TestAssess_WorkThatLeavesNeverRunsPastApproval(t *testing.T) {
 	t.Parallel()
 
-	name := "email_customer"
+	name := "customer_send_email"
 	clean, tainted := assessBoth(t, agenttoolpolicy.AssessInput{
 		Policy: actionPolicy(name, agent.EgressExternalRecipient),
 		Definition: chatAgent(agent.TierAutoExecute, map[string]agent.AutonomyTier{
@@ -126,7 +126,7 @@ func TestAssess_TheAgentsCeilingHoldsEveryTool(t *testing.T) {
 	t.Parallel()
 
 	clean, tainted := assessBoth(t, agenttoolpolicy.AssessInput{
-		Policy:     actionPolicy("assign_move", agent.EgressInternal),
+		Policy:     actionPolicy("dispatch_assign_move", agent.EgressInternal),
 		Definition: chatAgent(agent.TierPropose, nil),
 	})
 
@@ -145,7 +145,7 @@ Unattended, the exemption never applies.
 func TestAssess_AClassifiedToolWithTheExemptionIsConditionalInChat(t *testing.T) {
 	t.Parallel()
 
-	policy := actionPolicy("create_report", agent.EgressPersonal, agent.EgressInternal)
+	policy := actionPolicy("report_create", agent.EgressPersonal, agent.EgressInternal)
 	policy.DefaultTier = agent.TierPropose
 	policy.PersonalRunsUnasked = true
 	policy.Classify = func(agentports.ToolExecuteParams) agentports.CallPolicy {
@@ -172,7 +172,7 @@ func TestAssess_AClassifiedToolWithTheExemptionIsConditionalInChat(t *testing.T)
 func TestAssess_AConditionMakesAnAutomaticToolConditional(t *testing.T) {
 	t.Parallel()
 
-	policy := actionPolicy("mark_inbound_message", agent.EgressInternal)
+	policy := actionPolicy("inbox_mark_inbound_message", agent.EgressInternal)
 	policy.Condition = &agentports.TierCondition{
 		Description: "Runs only as far as its mailbox allows.",
 		Limit: func(context.Context, agentports.ToolExecuteParams) agent.AutonomyTier {
@@ -195,7 +195,7 @@ func TestAssess_AConditionMakesAnAutomaticToolConditional(t *testing.T) {
 func TestAssess_SimulationAndShadowPreviewEveryWrite(t *testing.T) {
 	t.Parallel()
 
-	policy := actionPolicy("assign_move", agent.EgressInternal)
+	policy := actionPolicy("dispatch_assign_move", agent.EgressInternal)
 
 	simulated := chatAgent(agent.TierAutoExecute, nil)
 	simulated.SimulationMode = true
@@ -250,7 +250,7 @@ func TestAssess_AQueryIsNeverSimulated(t *testing.T) {
 func TestAssess_EarnedTiersAndTheStreakToTheNext(t *testing.T) {
 	t.Parallel()
 
-	name := "assign_move"
+	name := "dispatch_assign_move"
 	definition := chatAgent(agent.TierAutoExecute, map[string]agent.AutonomyTier{
 		name: agent.TierActWithApproval,
 	})
@@ -290,7 +290,7 @@ func TestAssess_NoStreakCanMoveWhatALimitHolds(t *testing.T) {
 	t.Parallel()
 
 	control := &tenant.AgentControl{EarnedAutonomy: true, PromotionThreshold: 10}
-	name := "email_customer"
+	name := "customer_send_email"
 
 	leaves, _ := assessBoth(t, agenttoolpolicy.AssessInput{
 		Policy: actionPolicy(name, agent.EgressExternalRecipient),
@@ -302,16 +302,16 @@ func TestAssess_NoStreakCanMoveWhatALimitHolds(t *testing.T) {
 	assert.Nil(t, leaves.ApprovalsToNext, "approval is the most a message out may earn")
 
 	capped, _ := assessBoth(t, agenttoolpolicy.AssessInput{
-		Policy:     actionPolicy("assign_move", agent.EgressInternal),
+		Policy:     actionPolicy("dispatch_assign_move", agent.EgressInternal),
 		Definition: chatAgent(agent.TierPropose, nil),
 		Control:    control,
 	})
 	assert.Nil(t, capped.ApprovalsToNext, "the agent's ceiling stops a promotion")
 
 	off, _ := assessBoth(t, agenttoolpolicy.AssessInput{
-		Policy: actionPolicy("assign_move", agent.EgressInternal),
+		Policy: actionPolicy("dispatch_assign_move", agent.EgressInternal),
 		Definition: chatAgent(agent.TierAutoExecute, map[string]agent.AutonomyTier{
-			"assign_move": agent.TierPropose,
+			"dispatch_assign_move": agent.TierPropose,
 		}),
 		Control: &tenant.AgentControl{PromotionThreshold: 10},
 	})
@@ -322,7 +322,7 @@ func TestAssess_NoStreakCanMoveWhatALimitHolds(t *testing.T) {
 func TestAssess_ARegisteredToolAnswersLikeItsPolicy(t *testing.T) {
 	t.Parallel()
 
-	policy := registeredPolicy(t, "email_customer")
+	policy := registeredPolicy(t, "customer_send_email")
 	clean, tainted := assessBoth(t, agenttoolpolicy.AssessInput{
 		Policy: policy,
 		Definition: chatAgent(agent.TierAutoExecute, map[string]agent.AutonomyTier{

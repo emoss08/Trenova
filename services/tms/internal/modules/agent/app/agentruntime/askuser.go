@@ -119,7 +119,7 @@ const unshowableFieldsRefusal = "None of the fields could be shown. Each needs a
 // instructions can still name it, and a question no one will see used to end
 // the run as though it had been answered.
 const unattendedAskRefusal = "Nobody is watching this run, so there is no one to ask. " +
-	"Decide as your instructions allow, or call raise_exception to hand the question " +
+	"Decide as your instructions allow, or call agent_raise_exception to hand the question " +
 	"to a person."
 
 // repeatedAskRefusal answers a question the conversation has already put to

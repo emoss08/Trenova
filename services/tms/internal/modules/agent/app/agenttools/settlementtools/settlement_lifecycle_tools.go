@@ -372,7 +372,7 @@ func carrierAdjustmentSchema() (properties map[string]any, required []string) {
 	properties = adjustmentBase("carrier")
 	properties[common.ParamGLAccountID] = agenttoolschema.RecordIDText(
 		permission.ResourceGeneralLedgerAccount,
-		"The expense account it posts to, from list_gl_accounts, when it is not the "+
+		"The expense account it posts to, from ledger_list_accounts, when it is not the "+
 			"default purchased transportation account.",
 	)
 
@@ -427,7 +427,7 @@ func carrierLifecycle() *lifecycleText {
 		payee:      "carrier",
 		listTool:   "settlement_list_carrier",
 		getTool:    "settlement_get_carrier",
-		adjustFrom: "list_gl_accounts",
+		adjustFrom: "ledger_list_accounts",
 		methods:    carrierPaymentMethods,
 		postEgress: []agent.EgressClass{agent.EgressMoney},
 		paidEgress: []agent.EgressClass{agent.EgressMoney},

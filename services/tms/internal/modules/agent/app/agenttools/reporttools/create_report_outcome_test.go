@@ -135,9 +135,9 @@ func TestCreateReport_ClassifiesPrivateReportsAsPersonalAndHoldsSharedOnes(t *te
 /*
 Saving a report says which report it saved.
 
-An approved create_report used to leave only "it ran", and the agent then
-passed the proposal's id to describe_report. The result names the report and
-its id under the parameter describe_report, run_report and update_report take.
+An approved report_create used to leave only "it ran", and the agent then
+passed the proposal's id to report_get. The result names the report and
+its id under the parameter report_get, report_run and report_update take.
 */
 func TestCreateReport_ExecuteWithResultNamesTheSavedReport(t *testing.T) {
 	t.Parallel()

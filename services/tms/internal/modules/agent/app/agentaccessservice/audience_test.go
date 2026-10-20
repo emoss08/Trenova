@@ -92,8 +92,8 @@ func newPreviewFixture(t *testing.T) *previewFixture {
 	f.service.runtime = heldRuntime{}
 	f.service.policies = policyTable{
 		"shipment_get": {Name: "shipment_get", Resource: "shipment"},
-		"email_customer": {
-			Name:     "email_customer",
+		"customer_send_email": {
+			Name:     "customer_send_email",
 			Resource: "shipment",
 			Egress:   []agent.EgressClass{agent.EgressExternalRecipient},
 		},
@@ -119,12 +119,12 @@ func TestPreviewAudience_ReadsTheFormNotTheSavedAgent(t *testing.T) {
 	open, err := f.service.PreviewAudience(t.Context(), &agentdefinitionports.PreviewAgentAudienceRequest{
 		TenantInfo: f.tenant,
 		AgentID:    f.agent.ID,
-		ToolNames:  []string{"shipment_get", "email_customer"},
+		ToolNames:  []string{"shipment_get", "customer_send_email"},
 		Mode:       agentdefinition.AccessEveryone,
 	})
 	require.NoError(t, err)
 	assert.Equal(t, agentdefinition.AccessEveryone, open.Agent.EffectiveAccessMode())
-	assert.Equal(t, []string{"email_customer"}, open.SensitiveTools)
+	assert.Equal(t, []string{"customer_send_email"}, open.SensitiveTools)
 	assert.Equal(t, 1, f.grants.reads, "an agent being edited says which roles hold it now")
 	for _, role := range open.Roles {
 		assert.Equal(t, role.Role.ID == f.roleA.ID, role.Granted, role.Role.Name)
@@ -141,7 +141,7 @@ func TestPreviewAudience_ReadsTheFormNotTheSavedAgent(t *testing.T) {
 	restricted, err := f.service.PreviewAudience(t.Context(), &agentdefinitionports.PreviewAgentAudienceRequest{
 		TenantInfo: f.tenant,
 		AgentID:    f.agent.ID,
-		ToolNames:  []string{"shipment_get", "email_customer"},
+		ToolNames:  []string{"shipment_get", "customer_send_email"},
 		Mode:       agentdefinition.AccessRoles,
 	})
 	require.NoError(t, err)
@@ -157,11 +157,11 @@ func TestPreviewAudience_WorksForAnAgentNotYetSaved(t *testing.T) {
 
 	preview, err := f.service.PreviewAudience(t.Context(), &agentdefinitionports.PreviewAgentAudienceRequest{
 		TenantInfo: f.tenant,
-		ToolNames:  []string{" email_customer ", "email_customer", "", "not_a_tool"},
+		ToolNames:  []string{" customer_send_email ", "customer_send_email", "", "not_a_tool"},
 		Mode:       agentdefinition.AccessEveryone,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, []string{"email_customer"}, preview.SensitiveTools)
+	assert.Equal(t, []string{"customer_send_email"}, preview.SensitiveTools)
 	assert.Zero(t, f.grants.reads, "a new agent has no grants to read")
 	require.Len(t, preview.Roles, 2)
 	for _, role := range preview.Roles {
@@ -169,7 +169,7 @@ func TestPreviewAudience_WorksForAnAgentNotYetSaved(t *testing.T) {
 	}
 	require.Len(t, f.coverage.required, 1)
 	assert.Equal(t, []permissionports.RequiredGrant{
-		{Tool: "email_customer", Resource: "shipment", Operation: permission.OpRead},
+		{Tool: "customer_send_email", Resource: "shipment", Operation: permission.OpRead},
 	}, f.coverage.required[0])
 }
 
@@ -182,12 +182,12 @@ func TestPreviewAudience_ASystemAgentStaysOpen(t *testing.T) {
 	preview, err := f.service.PreviewAudience(t.Context(), &agentdefinitionports.PreviewAgentAudienceRequest{
 		TenantInfo: f.tenant,
 		AgentID:    f.system.ID,
-		ToolNames:  []string{"email_customer"},
+		ToolNames:  []string{"customer_send_email"},
 		Mode:       agentdefinition.AccessRoles,
 	})
 	require.NoError(t, err)
 	assert.Equal(t, agentdefinition.AccessEveryone, preview.Agent.EffectiveAccessMode())
-	assert.Equal(t, []string{"email_customer"}, preview.SensitiveTools)
+	assert.Equal(t, []string{"customer_send_email"}, preview.SensitiveTools)
 }
 
 func TestPreviewAudience_RefusesABadRequest(t *testing.T) {

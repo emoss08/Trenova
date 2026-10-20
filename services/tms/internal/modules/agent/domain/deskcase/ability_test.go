@@ -38,7 +38,7 @@ func TestAbilities(t *testing.T) {
 	t.Parallel()
 
 	shipments := holder("Shipment Assistant", "shipment_get_tracking")
-	billing := holder("Billing Assistant", "billing_transfer", "email_customer")
+	billing := holder("Billing Assistant", "billing_transfer", "customer_send_email")
 	steps := []deskcase.StepKey{
 		deskcase.StepTrackDelivery,
 		deskcase.StepMarkReady,

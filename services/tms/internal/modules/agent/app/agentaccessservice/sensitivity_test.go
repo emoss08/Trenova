@@ -53,7 +53,7 @@ func TestAnySensitive_OrsItsRules(t *testing.T) {
 	held := []HeldTool{
 		{Name: "send_email", Resource: "email", Operation: permission.OpCreate},
 		{Name: "get_worker_pay", Resource: "worker_pay", Operation: permission.OpRead},
-		{Name: "list_reports", Resource: "report", Operation: permission.OpRead},
+		{Name: "report_list", Resource: "report", Operation: permission.OpRead},
 	}
 
 	assert.Equal(t, []string{"send_email", "get_worker_pay"}, SensitiveTools(held, rule))
@@ -66,7 +66,7 @@ func TestDefaultSensitiveRule_NamesToolsWhoseWorkLeavesTheOrganization(t *testin
 	registry := permission.NewEmptyRegistry()
 	held := []HeldTool{
 		{
-			Name:      "email_customer",
+			Name:      "customer_send_email",
 			Resource:  "shipment",
 			Operation: permission.OpUpdate,
 			Egress:    []agent.EgressClass{agent.EgressInternal, agent.EgressExternalRecipient},
@@ -77,12 +77,12 @@ func TestDefaultSensitiveRule_NamesToolsWhoseWorkLeavesTheOrganization(t *testin
 			Operation: permission.OpUpdate,
 			Egress:    []agent.EgressClass{agent.EgressInternal},
 		},
-		{Name: "remember", Egress: []agent.EgressClass{agent.EgressPersonal}},
+		{Name: "agent_create_memory", Egress: []agent.EgressClass{agent.EgressPersonal}},
 		{Name: "shipment_get", Resource: "shipment", Operation: permission.OpRead},
 	}
 
 	assert.Equal(t,
-		[]string{"email_customer"},
+		[]string{"customer_send_email"},
 		SensitiveTools(held, DefaultSensitiveRule(registry)),
 	)
 }

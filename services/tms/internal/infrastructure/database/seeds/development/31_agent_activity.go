@@ -314,7 +314,7 @@ func decisionSpecs(refs *activitySeedRefs) []runSpec {
 	done := func(at int64) *int64 { return &at }
 
 	detention := proposal(
-		"send_detention_notice",
+		"detention_send_notice",
 		agent.TierActWithApproval,
 		agent.ProposalStatusPending,
 		0.88,
@@ -341,7 +341,7 @@ func decisionSpecs(refs *activitySeedRefs) []runSpec {
 	detention.TargetVersion = refs.shipments[0].Version
 
 	update := proposal(
-		"email_customer",
+		"customer_send_email",
 		agent.TierPropose,
 		agent.ProposalStatusPending,
 		0.79,
@@ -362,7 +362,7 @@ func decisionSpecs(refs *activitySeedRefs) []runSpec {
 	update.ExpiresAt = refs.now + activitySeedDay
 
 	credential := proposal(
-		"request_credential_renewal",
+		"worker_request_credential_renewal",
 		agent.TierActWithApproval,
 		agent.ProposalStatusPending,
 		0.93,
@@ -383,10 +383,10 @@ func decisionSpecs(refs *activitySeedRefs) []runSpec {
 	)
 	credential.ExpiresAt = refs.now + 5*activitySeedDay
 
-	// A second send_detention_notice, so the queue can show what selecting two
+	// A second detention_send_notice, so the queue can show what selecting two
 	// rows of the same tool and deciding them together looks like.
 	secondDetention := proposal(
-		"send_detention_notice",
+		"detention_send_notice",
 		agent.TierActWithApproval,
 		agent.ProposalStatusPending,
 		0.84,
@@ -426,7 +426,7 @@ func decisionSpecs(refs *activitySeedRefs) []runSpec {
 	executed.ExecutedAt = done(refs.now - 3*activitySeedHour)
 
 	rejected := proposal(
-		"place_worker_dispatch_hold",
+		"worker_place_dispatch_hold",
 		agent.TierPropose,
 		agent.ProposalStatusRejected,
 		0.61,
@@ -569,7 +569,7 @@ func (s *AgentActivitySeed) insertPlan(
 			[]agent.EvidenceRef{{Type: "Shipment", ID: refs.shipments[1].ID.String()}},
 		),
 		proposal(
-			"email_customer",
+			"customer_send_email",
 			agent.TierPropose,
 			agent.ProposalStatusPending,
 			0.74,
@@ -744,7 +744,7 @@ func trustRows(refs *activitySeedRefs) []*agent.ToolTrust {
 			OrganizationID:    refs.org.ID,
 			BusinessUnitID:    refs.org.BusinessUnitID,
 			AgentDefinitionID: refs.dispatch.ID,
-			ToolName:          "send_detention_notice",
+			ToolName:          "detention_send_notice",
 			Streak:            7,
 			Approvals:         9,
 			Modifications:     2,
@@ -757,7 +757,7 @@ func trustRows(refs *activitySeedRefs) []*agent.ToolTrust {
 			OrganizationID:    refs.org.ID,
 			BusinessUnitID:    refs.org.BusinessUnitID,
 			AgentDefinitionID: refs.dispatch.ID,
-			ToolName:          "email_customer",
+			ToolName:          "customer_send_email",
 			Streak:            3,
 			Approvals:         5,
 			Modifications:     4,
@@ -768,7 +768,7 @@ func trustRows(refs *activitySeedRefs) []*agent.ToolTrust {
 			OrganizationID:    refs.org.ID,
 			BusinessUnitID:    refs.org.BusinessUnitID,
 			AgentDefinitionID: refs.dispatch.ID,
-			ToolName:          "place_worker_dispatch_hold",
+			ToolName:          "worker_place_dispatch_hold",
 			Streak:            0,
 			Approvals:         2,
 			Modifications:     0,

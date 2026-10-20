@@ -76,9 +76,9 @@ const (
 // called them. Each builds or compares a report or an optimisation, which takes
 // a worker for minutes and would otherwise hold a slot a person's reply needs.
 var heavyTools = map[string]struct{}{
-	"run_report":          {},
-	"compare_report_runs": {},
-	"plan_dispatch":       {},
+	"report_run":          {},
+	"report_compare_runs": {},
+	"dispatch_plan":       {},
 }
 
 // Non-retryable error types of a tool call. A call that fails with one of these

@@ -10,7 +10,7 @@ const (
 
 // MaxPromptMemories bounds how many memories one prompt carries, whatever
 // the token budget leaves room for. Past a few dozen short lines the model
-// weighs each one less, and the rest are a recall_memory call away.
+// weighs each one less, and the rest are a agent_list_memories call away.
 const MaxPromptMemories = 50
 
 func (d *Definition) EffectiveMemoryTokenBudget() int {

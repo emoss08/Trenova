@@ -155,7 +155,7 @@ func (s *Service) knownSites(ctx context.Context, tenantInfo pagination.TenantIn
 	b.WriteString("The sites set up are: ")
 	for idx, site := range sites {
 		if idx == portalSiteListLimit {
-			b.WriteString(", and more; call list_portal_sites")
+			b.WriteString(", and more; call web_list_portal_sites")
 			break
 		}
 		if idx > 0 {

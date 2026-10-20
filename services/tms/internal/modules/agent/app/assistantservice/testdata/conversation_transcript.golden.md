@@ -27,7 +27,7 @@ Run the revenue report for the last year.
 
 </details>
 
-**Called `run_report`**
+**Called `report_run`**
 
 ```json
 {
@@ -40,7 +40,7 @@ Run the revenue report for the last year.
 
 ---
 
-### Result from `run_report`
+### Result from `report_run`
 
 ```json
 {
@@ -53,9 +53,9 @@ Run the revenue report for the last year.
 
 ---
 
-### Result from `list_reports` · not permitted
+### Result from `report_list` · not permitted
 
-Tool "list_reports" failed: you do not have permission
+Tool "report_list" failed: you do not have permission
 
 ---
 
@@ -115,7 +115,7 @@ Handing the lane review to the pricing desk.
 
 ## Decision · Sep 21, 2026 2:14:15 PM UTC
 
-Approved create_report, and it ran.
+Approved report_create, and it ran.
 
 ---
 
@@ -141,7 +141,7 @@ a system note
 
 ## Proposals
 
-### `create_report` · Executed
+### `report_create` · Executed
 
 - **Tier:** ActWithApproval
 - **Confidence:** 0.9
@@ -156,7 +156,7 @@ a system note
 ```
 
 
-### `assign_move` · ExecutionFailed
+### `dispatch_assign_move` · ExecutionFailed
 
 - **Tier:** ActWithApproval
 - **Error:** the move is already assigned

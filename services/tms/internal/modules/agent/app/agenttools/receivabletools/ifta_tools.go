@@ -48,9 +48,9 @@ const maxMileageNotes = 2000
 
 const maxBackfillMoves = 5000
 
-const iftaReturnSupplier = "The IFTA return, from list_ifta_returns. Never guess one."
+const iftaReturnSupplier = "The IFTA return, from fuel_list_ifta_returns. Never guess one."
 
-const iftaMileageSupplier = "The mileage entry, from list_ifta_mileage_entries. Never guess one."
+const iftaMileageSupplier = "The mileage entry, from fuel_list_ifta_mileage_entries. Never guess one."
 
 const iftaMileageTaintHold = "Miles read from a log or a message someone outside sent are proposed, since the IFTA return is computed from them."
 
@@ -216,16 +216,16 @@ func iftaPeriodProperties() map[string]any {
 
 func NewGenerateIFTAReturnTool(returns IftaReturnKeeper) agentports.AgentTool {
 	return common.NewReceivableTool(iftaInternalSpec(&common.ReceivableSpec{
-		Name: "generate_ifta_return",
+		Name: "fuel_generate_ifta_return",
 		Description: "Generate a quarter's IFTA fuel tax return as a draft, computed from " +
 			"the jurisdiction miles and fuel purchases on file. It files nothing: a person " +
 			"finalizes and files it. Refused while a draft or finalized return exists for the " +
-			"quarter, and once one is filed; use recompute_ifta_return or amend_ifta_return.",
+			"quarter, and once one is filed; use fuel_recalculate_ifta_return or fuel_amend_ifta_return.",
 		Resource:   permission.ResourceIFTAReturn,
 		Operation:  permission.OpCreate,
 		Reversible: true,
 		Rationale: "Computes a draft return inside Trenova; nothing is filed or sent, and " +
-			"delete_ifta_return removes the draft.",
+			"fuel_delete_ifta_return removes the draft.",
 		Properties:  iftaPeriodProperties(),
 		Required:    []string{paramYear, paramQuarter},
 		SearchTerms: []string{searchTermIFTA, "fuel tax", "quarterly return", "quarter"},
@@ -306,8 +306,8 @@ func iftaReturnIDFrom(params *agentports.ToolExecuteParams) (pulid.ID, error) {
 
 func NewRecomputeIFTAReturnTool(returns IftaReturnKeeper) agentports.AgentTool {
 	return common.NewReceivableTool(iftaInternalSpec(&common.ReceivableSpec{
-		Name:        "recompute_ifta_return",
-		Recipe:      []string{"list_ifta_returns", "recompute_ifta_return"},
+		Name:        "fuel_recalculate_ifta_return",
+		Recipe:      []string{"fuel_list_ifta_returns", "fuel_recalculate_ifta_return"},
 		SearchTerms: []string{"refresh draft return", "recompute after corrections"},
 		Description: "Recompute a draft IFTA return from the miles, purchases and tax rates " +
 			"on file now, after purchases or mileage were corrected. Only a draft can be " +
@@ -377,7 +377,7 @@ func NewRecomputeIFTAReturnTool(returns IftaReturnKeeper) agentports.AgentTool {
 
 func NewAmendIFTAReturnTool(returns IftaReturnKeeper) agentports.AgentTool {
 	return common.NewReceivableTool(iftaInternalSpec(&common.ReceivableSpec{
-		Name: "amend_ifta_return",
+		Name: "fuel_amend_ifta_return",
 		Description: "Propose opening an amendment of a filed IFTA return, with the reason: " +
 			"a new draft for the same quarter, computed from what is on file now. The filed " +
 			"return is left as it was, and a person finalizes and files the amendment.",
@@ -462,9 +462,9 @@ func NewAmendIFTAReturnTool(returns IftaReturnKeeper) agentports.AgentTool {
 
 func NewDeleteIFTAReturnTool(returns IftaReturnKeeper) agentports.AgentTool {
 	return common.NewReceivableTool(iftaInternalSpec(&common.ReceivableSpec{
-		Name: "delete_ifta_return",
+		Name: "fuel_delete_ifta_return",
 		Description: "Delete a draft IFTA return, such as one generated for the wrong " +
-			"quarter. Only a draft can be deleted; generate_ifta_return makes it again.",
+			"quarter. Only a draft can be deleted; fuel_generate_ifta_return makes it again.",
 		Resource:   permission.ResourceIFTAReturn,
 		Operation:  permission.OpDelete,
 		Reversible: true,
@@ -526,9 +526,9 @@ func iftaMileageProperties(forCorrection bool) map[string]any {
 
 	properties := map[string]any{
 		common.ParamTractorID: agenttoolschema.RecordIDText(permission.ResourceTractor,
-			"The tractor that drove the miles, from list_tractors."+keep),
+			"The tractor that drove the miles, from equipment_list_tractors."+keep),
 		paramJurisdictionID: agenttoolschema.KindID("The state or province the miles were "+
-			"driven in, from list_ifta_jurisdictions."+keep, permission.KindIFTAJurisdiction),
+			"driven in, from fuel_list_ifta_jurisdictions."+keep, permission.KindIFTAJurisdiction),
 		paramTraveledAt: agenttoolschema.DateTime("When the miles were driven; it decides the " +
 			"quarter they count in." + keep),
 		paramMiles: common.StringProperty("The miles as a decimal such as 212.5."+keep, 0),
@@ -537,8 +537,10 @@ func iftaMileageProperties(forCorrection bool) map[string]any {
 		common.ParamShipmentMoveID: agenttoolschema.RecordIDText(permission.ResourceShipmentMove,
 			"The move these miles correct, from shipment_get; the entry then replaces the "+
 				"move's routed miles on the return."+keep),
-		paramNotes: common.StringProperty("Where the miles came from, such as a trip sheet."+keep,
-			maxMileageNotes),
+		common.ParamNote: common.StringProperty(
+			"Where the miles came from, such as a trip sheet."+keep,
+			maxMileageNotes,
+		),
 	}
 	if forCorrection {
 		properties[paramIFTAMileageEntryID] = agenttoolschema.KindID(iftaMileageSupplier,
@@ -588,7 +590,7 @@ func applyMileageParams(entry *ifta.JurisdictionMileageEntry, values map[string]
 	if loaded != nil {
 		entry.Loaded = *loaded
 	}
-	notes, err := common.OptionalBoundedText(values, paramNotes, maxMileageNotes)
+	notes, err := common.OptionalBoundedText(values, common.ParamNote, maxMileageNotes)
 	if err != nil {
 		return err
 	}
@@ -655,7 +657,7 @@ type labelledMileage struct {
 
 func NewRecordIFTAMileageEntryTool(entries IftaMileageKeeper) agentports.AgentTool {
 	return common.NewReceivableTool(iftaInternalSpec(&common.ReceivableSpec{
-		Name: "record_ifta_mileage_entry",
+		Name: "fuel_record_ifta_mileage_entry",
 		Description: "Record miles a tractor drove in one state or province that no routed " +
 			"move carries, or that correct a move's routed miles. They come from a trip " +
 			"sheet or a telematics report, and the quarter's IFTA return counts them.",
@@ -664,7 +666,7 @@ func NewRecordIFTAMileageEntryTool(entries IftaMileageKeeper) agentports.AgentTo
 		Reversible: true,
 		TaintHold:  iftaMileageTaintHold,
 		Rationale: "Adds jurisdiction miles inside Trenova that the next IFTA return counts; " +
-			"nothing is sent, and delete_ifta_mileage_entry removes them.",
+			"nothing is sent, and fuel_delete_ifta_mileage_entry removes them.",
 		Properties: iftaMileageProperties(false),
 		Required: []string{
 			common.ParamTractorID,
@@ -780,7 +782,7 @@ type labelledMileageChange struct {
 
 func NewCorrectIFTAMileageEntryTool(entries IftaMileageKeeper) agentports.AgentTool {
 	return common.NewReceivableTool(iftaInternalSpec(&common.ReceivableSpec{
-		Name:        "correct_ifta_mileage_entry",
+		Name:        "fuel_correct_ifta_mileage_entry",
 		SearchTerms: []string{"fix mileage entry", "wrong jurisdiction miles", "correct miles"},
 		Description: "Correct a jurisdiction mileage entry that was keyed wrong: its tractor, " +
 			"state or province, day, miles or notes. Fields left out keep their value. A " +
@@ -892,11 +894,11 @@ func deleteMileageRequest(
 
 func NewDeleteIFTAMileageEntryTool(entries IftaMileageKeeper) agentports.AgentTool {
 	return common.NewReceivableTool(iftaInternalSpec(&common.ReceivableSpec{
-		Name:        "delete_ifta_mileage_entry",
+		Name:        "fuel_delete_ifta_mileage_entry",
 		SearchTerms: []string{"remove mileage entry", "duplicate mileage entry"},
 		Description: "Propose deleting a jurisdiction mileage entry recorded in error, such " +
 			"as a trip sheet entered twice. The next IFTA return no longer counts its miles. " +
-			"To fix a wrong field use correct_ifta_mileage_entry instead.",
+			"To fix a wrong field use fuel_correct_ifta_mileage_entry instead.",
 		Resource:  permission.ResourceIFTAJurisdictionMileage,
 		Operation: permission.OpDelete,
 		MaxTier:   agent.TierPropose,
@@ -981,7 +983,8 @@ func moveJurisdictionRequest(
 
 func NewRecalculateMoveJurisdictionMilesTool(router JurisdictionMileRouter) agentports.AgentTool {
 	return common.NewReceivableTool(iftaInternalSpec(&common.ReceivableSpec{
-		Name: "recalculate_move_jurisdiction_miles",
+		Name:        "fuel_recalculate_jurisdiction_miles",
+		SearchTerms: []string{"move jurisdiction miles"},
 		Description: "Ask the routing provider again for one move's state-by-state miles and " +
 			"replace its jurisdiction rows. Use it when the move's stops changed or the IFTA " +
 			"return shows it unattributed. The move's distance is left as it was. Each run is one " +
@@ -1081,7 +1084,7 @@ func NewBackfillJurisdictionMilesTool(
 		"Defaults to 2000; each is a billable distance request.", 1, maxBackfillMoves)
 
 	return common.NewReceivableTool(iftaInternalSpec(&common.ReceivableSpec{
-		Name: "backfill_jurisdiction_miles",
+		Name: "fuel_backfill_jurisdiction_miles",
 		Description: "Start a background job that routes every completed move in a quarter " +
 			"that has no state-by-state miles. The IFTA return then stops showing them " +
 			"unattributed. The preview counts the moves and " +

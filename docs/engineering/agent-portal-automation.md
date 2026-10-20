@@ -11,9 +11,9 @@ It has three tools:
 
 | Tool | Kind | What it does |
 |---|---|---|
-| `list_portal_sites` | read | Lists the portal sites the organization set up: what each is for, the addresses it lives on, whether it signs in and whether agents may act on it. Written by administrators, so it is not outside content. |
-| `read_portal` | read | Looks something up on one of the organization's portal sites and returns what the page says. Never submits anything. |
-| `act_on_portal` | write | Does something on a portal site — books an appointment, uploads a document, accepts a tender — after a person approves it. |
+| `web_list_portal_sites` | read | Lists the portal sites the organization set up: what each is for, the addresses it lives on, whether it signs in and whether agents may act on it. Written by administrators, so it is not outside content. |
+| `web_read_portal` | read | Looks something up on one of the organization's portal sites and returns what the page says. Never submits anything. |
+| `web_use_portal` | write | Does something on a portal site — books an appointment, uploads a document, accepts a tender — after a person approves it. |
 
 The capability is the plan capability `agent.portal_automation` and the
 permission resource `portal_automation` (`read` to look, `update` to act). Sites
@@ -99,7 +99,7 @@ codes were entered), the run goes to `AwaitingCode` instead of ending
 run, and `code_prompt` keeps how the portal asked, in the browser's words.
 
 - A read waiting on a code returns with `Status: AwaitingCode` inside its tool
-  call: the service starts `PortalRunWorkflow` for it, and `read_portal`
+  call: the service starts `PortalRunWorkflow` for it, and `web_read_portal`
   registers a `PortalRun` wait on the conversation and tells the agent to have
   the person enter the code on the portal task beside the conversation or in the
   box above their message box, or sign in themselves in the live browser, never
@@ -155,8 +155,8 @@ code. `PortalRunWorkflow` does not count time spent waiting on a code toward its
 20-minute deadline, since the code wait bounds it.
 
 Sites belong to the organization, not to a vendor, so moving to another vendor
-keeps them. An agent finds them with `list_portal_sites` and names one by its id
-in `read_portal` and `act_on_portal`; a disabled or unknown site is refused with
+keeps them. An agent finds them with `web_list_portal_sites` and names one by its id
+in `web_read_portal` and `web_use_portal`; a disabled or unknown site is refused with
 the sites that exist. A site with tasks recorded against it cannot be removed,
 only turned off, so its history keeps its site.
 
@@ -183,12 +183,12 @@ written to steer an agent. The rules:
   included, is refused.
 - **The browser agent does not see screenshots** unless an administrator turns
   that on, so a value on the page cannot reach the vendor's model as an image.
-- **Reading a portal holds every later write for a person.** `read_portal`
+- **Reading a portal holds every later write for a person.** `web_read_portal`
   declares `ReadsExternal: always` with the `web` taint source and
   `CapsLaterWrites`, exactly as `web_read` does. Outside content is declared per
-  tool (`CapabilitySpec.OutsideContentTools`), so `list_portal_sites` and
-  `act_on_portal` do not taint the turn by themselves.
-- **Acting on a portal is always a proposal.** `act_on_portal` is an
+  tool (`CapabilitySpec.OutsideContentTools`), so `web_list_portal_sites` and
+  `web_use_portal` do not taint the turn by themselves.
+- **Acting on a portal is always a proposal.** `web_use_portal` is an
   `external_recipient` write with a `Propose` ceiling. Its preview is a `Send`
   on the `Portal` message channel: the site's addresses as the recipients, the
   instruction as the subject, and the task exactly as the browser will receive
@@ -208,13 +208,13 @@ vendor is called, so a task the vendor took is never one Trenova has no record
 of, and starting a task is never retried: a request that failed after the vendor
 began it would start a second browser doing the same thing.
 
-- **`read_portal`** starts the vendor task and polls it every 3 seconds inside
+- **`web_read_portal`** starts the vendor task and polls it every 3 seconds inside
   the tool call, for at most `ReadBudget` (4 minutes, under the 5-minute tool
   activity). A task still running at the budget is stopped, recorded as
   `TimedOut`, and the agent is told to narrow the question. A read the portal
   stopped for a code the person can relay is followed like an action from there
   (see [Relayed codes](#relayed-codes)).
-- **`act_on_portal`** runs on approval. `StartPortalAction` records the run keyed
+- **`web_use_portal`** runs on approval. `StartPortalAction` records the run keyed
   by the proposal (a unique idempotency key, so an approval retried finds the
   task it started and does not act twice) and starts the vendor task. The tool
   then registers a `PortalRun` wait on the conversation or background run that
@@ -242,7 +242,7 @@ its browser is open, read through `GET /agent-portals/runs/:runID/` by the perso
 it was asked for or someone who can read agent extensions. AI control lists the
 history under the extension; a run's recording is
 fetched from the vendor when someone opens it, because its address is signed and
-short-lived. A run is the `portal_run` record kind: `act_on_portal`'s result names
+short-lived. A run is the `portal_run` record kind: `web_use_portal`'s result names
 it, and its record link (`/admin/agent-control?tab=extensions&portalRun=<id>`)
 opens the extension serving the capability with that task expanded. Sites are the
 `portal_site` kind, so a tool schema takes a site id by its prefix.
@@ -253,9 +253,9 @@ A person sends an agent to the browser from the Desk by starting a message with
 `/browser` and saying what to do. It is one of the extension commands, offered,
 checked and held the same way as `/search`; see "Extension commands" in
 [agent-extensions.md](agent-extensions.md). For `/browser` the command needs
-`read_portal` or `act_on_portal`, and the directive tells the model to find the site
-with `list_portal_sites`, look it up with `read_portal` and change it with
-`act_on_portal`, which a person approves. A reply that never called a portal tool is
+`web_read_portal` or `web_use_portal`, and the directive tells the model to find the site
+with `web_list_portal_sites`, look it up with `web_read_portal` and change it with
+`web_use_portal`, which a person approves. A reply that never called a portal tool is
 sent back once (`holdToCommand`); a second stands, so a request no site
 fits still ends in an answer that names the sites there are.
 
@@ -285,7 +285,7 @@ every extension does.
 | The wait it sets | `agentwait.KindPortalRun`, `agentwaitservice/portal.go` |
 | `/browser` | the extension command registry: `agentextension/command.go`, `agentruntime/command.go`, `assistantservice/commands.go`, the composer's `use-desk-extension-commands.ts` and `EXTENSION_COMMANDS` in `composer-commands.ts` |
 | Vendor connector | `internal/infrastructure/agentextension/browseruseconnector/` over `shared/browseruse` |
-| Tools | `agentquerytoolservice/portal_tools.go` (`list_portal_sites`, `read_portal`), `agenttools/portaltools/` (`act_on_portal`) |
+| Tools | `agentquerytoolservice/portal_tools.go` (`web_list_portal_sites`, `web_read_portal`), `agenttools/portaltools/` (`web_use_portal`) |
 | REST API | `/agent-portals/sites/` (list, create, `/:siteID/` update and delete), `/agent-portals/runs/` (list, `/:runID/`, `/:runID/live/`, `/:runID/recording/`, `/:runID/sign-in-code/`) |
 | Relayed codes and signing in by hand | `agentextension/portalsignin.go`, `agentextensionservice/portal_codes.go`, the code box in `client/apps/web/src/components/assistant/portal-code-form.tsx`, the live browser and "I've signed in" in `portal-sign-in.tsx` |
 | What a person reads of a run | `client/apps/web/src/components/assistant/portal-run-result.tsx`, drawn by AI control and by the Desk's `portal_task` artifact (`routes/desk/_components/artifacts/kinds/portal/`, recorded by `assistantservice/portal_task_artifact.go`) |

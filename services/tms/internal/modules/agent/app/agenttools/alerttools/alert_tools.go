@@ -53,21 +53,21 @@ func NewScheduleReportTool(schedules *reporting.Service) agentports.AgentTool {
 	return &ScheduleReportTool{schedules: schedules}
 }
 
-func (t *ScheduleReportTool) Name() string { return "schedule_report" }
+func (t *ScheduleReportTool) Name() string { return "report_create_schedule" }
 
 func (t *ScheduleReportTool) Recipe() []string {
-	return []string{"list_reports", "schedule_report"}
+	return []string{toolReportList, "report_create_schedule"}
 }
 
 func (t *ScheduleReportTool) Description() string {
 	return "Put a saved report on a schedule and email it to people. Use it when somebody " +
 		"wants a number regularly rather than now — \"send me the unbilled aging every " +
-		"Monday morning\". The report has to exist already; list_reports finds its id. " +
+		"Monday morning\". The report has to exist already; report_list finds its id. " +
 		"Times are read in the timezone given, so \"Monday morning\" means theirs."
 }
 
 func (t *ScheduleReportTool) Prerequisites() []string {
-	return []string{"list_reports"}
+	return []string{toolReportList}
 }
 
 func (t *ScheduleReportTool) ParamSchema() map[string]any {
@@ -77,7 +77,7 @@ func (t *ScheduleReportTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"definitionId": agenttoolschema.RecordIDText(
 				permission.ResourceReport,
-				"The saved report to run, from list_reports.",
+				"The saved report to run, from report_list.",
 			),
 			"cronExpression": map[string]any{
 				"type": "string",
@@ -151,7 +151,7 @@ func (t *ScheduleReportTool) Validate(
 	if err != nil {
 		multiErr := errortypes.NewMultiError()
 		multiErr.Add("definitionId", errortypes.ErrInvalid, fmt.Sprintf(
-			"%q is not a saved report you can open; find the one you mean with list_reports",
+			"%q is not a saved report you can open; find the one you mean with report_list",
 			raw,
 		))
 		return multiErr
@@ -317,7 +317,7 @@ func NewCreateTableChangeAlertTool(
 	return &CreateTableChangeAlertTool{alerts: alerts}
 }
 
-func (t *CreateTableChangeAlertTool) Name() string { return "create_table_change_alert" }
+func (t *CreateTableChangeAlertTool) Name() string { return "report_create_table_change_alert" }
 
 func (t *CreateTableChangeAlertTool) Description() string {
 	return "Be told when a record changes in a particular way: a shipment reaching " +

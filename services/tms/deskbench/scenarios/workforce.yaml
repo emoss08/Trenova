@@ -8,7 +8,7 @@ scenarios:
     steps:
       - say: "anybody driving on an expired med card?"
         expect:
-          calls: ["list_expiring_credentials|list_worker_credentials"]
+          calls: ["worker_list_expiring_credentials|worker_list_credentials"]
           maxFailedCalls: 0
           noProposals: true
           facts:
@@ -27,7 +27,7 @@ scenarios:
     steps:
       - say: "what creds are coming due in the next 30 days"
         expect:
-          calls: ["list_expiring_credentials|list_worker_credentials"]
+          calls: ["worker_list_expiring_credentials|worker_list_credentials"]
           maxFailedCalls: 0
           noProposals: true
           facts:
@@ -46,7 +46,7 @@ scenarios:
     steps:
       - say: "what safety stuff is still open"
         expect:
-          calls: ["list_worker_safety_events"]
+          calls: ["worker_list_safety_events"]
           maxFailedCalls: 0
           noProposals: true
           facts:
@@ -60,7 +60,7 @@ scenarios:
     steps:
       - say: "whos off this week"
         expect:
-          calls: ["list_time_off|get_worker_schedule|list_workers"]
+          calls: ["worker_list_time_off|worker_get_schedule|worker_list"]
           maxFailedCalls: 0
           noProposals: true
           rubric: >

@@ -38,7 +38,7 @@ func newRecallMemoryTool(memories agentports.AgentMemoryService) agentports.Agen
 	return &recallMemoryTool{memories: memories}
 }
 
-func (t *recallMemoryTool) Name() string { return "recall_memory" }
+func (t *recallMemoryTool) Name() string { return "agent_list_memories" }
 
 func (t *recallMemoryTool) SearchTerms() []string {
 	return []string{"what we know", "noted before", "past instructions", "recall"}
@@ -50,7 +50,7 @@ func (t *recallMemoryTool) Description() string {
 		"earlier proposals. Search by text, or narrow to one customer, location, " +
 		"driver or carrier with subjectType and subjectId, or to one tool. Call this " +
 		"before acting on a customer or a driver you have not been told about in this " +
-		"conversation. To save something, call remember directly; it handles a repeat."
+		"conversation. To save something, call agent_create_memory directly; it handles a repeat."
 }
 
 func (t *recallMemoryTool) ParamSchema() map[string]any {
@@ -78,8 +78,8 @@ func (t *recallMemoryTool) ParamSchema() map[string]any {
 				memoryFilterSubjectTypes,
 			),
 			"subjectId": agenttoolschema.KindID(
-				"Optional: the record's id, from list_customers, "+
-					"list_locations, search_worker or list_carriers to match subjectType, "+
+				"Optional: the record's id, from customer_list, "+
+					"location_list, worker_search or carrier_list to match subjectType, "+
 					"or the page you are on. Give it with subjectType.",
 				permission.RecordKind(permission.ResourceCustomer),
 				permission.RecordKind(permission.ResourceLocation),
@@ -88,16 +88,9 @@ func (t *recallMemoryTool) ParamSchema() map[string]any {
 			),
 			"toolName": map[string]any{
 				toolschema.KeyType:        toolschema.TypeString,
-				toolschema.KeyDescription: "Only memories about one tool, such as corrections to assign_move.",
+				toolschema.KeyDescription: "Only memories about one tool, such as corrections to dispatch_assign_move.",
 			},
-			paramLimit: map[string]any{
-				toolschema.KeyType: toolschema.TypeInteger,
-				toolschema.KeyDescription: fmt.Sprintf(
-					"How many to return; %d when left out, at most %d.",
-					agent.DefaultMemoryRecallLimit,
-					agent.MaxMemoryRecallLimit,
-				),
-			},
+			paramLimit: limitSchema(agent.DefaultMemoryRecallLimit, agent.MaxMemoryRecallLimit),
 		},
 		toolschema.KeyAdditionalProperties: false,
 	}
@@ -122,11 +115,7 @@ func (t *recallMemoryTool) Query(
 		return nil, err
 	}
 
-	limit := optionalInt(params.Params, "limit", agent.DefaultMemoryRecallLimit)
-	if limit <= 0 {
-		limit = agent.DefaultMemoryRecallLimit
-	}
-	limit = min(limit, agent.MaxMemoryRecallLimit)
+	limit := readLimit(params.Params, agent.DefaultMemoryRecallLimit, agent.MaxMemoryRecallLimit)
 
 	req := agentports.RecallAgentMemoriesRequest{
 		TenantInfo:        tenantOf(params),

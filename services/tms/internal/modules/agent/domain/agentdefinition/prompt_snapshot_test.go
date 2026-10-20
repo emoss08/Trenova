@@ -244,9 +244,9 @@ func snapshotMemories() ([]*agent.Memory, []agent.MemorySubject) {
 	dockRule.SubjectLabel = "Dallas DC"
 
 	assignFix := memory("amem_01JSNAPSHOTMEMORY00000004", agent.MemoryKindCorrection,
-		"When assign_move was proposed, a person changed tractorId to the one already at "+
+		"When dispatch_assign_move was proposed, a person changed tractorId to the one already at "+
 			"the yard. Reason: saves the deadhead.")
-	assignFix.ToolName = "assign_move"
+	assignFix.ToolName = "dispatch_assign_move"
 
 	holdFix := memory("amem_01JSNAPSHOTMEMORY00000005", agent.MemoryKindCorrection,
 		"A person rejected shipment_place_hold. Reason: holds are for billing, not dispatch.")
@@ -337,13 +337,13 @@ func TestPromptSnapshots_ProposalsAwaitingADecision(t *testing.T) {
 	req := promptContexts()[0].request(snapshotDefinition(agentdefinition.TemplateDispatchAssistant))
 	req.Proposals = []agentports.ProposalOutcome{{
 		ProposalID: proposalID,
-		ToolName:   "assign_move",
+		ToolName:   "dispatch_assign_move",
 		Rationale:  "Cover move 1 of S-1001 with Maria Ortiz and tractor 42.",
 		Status:     agent.ProposalStatusPending,
 	}}
 	req.Context.PendingProposals = []agentdefinition.PendingProposal{{
 		ProposalID: proposalID,
-		ToolName:   "assign_move",
+		ToolName:   "dispatch_assign_move",
 		Rationale:  "Cover move 1 of S-1001 with Maria Ortiz and tractor 42.",
 	}}
 
