@@ -193,6 +193,29 @@ func annotate(
 	return params, nil
 }
 
+// graphQLListSpecs are every list tool, module by module, that reads
+// through GraphQL by a spec alone.
+func graphQLListSpecs() []graphQLListSpec {
+	return slices.Concat(referenceReadSpecs(), partyReadSpecs())
+}
+
+// graphQLListProviders registers each spec as its own list tool.
+func graphQLListProviders() []any {
+	specs := graphQLListSpecs()
+	providers := make([]any, 0, len(specs))
+	for idx := range specs {
+		spec := &specs[idx]
+		providers = append(providers, func(
+			reader agentports.GraphQLReader,
+			permissions permissionports.PermissionEngine,
+		) (agentports.AgentQueryTool, error) {
+			return newGraphQLListTool(spec, reader, permissions)
+		})
+	}
+
+	return providers
+}
+
 func (t *graphQLListTool) Name() string { return t.spec.name }
 
 // Description is the summary and every typed parameter by name, so a model

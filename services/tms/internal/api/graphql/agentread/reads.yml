@@ -4,6 +4,9 @@
 # one); name an operation only to differ from the rule, with the reason.
 # See docs/engineering/agent-graphql-reads.md.
 reads:
+  - tool: carrier_list
+  - tool: customer_list
+  - tool: location_list
   - tool: document_list_types
   - tool: equipment_list_manufacturers
   - tool: equipment_list_types

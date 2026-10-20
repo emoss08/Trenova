@@ -554,20 +554,18 @@ type carrierRow struct {
 
 func newListCarriersTool(repo carrierports.CarrierRepository) agentports.AgentQueryTool {
 	return newListTool(listSpec{
-		name:         "carrier_list",
-		entityPlural: "carriers",
-		summary: "List the carriers this organization tenders freight to, narrowed by " +
-			"status, compliance, safety rating or authority number. Use it before " +
-			"tendering a load to check a carrier is qualified.",
-		resource: permission.ResourceCarrier,
-		config:   querybuilder.GetFieldConfiguration((*carrier.Carrier)(nil)),
+		name:         toolCarrierList,
+		entityPlural: pluralCarriers,
+		summary:      carriersSummary,
+		resource:     permission.ResourceCarrier,
+		config:       querybuilder.GetFieldConfiguration((*carrier.Carrier)(nil)),
 		fields: []listField{
 			{Name: "status", Kind: filterEnum, Values: statusValues},
 			{
 				Name:   "complianceStatus",
 				Kind:   filterEnum,
 				Values: []string{"Pending", "Qualified", "Disqualified", "Expired"},
-				Note:   "only a Qualified carrier should be tendered a load",
+				Note:   noteQualifiedCarrier,
 			},
 			{
 				Name:   "safetyRating",

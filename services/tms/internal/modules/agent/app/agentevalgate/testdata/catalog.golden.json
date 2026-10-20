@@ -5033,77 +5033,123 @@
     },
     {
       "name": "carrier_list",
-      "description": "List the carriers this organization tenders freight to, narrowed by status, compliance, safety rating or authority number. Use it before tendering a load to check a carrier is qualified. Filters: status (Active|Inactive); complianceStatus (Pending|Qualified|Disqualified|Expired): only a Qualified carrier should be tendered a load; safetyRating (Satisfactory|Conditional|Unsatisfactory|NotRated); carrierType (Common|Contract|Broker|Exempt); text: code, name, dotNumber, mcNumber; date: createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "description": "List the carriers this organization tenders freight to, narrowed by status, compliance, safety rating or authority number. Use it before tendering a load to check a carrier is qualified. Filters: addressLine1, addressLine2, carrierType, city, code, complianceStatus, createdAtFrom/To, dbaName, disqualifiedReason, dotNumber, email, externalId, hasRemitState, hasState, intelBlockingCountMin/Max, intelReviewRequired, intelRiskLevel, is1099Eligible, mcNumber, name, note, paymentMethod, paymentTermDaysMin/Max, phone, postalCode, qualifiedAtFrom/To, remitAddressLine1, remitAddressLine2, remitCity, remitPostalCode, remitToName, safetyRating, scac, status, taxId, taxIdType, updatedAtFrom/To, w9OnFile.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
-          "filters": {
-            "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
+          "addressLine1": {
+            "description": "Only records whose address line1 contains this text.",
+            "type": "string"
+          },
+          "addressLine2": {
+            "description": "Only records whose address line2 contains this text.",
+            "type": "string"
+          },
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
+          "carrierType": {
+            "description": "Only records whose carrier type is one of these.",
             "items": {
-              "additionalProperties": false,
-              "properties": {
-                "days": {
-                  "maximum": 3650,
-                  "minimum": 1,
-                  "type": "integer"
-                },
-                "field": {
-                  "enum": [
-                    "status",
-                    "complianceStatus",
-                    "safetyRating",
-                    "code",
-                    "name",
-                    "dotNumber",
-                    "mcNumber",
-                    "carrierType",
-                    "createdAt"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "carrier_list.field"
-                },
-                "operator": {
-                  "enum": [
-                    "eq",
-                    "ne",
-                    "in",
-                    "notin",
-                    "isnull",
-                    "isnotnull",
-                    "contains",
-                    "startswith",
-                    "endswith",
-                    "gt",
-                    "gte",
-                    "lt",
-                    "lte",
-                    "lastndays",
-                    "nextndays",
-                    "today",
-                    "yesterday",
-                    "tomorrow"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "carrier_list.operator"
-                },
-                "value": {
-                  "type": "string"
-                },
-                "values": {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                }
-              },
-              "required": [
-                "field",
-                "operator"
+              "enum": [
+                "Common",
+                "Contract",
+                "Broker",
+                "Exempt"
               ],
-              "type": "object"
+              "type": "string",
+              "x-enumOf": "graphql.CarrierType"
             },
-            "maxItems": 6,
+            "minItems": 1,
             "type": "array"
+          },
+          "city": {
+            "description": "Only records whose city contains this text.",
+            "type": "string"
+          },
+          "code": {
+            "description": "Only records whose code contains this text.",
+            "type": "string"
+          },
+          "complianceStatus": {
+            "description": "Only records whose compliance status is one of these. Only a Qualified carrier should be tendered a load.",
+            "items": {
+              "enum": [
+                "Pending",
+                "Qualified",
+                "Disqualified",
+                "Expired"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.CarrierComplianceStatus"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "createdAtFrom": {
+            "description": "Only records whose created at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "createdAtTo": {
+            "description": "Only records whose created at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "dbaName": {
+            "description": "Only records whose dba name contains this text.",
+            "type": "string"
+          },
+          "disqualifiedReason": {
+            "description": "Only records whose disqualified reason contains this text.",
+            "type": "string"
+          },
+          "dotNumber": {
+            "description": "Only records whose dot number contains this text.",
+            "type": "string"
+          },
+          "email": {
+            "description": "Only records whose email contains this text.",
+            "type": "string"
+          },
+          "externalId": {
+            "description": "Only records whose external id contains this text.",
+            "type": "string"
+          },
+          "hasRemitState": {
+            "description": "true for only records that have a remit state, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasState": {
+            "description": "true for only records that have a state, false for only those that have none.",
+            "type": "boolean"
+          },
+          "intelBlockingCountMax": {
+            "description": "Only records whose intel blocking count is at most this.",
+            "type": "integer"
+          },
+          "intelBlockingCountMin": {
+            "description": "Only records whose intel blocking count is at least this.",
+            "type": "integer"
+          },
+          "intelReviewRequired": {
+            "description": "Only records that are, or are not, intel review required.",
+            "type": "boolean"
+          },
+          "intelRiskLevel": {
+            "description": "Only records whose intel risk level contains this text.",
+            "type": "string"
+          },
+          "is1099Eligible": {
+            "description": "Only records that are, or are not, is1099 eligible.",
+            "type": "boolean"
           },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 50.",
@@ -5112,24 +5158,150 @@
             "type": "integer",
             "x-clamp": true
           },
-          "offset": {
-            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
-            "minimum": 0,
+          "mcNumber": {
+            "description": "Only records whose mc number contains this text.",
+            "type": "string"
+          },
+          "name": {
+            "description": "Only records whose name contains this text.",
+            "type": "string"
+          },
+          "note": {
+            "description": "Only records whose notes contains this text.",
+            "type": "string"
+          },
+          "paymentMethod": {
+            "description": "Only records whose payment method is one of these.",
+            "items": {
+              "enum": [
+                "Check",
+                "ACHManual"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.CarrierPaymentMethod"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "paymentTermDaysMax": {
+            "description": "Only records whose payment term days is at most this.",
             "type": "integer"
           },
+          "paymentTermDaysMin": {
+            "description": "Only records whose payment term days is at least this.",
+            "type": "integer"
+          },
+          "phone": {
+            "description": "Only records whose phone contains this text.",
+            "type": "string"
+          },
+          "postalCode": {
+            "description": "Only records whose postal code contains this text.",
+            "type": "string"
+          },
+          "qualifiedAtFrom": {
+            "description": "Only records whose qualified at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "qualifiedAtTo": {
+            "description": "Only records whose qualified at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
           "query": {
-            "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
+            "description": "Optional free text matched across the searchable columns. Omit it when you are narrowing by a field.",
+            "type": "string"
+          },
+          "remitAddressLine1": {
+            "description": "Only records whose remit address line1 contains this text.",
+            "type": "string"
+          },
+          "remitAddressLine2": {
+            "description": "Only records whose remit address line2 contains this text.",
+            "type": "string"
+          },
+          "remitCity": {
+            "description": "Only records whose remit city contains this text.",
+            "type": "string"
+          },
+          "remitPostalCode": {
+            "description": "Only records whose remit postal code contains this text.",
+            "type": "string"
+          },
+          "remitToName": {
+            "description": "Only records whose remit to name contains this text.",
+            "type": "string"
+          },
+          "safetyRating": {
+            "description": "Only records whose safety rating is one of these.",
+            "items": {
+              "enum": [
+                "Satisfactory",
+                "Conditional",
+                "Unsatisfactory",
+                "NotRated"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.CarrierSafetyRating"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "scac": {
+            "description": "Only records whose scac contains this text.",
             "type": "string"
           },
           "sortBy": {
             "description": "Field to order by. Defaults to most recently created.",
             "enum": [
+              "addressLine1",
+              "addressLine2",
+              "carrierType",
+              "city",
               "code",
+              "complianceStatus",
+              "createdAt",
+              "dbaName",
+              "disqualifiedReason",
+              "dotNumber",
+              "email",
+              "externalId",
+              "intelBlockingCount",
+              "intelReviewRequired",
+              "intelRiskLevel",
+              "is1099Eligible",
+              "mcNumber",
               "name",
-              "createdAt"
+              "notes",
+              "paymentMethod",
+              "paymentTermDays",
+              "phone",
+              "postalCode",
+              "qualifiedAt",
+              "remitAddressLine1",
+              "remitAddressLine2",
+              "remitCity",
+              "remitPostalCode",
+              "remitStateId",
+              "remitToName",
+              "safetyRating",
+              "scac",
+              "stateId",
+              "status",
+              "taxId",
+              "taxIdType",
+              "updatedAt",
+              "w9OnFile"
             ],
             "type": "string",
-            "x-enumOf": "carrier_list.sortBy"
+            "x-enumOf": "carrier_list.graphqlSortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -5139,6 +5311,57 @@
             ],
             "type": "string",
             "x-enumOf": "list.sortDirection"
+          },
+          "status": {
+            "description": "Only records whose status is one of these.",
+            "items": {
+              "enum": [
+                "Active",
+                "Inactive",
+                "DoNotUse"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.CarrierStatus"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "taxId": {
+            "description": "Only records whose tax id contains this text.",
+            "type": "string"
+          },
+          "taxIdType": {
+            "description": "Only records whose tax id type is one of these.",
+            "items": {
+              "enum": [
+                "EIN",
+                "SSN"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.CarrierTaxIDType"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "updatedAtFrom": {
+            "description": "Only records whose updated at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "updatedAtTo": {
+            "description": "Only records whose updated at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "w9OnFile": {
+            "description": "Only records that are, or are not, w9 on file.",
+            "type": "boolean"
           }
         },
         "type": "object"
@@ -6525,75 +6748,85 @@
     },
     {
       "name": "customer_list",
-      "description": "List customers narrowed by status, code, name or city, with their ids. Use it to turn a customer's name into an id: shipment_list filters on customerId, and a report filters on customer.name. Filters: status (Active|Inactive); text: code, name, city, dotNumber, mcNumber; date: createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "description": "List customers narrowed by status, code, name or city, with their ids. Use it to turn a customer's name into an id: shipment_list filters on customerId, and a report filters on customer.name. Filters: addressLine1, addressLine2, allowConsolidation, brokerVettingEnabled, city, code, consolidationPriorityMin/Max, createdAtFrom/To, dotNumber, exclusiveConsolidation, externalId, isGeocoded, latitudeMin/Max, longitudeMin/Max, mcNumber, name, postalCode, status, statusUpdatePreference, statusUpdateRecipients, updatedAtFrom/To.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
-          "filters": {
-            "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
-            "items": {
-              "additionalProperties": false,
-              "properties": {
-                "days": {
-                  "maximum": 3650,
-                  "minimum": 1,
-                  "type": "integer"
-                },
-                "field": {
-                  "enum": [
-                    "status",
-                    "code",
-                    "name",
-                    "city",
-                    "dotNumber",
-                    "mcNumber",
-                    "createdAt"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "customer_list.field"
-                },
-                "operator": {
-                  "enum": [
-                    "eq",
-                    "ne",
-                    "in",
-                    "notin",
-                    "isnull",
-                    "isnotnull",
-                    "contains",
-                    "startswith",
-                    "endswith",
-                    "gt",
-                    "gte",
-                    "lt",
-                    "lte",
-                    "lastndays",
-                    "nextndays",
-                    "today",
-                    "yesterday",
-                    "tomorrow"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "customer_list.operator"
-                },
-                "value": {
-                  "type": "string"
-                },
-                "values": {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                }
-              },
-              "required": [
-                "field",
-                "operator"
-              ],
-              "type": "object"
-            },
-            "maxItems": 6,
-            "type": "array"
+          "addressLine1": {
+            "description": "Only records whose address line1 contains this text.",
+            "type": "string"
+          },
+          "addressLine2": {
+            "description": "Only records whose address line2 contains this text.",
+            "type": "string"
+          },
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
+          "allowConsolidation": {
+            "description": "Only records that are, or are not, allow consolidation.",
+            "type": "boolean"
+          },
+          "brokerVettingEnabled": {
+            "description": "Only records that are, or are not, broker vetting enabled.",
+            "type": "boolean"
+          },
+          "city": {
+            "description": "Only records whose city contains this text.",
+            "type": "string"
+          },
+          "code": {
+            "description": "Only records whose code contains this text.",
+            "type": "string"
+          },
+          "consolidationPriorityMax": {
+            "description": "Only records whose consolidation priority is at most this.",
+            "type": "integer"
+          },
+          "consolidationPriorityMin": {
+            "description": "Only records whose consolidation priority is at least this.",
+            "type": "integer"
+          },
+          "createdAtFrom": {
+            "description": "Only records whose created at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "createdAtTo": {
+            "description": "Only records whose created at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "dotNumber": {
+            "description": "Only records whose dot number contains this text.",
+            "type": "string"
+          },
+          "exclusiveConsolidation": {
+            "description": "Only records that are, or are not, exclusive consolidation.",
+            "type": "boolean"
+          },
+          "externalId": {
+            "description": "Only records whose external id contains this text.",
+            "type": "string"
+          },
+          "isGeocoded": {
+            "description": "Only records that are, or are not, is geocoded.",
+            "type": "boolean"
+          },
+          "latitudeMax": {
+            "description": "Only records whose latitude is at most this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "latitudeMin": {
+            "description": "Only records whose latitude is at least this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
           },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 50.",
@@ -6602,25 +6835,58 @@
             "type": "integer",
             "x-clamp": true
           },
-          "offset": {
-            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
-            "minimum": 0,
-            "type": "integer"
+          "longitudeMax": {
+            "description": "Only records whose longitude is at most this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "longitudeMin": {
+            "description": "Only records whose longitude is at least this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "mcNumber": {
+            "description": "Only records whose mc number contains this text.",
+            "type": "string"
+          },
+          "name": {
+            "description": "Only records whose name contains this text.",
+            "type": "string"
+          },
+          "postalCode": {
+            "description": "Only records whose postal code contains this text.",
+            "type": "string"
           },
           "query": {
-            "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
+            "description": "Optional free text matched across the searchable columns. Omit it when you are narrowing by a field.",
             "type": "string"
           },
           "sortBy": {
             "description": "Field to order by. Defaults to most recently created.",
             "enum": [
-              "code",
-              "name",
+              "addressLine1",
+              "addressLine2",
+              "allowConsolidation",
+              "brokerVettingEnabled",
               "city",
-              "createdAt"
+              "code",
+              "consolidationPriority",
+              "createdAt",
+              "dotNumber",
+              "exclusiveConsolidation",
+              "externalId",
+              "isGeocoded",
+              "latitude",
+              "longitude",
+              "mcNumber",
+              "name",
+              "postalCode",
+              "stateId",
+              "status",
+              "statusUpdatePreference",
+              "statusUpdateRecipients",
+              "updatedAt"
             ],
             "type": "string",
-            "x-enumOf": "customer_list.sortBy"
+            "x-enumOf": "customer_list.graphqlSortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -6630,6 +6896,54 @@
             ],
             "type": "string",
             "x-enumOf": "list.sortDirection"
+          },
+          "status": {
+            "description": "Only records whose status is one of these.",
+            "items": {
+              "enum": [
+                "Active",
+                "Inactive"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.EntityStatus"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "statusUpdatePreference": {
+            "description": "What this customer asked to be told as their freight moves. None is the\ndefault: a customer who never opted in is not emailed about a stop. Only records whose status update preference is one of these.",
+            "items": {
+              "enum": [
+                "None",
+                "Arrivals",
+                "Departures",
+                "ArrivalsAndDepartures"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.CustomerStatusUpdatePreference"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "statusUpdateRecipients": {
+            "description": "Who receives those updates, comma separated. Empty falls back to the\nnotice profile's own recipients. Only records whose status update recipients contains this text.",
+            "type": "string"
+          },
+          "updatedAtFrom": {
+            "description": "Only records whose updated at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "updatedAtTo": {
+            "description": "Only records whose updated at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
           }
         },
         "type": "object"
@@ -24406,74 +24720,84 @@
     },
     {
       "name": "location_list",
-      "description": "List locations (facilities, terminals, yards) narrowed by status, code, name or city. Filters: status (Active|Inactive); text: code, name, city, postalCode; date: createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "description": "List locations (facilities, terminals, yards) narrowed by status, code, name or city. Filters: addressLine1, addressLine2, city, code, createdAtFrom/To, description, geofenceRadiusMetersMin/Max, geofenceType, isGeocoded, latitudeMin/Max, locationCategoryId, longitudeMin/Max, name, postalCode, status, timezone, updatedAtFrom/To.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
-          "filters": {
-            "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
+          "addressLine1": {
+            "description": "Only records whose address line1 contains this text.",
+            "type": "string"
+          },
+          "addressLine2": {
+            "description": "Only records whose address line2 contains this text.",
+            "type": "string"
+          },
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
+          "city": {
+            "description": "Only records whose city contains this text.",
+            "type": "string"
+          },
+          "code": {
+            "description": "Only records whose code contains this text.",
+            "type": "string"
+          },
+          "createdAtFrom": {
+            "description": "Only records whose created at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "createdAtTo": {
+            "description": "Only records whose created at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "description": {
+            "description": "Only records whose description contains this text.",
+            "type": "string"
+          },
+          "geofenceRadiusMetersMax": {
+            "description": "Only records whose geofence radius meters is at most this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "geofenceRadiusMetersMin": {
+            "description": "Only records whose geofence radius meters is at least this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "geofenceType": {
+            "description": "Only records whose geofence type is one of these.",
             "items": {
-              "additionalProperties": false,
-              "properties": {
-                "days": {
-                  "maximum": 3650,
-                  "minimum": 1,
-                  "type": "integer"
-                },
-                "field": {
-                  "enum": [
-                    "status",
-                    "code",
-                    "name",
-                    "city",
-                    "postalCode",
-                    "createdAt"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "location_list.field"
-                },
-                "operator": {
-                  "enum": [
-                    "eq",
-                    "ne",
-                    "in",
-                    "notin",
-                    "isnull",
-                    "isnotnull",
-                    "contains",
-                    "startswith",
-                    "endswith",
-                    "gt",
-                    "gte",
-                    "lt",
-                    "lte",
-                    "lastndays",
-                    "nextndays",
-                    "today",
-                    "yesterday",
-                    "tomorrow"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "location_list.operator"
-                },
-                "value": {
-                  "type": "string"
-                },
-                "values": {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                }
-              },
-              "required": [
-                "field",
-                "operator"
+              "enum": [
+                "auto",
+                "circle",
+                "rectangle",
+                "draw"
               ],
-              "type": "object"
+              "type": "string",
+              "x-enumOf": "graphql.LocationGeofenceType"
             },
-            "maxItems": 6,
+            "minItems": 1,
             "type": "array"
+          },
+          "isGeocoded": {
+            "description": "Only records that are, or are not, is geocoded.",
+            "type": "boolean"
+          },
+          "latitudeMax": {
+            "description": "Only records whose latitude is at most this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "latitudeMin": {
+            "description": "Only records whose latitude is at least this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
           },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 50.",
@@ -24482,25 +24806,55 @@
             "type": "integer",
             "x-clamp": true
           },
-          "offset": {
-            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
-            "minimum": 0,
-            "type": "integer"
+          "locationCategoryId": {
+            "description": "The location category, from location_list_categories. Never guess one.",
+            "type": "string",
+            "x-recordOf": "location_category"
+          },
+          "longitudeMax": {
+            "description": "Only records whose longitude is at most this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "longitudeMin": {
+            "description": "Only records whose longitude is at least this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "name": {
+            "description": "Only records whose name contains this text.",
+            "type": "string"
+          },
+          "postalCode": {
+            "description": "Only records whose postal code contains this text.",
+            "type": "string"
           },
           "query": {
-            "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
+            "description": "Optional free text matched across the searchable columns. Omit it when you are narrowing by a field.",
             "type": "string"
           },
           "sortBy": {
             "description": "Field to order by. Defaults to most recently created.",
             "enum": [
-              "code",
-              "name",
+              "addressLine1",
+              "addressLine2",
               "city",
-              "createdAt"
+              "code",
+              "createdAt",
+              "description",
+              "geofenceRadiusMeters",
+              "geofenceType",
+              "isGeocoded",
+              "latitude",
+              "locationCategoryId",
+              "longitude",
+              "name",
+              "postalCode",
+              "stateId",
+              "status",
+              "timezone",
+              "updatedAt"
             ],
             "type": "string",
-            "x-enumOf": "location_list.sortBy"
+            "x-enumOf": "location_list.graphqlSortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -24510,6 +24864,39 @@
             ],
             "type": "string",
             "x-enumOf": "list.sortDirection"
+          },
+          "status": {
+            "description": "Only records whose status is one of these.",
+            "items": {
+              "enum": [
+                "Active",
+                "Inactive"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.EntityStatus"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "timezone": {
+            "description": "Only records whose timezone contains this text.",
+            "type": "string"
+          },
+          "updatedAtFrom": {
+            "description": "Only records whose updated at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "updatedAtTo": {
+            "description": "Only records whose updated at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
           }
         },
         "type": "object"

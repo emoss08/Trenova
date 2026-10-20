@@ -1,9 +1,7 @@
 package agentquerytoolservice
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 )
 
 const (
@@ -136,22 +134,4 @@ func referenceReadSpecs() []graphQLListSpec {
 			notes:        map[string]string{fieldActive: noteActiveHoldReason},
 		},
 	}
-}
-
-// referenceReadProviders registers each reference list, read through
-// GraphQL, as its own tool.
-func referenceReadProviders() []any {
-	specs := referenceReadSpecs()
-	providers := make([]any, 0, len(specs))
-	for idx := range specs {
-		spec := &specs[idx]
-		providers = append(providers, func(
-			reader agentports.GraphQLReader,
-			permissions permissionports.PermissionEngine,
-		) (agentports.AgentQueryTool, error) {
-			return newGraphQLListTool(spec, reader, permissions)
-		})
-	}
-
-	return providers
 }

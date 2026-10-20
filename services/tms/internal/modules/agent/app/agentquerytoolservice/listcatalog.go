@@ -543,12 +543,10 @@ type customerRow struct {
 func newListCustomersTool(repo customerports.CustomerRepository) agentports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         toolCustomerList,
-		entityPlural: "customers",
-		summary: "List customers narrowed by status, code, name or city, with their ids. " +
-			"Use it to turn a customer's name into an id: shipment_list filters on " +
-			"customerId, and a report filters on customer.name.",
-		resource: permission.ResourceCustomer,
-		config:   querybuilder.GetFieldConfiguration((*customer.Customer)(nil)),
+		entityPlural: pluralCustomers,
+		summary:      customersSummary,
+		resource:     permission.ResourceCustomer,
+		config:       querybuilder.GetFieldConfiguration((*customer.Customer)(nil)),
 		fields: []listField{
 			{Name: "status", Kind: filterEnum, Values: statusValues},
 			{Name: "code", Kind: filterText, Sortable: true},
@@ -591,11 +589,10 @@ type locationRow struct {
 func newListLocationsTool(repo locationports.LocationRepository) agentports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         toolLocationList,
-		entityPlural: "locations",
-		summary: "List locations (facilities, terminals, yards) narrowed by status, " +
-			"code, name or city.",
-		resource: permission.ResourceLocation,
-		config:   querybuilder.GetFieldConfiguration((*location.Location)(nil)),
+		entityPlural: pluralLocations,
+		summary:      locationsSummary,
+		resource:     permission.ResourceLocation,
+		config:       querybuilder.GetFieldConfiguration((*location.Location)(nil)),
 		fields: []listField{
 			{Name: "status", Kind: filterEnum, Values: statusValues},
 			{Name: "code", Kind: filterText, Sortable: true},

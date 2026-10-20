@@ -29,11 +29,14 @@ var (
 	NewListDocumentTypesTool      = newListDocumentTypesTool
 	NewListLocationCategoriesTool = newListLocationCategoriesTool
 	NewListHoldReasonsTool        = newListHoldReasonsTool
+	NewListCustomersTool          = newListCustomersTool
+	NewListLocationsTool          = newListLocationsTool
+	NewListCarriersTool           = newListCarriersTool
 )
 
-// ReferenceReadNames are the reference lists read through GraphQL.
-func ReferenceReadNames() []string {
-	specs := referenceReadSpecs()
+// ConvertedListNames are the list tools read through GraphQL by a spec.
+func ConvertedListNames() []string {
+	specs := graphQLListSpecs()
 	names := make([]string, 0, len(specs))
 	for idx := range specs {
 		names = append(names, specs[idx].name)
@@ -42,9 +45,9 @@ func ReferenceReadNames() []string {
 	return names
 }
 
-// ReferenceReadResource is the resource a reference list reads.
-func ReferenceReadResource(name string) permission.Resource {
-	specs := referenceReadSpecs()
+// ConvertedListResource is the resource a converted list reads.
+func ConvertedListResource(name string) permission.Resource {
+	specs := graphQLListSpecs()
 	for idx := range specs {
 		if specs[idx].name == name {
 			return specs[idx].resource
@@ -54,13 +57,13 @@ func ReferenceReadResource(name string) permission.Resource {
 	return ""
 }
 
-// ReferenceReadTool is the registered reference list of that name.
-func ReferenceReadTool(
+// ConvertedListTool is the registered converted list of that name.
+func ConvertedListTool(
 	name string,
 	reader agentports.GraphQLReader,
 	permissions permissionports.PermissionEngine,
 ) (agentports.AgentQueryTool, error) {
-	specs := referenceReadSpecs()
+	specs := graphQLListSpecs()
 	for idx := range specs {
 		if specs[idx].name == name {
 			return newGraphQLListTool(&specs[idx], reader, permissions)

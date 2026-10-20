@@ -19,7 +19,7 @@ import (
 // A reference list refused its resource is refused through GraphQL, for a
 // person and for an unattended agent, exactly as authorize refuses it, and
 // a refusal is told apart from a failure.
-func TestReferenceReads_RefuseExactlyWhatAuthorizeRefuses(t *testing.T) {
+func TestConvertedLists_RefuseExactlyWhatAuthorizeRefuses(t *testing.T) {
 	t.Parallel()
 
 	person := agentreadtest.Person()
@@ -27,11 +27,11 @@ func TestReferenceReads_RefuseExactlyWhatAuthorizeRefuses(t *testing.T) {
 		"a person":            person,
 		"an unattended agent": agentreadtest.Agent(person),
 	}
-	for _, name := range agentquerytoolservice.ReferenceReadNames() {
-		resource := agentquerytoolservice.ReferenceReadResource(name)
+	for _, name := range agentquerytoolservice.ConvertedListNames() {
+		resource := agentquerytoolservice.ConvertedListResource(name)
 		engine := &mocks.DenyResourcesPermissionEngine{Denied: []string{resource.String()}}
 		reader := agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine})
-		tool, err := agentquerytoolservice.ReferenceReadTool(name, reader, engine)
+		tool, err := agentquerytoolservice.ConvertedListTool(name, reader, engine)
 		require.NoError(t, err, name)
 
 		for actorName, actor := range actors {
@@ -58,13 +58,13 @@ func TestReferenceReads_RefuseExactlyWhatAuthorizeRefuses(t *testing.T) {
 
 // Every reference list names its typed parameters in its description, so a
 // model choosing among tools sees what each narrows by.
-func TestReferenceReads_DescribeEveryParameter(t *testing.T) {
+func TestConvertedLists_DescribeEveryParameter(t *testing.T) {
 	t.Parallel()
 
 	engine := &mocks.DenyResourcesPermissionEngine{}
 	reader := agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine})
-	for _, name := range agentquerytoolservice.ReferenceReadNames() {
-		tool, err := agentquerytoolservice.ReferenceReadTool(name, reader, engine)
+	for _, name := range agentquerytoolservice.ConvertedListNames() {
+		tool, err := agentquerytoolservice.ConvertedListTool(name, reader, engine)
 		require.NoError(t, err, name)
 
 		properties, _ := tool.ParamSchema()["properties"].(map[string]any)
