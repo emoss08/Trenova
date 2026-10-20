@@ -68,7 +68,11 @@ func newAPIClient(
 ) (*netsuite.Client, *httptest.Server) {
 	t.Helper()
 	server := newServer(t, handler)
-	all := append([]netsuite.Option{netsuite.WithBaseURL(server.URL), fastRetry()}, opts...)
+	all := append([]netsuite.Option{
+		netsuite.WithBaseURL(server.URL),
+		netsuite.WithHTTPClient(server.Client()),
+		fastRetry(),
+	}, opts...)
 	client, err := netsuite.NewAccountClient(netsuite.AccountConfig{
 		AccountID:   testAccount,
 		AccessToken: testAccessToken,
