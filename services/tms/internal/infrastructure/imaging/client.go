@@ -137,6 +137,7 @@ func (c *Client) call(
 	priority kernelports.ImagingPriority,
 	attempt func(ctx context.Context, rpc imagingpb.ImagingServiceClient, progressed *bool) error,
 ) error {
+	parent := ctx
 	ctx, cancel := context.WithTimeout(ctx, deadline)
 	defer cancel()
 	ctx = withPriority(ctx, priority)
@@ -157,7 +158,12 @@ func (c *Client) call(
 		progressed := false
 		err = attempt(ctx, target.rpc, &progressed)
 		target.calls.Done()
-		target.record(ctx, err, progressed, &c.cfg.Breaker, time.Now())
+		target.record(callOutcome{
+			ctx:        ctx,
+			parent:     parent,
+			err:        err,
+			progressed: progressed,
+		}, &c.cfg.Breaker, time.Now())
 		if err == nil {
 			return nil
 		}

@@ -262,19 +262,19 @@ func TestTheBreakerTakesAFailingEndpointOutOfRotation(t *testing.T) {
 	now := time.Now()
 	unavailable := status.Error(codes.Unavailable, "gone")
 
-	e.record(t.Context(), unavailable, false, breaker, now)
+	e.record(callOutcome{ctx: t.Context(), parent: t.Context(), err: unavailable}, breaker, now)
 	assert.True(t, e.available(now), "one failure is not enough")
-	e.record(t.Context(), unavailable, false, breaker, now)
+	e.record(callOutcome{ctx: t.Context(), parent: t.Context(), err: unavailable}, breaker, now)
 	assert.False(t, e.available(now), "two in a row open the breaker")
 	assert.True(t, e.available(now.Add(2*time.Minute)), "it closes again after openFor")
 
-	e.record(t.Context(), nil, false, breaker, now)
-	e.record(t.Context(), status.Error(codes.InvalidArgument, "bad document"), false, breaker, now)
-	e.record(t.Context(), status.Error(codes.InvalidArgument, "bad document"), false, breaker, now)
+	e.record(callOutcome{ctx: t.Context(), parent: t.Context(), err: nil}, breaker, now)
+	e.record(callOutcome{ctx: t.Context(), parent: t.Context(), err: status.Error(codes.InvalidArgument, "bad document")}, breaker, now)
+	e.record(callOutcome{ctx: t.Context(), parent: t.Context(), err: status.Error(codes.InvalidArgument, "bad document")}, breaker, now)
 	assert.True(t, e.available(now), "a bad document says nothing about the endpoint")
 
 	draining := refusal(codes.Unavailable, "DRAINING", time.Second)
-	e.record(t.Context(), draining, false, breaker, now)
+	e.record(callOutcome{ctx: t.Context(), parent: t.Context(), err: draining}, breaker, now)
 	assert.False(t, e.available(now), "a draining worker is taken out at once")
 }
 
@@ -405,4 +405,18 @@ func TestACallerCancellingMidCallDoesNotCount(t *testing.T) {
 		cancel()
 	}
 	assert.True(t, e.available(time.Now()), "the caller went away, not the worker")
+}
+
+func TestTheCallersOwnShorterDeadlineDoesNotCount(t *testing.T) {
+	t.Parallel()
+
+	e := &endpoint{address: "a"}
+	client := breakerClient(e)
+	for range 5 {
+		ctx, cancel := context.WithTimeout(t.Context(), 5*time.Millisecond)
+		err := client.call(ctx, time.Minute, kernelports.ImagingBatch, waitForTheEnd(false))
+		cancel()
+		require.Error(t, err)
+	}
+	assert.True(t, e.available(time.Now()), "a slow caller's deadline is not the worker's fault")
 }

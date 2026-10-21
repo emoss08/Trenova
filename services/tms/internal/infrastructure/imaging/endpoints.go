@@ -39,17 +39,22 @@ func (e *endpoint) available(now time.Time) bool {
 	return !now.Before(e.openUntil)
 }
 
+type callOutcome struct {
+	ctx        context.Context
+	parent     context.Context
+	err        error
+	progressed bool
+}
+
 func (e *endpoint) record(
-	ctx context.Context,
-	err error,
-	progressed bool,
+	outcome callOutcome,
 	breaker *config.ImagingBreakerConfig,
 	now time.Time,
 ) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
-	if !countsAgainstEndpoint(ctx, err, progressed) {
-		if err == nil {
+	if !countsAgainstEndpoint(outcome) {
+		if outcome.err == nil {
 			e.failures = 0
 			e.openFor = 0
 			e.openUntil = time.Time{}
@@ -57,7 +62,7 @@ func (e *endpoint) record(
 		return
 	}
 	e.failures++
-	if e.failures < breaker.GetConsecutiveFailures() && !draining(err) {
+	if e.failures < breaker.GetConsecutiveFailures() && !draining(outcome.err) {
 		return
 	}
 	if e.openFor == 0 {
@@ -69,14 +74,16 @@ func (e *endpoint) record(
 	e.failures = 0
 }
 
-func countsAgainstEndpoint(ctx context.Context, err error, progressed bool) bool {
-	if err == nil {
+func countsAgainstEndpoint(outcome callOutcome) bool {
+	if outcome.err == nil {
 		return false
 	}
-	if ctxErr := ctx.Err(); ctxErr != nil {
-		return errors.Is(ctxErr, context.DeadlineExceeded) && !progressed
+	if ctxErr := outcome.ctx.Err(); ctxErr != nil {
+		return errors.Is(ctxErr, context.DeadlineExceeded) &&
+			outcome.parent.Err() == nil &&
+			!outcome.progressed
 	}
-	st, ok := status.FromError(err)
+	st, ok := status.FromError(outcome.err)
 	if !ok {
 		return false
 	}
