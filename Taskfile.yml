@@ -60,3 +60,27 @@ tasks:
     dir: '{{.ROOT_DIR}}'
     cmds:
       - node i18n/tools/i18n.mjs check
+
+  imaging:corpus:
+    desc: Generate the imaging benchmark corpus into .imagingbench/corpus
+    dir: '{{.ROOT_DIR}}'
+    cmds:
+      - uv run -q --with pillow --with pillow-heif --with reportlab --with qrcode --with numpy python3 -I tools/docling-fixtures/corpus.py .imagingbench/corpus
+
+  imaging:bench-go:
+    desc: Run the Go imaging benchmark in a 4-CPU container and write .imagingbench/results/go.json
+    dir: '{{.ROOT_DIR}}'
+    vars:
+      RESULTS: '{{.RESULTS | default "go.json"}}'
+      LABEL: '{{.LABEL | default "Go"}}'
+    cmds:
+      - mkdir -p .imagingbench/bin .imagingbench/results
+      - docker build -q -t trenova-imagingbench-go:local -f services/tms/internal/testutil/imagingbench/runner.Dockerfile services/tms/internal/testutil/imagingbench
+      - cd services/tms && CGO_ENABLED=0 nice go test -p 4 -c -tags imagingbench,nomsgpack -o ../../.imagingbench/bin/gobench.test {{.PACKAGES | default "./internal/testutil/imagingbench/..."}}
+      - >-
+        docker run --rm --cpus 4 --memory 8g -u "$(id -u):$(id -g)" -e HOME=/tmp -e GOMAXPROCS=4
+        -e TRENOVA_IMAGING_CORPUS=/corpus -e TRENOVA_IMAGING_RESULTS=/results/{{.RESULTS}}
+        -e "TRENOVA_IMAGING_LABEL={{.LABEL}}" {{.DOCKER_ARGS}}
+        -v "$PWD/.imagingbench/corpus:/corpus:ro" -v "$PWD/.imagingbench/results:/results"
+        -v "$PWD/.imagingbench/bin:/bench-bin:ro" trenova-imagingbench-go:local
+        /bench-bin/gobench.test -test.v -test.timeout 90m {{.CLI_ARGS}}
