@@ -20,6 +20,7 @@ var Shard = &gqlexec.Shard{
 	Name: "aiprovider",
 	Objects: []*gqlexec.Object{
 		{Name: "AIProvider", Implementors: []string{"AIProvider"}},
+		{Name: "AIProviderAdvisorRefusal", Implementors: []string{"AIProviderAdvisorRefusal"}},
 		{Name: "AIProviderConnection", Implementors: []string{"AIProviderConnection"}},
 		{Name: "AIProviderDraftTestResult", Implementors: []string{"AIProviderDraftTestResult"}},
 		{Name: "AIProviderEdge", Implementors: []string{"AIProviderEdge"}},
@@ -191,6 +192,16 @@ var Shard = &gqlexec.Shard{
 					return obj.AdvisorModel, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:      "advisorRefusal",
+				HasChild:  true,
+				ChildType: "AIProviderAdvisorRefusal",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*aiprovider.Provider)
+					return obj.AdvisorRefusal, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOAIProviderAdvisorRefusal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐAdvisorRefusal),
 			},
 			{
 				Name:     "scripts",
@@ -446,6 +457,48 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aiprovider.Provider)
 					return obj.UpdatedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+		}},
+		{Object: "AIProviderAdvisorRefusal", Fields: []*gqlexec.Field{
+			{
+				Name:     "advisor",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*aiprovider.AdvisorRefusal)
+					return obj.Advisor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "model",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*aiprovider.AdvisorRefusal)
+					return obj.Model, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "message",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*aiprovider.AdvisorRefusal)
+					return obj.Message, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "refusedAt",
+				NonNull:  true,
+				ChildErr: errNoChild14,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*aiprovider.AdvisorRefusal)
+					return obj.RefusedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
 			},
@@ -2044,6 +2097,13 @@ func marshalOAIProvider2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodules
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "AIProvider", v)
+}
+
+func marshalOAIProviderAdvisorRefusal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐAdvisorRefusal(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aiprovider.AdvisorRefusal) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "AIProviderAdvisorRefusal", v)
 }
 
 func marshalOAIProviderKeyInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐKeyInfo(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aiprovider.KeyInfo) graphql.Marshaler {

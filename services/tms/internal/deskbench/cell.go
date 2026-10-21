@@ -124,15 +124,15 @@ func checkAdvisor(provider *aiprovider.Provider, advisor *agentports.AdvisorSpec
 	if advisor == nil {
 		return nil
 	}
-	if provider == nil || provider.Kind != aiprovider.KindAnthropicMessages {
+	err := provider.CheckAdvisor()
+	switch {
+	case err == nil:
+		return nil
+	case errors.Is(err, aiprovider.ErrAdvisorNeedsAnthropic):
 		return errAdvisorNeedsAnthropic
+	default:
+		return fmt.Errorf("%s%s: %w", suffixSeparator, advisorSuffix, err)
 	}
-	if platform := provider.ResolvedPlatform(); !platform.ServesAdvisor() {
-		return fmt.Errorf("%s%s: %s does not serve the advisor tool; use the Claude API or "+
-			"Claude Platform on AWS", suffixSeparator, advisorSuffix, platform)
-	}
-
-	return nil
 }
 
 func (s *Session) Cell(ctx context.Context, ref string) (Cell, error) {

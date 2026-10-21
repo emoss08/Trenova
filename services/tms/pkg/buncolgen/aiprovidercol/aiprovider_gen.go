@@ -219,6 +219,7 @@ var ProviderColumns = struct {
 	PlatformSettings         buncolgen.Column // "platform_settings" → qualified: "aiprv.platform_settings"
 	AdvisorEnabled           buncolgen.Column // "advisor_enabled" → qualified: "aiprv.advisor_enabled"
 	AdvisorModel             buncolgen.Column // "advisor_model" → qualified: "aiprv.advisor_model"
+	AdvisorRefusal           buncolgen.Column // "advisor_refusal" → qualified: "aiprv.advisor_refusal"
 	Scripts                  buncolgen.Column // "code_mode_scripts" → qualified: "aiprv.code_mode_scripts"
 	ScriptWrites             buncolgen.Column // "code_mode_writes" → qualified: "aiprv.code_mode_writes"
 	ExtraBody                buncolgen.Column // "extra_body" → qualified: "aiprv.extra_body"
@@ -267,6 +268,7 @@ var ProviderColumns = struct {
 	PlatformSettings:         buncolgen.NewColumn("platform_settings", "aiprv"),
 	AdvisorEnabled:           buncolgen.NewColumn("advisor_enabled", "aiprv"),
 	AdvisorModel:             buncolgen.NewColumn("advisor_model", "aiprv"),
+	AdvisorRefusal:           buncolgen.NewColumn("advisor_refusal", "aiprv"),
 	Scripts:                  buncolgen.NewColumn("code_mode_scripts", "aiprv"),
 	ScriptWrites:             buncolgen.NewColumn("code_mode_writes", "aiprv"),
 	ExtraBody:                buncolgen.NewColumn("extra_body", "aiprv"),
@@ -320,6 +322,7 @@ var ProviderFieldMap = map[string]string{
 	"platformSettings":         "platform_settings",
 	"advisorEnabled":           "advisor_enabled",
 	"advisorModel":             "advisor_model",
+	"advisorRefusal":           "advisor_refusal",
 	"scripts":                  "code_mode_scripts",
 	"scriptWrites":             "code_mode_writes",
 	"extraBody":                "extra_body",
@@ -371,6 +374,7 @@ var ProviderInsertableColumns = []string{
 	"platform_settings",
 	"advisor_enabled",
 	"advisor_model",
+	"advisor_refusal",
 	"code_mode_scripts",
 	"code_mode_writes",
 	"extra_body",
@@ -482,6 +486,7 @@ var ProviderFilter = struct {
 	PlatformSettings         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "platformSettings" → DB: "platform_settings"
 	AdvisorEnabled           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "advisorEnabled" → DB: "advisor_enabled"
 	AdvisorModel             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "advisorModel" → DB: "advisor_model"
+	AdvisorRefusal           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "advisorRefusal" → DB: "advisor_refusal"
 	Scripts                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "scripts" → DB: "code_mode_scripts"
 	ScriptWrites             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "scriptWrites" → DB: "code_mode_writes"
 	ExtraBody                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "extraBody" → DB: "extra_body"
@@ -563,6 +568,9 @@ var ProviderFilter = struct {
 	},
 	AdvisorModel: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("advisorModel", op, value)
+	},
+	AdvisorRefusal: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("advisorRefusal", op, value)
 	},
 	Scripts: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("scripts", op, value)

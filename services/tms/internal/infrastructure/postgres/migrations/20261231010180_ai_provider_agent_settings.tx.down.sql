@@ -16,6 +16,10 @@ ALTER TABLE "ai_providers"
 
 --bun:split
 ALTER TABLE "ai_providers"
+    DROP COLUMN IF EXISTS "advisor_refusal";
+
+--bun:split
+ALTER TABLE "ai_providers"
     DROP COLUMN IF EXISTS "advisor_model";
 
 --bun:split

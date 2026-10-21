@@ -16,14 +16,19 @@ var (
 	ErrAdvisorNeedsAnthropic = errors.New(
 		"the advisor needs a provider that speaks the Anthropic Messages API",
 	)
-	ErrAdvisorNotServed   = errors.New("the platform does not serve the advisor tool")
-	ErrAdvisorUnreadable  = errors.New("the advisor is not a Claude model this system can read")
-	ErrAdvisorUnpriced    = errors.New("the advisor has no list price")
-	ErrExecutorUnreadable = errors.New(
-		"the provider's model is not a Claude model this system can read",
-	)
-	ErrAdvisorLessCapable = errors.New("the advisor is less capable than the provider's model")
+	ErrAdvisorNotServed = errors.New("the platform does not serve the advisor tool")
 )
+
+// AdvisorRefusal is the API refusing the advisor a provider declared, kept
+// so AI control can show it. Whether an advisor is strong enough for the
+// provider's model is the API's to say, and it says so with a 400 on the
+// first call; until the advisor or the model changes, calls go out without it.
+type AdvisorRefusal struct {
+	Advisor   string `json:"advisor"`
+	Model     string `json:"model"`
+	Message   string `json:"message"`
+	RefusedAt int64  `json:"refusedAt"`
+}
 
 // ScriptSettings say whether a provider's model may answer with code mode: a
 // read-only script (Scripts), and a script that prepares writes proposed as
@@ -44,20 +49,34 @@ func (p *Provider) ScriptSettings() ScriptSettings {
 }
 
 // ResolvedAdvisorModel is the advisor every chat call routed to this provider
-// declares, empty when the advisor is off or the platform does not serve it.
+// declares, empty when the advisor is off, the platform does not serve it, or
+// the API refused this advisor for this model.
 func (p *Provider) ResolvedAdvisorModel() string {
 	if p == nil || !p.AdvisorEnabled || p.Kind != KindAnthropicMessages ||
 		!p.ResolvedPlatform().ServesAdvisor() {
 		return ""
 	}
-	return p.namedAdvisorModel()
+	advisor := p.namedAdvisorModel()
+	if p.AdvisorRefused(advisor) {
+		return ""
+	}
+
+	return advisor
 }
 
-// CheckAdvisor says whether this provider may consult advisor: it speaks the
-// Anthropic Messages API on a platform that serves the advisor tool, the
-// advisor is a Claude model with a list price, so its calls are priced, and it
-// is at least as capable as the provider's own model.
-func (p *Provider) CheckAdvisor(advisor string) error {
+// AdvisorRefused reports a refusal the API gave this advisor for the
+// provider's current model.
+func (p *Provider) AdvisorRefused(advisor string) bool {
+	return p.AdvisorRefusal != nil &&
+		strings.EqualFold(p.AdvisorRefusal.Advisor, advisor) &&
+		strings.EqualFold(p.AdvisorRefusal.Model, p.Model)
+}
+
+// CheckAdvisor says whether this provider can declare an advisor at all: it
+// speaks the Anthropic Messages API on a platform that serves the advisor
+// tool. That the advisor is a model the provider serves is checked against
+// its model list when it is saved.
+func (p *Provider) CheckAdvisor() error {
 	if p == nil || p.Kind != KindAnthropicMessages {
 		return ErrAdvisorNeedsAnthropic
 	}
@@ -65,26 +84,22 @@ func (p *Provider) CheckAdvisor(advisor string) error {
 		return fmt.Errorf("%w: %s; use the Claude API or Claude Platform on AWS",
 			ErrAdvisorNotServed, platform)
 	}
-	advised, ok := ParseClaudeModel(advisor)
-	if !ok {
-		return fmt.Errorf("%w: %q", ErrAdvisorUnreadable, advisor)
-	}
-	if _, priced := ListPrice(KindAnthropicMessages, advisor); !priced {
-		return fmt.Errorf("%w: %q", ErrAdvisorUnpriced, advisor)
-	}
-	executor, ok := ParseClaudeModel(p.Model)
-	if !ok {
-		return fmt.Errorf("%w: %q", ErrExecutorUnreadable, p.Model)
-	}
-	if !advised.AtLeastAsCapableAs(executor) {
-		return fmt.Errorf("%w: %s advising %s", ErrAdvisorLessCapable, advisor, p.Model)
-	}
 
 	return nil
 }
 
+// AdvisorSettingsChanged reports a change that makes an earlier refusal stale:
+// the advisor turned on, another advisor, or another model it advises.
+func AdvisorSettingsChanged(before, after *Provider) bool {
+	return before.AdvisorEnabled != after.AdvisorEnabled ||
+		!strings.EqualFold(before.namedAdvisorModel(), after.namedAdvisorModel()) ||
+		!strings.EqualFold(before.Model, after.Model) ||
+		before.Kind != after.Kind ||
+		before.ResolvedPlatform() != after.ResolvedPlatform()
+}
+
 func (p *Provider) validateAgentSettings(multiErr *errortypes.MultiError) {
-	if len(strings.TrimSpace(p.AdvisorModel)) > maxModelLength {
+	if len(p.AdvisorModel) > maxModelLength {
 		multiErr.Add("advisorModel", errortypes.ErrInvalid,
 			"Advisor model cannot be longer than 200 characters")
 	}
@@ -107,63 +122,23 @@ func (p *Provider) validateAdvisor(multiErr *errortypes.MultiError) {
 			"The advisor applies only to a provider that handles assistant chat")
 		return
 	}
-	err := p.CheckAdvisor(p.namedAdvisorModel())
-	switch {
-	case err == nil:
-	case errors.Is(err, ErrAdvisorNeedsAnthropic), errors.Is(err, ErrAdvisorNotServed):
+	if err := p.CheckAdvisor(); err != nil {
 		multiErr.Add("advisorEnabled", errortypes.ErrInvalid,
 			"The advisor is served only on Anthropic Messages providers that call the "+
 				"Claude API or Claude Platform on AWS")
-	case errors.Is(err, ErrExecutorUnreadable):
-		multiErr.Add("advisorEnabled", errortypes.ErrInvalid,
-			"The advisor needs a Claude model id this system can read, to check the advisor "+
-				"is at least as capable")
-	case errors.Is(err, ErrAdvisorLessCapable):
-		multiErr.Add("advisorModel", errortypes.ErrInvalid,
-			"The advisor must be at least as capable as the provider's model")
-	default:
-		multiErr.Add("advisorModel", errortypes.ErrInvalid,
-			"The advisor must be a Claude model with a list price")
 	}
 }
 
-// namedAdvisorModel is the advisor the setting names, the default when none
+// AdvisorModelName is the advisor the setting names, the default when none
 // is named, whatever the platform.
+func (p *Provider) AdvisorModelName() string {
+	return p.namedAdvisorModel()
+}
+
 func (p *Provider) namedAdvisorModel() string {
 	if model := strings.TrimSpace(p.AdvisorModel); model != "" {
 		return model
 	}
 
 	return DefaultAdvisorModel
-}
-
-// claudeFamilyRank orders the families by capability. A family this does not
-// know ranks lowest, so it is never taken for a stronger advisor.
-func claudeFamilyRank(family ClaudeFamily) int {
-	switch family {
-	case ClaudeFamilyHaiku:
-		return 1
-	case ClaudeFamilySonnet:
-		return 2
-	case ClaudeFamilyOpus:
-		return 3
-	case ClaudeFamilyFable, ClaudeFamilyMythos:
-		return 4
-	default:
-		return 0
-	}
-}
-
-// AtLeastAsCapableAs reports a model of a higher family, or of the same
-// family and at least the same version.
-func (m ClaudeModel) AtLeastAsCapableAs(other ClaudeModel) bool {
-	mine, theirs := claudeFamilyRank(m.Family), claudeFamilyRank(other.Family)
-	if mine == 0 {
-		return false
-	}
-	if mine != theirs {
-		return mine > theirs
-	}
-
-	return m.Version >= other.Version
 }

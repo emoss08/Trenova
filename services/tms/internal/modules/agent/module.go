@@ -233,6 +233,7 @@ func SharedOptions() fx.Option {
 			aiproviderrepository.NewDismissalRepository,
 			agenttoolrulerepository.New,
 			aiproviderrepository.NewKeyRepository,
+			aiproviderrepository.NewAdvisorRecorder,
 			aituneuprepository.New,
 			aianalyticsrepository.New,
 			agentdefinitionrepository.NewTestPromptRepository,

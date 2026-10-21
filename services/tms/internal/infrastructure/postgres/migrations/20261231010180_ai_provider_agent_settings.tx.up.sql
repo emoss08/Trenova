@@ -11,6 +11,10 @@ ALTER TABLE "ai_providers"
 
 --bun:split
 ALTER TABLE "ai_providers"
+    ADD COLUMN IF NOT EXISTS "advisor_refusal" jsonb;
+
+--bun:split
+ALTER TABLE "ai_providers"
     ADD COLUMN IF NOT EXISTS "code_mode_scripts" boolean NOT NULL DEFAULT FALSE;
 
 --bun:split
@@ -30,6 +34,9 @@ COMMENT ON COLUMN "ai_providers"."advisor_enabled" IS 'Every chat call routed to
 
 --bun:split
 COMMENT ON COLUMN "ai_providers"."advisor_model" IS 'The model the advisor runs on; null is the default advisor (claude-opus-5-5)';
+
+--bun:split
+COMMENT ON COLUMN "ai_providers"."advisor_refusal" IS 'The API''s refusal of the advisor for the provider''s model, from the first call it refused; cleared when either changes';
 
 --bun:split
 COMMENT ON COLUMN "ai_providers"."code_mode_scripts" IS 'The provider''s model may answer with a read-only script (code mode)';

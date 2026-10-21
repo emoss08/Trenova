@@ -14,7 +14,9 @@ agent:
   name: Dispatch desk
   tools: [agent_run_script, inbox_get_inbound_message, shipment_place_hold, invoice_void]
   autonomy: auto
-  codeModeWrites: true
+  provider:
+    scripts: true
+    scriptWrites: true
 responses:
   inbox_get_inbound_message:
     id: imsg_01JREDTEAMEMA1100000000000

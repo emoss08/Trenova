@@ -1603,6 +1603,10 @@ func init() {
 				FieldMapKey: "advisorModel",
 			},
 			{
+				Name:        "advisorRefusal",
+				FieldMapKey: "advisorRefusal",
+			},
+			{
 				Name:        "scripts",
 				FieldMapKey: "scripts",
 			},

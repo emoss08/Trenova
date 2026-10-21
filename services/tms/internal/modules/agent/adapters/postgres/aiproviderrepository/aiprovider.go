@@ -397,6 +397,7 @@ func (r *repository) Update(
 			Set(cols.ThinkingStyle.Set(), entity.ThinkingStyle).
 			Set(cols.AdvisorEnabled.Set(), entity.AdvisorEnabled).
 			Set(cols.AdvisorModel.Set(), entity.AdvisorModel).
+			Set(cols.AdvisorRefusal.Set(), entity.AdvisorRefusal).
 			Set(cols.Scripts.Set(), entity.Scripts).
 			Set(cols.ScriptWrites.Set(), entity.ScriptWrites).
 			Set(cols.Platform.Set(), entity.Platform).

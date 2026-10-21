@@ -6272,6 +6272,12 @@ type AIProvider {
   "The model the advisor runs on. Empty consults the default advisor, claude-opus-5-5."
   advisorModel: String!
   """
+  The API's refusal of that advisor for the provider's model, from the first
+  call it refused. Calls go out without the advisor until the advisor, the
+  model or the platform changes. Null when nothing was refused.
+  """
+  advisorRefusal: AIProviderAdvisorRefusal
+  """
   The provider's model may answer a fan-out question with one read-only
   script (code mode). The organization must also turn on read-only scripts
   in its E2B extension and grant code_mode.
@@ -6327,6 +6333,16 @@ type AIProvider {
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
+}
+
+"The API refusing the advisor a provider declared, in its own words."
+type AIProviderAdvisorRefusal {
+  "The advisor the refused call declared."
+  advisor: String!
+  "The provider's model it was asked to advise."
+  model: String!
+  message: String!
+  refusedAt: Timestamp!
 }
 
 "What a provider does with a task once its monthly cap is reached."

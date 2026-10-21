@@ -111,6 +111,10 @@ type Provider struct {
 	// billed at the advisor's price.
 	AdvisorEnabled bool   `json:"advisorEnabled" bun:"advisor_enabled,type:BOOLEAN,notnull,default:false"`
 	AdvisorModel   string `json:"advisorModel"   bun:"advisor_model,type:VARCHAR(200),nullzero"`
+	// AdvisorRefusal is the API's refusal of that advisor for this model,
+	// recorded by the router on the first call it refused. It is cleared when
+	// the advisor, the model or the platform changes.
+	AdvisorRefusal *AdvisorRefusal `json:"advisorRefusal" bun:"advisor_refusal,type:JSONB,nullzero"`
 	// Scripts lets this provider's model answer with a read-only script
 	// (code mode), and ScriptWrites lets those scripts prepare writes, proposed
 	// as one batch for a person. Both are off by default, and both still need
