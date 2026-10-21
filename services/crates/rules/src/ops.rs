@@ -75,8 +75,11 @@ const OPERATIONS: &[(&str, Handler)] = &[
     ),
     ("allocation.rebalance", crate::allocation::ops::rebalance),
     ("report.format", crate::report::ops::format),
+    ("report.resolve", crate::report::ops::resolve),
     ("lane.specificity", crate::lane::ops::specificity),
     ("lane.keys", crate::lane::ops::keys),
+    ("lane.parse", crate::lane::ops::parse),
+    ("lane.coverage", crate::lane::ops::coverage),
     ("matrix.select", crate::matrix::ops::select),
     ("matrix.coverage", crate::matrix::ops::coverage),
 ];
