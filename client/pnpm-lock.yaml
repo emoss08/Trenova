@@ -116,6 +116,9 @@ catalogs:
     '@tanstack/react-table':
       specifier: ^9.2.4
       version: 9.2.4
+    motion:
+      specifier: ^14.4.0
+      version: 14.4.0
     react:
       specifier: ^19.2.8
       version: 19.2.8
@@ -131,11 +134,16 @@ catalogs:
     react-router:
       specifier: ^8.3.1
       version: 8.3.1
+    zod:
+      specifier: ^4.6.7
+      version: 4.6.7
     zustand:
       specifier: ^5.0.15
       version: 5.0.15
 
 overrides:
+  '@codemirror/language': ^6.13.1
+  '@codemirror/state': ^6.7.6
   '@codemirror/view': 6.43.6
   '@tanstack/query-core': 5.102.8
 
@@ -174,8 +182,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/shared
       motion:
-        specifier: ^13.2.0
-        version: 13.2.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        specifier: 'catalog:'
+        version: 14.4.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       react:
         specifier: 'catalog:'
         version: 19.2.8
@@ -364,7 +372,7 @@ importers:
         specifier: ^0.19.0
         version: 0.19.0
       motion:
-        specifier: ^14.4.0
+        specifier: 'catalog:'
         version: 14.4.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       nanoid:
         specifier: ^6.0.2
@@ -445,7 +453,7 @@ importers:
         specifier: ^1.1.2
         version: 1.1.2(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       zod:
-        specifier: ^4.6.7
+        specifier: 'catalog:'
         version: 4.6.7
       zustand:
         specifier: 'catalog:'
@@ -762,8 +770,8 @@ importers:
         specifier: ^3.2.0
         version: 3.2.0(date-fns@4.4.0)
       motion:
-        specifier: ^13.2.0
-        version: 13.2.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        specifier: 'catalog:'
+        version: 14.4.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       react:
         specifier: 'catalog:'
         version: 19.2.8
@@ -807,8 +815,8 @@ importers:
         specifier: ^1.1.2
         version: 1.1.2(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       zod:
-        specifier: ^4.5.4
-        version: 4.5.4
+        specifier: 'catalog:'
+        version: 4.6.7
       zustand:
         specifier: 'catalog:'
         version: 5.0.15(@types/react@19.3.0)(immer@11.1.18)(react@19.2.8)(use-sync-external-store@1.6.0(react@19.2.8))
@@ -1121,9 +1129,6 @@ packages:
   '@codemirror/lang-json@6.0.2':
     resolution: {integrity: sha512-x2OtO+AvwEHrEwR0FyyPtfDUiloG3rnVTSZV1W8UteaLL8/MajQd8DpvUb2YVzC+/T18aSDv0H9mu+xw0EStoQ==}
 
-  '@codemirror/language@6.12.4':
-    resolution: {integrity: sha512-1q4PaT+o6PbgpkJt4Q8Fv5XJxTy4FUZ4MWETtyiDw3J0Pyr9E2vqcKL+k9wcvjNTIsauxvE7OfmWj3FRPHQ76A==}
-
   '@codemirror/language@6.13.1':
     resolution: {integrity: sha512-zfvU2r3TyylQLMj/te+5CnQ0rSqZi8B1oTCBbQkagcLW4Xc6imab6qN+pEJhsuNOLaJqiRyBXp9UhWA1DhVvDw==}
 
@@ -1132,9 +1137,6 @@ packages:
 
   '@codemirror/search@6.7.1':
     resolution: {integrity: sha512-uMe5UO6PamJtSHrXhhHOzSX3ReWtiJrva6GnPMwSOrZtiExb5X5eExhr2OUZQVvdxPsKpY3Ro2mFbQadpPWmHA==}
-
-  '@codemirror/state@6.7.4':
-    resolution: {integrity: sha512-QhQIVRY+xHZDxwOSFrJ1eUMapJBUID3IdeAjf7dHO7zBUzSkyooHiodnalz5MG3iHzwixKMlAAyn7244y537EA==}
 
   '@codemirror/state@6.7.6':
     resolution: {integrity: sha512-kAz+AncRtKuIknedxT1bq4XwXv4UowhbkHU1myPrtVb/jZtImWuV5BXzv5vK6i3kYACsdiZiQKFQQ5Mq7elW8w==}
@@ -6529,17 +6531,6 @@ packages:
     resolution: {integrity: sha512-buRG0fpBtRHSTCOASe6hD258tEubFoRLb4ZNA6NxMVHNw2gOcwHo9wyablzMzOA5z9xA9L1KNjk/Nt6MT9aYow==}
     engines: {node: '>= 0.6'}
 
-  framer-motion@13.2.0:
-    resolution: {integrity: sha512-9E33ebgMaO33w1nN/jEdW8z3/GO483fMi4rqbMG9rt83XgW9QLKRe4NcmJ8s+fQ3O34++UHrIQwlIWGIWTITjA==}
-    peerDependencies:
-      react: ^18.0.0 || ^19.0.0
-      react-dom: ^18.0.0 || ^19.0.0
-    peerDependenciesMeta:
-      react:
-        optional: true
-      react-dom:
-        optional: true
-
   framer-motion@14.4.0:
     resolution: {integrity: sha512-HtO1fxord2rnXYRyr1laG4uY7+OtgwDc9Szcg1wlMq/LF7BO3/S7a+KEo691U7pSi+i0ueRuRqaD1UaLEmZHuQ==}
     peerDependencies:
@@ -7667,28 +7658,11 @@ packages:
   module-details-from-path@1.0.4:
     resolution: {integrity: sha512-EGWKgxALGMgzvxYF1UyGTy0HXX/2vHLkw6+NvDKW2jypWbHpjQuj4UMcqQWXHERJhVGKikolT06G3bcKe4fi7w==}
 
-  motion-dom@13.2.0:
-    resolution: {integrity: sha512-N6gdSoWRDk0Rh/fVtlqUtLs+fEN3ELFZI3cn3IQE9Mnf3E+Mh8wjO6MstzCOPFh4Yf0L1as5m2eUyYWj8ylVSQ==}
-
   motion-dom@14.4.0:
     resolution: {integrity: sha512-1q8RyHSdr5COpzrv3JgJ9XRjOO88ZN9CwflpkGgyO/SR/SNRP/dD6EU8SEo092kcKY34IzHC5diJPKrQRMA8lQ==}
 
-  motion-utils@13.0.0:
-    resolution: {integrity: sha512-7DnN7TmbLcYXcG4RVadXIihWlyuM9afoUww8Y5Agg431kGKiuL2/OMyP4mJ5wLz+pvN3t5ySClLOaVXJ+wekRQ==}
-
   motion-utils@14.1.1:
     resolution: {integrity: sha512-3VvN5Uvf8B6qG+OfOui6Nht5EWp+vLuU3IqcAj7ItZGKqtmTjCebl5sGZF7/08gEHRnEl1AP/fIwbcEyVrcQGQ==}
-
-  motion@13.2.0:
-    resolution: {integrity: sha512-4Hrb5vD6HhjFstLUiCmWvtpsw+WTpP4R+QXfSDYZBz7+uxE/LrRg3aV0ReJxHrTRffHhbIE6svEqnotngXvesQ==}
-    peerDependencies:
-      react: ^18.0.0 || ^19.0.0
-      react-dom: ^18.0.0 || ^19.0.0
-    peerDependenciesMeta:
-      react:
-        optional: true
-      react-dom:
-        optional: true
 
   motion@14.4.0:
     resolution: {integrity: sha512-JJTIdeNjtF2zi/py0ndRKxQF+8z2pcDUgJYXul7zqbhMvyTLRsPFR9ifE/j4cFCpCMlehQVJkTwd7BZFiPKgQg==}
@@ -9855,9 +9829,6 @@ packages:
     peerDependencies:
       zod: ^3.25.0 || ^4.0.0
 
-  zod@4.5.4:
-    resolution: {integrity: sha512-sC95tT5iHHH9gtpj6A81kh+NEaRAUFN+qlUPDUbRfOMvNf5QCBqsb3WgvnpVtK5Y+4UfA6KqufotuTvMGiTlsA==}
-
   zod@4.6.7:
     resolution: {integrity: sha512-g8W2D2kU6a8untc053fX1uVBKzM7yqAxW/3zwk83+6RyF2+SKOuV+c0wBDhUwzV1PaGapmZH+rmcUzPf+3CGwg==}
 
@@ -10236,15 +10207,15 @@ snapshots:
 
   '@codemirror/autocomplete@6.20.4':
     dependencies:
-      '@codemirror/language': 6.12.4
-      '@codemirror/state': 6.7.4
+      '@codemirror/language': 6.13.1
+      '@codemirror/state': 6.7.6
       '@codemirror/view': 6.43.6
       '@lezer/common': 1.5.2
 
   '@codemirror/commands@6.11.0':
     dependencies:
-      '@codemirror/language': 6.12.4
-      '@codemirror/state': 6.7.4
+      '@codemirror/language': 6.13.1
+      '@codemirror/state': 6.7.6
       '@codemirror/view': 6.43.6
       '@lezer/common': 1.5.2
 
@@ -10253,18 +10224,9 @@ snapshots:
       '@codemirror/language': 6.13.1
       '@lezer/json': 1.0.3
 
-  '@codemirror/language@6.12.4':
-    dependencies:
-      '@codemirror/state': 6.7.4
-      '@codemirror/view': 6.43.6
-      '@lezer/common': 1.5.2
-      '@lezer/highlight': 1.2.3
-      '@lezer/lr': 1.4.10
-      style-mod: 4.1.3
-
   '@codemirror/language@6.13.1':
     dependencies:
-      '@codemirror/state': 6.7.4
+      '@codemirror/state': 6.7.6
       '@codemirror/streamparser': 6.0.0
       '@codemirror/view': 6.43.6
       '@lezer/common': 1.5.2
@@ -10283,10 +10245,6 @@ snapshots:
       '@codemirror/state': 6.7.6
       '@codemirror/view': 6.43.6
       crelt: 1.0.7
-
-  '@codemirror/state@6.7.4':
-    dependencies:
-      '@marijn/find-cluster-break': 1.0.4
 
   '@codemirror/state@6.7.6':
     dependencies:
@@ -15611,15 +15569,6 @@ snapshots:
 
   forwarded@0.2.0: {}
 
-  framer-motion@13.2.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
-    dependencies:
-      motion-dom: 13.2.0
-      motion-utils: 13.0.0
-      tslib: 2.8.1
-    optionalDependencies:
-      react: 19.2.8
-      react-dom: 19.2.8(react@19.2.8)
-
   framer-motion@14.4.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
     dependencies:
       motion-dom: 14.4.0
@@ -16941,25 +16890,11 @@ snapshots:
 
   module-details-from-path@1.0.4: {}
 
-  motion-dom@13.2.0:
-    dependencies:
-      motion-utils: 13.0.0
-
   motion-dom@14.4.0:
     dependencies:
       motion-utils: 14.1.1
 
-  motion-utils@13.0.0: {}
-
   motion-utils@14.1.1: {}
-
-  motion@13.2.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
-    dependencies:
-      framer-motion: 13.2.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      tslib: 2.8.1
-    optionalDependencies:
-      react: 19.2.8
-      react-dom: 19.2.8(react@19.2.8)
 
   motion@14.4.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
     dependencies:
@@ -19467,8 +19402,6 @@ snapshots:
   zod-validation-error@4.0.2(zod@4.6.7):
     dependencies:
       zod: 4.6.7
-
-  zod@4.5.4: {}
 
   zod@4.6.7: {}
 
