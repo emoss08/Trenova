@@ -102,9 +102,15 @@ function userColumn<TData extends { user?: ActivityUser }>(
   };
 }
 
-function timestampColumn<TData extends Record<string, unknown>>(
-  { key, label, never }: { key: keyof TData & string; label: string; never?: string },
-): ColumnDef<TData> {
+function timestampColumn<TData extends Record<string, unknown>>({
+  key,
+  label,
+  never,
+}: {
+  key: keyof TData & string;
+  label: string;
+  never?: string;
+}): ColumnDef<TData> {
   return {
     accessorKey: key,
     header: label,

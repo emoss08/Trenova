@@ -26,9 +26,7 @@ describe("rootFields", () => {
   it("checks only the named fields and keeps the rest of the record as it was", () => {
     const record = { id: "dset_1", netPayMinor: 125_000, currencyCode: "USD", batchId: null };
 
-    expect(rootFields(record, "DriverSettlement", ["netPayMinor", "currencyCode"])).toEqual(
-      record,
-    );
+    expect(rootFields(record, "DriverSettlement", ["netPayMinor", "currencyCode"])).toEqual(record);
   });
 
   it("names the first withheld field", () => {

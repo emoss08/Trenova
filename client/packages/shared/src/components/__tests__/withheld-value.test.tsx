@@ -20,9 +20,10 @@ describe("WithheldValue", () => {
     render(<WithheldValue kind="agent_memory" />);
 
     expect(
-      screen.getByText("Hidden").closest('[data-slot="locked-reference"]')?.getAttribute(
-        "aria-description",
-      ),
+      screen
+        .getByText("Hidden")
+        .closest('[data-slot="locked-reference"]')
+        ?.getAttribute("aria-description"),
     ).toBe("You don't have access to agent memory");
   });
 });

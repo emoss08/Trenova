@@ -14,7 +14,10 @@ type DeskDriverSettlementFields = NonNullable<DeskDriverSettlementCardQuery["dri
  * the schema marks them nullable for where a settlement is linked from a dispute
  * (docs/engineering/reference-views.md).
  */
-export type DeskDriverSettlement = Omit<DeskDriverSettlementFields, "netPayMinor" | "currencyCode"> & {
+export type DeskDriverSettlement = Omit<
+  DeskDriverSettlementFields,
+  "netPayMinor" | "currencyCode"
+> & {
   netPayMinor: number;
   currencyCode: string;
 };

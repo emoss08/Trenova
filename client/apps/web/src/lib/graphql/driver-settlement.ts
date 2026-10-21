@@ -664,9 +664,8 @@ export async function fetchWorkspaceSettlements(
     },
     signal: options?.signal,
   });
-  return (data.driverSettlements.edges ?? []).map(
-    (edge): DriverSettlementRow =>
-      rootFields(edge.node, "DriverSettlement", DRIVER_SETTLEMENT_ROOT_FIELDS),
+  return (data.driverSettlements.edges ?? []).map((edge): DriverSettlementRow =>
+    rootFields(edge.node, "DriverSettlement", DRIVER_SETTLEMENT_ROOT_FIELDS),
   );
 }
 
@@ -757,8 +756,8 @@ export async function fetchWorkerPayAdvances(workerId: string, options?: { signa
     },
     signal: options?.signal,
   });
-  return (data.payAdvances.edges ?? []).map(
-    (edge): PayAdvanceRow => rootFields(edge.node, "PayAdvance", PAY_ADVANCE_ROOT_FIELDS),
+  return (data.payAdvances.edges ?? []).map((edge): PayAdvanceRow =>
+    rootFields(edge.node, "PayAdvance", PAY_ADVANCE_ROOT_FIELDS),
   );
 }
 

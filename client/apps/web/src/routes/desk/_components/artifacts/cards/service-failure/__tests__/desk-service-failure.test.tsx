@@ -379,10 +379,12 @@ describe("DeskServiceFailure", () => {
     ).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Activity" })).toBeNull();
     expect(fetchers.activity).not.toHaveBeenCalled();
-    expect(within(section("Load")).getByRole("link", { name: /S2610-1366/ })).toHaveAttribute(
-      "href",
-      expect.stringContaining("shp_1"),
-    );
+    // The load is a linked shipment: without shipment read it is named, locked, not linked.
+    expect(within(section("Load")).queryByRole("link", { name: /S2610-1366/ })).toBeNull();
+    const load = within(section("Load"))
+      .getByText("S2610-1366")
+      .closest('[data-slot="locked-reference"]');
+    expect(load?.getAttribute("aria-description")).toBe("You don't have access to shipments");
   });
 
   it("leaves the outline of activity the person may not read out of the skeleton", () => {

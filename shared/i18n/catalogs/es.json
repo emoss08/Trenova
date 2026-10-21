@@ -11747,6 +11747,7 @@
   "{0} no longer has a share of shipment {1}": "{0} ya no tiene parte en el envío {1}",
   "{0} no longer reports closed books, so {1} keeps its date; retry it instead": "{0} ya no informa libros cerrados, así que {1} conserva su fecha; reinténtelo en su lugar",
   "{0} not found within your organization": "No se encontró {0} dentro de su organización",
+  "{0} of a linked {1} needs read access to {1}; the operation must declare @requiresRead for it": "{0} de un {1} vinculado necesita acceso de lectura a {1}; la operación debe declarar @requiresRead para ello",
   "{0} of {1} test scenarios fail: {2}. Fix the formula or the scenarios before approving.": "{0} de {1} escenarios de prueba fallan: {2}. Corrija la fórmula o los escenarios antes de aprobar.",
   "{0} on invoice {1} could not be added to its packet: {2}": "No se pudo agregar {0} de la factura {1} a su paquete: {2}",
   "{0} on this item still need settling before it can be approved: {1}. A biller settles each in the item's review": "{0} en este elemento aún deben resolverse antes de poder aprobarlo: {1}. Un facturador resuelve cada una en la revisión del elemento",

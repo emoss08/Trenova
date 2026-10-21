@@ -308,7 +308,8 @@ function CarrierSettlementCard({
         aside={
           record.carrier && access.carrier ? (
             <CardOpenLink
-              kind="carrier" to={recordPath("carrier", record.carrier.id)}
+              kind="carrier"
+              to={recordPath("carrier", record.carrier.id)}
               onOpen={listedCarrier.open && (() => listedCarrier.open?.(record.carrier?.id ?? ""))}
             >
               {t("Open carrier")}

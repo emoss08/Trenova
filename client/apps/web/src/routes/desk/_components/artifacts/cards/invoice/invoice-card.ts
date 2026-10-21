@@ -83,11 +83,9 @@ export function invoiceKicker(record: DeskInvoice, t: TranslateFn): string[] {
     record.scope === "Consolidated" && record.periodStart && record.periodEnd
       ? t("{0} – {1}", cardDay(record.periodStart), cardDay(record.periodEnd))
       : "";
-  return [
-    record.number,
-    record.shipmentBol ? t("BOL {0}", record.shipmentBol) : "",
-    period,
-  ].filter(Boolean);
+  return [record.number, record.shipmentBol ? t("BOL {0}", record.shipmentBol) : "", period].filter(
+    Boolean,
+  );
 }
 
 /** What the invoice covers, and the day it is dated. */

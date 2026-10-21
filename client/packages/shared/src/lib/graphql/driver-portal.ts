@@ -371,9 +371,8 @@ export async function fetchMySettlements(
   });
   return {
     ...data.mySettlements,
-    items: data.mySettlements.items.map(
-      (item): PortalSettlementSummary =>
-        rootFields(item, "DriverSettlement", SETTLEMENT_OWN_FIELDS),
+    items: data.mySettlements.items.map((item): PortalSettlementSummary =>
+      rootFields(item, "DriverSettlement", SETTLEMENT_OWN_FIELDS),
     ),
   };
 }
@@ -411,8 +410,8 @@ export async function fetchMyAdvances(options?: { signal?: AbortSignal }) {
     operationName: "MyAdvances",
     signal: options?.signal,
   });
-  return data.myAdvances.map(
-    (advance): PortalAdvance => rootFields(advance, "PayAdvance", ADVANCE_OWN_FIELDS),
+  return data.myAdvances.map((advance): PortalAdvance =>
+    rootFields(advance, "PayAdvance", ADVANCE_OWN_FIELDS),
   );
 }
 

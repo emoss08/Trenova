@@ -89,7 +89,8 @@ export function DriverSeats({
         <CardRecordRow
           key={person.key}
           className="dk-tr-seat"
-          kind="worker" to={recordPath("worker", person.id)}
+          kind="worker"
+          to={recordPath("worker", person.id)}
           onOpen={onOpen && (() => onOpen(person.id))}
         >
           <CardAvatar name={person.name} />

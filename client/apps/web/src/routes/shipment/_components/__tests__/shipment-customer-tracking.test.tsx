@@ -4,6 +4,8 @@ import userEvent from "@testing-library/user-event";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import type { ReactNode } from "react";
 import { MemoryRouter } from "react-router";
+import { clearPermissions, seedPermissions } from "@/test/permissions";
+import { Operation } from "@trenova/shared/types/permission";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import ShipmentCustomerTracking from "../shipment-customer-tracking";
 
@@ -88,6 +90,7 @@ describe("ShipmentCustomerTracking", () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(NOW * 1000);
     mocks.canShare = true;
+    seedPermissions({ shipment: Operation.Read, customer: Operation.Read });
     mocks.getProfile.mockReset().mockResolvedValue(profile);
     mocks.listLinks.mockReset().mockResolvedValue([]);
     mocks.listNotifications.mockReset().mockResolvedValue([]);
@@ -97,6 +100,7 @@ describe("ShipmentCustomerTracking", () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    clearPermissions();
   });
 
   it("says who the load is shared with and how much they see", async () => {
@@ -185,9 +189,25 @@ describe("ShipmentCustomerTracking", () => {
     mocks.getProfile.mockResolvedValue({ ...profile, linkEnabled: false });
     renderTab();
 
-    expect(await screen.findByText("Tracking links are turned off for this customer.")).toBeDefined();
+    expect(
+      await screen.findByText("Tracking links are turned off for this customer."),
+    ).toBeDefined();
     expect(screen.getByRole("link", { name: "Turn them on" })).toBeDefined();
     expect(screen.queryByRole("button", { name: "Send" })).toBeNull();
+  });
+
+  it("offers no way to the customer's settings to someone who may not read customers", async () => {
+    seedPermissions({ shipment: Operation.Read });
+    mocks.getProfile.mockResolvedValue({ ...profile, linkEnabled: false });
+    renderTab();
+
+    expect(
+      await screen.findByText("Tracking links are turned off for this customer."),
+    ).toBeDefined();
+    expect(screen.queryByRole("link", { name: "Turn them on" })).toBeNull();
+    expect(screen.queryByRole("link", { name: /Settings/ })).toBeNull();
+    const locked = screen.getByText("Turn them on").closest('[data-slot="locked-reference"]');
+    expect(locked?.getAttribute("aria-description")).toBe("You don't have access to customers");
   });
 
   it("emails a new link and shows it once to copy", async () => {

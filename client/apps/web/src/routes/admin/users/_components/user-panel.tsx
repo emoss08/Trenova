@@ -141,7 +141,9 @@ function UserEditPanel({
             <AlertCircleIcon />
             <AlertTitle>{t("This user could not be loaded")}</AlertTitle>
             <AlertDescription>
-              {t("Close the panel and open it again. If it keeps failing, the user may have been removed.")}
+              {t(
+                "Close the panel and open it again. If it keeps failing, the user may have been removed.",
+              )}
             </AlertDescription>
           </Alert>
         ) : (

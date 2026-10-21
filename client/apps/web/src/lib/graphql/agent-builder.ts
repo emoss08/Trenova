@@ -106,7 +106,9 @@ export async function fetchAgentDefinition(
     signal: options?.signal,
   });
   return data.agentDefinition
-    ? toAgentDefinitionRow(getFragmentData(AgentDefinitionCardFieldsFragmentDoc, data.agentDefinition))
+    ? toAgentDefinitionRow(
+        getFragmentData(AgentDefinitionCardFieldsFragmentDoc, data.agentDefinition),
+      )
     : null;
 }
 
@@ -134,7 +136,9 @@ export async function draftAgentFromDescription(description: string): Promise<Ag
 }
 
 /** Instructions with the same meaning, shorter. Saves nothing. */
-export async function tightenAgentInstructions(instructions: string): Promise<TightenedInstructions> {
+export async function tightenAgentInstructions(
+  instructions: string,
+): Promise<TightenedInstructions> {
   const data = await requestGraphQL({
     document: TightenAgentInstructionsDocument,
     operationName: "TightenAgentInstructions",

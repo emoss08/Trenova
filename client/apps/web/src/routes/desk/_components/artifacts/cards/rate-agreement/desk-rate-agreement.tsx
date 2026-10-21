@@ -529,7 +529,11 @@ function PartyRow({
   onOpen: ((customerId: string) => void) | undefined;
 }) {
   return (
-    <CardRecordRow kind="customer" to={recordPath("customer", id)} onOpen={onOpen && (() => onOpen(id))}>
+    <CardRecordRow
+      kind="customer"
+      to={recordPath("customer", id)}
+      onOpen={onOpen && (() => onOpen(id))}
+    >
       <PartyName name={name} note={note} />
     </CardRecordRow>
   );

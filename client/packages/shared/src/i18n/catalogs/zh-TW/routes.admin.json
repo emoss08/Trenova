@@ -921,6 +921,7 @@
   "No distance profiles yet": "尚無距離設定檔",
   "No document selected": "未選取任何文件",
   "No draft generated": "未產生草稿",
+  "No email": "無電子郵件",
   "No failed sign-ins in the last {0, plural, one {# day} other {# days}}": "過去 {0, plural, other {# 天}}內沒有登入失敗",
   "No feeds have run yet. They start once a provider is connected and carriers are enrolled.": "尚未執行任何資料來源。待供應商連接且承運業者加入監控後即會開始執行。",
   "No field assertions yet. Add rules for things like “referenceNumber is not empty” or “rate matches a currency pattern.”": "尚無欄位斷言。請新增類似「referenceNumber 不為空」或「rate 符合貨幣格式」的規則。",

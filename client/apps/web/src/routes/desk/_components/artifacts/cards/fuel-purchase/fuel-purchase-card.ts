@@ -284,9 +284,7 @@ export function purchaseChecks(
     totalCheck(card.purchase, t),
     odometerCheck(card, t),
     cardCheck(card.purchase, canReadFuelCards, t),
-  ].filter(
-    (check): check is PurchaseCheck => check !== null,
-  );
+  ].filter((check): check is PurchaseCheck => check !== null);
 }
 
 export type PurchaseStanding = { label: string; tone: CardTone; mark: CardStatusMark };

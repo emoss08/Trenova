@@ -133,7 +133,10 @@ export function InstantPayDialog({
         description: (
           <span>
             {t("Net")}{" "}
-            <AmountDisplay value={rootField(settlement.netPayMinor, "DriverSettlement.netPayMinor")} currency={rootField(settlement.currencyCode, "DriverSettlement.currencyCode")} />
+            <AmountDisplay
+              value={rootField(settlement.netPayMinor, "DriverSettlement.netPayMinor")}
+              currency={rootField(settlement.currencyCode, "DriverSettlement.currencyCode")}
+            />
             {t(
               "via {0} · posted to the GL and visible to the driver in Dash.",
               settlement.paymentMethod,

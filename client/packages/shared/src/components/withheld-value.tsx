@@ -47,7 +47,7 @@ export function LockedReference({
               data-slot="locked-reference"
               tabIndex={0}
               aria-description={reason}
-              className={cn("ui-focus-ring cursor-default", className)}
+              className={cn("cursor-default ui-focus-ring", className)}
             />
           ) : (
             <span
@@ -55,7 +55,7 @@ export function LockedReference({
               tabIndex={0}
               aria-description={reason}
               className={cn(
-                "ui-focus-ring inline-flex min-w-0 cursor-default items-center gap-1 rounded-badge",
+                "inline-flex min-w-0 cursor-default items-center gap-1 rounded-badge ui-focus-ring",
                 className,
               )}
             />
@@ -93,10 +93,7 @@ type WithheldValueProps = {
 export function WithheldValue({ kind, className }: WithheldValueProps) {
   const t = useT();
   return (
-    <LockedReference
-      kind={kind}
-      className={cn("text-xs text-foreground-muted", className)}
-    >
+    <LockedReference kind={kind} className={cn("text-xs text-foreground-muted", className)}>
       {t("Hidden")}
     </LockedReference>
   );

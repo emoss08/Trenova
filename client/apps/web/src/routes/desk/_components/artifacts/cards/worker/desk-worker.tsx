@@ -238,7 +238,8 @@ function WorkerCard({
         aside={
           tractorId ? (
             <CardOpenLink
-              kind="tractor" to={recordPath("tractor", tractorId)}
+              kind="tractor"
+              to={recordPath("tractor", tractorId)}
               onOpen={listedTractor.open && (() => listedTractor.open?.(tractorId))}
             >
               {t("Open tractor")}
