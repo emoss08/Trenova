@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
 import { Tabs, TabsList, TabsPanel, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
-import { WithheldValue } from "@trenova/shared/components/withheld-value";
+import { WithheldPanel, WithheldValue } from "@trenova/shared/components/withheld-value";
 import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state";
 import { getShipmentPageAnalyticsGraphQL } from "@/lib/graphql/shipment";
 import { cn, formatCompactCurrency, formatCurrency } from "@trenova/shared/lib/utils";
@@ -13,13 +13,15 @@ import { useEffect, useMemo, useRef } from "react";
 import type { ShipmentAnalyticsData } from "@/lib/shipment-analytics";
 import { formatUnixInUserTimezone } from "@trenova/shared/lib/date";
 
-type CustomerMixEntry = ShipmentAnalyticsData["customerMix"]["entries"][number];
+type CustomerMixCard = NonNullable<ShipmentAnalyticsData["customerMix"]>;
+type CustomerMixEntry = CustomerMixCard["entries"][number];
 type TomorrowPickup = ShipmentAnalyticsData["tomorrowsPickups"]["pickups"][number];
 type TomorrowsPickupsCard = ShipmentAnalyticsData["tomorrowsPickups"];
 type PickupStatus = TomorrowPickup["status"];
 
 type CustomerMixProps = {
-  customerMix: ShipmentAnalyticsData["customerMix"];
+  /** Null when the reader cannot read customers. */
+  customerMix: CustomerMixCard | null;
   tomorrowsPickups: ShipmentAnalyticsData["tomorrowsPickups"];
   enabled?: boolean;
 };
@@ -59,12 +61,20 @@ export function CustomerMix({ customerMix, tomorrowsPickups, enabled = true }: C
               {t("Tomorrow's pickups")}
             </TabsTab>
           </TabsList>
-          <span className="text-muted-foreground font-mono text-2xs">
-            {t("{0}d", customerMix.windowDays)}
-          </span>
+          {customerMix ? (
+            <span className="text-muted-foreground font-mono text-2xs">
+              {t("{0}d", customerMix.windowDays)}
+            </span>
+          ) : null}
         </header>
-        <TabsPanel value="customers" className="min-h-0 flex-1 overflow-y-auto">
-          <CustomersList entries={customerMix.entries} />
+        <TabsPanel value="customers" className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+          {customerMix ? (
+            <CustomersList entries={customerMix.entries} />
+          ) : (
+            <WithheldPanel>
+              {t("You need access to customers to see the customer mix")}
+            </WithheldPanel>
+          )}
         </TabsPanel>
         <TabsPanel value="pickups" className="min-h-0 flex-1 overflow-y-auto">
           <PickupsList initialData={tomorrowsPickups} enabled={enabled} />
@@ -92,26 +102,22 @@ function CustomersList({ entries }: { entries: CustomerMixEntry[] }) {
           <div className="min-w-0 flex-1">
             <div className="flex items-baseline justify-between gap-2">
               <span className="truncate text-xs font-medium">{entry.name}</span>
-              {entry.revenue === null || entry.loads === null ? (
-                <WithheldValue kind="customer" className="text-2xs" />
-              ) : (
-                <span
-                  className="text-muted-foreground font-mono text-2xs tabular-nums"
-                  title={t(
-                    "{0} · {1, plural, one {# load} other {# loads}}",
-                    formatCurrency(entry.revenue),
-                    entry.loads,
-                  )}
-                >
-                  {formatCompactCurrency(entry.revenue)} · {entry.loads}
-                </span>
-              )}
+              <span
+                className="text-muted-foreground font-mono text-2xs tabular-nums"
+                title={t(
+                  "{0} · {1, plural, one {# load} other {# loads}}",
+                  formatCurrency(entry.revenue),
+                  entry.loads,
+                )}
+              >
+                {formatCompactCurrency(entry.revenue)} · {entry.loads}
+              </span>
             </div>
             <div aria-hidden className="bg-muted mt-1 h-1 w-full overflow-hidden rounded-full">
               <span
                 className="block h-full rounded-full"
                 style={{
-                  width: `${Math.min(100, entry.share ?? 0)}%`,
+                  width: `${Math.min(100, entry.share)}%`,
                   background: SHARE_BAR_COLORS[index] ?? SHARE_BAR_COLORS.at(-1),
                 }}
               />
@@ -124,11 +130,7 @@ function CustomersList({ entries }: { entries: CustomerMixEntry[] }) {
   );
 }
 
-function CustomerTrend({ trend }: { trend: number | null }) {
-  if (trend === null) {
-    return <span aria-hidden className="w-10" />;
-  }
-
+function CustomerTrend({ trend }: { trend: number }) {
   return (
     <span
       className={cn(

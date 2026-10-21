@@ -32,30 +32,19 @@ function renderMix(customerMix: CustomerMixCard) {
   );
 }
 
-// The server keeps a customer's name, which is in its reference view, and withholds the
-// figures about it (revenue, share, loads, trend) from a shipment reader who cannot read
-// customers. The row says so instead of drawing zero revenue.
+// The figures about each customer need customer read, and the order of the names alone ranks
+// them by revenue, so a shipment reader who cannot read customers gets no customer mix at all
+// (null) and the card says which access it needs instead of drawing an empty list.
 describe("customer mix", () => {
-  it("draws a customer's withheld figures as hidden", () => {
-    renderMix({
-      windowDays: 30,
-      entries: [
-        {
-          customerId: "cus_1",
-          name: "Acme Foods",
-          revenue: null,
-          share: null,
-          loads: null,
-          trend: null,
-        },
-      ],
-    });
+  it("says a reader who cannot read customers needs that access", () => {
+    renderMix(null);
 
-    const row = screen.getByText("Acme Foods").closest("li");
-    expect(row).not.toBeNull();
-    expect(within(row as HTMLElement).getByText("Hidden")).toBeInTheDocument();
-    expect(within(row as HTMLElement).queryByText(/\$/)).toBeNull();
-    expect(within(row as HTMLElement).queryByText(/▲|▼|–/)).toBeNull();
+    expect(
+      screen.getByText("You need access to customers to see the customer mix"),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("No customer revenue in this window")).toBeNull();
+    expect(screen.queryByText("30d")).toBeNull();
+    expect(screen.queryByText(/\$/)).toBeNull();
   });
 
   it("draws a customer reader's figures", () => {
@@ -75,7 +64,16 @@ describe("customer mix", () => {
 
     const row = screen.getByText("Acme Foods").closest("li");
     expect(row).not.toBeNull();
-    expect(within(row as HTMLElement).queryByText("Hidden")).toBeNull();
+    expect(within(row as HTMLElement).getByTitle("$40,000.00 · 10 loads")).toBeInTheDocument();
     expect(within(row as HTMLElement).getByText("▲12.5")).toBeInTheDocument();
+    expect(screen.getByText("30d")).toBeInTheDocument();
+    expect(screen.queryByText("You need access to customers to see the customer mix")).toBeNull();
+  });
+
+  it("tells an empty window apart from a withheld card", () => {
+    renderMix({ windowDays: 30, entries: [] });
+
+    expect(screen.getByText("No customer revenue in this window")).toBeInTheDocument();
+    expect(screen.queryByText("You need access to customers to see the customer mix")).toBeNull();
   });
 });

@@ -108,7 +108,9 @@ func (a *cardAccess) gate(ctx context.Context, data map[string]any) {
 		case *DetentionWatchlistCard:
 			a.gateDetentionWatchlist(ctx, card)
 		case *CustomerMixCard:
-			a.gateCustomerMix(ctx, card)
+			if card != nil && !a.shows(ctx, customerFigures) {
+				data[key] = (*CustomerMixCard)(nil)
+			}
 		case *TomorrowsPickupsCard:
 			a.gateTomorrowsPickups(ctx, card)
 		case *LaneHeatmapCard:
@@ -129,25 +131,6 @@ func (a *cardAccess) gateDetentionWatchlist(ctx context.Context, card *Detention
 	}
 	for _, item := range card.Items {
 		item.Customer = nil
-	}
-}
-
-// gateCustomerMix keeps each customer's name, which is in its reference view,
-// and withholds the figures about it from a reader who cannot read customers.
-// An entry left with nothing to show is dropped.
-func (a *cardAccess) gateCustomerMix(ctx context.Context, card *CustomerMixCard) {
-	if card == nil || a.shows(ctx, customerFigures) {
-		return
-	}
-	if !a.shows(ctx, customerName) {
-		card.Entries = card.Entries[:0]
-		return
-	}
-	for _, entry := range card.Entries {
-		entry.Revenue = nil
-		entry.Share = nil
-		entry.Loads = nil
-		entry.Trend = nil
 	}
 }
 

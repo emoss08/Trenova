@@ -300,18 +300,18 @@ func TestGetCustomerMix_RanksByRevenueAndCalculatesMetrics(t *testing.T) {
 	assert.Equal(t, &CustomerMixEntry{
 		CustomerID: "cus_1",
 		Name:       "Acme Manufacturing",
-		Revenue:    new(float64(40000)),
-		Share:      new(float64(80)),
-		Loads:      new(10),
-		Trend:      new(float64(100)),
+		Revenue:    40000,
+		Share:      80,
+		Loads:      10,
+		Trend:      100,
 	}, card.Entries[0])
 	assert.Equal(t, &CustomerMixEntry{
 		CustomerID: "cus_2",
 		Name:       "FreshHaul Foods",
-		Revenue:    new(float64(10000)),
-		Share:      new(float64(20)),
-		Loads:      new(4),
-		Trend:      new(float64(100)),
+		Revenue:    10000,
+		Share:      20,
+		Loads:      4,
+		Trend:      100,
 	}, card.Entries[1])
 	require.NoError(t, mockDB.ExpectationsWereMet())
 }

@@ -5832,39 +5832,43 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "revenue",
+				NonNull:  true,
 				ChildErr: errNoChild26,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCustomerMixEntry)
 					return obj.Revenue, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
+				Marshal: gqlexec.Marshal(marshalNFloat2float64),
 			},
 			{
 				Name:     "share",
+				NonNull:  true,
 				ChildErr: errNoChild26,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCustomerMixEntry)
 					return obj.Share, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
+				Marshal: gqlexec.Marshal(marshalNFloat2float64),
 			},
 			{
 				Name:     "loads",
+				NonNull:  true,
 				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCustomerMixEntry)
 					return obj.Loads, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
+				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
 			{
 				Name:     "trend",
+				NonNull:  true,
 				ChildErr: errNoChild26,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCustomerMixEntry)
 					return obj.Trend, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
+				Marshal: gqlexec.Marshal(marshalNFloat2float64),
 			},
 		}},
 		{Object: "ShipmentDetentionWatchlist", Fields: []*gqlexec.Field{

@@ -132,6 +132,13 @@ describe("withheld shipment analytics", () => {
     );
   });
 
+  it("keeps a withheld customer mix apart from one that has not loaded", () => {
+    expect(mergeShipmentAnalyticsWithDefaults({ customerMix: null }).customerMix).toBeNull();
+    expect(mergeShipmentAnalyticsWithDefaults({}).customerMix).toEqual(
+      defaultAnalyticsData.customerMix,
+    );
+  });
+
   it("draws a withheld lane heatmap as hidden", () => {
     render(<LaneHeatmap data={null} />);
 

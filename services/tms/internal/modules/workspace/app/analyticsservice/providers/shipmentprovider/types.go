@@ -76,12 +76,12 @@ type DetentionWatchlistCard struct {
 }
 
 type CustomerMixEntry struct {
-	CustomerID string   `json:"customerId"`
-	Name       string   `json:"name"`
-	Revenue    *float64 `json:"revenue"`
-	Share      *float64 `json:"share"`
-	Loads      *int     `json:"loads"`
-	Trend      *float64 `json:"trend"`
+	CustomerID string  `json:"customerId"`
+	Name       string  `json:"name"`
+	Revenue    float64 `json:"revenue"`
+	Share      float64 `json:"share"`
+	Loads      int     `json:"loads"`
+	Trend      float64 `json:"trend"`
 }
 
 type CustomerMixCard struct {

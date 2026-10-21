@@ -21,7 +21,7 @@ type Bookkeeping = (typeof REFERENCE_BOOKKEEPING)[number];
 
 /**
  * A field of a kind's reference view: what any record linking to it may always show. A kind
- * with no view (a document, a billing queue item) shows only its bookkeeping fields.
+ * with no view of its own shows only its bookkeeping fields.
  */
 export type ReferenceField<K extends string> = K extends ReferenceKind
   ? (typeof REFERENCE_VIEWS)[K][number]

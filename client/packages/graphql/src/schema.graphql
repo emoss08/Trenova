@@ -27412,6 +27412,10 @@ input ShipmentAdditionalChargeInput {
 type ShipmentAnalytics {
   activeShipments: ShipmentActiveShipments
   atRisk: ShipmentAtRisk
+  """
+  Null for a reader who cannot read customers: the figures about each customer
+  need customer read, and the order of the names alone would rank them.
+  """
   customerMix: ShipmentCustomerMix
   detentionWatchlist: ShipmentDetentionWatchlist
   emptyMilePercent: ShipmentEmptyMile
@@ -28151,14 +28155,11 @@ type ShipmentCustomerMix {
 
 type ShipmentCustomerMixEntry {
   customerId: String!
-  loads: Int
+  loads: Int!
   name: String!
-  """
-  Null for a reader who cannot read customers, as are share, loads and trend.
-  """
-  revenue: Float
-  share: Float
-  trend: Float
+  revenue: Float!
+  share: Float!
+  trend: Float!
 }
 
 type ShipmentDeliveryWatch {

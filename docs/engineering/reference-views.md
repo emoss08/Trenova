@@ -38,7 +38,12 @@ Internal.
 - **Declaration.** Each kind's `ReferenceView` sits on its definition in
   `internal/modules/identity/domain/permission/resources_*.go`, next to its field sensitivities.
   Every view also includes `id`, `organizationId`, `businessUnitId`, `version`, `createdAt` and
-  `updatedAt`, which carry nothing about a record's content. Views are fixed in the backend: there
+  `updatedAt`, which carry nothing about a record's content. A kind that only REST responses carry
+  still has a view: an invoice's PDF and attachments show a document's `originalName`, `fileType`
+  and `fileSize` (never its stored file name, storage path or checksum), its billing queue item
+  its `number` and `status`, an email attempt's email log its `status`, `sentAt`, `failedAt` and
+  `providerMessageId` (never its recipients, subject, body or error), and an email profile shows
+  its `name` (never its sender address or provider). Views are fixed in the backend: there
   is no table for them and no screen to edit them. An organization decides who sees whole linked
   records through bundles and job templates, and how sensitive a field may be through the role's
   ceiling.
@@ -100,9 +105,11 @@ asks the same port, `permissionports.ReferenceViews`, which refview implements:
   read; `shipmentprovider/access.go` then gates each card. Names of customers, locations and drivers
   are view fields, so they stay, held to the ceiling (a withheld one is `null`; the lane heatmap,
   whose regions come from location states, is `null` as a whole). A customer's revenue, share,
-  loads and trend are figures about the customer and need customer read; without it they are
-  `null` and an entry left with nothing to show is dropped. The average margin needs the margins
-  field group. The client draws each `null` with `WithheldValue`.
+  loads and trend are figures about the customer and need customer read, and the customer mix
+  lists names in revenue order, so the order alone would rank them: without customer read the
+  whole customer mix is `null`, and the card says the reader needs access to customers
+  (`WithheldPanel`). The average margin needs the margins field group. The client draws every
+  other `null` with `WithheldValue`.
 - **Insights** (`insightservice`). A finding names a customer, a location or a driver beside figures
   about it, which no view carries, so the reader needs read on every kind it names, not a view.
   Each detector declares those kinds in `Resources()`; each finding lists the kinds it names in
@@ -151,6 +158,7 @@ Each failure says what to add.
 |---|---|
 | `TestReferenceViewsAreAtMostInternal` (permission) | a view field ranks above Internal |
 | `TestEveryReferenceFieldExistsOnItsKind` (gqlext) | a view names a field no GraphQL type of its kind has |
+| `TestEveryReferenceFieldExistsOnItsRESTKind` (responseguard) | a kind no GraphQL type shows declares a view field that no REST type carrying it has, or no response carries it at all |
 | `TestEveryKindToKindFieldIsCovered` (gqlext) | a field named for a kind returns a type that declares no kind |
 | `TestEveryLinkedFieldIsDeclared` (gqlext) | a client operation selects a field outside a linked record's view without `@requiresRead` for its kind |
 | `TestEveryDeclaredLinkedFieldIsNullable` (gqlext) | a field selected under `@requiresRead` is non-null |

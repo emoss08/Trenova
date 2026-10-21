@@ -98,45 +98,51 @@ func customerMix() *CustomerMixCard {
 	})
 }
 
-func TestCustomerMix_ShowsItsFiguresToCustomerReaders(t *testing.T) {
+func TestCustomerMix_ShowsTheWholeCardToCustomerReaders(t *testing.T) {
 	t.Parallel()
 
 	card := customerMix()
-	reader{denied: []permission.Resource{permission.ResourceWorker}}.gate(t, map[string]any{"customerMix": card})
+	data := map[string]any{"customerMix": card}
+	reader{denied: []permission.Resource{permission.ResourceWorker}}.gate(t, data)
 
+	require.Same(t, card, data["customerMix"])
 	require.Len(t, card.Entries, 2)
-	assert.Equal(t, "Acme Foods", card.Entries[0].Name)
-	require.NotNil(t, card.Entries[0].Revenue)
-	assert.InDelta(t, 40000, *card.Entries[0].Revenue, 0.001)
-	require.NotNil(t, card.Entries[0].Share)
-	require.NotNil(t, card.Entries[0].Loads)
-	require.NotNil(t, card.Entries[0].Trend)
+	assert.Equal(t, &CustomerMixEntry{
+		CustomerID: "cus_1",
+		Name:       "Acme Foods",
+		Revenue:    40000,
+		Share:      80,
+		Loads:      10,
+		Trend:      100,
+	}, card.Entries[0])
 }
 
-func TestCustomerMix_WithholdsFiguresAboutACustomerFromOtherReaders(t *testing.T) {
+func TestCustomerMix_HidesTheCardFromReadersWhoCannotReadCustomers(t *testing.T) {
 	t.Parallel()
 
-	card := customerMix()
-	reader{denied: withoutLinkedReads}.gate(t, map[string]any{"customerMix": card})
+	for name, denied := range map[string][]permission.Resource{
+		"without customer read":    {permission.ResourceCustomer},
+		"without any linked reads": withoutLinkedReads,
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 
-	require.Len(t, card.Entries, 2)
-	for _, entry := range card.Entries {
-		assert.NotEmpty(t, entry.Name, "a customer's name is in its reference view")
-		assert.NotEmpty(t, entry.CustomerID)
-		assert.Nil(t, entry.Revenue)
-		assert.Nil(t, entry.Share)
-		assert.Nil(t, entry.Loads)
-		assert.Nil(t, entry.Trend)
+			data := map[string]any{"customerMix": customerMix()}
+			reader{denied: denied}.gate(t, data)
+
+			assert.Nil(t, data["customerMix"],
+				"the order of the names alone ranks the customers by revenue")
+		})
 	}
 }
 
-func TestCustomerMix_DropsEntriesLeftWithNothingToShow(t *testing.T) {
+func TestCustomerMix_LeavesAnEmptyCardAlone(t *testing.T) {
 	t.Parallel()
 
-	card := customerMix()
-	reader{denied: withoutLinkedReads, ceiling: belowInternal}.gate(t, map[string]any{"customerMix": card})
+	data := map[string]any{"customerMix": (*CustomerMixCard)(nil)}
+	reader{}.gate(t, data)
 
-	assert.Empty(t, card.Entries)
+	assert.Nil(t, data["customerMix"])
 }
 
 func detentionWatchlist() *DetentionWatchlistCard {

@@ -204,10 +204,10 @@ func customerMixFromAnalytics(value any) *gqlmodel.ShipmentCustomerMix {
 		entries = append(entries, &gqlmodel.ShipmentCustomerMixEntry{
 			CustomerID: sliceutils.StringValue(entry["customerId"]),
 			Name:       sliceutils.StringValue(entry["name"]),
-			Revenue:    floatutils.FloatPtrValue(entry["revenue"]),
-			Share:      floatutils.FloatPtrValue(entry["share"]),
-			Loads:      intutils.IntPtrValue(entry["loads"]),
-			Trend:      floatutils.FloatPtrValue(entry["trend"]),
+			Revenue:    floatutils.FloatValue(entry["revenue"]),
+			Share:      floatutils.FloatValue(entry["share"]),
+			Loads:      intutils.IntValue(entry["loads"]),
+			Trend:      floatutils.FloatValue(entry["trend"]),
 		})
 	}
 	return &gqlmodel.ShipmentCustomerMix{

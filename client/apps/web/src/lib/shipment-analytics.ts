@@ -84,18 +84,21 @@ export type ShipmentAnalyticsData = {
     /** `customer` is null when the reader's ceiling withholds the customer's name. */
     items: { shipmentId: string; customer: string | null; dwellLabel: string; tone: Tone }[];
   };
+  /**
+   * Null for a reader who cannot read customers: the figures about each customer need customer
+   * read, and the order of the names alone would rank them.
+   */
   customerMix: {
     windowDays: number;
     entries: {
       customerId: string;
       name: string;
-      /** The figures about a customer are null for a reader who cannot read customers. */
-      revenue: number | null;
-      share: number | null;
-      loads: number | null;
-      trend: number | null;
+      revenue: number;
+      share: number;
+      loads: number;
+      trend: number;
     }[];
-  };
+  } | null;
   tomorrowsPickups: {
     date: string;
     pickups: {
@@ -280,8 +283,10 @@ export function mergeShipmentAnalyticsWithDefaults(
       (data.detentionWatchlist as ShipmentAnalyticsData["detentionWatchlist"] | undefined) ??
       defaultAnalyticsData.detentionWatchlist,
     customerMix:
-      (data.customerMix as ShipmentAnalyticsData["customerMix"] | undefined) ??
-      defaultAnalyticsData.customerMix,
+      data.customerMix === null
+        ? null
+        : ((data.customerMix as ShipmentAnalyticsData["customerMix"] | undefined) ??
+          defaultAnalyticsData.customerMix),
     tomorrowsPickups:
       (data.tomorrowsPickups as ShipmentAnalyticsData["tomorrowsPickups"] | undefined) ??
       defaultAnalyticsData.tomorrowsPickups,

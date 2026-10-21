@@ -1148,10 +1148,10 @@ func buildCustomerMixCard(rows []customerMixRow) *CustomerMixCard {
 		entries = append(entries, &CustomerMixEntry{
 			CustomerID: row.CustomerID,
 			Name:       row.Name,
-			Revenue:    new(math.Round(row.Revenue*100) / 100),
-			Share:      new(share),
-			Loads:      new(row.Loads),
-			Trend:      new(customerMixTrend(row.Revenue, row.PreviousRevenue)),
+			Revenue:    math.Round(row.Revenue*100) / 100,
+			Share:      share,
+			Loads:      row.Loads,
+			Trend:      customerMixTrend(row.Revenue, row.PreviousRevenue),
 		})
 	}
 

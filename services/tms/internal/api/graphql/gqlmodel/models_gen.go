@@ -8179,8 +8179,10 @@ type ShipmentAnalytics struct {
 	Unassigned         *ShipmentUnassignedAnalytics `json:"unassigned,omitempty"`
 	ReadyToDispatch    *ShipmentReadyToDispatch     `json:"readyToDispatch,omitempty"`
 	DetentionWatchlist *ShipmentDetentionWatchlist  `json:"detentionWatchlist,omitempty"`
-	CustomerMix        *ShipmentCustomerMix         `json:"customerMix,omitempty"`
-	TomorrowsPickups   *ShipmentTomorrowsPickups    `json:"tomorrowsPickups,omitempty"`
+	// Null for a reader who cannot read customers: the figures about each customer
+	// need customer read, and the order of the names alone would rank them.
+	CustomerMix      *ShipmentCustomerMix      `json:"customerMix,omitempty"`
+	TomorrowsPickups *ShipmentTomorrowsPickups `json:"tomorrowsPickups,omitempty"`
 	// Null for a reader whose ceiling withholds the state of a location.
 	LaneHeatmap   *ShipmentLaneHeatmap            `json:"laneHeatmap,omitempty"`
 	Profitability *ShipmentProfitabilityAnalytics `json:"profitability,omitempty"`
@@ -8852,13 +8854,12 @@ type ShipmentCustomerMix struct {
 }
 
 type ShipmentCustomerMixEntry struct {
-	CustomerID string `json:"customerId"`
-	Name       string `json:"name"`
-	// Null for a reader who cannot read customers, as are share, loads and trend.
-	Revenue *float64 `json:"revenue,omitempty"`
-	Share   *float64 `json:"share,omitempty"`
-	Loads   *int     `json:"loads,omitempty"`
-	Trend   *float64 `json:"trend,omitempty"`
+	CustomerID string  `json:"customerId"`
+	Name       string  `json:"name"`
+	Revenue    float64 `json:"revenue"`
+	Share      float64 `json:"share"`
+	Loads      int     `json:"loads"`
+	Trend      float64 `json:"trend"`
 }
 
 type ShipmentDeliveryWatch struct {

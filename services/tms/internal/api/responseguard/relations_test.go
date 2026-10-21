@@ -33,6 +33,7 @@ type relationTarget struct {
 	pkgPath string
 	name    string
 	via     string
+	fields  []string
 }
 
 func (r relationTarget) key() string { return r.pkgPath + "." + r.name }
@@ -252,7 +253,12 @@ func walkType(
 		}
 		obj := u.Obj()
 		if relation && obj.Pkg() != nil {
-			target := relationTarget{pkgPath: obj.Pkg().Path(), name: obj.Name(), via: via}
+			target := relationTarget{
+				pkgPath: obj.Pkg().Path(),
+				name:    obj.Name(),
+				via:     via,
+				fields:  jsonNames(st),
+			}
 			if _, known := out[target.key()]; !known {
 				out[target.key()] = target
 			}
@@ -454,6 +460,71 @@ func TestEveryKindAgreesWithTheGraphQLGuard(t *testing.T) {
 	slices.Sort(mismatched)
 	require.Empty(t, mismatched, "\n"+strings.Join(mismatched, "\n"))
 	require.Greater(t, compared, 20, "gqlgen.yml bindings were not read")
+}
+
+// A kind no GraphQL type shows is gated on REST alone, so every field of its
+// reference view must be a JSON field of a Go type a response carries it as,
+// or a typo would silently show nothing.
+func TestEveryReferenceFieldExistsOnItsRESTKind(t *testing.T) {
+	registry := fieldsensitivity.DefaultRegistry()
+	schema, err := schemadiff.LoadDir("../graphql/schema")
+	require.NoError(t, err)
+	graphKinds, err := gqlext.KindTypes(schema, registry)
+	require.NoError(t, err)
+	shown := make(map[permission.Resource]struct{}, len(graphKinds))
+	for _, kind := range graphKinds {
+		shown[kind] = struct{}{}
+	}
+	carriedAs := make(map[permission.Resource][]relationTarget)
+	for _, target := range relationTargets(t) {
+		kind := kindOfName(registry, target.pkgPath, target.name)
+		carriedAs[kind] = append(carriedAs[kind], target)
+	}
+
+	var missing []string
+	for _, def := range registry.All() {
+		kind := permission.Resource(def.Resource)
+		if _, ok := shown[kind]; ok || len(def.ReferenceView) == 0 {
+			continue
+		}
+		targets := carriedAs[kind]
+		if len(targets) == 0 {
+			missing = append(missing, fmt.Sprintf(
+				"%s declares a reference view, but no GraphQL type or REST response shows it",
+				def.Resource))
+			continue
+		}
+		for _, field := range def.ReferenceView {
+			if !slices.ContainsFunc(targets, func(target relationTarget) bool {
+				return slices.Contains(target.fields, field)
+			}) {
+				missing = append(missing, fmt.Sprintf(
+					"%s.%s is not a JSON field of %s", def.Resource, field, targets[0].key()))
+			}
+		}
+	}
+	slices.Sort(missing)
+	require.Empty(t, missing,
+		"fix the field name in the kind's ReferenceView (resources_*.go):\n"+
+			strings.Join(missing, "\n"))
+}
+
+func jsonNames(st *types.Struct) []string {
+	out := make([]string, 0, st.NumFields())
+	for i := range st.NumFields() {
+		f := st.Field(i)
+		tag := reflect.StructTag(st.Tag(i))
+		if tag.Get("json") == "-" || (!f.Exported() && !f.Embedded()) {
+			continue
+		}
+		name, _ := parseTag(tag.Get("json"))
+		if name == "" {
+			name = f.Name()
+		}
+		out = append(out, name)
+	}
+
+	return out
 }
 
 // gqlModels maps each Go type gqlgen.yml binds to the GraphQL types bound to it.

@@ -1,7 +1,7 @@
 import { isReferenceField, linkedRecordSchema } from "@trenova/shared/lib/linked-record";
 import { billingQueueItemSchema } from "@trenova/shared/types/billing-queue";
 import { documentSchema } from "@trenova/shared/types/document";
-import { invoiceSchema } from "@trenova/shared/types/invoice";
+import { invoiceEmailAttemptSchema, invoiceSchema } from "@trenova/shared/types/invoice";
 import { shipmentSchema } from "@trenova/shared/types/shipment";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
@@ -49,10 +49,32 @@ describe("linkedRecordSchema", () => {
   });
 
   it("shows only bookkeeping fields of a kind with no view of its own", () => {
-    expect(isReferenceField("document", "id")).toBe(true);
-    expect(isReferenceField("document", "fileName")).toBe(false);
+    expect(isReferenceField("distance_profile", "id")).toBe(true);
+    expect(isReferenceField("distance_profile", "name")).toBe(false);
     expect(isReferenceField("user", "name")).toBe(true);
     expect(isReferenceField("user", "emailAddress")).toBe(false);
+  });
+
+  it("shows a document's name, type and size, never where or how it is stored", () => {
+    expect(isReferenceField("document", "originalName")).toBe(true);
+    expect(isReferenceField("document", "fileType")).toBe(true);
+    expect(isReferenceField("document", "fileSize")).toBe(true);
+    expect(isReferenceField("document", "createdAt")).toBe(true);
+    expect(isReferenceField("document", "fileName")).toBe(false);
+    expect(isReferenceField("document", "storagePath")).toBe(false);
+    expect(isReferenceField("document", "checksumSha256")).toBe(false);
+  });
+
+  it("shows an email's delivery state, never its recipients, subject or error", () => {
+    expect(isReferenceField("email_log", "status")).toBe(true);
+    expect(isReferenceField("email_log", "sentAt")).toBe(true);
+    expect(isReferenceField("email_log", "failedAt")).toBe(true);
+    expect(isReferenceField("email_log", "providerMessageId")).toBe(true);
+    expect(isReferenceField("email_log", "toRecipients")).toBe(false);
+    expect(isReferenceField("email_log", "subject")).toBe(false);
+    expect(isReferenceField("email_log", "lastError")).toBe(false);
+    expect(isReferenceField("email_profile", "name")).toBe(true);
+    expect(isReferenceField("email_profile", "senderEmail")).toBe(false);
   });
 });
 
@@ -159,11 +181,54 @@ describe("REST records carried inside another", () => {
           version: 1,
           createdAt: 1_700_000_000,
           updatedAt: 1_700_000_000,
+          originalName: "INV-1.pdf",
+          fileType: "application/pdf",
+          fileSize: 48_213,
         },
-        ["fileName", "status", "resourceType", "resourceId", "hasExtractedText"],
+        ["fileName", "storagePath", "status", "resourceType", "resourceId", "hasExtractedText"],
       ),
     );
-    expect(pdf?.id).toBe("doc_1");
+    expect(pdf?.originalName).toBe("INV-1.pdf");
+    expect(pdf?.fileSize).toBe(48_213);
+    expect(pdf?.storagePath).toBeNull();
+
+    const queueItem = shape.billingQueueItem.parse(
+      withheld(
+        {
+          id: "bqi_1",
+          organizationId: "org_1",
+          businessUnitId: "bu_1",
+          version: 1,
+          createdAt: 1_700_000_000,
+          updatedAt: 1_700_000_000,
+          number: "BQ-1",
+          status: "ReadyForReview",
+        },
+        ["shipmentId", "billType", "billToCustomerId", "reviewNotes", "exceptionNotes"],
+      ),
+    );
+    expect(queueItem?.number).toBe("BQ-1");
+    expect(queueItem?.status).toBe("ReadyForReview");
+    expect(queueItem?.reviewNotes).toBeNull();
+  });
+
+  it("parses an email attempt whose email log the reader cannot read", () => {
+    const email = invoiceEmailAttemptSchema.shape.email.parse(
+      withheld(
+        {
+          id: "em_1",
+          status: "Delivered",
+          sentAt: 1_700_000_000,
+          providerMessageId: "msg_1",
+          createdAt: 1_700_000_000,
+          updatedAt: 1_700_000_000,
+        },
+        ["toRecipients", "subject", "lastError", "fromEmail", "profile"],
+      ),
+    );
+    expect(email?.status).toBe("Delivered");
+    expect(email?.toRecipients).toBeNull();
+    expect(email?.lastError).toBeNull();
   });
 
   it("keeps every key of the record's own schema", () => {

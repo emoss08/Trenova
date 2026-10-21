@@ -26695,6 +26695,10 @@ type ShipmentAnalytics {
   unassigned: ShipmentUnassignedAnalytics
   readyToDispatch: ShipmentReadyToDispatch
   detentionWatchlist: ShipmentDetentionWatchlist
+  """
+  Null for a reader who cannot read customers: the figures about each customer
+  need customer read, and the order of the names alone would rank them.
+  """
   customerMix: ShipmentCustomerMix
   tomorrowsPickups: ShipmentTomorrowsPickups
   "Null for a reader whose ceiling withholds the state of a location."
@@ -26795,11 +26799,10 @@ type ShipmentCustomerMix {
 type ShipmentCustomerMixEntry {
   customerId: String!
   name: String!
-  "Null for a reader who cannot read customers, as are share, loads and trend."
-  revenue: Float
-  share: Float
-  loads: Int
-  trend: Float
+  revenue: Float!
+  share: Float!
+  loads: Int!
+  trend: Float!
 }
 
 type ShipmentTomorrowsPickups {
