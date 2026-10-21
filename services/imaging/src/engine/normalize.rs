@@ -1,4 +1,4 @@
-//! NormalizeImage: any image the worker reads, as a plain upright PNG or
+//! `NormalizeImage`: any image the worker reads, as a plain upright PNG or
 //! JPEG. Used where a browser or a PDF renderer needs a format it is sure to
 //! take (the template asset inliner turns WebP and HEIC into PNG). The image
 //! is decoded at a reduced size when its codec can, turned upright, fitted

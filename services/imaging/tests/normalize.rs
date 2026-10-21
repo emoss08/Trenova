@@ -41,7 +41,7 @@ async fn normalize(
     while let Some(message) = stream.message().await? {
         match message.part {
             Some(normalize_image_response::Part::Image(header)) => {
-                content_type = header.content_type
+                content_type = header.content_type;
             }
             Some(normalize_image_response::Part::Chunk(chunk)) => data.extend(chunk.data),
             Some(normalize_image_response::Part::Summary(s)) => summary = Some(s),
