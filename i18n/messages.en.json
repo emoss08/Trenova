@@ -43178,7 +43178,7 @@
       "routes/agent-control"
     ]
   },
-  "Can read every record and change nothing.": {
+  "Can read every record except leave cases, and change nothing.": {
     "sites": 1,
     "scope": [
       "go"
@@ -47033,6 +47033,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Case year is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
     ]
   },
   "Case {0}": {
@@ -133791,6 +133800,15 @@
       "routes/worker-credential-type"
     ]
   },
+  "Leave and FMLA": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Leave begins": {
     "sites": 1,
     "scope": [
@@ -175072,6 +175090,15 @@
     ],
     "areas": [
       "routes/accounting-sync"
+    ]
+  },
+  "Open and decide leave cases, record leave days and keep medical certification.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Open approvals": {
@@ -303990,7 +304017,7 @@
     ]
   },
   "Worker is invalid": {
-    "sites": 30,
+    "sites": 28,
     "scope": [
       "go"
     ],

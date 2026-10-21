@@ -74,6 +74,79 @@ func TestTemplateGrants_MergeBundlesAndKeepTheWidestScope(t *testing.T) {
 	assert.Equal(t, DataScopeTeam, teamOnly[idx].DataScope)
 }
 
+func leaveOperations(grants []*ResourcePermission) []Operation {
+	idx := slices.IndexFunc(grants, func(rp *ResourcePermission) bool {
+		return rp.Resource == ResourceWorkerLeave.String()
+	})
+	if idx < 0 {
+		return nil
+	}
+	return Implied(grants[idx].Operations)
+}
+
+func TestJobTemplates_OnlyHumanResourcesReachLeave(t *testing.T) {
+	t.Parallel()
+
+	expected := map[string][]Operation{
+		"dispatcher":          nil,
+		"dispatch_supervisor": nil,
+		"carrier_rep":         nil,
+		"billing_clerk":       nil,
+		"billing_manager":     nil,
+		"accountant":          nil,
+		"payroll":             nil,
+		"safety":              nil,
+		"driver_manager":      {OpApprove, OpRead, OpUpdate},
+		"hr":                  {OpApprove, OpCreate, OpRead, OpUpdate},
+		"read_only":           nil,
+	}
+
+	reg := NewRegistry()
+	require.Equal(t, ResourceWorkerLeave.String(),
+		reg.GetEffectiveResource(ResourceWorkerLeave.String()),
+		"a worker grant must not reach leave, or this table says nothing")
+	templates := JobTemplates()
+	require.Len(t, templates, len(expected), "add every new template to this table")
+	for _, template := range templates {
+		want, listed := expected[template.ID]
+		require.True(t, listed, "template %q is missing from this table", template.ID)
+		assert.Equal(t, want, leaveOperations(reg.TemplateGrants(template)),
+			"template %q", template.ID)
+	}
+}
+
+func TestBundles_OnlyHumanResourcesBundlesGrantLeave(t *testing.T) {
+	t.Parallel()
+
+	expected := map[string][]Operation{
+		"hr.leave": {OpApprove, OpCreate, OpRead, OpUpdate},
+		"hr.team":  {OpApprove, OpRead},
+	}
+
+	for _, bundle := range Bundles() {
+		var got []Operation
+		for _, grant := range bundle.Grants {
+			if grant.Resource == ResourceWorkerLeave {
+				got = Normalize(append(got, grant.Operations...))
+			}
+		}
+		assert.Equal(t, expected[bundle.ID], got, "bundle %q", bundle.ID)
+	}
+}
+
+func TestTemplateGrants_ReadEverythingSkipsWhatTheTemplateExcepts(t *testing.T) {
+	t.Parallel()
+
+	reg := NewRegistry()
+	grants := reg.TemplateGrants(JobTemplate{
+		ReadEverything: true,
+		ReadExcept:     []Resource{ResourceWorkerLeave},
+	})
+
+	assert.Nil(t, leaveOperations(grants))
+	assert.Len(t, grants, len(reg.TemplateGrants(JobTemplate{ReadEverything: true}))-1)
+}
+
 func TestTemplateGrants_ReadEverythingReadsEveryReadableKind(t *testing.T) {
 	t.Parallel()
 
