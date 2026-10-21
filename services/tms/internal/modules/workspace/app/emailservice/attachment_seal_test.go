@@ -379,15 +379,17 @@ func TestAttachmentContentRetriesATruncatedDownload(t *testing.T) {
 
 			h := newSealHarness(t)
 			attachment, sealed := sealedAttachment(t, h, plaintext)
-			h.storage.EXPECT().Download(mock.Anything, attachment.ObjectKey).Return(&kernelports.DownloadResult{
-				Body: io.NopCloser(bytes.NewReader(sealed[:cut(sealed)])),
-				Size: int64(len(sealed)),
-			}, nil).Once()
+			for ending, end := range map[string]error{"EOF": io.EOF, "unexpected EOF": io.ErrUnexpectedEOF} {
+				h.storage.EXPECT().Download(mock.Anything, attachment.ObjectKey).Return(&kernelports.DownloadResult{
+					Body: io.NopCloser(&failingAfter{data: sealed[:cut(sealed)], err: end}),
+					Size: int64(len(sealed)),
+				}, nil).Once()
 
-			_, err := h.svc.attachmentContent(t.Context(), attachment)
+				_, err := h.svc.attachmentContent(t.Context(), attachment)
 
-			require.ErrorIs(t, err, io.ErrUnexpectedEOF)
-			assert.False(t, errors.Is(err, ErrNonRetryableSend), "a cut-off download is retried")
+				require.ErrorIs(t, err, encryptionservice.ErrBlobTruncated, ending)
+				assert.False(t, errors.Is(err, ErrNonRetryableSend), "a cut-off download is retried: %s", ending)
+			}
 		})
 	}
 }

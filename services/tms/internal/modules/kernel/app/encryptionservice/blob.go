@@ -454,7 +454,7 @@ type sizedReader struct {
 func (r *sizedReader) Read(p []byte) (int, error) {
 	n, err := r.src.Read(p)
 	r.remaining -= int64(n)
-	if errors.Is(err, io.EOF) && r.remaining > 0 {
+	if r.remaining > 0 && (errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF)) {
 		return n, fmt.Errorf("%w: %d bytes short", ErrBlobTruncated, r.remaining)
 	}
 	return n, err

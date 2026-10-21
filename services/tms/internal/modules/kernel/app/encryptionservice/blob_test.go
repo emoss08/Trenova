@@ -315,3 +315,48 @@ func TestAFlippedCiphertextByteIsTampered(t *testing.T) {
 	require.ErrorIs(t, err, ErrBlobTampered)
 	assert.NotErrorIs(t, err, io.ErrUnexpectedEOF)
 }
+
+type cutOff struct {
+	data []byte
+	err  error
+}
+
+func (r *cutOff) Read(p []byte) (int, error) {
+	if len(r.data) == 0 {
+		return 0, r.err
+	}
+	n := copy(p, r.data)
+	r.data = r.data[n:]
+	return n, nil
+}
+
+func TestADownloadCutShortWithUnexpectedEOFIsTruncated(t *testing.T) {
+	t.Parallel()
+
+	svc := blobService(t, "blob-test-active-key-material")
+	aad := blobAAD("documents/cut-off.pdf")
+	sealed := seal(t, svc, randomBytes(t, 2*BlobChunkSize+10), aad)
+	start := headerLength(t, sealed)
+
+	for name, cut := range map[string]int{
+		"inside the header":      start / 2,
+		"inside the first chunk": start + 100,
+		"inside the last chunk":  len(sealed) - 3,
+	} {
+		_, err := func() ([]byte, error) {
+			opened, err := svc.OpenBlob(
+				t.Context(),
+				&cutOff{data: sealed[:cut], err: io.ErrUnexpectedEOF},
+				int64(len(sealed)),
+				aad,
+			)
+			if err != nil {
+				return nil, err
+			}
+			return io.ReadAll(opened)
+		}()
+
+		require.ErrorIs(t, err, ErrBlobTruncated, name)
+		assert.NotErrorIs(t, err, ErrBlobRejected, name)
+	}
+}
