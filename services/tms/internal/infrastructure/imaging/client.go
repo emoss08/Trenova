@@ -153,12 +153,13 @@ func (c *Client) call(
 		tried[target.address] = struct{}{}
 		progressed := false
 		err = attempt(ctx, target.rpc, &progressed)
+		target.calls.Done()
 		target.record(ctx, err, &c.cfg.Breaker, time.Now())
 		if err == nil {
 			return nil
 		}
 		last = err
-		wait, retry := retryable(err)
+		wait, retry := retryable(ctx, err)
 		if !retry || progressed || try == c.cfg.GetMaxAttempts() {
 			break
 		}
@@ -185,10 +186,13 @@ func (c *Client) call(
 	return mapError(last)
 }
 
-func retryable(err error) (time.Duration, bool) {
+func retryable(ctx context.Context, err error) (time.Duration, bool) {
 	st, ok := status.FromError(err)
 	if !ok {
 		return 0, false
+	}
+	if st.Code() == codes.Canceled && ctx.Err() == nil {
+		return 0, true
 	}
 	if code := st.Code(); code != codes.ResourceExhausted && code != codes.Unavailable {
 		return 0, false

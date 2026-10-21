@@ -120,7 +120,7 @@ func (w *fakeWorker) Render(stream imagingpb.ImagingService_RenderServer) error 
 	}})
 }
 
-func serve(t *testing.T, worker *fakeWorker) string {
+func serve(t *testing.T, worker imagingpb.ImagingServiceServer) string {
 	t.Helper()
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	require.NoError(t, err)

@@ -25,6 +25,7 @@ type endpoint struct {
 	address string
 	conn    *grpc.ClientConn
 	rpc     imagingpb.ImagingServiceClient
+	calls   sync.WaitGroup
 
 	mu        sync.Mutex
 	failures  int
@@ -88,8 +89,7 @@ type endpointSet struct {
 	dial   func(target string) (*grpc.ClientConn, error)
 	logger *zap.Logger
 
-	host   string
-	port   string
+	lookup func(ctx context.Context) ([]string, error)
 	static bool
 
 	mu        sync.RWMutex
@@ -97,6 +97,7 @@ type endpointSet struct {
 	next      atomic.Uint64
 
 	resolveMu sync.Mutex
+	retiring  sync.WaitGroup
 	stop      chan struct{}
 	done      chan struct{}
 }
@@ -121,7 +122,16 @@ func newEndpointSet(
 		if err != nil {
 			return nil, fmt.Errorf("imaging.endpoint %q: %w", target, err)
 		}
-		set.host, set.port = host, port
+		set.lookup = func(ctx context.Context) ([]string, error) {
+			addrs, lookupErr := net.DefaultResolver.LookupHost(ctx, host)
+			if lookupErr != nil {
+				return nil, lookupErr
+			}
+			for i, addr := range addrs {
+				addrs[i] = net.JoinHostPort(addr, port)
+			}
+			return addrs, nil
+		}
 	default:
 		set.static = true
 		conn, err := dial(target)
@@ -166,14 +176,13 @@ func (s *endpointSet) resolve(ctx context.Context) error {
 	s.resolveMu.Lock()
 	defer s.resolveMu.Unlock()
 
-	addrs, err := net.DefaultResolver.LookupHost(ctx, s.host)
+	addrs, err := s.lookup(ctx)
 	if err != nil {
 		return err
 	}
-	slices.Sort(addrs)
 	wanted := make(map[string]struct{}, len(addrs))
 	for _, addr := range addrs {
-		wanted[net.JoinHostPort(addr, s.port)] = struct{}{}
+		wanted[addr] = struct{}{}
 	}
 
 	s.mu.RLock()
@@ -214,9 +223,31 @@ func (s *endpointSet) resolve(ctx context.Context) error {
 	s.mu.Unlock()
 
 	for _, e := range retired {
-		_ = e.conn.Close()
+		s.retire(e)
 	}
 	return nil
+}
+
+func (s *endpointSet) retire(e *endpoint) {
+	s.retiring.Add(1)
+	go func() {
+		defer s.retiring.Done()
+		finished := make(chan struct{})
+		go func() {
+			e.calls.Wait()
+			close(finished)
+		}()
+		grace := time.NewTimer(s.cfg.Deadlines.Longest())
+		defer grace.Stop()
+		select {
+		case <-finished:
+		case <-s.stop:
+		case <-grace.C:
+			s.logger.Warn("closed a retired imaging endpoint with calls still in flight",
+				zap.String("address", e.address))
+		}
+		_ = e.conn.Close()
+	}()
 }
 
 func (s *endpointSet) pick(ctx context.Context, exclude map[string]struct{}) (*endpoint, error) {
@@ -247,19 +278,24 @@ func (s *endpointSet) pick(ctx context.Context, exclude map[string]struct{}) (*e
 			continue
 		}
 		if e.available(now) {
-			return e, nil
+			return claim(e), nil
 		}
 	}
 	for i := range n {
 		e := s.endpoints[(start+i)%n]
 		if _, skip := exclude[e.address]; !skip {
-			return e, nil
+			return claim(e), nil
 		}
 	}
 	if fallback != nil {
-		return fallback, nil
+		return claim(fallback), nil
 	}
 	return nil, errNoEndpoints
+}
+
+func claim(e *endpoint) *endpoint {
+	e.calls.Add(1)
+	return e
 }
 
 func (s *endpointSet) close() error {
@@ -267,6 +303,7 @@ func (s *endpointSet) close() error {
 		close(s.stop)
 	}
 	<-s.done
+	s.retiring.Wait()
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	var errs []error

@@ -128,6 +128,16 @@ func (c *ImagingDeadlinesConfig) GetNormalizeImage() time.Duration {
 	return durationOr(c.NormalizeImage, 60*time.Second)
 }
 
+func (c *ImagingDeadlinesConfig) Longest() time.Duration {
+	return max(
+		c.GetProbe(),
+		c.GetRender(),
+		c.GetInspectCapture(),
+		c.GetAssemble(),
+		c.GetNormalizeImage(),
+	)
+}
+
 func (c *ImagingConfig) GetResolveInterval() time.Duration {
 	return durationOr(c.ResolveInterval, 10*time.Second)
 }
