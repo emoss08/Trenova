@@ -62,7 +62,8 @@ balancer, list it there, or every row records the balancer's address.
 attempt. The caller fills an `AuthEventRecord` (provider, outcome, user,
 organization, assurance levels, an error code) and the recorder adds the request
 metadata. `provider` names the method: `password`, `sso.<provider>`,
-`session.logout`, `mfa` (the second step of a sign-in), `password_reset.request`, `password_reset.confirm`,
+`session.logout`, `mfa` (the second step of a sign-in), `mfa.step_up` (a signed-in
+person's second factor for a sensitive change), `password_reset.request`, `password_reset.confirm`,
 `invite.accept` (a new user redeeming the invitation link and choosing their first password), `login_throttled`,
 and for cloud signup `signup_requested`, `signup_rejected`, `signup_verified`,
 `signup_provisioned`. Signup rows carry no user until provisioning; a rejection names
@@ -102,7 +103,17 @@ A password sign-in for an account with an active authenticator app records its
 records an `mfa` row at assurance level 2 on success, or `mfa_state = rejected` with
 `error_code` `mfa_invalid_code`, `mfa_attempts_exhausted` (five wrong codes end the
 challenge) or `mfa_challenge_invalid` (unknown or expired challenge). Secrets, codes and
-recovery codes never reach a row; recovery codes are stored hashed.
+recovery codes never reach a row. Recovery codes are stored as HMAC-SHA256 digests keyed by
+`security.mfa.recoveryCodePepper` (required in production; never change it while codes are
+issued under it), with `hash_version` 2; codes issued before that are unsalted SHA-256
+(`hash_version` 1), keep working until their owner generates new ones, and make the two-factor
+settings ask for that (`recoveryCodesNeedReplacing`).
+
+Turning the authenticator off, generating new recovery codes and re-authenticating with
+password and code are step-ups of a signed-in person, recorded as `mfa.step_up` rows
+(`step_up_rejected`, or `step_up_throttled` when refused or when the attempt reached the
+limit). Each is counted against the same per-account and per-address throttle as sign-in,
+so a stolen session cannot guess codes faster than a sign-in could.
 
 API key authentication is not recorded per request; key creation, rotation and
 revocation are, and `api_keys.last_used_*` tracks use.

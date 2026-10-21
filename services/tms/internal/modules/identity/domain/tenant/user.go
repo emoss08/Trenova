@@ -128,7 +128,10 @@ func (u *User) GeneratePassword(raw string) (string, error) {
 }
 
 var dummyPasswordHash = sync.OnceValue(func() []byte {
-	hashed, err := bcrypt.GenerateFromPassword([]byte(pulid.MustNew("dpw_").String()), bcrypt.DefaultCost)
+	hashed, err := bcrypt.GenerateFromPassword(
+		[]byte(pulid.MustNew("dpw_").String()),
+		bcrypt.DefaultCost,
+	)
 	if err != nil {
 		panic(fmt.Sprintf("hash the dummy password: %v", err))
 	}

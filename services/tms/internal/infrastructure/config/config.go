@@ -1,6 +1,8 @@
 package config
 
 import (
+	"crypto/hkdf"
+	"crypto/sha256"
 	"fmt"
 	"net"
 	"net/http"
@@ -295,6 +297,24 @@ type SecurityConfig struct {
 	PasswordReset PasswordResetConfig `mapstructure:"passwordReset"`
 
 	SSO SSOSecurityConfig `mapstructure:"sso"`
+	MFA MFASecurityConfig `mapstructure:"mfa"`
+}
+
+type MFASecurityConfig struct {
+	RecoveryCodePepper string `mapstructure:"recoveryCodePepper" validate:"omitempty,min=32"`
+}
+
+const recoveryCodePepperInfo = "trenova mfa recovery code pepper"
+
+func (c *SecurityConfig) RecoveryCodePepperKey() ([]byte, error) {
+	if c == nil {
+		return hkdf.Key(sha256.New, nil, nil, recoveryCodePepperInfo, sha256.Size)
+	}
+	secret := strings.TrimSpace(c.MFA.RecoveryCodePepper)
+	if secret == "" {
+		secret = c.Session.Secret
+	}
+	return hkdf.Key(sha256.New, []byte(secret), nil, recoveryCodePepperInfo, sha256.Size)
 }
 
 const defaultSSOProviderCacheTTL = time.Hour

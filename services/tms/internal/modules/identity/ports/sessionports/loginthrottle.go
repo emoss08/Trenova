@@ -2,7 +2,10 @@ package sessionports
 
 import (
 	"context"
+	"strings"
 	"time"
+
+	"github.com/emoss08/trenova/pkg/requestmeta"
 )
 
 type LoginThrottleScope string
@@ -50,6 +53,14 @@ func DefaultLoginThrottlePolicy() LoginThrottlePolicy {
 type LoginThrottleKey struct {
 	Account  string
 	ClientIP string
+}
+
+func NewLoginThrottleKey(ctx context.Context, emailAddress string) LoginThrottleKey {
+	key := LoginThrottleKey{Account: strings.ToLower(strings.TrimSpace(emailAddress))}
+	if meta, ok := requestmeta.From(ctx); ok {
+		key.ClientIP = strings.TrimSpace(meta.ClientIP)
+	}
+	return key
 }
 
 type LoginThrottleDecision struct {

@@ -207,7 +207,11 @@ func (a *AvailabilityUpdate) Validate(self pulid.ID, now int64, multiErr *errort
 			}
 		}
 		if a.DelegateUserID != nil && *a.DelegateUserID == self {
-			multiErr.Add("delegateUserId", errortypes.ErrInvalid, "Hand off to someone other than yourself")
+			multiErr.Add(
+				"delegateUserId",
+				errortypes.ErrInvalid,
+				"Hand off to someone other than yourself",
+			)
 		}
 		if len([]rune(a.AwayNote)) > MaxAwayNoteLength {
 			multiErr.Add(

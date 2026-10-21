@@ -127,7 +127,7 @@ func (s *Service) VerifyMFAChallenge(
 		return nil, err
 	}
 
-	throttleKey := loginThrottleKey(ctx, usr.EmailAddress)
+	throttleKey := sessionports.NewLoginThrottleKey(ctx, usr.EmailAddress)
 	decision, err := s.beginLoginAttempt(ctx, throttleKey, attempt)
 	if err != nil {
 		return nil, err

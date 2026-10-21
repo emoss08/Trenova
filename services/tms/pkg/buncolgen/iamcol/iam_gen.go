@@ -1231,6 +1231,7 @@ var MFARecoveryCodeColumns = struct {
 	UserID         buncolgen.Column // "user_id" → qualified: "mrc.user_id"
 	OrganizationID buncolgen.Column // "organization_id" → qualified: "mrc.organization_id"
 	CodeHash       buncolgen.Column // "code_hash" → qualified: "mrc.code_hash"
+	HashVersion    buncolgen.Column // "hash_version" → qualified: "mrc.hash_version"
 	UsedAt         buncolgen.Column // "used_at" → qualified: "mrc.used_at"
 	CreatedAt      buncolgen.Column // "created_at" → qualified: "mrc.created_at"
 }{
@@ -1238,6 +1239,7 @@ var MFARecoveryCodeColumns = struct {
 	UserID:         buncolgen.NewColumn("user_id", "mrc"),
 	OrganizationID: buncolgen.NewColumn("organization_id", "mrc"),
 	CodeHash:       buncolgen.NewColumn("code_hash", "mrc"),
+	HashVersion:    buncolgen.NewColumn("hash_version", "mrc"),
 	UsedAt:         buncolgen.NewColumn("used_at", "mrc"),
 	CreatedAt:      buncolgen.NewColumn("created_at", "mrc"),
 }
@@ -1261,6 +1263,7 @@ var MFARecoveryCodeInsertableColumns = []string{
 	"user_id",
 	"organization_id",
 	"code_hash",
+	"hash_version",
 	"used_at",
 	"created_at",
 }

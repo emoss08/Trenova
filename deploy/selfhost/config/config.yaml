@@ -183,6 +183,10 @@ security:
     keyManager: local
     allowLocalKeyManagerInProduction: true
     key: change-me-encryption-key-min-32-characters # from .env
+  mfa:
+    # Keys the stored hashes of two-factor recovery codes. Never change it without
+    # having every user generate new codes: the old ones stop working.
+    recoveryCodePepper: change-me-recovery-code-pepper-min-32-chars # from .env
 
 monitoring:
   metrics:

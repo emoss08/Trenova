@@ -709,6 +709,20 @@ func validateProductionKeyManager(config *Config) error {
 
 const minProductionLocalEncryptionKeyLength = 32
 
+func validateProductionRecoveryCodePepper(pepper string) error {
+	trimmed := strings.TrimSpace(pepper)
+	if len(trimmed) < minProductionLocalEncryptionKeyLength {
+		return ErrProductionRecoveryCodePepperRequired
+	}
+	lowered := strings.ToLower(trimmed)
+	for _, placeholder := range InsecureDefaultValues {
+		if strings.Contains(lowered, placeholder) {
+			return ErrProductionRecoveryCodePepperRequired
+		}
+	}
+	return nil
+}
+
 func validateProductionLocalKey(key string) error {
 	trimmed := strings.TrimSpace(key)
 	if len(trimmed) < minProductionLocalEncryptionKeyLength {
@@ -749,6 +763,11 @@ func validateProductionSecurity(config *Config) error {
 		return ErrProductionEncryptionModeRequired
 	}
 	if err := validateProductionKeyManager(config); err != nil {
+		return err
+	}
+	if err := validateProductionRecoveryCodePepper(
+		config.Security.MFA.RecoveryCodePepper,
+	); err != nil {
 		return err
 	}
 	if config.Storage.GetProvider() == StorageProviderR2 &&

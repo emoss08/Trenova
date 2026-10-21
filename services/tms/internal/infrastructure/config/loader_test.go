@@ -1248,6 +1248,8 @@ func TestProductionConfigFileLoads(t *testing.T) {
 // stageProductionBase fills in the sections config.test.yaml leaves out but a
 // production deployment must supply. Viper's AutomaticEnv cannot substitute for
 // them: it only resolves keys it already knows about.
+const stagedRecoveryCodePepper = "4d1f8a2b6c9e3071a5b8c2d4e6f8091a3b5c7d9e"
+
 func stageProductionBase(t *testing.T, path string) {
 	t.Helper()
 
@@ -1268,6 +1270,9 @@ func stageProductionBase(t *testing.T, path string) {
 			"secretKey": "storage-secret-key",
 		},
 		"system": map[string]any{"systemUserPassword": "system-user-password"},
+		"security": map[string]any{
+			"mfa": map[string]any{"recoveryCodePepper": stagedRecoveryCodePepper},
+		},
 		"audit": map[string]any{
 			"batchSize":          100,
 			"maxEntriesPerFlush": 1000,
@@ -1371,4 +1376,73 @@ func TestSetDefaults_TrustedProxies(t *testing.T) {
 
 	assert.Equal(t, DefaultTrustedProxies, l.viper.GetStringSlice("server.trustedProxies"))
 	assert.Empty(t, l.viper.GetString("server.trustedPlatform"))
+}
+
+func TestProductionRequiresARecoveryCodePepper(t *testing.T) {
+	for name, pepper := range map[string]string{
+		"missing":     "",
+		"too short":   "4d1f8a2b6c9e",
+		"placeholder": "change-me-recovery-code-pepper-min-32-chars",
+	} {
+		t.Run(name, func(t *testing.T) {
+			configDir := t.TempDir()
+			basePath := filepath.Join(configDir, "config.yaml")
+			copyTrackedConfig(t, "config.test.yaml", basePath)
+			copyTrackedConfig(
+				t,
+				"config.prod.example.yaml",
+				filepath.Join(configDir, "config.prod.yaml"),
+			)
+			stageProductionBase(t, basePath)
+			setStagedRecoveryCodePepper(t, basePath, pepper)
+
+			_, err := NewLoader(
+				WithConfigPath(configDir),
+				WithEnvironment(EnvProduction),
+			).Load()
+
+			require.Error(t, err)
+			if len(pepper) >= 32 || pepper == "" {
+				require.ErrorIs(t, err, ErrProductionRecoveryCodePepperRequired)
+			} else {
+				assert.Contains(t, strings.ToLower(err.Error()), "recoverycodepepper")
+			}
+		})
+	}
+}
+
+func setStagedRecoveryCodePepper(t *testing.T, path, pepper string) {
+	t.Helper()
+
+	contents, err := os.ReadFile(path)
+	require.NoError(t, err)
+	var staged map[string]any
+	require.NoError(t, yaml.Unmarshal(contents, &staged))
+	security, ok := staged["security"].(map[string]any)
+	require.True(t, ok)
+	if pepper == "" {
+		delete(security, "mfa")
+	} else {
+		security["mfa"] = map[string]any{"recoveryCodePepper": pepper}
+	}
+	merged, err := yaml.Marshal(staged)
+	require.NoError(t, err)
+	require.NoError(t, os.WriteFile(path, merged, 0o600))
+}
+
+func TestRecoveryCodePepperKeyIsStableAndKeyedByThePepper(t *testing.T) {
+	t.Parallel()
+
+	configured := &SecurityConfig{MFA: MFASecurityConfig{RecoveryCodePepper: stagedRecoveryCodePepper}}
+	first, err := configured.RecoveryCodePepperKey()
+	require.NoError(t, err)
+	second, err := configured.RecoveryCodePepperKey()
+	require.NoError(t, err)
+	assert.Equal(t, first, second)
+	assert.Len(t, first, 32)
+
+	fromSession := &SecurityConfig{Session: SessionConfig{Secret: "a-very-long-secret-that-is-at-least-32-characters-long"}}
+	derived, err := fromSession.RecoveryCodePepperKey()
+	require.NoError(t, err)
+	assert.NotEqual(t, first, derived)
 }

@@ -106,12 +106,29 @@ func (r *memoryRepo) ConsumeRecoveryCode(
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	for _, code := range r.codes {
-		if code.CodeHash == req.CodeHash && code.UsedAt == 0 {
+		if code.UsedAt != 0 {
+			continue
+		}
+		matches := code.HashVersion == iam.RecoveryCodeHashHMAC && code.CodeHash == req.CodeHash ||
+			code.HashVersion == iam.RecoveryCodeHashSHA256 && code.CodeHash == req.LegacyCodeHash
+		if matches {
 			code.UsedAt = req.UsedAt
 			return true, nil
 		}
 	}
 	return false, nil
+}
+
+func (r *memoryRepo) CountLegacyRecoveryCodes(context.Context, pulid.ID) (int, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	count := 0
+	for _, code := range r.codes {
+		if code.UsedAt == 0 && code.HashVersion == iam.RecoveryCodeHashSHA256 {
+			count++
+		}
+	}
+	return count, nil
 }
 
 func (r *memoryRepo) CountUnusedRecoveryCodes(context.Context, pulid.ID) (int, error) {
@@ -182,7 +199,7 @@ func newHarness(t *testing.T) *harness {
 		clock: time.Unix(1_800_000_000, 0),
 	}
 
-	h.svc = newService(&Params{
+	svc, err := newService(&Params{
 		Repository: repo,
 		Users:      users,
 		Sessions:   sessions,
@@ -199,6 +216,8 @@ func newHarness(t *testing.T) *harness {
 		Config:  &config.Config{App: config.AppConfig{Name: "Trenova"}},
 		Logger:  zap.NewNop(),
 	})
+	require.NoError(t, err)
+	h.svc = svc
 	h.svc.now = func() time.Time { return h.clock }
 
 	return h

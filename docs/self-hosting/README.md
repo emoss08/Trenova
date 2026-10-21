@@ -319,13 +319,32 @@ docker compose up -d
 
 The first line leaves a key that is already set alone, so the command is safe to run twice.
 
+### Upgrading to a release with keyed recovery codes
+
+Two-factor recovery codes are now stored as HMAC-SHA256 digests keyed by
+`TRENOVA_SECURITY_MFA_RECOVERYCODEPEPPER`, which production requires: `docker compose` and the
+API both refuse to start without it. Add a generated value to the existing `.env` the same
+way:
+
+```bash
+grep -q '^TRENOVA_SECURITY_MFA_RECOVERYCODEPEPPER=.' .env || {
+  sed -i.bak '/^TRENOVA_SECURITY_MFA_RECOVERYCODEPEPPER=/d' .env
+  printf 'TRENOVA_SECURITY_MFA_RECOVERYCODEPEPPER=%s\n' "$(openssl rand -hex 32)" >> .env
+}
+docker compose up -d
+```
+
+Codes issued before the upgrade keep working until their owner generates new ones; the
+two-factor settings ask each such user to do so. Back the value up with `.env`, and never
+change it once set: every recovery code stored under it would stop working.
+
 ## Backups and restore
 
 What to keep, from most to least important:
 
 | Data | Where | How |
 |---|---|---|
-| Secrets | `.env` | Copy it off the host whenever it changes. Without `TRENOVA_SECURITY_ENCRYPTION_KEY` the encrypted fields of a database backup cannot be read. |
+| Secrets | `.env` | Copy it off the host whenever it changes. Without `TRENOVA_SECURITY_ENCRYPTION_KEY` the encrypted fields of a database backup cannot be read, and without `TRENOVA_SECURITY_MFA_RECOVERYCODEPEPPER` no stored recovery code can be checked. |
 | Trenova's database | `postgres` service | `pg_dump` (below), daily |
 | Uploaded files | `minio_data` volume | Mirror the bucket (below), daily |
 | Your configuration | `config/config.yaml` | Keep it in version control or with the backups |

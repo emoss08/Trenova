@@ -10419,6 +10419,7 @@
   "Toll roads and fees": "收费公路及通行费",
   "Tomorrow's Pickups": "明日取货",
   "Too long": "过长",
+  "Too many attempts. Wait a moment before trying again.": "尝试次数过多，请稍后再试。",
   "Too many columns": "列过多",
   "Too many dimensions ({0} > {1})": "维度过多（{0} > {1}）",
   "Too many extracted fields": "提取的字段过多",

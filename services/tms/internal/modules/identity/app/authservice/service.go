@@ -158,7 +158,7 @@ func (s *Service) Login(
 	attempt := newAuthAttempt(iamports.AuthEventProviderPassword)
 	defer func() { s.recordAuthAttempt(ctx, attempt, err) }()
 
-	throttleKey := loginThrottleKey(ctx, req.EmailAddress)
+	throttleKey := sessionports.NewLoginThrottleKey(ctx, req.EmailAddress)
 	decision, err := s.beginLoginAttempt(ctx, throttleKey, attempt)
 	if err != nil {
 		return nil, err
@@ -667,7 +667,11 @@ func (s *Service) AuthenticateSession(
 			return nil, err
 		}
 	}
-	sess.RoleActivationRequired = s.roleActivationRequired(ctx, sess.OrganizationID, sess.BusinessUnitID)
+	sess.RoleActivationRequired = s.roleActivationRequired(
+		ctx,
+		sess.OrganizationID,
+		sess.BusinessUnitID,
+	)
 
 	return sess, nil
 }

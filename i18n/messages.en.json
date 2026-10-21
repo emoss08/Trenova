@@ -278627,6 +278627,15 @@
       "routes/settings"
     ]
   },
+  "Too many attempts. Wait a moment before trying again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Too many cells": {
     "sites": 1,
     "scope": [
@@ -308104,6 +308113,16 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Your recovery codes were saved with an older, weaker protection. Create new ones and store them safely.": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "routes/settings"
     ]
   },
   "Your reference": {

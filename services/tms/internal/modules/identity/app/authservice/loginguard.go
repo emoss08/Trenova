@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/requestmeta"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
@@ -24,17 +23,6 @@ var errSubscriptionExpired = errortypes.NewAuthorizationError(
 	"This workspace's free trial has ended and it is scheduled for deletion, so sign-in is " +
 		"no longer available. Start a new trial or contact support to recover it.",
 )
-
-func loginThrottleKey(ctx context.Context, emailAddress string) sessionports.LoginThrottleKey {
-	key := sessionports.LoginThrottleKey{
-		Account: strings.ToLower(strings.TrimSpace(emailAddress)),
-	}
-	if meta, ok := requestmeta.From(ctx); ok {
-		key.ClientIP = strings.TrimSpace(meta.ClientIP)
-	}
-
-	return key
-}
 
 func (s *Service) beginLoginAttempt(
 	ctx context.Context,

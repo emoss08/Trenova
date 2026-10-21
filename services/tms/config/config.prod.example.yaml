@@ -96,6 +96,8 @@ security:
     tokenTtl: 30m # How long a reset link stays redeemable. It is a bearer credential sitting in a mailbox.
     inviteTokenTtl: 168h # How long the link a new user is invited with stays redeemable.
     maxRequestsPerHour: 5 # Reset links one account can be sent per hour, so the endpoint cannot flood an inbox.
+  # mfa:
+  #   recoveryCodePepper: set TRENOVA_SECURITY_MFA_RECOVERYCODEPEPPER to 32+ random characters (openssl rand -hex 32). Required in production; keys the stored hashes of two-factor recovery codes, so never change it once codes are issued.
   sso:
     allowPrivateNetworkIssuers: false # Allow an OIDC issuer (and its token and key endpoints) on a private network, for an identity provider inside this network. Link-local and metadata addresses stay refused.
     providerCacheTtl: 1h # How long an identity provider's discovery document is reused before it is fetched again. A configuration change refetches at once.
