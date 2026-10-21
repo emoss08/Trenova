@@ -59,12 +59,7 @@ type tableProjection struct {
 // projectTable reads rows against the columns the tool declared, keeping the
 // columns that have something readable in them and the values that fill them.
 func projectTable(entity string, declared []string, rows []any) tableProjection {
-	records := make([]map[string]any, 0, len(rows))
-	for _, row := range rows {
-		if record, ok := row.(map[string]any); ok {
-			records = append(records, record)
-		}
-	}
+	records := recordsOf(rows)
 
 	amountIsMoney := !slices.Contains(declared, "method")
 	columns := make([]assistantartifact.DisplayColumn, 0, len(declared))
@@ -85,6 +80,19 @@ func projectTable(entity string, declared []string, rows []any) tableProjection 
 	}
 
 	recordEntity := recordEntityOf(entity)
+
+	return tableProjection{
+		columns:      columns,
+		rows:         projectRows(columns, recordEntity, records),
+		recordEntity: recordEntity,
+	}
+}
+
+func projectRows(
+	columns []assistantartifact.DisplayColumn,
+	recordEntity string,
+	records []map[string]any,
+) []any {
 	projected := make([]any, 0, len(records))
 	for _, record := range records {
 		row := make(map[string]any, len(columns)+1)
@@ -101,7 +109,18 @@ func projectTable(entity string, declared []string, rows []any) tableProjection 
 		projected = append(projected, row)
 	}
 
-	return tableProjection{columns: columns, rows: projected, recordEntity: recordEntity}
+	return projected
+}
+
+func recordsOf(rows []any) []map[string]any {
+	records := make([]map[string]any, 0, len(rows))
+	for _, row := range rows {
+		if record, ok := row.(map[string]any); ok {
+			records = append(records, record)
+		}
+	}
+
+	return records
 }
 
 // projectRecord reads one record as labelled values, in the order the record

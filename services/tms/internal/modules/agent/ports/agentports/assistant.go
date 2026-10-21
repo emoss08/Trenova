@@ -952,6 +952,12 @@ type AssistantService interface {
 		req GetThreadRequest,
 		artifactID pulid.ID,
 	) (string, error)
+	ArtifactRows(
+		ctx context.Context,
+		req GetThreadRequest,
+		artifactID pulid.ID,
+		query *ArtifactRowsQuery,
+	) (*ArtifactRows, error)
 	// ExportDocument renders a document as a PDF or a Word file.
 	ExportDocument(
 		ctx context.Context,
@@ -1178,4 +1184,25 @@ type QueuedTurn struct {
 
 type AssistantQueueSettler interface {
 	SettleQueue(ctx context.Context, req *SettleQueueRequest) *QueuedTurn
+}
+
+type ArtifactRowsQuery struct {
+	After         string
+	Offset        int
+	Limit         int
+	Query         string
+	SortBy        string
+	SortDirection string
+	IncludeTotal  bool
+}
+
+type ArtifactRows struct {
+	Rows       []any    `json:"rows"`
+	HasMore    bool     `json:"hasMore"`
+	NextCursor string   `json:"nextCursor,omitempty"`
+	NextOffset *int     `json:"nextOffset,omitempty"`
+	Total      *int     `json:"total,omitempty"`
+	Withheld   []string `json:"withheld"`
+	Searchable bool     `json:"searchable"`
+	Sortable   []string `json:"sortable"`
 }

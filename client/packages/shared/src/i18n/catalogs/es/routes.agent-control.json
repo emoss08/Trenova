@@ -2191,7 +2191,6 @@
   "{0}s · 1 tool call · nothing written": "{0}s · 1 llamada a herramienta · nada escrito",
   "{0}s · {1} tool calls · nothing written": "{0}s · {1} llamadas a herramientas · nada escrito",
   "{0}{1} pts": "{0}{1} pts",
-  "{0}–{1} of {2}": "{0}–{1} de {2}",
   "~ Estimated list price per million tokens, from OpenRouter's public catalog.": "~ Precio de lista estimado por millón de tokens, según el catálogo público de OpenRouter.",
   "~{0} tokens": "~{0} tokens",
   "±0 pts": "±0 pts",

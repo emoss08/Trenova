@@ -246,6 +246,16 @@ const ICONS = {
   pause: <path d="M9 6v12M15 6v12" />,
   up: <path d="M6 15l6-6 6 6" />,
   down: <path d="M6 9l6 6 6-6" />,
+  left: <path d="M15 6l-6 6 6 6" />,
+  right: <path d="M9 6l6 6-6 6" />,
+  first: <path d="M17 6l-6 6 6 6M7 6v12" />,
+  lock: (
+    <>
+      <rect x="5" y="11" width="14" height="9" rx="2" />
+      <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+    </>
+  ),
+  retry: <path d="M4 12a8 8 0 1 0 3-6.2M4 4v4h4" />,
   search: (
     <>
       <circle cx="11" cy="11" r="6" />

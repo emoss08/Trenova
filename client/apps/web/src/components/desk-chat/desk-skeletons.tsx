@@ -96,6 +96,12 @@ const TABLE_ROWS = 8;
 function TableShape() {
   return (
     <div className="dk-skb-tb">
+      <div className="dk-skb-tvh">
+        <i className="dk-sk dk-skb-fig" />
+        <i className="dk-sk dk-skb-chip" />
+        <i className="dk-sk dk-skb-chip" />
+      </div>
+      <i className="dk-sk dk-skb-q" />
       <div className="dk-skb-tr dk-skb-th">
         {TABLE_COLUMNS.map((column, index) => (
           // oxlint-disable-next-line react/no-array-index-key -- a fixed outline that never reorders
@@ -115,6 +121,10 @@ function TableShape() {
           ))}
         </div>
       ))}
+      <div className="dk-skb-pager">
+        <i className="dk-sk dk-skb-range" />
+        <i className="dk-sk dk-skb-pages" />
+      </div>
     </div>
   );
 }

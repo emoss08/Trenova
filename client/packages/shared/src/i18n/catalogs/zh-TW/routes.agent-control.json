@@ -2191,7 +2191,6 @@
   "{0}s · 1 tool call · nothing written": "{0} 秒 · 1 次工具呼叫 · 未寫入任何內容",
   "{0}s · {1} tool calls · nothing written": "{0} 秒 · {1} 次工具呼叫 · 未寫入任何內容",
   "{0}{1} pts": "{0}{1} 分",
-  "{0}–{1} of {2}": "第 {0}–{1} 項，共 {2} 項",
   "~ Estimated list price per million tokens, from OpenRouter's public catalog.": "~ 每百萬個權杖的預估牌價，取自 OpenRouter 的公開目錄。",
   "~{0} tokens": "約 {0} 個 token",
   "±0 pts": "±0 分",
