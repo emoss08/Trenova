@@ -16,7 +16,7 @@ more slowly, not faster.
 The strongest candidates, in order:
 
 1. **A document and imaging worker** that replaces the PDFium-in-WASM pool, the pure-Go pixel loops, the
-   QR decoder, and the legacy OCR path that cannot run in the shipped image.
+   QR decoder, and retires the legacy OCR path, which cannot run in the shipped image.
 2. **The capture companion uploading what it already computes**, so the server stops re-rendering every
    scanned page.
 3. **One shared calculation crate** (formula language, money allocation, lane and matrix rules, report
@@ -99,16 +99,16 @@ inspection, thumbnails, the page viewer, legacy extraction and the docling pre-c
 - SIMD resizing (`fast_image_resize`) and threshold and luma loops over contiguous buffers.
 - QR decoding with `rxing` or `rqrr`.
 - Decode once and reuse, replacing the PNG round trips.
-- `ocrs` as a pure-Rust OCR engine that can ship inside the image. Its accuracy is below Tesseract's,
-  so benchmark it on real BOLs before adopting it.
+- No OCR in the worker. Docling already runs OCR (RapidOCR, or a vision model on the GPU profile), so
+  the legacy extraction engine and its Tesseract path are deleted rather than ported.
 
 Run it as a sidecar ("imaging worker") that takes plaintext bytes over a local API and returns
-thumbnails, page images, text layers and QR results. A lighter first step is to move only the pure
+thumbnails, page images, page-text maps and QR results. A lighter first step is to move only the pure
 pixel work (resize, threshold, QR, JPEG encode) into a wazero module and keep PDFium where it is.
 
 **What improves.** Peak memory per job, throughput on the page viewer and capture batches (up to 1,000
-pages each), an OCR fallback that works without docling, and one shared imaging library with the
-desktop crate (R2).
+pages each), one extraction engine instead of two, and one shared imaging library with the desktop
+crate (R2).
 
 **Costs.** A new service and its API. PDFium has to be linked or shipped as a shared library. The
 encryption envelope stays in Go, so plaintext crosses a local socket.
@@ -364,7 +364,7 @@ only if it shows up in a profile.
 
 | # | Candidate | Main gain | Seam | Effort (rough) | Prerequisite |
 | --- | --- | --- | --- | --- | --- |
-| R1 | Document and imaging worker | Memory, throughput, working OCR | Sidecar, or wazero for pure parts | Large | Binary encryption envelope; page cache |
+| R1 | Document and imaging worker | Memory, throughput, one imaging library | Sidecar, or wazero for pure parts | Large | Binary encryption envelope; page cache |
 | R2 | Capture companion uploads results | Server CPU per scanned page | Existing desktop crate | Small | Shared JSON fixtures; CI path filter |
 | R3 | Shared calculation crate | One answer in browser and server; hard timeouts | Browser WASM plus wazero | Large | Fix TS rounding with shared fixtures first |
 | R4 | pgrx `claims()` | Per-statement overhead under RLS | Postgres extension | Medium | Measure; SQL fixes |
