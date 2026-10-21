@@ -1974,7 +1974,10 @@ type AssembleHeader struct {
 	// How many sources follow.
 	SourceCount uint32 `protobuf:"varint,1,opt,name=source_count,json=sourceCount,proto3" json:"source_count,omitempty"`
 	// The PDFs to build, each from pages of the sources.
-	Outputs       []*AssembleOutput `protobuf:"bytes,2,rep,name=outputs,proto3" json:"outputs,omitempty"`
+	Outputs []*AssembleOutput `protobuf:"bytes,2,rep,name=outputs,proto3" json:"outputs,omitempty"`
+	// The sum of every source's declared size, so the call is admitted on its
+	// real cost before any bytes are sent.
+	TotalSize     uint64 `protobuf:"varint,3,opt,name=total_size,json=totalSize,proto3" json:"total_size,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2021,6 +2024,13 @@ func (x *AssembleHeader) GetOutputs() []*AssembleOutput {
 		return x.Outputs
 	}
 	return nil
+}
+
+func (x *AssembleHeader) GetTotalSize() uint64 {
+	if x != nil {
+		return x.TotalSize
+	}
+	return 0
 }
 
 type AssembleOutput struct {
@@ -2785,10 +2795,12 @@ const file_trenova_imaging_v1_imaging_proto_rawDesc = "" +
 	"\x06header\x18\x01 \x01(\v2\".trenova.imaging.v1.AssembleHeaderH\x00R\x06header\x12A\n" +
 	"\x06source\x18\x02 \x01(\v2'.trenova.imaging.v1.AssembleSourceStartH\x00R\x06source\x12\x16\n" +
 	"\x05chunk\x18\x03 \x01(\fH\x00R\x05chunkB\x06\n" +
-	"\x04part\"q\n" +
+	"\x04part\"\x90\x01\n" +
 	"\x0eAssembleHeader\x12!\n" +
 	"\fsource_count\x18\x01 \x01(\rR\vsourceCount\x12<\n" +
-	"\aoutputs\x18\x02 \x03(\v2\".trenova.imaging.v1.AssembleOutputR\aoutputs\"E\n" +
+	"\aoutputs\x18\x02 \x03(\v2\".trenova.imaging.v1.AssembleOutputR\aoutputs\x12\x1d\n" +
+	"\n" +
+	"total_size\x18\x03 \x01(\x04R\ttotalSize\"E\n" +
 	"\x0eAssembleOutput\x123\n" +
 	"\x05pages\x18\x01 \x03(\v2\x1d.trenova.imaging.v1.PageRangeR\x05pages\"i\n" +
 	"\tPageRange\x12\x16\n" +

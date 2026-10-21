@@ -1,10 +1,13 @@
 //! The Prometheus registry and the plain HTTP listener that serves it.
 //!
-//! The listener answers `GET /metrics` in the `OpenMetrics` text format and
-//! `GET /livez` with 200 while the process runs; everything else is 404. It
-//! is separate from the gRPC port so a scraper needs no client certificate.
+//! The listener answers `GET /metrics` in the `OpenMetrics` text format,
+//! `GET /livez` with 200 while the process runs, and `GET /readyz` with 200
+//! while the service says it is ready and 503 otherwise; everything else is
+//! 404. It is separate from the gRPC port so a scraper or a container
+//! healthcheck needs no client certificate.
 
 use std::net::SocketAddr;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, PoisonError};
 
 use bytes::Bytes;
@@ -43,10 +46,32 @@ impl SharedRegistry {
     }
 }
 
-/// Serves `/metrics` and `/livez` on `addr` until `shutdown` is triggered.
+/// Whether the service takes work, as `/readyz` reports it. Starts not ready.
+#[derive(Clone, Debug, Default)]
+pub struct Readiness {
+    ready: Arc<AtomicBool>,
+}
+
+impl Readiness {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn set(&self, ready: bool) {
+        self.ready.store(ready, Ordering::Release);
+    }
+
+    pub fn is_ready(&self) -> bool {
+        self.ready.load(Ordering::Acquire)
+    }
+}
+
+/// Serves `/metrics`, `/livez` and `/readyz` on `addr` until `shutdown` is
+/// triggered.
 pub async fn serve(
     addr: SocketAddr,
     registry: SharedRegistry,
+    readiness: Readiness,
     shutdown: Shutdown,
 ) -> std::io::Result<()> {
     let listener = TcpListener::bind(addr).await?;
@@ -60,10 +85,12 @@ pub async fn serve(
             () = &mut stopped => return Ok(()),
         };
         let registry = registry.clone();
+        let readiness = readiness.clone();
         tokio::spawn(async move {
             let service = service_fn(move |request| {
                 let registry = registry.clone();
-                async move { Ok::<_, std::convert::Infallible>(respond(&request, &registry)) }
+                let ready = readiness.is_ready();
+                async move { Ok::<_, std::convert::Infallible>(respond(&request, &registry, ready)) }
             });
             if let Err(err) = hyper::server::conn::http1::Builder::new()
                 .serve_connection(TokioIo::new(stream), service)
@@ -75,7 +102,11 @@ pub async fn serve(
     }
 }
 
-fn respond(request: &Request<Incoming>, registry: &SharedRegistry) -> Response<Full<Bytes>> {
+fn respond(
+    request: &Request<Incoming>,
+    registry: &SharedRegistry,
+    ready: bool,
+) -> Response<Full<Bytes>> {
     let response = |status: StatusCode, content_type: &'static str, body: Bytes| {
         let mut response = Response::new(Full::new(body));
         *response.status_mut() = status;
@@ -98,6 +129,14 @@ fn respond(request: &Request<Incoming>, registry: &SharedRegistry) -> Response<F
             ),
         },
         "/livez" => response(StatusCode::OK, "text/plain", Bytes::from_static(b"ok\n")),
+        "/readyz" if ready => {
+            response(StatusCode::OK, "text/plain", Bytes::from_static(b"ready\n"))
+        }
+        "/readyz" => response(
+            StatusCode::SERVICE_UNAVAILABLE,
+            "text/plain",
+            Bytes::from_static(b"not ready\n"),
+        ),
         _ => response(StatusCode::NOT_FOUND, "text/plain", Bytes::new()),
     }
 }

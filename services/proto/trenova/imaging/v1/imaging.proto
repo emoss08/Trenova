@@ -317,6 +317,9 @@ message AssembleHeader {
   uint32 source_count = 1;
   // The PDFs to build, each from pages of the sources.
   repeated AssembleOutput outputs = 2;
+  // The sum of every source's declared size, so the call is admitted on its
+  // real cost before any bytes are sent.
+  uint64 total_size = 3;
 }
 
 message AssembleOutput {

@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/*"]
+members = ["imaging", "crates/*"]
 exclude = ["tms", "postgres", "imaging/fuzz", "crates/sandbox/fuzz"]
 
 [workspace.package]
@@ -20,7 +20,7 @@ trenova-service-kit = { path = "crates/service-kit" }
 anyhow = { version = "1.0.100", default-features = false, features = ["std"] }
 bytes = { version = "1.12", default-features = false, features = ["std"] }
 clap = { version = "4.6", default-features = false, features = ["std", "derive", "help", "usage", "error-context", "env"] }
-fast_image_resize = { version = "6.1", default-features = false }
+fast_image_resize = { version = "6.1", default-features = false, features = ["std"] }
 fax = "0.3"
 futures-util = { version = "0.3", default-features = false, features = ["std"] }
 http = "1.4"
@@ -28,23 +28,25 @@ http-body-util = "0.1"
 hyper = { version = "1.9", default-features = false, features = ["server", "http1"] }
 hyper-util = { version = "0.1.20", default-features = false, features = ["tokio", "server", "http1"] }
 image = { version = "0.25.10", default-features = false, features = ["jpeg", "png", "gif", "tiff", "webp"] }
+jpeg-decoder = { version = "0.3", default-features = false }
 jpeg-encoder = "0.7"
 landlock = "0.4.7"
 libc = "0.2.191"
+libloading = "0.9"
 libheif-rs = { version = "3.0", default-features = false }
 libwebp-sys = { version = "0.14.4", default-features = false, features = ["std", "parallel"] }
 opentelemetry = { version = "0.33", default-features = false, features = ["trace"] }
 opentelemetry-otlp = { version = "0.33", default-features = false, features = ["trace", "grpc-tonic"] }
 opentelemetry_sdk = { version = "0.33", default-features = false, features = ["trace", "rt-tokio"] }
 pdf-writer = "0.15"
-pdfium-render = { version = "0.9.4", default-features = false, features = ["pdfium_latest", "thread_safe"] }
+pdfium-render = { version = "0.9.4", default-features = false, features = ["pdfium_7881"] }
 prometheus-client = "0.25.1"
 prost = { version = "0.14.4", default-features = false, features = ["std", "derive"] }
 prost-types = { version = "0.14.4", default-features = false, features = ["std"] }
 protox = "0.10"
 rustix = { version = "1.1", default-features = false, features = ["std", "fs", "process", "net", "pipe", "thread", "mm", "param"] }
 rustls = { version = "0.23.46", default-features = false, features = ["std", "ring", "tls12", "logging"] }
-rxing = { version = "0.9.3", default-features = false }
+rxing = { version = "0.9.3", default-features = false, features = ["decoders", "multi_barcode_readers", "qrcode", "oned", "pdf417", "datamatrix", "aztec", "encoding_rs"] }
 seccompiler = "0.5"
 serde = { version = "1", default-features = false, features = ["std", "derive"] }
 serde_json = "1"
