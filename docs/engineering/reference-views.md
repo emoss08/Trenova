@@ -70,6 +70,20 @@ Internal.
   `linkedRecordSchema(kind, schema)` (`@trenova/shared/lib/linked-record`), which makes every field
   outside the view nullable, and a screen draws `WithheldValue` where one it shows is null.
 
+- **Reports and exports.** The report catalog generator classifies every field and edge
+  `reference` or `kind_read` from its resource's reference view (`reportcatalog.Classify`);
+  entities that are part of another record are marked `withinRecord` and are always `kind_read`.
+  The compiler (`reporting/compiler/authorize.go`) requires read, and export for a run, on the
+  root entity and on any joined entity a `kind_read` field or edge is used from; a joined entity
+  used only through reference fields needs no read of its own, and each of those fields is decided
+  by `refview` through `permissionports.ReferenceViews`, so the role's ceiling applies inside the
+  view. Table exports and dashboard exports compile through the same check. Protected fields are
+  declared in the catalog (`protected: Personal|Margins`) and refused without the group.
+- **Row-level security.** For shipments, orders, invoices and workers the `read_scope` policy
+  still hides a row of a kind the reader cannot read at all, wherever it is reached. Under RLS a
+  linked record of those four kinds therefore comes back null, not as its reference view: never
+  more than the view, sometimes less.
+
 ## Search, analytics and insights
 
 Three surfaces put another kind's data into a payload of their own rather than a record, and each
@@ -142,6 +156,8 @@ Each failure says what to add.
 | `TestEveryDeclaredLinkedFieldIsNullable` (gqlext) | a field selected under `@requiresRead` is non-null |
 | `TestEveryAuthorizesDeclarationIsCheckedByItsResolver` (gqlext) | a root field declares `@authorizes` for a kind its resolver does not check |
 | `TestReferenceFragmentsAreGenerated` (gqlext) | the generated fragments or views are out of date |
+| `TestEveryFieldAndEdgeIsClassifiedByItsReferenceView` (reportcatalog) | a report catalog field or edge is unclassified, or its class disagrees with the registry's view |
+| `TestEveryProtectedFieldIsGatedInTheReportCatalog` (gqlext) | a schema `@protected` field is not marked `protected` in the report catalog, or the reverse |
 | `TestEveryRelationAResponseReachesIsClassified` (responseguard) | a REST response reaches a struct through a bun relation that is neither a kind nor listed in `carried` |
 | `TestEveryKindAgreesWithTheGraphQLGuard` (responseguard) | a Go type is gated as a different kind on REST than the GraphQL type bound to it |
 | `TestHandlersWriteEveryResponseThroughTheGuard` (responseguard) | a handler writes a response with gin directly instead of `helpers.JSON` |
