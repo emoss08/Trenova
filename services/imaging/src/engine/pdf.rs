@@ -48,6 +48,13 @@ impl Pdf {
             .map_err(open_error)
     }
 
+    /// Opens a document this process wrote itself (an image's page).
+    pub fn open_owned(&self, bytes: Vec<u8>) -> EngineResult<PdfDocument<'_>> {
+        self.pdfium
+            .load_pdf_from_byte_vec(bytes, None)
+            .map_err(open_error)
+    }
+
     pub fn create(&self) -> EngineResult<PdfDocument<'_>> {
         self.pdfium
             .create_new_pdf()

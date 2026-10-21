@@ -5,6 +5,7 @@
 //! [`Sink`], one encoded response message at a time, so a document with
 //! hundreds of pages never has more than one page's output in memory.
 
+pub mod assemble;
 pub mod capture;
 pub mod decode;
 pub mod error;
@@ -92,9 +93,13 @@ impl Engine {
             Operation::InspectCapture(header) => {
                 Ok(capture::inspect(self, header, &inputs, limits, sink)?.encode_to_vec())
             }
-            Operation::Assemble(_) | Operation::NormalizeImage(_) => Err(EngineError::request(
-                format!("{} is not available on this worker", operation.name()),
-            )),
+            Operation::Assemble(header) => {
+                Ok(assemble::assemble(self, header, &inputs, limits, sink)?.encode_to_vec())
+            }
+            Operation::NormalizeImage(_) => Err(EngineError::request(format!(
+                "{} is not available on this worker",
+                operation.name()
+            ))),
         }
     }
 }
