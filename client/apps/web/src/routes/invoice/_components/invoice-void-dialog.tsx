@@ -57,10 +57,15 @@ export function InvoiceVoidDialog({
     defaultValues: DEFAULT_VALUES,
   });
 
+  const [wasOpen, setWasOpen] = useState(open);
+  if (wasOpen !== open) {
+    setWasOpen(open);
+    if (open) setPending(null);
+  }
+
   useEffect(() => {
     if (open) {
       form.reset(DEFAULT_VALUES);
-      setPending(null);
     }
   }, [open, form]);
 

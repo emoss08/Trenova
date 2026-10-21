@@ -4,28 +4,41 @@
  * enough for a virtualizer to open a window: the container and the rows
  * are the same height, so a viewport holds one row plus its overscan.
  *
- * The virtualizer reads `offsetWidth` and `offsetHeight`, which jsdom
- * defines as zero on the prototype, so those are what change.
+ * The virtualizer reads the scroll element's `clientWidth` and
+ * `clientHeight` and a row's `offsetWidth` and `offsetHeight`, which the
+ * test DOM defines as zero on the prototype, so those are what change.
  */
+const STUBBED = {
+  offsetHeight: "height",
+  offsetWidth: "width",
+  clientHeight: "height",
+  clientWidth: "width",
+} as const;
+
+type StubbedProperty = keyof typeof STUBBED;
+
 export function stubLayout(height = 320, width = 480): () => void {
   const proto = HTMLElement.prototype;
-  const previous = {
-    height: Object.getOwnPropertyDescriptor(proto, "offsetHeight"),
-    width: Object.getOwnPropertyDescriptor(proto, "offsetWidth"),
-  };
-  Object.defineProperty(proto, "offsetHeight", { configurable: true, get: () => height });
-  Object.defineProperty(proto, "offsetWidth", { configurable: true, get: () => width });
+  const size = { height, width };
+  const properties = Object.keys(STUBBED) as StubbedProperty[];
+  const previous = new Map(
+    properties.map((property) => [property, Object.getOwnPropertyDescriptor(proto, property)]),
+  );
+  for (const property of properties) {
+    Object.defineProperty(proto, property, {
+      configurable: true,
+      get: () => size[STUBBED[property]],
+    });
+  }
 
   return () => {
-    if (previous.height) {
-      Object.defineProperty(proto, "offsetHeight", previous.height);
-    } else {
-      delete (proto as { offsetHeight?: number }).offsetHeight;
-    }
-    if (previous.width) {
-      Object.defineProperty(proto, "offsetWidth", previous.width);
-    } else {
-      delete (proto as { offsetWidth?: number }).offsetWidth;
+    for (const property of properties) {
+      const descriptor = previous.get(property);
+      if (descriptor) {
+        Object.defineProperty(proto, property, descriptor);
+      } else {
+        Reflect.deleteProperty(proto, property);
+      }
     }
   };
 }

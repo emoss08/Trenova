@@ -139,27 +139,20 @@ export function ImportWorkspace() {
     },
   });
 
-  useEffect(() => {
-    if (
-      importedDraft?.status === "Ready" &&
-      importedDraft.draftData &&
-      !reconciliationInitialized
-    ) {
-      reconciliation.initialize(
-        importedDraft.draftData,
-        importedDraft.draftData.missingFields ?? [],
-      );
-      setReconciliationInitialized(true);
+  const [stopSeed, setStopSeed] = useState<{ count: number } | null>(null);
+  if (importedDraft?.status === "Ready" && importedDraft.draftData && !reconciliationInitialized) {
+    reconciliation.initialize(importedDraft.draftData, importedDraft.draftData.missingFields ?? []);
+    setReconciliationInitialized(true);
+    setStopSeed({ count: importedDraft.draftData.stops?.length ?? 0 });
+  }
 
-      const stops = importedDraft.draftData.stops ?? [];
-      if (stops.length > 0) {
-        requiredFieldsForm.setValue(
-          "stops",
-          stops.map(() => ({ locationId: "" })),
-        );
-      }
-    }
-  }, [importedDraft, reconciliationInitialized, reconciliation, requiredFieldsForm]);
+  useEffect(() => {
+    if (!stopSeed || stopSeed.count === 0) return;
+    requiredFieldsForm.setValue(
+      "stops",
+      Array.from({ length: stopSeed.count }, () => ({ locationId: "" })),
+    );
+  }, [stopSeed, requiredFieldsForm]);
 
   const currentPhase = useMemo<ReconciliationPhase>(() => {
     if (createdShipmentId) return "success";

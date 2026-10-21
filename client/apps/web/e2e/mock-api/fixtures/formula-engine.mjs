@@ -324,11 +324,11 @@ export function applyPolicy(raw, policy) {
 
 /** Every value a run reads: the sample load (or a shipment over it), the inputs' defaults, then overrides. */
 export function valuesFor(base, customs, overrides) {
-  const out = { ...SAMPLE, ...(base || {}) };
+  const out = { ...SAMPLE, ...base };
   (customs || []).forEach((c) => {
     if (c.name) out[c.name] = c.defaultValue === "" || c.defaultValue === undefined ? null : c.defaultValue;
   });
-  return { ...out, ...(overrides || {}) };
+  return { ...out, ...overrides };
 }
 
 /** Where a value in the receipt came from, in the server's ValueSource words. */

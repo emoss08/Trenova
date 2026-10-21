@@ -1,5 +1,5 @@
 "use no memo";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 
 const ANIMATION_DURATION = 200;
 
@@ -12,14 +12,17 @@ export function useAnimatedPanel({ open, onOpenChange }: UseAnimatedPanelOptions
   const [isVisible, setIsVisible] = useState(open);
   const [isAnimating, setIsAnimating] = useState(false);
 
-  useEffect(() => {
+  const [prevOpen, setPrevOpen] = useState(open);
+
+  if (open !== prevOpen) {
+    setPrevOpen(open);
     if (open) {
       setIsVisible(true);
       setIsAnimating(false);
     } else {
       setIsVisible(false);
     }
-  }, [open]);
+  }
 
   const close = useCallback(() => {
     if (isAnimating) return;

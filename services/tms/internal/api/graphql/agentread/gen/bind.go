@@ -300,6 +300,29 @@ func bindOne(
 	return b, ""
 }
 
+// tableFields are what makes an input a table's: a list tool builds any input
+// that holds them, and sends the input's other fields as typed parameters.
+var tableFields = []string{"first", "after", "query", "fieldFilters", "sort"}
+
+// tableShaped reports whether an input is a table's input under another name
+// (WorkerPTOEntriesInput: the table's fields and the screen's own filters).
+func tableShaped(schema *ast.Schema, name string) bool {
+	if schema == nil {
+		return false
+	}
+	def := schema.Types[name]
+	if def == nil || def.Kind != ast.InputObject {
+		return false
+	}
+	for _, field := range tableFields {
+		if def.Fields.ForName(field) == nil {
+			return false
+		}
+	}
+
+	return true
+}
+
 // unsupplied names the required variables of a binding's operation that its
 // tool's parameters cannot supply.
 func unsupplied(b *binding) string {
@@ -312,7 +335,8 @@ func unsupplied(b *binding) string {
 		if typ, ok := want[variable.Variable]; ok && typ == variable.Type.Name() {
 			continue
 		}
-		if typ, ok := want[""]; ok && typ == variable.Type.Name() {
+		if typ, ok := want[""]; ok && (typ == variable.Type.Name() ||
+			(b.Verb == verbList && tableShaped(boundSchema, variable.Type.Name()))) {
 			continue
 		}
 		missing = append(missing, "$"+variable.Variable+": "+variable.Type.String())

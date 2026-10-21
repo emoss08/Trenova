@@ -75,20 +75,28 @@ function JsonNode({
   const shouldDefaultCollapse =
     typeof defaultCollapsed === "number" ? depth >= defaultCollapsed : defaultCollapsed;
 
-  const [isCollapsed, setIsCollapsed] = React.useState(shouldDefaultCollapse);
-  const [copied, setCopied] = React.useState(false);
-
   const type = getValueType(value);
   const isExpandable = type === "object" || type === "array";
-  const isVisible =
-    matchesSearch(value, searchQuery) ||
-    (keyName?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
+  const valueMatches = matchesSearch(value, searchQuery);
+  const expandForSearch = Boolean(searchQuery) && isExpandable && valueMatches;
 
-  React.useEffect(() => {
-    if (searchQuery && isExpandable && matchesSearch(value, searchQuery)) {
+  const [isCollapsed, setIsCollapsed] = React.useState(
+    expandForSearch ? false : shouldDefaultCollapse,
+  );
+  const [copied, setCopied] = React.useState(false);
+  const [prevSearchQuery, setPrevSearchQuery] = React.useState(searchQuery);
+  const [prevValue, setPrevValue] = React.useState(value);
+
+  if (searchQuery !== prevSearchQuery || value !== prevValue) {
+    setPrevSearchQuery(searchQuery);
+    setPrevValue(value);
+    if (expandForSearch) {
       setIsCollapsed(false);
     }
-  }, [searchQuery, isExpandable, value]);
+  }
+
+  const isVisible =
+    valueMatches || (keyName?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
 
   const handleToggle = React.useCallback(() => {
     setIsCollapsed((prev) => !prev);

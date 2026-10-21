@@ -17,7 +17,7 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import type { TableSheetProps } from "@trenova/shared/types/data-table";
 import { LazyImage } from "@/components/image";
 import { ExternalLink } from "@/components/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { CarrierIntelSettingsTab } from "./carrier-intel-settings-schema";
 import { CarrierIntelSettingsForm } from "./carrier-intel-settings-form";
 import {
@@ -71,11 +71,13 @@ export function CarrierIntelligenceModal({
     enabled: open && canRead,
   });
 
-  useEffect(() => {
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (prevOpen !== open) {
+    setPrevOpen(open);
     if (!open) {
       setActiveTab("connection");
     }
-  }, [open]);
+  }
 
   const close = () => onOpenChange(false);
   const logo = theme === "dark" ? (vendor.logoDark ?? vendor.logoLight) : vendor.logoLight;

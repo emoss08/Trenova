@@ -108,3 +108,55 @@ query DeskWorkerCredentials($workerId: ID!) {
     }
   }
 }
+
+# The Desk's worker list, read by the agent's worker_list: who each worker
+# is, whether they can be dispatched, and the credentials their qualification
+# hangs on, without the contact, address and personnel fields an agent at its
+# default data access is never shown.
+query DeskWorkers($input: DataTableConnectionInput!) {
+  workers(input: $input) {
+    edges {
+      node {
+        id
+        status
+        type
+        driverType
+        firstName
+        lastName
+        wholeName
+        city
+        externalId
+        assignmentBlocked
+        canBeAssigned
+        availableForDispatch
+        createdAt
+        fleetCodeId
+        fleetCode {
+          id
+          code
+        }
+        profile {
+          cdlClass
+          cdlRestrictions
+          endorsement
+          complianceStatus
+          isQualified
+          eldExempt
+          shortHaulExempt
+          licenseExpiry
+          hazmatExpiry
+          medicalCardExpiry
+          twicExpiry
+          physicalDueDate
+          mvrDueDate
+          lastMvrCheck
+          lastComplianceCheck
+        }
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+    }
+  }
+}

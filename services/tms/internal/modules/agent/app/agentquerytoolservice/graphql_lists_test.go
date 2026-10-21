@@ -2,7 +2,6 @@ package agentquerytoolservice_test
 
 import (
 	"errors"
-	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
@@ -56,8 +55,9 @@ func TestConvertedLists_RefuseExactlyWhatAuthorizeRefuses(t *testing.T) {
 	}
 }
 
-// Every reference list names its typed parameters in its description, so a
-// model choosing among tools sees what each narrows by.
+// Every converted list names, in its description, every typed parameter an
+// agent at the default data access can use, so a model choosing among tools
+// sees what each narrows by.
 func TestConvertedLists_DescribeEveryParameter(t *testing.T) {
 	t.Parallel()
 
@@ -69,33 +69,11 @@ func TestConvertedLists_DescribeEveryParameter(t *testing.T) {
 
 		properties, _ := tool.ParamSchema()["properties"].(map[string]any)
 		for param := range properties {
-			switch param {
-			case "query", "limit", "after", "sortBy", "sortDirection":
+			mention, required := agentquerytoolservice.ExpectedMention(tool, param)
+			if !required {
 				continue
 			}
-			named, ok := describedAs(param, properties)
-			if !ok {
-				continue
-			}
-			assert.Contains(t, tool.Description(), named, "%s does not name %s", name, param)
+			assert.Contains(t, tool.Description(), mention, "%s does not name %s", name, param)
 		}
 	}
-}
-
-// describedAs is how a description names a parameter: a range is named
-// once, by its lower end, as createdAtFrom/To or amountMin/Max.
-func describedAs(param string, properties map[string]any) (string, bool) {
-	ranges := [][2]string{{"From", "To"}, {"Min", "Max"}}
-	for _, pair := range ranges {
-		if base, ok := strings.CutSuffix(param, pair[0]); ok {
-			return base + pair[0] + "/" + pair[1], true
-		}
-		if base, ok := strings.CutSuffix(param, pair[1]); ok {
-			if _, paired := properties[base+pair[0]]; paired {
-				return "", false
-			}
-		}
-	}
-
-	return param, true
 }

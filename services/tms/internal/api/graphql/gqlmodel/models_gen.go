@@ -11434,8 +11434,10 @@ type WorkerPTOEntriesInput struct {
 	Type          *worker.PTOType     `json:"type,omitempty"`
 	StartDateFrom *int                `json:"startDateFrom,omitempty"`
 	StartDateTo   *int                `json:"startDateTo,omitempty"`
-	WorkerID      *string             `json:"workerId,omitempty"`
-	IncludeWorker *bool               `json:"includeWorker,omitempty"`
+	// true matches leave on at any point between startDateFrom and startDateTo, including leave that began before startDateFrom and is still running; false matches only leave that starts in that window.
+	Overlapping   *bool   `json:"overlapping,omitempty"`
+	WorkerID      *string `json:"workerId,omitempty"`
+	IncludeWorker *bool   `json:"includeWorker,omitempty"`
 }
 
 type WorkerPTOLedgerConnection struct {

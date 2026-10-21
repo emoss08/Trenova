@@ -8,7 +8,10 @@ allowBuilds:
   msw: true
   sharp: true
 overrides:
+  "@codemirror/language": "^6.13.1"
+  "@codemirror/state": "^6.7.6"
   "@codemirror/view": "6.43.6"
+  "@tanstack/query-core": "5.102.8"
 # Packages that must resolve once (see singleton-packages.ts). Every
 # package.json references them as "catalog:" so versions cannot drift.
 catalog:
@@ -21,6 +24,8 @@ catalog:
   react-hook-form: "^7.87.0"
   react-error-boundary: "^6.1.5"
   zustand: "^5.0.15"
+  motion: "^14.4.0"
+  zod: "^4.6.7"
 minimumReleaseAgeExclude:
   - "@graphql-codegen/add@7.1.0"
   - "@graphql-codegen/cli@7.2.0"

@@ -19,13 +19,17 @@ import {
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { cn } from "@trenova/shared/lib/utils";
 import { AlertTriangleIcon, SearchXIcon } from "@trenova/shared/components/icons";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { formatMiles, scoreTone, verdictMeta } from "./dispatch-vocabulary";
 import { FindingList } from "./finding-list";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
 function assignable(assignment: DispatchPlannedAssignment): boolean {
   return Boolean(assignment.tractorId) && !assignment.score.blocked;
+}
+
+function assignableMoveIds(plan: DispatchPlan): ReadonlySet<string> {
+  return new Set(plan.assignments.filter(assignable).map((assignment) => assignment.moveId));
 }
 
 function PlannedAssignmentRow({
@@ -182,13 +186,12 @@ export function PlanReviewDialog({
 }) {
   const t = useT();
 
-  const [checkedMoveIds, setCheckedMoveIds] = useState<ReadonlySet<string>>(new Set());
-
-  useEffect(() => {
-    setCheckedMoveIds(
-      new Set(plan.assignments.filter(assignable).map((assignment) => assignment.moveId)),
-    );
-  }, [plan]);
+  const [checkedMoveIds, setCheckedMoveIds] = useState(() => assignableMoveIds(plan));
+  const [prevPlan, setPrevPlan] = useState(plan);
+  if (prevPlan !== plan) {
+    setPrevPlan(plan);
+    setCheckedMoveIds(assignableMoveIds(plan));
+  }
 
   const selected = useMemo(
     () => plan.assignments.filter((assignment) => checkedMoveIds.has(assignment.moveId)),

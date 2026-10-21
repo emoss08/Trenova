@@ -212,11 +212,13 @@ function APIKeyEditPanel({ open, onOpenChange, row }: EditPanelProps) {
     }
   }, [detailQuery.data, reset]);
 
-  useEffect(() => {
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (prevOpen !== open) {
+    setPrevOpen(open);
     if (!open) {
       setRevokeDialogOpen(false);
     }
-  }, [open]);
+  }
 
   const handleSuccessDialogOpenChange = useCallback((nextOpen: boolean) => {
     setSuccessDialogOpen(nextOpen);

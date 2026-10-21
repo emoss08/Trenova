@@ -1,6 +1,6 @@
 import { getEndOfMonth, getStartOfMonth } from "@trenova/shared/lib/date";
 import type { PTOType } from "@trenova/shared/types/worker";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 export const ptoTypeOptions = [
   { value: "All", label: "All types" },
@@ -14,7 +14,7 @@ export const ptoTypeOptions = [
 ];
 
 export function usePTOFilters() {
-  const now = useMemo(() => new Date(), []);
+  const [now] = useState(() => new Date());
 
   const defaultValues = useMemo(
     () => ({

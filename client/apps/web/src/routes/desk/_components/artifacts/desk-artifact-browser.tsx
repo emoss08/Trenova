@@ -4,6 +4,7 @@ import { apiService } from "@/services/api";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
+import { useNow } from "@trenova/shared/hooks/use-now";
 import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   ArtIcon,
@@ -96,6 +97,7 @@ export function DeskArtifactBrowser({
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const nowSeconds = useNow("minute");
 
   useEffect(() => {
     const timer = window.setTimeout(() => inputRef.current?.focus(), 60);
@@ -160,7 +162,7 @@ export function DeskArtifactBrowser({
     return () => observer.disconnect();
   }, [fetchNextPage, hasNextPage, isFetchingNextPage, shown.length]);
 
-  const now = new Date();
+  const now = new Date(nowSeconds * 1000);
   const today = now.toDateString();
   const yesterday = new Date(now.getTime() - 86_400_000).toDateString();
   const groups: Array<{

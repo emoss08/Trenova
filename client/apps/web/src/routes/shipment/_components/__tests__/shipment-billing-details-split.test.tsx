@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -106,7 +106,9 @@ let latestForm: UseFormReturn<Shipment> | null = null;
 
 function Harness({ values }: { values: Partial<Shipment> }) {
   const form = useForm<Shipment>({ defaultValues: values as Shipment });
-  latestForm = form;
+  useEffect(() => {
+    latestForm = form;
+  }, [form]);
   const [client] = useState(
     () => new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } }),
   );

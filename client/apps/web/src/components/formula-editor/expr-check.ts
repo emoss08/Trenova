@@ -160,7 +160,7 @@ function levenshtein(a: string, b: string): number {
   if (Math.abs(a.length - b.length) > 3) return Number.MAX_SAFE_INTEGER;
   const rows = a.length + 1;
   const cols = b.length + 1;
-  const distances = new Array<number>(rows * cols).fill(0);
+  const distances = Array.from<number>({ length: rows * cols }).fill(0);
   for (let i = 0; i < rows; i++) distances[i * cols] = i;
   for (let j = 0; j < cols; j++) distances[j] = j;
   for (let i = 1; i < rows; i++) {

@@ -38,7 +38,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatMinor } from "@trenova/shared/lib/benefits";
 import { dateToUnixTimestamp, formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { describeError } from "@trenova/shared/lib/error-presentation";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import {
   reserveActionNeedsReason,
@@ -163,11 +163,12 @@ function MovementForm({
   const t = useT();
   const queryClient = useQueryClient();
   const copy = movementCopy(target, t);
+  const [todayUnix] = useState(() => dateToUnixTimestamp(new Date()));
   const form = useForm<ReserveMovementFormValues>({
     resolver: zodResolver(reserveMovementFormSchema) as Resolver<ReserveMovementFormValues>,
     defaultValues: {
       action: target.action,
-      occurredOn: dateToUnixTimestamp(new Date()),
+      occurredOn: todayUnix,
       overrideCash: false,
       cashMinor: defaultMovementCash(target.item, target.action),
       reason: "",

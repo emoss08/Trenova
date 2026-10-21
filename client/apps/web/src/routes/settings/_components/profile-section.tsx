@@ -16,6 +16,7 @@ import {
   Lock01Icon,
   Trash01Icon,
 } from "@trenova/shared/components/icons";
+import { useNow } from "@trenova/shared/hooks/use-now";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { resolveUserTimezone } from "@trenova/shared/lib/date";
 import { startOfDay } from "date-fns";
@@ -234,6 +235,7 @@ function AvailabilityCard({ user }: { user: User | null }) {
   const form = useForm<AvailabilityValues>({ defaultValues: availabilityValues(user) });
   const status = useWatch({ control: form.control, name: "status" });
   const timezone = resolveUserTimezone(user?.timezone);
+  const now = useNow();
 
   const { commit } = useAutosaveForm({
     form,
@@ -300,7 +302,7 @@ function AvailabilityCard({ user }: { user: User | null }) {
               layout="inline"
               label={t("Back on")}
               description={t("You show as available again from this day.")}
-              fromDate={startOfDay(new Date())}
+              fromDate={startOfDay(now * 1000)}
             />
           </SettingsRow>
           <SettingsRow sub id="hand-off">

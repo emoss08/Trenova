@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { getUTCYearBounds } from "@trenova/shared/lib/date";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { FiscalYearForm } from "./fiscal-year-form";
 import {
@@ -22,7 +22,7 @@ export function FiscalYearPanel({
 }: DataTablePanelProps<FiscalYearRow>) {
   const t = useT();
 
-  const currentYear = new Date().getFullYear();
+  const [currentYear] = useState(() => new Date().getFullYear());
   const { startDate, endDate } = getUTCYearBounds(currentYear);
 
   const form = useForm({

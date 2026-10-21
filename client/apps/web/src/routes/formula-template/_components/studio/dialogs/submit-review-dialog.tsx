@@ -91,21 +91,23 @@ export function SubmitReviewDialog({
   });
   const { mutate: drafting } = draft;
 
-  useEffect(() => {
+  const [seenOpen, setSeenOpen] = useState(open);
+  if (open !== seenOpen) {
+    setSeenOpen(open);
     if (!open) {
       setNote("");
       setReviewerId(null);
       setReady(null);
       setNoteError(null);
-      return;
     }
-    drafting();
-  }, [open, drafting]);
+  }
 
   useEffect(() => {
-    const first = reviewers.data?.[0];
-    if (open && reviewerId === null && first) setReviewerId(first.id);
-  }, [open, reviewerId, reviewers.data]);
+    if (open) drafting();
+  }, [open, drafting]);
+
+  const firstReviewer = reviewers.data?.[0];
+  if (open && reviewerId === null && firstReviewer) setReviewerId(firstReviewer.id);
 
   const submit = useMutation({
     mutationFn: () =>

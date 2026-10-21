@@ -315,3 +315,41 @@ func TestRepositoryParticipatesInOuterTransaction(t *testing.T) {
 		"rolled-back update must not persist",
 	)
 }
+
+func TestListOverlappingIncludesLeaveThatBeganBeforeTheWindow(t *testing.T) {
+	f := setupPTOFixture(t)
+	ctx := t.Context()
+	now := timeutils.NowUnix()
+	running := f.newPTO(t, now-86400*5, now+86400*3)
+	upcoming := f.newPTO(t, now+86400*5, now+86400*7)
+	f.newPTO(t, now-86400*20, now-86400*15)
+	f.newPTO(t, now+86400*30, now+86400*32)
+
+	list := func(overlapping bool) []pulid.ID {
+		t.Helper()
+		result, err := f.repo.List(ctx, &workerports.ListPTORequest{
+			Filter: &pagination.QueryOptions{
+				TenantInfo: f.tenant,
+				Pagination: pagination.Info{Limit: 10},
+			},
+			Cursor:        pagination.CursorInfo{Limit: 10, IncludeTotalCount: true},
+			StartDateFrom: now,
+			StartDateTo:   now + 86400*10,
+			Overlapping:   overlapping,
+			WorkerID:      f.worker.ID,
+		})
+		require.NoError(t, err)
+		ids := make([]pulid.ID, 0, len(result.Items))
+		for _, item := range result.Items {
+			ids = append(ids, item.ID)
+		}
+		require.NotNil(t, result.TotalCount)
+		assert.Equal(t, len(ids), *result.TotalCount, "the count applies the same window")
+		return ids
+	}
+
+	assert.ElementsMatch(t, []pulid.ID{running.ID, upcoming.ID}, list(true),
+		"overlapping takes leave still running from before the window")
+	assert.ElementsMatch(t, []pulid.ID{upcoming.ID}, list(false),
+		"without it only leave starting in the window matches")
+}

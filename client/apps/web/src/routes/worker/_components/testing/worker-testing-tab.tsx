@@ -1,3 +1,4 @@
+import { useNow } from "@trenova/shared/hooks/use-now";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { InfoPopover } from "@/components/info-popover";
 import { usePermission } from "@/hooks/use-permission";
@@ -55,6 +56,7 @@ export default function WorkerTestingTab({ workerId }: { workerId: string }) {
   const { allowed: canManage } = usePermission(Resource.WorkerDOTTest, Operation.Manage);
   const invalidate = useTestingInvalidation(workerId);
   const [dialog, setDialog] = useState<DialogState | null>(null);
+  const now = useNow();
 
   const fileQuery = useQuery({
     queryKey: [WORKER_DRUG_ALCOHOL_KEY, workerId],
@@ -175,7 +177,7 @@ export default function WorkerTestingTab({ workerId }: { workerId: string }) {
             warn={Boolean(
               file.standing.nextClearinghouseQueryDue &&
               file.standing.nextClearinghouseQueryDue * 1000 <
-                Date.parse(new Date().toDateString()),
+                Date.parse(new Date(now * 1000).toDateString()),
             )}
           />
         </dl>

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"slices"
 	"strings"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/toolschema"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 const (
@@ -63,7 +65,22 @@ type graphQLListSpec struct {
 	// as its has<Thing> parameter: a model has no honest way to get an id no
 	// tool lists.
 	references map[string]idReference
-	resource   permission.Resource
+	// rank orders a page that matched a free-text query when the call chose
+	// no order, as the screen's search cannot (closest name first).
+	rank func(query string, rows []map[string]any) []map[string]any
+	// shape applies to each row what the screen's resolver does not, given
+	// the fields withheld from it.
+	shape func(row map[string]any, withheld map[string]struct{})
+	// defaults are parameter values a call that omits them reads with (the
+	// active courses, not the retired ones), named in their notes.
+	defaults map[string]any
+	// defaultsAt are defaults that depend on the day (time off from today),
+	// applied together only when a call gives none of them.
+	defaultsAt func(clk clock) map[string]any
+	// inputs are input fields every call sends, as the screen sets them for
+	// its own rendering (each time-off request's worker).
+	inputs   map[string]any
+	resource permission.Resource
 	// reads is what the tool's records carry from outside the organization,
 	// declared as every read tool declares it (readSpec).
 	reads readSpec
@@ -100,16 +117,13 @@ func newGraphQLListTool(
 	if read.Verb != graphQLVerbList {
 		return nil, fmt.Errorf("%s reads %s, which is not a list", spec.name, read.Operation)
 	}
-	input := ""
-	for _, variable := range read.Variables {
-		if variable.Type == dataTableInput {
-			input = variable.Name
-		}
+	input, inputType, ok := read.tableInput()
+	if !ok {
+		return nil, fmt.Errorf("%s: %s takes no table input", spec.name, read.Operation)
 	}
-	if input == "" {
-		return nil, fmt.Errorf("%s: %s takes no %s", spec.name, read.Operation, dataTableInput)
-	}
-	params, err := referenced(spec.name, read.typedParams(), spec.references)
+	params := withInputParams(read.typedParams(), inputParams(inputType))
+	slices.SortFunc(params, func(a, b graphQLParam) int { return strings.Compare(a.Name, b.Name) })
+	params, err := referenced(spec.name, params, spec.references)
 	if err != nil {
 		return nil, err
 	}
@@ -196,7 +210,10 @@ func annotate(
 // graphQLListSpecs are every list tool, module by module, that reads
 // through GraphQL by a spec alone.
 func graphQLListSpecs() []graphQLListSpec {
-	return slices.Concat(referenceReadSpecs(), partyReadSpecs(), equipmentReadSpecs())
+	return slices.Concat(
+		referenceReadSpecs(), partyReadSpecs(), equipmentReadSpecs(), workerReadSpecs(),
+		trainingReadSpecs(), timeOffReadSpecs(),
+	)
 }
 
 // graphQLListProviders registers each spec as its own list tool.
@@ -218,27 +235,107 @@ func graphQLListProviders() []any {
 
 func (t *graphQLListTool) Name() string { return t.spec.name }
 
-// Description is the summary and every typed parameter by name, so a model
-// choosing a tool sees what it can narrow the list by. A range is named once,
-// by its lower end: createdAtFrom/To, amountMin/Max.
+// Description is the summary and every typed parameter an agent at the
+// default data access may use, by name, so a model choosing a tool sees what
+// it can narrow the list by. A range is named once,
+// by its lower end (createdAtFrom/To, amountMin/Max), and a nested record's
+// parameters are named once under it.
 func (t *graphQLListTool) Description() string {
-	names := make([]string, 0, len(t.params))
+	own := make([]string, 0, len(t.params))
+	nested := make(map[string][]string)
+	var holders []string
 	for _, param := range t.params {
-		switch param.Kind {
-		case paramDayTo, paramAtMost:
-		case paramDayFrom:
-			names = append(names, param.Name+"/"+suffixTo)
-		case paramAtLeast:
-			names = append(names, param.Name+"/"+suffixMax)
-		case paramIn, paramEquals, paramContains, paramPresent, paramReference:
-			names = append(names, param.Name)
+		name, ok := describedName(param)
+		if !ok || !t.describable(param) {
+			continue
 		}
+		parent, _, isNested := strings.Cut(param.Field, ".")
+		if !isNested {
+			own = append(own, name)
+			continue
+		}
+		if _, seen := nested[parent]; !seen {
+			holders = append(holders, parent)
+		}
+		nested[parent] = append(nested[parent],
+			stringutils.LowerFirst(strings.TrimPrefix(name, parent)))
 	}
-	if len(names) == 0 {
+	if len(own) == 0 && len(holders) == 0 {
 		return t.spec.summary
 	}
 
-	return t.spec.summary + " Filters: " + strings.Join(names, ", ") + "."
+	var b strings.Builder
+	b.WriteString(t.spec.summary)
+	b.WriteString(" Filters: ")
+	b.WriteString(strings.Join(own, ", "))
+	for _, parent := range holders {
+		fmt.Fprintf(&b, "; %s fields, each named %s and the field (%s%s): %s",
+			parent, parent, parent, stringutils.CapitalizeFirst(nested[parent][0]),
+			strings.Join(nested[parent], ", "))
+	}
+	b.WriteString(".")
+
+	return b.String()
+}
+
+// withDefaults is a call's arguments with the spec's defaults for those it
+// omits, and its day-dependent defaults when it omits all of them.
+func (t *graphQLListTool) withDefaults(args map[string]any, clk clock) map[string]any {
+	var dated map[string]any
+	if t.spec.defaultsAt != nil {
+		dated = t.spec.defaultsAt(clk)
+		for name := range dated {
+			if raw, given := args[name]; given && raw != nil {
+				dated = nil
+				break
+			}
+		}
+	}
+	if len(t.spec.defaults) == 0 && len(dated) == 0 {
+		return args
+	}
+	out := make(map[string]any, len(args)+len(t.spec.defaults)+len(dated))
+	for name, value := range t.spec.defaults {
+		out[name] = value
+	}
+	for name, value := range dated {
+		out[name] = value
+	}
+	for name, value := range args {
+		out[name] = value
+	}
+
+	return out
+}
+
+// describable reports whether a parameter's field can be filtered at the
+// default agent data access. A description names only those: the schema
+// still offers every parameter, and a reader above the default may use one
+// the description leaves out.
+func (t *graphQLListTool) describable(param graphQLParam) bool {
+	if param.OnInput {
+		return true
+	}
+	resource, name := t.fieldOwner(param.Field)
+
+	return fieldsensitivity.Visible(t.registry, resource, name, permission.SensitivityInternal)
+}
+
+// describedName is how a description names a parameter: a range once, by
+// its lower end.
+func describedName(param graphQLParam) (string, bool) {
+	switch param.Kind {
+	case paramDayTo, paramAtMost:
+		return "", false
+	case paramDayFrom:
+		return param.Name + "/" + suffixTo, true
+	case paramAtLeast:
+		return param.Name + "/" + suffixMax, true
+	case paramIn, paramEquals, paramContains, paramPresent, paramReference:
+		return param.Name, true
+	}
+
+	return param.Name, true
 }
 
 func (t *graphQLListTool) SearchTerms() []string { return t.spec.searchTerms }
@@ -314,7 +411,12 @@ func (t *graphQLListTool) Query(
 		return nil, err
 	}
 
-	filters, err := compileFilters(t.params, params.Params, clk)
+	args := t.withDefaults(params.Params, clk)
+	filters, err := compileFilters(t.params, args, clk)
+	if err != nil {
+		return nil, err
+	}
+	inputs, err := compileInputs(t.params, args, clk)
 	if err != nil {
 		return nil, err
 	}
@@ -323,10 +425,11 @@ func (t *graphQLListTool) Query(
 		return nil, err
 	}
 	query := strings.TrimSpace(optionalString(params.Params, graphQLParamQuery))
-	criteria := t.criteria(params.Params, query)
+	criteria := t.criteria(args, query)
 
 	page, err := t.page(ctx, params, &pageRequest{
 		query:   query,
+		inputs:  inputs,
 		filters: filters,
 		sort:    t.sort(params.Params),
 		limit:   window.limit,
@@ -334,6 +437,10 @@ func (t *graphQLListTool) Query(
 	})
 	if err != nil {
 		return nil, err
+	}
+
+	if t.spec.rank != nil && query != "" && optionalString(params.Params, paramSortBy) == "" {
+		page.items = t.spec.rank(query, page.items)
 	}
 
 	outcome := graphQLListOutcome{
@@ -352,7 +459,7 @@ func (t *graphQLListTool) Query(
 	}
 	if len(page.items) == 0 && page.first {
 		outcome.Note = criteria.EmptyNote()
-		if near := t.nearMiss(ctx, params, query, filters); near != "" {
+		if near := t.nearMiss(ctx, params, query, inputs, filters); near != "" {
 			outcome.Note = near
 		}
 	}
@@ -362,6 +469,7 @@ func (t *graphQLListTool) Query(
 
 type pageRequest struct {
 	query   string
+	inputs  map[string]any
 	filters []map[string]any
 	sort    []map[string]any
 	limit   int
@@ -381,7 +489,14 @@ func (t *graphQLListTool) page(
 	params *agentports.QueryToolParams,
 	req *pageRequest,
 ) (*graphQLPage, error) {
-	input := map[string]any{inputFirst: req.limit}
+	input := make(map[string]any, len(t.spec.inputs)+len(req.inputs)+5)
+	for name, value := range t.spec.inputs {
+		input[name] = value
+	}
+	for name, value := range req.inputs {
+		input[name] = value
+	}
+	input[inputFirst] = req.limit
 	if req.after != "" {
 		input[inputAfter] = req.after
 	}
@@ -417,6 +532,15 @@ func (t *graphQLListTool) page(
 		object, _ := edge.(map[string]any)
 		if node, ok := object[connectionNode].(map[string]any); ok {
 			page.items = append(page.items, compact(node))
+		}
+	}
+	if t.spec.shape != nil {
+		withheld := make(map[string]struct{}, len(page.withheld))
+		for _, path := range page.withheld {
+			withheld[path] = struct{}{}
+		}
+		for _, item := range page.items {
+			t.spec.shape(item, withheld)
 		}
 	}
 	if info, ok := connection[connectionPageInfo].(map[string]any); ok {
@@ -538,7 +662,7 @@ func (t *graphQLListTool) refuseWithheld(
 ) error {
 	fields := make([]string, 0, len(t.params)+1)
 	for _, param := range t.params {
-		if raw, present := params.Params[param.Name]; present && raw != nil {
+		if raw, present := params.Params[param.Name]; present && raw != nil && !param.OnInput {
 			fields = append(fields, param.Field)
 		}
 	}
@@ -559,11 +683,14 @@ func (t *graphQLListTool) refuseFields(
 		return nil
 	}
 
-	ceiling := fieldsensitivity.AgentCeiling(
-		ctx, t.permissions, params.Actor, params.DataAccessCeiling, t.spec.resource,
+	ceilings := fieldsensitivity.NewAgentCeilings(
+		t.permissions, params.Actor, params.DataAccessCeiling,
 	)
 	for _, field := range fields {
-		if !fieldsensitivity.Visible(t.registry, t.spec.resource, field, ceiling) {
+		resource, name := t.fieldOwner(field)
+		hidden := resource != t.spec.resource && !ceilings.Reads(ctx, resource)
+		if hidden || !fieldsensitivity.Visible(t.registry, resource, name,
+			ceilings.For(ctx, resource)) {
 			return fmt.Errorf(
 				"%s cannot be filtered or ordered by %s: its values are hidden at your access",
 				t.spec.name, field)
@@ -573,18 +700,38 @@ func (t *graphQLListTool) refuseFields(
 	return nil
 }
 
+// fieldOwner is the resource whose sensitivities a filtered field is judged
+// by, and the field's name there, as the field guard judges it: a nested
+// record of a registered kind (a worker's profile) by its own kind, any
+// other by the list's.
+func (t *graphQLListTool) fieldOwner(field string) (resource permission.Resource, name string) {
+	parent, child, ok := t.read.nestedField(field)
+	if !ok {
+		return t.spec.resource, field
+	}
+	kind := stringutils.ConvertCamelToSnake(parent.Type)
+	if t.registry.HasResource(kind) {
+		return permission.Resource(kind), child.Name
+	}
+
+	return t.spec.resource, child.Name
+}
+
 // nearMiss reads again with one condition dropped at a time, and says which
 // one, alone, kept every row out.
 func (t *graphQLListTool) nearMiss(
 	ctx context.Context,
 	params *agentports.QueryToolParams,
 	query string,
+	inputs map[string]any,
 	filters []map[string]any,
 ) string {
 	probes := 0
 	if query != "" {
 		probes++
-		if page, err := t.page(ctx, params, &pageRequest{filters: filters, limit: 1}); err == nil &&
+		if page, err := t.page(ctx, params, &pageRequest{
+			inputs: inputs, filters: filters, limit: 1,
+		}); err == nil &&
 			len(page.items) > 0 {
 			return fmt.Sprintf("Nothing matched the text %q, but %s do match the other "+
 				"conditions. Try different words, or drop the text.", query, t.spec.entityPlural)
@@ -596,15 +743,37 @@ func (t *graphQLListTool) nearMiss(
 		}
 		probes++
 		rest := slices.Delete(slices.Clone(filters), idx, idx+1)
-		page, err := t.page(ctx, params, &pageRequest{query: query, filters: rest, limit: 1})
+		page, err := t.page(ctx, params, &pageRequest{
+			query: query, inputs: inputs, filters: rest, limit: 1,
+		})
 		if err == nil && len(page.items) > 0 {
-			return fmt.Sprintf("No %s matched every condition. Without the condition on %v "+
-				"some do, so that one alone keeps them out.", t.spec.entityPlural,
-				filters[idx][paramField])
+			return t.keptOut(filters[idx][paramField])
+		}
+	}
+	for _, name := range slices.Sorted(maps.Keys(inputs)) {
+		if _, toggle := inputs[name].(bool); toggle {
+			continue
+		}
+		if probes >= maxNearMissProbes {
+			break
+		}
+		probes++
+		rest := maps.Clone(inputs)
+		delete(rest, name)
+		page, err := t.page(ctx, params, &pageRequest{
+			query: query, inputs: rest, filters: filters, limit: 1,
+		})
+		if err == nil && len(page.items) > 0 {
+			return t.keptOut(name)
 		}
 	}
 
 	return ""
+}
+
+func (t *graphQLListTool) keptOut(condition any) string {
+	return fmt.Sprintf("No %s matched every condition. Without the condition on %v "+
+		"some do, so that one alone keeps them out.", t.spec.entityPlural, condition)
 }
 
 // runView reads a composed table view through the same operation, so the

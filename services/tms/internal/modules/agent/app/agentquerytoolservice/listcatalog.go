@@ -107,16 +107,9 @@ func newListWorkersTool(
 	return newListTool(listSpec{
 		name:         toolWorkerList,
 		entityPlural: "workers",
-		summary: "Find workers (drivers) by name, closest first, or the roster by employment " +
-			"or qualification. Credentials due: worker_list_credentials. " +
-			"\"none on file\" was never recorded: worse than expiring soon.",
-		searchTerms: []string{
-			"look up a driver by name", "find a driver", "driver roster", "worker directory",
-			"employee by name",
-		},
-		queryNote: "A worker's name, first, last or both; each word matches the start of a " +
-			"name and the closest names come first. Omit it to list the roster or to filter " +
-			"on a field.",
+		summary:      workersSummary,
+		searchTerms:  workerSearchTerms,
+		queryNote:    workersQueryNote,
 		resource: permission.ResourceWorker,
 		config:   querybuilder.GetFieldConfiguration((*worker.Worker)(nil)),
 		fields: []listField{
@@ -217,9 +210,15 @@ func rankWorkersByName(query string, items []*worker.Worker, rows []any) []any {
 }
 
 func workerNameScore(query string, item *worker.Worker) float64 {
+	return namesScore(query, item.FirstName, item.LastName)
+}
+
+// namesScore is how closely a query matches a person's name, either way
+// round.
+func namesScore(query, first, last string) float64 {
 	return max(
-		stringutils.NameSimilarity(query, workerName(item)),
-		stringutils.NameSimilarity(query, item.LastName+" "+item.FirstName),
+		stringutils.NameSimilarity(query, strings.TrimSpace(first+" "+last)),
+		stringutils.NameSimilarity(query, last+" "+first),
 	)
 }
 
@@ -690,6 +689,24 @@ func toGatedWorkerRow(item *worker.Worker, showCity bool) workerRow {
 	return row
 }
 
+// dispatchable folds a worker's credential compliance into the stored
+// dispatch flag, as worker.Standing does: a NonCompliant worker cannot be
+// assigned whatever the column says.
+func dispatchable(
+	canBeAssigned bool,
+	blocked string,
+	compliance worker.ComplianceStatus,
+) (assignable bool, reason string) {
+	if compliance != worker.ComplianceStatusNonCompliant {
+		return canBeAssigned, blocked
+	}
+	if blocked == "" {
+		blocked = "Credentials are not compliant"
+	}
+
+	return false, blocked
+}
+
 func applyProfile(row *workerRow, profile *worker.WorkerProfile) {
 	if profile == nil {
 		return
@@ -704,12 +721,9 @@ func applyProfile(row *workerRow, profile *worker.WorkerProfile) {
 	// can apply it. Standing also weighs training, safety and checklists, which
 	// a list row does not load — so this can still be too generous, never too
 	// strict, and a caller deciding whether to dispatch should open the record.
-	if profile.ComplianceStatus == worker.ComplianceStatusNonCompliant {
-		row.CanBeAssigned = false
-		if row.AssignmentBlocked == "" {
-			row.AssignmentBlocked = "Credentials are not compliant"
-		}
-	}
+	row.CanBeAssigned, row.AssignmentBlocked = dispatchable(
+		row.CanBeAssigned, row.AssignmentBlocked, profile.ComplianceStatus,
+	)
 
 	row.HazmatExpiry = pointerDate(profile.HazmatExpiry)
 	row.LicenseExpiry = recordedDate(profile.LicenseExpiry)
