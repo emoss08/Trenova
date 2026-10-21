@@ -3,9 +3,9 @@
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use capture_imaging::PixelFormat;
 use capture_protocol::api::{PixelType, RequestFailureCode};
 use capture_protocol::helper::ScanCondition;
+use trenova_imaging_core::PixelFormat;
 
 use crate::TwainError;
 use crate::capability::to_fix32;

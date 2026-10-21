@@ -50,7 +50,7 @@ query CustomerPaymentTable($input: DataTableConnectionInput!, $includeTotalCount
   }
 }
 
-query CustomerPaymentDetail($id: ID!) {
+query CustomerPaymentDetail($id: ID!) @requiresRead(kind: "invoice") {
   customerPayment(id: $id) {
     id
     organizationId
@@ -98,7 +98,6 @@ query CustomerPaymentDetail($id: ID!) {
         invoiceDate
         dueDate
         totalAmount
-        appliedAmount
         settlementStatus
         disputeStatus
         billToName

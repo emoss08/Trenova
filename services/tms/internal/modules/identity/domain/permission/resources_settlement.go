@@ -58,10 +58,11 @@ func (r *Registry) registerSettlementResources() {
 	r.registerRecurringEarningResource()
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:    ResourcePayAdvance.String(),
-		DisplayName: "Pay Advance",
-		Description: "Driver cash and money-code advances",
-		Category:    "Payroll",
+		Resource:      ResourcePayAdvance.String(),
+		DisplayName:   "Pay Advance",
+		Description:   "Driver cash and money-code advances",
+		Category:      "Payroll",
+		ReferenceView: []string{"reference"},
 		Operations: append(slices.Clone(standardOps),
 			OperationDefinition{
 				Operation:   OpCancel,
@@ -95,10 +96,11 @@ func (r *Registry) registerSettlementResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:    ResourceEscrowAccount.String(),
-		DisplayName: "Escrow Account",
-		Description: "Owner-operator escrow accounts and ledgers",
-		Category:    "Payroll",
+		Resource:      ResourceEscrowAccount.String(),
+		DisplayName:   "Escrow Account",
+		Description:   "Owner-operator escrow accounts and ledgers",
+		Category:      "Payroll",
+		ReferenceView: []string{"status"},
 		Operations: append(slices.Clone(standardOps),
 			OperationDefinition{
 				Operation:   OpClose,
@@ -139,6 +141,13 @@ func (r *Registry) registerSettlementResources() {
 		DisplayName: "Driver Settlement",
 		Description: "Driver and owner-operator settlement statements and batches",
 		Category:    "Payroll",
+		ReferenceView: []string{
+			"settlementNumber",
+			"status",
+			"periodStart",
+			"periodEnd",
+			"workerId",
+		},
 		Operations: relabel(append(slices.Clone(standardOps),
 			OperationDefinition{
 				Operation:   OpSubmit,
@@ -252,10 +261,11 @@ func (r *Registry) registerSettlementResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:    ResourceSettlementDispute.String(),
-		DisplayName: "Settlement Dispute",
-		Description: "Driver-submitted settlement disputes and their resolution",
-		Category:    "Payroll",
+		Resource:      ResourceSettlementDispute.String(),
+		DisplayName:   "Settlement Dispute",
+		Description:   "Driver-submitted settlement disputes and their resolution",
+		Category:      "Payroll",
+		ReferenceView: []string{"status", "category", "createdAt", "resolvedAt"},
 		Operations: append(slices.Clone(standardOps),
 			OperationDefinition{
 				Operation:   OpApprove,

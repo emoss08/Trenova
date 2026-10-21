@@ -2,10 +2,25 @@ package permission
 
 func (r *Registry) registerCommodityResources() {
 	_ = r.Register(&ResourceDefinition{
-		Resource:           ResourceCommodity.String(),
-		DisplayName:        "Commodity",
-		Description:        "Commodity definitions",
-		Category:           "Shipments",
+		Resource:    ResourceCommodity.String(),
+		DisplayName: "Commodity",
+		Description: "Commodity definitions",
+		Category:    "Shipments",
+		ReferenceView: []string{
+			"hazardousMaterialId",
+			"status",
+			"name",
+			"description",
+			"minTemperature",
+			"maxTemperature",
+			"weightPerUnit",
+			"linearFeetPerUnit",
+			"maxQuantityPerShipment",
+			"freightClass",
+			"loadingInstructions",
+			"stackable",
+			"fragile",
+		},
 		Operations:         standardOps,
 		DefaultSensitivity: SensitivityInternal,
 	})

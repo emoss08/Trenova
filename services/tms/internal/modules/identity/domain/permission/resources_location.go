@@ -6,6 +6,21 @@ func (r *Registry) registerLocationResources() {
 		DisplayName: "Location",
 		Description: "Location management",
 		Category:    "Dispatch",
+		ReferenceView: []string{
+			"code",
+			"name",
+			"status",
+			"addressLine1",
+			"addressLine2",
+			"city",
+			"stateId",
+			"state",
+			"postalCode",
+			"latitude",
+			"longitude",
+			"locationCategoryId",
+			"timezone",
+		},
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "View", Description: "View locations"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Create locations"},
@@ -23,10 +38,17 @@ func (r *Registry) registerLocationResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:           ResourceLocationCategory.String(),
-		DisplayName:        "Location Category",
-		Description:        "Location category definitions",
-		Category:           "Dispatch",
+		Resource:    ResourceLocationCategory.String(),
+		DisplayName: "Location Category",
+		Description: "Location category definitions",
+		Category:    "Dispatch",
+		ReferenceView: []string{
+			"name",
+			"type",
+			"color",
+			"facilityType",
+			"requiresAppointment",
+		},
 		Operations:         standardOps,
 		DefaultSensitivity: SensitivityInternal,
 	})

@@ -21,7 +21,7 @@ enum ServiceFailureStatus {
   Voided
 }
 
-type ServiceFailureShipment {
+type ServiceFailureShipment @kind(resource: "shipment") {
   id: ID!
   proNumber: String!
   bol: String

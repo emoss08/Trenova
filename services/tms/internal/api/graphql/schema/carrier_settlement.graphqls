@@ -491,7 +491,7 @@ extend type Query {
   carrierSettlements(input: DataTableConnectionInput!): CarrierSettlementConnection!
   carrierSettlement(id: ID!): CarrierSettlement
   carrierSettlementBatches(input: DataTableConnectionInput!): CarrierSettlementBatchConnection!
-  carrierSettlementBatch(id: ID!): CarrierSettlementBatch
+  carrierSettlementBatch(id: ID!): CarrierSettlementBatch @authorizes(resource: "carrier_settlement")
   carrierCostEvents(input: DataTableConnectionInput!): CarrierCostEventConnection!
   carrierSettlementControl: CarrierSettlementControl!
   currentCarrierSettlementPeriod: CarrierSettlementPeriodBounds!
@@ -507,7 +507,7 @@ extend type Query {
     carrierId: ID
     limit: Int
     offset: Int
-  ): CarrierInvoiceMatchList!
+  ): CarrierInvoiceMatchList! @authorizes(resource: "carrier_invoice_match")
   "Inbound EDI carrier invoices, filterable by reconciliation status (e.g. Unmatched)."
   ediCarrierInvoices(
     reconciliationStatus: String

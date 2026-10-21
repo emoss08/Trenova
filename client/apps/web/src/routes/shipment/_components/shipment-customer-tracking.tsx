@@ -1,3 +1,4 @@
+import { LinkedRecordLink } from "@/components/linked-record-link";
 import { recordPath } from "@/config/record-links";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
@@ -53,6 +54,7 @@ import { Dialog, DialogContent, DialogTitle } from "@trenova/shared/components/u
 import { Input } from "@trenova/shared/components/ui/input";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
+import { useCanReadKind } from "@trenova/shared/hooks/use-can-read-kind";
 import { useT } from "@trenova/shared/i18n/use-t";
 import {
   formatSecondsAgo,
@@ -145,6 +147,7 @@ function Audience({
   const shown = new Set(profile?.visibleFields ?? []);
   const hidden = TRACKING_FIELDS.filter((field) => !shown.has(field));
   const [previewing, setPreviewing] = useState(false);
+  const canReadCustomer = useCanReadKind("customer");
   const audience = customerName || t("The customer");
 
   return (
@@ -159,7 +162,7 @@ function Audience({
             <EyeIcon className="size-3.5" aria-hidden />
             {t("Preview")}
           </Button>
-          {customerId && (
+          {customerId && canReadCustomer && (
             <Link
               to={recordPath("customer", customerId, { tab: "tracking" })}
               className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
@@ -296,12 +299,14 @@ function Share({
           <AlertDescription>
             {blocked}{" "}
             {linksOff && customerId && (
-              <Link
-                to={recordPath("customer", customerId, { tab: "tracking" })}
+              <LinkedRecordLink
+                kind="customer"
+                id={customerId}
+                extra={{ tab: "tracking" }}
                 className="font-medium underline underline-offset-2"
               >
                 {t("Turn them on")}
-              </Link>
+              </LinkedRecordLink>
             )}
           </AlertDescription>
         </Alert>

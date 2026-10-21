@@ -51,14 +51,14 @@ type ShiftTemplate {
   rather than an array so a pattern reads at a glance and compares without
   unpacking.
   """
-  daysOfWeek: String!
+  daysOfWeek: String
   startMinute: Int!
   durationMinutes: Int!
   """
   How many weeks the pattern rotates over. An A/B rotation is one template with
   a cycle of two and two assignments at different offsets.
   """
-  cycleWeeks: Int!
+  cycleWeeks: Int
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!

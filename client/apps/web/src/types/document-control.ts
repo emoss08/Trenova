@@ -12,8 +12,6 @@ const CAPTURE_AGENT_VERSION = /^v?(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)
 
 export const documentControlResourceSchema = z.enum(["shipment", "trailer", "tractor", "worker"]);
 
-export const extractionEngineSchema = z.enum(["legacy", "docling"]);
-
 export const documentControlSchema = z.object({
   id: optionalStringSchema,
   version: versionSchema,
@@ -43,7 +41,6 @@ export const documentControlSchema = z.object({
     })
     .optional(),
   captureAllowAutoUpdate: z.boolean(),
-  extractionEngine: extractionEngineSchema,
 });
 
 export const extractionModelReasonSchema = z.enum([
@@ -54,7 +51,6 @@ export const extractionModelReasonSchema = z.enum([
 ]);
 
 export const documentExtractionStatusSchema = z.object({
-  engine: extractionEngineSchema,
   modelProviderAvailable: z.boolean(),
   modelProviderReason: extractionModelReasonSchema.optional(),
   converterAvailable: z.boolean(),
@@ -63,6 +59,5 @@ export const documentExtractionStatusSchema = z.object({
 
 export type DocumentControl = z.infer<typeof documentControlSchema>;
 export type DocumentControlResource = z.infer<typeof documentControlResourceSchema>;
-export type ExtractionEngine = z.infer<typeof extractionEngineSchema>;
 export type ExtractionModelReason = z.infer<typeof extractionModelReasonSchema>;
 export type DocumentExtractionStatus = z.infer<typeof documentExtractionStatusSchema>;

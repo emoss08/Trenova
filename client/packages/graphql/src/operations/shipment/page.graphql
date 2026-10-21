@@ -2,9 +2,6 @@ fragment ShipmentUserFields on User {
   id
   name
   username
-  emailAddress
-  timezone
-  status
   profilePicUrl
   thumbnailUrl
 }
@@ -226,7 +223,6 @@ fragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {
     status
     method
     rateUnit
-    amount
     version
     createdAt
     updatedAt
@@ -588,7 +584,6 @@ fragment ShipmentEventFields on ShipmentEvent {
   actor {
     id
     name
-    emailAddress
     profilePicUrl
     thumbnailUrl
   }

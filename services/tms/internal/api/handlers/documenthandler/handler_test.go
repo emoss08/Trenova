@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -22,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/imaging/imagingfake"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/thumbnailservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
@@ -34,7 +36,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
-	"github.com/gen2brain/webp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -245,7 +246,7 @@ func setupHandlerWithConfig(
 	logger := zap.NewNop()
 
 	validator := documentservice.NewValidator(documentservice.ValidatorParams{Config: cfg})
-	thumbnailGen := thumbnailservice.NewGenerator(nil)
+	thumbnailGen := thumbnailservice.NewGenerator(imagingfake.New())
 	cacheRepo := customerportsmock.NewMockDocumentCacheRepository(t)
 	sessionRepo := documentuploadportsmock.NewMockDocumentUploadSessionRepository(t)
 
@@ -285,8 +286,10 @@ func encryptedDocumentBody(t *testing.T, body string, storagePath string) string
 	svc := encryptionservice.NewWithKeyManager(
 		encryptionservice.NewLocalKeyManager("unit-test-encryption-key-with-at-least-32-bytes"),
 	)
-	encrypted, err := svc.EncryptBytesWithAAD(
-		[]byte(body),
+	sealed, err := svc.SealBlob(
+		t.Context(),
+		strings.NewReader(body),
+		int64(len(body)),
 		encryptionservice.AAD{
 			Purpose:        encryptionservice.PurposeDocument,
 			OrganizationID: testutil.TestOrgID,
@@ -295,7 +298,9 @@ func encryptedDocumentBody(t *testing.T, body string, storagePath string) string
 		},
 	)
 	require.NoError(t, err)
-	return encrypted
+	encrypted, err := io.ReadAll(sealed)
+	require.NoError(t, err)
+	return string(encrypted)
 }
 
 func encryptedPreviewBody(t *testing.T, body string, storagePath string) string {
@@ -304,8 +309,10 @@ func encryptedPreviewBody(t *testing.T, body string, storagePath string) string 
 	svc := encryptionservice.NewWithKeyManager(
 		encryptionservice.NewLocalKeyManager("unit-test-encryption-key-with-at-least-32-bytes"),
 	)
-	encrypted, err := svc.EncryptBytesWithAAD(
-		[]byte(body),
+	sealed, err := svc.SealBlob(
+		t.Context(),
+		strings.NewReader(body),
+		int64(len(body)),
 		encryptionservice.AAD{
 			Purpose:        encryptionservice.PurposeDocument,
 			OrganizationID: testutil.TestOrgID,
@@ -314,7 +321,9 @@ func encryptedPreviewBody(t *testing.T, body string, storagePath string) string 
 		},
 	)
 	require.NoError(t, err)
-	return encrypted
+	encrypted, err := io.ReadAll(sealed)
+	require.NoError(t, err)
+	return string(encrypted)
 }
 
 func TestDocumentHandler_List_Success(t *testing.T) {
@@ -890,6 +899,7 @@ func pageImageRepo(
 				OriginalName:   "ratecon.png",
 				FileType:       fileType,
 				StoragePath:    "org/shipment/ratecon.png",
+				FileSize:       int64(len(pagePNG(t))),
 				ChecksumSHA256: "abc123",
 				Status:         document.StatusActive,
 			}, nil
@@ -898,12 +908,46 @@ func pageImageRepo(
 	return repo
 }
 
+type pageRenderObjects struct {
+	mu       sync.Mutex
+	stored   map[string][]byte
+	original int
+}
+
 func pageImageStorage(t *testing.T) *mockStorageClient {
+	t.Helper()
+	return pageImageStorageWith(t, &pageRenderObjects{stored: map[string][]byte{}})
+}
+
+func pageImageStorageWith(t *testing.T, objects *pageRenderObjects) *mockStorageClient {
 	t.Helper()
 
 	return &mockStorageClient{
+		uploadFunc: func(_ context.Context, params *kernelports.UploadParams) (*kernelports.FileInfo, error) {
+			data, err := io.ReadAll(params.Body)
+			if err != nil {
+				return nil, err
+			}
+			objects.mu.Lock()
+			objects.stored[params.Key] = data
+			objects.mu.Unlock()
+			return &kernelports.FileInfo{Key: params.Key, Size: int64(len(data))}, nil
+		},
 		downloadFunc: func(_ context.Context, key string) (*kernelports.DownloadResult, error) {
+			objects.mu.Lock()
+			defer objects.mu.Unlock()
+			if strings.Contains(key, "/renders/") {
+				data, ok := objects.stored[key]
+				if !ok {
+					return nil, kernelports.ErrObjectNotFound
+				}
+				return &kernelports.DownloadResult{
+					Body: io.NopCloser(bytes.NewReader(data)),
+					Size: int64(len(data)),
+				}, nil
+			}
 			assert.Equal(t, "org/shipment/ratecon.png", key)
+			objects.original++
 			body := encryptedDocumentBody(t, string(pagePNG(t)), key)
 			return &kernelports.DownloadResult{
 				Body:        io.NopCloser(strings.NewReader(body)),
@@ -953,10 +997,30 @@ func TestDocumentHandler_PageImage_ServesThePageAsWebP(t *testing.T) {
 
 	body := ginCtx.Recorder.Body.Bytes()
 	assert.Equal(t, strconv.Itoa(len(body)), header.Get("Content-Length"))
-	cfg, err := webp.DecodeConfig(bytes.NewReader(body))
-	require.NoError(t, err)
-	assert.Equal(t, 85, cfg.Width)
-	assert.Equal(t, 110, cfg.Height)
+	assert.Equal(t, []byte("RIFF-fake-page"), body)
+}
+
+func TestDocumentHandler_PageImage_ASecondViewIsServedFromTheStoredRender(t *testing.T) {
+	t.Parallel()
+
+	docID := pulid.MustNew("doc_")
+	objects := &pageRenderObjects{stored: map[string][]byte{}}
+	deps := setupHandler(t, pageImageRepo(t, "image/png"), pageImageStorageWith(t, objects))
+
+	for range 2 {
+		ginCtx := servePageImage(
+			t, deps, "/api/v1/documents/"+docID.String()+"/pages/1/image/", nil,
+		)
+		require.Equal(t, http.StatusOK, ginCtx.ResponseCode())
+		assert.Equal(t, []byte("RIFF-fake-page"), ginCtx.Recorder.Body.Bytes())
+	}
+
+	assert.Equal(t, 1, objects.original, "the document is read and rendered once")
+	assert.Len(t, objects.stored, 1, "the render is stored once, encrypted")
+	for key, data := range objects.stored {
+		assert.Contains(t, key, "/renders/")
+		assert.True(t, encryptionservice.IsBlob(data))
+	}
 }
 
 func TestDocumentHandler_PageImage_NotModifiedSkipsTheRender(t *testing.T) {

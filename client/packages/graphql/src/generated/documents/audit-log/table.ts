@@ -2,4 +2,4 @@
 import type { TypedDocumentString, AuditLogTableQuery, AuditLogTableQueryVariables, AuditLogTableRowFieldsFragment } from "../../graphql";
 
 export const AuditLogTableRowFieldsFragmentDoc = {"__meta__":{"fragmentName":"AuditLogTableRowFields"}} as unknown as TypedDocumentString<AuditLogTableRowFieldsFragment, unknown>;
-export const AuditLogTableDocument = {"__meta__":{"kind":"query","name":"AuditLogTable","hash":"sha256:25bcb0e024c30d7999751de7b49eaab0773e668bf4ae7c845b79d54c634acd55"}} as unknown as TypedDocumentString<AuditLogTableQuery, AuditLogTableQueryVariables>;
+export const AuditLogTableDocument = {"__meta__":{"kind":"query","name":"AuditLogTable","hash":"sha256:ce5c54531a75c578d66ab5fbf500101b994eaf4d09e07baeec39a1eb97dbf94b"}} as unknown as TypedDocumentString<AuditLogTableQuery, AuditLogTableQueryVariables>;

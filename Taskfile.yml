@@ -10,6 +10,15 @@ includes:
     taskfile: ./dev/samsara-sim/Taskfile.yml
     dir: ./dev/samsara-sim
 
+vars:
+  # Rust builds are capped the same way the Go tasks are: CARGO_BUILD_JOBS compile jobs at
+  # once (4 by default), or LOW_RESOURCE_JOBS of them with LOW_RESOURCE=true. Release
+  # builds use fat LTO and are slow; build-imaging uses the service-dev profile instead.
+  LOW_RESOURCE: '{{.LOW_RESOURCE | default "false"}}'
+  LOW_RESOURCE_JOBS: '{{.LOW_RESOURCE_JOBS | default "1"}}'
+  RUST_JOBS: '{{if eq .LOW_RESOURCE "true"}}{{.LOW_RESOURCE_JOBS}}{{else}}{{.CARGO_BUILD_JOBS | default "4"}}{{end}}'
+  BUF: go run github.com/bufbuild/buf/cmd/buf@v1.74.0
+
 tasks:
   default:
     desc: Show available top-level tasks
@@ -60,3 +69,102 @@ tasks:
     dir: '{{.ROOT_DIR}}'
     cmds:
       - node i18n/tools/i18n.mjs check
+
+  imaging:corpus:
+    desc: Generate the imaging benchmark corpus into .imagingbench/corpus
+    dir: '{{.ROOT_DIR}}'
+    cmds:
+      - uv run -q --with pillow --with pillow-heif --with reportlab --with qrcode --with numpy python3 -I tools/docling-fixtures/corpus.py .imagingbench/corpus
+
+  imaging:bench:
+    desc: Benchmark the TMS imaging calls against a 4-CPU imaging worker and write .imagingbench/results/worker.json
+    dir: '{{.ROOT_DIR}}'
+    vars:
+      RESULTS: '{{.RESULTS | default "worker.json"}}'
+      LABEL: '{{.LABEL | default "TMS through the imaging worker"}}'
+      IMAGE: '{{.IMAGE | default "trenova-imaging:local"}}'
+      WORKER_CPUS: '{{.WORKER_CPUS | default "4"}}'
+    cmds:
+      - mkdir -p .imagingbench/bin .imagingbench/results
+      - docker build -q -t trenova-imagingbench:local -f services/tms/internal/testutil/imagingbench/runner.Dockerfile services/tms/internal/testutil/imagingbench
+      - cd services/tms && CGO_ENABLED=0 nice go test -p 4 -c -tags imagingbench,nomsgpack -o ../../.imagingbench/bin/bench.test ./internal/testutil/imagingbench/workerbench
+      - docker network create trenova-imagingbench >/dev/null 2>&1 || true
+      - defer: docker rm -f trenova-imagingbench-worker >/dev/null 2>&1 || true
+      - >-
+        docker run -d --rm --name trenova-imagingbench-worker --network trenova-imagingbench
+        --cpus {{.WORKER_CPUS}} --memory 4g --read-only --tmpfs /tmp --cap-drop ALL
+        --security-opt no-new-privileges:true
+        -e TRENOVA_IMAGING__ENVIRONMENT=development -e TRENOVA_IMAGING__POOL__SIZE={{.WORKER_CPUS}}
+        {{.IMAGE}} serve >/dev/null
+      - >-
+        for i in $(seq 60); do
+        docker exec trenova-imagingbench-worker /usr/local/bin/trenova-imaging health >/dev/null 2>&1 && exit 0;
+        sleep 1; done; docker logs trenova-imagingbench-worker; exit 1
+      - >-
+        docker run --rm --network trenova-imagingbench --cpus 2 --memory 8g -u "$(id -u):$(id -g)" -e HOME=/tmp -e GOMAXPROCS=2
+        -e TRENOVA_IMAGING_TEST_ENDPOINT=trenova-imagingbench-worker:50051 -e TRENOVA_IMAGING_WORKER_CPUS={{.WORKER_CPUS}}
+        -e TRENOVA_IMAGING_CORPUS=/corpus -e TRENOVA_IMAGING_RESULTS=/results/{{.RESULTS}}
+        -e "TRENOVA_IMAGING_LABEL={{.LABEL}}" {{.DOCKER_ARGS}}
+        -v "$PWD/.imagingbench/corpus:/corpus:ro" -v "$PWD/.imagingbench/results:/results"
+        -v "$PWD/.imagingbench/bin:/bench-bin:ro" trenova-imagingbench:local
+        /bench-bin/bench.test -test.v -test.timeout 90m {{.CLI_ARGS}}
+
+  rust:fmt:
+    desc: Format every crate in the services workspace (task rust:fmt -- --check to check)
+    dir: '{{.ROOT_DIR}}/services'
+    cmds:
+      - cargo fmt --all {{.CLI_ARGS}}
+
+  rust:lint:
+    desc: Clippy over the services workspace with warnings as errors
+    dir: '{{.ROOT_DIR}}/services'
+    env:
+      CARGO_BUILD_JOBS: '{{.RUST_JOBS}}'
+    cmds:
+      - nice cargo clippy --workspace --all-targets -- -D warnings
+
+  rust:test:
+    desc: Test the services workspace (native-library tests run in the imaging dev image; see docs/engineering/rust.md)
+    dir: '{{.ROOT_DIR}}/services'
+    env:
+      CARGO_BUILD_JOBS: '{{.RUST_JOBS}}'
+    cmds:
+      - nice cargo test --workspace {{.CLI_ARGS}}
+
+  rust:deny:
+    desc: Check advisories, licences, duplicate majors and sources with cargo-deny
+    dir: '{{.ROOT_DIR}}/services'
+    cmds:
+      - cargo deny check
+
+  rust:proto:
+    desc: Lint the contracts in services/proto and regenerate their checked-in Go code
+    dir: '{{.ROOT_DIR}}/services/proto'
+    cmds:
+      - '{{.BUF}} lint'
+      - '{{.BUF}} generate'
+
+  rust:proto-breaking:
+    desc: Fail on a breaking change to a contract against origin/master
+    dir: '{{.ROOT_DIR}}'
+    cmds:
+      - |
+        if git cat-file -e origin/master:services/proto/buf.yaml 2>/dev/null; then
+          {{.BUF}} breaking services/proto --against ".git#branch=origin/master,subdir=services/proto"
+        else
+          echo "origin/master has no contracts yet; nothing to compare against"
+        fi
+
+  rust:build-imaging:
+    desc: Build the imaging worker with the service-dev profile (no LTO)
+    dir: '{{.ROOT_DIR}}/services'
+    env:
+      CARGO_BUILD_JOBS: '{{.RUST_JOBS}}'
+    cmds:
+      - nice cargo build --profile service-dev -p trenova-imaging
+
+  rust:image-imaging:
+    desc: Build the imaging worker's container image (deploy/Dockerfile.imaging)
+    dir: '{{.ROOT_DIR}}'
+    cmds:
+      - docker build --build-arg CARGO_BUILD_JOBS={{.RUST_JOBS}} -f deploy/Dockerfile.imaging -t {{.IMAGE | default "trenova-imaging:local"}} services

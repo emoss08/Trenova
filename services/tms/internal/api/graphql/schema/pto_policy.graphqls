@@ -334,7 +334,7 @@ input PTOAvailabilityInput {
 extend type Query {
   ptoPolicies(input: PTOPoliciesInput!): PTOPolicyConnection!
   ptoPolicy(id: ID!): PTOPolicy!
-  workerPtoPolicyAssignments(workerId: ID!): [WorkerPTOPolicyAssignment!]!
+  workerPtoPolicyAssignments(workerId: ID!): [WorkerPTOPolicyAssignment!]! @authorizes(resource: "pto_policy")
   workerPtoBalances(workerId: ID!): [WorkerPTOBalance!]!
   workerPtoLedger(input: WorkerPTOLedgerInput!): WorkerPTOLedgerConnection!
   workerPtoAvailability(input: PTOAvailabilityInput!): PTOAvailability!
@@ -348,7 +348,7 @@ extend type Mutation {
   updatePtoPolicy(id: ID!, input: PTOPolicyInput!): PTOPolicy!
   archivePtoPolicy(id: ID!, version: Int): PTOPolicy!
   restorePtoPolicy(id: ID!, version: Int): PTOPolicy!
-  assignWorkerPtoPolicy(input: AssignWorkerPTOPolicyInput!): AssignWorkerPTOPolicyPayload!
+  assignWorkerPtoPolicy(input: AssignWorkerPTOPolicyInput!): AssignWorkerPTOPolicyPayload! @authorizes(resource: "pto_policy")
   endWorkerPtoPolicyAssignment(input: EndWorkerPTOPolicyAssignmentInput!): WorkerPTOPolicyAssignment!
   adjustWorkerPtoBalance(input: AdjustWorkerPTOBalanceInput!): WorkerPTOLedgerEntry!
   runPtoAccrual(input: RunPTOAccrualInput!): PTOAccrualRunPayload!

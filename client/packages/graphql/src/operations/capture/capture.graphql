@@ -45,7 +45,6 @@ fragment CaptureDeviceFleetFields on CaptureDevice {
   user {
     id
     name
-    emailAddress
   }
 }
 

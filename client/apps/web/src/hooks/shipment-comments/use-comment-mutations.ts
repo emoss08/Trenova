@@ -39,7 +39,6 @@ function toUserSnapshot(
   user: {
     id?: string;
     name: string;
-    emailAddress: string;
     profilePicUrl?: string | null;
     thumbnailUrl?: string | null;
   } | null,
@@ -48,7 +47,6 @@ function toUserSnapshot(
   return {
     id: user.id,
     name: user.name,
-    emailAddress: user.emailAddress,
     profilePicUrl: user.profilePicUrl ?? null,
     thumbnailUrl: user.thumbnailUrl ?? null,
   };

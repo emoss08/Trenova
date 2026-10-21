@@ -36,6 +36,7 @@ type ResourceDefinition struct {
 	FieldSensitivities map[string]FieldSensitivity `json:"fieldSensitivities,omitempty"`
 	DefaultSensitivity FieldSensitivity            `json:"defaultSensitivity"`
 	Scopes             []ScopeSupport              `json:"scopes,omitempty"`
+	ReferenceView      []string                    `json:"referenceView,omitempty"`
 }
 
 type Registry struct {
@@ -132,6 +133,9 @@ func (r *Registry) GetFieldSensitivity(resource, field string) FieldSensitivity 
 	}
 	if sens, sensOK := def.FieldSensitivities[field]; sensOK {
 		return sens
+	}
+	if def.inReferenceView(field) {
+		return SensitivityInternal
 	}
 	return def.DefaultSensitivity
 }

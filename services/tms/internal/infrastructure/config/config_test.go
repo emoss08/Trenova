@@ -182,9 +182,11 @@ func TestStorageConfig_GetAllowedMIMETypes(t *testing.T) {
 		t.Parallel()
 		c := &StorageConfig{}
 		result := c.GetAllowedMIMETypes()
-		assert.Len(t, result, 11)
+		assert.Len(t, result, 14)
 		assert.Contains(t, result, "application/pdf")
 		assert.Contains(t, result, "image/jpeg")
+		assert.Contains(t, result, "image/heic", "phone photos from Dash")
+		assert.Contains(t, result, "image/heif")
 		assert.Contains(t, result, "text/csv")
 		assert.NotContains(t, result, "text/html")
 	})

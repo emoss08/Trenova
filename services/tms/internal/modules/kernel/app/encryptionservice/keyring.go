@@ -180,7 +180,7 @@ func openWrappedDEK(key []byte, wrapped WrappedKey, aad AAD) ([]byte, error) {
 
 	dek, err := gcm.Open(nil, wrapped.Nonce, wrapped.Bytes, aad.Bytes())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: %w", ErrKeyRejected, err)
 	}
 	if len(dek) != dekSize {
 		return nil, ErrInvalidEnvelope

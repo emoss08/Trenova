@@ -48,7 +48,7 @@ query Rota($filter: RotaFilterInput) {
   }
 }
 
-query WorkerShiftAssignments($workerId: ID!, $activeOnly: Boolean) {
+query WorkerShiftAssignments($workerId: ID!, $activeOnly: Boolean) @requiresRead(kind: "shift_template") {
   workerShiftAssignments(workerId: $workerId, activeOnly: $activeOnly) {
     id
     workerId

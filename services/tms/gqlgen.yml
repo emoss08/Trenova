@@ -54,6 +54,12 @@ use_buffer_pooling: true
 directives:
   protected:
     skip_runtime: true
+  kind:
+    skip_runtime: true
+  requiresRead:
+    skip_runtime: true
+  authorizes:
+    skip_runtime: true
 
 models:
   ID:
@@ -2339,9 +2345,6 @@ models:
   ExtractionEvalRunStatus:
     model:
       - github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval.RunStatus
-  ExtractionTextSource:
-    model:
-      - github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval.TextSource
   ExtractionEvalRefreeze:
     model:
       - github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports.RefreezeExtractionEvalCasesResult
@@ -2398,12 +2401,6 @@ models:
   ExtractionRolloutReport:
     model:
       - github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports.ExtractionRolloutReport
-  ExtractionRolloutExclusion:
-    model:
-      - github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports.ExtractionRolloutExclusionCount
-  ExtractionRolloutExclusionReason:
-    model:
-      - github.com/emoss08/trenova/internal/modules/documents/domain/extractionrollout.ExclusionReason
   ExtractionShadowSettings:
     model:
       - github.com/emoss08/trenova/internal/modules/documents/domain/extractionshadow.ShadowSettings

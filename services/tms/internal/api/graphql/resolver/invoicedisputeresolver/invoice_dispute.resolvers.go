@@ -51,12 +51,12 @@ func (r *InvoiceResolver) OpenDispute(ctx context.Context, obj *invoice.Invoice)
 	return nil, nil
 }
 
-func (r *InvoiceDisputeResolver) DisputedAmount(ctx context.Context, obj *invoice.InvoiceDispute) (string, error) {
+func (r *InvoiceDisputeResolver) DisputedAmount(ctx context.Context, obj *invoice.InvoiceDispute) (*string, error) {
 	if obj == nil {
-		return decimal.Zero.String(), nil
+		return stringutils.Ptr(decimal.Zero.String()), nil
 	}
 
-	return obj.DisputedAmount.String(), nil
+	return stringutils.Ptr(obj.DisputedAmount.String()), nil
 }
 
 func (r *InvoiceDisputeResolver) Resolution(ctx context.Context, obj *invoice.InvoiceDispute) (*invoice.DisputeResolution, error) {

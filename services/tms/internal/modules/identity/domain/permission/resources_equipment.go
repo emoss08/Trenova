@@ -6,6 +6,7 @@ func (r *Registry) registerEquipmentResources() {
 		DisplayName:        "Equipment Type",
 		Description:        "Equipment type definitions",
 		Category:           "Equipment",
+		ReferenceView:      []string{"code", "description", "color"},
 		Operations:         standardOps,
 		DefaultSensitivity: SensitivityInternal,
 	})
@@ -15,15 +16,17 @@ func (r *Registry) registerEquipmentResources() {
 		DisplayName:        "Equipment Manufacturer",
 		Description:        "Equipment manufacturer records",
 		Category:           "Equipment",
+		ReferenceView:      []string{"name"},
 		Operations:         standardOps,
 		DefaultSensitivity: SensitivityInternal,
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:    ResourceTrailer.String(),
-		DisplayName: "Trailer",
-		Description: "Trailer fleet management",
-		Category:    "Equipment",
+		Resource:      ResourceTrailer.String(),
+		DisplayName:   "Trailer",
+		Description:   "Trailer fleet management",
+		Category:      "Equipment",
+		ReferenceView: []string{"code", "status", "equipmentTypeId"},
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "View", Description: "View trailers"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Add new trailers"},
@@ -41,10 +44,11 @@ func (r *Registry) registerEquipmentResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:    ResourceTractor.String(),
-		DisplayName: "Tractor",
-		Description: "Tractor fleet management",
-		Category:    "Equipment",
+		Resource:      ResourceTractor.String(),
+		DisplayName:   "Tractor",
+		Description:   "Tractor fleet management",
+		Category:      "Equipment",
+		ReferenceView: []string{"code", "status", "make", "model"},
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "View", Description: "View tractors"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Add new tractors"},
@@ -66,6 +70,7 @@ func (r *Registry) registerEquipmentResources() {
 		DisplayName:        "Fleet Code",
 		Description:        "Fleet code definitions",
 		Category:           "Dispatch",
+		ReferenceView:      []string{"code", "color"},
 		Operations:         standardOps,
 		DefaultSensitivity: SensitivityInternal,
 	})

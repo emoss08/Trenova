@@ -1,3 +1,4 @@
+import { WithheldValue } from "@trenova/shared/components/withheld-value";
 import { useClipped } from "@/hooks/use-clipped";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
@@ -358,7 +359,11 @@ export function DisputeCases({
         <div className="dk-inv-case" role="note" aria-label={open.reason}>
           <div className="dk-inv-case-h">
             <b>{open.reason}</b>
-            <span>{open.amount}</span>
+            {open.amount === null ? (
+              <WithheldValue kind="invoice_dispute" />
+            ) : (
+              <span>{open.amount}</span>
+            )}
           </div>
           {open.notes && <blockquote>{open.notes}</blockquote>}
           <em>{open.opened}</em>
@@ -369,7 +374,11 @@ export function DisputeCases({
           {closed.map((item) => (
             <li key={item.key}>
               <b>{item.title}</b>
-              <span>{item.amount}</span>
+              {item.amount === null ? (
+                <WithheldValue kind="invoice_dispute" />
+              ) : (
+                <span>{item.amount}</span>
+              )}
               <em>{item.line}</em>
             </li>
           ))}

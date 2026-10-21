@@ -371,7 +371,7 @@ type ShipmentAutoRateResponse {
   contractRate: ShipmentContractRate!
 }
 
-type ShipmentCustomer {
+type ShipmentCustomer @kind(resource: "customer") {
   id: ID!
   businessUnitId: ID!
   organizationId: ID!
@@ -626,7 +626,7 @@ type ShipmentAdditionalCharge {
   accessorialCharge: ShipmentAccessorialCharge
 }
 
-type ShipmentAccessorialCharge {
+type ShipmentAccessorialCharge @kind(resource: "accessorial_charge") {
   id: ID!
   businessUnitId: ID!
   organizationId: ID!
@@ -658,7 +658,7 @@ type ShipmentCommodity {
   commodity: ShipmentCommodityDetail
 }
 
-type ShipmentCommodityDetail {
+type ShipmentCommodityDetail @kind(resource: "commodity") {
   id: ID!
   businessUnitId: ID!
   organizationId: ID!
@@ -1215,7 +1215,7 @@ enum ShipmentEventActorType {
   edi
 }
 
-type ShipmentEventShipmentReference {
+type ShipmentEventShipmentReference @kind(resource: "shipment") {
   id: ID
   proNumber: String
 }

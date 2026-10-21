@@ -45,9 +45,24 @@ import {
   type WorkerCredentialsQueryVariables,
 } from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import { rootFields, type RootFields } from "@trenova/shared/lib/reference-access";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 
-export type WorkerCredentialTypeRow = WorkerCredentialTypeFieldsFragment;
+/*
+ * A credential type is the root record of every read that returns this fragment, so the fields
+ * the schema marks nullable for where a type is linked from a worker's credentials
+ * (docs/engineering/reference-views.md) are its own here and never withheld.
+ */
+const CREDENTIAL_TYPE_ROOT_FIELDS = [
+  "activeCredentialCount",
+  "requiredForDriverTypes",
+  "status",
+] as const;
+
+export type WorkerCredentialTypeRow = RootFields<
+  WorkerCredentialTypeFieldsFragment,
+  (typeof CREDENTIAL_TYPE_ROOT_FIELDS)[number]
+>;
 export type WorkerCredentialRow = WorkerCredentialFieldsFragment;
 export type WorkerCredentialSummary = WorkerCredentialSummaryQuery["workerCredentialSummary"];
 export type WorkerCredentialSummaryItem = WorkerCredentialSummary["items"][number];
@@ -63,6 +78,8 @@ export const workerCredentialTypeTableGraphQLConfig = defineDataTableGraphQLConf
   document: WorkerCredentialTypeTableDocument,
   operationName: "WorkerCredentialTypeTable",
   connectionKey: "workerCredentialTypes",
+  mapNode: (node): WorkerCredentialTypeRow =>
+    rootFields(node, "WorkerCredentialType", CREDENTIAL_TYPE_ROOT_FIELDS),
 });
 
 export async function fetchWorkerCredentials(

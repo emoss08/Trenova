@@ -44,10 +44,16 @@ import {
   type WorkerChecklistsQueryVariables,
 } from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import type { RootFields } from "@trenova/shared/lib/reference-access";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 
 export type WorkerChecklistTemplateRow = WorkerChecklistTemplateFieldsFragment;
-export type WorkerChecklistRow = WorkerChecklistFieldsFragment;
+/**
+ * A checklist read for itself (the worker's checklists, and each checklist a mutation returns):
+ * the root record, so its progress is never withheld. The schema marks progress nullable for
+ * where a checklist is linked from the worker's overview (docs/engineering/reference-views.md).
+ */
+export type WorkerChecklistRow = RootFields<WorkerChecklistFieldsFragment, "progress">;
 export type WorkerChecklistItemRow = WorkerChecklistRow["items"][number];
 
 export const WORKER_CHECKLIST_TEMPLATE_LIST_KEY = "worker-checklist-template-list";

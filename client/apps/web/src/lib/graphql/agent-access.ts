@@ -15,6 +15,7 @@ import {
 } from "@trenova/graphql/generated/graphql";
 import { getFragmentData } from "@trenova/graphql/fragment-data";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import { rootField } from "@trenova/shared/lib/reference-access";
 
 type RequestOptions = { signal?: AbortSignal };
 
@@ -24,7 +25,6 @@ export type { AgentAccessMode, AgentAudienceCoverage };
 export type AgentAccessRole = {
   id: string;
   name: string;
-  description: string;
   isSystem: boolean;
 };
 
@@ -174,7 +174,7 @@ export async function setAgentAccess(
   const saved = getFragmentData(AgentAccessFieldsFragmentDoc, data.setAgentAccess);
 
   return {
-    mode: saved.accessMode,
+    mode: rootField(saved.accessMode, "AgentDefinition.accessMode"),
     roles: saved.accessRoles.map((role) => getFragmentData(AgentAccessRoleFieldsFragmentDoc, role)),
   };
 }

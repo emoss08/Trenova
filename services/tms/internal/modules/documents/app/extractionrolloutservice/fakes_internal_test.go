@@ -196,63 +196,6 @@ func (f *assignmentStore) PurgeBefore(
 	return purged, nil
 }
 
-type exclusionStore struct {
-	items []*extractionrollout.RolloutExclusion
-}
-
-func (f *exclusionStore) Record(
-	_ context.Context,
-	entity *extractionrollout.RolloutExclusion,
-) error {
-	for _, item := range f.items {
-		if item.DocumentID == entity.DocumentID && item.ExtractedAt == entity.ExtractedAt {
-			return nil
-		}
-	}
-	copied := *entity
-	copied.ID = pulid.MustNew("exrx_")
-	copied.CreatedAt = testNow
-	f.items = append(f.items, &copied)
-	return nil
-}
-
-func (f *exclusionStore) Totals(
-	_ context.Context,
-	req extractionrolloutports.TotalRolloutAssignmentsRequest,
-) ([]extractionrolloutports.RolloutExclusionTotal, error) {
-	counts := map[extractionrollout.ExclusionReason]int{}
-	for _, item := range f.items {
-		if item.CandidateProviderID == req.CandidateProviderID && item.CreatedAt >= req.Since {
-			counts[item.Reason]++
-		}
-	}
-	totals := make([]extractionrolloutports.RolloutExclusionTotal, 0, len(counts))
-	for reason, count := range counts {
-		totals = append(totals, extractionrolloutports.RolloutExclusionTotal{
-			Reason: reason,
-			Count:  count,
-		})
-	}
-	return totals, nil
-}
-
-func (f *exclusionStore) PurgeBefore(
-	_ context.Context,
-	req extractionrolloutports.PurgeRolloutAssignmentsRequest,
-) (int64, error) {
-	kept := f.items[:0]
-	var purged int64
-	for _, item := range f.items {
-		if item.CreatedAt < req.Before && purged < int64(req.Limit) {
-			purged++
-			continue
-		}
-		kept = append(kept, item)
-	}
-	f.items = kept
-	return purged, nil
-}
-
 type correctionStore struct {
 	aicorrectionports.AICorrectionRepository
 	items []*aicorrection.Correction
@@ -338,7 +281,6 @@ type world struct {
 	svc         *Service
 	rollouts    *rolloutStore
 	assignments *assignmentStore
-	exclusions  *exclusionStore
 	corrections *correctionStore
 	providers   *providerStore
 	notifier    *fakeNotifier
@@ -362,7 +304,6 @@ func newWorld() *world {
 	w := &world{
 		rollouts:    &rolloutStore{},
 		assignments: &assignmentStore{},
-		exclusions:  &exclusionStore{},
 		corrections: &correctionStore{},
 		providers: &providerStore{providers: map[pulid.ID]*aiprovider.Provider{
 			candidate.ID:  candidate,
@@ -376,7 +317,6 @@ func newWorld() *world {
 		l:           zap.NewNop(),
 		rollouts:    w.rollouts,
 		assignments: w.assignments,
-		exclusions:  w.exclusions,
 		corrections: w.corrections,
 		providers:   w.providers,
 		retention:   retentionStore{},

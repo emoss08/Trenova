@@ -272,8 +272,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "DeskWorkerTrainingRecords",
-		Hash:     "sha256:5d90cad7018b24ab2a5ba1fe05328ca0cff736e3404c134cc1961b14266d9fe6",
-		Document: "query DeskWorkerTrainingRecords($includeClosed: Boolean, $workerId: ID!) { workerTrainingRecords(workerId: $workerId, includeClosed: $includeClosed) { assignedAt completedAt course { code id name } courseId dueAt expiresAt id passed score status } }",
+		Hash:     "sha256:3417c37a15878e4f877d8a5404e92f68989f92810ac70e8b55f07c8c48d26dd2",
+		Document: "fragment TrainingCourseReference on TrainingCourse { category code contentUrl delivery description dueDaysAfterAssignment durationMinutes id isRequired name passingScore renewalWindowDays requiredForDriverTypes requiresAcknowledgement sortOrder status validityMonths } query DeskWorkerTrainingRecords($includeClosed: Boolean, $workerId: ID!) { workerTrainingRecords(workerId: $workerId, includeClosed: $includeClosed) { assignedAt completedAt course { ...TrainingCourseReference } courseId dueAt expiresAt id passed score status } }",
 	},
 	{
 		Name:     "TrainingCourseTable",

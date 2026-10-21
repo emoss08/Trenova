@@ -854,13 +854,12 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "status",
-				NonNull:  true,
 				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerCredentialType)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEntityStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐStatus),
+				Marshal: gqlexec.Marshal(marshalOEntityStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐStatus),
 			},
 			{
 				Name:     "isRequired",
@@ -874,13 +873,12 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "requiredForDriverTypes",
-				NonNull:  true,
 				ChildErr: errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerCredentialType)
 					return obj.RequiredForDriverTypes, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNDriverType2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐDriverTypeᚄ),
+				Marshal: gqlexec.Marshal(marshalODriverType2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐDriverTypeᚄ),
 			},
 			{
 				Name:     "renewalWindowDays",
@@ -954,7 +952,6 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:       "activeCredentialCount",
-				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
 				ChildErr:   errNoChild0,
@@ -962,7 +959,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*worker.WorkerCredentialType)
 					return gqlexec.Resolver[resolverWorkerCredentialType](ec, "WorkerCredentialType").ActiveCredentialCount(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNInt2int),
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
 			{
 				Name:     "version",
@@ -1100,7 +1097,7 @@ type resolverWorkerCredential interface {
 
 type resolverWorkerCredentialType interface {
 	ProfileField(ctx context.Context, obj *worker.WorkerCredentialType) (*string, error)
-	ActiveCredentialCount(ctx context.Context, obj *worker.WorkerCredentialType) (int, error)
+	ActiveCredentialCount(ctx context.Context, obj *worker.WorkerCredentialType) (*int, error)
 }
 
 var (
@@ -2031,22 +2028,6 @@ func marshalNDriverType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋ
 	return res
 }
 
-func marshalNDriverType2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐDriverTypeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []worker.DriverType) graphql.Marshaler {
-	return gqlexec.List[worker.DriverType]{
-		Elem:        marshalNDriverType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐDriverType,
-		NonNull:     true,
-		NonNullElem: true,
-	}.Marshal(ctx, ec, sel, v)
-}
-
-func marshalNEntityStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v domaintypes.Status) graphql.Marshaler {
-	res := graphql.MarshalString(string(v))
-	if res == graphql.Null {
-		gqlexec.NullViolation(ctx)
-	}
-	return res
-}
-
 func marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v pulid.ID) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
@@ -2205,6 +2186,18 @@ func marshalNWorkerCredentialTypeEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinte
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "WorkerCredentialTypeEdge", v)
+}
+
+func marshalODriverType2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐDriverTypeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []worker.DriverType) graphql.Marshaler {
+	return gqlexec.List[worker.DriverType]{
+		Elem:        marshalNDriverType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐDriverType,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalOEntityStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v domaintypes.Status) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	return res
 }
 
 func marshalOID2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *string) graphql.Marshaler {

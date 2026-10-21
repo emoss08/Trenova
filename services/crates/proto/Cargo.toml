@@ -1,0 +1,20 @@
+[package]
+name = "trenova-proto"
+description = "Rust code for the contracts in services/proto, generated at build time with protox (no protoc needed)."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+prost.workspace = true
+tonic.workspace = true
+tonic-prost.workspace = true
+
+[build-dependencies]
+protox.workspace = true
+tonic-prost-build.workspace = true
+
+[lints]
+workspace = true

@@ -57,7 +57,6 @@ func TestRenderGoldens(t *testing.T) {
 				"regenerate with TRENOVA_UPDATE_FIXTURES=1 go test ./internal/infrastructure/docling/",
 			)
 			assert.JSONEq(t, string(want), string(encoded))
-			assert.Equal(t, ConverterName, converted.Converter)
 			assert.NotEmpty(t, converted.Raw)
 		})
 	}

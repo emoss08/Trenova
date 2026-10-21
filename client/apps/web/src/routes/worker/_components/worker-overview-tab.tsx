@@ -1,3 +1,5 @@
+import { WithheldValue } from "@trenova/shared/components/withheld-value";
+import { useCanReadKind } from "@trenova/shared/hooks/use-can-read-kind";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { translate } from "@trenova/shared/i18n/runtime";
 import { InfoPopover } from "@/components/info-popover";
@@ -281,7 +283,7 @@ function MetricCard({
 }: {
   testId: string;
   title: string;
-  value: string;
+  value: React.ReactNode;
   unit?: string;
   detail: string;
   state?: CardState;
@@ -431,27 +433,39 @@ function ChecklistCard({
   onOpen: () => void;
 }) {
   const t = useT();
+  const { progress } = checklist;
+
+  if (progress === null) {
+    return (
+      <MetricCard
+        testId="overview-card-checklist"
+        title={t("Checklist")}
+        value={<WithheldValue kind="worker_checklist" />}
+        unit={checklist.name}
+        detail=""
+        onOpen={onOpen}
+      />
+    );
+  }
 
   const state: CardState =
-    checklist.progress.overdue > 0
-      ? { variant: "warning", label: t("{0} overdue", checklist.progress.overdue) }
-      : null;
+    progress.overdue > 0 ? { variant: "warning", label: t("{0} overdue", progress.overdue) } : null;
 
   return (
     <MetricCard
       testId="overview-card-checklist"
       title={t("Checklist")}
-      value={`${checklist.progress.percent}%`}
+      value={`${progress.percent}%`}
       unit={checklist.name}
       detail={t(
         "{0} of {1, plural, one {# required item settled} other {# required items settled}}",
-        checklist.progress.requiredDone,
-        checklist.progress.requiredTotal,
+        progress.requiredDone,
+        progress.requiredTotal,
       )}
       state={state}
       onOpen={onOpen}
     >
-      <Progress value={checklist.progress.percent} className="h-1" />
+      <Progress value={progress.percent} className="h-1" />
     </MetricCard>
   );
 }
@@ -503,8 +517,18 @@ function ReviewsCard({
   onOpen: () => void;
 }) {
   const t = useT();
+  const canReadReviews = useCanReadKind("performance_review");
+  const scoreWithheld = !open && last !== null && last.overallScore === null && !canReadReviews;
 
-  const value = open ? t("Open") : last?.overallScore ? formatScore(last.overallScore) : "—";
+  const value = open ? (
+    t("Open")
+  ) : scoreWithheld ? (
+    <WithheldValue kind="performance_review" />
+  ) : last?.overallScore ? (
+    formatScore(last.overallScore)
+  ) : (
+    "—"
+  );
   const unit = open ? open.title : last?.overallScore ? t("last score") : undefined;
   const detail = [
     last ? t("Last: {0}", last.title) : t("Nothing closed yet."),

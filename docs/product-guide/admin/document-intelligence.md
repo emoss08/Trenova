@@ -1,6 +1,6 @@
 ---
 path: /admin/document-intelligence
-aliases: [Document intelligence, OCR settings, document AI, document classification, document extraction, Docling, extraction engine, shipment drafts from documents, rate confirmation extraction]
+aliases: [Document intelligence, OCR settings, document AI, document classification, document extraction, Docling, shipment drafts from documents, rate confirmation extraction]
 related:
   - /admin/document-parsing-rules
   - /admin/document-operations
@@ -10,11 +10,13 @@ related:
 
 ## What it's for
 Document extraction decides what Trenova does with uploaded documents: whether it reads text
-from scanned pages, which engine reads them, how it classifies them into document kinds and
-types, whether it extracts structured data with an AI provider, whether documents such as rate
-confirmations become reviewable shipment drafts, and whether their text is indexed for search.
-The page is one settings form in five cards: **Platform availability**, **Extraction engine**,
-**Classification and extraction**, **Shipment draft extraction** and **Search and retrieval**.
+from scanned pages, how it classifies them into document kinds and types, whether it extracts
+structured data with an AI provider, whether documents such as rate confirmations become
+reviewable shipment drafts, and whether their text is indexed for search. Docling reads every
+document: the page layout, tables and scanned text.
+The page is one settings form in four cards: **Platform availability**, **Classification and
+extraction**, **Shipment draft extraction** and **Search and retrieval**. When documents cannot
+be read, **Platform availability** says what is missing.
 
 Administrators use it to switch document processing on and choose how much of it is automatic.
 
@@ -28,16 +30,6 @@ Keywords: enable OCR, document processing on
 3. Turn on **Enable OCR** to read scanned pages, photos and faxes that carry no text of their
    own.
 4. Select **Save changes** in the bar that appears at the bottom.
-
-### Choose the extraction engine
-Keywords: Docling, legacy engine, switch engine, layout extraction
-1. Open [Document extraction](/admin/document-intelligence).
-2. In **Extraction engine**, choose **Legacy** or **Docling**. Docling reads the page layout,
-   tables and scanned text, and every field it extracts needs an AI provider that serves
-   document work; parsing rules are not applied. Legacy reads native PDF text, runs OCR on
-   scans and applies your parsing rules.
-3. Select **Save changes**. The engine applies to documents uploaded from then on; documents
-   already read keep their text.
 
 ### Choose how documents are classified and extracted
 Keywords: auto classify, document types, AI extraction
@@ -63,9 +55,11 @@ Keywords: full text search, index documents
 3. Select **Save changes**.
 
 ## Notes
-Opening the page needs read access to document control. The AI-assisted options, and every
-document read by the Docling engine, depend on an enabled AI provider assigned to the Document
-extraction task, which is set up on [AI control](/admin/agent-control); a provider assigned only
-to chat does not read documents. The server must also have document extraction turned on. Without
-both, Docling documents are stored but not read, and upload screens say which is missing. Provider-specific parsing rules live on
-[Parsing rules](/admin/document-parsing-rules) and apply only to the legacy engine.
+Opening the page needs read access to document control. Every document Docling reads, and the
+AI-assisted options, depend on an enabled AI provider assigned to the Document extraction task,
+which is set up on [AI control](/admin/agent-control); a provider assigned only to chat does not
+read documents. The server must also have document extraction turned on and its document
+converter configured. Without all three, documents are stored but not read, and this page, the
+upload screens and the document's failure message say which is missing. The provider-specific
+rules on [Parsing rules](/admin/document-parsing-rules) are applied to the text Docling reads from
+a rate confirmation, after it is classified and before AI extraction.

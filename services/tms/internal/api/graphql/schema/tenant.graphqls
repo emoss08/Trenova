@@ -64,7 +64,7 @@ type User {
   name: String!
   username: String!
   timeFormat: TimeFormat!
-  emailAddress: String!
+  emailAddress: String
   profilePicUrl: String!
   thumbnailUrl: String!
   timezone: String!

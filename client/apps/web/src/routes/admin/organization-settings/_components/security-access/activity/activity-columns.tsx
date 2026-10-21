@@ -7,6 +7,7 @@ import type {
   RiskDecisionRow,
 } from "@/lib/graphql/security-activity-table";
 import { Badge } from "@trenova/shared/components/ui/badge";
+import { WithheldValue } from "@trenova/shared/components/withheld-value";
 import { defineLabels } from "@trenova/shared/i18n/labels";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
@@ -42,7 +43,8 @@ function optionsOf<T extends Record<string, string>>(labels: T) {
 type ActivityUser = {
   id: string;
   name: string;
-  emailAddress: string;
+  /** Outside the user's reference view: null for someone without user read. */
+  emailAddress: string | null;
   profilePicUrl: string;
   thumbnailUrl: string;
 } | null;
@@ -67,7 +69,11 @@ function UserCell({ user, unknown }: { user: ActivityUser | undefined; unknown: 
       />
       <div className="flex min-w-0 flex-col">
         <span className="truncate">{user.name}</span>
-        <span className="text-muted-foreground truncate text-xs">{user.emailAddress}</span>
+        {user.emailAddress === null ? (
+          <WithheldValue kind="user" className="self-start" />
+        ) : (
+          <span className="text-muted-foreground truncate text-xs">{user.emailAddress}</span>
+        )}
       </div>
     </div>
   );
@@ -96,9 +102,15 @@ function userColumn<TData extends { user?: ActivityUser }>(
   };
 }
 
-function timestampColumn<TData extends Record<string, unknown>>(
-  { key, label, never }: { key: keyof TData & string; label: string; never?: string },
-): ColumnDef<TData> {
+function timestampColumn<TData extends Record<string, unknown>>({
+  key,
+  label,
+  never,
+}: {
+  key: keyof TData & string;
+  label: string;
+  never?: string;
+}): ColumnDef<TData> {
   return {
     accessorKey: key,
     header: label,

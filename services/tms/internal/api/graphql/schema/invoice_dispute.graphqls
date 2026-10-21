@@ -37,16 +37,16 @@ type InvoiceDispute {
   customerId: ID!
   status: InvoiceDisputeCaseStatus!
   reasonCode: InvoiceDisputeReasonCode!
-  disputedAmount: Decimal!
+  disputedAmount: Decimal
   disputedAmountMinor: Int!
-  notes: String!
+  notes: String
   openedById: ID!
   openedAt: Timestamp!
   resolvedById: ID
   resolvedAt: Timestamp
   resolution: InvoiceDisputeResolution
   resolutionAdjustmentId: ID
-  resolutionNotes: String!
+  resolutionNotes: String
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!

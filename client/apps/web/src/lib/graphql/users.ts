@@ -14,6 +14,7 @@ import {
 } from "@trenova/graphql/generated/graphql";
 import { DEFAULT_LOCALE, LOCALES, type Locale } from "@trenova/shared/i18n/generated/locales";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import { rootField } from "@trenova/shared/lib/reference-access";
 import type {
   TimeFormatType,
   UserCreateFormValues,
@@ -53,7 +54,7 @@ export function userDetailToFormValues(detail: UserDetail | PatchedUser): UserEd
     status: detail.status,
     name: detail.name,
     username: detail.username,
-    emailAddress: detail.emailAddress,
+    emailAddress: rootField(detail.emailAddress, "User.emailAddress"),
     timezone: detail.timezone,
     timeFormat: timeFormatFromGraphQL(detail.timeFormat),
     locale: toLocale(detail.locale),

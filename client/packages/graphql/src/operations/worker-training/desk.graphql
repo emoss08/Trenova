@@ -3,9 +3,7 @@ query DeskWorkerTrainingRecords($workerId: ID!, $includeClosed: Boolean) {
     id
     courseId
     course {
-      id
-      code
-      name
+      ...TrainingCourseReference
     }
     status
     assignedAt

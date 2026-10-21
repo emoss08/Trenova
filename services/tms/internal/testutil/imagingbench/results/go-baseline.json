@@ -1,0 +1,556 @@
+{
+  "label": "Go baseline (master 2b3ea2c9e6): go-pdfium on wazero, pdfcpu, gozxing, disintegration/imaging, gen2brain/webp, tesseract CLI",
+  "recordedAt": "2026-10-21T00:37:51Z",
+  "machine": {
+    "goVersion": "go1.27.1",
+    "os": "linux",
+    "arch": "amd64",
+    "cpus": 4,
+    "cpuModel": "12th Gen Intel(R) Core(TM) i7-1270P"
+  },
+  "latency": [
+    {
+      "op": "legacy_ocr",
+      "input": "scan-bol-1p-g4.pdf",
+      "iterations": 3,
+      "units": "pages",
+      "unitsPerOp": 1,
+      "p50Ms": 1046.256,
+      "p95Ms": 1047.248,
+      "meanMs": 1041.392
+    },
+    {
+      "op": "legacy_ocr",
+      "input": "scan-bol-1p-gray.pdf",
+      "iterations": 3,
+      "units": "pages",
+      "unitsPerOp": 1,
+      "p50Ms": 882.705,
+      "p95Ms": 923.234,
+      "meanMs": 891.529
+    },
+    {
+      "op": "legacy_ocr",
+      "input": "scan-bol-5p-gray.pdf",
+      "iterations": 3,
+      "units": "pages",
+      "unitsPerOp": 5,
+      "p50Ms": 4131.937,
+      "p95Ms": 4316.256,
+      "meanMs": 4185.579
+    },
+    {
+      "op": "legacy_ocr",
+      "input": "capture-text-0.pdf",
+      "iterations": 3,
+      "units": "pages",
+      "unitsPerOp": 1,
+      "p50Ms": 889.604,
+      "p95Ms": 889.833,
+      "meanMs": 881.423
+    },
+    {
+      "op": "legacy_ocr",
+      "input": "capture-text-1.pdf",
+      "iterations": 3,
+      "units": "pages",
+      "unitsPerOp": 1,
+      "p50Ms": 799.576,
+      "p95Ms": 861.096,
+      "meanMs": 819.824
+    },
+    {
+      "op": "legacy_ocr",
+      "input": "faxed-bol.pdf",
+      "iterations": 3,
+      "units": "pages",
+      "unitsPerOp": 1,
+      "p50Ms": 1234.601,
+      "p95Ms": 1264.886,
+      "meanMs": 1240.848
+    },
+    {
+      "op": "legacy_ocr",
+      "input": "photo-bol.jpg",
+      "iterations": 3,
+      "units": "pages",
+      "unitsPerOp": 1,
+      "p50Ms": 1120.005,
+      "p95Ms": 1153.285,
+      "meanMs": 1123.926
+    },
+    {
+      "op": "legacy_ocr",
+      "input": "photo-bol-exif6.jpg",
+      "iterations": 3,
+      "units": "pages",
+      "unitsPerOp": 1,
+      "p50Ms": 1062.225,
+      "p95Ms": 1072.266,
+      "meanMs": 1061.708
+    },
+    {
+      "op": "legacy_ocr",
+      "input": "photo-bol.png",
+      "iterations": 3,
+      "units": "pages",
+      "unitsPerOp": 1,
+      "p50Ms": 697.676,
+      "p95Ms": 723.254,
+      "meanMs": 705.731
+    },
+    {
+      "op": "thumbnail",
+      "input": "native-1p.pdf",
+      "iterations": 15,
+      "p50Ms": 46.049,
+      "p95Ms": 47.954,
+      "meanMs": 46.4
+    },
+    {
+      "op": "thumbnail",
+      "input": "rate-confirmation.pdf",
+      "iterations": 15,
+      "p50Ms": 66.413,
+      "p95Ms": 70.763,
+      "meanMs": 66.585
+    },
+    {
+      "op": "thumbnail",
+      "input": "scan-bol-1p-gray.pdf",
+      "iterations": 15,
+      "p50Ms": 365.861,
+      "p95Ms": 372.966,
+      "meanMs": 366.691
+    },
+    {
+      "op": "thumbnail",
+      "input": "large-5mb.pdf",
+      "iterations": 15,
+      "p50Ms": 521.776,
+      "p95Ms": 555.57,
+      "meanMs": 526.1
+    },
+    {
+      "op": "thumbnail",
+      "input": "photo-bol.jpg",
+      "iterations": 15,
+      "p50Ms": 186.266,
+      "p95Ms": 194.458,
+      "meanMs": 186.94
+    },
+    {
+      "op": "thumbnail",
+      "input": "photo-bol.png",
+      "iterations": 15,
+      "p50Ms": 60.902,
+      "p95Ms": 64.045,
+      "meanMs": 61.297
+    },
+    {
+      "op": "page_view",
+      "input": "native-1p.pdf",
+      "iterations": 15,
+      "p50Ms": 194.028,
+      "p95Ms": 214.104,
+      "meanMs": 197.182
+    },
+    {
+      "op": "page_view",
+      "input": "rate-confirmation.pdf",
+      "iterations": 15,
+      "p50Ms": 254.574,
+      "p95Ms": 263.449,
+      "meanMs": 255.094
+    },
+    {
+      "op": "page_view",
+      "input": "scan-bol-1p-gray.pdf",
+      "iterations": 15,
+      "p50Ms": 356.733,
+      "p95Ms": 366.168,
+      "meanMs": 353.071
+    },
+    {
+      "op": "page_view",
+      "input": "scan-bol-20p-g4.pdf",
+      "iterations": 15,
+      "p50Ms": 614.472,
+      "p95Ms": 636.62,
+      "meanMs": 611.713
+    },
+    {
+      "op": "page_view",
+      "input": "native-200p.pdf",
+      "iterations": 15,
+      "p50Ms": 196.092,
+      "p95Ms": 202.432,
+      "meanMs": 195
+    },
+    {
+      "op": "page_view",
+      "input": "large-20mb.pdf",
+      "iterations": 15,
+      "p50Ms": 646.356,
+      "p95Ms": 682.811,
+      "meanMs": 646.438
+    },
+    {
+      "op": "capture_inspection",
+      "input": "capture-cover-2qr.pdf",
+      "iterations": 15,
+      "p50Ms": 267.413,
+      "p95Ms": 276.057,
+      "meanMs": 267.707
+    },
+    {
+      "op": "capture_inspection",
+      "input": "capture-blank.pdf",
+      "iterations": 15,
+      "p50Ms": 249.415,
+      "p95Ms": 262.952,
+      "meanMs": 252.182
+    },
+    {
+      "op": "capture_inspection",
+      "input": "capture-text-0.pdf",
+      "iterations": 15,
+      "p50Ms": 278.721,
+      "p95Ms": 286.465,
+      "meanMs": 278.125
+    },
+    {
+      "op": "capture_inspection",
+      "input": "capture-text-1.pdf",
+      "iterations": 15,
+      "p50Ms": 266.465,
+      "p95Ms": 271.822,
+      "meanMs": 263.528
+    },
+    {
+      "op": "capture_inspection",
+      "input": "capture-text-2.pdf",
+      "iterations": 15,
+      "p50Ms": 254.329,
+      "p95Ms": 267.052,
+      "meanMs": 255.379
+    },
+    {
+      "op": "text_profile",
+      "input": "native-10p.pdf",
+      "iterations": 15,
+      "units": "pages",
+      "unitsPerOp": 10,
+      "p50Ms": 75.236,
+      "p95Ms": 77.823,
+      "meanMs": 74.914
+    },
+    {
+      "op": "text_profile",
+      "input": "native-200p.pdf",
+      "iterations": 15,
+      "units": "pages",
+      "unitsPerOp": 200,
+      "p50Ms": 1183.071,
+      "p95Ms": 1249.356,
+      "meanMs": 1178.672
+    },
+    {
+      "op": "text_profile",
+      "input": "scan-bol-5p-gray.pdf",
+      "iterations": 15,
+      "units": "pages",
+      "unitsPerOp": 5,
+      "p50Ms": 5.469,
+      "p95Ms": 7.435,
+      "meanMs": 5.868
+    },
+    {
+      "op": "text_profile",
+      "input": "rate-confirmation.pdf",
+      "iterations": 15,
+      "units": "pages",
+      "unitsPerOp": 2,
+      "p50Ms": 24.171,
+      "p95Ms": 26.38,
+      "meanMs": 24.457
+    },
+    {
+      "op": "page_text_layout",
+      "input": "native-10p.pdf",
+      "iterations": 15,
+      "units": "pages",
+      "unitsPerOp": 10,
+      "p50Ms": 254.636,
+      "p95Ms": 277.918,
+      "meanMs": 256.994
+    },
+    {
+      "op": "page_text_layout",
+      "input": "native-50p.pdf",
+      "iterations": 15,
+      "units": "pages",
+      "unitsPerOp": 50,
+      "p50Ms": 1272.903,
+      "p95Ms": 1750.194,
+      "meanMs": 1362.077
+    },
+    {
+      "op": "page_text_layout",
+      "input": "rate-confirmation.pdf",
+      "iterations": 15,
+      "units": "pages",
+      "unitsPerOp": 2,
+      "p50Ms": 63.686,
+      "p95Ms": 75.407,
+      "meanMs": 65.19
+    },
+    {
+      "op": "merge",
+      "input": "50 one-page PDFs",
+      "iterations": 15,
+      "units": "pages",
+      "unitsPerOp": 50,
+      "p50Ms": 12.996,
+      "p95Ms": 15.474,
+      "meanMs": 13.19
+    },
+    {
+      "op": "merge",
+      "input": "native-10p+scan-bol-5p+rate-confirmation",
+      "iterations": 15,
+      "p50Ms": 5.723,
+      "p95Ms": 7.511,
+      "meanMs": 5.679
+    },
+    {
+      "op": "rotate",
+      "input": "scan-bol-1p-gray.pdf",
+      "iterations": 15,
+      "p50Ms": 0.738,
+      "p95Ms": 1.916,
+      "meanMs": 0.943
+    },
+    {
+      "op": "split",
+      "input": "native-50p.pdf",
+      "iterations": 15,
+      "units": "pages",
+      "unitsPerOp": 50,
+      "p50Ms": 24.479,
+      "p95Ms": 29.844,
+      "meanMs": 24.482
+    },
+    {
+      "op": "split",
+      "input": "scan-bol-20p-g4.pdf",
+      "iterations": 15,
+      "units": "pages",
+      "unitsPerOp": 20,
+      "p50Ms": 7.061,
+      "p95Ms": 9.76,
+      "meanMs": 7.674
+    },
+    {
+      "op": "split",
+      "input": "native-200p.pdf",
+      "iterations": 15,
+      "units": "pages",
+      "unitsPerOp": 200,
+      "p50Ms": 93.007,
+      "p95Ms": 97.798,
+      "meanMs": 93.354
+    },
+    {
+      "op": "image_to_pdf",
+      "input": "photo-bol.jpg",
+      "iterations": 15,
+      "p50Ms": 0.564,
+      "p95Ms": 2.591,
+      "meanMs": 0.928
+    }
+  ],
+  "throughput": [
+    {
+      "op": "page_view",
+      "input": "scan-bol-1p-gray.pdf",
+      "concurrency": 1,
+      "completed": 28,
+      "seconds": 10.000792374,
+      "perSecond": 2.799778152858591,
+      "perSecondPerCore": 0.6999445382146477
+    },
+    {
+      "op": "thumbnail",
+      "input": "scan-bol-1p-gray.pdf",
+      "concurrency": 1,
+      "completed": 29,
+      "seconds": 10.00074898,
+      "perSecond": 2.899782812066942,
+      "perSecondPerCore": 0.7249457030167356
+    },
+    {
+      "op": "capture_inspection",
+      "input": "capture-text-0.pdf",
+      "concurrency": 1,
+      "completed": 41,
+      "seconds": 10.001294671,
+      "perSecond": 4.099469253604196,
+      "perSecondPerCore": 1.024867313401049
+    },
+    {
+      "op": "page_view",
+      "input": "scan-bol-1p-gray.pdf",
+      "concurrency": 4,
+      "completed": 76,
+      "seconds": 10.20402025,
+      "perSecond": 7.448044803713517,
+      "perSecondPerCore": 1.8620112009283794
+    },
+    {
+      "op": "thumbnail",
+      "input": "scan-bol-1p-gray.pdf",
+      "concurrency": 4,
+      "completed": 76,
+      "seconds": 10.020103982,
+      "perSecond": 7.584751628977656,
+      "perSecondPerCore": 1.896187907244414
+    },
+    {
+      "op": "capture_inspection",
+      "input": "capture-text-0.pdf",
+      "concurrency": 4,
+      "completed": 96,
+      "seconds": 10.002359824,
+      "perSecond": 9.597735103435728,
+      "perSecondPerCore": 2.399433775858932
+    },
+    {
+      "op": "page_view",
+      "input": "scan-bol-1p-gray.pdf",
+      "concurrency": 8,
+      "completed": 76,
+      "seconds": 10.139714661,
+      "perSecond": 7.495279950264865,
+      "perSecondPerCore": 1.8738199875662163
+    },
+    {
+      "op": "thumbnail",
+      "input": "scan-bol-1p-gray.pdf",
+      "concurrency": 8,
+      "completed": 76,
+      "seconds": 10.030090539,
+      "perSecond": 7.577199797398559,
+      "perSecondPerCore": 1.8942999493496397
+    },
+    {
+      "op": "capture_inspection",
+      "input": "capture-text-0.pdf",
+      "concurrency": 8,
+      "completed": 99,
+      "seconds": 10.035535773,
+      "perSecond": 9.864944158373039,
+      "perSecondPerCore": 2.4662360395932597
+    }
+  ],
+  "peakRss": [
+    {
+      "input": "large-5mb.pdf",
+      "inputBytes": 4602134,
+      "pipeline": "upload -\u003e encrypt -\u003e store -\u003e download -\u003e decrypt -\u003e thumbnail",
+      "peakRssMb": 318.90234375,
+      "baselineRssMb": 319.34765625,
+      "seconds": 0.614501813
+    },
+    {
+      "input": "large-20mb.pdf",
+      "inputBytes": 21469064,
+      "pipeline": "upload -\u003e encrypt -\u003e store -\u003e download -\u003e decrypt -\u003e thumbnail",
+      "peakRssMb": 353.28125,
+      "baselineRssMb": 335.2890625,
+      "seconds": 0.8457336
+    },
+    {
+      "input": "large-50mb.pdf",
+      "inputBytes": 52141924,
+      "pipeline": "upload -\u003e encrypt -\u003e store -\u003e download -\u003e decrypt -\u003e thumbnail",
+      "peakRssMb": 551.1953125,
+      "baselineRssMb": 334.83203125,
+      "seconds": 1.328975526
+    }
+  ],
+  "ocr": [
+    {
+      "engine": "tesseract-cli (legacy Go pipeline)",
+      "input": "scan-bol-1p-g4.pdf",
+      "pages": 1,
+      "cer": 0.01056338028169014,
+      "meanPageMs": 1041.392,
+      "truthChars": 288,
+      "recognisedChars": 286
+    },
+    {
+      "engine": "tesseract-cli (legacy Go pipeline)",
+      "input": "scan-bol-1p-gray.pdf",
+      "pages": 1,
+      "cer": 0.007067137809187279,
+      "meanPageMs": 891.529,
+      "truthChars": 287,
+      "recognisedChars": 283
+    },
+    {
+      "engine": "tesseract-cli (legacy Go pipeline)",
+      "input": "scan-bol-5p-gray.pdf",
+      "pages": 5,
+      "cer": 0.00995732574679943,
+      "meanPageMs": 837.1157999999999,
+      "truthChars": 1422,
+      "recognisedChars": 1409
+    },
+    {
+      "engine": "tesseract-cli (legacy Go pipeline)",
+      "input": "capture-text-0.pdf",
+      "pages": 1,
+      "cer": 0.0035087719298245615,
+      "meanPageMs": 881.423,
+      "truthChars": 289,
+      "recognisedChars": 286
+    },
+    {
+      "engine": "tesseract-cli (legacy Go pipeline)",
+      "input": "capture-text-1.pdf",
+      "pages": 1,
+      "cer": 0,
+      "meanPageMs": 819.824,
+      "truthChars": 287,
+      "recognisedChars": 283
+    },
+    {
+      "engine": "tesseract-cli (legacy Go pipeline)",
+      "input": "photo-bol.jpg",
+      "pages": 1,
+      "cer": 0.007246376811594203,
+      "meanPageMs": 1123.926,
+      "truthChars": 280,
+      "recognisedChars": 276
+    },
+    {
+      "engine": "tesseract-cli (legacy Go pipeline)",
+      "input": "photo-bol-exif6.jpg",
+      "pages": 1,
+      "cer": 0.8586956521739131,
+      "meanPageMs": 1061.708,
+      "truthChars": 280,
+      "recognisedChars": 272
+    },
+    {
+      "engine": "tesseract-cli (legacy Go pipeline)",
+      "input": "photo-bol.png",
+      "pages": 1,
+      "cer": 0.0036231884057971015,
+      "meanPageMs": 705.731,
+      "truthChars": 280,
+      "recognisedChars": 276
+    }
+  ]
+}

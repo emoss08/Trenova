@@ -1,3 +1,4 @@
+import { WithheldValue } from "@trenova/shared/components/withheld-value";
 import { formatList } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { MoveRow, MoveStanding } from "./carrier-settlement-card";
@@ -85,12 +86,16 @@ export function InvoiceReconciliation({
 
 /** Where the money goes: the remit-to address, how the carrier is paid, and when. */
 export function Remittance({
+  withheld,
   lines,
   method,
   terms,
 }: {
+  /** The carrier's payment details are withheld: the person may not read carriers. */
+  withheld: boolean;
   lines: readonly string[];
-  method: string;
+  /** Null when withheld and the settlement sets no method of its own. */
+  method: string | null;
   terms: string;
 }) {
   const t = useT();
@@ -99,16 +104,29 @@ export function Remittance({
       <div>
         <dt>{t("Remit to")}</dt>
         <dd>
-          {lines.length > 0
-            ? lines.map((line) => <span key={line}>{line}</span>)
-            : t("No remit-to address on file — set it on the carrier record.")}
+          {withheld ? (
+            <WithheldValue kind="carrier" />
+          ) : lines.length > 0 ? (
+            lines.map((line) => <span key={line}>{line}</span>)
+          ) : (
+            t("No remit-to address on file — set it on the carrier record.")
+          )}
         </dd>
       </div>
-      {method && (
+      {method === null ? (
         <div>
           <dt>{t("Method")}</dt>
-          <dd>{method}</dd>
+          <dd>
+            <WithheldValue kind="carrier" />
+          </dd>
         </div>
+      ) : (
+        method && (
+          <div>
+            <dt>{t("Method")}</dt>
+            <dd>{method}</dd>
+          </div>
+        )
       )}
       <div>
         <dt>{t("Terms")}</dt>

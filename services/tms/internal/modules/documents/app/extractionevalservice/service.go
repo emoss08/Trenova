@@ -279,7 +279,6 @@ func (s *Service) freezeConvertedPages(
 
 	entity := extractioneval.NewCasePages(
 		evalCase,
-		extractioneval.TextSourceDocling,
 		markdownPages,
 		version,
 		evalCase.CreatedByID,

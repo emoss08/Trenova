@@ -469,8 +469,8 @@ the file's `AttachmentEntryLead`.
 Anything else goes as its text, and `Response.Files` says why, which the router
 logs: a type the model does not read, an image over 3.75 MB, a PDF past 100 pages
 (600 on a million-token model), the request's files past 20 MB together, a PDF that
-will not open (counted and checked with `kernelports.PDFReader` when the worker has
-one), or a file that could not be read. A request the provider refuses with a 400 or
+will not open (counted and checked by the imaging worker's `Probe` when the worker has
+the imaging service), or a file that could not be read. A request the provider refuses with a 400 or
 413 while carrying files is sent once more without them, before anything has
 streamed. The reader keeps up to eight files of 8 MB or less for ten minutes, keyed
 by tenant and document, since every model call of a turn sends the same files.
@@ -2198,12 +2198,11 @@ so the rule-based reading was stored at once and marked `Unavailable` while the
 model's reading was still on its way, and the agent read stop names like "7,000".
 Now the draft waits `Pending` for the model's reading like any other.
 
-A native PDF page's text is its layout read top to bottom, each row's segments
-left to right with `kernelports.PDFColumnGap` between them
-(`pdfreader.arrange`), not the order its content stream happens to draw in,
-which put a rate confirmation's terms first and left every label a page away
-from its value. The stream's text is kept only when the layout misses some of it
-(`readsWhole`). The rate confirmation parser reads such a row as its cells
+A page's text is Docling's reading of its layout, top to bottom, with each table
+row's cells left to right and `kernelports.TextColumnGap` between them
+(`plainTable` in `infrastructure/docling/render.go`), not the order a content
+stream happens to draw in, which put a rate confirmation's terms first and left
+every label a page away from its value. The rate confirmation parser reads such a row as its cells
 (`splitLayoutCells`), so `SHIPPER#1:` is followed by the shipper's name and
 `Address:` by the street, and a stop's name and address fill the shipper and
 consignee when no label names them. Documents read before this keep their old

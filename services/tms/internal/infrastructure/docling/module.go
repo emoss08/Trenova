@@ -39,7 +39,7 @@ func registerHealthProbe(
 			}
 			if !converter.Enabled() {
 				l.Warn(
-					"no document converter configured; organizations on the Docling extraction engine get no extraction",
+					"no document converter configured; uploaded documents are stored but not read",
 					zap.String(
 						"remedy",
 						"set documentConversion.doclingUrl and documentConversion.apiKey",

@@ -39,6 +39,7 @@ type conditionEvalParams struct {
 	Segment   *edi.EDITemplateSegment
 	Element   *edi.TemplateElement
 	Libraries []edistarlark.ScriptLibrary
+	Evaluator *edistarlark.Evaluator
 }
 
 func evaluateCondition(params conditionEvalParams) (bool, *Diagnostic) {
@@ -329,7 +330,7 @@ func evaluateStarlarkCondition(params conditionEvalParams, condition string) (bo
 		path = "condition:starlark:" + functionName
 	}
 
-	result := edistarlark.Evaluate(params.Context, edistarlark.EvalRequest{
+	result := params.Evaluator.Evaluate(params.Context, edistarlark.EvalRequest{
 		Script:       script,
 		FunctionName: functionName,
 		Libraries:    params.Libraries,

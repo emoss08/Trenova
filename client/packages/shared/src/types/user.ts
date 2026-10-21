@@ -107,6 +107,18 @@ export const userSchema = z.object({
 
 export type User = z.infer<typeof userSchema>;
 
+// What any record that links a user may show of them without the user read: the
+// user reference view (REFERENCE_VIEWS.user).
+export const userReferenceSchema = userSchema.pick({
+  id: true,
+  name: true,
+  username: true,
+  profilePicUrl: true,
+  thumbnailUrl: true,
+});
+
+export type UserReference = z.infer<typeof userReferenceSchema>;
+
 // The fields an administrator sets on any account. Both forms derive from userSchema,
 // so a rule changed there reaches create and edit alike.
 const userAccountShape = {

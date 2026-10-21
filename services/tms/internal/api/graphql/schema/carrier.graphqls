@@ -98,8 +98,8 @@ type Carrier {
   taxIdType: CarrierTaxIDType
   w9OnFile: Boolean!
   is1099Eligible: Boolean!
-  paymentMethod: CarrierPaymentMethod!
-  paymentTermDays: Int!
+  paymentMethod: CarrierPaymentMethod
+  paymentTermDays: Int
   remitToName: String
   remitAddressLine1: String
   remitAddressLine2: String

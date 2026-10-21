@@ -1,11 +1,14 @@
 package triageworkservice
 
 import (
+	"context"
+	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/triageworkjobs/triageworkcontract"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -173,4 +176,74 @@ func TestSplitTooManyRanges(t *testing.T) {
 	_, err := f.service.validateRanges(t.Context(), testTenant, pages, 100)
 	require.Error(t, err)
 	assert.True(t, errortypes.IsError(err) || errortypes.IsMultiError(err))
+}
+
+func splitAll(t *testing.T, f *fixture) error {
+	t.Helper()
+	_, err := f.service.File(t.Context(), &FileRequest{
+		TenantInfo:   testTenant,
+		UserID:       testUserID,
+		AttachmentID: f.attachment.ID,
+		ShipmentID:   f.shipmentID,
+		Pages:        []PageRange{{FromPage: 1, ToPage: 2, DocumentTypeID: f.pod.ID}},
+	})
+	return err
+}
+
+func TestSplitRefusesOnlyAFileTheWorkerCannotRead(t *testing.T) {
+	t.Parallel()
+
+	for _, cause := range []error{
+		kernelports.ErrImagingInvalidDocument,
+		kernelports.ErrImagingEncrypted,
+	} {
+		probing := newFixture()
+		probing.pdf.ProbeFunc = func(context.Context, *kernelports.ImagingProbeRequest) (*kernelports.ImagingProbe, error) {
+			return nil, fmt.Errorf("%w: refused", cause)
+		}
+		err := splitAll(t, probing)
+		require.True(t, errortypes.IsError(err), "probe %v: %v", cause, err)
+		assert.Contains(t, err.Error(), "not a PDF that can be split")
+
+		assembling := newFixture()
+		assembling.pdf.AssembleFunc = func(
+			context.Context,
+			*kernelports.ImagingAssembleRequest,
+			func(*kernelports.ImagingArtifact) error,
+		) ([]int, error) {
+			return nil, fmt.Errorf("%w: refused", cause)
+		}
+		err = splitAll(t, assembling)
+		require.True(t, errortypes.IsError(err), "assemble %v: %v", cause, err)
+		assert.Contains(t, err.Error(), "not a PDF that can be split")
+	}
+}
+
+func TestSplitReturnsAWorkerThatCannotAnswerAsItIs(t *testing.T) {
+	t.Parallel()
+
+	for _, cause := range []error{
+		kernelports.ErrImagingUnavailable,
+		kernelports.ErrImagingTimeout,
+	} {
+		probing := newFixture()
+		probing.pdf.ProbeFunc = func(context.Context, *kernelports.ImagingProbeRequest) (*kernelports.ImagingProbe, error) {
+			return nil, fmt.Errorf("%w: no worker", cause)
+		}
+		err := splitAll(t, probing)
+		require.ErrorIs(t, err, cause, "probe")
+		assert.False(t, errortypes.IsError(err), "probe %v is not a 422", cause)
+
+		assembling := newFixture()
+		assembling.pdf.AssembleFunc = func(
+			context.Context,
+			*kernelports.ImagingAssembleRequest,
+			func(*kernelports.ImagingArtifact) error,
+		) ([]int, error) {
+			return nil, fmt.Errorf("%w: no worker", cause)
+		}
+		err = splitAll(t, assembling)
+		require.ErrorIs(t, err, cause, "assemble")
+		assert.False(t, errortypes.IsError(err), "assemble %v is not a 422", cause)
+	}
 }

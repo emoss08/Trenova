@@ -72,13 +72,12 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "periodType",
-				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fiscalperiod.FiscalPeriod)
 					return obj.PeriodType, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNPeriodType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalperiodᚐPeriodType),
+				Marshal: gqlexec.Marshal(marshalOPeriodType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalperiodᚐPeriodType),
 			},
 			{
 				Name:     "status",
@@ -251,14 +250,6 @@ func marshalNInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionS
 	return res
 }
 
-func marshalNPeriodType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalperiodᚐPeriodType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fiscalperiod.PeriodType) graphql.Marshaler {
-	res := graphql.MarshalString(string(v))
-	if res == graphql.Null {
-		gqlexec.NullViolation(ctx)
-	}
-	return res
-}
-
 func marshalNString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
 	res := graphql.MarshalString(v)
 	if res == graphql.Null {
@@ -272,6 +263,11 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}
+	return res
+}
+
+func marshalOPeriodType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalperiodᚐPeriodType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fiscalperiod.PeriodType) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
 	return res
 }
 

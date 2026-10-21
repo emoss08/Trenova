@@ -1,0 +1,3 @@
+package kernelports
+
+const TextColumnGap = "   "

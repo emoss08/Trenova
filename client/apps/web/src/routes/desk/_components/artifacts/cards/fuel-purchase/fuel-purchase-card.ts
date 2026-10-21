@@ -2,6 +2,7 @@ import type { DeskFuelPurchase, DeskFuelPurchaseCard } from "@/lib/graphql/fuel-
 import { computeFuelTotal } from "@/lib/fuel-purchase";
 import { defineLabels } from "@trenova/shared/i18n/labels";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
+import { referenceKindAccessLabel } from "@trenova/shared/lib/reference-access";
 import { parseAmountToMinor } from "@trenova/shared/lib/money";
 import {
   FUEL_CARD_PROVIDER_LABELS,
@@ -203,7 +204,11 @@ function odometerCheck(card: DeskFuelPurchaseCard, t: TranslateFn): PurchaseChec
   };
 }
 
-function cardCheck(purchase: DeskFuelPurchase, t: TranslateFn): PurchaseCheck {
+function cardCheck(
+  purchase: DeskFuelPurchase,
+  canReadFuelCards: boolean,
+  t: TranslateFn,
+): PurchaseCheck {
   const card = purchase.fuelCard;
   if (!card) {
     return {
@@ -222,6 +227,14 @@ function cardCheck(purchase: DeskFuelPurchase, t: TranslateFn): PurchaseCheck {
       state: "warn",
       title: t("Card was cancelled"),
       detail: t("{0} was cancelled before this purchase was recorded", card.label),
+    };
+  }
+  if (!canReadFuelCards) {
+    return {
+      key: "card",
+      state: "info",
+      title: t("Card assignment is hidden"),
+      detail: t("You don't have access to {0}", referenceKindAccessLabel("fuel_card")),
     };
   }
   if (card.assignedTractorId && card.assignedTractorId !== purchase.tractorId) {
@@ -257,11 +270,21 @@ function cardCheck(purchase: DeskFuelPurchase, t: TranslateFn): PurchaseCheck {
   };
 }
 
-/** What the card checks about the purchase, in the order a person would look. */
-export function purchaseChecks(card: DeskFuelPurchaseCard, t: TranslateFn): PurchaseCheck[] {
-  return [totalCheck(card.purchase, t), odometerCheck(card, t), cardCheck(card.purchase, t)].filter(
-    (check): check is PurchaseCheck => check !== null,
-  );
+/**
+ * What the card checks about the purchase, in the order a person would look. The fuel card's
+ * assignment is outside its reference view, so without fuel card read (`canReadFuelCards`
+ * false) the card check says it cannot be made rather than reading the card as unassigned.
+ */
+export function purchaseChecks(
+  card: DeskFuelPurchaseCard,
+  t: TranslateFn,
+  canReadFuelCards = true,
+): PurchaseCheck[] {
+  return [
+    totalCheck(card.purchase, t),
+    odometerCheck(card, t),
+    cardCheck(card.purchase, canReadFuelCards, t),
+  ].filter((check): check is PurchaseCheck => check !== null);
 }
 
 export type PurchaseStanding = { label: string; tone: CardTone; mark: CardStatusMark };

@@ -61,9 +61,6 @@ func (s *Service) Update(
 		log.Error("failed to get original document control", zap.Error(err))
 		return nil, err
 	}
-	if entity.ExtractionEngine == "" {
-		entity.ExtractionEngine = original.ExtractionEngine
-	}
 
 	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
 		return nil, multiErr

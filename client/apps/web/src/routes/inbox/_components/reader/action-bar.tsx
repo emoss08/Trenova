@@ -28,8 +28,10 @@ import { useEffect, useState, type ReactNode, type RefObject } from "react";
 import { USER_FORMATTERS, actionCopy, ruleActionPhrase } from "../action-copy";
 import { tomorrowMorning } from "@/lib/snooze-presets";
 import { useTriageActions } from "../use-triage-actions";
+import { useTriageMailboxes } from "../use-triage-data";
 import {
   actionBarMode,
+  whyMailbox,
   whyRows,
   type ActionBarMode,
   type PrimaryKind,
@@ -138,8 +140,10 @@ function WhyRowView({ row }: { row: WhyRow }) {
 
 function WhyButton({ message }: { message: InboundMessageDetail }) {
   const t = useT();
+  const mailboxes = useTriageMailboxes().data;
   const next = message.actions.find((step) => !step.done) ?? null;
-  const rows = whyRows(message, next);
+  const policy = mailboxes?.find((row) => row.id === message.mailboxId);
+  const rows = whyRows({ ...message, mailbox: whyMailbox(message.mailbox, policy) }, next);
   if (rows.length === 0) {
     return null;
   }

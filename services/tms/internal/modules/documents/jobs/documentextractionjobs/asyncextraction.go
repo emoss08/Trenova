@@ -216,17 +216,7 @@ func (a *Activities) submitAIExtraction( //nolint:funlen // async submission wit
 	}
 
 	if strings.TrimSpace(row.ResponseID) == "" {
-		preferred := pulid.Nil
-		if content.Converter == documentcontent.ConverterDocling {
-			a.excludeFromRollout(
-				ctx,
-				tenantInfo,
-				payload,
-				extractionrollout.ExclusionReasonDoclingInput,
-			)
-		} else {
-			preferred = a.rolloutPreference(ctx, tenantInfo, payload)
-		}
+		preferred := a.rolloutPreference(ctx, tenantInfo, payload)
 		submission, submitErr := a.aiDocumentService.SubmitRateConfirmationBackgroundExtraction(
 			ctx,
 			&documentaiextractionports.AIExtractRequest{

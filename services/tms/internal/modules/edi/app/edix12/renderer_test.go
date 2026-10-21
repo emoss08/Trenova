@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/edi/app/edistarlark"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	editemplates "github.com/emoss08/trenova/internal/modules/edi/domain/edi/templates"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -876,6 +877,7 @@ func TestRenderX12_StarterTemplatesRenderTransactionSets(t *testing.T) {
 				},
 				DocumentPayload: tt.payload,
 				Runtime:         runtime,
+				Starlark:        untimedStarlark,
 			})
 			require.NoError(t, err)
 			assert.Contains(t, result.RawX12, "ST*"+string(tt.transactionSet)+"*0001")
@@ -1032,6 +1034,7 @@ func TestRenderX12_StarlarkReadsDocumentRoots(t *testing.T) {
 				},
 				DocumentPayload: tt.payload,
 				Runtime:         runtime,
+				Starlark:        untimedStarlark,
 			})
 
 			require.NoError(t, err)
@@ -1076,7 +1079,8 @@ func renderStarter214(
 			TransactionSet: edi.TransactionSet214,
 			ShipmentStatus: payload,
 		},
-		Runtime: runtime,
+		Runtime:  runtime,
+		Starlark: untimedStarlark,
 	})
 	require.NoError(t, err)
 
@@ -1232,6 +1236,35 @@ func TestRender204_StarlarkStepLimitDiagnosticPropagates(t *testing.T) {
 	assert.NotContains(t, diagnostic.Path, element.StarlarkScript)
 	assert.NotEmpty(t, diagnostic.Message)
 	assert.Equal(t, "Reduce loop work or simplify the Starlark script.", diagnostic.SuggestedFix)
+}
+
+func TestRender204_StarlarkOptionsBoundTheRenderedScripts(t *testing.T) {
+	t.Parallel()
+
+	input := validRenderInput(edi.ValidationModeStrict)
+	input.Starlark = edistarlark.Options{MaxExecutionSteps: 50, Timeout: time.Hour}
+	element := findElement(t, input, "L11", 0)
+	element.Source = edi.TemplateElementSourceStarlark
+	element.FieldPath = ""
+	element.StarlarkFunction = "count"
+	element.StarlarkScript = `def count(ctx):
+    total = 0
+    for i in range(1000):
+        total += i
+    return str(total)`
+
+	result, err := Render204(input)
+
+	require.NoError(t, err)
+	require.Len(t, result.Diagnostics, 1)
+	assert.Equal(t, "starlark_step_limit", result.Diagnostics[0].Code)
+
+	input.Starlark = untimedStarlark
+	result, err = Render204(input)
+
+	require.NoError(t, err)
+	require.Empty(t, result.Diagnostics)
+	assert.Contains(t, result.RawX12, "L11*499500*")
 }
 
 func TestRender204_StarlarkElementUsesLibraryFunction(t *testing.T) {
@@ -1392,6 +1425,8 @@ func TestHasBlockingDiagnostics_BlocksStrictStarlarkDiagnostics(t *testing.T) {
 	assert.False(t, HasBlockingDiagnostics(diagnostics, edi.ValidationModeWarnOnly))
 }
 
+var untimedStarlark = edistarlark.Options{Timeout: time.Hour}
+
 func renderInput(mode edi.ValidationMode) *RenderInput {
 	envelope := edi.DefaultX12EnvelopeSettings()
 	profile := &edi.EDIPartnerDocumentProfile{
@@ -1419,6 +1454,7 @@ func renderInput(mode edi.ValidationMode) *RenderInput {
 		},
 		X12Version: edi.DefaultX12204Version,
 		Runtime:    runtime,
+		Starlark:   untimedStarlark,
 	}
 }
 

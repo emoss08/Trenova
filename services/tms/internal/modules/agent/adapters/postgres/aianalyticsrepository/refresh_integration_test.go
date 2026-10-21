@@ -50,7 +50,7 @@ func TestRefreshWorksOutUnitsToolsAndProviderHoursFromTheSourceRecords(t *testin
 
 	tenant := seededTenant(ctx, t, db)
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
-	now := timeutils.NowUnix()
+	now := floorHour(timeutils.NowUnix()) - 1800
 	vllm := pulid.MustNew("aiprv_")
 	groq := pulid.MustNew("aiprv_")
 
@@ -283,7 +283,10 @@ func TestRefreshWorksOutUnitsToolsAndProviderHoursFromTheSourceRecords(t *testin
 
 	require.NoError(
 		t,
-		repo.Prune(ctx, aianalyticsports.PruneRequest{TenantInfo: tenant, Before: now + 3600}),
+		repo.Prune(ctx, aianalyticsports.PruneRequest{
+			TenantInfo: tenant,
+			Before:     timeutils.NowUnix() + 3600,
+		}),
 	)
 	pruned, err := repo.Deployments(ctx, filter)
 	require.NoError(t, err)

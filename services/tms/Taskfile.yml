@@ -43,8 +43,9 @@ vars:
   AIR_FLAGS: '{{if .GO_JOBS}}--build.delay 2000{{end}}'
   # Search is off by default, Gotenberg only renders PDFs, and Redis Insight and
   # the Samsara simulator are debugging aids, so the API starts without them.
-  # Temporal stays: every AI feature and background job runs on it.
-  DOCKER_MINIMAL_SERVICES: '{{.DOCKER_MINIMAL_SERVICES | default "db redis minio temporal"}}'
+  # Temporal stays: every AI feature and background job runs on it. The imaging
+  # worker stays: every document preview, page view and capture page goes through it.
+  DOCKER_MINIMAL_SERVICES: '{{.DOCKER_MINIMAL_SERVICES | default "db redis minio temporal imaging"}}'
   DOCKER_SERVICES: '{{if .GO_JOBS}}{{.DOCKER_MINIMAL_SERVICES}}{{end}}'
 
 # 769 of 832 packages depend on gin, so a go command that misses the tag set

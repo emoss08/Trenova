@@ -10,6 +10,7 @@ import { inlineErrorText } from "../inline-error";
 import type { TriageFolder } from "../folders";
 import { KIND_PLURAL } from "../kind-phrases";
 import { senderShortName } from "../rules/rule-model";
+import { useTriageMailboxes } from "../use-triage-data";
 
 type Suggestion = NonNullable<TriageBriefing["suggestion"]>;
 
@@ -116,6 +117,7 @@ export function FooterPills({
   const [teaching, setTeaching] = useState(false);
   const [taught, setTaught] = useState<Suggestion | null>(null);
   const [refusal, setRefusal] = useState<string | null>(null);
+  const mailboxes = useTriageMailboxes().data;
   const { corrections, suggestion } = briefing;
   const shownSuggestion = taught ?? suggestion;
 
@@ -183,7 +185,7 @@ export function FooterPills({
         >
           <span aria-hidden className="bg-warning size-1.75 rounded-full" />
           <span>
-            {mailbox.health === "NeverReceived"
+            {mailboxes?.find((row) => row.id === mailbox.id)?.health === "NeverReceived"
               ? t("{0} has not received mail yet", mailboxName(mailbox))
               : t("{0} stopped receiving mail", mailboxName(mailbox))}
           </span>

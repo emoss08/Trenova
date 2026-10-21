@@ -103,6 +103,7 @@ import {
   type WriteOffPayAdvanceInput,
 } from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import { rootFields, type RootFields } from "@trenova/shared/lib/reference-access";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 
 export type PayProfileRow = NonNullable<
@@ -116,22 +117,38 @@ export type PayCodeRow = NonNullable<PayCodeTableQuery["payCodes"]["edges"]>[num
 export type RecurringEarningRow = NonNullable<
   RecurringEarningTableQuery["recurringEarnings"]["edges"]
 >[number]["node"];
-export type PayAdvanceRow = NonNullable<
-  PayAdvanceTableQuery["payAdvances"]["edges"]
->[number]["node"];
-export type EscrowAccountRow = NonNullable<
-  EscrowAccountTableQuery["escrowAccounts"]["edges"]
->[number]["node"];
-export type DriverSettlementRow = NonNullable<
-  DriverSettlementTableQuery["driverSettlements"]["edges"]
->[number]["node"];
+/*
+ * Advances, escrow accounts and settlements are each their table's root record, so the fields
+ * the schema marks nullable for where they are linked from another record
+ * (docs/engineering/reference-views.md) are their own here and never withheld.
+ */
+const PAY_ADVANCE_ROOT_FIELDS = ["amountMinor", "outstandingMinor"] as const;
+const ESCROW_ACCOUNT_ROOT_FIELDS = ["balanceMinor", "targetAmountMinor"] as const;
+const DRIVER_SETTLEMENT_ROOT_FIELDS = ["netPayMinor", "currencyCode"] as const;
+
+export type PayAdvanceRow = RootFields<
+  NonNullable<PayAdvanceTableQuery["payAdvances"]["edges"]>[number]["node"],
+  (typeof PAY_ADVANCE_ROOT_FIELDS)[number]
+>;
+export type EscrowAccountRow = RootFields<
+  NonNullable<EscrowAccountTableQuery["escrowAccounts"]["edges"]>[number]["node"],
+  (typeof ESCROW_ACCOUNT_ROOT_FIELDS)[number]
+>;
+export type DriverSettlementRow = RootFields<
+  NonNullable<DriverSettlementTableQuery["driverSettlements"]["edges"]>[number]["node"],
+  (typeof DRIVER_SETTLEMENT_ROOT_FIELDS)[number]
+>;
 export type SettlementBatchRow = NonNullable<
   SettlementBatchTableQuery["settlementBatches"]["edges"]
 >[number]["node"];
 export type DriverPayEventRow = NonNullable<
   DriverPayEventTableQuery["driverPayEvents"]["edges"]
 >[number]["node"];
-export type DriverSettlementDetail = NonNullable<DriverSettlementDetailQuery["driverSettlement"]>;
+/** The settlement is the detail's root record, so its pay and currency are never withheld. */
+export type DriverSettlementDetail = RootFields<
+  NonNullable<DriverSettlementDetailQuery["driverSettlement"]>,
+  (typeof DRIVER_SETTLEMENT_ROOT_FIELDS)[number]
+>;
 export type DriverSettlementLineRow = NonNullable<DriverSettlementDetail["lines"]>[number];
 export type WorkerPayAssignmentRow = NonNullable<
   WorkerPayAssignmentsQuery["workerPayAssignments"]
@@ -176,18 +193,23 @@ export const payAdvanceTableGraphQLConfig = defineDataTableGraphQLConfig({
   document: PayAdvanceTableDocument,
   operationName: "PayAdvanceTable",
   connectionKey: "payAdvances",
+  mapNode: (node): PayAdvanceRow => rootFields(node, "PayAdvance", PAY_ADVANCE_ROOT_FIELDS),
 });
 
 export const escrowAccountTableGraphQLConfig = defineDataTableGraphQLConfig({
   document: EscrowAccountTableDocument,
   operationName: "EscrowAccountTable",
   connectionKey: "escrowAccounts",
+  mapNode: (node): EscrowAccountRow =>
+    rootFields(node, "EscrowAccount", ESCROW_ACCOUNT_ROOT_FIELDS),
 });
 
 export const driverSettlementTableGraphQLConfig = defineDataTableGraphQLConfig({
   document: DriverSettlementTableDocument,
   operationName: "DriverSettlementTable",
   connectionKey: "driverSettlements",
+  mapNode: (node): DriverSettlementRow =>
+    rootFields(node, "DriverSettlement", DRIVER_SETTLEMENT_ROOT_FIELDS),
 });
 
 export const settlementBatchTableGraphQLConfig = defineDataTableGraphQLConfig({
@@ -284,7 +306,9 @@ export async function fetchDriverSettlementDetail(id: string, options?: { signal
     variables: { id },
     signal: options?.signal,
   });
-  return data.driverSettlement;
+  return data.driverSettlement
+    ? rootFields(data.driverSettlement, "DriverSettlement", DRIVER_SETTLEMENT_ROOT_FIELDS)
+    : null;
 }
 
 export async function fetchEscrowAccountDetail(id: string, options?: { signal?: AbortSignal }) {
@@ -294,7 +318,9 @@ export async function fetchEscrowAccountDetail(id: string, options?: { signal?: 
     variables: { id },
     signal: options?.signal,
   });
-  return data.escrowAccount;
+  return data.escrowAccount
+    ? rootFields(data.escrowAccount, "EscrowAccount", ESCROW_ACCOUNT_ROOT_FIELDS)
+    : null;
 }
 
 export async function fetchWorkerEarningsSummary(
@@ -638,7 +664,9 @@ export async function fetchWorkspaceSettlements(
     },
     signal: options?.signal,
   });
-  return (data.driverSettlements.edges ?? []).map((edge) => edge.node);
+  return (data.driverSettlements.edges ?? []).map((edge): DriverSettlementRow =>
+    rootFields(edge.node, "DriverSettlement", DRIVER_SETTLEMENT_ROOT_FIELDS),
+  );
 }
 
 export async function fetchWorkerUnsettledPayEvents(
@@ -728,7 +756,9 @@ export async function fetchWorkerPayAdvances(workerId: string, options?: { signa
     },
     signal: options?.signal,
   });
-  return (data.payAdvances.edges ?? []).map((edge) => edge.node);
+  return (data.payAdvances.edges ?? []).map((edge): PayAdvanceRow =>
+    rootFields(edge.node, "PayAdvance", PAY_ADVANCE_ROOT_FIELDS),
+  );
 }
 
 export async function holdDriverPayEvent(input: HoldPayEventInput) {

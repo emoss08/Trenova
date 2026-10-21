@@ -1,8 +1,6 @@
 package documentextractionjobs
 
 import (
-	"bytes"
-	"image"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -487,12 +485,4 @@ func isPlainTextType(contentType, ext string) bool {
 
 func isPDFType(contentType, ext string) bool {
 	return contentType == "application/pdf" || ext == ".pdf"
-}
-
-func readImageDimensions(imageData []byte) (width, height int, err error) {
-	cfg, _, err := image.DecodeConfig(bytes.NewReader(imageData))
-	if err != nil {
-		return 0, 0, err
-	}
-	return cfg.Width, cfg.Height, nil
 }

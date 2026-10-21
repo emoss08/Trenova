@@ -142,7 +142,12 @@ function section(title: string): HTMLElement {
 }
 
 beforeEach(() => {
-  seedPermissions({ [Resource.Trailer]: Operation.Read, [Resource.Shipment]: Operation.Read });
+  seedPermissions({
+    [Resource.Trailer]: Operation.Read,
+    [Resource.Shipment]: Operation.Read,
+    [Resource.Worker]: Operation.Read,
+    [Resource.Location]: Operation.Read,
+  });
   fetchers.trailer.mockReset().mockResolvedValue(trailer());
   fetchers.shipments.mockReset().mockResolvedValue(page([shipment], 9));
 });
@@ -182,10 +187,8 @@ describe("DeskTrailer", () => {
     const where = section("Where it is");
     expect(within(where).getByText("Where its last move left it")).toBeInTheDocument();
     expect(within(where).getByText("Dallas yard")).toBeInTheDocument();
-    expect(within(where).getByRole("link", { name: /Open location/ })).toHaveAttribute(
-      "href",
-      expect.stringContaining("loc_dal"),
-    );
+    // Someone who may read locations opens the place in the card's place.
+    expect(within(where).getByRole("button", { name: /Open location/ })).toBeInTheDocument();
     const calendar = section("Service calendar");
     expect(within(calendar).getByText("Nothing due")).toBeInTheDocument();
     expect(within(calendar).getByRole("img", { name: "Service calendar" })).toBeInTheDocument();
@@ -245,8 +248,8 @@ describe("DeskTrailer", () => {
 
     const owner = await screen.findByRole("heading", { name: "Owner", level: 3 });
     expect(
-      within(owner.closest("section") as HTMLElement).getByRole("link", { name: /Ana Ruiz/ }),
-    ).toHaveAttribute("href", expect.stringContaining("wrk_9"));
+      within(owner.closest("section") as HTMLElement).getByRole("button", { name: /Ana Ruiz/ }),
+    ).toBeInTheDocument();
 
     fireEvent.click(await screen.findByRole("button", { name: /S26100090038417/ }));
     expect(await screen.findByText("Shipment card shp_1")).toBeInTheDocument();

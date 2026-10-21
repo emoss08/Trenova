@@ -68,5 +68,5 @@ extend type Query {
   manualJournals(input: DataTableConnectionInput!): ManualJournalConnection!
   manualJournal(id: ID!): ManualJournal
   "A manual journal as the Desk card draws it, read in one pass."
-  manualJournalCard(id: ID!): ManualJournalCard!
+  manualJournalCard(id: ID!): ManualJournalCard! @authorizes(resource: "manual_journal") @authorizes(resource: "journal_entry")
 }

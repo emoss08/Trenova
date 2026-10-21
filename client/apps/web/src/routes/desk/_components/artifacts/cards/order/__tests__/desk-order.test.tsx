@@ -323,7 +323,9 @@ describe("DeskOrder", () => {
     ).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Legs" })).toBeNull();
     expect(screen.queryByRole("heading", { name: "Activity" })).toBeNull();
-    expect(screen.getByRole("link", { name: /Open customer/ })).toBeInTheDocument();
+    // The customer is a linked record: without customer read there is no way to it.
+    expect(screen.queryByRole("link", { name: /Open customer/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Open customer/ })).toBeNull();
     expect(fetchers.shipments).not.toHaveBeenCalled();
     expect(fetchers.activity).not.toHaveBeenCalled();
   });

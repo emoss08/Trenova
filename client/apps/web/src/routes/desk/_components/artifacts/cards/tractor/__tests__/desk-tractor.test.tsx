@@ -151,6 +151,8 @@ const shipment = {
 const EVERYTHING = {
   [Resource.Tractor]: Operation.Read,
   [Resource.Shipment]: Operation.Read,
+  [Resource.Worker]: Operation.Read,
+  [Resource.Location]: Operation.Read,
 };
 
 function draw(props: Partial<Parameters<typeof DeskTractor>[0]> = {}) {
@@ -238,10 +240,8 @@ describe("DeskTractor", () => {
     expect(await within(where).findByText("I-35E near Waxahachie, TX")).toBeInTheDocument();
     expect(within(where).getByText("Moving 58 mph NE")).toBeInTheDocument();
 
-    expect(within(where).getByRole("link", { name: /Dallas yard/ })).toHaveAttribute(
-      "href",
-      expect.stringContaining("loc_1"),
-    );
+    // Someone who may read locations opens the place in the card's place.
+    expect(within(where).getByRole("button", { name: /Dallas yard/ })).toBeInTheDocument();
     expect(await screen.findByText("182,124 mi")).toBeInTheDocument();
 
     const dash = where.querySelector(".dk-tr-dash") as HTMLElement;
@@ -313,10 +313,7 @@ describe("DeskTractor", () => {
 
     const drivers = await screen.findByRole("heading", { name: "Drivers", level: 3 });
     const people = drivers.closest("section") as HTMLElement;
-    expect(within(people).getByRole("link", { name: /Rosa Diaz/ })).toHaveAttribute(
-      "href",
-      expect.stringContaining("wrk_1"),
-    );
+    expect(within(people).getByRole("button", { name: /Rosa Diaz/ })).toBeInTheDocument();
     expect(within(people).getByText("Co-driver")).toBeInTheDocument();
 
     const row = await screen.findByRole("button", { name: /S26100090038417/ });
@@ -458,6 +455,17 @@ describe("DeskTractor", () => {
     expect(screen.queryByRole("heading", { name: "Recent shipments" })).toBeNull();
     expect(fetchers.shipments).not.toHaveBeenCalled();
     expect(screen.getByRole("link", { name: /Open tractor/ })).toBeInTheDocument();
+  });
+
+  it("names the tractor's drivers without linking them for someone who may not read workers", async () => {
+    seedPermissions({ [Resource.Tractor]: Operation.Read });
+    draw();
+
+    const drivers = await screen.findByRole("heading", { name: "Drivers", level: 3 });
+    const people = drivers.closest("section") as HTMLElement;
+    expect(within(people).queryByRole("link", { name: /Rosa Diaz/ })).toBeNull();
+    const seat = within(people).getByText("Rosa Diaz").closest('[data-slot="locked-reference"]');
+    expect(seat?.getAttribute("aria-description")).toBe("You don't have access to workers");
   });
 
   it("leaves a section's outline out of the skeleton when the person may not read it", () => {

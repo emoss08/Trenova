@@ -35,6 +35,7 @@ import (
 
 const (
 	pdfContentType       = "application/pdf"
+	maxPacketBytes       = 256 << 20
 	noaFileNameFallback  = "Notice-of-Assignment.pdf"
 	maxNoaFileNameLength = 120
 	noaSendKeyPrefix     = "facnoa-"

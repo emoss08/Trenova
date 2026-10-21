@@ -26,8 +26,6 @@ import (
 )
 
 const (
-	ConverterName = "docling"
-
 	submitPath  = "/v1/convert/file/async"
 	statusPath  = "/v1/status/poll/"
 	resultPath  = "/v1/result/"
@@ -129,27 +127,19 @@ func (c *Client) Submit(
 	if !c.Enabled() {
 		return "", kernelports.ErrDocumentConverterUnavailable
 	}
-	if req == nil || req.Body == nil {
+	if req == nil || req.Open == nil || req.Size < 0 {
 		return "", fmt.Errorf("%w: the request has no file", kernelports.ErrDocumentNotConvertible)
 	}
 	if req.Size > c.cfg.GetMaxFileBytes() {
 		return "", c.tooLarge()
 	}
 
-	data, err := io.ReadAll(io.LimitReader(req.Body, c.cfg.GetMaxFileBytes()+1))
-	if err != nil {
-		return "", fmt.Errorf("read document: %w", err)
-	}
-	if int64(len(data)) > c.cfg.GetMaxFileBytes() {
-		return "", c.tooLarge()
-	}
-
-	body, contentType, err := c.buildSubmitBody(req, data)
+	body, err := c.buildSubmitBody(req)
 	if err != nil {
 		return "", err
 	}
 
-	raw, err := c.call(ctx, http.MethodPost, submitPath, body, contentType, maxErrorBodyBytes)
+	raw, err := c.call(ctx, http.MethodPost, submitPath, body, maxErrorBodyBytes)
 	if err != nil {
 		return "", err
 	}
@@ -186,7 +176,7 @@ func (c *Client) Status(
 
 	path := statusPath + url.PathEscape(string(id)) +
 		"?wait=" + strconv.Itoa(int(statusPollWait/time.Second))
-	raw, err := c.call(ctx, http.MethodGet, path, nil, "", maxErrorBodyBytes)
+	raw, err := c.call(ctx, http.MethodGet, path, nil, maxErrorBodyBytes)
 	if err != nil {
 		return kernelports.ConversionStatus{}, err
 	}
@@ -228,7 +218,6 @@ func (c *Client) Result(
 		http.MethodGet,
 		resultPath+url.PathEscape(string(id)),
 		nil,
-		"",
 		c.resultLimit,
 	)
 	if err != nil {
@@ -272,9 +261,8 @@ func convertResult(raw []byte) (*kernelports.ConvertedDocument, error) {
 	}
 
 	return &kernelports.ConvertedDocument{
-		Converter: ConverterName,
-		Pages:     renderPages(doc, envelope.Confidence),
-		Raw:       bytes.Clone(content),
+		Pages: renderPages(doc, envelope.Confidence),
+		Raw:   bytes.Clone(content),
 	}, nil
 }
 
@@ -299,7 +287,7 @@ func (c *Client) converterVersion(ctx context.Context) string {
 		return c.version
 	}
 
-	raw, err := c.call(ctx, http.MethodGet, versionPath, nil, "", maxErrorBodyBytes)
+	raw, err := c.call(ctx, http.MethodGet, versionPath, nil, maxErrorBodyBytes)
 	if err != nil {
 		c.l.Warn("could not read the docling-serve version", zap.Error(err))
 		return ""
@@ -314,11 +302,75 @@ func (c *Client) converterVersion(ctx context.Context) string {
 	return c.version
 }
 
+type requestBody struct {
+	prefix      []byte
+	suffix      []byte
+	size        int64
+	open        func(context.Context) (io.ReadCloser, error)
+	contentType string
+}
+
+func (b *requestBody) length() int64 {
+	return int64(len(b.prefix)) + b.size + int64(len(b.suffix))
+}
+
+type sizedFile struct {
+	file io.ReadCloser
+	io.Reader
+}
+
+func (f *sizedFile) Close() error {
+	return f.file.Close()
+}
+
+func (b *requestBody) reader(ctx context.Context) (io.ReadCloser, error) {
+	file, err := b.open(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("open the document for the converter: %w", err)
+	}
+	return &sizedFile{
+		file: file,
+		Reader: io.MultiReader(
+			bytes.NewReader(b.prefix),
+			&exactReader{src: file, remaining: b.size},
+			bytes.NewReader(b.suffix),
+		),
+	}, nil
+}
+
+var errFileSize = errors.New("the document is not the size the request declared")
+
+type exactReader struct {
+	src       io.Reader
+	remaining int64
+}
+
+func (r *exactReader) Read(p []byte) (int, error) {
+	if r.remaining <= 0 {
+		var extra [1]byte
+		if n, _ := r.src.Read(extra[:]); n > 0 {
+			return 0, errFileSize
+		}
+		return 0, io.EOF
+	}
+	if int64(len(p)) > r.remaining {
+		p = p[:r.remaining]
+	}
+	n, err := r.src.Read(p)
+	r.remaining -= int64(n)
+	if errors.Is(err, io.EOF) && r.remaining > 0 {
+		return n, fmt.Errorf("%w: %w", errFileSize, io.ErrUnexpectedEOF)
+	}
+	if errors.Is(err, io.EOF) {
+		return n, nil
+	}
+	return n, err
+}
+
 func (c *Client) call(
 	ctx context.Context,
 	method, path string,
-	body []byte,
-	contentType string,
+	body *requestBody,
 	limit int64,
 ) ([]byte, error) {
 	if err := c.sem.Acquire(ctx, 1); err != nil {
@@ -327,7 +379,7 @@ func (c *Client) call(
 	defer c.sem.Release(1)
 
 	operation := func() ([]byte, error) {
-		return c.do(ctx, method, path, body, contentType, limit)
+		return c.do(ctx, method, path, body, limit)
 	}
 
 	return backoff.Retry(
@@ -349,29 +401,41 @@ func newRetryBackOff() backoff.BackOff {
 func (c *Client) do(
 	ctx context.Context,
 	method, path string,
-	body []byte,
-	contentType string,
+	body *requestBody,
 	limit int64,
 ) ([]byte, error) {
-	var reader io.Reader = http.NoBody
-	if body != nil {
-		reader = bytes.NewReader(body)
-	}
 	requestCtx, cancel := context.WithTimeout(ctx, c.cfg.GetRequestTimeout()+statusPollWait)
 	defer cancel()
 
+	var reader io.Reader = http.NoBody
+	if body != nil {
+		file, err := body.reader(requestCtx)
+		if err != nil {
+			return nil, backoff.Permanent(err)
+		}
+		defer file.Close()
+		reader = file
+	}
 	req, err := c.newRequest(requestCtx, method, path, reader)
 	if err != nil {
 		return nil, backoff.Permanent(err)
 	}
-	if contentType != "" {
-		req.Header.Set("Content-Type", contentType)
+	if body != nil {
+		req.ContentLength = body.length()
+		req.Header.Set("Content-Type", body.contentType)
 	}
 
 	resp, err := c.http.Do(req)
 	if err != nil {
 		if ctx.Err() != nil {
 			return nil, backoff.Permanent(ctx.Err())
+		}
+		if errors.Is(err, errFileSize) {
+			return nil, backoff.Permanent(fmt.Errorf(
+				"%w: %w",
+				kernelports.ErrDocumentNotConvertible,
+				err,
+			))
 		}
 		return nil, fmt.Errorf("%w: %w", kernelports.ErrDocumentConverterUnavailable, err)
 	}
@@ -483,12 +547,18 @@ func drain(resp *http.Response) {
 	_ = resp.Body.Close()
 }
 
-func (c *Client) buildSubmitBody(
-	req *kernelports.ConvertRequest,
-	data []byte,
-) (body []byte, contentType string, err error) {
-	var buf bytes.Buffer
-	w := multipart.NewWriter(&buf)
+type switchWriter struct {
+	w io.Writer
+}
+
+func (s *switchWriter) Write(p []byte) (int, error) {
+	return s.w.Write(p)
+}
+
+func (c *Client) buildSubmitBody(req *kernelports.ConvertRequest) (*requestBody, error) {
+	var prefix, suffix bytes.Buffer
+	out := &switchWriter{w: &prefix}
+	w := multipart.NewWriter(out)
 
 	header := make(textproto.MIMEHeader, 2)
 	header.Set(
@@ -496,25 +566,27 @@ func (c *Client) buildSubmitBody(
 		multipart.FileContentDisposition("files", SanitizeFileName(req.FileName, req.ContentType)),
 	)
 	header.Set("Content-Type", fileContentType(req.ContentType))
-	part, err := w.CreatePart(header)
-	if err != nil {
-		return nil, "", fmt.Errorf("create converter file part: %w", err)
-	}
-	if _, err = part.Write(data); err != nil {
-		return nil, "", fmt.Errorf("write converter file part: %w", err)
+	if _, err := w.CreatePart(header); err != nil {
+		return nil, fmt.Errorf("create converter file part: %w", err)
 	}
 
+	out.w = &suffix
 	for _, field := range c.formFields(req) {
-		if err = w.WriteField(field[0], field[1]); err != nil {
-			return nil, "", fmt.Errorf("write converter field %q: %w", field[0], err)
+		if err := w.WriteField(field[0], field[1]); err != nil {
+			return nil, fmt.Errorf("write converter field %q: %w", field[0], err)
 		}
 	}
-
-	if err = w.Close(); err != nil {
-		return nil, "", fmt.Errorf("finalize converter request: %w", err)
+	if err := w.Close(); err != nil {
+		return nil, fmt.Errorf("finalize converter request: %w", err)
 	}
 
-	return buf.Bytes(), w.FormDataContentType(), nil
+	return &requestBody{
+		prefix:      prefix.Bytes(),
+		suffix:      suffix.Bytes(),
+		size:        req.Size,
+		open:        req.Open,
+		contentType: w.FormDataContentType(),
+	}, nil
 }
 
 func (c *Client) formFields(req *kernelports.ConvertRequest) [][2]string {

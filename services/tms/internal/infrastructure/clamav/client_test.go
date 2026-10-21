@@ -92,12 +92,12 @@ func TestScan_StreamsTheFileAndReadsTheVerdict(t *testing.T) {
 	)
 
 	large := bytes.Repeat([]byte("rate confirmation "), 10_000)
-	result, err := client.Scan(t.Context(), large)
+	result, err := client.Scan(t.Context(), bytes.NewReader(large), int64(len(large)))
 	require.NoError(t, err)
 	assert.Equal(t, contentscanports.VerdictClean, result.Verdict)
 	assert.Equal(t, large, <-fake.received)
 
-	result, err = client.Scan(t.Context(), []byte(eicar))
+	result, err = client.Scan(t.Context(), strings.NewReader(eicar), int64(len(eicar)))
 	require.NoError(t, err)
 	assert.Equal(t, contentscanports.VerdictInfected, result.Verdict)
 	assert.Equal(t, "Win.Test.EICAR_HDB-1", result.Signature)
@@ -112,7 +112,7 @@ func TestScan_ReachesClamdOverAUnixSocket(t *testing.T) {
 	startFakeClamd(t, "unix", socket)
 	client := New(config.ClamAVConfig{Address: "unix:" + socket})
 
-	result, err := client.Scan(t.Context(), []byte("clean"))
+	result, err := client.Scan(t.Context(), strings.NewReader("clean"), 5)
 	require.NoError(t, err)
 	assert.Equal(t, contentscanports.VerdictClean, result.Verdict)
 }
@@ -121,14 +121,14 @@ func TestScan_ReportsAFileItCouldNotCheckAsUnavailable(t *testing.T) {
 	t.Parallel()
 
 	unreachable := New(config.ClamAVConfig{Address: "127.0.0.1:1", Timeout: time.Second})
-	_, err := unreachable.Scan(t.Context(), []byte("x"))
+	_, err := unreachable.Scan(t.Context(), strings.NewReader("x"), 1)
 	require.ErrorIs(t, err, contentscanports.ErrScannerUnavailable)
 	require.ErrorIs(t, unreachable.Ping(t.Context()), contentscanports.ErrScannerUnavailable)
 
 	fake := startFakeClamd(t, "tcp", "127.0.0.1:0")
 	fake.reply = "Can't allocate memory ERROR"
 	client := New(config.ClamAVConfig{Address: fake.listener.Addr().String()})
-	_, err = client.Scan(t.Context(), []byte("x"))
+	_, err = client.Scan(t.Context(), strings.NewReader("x"), 1)
 	require.ErrorIs(t, err, contentscanports.ErrScannerUnavailable)
 	assert.Contains(t, err.Error(), "allocate memory")
 }
@@ -138,16 +138,21 @@ func TestScan_ReportsAFileTooLargeToCheckAsTooLargeNotUnavailable(t *testing.T) 
 
 	fake := startFakeClamd(t, "tcp", "127.0.0.1:0")
 	small := New(config.ClamAVConfig{Address: fake.listener.Addr().String(), MaxStreamBytes: 4})
-	_, err := small.Scan(t.Context(), []byte(strings.Repeat("x", 5)))
+	_, err := small.Scan(t.Context(), strings.NewReader(strings.Repeat("x", 5)), 5)
 	var tooLarge *contentscanports.TooLargeError
 	require.ErrorAs(t, err, &tooLarge)
 	assert.Equal(t, int64(5), tooLarge.Size)
 	assert.Equal(t, int64(4), tooLarge.Limit)
 	assert.NotErrorIs(t, err, contentscanports.ErrScannerUnavailable)
 
+	_, err = small.Scan(t.Context(), strings.NewReader(strings.Repeat("x", 5)), 3)
+	require.ErrorAs(t, err, &tooLarge, "a body longer than its declared size is refused as it streams")
+	assert.Equal(t, int64(4), tooLarge.Limit)
+	assert.NotErrorIs(t, err, contentscanports.ErrScannerUnavailable)
+
 	fake.reply = "INSTREAM size limit exceeded. ERROR"
 	client := New(config.ClamAVConfig{Address: fake.listener.Addr().String()})
-	_, err = client.Scan(t.Context(), []byte("xyz"))
+	_, err = client.Scan(t.Context(), strings.NewReader("xyz"), 3)
 	require.ErrorAs(t, err, &tooLarge)
 	assert.Equal(t, int64(3), tooLarge.Size)
 	assert.Zero(t, tooLarge.Limit, "clamd does not say what its own limit is")

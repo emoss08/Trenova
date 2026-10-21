@@ -17,6 +17,7 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { WithheldValue } from "@trenova/shared/components/withheld-value";
 import { getTodayDate } from "@trenova/shared/lib/date";
 import {
   AVAILABILITY_TONES,
@@ -113,7 +114,12 @@ export default function WorkerScheduleTab({ workerId }: { workerId: string }) {
   const history = assignments.filter((row) => row.id !== current?.id);
   const preferences = preferencesQuery.data ?? [];
   const swaps = swapsQuery.data ?? [];
-  const currentDays = current?.shiftTemplate ? dayMaskToDays(current.shiftTemplate.daysOfWeek) : [];
+  const template = current?.shiftTemplate ?? null;
+  // The template's pattern is outside its reference view: null without shift template read.
+  const daysOfWeek = template?.daysOfWeek ?? null;
+  const cycleWeeks = template?.cycleWeeks ?? null;
+  const patternWithheld = template !== null && (daysOfWeek === null || cycleWeeks === null);
+  const currentDays = daysOfWeek !== null ? dayMaskToDays(daysOfWeek) : [];
 
   return (
     <div className="flex flex-col gap-4">
@@ -135,16 +141,24 @@ export default function WorkerScheduleTab({ workerId }: { workerId: string }) {
                 {current?.shiftTemplate?.name ?? t("Not on a shift")}
               </h3>
               <p className="text-muted-foreground text-xs">
-                {current?.shiftTemplate
-                  ? `${describeShiftPattern(current.shiftTemplate.daysOfWeek, current.shiftTemplate.cycleWeeks)} · ${formatShiftWindow(current.shiftTemplate.startMinute, current.shiftTemplate.durationMinutes)}`
-                  : t("They show on the rota with no rostered days until they are.")}
+                {template === null ? (
+                  t("They show on the rota with no rostered days until they are.")
+                ) : daysOfWeek === null || cycleWeeks === null ? (
+                  <span className="inline-flex items-center gap-1">
+                    <WithheldValue kind="shift_template" />
+                    <span aria-hidden>·</span>
+                    {formatShiftWindow(template.startMinute, template.durationMinutes)}
+                  </span>
+                ) : (
+                  `${describeShiftPattern(daysOfWeek, cycleWeeks)} · ${formatShiftWindow(template.startMinute, template.durationMinutes)}`
+                )}
               </p>
               {current ? (
                 <p className="text-muted-foreground mt-1 text-xs tabular-nums">
                   {t(
                     "Since {0}{1}",
                     formatShiftDate(current.effectiveFrom),
-                    current.shiftTemplate && current.shiftTemplate.cycleWeeks > 1
+                    cycleWeeks !== null && cycleWeeks > 1
                       ? ` ${t("· week {0} of the rotation", current.cycleOffsetWeeks + 1)}`
                       : "",
                   )}
@@ -172,7 +186,7 @@ export default function WorkerScheduleTab({ workerId }: { workerId: string }) {
           ) : null}
         </div>
 
-        {current ? (
+        {current && !patternWithheld ? (
           <div className="mt-3 flex items-center gap-1">
             {DAY_LABELS.map((label, index) => {
               const on = currentDays.includes(index);

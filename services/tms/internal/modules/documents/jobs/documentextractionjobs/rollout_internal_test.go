@@ -21,16 +21,7 @@ type fakeRolloutRouter struct {
 	assignErr error
 	settleErr error
 	assigned  *extractionrolloutports.AssignExtractionRolloutRequest
-	excluded  *extractionrolloutports.ExcludeExtractionRolloutRequest
 	settled   *extractionrolloutports.SettleExtractionRolloutRequest
-}
-
-func (f *fakeRolloutRouter) ExcludeExtraction(
-	_ context.Context,
-	req *extractionrolloutports.ExcludeExtractionRolloutRequest,
-) error {
-	f.excluded = req
-	return nil
 }
 
 func (f *fakeRolloutRouter) AssignExtraction(

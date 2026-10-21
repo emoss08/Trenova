@@ -452,7 +452,7 @@ extend type Query {
   dotRandomPools(input: DOTRandomPoolsInput!): DOTRandomPoolConnection!
   dotRandomPool(id: ID!): DOTRandomPool!
   dotRandomDraws(poolId: ID): [DOTRandomDraw!]!
-  dotRandomDraw(id: ID!): DOTRandomDraw!
+  dotRandomDraw(id: ID!): DOTRandomDraw! @authorizes(resource: "dot_random_pool")
   """
   Selections the worker still owes a collection for.
   """

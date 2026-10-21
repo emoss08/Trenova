@@ -2,7 +2,7 @@
 # it, the flags the run raised, how it adds up, its lines summed by how each
 # was paid, each load's share, and the worker's disputes. The loads it pays are
 # read a page at a time through shipments.
-query DeskDriverSettlementCard($id: ID!) {
+query DeskDriverSettlementCard($id: ID!) @requiresRead(kind: "escrow_account") @requiresRead(kind: "pay_advance") {
   driverSettlement(id: $id) {
     id
     settlementNumber

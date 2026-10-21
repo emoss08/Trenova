@@ -2,6 +2,7 @@ package docling
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"mime"
 	"mime/multipart"
@@ -52,9 +53,11 @@ func convertRequest(body string) *kernelports.ConvertRequest {
 	return &kernelports.ConvertRequest{
 		FileName:    "../../Rate Con #48213.pdf",
 		ContentType: "application/pdf",
-		Body:        strings.NewReader(body),
-		Size:        int64(len(body)),
-		OCR:         true,
+		Open: func(context.Context) (io.ReadCloser, error) {
+			return io.NopCloser(strings.NewReader(body)), nil
+		},
+		Size: int64(len(body)),
+		OCR:  true,
 	}
 }
 
@@ -266,17 +269,18 @@ func TestSubmitRefusesOversizedFilesBeforeUpload(t *testing.T) {
 
 	_, err := client.Submit(t.Context(), convertRequest("12345"))
 	require.ErrorIs(t, err, kernelports.ErrDocumentNotConvertible)
+	assert.Zero(t, calls.Load(), "a declared size over the limit is refused before any request")
 
 	req := convertRequest("12345")
-	req.Size = 0
+	req.Size = 2
 	_, err = client.Submit(t.Context(), req)
 	require.ErrorIs(
 		t,
 		err,
 		kernelports.ErrDocumentNotConvertible,
-		"an understated size is caught on read",
+		"an understated size is caught as the file streams, and not retried",
 	)
-	assert.Zero(t, calls.Load())
+	assert.LessOrEqual(t, calls.Load(), int32(1))
 }
 
 func TestStatusMapsTaskStates(t *testing.T) {
@@ -362,7 +366,6 @@ func TestResultRendersTheDocument(t *testing.T) {
 	for range 2 {
 		converted, resultErr := client.Result(t.Context(), "task-1")
 		require.NoError(t, resultErr)
-		assert.Equal(t, ConverterName, converted.Converter)
 		assert.Equal(t, "1.36.0", converted.ConverterVersion)
 		assert.Len(t, converted.Pages, 2)
 		assert.True(t, bytes.HasPrefix(converted.Raw, []byte("{")))

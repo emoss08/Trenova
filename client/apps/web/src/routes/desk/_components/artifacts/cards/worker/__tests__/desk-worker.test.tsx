@@ -252,10 +252,8 @@ describe("DeskWorker", () => {
     expect(drive).toHaveTextContent("6:15");
     expect(drive.closest(".dk-wk-ring")).toHaveTextContent("of 11:00");
     expect(drive.querySelector("circle:last-of-type")).toHaveClass("text-brand");
-    expect(within(hours).getByRole("link", { name: /Open tractor/ })).toHaveAttribute(
-      "href",
-      expect.stringContaining("tr_101"),
-    );
+    // The tractor is a linked record the person may not read: there is no way to it.
+    expect(within(hours).queryByRole("link", { name: /Open tractor/ })).toBeNull();
 
     expect(await within(section("Standing")).findByText("In good standing")).toBeInTheDocument();
     expect(within(section("Qualifications")).getByText("Nothing due")).toBeInTheDocument();

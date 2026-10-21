@@ -3,6 +3,7 @@ package captureservice
 import (
 	"context"
 	"fmt"
+	"iter"
 	"slices"
 	"strings"
 	"sync"
@@ -10,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -23,9 +25,6 @@ import (
 
 const (
 	maxPageFailureLength = 500
-	// pageInspectionWorkers is how many pages of a sealed batch are read at
-	// once.
-	pageInspectionWorkers = 4
 	// maxReferencesTried bounds how many numbers from a document are looked
 	// up as shipment references. The first few are the ones printed large.
 	maxReferencesTried  = 8
@@ -175,60 +174,40 @@ func autoFileable(
 	return ready
 }
 
-// inspectPages reads every page still waiting to be read, a few at a time:
-// rendering a page is mostly waiting on storage and the renderer, and a
-// thousand-page batch read one page after another keeps its stack out of
-// Intake for minutes. Pages read as they arrived are already done.
 func (s *Service) inspectPages(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	pages []*capture.CapturePage,
 	progress Progress,
 ) error {
-	var (
-		mu   sync.Mutex
-		read int
-		wg   sync.WaitGroup
-	)
+	read := 0
 	report := func() {
-		mu.Lock()
 		read++
 		if progress != nil {
 			progress(read)
 		}
-		mu.Unlock()
 	}
-	slots := make(chan struct{}, pageInspectionWorkers)
+	pending := make([]int, 0, len(pages))
 	for i, page := range pages {
 		if page.Status != capture.PageReceived {
 			report()
 			continue
 		}
-		if err := ctx.Err(); err != nil {
-			break
-		}
-		slots <- struct{}{}
-		wg.Go(func() {
-			defer func() { <-slots }()
-			pages[i] = s.inspectPage(ctx, tenantInfo, page)
+		pending = append(pending, i)
+	}
+	if len(pending) == 0 {
+		return ctx.Err()
+	}
+
+	err := s.readPages(ctx, tenantInfo, pages, pending, kernelports.ImagingBatch,
+		func(i int) {
+			pages[i] = s.savePage(ctx, pages[i])
 			report()
 		})
+	if err != nil {
+		return err
 	}
-	wg.Wait()
-
 	return ctx.Err()
-}
-
-// inspectPage renders a page and records what it found. A page that cannot be
-// read is kept and marked, never dropped: it is still paper somebody scanned.
-func (s *Service) inspectPage(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	page *capture.CapturePage,
-) *capture.CapturePage {
-	s.readPage(ctx, tenantInfo, page)
-
-	return s.savePage(ctx, page)
 }
 
 // inspectOnArrival reads a page as soon as it is stored, so its thumbnail is
@@ -239,7 +218,12 @@ func (s *Service) inspectOnArrival(tenantInfo pagination.TenantInfo, page *captu
 	arrived := *page
 	s.arrivals.submit(func(ctx context.Context) {
 		ctx = dbscope.WithTenant(ctx, tenantInfo.DBTenant())
-		s.readPage(ctx, tenantInfo, &arrived)
+		pages := []*capture.CapturePage{&arrived}
+		if err := s.readPages(ctx, tenantInfo, pages, []int{0}, kernelports.ImagingBatch,
+			func(int) {}); err != nil {
+			s.l.Debug("a page was not read on arrival", zap.Error(err))
+			return
+		}
 		if arrived.Status != capture.PageProcessed {
 			return
 		}
@@ -250,38 +234,90 @@ func (s *Service) inspectOnArrival(tenantInfo pagination.TenantInfo, page *captu
 	})
 }
 
-// readPage renders a page and sets what it found on it, without saving.
-func (s *Service) readPage(
+func (s *Service) readPages(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	pages []*capture.CapturePage,
+	pending []int,
+	priority kernelports.ImagingPriority,
+	done func(i int),
+) error {
+	var unreadableMu sync.Mutex
+	unreadable := make(map[int]error)
+	_, err := s.imaging.InspectCapture(ctx, &kernelports.ImagingCaptureRequest{
+		PageCount: len(pending),
+		Priority:  priority,
+		Pages: func() iter.Seq2[kernelports.ImagingCapturePage, error] {
+			return func(yield func(kernelports.ImagingCapturePage, error) bool) {
+				for position, i := range pending {
+					page := pages[i]
+					data, readErr := s.getObject(ctx, tenantInfo, page.StoragePath)
+					if readErr != nil {
+						unreadableMu.Lock()
+						unreadable[position] = readErr
+						unreadableMu.Unlock()
+						data = nil
+					}
+					if !yield(kernelports.ImagingCapturePage{
+						Index:  position,
+						Source: kernelports.ImagingBytes("application/pdf", data),
+					}, nil) {
+						return
+					}
+				}
+			}
+		},
+	}, func(result *kernelports.ImagingCaptureResult) error {
+		if result.Index < 0 || result.Index >= len(pending) {
+			return fmt.Errorf(
+				"the imaging service answered for page %d of %d",
+				result.Index,
+				len(pending),
+			)
+		}
+		i := pending[result.Index]
+		unreadableMu.Lock()
+		readErr, ok := unreadable[result.Index]
+		unreadableMu.Unlock()
+		if ok {
+			s.failPage(pages[i], "The page could not be read back from storage.", readErr)
+		} else {
+			s.applyInspection(ctx, tenantInfo, pages[i], result)
+		}
+		done(i)
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("inspect captured pages: %w", err)
+	}
+	return nil
+}
+
+func (s *Service) failPage(page *capture.CapturePage, message string, err error) {
+	s.l.Warn("could not read a captured page",
+		zap.String("pageId", page.ID.String()), zap.Error(err))
+	page.Status = capture.PageFailed
+	page.FailureMessage = stringutils.TruncateRunes(message, maxPageFailureLength)
+}
+
+func (s *Service) applyInspection(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	page *capture.CapturePage,
+	result *kernelports.ImagingCaptureResult,
 ) {
-	fail := func(message string, err error) {
-		s.l.Warn("could not read a captured page",
-			zap.String("pageId", page.ID.String()), zap.Error(err))
-		page.Status = capture.PageFailed
-		page.FailureMessage = stringutils.TruncateRunes(message, maxPageFailureLength)
-	}
-
-	data, err := s.getObject(ctx, tenantInfo, page.StoragePath)
-	if err != nil {
-		fail("The page could not be read back from storage.", err)
-		return
-	}
-
-	inspection, err := s.inspector.Inspect(ctx, data)
-	if err != nil {
-		fail("The page could not be rendered.", err)
+	if result.Err != nil {
+		s.failPage(page, "The page could not be rendered.", result.Err)
 		return
 	}
 
 	thumb := thumbnailKey(page.StoragePath)
-	if err = s.putObject(
+	if err := s.putObject(
 		ctx,
 		tenantInfo,
 		thumb,
 		thumbnailContentType,
-		inspection.Thumbnail,
+		result.Thumbnail,
 	); err != nil {
 		s.l.Warn(
 			"could not store a page thumbnail",
@@ -292,11 +328,15 @@ func (s *Service) readPage(
 		page.ThumbnailPath = thumb
 	}
 
-	coverage := inspection.InkCoverage
+	coverage := result.InkCoverage
 	page.BlankScore = &coverage
-	page.WidthPx = inspection.WidthPx
-	page.HeightPx = inspection.HeightPx
-	s.readCodes(ctx, tenantInfo, page, inspection.Codes)
+	page.WidthPx = result.Width
+	page.HeightPx = result.Height
+	codes := make([]string, 0, len(result.Codes))
+	for _, code := range result.Codes {
+		codes = append(codes, code.Text)
+	}
+	s.readCodes(ctx, tenantInfo, page, codes)
 	page.Status = capture.PageProcessed
 }
 

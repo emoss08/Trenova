@@ -2069,7 +2069,6 @@ var DocumentControlColumns = struct {
 	CaptureRetentionDays            buncolgen.Column // "capture_retention_days" → qualified: "dc.capture_retention_days"
 	CaptureMinAgentVersion          buncolgen.Column // "capture_min_agent_version" → qualified: "dc.capture_min_agent_version"
 	CaptureAllowAutoUpdate          buncolgen.Column // "capture_allow_auto_update" → qualified: "dc.capture_allow_auto_update"
-	ExtractionEngine                buncolgen.Column // "extraction_engine" → qualified: "dc.extraction_engine"
 	Version                         buncolgen.Column // "version" → qualified: "dc.version"
 	CreatedAt                       buncolgen.Column // "created_at" → qualified: "dc.created_at"
 	UpdatedAt                       buncolgen.Column // "updated_at" → qualified: "dc.updated_at"
@@ -2092,7 +2091,6 @@ var DocumentControlColumns = struct {
 	CaptureRetentionDays:            buncolgen.NewColumn("capture_retention_days", "dc"),
 	CaptureMinAgentVersion:          buncolgen.NewColumn("capture_min_agent_version", "dc"),
 	CaptureAllowAutoUpdate:          buncolgen.NewColumn("capture_allow_auto_update", "dc"),
-	ExtractionEngine:                buncolgen.NewColumn("extraction_engine", "dc"),
 	Version:                         buncolgen.NewColumn("version", "dc"),
 	CreatedAt:                       buncolgen.NewColumn("created_at", "dc"),
 	UpdatedAt:                       buncolgen.NewColumn("updated_at", "dc"),
@@ -2121,7 +2119,6 @@ var DocumentControlFieldMap = map[string]string{
 	"captureRetentionDays":            "capture_retention_days",
 	"captureMinAgentVersion":          "capture_min_agent_version",
 	"captureAllowAutoUpdate":          "capture_allow_auto_update",
-	"extractionEngine":                "extraction_engine",
 	"version":                         "version",
 	"createdAt":                       "created_at",
 	"updatedAt":                       "updated_at",
@@ -2148,7 +2145,6 @@ var DocumentControlInsertableColumns = []string{
 	"capture_retention_days",
 	"capture_min_agent_version",
 	"capture_allow_auto_update",
-	"extraction_engine",
 	"version",
 	"created_at",
 	"updated_at",
@@ -2222,7 +2218,6 @@ var DocumentControlFilter = struct {
 	CaptureRetentionDays            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "captureRetentionDays" → DB: "capture_retention_days"
 	CaptureMinAgentVersion          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "captureMinAgentVersion" → DB: "capture_min_agent_version"
 	CaptureAllowAutoUpdate          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "captureAllowAutoUpdate" → DB: "capture_allow_auto_update"
-	ExtractionEngine                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "extractionEngine" → DB: "extraction_engine"
 	Version                         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt                       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt                       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -2280,9 +2275,6 @@ var DocumentControlFilter = struct {
 	},
 	CaptureAllowAutoUpdate: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("captureAllowAutoUpdate", op, value)
-	},
-	ExtractionEngine: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("extractionEngine", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("version", op, value)

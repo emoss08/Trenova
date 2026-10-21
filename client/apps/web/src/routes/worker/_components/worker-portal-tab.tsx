@@ -1,3 +1,5 @@
+import { WithheldValue } from "@trenova/shared/components/withheld-value";
+import { useCanReadKind } from "@trenova/shared/hooks/use-can-read-kind";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -43,6 +45,8 @@ const invitationStatusVariants: Record<string, React.ComponentProps<typeof Badge
 export default function WorkerPortalTab({ workerId }: { workerId: string }) {
   const t = useT();
   const rt = useRichT();
+  // The portal user's email and last sign-in are outside the user's reference view.
+  const canReadUsers = useCanReadKind("user");
 
   const queryClient = useQueryClient();
   const [inviteEmail, setInviteEmail] = useState("");
@@ -131,10 +135,16 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
         {data.linked && data.portalUser ? (
           <div className="mt-3 flex flex-col gap-1 text-sm">
             <p className="font-medium">{data.portalUser.name}</p>
-            <p className="text-muted-foreground text-xs">{data.portalUser.emailAddress}</p>
-            <p className="text-muted-foreground text-xs">
-              {t("Last sign-in: {0}", formatDate(data.portalUser.lastLoginAt))}
-            </p>
+            {data.portalUser.emailAddress === null ? (
+              <WithheldValue kind="user" className="self-start" />
+            ) : (
+              <p className="text-muted-foreground text-xs">{data.portalUser.emailAddress}</p>
+            )}
+            {canReadUsers ? (
+              <p className="text-muted-foreground text-xs">
+                {t("Last sign-in: {0}", formatDate(data.portalUser.lastLoginAt))}
+              </p>
+            ) : null}
             <Button
               variant="outline"
               size="sm"

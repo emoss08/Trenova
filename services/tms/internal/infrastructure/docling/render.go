@@ -369,7 +369,7 @@ func plainTable(grid [][]string) string {
 			filled = append(filled, cell)
 		}
 		if len(filled) > 0 {
-			rows = append(rows, strings.Join(filled, kernelports.PDFColumnGap))
+			rows = append(rows, strings.Join(filled, kernelports.TextColumnGap))
 		}
 	}
 

@@ -1,5 +1,7 @@
 import { usePermission } from "@/hooks/use-permission";
+import { WithheldValue } from "@trenova/shared/components/withheld-value";
 import { useT } from "@trenova/shared/i18n/use-t";
+import type { ReferenceKind } from "@trenova/shared/types/generated/reference-views";
 import { cn } from "@trenova/shared/lib/utils";
 import { Link } from "react-router";
 import { CardActionButton } from "./card-action";
@@ -87,6 +89,11 @@ export type StatementRow = {
   name: string;
   code?: string;
   detail: string;
+  /**
+   * The kind whose read the row's detail needs, when it was withheld: the detail is drawn as
+   * withheld rather than left out (docs/engineering/reference-views.md).
+   */
+  withheld?: ReferenceKind;
   basis: string;
   amount: string;
   manual?: boolean;
@@ -143,7 +150,11 @@ export function SettlementStatement({
                       {row.code && <span className="dk-rec-stmt-code">{row.code}</span>}
                       {row.manual && <span className="dk-rec-stmt-tag">{t("By hand")}</span>}
                     </span>
-                    {row.detail && <em>{row.detail}</em>}
+                    {row.detail ? (
+                      <em>{row.detail}</em>
+                    ) : (
+                      row.withheld && <WithheldValue kind={row.withheld} />
+                    )}
                   </div>
                 </td>
                 <td className="dk-qty">{row.basis}</td>
