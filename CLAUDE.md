@@ -571,7 +571,9 @@ from a table's row or looked up by the agent) live one folder each under `artifa
 are lazy-loaded through `cards/registry.tsx`, and each ships a skeleton drawn in its own
 layout. **Read
 [docs/engineering/desk-artifacts.md](docs/engineering/desk-artifacts.md) before adding
-an artifact card or a part shared between cards.**
+an artifact card or a part shared between cards**, and use the `desk-artifact` skill
+(`.claude/skills/desk-artifact/`) to build one end to end: mockup and approval, the one-query
+server read, the card, tests, mock API screenshots, i18n, generated snapshots and the PR.
 
 ## Record Kinds
 
