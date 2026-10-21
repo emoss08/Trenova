@@ -1,29 +1,29 @@
 //go:build imagingbench
 
-package gobaseline_test
+package workerbench_test
 
 import (
 	"bytes"
 	"context"
 	"fmt"
 	"io"
+	"iter"
 	"os"
 	"os/exec"
 	"runtime"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/infrastructure/captureimaging"
-	"github.com/emoss08/trenova/internal/infrastructure/pdfassembly"
-	"github.com/emoss08/trenova/internal/infrastructure/pdfrender/pdfreader"
+	"github.com/emoss08/trenova/internal/infrastructure/imaging/imagingkit"
 	"github.com/emoss08/trenova/internal/modules/documents/app/storedobject"
 	"github.com/emoss08/trenova/internal/modules/documents/app/thumbnailservice"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil/imagingbench"
+	"github.com/emoss08/trenova/internal/testutil/imagingtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -32,37 +32,36 @@ const (
 	iterations       = 15
 	throughputWindow = 10 * time.Second
 	rssChildEnv      = "TRENOVA_IMAGING_RSS_CHILD"
+	workerCPUsEnv    = "TRENOVA_IMAGING_WORKER_CPUS"
+	outputLimit      = 256 << 20
 )
 
-func TestBaseline(t *testing.T) {
+func TestWorker(t *testing.T) {
 	corpus := imagingbench.Load(t)
 	rec := imagingbench.NewRecorder()
 	t.Cleanup(func() { rec.Flush(t) })
 
-	reader := pdfreader.NewReader(nil, nil)
-	t.Cleanup(func() { _ = reader.Close() })
-	generator := thumbnailservice.NewGenerator(reader)
-	inspector := captureimaging.New(reader)
-	assembler := pdfassembly.New()
-	images := pdfassembly.NewImageConverter()
+	client := imagingtest.Client(t)
+	generator := thumbnailservice.NewGenerator(client)
 	ctx := t.Context()
 
-	warm, err := reader.Open(ctx, corpus.Read(t, "native-1p.pdf"))
-	if err != nil {
-		t.Fatalf("warm the PDF reader: %v", err)
+	if _, err := generator.Generate(
+		ctx,
+		kernelports.ImagingBytes("application/pdf", corpus.Read(t, "native-1p.pdf")),
+		kernelports.ImagingBatch,
+	); err != nil {
+		t.Fatalf("warm the worker: %v", err)
 	}
-	_ = warm.Close()
 
 	t.Run("thumbnail", func(t *testing.T) {
 		for _, name := range []string{
 			"native-1p.pdf", "rate-confirmation.pdf", "scan-bol-1p-gray.pdf", "large-5mb.pdf",
 			"photo-bol.jpg", "photo-bol.png",
 		} {
-			data := corpus.Read(t, name)
-			contentType := contentTypeOf(name)
+			source := kernelports.ImagingBytes(contentTypeOf(name), corpus.Read(t, name))
 			rec.AddLatency(imagingbench.MeasureLatency(ctx, "thumbnail", name, iterations, "",
 				func(ctx context.Context) (int, error) {
-					_, err := generator.Generate(ctx, bytes.NewReader(data), contentType)
+					_, err := generator.Generate(ctx, source, kernelports.ImagingBatch)
 					return 1, err
 				}))
 		}
@@ -73,63 +72,87 @@ func TestBaseline(t *testing.T) {
 			"native-1p.pdf", "rate-confirmation.pdf", "scan-bol-1p-gray.pdf", "scan-bol-20p-g4.pdf",
 			"native-200p.pdf", "large-20mb.pdf",
 		} {
-			data := corpus.Read(t, name)
+			source := kernelports.ImagingBytes("application/pdf", corpus.Read(t, name))
 			rec.AddLatency(imagingbench.MeasureLatency(ctx, "page_view", name, iterations, "",
 				func(ctx context.Context) (int, error) {
-					_, err := generator.RenderPage(ctx, bytes.NewReader(data), "application/pdf", 1)
+					_, err := generator.RenderPage(ctx, source, 1, kernelports.ImagingInteractive)
 					return 1, err
 				}))
 		}
 	})
 
 	t.Run("capture_inspection", func(t *testing.T) {
-		for _, entry := range corpus.Kind("capture-page") {
-			data := corpus.Read(t, entry.File)
+		entries := corpus.Kind("capture-page")
+		sources := make([]kernelports.ImagingSource, 0, len(entries))
+		for _, entry := range entries {
+			source := kernelports.ImagingBytes("application/pdf", corpus.Read(t, entry.File))
+			sources = append(sources, source)
 			rec.AddLatency(
 				imagingbench.MeasureLatency(ctx, "capture_inspection", entry.File, iterations, "",
 					func(ctx context.Context) (int, error) {
-						_, err := inspector.Inspect(ctx, data)
-						return 1, err
+						return inspect(ctx, client, []kernelports.ImagingSource{source})
 					}),
 			)
 		}
+		rec.AddLatency(imagingbench.MeasureLatency(
+			ctx,
+			"capture_inspection",
+			strconv.Itoa(len(sources))+" pages in one batch",
+			iterations,
+			"pages",
+			func(ctx context.Context) (int, error) {
+				return inspect(ctx, client, sources)
+			},
+		))
 	})
 
 	t.Run("text_profile", func(t *testing.T) {
 		for _, name := range []string{"native-10p.pdf", "native-200p.pdf", "scan-bol-5p-gray.pdf", "rate-confirmation.pdf"} {
-			data := corpus.Read(t, name)
+			source := kernelports.ImagingBytes("application/pdf", corpus.Read(t, name))
 			rec.AddLatency(
 				imagingbench.MeasureLatency(ctx, "text_profile", name, iterations, "pages",
 					func(ctx context.Context) (int, error) {
-						return textProfile(ctx, reader, data)
+						probe, err := client.Probe(ctx, &kernelports.ImagingProbeRequest{
+							Source:      source,
+							TextProfile: true,
+							Priority:    kernelports.ImagingBatch,
+						})
+						if err != nil {
+							return 0, err
+						}
+						return len(probe.Pages), nil
 					}),
 			)
 		}
 	})
 
 	t.Run("assemble", func(t *testing.T) {
-		pages, err := assembler.Split(ctx, corpus.Read(t, "native-50p.pdf"))
+		native50 := kernelports.ImagingBytes("application/pdf", corpus.Read(t, "native-50p.pdf"))
+		pages, err := imagingkit.SplitPages(ctx, client, native50, 50, outputLimit, kernelports.ImagingBatch)
 		if err != nil {
 			t.Fatalf("split native-50p for the merge input: %v", err)
 		}
-		mergeInput := make([]captureports.CaptureAssemblyPage, 0, len(pages))
+		mergeInput := make([]imagingkit.Part, 0, len(pages))
 		for _, page := range pages {
-			mergeInput = append(mergeInput, captureports.CaptureAssemblyPage{PDF: page})
+			mergeInput = append(mergeInput, imagingkit.Part{
+				Source: kernelports.ImagingBytes("application/pdf", page),
+			})
 		}
-		mixed := []captureports.CaptureAssemblyPage{
-			{PDF: corpus.Read(t, "native-10p.pdf")},
-			{PDF: corpus.Read(t, "scan-bol-5p-gray.pdf")},
-			{PDF: corpus.Read(t, "rate-confirmation.pdf")},
+		mixed := []imagingkit.Part{
+			{Source: kernelports.ImagingBytes("application/pdf", corpus.Read(t, "native-10p.pdf"))},
+			{Source: kernelports.ImagingBytes("application/pdf", corpus.Read(t, "scan-bol-5p-gray.pdf"))},
+			{Source: kernelports.ImagingBytes("application/pdf", corpus.Read(t, "rate-confirmation.pdf"))},
 		}
-		rotated := []captureports.CaptureAssemblyPage{
-			{PDF: corpus.Read(t, "scan-bol-1p-gray.pdf"), Rotation: 90},
-		}
+		rotated := []imagingkit.Part{{
+			Source:   kernelports.ImagingBytes("application/pdf", corpus.Read(t, "scan-bol-1p-gray.pdf")),
+			Rotation: 90,
+		}}
 
 		rec.AddLatency(
 			imagingbench.MeasureLatency(ctx, "merge", "50 one-page PDFs", iterations, "pages",
 				func(ctx context.Context) (int, error) {
-					_, err := assembler.Assemble(ctx, mergeInput)
-					return len(mergeInput), err
+					_, n, mergeErr := imagingkit.Merge(ctx, client, mergeInput, outputLimit, kernelports.ImagingBatch)
+					return n, mergeErr
 				}),
 		)
 		rec.AddLatency(
@@ -140,65 +163,69 @@ func TestBaseline(t *testing.T) {
 				iterations,
 				"",
 				func(ctx context.Context) (int, error) {
-					_, err := assembler.Assemble(ctx, mixed)
-					return 1, err
+					_, _, mergeErr := imagingkit.Merge(ctx, client, mixed, outputLimit, kernelports.ImagingBatch)
+					return 1, mergeErr
 				},
 			),
 		)
 		rec.AddLatency(
 			imagingbench.MeasureLatency(ctx, "rotate", "scan-bol-1p-gray.pdf", iterations, "",
 				func(ctx context.Context) (int, error) {
-					_, err := assembler.Assemble(ctx, rotated)
-					return 1, err
+					_, _, mergeErr := imagingkit.Merge(ctx, client, rotated, outputLimit, kernelports.ImagingBatch)
+					return 1, mergeErr
 				}),
 		)
 		for _, name := range []string{"native-50p.pdf", "scan-bol-20p-g4.pdf", "native-200p.pdf"} {
-			data := corpus.Read(t, name)
+			source := kernelports.ImagingBytes("application/pdf", corpus.Read(t, name))
+			pageCount := corpus.Find(t, name).Pages
 			rec.AddLatency(imagingbench.MeasureLatency(ctx, "split", name, iterations, "pages",
 				func(ctx context.Context) (int, error) {
-					out, err := assembler.Split(ctx, data)
-					return len(out), err
+					count, countErr := imagingkit.PageCount(ctx, client, source, kernelports.ImagingBatch)
+					if countErr != nil {
+						return 0, countErr
+					}
+					if pageCount > 0 && count != pageCount {
+						return 0, fmt.Errorf("%s has %d pages, the worker counted %d", name, pageCount, count)
+					}
+					out, splitErr := imagingkit.SplitPages(
+						ctx, client, source, count, outputLimit, kernelports.ImagingBatch,
+					)
+					return len(out), splitErr
 				}))
 		}
-		photo := corpus.Read(t, "photo-bol.jpg")
+		photo := kernelports.ImagingBytes("image/jpeg", corpus.Read(t, "photo-bol.jpg"))
 		rec.AddLatency(
 			imagingbench.MeasureLatency(ctx, "image_to_pdf", "photo-bol.jpg", iterations, "",
 				func(ctx context.Context) (int, error) {
-					_, err := images.ImageToPDF(ctx, photo)
-					return 1, err
+					_, convertErr := imagingkit.ImageToPDF(ctx, client, photo, outputLimit, kernelports.ImagingBatch)
+					return 1, convertErr
 				}),
 		)
 	})
 
 	t.Run("throughput", func(t *testing.T) {
-		cores := runtime.GOMAXPROCS(0)
-		page := corpus.Read(t, "scan-bol-1p-gray.pdf")
-		capture := corpus.Read(t, "capture-text-0.pdf")
+		cores := workerCPUs(t)
+		page := kernelports.ImagingBytes("application/pdf", corpus.Read(t, "scan-bol-1p-gray.pdf"))
+		capture := kernelports.ImagingBytes("application/pdf", corpus.Read(t, "capture-text-0.pdf"))
 		for _, concurrency := range []int{1, 4, 8} {
 			rec.AddThroughput(
 				imagingbench.MeasureThroughput(ctx, "page_view", "scan-bol-1p-gray.pdf",
 					concurrency, throughputWindow, cores, func(ctx context.Context) (int, error) {
-						_, err := generator.RenderPage(
-							ctx,
-							bytes.NewReader(page),
-							"application/pdf",
-							1,
-						)
+						_, err := generator.RenderPage(ctx, page, 1, kernelports.ImagingInteractive)
 						return 1, err
 					}),
 			)
 			rec.AddThroughput(
 				imagingbench.MeasureThroughput(ctx, "thumbnail", "scan-bol-1p-gray.pdf",
 					concurrency, throughputWindow, cores, func(ctx context.Context) (int, error) {
-						_, err := generator.Generate(ctx, bytes.NewReader(page), "application/pdf")
+						_, err := generator.Generate(ctx, page, kernelports.ImagingBatch)
 						return 1, err
 					}),
 			)
 			rec.AddThroughput(
 				imagingbench.MeasureThroughput(ctx, "capture_inspection", "capture-text-0.pdf",
 					concurrency, throughputWindow, cores, func(ctx context.Context) (int, error) {
-						_, err := inspector.Inspect(ctx, capture)
-						return 1, err
+						return inspect(ctx, client, []kernelports.ImagingSource{capture})
 					}),
 			)
 		}
@@ -214,18 +241,19 @@ func TestBaseline(t *testing.T) {
 func TestPeakRSSChild(t *testing.T) {
 	name := os.Getenv(rssChildEnv)
 	if name == "" {
-		t.Skip("run by TestBaseline in a child process")
+		t.Skip("run by TestWorker in a child process")
 	}
 	corpus := imagingbench.Load(t)
 	ctx := t.Context()
 
-	reader := pdfreader.NewReader(nil, nil)
-	generator := thumbnailservice.NewGenerator(reader)
-	warm, err := reader.Open(ctx, corpus.Read(t, "native-1p.pdf"))
-	if err != nil {
-		t.Fatalf("warm the PDF reader: %v", err)
+	generator := thumbnailservice.NewGenerator(imagingtest.Client(t))
+	if _, err := generator.Generate(
+		ctx,
+		kernelports.ImagingBytes("application/pdf", corpus.Read(t, "native-1p.pdf")),
+		kernelports.ImagingBatch,
+	); err != nil {
+		t.Fatalf("warm the worker: %v", err)
 	}
-	_ = warm.Close()
 	runtime.GC()
 	baseline, err := imagingbench.CurrentRSSMB()
 	if err != nil {
@@ -269,7 +297,11 @@ func TestPeakRSSChild(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read stored document: %v", err)
 	}
-	if _, err = generator.Generate(ctx, bytes.NewReader(stored), "application/pdf"); err != nil {
+	if _, err = generator.Generate(
+		ctx,
+		kernelports.ImagingBytes("application/pdf", stored),
+		kernelports.ImagingBatch,
+	); err != nil {
 		t.Fatalf("thumbnail: %v", err)
 	}
 	elapsed := time.Since(start)
@@ -288,6 +320,49 @@ func TestPeakRSSChild(t *testing.T) {
 		Seconds:    elapsed.Seconds(),
 	})
 	fmt.Printf("RSS-RESULT %s\n", out)
+}
+
+func inspect(
+	ctx context.Context,
+	client kernelports.Imaging,
+	sources []kernelports.ImagingSource,
+) (int, error) {
+	summary, err := client.InspectCapture(ctx, &kernelports.ImagingCaptureRequest{
+		PageCount: len(sources),
+		Pages: func() iter.Seq2[kernelports.ImagingCapturePage, error] {
+			return func(yield func(kernelports.ImagingCapturePage, error) bool) {
+				for i, source := range sources {
+					if !yield(kernelports.ImagingCapturePage{Index: i, Source: source}, nil) {
+						return
+					}
+				}
+			}
+		},
+		Priority: kernelports.ImagingBatch,
+	}, func(result *kernelports.ImagingCaptureResult) error {
+		if result.Err != nil {
+			return result.Err
+		}
+		return nil
+	})
+	if err != nil {
+		return 0, err
+	}
+	return summary.Inspected, nil
+}
+
+func workerCPUs(t *testing.T) int {
+	t.Helper()
+
+	value := os.Getenv(workerCPUsEnv)
+	if value == "" {
+		t.Fatalf("%s is not set; run this through `task imaging:bench`", workerCPUsEnv)
+	}
+	cpus, err := strconv.Atoi(value)
+	if err != nil || cpus < 1 {
+		t.Fatalf("%s=%q is not a CPU count", workerCPUsEnv, value)
+	}
+	return cpus
 }
 
 func runRSSChild(t *testing.T, corpus *imagingbench.Corpus, name string) imagingbench.PeakRSS {
@@ -314,22 +389,6 @@ func runRSSChild(t *testing.T, corpus *imagingbench.Corpus, name string) imaging
 	}
 
 	return result
-}
-
-func textProfile(ctx context.Context, reader *pdfreader.Reader, data []byte) (int, error) {
-	doc, err := reader.Open(ctx, data)
-	if err != nil {
-		return 0, err
-	}
-	defer doc.Close()
-
-	native := make(map[int]bool, doc.PageCount())
-	for page := range doc.PageCount() {
-		text, textErr := doc.PageText(ctx, page)
-		native[page+1] = textErr == nil && strings.TrimSpace(text) != ""
-	}
-
-	return len(native), nil
 }
 
 func contentTypeOf(name string) string {

@@ -76,23 +76,38 @@ tasks:
     cmds:
       - uv run -q --with pillow --with pillow-heif --with reportlab --with qrcode --with numpy python3 -I tools/docling-fixtures/corpus.py .imagingbench/corpus
 
-  imaging:bench-go:
-    desc: Run the Go imaging benchmark in a 4-CPU container and write .imagingbench/results/go.json
+  imaging:bench:
+    desc: Benchmark the TMS imaging calls against a 4-CPU imaging worker and write .imagingbench/results/worker.json
     dir: '{{.ROOT_DIR}}'
     vars:
-      RESULTS: '{{.RESULTS | default "go.json"}}'
-      LABEL: '{{.LABEL | default "Go"}}'
+      RESULTS: '{{.RESULTS | default "worker.json"}}'
+      LABEL: '{{.LABEL | default "TMS through the imaging worker"}}'
+      IMAGE: '{{.IMAGE | default "trenova-imaging:local"}}'
+      WORKER_CPUS: '{{.WORKER_CPUS | default "4"}}'
     cmds:
       - mkdir -p .imagingbench/bin .imagingbench/results
-      - docker build -q -t trenova-imagingbench-go:local -f services/tms/internal/testutil/imagingbench/runner.Dockerfile services/tms/internal/testutil/imagingbench
-      - cd services/tms && CGO_ENABLED=0 nice go test -p 4 -c -tags imagingbench,nomsgpack -o ../../.imagingbench/bin/gobench.test {{.PACKAGES | default "./internal/testutil/imagingbench/..."}}
+      - docker build -q -t trenova-imagingbench:local -f services/tms/internal/testutil/imagingbench/runner.Dockerfile services/tms/internal/testutil/imagingbench
+      - cd services/tms && CGO_ENABLED=0 nice go test -p 4 -c -tags imagingbench,nomsgpack -o ../../.imagingbench/bin/bench.test ./internal/testutil/imagingbench/workerbench
+      - docker network create trenova-imagingbench >/dev/null 2>&1 || true
+      - defer: docker rm -f trenova-imagingbench-worker >/dev/null 2>&1 || true
       - >-
-        docker run --rm --cpus 4 --memory 8g -u "$(id -u):$(id -g)" -e HOME=/tmp -e GOMAXPROCS=4
+        docker run -d --rm --name trenova-imagingbench-worker --network trenova-imagingbench
+        --cpus {{.WORKER_CPUS}} --memory 4g --read-only --tmpfs /tmp --cap-drop ALL
+        --security-opt no-new-privileges:true
+        -e TRENOVA_IMAGING__ENVIRONMENT=development -e TRENOVA_IMAGING__POOL__SIZE={{.WORKER_CPUS}}
+        {{.IMAGE}} serve >/dev/null
+      - >-
+        for i in $(seq 60); do
+        docker exec trenova-imagingbench-worker /usr/local/bin/trenova-imaging health >/dev/null 2>&1 && exit 0;
+        sleep 1; done; docker logs trenova-imagingbench-worker; exit 1
+      - >-
+        docker run --rm --network trenova-imagingbench --cpus 2 --memory 8g -u "$(id -u):$(id -g)" -e HOME=/tmp -e GOMAXPROCS=2
+        -e TRENOVA_IMAGING_TEST_ENDPOINT=trenova-imagingbench-worker:50051 -e TRENOVA_IMAGING_WORKER_CPUS={{.WORKER_CPUS}}
         -e TRENOVA_IMAGING_CORPUS=/corpus -e TRENOVA_IMAGING_RESULTS=/results/{{.RESULTS}}
         -e "TRENOVA_IMAGING_LABEL={{.LABEL}}" {{.DOCKER_ARGS}}
         -v "$PWD/.imagingbench/corpus:/corpus:ro" -v "$PWD/.imagingbench/results:/results"
-        -v "$PWD/.imagingbench/bin:/bench-bin:ro" trenova-imagingbench-go:local
-        /bench-bin/gobench.test -test.v -test.timeout 90m {{.CLI_ARGS}}
+        -v "$PWD/.imagingbench/bin:/bench-bin:ro" trenova-imagingbench:local
+        /bench-bin/bench.test -test.v -test.timeout 90m {{.CLI_ARGS}}
 
   rust:fmt:
     desc: Format every crate in the services workspace (task rust:fmt -- --check to check)

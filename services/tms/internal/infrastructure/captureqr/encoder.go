@@ -1,18 +1,17 @@
 // Package captureqr encodes the QR code printed on a capture cover sheet.
 //
-// It is apart from captureimaging, which reads codes off rendered pages and
-// needs a PDF renderer, because issuing a sheet needs neither.
+// Reading codes off scanned pages is the imaging worker's; issuing a sheet
+// needs only the encoder.
 package captureqr
 
 import (
 	"errors"
 	"fmt"
+	"image/color"
 	"strings"
 
+	"github.com/boombuler/barcode/qr"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
-	"github.com/makiuchi-d/gozxing"
-	"github.com/makiuchi-d/gozxing/qrcode/decoder"
-	"github.com/makiuchi-d/gozxing/qrcode/encoder"
 )
 
 // maxPayloadLength bounds what a sheet may carry. A cover sheet payload is a
@@ -35,16 +34,12 @@ func (e *Encoder) Encode(payload string) (*captureports.CaptureQRCode, error) {
 		return nil, ErrPayloadInvalid
 	}
 
-	hints := map[gozxing.EncodeHintType]any{
-		gozxing.EncodeHintType_CHARACTER_SET: "UTF-8",
-	}
-	code, err := encoder.Encoder_encode(payload, decoder.ErrorCorrectionLevel_Q, hints)
+	code, err := qr.Encode(payload, qr.Q, qr.Unicode)
 	if err != nil {
 		return nil, fmt.Errorf("encode cover sheet code: %w", err)
 	}
 
-	matrix := code.GetMatrix()
-	size := matrix.GetWidth()
+	size := code.Bounds().Dx()
 	rows := make([]string, 0, size)
 
 	var row strings.Builder
@@ -52,7 +47,7 @@ func (e *Encoder) Encode(payload string) (*captureports.CaptureQRCode, error) {
 	for y := range size {
 		row.Reset()
 		for x := range size {
-			if matrix.Get(x, y) == 1 {
+			if dark(code.At(x, y)) {
 				row.WriteByte('1')
 			} else {
 				row.WriteByte('0')
@@ -62,4 +57,9 @@ func (e *Encoder) Encode(payload string) (*captureports.CaptureQRCode, error) {
 	}
 
 	return &captureports.CaptureQRCode{Size: size, Modules: rows}, nil
+}
+
+func dark(c color.Color) bool {
+	luma, _, _, _ := color.GrayModel.Convert(c).RGBA()
+	return luma < 0x8000
 }

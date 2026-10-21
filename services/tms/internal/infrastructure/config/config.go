@@ -1665,41 +1665,6 @@ func (c *DocumentConversionConfig) GetVLMModel() string {
 	return c.VLMModel
 }
 
-type PDFReaderConfig struct {
-	MaxInstances    int           `mapstructure:"maxInstances"    validate:"min=0,max=64"`
-	MemoryLimitMB   int           `mapstructure:"memoryLimitMb"   validate:"min=0,max=4096"`
-	AcquireTimeout  time.Duration `mapstructure:"acquireTimeout"`
-	MaxRenderPixels int           `mapstructure:"maxRenderPixels" validate:"min=0"`
-}
-
-func (c *PDFReaderConfig) GetMaxInstances() int {
-	if c.MaxInstances == 0 {
-		return 4
-	}
-	return c.MaxInstances
-}
-
-func (c *PDFReaderConfig) GetMemoryLimitMB() int {
-	if c.MemoryLimitMB == 0 {
-		return 1024
-	}
-	return c.MemoryLimitMB
-}
-
-func (c *PDFReaderConfig) GetAcquireTimeout() time.Duration {
-	if c.AcquireTimeout == 0 {
-		return time.Minute
-	}
-	return c.AcquireTimeout
-}
-
-func (c *PDFReaderConfig) GetMaxRenderPixels() int {
-	if c.MaxRenderPixels == 0 {
-		return 25_000_000
-	}
-	return c.MaxRenderPixels
-}
-
 type AppConfig struct {
 	Name               string `mapstructure:"name"               validate:"required,min=1,max=100"`
 	Env                string `mapstructure:"env"                validate:"required,oneof=development staging production test"`
@@ -1835,7 +1800,6 @@ type Config struct {
 	Reporting           ReportingConfig           `mapstructure:"reporting"`
 	Renderer            RendererConfig            `mapstructure:"renderer"`
 	DocumentConversion  DocumentConversionConfig  `mapstructure:"documentConversion"`
-	PDFReader           PDFReaderConfig           `mapstructure:"pdfReader"`
 	Imaging             ImagingConfig             `mapstructure:"imaging"`
 	Portal              PortalConfig              `mapstructure:"portal"`
 	Push                PushConfig                `mapstructure:"push"`
@@ -2086,8 +2050,6 @@ func (c *Config) GetRendererConfig() *RendererConfig { return &c.Renderer }
 func (c *Config) GetDocumentConversionConfig() *DocumentConversionConfig {
 	return &c.DocumentConversion
 }
-
-func (c *Config) GetPDFReaderConfig() *PDFReaderConfig { return &c.PDFReader }
 
 func (c *Config) GetDSN(password string) string {
 	return c.postgresDSN(c.Database.User, password)

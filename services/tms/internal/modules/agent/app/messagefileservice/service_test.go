@@ -102,7 +102,7 @@ func TestReadMessageFile_CountsAPDFsPagesFromItsBytes(t *testing.T) {
 	assert.False(t, content.Unreadable, "an image is never opened as a PDF")
 }
 
-func TestReadMessageFile_WithoutAPDFReaderLeavesThePagesUnknown(t *testing.T) {
+func TestReadMessageFile_WithoutTheImagingServiceLeavesThePagesUnknown(t *testing.T) {
 	t.Parallel()
 
 	pdf := pulid.MustNew("doc_")

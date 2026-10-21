@@ -8,12 +8,10 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.38.0
 	github.com/aws/aws-sdk-go-v2/config v1.27.27
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.27
+	github.com/boombuler/barcode v1.1.0
 	github.com/emoss08/trenova/shared v0.0.0
-	github.com/klippa-app/go-pdfium v1.21.3
-	github.com/makiuchi-d/gozxing v0.1.1
-	github.com/pdfcpu/pdfcpu v0.16.1
+	github.com/ledongthuc/pdf v0.0.0-20260929131644-d0d294e5c96a
 	github.com/pgvector/pgvector-go v0.4.1
-	github.com/tetratelabs/wazero v1.12.0
 	github.com/tidwall/gjson v1.18.0
 	github.com/tidwall/sjson v1.2.5
 	github.com/vikstrous/dataloadgen v0.0.10
@@ -32,7 +30,6 @@ require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/bytedance/sonic v1.15.4
 	github.com/coreos/go-oidc/v3 v3.21.0
-	github.com/disintegration/imaging v1.6.2
 	github.com/expr-lang/expr v1.17.8
 	github.com/fatih/color v1.19.0
 	github.com/fsnotify/fsnotify v1.10.1
@@ -123,9 +120,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sts v1.30.3 // indirect
 	github.com/aws/smithy-go v1.22.5 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
-	github.com/boombuler/barcode v1.1.0 // indirect
 	github.com/buger/jsonparser v1.1.2 // indirect
-	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/dlclark/regexp2 v1.12.0 // indirect
 	github.com/dop251/goja v0.0.0-20230122112309-96b1610dd4f7 // indirect
 	github.com/fe3dback/go-arch-lint v1.19.0 // indirect
@@ -133,18 +128,14 @@ require (
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
-	github.com/google/pprof v0.0.0-20260802141513-ef3492d7dac3 // indirect
 	github.com/google/s2a-go v0.1.11 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.23 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
-	github.com/hhrutter/tiff v1.0.7 // indirect
 	github.com/invopop/jsonschema v0.14.0 // indirect
-	github.com/jolestar/go-commons-pool/v2 v2.1.2 // indirect
 	github.com/kr/fs v0.1.0 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/logrusorgru/aurora/v3 v3.0.0 // indirect
 	github.com/lucasb-eyer/go-colorful v1.4.0 // indirect
-	github.com/mattn/go-runewidth v0.0.31 // indirect
 	github.com/mazznoer/csscolorparser v0.1.3 // indirect
 	github.com/nexus-rpc/nexus-proto-annotations v0.1.0 // indirect
 	github.com/pb33f/ordered-map/v2 v2.3.1 // indirect
