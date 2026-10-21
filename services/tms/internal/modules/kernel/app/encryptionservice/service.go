@@ -682,12 +682,11 @@ func (m *GCPAutokeyManager) UnwrapKey(
 }
 
 func kmsUnwrapError(err error) error {
-	switch status.Code(err) {
-	case codes.InvalidArgument, codes.NotFound, codes.FailedPrecondition:
+	code := status.Code(err)
+	if code == codes.InvalidArgument || code == codes.NotFound || code == codes.FailedPrecondition {
 		return fmt.Errorf("%w: %w", ErrKeyRejected, err)
-	default:
-		return err
 	}
+	return err
 }
 
 func IsKeyRefused(err error) bool {
