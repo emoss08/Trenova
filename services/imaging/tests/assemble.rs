@@ -53,7 +53,7 @@ async fn assemble(
                 files.push(Vec::new());
             }
             Some(assemble_response::Part::Chunk(chunk)) => {
-                files.last_mut().expect("an output").extend(chunk.data)
+                files.last_mut().expect("an output").extend(chunk.data);
             }
             Some(assemble_response::Part::Summary(summary)) => counts = summary.output_page_counts,
             None => {}

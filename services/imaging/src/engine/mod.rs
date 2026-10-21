@@ -10,6 +10,7 @@ pub mod capture;
 pub mod decode;
 pub mod error;
 pub mod heif;
+pub mod normalize;
 pub mod pdf;
 pub mod probe;
 pub mod raster;
@@ -96,10 +97,10 @@ impl Engine {
             Operation::Assemble(header) => {
                 Ok(assemble::assemble(self, header, &inputs, limits, sink)?.encode_to_vec())
             }
-            Operation::NormalizeImage(_) => Err(EngineError::request(format!(
-                "{} is not available on this worker",
-                operation.name()
-            ))),
+            Operation::NormalizeImage(header) => {
+                let first = only(&inputs)?;
+                Ok(normalize::normalize(self, header, first, limits, sink)?.encode_to_vec())
+            }
         }
     }
 }
