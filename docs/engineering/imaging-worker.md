@@ -266,7 +266,9 @@ email service opens a sealed attachment with `OpenBlob` as it downloads it.
   header: `trenova encryption rewrap` reads the header, unwraps the data key under the retired
   key, wraps it under the active one, and writes the new header followed by the old chunks
   byte for byte. It spools the chunks to a temporary file rather than memory, because MinIO
-  holds an object's lock while it is being read.
+  holds an object's lock while it is being read. An object that is not a blob (one stored in
+  the retired envelope format) is never rewritten or read: the run counts it under "not
+  blobs" and logs its key.
 - The associated data is unchanged from the envelope: purpose, organization, business unit and
   the object key (`storedobject.AAD`, `captureObjectAAD`), so a copied object does not open
   under another name.

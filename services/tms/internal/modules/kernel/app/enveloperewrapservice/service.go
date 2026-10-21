@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"go.uber.org/zap"
 )
 
 const (
@@ -27,16 +28,27 @@ type Deps struct {
 	Repository kernelports.EnvelopeRepository
 	Rewrapper  kernelports.EnvelopeRewrapper
 	Storage    kernelports.Client
+	Logger     *zap.Logger
 }
 
 type Service struct {
 	repo      kernelports.EnvelopeRepository
 	rewrapper kernelports.EnvelopeRewrapper
 	storage   kernelports.Client
+	logger    *zap.Logger
 }
 
 func New(deps Deps) *Service {
-	return &Service{repo: deps.Repository, rewrapper: deps.Rewrapper, storage: deps.Storage}
+	logger := deps.Logger
+	if logger == nil {
+		logger = zap.NewNop()
+	}
+	return &Service{
+		repo:      deps.Repository,
+		rewrapper: deps.Rewrapper,
+		storage:   deps.Storage,
+		logger:    logger,
+	}
 }
 
 type Options struct {
@@ -51,6 +63,7 @@ type SourceReport struct {
 	Rewrapped int
 	Current   int
 	Skipped   int
+	NotBlobs  int
 	Conflicts int
 	Failed    int
 	Errors    []string
@@ -67,6 +80,14 @@ func (r *Report) Failed() int {
 		failed += source.Failed
 	}
 	return failed
+}
+
+func (r *Report) NotBlobs() int {
+	notBlobs := 0
+	for _, source := range r.Sources {
+		notBlobs += source.NotBlobs
+	}
+	return notBlobs
 }
 
 func (r *Report) Remaining() int {
@@ -93,6 +114,7 @@ const (
 	outcomeCurrent outcome = iota
 	outcomeRewrapped
 	outcomeSkipped
+	outcomeNotBlob
 	outcomeConflict
 )
 
@@ -102,6 +124,8 @@ func (s *SourceReport) record(result outcome) {
 		s.Rewrapped++
 	case outcomeSkipped:
 		s.Skipped++
+	case outcomeNotBlob:
+		s.NotBlobs++
 	case outcomeConflict:
 		s.Conflicts++
 	case outcomeCurrent:
@@ -324,9 +348,18 @@ func (s *Service) rewrapObject(
 	}
 	body := bufio.NewReaderSize(downloaded.Body, 64<<10)
 	prefix, peekErr := body.Peek(s.rewrapper.BlobPrefixSize())
+	if peekErr != nil && !errors.Is(peekErr, io.EOF) {
+		_ = downloaded.Body.Close()
+		return outcomeCurrent, fmt.Errorf("read %s: %w", row.Sealed, peekErr)
+	}
 	if peekErr != nil || !s.rewrapper.IsBlob(prefix) {
 		_ = downloaded.Body.Close()
-		return outcomeSkipped, nil
+		s.logger.Warn("a stored object is not a streaming blob and cannot be read",
+			zap.String("source", object.Column.Name),
+			zap.String("key", row.Sealed),
+			zap.String("organizationId", row.Tenant.OrgID.String()),
+			zap.String("rowId", row.ID))
+		return outcomeNotBlob, nil
 	}
 
 	rewrapped, err := s.rewrapper.RewrapBlob(ctx, body, object.Column.Scopes(row, row.Sealed))

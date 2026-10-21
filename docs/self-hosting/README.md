@@ -472,8 +472,10 @@ Documents and capture pages are rewritten in place in the bucket: only an object
 holds its wrapped key, so the rewrap replaces the header and copies the rest unchanged,
 spooling it through a temporary file. With bucket versioning
 or object lock, the earlier versions keep the old wrapping until they expire, so keep the
-retired key until they have. `--skip-objects` moves the database values alone and
-`--org org_…` limits a run to one organization.
+retired key until they have. An object stored in the retired envelope format cannot be
+read at all; the run reports how many it found under "not blobs" and logs each one's key, so
+it can be deleted or its file uploaded again. `--skip-objects` moves the database values alone
+and `--org org_…` limits a run to one organization.
 
 To move from the local key manager to Cloud KMS, set `keyManager: gcp-autokey` with its
 crypto key, keep the local key in `TRENOVA_SECURITY_ENCRYPTION_KEY` or

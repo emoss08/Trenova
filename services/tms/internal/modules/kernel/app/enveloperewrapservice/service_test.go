@@ -3,9 +3,11 @@ package enveloperewrapservice
 import (
 	"bytes"
 	"context"
+	"errors"
 	"io"
 	"strconv"
 	"testing"
+	"testing/iotest"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
@@ -15,6 +17,8 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zaptest/observer"
 )
 
 const (
@@ -123,14 +127,19 @@ func (f *fakeRepository) SwapVersion(
 type fakeStorage struct {
 	kernelports.Client
 
-	objects  map[string][]byte
-	uploads  int
-	versions int
+	objects    map[string][]byte
+	unreadable map[string]error
+	uploads    int
+	versions   int
 }
 
 func (f *fakeStorage) Download(_ context.Context, key string) (*kernelports.DownloadResult, error) {
+	var body io.Reader = bytes.NewReader(f.objects[key])
+	if readErr, ok := f.unreadable[key]; ok {
+		body = iotest.ErrReader(readErr)
+	}
 	return &kernelports.DownloadResult{
-		Body:        io.NopCloser(bytes.NewReader(f.objects[key])),
+		Body:        io.NopCloser(body),
 		ContentType: "application/pdf",
 		Metadata:    map[string]string{"crypto_mode": encryptionservice.CryptoModeBlobV1},
 	}, nil
@@ -533,4 +542,87 @@ func sealBlob(
 	out, err := io.ReadAll(sealed)
 	require.NoError(t, err)
 	return out
+}
+
+func TestRun_CountsAndLogsObjectsThatAreNotStreamingBlobs(t *testing.T) {
+	t.Parallel()
+
+	tenant := testTenant()
+	blobKey := tenant.OrgID.String() + "/documents/current.pdf"
+	sealed := sealBlob(t, keyring(t, newKey), []byte("%PDF-1.7"), encryptionservice.AAD{
+		Purpose:        encryptionservice.PurposeDocument,
+		OrganizationID: tenant.OrgID,
+		BusinessUnitID: tenant.BuID,
+		ResourceID:     blobKey,
+	})
+	envelopeKey := tenant.OrgID.String() + "/documents/old.pdf"
+	envelope, err := keyring(t, newKey).EncryptBytesWithAAD([]byte("%PDF-1.4"), encryptionservice.AAD{
+		Purpose:        encryptionservice.PurposeDocument,
+		OrganizationID: tenant.OrgID,
+		BusinessUnitID: tenant.BuID,
+		ResourceID:     envelopeKey,
+	})
+	require.NoError(t, err)
+	shortKey := tenant.OrgID.String() + "/documents/short.pdf"
+
+	repo := newFakeRepository(tenant)
+	repo.add("documents", tenant, "doc_1", blobKey)
+	repo.add("documents", tenant, "doc_2", envelopeKey)
+	repo.add("documents", tenant, "doc_3", shortKey)
+	storage := &fakeStorage{objects: map[string][]byte{
+		blobKey:     sealed,
+		envelopeKey: []byte(envelope),
+		shortKey:    []byte("TRN"),
+	}}
+	core, logs := observer.New(zap.WarnLevel)
+	service := New(Deps{
+		Repository: repo,
+		Rewrapper:  encryptionservice.NewEnvelopeRewrapper(keyring(t, newKey)),
+		Storage:    storage,
+		Logger:     zap.New(core),
+	})
+
+	report, err := service.Run(
+		t.Context(),
+		&kernelports.EnvelopeSources{Objects: []kernelports.EnvelopeObject{documentObject()}},
+		Options{},
+	)
+	require.NoError(t, err)
+	assert.Equal(t, SourceReport{Name: "documents", Scanned: 3, Current: 1, NotBlobs: 2},
+		*report.Sources[0])
+	assert.Equal(t, 2, report.NotBlobs())
+	assert.Zero(t, storage.uploads, "an object in the retired format is never rewritten")
+
+	warned := logs.FilterMessage("a stored object is not a streaming blob and cannot be read").All()
+	require.Len(t, warned, 2)
+	keys := []string{warned[0].ContextMap()["key"].(string), warned[1].ContextMap()["key"].(string)}
+	assert.ElementsMatch(t, []string{envelopeKey, shortKey}, keys)
+}
+
+func TestRun_AnObjectStorageCouldNotReadIsAFailureNotASkip(t *testing.T) {
+	t.Parallel()
+
+	tenant := testTenant()
+	key := tenant.OrgID.String() + "/documents/flaky.pdf"
+	repo := newFakeRepository(tenant)
+	repo.add("documents", tenant, "doc_1", key)
+	storage := &fakeStorage{
+		objects:    map[string][]byte{},
+		unreadable: map[string]error{key: errors.New("connection reset by peer")},
+	}
+	service := New(Deps{
+		Repository: repo,
+		Rewrapper:  encryptionservice.NewEnvelopeRewrapper(keyring(t, newKey)),
+		Storage:    storage,
+	})
+
+	report, err := service.Run(
+		t.Context(),
+		&kernelports.EnvelopeSources{Objects: []kernelports.EnvelopeObject{documentObject()}},
+		Options{},
+	)
+	require.NoError(t, err)
+	assert.Equal(t, 1, report.Sources[0].Failed)
+	assert.Zero(t, report.Sources[0].NotBlobs)
+	assert.Equal(t, 1, report.Failed())
 }
