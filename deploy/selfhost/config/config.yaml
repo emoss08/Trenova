@@ -265,3 +265,14 @@ update:
   githubOwner: emoss08
   githubRepo: trenova
   allowPrerelease: false
+
+# The imaging worker in compose.yml, reached over mutual TLS with the certificates
+# imaging-certs issues (see docs/self-hosting/README.md).
+imaging:
+  endpoint: dns:///imaging:50051
+  serverName: imaging
+  tls:
+    enabled: true
+    caFile: /certs/imaging/ca.pem
+    certFile: /certs/imaging/client.pem
+    keyFile: /certs/imaging/client-key.pem

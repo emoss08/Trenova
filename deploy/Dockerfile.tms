@@ -19,8 +19,10 @@ RUN go build -tags nomsgpack -ldflags="-s -w" -o /build/trenova ./cmd/cli
 
 FROM alpine:3.21
 
+# The same uid as the imaging worker, which issues the client certificate in
+# deploy/selfhost/compose.yml: its key is readable by its owner only.
 RUN apk add --no-cache ca-certificates tzdata && \
-    addgroup -S trenova && adduser -S trenova -G trenova
+    addgroup -S -g 65532 trenova && adduser -S -u 65532 -G trenova trenova
 
 COPY --from=builder /build/trenova /usr/local/bin/trenova
 COPY --from=builder /build/services/tms/internal/infrastructure/database/seeds/base/data/ /app/internal/infrastructure/database/seeds/base/data/

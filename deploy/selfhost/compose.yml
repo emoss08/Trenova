@@ -75,6 +75,7 @@ x-tms-service: &tms-service
   environment: *tms-environment
   volumes:
     - ./config/config.yaml:/app/config/config.yaml:ro
+    - imaging-client-tls:/certs/imaging:ro
   security_opt:
     - "no-new-privileges:true"
   logging: *logging
@@ -479,6 +480,75 @@ services:
     logging: *logging
     networks: [data]
 
+  # Issues the private CA and the certificates the TMS and the imaging worker
+  # authenticate each other with, once: a run that finds them leaves them alone.
+  # The server's half goes into a volume only the worker mounts, the client's
+  # into one only the TMS processes mount; the CA's key goes into a third that
+  # nothing mounts. Reissue with `docker compose run --rm imaging-certs certs --force`.
+  imaging-certs:
+    image: ghcr.io/emoss08/trenova/imaging:${TRENOVA_VERSION}
+    command:
+      - certs
+      - --server-dir=/certs/server
+      - --client-dir=/certs/client
+      - --ca-dir=/certs/ca
+      - --server-name=imaging
+    user: "65532:65532"
+    volumes:
+      - imaging-server-tls:/certs/server
+      - imaging-client-tls:/certs/client
+      - imaging-ca:/certs/ca
+    read_only: true
+    network_mode: none
+    cap_drop:
+      - ALL
+    security_opt:
+      - "no-new-privileges:true"
+    restart: "no"
+    logging: *logging
+
+  # The document and imaging worker: thumbnails, page views, capture page
+  # inspection, PDF assembly and image normalization. Every document is parsed
+  # in a hardened child process (seccomp, landlock, resource limits), and the
+  # worker holds no database, storage or key access and makes no outbound
+  # connections, so it sits on the data network only. The TMS reaches it over
+  # mutual TLS. Size it by CPUs: one child per CPU in its limit, and about
+  # 1 GB of memory per child under load.
+  imaging:
+    image: ghcr.io/emoss08/trenova/imaging:${TRENOVA_VERSION}
+    environment:
+      TRENOVA_IMAGING__ENVIRONMENT: production
+      TRENOVA_IMAGING__GRPC__TLS__CERT: /certs/server.pem
+      TRENOVA_IMAGING__GRPC__TLS__KEY: /certs/server-key.pem
+      TRENOVA_IMAGING__GRPC__TLS__CLIENT_CA: /certs/ca.pem
+    volumes:
+      - imaging-server-tls:/certs:ro
+    depends_on:
+      imaging-certs:
+        condition: service_completed_successfully
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - "no-new-privileges:true"
+    deploy:
+      resources:
+        limits:
+          cpus: "${TRENOVA_IMAGING_CPUS:-2}"
+          memory: ${TRENOVA_IMAGING_MEMORY:-3G}
+          pids: 512
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/trenova-imaging", "health"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+    restart: unless-stopped
+    logging: *logging
+    networks: [data]
+
   tms-api:
     <<: *tms-service
     command: ["api", "run"]
@@ -496,6 +566,8 @@ services:
       temporal:
         condition: service_healthy
       gotenberg:
+        condition: service_healthy
+      imaging:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "/dev/null", "-T", "5", "http://127.0.0.1:8080/api/v1/system/version"]
@@ -523,6 +595,8 @@ services:
       temporal:
         condition: service_healthy
       gotenberg:
+        condition: service_healthy
+      imaging:
         condition: service_healthy
       # Not required: without an API key the sidecar refuses to start, and
       # the worker still runs and reports document extraction as not set up.
@@ -609,6 +683,9 @@ volumes:
   caddy_data:
   caddy_config:
   docling_vlm_models:
+  imaging-server-tls:
+  imaging-client-tls:
+  imaging-ca:
 
 networks:
   data:
