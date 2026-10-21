@@ -10,6 +10,15 @@ includes:
     taskfile: ./dev/samsara-sim/Taskfile.yml
     dir: ./dev/samsara-sim
 
+vars:
+  # Rust builds are capped the same way the Go tasks are: CARGO_BUILD_JOBS compile jobs at
+  # once (4 by default), or LOW_RESOURCE_JOBS of them with LOW_RESOURCE=true. Release
+  # builds use fat LTO and are slow; build-imaging uses the service-dev profile instead.
+  LOW_RESOURCE: '{{.LOW_RESOURCE | default "false"}}'
+  LOW_RESOURCE_JOBS: '{{.LOW_RESOURCE_JOBS | default "1"}}'
+  RUST_JOBS: '{{if eq .LOW_RESOURCE "true"}}{{.LOW_RESOURCE_JOBS}}{{else}}{{.CARGO_BUILD_JOBS | default "4"}}{{end}}'
+  BUF: go run github.com/bufbuild/buf/cmd/buf@v1.74.0
+
 tasks:
   default:
     desc: Show available top-level tasks
@@ -84,3 +93,63 @@ tasks:
         -v "$PWD/.imagingbench/corpus:/corpus:ro" -v "$PWD/.imagingbench/results:/results"
         -v "$PWD/.imagingbench/bin:/bench-bin:ro" trenova-imagingbench-go:local
         /bench-bin/gobench.test -test.v -test.timeout 90m {{.CLI_ARGS}}
+
+  rust:fmt:
+    desc: Format every crate in the services workspace (task rust:fmt -- --check to check)
+    dir: '{{.ROOT_DIR}}/services'
+    cmds:
+      - cargo fmt --all {{.CLI_ARGS}}
+
+  rust:lint:
+    desc: Clippy over the services workspace with warnings as errors
+    dir: '{{.ROOT_DIR}}/services'
+    env:
+      CARGO_BUILD_JOBS: '{{.RUST_JOBS}}'
+    cmds:
+      - nice cargo clippy --workspace --all-targets -- -D warnings
+
+  rust:test:
+    desc: Test the services workspace (native-library tests run in the imaging dev image; see docs/engineering/rust.md)
+    dir: '{{.ROOT_DIR}}/services'
+    env:
+      CARGO_BUILD_JOBS: '{{.RUST_JOBS}}'
+    cmds:
+      - nice cargo test --workspace {{.CLI_ARGS}}
+
+  rust:deny:
+    desc: Check advisories, licences, duplicate majors and sources with cargo-deny
+    dir: '{{.ROOT_DIR}}/services'
+    cmds:
+      - cargo deny check
+
+  rust:proto:
+    desc: Lint the contracts in services/proto and regenerate their checked-in Go code
+    dir: '{{.ROOT_DIR}}/services/proto'
+    cmds:
+      - '{{.BUF}} lint'
+      - '{{.BUF}} generate'
+
+  rust:proto-breaking:
+    desc: Fail on a breaking change to a contract against origin/master
+    dir: '{{.ROOT_DIR}}'
+    cmds:
+      - |
+        if git cat-file -e origin/master:services/proto/buf.yaml 2>/dev/null; then
+          {{.BUF}} breaking services/proto --against ".git#branch=origin/master,subdir=services/proto"
+        else
+          echo "origin/master has no contracts yet; nothing to compare against"
+        fi
+
+  rust:build-imaging:
+    desc: Build the imaging worker with the service-dev profile (no LTO)
+    dir: '{{.ROOT_DIR}}/services'
+    env:
+      CARGO_BUILD_JOBS: '{{.RUST_JOBS}}'
+    cmds:
+      - nice cargo build --profile service-dev -p trenova-imaging
+
+  rust:image-imaging:
+    desc: Build the imaging worker's container image (deploy/Dockerfile.imaging)
+    dir: '{{.ROOT_DIR}}'
+    cmds:
+      - docker build --build-arg CARGO_BUILD_JOBS={{.RUST_JOBS}} -f deploy/Dockerfile.imaging -t {{.IMAGE | default "trenova-imaging:local"}} services

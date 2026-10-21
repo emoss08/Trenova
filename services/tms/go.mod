@@ -303,7 +303,7 @@ require (
 	golang.org/x/time v0.16.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20261005182115-fad411399dd8 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20261005182115-fad411399dd8 // indirect
-	google.golang.org/grpc v1.84.0 // indirect
+	google.golang.org/grpc v1.84.0
 	mellium.im/sasl v0.3.2 // indirect
 )
 

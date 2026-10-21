@@ -59,7 +59,10 @@ wildcards = "deny"
 highlight = "all"
 # Two majors of the same crate in one binary are a decision, recorded here with the reason.
 skip = [
-    { crate = "getrandom@0.2", reason = "ring 0.17, under rustls, is still on 0.2; everything else is on 0.3" },
+    { crate = "getrandom@0.2", reason = "ring 0.17, under rustls, is still on 0.2" },
+    { crate = "getrandom@0.3", reason = "rand 0.9, under opentelemetry_sdk's samplers, is on 0.3; tempfile is on 0.4" },
+    { crate = "rand_core@0.9", reason = "rand 0.9 under opentelemetry_sdk; the rest of the graph is on 0.10" },
+    { crate = "hashbrown@0.15", reason = "petgraph 0.8 under prost-build, which runs only at build time" },
     { crate = "syn@2", reason = "the proc-macro ecosystem is part way from syn 2 to syn 3; both only run at build time" },
 ]
 skip-tree = []
