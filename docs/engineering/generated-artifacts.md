@@ -247,7 +247,7 @@ Every root resolver must reach a permission check. This is enforced by a **Go te
 (`TestEveryRootResolverIsAuthorized` in `internal/api/graphql/authzlint`), not by a lint
 step, so it surfaces under `task test` rather than `task lint`. A resolver that checks only
 authentication is refused unless it is listed: in `authOnlyAllowlist` with a reason every
-signed-in user may call it, or in `selfScoped` under the reason it touches only the caller's
+signed-in user may call it, or in `selfscoped.Resolvers` under the reason it touches only the caller's
 own records. Self-scoped operations are named `My<Thing>`, but the name earns nothing; a new
 one fails until it is listed.
 

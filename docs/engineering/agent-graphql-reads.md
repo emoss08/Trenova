@@ -188,7 +188,7 @@ answers for an unattended run as `authorize` does today.
 - `authctx` exposes no setter that takes it from a request;
 - `TestOnlyTheReaderMakesAnAgentPrincipal` holds both.
 
-**Self-scoped resolvers** (`My*`, listed in `authzlint`'s `selfScoped`) act on the caller's own
+**Self-scoped resolvers** (`My*`, listed in `selfscoped.Resolvers`) act on the caller's own
 records. They refuse an agent principal, as `dispatch` refuses a self-scoped tool in an
 unattended run.
 
