@@ -78,23 +78,41 @@ func TestReadMessageFile_ADamagedOrEncryptedPDFIsUnreadable(t *testing.T) {
 	}
 }
 
-func TestReadMessageFile_AWorkerThatCannotAnswerIsAnErrorNotAnUnreadableFile(t *testing.T) {
+func TestReadMessageFile_AWorkerThatCannotAnswerLeavesThePageCountUnknown(t *testing.T) {
 	t.Parallel()
 
 	for _, cause := range []error{
 		kernelports.ErrImagingUnavailable,
 		kernelports.ErrImagingTimeout,
+		kernelports.ErrImagingTooLarge,
 	} {
-		svc, files, imaging := reader(fmt.Errorf("%w: no worker", cause))
+		probeErr := fmt.Errorf("%w: no worker", cause)
+		svc, files, imaging := reader(nil)
+		imaging.ProbeFunc = func(
+			context.Context,
+			*kernelports.ImagingProbeRequest,
+		) (*kernelports.ImagingProbe, error) {
+			if probeErr != nil {
+				return nil, probeErr
+			}
+			return &kernelports.ImagingProbe{PageCount: 3}, nil
+		}
 		req := request()
 
-		_, err := svc.ReadMessageFile(t.Context(), req)
-		require.ErrorIs(t, err, cause)
-
-		imaging.ProbeFunc = nil
 		content, err := svc.ReadMessageFile(t.Context(), req)
+		require.NoError(t, err, "%v", cause)
+		assert.Equal(t, []byte("%PDF-1.7"), content.Data, "%v", cause)
+		assert.False(t, content.Unreadable, "%v", cause)
+		assert.Zero(t, content.PageCount, "%v", cause)
+
+		probeErr = nil
+		content, err = svc.ReadMessageFile(t.Context(), req)
 		require.NoError(t, err)
-		assert.False(t, content.Unreadable, "the failure was not cached")
+		assert.Equal(t, 3, content.PageCount, "the file without its count was not cached")
 		assert.Equal(t, 2, files.reads)
+
+		_, err = svc.ReadMessageFile(t.Context(), req)
+		require.NoError(t, err)
+		assert.Equal(t, 2, files.reads, "once counted, the file is cached")
 	}
 }

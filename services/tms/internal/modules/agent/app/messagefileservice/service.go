@@ -3,7 +3,6 @@ package messagefileservice
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
@@ -79,13 +78,11 @@ func (s *Service) ReadMessageFile(
 		Data:        file.Data,
 		ContentType: file.Document.FileType,
 	}
+	counted := true
 	if aiprovider.MediaType(file.Document.FileType) == "application/pdf" {
-		content.PageCount, content.Unreadable, err = s.pages(ctx, file.Data)
-		if err != nil {
-			return nil, err
-		}
+		content.PageCount, content.Unreadable, counted = s.pages(ctx, file.Data)
 	}
-	if len(content.Data) <= cachedFileBytes {
+	if counted && len(content.Data) <= cachedFileBytes {
 		s.cache.Add(key, content)
 	}
 
@@ -93,14 +90,16 @@ func (s *Service) ReadMessageFile(
 }
 
 // pages counts a PDF's pages, and reports one that will not open: encrypted
-// or damaged, which a model refuses as well. A worker that could not answer
-// is an error, so the file is neither marked unreadable nor cached.
+// or damaged, which a model refuses as well. The count is only metadata, so a
+// worker that could not answer (unavailable, slow, or refusing the file's
+// size) leaves it unknown rather than failing the read, and counted is false
+// so the file is not cached without it.
 func (s *Service) pages(
 	ctx context.Context,
 	data []byte,
-) (count int, unreadable bool, err error) {
+) (count int, unreadable, counted bool) {
 	if s.imaging == nil {
-		return 0, false, nil
+		return 0, false, true
 	}
 
 	probe, err := s.imaging.Probe(ctx, &kernelports.ImagingProbeRequest{
@@ -110,14 +109,15 @@ func (s *Service) pages(
 	if errors.Is(err, kernelports.ErrImagingInvalidDocument) ||
 		errors.Is(err, kernelports.ErrImagingEncrypted) {
 		s.logger.Debug("an attached PDF could not be opened", zap.Error(err))
-		return 0, true, nil
+		return 0, true, true
 	}
 	if err != nil {
-		return 0, false, fmt.Errorf("count the pages of an attached PDF: %w", err)
+		s.logger.Warn("the pages of an attached PDF could not be counted", zap.Error(err))
+		return 0, false, false
 	}
 	if probe.Encrypted {
-		return 0, true, nil
+		return 0, true, true
 	}
 
-	return probe.PageCount, false, nil
+	return probe.PageCount, false, true
 }
