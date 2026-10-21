@@ -214,6 +214,29 @@ async fn a_child_is_replaced_after_its_job_allowance() {
 }
 
 #[tokio::test]
+async fn a_receiver_that_goes_away_mid_job_ends_it_and_frees_the_slot() {
+    let pool = pool(1, 100).await;
+    let (tx, mut rx) = mpsc::channel(1);
+    let job = Job {
+        body: b"outputs:100000".to_vec(),
+        input: None,
+        deadline: Instant::now() + Duration::from_secs(600),
+    };
+    let reader = tokio::spawn(async move {
+        let first = rx.recv().await;
+        drop(rx);
+        first
+    });
+    let result = tokio::time::timeout(Duration::from_secs(5), pool.run(job, tx))
+        .await
+        .expect("the job ended once nobody read its output");
+    assert_eq!(result, Err(JobError::Cancelled));
+    assert!(reader.await.expect("reads").is_some());
+    assert_eq!(pool.available(), pool.size());
+    still_works(&pool).await;
+}
+
+#[tokio::test]
 async fn dropping_the_caller_stops_the_job() {
     let pool = pool(1, 100).await;
     let (tx, _rx) = mpsc::channel(1);

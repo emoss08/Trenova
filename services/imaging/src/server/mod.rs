@@ -211,12 +211,13 @@ impl Call {
         };
         let (frames_tx, mut frames_rx) = mpsc::channel::<Vec<u8>>(FORWARD_BUFFER);
         let running = self.shared.pool.run(job, frames_tx);
-        let forwarding = async {
+        // The receiver moves into the forwarding future so that it is dropped
+        // when forwarding stops early: the pool's thread then fails its next
+        // send, kills the child and ends the job instead of waiting on a full
+        // channel nobody reads.
+        let forwarding = async move {
             let mut failure = None;
             while let Some(frame) = frames_rx.recv().await {
-                if failure.is_some() {
-                    continue;
-                }
                 self.count_out(frame.len(), 0);
                 let Some(forward) = forward else {
                     failure = Some(status(

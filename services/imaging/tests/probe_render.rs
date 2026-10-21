@@ -2,6 +2,8 @@
 
 mod common;
 
+use std::time::Duration;
+
 use common::{chunked, fixture, reason, start};
 use tonic::Code;
 use trenova_proto::imaging::v1::{
@@ -44,13 +46,12 @@ struct Page {
     data: Vec<u8>,
 }
 
-async fn render(
-    worker: &mut common::Worker,
+fn render_messages(
     content_type: &str,
     bytes: &[u8],
     size: render_size::Size,
     format: ImageFormat,
-) -> Result<(Vec<Page>, u32), tonic::Status> {
+) -> Vec<RenderRequest> {
     let mut messages = vec![RenderRequest {
         part: Some(render_request::Part::Header(RenderHeader {
             document: Some(DocumentHeader {
@@ -66,6 +67,17 @@ async fn render(
     messages.extend(chunked(bytes, |c| RenderRequest {
         part: Some(render_request::Part::Chunk(c)),
     }));
+    messages
+}
+
+async fn render(
+    worker: &mut common::Worker,
+    content_type: &str,
+    bytes: &[u8],
+    size: render_size::Size,
+    format: ImageFormat,
+) -> Result<(Vec<Page>, u32), tonic::Status> {
+    let messages = render_messages(content_type, bytes, size, format);
     let mut stream = worker
         .client
         .render(tokio_stream::iter(messages))
@@ -385,6 +397,55 @@ async fn hostile_pdfs_fail_alone_and_the_pool_carries_on() {
     .await
     .expect("the pool still works");
     assert_eq!(described.page_count, 1);
+    assert!(worker.pool.healthy());
+}
+
+#[tokio::test]
+async fn a_render_its_caller_abandons_gives_its_slot_back() {
+    let Some(mut worker) = start(&[]).await else {
+        return;
+    };
+    let pdf = fixture("native-10p.pdf");
+    let abandoned = tokio::time::timeout(Duration::from_secs(30), async {
+        for _ in 0..=worker.pool.size() {
+            let messages = render_messages(
+                "application/pdf",
+                &pdf,
+                render_size::Size::Fit(FitBox {
+                    max_width: 2400,
+                    max_height: 0,
+                }),
+                ImageFormat::Png,
+            );
+            let mut stream = worker
+                .client
+                .render(tokio_stream::iter(messages))
+                .await
+                .expect("the render starts")
+                .into_inner();
+            stream
+                .message()
+                .await
+                .expect("the first frame arrives")
+                .expect("the render has output");
+            drop(stream);
+        }
+        while worker.pool.available() < worker.pool.size() {
+            tokio::time::sleep(Duration::from_millis(20)).await;
+        }
+    })
+    .await;
+    assert!(
+        abandoned.is_ok(),
+        "abandoned renders kept {} of {} slots",
+        worker.pool.size() - worker.pool.available(),
+        worker.pool.size()
+    );
+
+    let described = probe(&mut worker, "application/pdf", &pdf, false)
+        .await
+        .expect("a following job runs");
+    assert_eq!(described.page_count, 10);
     assert!(worker.pool.healthy());
 }
 
