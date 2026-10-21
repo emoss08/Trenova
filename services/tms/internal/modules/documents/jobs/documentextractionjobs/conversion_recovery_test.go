@@ -163,7 +163,6 @@ func (h *doclingHarness) expectSucceedingConversion(t *testing.T) []kernelports.
 	h.converter.EXPECT().
 		Result(mock.Anything, kernelports.ConversionTaskID("task-1")).
 		Return(&kernelports.ConvertedDocument{
-			Converter:        string(documentcontent.ConverterDocling),
 			ConverterVersion: "1.36.0",
 			Pages:            golden,
 		}, nil).

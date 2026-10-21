@@ -23,7 +23,6 @@ type CasePages struct {
 	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
 
 	CaseID           pulid.ID   `json:"caseId"           bun:"case_id,type:VARCHAR(100),notnull"`
-	TextSource       TextSource `json:"textSource"       bun:"text_source,type:VARCHAR(20),notnull"`
 	Pages            []Page     `json:"pages"            bun:"pages,type:JSONB,notnull"`
 	PageCount        int        `json:"pageCount"        bun:"page_count,type:INTEGER,notnull,default:0"`
 	InputHash        string     `json:"inputHash"        bun:"input_hash,type:VARCHAR(64),notnull"`
@@ -40,7 +39,6 @@ type CasePages struct {
 
 func NewCasePages(
 	evalCase *ExtractionCase,
-	source TextSource,
 	pages []Page,
 	converterVersion string,
 	frozenByID pulid.ID,
@@ -49,7 +47,6 @@ func NewCasePages(
 		OrganizationID: evalCase.OrganizationID,
 		BusinessUnitID: evalCase.BusinessUnitID,
 		CaseID:         evalCase.ID,
-		TextSource:     source,
 		Pages:          pages,
 		PageCount:      len(pages),
 		InputHash: ComputeInputHash(
@@ -69,10 +66,6 @@ func (p *CasePages) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&p.OrganizationID, validation.Required.Error("Organization is required")),
 		validation.Field(&p.BusinessUnitID, validation.Required.Error("Business unit is required")),
 		validation.Field(&p.CaseID, validation.Required.Error("Case is required")),
-		validation.Field(&p.TextSource,
-			validation.Required.Error("Text source is required"),
-			validation.In(TextSourceDocling).Error("Only Docling pages are frozen beside a case"),
-		),
 		validation.Field(&p.Pages,
 			validation.Required.Error("The document has no readable pages"),
 			validation.Length(1, MaxPages).

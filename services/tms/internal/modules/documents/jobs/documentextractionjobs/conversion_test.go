@@ -172,9 +172,6 @@ func (r *memoryContentRepository) Upsert(
 	if entity.ID.IsNil() {
 		entity.ID = pulid.MustNew("dc_")
 	}
-	if entity.Converter == "" {
-		entity.Converter = documentcontent.ConverterLegacy
-	}
 	stored := *entity
 	r.content = &stored
 	r.writes = append(r.writes, stored)
@@ -365,7 +362,6 @@ func TestProcessDocumentExtractionWorkflow_WithoutAProviderNeverCallsTheConverte
 
 	require.NotNil(t, h.contents.content)
 	assert.Equal(t, documentcontent.StatusIndexed, h.contents.content.Status)
-	assert.Equal(t, documentcontent.ConverterDocling, h.contents.content.Converter)
 	assert.Equal(
 		t,
 		documentupload.FailureExtractionUnavailable.String(),
@@ -452,7 +448,6 @@ func TestProcessDocumentExtractionWorkflow_ConvertsWithDoclingAndBuildsADraft(t 
 	h.converter.EXPECT().
 		Result(mock.Anything, kernelports.ConversionTaskID("task-1")).
 		Return(&kernelports.ConvertedDocument{
-			Converter:        string(documentcontent.ConverterDocling),
 			ConverterVersion: "1.36.0",
 			Pages:            golden,
 		}, nil).
@@ -466,7 +461,6 @@ func TestProcessDocumentExtractionWorkflow_ConvertsWithDoclingAndBuildsADraft(t 
 	content := h.contents.content
 	require.NotNil(t, content)
 	assert.Equal(t, documentcontent.StatusIndexed, content.Status)
-	assert.Equal(t, documentcontent.ConverterDocling, content.Converter)
 	assert.Equal(t, "1.36.0", content.ConverterVersion)
 	assert.Equal(t, len(golden), content.PageCount)
 
@@ -560,7 +554,6 @@ func TestProcessDocumentExtractionWorkflow_ResubmitsWhenTheConverterLosesTheTask
 	h.converter.EXPECT().
 		Result(mock.Anything, kernelports.ConversionTaskID("task-2")).
 		Return(&kernelports.ConvertedDocument{
-			Converter:        string(documentcontent.ConverterDocling),
 			ConverterVersion: "1.36.0",
 			Pages:            golden,
 		}, nil).

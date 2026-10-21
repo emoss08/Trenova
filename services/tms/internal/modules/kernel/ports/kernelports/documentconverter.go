@@ -51,7 +51,6 @@ type ConvertRequest struct {
 }
 
 type ConvertedDocument struct {
-	Converter        string
 	ConverterVersion string
 	Pages            []ConvertedPage
 	Raw              []byte

@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentaiextraction"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionrollout"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -54,10 +53,7 @@ func (s *inlineExtraction) SubmitRateConfirmationBackgroundExtraction(
 	}, nil
 }
 
-func submitWithConverter(
-	t *testing.T,
-	converter documentcontent.Converter,
-) (*fakeRolloutRouter, *inlineExtraction) {
+func submitExtraction(t *testing.T) (*fakeRolloutRouter, *inlineExtraction) {
 	t.Helper()
 
 	extractedAt := int64(1_800_000_000)
@@ -81,7 +77,6 @@ func submitWithConverter(
 				DocumentID:      docID,
 				OrganizationID:  orgID,
 				BusinessUnitID:  buID,
-				Converter:       converter,
 				ContentText:     "Load 48213",
 				LastExtractedAt: &extractedAt,
 			},
@@ -108,30 +103,12 @@ func submitWithConverter(
 	return router, ai
 }
 
-/*
-The fine-tuned candidate was trained on legacy text, so Docling input never
-reaches it before it is retrained. The exclusion is recorded with its reason so
-the rollout can show it, and no assignment is made, which is what kept the
-rollout's numbers from moving without explanation.
-*/
-func TestDoclingContentIsExcludedFromTheRolloutAndNeverAssigned(t *testing.T) {
+func TestEveryExtractionIsOfferedToTheRollout(t *testing.T) {
 	t.Parallel()
 
-	router, ai := submitWithConverter(t, documentcontent.ConverterDocling)
-
-	assert.Nil(t, router.assigned, "Docling input is never assigned to a side")
-	require.NotNil(t, router.excluded)
-	assert.Equal(t, extractionrollout.ExclusionReasonDoclingInput, router.excluded.Reason)
-	assert.Equal(t, int64(1_800_000_000), router.excluded.ExtractedAt)
-	assert.True(t, ai.preferred.IsNil(), "production serves the excluded extraction")
-}
-
-func TestLegacyContentIsAssignedAndNotExcluded(t *testing.T) {
-	t.Parallel()
-
-	router, ai := submitWithConverter(t, documentcontent.ConverterLegacy)
+	router, ai := submitExtraction(t)
 
 	require.NotNil(t, router.assigned)
-	assert.Nil(t, router.excluded)
-	assert.Equal(t, router.preferred, ai.preferred)
+	assert.Equal(t, int64(1_800_000_000), router.assigned.ExtractedAt)
+	assert.Equal(t, router.preferred, ai.preferred, "the assigned side is the provider asked first")
 }

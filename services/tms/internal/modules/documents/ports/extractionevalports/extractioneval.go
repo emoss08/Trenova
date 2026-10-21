@@ -161,7 +161,6 @@ type ExtractionEvalResultRepository interface {
 type GetExtractionEvalCasePagesRequest struct {
 	TenantInfo pagination.TenantInfo
 	CaseID     pulid.ID
-	TextSource extractioneval.TextSource
 }
 
 type ExtractionEvalCasePagesRepository interface {

@@ -42151,7 +42151,7 @@
     ]
   },
   "Business unit is required": {
-    "sites": 145,
+    "sites": 144,
     "scope": [
       "go"
     ],
@@ -44257,7 +44257,7 @@
     ]
   },
   "Candidate is required": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -61694,15 +61694,6 @@
     ]
   },
   "Converted amount is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Converter is invalid": {
     "sites": 1,
     "scope": [
       "go"
@@ -80763,15 +80754,6 @@
       "apps/web/components"
     ]
   },
-  "Docling": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Docling re-conversion": {
     "sites": 1,
     "scope": [
@@ -81168,7 +81150,7 @@
     ]
   },
   "Document is required": {
-    "sites": 14,
+    "sites": 13,
     "scope": [
       "go"
     ],
@@ -81452,13 +81434,12 @@
     ]
   },
   "Document text": {
-    "sites": 6,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
-      "routes/agent-control"
+      "routes/admin"
     ]
   },
   "Document text, when the record it belongs to may be read by a model": {
@@ -86654,24 +86635,6 @@
     ],
     "areas": [
       "routes/dispatch-control"
-    ]
-  },
-  "Each case's pages as first frozen, read by the legacy engine.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
-  "Each case's pages frozen again through Docling, as Markdown. A case not yet re-converted is skipped.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Each check reads this organization's own records as they are now. Check again after a change to see it reflected.": {
@@ -100340,7 +100303,7 @@
     ]
   },
   "Extraction time is required": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -101906,7 +101869,7 @@
     ]
   },
   "Failed to download document": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -134471,15 +134434,6 @@
     ],
     "areas": [
       "routes/dispatch-console"
-    ]
-  },
-  "Legacy": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Legacy exact matches": {
@@ -171927,15 +171881,6 @@
       "routes/billing-queue"
     ]
   },
-  "Only Docling pages are frozen beside a case": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Only Draft and Published versions are available for simulation.": {
     "sites": 1,
     "scope": [
@@ -178648,7 +178593,7 @@
     ]
   },
   "Organization is required": {
-    "sites": 144,
+    "sites": 143,
     "scope": [
       "go"
     ],
@@ -252889,15 +252834,6 @@
       "go/other"
     ]
   },
-  "Text source is required": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Text strings that mark the beginning of this section": {
     "sites": 1,
     "scope": [
@@ -255823,15 +255759,6 @@
     ]
   },
   "The candidate could not answer": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
-  "The candidate is not sent documents read by Docling until it is retrained on Docling's output. Production reads them, and they count for neither side.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -264281,7 +264208,7 @@
     ]
   },
   "The print job could not be split into pages": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -318068,15 +317995,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "{0, plural, one {# document excluded: read by Docling} other {# documents excluded: read by Docling}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "{0, plural, one {# document on file} other {# documents on file}}": {

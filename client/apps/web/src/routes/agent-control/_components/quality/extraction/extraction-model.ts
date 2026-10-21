@@ -5,7 +5,6 @@ import type {
   ExtractionEvalCaseStatus,
   ExtractionEvalResultStatus,
   ExtractionEvalRunStatus,
-  ExtractionTextSource,
 } from "@trenova/graphql/generated/graphql";
 import { defineLabels } from "@trenova/shared/i18n/labels";
 
@@ -65,20 +64,6 @@ export const OUTCOME: Record<AiCorrectionOutcome, BadgeAttrProps> = {
     description: "Present on both sides but could not be compared",
   },
 };
-
-export const DEFAULT_TEXT_SOURCE: ExtractionTextSource = "legacy";
-
-/** Which reading of each case a run sends to the model. */
-export const TEXT_SOURCE: Record<ExtractionTextSource, string> = defineLabels({
-  legacy: "Legacy",
-  docling: "Docling",
-});
-
-export const TEXT_SOURCE_DESCRIPTION: Record<ExtractionTextSource, string> = defineLabels({
-  legacy: "Each case's pages as first frozen, read by the legacy engine.",
-  docling:
-    "Each case's pages frozen again through Docling, as Markdown. A case not yet re-converted is skipped.",
-});
 
 export const CASE_STATUS_ACTION: Record<ExtractionEvalCaseStatus, string> = defineLabels({
   Candidate: "Move back to candidates",

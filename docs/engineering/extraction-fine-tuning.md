@@ -63,16 +63,16 @@ to say; that is the recipe's job.
   `Prompted` or `JSONMode` provider is given.
 - `TestRenderedPromptMatchesWhatTheRouterSends` holds the two paths together.
 
-**Two kinds of page text reach the model.** Pages without Markdown (an evaluation case's pages as
-first frozen, and documents read before Docling) carry plain text and get the original system
-prompt, cut at the page limit. Pages read by Docling carry Markdown
-(`document_content_pages.markdown`): tables are pipe tables, the printed header and footer sit
-under a `<!-- page header -->` marker, the system prompt says so, and the page limit cuts at a
-block boundary, never inside a table row. A Markdown page is a different prompt with a
-different fingerprint. The current model was trained on plain text only, so the extraction
-rollout never pairs it with Docling content, and an export that includes Docling-read documents
-must be rendered again and the model retrained before it serves them. The reply schema did not
-change, so the pipeline's schema fixture stays as it is.
+**Docling's Markdown is what reaches the model.** Every document is read by Docling, and a page
+is sent as its Markdown (`document_content_pages.markdown`): tables are pipe tables, the printed
+header and footer sit under a `<!-- page header -->` marker, the system prompt says so, and the
+page limit cuts at a block boundary, never inside a table row. A page Docling gave no Markdown is
+sent as its plain text with the plain-text system prompt, cut at the page limit; that is a
+different prompt with a different fingerprint. Evaluation runs send the same Markdown, frozen
+beside each case from its original file. A model trained on anything else (the plain text the
+removed Legacy engine produced) must be retrained on rendered Markdown before it is a rollout
+candidate: the rollout assigns every extraction and does not check what a candidate was trained
+on. The reply schema did not change, so the pipeline's schema fixture stays as it is.
 
 **Choose the structured output mode now.** `--structured-output` must be the mode the model will
 be registered with:
@@ -509,10 +509,6 @@ correction captured   →  ObserveCorrection →  accuracy guard
   them, and the choice is independent of which documents shadow traffic samples. Every extraction
   while the rollout serves gets an `extraction_rollout_assignments` row (one per document and
   extraction time), on either side, so both sides are compared over the same period.
-- **Docling input.** A document read by Docling is never assigned, so the candidate never sees
-  Markdown before it is retrained on it; `ExcludeExtraction` records it in
-  `extraction_rollout_exclusions` with the reason `docling_input` instead, and the report's
-  `exclusions` count is shown in the rollout view as "N documents excluded: read by Docling".
 - **Serving.** `submitAIExtraction` asks `AssignExtraction` before it submits. A candidate-side
   extraction passes the candidate as `AIExtractRequest.PreferredProviderID`; the completion router
   tries it first and falls through to the usual priority order when it is disabled, busy or

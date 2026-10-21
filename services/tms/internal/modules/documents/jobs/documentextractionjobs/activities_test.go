@@ -118,7 +118,6 @@ func expectStoredText(
 			ContentText:    text,
 			PageCount:      1,
 			SourceKind:     documentcontent.SourceKindNative,
-			Converter:      documentcontent.ConverterDocling,
 		}, nil)
 	contentRepo.EXPECT().
 		ListPagesByDocumentID(mock.Anything, doc.ID, mock.Anything).

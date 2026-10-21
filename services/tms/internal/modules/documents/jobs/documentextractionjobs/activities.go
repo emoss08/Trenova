@@ -149,7 +149,6 @@ func (a *Activities) markExtractionStarted(
 		OrganizationID:  doc.OrganizationID,
 		BusinessUnitID:  doc.BusinessUnitID,
 		Status:          documentcontent.StatusExtracting,
-		Converter:       documentcontent.ConverterDocling,
 		LastExtractedAt: &now,
 	}
 	if _, err := a.contentRepo.Upsert(ctx, content); err != nil {

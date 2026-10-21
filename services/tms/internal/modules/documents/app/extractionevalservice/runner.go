@@ -118,7 +118,7 @@ func (s *Service) EvaluateResult(
 		return err
 	}
 
-	pages, err := s.pagesFor(ctx, req.TenantInfo, run, evalCase)
+	pages, err := s.pagesFor(ctx, req.TenantInfo, evalCase)
 	if err != nil {
 		return err
 	}
@@ -184,17 +184,11 @@ func (s *Service) saveFailure(
 func (s *Service) pagesFor(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	run *extractioneval.ExtractionRun,
 	evalCase *extractioneval.ExtractionCase,
 ) ([]extractioneval.Page, error) {
-	if !run.TextSource.Frozen() {
-		return evalCase.Pages, nil
-	}
-
 	frozen, err := s.casePages.Get(ctx, &extractionevalports.GetExtractionEvalCasePagesRequest{
 		TenantInfo: tenant,
 		CaseID:     evalCase.ID,
-		TextSource: run.TextSource,
 	})
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {

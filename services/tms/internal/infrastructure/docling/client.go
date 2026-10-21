@@ -26,8 +26,6 @@ import (
 )
 
 const (
-	ConverterName = "docling"
-
 	submitPath  = "/v1/convert/file/async"
 	statusPath  = "/v1/status/poll/"
 	resultPath  = "/v1/result/"
@@ -272,9 +270,8 @@ func convertResult(raw []byte) (*kernelports.ConvertedDocument, error) {
 	}
 
 	return &kernelports.ConvertedDocument{
-		Converter: ConverterName,
-		Pages:     renderPages(doc, envelope.Confidence),
-		Raw:       bytes.Clone(content),
+		Pages: renderPages(doc, envelope.Confidence),
+		Raw:   bytes.Clone(content),
 	}, nil
 }
 

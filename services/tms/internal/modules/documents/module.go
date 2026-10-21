@@ -86,7 +86,6 @@ func SharedOptions() fx.Option {
 			extractionevalrepository.NewCasePages,
 			extractionrolloutrepository.NewRollouts,
 			extractionrolloutrepository.NewAssignments,
-			extractionrolloutrepository.NewExclusions,
 			extractionshadowrepository.NewSettings,
 			extractionshadowrepository.NewResults,
 			retrievalsourcerepository.New,

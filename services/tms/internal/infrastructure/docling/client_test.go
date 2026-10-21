@@ -362,7 +362,6 @@ func TestResultRendersTheDocument(t *testing.T) {
 	for range 2 {
 		converted, resultErr := client.Result(t.Context(), "task-1")
 		require.NoError(t, resultErr)
-		assert.Equal(t, ConverterName, converted.Converter)
 		assert.Equal(t, "1.36.0", converted.ConverterVersion)
 		assert.Len(t, converted.Pages, 2)
 		assert.True(t, bytes.HasPrefix(converted.Raw, []byte("{")))

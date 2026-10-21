@@ -16095,14 +16095,6 @@ enum ExtractionEvalRunStatus {
   Failed
 }
 
-"Which reading of a document an evaluation sends to the model."
-enum ExtractionTextSource {
-  "The case's pages as first frozen: PDFium text, Tesseract OCR and the Office reader."
-  legacy
-  "The case's pages frozen again from its original file through Docling, as Markdown."
-  docling
-}
-
 enum ExtractionEvalResultStatus {
   Pending
   Completed
@@ -16263,8 +16255,6 @@ type ExtractionEvalRun {
   "The model the provider reported serving."
   servedModel: String!
   caseLimit: Int!
-  "The reading of each case the run sent to the model; a case with no pages for it is skipped."
-  textSource: ExtractionTextSource!
   casesTotal: Int!
   casesCompleted: Int!
   casesFailed: Int!
@@ -16446,8 +16436,6 @@ input StartExtractionEvalRunInput {
   providerId: ID!
   "How many active cases to run, newest first; 50 by default, at most 500."
   caseLimit: Int
-  "Which reading of each case to send; legacy by default."
-  textSource: ExtractionTextSource
 }
 
 input RefreezeExtractionEvalCasesInput {
@@ -16569,18 +16557,6 @@ type ExtractionRolloutAccuracy {
   accuracy: Float!
 }
 
-"Why a production extraction was left out of the rollout's comparison."
-enum ExtractionRolloutExclusionReason {
-  "The document was read by Docling, and the candidate must not see Markdown input until it is retrained on it."
-  docling_input
-}
-
-"Production extractions left out of the comparison since the rollout started, for one reason. Excluded extractions are served by production and never assigned to either side."
-type ExtractionRolloutExclusion {
-  reason: ExtractionRolloutExclusionReason!
-  count: Int!
-}
-
 "How the candidate is doing on the documents it serves, beside production on the rest."
 type ExtractionRolloutReport {
   rollout: ExtractionRollout!
@@ -16597,8 +16573,6 @@ type ExtractionRolloutReport {
   minGuardScoredFields: Int!
   "Settled extractions each side needs before the rejection guard can stop the rollout."
   minGuardExtractions: Int!
-  "Extractions left out of the comparison since the rollout started, one entry per reason."
-  exclusions: [ExtractionRolloutExclusion!]!
 }
 
 input UpdateExtractionRolloutInput {

@@ -239,7 +239,6 @@ func (a *Activities) planConversion(
 			DocumentID:     doc.ID,
 			OrganizationID: doc.OrganizationID,
 			BusinessUnitID: doc.BusinessUnitID,
-			Converter:      documentcontent.ConverterDocling,
 		}
 		if err = a.markFailed(
 			ctx,
@@ -364,7 +363,6 @@ func (a *Activities) markExtractionUnavailable(
 		OrganizationID: doc.OrganizationID,
 		BusinessUnitID: doc.BusinessUnitID,
 		Status:         documentcontent.StatusIndexed,
-		Converter:      documentcontent.ConverterDocling,
 		StructuredData: buildStructuredData(analysis, &AIDiagnostics{
 			FallbackAnalysis: analysis,
 			AcceptanceStatus: aiAcceptanceStatusNotAttempted,
@@ -504,7 +502,6 @@ func (a *Activities) contentForConversion(
 		OrganizationID:  doc.OrganizationID,
 		BusinessUnitID:  doc.BusinessUnitID,
 		Status:          documentcontent.StatusExtracting,
-		Converter:       documentcontent.ConverterDocling,
 		LastExtractedAt: &now,
 	}
 
@@ -522,7 +519,6 @@ func (a *Activities) conversionFailed(
 	content *documentcontent.Content,
 	failure *conversionFailure,
 ) (*ConvertDocumentResult, error) {
-	content.Converter = documentcontent.ConverterDocling
 	if err := a.markFailed(ctx, doc, content, failure.code.String(), failure.message); err != nil {
 		return nil, err
 	}
@@ -831,9 +827,7 @@ func (a *Activities) extractionPages(
 			Markdown:   stringutils.TruncateAtBlock(page.Markdown, maxChars),
 			Width:      int(math.Round(page.Width)),
 			Height:     int(math.Round(page.Height)),
-			Metadata: map[string]any{
-				"converter": documentcontent.ConverterDocling,
-			},
+			Metadata:   map[string]any{},
 		}
 		if kind != documentcontent.SourceKindNative {
 			result.OCRConfidence = page.OCRConfidence
@@ -897,7 +891,6 @@ func (a *Activities) storeConversion(
 	content.ContentText = extracted.Text
 	content.PageCount = converted.pageCount
 	content.SourceKind = extracted.SourceKind
-	content.Converter = documentcontent.ConverterDocling
 	content.ConverterVersion = converted.converterVersion
 	content.RawObjectKey = rawKey
 	content.FailureCode = ""
@@ -954,7 +947,6 @@ func (a *Activities) storeRawConversion(
 		Body:        bytes.NewReader(body),
 		Metadata: map[string]string{
 			"crypto_mode": encryptionservice.CryptoModeForCiphertext(encrypted),
-			"converter":   string(documentcontent.ConverterDocling),
 		},
 	}); err != nil {
 		return "", fmt.Errorf("store converted document: %w", err)
