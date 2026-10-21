@@ -291,3 +291,22 @@ func TestDialControlRefusesBlockedAddresses(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, conn.Close())
 }
+
+func TestValidateHTTPSURL(t *testing.T) {
+	t.Parallel()
+
+	parsed, err := ValidateHTTPSURL("https://login.example.com/tenant/v2.0", Policy{})
+	require.NoError(t, err)
+	require.Equal(t, "login.example.com", parsed.Hostname())
+
+	_, err = ValidateHTTPSURL("http://login.example.com", Policy{})
+	require.ErrorIs(t, err, ErrInsecureURL)
+	_, err = ValidateHTTPSURL("https://user:secret@login.example.com", Policy{})
+	require.ErrorIs(t, err, ErrInsecureURL)
+	_, err = ValidateHTTPSURL("https://127.0.0.1/realms/trenova", Policy{})
+	require.ErrorIs(t, err, ErrBlockedAddress)
+	_, err = ValidateHTTPSURL("https://10.1.2.3/realms/trenova", Policy{AllowPrivateNetworks: true})
+	require.NoError(t, err)
+	_, err = ValidateHTTPSURL("ftp://login.example.com", Policy{})
+	require.ErrorIs(t, err, ErrBlockedScheme)
+}

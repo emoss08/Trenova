@@ -96,6 +96,9 @@ security:
     tokenTtl: 30m # How long a reset link stays redeemable. It is a bearer credential sitting in a mailbox.
     inviteTokenTtl: 168h # How long the link a new user is invited with stays redeemable.
     maxRequestsPerHour: 5 # Reset links one account can be sent per hour, so the endpoint cannot flood an inbox.
+  sso:
+    allowPrivateNetworkIssuers: false # Allow an OIDC issuer (and its token and key endpoints) on a private network, for an identity provider inside this network. Link-local and metadata addresses stay refused.
+    providerCacheTtl: 1h # How long an identity provider's discovery document is reused before it is fetched again. A configuration change refetches at once.
   graphql:
     maxRequestBodyBytes: 1048576
     costBudget:

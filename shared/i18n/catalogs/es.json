@@ -5158,6 +5158,7 @@
   "Issuer URL cannot be longer than 500 characters": "La URL del emisor no puede superar los 500 caracteres",
   "Issuer URL is required": "La URL del emisor es obligatoria",
   "Issuer URL must be a valid URL": "La URL del emisor debe ser una URL válida",
+  "Issuer URL must be an https address on a public network, without credentials, a query or a fragment": "La URL del emisor debe ser una dirección https en una red pública, sin credenciales, consulta ni fragmento",
   "Issuer is required": "El emisor es obligatorio",
   "Issuing Agency": "Organismo emisor",
   "Issuing Authority": "Autoridad emisora",

@@ -83,6 +83,7 @@ type Service struct {
 	enc        *encryptionservice.Service
 	cfg        *config.Config
 	policy     session.Policy
+	oidc       *oidcProviders
 	l          *zap.Logger
 }
 
@@ -111,6 +112,10 @@ func New(p Params) tenantports.AuthService {
 			MaxAge:      p.Config.Security.Session.MaxAge,
 			IdleTimeout: p.Config.Security.Session.IdleTimeout,
 		},
+		oidc: newOIDCProviders(
+			p.Config.Security.SSO.IssuerPolicy(),
+			p.Config.Security.SSO.GetProviderCacheTTL(),
+		),
 		l: p.Logger.Named("service.auth"),
 	}
 }
@@ -321,7 +326,7 @@ func (s *Service) StartSSOLogin(
 		return "", err
 	}
 
-	provider, err := oidc.NewProvider(ctx, ssoConfig.OIDCIssuerURL)
+	provider, err := s.oidc.get(ctx, ssoConfig)
 	if err != nil {
 		return "", errortypes.NewBusinessError("Failed to initialize {0} identity provider", providerDisplayName(req.Provider)).
 			WithInternal(err)
@@ -425,7 +430,7 @@ func (s *Service) HandleSSOCallback( //nolint:cyclop // legacy workflow
 		return nil, err
 	}
 
-	provider, err := oidc.NewProvider(scoped, ssoConfig.OIDCIssuerURL)
+	provider, err := s.oidc.get(scoped, ssoConfig)
 	if err != nil {
 		attempt.fail(authErrorSSOConfig)
 		return nil, errortypes.NewBusinessError("Failed to initialize {0} identity provider", displayName).
@@ -441,7 +446,7 @@ func (s *Service) HandleSSOCallback( //nolint:cyclop // legacy workflow
 	}
 
 	oauthToken, err := oauthCfg.Exchange(
-		scoped,
+		s.oidc.clientContext(scoped),
 		req.Code,
 		oauth2.VerifierOption(loginState.CodeVerifier),
 	)
@@ -461,7 +466,7 @@ func (s *Service) HandleSSOCallback( //nolint:cyclop // legacy workflow
 	verifier := provider.Verifier(&oidc.Config{
 		ClientID: ssoConfig.OIDCClientID,
 	})
-	idToken, err := verifier.Verify(scoped, rawIDToken)
+	idToken, err := verifier.Verify(s.oidc.clientContext(scoped), rawIDToken)
 	if err != nil {
 		attempt.fail(authErrorSSOAssertion)
 		return nil, errortypes.NewAuthenticationError("{0} identity token is invalid", displayName)

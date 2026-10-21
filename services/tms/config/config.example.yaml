@@ -247,6 +247,9 @@ security:
     tokenTtl: 30m # How long a reset link stays redeemable. It is a bearer credential sitting in a mailbox.
     inviteTokenTtl: 168h # How long the link a new user is invited with stays redeemable.
     maxRequestsPerHour: 5 # Reset links one account can be sent per hour, so the endpoint cannot flood an inbox.
+  sso:
+    allowPrivateNetworkIssuers: false # Allow an OIDC issuer (and its token and key endpoints) on a private network, for an identity provider inside this network. Link-local and metadata addresses stay refused.
+    providerCacheTtl: 1h # How long an identity provider's discovery document is reused before it is fetched again. A configuration change refetches at once.
   graphql:
     maxRequestBodyBytes: 1048576 # Max /graphql request body (bytes); bounds the variables payload
     persistedDocumentsPath: internal/api/graphql/persisted-documents.json # Dev/test only: safelist file re-read on unknown hash
@@ -403,6 +406,7 @@ push:
     vapidPublicKey: ""
     vapidPrivateKey: ""
     subject: mailto:admin@example.com
+    allowedEndpointHosts: [] # Push service hosts a browser subscription may name ("*.example.com" for subdomains); empty means FCM, Mozilla, Windows and Apple
 
 # Accounting sync. An instance app is optional: with one, every organization can connect with
 # a click; without one, each organization enters its own Intuit app's keys on the QuickBooks

@@ -181,6 +181,19 @@ func ValidateURLWithPolicy(rawURL string, p Policy) (*url.URL, error) {
 	return parsed, nil
 }
 
+var ErrInsecureURL = errors.New("httpsafe: url must use https without credentials")
+
+func ValidateHTTPSURL(rawURL string, p Policy) (*url.URL, error) {
+	parsed, err := ValidateURLWithPolicy(rawURL, p)
+	if err != nil {
+		return nil, err
+	}
+	if parsed.Scheme != "https" || parsed.User != nil {
+		return nil, ErrInsecureURL
+	}
+	return parsed, nil
+}
+
 func ValidateHost(host string, p Policy) error {
 	trimmed := strings.Trim(strings.TrimSpace(host), "[]")
 	if trimmed == "" {

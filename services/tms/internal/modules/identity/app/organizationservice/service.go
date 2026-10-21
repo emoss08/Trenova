@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/fileutils"
+	"github.com/emoss08/trenova/shared/httpsafe"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
@@ -55,6 +56,7 @@ type service struct {
 	v            *Validator
 	enc          *encryptionservice.Service
 	plans        platformplanports.PlanService
+	issuers      httpsafe.Policy
 }
 
 func New(p Params) tenantports.OrganizationService {
@@ -69,6 +71,7 @@ func New(p Params) tenantports.OrganizationService {
 		v:            p.Validator,
 		enc:          p.Encryption,
 		plans:        p.Plans,
+		issuers:      p.Config.SSOIssuerPolicy(),
 	}
 }
 
@@ -570,6 +573,7 @@ func (s *service) UpsertOktaSSOConfig(
 		if issuerURL == "" {
 			multiErr.Add("issuerUrl", errortypes.ErrRequired, "Issuer URL is required")
 		}
+		tenant.ValidateOIDCIssuerURL(multiErr, "issuerUrl", issuerURL, s.issuers)
 		if clientID == "" {
 			multiErr.Add("clientId", errortypes.ErrRequired, "Client ID is required")
 		}

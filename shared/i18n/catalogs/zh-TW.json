@@ -5158,6 +5158,7 @@
   "Issuer URL cannot be longer than 500 characters": "簽發者網址不得超過 500 個字元",
   "Issuer URL is required": "簽發者網址為必填",
   "Issuer URL must be a valid URL": "簽發者網址必須為有效的網址",
+  "Issuer URL must be an https address on a public network, without credentials, a query or a fragment": "簽發者 URL 必須是公用網路上的 https 位址，且不得包含認證資訊、查詢字串或片段",
   "Issuer is required": "發出者為必填",
   "Issuing Agency": "核發機關",
   "Issuing Authority": "核發機構",

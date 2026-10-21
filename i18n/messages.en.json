@@ -127719,6 +127719,15 @@
       "go/other"
     ]
   },
+  "Issuer URL must be an https address on a public network, without credentials, a query or a fragment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Issuer is required": {
     "sites": 1,
     "scope": [

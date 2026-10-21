@@ -2,9 +2,11 @@ package tenant
 
 import (
 	"context"
+	"strings"
 
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/httpsafe"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -158,3 +160,22 @@ const (
 	maxSSOClientIDLength    = 255
 	maxSSODefaultRoleLength = 50
 )
+
+func ValidateOIDCIssuerURL(
+	multiErr *errortypes.MultiError,
+	field string,
+	issuerURL string,
+	policy httpsafe.Policy,
+) {
+	if strings.TrimSpace(issuerURL) == "" {
+		return
+	}
+	parsed, err := httpsafe.ValidateHTTPSURL(issuerURL, policy)
+	if err != nil || parsed.RawQuery != "" || parsed.Fragment != "" {
+		multiErr.Add(
+			field,
+			errortypes.ErrInvalid,
+			"Issuer URL must be an https address on a public network, without credentials, a query or a fragment",
+		)
+	}
+}

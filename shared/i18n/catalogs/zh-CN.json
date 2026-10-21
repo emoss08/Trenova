@@ -5158,6 +5158,7 @@
   "Issuer URL cannot be longer than 500 characters": "颁发者网址不得超过 500 个字符",
   "Issuer URL is required": "颁发者网址为必填",
   "Issuer URL must be a valid URL": "颁发者网址必须为有效的网址",
+  "Issuer URL must be an https address on a public network, without credentials, a query or a fragment": "签发者 URL 必须是公共网络上的 https 地址，且不得包含凭据、查询字符串或片段",
   "Issuer is required": "发出者为必填项",
   "Issuing Agency": "签发机构",
   "Issuing Authority": "核发机关",

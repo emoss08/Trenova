@@ -293,6 +293,33 @@ type SecurityConfig struct {
 	Idempotency IdempotencyConfig `mapstructure:"idempotency"`
 
 	PasswordReset PasswordResetConfig `mapstructure:"passwordReset"`
+
+	SSO SSOSecurityConfig `mapstructure:"sso"`
+}
+
+const defaultSSOProviderCacheTTL = time.Hour
+
+type SSOSecurityConfig struct {
+	AllowPrivateNetworkIssuers bool          `mapstructure:"allowPrivateNetworkIssuers"`
+	ProviderCacheTTL           time.Duration `mapstructure:"providerCacheTtl"           validate:"omitempty,min=0"`
+}
+
+func (c *Config) SSOIssuerPolicy() httpsafe.Policy {
+	if c == nil {
+		return httpsafe.Policy{}
+	}
+	return c.Security.SSO.IssuerPolicy()
+}
+
+func (c *SSOSecurityConfig) IssuerPolicy() httpsafe.Policy {
+	return httpsafe.Policy{AllowPrivateNetworks: c != nil && c.AllowPrivateNetworkIssuers}
+}
+
+func (c *SSOSecurityConfig) GetProviderCacheTTL() time.Duration {
+	if c == nil || c.ProviderCacheTTL <= 0 {
+		return defaultSSOProviderCacheTTL
+	}
+	return c.ProviderCacheTTL
 }
 
 const (
