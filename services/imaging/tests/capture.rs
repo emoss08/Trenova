@@ -61,12 +61,13 @@ async fn a_batch_is_read_page_by_page_in_one_pass_each() {
         ("application/pdf", fixture("capture-blank.pdf")),
         ("application/pdf", fixture("capture-text-0.pdf")),
         ("application/pdf", fixture("hostile-garbage.pdf")),
+        ("application/pdf", Vec::new()),
     ];
     let (results, summary) = inspect(&mut worker, &pages).await;
-    assert_eq!(results.len(), 4);
+    assert_eq!(results.len(), 5);
     assert_eq!(
         (summary.inspected, summary.failed),
-        (3, 1),
+        (3, 2),
         "{:?}",
         results.iter().map(|r| r.error.clone()).collect::<Vec<_>>()
     );
@@ -99,6 +100,11 @@ async fn a_batch_is_read_page_by_page_in_one_pass_each() {
         results[2].ink_coverage
     );
     assert!(results[3].error.is_some());
+    let empty = results[4]
+        .error
+        .as_ref()
+        .expect("an empty page fails in band");
+    assert_eq!(empty.page_index, 4);
 }
 
 #[tokio::test]

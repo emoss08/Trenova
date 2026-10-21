@@ -842,6 +842,9 @@ struct Batch {
 /// each sub-batch runs on a child while the next is read, and results go back
 /// per page as they come. A sub-batch whose child dies is run again a page at
 /// a time, so one hostile page fails alone.
+// One state machine over the request stream: pages, their chunks, and the
+// sub-batches they are gathered into.
+#[allow(clippy::too_many_lines)]
 async fn inspect_batch(
     call: Call,
     header: trenova_proto::imaging::v1::InspectCaptureHeader,
@@ -855,6 +858,8 @@ async fn inspect_batch(
     let mut running = tokio::task::JoinSet::new();
     let mut batch: Option<Batch> = None;
     let mut received: u32 = 0;
+    let mut skipped: u32 = 0;
+    let mut skipping: u64 = 0;
     let mut seen = std::collections::BTreeSet::new();
 
     loop {
@@ -886,9 +891,19 @@ async fn inspect_batch(
                         page.index
                     )));
                 }
-                let document = check_document(page.document.as_ref(), remaining)?;
-                remaining -= document.declared_size;
                 received += 1;
+                skipping = 0;
+                let document = match check_document(page.document.as_ref(), remaining) {
+                    Ok(document) => document,
+                    Err(err) => {
+                        skipping = page.document.as_ref().map_or(0, |d| d.declared_size);
+                        skipped += 1;
+                        send_page_error(&forward, page.index, reason_of(&err), err.message())
+                            .await?;
+                        continue;
+                    }
+                };
+                remaining -= document.declared_size;
                 let open = match &mut batch {
                     Some(open) => open,
                     None => batch.insert(Batch {
@@ -904,6 +919,14 @@ async fn inspect_batch(
                 });
             }
             Some(inspect_capture_request::Part::Chunk(chunk)) => {
+                if skipping > 0 {
+                    let length = chunk.len() as u64;
+                    if length > skipping {
+                        return Err(invalid("a refused page sent more bytes than it declared"));
+                    }
+                    skipping -= length;
+                    continue;
+                }
                 let open = batch
                     .as_mut()
                     .ok_or_else(|| invalid("a chunk arrived before any page"))?;
@@ -934,7 +957,7 @@ async fn inspect_batch(
         )));
     }
 
-    let mut failed = 0;
+    let mut failed = skipped;
     while let Some(joined) = running.join_next().await {
         failed +=
             joined.map_err(|_| status(ErrorReason::Internal, "a capture job panicked", None))??;
