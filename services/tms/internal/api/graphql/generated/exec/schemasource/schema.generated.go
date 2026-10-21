@@ -30918,7 +30918,11 @@ extend type Query {
   workerChecklistTemplates(input: WorkerChecklistTemplatesInput!): WorkerChecklistTemplateConnection!
   workerChecklistTemplate(id: ID!): WorkerChecklistTemplate!
   activeWorkerChecklistTemplates: [WorkerChecklistTemplate!]!
-  workerChecklists(workerId: ID!, includeClosed: Boolean = true): [WorkerChecklist!]!
+  workerChecklists(
+    workerId: ID!
+    "Also the completed and cancelled checklists, not only the open ones."
+    includeClosed: Boolean = true
+  ): [WorkerChecklist!]!
   workerChecklist(id: ID!): WorkerChecklist!
 }
 
@@ -33168,7 +33172,11 @@ extend type Query {
   trainingCourses(input: TrainingCoursesInput!): TrainingCourseConnection!
   trainingCourse(id: ID!): TrainingCourse!
   activeTrainingCourses: [TrainingCourse!]!
-  workerTrainingRecords(workerId: ID!, includeClosed: Boolean = true): [WorkerTrainingRecord!]!
+  workerTrainingRecords(
+    workerId: ID!
+    "Also the completed, waived, cancelled and expired assignments, not only the open ones."
+    includeClosed: Boolean = true
+  ): [WorkerTrainingRecord!]!
   workerTrainingRecord(id: ID!): WorkerTrainingRecord!
   workerTrainingSummary(workerId: ID!): WorkerTrainingSummary!
   """

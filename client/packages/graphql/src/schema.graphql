@@ -24756,7 +24756,11 @@ type Query {
   workerChecklist(id: ID!): WorkerChecklist!
   workerChecklistTemplate(id: ID!): WorkerChecklistTemplate!
   workerChecklistTemplates(input: WorkerChecklistTemplatesInput!): WorkerChecklistTemplateConnection!
-  workerChecklists(includeClosed: Boolean = true, workerId: ID!): [WorkerChecklist!]!
+  workerChecklists(
+    """Also the completed and cancelled checklists, not only the open ones."""
+    includeClosed: Boolean = true
+    workerId: ID!
+  ): [WorkerChecklist!]!
   workerClearinghouseQueries(workerId: ID!): [WorkerClearinghouseQuery!]!
   workerCredential(id: ID!): WorkerCredential!
   workerCredentialSummary(workerId: ID!): WorkerCredentialSummary! @authorizes(resource: "worker_credential")
@@ -24816,7 +24820,13 @@ type Query {
   """
   workerTotalCompensation(planYear: Int, workerId: ID!): TotalCompensation!
   workerTrainingRecord(id: ID!): WorkerTrainingRecord!
-  workerTrainingRecords(includeClosed: Boolean = true, workerId: ID!): [WorkerTrainingRecord!]!
+  workerTrainingRecords(
+    """
+    Also the completed, waived, cancelled and expired assignments, not only the open ones.
+    """
+    includeClosed: Boolean = true
+    workerId: ID!
+  ): [WorkerTrainingRecord!]!
   workerTrainingSummary(workerId: ID!): WorkerTrainingSummary!
   workerYtdPaySummaries(classification: PayeeClassification, year: Int!): [WorkerYTDPaySummary!]!
   workers(input: DataTableConnectionInput!): WorkerConnection!

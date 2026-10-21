@@ -48,11 +48,11 @@ var shards = []*gqlexec.Shard{
 // operations are the persisted operations agent tools read through, each
 // byte for byte as the client sends it.
 var operations = []Operation{
-{{- range .Bindings }}
+{{- range .Operations }}
 	{
-		Name:     {{ quote .Operation.Name }},
-		Hash:     {{ quote .Operation.Hash }},
-		Document: {{ quote .Operation.Document }},
+		Name:     {{ quote .Name }},
+		Hash:     {{ quote .Hash }},
+		Document: {{ quote .Document }},
 	},
 {{- end }}
 }
@@ -108,12 +108,34 @@ type (
 func writeExecutor(dir string, plan *executorPlan, bindings []*binding) error {
 	var buf bytes.Buffer
 	if err := executorTemplate.Execute(&buf, map[string]any{
-		"Plan": plan, "Bindings": bindings,
+		"Plan": plan, "Operations": boundOperations(bindings),
 	}); err != nil {
 		return fmt.Errorf("render read executor: %w", err)
 	}
 
 	return writeGo(filepath.Join(dir, executorFile), buf.Bytes())
+}
+
+// boundOperations are every operation a tool reads, its own and those it
+// reads alongside, each once, in the order the tools are listed.
+func boundOperations(bindings []*binding) []*operation {
+	seen := make(map[string]struct{}, len(bindings))
+	out := make([]*operation, 0, len(bindings))
+	add := func(op *operation) {
+		if _, dup := seen[op.Name]; dup {
+			return
+		}
+		seen[op.Name] = struct{}{}
+		out = append(out, op)
+	}
+	for _, b := range bindings {
+		add(b.Operation)
+		for _, beside := range b.Alongside {
+			add(beside.Operation)
+		}
+	}
+
+	return out
 }
 
 func writeGo(path string, src []byte) error {

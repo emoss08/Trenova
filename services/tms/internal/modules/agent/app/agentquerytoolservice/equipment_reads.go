@@ -57,11 +57,7 @@ func equipmentReferences(workers ...string) map[string]idReference {
 		},
 	}
 	for _, field := range workers {
-		refs[field] = idReference{
-			resource: permission.ResourceWorker,
-			what:     "The worker",
-			source:   toolWorkerList,
-		}
+		refs[field] = workerReference
 	}
 
 	return refs

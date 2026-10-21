@@ -1,0 +1,16 @@
+query DeskWorkerTrainingRecords($workerId: ID!, $includeClosed: Boolean) {
+  workerTrainingRecords(workerId: $workerId, includeClosed: $includeClosed) {
+    id
+    courseId
+    course {
+      ...TrainingCourseReference
+    }
+    status
+    assignedAt
+    dueAt
+    completedAt
+    expiresAt
+    score
+    passed
+  }
+}

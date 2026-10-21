@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -74,11 +75,26 @@ func ConvertedListTool(
 	specs := graphQLListSpecs()
 	for idx := range specs {
 		if specs[idx].name == name {
-			return newGraphQLListTool(&specs[idx], reader, permissions)
+			return newGraphQLReadTool(&specs[idx], reader, permissions)
 		}
 	}
 
 	return nil, errGraphQLReadUnbound
+}
+
+// MinimalCall is the smallest call a converted list takes: a page of five,
+// or, for a list keyed by a record, that record's id.
+func MinimalCall(tool agentports.AgentQueryTool) map[string]any {
+	keyed, ok := tool.(*graphQLUnpagedListTool)
+	if !ok {
+		return map[string]any{"limit": 5}
+	}
+	call := make(map[string]any, len(keyed.required))
+	for _, name := range keyed.required {
+		call[name] = pulid.MustNew("wrk_").String()
+	}
+
+	return call
 }
 
 // ExpectedMention is how a converted list's description must name one of its

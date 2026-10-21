@@ -311,24 +311,21 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 | `worker_get_dot_random_draw` | op | dotRandomDraw | DotRandomDraw | n/a | id | Same GetDraw; entries are selected by DotRandomDraw. |
 | `worker_get_hos` | op | workerHosState | DeskWorkerHos (alt WorkerHosState) | n/a | workerId | Same TelematicsService.GetWorkerHOSState (telematics read). |
 | `worker_get_schedule` | op | workerShiftAssignments (+ workerAvailabilityPreferences, shiftSwapRequests) | WorkerShiftAssignments (+ WorkerAvailabilityPreferences, ShiftSwapRequests) | unpaged lists | workerId | Same SchedulingService ListAssignments/ListPreferences/ListSwaps; tool's team-scope guard is server-side. |
-| `worker_list_checklists` | op | workerChecklists (+ workerChecklistTemplates) | WorkerChecklists (+ WorkerChecklistTemplateTable) | unpaged list | workerId, includeClosed | Same ListForWorker / ListTemplates. |
 | `worker_list_credentials` | partial | workerCredentials (+ credentialExpiryForecast) | WorkerCredentials (+ CredentialExpiryForecast) | unpaged / limit | workerId, includeArchived / days, limit | Tool uses WorkerCredentialService.ListExpiring with credentialTypeCode, requiredOnly, includeExpired grace, offset; neither root takes those. Per-worker list and org-wide forecast cover the records. |
 | `worker_list_dot_random_draws` | op | dotRandomDraws (+ dotRandomPools) | DotRandomDraws (+ DotRandomPools) | unpaged / cursor | poolId / DOTRandomPoolsInput | Same ListDraws/ListPools. |
 | `worker_list_dot_tests` | partial | workerDotTests (+ openDotTests) | WorkerDrugAlcoholFile (openDotTests has no op) | unpaged list | workerId (required) | Same ListTests. Per-worker field has no openOnly/limit; org-wide open tests via openDotTests, which no op uses. |
 | `worker_list_employment_verifications` | partial | workerEmploymentVerifications (+ outstandingEmploymentVerifications) | OutstandingEmploymentVerifications (workerEmploymentVerifications has no op) | unpaged list | workerId (required) / none | Same ListVerifications. outstandingOnly only org-wide; per-worker list has no op and no outstandingOnly. |
 | `worker_list_injuries` | partial | workerInjuries (+ oshaLog) | WorkerInjuries (+ OshaLog) | unpaged list | workerId (required) / year | Same ListInjuries. caseYear/openOnly/recordableOnly and the org-wide list are missing (oshaLog covers recordables per year only). |
 | `worker_list_leave_cases` | partial | workerLeaveCases (+ leaveCertificationsOutstanding) | WorkerLeaveFile (leaveCertificationsOutstanding has no op) | unpaged list | workerId (required) / none | Same ListCases. openOnly, limit and an org-wide list missing; certificationOutstandingOnly only org-wide. |
-| `worker_list_performance_reviews` | op | workerPerformanceReviews (+ performanceReviewTemplates) | WorkerPerformanceReviews (+ PerformanceReviewTemplateTable) | unpaged list | workerId | Same ListReviews / ListTemplates. |
 | `worker_list_safety_events` | partial | workerSafetyEvents (+ workerSafetyViolations, workerRecognitions) | WorkerSafetyEvents (+ WorkerSafetyViolations, WorkerRecognitions) | unpaged list | workerId (required) | Per-worker read matches. Without workerId the tool lists open events fleet-wide (ListOpenEvents); fleetSafety only returns an openEvents count. |
 | `worker_list_shift_templates` | op | shiftTemplates | ShiftTemplates | limit only | activeOnly, limit | Same ListTemplates. |
-| `worker_list_training` | op | workerTrainingRecords | WorkerTrainingRecords | unpaged list | workerId, includeClosed | Same ListForWorker. |
 
 ## Counts per class
 
 | class | tools |
 |---|---|
-| op, not yet converted | 100 |
-| op, converted (rows removed) | 19 |
+| op, not yet converted | 97 |
+| op, converted (rows removed) | 22 |
 | field-no-op | 6 |
 | partial | 30 |
 | none | 21 |

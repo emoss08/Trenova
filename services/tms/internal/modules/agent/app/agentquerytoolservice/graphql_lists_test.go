@@ -43,7 +43,7 @@ func TestConvertedLists_RefuseExactlyWhatAuthorizeRefuses(t *testing.T) {
 						BusinessUnitID: actor.BusinessUnitID,
 						Actor:          actor,
 						Timezone:       "America/Chicago",
-						Params:         map[string]any{"limit": 5},
+						Params:         agentquerytoolservice.MinimalCall(tool),
 						RunID:          pulid.MustNew("ar_"),
 					})
 

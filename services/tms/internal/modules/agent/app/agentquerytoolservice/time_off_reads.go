@@ -52,11 +52,7 @@ func timeOffReadSpecs() []graphQLListSpec {
 			timeOffFrom:        noteTimeOffWindow,
 			timeOffOverlapping: noteTimeOffDefault,
 		},
-		references: map[string]idReference{timeOffWorkerID: {
-			resource: permission.ResourceWorker,
-			what:     "The worker",
-			source:   toolWorkerList,
-		}},
+		references: map[string]idReference{timeOffWorkerID: workerReference},
 		defaults:   map[string]any{timeOffOverlapping: true},
 		defaultsAt: timeOffWindow,
 		inputs:     map[string]any{timeOffIncludes: true},

@@ -1,0 +1,43 @@
+query DeskWorkerPerformanceReviews($workerId: ID!) {
+  workerPerformanceReviews(workerId: $workerId) {
+    id
+    templateId
+    title
+    status
+    periodStart
+    periodEnd
+    overallScore
+    ratings {
+      key
+      label
+      weight
+      score
+      comment
+    }
+    summary
+    goals {
+      id
+      title
+      dueAt
+      status
+    }
+  }
+}
+
+query DeskPerformanceReviewTemplates($input: PerformanceReviewTemplatesInput!) {
+  performanceReviewTemplates(input: $input) {
+    edges {
+      node {
+        id
+        code
+        name
+        isDefault
+        cadenceMonths
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}

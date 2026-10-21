@@ -345,6 +345,30 @@ on at any point from today through 14 days out, counted by the calendar in the o
 so a change of clocks moves neither end, and naming either date replaces that window whole.
 `inputs` are input fields every call sends as the screen sets them (each request's worker).
 
+**Unpaged lists keyed by a record** (`workerChecklists(workerId:, includeClosed:)`,
+`workerTrainingRecords`, `workerPerformanceReviews`: a root field returning `[X!]!`). The tool's
+parameters are the operation's own variables, typed by the root field argument each is sent as: an
+`ID` is a reference the spec names (`workerId` from `worker_list`), a described `Boolean` is a
+switch in the schema's words, a single enum takes one value. A required variable is a required
+parameter, and a required id with no reference fails construction. There is no `limit`, `after`,
+`query` or sort, and the record's fields are not filters: the list is what the screen shows for
+that record, and `defaults` say what a call that omits a switch reads (open records only). The
+generator binds such a field by name in `reads.yml` and accepts any scalar, enum or id variable as
+supplied; an input object the tool cannot build still fails generation. The node needs no Go
+entity, because nothing compiles field filters against it. `newGraphQLReadTool` picks the shape
+from the binding, so a spec does not say which it is.
+
+**Reads alongside.** Where the repository tool returned records of another kind beside the list
+because the next call needs their ids (the checklist templates a person starts by hand, the review
+templates), the spec names the operation (`alongside`) and the key the result carries the records
+under, and `reads.yml` lists it under the tool. The generator proves each one as it proves a named
+binding: persisted, one connection root field that selects `pageInfo`, no required variable but
+its table input, and a resolver that checks a read permission. The tool makes the read only when
+the reader may read that kind (`AgentCeilings.Reads`), so a reader without it gets the list and no
+templates, as before, and a refusal is never charged to the budget. It reads at most 100 records
+and says so in `note` when there are more. Only an unpaged list reads alongside; a paged list's
+next call pages its own records.
+
 **Operations on another bespoke input** (`FuelPurchasesInput`, `WatchtowerItemsInput`,
 `FactoringNoaListInput`, the side `filter:` inputs, …). Each input field is a parameter under its
 own name:
@@ -420,7 +444,8 @@ Three kinds of root field do not page this way, and their tools say so:
 - limit/offset fields (`carrierInvoiceMatches`, `ediCarrierInvoices`, `mySettlements`): offset
   stays internal; the tool hands out `nextCursor` as an opaque encoded offset, so the model learns
   one convention;
-- unpaged lists: no `after` parameter, and `hasMore` is never set;
+- unpaged lists: no `limit` or `after` parameter, and `hasMore` is never set; the list keyed by a
+  record (above) returns every record the screen shows for it;
 - `DeskMemoryPage` (`items`, `next`): the tool reads `next` as the cursor.
 
 ## Field gating
@@ -522,6 +547,9 @@ Each module's PR:
 | Equipment | `equipment_list_trailers` | none | every field the table selects is Internal |
 | Workforce | `worker_list_training_courses` | none | every field the table selects is Internal |
 | Workforce | `worker_list_time_off` | `reason`, `rejectionReason`, `cancellationReason`, `balanceAfterDays` | `worker_pto` declared no field sensitivities, so under its Restricted default every field but `id` would be withheld at Internal; its dates, status, type, days and people are now declared Internal, and a leave's reasons and balance stay Restricted, where the repository row returned the reason and decision ungated. Each request's `worker` shows only the worker reference view to a reader who cannot read workers |
+| Workforce | `worker_list_checklists` | none | reads `DeskWorkerChecklists`; every checklist field is Internal. The templates read alongside are root records of their own read |
+| Workforce | `worker_list_training` | none | reads `DeskWorkerTrainingRecords`; each assignment's `course` is a linked training course and shows its reference view (`TrainingCourseReference`) to any reader of the assignment, which includes the name the repository row carried |
+| Workforce | `worker_list_performance_reviews` | none | reads `DeskWorkerPerformanceReviews`; every review field, the summary and rating comments among them, is Internal, as the repository row gated them |
 | Workforce | `worker_list` | none | reads `DeskWorkers`, which selects only what the Desk reads (no address, contact, personnel or Confidential profile fields); `city` is Restricted and withheld at Internal, as the repository row gated it |
 
 None of the repository-backed reference, party or equipment lists was gated, so at a person's role ceiling below
