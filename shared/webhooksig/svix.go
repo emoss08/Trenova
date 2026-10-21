@@ -30,6 +30,8 @@ var (
 // valid for as long as the secret lives.
 const DefaultMaxSkew = 5 * time.Minute
 
+const svixSignatureVersion = "v1,"
+
 // SvixParams is one delivery to check. Svix is the signing scheme Resend uses,
 // and several other providers besides.
 type SvixParams struct {
@@ -70,9 +72,9 @@ func VerifySvix(p SvixParams) error {
 	// A delivery carries every signature still in rotation, space separated, so
 	// a secret roll does not drop messages. One match is enough.
 	for part := range strings.SplitSeq(p.Signature, " ") {
-		_, sig, ok := strings.Cut(part, ",")
+		sig, ok := strings.CutPrefix(part, svixSignatureVersion)
 		if !ok {
-			sig = strings.TrimPrefix(part, "v1,")
+			continue
 		}
 		decoded, decodeErr := base64.StdEncoding.DecodeString(sig)
 		if decodeErr == nil && hmac.Equal(decoded, expected) {
@@ -91,7 +93,7 @@ func SignSvix(secret, id, timestamp string, body []byte) (string, error) {
 		return "", err
 	}
 
-	return "v1," + base64.StdEncoding.EncodeToString(mac), nil
+	return svixSignatureVersion + base64.StdEncoding.EncodeToString(mac), nil
 }
 
 func svixMAC(secret, id, timestamp string, body []byte) ([]byte, error) {
