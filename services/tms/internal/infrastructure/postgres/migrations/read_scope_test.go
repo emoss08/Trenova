@@ -14,7 +14,7 @@ import (
 const (
 	readScopesUp       = "20261231009720_enforced_read_scopes.tx.up.sql"
 	unreadableScopesUp = "20261231010140_read_scope_unreadable_kinds.tx.up.sql"
-	linkedRowsUp       = "20261231010180_read_scope_linked_rows.tx.up.sql"
+	linkedRowsUp       = "20261231010190_read_scope_linked_rows.tx.up.sql"
 )
 
 var (

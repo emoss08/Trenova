@@ -144,7 +144,7 @@ the person can read (a tractor's driver, a shipment's order, a document's shipme
 the application shows each as its kind's reference view: the GraphQL field guard, the
 REST response guard, search, reports and analytics all decide it through `refview`, so a
 linked record reads the same with row-level security on or off. (Until
-`20261231010180_read_scope_linked_rows` such a kind was sent as `<kind>:none`, and the
+`20261231010190_read_scope_linked_rows` such a kind was sent as `<kind>:none`, and the
 four policies hid every row of it but the person's own worker and the shipments a move
 assigned them to drive, which made a linked driver or order come back null under RLS.)
 
