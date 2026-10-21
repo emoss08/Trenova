@@ -62,7 +62,7 @@ type ActivitiesParams struct {
 	ShadowSampler       extractionshadowports.ExtractionShadowSampler  `optional:"true"`
 	Rollout             extractionrolloutports.ExtractionRolloutRouter `optional:"true"`
 	ParsingRuleRuntime  documentparsingruleports.DocumentParsingRuleRuntime
-	PDFReader           kernelports.PDFReader
+	Imaging             kernelports.Imaging
 	Converter           kernelports.DocumentConverter       `optional:"true"`
 	Triage              inboundmessageports.TriageEventSink `optional:"true"`
 	Realtime            agentports.RealtimeService          `optional:"true"`
@@ -87,7 +87,7 @@ type Activities struct {
 	agentEvents         agentports.AgentEventPublisher
 	shadowSampler       extractionshadowports.ExtractionShadowSampler
 	rollout             extractionrolloutports.ExtractionRolloutRouter
-	pdfReader           kernelports.PDFReader
+	imaging             kernelports.Imaging
 	converter           kernelports.DocumentConverter
 	conversionCfg       *config.DocumentConversionConfig
 	triage              inboundmessageports.TriageEventSink
@@ -131,7 +131,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		rollout:             p.Rollout,
 		triage:              p.Triage,
 		realtime:            p.Realtime,
-		pdfReader:           p.PDFReader,
+		imaging:             p.Imaging,
 		parsingRuleRuntime:  parsingRuleRuntimeOrNoop(p.ParsingRuleRuntime),
 		converter:           p.Converter,
 		conversionCfg:       p.Config.GetDocumentConversionConfig(),

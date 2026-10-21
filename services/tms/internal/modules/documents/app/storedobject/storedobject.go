@@ -6,6 +6,7 @@ package storedobject
 
 import (
 	"context"
+	"errors"
 	"io"
 
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
@@ -33,30 +34,55 @@ func Read(
 	storagePath string,
 	aad encryptionservice.AAD,
 ) ([]byte, error) {
-	download, err := storage.Download(ctx, storagePath)
+	data, found, err := ReadOptional(ctx, storage, encryption, storagePath, aad)
 	if err != nil {
-		return nil, errortypes.NewDatabaseError("Failed to download document").WithInternal(err)
+		return nil, err
+	}
+	if !found {
+		return nil, errortypes.NewDatabaseError("Failed to download document").
+			WithInternal(kernelports.ErrObjectNotFound)
+	}
+	return data, nil
+}
+
+// ReadOptional is Read for an object that may not exist yet: a missing object
+// is reported as not found rather than as an error.
+func ReadOptional(
+	ctx context.Context,
+	storage kernelports.Client,
+	encryption *encryptionservice.Service,
+	storagePath string,
+	aad encryptionservice.AAD,
+) (data []byte, found bool, err error) {
+	download, err := storage.Download(ctx, storagePath)
+	if errors.Is(err, kernelports.ErrObjectNotFound) {
+		return nil, false, nil
+	}
+	if err != nil {
+		return nil, false, errortypes.NewDatabaseError("Failed to download document").
+			WithInternal(err)
 	}
 	if download == nil || download.Body == nil {
-		return nil, errortypes.NewDatabaseError("Failed to download document")
+		return nil, false, errortypes.NewDatabaseError("Failed to download document")
 	}
 	defer download.Body.Close()
 
-	data, err := io.ReadAll(download.Body)
+	data, err = io.ReadAll(download.Body)
 	if err != nil {
-		return nil, errortypes.NewDatabaseError("Failed to read document").WithInternal(err)
+		return nil, false, errortypes.NewDatabaseError("Failed to read document").WithInternal(err)
 	}
 	if encryption == nil {
-		return nil, errortypes.NewBusinessError("Document encryption is not configured")
+		return nil, false, errortypes.NewBusinessError("Document encryption is not configured")
 	}
 	if !encryptionservice.IsEnvelope(string(data)) {
-		return nil, errortypes.NewBusinessError("Stored document is not encrypted")
+		return nil, false, errortypes.NewBusinessError("Stored document is not encrypted")
 	}
 
 	plaintext, err := encryption.DecryptBytesWithAAD(string(data), aad)
 	if err != nil {
-		return nil, errortypes.NewBusinessError("Failed to decrypt document").WithInternal(err)
+		return nil, false, errortypes.NewBusinessError("Failed to decrypt document").
+			WithInternal(err)
 	}
 
-	return plaintext, nil
+	return plaintext, true, nil
 }

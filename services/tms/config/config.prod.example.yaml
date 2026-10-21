@@ -159,3 +159,12 @@ documentConversion:
   apiKey: ""
   maxConcurrent: 2
   ocrLanguages: [en]
+
+imaging:
+  endpoint: dns:///imaging:50051
+  serverName: imaging
+  tls:
+    enabled: true
+    caFile: /certs/imaging/ca.pem
+    certFile: /certs/imaging/client.pem
+    keyFile: /certs/imaging/client-key.pem

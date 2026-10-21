@@ -1188,6 +1188,9 @@ func (c *StorageConfig) GetAllowedMIMETypes() []string {
 			"image/png",
 			"image/webp",
 			"image/gif",
+			"image/tiff",
+			"image/heic",
+			"image/heif",
 			"application/msword",
 			"application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 			"application/vnd.ms-excel",
@@ -1833,6 +1836,7 @@ type Config struct {
 	Renderer            RendererConfig            `mapstructure:"renderer"`
 	DocumentConversion  DocumentConversionConfig  `mapstructure:"documentConversion"`
 	PDFReader           PDFReaderConfig           `mapstructure:"pdfReader"`
+	Imaging             ImagingConfig             `mapstructure:"imaging"`
 	Portal              PortalConfig              `mapstructure:"portal"`
 	Push                PushConfig                `mapstructure:"push"`
 	Tendering           TenderingConfig           `mapstructure:"tendering"`

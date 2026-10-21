@@ -363,6 +363,36 @@ documentConversion:
 # layout document intelligence extracts. PDFium runs in-process as WebAssembly,
 # so no native library is needed; every instance is sandboxed with its own
 # memory ceiling, and a render that outlives its caller's deadline is stopped.
+# The imaging worker (services/imaging): thumbnails, page views, capture page inspection,
+# PDF assembly and image normalization. See docs/engineering/imaging-worker.md.
+imaging:
+    endpoint: dns:///imaging:50051 # dns:/// (every address the name resolves to), passthrough:/// or unix://
+    serverName: imaging # The name the worker's certificate carries
+    tls:
+        enabled: true # Required outside development: the link carries tenant documents
+        caFile: /certs/imaging/ca.pem
+        certFile: /certs/imaging/client.pem
+        keyFile: /certs/imaging/client-key.pem
+    chunkBytes: 1048576 # Upload chunk size
+    maxMessageBytes: 4194304 # Largest gRPC message either way
+    maxAttempts: 4 # Calls refused for capacity are retried on another worker within the deadline
+    initialBackoff: 100ms
+    maxBackoff: 5s
+    keepaliveTime: 30s
+    keepaliveTimeout: 10s
+    resolveInterval: 10s # How often the endpoint's DNS name is re-resolved
+    breaker:
+        consecutiveFailures: 5 # Failures in a row that take a worker out of rotation
+        openFor: 5s # First time out; doubles while it keeps failing
+        maxOpenFor: 2m
+    deadlines:
+        probe: 30s
+        render: 60s
+        inspectCapture: 10m
+        assemble: 5m
+        normalizeImage: 60s
+    prerenderPages: 20 # Page views rendered ahead after an upload; later pages render on first view
+
 pdfReader:
     maxInstances: 4 # Documents read at once per process; excess callers queue
     memoryLimitMb: 1024 # Memory ceiling of one instance

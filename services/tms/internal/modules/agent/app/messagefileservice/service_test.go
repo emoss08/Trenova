@@ -3,10 +3,10 @@ package messagefileservice
 import (
 	"context"
 	"errors"
-	"image"
 	"sync"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/imaging/imagingfake"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
@@ -41,32 +41,23 @@ func (f *fakeFiles) ReadConversationFile(
 	return file, nil
 }
 
-type fakePDF struct{ pages int }
-
-func (p fakePDF) PageCount() int { return p.pages }
-func (fakePDF) RenderPage(context.Context, int, int) (*image.RGBA, error) {
-	return nil, errors.New("not rendered")
-}
-func (fakePDF) PageText(context.Context, int) (string, error) { return "", nil }
-func (fakePDF) PageLayout(context.Context, int) (*kernelports.PDFPageLayout, error) {
-	return nil, errors.New("no layout")
-}
-func (fakePDF) Close() error { return nil }
-
-// fakePDFs opens a PDF whose bytes start with "%PDF" and refuses anything
-// else, as an encrypted or damaged file is refused.
-type fakePDFs struct{ pages int }
-
-func (r fakePDFs) Open(_ context.Context, data []byte) (kernelports.PDFDocument, error) {
-	if len(data) < 4 || string(data[:4]) != "%PDF" {
-		return nil, kernelports.ErrPDFUnreadable
+func fakePDFs(pages int) kernelports.Imaging {
+	fake := imagingfake.New()
+	fake.ProbeFunc = func(ctx context.Context, req *kernelports.ImagingProbeRequest) (*kernelports.ImagingProbe, error) {
+		data, err := imagingfake.Read(ctx, req.Source)
+		if err != nil {
+			return nil, err
+		}
+		if len(data) < 4 || string(data[:4]) != "%PDF" {
+			return nil, kernelports.ErrImagingInvalidDocument
+		}
+		return &kernelports.ImagingProbe{Kind: kernelports.ImagingKindPDF, PageCount: pages}, nil
 	}
-
-	return fakePDF(r), nil
+	return fake
 }
 
-func newTestReader(files *fakeFiles, pdfs kernelports.PDFReader) agentports.MessageFileReader {
-	return New(Params{Logger: zap.NewNop(), Files: files, PDFs: pdfs})
+func newTestReader(files *fakeFiles, imaging kernelports.Imaging) agentports.MessageFileReader {
+	return New(Params{Logger: zap.NewNop(), Files: files, Imaging: imaging})
 }
 
 func attached(contentType string, data []byte) *documentports.ConversationFile {
@@ -86,7 +77,7 @@ func TestReadMessageFile_CountsAPDFsPagesFromItsBytes(t *testing.T) {
 		locked: attached("application/pdf", []byte("encrypted bytes")),
 		photo:  attached("image/png", []byte("\x89PNG photo")),
 	}}
-	reader := newTestReader(files, fakePDFs{pages: 7})
+	reader := newTestReader(files, fakePDFs(7))
 
 	content, err := reader.ReadMessageFile(t.Context(), &agentports.ReadMessageFileRequest{
 		TenantInfo: tenant, DocumentID: pdf,

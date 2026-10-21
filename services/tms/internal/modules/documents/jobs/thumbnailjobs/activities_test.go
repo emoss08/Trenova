@@ -9,8 +9,12 @@ import (
 	"io"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/imaging/imagingfake"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 
+	"github.com/emoss08/trenova/internal/modules/documents/app/pagerender"
 	"github.com/emoss08/trenova/internal/modules/documents/app/thumbnailservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/thumbnailjobs/thumbnailcontract"
@@ -140,7 +144,7 @@ func TestGenerateThumbnailActivityDecryptsOriginalAndStoresEncryptedPreview(t *t
 	activities := NewActivities(ActivitiesParams{
 		DocumentRepository: repo,
 		Storage:            storageClient,
-		ThumbnailGenerator: thumbnailservice.NewGenerator(nil),
+		ThumbnailGenerator: thumbnailservice.NewGenerator(imagingfake.New()),
 		Encryption:         enc,
 	})
 
@@ -169,6 +173,51 @@ func TestGenerateThumbnailActivityDecryptsOriginalAndStoresEncryptedPreview(t *t
 		documentStorageAAD(doc, previewPath),
 	)
 	require.NoError(t, err)
+}
+
+func TestPrerenderPagesActivityStoresEveryPageViewEncrypted(t *testing.T) {
+	t.Parallel()
+
+	enc := encryptionservice.NewWithKeyManager(
+		encryptionservice.NewLocalKeyManager(
+			"thumbnail-test-encryption-key-with-at-least-32-bytes",
+		),
+	)
+	doc := thumbnailDocument()
+	encrypted, err := enc.EncryptBytesWithAAD(testPNG(t), documentStorageAAD(doc, doc.StoragePath))
+	require.NoError(t, err)
+
+	storageClient := &thumbnailStorage{download: []byte(encrypted)}
+	repo := documentportsmock.NewMockDocumentRepository(t)
+	repo.EXPECT().GetByID(mock.Anything, mockGetDocumentRequest(doc)).Return(doc, nil)
+
+	fake := imagingfake.New()
+	fake.PageCount = 3
+	generator := thumbnailservice.NewGenerator(fake)
+	activities := NewActivities(ActivitiesParams{
+		DocumentRepository: repo,
+		Storage:            storageClient,
+		ThumbnailGenerator: generator,
+		PageRenders: pagerender.New(pagerender.Params{
+			Storage:    storageClient,
+			Encryption: enc,
+			Generator:  generator,
+			Logger:     zap.NewNop(),
+		}),
+		Encryption: enc,
+	})
+
+	var suite testsuite.WorkflowTestSuite
+	env := suite.NewTestActivityEnvironment()
+	env.RegisterActivity(activities.PrerenderPagesActivity)
+	result, err := env.ExecuteActivity(activities.PrerenderPagesActivity, thumbnailPayload(doc))
+	require.NoError(t, err)
+
+	var stored int
+	require.NoError(t, result.Get(&stored))
+	assert.Equal(t, 3, stored)
+	assert.Equal(t, pagerender.Key(doc, 3), storageClient.uploadKey, "the last page stored")
+	assert.True(t, encryptionservice.IsEnvelope(string(storageClient.uploadBody)))
 }
 
 func thumbnailDocument() *document.Document {

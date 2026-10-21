@@ -680,24 +680,26 @@ func (a *Activities) pdfTextProfile(
 	ctx context.Context,
 	data []byte,
 ) (pageCount int, native map[int]bool) {
-	if a.pdfReader == nil {
+	if a.imaging == nil {
 		return 0, nil
 	}
-	pdf, err := a.pdfReader.Open(ctx, data)
-	if err != nil {
+	probe, err := a.imaging.Probe(ctx, &kernelports.ImagingProbeRequest{
+		Source:      kernelports.ImagingBytes("application/pdf", data),
+		TextProfile: true,
+		Priority:    kernelports.ImagingBatch,
+	})
+	if err != nil || probe.Encrypted {
 		return 0, nil
 	}
-	defer pdf.Close()
 
-	pageCount = pdf.PageCount()
+	pageCount = probe.PageCount
 	if pageCount > a.conversionCfg.GetMaxPages() {
 		return pageCount, nil
 	}
 
-	native = make(map[int]bool, pageCount)
-	for page := range pageCount {
-		text, textErr := pdf.PageText(ctx, page)
-		native[page+1] = textErr == nil && strings.TrimSpace(text) != ""
+	native = make(map[int]bool, len(probe.Pages))
+	for _, page := range probe.Pages {
+		native[page.Index+1] = page.HasText
 	}
 
 	return pageCount, native

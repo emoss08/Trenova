@@ -19,6 +19,7 @@ import (
 	workflowstarterservice "github.com/emoss08/trenova/internal/infrastructure/temporaljobs/workflowstarter"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
+	"github.com/emoss08/trenova/internal/modules/documents/app/pagerender"
 	"github.com/emoss08/trenova/internal/modules/documents/app/thumbnailservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
@@ -78,6 +79,7 @@ type Params struct {
 	UsageProvider        platformcatalogports.UsageProvider `optional:"true"`
 	Config               *config.Config
 	ThumbnailGenerator   *thumbnailservice.Generator
+	PageRenders          *pagerender.Store
 	Encryption           *encryptionservice.Service
 	Realtime             agentports.RealtimeService
 	AICorrections        aicorrectionports.AICorrectionService `optional:"true"`
@@ -104,6 +106,7 @@ type Service struct {
 	usageProvider        platformcatalogports.UsageProvider
 	config               *config.StorageConfig
 	thumbnailGenerator   *thumbnailservice.Generator
+	pageRenders          *pagerender.Store
 	encryption           *encryptionservice.Service
 	realtime             agentports.RealtimeService
 	aiCorrections        aicorrectionports.AICorrectionService
@@ -146,6 +149,7 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		usageProvider:        p.UsageProvider,
 		config:               p.Config.GetStorageConfig(),
 		thumbnailGenerator:   p.ThumbnailGenerator,
+		pageRenders:          p.PageRenders,
 		encryption:           p.Encryption,
 		realtime:             p.Realtime,
 		aiCorrections:        p.AICorrections,
@@ -825,16 +829,18 @@ func (s *Service) GetPageImage(
 		return &documentports.DocumentPageImage{ETag: etag, NotModified: true}, nil
 	}
 
-	body, err := s.readDocumentObject(ctx, doc, req.TenantInfo, doc.StoragePath)
-	if err != nil {
-		return nil, err
-	}
-
-	rendered, err := s.thumbnailGenerator.RenderPage(
+	rendered, err := s.pageRenders.Get(
 		ctx,
-		bytes.NewReader(body),
-		doc.FileType,
+		req.TenantInfo,
+		doc,
 		req.PageNumber,
+		func(ctx context.Context) (kernelports.ImagingSource, error) {
+			body, readErr := s.readDocumentObject(ctx, doc, req.TenantInfo, doc.StoragePath)
+			if readErr != nil {
+				return kernelports.ImagingSource{}, readErr
+			}
+			return kernelports.ImagingBytes(doc.FileType, body), nil
+		},
 	)
 	if errors.Is(err, thumbnailservice.ErrPageOutOfRange) ||
 		errors.Is(err, thumbnailservice.ErrPDFHasNoPages) {
@@ -1325,6 +1331,16 @@ func (s *Service) cleanupDocumentStorage(
 			zap.Error(err),
 		)
 		failedPaths = append(failedPaths, convertedPath)
+	}
+
+	if s.pageRenders != nil {
+		if err := s.pageRenders.Delete(ctx, doc); err != nil {
+			log.Warn("failed to delete page renders from storage after document delete",
+				zap.String("documentId", doc.ID.String()),
+				zap.Error(err),
+			)
+			failedPaths = append(failedPaths, pagerender.Prefix(doc))
+		}
 	}
 
 	if doc.PreviewStoragePath == "" {

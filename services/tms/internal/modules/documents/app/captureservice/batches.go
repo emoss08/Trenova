@@ -11,9 +11,11 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/infrastructure/imaging/imagingkit"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -471,7 +473,12 @@ func (s *Service) checkPDF(ctx context.Context, data []byte, pages int) error {
 		)
 	}
 
-	count, err := s.assembler.PageCount(ctx, data)
+	count, err := imagingkit.PageCount(
+		ctx,
+		s.imaging,
+		kernelports.ImagingBytes("application/pdf", data),
+		kernelports.ImagingInteractive,
+	)
 	if err != nil {
 		s.l.Info("refused an unreadable capture PDF", zap.Error(err))
 
@@ -526,7 +533,26 @@ func (s *Service) PutPrintJob(
 		return nil, err
 	}
 
-	pages, err := s.assembler.Split(ctx, data)
+	count, err := imagingkit.PageCount(
+		ctx,
+		s.imaging,
+		kernelports.ImagingBytes("application/pdf", data),
+		kernelports.ImagingInteractive,
+	)
+	if err != nil {
+		s.l.Info("refused a print job that would not open", zap.Error(err))
+
+		return nil, errortypes.NewValidationError("body", errortypes.ErrInvalid,
+			"The print job could not be split into pages")
+	}
+	pages, err := imagingkit.SplitPages(
+		ctx,
+		s.imaging,
+		kernelports.ImagingBytes("application/pdf", data),
+		count,
+		maxPrintJobBytes,
+		kernelports.ImagingInteractive,
+	)
 	if err != nil {
 		s.l.Info("refused a print job that would not split", zap.Error(err))
 

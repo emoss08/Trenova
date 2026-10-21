@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
@@ -63,7 +62,7 @@ type Params struct {
 	Documents     *documentservice.Service
 	DocumentTypes documenttypeports.DocumentTypeRepository
 	Uploads       documentuploadports.DocumentUploadService
-	PDF           captureports.CapturePDFAssembler
+	Imaging       kernelports.Imaging
 	Replies       *inboundreplyservice.Service
 	ReplyReader   inboundmessageports.InboundReplyReader
 	Nova          *triagenova.Caller
@@ -87,7 +86,7 @@ type Service struct {
 	documents     documentFiler
 	documentTypes documenttypeports.DocumentTypeRepository
 	uploads       documentuploadports.DocumentUploadService
-	pdf           captureports.CapturePDFAssembler
+	imaging       kernelports.Imaging
 	replies       replyDrafter
 	latest        inboundmessageports.InboundReplyReader
 	nova          triagenova.Completer
@@ -113,7 +112,7 @@ func New(p Params) *Service { //nolint:gocritic // fx params are passed by value
 		documents:     p.Documents,
 		documentTypes: p.DocumentTypes,
 		uploads:       p.Uploads,
-		pdf:           p.PDF,
+		imaging:       p.Imaging,
 		replies:       p.Replies,
 		latest:        p.ReplyReader,
 		nova:          p.Nova,

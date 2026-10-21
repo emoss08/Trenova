@@ -39,6 +39,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/app/extractionshadowservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundreplyservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/pagerender"
 	"github.com/emoss08/trenova/internal/modules/documents/app/thumbnailservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triagebriefingservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triageconflictservice"
@@ -66,6 +67,7 @@ func SharedOptions() fx.Option {
 		fx.Decorate(documentrepository.Observe),
 		fx.Provide(
 			thumbnailservice.NewGenerator,
+			pagerender.New,
 			capturereleaseservice.New,
 			documentparsingrulerepository.New,
 			documentpacketrulerepository.New,

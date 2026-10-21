@@ -82,8 +82,7 @@ type Params struct {
 	Storage         kernelports.Client
 	Encryption      *encryptionservice.Service
 	Uploads         documentuploadports.DocumentUploadService
-	Assembler       captureports.CapturePDFAssembler
-	Inspector       captureports.CapturePageInspector
+	Imaging         kernelports.Imaging
 	QRCodes         captureports.CaptureQREncoder
 	// Workflows is optional so an installation without a worker still
 	// receives pages. A sealed batch then waits, and the reconcile sweep
@@ -145,8 +144,7 @@ type Service struct {
 	storage       kernelports.Client
 	cipher        envelopeCipher
 	uploads       documentuploadports.DocumentUploadService
-	assembler     captureports.CapturePDFAssembler
-	inspector     captureports.CapturePageInspector
+	imaging       kernelports.Imaging
 	qrCodes       captureports.CaptureQREncoder
 	notifications notifier
 	workflows     kernelports.WorkflowStarter
@@ -190,8 +188,7 @@ func New(p Params) *Service {
 		storage:       p.Storage,
 		cipher:        cipher,
 		uploads:       p.Uploads,
-		assembler:     p.Assembler,
-		inspector:     p.Inspector,
+		imaging:       p.Imaging,
 		qrCodes:       p.QRCodes,
 		workflows:     p.Workflows,
 		realtime:      p.Realtime,

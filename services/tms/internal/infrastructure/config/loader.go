@@ -568,7 +568,7 @@ func (l *Loader) validateConfig(config *Config) error {
 		}
 	}
 
-	return nil
+	return validateImagingConfig(config, l.env)
 }
 
 func (l *Loader) validatePlatformMode(config *Config) error {

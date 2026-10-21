@@ -9,15 +9,16 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/infrastructure/imaging/imagingkit"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/triageworkjobs/triageworkcontract"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -60,7 +61,12 @@ func (s *Service) split(
 		return nil, err
 	}
 
-	pageCount, err := s.pdf.PageCount(ctx, pdf)
+	pageCount, err := imagingkit.PageCount(
+		ctx,
+		s.imaging,
+		kernelports.ImagingBytes("application/pdf", pdf),
+		kernelports.ImagingInteractive,
+	)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"pages", errortypes.ErrInvalid, "The file is not a PDF that can be split",
@@ -231,7 +237,18 @@ func (s *Service) stageRanges(
 	pdf []byte,
 	ranges []resolvedRange,
 ) ([]triageworkcontract.SplitRange, error) {
-	pages, err := s.pdf.Split(ctx, pdf)
+	wanted := make([]imagingkit.Range, 0, len(ranges))
+	for _, rng := range ranges {
+		wanted = append(wanted, imagingkit.Range{First: rng.FromPage - 1, Last: rng.ToPage - 1})
+	}
+	files, err := imagingkit.ExtractRanges(
+		ctx,
+		s.imaging,
+		kernelports.ImagingBytes("application/pdf", pdf),
+		wanted,
+		maxSplitFileBytes,
+		kernelports.ImagingInteractive,
+	)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"pages", errortypes.ErrInvalid, "The file is not a PDF that can be split",
@@ -239,18 +256,8 @@ func (s *Service) stageRanges(
 	}
 
 	staged := make([]triageworkcontract.SplitRange, 0, len(ranges))
-	for _, rng := range ranges {
-		parts := make([]captureports.CaptureAssemblyPage, 0, rng.ToPage-rng.FromPage+1)
-		for page := rng.FromPage; page <= rng.ToPage; page++ {
-			parts = append(parts, captureports.CaptureAssemblyPage{PDF: pages[page-1]})
-		}
-
-		content, assembleErr := s.pdf.Assemble(ctx, parts)
-		if assembleErr != nil {
-			return nil, assembleErr
-		}
-
-		sessionID, stageErr := s.stageRange(ctx, req, rng, content)
+	for i, rng := range ranges {
+		sessionID, stageErr := s.stageRange(ctx, req, rng, files[i])
 		if stageErr != nil {
 			return nil, stageErr
 		}

@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/documents/app/pagerender"
 	"github.com/emoss08/trenova/internal/modules/documents/app/thumbnailservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/thumbnailjobs/thumbnailcontract"
@@ -20,29 +22,78 @@ import (
 	"go.uber.org/fx"
 )
 
+const logKeyDocumentID = "documentId"
+
 type ActivitiesParams struct {
 	fx.In
 
 	DocumentRepository documentports.DocumentRepository
 	Storage            kernelports.Client
 	ThumbnailGenerator *thumbnailservice.Generator
+	PageRenders        *pagerender.Store
 	Encryption         *encryptionservice.Service
+	Config             *config.Config
 }
 
 type Activities struct {
 	docRepo            documentports.DocumentRepository
 	storage            kernelports.Client
 	thumbnailGenerator *thumbnailservice.Generator
+	pageRenders        *pagerender.Store
 	encryption         *encryptionservice.Service
+	prerenderPages     int
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
+	imagingConfig := &config.ImagingConfig{}
+	if p.Config != nil {
+		imagingConfig = &p.Config.Imaging
+	}
 	return &Activities{
 		docRepo:            p.DocumentRepository,
 		storage:            p.Storage,
 		thumbnailGenerator: p.ThumbnailGenerator,
+		pageRenders:        p.PageRenders,
 		encryption:         p.Encryption,
+		prerenderPages:     imagingConfig.GetPrerenderPages(),
 	}
+}
+
+func (a *Activities) PrerenderPagesActivity(
+	ctx context.Context,
+	payload *thumbnailcontract.GenerateThumbnailPayload,
+) (int, error) {
+	doc, _, err := a.getDocument(ctx, payload)
+	if err != nil {
+		return 0, err
+	}
+	if !document.SupportsPreview(doc.FileType) {
+		return 0, nil
+	}
+	fileData, _, err := a.downloadFileData(ctx, payload, doc)
+	if err != nil {
+		return 0, err
+	}
+
+	activity.RecordHeartbeat(ctx, "rendering page views")
+	stored, err := a.pageRenders.Prerender(
+		ctx,
+		pagination.TenantInfo{OrgID: payload.OrganizationID, BuID: payload.BusinessUnitID},
+		doc,
+		kernelports.ImagingBytes(doc.FileType, fileData),
+		a.prerenderPages,
+	)
+	if errors.Is(err, thumbnailservice.ErrUnreadable) ||
+		errors.Is(err, thumbnailservice.ErrPDFHasNoPages) {
+		return stored, temporaltype.NewDataIntegrityError(
+			"The document's pages could not be rendered",
+			map[string]any{logKeyDocumentID: payload.DocumentID.String(), "error": err.Error()},
+		).ToTemporalError()
+	}
+	if err != nil {
+		return stored, a.retryable("Failed to render page views", err)
+	}
+	return stored, nil
 }
 
 func (a *Activities) GenerateThumbnailActivity(
@@ -225,8 +276,8 @@ func (a *Activities) generateThumbnail(
 
 	thumbData, err := a.thumbnailGenerator.Generate(
 		ctx,
-		bytes.NewReader(fileData),
-		payload.ContentType,
+		kernelports.ImagingBytes(payload.ContentType, fileData),
+		kernelports.ImagingBatch,
 	)
 	if err != nil {
 		logger.Warn("Thumbnail generation failed", "error", err)
@@ -243,7 +294,7 @@ func (a *Activities) generateThumbnail(
 					ToTemporalError()
 		}
 
-		if errors.Is(err, kernelports.ErrPDFUnreadable) {
+		if errors.Is(err, thumbnailservice.ErrUnreadable) {
 			return nil, a.failure(
 					payload,
 					"thumbnail generation failed: %v",

@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/workflowstarter"
+	"github.com/emoss08/trenova/internal/modules/documents/app/pagerender"
 	"github.com/emoss08/trenova/internal/modules/documents/app/thumbnailservice"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
@@ -60,6 +61,14 @@ func NewTestService(
 			encryptionservice.NewLocalKeyManager("unit-test-encryption-key-with-at-least-32-bytes"),
 		),
 		thumbnailGenerator: thumbnailGenerator,
+		pageRenders: pagerender.New(pagerender.Params{
+			Storage: storageClient,
+			Encryption: encryptionservice.NewWithKeyManager(
+				encryptionservice.NewLocalKeyManager("unit-test-encryption-key-with-at-least-32-bytes"),
+			),
+			Generator: thumbnailGenerator,
+			Logger:    logger,
+		}),
 		workflowStarter: workflowstarter.New(workflowstarter.Params{
 			TemporalClient: temporalClient,
 		}),

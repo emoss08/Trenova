@@ -9,15 +9,16 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/emoss08/trenova/internal/infrastructure/imaging/imagingfake"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triagenova"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentupload"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -292,31 +293,43 @@ func (f *fakeWork) CurrentShipmentDocuments(
 }
 
 type fakePDF struct {
+	imagingfake.Fake
 	pages     int
-	assembled [][]captureports.CaptureAssemblyPage
+	assembled [][]kernelports.ImagingPageRange
 }
 
-func (f *fakePDF) PageCount(context.Context, []byte) (int, error) {
-	return f.pages, nil
-}
-
-func (f *fakePDF) Split(context.Context, []byte) ([][]byte, error) {
-	out := make([][]byte, 0, f.pages)
-	for i := range f.pages {
-		out = append(out, []byte{byte('a' + i)})
+func newFakePDF(pages int) *fakePDF {
+	f := &fakePDF{pages: pages}
+	f.ProbeFunc = func(context.Context, *kernelports.ImagingProbeRequest) (*kernelports.ImagingProbe, error) {
+		return &kernelports.ImagingProbe{Kind: kernelports.ImagingKindPDF, PageCount: f.pages}, nil
 	}
-
-	return out, nil
-}
-
-func (f *fakePDF) Assemble(_ context.Context, pages []captureports.CaptureAssemblyPage) ([]byte, error) {
-	f.assembled = append(f.assembled, pages)
-	out := make([]byte, 0, len(pages))
-	for _, page := range pages {
-		out = append(out, page.PDF...)
+	f.AssembleFunc = func(
+		_ context.Context,
+		req *kernelports.ImagingAssembleRequest,
+		yield func(*kernelports.ImagingArtifact) error,
+	) ([]int, error) {
+		counts := make([]int, 0, len(req.Outputs))
+		for index, output := range req.Outputs {
+			f.assembled = append(f.assembled, output)
+			out := make([]byte, 0, f.pages)
+			for _, r := range output {
+				for page := r.First; page <= r.Last; page++ {
+					out = append(out, byte('a'+page))
+				}
+			}
+			if err := yield(&kernelports.ImagingArtifact{
+				Index:       index,
+				ContentType: "application/pdf",
+				Size:        int64(len(out)),
+				Body:        bytes.NewReader(out),
+			}); err != nil {
+				return nil, err
+			}
+			counts = append(counts, len(out))
+		}
+		return counts, nil
 	}
-
-	return out, nil
+	return f
 }
 
 type fakeUploads struct {
@@ -536,7 +549,7 @@ func newFixture() *fixture {
 		docRepo:    docRepo,
 		documents:  &fakeDocuments{repo: docRepo, content: []byte("%PDF")},
 		work:       &fakeWork{},
-		pdf:        &fakePDF{pages: 4},
+		pdf:        newFakePDF(4),
 		uploads:    &fakeUploads{sessions: map[pulid.ID]*documentuploadports.CreateSessionRequest{}, parts: map[pulid.ID][]byte{}},
 		recorder:   &fakeRecorder{},
 		notifier:   &fakeNotifier{},
@@ -563,7 +576,7 @@ func newFixture() *fixture {
 		documents:     f.documents,
 		documentTypes: &fakeDocumentTypes{types: map[pulid.ID]*documenttype.DocumentType{pod.ID: pod, bol.ID: bol}},
 		uploads:       f.uploads,
-		pdf:           f.pdf,
+		imaging:       f.pdf,
 		replies:       f.drafter,
 		events:        f.events,
 		loads:         f.loads,

@@ -18,9 +18,9 @@ type Params struct {
 
 	Logger *zap.Logger
 	Files  documentports.ConversationFileReader
-	// PDFs counts a PDF's pages from its bytes. Optional: without it a PDF's
+	// Imaging counts a PDF's pages from its bytes. Optional: without it a PDF's
 	// pages are whatever reading the file counted.
-	PDFs kernelports.PDFReader `optional:"true"`
+	Imaging kernelports.Imaging `optional:"true"`
 }
 
 const (
@@ -37,17 +37,17 @@ const (
 // files itself. Only a conversation's files are read, through the documents
 // service that decrypts them, as document intelligence reads an upload.
 type Service struct {
-	logger *zap.Logger
-	files  documentports.ConversationFileReader
-	pdfs   kernelports.PDFReader
-	cache  lrucache.Cache[string, *agentports.MessageFileContent]
+	logger  *zap.Logger
+	files   documentports.ConversationFileReader
+	imaging kernelports.Imaging
+	cache   lrucache.Cache[string, *agentports.MessageFileContent]
 }
 
 func New(p Params) agentports.MessageFileReader {
 	return &Service{
-		logger: p.Logger.Named("message-files"),
-		files:  p.Files,
-		pdfs:   p.PDFs,
+		logger:  p.Logger.Named("message-files"),
+		files:   p.Files,
+		imaging: p.Imaging,
 		cache: lrucache.NewExpirable[string, *agentports.MessageFileContent](
 			cachedFiles,
 			cachedFileTTL,
@@ -90,20 +90,21 @@ func (s *Service) ReadMessageFile(
 // pages counts a PDF's pages, and reports one that will not open: encrypted
 // or damaged, which a model refuses as well.
 func (s *Service) pages(ctx context.Context, data []byte) (count int, unreadable bool) {
-	if s.pdfs == nil {
+	if s.imaging == nil {
 		return 0, false
 	}
 
-	doc, err := s.pdfs.Open(ctx, data)
+	probe, err := s.imaging.Probe(ctx, &kernelports.ImagingProbeRequest{
+		Source:   kernelports.ImagingBytes("application/pdf", data),
+		Priority: kernelports.ImagingInteractive,
+	})
 	if err != nil {
 		s.logger.Debug("an attached PDF could not be opened", zap.Error(err))
 		return 0, true
 	}
-	defer func() {
-		if closeErr := doc.Close(); closeErr != nil {
-			s.logger.Debug("an attached PDF did not close", zap.Error(closeErr))
-		}
-	}()
+	if probe.Encrypted {
+		return 0, true
+	}
 
-	return doc.PageCount(), false
+	return probe.PageCount, false
 }
