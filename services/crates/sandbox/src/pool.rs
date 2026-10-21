@@ -23,7 +23,7 @@ use std::os::fd::{AsFd, OwnedFd};
 use std::os::unix::net::UnixStream;
 use std::os::unix::process::{CommandExt, ExitStatusExt};
 use std::path::PathBuf;
-use std::process::{Command, Stdio};
+use std::process::{Child, Command, Stdio};
 use std::sync::atomic::{AtomicBool, AtomicU8, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, PoisonError};
 use std::time::Duration;
@@ -162,7 +162,7 @@ struct Metrics {
 }
 
 struct Worker {
-    process: std::process::Child,
+    process: Child,
     pidfd: Arc<OwnedFd>,
     channel: Channel,
     jobs: u32,
@@ -181,6 +181,7 @@ impl std::fmt::Debug for Worker {
 struct Inner {
     config: PoolConfig,
     spec: ChildSpec,
+    spawner: Spawner,
     slots: Arc<Semaphore>,
     idle: Mutex<Vec<Worker>>,
     live: AtomicU64,
@@ -293,6 +294,7 @@ impl Pool {
         let inner = Arc::new(Inner {
             config,
             spec,
+            spawner: Spawner::start()?,
             slots: Arc::new(Semaphore::new(size)),
             idle: Mutex::new(Vec::with_capacity(size)),
             live: AtomicU64::new(0),
@@ -336,7 +338,7 @@ impl Pool {
             return Err(JobError::DeadlineExceeded);
         }
 
-        let worker = lock(&self.inner.idle).pop();
+        let worker = take_idle(&self.inner);
         let inner = Arc::clone(&self.inner);
         let worker = if let Some(worker) = worker {
             worker
@@ -383,6 +385,9 @@ impl Pool {
                         reason: kill_reason(err),
                     })
                     .inc();
+                if let JobError::Crashed(how) | JobError::Protocol(how) = err {
+                    tracing::warn!(outcome = %how, "a child was lost during a job");
+                }
             }
             let recycle = Arc::clone(&inner);
             let _ = tokio::task::spawn_blocking(move || settle(&recycle, worker)).await;
@@ -507,7 +512,10 @@ fn abandon(worker: &mut Worker, control: &Control, err: &FrameError) -> JobError
             FrameError::Protocol(_) | FrameError::TooLarge { .. } => {
                 JobError::Protocol(err.to_string())
             }
-            _ => JobError::Crashed(status),
+            _ => {
+                tracing::debug!(error = %err, %status, "the channel to a child failed");
+                JobError::Crashed(status)
+            }
         },
     }
 }
@@ -521,6 +529,80 @@ fn reap(worker: &mut Worker) -> String {
             (None, None) => "unknown status".into(),
         },
         Err(err) => format!("wait failed: {err}"),
+    }
+}
+
+/// The next idle child still alive. One that died while it waited, which
+/// nothing in the pool does to it, is reaped and counted, and its slot is
+/// filled by the caller's spawn.
+fn take_idle(inner: &Inner) -> Option<Worker> {
+    loop {
+        let mut worker = lock(&inner.idle).pop()?;
+        match worker.process.try_wait() {
+            Ok(None) => return Some(worker),
+            Ok(Some(status)) => {
+                tracing::warn!(
+                    pid = worker.process.id(),
+                    %status,
+                    "an idle child had exited; starting another"
+                );
+            }
+            Err(err) => {
+                tracing::warn!(error = %err, "an idle child could not be checked; replacing it");
+                reap(&mut worker);
+            }
+        }
+        inner.live.fetch_sub(1, Ordering::AcqRel);
+        inner.metrics.live.dec();
+        inner
+            .metrics
+            .killed
+            .get_or_create(&KillLabel {
+                reason: KillReason::Crash,
+            })
+            .inc();
+    }
+}
+
+/// Forks every child from one thread that lives as long as the pool.
+///
+/// A child's death signal fires when the thread that forked it exits, not
+/// the process, and tokio retires an idle blocking thread after ten seconds:
+/// a child forked from one was killed while it waited for its first job.
+#[derive(Debug)]
+struct Spawner {
+    requests: Mutex<std::sync::mpsc::Sender<SpawnRequest>>,
+}
+
+type SpawnRequest = (Command, std::sync::mpsc::SyncSender<std::io::Result<Child>>);
+
+impl Spawner {
+    fn start() -> Result<Self, SandboxError> {
+        let (requests, receiver) = std::sync::mpsc::channel::<SpawnRequest>();
+        std::thread::Builder::new()
+            .name("sandbox-spawner".into())
+            .spawn(move || {
+                for (mut command, reply) in receiver {
+                    let spawned = command.spawn();
+                    // The command holds the child's end of the channel; ours
+                    // must close before the handshake reads from it.
+                    drop(command);
+                    let _ = reply.send(spawned);
+                }
+            })
+            .map_err(|err| SandboxError::Spawn(format!("spawner thread: {err}")))?;
+        Ok(Self {
+            requests: Mutex::new(requests),
+        })
+    }
+
+    fn spawn(&self, command: Command) -> std::io::Result<Child> {
+        let (reply, result) = std::sync::mpsc::sync_channel(1);
+        let gone = || std::io::Error::other("the spawner thread has stopped");
+        lock(&self.requests)
+            .send((command, reply))
+            .map_err(|_| gone())?;
+        result.recv().map_err(|_| gone())?
     }
 }
 
@@ -635,6 +717,7 @@ fn start_child(inner: &Inner) -> Result<Worker, SandboxError> {
         |what: &str, err: &dyn std::fmt::Display| SandboxError::Spawn(format!("{what}: {err}"));
     let (ours, theirs) = UnixStream::pair().map_err(|err| spawn_err("socketpair", &err))?;
     let limits = inner.config.limits;
+    let parent = rustix::process::getpid();
 
     let mut command = Command::new(&inner.spec.program);
     command
@@ -645,8 +728,8 @@ fn start_child(inner: &Inner) -> Result<Worker, SandboxError> {
         .stdout(Stdio::null())
         .stderr(Stdio::piped());
     // SAFETY: the closure runs in the forked child before exec and calls only
-    // `setrlimit` and `prctl`, which are async-signal-safe system calls; it
-    // allocates nothing and touches no lock.
+    // `setrlimit`, `prctl` and `getppid`, which are async-signal-safe system
+    // calls; it allocates nothing and touches no lock.
     unsafe {
         command.pre_exec(move || {
             set_limit(libc::RLIMIT_AS, limits.address_space_bytes)?;
@@ -657,13 +740,21 @@ fn start_child(inner: &Inner) -> Result<Worker, SandboxError> {
             if libc::prctl(libc::PR_SET_PDEATHSIG, libc::SIGKILL, 0, 0, 0) != 0 {
                 return Err(std::io::Error::last_os_error());
             }
+            // The supervisor died between the fork and the prctl, so the
+            // death signal will never come.
+            if libc::getppid() != parent.as_raw_nonzero().get() {
+                return Err(std::io::Error::other(
+                    "the supervisor exited during the spawn",
+                ));
+            }
             Ok(())
         });
     }
 
-    let spawned = command.spawn();
-    drop(command);
-    let mut process = spawned.map_err(|err| spawn_err("spawn", &err))?;
+    let mut process = inner
+        .spawner
+        .spawn(command)
+        .map_err(|err| spawn_err("spawn", &err))?;
     let pid = Pid::from_raw(i32::try_from(process.id()).unwrap_or(0))
         .ok_or_else(|| SandboxError::Spawn("no pid".into()))?;
     let pidfd = match pidfd_open(pid, PidfdFlags::empty()) {

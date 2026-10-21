@@ -263,3 +263,47 @@ async fn concurrent_jobs_spread_over_the_pool() {
     assert!(pids.len() > 1 && pids.len() <= 3, "{pids:?}");
     pool.close().await;
 }
+
+async fn pid_of(pool: &Pool) -> i32 {
+    let (result, _) = run(pool, "pid", Duration::from_secs(10)).await;
+    let Ok(Outcome::Done(body)) = result else {
+        panic!("the pid job failed: {result:?}");
+    };
+    String::from_utf8(body)
+        .expect("utf-8")
+        .parse()
+        .expect("a pid")
+}
+
+#[test]
+fn a_child_outlives_the_thread_that_asked_for_it() {
+    let runtime = tokio::runtime::Builder::new_multi_thread()
+        .worker_threads(1)
+        .thread_keep_alive(Duration::from_millis(50))
+        .enable_all()
+        .build()
+        .expect("runtime");
+    runtime.block_on(async {
+        let pool = pool(1, 100).await;
+        let first = pid_of(&pool).await;
+        tokio::time::sleep(Duration::from_millis(400)).await;
+        assert_eq!(
+            pid_of(&pool).await,
+            first,
+            "the idle child survived the blocking thread retiring"
+        );
+    });
+}
+
+#[tokio::test]
+async fn an_idle_child_that_died_is_replaced_rather_than_failing_a_job() {
+    let pool = pool(1, 100).await;
+    let first = pid_of(&pool).await;
+    // SAFETY: kill(2) on the pool's own idle child, whose pid the job just returned.
+    assert_eq!(unsafe { libc::kill(first, libc::SIGKILL) }, 0);
+    tokio::time::sleep(Duration::from_millis(100)).await;
+
+    let second = pid_of(&pool).await;
+    assert_ne!(second, first);
+    still_works(&pool).await;
+}
