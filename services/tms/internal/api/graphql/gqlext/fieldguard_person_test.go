@@ -168,6 +168,47 @@ func TestPersonRead_APartOfALinkedRecordFollowsThatRecordsRead(t *testing.T) {
 	assert.True(t, resolved)
 }
 
+func TestPersonRead_ALeaveCaseAWorkerCarriesNeedsLeaveRead(t *testing.T) {
+	t.Parallel()
+
+	leaveField := func(field string) []fieldStep {
+		return []fieldStep{
+			{object: "Query", field: "worker"},
+			{object: "Worker", field: "leaveCases"},
+			{object: "WorkerLeaveCase", field: field},
+		}
+	}
+	credentialExpiry := []fieldStep{
+		{object: "Query", field: "worker"},
+		{object: "Worker", field: "credentials"},
+		{object: "WorkerCredential", field: "expiresAt"},
+	}
+	leaveGuard := func(denied ...permission.Resource) (*FieldGuardExtension, context.Context) {
+		guard, ctx := personGuard(t, denied...)
+		guard.resources["WorkerLeaveCase"] = permission.ResourceWorkerLeave
+		return guard, ctx
+	}
+
+	guard, ctx := leaveGuard(permission.ResourceWorkerLeave, permission.ResourceWorkerCredential)
+	for _, field := range []string{"reason", "leaveType", "notes", "certificationStatus"} {
+		result, resolved := resolveNested(t, guard, ctx, leaveField(field)...)
+		assert.Nil(t, result, "a worker reader without worker_leave read sees no %s", field)
+		assert.False(t, resolved, field)
+	}
+	result, resolved := resolveNested(t, guard, ctx, leaveField("id")...)
+	assert.Equal(t, "stored value", result)
+	assert.True(t, resolved)
+	result, resolved = resolveNested(t, guard, ctx, credentialExpiry...)
+	assert.Equal(t, "stored value", result, "a credential is still part of its worker")
+	assert.True(t, resolved)
+	assert.Contains(t, withheldPaths(ctx), "worker.leaveCases.reason")
+
+	guard, ctx = leaveGuard(permission.ResourceWorker)
+	result, resolved = resolveNested(t, guard, ctx, leaveField("reason")...)
+	assert.Equal(t, "stored value", result, "worker_leave read shows the case")
+	assert.True(t, resolved)
+}
+
 func TestPersonRead_AnObjectInTheViewShowsWithIt(t *testing.T) {
 	t.Parallel()
 

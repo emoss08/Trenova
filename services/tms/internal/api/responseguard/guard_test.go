@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"testing"
 
 	"github.com/bytedance/sonic"
@@ -499,6 +500,59 @@ func TestAPartOfALinkedRecordShowsOnlyItsIDWithoutTheLinkedKindsRead(t *testing.
 	shp := object(t, body, "shipment")
 	assert.Equal(t, "PRO-1", shp["proNumber"])
 	assert.Nil(t, shp["moves"], "a linked shipment's moves are outside its view")
+}
+
+func TestALeaveCaseAWorkerCarriesNeedsLeaveRead(t *testing.T) {
+	t.Parallel()
+
+	registry := refview.Default().Registry()
+	walker := &walker{
+		ctx:      t.Context(),
+		decider:  denyAll{},
+		planner:  newPlanner(newKindTable(registry)),
+		registry: registry,
+	}
+	kind, ok := newKindTable(registry).kindOf(reflect.TypeFor[worker.WorkerLeaveCase]())
+	require.True(t, ok)
+	require.Equal(t, permission.ResourceWorkerLeave, kind)
+
+	root := walker.recordOf(permission.ResourceWorker, nil, false)
+	leave := walker.recordOf(permission.ResourceWorkerLeave, root, false)
+	assert.Equal(t, &record{kind: permission.ResourceWorkerLeave, linked: true}, leave,
+		"a leave case under its worker is a linked record, not part of the worker")
+	assert.Equal(t, gateView, walker.gate(permission.ResourceWorkerLeave, leave))
+	assert.Same(t, root, walker.recordOf(permission.ResourceWorkerCredential, root, false),
+		"a credential is still part of its worker")
+
+	type result struct {
+		Worker     *worker.Worker            `json:"worker"`
+		LeaveCases []*worker.WorkerLeaveCase `json:"leaveCases"`
+	}
+	value := result{
+		Worker: driver(),
+		LeaveCases: []*worker.WorkerLeaveCase{{
+			ID:                  pulid.MustNew("wlc_"),
+			LeaveType:           worker.LeaveTypeMedical,
+			Reason:              "Surgery",
+			Notes:               "Certified by the surgeon",
+			CertificationStatus: worker.CertificationReceived,
+		}},
+	}
+
+	body, header := serve(t, []permission.Resource{permission.ResourceWorkerLeave}, value, guarded)
+	assert.Equal(t, "dana@example.com", object(t, body, "worker")["email"])
+	leaveCase := object(t, body, "leaveCases", 0)
+	assert.NotEmpty(t, leaveCase["id"])
+	for _, field := range []string{"leaveType", "reason", "notes", "certificationStatus"} {
+		value, present := leaveCase[field]
+		assert.Truef(t, present, "%s should be answered, as null", field)
+		assert.Nilf(t, value, "%s needs worker_leave read", field)
+	}
+	assert.Equal(t, "leaveCases", header)
+
+	body, _ = serve(t, []permission.Resource{permission.ResourceWorker}, value, guarded)
+	assert.Equal(t, "Surgery", object(t, body, "leaveCases", 0)["reason"],
+		"worker_leave read shows the case without worker read")
 }
 
 type denyAll struct{}
