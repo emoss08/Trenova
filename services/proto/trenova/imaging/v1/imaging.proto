@@ -1,6 +1,7 @@
 // The imaging worker's contract: stateless, tenant-agnostic document and image
 // computation for the TMS. Plaintext bytes go in, derived artifacts come out;
-// the worker holds no database, storage, key or network access.
+// the worker holds no database, storage, key or network access. It reads no
+// text and runs no OCR: docling does both.
 //
 // Every call streams its input in. The first message is a header naming the
 // operation's parameters and each document's content type and declared size;
@@ -43,18 +44,10 @@ service ImagingService {
   // PNG, at a DPI or fitted into a box, flattened onto white.
   rpc Render(stream RenderRequest) returns (stream RenderResponse);
 
-  // Reads each page's text and its layout: words and lines with boxes and
-  // font, arranged into reading order.
-  rpc ExtractText(stream ExtractTextRequest) returns (stream ExtractTextResponse);
-
   // Inspects captured pages in one pass each: thumbnail, ink coverage and
   // every QR and 1D barcode. A batch of up to 1,000 pages streams in and the
   // results stream back per page.
   rpc InspectCapture(stream InspectCaptureRequest) returns (stream InspectCaptureResponse);
-
-  // Recognizes text on rendered PDF pages or an image: words with boxes and
-  // confidence, grouped into lines.
-  rpc Recognize(stream RecognizeRequest) returns (stream RecognizeResponse);
 
   // Builds PDFs from pages of the sources: merge, split into ranges, rotate,
   // extract; an image source becomes a page of its own.
@@ -243,72 +236,6 @@ message RenderSummary {
   uint32 rendered = 2;
 }
 
-// ---- ExtractText ----
-
-message ExtractTextRequest {
-  oneof part {
-    ExtractTextHeader header = 1;
-    bytes chunk = 2;
-  }
-}
-
-message ExtractTextHeader {
-  DocumentHeader document = 1;
-  // Zero-based page indexes; empty reads every page up to max_pages.
-  repeated uint32 pages = 2;
-  // Return words and lines as well as text.
-  bool layout = 3;
-  uint32 max_pages = 4;
-}
-
-message ExtractTextResponse {
-  oneof part {
-    PageText page = 1;
-    PageError page_error = 2;
-    TextSummary summary = 3;
-  }
-}
-
-message TextSummary {
-  uint32 page_count = 1;
-}
-
-message PageText {
-  uint32 page_index = 1;
-  // The page's size in points.
-  float width = 2;
-  float height = 3;
-  // The text in content-stream order, as the PDF stores it.
-  string stream_text = 4;
-  // The text in reading order, rebuilt from the layout: lines top to
-  // bottom, a blank line at a paragraph gap, three spaces between columns.
-  // Empty unless layout was asked for.
-  string arranged_text = 5;
-  repeated TextLine lines = 6;
-}
-
-// Boxes are in points from the page's top-left corner, as displayed.
-message TextLine {
-  string text = 1;
-  float left = 2;
-  float top = 3;
-  float width = 4;
-  float height = 5;
-  repeated TextWord words = 6;
-}
-
-message TextWord {
-  string text = 1;
-  float left = 2;
-  float top = 3;
-  float width = 4;
-  float height = 5;
-  float font_size = 6;
-  string font_name = 7;
-  bool bold = 8;
-  bool italic = 9;
-}
-
 // ---- InspectCapture ----
 
 message InspectCaptureRequest {
@@ -373,91 +300,6 @@ message Barcode {
 message CaptureSummary {
   uint32 inspected = 1;
   uint32 failed = 2;
-}
-
-// ---- Recognize ----
-
-message RecognizeRequest {
-  oneof part {
-    RecognizeHeader header = 1;
-    bytes chunk = 2;
-  }
-}
-
-message RecognizeHeader {
-  DocumentHeader document = 1;
-  // Zero-based page indexes of a PDF; empty recognizes every page up to
-  // max_pages. Ignored for an image.
-  repeated uint32 pages = 2;
-  // Render resolution for PDF pages (default 300).
-  uint32 dpi = 3;
-  // Tesseract language codes joined with "+" (default "eng").
-  string language = 4;
-  Preprocess preprocess = 5;
-  uint32 max_pages = 6;
-  // Downscale an image whose longer side passes this before recognizing
-  // (0: the worker's limit).
-  uint32 max_dimension = 7;
-}
-
-message Preprocess {
-  // Estimate and undo small rotations of the text.
-  bool deskew = 1;
-  // Stretch the page's contrast to its full range.
-  bool contrast = 2;
-  // Reduce to black and white with an adaptive threshold.
-  bool binarize = 3;
-}
-
-message RecognizeResponse {
-  oneof part {
-    RecognizedPage page = 1;
-    PageError page_error = 2;
-    RecognizeSummary summary = 3;
-  }
-}
-
-message RecognizeSummary {
-  uint32 page_count = 1;
-  string engine = 2;
-}
-
-message RecognizedPage {
-  uint32 page_index = 1;
-  // The image recognized, in pixels.
-  uint32 width_px = 2;
-  uint32 height_px = 3;
-  string text = 4;
-  // The mean word confidence, 0 to 100.
-  double mean_confidence = 5;
-  // Every word, with the block, paragraph and line numbers Tesseract's TSV
-  // carries, so a caller can rebuild it.
-  repeated OcrWord words = 6;
-  repeated OcrLine lines = 7;
-  // The rotation removed by deskewing, in degrees.
-  float deskew_degrees = 8;
-}
-
-message OcrWord {
-  string text = 1;
-  uint32 left = 2;
-  uint32 top = 3;
-  uint32 width = 4;
-  uint32 height = 5;
-  float confidence = 6;
-  uint32 block = 7;
-  uint32 paragraph = 8;
-  uint32 line = 9;
-  uint32 word = 10;
-}
-
-message OcrLine {
-  string text = 1;
-  uint32 left = 2;
-  uint32 top = 3;
-  uint32 width = 4;
-  uint32 height = 5;
-  float confidence = 6;
 }
 
 // ---- Assemble ----

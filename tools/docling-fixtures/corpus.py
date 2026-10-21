@@ -11,9 +11,7 @@ hostile PDFs.
         python3 -I tools/docling-fixtures/corpus.py <output-dir>
 
 Every company, person, address and number is invented. The output is deterministic for a
-given set of library versions (noise is seeded). Next to every document whose text is known
-the generator writes <name>.truth.txt, the text a perfect OCR would read, so the benchmark
-can score character error rate. manifest.json lists every file with its kind.
+given set of library versions (noise is seeded). manifest.json lists every file with its kind.
 """
 
 from __future__ import annotations
@@ -54,9 +52,6 @@ class Manifest:
     def add(self, name: str, kind: str, **extra) -> Path:
         self.entries.append({"file": name, "kind": kind, **extra})
         return self.root / name
-
-    def truth(self, name: str, lines: list[str]) -> None:
-        (self.root / f"{name}.truth.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
     def write(self) -> None:
         (self.root / "manifest.json").write_text(json.dumps(self.entries, indent=2) + "\n", encoding="utf-8")
@@ -106,14 +101,12 @@ def scan_noise(img: Image.Image, rng: random.Random, skew: float, speckles: int)
 def scanned_bols(m: Manifest, rng: random.Random) -> None:
     for pages, bilevel in [(1, True), (1, False), (5, False), (20, True)]:
         name = f"scan-bol-{pages}p-{'g4' if bilevel else 'gray'}.pdf"
-        images, truth = [], []
+        images = []
         for page in range(pages):
             lines = bol_lines(rng, page)
-            truth.extend(lines)
             img = scan_noise(draw_sheet(lines, 200).image, rng, rng.uniform(-1.5, 1.5), 6000)
             images.append(img.point(lambda v: 0 if v < 150 else 255, mode="1") if bilevel else img)
         images[0].save(m.add(name, "scanned-pdf", pages=pages), "PDF", resolution=200, save_all=True, append_images=images[1:])
-        m.truth(name, truth)
 
 
 def native_pdf(m: Manifest, rng: random.Random, pages: int) -> None:
@@ -122,12 +115,10 @@ def native_pdf(m: Manifest, rng: random.Random, pages: int) -> None:
     c = pdfcanvas.Canvas(str(path), pagesize=letter, pageCompression=1)
     c.setTitle(f"Freight statement, {pages} pages")
     c.setAuthor("Northwind Freight Brokerage LLC")
-    truth = []
     for page in range(pages):
         c.setFont("Helvetica-Bold", 14)
         title = f"Freight statement page {page + 1} of {pages}"
         c.drawString(0.75 * inch, 10.2 * inch, title)
-        truth.append(title)
         c.setFont("Helvetica", 9)
         y = 9.7 * inch
         for row in range(34):
@@ -141,11 +132,9 @@ def native_pdf(m: Manifest, rng: random.Random, pages: int) -> None:
             ]
             for col, (x, cell) in enumerate(zip([0.75, 1.75, 3.25, 4.75, 6.0], cells)):
                 c.drawString(x * inch, y, cell)
-            truth.append(" ".join(cells))
             y -= 0.26 * inch
         c.showPage()
     c.save()
-    m.truth(name, truth)
 
 
 def phone_photos(m: Manifest, rng: random.Random) -> None:
@@ -162,27 +151,21 @@ def phone_photos(m: Manifest, rng: random.Random) -> None:
     canvas = canvas.filter(ImageFilter.GaussianBlur(1.0))
 
     canvas.save(m.add("photo-bol.jpg", "photo", format="jpeg"), "JPEG", quality=85)
-    m.truth("photo-bol.jpg", lines)
 
     rotated = canvas.transpose(Image.Transpose.ROTATE_90)
     exif = Image.Exif()
     exif[0x0112] = 6
     rotated.save(m.add("photo-bol-exif6.jpg", "photo", format="jpeg", orientation=6), "JPEG", quality=85, exif=exif)
-    m.truth("photo-bol-exif6.jpg", lines)
 
     canvas.resize((1512, 2016)).save(m.add("photo-bol.png", "photo", format="png"), "PNG", optimize=False)
-    m.truth("photo-bol.png", lines)
     canvas.save(m.add("photo-bol.webp", "photo", format="webp"), "WEBP", quality=80)
-    m.truth("photo-bol.webp", lines)
     canvas.save(m.add("photo-bol.tiff", "photo", format="tiff"), "TIFF", compression="tiff_lzw")
-    m.truth("photo-bol.tiff", lines)
     canvas.resize((756, 1008)).convert("P", palette=Image.Palette.ADAPTIVE).save(m.add("photo-bol.gif", "photo", format="gif"), "GIF")
 
     import pillow_heif
 
     pillow_heif.register_heif_opener()
     canvas.save(m.add("photo-bol.heic", "photo", format="heic"), "HEIF", quality=80)
-    m.truth("photo-bol.heic", lines)
 
 
 def capture_pages(m: Manifest, rng: random.Random) -> None:
@@ -213,7 +196,6 @@ def capture_pages(m: Manifest, rng: random.Random) -> None:
     for index in range(3):
         lines = bol_lines(rng, 500 + index)
         one_page(f"capture-text-{index}.pdf", scan_noise(draw_sheet(lines, 200).image, rng, rng.uniform(-1, 1), 4000))
-        m.truth(f"capture-text-{index}.pdf", lines)
 
 
 def sized_document(m: Manifest, rng: random.Random, megabytes: int) -> None:

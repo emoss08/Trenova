@@ -15,7 +15,6 @@ import (
 	"sync"
 	"testing"
 	"time"
-	"unicode"
 
 	"github.com/bytedance/sonic"
 )
@@ -105,15 +104,6 @@ func (c *Corpus) Read(t testing.TB, name string) []byte {
 	return data
 }
 
-func (c *Corpus) Truth(name string) (string, bool) {
-	data, err := os.ReadFile(c.Path(name + ".truth.txt"))
-	if err != nil {
-		return "", false
-	}
-
-	return string(data), true
-}
-
 type Latency struct {
 	Op         string  `json:"op"`
 	Input      string  `json:"input"`
@@ -147,16 +137,6 @@ type PeakRSS struct {
 	Seconds    float64 `json:"seconds"`
 }
 
-type OCRAccuracy struct {
-	Engine        string  `json:"engine"`
-	Input         string  `json:"input"`
-	Pages         int     `json:"pages"`
-	CER           float64 `json:"cer"`
-	MeanPageMs    float64 `json:"meanPageMs"`
-	TruthChars    int     `json:"truthChars"`
-	RecognisedLen int     `json:"recognisedChars"`
-}
-
 type Machine struct {
 	GoVersion string `json:"goVersion"`
 	OS        string `json:"os"`
@@ -166,13 +146,12 @@ type Machine struct {
 }
 
 type Report struct {
-	Label      string        `json:"label"`
-	RecordedAt string        `json:"recordedAt"`
-	Machine    Machine       `json:"machine"`
-	Latency    []Latency     `json:"latency"`
-	Throughput []Throughput  `json:"throughput"`
-	PeakRSS    []PeakRSS     `json:"peakRss"`
-	OCR        []OCRAccuracy `json:"ocr"`
+	Label      string       `json:"label"`
+	RecordedAt string       `json:"recordedAt"`
+	Machine    Machine      `json:"machine"`
+	Latency    []Latency    `json:"latency"`
+	Throughput []Throughput `json:"throughput"`
+	PeakRSS    []PeakRSS    `json:"peakRss"`
 }
 
 type Recorder struct {
@@ -200,12 +179,6 @@ func (r *Recorder) AddPeakRSS(p PeakRSS) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.report.PeakRSS = append(r.report.PeakRSS, p)
-}
-
-func (r *Recorder) AddOCR(o OCRAccuracy) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	r.report.OCR = append(r.report.OCR, o)
 }
 
 func (r *Recorder) Flush(t testing.TB) {
@@ -239,9 +212,6 @@ func (r *Recorder) Flush(t testing.TB) {
 	})
 	merged.PeakRSS = mergeBy(merged.PeakRSS, r.report.PeakRSS, func(p PeakRSS) string {
 		return p.Input + "\x00" + p.Pipeline
-	})
-	merged.OCR = mergeBy(merged.OCR, r.report.OCR, func(o OCRAccuracy) string {
-		return o.Engine + "\x00" + o.Input
 	})
 
 	out, err := sonic.ConfigStd.MarshalIndent(merged, "", "  ")
@@ -415,46 +385,6 @@ func procStatusMB(field string) (float64, error) {
 	}
 
 	return 0, fmt.Errorf("%s not in /proc/self/status", field)
-}
-
-func CER(truth, recognised string) float64 {
-	want := normalize(truth)
-	got := normalize(recognised)
-	if len(want) == 0 {
-		if len(got) == 0 {
-			return 0
-		}
-		return 1
-	}
-
-	return float64(levenshtein(want, got)) / float64(len(want))
-}
-
-func normalize(s string) []rune {
-	fields := strings.FieldsFunc(s, unicode.IsSpace)
-
-	return []rune(strings.ToLower(strings.Join(fields, " ")))
-}
-
-func levenshtein(a, b []rune) int {
-	prev := make([]int, len(b)+1)
-	curr := make([]int, len(b)+1)
-	for j := range prev {
-		prev[j] = j
-	}
-	for i := 1; i <= len(a); i++ {
-		curr[0] = i
-		for j := 1; j <= len(b); j++ {
-			cost := 1
-			if a[i-1] == b[j-1] {
-				cost = 0
-			}
-			curr[j] = min(prev[j]+1, curr[j-1]+1, prev[j-1]+cost)
-		}
-		prev, curr = curr, prev
-	}
-
-	return prev[len(b)]
 }
 
 func machine() Machine {

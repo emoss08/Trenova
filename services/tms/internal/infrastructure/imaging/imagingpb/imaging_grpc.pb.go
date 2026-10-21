@@ -1,6 +1,7 @@
 // The imaging worker's contract: stateless, tenant-agnostic document and image
 // computation for the TMS. Plaintext bytes go in, derived artifacts come out;
-// the worker holds no database, storage, key or network access.
+// the worker holds no database, storage, key or network access. It reads no
+// text and runs no OCR: docling does both.
 //
 // Every call streams its input in. The first message is a header naming the
 // operation's parameters and each document's content type and declared size;
@@ -51,9 +52,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	ImagingService_Probe_FullMethodName          = "/trenova.imaging.v1.ImagingService/Probe"
 	ImagingService_Render_FullMethodName         = "/trenova.imaging.v1.ImagingService/Render"
-	ImagingService_ExtractText_FullMethodName    = "/trenova.imaging.v1.ImagingService/ExtractText"
 	ImagingService_InspectCapture_FullMethodName = "/trenova.imaging.v1.ImagingService/InspectCapture"
-	ImagingService_Recognize_FullMethodName      = "/trenova.imaging.v1.ImagingService/Recognize"
 	ImagingService_Assemble_FullMethodName       = "/trenova.imaging.v1.ImagingService/Assemble"
 	ImagingService_NormalizeImage_FullMethodName = "/trenova.imaging.v1.ImagingService/NormalizeImage"
 )
@@ -69,16 +68,10 @@ type ImagingServiceClient interface {
 	// Renders pages (of a PDF, or the one page of an image) to WebP, JPEG or
 	// PNG, at a DPI or fitted into a box, flattened onto white.
 	Render(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[RenderRequest, RenderResponse], error)
-	// Reads each page's text and its layout: words and lines with boxes and
-	// font, arranged into reading order.
-	ExtractText(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[ExtractTextRequest, ExtractTextResponse], error)
 	// Inspects captured pages in one pass each: thumbnail, ink coverage and
 	// every QR and 1D barcode. A batch of up to 1,000 pages streams in and the
 	// results stream back per page.
 	InspectCapture(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[InspectCaptureRequest, InspectCaptureResponse], error)
-	// Recognizes text on rendered PDF pages or an image: words with boxes and
-	// confidence, grouped into lines.
-	Recognize(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[RecognizeRequest, RecognizeResponse], error)
 	// Builds PDFs from pages of the sources: merge, split into ranges, rotate,
 	// extract; an image source becomes a page of its own.
 	Assemble(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[AssembleRequest, AssembleResponse], error)
@@ -122,22 +115,9 @@ func (c *imagingServiceClient) Render(ctx context.Context, opts ...grpc.CallOpti
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type ImagingService_RenderClient = grpc.BidiStreamingClient[RenderRequest, RenderResponse]
 
-func (c *imagingServiceClient) ExtractText(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[ExtractTextRequest, ExtractTextResponse], error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &ImagingService_ServiceDesc.Streams[2], ImagingService_ExtractText_FullMethodName, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &grpc.GenericClientStream[ExtractTextRequest, ExtractTextResponse]{ClientStream: stream}
-	return x, nil
-}
-
-// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type ImagingService_ExtractTextClient = grpc.BidiStreamingClient[ExtractTextRequest, ExtractTextResponse]
-
 func (c *imagingServiceClient) InspectCapture(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[InspectCaptureRequest, InspectCaptureResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &ImagingService_ServiceDesc.Streams[3], ImagingService_InspectCapture_FullMethodName, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &ImagingService_ServiceDesc.Streams[2], ImagingService_InspectCapture_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -148,22 +128,9 @@ func (c *imagingServiceClient) InspectCapture(ctx context.Context, opts ...grpc.
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type ImagingService_InspectCaptureClient = grpc.BidiStreamingClient[InspectCaptureRequest, InspectCaptureResponse]
 
-func (c *imagingServiceClient) Recognize(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[RecognizeRequest, RecognizeResponse], error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &ImagingService_ServiceDesc.Streams[4], ImagingService_Recognize_FullMethodName, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &grpc.GenericClientStream[RecognizeRequest, RecognizeResponse]{ClientStream: stream}
-	return x, nil
-}
-
-// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type ImagingService_RecognizeClient = grpc.BidiStreamingClient[RecognizeRequest, RecognizeResponse]
-
 func (c *imagingServiceClient) Assemble(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[AssembleRequest, AssembleResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &ImagingService_ServiceDesc.Streams[5], ImagingService_Assemble_FullMethodName, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &ImagingService_ServiceDesc.Streams[3], ImagingService_Assemble_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -176,7 +143,7 @@ type ImagingService_AssembleClient = grpc.BidiStreamingClient[AssembleRequest, A
 
 func (c *imagingServiceClient) NormalizeImage(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[NormalizeImageRequest, NormalizeImageResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &ImagingService_ServiceDesc.Streams[6], ImagingService_NormalizeImage_FullMethodName, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &ImagingService_ServiceDesc.Streams[4], ImagingService_NormalizeImage_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -198,16 +165,10 @@ type ImagingServiceServer interface {
 	// Renders pages (of a PDF, or the one page of an image) to WebP, JPEG or
 	// PNG, at a DPI or fitted into a box, flattened onto white.
 	Render(grpc.BidiStreamingServer[RenderRequest, RenderResponse]) error
-	// Reads each page's text and its layout: words and lines with boxes and
-	// font, arranged into reading order.
-	ExtractText(grpc.BidiStreamingServer[ExtractTextRequest, ExtractTextResponse]) error
 	// Inspects captured pages in one pass each: thumbnail, ink coverage and
 	// every QR and 1D barcode. A batch of up to 1,000 pages streams in and the
 	// results stream back per page.
 	InspectCapture(grpc.BidiStreamingServer[InspectCaptureRequest, InspectCaptureResponse]) error
-	// Recognizes text on rendered PDF pages or an image: words with boxes and
-	// confidence, grouped into lines.
-	Recognize(grpc.BidiStreamingServer[RecognizeRequest, RecognizeResponse]) error
 	// Builds PDFs from pages of the sources: merge, split into ranges, rotate,
 	// extract; an image source becomes a page of its own.
 	Assemble(grpc.BidiStreamingServer[AssembleRequest, AssembleResponse]) error
@@ -230,14 +191,8 @@ func (UnimplementedImagingServiceServer) Probe(grpc.ClientStreamingServer[ProbeR
 func (UnimplementedImagingServiceServer) Render(grpc.BidiStreamingServer[RenderRequest, RenderResponse]) error {
 	return status.Error(codes.Unimplemented, "method Render not implemented")
 }
-func (UnimplementedImagingServiceServer) ExtractText(grpc.BidiStreamingServer[ExtractTextRequest, ExtractTextResponse]) error {
-	return status.Error(codes.Unimplemented, "method ExtractText not implemented")
-}
 func (UnimplementedImagingServiceServer) InspectCapture(grpc.BidiStreamingServer[InspectCaptureRequest, InspectCaptureResponse]) error {
 	return status.Error(codes.Unimplemented, "method InspectCapture not implemented")
-}
-func (UnimplementedImagingServiceServer) Recognize(grpc.BidiStreamingServer[RecognizeRequest, RecognizeResponse]) error {
-	return status.Error(codes.Unimplemented, "method Recognize not implemented")
 }
 func (UnimplementedImagingServiceServer) Assemble(grpc.BidiStreamingServer[AssembleRequest, AssembleResponse]) error {
 	return status.Error(codes.Unimplemented, "method Assemble not implemented")
@@ -279,26 +234,12 @@ func _ImagingService_Render_Handler(srv interface{}, stream grpc.ServerStream) e
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type ImagingService_RenderServer = grpc.BidiStreamingServer[RenderRequest, RenderResponse]
 
-func _ImagingService_ExtractText_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(ImagingServiceServer).ExtractText(&grpc.GenericServerStream[ExtractTextRequest, ExtractTextResponse]{ServerStream: stream})
-}
-
-// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type ImagingService_ExtractTextServer = grpc.BidiStreamingServer[ExtractTextRequest, ExtractTextResponse]
-
 func _ImagingService_InspectCapture_Handler(srv interface{}, stream grpc.ServerStream) error {
 	return srv.(ImagingServiceServer).InspectCapture(&grpc.GenericServerStream[InspectCaptureRequest, InspectCaptureResponse]{ServerStream: stream})
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type ImagingService_InspectCaptureServer = grpc.BidiStreamingServer[InspectCaptureRequest, InspectCaptureResponse]
-
-func _ImagingService_Recognize_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(ImagingServiceServer).Recognize(&grpc.GenericServerStream[RecognizeRequest, RecognizeResponse]{ServerStream: stream})
-}
-
-// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type ImagingService_RecognizeServer = grpc.BidiStreamingServer[RecognizeRequest, RecognizeResponse]
 
 func _ImagingService_Assemble_Handler(srv interface{}, stream grpc.ServerStream) error {
 	return srv.(ImagingServiceServer).Assemble(&grpc.GenericServerStream[AssembleRequest, AssembleResponse]{ServerStream: stream})
@@ -334,20 +275,8 @@ var ImagingService_ServiceDesc = grpc.ServiceDesc{
 			ClientStreams: true,
 		},
 		{
-			StreamName:    "ExtractText",
-			Handler:       _ImagingService_ExtractText_Handler,
-			ServerStreams: true,
-			ClientStreams: true,
-		},
-		{
 			StreamName:    "InspectCapture",
 			Handler:       _ImagingService_InspectCapture_Handler,
-			ServerStreams: true,
-			ClientStreams: true,
-		},
-		{
-			StreamName:    "Recognize",
-			Handler:       _ImagingService_Recognize_Handler,
 			ServerStreams: true,
 			ClientStreams: true,
 		},

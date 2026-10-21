@@ -107,18 +107,6 @@ func TestBaseline(t *testing.T) {
 		}
 	})
 
-	t.Run("page_text_layout", func(t *testing.T) {
-		for _, name := range []string{"native-10p.pdf", "native-50p.pdf", "rate-confirmation.pdf"} {
-			data := corpus.Read(t, name)
-			rec.AddLatency(
-				imagingbench.MeasureLatency(ctx, "page_text_layout", name, iterations, "pages",
-					func(ctx context.Context) (int, error) {
-						return pageLayouts(ctx, reader, data)
-					}),
-			)
-		}
-	})
-
 	t.Run("assemble", func(t *testing.T) {
 		pages, err := assembler.Split(ctx, corpus.Read(t, "native-50p.pdf"))
 		if err != nil {
@@ -342,22 +330,6 @@ func textProfile(ctx context.Context, reader *pdfreader.Reader, data []byte) (in
 	}
 
 	return len(native), nil
-}
-
-func pageLayouts(ctx context.Context, reader *pdfreader.Reader, data []byte) (int, error) {
-	doc, err := reader.Open(ctx, data)
-	if err != nil {
-		return 0, err
-	}
-	defer doc.Close()
-
-	for page := range doc.PageCount() {
-		if _, err = doc.PageLayout(ctx, page); err != nil {
-			return 0, err
-		}
-	}
-
-	return doc.PageCount(), nil
 }
 
 func contentTypeOf(name string) string {

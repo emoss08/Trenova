@@ -1,6 +1,7 @@
 // The imaging worker's contract: stateless, tenant-agnostic document and image
 // computation for the TMS. Plaintext bytes go in, derived artifacts come out;
-// the worker holds no database, storage, key or network access.
+// the worker holds no database, storage, key or network access. It reads no
+// text and runs no OCR: docling does both.
 //
 // Every call streams its input in. The first message is a header naming the
 // operation's parameters and each document's content type and declared size;
@@ -1315,582 +1316,6 @@ func (x *RenderSummary) GetRendered() uint32 {
 	return 0
 }
 
-type ExtractTextRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Types that are valid to be assigned to Part:
-	//
-	//	*ExtractTextRequest_Header
-	//	*ExtractTextRequest_Chunk
-	Part          isExtractTextRequest_Part `protobuf_oneof:"part"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ExtractTextRequest) Reset() {
-	*x = ExtractTextRequest{}
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[14]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ExtractTextRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ExtractTextRequest) ProtoMessage() {}
-
-func (x *ExtractTextRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[14]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ExtractTextRequest.ProtoReflect.Descriptor instead.
-func (*ExtractTextRequest) Descriptor() ([]byte, []int) {
-	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{14}
-}
-
-func (x *ExtractTextRequest) GetPart() isExtractTextRequest_Part {
-	if x != nil {
-		return x.Part
-	}
-	return nil
-}
-
-func (x *ExtractTextRequest) GetHeader() *ExtractTextHeader {
-	if x != nil {
-		if x, ok := x.Part.(*ExtractTextRequest_Header); ok {
-			return x.Header
-		}
-	}
-	return nil
-}
-
-func (x *ExtractTextRequest) GetChunk() []byte {
-	if x != nil {
-		if x, ok := x.Part.(*ExtractTextRequest_Chunk); ok {
-			return x.Chunk
-		}
-	}
-	return nil
-}
-
-type isExtractTextRequest_Part interface {
-	isExtractTextRequest_Part()
-}
-
-type ExtractTextRequest_Header struct {
-	Header *ExtractTextHeader `protobuf:"bytes,1,opt,name=header,proto3,oneof"`
-}
-
-type ExtractTextRequest_Chunk struct {
-	Chunk []byte `protobuf:"bytes,2,opt,name=chunk,proto3,oneof"`
-}
-
-func (*ExtractTextRequest_Header) isExtractTextRequest_Part() {}
-
-func (*ExtractTextRequest_Chunk) isExtractTextRequest_Part() {}
-
-type ExtractTextHeader struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	Document *DocumentHeader        `protobuf:"bytes,1,opt,name=document,proto3" json:"document,omitempty"`
-	// Zero-based page indexes; empty reads every page up to max_pages.
-	Pages []uint32 `protobuf:"varint,2,rep,packed,name=pages,proto3" json:"pages,omitempty"`
-	// Return words and lines as well as text.
-	Layout        bool   `protobuf:"varint,3,opt,name=layout,proto3" json:"layout,omitempty"`
-	MaxPages      uint32 `protobuf:"varint,4,opt,name=max_pages,json=maxPages,proto3" json:"max_pages,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ExtractTextHeader) Reset() {
-	*x = ExtractTextHeader{}
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[15]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ExtractTextHeader) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ExtractTextHeader) ProtoMessage() {}
-
-func (x *ExtractTextHeader) ProtoReflect() protoreflect.Message {
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[15]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ExtractTextHeader.ProtoReflect.Descriptor instead.
-func (*ExtractTextHeader) Descriptor() ([]byte, []int) {
-	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{15}
-}
-
-func (x *ExtractTextHeader) GetDocument() *DocumentHeader {
-	if x != nil {
-		return x.Document
-	}
-	return nil
-}
-
-func (x *ExtractTextHeader) GetPages() []uint32 {
-	if x != nil {
-		return x.Pages
-	}
-	return nil
-}
-
-func (x *ExtractTextHeader) GetLayout() bool {
-	if x != nil {
-		return x.Layout
-	}
-	return false
-}
-
-func (x *ExtractTextHeader) GetMaxPages() uint32 {
-	if x != nil {
-		return x.MaxPages
-	}
-	return 0
-}
-
-type ExtractTextResponse struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Types that are valid to be assigned to Part:
-	//
-	//	*ExtractTextResponse_Page
-	//	*ExtractTextResponse_PageError
-	//	*ExtractTextResponse_Summary
-	Part          isExtractTextResponse_Part `protobuf_oneof:"part"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ExtractTextResponse) Reset() {
-	*x = ExtractTextResponse{}
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[16]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ExtractTextResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ExtractTextResponse) ProtoMessage() {}
-
-func (x *ExtractTextResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[16]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ExtractTextResponse.ProtoReflect.Descriptor instead.
-func (*ExtractTextResponse) Descriptor() ([]byte, []int) {
-	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{16}
-}
-
-func (x *ExtractTextResponse) GetPart() isExtractTextResponse_Part {
-	if x != nil {
-		return x.Part
-	}
-	return nil
-}
-
-func (x *ExtractTextResponse) GetPage() *PageText {
-	if x != nil {
-		if x, ok := x.Part.(*ExtractTextResponse_Page); ok {
-			return x.Page
-		}
-	}
-	return nil
-}
-
-func (x *ExtractTextResponse) GetPageError() *PageError {
-	if x != nil {
-		if x, ok := x.Part.(*ExtractTextResponse_PageError); ok {
-			return x.PageError
-		}
-	}
-	return nil
-}
-
-func (x *ExtractTextResponse) GetSummary() *TextSummary {
-	if x != nil {
-		if x, ok := x.Part.(*ExtractTextResponse_Summary); ok {
-			return x.Summary
-		}
-	}
-	return nil
-}
-
-type isExtractTextResponse_Part interface {
-	isExtractTextResponse_Part()
-}
-
-type ExtractTextResponse_Page struct {
-	Page *PageText `protobuf:"bytes,1,opt,name=page,proto3,oneof"`
-}
-
-type ExtractTextResponse_PageError struct {
-	PageError *PageError `protobuf:"bytes,2,opt,name=page_error,json=pageError,proto3,oneof"`
-}
-
-type ExtractTextResponse_Summary struct {
-	Summary *TextSummary `protobuf:"bytes,3,opt,name=summary,proto3,oneof"`
-}
-
-func (*ExtractTextResponse_Page) isExtractTextResponse_Part() {}
-
-func (*ExtractTextResponse_PageError) isExtractTextResponse_Part() {}
-
-func (*ExtractTextResponse_Summary) isExtractTextResponse_Part() {}
-
-type TextSummary struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	PageCount     uint32                 `protobuf:"varint,1,opt,name=page_count,json=pageCount,proto3" json:"page_count,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *TextSummary) Reset() {
-	*x = TextSummary{}
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[17]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *TextSummary) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*TextSummary) ProtoMessage() {}
-
-func (x *TextSummary) ProtoReflect() protoreflect.Message {
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[17]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use TextSummary.ProtoReflect.Descriptor instead.
-func (*TextSummary) Descriptor() ([]byte, []int) {
-	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{17}
-}
-
-func (x *TextSummary) GetPageCount() uint32 {
-	if x != nil {
-		return x.PageCount
-	}
-	return 0
-}
-
-type PageText struct {
-	state     protoimpl.MessageState `protogen:"open.v1"`
-	PageIndex uint32                 `protobuf:"varint,1,opt,name=page_index,json=pageIndex,proto3" json:"page_index,omitempty"`
-	// The page's size in points.
-	Width  float32 `protobuf:"fixed32,2,opt,name=width,proto3" json:"width,omitempty"`
-	Height float32 `protobuf:"fixed32,3,opt,name=height,proto3" json:"height,omitempty"`
-	// The text in content-stream order, as the PDF stores it.
-	StreamText string `protobuf:"bytes,4,opt,name=stream_text,json=streamText,proto3" json:"stream_text,omitempty"`
-	// The text in reading order, rebuilt from the layout: lines top to
-	// bottom, a blank line at a paragraph gap, three spaces between columns.
-	// Empty unless layout was asked for.
-	ArrangedText  string      `protobuf:"bytes,5,opt,name=arranged_text,json=arrangedText,proto3" json:"arranged_text,omitempty"`
-	Lines         []*TextLine `protobuf:"bytes,6,rep,name=lines,proto3" json:"lines,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *PageText) Reset() {
-	*x = PageText{}
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[18]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *PageText) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*PageText) ProtoMessage() {}
-
-func (x *PageText) ProtoReflect() protoreflect.Message {
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[18]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use PageText.ProtoReflect.Descriptor instead.
-func (*PageText) Descriptor() ([]byte, []int) {
-	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{18}
-}
-
-func (x *PageText) GetPageIndex() uint32 {
-	if x != nil {
-		return x.PageIndex
-	}
-	return 0
-}
-
-func (x *PageText) GetWidth() float32 {
-	if x != nil {
-		return x.Width
-	}
-	return 0
-}
-
-func (x *PageText) GetHeight() float32 {
-	if x != nil {
-		return x.Height
-	}
-	return 0
-}
-
-func (x *PageText) GetStreamText() string {
-	if x != nil {
-		return x.StreamText
-	}
-	return ""
-}
-
-func (x *PageText) GetArrangedText() string {
-	if x != nil {
-		return x.ArrangedText
-	}
-	return ""
-}
-
-func (x *PageText) GetLines() []*TextLine {
-	if x != nil {
-		return x.Lines
-	}
-	return nil
-}
-
-// Boxes are in points from the page's top-left corner, as displayed.
-type TextLine struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Text          string                 `protobuf:"bytes,1,opt,name=text,proto3" json:"text,omitempty"`
-	Left          float32                `protobuf:"fixed32,2,opt,name=left,proto3" json:"left,omitempty"`
-	Top           float32                `protobuf:"fixed32,3,opt,name=top,proto3" json:"top,omitempty"`
-	Width         float32                `protobuf:"fixed32,4,opt,name=width,proto3" json:"width,omitempty"`
-	Height        float32                `protobuf:"fixed32,5,opt,name=height,proto3" json:"height,omitempty"`
-	Words         []*TextWord            `protobuf:"bytes,6,rep,name=words,proto3" json:"words,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *TextLine) Reset() {
-	*x = TextLine{}
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[19]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *TextLine) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*TextLine) ProtoMessage() {}
-
-func (x *TextLine) ProtoReflect() protoreflect.Message {
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[19]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use TextLine.ProtoReflect.Descriptor instead.
-func (*TextLine) Descriptor() ([]byte, []int) {
-	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{19}
-}
-
-func (x *TextLine) GetText() string {
-	if x != nil {
-		return x.Text
-	}
-	return ""
-}
-
-func (x *TextLine) GetLeft() float32 {
-	if x != nil {
-		return x.Left
-	}
-	return 0
-}
-
-func (x *TextLine) GetTop() float32 {
-	if x != nil {
-		return x.Top
-	}
-	return 0
-}
-
-func (x *TextLine) GetWidth() float32 {
-	if x != nil {
-		return x.Width
-	}
-	return 0
-}
-
-func (x *TextLine) GetHeight() float32 {
-	if x != nil {
-		return x.Height
-	}
-	return 0
-}
-
-func (x *TextLine) GetWords() []*TextWord {
-	if x != nil {
-		return x.Words
-	}
-	return nil
-}
-
-type TextWord struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Text          string                 `protobuf:"bytes,1,opt,name=text,proto3" json:"text,omitempty"`
-	Left          float32                `protobuf:"fixed32,2,opt,name=left,proto3" json:"left,omitempty"`
-	Top           float32                `protobuf:"fixed32,3,opt,name=top,proto3" json:"top,omitempty"`
-	Width         float32                `protobuf:"fixed32,4,opt,name=width,proto3" json:"width,omitempty"`
-	Height        float32                `protobuf:"fixed32,5,opt,name=height,proto3" json:"height,omitempty"`
-	FontSize      float32                `protobuf:"fixed32,6,opt,name=font_size,json=fontSize,proto3" json:"font_size,omitempty"`
-	FontName      string                 `protobuf:"bytes,7,opt,name=font_name,json=fontName,proto3" json:"font_name,omitempty"`
-	Bold          bool                   `protobuf:"varint,8,opt,name=bold,proto3" json:"bold,omitempty"`
-	Italic        bool                   `protobuf:"varint,9,opt,name=italic,proto3" json:"italic,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *TextWord) Reset() {
-	*x = TextWord{}
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[20]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *TextWord) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*TextWord) ProtoMessage() {}
-
-func (x *TextWord) ProtoReflect() protoreflect.Message {
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[20]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use TextWord.ProtoReflect.Descriptor instead.
-func (*TextWord) Descriptor() ([]byte, []int) {
-	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{20}
-}
-
-func (x *TextWord) GetText() string {
-	if x != nil {
-		return x.Text
-	}
-	return ""
-}
-
-func (x *TextWord) GetLeft() float32 {
-	if x != nil {
-		return x.Left
-	}
-	return 0
-}
-
-func (x *TextWord) GetTop() float32 {
-	if x != nil {
-		return x.Top
-	}
-	return 0
-}
-
-func (x *TextWord) GetWidth() float32 {
-	if x != nil {
-		return x.Width
-	}
-	return 0
-}
-
-func (x *TextWord) GetHeight() float32 {
-	if x != nil {
-		return x.Height
-	}
-	return 0
-}
-
-func (x *TextWord) GetFontSize() float32 {
-	if x != nil {
-		return x.FontSize
-	}
-	return 0
-}
-
-func (x *TextWord) GetFontName() string {
-	if x != nil {
-		return x.FontName
-	}
-	return ""
-}
-
-func (x *TextWord) GetBold() bool {
-	if x != nil {
-		return x.Bold
-	}
-	return false
-}
-
-func (x *TextWord) GetItalic() bool {
-	if x != nil {
-		return x.Italic
-	}
-	return false
-}
-
 type InspectCaptureRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Types that are valid to be assigned to Part:
@@ -1905,7 +1330,7 @@ type InspectCaptureRequest struct {
 
 func (x *InspectCaptureRequest) Reset() {
 	*x = InspectCaptureRequest{}
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[21]
+	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1917,7 +1342,7 @@ func (x *InspectCaptureRequest) String() string {
 func (*InspectCaptureRequest) ProtoMessage() {}
 
 func (x *InspectCaptureRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[21]
+	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1930,7 +1355,7 @@ func (x *InspectCaptureRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InspectCaptureRequest.ProtoReflect.Descriptor instead.
 func (*InspectCaptureRequest) Descriptor() ([]byte, []int) {
-	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{21}
+	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *InspectCaptureRequest) GetPart() isInspectCaptureRequest_Part {
@@ -2014,7 +1439,7 @@ type InspectCaptureHeader struct {
 
 func (x *InspectCaptureHeader) Reset() {
 	*x = InspectCaptureHeader{}
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[22]
+	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2026,7 +1451,7 @@ func (x *InspectCaptureHeader) String() string {
 func (*InspectCaptureHeader) ProtoMessage() {}
 
 func (x *InspectCaptureHeader) ProtoReflect() protoreflect.Message {
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[22]
+	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2039,7 +1464,7 @@ func (x *InspectCaptureHeader) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InspectCaptureHeader.ProtoReflect.Descriptor instead.
 func (*InspectCaptureHeader) Descriptor() ([]byte, []int) {
-	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{22}
+	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *InspectCaptureHeader) GetPageCount() uint32 {
@@ -2116,7 +1541,7 @@ type CapturePageStart struct {
 
 func (x *CapturePageStart) Reset() {
 	*x = CapturePageStart{}
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[23]
+	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2128,7 +1553,7 @@ func (x *CapturePageStart) String() string {
 func (*CapturePageStart) ProtoMessage() {}
 
 func (x *CapturePageStart) ProtoReflect() protoreflect.Message {
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[23]
+	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2141,7 +1566,7 @@ func (x *CapturePageStart) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CapturePageStart.ProtoReflect.Descriptor instead.
 func (*CapturePageStart) Descriptor() ([]byte, []int) {
-	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{23}
+	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *CapturePageStart) GetIndex() uint32 {
@@ -2171,7 +1596,7 @@ type InspectCaptureResponse struct {
 
 func (x *InspectCaptureResponse) Reset() {
 	*x = InspectCaptureResponse{}
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[24]
+	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2183,7 +1608,7 @@ func (x *InspectCaptureResponse) String() string {
 func (*InspectCaptureResponse) ProtoMessage() {}
 
 func (x *InspectCaptureResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[24]
+	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2196,7 +1621,7 @@ func (x *InspectCaptureResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InspectCaptureResponse.ProtoReflect.Descriptor instead.
 func (*InspectCaptureResponse) Descriptor() ([]byte, []int) {
-	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{24}
+	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *InspectCaptureResponse) GetPart() isInspectCaptureResponse_Part {
@@ -2257,7 +1682,7 @@ type CapturePageResult struct {
 
 func (x *CapturePageResult) Reset() {
 	*x = CapturePageResult{}
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[25]
+	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2269,7 +1694,7 @@ func (x *CapturePageResult) String() string {
 func (*CapturePageResult) ProtoMessage() {}
 
 func (x *CapturePageResult) ProtoReflect() protoreflect.Message {
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[25]
+	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2282,7 +1707,7 @@ func (x *CapturePageResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CapturePageResult.ProtoReflect.Descriptor instead.
 func (*CapturePageResult) Descriptor() ([]byte, []int) {
-	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{25}
+	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *CapturePageResult) GetIndex() uint32 {
@@ -2352,7 +1777,7 @@ type Barcode struct {
 
 func (x *Barcode) Reset() {
 	*x = Barcode{}
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[26]
+	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2364,7 +1789,7 @@ func (x *Barcode) String() string {
 func (*Barcode) ProtoMessage() {}
 
 func (x *Barcode) ProtoReflect() protoreflect.Message {
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[26]
+	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2377,7 +1802,7 @@ func (x *Barcode) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Barcode.ProtoReflect.Descriptor instead.
 func (*Barcode) Descriptor() ([]byte, []int) {
-	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{26}
+	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *Barcode) GetFormat() string {
@@ -2404,7 +1829,7 @@ type CaptureSummary struct {
 
 func (x *CaptureSummary) Reset() {
 	*x = CaptureSummary{}
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[27]
+	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2416,7 +1841,7 @@ func (x *CaptureSummary) String() string {
 func (*CaptureSummary) ProtoMessage() {}
 
 func (x *CaptureSummary) ProtoReflect() protoreflect.Message {
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[27]
+	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2429,7 +1854,7 @@ func (x *CaptureSummary) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CaptureSummary.ProtoReflect.Descriptor instead.
 func (*CaptureSummary) Descriptor() ([]byte, []int) {
-	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{27}
+	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *CaptureSummary) GetInspected() uint32 {
@@ -2442,704 +1867,6 @@ func (x *CaptureSummary) GetInspected() uint32 {
 func (x *CaptureSummary) GetFailed() uint32 {
 	if x != nil {
 		return x.Failed
-	}
-	return 0
-}
-
-type RecognizeRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Types that are valid to be assigned to Part:
-	//
-	//	*RecognizeRequest_Header
-	//	*RecognizeRequest_Chunk
-	Part          isRecognizeRequest_Part `protobuf_oneof:"part"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *RecognizeRequest) Reset() {
-	*x = RecognizeRequest{}
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[28]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *RecognizeRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RecognizeRequest) ProtoMessage() {}
-
-func (x *RecognizeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[28]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RecognizeRequest.ProtoReflect.Descriptor instead.
-func (*RecognizeRequest) Descriptor() ([]byte, []int) {
-	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{28}
-}
-
-func (x *RecognizeRequest) GetPart() isRecognizeRequest_Part {
-	if x != nil {
-		return x.Part
-	}
-	return nil
-}
-
-func (x *RecognizeRequest) GetHeader() *RecognizeHeader {
-	if x != nil {
-		if x, ok := x.Part.(*RecognizeRequest_Header); ok {
-			return x.Header
-		}
-	}
-	return nil
-}
-
-func (x *RecognizeRequest) GetChunk() []byte {
-	if x != nil {
-		if x, ok := x.Part.(*RecognizeRequest_Chunk); ok {
-			return x.Chunk
-		}
-	}
-	return nil
-}
-
-type isRecognizeRequest_Part interface {
-	isRecognizeRequest_Part()
-}
-
-type RecognizeRequest_Header struct {
-	Header *RecognizeHeader `protobuf:"bytes,1,opt,name=header,proto3,oneof"`
-}
-
-type RecognizeRequest_Chunk struct {
-	Chunk []byte `protobuf:"bytes,2,opt,name=chunk,proto3,oneof"`
-}
-
-func (*RecognizeRequest_Header) isRecognizeRequest_Part() {}
-
-func (*RecognizeRequest_Chunk) isRecognizeRequest_Part() {}
-
-type RecognizeHeader struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	Document *DocumentHeader        `protobuf:"bytes,1,opt,name=document,proto3" json:"document,omitempty"`
-	// Zero-based page indexes of a PDF; empty recognizes every page up to
-	// max_pages. Ignored for an image.
-	Pages []uint32 `protobuf:"varint,2,rep,packed,name=pages,proto3" json:"pages,omitempty"`
-	// Render resolution for PDF pages (default 300).
-	Dpi uint32 `protobuf:"varint,3,opt,name=dpi,proto3" json:"dpi,omitempty"`
-	// Tesseract language codes joined with "+" (default "eng").
-	Language   string      `protobuf:"bytes,4,opt,name=language,proto3" json:"language,omitempty"`
-	Preprocess *Preprocess `protobuf:"bytes,5,opt,name=preprocess,proto3" json:"preprocess,omitempty"`
-	MaxPages   uint32      `protobuf:"varint,6,opt,name=max_pages,json=maxPages,proto3" json:"max_pages,omitempty"`
-	// Downscale an image whose longer side passes this before recognizing
-	// (0: the worker's limit).
-	MaxDimension  uint32 `protobuf:"varint,7,opt,name=max_dimension,json=maxDimension,proto3" json:"max_dimension,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *RecognizeHeader) Reset() {
-	*x = RecognizeHeader{}
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[29]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *RecognizeHeader) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RecognizeHeader) ProtoMessage() {}
-
-func (x *RecognizeHeader) ProtoReflect() protoreflect.Message {
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[29]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RecognizeHeader.ProtoReflect.Descriptor instead.
-func (*RecognizeHeader) Descriptor() ([]byte, []int) {
-	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{29}
-}
-
-func (x *RecognizeHeader) GetDocument() *DocumentHeader {
-	if x != nil {
-		return x.Document
-	}
-	return nil
-}
-
-func (x *RecognizeHeader) GetPages() []uint32 {
-	if x != nil {
-		return x.Pages
-	}
-	return nil
-}
-
-func (x *RecognizeHeader) GetDpi() uint32 {
-	if x != nil {
-		return x.Dpi
-	}
-	return 0
-}
-
-func (x *RecognizeHeader) GetLanguage() string {
-	if x != nil {
-		return x.Language
-	}
-	return ""
-}
-
-func (x *RecognizeHeader) GetPreprocess() *Preprocess {
-	if x != nil {
-		return x.Preprocess
-	}
-	return nil
-}
-
-func (x *RecognizeHeader) GetMaxPages() uint32 {
-	if x != nil {
-		return x.MaxPages
-	}
-	return 0
-}
-
-func (x *RecognizeHeader) GetMaxDimension() uint32 {
-	if x != nil {
-		return x.MaxDimension
-	}
-	return 0
-}
-
-type Preprocess struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Estimate and undo small rotations of the text.
-	Deskew bool `protobuf:"varint,1,opt,name=deskew,proto3" json:"deskew,omitempty"`
-	// Stretch the page's contrast to its full range.
-	Contrast bool `protobuf:"varint,2,opt,name=contrast,proto3" json:"contrast,omitempty"`
-	// Reduce to black and white with an adaptive threshold.
-	Binarize      bool `protobuf:"varint,3,opt,name=binarize,proto3" json:"binarize,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Preprocess) Reset() {
-	*x = Preprocess{}
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[30]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Preprocess) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Preprocess) ProtoMessage() {}
-
-func (x *Preprocess) ProtoReflect() protoreflect.Message {
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[30]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Preprocess.ProtoReflect.Descriptor instead.
-func (*Preprocess) Descriptor() ([]byte, []int) {
-	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{30}
-}
-
-func (x *Preprocess) GetDeskew() bool {
-	if x != nil {
-		return x.Deskew
-	}
-	return false
-}
-
-func (x *Preprocess) GetContrast() bool {
-	if x != nil {
-		return x.Contrast
-	}
-	return false
-}
-
-func (x *Preprocess) GetBinarize() bool {
-	if x != nil {
-		return x.Binarize
-	}
-	return false
-}
-
-type RecognizeResponse struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Types that are valid to be assigned to Part:
-	//
-	//	*RecognizeResponse_Page
-	//	*RecognizeResponse_PageError
-	//	*RecognizeResponse_Summary
-	Part          isRecognizeResponse_Part `protobuf_oneof:"part"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *RecognizeResponse) Reset() {
-	*x = RecognizeResponse{}
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[31]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *RecognizeResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RecognizeResponse) ProtoMessage() {}
-
-func (x *RecognizeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[31]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RecognizeResponse.ProtoReflect.Descriptor instead.
-func (*RecognizeResponse) Descriptor() ([]byte, []int) {
-	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{31}
-}
-
-func (x *RecognizeResponse) GetPart() isRecognizeResponse_Part {
-	if x != nil {
-		return x.Part
-	}
-	return nil
-}
-
-func (x *RecognizeResponse) GetPage() *RecognizedPage {
-	if x != nil {
-		if x, ok := x.Part.(*RecognizeResponse_Page); ok {
-			return x.Page
-		}
-	}
-	return nil
-}
-
-func (x *RecognizeResponse) GetPageError() *PageError {
-	if x != nil {
-		if x, ok := x.Part.(*RecognizeResponse_PageError); ok {
-			return x.PageError
-		}
-	}
-	return nil
-}
-
-func (x *RecognizeResponse) GetSummary() *RecognizeSummary {
-	if x != nil {
-		if x, ok := x.Part.(*RecognizeResponse_Summary); ok {
-			return x.Summary
-		}
-	}
-	return nil
-}
-
-type isRecognizeResponse_Part interface {
-	isRecognizeResponse_Part()
-}
-
-type RecognizeResponse_Page struct {
-	Page *RecognizedPage `protobuf:"bytes,1,opt,name=page,proto3,oneof"`
-}
-
-type RecognizeResponse_PageError struct {
-	PageError *PageError `protobuf:"bytes,2,opt,name=page_error,json=pageError,proto3,oneof"`
-}
-
-type RecognizeResponse_Summary struct {
-	Summary *RecognizeSummary `protobuf:"bytes,3,opt,name=summary,proto3,oneof"`
-}
-
-func (*RecognizeResponse_Page) isRecognizeResponse_Part() {}
-
-func (*RecognizeResponse_PageError) isRecognizeResponse_Part() {}
-
-func (*RecognizeResponse_Summary) isRecognizeResponse_Part() {}
-
-type RecognizeSummary struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	PageCount     uint32                 `protobuf:"varint,1,opt,name=page_count,json=pageCount,proto3" json:"page_count,omitempty"`
-	Engine        string                 `protobuf:"bytes,2,opt,name=engine,proto3" json:"engine,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *RecognizeSummary) Reset() {
-	*x = RecognizeSummary{}
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[32]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *RecognizeSummary) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RecognizeSummary) ProtoMessage() {}
-
-func (x *RecognizeSummary) ProtoReflect() protoreflect.Message {
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[32]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RecognizeSummary.ProtoReflect.Descriptor instead.
-func (*RecognizeSummary) Descriptor() ([]byte, []int) {
-	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{32}
-}
-
-func (x *RecognizeSummary) GetPageCount() uint32 {
-	if x != nil {
-		return x.PageCount
-	}
-	return 0
-}
-
-func (x *RecognizeSummary) GetEngine() string {
-	if x != nil {
-		return x.Engine
-	}
-	return ""
-}
-
-type RecognizedPage struct {
-	state     protoimpl.MessageState `protogen:"open.v1"`
-	PageIndex uint32                 `protobuf:"varint,1,opt,name=page_index,json=pageIndex,proto3" json:"page_index,omitempty"`
-	// The image recognized, in pixels.
-	WidthPx  uint32 `protobuf:"varint,2,opt,name=width_px,json=widthPx,proto3" json:"width_px,omitempty"`
-	HeightPx uint32 `protobuf:"varint,3,opt,name=height_px,json=heightPx,proto3" json:"height_px,omitempty"`
-	Text     string `protobuf:"bytes,4,opt,name=text,proto3" json:"text,omitempty"`
-	// The mean word confidence, 0 to 100.
-	MeanConfidence float64 `protobuf:"fixed64,5,opt,name=mean_confidence,json=meanConfidence,proto3" json:"mean_confidence,omitempty"`
-	// Every word, with the block, paragraph and line numbers Tesseract's TSV
-	// carries, so a caller can rebuild it.
-	Words []*OcrWord `protobuf:"bytes,6,rep,name=words,proto3" json:"words,omitempty"`
-	Lines []*OcrLine `protobuf:"bytes,7,rep,name=lines,proto3" json:"lines,omitempty"`
-	// The rotation removed by deskewing, in degrees.
-	DeskewDegrees float32 `protobuf:"fixed32,8,opt,name=deskew_degrees,json=deskewDegrees,proto3" json:"deskew_degrees,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *RecognizedPage) Reset() {
-	*x = RecognizedPage{}
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[33]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *RecognizedPage) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RecognizedPage) ProtoMessage() {}
-
-func (x *RecognizedPage) ProtoReflect() protoreflect.Message {
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[33]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RecognizedPage.ProtoReflect.Descriptor instead.
-func (*RecognizedPage) Descriptor() ([]byte, []int) {
-	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{33}
-}
-
-func (x *RecognizedPage) GetPageIndex() uint32 {
-	if x != nil {
-		return x.PageIndex
-	}
-	return 0
-}
-
-func (x *RecognizedPage) GetWidthPx() uint32 {
-	if x != nil {
-		return x.WidthPx
-	}
-	return 0
-}
-
-func (x *RecognizedPage) GetHeightPx() uint32 {
-	if x != nil {
-		return x.HeightPx
-	}
-	return 0
-}
-
-func (x *RecognizedPage) GetText() string {
-	if x != nil {
-		return x.Text
-	}
-	return ""
-}
-
-func (x *RecognizedPage) GetMeanConfidence() float64 {
-	if x != nil {
-		return x.MeanConfidence
-	}
-	return 0
-}
-
-func (x *RecognizedPage) GetWords() []*OcrWord {
-	if x != nil {
-		return x.Words
-	}
-	return nil
-}
-
-func (x *RecognizedPage) GetLines() []*OcrLine {
-	if x != nil {
-		return x.Lines
-	}
-	return nil
-}
-
-func (x *RecognizedPage) GetDeskewDegrees() float32 {
-	if x != nil {
-		return x.DeskewDegrees
-	}
-	return 0
-}
-
-type OcrWord struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Text          string                 `protobuf:"bytes,1,opt,name=text,proto3" json:"text,omitempty"`
-	Left          uint32                 `protobuf:"varint,2,opt,name=left,proto3" json:"left,omitempty"`
-	Top           uint32                 `protobuf:"varint,3,opt,name=top,proto3" json:"top,omitempty"`
-	Width         uint32                 `protobuf:"varint,4,opt,name=width,proto3" json:"width,omitempty"`
-	Height        uint32                 `protobuf:"varint,5,opt,name=height,proto3" json:"height,omitempty"`
-	Confidence    float32                `protobuf:"fixed32,6,opt,name=confidence,proto3" json:"confidence,omitempty"`
-	Block         uint32                 `protobuf:"varint,7,opt,name=block,proto3" json:"block,omitempty"`
-	Paragraph     uint32                 `protobuf:"varint,8,opt,name=paragraph,proto3" json:"paragraph,omitempty"`
-	Line          uint32                 `protobuf:"varint,9,opt,name=line,proto3" json:"line,omitempty"`
-	Word          uint32                 `protobuf:"varint,10,opt,name=word,proto3" json:"word,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *OcrWord) Reset() {
-	*x = OcrWord{}
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[34]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *OcrWord) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*OcrWord) ProtoMessage() {}
-
-func (x *OcrWord) ProtoReflect() protoreflect.Message {
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[34]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use OcrWord.ProtoReflect.Descriptor instead.
-func (*OcrWord) Descriptor() ([]byte, []int) {
-	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{34}
-}
-
-func (x *OcrWord) GetText() string {
-	if x != nil {
-		return x.Text
-	}
-	return ""
-}
-
-func (x *OcrWord) GetLeft() uint32 {
-	if x != nil {
-		return x.Left
-	}
-	return 0
-}
-
-func (x *OcrWord) GetTop() uint32 {
-	if x != nil {
-		return x.Top
-	}
-	return 0
-}
-
-func (x *OcrWord) GetWidth() uint32 {
-	if x != nil {
-		return x.Width
-	}
-	return 0
-}
-
-func (x *OcrWord) GetHeight() uint32 {
-	if x != nil {
-		return x.Height
-	}
-	return 0
-}
-
-func (x *OcrWord) GetConfidence() float32 {
-	if x != nil {
-		return x.Confidence
-	}
-	return 0
-}
-
-func (x *OcrWord) GetBlock() uint32 {
-	if x != nil {
-		return x.Block
-	}
-	return 0
-}
-
-func (x *OcrWord) GetParagraph() uint32 {
-	if x != nil {
-		return x.Paragraph
-	}
-	return 0
-}
-
-func (x *OcrWord) GetLine() uint32 {
-	if x != nil {
-		return x.Line
-	}
-	return 0
-}
-
-func (x *OcrWord) GetWord() uint32 {
-	if x != nil {
-		return x.Word
-	}
-	return 0
-}
-
-type OcrLine struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Text          string                 `protobuf:"bytes,1,opt,name=text,proto3" json:"text,omitempty"`
-	Left          uint32                 `protobuf:"varint,2,opt,name=left,proto3" json:"left,omitempty"`
-	Top           uint32                 `protobuf:"varint,3,opt,name=top,proto3" json:"top,omitempty"`
-	Width         uint32                 `protobuf:"varint,4,opt,name=width,proto3" json:"width,omitempty"`
-	Height        uint32                 `protobuf:"varint,5,opt,name=height,proto3" json:"height,omitempty"`
-	Confidence    float32                `protobuf:"fixed32,6,opt,name=confidence,proto3" json:"confidence,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *OcrLine) Reset() {
-	*x = OcrLine{}
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[35]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *OcrLine) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*OcrLine) ProtoMessage() {}
-
-func (x *OcrLine) ProtoReflect() protoreflect.Message {
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[35]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use OcrLine.ProtoReflect.Descriptor instead.
-func (*OcrLine) Descriptor() ([]byte, []int) {
-	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{35}
-}
-
-func (x *OcrLine) GetText() string {
-	if x != nil {
-		return x.Text
-	}
-	return ""
-}
-
-func (x *OcrLine) GetLeft() uint32 {
-	if x != nil {
-		return x.Left
-	}
-	return 0
-}
-
-func (x *OcrLine) GetTop() uint32 {
-	if x != nil {
-		return x.Top
-	}
-	return 0
-}
-
-func (x *OcrLine) GetWidth() uint32 {
-	if x != nil {
-		return x.Width
-	}
-	return 0
-}
-
-func (x *OcrLine) GetHeight() uint32 {
-	if x != nil {
-		return x.Height
-	}
-	return 0
-}
-
-func (x *OcrLine) GetConfidence() float32 {
-	if x != nil {
-		return x.Confidence
 	}
 	return 0
 }
@@ -3158,7 +1885,7 @@ type AssembleRequest struct {
 
 func (x *AssembleRequest) Reset() {
 	*x = AssembleRequest{}
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[36]
+	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3170,7 +1897,7 @@ func (x *AssembleRequest) String() string {
 func (*AssembleRequest) ProtoMessage() {}
 
 func (x *AssembleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[36]
+	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3183,7 +1910,7 @@ func (x *AssembleRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AssembleRequest.ProtoReflect.Descriptor instead.
 func (*AssembleRequest) Descriptor() ([]byte, []int) {
-	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{36}
+	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *AssembleRequest) GetPart() isAssembleRequest_Part {
@@ -3254,7 +1981,7 @@ type AssembleHeader struct {
 
 func (x *AssembleHeader) Reset() {
 	*x = AssembleHeader{}
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[37]
+	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3266,7 +1993,7 @@ func (x *AssembleHeader) String() string {
 func (*AssembleHeader) ProtoMessage() {}
 
 func (x *AssembleHeader) ProtoReflect() protoreflect.Message {
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[37]
+	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3279,7 +2006,7 @@ func (x *AssembleHeader) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AssembleHeader.ProtoReflect.Descriptor instead.
 func (*AssembleHeader) Descriptor() ([]byte, []int) {
-	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{37}
+	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *AssembleHeader) GetSourceCount() uint32 {
@@ -3305,7 +2032,7 @@ type AssembleOutput struct {
 
 func (x *AssembleOutput) Reset() {
 	*x = AssembleOutput{}
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[38]
+	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3317,7 +2044,7 @@ func (x *AssembleOutput) String() string {
 func (*AssembleOutput) ProtoMessage() {}
 
 func (x *AssembleOutput) ProtoReflect() protoreflect.Message {
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[38]
+	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3330,7 +2057,7 @@ func (x *AssembleOutput) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AssembleOutput.ProtoReflect.Descriptor instead.
 func (*AssembleOutput) Descriptor() ([]byte, []int) {
-	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{38}
+	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *AssembleOutput) GetPages() []*PageRange {
@@ -3354,7 +2081,7 @@ type PageRange struct {
 
 func (x *PageRange) Reset() {
 	*x = PageRange{}
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[39]
+	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3366,7 +2093,7 @@ func (x *PageRange) String() string {
 func (*PageRange) ProtoMessage() {}
 
 func (x *PageRange) ProtoReflect() protoreflect.Message {
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[39]
+	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3379,7 +2106,7 @@ func (x *PageRange) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PageRange.ProtoReflect.Descriptor instead.
 func (*PageRange) Descriptor() ([]byte, []int) {
-	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{39}
+	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *PageRange) GetSource() uint32 {
@@ -3420,7 +2147,7 @@ type AssembleSourceStart struct {
 
 func (x *AssembleSourceStart) Reset() {
 	*x = AssembleSourceStart{}
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[40]
+	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3432,7 +2159,7 @@ func (x *AssembleSourceStart) String() string {
 func (*AssembleSourceStart) ProtoMessage() {}
 
 func (x *AssembleSourceStart) ProtoReflect() protoreflect.Message {
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[40]
+	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3445,7 +2172,7 @@ func (x *AssembleSourceStart) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AssembleSourceStart.ProtoReflect.Descriptor instead.
 func (*AssembleSourceStart) Descriptor() ([]byte, []int) {
-	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{40}
+	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *AssembleSourceStart) GetIndex() uint32 {
@@ -3476,7 +2203,7 @@ type AssembleResponse struct {
 
 func (x *AssembleResponse) Reset() {
 	*x = AssembleResponse{}
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[41]
+	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3488,7 +2215,7 @@ func (x *AssembleResponse) String() string {
 func (*AssembleResponse) ProtoMessage() {}
 
 func (x *AssembleResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[41]
+	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3501,7 +2228,7 @@ func (x *AssembleResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AssembleResponse.ProtoReflect.Descriptor instead.
 func (*AssembleResponse) Descriptor() ([]byte, []int) {
-	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{41}
+	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *AssembleResponse) GetPart() isAssembleResponse_Part {
@@ -3569,7 +2296,7 @@ type AssembleSummary struct {
 
 func (x *AssembleSummary) Reset() {
 	*x = AssembleSummary{}
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[42]
+	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3581,7 +2308,7 @@ func (x *AssembleSummary) String() string {
 func (*AssembleSummary) ProtoMessage() {}
 
 func (x *AssembleSummary) ProtoReflect() protoreflect.Message {
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[42]
+	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3594,7 +2321,7 @@ func (x *AssembleSummary) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AssembleSummary.ProtoReflect.Descriptor instead.
 func (*AssembleSummary) Descriptor() ([]byte, []int) {
-	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{42}
+	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *AssembleSummary) GetOutputPageCounts() []uint32 {
@@ -3617,7 +2344,7 @@ type NormalizeImageRequest struct {
 
 func (x *NormalizeImageRequest) Reset() {
 	*x = NormalizeImageRequest{}
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[43]
+	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3629,7 +2356,7 @@ func (x *NormalizeImageRequest) String() string {
 func (*NormalizeImageRequest) ProtoMessage() {}
 
 func (x *NormalizeImageRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[43]
+	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3642,7 +2369,7 @@ func (x *NormalizeImageRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NormalizeImageRequest.ProtoReflect.Descriptor instead.
 func (*NormalizeImageRequest) Descriptor() ([]byte, []int) {
-	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{43}
+	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *NormalizeImageRequest) GetPart() isNormalizeImageRequest_Part {
@@ -3701,7 +2428,7 @@ type NormalizeImageHeader struct {
 
 func (x *NormalizeImageHeader) Reset() {
 	*x = NormalizeImageHeader{}
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[44]
+	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3713,7 +2440,7 @@ func (x *NormalizeImageHeader) String() string {
 func (*NormalizeImageHeader) ProtoMessage() {}
 
 func (x *NormalizeImageHeader) ProtoReflect() protoreflect.Message {
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[44]
+	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3726,7 +2453,7 @@ func (x *NormalizeImageHeader) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NormalizeImageHeader.ProtoReflect.Descriptor instead.
 func (*NormalizeImageHeader) Descriptor() ([]byte, []int) {
-	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{44}
+	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *NormalizeImageHeader) GetDocument() *DocumentHeader {
@@ -3778,7 +2505,7 @@ type NormalizeImageResponse struct {
 
 func (x *NormalizeImageResponse) Reset() {
 	*x = NormalizeImageResponse{}
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[45]
+	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3790,7 +2517,7 @@ func (x *NormalizeImageResponse) String() string {
 func (*NormalizeImageResponse) ProtoMessage() {}
 
 func (x *NormalizeImageResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[45]
+	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3803,7 +2530,7 @@ func (x *NormalizeImageResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NormalizeImageResponse.ProtoReflect.Descriptor instead.
 func (*NormalizeImageResponse) Descriptor() ([]byte, []int) {
-	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{45}
+	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *NormalizeImageResponse) GetPart() isNormalizeImageResponse_Part {
@@ -3875,7 +2602,7 @@ type NormalizeSummary struct {
 
 func (x *NormalizeSummary) Reset() {
 	*x = NormalizeSummary{}
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[46]
+	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3887,7 +2614,7 @@ func (x *NormalizeSummary) String() string {
 func (*NormalizeSummary) ProtoMessage() {}
 
 func (x *NormalizeSummary) ProtoReflect() protoreflect.Message {
-	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[46]
+	mi := &file_trenova_imaging_v1_imaging_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3900,7 +2627,7 @@ func (x *NormalizeSummary) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NormalizeSummary.ProtoReflect.Descriptor instead.
 func (*NormalizeSummary) Descriptor() ([]byte, []int) {
-	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{46}
+	return file_trenova_imaging_v1_imaging_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *NormalizeSummary) GetSourceFormat() string {
@@ -4012,51 +2739,7 @@ const file_trenova_imaging_v1_imaging_proto_rawDesc = "" +
 	"\rRenderSummary\x12\x1d\n" +
 	"\n" +
 	"page_count\x18\x01 \x01(\rR\tpageCount\x12\x1a\n" +
-	"\brendered\x18\x02 \x01(\rR\brendered\"u\n" +
-	"\x12ExtractTextRequest\x12?\n" +
-	"\x06header\x18\x01 \x01(\v2%.trenova.imaging.v1.ExtractTextHeaderH\x00R\x06header\x12\x16\n" +
-	"\x05chunk\x18\x02 \x01(\fH\x00R\x05chunkB\x06\n" +
-	"\x04part\"\x9e\x01\n" +
-	"\x11ExtractTextHeader\x12>\n" +
-	"\bdocument\x18\x01 \x01(\v2\".trenova.imaging.v1.DocumentHeaderR\bdocument\x12\x14\n" +
-	"\x05pages\x18\x02 \x03(\rR\x05pages\x12\x16\n" +
-	"\x06layout\x18\x03 \x01(\bR\x06layout\x12\x1b\n" +
-	"\tmax_pages\x18\x04 \x01(\rR\bmaxPages\"\xce\x01\n" +
-	"\x13ExtractTextResponse\x122\n" +
-	"\x04page\x18\x01 \x01(\v2\x1c.trenova.imaging.v1.PageTextH\x00R\x04page\x12>\n" +
-	"\n" +
-	"page_error\x18\x02 \x01(\v2\x1d.trenova.imaging.v1.PageErrorH\x00R\tpageError\x12;\n" +
-	"\asummary\x18\x03 \x01(\v2\x1f.trenova.imaging.v1.TextSummaryH\x00R\asummaryB\x06\n" +
-	"\x04part\",\n" +
-	"\vTextSummary\x12\x1d\n" +
-	"\n" +
-	"page_count\x18\x01 \x01(\rR\tpageCount\"\xd1\x01\n" +
-	"\bPageText\x12\x1d\n" +
-	"\n" +
-	"page_index\x18\x01 \x01(\rR\tpageIndex\x12\x14\n" +
-	"\x05width\x18\x02 \x01(\x02R\x05width\x12\x16\n" +
-	"\x06height\x18\x03 \x01(\x02R\x06height\x12\x1f\n" +
-	"\vstream_text\x18\x04 \x01(\tR\n" +
-	"streamText\x12#\n" +
-	"\rarranged_text\x18\x05 \x01(\tR\farrangedText\x122\n" +
-	"\x05lines\x18\x06 \x03(\v2\x1c.trenova.imaging.v1.TextLineR\x05lines\"\xa6\x01\n" +
-	"\bTextLine\x12\x12\n" +
-	"\x04text\x18\x01 \x01(\tR\x04text\x12\x12\n" +
-	"\x04left\x18\x02 \x01(\x02R\x04left\x12\x10\n" +
-	"\x03top\x18\x03 \x01(\x02R\x03top\x12\x14\n" +
-	"\x05width\x18\x04 \x01(\x02R\x05width\x12\x16\n" +
-	"\x06height\x18\x05 \x01(\x02R\x06height\x122\n" +
-	"\x05words\x18\x06 \x03(\v2\x1c.trenova.imaging.v1.TextWordR\x05words\"\xd8\x01\n" +
-	"\bTextWord\x12\x12\n" +
-	"\x04text\x18\x01 \x01(\tR\x04text\x12\x12\n" +
-	"\x04left\x18\x02 \x01(\x02R\x04left\x12\x10\n" +
-	"\x03top\x18\x03 \x01(\x02R\x03top\x12\x14\n" +
-	"\x05width\x18\x04 \x01(\x02R\x05width\x12\x16\n" +
-	"\x06height\x18\x05 \x01(\x02R\x06height\x12\x1b\n" +
-	"\tfont_size\x18\x06 \x01(\x02R\bfontSize\x12\x1b\n" +
-	"\tfont_name\x18\a \x01(\tR\bfontName\x12\x12\n" +
-	"\x04bold\x18\b \x01(\bR\x04bold\x12\x16\n" +
-	"\x06italic\x18\t \x01(\bR\x06italic\"\xb7\x01\n" +
+	"\brendered\x18\x02 \x01(\rR\brendered\"\xb7\x01\n" +
 	"\x15InspectCaptureRequest\x12B\n" +
 	"\x06header\x18\x01 \x01(\v2(.trenova.imaging.v1.InspectCaptureHeaderH\x00R\x06header\x12:\n" +
 	"\x04page\x18\x02 \x01(\v2$.trenova.imaging.v1.CapturePageStartH\x00R\x04page\x12\x16\n" +
@@ -4097,69 +2780,7 @@ const file_trenova_imaging_v1_imaging_proto_rawDesc = "" +
 	"\x04text\x18\x02 \x01(\tR\x04text\"F\n" +
 	"\x0eCaptureSummary\x12\x1c\n" +
 	"\tinspected\x18\x01 \x01(\rR\tinspected\x12\x16\n" +
-	"\x06failed\x18\x02 \x01(\rR\x06failed\"q\n" +
-	"\x10RecognizeRequest\x12=\n" +
-	"\x06header\x18\x01 \x01(\v2#.trenova.imaging.v1.RecognizeHeaderH\x00R\x06header\x12\x16\n" +
-	"\x05chunk\x18\x02 \x01(\fH\x00R\x05chunkB\x06\n" +
-	"\x04part\"\x97\x02\n" +
-	"\x0fRecognizeHeader\x12>\n" +
-	"\bdocument\x18\x01 \x01(\v2\".trenova.imaging.v1.DocumentHeaderR\bdocument\x12\x14\n" +
-	"\x05pages\x18\x02 \x03(\rR\x05pages\x12\x10\n" +
-	"\x03dpi\x18\x03 \x01(\rR\x03dpi\x12\x1a\n" +
-	"\blanguage\x18\x04 \x01(\tR\blanguage\x12>\n" +
-	"\n" +
-	"preprocess\x18\x05 \x01(\v2\x1e.trenova.imaging.v1.PreprocessR\n" +
-	"preprocess\x12\x1b\n" +
-	"\tmax_pages\x18\x06 \x01(\rR\bmaxPages\x12#\n" +
-	"\rmax_dimension\x18\a \x01(\rR\fmaxDimension\"\\\n" +
-	"\n" +
-	"Preprocess\x12\x16\n" +
-	"\x06deskew\x18\x01 \x01(\bR\x06deskew\x12\x1a\n" +
-	"\bcontrast\x18\x02 \x01(\bR\bcontrast\x12\x1a\n" +
-	"\bbinarize\x18\x03 \x01(\bR\bbinarize\"\xd7\x01\n" +
-	"\x11RecognizeResponse\x128\n" +
-	"\x04page\x18\x01 \x01(\v2\".trenova.imaging.v1.RecognizedPageH\x00R\x04page\x12>\n" +
-	"\n" +
-	"page_error\x18\x02 \x01(\v2\x1d.trenova.imaging.v1.PageErrorH\x00R\tpageError\x12@\n" +
-	"\asummary\x18\x03 \x01(\v2$.trenova.imaging.v1.RecognizeSummaryH\x00R\asummaryB\x06\n" +
-	"\x04part\"I\n" +
-	"\x10RecognizeSummary\x12\x1d\n" +
-	"\n" +
-	"page_count\x18\x01 \x01(\rR\tpageCount\x12\x16\n" +
-	"\x06engine\x18\x02 \x01(\tR\x06engine\"\xb1\x02\n" +
-	"\x0eRecognizedPage\x12\x1d\n" +
-	"\n" +
-	"page_index\x18\x01 \x01(\rR\tpageIndex\x12\x19\n" +
-	"\bwidth_px\x18\x02 \x01(\rR\awidthPx\x12\x1b\n" +
-	"\theight_px\x18\x03 \x01(\rR\bheightPx\x12\x12\n" +
-	"\x04text\x18\x04 \x01(\tR\x04text\x12'\n" +
-	"\x0fmean_confidence\x18\x05 \x01(\x01R\x0emeanConfidence\x121\n" +
-	"\x05words\x18\x06 \x03(\v2\x1b.trenova.imaging.v1.OcrWordR\x05words\x121\n" +
-	"\x05lines\x18\a \x03(\v2\x1b.trenova.imaging.v1.OcrLineR\x05lines\x12%\n" +
-	"\x0edeskew_degrees\x18\b \x01(\x02R\rdeskewDegrees\"\xed\x01\n" +
-	"\aOcrWord\x12\x12\n" +
-	"\x04text\x18\x01 \x01(\tR\x04text\x12\x12\n" +
-	"\x04left\x18\x02 \x01(\rR\x04left\x12\x10\n" +
-	"\x03top\x18\x03 \x01(\rR\x03top\x12\x14\n" +
-	"\x05width\x18\x04 \x01(\rR\x05width\x12\x16\n" +
-	"\x06height\x18\x05 \x01(\rR\x06height\x12\x1e\n" +
-	"\n" +
-	"confidence\x18\x06 \x01(\x02R\n" +
-	"confidence\x12\x14\n" +
-	"\x05block\x18\a \x01(\rR\x05block\x12\x1c\n" +
-	"\tparagraph\x18\b \x01(\rR\tparagraph\x12\x12\n" +
-	"\x04line\x18\t \x01(\rR\x04line\x12\x12\n" +
-	"\x04word\x18\n" +
-	" \x01(\rR\x04word\"\x91\x01\n" +
-	"\aOcrLine\x12\x12\n" +
-	"\x04text\x18\x01 \x01(\tR\x04text\x12\x12\n" +
-	"\x04left\x18\x02 \x01(\rR\x04left\x12\x10\n" +
-	"\x03top\x18\x03 \x01(\rR\x03top\x12\x14\n" +
-	"\x05width\x18\x04 \x01(\rR\x05width\x12\x16\n" +
-	"\x06height\x18\x05 \x01(\rR\x06height\x12\x1e\n" +
-	"\n" +
-	"confidence\x18\x06 \x01(\x02R\n" +
-	"confidence\"\xb2\x01\n" +
+	"\x06failed\x18\x02 \x01(\rR\x06failed\"\xb2\x01\n" +
 	"\x0fAssembleRequest\x12<\n" +
 	"\x06header\x18\x01 \x01(\v2\".trenova.imaging.v1.AssembleHeaderH\x00R\x06header\x12A\n" +
 	"\x06source\x18\x02 \x01(\v2'.trenova.imaging.v1.AssembleSourceStartH\x00R\x06source\x12\x16\n" +
@@ -4229,13 +2850,11 @@ const file_trenova_imaging_v1_imaging_proto_rawDesc = "" +
 	"\fDocumentKind\x12\x1d\n" +
 	"\x19DOCUMENT_KIND_UNSPECIFIED\x10\x00\x12\x15\n" +
 	"\x11DOCUMENT_KIND_PDF\x10\x01\x12\x17\n" +
-	"\x13DOCUMENT_KIND_IMAGE\x10\x022\xac\x05\n" +
+	"\x13DOCUMENT_KIND_IMAGE\x10\x022\xea\x03\n" +
 	"\x0eImagingService\x12N\n" +
 	"\x05Probe\x12 .trenova.imaging.v1.ProbeRequest\x1a!.trenova.imaging.v1.ProbeResponse(\x01\x12S\n" +
-	"\x06Render\x12!.trenova.imaging.v1.RenderRequest\x1a\".trenova.imaging.v1.RenderResponse(\x010\x01\x12b\n" +
-	"\vExtractText\x12&.trenova.imaging.v1.ExtractTextRequest\x1a'.trenova.imaging.v1.ExtractTextResponse(\x010\x01\x12k\n" +
-	"\x0eInspectCapture\x12).trenova.imaging.v1.InspectCaptureRequest\x1a*.trenova.imaging.v1.InspectCaptureResponse(\x010\x01\x12\\\n" +
-	"\tRecognize\x12$.trenova.imaging.v1.RecognizeRequest\x1a%.trenova.imaging.v1.RecognizeResponse(\x010\x01\x12Y\n" +
+	"\x06Render\x12!.trenova.imaging.v1.RenderRequest\x1a\".trenova.imaging.v1.RenderResponse(\x010\x01\x12k\n" +
+	"\x0eInspectCapture\x12).trenova.imaging.v1.InspectCaptureRequest\x1a*.trenova.imaging.v1.InspectCaptureResponse(\x010\x01\x12Y\n" +
 	"\bAssemble\x12#.trenova.imaging.v1.AssembleRequest\x1a$.trenova.imaging.v1.AssembleResponse(\x010\x01\x12k\n" +
 	"\x0eNormalizeImage\x12).trenova.imaging.v1.NormalizeImageRequest\x1a*.trenova.imaging.v1.NormalizeImageResponse(\x010\x01BPZNgithub.com/emoss08/trenova/internal/infrastructure/imaging/imagingpb;imagingpbb\x06proto3"
 
@@ -4252,7 +2871,7 @@ func file_trenova_imaging_v1_imaging_proto_rawDescGZIP() []byte {
 }
 
 var file_trenova_imaging_v1_imaging_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_trenova_imaging_v1_imaging_proto_msgTypes = make([]protoimpl.MessageInfo, 47)
+var file_trenova_imaging_v1_imaging_proto_msgTypes = make([]protoimpl.MessageInfo, 32)
 var file_trenova_imaging_v1_imaging_proto_goTypes = []any{
 	(ErrorReason)(0),               // 0: trenova.imaging.v1.ErrorReason
 	(ImageFormat)(0),               // 1: trenova.imaging.v1.ImageFormat
@@ -4271,39 +2890,24 @@ var file_trenova_imaging_v1_imaging_proto_goTypes = []any{
 	(*RenderHeader)(nil),           // 14: trenova.imaging.v1.RenderHeader
 	(*RenderResponse)(nil),         // 15: trenova.imaging.v1.RenderResponse
 	(*RenderSummary)(nil),          // 16: trenova.imaging.v1.RenderSummary
-	(*ExtractTextRequest)(nil),     // 17: trenova.imaging.v1.ExtractTextRequest
-	(*ExtractTextHeader)(nil),      // 18: trenova.imaging.v1.ExtractTextHeader
-	(*ExtractTextResponse)(nil),    // 19: trenova.imaging.v1.ExtractTextResponse
-	(*TextSummary)(nil),            // 20: trenova.imaging.v1.TextSummary
-	(*PageText)(nil),               // 21: trenova.imaging.v1.PageText
-	(*TextLine)(nil),               // 22: trenova.imaging.v1.TextLine
-	(*TextWord)(nil),               // 23: trenova.imaging.v1.TextWord
-	(*InspectCaptureRequest)(nil),  // 24: trenova.imaging.v1.InspectCaptureRequest
-	(*InspectCaptureHeader)(nil),   // 25: trenova.imaging.v1.InspectCaptureHeader
-	(*CapturePageStart)(nil),       // 26: trenova.imaging.v1.CapturePageStart
-	(*InspectCaptureResponse)(nil), // 27: trenova.imaging.v1.InspectCaptureResponse
-	(*CapturePageResult)(nil),      // 28: trenova.imaging.v1.CapturePageResult
-	(*Barcode)(nil),                // 29: trenova.imaging.v1.Barcode
-	(*CaptureSummary)(nil),         // 30: trenova.imaging.v1.CaptureSummary
-	(*RecognizeRequest)(nil),       // 31: trenova.imaging.v1.RecognizeRequest
-	(*RecognizeHeader)(nil),        // 32: trenova.imaging.v1.RecognizeHeader
-	(*Preprocess)(nil),             // 33: trenova.imaging.v1.Preprocess
-	(*RecognizeResponse)(nil),      // 34: trenova.imaging.v1.RecognizeResponse
-	(*RecognizeSummary)(nil),       // 35: trenova.imaging.v1.RecognizeSummary
-	(*RecognizedPage)(nil),         // 36: trenova.imaging.v1.RecognizedPage
-	(*OcrWord)(nil),                // 37: trenova.imaging.v1.OcrWord
-	(*OcrLine)(nil),                // 38: trenova.imaging.v1.OcrLine
-	(*AssembleRequest)(nil),        // 39: trenova.imaging.v1.AssembleRequest
-	(*AssembleHeader)(nil),         // 40: trenova.imaging.v1.AssembleHeader
-	(*AssembleOutput)(nil),         // 41: trenova.imaging.v1.AssembleOutput
-	(*PageRange)(nil),              // 42: trenova.imaging.v1.PageRange
-	(*AssembleSourceStart)(nil),    // 43: trenova.imaging.v1.AssembleSourceStart
-	(*AssembleResponse)(nil),       // 44: trenova.imaging.v1.AssembleResponse
-	(*AssembleSummary)(nil),        // 45: trenova.imaging.v1.AssembleSummary
-	(*NormalizeImageRequest)(nil),  // 46: trenova.imaging.v1.NormalizeImageRequest
-	(*NormalizeImageHeader)(nil),   // 47: trenova.imaging.v1.NormalizeImageHeader
-	(*NormalizeImageResponse)(nil), // 48: trenova.imaging.v1.NormalizeImageResponse
-	(*NormalizeSummary)(nil),       // 49: trenova.imaging.v1.NormalizeSummary
+	(*InspectCaptureRequest)(nil),  // 17: trenova.imaging.v1.InspectCaptureRequest
+	(*InspectCaptureHeader)(nil),   // 18: trenova.imaging.v1.InspectCaptureHeader
+	(*CapturePageStart)(nil),       // 19: trenova.imaging.v1.CapturePageStart
+	(*InspectCaptureResponse)(nil), // 20: trenova.imaging.v1.InspectCaptureResponse
+	(*CapturePageResult)(nil),      // 21: trenova.imaging.v1.CapturePageResult
+	(*Barcode)(nil),                // 22: trenova.imaging.v1.Barcode
+	(*CaptureSummary)(nil),         // 23: trenova.imaging.v1.CaptureSummary
+	(*AssembleRequest)(nil),        // 24: trenova.imaging.v1.AssembleRequest
+	(*AssembleHeader)(nil),         // 25: trenova.imaging.v1.AssembleHeader
+	(*AssembleOutput)(nil),         // 26: trenova.imaging.v1.AssembleOutput
+	(*PageRange)(nil),              // 27: trenova.imaging.v1.PageRange
+	(*AssembleSourceStart)(nil),    // 28: trenova.imaging.v1.AssembleSourceStart
+	(*AssembleResponse)(nil),       // 29: trenova.imaging.v1.AssembleResponse
+	(*AssembleSummary)(nil),        // 30: trenova.imaging.v1.AssembleSummary
+	(*NormalizeImageRequest)(nil),  // 31: trenova.imaging.v1.NormalizeImageRequest
+	(*NormalizeImageHeader)(nil),   // 32: trenova.imaging.v1.NormalizeImageHeader
+	(*NormalizeImageResponse)(nil), // 33: trenova.imaging.v1.NormalizeImageResponse
+	(*NormalizeSummary)(nil),       // 34: trenova.imaging.v1.NormalizeSummary
 }
 var file_trenova_imaging_v1_imaging_proto_depIdxs = []int32{
 	0,  // 0: trenova.imaging.v1.PageError.reason:type_name -> trenova.imaging.v1.ErrorReason
@@ -4320,62 +2924,43 @@ var file_trenova_imaging_v1_imaging_proto_depIdxs = []int32{
 	6,  // 11: trenova.imaging.v1.RenderResponse.chunk:type_name -> trenova.imaging.v1.ArtifactChunk
 	4,  // 12: trenova.imaging.v1.RenderResponse.page_error:type_name -> trenova.imaging.v1.PageError
 	16, // 13: trenova.imaging.v1.RenderResponse.summary:type_name -> trenova.imaging.v1.RenderSummary
-	18, // 14: trenova.imaging.v1.ExtractTextRequest.header:type_name -> trenova.imaging.v1.ExtractTextHeader
-	3,  // 15: trenova.imaging.v1.ExtractTextHeader.document:type_name -> trenova.imaging.v1.DocumentHeader
-	21, // 16: trenova.imaging.v1.ExtractTextResponse.page:type_name -> trenova.imaging.v1.PageText
-	4,  // 17: trenova.imaging.v1.ExtractTextResponse.page_error:type_name -> trenova.imaging.v1.PageError
-	20, // 18: trenova.imaging.v1.ExtractTextResponse.summary:type_name -> trenova.imaging.v1.TextSummary
-	22, // 19: trenova.imaging.v1.PageText.lines:type_name -> trenova.imaging.v1.TextLine
-	23, // 20: trenova.imaging.v1.TextLine.words:type_name -> trenova.imaging.v1.TextWord
-	25, // 21: trenova.imaging.v1.InspectCaptureRequest.header:type_name -> trenova.imaging.v1.InspectCaptureHeader
-	26, // 22: trenova.imaging.v1.InspectCaptureRequest.page:type_name -> trenova.imaging.v1.CapturePageStart
-	1,  // 23: trenova.imaging.v1.InspectCaptureHeader.thumbnail_format:type_name -> trenova.imaging.v1.ImageFormat
-	3,  // 24: trenova.imaging.v1.CapturePageStart.document:type_name -> trenova.imaging.v1.DocumentHeader
-	28, // 25: trenova.imaging.v1.InspectCaptureResponse.page:type_name -> trenova.imaging.v1.CapturePageResult
-	30, // 26: trenova.imaging.v1.InspectCaptureResponse.summary:type_name -> trenova.imaging.v1.CaptureSummary
-	29, // 27: trenova.imaging.v1.CapturePageResult.codes:type_name -> trenova.imaging.v1.Barcode
-	4,  // 28: trenova.imaging.v1.CapturePageResult.error:type_name -> trenova.imaging.v1.PageError
-	32, // 29: trenova.imaging.v1.RecognizeRequest.header:type_name -> trenova.imaging.v1.RecognizeHeader
-	3,  // 30: trenova.imaging.v1.RecognizeHeader.document:type_name -> trenova.imaging.v1.DocumentHeader
-	33, // 31: trenova.imaging.v1.RecognizeHeader.preprocess:type_name -> trenova.imaging.v1.Preprocess
-	36, // 32: trenova.imaging.v1.RecognizeResponse.page:type_name -> trenova.imaging.v1.RecognizedPage
-	4,  // 33: trenova.imaging.v1.RecognizeResponse.page_error:type_name -> trenova.imaging.v1.PageError
-	35, // 34: trenova.imaging.v1.RecognizeResponse.summary:type_name -> trenova.imaging.v1.RecognizeSummary
-	37, // 35: trenova.imaging.v1.RecognizedPage.words:type_name -> trenova.imaging.v1.OcrWord
-	38, // 36: trenova.imaging.v1.RecognizedPage.lines:type_name -> trenova.imaging.v1.OcrLine
-	40, // 37: trenova.imaging.v1.AssembleRequest.header:type_name -> trenova.imaging.v1.AssembleHeader
-	43, // 38: trenova.imaging.v1.AssembleRequest.source:type_name -> trenova.imaging.v1.AssembleSourceStart
-	41, // 39: trenova.imaging.v1.AssembleHeader.outputs:type_name -> trenova.imaging.v1.AssembleOutput
-	42, // 40: trenova.imaging.v1.AssembleOutput.pages:type_name -> trenova.imaging.v1.PageRange
-	3,  // 41: trenova.imaging.v1.AssembleSourceStart.document:type_name -> trenova.imaging.v1.DocumentHeader
-	5,  // 42: trenova.imaging.v1.AssembleResponse.output:type_name -> trenova.imaging.v1.ArtifactHeader
-	6,  // 43: trenova.imaging.v1.AssembleResponse.chunk:type_name -> trenova.imaging.v1.ArtifactChunk
-	45, // 44: trenova.imaging.v1.AssembleResponse.summary:type_name -> trenova.imaging.v1.AssembleSummary
-	47, // 45: trenova.imaging.v1.NormalizeImageRequest.header:type_name -> trenova.imaging.v1.NormalizeImageHeader
-	3,  // 46: trenova.imaging.v1.NormalizeImageHeader.document:type_name -> trenova.imaging.v1.DocumentHeader
-	1,  // 47: trenova.imaging.v1.NormalizeImageHeader.format:type_name -> trenova.imaging.v1.ImageFormat
-	5,  // 48: trenova.imaging.v1.NormalizeImageResponse.image:type_name -> trenova.imaging.v1.ArtifactHeader
-	6,  // 49: trenova.imaging.v1.NormalizeImageResponse.chunk:type_name -> trenova.imaging.v1.ArtifactChunk
-	49, // 50: trenova.imaging.v1.NormalizeImageResponse.summary:type_name -> trenova.imaging.v1.NormalizeSummary
-	9,  // 51: trenova.imaging.v1.ImagingService.Probe:input_type -> trenova.imaging.v1.ProbeRequest
-	13, // 52: trenova.imaging.v1.ImagingService.Render:input_type -> trenova.imaging.v1.RenderRequest
-	17, // 53: trenova.imaging.v1.ImagingService.ExtractText:input_type -> trenova.imaging.v1.ExtractTextRequest
-	24, // 54: trenova.imaging.v1.ImagingService.InspectCapture:input_type -> trenova.imaging.v1.InspectCaptureRequest
-	31, // 55: trenova.imaging.v1.ImagingService.Recognize:input_type -> trenova.imaging.v1.RecognizeRequest
-	39, // 56: trenova.imaging.v1.ImagingService.Assemble:input_type -> trenova.imaging.v1.AssembleRequest
-	46, // 57: trenova.imaging.v1.ImagingService.NormalizeImage:input_type -> trenova.imaging.v1.NormalizeImageRequest
-	11, // 58: trenova.imaging.v1.ImagingService.Probe:output_type -> trenova.imaging.v1.ProbeResponse
-	15, // 59: trenova.imaging.v1.ImagingService.Render:output_type -> trenova.imaging.v1.RenderResponse
-	19, // 60: trenova.imaging.v1.ImagingService.ExtractText:output_type -> trenova.imaging.v1.ExtractTextResponse
-	27, // 61: trenova.imaging.v1.ImagingService.InspectCapture:output_type -> trenova.imaging.v1.InspectCaptureResponse
-	34, // 62: trenova.imaging.v1.ImagingService.Recognize:output_type -> trenova.imaging.v1.RecognizeResponse
-	44, // 63: trenova.imaging.v1.ImagingService.Assemble:output_type -> trenova.imaging.v1.AssembleResponse
-	48, // 64: trenova.imaging.v1.ImagingService.NormalizeImage:output_type -> trenova.imaging.v1.NormalizeImageResponse
-	58, // [58:65] is the sub-list for method output_type
-	51, // [51:58] is the sub-list for method input_type
-	51, // [51:51] is the sub-list for extension type_name
-	51, // [51:51] is the sub-list for extension extendee
-	0,  // [0:51] is the sub-list for field type_name
+	18, // 14: trenova.imaging.v1.InspectCaptureRequest.header:type_name -> trenova.imaging.v1.InspectCaptureHeader
+	19, // 15: trenova.imaging.v1.InspectCaptureRequest.page:type_name -> trenova.imaging.v1.CapturePageStart
+	1,  // 16: trenova.imaging.v1.InspectCaptureHeader.thumbnail_format:type_name -> trenova.imaging.v1.ImageFormat
+	3,  // 17: trenova.imaging.v1.CapturePageStart.document:type_name -> trenova.imaging.v1.DocumentHeader
+	21, // 18: trenova.imaging.v1.InspectCaptureResponse.page:type_name -> trenova.imaging.v1.CapturePageResult
+	23, // 19: trenova.imaging.v1.InspectCaptureResponse.summary:type_name -> trenova.imaging.v1.CaptureSummary
+	22, // 20: trenova.imaging.v1.CapturePageResult.codes:type_name -> trenova.imaging.v1.Barcode
+	4,  // 21: trenova.imaging.v1.CapturePageResult.error:type_name -> trenova.imaging.v1.PageError
+	25, // 22: trenova.imaging.v1.AssembleRequest.header:type_name -> trenova.imaging.v1.AssembleHeader
+	28, // 23: trenova.imaging.v1.AssembleRequest.source:type_name -> trenova.imaging.v1.AssembleSourceStart
+	26, // 24: trenova.imaging.v1.AssembleHeader.outputs:type_name -> trenova.imaging.v1.AssembleOutput
+	27, // 25: trenova.imaging.v1.AssembleOutput.pages:type_name -> trenova.imaging.v1.PageRange
+	3,  // 26: trenova.imaging.v1.AssembleSourceStart.document:type_name -> trenova.imaging.v1.DocumentHeader
+	5,  // 27: trenova.imaging.v1.AssembleResponse.output:type_name -> trenova.imaging.v1.ArtifactHeader
+	6,  // 28: trenova.imaging.v1.AssembleResponse.chunk:type_name -> trenova.imaging.v1.ArtifactChunk
+	30, // 29: trenova.imaging.v1.AssembleResponse.summary:type_name -> trenova.imaging.v1.AssembleSummary
+	32, // 30: trenova.imaging.v1.NormalizeImageRequest.header:type_name -> trenova.imaging.v1.NormalizeImageHeader
+	3,  // 31: trenova.imaging.v1.NormalizeImageHeader.document:type_name -> trenova.imaging.v1.DocumentHeader
+	1,  // 32: trenova.imaging.v1.NormalizeImageHeader.format:type_name -> trenova.imaging.v1.ImageFormat
+	5,  // 33: trenova.imaging.v1.NormalizeImageResponse.image:type_name -> trenova.imaging.v1.ArtifactHeader
+	6,  // 34: trenova.imaging.v1.NormalizeImageResponse.chunk:type_name -> trenova.imaging.v1.ArtifactChunk
+	34, // 35: trenova.imaging.v1.NormalizeImageResponse.summary:type_name -> trenova.imaging.v1.NormalizeSummary
+	9,  // 36: trenova.imaging.v1.ImagingService.Probe:input_type -> trenova.imaging.v1.ProbeRequest
+	13, // 37: trenova.imaging.v1.ImagingService.Render:input_type -> trenova.imaging.v1.RenderRequest
+	17, // 38: trenova.imaging.v1.ImagingService.InspectCapture:input_type -> trenova.imaging.v1.InspectCaptureRequest
+	24, // 39: trenova.imaging.v1.ImagingService.Assemble:input_type -> trenova.imaging.v1.AssembleRequest
+	31, // 40: trenova.imaging.v1.ImagingService.NormalizeImage:input_type -> trenova.imaging.v1.NormalizeImageRequest
+	11, // 41: trenova.imaging.v1.ImagingService.Probe:output_type -> trenova.imaging.v1.ProbeResponse
+	15, // 42: trenova.imaging.v1.ImagingService.Render:output_type -> trenova.imaging.v1.RenderResponse
+	20, // 43: trenova.imaging.v1.ImagingService.InspectCapture:output_type -> trenova.imaging.v1.InspectCaptureResponse
+	29, // 44: trenova.imaging.v1.ImagingService.Assemble:output_type -> trenova.imaging.v1.AssembleResponse
+	33, // 45: trenova.imaging.v1.ImagingService.NormalizeImage:output_type -> trenova.imaging.v1.NormalizeImageResponse
+	41, // [41:46] is the sub-list for method output_type
+	36, // [36:41] is the sub-list for method input_type
+	36, // [36:36] is the sub-list for extension type_name
+	36, // [36:36] is the sub-list for extension extendee
+	0,  // [0:36] is the sub-list for field type_name
 }
 
 func init() { file_trenova_imaging_v1_imaging_proto_init() }
@@ -4402,47 +2987,29 @@ func file_trenova_imaging_v1_imaging_proto_init() {
 		(*RenderResponse_Summary)(nil),
 	}
 	file_trenova_imaging_v1_imaging_proto_msgTypes[14].OneofWrappers = []any{
-		(*ExtractTextRequest_Header)(nil),
-		(*ExtractTextRequest_Chunk)(nil),
-	}
-	file_trenova_imaging_v1_imaging_proto_msgTypes[16].OneofWrappers = []any{
-		(*ExtractTextResponse_Page)(nil),
-		(*ExtractTextResponse_PageError)(nil),
-		(*ExtractTextResponse_Summary)(nil),
-	}
-	file_trenova_imaging_v1_imaging_proto_msgTypes[21].OneofWrappers = []any{
 		(*InspectCaptureRequest_Header)(nil),
 		(*InspectCaptureRequest_Page)(nil),
 		(*InspectCaptureRequest_Chunk)(nil),
 	}
-	file_trenova_imaging_v1_imaging_proto_msgTypes[24].OneofWrappers = []any{
+	file_trenova_imaging_v1_imaging_proto_msgTypes[17].OneofWrappers = []any{
 		(*InspectCaptureResponse_Page)(nil),
 		(*InspectCaptureResponse_Summary)(nil),
 	}
-	file_trenova_imaging_v1_imaging_proto_msgTypes[28].OneofWrappers = []any{
-		(*RecognizeRequest_Header)(nil),
-		(*RecognizeRequest_Chunk)(nil),
-	}
-	file_trenova_imaging_v1_imaging_proto_msgTypes[31].OneofWrappers = []any{
-		(*RecognizeResponse_Page)(nil),
-		(*RecognizeResponse_PageError)(nil),
-		(*RecognizeResponse_Summary)(nil),
-	}
-	file_trenova_imaging_v1_imaging_proto_msgTypes[36].OneofWrappers = []any{
+	file_trenova_imaging_v1_imaging_proto_msgTypes[21].OneofWrappers = []any{
 		(*AssembleRequest_Header)(nil),
 		(*AssembleRequest_Source)(nil),
 		(*AssembleRequest_Chunk)(nil),
 	}
-	file_trenova_imaging_v1_imaging_proto_msgTypes[41].OneofWrappers = []any{
+	file_trenova_imaging_v1_imaging_proto_msgTypes[26].OneofWrappers = []any{
 		(*AssembleResponse_Output)(nil),
 		(*AssembleResponse_Chunk)(nil),
 		(*AssembleResponse_Summary)(nil),
 	}
-	file_trenova_imaging_v1_imaging_proto_msgTypes[43].OneofWrappers = []any{
+	file_trenova_imaging_v1_imaging_proto_msgTypes[28].OneofWrappers = []any{
 		(*NormalizeImageRequest_Header)(nil),
 		(*NormalizeImageRequest_Chunk)(nil),
 	}
-	file_trenova_imaging_v1_imaging_proto_msgTypes[45].OneofWrappers = []any{
+	file_trenova_imaging_v1_imaging_proto_msgTypes[30].OneofWrappers = []any{
 		(*NormalizeImageResponse_Image)(nil),
 		(*NormalizeImageResponse_Chunk)(nil),
 		(*NormalizeImageResponse_Summary)(nil),
@@ -4453,7 +3020,7 @@ func file_trenova_imaging_v1_imaging_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_trenova_imaging_v1_imaging_proto_rawDesc), len(file_trenova_imaging_v1_imaging_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   47,
+			NumMessages:   32,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
