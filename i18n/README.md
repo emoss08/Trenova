@@ -13,6 +13,9 @@ t("Create Shipment")
 ```go
 multiErr.Add("email", errortypes.ErrRequired, "Email is required")
 ```
+```rust
+Message::with(message!("unknown name {0}"), [Arg::from(name)])
+```
 
 Write the **whole sentence** as one message. A count is a plural, not an English word
 passed in, and a sentence with a link or bold part in it is one rich message:
@@ -40,8 +43,8 @@ template that is not interface text takes `// i18n-ignore: <reason>`); see the i
 [generated-artifacts.md](../docs/engineering/generated-artifacts.md) for the rules.
 
 Nobody edits a catalog by hand. `task i18n` finds every user-facing string in the Go
-services and the React apps and writes them to `messages.en.json`; the per-locale files
-hold the translations.
+services, the React apps and the rules crate (`services/crates/rules`) and writes them to
+`messages.en.json`; the per-locale files hold the translations.
 
 ## The English string is the key
 
@@ -155,3 +158,36 @@ its value (it is an `ExprStmt`), while an ozzo rule is always built to be passed
 **`stringLiteral` follows concatenation** so a message split across lines for width is
 captured whole, and refuses anything involving a variable or call — those are dynamic and
 need an explicit parameterised message instead.
+
+## Maintaining the Rust extractor
+
+`tools/extract-rust.mjs` reads the `message!("...")` templates in `services/crates/rules/src`
+([rules-engine.md](../docs/engineering/rules-engine.md)). The crate returns English ICU
+templates and never translates, and the same template reaches the browser (the formula
+editor, the rule screens) and the server (the validation errors it reports), so every
+template is filed twice: once in the Go scope, area `rules/<module>`, and once in the client
+scope, area `apps/web/rules`, which `bundles.mjs` puts in the web app's startup `web` bundle.
+
+**A lexer, not a regex.** It tokenises the crate the way the compiler does, so comments and
+doc comments (which mention `message!("...")`), strings and char literals never yield a
+template. Escapes are decoded as Rust decodes them (`\"`, `\\`, `\n`, `\x41`, `\u{e9}`, a
+trailing backslash that continues the literal on the next line), and raw strings (`r"..."`,
+`r#"..."#`) are taken verbatim.
+
+**Test code is skipped.** An item under `#[cfg(test)]` or `#[cfg(all(test, ...))]` is left
+out, and so is the file of a `#[cfg(test)] mod name;` (including a `#[path]` one), and a file
+starting `#![cfg(test)]`. `not(test)` and `any(test, ...)` also compile outside tests, so
+their code is read. Integration tests under the crate's `tests/` are outside `src` and never
+read.
+
+**What it refuses, failing the run.** A template the extractor cannot read would ship in
+English with nothing failing, so `sync`, `report` and `check` stop, naming the file and line,
+on a `message!` whose argument is anything but one plain or raw string literal (`concat!`, a
+constant, a variable, a byte or C string, extra arguments). They also stop on a template
+with leading, trailing or repeated whitespace or a newline: the catalogs collapse whitespace
+in their keys, while the crate sends the template exactly as written, so such a key could
+never be looked up.
+
+A template the string filter rejects (`{0}` alone has no letters) is listed by
+`task i18n-report -- --rejected`, like a Go message, and renders in English. The extractor's
+tests are `tools/extract-rust.test.mjs` (`task i18n-test`).

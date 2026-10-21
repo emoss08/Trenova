@@ -26,6 +26,7 @@ export class RulesRequestError extends Error {
   readonly detail: string;
 
   constructor(op: string, code: RulesRequestErrorCode, detail: string) {
+    // i18n-ignore: developer English for logs; a request error is a caller bug, never shown
     super(`rules: ${op}: ${code}: ${detail}`);
     this.name = "RulesRequestError";
     this.op = op;
@@ -39,6 +40,7 @@ export class RulesTrapError extends Error {
   readonly op: string;
 
   constructor(op: string, cause: unknown) {
+    // i18n-ignore: developer English for logs; a trap is an internal bug, never shown
     super(`rules: ${op}: the rules module trapped`, { cause });
     this.name = "RulesTrapError";
     this.op = op;
