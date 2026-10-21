@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/pkg/pagination"
 )
 
 type SecretCipher struct {
@@ -42,5 +43,53 @@ func aadFor(scope *kernelports.SecretScope) AAD {
 		OrganizationID: scope.Tenant.OrgID,
 		BusinessUnitID: scope.Tenant.BuID,
 		ResourceID:     scope.ResourceID,
+	}
+}
+
+var _ kernelports.EnvelopeRewrapper = (*SecretCipher)(nil)
+
+func NewEnvelopeRewrapper(service *Service) kernelports.EnvelopeRewrapper {
+	return &SecretCipher{service: service}
+}
+
+func (c *SecretCipher) IsEnvelope(value string) bool {
+	return IsEnvelope(value)
+}
+
+func (c *SecretCipher) Rewrap(
+	ctx context.Context,
+	req *kernelports.EnvelopeRewrapRequest,
+) (rewrapped string, changed bool, err error) {
+	if len(req.Scopes) == 0 {
+		return "", false, ErrInvalidEnvelope
+	}
+
+	target := aadFor(&req.Scopes[0])
+	for i := range req.Scopes {
+		aad := aadFor(&req.Scopes[i])
+		if !EnvelopeHasAAD(req.Sealed, aad) {
+			continue
+		}
+		if i == 0 || !req.Rebind {
+			return c.service.RewrapEnvelope(ctx, req.Sealed, aad)
+		}
+		plaintext, decryptErr := c.service.DecryptBytesWithAADContext(ctx, req.Sealed, aad)
+		if decryptErr != nil {
+			return "", false, decryptErr
+		}
+		rewrapped, err = c.service.EncryptBytesWithAADContext(ctx, plaintext, target)
+		if err != nil {
+			return "", false, err
+		}
+		return rewrapped, true, nil
+	}
+	return "", false, ErrInvalidEnvelope
+}
+
+func (a AAD) SecretScope() kernelports.SecretScope {
+	return kernelports.SecretScope{
+		Purpose:    kernelports.SecretPurpose(a.Purpose),
+		Tenant:     pagination.TenantInfo{OrgID: a.OrganizationID, BuID: a.BusinessUnitID},
+		ResourceID: a.ResourceID,
 	}
 }

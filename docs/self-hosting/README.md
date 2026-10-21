@@ -338,6 +338,26 @@ Codes issued before the upgrade keep working until their owner generates new one
 two-factor settings ask each such user to do so. Back the value up with `.env`, and never
 change it once set: every recovery code stored under it would stop working.
 
+### Upgrading to a release with an encryption keyring
+
+The local key manager now derives its key-encryption key from
+`TRENOVA_SECURITY_ENCRYPTION_KEY` with HKDF-SHA256 and names it by a fingerprint
+(`local-hkdf-v2:…`). Values sealed before the upgrade name the old SHA-256 key
+(`local-sha256-v1`) and stay readable with the same `TRENOVA_SECURITY_ENCRYPTION_KEY`;
+nothing has to be changed for the upgrade. To move them onto the new key, run once after
+the upgrade:
+
+```bash
+docker compose run --rm tms-api encryption rewrap --dry-run
+docker compose run --rm tms-api encryption rewrap
+```
+
+The API, worker and every `trenova` command now refuse to start when the key manager
+cannot be built, instead of starting with encryption silently switched off: an empty
+`TRENOVA_SECURITY_ENCRYPTION_KEY` with `keyManager: local`, or with `keyManager:
+gcp-autokey` a missing crypto key or a KMS client that cannot be created (no credentials,
+an unreadable credentials file).
+
 ## Backups and restore
 
 What to keep, from most to least important:
@@ -408,6 +428,38 @@ The **GTC dashboard** (backfills, dead letters) and the **Temporal UI** are deli
 exposed. [`deploy/Caddyfile.admin.example`](../../deploy/Caddyfile.admin.example) shows an
 admin-only Caddy bound to `127.0.0.1` for use over an SSH tunnel or Tailscale.
 
+### Rotating the encryption key
+
+Secrets and documents are sealed with a random data key, and the data key with the key
+named in `.env`. Rotating replaces the outer key without decrypting anything else:
+
+1. Move the current value to `TRENOVA_SECURITY_ENCRYPTION_RETIREDKEYS` (comma-separated
+   if there are already retired keys) and set a new `TRENOVA_SECURITY_ENCRYPTION_KEY`
+   (`openssl rand -hex 32`). Back up `.env`.
+2. `docker compose up -d`. New values are sealed with the new key; values sealed with a
+   retired key are still read.
+3. `docker compose run --rm tms-api encryption rewrap --dry-run` reports how many values
+   and documents each kind of record still holds under a retired key, and
+   `docker compose run --rm tms-api encryption rewrap` moves them. It writes each row only
+   if nothing changed it since it was read, so it can run while Trenova is in use; a row
+   changed meanwhile is reported as a conflict and moved by the next run. It also moves
+   AI provider keys, agent extension secrets and the CarrierOK and FMCSA QCMobile keys
+   that older releases sealed without a tenant binding onto their binding.
+4. When a run reports `Every sealed value is on the active key.`, remove the retired value
+   from `.env` and restart. Keep the backup of the old `.env` for as long as you keep
+   database or bucket backups taken before the rewrap: they can only be read with the old
+   key.
+
+Documents and capture pages are rewritten in place in the bucket. With bucket versioning
+or object lock, the earlier versions keep the old wrapping until they expire, so keep the
+retired key until they have. `--skip-objects` moves the database values alone and
+`--org org_…` limits a run to one organization.
+
+To move from the local key manager to Cloud KMS, set `keyManager: gcp-autokey` with its
+crypto key, keep the local key in `TRENOVA_SECURITY_ENCRYPTION_KEY` or
+`TRENOVA_SECURITY_ENCRYPTION_RETIREDKEYS` so existing values stay readable, and run the
+rewrap the same way.
+
 ## Document extraction
 
 Uploaded rate confirmations, bills of lading and delivery receipts are read so the AI can
@@ -463,7 +515,8 @@ internal network, Gotenberg and docling-serve sandboxed, and nothing published e
   `trenova db rls provision-roles`, a period in `observe`, then `enforce` with
   `database.user` switched to the new application role. GTC keeps connecting as the owner.
 - **Encryption key.** The local key manager keeps `TRENOVA_SECURITY_ENCRYPTION_KEY` in `.env`.
-  Treat `.env` like the database itself.
+  Treat `.env` like the database itself, and rotate the key (see "Rotating the encryption
+  key") whenever someone who could read `.env` should no longer be able to.
 
 ## Troubleshooting
 

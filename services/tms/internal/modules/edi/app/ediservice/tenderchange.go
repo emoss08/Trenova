@@ -878,12 +878,11 @@ func (s *Service) decryptProfileSecret(
 	if !encryptionservice.IsEnvelope(value) {
 		return value, nil
 	}
-	return s.encryption.DecryptStringWithAAD(value, encryptionservice.AAD{
-		Purpose:        encryptionservice.PurposeEDICommunicationProfileItem,
-		OrganizationID: profile.OrganizationID,
-		BusinessUnitID: profile.BusinessUnitID,
-		ResourceID:     profile.ID.String() + ":" + key,
-	})
+	return s.encryption.DecryptStringWithAAD(value, profileSecretAAD(
+		pagination.TenantInfo{OrgID: profile.OrganizationID, BuID: profile.BusinessUnitID},
+		profile.ID,
+		key,
+	))
 }
 
 func actorUserID(actor *permissionports.RequestActor) pulid.ID {

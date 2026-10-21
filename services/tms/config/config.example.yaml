@@ -277,6 +277,11 @@ security:
     mode: envelope # envelope, disabled (tests only)
     keyManager: local # local for dev/test; production/staging must use gcp-autokey
     key: super-secret-key # Encryption key (min 32 chars)
+    # Keys that sealed data before the last rotation. They are only read, never used to seal,
+    # until `trenova encryption rewrap` has moved every envelope to the active key. With
+    # gcp-autokey they keep envelopes sealed by the local key readable during a migration.
+    # As an environment variable: TRENOVA_SECURITY_ENCRYPTION_RETIREDKEYS="old-key-1,old-key-2".
+    retiredKeys: []
     # Lets a single-host production deploy run keyManager: local. The key must then be at
     # least 32 characters and contain no placeholder text. Leave false wherever a cloud KMS
     # is available.

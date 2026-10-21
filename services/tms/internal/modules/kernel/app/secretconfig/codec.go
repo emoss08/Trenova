@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/configspec"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/zap"
@@ -24,6 +25,16 @@ func (sc Scope) aad(fieldKey string) encryptionservice.AAD {
 		OrganizationID: sc.Tenant.OrgID,
 		BusinessUnitID: sc.Tenant.BuID,
 		ResourceID:     sc.ResourceKind + ":" + sc.Subject + ":" + fieldKey,
+	}
+}
+
+func (sc *Scope) SecretScopes(fieldKey string) []kernelports.SecretScope {
+	if !sc.Bind {
+		return []kernelports.SecretScope{encryptionservice.AAD{}.SecretScope()}
+	}
+	return []kernelports.SecretScope{
+		sc.aad(fieldKey).SecretScope(),
+		encryptionservice.AAD{}.SecretScope(),
 	}
 }
 

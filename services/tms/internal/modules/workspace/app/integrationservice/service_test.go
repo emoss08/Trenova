@@ -7,7 +7,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
@@ -422,15 +421,9 @@ func TestGetClientRuntimeConfigAllowsBrowserSafeIntegrations(t *testing.T) {
 }
 
 func testEncryptionService() *encryptionservice.Service {
-	return encryptionservice.New(encryptionservice.Params{
-		Config: &config.Config{
-			Security: config.SecurityConfig{
-				Encryption: config.EncryptionConfig{
-					Key: "unit-test-encryption-key-with-at-least-32-bytes",
-				},
-			},
-		},
-	})
+	return encryptionservice.NewWithKeyManager(
+		encryptionservice.NewLocalKeyManager("unit-test-encryption-key-with-at-least-32-bytes"),
+	)
 }
 
 func TestGetClientRuntimeConfigReturnsReadinessForUnconfiguredIntegration(t *testing.T) {

@@ -6,7 +6,6 @@ import (
 	"io"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
@@ -21,15 +20,9 @@ import (
 )
 
 func sealTestEncryption() *encryptionservice.Service {
-	return encryptionservice.New(encryptionservice.Params{
-		Config: &config.Config{
-			Security: config.SecurityConfig{
-				Encryption: config.EncryptionConfig{
-					Key: "unit-test-encryption-key-with-at-least-32-bytes",
-				},
-			},
-		},
-	})
+	return encryptionservice.NewWithKeyManager(
+		encryptionservice.NewLocalKeyManager("unit-test-encryption-key-with-at-least-32-bytes"),
+	)
 }
 
 type sealHarness struct {

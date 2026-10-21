@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/exchangerate"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/exchangerateports"
@@ -296,15 +295,9 @@ func newTestService(
 ) *Service {
 	t.Helper()
 
-	encryption := encryptionservice.New(encryptionservice.Params{
-		Config: &config.Config{
-			Security: config.SecurityConfig{
-				Encryption: config.EncryptionConfig{
-					Key: "unit-test-encryption-key-with-at-least-32-bytes",
-				},
-			},
-		},
-	})
+	encryption := encryptionservice.NewWithKeyManager(
+		encryptionservice.NewLocalKeyManager("unit-test-encryption-key-with-at-least-32-bytes"),
+	)
 	apiKey, err := encryption.EncryptString("test-key")
 	require.NoError(t, err)
 

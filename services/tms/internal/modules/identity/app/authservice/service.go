@@ -1318,15 +1318,11 @@ func decryptSSOSecret(enc *encryptionservice.Service, cfg *tenant.SSOConfig) str
 	}
 
 	if encryptionservice.IsEnvelope(cfg.OIDCClientSecret) {
+		tenantInfo := pagination.TenantInfo{OrgID: cfg.OrganizationID, BuID: cfg.BusinessUnitID}
 		for _, resourceID := range ssoSecretAADResourceIDs(cfg.Provider) {
 			plaintext, err := enc.DecryptStringWithAAD(
 				cfg.OIDCClientSecret,
-				encryptionservice.AAD{
-					Purpose:        encryptionservice.PurposeIAMOIDCClientSecret,
-					OrganizationID: cfg.OrganizationID,
-					BusinessUnitID: cfg.BusinessUnitID,
-					ResourceID:     resourceID,
-				},
+				ssoSecretAAD(tenantInfo, resourceID),
 			)
 			if err == nil {
 				return plaintext
@@ -1336,6 +1332,15 @@ func decryptSSOSecret(enc *encryptionservice.Service, cfg *tenant.SSOConfig) str
 	}
 
 	return ""
+}
+
+func ssoSecretAAD(tenantInfo pagination.TenantInfo, resourceID string) encryptionservice.AAD {
+	return encryptionservice.AAD{
+		Purpose:        encryptionservice.PurposeIAMOIDCClientSecret,
+		OrganizationID: tenantInfo.OrgID,
+		BusinessUnitID: tenantInfo.BuID,
+		ResourceID:     resourceID,
+	}
 }
 
 func ssoSecretAADResourceIDs(provider tenant.SSOProvider) []string {

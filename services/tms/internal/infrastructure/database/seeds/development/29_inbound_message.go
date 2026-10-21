@@ -143,9 +143,13 @@ func (s *InboundMessageSeed) Run(ctx context.Context, tx bun.Tx) error {
 		s.Name(),
 		nil,
 		func(ctx context.Context, tx bun.Tx, sc *seedhelpers.SeedContext) error {
-			secret, err := mailboxSigningSecret(
-				encryptionservice.New(encryptionservice.Params{Config: sc.Config()}),
-			)
+			sealer, err := encryptionservice.New(encryptionservice.Params{Config: sc.Config()})
+			if errors.Is(err, encryptionservice.ErrLocalKeyRequired) {
+				sealer = encryptionservice.NewWithKeyManager(encryptionservice.DisabledKeyManager{})
+			} else if err != nil {
+				return err
+			}
+			secret, err := mailboxSigningSecret(sealer)
 			if err != nil {
 				return err
 			}

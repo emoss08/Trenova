@@ -77,15 +77,9 @@ func newTestUser(t *testing.T) *tenant.User {
 func TestDecryptSSOSecretSupportsIAMSlugAAD(t *testing.T) {
 	t.Parallel()
 
-	enc := encryptionservice.New(encryptionservice.Params{
-		Config: &config.Config{
-			Security: config.SecurityConfig{
-				Encryption: config.EncryptionConfig{
-					Key: "unit-test-encryption-key-with-at-least-32-bytes",
-				},
-			},
-		},
-	})
+	enc := encryptionservice.NewWithKeyManager(
+		encryptionservice.NewLocalKeyManager("unit-test-encryption-key-with-at-least-32-bytes"),
+	)
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 	ciphertext, err := enc.EncryptStringWithAAD(

@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/agentextension/exaconnector"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -345,15 +344,9 @@ func newFixture(t *testing.T) *fixture {
 }
 
 func testEncryptionService() *encryptionservice.Service {
-	return encryptionservice.New(encryptionservice.Params{
-		Config: &config.Config{
-			Security: config.SecurityConfig{
-				Encryption: config.EncryptionConfig{
-					Key: "unit-test-encryption-key-with-at-least-32-bytes",
-				},
-			},
-		},
-	})
+	return encryptionservice.NewWithKeyManager(
+		encryptionservice.NewLocalKeyManager("unit-test-encryption-key-with-at-least-32-bytes"),
+	)
 }
 
 func (f *fixture) enable(t *testing.T, configuration map[string]string) *agentextensionports.AgentExtensionConfigResponse {

@@ -203,15 +203,9 @@ func newHarness(t *testing.T) *harness {
 		Repository: repo,
 		Users:      users,
 		Sessions:   sessions,
-		Encryption: encryptionservice.New(encryptionservice.Params{
-			Config: &config.Config{
-				Security: config.SecurityConfig{
-					Encryption: config.EncryptionConfig{
-						Key: "unit-test-encryption-key-with-at-least-32-bytes",
-					},
-				},
-			},
-		}),
+		Encryption: encryptionservice.NewWithKeyManager(
+			encryptionservice.NewLocalKeyManager("unit-test-encryption-key-with-at-least-32-bytes"),
+		),
 		Auditor: auditor,
 		Config:  &config.Config{App: config.AppConfig{Name: "Trenova"}},
 		Logger:  zap.NewNop(),

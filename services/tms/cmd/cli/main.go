@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/cmd/cli/api"
 	"github.com/emoss08/trenova/cmd/cli/db"
 	"github.com/emoss08/trenova/cmd/cli/desk"
+	"github.com/emoss08/trenova/cmd/cli/encryption"
 	"github.com/emoss08/trenova/cmd/cli/redis"
 	"github.com/emoss08/trenova/cmd/cli/update"
 	"github.com/emoss08/trenova/cmd/cli/worker"
@@ -61,6 +62,7 @@ the Trenova transportation management system.`,
 		cfg = cf
 		db.SetConfig(cf)
 		desk.SetConfig(cf)
+		encryption.SetConfig(cf)
 		redis.SetConfig(cf)
 		update.SetConfig(cf)
 		return nil
@@ -305,6 +307,7 @@ func init() {
 	rootCmd.AddCommand(api.APICmd)
 	rootCmd.AddCommand(db.DbCmd)
 	rootCmd.AddCommand(desk.DeskCmd)
+	rootCmd.AddCommand(encryption.EncryptionCmd)
 	rootCmd.AddCommand(redis.RedisCmd)
 	rootCmd.AddCommand(worker.WorkerCmd)
 	rootCmd.AddCommand(update.UpdateCmd)

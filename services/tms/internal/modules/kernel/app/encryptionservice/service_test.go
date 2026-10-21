@@ -82,23 +82,6 @@ func TestService_RejectsUnencryptedCiphertext(t *testing.T) {
 	require.ErrorIs(t, err, ErrInvalidEnvelope)
 }
 
-func TestService_RewrapEnvelopeKeepsPlaintext(t *testing.T) {
-	t.Parallel()
-
-	svc := testService()
-	aad := testAAD()
-	ciphertext, err := svc.EncryptStringWithAAD("client-secret", aad)
-	require.NoError(t, err)
-
-	rewrapped, err := svc.RewrapEnvelopeWithAAD(ciphertext, aad)
-	require.NoError(t, err)
-	require.NotEqual(t, ciphertext, rewrapped)
-
-	plaintext, err := svc.DecryptStringWithAAD(rewrapped, aad)
-	require.NoError(t, err)
-	require.Equal(t, "client-secret", plaintext)
-}
-
 func TestGCPAutokeyManagerUsesEnvelopeAAD(t *testing.T) {
 	t.Parallel()
 
@@ -123,7 +106,7 @@ func TestGCPAutokeyManagerUsesEnvelopeAAD(t *testing.T) {
 }
 
 func testService() *Service {
-	return New(Params{
+	svc, err := New(Params{
 		Config: &config.Config{
 			Security: config.SecurityConfig{
 				Encryption: config.EncryptionConfig{
@@ -132,6 +115,10 @@ func testService() *Service {
 			},
 		},
 	})
+	if err != nil {
+		panic(err)
+	}
+	return svc
 }
 
 func testAAD() AAD {
