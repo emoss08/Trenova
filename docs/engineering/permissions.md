@@ -139,6 +139,12 @@ The value only narrows what the signed tenant scope allows, so it is not signed;
 with no holder (jobs, unattended agents) reads its whole tenant. Policies are
 `FOR SELECT`, so an update or a `RETURNING` on a row outside the scope finds nothing.
 
+A cache cannot apply them either. The synced Redis caches (`cache:shipments`,
+`cache:workers`, `cache:customers`, `cache:documents`) hold the tenant's rows, so each one
+asks `readscope.Narrows` for the kind it holds and answers only a request its kind is not
+narrowed for (or one whose scope could not be resolved); anything else reads through the
+database.
+
 A search index cannot apply them: Meilisearch holds every record of the tenant. Global
 search therefore passes each shipment, order, invoice and worker hit, and each document
 attached to one, through `kernelports.RecordVisibility`, which asks the database which of
