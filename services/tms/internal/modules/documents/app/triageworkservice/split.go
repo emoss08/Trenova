@@ -3,6 +3,7 @@ package triageworkservice
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"path/filepath"
@@ -68,9 +69,7 @@ func (s *Service) split(
 		kernelports.ImagingInteractive,
 	)
 	if err != nil {
-		return nil, errortypes.NewValidationError(
-			"pages", errortypes.ErrInvalid, "The file is not a PDF that can be split",
-		)
+		return nil, splitImagingError(err)
 	}
 	if req.attachment.PageCount != pageCount {
 		req.attachment.PageCount = pageCount
@@ -127,6 +126,16 @@ func (s *Service) split(
 	}
 
 	return s.refreshed(ctx, req.tenantInfo, req.message.ID)
+}
+
+func splitImagingError(err error) error {
+	if errors.Is(err, kernelports.ErrImagingInvalidDocument) ||
+		errors.Is(err, kernelports.ErrImagingEncrypted) {
+		return errortypes.NewValidationError(
+			"pages", errortypes.ErrInvalid, "The file is not a PDF that can be split",
+		)
+	}
+	return err
 }
 
 func requireSplittable(attachment *inboundmessage.InboundAttachment) error {
@@ -250,9 +259,7 @@ func (s *Service) stageRanges(
 		kernelports.ImagingInteractive,
 	)
 	if err != nil {
-		return nil, errortypes.NewValidationError(
-			"pages", errortypes.ErrInvalid, "The file is not a PDF that can be split",
-		)
+		return nil, splitImagingError(err)
 	}
 
 	staged := make([]triageworkcontract.SplitRange, 0, len(ranges))
