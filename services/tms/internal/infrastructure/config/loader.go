@@ -249,9 +249,20 @@ func (l *Loader) configureViper() {
 	l.bindPlatformEnvAliases()
 	l.bindAccountingEnv()
 	l.bindAIAuditEnv()
+	l.bindUnlistedEnv()
 
 	for _, section := range l.sections {
 		section.SetDefaults(l.viper, l.envPrefix)
+	}
+}
+
+var envOnlyKeys = []string{
+	"security.encryption.retiredKeys",
+}
+
+func (l *Loader) bindUnlistedEnv() {
+	for _, key := range envOnlyKeys {
+		_ = l.viper.BindEnv(key)
 	}
 }
 
