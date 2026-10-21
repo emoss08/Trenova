@@ -265,7 +265,6 @@ func newDoclingHarness(t *testing.T, providerAvailable bool) *doclingHarness {
 	docID := pulid.MustNew("doc_")
 
 	control := tenant.NewDefaultDocumentControl(orgID, buID)
-	control.ExtractionEngine = tenant.ExtractionEngineDocling
 	control.EnableAutoDocumentTypeAssociate = false
 	controlRepo := tenantportsmock.NewMockDocumentControlRepository(t)
 	controlRepo.EXPECT().GetOrCreate(mock.Anything, orgID, buID).Return(control, nil)
@@ -302,7 +301,6 @@ func newDoclingHarness(t *testing.T, providerAvailable bool) *doclingHarness {
 		searchProjection:    noopDocumentSearchProjectionService{},
 		storage:             storage,
 		workflowStarter:     noopWorkflowStarter{},
-		parsingRuleRuntime:  noopDocumentParsingRuleRuntime{},
 		converter:           converter,
 		conversionCfg:       &config.DocumentConversionConfig{DoclingURL: "http://docling:5001"},
 	}

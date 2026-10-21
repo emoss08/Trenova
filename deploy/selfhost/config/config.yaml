@@ -130,10 +130,6 @@ ai:
   # logged and traced. Only providers calling the Claude API directly ask.
   cacheDiagnostics: false
   documentExtraction: false
-  ocrCommand: tesseract
-  ocrLanguage: eng
-  ocrTimeout: 45s
-  maxOcrPages: 25
   maxConcurrentActivities: 2
 
 security:

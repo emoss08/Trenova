@@ -760,9 +760,7 @@ func (c *SearchConfig) GetDefaultLimit() int {
 // produced the original confusion: the gate used to be
 // documentIntelligence.enableAI, which ships false, so configuring a
 // provider under AI Control produced "AI features are disabled" from a key
-// named after a feature the operator was not using. The OCR settings live
-// here too, because every one of them exists to feed the extraction above
-// them.
+// named after a feature the operator was not using.
 type AIConfig struct {
 	// Enabled is a pointer so an absent key means enabled rather than
 	// disabled. Leaving it out is the common case and must not turn the
@@ -819,24 +817,14 @@ type AIConfig struct {
 	ModelPriceReferenceTTL time.Duration `mapstructure:"modelPriceReferenceTtl" validate:"omitempty,min=0"`
 
 	// DocumentExtraction lets a model classify and extract uploaded
-	// documents. Off by default; the OCR pipeline below runs either way.
+	// documents. Off by default, and Docling reads nothing without it.
 	DocumentExtraction  bool `mapstructure:"documentExtraction"`
 	MaxInputChars       int  `mapstructure:"maxInputChars"       validate:"omitempty,min=1000,max=500000"`
 	ExtractionMaxTokens int  `mapstructure:"extractionMaxTokens" validate:"omitempty,min=256,max=32768"`
 
-	// The OCR pipeline that turns a scan into the text a model reads. It
-	// lives here rather than in a section of its own because every one of
-	// these settings exists to feed the extraction above it.
-	OCRCommand              string        `mapstructure:"ocrCommand"`
-	OCRLanguage             string        `mapstructure:"ocrLanguage"`
-	OCRTimeout              time.Duration `mapstructure:"ocrTimeout"`
-	EnableOCRPreprocessing  bool          `mapstructure:"enableOcrPreprocessing"`
-	OCRPreprocessingMode    string        `mapstructure:"ocrPreprocessingMode"`
-	OCRMaxImageDimension    int           `mapstructure:"ocrMaxImageDimension"    validate:"omitempty,min=512,max=12000"`
-	MaxOCRPages             int           `mapstructure:"maxOcrPages"             validate:"omitempty,min=1,max=500"`
-	MaxExtractedChars       int           `mapstructure:"maxExtractedChars"       validate:"omitempty,min=1000,max=1000000"`
-	ReconcileBatchSize      int           `mapstructure:"reconcileBatchSize"      validate:"omitempty,min=1,max=1000"`
-	MaxConcurrentActivities int           `mapstructure:"maxConcurrentActivities" validate:"omitempty,min=1,max=64"`
+	MaxExtractedChars       int `mapstructure:"maxExtractedChars"       validate:"omitempty,min=1000,max=1000000"`
+	ReconcileBatchSize      int `mapstructure:"reconcileBatchSize"      validate:"omitempty,min=1,max=1000"`
+	MaxConcurrentActivities int `mapstructure:"maxConcurrentActivities" validate:"omitempty,min=1,max=64"`
 }
 
 const defaultVerdictCacheTTL = 24 * time.Hour
@@ -906,30 +894,6 @@ func (c *AIConfig) CacheDiagnosticsEnabled() bool {
 
 func (c *AIConfig) AIEnabled() bool {
 	return c == nil || c.Enabled == nil || *c.Enabled
-}
-
-func (c *AIConfig) GetOCRCommand() string {
-	if c.OCRCommand == "" {
-		return "tesseract"
-	}
-
-	return c.OCRCommand
-}
-
-func (c *AIConfig) GetOCRLanguage() string {
-	if c.OCRLanguage == "" {
-		return "eng"
-	}
-
-	return c.OCRLanguage
-}
-
-func (c *AIConfig) GetOCRTimeout() time.Duration {
-	if c.OCRTimeout <= 0 {
-		return 45 * time.Second
-	}
-
-	return c.OCRTimeout
 }
 
 // DocumentExtractionEnabled says whether a model may read uploaded
@@ -1020,34 +984,6 @@ func (c *AIConfig) GetMaxRetries() int {
 	}
 
 	return c.MaxRetries
-}
-
-func (c *AIConfig) OCRPreprocessingEnabled() bool {
-	return c.EnableOCRPreprocessing
-}
-
-func (c *AIConfig) GetOCRPreprocessingMode() string {
-	if c.OCRPreprocessingMode == "" {
-		return "standard"
-	}
-
-	return c.OCRPreprocessingMode
-}
-
-func (c *AIConfig) GetOCRMaxImageDimension() int {
-	if c.OCRMaxImageDimension <= 0 {
-		return 2400
-	}
-
-	return c.OCRMaxImageDimension
-}
-
-func (c *AIConfig) GetMaxOCRPages() int {
-	if c.MaxOCRPages <= 0 {
-		return 25
-	}
-
-	return c.MaxOCRPages
 }
 
 func (c *AIConfig) GetMaxConcurrentActivities() int {

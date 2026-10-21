@@ -108,13 +108,9 @@ func (s *Service) ExtractionStatus(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*documentports.ExtractionStatus, error) {
-	control, err := s.documentControlRepo.GetOrCreate(ctx, tenantInfo.OrgID, tenantInfo.BuID)
-	if err != nil {
-		return nil, err
-	}
-
 	availability := documentaiextractionports.ExtractionNoProviderAssigned
 	if s.aiDocuments != nil {
+		var err error
 		if availability, err = s.aiDocuments.ExtractionAvailability(ctx, tenantInfo); err != nil {
 			return nil, err
 		}
@@ -124,12 +120,10 @@ func (s *Service) ExtractionStatus(
 	converterAvailable := s.conversionConfig.Enabled()
 
 	return &documentports.ExtractionStatus{
-		Engine:                 string(control.ExtractionEngine),
 		ModelProviderAvailable: providerAvailable,
 		ModelProviderReason:    string(availability),
 		ConverterAvailable:     converterAvailable,
-		ExtractionAvailable: !control.UsesDocling() ||
-			(providerAvailable && converterAvailable),
+		ExtractionAvailable:    providerAvailable && converterAvailable,
 	}, nil
 }
 

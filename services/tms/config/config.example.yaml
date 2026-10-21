@@ -200,17 +200,10 @@ ai:
   modelPriceReference: true # Estimate a model's price from OpenRouter's public catalog when its provider lists none; set false to make no outside call
   modelPriceReferenceTtl: 24h # How long that catalog is kept before it is read again
 
-  # Reading uploaded documents with a model, and the OCR pipeline that feeds it.
+  # Reading uploaded documents with a model. Docling converts them and does all OCR (see documentConversion).
   documentExtraction: true # Let a model classify and extract uploaded documents. Off, no document is read by a model whatever providers an organization has, and Docling reads nothing at all
   maxInputChars: 24000 # Max extracted text sent to a model
   extractionMaxTokens: 5000 # Output ceiling for one extraction
-  ocrCommand: tesseract # OCR binary path
-  ocrLanguage: eng # OCR language pack
-  ocrTimeout: 45s # Hard timeout per OCR process
-  enableOcrPreprocessing: true # Preprocess scanned images before OCR
-  ocrPreprocessingMode: standard # standard preprocessing pipeline
-  ocrMaxImageDimension: 2400 # Max width/height for preprocessed OCR images
-  maxOcrPages: 25 # Max scanned pages OCR will attempt per document
   maxExtractedChars: 200000 # Max stored extracted text
   reconcileBatchSize: 100 # Batch size for stale-job reconciliation
   maxConcurrentActivities: 2 # Dedicated document worker concurrency

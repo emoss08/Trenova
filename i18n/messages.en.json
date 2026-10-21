@@ -51388,15 +51388,6 @@
       "go/other"
     ]
   },
-  "Choose how uploaded documents are read before fields are extracted. Switching affects documents uploaded from now on; documents already read keep their text.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Choose one of the listed resolution codes": {
     "sites": 1,
     "scope": [
@@ -61631,6 +61622,15 @@
     ]
   },
   "Conversations with the agents and what they produce": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Convert a document with Docling, then classify and extract it": {
     "sites": 1,
     "scope": [
       "go"
@@ -80764,31 +80764,12 @@
     ]
   },
   "Docling": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
       "routes/agent-control"
-    ]
-  },
-  "Docling is unavailable: the document converter is not configured on this server. An administrator sets documentConversion.doclingUrl and documentConversion.apiKey to turn it on.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Docling needs the document converter, which is not configured on this server. Set documentConversion.doclingUrl and documentConversion.apiKey, or keep the Legacy engine.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Docling re-conversion": {
@@ -80798,15 +80779,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "Docling reads the page layout, tables, and scanned text, and every extracted field needs an AI provider that serves document work. Parsing rules are not applied.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Docs": {
@@ -100182,15 +100154,6 @@
       "routes/agent-control"
     ]
   },
-  "Extract and classify document content": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Extract shipment data and build the draft.": {
     "sites": 1,
     "scope": [
@@ -100282,33 +100245,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "Extraction engine": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Extraction engine is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Extraction engine must be Legacy or Docling": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Extraction evaluations cannot run on this installation": {
@@ -134538,12 +134474,11 @@
     ]
   },
   "Legacy": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
       "routes/agent-control"
     ]
   },
@@ -201518,15 +201453,6 @@
       "go/other"
     ]
   },
-  "Re-drive stale document intelligence jobs": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Re-extract": {
     "sites": 1,
     "scope": [
@@ -201940,15 +201866,6 @@
       "routes/ifta-tax-rate"
     ]
   },
-  "Read a document with its organization's extraction engine, then classify and extract it": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Read a web page": {
     "sites": 2,
     "scope": [
@@ -202048,15 +201965,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Read documents with": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Read each row as: when fuel costs at least “from” and less than “up to”, add that flat dollar amount.": {
@@ -261531,15 +261439,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "The legacy engine reads native PDF text, runs OCR on scans, and applies your parsing rules before any AI-assisted extraction.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "The legs and charges of a {0} order cannot be modified": {

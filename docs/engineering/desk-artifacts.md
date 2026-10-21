@@ -224,10 +224,9 @@ as its evidence (read from the stored draft, not from the tool result the model 
 line that carries the field's label before the value (so "Bill to" is not boxed on a letterhead
 that happens to hold the same name), then on any line; the page the reading names is searched
 first, and a value split by other words on the page ("10/22/2026 Appt 09:00") is boxed on its
-leading words. The value's span is measured on the line's own characters, and where the reader
-placed each word (`LayoutLine.Words`, from pdfium's glyphs on a native PDF and from tesseract's
-words on a scan) the box runs from the first word's edge to the last; Docling pages and
-documents read before words were kept fall back to each character's share of the line. On the
+leading words. The value's span is measured on the line's own characters, and where a line records where
+each word sits (`LayoutLine.Words`) the box runs from the first word's edge to the last; Docling's
+lines carry no word positions, so the box takes each character's share of the line. On the
 client the sheet is the image at its own size and the boxes are percentages of a layer exactly
 over it (`boxStyle`), so they stay on their text at any width, zoom step or pixel ratio and after
 a resize. Fit draws the page at the viewer's width but never under 600px (`sheetWidth`), so on a

@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { ExtractionNeedsProviderAlert } from "@/components/documents/extraction-needs-provider-alert";
 import { FormSaveDock } from "@/components/form-save-dock";
-import { SegmentedField } from "@/components/fields/segmented-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import {
@@ -18,13 +18,11 @@ import { apiService } from "@/services/api";
 import {
   documentControlResourceSchema,
   documentControlSchema,
-  extractionEngineSchema,
   type DocumentControl,
   type DocumentControlResource,
-  type ExtractionEngine,
 } from "@/types/document-control";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { FormProvider, useForm, useFormContext, useWatch } from "react-hook-form";
 
@@ -53,11 +51,6 @@ const allowedResourceOptions: Array<{
     label: "Worker",
     description: "Allow shipment-draft style extraction on worker-linked documents.",
   },
-];
-
-const extractionEngineOptions: Array<{ value: ExtractionEngine; label: string }> = [
-  { value: extractionEngineSchema.enum.legacy, label: "Legacy" },
-  { value: extractionEngineSchema.enum.docling, label: "Docling" },
 ];
 
 export default function DocumentIntelligenceForm() {
@@ -95,7 +88,6 @@ export default function DocumentIntelligenceForm() {
       <Form onSubmit={handleSubmit(onSubmit)}>
         <div className="flex flex-col gap-4 pb-14">
           <PlatformAvailabilityCard />
-          <ExtractionEngineCard />
           <ClassificationAndExtractionCard />
           <ShipmentDraftCard />
           <SearchCard />
@@ -125,7 +117,8 @@ function PlatformAvailabilityCard() {
           )}
         </CardDescription>
       </CardHeader>
-      <CardContent className="max-w-prose">
+      <CardContent className="flex max-w-prose flex-col gap-4">
+        <ExtractionNeedsProviderAlert />
         <FormGroup cols={1}>
           <FormControl className="min-h-[3em]">
             <SwitchField
@@ -148,67 +141,6 @@ function PlatformAvailabilityCard() {
               )}
               position="left"
               disabled={!enabled}
-            />
-          </FormControl>
-        </FormGroup>
-      </CardContent>
-    </Card>
-  );
-}
-
-function ExtractionEngineCard() {
-  const t = useT();
-
-  const { control } = useFormContext<DocumentControl>();
-  const enabled = useWatch({
-    control,
-    name: "enableDocumentIntelligence",
-  });
-  const engine = useWatch({
-    control,
-    name: "extractionEngine",
-  });
-  const { data: status } = useQuery({ ...documentControl.extractionStatus() });
-  const converterMissing = status?.converterAvailable === false;
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t("Extraction engine")}</CardTitle>
-        <CardDescription>
-          {t(
-            "Choose how uploaded documents are read before fields are extracted. Switching affects documents uploaded from now on; documents already read keep their text.",
-          )}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="max-w-prose">
-        <FormGroup cols={1}>
-          <FormControl>
-            <SegmentedField
-              control={control}
-              name="extractionEngine"
-              label={t("Read documents with")}
-              description={
-                converterMissing
-                  ? t(
-                      "Docling is unavailable: the document converter is not configured on this server. An administrator sets documentConversion.doclingUrl and documentConversion.apiKey to turn it on.",
-                    )
-                  : engine === extractionEngineSchema.enum.docling
-                    ? t(
-                        "Docling reads the page layout, tables, and scanned text, and every extracted field needs an AI provider that serves document work. Parsing rules are not applied.",
-                      )
-                    : t(
-                        "The legacy engine reads native PDF text, runs OCR on scans, and applies your parsing rules before any AI-assisted extraction.",
-                      )
-              }
-              options={extractionEngineOptions.map((option) => ({
-                value: option.value,
-                label: t(option.label),
-                disabled:
-                  !enabled ||
-                  (converterMissing && option.value === extractionEngineSchema.enum.docling),
-              }))}
-              fullWidth={false}
             />
           </FormControl>
         </FormGroup>

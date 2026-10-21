@@ -4,9 +4,7 @@ import (
 	"bytes"
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/referenceutils"
 )
@@ -19,11 +17,11 @@ const (
 	maxCaptureReferences = 12
 )
 
-// CaptureAnalyzer reads a captured document through the same extraction,
-// classification and parsing rules a stored document goes through, without
-// storing it or recording anything about it. A captured stack is read to
-// suggest where its parts go; the document each part becomes is read again,
-// properly, once it is filed.
+// CaptureAnalyzer reads a captured document through the same conversion and
+// classification a stored document goes through, without storing it or
+// recording anything about it. A captured stack is read to suggest where its
+// parts go; the document each part becomes is read again, properly, once it is
+// filed.
 type CaptureAnalyzer struct {
 	activities *Activities
 }
@@ -42,51 +40,6 @@ func (c *CaptureAnalyzer) Analyze(
 		return nil, err
 	}
 
-	doc := &document.Document{
-		OrganizationID: req.TenantInfo.OrgID,
-		BusinessUnitID: req.TenantInfo.BuID,
-		OriginalName:   req.FileName,
-		FileType:       captureContentType,
-	}
-
-	if control.UsesDocling() {
-		return c.analyzeConverted(ctx, req, doc, control)
-	}
-
-	extracted, err := a.extractContent(ctx, doc, req.PDF, control)
-	if err != nil {
-		return nil, err
-	}
-
-	features := extractDocumentFeatures(doc.OriginalName, extracted.Pages, extracted.Text)
-	fingerprint := detectProviderFingerprint(doc.OriginalName, extracted.Text, features)
-	classification := classifyDocumentWithControl(
-		doc.OriginalName,
-		extracted.Text,
-		control,
-		features,
-		fingerprint,
-	)
-	intelligence := analyzeDocument(classification, extracted)
-	intelligence = a.applyParsingRules(
-		ctx,
-		req.TenantInfo,
-		doc.OriginalName,
-		classification.ProviderFingerprint,
-		extracted,
-		intelligence,
-	)
-
-	return captureAnalysisOf(intelligence, classification, extracted.Text), nil
-}
-
-func (c *CaptureAnalyzer) analyzeConverted(
-	ctx context.Context,
-	req *captureports.CaptureAnalysisRequest,
-	doc *document.Document,
-	control *tenant.DocumentControl,
-) (*captureports.CaptureAnalysis, error) {
-	a := c.activities
 	availability, err := a.aiDocumentService.ExtractionAvailability(ctx, req.TenantInfo)
 	if err != nil {
 		return nil, err
@@ -97,7 +50,7 @@ func (c *CaptureAnalyzer) analyzeConverted(
 	}
 
 	converted, err := a.convertWithConverter(ctx, &kernelports.ConvertRequest{
-		FileName:    doc.OriginalName,
+		FileName:    req.FileName,
 		ContentType: captureContentType,
 		Body:        bytes.NewReader(req.PDF),
 		Size:        int64(len(req.PDF)),
@@ -111,10 +64,10 @@ func (c *CaptureAnalyzer) analyzeConverted(
 		a.extractionPages(converted.Pages, nil),
 		a.cfg.GetMaxExtractedChars(),
 	)
-	features := extractDocumentFeatures(doc.OriginalName, extracted.Pages, extracted.Text)
-	fingerprint := detectProviderFingerprint(doc.OriginalName, extracted.Text, features)
+	features := extractDocumentFeatures(req.FileName, extracted.Pages, extracted.Text)
+	fingerprint := detectProviderFingerprint(req.FileName, extracted.Text, features)
 	classification := classifyDocumentWithControl(
-		doc.OriginalName,
+		req.FileName,
 		extracted.Text,
 		control,
 		features,

@@ -63,8 +63,9 @@ to say; that is the recipe's job.
   `Prompted` or `JSONMode` provider is given.
 - `TestRenderedPromptMatchesWhatTheRouterSends` holds the two paths together.
 
-**Two kinds of page text reach the model.** Pages read by the legacy engine carry plain text and
-get the original system prompt, cut at the page limit. Pages read by Docling carry Markdown
+**Two kinds of page text reach the model.** Pages without Markdown (an evaluation case's pages as
+first frozen, and documents read before Docling) carry plain text and get the original system
+prompt, cut at the page limit. Pages read by Docling carry Markdown
 (`document_content_pages.markdown`): tables are pipe tables, the printed header and footer sit
 under a `<!-- page header -->` marker, the system prompt says so, and the page limit cuts at a
 block boundary, never inside a table row. A Markdown page is a different prompt with a

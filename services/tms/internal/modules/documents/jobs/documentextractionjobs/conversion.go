@@ -64,7 +64,6 @@ type ExtractionRoute string
 
 const (
 	ExtractionRouteSkip    ExtractionRoute = "skip"
-	ExtractionRouteLegacy  ExtractionRoute = "legacy"
 	ExtractionRouteDocling ExtractionRoute = "docling"
 	ExtractionRouteStopped ExtractionRoute = "stopped"
 )
@@ -131,6 +130,12 @@ var legacyOfficeContentTypes = map[string]struct{}{
 	"text/richtext":                 {},
 }
 
+var officeContentTypes = map[string]struct{}{
+	"application/vnd.openxmlformats-officedocument.wordprocessingml.document":   {},
+	"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":         {},
+	"application/vnd.openxmlformats-officedocument.presentationml.presentation": {},
+}
+
 var convertibleImageTypes = map[string]struct{}{
 	"image/png":  {},
 	"image/jpeg": {},
@@ -164,8 +169,11 @@ func conversionFormatOf(contentType, fileName string) conversionFormat {
 	if _, ok := convertibleImageTypes[mediaType]; ok {
 		return formatImage
 	}
-	if format, ok := kernelports.OfficeFormatOf(mediaType, fileName); ok &&
-		format != kernelports.OfficeFormatEPUB {
+	if _, ok := officeContentTypes[mediaType]; ok {
+		return formatOffice
+	}
+	switch ext {
+	case ".docx", ".xlsx", ".pptx":
 		return formatOffice
 	}
 
@@ -199,14 +207,11 @@ func (a *Activities) PlanDocumentExtractionActivity(
 		a.metrics.Document.RecordExtraction("skipped", "", "control_disabled")
 		return stoppedPlan(ExtractionRouteSkip, doc), nil
 	}
-	if !control.UsesDocling() {
-		return &PlanDocumentExtractionResult{Route: ExtractionRouteLegacy}, nil
-	}
 
-	return a.planDocling(ctx, doc, control, tenantInfo)
+	return a.planConversion(ctx, doc, control, tenantInfo)
 }
 
-func (a *Activities) planDocling(
+func (a *Activities) planConversion(
 	ctx context.Context,
 	doc *document.Document,
 	control *tenant.DocumentControl,
@@ -260,7 +265,7 @@ func (a *Activities) planDocling(
 		}
 	}
 
-	if _, _, err = a.prepareExtractionContentAndStart(ctx, doc, tenantInfo); err != nil {
+	if err = a.markExtractionStarted(ctx, doc, tenantInfo); err != nil {
 		return nil, err
 	}
 
@@ -1007,7 +1012,6 @@ func (a *Activities) AnalyzeConvertedDocumentActivity(
 		Intelligence:   outcome.Intelligence,
 		AIDiagnostics:  outcome.AIDiagnostics,
 		Timestamp:      now,
-		PagesStored:    true,
 	}); err != nil {
 		return nil, err
 	}
@@ -1080,6 +1084,17 @@ func (a *Activities) analyzeExtraction(
 		fingerprint,
 	)
 	intelligence := analyzeDocument(classification, extracted)
+	intelligence = a.applyParsingRules(
+		ctx,
+		pagination.TenantInfo{
+			OrgID: doc.OrganizationID,
+			BuID:  doc.BusinessUnitID,
+		},
+		doc.OriginalName,
+		classification.ProviderFingerprint,
+		extracted,
+		intelligence,
+	)
 	result, err := a.enrichWithAI(ctx, &EnrichmentPayload{
 		Payload:        payload,
 		Document:       doc,

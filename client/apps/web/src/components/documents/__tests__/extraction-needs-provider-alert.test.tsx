@@ -33,7 +33,6 @@ vi.mock("@/lib/queries/document-control", () => ({
 }));
 
 const NO_PROVIDER: DocumentExtractionStatus = {
-  engine: "docling",
   modelProviderAvailable: false,
   modelProviderReason: "no_model_provider",
   converterAvailable: true,
@@ -106,7 +105,6 @@ describe("ExtractionNeedsProviderAlert", () => {
   it("says the converter is not configured rather than asking for a provider", async () => {
     grantProviderSetup();
     mocks.status = {
-      engine: "docling",
       modelProviderAvailable: true,
       converterAvailable: false,
       extractionAvailable: false,
@@ -155,11 +153,11 @@ describe("ExtractionNeedsProviderAlert", () => {
     expect(await screen.findByText("Extraction needs a model provider")).toBeInTheDocument();
   });
 
-  it("stays hidden on the legacy engine even without a provider", async () => {
+  it("stays hidden while documents can be read", async () => {
     mocks.status = {
-      engine: "legacy",
-      modelProviderAvailable: false,
-      converterAvailable: false,
+      modelProviderAvailable: true,
+      modelProviderReason: "available",
+      converterAvailable: true,
       extractionAvailable: true,
     };
 

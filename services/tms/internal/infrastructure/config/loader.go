@@ -129,7 +129,7 @@ var retiredSections = map[string]string{
 		"aiStreamIdleTimeout is ai.streamIdleTimeout, " +
 		"aiMaxRetries is ai.maxRetries, aiMaxInputChars is ai.maxInputChars, " +
 		"aiExtractionMaxTokens is ai.extractionMaxTokens, and the OCR keys " +
-		"keep their names",
+		"are gone because Docling reads scans",
 }
 
 func (l *Loader) rejectUnownedEditionSections() error {
@@ -463,20 +463,13 @@ func (l *Loader) setDefaults() { //nolint:funlen // sets default configs
 	l.viper.SetDefault("search.meilisearch.indexes.workers", "workers")
 	l.viper.SetDefault("search.meilisearch.indexes.documents", "documents")
 
-	// AI defaults, including the OCR pipeline that feeds extraction.
+	// AI defaults
 	l.viper.SetDefault("ai.timeout", "20s")
 	l.viper.SetDefault("ai.probeTimeout", "45s")
 	l.viper.SetDefault("ai.completionTimeout", "5m")
 	l.viper.SetDefault("ai.streamIdleTimeout", "5m")
 	l.viper.SetDefault("ai.maxRetries", 2)
 	l.viper.SetDefault("ai.maxInputChars", 24000)
-	l.viper.SetDefault("ai.enableOcrPreprocessing", true)
-	l.viper.SetDefault("ai.ocrPreprocessingMode", "standard")
-	l.viper.SetDefault("ai.ocrMaxImageDimension", 2400)
-	l.viper.SetDefault("ai.ocrCommand", "tesseract")
-	l.viper.SetDefault("ai.ocrLanguage", "eng")
-	l.viper.SetDefault("ai.ocrTimeout", "45s")
-	l.viper.SetDefault("ai.maxOcrPages", 25)
 	l.viper.SetDefault("ai.maxExtractedChars", 200000)
 	l.viper.SetDefault("ai.reconcileBatchSize", 100)
 	l.viper.SetDefault("ai.maxConcurrentActivities", 2)
