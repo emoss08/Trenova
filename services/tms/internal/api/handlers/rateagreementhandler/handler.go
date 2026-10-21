@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/fieldguard"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/api/responseguard"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/rateagreementservice"
@@ -135,7 +136,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.review(h.service.Archive),
 	)
 
-	selectOptions := api.Group("/select-options")
+	selectOptions := api.Group("/select-options", responseguard.References())
 	selectOptions.GET("/", h.selectOptions)
 }
 
@@ -220,7 +221,7 @@ func (h *Handler) get(c *gin.Context) {
 	}
 
 	h.withhold(c, entity)
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 // @Summary Create a rate agreement
@@ -253,7 +254,7 @@ func (h *Handler) create(c *gin.Context) {
 	}
 
 	h.withhold(c, created)
-	c.JSON(http.StatusCreated, created)
+	helpers.JSON(c, http.StatusCreated, created)
 }
 
 // @Summary Update a rate agreement
@@ -289,14 +290,18 @@ func (h *Handler) update(c *gin.Context) {
 
 	entity.ID = agreementID
 
-	updated, err := h.service.Update(c.Request.Context(), entity, actorutil.FromAuthContext(authCtx))
+	updated, err := h.service.Update(
+		c.Request.Context(),
+		entity,
+		actorutil.FromAuthContext(authCtx),
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
 
 	h.withhold(c, updated)
-	c.JSON(http.StatusOK, updated)
+	helpers.JSON(c, http.StatusOK, updated)
 }
 
 // @Summary List a rate agreement's rules
@@ -339,7 +344,7 @@ func (h *Handler) listRules(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, rules)
+	helpers.JSON(c, http.StatusOK, rules)
 }
 
 // @Summary List a rate agreement's live lanes
@@ -380,7 +385,7 @@ func (h *Handler) listLanes(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, page)
+	helpers.JSON(c, http.StatusOK, page)
 }
 
 // @Summary Summarize a rate agreement's lanes
@@ -413,7 +418,7 @@ func (h *Handler) summarizeLanes(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, summary)
+	helpers.JSON(c, http.StatusOK, summary)
 }
 
 type amendRulesRequest struct {
@@ -468,7 +473,7 @@ func (h *Handler) amendRules(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, amended)
+	helpers.JSON(c, http.StatusOK, amended)
 }
 
 // @Summary List a rate agreement's versions
@@ -588,7 +593,7 @@ func (h *Handler) previewRateIncrease(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, plan)
+	helpers.JSON(c, http.StatusOK, plan)
 }
 
 // @Summary Apply a general rate increase
@@ -622,7 +627,7 @@ func (h *Handler) applyRateIncrease(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, plan)
+	helpers.JSON(c, http.StatusOK, plan)
 }
 
 // @Summary Duplicate a rate agreement
@@ -665,7 +670,7 @@ func (h *Handler) duplicate(c *gin.Context) {
 	}
 
 	h.withhold(c, created)
-	c.JSON(http.StatusCreated, created)
+	helpers.JSON(c, http.StatusCreated, created)
 }
 
 func (h *Handler) review(action rateagreementservice.ReviewAction) gin.HandlerFunc {
@@ -694,7 +699,7 @@ func (h *Handler) review(action rateagreementservice.ReviewAction) gin.HandlerFu
 		}
 
 		h.withhold(c, updated)
-		c.JSON(http.StatusOK, updated)
+		helpers.JSON(c, http.StatusOK, updated)
 	}
 }
 

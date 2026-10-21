@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/agent/app/conversationscheduleservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationschedule"
@@ -141,7 +142,7 @@ func (h *Handler) respondWithSchedules(
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 type createScheduleRequest struct {
@@ -179,7 +180,7 @@ func (h *Handler) createSchedule(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, result)
+	helpers.JSON(c, http.StatusCreated, result)
 }
 
 // scheduleRequest names the schedule in the path, as the caller's own.
@@ -264,13 +265,17 @@ func (h *Handler) updateSchedule(c *gin.Context) {
 		}
 	}
 	if body.Enabled != nil {
-		if schedule, err = h.schedules.SetEnabled(c.Request.Context(), req, *body.Enabled); err != nil {
+		if schedule, err = h.schedules.SetEnabled(
+			c.Request.Context(),
+			req,
+			*body.Enabled,
+		); err != nil {
 			h.eh.HandleError(c, err)
 			return
 		}
 	}
 
-	c.JSON(http.StatusOK, schedule)
+	helpers.JSON(c, http.StatusOK, schedule)
 }
 
 func (h *Handler) deleteSchedule(c *gin.Context) {
@@ -311,5 +316,5 @@ func (h *Handler) runSchedule(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusAccepted, turnStarted(turn))
+	helpers.JSON(c, http.StatusAccepted, turnStarted(turn))
 }

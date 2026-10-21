@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -89,7 +90,7 @@ func (h *Handler) me(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, identity)
+	helpers.JSON(c, http.StatusOK, identity)
 }
 
 // signedOutReason is recorded on a device that signed itself out.
@@ -139,7 +140,7 @@ func (h *Handler) profiles(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, profiles)
+	helpers.JSON(c, http.StatusOK, profiles)
 }
 
 type reportSourcesRequest struct {
@@ -172,7 +173,7 @@ func (h *Handler) reportSources(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, device)
+	helpers.JSON(c, http.StatusOK, device)
 }
 
 // @Summary List what the device still has to do
@@ -193,7 +194,7 @@ func (h *Handler) openRequests(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, requests)
+	helpers.JSON(c, http.StatusOK, requests)
 }
 
 // @Summary Report how a capture request is going
@@ -232,7 +233,7 @@ func (h *Handler) reportRequestStatus(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updated)
+	helpers.JSON(c, http.StatusOK, updated)
 }
 
 // @Summary Open a capture batch
@@ -265,7 +266,7 @@ func (h *Handler) openBatch(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, batch)
+	helpers.JSON(c, http.StatusOK, batch)
 }
 
 // @Summary Upload one scanned page
@@ -345,7 +346,7 @@ func (h *Handler) putPage(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, page)
+	helpers.JSON(c, http.StatusOK, page)
 }
 
 // @Summary Upload a whole print job
@@ -384,7 +385,7 @@ func (h *Handler) putPrintJob(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, batch)
+	helpers.JSON(c, http.StatusOK, batch)
 }
 
 // @Summary Seal a capture batch
@@ -424,5 +425,5 @@ func (h *Handler) sealBatch(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, batch)
+	helpers.JSON(c, http.StatusOK, batch)
 }

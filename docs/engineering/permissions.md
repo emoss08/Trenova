@@ -274,7 +274,8 @@ refused. The record a root resolver returns, records that are part of it (`Paren
 everything under a self-scoped resolver are not gated this way.
 
 Views are declared on each resource definition (`ReferenceView` in `resources_*.go`) and decided by
-one package, `refview`, which the GraphQL field guard asks for people and agents alike. They are
+one package, `refview`, which the GraphQL field guard asks for people and agents alike, and the
+REST response guard (`internal/api/responseguard`) asks for every REST response. They are
 fixed in the code; an organization decides who sees whole linked records through bundles and job
 templates, and the role's sensitivity ceiling still applies inside a view. Built-in bundles grant
 a linked kind's read where the job needs the full record (billing receivables reads invoices and
@@ -301,9 +302,9 @@ resolvers. A protected field is therefore nullable, and on the client null means
 the worker form, credential form, rate agreement form and Desk cards show "Hidden" and
 disable the input.
 
-The REST routes that return these records (`/workers`, `/rate-agreements`, a rate quote's
-agreement) withhold the same fields through the entity's `WithholdFields`
-(`internal/api/fieldguard`), and an update keeps the stored value of any group the writer
+The REST routes withhold the same fields through the entity's `WithholdFields`
+(`internal/api/fieldguard`): the response guard calls it on every record in every response, at
+the root or nested inside another (a driver on a shipment), and an update keeps the stored value of any group the writer
 cannot see (`KeepFields` in the worker, credential and rate agreement services), so a form
 that never received a field cannot clear it. Creating a record takes the values as sent.
 Workers are published to the realtime stream without their entity, so a subscriber refetches
@@ -320,8 +321,8 @@ New roles get them from bundles: `safety.drivers` and `hr.workers` carry persona
 `billing.rates` carries margins.
 
 To protect another field: add the directive to a nullable field, classify it confidential on
-its resource, give the entity `WithholdFields`/`KeepFields` and call them from its REST routes
-and update path, show "Hidden" where the client reads it, and add it to the tables in
+its resource, give the entity `WithholdFields` (the REST response guard calls it wherever the
+entity appears) and `KeepFields`, call `KeepFields` from its update path, show "Hidden" where the client reads it, and add it to the tables in
 `fieldguard_test.go`.
 
 ## Agents

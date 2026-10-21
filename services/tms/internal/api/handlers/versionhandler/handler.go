@@ -55,7 +55,7 @@ func (h *Handler) getVersion(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, info)
+	helpers.JSON(c, http.StatusOK, info)
 }
 
 func (h *Handler) getUpdateStatus(c *gin.Context) {
@@ -65,7 +65,7 @@ func (h *Handler) getUpdateStatus(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, status)
+	helpers.JSON(c, http.StatusOK, status)
 }
 
 func (h *Handler) checkUpdates(c *gin.Context) {
@@ -75,5 +75,5 @@ func (h *Handler) checkUpdates(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, status)
+	helpers.JSON(c, http.StatusOK, status)
 }

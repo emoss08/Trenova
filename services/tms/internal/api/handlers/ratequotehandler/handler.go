@@ -145,7 +145,7 @@ func (h *Handler) get(c *gin.Context) {
 	}
 
 	fieldguard.Withhold(fieldguard.Visible(c, h.engine), entity)
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 // @Summary List a shipment's rating history
@@ -181,7 +181,7 @@ func (h *Handler) listForShipment(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, quotes)
+	helpers.JSON(c, http.StatusOK, quotes)
 }
 
 // @Summary Get the quote governing a shipment
@@ -220,7 +220,7 @@ func (h *Handler) appliedForShipment(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 // ratedShipment names the engine's result in this package so the generated API
@@ -281,7 +281,7 @@ func (h *Handler) explain(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, rated)
+	helpers.JSON(c, http.StatusOK, rated)
 }
 
 type quoteRequest struct {
@@ -331,7 +331,7 @@ func (h *Handler) quote(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, rated)
+	helpers.JSON(c, http.StatusOK, rated)
 }
 
 func (h *Handler) shipmentID(c *gin.Context) (pulid.ID, error) {
@@ -427,5 +427,5 @@ func (h *Handler) shop(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }

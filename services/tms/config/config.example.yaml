@@ -74,6 +74,7 @@ server:
     exposeHeaders: # Headers exposed to the client
       - X-Request-Id
       - Idempotent-Replayed # Set on a response replayed for a repeated Idempotency-Key
+      - Withheld-By-Access # Names the linked records a response answered with only their reference view
     credentials: true # Allow credentials
     maxAge: 86400 # Preflight cache duration in seconds
 

@@ -230,7 +230,7 @@ func (h *Handler) listIdentityProviders(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 func (h *Handler) createIdentityProvider(c *gin.Context) {
@@ -248,7 +248,7 @@ func (h *Handler) createIdentityProvider(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusCreated, resp)
+	helpers.JSON(c, http.StatusCreated, resp)
 }
 
 func (h *Handler) updateIdentityProvider(c *gin.Context) {
@@ -270,7 +270,7 @@ func (h *Handler) updateIdentityProvider(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 func (h *Handler) deleteIdentityProvider(c *gin.Context) {
@@ -323,7 +323,7 @@ func (h *Handler) createSCIMDirectory(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusCreated, resp)
+	helpers.JSON(c, http.StatusCreated, resp)
 }
 
 func (h *Handler) updateSCIMDirectory(c *gin.Context) {
@@ -345,7 +345,7 @@ func (h *Handler) updateSCIMDirectory(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 func (h *Handler) deleteSCIMDirectory(c *gin.Context) {
@@ -378,7 +378,7 @@ func (h *Handler) listSCIMTokens(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 func (h *Handler) createSCIMToken(c *gin.Context) {
@@ -400,7 +400,7 @@ func (h *Handler) createSCIMToken(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusCreated, resp)
+	helpers.JSON(c, http.StatusCreated, resp)
 }
 
 func (h *Handler) revokeSCIMToken(c *gin.Context) {
@@ -417,7 +417,7 @@ func (h *Handler) revokeSCIMToken(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 func (h *Handler) listSCIMGroupRoleMappings(c *gin.Context) {
@@ -468,7 +468,7 @@ func (h *Handler) createSCIMGroupRoleMapping(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusCreated, resp)
+	helpers.JSON(c, http.StatusCreated, resp)
 }
 
 func (h *Handler) updateSCIMGroupRoleMapping(c *gin.Context) {
@@ -490,7 +490,7 @@ func (h *Handler) updateSCIMGroupRoleMapping(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 func (h *Handler) deleteSCIMGroupRoleMapping(c *gin.Context) {
@@ -537,7 +537,7 @@ func (h *Handler) listProvisioningAuditRecords(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 func (h *Handler) listAccessPolicies(c *gin.Context) {
@@ -550,7 +550,7 @@ func (h *Handler) listAccessPolicies(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 func (h *Handler) createAccessPolicy(c *gin.Context) {
@@ -568,7 +568,7 @@ func (h *Handler) createAccessPolicy(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusCreated, resp)
+	helpers.JSON(c, http.StatusCreated, resp)
 }
 
 func (h *Handler) updateAccessPolicy(c *gin.Context) {
@@ -590,7 +590,7 @@ func (h *Handler) updateAccessPolicy(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 func (h *Handler) deleteAccessPolicy(c *gin.Context) {
@@ -621,7 +621,7 @@ func (h *Handler) getSecurityBriefing(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 func (h *Handler) listAuthEvents(c *gin.Context) {
@@ -634,7 +634,7 @@ func (h *Handler) listAuthEvents(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 func (h *Handler) listRiskDecisions(c *gin.Context) {
@@ -647,7 +647,7 @@ func (h *Handler) listRiskDecisions(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 func (h *Handler) listExternalIdentities(c *gin.Context) {
@@ -660,7 +660,7 @@ func (h *Handler) listExternalIdentities(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 func (h *Handler) listMFAAuthenticators(c *gin.Context) {
@@ -677,7 +677,7 @@ func (h *Handler) listMFAAuthenticators(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 type accessSettingsInput struct {
@@ -695,7 +695,7 @@ func (h *Handler) getAccessSettings(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 func (h *Handler) updateAccessSettings(c *gin.Context) {
@@ -719,5 +719,5 @@ func (h *Handler) updateAccessSettings(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }

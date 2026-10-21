@@ -137,7 +137,7 @@ func (h *Handler) getPartner(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 func (h *Handler) createPartner(c *gin.Context) {
@@ -162,7 +162,7 @@ func (h *Handler) createPartner(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, created)
+	helpers.JSON(c, http.StatusCreated, created)
 }
 
 func (h *Handler) createInternalPartnerPair(c *gin.Context) {
@@ -189,7 +189,7 @@ func (h *Handler) createInternalPartnerPair(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, pair)
+	helpers.JSON(c, http.StatusCreated, pair)
 }
 
 func (h *Handler) updatePartner(c *gin.Context) {
@@ -221,7 +221,7 @@ func (h *Handler) updatePartner(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updated)
+	helpers.JSON(c, http.StatusOK, updated)
 }
 
 func (r *partnerRequest) toEntity(defaultEnabled bool) *edi.EDIPartner {
@@ -272,7 +272,7 @@ func (h *Handler) inspectCertificate(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, summary)
+	helpers.JSON(c, http.StatusOK, summary)
 }
 
 func (h *Handler) getPartnerReadiness(c *gin.Context) {
@@ -297,5 +297,5 @@ func (h *Handler) getPartnerReadiness(c *gin.Context) {
 		h.eh.HandleError(c, errortypes.NewNotFoundError("EDIPartner not found"))
 		return
 	}
-	c.JSON(http.StatusOK, states[0])
+	helpers.JSON(c, http.StatusOK, states[0])
 }

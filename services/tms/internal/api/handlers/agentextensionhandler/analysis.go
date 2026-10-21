@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -40,7 +41,7 @@ func (h *Handler) listAnalysisRuns(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, runs)
+	helpers.JSON(c, http.StatusOK, runs)
 }
 
 // analysisChart sends one of an analysis's charts as the image it is. The
@@ -120,5 +121,5 @@ func (h *Handler) analysisRun(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, run)
+	helpers.JSON(c, http.StatusOK, run)
 }

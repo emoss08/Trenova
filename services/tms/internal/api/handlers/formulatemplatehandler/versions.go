@@ -97,7 +97,7 @@ func (h *Handler) getVersion(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, version)
+	helpers.JSON(c, http.StatusOK, version)
 }
 
 type createVersionRequest struct {
@@ -145,7 +145,7 @@ func (h *Handler) createVersion(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, version)
+	helpers.JSON(c, http.StatusCreated, version)
 }
 
 type rollbackRequest struct {
@@ -195,7 +195,7 @@ func (h *Handler) rollback(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, template)
+	helpers.JSON(c, http.StatusOK, template)
 }
 
 type forkRequest struct {
@@ -247,7 +247,7 @@ func (h *Handler) fork(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, template)
+	helpers.JSON(c, http.StatusCreated, template)
 }
 
 // @Summary Compare formula template versions
@@ -307,7 +307,7 @@ func (h *Handler) compareVersions(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, diff)
+	helpers.JSON(c, http.StatusOK, diff)
 }
 
 // @Summary Get formula template lineage
@@ -342,7 +342,7 @@ func (h *Handler) getLineage(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, lineage)
+	helpers.JSON(c, http.StatusOK, lineage)
 }
 
 type updateVersionTagsRequest struct {
@@ -399,7 +399,7 @@ func (h *Handler) updateVersionTags(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, version)
+	helpers.JSON(c, http.StatusOK, version)
 }
 
 // @Summary List scheduled formula template versions
@@ -434,5 +434,5 @@ func (h *Handler) listScheduledVersions(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, versions)
+	helpers.JSON(c, http.StatusOK, versions)
 }

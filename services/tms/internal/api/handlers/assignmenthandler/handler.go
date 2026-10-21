@@ -138,7 +138,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 func (h *Handler) checkWorkerCompliance(c *gin.Context) {
@@ -160,7 +160,7 @@ func (h *Handler) checkWorkerCompliance(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"valid": true})
+	helpers.JSON(c, http.StatusOK, gin.H{"valid": true})
 }
 
 type upsertAssignmentRequest struct {
@@ -278,7 +278,7 @@ func (h *Handler) upsert(c *gin.Context, create bool) {
 			return
 		}
 
-		c.JSON(http.StatusCreated, entity)
+		helpers.JSON(c, http.StatusCreated, entity)
 		return
 	}
 
@@ -298,5 +298,5 @@ func (h *Handler) upsert(c *gin.Context, create bool) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }

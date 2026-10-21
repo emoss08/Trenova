@@ -72,7 +72,7 @@ func (h *Handler) compose(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 type catalogueField struct {
@@ -124,7 +124,7 @@ func (h *Handler) catalogue(c *gin.Context) {
 		})
 	}
 
-	c.JSON(http.StatusOK, gin.H{"results": out, "count": len(out)})
+	helpers.JSON(c, http.StatusOK, gin.H{"results": out, "count": len(out)})
 }
 
 func requestActor(authCtx *authctx.AuthContext) permissionports.RequestActor {

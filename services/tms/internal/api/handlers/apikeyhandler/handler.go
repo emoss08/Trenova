@@ -151,7 +151,7 @@ func (h *Handler) create(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, result)
+	helpers.JSON(c, http.StatusCreated, result)
 }
 
 // @Summary Get an API key
@@ -188,7 +188,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 // @Summary Update an API key
@@ -233,7 +233,7 @@ func (h *Handler) update(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 // @Summary Rotate an API key
@@ -270,7 +270,7 @@ func (h *Handler) rotate(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 // @Summary Revoke an API key
@@ -307,7 +307,7 @@ func (h *Handler) revoke(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 // @Summary List allowed API key resources
@@ -321,7 +321,7 @@ func (h *Handler) revoke(c *gin.Context) {
 // @Security BearerAuth
 // @Router /api-keys/allowed-resources [get]
 func (h *Handler) getAllowedResources(c *gin.Context) {
-	c.JSON(http.StatusOK, h.apiKeyService.GetAllowedResources(c.Request.Context()))
+	helpers.JSON(c, http.StatusOK, h.apiKeyService.GetAllowedResources(c.Request.Context()))
 }
 
 func (h *Handler) isSessionPrincipal(authCtx *authctx.AuthContext) bool {

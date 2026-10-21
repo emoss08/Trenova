@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/api/responseguard"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/fleetcodeservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/fleetcodeports"
@@ -66,7 +67,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.patch,
 	)
 
-	selectOptions := api.Group("/select-options")
+	selectOptions := api.Group("/select-options", responseguard.References())
 	selectOptions.GET("/", h.selectOptions)
 	selectOptions.GET("/:fleetCodeID", h.getOption)
 }
@@ -143,7 +144,7 @@ func (h *Handler) getOption(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 // @Summary List fleet code options
@@ -208,7 +209,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 // @Summary Create a fleet code
@@ -240,7 +241,7 @@ func (h *Handler) create(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, created)
+	helpers.JSON(c, http.StatusCreated, created)
 }
 
 // @Summary Update a fleet code
@@ -280,7 +281,7 @@ func (h *Handler) update(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updated)
+	helpers.JSON(c, http.StatusOK, updated)
 }
 
 // @Summary Patch a fleet code
@@ -321,5 +322,5 @@ func (h *Handler) patch(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updatedEntity)
+	helpers.JSON(c, http.StatusOK, updatedEntity)
 }

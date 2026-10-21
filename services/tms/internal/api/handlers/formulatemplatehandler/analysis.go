@@ -3,6 +3,7 @@ package formulatemplatehandler
 import (
 	"net/http"
 
+	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -68,7 +69,7 @@ func (h *Handler) approvalImpact(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, response)
+	helpers.JSON(c, http.StatusOK, response)
 }
 
 // @Summary Compare a formula template's pending content with its last approved snapshot
@@ -103,7 +104,7 @@ func (h *Handler) reviewDiff(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, response)
+	helpers.JSON(c, http.StatusOK, response)
 }
 
 // @Summary Report whether a formula template is ready to submit or approve
@@ -138,7 +139,7 @@ func (h *Handler) readiness(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, response)
+	helpers.JSON(c, http.StatusOK, response)
 }
 
 // @Summary Backtest a formula template candidate against rated shipments
@@ -191,5 +192,5 @@ func (h *Handler) backtest(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, response)
+	helpers.JSON(c, http.StatusOK, response)
 }

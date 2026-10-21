@@ -51,6 +51,24 @@ Internal.
   `@kind(resource:)`), works out how the record holding each field was reached, and asks
   `refview`. A new type, field or resolver is covered with no permission code. People and agents
   go through the same guard.
+- **REST.** Every handler writes its response with `helpers.JSON`, which hands the value to the
+  request's guard (`internal/api/responseguard`, installed on every signed-in route group). The
+  guard walks the value by reflection with a plan cached per Go type: a domain struct named for a
+  resource is that kind (`customer.Customer`, `worker.Worker`), `namedKinds` holds the few whose
+  name does not spell theirs (`shipment.Stop`, `billingqueue.BillingQueueItem`), and any other
+  struct is part of the record that carries it. The value a route returns (each item of a list or
+  page) is the root record; a record of a kind reached through it is linked, unless it is part of
+  the root's family (a shipment's moves and stops), and so on down. A linked record of a kind the
+  caller cannot read is written as an object with all its keys and `null` for each field
+  `refview` withholds, and the response names it, without list indices, in the
+  `Withheld-By-Access` header (`moves.assignment.primaryWorker`). The handler's own value is never
+  changed. Protected field groups are withheld from every record in the response through the
+  entity's `WithholdFields`. Select-option routes mark their records `responseguard.References()`
+  (they authorize no kind, so each is shown as a linked record), and routes that return only the
+  caller's own records (`/users/me`, the driver portal) mark them `responseguard.SelfScoped()`.
+  On the client, a REST schema carries a linked record as
+  `linkedRecordSchema(kind, schema)` (`@trenova/shared/lib/linked-record`), which makes every field
+  outside the view nullable, and a screen draws `WithheldValue` where one it shows is null.
 
 ## Building a screen
 
@@ -99,3 +117,6 @@ Each failure says what to add.
 | `TestEveryDeclaredLinkedFieldIsNullable` (gqlext) | a field selected under `@requiresRead` is non-null |
 | `TestEveryAuthorizesDeclarationIsCheckedByItsResolver` (gqlext) | a root field declares `@authorizes` for a kind its resolver does not check |
 | `TestReferenceFragmentsAreGenerated` (gqlext) | the generated fragments or views are out of date |
+| `TestEveryRelationAResponseReachesIsClassified` (responseguard) | a REST response reaches a struct through a bun relation that is neither a kind nor listed in `carried` |
+| `TestEveryKindAgreesWithTheGraphQLGuard` (responseguard) | a Go type is gated as a different kind on REST than the GraphQL type bound to it |
+| `TestHandlersWriteEveryResponseThroughTheGuard` (responseguard) | a handler writes a response with gin directly instead of `helpers.JSON` |

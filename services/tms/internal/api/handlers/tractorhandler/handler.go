@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/api/responseguard"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/tractorservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
@@ -73,7 +74,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.bulkUpdateStatus,
 	)
 
-	selectOptions := api.Group("/select-options")
+	selectOptions := api.Group("/select-options", responseguard.References())
 	selectOptions.GET("/", h.selectOptions)
 	selectOptions.GET("/:tractorID", h.getOption)
 }
@@ -164,7 +165,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 // @Summary Get a tractor option
@@ -197,7 +198,7 @@ func (h *Handler) getOption(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 // @Summary List tractor options
@@ -262,7 +263,7 @@ func (h *Handler) create(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, created)
+	helpers.JSON(c, http.StatusCreated, created)
 }
 
 // @Summary Update a tractor
@@ -304,7 +305,7 @@ func (h *Handler) update(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updated)
+	helpers.JSON(c, http.StatusOK, updated)
 }
 
 // @Summary Patch a tractor
@@ -355,7 +356,7 @@ func (h *Handler) patch(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updated)
+	helpers.JSON(c, http.StatusOK, updated)
 }
 
 // @Summary Bulk update tractor statuses
@@ -399,5 +400,5 @@ func (h *Handler) bulkUpdateStatus(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, results)
+	helpers.JSON(c, http.StatusOK, results)
 }

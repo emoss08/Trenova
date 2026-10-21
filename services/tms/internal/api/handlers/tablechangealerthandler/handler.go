@@ -76,7 +76,7 @@ func (h *Handler) listAllowlistedTables(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, tables)
+	helpers.JSON(c, http.StatusOK, tables)
 }
 
 func (h *Handler) listSubscriptions(c *gin.Context) {
@@ -123,7 +123,7 @@ func (h *Handler) getSubscription(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 func (h *Handler) createSubscription(c *gin.Context) {
@@ -141,7 +141,7 @@ func (h *Handler) createSubscription(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, created)
+	helpers.JSON(c, http.StatusCreated, created)
 }
 
 func (h *Handler) updateSubscription(c *gin.Context) {
@@ -167,7 +167,7 @@ func (h *Handler) updateSubscription(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updated)
+	helpers.JSON(c, http.StatusOK, updated)
 }
 
 func (h *Handler) deleteSubscription(c *gin.Context) {
@@ -210,7 +210,7 @@ func (h *Handler) pauseSubscription(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updated)
+	helpers.JSON(c, http.StatusOK, updated)
 }
 
 func (h *Handler) resumeSubscription(c *gin.Context) {
@@ -232,5 +232,5 @@ func (h *Handler) resumeSubscription(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updated)
+	helpers.JSON(c, http.StatusOK, updated)
 }

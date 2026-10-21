@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@trenova/shared/compon
 import { exceptionReasonLabels } from "@/lib/choices";
 import { billingQueue } from "@/lib/queries/billing-queue";
 import { getDestinationLocation, getOriginLocation } from "@/lib/shipment-utils";
+import { WithheldValue } from "@trenova/shared/components/withheld-value";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import { CommentsTabSkeleton } from "@/routes/shipment/_components/comments/comments-skeleton";
 import type { ExceptionReasonCode } from "@trenova/shared/types/billing-queue";
@@ -19,7 +20,7 @@ import {
   RefreshCw02Icon,
 } from "@trenova/shared/components/icons";
 import { useNow } from "@trenova/shared/hooks/use-now";
-import { lazy, Suspense, useCallback, useState } from "react";
+import { lazy, Suspense, useCallback, useState, type ReactNode } from "react";
 import { Link } from "react-router";
 import { BillingQueueActionBar } from "./billing-queue-action-bar";
 import { BillingQueueAssignDialog } from "./billing-queue-assign-dialog";
@@ -81,6 +82,7 @@ export default function BillingQueueDetailPane({
   const isPartial = allocated != null && Math.abs(allocated - totalCharge) >= 0.005;
   const originLocation = shipment ? getOriginLocation(shipment) : null;
   const destLocation = shipment ? getDestinationLocation(shipment) : null;
+  const routeWithheld = shipment != null && shipment.moves === null;
 
   return (
     <div className="flex h-full flex-col">
@@ -126,6 +128,8 @@ export default function BillingQueueDetailPane({
               label={t("Route")}
               value={`${originLocation.city}, ${originLocation.state?.abbreviation} → ${destLocation.city}, ${destLocation.state?.abbreviation}`}
             />
+          ) : routeWithheld ? (
+            <MetadataCell label={t("Route")} value={<WithheldValue kind="shipment" />} />
           ) : null}
         </div>
       </div>
@@ -211,7 +215,7 @@ export default function BillingQueueDetailPane({
   );
 }
 
-function MetadataCell({ label, value }: { label: string; value: string }) {
+function MetadataCell({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div>
       <p className="text-muted-foreground text-xs">{label}</p>

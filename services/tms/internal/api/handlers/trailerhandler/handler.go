@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/api/responseguard"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/trailerservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
@@ -78,7 +79,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.locate,
 	)
 
-	selectOptions := api.Group("/select-options")
+	selectOptions := api.Group("/select-options", responseguard.References())
 	selectOptions.GET("/", h.selectOptions)
 	selectOptions.GET("/:trailerID", h.getOption)
 }
@@ -167,7 +168,7 @@ func (h *Handler) getOption(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 // @Summary List trailer options
@@ -232,7 +233,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 // @Summary Create a trailer
@@ -264,7 +265,7 @@ func (h *Handler) create(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, created)
+	helpers.JSON(c, http.StatusCreated, created)
 }
 
 // @Summary Update a trailer
@@ -303,7 +304,7 @@ func (h *Handler) update(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updated)
+	helpers.JSON(c, http.StatusOK, updated)
 }
 
 // @Summary Patch a trailer
@@ -354,7 +355,7 @@ func (h *Handler) patch(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updatedEntity)
+	helpers.JSON(c, http.StatusOK, updatedEntity)
 }
 
 // @Summary Bulk update trailer statuses
@@ -398,7 +399,7 @@ func (h *Handler) bulkUpdateStatus(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, results)
+	helpers.JSON(c, http.StatusOK, results)
 }
 
 func (h *Handler) locate(c *gin.Context) {
@@ -427,5 +428,5 @@ func (h *Handler) locate(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }

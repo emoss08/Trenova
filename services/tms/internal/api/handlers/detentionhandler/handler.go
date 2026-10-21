@@ -104,7 +104,7 @@ func (h *Handler) desk(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entries)
+	helpers.JSON(c, http.StatusOK, entries)
 }
 
 // @Summary List detention occurrences
@@ -197,7 +197,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, detail)
+	helpers.JSON(c, http.StatusOK, detail)
 }
 
 // @Summary Build the dispute packet for an occurrence
@@ -226,7 +226,7 @@ func (h *Handler) disputePacket(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, packet)
+	helpers.JSON(c, http.StatusOK, packet)
 }
 
 type waiveRequest struct {
@@ -274,7 +274,7 @@ func (h *Handler) waive(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, occurrence)
+	helpers.JSON(c, http.StatusOK, occurrence)
 }
 
 // @Summary Approve a detention charge for billing
@@ -307,7 +307,7 @@ func (h *Handler) approve(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, occurrence)
+	helpers.JSON(c, http.StatusOK, occurrence)
 }
 
 type disputeRequest struct {
@@ -353,7 +353,7 @@ func (h *Handler) dispute(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, occurrence)
+	helpers.JSON(c, http.StatusOK, occurrence)
 }
 
 func (h *Handler) statsRequest(c *gin.Context) *detentionports.DetentionStatsRequest {
@@ -414,7 +414,7 @@ func (h *Handler) backtest(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 // @Summary Detention profile per facility
@@ -434,7 +434,7 @@ func (h *Handler) facilities(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, stats)
+	helpers.JSON(c, http.StatusOK, stats)
 }
 
 // @Summary Detention margin per customer
@@ -454,7 +454,7 @@ func (h *Handler) customers(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, stats)
+	helpers.JSON(c, http.StatusOK, stats)
 }
 
 // @Summary Detention waiver leakage by coded reason
@@ -474,5 +474,5 @@ func (h *Handler) waivers(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, stats)
+	helpers.JSON(c, http.StatusOK, stats)
 }

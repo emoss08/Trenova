@@ -223,7 +223,7 @@ func (h *Handler) stats(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, stats)
+	helpers.JSON(c, http.StatusOK, stats)
 }
 
 // @Summary Get a billing queue item
@@ -535,7 +535,7 @@ func (h *Handler) listFilterPresets(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
+	helpers.JSON(c, http.StatusOK, gin.H{
 		"results": presets,
 		"count":   len(presets),
 	})
@@ -592,7 +592,7 @@ func (h *Handler) createFilterPreset(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, created)
+	helpers.JSON(c, http.StatusCreated, created)
 }
 
 // @Summary Update a billing queue filter preset
@@ -650,7 +650,7 @@ func (h *Handler) updateFilterPreset(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updated)
+	helpers.JSON(c, http.StatusOK, updated)
 }
 
 // @Summary Delete a billing queue filter preset

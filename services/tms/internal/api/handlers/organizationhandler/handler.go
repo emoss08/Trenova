@@ -150,7 +150,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 // @Summary Update an organization
@@ -204,7 +204,7 @@ func (h *Handler) update(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updatedEntity)
+	helpers.JSON(c, http.StatusOK, updatedEntity)
 }
 
 // @Summary Upload an organization logo
@@ -250,7 +250,7 @@ func (h *Handler) uploadLogo(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updatedEntity)
+	helpers.JSON(c, http.StatusOK, updatedEntity)
 }
 
 // @Summary Get organization logo URL
@@ -283,7 +283,7 @@ func (h *Handler) getLogoURL(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 // @Summary Delete an organization logo
@@ -319,7 +319,7 @@ func (h *Handler) deleteLogo(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updatedEntity)
+	helpers.JSON(c, http.StatusOK, updatedEntity)
 }
 
 func (h *Handler) getMicrosoftSSOConfig(c *gin.Context) {
@@ -337,7 +337,7 @@ func (h *Handler) getMicrosoftSSOConfig(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 func (h *Handler) upsertMicrosoftSSOConfig(c *gin.Context) {
@@ -371,7 +371,7 @@ func (h *Handler) upsertMicrosoftSSOConfig(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 func (h *Handler) getOktaSSOConfig(c *gin.Context) {
@@ -389,7 +389,7 @@ func (h *Handler) getOktaSSOConfig(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 func (h *Handler) upsertOktaSSOConfig(c *gin.Context) {
@@ -423,7 +423,7 @@ func (h *Handler) upsertOktaSSOConfig(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 func currentOrganizationParam(c *gin.Context, authCtx *authctx.AuthContext) (pulid.ID, error) {

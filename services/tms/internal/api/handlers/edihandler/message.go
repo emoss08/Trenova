@@ -88,7 +88,7 @@ func (h *Handler) getMessage(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, message)
+	helpers.JSON(c, http.StatusOK, message)
 }
 
 func (h *Handler) inspectMessage(c *gin.Context) {
@@ -109,7 +109,7 @@ func (h *Handler) inspectMessage(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, inspection)
+	helpers.JSON(c, http.StatusOK, inspection)
 }
 
 func (h *Handler) retryMessageDelivery(c *gin.Context) {
@@ -130,7 +130,7 @@ func (h *Handler) retryMessageDelivery(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, message)
+	helpers.JSON(c, http.StatusOK, message)
 }
 
 func (h *Handler) replayMessageDelivery(c *gin.Context) {
@@ -151,7 +151,7 @@ func (h *Handler) replayMessageDelivery(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, message)
+	helpers.JSON(c, http.StatusOK, message)
 }
 
 func (h *Handler) bulkRetryMessageDelivery(c *gin.Context) {
@@ -171,5 +171,5 @@ func (h *Handler) bulkRetryMessageDelivery(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }

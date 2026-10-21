@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
+	"github.com/emoss08/trenova/internal/api/responseguard"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
@@ -18,7 +19,7 @@ import (
 )
 
 func (h *Handler) registerTemplateRoutes(templates *gin.RouterGroup) {
-	selectOptions := templates.Group("/select-options")
+	selectOptions := templates.Group("/select-options", responseguard.References())
 	selectOptions.GET(
 		"/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
@@ -177,7 +178,7 @@ func (h *Handler) createTemplate(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusCreated, created)
+	helpers.JSON(c, http.StatusCreated, created)
 }
 
 func (h *Handler) getTemplate(c *gin.Context) {
@@ -198,7 +199,7 @@ func (h *Handler) getTemplate(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, template)
+	helpers.JSON(c, http.StatusOK, template)
 }
 
 func (h *Handler) updateTemplate(c *gin.Context) {
@@ -224,7 +225,7 @@ func (h *Handler) updateTemplate(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, updated)
+	helpers.JSON(c, http.StatusOK, updated)
 }
 
 func (h *Handler) createDraftVersion(c *gin.Context) {
@@ -252,7 +253,7 @@ func (h *Handler) createDraftVersion(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusCreated, version)
+	helpers.JSON(c, http.StatusCreated, version)
 }
 
 func (h *Handler) listTemplateVersions(c *gin.Context) {
@@ -273,7 +274,7 @@ func (h *Handler) listTemplateVersions(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, versions)
+	helpers.JSON(c, http.StatusOK, versions)
 }
 
 func (h *Handler) getTemplateVersion(c *gin.Context) {
@@ -295,7 +296,7 @@ func (h *Handler) getTemplateVersion(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, version)
+	helpers.JSON(c, http.StatusOK, version)
 }
 
 func (h *Handler) updateTemplateVersion(c *gin.Context) {
@@ -322,7 +323,7 @@ func (h *Handler) updateTemplateVersion(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, version)
+	helpers.JSON(c, http.StatusOK, version)
 }
 
 func (h *Handler) replaceTemplateSegments(c *gin.Context) {
@@ -349,7 +350,7 @@ func (h *Handler) replaceTemplateSegments(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, version)
+	helpers.JSON(c, http.StatusOK, version)
 }
 
 func (h *Handler) listTemplateScriptLibraries(c *gin.Context) {
@@ -371,7 +372,7 @@ func (h *Handler) listTemplateScriptLibraries(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, libraries)
+	helpers.JSON(c, http.StatusOK, libraries)
 }
 
 func (h *Handler) replaceTemplateScriptLibraries(c *gin.Context) {
@@ -398,7 +399,7 @@ func (h *Handler) replaceTemplateScriptLibraries(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, version)
+	helpers.JSON(c, http.StatusOK, version)
 }
 
 func (h *Handler) validateTemplateVersion(c *gin.Context) {
@@ -412,7 +413,7 @@ func (h *Handler) validateTemplateVersion(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"diagnostics": diagnostics})
+	helpers.JSON(c, http.StatusOK, gin.H{"diagnostics": diagnostics})
 }
 
 func (h *Handler) certifyTemplateVersion(c *gin.Context) {
@@ -446,7 +447,7 @@ func (h *Handler) templateVersionAction(
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, version)
+	helpers.JSON(c, http.StatusOK, version)
 }
 
 func (h *Handler) templateActionRequest(c *gin.Context) (*ediservice.EDIActionNotesRequest, error) {

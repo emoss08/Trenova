@@ -1,6 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
+import { WithheldValue } from "@trenova/shared/components/withheld-value";
 import {
   DescriptionEmpty,
   DescriptionItem,
@@ -40,6 +41,7 @@ export function InvoiceOverviewTab({
   const shipment = invoice.shipment;
   const originLocation = shipment ? getOriginLocation(shipment) : null;
   const destinationLocation = shipment ? getDestinationLocation(shipment) : null;
+  const routeWithheld = shipment != null && shipment.moves === null;
   const billsSingleShipment = invoiceBillsSingleShipment(invoice.scope);
   const billingPeriod = invoiceBillingPeriod(invoice);
 
@@ -153,6 +155,10 @@ export function InvoiceOverviewTab({
                   <DescriptionItem label={t("Route")}>
                     {originLocation.city}, {originLocation.state?.abbreviation} →{" "}
                     {destinationLocation.city}, {destinationLocation.state?.abbreviation}
+                  </DescriptionItem>
+                ) : routeWithheld ? (
+                  <DescriptionItem label={t("Route")}>
+                    <WithheldValue kind="shipment" />
                   </DescriptionItem>
                 ) : null}
               </DescriptionList>

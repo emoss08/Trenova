@@ -129,7 +129,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, data)
+	helpers.JSON(c, http.StatusOK, data)
 }
 
 func (h *Handler) authorizePage(c *gin.Context, page kernelports.AnalyticsPage) error {

@@ -160,7 +160,7 @@ func (h *Handler) match(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, guide)
+	helpers.JSON(c, http.StatusOK, guide)
 }
 
 // @Summary Get a routing guide
@@ -196,7 +196,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 // @Summary Create a routing guide
@@ -229,7 +229,7 @@ func (h *Handler) create(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, created)
+	helpers.JSON(c, http.StatusCreated, created)
 }
 
 // @Summary Update a routing guide
@@ -271,7 +271,7 @@ func (h *Handler) update(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updated)
+	helpers.JSON(c, http.StatusOK, updated)
 }
 
 // @Summary Delete a routing guide

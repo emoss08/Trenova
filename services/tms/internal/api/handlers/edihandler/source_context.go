@@ -92,7 +92,7 @@ func (h *Handler) getSourceContextSchema(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, schema)
+	helpers.JSON(c, http.StatusOK, schema)
 }
 
 func (h *Handler) listSourceContextSchemaFields(c *gin.Context) {

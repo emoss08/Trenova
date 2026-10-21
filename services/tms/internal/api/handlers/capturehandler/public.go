@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/gin-gonic/gin"
@@ -38,7 +39,7 @@ func (h *Handler) startPairing(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, grant)
+	helpers.JSON(c, http.StatusOK, grant)
 }
 
 type exchangePairingRequest struct {
@@ -73,7 +74,7 @@ func (h *Handler) exchangePairing(c *gin.Context) {
 	}
 
 	c.Header("Cache-Control", "no-store")
-	c.JSON(http.StatusOK, pair)
+	helpers.JSON(c, http.StatusOK, pair)
 }
 
 // @Summary Rotate a device's credential
@@ -106,7 +107,7 @@ func (h *Handler) refreshToken(c *gin.Context) {
 	}
 
 	c.Header("Cache-Control", "no-store")
-	c.JSON(http.StatusOK, pair)
+	helpers.JSON(c, http.StatusOK, pair)
 }
 
 // releaseCacheSeconds is how long a browser or proxy may keep the manifest.
@@ -137,5 +138,5 @@ func (h *Handler) latestRelease(c *gin.Context) {
 	}
 
 	c.Header("Cache-Control", "public, max-age="+strconv.Itoa(releaseCacheSeconds))
-	c.JSON(http.StatusOK, latest.Signed)
+	helpers.JSON(c, http.StatusOK, latest.Signed)
 }

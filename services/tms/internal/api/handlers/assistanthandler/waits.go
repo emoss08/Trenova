@@ -3,6 +3,7 @@ package assistanthandler
 import (
 	"net/http"
 
+	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -41,7 +42,7 @@ func (h *Handler) listWaits(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, waitListResponse{Items: items})
+	helpers.JSON(c, http.StatusOK, waitListResponse{Items: items})
 }
 
 func (h *Handler) cancelWait(c *gin.Context) {
@@ -68,5 +69,5 @@ func (h *Handler) cancelWait(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, wait)
+	helpers.JSON(c, http.StatusOK, wait)
 }

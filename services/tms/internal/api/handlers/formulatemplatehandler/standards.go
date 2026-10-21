@@ -3,6 +3,7 @@ package formulatemplatehandler
 import (
 	"net/http"
 
+	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/gin-gonic/gin"
@@ -24,7 +25,7 @@ func (h *Handler) listStandards(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, standards)
+	helpers.JSON(c, http.StatusOK, standards)
 }
 
 // @Summary Install the standard formula template library for this organization
@@ -50,5 +51,5 @@ func (h *Handler) installStandards(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }

@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/api/responseguard"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -28,6 +29,10 @@ import (
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+func contentServiceUnavailable() gin.H {
+	return gin.H{"message": "Document content service unavailable"}
+}
 
 type Params struct {
 	fx.In
@@ -94,7 +99,8 @@ func (h *Handler) limitUploadBody(maxFiles int) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		limit := h.maxUploadBodyBytes(maxFiles)
 		if c.Request.ContentLength > limit {
-			c.AbortWithStatusJSON(http.StatusRequestEntityTooLarge, gin.H{
+			c.Abort()
+			helpers.JSON(c, http.StatusRequestEntityTooLarge, gin.H{
 				"error": "request body too large",
 			})
 			return
@@ -197,7 +203,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
 		h.list,
 	)
-	selectOptions := api.Group("/select-options")
+	selectOptions := api.Group("/select-options", responseguard.References())
 	selectOptions.GET("/", h.selectOptions)
 	selectOptions.GET("/:documentID", h.getOption)
 	api.GET(
@@ -399,7 +405,7 @@ func (h *Handler) getOption(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 // @Summary List document options
@@ -470,7 +476,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 func (h *Handler) listVersions(c *gin.Context) {
@@ -490,7 +496,7 @@ func (h *Handler) listVersions(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, versions)
+	helpers.JSON(c, http.StatusOK, versions)
 }
 
 func (h *Handler) restoreVersion(c *gin.Context) {
@@ -510,7 +516,7 @@ func (h *Handler) restoreVersion(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, doc)
+	helpers.JSON(c, http.StatusOK, doc)
 }
 
 // @Summary Get a document download URL
@@ -772,7 +778,7 @@ func (h *Handler) upload(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, result.Document)
+	helpers.JSON(c, http.StatusCreated, result.Document)
 }
 
 func (h *Handler) createUploadSession(c *gin.Context) {
@@ -806,7 +812,7 @@ func (h *Handler) createUploadSession(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, session)
+	helpers.JSON(c, http.StatusCreated, session)
 }
 
 func (h *Handler) listActiveUploadSessions(c *gin.Context) {
@@ -825,7 +831,7 @@ func (h *Handler) listActiveUploadSessions(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, sessions)
+	helpers.JSON(c, http.StatusOK, sessions)
 }
 
 func (h *Handler) getUploadSession(c *gin.Context) {
@@ -848,7 +854,7 @@ func (h *Handler) getUploadSession(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, state)
+	helpers.JSON(c, http.StatusOK, state)
 }
 
 func (h *Handler) getUploadPartURLs(c *gin.Context) {
@@ -878,7 +884,7 @@ func (h *Handler) getUploadPartURLs(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"parts": targets})
+	helpers.JSON(c, http.StatusOK, gin.H{"parts": targets})
 }
 
 func (h *Handler) uploadSessionPart(c *gin.Context) {
@@ -914,7 +920,7 @@ func (h *Handler) uploadSessionPart(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, session)
+	helpers.JSON(c, http.StatusOK, session)
 }
 
 func (h *Handler) completeUploadSession(c *gin.Context) {
@@ -938,7 +944,7 @@ func (h *Handler) completeUploadSession(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusAccepted, session)
+	helpers.JSON(c, http.StatusAccepted, session)
 }
 
 func (h *Handler) cancelUploadSession(c *gin.Context) {
@@ -957,7 +963,7 @@ func (h *Handler) cancelUploadSession(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"status": documentupload.StatusCanceled})
+	helpers.JSON(c, http.StatusOK, gin.H{"status": documentupload.StatusCanceled})
 }
 
 type bulkUploadRequest struct {
@@ -1037,7 +1043,7 @@ func (h *Handler) uploadBulk(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
+	helpers.JSON(c, http.StatusCreated, gin.H{
 		"documents":    result.Documents,
 		"errorCount":   len(result.Errors),
 		"successCount": len(result.Documents),
@@ -1129,7 +1135,7 @@ func (h *Handler) bulkDelete(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
+	helpers.JSON(c, http.StatusOK, gin.H{
 		"deletedCount": result.DeletedCount,
 		"errorCount":   len(result.Errors),
 	})
@@ -1170,7 +1176,7 @@ func (h *Handler) getByResource(c *gin.Context) {
 			return
 		}
 
-		c.JSON(http.StatusOK, documents)
+		helpers.JSON(c, http.StatusOK, documents)
 		return
 	}
 
@@ -1188,7 +1194,7 @@ func (h *Handler) getByResource(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, documents)
+	helpers.JSON(c, http.StatusOK, documents)
 }
 
 func (h *Handler) getPacketSummary(c *gin.Context) {
@@ -1208,12 +1214,16 @@ func (h *Handler) getPacketSummary(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, summary)
+	helpers.JSON(c, http.StatusOK, summary)
 }
 
 func (h *Handler) getContent(c *gin.Context) {
 	if h.contentService == nil {
-		c.JSON(http.StatusNotImplemented, gin.H{"message": "Document content service unavailable"})
+		helpers.JSON(
+			c,
+			http.StatusNotImplemented,
+			contentServiceUnavailable(),
+		)
 		return
 	}
 
@@ -1237,12 +1247,16 @@ func (h *Handler) getContent(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, content)
+	helpers.JSON(c, http.StatusOK, content)
 }
 
 func (h *Handler) getShipmentDraft(c *gin.Context) {
 	if h.contentService == nil {
-		c.JSON(http.StatusNotImplemented, gin.H{"message": "Document content service unavailable"})
+		helpers.JSON(
+			c,
+			http.StatusNotImplemented,
+			contentServiceUnavailable(),
+		)
 		return
 	}
 
@@ -1266,12 +1280,16 @@ func (h *Handler) getShipmentDraft(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, draft)
+	helpers.JSON(c, http.StatusOK, draft)
 }
 
 func (h *Handler) reextractDocumentContent(c *gin.Context) {
 	if h.contentService == nil {
-		c.JSON(http.StatusNotImplemented, gin.H{"message": "Document content service unavailable"})
+		helpers.JSON(
+			c,
+			http.StatusNotImplemented,
+			contentServiceUnavailable(),
+		)
 		return
 	}
 
@@ -1357,7 +1375,7 @@ func (h *Handler) review(c *gin.Context, decision document.ReviewDecision, reaso
 		return
 	}
 
-	c.JSON(http.StatusOK, reviewed)
+	helpers.JSON(c, http.StatusOK, reviewed)
 }
 
 type setSignatureRequest struct {
@@ -1418,7 +1436,7 @@ func (h *Handler) setSignature(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updated)
+	helpers.JSON(c, http.StatusOK, updated)
 }
 
 type attachToShipmentRequest struct {
@@ -1494,7 +1512,7 @@ func (h *Handler) attachToShipment(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusOK, updated)
+	helpers.JSON(c, http.StatusOK, updated)
 }
 
 // @Summary Open the import assistant's conversation about a document
@@ -1550,7 +1568,7 @@ func (h *Handler) openImportAssistantThread(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, opened)
+	helpers.JSON(c, http.StatusOK, opened)
 }
 
 func (h *Handler) getImportAssistantHistory(c *gin.Context) {
@@ -1583,7 +1601,7 @@ func (h *Handler) getImportAssistantHistory(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 func (h *Handler) extractionStatus(c *gin.Context) {
@@ -1598,5 +1616,5 @@ func (h *Handler) extractionStatus(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, status)
+	helpers.JSON(c, http.StatusOK, status)
 }
