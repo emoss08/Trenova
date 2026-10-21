@@ -75,12 +75,8 @@ func countsAgainstEndpoint(ctx context.Context, err error) bool {
 	if !ok {
 		return false
 	}
-	switch st.Code() {
-	case codes.Unavailable, codes.DeadlineExceeded, codes.Unknown:
-		return true
-	default:
-		return false
-	}
+	code := st.Code()
+	return code == codes.Unavailable || code == codes.DeadlineExceeded || code == codes.Unknown
 }
 
 func draining(err error) bool {
