@@ -355,6 +355,12 @@ docker compose run --rm tms-api encryption rewrap --dry-run
 docker compose run --rm tms-api encryption rewrap
 ```
 
+The same command binds older integration secrets (every integration's API keys and
+webhook secrets) and inbound mailbox signing secrets and API keys to the record they
+belong to, so a sealed value copied onto another organization, integration or mailbox no
+longer opens. Until it has run, values sealed before the upgrade are still read, and an
+integration's secrets are also bound the next time it is saved.
+
 The API, worker and every `trenova` command now refuse to start when the key manager
 cannot be built, instead of starting with encryption silently switched off: an empty
 `TRENOVA_SECURITY_ENCRYPTION_KEY` with `keyManager: local`, or with `keyManager:

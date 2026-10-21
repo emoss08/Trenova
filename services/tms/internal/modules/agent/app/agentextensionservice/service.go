@@ -176,7 +176,6 @@ func secretScope(tenantInfo pagination.TenantInfo, typ agentextension.Type) secr
 		Tenant:       tenantInfo,
 		ResourceKind: secretResourceKind,
 		Subject:      typ.String(),
-		Bind:         true,
 	}
 }
 

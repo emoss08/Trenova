@@ -16,7 +16,6 @@ type Scope struct {
 	Tenant       pagination.TenantInfo
 	ResourceKind string
 	Subject      string
-	Bind         bool
 }
 
 func (sc Scope) aad(fieldKey string) encryptionservice.AAD {
@@ -29,9 +28,6 @@ func (sc Scope) aad(fieldKey string) encryptionservice.AAD {
 }
 
 func (sc *Scope) SecretScopes(fieldKey string) []kernelports.SecretScope {
-	if !sc.Bind {
-		return []kernelports.SecretScope{encryptionservice.AAD{}.SecretScope()}
-	}
 	return []kernelports.SecretScope{
 		sc.aad(fieldKey).SecretScope(),
 		encryptionservice.AAD{}.SecretScope(),
@@ -48,24 +44,16 @@ func NewCodec(encryption *encryptionservice.Service, logger *zap.Logger) Codec {
 }
 
 func (c Codec) Encrypt(value, fieldKey string, scope Scope) (string, error) {
-	if !scope.Bind {
-		return c.encryption.EncryptString(value)
-	}
-
 	return c.encryption.EncryptStringWithAAD(value, scope.aad(fieldKey))
 }
 
 func (c Codec) Decrypt(value, fieldKey string, scope Scope) (string, error) {
-	if !scope.Bind {
-		return c.encryption.DecryptString(value)
-	}
-
 	decrypted, _, err := c.encryption.DecryptStringWithLegacy(value, scope.aad(fieldKey))
 	return decrypted, err
 }
 
 func (c Codec) Rebind(stored, fieldKey string, scope Scope) string {
-	if !scope.Bind || stored == "" {
+	if stored == "" {
 		return stored
 	}
 

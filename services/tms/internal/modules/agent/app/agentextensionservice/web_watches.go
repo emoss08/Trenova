@@ -50,7 +50,6 @@ func webWatchScope(tenantInfo pagination.TenantInfo, watchID pulid.ID) secretcon
 		Tenant:       tenantInfo,
 		ResourceKind: webWatchSecretKind,
 		Subject:      watchID.String(),
-		Bind:         true,
 	}
 }
 

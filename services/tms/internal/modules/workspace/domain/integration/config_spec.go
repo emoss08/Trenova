@@ -16,10 +16,14 @@ const (
 
 type ConfigFieldSpec = configspec.Field
 
+const (
+	WebhookSecretField        = "webhookSecret"
+	WebhookSigningSecretField = "webhookSigningSecret"
+)
+
 type IntegrationSpec struct {
 	Fields              []ConfigFieldSpec `json:"fields"`
 	SupportsTestConnect bool              `json:"supportsTestConnect"`
-	BindSecretsToTenant bool              `json:"-"`
 }
 
 var ConfigSpecs = map[Type]IntegrationSpec{
@@ -50,7 +54,7 @@ var ConfigSpecs = map[Type]IntegrationSpec{
 				Default: "https://api.samsara.com",
 			},
 			{
-				Key:       "webhookSecret",
+				Key:       WebhookSecretField,
 				Label:     "Webhook Secret",
 				Type:      ConfigFieldTypePassword,
 				Sensitive: true,
@@ -174,7 +178,7 @@ var ConfigSpecs = map[Type]IntegrationSpec{
 				Placeholder: "https://api.resend.com",
 			},
 			{
-				Key:       "webhookSigningSecret",
+				Key:       WebhookSigningSecretField,
 				Label:     "Webhook Signing Secret",
 				Type:      ConfigFieldTypePassword,
 				Sensitive: true,

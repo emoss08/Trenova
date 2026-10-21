@@ -27,7 +27,6 @@ func portalSiteScope(tenantInfo pagination.TenantInfo, siteID pulid.ID) secretco
 		Tenant:       tenantInfo,
 		ResourceKind: portalSiteSecretKind,
 		Subject:      siteID.String(),
-		Bind:         true,
 	}
 }
 

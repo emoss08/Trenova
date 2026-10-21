@@ -66,6 +66,7 @@ const (
 	PurposeMFATOTPSecret               Purpose = "mfa_totp_secret"              // #nosec G101 -- AAD label, not a credential.
 	PurposeAIProviderCredential        Purpose = "ai_provider_credential"       // #nosec G101 -- AAD label, not a credential.
 	PurposeAIProviderDraftCredential   Purpose = "ai_provider_draft_credential" // #nosec G101 -- AAD label, not a credential.
+	PurposeInboundMailboxSecret        Purpose = "inbound_mailbox_secret"       // #nosec G101 -- AAD label, not a credential.
 
 	CryptoModeEnvelopeV1 = "envelope_v1"
 
@@ -436,6 +437,15 @@ func AIProviderDraftCredentialAAD(orgID, buID, userID pulid.ID) AAD {
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
 		ResourceID:     userID.String(),
+	}
+}
+
+func InboundMailboxSecretAAD(orgID, buID, mailboxID pulid.ID, field string) AAD {
+	return AAD{
+		Purpose:        PurposeInboundMailboxSecret,
+		OrganizationID: orgID,
+		BusinessUnitID: buID,
+		ResourceID:     mailboxID.String() + ":" + field,
 	}
 }
 
