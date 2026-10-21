@@ -87,8 +87,8 @@ type Service struct {
 }
 
 func New(
-	p Params,
-) (sessionports.MFAService, error) { //nolint:gocritic // fx params are passed by value
+	p Params, //nolint:gocritic // fx params are passed by value
+) (sessionports.MFAService, error) {
 	return newService(&p)
 }
 
