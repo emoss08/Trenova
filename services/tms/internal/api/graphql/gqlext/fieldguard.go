@@ -377,8 +377,8 @@ func (e *FieldGuardExtension) decide(
 	record recordContext,
 	field string,
 ) refview.Decision {
-	if record.part && record.reach == refview.Nested && !access.Reads(ctx, record.kind) {
-		return refview.WithheldKind
+	if record.part {
+		return e.views.DecidePart(ctx, access, record.kind, field, record.reach)
 	}
 	if record.through != "" && !record.part && e.views.InView(record.kind, record.through) {
 		field = record.through
