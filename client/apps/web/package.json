@@ -24,7 +24,9 @@
     "b:build": "bunx --bun vite build",
     "doctor": "npx react-doctor@latest",
     "guide:generate": "node scripts/product-guide/generate.mjs",
-    "guide:check": "node scripts/product-guide/generate.mjs --check"
+    "guide:check": "node scripts/product-guide/generate.mjs --check",
+    "access:generate": "node scripts/page-access/generate.mjs",
+    "access:check": "node scripts/page-access/generate.mjs --check"
   },
   "dependencies": {
     "@base-ui/react": "catalog:",

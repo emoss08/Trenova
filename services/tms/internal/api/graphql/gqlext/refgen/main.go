@@ -1,5 +1,6 @@
 // Command refgen writes the client's reference fragments and reference view
-// map from the permission registry.
+// map from the permission registry, then the page access manifest from the
+// web app's screens and the operations they run.
 package main
 
 import (
@@ -9,6 +10,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlext"
 	"github.com/emoss08/trenova/internal/api/graphql/schemadiff"
+	"github.com/emoss08/trenova/internal/api/pagemanifest"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
 )
 
@@ -32,16 +34,30 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	write(gqlext.ReferenceFragmentsPath, fragments)
-	write(gqlext.ReferenceViewsPath, views)
+	write(gqlext.ReferenceFragmentsPath, []byte(fragments))
+	write(gqlext.ReferenceViewsPath, []byte(views))
+
+	inputs, err := pagemanifest.FromRepository(repoRoot, registry)
+	if err != nil {
+		log.Fatal(err)
+	}
+	manifest, err := pagemanifest.Build(inputs)
+	if err != nil {
+		log.Fatal(err)
+	}
+	rendered, err := pagemanifest.Render(manifest)
+	if err != nil {
+		log.Fatal(err)
+	}
+	write(pagemanifest.ManifestPath, rendered)
 }
 
-func write(path, content string) {
+func write(path string, content []byte) {
 	target := filepath.Join(repoRoot, path)
 	if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
 		log.Fatal(err)
 	}
-	if err := os.WriteFile(target, []byte(content), 0o600); err != nil {
+	if err := os.WriteFile(target, content, 0o600); err != nil {
 		log.Fatal(err)
 	}
 }
