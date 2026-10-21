@@ -50,7 +50,8 @@ func (e berElement) objectIdentifier() (asn1.ObjectIdentifier, error) {
 		return nil, errMalformedEnvelope
 	}
 	encoded := make([]byte, 0, len(e.content)+2)
-	encoded = append(encoded, asn1.TagOID, byte(len(e.content)))
+	length := byte(len(e.content)) //nolint:gosec // length is at most 127
+	encoded = append(encoded, asn1.TagOID, length)
 	encoded = append(encoded, e.content...)
 	var oid asn1.ObjectIdentifier
 	if _, err := asn1.Unmarshal(encoded, &oid); err != nil {

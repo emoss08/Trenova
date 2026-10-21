@@ -3,7 +3,7 @@ package as2
 import (
 	"crypto/aes"
 	"crypto/cipher"
-	"crypto/des"
+	"crypto/des" //nolint:gosec // DES-EDE3-CBC is the AS2 '3des' partner setting
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -148,7 +148,11 @@ func encryptEnvelope(
 		return nil, err
 	}
 
-	encryptedKey, err := rsa.EncryptPKCS1v15(rand.Reader, publicKey, key)
+	encryptedKey, err := rsa.EncryptPKCS1v15( //nolint:staticcheck // AS2 partners expect rsaEncryption key transport
+		rand.Reader,
+		publicKey,
+		key,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("as2: wrap content key: %w", err)
 	}
@@ -270,7 +274,7 @@ func padPKCS7(data []byte, blockSize int) []byte {
 	padded := make([]byte, len(data)+padding)
 	copy(padded, data)
 	for i := len(data); i < len(padded); i++ {
-		padded[i] = byte(padding)
+		padded[i] = byte(padding) //nolint:gosec // padding is at most one block
 	}
 	return padded
 }
