@@ -58,8 +58,10 @@ const (
 	PurposeAccountingPendingGrant      Purpose = "accounting_pending_grant"    // #nosec G101 -- AAD label, not a credential.
 	PurposeAccountingWebhookState      Purpose = "accounting_webhook_state"
 	PurposeAccountingOAuthVerifier     Purpose = "accounting_oauth_verifier"
-	PurposeAccountingClientKey         Purpose = "accounting_client_key" // #nosec G101 -- AAD label, not a credential.
-	PurposeMFATOTPSecret               Purpose = "mfa_totp_secret"       // #nosec G101 -- AAD label, not a credential.
+	PurposeAccountingClientKey         Purpose = "accounting_client_key"        // #nosec G101 -- AAD label, not a credential.
+	PurposeMFATOTPSecret               Purpose = "mfa_totp_secret"              // #nosec G101 -- AAD label, not a credential.
+	PurposeAIProviderCredential        Purpose = "ai_provider_credential"       // #nosec G101 -- AAD label, not a credential.
+	PurposeAIProviderDraftCredential   Purpose = "ai_provider_draft_credential" // #nosec G101 -- AAD label, not a credential.
 
 	CryptoModeEnvelopeV1 = "envelope_v1"
 
@@ -345,6 +347,71 @@ func (s *Service) RewrapEnvelopeWithAADContext(
 	}
 
 	return envelopePrefix + base64.StdEncoding.EncodeToString(payload), nil
+}
+
+func (s *Service) DecryptStringWithLegacy(
+	value string,
+	aad AAD,
+) (plaintext string, legacy bool, err error) {
+	plaintext, err = s.DecryptStringWithAAD(value, aad)
+	if err == nil {
+		return plaintext, false, nil
+	}
+	if aad.Hash() == (AAD{}).Hash() || !EnvelopeHasAAD(value, AAD{}) {
+		return "", false, err
+	}
+
+	unbound, legacyErr := s.DecryptString(value)
+	if legacyErr != nil {
+		return "", false, err
+	}
+	return unbound, true, nil
+}
+
+func (s *Service) DecryptAndRebind(
+	value string,
+	aad AAD,
+) (plaintext, rebound string, err error) {
+	plaintext, legacy, err := s.DecryptStringWithLegacy(value, aad)
+	if err != nil || !legacy {
+		return plaintext, "", err
+	}
+
+	rebound, err = s.EncryptStringWithAAD(plaintext, aad)
+	if err != nil {
+		return plaintext, "", err
+	}
+	return plaintext, rebound, nil
+}
+
+func EnvelopeHasAAD(value string, aad AAD) bool {
+	ciphertext := strings.TrimSpace(value)
+	if !IsEnvelope(ciphertext) {
+		return false
+	}
+	env, err := decodeEnvelope(ciphertext)
+	if err != nil {
+		return false
+	}
+	return env.AADHash == aad.Hash()
+}
+
+func AIProviderCredentialAAD(orgID, buID, providerID pulid.ID) AAD {
+	return AAD{
+		Purpose:        PurposeAIProviderCredential,
+		OrganizationID: orgID,
+		BusinessUnitID: buID,
+		ResourceID:     providerID.String(),
+	}
+}
+
+func AIProviderDraftCredentialAAD(orgID, buID, userID pulid.ID) AAD {
+	return AAD{
+		Purpose:        PurposeAIProviderDraftCredential,
+		OrganizationID: orgID,
+		BusinessUnitID: buID,
+		ResourceID:     userID.String(),
+	}
 }
 
 func IsEnvelope(value string) bool {

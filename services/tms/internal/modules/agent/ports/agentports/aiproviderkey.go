@@ -25,7 +25,16 @@ type ClearExpiredAIProviderKeysRequest struct {
 	Now        int64
 }
 
+type RebindAIProviderKeyRequest struct {
+	ID          pulid.ID
+	TenantInfo  pagination.TenantInfo
+	Previous    bool
+	Expected    string
+	Replacement string
+}
+
 type AIProviderKeyRepository interface {
+	RebindSealedKey(ctx context.Context, req *RebindAIProviderKeyRequest) error
 	RecordFingerprint(ctx context.Context, req RecordAIProviderKeyFingerprintRequest) error
 	TouchUsed(ctx context.Context, req TouchAIProviderKeyRequest) error
 	ClearExpiredPrevious(ctx context.Context, req ClearExpiredAIProviderKeysRequest) (int, error)

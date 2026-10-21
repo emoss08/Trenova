@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/secretutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
@@ -170,6 +171,7 @@ func (s *Service) Create(
 	actor *permissionports.RequestActor,
 ) (*aiprovider.Provider, error) {
 	provider := &aiprovider.Provider{
+		ID:             pulid.MustNew("aiprv_"),
 		OrganizationID: req.TenantInfo.OrgID,
 		BusinessUnitID: req.TenantInfo.BuID,
 	}
@@ -315,7 +317,7 @@ func (s *Service) RunTest(
 		return nil, err
 	}
 
-	apiKey, err := s.decryptAPIKey(provider)
+	apiKey, err := s.decryptAPIKey(ctx, provider)
 	if err != nil {
 		return nil, err
 	}
@@ -539,7 +541,7 @@ func (s *Service) keyReplacement(change *keyChange) (aiprovider.KeyReplacement, 
 		subject = change.provider.CredentialFingerprintSubject(incoming)
 	}
 
-	encrypted, err := s.encryption.EncryptString(incoming)
+	encrypted, err := s.encryption.EncryptStringWithAAD(incoming, credentialAAD(change.provider))
 	if err != nil {
 		return replacement, errortypes.NewBusinessError(
 			"failed to encrypt the credential for this AI provider",
@@ -567,19 +569,57 @@ func keptKeyForNewEndpoint(
 	return !aiprovider.SameCredentialTarget(existing, updated)
 }
 
-func (s *Service) decryptAPIKey(provider *aiprovider.Provider) (string, error) {
+func credentialAAD(provider *aiprovider.Provider) encryptionservice.AAD {
+	return encryptionservice.AIProviderCredentialAAD(
+		provider.OrganizationID,
+		provider.BusinessUnitID,
+		provider.ID,
+	)
+}
+
+func (s *Service) decryptAPIKey(
+	ctx context.Context,
+	provider *aiprovider.Provider,
+) (string, error) {
 	if !provider.HasStoredAPIKey() {
 		return "", nil
 	}
 
-	decrypted, err := s.encryption.DecryptString(provider.APIKey)
+	decrypted, rebound, err := s.encryption.DecryptAndRebind(
+		provider.APIKey,
+		credentialAAD(provider),
+	)
 	if err != nil {
 		return "", errortypes.NewBusinessError(
 			"failed to decrypt the credential for AI provider {0}", provider.Name,
 		).WithInternal(err)
 	}
+	s.persistRebound(ctx, provider, false, provider.APIKey, rebound)
 
 	return decrypted, nil
+}
+
+func (s *Service) persistRebound(
+	ctx context.Context,
+	provider *aiprovider.Provider,
+	previous bool,
+	expected, rebound string,
+) {
+	if rebound == "" || s.keys == nil {
+		return
+	}
+	if err := s.keys.RebindSealedKey(ctx, &agentports.RebindAIProviderKeyRequest{
+		ID: provider.ID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: provider.OrganizationID,
+			BuID:  provider.BusinessUnitID,
+		},
+		Previous:    previous,
+		Expected:    expected,
+		Replacement: rebound,
+	}); err != nil {
+		s.l.Warn("failed to bind an ai provider key to its provider", zap.Error(err))
+	}
 }
 
 type auditParams struct {
