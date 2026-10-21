@@ -467,10 +467,12 @@ Read it before changing `analysis.go` in `agentextensionservice`, `analysis_tool
 `e2bconnector` or `shared/e2b`.
 Code mode (`agent_run_script`: a short read-only Python script in the same sandbox whose every read
 goes through a Go broker that runs it as one of the agent's own reads through `dispatch`, taint
-unioned by the broker, gated per model by `domain/codemode/models.yaml`, which ships empty) is in
-[docs/engineering/agent-code-mode.md](docs/engineering/agent-code-mode.md). Read it before changing
-`domain/codemode`, `scriptbroker.go` or `scripttool.go` in `agentruntime`, `script_tool.go`,
-`script.go` in `agentextensionservice`, or `RunCodeStream` in `shared/e2b`.
+unioned by the broker, turned on per chat provider in AI Control by "Scripts" and "Scripts may
+propose writes", both off by default and read live at dispatch from the provider that answered)
+is in [docs/engineering/agent-code-mode.md](docs/engineering/agent-code-mode.md). Read it before
+changing `domain/codemode`, `aiprovider/agentsettings.go`, `scriptbroker.go` or `scripttool.go`
+in `agentruntime`, `script_tool.go`, `script.go` in `agentextensionservice`, or `RunCodeStream`
+in `shared/e2b`.
 How an agent looks back over a quiet conversation or a settled run and keeps what the work
 taught (`agentreflectionservice`, `reflectionjobs`, the `agent_reflections` table) is under
 "Learning from the work" in agent-runtime.md.
@@ -562,6 +564,8 @@ in `services/tms/deskbench/findings.yaml` (`trenova desk findings` lists and exp
 [docs/engineering/desk-bench.md](docs/engineering/desk-bench.md) before changing
 `internal/deskbench` or writing scenarios.** It approves real writes, so run it against a
 seeded development database only.
+
+Never gate a feature behind the bench: ship it as a setting (off by default when it costs money or touches data in a new way), and use the bench to measure and recommend.
 
 ## Desk Artifacts
 

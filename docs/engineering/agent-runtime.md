@@ -392,11 +392,43 @@ than any it names takes the newest known constraints.
 
 ### The advisor
 
-A chat call may ask for Anthropic's advisor tool (`ChatCompletionRequest.Advisor`: model, max
-uses, max tokens): the executor model consults a more capable one mid-reply, on Anthropic's side.
-Only the desk bench asks for it today (the `+advisor` cell suffix in
-[desk-bench.md](desk-bench.md)); there is no provider setting, and the OpenAI adapters ignore
-the field. The Anthropic adapter (`modeladapter/anthropicadvisor.go`):
+A chat call may declare Anthropic's advisor tool: the executor model consults a more capable
+one mid-reply, on Anthropic's side. The advisor is a **setting on each chat provider** in AI
+Control → Providers, off by default: `advisorEnabled`, and `advisorModel`, which is
+`claude-opus-5-5` when left empty (`aiprovider.DefaultAdvisorModel`). The columns are
+`advisor_enabled`, `advisor_model` and `advisor_refusal` on `ai_providers` (migration
+`20261231010180_ai_provider_agent_settings`). The OpenAI adapters ignore the advisor.
+
+- **Checked on save.** The advisor is accepted only on an Anthropic Messages provider, on a
+  platform that serves it (`Platform.ServesAdvisor`: the Claude API and Claude Platform on
+  AWS), and only on a provider that handles AssistantChat (`validateAgentSettings`,
+  `CheckAdvisor`). When the advisor is turned on or renamed, or the provider's model or endpoint
+  changes, the endpoint's own model list is asked for and must contain the advisor model
+  (`aiproviderservice/advisor.go`, `confirmAdvisor`). There is no hand-kept ranking of which
+  advisor may advise which model: that is the Anthropic API's to say, and it refuses with a
+  400. Every save is audited and kept in the provider's change history ("Advisor"), as other
+  provider changes are.
+- **Declared on every chat call to the provider.** `completionrouter` (`advisor.go`,
+  `attemptChat` in `chat.go`) declares the provider's advisor on every chat call routed to it
+  (`advisorFor`, from `Provider.ResolvedAdvisorModel`). A request that names its own advisor
+  (`ChatCompletionRequest.Advisor`: model, max uses, max tokens) overrides the setting; the desk
+  bench's `+advisor` cell does that ([desk-bench.md](desk-bench.md)).
+- **A refusal is recorded and the call answered without it.** When the API refuses the
+  provider's advisor (a 400 whose message names the advisor, `refusedAdvisor`), the router keeps
+  the refusal on the provider (`aiprovider.AdvisorRefusal`: advisor, model, message, time),
+  through `agentports.AIProviderAdvisorRecorder` (`aiproviderrepository.NewAdvisorRecorder`,
+  which writes only while the provider still has the advisor on for the same model, and does
+  not bump the version). It retries that call once without the advisor, and every later call to
+  the provider goes out without it (`ResolvedAdvisorModel` is empty while `AdvisorRefused`)
+  until the advisor, the model or the platform changes (`aiprovider.AdvisorSettingsChanged`);
+  the service clears the refusal on such an update. AI Control shows the refusal in the
+  provider editor (`AIProvider.advisorRefusal`). A bench cell's own advisor is not retried
+  without it: the call fails, so a cell never runs quietly without what it asked for.
+- **Counted in AI Analytics.** Besides the usage row and the span (below), the
+  `ai_work_units` rollup carries the advisor's calls, tokens and cost, and `agentAnalytics`
+  series and totals carry `advisor` ([ai-analytics.md](ai-analytics.md)).
+
+The Anthropic adapter (`modeladapter/anthropicadvisor.go`):
 
 - **Only where it is served.** The advisor is declared only on the Claude API and Claude Platform
   on AWS (`Platform.ServesAdvisor`); Bedrock, Vertex AI and Foundry refuse a request that
@@ -421,8 +453,8 @@ the field. The Anthropic adapter (`modeladapter/anthropicadvisor.go`):
   after consulting the advisor keeps both parts, blocking or streamed.
 - **Replays them unchanged.** An assistant message with stored blocks is rebuilt from them,
   in order, then its tool calls: thinking only in the current turn (as for any thinking), the
-  server tool blocks and text on every turn. Only the request's own `Advisor` declares the
-  tool (`advisorFor`); advice in the history never does. A history holding
+  server tool blocks and text on every turn. Only the request's own `Advisor`, as the router set it, declares
+  the tool (`advisorFor`); advice in the history never does. A history holding
   `advisor_tool_result` blocks is accepted without the tool as long as the
   `advisor-tool-2026-03-01` beta is sent, so on a platform that serves the advisor
   `sendsAdvisorBeta` sends the beta alone and the blocks go back unchanged; a later turn that
