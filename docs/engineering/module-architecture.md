@@ -195,7 +195,7 @@ export data, so it recompiles only its direct importers; the second leaves out t
 table and DWARF, which only a debugger reads, and shortens the link on every reload. The
 binaries run unoptimised code, so do not benchmark against them.
 
-Each main registers its edition separately; see the Editions section of `CLAUDE.md`.
+Each main registers its edition separately; see "Server seams" in [editions.md](editions.md).
 
 ### Why `WorkerOptions` live in the jobs package
 

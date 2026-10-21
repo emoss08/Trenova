@@ -9,7 +9,7 @@ The engineering docs are the source of truth; this skill is the map to them plus
 that have actually broken `master` or bloated the bundle. Read the doc for the area you touch
 before writing code (table below), then follow the rules here.
 
-**When a rule is wrong, change the rule.** If a rule in CLAUDE.md, a doc or a lint config
+**When a rule is wrong, change the rule.** If a rule in AGENTS.md, a doc or a lint config
 stops you from doing the better thing, update the rule in the same change and say so in your
 report. Never work around a rule silently, and never add an `ignore` comment to get past lint
 without a reason that a reviewer would accept.
@@ -145,6 +145,13 @@ of sight, a bulk outcome, or a result that carries its next step (Undo, Download
   callouts `<Alert size="sm">`.
 - Code is shown with `HighlightedCode`, markdown with `AiMarkdown`, PDFs with `PdfFrame`.
   Don't add another renderer for any of them.
+- Integration logos come from Brandfetch, never drawn or traced. Look the brand up with
+  `GET https://api.brandfetch.io/v2/brands/{domain}` (`Authorization: Bearer <key>`; the key is
+  the maintainer's, from `BRANDFETCH_API_KEY` or by asking, never committed), download its SVG
+  (PNG only when there is none) unmodified into `apps/web/public/integrations/logos/`, and point
+  both the client vendor entry and the server catalog (`integrationports`) at it. Brandfetch's
+  `theme` is the logo's own tone, so its `dark` variant is our `*-light` file and vice versa.
+  With no mark for the product or for one background, use the parent company's.
 
 ## Bundle discipline
 

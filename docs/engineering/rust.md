@@ -131,7 +131,7 @@ and a child forked from tokio's blocking pool was killed ten idle seconds later.
   CI runs clippy with `-D warnings`.
 - Rust follows desktop/capture's style, including its doc comments: a module says what it is
   for and why it works the way it does; functions say what a caller needs to know. Go code
-  follows CLAUDE.md (no comments).
+  follows AGENTS.md (no comments).
 - `thiserror` in libraries; structured errors at service edges (the contract's reasons).
 - No document content in any log, metric label or error message: sizes, counts, durations,
   page numbers and error kinds only.

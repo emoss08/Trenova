@@ -43,7 +43,7 @@
 ## Checklist
 
 - [ ] I kept the change focused and reviewable.
-- [ ] I followed `AGENTS.md`, `CLAUDE.md`, and existing repository patterns.
+- [ ] I followed `AGENTS.md` and the patterns in `docs/engineering/backend`.
 - [ ] I added or updated tests for behavior changes, or explained why tests are not applicable.
 - [ ] I updated relevant documentation, examples, migrations, or configuration.
 - [ ] I did not include secrets, credentials, private customer data, unrelated refactors, or placeholder code.

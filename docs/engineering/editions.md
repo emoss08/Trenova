@@ -150,10 +150,26 @@ private build.
 
 ## Server seams
 
-The Go side of an edition registers through `internal/bootstrap/edition` (fx options for
-every process, the API or the worker, Cobra commands, Postgres migration sets and
-configuration sections); see CLAUDE.md "Editions". Every seam below has an inert
-self-hosted default, so a build without `internal/cloud` behaves exactly as before.
+Cloud Go code is overlaid into `services/tms/internal/cloud/` plus one registration file per
+binary: `cmd/cli/edition_cloud.go`, `cmd/api/edition_cloud.go` and `cmd/worker/edition_cloud.go`,
+each calling `edition.Register(cloud.Edition())`. Each main registers its edition separately, so
+a binary without its file runs the self-hosted edition. The build must pass with and without the
+overlay, so **public code never imports `internal/cloud`**.
+
+An edition registers through `internal/bootstrap/edition`: fx options for every process
+(`Options`), the API (`APIOptions`) or the worker (`WorkerOptions`), Cobra commands, Postgres
+migration sets (run after the public ones) and configuration sections the loader decodes
+strictly on the edition's behalf. The public graph always provides the self-hosted
+implementation of every platform port (`PlanService`, `QuotaGuard`, `EntitlementProvider`,
+`BillingProvider`, `UsageProvider`, `EditionInfo`, `AITrainingHistoryService`); an edition swaps
+them with root-level `fx.Decorate`. Routes and middleware join through the
+`internal/api/routegroup` value groups, GraphQL extensions through `edition_graphql_extensions`,
+and `GET /system/public-config` fields through `public_config_contributors`. Decide behaviour
+from an injected port (`PlanService.EnforcesPlans`, `EditionInfo.SharedTenancy`, an onboarding
+row existing), never from `platform.mode`.
+
+Every seam below has an inert self-hosted default, so a build without `internal/cloud` behaves
+exactly as before.
 
 | Seam | Where | Self-hosted default | Cloud uses it for |
 |---|---|---|---|

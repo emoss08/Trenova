@@ -70,7 +70,7 @@ i18n/                     Translation catalogs and the extraction tooling
 dev/                      Local environment: compose.yml, its configs, Samsara and EDI partner simulators
 deploy/                   Dockerfiles, self-host compose, Caddy, GTC routing, observability, PgBouncer example
 tools/                    Tooling that is not shipped: extraction fine-tuning (Python), screenshots, load tests, release
-docs/                     Engineering guides referenced by CLAUDE.md, product guide, self-hosting
+docs/                     Engineering guides (indexed in docs/engineering/README.md), product guide, self-hosting
 ```
 
 ## Quick start (local development)
