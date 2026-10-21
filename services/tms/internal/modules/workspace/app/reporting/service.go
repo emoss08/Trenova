@@ -36,6 +36,7 @@ type Params struct {
 	Compiler         reportports.ReportCompiler
 	Executor         reportports.ReportDatasetExecutor
 	PermissionEngine permissionports.PermissionEngine
+	FieldAccess      permissionports.FieldAccess
 	WorkflowStarter  kernelports.WorkflowStarter
 	Storage          kernelports.Client
 	AuditService     auditports.AuditService `optional:"true"`
@@ -55,6 +56,7 @@ type Service struct {
 	compiler      reportports.ReportCompiler
 	executor      reportports.ReportDatasetExecutor
 	perms         permissionports.PermissionEngine
+	fieldAccess   permissionports.FieldAccess
 	permRegistry  *permission.Registry
 	workflows     kernelports.WorkflowStarter
 	storage       kernelports.Client
@@ -84,6 +86,7 @@ func New(p Params) *Service {
 		compiler:      p.Compiler,
 		executor:      p.Executor,
 		perms:         p.PermissionEngine,
+		fieldAccess:   p.FieldAccess,
 		permRegistry:  permission.NewRegistry(),
 		workflows:     p.WorkflowStarter,
 		storage:       p.Storage,

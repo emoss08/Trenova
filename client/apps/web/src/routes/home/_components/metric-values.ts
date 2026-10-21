@@ -148,8 +148,11 @@ function shipmentMetric(key: string, analytics: ShipmentAnalyticsData): MetricVa
         key,
         label: translate("Margin"),
         shape: "stat",
-        display: `${analytics.profitability.avgMarginPct.toFixed(1)}%`,
-        raw: analytics.profitability.avgMarginPct,
+        display:
+          analytics.profitability.avgMarginPct === null
+            ? translate("Hidden")
+            : `${analytics.profitability.avgMarginPct.toFixed(1)}%`,
+        raw: analytics.profitability.avgMarginPct ?? 0,
         sub: translate(
           "{0, plural, one {# unprofitable load} other {# unprofitable loads}}",
           analytics.profitability.unprofitableCount,

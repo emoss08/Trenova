@@ -109,7 +109,7 @@ func (h *Handler) get(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 func (h *Handler) create(c *gin.Context) {
 	auth := authctx.GetAuthContext(c)
@@ -128,7 +128,7 @@ func (h *Handler) create(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusCreated, entity)
+	helpers.JSON(c, http.StatusCreated, entity)
 }
 func (h *Handler) approve(c *gin.Context) {
 	h.transitionNoBody(
@@ -199,7 +199,7 @@ func (h *Handler) reject(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 func (h *Handler) cancel(c *gin.Context) {
 	auth := authctx.GetAuthContext(c)
@@ -232,7 +232,7 @@ func (h *Handler) cancel(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 func (h *Handler) transitionNoBody(
@@ -250,5 +250,5 @@ func (h *Handler) transitionNoBody(
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }

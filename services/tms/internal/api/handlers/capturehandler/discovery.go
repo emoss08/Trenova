@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/gin-gonic/gin"
 )
 
@@ -46,7 +47,7 @@ type Discovery struct {
 // @Router /capture/discovery/ [get]
 func (h *Handler) discovery(c *gin.Context) {
 	c.Header("Cache-Control", "public, max-age="+strconv.Itoa(discoveryCacheSeconds))
-	c.JSON(http.StatusOK, h.Discovery())
+	helpers.JSON(c, http.StatusOK, h.Discovery())
 }
 
 // Discovery is the server as the discovery route describes it.

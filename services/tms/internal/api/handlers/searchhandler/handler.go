@@ -63,7 +63,7 @@ func (h *Handler) globalSearch(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 func parseEntityTypes(value string) ([]search.EntityType, error) {

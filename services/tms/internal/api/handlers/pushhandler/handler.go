@@ -55,7 +55,7 @@ type publicKeyResponse struct {
 // @Success 200 {object} publicKeyResponse
 // @Router /push/public-key [get]
 func (h *Handler) publicKey(c *gin.Context) {
-	c.JSON(http.StatusOK, publicKeyResponse{
+	helpers.JSON(c, http.StatusOK, publicKeyResponse{
 		Enabled:   h.service.Enabled(),
 		PublicKey: h.service.PublicKey(),
 	})
@@ -99,7 +99,7 @@ func (h *Handler) subscribe(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusCreated, subscription)
+	helpers.JSON(c, http.StatusCreated, subscription)
 }
 
 type unsubscribeRequest struct {

@@ -44,6 +44,9 @@ func (s *Service) DownloadRun(ctx context.Context, req *GetRunRequest) (*RunDown
 			"This report artifact has expired — run the report again",
 		)
 	}
+	if err = s.authorizeStoredRun(ctx, req, run); err != nil {
+		return nil, err
+	}
 
 	fileName := s.downloadFileName(ctx, req, run)
 

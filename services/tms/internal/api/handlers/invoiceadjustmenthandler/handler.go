@@ -150,7 +150,7 @@ func (h *Handler) createDraft(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusCreated, resp)
+	helpers.JSON(c, http.StatusCreated, resp)
 }
 
 func (h *Handler) updateDraft(c *gin.Context) {
@@ -177,7 +177,7 @@ func (h *Handler) updateDraft(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 func (h *Handler) previewDraft(c *gin.Context) {
@@ -199,7 +199,7 @@ func (h *Handler) previewDraft(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 func (h *Handler) submitDraft(c *gin.Context) {
@@ -221,7 +221,7 @@ func (h *Handler) submitDraft(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 func (h *Handler) preview(c *gin.Context) {
@@ -241,7 +241,7 @@ func (h *Handler) preview(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 func (h *Handler) submit(c *gin.Context) {
@@ -261,7 +261,7 @@ func (h *Handler) submit(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 func (h *Handler) bulkPreview(c *gin.Context) {
@@ -281,7 +281,7 @@ func (h *Handler) bulkPreview(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 func (h *Handler) bulkSubmit(c *gin.Context) {
@@ -301,7 +301,7 @@ func (h *Handler) bulkSubmit(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 func (h *Handler) summary(c *gin.Context) {
@@ -314,7 +314,7 @@ func (h *Handler) summary(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 func (h *Handler) approvals(c *gin.Context) {
@@ -363,7 +363,7 @@ func (h *Handler) getBatch(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 func (h *Handler) listBatches(c *gin.Context) {
@@ -397,7 +397,7 @@ func (h *Handler) get(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 func (h *Handler) approve(c *gin.Context) {
@@ -419,7 +419,7 @@ func (h *Handler) approve(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 func (h *Handler) reject(c *gin.Context) {
@@ -449,7 +449,7 @@ func (h *Handler) reject(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 func (h *Handler) lineage(c *gin.Context) {
@@ -481,7 +481,7 @@ func (h *Handler) lineage(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 func (h *Handler) groupLineage(c *gin.Context) {
@@ -502,5 +502,5 @@ func (h *Handler) groupLineage(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }

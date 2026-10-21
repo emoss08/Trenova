@@ -5897,13 +5897,12 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "customer",
-				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentDetentionWatchlistItem)
 					return obj.Customer, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
 			{
 				Name:     "dwellLabel",
@@ -8350,13 +8349,12 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "avgMarginPct",
-				NonNull:  true,
 				ChildErr: errNoChild26,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentProfitabilityAnalytics)
 					return obj.AvgMarginPct, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFloat2float64),
+				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
 			},
 			{
 				Name:     "hasMargin",
@@ -9342,43 +9340,39 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "customer",
-				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentTomorrowPickup)
 					return obj.Customer, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
 			{
 				Name:     "origin",
-				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentTomorrowPickup)
 					return obj.Origin, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
 			{
 				Name:     "destination",
-				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentTomorrowPickup)
 					return obj.Destination, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
 			{
 				Name:     "driver",
-				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentTomorrowPickup)
 					return obj.Driver, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
 			{
 				Name:     "status",

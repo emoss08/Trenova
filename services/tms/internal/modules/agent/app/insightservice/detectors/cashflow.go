@@ -47,10 +47,10 @@ func NewUnbilledAging(metrics insightports.InsightMetricsRepository) *UnbilledAg
 	return &UnbilledAging{metrics: metrics}
 }
 
-func (d *UnbilledAging) Key() string                     { return UnbilledAgingKey }
-func (d *UnbilledAging) Category() insight.Category      { return insight.CategoryCashFlow }
-func (d *UnbilledAging) Resource() permission.Resource   { return permission.ResourceShipment }
-func (d *UnbilledAging) Operation() permission.Operation { return permission.OpRead }
+func (d *UnbilledAging) Key() string                      { return UnbilledAgingKey }
+func (d *UnbilledAging) Category() insight.Category       { return insight.CategoryCashFlow }
+func (d *UnbilledAging) Resources() []permission.Resource { return shipmentAndCustomer() }
+func (d *UnbilledAging) Operation() permission.Operation  { return permission.OpRead }
 
 // Surfaces puts unbilled revenue in front of the people who invoice.
 func (d *UnbilledAging) Surfaces() []insight.Surface {
@@ -117,6 +117,7 @@ func (d *UnbilledAging) findingFor(
 	return detector.Finding{
 		DedupeKey: detector.DedupeKey(UnbilledAgingKey, row.CustomerID.String()),
 		Subject:   row.CustomerName,
+		Names:     shipmentAndCustomer(),
 		Headline: fmt.Sprintf(
 			"%d delivered shipments for %s worth %s have not been billed, the oldest %s days ago",
 			row.ShipmentCount,

@@ -1,3 +1,4 @@
+import { linkedRecordSchema } from "@trenova/shared/lib/linked-record";
 import { z } from "zod";
 import { documentTypeSchema } from "./document-type";
 
@@ -95,7 +96,7 @@ export const documentSchema = z.object({
   hasExtractedText: z.boolean(),
   shipmentDraftStatus: documentShipmentDraftStatusSchema,
   documentTypeId: z.string().nullable().optional(),
-  documentType: documentTypeSchema.nullable().optional(),
+  documentType: linkedRecordSchema("document_type", documentTypeSchema).nullable().optional(),
   signatureStatus: documentSignatureStatusSchema.nullish().transform((value) => value ?? "Unknown"),
   signedAt: z.number().nullable().optional(),
   signatureSource: z
@@ -322,6 +323,11 @@ export const documentUploadSessionSchema = z.object({
   partSize: z.number(),
   failureCode: z.string().nullable().optional(),
   failureMessage: z.string().nullable().optional(),
+  malwareScan: z
+    .boolean()
+    .nullish()
+    .transform((value) => value ?? false),
+  threatName: z.string().nullable().optional(),
   expiresAt: z.number(),
   lastActivityAt: z.number(),
   version: z.number(),

@@ -1,6 +1,7 @@
 package formulatemplatehandler
 
 import (
+	"github.com/emoss08/trenova/internal/api/helpers"
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
@@ -40,7 +41,7 @@ func (h *Handler) listTestCases(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, cases)
+	helpers.JSON(c, http.StatusOK, cases)
 }
 
 // @Summary Create a test scenario for a formula template
@@ -85,7 +86,7 @@ func (h *Handler) createTestCase(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, created)
+	helpers.JSON(c, http.StatusOK, created)
 }
 
 // @Summary Update a formula template test scenario
@@ -138,7 +139,7 @@ func (h *Handler) updateTestCase(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updated)
+	helpers.JSON(c, http.StatusOK, updated)
 }
 
 // @Summary Delete a formula template test scenario
@@ -222,5 +223,5 @@ func (h *Handler) runTestCases(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }

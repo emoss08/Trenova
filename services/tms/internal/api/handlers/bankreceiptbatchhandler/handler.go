@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/api/responseguard"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptbatchports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -49,7 +50,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.importBatch,
 	)
 
-	selectOptions := api.Group("/select-options")
+	selectOptions := api.Group("/select-options", responseguard.References())
 	selectOptions.GET(
 		"/sources/",
 		h.pm.RequirePermission(permission.ResourceBankReceipt.String(), permission.OpRead),
@@ -71,7 +72,7 @@ func (h *Handler) list(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, items)
+	helpers.JSON(c, http.StatusOK, items)
 }
 
 func (h *Handler) get(c *gin.Context) {
@@ -96,7 +97,7 @@ func (h *Handler) get(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, item)
+	helpers.JSON(c, http.StatusOK, item)
 }
 
 func (h *Handler) selectSources(c *gin.Context) {
@@ -130,5 +131,5 @@ func (h *Handler) importBatch(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusCreated, result)
+	helpers.JSON(c, http.StatusCreated, result)
 }

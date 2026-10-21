@@ -91,7 +91,7 @@ func (h *Handler) summary(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, summary)
+	helpers.JSON(c, http.StatusOK, summary)
 }
 
 func (h *Handler) listExceptions(c *gin.Context) {
@@ -108,7 +108,7 @@ func (h *Handler) listExceptions(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, items)
+	helpers.JSON(c, http.StatusOK, items)
 }
 
 func (h *Handler) get(c *gin.Context) {
@@ -133,7 +133,7 @@ func (h *Handler) get(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 func (h *Handler) suggestions(c *gin.Context) {
@@ -158,7 +158,7 @@ func (h *Handler) suggestions(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, items)
+	helpers.JSON(c, http.StatusOK, items)
 }
 
 func (h *Handler) importReceipt(c *gin.Context) {
@@ -178,7 +178,7 @@ func (h *Handler) importReceipt(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusCreated, entity)
+	helpers.JSON(c, http.StatusCreated, entity)
 }
 
 func (h *Handler) match(c *gin.Context) {
@@ -212,5 +212,5 @@ func (h *Handler) match(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }

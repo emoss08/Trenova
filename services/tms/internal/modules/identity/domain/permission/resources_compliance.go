@@ -15,6 +15,11 @@ func (r *Registry) registerComplianceResources() {
 		DisplayName: "Document",
 		Description: "Uploaded document records and intelligence output",
 		Category:    "Documents",
+		ReferenceView: []string{
+			"originalName",
+			"fileType",
+			"fileSize",
+		},
 		Operations: relabel(relabel(operations(
 			OpRead, OpCreate, OpUpdate, OpExport, OpImport, OpDelete, OpApprove, OpReject,
 		), OpCreate, "Create", "Upload documents and cancel uploads"), OpUpdate, "Update", "Modify documents and restore deleted ones"),

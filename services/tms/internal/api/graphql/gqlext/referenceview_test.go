@@ -67,7 +67,9 @@ func loadSchema(t *testing.T) *ast.Schema {
 }
 
 // Every field a kind's reference view names exists on the kind's GraphQL
-// type or on a projection of it, so a typo cannot silently show nothing.
+// type or on a projection of it, so a typo cannot silently show nothing. A
+// kind no GraphQL type shows, such as a document, is checked against the REST
+// types that carry it (responseguard).
 func TestEveryReferenceFieldExistsOnItsKind(t *testing.T) {
 	t.Parallel()
 
@@ -82,6 +84,9 @@ func TestEveryReferenceFieldExistsOnItsKind(t *testing.T) {
 	}
 	var missing []string
 	for _, def := range registry.All() {
+		if len(types[permission.Resource(def.Resource)]) == 0 {
+			continue
+		}
 		for _, field := range def.ReferenceView {
 			found := false
 			for _, typ := range types[permission.Resource(def.Resource)] {

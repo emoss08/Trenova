@@ -129,3 +129,40 @@ describe("invoice overview scope", () => {
     expect(screen.queryByText("Billing period")).toBeNull();
   });
 });
+
+// A reader who may read the invoice but not shipments receives the shipment's reference view:
+// its stops are withheld (null, named in the Withheld-By-Access header), so the route is drawn
+// as hidden rather than left out as if the shipment had none.
+describe("invoice overview route", () => {
+  it("draws the route as hidden when the shipment's stops are withheld", () => {
+    renderOverview(
+      invoice({
+        shipment: {
+          id: "shp_1",
+          proNumber: "SEED-DET-011",
+          customerId: "cus_1",
+          moves: null,
+        } as Invoice["shipment"],
+      }),
+    );
+
+    expect(screen.getByText("Route")).toBeInTheDocument();
+    expect(screen.getByText("Hidden")).toBeInTheDocument();
+  });
+
+  it("leaves the route out when the shipment has no stops", () => {
+    renderOverview(
+      invoice({
+        shipment: {
+          id: "shp_1",
+          proNumber: "SEED-DET-011",
+          customerId: "cus_1",
+          moves: [] as NonNullable<NonNullable<Invoice["shipment"]>["moves"]>,
+        } as Invoice["shipment"],
+      }),
+    );
+
+    expect(screen.queryByText("Route")).not.toBeInTheDocument();
+    expect(screen.queryByText("Hidden")).not.toBeInTheDocument();
+  });
+});

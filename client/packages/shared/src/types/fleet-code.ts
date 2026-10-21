@@ -1,3 +1,4 @@
+import { linkedRecordSchema } from "@trenova/shared/lib/linked-record";
 import { z } from "zod";
 import {
   decimalStringSchema,
@@ -24,7 +25,7 @@ export const fleetCodeSchema = z.object({
   managerId: z.string().min(1, {
     error: () => translate("Manager is required"),
   }),
-  manager: userSchema.nullish(),
+  manager: linkedRecordSchema("user", userSchema).nullish(),
 });
 
 export type FleetCode = z.infer<typeof fleetCodeSchema>;

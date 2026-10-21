@@ -61,7 +61,7 @@ func (h *Handler) publicConfig(c *gin.Context) {
 	}
 
 	c.Header("Cache-Control", cacheControl)
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 func (h *Handler) Build(ctx context.Context) (*kernelports.PublicConfig, error) {

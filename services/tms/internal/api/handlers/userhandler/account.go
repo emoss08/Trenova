@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/identity/app/userservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -73,17 +74,21 @@ func (h *Handler) updateMyProfile(c *gin.Context) {
 		return
 	}
 
-	updated, err := h.service.UpdateMyProfile(c.Request.Context(), selfTenant(c), tenant.ProfileUpdate{
-		JobTitle:    req.JobTitle,
-		PhoneNumber: req.PhoneNumber,
-		AvatarStyle: req.AvatarStyle,
-	})
+	updated, err := h.service.UpdateMyProfile(
+		c.Request.Context(),
+		selfTenant(c),
+		tenant.ProfileUpdate{
+			JobTitle:    req.JobTitle,
+			PhoneNumber: req.PhoneNumber,
+			AvatarStyle: req.AvatarStyle,
+		},
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, updated)
+	helpers.JSON(c, http.StatusOK, updated)
 }
 
 // @Summary Show or hide the assistant for the current user
@@ -124,7 +129,7 @@ func (h *Handler) updateMyAssistantVisibility(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updated)
+	helpers.JSON(c, http.StatusOK, updated)
 }
 
 // @Summary Update current user availability
@@ -171,7 +176,7 @@ func (h *Handler) updateMyAvailability(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updated)
+	helpers.JSON(c, http.StatusOK, updated)
 }
 
 // @Summary List avatar styles and availability for teammates
@@ -219,7 +224,7 @@ func (h *Handler) listAvatars(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, avatars)
+	helpers.JSON(c, http.StatusOK, avatars)
 }
 
 // @Summary List the current user's sessions
@@ -237,7 +242,7 @@ func (h *Handler) listMySessions(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, sessions)
+	helpers.JSON(c, http.StatusOK, sessions)
 }
 
 // @Summary Sign out one of the current user's other sessions
@@ -257,7 +262,11 @@ func (h *Handler) revokeMySession(c *gin.Context) {
 		return
 	}
 
-	if err = h.service.RevokeMySession(c.Request.Context(), sessionScope(c), sessionID); err != nil {
+	if err = h.service.RevokeMySession(
+		c.Request.Context(),
+		sessionScope(c),
+		sessionID,
+	); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -280,7 +289,7 @@ func (h *Handler) revokeMyOtherSessions(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, RevokeSessionsResponse{Revoked: revoked})
+	helpers.JSON(c, http.StatusOK, RevokeSessionsResponse{Revoked: revoked})
 }
 
 // @Summary List the current user's recent sign-ins
@@ -313,5 +322,5 @@ func (h *Handler) listMySignIns(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, signIns)
+	helpers.JSON(c, http.StatusOK, signIns)
 }

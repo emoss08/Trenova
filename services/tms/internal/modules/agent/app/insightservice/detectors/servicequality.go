@@ -51,10 +51,10 @@ func NewOnTimeDecline(metrics insightports.InsightMetricsRepository) *OnTimeDecl
 	return &OnTimeDecline{metrics: metrics}
 }
 
-func (d *OnTimeDecline) Key() string                     { return OnTimeDeclineKey }
-func (d *OnTimeDecline) Category() insight.Category      { return insight.CategoryServiceQuality }
-func (d *OnTimeDecline) Resource() permission.Resource   { return permission.ResourceShipment }
-func (d *OnTimeDecline) Operation() permission.Operation { return permission.OpRead }
+func (d *OnTimeDecline) Key() string                      { return OnTimeDeclineKey }
+func (d *OnTimeDecline) Category() insight.Category       { return insight.CategoryServiceQuality }
+func (d *OnTimeDecline) Resources() []permission.Resource { return shipmentAndCustomer() }
+func (d *OnTimeDecline) Operation() permission.Operation  { return permission.OpRead }
 
 // Surfaces puts a service decline where it can be acted on: the shipment desk
 // that owns the customer relationship and the dispatch console that decides
@@ -128,6 +128,7 @@ func (d *OnTimeDecline) findingFor(
 	return detector.Finding{
 		DedupeKey: detector.DedupeKey(OnTimeDeclineKey, row.CustomerID.String()),
 		Subject:   row.CustomerName,
+		Names:     shipmentAndCustomer(),
 		Headline: fmt.Sprintf(
 			"On-time delivery for %s is %s%%, down from %s%% the previous %d days",
 			row.CustomerName,

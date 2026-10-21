@@ -44,7 +44,7 @@ func (h *Handler) activeTurn(c *gin.Context) {
 	// Nothing in progress is the ordinary state of a conversation, not a
 	// missing record: a 404 here would have every client treating the common
 	// case as an error.
-	c.JSON(http.StatusOK, gin.H{"turn": turn})
+	helpers.JSON(c, http.StatusOK, gin.H{"turn": turn})
 }
 
 // liveTurn is one reply the person still has in progress.
@@ -95,7 +95,7 @@ func (h *Handler) activeTurns(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, liveTurnsFrom(turns))
+	helpers.JSON(c, http.StatusOK, liveTurnsFrom(turns))
 }
 
 // streamTurn relays one turn's events to a reader.
@@ -210,7 +210,7 @@ func (h *Handler) startTurn(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusAccepted, turnStarted(turn))
+	helpers.JSON(c, http.StatusAccepted, turnStarted(turn))
 }
 
 // sendMessage asks a question and answers with the saved turn, for a caller
@@ -254,7 +254,7 @@ func (h *Handler) sendMessage(c *gin.Context) {
 
 	// A refusal is a successful request with a declined answer, not an error: the
 	// turn was processed, recorded, and explained.
-	c.JSON(http.StatusOK, outcome.Result)
+	helpers.JSON(c, http.StatusOK, outcome.Result)
 }
 
 // ask starts a quick question: the hidden thread it is answered on, and the
@@ -294,7 +294,7 @@ func (h *Handler) ask(c *gin.Context) {
 
 	response := turnStarted(turn)
 	response.Thread = thread
-	c.JSON(http.StatusAccepted, response)
+	helpers.JSON(c, http.StatusAccepted, response)
 }
 
 // askWorker records a turn and starts the workflow that answers it.
@@ -412,7 +412,7 @@ func (h *Handler) compactThread(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusAccepted, turnStarted(turn))
+	helpers.JSON(c, http.StatusAccepted, turnStarted(turn))
 }
 
 // stopTurn ends a reply nobody is waiting for any more.

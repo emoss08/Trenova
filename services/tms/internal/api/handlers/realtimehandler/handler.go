@@ -344,7 +344,7 @@ func (h *Handler) join(c *gin.Context, scope string) {
 		return
 	}
 
-	c.JSON(http.StatusOK, snapshot)
+	helpers.JSON(c, http.StatusOK, snapshot)
 }
 
 func (h *Handler) leave(c *gin.Context, scope string) {

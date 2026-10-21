@@ -3,6 +3,7 @@ package edihandler
 import (
 	"net/http"
 
+	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -57,5 +58,5 @@ func (h *Handler) getShipmentLink(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, link)
+	helpers.JSON(c, http.StatusOK, link)
 }

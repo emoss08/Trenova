@@ -89,7 +89,7 @@ func (h *Handler) list(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, listSharesResponse{Shares: shares})
+	helpers.JSON(c, http.StatusOK, listSharesResponse{Shares: shares})
 }
 
 func (h *Handler) share(c *gin.Context) {
@@ -122,7 +122,7 @@ func (h *Handler) share(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 func (h *Handler) candidates(c *gin.Context) {
@@ -178,7 +178,7 @@ func (h *Handler) candidate(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, candidate)
+	helpers.JSON(c, http.StatusOK, candidate)
 }
 
 func tenantInfo(authCtx *authctx.AuthContext) pagination.TenantInfo {

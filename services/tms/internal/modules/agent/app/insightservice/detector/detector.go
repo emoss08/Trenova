@@ -14,6 +14,7 @@ package detector
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
@@ -66,6 +67,10 @@ type Finding struct {
 	Severity insight.Severity
 	Metrics  []insight.Metric
 	Links    []insight.Link
+	// Names is every kind of record the finding names in its subject or
+	// headline, or carries a figure about. Each must be among its detector's
+	// Resources, or the finding is dropped.
+	Names []permission.Resource
 }
 
 // Explanation says what a rule looks for, in the reader's language.
@@ -92,10 +97,12 @@ type Detector interface {
 	// Key is the stable identifier stored on every insight this produces.
 	Key() string
 	Category() insight.Category
-	// Resource and Operation are the permission a reader needs before this
-	// detector's findings may be shown to them. An insight about customer
-	// profitability must not reach someone who cannot read customers.
-	Resource() permission.Resource
+	// Resources is every kind of record this detector's findings name, and
+	// Operation what a reader needs on each before they may be shown one. A
+	// finding names a customer or a location beside figures about it, which no
+	// reference view carries, so an insight about a customer's service must
+	// not reach someone who cannot read customers.
+	Resources() []permission.Resource
 	Operation() permission.Operation
 	// Surfaces names the working pages this detector's findings belong on. A
 	// finding may matter to more than one desk; an empty list means it is only
@@ -191,6 +198,12 @@ func (f Finding) Validate() error {
 		)
 	}
 
+	if len(f.Names) == 0 {
+		// A finding is always about some record. Saying which kinds is what
+		// lets a reader be checked for each before the card reaches them.
+		return fmt.Errorf("%w: %s names no kind of record", ErrMalformedFinding, f.DedupeKey)
+	}
+
 	if len(f.Metrics) == 0 {
 		// A finding with no numbers is an opinion. There is nothing for a reader
 		// to check and nothing to stop narration inventing a figure, so it is
@@ -227,6 +240,19 @@ func (f Finding) validateParts() error {
 	}
 
 	return nil
+}
+
+// Undeclared is every kind a finding names that its detector does not declare.
+func Undeclared(d Detector, f *Finding) []permission.Resource {
+	declared := d.Resources()
+	var missing []permission.Resource
+	for _, kind := range f.Names {
+		if !slices.Contains(declared, kind) {
+			missing = append(missing, kind)
+		}
+	}
+
+	return missing
 }
 
 // MetricValues maps each metric key to its value, which is what a narrator needs

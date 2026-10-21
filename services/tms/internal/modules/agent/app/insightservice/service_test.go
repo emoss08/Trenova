@@ -23,8 +23,8 @@ import (
 type stubDetector struct {
 	key      string
 	category insight.Category
-	resource permission.Resource
-	surfaces []insight.Surface
+	resources []permission.Resource
+	surfaces  []insight.Surface
 	findings []detector.Finding
 	err      error
 	lastRun  detector.Params
@@ -44,12 +44,12 @@ func (d *stubDetector) Explain() detector.Explanation {
 	}
 }
 
-func (d *stubDetector) Resource() permission.Resource {
-	if d.resource == "" {
-		return permission.ResourceShipment
+func (d *stubDetector) Resources() []permission.Resource {
+	if len(d.resources) == 0 {
+		return []permission.Resource{permission.ResourceShipment}
 	}
 
-	return d.resource
+	return d.resources
 }
 
 func (d *stubDetector) Detect(
@@ -205,6 +205,7 @@ func testFinding(key string) detector.Finding {
 		Subject:   "Acme Foods",
 		Headline:  "On-time delivery for Acme Foods is 82.4%",
 		Severity:  insight.SeverityWarning,
+		Names:     []permission.Resource{permission.ResourceShipment},
 		Metrics: []insight.Metric{
 			detector.Percent(
 				"onTimePercent",
@@ -343,6 +344,68 @@ func TestRefresh_DropsAMalformedFindingAndKeepsTheRest(t *testing.T) {
 	assert.Equal(t, "good:cus_1", repo.replaced[0].Insights[0].DedupeKey)
 }
 
+// Readers are checked against the kinds a detector declares, so a finding
+// that names another kind is dropped rather than stored for readers who were
+// never checked for it.
+func TestRefresh_DropsAFindingNamingAKindItsDetectorDoesNotDeclare(t *testing.T) {
+	t.Parallel()
+
+	repo := &stubRepo{}
+	namesCustomer := testFinding("names:cus_1")
+	namesCustomer.Names = []permission.Resource{permission.ResourceShipment, permission.ResourceCustomer}
+
+	svc := newService(repo, &stubPermissions{}, &stubDetector{
+		key:      "undeclared",
+		category: insight.CategoryServiceQuality,
+		findings: []detector.Finding{namesCustomer, testFinding("good:cus_1")},
+	})
+
+	result, err := svc.Refresh(
+		t.Context(),
+		RefreshRequest{TenantInfo: tenant(), Now: 1_800_000_000},
+	)
+	require.NoError(t, err)
+
+	assert.Equal(t, 1, result.Created)
+	require.Len(t, repo.replaced[0].Insights, 1)
+	assert.Equal(t, "good:cus_1", repo.replaced[0].Insights[0].DedupeKey)
+}
+
+// A finding names a customer beside figures about it, so a reader who can read
+// shipments but not customers receives none of a customer detector's findings,
+// and each kind is asked about once however many detectors name it.
+func TestListActive_RequiresReadOnEveryKindADetectorNames(t *testing.T) {
+	t.Parallel()
+
+	repo := &stubRepo{}
+	perms := &stubPermissions{allowedResources: map[permission.Resource]bool{
+		permission.ResourceShipment: true,
+		permission.ResourceLocation: true,
+	}}
+
+	svc := newService(repo, perms,
+		&stubDetector{key: "on-time", resources: []permission.Resource{
+			permission.ResourceShipment, permission.ResourceCustomer,
+		}},
+		&stubDetector{key: "detention", resources: []permission.Resource{
+			permission.ResourceShipment, permission.ResourceLocation,
+		}},
+		&stubDetector{key: "empty-miles", resources: []permission.Resource{
+			permission.ResourceShipment, permission.ResourceCustomer,
+		}},
+	)
+
+	_, err := svc.ListActive(t.Context(), insightports.ListInsightsRequest{
+		TenantInfo: tenant(),
+		UserID:     pulid.MustNew("usr_"),
+		Limit:      10,
+	})
+	require.NoError(t, err)
+
+	assert.Equal(t, insightports.AllowedDetectorKeys{"detention"}, repo.lastList.AllowedDetectorKeys)
+	assert.Equal(t, 3, perms.checks)
+}
+
 func TestRefresh_AnchorsTheWindowToTheGivenInstant(t *testing.T) {
 	t.Parallel()
 
@@ -413,8 +476,8 @@ func TestListActive_AsksOnlyForDetectorsTheReaderMaySee(t *testing.T) {
 	}}
 
 	svc := newService(repo, perms,
-		&stubDetector{key: "shipments", resource: permission.ResourceShipment},
-		&stubDetector{key: "workers", resource: permission.ResourceWorker},
+		&stubDetector{key: "shipments", resources: []permission.Resource{permission.ResourceShipment}},
+		&stubDetector{key: "workers", resources: []permission.Resource{permission.ResourceWorker}},
 	)
 
 	_, err := svc.ListActive(t.Context(), insightports.ListInsightsRequest{
@@ -445,17 +508,17 @@ func TestListActive_RestrictsASurfaceToWhatTheReaderMaySee(t *testing.T) {
 	svc := newService(repo, perms,
 		&stubDetector{
 			key:      "unbilled-aging",
-			resource: permission.ResourceShipment,
+			resources: []permission.Resource{permission.ResourceShipment},
 			surfaces: []insight.Surface{insight.SurfaceAccounting},
 		},
 		&stubDetector{
 			key:      "empty-miles",
-			resource: permission.ResourceShipment,
+			resources: []permission.Resource{permission.ResourceShipment},
 			surfaces: []insight.Surface{insight.SurfaceDispatch},
 		},
 		&stubDetector{
 			key:      "credential-expiry",
-			resource: permission.ResourceWorker,
+			resources: []permission.Resource{permission.ResourceWorker},
 			surfaces: []insight.Surface{insight.SurfaceAccounting, insight.SurfaceDispatch},
 		},
 	)
@@ -485,7 +548,7 @@ func TestListActive_AsksForNothingOnASurfaceNoDetectorClaims(t *testing.T) {
 	}}
 
 	svc := newService(repo, perms,
-		&stubDetector{key: "shipments", resource: permission.ResourceShipment},
+		&stubDetector{key: "shipments", resources: []permission.Resource{permission.ResourceShipment}},
 	)
 
 	_, err := svc.ListActive(t.Context(), insightports.ListInsightsRequest{
@@ -507,7 +570,7 @@ func TestListActive_AsksForNothingWhenTheReaderMaySeeNothing(t *testing.T) {
 
 	repo := &stubRepo{}
 	svc := newService(repo, &stubPermissions{},
-		&stubDetector{key: "shipments", resource: permission.ResourceShipment},
+		&stubDetector{key: "shipments", resources: []permission.Resource{permission.ResourceShipment}},
 	)
 
 	_, err := svc.ListActive(t.Context(), insightports.ListInsightsRequest{
@@ -531,7 +594,7 @@ func TestListActive_NeverAllowsADetectorThatNoLongerExists(t *testing.T) {
 	}}
 
 	svc := newService(repo, perms,
-		&stubDetector{key: "shipments", resource: permission.ResourceShipment},
+		&stubDetector{key: "shipments", resources: []permission.Resource{permission.ResourceShipment}},
 	)
 
 	_, err := svc.ListActive(t.Context(), insightports.ListInsightsRequest{
@@ -552,7 +615,7 @@ func TestListActive_AllowsNothingWhenThePermissionCheckFails(t *testing.T) {
 	perms := &stubPermissions{err: errors.New("permission service down")}
 
 	svc := newService(repo, perms,
-		&stubDetector{key: "shipments", resource: permission.ResourceShipment},
+		&stubDetector{key: "shipments", resources: []permission.Resource{permission.ResourceShipment}},
 	)
 
 	_, err := svc.ListActive(t.Context(), insightports.ListInsightsRequest{
@@ -583,7 +646,7 @@ func TestListActive_ResolvesEachDetectorsPermissionOnce(t *testing.T) {
 	}}
 
 	_, err := newService(&stubRepo{active: active}, perms,
-		&stubDetector{key: "shipments", resource: permission.ResourceShipment},
+		&stubDetector{key: "shipments", resources: []permission.Resource{permission.ResourceShipment}},
 	).ListActive(
 		t.Context(),
 		insightports.ListInsightsRequest{
@@ -608,8 +671,8 @@ func TestList_CarriesTheSameDetectorRestrictionAsTheWidget(t *testing.T) {
 	}}
 
 	svc := newService(repo, perms,
-		&stubDetector{key: "shipments", resource: permission.ResourceShipment},
-		&stubDetector{key: "workers", resource: permission.ResourceWorker},
+		&stubDetector{key: "shipments", resources: []permission.Resource{permission.ResourceShipment}},
+		&stubDetector{key: "workers", resources: []permission.Resource{permission.ResourceWorker}},
 	)
 
 	_, err := svc.List(t.Context(), insightports.BrowseInsightsRequest{
@@ -636,7 +699,7 @@ func TestList_PassesTheRequestedFiltersThrough(t *testing.T) {
 	}}
 
 	svc := newService(repo, perms,
-		&stubDetector{key: "shipments", resource: permission.ResourceShipment},
+		&stubDetector{key: "shipments", resources: []permission.Resource{permission.ResourceShipment}},
 	)
 
 	_, err := svc.List(t.Context(), insightports.BrowseInsightsRequest{
@@ -673,7 +736,7 @@ func TestGetDetail_ReturnsTheFindingItsTrendAndTheRuleBehindIt(t *testing.T) {
 	}}
 
 	detail, err := newService(repo, perms,
-		&stubDetector{key: "shipments", resource: permission.ResourceShipment},
+		&stubDetector{key: "shipments", resources: []permission.Resource{permission.ResourceShipment}},
 	).GetDetail(t.Context(), insightports.GetInsightDetailRequest{
 		ID:         found.ID,
 		UserID:     pulid.MustNew("usr_"),
@@ -703,7 +766,7 @@ func TestGetDetail_KeepsTheFindingOutOfItsOwnHistory(t *testing.T) {
 	}}
 
 	_, err := newService(repo, perms,
-		&stubDetector{key: "shipments", resource: permission.ResourceShipment},
+		&stubDetector{key: "shipments", resources: []permission.Resource{permission.ResourceShipment}},
 	).GetDetail(t.Context(), insightports.GetInsightDetailRequest{
 		ID:         found.ID,
 		UserID:     pulid.MustNew("usr_"),
@@ -731,7 +794,7 @@ func TestGetDetail_RefusesAFindingTheReaderMayNotSee(t *testing.T) {
 	}}
 
 	_, err := newService(repo, perms,
-		&stubDetector{key: "workers", resource: permission.ResourceWorker},
+		&stubDetector{key: "workers", resources: []permission.Resource{permission.ResourceWorker}},
 	).GetDetail(t.Context(), insightports.GetInsightDetailRequest{
 		ID:         found.ID,
 		UserID:     pulid.MustNew("usr_"),
@@ -782,7 +845,7 @@ func TestGetDetail_StillReturnsTheFindingWhenItsHistoryCannotBeRead(t *testing.T
 	}}
 
 	detail, err := newService(repo, perms,
-		&stubDetector{key: "shipments", resource: permission.ResourceShipment},
+		&stubDetector{key: "shipments", resources: []permission.Resource{permission.ResourceShipment}},
 	).GetDetail(t.Context(), insightports.GetInsightDetailRequest{
 		ID:         found.ID,
 		UserID:     pulid.MustNew("usr_"),
@@ -861,7 +924,7 @@ func TestListActive_AppliesADefaultLimit(t *testing.T) {
 	}}
 
 	_, err := newService(repo, perms,
-		&stubDetector{key: "shipments", resource: permission.ResourceShipment},
+		&stubDetector{key: "shipments", resources: []permission.Resource{permission.ResourceShipment}},
 	).ListActive(
 		t.Context(),
 		insightports.ListInsightsRequest{TenantInfo: tenant(), UserID: pulid.MustNew("usr_")},

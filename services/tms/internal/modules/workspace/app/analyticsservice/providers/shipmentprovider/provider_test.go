@@ -357,7 +357,7 @@ func TestGetTomorrowsPickups_ReturnsPickupRowsWithStatusMapping(t *testing.T) {
 	assert.Equal(t, TomorrowPickupStatusConfirmed, card.Pickups[0].Status)
 	assert.Equal(t, TomorrowPickupStatusUnassigned, card.Pickups[1].Status)
 	assert.Equal(t, TomorrowPickupStatusTentative, card.Pickups[2].Status)
-	assert.Equal(t, "TERM-LA", card.Pickups[0].Origin)
-	assert.Equal(t, "DC-CHI", card.Pickups[0].Destination)
+	assert.Equal(t, new("TERM-LA"), card.Pickups[0].Origin)
+	assert.Equal(t, new("DC-CHI"), card.Pickups[0].Destination)
 	require.NoError(t, mockDB.ExpectationsWereMet())
 }

@@ -36,6 +36,7 @@ type Params struct {
 	Visibility   kernelports.RecordVisibility
 	Balances     kernelports.CustomerOpenBalanceReader `optional:"true"`
 	RecordLabels captureports.CaptureRecordFinder      `optional:"true"`
+	Views        permissionports.ReferenceViews
 }
 
 type Service struct {
@@ -48,6 +49,7 @@ type Service struct {
 	states       usstateports.UsStateRepository
 	balances     kernelports.CustomerOpenBalanceReader
 	recordLabels captureports.CaptureRecordFinder
+	views        permissionports.ReferenceViews
 }
 
 var _ kernelports.GlobalSearchService = (*Service)(nil)
@@ -63,6 +65,7 @@ type entitySearchDefinition struct {
 const (
 	maxSearchLimit = 25
 	fieldStatus    = "status"
+	fieldCity      = "city"
 )
 
 func New(p Params) kernelports.GlobalSearchService {
@@ -76,6 +79,7 @@ func New(p Params) kernelports.GlobalSearchService {
 		states:       p.States,
 		balances:     p.Balances,
 		recordLabels: p.RecordLabels,
+		views:        p.Views,
 	}
 }
 
@@ -194,6 +198,7 @@ type searchAccess struct {
 	definitions []entitySearchDefinition
 	readable    map[permission.Resource]bool
 	narrowed    map[permission.Resource]bool
+	linked      permissionports.LinkedFields
 }
 
 func (a *searchAccess) canRead(resource permission.Resource) bool {
@@ -218,18 +223,7 @@ func (s *Service) resolveAccess(
 		definitions = filtered
 	}
 
-	resources := []permission.Resource{
-		permission.ResourceShipment,
-		permission.ResourceCustomer,
-		permission.ResourceWorker,
-		permission.ResourceDocument,
-		permission.ResourceAccountsReceivable,
-		permission.ResourceTractor,
-		permission.ResourceTrailer,
-		permission.ResourceCarrier,
-		permission.ResourceOrder,
-		permission.ResourceInvoice,
-	}
+	resources := searchResources
 
 	checks := make([]permissionports.ResourceOperationCheck, 0, len(resources))
 	for _, resource := range resources {
@@ -269,7 +263,81 @@ func (s *Service) resolveAccess(
 		}
 	}
 
-	return &searchAccess{definitions: allowed, readable: readable, narrowed: narrowed}, nil
+	access := &searchAccess{definitions: allowed, readable: readable, narrowed: narrowed}
+	access.linked = s.linkedFields(req, readable)
+
+	return access, nil
+}
+
+// searchResources is every kind the batch asks about: the indexes, the
+// records a hit may describe in its context line, and every kind its
+// metadata is classified under.
+var searchResources = func() []permission.Resource {
+	resources := []permission.Resource{
+		permission.ResourceShipment,
+		permission.ResourceCustomer,
+		permission.ResourceWorker,
+		permission.ResourceDocument,
+		permission.ResourceAccountsReceivable,
+		permission.ResourceTractor,
+		permission.ResourceTrailer,
+		permission.ResourceCarrier,
+		permission.ResourceOrder,
+		permission.ResourceInvoice,
+	}
+	for _, kind := range classifiedKinds() {
+		if !slices.Contains(resources, kind) {
+			resources = append(resources, kind)
+		}
+	}
+
+	return resources
+}()
+
+// linkedFields answers for the records a hit names besides its own, through
+// the reference view port and sharing the batch's answers for each kind's
+// read.
+func (s *Service) linkedFields(
+	req *kernelports.GlobalSearchRequest,
+	readable map[permission.Resource]bool,
+) permissionports.LinkedFields {
+	check := func(_ context.Context, kind permission.Resource) (bool, error) {
+		return readable[kind], nil
+	}
+	if s.views == nil {
+		return readsOnly{check: check}
+	}
+
+	return s.views.Person(&permissionports.RequestActor{
+		PrincipalType:  req.Principal.Type,
+		PrincipalID:    req.Principal.ID,
+		UserID:         req.Principal.UserID,
+		APIKeyID:       req.Principal.APIKeyID,
+		BusinessUnitID: req.TenantInfo.BuID,
+		OrganizationID: req.TenantInfo.OrgID,
+	}, check)
+}
+
+// readsOnly is the answer without reference views: a linked record's fields
+// need its kind's read.
+type readsOnly struct {
+	check func(ctx context.Context, kind permission.Resource) (bool, error)
+}
+
+func (r readsOnly) Reads(ctx context.Context, kind permission.Resource) bool {
+	allowed, err := r.check(ctx, kind)
+	return err == nil && allowed
+}
+
+func (r readsOnly) Decide(
+	ctx context.Context,
+	kind permission.Resource,
+	_ string,
+) permissionports.LinkedFieldDecision {
+	if r.Reads(ctx, kind) {
+		return permissionports.LinkedFieldVisible
+	}
+	return permissionports.LinkedFieldWithheldKind
 }
 
 func (s *Service) definitions() []entitySearchDefinition {
@@ -286,7 +354,7 @@ func (s *Service) definitions() []entitySearchDefinition {
 			label:      "Customers",
 			index:      s.config.Meilisearch.Indexes.Customers,
 			resource:   permission.ResourceCustomer,
-			attributes: []string{"id", "name", "code", "city", "state_id", fieldStatus},
+			attributes: []string{"id", "name", "code", fieldCity, "state_id", fieldStatus},
 		},
 		{
 			entityType: search.EntityTypeWorker,
@@ -301,7 +369,7 @@ func (s *Service) definitions() []entitySearchDefinition {
 				"driver_type",
 				fieldStatus,
 				"external_id",
-				"city",
+				fieldCity,
 				"state_id",
 				"available_for_dispatch",
 			},
@@ -389,13 +457,13 @@ func customerHit(id string, document map[string]any) *kernelports.GlobalSearchHi
 	)
 	subtitle := stringutils.FirstNonEmpty(
 		stringValue(document, "code"),
-		stringValue(document, "city"),
+		stringValue(document, fieldCity),
 	)
 	metadata := map[string]string{
 		fieldStatus: stringutils.FirstNonEmpty(stringValue(document, fieldStatus), "Unknown"),
 	}
 	putIfPresent(metadata, "code", stringValue(document, "code"))
-	putIfPresent(metadata, "city", stringValue(document, "city"))
+	putIfPresent(metadata, fieldCity, stringValue(document, fieldCity))
 
 	return &kernelports.GlobalSearchHit{
 		ID:         id,
@@ -422,7 +490,7 @@ func workerHit(id string, document map[string]any) *kernelports.GlobalSearchHit 
 	putIfPresent(metadata, "externalId", stringValue(document, "external_id"))
 	putIfPresent(metadata, "workerType", stringValue(document, "type"))
 	putIfPresent(metadata, "driverType", stringValue(document, "driver_type"))
-	putIfPresent(metadata, "city", stringValue(document, "city"))
+	putIfPresent(metadata, fieldCity, stringValue(document, fieldCity))
 	putIfPresent(metadata, "availableForDispatch", stringValue(document, "available_for_dispatch"))
 
 	return &kernelports.GlobalSearchHit{

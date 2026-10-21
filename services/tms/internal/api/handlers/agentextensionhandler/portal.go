@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -21,7 +22,7 @@ func (h *Handler) listSites(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"items": sites})
+	helpers.JSON(c, http.StatusOK, gin.H{"items": sites})
 }
 
 func (h *Handler) createSite(c *gin.Context) {
@@ -38,7 +39,7 @@ func (h *Handler) createSite(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, site)
+	helpers.JSON(c, http.StatusCreated, site)
 }
 
 func (h *Handler) updateSite(c *gin.Context) {
@@ -62,7 +63,7 @@ func (h *Handler) updateSite(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, site)
+	helpers.JSON(c, http.StatusOK, site)
 }
 
 func (h *Handler) deleteSite(c *gin.Context) {
@@ -117,7 +118,7 @@ func (h *Handler) listRuns(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, runs)
+	helpers.JSON(c, http.StatusOK, runs)
 }
 
 func (h *Handler) runRecording(c *gin.Context) {
@@ -134,7 +135,7 @@ func (h *Handler) runRecording(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, recording)
+	helpers.JSON(c, http.StatusOK, recording)
 }
 
 // portalRun is one run, for the person it was asked for or someone who
@@ -151,7 +152,7 @@ func (h *Handler) portalRun(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, run)
+	helpers.JSON(c, http.StatusOK, run)
 }
 
 // portalRunLive is the address of the open browser a run is in, where the
@@ -170,7 +171,7 @@ func (h *Handler) portalRunLive(c *gin.Context) {
 	}
 
 	c.Header("Cache-Control", "no-store")
-	c.JSON(http.StatusOK, live)
+	helpers.JSON(c, http.StatusOK, live)
 }
 
 func (h *Handler) runAccess(
@@ -242,5 +243,5 @@ func (h *Handler) provideSignInCode(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, run)
+	helpers.JSON(c, http.StatusOK, run)
 }

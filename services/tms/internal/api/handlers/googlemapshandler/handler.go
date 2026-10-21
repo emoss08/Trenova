@@ -69,5 +69,5 @@ func (h *Handler) autocomplete(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }

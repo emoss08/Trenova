@@ -87,6 +87,15 @@ func (allowAllEngine) RoleCoverage(
 	panic("not used")
 }
 
+type allFieldGroups struct{}
+
+func (allFieldGroups) Visible(
+	context.Context,
+	*permissionports.RequestActor,
+) permission.FieldGroupSet {
+	return permission.AllFieldGroups()
+}
+
 // TestEveryCannedReportCompilesAgainstCurrentCatalog is the CI gate for canned
 // reports: schema or catalog drift that breaks a shipped report fails the
 // build, not the customer.
@@ -97,7 +106,7 @@ func TestEveryCannedReportCompilesAgainstCurrentCatalog(t *testing.T) {
 		permission.NewRegistry(),
 		&config.ReportingConfig{},
 		zap.NewNop(),
-	)
+	).WithAccess(nil, allFieldGroups{})
 
 	tenant := pagination.TenantInfo{
 		OrgID:  pulid.ID("org_test"),

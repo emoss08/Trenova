@@ -21,6 +21,7 @@ type EntityManifest struct {
 	Description     string                    `yaml:"description"`
 	Category        string                    `yaml:"category"`
 	OwnershipColumn string                    `yaml:"ownershipColumn"`
+	WithinRecord    bool                      `yaml:"withinRecord"`
 	ExcludeFields   []string                  `yaml:"excludeFields"`
 	Fields          map[string]*FieldManifest `yaml:"fields"`
 	Edges           map[string]*EdgeManifest  `yaml:"edges"`
@@ -48,6 +49,7 @@ type FieldManifest struct {
 	Aggregations []string          `yaml:"aggregations"`
 	Filterable   *bool             `yaml:"filterable"`
 	Groupable    *bool             `yaml:"groupable"`
+	Protected    string            `yaml:"protected"`
 }
 
 type EdgeManifest struct {

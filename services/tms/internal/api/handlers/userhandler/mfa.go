@@ -3,6 +3,7 @@ package userhandler
 import (
 	"net/http"
 
+	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -32,7 +33,7 @@ func (h *Handler) getMyMFA(c *gin.Context) {
 	}
 
 	c.Header("Cache-Control", "no-store")
-	c.JSON(http.StatusOK, status)
+	helpers.JSON(c, http.StatusOK, status)
 }
 
 func (h *Handler) beginTOTPEnrollment(c *gin.Context) {
@@ -52,7 +53,7 @@ func (h *Handler) beginTOTPEnrollment(c *gin.Context) {
 	}
 
 	c.Header("Cache-Control", "no-store")
-	c.JSON(http.StatusOK, enrollment)
+	helpers.JSON(c, http.StatusOK, enrollment)
 }
 
 func (h *Handler) confirmTOTPEnrollment(c *gin.Context) {
@@ -73,7 +74,7 @@ func (h *Handler) confirmTOTPEnrollment(c *gin.Context) {
 	}
 
 	c.Header("Cache-Control", "no-store")
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 func (h *Handler) disableTOTP(c *gin.Context) {
@@ -111,7 +112,7 @@ func (h *Handler) regenerateRecoveryCodes(c *gin.Context) {
 	}
 
 	c.Header("Cache-Control", "no-store")
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 func (h *Handler) resetUserMFA(c *gin.Context) {

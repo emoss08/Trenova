@@ -140,14 +140,14 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 func (h *Handler) fail(c *gin.Context, err error) {
 	var pairingErr *captureservice.PairingError
 	if errors.As(err, &pairingErr) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": string(pairingErr.Code)})
+		helpers.JSON(c, http.StatusBadRequest, gin.H{"error": string(pairingErr.Code)})
 
 		return
 	}
 
 	var outdated *captureservice.OutdatedAgentError
 	if errors.As(err, &outdated) {
-		c.JSON(http.StatusUpgradeRequired, gin.H{
+		helpers.JSON(c, http.StatusUpgradeRequired, gin.H{
 			"error":          "agent_outdated",
 			"message":        outdated.Error(),
 			"minimumVersion": outdated.Minimum,

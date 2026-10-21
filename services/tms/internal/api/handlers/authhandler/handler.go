@@ -23,6 +23,9 @@ import (
 	"go.uber.org/zap"
 )
 
+// validKey says whether the session a request carries is still valid.
+const validKey = "valid"
+
 type Params struct {
 	fx.In
 
@@ -83,7 +86,7 @@ func (h *Handler) listAuthorizedSessionRoles(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 func (h *Handler) activateSessionRoles(c *gin.Context) {
@@ -105,7 +108,7 @@ func (h *Handler) activateSessionRoles(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 // @Summary Login
@@ -135,7 +138,7 @@ func (h *Handler) login(c *gin.Context) {
 
 	if resp.MFARequired {
 		c.Header("Cache-Control", "no-store")
-		c.JSON(http.StatusOK, resp)
+		helpers.JSON(c, http.StatusOK, resp)
 		return
 	}
 
@@ -169,7 +172,7 @@ func (h *Handler) completeLogin(c *gin.Context, resp *tenantports.LoginResponse)
 	h.setSessionCookie(c, resp.SessionToken, resp.ExpiresAt)
 	resp.CSRFToken = csrf.Token(resp.SessionID, h.cfg.Security.Session.Secret)
 
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 // @Summary Logout
@@ -206,17 +209,17 @@ func (h *Handler) logout(c *gin.Context) {
 func (h *Handler) validateSession(c *gin.Context) {
 	token, err := c.Cookie(h.cfg.Security.Session.Name)
 	if err != nil || token == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"valid": false})
+		helpers.JSON(c, http.StatusUnauthorized, gin.H{validKey: false})
 		return
 	}
 
 	_, err = h.service.AuthenticateSession(c.Request.Context(), token)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"valid": false})
+		helpers.JSON(c, http.StatusUnauthorized, gin.H{validKey: false})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"valid": true})
+	helpers.JSON(c, http.StatusOK, gin.H{validKey: true})
 }
 
 // @Summary Keep session alive
@@ -255,7 +258,7 @@ func (h *Handler) csrfToken(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
+	helpers.JSON(c, http.StatusOK, gin.H{
 		"csrfToken":  csrf.Token(sess.ID.String(), h.cfg.Security.Session.Secret),
 		"headerName": h.cfg.Security.CSRF.HeaderName,
 	})
@@ -263,7 +266,7 @@ func (h *Handler) csrfToken(c *gin.Context) {
 
 func (h *Handler) anonymousCSRFToken(c *gin.Context) {
 	c.Header("Cache-Control", "no-store")
-	c.JSON(http.StatusOK, gin.H{
+	helpers.JSON(c, http.StatusOK, gin.H{
 		"csrfToken":  "",
 		"headerName": h.cfg.Security.CSRF.HeaderName,
 	})
@@ -292,7 +295,7 @@ func (h *Handler) getTenantLoginMetadata(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 func (h *Handler) listAuthProviders(c *gin.Context) {
@@ -302,7 +305,7 @@ func (h *Handler) listAuthProviders(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 func (h *Handler) startSSOLogin(provider tenant.SSOProvider) gin.HandlerFunc {

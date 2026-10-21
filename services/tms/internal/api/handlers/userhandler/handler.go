@@ -6,6 +6,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/api/responseguard"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/identity/app/passwordresetservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
@@ -113,7 +114,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.simulatePermissions,
 	)
 
-	meAPI := api.Group("/me")
+	meAPI := api.Group("/me", responseguard.SelfScoped())
 	meAPI.GET("/", h.me)
 	meAPI.POST("/switch-organization/", h.switchOrganization)
 	meAPI.GET("/organizations/", h.getOrganizations)
@@ -136,7 +137,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api.GET("/:userID/profile-picture/", h.getProfilePictureURL)
 	api.GET("/avatars/", h.listAvatars)
 
-	selectOptions := api.Group("/select-options")
+	selectOptions := api.Group("/select-options", responseguard.References())
 	selectOptions.GET("/", h.selectOptions)
 	selectOptions.GET("/:userID", h.getOption)
 }
@@ -211,7 +212,7 @@ func (h *Handler) bulkUpdateStatus(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, results)
+	helpers.JSON(c, http.StatusOK, results)
 }
 
 // @Summary Get a user
@@ -245,7 +246,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 // @Summary Get current user
@@ -269,7 +270,7 @@ func (h *Handler) me(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 // @Summary Get a user option
@@ -300,7 +301,7 @@ func (h *Handler) getOption(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 // @Summary List user options
@@ -354,7 +355,7 @@ func (h *Handler) getRoleAssignments(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, assignments)
+	helpers.JSON(c, http.StatusOK, assignments)
 }
 
 // @Summary Get user effective permissions
@@ -388,7 +389,7 @@ func (h *Handler) getUserEffectivePermissions(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, perms)
+	helpers.JSON(c, http.StatusOK, perms)
 }
 
 // @Summary Simulate user permissions
@@ -433,7 +434,7 @@ func (h *Handler) simulatePermissions(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, perms)
+	helpers.JSON(c, http.StatusOK, perms)
 }
 
 // @Summary List current user organizations
@@ -458,7 +459,7 @@ func (h *Handler) getOrganizations(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, orgs)
+	helpers.JSON(c, http.StatusOK, orgs)
 }
 
 // @Summary Update current user settings
@@ -518,7 +519,7 @@ func (h *Handler) updateMySettings(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updated)
+	helpers.JSON(c, http.StatusOK, updated)
 }
 
 // @Summary Upload current user profile picture
@@ -552,7 +553,7 @@ func (h *Handler) uploadProfilePicture(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updated)
+	helpers.JSON(c, http.StatusOK, updated)
 }
 
 // @Summary Delete current user profile picture
@@ -577,7 +578,7 @@ func (h *Handler) deleteProfilePicture(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updated)
+	helpers.JSON(c, http.StatusOK, updated)
 }
 
 // @Summary Get user profile picture URL
@@ -617,7 +618,7 @@ func (h *Handler) getProfilePictureURL(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, ProfilePictureURLResponse{URL: url})
+	helpers.JSON(c, http.StatusOK, ProfilePictureURLResponse{URL: url})
 }
 
 // @Summary Change current user password
@@ -659,7 +660,7 @@ func (h *Handler) changeMyPassword(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updated)
+	helpers.JSON(c, http.StatusOK, updated)
 }
 
 func validateMySettingsFields(raw map[string]any) error {
@@ -713,7 +714,7 @@ func (h *Handler) listOrganizationMemberships(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, memberships)
+	helpers.JSON(c, http.StatusOK, memberships)
 }
 
 // @Summary Replace user organization memberships
@@ -768,7 +769,7 @@ func (h *Handler) replaceOrganizationMemberships(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updatedMemberships)
+	helpers.JSON(c, http.StatusOK, updatedMemberships)
 }
 
 // @Summary Switch current organization
@@ -817,5 +818,5 @@ func (h *Handler) switchOrganization(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }

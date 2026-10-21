@@ -79,6 +79,32 @@ export function LockedReference({
   );
 }
 
+type WithheldPanelProps = {
+  /** What the person cannot see and whose access it needs, as one translated sentence. */
+  children: ReactNode;
+  className?: string;
+};
+
+/**
+ * A whole card or section withheld because the person may not read a kind of record it is
+ * about: a lock and a sentence naming the access it needs, in place of the content, so it
+ * never reads as an empty card.
+ */
+export function WithheldPanel({ children, className }: WithheldPanelProps) {
+  return (
+    <div
+      data-slot="withheld-panel"
+      className={cn(
+        "flex flex-1 flex-col items-center justify-center gap-2 px-3 py-6 text-center",
+        className,
+      )}
+    >
+      <Lock01Icon aria-hidden className="size-4 shrink-0 text-foreground-muted" />
+      <p className="max-w-64 text-xs text-foreground-muted">{children}</p>
+    </div>
+  );
+}
+
 type WithheldValueProps = {
   /** The kind of record the withheld field belongs to. */
   kind: ReferenceKind;

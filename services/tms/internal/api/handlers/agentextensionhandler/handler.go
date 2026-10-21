@@ -167,7 +167,7 @@ func (h *Handler) catalog(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 func (h *Handler) getConfig(c *gin.Context) {
@@ -177,7 +177,7 @@ func (h *Handler) getConfig(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 func (h *Handler) updateConfig(c *gin.Context) {
@@ -194,7 +194,7 @@ func (h *Handler) updateConfig(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 func (h *Handler) test(c *gin.Context) {
@@ -204,5 +204,5 @@ func (h *Handler) test(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
