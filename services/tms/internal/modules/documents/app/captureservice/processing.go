@@ -6,6 +6,7 @@ import (
 	"iter"
 	"slices"
 	"strings"
+	"sync"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
@@ -241,6 +242,7 @@ func (s *Service) readPages(
 	priority kernelports.ImagingPriority,
 	done func(i int),
 ) error {
+	var unreadableMu sync.Mutex
 	unreadable := make(map[int]error)
 	_, err := s.imaging.InspectCapture(ctx, &kernelports.ImagingCaptureRequest{
 		PageCount: len(pending),
@@ -251,7 +253,9 @@ func (s *Service) readPages(
 					page := pages[i]
 					data, readErr := s.getObject(ctx, tenantInfo, page.StoragePath)
 					if readErr != nil {
+						unreadableMu.Lock()
 						unreadable[position] = readErr
+						unreadableMu.Unlock()
 						data = nil
 					}
 					if !yield(kernelports.ImagingCapturePage{
@@ -272,7 +276,10 @@ func (s *Service) readPages(
 			)
 		}
 		i := pending[result.Index]
-		if readErr, ok := unreadable[result.Index]; ok {
+		unreadableMu.Lock()
+		readErr, ok := unreadable[result.Index]
+		unreadableMu.Unlock()
+		if ok {
 			s.failPage(pages[i], "The page could not be read back from storage.", readErr)
 		} else {
 			s.applyInspection(ctx, tenantInfo, pages[i], result)
