@@ -617,7 +617,10 @@ func (a *Activities) convertDocument(
 
 	var nativePages map[int]bool
 	if format == formatPDF {
-		pageCount, native := a.pdfTextProfile(ctx, source)
+		pageCount, native, err := a.pdfTextProfile(ctx, source)
+		if err != nil {
+			return nil, nil, err
+		}
 		if limit := a.conversionCfg.GetMaxPages(); pageCount > limit {
 			return nil, &conversionFailure{
 				code: documentupload.FailureTooManyPages,
@@ -699,9 +702,9 @@ func (a *Activities) plainTextConversion(data []byte) *convertedFile {
 func (a *Activities) pdfTextProfile(
 	ctx context.Context,
 	source kernelports.ImagingSource,
-) (pageCount int, native map[int]bool) {
+) (pageCount int, native map[int]bool, err error) {
 	if a.imaging == nil {
-		return 0, nil
+		return 0, nil, nil
 	}
 	source.ContentType = "application/pdf"
 	probe, err := a.imaging.Probe(ctx, &kernelports.ImagingProbeRequest{
@@ -709,13 +712,19 @@ func (a *Activities) pdfTextProfile(
 		TextProfile: true,
 		Priority:    kernelports.ImagingBatch,
 	})
-	if err != nil || probe.Encrypted {
-		return 0, nil
+	if err != nil {
+		if probeIsVerdict(err) {
+			return 0, nil, nil
+		}
+		return 0, nil, fmt.Errorf("probe the PDF before converting it: %w", err)
+	}
+	if probe.Encrypted {
+		return 0, nil, nil
 	}
 
 	pageCount = probe.PageCount
 	if pageCount > a.conversionCfg.GetMaxPages() {
-		return pageCount, nil
+		return pageCount, nil, nil
 	}
 
 	native = make(map[int]bool, len(probe.Pages))
@@ -723,7 +732,17 @@ func (a *Activities) pdfTextProfile(
 		native[page.Index+1] = page.HasText
 	}
 
-	return pageCount, native
+	return pageCount, native, nil
+}
+
+func probeIsVerdict(err error) bool {
+	return unreadable(err) ||
+		errors.Is(err, kernelports.ErrImagingInvalidDocument) ||
+		errors.Is(err, kernelports.ErrImagingEncrypted) ||
+		errors.Is(err, kernelports.ErrImagingUnsupported) ||
+		errors.Is(err, kernelports.ErrImagingTooLarge) ||
+		errors.Is(err, kernelports.ErrImagingPixelBudget) ||
+		errors.Is(err, kernelports.ErrImagingInternal)
 }
 
 func (a *Activities) convertWithConverter(
