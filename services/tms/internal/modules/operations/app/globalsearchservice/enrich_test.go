@@ -194,6 +194,7 @@ func TestSearchFindsACustomersShipmentsAndAWorkersCurrentLoad(t *testing.T) {
 		}),
 		shipmentRead: reader,
 		permissions:  allowAllPermissionsMock(t),
+		visibility:   everyRecordVisible{},
 	}
 
 	result, err := svc.Search(t.Context(), &kernelports.GlobalSearchRequest{
@@ -246,6 +247,7 @@ func TestSearchNamesNoShipmentWithoutShipmentAccess(t *testing.T) {
 		}),
 		shipmentRead: reader,
 		permissions:  permissionsDenying(t, permission.ResourceShipment),
+		visibility:   everyRecordVisible{},
 	}
 
 	result, err := svc.Search(t.Context(), &kernelports.GlobalSearchRequest{
@@ -275,6 +277,7 @@ func TestSearchShowsOpenBalancesOnlyWithReceivablesAccess(t *testing.T) {
 		searchRepo:   repoReturning(t, pages),
 		shipmentRead: &fakeCardReader{},
 		permissions:  allowAllPermissionsMock(t),
+		visibility:   everyRecordVisible{},
 		balances:     balances,
 	}
 	result, err := svc.Search(t.Context(), &kernelports.GlobalSearchRequest{
@@ -296,6 +299,7 @@ func TestSearchShowsOpenBalancesOnlyWithReceivablesAccess(t *testing.T) {
 		searchRepo:   repoReturning(t, pages),
 		shipmentRead: &fakeCardReader{},
 		permissions:  permissionsDenying(t, permission.ResourceAccountsReceivable),
+		visibility:   everyRecordVisible{},
 		balances:     denied,
 	}
 	result, err = svc.Search(t.Context(), &kernelports.GlobalSearchRequest{
@@ -339,6 +343,7 @@ func TestSearchLabelsTheRecordADocumentIsAttachedToWhenReadable(t *testing.T) {
 		}),
 		shipmentRead: &fakeCardReader{},
 		permissions:  permissionsDenying(t, permission.ResourceCustomer),
+		visibility:   everyRecordVisible{},
 		recordLabels: labels,
 	}
 
@@ -364,12 +369,13 @@ func TestSearchReportsTheIndexTotalBeyondTheReturnedHits(t *testing.T) {
 		config: indexConfig(),
 		searchRepo: repoReturning(t, map[string]*customerports.SearchPage{
 			"workers": {
-				Documents:      []map[string]any{{"id": "wrk_1", "first_name": "Ann"}},
+				Documents:      []map[string]any{{"id": pulid.MustNew("wrk_").String(), "first_name": "Ann"}},
 				EstimatedTotal: 41,
 			},
 		}),
 		shipmentRead: &fakeCardReader{},
 		permissions:  allowAllPermissionsMock(t),
+		visibility:   everyRecordVisible{},
 	}
 
 	result, err := svc.Search(t.Context(), &kernelports.GlobalSearchRequest{
@@ -390,7 +396,9 @@ func TestSearchBrowsesOneKindOfRecordOnABlankQuery(t *testing.T) {
 		RunAndReturn(func(_ context.Context, req customerports.SearchRequest) (*customerports.SearchPage, error) {
 			requests = append(requests, req)
 			return &customerports.SearchPage{
-				Documents:      []map[string]any{{"id": "wrk_1", "first_name": "Ann", "last_name": "Lee"}},
+				Documents: []map[string]any{
+					{"id": pulid.MustNew("wrk_").String(), "first_name": "Ann", "last_name": "Lee"},
+				},
 				EstimatedTotal: 64,
 			}, nil
 		}).
@@ -402,6 +410,7 @@ func TestSearchBrowsesOneKindOfRecordOnABlankQuery(t *testing.T) {
 		searchRepo:   repo,
 		shipmentRead: &fakeCardReader{},
 		permissions:  allowAllPermissionsMock(t),
+		visibility:   everyRecordVisible{},
 	}
 
 	result, err := svc.Search(t.Context(), &kernelports.GlobalSearchRequest{
@@ -423,6 +432,7 @@ func TestSearchDoesNotBrowseEverythingOnABlankQuery(t *testing.T) {
 		config:      indexConfig(),
 		searchRepo:  customerportsmock.NewMockSearchRepository(t),
 		permissions: permissionportsmock.NewMockPermissionEngine(t),
+		visibility:  everyRecordVisible{},
 	}
 
 	result, err := svc.Search(t.Context(), &kernelports.GlobalSearchRequest{

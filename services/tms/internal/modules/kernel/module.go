@@ -1,6 +1,7 @@
 package kernel
 
 import (
+	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/recordvisibilityrepository"
 	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/settingversionrepository"
 	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/usstaterepository"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/editioninfo"
@@ -25,6 +26,7 @@ func SharedOptions() fx.Option {
 			encryptionservice.NewSecretCipher,
 			usstaterepository.New,
 			settingversionrepository.New,
+			recordvisibilityrepository.New,
 			fx.Annotate(
 				entitlementservice.NewLocalEntitlementProvider,
 				fx.As(new(platformcatalogports.EntitlementProvider)),

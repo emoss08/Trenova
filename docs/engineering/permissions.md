@@ -139,6 +139,15 @@ The value only narrows what the signed tenant scope allows, so it is not signed;
 with no holder (jobs, unattended agents) reads its whole tenant. Policies are
 `FOR SELECT`, so an update or a `RETURNING` on a row outside the scope finds nothing.
 
+A search index cannot apply them: Meilisearch holds every record of the tenant. Global
+search therefore passes each shipment, order, invoice and worker hit, and each document
+attached to one, through `kernelports.RecordVisibility`, which asks the database which of
+those ids the request may read under its read scope; a hit it does not return, or a check
+that fails, is not shown, a kind the person cannot read at all hides the documents attached
+to it, and a narrowed group reports only the hits it shows as its total. Every index query
+names the fields it returns (`SearchRequest.Attributes`, the id alone when none are named)
+and builds its filter with `shared/searchfilter`, which quotes each value.
+
 These policies apply only while row-level security is installed (`database.rls.mode`
 `observe` or `enforce`). With RLS off, a database-enforced scope is not enforced, so the
 server refuses to grant one and the editor does not offer it.

@@ -68,3 +68,17 @@ type CustomerOpenBalanceReader interface {
 		req *ListCustomerOpenBalancesRequest,
 	) ([]*CustomerOpenBalance, error)
 }
+
+type ListVisibleRecordsRequest struct {
+	TenantInfo pagination.TenantInfo
+	Kind       string
+	IDs        []pulid.ID
+}
+
+// RecordVisibility answers, through the database's read scope, which of a
+// set of records the current request may read. A search index cannot apply
+// an own or team scope, so its hits for a scoped kind go through it.
+type RecordVisibility interface {
+	Scoped(kind string) bool
+	VisibleIDs(ctx context.Context, req *ListVisibleRecordsRequest) ([]pulid.ID, error)
+}
