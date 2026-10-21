@@ -32614,12 +32614,11 @@
     ]
   },
   "At least 8 characters": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/dash/routes",
       "routes/auth"
     ]
   },
@@ -33034,6 +33033,15 @@
     ],
     "areas": [
       "apps/web/types"
+    ]
+  },
+  "At least {0} characters": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/dash/routes"
     ]
   },
   "At least {0} seconds": {
@@ -183970,6 +183978,15 @@
       "routes/settings"
     ]
   },
+  "Password cannot be only spaces": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Password changed": {
     "sites": 1,
     "scope": [
@@ -183989,6 +184006,15 @@
     ]
   },
   "Password confirmation must match the new password": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Password does not meet the password policy": {
     "sites": 1,
     "scope": [
       "go"
@@ -184036,8 +184062,20 @@
       "routes/admin"
     ]
   },
-  "Password must be at least 8 characters": {
-    "sites": 2,
+  "Password must be 72 bytes or fewer": {
+    "sites": 4,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/dash/routes",
+      "go/other",
+      "routes/auth"
+    ]
+  },
+  "Password must be at least 12 characters": {
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -184046,12 +184084,21 @@
     ]
   },
   "Password must be at least {0} characters": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/auth"
+    ]
+  },
+  "Password must not contain the account's email address": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Password or private key": {
@@ -274144,6 +274191,15 @@
       "routes/edi"
     ]
   },
+  "This password is too common. Choose something harder to guess": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This pay is on hold — check with your fleet manager.": {
     "sites": 1,
     "scope": [
@@ -307922,6 +307978,15 @@
     ],
     "areas": [
       "routes/auth"
+    ]
+  },
+  "Your password must be at least {0} characters.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/dash/routes"
     ]
   },
   "Your password must be changed before you can continue.": {

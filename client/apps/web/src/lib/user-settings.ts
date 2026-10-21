@@ -2,6 +2,7 @@ import { dateTimeFormatter } from "@trenova/shared/i18n/format";
 import type { TimeFormatType } from "@trenova/shared/types/user";
 import { addDays, addHours, endOfDay, nextMonday, set } from "date-fns";
 import { fromZonedTime, toZonedTime } from "date-fns-tz";
+import { PASSWORD_MIN_LENGTH, passwordLength } from "@trenova/shared/lib/password-policy";
 
 export const PAUSE_CHOICES = ["off", "1h", "tomorrow", "monday"] as const;
 export type PauseChoice = (typeof PAUSE_CHOICES)[number] | "current";
@@ -104,12 +105,11 @@ export function greetingPeriod(hour: number): GreetingPeriod {
 
 export type PasswordCheck = "length" | "number" | "case" | "symbol";
 
-export const PASSWORD_MIN_LENGTH = 12;
 
 /** Which of the four requirements a new password meets. */
 export function passwordChecks(password: string): Record<PasswordCheck, boolean> {
   return {
-    length: password.length >= PASSWORD_MIN_LENGTH,
+    length: passwordLength(password) >= PASSWORD_MIN_LENGTH,
     number: /\d/.test(password),
     case: /\p{Ll}/u.test(password) && /\p{Lu}/u.test(password),
     symbol: /[^\p{L}\p{N}\s]/u.test(password),

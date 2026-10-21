@@ -8,16 +8,27 @@ import { AuthErrorText, AuthPasswordField, AuthSubmit } from "./auth-field";
 import { AuthHeading, AuthQuietButton, StepCrumbs } from "./auth-primitives";
 import { AuthCheckMark, AuthSuccess } from "./auth-success";
 import { translate } from "@trenova/shared/i18n/runtime";
+import {
+  PASSWORD_MAX_BYTES,
+  PASSWORD_MIN_LENGTH,
+  passwordByteLength,
+  passwordLength,
+} from "@trenova/shared/lib/password-policy";
 
-export const MIN_PASSWORD_LENGTH = 8;
+export const newPasswordSchema = z
+  .string()
+  .refine((value) => passwordLength(value) >= PASSWORD_MIN_LENGTH, {
+    error: () => translate("Password must be at least {0} characters", PASSWORD_MIN_LENGTH),
+  })
+  .refine((value) => passwordByteLength(value) <= PASSWORD_MAX_BYTES, {
+    error: () => translate("Password must be 72 bytes or fewer"),
+  });
 
 // Mirrors the server's rule. The server is the one that enforces it; this exists so a
 // too-short password is refused before it burns the single-use link.
 export const resetPasswordSchema = z
   .object({
-    newPassword: z.string().min(MIN_PASSWORD_LENGTH, {
-      error: () => translate("Password must be at least {0} characters", MIN_PASSWORD_LENGTH),
-    }),
+    newPassword: newPasswordSchema,
     confirmPassword: z.string().min(1, { error: () => translate("Confirm your new password") }),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {

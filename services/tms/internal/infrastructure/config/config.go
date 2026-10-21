@@ -1900,7 +1900,7 @@ func (c *PlatformConfig) IsDevelopmentDeployment() bool {
 }
 
 type SystemConfig struct {
-	SystemUserPassword string `mapstructure:"systemUserPassword" validate:"required,min=1,max=100"`
+	SystemUserPassword string `mapstructure:"systemUserPassword" validate:"required,min=1,max=72"`
 }
 
 type Config struct {

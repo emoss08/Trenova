@@ -1,6 +1,7 @@
 {
   "Account setup": "Configuración de la cuenta",
   "Activate {0, plural, one {# role} other {# roles}}": "Activar {0, plural, one {# rol} other {# roles}}",
+  "At least 8 characters": "Al menos 8 caracteres",
   "Authorized roles": "Roles autorizados",
   "Back to sign in": "Volver al inicio de sesión",
   "By continuing you agree to our": "Al continuar, acepta nuestros",

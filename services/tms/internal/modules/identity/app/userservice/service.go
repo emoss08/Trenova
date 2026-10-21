@@ -643,6 +643,10 @@ func (s *Service) ChangeMyPassword(
 		return nil, err
 	}
 
+	if err = tenant.CheckNewPassword("newPassword", req.NewPassword, user.EmailAddress); err != nil {
+		return nil, err
+	}
+
 	if err = user.VerifyCredentials(req.CurrentPassword); err != nil {
 		return nil, err
 	}

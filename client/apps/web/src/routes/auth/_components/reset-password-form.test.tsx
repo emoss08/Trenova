@@ -64,7 +64,16 @@ describe("ResetPasswordForm", () => {
     const user = await fillPasswords("short");
     await user.click(screen.getByRole("button", { name: /set new password/i }));
 
-    await waitFor(() => expect(screen.getByText(/at least 8 characters/i)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/at least 12 characters/i)).toBeInTheDocument());
+    expect(mocks.resetPassword).not.toHaveBeenCalled();
+  });
+
+  it("refuses a password longer than the 72 bytes bcrypt reads", async () => {
+    renderForm();
+    const user = await fillPasswords("ab1-".repeat(19));
+    await user.click(screen.getByRole("button", { name: /set new password/i }));
+
+    await waitFor(() => expect(screen.getByText(/72 bytes or fewer/i)).toBeInTheDocument());
     expect(mocks.resetPassword).not.toHaveBeenCalled();
   });
 

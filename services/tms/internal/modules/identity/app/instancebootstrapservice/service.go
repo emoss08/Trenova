@@ -19,7 +19,6 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/emailutils"
-	"github.com/emoss08/trenova/shared/passwordutils"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
@@ -415,33 +414,13 @@ func validateRequest(
 	multiErr := errortypes.NewMultiError()
 	normalized.Validate(multiErr)
 
-	address, _ := emailutils.Parse(normalized.AdminEmail)
-	if err := passwordutils.CheckPolicy(req.Password, &address); err != nil {
-		multiErr.Add(fieldPassword, errortypes.ErrInvalid, passwordMessage(err))
-	}
+	tenant.ValidateNewPassword(multiErr, fieldPassword, req.Password, normalized.AdminEmail)
 
 	if multiErr.HasErrors() {
 		return normalized, multiErr
 	}
 
 	return normalized, nil
-}
-
-func passwordMessage(err error) string {
-	switch {
-	case errors.Is(err, passwordutils.ErrTooShort):
-		return "Password must be at least 12 characters"
-	case errors.Is(err, passwordutils.ErrTooLong):
-		return "Password must be 72 bytes or fewer"
-	case errors.Is(err, passwordutils.ErrBlank):
-		return "Password cannot be only spaces"
-	case errors.Is(err, passwordutils.ErrContainsEmail):
-		return "Password must not contain the administrator's email address"
-	case errors.Is(err, passwordutils.ErrCommon):
-		return "This password is too common. Choose something harder to guess"
-	default:
-		return "Password does not meet the password policy"
-	}
 }
 
 func usernameBase(email string) string {
