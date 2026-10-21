@@ -181,6 +181,21 @@ func ValidateURLWithPolicy(rawURL string, p Policy) (*url.URL, error) {
 	return parsed, nil
 }
 
+func ValidateHost(host string, p Policy) error {
+	trimmed := strings.Trim(strings.TrimSpace(host), "[]")
+	if trimmed == "" {
+		return ErrMissingHost
+	}
+	if ip := net.ParseIP(trimmed); ip != nil && IsBlockedIPWithPolicy(ip, p) {
+		return fmt.Errorf("%w: %s", ErrBlockedAddress, trimmed)
+	}
+	return nil
+}
+
+func DialControl(p Policy) func(string, string, syscall.RawConn) error {
+	return guardedControl(p)
+}
+
 func guardedControl(p Policy) func(string, string, syscall.RawConn) error {
 	return func(_, address string, _ syscall.RawConn) error {
 		host, _, err := net.SplitHostPort(address)

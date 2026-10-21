@@ -48,7 +48,7 @@ func (t *SFTPTransport) TestConnection(
 	ctx context.Context,
 	req *ediports.EDITransportRequest,
 ) []ediports.EDIConnectionCheck {
-	return testSFTPEndpoint(ctx, req, defaultOutboundDirectory)
+	return t.network.testEndpoint(ctx, req, defaultOutboundDirectory)
 }
 
 func (t *VANTransport) TestConnection(
@@ -69,10 +69,10 @@ func (t *VANTransport) TestConnection(
 			failedCheck("configuration", "VAN mailbox ID is required"),
 		}
 	}
-	return testSFTPEndpoint(ctx, req, path.Join("/", mailboxID, "outbound"))
+	return t.network.testEndpoint(ctx, req, path.Join("/", mailboxID, "outbound"))
 }
 
-func testSFTPEndpoint(
+func (n sftpNetwork) testEndpoint(
 	ctx context.Context,
 	req *ediports.EDITransportRequest,
 	fallbackOutboundDirectory string,
@@ -81,7 +81,7 @@ func testSFTPEndpoint(
 	if req == nil || req.Profile == nil {
 		return append(checks, failedCheck("configuration", "EDI communication profile is required"))
 	}
-	cfg := endpointConfigFromProfile(req.Profile, req.Secrets)
+	cfg := n.endpointConfig(req.Profile, req.Secrets)
 	if err := cfg.Validate(); err != nil {
 		return append(checks, failedCheck("configuration", err.Error()))
 	}

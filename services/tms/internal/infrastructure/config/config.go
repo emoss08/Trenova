@@ -2105,8 +2105,18 @@ func (c *Config) PublicLinkBaseURL() string {
 	return c.App.GetWebBaseURL()
 }
 
+const DefaultEDIMaxInboundFileBytes int64 = 32 << 20
+
 type EDIConfig struct {
-	AllowPrivateNetworks bool `mapstructure:"allowPrivateNetworks"`
+	AllowPrivateNetworks bool  `mapstructure:"allowPrivateNetworks"`
+	MaxInboundFileBytes  int64 `mapstructure:"maxInboundFileBytes"  validate:"omitempty,min=1024"`
+}
+
+func (c *EDIConfig) GetMaxInboundFileBytes() int64 {
+	if c == nil || c.MaxInboundFileBytes <= 0 {
+		return DefaultEDIMaxInboundFileBytes
+	}
+	return c.MaxInboundFileBytes
 }
 
 func (c *Config) GetEDIConfig() *EDIConfig {

@@ -126,7 +126,7 @@ func TestSftpUploadsEveryFileUnderTheScheduleNumber(t *testing.T) {
 			dialed = *cfg
 			return remote, nil
 		},
-		func(context.Context, string) ([]net.IP, error) { return []net.IP{net.ParseIP("203.0.113.10")}, nil },
+		func(context.Context, string) ([]net.IP, error) { return []net.IP{net.ParseIP("93.184.215.14")}, nil },
 	)
 	result, err := transport.Send(t.Context(), &factoringports.TransportSendRequest{
 		Submission:     submission(),
@@ -141,7 +141,7 @@ func TestSftpUploadsEveryFileUnderTheScheduleNumber(t *testing.T) {
 		"/inbound/FS2610000001/FS2610000001.pdf": 3,
 		"/inbound/FS2610000001/-INV-1.pdf":       4,
 	}, remote.written)
-	assert.Equal(t, "203.0.113.10", dialed.Host)
+	assert.Equal(t, "93.184.215.14", dialed.Host)
 	assert.Equal(t, sftp.AuthModePassword, dialed.AuthMode)
 	assert.Equal(t, "hunter2", dialed.Password)
 }
@@ -156,7 +156,7 @@ func TestSftpRefusesPrivateHostsAndMissingSecrets(t *testing.T) {
 			return nil, errors.New("should not dial")
 		},
 		func(context.Context, string) ([]net.IP, error) {
-			return []net.IP{net.ParseIP("203.0.113.10"), net.ParseIP("10.0.0.5")}, nil
+			return []net.IP{net.ParseIP("93.184.215.14"), net.ParseIP("10.0.0.5")}, nil
 		},
 	)
 	err := transport.Test(t.Context(), &factoringports.TransportTestRequest{
@@ -178,7 +178,7 @@ func TestSftpTestReportsAnUnreadableDirectory(t *testing.T) {
 		func(context.Context, *sftp.Config) (factoringtransport.RemoteClient, error) {
 			return &fakeRemote{statErr: errors.New("permission denied")}, nil
 		},
-		func(context.Context, string) ([]net.IP, error) { return []net.IP{net.ParseIP("203.0.113.10")}, nil },
+		func(context.Context, string) ([]net.IP, error) { return []net.IP{net.ParseIP("93.184.215.14")}, nil },
 	)
 	err := transport.Test(t.Context(), &factoringports.TransportTestRequest{
 		Transport: sftpTransport(),

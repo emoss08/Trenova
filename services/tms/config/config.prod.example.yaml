@@ -166,3 +166,4 @@ documentConversion:
 # addresses stay refused either way.
 edi:
     allowPrivateNetworks: false
+    maxInboundFileBytes: 33554432 # Largest file read from a partner's SFTP or VAN mailbox (32 MiB)

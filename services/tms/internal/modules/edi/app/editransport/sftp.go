@@ -7,8 +7,10 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/shared/httpsafe"
 	"github.com/emoss08/trenova/shared/maputils"
 	"github.com/emoss08/trenova/shared/sftp"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -40,10 +42,22 @@ type endpointConfig struct {
 	fileNamingPattern string
 }
 
-type SFTPTransport struct{}
+type sftpNetwork struct {
+	policy       httpsafe.Policy
+	maxFileBytes int64
+}
 
-func NewSFTPTransport() *SFTPTransport {
-	return &SFTPTransport{}
+func sftpNetworkFromConfig(cfg *config.Config) sftpNetwork {
+	edi := cfg.GetEDIConfig()
+	return sftpNetwork{policy: edi.EgressPolicy(), maxFileBytes: edi.GetMaxInboundFileBytes()}
+}
+
+type SFTPTransport struct {
+	network sftpNetwork
+}
+
+func NewSFTPTransport(cfg *config.Config) *SFTPTransport {
+	return &SFTPTransport{network: sftpNetworkFromConfig(cfg)}
 }
 
 func (t *SFTPTransport) Method() edi.ConnectionMethod {
@@ -54,11 +68,12 @@ func (t *SFTPTransport) Deliver(
 	ctx context.Context,
 	req *ediports.EDITransportRequest,
 ) (*ediports.EDITransportResult, error) {
-	return deliverOverSFTP(ctx, req, defaultOutboundDirectory)
+	return deliverOverSFTP(ctx, t.network, req, defaultOutboundDirectory)
 }
 
 func deliverOverSFTP(
 	ctx context.Context,
+	network sftpNetwork,
 	req *ediports.EDITransportRequest,
 	fallbackOutboundDirectory string,
 ) (*ediports.EDITransportResult, error) {
@@ -68,7 +83,7 @@ func deliverOverSFTP(
 	if strings.TrimSpace(req.FileName) == "" {
 		return nil, errors.New("EDI delivery file name is required")
 	}
-	cfg := endpointConfigFromProfile(req.Profile, req.Secrets)
+	cfg := network.endpointConfig(req.Profile, req.Secrets)
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
@@ -80,7 +95,7 @@ func deliverOverSFTP(
 	return &ediports.EDITransportResult{RemotePath: remotePath}, nil
 }
 
-func endpointConfigFromProfile(
+func (n sftpNetwork) endpointConfig(
 	profile *edi.EDICommunicationProfile,
 	secrets map[string]string,
 ) endpointConfig {
@@ -93,6 +108,8 @@ func endpointConfigFromProfile(
 			KnownHostKey: maputils.StringValue(profile.Config, configKeyKnownHostKey),
 			Password:     strings.TrimSpace(secrets[secretKeyPassword]),
 			PrivateKey:   strings.TrimSpace(secrets[secretKeyPrivateKey]),
+			EgressPolicy: n.policy,
+			MaxFileBytes: n.maxFileBytes,
 		},
 		outboundDirectory: maputils.StringValue(profile.Config, configKeyOutboundDir),
 		fileNamingPattern: maputils.StringValue(profile.Config, configKeyFileNamePattern),

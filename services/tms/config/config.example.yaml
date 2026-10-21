@@ -388,6 +388,7 @@ formula:
 # addresses stay refused either way.
 edi:
     allowPrivateNetworks: true # The local partner simulator listens on localhost
+    maxInboundFileBytes: 33554432 # Largest file read from a partner's SFTP or VAN mailbox (32 MiB)
 
 # Driver portal (Dash) settings
 portal:

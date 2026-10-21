@@ -254,3 +254,40 @@ func TestSameOrigin(t *testing.T) {
 		}
 	}
 }
+
+func TestValidateHost(t *testing.T) {
+	t.Parallel()
+
+	require.NoError(t, ValidateHost("sftp.partner.example", Policy{}))
+	require.NoError(t, ValidateHost("8.8.8.8", Policy{}))
+	require.ErrorIs(t, ValidateHost("", Policy{}), ErrMissingHost)
+	require.ErrorIs(t, ValidateHost("127.0.0.1", Policy{}), ErrBlockedAddress)
+	require.ErrorIs(t, ValidateHost("[::1]", Policy{}), ErrBlockedAddress)
+	require.ErrorIs(t, ValidateHost("169.254.169.254", Policy{}), ErrBlockedAddress)
+	require.NoError(t, ValidateHost("10.0.0.5", Policy{AllowPrivateNetworks: true}))
+	require.ErrorIs(
+		t,
+		ValidateHost("169.254.169.254", Policy{AllowPrivateNetworks: true}),
+		ErrBlockedAddress,
+	)
+}
+
+func TestDialControlRefusesBlockedAddresses(t *testing.T) {
+	t.Parallel()
+
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = listener.Close() })
+
+	strict := net.Dialer{Timeout: time.Second, Control: DialControl(Policy{})}
+	_, err = strict.DialContext(t.Context(), "tcp", listener.Addr().String())
+	require.ErrorIs(t, err, ErrBlockedAddress)
+
+	allowed := net.Dialer{
+		Timeout: time.Second,
+		Control: DialControl(Policy{AllowPrivateNetworks: true}),
+	}
+	conn, err := allowed.DialContext(t.Context(), "tcp", listener.Addr().String())
+	require.NoError(t, err)
+	require.NoError(t, conn.Close())
+}
