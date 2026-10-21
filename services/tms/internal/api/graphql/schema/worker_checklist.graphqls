@@ -203,7 +203,11 @@ extend type Query {
   workerChecklistTemplates(input: WorkerChecklistTemplatesInput!): WorkerChecklistTemplateConnection!
   workerChecklistTemplate(id: ID!): WorkerChecklistTemplate!
   activeWorkerChecklistTemplates: [WorkerChecklistTemplate!]!
-  workerChecklists(workerId: ID!, includeClosed: Boolean = true): [WorkerChecklist!]!
+  workerChecklists(
+    workerId: ID!
+    "Also the completed and cancelled checklists, not only the open ones."
+    includeClosed: Boolean = true
+  ): [WorkerChecklist!]!
   workerChecklist(id: ID!): WorkerChecklist!
 }
 

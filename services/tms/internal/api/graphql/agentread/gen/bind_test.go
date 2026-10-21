@@ -74,3 +74,44 @@ func TestUnsupplied_RefusesARequiredVariableTheToolCannotSend(t *testing.T) {
 		})
 	}
 }
+
+const keyedSchema = `
+input CodeFilter { region: String }
+type Checklist { id: ID! }
+type Query {
+  workerChecklists(workerId: ID!, includeClosed: Boolean = true, filter: CodeFilter): [Checklist!]!
+}
+`
+
+func TestUnsupplied_AnUnpagedListSendsItsOwnArguments(t *testing.T) {
+	schema := gqlparser.MustLoadSchema(&ast.Source{Input: keyedSchema})
+	boundSchema = schema
+	t.Cleanup(func() { boundSchema = nil })
+	field := schema.Query.Fields.ForName("workerChecklists")
+
+	cases := map[string]struct {
+		text    string
+		refused bool
+	}{
+		"the worker and a switch are its parameters": {
+			text: `query DeskWorkerChecklists($workerId: ID!, $includeClosed: Boolean) {
+				workerChecklists(workerId: $workerId, includeClosed: $includeClosed) { id } }`,
+		},
+		"an input object is not": {
+			text: `query DeskWorkerChecklists($workerId: ID!, $filter: CodeFilter!) {
+				workerChecklists(workerId: $workerId, filter: $filter) { id } }`,
+			refused: true,
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			problem := unsupplied(&binding{
+				Tool:      "worker_list_checklists",
+				Verb:      verbList,
+				RootField: field,
+				Operation: supplyOperation(t, schema, "DeskWorkerChecklists", tc.text),
+			})
+			assert.Equal(t, tc.refused, problem != "", problem)
+		})
+	}
+}

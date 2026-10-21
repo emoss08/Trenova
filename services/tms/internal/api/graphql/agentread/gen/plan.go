@@ -70,6 +70,9 @@ func planExecutor(schema *ast.Schema, opts *options, bindings []*binding) (*exec
 	r := newReach(schema)
 	for _, b := range bindings {
 		r.operation(b.Operation.Query)
+		for _, beside := range b.Alongside {
+			r.operation(beside.Operation.Query)
+		}
 	}
 	closeOver(schema, r.shards)
 

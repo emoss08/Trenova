@@ -30,11 +30,19 @@ func TestGraphQLReadsDeriveTheirTypedParameters(t *testing.T) {
 		t.Run(tool, func(t *testing.T) {
 			t.Parallel()
 
-			params := read.typedParams()
-			require.NotEmpty(t, params, "a list tool reads by at least one typed parameter")
+			params := read.typedParams
+			if read.Unpaged {
+				params = func() []graphQLParam {
+					derived, _, err := read.argumentParams(tool)
+					require.NoError(t, err)
+					return derived
+				}
+			}
+			derived := params()
+			require.NotEmpty(t, derived, "a list tool reads by at least one typed parameter")
 
-			names := make(map[string]struct{}, len(params))
-			for _, param := range params {
+			names := make(map[string]struct{}, len(derived))
+			for _, param := range derived {
 				_, dup := names[param.Name]
 				assert.Falsef(t, dup, "parameter %s is derived twice", param.Name)
 				names[param.Name] = struct{}{}
