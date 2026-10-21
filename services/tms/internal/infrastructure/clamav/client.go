@@ -22,6 +22,7 @@ const (
 	unixPrefix       = "unix:"
 	foundSuffix      = " FOUND"
 	streamPrefix     = "stream: "
+	sizeLimitReply   = "INSTREAM size limit exceeded"
 )
 
 var errUnexpectedReply = errors.New("clamd sent a reply it does not send")
@@ -69,11 +70,9 @@ func (c *Client) Ping(ctx context.Context) error {
 }
 
 func (c *Client) Scan(ctx context.Context, content []byte) (*contentscanports.ScanResult, error) {
-	if int64(len(content)) > c.maxStreamBytes {
-		return nil, fmt.Errorf(
-			"%w: the file is %d bytes and the scanner takes at most %d",
-			contentscanports.ErrScannerUnavailable, len(content), c.maxStreamBytes,
-		)
+	size := int64(len(content))
+	if size > c.maxStreamBytes {
+		return nil, &contentscanports.TooLargeError{Size: size, Limit: c.maxStreamBytes}
 	}
 
 	reply, err := c.exchange(ctx, func(w io.Writer) error {
@@ -81,6 +80,9 @@ func (c *Client) Scan(ctx context.Context, content []byte) (*contentscanports.Sc
 	})
 	if err != nil {
 		return nil, err
+	}
+	if strings.HasPrefix(reply, sizeLimitReply) {
+		return nil, &contentscanports.TooLargeError{Size: size}
 	}
 	return parseReply(reply)
 }

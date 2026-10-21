@@ -18,6 +18,9 @@ import (
 )
 
 const (
+	SigningSecretField  = "signing_secret"
+	ProviderAPIKeyField = "provider_api_key"
+
 	maxMailboxNameLength = 100
 	maxAddressLength     = 255
 	// MinConfidenceFloor is the lowest bar a mailbox may set before it acts

@@ -32,7 +32,9 @@ func (r *adminMailboxRepo) Create(
 	if r.createErr != nil {
 		return nil, r.createErr
 	}
-	entity.ID = pulid.MustNew("imbx_")
+	if entity.ID.IsNil() {
+		entity.ID = pulid.MustNew("imbx_")
+	}
 	r.stored = entity
 
 	return entity, nil

@@ -7,16 +7,19 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
-func newSecretScope(
-	tenantInfo pagination.TenantInfo,
-	typ integration.Type,
-	spec integration.IntegrationSpec,
-) secretconfig.Scope {
+func newSecretScope(tenantInfo pagination.TenantInfo, typ integration.Type) secretconfig.Scope {
 	return secretconfig.Scope{
 		Purpose:      encryptionservice.PurposeIntegrationSecret,
 		Tenant:       tenantInfo,
 		ResourceKind: "integration",
 		Subject:      typ.String(),
-		Bind:         spec.BindSecretsToTenant,
 	}
+}
+
+func (s *Service) OpenSecret(
+	tenantInfo pagination.TenantInfo,
+	typ integration.Type,
+	fieldKey, sealed string,
+) (string, error) {
+	return s.secrets.Decrypt(sealed, fieldKey, newSecretScope(tenantInfo, typ))
 }

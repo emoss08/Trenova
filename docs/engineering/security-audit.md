@@ -38,7 +38,7 @@ separate system: see [ai-audit-trail.md](ai-audit-trail.md).
 | Document downloaded or viewed (content, presigned URL or page image) | `audit_entries` | `documentservice` | — |
 | Document attached to an outbound email | `audit_entries` | `documentmailservice` | — |
 | Cross-tenant request refused | `audit_entries` | `middleware.TenantBoundaryMiddleware` | yes |
-| File refused by the malware scanner (upload, inbound email attachment, capture page, inbound EDI file) | `audit_entries` | `contentscanservice` | yes |
+| File refused by the malware scanner (upload, inbound email attachment, capture page, inbound EDI file, fuel card export) | `audit_entries` | `contentscanservice` | yes |
 
 Every row carries the request ID, client IP and user agent of the request that
 caused it. The request ID is the `X-Request-ID` the API returns, so a support
@@ -282,7 +282,7 @@ user. See [agent-runtime.md](agent-runtime.md#who-a-run-acts-as).
 
 Every file Trenova receives passes `contentscanports.Gate` before it is stored or parsed
 (`documentservice`, `documentuploadservice`, `captureservice`, `ediinboundservice`,
-`rateimportservice`, and the profile picture and logo uploads). When ClamAV flags one,
+`rateimportservice`, the fuel card file connector, and the profile picture and logo uploads). When ClamAV flags one,
 `contentscanservice` writes a critical entry against resource `document` with operation
 `reject`, the file's SHA-256 as `resource_id` (the file is never stored, so it has no ID),
 and the file name, source, signature, digest and size in `current_state`. A new way of

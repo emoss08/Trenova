@@ -101,7 +101,7 @@ func inboundRefs(t *testing.T) (*inboundSeedRefs, *seedMailboxes) {
 		weekStart: timeutils.WeekStart(inboundSeedTestNow, time.UTC),
 	}
 
-	return refs, seedMailboxesFor(refs, "sealed")
+	return refs, seedMailboxesFor(refs)
 }
 
 func seededTriage(
@@ -400,13 +400,24 @@ func TestMailboxSigningSecret_SealsTheDevelopmentSecretSoASignedDeliveryVerifies
 		encryptionservice.NewLocalKeyManager("a-development-encryption-key-of-32+-chars"),
 	)
 
-	sealed, err := mailboxSigningSecret(enc)
+	mailbox := &inboundmessage.Mailbox{
+		ID:             pulid.MustNew("imbx_"),
+		OrganizationID: pulid.MustNew("org_"),
+		BusinessUnitID: pulid.MustNew("bu_"),
+	}
+
+	sealed, err := mailboxSigningSecret(enc, mailbox)
 	require.NoError(t, err)
 	require.NotEmpty(t, sealed)
 	assert.NotEqual(t, SeedInboundMailboxSigningSecret, sealed, "the secret is stored sealed, not in the clear")
 
-	opened, err := enc.DecryptString(sealed)
-	require.NoError(t, err)
+	opened, err := enc.DecryptStringWithAAD(sealed, encryptionservice.InboundMailboxSecretAAD(
+		mailbox.OrganizationID,
+		mailbox.BusinessUnitID,
+		mailbox.ID,
+		inboundmessage.SigningSecretField,
+	))
+	require.NoError(t, err, "the secret is bound to the mailbox the seed wrote it on")
 	assert.Equal(t, SeedInboundMailboxSigningSecret, opened)
 
 	now := time.Unix(1_790_000_000, 0)
@@ -423,7 +434,10 @@ func TestMailboxSigningSecret_SealsTheDevelopmentSecretSoASignedDeliveryVerifies
 // seeded, and still refuses deliveries — the safe default — rather than the
 // seed failing or storing the secret in the clear.
 func TestMailboxSigningSecret_LeavesItUnsetWhenEncryptionIsOff(t *testing.T) {
-	sealed, err := mailboxSigningSecret(encryptionservice.NewWithKeyManager(encryptionservice.DisabledKeyManager{}))
+	sealed, err := mailboxSigningSecret(
+		encryptionservice.NewWithKeyManager(encryptionservice.DisabledKeyManager{}),
+		&inboundmessage.Mailbox{ID: pulid.MustNew("imbx_")},
+	)
 
 	require.NoError(t, err)
 	assert.Empty(t, sealed)

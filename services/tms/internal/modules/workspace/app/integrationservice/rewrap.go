@@ -21,7 +21,7 @@ func EnvelopeColumns() []kernelports.EnvelopeColumn {
 		Rebind:         true,
 		Scopes: func(row *kernelports.EnvelopeRow, field string) []kernelports.SecretScope {
 			typ := integration.Type(row.Extra[cols.Type.Name])
-			scope := newSecretScope(row.Tenant, typ, integration.ConfigSpecs[typ])
+			scope := newSecretScope(row.Tenant, typ)
 			return scope.SecretScopes(field)
 		},
 	}}

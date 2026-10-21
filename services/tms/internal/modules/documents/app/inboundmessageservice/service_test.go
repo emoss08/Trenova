@@ -14,6 +14,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/hashutils"
@@ -181,10 +182,15 @@ type plainSecrets struct{}
 // secret that went through the keeper from one stored in the clear.
 const sealedPrefix = "sealed:"
 
-func (plainSecrets) EncryptString(value string) (string, error) { return sealedPrefix + value, nil }
+func (plainSecrets) EncryptStringWithAAD(value string, _ encryptionservice.AAD) (string, error) {
+	return sealedPrefix + value, nil
+}
 
-func (plainSecrets) DecryptString(value string) (string, error) {
-	return strings.TrimPrefix(value, sealedPrefix), nil
+func (plainSecrets) DecryptStringWithLegacy(
+	value string,
+	_ encryptionservice.AAD,
+) (string, bool, error) {
+	return strings.TrimPrefix(value, sealedPrefix), false, nil
 }
 
 // stubWorkflows is a worker that is there, so a staged message is handed to

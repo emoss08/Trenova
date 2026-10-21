@@ -106,7 +106,11 @@ func (s *Service) mailboxAPIKey(mailbox *inboundmessage.Mailbox) (string, error)
 			inboundmessageports.ErrInboundContentRejected, mailbox.Provider)
 	}
 
-	apiKey, err := s.encryption.DecryptString(mailbox.ProviderAPIKey)
+	apiKey, err := s.openMailboxSecret(
+		mailbox,
+		inboundmessage.ProviderAPIKeyField,
+		mailbox.ProviderAPIKey,
+	)
 	if err != nil {
 		s.l.Error("failed to decrypt a mailbox API key",
 			zap.String("mailboxId", mailbox.ID.String()), zap.Error(err))

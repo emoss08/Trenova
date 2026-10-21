@@ -358,6 +358,9 @@ func (s *Service) processInboundFile(
 		if errors.As(scanErr, &infected) {
 			return s.quarantineFile(ctx, file, "the malware scanner found "+infected.Signature)
 		}
+		if errors.Is(scanErr, contentscanports.ErrTooLarge) {
+			return s.quarantineFile(ctx, file, scanErr.Error())
+		}
 		return nil, scanErr
 	}
 

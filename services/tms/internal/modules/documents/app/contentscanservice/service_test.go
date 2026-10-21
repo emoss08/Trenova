@@ -130,3 +130,30 @@ func TestCheck_PassesACleanFileAndLetsEverythingThroughWithoutAScanner(t *testin
 	require.NoError(t, err)
 	assert.Equal(t, contentscanports.VerdictUnscanned, result.Verdict)
 }
+
+func TestCheck_RefusesAFileTooLargeToScanEvenWhenFailingOpen(t *testing.T) {
+	t.Parallel()
+
+	tooLarge := &fakeScanner{err: &contentscanports.TooLargeError{Size: 200 << 20, Limit: 100 << 20}}
+
+	for _, failOpen := range []bool{false, true} {
+		_, err := NewWithScanner(tooLarge, failOpen, nil, zap.NewNop()).
+			Check(t.Context(), scanRequest())
+		require.ErrorIs(t, err, contentscanports.ErrTooLarge, "failOpen %v", failOpen)
+	}
+
+	refusal := contentscanports.RefusalError("file", &contentscanports.TooLargeError{
+		Size:  200 << 20,
+		Limit: 100 << 20,
+	})
+	var validation *errortypes.Error
+	require.ErrorAs(t, refusal, &validation)
+	assert.Equal(t, "file", validation.Field)
+	assert.Contains(t, refusal.Error(), "too large to be checked for malware")
+	assert.Contains(t, refusal.Error(), "100")
+	assert.NotContains(t, refusal.Error(), "Try again")
+
+	unknownLimit := contentscanports.RefusalError("file", &contentscanports.TooLargeError{Size: 1})
+	require.ErrorAs(t, unknownLimit, &validation)
+	assert.Contains(t, unknownLimit.Error(), "too large to be checked for malware")
+}

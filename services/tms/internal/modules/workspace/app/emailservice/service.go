@@ -27,6 +27,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/integrationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/workspace/jobs/emailjobs/emailcontract"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
@@ -1011,7 +1012,12 @@ func (s *Service) ResolveTenantByWebhookToken(
 	if err != nil {
 		return pagination.TenantInfo{}, "", err
 	}
-	signingSecret, err := s.encryptionService.DecryptString(cfg.SigningSecret)
+	signingSecret, err := s.integrationService.OpenSecret(
+		cfg.TenantInfo,
+		sender.IntegrationType(),
+		integration.WebhookSigningSecretField,
+		cfg.SigningSecret,
+	)
 	if err != nil {
 		return pagination.TenantInfo{}, "", err
 	}

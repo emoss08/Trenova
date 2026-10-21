@@ -38,13 +38,18 @@ func (s *Service) ProcessWebhook(
 
 	if strings.TrimSpace(cfg.WebhookSecret) == "" {
 		return errortypes.NewValidationError(
-			"webhookSecret",
+			integration.WebhookSecretField,
 			errortypes.ErrInvalid,
 			"Telematics webhook secret is not configured",
 		)
 	}
 
-	secret, err := s.encryptionService.DecryptString(cfg.WebhookSecret)
+	secret, err := s.integrationService.OpenSecret(
+		cfg.TenantInfo,
+		req.ProviderType,
+		integration.WebhookSecretField,
+		cfg.WebhookSecret,
+	)
 	if err != nil {
 		return errortypes.NewBusinessError(
 			"failed to resolve telematics webhook secret",

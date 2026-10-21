@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -126,13 +127,16 @@ func validateSigningSecret(provider inboundmessage.Provider, secret string) erro
 	return nil
 }
 
-func (s *Service) sealSecret(provider inboundmessage.Provider, secret string) (string, error) {
+func (s *Service) sealSecret(mailbox *inboundmessage.Mailbox, secret string) (string, error) {
 	secret = strings.TrimSpace(secret)
-	if err := validateSigningSecret(provider, secret); err != nil {
+	if err := validateSigningSecret(mailbox.Provider, secret); err != nil {
 		return "", err
 	}
 
-	sealed, err := s.encryption.EncryptString(secret)
+	sealed, err := s.encryption.EncryptStringWithAAD(
+		secret,
+		mailboxSecretAAD(mailbox, inboundmessage.SigningSecretField),
+	)
 	if err != nil {
 		return "", fmt.Errorf("seal the signing secret: %w", err)
 	}
@@ -159,18 +163,38 @@ func validateAPIKey(provider inboundmessage.Provider, apiKey string) error {
 	return nil
 }
 
-func (s *Service) sealAPIKey(provider inboundmessage.Provider, apiKey string) (string, error) {
+func (s *Service) sealAPIKey(mailbox *inboundmessage.Mailbox, apiKey string) (string, error) {
 	apiKey = strings.TrimSpace(apiKey)
-	if err := validateAPIKey(provider, apiKey); err != nil {
+	if err := validateAPIKey(mailbox.Provider, apiKey); err != nil {
 		return "", err
 	}
 
-	sealed, err := s.encryption.EncryptString(apiKey)
+	sealed, err := s.encryption.EncryptStringWithAAD(
+		apiKey,
+		mailboxSecretAAD(mailbox, inboundmessage.ProviderAPIKeyField),
+	)
 	if err != nil {
 		return "", fmt.Errorf("seal the API key: %w", err)
 	}
 
 	return sealed, nil
+}
+
+func mailboxSecretAAD(mailbox *inboundmessage.Mailbox, field string) encryptionservice.AAD {
+	return encryptionservice.InboundMailboxSecretAAD(
+		mailbox.OrganizationID,
+		mailbox.BusinessUnitID,
+		mailbox.ID,
+		field,
+	)
+}
+
+func (s *Service) openMailboxSecret(
+	mailbox *inboundmessage.Mailbox,
+	field, sealed string,
+) (string, error) {
+	opened, _, err := s.encryption.DecryptStringWithLegacy(sealed, mailboxSecretAAD(mailbox, field))
+	return opened, err
 }
 
 func validateMailbox(mailbox *inboundmessage.Mailbox) error {
@@ -212,6 +236,7 @@ func (s *Service) CreateMailbox(
 ) (*MailboxCredentials, error) {
 	tenant := req.Actor.TenantInfo()
 	mailbox := &inboundmessage.Mailbox{
+		ID:             pulid.MustNew("imbx_"),
 		OrganizationID: tenant.OrgID,
 		BusinessUnitID: tenant.BuID,
 	}
@@ -223,7 +248,7 @@ func (s *Service) CreateMailbox(
 	}
 
 	if strings.TrimSpace(req.SigningSecret) != "" {
-		sealed, err := s.sealSecret(mailbox.Provider, req.SigningSecret)
+		sealed, err := s.sealSecret(mailbox, req.SigningSecret)
 		if err != nil {
 			return nil, err
 		}
@@ -231,7 +256,7 @@ func (s *Service) CreateMailbox(
 	}
 
 	if strings.TrimSpace(req.ProviderAPIKey) != "" {
-		sealed, err := s.sealAPIKey(mailbox.Provider, req.ProviderAPIKey)
+		sealed, err := s.sealAPIKey(mailbox, req.ProviderAPIKey)
 		if err != nil {
 			return nil, err
 		}
@@ -337,7 +362,7 @@ func (s *Service) SetMailboxSigningSecret(
 		return nil, err
 	}
 
-	sealed, err := s.sealSecret(original.Provider, req.Secret)
+	sealed, err := s.sealSecret(original, req.Secret)
 	if err != nil {
 		return nil, err
 	}
@@ -366,7 +391,7 @@ func (s *Service) SetMailboxAPIKey(
 		return nil, err
 	}
 
-	sealed, err := s.sealAPIKey(original.Provider, req.APIKey)
+	sealed, err := s.sealAPIKey(original, req.APIKey)
 	if err != nil {
 		return nil, err
 	}

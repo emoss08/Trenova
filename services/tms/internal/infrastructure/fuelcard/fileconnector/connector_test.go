@@ -5,10 +5,14 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/infrastructure/fuelcard/fileconnector"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
+	"github.com/emoss08/trenova/internal/testutil/mocks/contentscanportsmock"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sftp"
 	"github.com/stretchr/testify/require"
 )
@@ -72,8 +76,16 @@ func (f *fakeTransport) Close() error {
 }
 
 func newConnector(transport fileconnector.Transport) *fileconnector.Connector {
+	return newScannedConnector(transport, nil)
+}
+
+func newScannedConnector(
+	transport fileconnector.Transport,
+	gate contentscanports.Gate,
+) *fileconnector.Connector {
 	return fileconnector.NewWithTransport(
 		integration.TypeComdataFuel,
+		gate,
 		func(context.Context, sftp.Config) (fileconnector.Transport, error) {
 			return transport, nil
 		},
@@ -336,4 +348,41 @@ func TestCapabilityIsIFTAGrade(t *testing.T) {
 	t.Parallel()
 
 	require.True(t, newConnector(newFakeTransport(nil)).Capability().IsIFTAGrade())
+}
+
+func TestFetchRefusesAnInfectedExportAndLeavesItInPlace(t *testing.T) {
+	t.Parallel()
+
+	transport := newFakeTransport(map[string]string{"AC00029_20260106.csv": delimitedExport})
+	gate := contentscanportsmock.NewInfectedGate("Csv.Exploit.Formula-1")
+	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
+
+	_, err := newScannedConnector(transport, gate).FetchTransactions(
+		t.Context(),
+		&fuelpurchaseports.FetchFuelTransactionsRequest{
+			TenantInfo: tenant,
+			Provider:   fuelpurchase.CardProviderComdata,
+			Config:     baseConfig(),
+		},
+	)
+
+	require.ErrorIs(t, err, contentscanports.ErrInfected)
+	require.Contains(t, err.Error(), "AC00029_20260106.csv")
+	require.Empty(t, transport.archived, "a refused file is not archived as read")
+	require.Len(t, gate.Requests(), 1)
+	require.Equal(t, contentscanports.SourceFuelCardFile, gate.Requests()[0].Source)
+	require.Equal(t, tenant, gate.Requests()[0].TenantInfo)
+	require.Equal(t, []byte(delimitedExport), gate.Requests()[0].Content)
+}
+
+func TestFetchScansEveryExportBeforeStagingIt(t *testing.T) {
+	t.Parallel()
+
+	transport := newFakeTransport(map[string]string{"AC00029_20260106.csv": delimitedExport})
+	gate := contentscanportsmock.NewCleanGate()
+
+	result := fetch(t, newScannedConnector(transport, gate), baseConfig())
+
+	require.Len(t, result.Staged.Rows, 2)
+	require.Len(t, gate.Requests(), 1)
 }
