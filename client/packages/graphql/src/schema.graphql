@@ -24826,7 +24826,20 @@ type Query {
   workerDisciplinaryActions(workerId: ID!): [WorkerDisciplinaryAction!]!
   workerDisciplinaryLadder(workerId: ID!): DisciplinaryLadder! @authorizes(resource: "worker_disciplinary_action")
   workerDotTest(id: ID!): WorkerDOTTest!
-  workerDotTests(workerId: ID!): [WorkerDOTTest!]!
+  """
+  Drug and alcohol tests, newest first: one worker's, or every worker's when
+  no worker is named.
+  """
+  workerDotTests(
+    """
+    At most this many tests, from 1 to 100. Every test of a named worker when left out; 20 across the organization.
+    """
+    limit: Int
+    """Only the collections not yet completed or cancelled."""
+    openOnly: Boolean
+    """The worker whose tests are read. Leave it out for every worker's."""
+    workerId: ID
+  ): [WorkerDOTTest!]!
   workerDotViolations(workerId: ID!): [WorkerDOTViolation!]!
   workerDrugAlcoholStanding(workerId: ID!): DrugAlcoholStanding!
   workerEarningsSummary(workerId: ID!): WorkerEarningsSummary!
@@ -24839,7 +24852,24 @@ type Query {
   workerHosState(workerId: ID!): WorkerHosState
   workerHosStates(limit: Int, workerIds: [ID!]): [WorkerHosState!]!
   workerHosViolations(limit: Int, since: Timestamp, workerId: ID): [WorkerHosViolation!]!
-  workerInjuries(workerId: ID!): [WorkerInjury!]!
+  """
+  Injury and illness cases, newest first: one worker's, or the
+  establishment's log when no worker is named.
+  """
+  workerInjuries(
+    """Only the cases of one calendar year's log, such as 2026."""
+    caseYear: Int
+    """
+    At most this many cases, from 1 to 100. Every case of a named worker when left out; 20 across the organization.
+    """
+    limit: Int
+    """Only the cases still open."""
+    openOnly: Boolean
+    """Only the cases that belong on the OSHA 300 log."""
+    recordableOnly: Boolean
+    """The worker whose cases are read. Leave it out for every worker's."""
+    workerId: ID
+  ): [WorkerInjury!]!
   workerInjury(id: ID!): WorkerInjury!
   workerLeaveCase(id: ID!): WorkerLeaveCase!
   workerLeaveCases(workerId: ID!): [WorkerLeaveCase!]!

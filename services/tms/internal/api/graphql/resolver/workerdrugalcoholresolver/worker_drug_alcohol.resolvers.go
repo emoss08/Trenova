@@ -265,26 +265,24 @@ func (r *MutationResolver) UpdateDOTRandomDrawEntry(ctx context.Context, input g
 	)
 }
 
-func (r *QueryResolver) WorkerDOTTests(ctx context.Context, workerID string) ([]*worker.WorkerDOTTest, error) {
+func (r *QueryResolver) WorkerDOTTests(ctx context.Context, workerID *string, openOnly *bool, limit *int) ([]*worker.WorkerDOTTest, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerDOTTest, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
 
-	id, err := pulid.MustParse(workerID)
+	id, err := base.ParseOptionalIDField("workerId", workerID)
 	if err != nil {
-		return nil, errortypes.NewValidationError(
-			"workerId",
-			errortypes.ErrInvalid,
-			"Worker is invalid",
-		)
+		return nil, err
 	}
-
 	return r.WorkerDrugAlcoholService.ListTests(ctx, &workerports.ListWorkerDOTTestsRequest{
 		TenantInfo:      base.TenantInfo(authCtx),
 		WorkerID:        id,
+		OpenOnly:        base.BoolValue(openOnly),
+		IncludeWorker:   true,
 		IncludeDocument: true,
 		IncludeActors:   true,
+		Limit:           base.RecordListLimit(limit, id.IsNotNil()),
 	})
 }
 

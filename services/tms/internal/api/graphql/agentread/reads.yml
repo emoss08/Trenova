@@ -36,3 +36,9 @@ reads:
   - tool: worker_list_training
     operation: DeskWorkerTrainingRecords
     reason: A worker's training assignments are read whole by workerTrainingRecords, keyed by the worker.
+  - tool: worker_list_dot_tests
+    operation: DeskWorkerDotTests
+    reason: Drug and alcohol tests are read by workerDotTests, one worker's or every worker's.
+  - tool: worker_list_injuries
+    operation: DeskWorkerInjuries
+    reason: Injury cases are read by workerInjuries, one worker's or the whole log.

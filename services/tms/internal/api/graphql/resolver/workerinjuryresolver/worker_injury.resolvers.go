@@ -7,6 +7,7 @@ package workerinjuryresolver
 
 import (
 	"context"
+	"math"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
@@ -129,25 +130,34 @@ func (r *OSHAAnnualSummaryResolver) SubmittedAt(ctx context.Context, obj *worker
 	return base.IntPtr(obj.SubmittedAt), nil
 }
 
-func (r *QueryResolver) WorkerInjuries(ctx context.Context, workerID string) ([]*worker.WorkerInjury, error) {
+func (r *QueryResolver) WorkerInjuries(ctx context.Context, workerID *string, caseYear *int, recordableOnly *bool, openOnly *bool, limit *int) ([]*worker.WorkerInjury, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerInjury, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
 
-	id, err := pulid.MustParse(workerID)
+	id, err := base.ParseOptionalIDField("workerId", workerID)
 	if err != nil {
+		return nil, err
+	}
+	year := base.IntValue(caseYear)
+	if year < 0 || year > math.MaxInt16 {
 		return nil, errortypes.NewValidationError(
-			"workerId",
+			"caseYear",
 			errortypes.ErrInvalid,
-			"Worker is invalid",
+			"Case year is invalid",
 		)
 	}
 	return r.WorkerInjuryService.ListInjuries(ctx, &workerports.ListWorkerInjuriesRequest{
 		TenantInfo:      base.TenantInfo(authCtx),
 		WorkerID:        id,
+		CaseYear:        int16(year),
+		RecordableOnly:  base.BoolValue(recordableOnly),
+		OpenOnly:        base.BoolValue(openOnly),
+		IncludeWorker:   true,
 		IncludeDocument: true,
 		IncludeEvent:    true,
+		Limit:           base.RecordListLimit(limit, id.IsNotNil()),
 	})
 }
 

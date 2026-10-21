@@ -353,6 +353,31 @@ func (r *Registry) registerWorkerResources() {
 		Description:    "Controlled-substances and alcohol tests, violations and Clearinghouse queries on a worker's record",
 		Category:       "Human resources",
 		ParentResource: ResourceWorker.String(),
+		// That a test was ordered, why and when, and where it stands is what
+		// scheduling a collection needs, and is Internal. What it found (the
+		// result, the substances, the alcohol reading) and who collected,
+		// tested and verified the specimen are Restricted (49 CFR 40.321).
+		DefaultSensitivity: SensitivityRestricted,
+		FieldSensitivities: map[string]FieldSensitivity{
+			"id":             SensitivityInternal,
+			"businessUnitId": SensitivityInternal,
+			"organizationId": SensitivityInternal,
+			"workerId":       SensitivityInternal,
+			"testType":       SensitivityInternal,
+			"isDot":          SensitivityInternal,
+			"reason":         SensitivityInternal,
+			"status":         SensitivityInternal,
+			"scheduledAt":    SensitivityInternal,
+			"collectedAt":    SensitivityInternal,
+			"resultAt":       SensitivityInternal,
+			"safetyEventId":  SensitivityInternal,
+			"drawEntryId":    SensitivityInternal,
+			"orderedById":    SensitivityInternal,
+			"recordedById":   SensitivityInternal,
+			"version":        SensitivityInternal,
+			"createdAt":      SensitivityInternal,
+			"updatedAt":      SensitivityInternal,
+		},
 		Operations: []OperationDefinition{
 			{
 				Operation:   OpRead,
@@ -644,7 +669,34 @@ func (r *Registry) registerWorkerResources() {
 		// The log carries body parts, treatment and workers' compensation
 		// claims. It is granted separately from the rest of a worker's record
 		// because most people who need the roster have no business reading it.
+		// What the 300 log itself posts (the case, its classification, the days
+		// lost and whether it is closed) is Internal; what happened to the
+		// person's body, how it was treated and the claim stay Restricted.
 		DefaultSensitivity: SensitivityRestricted,
+		FieldSensitivities: map[string]FieldSensitivity{
+			"id":               SensitivityInternal,
+			"businessUnitId":   SensitivityInternal,
+			"organizationId":   SensitivityInternal,
+			"workerId":         SensitivityInternal,
+			"caseNumber":       SensitivityInternal,
+			"caseYear":         SensitivityInternal,
+			"classification":   SensitivityInternal,
+			"illnessType":      SensitivityInternal,
+			"status":           SensitivityInternal,
+			"recordable":       SensitivityInternal,
+			"occurredAt":       SensitivityInternal,
+			"reportedAt":       SensitivityInternal,
+			"returnedToWorkAt": SensitivityInternal,
+			"daysAway":         SensitivityInternal,
+			"daysRestricted":   SensitivityInternal,
+			"privacyCase":      SensitivityInternal,
+			"logName":          SensitivityInternal,
+			"claimStatus":      SensitivityInternal,
+			"safetyEventId":    SensitivityInternal,
+			"version":          SensitivityInternal,
+			"createdAt":        SensitivityInternal,
+			"updatedAt":        SensitivityInternal,
+		},
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "View", Description: "View cases and the OSHA log"},
 			{Operation: OpCreate, DisplayName: "Record", Description: "Record a case"},

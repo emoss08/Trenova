@@ -22,6 +22,9 @@ const (
 	// read beside a worker's records (checklist and review templates) never
 	// approached.
 	alongsideMost = 100
+	// unpagedMost is the most rows a limit on an unpaged list may ask for: the
+	// server's page bound, since such a list has no next page to hand out.
+	unpagedMost = 100
 
 	outcomeCount        = "count"
 	outcomeSearchedFor  = "searchedFor"
@@ -207,7 +210,46 @@ func argumentParam(field *graphQLField) []graphQLParam {
 		}}
 	}
 
+	if field.Type == graphQLTypeInt && !field.List {
+		return intArgumentParam(field)
+	}
+
 	return inputFieldParams(field)
+}
+
+// intArgumentParam is an Int argument's parameter: a limit takes the list
+// tools' bounds, and any other number is the value the schema describes (a
+// case year), sent as it is.
+func intArgumentParam(field *graphQLField) []graphQLParam {
+	if field.Name == paramLimit {
+		return []graphQLParam{{
+			Name: field.Name, Field: field.Name, Kind: paramEquals,
+			Schema: limitSchema(graphQLListLimit, unpagedMost),
+		}}
+	}
+	if field.Description == "" {
+		return nil
+	}
+
+	return []graphQLParam{{
+		Name: field.Name, Field: field.Name, Kind: paramEquals,
+		Schema: map[string]any{
+			toolschema.KeyType:        toolschema.TypeInteger,
+			toolschema.KeyDescription: field.Description,
+		},
+	}}
+}
+
+// cutShort is the note a list whose limit it filled leaves, since an unpaged
+// list cannot hand out the next page.
+func cutShort(args map[string]any, count int, plural string) string {
+	limit := optionalInt(args, paramLimit, 0)
+	if limit <= 0 || count < limit {
+		return ""
+	}
+
+	return fmt.Sprintf("These are the first %d %s; more may exist. Narrow the call, or raise "+
+		"limit to at most %d.", count, plural, unpagedMost)
 }
 
 func (t *graphQLUnpagedListTool) Name() string { return t.spec.name }
@@ -307,6 +349,9 @@ func (t *graphQLUnpagedListTool) Query(
 	var notes []string
 	if len(items) == 0 {
 		notes = append(notes, criteria.EmptyNote())
+	}
+	if note := cutShort(args, len(items), t.spec.entityPlural); note != "" {
+		notes = append(notes, note)
 	}
 	beside, besideWithheld, besideNotes, err := t.readAlongside(ctx, params)
 	if err != nil {

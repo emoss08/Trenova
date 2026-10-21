@@ -43519,23 +43519,23 @@
     },
     {
       "name": "worker_list_dot_tests",
-      "description": "List drug and alcohol tests, newest first: one worker's, or every collection still open across the organization. Each row has the test type, substance, status and result. It yields the testId worker_cancel_dot_test takes.",
+      "description": "List drug and alcohol tests, newest first: one worker's, or every collection still open across the organization. Each row has the test type, why it was ordered, its status and dates; the substance and result are shown only where access reaches Restricted. It yields the testId worker_cancel_dot_test takes.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
           },
           "openOnly": {
-            "description": "Only collections not yet completed or cancelled.",
+            "description": "Only the collections not yet completed or cancelled.",
             "type": "boolean"
           },
           "workerId": {
-            "description": "Narrow to one worker, by id from worker_list. A name is not an id.",
+            "description": "The worker, from worker_list. Never guess one. Leave it out for every worker's.",
             "type": "string",
             "x-recordOf": "worker"
           }
@@ -43618,21 +43618,26 @@
         "additionalProperties": false,
         "properties": {
           "caseYear": {
-            "description": "Narrow to one calendar year's log, such as 2026.",
-            "maximum": 2100,
-            "minimum": 2000,
+            "description": "Only the cases of one calendar year's log, such as 2026.",
             "type": "integer"
           },
+          "limit": {
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer",
+            "x-clamp": true
+          },
           "openOnly": {
-            "description": "Only cases still open.",
+            "description": "Only the cases still open.",
             "type": "boolean"
           },
           "recordableOnly": {
-            "description": "Only the cases that belong on the 300 log.",
+            "description": "Only the cases that belong on the OSHA 300 log.",
             "type": "boolean"
           },
           "workerId": {
-            "description": "Narrow to one worker, by id from worker_list. A name is not an id.",
+            "description": "The worker, from worker_list. Never guess one. Leave it out for every worker's.",
             "type": "string",
             "x-recordOf": "worker"
           }

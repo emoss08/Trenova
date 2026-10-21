@@ -440,7 +440,18 @@ input UpdateDOTRandomDrawEntryInput {
 }
 
 extend type Query {
-  workerDotTests(workerId: ID!): [WorkerDOTTest!]!
+  """
+  Drug and alcohol tests, newest first: one worker's, or every worker's when
+  no worker is named.
+  """
+  workerDotTests(
+    "The worker whose tests are read. Leave it out for every worker's."
+    workerId: ID
+    "Only the collections not yet completed or cancelled."
+    openOnly: Boolean
+    "At most this many tests, from 1 to 100. Every test of a named worker when left out; 20 across the organization."
+    limit: Int
+  ): [WorkerDOTTest!]!
   workerDotTest(id: ID!): WorkerDOTTest!
   """
   Open collections across the organisation: what the office is waiting on.

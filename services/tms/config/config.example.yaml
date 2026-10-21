@@ -370,10 +370,6 @@ documentConversion:
     vlmEndpoint: "" # gpu profile only: OpenAI-compatible vision model on the internal network
     vlmModel: ibm-granite/granite-docling-258M # Model the vision endpoint serves
 
-# Reading uploaded PDFs: thumbnails, capture page inspection, and the text and
-# layout document intelligence extracts. PDFium runs in-process as WebAssembly,
-# so no native library is needed; every instance is sandboxed with its own
-# memory ceiling, and a render that outlives its caller's deadline is stopped.
 # The imaging worker (services/imaging): thumbnails, page views, capture page inspection,
 # PDF assembly and image normalization. See docs/engineering/imaging-worker.md.
 imaging:
