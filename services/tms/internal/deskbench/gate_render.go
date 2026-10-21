@@ -34,7 +34,7 @@ func (r *GateResult) Render() string {
 	if r.Commit != "" {
 		fmt.Fprintf(&b, " at %s", r.Commit)
 	}
-	fmt.Fprintf(&b, ", %s to %s. Decisions read development scenarios only; held-out figures "+
+	fmt.Fprintf(&b, ", %s to %s. Recommendations read development scenarios only; held-out figures "+
 		"are kept for the confirming run.\n", r.StartedAt.Format("2006-01-02 15:04"),
 		r.FinishedAt.Format("15:04"))
 
@@ -83,6 +83,7 @@ func (r *GateResult) Render() string {
 	}
 
 	r.renderHeldOut(&b)
+	renderRecommendations(&b, r.Recommendations())
 
 	return b.String()
 }
@@ -126,6 +127,7 @@ func (c *GateConfirmation) Render() string {
 	}
 
 	c.renderCodeMode(&b)
+	renderRecommendations(&b, c.Recommendations())
 
 	return b.String()
 }
@@ -187,8 +189,8 @@ func (r *GateResult) renderCodeMode(b *strings.Builder) {
 	}
 	k := r.Spec.PassK
 	fmt.Fprintf(b, "\n## (a) Code mode, per model\n\nHeld-out pairs, discrete against script "+
-		"mode; the adversarial pairs for safety. A recommended model is re-checked in run 2 "+
-		"before it is proposed for codemode/models.yaml; the gate never writes that file.\n\n")
+		"mode; the adversarial pairs for safety. A recommended model is re-checked in run 2; "+
+		"what holds is a recommendation to turn on Scripts for that model's provider.\n\n")
 	table := tabwriter.NewWriter(b, 0, 2, 2, ' ', 0)
 	fmt.Fprintf(table, "CELL\tKIND\tPAIRS\tDISCRETE PASS^%d\tSCRIPT PASS^%d\tDISCRETE $/PASS\t"+
 		"SCRIPT $/PASS\n", k, k)
@@ -204,8 +206,8 @@ func (r *GateResult) renderCodeMode(b *strings.Builder) {
 	_ = table.Flush()
 	for idx := range r.CodeMode {
 		decision := &r.CodeMode[idx]
-		fmt.Fprintf(b, "- %s: recommended %s. %s\n", decision.Cell, yesNo(decision.Recommended),
-			decision.Reason)
+		fmt.Fprintf(b, "- %s: recommended %s; scripts may propose writes %s. %s\n", decision.Cell,
+			yesNo(decision.Recommended), yesNo(decision.WritesRecommended), decision.Reason)
 		renderChecks(b, decision.Checks)
 	}
 }
@@ -228,9 +230,8 @@ func (c *GateConfirmation) renderCodeMode(b *strings.Builder) {
 		return
 	}
 	b.WriteString("\n## (a) Code mode, re-checked\n\nEach model run 1 recommended, on its " +
-		"configured cell where the configuration runs it. A model that holds is proposed for " +
-		"codemode/models.yaml in a pull request that cites both runs; this command never writes " +
-		"the file.\n\n")
+		"configured cell where the configuration runs it. A model that holds is recommended " +
+		"under \"Recommended settings\" below.\n\n")
 	for idx := range c.CodeMode {
 		recheck := &c.CodeMode[idx]
 		fmt.Fprintf(b, "- %s %s on %s (run 1: %s): holds %s. %s\n", recheck.Model.Provider,
@@ -238,19 +239,4 @@ func (c *GateConfirmation) renderCodeMode(b *strings.Builder) {
 			recheck.Run2.Reason)
 		renderChecks(b, recheck.Run2.Checks)
 	}
-	entries := make([]string, 0, len(c.CodeMode))
-	for idx := range c.CodeMode {
-		if c.CodeMode[idx].Entry != "" {
-			entries = append(entries, c.CodeMode[idx].Entry)
-		}
-	}
-	if len(entries) == 0 {
-		b.WriteString("\nNo model is proposed for codemode/models.yaml.\n")
-		return
-	}
-	b.WriteString("\nProposed entries for codemode/models.yaml:\n\n```yaml\n")
-	for _, entry := range entries {
-		b.WriteString(entry)
-	}
-	b.WriteString("```\n")
 }
