@@ -7,12 +7,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -42,9 +42,17 @@ func (w *world) seedCorrection() *aicorrection.Correction {
 	documentID := pulid.MustNew("doc_")
 	w.documents.docs[documentID] = &document.Document{ID: documentID, OriginalName: "ratecon-4471.pdf"}
 	w.contents.pages = []*documentcontent.Page{
-		{PageNumber: 1, ExtractedText: "Load LD-10442 Rate $2,450"},
+		{
+			PageNumber:    1,
+			ExtractedText: "Load LD-10442 Rate $2,450",
+			Markdown:      "| Load | LD-10442 |\n| Rate | $2,450 |",
+		},
 		{PageNumber: 2, ExtractedText: "   "},
-		{PageNumber: 3, ExtractedText: "Pickup Northwind Foods, Dallas TX"},
+		{
+			PageNumber:    3,
+			ExtractedText: "Pickup Northwind Foods, Dallas TX",
+			Markdown:      "## Pickup\n\nNorthwind Foods, Dallas TX",
+		},
 	}
 	correction := &aicorrection.Correction{
 		ID:                  pulid.MustNew("aicr_"),

@@ -33,26 +33,22 @@ const (
 	kindInvoice          = "Invoice"
 	kindOther            = "Other"
 
-	maxConfidence                   = 0.99
-	classificationMinConfidence     = 0.55
-	reviewRequiredConfidenceFloor   = 0.8
-	reviewReadyConfidenceThreshold  = 0.82
-	defaultLowConfidence            = 0.3
-	ocrBaseStopConfidence           = 0.72
-	nativeBaseStopConfidence        = 0.9
-	stopMissingAddressPenalty       = 0.18
-	stopMissingCityStatePenalty     = 0.08
-	rawExcerptPreTruncateLen        = 2100
-	rawExcerptMaxLen                = 2000
-	heartbeatInterval               = 10 * time.Second
-	ocrPreprocessingContrastBoost   = 25.0
-	ocrPreprocessingSharpenSigma    = 1.5
-	ocrPreprocessingBinaryThreshold = 170
-	stopBlockMaxLines               = 36
-	stopBlockMaxBlankRun            = 5
-	sectionBlockMaxLines            = 6
-	stopExcerptLines                = 4
-	minArrangedShare                = 0.97
+	maxConfidence                  = 0.99
+	classificationMinConfidence    = 0.55
+	reviewRequiredConfidenceFloor  = 0.8
+	reviewReadyConfidenceThreshold = 0.82
+	defaultLowConfidence           = 0.3
+	ocrBaseStopConfidence          = 0.72
+	nativeBaseStopConfidence       = 0.9
+	stopMissingAddressPenalty      = 0.18
+	stopMissingCityStatePenalty    = 0.08
+	rawExcerptPreTruncateLen       = 2100
+	rawExcerptMaxLen               = 2000
+	heartbeatInterval              = 10 * time.Second
+	stopBlockMaxLines              = 36
+	stopBlockMaxBlankRun           = 5
+	sectionBlockMaxLines           = 6
+	stopExcerptLines               = 4
 )
 
 var (
@@ -420,7 +416,6 @@ type PersistIndexedContentPayload struct {
 	Intelligence   *DocumentIntelligenceAnalysis
 	AIDiagnostics  *AIDiagnostics
 	Timestamp      int64
-	PagesStored    bool
 }
 
 type PageSectionMatch struct {

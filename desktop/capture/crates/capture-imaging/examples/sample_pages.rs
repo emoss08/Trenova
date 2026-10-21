@@ -6,7 +6,8 @@
 use std::path::PathBuf;
 
 use capture_imaging::pwg::encode::{Kind, Page, stream};
-use capture_imaging::{ConvertLimits, PixelFormat, Raster, Resolution, encode_page, pwg_to_pdf};
+use capture_imaging::{ConvertLimits, pwg_to_pdf};
+use trenova_imaging_core::{PixelFormat, Raster, Resolution, encode_page};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let dir = PathBuf::from(std::env::args().nth(1).ok_or("usage: sample_pages <dir>")?);

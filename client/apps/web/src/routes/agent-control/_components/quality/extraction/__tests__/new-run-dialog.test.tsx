@@ -46,42 +46,14 @@ function renderDialog() {
 }
 
 describe("NewRunDialog", () => {
-  it("runs on the legacy text unless Docling is chosen", async () => {
+  it("starts a run on the chosen provider over the case limit", async () => {
     renderDialog();
     const start = await screen.findByRole("button", { name: "Start run" });
     await waitFor(() => expect(start).toBeEnabled());
 
-    expect(screen.getByRole("radio", { name: "Legacy" })).toHaveAttribute("aria-checked", "true");
     await userEvent.click(start);
 
-    await waitFor(() =>
-      expect(startRun).toHaveBeenCalledWith({
-        providerId: "aip_frontier",
-        caseLimit: 50,
-        textSource: "legacy",
-      }),
-    );
-  });
-
-  it("sends the Docling text source when it is chosen", async () => {
-    renderDialog();
-    const start = await screen.findByRole("button", { name: "Start run" });
-    await waitFor(() => expect(start).toBeEnabled());
-
-    await userEvent.click(screen.getByRole("radio", { name: "Docling" }));
-    expect(
-      screen.getByText(
-        "Each case's pages frozen again through Docling, as Markdown. A case not yet re-converted is skipped.",
-      ),
-    ).toBeInTheDocument();
-    await userEvent.click(start);
-
-    await waitFor(() =>
-      expect(startRun).toHaveBeenCalledWith({
-        providerId: "aip_frontier",
-        caseLimit: 50,
-        textSource: "docling",
-      }),
-    );
+    await waitFor(() => expect(startRun).toHaveBeenCalledTimes(1));
+    expect(startRun.mock.calls[0]).toStrictEqual([{ providerId: "aip_frontier", caseLimit: 50 }]);
   });
 });

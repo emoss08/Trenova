@@ -42151,7 +42151,7 @@
     ]
   },
   "Business unit is required": {
-    "sites": 145,
+    "sites": 144,
     "scope": [
       "go"
     ],
@@ -44257,7 +44257,7 @@
     ]
   },
   "Candidate is required": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -51395,15 +51395,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Choose how uploaded documents are read before fields are extracted. Switching affects documents uploaded from now on; documents already read keep their text.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Choose one of the listed resolution codes": {
@@ -61648,6 +61639,15 @@
       "go/other"
     ]
   },
+  "Convert a document with Docling, then classify and extract it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Convert amount splits to percentages?": {
     "sites": 1,
     "scope": [
@@ -61703,15 +61703,6 @@
     ]
   },
   "Converted amount is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Converter is invalid": {
     "sites": 1,
     "scope": [
       "go"
@@ -80781,34 +80772,6 @@
       "apps/web/components"
     ]
   },
-  "Docling": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin",
-      "routes/agent-control"
-    ]
-  },
-  "Docling is unavailable: the document converter is not configured on this server. An administrator sets documentConversion.doclingUrl and documentConversion.apiKey to turn it on.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Docling needs the document converter, which is not configured on this server. Set documentConversion.doclingUrl and documentConversion.apiKey, or keep the Legacy engine.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Docling re-conversion": {
     "sites": 1,
     "scope": [
@@ -80816,15 +80779,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "Docling reads the page layout, tables, and scanned text, and every extracted field needs an AI provider that serves document work. Parsing rules are not applied.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Docs": {
@@ -81109,7 +81063,7 @@
     ]
   },
   "Document encryption is not configured": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -81214,7 +81168,7 @@
     ]
   },
   "Document is required": {
-    "sites": 14,
+    "sites": 13,
     "scope": [
       "go"
     ],
@@ -81498,13 +81452,12 @@
     ]
   },
   "Document text": {
-    "sites": 6,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
-      "routes/agent-control"
+      "routes/admin"
     ]
   },
   "Document text, when the record it belongs to may be read by a model": {
@@ -86700,24 +86653,6 @@
     ],
     "areas": [
       "routes/dispatch-control"
-    ]
-  },
-  "Each case's pages as first frozen, read by the legacy engine.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
-  "Each case's pages frozen again through Docling, as Markdown. A case not yet re-converted is skipped.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Each check reads this organization's own records as they are now. Check again after a change to see it reflected.": {
@@ -100227,15 +100162,6 @@
       "routes/agent-control"
     ]
   },
-  "Extract and classify document content": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Extract shipment data and build the draft.": {
     "sites": 1,
     "scope": [
@@ -100327,33 +100253,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "Extraction engine": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Extraction engine is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Extraction engine must be Legacy or Docling": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Extraction evaluations cannot run on this installation": {
@@ -100449,7 +100348,7 @@
     ]
   },
   "Extraction time is required": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -101844,7 +101743,7 @@
     ]
   },
   "Failed to decrypt document": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -102015,7 +101914,7 @@
     ]
   },
   "Failed to download document": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "go"
     ],
@@ -102069,15 +101968,6 @@
     ]
   },
   "Failed to encrypt document": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Failed to encrypt document upload": {
     "sites": 1,
     "scope": [
       "go"
@@ -102540,7 +102430,7 @@
     ]
   },
   "Failed to process uploaded file": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -102618,24 +102508,6 @@
     ],
     "areas": [
       "routes/billing-queue"
-    ]
-  },
-  "Failed to read document": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Failed to read uploaded file": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Failed to read {0}": {
@@ -103110,6 +102982,15 @@
       "go/other"
     ]
   },
+  "Failed to store document": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Failed to submit EDI load tender": {
     "sites": 1,
     "scope": [
@@ -103315,24 +103196,6 @@
     "areas": [
       "apps/web/components",
       "routes/worker"
-    ]
-  },
-  "Failed to upload document": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Failed to upload file": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Failed to upload organization logo": {
@@ -134590,16 +134453,6 @@
     ],
     "areas": [
       "routes/dispatch-console"
-    ]
-  },
-  "Legacy": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin",
-      "routes/agent-control"
     ]
   },
   "Legacy exact matches": {
@@ -172083,15 +171936,6 @@
       "routes/billing-queue"
     ]
   },
-  "Only Docling pages are frozen beside a case": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Only Draft and Published versions are available for simulation.": {
     "sites": 1,
     "scope": [
@@ -178813,7 +178657,7 @@
     ]
   },
   "Organization is required": {
-    "sites": 144,
+    "sites": 143,
     "scope": [
       "go"
     ],
@@ -201666,15 +201510,6 @@
       "go/other"
     ]
   },
-  "Re-drive stale document intelligence jobs": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Re-extract": {
     "sites": 1,
     "scope": [
@@ -202088,15 +201923,6 @@
       "routes/ifta-tax-rate"
     ]
   },
-  "Read a document with its organization's extraction engine, then classify and extract it": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Read a web page": {
     "sites": 2,
     "scope": [
@@ -202196,15 +202022,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Read documents with": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Read each row as: when fuel costs at least “from” and less than “up to”, add that flat dollar amount.": {
@@ -247575,6 +247392,15 @@
       "go/other"
     ]
   },
+  "Stored document is too large to read": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Stored documents: search, summaries, attachments, versions and document types.": {
     "sites": 1,
     "scope": [
@@ -253129,15 +252955,6 @@
       "go/other"
     ]
   },
-  "Text source is required": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Text strings that mark the beginning of this section": {
     "sites": 1,
     "scope": [
@@ -256063,15 +255880,6 @@
     ]
   },
   "The candidate could not answer": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
-  "The candidate is not sent documents read by Docling until it is retrained on Docling's output. Production reads them, and they count for neither side.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -261681,15 +261489,6 @@
       "routes/agent-control"
     ]
   },
-  "The legacy engine reads native PDF text, runs OCR on scans, and applies your parsing rules before any AI-assisted extraction.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "The legs and charges of a {0} order cannot be modified": {
     "sites": 1,
     "scope": [
@@ -264530,7 +264329,7 @@
     ]
   },
   "The print job could not be split into pages": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -318645,15 +318444,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "{0, plural, one {# document excluded: read by Docling} other {# documents excluded: read by Docling}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "{0, plural, one {# document on file} other {# documents on file}}": {

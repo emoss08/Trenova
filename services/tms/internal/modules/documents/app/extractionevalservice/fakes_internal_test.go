@@ -8,15 +8,15 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentcontentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -346,6 +346,39 @@ func (f *contentStore) ListPagesByDocumentID(
 	return f.pages, nil
 }
 
+func (f *contentStore) GetByDocumentID(
+	context.Context,
+	pulid.ID,
+	pagination.TenantInfo,
+) (*documentcontent.Content, error) {
+	return &documentcontent.Content{ConverterVersion: "1.36.0"}, nil
+}
+
+type casePagesStore struct {
+	items map[pulid.ID]*extractioneval.CasePages
+}
+
+func (f *casePagesStore) Upsert(
+	_ context.Context,
+	entity *extractioneval.CasePages,
+) (*extractioneval.CasePages, error) {
+	copied := *entity
+	f.items[entity.CaseID] = &copied
+	return entity, nil
+}
+
+func (f *casePagesStore) Get(
+	_ context.Context,
+	req *extractionevalports.GetExtractionEvalCasePagesRequest,
+) (*extractioneval.CasePages, error) {
+	item, ok := f.items[req.CaseID]
+	if !ok {
+		return nil, errortypes.NewNotFoundError("case pages not found")
+	}
+	copied := *item
+	return &copied, nil
+}
+
 type providerStore struct {
 	agentports.AIProviderRepository
 	providers map[pulid.ID]*aiprovider.Provider
@@ -435,6 +468,7 @@ type world struct {
 	corrections *correctionStore
 	documents   *documentStore
 	contents    *contentStore
+	casePages   *casePagesStore
 	providers   *providerStore
 	retention   *retentionStore
 	budget      *fakeBudget
@@ -451,6 +485,7 @@ func newWorld() *world {
 		corrections: &correctionStore{items: map[pulid.ID]*aicorrection.Correction{}},
 		documents:   &documentStore{docs: map[pulid.ID]*document.Document{}},
 		contents:    &contentStore{},
+		casePages:   &casePagesStore{items: map[pulid.ID]*extractioneval.CasePages{}},
 		providers:   &providerStore{providers: map[pulid.ID]*aiprovider.Provider{}},
 		retention:   &retentionStore{},
 		budget:      &fakeBudget{decision: &agentquality.BudgetDecision{}},
@@ -465,6 +500,7 @@ func newWorld() *world {
 		corrections: w.corrections,
 		documents:   w.documents,
 		contents:    w.contents,
+		casePages:   w.casePages,
 		providers:   w.providers,
 		audit:       &mocks.NoopAuditService{},
 		retention:   w.retention,

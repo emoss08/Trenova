@@ -84,19 +84,3 @@ const (
 	ServedByOther     = ServedBy("Other")
 	ServedByNone      = ServedBy("None")
 )
-
-type ExclusionReason string
-
-const (
-	ExclusionReasonDoclingInput = ExclusionReason("docling_input")
-)
-
-func (r ExclusionReason) IsValid() bool {
-	return r == ExclusionReasonDoclingInput
-}
-
-func (r ExclusionReason) String() string { return string(r) }
-
-func AllExclusionReasons() []ExclusionReason {
-	return []ExclusionReason{ExclusionReasonDoclingInput}
-}

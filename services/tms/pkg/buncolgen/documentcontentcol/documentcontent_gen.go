@@ -69,7 +69,6 @@ var ContentColumns = struct {
 	CreatedAt                buncolgen.Column // "created_at" → qualified: "dc.created_at"
 	UpdatedAt                buncolgen.Column // "updated_at" → qualified: "dc.updated_at"
 	LastExtractedAt          buncolgen.Column // "last_extracted_at" → qualified: "dc.last_extracted_at"
-	Converter                buncolgen.Column // "converter" → qualified: "dc.converter"
 	ConverterVersion         buncolgen.Column // "converter_version" → qualified: "dc.converter_version"
 	RawObjectKey             buncolgen.Column // "raw_object_key" → qualified: "dc.raw_object_key"
 }{
@@ -92,7 +91,6 @@ var ContentColumns = struct {
 	CreatedAt:                buncolgen.NewColumn("created_at", "dc"),
 	UpdatedAt:                buncolgen.NewColumn("updated_at", "dc"),
 	LastExtractedAt:          buncolgen.NewColumn("last_extracted_at", "dc"),
-	Converter:                buncolgen.NewColumn("converter", "dc"),
 	ConverterVersion:         buncolgen.NewColumn("converter_version", "dc"),
 	RawObjectKey:             buncolgen.NewColumn("raw_object_key", "dc"),
 }
@@ -120,7 +118,6 @@ var ContentFieldMap = map[string]string{
 	"createdAt":                "created_at",
 	"updatedAt":                "updated_at",
 	"lastExtractedAt":          "last_extracted_at",
-	"converter":                "converter",
 	"converterVersion":         "converter_version",
 }
 
@@ -145,7 +142,6 @@ var ContentInsertableColumns = []string{
 	"created_at",
 	"updated_at",
 	"last_extracted_at",
-	"converter",
 	"converter_version",
 	"raw_object_key",
 }
@@ -218,7 +214,6 @@ var ContentFilter = struct {
 	CreatedAt                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 	LastExtractedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastExtractedAt" → DB: "last_extracted_at"
-	Converter                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "converter" → DB: "converter"
 	ConverterVersion         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "converterVersion" → DB: "converter_version"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
@@ -274,9 +269,6 @@ var ContentFilter = struct {
 	},
 	LastExtractedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("lastExtractedAt", op, value)
-	},
-	Converter: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("converter", op, value)
 	},
 	ConverterVersion: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("converterVersion", op, value)

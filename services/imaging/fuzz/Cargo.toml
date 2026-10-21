@@ -1,0 +1,40 @@
+# cargo-fuzz targets for the imaging worker's own parsers: the image decoders (format
+# sniffing, the pixel budget, EXIF orientation) and the job a child decodes. Outside the
+# services workspace; run with `cargo +nightly fuzz run image_decode -- -max_total_time=60`.
+[package]
+name = "trenova-imaging-fuzz"
+version = "0.0.0"
+edition = "2024"
+publish = false
+license = "FSL-1.1-ALv2"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+prost = "0.14"
+trenova-imaging = { path = ".." }
+
+[workspace]
+
+[[bin]]
+name = "image_decode"
+path = "fuzz_targets/image_decode.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "exif_orientation"
+path = "fuzz_targets/exif_orientation.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "worker_job"
+path = "fuzz_targets/worker_job.rs"
+test = false
+doc = false
+bench = false

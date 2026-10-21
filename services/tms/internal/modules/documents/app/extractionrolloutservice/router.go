@@ -55,36 +55,6 @@ func (s *Service) AssignExtraction(
 	return assignment.PreferredProviderID(), nil
 }
 
-func (s *Service) ExcludeExtraction(
-	ctx context.Context,
-	req *extractionrolloutports.ExcludeExtractionRolloutRequest,
-) error {
-	rollout, err := s.Get(ctx, req.TenantInfo)
-	if err != nil {
-		return err
-	}
-	candidate := rollout.CandidateID()
-	if candidate.IsNil() {
-		return nil
-	}
-
-	entity := &extractionrollout.RolloutExclusion{
-		OrganizationID:      req.TenantInfo.OrgID,
-		BusinessUnitID:      req.TenantInfo.BuID,
-		DocumentID:          req.DocumentID,
-		ExtractedAt:         req.ExtractedAt,
-		CandidateProviderID: candidate,
-		Reason:              req.Reason,
-	}
-	multiErr := errortypes.NewMultiError()
-	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return s.exclusions.Record(ctx, entity)
-}
-
 func (s *Service) SettleExtraction(
 	ctx context.Context,
 	req *extractionrolloutports.SettleExtractionRolloutRequest,

@@ -9,6 +9,7 @@ publish.workspace = true
 
 [dependencies]
 capture-imaging.workspace = true
+trenova-imaging-core.workspace = true
 capture-protocol.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true

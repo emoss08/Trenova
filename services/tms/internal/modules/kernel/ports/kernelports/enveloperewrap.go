@@ -2,6 +2,7 @@ package kernelports
 
 import (
 	"context"
+	"io"
 
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -10,6 +11,15 @@ import (
 type EnvelopeRewrapper interface {
 	IsEnvelope(value string) bool
 	Rewrap(ctx context.Context, req *EnvelopeRewrapRequest) (string, bool, error)
+	IsBlob(prefix []byte) bool
+	BlobPrefixSize() int
+	RewrapBlob(ctx context.Context, sealed io.Reader, scopes []SecretScope) (*BlobRewrap, error)
+}
+
+type BlobRewrap struct {
+	Header   []byte
+	Consumed int64
+	Changed  bool
 }
 
 type EnvelopeRewrapRequest struct {

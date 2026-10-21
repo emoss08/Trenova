@@ -8,18 +8,19 @@ import (
 	"io"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/infrastructure/imaging/imagingkit"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
@@ -440,14 +441,14 @@ func (s *SubmissionService) buildPacket(
 	if err != nil {
 		return nil, err
 	}
-	pages := []captureports.CaptureAssemblyPage{{PDF: invoicePDF}}
+	pages := []imagingkit.Part{{Source: kernelports.ImagingBytes(pdfContentType, invoicePDF)}}
 
 	supporting, err := s.supportingDocuments(ctx, tenantInfo, inv, sources)
 	if err != nil {
 		return nil, err
 	}
 	for _, doc := range supporting {
-		page, pageErr := s.documentAsPDF(ctx, tenantInfo, doc)
+		page, pageErr := s.documentPart(ctx, tenantInfo, doc)
 		if pageErr != nil {
 			return nil, errortypes.NewBusinessError(
 				"{0} on invoice {1} could not be added to its packet: {2}",
@@ -457,10 +458,11 @@ func (s *SubmissionService) buildPacket(
 			)
 		}
 		if page != nil {
-			pages = append(pages, captureports.CaptureAssemblyPage{PDF: page})
+			pages = append(pages, *page)
 		}
 	}
-	return s.assembler.Assemble(ctx, pages)
+	packet, _, err := imagingkit.Merge(ctx, s.imaging, pages, maxPacketBytes, kernelports.ImagingBatch)
+	return packet, err
 }
 
 func (s *SubmissionService) invoicePDF(
@@ -575,11 +577,11 @@ func packetTypeOrder(cus *customer.Customer, agreement *factoring.Agreement) []p
 	return out
 }
 
-func (s *SubmissionService) documentAsPDF(
+func (s *SubmissionService) documentPart(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	doc *document.Document,
-) ([]byte, error) {
+) (*imagingkit.Part, error) {
 	contentType := strings.ToLower(strings.TrimSpace(doc.FileType))
 	switch contentType {
 	case pdfContentType, jpegContentType, pngContentType:
@@ -592,10 +594,7 @@ func (s *SubmissionService) documentAsPDF(
 	if err != nil {
 		return nil, err
 	}
-	if contentType == pdfContentType {
-		return content, nil
-	}
-	return s.images.ImageToPDF(ctx, content)
+	return &imagingkit.Part{Source: kernelports.ImagingBytes(contentType, content)}, nil
 }
 
 func (s *SubmissionService) readDocument(

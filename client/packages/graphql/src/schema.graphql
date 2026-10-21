@@ -14902,10 +14902,6 @@ type ExtractionEvalRun {
   """Why the run ended before every case ran."""
   stopReason: String!
   task: String!
-  """
-  The reading of each case the run sent to the model; a case with no pages for it is skipped.
-  """
-  textSource: ExtractionTextSource!
   unconfirmedCount: Int!
   unscoredCount: Int!
   updatedAt: Timestamp!
@@ -15070,22 +15066,6 @@ type ExtractionRolloutArm {
   superseded: Int!
 }
 
-"""
-Production extractions left out of the comparison since the rollout started, for one reason. Excluded extractions are served by production and never assigned to either side.
-"""
-type ExtractionRolloutExclusion {
-  count: Int!
-  reason: ExtractionRolloutExclusionReason!
-}
-
-"""Why a production extraction was left out of the rollout's comparison."""
-enum ExtractionRolloutExclusionReason {
-  """
-  The document was read by Docling, and the candidate must not see Markdown input until it is retrained on it.
-  """
-  docling_input
-}
-
 enum ExtractionRolloutHaltReason {
   """
   The candidate read confirmed fields worse than production by more than the allowed points.
@@ -15104,10 +15084,6 @@ type ExtractionRolloutReport {
   candidate: ExtractionRolloutArm!
   candidateAccuracy: ExtractionRolloutAccuracy!
   control: ExtractionRolloutArm!
-  """
-  Extractions left out of the comparison since the rollout started, one entry per reason.
-  """
-  exclusions: [ExtractionRolloutExclusion!]!
   """Per field, the candidate's biggest shortfall against production first."""
   fields: [ExtractionShadowFieldComparison!]!
   """
@@ -15315,18 +15291,6 @@ type ExtractionStop {
   state: String!
   timeWindow: String!
   timezone: String!
-}
-
-"""Which reading of a document an evaluation sends to the model."""
-enum ExtractionTextSource {
-  """
-  The case's pages frozen again from its original file through Docling, as Markdown.
-  """
-  docling
-  """
-  The case's pages as first frozen: PDFium text, Tesseract OCR and the Office reader.
-  """
-  legacy
 }
 
 """One provider's corrections in one UTC week, Monday to Sunday."""
@@ -29472,8 +29436,6 @@ input StartExtractionEvalRunInput {
   """
   caseLimit: Int
   providerId: ID!
-  """Which reading of each case to send; legacy by default."""
-  textSource: ExtractionTextSource
 }
 
 input StartWorkerChecklistInput {

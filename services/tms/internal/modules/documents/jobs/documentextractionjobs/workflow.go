@@ -3,9 +3,6 @@ package documentextractionjobs
 import (
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentextractionjobs/documentintelligencecontract"
-
-	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
@@ -65,98 +62,12 @@ var pollAIExtractionActivityOptions = workflow.ActivityOptions{
 func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 	return []temporaltype.WorkflowDefinition{
 		{
-			Name:        "ProcessDocumentIntelligenceWorkflow",
-			Fn:          ProcessDocumentIntelligenceWorkflow,
-			TaskQueue:   temporaltype.DocumentIntelligenceTaskQueue,
-			Description: "Extract and classify document content",
-		},
-		{
-			Name:        "ReconcileDocumentIntelligenceWorkflow",
-			Fn:          ReconcileDocumentIntelligenceWorkflow,
-			TaskQueue:   temporaltype.DocumentIntelligenceTaskQueue,
-			Description: "Re-drive stale document intelligence jobs",
-		},
-		{
 			Name:        "ProcessDocumentAIExtractionWorkflow",
 			Fn:          ProcessDocumentAIExtractionWorkflow,
 			TaskQueue:   temporaltype.DocumentIntelligenceTaskQueue,
 			Description: "Run asynchronous AI extraction for an indexed document",
 		},
 	}
-}
-
-func ProcessDocumentIntelligenceWorkflow(
-	ctx workflow.Context,
-	payload *documentintelligencecontract.ProcessDocumentIntelligencePayload,
-) (*ProcessDocumentIntelligenceResult, error) {
-	ctx = workflow.WithActivityOptions(ctx, defaultActivityOptions)
-
-	var a *Activities
-	var result *ProcessDocumentIntelligenceResult
-	if err := workflow.ExecuteActivity(
-		ctx, a.ProcessDocumentIntelligenceActivity, payload,
-	).Get(ctx, &result); err != nil {
-		return nil, err
-	}
-
-	return result, nil
-}
-
-func ReconcileDocumentIntelligenceWorkflow(
-	ctx workflow.Context,
-) (*ReconcileDocumentIntelligenceResult, error) {
-	activityCtx := workflow.WithActivityOptions(ctx, defaultActivityOptions)
-	logger := workflow.GetLogger(ctx)
-
-	var a *Activities
-	payload := &ReconcileDocumentIntelligencePayload{
-		BasePayload: temporaltype.BasePayload{
-			Timestamp: workflow.Now(ctx).Unix(),
-		},
-		OlderThanSeconds: int64((10 * time.Minute).Seconds()),
-		Limit:            temporaljobs.DefaultTenantRecordLimit,
-	}
-
-	var tenantsResult *ListDocumentIntelligenceTenantsResult
-	if err := workflow.ExecuteActivity(
-		activityCtx,
-		a.ListDocumentIntelligenceTenantsActivity,
-		payload,
-	).Get(ctx, &tenantsResult); err != nil {
-		return nil, err
-	}
-
-	result := &ReconcileDocumentIntelligenceResult{}
-	result.TenantsScanned = len(tenantsResult.Tenants)
-	for _, tenant := range tenantsResult.Tenants {
-		tenantPayload := *payload
-		tenantPayload.OrganizationID = tenant.OrganizationID
-		tenantPayload.BusinessUnitID = tenant.BusinessUnitID
-		tenantPayload.Limit = temporaljobs.NormalizeLimit(
-			tenant.Limit,
-			temporaljobs.DefaultTenantRecordLimit,
-		)
-
-		var tenantResult *ReconcileDocumentIntelligenceResult
-		if err := workflow.ExecuteActivity(
-			activityCtx,
-			a.ReconcileDocumentIntelligenceActivity,
-			&tenantPayload,
-		).Get(ctx, &tenantResult); err != nil {
-			logger.Error("Document intelligence reconciliation tenant failed",
-				"orgId", tenant.OrganizationID.String(),
-				"buId", tenant.BusinessUnitID.String(),
-				"error", err,
-			)
-			result.AddFailure(tenant, err)
-			continue
-		}
-
-		result.AddTenantResult(tenantResult.Queued, 0)
-		result.Queued += tenantResult.Queued
-	}
-
-	return result, nil
 }
 
 // ProcessDocumentAIExtractionWorkflow runs a document's AI extraction: it

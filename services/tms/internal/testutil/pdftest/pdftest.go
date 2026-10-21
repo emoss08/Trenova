@@ -1,53 +1,107 @@
 package pdftest
 
 import (
+	"bytes"
+	"cmp"
+	"fmt"
+	"slices"
 	"strings"
-	"sync"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/pdfrender/pdfreader"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/ledongthuc/pdf"
 	"github.com/stretchr/testify/require"
 )
 
-var shared = sync.OnceValue(func() *pdfreader.Reader {
-	return pdfreader.NewReader(nil, nil)
-})
-
-func Reader() kernelports.PDFReader {
-	return shared()
+type Size struct {
+	Width  float64
+	Height float64
 }
 
-func Open(t testing.TB, pdf []byte) kernelports.PDFDocument {
+func open(t testing.TB, data []byte) *pdf.Reader {
 	t.Helper()
 
-	doc, err := shared().Open(t.Context(), pdf)
-	require.NoError(t, err)
-	t.Cleanup(func() { require.NoError(t, doc.Close()) })
-
-	return doc
+	reader, err := pdf.NewReader(bytes.NewReader(data), int64(len(data)))
+	require.NoError(t, err, "the PDF could not be opened")
+	return reader
 }
 
-func PageTexts(t testing.TB, pdf []byte) []string {
+func PageTexts(t testing.TB, data []byte) []string {
 	t.Helper()
 
-	doc := Open(t, pdf)
-	texts := make([]string, 0, doc.PageCount())
-	for page := range doc.PageCount() {
-		text, err := doc.PageText(t.Context(), page)
-		require.NoError(t, err)
-		texts = append(texts, text)
+	reader := open(t, data)
+	texts := make([]string, 0, reader.NumPage())
+	for page := 1; page <= reader.NumPage(); page++ {
+		texts = append(texts, pageText(t, reader.Page(page), page))
 	}
 
 	return texts
 }
 
-func Text(t testing.TB, pdf []byte) string {
+func Text(t testing.TB, data []byte) string {
 	t.Helper()
-	return strings.Join(PageTexts(t, pdf), "\n")
+	return strings.Join(PageTexts(t, data), "\n")
 }
 
-func PageCount(t testing.TB, pdf []byte) int {
+func PageCount(t testing.TB, data []byte) int {
 	t.Helper()
-	return Open(t, pdf).PageCount()
+	return open(t, data).NumPage()
+}
+
+func PageSize(t testing.TB, data []byte, page int) Size {
+	t.Helper()
+
+	reader := open(t, data)
+	require.True(t, page >= 1 && page <= reader.NumPage(), "the PDF has no page %d", page)
+	for node := reader.Page(page).V; !node.IsNull(); node = node.Key("Parent") {
+		box := node.Key("MediaBox")
+		if box.Len() != 4 {
+			continue
+		}
+		size := Size{
+			Width:  box.Index(2).Float64() - box.Index(0).Float64(),
+			Height: box.Index(3).Float64() - box.Index(1).Float64(),
+		}
+		if rotate := node.Key("Rotate").Int64(); rotate%180 != 0 {
+			size.Width, size.Height = size.Height, size.Width
+		}
+		return size
+	}
+	t.Fatalf("page %d has no media box", page)
+	return Size{}
+}
+
+func pageText(t testing.TB, page pdf.Page, number int) (text string) {
+	t.Helper()
+
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			t.Fatalf("read the text of page %d: %v", number, fmt.Sprint(recovered))
+		}
+	}()
+	rows, err := page.GetTextByRow()
+	require.NoError(t, err, "read the text of page %d", number)
+	slices.SortStableFunc(rows, func(a, b *pdf.Row) int {
+		return cmp.Compare(b.Position, a.Position)
+	})
+
+	var out strings.Builder
+	for _, row := range rows {
+		runs := slices.Clone(row.Content)
+		slices.SortStableFunc(runs, func(a, b pdf.Text) int { return cmp.Compare(a.X, b.X) })
+		line := make([]string, 0, len(runs))
+		var cell strings.Builder
+		for i, run := range runs {
+			if i > 0 && run.X != runs[i-1].X {
+				line = append(line, strings.TrimSpace(cell.String()))
+				cell.Reset()
+			}
+			cell.WriteString(run.S)
+		}
+		line = append(line, strings.TrimSpace(cell.String()))
+		if joined := strings.TrimSpace(strings.Join(line, " ")); joined != "" {
+			out.WriteString(joined)
+			out.WriteByte('\n')
+		}
+	}
+	return out.String()
 }

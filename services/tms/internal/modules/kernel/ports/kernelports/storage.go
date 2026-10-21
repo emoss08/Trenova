@@ -2,9 +2,12 @@ package kernelports
 
 import (
 	"context"
+	"errors"
 	"io"
 	"time"
 )
+
+var ErrObjectNotFound = errors.New("the object does not exist")
 
 type UploadParams struct {
 	Key         string

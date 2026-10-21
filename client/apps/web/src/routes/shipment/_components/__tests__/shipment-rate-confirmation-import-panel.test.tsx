@@ -71,7 +71,6 @@ const BLOCKED: Document = {
 beforeEach(() => {
   mocks.calls = [];
   mocks.status = {
-    engine: "docling",
     modelProviderAvailable: false,
     converterAvailable: true,
     extractionAvailable: false,
@@ -113,7 +112,6 @@ describe("ShipmentRateConfirmationImportPanel", () => {
     await renderBlockedImport();
     mocks.calls = [];
     mocks.status = {
-      engine: "docling",
       modelProviderAvailable: true,
       converterAvailable: true,
       extractionAvailable: true,

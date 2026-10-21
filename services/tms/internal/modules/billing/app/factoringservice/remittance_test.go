@@ -425,11 +425,11 @@ func newRemittanceHarness(t *testing.T) *remittanceHarness {
 		})
 	}
 	h.funded = &factoring.SubmissionItem{
-		ID:                  pulid.MustNew("facsit_"),
-		SubmissionID:        h.subB,
-		InvoiceNumber:       "INV-050",
-		Status:              factoring.SubmissionItemStatusFunded,
-		FundedOn:            &funded,
+		ID:                   pulid.MustNew("facsit_"),
+		SubmissionID:         h.subB,
+		InvoiceNumber:        "INV-050",
+		Status:               factoring.SubmissionItemStatusFunded,
+		FundedOn:             &funded,
 		AdvanceMinor:         new(int64(45_000)),
 		FeeMinor:             new(int64(1_500)),
 		ReserveMinor:         new(int64(3_500)),

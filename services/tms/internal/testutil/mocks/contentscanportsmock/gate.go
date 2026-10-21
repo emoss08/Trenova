@@ -1,6 +1,7 @@
 package contentscanportsmock
 
 import (
+	"bytes"
 	"context"
 	"sync"
 
@@ -37,6 +38,34 @@ func (g *Gate) Check(
 	}
 	return &contentscanports.ScanResult{Verdict: contentscanports.VerdictClean}, nil
 }
+
+func (g *Gate) Stream(
+	_ context.Context,
+	req *contentscanports.StreamRequest,
+) (contentscanports.Stream, error) {
+	return &stream{gate: g, req: req}, nil
+}
+
+type stream struct {
+	gate *Gate
+	req  *contentscanports.StreamRequest
+	body bytes.Buffer
+}
+
+func (s *stream) Write(p []byte) (int, error) {
+	return s.body.Write(p)
+}
+
+func (s *stream) Finish() (*contentscanports.ScanResult, error) {
+	return s.gate.Check(context.Background(), &contentscanports.ScanRequest{
+		TenantInfo: s.req.TenantInfo,
+		Source:     s.req.Source,
+		FileName:   s.req.FileName,
+		Content:    s.body.Bytes(),
+	})
+}
+
+func (s *stream) Abort() {}
 
 func (g *Gate) Requests() []*contentscanports.ScanRequest {
 	g.mu.Lock()

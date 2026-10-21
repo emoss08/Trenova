@@ -8,8 +8,16 @@
 //! and 24 or 32 bits direct, uncompressed. Anything else is refused rather
 //! than guessed at.
 
-use crate::ImagingError;
-use crate::raster::{OwnedRaster, PixelFormat};
+use trenova_imaging_core::{ImagingError, OwnedRaster, PixelFormat};
+
+/// Why a bitmap could not be read.
+#[derive(Debug, thiserror::Error, PartialEq, Eq)]
+pub enum DibError {
+    #[error("unreadable bitmap: {0}")]
+    Unreadable(&'static str),
+    #[error(transparent)]
+    Imaging(#[from] ImagingError),
+}
 
 const FILE_HEADER_LEN: usize = 14;
 const INFO_HEADER_MIN: usize = 40;
@@ -26,21 +34,21 @@ pub struct Bitmap {
     pub dpi: Option<(u32, u32)>,
 }
 
-fn u16_at(bytes: &[u8], at: usize) -> Result<u16, ImagingError> {
+fn u16_at(bytes: &[u8], at: usize) -> Result<u16, DibError> {
     bytes
         .get(at..at + 2)
         .map(|b| u16::from_le_bytes([b[0], b[1]]))
-        .ok_or(ImagingError::Dib("the header is cut short"))
+        .ok_or(DibError::Unreadable("the header is cut short"))
 }
 
-fn u32_at(bytes: &[u8], at: usize) -> Result<u32, ImagingError> {
+fn u32_at(bytes: &[u8], at: usize) -> Result<u32, DibError> {
     bytes
         .get(at..at + 4)
         .map(|b| u32::from_le_bytes([b[0], b[1], b[2], b[3]]))
-        .ok_or(ImagingError::Dib("the header is cut short"))
+        .ok_or(DibError::Unreadable("the header is cut short"))
 }
 
-fn i32_at(bytes: &[u8], at: usize) -> Result<i32, ImagingError> {
+fn i32_at(bytes: &[u8], at: usize) -> Result<i32, DibError> {
     u32_at(bytes, at).map(|v| i32::from_le_bytes(v.to_le_bytes()))
 }
 
@@ -53,7 +61,7 @@ fn dpi_from_ppm(ppm: i32) -> Option<u32> {
 
 /// Decodes a BMP file, or a bare DIB starting at its info header.
 #[allow(clippy::too_many_lines)]
-pub fn decode_bmp(bytes: &[u8]) -> Result<Bitmap, ImagingError> {
+pub fn decode_bmp(bytes: &[u8]) -> Result<Bitmap, DibError> {
     let (info_at, pixels_at_from_header) = if bytes.starts_with(b"BM") {
         let offset = u32_at(bytes, 10)? as usize;
         (FILE_HEADER_LEN, Some(offset))
@@ -63,7 +71,7 @@ pub fn decode_bmp(bytes: &[u8]) -> Result<Bitmap, ImagingError> {
 
     let header_len = u32_at(bytes, info_at)? as usize;
     if header_len < INFO_HEADER_MIN {
-        return Err(ImagingError::Dib(
+        return Err(DibError::Unreadable(
             "the info header is older than BITMAPINFOHEADER",
         ));
     }
@@ -78,21 +86,21 @@ pub fn decode_bmp(bytes: &[u8]) -> Result<Bitmap, ImagingError> {
     let width = u32::try_from(width)
         .ok()
         .filter(|&w| w > 0)
-        .ok_or(ImagingError::Dib("the width is not positive"))?;
+        .ok_or(DibError::Unreadable("the width is not positive"))?;
     let top_down = raw_height < 0;
     let height = raw_height.unsigned_abs();
     if height == 0 {
-        return Err(ImagingError::Dib("the height is zero"));
+        return Err(DibError::Unreadable("the height is zero"));
     }
     if u64::from(width) * u64::from(height) > MAX_PIXELS {
-        return Err(ImagingError::Dimensions { width, height });
+        return Err(ImagingError::Dimensions { width, height }.into());
     }
 
     let direct = match (bits, compression) {
         (1 | 4 | 8, BI_RGB) => false,
         (24, BI_RGB) | (32, BI_RGB | BI_BITFIELDS) => true,
         _ => {
-            return Err(ImagingError::Dib(
+            return Err(DibError::Unreadable(
                 "only uncompressed 1, 4, 8, 24 and 32 bit bitmaps are read",
             ));
         }
@@ -104,7 +112,7 @@ pub fn decode_bmp(bytes: &[u8]) -> Result<Bitmap, ImagingError> {
             u32_at(bytes, info_at + 48)?,
         );
         if masks != (0x00FF_0000, 0x0000_FF00, 0x0000_00FF) {
-            return Err(ImagingError::Dib(
+            return Err(DibError::Unreadable(
                 "32-bit bitfields other than BGRX are not read",
             ));
         }
@@ -128,7 +136,7 @@ pub fn decode_bmp(bytes: &[u8]) -> Result<Bitmap, ImagingError> {
             bytes
                 .get(palette_at + i * 4..palette_at + i * 4 + 3)
                 .map(|bgr| [bgr[2], bgr[1], bgr[0]])
-                .ok_or(ImagingError::Dib("the colour table is cut short"))
+                .ok_or(DibError::Unreadable("the colour table is cut short"))
         })
         .collect::<Result<_, _>>()?;
 
@@ -137,12 +145,13 @@ pub fn decode_bmp(bytes: &[u8]) -> Result<Bitmap, ImagingError> {
     let needed = source_stride
         .checked_mul(height as usize)
         .and_then(|len| len.checked_add(pixels_at))
-        .ok_or(ImagingError::Dib("the bitmap is too large"))?;
+        .ok_or(DibError::Unreadable("the bitmap is too large"))?;
     if bytes.len() < needed {
         return Err(ImagingError::ShortBuffer {
             needed,
             actual: bytes.len(),
-        });
+        }
+        .into());
     }
     let source_row = |y: u32| {
         let stored = if top_down { y } else { height - 1 - y };
@@ -308,13 +317,13 @@ mod tests {
         let file = bmp(4, 4, 24, &[], &[vec![0; 12]]);
         assert!(matches!(
             decode_bmp(&file),
-            Err(ImagingError::ShortBuffer { .. })
+            Err(DibError::Imaging(ImagingError::ShortBuffer { .. }))
         ));
 
         let mut rle = bmp(2, 1, 8, &[[0, 0, 0], [1, 1, 1]], &[vec![0, 1]]);
         rle[14 + 16] = 1;
-        assert!(matches!(decode_bmp(&rle), Err(ImagingError::Dib(_))));
+        assert!(matches!(decode_bmp(&rle), Err(DibError::Unreadable(_))));
 
-        assert!(matches!(decode_bmp(b"BM"), Err(ImagingError::Dib(_))));
+        assert!(matches!(decode_bmp(b"BM"), Err(DibError::Unreadable(_))));
     }
 }

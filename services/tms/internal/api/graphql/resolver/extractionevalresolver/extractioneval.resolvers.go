@@ -140,9 +140,6 @@ func (r *MutationResolver) StartExtractionEvalRun(ctx context.Context, input gql
 	if input.CaseLimit != nil {
 		request.CaseLimit = *input.CaseLimit
 	}
-	if input.TextSource != nil {
-		request.TextSource = *input.TextSource
-	}
 
 	return r.ExtractionEvalService.StartRun(ctx, request, actorutil.FromAuthContext(authCtx))
 }

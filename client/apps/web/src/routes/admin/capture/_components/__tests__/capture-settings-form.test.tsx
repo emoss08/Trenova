@@ -54,7 +54,6 @@ const saved: DocumentControl = {
   captureRetentionDays: 30,
   captureMinAgentVersion: "",
   captureAllowAutoUpdate: true,
-  extractionEngine: "legacy",
 };
 
 const RETENTION = "captureRetentionDays";

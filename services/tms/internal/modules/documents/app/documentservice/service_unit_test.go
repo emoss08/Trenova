@@ -2,6 +2,8 @@ package documentservice_test
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"io"
 	"testing"
@@ -1663,6 +1665,7 @@ func TestUnit_Store_StoresSealedBytesAsADocument(t *testing.T) {
 	buID := pulid.MustNew("bu_")
 	typeID := pulid.MustNew("dt_")
 	var uploaded *kernelports.UploadParams
+	var stored []byte
 
 	repo := &mockDocRepo{
 		CreateFn: func(_ context.Context, entity *document.Document) (*document.Document, error) {
@@ -1672,6 +1675,11 @@ func TestUnit_Store_StoresSealedBytesAsADocument(t *testing.T) {
 	sc := &mockStorageClient{
 		UploadFn: func(_ context.Context, params *kernelports.UploadParams) (*kernelports.FileInfo, error) {
 			uploaded = params
+			body, err := io.ReadAll(params.Body)
+			if err != nil {
+				return nil, err
+			}
+			stored = body
 			return &kernelports.FileInfo{Key: params.Key}, nil
 		},
 	}
@@ -1699,9 +1707,11 @@ func TestUnit_Store_StoresSealedBytesAsADocument(t *testing.T) {
 	assert.Equal(t, typeID, *doc.DocumentTypeID)
 	assert.Equal(t, document.ProcessingProfileNone, doc.ProcessingProfile)
 	require.NotNil(t, uploaded)
-	stored, err := io.ReadAll(uploaded.Body)
-	require.NoError(t, err)
-	assert.True(t, encryptionservice.IsEnvelope(string(stored)))
+	assert.True(t, encryptionservice.IsBlob(stored))
+	assert.Equal(t, uploaded.Size, int64(len(stored)))
+	assert.Equal(t, encryptionservice.CryptoModeBlobV1, doc.CryptoMode)
+	sum := sha256.Sum256(content)
+	assert.Equal(t, hex.EncodeToString(sum[:]), doc.ChecksumSHA256)
 	assert.Equal(t, doc.StoragePath, uploaded.Key)
 }
 

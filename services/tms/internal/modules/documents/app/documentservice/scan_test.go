@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentuploadportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
+	"github.com/emoss08/trenova/internal/testutil/objectstoretest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -23,9 +23,10 @@ import (
 	"go.uber.org/zap"
 )
 
-func newScannedService(t *testing.T, gate contentscanports.Gate) *Service {
+func newScannedService(t *testing.T, gate contentscanports.Gate) (*Service, *objectstoretest.Store) {
 	t.Helper()
 
+	store := objectstoretest.New()
 	storageCfg := &config.StorageConfig{
 		AllowedMIMETypes:   []string{"application/pdf"},
 		MaxFileSize:        50 * 1024 * 1024,
@@ -36,7 +37,7 @@ func newScannedService(t *testing.T, gate contentscanports.Gate) *Service {
 		documentportsmock.NewMockDocumentRepository(t),
 		customerportsmock.NewMockDocumentCacheRepository(t),
 		documentuploadportsmock.NewMockDocumentUploadSessionRepository(t),
-		kernelportsmock.NewMockClient(t),
+		store,
 		NewValidator(ValidatorParams{Config: &config.Config{Storage: *storageCfg}}),
 		&mocks.NoopAuditService{},
 		storageCfg,
@@ -44,7 +45,7 @@ func newScannedService(t *testing.T, gate contentscanports.Gate) *Service {
 		nil,
 	)
 	svc.contentGate = gate
-	return svc
+	return svc, store
 }
 
 func scannedTenant() pagination.TenantInfo {
@@ -59,7 +60,7 @@ func TestUpload_RefusesAnInfectedFileBeforeItIsStored(t *testing.T) {
 	t.Parallel()
 
 	gate := contentscanportsmock.NewInfectedGate("Win.Test.EICAR_HDB-1")
-	svc := newScannedService(t, gate)
+	svc, store := newScannedService(t, gate)
 	content := []byte("%PDF-1.7 infected")
 
 	result, err := svc.Upload(t.Context(), &documentports.UploadRequest{
@@ -76,12 +77,13 @@ func TestUpload_RefusesAnInfectedFileBeforeItIsStored(t *testing.T) {
 	assert.Equal(t, contentscanports.SourceUpload, gate.Requests()[0].Source)
 	assert.Equal(t, "bol.pdf", gate.Requests()[0].FileName)
 	assert.Equal(t, content, gate.Requests()[0].Content)
+	assert.Empty(t, store.Keys(), "an infected file never becomes an object")
 }
 
 func TestUpload_RefusesAFileTheScannerCannotCheck(t *testing.T) {
 	t.Parallel()
 
-	svc := newScannedService(
+	svc, store := newScannedService(
 		t,
 		contentscanportsmock.NewRefusingGate(contentscanports.ErrScannerUnavailable),
 	)
@@ -101,4 +103,5 @@ func TestUpload_RefusesAFileTheScannerCannotCheck(t *testing.T) {
 	assert.Nil(t, result)
 	assert.True(t, errortypes.IsBusinessError(err))
 	assert.ErrorIs(t, err, contentscanports.ErrScannerUnavailable)
+	assert.Empty(t, store.Keys())
 }
