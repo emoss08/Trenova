@@ -210,7 +210,10 @@ capacity refusals (and any refused interactive call), crashing children and a sh
 Page views are not rendered on every request. After an upload, the thumbnail workflow
 pre-renders the first `imaging.prerenderPages` pages' views (1400 × 1800 WebP) and the
 thumbnail, and stores them encrypted under keys built from the document's checksum, the page,
-the size and the format, so a new version never serves an old render. `GetPageImage` serves the
+the size and the format, so a new version never serves an old render. The prerender activity
+heartbeats after every stored page with the count so far, and an attempt starts after the pages
+already stored (they run in order, so they are a prefix), so a retry resumes rather than
+rendering the whole document again. `GetPageImage` serves the
 stored render; on a miss it renders the page at interactive priority behind a singleflight
 (one render per key however many viewers ask) and stores it. ETag, immutable caching headers
 and the document-view audit are unchanged. Deleting a document deletes its renders.

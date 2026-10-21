@@ -110,10 +110,20 @@ func (g *Generator) RenderPages(
 	priority kernelports.ImagingPriority,
 	yield func(page int, data []byte) error,
 ) (int, error) {
+	return g.RenderPagesFrom(ctx, source, 1, maxPages, priority, yield)
+}
+
+func (g *Generator) RenderPagesFrom(
+	ctx context.Context,
+	source kernelports.ImagingSource,
+	first, maxPages int,
+	priority kernelports.ImagingPriority,
+	yield func(page int, data []byte) error,
+) (int, error) {
 	if g.imaging == nil {
 		return 0, ErrImagingNotConfigured
 	}
-	summary, err := g.imaging.Render(ctx, &kernelports.ImagingRenderRequest{
+	req := &kernelports.ImagingRenderRequest{
 		Source:    source,
 		FitWidth:  PageMaxWidth,
 		FitHeight: PageMaxHeight,
@@ -121,7 +131,18 @@ func (g *Generator) RenderPages(
 		Quality:   pageQuality,
 		MaxPages:  maxPages,
 		Priority:  priority,
-	}, func(artifact *kernelports.ImagingArtifact) error {
+	}
+	if first > 1 {
+		if first > maxPages {
+			return 0, nil
+		}
+		req.Pages = make([]int, 0, maxPages-first+1)
+		for page := first; page <= maxPages; page++ {
+			req.Pages = append(req.Pages, page-1)
+		}
+		req.MaxPages = 0
+	}
+	summary, err := g.imaging.Render(ctx, req, func(artifact *kernelports.ImagingArtifact) error {
 		if artifact.Body == nil {
 			return nil
 		}

@@ -142,20 +142,55 @@ func (s *Store) Prerender(
 	doc *document.Document,
 	source kernelports.ImagingSource,
 	maxPages int,
+	progress func(stored int),
 ) (int, error) {
-	stored := 0
-	_, err := s.generator.RenderPages(ctx, source, maxPages, kernelports.ImagingBatch,
+	stored := s.storedPrefix(ctx, doc, maxPages)
+	if stored >= maxPages {
+		return stored, nil
+	}
+	if stored > 0 && progress != nil {
+		progress(stored)
+	}
+	resumed := stored
+	_, err := s.generator.RenderPagesFrom(
+		ctx,
+		source,
+		stored+1,
+		maxPages,
+		kernelports.ImagingBatch,
 		func(page int, data []byte) error {
+			if page <= resumed {
+				return nil
+			}
 			if writeErr := s.write(ctx, tenantInfo, Key(doc, page), data); writeErr != nil {
 				return writeErr
 			}
 			stored++
+			if progress != nil {
+				progress(stored)
+			}
 			return nil
-		})
+		},
+	)
 	if err != nil {
 		return stored, err
 	}
 	return stored, nil
+}
+
+func (s *Store) storedPrefix(ctx context.Context, doc *document.Document, maxPages int) int {
+	for page := 1; page <= maxPages; page++ {
+		exists, err := s.storage.Exists(ctx, Key(doc, page))
+		if err != nil {
+			s.logger.Warn("could not check for a stored page render; rendering from it",
+				zap.String("documentId", doc.ID.String()), zap.Int("page", page), zap.Error(err))
+			return page - 1
+		}
+		if !exists {
+			return page - 1
+		}
+	}
+	return maxPages
 }
 
 func (s *Store) Delete(ctx context.Context, doc *document.Document) error {

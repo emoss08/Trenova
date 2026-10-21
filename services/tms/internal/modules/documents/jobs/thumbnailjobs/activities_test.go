@@ -7,7 +7,9 @@ import (
 	"image/color"
 	"image/png"
 	"io"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/imaging/imagingfake"
@@ -293,4 +295,83 @@ func sealBlob(
 	out, err := io.ReadAll(sealed)
 	require.NoError(t, err)
 	return out
+}
+
+func TestPrerenderPagesActivityHeartbeatsAfterEveryStoredPage(t *testing.T) {
+	t.Parallel()
+
+	enc := encryptionservice.NewWithKeyManager(
+		encryptionservice.NewLocalKeyManager(
+			"thumbnail-test-encryption-key-with-at-least-32-bytes",
+		),
+	)
+	doc := thumbnailDocument()
+	original := testPNG(t)
+	doc.FileSize = int64(len(original))
+	storageClient := &thumbnailStorage{
+		download: sealBlob(t, enc, original, documentStorageAAD(doc, doc.StoragePath)),
+	}
+	repo := documentportsmock.NewMockDocumentRepository(t)
+	repo.EXPECT().GetByID(mock.Anything, mockGetDocumentRequest(doc)).Return(doc, nil)
+
+	fake := imagingfake.New()
+	fake.RenderFunc = func(
+		_ context.Context,
+		_ *kernelports.ImagingRenderRequest,
+		yield func(*kernelports.ImagingArtifact) error,
+	) (*kernelports.ImagingRenderSummary, error) {
+		for page := range 3 {
+			time.Sleep(10 * time.Millisecond)
+			data := []byte("RIFF-slow-page")
+			if err := yield(&kernelports.ImagingArtifact{
+				Index:       page,
+				ContentType: "image/webp",
+				Size:        int64(len(data)),
+				Body:        bytes.NewReader(data),
+			}); err != nil {
+				return nil, err
+			}
+		}
+		return &kernelports.ImagingRenderSummary{PageCount: 3, Rendered: 3}, nil
+	}
+	generator := thumbnailservice.NewGenerator(fake)
+	activities := NewActivities(ActivitiesParams{
+		DocumentRepository: repo,
+		Storage:            storageClient,
+		ThumbnailGenerator: generator,
+		PageRenders: pagerender.New(pagerender.Params{
+			Storage:    storageClient,
+			Encryption: enc,
+			Generator:  generator,
+			Config:     &config.Config{},
+			Logger:     zap.NewNop(),
+		}),
+		Encryption: enc,
+	})
+
+	var (
+		mu         sync.Mutex
+		heartbeats []int
+	)
+	activities.heartbeat = func(_ context.Context, details ...any) {
+		for _, detail := range details {
+			if progress, ok := detail.(PrerenderProgress); ok {
+				mu.Lock()
+				heartbeats = append(heartbeats, progress.PagesStored)
+				mu.Unlock()
+			}
+		}
+	}
+	var suite testsuite.WorkflowTestSuite
+	env := suite.NewTestActivityEnvironment()
+	env.RegisterActivity(activities.PrerenderPagesActivity)
+	result, err := env.ExecuteActivity(activities.PrerenderPagesActivity, thumbnailPayload(doc))
+	require.NoError(t, err)
+
+	var stored int
+	require.NoError(t, result.Get(&stored))
+	assert.Equal(t, 3, stored)
+	mu.Lock()
+	defer mu.Unlock()
+	assert.Equal(t, []int{0, 1, 2, 3}, heartbeats, "one heartbeat to start, then one per stored page")
 }

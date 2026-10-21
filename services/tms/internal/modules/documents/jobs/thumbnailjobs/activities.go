@@ -24,6 +24,10 @@ import (
 
 const logKeyDocumentID = "documentId"
 
+type PrerenderProgress struct {
+	PagesStored int `json:"pagesStored"`
+}
+
 type ActivitiesParams struct {
 	fx.In
 
@@ -42,6 +46,7 @@ type Activities struct {
 	pageRenders        *pagerender.Store
 	encryption         *encryptionservice.Service
 	prerenderPages     int
+	heartbeat          func(ctx context.Context, details ...any)
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
@@ -56,6 +61,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		pageRenders:        p.PageRenders,
 		encryption:         p.Encryption,
 		prerenderPages:     imagingConfig.GetPrerenderPages(),
+		heartbeat:          activity.RecordHeartbeat,
 	}
 }
 
@@ -74,13 +80,16 @@ func (a *Activities) PrerenderPagesActivity(
 		return 0, a.retryable("Failed to read the document", storedobject.ErrNotAvailable)
 	}
 
-	activity.RecordHeartbeat(ctx, "rendering page views")
+	a.heartbeat(ctx, PrerenderProgress{})
 	stored, err := a.pageRenders.Prerender(
 		ctx,
 		pagination.TenantInfo{OrgID: payload.OrganizationID, BuID: payload.BusinessUnitID},
 		doc,
 		a.documentSource(doc, doc.FileType),
 		a.prerenderPages,
+		func(stored int) {
+			a.heartbeat(ctx, PrerenderProgress{PagesStored: stored})
+		},
 	)
 	if errors.Is(err, thumbnailservice.ErrUnreadable) ||
 		errors.Is(err, thumbnailservice.ErrPDFHasNoPages) {
@@ -150,7 +159,7 @@ func (a *Activities) getDocument(
 	payload *thumbnailcontract.GenerateThumbnailPayload,
 ) (*document.Document, *GenerateThumbnailResult, error) {
 	logger := activity.GetLogger(ctx)
-	activity.RecordHeartbeat(ctx, "loading document record")
+	a.heartbeat(ctx, "loading document record")
 
 	doc, err := a.docRepo.GetByID(ctx, documentports.GetDocumentByIDRequest{
 		ID: payload.DocumentID,
@@ -210,7 +219,7 @@ func (a *Activities) generateThumbnail(
 	source kernelports.ImagingSource,
 ) ([]byte, *GenerateThumbnailResult, error) {
 	logger := activity.GetLogger(ctx)
-	activity.RecordHeartbeat(ctx, "generating thumbnail")
+	a.heartbeat(ctx, "generating thumbnail")
 
 	thumbData, err := a.thumbnailGenerator.Generate(ctx, source, kernelports.ImagingBatch)
 	if err != nil {
@@ -259,7 +268,7 @@ func (a *Activities) uploadThumbnail(
 	thumbData []byte,
 ) (string, *GenerateThumbnailResult, error) {
 	logger := activity.GetLogger(ctx)
-	activity.RecordHeartbeat(ctx, "uploading thumbnail")
+	a.heartbeat(ctx, "uploading thumbnail")
 
 	previewPath := fmt.Sprintf("%s/thumbnails/%s/%s_thumb.webp",
 		payload.OrganizationID.String(),
@@ -302,7 +311,7 @@ func (a *Activities) updateDocumentPreview(
 	previewPath string,
 ) (*GenerateThumbnailResult, error) {
 	logger := activity.GetLogger(ctx)
-	activity.RecordHeartbeat(ctx, "updating document record")
+	a.heartbeat(ctx, "updating document record")
 
 	doc.PreviewStoragePath = previewPath
 	doc.PreviewStatus = document.PreviewStatusReady

@@ -3,6 +3,8 @@ package pagerender
 import (
 	"bytes"
 	"context"
+	"errors"
+	"fmt"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -112,4 +114,128 @@ func TestGet_OneWaiterCancellingDoesNotFailTheOthers(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, view, stored)
 	assert.Equal(t, int32(1), renders.Load(), "and stored for the next caller")
+}
+
+type prerenderHarness struct {
+	store    *Store
+	storage  *objectstoretest.Store
+	tenant   pagination.TenantInfo
+	doc      *document.Document
+	requests [][]int
+	failAt   int
+}
+
+func newPrerenderHarness(t *testing.T, pageCount int) *prerenderHarness {
+	t.Helper()
+
+	h := &prerenderHarness{storage: objectstoretest.New()}
+	imaging := imagingfake.New()
+	imaging.RenderFunc = func(
+		_ context.Context,
+		req *kernelports.ImagingRenderRequest,
+		yield func(*kernelports.ImagingArtifact) error,
+	) (*kernelports.ImagingRenderSummary, error) {
+		h.requests = append(h.requests, append([]int(nil), req.Pages...))
+		pages := req.Pages
+		if len(pages) == 0 {
+			for page := range min(pageCount, req.MaxPages) {
+				pages = append(pages, page)
+			}
+		}
+		rendered := 0
+		for _, page := range pages {
+			if h.failAt > 0 && page+1 == h.failAt {
+				return nil, errors.New("the worker went away mid-render")
+			}
+			time.Sleep(5 * time.Millisecond)
+			view := fmt.Appendf(nil, "RIFF....WEBPVP8 page %d", page+1)
+			if err := yield(&kernelports.ImagingArtifact{
+				Index:       page,
+				ContentType: ContentType,
+				Size:        int64(len(view)),
+				Body:        bytes.NewReader(view),
+			}); err != nil {
+				return nil, err
+			}
+			rendered++
+		}
+		return &kernelports.ImagingRenderSummary{PageCount: pageCount, Rendered: rendered}, nil
+	}
+	h.store = New(Params{
+		Storage: h.storage,
+		Encryption: encryptionservice.NewWithKeyManager(
+			encryptionservice.NewLocalKeyManager("pagerender-test-key-material"),
+		),
+		Generator: thumbnailservice.NewGenerator(imaging),
+		Config:    &config.Config{},
+		Logger:    zap.NewNop(),
+	})
+	h.tenant = pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
+	h.doc = &document.Document{
+		ID:             pulid.MustNew("doc_"),
+		OrganizationID: h.tenant.OrgID,
+		BusinessUnitID: h.tenant.BuID,
+		ChecksumSHA256: "abc123",
+	}
+	return h
+}
+
+func (h *prerenderHarness) prerender(t *testing.T, maxPages int) (int, []int, error) {
+	t.Helper()
+
+	var progress []int
+	stored, err := h.store.Prerender(
+		t.Context(),
+		h.tenant,
+		h.doc,
+		kernelports.ImagingBytes("application/pdf", []byte("%PDF-1.7")),
+		maxPages,
+		func(stored int) { progress = append(progress, stored) },
+	)
+	return stored, progress, err
+}
+
+func TestPrerender_ReportsProgressAfterEveryStoredPage(t *testing.T) {
+	t.Parallel()
+
+	h := newPrerenderHarness(t, 4)
+
+	stored, progress, err := h.prerender(t, 20)
+
+	require.NoError(t, err)
+	assert.Equal(t, 4, stored)
+	assert.Equal(t, []int{1, 2, 3, 4}, progress)
+}
+
+func TestPrerender_ARetryRendersOnlyThePagesNotYetStored(t *testing.T) {
+	t.Parallel()
+
+	h := newPrerenderHarness(t, 5)
+	h.failAt = 3
+	stored, _, err := h.prerender(t, 5)
+	require.Error(t, err)
+	require.Equal(t, 2, stored)
+	firstPage, ok := h.storage.Object(Key(h.doc, 1))
+	require.True(t, ok)
+
+	h.failAt = 0
+	h.requests = nil
+	stored, progress, err := h.prerender(t, 5)
+
+	require.NoError(t, err)
+	assert.Equal(t, 5, stored)
+	assert.Equal(t, [][]int{{2, 3, 4}}, h.requests, "only pages 3 to 5 are rendered")
+	assert.Equal(t, []int{2, 3, 4, 5}, progress)
+	again, _ := h.storage.Object(Key(h.doc, 1))
+	assert.Equal(t, firstPage, again, "a stored page is not written again")
+	for page := 1; page <= 5; page++ {
+		_, ok := h.storage.Object(Key(h.doc, page))
+		assert.True(t, ok, "page %d is stored", page)
+	}
+
+	h.requests = nil
+	stored, _, err = h.prerender(t, 5)
+	require.NoError(t, err)
+	assert.Equal(t, 5, stored)
+	assert.Empty(t, h.requests, "a finished document is not rendered again")
 }
