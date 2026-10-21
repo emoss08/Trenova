@@ -35,6 +35,7 @@ type DocumentUploadSession struct {
 	ChecksumSHA256          string                     `json:"checksumSha256"          bun:"checksum_sha256,type:VARCHAR(64),nullzero"`
 	CryptoMode              string                     `json:"cryptoMode"              bun:"crypto_mode,type:VARCHAR(32),notnull,default:'blob_v1'"`
 	CryptoVersion           int16                      `json:"cryptoVersion"           bun:"crypto_version,type:SMALLINT,notnull,default:2"`
+	MalwareScan             bool                       `json:"malwareScan"             bun:"malware_scan,type:BOOLEAN,notnull,default:false"`
 	Strategy                Strategy                   `json:"strategy"                bun:"strategy,type:VARCHAR(20),notnull"`
 	Status                  Status                     `json:"status"                  bun:"status,type:document_upload_session_status_enum,notnull,default:'Initiated'"`
 	Description             string                     `json:"description"             bun:"description,type:TEXT,nullzero"`
@@ -43,6 +44,7 @@ type DocumentUploadSession struct {
 	PartSize                int64                      `json:"partSize"                bun:"part_size,type:BIGINT,notnull"`
 	FailureCode             string                     `json:"failureCode"             bun:"failure_code,type:VARCHAR(100),nullzero"`
 	FailureMessage          string                     `json:"failureMessage"          bun:"failure_message,type:TEXT,nullzero"`
+	ThreatName              string                     `json:"threatName"              bun:"threat_name,type:VARCHAR(255),nullzero"`
 	ExpiresAt               int64                      `json:"expiresAt"               bun:"expires_at,type:BIGINT,notnull"`
 	LastActivityAt          int64                      `json:"lastActivityAt"          bun:"last_activity_at,type:BIGINT,notnull"`
 	Version                 int64                      `json:"version"                 bun:"version,type:BIGINT"`

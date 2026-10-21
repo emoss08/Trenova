@@ -40385,6 +40385,24 @@
       "routes/inbox"
     ]
   },
+  "Blocked: the virus scanner found a virus in this file": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "Blocked: the virus scanner found {0} in this file": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Blockers": {
     "sites": 1,
     "scope": [
@@ -50222,6 +50240,24 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Checking for viruses": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "Checking for viruses...": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Checking invoice email configuration.": {
@@ -105779,6 +105815,15 @@
     ],
     "areas": [
       "routes/ifta-return"
+    ]
+  },
+  "Finalizing upload": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Finalizing...": {
@@ -192861,6 +192906,15 @@
       "routes/shipment"
     ]
   },
+  "Preparing upload": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "Preparing...": {
     "sites": 2,
     "scope": [
@@ -198149,12 +198203,11 @@
     ]
   },
   "Quarantined": {
-    "sites": 5,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
       "apps/web/lib",
       "packages/shared/components",
       "routes/agent-control",
@@ -216420,6 +216473,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Retrying upload": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Retrying with backoff": {
@@ -287923,6 +287985,24 @@
       "routes/admin"
     ]
   },
+  "Upload blocked": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "Upload complete": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "Upload documents": {
     "sites": 2,
     "scope": [
@@ -287943,7 +288023,7 @@
     ]
   },
   "Upload failed": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -287999,6 +288079,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Upload paused": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Upload picture": {
@@ -288276,6 +288365,15 @@
   },
   "Uploading": {
     "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "Uploading file": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -290930,6 +291028,15 @@
     ],
     "areas": [
       "routes/auth"
+    ]
+  },
+  "Verifying upload": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Verifying...": {
@@ -293663,6 +293770,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Waiting for file": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Waiting for it to arrive…": {

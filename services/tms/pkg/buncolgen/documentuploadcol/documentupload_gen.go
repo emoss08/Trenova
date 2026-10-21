@@ -67,6 +67,7 @@ var DocumentUploadSessionColumns = struct {
 	ChecksumSHA256          buncolgen.Column // "checksum_sha256" → qualified: "dus.checksum_sha256"
 	CryptoMode              buncolgen.Column // "crypto_mode" → qualified: "dus.crypto_mode"
 	CryptoVersion           buncolgen.Column // "crypto_version" → qualified: "dus.crypto_version"
+	MalwareScan             buncolgen.Column // "malware_scan" → qualified: "dus.malware_scan"
 	Strategy                buncolgen.Column // "strategy" → qualified: "dus.strategy"
 	Status                  buncolgen.Column // "status" → qualified: "dus.status"
 	Description             buncolgen.Column // "description" → qualified: "dus.description"
@@ -75,6 +76,7 @@ var DocumentUploadSessionColumns = struct {
 	PartSize                buncolgen.Column // "part_size" → qualified: "dus.part_size"
 	FailureCode             buncolgen.Column // "failure_code" → qualified: "dus.failure_code"
 	FailureMessage          buncolgen.Column // "failure_message" → qualified: "dus.failure_message"
+	ThreatName              buncolgen.Column // "threat_name" → qualified: "dus.threat_name"
 	ExpiresAt               buncolgen.Column // "expires_at" → qualified: "dus.expires_at"
 	LastActivityAt          buncolgen.Column // "last_activity_at" → qualified: "dus.last_activity_at"
 	Version                 buncolgen.Column // "version" → qualified: "dus.version"
@@ -98,6 +100,7 @@ var DocumentUploadSessionColumns = struct {
 	ChecksumSHA256:          buncolgen.NewColumn("checksum_sha256", "dus"),
 	CryptoMode:              buncolgen.NewColumn("crypto_mode", "dus"),
 	CryptoVersion:           buncolgen.NewColumn("crypto_version", "dus"),
+	MalwareScan:             buncolgen.NewColumn("malware_scan", "dus"),
 	Strategy:                buncolgen.NewColumn("strategy", "dus"),
 	Status:                  buncolgen.NewColumn("status", "dus"),
 	Description:             buncolgen.NewColumn("description", "dus"),
@@ -106,6 +109,7 @@ var DocumentUploadSessionColumns = struct {
 	PartSize:                buncolgen.NewColumn("part_size", "dus"),
 	FailureCode:             buncolgen.NewColumn("failure_code", "dus"),
 	FailureMessage:          buncolgen.NewColumn("failure_message", "dus"),
+	ThreatName:              buncolgen.NewColumn("threat_name", "dus"),
 	ExpiresAt:               buncolgen.NewColumn("expires_at", "dus"),
 	LastActivityAt:          buncolgen.NewColumn("last_activity_at", "dus"),
 	Version:                 buncolgen.NewColumn("version", "dus"),
@@ -135,6 +139,7 @@ var DocumentUploadSessionFieldMap = map[string]string{
 	"checksumSha256":          "checksum_sha256",
 	"cryptoMode":              "crypto_mode",
 	"cryptoVersion":           "crypto_version",
+	"malwareScan":             "malware_scan",
 	"strategy":                "strategy",
 	"status":                  "status",
 	"description":             "description",
@@ -143,6 +148,7 @@ var DocumentUploadSessionFieldMap = map[string]string{
 	"partSize":                "part_size",
 	"failureCode":             "failure_code",
 	"failureMessage":          "failure_message",
+	"threatName":              "threat_name",
 	"expiresAt":               "expires_at",
 	"lastActivityAt":          "last_activity_at",
 	"version":                 "version",
@@ -170,6 +176,7 @@ var DocumentUploadSessionInsertableColumns = []string{
 	"checksum_sha256",
 	"crypto_mode",
 	"crypto_version",
+	"malware_scan",
 	"strategy",
 	"status",
 	"description",
@@ -178,6 +185,7 @@ var DocumentUploadSessionInsertableColumns = []string{
 	"part_size",
 	"failure_code",
 	"failure_message",
+	"threat_name",
 	"expires_at",
 	"last_activity_at",
 	"version",
@@ -252,6 +260,7 @@ var DocumentUploadSessionFilter = struct {
 	ChecksumSHA256          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "checksumSha256" → DB: "checksum_sha256"
 	CryptoMode              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cryptoMode" → DB: "crypto_mode"
 	CryptoVersion           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cryptoVersion" → DB: "crypto_version"
+	MalwareScan             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "malwareScan" → DB: "malware_scan"
 	Strategy                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "strategy" → DB: "strategy"
 	Status                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
 	Description             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
@@ -260,6 +269,7 @@ var DocumentUploadSessionFilter = struct {
 	PartSize                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "partSize" → DB: "part_size"
 	FailureCode             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failureCode" → DB: "failure_code"
 	FailureMessage          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failureMessage" → DB: "failure_message"
+	ThreatName              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "threatName" → DB: "threat_name"
 	ExpiresAt               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expiresAt" → DB: "expires_at"
 	LastActivityAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastActivityAt" → DB: "last_activity_at"
 	Version                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
@@ -317,6 +327,9 @@ var DocumentUploadSessionFilter = struct {
 	CryptoVersion: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("cryptoVersion", op, value)
 	},
+	MalwareScan: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("malwareScan", op, value)
+	},
 	Strategy: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("strategy", op, value)
 	},
@@ -340,6 +353,9 @@ var DocumentUploadSessionFilter = struct {
 	},
 	FailureMessage: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("failureMessage", op, value)
+	},
+	ThreatName: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("threatName", op, value)
 	},
 	ExpiresAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("expiresAt", op, value)
