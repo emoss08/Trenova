@@ -206,3 +206,85 @@ func sealBlob(
 	}
 	return io.ReadAll(sealed)
 }
+
+type failingAfter struct {
+	data []byte
+	err  error
+}
+
+func (r *failingAfter) Read(p []byte) (int, error) {
+	if len(r.data) == 0 {
+		return 0, r.err
+	}
+	n := copy(p, r.data)
+	r.data = r.data[n:]
+	return n, nil
+}
+
+func sealedAttachment(
+	t *testing.T,
+	h *sealHarness,
+	plaintext []byte,
+) (*email.Attachment, []byte) {
+	t.Helper()
+
+	tenant := testTenantInfo()
+	key := tenant.OrgID.String() + "/shipment/pod.pdf"
+	sealed, err := sealBlob(t, h.crypto, plaintext, encryptionservice.AAD{
+		Purpose:        encryptionservice.PurposeDocument,
+		OrganizationID: tenant.OrgID,
+		BusinessUnitID: tenant.BuID,
+		ResourceID:     key,
+	})
+	require.NoError(t, err)
+	return &email.Attachment{
+		ID:             pulid.MustNew("emlatt_"),
+		OrganizationID: tenant.OrgID,
+		BusinessUnitID: tenant.BuID,
+		FileName:       "pod.pdf",
+		ObjectKey:      key,
+		Seal:           email.AttachmentSealDocument,
+	}, sealed
+}
+
+func TestAttachmentContentKeepsAStorageReadErrorRetryable(t *testing.T) {
+	t.Parallel()
+
+	plaintext := bytes.Repeat([]byte("POD "), 3*encryptionservice.BlobChunkSize/4)
+	reset := errors.New("connection reset by peer")
+
+	for name, cut := range map[string]func(sealed []byte) int{
+		"inside the header":  func([]byte) int { return 20 },
+		"between the chunks": func(sealed []byte) int { return len(sealed) / 2 },
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			h := newSealHarness(t)
+			attachment, sealed := sealedAttachment(t, h, plaintext)
+			h.storage.EXPECT().Download(mock.Anything, attachment.ObjectKey).Return(&kernelports.DownloadResult{
+				Body: io.NopCloser(&failingAfter{data: sealed[:cut(sealed)], err: reset}),
+				Size: int64(len(sealed)),
+			}, nil).Once()
+
+			_, err := h.svc.attachmentContent(t.Context(), attachment)
+
+			require.ErrorIs(t, err, reset)
+			assert.False(t, errors.Is(err, ErrNonRetryableSend), "a storage read error is retried")
+		})
+	}
+}
+
+func TestAttachmentContentRefusesATamperedBlobForGood(t *testing.T) {
+	t.Parallel()
+
+	h := newSealHarness(t)
+	attachment, sealed := sealedAttachment(t, h, []byte("%PDF-1.7 proof of delivery"))
+	sealed[len(sealed)-1] ^= 0xff
+	h.stored(t, attachment.ObjectKey, sealed)
+
+	_, err := h.svc.attachmentContent(t.Context(), attachment)
+
+	require.ErrorIs(t, err, encryptionservice.ErrBlobTampered)
+	assert.True(t, errors.Is(err, ErrNonRetryableSend))
+}

@@ -769,24 +769,26 @@ func (s *Service) unsealDocument(
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf(
-			"%w: attachment %s could not be unsealed: %w",
-			ErrNonRetryableSend,
-			attachment.ID,
-			err,
-		)
+		return nil, unsealError(attachment, err)
 	}
 	content, err := io.ReadAll(opened)
 	if err != nil {
-		return nil, fmt.Errorf(
+		return nil, unsealError(attachment, err)
+	}
+
+	return content, nil
+}
+
+func unsealError(attachment *email.Attachment, err error) error {
+	if errors.Is(err, encryptionservice.ErrBlobRejected) {
+		return fmt.Errorf(
 			"%w: attachment %s could not be unsealed: %w",
 			ErrNonRetryableSend,
 			attachment.ID,
 			err,
 		)
 	}
-
-	return content, nil
+	return fmt.Errorf("read attachment %s: %w", attachment.ID, err)
 }
 
 func (s *Service) startSendWorkflow(

@@ -30,9 +30,10 @@ const (
 )
 
 var (
-	ErrBlobFormat   = errors.New("the object is not a sealed blob")
-	ErrBlobAAD      = errors.New("the blob is sealed for other associated data")
-	ErrBlobTampered = errors.New("the blob failed authentication")
+	ErrBlobRejected = errors.New("the blob could not be decrypted or authenticated")
+	ErrBlobFormat   = fmt.Errorf("%w: the object is not a sealed blob", ErrBlobRejected)
+	ErrBlobAAD      = fmt.Errorf("%w: it is sealed for other associated data", ErrBlobRejected)
+	ErrBlobTampered = fmt.Errorf("%w: it failed authentication", ErrBlobRejected)
 	ErrBlobSize     = errors.New("the blob's plaintext is not the declared size")
 )
 
@@ -122,10 +123,17 @@ func encodeBlobHeader(fixed []byte, wrapped *WrappedKey) ([]byte, error) {
 	return append(header, section...), nil
 }
 
+func headerReadError(err error) error {
+	if errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) {
+		return fmt.Errorf("%w: %w", ErrBlobFormat, err)
+	}
+	return err
+}
+
 func readBlobHeader(src io.Reader) (*blobHeader, error) {
 	fixed := make([]byte, blobFixedSize)
 	if _, err := io.ReadFull(src, fixed); err != nil {
-		return nil, fmt.Errorf("%w: %w", ErrBlobFormat, err)
+		return nil, headerReadError(err)
 	}
 	if !IsBlob(fixed) {
 		return nil, ErrBlobFormat
@@ -143,7 +151,7 @@ func readBlobHeader(src io.Reader) (*blobHeader, error) {
 
 	var sizeField [2]byte
 	if _, err := io.ReadFull(src, sizeField[:]); err != nil {
-		return nil, fmt.Errorf("%w: %w", ErrBlobFormat, err)
+		return nil, headerReadError(err)
 	}
 	sectionSize := int(binary.BigEndian.Uint16(sizeField[:]))
 	if sectionSize > blobKeySectionMax {
@@ -151,7 +159,7 @@ func readBlobHeader(src io.Reader) (*blobHeader, error) {
 	}
 	section := make([]byte, sectionSize)
 	if _, err := io.ReadFull(src, section); err != nil {
-		return nil, fmt.Errorf("%w: %w", ErrBlobFormat, err)
+		return nil, headerReadError(err)
 	}
 
 	fields := make([][]byte, 0, 5)
@@ -337,11 +345,11 @@ func (s *Service) OpenBlob(
 	}
 	dek, err := s.keyManager.UnwrapKey(ctx, header.wrapped, aad)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: its key did not unwrap: %w", ErrBlobRejected, err)
 	}
 	aead, err := newBlobAEAD(dek)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: %w", ErrBlobRejected, err)
 	}
 
 	size := int64(-1)
