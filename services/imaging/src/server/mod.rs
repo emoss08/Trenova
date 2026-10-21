@@ -852,7 +852,11 @@ async fn inspect_batch(
     forward: mpsc::Sender<Result<InspectCaptureResponse, Status>>,
 ) -> Result<InspectCaptureResponse, Status> {
     let limits = &call.shared.config.limits;
-    let batch_size = limits.capture_batch as usize;
+    let batch_size = sub_batch_size(
+        header.page_count,
+        limits.capture_batch,
+        limits.capture_parallelism,
+    );
     let parallel = Arc::new(Semaphore::new(limits.capture_parallelism));
     let mut remaining = limits.max_input_bytes;
     let mut running = tokio::task::JoinSet::new();
@@ -969,6 +973,14 @@ async fn inspect_batch(
             failed,
         })),
     })
+}
+
+/// Pages per child job: enough jobs to keep every slot of the call busy, none
+/// larger than the configured batch, so a five-page batch runs on five children
+/// rather than one.
+fn sub_batch_size(page_count: u32, capture_batch: u32, parallelism: usize) -> usize {
+    let slots = u32::try_from(parallelism.max(1)).unwrap_or(u32::MAX);
+    page_count.div_ceil(slots).clamp(1, capture_batch.max(1)) as usize
 }
 
 fn check_page_complete(batch: &Batch) -> Result<(), Status> {
@@ -1135,6 +1147,16 @@ mod tests {
         assert_eq!(parse_grpc_timeout("123456789S"), None);
         assert_eq!(parse_grpc_timeout("S"), None);
         assert_eq!(parse_grpc_timeout("10x"), None);
+    }
+
+    #[test]
+    fn small_capture_batches_spread_across_every_slot() {
+        assert_eq!(sub_batch_size(5, 8, 4), 2);
+        assert_eq!(sub_batch_size(1, 8, 4), 1);
+        assert_eq!(sub_batch_size(4, 8, 4), 1);
+        assert_eq!(sub_batch_size(40, 8, 4), 8);
+        assert_eq!(sub_batch_size(0, 8, 4), 1);
+        assert_eq!(sub_batch_size(9, 8, 0), 8);
     }
 
     #[test]
