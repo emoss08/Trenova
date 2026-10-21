@@ -11,6 +11,7 @@ import type {
   DocumentUploadSession,
   DocumentUploadSessionState,
 } from "@trenova/shared/types/document";
+import { quarantinedUploadMessage } from "@/lib/upload-refusal";
 import type { UploadErrorType, UploadState } from "@/types/upload";
 import { useQueryClient } from "@tanstack/react-query";
 import { nanoid } from "nanoid";
@@ -335,6 +336,22 @@ export function useDocumentUpload({
     sessionByUploadIdRef.current.delete(uploadId);
   }, []);
 
+  const readQuarantine = useCallback(
+    async (uploadId: string): Promise<DocumentUploadSession | undefined> => {
+      const session = sessionByUploadIdRef.current.get(uploadId);
+      if (!session) {
+        return undefined;
+      }
+      try {
+        const state = await apiService.documentService.getUploadSession(session.id);
+        return state.session.status === "Quarantined" ? state.session : undefined;
+      } catch {
+        return undefined;
+      }
+    },
+    [],
+  );
+
   const waitForSessionFinalization = useCallback(
     async (uploadId: string, sessionId: string, signal: AbortSignal) => {
       while (!signal.aborted) {
@@ -350,12 +367,13 @@ export function useDocumentUpload({
               ? 100
               : current.progress,
           error:
-            state.session.status === "Failed" ||
-            state.session.status === "Expired" ||
-            state.session.status === "Canceled" ||
             state.session.status === "Quarantined"
-              ? state.session.failureMessage || current.error
-              : undefined,
+              ? quarantinedUploadMessage(state.session.threatName)
+              : state.session.status === "Failed" ||
+                  state.session.status === "Expired" ||
+                  state.session.status === "Canceled"
+                ? state.session.failureMessage || current.error
+                : undefined,
         }));
 
         if (state.session.status === "Available" || state.session.status === "Completed") {
@@ -457,13 +475,14 @@ export function useDocumentUpload({
             state.session.id,
             [1],
           );
+          const checkedForMalware = state.session.malwareScan;
           await api.putFileWithProgress(
             target.url,
             uploadState.file,
             (percent) => {
               setUploadState(uploadState.id, (current) => ({
                 ...current,
-                status: "uploading",
+                status: checkedForMalware && percent >= 100 ? "checking" : "uploading",
                 progress: Math.min(99, percent),
               }));
             },
@@ -518,9 +537,23 @@ export function useDocumentUpload({
           return;
         }
 
-        const message = error instanceof Error ? error.message : "Upload failed";
         const errorType = getErrorType(error);
+        const quarantined =
+          errorType === "network" ? undefined : await readQuarantine(uploadState.id);
+        if (quarantined) {
+          const message = quarantinedUploadMessage(quarantined.threatName);
+          setUploadState(uploadState.id, (current) => ({
+            ...current,
+            status: "quarantined",
+            error: message,
+            errorType: "validation",
+          }));
+          await discardSession(uploadState.id);
+          onError?.(new Error(message), uploadState.file);
+          return;
+        }
 
+        const message = error instanceof Error ? error.message : "Upload failed";
         setUploadState(uploadState.id, (current) => ({
           ...current,
           status: errorType === "network" ? "paused" : "error",
@@ -548,6 +581,7 @@ export function useDocumentUpload({
       syncSessionToStore,
       createFreshSession,
       discardSession,
+      readQuarantine,
       waitForSessionFinalization,
       uploadMultipart,
     ],
@@ -745,6 +779,7 @@ export function useDocumentUpload({
     [
       "pending",
       "uploading",
+      "checking",
       "processing",
       "uploaded",
       "verifying",

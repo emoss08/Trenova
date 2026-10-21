@@ -552,9 +552,15 @@ To use a `clamd` you already run, point the address at it instead (`host:3310`, 
 
 **What happens to a file.**
 
+While scanning is on, an upload in the web app reads "Checking for viruses..." once every byte
+has been sent: the server answers only after `clamd` has given its verdict, which takes about
+a second for a small file and a few seconds for a large PDF. Each upload session records
+whether it is scanned (`malwareScan`) and, when refused, the signature (`threatName`).
+
 - *Clean*: it is stored and processed as before.
 - *Infected*: it is refused and never stored. The person uploading it is told the signature
-  the scanner found; an inbound email attachment is marked on its message as not filed, with
+  the scanner found (in the web app the file reads "Blocked: the virus scanner found ... in
+  this file" and is listed with the failed uploads; it cannot be retried); an inbound email attachment is marked on its message as not filed, with
   the reason; an inbound EDI file is moved to **Quarantined** with the signature as its
   failure reason, which raises the usual quarantined-file alert; a fuel card export fails
   that run with the file's name and is left on the server, unarchived. Every refusal writes a

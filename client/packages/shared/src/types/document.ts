@@ -322,6 +322,11 @@ export const documentUploadSessionSchema = z.object({
   partSize: z.number(),
   failureCode: z.string().nullable().optional(),
   failureMessage: z.string().nullable().optional(),
+  malwareScan: z
+    .boolean()
+    .nullish()
+    .transform((value) => value ?? false),
+  threatName: z.string().nullable().optional(),
   expiresAt: z.number(),
   lastActivityAt: z.number(),
   version: z.number(),

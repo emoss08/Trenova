@@ -3,6 +3,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { cn } from "@trenova/shared/lib/utils";
+import { quarantinedUploadMessage } from "@/lib/upload-refusal";
 import type { UploadState } from "@/types/upload";
 import {
   AlertCircleIcon,
@@ -133,7 +134,7 @@ function UploadItem({
   const t = useT();
 
   const { id, file, progress, status, error, errorType, retryCount } = upload;
-  const canRetry = (retryCount ?? 0) < MAX_RETRIES;
+  const canRetry = status !== "quarantined" && (retryCount ?? 0) < MAX_RETRIES;
 
   return (
     <div className="flex items-center gap-3 rounded-md bg-transparent p-1">
@@ -159,6 +160,9 @@ function UploadItem({
               <span className="text-muted-foreground text-xs">{progress}%</span>
             </>
           )}
+          {status === "checking" && (
+            <span className="text-muted-foreground text-xs">{t("Checking for viruses...")}</span>
+          )}
           {status === "processing" && (
             <span className="text-muted-foreground text-xs">{t("Compressing...")}</span>
           )}
@@ -178,7 +182,9 @@ function UploadItem({
             <span className="text-muted-foreground text-xs">{t("Finalizing...")}</span>
           )}
           {status === "quarantined" && (
-            <span className="text-xs text-danger-foreground">{t("Quarantined")}</span>
+            <span className="truncate text-xs text-danger-foreground">
+              {error ?? quarantinedUploadMessage()}
+            </span>
           )}
           {status === "pending" && (
             <span className="text-muted-foreground text-xs">
@@ -200,7 +206,7 @@ function UploadItem({
         {status === "uploading" && (
           <SpinnerIcon className="size-4 animate-spin text-info-foreground" />
         )}
-        {status === "processing" && (
+        {(status === "checking" || status === "processing") && (
           <SpinnerIcon className="size-4 animate-spin text-info-foreground" />
         )}
         {status === "uploaded" && (
@@ -222,6 +228,9 @@ function UploadItem({
         {(status === "error" || status === "paused" || status === "quarantined") && (
           <>
             {status === "error" ? getErrorIcon(errorType) : null}
+            {status === "quarantined" ? (
+              <AlertCircleIcon className="size-4 text-danger-foreground" />
+            ) : null}
             {onRetry && canRetry && (
               <Button
                 variant="ghost"
@@ -249,6 +258,7 @@ function UploadItem({
         {(status === "pending" ||
           status === "processing" ||
           status === "uploading" ||
+          status === "checking" ||
           status === "uploaded" ||
           status === "verifying" ||
           status === "retrying" ||
@@ -420,7 +430,7 @@ export function UploadPanel({
     return {
       all: uploads.length,
       completed: uploads.filter((u) => u.status === "success").length,
-      failed: uploads.filter((u) => u.status === "error").length,
+      failed: uploads.filter((u) => u.status === "error" || u.status === "quarantined").length,
     };
   }, [uploads]);
 
@@ -429,14 +439,18 @@ export function UploadPanel({
       case "completed":
         return uploads.filter((u) => u.status === "success");
       case "failed":
-        return uploads.filter((u) => u.status === "error");
+        return uploads.filter((u) => u.status === "error" || u.status === "quarantined");
       default:
         return uploads;
     }
   }, [uploads, filter]);
 
   const activeCount = uploads.filter(
-    (u) => u.status === "uploading" || u.status === "pending" || u.status === "processing",
+    (u) =>
+      u.status === "uploading" ||
+      u.status === "checking" ||
+      u.status === "pending" ||
+      u.status === "processing",
   ).length;
 
   const hasUploads = uploads.length > 0;
