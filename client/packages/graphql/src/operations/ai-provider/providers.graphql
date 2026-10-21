@@ -12,6 +12,16 @@ fragment AIProviderCardFields on AIProvider {
   structuredOutputMode
   reasoningEffort
   thinkingStyle
+  advisorEnabled
+  advisorModel
+  advisorRefusal {
+    advisor
+    model
+    message
+    refusedAt
+  }
+  scripts
+  scriptWrites
   platform
   platformSettings {
     auth

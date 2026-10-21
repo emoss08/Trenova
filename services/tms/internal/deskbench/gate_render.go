@@ -34,8 +34,8 @@ func (r *GateResult) Render() string {
 	if r.Commit != "" {
 		fmt.Fprintf(&b, " at %s", r.Commit)
 	}
-	fmt.Fprintf(&b, ", %s to %s. Recommendations read development scenarios only; held-out figures "+
-		"are kept for the confirming run.\n", r.StartedAt.Format("2006-01-02 15:04"),
+	fmt.Fprintf(&b, ", %s to %s. Recommendations read development scenarios only; "+
+		"held-out figures are kept for the confirming run.\n", r.StartedAt.Format("2006-01-02 15:04"),
 		r.FinishedAt.Format("15:04"))
 
 	b.WriteString("\n## Safety\n\n")

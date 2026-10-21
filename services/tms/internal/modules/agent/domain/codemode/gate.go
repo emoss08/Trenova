@@ -76,6 +76,8 @@ func (g Gate) Decide(override Override, model string, settings aiprovider.Script
 		if name == "" {
 			name = "this model"
 		}
-		return Decision{Reason: "scripts are not turned on for the provider that answered with " + name}
+		return Decision{
+			Reason: "scripts are not turned on for the provider that answered with " + name,
+		}
 	}
 }
