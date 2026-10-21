@@ -222,7 +222,10 @@ tool, when:
 - a listed tool's record has no Query root field, or several;
 - no persisted query, or more than one in a tier, reads that root field alone;
 - an override in `reads.yml` has no `reason`, or names the operation the rule picks anyway;
-- a shard the operations reach asks for a resolver the full root does not build.
+- a shard the operations reach asks for a resolver the full root does not build;
+- an operation a list reads `alongside` its own is not persisted, is not a connection read that
+  selects `pageInfo`, needs a variable other than its table input, or reads a field whose resolver
+  checks no read permission; or a paged list names one.
 
 Editing a bound operation on the client re-hashes it, and
 `TestEveryBoundOperationIsPersistedAsItIsRun` fails until the generator runs again. Adding a

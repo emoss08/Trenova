@@ -341,7 +341,7 @@ func bindOne(
 func bindAlongside(
 	catalog map[string]*operation,
 	tool, name string,
-) (*alongside, string) {
+) (beside *alongside, problem string) {
 	chosen, ok := catalog[name]
 	if !ok {
 		return nil, fmt.Sprintf("%s reads %s alongside, which is not a persisted query",
@@ -366,8 +366,9 @@ func bindAlongside(
 		return nil, fmt.Sprintf("%s: the resolver of %s checks no read permission, so what "+
 			"%s reads alongside could not be held to it", tool, field.Name, tool)
 	}
-	beside := &binding{Tool: tool, Verb: verbList, Operation: chosen, RootField: field}
-	if problem := unsupplied(beside); problem != "" {
+	if problem = unsupplied(&binding{
+		Tool: tool, Verb: verbList, Operation: chosen, RootField: field,
+	}); problem != "" {
 		return nil, problem
 	}
 	input := ""

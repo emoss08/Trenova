@@ -9,8 +9,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
+	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/documentrepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/performancereviewrepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workerchecklistrepository"
+	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workercredentialrepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workerrepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workertrainingrepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/performancereviewservice"
@@ -61,18 +63,18 @@ func keyedListCases(services *agentreadServices) []keyedCase {
 			tool: "worker_list_checklists", hasSwitch: true, key: "templatesStartedByHand",
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, workerID pulid.ID, label string, closed bool) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
-				status := worker.ChecklistStatusOpen
+				status, completedAt := worker.ChecklistStatusOpen, (*int64)(nil)
 				if closed {
-					status = worker.ChecklistStatusCompleted
+					status, completedAt = worker.ChecklistStatusCompleted, &now
 				}
 				row, err := services.checklists.Create(ctx, &worker.WorkerChecklist{
 					BusinessUnitID: bu, OrganizationID: org, WorkerID: workerID,
 					Name: "Checklist " + label, Kind: worker.ChecklistKindOnboarding,
-					Status: status, StartedAt: now,
+					Status: status, StartedAt: now, CompletedAt: completedAt,
 					Items: []*worker.WorkerChecklistItem{{
-						Label: "Sign the handbook", Kind: worker.ChecklistItemKindTask,
+						Label: "Sign the handbook", Kind: worker.ChecklistItemTask,
 						Required: true, Owner: worker.ChecklistOwnerHR,
-						Status: worker.ChecklistItemStatusPending, Note: "ask " + label,
+						Status: worker.ChecklistItemPending, Note: "ask " + label,
 					}},
 				})
 				return created(row, err)
@@ -280,6 +282,9 @@ func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSec
 		checklists: checklists, training: training, reviews: reviews,
 		checklistService: workerchecklistservice.New(workerchecklistservice.Params{
 			Logger: logger, Repo: checklists, WorkerRepo: workers,
+			CredentialRepo: workercredentialrepository.New(
+				workercredentialrepository.Params{DB: conn, Logger: logger}),
+			DocumentRepo: documentrepository.New(documentrepository.Params{DB: conn, Logger: logger}),
 		}),
 		trainingService: resolvers.WorkerTrainingService,
 		reviewService: performancereviewservice.New(performancereviewservice.Params{

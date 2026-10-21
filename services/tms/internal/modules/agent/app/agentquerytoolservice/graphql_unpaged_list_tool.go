@@ -356,15 +356,14 @@ func (t *graphQLUnpagedListTool) checkArguments(args map[string]any) error {
 func (t *graphQLUnpagedListTool) readAlongside(
 	ctx context.Context,
 	params *agentports.QueryToolParams,
-) (map[string][]map[string]any, []string, []string, error) {
+) (records map[string][]map[string]any, withheld, notes []string, err error) {
 	if len(t.alongside) == 0 {
 		return nil, nil, nil, nil
 	}
 	ceilings := fieldsensitivity.NewAgentCeilings(
 		t.permissions, params.Actor, params.DataAccessCeiling,
 	)
-	out := make(map[string][]map[string]any, len(t.alongside))
-	var withheld, notes []string
+	records = make(map[string][]map[string]any, len(t.alongside))
 	for idx, bound := range t.alongside {
 		spec := t.spec.alongside[idx]
 		resource := permission.Resource(bound.Resource)
@@ -377,7 +376,8 @@ func (t *graphQLUnpagedListTool) readAlongside(
 		}
 		input[inputFirst] = alongsideMost
 
-		result, err := t.reader.Read(ctx, &agentports.GraphQLReadRequest{
+		var result *agentports.GraphQLReadResult
+		result, err = t.reader.Read(ctx, &agentports.GraphQLReadRequest{
 			Actor:             params.Actor,
 			Operation:         bound.Operation,
 			Variables:         map[string]any{bound.Input: input},
@@ -404,7 +404,7 @@ func (t *graphQLUnpagedListTool) readAlongside(
 				rows = append(rows, compact(node))
 			}
 		}
-		out[spec.key] = rows
+		records[spec.key] = rows
 		prefix := bound.RootField + "." + connectionEdges + "." + connectionNode + "."
 		for _, path := range relativePaths(result.Withheld, prefix) {
 			withheld = append(withheld, spec.key+"."+path)
@@ -417,7 +417,7 @@ func (t *graphQLUnpagedListTool) readAlongside(
 		}
 	}
 
-	return out, withheld, notes, nil
+	return records, withheld, notes, nil
 }
 
 // relativePaths names withheld fields from the record, as a model reads

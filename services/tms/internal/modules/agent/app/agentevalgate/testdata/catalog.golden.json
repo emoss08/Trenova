@@ -43374,11 +43374,11 @@
         "additionalProperties": false,
         "properties": {
           "includeClosed": {
-            "description": "Also return completed and cancelled checklists.",
+            "description": "Also the completed and cancelled checklists, not only the open ones. Defaults to false, the open ones only.",
             "type": "boolean"
           },
           "workerId": {
-            "description": "The worker, by id from worker_list. A name is not an id.",
+            "description": "The worker, from worker_list. Never guess one.",
             "type": "string",
             "x-recordOf": "worker"
           }
@@ -43719,7 +43719,7 @@
         "additionalProperties": false,
         "properties": {
           "workerId": {
-            "description": "The worker, by id from worker_list. A name is not an id.",
+            "description": "The worker, from worker_list. Never guess one.",
             "type": "string",
             "x-recordOf": "worker"
           }
@@ -44062,11 +44062,11 @@
         "additionalProperties": false,
         "properties": {
           "includeClosed": {
-            "description": "Also return completed, waived, cancelled and expired assignments. Defaults to open ones only.",
+            "description": "Also the completed, waived, cancelled and expired assignments, not only the open ones. Defaults to false, the open ones only.",
             "type": "boolean"
           },
           "workerId": {
-            "description": "The worker, by id from worker_list. A name is not an id.",
+            "description": "The worker, from worker_list. Never guess one.",
             "type": "string",
             "x-recordOf": "worker"
           }

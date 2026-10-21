@@ -30,12 +30,15 @@ const (
 	noteOpenOnly = "Defaults to false, the open ones only."
 )
 
-// theWorker is the worker a per-worker list is keyed by.
-var theWorker = map[string]idReference{paramWorkerID: {
+// workerReference is a worker id parameter: a worker, from the worker list.
+var workerReference = idReference{
 	resource: permission.ResourceWorker,
 	what:     "The worker",
 	source:   toolWorkerList,
-}}
+}
+
+// theWorker is the worker a per-worker list is keyed by.
+var theWorker = map[string]idReference{paramWorkerID: workerReference}
 
 // workerRecordReadSpecs are the lists of one worker's own records, each read
 // whole through the operation the worker's page sends, keyed by the worker.
