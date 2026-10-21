@@ -265842,6 +265842,15 @@
       "apps/web/components"
     ]
   },
+  "The request nests records too deeply to be accepted": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The request the agent composed. Required: this is the substance of the message.": {
     "sites": 1,
     "scope": [

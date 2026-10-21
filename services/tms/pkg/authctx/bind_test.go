@@ -232,16 +232,112 @@ func TestBindJSON_StampsTenantInfoAndNestedEntities(t *testing.T) {
 	assert.Equal(t, ac.BusinessUnitID, req.Policy.BusinessUnitID)
 }
 
-func TestBindJSON_LeavesSliceElementsToTheirOwners(t *testing.T) {
+func TestBindJSON_RejectsAForeignTenantInASliceElement(t *testing.T) {
 	t.Parallel()
 
 	ac := bindAuthContext()
-	sibling := pulid.MustNew("org_")
-	req := new(bindRequestWithNesting)
-	body := `{"lines":[{"organizationId":"` + sibling.String() + `"}]}`
+	foreign := pulid.MustNew("org_")
+	body := `{"lines":[{"organizationId":"` + ac.OrganizationID.String() + `"},` +
+		`{"organizationId":"` + foreign.String() + `"}]}`
+
+	err := authctx.BindJSON(bindContext(t, body), ac, new(bindRequestWithNesting))
+
+	require.Error(t, err)
+	assert.True(t, errortypes.IsAuthorizationError(err))
+}
+
+type bindStop struct {
+	BusinessUnitID pulid.ID `json:"businessUnitId"`
+	OrganizationID pulid.ID `json:"organizationId"`
+}
+
+type bindMove struct {
+	OrganizationID pulid.ID    `json:"organizationId"`
+	Stops          []*bindStop `json:"stops"`
+}
+
+type bindDeepRequest struct {
+	Moves    []*bindMove          `json:"moves"`
+	ByCode   map[string]bindStop  `json:"byCode"`
+	Pointers map[string]*bindStop `json:"pointers"`
+	Grid     [][]bindStop         `json:"grid"`
+	Extra    any                  `json:"extra"`
+}
+
+func TestBindJSON_RejectsAForeignTenantWhereverTheBodyNestsIt(t *testing.T) {
+	t.Parallel()
+
+	foreign := pulid.MustNew("org_")
+	foreignBU := pulid.MustNew("bu_")
+	for name, body := range map[string]string{
+		"a pointer slice inside a slice": `{"moves":[{"stops":[{},{"organizationId":"` +
+			foreign.String() + `"}]}]}`,
+		"a map value":       `{"byCode":{"A":{"organizationId":"` + foreign.String() + `"}}}`,
+		"a map of pointers": `{"pointers":{"A":{"businessUnitId":"` + foreignBU.String() + `"}}}`,
+		"a slice of slices": `{"grid":[[{},{"organizationId":"` + foreign.String() + `"}]]}`,
+	} {
+		err := authctx.BindJSON(bindContext(t, body), bindAuthContext(), new(bindDeepRequest))
+		require.Error(t, err, name)
+		assert.True(t, errortypes.IsAuthorizationError(err), name)
+	}
+}
+
+func TestBindJSON_StampsEveryNestedRecordWithTheSessionTenant(t *testing.T) {
+	t.Parallel()
+
+	ac := bindAuthContext()
+	req := new(bindDeepRequest)
+	body := `{"moves":[{"stops":[{},{}]},{"stops":[{}]}],` +
+		`"byCode":{"A":{}},"pointers":{"B":{}},"grid":[[{}],[{},{}]]}`
 
 	require.NoError(t, authctx.BindJSON(bindContext(t, body), ac, req))
-	assert.Equal(t, sibling, req.Lines[0].OrganizationID)
+
+	stops := make([]bindStop, 0, 8)
+	for _, move := range req.Moves {
+		assert.Equal(t, ac.OrganizationID, move.OrganizationID)
+		for _, stop := range move.Stops {
+			stops = append(stops, *stop)
+		}
+	}
+	stops = append(stops, req.ByCode["A"], *req.Pointers["B"])
+	for _, row := range req.Grid {
+		stops = append(stops, row...)
+	}
+	require.Len(t, stops, 8)
+	for _, stop := range stops {
+		assert.Equal(t, ac.OrganizationID, stop.OrganizationID)
+		assert.Equal(t, ac.BusinessUnitID, stop.BusinessUnitID)
+	}
+}
+
+type bindChain struct {
+	OrganizationID pulid.ID   `json:"organizationId"`
+	Next           *bindChain `json:"next"`
+}
+
+func TestBindJSON_ChecksATenantFarBelowTheTopOfTheBody(t *testing.T) {
+	t.Parallel()
+
+	ac := bindAuthContext()
+	body := strings.Repeat(`{"next":`, 10) + `{"organizationId":"` + pulid.MustNew("org_").String() +
+		`"}` + strings.Repeat(`}`, 10)
+
+	err := authctx.BindJSON(bindContext(t, body), ac, new(bindChain))
+
+	require.Error(t, err)
+	assert.True(t, errortypes.IsAuthorizationError(err))
+}
+
+func TestBindJSON_RefusesABodyNestedTooDeeplyToCheck(t *testing.T) {
+	t.Parallel()
+
+	ac := bindAuthContext()
+	body := strings.Repeat(`{"next":`, 40) + `{}` + strings.Repeat(`}`, 40)
+
+	err := authctx.BindJSON(bindContext(t, body), ac, new(bindChain))
+
+	require.Error(t, err)
+	assert.True(t, errortypes.IsBusinessError(err))
 }
 
 func TestBindJSON_ReportsTheForeignTenantItRefused(t *testing.T) {

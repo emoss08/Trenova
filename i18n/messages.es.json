@@ -28614,6 +28614,7 @@
   "The request belongs to a different organization than your session": "La solicitud pertenece a una organización distinta de la de su sesión",
   "The request body could not be read": "No se pudo leer el cuerpo de la solicitud",
   "The request didn't go through": "La solicitud no se completó",
+  "The request nests records too deeply to be accepted": "La solicitud anida registros a demasiada profundidad para ser aceptada",
   "The request the agent composed. Required: this is the substance of the message.": "La solicitud que compuso el agente. Obligatorio: es el contenido del mensaje.",
   "The request was rejected. Check what you entered and try again.": "Se rechazó la solicitud. Revise lo que ingresó e inténtelo de nuevo.",
   "The request with this Idempotency-Key already completed with status {0}, and its response was too large to keep for replay": "La solicitud con esta Idempotency-Key ya terminó con el estado {0} y su respuesta era demasiado grande para guardarla y repetirla",

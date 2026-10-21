@@ -9818,6 +9818,7 @@
   "The report this is about. A notification that does not name it is one nobody can act on.": "此项所指的报表。未载明报表的通知，无人能据以行动。",
   "The request belongs to a different organization than your session": "此请求所属的组织与您的会话不同",
   "The request body could not be read": "无法读取请求正文",
+  "The request nests records too deeply to be accepted": "此请求的记录嵌套层级过深，无法接受",
   "The request the agent composed. Required: this is the substance of the message.": "代理程序撰写的请求内容。为必填：这是消息的实质内容。",
   "The request with this Idempotency-Key already completed with status {0}, and its response was too large to keep for replay": "使用此 Idempotency-Key 的请求已以状态 {0} 完成，其响应过大，无法保留以供重放",
   "The requesting driver is required": "提出申请的司机为必填",

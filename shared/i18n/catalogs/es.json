@@ -9818,6 +9818,7 @@
   "The report this is about. A notification that does not name it is one nobody can act on.": "El informe del que se trata. Una notificación que no lo nombra es una sobre la que nadie puede actuar.",
   "The request belongs to a different organization than your session": "La solicitud pertenece a una organización distinta de la de su sesión",
   "The request body could not be read": "No se pudo leer el cuerpo de la solicitud",
+  "The request nests records too deeply to be accepted": "La solicitud anida registros a demasiada profundidad para ser aceptada",
   "The request the agent composed. Required: this is the substance of the message.": "La solicitud que compuso el agente. Obligatorio: es el contenido del mensaje.",
   "The request with this Idempotency-Key already completed with status {0}, and its response was too large to keep for replay": "La solicitud con esta Idempotency-Key ya terminó con el estado {0} y su respuesta era demasiado grande para guardarla y repetirla",
   "The requesting driver is required": "El conductor solicitante es obligatorio",
