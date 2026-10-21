@@ -2,9 +2,13 @@ package emailservice
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"io"
 	"testing"
+	"time"
+
+	kmspb "cloud.google.com/go/kms/apiv1/kmspb"
 
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -13,10 +17,13 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/emailportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
 	"github.com/emoss08/trenova/shared/pulid"
+	gax "github.com/googleapis/gax-go/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func sealTestEncryption() *encryptionservice.Service {
@@ -286,5 +293,115 @@ func TestAttachmentContentRefusesATamperedBlobForGood(t *testing.T) {
 	_, err := h.svc.attachmentContent(t.Context(), attachment)
 
 	require.ErrorIs(t, err, encryptionservice.ErrBlobTampered)
+	assert.True(t, errors.Is(err, ErrNonRetryableSend))
+}
+
+type unavailableKMS struct {
+	decryptErr error
+}
+
+func (c *unavailableKMS) Encrypt(
+	_ context.Context,
+	req *kmspb.EncryptRequest,
+	_ ...gax.CallOption,
+) (*kmspb.EncryptResponse, error) {
+	return &kmspb.EncryptResponse{Ciphertext: req.GetPlaintext()}, nil
+}
+
+func (c *unavailableKMS) Decrypt(
+	context.Context,
+	*kmspb.DecryptRequest,
+	...gax.CallOption,
+) (*kmspb.DecryptResponse, error) {
+	return nil, c.decryptErr
+}
+
+func (c *unavailableKMS) Close() error {
+	return nil
+}
+
+func TestAttachmentContentRetriesAKeyServiceOutage(t *testing.T) {
+	t.Parallel()
+
+	h := newSealHarness(t)
+	client := &unavailableKMS{}
+	h.crypto = encryptionservice.NewWithKeyManager(encryptionservice.NewGCPAutokeyManager(
+		client,
+		"projects/test/locations/us/keyRings/autokey/cryptoKeys/trenova",
+		time.Second,
+	))
+	h.svc.encryptionService = h.crypto
+	attachment, sealed := sealedAttachment(t, h, []byte("%PDF-1.7 proof of delivery"))
+	client.decryptErr = status.Error(codes.Unavailable, "kms is down")
+	h.stored(t, attachment.ObjectKey, sealed)
+
+	_, err := h.svc.attachmentContent(t.Context(), attachment)
+
+	require.Error(t, err)
+	assert.Equal(t, codes.Unavailable, status.Code(err))
+	assert.False(t, errors.Is(err, ErrNonRetryableSend), "a key service outage is retried")
+}
+
+func TestAttachmentContentRefusesAnUnknownKeyForGood(t *testing.T) {
+	t.Parallel()
+
+	h := newSealHarness(t)
+	sealer := encryptionservice.NewWithKeyManager(
+		encryptionservice.NewLocalKeyManager("a-key-this-deployment-no-longer-holds-32b"),
+	)
+	attachment, _ := sealedAttachment(t, h, []byte("%PDF"))
+	sealed, err := sealBlob(t, sealer, []byte("%PDF"), encryptionservice.AAD{
+		Purpose:        encryptionservice.PurposeDocument,
+		OrganizationID: attachment.OrganizationID,
+		BusinessUnitID: attachment.BusinessUnitID,
+		ResourceID:     attachment.ObjectKey,
+	})
+	require.NoError(t, err)
+	h.stored(t, attachment.ObjectKey, sealed)
+
+	_, err = h.svc.attachmentContent(t.Context(), attachment)
+
+	require.ErrorIs(t, err, encryptionservice.ErrUnknownKeyID)
+	assert.True(t, errors.Is(err, ErrNonRetryableSend))
+}
+
+func TestAttachmentContentRetriesATruncatedDownload(t *testing.T) {
+	t.Parallel()
+
+	plaintext := bytes.Repeat([]byte("POD "), 3*encryptionservice.BlobChunkSize/4)
+	for name, cut := range map[string]func(sealed []byte) int{
+		"inside the header": func([]byte) int { return 20 },
+		"inside a chunk":    func(sealed []byte) int { return len(sealed)/2 + 7 },
+		"before the tag":    func(sealed []byte) int { return len(sealed) - 1 },
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			h := newSealHarness(t)
+			attachment, sealed := sealedAttachment(t, h, plaintext)
+			h.storage.EXPECT().Download(mock.Anything, attachment.ObjectKey).Return(&kernelports.DownloadResult{
+				Body: io.NopCloser(bytes.NewReader(sealed[:cut(sealed)])),
+				Size: int64(len(sealed)),
+			}, nil).Once()
+
+			_, err := h.svc.attachmentContent(t.Context(), attachment)
+
+			require.ErrorIs(t, err, io.ErrUnexpectedEOF)
+			assert.False(t, errors.Is(err, ErrNonRetryableSend), "a cut-off download is retried")
+		})
+	}
+}
+
+func TestAttachmentContentRefusesAFlippedCiphertextByteForGood(t *testing.T) {
+	t.Parallel()
+
+	h := newSealHarness(t)
+	attachment, sealed := sealedAttachment(t, h, []byte("%PDF-1.7 proof of delivery"))
+	sealed[len(sealed)/2] ^= 0x01
+	h.stored(t, attachment.ObjectKey, sealed)
+
+	_, err := h.svc.attachmentContent(t.Context(), attachment)
+
+	require.ErrorIs(t, err, encryptionservice.ErrBlobRejected)
 	assert.True(t, errors.Is(err, ErrNonRetryableSend))
 }

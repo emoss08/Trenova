@@ -262,6 +262,12 @@ email service opens a sealed attachment with `OpenBlob` as it downloads it.
   appending one, reordering or swapping chunks within a blob, splicing chunks or a key section
   from another blob, and opening under another tenant's or path's associated data all fail
   authentication (`blob_test.go` covers each).
+- A failure is permanent (`ErrBlobRejected`) only when retrying cannot help: a tampered or
+  malformed object, a key id no manager holds, or a wrapped key that fails authentication
+  (`IsKeyRefused`; GCP KMS answers `InvalidArgument`, `NotFound` or `FailedPrecondition`). A
+  key service that is unavailable, slow or overloaded passes its error through, and so does a
+  download that ends before the object's stored size (`ErrBlobTruncated`, an
+  `io.ErrUnexpectedEOF`), so an email or extraction retries rather than failing for good.
 - The key section is not in the chunks' additional data, so a rewrap replaces only the
   header: `trenova encryption rewrap` reads the header, unwraps the data key under the retired
   key, wraps it under the active one, and writes the new header followed by the old chunks

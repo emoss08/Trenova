@@ -21,6 +21,8 @@ import (
 	gax "github.com/googleapis/gax-go/v2"
 	"go.uber.org/fx"
 	"google.golang.org/api/option"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 var (
@@ -30,6 +32,7 @@ var (
 	ErrInvalidEnvelope    = errors.New("invalid encryption envelope")
 	ErrKeyManagerDisabled = errors.New("encryption key manager is disabled")
 	ErrUnknownKeyID       = errors.New("unknown encryption key id")
+	ErrKeyRejected        = errors.New("the wrapped key was refused")
 	ErrKMSKeyRequired     = errors.New(
 		"security.encryption.gcpKms.cryptoKey is required for the gcp-autokey key manager",
 	)
@@ -670,12 +673,28 @@ func (m *GCPAutokeyManager) UnwrapKey(
 		AdditionalAuthenticatedData: aad.Bytes(),
 	})
 	if err != nil {
-		return nil, err
+		return nil, kmsUnwrapError(err)
 	}
 	if len(resp.GetPlaintext()) != dekSize {
 		return nil, ErrInvalidEnvelope
 	}
 	return resp.GetPlaintext(), nil
+}
+
+func kmsUnwrapError(err error) error {
+	switch status.Code(err) {
+	case codes.InvalidArgument, codes.NotFound, codes.FailedPrecondition:
+		return fmt.Errorf("%w: %w", ErrKeyRejected, err)
+	default:
+		return err
+	}
+}
+
+func IsKeyRefused(err error) bool {
+	return errors.Is(err, ErrKeyRejected) ||
+		errors.Is(err, ErrUnknownKeyID) ||
+		errors.Is(err, ErrInvalidEnvelope) ||
+		errors.Is(err, ErrCiphertextFormat)
 }
 
 func (m *GCPAutokeyManager) ActiveKeyID() string {

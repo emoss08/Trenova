@@ -30,11 +30,15 @@ const (
 )
 
 var (
-	ErrBlobRejected = errors.New("the blob could not be decrypted or authenticated")
-	ErrBlobFormat   = fmt.Errorf("%w: the object is not a sealed blob", ErrBlobRejected)
-	ErrBlobAAD      = fmt.Errorf("%w: it is sealed for other associated data", ErrBlobRejected)
-	ErrBlobTampered = fmt.Errorf("%w: it failed authentication", ErrBlobRejected)
-	ErrBlobSize     = errors.New("the blob's plaintext is not the declared size")
+	ErrBlobRejected  = errors.New("the blob could not be decrypted or authenticated")
+	ErrBlobFormat    = fmt.Errorf("%w: the object is not a sealed blob", ErrBlobRejected)
+	ErrBlobAAD       = fmt.Errorf("%w: it is sealed for other associated data", ErrBlobRejected)
+	ErrBlobTampered  = fmt.Errorf("%w: it failed authentication", ErrBlobRejected)
+	ErrBlobSize      = errors.New("the blob's plaintext is not the declared size")
+	ErrBlobTruncated = fmt.Errorf(
+		"the object ended before its stored size: %w",
+		io.ErrUnexpectedEOF,
+	)
 )
 
 type blobHeader struct {
@@ -124,6 +128,9 @@ func encodeBlobHeader(fixed []byte, wrapped *WrappedKey) ([]byte, error) {
 }
 
 func headerReadError(err error) error {
+	if errors.Is(err, ErrBlobTruncated) {
+		return err
+	}
 	if errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) {
 		return fmt.Errorf("%w: %w", ErrBlobFormat, err)
 	}
@@ -336,6 +343,9 @@ func (s *Service) OpenBlob(
 	if s.keyManager == nil {
 		return nil, ErrKeyManagerDisabled
 	}
+	if sealedSize >= 0 {
+		src = &sizedReader{src: src, remaining: sealedSize}
+	}
 	header, err := readBlobHeader(src)
 	if err != nil {
 		return nil, err
@@ -345,7 +355,10 @@ func (s *Service) OpenBlob(
 	}
 	dek, err := s.keyManager.UnwrapKey(ctx, header.wrapped, aad)
 	if err != nil {
-		return nil, fmt.Errorf("%w: its key did not unwrap: %w", ErrBlobRejected, err)
+		if IsKeyRefused(err) {
+			return nil, fmt.Errorf("%w: its key did not unwrap: %w", ErrBlobRejected, err)
+		}
+		return nil, fmt.Errorf("unwrap the blob's key: %w", err)
 	}
 	aead, err := newBlobAEAD(dek)
 	if err != nil {
@@ -397,6 +410,8 @@ func (b *OpenedBlob) openNext() error {
 	last := false
 	switch {
 	case err == nil:
+	case errors.Is(err, ErrBlobTruncated):
+		return err
 	case errors.Is(err, io.EOF), errors.Is(err, io.ErrUnexpectedEOF):
 		last = true
 	default:
@@ -429,6 +444,20 @@ func (b *OpenedBlob) openNext() error {
 		b.have = 1
 	}
 	return nil
+}
+
+type sizedReader struct {
+	src       io.Reader
+	remaining int64
+}
+
+func (r *sizedReader) Read(p []byte) (int, error) {
+	n, err := r.src.Read(p)
+	r.remaining -= int64(n)
+	if errors.Is(err, io.EOF) && r.remaining > 0 {
+		return n, fmt.Errorf("%w: %d bytes short", ErrBlobTruncated, r.remaining)
+	}
+	return n, err
 }
 
 type RewrappedBlob struct {

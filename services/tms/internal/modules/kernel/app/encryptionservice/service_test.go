@@ -133,6 +133,7 @@ func testAAD() AAD {
 type fakeKMSClient struct {
 	encryptAAD []byte
 	decryptAAD []byte
+	decryptErr error
 }
 
 func (c *fakeKMSClient) Encrypt(
@@ -151,6 +152,9 @@ func (c *fakeKMSClient) Decrypt(
 	_ ...gax.CallOption,
 ) (*kmspb.DecryptResponse, error) {
 	c.decryptAAD = append([]byte(nil), req.AdditionalAuthenticatedData...)
+	if c.decryptErr != nil {
+		return nil, c.decryptErr
+	}
 	return &kmspb.DecryptResponse{
 		Plaintext: []byte(strings.TrimPrefix(string(req.Ciphertext), "wrapped:")),
 	}, nil

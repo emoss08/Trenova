@@ -4,12 +4,16 @@ import (
 	"bytes"
 	"crypto/rand"
 	"crypto/sha256"
+	"errors"
 	"io"
 	"testing"
+	"time"
 
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func blobAAD(resource string) AAD {
@@ -221,4 +225,93 @@ func TestOnlyTheBlobFormatIsRecognized(t *testing.T) {
 	assert.False(t, IsBlob([]byte(envelope)))
 	_, err = open(t, svc, []byte(envelope), blobAAD("x"))
 	require.ErrorIs(t, err, ErrBlobFormat)
+}
+
+func TestOnlyAPermanentKeyFailureRejectsABlob(t *testing.T) {
+	t.Parallel()
+
+	aad := blobAAD("documents/kms.pdf")
+	for code, rejected := range map[codes.Code]bool{
+		codes.Unavailable:        false,
+		codes.DeadlineExceeded:   false,
+		codes.ResourceExhausted:  false,
+		codes.Internal:           false,
+		codes.InvalidArgument:    true,
+		codes.NotFound:           true,
+		codes.FailedPrecondition: true,
+	} {
+		client := &fakeKMSClient{}
+		svc := NewWithKeyManager(NewGCPAutokeyManager(
+			client,
+			"projects/test/locations/us/keyRings/autokey/cryptoKeys/trenova",
+			time.Second,
+		))
+		sealed := seal(t, svc, []byte("proof of delivery"), aad)
+		client.decryptErr = status.Error(code, "kms said no")
+
+		_, err := open(t, svc, sealed, aad)
+
+		require.Error(t, err, code.String())
+		assert.Equal(t, rejected, errors.Is(err, ErrBlobRejected), code.String())
+		assert.Equal(t, code, status.Code(err), code.String())
+	}
+}
+
+func TestABlobUnderAnUnknownKeyIsRejected(t *testing.T) {
+	t.Parallel()
+
+	aad := blobAAD("documents/unknown-key.pdf")
+	sealed := seal(t, blobService(t, "blob-test-key-nobody-has-any-more"), []byte("bol"), aad)
+
+	_, err := open(t, blobService(t, "blob-test-active-key-material"), sealed, aad)
+
+	require.ErrorIs(t, err, ErrBlobRejected)
+	require.ErrorIs(t, err, ErrUnknownKeyID)
+}
+
+func TestASourceEndingBeforeItsStoredSizeIsAReadError(t *testing.T) {
+	t.Parallel()
+
+	svc := blobService(t, "blob-test-active-key-material")
+	aad := blobAAD("documents/truncated.pdf")
+	sealed := seal(t, svc, randomBytes(t, 2*BlobChunkSize+10), aad)
+	start := headerLength(t, sealed)
+
+	for name, cut := range map[string]int{
+		"inside the header":       start / 2,
+		"at a chunk boundary":     start + BlobChunkSize + blobTagSize,
+		"inside the middle chunk": start + BlobChunkSize + 100,
+		"inside the last chunk":   len(sealed) - 3,
+	} {
+		_, err := func() ([]byte, error) {
+			opened, err := svc.OpenBlob(
+				t.Context(),
+				bytes.NewReader(sealed[:cut]),
+				int64(len(sealed)),
+				aad,
+			)
+			if err != nil {
+				return nil, err
+			}
+			return io.ReadAll(opened)
+		}()
+
+		require.ErrorIs(t, err, io.ErrUnexpectedEOF, name)
+		require.ErrorIs(t, err, ErrBlobTruncated, name)
+		assert.NotErrorIs(t, err, ErrBlobRejected, name)
+	}
+}
+
+func TestAFlippedCiphertextByteIsTampered(t *testing.T) {
+	t.Parallel()
+
+	svc := blobService(t, "blob-test-active-key-material")
+	aad := blobAAD("documents/flipped.pdf")
+	sealed := seal(t, svc, randomBytes(t, BlobChunkSize+10), aad)
+	sealed[headerLength(t, sealed)+3] ^= 0x80
+
+	_, err := open(t, svc, sealed, aad)
+
+	require.ErrorIs(t, err, ErrBlobTampered)
+	assert.NotErrorIs(t, err, io.ErrUnexpectedEOF)
 }
