@@ -31814,7 +31814,18 @@ input UpdateDOTRandomDrawEntryInput {
 }
 
 extend type Query {
-  workerDotTests(workerId: ID!): [WorkerDOTTest!]!
+  """
+  Drug and alcohol tests, newest first: one worker's, or every worker's when
+  no worker is named.
+  """
+  workerDotTests(
+    "The worker whose tests are read. Leave it out for every worker's."
+    workerId: ID
+    "Only the collections not yet completed or cancelled."
+    openOnly: Boolean
+    "At most this many tests, from 1 to 100. Every test of a named worker when left out; 20 across the organization."
+    limit: Int
+  ): [WorkerDOTTest!]!
   workerDotTest(id: ID!): WorkerDOTTest!
   """
   Open collections across the organisation: what the office is waiting on.
@@ -32238,7 +32249,22 @@ input SaveOSHASummaryInput {
 }
 
 extend type Query {
-  workerInjuries(workerId: ID!): [WorkerInjury!]!
+  """
+  Injury and illness cases, newest first: one worker's, or the
+  establishment's log when no worker is named.
+  """
+  workerInjuries(
+    "The worker whose cases are read. Leave it out for every worker's."
+    workerId: ID
+    "Only the cases of one calendar year's log, such as 2026."
+    caseYear: Int
+    "Only the cases that belong on the OSHA 300 log."
+    recordableOnly: Boolean
+    "Only the cases still open."
+    openOnly: Boolean
+    "At most this many cases, from 1 to 100. Every case of a named worker when left out; 20 across the organization."
+    limit: Int
+  ): [WorkerInjury!]!
   workerInjury(id: ID!): WorkerInjury!
   """
   One year of the OSHA 300 log with its 300A totals. Leave the year empty for

@@ -358,6 +358,15 @@ supplied; an input object the tool cannot build still fails generation. The node
 entity, because nothing compiles field filters against it. `newGraphQLReadTool` picks the shape
 from the binding, so a spec does not say which it is.
 
+The record a list is keyed by may be optional: `workerInjuries` and `workerDotTests` read one
+worker's records, or every worker's when no worker is named, as the repository tools did. Such a
+field takes a `limit` argument, which the tool offers with the list bounds (25 unless asked, at
+most 100, the server's page), and the resolver reads every row of a named record when no limit is
+sent and one default page when no record is named (`base.RecordListLimit`). An unpaged list has
+no next page, so when the rows fill the limit the result's `note` says more may exist and how to
+narrow the call. Any other `Int` argument is a parameter only when the schema describes it
+(`caseYear`).
+
 **Reads alongside.** Where the repository tool returned records of another kind beside the list
 because the next call needs their ids (the checklist templates a person starts by hand, the review
 templates), the spec names the operation (`alongside`) and the key the result carries the records
@@ -550,6 +559,8 @@ Each module's PR:
 | Workforce | `worker_list_checklists` | none | reads `DeskWorkerChecklists`; every checklist field is Internal. The templates read alongside are root records of their own read |
 | Workforce | `worker_list_training` | none | reads `DeskWorkerTrainingRecords`; each assignment's `course` is a linked training course and shows its reference view (`TrainingCourseReference`) to any reader of the assignment, which includes the name the repository row carried |
 | Workforce | `worker_list_performance_reviews` | none | reads `DeskWorkerPerformanceReviews`; every review field, the summary and rating comments among them, is Internal, as the repository row gated them |
+| Workforce | `worker_list_injuries` | none | reads `DeskWorkerInjuries`. `worker_injury` declared no field sensitivities, so under its Restricted default every field but `id` would be withheld at Internal; what the OSHA 300 log posts (case, classification, illness type, status, dates, days away or restricted, privacy flag, log name, claim status) is now Internal, and treatment, description, body part, harmful agent, location, claim details and notes stay Restricted, as the repository row gated the medical detail. A privacy case's `worker` is left out by the spec's `shape`, as the repository row left out its name |
+| Workforce | `worker_list_dot_tests` | `substance`, `result`, `collectionSite` | reads `DeskWorkerDotTests`. `worker_dot_test` declared no field sensitivities and defaulted to Internal, so results showed at Internal; by the owner's decision the test type, reason, status, dates and random-selection fields are Internal, and the result, substance, alcohol reading, collector, lab, MRO, specimen, notes and document are Restricted (49 CFR 40.321). This also changes what a person whose role reaches only Internal sees where sensitivity applies to them. The description says the substance and result can be withheld |
 | Workforce | `worker_list` | none | reads `DeskWorkers`, which selects only what the Desk reads (no address, contact, personnel or Confidential profile fields); `city` is Restricted and withheld at Internal, as the repository row gated it |
 
 None of the repository-backed reference, party or equipment lists was gated, so at a person's role ceiling below

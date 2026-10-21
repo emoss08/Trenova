@@ -18376,6 +18376,15 @@ export type DeleteEmploymentVerificationMutationVariables = Exact<{
 
 export type DeleteEmploymentVerificationMutation = { deleteEmploymentVerification: boolean };
 
+export type DeskWorkerDotTestsQueryVariables = Exact<{
+  workerId?: string | number | null | undefined;
+  openOnly?: boolean | null | undefined;
+  limit?: number | null | undefined;
+}>;
+
+
+export type DeskWorkerDotTestsQuery = { workerDotTests: Array<{ id: string, workerId: string, testType: DotTestType, substance: DotTestSubstance, status: DotTestStatus, result: DotTestResult, isDot: boolean, reason: string | null, scheduledAt: number | null, collectedAt: number | null, collectionSite: string | null, safetyEventId: string | null, drawEntryId: string | null, worker: { ' $fragmentRefs'?: { 'WorkerReferenceFragment': WorkerReferenceFragment } } | null }> };
+
 export type WorkerDotTestFieldsFragment = { id: string, workerId: string, testType: DotTestType, substance: DotTestSubstance, status: DotTestStatus, result: DotTestResult, isDot: boolean, reason: string | null, scheduledAt: number | null, collectedAt: number | null, resultAt: number | null, collectionSite: string | null, collectorName: string | null, specimenId: string | null, labName: string | null, mroName: string | null, mroVerifiedAt: number | null, alcoholConcentration: string | null, safetyEventId: string | null, drawEntryId: string | null, documentId: string | null, notes: string | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'WorkerDotTestFieldsFragment' };
 
 export type WorkerDotViolationFieldsFragment = { id: string, workerId: string, violationType: DotViolationType, status: DotViolationStatus, occurredAt: number, sourceTestId: string | null, reportedToClearinghouseAt: number | null, sapName: string | null, sapReferredAt: number | null, sapEvaluationCompletedAt: number | null, rtdTestId: string | null, rtdCompletedAt: number | null, followUpTestCount: number, followUpTestsCompleted: number, followUpEndsAt: number | null, resolvedAt: number | null, documentId: string | null, notes: string | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'WorkerDotViolationFieldsFragment' };
@@ -18534,6 +18543,17 @@ export type AmendWorkerEmploymentEventMutationVariables = Exact<{
 
 
 export type AmendWorkerEmploymentEventMutation = { amendWorkerEmploymentEvent: { ' $fragmentRefs'?: { 'WorkerEmploymentEventFieldsFragment': WorkerEmploymentEventFieldsFragment } } };
+
+export type DeskWorkerInjuriesQueryVariables = Exact<{
+  workerId?: string | number | null | undefined;
+  caseYear?: number | null | undefined;
+  recordableOnly?: boolean | null | undefined;
+  openOnly?: boolean | null | undefined;
+  limit?: number | null | undefined;
+}>;
+
+
+export type DeskWorkerInjuriesQuery = { workerInjuries: Array<{ id: string, workerId: string, caseNumber: number, caseYear: number, classification: OshaCaseClassification, illnessType: OshaIllnessType, treatment: InjuryTreatment, status: InjuryCaseStatus, recordable: boolean, occurredAt: number, returnedToWorkAt: number | null, description: string, bodyPart: string | null, daysAway: number, daysRestricted: number, privacyCase: boolean, logName: string, claimStatus: WorkersCompClaimStatus, worker: { ' $fragmentRefs'?: { 'WorkerReferenceFragment': WorkerReferenceFragment } } | null }> };
 
 export type WorkerInjuriesQueryVariables = Exact<{
   workerId: string | number;
@@ -19235,8 +19255,10 @@ export { WorkerChecklistTemplateItemFieldsFragmentDoc, WorkerChecklistTemplateFi
 export { WorkerCredentialTypeFieldsFragmentDoc, WorkerCredentialFieldsFragmentDoc, WorkerCredentialTypeTableDocument, WorkerCredentialsDocument, WorkerCredentialSummaryDocument, CredentialExpiryForecastDocument, CreateWorkerCredentialTypeDocument, UpdateWorkerCredentialTypeDocument, ArchiveWorkerCredentialTypeDocument, RestoreWorkerCredentialTypeDocument, CreateWorkerCredentialDocument, UpdateWorkerCredentialDocument, VerifyWorkerCredentialDocument, ArchiveWorkerCredentialDocument, AttachWorkerCredentialDocumentDocument } from "./documents/worker-credential/operations";
 export { DeskWorkerCardDocument, DeskWorkerHosDocument, DeskWorkerStandingDocument, DeskWorkerCredentialsDocument, DeskWorkersDocument } from "./documents/worker-desk/desk";
 export { DriverQualificationFileDocument, OutstandingEmploymentVerificationsDocument, DqfRetentionCandidatesDocument, RecordEmploymentVerificationDocument, UpdateEmploymentVerificationDocument, MarkEmploymentVerificationRequestedDocument, RecordEmploymentVerificationFollowUpDocument, DeleteEmploymentVerificationDocument } from "./documents/worker-dqf/operations";
+export { DeskWorkerDotTestsDocument } from "./documents/worker-drug-alcohol/desk";
 export { WorkerDotTestFieldsFragmentDoc, WorkerDotViolationFieldsFragmentDoc, ClearinghouseQueryFieldsFragmentDoc, DotRandomPoolFieldsFragmentDoc, DotRandomDrawEntryFieldsFragmentDoc, DotRandomDrawFieldsFragmentDoc, WorkerDrugAlcoholFileDocument, DotRandomPoolsDocument, DotRandomDrawsDocument, DotRandomDrawDocument, RecordDotTestDocument, RecordDotTestResultDocument, CancelDotTestDocument, RecordDotViolationDocument, UpdateDotViolationDocument, RecordClearinghouseQueryDocument, CompleteClearinghouseQueryDocument, CreateDotRandomPoolDocument, UpdateDotRandomPoolDocument, RunDotRandomDrawDocument, FinalizeDotRandomDrawDocument, CancelDotRandomDrawDocument, UpdateDotRandomDrawEntryDocument } from "./documents/worker-drug-alcohol/operations";
 export { WorkerEmploymentEventFieldsFragmentDoc, WorkerEmploymentEventsDocument, RecordWorkerEmploymentEventDocument, AmendWorkerEmploymentEventDocument } from "./documents/worker-employment/operations";
+export { DeskWorkerInjuriesDocument } from "./documents/worker-injury/desk";
 export { WorkerInjuriesDocument, OshaLogDocument, OshaSummariesDocument, RecordWorkerInjuryDocument, UpdateWorkerInjuryDocument, DeleteWorkerInjuryDocument, SaveOshaSummaryDocument, CertifyOshaSummaryDocument, UncertifyOshaSummaryDocument } from "./documents/worker-injury/operations";
 export { WorkerLeaveFileDocument, LeaveControlDocument, OpenLeaveCaseDocument, UpdateLeaveCaseDocument, DecideLeaveCaseDocument, CloseLeaveCaseDocument, RequestLeaveCertificationDocument, RecordLeaveCertificationDocument, RecordLeaveDayDocument, DeleteLeaveDayDocument, UpdateLeaveControlDocument } from "./documents/worker-leave/operations";
 export { WorkerOverviewDocument, WorkerRosterAttentionDocument } from "./documents/worker-overview/operations";

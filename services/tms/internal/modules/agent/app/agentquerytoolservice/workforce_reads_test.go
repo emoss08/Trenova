@@ -5,13 +5,13 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/permit"
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/permit"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -72,14 +72,6 @@ func (f *fakeWorkforceReads) ListRecognitions(
 	return f.recognitions, nil
 }
 
-func (f *fakeWorkforceReads) ListTests(
-	_ context.Context,
-	req *workerports.ListWorkerDOTTestsRequest,
-) ([]*worker.WorkerDOTTest, error) {
-	f.testsReq = req
-	return f.tests, nil
-}
-
 func (f *fakeWorkforceReads) ListPools(
 	context.Context,
 	*workerports.ListDOTRandomPoolsRequest,
@@ -107,14 +99,6 @@ func (f *fakeWorkforceReads) ListDrawEntries(
 	*workerports.ListDOTRandomDrawEntriesRequest,
 ) ([]*worker.DOTRandomDrawEntry, error) {
 	return f.entries, nil
-}
-
-func (f *fakeWorkforceReads) ListInjuries(
-	_ context.Context,
-	req *workerports.ListWorkerInjuriesRequest,
-) ([]*worker.WorkerInjury, error) {
-	f.injuriesReq = req
-	return f.injuries, nil
 }
 
 func (f *fakeWorkforceReads) ListCases(
@@ -193,37 +177,6 @@ func TestListWorkerSafetyEvents_NestsViolationsUnderTheirEvent(t *testing.T) {
 		"recognitions belong to one worker's record")
 }
 
-func TestListDOTTests_ScopesToAWorkerOrTheOpenRegister(t *testing.T) {
-	t.Parallel()
-
-	workerID := pulid.MustNew("wrk_")
-	reads := &fakeWorkforceReads{tests: []*worker.WorkerDOTTest{{
-		ID:        pulid.MustNew("wdt_"),
-		WorkerID:  workerID,
-		TestType:  worker.DOTTestRandom,
-		Substance: worker.DOTSubstanceDrug,
-		Status:    worker.DOTTestStatusScheduled,
-		Result:    worker.DOTResultPending,
-	}}}
-	tool := newListDOTTestsTool(reads, &fakePermissions{allowed: true})
-
-	result, err := tool.Query(t.Context(), testParams(map[string]any{
-		paramWorkerID:   workerID.String(),
-		wfParamOpenOnly: true,
-	}))
-	require.NoError(t, err)
-	list := result.(*receivableList[dotTestRow])
-	require.Len(t, list.Items, 1)
-	assert.Equal(t, "Pending", list.Items[0].Result)
-	assert.Equal(t, workerID, reads.testsReq.WorkerID)
-	assert.True(t, reads.testsReq.OpenOnly)
-	assert.Equal(t, permission.ResourceWorkerDOTTest, tool.Policy().Resource)
-
-	_, err = tool.Query(t.Context(), testParams(map[string]any{}))
-	require.NoError(t, err)
-	assert.True(t, reads.testsReq.WorkerID.IsNil())
-}
-
 func TestGetDOTRandomDraw_ListsEverySelection(t *testing.T) {
 	t.Parallel()
 
@@ -251,44 +204,6 @@ func TestGetDOTRandomDraw_ListsEverySelection(t *testing.T) {
 	assert.Equal(t, "2026-Q3", detail.PeriodKey)
 	require.Len(t, detail.Selections, 1)
 	assert.Equal(t, "Alcohol", detail.Selections[0].Substance)
-}
-
-func TestListWorkerInjuries_WithholdsMedicalDetailBelowTheCeiling(t *testing.T) {
-	t.Parallel()
-
-	reads := &fakeWorkforceReads{injuries: []*worker.WorkerInjury{{
-		ID:             pulid.MustNew("winj_"),
-		WorkerID:       pulid.MustNew("wrk_"),
-		CaseYear:       2026,
-		CaseNumber:     3,
-		Classification: worker.CaseDaysAway,
-		Treatment:      worker.TreatmentMedical,
-		Description:    "Fractured wrist in a fall from the trailer",
-		BodyPart:       "Left wrist",
-		DaysAway:       12,
-		PrivacyCase:    true,
-		Worker:         &worker.Worker{FirstName: "Dana", LastName: "Reyes"},
-	}}}
-	tool := newListWorkerInjuriesTool(reads, &fakePermissions{})
-
-	withheld, err := tool.Query(t.Context(), agentParams(map[string]any{
-		paramCaseYear: float64(2026),
-	}, ""))
-	require.NoError(t, err)
-	internal := withheld.(*receivableList[injuryRow])
-	require.Len(t, internal.Items, 1)
-	assert.Empty(t, internal.Items[0].Description)
-	assert.Empty(t, internal.Items[0].BodyPart)
-	assert.Contains(t, internal.Withheld, "description")
-	assert.Empty(t, internal.Items[0].Worker, "a privacy case keeps the name off the row")
-	assert.Equal(t, int16(2026), reads.injuriesReq.CaseYear)
-
-	shown, err := tool.Query(t.Context(), agentParams(map[string]any{},
-		permission.SensitivityRestricted))
-	require.NoError(t, err)
-	restricted := shown.(*receivableList[injuryRow])
-	assert.Equal(t, "Left wrist", restricted.Items[0].BodyPart)
-	assert.Equal(t, int32(12), restricted.Items[0].DaysAway)
 }
 
 func TestListWorkerLeaveCases_CarriesTheDaysTaken(t *testing.T) {
@@ -400,10 +315,8 @@ func TestWorkforceReads_AreClosedReadsOfTheirResource(t *testing.T) {
 	reads := &fakeWorkforceReads{}
 	for _, tool := range []agentports.AgentQueryTool{
 		newListWorkerSafetyEventsTool(reads, nil),
-		newListDOTTestsTool(reads, nil),
 		newListDOTRandomDrawsTool(reads, nil),
 		newGetDOTRandomDrawTool(reads, nil),
-		newListWorkerInjuriesTool(reads, nil),
 		newListWorkerLeaveCasesTool(reads, nil),
 		newListDriverExpensesTool(reads, nil),
 		newListShipmentPermitsTool(reads, nil),

@@ -2,19 +2,16 @@ package agentquerytoolservice
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdqfservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/app/workerinjuryservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerleaveservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/typeutils"
 )
@@ -22,10 +19,6 @@ import (
 const (
 	maxCatalogRows       = 100
 	activeStatus         = "Active"
-	minCaseYear          = 2000
-	maxCaseYear          = 2100
-	paramCaseYear        = "caseYear"
-	paramRecordable      = "recordableOnly"
 	paramOutstanding     = "outstandingOnly"
 	paramCertOutstanding = "certificationOutstandingOnly"
 	paramIncludeArchived = "includeArchived"
@@ -58,18 +51,10 @@ type wfCredentialReader interface {
 	) (*pagination.CursorListResult[*worker.WorkerCredentialType], error)
 }
 
-type wfInjuryReader interface {
-	ListInjuries(
-		ctx context.Context,
-		req *workerports.ListWorkerInjuriesRequest,
-	) ([]*worker.WorkerInjury, error)
-}
-
 var (
 	_ wfLeaveReader        = (*workerleaveservice.Service)(nil)
 	_ wfVerificationReader = (*workerdqfservice.Service)(nil)
 	_ wfCredentialReader   = (*workercredentialservice.Service)(nil)
-	_ wfInjuryReader       = (*workerinjuryservice.Service)(nil)
 )
 
 func catalogFilter(params *agentports.QueryToolParams) *pagination.QueryOptions {
@@ -274,108 +259,6 @@ func newListEmploymentVerificationsTool(
 	}
 }
 
-type injuryRow struct {
-	ID               string       `json:"id"`
-	WorkerID         string       `json:"workerId"`
-	Worker           string       `json:"worker,omitempty"`
-	CaseNumber       int32        `json:"caseNumber"`
-	CaseYear         int16        `json:"caseYear"`
-	Classification   string       `json:"classification"`
-	IllnessType      string       `json:"illnessType"`
-	Treatment        string       `json:"treatment,omitempty"`
-	Status           string       `json:"status"`
-	OccurredAt       optionalDate `json:"occurredAt"`
-	ReturnedToWorkAt optionalDate `json:"returnedToWorkAt"`
-	Description      string       `json:"description,omitempty"`
-	BodyPart         string       `json:"bodyPart,omitempty"`
-	DaysAway         int32        `json:"daysAway"`
-	DaysRestricted   int32        `json:"daysRestricted"`
-	PrivacyCase      bool         `json:"privacyCase"`
-	ClaimStatus      string       `json:"claimStatus,omitempty"`
-}
-
-func newListWorkerInjuriesTool(
-	injuries wfInjuryReader,
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return &workforceRead{
-		name: "worker_list_injuries",
-		description: "List injury and illness cases on the OSHA log, for one worker or a " +
-			"year, with the classification, days away or restricted and the workers' comp " +
-			"claim. Medical detail follows the injury permission. It yields the injuryId " +
-			"the injury tools take.",
-		resource: permission.ResourceWorkerInjury,
-		properties: map[string]any{
-			paramWorkerID: wfWorkerProperty("Narrow to one worker"),
-			paramCaseYear: map[string]any{
-				toolschema.KeyType:        toolschema.TypeInteger,
-				toolschema.KeyDescription: "Narrow to one calendar year's log, such as 2026.",
-				toolschema.KeyMinimum:     minCaseYear,
-				toolschema.KeyMaximum:     maxCaseYear,
-			},
-			paramRecordable: wfBoolProperty("Only the cases that belong on the 300 log."),
-			wfParamOpenOnly: wfBoolProperty("Only cases still open."),
-		},
-		access: newFieldAccess(permissions),
-		run: func(
-			ctx context.Context,
-			params *agentports.QueryToolParams,
-			gate *fieldGate,
-		) (any, error) {
-			workerID, err := optionalWorker(params.Params)
-			if err != nil {
-				return nil, err
-			}
-			year := optionalInt(params.Params, paramCaseYear, 0)
-			if year != 0 && (year < minCaseYear || year > maxCaseYear) {
-				return nil, fmt.Errorf("parameter %q must be a year from %d to %d",
-					paramCaseYear, minCaseYear, maxCaseYear)
-			}
-			caseYear := int16(year) //nolint:gosec // checked against the year range above
-			found, err := injuries.ListInjuries(ctx, &workerports.ListWorkerInjuriesRequest{
-				TenantInfo:     tenantOf(params),
-				WorkerID:       workerID,
-				CaseYear:       caseYear,
-				RecordableOnly: optionalBool(params.Params, paramRecordable),
-				OpenOnly:       optionalBool(params.Params, wfParamOpenOnly),
-				IncludeWorker:  true,
-			})
-			if err != nil {
-				return nil, err
-			}
-			rows := make([]injuryRow, 0, len(found))
-			for _, injury := range found {
-				row := injuryRow{
-					ID:             injury.ID.String(),
-					WorkerID:       injury.WorkerID.String(),
-					CaseNumber:     injury.CaseNumber,
-					CaseYear:       injury.CaseYear,
-					Classification: string(injury.Classification),
-					IllnessType:    string(injury.IllnessType),
-					Status:         string(injury.Status),
-					OccurredAt:     recordedDate(injury.OccurredAt),
-					ReturnedToWorkAt: expectedDate(
-						typeutils.ValueOrZero(injury.ReturnedToWorkAt),
-						absentNotReturned,
-					),
-					DaysAway:       injury.DaysAway,
-					DaysRestricted: injury.DaysRestricted,
-					PrivacyCase:    injury.PrivacyCase,
-					ClaimStatus:    string(injury.ClaimStatus),
-					Treatment:      gatedText(gate, "treatment", string(injury.Treatment)),
-					Description:    gatedText(gate, wfFieldDescription, injury.Description),
-					BodyPart:       gatedText(gate, "bodyPart", injury.BodyPart),
-				}
-				if !injury.PrivacyCase {
-					row.Worker = workerName(injury.Worker)
-				}
-				rows = append(rows, row)
-			}
-			return newReceivableList(rows, gate), nil
-		},
-	}
-}
-
 func provideListWorkerLeaveCasesTool(
 	s *workerleaveservice.Service,
 	permissions permissionports.PermissionEngine,
@@ -388,11 +271,4 @@ func provideListEmploymentVerificationsTool(
 	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
 	return newListEmploymentVerificationsTool(s, permissions)
-}
-
-func provideListWorkerInjuriesTool(
-	s *workerinjuryservice.Service,
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return newListWorkerInjuriesTool(s, permissions)
 }
