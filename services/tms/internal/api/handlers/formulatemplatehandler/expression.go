@@ -3,6 +3,7 @@ package formulatemplatehandler
 import (
 	"net/http"
 
+	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
@@ -111,7 +112,7 @@ func (h *Handler) testExpression(c *gin.Context) {
 
 	result := h.service.TestExpression(c.Request.Context(), serviceReq)
 
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 func (h *Handler) allowShipmentRead(c *gin.Context, authCtx *authctx.AuthContext) bool {

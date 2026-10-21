@@ -136,6 +136,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/workerhandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/api/responseguard"
 	"github.com/emoss08/trenova/internal/api/routegroup"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability"
@@ -163,6 +164,7 @@ type RouterParams struct {
 	IdempotencyMiddleware           *middleware.IdempotencyMiddleware
 	PermissionMiddleware            *middleware.PermissionMiddleware
 	TenantBoundaryMiddleware        *middleware.TenantBoundaryMiddleware
+	ResponseGuard                   *responseguard.Guard
 	ErrorHandler                    *helpers.ErrorHandler
 	EditionRoutes                   routegroup.Registrars
 	OrganizationHandler             *organizationhandler.Handler
@@ -308,6 +310,7 @@ type Router struct {
 	idempotencyMiddleware           *middleware.IdempotencyMiddleware
 	permissionMiddleware            *middleware.PermissionMiddleware
 	tenantBoundaryMiddleware        *middleware.TenantBoundaryMiddleware
+	responseGuard                   *responseguard.Guard
 	cfg                             *config.Config
 	errorHandler                    *helpers.ErrorHandler
 	editionRoutes                   routegroup.Registrars
@@ -457,6 +460,7 @@ func NewRouter(p RouterParams) *Router {
 		idempotencyMiddleware:           p.IdempotencyMiddleware,
 		permissionMiddleware:            p.PermissionMiddleware,
 		tenantBoundaryMiddleware:        p.TenantBoundaryMiddleware,
+		responseGuard:                   p.ResponseGuard,
 		errorHandler:                    p.ErrorHandler,
 		editionRoutes:                   p.EditionRoutes,
 		organizationHandler:             p.OrganizationHandler,
@@ -804,6 +808,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 func (r *Router) protectedGroup(rg *gin.RouterGroup) *gin.RouterGroup {
 	protected := rg.Group("")
 	protected.Use(r.authMiddleware.RequireAuth())
+	protected.Use(r.responseGuard.Install())
 	protected.Use(r.readScopeMiddleware.Install())
 	protected.Use(r.rateLimiter.ByPrincipal())
 	protected.Use(middleware.NewLocaleMiddleware().Resolve())

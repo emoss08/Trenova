@@ -130,7 +130,8 @@ func scalarFields(schema *ast.Schema, def *ast.Definition) []string {
 
 // RenderReferenceViews writes the client's copy of every kind's reference
 // view and of which GraphQL type shows which kind, so a screen can tell a
-// field withheld for want of a kind's read from one that is empty.
+// field withheld for want of a kind's read from one that is empty. A kind
+// only REST responses carry, such as a document, is listed by its view.
 func RenderReferenceViews(schema *ast.Schema, registry *permission.Registry) (string, error) {
 	kinds, err := KindTypes(schema, registry)
 	if err != nil {
@@ -140,6 +141,11 @@ func RenderReferenceViews(schema *ast.Schema, registry *permission.Registry) (st
 	for _, kind := range kinds {
 		if !slices.Contains(resources, kind.String()) {
 			resources = append(resources, kind.String())
+		}
+	}
+	for _, def := range registry.All() {
+		if len(def.ReferenceView) > 0 && !slices.Contains(resources, def.Resource) {
+			resources = append(resources, def.Resource)
 		}
 	}
 	slices.Sort(resources)

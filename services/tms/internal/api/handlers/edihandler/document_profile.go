@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
+	"github.com/emoss08/trenova/internal/api/responseguard"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
@@ -16,7 +17,7 @@ import (
 )
 
 func (h *Handler) registerDocumentProfileRoutes(documentProfiles *gin.RouterGroup) {
-	selectOptions := documentProfiles.Group("/select-options")
+	selectOptions := documentProfiles.Group("/select-options", responseguard.References())
 	selectOptions.GET(
 		"/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
@@ -125,7 +126,7 @@ func (h *Handler) getPartnerDocumentProfile(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 func (h *Handler) createPartnerDocumentProfile(c *gin.Context) {
@@ -149,7 +150,7 @@ func (h *Handler) createPartnerDocumentProfile(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusCreated, created)
+	helpers.JSON(c, http.StatusCreated, created)
 }
 
 func (h *Handler) updatePartnerDocumentProfile(c *gin.Context) {
@@ -179,5 +180,5 @@ func (h *Handler) updatePartnerDocumentProfile(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, updated)
+	helpers.JSON(c, http.StatusOK, updated)
 }

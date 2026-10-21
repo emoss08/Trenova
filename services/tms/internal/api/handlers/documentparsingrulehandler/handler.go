@@ -162,7 +162,7 @@ func (h *Handler) listRuleSets(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, items)
+	helpers.JSON(c, http.StatusOK, items)
 }
 
 func (h *Handler) getRuleSet(c *gin.Context) {
@@ -180,7 +180,7 @@ func (h *Handler) getRuleSet(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, item)
+	helpers.JSON(c, http.StatusOK, item)
 }
 
 func (h *Handler) createRuleSet(c *gin.Context) {
@@ -195,7 +195,7 @@ func (h *Handler) createRuleSet(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusCreated, item)
+	helpers.JSON(c, http.StatusCreated, item)
 }
 
 func (h *Handler) updateRuleSet(c *gin.Context) {
@@ -216,7 +216,7 @@ func (h *Handler) updateRuleSet(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, item)
+	helpers.JSON(c, http.StatusOK, item)
 }
 
 func (h *Handler) deleteRuleSet(c *gin.Context) {
@@ -251,7 +251,7 @@ func (h *Handler) listVersions(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, items)
+	helpers.JSON(c, http.StatusOK, items)
 }
 
 func (h *Handler) getVersion(c *gin.Context) {
@@ -269,7 +269,7 @@ func (h *Handler) getVersion(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, item)
+	helpers.JSON(c, http.StatusOK, item)
 }
 
 func (h *Handler) createVersion(c *gin.Context) {
@@ -290,7 +290,7 @@ func (h *Handler) createVersion(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusCreated, item)
+	helpers.JSON(c, http.StatusCreated, item)
 }
 
 func (h *Handler) updateVersion(c *gin.Context) {
@@ -311,7 +311,7 @@ func (h *Handler) updateVersion(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, item)
+	helpers.JSON(c, http.StatusOK, item)
 }
 
 func (h *Handler) publishVersion(c *gin.Context) {
@@ -329,7 +329,7 @@ func (h *Handler) publishVersion(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, item)
+	helpers.JSON(c, http.StatusOK, item)
 }
 
 func (h *Handler) simulateVersion(c *gin.Context) {
@@ -366,7 +366,7 @@ func (h *Handler) simulateVersion(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 func (h *Handler) listFixtures(c *gin.Context) {
@@ -384,7 +384,7 @@ func (h *Handler) listFixtures(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, items)
+	helpers.JSON(c, http.StatusOK, items)
 }
 
 func (h *Handler) getFixture(c *gin.Context) {
@@ -402,7 +402,7 @@ func (h *Handler) getFixture(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, item)
+	helpers.JSON(c, http.StatusOK, item)
 }
 
 func (h *Handler) saveFixture(c *gin.Context) {
@@ -443,10 +443,10 @@ func (h *Handler) saveFixture(c *gin.Context) {
 		return
 	}
 	if isCreate {
-		c.JSON(http.StatusCreated, item)
+		helpers.JSON(c, http.StatusCreated, item)
 		return
 	}
-	c.JSON(http.StatusOK, item)
+	helpers.JSON(c, http.StatusOK, item)
 }
 
 func (h *Handler) deleteFixture(c *gin.Context) {

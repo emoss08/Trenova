@@ -54,7 +54,7 @@ export function describeLinePayers(line: PayerShareLine): string {
  * the resolved share so the split editor can label them without a lookup.
  */
 export function allocationsForCharge(
-  shipment: Pick<Shipment, "chargeAllocations"> | null | undefined,
+  shipment: { chargeAllocations?: Shipment["chargeAllocations"] | null } | null | undefined,
   line: Pick<PayerShareLine, "kind" | "additionalChargeId" | "payers">,
 ): ChargeAllocation[] {
   const names = new Map(line.payers.map((party) => [party.payerId, party]));

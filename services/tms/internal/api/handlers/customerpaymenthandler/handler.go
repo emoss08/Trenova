@@ -124,7 +124,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 func (h *Handler) postAndApply(c *gin.Context) {
@@ -150,7 +150,7 @@ func (h *Handler) postAndApply(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, entity)
+	helpers.JSON(c, http.StatusCreated, entity)
 }
 
 func (h *Handler) applyUnapplied(c *gin.Context) {
@@ -182,7 +182,7 @@ func (h *Handler) applyUnapplied(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 func (h *Handler) reverse(c *gin.Context) {
@@ -210,7 +210,7 @@ func (h *Handler) reverse(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 // applyCreditMemo settles open invoices with a posted credit memo.
@@ -237,7 +237,7 @@ func (h *Handler) applyCreditMemo(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, applications)
+	helpers.JSON(c, http.StatusCreated, applications)
 }
 
 // unapplyCreditMemoApplication takes one credit memo application back.
@@ -270,5 +270,5 @@ func (h *Handler) unapplyCreditMemoApplication(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, application)
+	helpers.JSON(c, http.StatusOK, application)
 }

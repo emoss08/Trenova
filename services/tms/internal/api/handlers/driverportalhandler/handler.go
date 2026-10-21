@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
+	"github.com/emoss08/trenova/internal/api/responseguard"
 	_ "github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -45,7 +46,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 }
 
 func (h *Handler) RegisterProtectedRoutes(rg *gin.RouterGroup) {
-	api := rg.Group("/portal/")
+	api := rg.Group("/portal/", responseguard.SelfScoped())
 	api.GET("document-types/", h.listShipmentDocumentTypes)
 	api.GET("loads/:shipmentID/documents/", h.listLoadDocuments)
 	api.POST("loads/:shipmentID/documents/", h.uploadLoadDocument)
@@ -71,7 +72,7 @@ func (h *Handler) listWorkerDocumentTypes(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, types)
+	helpers.JSON(c, http.StatusOK, types)
 }
 
 // @Summary List the signed-in driver's qualification-file documents
@@ -88,7 +89,7 @@ func (h *Handler) listProfileDocuments(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, documents)
+	helpers.JSON(c, http.StatusOK, documents)
 }
 
 // @Summary Upload a qualification-file document (license, medical card, ...)
@@ -121,7 +122,7 @@ func (h *Handler) uploadProfileDocument(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusCreated, uploaded)
+	helpers.JSON(c, http.StatusCreated, uploaded)
 }
 
 // @Summary List shipment document types for the driver portal
@@ -139,7 +140,7 @@ func (h *Handler) listShipmentDocumentTypes(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, types)
+	helpers.JSON(c, http.StatusOK, types)
 }
 
 // @Summary List the signed-in driver's documents for a load
@@ -170,7 +171,7 @@ func (h *Handler) listLoadDocuments(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, documents)
+	helpers.JSON(c, http.StatusOK, documents)
 }
 
 // @Summary Upload a document (POD, BOL photo) to one of the signed-in driver's loads
@@ -214,7 +215,7 @@ func (h *Handler) uploadLoadDocument(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusCreated, uploaded)
+	helpers.JSON(c, http.StatusCreated, uploaded)
 }
 
 // @Summary Attach a receipt photo to one of the signed-in driver's expenses
@@ -256,7 +257,7 @@ func (h *Handler) uploadExpenseReceipt(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, updated)
+	helpers.JSON(c, http.StatusOK, updated)
 }
 
 func tenantInfoFrom(authCtx *authctx.AuthContext) pagination.TenantInfo {
@@ -282,7 +283,7 @@ func (h *Handler) previewInvitation(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, preview)
+	helpers.JSON(c, http.StatusOK, preview)
 }
 
 type acceptInvitationRequest struct {
@@ -320,7 +321,7 @@ func (h *Handler) acceptInvitation(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 // @Summary Upload a renewal document for one of the driver's credentials
@@ -360,5 +361,5 @@ func (h *Handler) uploadCredentialDocument(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusCreated, uploaded)
+	helpers.JSON(c, http.StatusCreated, uploaded)
 }

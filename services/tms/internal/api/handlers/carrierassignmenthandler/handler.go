@@ -102,7 +102,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 // @Summary Preview carrier eligibility for a move assignment
@@ -141,7 +141,7 @@ func (h *Handler) preview(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 // @Summary Assign a move to an external carrier
@@ -187,7 +187,7 @@ func (h *Handler) assign(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, entity)
+	helpers.JSON(c, http.StatusCreated, entity)
 }
 
 type cancelCarrierAssignmentBody struct {

@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
-	_ "github.com/emoss08/trenova/internal/api/helpers"
+	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -50,7 +50,7 @@ func (h *Handler) getCommentCount(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, shipmentCommentCountResponse{Count: count})
+	helpers.JSON(c, http.StatusOK, shipmentCommentCountResponse{Count: count})
 }
 
 // @Summary List shipment comments
@@ -134,7 +134,7 @@ func (h *Handler) createComment(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, created)
+	helpers.JSON(c, http.StatusCreated, created)
 }
 
 // @Summary Update a shipment comment
@@ -184,7 +184,7 @@ func (h *Handler) updateComment(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updated)
+	helpers.JSON(c, http.StatusOK, updated)
 }
 
 // @Summary Delete a shipment comment

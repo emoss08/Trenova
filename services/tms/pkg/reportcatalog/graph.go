@@ -67,6 +67,9 @@ type Edge struct {
 	// relationship rather than to a foreign key.
 	Pick        *PickOne
 	Traversable bool
+	// Class is what following the edge out of a record reached through
+	// another takes: the edge is a field of its source.
+	Class FieldClass
 }
 
 var (

@@ -7,6 +7,7 @@ import (
 	"go/format"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
 )
 
@@ -39,6 +40,16 @@ var formatConsts = map[reportcatalog.FormatHint]string{
 	reportcatalog.FormatCount:    "FormatCount",
 }
 
+var classConsts = map[reportcatalog.FieldClass]string{
+	reportcatalog.ClassReference: "ClassReference",
+	reportcatalog.ClassKindRead:  "ClassKindRead",
+}
+
+var fieldGroupConsts = map[permission.FieldGroup]string{
+	permission.FieldGroupPersonal: "permission.FieldGroupPersonal",
+	permission.FieldGroupMargins:  "permission.FieldGroupMargins",
+}
+
 var cardinalityConsts = map[reportcatalog.Cardinality]string{
 	reportcatalog.CardinalityOne:  "CardinalityOne",
 	reportcatalog.CardinalityMany: "CardinalityMany",
@@ -52,24 +63,28 @@ func ComputeVersion(catalog *reportcatalog.Catalog, manifestRaw []byte) string {
 
 	for i := range catalog.Entities {
 		entity := &catalog.Entities[i]
-		fmt.Fprintf(&dump, "entity %s resource=%s table=%s alias=%s pk=%v tenant=%s/%s owner=%s\n",
+		fmt.Fprintf(&dump,
+			"entity %s resource=%s table=%s alias=%s pk=%v tenant=%s/%s owner=%s within=%t\n",
 			entity.Key, entity.Resource, entity.Table.Name, entity.Table.Alias,
 			entity.Table.PrimaryKey, entity.Tenant.OrganizationID, entity.Tenant.BusinessUnitID,
-			entity.OwnershipColumn,
+			entity.OwnershipColumn, entity.WithinRecord,
 		)
 		for j := range entity.Fields {
 			field := &entity.Fields[j]
-			fmt.Fprintf(&dump, "  field %s col=%s type=%s fmt=%s null=%t aggs=%v filter=%t group=%t enums=%v\n",
+			fmt.Fprintf(&dump,
+				"  field %s col=%s type=%s fmt=%s null=%t aggs=%v filter=%t group=%t enums=%v "+
+					"class=%s protected=%s\n",
 				field.Key, field.Column.Name, field.Type, field.Format, field.Nullable,
 				field.Aggregations, field.Filterable, field.Groupable, field.EnumValues,
+				field.Class, field.Protected,
 			)
 		}
 		for j := range entity.Edges {
 			edge := &entity.Edges[j]
 			fmt.Fprintf(&dump,
-				"  edge %s target=%s card=%s join=%v traversable=%t through=%v pick=%v\n",
+				"  edge %s target=%s card=%s join=%v traversable=%t through=%v pick=%v class=%s\n",
 				edge.Name, edge.Target, edge.Cardinality, edge.Join, edge.Traversable,
-				edge.Through, edge.Pick,
+				edge.Through, edge.Pick, edge.Class,
 			)
 		}
 	}
@@ -132,6 +147,9 @@ func emitEntity(out *strings.Builder, entity *reportcatalog.Entity) {
 	if entity.OwnershipColumn != "" {
 		fmt.Fprintf(out, "\t\t\tOwnershipColumn: %q,\n", entity.OwnershipColumn)
 	}
+	if entity.WithinRecord {
+		out.WriteString("\t\t\tWithinRecord: true,\n")
+	}
 
 	out.WriteString("\t\t\tFields: []Field{\n")
 	for i := range entity.Fields {
@@ -185,6 +203,10 @@ func emitField(out *strings.Builder, field *reportcatalog.Field) {
 	if field.Groupable {
 		out.WriteString("\t\t\t\t\tGroupable: true,\n")
 	}
+	fmt.Fprintf(out, "\t\t\t\t\tClass: %s,\n", classConsts[field.Class])
+	if field.Protected != "" {
+		fmt.Fprintf(out, "\t\t\t\t\tProtected: %s,\n", fieldGroupConsts[field.Protected])
+	}
 	out.WriteString("\t\t\t\t},\n")
 }
 
@@ -236,6 +258,7 @@ func emitEdge(out *strings.Builder, edge *reportcatalog.Edge) {
 	if edge.Traversable {
 		out.WriteString("\t\t\t\t\tTraversable: true,\n")
 	}
+	fmt.Fprintf(out, "\t\t\t\t\tClass: %s,\n", classConsts[edge.Class])
 	out.WriteString("\t\t\t\t},\n")
 }
 

@@ -52,7 +52,7 @@ func (h *Handler) preview(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, view)
+	helpers.JSON(c, http.StatusOK, view)
 }
 
 type confirmRequest struct {
@@ -73,5 +73,5 @@ func (h *Handler) confirm(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"status": "recorded"})
+	helpers.JSON(c, http.StatusOK, gin.H{"status": "recorded"})
 }

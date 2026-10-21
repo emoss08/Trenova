@@ -104,7 +104,7 @@ func (h *Handler) list(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"results": found})
+	helpers.JSON(c, http.StatusOK, gin.H{"results": found})
 }
 
 func (h *Handler) browse(c *gin.Context) {
@@ -125,7 +125,7 @@ func (h *Handler) browse(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"results": result.Items, "total": result.Total})
+	helpers.JSON(c, http.StatusOK, gin.H{"results": result.Items, "total": result.Total})
 }
 
 // detail reads one finding with its history and the rule behind it.
@@ -161,7 +161,7 @@ func (h *Handler) detail(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, found)
+	helpers.JSON(c, http.StatusOK, found)
 }
 
 func (h *Handler) restore(c *gin.Context) {
@@ -184,7 +184,7 @@ func (h *Handler) restore(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, restored)
+	helpers.JSON(c, http.StatusOK, restored)
 }
 
 type dismissRequest struct {
@@ -223,7 +223,7 @@ func (h *Handler) dismiss(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, dismissed)
+	helpers.JSON(c, http.StatusOK, dismissed)
 }
 
 // parseCategories keeps only categories the domain recognises.

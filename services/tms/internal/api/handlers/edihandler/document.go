@@ -3,6 +3,7 @@ package edihandler
 import (
 	"net/http"
 
+	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -40,7 +41,7 @@ func (h *Handler) previewDocument(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, preview)
+	helpers.JSON(c, http.StatusOK, preview)
 }
 
 func (h *Handler) generateDocument(c *gin.Context) {
@@ -61,5 +62,5 @@ func (h *Handler) generateDocument(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusCreated, message)
+	helpers.JSON(c, http.StatusCreated, message)
 }

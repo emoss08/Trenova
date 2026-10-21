@@ -125,7 +125,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 // @Summary Start a waterfall tender from a routing guide
@@ -156,7 +156,7 @@ func (h *Handler) createWaterfall(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, entity)
+	helpers.JSON(c, http.StatusCreated, entity)
 }
 
 // @Summary Start a spot tender with an ad-hoc carrier list
@@ -187,7 +187,7 @@ func (h *Handler) createSpot(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, entity)
+	helpers.JSON(c, http.StatusCreated, entity)
 }
 
 // @Summary Cancel a live tender
@@ -328,7 +328,7 @@ func (h *Handler) bounce(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 func requestActorFromAuthContext(authCtx *authctx.AuthContext) *permissionports.RequestActor {
@@ -373,7 +373,7 @@ func (h *Handler) listByShipment(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entities)
+	helpers.JSON(c, http.StatusOK, entities)
 }
 
 // @Summary Get the live tender for a move
@@ -407,5 +407,5 @@ func (h *Handler) getLiveByMove(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }

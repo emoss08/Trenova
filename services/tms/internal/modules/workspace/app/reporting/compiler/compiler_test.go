@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/identity/app/refview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
@@ -125,13 +126,35 @@ func (f *fakePermissionEngine) RoleCoverage(
 	panic("not used by compiler")
 }
 
+type fakeFieldAccess struct {
+	visible permission.FieldGroupSet
+}
+
+func (f fakeFieldAccess) Visible(
+	context.Context,
+	*permissionports.RequestActor,
+) permission.FieldGroupSet {
+	return f.visible
+}
+
 func newTestCompiler(engine permissionports.PermissionEngine) *Compiler {
+	return newTestCompilerWithGroups(engine, permission.AllFieldGroups())
+}
+
+func newTestCompilerWithGroups(
+	engine permissionports.PermissionEngine,
+	groups permission.FieldGroupSet,
+) *Compiler {
+	registry := permission.NewRegistry()
 	return NewWithCatalog(
 		&reportcatalog.Default,
 		engine,
-		permission.NewRegistry(),
+		registry,
 		&config.ReportingConfig{},
 		zap.NewNop(),
+	).WithAccess(
+		refview.NewPort(refview.New(registry), engine),
+		fakeFieldAccess{visible: groups},
 	)
 }
 
@@ -517,7 +540,7 @@ func TestAuthorizeDeniesMissingRead(t *testing.T) {
 	_, err := c.Compile(context.Background(), newRequest(&report.Definition{
 		IRVersion: report.CurrentIRVersion,
 		Entity:    "shipment",
-		Columns:   []report.ColumnSpec{dim("c_customer", "name", "customer")},
+		Columns:   []report.ColumnSpec{dim("c_customer", "dotNumber", "customer")},
 	}))
 	require.Error(t, err)
 	var authzErr *errortypes.AuthorizationError

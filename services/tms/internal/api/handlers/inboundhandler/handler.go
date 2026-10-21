@@ -95,7 +95,7 @@ func (h *Handler) receive(c *gin.Context) {
 	// A duplicate and a first delivery are both a success as far as the
 	// provider is concerned. Reporting anything else would make it retry a
 	// message that is already handled.
-	c.JSON(http.StatusOK, gin.H{
+	helpers.JSON(c, http.StatusOK, gin.H{
 		"messageId": result.MessageID,
 		"duplicate": result.Duplicate,
 		"ignored":   result.Ignored,

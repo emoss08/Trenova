@@ -147,6 +147,7 @@ func (r *Registry) registerAdministrationResources() {
 		DisplayName:        "Email Profile",
 		Description:        "Transactional email sender profiles and assignments",
 		Category:           "Organization settings",
+		ReferenceView:      []string{"name"},
 		Operations:         standardOpsWithDelete,
 		DefaultSensitivity: SensitivityRestricted,
 	})
@@ -156,6 +157,7 @@ func (r *Registry) registerAdministrationResources() {
 		DisplayName:        "Email Log",
 		Description:        "Transactional email send and delivery logs",
 		Category:           "Organization settings",
+		ReferenceView:      []string{"status", "sentAt", "failedAt", "providerMessageId"},
 		Operations:         readOnlyOps,
 		DefaultSensitivity: SensitivityConfidential,
 	})

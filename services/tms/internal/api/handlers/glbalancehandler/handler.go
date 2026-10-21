@@ -71,7 +71,7 @@ func (h *Handler) listByPeriod(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, balances)
+	helpers.JSON(c, http.StatusOK, balances)
 }
 
 func (h *Handler) incomeStatement(c *gin.Context) {
@@ -94,7 +94,7 @@ func (h *Handler) incomeStatement(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, statement)
+	helpers.JSON(c, http.StatusOK, statement)
 }
 
 func (h *Handler) balanceSheet(c *gin.Context) {
@@ -117,5 +117,5 @@ func (h *Handler) balanceSheet(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, statement)
+	helpers.JSON(c, http.StatusOK, statement)
 }

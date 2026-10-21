@@ -88,6 +88,10 @@ func (b *builder) indexPackage(dir string) error {
 }
 
 func (b *builder) Build() (*reportcatalog.Catalog, error) {
+	if err := b.checkSharedResources(); err != nil {
+		return nil, err
+	}
+
 	catalog := &reportcatalog.Catalog{
 		Entities: make([]reportcatalog.Entity, 0, len(b.manifest.Entities)),
 	}
@@ -106,7 +110,50 @@ func (b *builder) Build() (*reportcatalog.Catalog, error) {
 		return nil, err
 	}
 
+	b.classify(catalog)
+
 	return catalog, nil
+}
+
+// checkSharedResources refuses a resource that more than one entity claims to
+// be the record of. Only the record shows its resource's reference view; the
+// others hold rows of it (a worker's profile, an invoice's lines) and must say
+// so, or a field of theirs that shares a name with a view field would be
+// shown to readers of whatever links to the resource.
+func (b *builder) checkSharedResources() error {
+	records := make(map[string]string, len(b.manifest.Entities))
+	for _, key := range b.manifest.SortedEntityKeys() {
+		em := b.manifest.Entities[key]
+		if em.WithinRecord {
+			continue
+		}
+		if other, taken := records[em.Resource]; taken {
+			return fmt.Errorf(
+				"entities %q and %q both map to resource %q as its record; mark each that only "+
+					"holds rows of that record withinRecord: true",
+				other, key, em.Resource,
+			)
+		}
+		records[em.Resource] = key
+	}
+
+	return nil
+}
+
+func (b *builder) classify(catalog *reportcatalog.Catalog) {
+	for i := range catalog.Entities {
+		entity := &catalog.Entities[i]
+		for j := range entity.Fields {
+			entity.Fields[j].Class = reportcatalog.Classify(
+				b.permissions, entity, entity.Fields[j].Key,
+			)
+		}
+		for j := range entity.Edges {
+			entity.Edges[j].Class = reportcatalog.Classify(
+				b.permissions, entity, entity.Edges[j].Name,
+			)
+		}
+	}
 }
 
 func (b *builder) attachPickEdges(catalog *reportcatalog.Catalog) error {
@@ -330,6 +377,7 @@ func (b *builder) buildEntity(key string, em *EntityManifest) (*reportcatalog.En
 		Category:        em.Category,
 		Tenant:          tenant,
 		OwnershipColumn: em.OwnershipColumn,
+		WithinRecord:    em.WithinRecord,
 	}
 
 	resourceDef, _ := b.permissions.Get(em.Resource)
@@ -449,6 +497,14 @@ func (b *builder) buildField(
 		return nil, fmt.Errorf("json fields cannot be filterable or groupable")
 	}
 
+	var protected permission.FieldGroup
+	if fm != nil && fm.Protected != "" {
+		protected = permission.FieldGroup(fm.Protected)
+		if _, known := fieldGroupConsts[protected]; !known {
+			return nil, fmt.Errorf("protected names unknown field group %q", fm.Protected)
+		}
+	}
+
 	return &reportcatalog.Field{
 		Key:          field.JSONName,
 		Column:       buncolgen.NewColumn(field.ColumnName, model.Alias),
@@ -461,6 +517,7 @@ func (b *builder) buildField(
 		Aggregations: aggregations,
 		Filterable:   filterable,
 		Groupable:    groupable,
+		Protected:    protected,
 	}, nil
 }
 

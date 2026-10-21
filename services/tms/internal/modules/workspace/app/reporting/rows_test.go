@@ -73,15 +73,19 @@ func (s *stubRowsStorage) Download(
 
 func rowsService(run *report.ReportRun, store *stubRowsStorage) *Service {
 	return &Service{
-		l:       zap.NewNop(),
-		runRepo: &stubRunRepo{run: run},
-		storage: store,
+		l:        zap.NewNop(),
+		runRepo:  &stubRunRepo{run: run},
+		defRepo:  &stubRevisions{definition: storedRunDefinition()},
+		orgRepo:  previewOrganizations{},
+		compiler: &recordingCompiler{},
+		storage:  store,
 	}
 }
 
 func storedRun() *report.ReportRun {
 	return &report.ReportRun{
 		ID:                pulid.MustNew("rrun_"),
+		RevisionID:        pulid.MustNew("rrev_"),
 		Status:            report.RunStatusSucceeded,
 		Format:            report.FormatXLSX,
 		RowsKey:           "reports/org/run/1/report.xlsx.rows.json",

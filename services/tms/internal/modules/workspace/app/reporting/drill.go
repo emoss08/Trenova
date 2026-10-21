@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
 )
 
@@ -374,6 +377,7 @@ func (s *Service) detailColumns(
 
 	columns := make([]report.ColumnSpec, 0, maxDrillColumns)
 	seen := make(map[string]bool, maxDrillColumns)
+	groups := s.fieldGroups(ctx, req.TenantInfo)
 
 	for i := range entity.Fields {
 		field := &entity.Fields[i]
@@ -384,6 +388,9 @@ func (s *Service) detailColumns(
 			continue
 		}
 		if !s.fieldVisible(detail, entity, field) {
+			continue
+		}
+		if field.Protected != "" && !groups().Has(field.Protected) {
 			continue
 		}
 		ref := report.FieldRef{Field: field.Key}
@@ -412,6 +419,20 @@ func (s *Service) detailColumns(
 	}
 
 	return columns, nil
+}
+
+// fieldGroups asks once, and only when a protected field comes up, which
+// protected field groups the person may read.
+func (s *Service) fieldGroups(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+) func() permission.FieldGroupSet {
+	return sync.OnceValue(func() permission.FieldGroupSet {
+		if s.fieldAccess == nil {
+			return 0
+		}
+		return s.fieldAccess.Visible(ctx, permissionports.UserActor(tenant))
+	})
 }
 
 func (s *Service) fieldVisible(

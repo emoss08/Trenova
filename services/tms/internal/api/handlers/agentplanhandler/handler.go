@@ -90,7 +90,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, plan)
+	helpers.JSON(c, http.StatusOK, plan)
 }
 
 type resolvePlanRequest struct {
@@ -145,7 +145,7 @@ func (h *Handler) preview(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, preview)
+	helpers.JSON(c, http.StatusOK, preview)
 }
 
 func (h *Handler) resolve(c *gin.Context) {
@@ -177,5 +177,5 @@ func (h *Handler) resolve(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, plan)
+	helpers.JSON(c, http.StatusOK, plan)
 }

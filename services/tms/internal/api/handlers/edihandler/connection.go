@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
+	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
@@ -90,7 +91,7 @@ func (h *Handler) createConnection(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, connection)
+	helpers.JSON(c, http.StatusCreated, connection)
 }
 
 func (h *Handler) getConnection(c *gin.Context) {
@@ -113,7 +114,7 @@ func (h *Handler) getConnection(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, connection)
+	helpers.JSON(c, http.StatusOK, connection)
 }
 
 func (h *Handler) acceptConnection(c *gin.Context) {
@@ -167,5 +168,5 @@ func (h *Handler) connectionAction(
 		return
 	}
 
-	c.JSON(http.StatusOK, connection)
+	helpers.JSON(c, http.StatusOK, connection)
 }

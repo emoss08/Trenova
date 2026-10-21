@@ -115,7 +115,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, provider)
+	helpers.JSON(c, http.StatusOK, provider)
 }
 
 // saveProviderRequest mirrors the service request. APIKey is a pointer so an
@@ -216,7 +216,7 @@ func (h *Handler) create(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, created)
+	helpers.JSON(c, http.StatusCreated, created)
 }
 
 func (h *Handler) update(c *gin.Context) {
@@ -245,7 +245,7 @@ func (h *Handler) update(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updated)
+	helpers.JSON(c, http.StatusOK, updated)
 }
 
 func (h *Handler) remove(c *gin.Context) {
@@ -287,13 +287,13 @@ func (h *Handler) test(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 // catalog describes the protocols, presets, and routable tasks the UI offers, so
 // the form does not hardcode a list that drifts from the domain.
 func (h *Handler) catalog(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
+	helpers.JSON(c, http.StatusOK, gin.H{
 		"kinds":                kindDescriptors(),
 		"presets":              Presets(),
 		"tasks":                taskDescriptors(),

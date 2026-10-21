@@ -13,6 +13,10 @@ import (
 	"go.uber.org/fx"
 )
 
+func responseRecorded() gin.H {
+	return gin.H{"status": "recorded"}
+}
+
 const tokenParam = "token"
 
 type Params struct {
@@ -53,7 +57,7 @@ func (h *Handler) preview(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, view)
+	helpers.JSON(c, http.StatusOK, view)
 }
 
 type declineRequest struct {
@@ -69,7 +73,7 @@ func (h *Handler) accept(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"status": "recorded"})
+	helpers.JSON(c, http.StatusOK, responseRecorded())
 }
 
 func (h *Handler) decline(c *gin.Context) {
@@ -90,7 +94,7 @@ func (h *Handler) decline(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"status": "recorded"})
+	helpers.JSON(c, http.StatusOK, responseRecorded())
 }
 
 type counterRequest struct {
@@ -119,5 +123,5 @@ func (h *Handler) counter(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"status": "recorded"})
+	helpers.JSON(c, http.StatusOK, responseRecorded())
 }

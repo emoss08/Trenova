@@ -55,6 +55,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/readscopeservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/refview"
 	"github.com/emoss08/trenova/internal/modules/identity/app/roleassignmentservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/securitybriefingservice"
@@ -129,6 +130,9 @@ func SharedOptions() fx.Option {
 			permission.NewEngine,
 			fieldsensitivity.NewFieldAccess,
 			func(a *fieldsensitivity.FieldAccess) permissionports.FieldAccess { return a },
+			func(engine permissionports.PermissionEngine) permissionports.ReferenceViews {
+				return refview.NewPort(refview.Default(), engine)
+			},
 			permissionchange.New,
 			readscopeservice.New,
 			accesssettingsservice.New,

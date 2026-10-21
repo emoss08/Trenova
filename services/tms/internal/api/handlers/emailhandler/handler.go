@@ -177,7 +177,7 @@ func (h *Handler) getProfileOption(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, profile)
+	helpers.JSON(c, http.StatusOK, profile)
 }
 
 func (h *Handler) getProfile(c *gin.Context) {
@@ -195,7 +195,7 @@ func (h *Handler) getProfile(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, profile)
+	helpers.JSON(c, http.StatusOK, profile)
 }
 
 func (h *Handler) createProfile(c *gin.Context) {
@@ -212,7 +212,7 @@ func (h *Handler) createProfile(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusCreated, created)
+	helpers.JSON(c, http.StatusCreated, created)
 }
 
 func (h *Handler) updateProfile(c *gin.Context) {
@@ -235,7 +235,7 @@ func (h *Handler) updateProfile(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, updated)
+	helpers.JSON(c, http.StatusOK, updated)
 }
 
 func (h *Handler) deleteProfile(c *gin.Context) {
@@ -273,7 +273,7 @@ func (h *Handler) testSend(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusAccepted, msg)
+	helpers.JSON(c, http.StatusAccepted, msg)
 }
 
 func (h *Handler) listAssignments(c *gin.Context) {
@@ -283,7 +283,7 @@ func (h *Handler) listAssignments(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, assignments)
+	helpers.JSON(c, http.StatusOK, assignments)
 }
 
 func (h *Handler) updateAssignments(c *gin.Context) {
@@ -303,7 +303,7 @@ func (h *Handler) updateAssignments(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, updated)
+	helpers.JSON(c, http.StatusOK, updated)
 }
 
 func (h *Handler) listLogs(c *gin.Context) {
@@ -331,7 +331,7 @@ func (h *Handler) getLog(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, msg)
+	helpers.JSON(c, http.StatusOK, msg)
 }
 
 func (h *Handler) listSuppressions(c *gin.Context) {
@@ -362,7 +362,7 @@ func (h *Handler) createSuppression(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusCreated, created)
+	helpers.JSON(c, http.StatusCreated, created)
 }
 
 func (h *Handler) deleteSuppression(c *gin.Context) {

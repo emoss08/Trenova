@@ -93,7 +93,7 @@ func (h *Handler) list(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, items)
+	helpers.JSON(c, http.StatusOK, items)
 }
 func (h *Handler) get(c *gin.Context) {
 	auth := authctx.GetAuthContext(c)
@@ -117,7 +117,7 @@ func (h *Handler) get(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, item)
+	helpers.JSON(c, http.StatusOK, item)
 }
 func (h *Handler) assign(c *gin.Context) {
 	auth := authctx.GetAuthContext(c)
@@ -150,7 +150,7 @@ func (h *Handler) assign(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, item)
+	helpers.JSON(c, http.StatusOK, item)
 }
 func (h *Handler) startReview(c *gin.Context) {
 	auth := authctx.GetAuthContext(c)
@@ -175,7 +175,7 @@ func (h *Handler) startReview(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, item)
+	helpers.JSON(c, http.StatusOK, item)
 }
 func (h *Handler) resolve(c *gin.Context) {
 	auth := authctx.GetAuthContext(c)
@@ -210,7 +210,7 @@ func (h *Handler) resolve(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, item)
+	helpers.JSON(c, http.StatusOK, item)
 }
 func (h *Handler) dismiss(c *gin.Context) {
 	auth := authctx.GetAuthContext(c)
@@ -243,5 +243,5 @@ func (h *Handler) dismiss(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, item)
+	helpers.JSON(c, http.StatusOK, item)
 }

@@ -95,7 +95,7 @@ func (h *Handler) getTenderChange(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, change)
+	helpers.JSON(c, http.StatusOK, change)
 }
 
 func (h *Handler) applyTenderChange(c *gin.Context) {
@@ -141,7 +141,7 @@ func (h *Handler) tenderChangeAction(
 		return
 	}
 
-	c.JSON(http.StatusOK, change)
+	helpers.JSON(c, http.StatusOK, change)
 }
 
 func (h *Handler) transferChangeAction(
@@ -179,7 +179,7 @@ func (h *Handler) transferChangeAction(
 		return
 	}
 
-	c.JSON(http.StatusOK, change)
+	helpers.JSON(c, http.StatusOK, change)
 }
 
 func (h *Handler) withTransfer(

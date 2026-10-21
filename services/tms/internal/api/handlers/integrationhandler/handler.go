@@ -137,7 +137,7 @@ func (h *Handler) listCatalog(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 func (h *Handler) getConfig(c *gin.Context) {
@@ -158,7 +158,7 @@ func (h *Handler) getConfig(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 func (h *Handler) updateConfig(c *gin.Context) {
@@ -188,7 +188,7 @@ func (h *Handler) updateConfig(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 func (h *Handler) getRuntimeConfig(c *gin.Context) {
@@ -209,7 +209,7 @@ func (h *Handler) getRuntimeConfig(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 func (h *Handler) testConnection(c *gin.Context) {
@@ -231,7 +231,7 @@ func (h *Handler) testConnection(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 func (h *Handler) startWorkerSync(c *gin.Context) {
@@ -250,7 +250,7 @@ func (h *Handler) startWorkerSync(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusAccepted, result)
+	helpers.JSON(c, http.StatusAccepted, result)
 }
 
 func (h *Handler) getWorkerSyncStatus(c *gin.Context) {
@@ -273,7 +273,7 @@ func (h *Handler) getWorkerSyncStatus(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 func (h *Handler) getWorkerSyncDrift(c *gin.Context) {
@@ -292,7 +292,7 @@ func (h *Handler) getWorkerSyncDrift(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 func (h *Handler) detectWorkerSyncDrift(c *gin.Context) {
@@ -311,7 +311,7 @@ func (h *Handler) detectWorkerSyncDrift(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 func (h *Handler) repairWorkerSyncDrift(c *gin.Context) {
@@ -337,7 +337,7 @@ func (h *Handler) repairWorkerSyncDrift(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 func (h *Handler) getWorkerSyncReadiness(c *gin.Context) {
@@ -356,5 +356,5 @@ func (h *Handler) getWorkerSyncReadiness(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }

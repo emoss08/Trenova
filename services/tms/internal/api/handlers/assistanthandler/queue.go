@@ -3,6 +3,7 @@ package assistanthandler
 import (
 	"net/http"
 
+	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantqueueservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -113,7 +114,7 @@ func (h *Handler) listQueue(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, queueListResponse{Items: items})
+	helpers.JSON(c, http.StatusOK, queueListResponse{Items: items})
 }
 
 func (h *Handler) enqueue(c *gin.Context) {
@@ -152,7 +153,7 @@ func (h *Handler) enqueue(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusAccepted, outcomeResponse(outcome))
+	helpers.JSON(c, http.StatusAccepted, outcomeResponse(outcome))
 }
 
 func (h *Handler) editQueued(c *gin.Context) {
@@ -179,7 +180,7 @@ func (h *Handler) editQueued(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, item)
+	helpers.JSON(c, http.StatusOK, item)
 }
 
 func (h *Handler) removeQueued(c *gin.Context) {
@@ -222,7 +223,7 @@ func (h *Handler) reorderQueue(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, queueListResponse{Items: items})
+	helpers.JSON(c, http.StatusOK, queueListResponse{Items: items})
 }
 
 func (h *Handler) sendQueued(c *gin.Context) {
@@ -241,5 +242,5 @@ func (h *Handler) sendQueued(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusAccepted, outcomeResponse(outcome))
+	helpers.JSON(c, http.StatusAccepted, outcomeResponse(outcome))
 }

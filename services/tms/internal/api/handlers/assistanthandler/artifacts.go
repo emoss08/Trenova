@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -69,7 +70,7 @@ func (h *Handler) listThreadArtifacts(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, page)
+	helpers.JSON(c, http.StatusOK, page)
 }
 
 func artifactParam(c *gin.Context) (pulid.ID, error) {
@@ -94,7 +95,7 @@ func (h *Handler) artifactLineage(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"results": versions})
+	helpers.JSON(c, http.StatusOK, gin.H{resultsKey: versions})
 }
 
 func (h *Handler) artifactBySlug(c *gin.Context) {
@@ -110,7 +111,7 @@ func (h *Handler) artifactBySlug(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"results": versions})
+	helpers.JSON(c, http.StatusOK, gin.H{resultsKey: versions})
 }
 
 // exportArtifactCSV streams the table as it is read. The name and the checks
@@ -198,7 +199,7 @@ func (h *Handler) saveDocumentVersion(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, saved)
+	helpers.JSON(c, http.StatusCreated, saved)
 }
 
 func (h *Handler) restoreDocumentVersion(c *gin.Context) {
@@ -219,7 +220,7 @@ func (h *Handler) restoreDocumentVersion(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, saved)
+	helpers.JSON(c, http.StatusCreated, saved)
 }
 
 func (h *Handler) rewriteDocument(c *gin.Context) {
@@ -246,5 +247,5 @@ func (h *Handler) rewriteDocument(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, suggestion)
+	helpers.JSON(c, http.StatusOK, suggestion)
 }

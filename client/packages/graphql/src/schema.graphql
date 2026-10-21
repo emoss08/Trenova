@@ -27452,9 +27452,14 @@ input ShipmentAdditionalChargeInput {
 type ShipmentAnalytics {
   activeShipments: ShipmentActiveShipments
   atRisk: ShipmentAtRisk
+  """
+  Null for a reader who cannot read customers: the figures about each customer
+  need customer read, and the order of the names alone would rank them.
+  """
   customerMix: ShipmentCustomerMix
   detentionWatchlist: ShipmentDetentionWatchlist
   emptyMilePercent: ShipmentEmptyMile
+  """Null for a reader whose ceiling withholds the state of a location."""
   laneHeatmap: ShipmentLaneHeatmap
   onTimePercent: ShipmentOnTime
   page: String!
@@ -28218,7 +28223,10 @@ type ShipmentDetentionWatchlist {
 }
 
 type ShipmentDetentionWatchlistItem {
-  customer: String!
+  """
+  The customer's name, from its reference view; null when the reader's ceiling withholds it.
+  """
+  customer: String
   dwellLabel: String!
   shipmentId: String!
   tone: String!
@@ -28843,7 +28851,8 @@ type ShipmentProfitability {
 
 type ShipmentProfitabilityAnalytics {
   avgCpm: Float!
-  avgMarginPct: Float!
+  """Null when the reader does not hold the margins field group."""
+  avgMarginPct: Float
   hasMargin: Boolean!
   shipmentCount: Int!
   totalMiles: Float!
@@ -29189,10 +29198,13 @@ enum ShipmentTenderStatus {
 }
 
 type ShipmentTomorrowPickup {
-  customer: String!
-  destination: String!
-  driver: String!
-  origin: String!
+  """
+  The customer's, locations' and driver's reference view fields; null when the reader's ceiling withholds them.
+  """
+  customer: String
+  destination: String
+  driver: String
+  origin: String
   pickupWindowStart: Timestamp!
   proNumber: String!
   shipmentId: String!

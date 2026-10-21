@@ -26,6 +26,9 @@ import (
 	"go.uber.org/zap"
 )
 
+// resultsKey holds the records a list response returns.
+const resultsKey = "results"
+
 type Params struct {
 	fx.In
 
@@ -312,7 +315,7 @@ func (h *Handler) listThreads(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 type threadShelvesQuery struct {
@@ -341,7 +344,7 @@ func (h *Handler) countThreadShelves(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 type startThreadRequest struct {
@@ -392,7 +395,7 @@ func (h *Handler) startThread(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, thread)
+	helpers.JSON(c, http.StatusCreated, thread)
 }
 
 func (h *Handler) getThread(c *gin.Context) {
@@ -408,7 +411,7 @@ func (h *Handler) getThread(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, thread)
+	helpers.JSON(c, http.StatusOK, thread)
 }
 
 func (h *Handler) threadBudget(c *gin.Context) {
@@ -424,7 +427,7 @@ func (h *Handler) threadBudget(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, budget)
+	helpers.JSON(c, http.StatusOK, budget)
 }
 
 func (h *Handler) requestMore(c *gin.Context) {
@@ -452,7 +455,7 @@ func (h *Handler) requestMore(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 func (h *Handler) markThreadRead(c *gin.Context) {
@@ -509,7 +512,7 @@ func (h *Handler) updateThread(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, thread)
+	helpers.JSON(c, http.StatusOK, thread)
 }
 
 type pinArtifactRequest struct {
@@ -541,7 +544,7 @@ func (h *Handler) pinArtifact(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, artifact)
+	helpers.JSON(c, http.StatusOK, artifact)
 }
 
 func (h *Handler) deleteThread(c *gin.Context) {
@@ -572,7 +575,7 @@ func (h *Handler) listThreadPlans(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"results": plans})
+	helpers.JSON(c, http.StatusOK, gin.H{resultsKey: plans})
 }
 
 func (h *Handler) listThreadProposals(c *gin.Context) {
@@ -588,7 +591,7 @@ func (h *Handler) listThreadProposals(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"results": proposals})
+	helpers.JSON(c, http.StatusOK, gin.H{resultsKey: proposals})
 }
 
 // saveProposalEditsRequest is the values a person changed, keyed by
@@ -627,7 +630,7 @@ func (h *Handler) saveProposalEdits(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, edits)
+	helpers.JSON(c, http.StatusOK, edits)
 }
 
 type listMessagesQuery struct {
@@ -659,7 +662,7 @@ func (h *Handler) listMessages(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, page)
+	helpers.JSON(c, http.StatusOK, page)
 }
 
 // downloadTranscript hands the conversation over as a Markdown file. It is a
@@ -785,7 +788,7 @@ func (h *Handler) searchMentions(c *gin.Context) {
 			h.eh.HandleError(c, err)
 			return
 		}
-		c.JSON(http.StatusOK, page)
+		helpers.JSON(c, http.StatusOK, page)
 		return
 	}
 
@@ -799,7 +802,7 @@ func (h *Handler) searchMentions(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"results": results})
+	helpers.JSON(c, http.StatusOK, gin.H{resultsKey: results})
 }
 
 type searchDeskQuery struct {
@@ -826,7 +829,7 @@ func (h *Handler) searchDesk(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"results": results})
+	helpers.JSON(c, http.StatusOK, gin.H{resultsKey: results})
 }
 
 func (h *Handler) commandAvailability(c *gin.Context) {
@@ -852,7 +855,7 @@ func (h *Handler) commandAvailability(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, availability)
+	helpers.JSON(c, http.StatusOK, availability)
 }
 
 func (h *Handler) listProviders(c *gin.Context) {
@@ -865,5 +868,5 @@ func (h *Handler) listProviders(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"results": options})
+	helpers.JSON(c, http.StatusOK, gin.H{resultsKey: options})
 }

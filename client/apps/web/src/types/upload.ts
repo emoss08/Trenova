@@ -2,6 +2,7 @@ export type UploadStatus =
   | "pending"
   | "processing"
   | "uploading"
+  | "checking"
   | "uploaded"
   | "verifying"
   | "paused"

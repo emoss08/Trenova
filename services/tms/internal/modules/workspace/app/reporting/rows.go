@@ -40,6 +40,9 @@ func (s *Service) ReadRunRows(
 	if err = rowsReadable(run); err != nil {
 		return nil, err
 	}
+	if err = s.authorizeStoredRun(ctx, req, run); err != nil {
+		return nil, err
+	}
 
 	info, err := s.storage.GetFileInfo(ctx, run.RowsKey)
 	if err != nil {

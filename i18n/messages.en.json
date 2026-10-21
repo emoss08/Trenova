@@ -40385,6 +40385,24 @@
       "routes/inbox"
     ]
   },
+  "Blocked: the virus scanner found a virus in this file": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "Blocked: the virus scanner found {0} in this file": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Blockers": {
     "sites": 1,
     "scope": [
@@ -50222,6 +50240,24 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Checking for viruses": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "Checking for viruses...": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Checking invoice email configuration.": {
@@ -105781,6 +105817,15 @@
       "routes/ifta-return"
     ]
   },
+  "Finalizing upload": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "Finalizing...": {
     "sites": 2,
     "scope": [
@@ -116197,7 +116242,7 @@
     ]
   },
   "Hidden": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "ts"
     ],
@@ -116205,6 +116250,7 @@
       "packages/shared/components",
       "routes/agent-control",
       "routes/desk",
+      "routes/home",
       "routes/rate-agreement",
       "routes/shipment",
       "routes/worker"
@@ -131712,7 +131758,7 @@
     ]
   },
   "Lane heatmap": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -143095,16 +143141,7 @@
     ]
   },
   "Margin Floor (%)": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Margin Floor Percent": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -144508,16 +144545,7 @@
     ]
   },
   "Max Pay % of Sell": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Max Pay Percent Of Sell": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -192878,6 +192906,15 @@
       "routes/shipment"
     ]
   },
+  "Preparing upload": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "Preparing...": {
     "sites": 2,
     "scope": [
@@ -198166,12 +198203,11 @@
     ]
   },
   "Quarantined": {
-    "sites": 5,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
       "apps/web/lib",
       "packages/shared/components",
       "routes/agent-control",
@@ -216439,6 +216475,15 @@
       "apps/web/components"
     ]
   },
+  "Retrying upload": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "Retrying with backoff": {
     "sites": 1,
     "scope": [
@@ -219643,7 +219688,7 @@
     ]
   },
   "Route": {
-    "sites": 12,
+    "sites": 14,
     "scope": [
       "ts"
     ],
@@ -259986,7 +260031,7 @@
     ]
   },
   "The file is not a PDF that can be split": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -265644,6 +265689,15 @@
     ]
   },
   "The report this is about. A notification that does not name it is one nobody can act on.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The report this run came from is no longer available — run it again": {
     "sites": 1,
     "scope": [
       "go"
@@ -274600,6 +274654,15 @@
       "go/other"
     ]
   },
+  "This report has changed since it ran, so its result cannot be served — run it again": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This report has no chart configured.": {
     "sites": 1,
     "scope": [
@@ -274746,6 +274809,15 @@
     ]
   },
   "This report run has no downloadable artifact": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This report run is bound to no report, so its result cannot be served": {
     "sites": 1,
     "scope": [
       "go"
@@ -287913,6 +287985,24 @@
       "routes/admin"
     ]
   },
+  "Upload blocked": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "Upload complete": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "Upload documents": {
     "sites": 2,
     "scope": [
@@ -287933,7 +288023,7 @@
     ]
   },
   "Upload failed": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -287989,6 +288079,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Upload paused": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Upload picture": {
@@ -288266,6 +288365,15 @@
   },
   "Uploading": {
     "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "Uploading file": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -290920,6 +291028,15 @@
     ],
     "areas": [
       "routes/auth"
+    ]
+  },
+  "Verifying upload": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Verifying...": {
@@ -293653,6 +293770,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Waiting for file": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Waiting for it to arrive…": {
@@ -306752,6 +306878,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "You need access to customers to see the customer mix": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "You need permission to manage users in every organization you add or remove": {

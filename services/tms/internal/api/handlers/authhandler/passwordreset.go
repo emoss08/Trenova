@@ -3,6 +3,7 @@ package authhandler
 import (
 	"net/http"
 
+	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/gin-gonic/gin"
 )
 
@@ -35,7 +36,7 @@ func (h *Handler) forgotPassword(c *gin.Context) {
 		h.l.Error("password reset request failed")
 	}
 
-	c.JSON(http.StatusAccepted, gin.H{
+	helpers.JSON(c, http.StatusAccepted, gin.H{
 		"message": "If that address has an account, a reset link is on its way.",
 	})
 }
@@ -56,7 +57,7 @@ func (h *Handler) resetPassword(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
+	helpers.JSON(c, http.StatusOK, gin.H{
 		"message": "Your password has been changed. Sign in with your new password.",
 	})
 }

@@ -72,7 +72,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, pref)
+	helpers.JSON(c, http.StatusOK, pref)
 }
 
 // @Summary Replace the current user's notification preferences
@@ -112,5 +112,5 @@ func (h *Handler) update(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, saved)
+	helpers.JSON(c, http.StatusOK, saved)
 }

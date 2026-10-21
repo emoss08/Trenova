@@ -143,7 +143,7 @@ func (h *Handler) preview(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, preview)
+	helpers.JSON(c, http.StatusOK, preview)
 }
 
 func previewModifications(raw string) (map[string]any, error) {
@@ -197,5 +197,5 @@ func (h *Handler) resolve(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, decision)
+	helpers.JSON(c, http.StatusOK, decision)
 }

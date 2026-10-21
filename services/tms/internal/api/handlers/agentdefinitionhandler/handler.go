@@ -130,7 +130,7 @@ func (h *Handler) list(c *gin.Context) {
 }
 
 func (h *Handler) templates(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"templates": h.service.Templates()})
+	helpers.JSON(c, http.StatusOK, gin.H{"templates": h.service.Templates()})
 }
 
 func (h *Handler) tools(c *gin.Context) {
@@ -142,11 +142,11 @@ func (h *Handler) tools(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"tools": tools})
+	helpers.JSON(c, http.StatusOK, gin.H{"tools": tools})
 }
 
 func (h *Handler) eventKinds(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"events": h.service.EventKinds()})
+	helpers.JSON(c, http.StatusOK, gin.H{"events": h.service.EventKinds()})
 }
 
 func (h *Handler) get(c *gin.Context) {
@@ -170,7 +170,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, definition)
+	helpers.JSON(c, http.StatusOK, definition)
 }
 
 // trustLedger answers how each of the agent's tools has been decided on: the
@@ -194,7 +194,7 @@ func (h *Handler) trustLedger(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"results": rows})
+	helpers.JSON(c, http.StatusOK, gin.H{"results": rows})
 }
 
 func (h *Handler) getBySystemKey(c *gin.Context) {
@@ -212,7 +212,7 @@ func (h *Handler) getBySystemKey(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, definition)
+	helpers.JSON(c, http.StatusOK, definition)
 }
 
 type saveAgentRequest struct {
@@ -373,7 +373,7 @@ func (h *Handler) create(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, created)
+	helpers.JSON(c, http.StatusCreated, created)
 }
 
 func (h *Handler) update(c *gin.Context) {
@@ -404,7 +404,7 @@ func (h *Handler) update(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updated)
+	helpers.JSON(c, http.StatusOK, updated)
 }
 
 func (h *Handler) previewPrompt(c *gin.Context) {
@@ -429,7 +429,7 @@ func (h *Handler) previewPrompt(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"prompt": prompt})
+	helpers.JSON(c, http.StatusOK, gin.H{"prompt": prompt})
 }
 
 func (h *Handler) remove(c *gin.Context) {
@@ -486,5 +486,5 @@ func (h *Handler) budget(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, status)
+	helpers.JSON(c, http.StatusOK, status)
 }

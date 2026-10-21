@@ -10,6 +10,7 @@ import (
 
 type Gate struct {
 	err      error
+	disabled bool
 	mu       sync.Mutex
 	requests []*contentscanports.ScanRequest
 }
@@ -18,12 +19,20 @@ func NewCleanGate() *Gate {
 	return &Gate{}
 }
 
+func NewDisabledGate() *Gate {
+	return &Gate{disabled: true}
+}
+
 func NewRefusingGate(err error) *Gate {
 	return &Gate{err: err}
 }
 
 func NewInfectedGate(signature string) *Gate {
 	return &Gate{err: &contentscanports.InfectedError{Signature: signature}}
+}
+
+func (g *Gate) Enabled() bool {
+	return !g.disabled
 }
 
 func (g *Gate) Check(

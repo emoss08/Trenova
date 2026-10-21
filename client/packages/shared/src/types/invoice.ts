@@ -1,3 +1,4 @@
+import { linkedRecordSchema } from "@trenova/shared/lib/linked-record";
 import { z } from "zod";
 import { accessorialChargeMethodSchema, rateUnitSchema } from "./accessorial-charge";
 import { billTypeSchema, billingQueueItemSchema } from "./billing-queue";
@@ -223,7 +224,7 @@ export const invoiceAttachmentSchema = z.object({
   sortOrder: z.number().int(),
   createdAt: z.number(),
   updatedAt: z.number(),
-  document: documentSchema.nullable().optional(),
+  document: linkedRecordSchema("document", documentSchema).nullable().optional(),
 });
 export type InvoiceAttachment = z.infer<typeof invoiceAttachmentSchema>;
 
@@ -240,7 +241,7 @@ export const invoiceEmailAttemptAttachmentSchema = z.object({
   shareTokenId: nullableStringSchema,
   reason: nullableStringSchema,
   createdAt: z.number(),
-  document: documentSchema.nullable().optional(),
+  document: linkedRecordSchema("document", documentSchema).nullable().optional(),
 });
 export type InvoiceEmailAttemptAttachment = z.infer<typeof invoiceEmailAttemptAttachmentSchema>;
 
@@ -267,7 +268,9 @@ export const invoiceEmailAttemptSchema = z.object({
   createdById: nullableStringSchema,
   createdAt: z.number(),
   updatedAt: z.number(),
-  email: emailMessageSchema.nullish().transform((value) => value ?? undefined),
+  email: linkedRecordSchema("email_log", emailMessageSchema)
+    .nullish()
+    .transform((value) => value ?? undefined),
   attachments: z.array(invoiceEmailAttemptAttachmentSchema).optional().default([]),
 });
 export type InvoiceEmailAttempt = z.infer<typeof invoiceEmailAttemptSchema>;
@@ -460,7 +463,9 @@ export const invoiceSchema = z.object({
   billToCountry: nullableStringSchema,
   /** The customer who ordered the freight when somebody else is billed for it. */
   shipperCustomerId: nullableStringSchema,
-  shipperCustomer: customerSchema.nullish().transform((value) => value ?? undefined),
+  shipperCustomer: linkedRecordSchema("customer", customerSchema)
+    .nullish()
+    .transform((value) => value ?? undefined),
   /** The factoring company the invoice was assigned to when it posted. */
   factoringCompanyId: nullableStringSchema,
   factoringCompany: invoiceFactorSchema.nullish().transform((value) => value ?? undefined),
@@ -509,10 +514,18 @@ export const invoiceSchema = z.object({
   version: z.number(),
   createdAt: z.number(),
   updatedAt: z.number(),
-  billingQueueItem: billingQueueItemSchema.nullish().transform((value) => value ?? undefined),
-  shipment: shipmentSchema.nullish().transform((value) => value ?? undefined),
-  customer: customerSchema.nullish().transform((value) => value ?? undefined),
-  pdfDocument: documentSchema.nullish().transform((value) => value ?? undefined),
+  billingQueueItem: linkedRecordSchema("billing_queue", billingQueueItemSchema)
+    .nullish()
+    .transform((value) => value ?? undefined),
+  shipment: linkedRecordSchema("shipment", shipmentSchema)
+    .nullish()
+    .transform((value) => value ?? undefined),
+  customer: linkedRecordSchema("customer", customerSchema)
+    .nullish()
+    .transform((value) => value ?? undefined),
+  pdfDocument: linkedRecordSchema("document", documentSchema)
+    .nullish()
+    .transform((value) => value ?? undefined),
   lines: z
     .array(invoiceLineSchema)
     .nullish()

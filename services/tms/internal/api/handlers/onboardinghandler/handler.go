@@ -79,7 +79,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, state)
+	helpers.JSON(c, http.StatusOK, state)
 }
 
 func (h *Handler) complete(c *gin.Context) {
@@ -126,5 +126,5 @@ func (h *Handler) complete(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, state)
+	helpers.JSON(c, http.StatusOK, state)
 }

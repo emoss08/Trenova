@@ -1,3 +1,4 @@
+import { linkedRecordSchema } from "@trenova/shared/lib/linked-record";
 import { z } from "zod";
 import { documentSchema } from "@trenova/shared/types/document";
 import {
@@ -118,7 +119,7 @@ export const invoiceAdjustmentDocumentReferenceSchema = z.object({
   version: z.number(),
   createdAt: z.number(),
   updatedAt: z.number(),
-  document: documentSchema.optional(),
+  document: linkedRecordSchema("document", documentSchema).optional(),
 });
 export type InvoiceAdjustmentDocumentReference = z.infer<
   typeof invoiceAdjustmentDocumentReferenceSchema
@@ -163,7 +164,7 @@ export const invoiceAdjustmentSchema = z.object({
   updatedAt: z.number(),
   lines: z.array(invoiceAdjustmentLineSchema).default([]),
   referencedDocuments: z.array(invoiceAdjustmentDocumentReferenceSchema).default([]),
-  adjustmentDocuments: z.array(documentSchema).default([]),
+  adjustmentDocuments: z.array(linkedRecordSchema("document", documentSchema)).default([]),
 });
 export type InvoiceAdjustment = z.infer<typeof invoiceAdjustmentSchema>;
 
