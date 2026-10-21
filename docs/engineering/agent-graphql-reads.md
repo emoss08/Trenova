@@ -133,7 +133,7 @@ on the worker too.
 
 The worker does **not** take the API's `GraphQLModule`. That would pull every resolver package,
 every service they name and every loader into the worker graph, at the build-time and memory cost
-that CLAUDE.md's generics rules exist to prevent. It runs a *read executor* built only from what
+that the generics rules in module-architecture.md exist to prevent. It runs a *read executor* built only from what
 the bound operations reach:
 
 - **Validation.** The **parsed schema is the whole schema**, from the same embedded `.graphqls`
