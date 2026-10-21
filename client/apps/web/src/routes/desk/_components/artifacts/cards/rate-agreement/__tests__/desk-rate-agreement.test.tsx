@@ -616,10 +616,13 @@ describe("DeskRateAgreement", () => {
     expect(screen.queryByRole("heading", { name: "Activity" })).toBeNull();
     expect(fetchers.activity).not.toHaveBeenCalled();
 
-    const customer = await within(await section("Customer")).findByRole("link", {
-      name: /Acme Foods/,
-    });
-    expect(customer).toHaveAttribute("href", expect.stringContaining("cus_1"));
+    // The customer is a linked record: without customer read it is named, locked, not linked.
+    const customers = await section("Customer");
+    expect(within(customers).queryByRole("link", { name: /Acme Foods/ })).toBeNull();
+    const customer = (await within(customers).findByText("Acme Foods")).closest(
+      '[data-slot="locked-reference"]',
+    );
+    expect(customer?.getAttribute("aria-description")).toBe("You don't have access to customers");
     const lanes = await section("Lanes");
     expect(await within(lanes).findByText("Per mile")).not.toHaveRole("button");
   });

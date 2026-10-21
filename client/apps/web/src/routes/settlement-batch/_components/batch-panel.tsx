@@ -1,3 +1,4 @@
+import { rootField } from "@trenova/shared/lib/reference-access";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import { FormCreatePanel } from "@/components/form-create-panel";
@@ -283,14 +284,14 @@ function BatchDetail({ batchId }: { batchId: string }) {
                 <td className="px-3 py-2 text-right">
                   <AmountDisplay
                     value={settlement.grossEarningsMinor}
-                    currency={settlement.currencyCode}
+                    currency={rootField(settlement.currencyCode, "DriverSettlement.currencyCode")}
                   />
                 </td>
                 <td className="px-3 py-2 text-right font-medium">
                   <AmountDisplay
-                    value={settlement.netPayMinor}
+                    value={rootField(settlement.netPayMinor, "DriverSettlement.netPayMinor")}
                     variant="positive"
-                    currency={settlement.currencyCode}
+                    currency={rootField(settlement.currencyCode, "DriverSettlement.currencyCode")}
                   />
                 </td>
               </tr>

@@ -57,7 +57,7 @@ fragment DeskJournalCardEntryFields on JournalEntry {
   reversalReason
 }
 
-query DeskJournalEntryCard($id: ID!) {
+query DeskJournalEntryCard($id: ID!) @requiresRead(kind: "fiscal_period") {
   journalEntryCard(id: $id) {
     entry {
       ...DeskJournalCardEntryFields

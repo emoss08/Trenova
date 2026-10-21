@@ -2,7 +2,7 @@
 # fragment spread returns a masked $fragmentRefs type, and the overview needs
 # to read these values directly. It also keeps the payload to the headline
 # numbers the summary draws, not every item behind them.
-query WorkerOverview($workerId: ID!) {
+query WorkerOverview($workerId: ID!) @requiresRead(kind: "performance_review") @requiresRead(kind: "worker_checklist") {
   workerOverview(workerId: $workerId) {
     asOf
     standing
@@ -74,13 +74,10 @@ query WorkerOverview($workerId: ID!) {
       status
       dueAt
       progress {
-        total
-        settled
         requiredTotal
         requiredDone
         overdue
         percent
-        complete
       }
     }
     pto {

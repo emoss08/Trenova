@@ -5,8 +5,10 @@ import {
   AgentDefinitionCardsDocument,
   DataTablePageInfoFieldsFragmentDoc,
   MyAgentFieldsFragmentDoc,
+  type AgentChoiceFieldsFragment,
   MyAgentMatchDocument,
   MyAgentsDocument,
+  type AgentAccessMode,
   type AgentDefinitionCardFieldsFragment,
   type AgentMatchOutcome,
   type FieldFilterInput,
@@ -16,8 +18,41 @@ import {
 } from "@trenova/graphql/generated/graphql";
 import { getFragmentData } from "@trenova/graphql/fragment-data";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import { rootField } from "@trenova/shared/lib/reference-access";
 
-export type AgentDefinitionRow = AgentDefinitionCardFieldsFragment;
+type AgentDefinitionCardFields = Omit<AgentDefinitionCardFieldsFragment, " $fragmentName">;
+type AgentDefinitionCardDelegate = AgentDefinitionCardFields["delegates"][number];
+
+/**
+ * An agent as AI Control reads it: the agent is the root record of every read that returns
+ * it, so the fields the schema marks nullable for where an agent is linked from another
+ * record (docs/engineering/reference-views.md) are its own here and never withheld. Its
+ * delegates are agents too, read by someone who may read agents, so theirs are not either.
+ */
+export type AgentDefinitionRow = Omit<
+  AgentDefinitionCardFields,
+  "accessMode" | "description" | "enabled" | "systemKey" | "delegates"
+> & {
+  accessMode: AgentAccessMode;
+  description: string;
+  enabled: boolean;
+  systemKey: string;
+  delegates: Array<Omit<AgentDefinitionCardDelegate, "enabled"> & { enabled: boolean }>;
+};
+
+export function toAgentDefinitionRow(fields: AgentDefinitionCardFields): AgentDefinitionRow {
+  return {
+    ...fields,
+    accessMode: rootField(fields.accessMode, "AgentDefinition.accessMode"),
+    description: rootField(fields.description, "AgentDefinition.description"),
+    enabled: rootField(fields.enabled, "AgentDefinition.enabled"),
+    systemKey: rootField(fields.systemKey, "AgentDefinition.systemKey"),
+    delegates: fields.delegates.map((delegate) => ({
+      ...delegate,
+      enabled: rootField(delegate.enabled, "AgentDefinition.enabled"),
+    })),
+  };
+}
 
 type RequestOptions = { signal?: AbortSignal };
 
@@ -61,7 +96,7 @@ export async function fetchAgentDefinitions(
   });
 
   return data.agentDefinitions.edges.map((edge) =>
-    getFragmentData(AgentDefinitionCardFieldsFragmentDoc, edge.node),
+    toAgentDefinitionRow(getFragmentData(AgentDefinitionCardFieldsFragmentDoc, edge.node)),
   );
 }
 
@@ -124,6 +159,24 @@ export type AgentChoicePage = {
   /** Only read when the page asked for it; the count is a second query on the server. */
   totalCount: number | null;
 };
+
+/**
+ * An agent from the organization's list, which reads each agent as its root record, so its
+ * description and system key are never withheld (docs/engineering/reference-views.md).
+ */
+function toAgentChoice(fields: AgentChoiceFieldsFragment): AgentChoice {
+  return {
+    id: fields.id,
+    name: fields.name,
+    description: rootField(fields.description, "AgentDefinition.description"),
+    template: fields.template,
+    icon: fields.icon,
+    accent: fields.accent,
+    toolNames: fields.toolNames,
+    systemKey: rootField(fields.systemKey, "AgentDefinition.systemKey"),
+    starters: fields.starters,
+  };
+}
 
 /** The most agents `myAgents` returns in one page, and the most ids it takes. */
 export const MY_AGENTS_LIMIT = 100;
@@ -241,7 +294,9 @@ async function requestOrganizationAgents(
   const pageInfo = getFragmentData(DataTablePageInfoFieldsFragmentDoc, connection.pageInfo);
 
   return {
-    items: connection.edges.map((edge) => getFragmentData(AgentChoiceFieldsFragmentDoc, edge.node)),
+    items: connection.edges.map((edge) =>
+      toAgentChoice(getFragmentData(AgentChoiceFieldsFragmentDoc, edge.node)),
+    ),
     endCursor: pageInfo.endCursor ?? null,
     hasNextPage: pageInfo.hasNextPage,
     totalCount: connection.totalCount ?? null,

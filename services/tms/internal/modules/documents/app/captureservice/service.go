@@ -53,13 +53,6 @@ const (
 	DisabledReason      = "capture_disabled"
 )
 
-// envelopeCipher is the slice of the encryption service capture uses: sealing
-// pages and thumbnails at rest and opening them again.
-type envelopeCipher interface {
-	EncryptBytesWithAAD(plaintext []byte, aad encryptionservice.AAD) (string, error)
-	DecryptBytesWithAAD(value string, aad encryptionservice.AAD) ([]byte, error)
-}
-
 type Params struct {
 	fx.In
 
@@ -84,8 +77,7 @@ type Params struct {
 	ContentGate     contentscanports.Gate
 	Encryption      *encryptionservice.Service
 	Uploads         documentuploadports.DocumentUploadService
-	Assembler       captureports.CapturePDFAssembler
-	Inspector       captureports.CapturePageInspector
+	Imaging         kernelports.Imaging
 	QRCodes         captureports.CaptureQREncoder
 	// Workflows is optional so an installation without a worker still
 	// receives pages. A sealed batch then waits, and the reconcile sweep
@@ -145,10 +137,9 @@ type Service struct {
 	organizations organizationReader
 	permissions   permissionports.PermissionEngine
 	storage       kernelports.Client
-	cipher        envelopeCipher
+	cipher        *encryptionservice.Service
 	uploads       documentuploadports.DocumentUploadService
-	assembler     captureports.CapturePDFAssembler
-	inspector     captureports.CapturePageInspector
+	imaging       kernelports.Imaging
 	qrCodes       captureports.CaptureQREncoder
 	notifications notifier
 	workflows     kernelports.WorkflowStarter
@@ -163,10 +154,6 @@ type Service struct {
 
 //nolint:gocritic // dependency injection param
 func New(p Params) *Service {
-	var cipher envelopeCipher
-	if p.Encryption != nil {
-		cipher = p.Encryption
-	}
 	var notifications notifier
 	if p.Notifications != nil {
 		notifications = p.Notifications
@@ -192,10 +179,9 @@ func New(p Params) *Service {
 		organizations: p.Organizations,
 		permissions:   p.Permissions,
 		storage:       p.Storage,
-		cipher:        cipher,
+		cipher:        p.Encryption,
 		uploads:       p.Uploads,
-		assembler:     p.Assembler,
-		inspector:     p.Inspector,
+		imaging:       p.Imaging,
 		qrCodes:       p.QRCodes,
 		workflows:     p.Workflows,
 		realtime:      p.Realtime,

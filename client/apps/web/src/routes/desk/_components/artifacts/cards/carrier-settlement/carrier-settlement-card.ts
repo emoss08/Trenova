@@ -21,8 +21,9 @@ export function carrierName(record: DeskCarrierSettlement, t: TranslateFn): stri
 /** What heads the card: the number, the period, and the carrier's terms. */
 export function settlementKicker(record: DeskCarrierSettlement, t: TranslateFn): string[] {
   const kicker = [record.settlementNumber, periodLabel(record.periodStart, record.periodEnd, t)];
-  if (record.carrier && record.carrier.paymentTermDays > 0) {
-    kicker.push(t("Net {0}", record.carrier.paymentTermDays));
+  const termDays = record.carrier?.paymentTermDays;
+  if (termDays != null && termDays > 0) {
+    kicker.push(t("Net {0}", termDays));
   }
   return kicker;
 }
@@ -288,12 +289,26 @@ export function lineTotal(record: DeskCarrierSettlement): number {
   return (record.costSummary ?? []).reduce((sum, group) => sum + group.lineCount, 0);
 }
 
-/** Where the money goes: the remit-to address, how the carrier is paid, and its terms. */
+/**
+ * Where the money goes: the remit-to address, how the carrier is paid, and its terms.
+ * `withheld` is set when the carrier's payment details are outside its reference view and
+ * the person may not read carriers: the address and the carrier's own method and terms are
+ * then unknown, not missing, and `method` is null unless the settlement sets its own.
+ */
 export function remittance(
   record: DeskCarrierSettlement,
   t: TranslateFn,
-): { lines: string[]; method: string; terms: string } {
+): { withheld: boolean; lines: string[]; method: string | null; terms: string } {
   const carrier = record.carrier;
+  const ownMethod = record.paymentMethod.trim() ? paymentMethodLabel(record.paymentMethod) : "";
+  if (carrier && (carrier.paymentMethod === null || carrier.paymentTermDays === null)) {
+    return {
+      withheld: true,
+      lines: [],
+      method: ownMethod || null,
+      terms: t("Pays {0}", cardDay(record.payDate)),
+    };
+  }
   const lines = carrier
     ? [
         carrier.remitToName?.trim() || carrier.name,
@@ -311,14 +326,15 @@ export function remittance(
     : [];
   const hasAddress = Boolean(carrier?.remitAddressLine1?.trim() || carrier?.remitCity?.trim());
   return {
+    withheld: false,
     lines: hasAddress ? lines : [],
-    method: record.paymentMethod.trim()
-      ? paymentMethodLabel(record.paymentMethod)
-      : carrier
+    method:
+      ownMethod ||
+      (carrier?.paymentMethod
         ? t("{0} · the carrier's preferred", paymentMethodLabel(carrier.paymentMethod))
-        : "",
+        : ""),
     terms:
-      carrier && carrier.paymentTermDays > 0
+      carrier?.paymentTermDays != null && carrier.paymentTermDays > 0
         ? t("Net {0} · pays {1}", carrier.paymentTermDays, cardDay(record.payDate))
         : t("Pays {0}", cardDay(record.payDate)),
   };

@@ -16,7 +16,7 @@ import {
   type AgentShadowReportQuery,
 } from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
-import type { AgentDefinitionRow } from "./agent-definition";
+import { toAgentDefinitionRow, type AgentDefinitionRow } from "./agent-definition";
 
 type RequestOptions = { signal?: AbortSignal };
 
@@ -89,7 +89,9 @@ export async function fetchAgentVersionDraft(
     variables: { agentId, version },
     signal: options?.signal,
   });
-  return getFragmentData(AgentDefinitionCardFieldsFragmentDoc, data.agentDefinitionVersionDraft);
+  return toAgentDefinitionRow(
+    getFragmentData(AgentDefinitionCardFieldsFragmentDoc, data.agentDefinitionVersionDraft),
+  );
 }
 
 /** One agent as the roster reads it, or null when it is gone. */
@@ -104,7 +106,9 @@ export async function fetchAgentDefinition(
     signal: options?.signal,
   });
   return data.agentDefinition
-    ? getFragmentData(AgentDefinitionCardFieldsFragmentDoc, data.agentDefinition)
+    ? toAgentDefinitionRow(
+        getFragmentData(AgentDefinitionCardFieldsFragmentDoc, data.agentDefinition),
+      )
     : null;
 }
 
@@ -132,7 +136,9 @@ export async function draftAgentFromDescription(description: string): Promise<Ag
 }
 
 /** Instructions with the same meaning, shorter. Saves nothing. */
-export async function tightenAgentInstructions(instructions: string): Promise<TightenedInstructions> {
+export async function tightenAgentInstructions(
+  instructions: string,
+): Promise<TightenedInstructions> {
   const data = await requestGraphQL({
     document: TightenAgentInstructionsDocument,
     operationName: "TightenAgentInstructions",

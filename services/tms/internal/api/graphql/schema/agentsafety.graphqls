@@ -315,7 +315,7 @@ extend type Query {
   What each agent can do without a person, by name. Null agentIds reads every
   agent in the organization; at most 100 may be named.
   """
-  agentSafety(agentIds: [ID!]): [AgentSafety!]!
+  agentSafety(agentIds: [ID!]): [AgentSafety!]! @authorizes(resource: "agent_definition")
 }
 
 extend type Mutation {

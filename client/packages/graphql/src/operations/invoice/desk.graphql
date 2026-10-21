@@ -2,7 +2,7 @@
 # each was billed, what settled it, its disputes, and where it went. The
 # shipments it bills are read a page at a time through shipments, and the
 # lines themselves stay on the invoice's page.
-query DeskInvoiceCard($id: ID!) {
+query DeskInvoiceCard($id: ID!) @requiresRead(kind: "invoice_dispute") {
   invoice(id: $id) {
     id
     number

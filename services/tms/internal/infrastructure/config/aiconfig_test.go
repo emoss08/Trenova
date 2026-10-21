@@ -70,7 +70,7 @@ func TestLoad_SaysWhereTheDocumentIntelligenceSectionWent(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "config.test.yaml")
 	require.NoError(t, os.WriteFile(path, []byte(
-		"documentIntelligence:\n  enableAI: true\n  ocrCommand: tesseract\n",
+		"documentIntelligence:\n  enableAI: true\n  aiTimeout: 20s\n",
 	), 0o600))
 
 	loader := config.NewLoader(

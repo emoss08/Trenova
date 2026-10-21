@@ -1097,7 +1097,7 @@ extend type Query {
   factoringNoa(id: ID!): FactoringNoa!
   "Evaluates the invoice now and returns its readiness."
   factoringReadiness(invoiceId: ID!): FactoringInvoiceState!
-  factoringInvoiceStates(input: FactoringInvoiceStateListInput!): FactoringInvoiceStateConnection!
+  factoringInvoiceStates(input: FactoringInvoiceStateListInput!): FactoringInvoiceStateConnection! @authorizes(resource: "invoice")
   factoringSummary: FactoringSummary!
   factoringSubmissions(input: FactoringSubmissionListInput!): FactoringSubmissionConnection!
   factoringSubmission(id: ID!): FactoringSubmission!

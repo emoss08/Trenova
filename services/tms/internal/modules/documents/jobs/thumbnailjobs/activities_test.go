@@ -7,10 +7,17 @@ import (
 	"image/color"
 	"image/png"
 	"io"
+	"sync"
 	"testing"
+	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/imaging/imagingfake"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 
+	"github.com/emoss08/trenova/internal/modules/documents/app/pagerender"
 	"github.com/emoss08/trenova/internal/modules/documents/app/thumbnailservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/thumbnailjobs/thumbnailcontract"
@@ -29,6 +36,7 @@ type thumbnailStorage struct {
 	uploadKey   string
 	uploadBody  []byte
 	metadata    map[string]string
+	existing    map[string]bool
 }
 
 func (s *thumbnailStorage) Upload(
@@ -110,7 +118,9 @@ func (s *thumbnailStorage) ListMultipartUploadParts(
 ) ([]kernelports.UploadedPart, error) {
 	return nil, nil
 }
-func (s *thumbnailStorage) Exists(context.Context, string) (bool, error) { return false, nil }
+func (s *thumbnailStorage) Exists(_ context.Context, key string) (bool, error) {
+	return s.existing[key], nil
+}
 func (s *thumbnailStorage) GetFileInfo(context.Context, string) (*kernelports.FileInfo, error) {
 	return nil, nil
 }
@@ -124,13 +134,11 @@ func TestGenerateThumbnailActivityDecryptsOriginalAndStoresEncryptedPreview(t *t
 		),
 	)
 	doc := thumbnailDocument()
-	encrypted, err := enc.EncryptBytesWithAAD(
-		testPNG(t),
-		documentStorageAAD(doc, doc.StoragePath),
-	)
-	require.NoError(t, err)
-
-	storageClient := &thumbnailStorage{download: []byte(encrypted)}
+	original := testPNG(t)
+	doc.FileSize = int64(len(original))
+	storageClient := &thumbnailStorage{
+		download: sealBlob(t, enc, original, documentStorageAAD(doc, doc.StoragePath)),
+	}
 	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.EXPECT().GetByID(mock.Anything, mockGetDocumentRequest(doc)).Return(doc, nil)
 	repo.EXPECT().
@@ -140,7 +148,7 @@ func TestGenerateThumbnailActivityDecryptsOriginalAndStoresEncryptedPreview(t *t
 	activities := NewActivities(ActivitiesParams{
 		DocumentRepository: repo,
 		Storage:            storageClient,
-		ThumbnailGenerator: thumbnailservice.NewGenerator(nil),
+		ThumbnailGenerator: thumbnailservice.NewGenerator(imagingfake.New()),
 		Encryption:         enc,
 	})
 
@@ -161,14 +169,65 @@ func TestGenerateThumbnailActivityDecryptsOriginalAndStoresEncryptedPreview(t *t
 	require.NotEmpty(t, previewPath)
 	require.Equal(t, doc.StoragePath, storageClient.downloadKey)
 	require.Equal(t, previewPath, storageClient.uploadKey)
-	require.Equal(t, encryptionservice.CryptoModeEnvelopeV1, storageClient.metadata["crypto_mode"])
-	require.True(t, encryptionservice.IsEnvelope(string(storageClient.uploadBody)))
+	require.Equal(t, encryptionservice.CryptoModeBlobV1, storageClient.metadata["crypto_mode"])
+	require.True(t, encryptionservice.IsBlob(storageClient.uploadBody))
 
-	_, err = enc.DecryptBytesWithAAD(
-		string(storageClient.uploadBody),
+	opened, err := enc.OpenBlob(
+		t.Context(),
+		bytes.NewReader(storageClient.uploadBody),
+		int64(len(storageClient.uploadBody)),
 		documentStorageAAD(doc, previewPath),
 	)
 	require.NoError(t, err)
+	_, err = io.ReadAll(opened)
+	require.NoError(t, err)
+}
+
+func TestPrerenderPagesActivityStoresEveryPageViewEncrypted(t *testing.T) {
+	t.Parallel()
+
+	enc := encryptionservice.NewWithKeyManager(
+		encryptionservice.NewLocalKeyManager(
+			"thumbnail-test-encryption-key-with-at-least-32-bytes",
+		),
+	)
+	doc := thumbnailDocument()
+	original := testPNG(t)
+	doc.FileSize = int64(len(original))
+	storageClient := &thumbnailStorage{
+		download: sealBlob(t, enc, original, documentStorageAAD(doc, doc.StoragePath)),
+	}
+	repo := documentportsmock.NewMockDocumentRepository(t)
+	repo.EXPECT().GetByID(mock.Anything, mockGetDocumentRequest(doc)).Return(doc, nil)
+
+	fake := imagingfake.New()
+	fake.PageCount = 3
+	generator := thumbnailservice.NewGenerator(fake)
+	activities := NewActivities(ActivitiesParams{
+		DocumentRepository: repo,
+		Storage:            storageClient,
+		ThumbnailGenerator: generator,
+		PageRenders: pagerender.New(pagerender.Params{
+			Storage:    storageClient,
+			Encryption: enc,
+			Generator:  generator,
+			Config:     &config.Config{},
+			Logger:     zap.NewNop(),
+		}),
+		Encryption: enc,
+	})
+
+	var suite testsuite.WorkflowTestSuite
+	env := suite.NewTestActivityEnvironment()
+	env.RegisterActivity(activities.PrerenderPagesActivity)
+	result, err := env.ExecuteActivity(activities.PrerenderPagesActivity, thumbnailPayload(doc))
+	require.NoError(t, err)
+
+	var stored int
+	require.NoError(t, result.Get(&stored))
+	assert.Equal(t, 3, stored)
+	assert.Equal(t, pagerender.Key(doc, 3), storageClient.uploadKey, "the last page stored")
+	assert.True(t, encryptionservice.IsBlob(storageClient.uploadBody))
 }
 
 func thumbnailDocument() *document.Document {
@@ -225,4 +284,150 @@ func testPNG(t *testing.T) []byte {
 	var buf bytes.Buffer
 	require.NoError(t, png.Encode(&buf, img))
 	return buf.Bytes()
+}
+
+func sealBlob(
+	t *testing.T,
+	enc *encryptionservice.Service,
+	plaintext []byte,
+	aad encryptionservice.AAD,
+) []byte {
+	t.Helper()
+	sealed, err := enc.SealBlob(t.Context(), bytes.NewReader(plaintext), int64(len(plaintext)), aad)
+	require.NoError(t, err)
+	out, err := io.ReadAll(sealed)
+	require.NoError(t, err)
+	return out
+}
+
+func TestPrerenderPagesActivityHeartbeatsAfterEveryStoredPage(t *testing.T) {
+	t.Parallel()
+
+	enc := encryptionservice.NewWithKeyManager(
+		encryptionservice.NewLocalKeyManager(
+			"thumbnail-test-encryption-key-with-at-least-32-bytes",
+		),
+	)
+	doc := thumbnailDocument()
+	original := testPNG(t)
+	doc.FileSize = int64(len(original))
+	storageClient := &thumbnailStorage{
+		download: sealBlob(t, enc, original, documentStorageAAD(doc, doc.StoragePath)),
+	}
+	repo := documentportsmock.NewMockDocumentRepository(t)
+	repo.EXPECT().GetByID(mock.Anything, mockGetDocumentRequest(doc)).Return(doc, nil)
+
+	fake := imagingfake.New()
+	fake.RenderFunc = func(
+		_ context.Context,
+		_ *kernelports.ImagingRenderRequest,
+		yield func(*kernelports.ImagingArtifact) error,
+	) (*kernelports.ImagingRenderSummary, error) {
+		for page := range 3 {
+			time.Sleep(10 * time.Millisecond)
+			data := []byte("RIFF-slow-page")
+			if err := yield(&kernelports.ImagingArtifact{
+				Index:       page,
+				ContentType: "image/webp",
+				Size:        int64(len(data)),
+				Body:        bytes.NewReader(data),
+			}); err != nil {
+				return nil, err
+			}
+		}
+		return &kernelports.ImagingRenderSummary{PageCount: 3, Rendered: 3}, nil
+	}
+	generator := thumbnailservice.NewGenerator(fake)
+	activities := NewActivities(ActivitiesParams{
+		DocumentRepository: repo,
+		Storage:            storageClient,
+		ThumbnailGenerator: generator,
+		PageRenders: pagerender.New(pagerender.Params{
+			Storage:    storageClient,
+			Encryption: enc,
+			Generator:  generator,
+			Config:     &config.Config{},
+			Logger:     zap.NewNop(),
+		}),
+		Encryption: enc,
+	})
+
+	var (
+		mu         sync.Mutex
+		heartbeats []int
+	)
+	activities.heartbeat = func(_ context.Context, details ...any) {
+		for _, detail := range details {
+			if progress, ok := detail.(pagerender.Progress); ok {
+				mu.Lock()
+				heartbeats = append(heartbeats, progress.PagesStored)
+				mu.Unlock()
+			}
+		}
+	}
+	var suite testsuite.WorkflowTestSuite
+	env := suite.NewTestActivityEnvironment()
+	env.RegisterActivity(activities.PrerenderPagesActivity)
+	result, err := env.ExecuteActivity(activities.PrerenderPagesActivity, thumbnailPayload(doc))
+	require.NoError(t, err)
+
+	var stored int
+	require.NoError(t, result.Get(&stored))
+	assert.Equal(t, 3, stored)
+	mu.Lock()
+	defer mu.Unlock()
+	assert.Equal(t, []int{0, 1, 2, 3, 3}, heartbeats, "one to start, one per stored page, then the count")
+}
+
+func TestPrerenderPagesActivityRetryDoesNotResendAFinishedDocument(t *testing.T) {
+	t.Parallel()
+
+	enc := encryptionservice.NewWithKeyManager(
+		encryptionservice.NewLocalKeyManager(
+			"thumbnail-test-encryption-key-with-at-least-32-bytes",
+		),
+	)
+	doc := thumbnailDocument()
+	doc.FileType = "application/pdf"
+	storageClient := &thumbnailStorage{existing: map[string]bool{
+		pagerender.Key(doc, 1): true,
+		pagerender.Key(doc, 2): true,
+	}}
+	repo := documentportsmock.NewMockDocumentRepository(t)
+	repo.EXPECT().GetByID(mock.Anything, mockGetDocumentRequest(doc)).Return(doc, nil)
+
+	fake := imagingfake.New()
+	fake.RenderFunc = func(
+		context.Context,
+		*kernelports.ImagingRenderRequest,
+		func(*kernelports.ImagingArtifact) error,
+	) (*kernelports.ImagingRenderSummary, error) {
+		t.Error("a document whose pages are all stored is not sent to the worker")
+		return &kernelports.ImagingRenderSummary{}, nil
+	}
+	generator := thumbnailservice.NewGenerator(fake)
+	activities := NewActivities(ActivitiesParams{
+		DocumentRepository: repo,
+		Storage:            storageClient,
+		ThumbnailGenerator: generator,
+		PageRenders: pagerender.New(pagerender.Params{
+			Storage:    storageClient,
+			Encryption: enc,
+			Generator:  generator,
+			Config:     &config.Config{},
+			Logger:     zap.NewNop(),
+		}),
+		Encryption: enc,
+	})
+
+	var suite testsuite.WorkflowTestSuite
+	env := suite.NewTestActivityEnvironment()
+	env.SetHeartbeatDetails(pagerender.Progress{PagesStored: 2, PageCount: 2})
+	env.RegisterActivity(activities.PrerenderPagesActivity)
+	result, err := env.ExecuteActivity(activities.PrerenderPagesActivity, thumbnailPayload(doc))
+	require.NoError(t, err)
+
+	var stored int
+	require.NoError(t, result.Get(&stored))
+	assert.Equal(t, 2, stored)
 }

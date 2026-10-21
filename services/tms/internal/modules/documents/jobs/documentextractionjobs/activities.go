@@ -1,18 +1,14 @@
 package documentextractionjobs
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
-	"image/png"
-	"os"
-	"os/exec"
-	"path/filepath"
 	"strings"
 	"time"
 
-	"github.com/disintegration/imaging"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentparsingruleports"
+
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
@@ -20,11 +16,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documentupload"
-	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentextractionjobs/documentintelligencecontract"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentcontentports"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/documentparsingruleports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentsearchprojectionports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
@@ -40,19 +33,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/activity"
-	"go.temporal.io/sdk/client"
-	"go.temporal.io/sdk/temporal"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
-
-const ocrRenderDPI = 150
 
 type ActivitiesParams struct {
 	fx.In
@@ -70,13 +57,12 @@ type ActivitiesParams struct {
 	SearchProjection    documentsearchprojectionports.DocumentSearchProjectionService
 	Storage             kernelports.Client
 	WorkflowStarter     kernelports.WorkflowStarter
-	ParsingRuleRuntime  documentparsingruleports.DocumentParsingRuleRuntime
 	Encryption          *encryptionservice.Service
 	AgentEvents         agentports.AgentEventPublisher                 `optional:"true"`
 	ShadowSampler       extractionshadowports.ExtractionShadowSampler  `optional:"true"`
 	Rollout             extractionrolloutports.ExtractionRolloutRouter `optional:"true"`
-	PDFReader           kernelports.PDFReader
-	OfficeReader        kernelports.OfficeDocumentReader
+	ParsingRuleRuntime  documentparsingruleports.DocumentParsingRuleRuntime
+	Imaging             kernelports.Imaging
 	Converter           kernelports.DocumentConverter       `optional:"true"`
 	Triage              inboundmessageports.TriageEventSink `optional:"true"`
 	Realtime            agentports.RealtimeService          `optional:"true"`
@@ -95,14 +81,13 @@ type Activities struct {
 	aiDocumentService   documentaiextractionports.AIDocumentService
 	searchProjection    documentsearchprojectionports.DocumentSearchProjectionService
 	storage             kernelports.Client
-	workflowStarter     kernelports.WorkflowStarter
 	parsingRuleRuntime  documentparsingruleports.DocumentParsingRuleRuntime
+	workflowStarter     kernelports.WorkflowStarter
 	encryption          *encryptionservice.Service
 	agentEvents         agentports.AgentEventPublisher
 	shadowSampler       extractionshadowports.ExtractionShadowSampler
 	rollout             extractionrolloutports.ExtractionRolloutRouter
-	pdfReader           kernelports.PDFReader
-	officeReader        kernelports.OfficeDocumentReader
+	imaging             kernelports.Imaging
 	converter           kernelports.DocumentConverter
 	conversionCfg       *config.DocumentConversionConfig
 	triage              inboundmessageports.TriageEventSink
@@ -126,11 +111,6 @@ func NewActivities(p ActivitiesParams) *Activities {
 		workflowStarter = noopWorkflowStarter{}
 	}
 
-	parsingRuleRuntime := p.ParsingRuleRuntime
-	if parsingRuleRuntime == nil {
-		parsingRuleRuntime = noopDocumentParsingRuleRuntime{}
-	}
-
 	return &Activities{
 		logger:              p.Logger.Named("temporal.document-extraction"),
 		cfg:                 p.Config.GetAIConfig(),
@@ -145,133 +125,24 @@ func NewActivities(p ActivitiesParams) *Activities {
 		searchProjection:    searchProjection,
 		storage:             p.Storage,
 		workflowStarter:     workflowStarter,
-		parsingRuleRuntime:  parsingRuleRuntime,
 		encryption:          p.Encryption,
 		agentEvents:         p.AgentEvents,
 		shadowSampler:       p.ShadowSampler,
 		rollout:             p.Rollout,
 		triage:              p.Triage,
 		realtime:            p.Realtime,
-		pdfReader:           p.PDFReader,
-		officeReader:        p.OfficeReader,
+		imaging:             p.Imaging,
+		parsingRuleRuntime:  parsingRuleRuntimeOrNoop(p.ParsingRuleRuntime),
 		converter:           p.Converter,
 		conversionCfg:       p.Config.GetDocumentConversionConfig(),
 	}
 }
 
-func (a *Activities) ProcessDocumentIntelligenceActivity(
-	ctx context.Context,
-	payload *documentintelligencecontract.ProcessDocumentIntelligencePayload,
-) (*ProcessDocumentIntelligenceResult, error) {
-	tenantInfo := pagination.TenantInfo{
-		OrgID:  payload.OrganizationID,
-		BuID:   payload.BusinessUnitID,
-		UserID: payload.UserID,
-	}
-
-	doc, err := a.documentRepo.GetByID(ctx, documentports.GetDocumentByIDRequest{
-		ID:         payload.DocumentID,
-		TenantInfo: tenantInfo,
-	})
-	if err != nil {
-		if errortypes.IsNotFoundError(err) {
-			return nil, temporal.NewNonRetryableApplicationError(
-				"Document no longer exists",
-				temporaltype.ErrorTypeResourceNotFound.String(),
-				err,
-			)
-		}
-		return nil, err
-	}
-	// The profile says whether this document is ever to be read, and this is
-	// the one place that cannot be gone around. EnqueueExtraction checks it
-	// too, but the reconcile starts this workflow directly, so a gate that
-	// lived only at the enqueue was no gate at all.
-	if !doc.ProcessingProfile.SupportsIntelligence() {
-		a.metrics.Document.RecordExtraction("skipped", "", "processing_profile_disabled")
-
-		return &ProcessDocumentIntelligenceResult{
-			DocumentID: doc.ID,
-			Status:     string(doc.ContentStatus),
-			Kind:       doc.DetectedKind,
-		}, nil
-	}
-
-	control, err := a.getDocumentControl(ctx, doc.OrganizationID, doc.BusinessUnitID)
-	if err != nil {
-		return nil, err
-	}
-	if !control.EnableDocumentIntelligence {
-		a.metrics.Document.RecordExtraction("skipped", "", "control_disabled")
-		return &ProcessDocumentIntelligenceResult{
-			DocumentID: doc.ID,
-			Status:     string(doc.ContentStatus),
-			Kind:       doc.DetectedKind,
-		}, nil
-	}
-
-	content, now, err := a.prepareExtractionContentAndStart(ctx, doc, tenantInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	outcome, err := a.runExtractionPipeline(
-		ctx,
-		payload,
-		doc,
-		tenantInfo,
-		control,
-		content,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	if err = a.persistIndexedContentAndAssociate(
-		ctx,
-		&PersistIndexedContentPayload{
-			Document:       doc,
-			TenantInfo:     tenantInfo,
-			Control:        control,
-			Content:        content,
-			Extracted:      outcome.Extracted,
-			Classification: outcome.Classification,
-			Intelligence:   outcome.Intelligence,
-			AIDiagnostics:  outcome.AIDiagnostics,
-			Timestamp:      now,
-		}); err != nil {
-		return nil, err
-	}
-
-	if err = a.finalizeProcessDocumentIntelligence(ctx, &FinalizeIntelligenceParams{
-		Document:       doc,
-		Payload:        payload,
-		Content:        content,
-		Extracted:      outcome.Extracted,
-		Classification: outcome.Classification,
-		Intelligence:   outcome.Intelligence,
-		AIDiagnostics:  outcome.AIDiagnostics,
-		Signature:      outcome.Signature,
-		Control:        control,
-		TenantInfo:     tenantInfo,
-		EnqueueAsyncAI: outcome.EnqueueAsyncAI,
-		Timestamp:      now,
-	}); err != nil {
-		return nil, err
-	}
-
-	return &ProcessDocumentIntelligenceResult{
-		DocumentID: doc.ID,
-		Status:     string(doc.ContentStatus),
-		Kind:       outcome.Classification.Kind,
-	}, nil
-}
-
-func (a *Activities) prepareExtractionContentAndStart(
+func (a *Activities) markExtractionStarted(
 	ctx context.Context,
 	doc *document.Document,
 	tenantInfo pagination.TenantInfo,
-) (*documentcontent.Content, int64, error) {
+) error {
 	now := timeutils.NowUnix()
 	content := &documentcontent.Content{
 		DocumentID:      doc.ID,
@@ -281,7 +152,7 @@ func (a *Activities) prepareExtractionContentAndStart(
 		LastExtractedAt: &now,
 	}
 	if _, err := a.contentRepo.Upsert(ctx, content); err != nil {
-		return nil, 0, err
+		return err
 	}
 
 	doc.ContentStatus = document.ContentStatusExtracting
@@ -297,11 +168,11 @@ func (a *Activities) prepareExtractionContentAndStart(
 			ShipmentDraftStatus: doc.ShipmentDraftStatus,
 			DocumentTypeID:      doc.DocumentTypeID,
 		}); err != nil {
-		return nil, 0, err
+		return err
 	}
 	a.metrics.Document.RecordExtraction("started", "", "none")
 	a.syncSearchProjection(ctx, doc, "")
-	return content, now, nil
+	return nil
 }
 
 func (a *Activities) finalizeProcessDocumentIntelligence(
@@ -367,15 +238,6 @@ func (a *Activities) persistIndexedContentAndAssociate(
 	if _, err := a.contentRepo.Upsert(ctx, payload.Content); err != nil {
 		return err
 	}
-	if !payload.PagesStored {
-		if err := a.contentRepo.ReplacePages(
-			ctx,
-			payload.Content,
-			buildContentPages(payload.Content, payload.Extracted.Pages),
-		); err != nil {
-			return err
-		}
-	}
 	a.metrics.Document.RecordExtraction("succeeded", payload.Extracted.SourceKind, "none")
 
 	payload.Document.ContentStatus = document.ContentStatusIndexed
@@ -392,115 +254,6 @@ func (a *Activities) persistIndexedContentAndAssociate(
 		return err
 	}
 	return nil
-}
-
-func (a *Activities) runExtractionPipeline(
-	ctx context.Context,
-	payload *documentintelligencecontract.ProcessDocumentIntelligencePayload,
-	doc *document.Document,
-	tenantInfo pagination.TenantInfo,
-	control *tenant.DocumentControl,
-	content *documentcontent.Content,
-) (*ExtractionPipelineOutcome, error) {
-	download, err := a.storage.Download(ctx, doc.StoragePath)
-	if err != nil {
-		return nil, a.markFailed(
-			ctx,
-			doc,
-			content,
-			documentupload.FailureDownloadFailed.String(),
-			"Failed to download document",
-		)
-	}
-	defer download.Body.Close()
-
-	buf := new(bytes.Buffer)
-	if _, err = buf.ReadFrom(download.Body); err != nil {
-		return nil, a.markFailed(
-			ctx,
-			doc,
-			content,
-			documentupload.FailureReadFailed.String(),
-			"Failed to read document bytes",
-		)
-	}
-
-	documentBytes := buf.Bytes()
-	if a.encryption != nil && encryptionservice.IsEnvelope(string(documentBytes)) {
-		documentBytes, err = a.encryption.DecryptBytesWithAAD(
-			string(documentBytes),
-			encryptionservice.AAD{
-				Purpose:        encryptionservice.PurposeDocument,
-				OrganizationID: doc.OrganizationID,
-				BusinessUnitID: doc.BusinessUnitID,
-				ResourceID:     doc.StoragePath,
-			},
-		)
-		if err != nil {
-			return nil, a.markFailed(
-				ctx,
-				doc,
-				content,
-				documentupload.FailureReadFailed.String(),
-				"Failed to decrypt document bytes",
-			)
-		}
-	}
-
-	extracted, err := a.extractContent(ctx, doc, documentBytes, control)
-	if err != nil {
-		return nil, a.markFailed(
-			ctx,
-			doc,
-			content,
-			documentupload.FailureExtractionFailed.String(),
-			err.Error(),
-		)
-	}
-
-	features := extractDocumentFeatures(doc.OriginalName, extracted.Pages, extracted.Text)
-	fingerprint := detectProviderFingerprint(doc.OriginalName, extracted.Text, features)
-	classification := classifyDocumentWithControl(
-		doc.OriginalName,
-		extracted.Text,
-		control,
-		features,
-		fingerprint,
-	)
-	intelligence := analyzeDocument(classification, extracted)
-	intelligence = a.applyParsingRules(
-		ctx,
-		tenantInfo,
-		doc.OriginalName,
-		classification.ProviderFingerprint,
-		extracted,
-		intelligence,
-	)
-	result, err := a.enrichWithAI(
-		ctx,
-		&EnrichmentPayload{
-			Payload:        payload,
-			Document:       doc,
-			Control:        control,
-			Extracted:      extracted,
-			Features:       features,
-			Fingerprint:    fingerprint,
-			Classification: classification,
-			Intelligence:   intelligence,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return &ExtractionPipelineOutcome{
-		Extracted:      extracted,
-		Classification: classification,
-		Intelligence:   intelligence,
-		AIDiagnostics:  result.AIDiagnostics,
-		Signature:      result.Signature,
-		EnqueueAsyncAI: result.EnqueueAsyncAI,
-	}, nil
 }
 
 func (a *Activities) upsertShipmentDraftForProcess(
@@ -575,62 +328,6 @@ func (a *Activities) maybeApplyAsyncAIEnqueueFailure(
 	return nil
 }
 
-func (a *Activities) ReconcileDocumentIntelligenceActivity(
-	ctx context.Context,
-	payload *ReconcileDocumentIntelligencePayload,
-) (*ReconcileDocumentIntelligenceResult, error) {
-	if !a.workflowStarter.Enabled() {
-		return &ReconcileDocumentIntelligenceResult{}, nil
-	}
-
-	olderThan := time.Now().Add(-time.Duration(payload.OlderThanSeconds) * time.Second).Unix()
-	docs, err := a.contentRepo.ListPendingExtraction(
-		ctx,
-		&documentcontentports.ListPendingDocumentExtractionRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: payload.OrganizationID,
-				BuID:  payload.BusinessUnitID,
-			},
-			OlderThan: olderThan,
-			Limit:     payload.Limit,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	result := &ReconcileDocumentIntelligenceResult{}
-	for _, doc := range docs {
-		_, startErr := a.workflowStarter.StartWorkflow(
-			ctx,
-			client.StartWorkflowOptions{
-				ID: fmt.Sprintf(
-					"document-intelligence-%s",
-					doc.ID.String(),
-				),
-				TaskQueue:                                temporaltype.DocumentIntelligenceTaskQueue,
-				WorkflowExecutionErrorWhenAlreadyStarted: true,
-				WorkflowIDReusePolicy:                    enums.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY,
-			},
-			"ProcessDocumentIntelligenceWorkflow",
-			&documentintelligencecontract.ProcessDocumentIntelligencePayload{
-				BasePayload: temporaltype.BasePayload{
-					OrganizationID: doc.OrganizationID,
-					BusinessUnitID: doc.BusinessUnitID,
-					UserID:         doc.UploadedByID,
-				},
-				DocumentID: doc.ID,
-			},
-		)
-		if startErr == nil {
-			result.Queued++
-		}
-		a.metrics.Document.RecordReconciliationQueue(startErr == nil)
-	}
-
-	return result, nil
-}
-
 func (a *Activities) ListDocumentIntelligenceTenantsActivity(
 	ctx context.Context,
 	payload *ReconcileDocumentIntelligencePayload,
@@ -650,382 +347,6 @@ func (a *Activities) ListDocumentIntelligenceTenantsActivity(
 	return &ListDocumentIntelligenceTenantsResult{
 		Tenants: temporaljobs.BuildTenantWorkItems(tenants, a.cfg.GetReconcileBatchSize()),
 	}, nil
-}
-
-func (a *Activities) extractContent(
-	ctx context.Context,
-	doc *document.Document,
-	data []byte,
-	control *tenant.DocumentControl,
-) (*ExtractionResult, error) {
-	contentType := strings.ToLower(doc.FileType)
-	ext := strings.ToLower(filepath.Ext(doc.OriginalName))
-	officeFormat, isOffice := kernelports.OfficeFormatOf(contentType, doc.OriginalName)
-
-	switch {
-	case isPlainTextType(contentType, ext):
-		maxChars := a.cfg.GetMaxExtractedChars()
-		bounded := data
-		if len(bounded) > maxChars {
-			bounded = bounded[:maxChars]
-		}
-		text := stringutils.TruncateAndTrim(string(bounded), maxChars)
-		return finalizeExtraction([]*PageExtractionResult{{
-			PageNumber: 1,
-			SourceKind: documentcontent.SourceKindNative,
-			Text:       text,
-		}}, a.cfg.GetMaxExtractedChars()), nil
-	case isPDFType(contentType, ext):
-		return a.extractPDF(ctx, data, control.EnableOCR)
-	case isOffice:
-		return a.extractOffice(ctx, data, officeFormat, control.EnableOCR)
-	case strings.HasPrefix(contentType, "image/"):
-		if !control.EnableOCR {
-			return finalizeExtraction([]*PageExtractionResult{{
-				PageNumber: 1,
-				SourceKind: documentcontent.SourceKindOCR,
-			}}, a.cfg.GetMaxExtractedChars()), nil
-		}
-		page, err := a.runOCRPage(ctx, data, ext, 1)
-		if err != nil {
-			return nil, err
-		}
-		return finalizeExtraction([]*PageExtractionResult{page}, a.cfg.GetMaxExtractedChars()), nil
-	default:
-		return nil, fmt.Errorf("unsupported document type for extraction: %s", doc.FileType)
-	}
-}
-
-func (a *Activities) extractPDF(
-	ctx context.Context,
-	data []byte,
-	enableOCR bool,
-) (*ExtractionResult, error) {
-	doc, err := a.pdfReader.Open(ctx, data)
-	if err != nil {
-		return nil, err
-	}
-	defer doc.Close()
-
-	pageCount := doc.PageCount()
-	pages := make([]*PageExtractionResult, 0, pageCount)
-
-	for page := range pageCount {
-		recordHeartbeatIfActivity(ctx, page)
-		pageText, textErr := doc.PageText(ctx, page)
-		if err = ctx.Err(); err != nil {
-			return nil, err
-		}
-		if textErr == nil && strings.TrimSpace(pageText) != "" {
-			pages = append(pages, a.nativePDFPage(ctx, doc, page, pageText))
-			continue
-		}
-
-		if !enableOCR || page >= a.cfg.GetMaxOCRPages() {
-			pages = append(pages, skippedOCRPage(page+1))
-			continue
-		}
-
-		imageBytes, imageErr := renderPagePNG(ctx, doc, page)
-		if imageErr != nil {
-			if err = ctx.Err(); err != nil {
-				return nil, err
-			}
-			pages = append(pages, &PageExtractionResult{
-				PageNumber: page + 1,
-				SourceKind: documentcontent.SourceKindOCR,
-				Metadata: map[string]any{
-					"extractionMode": "ocr_image_failed",
-				},
-			})
-			continue
-		}
-
-		pages = append(pages, a.ocrPageOrFailure(ctx, imageBytes, ".png", page+1))
-	}
-
-	result := finalizeExtraction(pages, a.cfg.GetMaxExtractedChars())
-	result.PageCount = pageCount
-	return result, nil
-}
-
-func (a *Activities) nativePDFPage(
-	ctx context.Context,
-	doc kernelports.PDFDocument,
-	page int,
-	text string,
-) *PageExtractionResult {
-	native := &PageExtractionResult{
-		PageNumber: page + 1,
-		SourceKind: documentcontent.SourceKindNative,
-		Text:       text,
-	}
-
-	layout, err := doc.PageLayout(ctx, page)
-	if err != nil {
-		a.logger.Debug("page layout unavailable", zap.Int("page", page+1), zap.Error(err))
-		return native
-	}
-	if lines := pdfLayout(layout); len(lines) > 0 {
-		native.Metadata = map[string]any{documentcontent.MetadataLines: lines}
-	}
-	if readsWhole(layout.Text, text) {
-		native.Text = layout.Text
-	}
-
-	return native
-}
-
-func readsWhole(arranged, stream string) bool {
-	kept := stringutils.CountNonSpace(arranged)
-
-	return kept > 0 && float64(kept) >= float64(stringutils.CountNonSpace(stream))*minArrangedShare
-}
-
-func (a *Activities) extractOffice(
-	ctx context.Context,
-	data []byte,
-	format kernelports.OfficeFormat,
-	enableOCR bool,
-) (*ExtractionResult, error) {
-	officePages, err := a.officeReader.Read(ctx, data, format)
-	if err != nil {
-		return nil, err
-	}
-
-	pages := make([]*PageExtractionResult, 0, len(officePages))
-	for idx, officePage := range officePages {
-		recordHeartbeatIfActivity(ctx, idx)
-		if err = ctx.Err(); err != nil {
-			return nil, err
-		}
-
-		if strings.TrimSpace(officePage.Text) != "" || len(officePage.Images) == 0 {
-			pages = append(pages, &PageExtractionResult{
-				PageNumber: idx + 1,
-				SourceKind: documentcontent.SourceKindNative,
-				Text:       officePage.Text,
-			})
-			continue
-		}
-
-		if !enableOCR || idx >= a.cfg.GetMaxOCRPages() {
-			pages = append(pages, skippedOCRPage(idx+1))
-			continue
-		}
-
-		pages = append(pages, a.ocrOfficeImages(ctx, officePage.Images, idx+1))
-	}
-
-	result := finalizeExtraction(pages, a.cfg.GetMaxExtractedChars())
-	result.PageCount = len(officePages)
-	return result, nil
-}
-
-func (a *Activities) ocrOfficeImages(
-	ctx context.Context,
-	images []kernelports.OfficeImage,
-	pageNumber int,
-) *PageExtractionResult {
-	if len(images) == 1 {
-		return a.ocrPageOrFailure(ctx, images[0].Data, images[0].Ext, pageNumber)
-	}
-
-	texts := make([]string, 0, len(images))
-	failures := make([]string, 0)
-	confidence := 0.0
-	for _, img := range images {
-		page, err := a.runOCRPage(ctx, img.Data, img.Ext, pageNumber)
-		if err != nil {
-			failures = append(failures, err.Error())
-			continue
-		}
-		if trimmed := strings.TrimSpace(page.Text); trimmed != "" {
-			texts = append(texts, trimmed)
-		}
-		confidence += page.OCRConfidence
-	}
-
-	recognised := len(images) - len(failures)
-	if recognised == 0 {
-		return &PageExtractionResult{
-			PageNumber: pageNumber,
-			SourceKind: documentcontent.SourceKindOCR,
-			Metadata: map[string]any{
-				"extractionMode": "ocr_failed",
-				"error":          strings.Join(failures, "; "),
-			},
-		}
-	}
-
-	merged := &PageExtractionResult{
-		PageNumber: pageNumber,
-		SourceKind: documentcontent.SourceKindOCR,
-		Text: stringutils.TruncateAndTrim(
-			strings.Join(texts, "\n"),
-			a.cfg.GetMaxExtractedChars(),
-		),
-		OCRConfidence: confidence / float64(recognised),
-		Metadata: map[string]any{
-			"ocrLanguage":   a.cfg.GetOCRLanguage(),
-			"ocrConfidence": confidence / float64(recognised),
-			"ocrImages":     len(images),
-		},
-	}
-	if len(failures) > 0 {
-		merged.Metadata["ocrImageFailures"] = len(failures)
-	}
-
-	return merged
-}
-
-func (a *Activities) ocrPageOrFailure(
-	ctx context.Context,
-	imageData []byte,
-	ext string,
-	pageNumber int,
-) *PageExtractionResult {
-	page, err := a.runOCRPage(ctx, imageData, ext, pageNumber)
-	if err != nil {
-		return &PageExtractionResult{
-			PageNumber: pageNumber,
-			SourceKind: documentcontent.SourceKindOCR,
-			Metadata: map[string]any{
-				"extractionMode": "ocr_failed",
-				"error":          err.Error(),
-			},
-		}
-	}
-	return page
-}
-
-func skippedOCRPage(pageNumber int) *PageExtractionResult {
-	return &PageExtractionResult{
-		PageNumber: pageNumber,
-		SourceKind: documentcontent.SourceKindNative,
-		Metadata: map[string]any{
-			"extractionMode": "native_skipped",
-		},
-	}
-}
-
-func renderPagePNG(ctx context.Context, doc kernelports.PDFDocument, page int) ([]byte, error) {
-	img, err := doc.RenderPage(ctx, page, ocrRenderDPI)
-	if err != nil {
-		return nil, err
-	}
-
-	var buf bytes.Buffer
-	if err = png.Encode(&buf, img); err != nil {
-		return nil, fmt.Errorf("encode page %d: %w", page+1, err)
-	}
-	return buf.Bytes(), nil
-}
-
-func (a *Activities) runOCRPage(
-	ctx context.Context,
-	imageData []byte,
-	ext string,
-	pageNumber int,
-) (*PageExtractionResult, error) {
-	page := PageExtractionResult{
-		PageNumber: pageNumber,
-		SourceKind: documentcontent.SourceKindOCR,
-		Metadata:   map[string]any{},
-	}
-
-	if width, height, err := readImageDimensions(imageData); err == nil {
-		page.Width = width
-		page.Height = height
-	}
-
-	ocrInput := imageData
-	if a.cfg.OCRPreprocessingEnabled() {
-		processed, width, height, err := a.preprocessOCRImage(imageData)
-		if err == nil {
-			ocrInput = processed
-			page.Width = width
-			page.Height = height
-			page.PreprocessingApplied = true
-			page.Metadata["preprocessingMode"] = a.cfg.GetOCRPreprocessingMode()
-		} else {
-			page.Metadata["preprocessingError"] = err.Error()
-		}
-	}
-
-	text, confidence, raw, err := a.runOCR(ctx, ocrInput, ext)
-	if err != nil {
-		return &page, err
-	}
-
-	page.Text = stringutils.TruncateAndTrim(text, a.cfg.GetMaxExtractedChars())
-	page.OCRConfidence = confidence
-	if page.Metadata == nil {
-		page.Metadata = map[string]any{}
-	}
-	page.Metadata["ocrLanguage"] = a.cfg.GetOCRLanguage()
-	page.Metadata["ocrConfidence"] = confidence
-	if lines := tesseractLayout(raw, page.Width, page.Height); len(lines) > 0 {
-		page.Metadata[documentcontent.MetadataLines] = lines
-	}
-
-	return &page, nil
-}
-
-func (a *Activities) runOCR(
-	ctx context.Context,
-	imageData []byte,
-	ext string,
-) (text string, confidence float64, raw string, err error) {
-	tmpFile, err := os.CreateTemp("", "trenova-ocr-*"+ext)
-	if err != nil {
-		return "", 0, "", err
-	}
-	defer os.Remove(tmpFile.Name())
-
-	if _, err = tmpFile.Write(imageData); err != nil {
-		tmpFile.Close()
-		return "", 0, "", err
-	}
-	if err = tmpFile.Close(); err != nil {
-		return "", 0, "", err
-	}
-
-	ocrCtx, cancel := context.WithTimeout(ctx, a.cfg.GetOCRTimeout())
-	defer cancel()
-
-	// #nosec G204 -- OCR binary path and language come from trusted config; temp path is from os.CreateTemp, not user shell input
-	cmd := exec.CommandContext(
-		ocrCtx,
-		a.cfg.GetOCRCommand(),
-		tmpFile.Name(),
-		"stdout",
-		"-l",
-		a.cfg.GetOCRLanguage(),
-		"tsv",
-	)
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		if ocrCtx.Err() != nil {
-			return "", 0, "", fmt.Errorf(
-				"ocr command timed out after %s: %w",
-				a.cfg.GetOCRTimeout(),
-				ocrCtx.Err(),
-			)
-		}
-		return "", 0, "", fmt.Errorf(
-			"ocr command failed: %w: %s",
-			err,
-			strings.TrimSpace(string(output)),
-		)
-	}
-
-	text, confidence, err = parseTesseractTSV(string(output))
-	if err != nil {
-		return "", 0, "", err
-	}
-
-	return text, confidence, string(output), nil
 }
 
 func (a *Activities) markFailed(
@@ -1424,37 +745,4 @@ func (a *Activities) getDocumentControl(
 	orgID, buID pulid.ID,
 ) (*tenant.DocumentControl, error) {
 	return a.documentControlRepo.GetOrCreate(ctx, orgID, buID)
-}
-
-func (a *Activities) preprocessOCRImage(
-	imageData []byte,
-) (data []byte, width, height int, err error) {
-	img, err := imaging.Decode(bytes.NewReader(imageData))
-	if err != nil {
-		return nil, 0, 0, err
-	}
-
-	processed := img
-	maxDimension := a.cfg.GetOCRMaxImageDimension()
-	if maxDimension > 0 {
-		bounds := processed.Bounds()
-		if bounds.Dx() > maxDimension || bounds.Dy() > maxDimension {
-			processed = imaging.Fit(processed, maxDimension, maxDimension, imaging.Lanczos)
-		}
-	}
-
-	if strings.ToLower(a.cfg.GetOCRPreprocessingMode()) == "standard" {
-		processed = imaging.Grayscale(processed)
-		processed = imaging.AdjustContrast(processed, ocrPreprocessingContrastBoost)
-		processed = imaging.Sharpen(processed, ocrPreprocessingSharpenSigma)
-		processed = thresholdImage(processed, ocrPreprocessingBinaryThreshold)
-	}
-
-	buf := new(bytes.Buffer)
-	if encErr := imaging.Encode(buf, processed, imaging.PNG); encErr != nil {
-		return nil, 0, 0, encErr
-	}
-
-	bounds := processed.Bounds()
-	return buf.Bytes(), bounds.Dx(), bounds.Dy(), nil
 }

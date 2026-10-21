@@ -6,10 +6,10 @@ import { activityLine, type ActivityContext } from "../activity-copy";
 const DANA = {
   id: "usr_dana",
   name: "Dana Whitfield",
-  emailAddress: "dana@trenova.example",
+  username: "dana",
   thumbnailUrl: "",
 };
-const ME = { id: "usr_me", name: "System Administrator", emailAddress: "me@x", thumbnailUrl: "" };
+const ME = { id: "usr_me", name: "System Administrator", username: "admin", thumbnailUrl: "" };
 
 const context: ActivityContext = {
   meId: ME.id,

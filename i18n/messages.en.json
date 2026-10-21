@@ -19988,11 +19988,12 @@
     ]
   },
   "Advance {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/pay-advance"
     ]
   },
@@ -42150,7 +42151,7 @@
     ]
   },
   "Business unit is required": {
-    "sites": 145,
+    "sites": 144,
     "scope": [
       "go"
     ],
@@ -44256,7 +44257,7 @@
     ]
   },
   "Candidate is required": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -45046,6 +45047,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Card assignment is hidden": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Card belongs to another tractor": {
@@ -50324,7 +50334,7 @@
     ]
   },
   "Checklist": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -51385,15 +51395,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Choose how uploaded documents are read before fields are extracted. Switching affects documents uploaded from now on; documents already read keep their text.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Choose one of the listed resolution codes": {
@@ -61638,6 +61639,15 @@
       "go/other"
     ]
   },
+  "Convert a document with Docling, then classify and extract it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Convert amount splits to percentages?": {
     "sites": 1,
     "scope": [
@@ -61693,15 +61703,6 @@
     ]
   },
   "Converted amount is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Converter is invalid": {
     "sites": 1,
     "scope": [
       "go"
@@ -67232,7 +67233,7 @@
     ]
   },
   "Credited": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -80771,34 +80772,6 @@
       "apps/web/components"
     ]
   },
-  "Docling": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin",
-      "routes/agent-control"
-    ]
-  },
-  "Docling is unavailable: the document converter is not configured on this server. An administrator sets documentConversion.doclingUrl and documentConversion.apiKey to turn it on.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Docling needs the document converter, which is not configured on this server. Set documentConversion.doclingUrl and documentConversion.apiKey, or keep the Legacy engine.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Docling re-conversion": {
     "sites": 1,
     "scope": [
@@ -80806,15 +80779,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "Docling reads the page layout, tables, and scanned text, and every extracted field needs an AI provider that serves document work. Parsing rules are not applied.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Docs": {
@@ -81099,7 +81063,7 @@
     ]
   },
   "Document encryption is not configured": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -81204,7 +81168,7 @@
     ]
   },
   "Document is required": {
-    "sites": 14,
+    "sites": 13,
     "scope": [
       "go"
     ],
@@ -81488,13 +81452,12 @@
     ]
   },
   "Document text": {
-    "sites": 6,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
-      "routes/agent-control"
+      "routes/admin"
     ]
   },
   "Document text, when the record it belongs to may be read by a model": {
@@ -86690,24 +86653,6 @@
     ],
     "areas": [
       "routes/dispatch-control"
-    ]
-  },
-  "Each case's pages as first frozen, read by the legacy engine.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
-  "Each case's pages frozen again through Docling, as Markdown. A case not yet re-converted is skipped.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Each check reads this organization's own records as they are now. Check again after a change to see it reflected.": {
@@ -100217,15 +100162,6 @@
       "routes/agent-control"
     ]
   },
-  "Extract and classify document content": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Extract shipment data and build the draft.": {
     "sites": 1,
     "scope": [
@@ -100317,33 +100253,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "Extraction engine": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Extraction engine is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Extraction engine must be Legacy or Docling": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Extraction evaluations cannot run on this installation": {
@@ -100439,7 +100348,7 @@
     ]
   },
   "Extraction time is required": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -101834,7 +101743,7 @@
     ]
   },
   "Failed to decrypt document": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -102005,7 +101914,7 @@
     ]
   },
   "Failed to download document": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "go"
     ],
@@ -102059,15 +101968,6 @@
     ]
   },
   "Failed to encrypt document": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Failed to encrypt document upload": {
     "sites": 1,
     "scope": [
       "go"
@@ -102530,7 +102430,7 @@
     ]
   },
   "Failed to process uploaded file": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -102608,24 +102508,6 @@
     ],
     "areas": [
       "routes/billing-queue"
-    ]
-  },
-  "Failed to read document": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Failed to read uploaded file": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Failed to read {0}": {
@@ -103100,6 +102982,15 @@
       "go/other"
     ]
   },
+  "Failed to store document": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Failed to submit EDI load tender": {
     "sites": 1,
     "scope": [
@@ -103305,24 +103196,6 @@
     "areas": [
       "apps/web/components",
       "routes/worker"
-    ]
-  },
-  "Failed to upload document": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Failed to upload file": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Failed to upload organization logo": {
@@ -116324,11 +116197,12 @@
     ]
   },
   "Hidden": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "ts"
     ],
     "areas": [
+      "packages/shared/components",
       "routes/agent-control",
       "routes/desk",
       "routes/rate-agreement",
@@ -121321,7 +121195,7 @@
     ]
   },
   "In dispute": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
@@ -134581,16 +134455,6 @@
       "routes/dispatch-console"
     ]
   },
-  "Legacy": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin",
-      "routes/agent-control"
-    ]
-  },
   "Legacy exact matches": {
     "sites": 1,
     "scope": [
@@ -146714,7 +146578,7 @@
     ]
   },
   "Method": {
-    "sites": 29,
+    "sites": 30,
     "scope": [
       "go",
       "ts"
@@ -152327,7 +152191,7 @@
     ]
   },
   "Net": {
-    "sites": 7,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -157557,6 +157421,15 @@
     ],
     "areas": [
       "routes/dispatch-console"
+    ]
+  },
+  "No email": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "No email attempts recorded.": {
@@ -172063,15 +171936,6 @@
       "routes/billing-queue"
     ]
   },
-  "Only Docling pages are frozen beside a case": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Only Draft and Published versions are available for simulation.": {
     "sites": 1,
     "scope": [
@@ -176891,6 +176755,15 @@
       "go/other"
     ]
   },
+  "Open, part in dispute": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Open-ended": {
     "sites": 3,
     "scope": [
@@ -178784,7 +178657,7 @@
     ]
   },
   "Organization is required": {
-    "sites": 144,
+    "sites": 143,
     "scope": [
       "go"
     ],
@@ -180572,6 +180445,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Overnight": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Overnight allowed": {
@@ -182536,7 +182418,7 @@
     ]
   },
   "Paid": {
-    "sites": 23,
+    "sites": 24,
     "scope": [
       "go",
       "ts"
@@ -186376,7 +186258,7 @@
     ]
   },
   "Pays {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -201628,15 +201510,6 @@
       "go/other"
     ]
   },
-  "Re-drive stale document intelligence jobs": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Re-extract": {
     "sites": 1,
     "scope": [
@@ -202050,15 +201923,6 @@
       "routes/ifta-tax-rate"
     ]
   },
-  "Read a document with its organization's extraction engine, then classify and extract it": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Read a web page": {
     "sites": 2,
     "scope": [
@@ -202158,15 +202022,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Read documents with": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Read each row as: when fuel costs at least “from” and less than “up to”, add that flat dollar amount.": {
@@ -216025,7 +215880,7 @@
     ]
   },
   "Restroom": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -228093,7 +227948,7 @@
     ]
   },
   "Secure parking": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -247537,6 +247392,15 @@
       "go/other"
     ]
   },
+  "Stored document is too large to read": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Stored documents: search, summaries, attachments, versions and document types.": {
     "sites": 1,
     "scope": [
@@ -253091,15 +252955,6 @@
       "go/other"
     ]
   },
-  "Text source is required": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Text strings that mark the beginning of this section": {
     "sites": 1,
     "scope": [
@@ -256025,15 +255880,6 @@
     ]
   },
   "The candidate could not answer": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
-  "The candidate is not sent documents read by Docling until it is retrained on Docling's output. Production reads them, and they count for neither side.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -261643,15 +261489,6 @@
       "routes/agent-control"
     ]
   },
-  "The legacy engine reads native PDF text, runs OCR on scans, and applies your parsing rules before any AI-assisted extraction.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "The legs and charges of a {0} order cannot be modified": {
     "sites": 1,
     "scope": [
@@ -264492,7 +264329,7 @@
     ]
   },
   "The print job could not be split into pages": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -286283,12 +286120,13 @@
     ]
   },
   "Unknown user": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/accounting-sync",
+      "routes/admin",
       "routes/invoice"
     ]
   },
@@ -306670,6 +306508,16 @@
       "apps/web/components"
     ]
   },
+  "You don't have access to {0}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/components",
+      "routes/desk"
+    ]
+  },
   "You don't have an escrow account.": {
     "sites": 1,
     "scope": [
@@ -309175,6 +309023,15 @@
       "routes/agent-control"
     ]
   },
+  "agents": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
+    ]
+  },
   "all active workers are already synced to Samsara": {
     "sites": 1,
     "scope": [
@@ -309831,6 +309688,15 @@
       "go/other"
     ]
   },
+  "carriers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
+    ]
+  },
   "change how they're split": {
     "sites": 1,
     "scope": [
@@ -310020,6 +309886,15 @@
       "routes/carrier-invoice-matching"
     ]
   },
+  "credential types": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
+    ]
+  },
   "credit left of {0}": {
     "sites": 1,
     "scope": [
@@ -310045,6 +309920,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "customers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
     ]
   },
   "d avg": {
@@ -310307,6 +310191,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "driver settlements": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
     ]
   },
   "due now": {
@@ -312630,6 +312523,15 @@
       "packages/shared/lib"
     ]
   },
+  "escrow accounts": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
+    ]
+  },
   "events": {
     "sites": 1,
     "scope": [
@@ -312914,6 +312816,24 @@
       "routes/reports"
     ]
   },
+  "fiscal periods": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
+    ]
+  },
+  "fleet codes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
+    ]
+  },
   "fmcsa.dot.gov": {
     "sites": 1,
     "scope": [
@@ -313058,6 +312978,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "fuel cards": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
     ]
   },
   "generate to start": {
@@ -313352,6 +313281,15 @@
       "go/other"
     ]
   },
+  "invoice disputes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
+    ]
+  },
   "invoice write-off": {
     "sites": 1,
     "scope": [
@@ -313371,11 +313309,12 @@
     ]
   },
   "invoices": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "packages/shared/lib",
       "routes/inbox"
     ]
   },
@@ -313688,6 +313627,24 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "location categories": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
+    ]
+  },
+  "locations": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
     ]
   },
   "lowercase": {
@@ -314998,6 +314955,15 @@
       "routes/dispatch-console"
     ]
   },
+  "pay advances": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
+    ]
+  },
   "pays {0}": {
     "sites": 2,
     "scope": [
@@ -315050,6 +315016,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "performance reviews": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
     ]
   },
   "pgvector is installed, but the tables that hold the index were never created. Run this on the server; running services notice within five minutes:": {
@@ -315515,6 +315490,15 @@
       "go/other"
     ]
   },
+  "service failure reason codes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
+    ]
+  },
   "service type": {
     "sites": 1,
     "scope": [
@@ -315558,6 +315542,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "shift templates": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
     ]
   },
   "shipment duplication is not configured": {
@@ -315612,6 +315605,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "shipments": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
     ]
   },
   "shipping@customer.com, logistics@customer.com": {
@@ -316600,6 +316602,15 @@
       "routes/accounting-drift"
     ]
   },
+  "tractors": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
+    ]
+  },
   "trailer continues": {
     "sites": 1,
     "scope": [
@@ -316607,6 +316618,15 @@
     ],
     "areas": [
       "routes/dispatch-console"
+    ]
+  },
+  "trailers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
     ]
   },
   "trailing 90 days": {
@@ -316789,6 +316809,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "users": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
     ]
   },
   "v1 – v{0}": {
@@ -317165,6 +317194,15 @@
       "routes/agent-control"
     ]
   },
+  "worker checklists": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
+    ]
+  },
   "worker is required": {
     "sites": 1,
     "scope": [
@@ -317199,6 +317237,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "workers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
     ]
   },
   "workflow id is required": {
@@ -318397,15 +318444,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "{0, plural, one {# document excluded: read by Docling} other {# documents excluded: read by Docling}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "{0, plural, one {# document on file} other {# documents on file}}": {
@@ -329794,6 +329832,15 @@
     ],
     "areas": [
       "routes/time-attendance"
+    ]
+  },
+  "{0} of a linked {1} needs read access to {1}; the operation must declare @requiresRead for it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
     ]
   },
   "{0} of answers": {

@@ -1,4 +1,4 @@
-query DeskFuelPurchaseCard($id: ID!) {
+query DeskFuelPurchaseCard($id: ID!) @requiresRead(kind: "fuel_card") {
   fuelPurchaseDeskCard(id: $id) {
     purchase {
       ...FuelPurchaseFields

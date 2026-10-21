@@ -664,9 +664,9 @@ extend type Query {
   fuelPurchaseImport(id: ID!): FuelPurchaseImportBatch!
   fuelPurchaseImportTemplate(provider: FuelCardProvider!): FuelImportTemplate!
   "A fuel purchase as the Desk card draws it, read in one pass."
-  fuelPurchaseDeskCard(id: ID!): FuelPurchaseDeskCard!
+  fuelPurchaseDeskCard(id: ID!): FuelPurchaseDeskCard! @authorizes(resource: "fuel_purchase")
   "A fuel card as the Desk card draws it, read in one pass."
-  fuelCardDeskCard(id: ID!): FuelCardDeskCard!
+  fuelCardDeskCard(id: ID!): FuelCardDeskCard! @authorizes(resource: "fuel_card") @authorizes(resource: "fuel_purchase")
 }
 
 extend type Mutation {

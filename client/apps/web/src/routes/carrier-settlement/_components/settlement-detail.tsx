@@ -1,3 +1,4 @@
+import { WithheldValue } from "@trenova/shared/components/withheld-value";
 import { AccountingSyncStateLine } from "@/components/accounting-sync/sync-state-line";
 import { ExchangeRateLine } from "@/components/accounting/exchange-rate-line";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -753,6 +754,8 @@ function RemittanceCard({ settlement }: { settlement: SettlementDetailData }) {
   const carrier = settlement.carrier;
   if (!carrier) return null;
 
+  // The carrier's payment details are outside its reference view: null without carrier read.
+  const withheld = carrier.paymentMethod === null || carrier.paymentTermDays === null;
   const remitLines = [
     carrier.remitToName || carrier.name,
     carrier.remitAddressLine1,
@@ -768,7 +771,9 @@ function RemittanceCard({ settlement }: { settlement: SettlementDetailData }) {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div>
           <p className="text-muted-foreground text-xs">{t("Remit to")}</p>
-          {remitLines.length > 0 ? (
+          {withheld ? (
+            <WithheldValue kind="carrier" />
+          ) : remitLines.length > 0 ? (
             remitLines.map((line) => (
               <p key={line} className="text-xs font-medium">
                 {line}
@@ -785,13 +790,25 @@ function RemittanceCard({ settlement }: { settlement: SettlementDetailData }) {
             <p className="text-muted-foreground text-xs">{t("Payment method")}</p>
             <p className="text-xs font-medium">
               {settlement.paymentMethod ||
-                (carrier.paymentMethod === "ACHManual" ? t("ACH (manual)") : carrier.paymentMethod)}
+                (carrier.paymentMethod === null ? (
+                  <WithheldValue kind="carrier" />
+                ) : carrier.paymentMethod === "ACHManual" ? (
+                  t("ACH (manual)")
+                ) : (
+                  carrier.paymentMethod
+                ))}
               {settlement.paymentReference ? ` · ${settlement.paymentReference}` : ""}
             </p>
           </div>
           <div>
             <p className="text-muted-foreground text-xs">{t("Payment terms")}</p>
-            <p className="text-xs font-medium">{t("Net {0} days", carrier.paymentTermDays)}</p>
+            <p className="text-xs font-medium">
+              {carrier.paymentTermDays === null ? (
+                <WithheldValue kind="carrier" />
+              ) : (
+                t("Net {0} days", carrier.paymentTermDays)
+              )}
+            </p>
           </div>
         </div>
       </div>

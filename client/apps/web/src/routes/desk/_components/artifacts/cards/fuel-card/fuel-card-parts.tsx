@@ -135,6 +135,7 @@ export function FuelCardHolders({
       {worker && (
         <CardRecordRow
           className="dk-fu-seat"
+          kind="worker"
           to={recordPath("worker", worker.id)}
           onOpen={onOpenWorker && (() => onOpenWorker(worker.id))}
         >
@@ -149,6 +150,7 @@ export function FuelCardHolders({
       {tractor && (
         <CardRecordRow
           className="dk-fu-seat"
+          kind="tractor"
           to={recordPath("tractor", tractor.id)}
           onOpen={onOpenTractor && (() => onOpenTractor(tractor.id))}
         >

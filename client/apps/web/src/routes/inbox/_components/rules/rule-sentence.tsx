@@ -315,7 +315,7 @@ export function RuleSentence({
       (assignees ?? []).map((row) => ({
         key: row.user.id,
         label: row.user.name,
-        hint: row.user.emailAddress,
+        hint: row.user.username,
       })),
     [assignees],
   );

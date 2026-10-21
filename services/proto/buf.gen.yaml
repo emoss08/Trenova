@@ -1,0 +1,17 @@
+# Go code for the contracts, checked in where the TMS consumes it
+# (services/tms/internal/infrastructure/imaging/imagingpb). Rust code is generated at build
+# time by services/crates/proto. Run with `task rust:proto`; the plugins are pinned and run
+# through `go run`, so nothing is installed.
+version: v2
+managed:
+  enabled: false
+plugins:
+  - local: ["go", "run", "google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.12"]
+    out: ../tms
+    opt:
+      - module=github.com/emoss08/trenova
+  - local: ["go", "run", "google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.6.2"]
+    out: ../tms
+    opt:
+      - module=github.com/emoss08/trenova
+      - require_unimplemented_servers=false

@@ -50,3 +50,6 @@ client/packages/cloud/
 *:Zone.Identifier
 
 .cloudflare
+
+# Imaging benchmark corpus and runs (tools/docling-fixtures/corpus.py, task imaging:bench)
+.imagingbench/

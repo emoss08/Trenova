@@ -256,7 +256,7 @@ type InboundMessage {
 A shipment as an inbox row names it: the numbers a sender quotes and the lane.
 Enough to recognise the load without opening it.
 """
-type InboundShipmentRef {
+type InboundShipmentRef @kind(resource: "shipment") {
   id: ID!
   proNumber: String!
   bol: String!

@@ -103,8 +103,7 @@ func newSubmissionHarness(t *testing.T) *submissionHarness {
 		InvoiceDocuments: &fakeDocumentReader{store: store},
 		Documents:        fakeDocuments{},
 		Store:            store,
-		Assembler:        fakeAssembler{},
-		Images:           fakeImages{},
+		Imaging:          fakeImaging(),
 		Factors:          &fakeFactors{factor: factor},
 		Customers: &fakeCustomers{customers: []*customer.Customer{
 			{ID: customerID, Name: "Halstead Grocery", Code: "=HALSTEAD"},

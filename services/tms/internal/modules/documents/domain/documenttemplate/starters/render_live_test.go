@@ -145,9 +145,8 @@ func TestLiveReportStarterRendersLandscape(t *testing.T) {
 
 	require.True(t, bytes.HasPrefix(pdf, []byte("%PDF")))
 
-	layout, err := pdftest.Open(t, pdf).PageLayout(t.Context(), 0)
-	require.NoError(t, err)
-	assert.Greater(t, layout.Width, layout.Height,
+	size := pdftest.PageSize(t, pdf, 1)
+	assert.Greater(t, size.Width, size.Height,
 		"a report must be landscape, or its rightmost columns fall off the page")
 
 	text := pdftest.Text(t, pdf)

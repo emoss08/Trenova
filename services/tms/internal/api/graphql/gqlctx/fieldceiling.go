@@ -68,7 +68,7 @@ func (c *FieldCeiling) Withhold(path ast.Path, strip bool) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	c.withheld[withheldName(path)] = struct{}{}
+	c.withheld[WithheldName(path)] = struct{}{}
 	if strip {
 		c.strip = append(c.strip, slices.Clone(path))
 	}
@@ -97,7 +97,8 @@ func (c *FieldCeiling) Stripped() []ast.Path {
 	return slices.Clone(c.strip)
 }
 
-func withheldName(path ast.Path) string {
+// WithheldName is a path by its field names alone, without list indices.
+func WithheldName(path ast.Path) string {
 	var b strings.Builder
 	for _, element := range path {
 		name, ok := element.(ast.PathName)

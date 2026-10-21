@@ -179,10 +179,34 @@ export type WhyRow =
   | { kind: "note"; note: WhyNote; mailbox: string }
   | { kind: "match"; text: string };
 
+/**
+ * The message's mailbox as the reader knows it: its name from the message, and
+ * its review policy from the mailbox list, which only someone who may read
+ * mailboxes is sent. Without the policy the popover leaves out the bar.
+ */
+export type WhyMailbox = Pick<InboundMailbox, "name"> &
+  Partial<Pick<InboundMailbox, "reviewPolicy" | "minConfidence">>;
+
 export type WhyMessage = Pick<
   InboundMessageDetail,
   "failureText" | "status" | "confidence" | "matchReason" | "novaRead"
-> & { mailbox: Pick<InboundMailbox, "reviewPolicy" | "minConfidence" | "name"> | null };
+> & { mailbox: WhyMailbox | null };
+
+/** The message's mailbox joined with its review policy from the mailbox list, when it is there. */
+export function whyMailbox(
+  mailbox: Pick<InboundMailbox, "name"> | null,
+  policy: Pick<InboundMailbox, "reviewPolicy" | "minConfidence"> | undefined,
+): WhyMailbox | null {
+  if (mailbox === null) {
+    return null;
+  }
+
+  return {
+    name: mailbox.name,
+    reviewPolicy: policy?.reviewPolicy,
+    minConfidence: policy?.minConfidence,
+  };
+}
 
 function noteFor(message: WhyMessage, next: TriageAction | null): WhyNote | null {
   if (!message.novaRead) {
@@ -215,7 +239,11 @@ export function whyRows(message: WhyMessage, next: TriageAction | null): WhyRow[
   const failure = message.failureText.trim();
   if (failure !== "") {
     rows.push({ kind: "failure", text: failure, held: message.status === "Quarantined" });
-  } else if (message.novaRead && message.mailbox?.reviewPolicy === "ReviewBelowConfidence") {
+  } else if (
+    message.novaRead &&
+    message.mailbox?.reviewPolicy === "ReviewBelowConfidence" &&
+    message.mailbox.minConfidence !== undefined
+  ) {
     rows.push({
       kind: "confidence",
       confidence: message.confidence,

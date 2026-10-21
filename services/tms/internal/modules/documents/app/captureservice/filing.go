@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/imaging/imagingkit"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
@@ -61,6 +62,8 @@ func (s *Service) coverSheetByID(
 	return sheet, true, nil
 }
 
+const maxAssembledBytes = 256 << 20
+
 // assembleItem joins an item's pages, rotated as a person left them, into
 // one PDF.
 func (s *Service) assembleItem(
@@ -74,7 +77,7 @@ func (s *Service) assembleItem(
 		byID[page.ID] = page
 	}
 
-	parts := make([]captureports.CaptureAssemblyPage, 0, len(item.PageIDs))
+	parts := make([]imagingkit.Part, 0, len(item.PageIDs))
 	for _, id := range item.PageIDs {
 		page, ok := byID[id]
 		if !ok {
@@ -85,10 +88,20 @@ func (s *Service) assembleItem(
 		if err != nil {
 			return nil, err
 		}
-		parts = append(parts, captureports.CaptureAssemblyPage{PDF: data, Rotation: page.Rotation})
+		parts = append(parts, imagingkit.Part{
+			Source:   kernelports.ImagingBytes("application/pdf", data),
+			Rotation: capture.NormalizeRotation(page.Rotation),
+		})
 	}
 
-	return s.assembler.Assemble(ctx, parts)
+	assembled, _, err := imagingkit.Merge(
+		ctx,
+		s.imaging,
+		parts,
+		maxAssembledBytes,
+		kernelports.ImagingBatch,
+	)
+	return assembled, err
 }
 
 // visibleBatch is a batch the person may act on: their own, or anybody's when

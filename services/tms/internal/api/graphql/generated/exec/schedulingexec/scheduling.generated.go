@@ -718,13 +718,12 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "daysOfWeek",
-				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.ShiftTemplate)
 					return obj.DaysOfWeek, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
+				Marshal: gqlexec.Marshal(marshalOString2string),
 			},
 			{
 				Name:     "startMinute",
@@ -748,13 +747,12 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "cycleWeeks",
-				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.ShiftTemplate)
 					return obj.CycleWeeks, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInt2int16),
+				Marshal: gqlexec.Marshal(marshalOInt2int16),
 			},
 			{
 				Name:     "version",
@@ -2040,6 +2038,11 @@ func marshalOAvailabilityPreference2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋintern
 
 func marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v pulid.ID) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
+	return res
+}
+
+func marshalOInt2int16(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int16) graphql.Marshaler {
+	res := graphql.MarshalInt16(v)
 	return res
 }
 

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
@@ -272,7 +273,7 @@ func (a *Activities) finalizeValidateStoredObject(
 		)
 	}
 
-	if session.CryptoMode != encryptionservice.CryptoModeEnvelopeV1 {
+	if session.CryptoMode != encryptionservice.CryptoModeBlobV1 {
 		return a.failSession(
 			ctx,
 			session,
@@ -539,6 +540,17 @@ func (a *Activities) CleanupDocumentStorageActivity(
 ) error {
 	for _, path := range payload.Paths {
 		if path == "" {
+			continue
+		}
+		if strings.HasSuffix(path, "/") {
+			deleter, ok := a.storage.(kernelports.PrefixDeleter)
+			if !ok {
+				continue
+			}
+			if _, err := deleter.DeletePrefix(ctx, path); err != nil {
+				return temporaltype.NewRetryableError("Failed to cleanup document storage", err).
+					ToTemporalError()
+			}
 			continue
 		}
 		if err := a.deleteStoredObject(ctx, path); err != nil {

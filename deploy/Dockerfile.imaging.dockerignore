@@ -1,0 +1,7 @@
+# Build context is services/; the image needs only the Rust workspace and its contracts.
+target
+**/target
+tms
+postgres
+**/fuzz/corpus
+**/fuzz/artifacts

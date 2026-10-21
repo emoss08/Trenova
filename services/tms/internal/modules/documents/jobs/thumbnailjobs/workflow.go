@@ -27,6 +27,12 @@ var thumbnailActivityOptions = workflow.ActivityOptions{
 	RetryPolicy:         defaultRetryPolicy,
 }
 
+var prerenderActivityOptions = workflow.ActivityOptions{
+	StartToCloseTimeout: 10 * time.Minute,
+	HeartbeatTimeout:    time.Minute,
+	RetryPolicy:         defaultRetryPolicy,
+}
+
 func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 	return []temporaltype.WorkflowDefinition{
 		{
@@ -56,6 +62,19 @@ func GenerateThumbnailWorkflow(
 			"error", err,
 		)
 		return nil, err
+	}
+
+	var prerendered int
+	if err = workflow.ExecuteActivity(
+		workflow.WithActivityOptions(ctx, prerenderActivityOptions),
+		a.PrerenderPagesActivity,
+		payload,
+	).Get(ctx, &prerendered); err != nil {
+		workflow.GetLogger(ctx).Warn(
+			"Page views were not rendered ahead; they render on first view",
+			"documentId", payload.DocumentID.String(),
+			"error", err,
+		)
 	}
 
 	workflow.GetLogger(ctx).Info(

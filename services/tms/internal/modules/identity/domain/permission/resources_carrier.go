@@ -6,10 +6,11 @@ import (
 
 func (r *Registry) registerCarrierResources() {
 	_ = r.Register(&ResourceDefinition{
-		Resource:    ResourceCarrier.String(),
-		DisplayName: "Carrier",
-		Description: "External carrier management for brokered freight",
-		Category:    "Carriers",
+		Resource:      ResourceCarrier.String(),
+		DisplayName:   "Carrier",
+		Description:   "External carrier management for brokered freight",
+		Category:      "Carriers",
+		ReferenceView: []string{"code", "name", "scac", "mcNumber", "dotNumber", "status"},
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "View", Description: "View carriers"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Create carriers"},
@@ -53,10 +54,11 @@ func (r *Registry) registerCarrierResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:    ResourceCarrierSettlement.String(),
-		DisplayName: "Carrier Settlement",
-		Description: "Carrier settlement statements, batches, and cost events",
-		Category:    "Carrier settlements",
+		Resource:      ResourceCarrierSettlement.String(),
+		DisplayName:   "Carrier Settlement",
+		Description:   "Carrier settlement statements, batches, and cost events",
+		Category:      "Carrier settlements",
+		ReferenceView: []string{"settlementNumber", "status", "carrierId"},
 		Operations: append(slices.Clone(standardOps),
 			OperationDefinition{
 				Operation:   OpSubmit,
@@ -141,10 +143,11 @@ func (r *Registry) registerCarrierResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:    ResourceCarrierInvoiceMatch.String(),
-		DisplayName: "Carrier Invoice Match",
-		Description: "Carrier invoice matching against negotiated buy rates",
-		Category:    "Carrier settlements",
+		Resource:      ResourceCarrierInvoiceMatch.String(),
+		DisplayName:   "Carrier Invoice Match",
+		Description:   "Carrier invoice matching against negotiated buy rates",
+		Category:      "Carrier settlements",
+		ReferenceView: []string{"invoiceNumber", "status"},
 		Operations: append(slices.Clone(standardOps),
 			OperationDefinition{
 				Operation:   OpApprove,
@@ -162,10 +165,11 @@ func (r *Registry) registerCarrierResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:    ResourceRoutingGuide.String(),
-		DisplayName: "Routing Guide",
-		Description: "Ranked carrier lists per freight lane that drive waterfall tenders",
-		Category:    "Carriers",
+		Resource:      ResourceRoutingGuide.String(),
+		DisplayName:   "Routing Guide",
+		Description:   "Ranked carrier lists per freight lane that drive waterfall tenders",
+		Category:      "Carriers",
+		ReferenceView: []string{"name"},
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "View", Description: "View routing guides"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Create routing guides"},

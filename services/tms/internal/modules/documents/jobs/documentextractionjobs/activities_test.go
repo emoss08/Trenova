@@ -3,7 +3,6 @@ package documentextractionjobs
 import (
 	"context"
 	"errors"
-	"io"
 	"strings"
 	"testing"
 
@@ -19,11 +18,11 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
-	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentextractionjobs/documentintelligencecontract"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentextractionjobs/documentextractioncontract"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentparsingruleports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -36,6 +35,11 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/zap"
+)
+
+const (
+	rateConfirmationText = "Rate Confirmation\nShipper: ACME Foods\nConsignee: Blue Market\nRate: $1,200\nPickup: ACME Foods\n123 Main St\nDallas, TX 75001\nPickup Date: 03/27/2026\nDelivery: Blue Market\n500 Peachtree Rd\nAtlanta, GA 30301\nDelivery Date: 03/28/2026"
+	billOfLadingText     = "Bill of Lading\nShipper: ACME Foods\nConsignee: Blue Market\nCommodity: Produce\nBOL #: B12345"
 )
 
 type asyncRouteOnlyAIDocumentService struct{}
@@ -98,7 +102,47 @@ func (asyncRouteOnlyAIDocumentService) PollRateConfirmationBackgroundExtraction(
 	return nil, nil
 }
 
-func TestProcessDocumentIntelligenceActivity_SkipsWhenControlDisabled(t *testing.T) {
+func expectStoredText(
+	contentRepo *documentcontentportsmock.MockDocumentContentRepository,
+	doc *document.Document,
+	text string,
+) {
+	contentRepo.EXPECT().
+		GetByDocumentID(mock.Anything, doc.ID, mock.Anything).
+		Return(&documentcontent.Content{
+			ID:             pulid.MustNew("dc_"),
+			DocumentID:     doc.ID,
+			OrganizationID: doc.OrganizationID,
+			BusinessUnitID: doc.BusinessUnitID,
+			Status:         documentcontent.StatusExtracted,
+			ContentText:    text,
+			PageCount:      1,
+			SourceKind:     documentcontent.SourceKindNative,
+		}, nil)
+	contentRepo.EXPECT().
+		ListPagesByDocumentID(mock.Anything, doc.ID, mock.Anything).
+		Return([]*documentcontent.Page{{
+			DocumentID:     doc.ID,
+			OrganizationID: doc.OrganizationID,
+			BusinessUnitID: doc.BusinessUnitID,
+			PageNumber:     1,
+			SourceKind:     documentcontent.SourceKindNative,
+			ExtractedText:  text,
+		}}, nil)
+}
+
+func analyzeInput(doc *document.Document) *AnalyzeConvertedDocumentInput {
+	return &AnalyzeConvertedDocumentInput{
+		BasePayload: temporaltype.BasePayload{
+			OrganizationID: doc.OrganizationID,
+			BusinessUnitID: doc.BusinessUnitID,
+			UserID:         doc.UploadedByID,
+		},
+		DocumentID: doc.ID,
+	}
+}
+
+func TestPlanDocumentExtractionActivity_SkipsWhenControlDisabled(t *testing.T) {
 	t.Parallel()
 
 	docRepo := documentportsmock.NewMockDocumentRepository(t)
@@ -109,10 +153,7 @@ func TestProcessDocumentIntelligenceActivity_SkipsWhenControlDisabled(t *testing
 	docID := pulid.MustNew("doc_")
 
 	doc := &document.Document{
-		ID: docID,
-		// The activity refuses a document whose profile says not to read
-		// it, so a fixture standing in for one that reached the pipeline
-		// carries the profile that put it there.
+		ID:                docID,
 		ProcessingProfile: document.ProcessingProfileRateConfirmationImport,
 		OrganizationID:    orgID,
 		BusinessUnitID:    buID,
@@ -136,19 +177,18 @@ func TestProcessDocumentIntelligenceActivity_SkipsWhenControlDisabled(t *testing
 			EnableDocumentIntelligence: false,
 		}, nil)
 
-	promRegistry := prometheus.NewRegistry()
 	activities := &Activities{
 		logger: zap.NewNop(),
 		metrics: &metrics.Registry{
-			Document: metrics.NewDocument(promRegistry, zap.NewNop(), true),
+			Document: metrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), true),
 		},
 		documentRepo:        docRepo,
 		documentControlRepo: controlRepo,
 	}
 
-	result, err := activities.ProcessDocumentIntelligenceActivity(
-		context.Background(),
-		&documentintelligencecontract.ProcessDocumentIntelligencePayload{
+	plan, err := activities.PlanDocumentExtractionActivity(
+		t.Context(),
+		&documentextractioncontract.ProcessDocumentExtractionPayload{
 			DocumentID: docID,
 			BasePayload: temporaltype.BasePayload{
 				OrganizationID: orgID,
@@ -158,22 +198,22 @@ func TestProcessDocumentIntelligenceActivity_SkipsWhenControlDisabled(t *testing
 	)
 
 	require.NoError(t, err)
-	require.NotNil(t, result)
-	assert.Equal(t, string(document.ContentStatusPending), result.Status)
-	assert.Equal(t, "", result.Kind)
+	require.NotNil(t, plan)
+	assert.Equal(t, ExtractionRouteSkip, plan.Route)
+	require.NotNil(t, plan.Result)
+	assert.Equal(t, string(document.ContentStatusPending), plan.Result.Status)
+	assert.Empty(t, plan.Result.Kind)
 }
 
 /*
 The profile is the one gate that cannot be gone around.
 
 EnqueueExtraction checks it, but the reconcile sweep starts this workflow
-directly — so for as long as the check lived only at the enqueue, every
-document that had not been extracted yet was OCR'd and run through a model ten
-minutes after it landed, whatever its profile said. The document control is not
+directly, so the plan refuses the document itself. The document control is not
 reached at all here: a document that is not to be read is not read, whatever
 the tenant has switched on.
 */
-func TestProcessDocumentIntelligenceActivity_RefusesAProfileThatIsNotRead(t *testing.T) {
+func TestPlanDocumentExtractionActivity_RefusesAProfileThatIsNotRead(t *testing.T) {
 	t.Parallel()
 
 	docRepo := documentportsmock.NewMockDocumentRepository(t)
@@ -197,31 +237,30 @@ func TestProcessDocumentIntelligenceActivity_RefusesAProfileThatIsNotRead(t *tes
 		}).
 		Return(doc, nil)
 
-	promRegistry := prometheus.NewRegistry()
 	activities := &Activities{
 		logger: zap.NewNop(),
 		metrics: &metrics.Registry{
-			Document: metrics.NewDocument(promRegistry, zap.NewNop(), true),
+			Document: metrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), true),
 		},
 		documentRepo: docRepo,
-		// No control repository: reaching for one would mean the profile was
-		// checked too late.
 	}
 
-	result, err := activities.ProcessDocumentIntelligenceActivity(
-		context.Background(),
-		&documentintelligencecontract.ProcessDocumentIntelligencePayload{
+	plan, err := activities.PlanDocumentExtractionActivity(
+		t.Context(),
+		&documentextractioncontract.ProcessDocumentExtractionPayload{
 			DocumentID:  docID,
 			BasePayload: temporaltype.BasePayload{OrganizationID: orgID, BusinessUnitID: buID},
 		},
 	)
 
 	require.NoError(t, err)
-	require.NotNil(t, result)
-	assert.Equal(t, string(document.ContentStatusPending), result.Status)
+	require.NotNil(t, plan)
+	assert.Equal(t, ExtractionRouteSkip, plan.Route)
+	require.NotNil(t, plan.Result)
+	assert.Equal(t, string(document.ContentStatusPending), plan.Result.Status)
 }
 
-func TestProcessDocumentIntelligenceActivity_SuppressesShipmentDraftOutsideShipments(t *testing.T) {
+func TestAnalyzeConvertedDocumentActivity_SuppressesShipmentDraftOutsideShipments(t *testing.T) {
 	t.Parallel()
 
 	docRepo := documentportsmock.NewMockDocumentRepository(t)
@@ -229,18 +268,12 @@ func TestProcessDocumentIntelligenceActivity_SuppressesShipmentDraftOutsideShipm
 	contentRepo := documentcontentportsmock.NewMockDocumentContentRepository(t)
 	draftRepo := documentshipmentdraftportsmock.NewMockDocumentShipmentDraftRepository(t)
 	searchProjection := documentsearchprojectionportsmock.NewMockDocumentSearchProjectionService(t)
-	storageClient := kernelportsmock.NewMockClient(t)
 
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
-	userID := pulid.MustNew("usr_")
-	docID := pulid.MustNew("doc_")
 
 	doc := &document.Document{
-		ID: docID,
-		// The activity refuses a document whose profile says not to read
-		// it, so a fixture standing in for one that reached the pipeline
-		// carries the profile that put it there.
+		ID:                pulid.MustNew("doc_"),
 		ProcessingProfile: document.ProcessingProfileRateConfirmationImport,
 		OrganizationID:    orgID,
 		BusinessUnitID:    buID,
@@ -249,56 +282,33 @@ func TestProcessDocumentIntelligenceActivity_SuppressesShipmentDraftOutsideShipm
 		StoragePath:       "documents/rate-confirmation.txt",
 		ResourceType:      "trailer",
 		ResourceID:        "trl_123",
-		ContentStatus:     document.ContentStatusPending,
-		UploadedByID:      userID,
+		ContentStatus:     document.ContentStatusExtracting,
+		UploadedByID:      pulid.MustNew("usr_"),
 	}
 
 	control := tenant.NewDefaultDocumentControl(orgID, buID)
-	contentWrites := make([]documentcontent.Content, 0, 2)
-	docUpdates := make([]documentports.UpdateDocumentIntelligenceRequest, 0, 2)
+	docUpdates := make([]documentports.UpdateDocumentIntelligenceRequest, 0, 1)
 	draftWrites := make([]documentshipmentdraft.DocumentShipmentDraft, 0, 1)
-	metricsRegistry := &metrics.Registry{
-		Document: metrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false),
-	}
 
-	docRepo.EXPECT().
-		GetByID(mock.Anything, mock.Anything).
-		Return(doc, nil)
-	controlRepo.EXPECT().
-		GetOrCreate(mock.Anything, orgID, buID).
-		Return(control, nil)
+	docRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(doc, nil)
+	controlRepo.EXPECT().GetOrCreate(mock.Anything, orgID, buID).Return(control, nil)
+	expectStoredText(contentRepo, doc, rateConfirmationText)
 	contentRepo.EXPECT().
 		Upsert(mock.Anything, mock.AnythingOfType("*documentcontent.Content")).
 		RunAndReturn(func(_ context.Context, entity *documentcontent.Content) (*documentcontent.Content, error) {
-			if entity.ID.IsNil() {
-				entity.ID = pulid.MustNew("dc_")
-			}
-			contentWrites = append(contentWrites, *entity)
 			return entity, nil
 		}).
-		Twice()
-	contentRepo.EXPECT().
-		ReplacePages(mock.Anything, mock.AnythingOfType("*documentcontent.Content"), mock.AnythingOfType("[]*documentcontent.Page")).
-		Return(nil)
+		Once()
 	docRepo.EXPECT().
 		UpdateIntelligence(mock.Anything, mock.AnythingOfType("*documentports.UpdateDocumentIntelligenceRequest")).
 		RunAndReturn(func(_ context.Context, req *documentports.UpdateDocumentIntelligenceRequest) error {
 			docUpdates = append(docUpdates, *req)
 			return nil
 		}).
-		Twice()
+		Once()
 	searchProjection.EXPECT().
 		Upsert(mock.Anything, mock.AnythingOfType("*document.Document"), mock.Anything).
-		Return(nil).Twice()
-	storageClient.EXPECT().
-		Download(mock.Anything, doc.StoragePath).
-		Return(&kernelports.DownloadResult{
-			Body: io.NopCloser(
-				strings.NewReader(
-					"Rate Confirmation\nRate: $1,200\nPickup: ACME Foods\n123 Main St\nDallas, TX 75001\nPickup Date: 03/27/2026\nDelivery: Blue Market\n500 Peachtree Rd\nAtlanta, GA 30301\nDelivery Date: 03/28/2026",
-				),
-			),
-		}, nil)
+		Return(nil).Once()
 	draftRepo.EXPECT().
 		Upsert(mock.Anything, mock.AnythingOfType("*documentshipmentdraft.DocumentShipmentDraft")).
 		RunAndReturn(func(_ context.Context, entity *documentshipmentdraft.DocumentShipmentDraft) (*documentshipmentdraft.DocumentShipmentDraft, error) {
@@ -307,43 +317,136 @@ func TestProcessDocumentIntelligenceActivity_SuppressesShipmentDraftOutsideShipm
 		})
 
 	activities := &Activities{
-		logger:              zap.NewNop(),
-		cfg:                 &config.AIConfig{},
-		metrics:             metricsRegistry,
+		logger: zap.NewNop(),
+		cfg:    &config.AIConfig{},
+		metrics: &metrics.Registry{
+			Document: metrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false),
+		},
 		documentRepo:        docRepo,
 		documentControlRepo: controlRepo,
 		contentRepo:         contentRepo,
 		draftRepo:           draftRepo,
 		aiDocumentService:   noopAIDocumentService{},
 		searchProjection:    searchProjection,
-		storage:             storageClient,
 		workflowStarter:     noopWorkflowStarter{},
-		parsingRuleRuntime:  noopDocumentParsingRuleRuntime{},
 	}
 
-	result, err := activities.ProcessDocumentIntelligenceActivity(
-		context.Background(),
-		&documentintelligencecontract.ProcessDocumentIntelligencePayload{
-			DocumentID: docID,
-			BasePayload: temporaltype.BasePayload{
-				OrganizationID: orgID,
-				BusinessUnitID: buID,
-				UserID:         userID,
-			},
-		},
-	)
+	result, err := activities.AnalyzeConvertedDocumentActivity(t.Context(), analyzeInput(doc))
 
 	require.NoError(t, err)
 	require.NotNil(t, result)
 	require.Len(t, draftWrites, 1)
-	require.Len(t, docUpdates, 2)
+	require.Len(t, docUpdates, 1)
 	assert.Equal(t, kindRateConfirmation, result.Kind)
 	assert.Equal(t, documentshipmentdraft.StatusUnavailable, draftWrites[0].Status)
-	assert.Equal(t, document.ShipmentDraftStatusUnavailable, docUpdates[1].ShipmentDraftStatus)
-	assert.Nil(t, docUpdates[1].DocumentTypeID)
+	assert.Equal(t, document.ShipmentDraftStatusUnavailable, docUpdates[0].ShipmentDraftStatus)
+	assert.Nil(t, docUpdates[0].DocumentTypeID)
 }
 
-func TestProcessDocumentIntelligenceActivity_AutoCreatesAndAssociatesDocumentTypeForShipment(
+func TestAnalyzeConvertedDocumentActivity_AppliesPublishedParsingRulesToDoclingText(t *testing.T) {
+	t.Parallel()
+
+	docRepo := documentportsmock.NewMockDocumentRepository(t)
+	controlRepo := tenantportsmock.NewMockDocumentControlRepository(t)
+	contentRepo := documentcontentportsmock.NewMockDocumentContentRepository(t)
+	draftRepo := documentshipmentdraftportsmock.NewMockDocumentShipmentDraftRepository(t)
+	searchProjection := documentsearchprojectionportsmock.NewMockDocumentSearchProjectionService(t)
+
+	orgID := pulid.MustNew("org_")
+	buID := pulid.MustNew("bu_")
+
+	doc := &document.Document{
+		ID:                pulid.MustNew("doc_"),
+		ProcessingProfile: document.ProcessingProfileRateConfirmationImport,
+		OrganizationID:    orgID,
+		BusinessUnitID:    buID,
+		OriginalName:      "rate-confirmation.txt",
+		FileType:          "text/plain",
+		StoragePath:       "documents/rate-confirmation.txt",
+		ResourceType:      "trailer",
+		ResourceID:        "trl_123",
+		ContentStatus:     document.ContentStatusExtracting,
+		UploadedByID:      pulid.MustNew("usr_"),
+	}
+
+	control := tenant.NewDefaultDocumentControl(orgID, buID)
+	rules := &recordingParsingRules{}
+	docUpdates := make([]documentports.UpdateDocumentIntelligenceRequest, 0, 1)
+	draftWrites := make([]documentshipmentdraft.DocumentShipmentDraft, 0, 1)
+
+	docRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(doc, nil)
+	controlRepo.EXPECT().GetOrCreate(mock.Anything, orgID, buID).Return(control, nil)
+	expectStoredText(contentRepo, doc, rateConfirmationText)
+	contentRepo.EXPECT().
+		Upsert(mock.Anything, mock.AnythingOfType("*documentcontent.Content")).
+		RunAndReturn(func(_ context.Context, entity *documentcontent.Content) (*documentcontent.Content, error) {
+			return entity, nil
+		}).
+		Once()
+	docRepo.EXPECT().
+		UpdateIntelligence(mock.Anything, mock.AnythingOfType("*documentports.UpdateDocumentIntelligenceRequest")).
+		RunAndReturn(func(_ context.Context, req *documentports.UpdateDocumentIntelligenceRequest) error {
+			docUpdates = append(docUpdates, *req)
+			return nil
+		}).
+		Once()
+	searchProjection.EXPECT().
+		Upsert(mock.Anything, mock.AnythingOfType("*document.Document"), mock.Anything).
+		Return(nil).Once()
+	draftRepo.EXPECT().
+		Upsert(mock.Anything, mock.AnythingOfType("*documentshipmentdraft.DocumentShipmentDraft")).
+		RunAndReturn(func(_ context.Context, entity *documentshipmentdraft.DocumentShipmentDraft) (*documentshipmentdraft.DocumentShipmentDraft, error) {
+			draftWrites = append(draftWrites, *entity)
+			return entity, nil
+		})
+
+	activities := &Activities{
+		logger: zap.NewNop(),
+		cfg:    &config.AIConfig{},
+		metrics: &metrics.Registry{
+			Document: metrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false),
+		},
+		documentRepo:        docRepo,
+		documentControlRepo: controlRepo,
+		contentRepo:         contentRepo,
+		draftRepo:           draftRepo,
+		aiDocumentService:   noopAIDocumentService{},
+		searchProjection:    searchProjection,
+		workflowStarter:     noopWorkflowStarter{},
+		parsingRuleRuntime:  rules,
+	}
+
+	result, err := activities.AnalyzeConvertedDocumentActivity(t.Context(), analyzeInput(doc))
+
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	require.Len(t, rules.inputs, 1)
+	assert.Equal(t, kindRateConfirmation, rules.inputs[0].DocumentKind)
+	assert.Equal(t, orgID, rules.inputs[0].TenantInfo.OrgID)
+	assert.Contains(t, rules.inputs[0].Text, "Rate")
+}
+
+type recordingParsingRules struct {
+	inputs []*documentparsingruleports.DocumentParsingRuntimeInput
+}
+
+func (r *recordingParsingRules) ApplyPublished(
+	_ context.Context,
+	input *documentparsingruleports.DocumentParsingRuntimeInput,
+	_ *documentparsingruleports.DocumentParsingAnalysis,
+) (*documentparsingruleports.DocumentParsingAnalysis, error) {
+	r.inputs = append(r.inputs, input)
+	return nil, nil //nolint:nilnil // no rule matched
+}
+
+func (r *recordingParsingRules) SimulateVersion(
+	context.Context,
+	*documentparsingruleports.DocumentParsingSimulationRequest,
+) (*documentparsingruleports.DocumentParsingSimulationResult, error) {
+	return nil, nil //nolint:nilnil // unused
+}
+
+func TestAnalyzeConvertedDocumentActivity_AutoCreatesAndAssociatesDocumentTypeForShipment(
 	t *testing.T,
 ) {
 	t.Parallel()
@@ -354,19 +457,13 @@ func TestProcessDocumentIntelligenceActivity_AutoCreatesAndAssociatesDocumentTyp
 	contentRepo := documentcontentportsmock.NewMockDocumentContentRepository(t)
 	draftRepo := documentshipmentdraftportsmock.NewMockDocumentShipmentDraftRepository(t)
 	searchProjection := documentsearchprojectionportsmock.NewMockDocumentSearchProjectionService(t)
-	storageClient := kernelportsmock.NewMockClient(t)
 
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
-	userID := pulid.MustNew("usr_")
-	docID := pulid.MustNew("doc_")
 	typeID := pulid.MustNew("dt_")
 
 	doc := &document.Document{
-		ID: docID,
-		// The activity refuses a document whose profile says not to read
-		// it, so a fixture standing in for one that reached the pipeline
-		// carries the profile that put it there.
+		ID:                pulid.MustNew("doc_"),
 		ProcessingProfile: document.ProcessingProfileRateConfirmationImport,
 		OrganizationID:    orgID,
 		BusinessUnitID:    buID,
@@ -375,54 +472,33 @@ func TestProcessDocumentIntelligenceActivity_AutoCreatesAndAssociatesDocumentTyp
 		StoragePath:       "documents/rate-confirmation.txt",
 		ResourceType:      "shipment",
 		ResourceID:        "shp_123",
-		ContentStatus:     document.ContentStatusPending,
-		UploadedByID:      userID,
+		ContentStatus:     document.ContentStatusExtracting,
+		UploadedByID:      pulid.MustNew("usr_"),
 	}
 
 	control := tenant.NewDefaultDocumentControl(orgID, buID)
-	docUpdates := make([]documentports.UpdateDocumentIntelligenceRequest, 0, 2)
+	docUpdates := make([]documentports.UpdateDocumentIntelligenceRequest, 0, 1)
 	draftWrites := make([]documentshipmentdraft.DocumentShipmentDraft, 0, 1)
-	metricsRegistry := &metrics.Registry{
-		Document: metrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false),
-	}
 
-	docRepo.EXPECT().
-		GetByID(mock.Anything, mock.Anything).
-		Return(doc, nil)
-	controlRepo.EXPECT().
-		GetOrCreate(mock.Anything, orgID, buID).
-		Return(control, nil)
+	docRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(doc, nil)
+	controlRepo.EXPECT().GetOrCreate(mock.Anything, orgID, buID).Return(control, nil)
+	expectStoredText(contentRepo, doc, rateConfirmationText)
 	contentRepo.EXPECT().
 		Upsert(mock.Anything, mock.AnythingOfType("*documentcontent.Content")).
 		RunAndReturn(func(_ context.Context, entity *documentcontent.Content) (*documentcontent.Content, error) {
-			if entity.ID.IsNil() {
-				entity.ID = pulid.MustNew("dc_")
-			}
 			return entity, nil
 		}).
-		Twice()
-	contentRepo.EXPECT().
-		ReplacePages(mock.Anything, mock.AnythingOfType("*documentcontent.Content"), mock.AnythingOfType("[]*documentcontent.Page")).
-		Return(nil)
+		Once()
 	docRepo.EXPECT().
 		UpdateIntelligence(mock.Anything, mock.AnythingOfType("*documentports.UpdateDocumentIntelligenceRequest")).
 		RunAndReturn(func(_ context.Context, req *documentports.UpdateDocumentIntelligenceRequest) error {
 			docUpdates = append(docUpdates, *req)
 			return nil
 		}).
-		Twice()
+		Once()
 	searchProjection.EXPECT().
 		Upsert(mock.Anything, mock.AnythingOfType("*document.Document"), mock.Anything).
-		Return(nil).Twice()
-	storageClient.EXPECT().
-		Download(mock.Anything, doc.StoragePath).
-		Return(&kernelports.DownloadResult{
-			Body: io.NopCloser(
-				strings.NewReader(
-					"Rate Confirmation\nShipper: ACME Foods\nConsignee: Blue Market\nRate: $1,200\nPickup: ACME Foods\n123 Main St\nDallas, TX 75001\nPickup Date: 03/27/2026\nDelivery: Blue Market\n500 Peachtree Rd\nAtlanta, GA 30301\nDelivery Date: 03/28/2026",
-				),
-			),
-		}, nil)
+		Return(nil).Once()
 	typeRepo.EXPECT().
 		GetByCode(mock.Anything, mock.Anything).
 		Return(nil, errortypes.NewNotFoundError("DocumentType not found"))
@@ -440,9 +516,11 @@ func TestProcessDocumentIntelligenceActivity_AutoCreatesAndAssociatesDocumentTyp
 		})
 
 	activities := &Activities{
-		logger:              zap.NewNop(),
-		cfg:                 &config.AIConfig{},
-		metrics:             metricsRegistry,
+		logger: zap.NewNop(),
+		cfg:    &config.AIConfig{},
+		metrics: &metrics.Registry{
+			Document: metrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false),
+		},
 		documentRepo:        docRepo,
 		documentControlRepo: controlRepo,
 		documentTypeRepo:    typeRepo,
@@ -450,35 +528,23 @@ func TestProcessDocumentIntelligenceActivity_AutoCreatesAndAssociatesDocumentTyp
 		draftRepo:           draftRepo,
 		aiDocumentService:   noopAIDocumentService{},
 		searchProjection:    searchProjection,
-		storage:             storageClient,
 		workflowStarter:     noopWorkflowStarter{},
-		parsingRuleRuntime:  noopDocumentParsingRuleRuntime{},
 	}
 
-	result, err := activities.ProcessDocumentIntelligenceActivity(
-		context.Background(),
-		&documentintelligencecontract.ProcessDocumentIntelligencePayload{
-			DocumentID: docID,
-			BasePayload: temporaltype.BasePayload{
-				OrganizationID: orgID,
-				BusinessUnitID: buID,
-				UserID:         userID,
-			},
-		},
-	)
+	result, err := activities.AnalyzeConvertedDocumentActivity(t.Context(), analyzeInput(doc))
 
 	require.NoError(t, err)
 	require.NotNil(t, result)
 	require.Len(t, draftWrites, 1)
-	require.Len(t, docUpdates, 2)
-	require.NotNil(t, docUpdates[1].DocumentTypeID)
-	assert.Equal(t, typeID, *docUpdates[1].DocumentTypeID)
-	assert.Equal(t, document.ShipmentDraftStatusReady, docUpdates[1].ShipmentDraftStatus)
+	require.Len(t, docUpdates, 1)
+	require.NotNil(t, docUpdates[0].DocumentTypeID)
+	assert.Equal(t, typeID, *docUpdates[0].DocumentTypeID)
+	assert.Equal(t, document.ShipmentDraftStatusReady, docUpdates[0].ShipmentDraftStatus)
 	assert.Equal(t, documentshipmentdraft.StatusReady, draftWrites[0].Status)
 	require.NotNil(t, draftWrites[0].DraftData["stops"])
 }
 
-func TestProcessDocumentIntelligenceActivity_AssociatesExistingDocumentTypeByName(t *testing.T) {
+func TestAnalyzeConvertedDocumentActivity_AssociatesExistingDocumentTypeByName(t *testing.T) {
 	t.Parallel()
 
 	docRepo := documentportsmock.NewMockDocumentRepository(t)
@@ -487,19 +553,13 @@ func TestProcessDocumentIntelligenceActivity_AssociatesExistingDocumentTypeByNam
 	contentRepo := documentcontentportsmock.NewMockDocumentContentRepository(t)
 	draftRepo := documentshipmentdraftportsmock.NewMockDocumentShipmentDraftRepository(t)
 	searchProjection := documentsearchprojectionportsmock.NewMockDocumentSearchProjectionService(t)
-	storageClient := kernelportsmock.NewMockClient(t)
 
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
-	userID := pulid.MustNew("usr_")
-	docID := pulid.MustNew("doc_")
 	typeID := pulid.MustNew("dt_")
 
 	doc := &document.Document{
-		ID: docID,
-		// The activity refuses a document whose profile says not to read
-		// it, so a fixture standing in for one that reached the pipeline
-		// carries the profile that put it there.
+		ID:                pulid.MustNew("doc_"),
 		ProcessingProfile: document.ProcessingProfileRateConfirmationImport,
 		OrganizationID:    orgID,
 		BusinessUnitID:    buID,
@@ -508,53 +568,32 @@ func TestProcessDocumentIntelligenceActivity_AssociatesExistingDocumentTypeByNam
 		StoragePath:       "documents/bill-of-lading.txt",
 		ResourceType:      "shipment",
 		ResourceID:        "shp_123",
-		ContentStatus:     document.ContentStatusPending,
-		UploadedByID:      userID,
+		ContentStatus:     document.ContentStatusExtracting,
+		UploadedByID:      pulid.MustNew("usr_"),
 	}
 
 	control := tenant.NewDefaultDocumentControl(orgID, buID)
-	docUpdates := make([]documentports.UpdateDocumentIntelligenceRequest, 0, 2)
-	metricsRegistry := &metrics.Registry{
-		Document: metrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false),
-	}
+	docUpdates := make([]documentports.UpdateDocumentIntelligenceRequest, 0, 1)
 
-	docRepo.EXPECT().
-		GetByID(mock.Anything, mock.Anything).
-		Return(doc, nil)
-	controlRepo.EXPECT().
-		GetOrCreate(mock.Anything, orgID, buID).
-		Return(control, nil)
+	docRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(doc, nil)
+	controlRepo.EXPECT().GetOrCreate(mock.Anything, orgID, buID).Return(control, nil)
+	expectStoredText(contentRepo, doc, billOfLadingText)
 	contentRepo.EXPECT().
 		Upsert(mock.Anything, mock.AnythingOfType("*documentcontent.Content")).
 		RunAndReturn(func(_ context.Context, entity *documentcontent.Content) (*documentcontent.Content, error) {
-			if entity.ID.IsNil() {
-				entity.ID = pulid.MustNew("dc_")
-			}
 			return entity, nil
 		}).
-		Twice()
-	contentRepo.EXPECT().
-		ReplacePages(mock.Anything, mock.AnythingOfType("*documentcontent.Content"), mock.AnythingOfType("[]*documentcontent.Page")).
-		Return(nil)
+		Once()
 	docRepo.EXPECT().
 		UpdateIntelligence(mock.Anything, mock.AnythingOfType("*documentports.UpdateDocumentIntelligenceRequest")).
 		RunAndReturn(func(_ context.Context, req *documentports.UpdateDocumentIntelligenceRequest) error {
 			docUpdates = append(docUpdates, *req)
 			return nil
 		}).
-		Twice()
+		Once()
 	searchProjection.EXPECT().
 		Upsert(mock.Anything, mock.AnythingOfType("*document.Document"), mock.Anything).
-		Return(nil).Twice()
-	storageClient.EXPECT().
-		Download(mock.Anything, doc.StoragePath).
-		Return(&kernelports.DownloadResult{
-			Body: io.NopCloser(
-				strings.NewReader(
-					"Bill of Lading\nShipper: ACME Foods\nConsignee: Blue Market\nCommodity: Produce\nBOL #: B12345",
-				),
-			),
-		}, nil)
+		Return(nil).Once()
 	typeRepo.EXPECT().
 		GetByCode(mock.Anything, mock.Anything).
 		Return(nil, errortypes.NewNotFoundError("DocumentType not found"))
@@ -566,9 +605,11 @@ func TestProcessDocumentIntelligenceActivity_AssociatesExistingDocumentTypeByNam
 		Return(&documentshipmentdraft.DocumentShipmentDraft{}, nil)
 
 	activities := &Activities{
-		logger:              zap.NewNop(),
-		cfg:                 &config.AIConfig{},
-		metrics:             metricsRegistry,
+		logger: zap.NewNop(),
+		cfg:    &config.AIConfig{},
+		metrics: &metrics.Registry{
+			Document: metrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false),
+		},
 		documentRepo:        docRepo,
 		documentControlRepo: controlRepo,
 		documentTypeRepo:    typeRepo,
@@ -576,32 +617,20 @@ func TestProcessDocumentIntelligenceActivity_AssociatesExistingDocumentTypeByNam
 		draftRepo:           draftRepo,
 		aiDocumentService:   noopAIDocumentService{},
 		searchProjection:    searchProjection,
-		storage:             storageClient,
 		workflowStarter:     noopWorkflowStarter{},
-		parsingRuleRuntime:  noopDocumentParsingRuleRuntime{},
 	}
 
-	result, err := activities.ProcessDocumentIntelligenceActivity(
-		context.Background(),
-		&documentintelligencecontract.ProcessDocumentIntelligencePayload{
-			DocumentID: docID,
-			BasePayload: temporaltype.BasePayload{
-				OrganizationID: orgID,
-				BusinessUnitID: buID,
-				UserID:         userID,
-			},
-		},
-	)
+	result, err := activities.AnalyzeConvertedDocumentActivity(t.Context(), analyzeInput(doc))
 
 	require.NoError(t, err)
 	require.NotNil(t, result)
-	require.Len(t, docUpdates, 2)
-	require.NotNil(t, docUpdates[1].DocumentTypeID)
-	assert.Equal(t, typeID, *docUpdates[1].DocumentTypeID)
+	require.Len(t, docUpdates, 1)
+	require.NotNil(t, docUpdates[0].DocumentTypeID)
+	assert.Equal(t, typeID, *docUpdates[0].DocumentTypeID)
 	assert.Equal(t, "BillOfLading", result.Kind)
 }
 
-func TestProcessDocumentIntelligenceActivity_EnqueuesAsyncAIExtraction(t *testing.T) {
+func TestAnalyzeConvertedDocumentActivity_EnqueuesAsyncAIExtraction(t *testing.T) {
 	t.Parallel()
 
 	docRepo := documentportsmock.NewMockDocumentRepository(t)
@@ -610,20 +639,14 @@ func TestProcessDocumentIntelligenceActivity_EnqueuesAsyncAIExtraction(t *testin
 	contentRepo := documentcontentportsmock.NewMockDocumentContentRepository(t)
 	draftRepo := documentshipmentdraftportsmock.NewMockDocumentShipmentDraftRepository(t)
 	searchProjection := documentsearchprojectionportsmock.NewMockDocumentSearchProjectionService(t)
-	storageClient := kernelportsmock.NewMockClient(t)
 	workflowStarter := kernelportsmock.NewMockWorkflowStarter(t)
 
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
-	userID := pulid.MustNew("usr_")
-	docID := pulid.MustNew("doc_")
 	typeID := pulid.MustNew("dt_")
 
 	doc := &document.Document{
-		ID: docID,
-		// The activity refuses a document whose profile says not to read
-		// it, so a fixture standing in for one that reached the pipeline
-		// carries the profile that put it there.
+		ID:                pulid.MustNew("doc_"),
 		ProcessingProfile: document.ProcessingProfileRateConfirmationImport,
 		OrganizationID:    orgID,
 		BusinessUnitID:    buID,
@@ -632,43 +655,29 @@ func TestProcessDocumentIntelligenceActivity_EnqueuesAsyncAIExtraction(t *testin
 		StoragePath:       "documents/rate-confirmation.txt",
 		ResourceType:      "shipment",
 		ResourceID:        "shp_123",
-		ContentStatus:     document.ContentStatusPending,
-		UploadedByID:      userID,
+		ContentStatus:     document.ContentStatusExtracting,
+		UploadedByID:      pulid.MustNew("usr_"),
 	}
 
 	control := tenant.NewDefaultDocumentControl(orgID, buID)
-	contentWrites := make([]documentcontent.Content, 0, 3)
+	contentWrites := make([]documentcontent.Content, 0, 1)
 
 	docRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(doc, nil)
 	controlRepo.EXPECT().GetOrCreate(mock.Anything, orgID, buID).Return(control, nil)
+	expectStoredText(contentRepo, doc, rateConfirmationText)
 	contentRepo.EXPECT().
 		Upsert(mock.Anything, mock.AnythingOfType("*documentcontent.Content")).
 		RunAndReturn(func(_ context.Context, entity *documentcontent.Content) (*documentcontent.Content, error) {
-			if entity.ID.IsNil() {
-				entity.ID = pulid.MustNew("dc_")
-			}
 			contentWrites = append(contentWrites, *entity)
 			return entity, nil
 		}).
-		Twice()
-	contentRepo.EXPECT().
-		ReplacePages(mock.Anything, mock.AnythingOfType("*documentcontent.Content"), mock.AnythingOfType("[]*documentcontent.Page")).
-		Return(nil)
+		Once()
 	docRepo.EXPECT().
 		UpdateIntelligence(mock.Anything, mock.AnythingOfType("*documentports.UpdateDocumentIntelligenceRequest")).
-		Return(nil).Twice()
+		Return(nil).Once()
 	searchProjection.EXPECT().
 		Upsert(mock.Anything, mock.AnythingOfType("*document.Document"), mock.Anything).
-		Return(nil).Twice()
-	storageClient.EXPECT().
-		Download(mock.Anything, doc.StoragePath).
-		Return(&kernelports.DownloadResult{
-			Body: io.NopCloser(
-				strings.NewReader(
-					"Rate Confirmation\nShipper: ACME Foods\nConsignee: Blue Market\nRate: $1,200\nPickup: ACME Foods\n123 Main St\nDallas, TX 75001\nPickup Date: 03/27/2026\nDelivery: Blue Market\n500 Peachtree Rd\nAtlanta, GA 30301\nDelivery Date: 03/28/2026",
-				),
-			),
-		}, nil)
+		Return(nil).Once()
 	typeRepo.EXPECT().
 		GetByCode(mock.Anything, mock.Anything).
 		Return(nil, errortypes.NewNotFoundError("DocumentType not found"))
@@ -681,7 +690,7 @@ func TestProcessDocumentIntelligenceActivity_EnqueuesAsyncAIExtraction(t *testin
 	workflowStarter.EXPECT().Enabled().Return(true)
 	workflowStarter.EXPECT().
 		StartWorkflow(mock.Anything, mock.MatchedBy(func(options client.StartWorkflowOptions) bool {
-			return strings.HasPrefix(options.ID, "document-ai-extraction-"+docID.String()+"-")
+			return strings.HasPrefix(options.ID, "document-ai-extraction-"+doc.ID.String()+"-")
 		}), "ProcessDocumentAIExtractionWorkflow", mock.Anything).
 		Return(nil, nil)
 
@@ -698,25 +707,14 @@ func TestProcessDocumentIntelligenceActivity_EnqueuesAsyncAIExtraction(t *testin
 		draftRepo:           draftRepo,
 		aiDocumentService:   asyncRouteOnlyAIDocumentService{},
 		searchProjection:    searchProjection,
-		storage:             storageClient,
 		workflowStarter:     workflowStarter,
 	}
 
-	_, err := activities.ProcessDocumentIntelligenceActivity(
-		context.Background(),
-		&documentintelligencecontract.ProcessDocumentIntelligencePayload{
-			DocumentID: docID,
-			BasePayload: temporaltype.BasePayload{
-				OrganizationID: orgID,
-				BusinessUnitID: buID,
-				UserID:         userID,
-			},
-		},
-	)
+	_, err := activities.AnalyzeConvertedDocumentActivity(t.Context(), analyzeInput(doc))
 
 	require.NoError(t, err)
-	require.Len(t, contentWrites, 2)
-	diagnostics := contentWrites[1].StructuredData["aiDiagnostics"].(map[string]any)
+	require.Len(t, contentWrites, 1)
+	diagnostics := contentWrites[0].StructuredData["aiDiagnostics"].(map[string]any)
 	assert.Equal(t, aiAcceptanceStatusPending, diagnostics["acceptanceStatus"])
 }
 

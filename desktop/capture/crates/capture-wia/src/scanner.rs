@@ -8,10 +8,11 @@ use std::rc::Rc;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
+use capture_imaging::decode_bmp;
 use capture_imaging::scan::{ScanEnd, ScanSettings, ScannedPage};
-use capture_imaging::{PixelFormat, Resolution, binarize, decode_bmp};
 use capture_protocol::api::{PixelType, Settings, SourceInfo, SourceProtocol};
 use capture_protocol::helper::ScanCondition;
+use trenova_imaging_core::{PixelFormat, Resolution, binarize};
 use windows::Win32::Devices::ImageAcquisition::{
     ALL_PAGES, DUPLEX, FEEDER, IEnumWiaItem2, IWiaDevMgr2, IWiaItem2, IWiaPropertyStorage,
     IWiaTransfer, IWiaTransferCallback, IWiaTransferCallback_Impl,

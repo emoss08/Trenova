@@ -105,13 +105,12 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "description",
-				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*servicefailure.ReasonCode)
 					return obj.Description, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
+				Marshal: gqlexec.Marshal(marshalOString2string),
 			},
 			{
 				Name:     "category",
@@ -510,4 +509,9 @@ func marshalOServiceFailureReasonCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinte
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "ServiceFailureReasonCode", v)
+}
+
+func marshalOString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
+	res := graphql.MarshalString(v)
+	return res
 }

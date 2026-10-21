@@ -1,0 +1,32 @@
+# cargo-fuzz targets for the sandbox's framed protocol. Outside the services workspace
+# (cargo-fuzz builds with nightly and its own flags); run with
+#   cargo +nightly fuzz run frame_stream -- -max_total_time=60
+[package]
+name = "trenova-sandbox-fuzz"
+version = "0.0.0"
+edition = "2024"
+publish = false
+license = "FSL-1.1-ALv2"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+trenova-sandbox = { path = ".." }
+
+[workspace]
+
+[[bin]]
+name = "frame_stream"
+path = "fuzz_targets/frame_stream.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "init_body"
+path = "fuzz_targets/init_body.rs"
+test = false
+doc = false
+bench = false

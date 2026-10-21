@@ -6,7 +6,6 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, PoisonError};
 
 use capture_imaging::scan::{ScanEnd, ScanSettings, ScannedPage};
-use capture_imaging::{PagePreview, PixelFormat, binarize, encode_page, preview};
 use capture_platform::settings;
 use capture_protocol::api::{PixelType, RequestFailureCode, Settings, SourceInfo, SourceProtocol};
 use capture_protocol::helper::{
@@ -14,6 +13,7 @@ use capture_protocol::helper::{
     read_frame, write_bytes, write_message,
 };
 use capture_twain::win::{Canceller, LibraryDsm, WindowPump};
+use trenova_imaging_core::{PagePreview, PixelFormat, binarize, encode_page, preview};
 
 use crate::test_scanner;
 use capture_twain::{AppIdentity, Manager, TwainError};

@@ -122,7 +122,7 @@ extend type Query {
   pendingDecisions(input: PendingDecisionsInput!): PendingDecisionConnection!
   pendingDecisionSummary: PendingDecisionSummary!
   "What was decided since a moment, newest first: proposals that stood on their own."
-  recentDecisions(since: Timestamp!, first: Int = 25): [RecentDecision!]!
+  recentDecisions(since: Timestamp!, first: Int = 25): [RecentDecision!]! @authorizes(resource: "agent_proposal")
 }
 
 extend type Mutation {

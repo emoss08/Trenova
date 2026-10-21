@@ -120,7 +120,7 @@ type EdiConnection {
   revokedAt: Timestamp
 }
 
-type EdiPartner {
+type EdiPartner @kind(resource: "edi") {
   id: ID!
   businessUnitId: ID!
   organizationId: ID!
@@ -534,7 +534,7 @@ type EdiVolumePoint {
   receivedCount: Int!
 }
 
-type EdiPartnerCustomer {
+type EdiPartnerCustomer @kind(resource: "customer") {
   id: ID!
   name: String!
   code: String!
@@ -700,5 +700,5 @@ extend type Query {
   ediPartnerScorecards(sinceHours: Int): [EdiPartnerScorecard!]!
   ediPartnerReadiness(partnerIds: [ID!]!): [EdiPartnerReadinessState!]!
   ediVolumeSeries(sinceHours: Int): [EdiVolumePoint!]!
-  ediPartnerCard(id: ID!): EdiPartnerCard!
+  ediPartnerCard(id: ID!): EdiPartnerCard! @authorizes(resource: "edi")
 }

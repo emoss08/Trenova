@@ -108,7 +108,7 @@ fragment WatchtowerCountsFields on WatchtowerCounts {
   }
 }
 
-query WatchtowerFeed($input: WatchtowerItemsInput!) {
+query WatchtowerFeed($input: WatchtowerItemsInput!) @requiresRead(kind: "agent_definition") {
   watchtowerItems(input: $input) {
     edges {
       cursor
@@ -130,7 +130,7 @@ query WatchtowerCounts {
   }
 }
 
-mutation HandOffWatchtowerItem($id: ID!, $input: HandOffWatchtowerItemInput!) {
+mutation HandOffWatchtowerItem($id: ID!, $input: HandOffWatchtowerItemInput!) @requiresRead(kind: "agent_definition") {
   handOffWatchtowerItem(id: $id, input: $input) {
     item {
       ...WatchtowerItemFields
@@ -157,19 +157,19 @@ mutation HandOffWatchtowerItem($id: ID!, $input: HandOffWatchtowerItemInput!) {
   }
 }
 
-query WatchtowerItemDetail($id: ID!) {
+query WatchtowerItemDetail($id: ID!) @requiresRead(kind: "agent_definition") {
   watchtowerItem(id: $id) {
     ...WatchtowerItemFields
   }
 }
 
-mutation SnoozeWatchtowerItem($id: ID!, $input: SnoozeWatchtowerItemInput!) {
+mutation SnoozeWatchtowerItem($id: ID!, $input: SnoozeWatchtowerItemInput!) @requiresRead(kind: "agent_definition") {
   snoozeWatchtowerItem(id: $id, input: $input) {
     ...WatchtowerItemFields
   }
 }
 
-mutation ResolveWatchtowerItem($id: ID!, $input: ResolveWatchtowerItemInput!) {
+mutation ResolveWatchtowerItem($id: ID!, $input: ResolveWatchtowerItemInput!) @requiresRead(kind: "agent_definition") {
   resolveWatchtowerItem(id: $id, input: $input) {
     ...WatchtowerItemFields
   }
@@ -185,7 +185,7 @@ query WatchtowerHandOffAgents {
   }
 }
 
-mutation MarkWatchtowerItemSeen($id: ID!) {
+mutation MarkWatchtowerItemSeen($id: ID!) @requiresRead(kind: "agent_definition") {
   markWatchtowerItemSeen(id: $id) {
     ...WatchtowerItemFields
   }

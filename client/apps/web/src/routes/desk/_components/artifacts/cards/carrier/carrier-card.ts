@@ -1,3 +1,4 @@
+import { rootField } from "@trenova/shared/lib/reference-access";
 import type { CarrierIntelLabels } from "@/components/carrier-intelligence/use-carrier-intel-labels";
 import { sortBasicMeasures } from "@/lib/carrier-intelligence";
 import {
@@ -364,8 +365,11 @@ export function carrierFacts(carrier: DeskCarrier, t: TranslateFn): CardFact[] {
       label: t("Payment"),
       value: t(
         "{0}, net {1}",
-        choiceLabel(carrierPaymentMethodChoices, carrier.paymentMethod),
-        formatNumber(carrier.paymentTermDays),
+        choiceLabel(
+          carrierPaymentMethodChoices,
+          rootField(carrier.paymentMethod, "Carrier.paymentMethod"),
+        ),
+        formatNumber(rootField(carrier.paymentTermDays, "Carrier.paymentTermDays")),
       ),
     },
     {

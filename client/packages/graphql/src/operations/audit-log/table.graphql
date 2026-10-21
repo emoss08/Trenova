@@ -28,7 +28,7 @@ fragment AuditLogTableRowFields on AuditEntry {
   }
 }
 
-query AuditLogTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
+query AuditLogTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) @requiresRead(kind: "user") {
   auditEntries(input: $input) {
     edges {
       node {

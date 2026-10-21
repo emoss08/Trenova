@@ -17,10 +17,3 @@ func (e *ExtractionRollout) GetStaticFieldMap() map[string]string {
 func (e *RolloutAssignment) GetStaticFieldMap() map[string]string {
 	return extractionrolloutcol.RolloutAssignmentFieldMap
 }
-
-// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RolloutExclusion].
-// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [extractionrolloutcol.RolloutExclusionFieldMap] instead of parsing struct tags via reflection.
-func (e *RolloutExclusion) GetStaticFieldMap() map[string]string {
-	return extractionrolloutcol.RolloutExclusionFieldMap
-}

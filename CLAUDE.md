@@ -10,9 +10,14 @@ Trenova is a Transportation Management System (TMS) built as a Go monorepo with 
 
 ```
 trenova/
-├── services/tms/          # Main TMS service (API, worker, CLI)
+├── services/              # Backend services in any language, plus their shared crates and contracts
+│   ├── tms/               #   Main TMS service (Go: API, worker, CLI)
+│   ├── imaging/           #   Document and imaging worker (Rust, gRPC)
+│   ├── crates/            #   Shared Rust crates: imaging-core, service-kit, sandbox, proto
+│   ├── proto/             #   gRPC contracts (buf); Go stubs are generated into services/tms
+│   └── Cargo.toml         #   The Cargo workspace for every backend Rust crate
 ├── client/                # pnpm + Turborepo: apps/web, apps/dash, packages/*
-├── desktop/capture/       # Windows scanning and printing companion (Rust)
+├── desktop/capture/       # Windows scanning and printing companion (Rust, its own workspace)
 ├── shared/                # Shared Go packages (its own module in go.work)
 ├── i18n/                  # Translation catalogs and their tooling
 ├── dev/                   # Local environment: compose.yml, config/, samsara-sim, edi-partner-sim
@@ -82,6 +87,20 @@ GraphQL codegen lives in `@trenova/graphql` (`pnpm --filter @trenova/graphql cod
 utilities, types, base services — belongs in `packages/shared` and is imported
 as `@trenova/shared/...`. App-specific (TMS-only) code stays in `apps/web`.
 Never reach across apps or import an app package from another app.
+
+### Rust services (from the repository root)
+
+```bash
+task rust:fmt             # cargo fmt over the services workspace (-- --check to check)
+task rust:lint            # clippy, warnings as errors
+task rust:test            # cargo test --workspace (PDFium/libheif tests need TRENOVA_PDFIUM_LIBRARY)
+task rust:deny            # cargo-deny: advisories, licences, sources
+task rust:proto           # buf lint + regenerate the Go stubs from services/proto
+task rust:proto-breaking  # fail on a breaking contract change against origin/master
+task rust:image-imaging   # build the imaging worker image (deploy/Dockerfile.imaging)
+task imaging:corpus       # generate the imaging benchmark corpus
+task imaging:bench        # benchmark the TMS imaging calls against a 4-CPU worker
+```
 
 ### Running a Single Test
 
@@ -168,6 +187,7 @@ Local development uses `dev/compose.yml`:
 | Redis Insight | 5540 | Redis inspection UI |
 | Meilisearch | 7700 | Full-text search |
 | MinIO | 9000, 9001 | Object storage |
+| Imaging worker | 50051, 19464 | Thumbnails, page views, capture inspection, PDF assembly (gRPC, no TLS in dev) |
 | GTC | - | CDC pipeline (Postgres → Redis/Meilisearch) |
 
 ## Error Handling
@@ -326,6 +346,36 @@ GraphQL field to resolve to a column, an inferred relation, or a declared overri
 retiring a column while keeping its deprecated field breaks the build until the field is
 added to `virtuals`.
 
+## Rust and the Imaging Worker
+
+Backend Rust lives in the `services/` Cargo workspace: deployable services (`services/imaging`),
+shared crates (`services/crates/*`) and gRPC contracts (`services/proto`, Go stubs generated
+into `services/tms/internal/infrastructure/imaging/imagingpb`). Every service is built on
+`trenova-service-kit` (config, telemetry, metrics, gRPC server, health, admission, shutdown),
+and anything that parses untrusted input runs it in `trenova-sandbox` children. **Read
+[docs/engineering/rust.md](docs/engineering/rust.md) before adding or changing Rust code**: the
+seams (in-process WASM, browser WASM, a gRPC service, a Postgres extension), layout, unsafe and
+dependency policy, and testing.
+
+The TMS does no document or image computation in process: PDF probing, thumbnails and page
+views, capture page inspection (QR codes, ink, thumbnails), PDF merge/split/rotate, image to
+PDF and image normalization go through `kernelports.Imaging` to the imaging worker, and there
+is no PDF or image library in the Go module. The worker reads no text and runs no OCR (Docling
+does). Page views are rendered once and stored (`documents/app/pagerender`). **Read
+[docs/engineering/imaging-worker.md](docs/engineering/imaging-worker.md) before changing the
+worker, `services/proto/trenova/imaging`, `infrastructure/imaging`, `pagerender`, the
+`imaging` config section, or anything that renders, inspects or assembles a document.** Unit
+tests use `imaging/imagingfake`; integration tests start the worker image through
+`internal/testutil/imagingtest`.
+
+Stored objects (documents, upload sessions, capture pages, thumbnails, page renders, Docling
+conversions) are sealed as streaming blobs: `encryptionservice.SealBlob`/`OpenBlob`, reached only
+through `storedobject.Write`, `Open`, `Read` and `Source`, so nothing holds a whole document to
+encrypt or decrypt it, and an upload is scanned for malware as it streams, its last chunk held
+back until the verdict. The string envelope is for small secrets only. Read "Blob encryption" in
+imaging-worker.md before changing `blob.go`, `storedobject`, the scan gate's streaming, or how an
+object is stored or rewrapped.
+
 ## Web Build
 
 The React Compiler runs in Rust (`react({ compiler: true })`, `oxc-transform-react`), `pnpm build`
@@ -375,7 +425,7 @@ maintainer's: ask for them or read `BRANDFETCH_API_KEY`, and never commit them.
 - Resolvers live in one package per schema file (`resolver/<file>resolver`). Each gets a generated `Deps` holding `*base.Core` plus only the `Services` fields its code names; add a new dependency to `Params`, `Services` and `newServices` in `resolver/services.go`, use it as `r.X`, and run `task gqlgen`. Resolver packages never import each other; put shared code in `base` only if it needs nothing but `Core`. In tests build `&QueryResolver{&Deps{Core: &base.Core{...}, ...}}`.
 - When a domain struct field uses an initialism (`ShipmentBOL`, `DOTNumber`, `PTOType`), add the initialism to `go_initialisms` in `gqlgen.yml` rather than a per-field `fieldName:` override. Keep initialisms to 3+ letters: 2-letter ones (`AR`, `PO`, `MC`, `CC`) prefix-match SCREAMING enum values and mangle their Go constants (`DETENTION_POLICY` became `DetentionPOLicy`), so those few fields keep explicit overrides.
 - Bind GraphQL enums to their domain type in `gqlgen.yml` (`RotaDayState: model: ...worker.RotaDayState`) when the string values match; that removes the need for a conversion resolver.
-- Every root resolver must reach a permission check or be listed, with a reason, in `internal/api/graphql/authzlint`; self-scoped operations are named `My<Thing>` and each is listed in `selfScoped` under the reason it touches only the caller's own records (the name alone earns no exemption). `task gqlschema-diff` fails on breaking schema changes; swapping a field between wire-compatible scalars (`Int`↔`Timestamp`, `String`↔`Decimal`) is reported as dangerous, not breaking.
+- Every root resolver must reach a permission check or be listed, with a reason, in `internal/api/graphql/authzlint`; self-scoped operations are named `My<Thing>` and each is listed in `selfscoped.Resolvers` (`internal/api/graphql/selfscoped`) under the reason it touches only the caller's own records (the name alone earns no exemption). `task gqlschema-diff` fails on breaking schema changes; swapping a field between wire-compatible scalars (`Int`↔`Timestamp`, `String`↔`Decimal`) is reported as dangerous, not breaking.
 - Use the semantic scalars from `shared.graphqls`: `Timestamp` for Unix-second instants (never bare `Int` for a `*At`/`*Date` field) and `Decimal` for money and other exact quantities (never `String` or `Float`). Both bind to the same Go types as `Int`/`String`, so no mapper changes are needed.
 - A field resolver that fetches per parent row must go through a per-request dataloader in `internal/api/graphql/loaders` (`batchByIDFunc` for entities, `batchCountFunc` for counts, `batchGroupFunc` for child lists) backed by a `...ByIDs` repository method; never call a single-ID getter from an object-type resolver. Register the factory in `loaders/loaders.go` and `bootstrap/modules/api/graphql.go`, add its field to `set` and its accessor and `Attach` to `loaders/access.go`. Resolvers read loaders only through those accessors (`loaders.Available(ctx)`, `loaders.CustomerByID(ctx, id)`), and tests attach one with the factory's `Attach`. No exported type in `loaders` may have a field or method, even an unexported one, that mentions `dataloadgen.Loader`, and no exported function may take or return one: Go compiles a generic type's methods again in every package that can see the type, and the old exported `Loaders` struct cost about 1,000 compiled functions in each of 40 resolver packages.
 - Connection repositories only run their `COUNT` when `req.Cursor.IncludeTotalCount` is set; the GraphQL layer clears it when `totalCount` is not selected. New `ListConnection` methods must follow that gate.
@@ -554,6 +604,12 @@ Grants are stored as made and implied operations are applied when evaluated. An 
 "team" scope exists only where a kind declares it; shipments, orders, invoices and workers
 are narrowed by restrictive `read_scope` policies fed from a per-request `pkg/readscope`
 holder, so they are enforced only while RLS is installed.
+A record shown inside another (a shipment's customer, a tractor's driver) shows its kind's
+reference view to everyone who can read the record carrying it, and its other fields only with
+that kind's read; a screen selects `...<Type>Reference` and declares `@requiresRead(kind:)` when
+it needs more. **Read [docs/engineering/reference-views.md](docs/engineering/reference-views.md)
+before showing another kind's record on a screen, adding a GraphQL type that carries one, or
+changing a reference view.**
 **Read [docs/engineering/permissions.md](docs/engineering/permissions.md) before adding a
 resource or operation, a permission check, a data scope, a way of granting access, or
 anything that invalidates cached permissions.**

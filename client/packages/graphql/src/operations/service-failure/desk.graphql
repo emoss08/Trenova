@@ -1,6 +1,6 @@
 # The Desk's service failure card: what was late and by how much, at which
 # stop on which load, why, and who has looked at it.
-query DeskServiceFailureCard($id: ID!) {
+query DeskServiceFailureCard($id: ID!) @requiresRead(kind: "service_failure_reason_code") @requiresRead(kind: "shipment") {
   serviceFailure(id: $id) {
     id
     shipmentId

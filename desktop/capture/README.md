@@ -45,7 +45,8 @@ service at all.
 | Crate | What it is | Runs on |
 |---|---|---|
 | `crates/capture-protocol` | The server's capture JSON, the agent↔helper pipe, the seal digest, the print hand-off | anywhere |
-| `crates/capture-imaging` | CCITT G4 and JPEG encoding, PDFs of one page or many, BMP and PWG raster decoding | anywhere |
+| `../../services/crates/imaging-core` | `trenova-imaging-core`, shared with the server's imaging worker: rasters, luma, binarizing, ink coverage, previews, CCITT G4 and JPEG encoding, PDFs of one page or many | anywhere |
+| `crates/capture-imaging` | The device formats only the companion meets: BMP and PWG raster decoding, the scan hand-off, the test scanner's pages | anywhere |
 | `crates/capture-ipp` | The IPP/2.0 codec and the Trenova printer's operations | anywhere |
 | `crates/capture-twain` | TWAIN 2.5: bindings, session, negotiation, memory transfer | Windows (tested anywhere against a scripted DSM) |
 | `crates/capture-wia` | WIA 2.0 scanning | Windows |

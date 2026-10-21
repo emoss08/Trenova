@@ -14088,10 +14088,6 @@ func init() {
 				FieldMapKey: "caseLimit",
 			},
 			{
-				Name:        "textSource",
-				FieldMapKey: "textSource",
-			},
-			{
 				Name:        "casesTotal",
 				FieldMapKey: "casesTotal",
 			},

@@ -35,7 +35,6 @@ export type CommentSource = z.infer<typeof commentSourceEnum>;
 const commentUserSchema = z.object({
   id: z.string(),
   name: z.string(),
-  emailAddress: z.string(),
   profilePicUrl: z.string().nullish(),
   thumbnailUrl: z.string().nullish(),
 });

@@ -9,6 +9,7 @@ import type {
   DeskDriverSettlementGroup,
 } from "@/lib/graphql/settlement-card";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
+import type { ReferenceKind } from "@trenova/shared/types/generated/reference-views";
 import type { StatementGroup, StatementRow } from "../../record-card/card-settlement";
 import { cardDay, cardMoment, cardWeekday, money } from "../../record-card/record-card-values";
 import { minor, periodLabel, signedMinor } from "../../record-card/settlement-values";
@@ -324,23 +325,36 @@ function lineName(group: DeskDriverSettlementGroup, t: TranslateFn): string {
   }
 }
 
+/** The kind whose read a line's detail needs when the server withheld it. */
+function lineWithheld(group: DeskDriverSettlementGroup): ReferenceKind | undefined {
+  if (group.advance) {
+    return group.advance.outstandingMinor === null ? "pay_advance" : undefined;
+  }
+  if (group.escrowAccount) {
+    const { balanceMinor, targetAmountMinor } = group.escrowAccount;
+    return balanceMinor === null || targetAmountMinor === null ? "escrow_account" : undefined;
+  }
+  return undefined;
+}
+
 function lineDetail(group: DeskDriverSettlementGroup, currency: string, t: TranslateFn): string {
   if (group.advance) {
     const reference = group.advance.reference.trim();
-    return reference && !group.description.includes(reference)
-      ? t(
-          "Advance {0} · {1} still owed",
-          reference,
-          minor(group.advance.outstandingMinor, currency),
-        )
-      : t("{0} still owed on the advance", minor(group.advance.outstandingMinor, currency));
+    const named = reference !== "" && !group.description.includes(reference);
+    const outstanding = group.advance.outstandingMinor;
+    if (outstanding === null) {
+      return named ? t("Advance {0}", reference) : "";
+    }
+    return named
+      ? t("Advance {0} · {1} still owed", reference, minor(outstanding, currency))
+      : t("{0} still owed on the advance", minor(outstanding, currency));
   }
   if (group.escrowAccount) {
-    return t(
-      "{0} of {1} held",
-      minor(group.escrowAccount.balanceMinor, currency),
-      minor(group.escrowAccount.targetAmountMinor, currency),
-    );
+    const { balanceMinor, targetAmountMinor } = group.escrowAccount;
+    if (balanceMinor === null || targetAmountMinor === null) {
+      return "";
+    }
+    return t("{0} of {1} held", minor(balanceMinor, currency), minor(targetAmountMinor, currency));
   }
   if (group.shipmentCount > 0) {
     return t("{0, plural, one {# load} other {# loads}}", group.shipmentCount);
@@ -386,6 +400,7 @@ export function statementGroups(record: DeskDriverSettlement, t: TranslateFn): S
       key: `${group.category}:${index}`,
       name: lineName(group, t),
       detail: lineDetail(group, currency, t),
+      withheld: lineWithheld(group),
       basis: lineBasis(group, currency, t),
       amount: signedMinor(group.amountMinor, currency),
       manual: group.manual,

@@ -48,7 +48,6 @@ fragment ExtractionEvalRunFields on ExtractionEvalRun {
   providerModel
   servedModel
   caseLimit
-  textSource
   casesTotal
   casesCompleted
   casesFailed

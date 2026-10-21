@@ -4,18 +4,13 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"image"
-	"image/color"
-	"image/png"
 	"io"
 	"slices"
 	"strings"
 	"sync"
-	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/captureqr"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/pdfassembly"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentupload"
@@ -35,10 +30,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/pdfcpu/pdfcpu/pkg/api"
-	"github.com/pdfcpu/pdfcpu/pkg/pdfcpu"
-	"github.com/pdfcpu/pdfcpu/pkg/pdfcpu/model"
-	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
@@ -65,7 +56,7 @@ type world struct {
 	control     *tenant.DocumentControl
 	denied      map[string]bool
 	ownScope    bool
-	inspections map[string]*captureports.CapturePageInspection
+	inspections map[string]*pageReading
 	inspected   int
 	sessions    map[pulid.ID]*documentupload.DocumentUploadSession
 	uploaded    map[pulid.ID][]byte
@@ -93,7 +84,7 @@ func newWorld() *world {
 		objects:     map[string][]byte{},
 		control:     tenant.NewDefaultDocumentControl(orgID, buID),
 		denied:      map[string]bool{},
-		inspections: map[string]*captureports.CapturePageInspection{},
+		inspections: map[string]*pageReading{},
 		sessions:    map[pulid.ID]*documentupload.DocumentUploadSession{},
 		uploaded:    map[pulid.ID][]byte{},
 	}
@@ -119,10 +110,11 @@ func (w *world) service() *Service {
 		organizations: fakeOrganizations{w},
 		permissions:   &fakePermissions{w: w},
 		storage:       &fakeStorage{w: w},
-		cipher:        fakeCipher{},
+		cipher: encryptionservice.NewWithKeyManager(
+			encryptionservice.NewLocalKeyManager("capture-test-key-material"),
+		),
 		uploads:       &fakeUploads{w},
-		assembler:     pdfassembly.New(),
-		inspector:     &fakeInspector{w},
+		imaging:       &fakeImaging{w},
 		qrCodes:       captureqr.New(),
 		notifications: &fakeNotifier{w},
 		realtime:      &fakeRealtime{w},
@@ -967,23 +959,6 @@ func (f *fakeStorage) Delete(_ context.Context, key string) error {
 	return nil
 }
 
-// fakeCipher seals by binding the bytes to their AAD, so a test catches an
-// object opened under a different key than it was sealed with.
-type fakeCipher struct{}
-
-func (fakeCipher) EncryptBytesWithAAD(plaintext []byte, aad encryptionservice.AAD) (string, error) {
-	return "sealed|" + string(aad.Purpose) + "|" + aad.ResourceID + "|" + string(plaintext), nil
-}
-
-func (fakeCipher) DecryptBytesWithAAD(value string, aad encryptionservice.AAD) ([]byte, error) {
-	prefix := "sealed|" + string(aad.Purpose) + "|" + aad.ResourceID + "|"
-	if !strings.HasPrefix(value, prefix) {
-		return nil, fmt.Errorf("aad mismatch")
-	}
-
-	return []byte(strings.TrimPrefix(value, prefix)), nil
-}
-
 type fakeUploads struct{ w *world }
 
 func (f *fakeUploads) CreateSession(_ context.Context, req *documentuploadports.CreateSessionRequest) (*documentupload.DocumentUploadSession, error) {
@@ -1016,21 +991,6 @@ func (f *fakeUploads) Complete(_ context.Context, req *documentuploadports.Compl
 	return session, nil
 }
 
-// fakeInspector reports a page as the test configured its bytes, or as an
-// ordinary page of text.
-type fakeInspector struct{ w *world }
-
-func (f *fakeInspector) Inspect(_ context.Context, pdf []byte) (*captureports.CapturePageInspection, error) {
-	f.w.mu.Lock()
-	defer f.w.mu.Unlock()
-	f.w.inspected++
-	if inspection, ok := f.w.inspections[string(pdf)]; ok {
-		return inspection, nil
-	}
-
-	return &captureports.CapturePageInspection{WidthPx: 100, HeightPx: 130, Thumbnail: []byte("jpeg"), InkCoverage: 0.2}, nil
-}
-
 type fakeRealtime struct{ w *world }
 
 func (f *fakeRealtime) PublishResourceInvalidation(_ context.Context, req *agentports.PublishResourceInvalidationRequest) error {
@@ -1039,26 +999,6 @@ func (f *fakeRealtime) PublishResourceInvalidation(_ context.Context, req *agent
 	f.w.published = append(f.w.published, req.Resource+":"+req.Action)
 
 	return nil
-}
-
-// pdfPage makes a distinct one-page PDF; shade makes each one's bytes unique.
-func pdfPage(t *testing.T, shade uint8) []byte {
-	t.Helper()
-
-	img := image.NewGray(image.Rect(0, 0, 20, 26))
-	for i := range img.Pix {
-		img.Pix[i] = shade
-	}
-	img.Set(1, 1, color.Black)
-
-	encoded := new(bytes.Buffer)
-	require.NoError(t, png.Encode(encoded, img))
-
-	out := new(bytes.Buffer)
-	require.NoError(t, api.ImportImages(t.Context(), nil, out, []io.Reader{encoded}, pdfcpu.DefaultImportConfig(),
-		model.NewDefaultConfiguration()))
-
-	return out.Bytes()
 }
 
 type fakeNotifier struct{ w *world }

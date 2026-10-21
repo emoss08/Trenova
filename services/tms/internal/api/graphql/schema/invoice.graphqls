@@ -147,7 +147,7 @@ type Invoice {
   relatedInvoices: [Invoice!]!
   subtotalAmount: Decimal!
   otherAmount: Decimal!
-  totalAmount: Decimal!
+  totalAmount: Decimal
   appliedAmount: Decimal!
   settlementStatus: InvoiceSettlementStatus!
   disputeStatus: InvoiceDisputeStatus!

@@ -671,13 +671,12 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "netPayMinor",
-				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*driversettlement.Settlement)
 					return obj.NetPayMinor, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInt2int64),
+				Marshal: gqlexec.Marshal(marshalOInt2int64),
 			},
 			{
 				Name:       "totalMiles",
@@ -703,13 +702,12 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "currencyCode",
-				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*driversettlement.Settlement)
 					return obj.CurrencyCode, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
+				Marshal: gqlexec.Marshal(marshalOString2string),
 			},
 			{
 				Name:       "exchangeRate",
@@ -1516,23 +1514,21 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "targetAmountMinor",
-				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*driverpay.EscrowAccount)
 					return obj.TargetAmountMinor, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInt2int64),
+				Marshal: gqlexec.Marshal(marshalOInt2int64),
 			},
 			{
 				Name:     "balanceMinor",
-				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*driverpay.EscrowAccount)
 					return obj.BalanceMinor, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInt2int64),
+				Marshal: gqlexec.Marshal(marshalOInt2int64),
 			},
 			{
 				Name:       "annualInterestRate",
@@ -2317,13 +2313,12 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "amountMinor",
-				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*driverpay.PayAdvance)
 					return obj.AmountMinor, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInt2int64),
+				Marshal: gqlexec.Marshal(marshalOInt2int64),
 			},
 			{
 				Name:     "recoveredMinor",
@@ -2347,14 +2342,13 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "outstandingMinor",
-				NonNull:  true,
 				IsMethod: true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*driverpay.PayAdvance)
 					return obj.OutstandingMinor(), nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInt2int64),
+				Marshal: gqlexec.Marshal(marshalOInt2int64),
 			},
 			{
 				Name:     "writeOffReason",
@@ -9402,6 +9396,11 @@ func marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx co
 	return res
 }
 
+func marshalOInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int64) graphql.Marshaler {
+	res := graphql.MarshalInt64(v)
+	return res
+}
+
 func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *int) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -9515,6 +9514,11 @@ func marshalOSettlementLoadShare2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋintern
 		Elem:        marshalNSettlementLoadShare2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋsettlementloadᚐShare,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalOString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
+	res := graphql.MarshalString(v)
+	return res
 }
 
 func marshalOTimestamp2ᚖint64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *int64) graphql.Marshaler {

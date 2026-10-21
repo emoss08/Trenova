@@ -292,7 +292,7 @@ export function useTriageActionsController(): TriageActions {
         : {
             id: me.id,
             name: me.name,
-            emailAddress: me.emailAddress,
+            username: me.username,
             thumbnailUrl: me.thumbnailUrl ?? "",
           };
     const context = (): MembershipContext => ({ meId, now: Math.floor(Date.now() / 1000) });

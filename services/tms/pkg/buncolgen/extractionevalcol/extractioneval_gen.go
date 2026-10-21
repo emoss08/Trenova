@@ -54,7 +54,6 @@ var CasePagesColumns = struct {
 	BusinessUnitID   buncolgen.Column // "business_unit_id" → qualified: "eecp.business_unit_id"
 	OrganizationID   buncolgen.Column // "organization_id" → qualified: "eecp.organization_id"
 	CaseID           buncolgen.Column // "case_id" → qualified: "eecp.case_id"
-	TextSource       buncolgen.Column // "text_source" → qualified: "eecp.text_source"
 	Pages            buncolgen.Column // "pages" → qualified: "eecp.pages"
 	PageCount        buncolgen.Column // "page_count" → qualified: "eecp.page_count"
 	InputHash        buncolgen.Column // "input_hash" → qualified: "eecp.input_hash"
@@ -68,7 +67,6 @@ var CasePagesColumns = struct {
 	BusinessUnitID:   buncolgen.NewColumn("business_unit_id", "eecp"),
 	OrganizationID:   buncolgen.NewColumn("organization_id", "eecp"),
 	CaseID:           buncolgen.NewColumn("case_id", "eecp"),
-	TextSource:       buncolgen.NewColumn("text_source", "eecp"),
 	Pages:            buncolgen.NewColumn("pages", "eecp"),
 	PageCount:        buncolgen.NewColumn("page_count", "eecp"),
 	InputHash:        buncolgen.NewColumn("input_hash", "eecp"),
@@ -88,7 +86,6 @@ var CasePagesFieldMap = map[string]string{
 	"businessUnitId":   "business_unit_id",
 	"organizationId":   "organization_id",
 	"caseId":           "case_id",
-	"textSource":       "text_source",
 	"pages":            "pages",
 	"pageCount":        "page_count",
 	"inputHash":        "input_hash",
@@ -106,7 +103,6 @@ var CasePagesInsertableColumns = []string{
 	"business_unit_id",
 	"organization_id",
 	"case_id",
-	"text_source",
 	"pages",
 	"page_count",
 	"input_hash",
@@ -184,7 +180,6 @@ var CasePagesFilter = struct {
 	BusinessUnitID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
 	OrganizationID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
 	CaseID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "caseId" → DB: "case_id"
-	TextSource       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "textSource" → DB: "text_source"
 	Pages            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "pages" → DB: "pages"
 	PageCount        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "pageCount" → DB: "page_count"
 	InputHash        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "inputHash" → DB: "input_hash"
@@ -205,9 +200,6 @@ var CasePagesFilter = struct {
 	},
 	CaseID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("caseId", op, value)
-	},
-	TextSource: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("textSource", op, value)
 	},
 	Pages: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("pages", op, value)
@@ -872,7 +864,6 @@ var ExtractionRunColumns = struct {
 	ProviderModel    buncolgen.Column // "provider_model" → qualified: "eer.provider_model"
 	ServedModel      buncolgen.Column // "served_model" → qualified: "eer.served_model"
 	CaseLimit        buncolgen.Column // "case_limit" → qualified: "eer.case_limit"
-	TextSource       buncolgen.Column // "text_source" → qualified: "eer.text_source"
 	CasesTotal       buncolgen.Column // "cases_total" → qualified: "eer.cases_total"
 	CasesCompleted   buncolgen.Column // "cases_completed" → qualified: "eer.cases_completed"
 	CasesFailed      buncolgen.Column // "cases_failed" → qualified: "eer.cases_failed"
@@ -909,7 +900,6 @@ var ExtractionRunColumns = struct {
 	ProviderModel:    buncolgen.NewColumn("provider_model", "eer"),
 	ServedModel:      buncolgen.NewColumn("served_model", "eer"),
 	CaseLimit:        buncolgen.NewColumn("case_limit", "eer"),
-	TextSource:       buncolgen.NewColumn("text_source", "eer"),
 	CasesTotal:       buncolgen.NewColumn("cases_total", "eer"),
 	CasesCompleted:   buncolgen.NewColumn("cases_completed", "eer"),
 	CasesFailed:      buncolgen.NewColumn("cases_failed", "eer"),
@@ -952,7 +942,6 @@ var ExtractionRunFieldMap = map[string]string{
 	"providerModel":    "provider_model",
 	"servedModel":      "served_model",
 	"caseLimit":        "case_limit",
-	"textSource":       "text_source",
 	"casesTotal":       "cases_total",
 	"casesCompleted":   "cases_completed",
 	"casesFailed":      "cases_failed",
@@ -993,7 +982,6 @@ var ExtractionRunInsertableColumns = []string{
 	"provider_model",
 	"served_model",
 	"case_limit",
-	"text_source",
 	"cases_total",
 	"cases_completed",
 	"cases_failed",
@@ -1094,7 +1082,6 @@ var ExtractionRunFilter = struct {
 	ProviderModel    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "providerModel" → DB: "provider_model"
 	ServedModel      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "servedModel" → DB: "served_model"
 	CaseLimit        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "caseLimit" → DB: "case_limit"
-	TextSource       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "textSource" → DB: "text_source"
 	CasesTotal       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "casesTotal" → DB: "cases_total"
 	CasesCompleted   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "casesCompleted" → DB: "cases_completed"
 	CasesFailed      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "casesFailed" → DB: "cases_failed"
@@ -1150,9 +1137,6 @@ var ExtractionRunFilter = struct {
 	},
 	CaseLimit: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("caseLimit", op, value)
-	},
-	TextSource: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("textSource", op, value)
 	},
 	CasesTotal: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("casesTotal", op, value)

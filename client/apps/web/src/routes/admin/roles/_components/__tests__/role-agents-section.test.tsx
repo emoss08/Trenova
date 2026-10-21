@@ -66,7 +66,6 @@ function granted(id: string, name: string, overrides: Partial<RoleAgent> = {}): 
     template: null,
     accessMode: "Roles",
     enabled: true,
-    triggerMode: "Chat",
     systemKey: "",
     ...overrides,
   };

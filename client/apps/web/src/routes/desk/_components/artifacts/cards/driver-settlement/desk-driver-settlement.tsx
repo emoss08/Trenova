@@ -312,6 +312,7 @@ function DriverSettlementCard({
         aside={
           record.worker && access.worker ? (
             <CardOpenLink
+              kind="worker"
               to={recordPath("worker", record.worker.id)}
               onOpen={listedWorker.open && (() => listedWorker.open?.(record.worker?.id ?? ""))}
             >

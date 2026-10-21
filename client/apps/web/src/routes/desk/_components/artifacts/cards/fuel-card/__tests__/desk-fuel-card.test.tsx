@@ -1,4 +1,3 @@
-import { recordPath } from "@/config/record-links";
 import type { DeskFuelCardCard } from "@/lib/graphql/fuel-desk-cards";
 import { clearPermissions, seedPermissions } from "@/test/permissions";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -133,13 +132,16 @@ describe("DeskFuelCard", () => {
     );
     const holders = container.querySelector<HTMLElement>(".dk-fcd-holds");
     if (!holders) throw new Error("No holders");
+    // The holders are linked records the person may not read: named, locked, not linked.
+    expect(within(holders).queryAllByRole("link")).toEqual([]);
     expect(
-      within(holders)
-        .getAllByRole("link")
-        .map((link) => [link.textContent, link.getAttribute("href")]),
+      Array.from(holders.querySelectorAll('[data-slot="locked-reference"]')).map((row) => [
+        row.textContent,
+        row.getAttribute("aria-description"),
+      ]),
     ).toEqual([
-      ["RDRosa DiazDriver", recordPath("worker", "wrk_rosa")],
-      ["T-101T-101Freightliner Cascadia · Tractor", recordPath("tractor", "tr_101")],
+      ["RDRosa DiazDriver", "You don't have access to workers"],
+      ["T-101T-101Freightliner Cascadia · Tractor", "You don't have access to tractors"],
     ]);
     expect(container.querySelector(".dk-rec-stats")).toHaveTextContent(
       "Purchases9Gallons1,046.3Avg / gal$3.91Untaxed15.0 gal",

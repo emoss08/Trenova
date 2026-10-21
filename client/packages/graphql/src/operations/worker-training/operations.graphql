@@ -50,7 +50,6 @@ fragment WorkerTrainingRecordFields on WorkerTrainingRecord {
     dueDaysAfterAssignment
     requiresAcknowledgement
     sortOrder
-    openRecordCount
     version
     createdAt
     updatedAt
@@ -153,7 +152,6 @@ query WorkerTrainingSummary($workerId: ID!) {
         dueDaysAfterAssignment
         requiresAcknowledgement
         sortOrder
-        openRecordCount
         version
         createdAt
         updatedAt
@@ -184,7 +182,6 @@ query WorkerTrainingSummary($workerId: ID!) {
           dueDaysAfterAssignment
           requiresAcknowledgement
           sortOrder
-          openRecordCount
           version
           createdAt
           updatedAt

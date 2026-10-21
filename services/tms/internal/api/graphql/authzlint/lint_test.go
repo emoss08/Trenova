@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/api/graphql/selfscoped"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -66,81 +67,6 @@ var authOnlyAllowlist = map[string]string{
 	"MutationResolver.WithdrawSettlementDispute": "a driver withdrawing their own dispute",
 }
 
-// selfScoped lists, by the reason each holds, the resolvers that act only on the
-// caller's own records and so need no permission beyond being signed in. Every
-// name is listed: a resolver called My<Thing> earns no exemption by its name.
-var selfScoped = map[string][]string{
-	"the driver portal resolves the worker linked to the calling user " +
-		"(driverportalservice.ResolveWorker) and reads or acts only on that worker": {
-		"MutationResolver.AcknowledgeMyDisciplinaryAction",
-		"MutationResolver.AcknowledgeMyPolicy",
-		"MutationResolver.AcknowledgeMyReview",
-		"MutationResolver.AcknowledgeMyTraining",
-		"MutationResolver.CancelMyExpense",
-		"MutationResolver.CancelMyPTO",
-		"MutationResolver.CreateMyLoadComment",
-		"MutationResolver.DismissMyNotifications",
-		"MutationResolver.MarkAllMyNotificationsRead",
-		"MutationResolver.MarkMyNotificationsRead",
-		"MutationResolver.MarkMyNotificationsUnread",
-		"MutationResolver.ProposeMyShiftSwap",
-		"MutationResolver.RecordMyStopAction",
-		"MutationResolver.RequestMyPTO",
-		"MutationResolver.RespondToMyAssignment",
-		"MutationResolver.RespondToMyShiftSwap",
-		"MutationResolver.RestoreMyNotifications",
-		"MutationResolver.SetMyAvailability",
-		"MutationResolver.StartMyTraining",
-		"MutationResolver.SubmitMyExpense",
-		"MutationResolver.UpdateMyContactInfo",
-		"MutationResolver.WithdrawMyProfileChange",
-		"QueryResolver.MyAdvances",
-		"QueryResolver.MyAvailability",
-		"QueryResolver.MyComplianceProfile",
-		"QueryResolver.MyCredentials",
-		"QueryResolver.MyDisciplinaryActions",
-		"QueryResolver.MyDisputes",
-		"QueryResolver.MyEscrow",
-		"QueryResolver.MyExpenses",
-		"QueryResolver.MyHosDailyLogs",
-		"QueryResolver.MyHosState",
-		"QueryResolver.MyHosViolations",
-		"QueryResolver.MyLeave",
-		"QueryResolver.MyLoadComments",
-		"QueryResolver.MyLoadPayEstimate",
-		"QueryResolver.MyLoads",
-		"QueryResolver.MyNotificationUnreadCount",
-		"QueryResolver.MyNotifications",
-		"QueryResolver.MyPTO",
-		"QueryResolver.MyPTOBalances",
-		"QueryResolver.MyPeriodSummary",
-		"QueryResolver.MyPolicies",
-		"QueryResolver.MyPolicyDocumentURL",
-		"QueryResolver.MyPortalFeatures",
-		"QueryResolver.MyPortalProfile",
-		"QueryResolver.MyProfileChangeRequests",
-		"QueryResolver.MyRecentPayEvents",
-		"QueryResolver.MyRecognitions",
-		"QueryResolver.MyReviews",
-		"QueryResolver.MySafetyScorecard",
-		"QueryResolver.MySchedule",
-		"QueryResolver.MySettlement",
-		"QueryResolver.MySettlements",
-		"QueryResolver.MyShiftSwaps",
-		"QueryResolver.MyTotalCompensation",
-		"QueryResolver.MyTraining",
-		"QueryResolver.MyYtdPay",
-	},
-	"capture devices are listed and revoked as the caller's own: the service is " +
-		"asked with Mine set and refuses a device another user registered": {
-		"MutationResolver.RevokeMyCaptureDevice",
-		"QueryResolver.MyCaptureDevices",
-	},
-	"reports what capture the calling user may use, from their own session": {
-		"QueryResolver.MyCaptureAccess",
-	},
-}
-
 func isAllowedAuthOnly(root RootResolver) bool {
 	_, ok := allowedAuthOnly()[root.Key()]
 	return ok
@@ -151,7 +77,7 @@ func allowedAuthOnly() map[string]string {
 	for key, reason := range authOnlyAllowlist {
 		allowed[key] = reason
 	}
-	for reason, keys := range selfScoped {
+	for reason, keys := range selfscoped.Resolvers {
 		for _, key := range keys {
 			allowed[key] = reason
 		}
@@ -192,7 +118,7 @@ func TestEveryRootResolverIsAuthorized(t *testing.T) {
 
 	assert.Empty(t, unlistedAuthOnly,
 		"root resolvers that authenticate but never reach a permission check. "+
-			"Either add one, list it in selfScoped under the reason it only ever touches "+
+			"Either add one, list it in selfscoped.Resolvers under the reason it only ever touches "+
 			"the caller's own data, or add it to authOnlyAllowlist with a reason explaining "+
 			"why every authenticated user may call it:\n  %s",
 		strings.Join(unlistedAuthOnly, "\n  "))
@@ -208,7 +134,7 @@ func TestEveryRootResolverIsAuthorized(t *testing.T) {
 			stale = append(stale, key)
 		}
 	}
-	assert.Empty(t, stale, "authOnlyAllowlist or selfScoped names resolvers that no longer exist:\n  %s",
+	assert.Empty(t, stale, "authOnlyAllowlist or selfscoped.Resolvers names resolvers that no longer exist:\n  %s",
 		strings.Join(stale, "\n  "))
 }
 
@@ -243,12 +169,12 @@ func TestSelfScopedResolversAreListedOnce(t *testing.T) {
 	t.Parallel()
 
 	seen := make(map[string]string)
-	for reason, keys := range selfScoped {
+	for reason, keys := range selfscoped.Resolvers {
 		for _, key := range keys {
 			previous, dup := seen[key]
 			assert.Falsef(t, dup, "%s is listed under %q and %q", key, previous, reason)
 			_, alsoListed := authOnlyAllowlist[key]
-			assert.Falsef(t, alsoListed, "%s is in both selfScoped and authOnlyAllowlist", key)
+			assert.Falsef(t, alsoListed, "%s is in both selfscoped.Resolvers and authOnlyAllowlist", key)
 			seen[key] = reason
 		}
 	}

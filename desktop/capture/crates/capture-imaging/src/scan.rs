@@ -4,8 +4,7 @@
 use capture_protocol::api::PixelType;
 use capture_protocol::helper::ScanCondition;
 
-use crate::page::Resolution;
-use crate::raster::OwnedRaster;
+use trenova_imaging_core::{OwnedRaster, Resolution};
 
 /// What a scan was asked for.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

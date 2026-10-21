@@ -29,6 +29,7 @@ type RenderInput struct {
 	// CarrierSCAC overrides the partner-settings carrier.scac lookup for this
 	// render only; the stored profile settings stay untouched.
 	CarrierSCAC string
+	Starlark    edistarlark.Options
 }
 
 type RenderResult struct {
@@ -78,6 +79,7 @@ func RenderX12(input *RenderInput) (*RenderResult, error) {
 		return segments[i].Sequence < segments[j].Sequence
 	})
 	libraries := templateScriptLibraries(input.TemplateVersion.ScriptLibraries)
+	evaluator := edistarlark.NewEvaluator(input.Starlark)
 	partnerSettings := partnerSettingsWithCarrierSCAC(
 		input.Profile.PartnerSettings,
 		input.CarrierSCAC,
@@ -103,6 +105,7 @@ func RenderX12(input *RenderInput) (*RenderResult, error) {
 				Env:       env,
 				Segment:   segment,
 				Libraries: libraries,
+				Evaluator: evaluator,
 			})
 			if conditionDiagnostic != nil {
 				diagnostics = append(diagnostics, *conditionDiagnostic)
@@ -121,6 +124,7 @@ func RenderX12(input *RenderInput) (*RenderResult, error) {
 					Element:   element,
 					Env:       env,
 					Libraries: libraries,
+					Evaluator: evaluator,
 				})
 				diagnostics = append(diagnostics, elementDiagnostics...)
 				if value != "" {
@@ -228,6 +232,7 @@ type elementResolveParams struct {
 	Element   *edi.TemplateElement
 	Env       map[string]any
 	Libraries []edistarlark.ScriptLibrary
+	Evaluator *edistarlark.Evaluator
 }
 
 func resolveElement(params elementResolveParams) (string, []Diagnostic) {
@@ -239,6 +244,7 @@ func resolveElement(params elementResolveParams) (string, []Diagnostic) {
 		Segment:   params.Segment,
 		Element:   params.Element,
 		Libraries: params.Libraries,
+		Evaluator: params.Evaluator,
 	})
 	if conditionDiagnostic != nil {
 		return "", []Diagnostic{*conditionDiagnostic}
@@ -669,7 +675,7 @@ func resolveStarlarkElementValue(params elementResolveParams) (string, []Diagnos
 		starlarkCtx["item"] = repeatValue
 	}
 
-	result := edistarlark.Evaluate(params.Context, edistarlark.EvalRequest{
+	result := params.Evaluator.Evaluate(params.Context, edistarlark.EvalRequest{
 		Script:          params.Element.StarlarkScript,
 		FunctionName:    params.Element.StarlarkFunction,
 		Libraries:       params.Libraries,

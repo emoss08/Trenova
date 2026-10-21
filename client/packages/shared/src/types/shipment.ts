@@ -16,7 +16,7 @@ import {
   tenantInfoSchema,
 } from "./helpers";
 import { locationSchema } from "./location";
-import { userSchema } from "./user";
+import { userReferenceSchema } from "./user";
 import { translate } from "@trenova/shared/i18n/runtime";
 
 export const shipmentStatusSchema = z.enum([
@@ -869,7 +869,7 @@ export const shipmentSchema = z
     billingSplitSummary: z.array(billingSplitSummaryRowSchema).default([]),
     customer: customerSchema.nullish(),
     billToCustomer: customerReferenceSchema.nullish(),
-    owner: userSchema.nullish(),
+    owner: userReferenceSchema.nullish(),
     formulaTemplate: formulaTemplateSchema.nullish(),
   })
   .superRefine(refineFreightAllocations);

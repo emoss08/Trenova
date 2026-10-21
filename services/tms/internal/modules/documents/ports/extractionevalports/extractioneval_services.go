@@ -33,7 +33,6 @@ type StartExtractionEvalRunRequest struct {
 	TenantInfo pagination.TenantInfo
 	ProviderID pulid.ID
 	CaseLimit  int
-	TextSource extractioneval.TextSource
 }
 
 type ExtractionAccuracyRequest struct {

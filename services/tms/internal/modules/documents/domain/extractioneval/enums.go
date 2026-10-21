@@ -107,21 +107,6 @@ func AllResultStatuses() []ResultStatus {
 	}
 }
 
-type TextSource string
-
-const (
-	TextSourceLegacy  = TextSource("legacy")
-	TextSourceDocling = TextSource("docling")
-)
-
-func (s TextSource) IsValid() bool {
-	return s == TextSourceLegacy || s == TextSourceDocling
-}
-
-func (s TextSource) String() string { return string(s) }
-
-func (s TextSource) Frozen() bool { return s == TextSourceDocling }
-
 type RefreezeStatus string
 
 const (

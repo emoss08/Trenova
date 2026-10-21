@@ -124,10 +124,8 @@ name = "capture-imaging"
 version = "1.0.0"
 dependencies = [
  "capture-protocol",
- "fax",
- "jpeg-encoder",
- "pdf-writer",
  "thiserror 2.0.21",
+ "trenova-imaging-core",
 ]
 
 [[package]]
@@ -174,6 +172,7 @@ dependencies = [
  "capture-protocol",
  "thiserror 2.0.21",
  "tracing",
+ "trenova-imaging-core",
  "windows",
 ]
 
@@ -202,6 +201,7 @@ dependencies = [
  "capture-protocol",
  "thiserror 2.0.21",
  "tracing",
+ "trenova-imaging-core",
  "windows",
  "windows-core",
 ]
@@ -2514,6 +2514,7 @@ dependencies = [
  "tempfile",
  "tracing",
  "tracing-subscriber",
+ "trenova-imaging-core",
 ]
 
 [[package]]
@@ -2563,6 +2564,16 @@ dependencies = [
  "windows-core",
  "windows-service",
  "wiremock",
+]
+
+[[package]]
+name = "trenova-imaging-core"
+version = "0.1.0"
+dependencies = [
+ "fax",
+ "jpeg-encoder",
+ "pdf-writer",
+ "thiserror 2.0.21",
 ]
 
 [[package]]

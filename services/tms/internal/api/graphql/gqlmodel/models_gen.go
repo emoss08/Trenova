@@ -9983,8 +9983,6 @@ type StartExtractionEvalRunInput struct {
 	ProviderID string `json:"providerId"`
 	// How many active cases to run, newest first; 50 by default, at most 500.
 	CaseLimit *int `json:"caseLimit,omitempty"`
-	// Which reading of each case to send; legacy by default.
-	TextSource *extractioneval.TextSource `json:"textSource,omitempty"`
 }
 
 type StartWorkerChecklistInput struct {

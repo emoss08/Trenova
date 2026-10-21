@@ -80,7 +80,7 @@ func (s *Service) RefreezeCases(
 		ResourceID: started.WorkflowID,
 		Operation:  permission.OpUpdate,
 		CurrentState: jsonutils.MustToJSON(
-			map[string]any{"caseIds": caseIDs, "textSource": extractioneval.TextSourceDocling},
+			map[string]any{"caseIds": caseIDs},
 		),
 		OrganizationID: req.TenantInfo.OrgID,
 		BusinessUnitID: req.TenantInfo.BuID,
@@ -205,7 +205,6 @@ func (s *Service) FreezeDoclingPages(
 	frozenBy := pulid.FirstNotNil(req.TenantInfo.UserID, evalCase.CreatedByID)
 	entity := extractioneval.NewCasePages(
 		evalCase,
-		extractioneval.TextSourceDocling,
 		pages,
 		converted.ConverterVersion,
 		frozenBy,

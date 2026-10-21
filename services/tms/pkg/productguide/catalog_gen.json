@@ -1,5 +1,5 @@
 {
-  "version": "sha256:faf05bb98ea18d24b78c8f8aea0b114c9c9d578e51fdbc3b2fe4a5ebeff9acd6",
+  "version": "sha256:07df242d43f41f0a41bfa1b93d7ab569f1ad3eee251d168a40b7abb09ecffc4f",
   "modules": [
     {
       "id": "home",
@@ -4492,7 +4492,7 @@
         "Document extraction"
       ],
       "description": "Configure how documents are read, classified, extracted, and drafted into shipments",
-      "summary": "Document extraction decides what Trenova does with uploaded documents: whether it reads text from scanned pages, which engine reads them, how it classifies them into document kinds and types, whether it extracts structured data with an AI provider, whether documents such as rate confirmations become reviewable shipment drafts, and whether their text is indexed for search. The page is one settings form in five cards: **Platform availability**, **Extraction engine**, **Classification and extraction**, **Shipment draft extraction** and **Search and retrieval**.\n\nAdministrators use it to switch document processing on and choose how much of it is automatic.",
+      "summary": "Document extraction decides what Trenova does with uploaded documents: whether it reads text from scanned pages, how it classifies them into document kinds and types, whether it extracts structured data with an AI provider, whether documents such as rate confirmations become reviewable shipment drafts, and whether their text is indexed for search. Docling reads every document: the page layout, tables and scanned text. The page is one settings form in four cards: **Platform availability**, **Classification and extraction**, **Shipment draft extraction** and **Search and retrieval**. When documents cannot be read, **Platform availability** says what is missing.\n\nAdministrators use it to switch document processing on and choose how much of it is automatic.",
       "requires": [
         {
           "resource": "document_control",
@@ -4507,7 +4507,6 @@
         "document classification",
         "document extraction",
         "Docling",
-        "extraction engine",
         "shipment drafts from documents",
         "rate confirmation extraction"
       ],
@@ -4523,20 +4522,6 @@
             "In **Platform availability**, turn on **Enable document extraction**. This is the master switch; every other option on the page stays unavailable while it is off.",
             "Turn on **Enable OCR** to read scanned pages, photos and faxes that carry no text of their own.",
             "Select **Save changes** in the bar that appears at the bottom."
-          ]
-        },
-        {
-          "title": "Choose the extraction engine",
-          "keywords": [
-            "Docling",
-            "legacy engine",
-            "switch engine",
-            "layout extraction"
-          ],
-          "steps": [
-            "Open [Document extraction](/admin/document-intelligence).",
-            "In **Extraction engine**, choose **Legacy** or **Docling**. Docling reads the page layout, tables and scanned text, and every field it extracts needs an AI provider that serves document work; parsing rules are not applied. Legacy reads native PDF text, runs OCR on scans and applies your parsing rules.",
-            "Select **Save changes**. The engine applies to documents uploaded from then on; documents already read keep their text."
           ]
         },
         {
@@ -4579,7 +4564,7 @@
           ]
         }
       ],
-      "notes": "Opening the page needs read access to document control. The AI-assisted options, and every document read by the Docling engine, depend on an enabled AI provider assigned to the Document extraction task, which is set up on [AI control](/admin/agent-control); a provider assigned only to chat does not read documents. The server must also have document extraction turned on. Without both, Docling documents are stored but not read, and upload screens say which is missing. Provider-specific parsing rules live on [Parsing rules](/admin/document-parsing-rules) and apply only to the legacy engine.",
+      "notes": "Opening the page needs read access to document control. Every document Docling reads, and the AI-assisted options, depend on an enabled AI provider assigned to the Document extraction task, which is set up on [AI control](/admin/agent-control); a provider assigned only to chat does not read documents. The server must also have document extraction turned on and its document converter configured. Without all three, documents are stored but not read, and this page, the upload screens and the document's failure message say which is missing. The provider-specific rules on [Parsing rules](/admin/document-parsing-rules) are applied to the text Docling reads from a rate confirmation, after it is classified and before AI extraction.",
       "related": [
         "/admin/document-parsing-rules",
         "/admin/document-operations",

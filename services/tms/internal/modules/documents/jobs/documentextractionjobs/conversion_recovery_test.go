@@ -2,8 +2,6 @@ package documentextractionjobs
 
 import (
 	"context"
-	"io"
-	"strings"
 	"sync"
 	"testing"
 
@@ -145,12 +143,6 @@ func (h *doclingHarness) expectSucceedingConversion(t *testing.T) []kernelports.
 	t.Helper()
 
 	golden := doclingGoldenPages(t, "rate-confirmation.pdf.golden.json")
-	h.storage.EXPECT().
-		Download(mock.Anything, mock.Anything).
-		Return(&kernelports.DownloadResult{
-			Body: io.NopCloser(strings.NewReader("%PDF-1.7 rate confirmation")),
-		}, nil).
-		Once()
 	h.converter.EXPECT().Enabled().Return(true)
 	h.converter.EXPECT().
 		Submit(mock.Anything, mock.Anything).
@@ -163,7 +155,6 @@ func (h *doclingHarness) expectSucceedingConversion(t *testing.T) []kernelports.
 	h.converter.EXPECT().
 		Result(mock.Anything, kernelports.ConversionTaskID("task-1")).
 		Return(&kernelports.ConvertedDocument{
-			Converter:        string(documentcontent.ConverterDocling),
 			ConverterVersion: "1.36.0",
 			Pages:            golden,
 		}, nil).
@@ -272,14 +263,6 @@ func TestProcessDocumentExtractionWorkflow_ExhaustedConversionEndsFailed(t *test
 	t.Parallel()
 
 	h := newDoclingHarness(t, true)
-	h.storage.EXPECT().
-		Download(mock.Anything, mock.Anything).
-		RunAndReturn(func(context.Context, string) (*kernelports.DownloadResult, error) {
-			return &kernelports.DownloadResult{
-				Body: io.NopCloser(strings.NewReader("%PDF-1.7 rate confirmation")),
-			}, nil
-		}).
-		Times(int(convertRetryPolicy.MaximumAttempts))
 	h.converter.EXPECT().Enabled().Return(true)
 	h.converter.EXPECT().
 		Submit(mock.Anything, mock.Anything).
@@ -310,12 +293,6 @@ func TestProcessDocumentExtractionWorkflow_RefusedAPIKeyFailsAtOnceWithTheConfig
 	t.Parallel()
 
 	h := newDoclingHarness(t, true)
-	h.storage.EXPECT().
-		Download(mock.Anything, mock.Anything).
-		Return(&kernelports.DownloadResult{
-			Body: io.NopCloser(strings.NewReader("%PDF-1.7 rate confirmation")),
-		}, nil).
-		Once()
 	h.converter.EXPECT().Enabled().Return(true)
 	h.converter.EXPECT().
 		Submit(mock.Anything, mock.Anything).

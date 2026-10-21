@@ -170,6 +170,7 @@ export function getColumns(t: TranslateFn): ColumnDef<TrailerRow>[] {
           <EntityRefCell<NonNullable<TrailerRow["fleetCode"]>, TrailerRow>
             entity={fleetCode}
             config={{
+              kind: "fleet_code",
               basePath: "/dispatch/configuration-files/fleet-codes",
               getId: (fleetCode) => fleetCode.id,
               getDisplayText: (fleetCode) => fleetCode.code ?? "",
@@ -201,6 +202,7 @@ export function getColumns(t: TranslateFn): ColumnDef<TrailerRow>[] {
           <EntityRefCell<Pick<Location, "id" | "name">, TrailerRow>
             entity={locationRef}
             config={{
+              kind: "location",
               basePath: "/dispatch/locations",
               getId: (location) => location.id,
               getDisplayText: (location) => location.name,

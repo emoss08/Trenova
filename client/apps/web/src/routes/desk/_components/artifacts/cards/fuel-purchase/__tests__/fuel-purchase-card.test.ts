@@ -196,6 +196,23 @@ describe("the purchase's checks", () => {
     expect(purchaseStanding(card, purchaseChecks(card, t), t).label).toBe("Not IFTA fuel");
   });
 
+  it("says the card check cannot be made without fuel card read, not that the card is unassigned", () => {
+    const withheld = withCard(importedPurchase(), (copy) => {
+      copy.purchase.fuelCard = fuelCardOnFile({
+        assignedTractorId: null,
+        assignedTractor: null,
+        assignedWorkerId: null,
+        assignedWorker: null,
+      });
+    });
+    expect(purchaseChecks(withheld, t, false).at(-1)).toEqual({
+      key: "card",
+      state: "info",
+      title: "Card assignment is hidden",
+      detail: "You don't have access to fuel cards",
+    });
+  });
+
   it("warns about a card that was cancelled or belongs to another tractor", () => {
     const cancelled = withCard(importedPurchase(), (copy) => {
       copy.purchase.fuelCard = fuelCardOnFile({ status: "Cancelled" });
