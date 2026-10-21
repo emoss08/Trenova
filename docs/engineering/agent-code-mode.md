@@ -559,7 +559,7 @@ decides from its own use whether to keep it.
 | Piece | Location |
 |---|---|
 | Gate, limits, frame protocol, shim and runner | `internal/modules/agent/domain/codemode/` (`gate.go`, `limits.go`, `protocol.go`, `script.go`, `sdk/`) |
-| Provider settings (Scripts, Scripts may propose writes) | `aiprovider` (`agentsettings.go`, `ScriptSettings`); migration `20261231010180_ai_provider_agent_settings` |
+| Provider settings (Scripts, Scripts may propose writes) | `aiprovider` (`agentsettings.go`, `ScriptSettings`); migration `20261231010200_ai_provider_agent_settings` |
 | Which providers offer scripts, and the answering provider's settings at dispatch | `completionrouter/scripts.go` (`agentports.ScriptProviders`) |
 | Broker, index, gate check, per-turn count | `agentruntime/scriptbroker.go`, `scripttool.go` |
 | `ToolPolicy.Script`, `CallableFromScript`, `QueryToolParams.Broker` | `agentports/toolpolicy.go`, `agentquerytool.go` |

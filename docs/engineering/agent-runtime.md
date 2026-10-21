@@ -397,7 +397,7 @@ one mid-reply, on Anthropic's side. The advisor is a **setting on each chat prov
 Control → Providers, off by default: `advisorEnabled`, and `advisorModel`, which is
 `claude-opus-5-5` when left empty (`aiprovider.DefaultAdvisorModel`). The columns are
 `advisor_enabled`, `advisor_model` and `advisor_refusal` on `ai_providers` (migration
-`20261231010180_ai_provider_agent_settings`). The OpenAI adapters ignore the advisor.
+`20261231010200_ai_provider_agent_settings`). The OpenAI adapters ignore the advisor.
 
 - **Checked on save.** The advisor is accepted only on an Anthropic Messages provider, on a
   platform that serves it (`Platform.ServesAdvisor`: the Claude API and Claude Platform on

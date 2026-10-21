@@ -45,7 +45,7 @@ agent runtime    ─▶ agent_runs / assistant_turns (status, fingerprint.stoppe
 | Routing change | `aiprovider.PlanRouteTo`, `AIProviderService.RouteTask`, mutation `routeAITask` |
 | GraphQL | `schema/aianalytics.graphqls`, `resolver/aianalyticsresolver` (permission `AgentRun` Read) |
 | Web | `routes/agent-control/_components/analytics/`, query keys `queries.aiAnalytics` |
-| Migrations | `20261231009250_ai_analytics.tx`, `20261231009260_ai_analytics_indexes`, `20261231009290_ai_analytics_refresh_indexes`, `20261231009950_ai_work_unit_cache_tokens.tx`, `20261231010190_ai_work_unit_advisor.tx` |
+| Migrations | `20261231009250_ai_analytics.tx`, `20261231009260_ai_analytics_indexes`, `20261231009290_ai_analytics_refresh_indexes`, `20261231009950_ai_work_unit_cache_tokens.tx`, `20261231010210_ai_work_unit_advisor.tx` |
 | Development seed | `seeds/development/38_ai_analytics.go` |
 
 ## What is recorded
@@ -132,7 +132,7 @@ rebuilds the last 30 days from the sources.
   (input, cache reads and cache writes together), `advisor_output_tokens` and
   `advisor_cost_usd`, summed from the usage rows' `advisor_*` columns. `cost_usd` still includes
   the advisor's cost; `advisor_cost_usd` is its part. Migration
-  `20261231010190_ai_work_unit_advisor` added them and set every organization's
+  `20261231010210_ai_work_unit_advisor` added them and set every organization's
   `refreshed_through` to 0, so the next refresh rebuilds the retention window with them.
 
 ## The query
