@@ -124,3 +124,28 @@ func TestLoginThrottleBlocksAnAddressPastItsThreshold(t *testing.T) {
 	assert.True(t, decision.Blocked)
 	assert.Equal(t, sessionports.LoginThrottleScopeIP, decision.Scope)
 }
+
+func TestLoginThrottleLocksFollowThePolicysBackoff(t *testing.T) {
+	policy := sessionports.DefaultLoginThrottlePolicy()
+	policy.AccountWindow = time.Hour
+	policy.IPThreshold = 0
+	client := testutil.SetupTestRedis(t)
+	t.Cleanup(func() { client.FlushDB(t.Context()) })
+	store := NewLoginThrottleStoreWithPolicy(client, policy, zap.NewNop())
+	key := sessionports.LoginThrottleKey{Account: "dana@example.com", ClientIP: "198.51.100.4"}
+	lockKey := loginThrottlePrefix + ":account:" + accountDigest(key.Account) + ":lock"
+
+	for failures := 1; failures <= policy.AccountThreshold+25; failures++ {
+		require.NoError(t, client.Del(t.Context(), lockKey).Err())
+		decision, err := store.Begin(t.Context(), key)
+		require.NoError(t, err)
+		assert.Equal(t, failures, decision.AccountFailures)
+		want := policy.AccountLockFor(failures)
+		if want == 0 {
+			assert.False(t, decision.Tripped, failures)
+			continue
+		}
+		assert.True(t, decision.Tripped, failures)
+		assert.Equal(t, want, decision.RetryAfter, failures)
+	}
+}

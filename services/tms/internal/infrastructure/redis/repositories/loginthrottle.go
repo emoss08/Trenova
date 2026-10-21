@@ -18,6 +18,7 @@ const (
 	loginThrottleUnknown      = "unknown"
 	loginThrottleResultFields = 6
 	loginThrottleScopeIPCode  = 2
+	loginThrottleLockSteps    = 18
 )
 
 type LoginThrottleStoreParams struct {
@@ -28,9 +29,27 @@ type LoginThrottleStoreParams struct {
 }
 
 type loginThrottleStore struct {
-	client *redis.Client
-	policy sessionports.LoginThrottlePolicy
-	l      *zap.Logger
+	client    *redis.Client
+	policy    sessionports.LoginThrottlePolicy
+	beginArgs []any
+	l         *zap.Logger
+}
+
+func loginThrottleBeginArgs(policy sessionports.LoginThrottlePolicy) []any {
+	args := make([]any, 0, 4+loginThrottleLockSteps)
+	args = append(args,
+		policy.IPThreshold,
+		policy.AccountWindow.Milliseconds(),
+		policy.IPWindow.Milliseconds(),
+		policy.AccountThreshold,
+	)
+	if policy.AccountThreshold <= 0 {
+		return args
+	}
+	for step := range loginThrottleLockSteps {
+		args = append(args, policy.AccountLockFor(policy.AccountThreshold+step).Milliseconds())
+	}
+	return args
 }
 
 func NewLoginThrottleStore(p LoginThrottleStoreParams) sessionports.LoginThrottleStore {
@@ -51,9 +70,10 @@ func NewLoginThrottleStoreWithPolicy(
 	}
 
 	return &loginThrottleStore{
-		client: client,
-		policy: policy,
-		l:      logger.Named("redis.login-throttle"),
+		client:    client,
+		policy:    policy,
+		beginArgs: loginThrottleBeginArgs(policy),
+		l:         logger.Named("redis.login-throttle"),
 	}
 }
 
@@ -74,19 +94,9 @@ if redis.call('PTTL', KEYS[3]) < 0 then
 	redis.call('PEXPIRE', KEYS[3], ARGV[3])
 end
 local threshold = tonumber(ARGV[4])
-if threshold > 0 and accountFailures >= threshold then
-	local lock = tonumber(ARGV[5])
-	local maxLock = tonumber(ARGV[6])
-	local steps = math.min(accountFailures - threshold, 16)
-	for _ = 1, steps do
-		lock = lock * 2
-		if lock >= maxLock then
-			break
-		end
-	end
-	if lock > maxLock then
-		lock = maxLock
-	end
+local steps = #ARGV - 4
+if threshold > 0 and steps > 0 and accountFailures >= threshold then
+	local lock = tonumber(ARGV[4 + math.min(accountFailures - threshold + 1, steps)])
 	redis.call('SET', KEYS[1], '1', 'PX', lock)
 	return {0, 1, lock, accountFailures, ipFailures, 1}
 end
@@ -117,12 +127,7 @@ func (s *loginThrottleStore) Begin(
 			s.accountFailuresKey(key.Account),
 			s.ipFailuresKey(key.ClientIP),
 		},
-		s.policy.IPThreshold,
-		s.policy.AccountWindow.Milliseconds(),
-		s.policy.IPWindow.Milliseconds(),
-		s.policy.AccountThreshold,
-		s.policy.AccountBaseLock.Milliseconds(),
-		s.policy.AccountMaxLock.Milliseconds(),
+		s.beginArgs...,
 	).Int64Slice()
 	if err != nil {
 		return nil, fmt.Errorf("begin login attempt: %w", err)
