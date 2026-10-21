@@ -3,6 +3,7 @@ package ediservice
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/edi/app/editransport"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/stretchr/testify/require"
@@ -14,7 +15,12 @@ func TestTransportModuleWiresAllDeliverableMethods(t *testing.T) {
 	t.Parallel()
 
 	var dispatcher ediports.EDITransportDispatcher
-	app := fxtest.New(t, editransport.Module, fx.Populate(&dispatcher))
+	app := fxtest.New(
+		t,
+		fx.Supply(&config.Config{}),
+		editransport.Module,
+		fx.Populate(&dispatcher),
+	)
 	app.RequireStart()
 	t.Cleanup(app.RequireStop)
 
