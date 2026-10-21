@@ -128,7 +128,8 @@ func (s *Service) VerifyMFAChallenge(
 	}
 
 	throttleKey := loginThrottleKey(ctx, usr.EmailAddress)
-	if err = s.checkLoginThrottle(ctx, throttleKey, attempt); err != nil {
+	decision, err := s.beginLoginAttempt(ctx, throttleKey, attempt)
+	if err != nil {
 		return nil, err
 	}
 
@@ -140,7 +141,7 @@ func (s *Service) VerifyMFAChallenge(
 	})
 	if err != nil {
 		attempt.mfaState = mfaStateRejected
-		return nil, s.rejectMFAAttempt(ctx, tokenHash, throttleKey, attempt, err)
+		return nil, s.rejectMFAAttempt(ctx, tokenHash, decision, attempt, err)
 	}
 	attempt.mfaState = method
 
@@ -171,11 +172,11 @@ func (s *Service) VerifyMFAChallenge(
 func (s *Service) rejectMFAAttempt(
 	ctx context.Context,
 	tokenHash string,
-	throttleKey sessionports.LoginThrottleKey,
+	decision *sessionports.LoginThrottleDecision,
 	attempt *authAttempt,
 	cause error,
 ) error {
-	s.recordLoginFailure(ctx, throttleKey)
+	s.recordLoginFailure(ctx, decision)
 
 	failures, err := s.challenges.RecordFailure(ctx, tokenHash, mfaChallengeTTL)
 	if err != nil {

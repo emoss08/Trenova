@@ -159,26 +159,30 @@ func (s *Service) Login(
 	defer func() { s.recordAuthAttempt(ctx, attempt, err) }()
 
 	throttleKey := loginThrottleKey(ctx, req.EmailAddress)
-	if err = s.checkLoginThrottle(ctx, throttleKey, attempt); err != nil {
+	decision, err := s.beginLoginAttempt(ctx, throttleKey, attempt)
+	if err != nil {
 		return nil, err
 	}
 
 	usr, err := s.ur.FindByEmail(ctx, req.EmailAddress)
 	if err != nil {
+		tenant.DiscardPasswordCheck(req.Password)
 		attempt.fail(authErrorUnknownAccount)
-		s.recordLoginFailure(ctx, throttleKey)
+		s.recordLoginFailure(ctx, decision)
 		return nil, errInvalidCredentials
 	}
 	attempt.forUser(usr)
 
-	if err = usr.VerifyCredentials(req.Password); err != nil {
-		if errortypes.IsAuthorizationError(err) {
-			attempt.fail(authErrorAccountUnavailable)
-			return nil, err
-		}
+	if err = usr.VerifyPassword(req.Password); err != nil {
 		attempt.fail(authErrorRejectedLogin)
-		s.recordLoginFailure(ctx, throttleKey)
+		s.recordLoginFailure(ctx, decision)
 		return nil, errInvalidCredentials
+	}
+
+	if err = usr.ValidateStatus(); err != nil {
+		attempt.fail(authErrorAccountUnavailable)
+		s.recordLoginFailure(ctx, decision)
+		return nil, err
 	}
 	s.resetLoginThrottle(ctx, throttleKey)
 

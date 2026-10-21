@@ -2,6 +2,8 @@ package tenant
 
 import (
 	"context"
+	"fmt"
+	"sync"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/dbtype"
@@ -123,6 +125,22 @@ func (u *User) GeneratePassword(raw string) (string, error) {
 	}
 
 	return string(hashed), nil
+}
+
+var dummyPasswordHash = sync.OnceValue(func() []byte {
+	hashed, err := bcrypt.GenerateFromPassword([]byte(pulid.MustNew("dpw_").String()), bcrypt.DefaultCost)
+	if err != nil {
+		panic(fmt.Sprintf("hash the dummy password: %v", err))
+	}
+	return hashed
+})
+
+func DiscardPasswordCheck(raw string) {
+	_ = bcrypt.CompareHashAndPassword(dummyPasswordHash(), []byte(raw))
+}
+
+func (u *User) VerifyPassword(raw string) error {
+	return u.verifyPassword(raw)
 }
 
 func (u *User) verifyPassword(raw string) error {

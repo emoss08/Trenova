@@ -70,7 +70,14 @@ its reason in `error_code` (`honeypot`, `turnstile_rejected`, `turnstile_unavail
 `invalid_input`, `existing_account`, `send_limit_reached`, `invalid_token`,
 `expired_token`, `signups_paused`, `email_in_use`, `provisioning_failed`).
 `login_throttled` rows name the scope in `error_code` (`login_throttled_account`,
-`login_throttled_ip`). The throttle fails open: when Redis cannot be reached the attempt
+`login_throttled_ip`). Every attempt is counted before its password is checked, in one
+Redis script that refuses an account under lock or an address past its threshold and
+otherwise increments both counters and sets the lock on the attempt that reaches the
+threshold, so concurrent guesses cannot all slip in under it. A successful sign-in clears
+the account's counter and returns its attempt to the address. An unknown address still
+costs a bcrypt comparison against a dummy hash, and a locked or inactive account answers
+"invalid email or password" until the right password is given, so neither timing nor the
+message tells an attacker which addresses exist or what state they are in. The throttle fails open: when Redis cannot be reached the attempt
 is allowed and a warning is logged, so a cache outage never locks every user out; the
 password check, the per-account bcrypt cost and the signup Turnstile check still apply.
 

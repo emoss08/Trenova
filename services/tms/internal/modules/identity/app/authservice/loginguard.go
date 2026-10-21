@@ -36,22 +36,22 @@ func loginThrottleKey(ctx context.Context, emailAddress string) sessionports.Log
 	return key
 }
 
-func (s *Service) checkLoginThrottle(
+func (s *Service) beginLoginAttempt(
 	ctx context.Context,
 	key sessionports.LoginThrottleKey,
 	attempt *authAttempt,
-) error {
+) (*sessionports.LoginThrottleDecision, error) {
 	if s.throttle == nil {
-		return nil
+		return nil, nil //nolint:nilnil // no throttle is configured
 	}
 
-	decision, err := s.throttle.Check(ctx, key)
+	decision, err := s.throttle.Begin(ctx, key)
 	if err != nil {
 		s.l.Warn("login throttle check failed; allowing the attempt", zap.Error(err))
-		return nil
+		return nil, nil //nolint:nilnil // the throttle fails open
 	}
 	if !decision.Blocked {
-		return nil
+		return decision, nil
 	}
 
 	attempt.provider = iamports.AuthEventProviderLoginThrottled
@@ -63,23 +63,17 @@ func (s *Service) checkLoginThrottle(
 		attempt.riskSignals = []string{riskSignalAccountThrottle}
 	}
 
-	return errortypes.NewRateLimitError(
+	return nil, errortypes.NewRateLimitError(
 		"emailAddress",
 		"Too many sign-in attempts. Wait a moment before trying again.",
 	).WithRetryAfter(decision.RetryAfter)
 }
 
-func (s *Service) recordLoginFailure(ctx context.Context, key sessionports.LoginThrottleKey) {
-	if s.throttle == nil {
-		return
-	}
-
-	decision, err := s.throttle.RecordFailure(ctx, key)
-	if err != nil {
-		s.l.Warn("failed to record a failed sign-in", zap.Error(err))
-		return
-	}
-	if !decision.Blocked || s.authEvents == nil {
+func (s *Service) recordLoginFailure(
+	ctx context.Context,
+	decision *sessionports.LoginThrottleDecision,
+) {
+	if decision == nil || !decision.Tripped || s.authEvents == nil {
 		return
 	}
 
@@ -89,7 +83,7 @@ func (s *Service) recordLoginFailure(ctx context.Context, key sessionports.Login
 		RiskSignals: []string{riskSignalAccountThrottle},
 		ErrorCode:   authErrorThrottledAccount,
 	}
-	if decision.Scope == sessionports.LoginThrottleScopeIP {
+	if decision.TrippedScope == sessionports.LoginThrottleScopeIP {
 		rec.RiskSignals = []string{riskSignalIPThrottle}
 		rec.ErrorCode = authErrorThrottledIP
 	}
@@ -101,7 +95,7 @@ func (s *Service) resetLoginThrottle(ctx context.Context, key sessionports.Login
 		return
 	}
 
-	if err := s.throttle.Reset(ctx, key.Account); err != nil {
+	if err := s.throttle.Succeed(ctx, key); err != nil {
 		s.l.Warn("failed to clear the sign-in failure counter", zap.Error(err))
 	}
 }

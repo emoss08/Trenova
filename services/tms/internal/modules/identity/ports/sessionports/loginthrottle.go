@@ -58,10 +58,11 @@ type LoginThrottleDecision struct {
 	RetryAfter      time.Duration
 	AccountFailures int
 	IPFailures      int
+	Tripped         bool
+	TrippedScope    LoginThrottleScope
 }
 
 type LoginThrottleStore interface {
-	Check(ctx context.Context, key LoginThrottleKey) (*LoginThrottleDecision, error)
-	RecordFailure(ctx context.Context, key LoginThrottleKey) (*LoginThrottleDecision, error)
-	Reset(ctx context.Context, account string) error
+	Begin(ctx context.Context, key LoginThrottleKey) (*LoginThrottleDecision, error)
+	Succeed(ctx context.Context, key LoginThrottleKey) error
 }
