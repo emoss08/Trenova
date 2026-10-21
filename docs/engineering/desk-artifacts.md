@@ -206,7 +206,10 @@ to speak of, then where it stands (`headStanding`); beside it are what was not r
 read clearly, and the classifier's confidence in the kind only when it is under 90%.
 
 **The page.** Each page is the server's drawing of it, `GET /documents/:id/pages/:page/image/`
-(a PDF page rendered by pdfium at 150 dpi, or the image itself as page 1, as WebP; read on
+(a PDF page drawn by the imaging worker to fit 1400 × 1800, or the image itself as page 1, as
+WebP; the first `imaging.prerenderPages` pages are rendered and stored after the upload, and any
+other page is rendered once on its first view and stored, so a read serves a stored render; see
+[imaging-worker.md](imaging-worker.md#page-renders-in-the-tms). It is read on
 `document:read`, recorded as a view on the `page_image` channel and cached against an ETag;
 every API response says `Vary: Origin` (`middleware.NewVaryOriginMiddleware`), so a copy a
 browser cached from a request without an origin is never handed to a cross-origin fetch that

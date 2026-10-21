@@ -44,12 +44,14 @@ itself are yours.
 | `temporal` | `temporalio/auto-setup` | Durable workflows; state in its own two PostgreSQL databases |
 | `gotenberg` | `gotenberg/gotenberg` | HTML-to-PDF rendering, locked down and unreachable from outside |
 | `docling` | `ghcr.io/docling-project/docling-serve-cpu` | Reads uploaded files for document extraction (PDFs, scans, photos, Office files, email), locked down and unreachable from outside |
+| `imaging` | `ghcr.io/emoss08/trenova/imaging` | Document thumbnails, page views, capture page inspection, PDF assembly and image normalization; every file is parsed in a hardened child process |
+| `imaging-certs` | `ghcr.io/emoss08/trenova/imaging` | One-shot: issues the private CA and the certificates the TMS and the imaging worker authenticate each other with, once |
 | `gtc` | `ghcr.io/emoss08/gtc` | Change data capture: PostgreSQL to Meilisearch and Redis |
 
 The `tms-api`, `tms-worker`, `tms-migrate` and `tms-bootstrap` services are one image with
 different commands.
 Only Caddy publishes ports (80 and 443, TCP and UDP). The databases, queues, search, Temporal,
-Gotenberg, docling-serve and GTC sit on an internal Docker network with no route off the host; the API and
+Gotenberg, docling-serve, the imaging worker and GTC sit on an internal Docker network with no route off the host; the API and
 worker get a separate network for outbound calls (AI providers, email, accounting
 integrations, release checks).
 
@@ -63,6 +65,11 @@ integrations, release checks).
   4 vCPU it takes roughly 8 to 15 seconds a page for PDFs and scans and well under a second
   for Office files and email. Document extraction needs it; see
   [Document extraction](#document-extraction).
+- The `imaging` service takes **2 vCPU and up to 3 GB of memory** by default
+  (`TRENOVA_IMAGING_CPUS` and `TRENOVA_IMAGING_MEMORY` in `.env`); it runs one child process
+  per CPU, each needing about 1 GB under load, and idles at a few megabytes. Every document
+  preview, page view and capture page goes through it, so the API and worker wait for it to be
+  healthy.
 - Docker Engine 24 or newer with the Compose plugin v2.24 or newer (`docker compose version`).
 - `git` and `openssl` on the host.
 - For a public install: a hostname for Trenova and one for its file storage (for example
@@ -257,7 +264,9 @@ Settings you are likely to change:
 [`postgresql.conf`](../../deploy/selfhost/postgresql.conf) is sized for an 8 GB host. On a
 larger one, raise `shared_buffers` to about a quarter of RAM and `effective_cache_size` to
 about half, then `docker compose restart postgres`. Redis is capped at 1 GB
-(`REDIS_MAXMEMORY` in `.env`).
+(`REDIS_MAXMEMORY` in `.env`). If page views or capture intake queue up, give the imaging worker
+more CPUs (`TRENOVA_IMAGING_CPUS`, with about 1 GB of `TRENOVA_IMAGING_MEMORY` per CPU) and
+`docker compose up -d imaging`.
 
 ## Upgrades
 
@@ -431,7 +440,9 @@ docling-serve call another service, and both stay on the internal network.
 
 The stack is secure by default for a single-operator host: TLS everywhere, secrets generated
 per install, no account with a default or published password, every backing service on an
-internal network, Gotenberg and docling-serve sandboxed, and nothing published except Caddy. Beyond that:
+internal network, Gotenberg and docling-serve sandboxed, the imaging worker parsing every file
+in a child process under seccomp, landlock and resource limits and reached only over mutual
+TLS, and nothing published except Caddy. Beyond that:
 
 - **Firewall.** Allow inbound 22 (or your SSH port), 80 and 443 only. Docker publishes ports
   around `ufw`/`firewalld` rules, which is why nothing but Caddy publishes one; keep it that
@@ -499,6 +510,15 @@ reach both `docling` and `tms-worker`; recreate both after changing it). A docum
 **Unavailable** with no draft means no AI provider can serve document extraction for that
 organization; add one, then extract the document again. A file refused as too large or too
 long is over `documentConversion.maxFileBytes` or `maxPages`.
+
+**Previews, page views or capture pages fail.** `docker compose ps imaging` must be healthy,
+and `imaging-certs` must have exited 0. `docker compose logs imaging` says why a call was
+refused: a file the worker could not read is reported as such and stays downloadable; `a child
+was lost during a job` means a file faulted a native library, and only that file fails. If the
+TMS logs certificate errors after the volumes were recreated, reissue the certificates with
+`docker compose run --rm imaging-certs certs --force --server-dir=/certs/server
+--client-dir=/certs/client --ca-dir=/certs/ca --server-name=imaging` and
+`docker compose up -d --force-recreate imaging tms-api tms-worker`.
 
 **A service is restarting in a loop.** `docker compose ps` and then `docker compose logs
 <service>`. `docker stats` shows whether the host is out of memory.
