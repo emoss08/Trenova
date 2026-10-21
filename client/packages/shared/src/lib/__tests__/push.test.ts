@@ -67,7 +67,13 @@ describe("enablePush", () => {
 
   it("replaces a subscription another account holds instead of taking it over", async () => {
     post
-      .mockRejectedValueOnce(new ApiRequestError(409, { title: "Conflict", status: 409 }))
+      .mockRejectedValueOnce(
+        new ApiRequestError(409, {
+          type: "https://example.com/problems/conflict",
+          title: "Conflict",
+          status: 409,
+        }),
+      )
       .mockResolvedValueOnce({});
 
     await enablePush();
@@ -82,7 +88,11 @@ describe("enablePush", () => {
   });
 
   it("surfaces any other failure without touching the subscription", async () => {
-    const failure = new ApiRequestError(422, { title: "Invalid", status: 422 });
+    const failure = new ApiRequestError(422, {
+      type: "https://example.com/problems/validation-error",
+      title: "Invalid",
+      status: 422,
+    });
     post.mockRejectedValueOnce(failure);
 
     await expect(enablePush()).rejects.toBe(failure);
