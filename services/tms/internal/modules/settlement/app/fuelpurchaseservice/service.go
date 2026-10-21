@@ -3,6 +3,8 @@ package fuelpurchaseservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/pkg/rateimport"
+
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
@@ -57,6 +59,7 @@ type Params struct {
 	Realtime     agentports.RealtimeService             `optional:"true"`
 	Feeds        fuelpurchaseports.FuelCardFeedResolver `optional:"true"`
 	Validator    *Validator
+	SheetLimits  rateimport.Limits `optional:"true"`
 }
 
 type Service struct {
@@ -71,11 +74,13 @@ type Service struct {
 	feeds         fuelpurchaseports.FuelCardFeedResolver
 	validator     *Validator
 	now           func() int64
+	sheetLimits   rateimport.Limits
 }
 
 func New(p Params) *Service {
 	return &Service{
 		l:             p.Logger.Named("service.fuel-purchase"),
+		sheetLimits:   p.SheetLimits,
 		repo:          p.Repo,
 		jurisdictions: p.IFTARepo,
 		tractorRepo:   p.TractorRepo,

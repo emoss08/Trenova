@@ -1954,6 +1954,7 @@ type Config struct {
 	Accounting          AccountingConfig          `mapstructure:"accounting"`
 	Formula             FormulaConfig             `mapstructure:"formula"`
 	EDI                 EDIConfig                 `mapstructure:"edi"`
+	Imports             ImportsConfig             `mapstructure:"imports"`
 
 	extensions map[string]any
 }
@@ -2275,3 +2276,25 @@ func (c *Config) GetDSNMasked() string {
 }
 
 func (c *Config) CorsEnabled() bool { return c.Server.CORS.Enabled }
+
+type ImportsConfig struct {
+	Spreadsheet SpreadsheetImportConfig `mapstructure:"spreadsheet"`
+}
+
+// SpreadsheetImportConfig bounds reading one uploaded rate sheet, fuel card
+// statement or factoring remittance. A zero value takes the reader's default.
+type SpreadsheetImportConfig struct {
+	MaxRows          int   `mapstructure:"maxRows"          validate:"omitempty,min=1"`
+	MaxColumns       int   `mapstructure:"maxColumns"       validate:"omitempty,min=1"`
+	MaxCellBytes     int   `mapstructure:"maxCellBytes"     validate:"omitempty,min=1"`
+	MaxSheetBytes    int   `mapstructure:"maxSheetBytes"    validate:"omitempty,min=1"`
+	MaxUnzippedBytes int64 `mapstructure:"maxUnzippedBytes" validate:"omitempty,min=1"`
+	MaxPartBytes     int64 `mapstructure:"maxPartBytes"     validate:"omitempty,min=1"`
+}
+
+func (c *Config) GetSpreadsheetImportConfig() SpreadsheetImportConfig {
+	if c == nil {
+		return SpreadsheetImportConfig{}
+	}
+	return c.Imports.Spreadsheet
+}

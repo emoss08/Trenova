@@ -27,7 +27,7 @@ func TestReadCSV_ReadsHeadersAndRows(t *testing.T) {
 		"Origin State,Destination State,Rate",
 		"IL,GA,2.35",
 		"TX,CA,1.90",
-	))
+	), rateimport.Limits{})
 
 	require.NoError(t, err)
 	assert.Equal(t, []string{"Origin State", "Destination State", "Rate"}, sheet.Headers)
@@ -43,7 +43,7 @@ func TestReadCSV_StripsTheByteOrderMarkExcelWrites(t *testing.T) {
 	sheet, err := rateimport.ReadCSV(append([]byte("\ufeff"), csvBytes(
 		"Origin State,Rate",
 		"IL,2.35",
-	)...))
+	)...), rateimport.Limits{})
 
 	require.NoError(t, err)
 	assert.Equal(t, "Origin State", sheet.Headers[0])
@@ -57,7 +57,7 @@ func TestReadCSV_AcceptsRowsShorterThanTheHeader(t *testing.T) {
 	sheet, err := rateimport.ReadCSV(csvBytes(
 		"Origin State,Destination State,Rate,Minimum",
 		"IL,GA,2.35",
-	))
+	), rateimport.Limits{})
 
 	require.NoError(t, err)
 	require.Len(t, sheet.Rows, 1)
@@ -67,7 +67,7 @@ func TestReadCSV_AcceptsRowsShorterThanTheHeader(t *testing.T) {
 func TestReadCSV_AFileWithNoRowsIsRefused(t *testing.T) {
 	t.Parallel()
 
-	_, err := rateimport.ReadCSV(csvBytes("Origin State,Destination State,Rate"))
+	_, err := rateimport.ReadCSV(csvBytes("Origin State,Destination State,Rate"), rateimport.Limits{})
 
 	require.Error(t, err)
 }
@@ -75,7 +75,7 @@ func TestReadCSV_AFileWithNoRowsIsRefused(t *testing.T) {
 func TestReadCSV_AnEmptyFileIsRefused(t *testing.T) {
 	t.Parallel()
 
-	_, err := rateimport.ReadCSV(nil)
+	_, err := rateimport.ReadCSV(nil, rateimport.Limits{})
 
 	require.Error(t, err)
 }
@@ -104,7 +104,7 @@ func TestReadXLSX_ReadsTheFirstSheet(t *testing.T) {
 	sheet, err := rateimport.ReadXLSX(xlsxBytes(t, [][]string{
 		{"Origin State", "Destination State", "Rate"},
 		{"IL", "GA", "2.35"},
-	}))
+	}), rateimport.Limits{})
 
 	require.NoError(t, err)
 	assert.Equal(t, []string{"Origin State", "Destination State", "Rate"}, sheet.Headers)
@@ -122,7 +122,7 @@ func TestReadXLSX_FindsTheHeaderRowUnderATitle(t *testing.T) {
 		{},
 		{"Origin State", "Destination State", "Rate"},
 		{"IL", "GA", "2.35"},
-	}))
+	}), rateimport.Limits{})
 
 	require.NoError(t, err)
 	assert.Equal(t, []string{"Origin State", "Destination State", "Rate"}, sheet.Headers)
@@ -140,7 +140,7 @@ func TestReadXLSX_RowNumbersCountFromTheTopOfTheFile(t *testing.T) {
 		{},
 		{"Origin State", "Destination State", "Rate"},
 		{"IL", "GA", "2.35"},
-	}))
+	}), rateimport.Limits{})
 
 	require.NoError(t, err)
 	assert.Equal(t, 4, sheet.FirstDataRow)
@@ -149,7 +149,7 @@ func TestReadXLSX_RowNumbersCountFromTheTopOfTheFile(t *testing.T) {
 func TestReadXLSX_AWorkbookWithNoTableIsRefused(t *testing.T) {
 	t.Parallel()
 
-	_, err := rateimport.ReadXLSX(xlsxBytes(t, [][]string{{"ACME FREIGHT"}, {}}))
+	_, err := rateimport.ReadXLSX(xlsxBytes(t, [][]string{{"ACME FREIGHT"}, {}}), rateimport.Limits{})
 
 	require.Error(t, err)
 }
@@ -157,7 +157,7 @@ func TestReadXLSX_AWorkbookWithNoTableIsRefused(t *testing.T) {
 func TestReadXLSX_SomethingThatIsNotAWorkbookIsRefused(t *testing.T) {
 	t.Parallel()
 
-	_, err := rateimport.ReadXLSX([]byte("this is not a spreadsheet"))
+	_, err := rateimport.ReadXLSX([]byte("this is not a spreadsheet"), rateimport.Limits{})
 
 	require.Error(t, err)
 }

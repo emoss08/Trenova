@@ -8,6 +8,7 @@ package rateimportservice
 
 import (
 	"context"
+	"errors"
 	"path/filepath"
 	"strings"
 
@@ -42,6 +43,7 @@ type Params struct {
 	AgreementRepo rateagreementports.RateAgreementRepository
 	TemplateRepo  formulatemplateports.FormulaTemplateRepository
 	AuditService  auditports.AuditService
+	SheetLimits   pkgrateimport.Limits `optional:"true"`
 }
 
 type Service struct {
@@ -50,6 +52,7 @@ type Service struct {
 	agreementRepo rateagreementports.RateAgreementRepository
 	templateRepo  formulatemplateports.FormulaTemplateRepository
 	audit         auditports.AuditService
+	sheetLimits   pkgrateimport.Limits
 	now           func() int64
 }
 
@@ -60,6 +63,7 @@ func New(p Params) *Service {
 		agreementRepo: p.AgreementRepo,
 		templateRepo:  p.TemplateRepo,
 		audit:         p.AuditService,
+		sheetLimits:   p.SheetLimits,
 		now:           timeutils.NowUnix,
 	}
 }
@@ -122,8 +126,11 @@ func (s *Service) Upload(
 		return nil, err
 	}
 
-	sheet, err := readSheet(format, req.Content)
+	sheet, err := readSheet(format, req.Content, s.sheetLimits)
 	if err != nil {
+		if errors.Is(err, pkgrateimport.ErrLimitExceeded) {
+			return nil, pkgrateimport.ValidationError("file", err)
+		}
 		return nil, errortypes.NewValidationError("file", errortypes.ErrInvalid, err.Error())
 	}
 
@@ -250,12 +257,13 @@ func formatOf(fileName string) (rateimport.SourceFormat, error) {
 func readSheet(
 	format rateimport.SourceFormat,
 	content []byte,
+	limits pkgrateimport.Limits,
 ) (*pkgrateimport.Sheet, error) {
 	if format == rateimport.SourceFormatXLSX {
-		return pkgrateimport.ReadXLSX(content)
+		return pkgrateimport.ReadXLSX(content, limits)
 	}
 
-	return pkgrateimport.ReadCSV(content)
+	return pkgrateimport.ReadCSV(content, limits)
 }
 
 // templateResolver reads the organization's active freight charge templates

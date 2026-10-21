@@ -15,7 +15,7 @@ import (
 func TestTemplateCSV_ImportsCleanly(t *testing.T) {
 	t.Parallel()
 
-	sheet, err := rateimport.ReadCSV([]byte(rateimport.TemplateCSV()))
+	sheet, err := rateimport.ReadCSV([]byte(rateimport.TemplateCSV()), rateimport.Limits{})
 	require.NoError(t, err)
 	require.Len(t, sheet.Rows, 2, "the template carries two example rows")
 

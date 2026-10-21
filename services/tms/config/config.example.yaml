@@ -453,3 +453,15 @@ accounting:
   # secrets come from TRENOVA_NETSUITE_CLIENT_ID and TRENOVA_NETSUITE_CLIENT_SECRET.
   netSuite:
     redirectUrl: "" # Defaults to app.webBaseUrl + /admin/integrations/netsuite/callback
+
+# Limits on one uploaded rate sheet, fuel card statement or factoring remittance (CSV or
+# XLSX). A file past any of them is refused with the limit it went past; 0 or unset takes
+# the default shown.
+imports:
+  spreadsheet:
+    maxRows: 100000
+    maxColumns: 256
+    maxCellBytes: 32768 # 32 KiB
+    maxSheetBytes: 67108864 # 64 MiB of cell text
+    maxUnzippedBytes: 268435456 # 256 MiB for the whole workbook once unzipped; past it the file is refused
+    maxPartBytes: 67108864 # 64 MiB of one XML part held in memory; a larger part is read from a temp file

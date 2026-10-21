@@ -541,7 +541,7 @@ func TestTemplateRoundTrips(t *testing.T) {
 		fuelpurchase.CardProviderOther,
 	} {
 		content := fuelimport.Template(provider)
-		sheet, err := rateimport.ReadCSV([]byte(content))
+		sheet, err := rateimport.ReadCSV([]byte(content), rateimport.Limits{})
 		require.NoError(t, err, provider)
 
 		result := fuelimport.Stage(sheet, fuelimport.StageOptions{Provider: provider})

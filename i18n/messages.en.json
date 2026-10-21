@@ -135939,6 +135939,24 @@
       "apps/web/components"
     ]
   },
+  "Line {0} of this file has a cell longer than {1} bytes.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Line {0} of this file has more than {1} columns.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Line-level credit and rebill values that created the exception.": {
     "sites": 1,
     "scope": [
@@ -272617,6 +272635,24 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "This file has more than {0} rows. Split it into smaller files and import each one.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This file holds more than {0} bytes of text. Split it into smaller files and import each one.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "This file is already a shipment": {
