@@ -306,3 +306,35 @@ func TestKeyRefused_ReadsOnlyAuthStatuses(t *testing.T) {
 
 	assert.False(t, keyRefused(errors.New("dial tcp: refused")))
 }
+
+func TestResolveAPIKey_ReadsOnlyAKeyBoundToItsOwnProvider(t *testing.T) {
+	t.Parallel()
+
+	provider := openAIChatProvider("bound", "https://api.example.com/v1", 10)
+	provider.ID = pulid.MustNew("aiprv_")
+	provider.OrganizationID = pulid.MustNew("org_")
+	provider.BusinessUnitID = pulid.MustNew("bu_")
+	service := newTestService(t, provider)
+
+	bound, err := service.encryption.EncryptStringWithAAD("sk-bound", credentialAAD(provider))
+	require.NoError(t, err)
+	provider.APIKey = bound
+	key, err := service.resolveAPIKey(provider)
+	require.NoError(t, err)
+	assert.Equal(t, "sk-bound", key)
+
+	other := *provider
+	other.ID = pulid.MustNew("aiprv_")
+	foreign, err := service.encryption.EncryptStringWithAAD("sk-foreign", credentialAAD(&other))
+	require.NoError(t, err)
+	provider.APIKey = foreign
+	_, err = service.resolveAPIKey(provider)
+	require.Error(t, err, "a key copied from another provider never decrypts")
+
+	legacy, err := service.encryption.EncryptString("sk-legacy")
+	require.NoError(t, err)
+	provider.APIKey = legacy
+	key, err = service.resolveAPIKey(provider)
+	require.NoError(t, err)
+	assert.Equal(t, "sk-legacy", key, "an unbound key from before keeps working until it is rebound")
+}

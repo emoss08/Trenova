@@ -94,6 +94,38 @@ describe("TwoFactorSection", () => {
     expect(screen.getByRole("button", { name: "New recovery codes" })).toBeInTheDocument();
   });
 
+  it("asks for new recovery codes when the stored ones use the older protection", async () => {
+    mocks.status.mockResolvedValue({
+      ...ON,
+      recoveryCodesRemaining: 8,
+      recoveryCodesNeedReplacing: true,
+    });
+    renderSection(<TwoFactorSection />);
+
+    expect(
+      await screen.findByText(
+        "Your recovery codes were saved with an older, weaker protection. Create new ones and store them safely.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(
+        "You are running out of recovery codes. Create new ones and store them safely.",
+      ),
+    ).not.toBeInTheDocument();
+  });
+
+  it("says nothing about protection when the codes are current", async () => {
+    mocks.status.mockResolvedValue({ ...ON, recoveryCodesRemaining: 8 });
+    renderSection(<TwoFactorSection />);
+
+    expect(await screen.findByText("On")).toBeInTheDocument();
+    expect(
+      screen.queryByText(
+        "Your recovery codes were saved with an older, weaker protection. Create new ones and store them safely.",
+      ),
+    ).not.toBeInTheDocument();
+  });
+
   it("turns the factor off only with the password and a code", async () => {
     mocks.status.mockResolvedValue(ON);
     mocks.disable.mockResolvedValue(undefined);

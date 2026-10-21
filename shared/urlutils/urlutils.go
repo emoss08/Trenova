@@ -18,3 +18,26 @@ func ParseAbsoluteHTTP(raw string) (*url.URL, bool) {
 		return nil, false
 	}
 }
+
+func HostMatches(host string, patterns []string) bool {
+	normalized := strings.TrimSuffix(strings.ToLower(strings.TrimSpace(host)), ".")
+	if normalized == "" {
+		return false
+	}
+	for _, pattern := range patterns {
+		candidate := strings.TrimSuffix(strings.ToLower(strings.TrimSpace(pattern)), ".")
+		if candidate == "" {
+			continue
+		}
+		if suffix, wildcard := strings.CutPrefix(candidate, "*."); wildcard {
+			if suffix != "" && strings.HasSuffix(normalized, "."+suffix) {
+				return true
+			}
+			continue
+		}
+		if normalized == candidate {
+			return true
+		}
+	}
+	return false
+}

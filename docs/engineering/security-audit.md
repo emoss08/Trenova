@@ -38,6 +38,7 @@ separate system: see [ai-audit-trail.md](ai-audit-trail.md).
 | Document downloaded or viewed (content, presigned URL or page image) | `audit_entries` | `documentservice` | — |
 | Document attached to an outbound email | `audit_entries` | `documentmailservice` | — |
 | Cross-tenant request refused | `audit_entries` | `middleware.TenantBoundaryMiddleware` | yes |
+| File refused by the malware scanner (upload, inbound email attachment, capture page, inbound EDI file) | `audit_entries` | `contentscanservice` | yes |
 
 Every row carries the request ID, client IP and user agent of the request that
 caused it. The request ID is the `X-Request-ID` the API returns, so a support
@@ -62,7 +63,8 @@ balancer, list it there, or every row records the balancer's address.
 attempt. The caller fills an `AuthEventRecord` (provider, outcome, user,
 organization, assurance levels, an error code) and the recorder adds the request
 metadata. `provider` names the method: `password`, `sso.<provider>`,
-`session.logout`, `mfa` (the second step of a sign-in), `password_reset.request`, `password_reset.confirm`,
+`session.logout`, `mfa` (the second step of a sign-in), `mfa.step_up` (a signed-in
+person's second factor for a sensitive change), `password_reset.request`, `password_reset.confirm`,
 `invite.accept` (a new user redeeming the invitation link and choosing their first password), `login_throttled`,
 and for cloud signup `signup_requested`, `signup_rejected`, `signup_verified`,
 `signup_provisioned`. Signup rows carry no user until provisioning; a rejection names
@@ -70,7 +72,14 @@ its reason in `error_code` (`honeypot`, `turnstile_rejected`, `turnstile_unavail
 `invalid_input`, `existing_account`, `send_limit_reached`, `invalid_token`,
 `expired_token`, `signups_paused`, `email_in_use`, `provisioning_failed`).
 `login_throttled` rows name the scope in `error_code` (`login_throttled_account`,
-`login_throttled_ip`). The throttle fails open: when Redis cannot be reached the attempt
+`login_throttled_ip`). Every attempt is counted before its password is checked, in one
+Redis script that refuses an account under lock or an address past its threshold and
+otherwise increments both counters and sets the lock on the attempt that reaches the
+threshold, so concurrent guesses cannot all slip in under it. A successful sign-in clears
+the account's counter and returns its attempt to the address. An unknown address still
+costs a bcrypt comparison against a dummy hash, and a locked or inactive account answers
+"invalid email or password" until the right password is given, so neither timing nor the
+message tells an attacker which addresses exist or what state they are in. The throttle fails open: when Redis cannot be reached the attempt
 is allowed and a warning is logged, so a cache outage never locks every user out; the
 password check, the per-account bcrypt cost and the signup Turnstile check still apply.
 
@@ -95,7 +104,34 @@ A password sign-in for an account with an active authenticator app records its
 records an `mfa` row at assurance level 2 on success, or `mfa_state = rejected` with
 `error_code` `mfa_invalid_code`, `mfa_attempts_exhausted` (five wrong codes end the
 challenge) or `mfa_challenge_invalid` (unknown or expired challenge). Secrets, codes and
-recovery codes never reach a row; recovery codes are stored hashed.
+recovery codes never reach a row. Recovery codes are stored as HMAC-SHA256 digests keyed by
+`security.mfa.recoveryCodePepper` (required in production; never change it while codes are
+issued under it), with `hash_version` 2; codes issued before that are unsalted SHA-256
+(`hash_version` 1), keep working until their owner generates new ones, and make the two-factor
+settings ask for that (`recoveryCodesNeedReplacing`).
+
+An SSO identity is linked to a Trenova user once, on its first sign-in, and only through an
+`email` claim the provider vouches for: `email_verified` true, or for Microsoft Entra the
+`xms_edov` (domain owner verified) optional claim. `preferred_username` and `upn` are never
+used to find a user. Every later sign-in resolves the user by the link's issuer and subject,
+whatever the email has become. Entra tenants that link new people therefore need the `email`
+and `xms_edov` optional claims on the app registration.
+
+An SSO sign-in counts as two-factor only when its identity provider has "Trust federated
+MFA" on and the ID token names an exact multi-factor `amr` value (`mfa`, `otp`, `hwk`, `swk`,
+`fpt`, `face`, `iris`, `retina`, `sc`, `fido`, `ngcmfa`) or an `acr` value the administrator
+listed on the provider (`federatedMfaAcrValues`); no substring of an `acr` counts. The SSO row
+records `mfa_state` `federated` or `federated_not_trusted`. When the provider's MFA is not
+trusted and the person has an authenticator app, the callback issues no session: it sends the
+browser back to the sign-in page with a challenge in the URL fragment, and the `mfa` step
+finishes the sign-in with the SSO provider, subject and federation level. Without an app the
+session stays at assurance level 1, so an access policy with `mfaRequired` refuses it.
+
+Turning the authenticator off, generating new recovery codes and re-authenticating with
+password and code are step-ups of a signed-in person, recorded as `mfa.step_up` rows
+(`step_up_rejected`, or `step_up_throttled` when refused or when the attempt reached the
+limit). Each is counted against the same per-account and per-address throttle as sign-in,
+so a stolen session cannot guess codes faster than a sign-in could.
 
 API key authentication is not recorded per request; key creation, rotation and
 revocation are, and `api_keys.last_used_*` tracks use.
@@ -241,6 +277,18 @@ row, never an API key, and never the user as the row's own principal; a `system`
 row still names no user. Rows written before
 `20261231007250_audit_agent_system_user` name the generic `agent` principal and no
 user. See [agent-runtime.md](agent-runtime.md#who-a-run-acts-as).
+
+## Files refused by the malware scanner
+
+Every file Trenova receives passes `contentscanports.Gate` before it is stored or parsed
+(`documentservice`, `documentuploadservice`, `captureservice`, `ediinboundservice`,
+`rateimportservice`, and the profile picture and logo uploads). When ClamAV flags one,
+`contentscanservice` writes a critical entry against resource `document` with operation
+`reject`, the file's SHA-256 as `resource_id` (the file is never stored, so it has no ID),
+and the file name, source, signature, digest and size in `current_state`. A new way of
+receiving a file calls `contentscanports.Check` on its bytes before anything opens them and
+answers a refusal with `contentscanports.RefusalError`. Configuration and operation are in
+"Malware scanning" in [docs/self-hosting/README.md](../self-hosting/README.md).
 
 ## Refused cross-tenant requests
 

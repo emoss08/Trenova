@@ -38,12 +38,16 @@ func IsRemittanceFile(fileName, contentType string) bool {
 	return err == nil
 }
 
-func ReadSheet(data []byte, format factoring.RemittanceFormat) (*rateimport.Sheet, error) {
+func ReadSheet(
+	data []byte,
+	format factoring.RemittanceFormat,
+	limits rateimport.Limits,
+) (*rateimport.Sheet, error) {
 	switch format {
 	case factoring.RemittanceFormatCsv:
-		return rateimport.ReadCSV(data)
+		return rateimport.ReadCSV(data, limits)
 	case factoring.RemittanceFormatXlsx:
-		return rateimport.ReadXLSX(data)
+		return rateimport.ReadXLSX(data, limits)
 	case factoring.RemittanceFormatPdf:
 	}
 	return nil, ErrUnsupportedFile

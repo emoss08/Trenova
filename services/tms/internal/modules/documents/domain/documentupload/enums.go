@@ -22,6 +22,7 @@ const (
 	FailureExtractionUnavailable        = FailureCode("EXTRACTION_UNAVAILABLE")
 	FailureConverterUnavailable         = FailureCode("CONVERTER_UNAVAILABLE")
 	FailureConverterMisconfigured       = FailureCode("CONVERTER_MISCONFIGURED")
+	FailureMalwareDetected              = FailureCode("MALWARE_DETECTED")
 )
 
 func (f FailureCode) String() string {

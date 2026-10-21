@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -60,9 +61,11 @@ func TestApply_StoresThePlatformAndItsSecret(t *testing.T) {
 	require.NotNil(t, provider.PlatformSettings)
 	assert.Equal(t, "us-east-1", provider.PlatformSettings.Region)
 	assert.Equal(t, "EKEY", provider.APIKeyLastFour)
-	decrypted, err := svc.encryption.DecryptString(provider.APIKey)
+	decrypted, err := svc.encryption.DecryptStringWithAAD(provider.APIKey, credentialAAD(provider))
 	require.NoError(t, err)
 	assert.Equal(t, serviceSecretKey, decrypted)
+	_, err = svc.encryption.DecryptString(provider.APIKey)
+	require.Error(t, err, "a provider key is never sealed without its binding")
 }
 
 // A service account key is told apart from another by its key id: every key
@@ -173,8 +176,16 @@ func TestSeal_ReusesTheStoredKeyOnlyForItsOwnTarget(t *testing.T) {
 
 	sealed, err := svc.seal(t.Context(), tenant, endpoint("us-east-1"))
 	require.NoError(t, err)
-	assert.Equal(t, stored.APIKey, sealed.SealedAPIKey)
+	assert.NotEqual(t, stored.APIKey, sealed.SealedAPIKey)
+	unsealed, err := svc.unseal(tenant, &sealed)
+	require.NoError(t, err)
+	assert.Equal(t, serviceSecretKey, unsealed)
 	assert.Equal(t, aiprovider.PlatformBedrock, sealed.Platform)
+
+	otherTenant := tenant
+	otherTenant.OrgID = pulid.MustNew("org_")
+	_, err = svc.unseal(otherTenant, &sealed)
+	require.Error(t, err, "a sealed draft key does not open for another organization")
 
 	_, err = svc.seal(t.Context(), tenant, endpoint("eu-west-1"))
 	assert.Contains(t, fieldsOf(t, err), "apiKey", "another region gets no stored key")

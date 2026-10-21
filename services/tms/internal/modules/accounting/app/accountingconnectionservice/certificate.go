@@ -48,7 +48,7 @@ func errNoPendingCertificate(provider string) error {
 	)
 }
 
-func (s *Service) pendingKeyAAD(
+func pendingKeyAAD(
 	pending *accountingsync.AccountingPendingCertificate,
 ) encryptionservice.AAD {
 	return encryptionservice.AAD{
@@ -146,7 +146,7 @@ func (s *Service) PrepareCertificate(
 	}
 	pending.PrivateKeyCiphertext, err = s.encryption.EncryptStringWithAAD(
 		string(cert.PrivateKeyPEM),
-		s.pendingKeyAAD(pending),
+		pendingKeyAAD(pending),
 	)
 	if err != nil {
 		return nil, errortypes.NewBusinessError("Could not generate a certificate. Try again.").
@@ -201,7 +201,7 @@ func (s *Service) heldPendingCertificate(
 	}
 	key, err := s.encryption.DecryptStringWithAAD(
 		pending.PrivateKeyCiphertext,
-		s.pendingKeyAAD(pending),
+		pendingKeyAAD(pending),
 	)
 	if err != nil {
 		return nil, errortypes.NewBusinessError(
@@ -402,7 +402,7 @@ func (s *Service) useCertificate(
 ) error {
 	sealed, err := s.encryption.EncryptStringWithAAD(
 		held.privateKeyPEM,
-		s.aad(conn, clientKeyField),
+		connectionAAD(conn, clientKeyField),
 	)
 	if err != nil {
 		return err

@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/testutil/rbactest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/shared/httpsafe"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
@@ -76,15 +77,9 @@ func newTestUser(t *testing.T) *tenant.User {
 func TestDecryptSSOSecretSupportsIAMSlugAAD(t *testing.T) {
 	t.Parallel()
 
-	enc := encryptionservice.New(encryptionservice.Params{
-		Config: &config.Config{
-			Security: config.SecurityConfig{
-				Encryption: config.EncryptionConfig{
-					Key: "unit-test-encryption-key-with-at-least-32-bytes",
-				},
-			},
-		},
-	})
+	enc := encryptionservice.NewWithKeyManager(
+		encryptionservice.NewLocalKeyManager("unit-test-encryption-key-with-at-least-32-bytes"),
+	)
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 	ciphertext, err := enc.EncryptStringWithAAD(
@@ -484,7 +479,8 @@ func TestStartSSOLogin_StoresProviderIDInState(t *testing.T) {
 				},
 			},
 		},
-		l: zap.NewNop(),
+		oidc: newTestOIDCProviders(providerServer),
+		l:    zap.NewNop(),
 	}
 	ssoConfig := &tenant.SSOConfig{
 		ID:               providerID,
@@ -633,11 +629,17 @@ func TestNew(t *testing.T) {
 	assert.Equal(t, testSessionPolicy, svc.(*Service).policy)
 }
 
+func newTestOIDCProviders(server *httptest.Server) *oidcProviders {
+	providers := newOIDCProviders(httpsafe.Policy{AllowPrivateNetworks: true}, time.Hour)
+	providers.client = server.Client()
+	return providers
+}
+
 func newOIDCDiscoveryServer(t *testing.T) *httptest.Server {
 	t.Helper()
 
 	var server *httptest.Server
-	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server = httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/.well-known/openid-configuration" {
 			http.NotFound(w, r)
 			return

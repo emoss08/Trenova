@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -60,11 +59,9 @@ func newHarness(t *testing.T) *harness {
 		poller:       &fakePoller{},
 		certificates: newFakeCertificates(),
 		events:       &agenteventstest.Recorder{},
-		encryption: encryptionservice.New(encryptionservice.Params{Config: &config.Config{
-			Security: config.SecurityConfig{Encryption: config.EncryptionConfig{
-				Key: "unit-test-encryption-key-with-at-least-32-bytes",
-			}},
-		}}),
+		encryption: encryptionservice.NewWithKeyManager(
+			encryptionservice.NewLocalKeyManager("unit-test-encryption-key-with-at-least-32-bytes"),
+		),
 		tenant: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
 		userID: pulid.MustNew("usr_"),
 	}
@@ -128,7 +125,7 @@ func (h *harness) connect(t *testing.T) *accountingsync.AccountingConnection {
 
 func (h *harness) decrypt(t *testing.T, conn *accountingsync.AccountingConnection, field, ciphertext string) string {
 	t.Helper()
-	value, err := h.encryption.DecryptStringWithAAD(ciphertext, h.svc.aad(conn, field))
+	value, err := h.encryption.DecryptStringWithAAD(ciphertext, connectionAAD(conn, field))
 	require.NoError(t, err)
 	return value
 }
@@ -208,7 +205,7 @@ func TestCompleteAuthorizationConnectsWithEncryptedTokens(t *testing.T) {
 
 	other := *conn
 	other.ID = pulid.MustNew("acctc_")
-	_, err := h.encryption.DecryptStringWithAAD(stored.access, h.svc.aad(&other, accessTokenField))
+	_, err := h.encryption.DecryptStringWithAAD(stored.access, connectionAAD(&other, accessTokenField))
 	require.Error(t, err, "a token must not decrypt under another connection's binding")
 
 	assert.True(t, h.integrations.enabled(h.tenant))

@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	maxToolResultChars = 12000
+	maxToolResultBytes = 12000
 	untrustedOpenTag   = "<untrusted_data>"
 	untrustedCloseTag  = "</untrusted_data>"
 )
@@ -27,7 +27,7 @@ func FenceUntrusted(header, payload string) string {
 	builder.WriteString("\n")
 	builder.WriteString(untrustedOpenTag)
 	builder.WriteString("\n")
-	builder.WriteString(stringutils.NeutralizeCloseTag(payload, untrustedCloseTag))
+	builder.WriteString(stringutils.FenceText(payload, untrustedCloseTag))
 	builder.WriteString("\n")
 	builder.WriteString(untrustedCloseTag)
 
@@ -43,7 +43,7 @@ func FenceUntrusted(header, payload string) string {
 // truncated data", and then filled them in from nothing. Naming the loss and
 // the remedy is the difference between a short answer and an invented one.
 func truncateToolResult(payload string) string {
-	if len(payload) <= maxToolResultChars {
+	if len(payload) <= maxToolResultBytes {
 		return payload
 	}
 	if shortened, ok := shortenObjectLists(payload); ok {
@@ -52,7 +52,7 @@ func truncateToolResult(payload string) string {
 
 	// Cutting mid-rune would put invalid UTF-8 on the wire. Walking back to a
 	// boundary costs at most three bytes.
-	cut := maxToolResultChars
+	cut := maxToolResultBytes
 	for cut > 0 && !utf8.RuneStart(payload[cut]) {
 		cut--
 	}
@@ -92,7 +92,7 @@ func shortenObjectLists(payload string) (string, bool) {
 
 	fields := make([]string, 0, len(keys))
 	lists := make([]string, 0, len(keys))
-	budget := maxToolResultChars - listCutNoteBudget - 2
+	budget := maxToolResultBytes - listCutNoteBudget - 2
 	for _, key := range keys {
 		if jsonflex.KindOf(object[key]) == jsonflex.KindArray {
 			lists = append(lists, key)

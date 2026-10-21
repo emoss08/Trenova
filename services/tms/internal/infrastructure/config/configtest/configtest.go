@@ -16,6 +16,8 @@ database:
   password: testpass
   sslMode: require
 security:
+  mfa:
+    recoveryCodePepper: "9f2c4e7a1b3d5f60718293a4b5c6d7e8f9a0b1c2"
   session:
     secret: "a-very-long-secret-that-is-at-least-32-characters-long"
     name: "__Host-trenova_session"

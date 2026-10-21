@@ -3,6 +3,7 @@ package totputils
 import (
 	"crypto/rand"
 	"fmt"
+	"io"
 	"strings"
 )
 
@@ -45,18 +46,34 @@ func NormalizeRecoveryCode(code string) string {
 }
 
 func recoveryCode() (string, error) {
-	raw := make([]byte, recoveryCodeGroups*recoveryGroupSize)
-	if _, err := rand.Read(raw); err != nil {
-		return "", fmt.Errorf("generate recovery code: %w", err)
-	}
+	return recoveryCodeFrom(rand.Reader)
+}
+
+func recoveryCodeFrom(source io.Reader) (string, error) {
+	const length = recoveryCodeGroups * recoveryGroupSize
+	limit := byte(256 - 256%len(recoveryAlphabet))
 
 	var b strings.Builder
-	b.Grow(len(raw) + recoveryCodeGroups - 1)
-	for i, value := range raw {
-		if i > 0 && i%recoveryGroupSize == 0 {
-			b.WriteByte('-')
+	b.Grow(length + recoveryCodeGroups - 1)
+	buffer := make([]byte, length)
+	written := 0
+	for written < length {
+		if _, err := io.ReadFull(source, buffer); err != nil {
+			return "", fmt.Errorf("generate recovery code: %w", err)
 		}
-		b.WriteByte(recoveryAlphabet[int(value)%len(recoveryAlphabet)])
+		for _, value := range buffer {
+			if value >= limit {
+				continue
+			}
+			if written > 0 && written%recoveryGroupSize == 0 {
+				b.WriteByte('-')
+			}
+			b.WriteByte(recoveryAlphabet[int(value)%len(recoveryAlphabet)])
+			written++
+			if written == length {
+				break
+			}
+		}
 	}
 
 	return b.String(), nil

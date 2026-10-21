@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/trenova/pkg/rateimport"
+
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
@@ -44,6 +46,7 @@ type RemittanceParams struct {
 	Events      agentports.AgentEventPublisher        `optional:"true"`
 	Audit       auditports.AuditService
 	Realtime    agentports.RealtimeService `optional:"true"`
+	SheetLimits rateimport.Limits          `optional:"true"`
 	Logger      *zap.Logger
 }
 
@@ -59,6 +62,7 @@ type RemittanceService struct {
 	starter     factoringports.RemittanceStageStarter
 	events      agentports.AgentEventPublisher
 	rec         recorder
+	sheetLimits rateimport.Limits
 	l           *zap.Logger
 	now         func() int64
 }
@@ -78,6 +82,7 @@ func NewRemittanceService(p RemittanceParams) factoringports.RemittanceService {
 		content:     p.Content,
 		completion:  p.Completion,
 		starter:     p.Starter,
+		sheetLimits: p.SheetLimits,
 		events:      p.Events,
 		rec:         recorder{audit: p.Audit, realtime: p.Realtime, l: l},
 		l:           l,

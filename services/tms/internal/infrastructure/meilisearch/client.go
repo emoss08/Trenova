@@ -97,8 +97,9 @@ func (c *Client) SearchPage(
 	}
 
 	result, err := c.client.Index(req.Index).SearchWithContext(ctx, req.Query, &meili.SearchRequest{
-		Limit:  int64(req.Limit),
-		Filter: req.Filter,
+		Limit:                int64(req.Limit),
+		Filter:               req.Filter,
+		AttributesToRetrieve: attributesToRetrieve(req.Attributes),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("search index %s: %w", req.Index, err)
@@ -119,6 +120,16 @@ func (c *Client) SearchPage(
 	}
 
 	return &customerports.SearchPage{Documents: documents, EstimatedTotal: total}, nil
+}
+
+// attributesToRetrieve names the fields a search returns. An index row can
+// carry more than any one caller should see, so a caller that names none gets
+// the row's id alone.
+func attributesToRetrieve(attributes []string) []string {
+	if len(attributes) == 0 {
+		return []string{"id"}
+	}
+	return attributes
 }
 
 // decodeHit turns a hit's raw JSON fields into plain values. The client

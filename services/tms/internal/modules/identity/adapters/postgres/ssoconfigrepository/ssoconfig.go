@@ -224,7 +224,6 @@ func (r *repository) upsertIdentityProvider(ctx context.Context, cfg *tenant.SSO
 			Set("enabled = EXCLUDED.enabled").
 			Set("enforce_sso = EXCLUDED.enforce_sso").
 			Set("auto_provision = EXCLUDED.auto_provision").
-			Set("allow_federated_mfa = EXCLUDED.allow_federated_mfa").
 			Set("allowed_domains = EXCLUDED.allowed_domains").
 			Set("attribute_map = EXCLUDED.attribute_map").
 			Set("oidc_issuer_url = EXCLUDED.oidc_issuer_url").
@@ -241,25 +240,27 @@ func (r *repository) upsertIdentityProvider(ctx context.Context, cfg *tenant.SSO
 
 func identityProviderToSSOConfig(provider *iam.IdentityProvider) *tenant.SSOConfig {
 	return &tenant.SSOConfig{
-		ID:               provider.ID,
-		OrganizationID:   provider.OrganizationID,
-		BusinessUnitID:   provider.BusinessUnitID,
-		Name:             provider.Name,
-		Provider:         providerFromSlug(provider.Slug),
-		Protocol:         tenant.SSOProtocolOIDC,
-		Enabled:          provider.Enabled,
-		EnforceSSO:       provider.EnforceSSO,
-		AutoProvision:    provider.AutoProvision,
-		AllowedDomains:   provider.AllowedDomains,
-		AttributeMap:     provider.AttributeMap,
-		OIDCIssuerURL:    provider.OIDCIssuerURL,
-		OIDCClientID:     provider.OIDCClientID,
-		OIDCClientSecret: provider.OIDCClientSecret,
-		OIDCRedirectURL:  provider.OIDCRedirectURL,
-		OIDCScopes:       provider.OIDCScopes,
-		Version:          provider.Version,
-		CreatedAt:        provider.CreatedAt,
-		UpdatedAt:        provider.UpdatedAt,
+		ID:                provider.ID,
+		OrganizationID:    provider.OrganizationID,
+		BusinessUnitID:    provider.BusinessUnitID,
+		Name:              provider.Name,
+		Provider:          providerFromSlug(provider.Slug),
+		Protocol:          tenant.SSOProtocolOIDC,
+		Enabled:           provider.Enabled,
+		EnforceSSO:        provider.EnforceSSO,
+		AutoProvision:     provider.AutoProvision,
+		AllowedDomains:    provider.AllowedDomains,
+		AttributeMap:      provider.AttributeMap,
+		OIDCIssuerURL:     provider.OIDCIssuerURL,
+		OIDCClientID:      provider.OIDCClientID,
+		OIDCClientSecret:  provider.OIDCClientSecret,
+		OIDCRedirectURL:   provider.OIDCRedirectURL,
+		OIDCScopes:        provider.OIDCScopes,
+		AllowFederatedMFA: provider.AllowFederatedMFA,
+		FederatedMFAACRs:  provider.FederatedMFAACRs,
+		Version:           provider.Version,
+		CreatedAt:         provider.CreatedAt,
+		UpdatedAt:         provider.UpdatedAt,
 	}
 }
 

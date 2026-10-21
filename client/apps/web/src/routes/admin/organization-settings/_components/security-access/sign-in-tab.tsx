@@ -584,8 +584,23 @@ function IdentityProviderForm({ mode }: { mode: IdentityProviderPanelMode }) {
               control={control}
               name="allowFederatedMfa"
               label={t("Trust federated MFA")}
-              description={t("Accept MFA claims from the provider when risk policy allows it.")}
+              description={t(
+                "Count the provider's sign-in as two-factor when its token names a multi-factor method (amr) or one of the ACR values below. Otherwise people who use an authenticator app are asked for its code after signing in.",
+              )}
               outlined
+            />
+          </FormControl>
+          <FormControl>
+            <ChipArrayField
+              control={control}
+              name="federatedMfaAcrValues"
+              label={t("Trusted ACR values")}
+              placeholder={t("http://schemas.openid.net/pape/policies/2007/06/multi-factor")}
+              description={t(
+                "Exact authentication context (acr) values this provider sends only for a multi-factor sign-in. Leave blank to trust the amr claim alone.",
+              )}
+              parseValue={parseCommaSeparatedList}
+              formatValue={(value) => value.join(", ")}
             />
           </FormControl>
         </FormGroup>

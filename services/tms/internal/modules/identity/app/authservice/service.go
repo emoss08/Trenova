@@ -83,6 +83,7 @@ type Service struct {
 	enc        *encryptionservice.Service
 	cfg        *config.Config
 	policy     session.Policy
+	oidc       *oidcProviders
 	l          *zap.Logger
 }
 
@@ -111,6 +112,10 @@ func New(p Params) tenantports.AuthService {
 			MaxAge:      p.Config.Security.Session.MaxAge,
 			IdleTimeout: p.Config.Security.Session.IdleTimeout,
 		},
+		oidc: newOIDCProviders(
+			p.Config.Security.SSO.IssuerPolicy(),
+			p.Config.Security.SSO.GetProviderCacheTTL(),
+		),
 		l: p.Logger.Named("service.auth"),
 	}
 }
@@ -153,27 +158,31 @@ func (s *Service) Login(
 	attempt := newAuthAttempt(iamports.AuthEventProviderPassword)
 	defer func() { s.recordAuthAttempt(ctx, attempt, err) }()
 
-	throttleKey := loginThrottleKey(ctx, req.EmailAddress)
-	if err = s.checkLoginThrottle(ctx, throttleKey, attempt); err != nil {
+	throttleKey := sessionports.NewLoginThrottleKey(ctx, req.EmailAddress)
+	decision, err := s.beginLoginAttempt(ctx, throttleKey, attempt)
+	if err != nil {
 		return nil, err
 	}
 
 	usr, err := s.ur.FindByEmail(ctx, req.EmailAddress)
 	if err != nil {
+		tenant.DiscardPasswordCheck(req.Password)
 		attempt.fail(authErrorUnknownAccount)
-		s.recordLoginFailure(ctx, throttleKey)
+		s.recordLoginFailure(ctx, decision)
 		return nil, errInvalidCredentials
 	}
 	attempt.forUser(usr)
 
-	if err = usr.VerifyCredentials(req.Password); err != nil {
-		if errortypes.IsAuthorizationError(err) {
-			attempt.fail(authErrorAccountUnavailable)
-			return nil, err
-		}
+	if err = usr.VerifyPassword(req.Password); err != nil {
 		attempt.fail(authErrorRejectedLogin)
-		s.recordLoginFailure(ctx, throttleKey)
+		s.recordLoginFailure(ctx, decision)
 		return nil, errInvalidCredentials
+	}
+
+	if err = usr.ValidateStatus(); err != nil {
+		attempt.fail(authErrorAccountUnavailable)
+		s.recordLoginFailure(ctx, decision)
+		return nil, err
 	}
 	s.resetLoginThrottle(ctx, throttleKey)
 
@@ -203,7 +212,7 @@ func (s *Service) Login(
 		return nil, err
 	}
 
-	challenge, err := s.issueMFAChallenge(scoped, usr, targetOrg, attempt)
+	challenge, err := s.issueMFAChallenge(scoped, usr, targetOrg, attempt, nil)
 	if err != nil || challenge != nil {
 		return challenge, err
 	}
@@ -321,7 +330,7 @@ func (s *Service) StartSSOLogin(
 		return "", err
 	}
 
-	provider, err := oidc.NewProvider(ctx, ssoConfig.OIDCIssuerURL)
+	provider, err := s.oidc.get(ctx, ssoConfig)
 	if err != nil {
 		return "", errortypes.NewBusinessError("Failed to initialize {0} identity provider", providerDisplayName(req.Provider)).
 			WithInternal(err)
@@ -425,7 +434,7 @@ func (s *Service) HandleSSOCallback( //nolint:cyclop // legacy workflow
 		return nil, err
 	}
 
-	provider, err := oidc.NewProvider(scoped, ssoConfig.OIDCIssuerURL)
+	provider, err := s.oidc.get(scoped, ssoConfig)
 	if err != nil {
 		attempt.fail(authErrorSSOConfig)
 		return nil, errortypes.NewBusinessError("Failed to initialize {0} identity provider", displayName).
@@ -441,7 +450,7 @@ func (s *Service) HandleSSOCallback( //nolint:cyclop // legacy workflow
 	}
 
 	oauthToken, err := oauthCfg.Exchange(
-		scoped,
+		s.oidc.clientContext(scoped),
 		req.Code,
 		oauth2.VerifierOption(loginState.CodeVerifier),
 	)
@@ -461,7 +470,7 @@ func (s *Service) HandleSSOCallback( //nolint:cyclop // legacy workflow
 	verifier := provider.Verifier(&oidc.Config{
 		ClientID: ssoConfig.OIDCClientID,
 	})
-	idToken, err := verifier.Verify(scoped, rawIDToken)
+	idToken, err := verifier.Verify(s.oidc.clientContext(scoped), rawIDToken)
 	if err != nil {
 		attempt.fail(authErrorSSOAssertion)
 		return nil, errortypes.NewAuthenticationError("{0} identity token is invalid", displayName)
@@ -526,8 +535,34 @@ func (s *Service) HandleSSOCallback( //nolint:cyclop // legacy workflow
 		usr.BusinessUnitID = ssoConfig.BusinessUnitID
 	}
 
-	aal, mfaAt := assuranceFromOIDCClaims(claims)
+	aal, mfaAt := assuranceFromOIDCClaims(ssoConfig, claims)
 	attempt.aal = aal
+	if aal >= mfaAssuranceLevel {
+		attempt.mfaState = mfaStateFederated
+	} else {
+		attempt.mfaState = mfaStateFederationNotTrust
+		challenge, challengeErr := s.issueMFAChallenge(
+			scoped,
+			usr,
+			nil,
+			attempt,
+			&iamports.MFAChallengeFederation{
+				AuthProvider:    string(loginState.Provider),
+				ExternalSubject: claims.Subject,
+				FederationFAL:   2,
+			},
+		)
+		if challengeErr != nil {
+			return nil, challengeErr
+		}
+		if challenge != nil {
+			return &tenantports.SSOCallbackResponse{
+				LoginResponse: challenge,
+				RedirectTo:    loginState.ReturnTo,
+			}, nil
+		}
+	}
+
 	loginResp, err := s.createLoginResponse(userScope(scoped, usr), usr, loginSessionContext{
 		AuthProvider:          string(loginState.Provider),
 		ExternalSubject:       claims.Subject,
@@ -658,7 +693,11 @@ func (s *Service) AuthenticateSession(
 			return nil, err
 		}
 	}
-	sess.RoleActivationRequired = s.roleActivationRequired(ctx, sess.OrganizationID, sess.BusinessUnitID)
+	sess.RoleActivationRequired = s.roleActivationRequired(
+		ctx,
+		sess.OrganizationID,
+		sess.BusinessUnitID,
+	)
 
 	return sess, nil
 }
@@ -1127,48 +1166,60 @@ func (s *Service) enforcePasswordLoginPolicy(
 }
 
 type oidcClaims struct {
-	Email             string   `json:"email"`
-	EmailVerified     oidcBool `json:"email_verified"`
-	PreferredUsername string   `json:"preferred_username"`
-	UPN               string   `json:"upn"`
-	Nonce             string   `json:"nonce"`
-	TenantID          string   `json:"tid"`
-	Subject           string   `json:"sub"`
-	ACR               string   `json:"acr"`
-	AMR               []string `json:"amr"`
+	Email                    string   `json:"email"`
+	EmailVerified            oidcBool `json:"email_verified"`
+	EmailDomainOwnerVerified oidcBool `json:"xms_edov"`
+	PreferredUsername        string   `json:"preferred_username"`
+	UPN                      string   `json:"upn"`
+	Nonce                    string   `json:"nonce"`
+	TenantID                 string   `json:"tid"`
+	Subject                  string   `json:"sub"`
+	ACR                      string   `json:"acr"`
+	AMR                      []string `json:"amr"`
 }
 
-func (c oidcClaims) EmailAddress(provider tenant.SSOProvider) string {
-	if email := strings.TrimSpace(c.Email); email != "" {
-		return strings.ToLower(email)
-	}
-
-	if provider != tenant.SSOProviderAzureAD {
-		return ""
-	}
-
-	if username := strings.TrimSpace(c.PreferredUsername); username != "" {
-		return strings.ToLower(username)
-	}
-
-	return strings.ToLower(strings.TrimSpace(c.UPN))
+func (c oidcClaims) EmailAddress() string {
+	return strings.ToLower(strings.TrimSpace(c.Email))
 }
 
-func assuranceFromOIDCClaims(claims oidcClaims) (int, int64) {
+func (c oidcClaims) EmailIsVerified(provider tenant.SSOProvider) bool {
+	if c.EmailVerified.IsTrue() {
+		return true
+	}
+	return provider == tenant.SSOProviderAzureAD && c.EmailDomainOwnerVerified.IsTrue()
+}
+
+var federatedMFAMethods = map[string]struct{}{
+	"mfa":    {},
+	"otp":    {},
+	"hwk":    {},
+	"swk":    {},
+	"fpt":    {},
+	"face":   {},
+	"iris":   {},
+	"retina": {},
+	"sc":     {},
+	"fido":   {},
+	"ngcmfa": {},
+}
+
+func assuranceFromOIDCClaims(cfg *tenant.SSOConfig, claims oidcClaims) (int, int64) {
+	if federatedMFASatisfied(cfg, claims) {
+		return mfaAssuranceLevel, timeutils.NowUnix()
+	}
+	return 1, 0
+}
+
+func federatedMFASatisfied(cfg *tenant.SSOConfig, claims oidcClaims) bool {
+	if cfg == nil || !cfg.AllowFederatedMFA {
+		return false
+	}
 	for _, method := range claims.AMR {
-		switch strings.ToLower(strings.TrimSpace(method)) {
-		case "mfa", "otp", "totp", "webauthn", "hwk", "swk", "fido", "face", "fingerprint":
-			return 2, timeutils.NowUnix()
+		if _, ok := federatedMFAMethods[method]; ok {
+			return true
 		}
 	}
-
-	acr := strings.ToLower(strings.TrimSpace(claims.ACR))
-	if strings.Contains(acr, "aal2") || strings.Contains(acr, "level2") ||
-		strings.Contains(acr, "urn:mace:incommon:iap:silver") {
-		return 2, timeutils.NowUnix()
-	}
-
-	return 1, 0
+	return claims.ACR != "" && slices.Contains(cfg.FederatedMFAACRs, claims.ACR)
 }
 
 func validateReturnToURL(returnTo string, allowedOrigins []string) error {
@@ -1267,15 +1318,11 @@ func decryptSSOSecret(enc *encryptionservice.Service, cfg *tenant.SSOConfig) str
 	}
 
 	if encryptionservice.IsEnvelope(cfg.OIDCClientSecret) {
+		tenantInfo := pagination.TenantInfo{OrgID: cfg.OrganizationID, BuID: cfg.BusinessUnitID}
 		for _, resourceID := range ssoSecretAADResourceIDs(cfg.Provider) {
 			plaintext, err := enc.DecryptStringWithAAD(
 				cfg.OIDCClientSecret,
-				encryptionservice.AAD{
-					Purpose:        encryptionservice.PurposeIAMOIDCClientSecret,
-					OrganizationID: cfg.OrganizationID,
-					BusinessUnitID: cfg.BusinessUnitID,
-					ResourceID:     resourceID,
-				},
+				ssoSecretAAD(tenantInfo, resourceID),
 			)
 			if err == nil {
 				return plaintext
@@ -1285,6 +1332,15 @@ func decryptSSOSecret(enc *encryptionservice.Service, cfg *tenant.SSOConfig) str
 	}
 
 	return ""
+}
+
+func ssoSecretAAD(tenantInfo pagination.TenantInfo, resourceID string) encryptionservice.AAD {
+	return encryptionservice.AAD{
+		Purpose:        encryptionservice.PurposeIAMOIDCClientSecret,
+		OrganizationID: tenantInfo.OrgID,
+		BusinessUnitID: tenantInfo.BuID,
+		ResourceID:     resourceID,
+	}
 }
 
 func ssoSecretAADResourceIDs(provider tenant.SSOProvider) []string {

@@ -381,7 +381,7 @@ func (s *Service) ResetPassword(ctx context.Context, rawToken, newPassword strin
 		return errInvalidToken
 	}
 
-	if err = validatePasswordStrength(newPassword); err != nil {
+	if err = tenant.CheckNewPassword(resetPasswordField, newPassword, ""); err != nil {
 		return err
 	}
 
@@ -413,6 +413,15 @@ func (s *Service) ResetPassword(ctx context.Context, rawToken, newPassword strin
 	if !user.IsActive() {
 		event.deny(iam.AuthEventOutcomeDenied, resetErrorAccountUnavailable)
 		return errInvalidToken
+	}
+
+	if err = tenant.CheckNewPassword(
+		resetPasswordField,
+		newPassword,
+		user.EmailAddress,
+	); err != nil {
+		event.deny(iam.AuthEventOutcomeFailed, resetErrorWeakPassword)
+		return err
 	}
 
 	scoped := dbscope.WithTenant(ctx, dbscope.Tenant{
@@ -469,18 +478,7 @@ func (s *Service) ResetPassword(ctx context.Context, rawToken, newPassword strin
 	return nil
 }
 
-const minPasswordLength = 8
-
-func validatePasswordStrength(password string) error {
-	if len(password) < minPasswordLength {
-		return errortypes.NewValidationError(
-			"newPassword",
-			errortypes.ErrInvalid,
-			"Password must be at least 8 characters",
-		)
-	}
-	return nil
-}
+const resetPasswordField = "newPassword"
 
 // sendResetEmail renders the message through the organization's template and mails it.
 //

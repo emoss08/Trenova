@@ -53,20 +53,28 @@ var documentSkeleton = template.Must(template.New("document").Parse(
 
 // WrapDocument assembles a printable document from a rendered body and stylesheet.
 //
-// The body is already-rendered output that has been through the sanitizer, so it is
-// inserted as trusted markup. The stylesheet has been through SanitizeCSS. Passing
-// unsanitized content here would defeat both.
+// The body must be rendered output of a source that passed SanitizeHTML; it is
+// inserted as trusted markup. The stylesheet is checked here with SanitizeCSS on
+// every call, and one with any finding is left out of the document rather than
+// inserted, so a stylesheet that slipped past the save and publish checks still
+// cannot end the style element or load anything.
 func WrapDocument(req WrapRequest) string {
 	title := strings.TrimSpace(req.Title)
 	if title == "" {
 		title = "Document"
 	}
 
-	var b strings.Builder
-	b.Grow(len(req.BodyHTML) + len(req.CSS) + 1024)
+	css := req.CSS
+	if SanitizeCSS("cssContent", css).HasErrors() {
+		css = ""
+	}
 
-	// The template's fields are typed as pre-sanitized markup, which is why the
-	// escaper leaves them alone. See the doc comment above.
+	var b strings.Builder
+	b.Grow(len(req.BodyHTML) + len(css) + 1024)
+
+	// The template's fields are typed as trusted markup, which is why the escaper
+	// leaves them alone: the body passed SanitizeHTML before it was rendered, and
+	// the stylesheet passed SanitizeCSS just above.
 	err := documentSkeleton.Execute(&b, struct {
 		Title string
 		Body  template.HTML
@@ -75,8 +83,8 @@ func WrapDocument(req WrapRequest) string {
 		Title: title,
 		//nolint:gosec // Body is rendered output that already passed SanitizeHTML.
 		Body: template.HTML(req.BodyHTML),
-		//nolint:gosec // CSS already passed SanitizeCSS.
-		CSS: template.CSS(req.CSS),
+		//nolint:gosec // css passed SanitizeCSS above; one with findings is dropped.
+		CSS: template.CSS(css),
 	})
 	if err != nil {
 		// The skeleton is a compile-time constant with three string fields; it

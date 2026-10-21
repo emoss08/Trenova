@@ -76,6 +76,13 @@ const (
 	// CodeAssetBudgetExceeded means an asset was dropped because the document
 	// already used its allowance.
 	CodeAssetBudgetExceeded = "asset_budget_exceeded"
+
+	// CodeRangeOverNumber means a {{range}} counts to a number written into the
+	// template instead of using seq, whose length is capped.
+	CodeRangeOverNumber = "range_over_number"
+
+	// CodeRangeTooDeep means ranges are nested deeper than a render can afford.
+	CodeRangeTooDeep = "range_too_deep"
 )
 
 // Diagnostic is one problem found in a template, addressed to the person editing

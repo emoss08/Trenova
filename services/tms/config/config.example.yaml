@@ -247,6 +247,11 @@ security:
     tokenTtl: 30m # How long a reset link stays redeemable. It is a bearer credential sitting in a mailbox.
     inviteTokenTtl: 168h # How long the link a new user is invited with stays redeemable.
     maxRequestsPerHour: 5 # Reset links one account can be sent per hour, so the endpoint cannot flood an inbox.
+  mfa:
+    recoveryCodePepper: "" # Keys the stored hashes of two-factor recovery codes (32+ random characters, required in production; empty outside it derives one from the session secret). Never change it once codes are issued.
+  sso:
+    allowPrivateNetworkIssuers: false # Allow an OIDC issuer (and its token and key endpoints) on a private network, for an identity provider inside this network. Link-local and metadata addresses stay refused.
+    providerCacheTtl: 1h # How long an identity provider's discovery document is reused before it is fetched again. A configuration change refetches at once.
   graphql:
     maxRequestBodyBytes: 1048576 # Max /graphql request body (bytes); bounds the variables payload
     persistedDocumentsPath: internal/api/graphql/persisted-documents.json # Dev/test only: safelist file re-read on unknown hash
@@ -272,6 +277,11 @@ security:
     mode: envelope # envelope, disabled (tests only)
     keyManager: local # local for dev/test; production/staging must use gcp-autokey
     key: super-secret-key # Encryption key (min 32 chars)
+    # Keys that sealed data before the last rotation. They are only read, never used to seal,
+    # until `trenova encryption rewrap` has moved every envelope to the active key. With
+    # gcp-autokey they keep envelopes sealed by the local key readable during a migration.
+    # As an environment variable: TRENOVA_SECURITY_ENCRYPTION_RETIREDKEYS="old-key-1,old-key-2".
+    retiredKeys: []
     # Lets a single-host production deploy run keyManager: local. The key must then be at
     # least 32 characters and contain no placeholder text. Leave false wherever a cloud KMS
     # is available.
@@ -382,6 +392,14 @@ pdfReader:
 formula:
     maxConcurrentEvaluations: 64 # Evaluations running at once per process; excess callers wait
 
+# EDI transports (AS2 and SFTP). A partner endpoint that resolves to a loopback, private or
+# reserved address is refused, so a communication profile cannot reach into this network.
+# Turn this on only for partners reached over a private link; link-local and cloud metadata
+# addresses stay refused either way.
+edi:
+    allowPrivateNetworks: true # The local partner simulator listens on localhost
+    maxInboundFileBytes: 33554432 # Largest file read from a partner's SFTP or VAN mailbox (32 MiB)
+
 # Driver portal (Dash) settings
 portal:
     # Absolute base URL of the app that serves Dash; used to build portal invitation
@@ -395,6 +413,7 @@ push:
     vapidPublicKey: ""
     vapidPrivateKey: ""
     subject: mailto:admin@example.com
+    allowedEndpointHosts: [] # Push service hosts a browser subscription may name ("*.example.com" for subdomains); empty means FCM, Mozilla, Windows and Apple
 
 # Accounting sync. An instance app is optional: with one, every organization can connect with
 # a click; without one, each organization enters its own Intuit app's keys on the QuickBooks
@@ -434,3 +453,26 @@ accounting:
   # secrets come from TRENOVA_NETSUITE_CLIENT_ID and TRENOVA_NETSUITE_CLIENT_SECRET.
   netSuite:
     redirectUrl: "" # Defaults to app.webBaseUrl + /admin/integrations/netsuite/callback
+
+# Malware scanning of every uploaded file, inbound email attachment, capture page and inbound
+# EDI file, before anything parses it, with ClamAV's clamd (INSTREAM). Off while address is
+# empty, with a warning at startup. Once an address is set a file is refused while the
+# scanner is unreachable, unless failOpen (refused in production and staging).
+contentScan:
+  clamav:
+    address: "" # host:port (clamav:3310) or unix:/run/clamav/clamd.sock
+    timeout: 60s # one scan, connection included
+    maxStreamBytes: 104857600 # 100 MiB; keep at or below clamd's StreamMaxLength
+  failOpen: false
+
+# Limits on one uploaded rate sheet, fuel card statement or factoring remittance (CSV or
+# XLSX). A file past any of them is refused with the limit it went past; 0 or unset takes
+# the default shown.
+imports:
+  spreadsheet:
+    maxRows: 100000
+    maxColumns: 256
+    maxCellBytes: 32768 # 32 KiB
+    maxSheetBytes: 67108864 # 64 MiB of cell text
+    maxUnzippedBytes: 268435456 # 256 MiB for the whole workbook once unzipped; past it the file is refused
+    maxPartBytes: 67108864 # 64 MiB of one XML part held in memory; a larger part is read from a temp file

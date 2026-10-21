@@ -37,10 +37,11 @@ const (
 
 // Config bounds what the engine will accept and produce.
 type Config struct {
-	MaxSourceBytes int64
-	MaxHTMLBytes   int64
-	MaxTextBytes   int64
-	CacheSize      int
+	MaxSourceBytes     int64
+	MaxHTMLBytes       int64
+	MaxTextBytes       int64
+	MaxRangeIterations int64
+	CacheSize          int
 }
 
 func (c Config) withDefaults() Config {
@@ -55,6 +56,9 @@ func (c Config) withDefaults() Config {
 	}
 	if c.CacheSize <= 0 {
 		c.CacheSize = defaultCacheSize
+	}
+	if c.MaxRangeIterations <= 0 {
+		c.MaxRangeIterations = defaultMaxRangeIterations
 	}
 	return c
 }
@@ -180,8 +184,9 @@ func (e *Engine) compile(req *ParseRequest, field string) (*Compiled, Diagnostic
 	name := req.Kind + ":" + string(req.Channel)
 
 	compiled := &Compiled{
-		Channel:     req.Channel,
-		ContentHash: ContentHash(req.Source),
+		Channel:            req.Channel,
+		ContentHash:        ContentHash(req.Source),
+		maxRangeIterations: e.cfg.MaxRangeIterations,
 	}
 
 	var diags Diagnostics
@@ -216,6 +221,8 @@ func (e *Engine) compile(req *ParseRequest, field string) (*Compiled, Diagnostic
 	}
 
 	result := analyzeTree(rootTree)
+	diags = append(diags, rangeChecks(field, rootTree)...)
+	guardRanges(rootTree)
 
 	// A version is exactly one template. define/template/block would let one
 	// version reach into another, which breaks the promise that the bytes a

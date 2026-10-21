@@ -54,6 +54,8 @@ type Compiled struct {
 
 	// ContentHash identifies the source this was compiled from.
 	ContentHash string
+
+	maxRangeIterations int64
 }
 
 // Execute renders into dst under a size budget and the caller's deadline.
@@ -64,26 +66,51 @@ func (c *Compiled) Execute(
 	maxBytes int64,
 ) (int64, error) {
 	writer := newLimitedWriter(ctx, dst, maxBytes)
+	guard := newRangeGuard(ctx, c.maxRangeIterations)
 
 	var err error
 	switch {
 	case c.htmlTmpl != nil:
-		err = c.htmlTmpl.Execute(writer, data)
+		err = executeHTML(c.htmlTmpl, guard, writer, data)
 	case c.textTmpl != nil:
-		err = c.textTmpl.Execute(writer, data)
+		err = executeText(c.textTmpl, guard, writer, data)
 	default:
 		return 0, errors.New("compiled template has no executable body")
 	}
 
 	if err != nil {
-		if errors.Is(err, ErrOutputTooLarge) || errors.Is(err, context.Canceled) ||
-			errors.Is(err, context.DeadlineExceeded) {
+		if errors.Is(err, ErrOutputTooLarge) || errors.Is(err, ErrRenderBudget) ||
+			errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 			return writer.Written(), err
 		}
 		return writer.Written(), fmt.Errorf("execute template: %w", err)
 	}
 
 	return writer.Written(), nil
+}
+
+// executeHTML and executeText run a clone of the compiled template with the
+// range guard bound to this render. The compiled template itself is never
+// executed, so it stays cloneable and every render gets its own budget.
+func executeHTML(master *template.Template, guard *rangeGuard, dst io.Writer, data any) error {
+	tmpl, err := master.Clone()
+	if err != nil {
+		return fmt.Errorf("prepare template: %w", err)
+	}
+	return tmpl.Funcs(template.FuncMap{rangeGuardName: guard.check}).Execute(dst, data)
+}
+
+func executeText(
+	master *texttemplate.Template,
+	guard *rangeGuard,
+	dst io.Writer,
+	data any,
+) error {
+	tmpl, err := master.Clone()
+	if err != nil {
+		return fmt.Errorf("prepare template: %w", err)
+	}
+	return tmpl.Funcs(texttemplate.FuncMap{rangeGuardName: guard.check}).Execute(dst, data)
 }
 
 // Render is Execute into a string, for the channels short enough that streaming

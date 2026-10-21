@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/pkg/templateengine"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
@@ -323,4 +324,65 @@ func TestContentHashDistinguishesWhereContentLives(t *testing.T) {
 		documenttemplateservice.ContentHash(subjectSide),
 		documenttemplateservice.ContentHash(bodySide),
 	)
+}
+
+func publishableInvoice(t *testing.T) (*documenttemplate.KindDefinition, *documenttemplate.DocumentTemplateVersion) {
+	t.Helper()
+
+	registry := documenttemplate.NewRegistry()
+	def, ok := registry.Get(documenttemplate.KindInvoicePDF)
+	require.True(t, ok)
+	starter, err := starters.For(documenttemplate.KindInvoicePDF)
+	require.NoError(t, err)
+
+	return def, &documenttemplate.DocumentTemplateVersion{
+		ID:             pulid.MustNew("dtv_"),
+		OrganizationID: pulid.MustNew("org_"),
+		BusinessUnitID: pulid.MustNew("bu_"),
+		TemplateID:     pulid.MustNew("dtpl_"),
+		VersionNumber:  1,
+		Status:         documenttemplate.VersionStatusDraft,
+		BodyHTML:       starter.BodyHTML,
+		CSSContent:     starter.CSS,
+	}
+}
+
+func TestPublishGateRefusesAStylesheetThatBreaksOutOfItsStyleElement(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t)
+	def, version := publishableInvoice(t)
+	require.Nil(t, h.service.VerifyForPublish(t.Context(), def, version))
+
+	version.CSSContent += "\n</style><script>alert(1)</script>"
+	multiErr := h.service.VerifyForPublish(t.Context(), def, version)
+	require.NotNil(t, multiErr)
+	assert.Contains(t, multiErr.Error(), "cssContent")
+}
+
+func TestPublishGateRefusesAHostileRunningHeader(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t)
+	def, version := publishableInvoice(t)
+	version.HeaderHTML = `<div onload="alert(1)">Invoice</div>`
+
+	multiErr := h.service.VerifyForPublish(t.Context(), def, version)
+	require.NotNil(t, multiErr)
+	assert.Contains(t, multiErr.Error(), "headerHtml")
+}
+
+func TestSavingADraftRefusesAStylesheetThatLoadsRemoteContent(t *testing.T) {
+	t.Parallel()
+
+	registry := documenttemplate.NewRegistry()
+	validator := documenttemplateservice.NewValidator(
+		documenttemplateservice.ValidatorParams{Registry: registry},
+	)
+	_, version := publishableInvoice(t)
+	version.CSSContent = `@\69mport "https://evil.example/x.css";`
+
+	multiErr := validator.ValidateVersion(t.Context(), version, documenttemplate.KindInvoicePDF)
+	require.NotNil(t, multiErr)
+	assert.Contains(t, multiErr.Error(), "cssContent")
 }

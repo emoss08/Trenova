@@ -136,8 +136,31 @@ tenant scope as `SET LOCAL trenova.read_scope = '<kind>:<scope>[:<ids>]'`, and a
 restrictive `read_scope` policy on `shipments`, `orders`, `invoices` and `workers`
 applies it to every read: lists, lookups, loaders, search, insights and reports alike.
 The value only narrows what the signed tenant scope allows, so it is not signed; work
-with no holder (jobs, unattended agents) reads its whole tenant. Policies are
+with no holder (jobs, unattended agents) reads its whole tenant.
+
+A kind the principal cannot read at all is sent as `<kind>:none`, so a relation, loader,
+join or index check that reaches it finds nothing rather than the whole organization.
+Under `none` a person still sees what is their own: the worker linked to their user
+(`workers.user_id`) and the shipments a move assigns them to drive, which is what the
+driver portal and the `My…` self-service reads stand on; orders and invoices are hidden
+entirely. Because the policies are `FOR SELECT`, an update whose `WHERE` reads a row the
+person cannot see changes nothing, so a role that writes a kind needs read on it too. Policies are
 `FOR SELECT`, so an update or a `RETURNING` on a row outside the scope finds nothing.
+
+A cache cannot apply them either. The synced Redis caches (`cache:shipments`,
+`cache:workers`, `cache:customers`, `cache:documents`) hold the tenant's rows, so each one
+asks `readscope.Narrows` for the kind it holds and answers only a request its kind is not
+narrowed for (or one whose scope could not be resolved); anything else reads through the
+database.
+
+A search index cannot apply them: Meilisearch holds every record of the tenant. Global
+search therefore passes each shipment, order, invoice and worker hit, and each document
+attached to one, through `kernelports.RecordVisibility`, which asks the database which of
+those ids the request may read under its read scope; a hit it does not return, or a check
+that fails, is not shown, a kind the person cannot read at all hides the documents attached
+to it, and a narrowed group reports only the hits it shows as its total. Every index query
+names the fields it returns (`SearchRequest.Attributes`, the id alone when none are named)
+and builds its filter with `shared/searchfilter`, which quotes each value.
 
 These policies apply only while row-level security is installed (`database.rls.mode`
 `observe` or `enforce`). With RLS off, a database-enforced scope is not enforced, so the

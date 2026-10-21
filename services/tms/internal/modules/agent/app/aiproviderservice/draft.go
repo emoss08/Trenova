@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -62,7 +63,7 @@ func (s *Service) RunListModels(
 	req *agentports.ProbeAIProviderModelsRequest,
 ) ([]agentports.AIProviderModelOption, error) {
 	provider := endpointProvider(&req.Endpoint)
-	apiKey, err := s.unseal(&req.Endpoint)
+	apiKey, err := s.unseal(req.TenantInfo, &req.Endpoint)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +92,7 @@ func (s *Service) RunTestDraft(
 	}
 	provider.TimeoutSeconds = req.TimeoutSeconds
 
-	apiKey, err := s.unseal(&req.Endpoint)
+	apiKey, err := s.unseal(req.TenantInfo, &req.Endpoint)
 	if err != nil {
 		return nil, err
 	}
@@ -186,14 +187,7 @@ func (s *Service) sealedKey(
 			if multiErr.HasErrors() {
 				return "", multiErr
 			}
-			encrypted, err := s.encryption.EncryptString(typed)
-			if err != nil {
-				return "", errortypes.NewBusinessError(
-					"failed to encrypt the credential for this AI provider",
-				).WithInternal(err)
-			}
-
-			return encrypted, nil
+			return s.sealForDraft(tenantInfo, typed)
 		}
 	}
 	if endpoint.ProviderID.IsNil() {
@@ -207,19 +201,49 @@ func (s *Service) sealedKey(
 	if err != nil {
 		return "", err
 	}
-	if !aiprovider.SameCredentialTarget(stored, draft) {
+	if !aiprovider.SameCredentialTarget(stored, draft) || !stored.HasStoredAPIKey() {
 		return "", nil
 	}
 
-	return stored.APIKey, nil
+	apiKey, err := s.decryptAPIKey(ctx, stored)
+	if err != nil {
+		return "", err
+	}
+
+	return s.sealForDraft(tenantInfo, apiKey)
 }
 
-func (s *Service) unseal(endpoint *agentports.SealedAIProviderEndpoint) (string, error) {
+func (s *Service) sealForDraft(tenantInfo pagination.TenantInfo, apiKey string) (string, error) {
+	encrypted, err := s.encryption.EncryptStringWithAAD(apiKey, draftAAD(tenantInfo))
+	if err != nil {
+		return "", errortypes.NewBusinessError(
+			"failed to encrypt the credential for this AI provider",
+		).WithInternal(err)
+	}
+
+	return encrypted, nil
+}
+
+func draftAAD(tenantInfo pagination.TenantInfo) encryptionservice.AAD {
+	return encryptionservice.AIProviderDraftCredentialAAD(
+		tenantInfo.OrgID,
+		tenantInfo.BuID,
+		tenantInfo.UserID,
+	)
+}
+
+func (s *Service) unseal(
+	tenantInfo pagination.TenantInfo,
+	endpoint *agentports.SealedAIProviderEndpoint,
+) (string, error) {
 	if strings.TrimSpace(endpoint.SealedAPIKey) == "" {
 		return "", nil
 	}
 
-	apiKey, err := s.encryption.DecryptString(endpoint.SealedAPIKey)
+	apiKey, _, err := s.encryption.DecryptStringWithLegacy(
+		endpoint.SealedAPIKey,
+		draftAAD(tenantInfo),
+	)
 	if err != nil {
 		return "", errortypes.NewBusinessError(
 			"failed to decrypt the credential for this AI provider",

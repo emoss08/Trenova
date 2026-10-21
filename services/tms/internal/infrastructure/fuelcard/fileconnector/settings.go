@@ -44,7 +44,7 @@ func (s *settings) readSheet(content []byte) (*rateimport.Sheet, error) {
 		return fuelimport.ReadFixedWidth(content, s.layout)
 	}
 
-	return rateimport.ReadCSV(content)
+	return rateimport.ReadCSV(content, rateimport.Limits{})
 }
 
 func settingsFrom(config map[string]string) (*settings, error) {

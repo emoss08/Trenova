@@ -5919,6 +5919,7 @@
   "Your plan does not include document extraction, so uploaded files are stored but not read and no shipment draft is built.": "您的方案不包含文件擷取，因此上傳的檔案只會儲存，不會被讀取，也不會建立運單草稿。",
   "Your profile": "您的個人資料",
   "Your rating could not be saved": "無法儲存您的評分",
+  "Your recovery codes were saved with an older, weaker protection. Create new ones and store them safely.": "你的復原碼是以較舊、較弱的保護方式儲存的。請建立新的復原碼並妥善保存。",
   "Your reply could not finish": "您的回覆無法完成",
   "Your reply is ready": "您的回覆已準備好",
   "Your request was already sent today": "您今天已送出請求",

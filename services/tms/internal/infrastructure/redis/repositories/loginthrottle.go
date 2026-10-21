@@ -2,7 +2,6 @@ package repositories
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -15,8 +14,11 @@ import (
 )
 
 const (
-	loginThrottlePrefix  = "login_throttle:{auth}"
-	loginThrottleUnknown = "unknown"
+	loginThrottlePrefix       = "login_throttle:{auth}"
+	loginThrottleUnknown      = "unknown"
+	loginThrottleResultFields = 6
+	loginThrottleScopeIPCode  = 2
+	loginThrottleLockSteps    = 18
 )
 
 type LoginThrottleStoreParams struct {
@@ -27,9 +29,27 @@ type LoginThrottleStoreParams struct {
 }
 
 type loginThrottleStore struct {
-	client *redis.Client
-	policy sessionports.LoginThrottlePolicy
-	l      *zap.Logger
+	client    *redis.Client
+	policy    sessionports.LoginThrottlePolicy
+	beginArgs []any
+	l         *zap.Logger
+}
+
+func loginThrottleBeginArgs(policy sessionports.LoginThrottlePolicy) []any {
+	args := make([]any, 0, 4+loginThrottleLockSteps)
+	args = append(args,
+		policy.IPThreshold,
+		policy.AccountWindow.Milliseconds(),
+		policy.IPWindow.Milliseconds(),
+		policy.AccountThreshold,
+	)
+	if policy.AccountThreshold <= 0 {
+		return args
+	}
+	for step := range loginThrottleLockSteps {
+		args = append(args, policy.AccountLockFor(policy.AccountThreshold+step).Milliseconds())
+	}
+	return args
 }
 
 func NewLoginThrottleStore(p LoginThrottleStoreParams) sessionports.LoginThrottleStore {
@@ -50,91 +70,127 @@ func NewLoginThrottleStoreWithPolicy(
 	}
 
 	return &loginThrottleStore{
-		client: client,
-		policy: policy,
-		l:      logger.Named("redis.login-throttle"),
+		client:    client,
+		policy:    policy,
+		beginArgs: loginThrottleBeginArgs(policy),
+		l:         logger.Named("redis.login-throttle"),
 	}
 }
 
-func (s *loginThrottleStore) Check(
+var loginThrottleBeginScript = redis.NewScript(`
+local lockTTL = redis.call('PTTL', KEYS[1])
+if lockTTL > 0 then
+	return {1, 1, lockTTL, tonumber(redis.call('GET', KEYS[2]) or '0'), 0, 0}
+end
+local ipThreshold = tonumber(ARGV[1])
+local ipCount = tonumber(redis.call('GET', KEYS[3]) or '0')
+if ipThreshold > 0 and ipCount >= ipThreshold then
+	return {1, 2, redis.call('PTTL', KEYS[3]), 0, ipCount, 0}
+end
+local accountFailures = redis.call('INCR', KEYS[2])
+redis.call('PEXPIRE', KEYS[2], ARGV[2])
+local ipFailures = redis.call('INCR', KEYS[3])
+if redis.call('PTTL', KEYS[3]) < 0 then
+	redis.call('PEXPIRE', KEYS[3], ARGV[3])
+end
+local threshold = tonumber(ARGV[4])
+local steps = #ARGV - 4
+if threshold > 0 and steps > 0 and accountFailures >= threshold then
+	local lock = tonumber(ARGV[4 + math.min(accountFailures - threshold + 1, steps)])
+	redis.call('SET', KEYS[1], '1', 'PX', lock)
+	return {0, 1, lock, accountFailures, ipFailures, 1}
+end
+if ipThreshold > 0 and ipFailures >= ipThreshold then
+	return {0, 2, redis.call('PTTL', KEYS[3]), accountFailures, ipFailures, 1}
+end
+return {0, 0, 0, accountFailures, ipFailures, 0}
+`)
+
+var loginThrottleSucceedScript = redis.NewScript(`
+redis.call('DEL', KEYS[1], KEYS[2])
+local ipFailures = tonumber(redis.call('GET', KEYS[3]) or '0')
+if ipFailures > 0 then
+	redis.call('DECR', KEYS[3])
+end
+return 1
+`)
+
+func (s *loginThrottleStore) Begin(
 	ctx context.Context,
 	key sessionports.LoginThrottleKey,
 ) (*sessionports.LoginThrottleDecision, error) {
-	pipe := s.client.Pipeline()
-	lockTTL := pipe.PTTL(ctx, s.accountLockKey(key.Account))
-	accountFailures := pipe.Get(ctx, s.accountFailuresKey(key.Account))
-	ipFailures := pipe.Get(ctx, s.ipFailuresKey(key.ClientIP))
-	ipTTL := pipe.PTTL(ctx, s.ipFailuresKey(key.ClientIP))
-	if _, err := pipe.Exec(ctx); err != nil && !errors.Is(err, redis.Nil) {
-		return nil, fmt.Errorf("check login throttle: %w", err)
+	result, err := loginThrottleBeginScript.Run(
+		ctx,
+		s.client,
+		[]string{
+			s.accountLockKey(key.Account),
+			s.accountFailuresKey(key.Account),
+			s.ipFailuresKey(key.ClientIP),
+		},
+		s.beginArgs...,
+	).Int64Slice()
+	if err != nil {
+		return nil, fmt.Errorf("begin login attempt: %w", err)
 	}
 
+	return s.decisionFrom(result)
+}
+
+func (s *loginThrottleStore) decisionFrom(
+	result []int64,
+) (*sessionports.LoginThrottleDecision, error) {
+	if len(result) != loginThrottleResultFields {
+		return nil, fmt.Errorf("begin login attempt: unexpected result %v", result)
+	}
+
+	scope := throttleScope(result[1])
+	window := time.Duration(result[2]) * time.Millisecond
 	decision := &sessionports.LoginThrottleDecision{
-		AccountFailures: intOrZero(accountFailures),
-		IPFailures:      intOrZero(ipFailures),
+		AccountFailures: int(result[3]),
+		IPFailures:      int(result[4]),
 	}
-
-	if ttl := lockTTL.Val(); ttl > 0 {
+	switch {
+	case result[0] == 1:
 		decision.Blocked = true
-		decision.Scope = sessionports.LoginThrottleScopeAccount
-		decision.RetryAfter = ttl
-		return decision, nil
-	}
-
-	if decision.IPFailures >= s.policy.IPThreshold && s.policy.IPThreshold > 0 {
-		decision.Blocked = true
-		decision.Scope = sessionports.LoginThrottleScopeIP
-		decision.RetryAfter = positiveOr(ipTTL.Val(), s.policy.IPWindow)
+		decision.Scope = scope
+		decision.RetryAfter = positiveOr(window, s.windowFor(scope))
+	case result[5] == 1:
+		decision.Tripped = true
+		decision.TrippedScope = scope
+		decision.RetryAfter = positiveOr(window, s.windowFor(scope))
 	}
 
 	return decision, nil
 }
 
-func (s *loginThrottleStore) RecordFailure(
-	ctx context.Context,
-	key sessionports.LoginThrottleKey,
-) (*sessionports.LoginThrottleDecision, error) {
-	accountKey := s.accountFailuresKey(key.Account)
-	ipKey := s.ipFailuresKey(key.ClientIP)
-
-	pipe := s.client.TxPipeline()
-	accountFailures := pipe.Incr(ctx, accountKey)
-	pipe.Expire(ctx, accountKey, s.policy.AccountWindow)
-	ipFailures := pipe.Incr(ctx, ipKey)
-	pipe.ExpireNX(ctx, ipKey, s.policy.IPWindow)
-	ipTTL := pipe.PTTL(ctx, ipKey)
-	if _, err := pipe.Exec(ctx); err != nil {
-		return nil, fmt.Errorf("record login failure: %w", err)
+func (s *loginThrottleStore) windowFor(scope sessionports.LoginThrottleScope) time.Duration {
+	if scope == sessionports.LoginThrottleScopeIP {
+		return s.policy.IPWindow
 	}
-
-	decision := &sessionports.LoginThrottleDecision{
-		AccountFailures: int(accountFailures.Val()),
-		IPFailures:      int(ipFailures.Val()),
-	}
-
-	if lock := s.policy.AccountLockFor(decision.AccountFailures); lock > 0 {
-		if err := s.client.Set(ctx, s.accountLockKey(key.Account), "1", lock).Err(); err != nil {
-			return nil, fmt.Errorf("lock account after login failures: %w", err)
-		}
-		decision.Blocked = true
-		decision.Scope = sessionports.LoginThrottleScopeAccount
-		decision.RetryAfter = lock
-		return decision, nil
-	}
-
-	if s.policy.IPThreshold > 0 && decision.IPFailures >= s.policy.IPThreshold {
-		decision.Blocked = true
-		decision.Scope = sessionports.LoginThrottleScopeIP
-		decision.RetryAfter = positiveOr(ipTTL.Val(), s.policy.IPWindow)
-	}
-
-	return decision, nil
+	return s.policy.AccountBaseLock
 }
 
-func (s *loginThrottleStore) Reset(ctx context.Context, account string) error {
-	if err := s.client.Del(ctx, s.accountFailuresKey(account), s.accountLockKey(account)).
-		Err(); err != nil {
-		return fmt.Errorf("reset login throttle: %w", err)
+func throttleScope(code int64) sessionports.LoginThrottleScope {
+	if code == loginThrottleScopeIPCode {
+		return sessionports.LoginThrottleScopeIP
+	}
+	return sessionports.LoginThrottleScopeAccount
+}
+
+func (s *loginThrottleStore) Succeed(
+	ctx context.Context,
+	key sessionports.LoginThrottleKey,
+) error {
+	if err := loginThrottleSucceedScript.Run(
+		ctx,
+		s.client,
+		[]string{
+			s.accountFailuresKey(key.Account),
+			s.accountLockKey(key.Account),
+			s.ipFailuresKey(key.ClientIP),
+		},
+	).Err(); err != nil {
+		return fmt.Errorf("clear login throttle: %w", err)
 	}
 
 	return nil
@@ -159,15 +215,6 @@ func (s *loginThrottleStore) ipFailuresKey(clientIP string) string {
 
 func accountDigest(account string) string {
 	return tokenutils.Hash(strings.ToLower(strings.TrimSpace(account)))
-}
-
-func intOrZero(cmd *redis.StringCmd) int {
-	value, err := cmd.Int()
-	if err != nil {
-		return 0
-	}
-
-	return value
 }
 
 func positiveOr(value, fallback time.Duration) time.Duration {

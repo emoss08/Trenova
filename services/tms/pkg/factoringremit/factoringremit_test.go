@@ -20,7 +20,7 @@ const fundingReport = "Schedule #,Invoice No,Debtor Name,Invoice Amount,Advance 
 
 func readCSV(t *testing.T, body string) *rateimport.Sheet {
 	t.Helper()
-	sheet, err := factoringremit.ReadSheet([]byte(body), factoring.RemittanceFormatCsv)
+	sheet, err := factoringremit.ReadSheet([]byte(body), factoring.RemittanceFormatCsv, rateimport.Limits{})
 	require.NoError(t, err)
 	return sheet
 }
@@ -118,16 +118,16 @@ func TestKindFromTextReadsTheWordsFactorsUse(t *testing.T) {
 	t.Parallel()
 
 	cases := map[string]factoring.RemittanceLineKind{
-		"Charge Back":        factoring.RemittanceLineChargeback,
-		"Recourse":           factoring.RemittanceLineChargeback,
-		"Reserve Release":    factoring.RemittanceLineReserveRelease,
-		"Rebate":             factoring.RemittanceLineReserveRelease,
-		"DECLINED":           factoring.RemittanceLineRejection,
-		"Non-Purchase":       factoring.RemittanceLineRejection,
-		"Purchase":           factoring.RemittanceLineFunding,
-		"Advance":            factoring.RemittanceLineFunding,
-		"Wire fee":           factoring.RemittanceLineOther,
-		"Something unusual":  factoring.RemittanceLineReserveRelease,
+		"Charge Back":       factoring.RemittanceLineChargeback,
+		"Recourse":          factoring.RemittanceLineChargeback,
+		"Reserve Release":   factoring.RemittanceLineReserveRelease,
+		"Rebate":            factoring.RemittanceLineReserveRelease,
+		"DECLINED":          factoring.RemittanceLineRejection,
+		"Non-Purchase":      factoring.RemittanceLineRejection,
+		"Purchase":          factoring.RemittanceLineFunding,
+		"Advance":           factoring.RemittanceLineFunding,
+		"Wire fee":          factoring.RemittanceLineOther,
+		"Something unusual": factoring.RemittanceLineReserveRelease,
 	}
 	for text, want := range cases {
 		assert.Equal(t, want, factoringremit.KindFromText(text, factoring.RemittanceLineReserveRelease), text)

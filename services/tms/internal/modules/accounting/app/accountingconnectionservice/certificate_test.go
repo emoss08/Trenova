@@ -100,7 +100,7 @@ func TestPrepareCertificateSealsTheKeyAndReturnsTheCertificate(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.NotContains(t, pending.PrivateKeyCiphertext, "PRIVATE KEY")
-	key, err := h.encryption.DecryptStringWithAAD(pending.PrivateKeyCiphertext, h.svc.pendingKeyAAD(pending))
+	key, err := h.encryption.DecryptStringWithAAD(pending.PrivateKeyCiphertext, pendingKeyAAD(pending))
 	require.NoError(t, err)
 	assert.Equal(t, h.connector.clientCredentials().preparedKeys[0], key)
 	assert.Equal(t, h.userID, pending.PreparedByID)

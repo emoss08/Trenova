@@ -25,6 +25,7 @@ export const identityProviderSchema = z.object({
   enforceSso: z.boolean().default(false),
   autoProvision: z.boolean().default(false),
   allowFederatedMfa: z.boolean().default(true),
+  federatedMfaAcrValues: stringArraySchema,
   allowedDomains: stringArraySchema,
   attributeMap: stringMapSchema,
   oidcIssuerUrl: z.string().optional().default(""),

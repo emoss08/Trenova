@@ -12,12 +12,13 @@ const MFAMethodTOTP = "totp"
 const MFAMethodRecoveryCode = "recovery_code"
 
 type MFAStatus struct {
-	TOTPEnabled            bool  `json:"totpEnabled"`
-	EnrollmentPending      bool  `json:"enrollmentPending"`
-	EnabledAt              int64 `json:"enabledAt,omitempty"`
-	LastUsedAt             int64 `json:"lastUsedAt,omitempty"`
-	RecoveryCodesRemaining int   `json:"recoveryCodesRemaining"`
-	SessionVerified        bool  `json:"sessionVerified"`
+	TOTPEnabled                bool  `json:"totpEnabled"`
+	EnrollmentPending          bool  `json:"enrollmentPending"`
+	EnabledAt                  int64 `json:"enabledAt,omitempty"`
+	LastUsedAt                 int64 `json:"lastUsedAt,omitempty"`
+	RecoveryCodesRemaining     int   `json:"recoveryCodesRemaining"`
+	RecoveryCodesNeedReplacing bool  `json:"recoveryCodesNeedReplacing"`
+	SessionVerified            bool  `json:"sessionVerified"`
 }
 
 type BeginTOTPEnrollmentRequest struct {

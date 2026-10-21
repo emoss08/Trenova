@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/api/csrf"
@@ -404,6 +405,11 @@ func (h *Handler) ssoCallback(provider tenant.SSOProvider) gin.HandlerFunc {
 			return
 		}
 
+		if resp.LoginResponse.MFARequired {
+			c.Redirect(http.StatusFound, h.ssoMFAChallengeURL(loginState, resp.LoginResponse))
+			return
+		}
+
 		h.setSessionCookie(c, resp.LoginResponse.SessionToken, resp.LoginResponse.ExpiresAt)
 		c.Redirect(http.StatusFound, resp.RedirectTo)
 	}
@@ -441,16 +447,30 @@ func (h *Handler) redirectSSOError(
 ) {
 	h.l.Warn("sso callback failed", zap.Error(callbackErr))
 
-	loginPath := "/login"
-	if loginState != nil && loginState.OrganizationSlug != "" {
-		loginPath = "/login/" + loginState.OrganizationSlug
-	}
+	loginPath := ssoLoginPath(loginState)
 
 	userMsg := "Sign-in failed. Please try again or contact your administrator."
 
 	origin := h.resolveSSOErrorOrigin(loginState)
 	redirectURL := fmt.Sprintf("%s%s?sso_error=%s", origin, loginPath, url.QueryEscape(userMsg))
 	c.Redirect(http.StatusFound, redirectURL)
+}
+
+func (h *Handler) ssoMFAChallengeURL(
+	loginState *tenantports.SSOLoginState,
+	challenge *tenantports.LoginResponse,
+) string {
+	fragment := url.Values{}
+	fragment.Set("mfa_challenge", challenge.MFAChallengeToken)
+	fragment.Set("mfa_expires", strconv.FormatInt(challenge.ExpiresAt, 10))
+	return h.resolveSSOErrorOrigin(loginState) + ssoLoginPath(loginState) + "#" + fragment.Encode()
+}
+
+func ssoLoginPath(loginState *tenantports.SSOLoginState) string {
+	if loginState != nil && loginState.OrganizationSlug != "" {
+		return "/login/" + url.PathEscape(loginState.OrganizationSlug)
+	}
+	return "/login"
 }
 
 func (h *Handler) resolveSSOErrorOrigin(loginState *tenantports.SSOLoginState) string {

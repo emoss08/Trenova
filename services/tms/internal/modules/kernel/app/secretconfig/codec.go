@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/configspec"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/zap"
@@ -24,6 +25,16 @@ func (sc Scope) aad(fieldKey string) encryptionservice.AAD {
 		OrganizationID: sc.Tenant.OrgID,
 		BusinessUnitID: sc.Tenant.BuID,
 		ResourceID:     sc.ResourceKind + ":" + sc.Subject + ":" + fieldKey,
+	}
+}
+
+func (sc *Scope) SecretScopes(fieldKey string) []kernelports.SecretScope {
+	if !sc.Bind {
+		return []kernelports.SecretScope{encryptionservice.AAD{}.SecretScope()}
+	}
+	return []kernelports.SecretScope{
+		sc.aad(fieldKey).SecretScope(),
+		encryptionservice.AAD{}.SecretScope(),
 	}
 }
 
@@ -49,36 +60,22 @@ func (c Codec) Decrypt(value, fieldKey string, scope Scope) (string, error) {
 		return c.encryption.DecryptString(value)
 	}
 
-	decrypted, err := c.encryption.DecryptStringWithAAD(value, scope.aad(fieldKey))
-	if err == nil {
-		return decrypted, nil
-	}
-
-	legacy, legacyErr := c.encryption.DecryptString(value)
-	if legacyErr != nil {
-		return "", err
-	}
-
-	return legacy, nil
+	decrypted, _, err := c.encryption.DecryptStringWithLegacy(value, scope.aad(fieldKey))
+	return decrypted, err
 }
 
 func (c Codec) Rebind(stored, fieldKey string, scope Scope) string {
 	if !scope.Bind || stored == "" {
 		return stored
 	}
-	if _, err := c.encryption.DecryptStringWithAAD(stored, scope.aad(fieldKey)); err == nil {
-		return stored
-	}
 
-	plaintext, err := c.encryption.DecryptString(stored)
-	if err != nil {
-		return stored
-	}
-
-	rebound, err := c.encryption.EncryptStringWithAAD(plaintext, scope.aad(fieldKey))
+	_, rebound, err := c.encryption.DecryptAndRebind(stored, scope.aad(fieldKey))
 	if err != nil {
 		c.l.Warn("failed to bind secret to tenant", zap.Error(err),
 			zap.String("resource", scope.ResourceKind), zap.String("subject", scope.Subject))
+		return stored
+	}
+	if rebound == "" {
 		return stored
 	}
 

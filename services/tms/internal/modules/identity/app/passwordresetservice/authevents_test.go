@@ -3,11 +3,13 @@ package passwordresetservice
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -135,4 +137,32 @@ func TestResetPasswordDoesNotRecordAWeakPassword(t *testing.T) {
 
 	require.Error(t, svc.ResetPassword(t.Context(), "raw-token", "short"))
 	assert.Empty(t, events.records)
+}
+
+func TestResetPasswordRefusesAPasswordThePolicyRejectsWithoutSpendingTheLink(t *testing.T) {
+	t.Parallel()
+
+	for name, password := range map[string]string{
+		"eight characters":   "abcd-123",
+		"common":             "password1234",
+		"contains the email": "dana-loves-freight",
+		"over 72 bytes":      strings.Repeat("ab1-", 19),
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			user := activeUser()
+			tokens := &stubTokenRepo{redeemable: redeemableToken(user), markUsedOK: true}
+			users := &stubUserRepo{user: user}
+			svc := newService(t, users, tokens, &stubSessionRepo{})
+
+			err := svc.ResetPassword(t.Context(), "raw-token", password)
+
+			var multiErr *errortypes.MultiError
+			require.ErrorAs(t, err, &multiErr)
+			require.Len(t, multiErr.Errors, 1)
+			assert.Equal(t, "newPassword", multiErr.Errors[0].Field)
+			assert.Zero(t, tokens.markUsedCall)
+		})
+	}
 }

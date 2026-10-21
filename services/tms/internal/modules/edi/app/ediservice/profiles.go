@@ -362,19 +362,29 @@ func (s *Service) encryptProfileSecret(
 		)
 	}
 
-	resourceID := profileID.String() + ":" + key
-	encrypted, err := s.encryption.EncryptStringWithAAD(value, encryptionservice.AAD{
-		Purpose:        encryptionservice.PurposeEDICommunicationProfileItem,
-		OrganizationID: req.TenantInfo.OrgID,
-		BusinessUnitID: req.TenantInfo.BuID,
-		ResourceID:     resourceID,
-	})
+	encrypted, err := s.encryption.EncryptStringWithAAD(
+		value,
+		profileSecretAAD(req.TenantInfo, profileID, key),
+	)
 	if err != nil {
 		return "", errortypes.NewBusinessError(
 			"failed to encrypt EDI communication profile secret",
 		).WithInternal(err)
 	}
 	return encrypted, nil
+}
+
+func profileSecretAAD(
+	tenantInfo pagination.TenantInfo,
+	profileID pulid.ID,
+	key string,
+) encryptionservice.AAD {
+	return encryptionservice.AAD{
+		Purpose:        encryptionservice.PurposeEDICommunicationProfileItem,
+		OrganizationID: tenantInfo.OrgID,
+		BusinessUnitID: tenantInfo.BuID,
+		ResourceID:     profileID.String() + ":" + key,
+	}
 }
 
 func normalizeProfileConfig(config map[string]any) map[string]any {

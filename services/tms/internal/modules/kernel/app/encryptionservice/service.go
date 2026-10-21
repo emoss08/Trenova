@@ -30,6 +30,10 @@ var (
 	ErrInvalidEnvelope    = errors.New("invalid encryption envelope")
 	ErrKeyManagerDisabled = errors.New("encryption key manager is disabled")
 	ErrUnknownKeyID       = errors.New("unknown encryption key id")
+	ErrKMSKeyRequired     = errors.New(
+		"security.encryption.gcpKms.cryptoKey is required for the gcp-autokey key manager",
+	)
+	ErrKMSUnavailable = errors.New("the GCP KMS client could not be created")
 )
 
 type Params struct {
@@ -58,8 +62,10 @@ const (
 	PurposeAccountingPendingGrant      Purpose = "accounting_pending_grant"    // #nosec G101 -- AAD label, not a credential.
 	PurposeAccountingWebhookState      Purpose = "accounting_webhook_state"
 	PurposeAccountingOAuthVerifier     Purpose = "accounting_oauth_verifier"
-	PurposeAccountingClientKey         Purpose = "accounting_client_key" // #nosec G101 -- AAD label, not a credential.
-	PurposeMFATOTPSecret               Purpose = "mfa_totp_secret"       // #nosec G101 -- AAD label, not a credential.
+	PurposeAccountingClientKey         Purpose = "accounting_client_key"        // #nosec G101 -- AAD label, not a credential.
+	PurposeMFATOTPSecret               Purpose = "mfa_totp_secret"              // #nosec G101 -- AAD label, not a credential.
+	PurposeAIProviderCredential        Purpose = "ai_provider_credential"       // #nosec G101 -- AAD label, not a credential.
+	PurposeAIProviderDraftCredential   Purpose = "ai_provider_draft_credential" // #nosec G101 -- AAD label, not a credential.
 
 	CryptoModeEnvelopeV1 = "envelope_v1"
 
@@ -126,8 +132,12 @@ type kmsClient interface {
 	Close() error
 }
 
-func New(p Params) *Service {
-	return &Service{keyManager: keyManagerFromConfig(p.Config)}
+func New(p Params) (*Service, error) {
+	keyManager, err := keyManagerFromConfig(p.Config, dialKMS)
+	if err != nil {
+		return nil, err
+	}
+	return &Service{keyManager: keyManager}, nil
 }
 
 func NewWithKeyManager(keyManager KeyManager) *Service {
@@ -295,56 +305,138 @@ func (s *Service) DecryptBytesWithAADContext(
 	return plaintext, nil
 }
 
-func (s *Service) RewrapEnvelopeWithAAD(value string, aad AAD) (string, error) {
-	return s.RewrapEnvelopeWithAADContext(context.Background(), value, aad)
-}
-
-func (s *Service) RewrapEnvelopeWithAADContext(
+func (s *Service) RewrapEnvelope(
 	ctx context.Context,
 	value string,
 	aad AAD,
-) (string, error) {
+) (rewrapped string, changed bool, err error) {
 	ciphertext := strings.TrimSpace(value)
 	if ciphertext == "" {
-		return "", ErrValueRequired
+		return "", false, ErrValueRequired
 	}
 	if !IsEnvelope(ciphertext) {
-		return "", ErrInvalidEnvelope
+		return "", false, ErrInvalidEnvelope
 	}
 	if s.keyManager == nil {
-		return "", ErrKeyManagerDisabled
+		return "", false, ErrKeyManagerDisabled
 	}
 
 	env, err := decodeEnvelope(ciphertext)
 	if err != nil {
-		return "", err
+		return "", false, err
 	}
+	if env.AADHash != aad.Hash() {
+		return "", false, ErrInvalidEnvelope
+	}
+	if env.Provider == s.keyManager.Provider() && env.KeyID == s.keyManager.ActiveKeyID() {
+		return value, false, nil
+	}
+
 	wrapped, err := env.wrappedKey()
 	if err != nil {
-		return "", err
+		return "", false, err
 	}
 	dek, err := s.keyManager.UnwrapKey(ctx, wrapped, aad)
 	if err != nil {
-		return "", err
+		return "", false, err
 	}
 	nextWrapped, err := s.keyManager.WrapKey(ctx, dek, aad)
 	if err != nil {
-		return "", err
+		return "", false, err
 	}
 
 	env.Provider = nextWrapped.Provider
 	env.KeyID = nextWrapped.KeyID
 	env.WrappedDEK = base64.StdEncoding.EncodeToString(nextWrapped.Bytes)
-	env.WrappedDEKNonce = base64.StdEncoding.EncodeToString(nextWrapped.Nonce)
+	env.WrappedDEKNonce = ""
+	if len(nextWrapped.Nonce) > 0 {
+		env.WrappedDEKNonce = base64.StdEncoding.EncodeToString(nextWrapped.Nonce)
+	}
 	env.WrappingAlgorithm = nextWrapped.Algorithm
-	env.AADHash = aad.Hash()
 
 	payload, err := sonic.Marshal(env)
 	if err != nil {
-		return "", fmt.Errorf("marshal encryption envelope: %w", err)
+		return "", false, fmt.Errorf("marshal encryption envelope: %w", err)
 	}
 
-	return envelopePrefix + base64.StdEncoding.EncodeToString(payload), nil
+	return envelopePrefix + base64.StdEncoding.EncodeToString(payload), true, nil
+}
+
+func (s *Service) NeedsRewrap(value string) bool {
+	ciphertext := strings.TrimSpace(value)
+	if s.keyManager == nil || !IsEnvelope(ciphertext) {
+		return false
+	}
+	env, err := decodeEnvelope(ciphertext)
+	if err != nil {
+		return false
+	}
+	return env.Provider != s.keyManager.Provider() || env.KeyID != s.keyManager.ActiveKeyID()
+}
+
+func (s *Service) DecryptStringWithLegacy(
+	value string,
+	aad AAD,
+) (plaintext string, legacy bool, err error) {
+	plaintext, err = s.DecryptStringWithAAD(value, aad)
+	if err == nil {
+		return plaintext, false, nil
+	}
+	if aad.Hash() == (AAD{}).Hash() || !EnvelopeHasAAD(value, AAD{}) {
+		return "", false, err
+	}
+
+	unbound, legacyErr := s.DecryptString(value)
+	if legacyErr != nil {
+		return "", false, err
+	}
+	return unbound, true, nil
+}
+
+func (s *Service) DecryptAndRebind(
+	value string,
+	aad AAD,
+) (plaintext, rebound string, err error) {
+	plaintext, legacy, err := s.DecryptStringWithLegacy(value, aad)
+	if err != nil || !legacy {
+		return plaintext, "", err
+	}
+
+	rebound, err = s.EncryptStringWithAAD(plaintext, aad)
+	if err != nil {
+		return plaintext, "", err
+	}
+	return plaintext, rebound, nil
+}
+
+func EnvelopeHasAAD(value string, aad AAD) bool {
+	ciphertext := strings.TrimSpace(value)
+	if !IsEnvelope(ciphertext) {
+		return false
+	}
+	env, err := decodeEnvelope(ciphertext)
+	if err != nil {
+		return false
+	}
+	return env.AADHash == aad.Hash()
+}
+
+func AIProviderCredentialAAD(orgID, buID, providerID pulid.ID) AAD {
+	return AAD{
+		Purpose:        PurposeAIProviderCredential,
+		OrganizationID: orgID,
+		BusinessUnitID: buID,
+		ResourceID:     providerID.String(),
+	}
+}
+
+func AIProviderDraftCredentialAAD(orgID, buID, userID pulid.ID) AAD {
+	return AAD{
+		Purpose:        PurposeAIProviderDraftCredential,
+		OrganizationID: orgID,
+		BusinessUnitID: buID,
+		ResourceID:     userID.String(),
+	}
 }
 
 func IsEnvelope(value string) bool {
@@ -418,9 +510,15 @@ func (e envelope) wrappedKey() (WrappedKey, error) {
 	}, nil
 }
 
-func keyManagerFromConfig(cfg *config.Config) KeyManager {
+type kmsDialer func(context.Context, ...option.ClientOption) (kmsClient, error)
+
+func dialKMS(ctx context.Context, opts ...option.ClientOption) (kmsClient, error) {
+	return kms.NewKeyManagementClient(ctx, opts...)
+}
+
+func keyManagerFromConfig(cfg *config.Config, dial kmsDialer) (KeyManager, error) {
 	if cfg == nil {
-		return DisabledKeyManager{}
+		return DisabledKeyManager{}, nil
 	}
 
 	enc := cfg.Security.Encryption
@@ -431,85 +529,47 @@ func keyManagerFromConfig(cfg *config.Config) KeyManager {
 
 	switch manager {
 	case config.EncryptionKeyManagerGCPAutokey:
-		return newGCPAutokeyManager(enc.GCPKMS)
+		active, err := newGCPAutokeyManager(&enc.GCPKMS, dial)
+		if err != nil {
+			return nil, err
+		}
+		reader, ok, err := localReader(&enc)
+		if err != nil {
+			return nil, err
+		}
+		if !ok {
+			return active, nil
+		}
+		return NewKeyring(active, reader), nil
 	case config.EncryptionKeyManagerDisabled:
-		return DisabledKeyManager{}
+		return DisabledKeyManager{}, nil
 	default:
-		return NewLocalKeyManager(enc.Key)
+		keyring, err := NewLocalKeyring(enc.Key, enc.RetiredKeys)
+		if err != nil {
+			return nil, err
+		}
+		return keyring, nil
 	}
 }
 
-type LocalKeyManager struct {
-	key []byte
-}
-
-func NewLocalKeyManager(secret string) LocalKeyManager {
-	sum := sha256.Sum256([]byte(strings.TrimSpace(secret)))
-	return LocalKeyManager{key: sum[:]}
-}
-
-func (m LocalKeyManager) WrapKey(_ context.Context, dek []byte, aad AAD) (*WrappedKey, error) {
-	if len(m.key) == 0 {
-		return nil, ErrKeyManagerDisabled
+func localReader(enc *config.EncryptionConfig) (KeyManager, bool, error) {
+	secrets := make([]string, 0, len(enc.RetiredKeys)+1)
+	if strings.TrimSpace(enc.Key) != "" {
+		secrets = append(secrets, enc.Key)
 	}
-	block, err := aes.NewCipher(m.key)
+	for _, secret := range enc.RetiredKeys {
+		if strings.TrimSpace(secret) != "" {
+			secrets = append(secrets, secret)
+		}
+	}
+	if len(secrets) == 0 {
+		return nil, false, nil
+	}
+	reader, err := NewLocalKeyring(secrets[0], secrets[1:])
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
-	gcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return nil, err
-	}
-
-	nonce := make([]byte, gcm.NonceSize())
-	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
-		return nil, err
-	}
-
-	return &WrappedKey{
-		Provider:  localProvider,
-		KeyID:     m.ActiveKeyID(),
-		Algorithm: localWrappingAlg,
-		Nonce:     nonce,
-		Bytes:     gcm.Seal(nil, nonce, dek, aad.Bytes()),
-	}, nil
-}
-
-func (m LocalKeyManager) UnwrapKey(_ context.Context, wrapped WrappedKey, aad AAD) ([]byte, error) {
-	if wrapped.Provider != localProvider ||
-		wrapped.KeyID != m.ActiveKeyID() ||
-		wrapped.Algorithm != localWrappingAlg {
-		return nil, ErrUnknownKeyID
-	}
-
-	block, err := aes.NewCipher(m.key)
-	if err != nil {
-		return nil, err
-	}
-	gcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return nil, err
-	}
-	if len(wrapped.Nonce) != gcm.NonceSize() {
-		return nil, ErrCiphertextFormat
-	}
-
-	dek, err := gcm.Open(nil, wrapped.Nonce, wrapped.Bytes, aad.Bytes())
-	if err != nil {
-		return nil, err
-	}
-	if len(dek) != dekSize {
-		return nil, ErrInvalidEnvelope
-	}
-	return dek, nil
-}
-
-func (m LocalKeyManager) ActiveKeyID() string {
-	return localKeyID
-}
-
-func (m LocalKeyManager) Provider() string {
-	return localProvider
+	return reader, true, nil
 }
 
 type DisabledKeyManager struct{}
@@ -619,17 +679,16 @@ func (m *GCPAutokeyManager) Provider() string {
 	return gcpAutokeyProvider
 }
 
-func newGCPAutokeyManager(cfg config.GCPKMSConfig) KeyManager {
+func newGCPAutokeyManager(cfg *config.GCPKMSConfig, dial kmsDialer) (KeyManager, error) {
 	activeKey := cfg.CryptoKey
 	if strings.TrimSpace(activeKey) == "" {
 		activeKey = cfg.KeyResource
 	}
 	activeKey = strings.TrimSpace(activeKey)
 	if activeKey == "" {
-		return DisabledKeyManager{}
+		return nil, ErrKMSKeyRequired
 	}
 
-	ctx := context.Background()
 	opts := make([]option.ClientOption, 0, 1)
 	if cfg.CredentialsFile != "" {
 		//nolint:staticcheck // SA1019: the replacement pins the credential type at the
@@ -638,10 +697,10 @@ func newGCPAutokeyManager(cfg config.GCPKMSConfig) KeyManager {
 		opts = append(opts, option.WithCredentialsFile(cfg.CredentialsFile))
 	}
 
-	client, err := kms.NewKeyManagementClient(ctx, opts...)
+	client, err := dial(context.Background(), opts...)
 	if err != nil {
-		return DisabledKeyManager{}
+		return nil, fmt.Errorf("%w: %w", ErrKMSUnavailable, err)
 	}
 
-	return NewGCPAutokeyManager(client, activeKey, cfg.Timeout)
+	return NewGCPAutokeyManager(client, activeKey, cfg.Timeout), nil
 }

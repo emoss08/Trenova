@@ -119,3 +119,48 @@ func TestWithout_HidesTheHolder(t *testing.T) {
 	require.NoError(t, err)
 	assert.Empty(t, encoded)
 }
+
+func TestNarrows_IsFalseWithoutAHolder(t *testing.T) {
+	t.Parallel()
+
+	narrowed, err := readscope.Narrows(t.Context(), "worker")
+
+	require.NoError(t, err)
+	assert.False(t, narrowed)
+}
+
+func TestNarrows_NamesOnlyTheKindsAnOwnOrTeamGrantNarrows(t *testing.T) {
+	t.Parallel()
+
+	ctx := readscope.With(t.Context(), func(context.Context) (readscope.Grants, error) {
+		return readscope.Grants{
+			"worker":   {Scope: readscope.ScopeTeam, Team: []pulid.ID{pulid.MustNew("usr_")}},
+			"shipment": {Scope: readscope.ScopeOwn},
+			"order":    {Scope: "organization"},
+		}, nil
+	})
+
+	for kind, want := range map[string]bool{
+		"worker":   true,
+		"shipment": true,
+		"order":    false,
+		"customer": false,
+	} {
+		narrowed, err := readscope.Narrows(ctx, kind)
+		require.NoError(t, err, kind)
+		assert.Equal(t, want, narrowed, kind)
+	}
+}
+
+func TestNarrows_TreatsAScopeThatCannotBeResolvedAsNarrowed(t *testing.T) {
+	t.Parallel()
+
+	ctx := readscope.With(t.Context(), func(context.Context) (readscope.Grants, error) {
+		return nil, errors.New("team lookup failed")
+	})
+
+	narrowed, err := readscope.Narrows(ctx, "customer")
+
+	require.Error(t, err)
+	assert.True(t, narrowed)
+}

@@ -8,15 +8,13 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { AuthErrorText, AuthPasswordField, AuthSubmit } from "./auth-field";
 import { AuthHeading, StepCrumbs } from "./auth-primitives";
-import { MIN_PASSWORD_LENGTH } from "./reset-password-form";
+import { newPasswordSchema } from "./reset-password-form";
 import { translate } from "@trenova/shared/i18n/runtime";
 
 export const forcedChangePasswordSchema = z
   .object({
     currentPassword: z.string().min(1, { error: () => translate("Enter your current password") }),
-    newPassword: z.string().min(MIN_PASSWORD_LENGTH, {
-      error: () => translate("Password must be at least {0} characters", MIN_PASSWORD_LENGTH),
-    }),
+    newPassword: newPasswordSchema,
     confirmPassword: z.string().min(1, { error: () => translate("Confirm your new password") }),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {

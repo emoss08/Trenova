@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/netip"
 	"net/url"
 	"strings"
 	"syscall"
@@ -39,12 +40,60 @@ const (
 	defaultResponseHeaderTO = 30 * time.Second
 )
 
-// carrierGradeNAT is the RFC 6598 shared address space (100.64.0.0/10) used by
-// many cloud providers for internal routing; it is not covered by the net.IP
-// classification helpers.
-var carrierGradeNAT = &net.IPNet{
-	IP:   net.IPv4(100, 64, 0, 0),
-	Mask: net.CIDRMask(10, 32),
+var (
+	alwaysBlockedPrefixes = mustPrefixes(
+		"0.0.0.0/8",
+		"240.0.0.0/4",
+		"2001::/32",
+	)
+	privatePrefixes = mustPrefixes(
+		"100.64.0.0/10",
+		"192.0.0.0/24",
+		"192.0.2.0/24",
+		"198.18.0.0/15",
+		"198.51.100.0/24",
+		"203.0.113.0/24",
+		"64:ff9b:1::/48",
+		"100::/64",
+		"2001:db8::/32",
+		"fec0::/10",
+	)
+	nat64Prefix  = netip.MustParsePrefix("64:ff9b::/96")
+	sixToFour    = netip.MustParsePrefix("2002::/16")
+	ipv4Compat   = netip.MustParsePrefix("::/96")
+	maxEmbedding = 2
+)
+
+func mustPrefixes(cidrs ...string) []netip.Prefix {
+	prefixes := make([]netip.Prefix, 0, len(cidrs))
+	for _, cidr := range cidrs {
+		prefixes = append(prefixes, netip.MustParsePrefix(cidr))
+	}
+	return prefixes
+}
+
+func containedIn(addr netip.Addr, prefixes []netip.Prefix) bool {
+	for _, prefix := range prefixes {
+		if prefix.Contains(addr) {
+			return true
+		}
+	}
+	return false
+}
+
+func embeddedIPv4(addr netip.Addr) (netip.Addr, bool) {
+	if !addr.Is6() {
+		return netip.Addr{}, false
+	}
+	raw := addr.As16()
+	switch {
+	case nat64Prefix.Contains(addr), ipv4Compat.Contains(addr):
+		return netip.AddrFrom4([4]byte{raw[12], raw[13], raw[14], raw[15]}), true
+	case sixToFour.Contains(addr):
+		return netip.AddrFrom4([4]byte{raw[2], raw[3], raw[4], raw[5]}), true
+	default:
+		return netip.Addr{}, false
+	}
 }
 
 // Policy controls how permissive the address checks are. The zero value is the
@@ -71,22 +120,35 @@ func IsBlockedIP(ip net.IP) bool {
 
 // IsBlockedIPWithPolicy reports whether connecting to ip is disallowed under p.
 func IsBlockedIPWithPolicy(ip net.IP, p Policy) bool {
-	if ip == nil {
+	addr, ok := netip.AddrFromSlice(ip)
+	if !ok {
 		return true
 	}
-	// Never reachable: an unspecified or multicast target is not a model server,
-	// and link-local covers the metadata service that SSRF most often targets.
-	if ip.IsUnspecified() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() ||
-		ip.IsInterfaceLocalMulticast() || ip.IsMulticast() {
+	return isBlockedAddr(addr.Unmap(), p, 0)
+}
+
+func isBlockedAddr(addr netip.Addr, p Policy, depth int) bool {
+	if !addr.IsValid() || addr.Zone() != "" {
 		return true
+	}
+	if addr.IsUnspecified() || addr.IsLinkLocalUnicast() || addr.IsLinkLocalMulticast() ||
+		addr.IsInterfaceLocalMulticast() || addr.IsMulticast() ||
+		containedIn(addr, alwaysBlockedPrefixes) {
+		return true
+	}
+	if addr.IsLoopback() {
+		return !p.AllowPrivateNetworks
+	}
+	if embedded, ok := embeddedIPv4(addr); ok {
+		if depth >= maxEmbedding {
+			return true
+		}
+		return isBlockedAddr(embedded, p, depth+1)
 	}
 	if p.AllowPrivateNetworks {
 		return false
 	}
-	if ip.IsLoopback() || ip.IsPrivate() {
-		return true
-	}
-	return carrierGradeNAT.Contains(ip)
+	return addr.IsPrivate() || containedIn(addr, privatePrefixes)
 }
 
 // ValidateURL parses rawURL and ensures it uses an allowed scheme and, when the
@@ -117,6 +179,34 @@ func ValidateURLWithPolicy(rawURL string, p Policy) (*url.URL, error) {
 		return nil, fmt.Errorf("%w: %s", ErrBlockedAddress, host)
 	}
 	return parsed, nil
+}
+
+var ErrInsecureURL = errors.New("httpsafe: url must use https without credentials")
+
+func ValidateHTTPSURL(rawURL string, p Policy) (*url.URL, error) {
+	parsed, err := ValidateURLWithPolicy(rawURL, p)
+	if err != nil {
+		return nil, err
+	}
+	if parsed.Scheme != "https" || parsed.User != nil {
+		return nil, ErrInsecureURL
+	}
+	return parsed, nil
+}
+
+func ValidateHost(host string, p Policy) error {
+	trimmed := strings.Trim(strings.TrimSpace(host), "[]")
+	if trimmed == "" {
+		return ErrMissingHost
+	}
+	if ip := net.ParseIP(trimmed); ip != nil && IsBlockedIPWithPolicy(ip, p) {
+		return fmt.Errorf("%w: %s", ErrBlockedAddress, trimmed)
+	}
+	return nil
+}
+
+func DialControl(p Policy) func(string, string, syscall.RawConn) error {
+	return guardedControl(p)
 }
 
 func guardedControl(p Policy) func(string, string, syscall.RawConn) error {

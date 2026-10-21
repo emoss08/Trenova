@@ -2,6 +2,8 @@ package tenant
 
 import (
 	"context"
+	"fmt"
+	"sync"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/dbtype"
@@ -10,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/shared/passwordutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -109,12 +112,38 @@ type User struct {
 }
 
 func (u *User) GeneratePassword(raw string) (string, error) {
+	if len(raw) > passwordutils.MaxBytes {
+		return "", errortypes.NewValidationError(
+			"password",
+			errortypes.ErrInvalid,
+			"Password must be 72 bytes or fewer",
+		)
+	}
 	hashed, err := bcrypt.GenerateFromPassword([]byte(raw), bcrypt.DefaultCost)
 	if err != nil {
 		return "", err
 	}
 
 	return string(hashed), nil
+}
+
+var dummyPasswordHash = sync.OnceValue(func() []byte {
+	hashed, err := bcrypt.GenerateFromPassword(
+		[]byte(pulid.MustNew("dpw_").String()),
+		bcrypt.DefaultCost,
+	)
+	if err != nil {
+		panic(fmt.Sprintf("hash the dummy password: %v", err))
+	}
+	return hashed
+})
+
+func DiscardPasswordCheck(raw string) {
+	_ = bcrypt.CompareHashAndPassword(dummyPasswordHash(), []byte(raw))
+}
+
+func (u *User) VerifyPassword(raw string) error {
+	return u.verifyPassword(raw)
 }
 
 func (u *User) verifyPassword(raw string) error {

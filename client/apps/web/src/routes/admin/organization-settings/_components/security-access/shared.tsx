@@ -147,7 +147,7 @@ export function ChipArrayField({
   required,
 }: {
   control: Control<IdentityProviderFormValues>;
-  name: "allowedDomains" | "oidcScopes";
+  name: "allowedDomains" | "oidcScopes" | "federatedMfaAcrValues";
   label: string;
   placeholder: string;
   description: string;

@@ -188,8 +188,8 @@ func describeReading(reading AttachmentReading) string {
 }
 
 func fenced(text string) string {
-	return stringutils.NeutralizeCloseTag(
-		stringutils.NeutralizeCloseTag(text, fileTextCloseTag),
+	return stringutils.FenceText(
+		stringutils.FenceText(text, fileTextCloseTag),
 		attachmentsCloseTag,
 	)
 }

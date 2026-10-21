@@ -21,10 +21,11 @@ const (
 	// still be read as the same figure. It is proportional, so it scales from
 	// percentages to six-figure sums.
 	roundingTolerance = 0.005
-	// smallNumberCeiling is the value below which a number is treated as ordinary
-	// prose rather than a citation. "the top 3 customers", "a second driver", "one
-	// of the stops" are all sentence furniture, and a model cannot mislead anyone
-	// about money with them.
+	// smallNumberCeiling is the value below which a bare count is treated as
+	// ordinary prose rather than a citation. "the top 3 customers", "a second
+	// driver", "one of the stops" are all sentence furniture. A small figure
+	// written as money, a percentage or a rate is a claim all the same: "$3.10 a
+	// mile", "a 4% surcharge" and "2.15 per mile" are what a person acts on.
 	smallNumberCeiling = 24
 )
 
@@ -103,7 +104,16 @@ func CheckAmountsAs(how Reading, prose string, supported []decimal.Decimal) Numb
 // "$57K" is of 57,323.83. A percentage is also the fraction it renders: 52.3%
 // is a computed 0.523.
 func (c citation) supportedBy(supported []decimal.Decimal) bool {
+	if c.bareCount() && c.value.Abs().LessThanOrEqual(decimal.NewFromInt(smallNumberCeiling)) {
+		return true
+	}
 	return isSupported(c.value, supported) || c.readIn(supported)
+}
+
+// bareCount reports whether the citation is a plain count, the only kind of
+// figure the small-number exemption covers.
+func (c citation) bareCount() bool {
+	return !c.money && !c.percent && !c.rate
 }
 
 // readIn reports whether a figure in supported is the one cited, leaving out
@@ -187,6 +197,7 @@ type citation struct {
 	value   decimal.Decimal
 	money   bool
 	percent bool
+	rate    bool
 	// half is half a unit of the last digit written, in the figure's own
 	// units: "$57K" is 57,000 to the nearest thousand, so 500 either way,
 	// and "43%" is 43 to the nearest point. Zero in the joined reading.
@@ -194,13 +205,6 @@ type citation struct {
 }
 
 func isSupported(value decimal.Decimal, supported []decimal.Decimal) bool {
-	// Small numbers are sentence furniture rather than claims: "the top 3
-	// customers" cites nothing, and demanding a detector compute a 3 to permit
-	// the phrase would reject perfectly honest prose.
-	if value.Abs().LessThanOrEqual(decimal.NewFromInt(smallNumberCeiling)) {
-		return true
-	}
-
 	for _, candidate := range supported {
 		if withinTolerance(value, candidate) {
 			return true
@@ -311,6 +315,7 @@ func scan(prose string, how Reading) []citation {
 			value:   value,
 			money:   isMoney(runes, start, end),
 			percent: isPercent(runes, end),
+			rate:    isRate(runes, end),
 		}
 		if how == ReadCodesApart && !cited.money && !cited.percent &&
 			(leadingZero(raw) || listedAfter(runes, codeEnd, start) || isYear(raw)) {
@@ -352,6 +357,41 @@ func isMoney(runes []rune, start, end int) bool {
 	}
 
 	return slices.Contains(currencyCodes, wordAfter(runes, after))
+}
+
+var rateWords = []string{"per", "a", "an", "each"}
+
+var rateUnits = []string{
+	"mile", "miles", "mi", "km", "hour", "hours", "hr", "hrs", "day", "days", "lb", "lbs",
+	"pound", "pounds", "cwt", "kg", "ton", "tons", "gallon", "gallons", "gal", "liter",
+	"liters", "load", "loads", "stop", "stops", "pallet", "pallets", "unit", "units",
+	"piece", "pieces", "week", "month", "shipment", "shipments", "trip", "trips",
+}
+
+// isRate reports whether the figure ending at end is a per-unit rate: "2.15 per
+// mile", "2.15/mi", "45 an hour", "1.10 a gallon". A unit suffix such as k is
+// skipped first, as isMoney does.
+func isRate(runes []rune, end int) bool {
+	after := end
+	if after < len(runes) && strings.ContainsRune("kKmM", runes[after]) &&
+		(after+1 >= len(runes) || !unicode.IsLetter(runes[after+1])) {
+		after++
+	}
+	if after+1 < len(runes) && runes[after] == '/' && unicode.IsLetter(runes[after+1]) {
+		return true
+	}
+
+	word := strings.ToLower(wordAfter(runes, after))
+	if !slices.Contains(rateWords, word) {
+		return false
+	}
+	next := after
+	for next < len(runes) && runes[next] == ' ' {
+		next++
+	}
+	next += len([]rune(word))
+	unit := strings.ToLower(wordAfter(runes, next))
+	return word == "per" || slices.Contains(rateUnits, unit)
 }
 
 // isPercent reports whether the figure ending at end is written as a share:

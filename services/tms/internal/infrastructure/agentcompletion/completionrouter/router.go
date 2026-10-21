@@ -654,6 +654,14 @@ func (s *Service) wait(ctx context.Context, wait time.Duration) error {
 	return s.pause(ctx, wait)
 }
 
+func credentialAAD(provider *aiprovider.Provider) encryptionservice.AAD {
+	return encryptionservice.AIProviderCredentialAAD(
+		provider.OrganizationID,
+		provider.BusinessUnitID,
+		provider.ID,
+	)
+}
+
 func (s *Service) resolveAPIKey(provider *aiprovider.Provider) (string, error) {
 	stored := strings.TrimSpace(provider.APIKey)
 	if stored == "" {
@@ -666,7 +674,7 @@ func (s *Service) resolveAPIKey(provider *aiprovider.Provider) (string, error) {
 		return "", nil
 	}
 
-	decrypted, err := s.encryption.DecryptString(stored)
+	decrypted, _, err := s.encryption.DecryptStringWithLegacy(stored, credentialAAD(provider))
 	if err != nil {
 		return "", errortypes.NewBusinessError(
 			"failed to decrypt the credential for AI provider {0}", provider.Name,

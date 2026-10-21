@@ -2,10 +2,13 @@ package notification
 
 import (
 	"context"
+	"net/url"
+	"strings"
 
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/emoss08/trenova/shared/urlutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/uptrace/bun"
@@ -69,3 +72,27 @@ func (s *PushSubscription) Validate(multiErr *errortypes.MultiError) {
 }
 
 const maxPushUserAgentLength = 255
+
+func (s *PushSubscription) ValidateEndpointHost(
+	multiErr *errortypes.MultiError,
+	allowedHosts []string,
+) {
+	if !PushEndpointAllowed(s.Endpoint, allowedHosts) {
+		multiErr.Add(
+			"endpoint",
+			errortypes.ErrInvalid,
+			"Endpoint must be an https address of a supported push service",
+		)
+	}
+}
+
+func PushEndpointAllowed(endpoint string, allowedHosts []string) bool {
+	parsed, err := url.Parse(strings.TrimSpace(endpoint))
+	if err != nil || parsed.Scheme != "https" || parsed.User != nil || parsed.Opaque != "" {
+		return false
+	}
+	if port := parsed.Port(); port != "" && port != "443" {
+		return false
+	}
+	return urlutils.HostMatches(parsed.Hostname(), allowedHosts)
+}

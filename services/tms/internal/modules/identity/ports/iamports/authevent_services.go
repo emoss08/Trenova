@@ -11,6 +11,8 @@ const AuthEventProviderPassword = "password"
 
 const AuthEventProviderMFA = "mfa"
 
+const AuthEventProviderMFAStepUp = "mfa.step_up"
+
 const AuthEventProviderLogout = "session.logout"
 
 const AuthEventProviderSessionRevoked = "session.revoked"

@@ -1,14 +1,18 @@
 package config
 
 import (
+	"crypto/hkdf"
+	"crypto/sha256"
 	"fmt"
 	"net"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/shared/httpsafe"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -291,6 +295,51 @@ type SecurityConfig struct {
 	Idempotency IdempotencyConfig `mapstructure:"idempotency"`
 
 	PasswordReset PasswordResetConfig `mapstructure:"passwordReset"`
+
+	SSO SSOSecurityConfig `mapstructure:"sso"`
+	MFA MFASecurityConfig `mapstructure:"mfa"`
+}
+
+type MFASecurityConfig struct {
+	RecoveryCodePepper string `mapstructure:"recoveryCodePepper" validate:"omitempty,min=32"`
+}
+
+const recoveryCodePepperInfo = "trenova mfa recovery code pepper"
+
+func (c *SecurityConfig) RecoveryCodePepperKey() ([]byte, error) {
+	if c == nil {
+		return hkdf.Key(sha256.New, nil, nil, recoveryCodePepperInfo, sha256.Size)
+	}
+	secret := strings.TrimSpace(c.MFA.RecoveryCodePepper)
+	if secret == "" {
+		secret = c.Session.Secret
+	}
+	return hkdf.Key(sha256.New, []byte(secret), nil, recoveryCodePepperInfo, sha256.Size)
+}
+
+const defaultSSOProviderCacheTTL = time.Hour
+
+type SSOSecurityConfig struct {
+	AllowPrivateNetworkIssuers bool          `mapstructure:"allowPrivateNetworkIssuers"`
+	ProviderCacheTTL           time.Duration `mapstructure:"providerCacheTtl"           validate:"omitempty,min=0"`
+}
+
+func (c *Config) SSOIssuerPolicy() httpsafe.Policy {
+	if c == nil {
+		return httpsafe.Policy{}
+	}
+	return c.Security.SSO.IssuerPolicy()
+}
+
+func (c *SSOSecurityConfig) IssuerPolicy() httpsafe.Policy {
+	return httpsafe.Policy{AllowPrivateNetworks: c != nil && c.AllowPrivateNetworkIssuers}
+}
+
+func (c *SSOSecurityConfig) GetProviderCacheTTL() time.Duration {
+	if c == nil || c.ProviderCacheTTL <= 0 {
+		return defaultSSOProviderCacheTTL
+	}
+	return c.ProviderCacheTTL
 }
 
 const (
@@ -445,6 +494,7 @@ type EncryptionConfig struct {
 	Mode                             string       `mapstructure:"mode"                             validate:"omitempty,oneof=envelope disabled"`
 	KeyManager                       string       `mapstructure:"keyManager"                       validate:"omitempty,oneof=local gcp-autokey disabled"`
 	Key                              string       `mapstructure:"key"                              validate:"omitempty,min=32"`
+	RetiredKeys                      []string     `mapstructure:"retiredKeys"                      validate:"omitempty,dive,required"`
 	AllowLocalKeyManagerInProduction bool         `mapstructure:"allowLocalKeyManagerInProduction"`
 	GCPKMS                           GCPKMSConfig `mapstructure:"gcpKms"`
 }
@@ -1871,7 +1921,7 @@ func (c *PlatformConfig) IsDevelopmentDeployment() bool {
 }
 
 type SystemConfig struct {
-	SystemUserPassword string `mapstructure:"systemUserPassword" validate:"required,min=1,max=100"`
+	SystemUserPassword string `mapstructure:"systemUserPassword" validate:"required,min=1,max=72"`
 }
 
 type Config struct {
@@ -1903,6 +1953,9 @@ type Config struct {
 	CarrierIntelligence CarrierIntelligenceConfig `mapstructure:"carrierIntelligence"`
 	Accounting          AccountingConfig          `mapstructure:"accounting"`
 	Formula             FormulaConfig             `mapstructure:"formula"`
+	EDI                 EDIConfig                 `mapstructure:"edi"`
+	Imports             ImportsConfig             `mapstructure:"imports"`
+	ContentScan         ContentScanConfig         `mapstructure:"contentScan"`
 
 	extensions map[string]any
 }
@@ -2103,10 +2156,56 @@ func (c *Config) PublicLinkBaseURL() string {
 	return c.App.GetWebBaseURL()
 }
 
+const DefaultEDIMaxInboundFileBytes int64 = 32 << 20
+
+type EDIConfig struct {
+	AllowPrivateNetworks bool  `mapstructure:"allowPrivateNetworks"`
+	MaxInboundFileBytes  int64 `mapstructure:"maxInboundFileBytes"  validate:"omitempty,min=1024"`
+}
+
+func (c *EDIConfig) GetMaxInboundFileBytes() int64 {
+	if c == nil || c.MaxInboundFileBytes <= 0 {
+		return DefaultEDIMaxInboundFileBytes
+	}
+	return c.MaxInboundFileBytes
+}
+
+func (c *Config) GetEDIConfig() *EDIConfig {
+	if c == nil {
+		return nil
+	}
+	return &c.EDI
+}
+
+func (c *EDIConfig) EgressPolicy() httpsafe.Policy {
+	return httpsafe.Policy{AllowPrivateNetworks: c != nil && c.AllowPrivateNetworks}
+}
+
 type PushConfig struct {
-	VAPIDPublicKey  string `mapstructure:"vapidPublicKey"`
-	VAPIDPrivateKey string `mapstructure:"vapidPrivateKey"`
-	Subject         string `mapstructure:"subject"         validate:"omitempty"`
+	VAPIDPublicKey       string   `mapstructure:"vapidPublicKey"`
+	VAPIDPrivateKey      string   `mapstructure:"vapidPrivateKey"`
+	Subject              string   `mapstructure:"subject"              validate:"omitempty"`
+	AllowedEndpointHosts []string `mapstructure:"allowedEndpointHosts"`
+}
+
+var defaultPushEndpointHosts = []string{
+	"fcm.googleapis.com",
+	"updates.push.services.mozilla.com",
+	"*.push.services.mozilla.com",
+	"*.notify.windows.com",
+	"web.push.apple.com",
+	"*.push.apple.com",
+}
+
+func DefaultPushEndpointHosts() []string {
+	return slices.Clone(defaultPushEndpointHosts)
+}
+
+func (c *PushConfig) GetAllowedEndpointHosts() []string {
+	if c == nil || len(c.AllowedEndpointHosts) == 0 {
+		return DefaultPushEndpointHosts()
+	}
+	return slices.Clone(c.AllowedEndpointHosts)
 }
 
 func (c *PushConfig) Enabled() bool {
@@ -2178,3 +2277,66 @@ func (c *Config) GetDSNMasked() string {
 }
 
 func (c *Config) CorsEnabled() bool { return c.Server.CORS.Enabled }
+
+type ImportsConfig struct {
+	Spreadsheet SpreadsheetImportConfig `mapstructure:"spreadsheet"`
+}
+
+// SpreadsheetImportConfig bounds reading one uploaded rate sheet, fuel card
+// statement or factoring remittance. A zero value takes the reader's default.
+type SpreadsheetImportConfig struct {
+	MaxRows          int   `mapstructure:"maxRows"          validate:"omitempty,min=1"`
+	MaxColumns       int   `mapstructure:"maxColumns"       validate:"omitempty,min=1"`
+	MaxCellBytes     int   `mapstructure:"maxCellBytes"     validate:"omitempty,min=1"`
+	MaxSheetBytes    int   `mapstructure:"maxSheetBytes"    validate:"omitempty,min=1"`
+	MaxUnzippedBytes int64 `mapstructure:"maxUnzippedBytes" validate:"omitempty,min=1"`
+	MaxPartBytes     int64 `mapstructure:"maxPartBytes"     validate:"omitempty,min=1"`
+}
+
+func (c *Config) GetSpreadsheetImportConfig() SpreadsheetImportConfig {
+	if c == nil {
+		return SpreadsheetImportConfig{}
+	}
+	return c.Imports.Spreadsheet
+}
+
+const (
+	defaultClamAVTimeout        = 60 * time.Second
+	defaultClamAVMaxStreamBytes = 100 << 20
+)
+
+type ContentScanConfig struct {
+	ClamAV   ClamAVConfig `mapstructure:"clamav"`
+	FailOpen bool         `mapstructure:"failOpen"`
+}
+
+type ClamAVConfig struct {
+	Address        string        `mapstructure:"address"`
+	Timeout        time.Duration `mapstructure:"timeout"        validate:"omitempty,min=1s"`
+	MaxStreamBytes int64         `mapstructure:"maxStreamBytes" validate:"omitempty,min=1"`
+}
+
+func (c ContentScanConfig) Enabled() bool {
+	return strings.TrimSpace(c.ClamAV.Address) != ""
+}
+
+func (c ClamAVConfig) GetTimeout() time.Duration {
+	if c.Timeout <= 0 {
+		return defaultClamAVTimeout
+	}
+	return c.Timeout
+}
+
+func (c ClamAVConfig) GetMaxStreamBytes() int64 {
+	if c.MaxStreamBytes <= 0 {
+		return defaultClamAVMaxStreamBytes
+	}
+	return c.MaxStreamBytes
+}
+
+func (c *Config) GetContentScanConfig() ContentScanConfig {
+	if c == nil {
+		return ContentScanConfig{}
+	}
+	return c.ContentScan
+}

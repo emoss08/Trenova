@@ -4,6 +4,12 @@ import { Input } from "@trenova/shared/components/ui/input";
 import { Label } from "@trenova/shared/components/ui/label";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { api, ApiRequestError } from "@trenova/shared/lib/api";
+import {
+  PASSWORD_MAX_BYTES,
+  PASSWORD_MIN_LENGTH,
+  passwordByteLength,
+  passwordLength,
+} from "@trenova/shared/lib/password-policy";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useQuery } from "@tanstack/react-query";
 import { m } from "motion/react";
@@ -120,8 +126,12 @@ function AcceptForm({ token, preview }: { token: string; preview: InvitationPrev
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (password.length < 8) {
-      setError("Your password must be at least 8 characters.");
+    if (passwordLength(password) < PASSWORD_MIN_LENGTH) {
+      setError(t("Your password must be at least {0} characters.", PASSWORD_MIN_LENGTH));
+      return;
+    }
+    if (passwordByteLength(password) > PASSWORD_MAX_BYTES) {
+      setError(t("Password must be 72 bytes or fewer"));
       return;
     }
     if (password !== confirmPassword) {
@@ -173,7 +183,7 @@ function AcceptForm({ token, preview }: { token: string; preview: InvitationPrev
             id="dash-new-password"
             type="password"
             autoComplete="new-password"
-            placeholder={t("At least 8 characters")}
+            placeholder={t("At least {0} characters", PASSWORD_MIN_LENGTH)}
             value={password}
             onChange={(event) => setPassword(event.target.value)}
           />

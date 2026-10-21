@@ -2,7 +2,10 @@ package sessionports
 
 import (
 	"context"
+	"strings"
 	"time"
+
+	"github.com/emoss08/trenova/pkg/requestmeta"
 )
 
 type LoginThrottleScope string
@@ -52,16 +55,25 @@ type LoginThrottleKey struct {
 	ClientIP string
 }
 
+func NewLoginThrottleKey(ctx context.Context, emailAddress string) LoginThrottleKey {
+	key := LoginThrottleKey{Account: strings.ToLower(strings.TrimSpace(emailAddress))}
+	if meta, ok := requestmeta.From(ctx); ok {
+		key.ClientIP = strings.TrimSpace(meta.ClientIP)
+	}
+	return key
+}
+
 type LoginThrottleDecision struct {
 	Blocked         bool
 	Scope           LoginThrottleScope
 	RetryAfter      time.Duration
 	AccountFailures int
 	IPFailures      int
+	Tripped         bool
+	TrippedScope    LoginThrottleScope
 }
 
 type LoginThrottleStore interface {
-	Check(ctx context.Context, key LoginThrottleKey) (*LoginThrottleDecision, error)
-	RecordFailure(ctx context.Context, key LoginThrottleKey) (*LoginThrottleDecision, error)
-	Reset(ctx context.Context, account string) error
+	Begin(ctx context.Context, key LoginThrottleKey) (*LoginThrottleDecision, error)
+	Succeed(ctx context.Context, key LoginThrottleKey) error
 }
