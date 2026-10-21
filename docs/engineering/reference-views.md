@@ -70,6 +70,31 @@ Internal.
   `linkedRecordSchema(kind, schema)` (`@trenova/shared/lib/linked-record`), which makes every field
   outside the view nullable, and a screen draws `WithheldValue` where one it shows is null.
 
+## Search, analytics and insights
+
+Three surfaces put another kind's data into a payload of their own rather than a record, and each
+asks the same port, `permissionports.ReferenceViews`, which refview implements:
+
+- **Global search** (`globalsearchservice`). `hitMetadata` in `enrich.go` classifies every metadata
+  key a hit can carry: the hit's own record, a linked record's fields (a shipment hit's
+  `customerName` is the customer's `name`, `origin` a location's `city` and `state`, `driverName` a
+  worker's `firstName` and `lastName`), or a figure about a kind no view carries (`openBalance` needs
+  accounts receivable read). Each linked value is decided field by field for the person, ceiling
+  included; a service type has no view, so `serviceTypeCode` needs service type read. A key with no
+  classification is dropped, and `TestEveryHitMetadataKeyIsClassified` fails until it has one.
+- **Shipment analytics** (`/analytics?page=shipment`, `shipmentAnalytics`). The page needs shipment
+  read; `shipmentprovider/access.go` then gates each card. Names of customers, locations and drivers
+  are view fields, so they stay, held to the ceiling (a withheld one is `null`; the lane heatmap,
+  whose regions come from location states, is `null` as a whole). A customer's revenue, share,
+  loads and trend are figures about the customer and need customer read; without it they are
+  `null` and an entry left with nothing to show is dropped. The average margin needs the margins
+  field group. The client draws each `null` with `WithheldValue`.
+- **Insights** (`insightservice`). A finding names a customer, a location or a driver beside figures
+  about it, which no view carries, so the reader needs read on every kind it names, not a view.
+  Each detector declares those kinds in `Resources()`; each finding lists the kinds it names in
+  `Names`, and a finding naming a kind its detector does not declare is dropped at refresh.
+  `TestEveryDetectorDeclaresEveryKindItsFindingsName` runs every detector and checks both.
+
 ## Building a screen
 
 1. **Select the reference fragment.** `go run ./internal/api/graphql/gqlext/refgen` (from
@@ -120,3 +145,5 @@ Each failure says what to add.
 | `TestEveryRelationAResponseReachesIsClassified` (responseguard) | a REST response reaches a struct through a bun relation that is neither a kind nor listed in `carried` |
 | `TestEveryKindAgreesWithTheGraphQLGuard` (responseguard) | a Go type is gated as a different kind on REST than the GraphQL type bound to it |
 | `TestHandlersWriteEveryResponseThroughTheGuard` (responseguard) | a handler writes a response with gin directly instead of `helpers.JSON` |
+| `TestEveryHitMetadataKeyIsClassified` (globalsearchservice) | a search hit carries a metadata key `hitMetadata` does not classify |
+| `TestEveryDetectorDeclaresEveryKindItsFindingsName` (detectors) | an insight detector declares no kind, an unregistered kind, or a finding names a kind it does not declare |

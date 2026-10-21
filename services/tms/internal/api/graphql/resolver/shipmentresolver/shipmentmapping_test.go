@@ -572,6 +572,54 @@ func TestShipmentAnalyticsToModel_MapsTypedCards(t *testing.T) {
 	assert.Equal(t, "TX", model.LaneHeatmap.Cells[0].Destination)
 }
 
+func TestShipmentAnalyticsToModel_KeepsWithheldValuesNull(t *testing.T) {
+	t.Parallel()
+
+	model, err := shipmentAnalyticsToModel(kernelports.AnalyticsData{
+		"customerMix": map[string]any{
+			"windowDays": 30,
+			"entries": []any{map[string]any{
+				"customerId": "cus_1",
+				"name":       "Acme",
+				"revenue":    nil,
+				"share":      nil,
+				"loads":      nil,
+				"trend":      nil,
+			}},
+		},
+		"detentionWatchlist": map[string]any{
+			"items": []any{map[string]any{"shipmentId": "PRO-1", "customer": nil}},
+		},
+		"tomorrowsPickups": map[string]any{
+			"pickups": []any{map[string]any{
+				"proNumber":   "PRO-1",
+				"customer":    nil,
+				"origin":      "CHI",
+				"destination": nil,
+				"driver":      "",
+			}},
+		},
+		"profitability": map[string]any{"avgCpm": 1.9, "avgMarginPct": nil, "hasMargin": true},
+	})
+
+	require.NoError(t, err)
+	entry := model.CustomerMix.Entries[0]
+	assert.Equal(t, "Acme", entry.Name)
+	assert.Nil(t, entry.Revenue)
+	assert.Nil(t, entry.Share)
+	assert.Nil(t, entry.Loads)
+	assert.Nil(t, entry.Trend)
+	assert.Nil(t, model.DetentionWatchlist.Items[0].Customer)
+	pickup := model.TomorrowsPickups.Pickups[0]
+	assert.Nil(t, pickup.Customer)
+	assert.Equal(t, "CHI", *pickup.Origin)
+	assert.Nil(t, pickup.Destination)
+	require.NotNil(t, pickup.Driver, "an unassigned pickup has no driver, which is not withheld")
+	assert.Empty(t, *pickup.Driver)
+	assert.Nil(t, model.Profitability.AvgMarginPct)
+	assert.True(t, model.Profitability.HasMargin)
+}
+
 func TestShipmentCommodityMapping_CarriesDimensionsBothWays(t *testing.T) {
 	t.Parallel()
 

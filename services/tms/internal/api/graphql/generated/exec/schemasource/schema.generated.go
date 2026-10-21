@@ -26697,13 +26697,15 @@ type ShipmentAnalytics {
   detentionWatchlist: ShipmentDetentionWatchlist
   customerMix: ShipmentCustomerMix
   tomorrowsPickups: ShipmentTomorrowsPickups
+  "Null for a reader whose ceiling withholds the state of a location."
   laneHeatmap: ShipmentLaneHeatmap
   profitability: ShipmentProfitabilityAnalytics
 }
 
 type ShipmentProfitabilityAnalytics {
   avgCpm: Float!
-  avgMarginPct: Float!
+  "Null when the reader does not hold the margins field group."
+  avgMarginPct: Float
   hasMargin: Boolean!
   unprofitableCount: Int!
   shipmentCount: Int!
@@ -26779,7 +26781,8 @@ type ShipmentDetentionWatchlist {
 
 type ShipmentDetentionWatchlistItem {
   shipmentId: String!
-  customer: String!
+  "The customer's name, from its reference view; null when the reader's ceiling withholds it."
+  customer: String
   dwellLabel: String!
   tone: String!
 }
@@ -26792,10 +26795,11 @@ type ShipmentCustomerMix {
 type ShipmentCustomerMixEntry {
   customerId: String!
   name: String!
-  revenue: Float!
-  share: Float!
-  loads: Int!
-  trend: Float!
+  "Null for a reader who cannot read customers, as are share, loads and trend."
+  revenue: Float
+  share: Float
+  loads: Int
+  trend: Float
 }
 
 type ShipmentTomorrowsPickups {
@@ -26807,10 +26811,11 @@ type ShipmentTomorrowPickup {
   shipmentId: String!
   proNumber: String!
   pickupWindowStart: Timestamp!
-  customer: String!
-  origin: String!
-  destination: String!
-  driver: String!
+  "The customer's, locations' and driver's reference view fields; null when the reader's ceiling withholds them."
+  customer: String
+  origin: String
+  destination: String
+  driver: String
   status: String!
 }
 

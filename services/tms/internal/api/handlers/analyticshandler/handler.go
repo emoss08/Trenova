@@ -105,9 +105,15 @@ func (h *Handler) get(c *gin.Context) {
 	}
 
 	opts := &kernelports.AnalyticsRequestOptions{
-		OrgID:      authCtx.OrganizationID,
-		BuID:       authCtx.BusinessUnitID,
-		UserID:     authCtx.UserID,
+		OrgID:  authCtx.OrganizationID,
+		BuID:   authCtx.BusinessUnitID,
+		UserID: authCtx.UserID,
+		Principal: kernelports.PrincipalInfo{
+			Type:     kernelports.PrincipalType(authCtx.PrincipalType),
+			ID:       authCtx.PrincipalID,
+			UserID:   authCtx.UserID,
+			APIKeyID: authCtx.APIKeyID,
+		},
 		Page:       req.Page,
 		Limit:      req.Limit,
 		Offset:     req.Offset,

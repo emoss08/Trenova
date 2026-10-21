@@ -64,11 +64,11 @@ type ReadyToDispatchCard struct {
 }
 
 type DetentionWatchlistItem struct {
-	ShipmentID   string `json:"shipmentId"`
-	Customer     string `json:"customer"`
-	DwellLabel   string `json:"dwellLabel"`
-	Tone         string `json:"tone"`
-	DwellSeconds int64  `json:"-"`
+	ShipmentID   string  `json:"shipmentId"`
+	Customer     *string `json:"customer"`
+	DwellLabel   string  `json:"dwellLabel"`
+	Tone         string  `json:"tone"`
+	DwellSeconds int64   `json:"-"`
 }
 
 type DetentionWatchlistCard struct {
@@ -76,12 +76,12 @@ type DetentionWatchlistCard struct {
 }
 
 type CustomerMixEntry struct {
-	CustomerID string  `json:"customerId"`
-	Name       string  `json:"name"`
-	Revenue    float64 `json:"revenue"`
-	Share      float64 `json:"share"`
-	Loads      int     `json:"loads"`
-	Trend      float64 `json:"trend"`
+	CustomerID string   `json:"customerId"`
+	Name       string   `json:"name"`
+	Revenue    *float64 `json:"revenue"`
+	Share      *float64 `json:"share"`
+	Loads      *int     `json:"loads"`
+	Trend      *float64 `json:"trend"`
 }
 
 type CustomerMixCard struct {
@@ -102,10 +102,10 @@ type TomorrowPickup struct {
 	ShipmentID        string               `json:"shipmentId"`
 	ProNumber         string               `json:"proNumber"`
 	PickupWindowStart int64                `json:"pickupWindowStart"`
-	Customer          string               `json:"customer"`
-	Origin            string               `json:"origin"`
-	Destination       string               `json:"destination"`
-	Driver            string               `json:"driver"`
+	Customer          *string              `json:"customer"`
+	Origin            *string              `json:"origin"`
+	Destination       *string              `json:"destination"`
+	Driver            *string              `json:"driver"`
 	Status            TomorrowPickupStatus `json:"status"`
 }
 
@@ -127,10 +127,10 @@ type LaneHeatmapCard struct {
 }
 
 type ProfitabilityCard struct {
-	AvgCPM            float64 `json:"avgCpm"`
-	AvgMarginPct      float64 `json:"avgMarginPct"`
-	HasMargin         bool    `json:"hasMargin"`
-	UnprofitableCount int     `json:"unprofitableCount"`
-	ShipmentCount     int     `json:"shipmentCount"`
-	TotalMiles        float64 `json:"totalMiles"`
+	AvgCPM            float64  `json:"avgCpm"`
+	AvgMarginPct      *float64 `json:"avgMarginPct"`
+	HasMargin         bool     `json:"hasMargin"`
+	UnprofitableCount int      `json:"unprofitableCount"`
+	ShipmentCount     int      `json:"shipmentCount"`
+	TotalMiles        float64  `json:"totalMiles"`
 }

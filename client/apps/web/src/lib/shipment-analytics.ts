@@ -19,7 +19,8 @@ export type ShipmentAnalyticsData = {
   };
   profitability: {
     avgCpm: number;
-    avgMarginPct: number;
+    /** Null when the reader does not hold the margins field group. */
+    avgMarginPct: number | null;
     hasMargin: boolean;
     unprofitableCount: number;
     shipmentCount: number;
@@ -80,17 +81,19 @@ export type ShipmentAnalyticsData = {
     items: { driverId: string; name: string; hoursLeftLabel: string; tone: Tone }[];
   };
   detentionWatchlist: {
-    items: { shipmentId: string; customer: string; dwellLabel: string; tone: Tone }[];
+    /** `customer` is null when the reader's ceiling withholds the customer's name. */
+    items: { shipmentId: string; customer: string | null; dwellLabel: string; tone: Tone }[];
   };
   customerMix: {
     windowDays: number;
     entries: {
       customerId: string;
       name: string;
-      revenue: number;
-      share: number;
-      loads: number;
-      trend: number;
+      /** The figures about a customer are null for a reader who cannot read customers. */
+      revenue: number | null;
+      share: number | null;
+      loads: number | null;
+      trend: number | null;
     }[];
   };
   tomorrowsPickups: {
@@ -99,13 +102,15 @@ export type ShipmentAnalyticsData = {
       shipmentId: string;
       proNumber: string;
       pickupWindowStart: number;
-      customer: string;
-      origin: string;
-      destination: string;
-      driver: string;
+      /** Each is null when the reader's ceiling withholds it; an unassigned pickup's driver is "". */
+      customer: string | null;
+      origin: string | null;
+      destination: string | null;
+      driver: string | null;
       status: "scheduled" | "confirmed" | "tentative" | "unassigned";
     }[];
   };
+  /** Null when the reader's ceiling withholds the state of a location. */
   laneHeatmap: {
     windowDays: number;
     cells: {
@@ -114,7 +119,7 @@ export type ShipmentAnalyticsData = {
       count: number;
     }[];
     total: number;
-  };
+  } | null;
 };
 
 export type Region = "West" | "Midwest" | "South" | "Northeast";
@@ -281,7 +286,9 @@ export function mergeShipmentAnalyticsWithDefaults(
       (data.tomorrowsPickups as ShipmentAnalyticsData["tomorrowsPickups"] | undefined) ??
       defaultAnalyticsData.tomorrowsPickups,
     laneHeatmap:
-      (data.laneHeatmap as ShipmentAnalyticsData["laneHeatmap"] | undefined) ??
-      defaultAnalyticsData.laneHeatmap,
+      data.laneHeatmap === null
+        ? null
+        : ((data.laneHeatmap as ShipmentAnalyticsData["laneHeatmap"] | undefined) ??
+          defaultAnalyticsData.laneHeatmap),
   };
 }

@@ -181,7 +181,7 @@ func detentionWatchlistFromAnalytics(value any) *gqlmodel.ShipmentDetentionWatch
 		}
 		items = append(items, &gqlmodel.ShipmentDetentionWatchlistItem{
 			ShipmentID: sliceutils.StringValue(item["shipmentId"]),
-			Customer:   sliceutils.StringValue(item["customer"]),
+			Customer:   sliceutils.PresentStringValue(item["customer"]),
 			DwellLabel: sliceutils.StringValue(item["dwellLabel"]),
 			Tone:       sliceutils.StringValue(item["tone"]),
 		})
@@ -204,10 +204,10 @@ func customerMixFromAnalytics(value any) *gqlmodel.ShipmentCustomerMix {
 		entries = append(entries, &gqlmodel.ShipmentCustomerMixEntry{
 			CustomerID: sliceutils.StringValue(entry["customerId"]),
 			Name:       sliceutils.StringValue(entry["name"]),
-			Revenue:    floatutils.FloatValue(entry["revenue"]),
-			Share:      floatutils.FloatValue(entry["share"]),
-			Loads:      intutils.IntValue(entry["loads"]),
-			Trend:      floatutils.FloatValue(entry["trend"]),
+			Revenue:    floatutils.FloatPtrValue(entry["revenue"]),
+			Share:      floatutils.FloatPtrValue(entry["share"]),
+			Loads:      intutils.IntPtrValue(entry["loads"]),
+			Trend:      floatutils.FloatPtrValue(entry["trend"]),
 		})
 	}
 	return &gqlmodel.ShipmentCustomerMix{
@@ -232,10 +232,10 @@ func tomorrowsPickupsFromAnalytics(value any) *gqlmodel.ShipmentTomorrowsPickups
 			ShipmentID:        sliceutils.StringValue(pickup["shipmentId"]),
 			ProNumber:         sliceutils.StringValue(pickup["proNumber"]),
 			PickupWindowStart: intutils.IntValue(pickup["pickupWindowStart"]),
-			Customer:          sliceutils.StringValue(pickup["customer"]),
-			Origin:            sliceutils.StringValue(pickup["origin"]),
-			Destination:       sliceutils.StringValue(pickup["destination"]),
-			Driver:            sliceutils.StringValue(pickup["driver"]),
+			Customer:          sliceutils.PresentStringValue(pickup["customer"]),
+			Origin:            sliceutils.PresentStringValue(pickup["origin"]),
+			Destination:       sliceutils.PresentStringValue(pickup["destination"]),
+			Driver:            sliceutils.PresentStringValue(pickup["driver"]),
 			Status:            sliceutils.StringValue(pickup["status"]),
 		})
 	}
@@ -278,7 +278,7 @@ func profitabilityFromAnalytics(value any) *gqlmodel.ShipmentProfitabilityAnalyt
 	hasMargin, _ := card["hasMargin"].(bool)
 	return &gqlmodel.ShipmentProfitabilityAnalytics{
 		AvgCpm:            floatutils.FloatValue(card["avgCpm"]),
-		AvgMarginPct:      floatutils.FloatValue(card["avgMarginPct"]),
+		AvgMarginPct:      floatutils.FloatPtrValue(card["avgMarginPct"]),
 		HasMargin:         hasMargin,
 		UnprofitableCount: intutils.IntValue(card["unprofitableCount"]),
 		ShipmentCount:     intutils.IntValue(card["shipmentCount"]),

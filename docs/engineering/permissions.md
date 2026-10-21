@@ -275,7 +275,9 @@ everything under a self-scoped resolver are not gated this way.
 
 Views are declared on each resource definition (`ReferenceView` in `resources_*.go`) and decided by
 one package, `refview`, which the GraphQL field guard asks for people and agents alike, and the
-REST response guard (`internal/api/responseguard`) asks for every REST response. They are
+REST response guard (`internal/api/responseguard`) asks for every REST response. Global search,
+shipment analytics and reports ask it through `permissionports.ReferenceViews`; an insight names
+records beside figures about them, so its reader needs read on every kind its detector declares. They are
 fixed in the code; an organization decides who sees whole linked records through bundles and job
 templates, and the role's sensitivity ceiling still applies inside a view. Built-in bundles grant
 a linked kind's read where the job needs the full record (billing receivables reads invoices and

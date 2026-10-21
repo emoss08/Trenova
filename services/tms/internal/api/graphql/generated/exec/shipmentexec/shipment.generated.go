@@ -5832,43 +5832,39 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "revenue",
-				NonNull:  true,
 				ChildErr: errNoChild26,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCustomerMixEntry)
 					return obj.Revenue, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFloat2float64),
+				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
 			},
 			{
 				Name:     "share",
-				NonNull:  true,
 				ChildErr: errNoChild26,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCustomerMixEntry)
 					return obj.Share, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFloat2float64),
+				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
 			},
 			{
 				Name:     "loads",
-				NonNull:  true,
 				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCustomerMixEntry)
 					return obj.Loads, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInt2int),
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
 			{
 				Name:     "trend",
-				NonNull:  true,
 				ChildErr: errNoChild26,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentCustomerMixEntry)
 					return obj.Trend, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFloat2float64),
+				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
 			},
 		}},
 		{Object: "ShipmentDetentionWatchlist", Fields: []*gqlexec.Field{
@@ -5897,13 +5893,12 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "customer",
-				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentDetentionWatchlistItem)
 					return obj.Customer, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
 			{
 				Name:     "dwellLabel",
@@ -8350,13 +8345,12 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "avgMarginPct",
-				NonNull:  true,
 				ChildErr: errNoChild26,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentProfitabilityAnalytics)
 					return obj.AvgMarginPct, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFloat2float64),
+				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
 			},
 			{
 				Name:     "hasMargin",
@@ -9342,43 +9336,39 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "customer",
-				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentTomorrowPickup)
 					return obj.Customer, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
 			{
 				Name:     "origin",
-				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentTomorrowPickup)
 					return obj.Origin, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
 			{
 				Name:     "destination",
-				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentTomorrowPickup)
 					return obj.Destination, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
 			{
 				Name:     "driver",
-				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentTomorrowPickup)
 					return obj.Driver, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
 			{
 				Name:     "status",

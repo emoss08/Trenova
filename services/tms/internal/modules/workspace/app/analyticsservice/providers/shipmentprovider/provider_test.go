@@ -300,18 +300,18 @@ func TestGetCustomerMix_RanksByRevenueAndCalculatesMetrics(t *testing.T) {
 	assert.Equal(t, &CustomerMixEntry{
 		CustomerID: "cus_1",
 		Name:       "Acme Manufacturing",
-		Revenue:    40000,
-		Share:      80,
-		Loads:      10,
-		Trend:      100,
+		Revenue:    new(float64(40000)),
+		Share:      new(float64(80)),
+		Loads:      new(10),
+		Trend:      new(float64(100)),
 	}, card.Entries[0])
 	assert.Equal(t, &CustomerMixEntry{
 		CustomerID: "cus_2",
 		Name:       "FreshHaul Foods",
-		Revenue:    10000,
-		Share:      20,
-		Loads:      4,
-		Trend:      100,
+		Revenue:    new(float64(10000)),
+		Share:      new(float64(20)),
+		Loads:      new(4),
+		Trend:      new(float64(100)),
 	}, card.Entries[1])
 	require.NoError(t, mockDB.ExpectationsWereMet())
 }
@@ -357,7 +357,7 @@ func TestGetTomorrowsPickups_ReturnsPickupRowsWithStatusMapping(t *testing.T) {
 	assert.Equal(t, TomorrowPickupStatusConfirmed, card.Pickups[0].Status)
 	assert.Equal(t, TomorrowPickupStatusUnassigned, card.Pickups[1].Status)
 	assert.Equal(t, TomorrowPickupStatusTentative, card.Pickups[2].Status)
-	assert.Equal(t, "TERM-LA", card.Pickups[0].Origin)
-	assert.Equal(t, "DC-CHI", card.Pickups[0].Destination)
+	assert.Equal(t, new("TERM-LA"), card.Pickups[0].Origin)
+	assert.Equal(t, new("DC-CHI"), card.Pickups[0].Destination)
 	require.NoError(t, mockDB.ExpectationsWereMet())
 }

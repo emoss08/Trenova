@@ -1,5 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
+import { WithheldValue } from "@trenova/shared/components/withheld-value";
 import { cn } from "@trenova/shared/lib/utils";
 import { useMemo } from "react";
 import type { Region, ShipmentAnalyticsData } from "@/lib/shipment-analytics";
@@ -7,11 +8,37 @@ import type { Region, ShipmentAnalyticsData } from "@/lib/shipment-analytics";
 const HIGH_INTENSITY_THRESHOLD = 0.55;
 const REGIONS: Region[] = ["West", "Midwest", "South", "Northeast"];
 
+type LaneHeatmapCard = NonNullable<ShipmentAnalyticsData["laneHeatmap"]>;
+
 type LaneHeatmapProps = {
-  data: ShipmentAnalyticsData["laneHeatmap"];
+  /** Null when the reader's ceiling withholds the state of a location. */
+  data: LaneHeatmapCard | null;
 };
 
 export function LaneHeatmap({ data }: LaneHeatmapProps) {
+  if (data === null) {
+    return <WithheldLaneHeatmap />;
+  }
+
+  return <LaneHeatmapGrid data={data} />;
+}
+
+function WithheldLaneHeatmap() {
+  const t = useT();
+
+  return (
+    <section className="cc-module-card flex min-h-65 flex-col">
+      <header className="border-border flex min-h-9 items-center gap-2 border-b px-3 py-1.5">
+        <h3 className="text-sm font-semibold">{t("Lane heatmap")}</h3>
+      </header>
+      <div className="flex flex-1 items-center justify-center px-3 py-6">
+        <WithheldValue kind="location" />
+      </div>
+    </section>
+  );
+}
+
+function LaneHeatmapGrid({ data }: { data: LaneHeatmapCard }) {
   const t = useT();
 
   const { grid, total, max, top } = useMemo(() => buildGrid(data), [data]);
@@ -149,15 +176,15 @@ function ScaleLegend({ max }: { max: number }) {
   );
 }
 
-function buildGrid(data: ShipmentAnalyticsData["laneHeatmap"]): {
+function buildGrid(data: LaneHeatmapCard): {
   grid: (number | null)[][];
   total: number;
   max: number;
-  top: ShipmentAnalyticsData["laneHeatmap"]["cells"][number] | null;
+  top: LaneHeatmapCard["cells"][number] | null;
 } {
   const byOriginDest = new Map<string, number>();
   let max = 0;
-  let top: ShipmentAnalyticsData["laneHeatmap"]["cells"][number] | null = null;
+  let top: LaneHeatmapCard["cells"][number] | null = null;
   for (const lane of data.cells) {
     byOriginDest.set(`${lane.origin}|${lane.destination}`, lane.count);
     if (lane.count > max) max = lane.count;

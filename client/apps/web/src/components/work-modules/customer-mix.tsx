@@ -2,6 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
 import { Tabs, TabsList, TabsPanel, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
+import { WithheldValue } from "@trenova/shared/components/withheld-value";
 import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state";
 import { getShipmentPageAnalyticsGraphQL } from "@/lib/graphql/shipment";
 import { cn, formatCompactCurrency, formatCurrency } from "@trenova/shared/lib/utils";
@@ -91,41 +92,55 @@ function CustomersList({ entries }: { entries: CustomerMixEntry[] }) {
           <div className="min-w-0 flex-1">
             <div className="flex items-baseline justify-between gap-2">
               <span className="truncate text-xs font-medium">{entry.name}</span>
-              <span
-                className="text-muted-foreground font-mono text-2xs tabular-nums"
-                title={t(
-                  "{0} · {1, plural, one {# load} other {# loads}}",
-                  formatCurrency(entry.revenue),
-                  entry.loads,
-                )}
-              >
-                {formatCompactCurrency(entry.revenue)} · {entry.loads}
-              </span>
+              {entry.revenue === null || entry.loads === null ? (
+                <WithheldValue kind="customer" className="text-2xs" />
+              ) : (
+                <span
+                  className="text-muted-foreground font-mono text-2xs tabular-nums"
+                  title={t(
+                    "{0} · {1, plural, one {# load} other {# loads}}",
+                    formatCurrency(entry.revenue),
+                    entry.loads,
+                  )}
+                >
+                  {formatCompactCurrency(entry.revenue)} · {entry.loads}
+                </span>
+              )}
             </div>
             <div aria-hidden className="bg-muted mt-1 h-1 w-full overflow-hidden rounded-full">
               <span
                 className="block h-full rounded-full"
                 style={{
-                  width: `${Math.min(100, entry.share)}%`,
+                  width: `${Math.min(100, entry.share ?? 0)}%`,
                   background: SHARE_BAR_COLORS[index] ?? SHARE_BAR_COLORS.at(-1),
                 }}
               />
             </div>
           </div>
-          <span
-            className={cn(
-              "w-10 text-right font-mono text-2xs tabular-nums",
-              entry.trend > 0 && "text-success",
-              entry.trend < 0 && "text-destructive",
-              entry.trend === 0 && "text-muted-foreground",
-            )}
-          >
-            {entry.trend > 0 ? "▲" : entry.trend < 0 ? "▼" : "–"}
-            {formatPercent(Math.abs(entry.trend))}
-          </span>
+          <CustomerTrend trend={entry.trend} />
         </li>
       ))}
     </ul>
+  );
+}
+
+function CustomerTrend({ trend }: { trend: number | null }) {
+  if (trend === null) {
+    return <span aria-hidden className="w-10" />;
+  }
+
+  return (
+    <span
+      className={cn(
+        "w-10 text-right font-mono text-2xs tabular-nums",
+        trend > 0 && "text-success",
+        trend < 0 && "text-destructive",
+        trend === 0 && "text-muted-foreground",
+      )}
+    >
+      {trend > 0 ? "▲" : trend < 0 ? "▼" : "–"}
+      {formatPercent(Math.abs(trend))}
+    </span>
   );
 }
 
@@ -239,9 +254,12 @@ function PickupsList({
               {formatPickupTime(pickup.pickupWindowStart)}
             </span>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-xs font-medium">{pickup.customer}</p>
+              <p className="truncate text-xs font-medium">
+                {pickup.customer ?? <WithheldValue kind="customer" />}
+              </p>
               <p className="text-muted-foreground truncate font-mono text-3xs">
-                {pickup.origin} → {pickup.destination}
+                {pickup.origin ?? <WithheldValue kind="location" className="text-3xs" />} →{" "}
+                {pickup.destination ?? <WithheldValue kind="location" className="text-3xs" />}
               </p>
             </div>
             {pickup.status === "unassigned" || pickup.status === "tentative" ? (
@@ -250,7 +268,11 @@ function PickupsList({
               </Badge>
             ) : (
               <span className="text-muted-foreground max-w-20 truncate font-mono text-2xs">
-                {pickup.driver || PICKUP_STATUS[pickup.status].label}
+                {pickup.driver === null ? (
+                  <WithheldValue kind="worker" className="text-2xs" />
+                ) : (
+                  pickup.driver || PICKUP_STATUS[pickup.status].label
+                )}
               </span>
             )}
           </button>

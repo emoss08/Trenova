@@ -122,6 +122,17 @@ func StringPtrValue(v any) *string {
 	return &value
 }
 
+// PresentStringValue is v when it is a string, empty or not, and nil for
+// anything else, so an absent or null value stays apart from an empty one.
+func PresentStringValue(v any) *string {
+	s, ok := v.(string)
+	if !ok {
+		return nil
+	}
+	s = strings.TrimSpace(s)
+	return &s
+}
+
 func EnumPtrValue[T ~string](v any) *T {
 	value := StringValue(v)
 	if value == "" {
