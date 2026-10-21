@@ -621,7 +621,7 @@ func TestDelegateOutcome_KeepsTheReportWholeWithinOneToolResult(t *testing.T) {
 
 	_, payload, fenced := UnfenceToolResult(outcome.content[:strings.Index(outcome.content, "\n\n[")])
 	require.True(t, fenced)
-	assert.LessOrEqual(t, len(payload), maxToolResultChars)
+	assert.LessOrEqual(t, len(payload), maxToolResultBytes)
 	assert.True(t, sonic.ValidString(payload), "the report is never cut mid-document")
 	assert.NotContains(t, payload, "was cut off")
 	assert.Positive(t, report.MoreFindings, "every finding left out is counted")
