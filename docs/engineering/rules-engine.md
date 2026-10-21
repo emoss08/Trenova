@@ -281,7 +281,538 @@ Each area documents its operations here: the input and output, with an example, 
 
 <!-- formula.evaluate and the rate table format -->
 
-<!-- allocation.*, report.format, lane.*, matrix.* -->
+### Charge allocation (`allocation.*`)
+
+A shipment's freight and accessorials, or an order's charges, can be billed to several
+customers. Each charge is divided by its allocation rows and every payer's invoice is the sum
+of its shares. The server bills with these operations and the shipment form previews the same
+invoices, so each takes every charge of one shipment, order or form in **one call**.
+Pinned by `testdata/allocation.json`.
+
+**Shared shapes.** A *charge* is
+
+```json
+{"kind": "Freight" | "Accessorial" | "OrderCharge",
+ "total": "1000.01",
+ "method": "Flat" | "PerUnit" | "Percentage", "amount": "75", "unit": 2,
+ "allocations": [<row>, null, ...]}
+```
+
+Its total is `total` when given (freight, an order charge), or else its accessorial line priced
+against the request's `base` (the shipment's freight; zero when absent):
+
+- `Flat`: `amount × max(unit, 1)`;
+- `PerUnit`: `amount × unit`, and zero when `unit < 1`;
+- `Percentage`: `base × amount / 100`;
+- anything else, or no method: zero.
+
+A *row* is the GraphQL charge allocation:
+`{"id"?, "billToCustomerId", "method": "Percent" | "Amount", "percent"?, "amount"?, "sequence"?}`.
+`null` rows are skipped but keep their positions. Here and in every area below, a `null` list or
+string reads as empty, as GraphQL writes an unset one, and a decimal that is `null`, missing or a
+blank string is "not filled in"; any other text must be a decimal, or the request is
+`invalid_input`. So is a charge without a valid `kind` in `allocation.split`, and arithmetic past
+28 significant digits, which no stored column reaches.
+
+**Ordering.** Rows are read by `sequence` (missing is 0), then by `id`. Rows without an ID (not
+saved yet) sort before saved rows of the same sequence, where Go's empty ID sorts, and keep their
+request order among themselves, so the browser and the server agree once the rows are saved.
+
+#### `allocation.split`
+
+Input: `{"defaultPayerId": "cus_1", "base": "1000", "charges": [<charge>...]}`.
+
+```json
+{"defaultPayerId": "cus_first", "charges": [{"kind": "Freight", "total": "1000.01", "allocations": [
+  {"id": "chal_b", "billToCustomerId": "cus_second", "method": "Percent", "percent": 40, "sequence": 1},
+  {"id": "chal_a", "billToCustomerId": "cus_first", "method": "Percent", "percent": 60, "sequence": 0}]}]}
+```
+
+Output: per charge its exact `total` and either `shares` (in split order) or `error` (a
+`Message`); then the payers and whether billing is split, both `null` when any charge failed.
+
+```json
+{"charges": [{"total": "1000.01", "shares": [
+   {"allocation": 1, "allocationId": "chal_a", "billToCustomerId": "cus_first", "method": "Percent",
+    "amount": "600.01", "percent": "60", "partial": true},
+   {"allocation": 0, "allocationId": "chal_b", "billToCustomerId": "cus_second", "method": "Percent",
+    "amount": "400", "percent": "40", "partial": true}]}],
+ "payers": [
+   {"payerId": "cus_first", "freightAmount": "600.01", "accessorialAmount": "0", "totalAmount": "600.01"},
+   {"payerId": "cus_second", "freightAmount": "400", "accessorialAmount": "0", "totalAmount": "400"}],
+ "isSplit": true}
+```
+
+`allocation` is the row's index in that charge's `allocations`; an unallocated charge's one share
+has neither `allocation` nor `allocationId`, and `method: null`.
+
+The rules (`shipment.ResolveShares`, `ResolveOrderChargeShares`, `decimalutils.AllocatePercent`):
+
+- No rows: the whole charge, rounded half to even to cents, to the default payer at 100%.
+- Every row must use the same method ("A charge must be split either by percent or by amount,
+  not both"), that method must be `Percent` or `Amount` ("Allocation method must be Percent or
+  Amount"), and every row must name a payer ("Bill-to customer is required").
+- Percent rows must each be in (0, 100] and total 100 at six places (half away from zero);
+  otherwise "Percent allocations for this charge must total 100". Every share but the last is
+  `total × percent / 100` rounded half to even to cents; the last is the rounded total minus the
+  others.
+- Amount rows are rounded half to even to cents and must add up to the rounded charge; otherwise
+  "Amount allocations for this charge must add up to {0}", with the unrounded total written by
+  `StringFixed(2)` (half away from zero). An amount share's percent is shopspring's
+  `amount × 100 / total` (the quotient rounded half away from zero to 16 places, then to 6), or
+  `null` when the charge is zero. A percent share carries its row's percent; an unallocated
+  share 100.
+- A share is `partial` when it is not the whole rounded charge.
+- Payers: freight shares sum into `freightAmount`, accessorial and order-charge shares into
+  `accessorialAmount`. The default payer leads, even with nothing to pay; the others follow by
+  ID. `isSplit` is true when any share is partial or goes to another payer, or more than one
+  payer is billed.
+
+#### `allocation.remainder`
+
+What a split editor shows while somebody types, and whether the rows can be saved. Input:
+`{"base"?, "charges": [<charge>...]}`; a charge with neither `total` nor `method` has an unknown
+total. Output, per charge:
+
+```json
+{"charges": [{"method": "Percent", "allocated": "60", "remaining": "40", "complete": false,
+  "over": false, "mixedMethods": false, "duplicatePayers": false, "missingPayers": false,
+  "problem": {"message": "Percents must add up to 100"}, "valid": false}]}
+```
+
+- `method` is the first row's (`Percent` when it is not `Amount`); `mixedMethods` when any row
+  differs from it.
+- Percent rows: `allocated` is their exact sum, `remaining` is `100 − allocated`; `complete` when
+  the sum rounds to 100 at six places and there is a row; `over` when it rounds above 100.
+- Amount rows: `allocated` is their exact sum, `remaining` is `total − allocated` (`null` when
+  the total is unknown); `complete` when their cents add up to the total's cents; `over` when
+  they add up to more.
+- `problem` is the first of: "Split every row by percent or every row by amount", "Each payer
+  may appear only once", "Every row needs a payer", "Percent must be greater than 0 and at most
+  100" / "Amount must be greater than zero", "Percents must add up to 100" / "Amounts must add
+  up to the charge". No rows is no problem (the whole charge goes to the default payer), and
+  amount rows against an unknown total are not judged on their sum. `valid` is
+  `problem == null`.
+
+#### `allocation.chargeTotal`
+
+`{"base": "2450", "charges": [{"method": "Flat", "amount": 150, "unit": 2}, {"method": "Percentage", "amount": 10}]}`
+→ `{"totals": ["300", "245"], "sum": "545"}`: each charge's exact total by the rules above, and
+their sum (`AdditionalChargesTotal`).
+
+#### `allocation.rebalance`
+
+Amount splits that went stale because their charge changed (`FindStaleAmountSplits`), converted
+to percents that keep each payer's proportion (`ConvertAmountSplitsToPercent`). Input as
+`allocation.remainder`. Output per charge, and how many were converted:
+
+```json
+{"charges": [{"stale": true, "allocatedTotal": "2850", "chargeTotal": "3000",
+  "percents": ["52.631579", "47.368421"]}], "converted": 1}
+```
+
+- A charge is stale when every row is an amount row and their cents do not add up to the
+  charge's cents, exactly when `allocation.split` would refuse it. Otherwise
+  `{"stale": false, "allocatedTotal": null, "chargeTotal": null, "percents": null}`.
+- `percents` is aligned with the request's `allocations` (`null` for a `null` row). Every row but
+  the last by sequence gets shopspring's `amount × 100 / sum` rounded half away from zero to six
+  places, and the last gets the rest of 100. A stale split whose rows sum to zero or less cannot
+  be converted: `percents` is `null` and it does not count as converted.
+
+#### Where Go and TypeScript disagreed
+
+| Rule | Go | TypeScript | Now |
+|---|---|---|---|
+| Money | exact decimals | floats and `Math.round(x × 100)` | exact decimals |
+| `PerUnit` with no units | 0 | `amount × max(unit, 1)` | 0 (Go) |
+| Unknown method | 0 | the amount | 0 (Go) |
+| Missing unit | 0 | 1 | 0 (Go: the field's zero value; the form defaults it to 1 anyway) |
+| Mixed methods, bad percents, amounts that do not add up | refused | not checked; shares computed anyway | refused (Go) |
+| Rows without a payer | not reachable (validation refuses them first) | dropped from the split | refused with "Bill-to customer is required" |
+| Row order | sequence, then ID | sequence, then position | sequence, then ID, unsaved rows by position |
+| Percent complete | rounds to 100 at six places | rounds to 100 at four places | six places (Go): `33.3333333 × 3` is complete |
+| Amount complete | `RoundBank(sum) == RoundBank(total)` | `Math.round` cents | cents of each share (see the fix below) |
+| Duplicate payers | allowed, merged into one share | refused by the editor | refused by `allocation.remainder` only; `allocation.split` merges them as Go does |
+
+Two Go rules were wrong and are fixed here; `decimalutils.AllocatePercent` and the resolver's
+amount check should follow when the Go callers move to the module:
+
+- **The last percent share** was `total − others` before rounding, then rounded half to even.
+  With a sub-cent total that loses a cent: 50/50 of `0.015` gave `0.01 + 0.00`, but the payer
+  totals should add up to the charge's `0.02`. The last share is now `RoundBank(total) − others`,
+  which is the same answer for every whole-cent total.
+- **Amount rows** were accepted when their unrounded sum rounded to the charge, but each share is
+  then rounded on its own: `0.005 + 0.005` passed for a `0.01` charge and billed nobody. Their
+  cents must now add up.
+
+The invariants are property tests in `tests/rules_allocation.rs`: shares always add up to the
+rounded total, and every share but the last is within half a cent of its exact share. The last
+share absorbs the others' rounding, so it is within one cent for two payers and within
+`n × ½` cent for `n`; a largest-remainder rule would bound it by one cent for any `n`, but it
+would move cents between payers on existing invoices, so Go's "remainder on the last row" stays.
+
+**What replaces what.** `chargeLineTotal` → `allocation.chargeTotal`; `splitCharges` and
+`summarizeBillingByPayer`'s sums → `allocation.split`; `allocationRemainder` and
+`allocationsValid` (and the messages of `chargeAllocationsRefinement`) →
+`allocation.remainder`; `AdditionalCharge.Total`/`AdditionalChargesTotal`,
+`ResolveShares`/`ResolveOrderChargeShares`/`AllocatePercent`/`SumEquals` → `allocation.chargeTotal`
+and `allocation.split`; `FindStaleAmountSplits`/`ConvertAmountSplitsToPercent` →
+`allocation.rebalance`. They stay native: `toMinorUnits` (money in cents for the credit memo
+dialog and invoice line comparison, not an allocation rule), and the GraphQL shaping helpers
+`nestChargeAllocations`, `toChargeAllocationInput`, `hasAnyAllocations`. Grouping allocations
+by the charge they target (`TargetID`, the kind filters in `ResolveShares`) and payer
+validation (`ValidateAllocations`: the customer exists, is active and belongs to the tenant)
+stay in Go, since they need the shipment and the database.
+
+### Report formatting (`report.*`)
+
+Every place a report is shown (the builder preview, the result grid, CSV, PDF, the XLSX text
+fallback) renders values through the column's display contract (`reportfmt.Resolved`). Pinned
+by `testdata/report.json`.
+
+#### `report.format`
+
+Works on columns, because the server formats up to 100,000 rows and the browser a virtualised
+grid. Each column has its resolved `display` (every field defaults to Go's zero value, and a
+missing display renders raw), or a `resolve` input (as `report.resolve`) to resolve it in the
+same call; a `valueType`; and its `values`.
+
+```json
+{"columns": [
+  {"display": {"style": "currency", "decimals": 2, "grouping": true, "currency": "USD",
+               "negative": "parentheses", "rules": [{"op": "gt", "value": 10000, "tone": "warning"}]},
+   "values": [1082.0672643987443142, -1.005, null, 50000]},
+  {"resolve": {"type": "epoch", "spec": {"dateStyle": "date"}}, "values": [1772587800]}]}
+```
+
+```json
+{"columns": [
+  {"values": [{"text": "$1,082.07"}, {"text": "($1.01)"}, {"text": ""},
+              {"text": "$50,000.00", "tone": "warning"}]},
+  {"values": [{"date": "1772587800"}]}]}
+```
+
+**Values.** `null` is empty; `true`/`false` are booleans; a JSON number is an exact decimal (one
+too large to read is shown as written); an array or object reads as empty. A JSON string is text,
+except that in a column whose `valueType` is `int`, `decimal` or `epoch` a string holding a
+decimal is that number (GraphQL sends decimals as strings so they stay exact), and in a `bool`
+column `"true"` and `"false"` are booleans. Both hosts know a column's catalog type, which is
+the `valueType`.
+
+**Dates.** A number in a date-style column comes back as `{"date": "<epoch seconds>"}` (the
+integer part, truncated toward zero, as Go's `IntPart`), with its tone, for the host to write in
+the report's time zone: Go's layouts on the server, `Intl` in the browser. The module has no time
+zone data. A Go `time.Time` value never reaches the module: the host formats it directly.
+
+**The order of decisions** (`Resolved.String`): empty → `nullText`; style `""` → the raw value
+(a decimal normalised, a boolean as `true`/`false`, text as is); a number in a column with a
+usable band → its range; a number in a date column → a date; any other number → the numeric
+style; a boolean → the boolean style (whatever the column's style); text → `prefix + text +
+suffix`, or `nullText` when empty.
+
+**Numbers.**
+
+- A percent is shifted two places; a duration formats as below.
+- Compact notation picks T, B, M or K from the **unrounded** magnitude (`999999` with no places
+  is "1,000K").
+- The digits are rounded half away from zero to `decimals` (clamped to 0..10) exactly as
+  written: `1.005` → "1.01", `2.675` → "2.68".
+- The whole part is grouped by thousands when `grouping`.
+- Assembly is `prefix + symbol + digits + compact suffix + % + suffix`. The currency symbols are
+  `USD` and empty `$`, `CAD C$`, `MXN MX$`, `EUR €`, `GBP £`, `AUD A$`, `JPY ¥`; any other code
+  is written followed by a space.
+- A negative value is wrapped in parentheses when `negative` is `parentheses`, else prefixed with
+  a minus. The sign is decided before rounding, so `-0.001` is "-0.00" or "($0.00)", as in Go.
+
+**Durations.** The value times `durationUnit` (seconds, minutes, hours, days) is the seconds:
+
+- `clock` (the default): `H:MM`;
+- `compact`: "1d 2h 10m";
+- `verbose`: "1 day 2 hours 10 minutes";
+- `decimalHours`: hours to `max(decimals, 1)` places, grouped, then " h".
+
+Clock, compact and verbose use whole seconds. A negative duration is signed after the prefix and
+suffix are added.
+
+**Bands** (`reportfmt.Band`). The value of a banded cell is its range's lower bound. A fixed
+`width` gives `[value, value + width)`. Explicit `edges` give the range of the last edge at or
+below the value (a value below the first edge is in the first range), and the top range is
+open: "$5,000.00+". Both ends render through the column's display, with a trailing suffix written
+once: "10,000 – 15,000 lbs". Bounds are exact decimals.
+
+**Tones** (`ToneFor`). Rules are tried in order and the first match gives the tone: `gt`, `gte`,
+`lt`, `lte`, `eq`, and `between` (inclusive). Only numbers are toned, compared exactly; a percent
+column's values are compared times 100, so a threshold of 12 means 12%.
+
+#### `report.resolve`
+
+`{"columns": [{"type": "decimal", "hint": "money", "dateStyle"?, "band"?, "spec"?}]}` →
+`{"displays": [<resolved display>]}` (`reportfmt.Resolve`):
+
+- **Baseline:** text, grouping on, USD, minus, standard notation, `dateTime`, `yesNo`, seconds,
+  clock. `epoch` is date, `bool` is bool, `int` is a number with 0 places, `decimal` a number with
+  2, and only number types take the hint:
+  - `money`: currency, 2 places, parentheses;
+  - `percent`: 1 place;
+  - `duration`: 0 places;
+  - `distance`: 1 place, " mi";
+  - `weight`: 0 places, " lbs";
+  - `count`: 0 places.
+- A bucket's `dateStyle` applies to a date column.
+- A band that is not empty is carried, even a malformed one, so validation can report it.
+- **Spec:** a `style` different from the baseline's restyles first:
+  - currency resets 2 places and parentheses;
+  - percent resets 1 place;
+  - duration resets 0 places;
+  - number clears the suffix.
+
+  Then every set field overrides. Decimals are clamped to 0..10, the currency is upper-cased
+  (ASCII), and rules replace the baseline's.
+
+Output decimals in a display (band width and edges, rule values) are strings, like every output
+decimal.
+
+#### Where Go and TypeScript disagreed
+
+| Rule | Go | TypeScript | Now |
+|---|---|---|---|
+| Rounding | `StringFixed`, exact, half away from zero | `toFixed` on floats: `1.005` → "1.00", `2.675` → "2.67" | exact (Go) |
+| Rule and band arithmetic | `float64` | `number` | exact decimals: a `0.1` band from `0.2` ends at `0.3` |
+| A band that does not validate (one edge, a negative width, width and edges) | rendered anyway: one edge reads "500.00+" for every value, a negative width with no edges indexes past the end and panics | ignored | ignored (TS): Go was wrong |
+| A band on a date, text or boolean column | the number renders as its range | only numeric styles | its range (Go) |
+| A number in a text or boolean column | formatted as a number | written raw | as a number (Go) |
+| A boolean in a numeric column | its boolean style | written raw | its boolean style (Go) |
+| An empty string in a numeric column | `nullText` | `""` | `nullText` (Go) |
+| A date inside a decimal epoch column | `IntPart` (truncated) | `new Date(seconds × 1000)` with the fraction | truncated (Go), formatted by the host |
+| Objects and arrays | empty, so `nullText` | `JSON.stringify` | empty (Go) |
+| Currency upper-casing | ASCII | Unicode | ASCII (Go) |
+
+**What replaces what.** `formatReportValue` and `reportValueTone` → `report.format`;
+`resolveReportDisplay` and `reportfmt.Resolve` → `report.resolve` (or `resolve` inside
+`report.format`); `Resolved.String`, `ToneFor`, `Band.Bounds` and `bandLabel` → `report.format`.
+They stay native:
+
+- dates (Go time layouts; `formatDate` and `dateParts` with `Intl`), fed by the `date` cells;
+- `reportfmt.ExcelFormat` (Go only; nothing in the browser writes XLSX number formats);
+- `Spec.Validate` and `Band.Validate`, which are save-time checks with developer messages;
+- `Band.IsWhole` and `IsLowest`, which the query compiler and drill-through use;
+- `reportNumericValue` (float coercion for charts) and `isNumericDisplay` (a one-line style
+  check for alignment).
+
+### Lanes (`lane.*`)
+
+A rate agreement rule names a scope for its origin and its destination, stores one lane key, and
+the most specific matching rule prices a shipment once priority is equal. The lane editor scores
+and keys lanes as they are typed, so it must build what the engine stores to the character.
+Pinned by `testdata/lane.json`.
+
+Rules are read in the GraphQL / Go JSON shape (`originScopeType`, `originScopeValue`,
+`originCity`, the same for `destination`, `direction`, `status`, `priority`, `effectiveFrom`,
+`effectiveTo` and the condition fields); other fields are ignored, so either host passes its rows
+as they are. An empty or missing scope type is `Any`, the default a saved rule takes.
+
+#### `lane.specificity`
+
+`{"rules": [<rule>...]}` → `{"scores": [1843200, 1025023]}` (`ComputeSpecificity`):
+
+- **Geography:** `(origin weight + destination weight) × 1024`. The weights are Any 0,
+  Country 300, State 500, Zone 600, Radius 650, CityState 700, Zip3 800, Zip5 900 and
+  Location 1000; an unknown type weighs 0.
+- **Conditions,** each counted once when the rule names it:
+  - commodities 512, freight classes 256;
+  - tractor types, trailer types or equipment classes 128, once together;
+  - service types 64, shipment types 32;
+  - a weight bound 16, a distance bound 8;
+  - service models 4, hazmat 2, temperature control 1.
+
+  They sum to 1023, below one step of geography, which a compile-time assertion keeps true.
+- A list counts when it is not empty (`null` is empty). A bound counts when it is not `null`,
+  missing or blank.
+
+#### `lane.keys`
+
+```json
+{"rules": [{"direction": "Bidirectional", "originScopeType": "Zip3", "originScopeValue": "60601",
+            "destinationScopeType": "State", "destinationScopeValue": "ust_ga"}],
+ "shipments": [{"origin": {"postalCode": "60601", "city": "Chicago", "countryIso3": "USA"},
+                "destination": {"stateId": "ust_ga"}}]}
+```
+
+```json
+{"rules": [{"origin": "Z3:606", "destination": "ST:ust_ga", "key": "Z3:606>ST:ust_ga",
+            "stored": "Z3:606>ST:ust_ga", "reverse": "ST:ust_ga>Z3:606",
+            "segments": [{"text": "Z3:606"}, {"text": "ST:ust_ga", "scope": "State", "id": "ust_ga", "prefix": "ST:", "suffix": ""}]}],
+ "shipments": [{"originKeys": ["Z5:60601", "Z3:606", "CT:USA", "ANY"],
+                "destinationKeys": ["ST:ust_ga", "ANY"],
+                "candidates": ["Z5:60601>ST:ust_ga", "Z5:60601>ANY", "Z3:606>ST:ust_ga", "Z3:606>ANY",
+                               "CT:USA>ST:ust_ga", "CT:USA>ANY", "ANY>ST:ust_ga", "ANY>ANY"]}]}
+```
+
+- **A rule's ends** (`Scope.Key`):
+  - `ANY`, `LOC:<id>`, `ZN:<id>`, `ST:<id>`;
+  - `Z5:<postal>`, `Z3:<first three of postal>`;
+  - `CS:<state>|<CITY>`, `CT:<COUNTRY>`.
+
+  An end has no key (`null`) when it is a radius, an unknown type, has no value (a city-state
+  needs both), or is a postal prefix shorter than three characters. `key` is
+  `origin>destination` or `null`; `stored` is the key or `RADIUS`, the sentinel a geospatially
+  matched lane stores; `reverse` is the swapped key of a bidirectional rule. `segments` is the
+  key parsed as `lane.parse` does.
+- **Text:**
+  - a postal code is trimmed, cut at the first dash unless the dash leads, and upper-cased, so
+    inner spaces stay;
+  - a city is folded to single spaces and upper-cased;
+  - a country is trimmed and upper-cased.
+
+  Upper-casing is Unicode's one-to-one mapping, as Go's `strings.ToUpper`: `ß` stays `ß`. A
+  postal prefix is cut at a character boundary where Go would cut a byte.
+- **A shipment end's keys** (`Place.MatchKeys`), most specific first:
+  - location, then postal code and prefix;
+  - city-state (both needed), then every non-empty zone;
+  - state, then country;
+  - always ending with `ANY`.
+
+  `candidates` is the cross product, origin major (`LaneKeyCandidates`).
+
+#### `lane.parse`
+
+`{"keys": ["CS:us_tx|DALLAS>ZN:rzn_sw", "Z3:606>CT:USA"]}` →
+`{"keys": [{"segments": [{"text": "CS:us_tx|DALLAS", "scope": "CityState", "id": "us_tx", "prefix": "CS:", "suffix": "|DALLAS"}, {"text": "ZN:rzn_sw", "scope": "Zone", "id": "rzn_sw", "prefix": "ZN:", "suffix": ""}]}, {"segments": [{"text": "Z3:606"}, {"text": "CT:USA"}]}]}`.
+
+Splits each key at `>`. `LOC:`, `ZN:`, `ST:` and `CS:` ends reference a record (a city-state's
+is the state before `|`); every other end, and one with an empty ID, is literal. A display
+replaces `id` with the record's name: `prefix + name + suffix`.
+
+#### `lane.coverage`
+
+`{"rules": [<rule>...]}` → `{"issues": [{"index": 1, "kind": "duplicate", "other": 0, "message": {"message": "This lane is written exactly as narrowly as another one, so which of the two applies is decided by a tie-break rather than by you."}}]}`.
+
+The engine orders matching rules by priority (higher first), agreement priority, specificity,
+effective date and ID. Two active lanes (an empty status is active) that are reachable by the
+same key (a bidirectional lane by its reverse too) with the same specificity, during overlapping
+effective windows (`[effectiveFrom, effectiveTo)`, open-ended when `effectiveTo` is `null`),
+never both apply:
+
+- with different priorities the lower one is `shadowed`: "Another lane covers the same geography
+  with a higher priority, so this one can never apply.";
+- with equal priorities the later one is a `duplicate`.
+
+Radius lanes are not judged. A lane gets at most one issue (shadowed before duplicate), and
+`other` is the first lane it collides with. Lanes are bucketed by key and specificity, so only
+identical lanes are compared.
+
+This rule has no Go twin; it lives in the crate because it is built entirely from the crate's
+keys and specificity, it would otherwise be the last copy of the key scheme in TypeScript, and
+the server can run it over an import or a save to warn about dead lanes. Moving it fixed one
+TypeScript bug and two blind spots:
+
+- TypeScript flagged the *later* lane as shadowed even when the later lane had the higher
+  priority. The lower-priority lane is now the shadowed one, wherever it sits.
+- It compared lanes whose effective windows do not overlap (an amendment and its predecessor).
+- It missed a bidirectional lane meeting a lane written the other way round.
+
+#### Where Go and TypeScript disagreed
+
+| Rule | Go | TypeScript | Now |
+|---|---|---|---|
+| An end with no value (`Location` with `""`) | no key: the rule stores `RADIUS` | an empty end: `">ANY"` | no key (Go) |
+| A postal prefix shorter than three | no key | `Z3:60` | no key (Go) |
+| Spaces inside a postal code | kept: `Z5:606 01` | removed: `Z5:60601` | kept (Go; the stored key must match) |
+| A leading dash in a postal code | kept | the code becomes empty | kept (Go) |
+| Spaces inside a city | folded to one | kept | folded (Go) |
+| A whitespace-only value | keyed, `Z5:` | keyed, `Z5:` | keyed, as Go stores it |
+
+**What replaces what.** `laneSpecificity` and `ComputeSpecificity` → `lane.specificity`;
+`laneKeyPreview`, `ApplyLaneKey`, `ReverseLaneKey`, `Scope.Key`, `CityStateKey`, `LaneKey`,
+`Place.MatchKeys` and `LaneKeyCandidates` → `lane.keys`; `laneKeyScopeIds` and the parsing in
+`laneKeyStringDisplay` → `lane.parse`; `findCoverageIssues` → `lane.coverage`; `normalizePostal`
+and the weight and scale constants → inside those operations. They stay native: `laneKeyDisplay`
+and `laneKeyStringDisplay` (substituting translated record names into `segments`),
+`laneEndDisplay` and `laneDisplayLabel` (translated labels only), `IsEffectiveAt` and
+`MatchesDayOfWeek` and the rest of rule matching (server-side, against shipment facts).
+
+### Rate matrices (`matrix.*`)
+
+Pinned by `testdata/matrix.json`. Dimensions are
+`{"position": 0..3, "matchMode": "Exact" | "Range", "kind": "Zone", "label": ""}`. Cells are the
+GraphQL cell (`id`, `d0Key`..`d3Key`, `d0Min`..`d3Max`; other fields ignored). A blank or `null`
+bound is no bound, and `null` entries are skipped. A position outside 0..3 or more than four
+lookup values is `invalid_input`. A dimension's display label is its trimmed `label`, or else
+the English name of its kind (Zone, Postal prefix, Postal code, State, Country, Weight break,
+Distance, Pieces, Linear feet, Freight class, Equipment, Service, Custom, Quantity). A host that
+translates passes the translated name as `label`.
+
+**Bands** are half open, `[min, max)`, and a missing bound is no bound:
+`matrix::band::contains(min, max, value)` is the one implementation (`ContainsQuantity`), and
+the formula evaluator's band lookups should call it.
+
+#### `matrix.select`
+
+One lookup and its candidate cells (`SelectCell`):
+
+```json
+{"dimensions": [{"position": 0, "matchMode": "Exact"}, {"position": 1, "matchMode": "Range", "kind": "WeightBreak"}],
+ "cells": [{"id": "rmc_1", "d0Key": "SE", "d1Min": 0, "d1Max": 1000}, {"id": "rmc_2", "d0Key": "SE", "d1Min": 1000}],
+ "values": [{"keys": ["SE", "SOUTH"]}, {"quantity": "1000"}]}
+```
+
+→ `{"cell": {"index": 1, "id": "rmc_2", "preference": 0, "matchedKeys": ["SE", "1000", "", ""]}}`,
+or `{"error": {"code": "dimension_value_missing", "position": 1, "message": {"message": "No value was supplied for the matrix dimension {0}", "args": ["Weight break"]}}}`,
+or `{"error": {"code": "no_matching_cell", "message": {"message": "No matrix cell matches the supplied values"}}}`.
+
+- Every exact axis needs a key and every banded axis a quantity; the first axis without one, in
+  dimension order, fails the lookup. An axis with another match mode constrains nothing, as in
+  Go.
+- A cell matches when its key on every exact axis is one of that axis's keys and its band on
+  every banded axis contains the quantity.
+- The keys are ordered most preferred first. `preference` is the sum of the matched keys'
+  positions, and the lowest wins, then the lowest cell ID, then the earlier cell in the request
+  (unsaved cells, which sort before saved ones). Go's `sort.Slice` left that last tie
+  unspecified.
+- `matchedKeys` gives per position the key matched, or the quantity normalised.
+
+#### `matrix.coverage`
+
+`{"dimensions": [...], "cells": [...]}` → `{"issues": [{"kind", "position", "message", "bands"?, "slices"?}]}`.
+This rule has no Go twin; the editor runs it (and the server can, before publishing a tariff).
+The kinds:
+
+- **`empty`**: "This matrix has no axes, so nothing can ever look a rate up in it." or "This
+  matrix has no rates yet, so every lane pointing at it prices nothing."
+- **`duplicate`**: "Two rates sit at {0}. The engine will take the one entered first and never
+  mention the other.", reported once per coordinate. The coordinate is every axis's key or
+  `min..max`, joined by " · ".
+- For each banded axis, within each **slice** (the cells that agree on every other axis):
+  - **`gap`** below the lowest band when it starts above zero: "{0} has no band below {1}, so
+    anything smaller finds no rate.";
+  - **`unbounded`** when nothing reaches upward forever: "{0} stops at {1}. Anything at or above
+    that finds no rate — give the top band no upper bound to catch it.";
+  - **`gap`** between bands: "{0} jumps from {1} to {2} with nothing in between.";
+  - **`overlap`**: "{0} bands {1} and {2} overlap, so the same shipment matches both."
+
+Bands are swept by lower bound (none first), each compared with the furthest reach so far.
+Numbers are written exactly with English thousands grouping. An overlap's band arguments are
+the English band labels ("{0} – under {1}", "{0} and over", "under {0}", "Any"), and `bands`
+gives both bands' bounds, because a `Message` argument cannot be a `Message`: a host that
+translates rebuilds the labels from `bands`. The same finding in several slices is reported
+once, with `slices` listing the other axes' coordinates (absent for a one-axis matrix).
+
+Moving it from TypeScript fixed three things. Its messages are TypeScript's English unchanged.
+
+- TypeScript collected the bands of every cell together, so a zone-by-weight matrix whose zones
+  break at different weights showed false overlaps, and a gap in one zone was hidden by another.
+  Each slice is now checked on its own.
+- It compared only neighbouring bands, so a wide band covering two narrow ones produced a false
+  gap and a missed overlap.
+- It skipped every band after an unbounded one or before a floorless one, missing their
+  overlaps.
+
+**What replaces what.** `ContainsQuantity` → `matrix::band::contains`; `SelectCell` →
+`matrix.select`; `findMatrixCoverageIssues` → `matrix.coverage`. They stay native: the sheet
+projection (`buildMatrixGrid`, `sliceBuckets`, `bucketKeyOf`, `cellCoordinate`,
+`coordinateKey`), `axisLabel` and `bandLabel` for headers, which only lay cells out and label
+them. `DensityScale.ClassFor` and the formula lookups' `KeyNormalization` and `RangeOverflow`
+stay in Go with their callers; `ClassFor` uses the same half-open rule as `contains`.
 
 ## Hosts
 
