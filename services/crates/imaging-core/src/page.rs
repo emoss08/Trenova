@@ -8,6 +8,10 @@
 //! the page's only content, with the page sized so the image is at its
 //! scanned resolution: the server's thumbnailer, text extraction and OCR all
 //! take PDF, and reading the image back loses nothing.
+//!
+//! A JPEG that already exists (a phone photo) is placed as it is, without
+//! decoding and encoding it again, and a photo's page can be a letter sheet
+//! the image is fitted onto rather than the size of its pixels.
 
 use jpeg_encoder::{ColorType, Encoder as JpegEncoder, PixelDensity, PixelDensityUnit};
 use pdf_writer::{Content, Filter, Finish, Name, Pdf, Rect, Ref, TextStr};
@@ -22,6 +26,8 @@ pub const DPI_RANGE: std::ops::RangeInclusive<u32> = 50..=1200;
 pub const JPEG_QUALITY_RANGE: std::ops::RangeInclusive<u8> = 30..=95;
 
 const PRODUCER: &str = "Trenova Capture";
+/// US letter, in points.
+const LETTER: (f32, f32) = (612.0, 792.0);
 const IMAGE_NAME: Name<'static> = Name(b"Im0");
 
 /// The resolution of a page, which a scanner may report differently for each
@@ -66,7 +72,7 @@ pub fn encode_page(
     let image = PageImage::encode(raster, resolution, jpeg_quality)?;
     let bilevel = image.bilevel();
     Ok(EncodedPage {
-        pdf: write_pdf(std::slice::from_ref(&image)),
+        pdf: write_pdf(std::slice::from_ref(&image), PageFit::Native, PRODUCER),
         width_px: raster.width,
         height_px: raster.height,
         resolution,
@@ -76,15 +82,119 @@ pub fn encode_page(
 
 /// A document assembled a page at a time, as a printed job is. Each page is
 /// encoded as it is pushed, so only the compressed pages are held.
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct PdfDocument {
     pages: Vec<PageImage>,
     encoded_bytes: usize,
+    fit: PageFit,
+    producer: &'static str,
+}
+
+impl Default for PdfDocument {
+    fn default() -> Self {
+        Self {
+            pages: Vec::new(),
+            encoded_bytes: 0,
+            fit: PageFit::Native,
+            producer: PRODUCER,
+        }
+    }
+}
+
+/// How a page is sized around its image.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum PageFit {
+    /// The page is the image at its resolution, as a scanned page is.
+    Native,
+    /// The page is `width` × `height` points, turned to the image's
+    /// orientation, with the image centred and scaled to `scale` of it.
+    Fit { width: f32, height: f32, scale: f32 },
+}
+
+impl PageFit {
+    /// A letter sheet with the image at 95% of it: how a photographed
+    /// document is put into a PDF so it prints and merges like paper.
+    pub const LETTER: Self = Self::Fit {
+        width: LETTER.0,
+        height: LETTER.1,
+        scale: 0.95,
+    };
+}
+
+/// How the samples of a JPEG are coloured.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum JpegColor {
+    Gray,
+    Rgb,
+    /// Four components. Adobe's encoders store CMYK inverted, which the
+    /// image's `Decode` array undoes.
+    Cmyk {
+        inverted: bool,
+    },
+}
+
+/// A JPEG to place as it is. The caller has read its header: the
+/// dimensions and colour here are what a PDF reader is told.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct PassthroughJpeg {
+    pub data: Vec<u8>,
+    pub width: u32,
+    pub height: u32,
+    pub color: JpegColor,
 }
 
 impl PdfDocument {
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// Sizes every page with `fit` rather than at the image's resolution.
+    #[must_use]
+    pub fn with_fit(mut self, fit: PageFit) -> Self {
+        self.fit = fit;
+        self
+    }
+
+    /// Names the producer written into the document information.
+    #[must_use]
+    pub fn with_producer(mut self, producer: &'static str) -> Self {
+        self.producer = producer;
+        self
+    }
+
+    /// Appends an already encoded JPEG without decoding it.
+    pub fn push_jpeg(
+        &mut self,
+        jpeg: PassthroughJpeg,
+        resolution: Resolution,
+    ) -> Result<(), ImagingError> {
+        if !DPI_RANGE.contains(&resolution.x) || !DPI_RANGE.contains(&resolution.y) {
+            return Err(ImagingError::Resolution {
+                x: resolution.x,
+                y: resolution.y,
+            });
+        }
+        if jpeg.width == 0
+            || jpeg.height == 0
+            || jpeg.width > crate::raster::MAX_SIDE
+            || jpeg.height > crate::raster::MAX_SIDE
+        {
+            return Err(ImagingError::Dimensions {
+                width: jpeg.width,
+                height: jpeg.height,
+            });
+        }
+        self.encoded_bytes += jpeg.data.len();
+        self.pages.push(PageImage {
+            image: EncodedImage::Jpeg {
+                data: jpeg.data,
+                color: jpeg.color,
+            },
+            width: jpeg.width,
+            height: jpeg.height,
+            resolution,
+        });
+        Ok(())
     }
 
     /// Encodes a page and appends it.
@@ -115,7 +225,7 @@ impl PdfDocument {
     }
 
     pub fn finish(self) -> Vec<u8> {
-        write_pdf(&self.pages)
+        write_pdf(&self.pages, self.fit, self.producer)
     }
 }
 
@@ -145,15 +255,15 @@ impl PageImage {
             }
             PixelFormat::Gray8 => EncodedImage::Jpeg {
                 data: encode_jpeg(raster, ColorType::Luma, jpeg_quality, resolution)?,
-                gray: true,
+                color: JpegColor::Gray,
             },
             PixelFormat::Rgb8 => EncodedImage::Jpeg {
                 data: encode_jpeg(raster, ColorType::Rgb, jpeg_quality, resolution)?,
-                gray: false,
+                color: JpegColor::Rgb,
             },
             PixelFormat::Bgr8 => EncodedImage::Jpeg {
                 data: encode_jpeg(raster, ColorType::Bgr, jpeg_quality, resolution)?,
-                gray: false,
+                color: JpegColor::Rgb,
             },
         };
         Ok(Self {
@@ -178,7 +288,7 @@ impl PageImage {
 #[derive(Debug)]
 enum EncodedImage {
     G4(Vec<u8>),
-    Jpeg { data: Vec<u8>, gray: bool },
+    Jpeg { data: Vec<u8>, color: JpegColor },
 }
 
 /// ITU-T T.6, as PDF's `CCITTFaxDecode` reads it with `K -1`.
@@ -203,7 +313,8 @@ fn encode_g4(raster: &Raster<'_>, zero_is_black: bool) -> Vec<u8> {
     writer.finish()
 }
 
-pub(crate) fn encode_jpeg(
+/// Encodes a raster as baseline JPEG at `quality` (30 to 95).
+pub fn encode_jpeg(
     raster: &Raster<'_>,
     color: ColorType,
     quality: u8,
@@ -240,9 +351,43 @@ fn points(pixels: u32, dpi: u32) -> f32 {
     pixels as f32 * 72.0 / dpi as f32
 }
 
+/// Where a page's image sits: the media box, and the image's origin and size,
+/// all in points.
+fn placement(page: &PageImage, fit: PageFit) -> ([f32; 2], [f32; 4]) {
+    let width_pt = points(page.width, page.resolution.x);
+    let height_pt = points(page.height, page.resolution.y);
+    match fit {
+        PageFit::Native => ([width_pt, height_pt], [0.0, 0.0, width_pt, height_pt]),
+        PageFit::Fit {
+            width,
+            height,
+            scale,
+        } => {
+            let (short, long) = (width.min(height), width.max(height));
+            let (page_w, page_h) = if width_pt > height_pt {
+                (long, short)
+            } else {
+                (short, long)
+            };
+            let scale = scale.clamp(0.1, 1.0);
+            let factor = (page_w * scale / width_pt).min(page_h * scale / height_pt);
+            let (image_w, image_h) = (width_pt * factor, height_pt * factor);
+            (
+                [page_w, page_h],
+                [
+                    (page_w - image_w) / 2.0,
+                    (page_h - image_h) / 2.0,
+                    image_w,
+                    image_h,
+                ],
+            )
+        }
+    }
+}
+
 /// Each page's image stored as encoded, as the page's only content, with
-/// the page sized so the image is at its resolution.
-fn write_pdf(pages: &[PageImage]) -> Vec<u8> {
+/// the page sized by `fit`.
+fn write_pdf(pages: &[PageImage], fit: PageFit, producer: &str) -> Vec<u8> {
     const CATALOG: Ref = Ref::new(1);
     const PAGE_TREE: Ref = Ref::new(2);
     const INFO: Ref = Ref::new(3);
@@ -261,13 +406,12 @@ fn write_pdf(pages: &[PageImage]) -> Vec<u8> {
 
     for (i, page) in pages.iter().enumerate() {
         let (page_id, image_id, content_id) = (object(i, 0), object(i, 1), object(i, 2));
-        let width_pt = points(page.width, page.resolution.x);
-        let height_pt = points(page.height, page.resolution.y);
+        let ([page_w, page_h], [x, y, image_w, image_h]) = placement(page, fit);
         let columns = i32::try_from(page.width).unwrap_or(i32::MAX);
         let rows = i32::try_from(page.height).unwrap_or(i32::MAX);
 
         let mut writer = pdf.page(page_id);
-        writer.media_box(Rect::new(0.0, 0.0, width_pt, height_pt));
+        writer.media_box(Rect::new(0.0, 0.0, page_w, page_h));
         writer.parent(PAGE_TREE);
         writer.contents(content_id);
         writer.resources().x_objects().pair(IMAGE_NAME, image_id);
@@ -288,12 +432,17 @@ fn write_pdf(pages: &[PageImage]) -> Vec<u8> {
                     .rows(rows)
                     .black_is_1(false);
             }
-            EncodedImage::Jpeg { gray, .. } => {
+            EncodedImage::Jpeg { color, .. } => {
                 xobject.filter(Filter::DctDecode);
-                if *gray {
-                    xobject.color_space().device_gray();
-                } else {
-                    xobject.color_space().device_rgb();
+                match color {
+                    JpegColor::Gray => xobject.color_space().device_gray(),
+                    JpegColor::Rgb => xobject.color_space().device_rgb(),
+                    JpegColor::Cmyk { inverted } => {
+                        xobject.color_space().device_cmyk();
+                        if *inverted {
+                            xobject.decode([1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0]);
+                        }
+                    }
                 }
                 xobject.bits_per_component(8);
             }
@@ -302,13 +451,13 @@ fn write_pdf(pages: &[PageImage]) -> Vec<u8> {
 
         let mut content = Content::new();
         content.save_state();
-        content.transform([width_pt, 0.0, 0.0, height_pt, 0.0, 0.0]);
+        content.transform([image_w, 0.0, 0.0, image_h, x, y]);
         content.x_object(IMAGE_NAME);
         content.restore_state();
         pdf.stream(content_id, &content.finish());
     }
 
-    pdf.document_info(INFO).producer(TextStr(PRODUCER));
+    pdf.document_info(INFO).producer(TextStr(producer));
     pdf.finish()
 }
 
@@ -453,5 +602,67 @@ mod tests {
             encode_page(&raster, Resolution::square(300), 100),
             Err(ImagingError::Quality(100))
         ));
+    }
+
+    #[test]
+    fn a_passed_through_jpeg_is_stored_byte_for_byte_on_a_fitted_letter_page() {
+        let gray = vec![128u8; 300 * 200];
+        let raster = Raster::new(300, 200, 300, PixelFormat::Gray8, &gray).expect("raster");
+        let jpeg = encode_jpeg(&raster, ColorType::Luma, 80, Resolution::square(72)).expect("jpeg");
+
+        let mut doc = PdfDocument::new()
+            .with_fit(PageFit::LETTER)
+            .with_producer("Trenova");
+        doc.push_jpeg(
+            PassthroughJpeg {
+                data: jpeg.clone(),
+                width: 300,
+                height: 200,
+                color: JpegColor::Gray,
+            },
+            Resolution::square(72),
+        )
+        .expect("push");
+        let pdf = doc.finish();
+
+        assert!(
+            pdf.windows(jpeg.len())
+                .any(|window| window == jpeg.as_slice())
+        );
+        let text = String::from_utf8_lossy(&pdf);
+        assert!(
+            text.contains("/MediaBox [0 0 792 612]"),
+            "a landscape photo gets a landscape sheet"
+        );
+        assert!(text.contains("(Trenova)"));
+    }
+
+    #[test]
+    fn a_passed_through_jpeg_with_impossible_dimensions_is_refused() {
+        let mut doc = PdfDocument::new();
+        let jpeg = PassthroughJpeg {
+            data: vec![0xFF, 0xD8],
+            width: 0,
+            height: 10,
+            color: JpegColor::Rgb,
+        };
+        assert!(matches!(
+            doc.push_jpeg(jpeg, Resolution::square(72)),
+            Err(ImagingError::Dimensions { .. })
+        ));
+    }
+
+    #[test]
+    fn fitting_keeps_the_aspect_ratio_inside_the_sheet() {
+        let page = PageImage {
+            image: EncodedImage::G4(Vec::new()),
+            width: 1000,
+            height: 4000,
+            resolution: Resolution::square(100),
+        };
+        let ([w, h], [x, y, iw, ih]) = placement(&page, PageFit::LETTER);
+        assert!((w - 612.0).abs() < 0.01 && (h - 792.0).abs() < 0.01);
+        assert!((iw / ih - 0.25).abs() < 0.001);
+        assert!(x >= 0.0 && y >= 0.0 && x + iw <= w && y + ih <= h);
     }
 }

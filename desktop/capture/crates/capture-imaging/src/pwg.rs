@@ -9,10 +9,10 @@
 
 use capture_protocol::handoff::MAX_PICTURED_PAGES;
 
-use crate::ImagingError;
-use crate::page::{PdfDocument, Resolution};
-use crate::preview::{PagePreview, preview};
-use crate::raster::{MAX_SIDE, OwnedRaster, PixelFormat};
+use trenova_imaging_core::raster::MAX_SIDE;
+use trenova_imaging_core::{
+    ImagingError, OwnedRaster, PagePreview, PdfDocument, PixelFormat, Resolution, preview,
+};
 
 const SYNC: &[u8; 4] = b"RaS2";
 const HEADER_BYTES: usize = 1796;

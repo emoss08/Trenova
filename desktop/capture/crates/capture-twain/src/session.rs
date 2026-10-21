@@ -20,9 +20,9 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
 use capture_imaging::scan::{ScanEnd, ScanSettings, ScannedPage};
-use capture_imaging::{OwnedRaster, PixelFormat, Resolution};
 use capture_protocol::api::{PixelType, Settings, SourceInfo, SourceProtocol, known_patch_code};
 use capture_protocol::helper::ScanCondition;
+use trenova_imaging_core::{OwnedRaster, PixelFormat, Resolution};
 
 use crate::capability::{self, CapValue, CapValues, ONE_VALUE_SIZE};
 #[allow(clippy::wildcard_imports)] // The constants mirror twain.h's own namespace.
@@ -1172,14 +1172,14 @@ impl PageLayout {
     fn from_info(info: &TW_IMAGEINFO, flavor: Option<CapValue>) -> TwainResult<Self> {
         let width = u32::try_from(info.ImageWidth)
             .ok()
-            .filter(|w| (1..=capture_imaging::raster::MAX_SIDE).contains(w))
+            .filter(|w| (1..=trenova_imaging_core::raster::MAX_SIDE).contains(w))
             .ok_or_else(|| {
                 let width = info.ImageWidth;
                 TwainError::Unsupported(format!("a page {width} pixels wide"))
             })?;
         let height = u32::try_from(info.ImageLength)
             .ok()
-            .filter(|&h| h > 0 && h <= capture_imaging::raster::MAX_SIDE);
+            .filter(|&h| h > 0 && h <= trenova_imaging_core::raster::MAX_SIDE);
         if info.Planar != 0 && info.SamplesPerPixel > 1 {
             return Err(TwainError::Unsupported("planar colour data".into()));
         }
@@ -1300,7 +1300,7 @@ impl PageBuffer {
         let max_rows = self
             .layout
             .height
-            .unwrap_or(capture_imaging::raster::MAX_SIDE);
+            .unwrap_or(trenova_imaging_core::raster::MAX_SIDE);
         if end_row > max_rows {
             return Err(malformed("taller than the page"));
         }

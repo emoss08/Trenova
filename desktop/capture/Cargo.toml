@@ -13,6 +13,7 @@ repository = "https://github.com/emoss08/trenova"
 [workspace.dependencies]
 capture-protocol = { path = "crates/capture-protocol" }
 capture-imaging = { path = "crates/capture-imaging" }
+trenova-imaging-core = { path = "../../services/crates/imaging-core" }
 capture-ipp = { path = "crates/capture-ipp" }
 capture-twain = { path = "crates/capture-twain" }
 capture-wia = { path = "crates/capture-wia" }

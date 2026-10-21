@@ -35,6 +35,9 @@ on:
       - "capture-v*"
     paths:
       - "desktop/capture/**"
+      - "services/crates/imaging-core/**"
+      - "services/Cargo.toml"
+      - "services/rust-toolchain.toml"
       - "client/apps/web/public/logo.ico"
       - ".github/workflows/native-capture.yml"
   pull_request:
@@ -44,6 +47,9 @@ on:
       - develop
     paths:
       - "desktop/capture/**"
+      - "services/crates/imaging-core/**"
+      - "services/Cargo.toml"
+      - "services/rust-toolchain.toml"
       - "client/apps/web/public/logo.ico"
       - ".github/workflows/native-capture.yml"
   workflow_dispatch:

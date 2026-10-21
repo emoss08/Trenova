@@ -85,7 +85,7 @@ impl<'a> Raster<'a> {
     }
 
     /// The rows packed end to end, borrowing when they already are.
-    pub(crate) fn packed(&self) -> std::borrow::Cow<'a, [u8]> {
+    pub fn packed(&self) -> std::borrow::Cow<'a, [u8]> {
         let row_bytes = self.format.row_bytes(self.width);
         let total = row_bytes * self.height as usize;
         if self.stride == row_bytes {
@@ -121,8 +121,10 @@ impl OwnedRaster {
     }
 }
 
-/// The luminance a pixel reads as, 0 black to 255 white (ITU-R BT.601).
-fn luma(r: u8, g: u8, b: u8) -> u8 {
+/// The luminance a pixel reads as, 0 black to 255 white (ITU-R BT.601),
+/// rounded to the nearest level. Every luma in Trenova is this one.
+#[inline]
+pub fn luma(r: u8, g: u8, b: u8) -> u8 {
     let weighted = 299 * u32::from(r) + 587 * u32::from(g) + 114 * u32::from(b);
     u8::try_from((weighted + 500) / 1000).unwrap_or(u8::MAX)
 }
@@ -131,8 +133,12 @@ fn luma(r: u8, g: u8, b: u8) -> u8 {
 /// cannot scan bilevel itself when the profile asks for it. The result is
 /// packed chocolate (zero is black), which is what the G4 encoder reads.
 pub fn binarize(raster: &Raster<'_>) -> OwnedRaster {
-    const THRESHOLD: u8 = 128;
+    binarize_at(raster, 128)
+}
 
+/// Reduces a page to black and white: a pixel whose luma is at least
+/// `threshold` is white. The result is packed chocolate (zero is black).
+pub fn binarize_at(raster: &Raster<'_>, threshold: u8) -> OwnedRaster {
     let row_bytes = PixelFormat::Bilevel {
         zero_is_black: true,
     }
@@ -147,12 +153,12 @@ pub fn binarize(raster: &Raster<'_>) -> OwnedRaster {
                     let bit = source[x / 8] >> (7 - (x % 8)) & 1;
                     (bit == 1) == zero_is_black
                 }
-                PixelFormat::Gray8 => source[x] >= THRESHOLD,
+                PixelFormat::Gray8 => source[x] >= threshold,
                 PixelFormat::Rgb8 => {
-                    luma(source[x * 3], source[x * 3 + 1], source[x * 3 + 2]) >= THRESHOLD
+                    luma(source[x * 3], source[x * 3 + 1], source[x * 3 + 2]) >= threshold
                 }
                 PixelFormat::Bgr8 => {
-                    luma(source[x * 3 + 2], source[x * 3 + 1], source[x * 3]) >= THRESHOLD
+                    luma(source[x * 3 + 2], source[x * 3 + 1], source[x * 3]) >= threshold
                 }
             };
             if white {
@@ -168,6 +174,33 @@ pub fn binarize(raster: &Raster<'_>) -> OwnedRaster {
         format: PixelFormat::Bilevel {
             zero_is_black: true,
         },
+        data,
+    }
+}
+
+/// The page as one byte of luma a pixel, packed, which is what OCR, barcode
+/// decoding and the ink measure read.
+pub fn to_gray(raster: &Raster<'_>) -> OwnedRaster {
+    let width = raster.width as usize;
+    let mut data = Vec::with_capacity(width * raster.height as usize);
+    for y in 0..raster.height {
+        let row = raster.row(y);
+        match raster.format {
+            PixelFormat::Gray8 => data.extend_from_slice(row),
+            PixelFormat::Rgb8 => data.extend(row.chunks_exact(3).map(|p| luma(p[0], p[1], p[2]))),
+            PixelFormat::Bgr8 => data.extend(row.chunks_exact(3).map(|p| luma(p[2], p[1], p[0]))),
+            PixelFormat::Bilevel { zero_is_black } => data.extend((0..width).map(|x| {
+                let bit = row[x / 8] >> (7 - (x % 8)) & 1;
+                if (bit == 1) == zero_is_black { 255 } else { 0 }
+            })),
+        }
+    }
+
+    OwnedRaster {
+        width: raster.width,
+        height: raster.height,
+        stride: width,
+        format: PixelFormat::Gray8,
         data,
     }
 }
@@ -231,5 +264,34 @@ mod tests {
         )
         .expect("raster");
         assert_eq!(binarize(&raster).data, vec![0b0100_0000]);
+    }
+
+    #[test]
+    fn a_higher_threshold_turns_more_of_the_page_black() {
+        let gray = [100, 150, 200, 250];
+        let raster = Raster::new(4, 1, 4, PixelFormat::Gray8, &gray).expect("raster");
+        assert_eq!(binarize_at(&raster, 128).data, vec![0b0111_0000]);
+        assert_eq!(binarize_at(&raster, 220).data, vec![0b0001_0000]);
+    }
+
+    #[test]
+    fn gray_is_luma_for_every_format() {
+        let rgb = [255, 0, 0, 0, 255, 0];
+        let raster = Raster::new(2, 1, 6, PixelFormat::Rgb8, &rgb).expect("raster");
+        assert_eq!(
+            to_gray(&raster).data,
+            vec![luma(255, 0, 0), luma(0, 255, 0)]
+        );
+
+        let bgr = [0, 0, 255];
+        let raster = Raster::new(1, 1, 3, PixelFormat::Bgr8, &bgr).expect("raster");
+        assert_eq!(to_gray(&raster).data, vec![luma(255, 0, 0)]);
+
+        let vanilla = [0b1000_0000];
+        let format = PixelFormat::Bilevel {
+            zero_is_black: false,
+        };
+        let raster = Raster::new(2, 1, 1, format, &vanilla).expect("raster");
+        assert_eq!(to_gray(&raster).data, vec![0, 255]);
     }
 }
