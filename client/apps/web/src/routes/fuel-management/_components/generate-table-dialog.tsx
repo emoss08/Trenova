@@ -16,7 +16,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangleIcon, SpinnerIcon } from "@trenova/shared/components/icons";
-import { useEffect, useId, useState } from "react";
+import { useId, useState } from "react";
 import { NumericFormat } from "react-number-format";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
@@ -135,11 +135,13 @@ export function GenerateTableDialog({
   const [state, setState] = useState<WizardState>(DEFAULT_STATE);
   const openEndedId = useId();
 
-  useEffect(() => {
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (prevOpen !== open) {
+    setPrevOpen(open);
     if (open) {
       setState(DEFAULT_STATE);
     }
-  }, [open]);
+  }
 
   const debounced = useDebounce(state, 300);
   const valid = isValidState(debounced);

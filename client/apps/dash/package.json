@@ -15,7 +15,7 @@
     "@tanstack/react-query": "catalog:",
     "@trenova/graphql": "workspace:*",
     "@trenova/shared": "workspace:*",
-    "motion": "^13.2.0",
+    "motion": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-router": "catalog:",

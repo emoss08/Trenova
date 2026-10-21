@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 type EDIReasonDialogProps = {
   open: boolean;
@@ -38,9 +38,11 @@ export function EDIReasonDialog({
 
   const [reason, setReason] = useState("");
 
-  useEffect(() => {
+  const [wasOpen, setWasOpen] = useState(open);
+  if (wasOpen !== open) {
+    setWasOpen(open);
     if (!open) setReason("");
-  }, [open]);
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

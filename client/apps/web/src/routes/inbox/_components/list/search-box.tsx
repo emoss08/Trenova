@@ -33,9 +33,14 @@ export function SearchBox({
   const commit = useLatestCallback(onCommit);
   const committed = useRef(value);
 
+  const [prevValue, setPrevValue] = useState(value);
+  if (prevValue !== value) {
+    setPrevValue(value);
+    setText((current) => (current.trim() === value.trim() ? current : value));
+  }
+
   useEffect(() => {
     committed.current = value;
-    setText((current) => (current.trim() === value.trim() ? current : value));
   }, [value]);
 
   useEffect(() => {

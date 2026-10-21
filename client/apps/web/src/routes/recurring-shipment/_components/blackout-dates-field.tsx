@@ -19,7 +19,7 @@ import { FieldWrapper } from "@/components/fields/field-components";
 import type { RecurringShipment } from "@/types/recurring-shipment";
 import { format } from "date-fns";
 import { CalendarPlus01Icon, ChevronDownIcon, XCloseIcon } from "@trenova/shared/components/icons";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useController, useFormContext } from "react-hook-form";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
@@ -107,8 +107,8 @@ export function BlackoutDatesField() {
   const { field, fieldState } = useController({ control, name: "blackoutDates" });
 
   const dates = useMemo(() => field.value ?? [], [field.value]);
-  const todayISO = useMemo(() => toISODateString(new Date()), []);
-  const currentYear = useMemo(() => new Date().getFullYear(), []);
+  const [todayISO] = useState(() => toISODateString(new Date()));
+  const [currentYear] = useState(() => new Date().getFullYear());
 
   const commit = useCallback(
     (next: readonly string[]) => {

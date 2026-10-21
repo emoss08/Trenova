@@ -36,7 +36,7 @@ import {
   SpinnerIcon,
 } from "@trenova/shared/components/icons";
 import { nanoid } from "nanoid";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
@@ -231,15 +231,23 @@ export function ShipmentRateConfirmationImportPanel({
     },
   });
 
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-
-    if (!currentUpload && !uploadedDocumentId && !createdShipmentId) {
+  const [idleCheck, setIdleCheck] = useState({
+    createdShipmentId,
+    currentUpload,
+    open,
+    uploadedDocumentId,
+  });
+  if (
+    idleCheck.createdShipmentId !== createdShipmentId ||
+    idleCheck.currentUpload !== currentUpload ||
+    idleCheck.open !== open ||
+    idleCheck.uploadedDocumentId !== uploadedDocumentId
+  ) {
+    setIdleCheck({ createdShipmentId, currentUpload, open, uploadedDocumentId });
+    if (open && !currentUpload && !uploadedDocumentId && !createdShipmentId) {
       setAttachErrorMessage(null);
     }
-  }, [createdShipmentId, currentUpload, open, uploadedDocumentId]);
+  }
 
   const extractionAvailable = useDocumentExtractionAvailable();
   const blockedByProvider = isBlockedByProvider(importedDocument, extractionAvailable);

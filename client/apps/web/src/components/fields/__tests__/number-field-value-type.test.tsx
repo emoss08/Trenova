@@ -1,6 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { useForm, type Control, type FieldValues } from "react-hook-form";
+import { useForm, useWatch, type Control, type FieldValues } from "react-hook-form";
 import { afterEach, describe, expect, it } from "vitest";
 import { NumberField } from "../number-field";
 
@@ -39,6 +39,7 @@ function StringHarness({
   const form = useForm<Values>({
     defaultValues: { miles: initial, odometer: null, loose: "" },
   });
+  const value = useWatch({ control: form.control, name: "miles" });
   return (
     <>
       <NumberField<Values>
@@ -52,7 +53,7 @@ function StringHarness({
         min={min}
         max={max}
       />
-      <State values={form.watch("miles")} />
+      <State values={value} />
     </>
   );
 }
@@ -61,6 +62,7 @@ function NumberHarness({ initial = null }: { initial?: number | null }) {
   const form = useForm<Values>({
     defaultValues: { miles: "", odometer: initial, loose: "" },
   });
+  const value = useWatch({ control: form.control, name: "odometer" });
   return (
     <>
       <NumberField<Values>
@@ -70,7 +72,7 @@ function NumberHarness({ initial = null }: { initial?: number | null }) {
         step={10}
         min={0}
       />
-      <State values={form.watch("odometer")} />
+      <State values={value} />
     </>
   );
 }
@@ -81,6 +83,7 @@ function UndeclaredHarness({ initial }: { initial: string | number | null }) {
   const form = useForm<Values>({
     defaultValues: { miles: "", odometer: null, loose: initial as string },
   });
+  const value = useWatch({ control: form.control, name: "loose" });
   return (
     <>
       <NumberField<FieldValues>
@@ -89,7 +92,7 @@ function UndeclaredHarness({ initial }: { initial: string | number | null }) {
         label="Loose"
         decimalScale={2}
       />
-      <State values={form.watch("loose")} />
+      <State values={value} />
     </>
   );
 }

@@ -7,34 +7,18 @@ import { cn } from "@trenova/shared/lib/utils";
 import type { UploadState } from "@/hooks/use-upload-with-progress";
 import { RefreshCcw01Icon, XCloseIcon } from "@trenova/shared/components/icons";
 import { AnimatePresence, m } from "motion/react";
-import { useEffect, useState } from "react";
-
-function useObjectUrl(file: File | null): string | null {
-  const [url, setUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!file) {
-      setUrl(null);
-      return;
-    }
-    const objectUrl = URL.createObjectURL(file);
-    setUrl(objectUrl);
-    return () => {
-      URL.revokeObjectURL(objectUrl);
-    };
-  }, [file]);
-
-  return url;
-}
+import { useObjectUrl } from "@trenova/shared/hooks/use-object-url";
+import { useState } from "react";
 
 function AttachmentThumbnail({ upload }: { upload: UploadState }) {
   const isImage = upload.file.type.startsWith("image/");
   const objectUrl = useObjectUrl(isImage ? upload.file : null);
   const [imageFailed, setImageFailed] = useState(false);
-
-  useEffect(() => {
+  const [checkedUrl, setCheckedUrl] = useState(objectUrl);
+  if (checkedUrl !== objectUrl) {
+    setCheckedUrl(objectUrl);
     setImageFailed(false);
-  }, [objectUrl]);
+  }
 
   if (!isImage || imageFailed) {
     return (

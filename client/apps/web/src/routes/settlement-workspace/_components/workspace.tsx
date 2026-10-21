@@ -105,16 +105,13 @@ export default function Workspace() {
     setSearchParams({}, { replace: true });
   }, [settlements, searchParams, setSearchParams, t]);
 
-  useEffect(() => {
-    if (settlements == null) return;
+  if (settlements != null) {
     if (filtered.length === 0) {
-      setSelectedId(null);
-      return;
-    }
-    if (!selectedId || !filtered.some((settlement) => settlement.id === selectedId)) {
+      if (selectedId !== null) setSelectedId(null);
+    } else if (!selectedId || !filtered.some((settlement) => settlement.id === selectedId)) {
       setSelectedId(filtered[0].id);
     }
-  }, [filtered, selectedId, settlements]);
+  }
 
   const selected: DriverSettlementRow | null = useMemo(
     () => (settlements ?? []).find((settlement) => settlement.id === selectedId) ?? null,

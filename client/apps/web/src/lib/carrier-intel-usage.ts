@@ -82,11 +82,9 @@ export function recentUsageMonths(nowSeconds: number, count: number): number[] {
   const now = new Date(nowSeconds * 1000);
   const year = now.getUTCFullYear();
   const month = now.getUTCMonth();
-  const months = new Array<number>(Math.max(count, 0));
-  for (let offset = 0; offset < months.length; offset++) {
-    months[offset] = Math.floor(Date.UTC(year, month - offset, 1) / 1000);
-  }
-  return months;
+  return Array.from({ length: Math.max(count, 0) }, (_, offset) =>
+    Math.floor(Date.UTC(year, month - offset, 1) / 1000),
+  );
 }
 
 export function formatUsageMonth(monthStart: number): string {

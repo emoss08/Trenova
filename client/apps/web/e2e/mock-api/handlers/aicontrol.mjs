@@ -766,7 +766,7 @@ function savedNode(state, base, request, id) {
   const accessMode = request.accessMode ?? base?.accessMode ?? "Everyone";
   const roleIds = request.accessRoleIds ?? base?.accessRoles.map((role) => role.id) ?? [];
   return {
-    ...(base ?? {}),
+    ...base,
     ...request,
     id,
     organizationId: "org_mock",

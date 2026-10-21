@@ -5,7 +5,7 @@ import type {
   EDITemplateSegment,
   EDITemplateVersion,
 } from "@trenova/shared/types/edi";
-import { createContext, useContext, useRef, type ReactNode } from "react";
+import { createContext, useContext, type ReactNode, useState } from "react";
 import { useStore } from "zustand";
 import { createStore, type StoreApi } from "zustand/vanilla";
 import { cloneSegments } from "@/routes/edi/_components/designer/utils/edi-designer-utils";
@@ -183,13 +183,10 @@ function shouldRefreshHydratedVersionDraft(
 const TemplateDesignerStoreContext = createContext<StoreApi<TemplateDesignerStore> | null>(null);
 
 export function TemplateDesignerStoreProvider({ children }: { children: ReactNode }) {
-  const storeRef = useRef<StoreApi<TemplateDesignerStore> | null>(null);
-  if (!storeRef.current) {
-    storeRef.current = createTemplateDesignerStore();
-  }
+  const [store] = useState(createTemplateDesignerStore);
 
   return (
-    <TemplateDesignerStoreContext.Provider value={storeRef.current}>
+    <TemplateDesignerStoreContext.Provider value={store}>
       {children}
     </TemplateDesignerStoreContext.Provider>
   );

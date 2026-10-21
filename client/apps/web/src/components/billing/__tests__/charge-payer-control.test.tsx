@@ -1,6 +1,7 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ChargeAllocation } from "@trenova/shared/types/shipment";
+import { useEffect } from "react";
 import {
   FormProvider,
   useController,
@@ -66,7 +67,9 @@ let latestForm: UseFormReturn<FieldValues> | null = null;
 
 function Harness({ allocations }: { allocations: ChargeAllocation[] }) {
   const form = useForm<FieldValues>({ defaultValues: { allocations } });
-  latestForm = form;
+  useEffect(() => {
+    latestForm = form;
+  }, [form]);
   return (
     <FormProvider {...form}>
       <ChargePayerControl

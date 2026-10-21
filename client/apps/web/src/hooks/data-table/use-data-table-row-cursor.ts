@@ -1,5 +1,5 @@
 import { isTypingTarget, isWithinDialog, isWithinPopup } from "@/lib/dom";
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 
 export type DataTableRowCursorShortcut = {
   /** The lowercase key; an Alt chord is matched by physical key so Option on a Mac still works. */
@@ -45,7 +45,10 @@ const UP_KEYS = new Set(["k", "ArrowUp"]);
  */
 export function useDataTableRowCursor(params: DataTableRowCursorParams) {
   const latest = useRef(params);
-  latest.current = params;
+
+  useLayoutEffect(() => {
+    latest.current = params;
+  });
 
   useEffect(() => {
     if (!params.enabled) {

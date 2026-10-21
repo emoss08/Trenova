@@ -128,7 +128,9 @@ function check(value, type, nodes, path, ctx) {
 }
 
 async function post(path, body, method = "POST") {
-  const response = await fetch(`${MOCK}${path}`, { method, headers: { "content-type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
+  const init = { method, headers: { "content-type": "application/json" } };
+  if (body) init.body = JSON.stringify(body);
+  const response = await fetch(`${MOCK}${path}`, init);
   return response.json();
 }
 

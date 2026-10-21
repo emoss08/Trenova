@@ -2,6 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { daysInMonth } from "@trenova/shared/lib/holiday";
 import { cn } from "@trenova/shared/lib/utils";
+import { useState } from "react";
 
 /**
  * Stands in twice: the page skeleton is the Suspense fallback while the
@@ -123,12 +124,13 @@ type HolidayCalendarSkeletonProps = {
  */
 export function HolidayCalendarSkeleton({ canCreate }: HolidayCalendarSkeletonProps) {
   const t = useT();
+  const [year] = useState(() => new Date().getUTCFullYear());
 
   return (
     <div className="flex flex-col gap-4" aria-busy aria-label={t("Loading the holiday calendar")}>
       <div className="contents" aria-hidden>
         <ToolbarSkeleton canCreate={canCreate} />
-        <HolidayMonthsSkeleton year={new Date().getUTCFullYear()} />
+        <HolidayMonthsSkeleton year={year} />
       </div>
     </div>
   );

@@ -95,7 +95,6 @@ export function FormEditModal<T extends FieldValues>({
   const previousRecordIdRef = useRef<string | number | null>(null);
   const navigationQueueRef = useRef<string | null>(null);
   const isNavigatingRef = useRef(false);
-  const [pendingNavigationId, setPendingNavigationId] = React.useState<string | null>(null);
   const selectedRowKey = useTableAtom(
     dataTable?.table.atoms.rowSelection ?? NO_SELECTION,
     firstSelectedRowId,
@@ -170,7 +169,7 @@ export function FormEditModal<T extends FieldValues>({
   ]);
 
   const processNavigation = useCallback(
-    async (targetId: string) => {
+    async function navigate(targetId: string) {
       if (isNavigatingRef.current) {
         navigationQueueRef.current = targetId;
         return;
@@ -189,7 +188,7 @@ export function FormEditModal<T extends FieldValues>({
               navigationQueueRef.current = null;
               setTimeout(() => {
                 isNavigatingRef.current = false;
-                setPendingNavigationId(queuedId);
+                void navigate(queuedId);
               }, 50);
             } else {
               isNavigatingRef.current = false;
@@ -203,13 +202,6 @@ export function FormEditModal<T extends FieldValues>({
     },
     [setSearchParams, startTransition],
   );
-
-  React.useEffect(() => {
-    if (!pendingNavigationId) return;
-    const nextId = pendingNavigationId;
-    setPendingNavigationId(null);
-    void processNavigation(nextId);
-  }, [pendingNavigationId, processNavigation]);
 
   const onPrev = React.useCallback(() => {
     if (prevId) {

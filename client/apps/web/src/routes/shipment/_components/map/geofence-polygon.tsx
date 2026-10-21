@@ -1,5 +1,6 @@
 import { useMap, useMapsLibrary } from "@vis.gl/react-google-maps";
-import { useEffect, useRef } from "react";
+import { useLatestCallback } from "@trenova/shared/hooks/use-latest-callback";
+import { useEffect } from "react";
 import { GEOFENCE_OPACITY, GEOFENCE_STYLE, GEOFENCE_Z_INDEX } from "./geofence-styles";
 import type { NormalizedGeofence } from "./geofence-types";
 
@@ -11,8 +12,7 @@ type Props = {
 export function GeofencePolygon({ geofence, onSelect }: Props) {
   const map = useMap();
   const mapsLib = useMapsLibrary("maps");
-  const onSelectRef = useRef(onSelect);
-  onSelectRef.current = onSelect;
+  const select = useLatestCallback(onSelect);
 
   useEffect(() => {
     if (!map || !mapsLib) return;
@@ -44,7 +44,7 @@ export function GeofencePolygon({ geofence, onSelect }: Props) {
       });
     });
     const clickListener = polygon.addListener("click", () => {
-      onSelectRef.current(geofence);
+      select(geofence);
     });
 
     return () => {
@@ -53,7 +53,7 @@ export function GeofencePolygon({ geofence, onSelect }: Props) {
       clickListener.remove();
       polygon.setMap(null);
     };
-  }, [map, mapsLib, geofence]);
+  }, [map, mapsLib, geofence, select]);
 
   return null;
 }

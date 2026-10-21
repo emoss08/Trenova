@@ -276,7 +276,11 @@ export default function DataTableExportDialog<TData extends Record<string, any>>
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
-          <Form onSubmit={handleSubmit(onSubmit)}>
+          <Form
+            onSubmit={(event) => {
+              void handleSubmit(onSubmit)(event);
+            }}
+          >
             <FormGroup cols={1} className="pb-4">
               <FormControl cols="full">
                 <SegmentedField

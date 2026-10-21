@@ -20,6 +20,7 @@ import {
   formatUnixTime,
 } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
+import { useNow } from "@trenova/shared/hooks/use-now";
 import {
   AlertTriangleIcon,
   ArrowNarrowRightIcon,
@@ -145,6 +146,7 @@ export function PreflightDialog({
   isAssigning: boolean;
 }) {
   const t = useT();
+  const nowSeconds = useNow("minute");
 
   const { move, driver } = target;
   const { data, isLoading } = useQuery(
@@ -160,7 +162,7 @@ export function PreflightDialog({
   const tractorId = data?.tractorId ?? driver.tractorId;
   const canAssign = Boolean(tractorId) && !isLoading;
 
-  const minutesToPickup = Math.round((move.originWindowStart - Date.now() / 1000) / 60);
+  const minutesToPickup = Math.round((move.originWindowStart - nowSeconds) / 60);
   const slack = data?.score.minutesOfSlack ?? 0;
   const listedFindings =
     data?.score.findings.filter(

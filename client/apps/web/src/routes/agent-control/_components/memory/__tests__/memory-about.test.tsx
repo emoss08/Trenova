@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { FormProvider, useForm, type UseFormReturn } from "react-hook-form";
 import { describe, expect, it, vi } from "vitest";
 import { MemoryAbout } from "../memory-form";
@@ -17,7 +17,7 @@ vi.mock("@/components/autocomplete-fields", () => ({
 function renderAbout(defaults: Partial<MemoryFormValues>) {
   let form!: UseFormReturn<MemoryFormValues>;
   function Host({ children }: { children: ReactNode }) {
-    form = useForm<MemoryFormValues>({
+    const hostForm = useForm<MemoryFormValues>({
       defaultValues: {
         content: "Dock 4 closes at 15:00 on Fridays.",
         kind: "Fact",
@@ -28,7 +28,10 @@ function renderAbout(defaults: Partial<MemoryFormValues>) {
         ...defaults,
       } as MemoryFormValues,
     });
-    return <FormProvider {...form}>{children}</FormProvider>;
+    useEffect(() => {
+      form = hostForm;
+    });
+    return <FormProvider {...hostForm}>{children}</FormProvider>;
   }
   render(
     <QueryClientProvider client={new QueryClient()}>

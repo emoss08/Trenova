@@ -66,12 +66,23 @@ export default function DataTableSearch({
   const items = suggestions?.items ?? [];
   const open = !!suggestions && focused && isEmpty && items.length > 0;
   const onSuggestionsOpenChange = suggestions?.onOpenChange;
+  const [prevValue, setPrevValue] = useState(value);
+  const [prevOpen, setPrevOpen] = useState(open);
+
+  if (value !== prevValue) {
+    setPrevValue(value);
+    setIsEmpty(value === "");
+  }
+
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (!open) setActiveIndex(-1);
+  }
 
   useEffect(() => {
     if (inputRef.current && inputRef.current.value !== value) {
       inputRef.current.value = value;
     }
-    setIsEmpty(value === "");
   }, [value]);
 
   useEffect(() => {
@@ -84,7 +95,6 @@ export default function DataTableSearch({
 
   useEffect(() => {
     onSuggestionsOpenChange?.(open);
-    if (!open) setActiveIndex(-1);
   }, [open, onSuggestionsOpenChange]);
 
   useEffect(() => {

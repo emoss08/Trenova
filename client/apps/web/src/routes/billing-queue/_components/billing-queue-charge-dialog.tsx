@@ -118,7 +118,7 @@ export function BillingQueueChargeDialog({
               : t("Select an accessorial charge and configure billing details")}
           </DialogDescription>
         </DialogHeader>
-        <Form onSubmit={handleSubmit(onSubmit)}>
+        <Form onSubmit={(event) => void handleSubmit(onSubmit)(event)}>
           <div className="pb-4">
             <FormGroup cols={2}>
               <FormControl className="col-span-2">

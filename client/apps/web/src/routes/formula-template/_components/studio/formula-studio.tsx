@@ -359,9 +359,14 @@ function StudioLayout() {
   // editor: the approve dialog opens itself, then the marker leaves the URL so
   // a refresh does not reopen it.
   const reviewStep = searchParams.get("review");
+  const opensApproval = reviewStep === "approve" && template?.status === "InReview";
+  const [seenOpensApproval, setSeenOpensApproval] = useState(false);
+  if (opensApproval !== seenOpensApproval) {
+    setSeenOpensApproval(opensApproval);
+    if (opensApproval) setApprovalAction("approve");
+  }
   useEffect(() => {
-    if (reviewStep === "approve" && template?.status === "InReview") {
-      setApprovalAction("approve");
+    if (opensApproval) {
       setSearchParams(
         (params) => {
           params.delete("review");
@@ -370,7 +375,7 @@ function StudioLayout() {
         { replace: true },
       );
     }
-  }, [reviewStep, template?.status, setSearchParams]);
+  }, [opensApproval, setSearchParams]);
 
   const shortcuts = useMemo(
     () => ({

@@ -18,7 +18,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { ArrowRightIcon } from "@trenova/shared/components/icons";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
 
 export type IntelligenceSyncPanelProps = {
@@ -78,11 +78,12 @@ export function IntelligenceSyncPanel({
     queryFn: ({ signal }) => fetchCarrierIntelSyncPlan(carrierId, { signal }),
   });
   const plan = planQuery.data;
-
-  useEffect(() => {
+  const [seenPlan, setSeenPlan] = useState(plan);
+  if (plan !== seenPlan) {
+    setSeenPlan(plan);
     setSelectedFields(new Set());
     setSelectedPolicies(new Set());
-  }, [plan]);
+  }
 
   const applicableInsurance = useMemo(
     () => (plan?.insuranceSuggestions ?? []).filter((change) => change.policyId !== null),

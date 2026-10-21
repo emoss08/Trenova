@@ -22,9 +22,13 @@ import {
 } from "@trenova/shared/lib/rate-matrix";
 import type { RateMatrix, RateMatrixCell, RateMatrixDimension } from "@trenova/shared/types/rate";
 import { AlertCircleIcon, Save01Icon, SpinnerIcon } from "@trenova/shared/components/icons";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { toast } from "@trenova/shared/components/ui/toast";
+
+function orderByPosition(dimensions: RateMatrixDimension[]): RateMatrixDimension[] {
+  return [...dimensions].sort((a, b) => a.position - b.position);
+}
 
 type MatrixGridEditorProps = {
   /** Absent while the matrix is being created — there is nothing to hang cells off yet. */
@@ -60,13 +64,16 @@ export function MatrixGridEditor({ rateMatrixId }: MatrixGridEditorProps) {
   // coercing them on every keystroke would fight the person entering them.
   const [drafts, setDrafts] = useState<Record<string, string>>({});
 
-  useEffect(() => {
+  const [prevLoadedCells, setPrevLoadedCells] = useState<RateMatrixCell[] | undefined>(undefined);
+
+  if (loadedCells !== prevLoadedCells) {
+    setPrevLoadedCells(loadedCells);
     if (loadedCells) {
       setCells(loadedCells);
       setDrafts({});
       setDirty(false);
     }
-  }, [loadedCells]);
+  }
 
   // useWatch hands back a fresh array every render, so memoizing on it would
   // memoize nothing and every grid below would rebuild on each keystroke. What
@@ -74,15 +81,16 @@ export function MatrixGridEditor({ rateMatrixId }: MatrixGridEditorProps) {
   const signature = dimensions
     .map((dimension) => `${dimension.position}:${dimension.kind}:${dimension.matchMode}`)
     .join("|");
-  const orderedRef = useRef<RateMatrixDimension[]>([]);
-  const signatureRef = useRef<string | null>(null);
+  const [axes, setAxes] = useState(() => ({
+    signature,
+    ordered: orderByPosition(dimensions),
+  }));
 
-  if (signatureRef.current !== signature) {
-    signatureRef.current = signature;
-    orderedRef.current = [...dimensions].sort((a, b) => a.position - b.position);
+  if (axes.signature !== signature) {
+    setAxes({ signature, ordered: orderByPosition(dimensions) });
   }
 
-  const ordered = orderedRef.current;
+  const ordered = axes.ordered;
 
   const rowPosition = (ordered[0]?.position ?? 0) as MatrixAxisPosition;
   const columnDimension = ordered[1];
@@ -94,25 +102,30 @@ export function MatrixGridEditor({ rateMatrixId }: MatrixGridEditorProps) {
   // A sheet selector pointing at a band that no longer exists renders an empty
   // grid that looks like missing data. Snapping to the first available bucket
   // keeps the editor showing something real.
-  useEffect(() => {
-    setSlice((current) => {
-      let changed = false;
-      const next = { ...current };
+  const [sliceSource, setSliceSource] = useState<{
+    cells: RateMatrixCell[];
+    sliceDimensions: RateMatrixDimension[];
+  } | null>(null);
 
-      for (const dimension of sliceDimensions) {
-        const buckets = sliceBuckets(dimension, cells);
-        const chosen = next[dimension.position];
+  if (sliceSource?.cells !== cells || sliceSource.sliceDimensions !== sliceDimensions) {
+    setSliceSource({ cells, sliceDimensions });
 
-        if (buckets.length === 0) continue;
-        if (chosen !== undefined && buckets.some((bucket) => bucket.key === chosen)) continue;
+    let changed = false;
+    const next = { ...slice };
 
-        next[dimension.position] = buckets[0]?.key ?? "";
-        changed = true;
-      }
+    for (const dimension of sliceDimensions) {
+      const buckets = sliceBuckets(dimension, cells);
+      const chosen = next[dimension.position];
 
-      return changed ? next : current;
-    });
-  }, [cells, sliceDimensions]);
+      if (buckets.length === 0) continue;
+      if (chosen !== undefined && buckets.some((bucket) => bucket.key === chosen)) continue;
+
+      next[dimension.position] = buckets[0]?.key ?? "";
+      changed = true;
+    }
+
+    if (changed) setSlice(next);
+  }
 
   const grid = useMemo(
     () =>

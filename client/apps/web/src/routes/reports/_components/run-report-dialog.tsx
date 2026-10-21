@@ -19,7 +19,7 @@ import {
 import { useRunReport } from "@/hooks/use-reports";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { REPORT_FORMAT_CHOICES, type ReportParameterDef } from "@/types/report";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import {
@@ -64,13 +64,20 @@ export function RunReportDialog({
   }));
   const [viewId, setViewId] = useState<string | null>(null);
 
-  useEffect(() => {
+  const [prevInputs, setPrevInputs] = useState({ open, defaultFormat, parameters, initialParams });
+  if (
+    prevInputs.open !== open ||
+    prevInputs.defaultFormat !== defaultFormat ||
+    prevInputs.parameters !== parameters ||
+    prevInputs.initialParams !== initialParams
+  ) {
+    setPrevInputs({ open, defaultFormat, parameters, initialParams });
     if (open) {
       setFormat(defaultFormat || "csv");
       setParamValues({ ...defaultParamValues(parameters), ...initialParams });
       setViewId(null);
     }
-  }, [open, defaultFormat, parameters, initialParams]);
+  }
 
   // Applying a view fills the form so its values stay visible and editable;
   // editing them afterwards is what detaches the run from the view.

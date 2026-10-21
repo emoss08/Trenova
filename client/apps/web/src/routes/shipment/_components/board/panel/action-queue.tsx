@@ -136,7 +136,9 @@ export function ActionQueue() {
   };
 
   const latest = useRef({ current, approve, later, pending });
-  latest.current = { current, approve, later, pending };
+  useEffect(() => {
+    latest.current = { current, approve, later, pending };
+  });
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {

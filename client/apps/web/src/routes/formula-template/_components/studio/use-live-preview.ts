@@ -115,7 +115,9 @@ export function useLivePreview(): LivePreviewState {
   );
 
   const requestRef = useRef(request);
-  requestRef.current = request;
+  useEffect(() => {
+    requestRef.current = request;
+  }, [request]);
 
   const runNow = useCallback(() => {
     if (requestRef.current) {

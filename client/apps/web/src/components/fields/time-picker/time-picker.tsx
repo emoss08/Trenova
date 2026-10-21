@@ -21,17 +21,18 @@ export function TimePicker({ date, setDate }: TimePickerDemoProps) {
 
   const currentPeriod = calcCurrentPeriod(date);
   const [period, setPeriod] = React.useState<Period>(currentPeriod);
+  const [prevDate, setPrevDate] = React.useState(date);
+
+  if (date !== prevDate) {
+    setPrevDate(date);
+    if (date) {
+      setPeriod(currentPeriod);
+    }
+  }
 
   const minuteRef = React.useRef<HTMLInputElement>(null);
   const hourRef = React.useRef<HTMLInputElement>(null);
   const periodRef = React.useRef<HTMLButtonElement>(null);
-
-  // Update period when date is changed
-  React.useEffect(() => {
-    if (date) {
-      setPeriod(calcCurrentPeriod(date));
-    }
-  }, [date]);
 
   return (
     <div className="flex justify-center gap-2">

@@ -556,12 +556,16 @@ function FlagSetting({ field, value, disabled, onSave }: SettingProps) {
   const t = useT();
   const form = useForm<{ on: boolean }>({ values: { on: value === "true" } });
 
-  useEffect(() => {
-    const subscription = form.watch((next, { type }) => {
-      if (type === "change") onSave(next.on ? "true" : "false");
-    });
-    return () => subscription.unsubscribe();
-  }, [form, onSave]);
+  useEffect(
+    () =>
+      form.subscribe({
+        formState: { values: true },
+        callback: ({ values, type }) => {
+          if (type === "change") onSave(values.on ? "true" : "false");
+        },
+      }),
+    [form, onSave],
+  );
 
   return (
     <SwitchField

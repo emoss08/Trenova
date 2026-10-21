@@ -62,7 +62,20 @@ export function InvoiceAdjustmentPanel({ invoice }: { invoice: Invoice }) {
     [preview?.lines],
   );
 
-  useEffect(() => {
+  const [linesSource, setLinesSource] = useState<{
+    draftLines: InvoiceAdjustment["lines"] | undefined;
+    invoiceLines: Invoice["lines"];
+    kind: AdjustmentFormValues["kind"];
+    rebillStrategy: AdjustmentFormValues["rebillStrategy"];
+  } | null>(null);
+  if (
+    linesSource === null ||
+    linesSource.draftLines !== draft?.lines ||
+    linesSource.invoiceLines !== invoice.lines ||
+    linesSource.kind !== kind ||
+    linesSource.rebillStrategy !== rebillStrategy
+  ) {
+    setLinesSource({ draftLines: draft?.lines, invoiceLines: invoice.lines, kind, rebillStrategy });
     const sourceLines = draft?.lines?.length ? draft.lines : invoice.lines;
     setLines(
       sourceLines.map((line) => {
@@ -83,7 +96,7 @@ export function InvoiceAdjustmentPanel({ invoice }: { invoice: Invoice }) {
         };
       }),
     );
-  }, [draft?.lines, invoice.lines, kind, rebillStrategy]);
+  }
 
   useEffect(() => {
     if (!draft) {
